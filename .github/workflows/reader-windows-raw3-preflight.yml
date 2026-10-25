@@ -38,6 +38,9 @@ jobs:
         if: runner.os == 'Windows'
       - name: Build installed legacy and raw metadata and run original complete29 checks each
         run: python tests/reader_windows_raw3/metadata.py
+      - name: Compile actual Windows host and record owner sources in both profiles
+        if: runner.os == 'Windows'
+        run: python tests/reader_windows_raw3/compile_windows.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

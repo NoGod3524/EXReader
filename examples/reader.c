@@ -68,6 +68,9 @@
 #ifdef EXR_READER_WINDOWS_PREFERENCES
 #include "../apps/reader/desktop/windows_preferences.h"
 #endif
+#ifdef EXR_READER_WINDOWS_RAW3
+#include "../apps/reader/desktop/windows_raw3_apis.h"
+#endif
 
 enum {
   IDC_IMPORT_LABEL = 100, IDC_IMPORT_EDIT, IDC_IMPORT_BUTTON, IDC_OPEN_BUTTON,

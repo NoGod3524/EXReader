@@ -7,6 +7,10 @@
 #include "windows_records_owner.h"
 #include <catalog.h>
 #include <reader_commands.h>
+#ifdef EXR_READER_WINDOWS_RAW3
+#include "windows_raw3_apis.h"
+#include "reading_capture_bytes.h"
+#endif
 #include <algorithm>
 #include <array>
 #include <climits>
@@ -21,7 +25,12 @@
 namespace {
 constexpr size_t PENDING_MAX=2u*1024u*1024u;
 enum {KEY,ANNOTATION,REVISION,BOOTSTRAP,BODY,PARSER,CAPTURE,FORMAT,TITLE,AUTHOR,SORT,
+#ifdef EXR_READER_WINDOWS_RAW3
+ HEADS,KIND,OPERATION,SDK_BOOK,SOURCE_BYTES,FAVORITE,LEGACY_FIELDS,
+ WRITER_VERSION=LEGACY_FIELDS,SOURCE_VERSION,PRIVATE_VERSION,FIELDS};
+#else
  HEADS,KIND,OPERATION,SDK_BOOK,SOURCE_BYTES,FAVORITE,FIELDS};
+#endif
 using fields=std::array<std::string,FIELDS>;
 struct failure {exr_status status;const char *message;};
 void need(bool condition,const char *message,exr_status status=EXR_ARGUMENT) {if(!condition)throw failure{status,message};}
@@ -98,15 +107,42 @@ void shape(const fields &p) {
  need(op==READER_RC_PUT || p[HEADS].size()==32,"Delete or restore requires its safe head");
  std::set<std::string> unique;
  for(size_t i=0;i<p[HEADS].size();i+=32)need(hex(p[HEADS].substr(i,32),32)&&unique.insert(p[HEADS].substr(i,32)).second,"Invalid observed head set");
+#ifdef EXR_READER_WINDOWS_RAW3
+ auto writer=number(p[WRITER_VERSION]),source=number(p[SOURCE_VERSION]),version=number(p[PRIVATE_VERSION]);
+ need((version==1&&writer==2&&source==0)||(version==2&&writer>=1&&writer<=3&&source>=1&&source<=3),
+      "Invalid private request version or explicit writer/source");
+#endif
 }
 std::vector<unsigned char> pack(const fields &p) {
  shape(p);std::vector<unsigned char> payload;
  for(const auto &field:p) {need(field.size()<=PENDING_MAX-5&&payload.size()<=PENDING_MAX-field.size()-5,"Local reading request exceeds 2 MiB",EXR_LIMIT);
   put32(payload,(uint32_t)field.size()+1);payload.insert(payload.end(),field.begin(),field.end());payload.push_back(0);}
+#ifdef EXR_READER_WINDOWS_RAW3
+ need(p[PRIVATE_VERSION]=="2","Never republish or migrate a legacy pending request");
+ auto hash=digest(payload.data(),payload.size());std::vector<unsigned char> out={'E','X','R','R','D','0','0','2'};
+#else
  auto hash=digest(payload.data(),payload.size());std::vector<unsigned char> out={'E','X','R','R','D','0','0','1'};
+#endif
  put32(out,(uint32_t)payload.size());out.insert(out.end(),hash.begin(),hash.end());out.insert(out.end(),payload.begin(),payload.end());return out;
 }
 fields unpack(const std::vector<unsigned char> &raw) {
+#ifdef EXR_READER_WINDOWS_RAW3
+ need(raw.size()>=44&&u32(raw.data()+8)==raw.size()-44,"Damaged reading request");
+ bool legacy=!std::memcmp(raw.data(),"EXRRD001",8);
+ need(legacy||!std::memcmp(raw.data(),"EXRRD002",8),"Unknown private reading request");
+ auto hash=digest(raw.data()+44,raw.size()-44);need(!std::memcmp(hash.data(),raw.data()+12,32),"Reading request integrity differs");
+ fields p;size_t at=44,count=legacy?(size_t)LEGACY_FIELDS:(size_t)FIELDS;
+ for(size_t i=0;i<count;i++) {auto &field=p[i];
+  need(at<=raw.size()&&raw.size()-at>=4,"Truncated reading request");size_t n=u32(raw.data()+at);at+=4;
+  need(n>0&&n<=raw.size()-at&&raw[at+n-1]==0,"Invalid request field");
+  need((!legacy&&i==CAPTURE)||!std::memchr(raw.data()+at,0,n-1),"Embedded NUL in private text field");
+  field.assign((const char *)raw.data()+at,n-1);at+=n;
+ }
+ need(at==raw.size(),"Trailing reading request bytes");
+ if(legacy) {p[WRITER_VERSION]="2";p[SOURCE_VERSION]="0";p[PRIVATE_VERSION]="1";}
+ else need(p[PRIVATE_VERSION]=="2","Private header and intent version disagree");
+ shape(p);return p;
+#else
  need(raw.size()>=44&&!std::memcmp(raw.data(),"EXRRD001",8)&&u32(raw.data()+8)==raw.size()-44,"Damaged reading request");
  auto hash=digest(raw.data()+44,raw.size()-44);need(!std::memcmp(hash.data(),raw.data()+12,32),"Reading request integrity differs");
  fields p;size_t at=44;
@@ -114,6 +150,7 @@ fields unpack(const std::vector<unsigned char> &raw) {
   need(n>0&&n<=raw.size()-at&&raw[at+n-1]==0&&!std::memchr(raw.data()+at,0,n-1),"Invalid request string");
   field.assign((const char *)raw.data()+at,n-1);at+=n;}
  need(at==raw.size(),"Trailing reading request bytes");shape(p);return p;
+#endif
 }
 bool regular(HANDLE file,BY_HANDLE_FILE_INFORMATION *out=nullptr) {
  BY_HANDLE_FILE_INFORMATION info{};if(!GetFileInformationByHandle(file,&info))return false;
@@ -212,17 +249,43 @@ fields prepare(store &s,const book &b,const winrecords_request &r) {
   auto found=r.capture(r.context,nullptr,&actual.value,&actual.anchor,&actual.fixed,&actual.part);
   need(found==EXR_OK,"Real current-page capture failed",found);
  }
+#ifdef EXR_READER_WINDOWS_RAW3
+ if(r.kind==READER_RC_NOTE_TEXT) {
+  need(!old.empty()&&reader_rs_decode(s.revisions,old.data(),old.size(),&retained.value,&error)==READER_RS_OK&&
+       retained.value.has_location,"Current note source is unavailable");
+  need(retained.value.mode!=READER_RS_FIXED_PAGE||retained.value.exact!=nullptr,"NULL location cannot be edited");
+  actual.value.mode=retained.value.mode;
+ }
+ unsigned writer=actual.value.mode==READER_RS_FIXED_PAGE?3u:2u;
+ unsigned source=writer;
+ if(r.operation==READER_RC_RESTORE||r.operation==READER_RC_DELETE||r.kind==READER_RC_NOTE_TEXT) {
+  need(retained.value.anchor_version>=1&&retained.value.anchor_version<=3,"Unknown selected source version");
+  source=(unsigned)retained.value.anchor_version;
+  if(r.operation==READER_RC_RESTORE)writer=source;
+ }
+ p[WRITER_VERSION]=std::to_string(writer);p[SOURCE_VERSION]=std::to_string(source);p[PRIVATE_VERSION]="2";
+#endif
  if(r.kind!=READER_RC_NOTE_TEXT) {
   if(r.operation!=READER_RC_DELETE&&!progress) {
    uint64_t start=actual.value.mode==READER_RS_FIXED_PAGE?actual.fixed.start:actual.anchor.start;
    uint64_t end=actual.value.mode==READER_RS_FIXED_PAGE?actual.fixed.end:actual.anchor.end;
    need(kind==READER_RC_BOOKMARK?start==end:start<end,"A bookmark is a point; a highlight requires selected text");
   }
+#ifdef EXR_READER_WINDOWS_RAW3
+  reader_rs_capture native=actual.value;exr_anchor borrowed_anchor{};exr_fixed_anchor borrowed_fixed{};size_t native_part=actual.part;
+  if(r.operation==READER_RC_DELETE) {from_record(retained.value,native,borrowed_anchor,borrowed_fixed);native_part=(size_t)retained.value.part;}
+  unsigned char *bytes=nullptr;size_t count=0;
+  auto status=reader_private_capture_encode(&native,native_part,writer,&bytes,&count);
+  struct private_bytes {unsigned char *value;~private_bytes(){reader_private_capture_free(value);}} held{bytes};
+  need(status==EXR_OK,"Cannot persist native SDK capture",status);
+  p[CAPTURE].assign((const char *)bytes,count);
+#else
   reader_rs_envelope envelope={p[REVISION].c_str(),r.operation==READER_RC_DELETE?"delete":r.operation==READER_RC_RESTORE?"restore":"put",
    progress?"progress":"annotation",b.key.c_str(),progress?nullptr:p[ANNOTATION].c_str(),parents,observed.count,
    progress||r.operation==READER_RC_DELETE?nullptr:p[BODY].c_str(),p[PARSER].c_str()};
   encoded bytes;need(reader_rs_encode_v2(s.revisions,&envelope,&actual.value,actual.part,&bytes.data,&bytes.size,&error)==READER_RS_OK,"Capture has no lossless reading wire");
   p[CAPTURE].assign(bytes.data,bytes.size);
+#endif
  }
  p[FORMAT]=b.format;p[TITLE]=b.title;p[AUTHOR]=b.author;p[SORT]=b.sort;p[KIND]=std::to_string(kind);p[OPERATION]=std::to_string(r.operation);
  p[SDK_BOOK]=std::to_string(r.sdk_book);p[SOURCE_BYTES]=std::to_string(b.bytes);p[FAVORITE]=std::to_string(b.favorite);
@@ -233,9 +296,19 @@ void apply(store &s,const book &b,const winrecords_request &r,const fields &p,wi
  int kind=(int)number(p[KIND]),operation=(int)number(p[OPERATION]);record decoded;reader_rs_capture captured{};exr_anchor a{};exr_fixed_anchor f{};
  reader_rs_error error{};
  if(kind!=READER_RC_NOTE_TEXT) {
+#ifdef EXR_READER_WINDOWS_RAW3
+  if(p[PRIVATE_VERSION]=="2") {
+   auto status=reader_private_capture_decode(p[CAPTURE].data(),p[CAPTURE].size(),&decoded.value);
+   need(status==EXR_OK&&decoded.value.has_location&&decoded.value.anchor_version==number(p[WRITER_VERSION]),
+        "Retained native capture differs",status==EXR_OK?EXR_ARGUMENT:status);
+  } else {
+#endif
   need(reader_rs_decode(s.revisions,p[CAPTURE].data(),p[CAPTURE].size(),&decoded.value,&error)==READER_RS_OK&&
    std::string(decoded.value.book_key)==b.key&&std::string(decoded.value.entity_kind)==(kind==READER_RC_PROGRESS?"progress":"annotation")&&
    (kind==READER_RC_PROGRESS||p[ANNOTATION]==decoded.value.annotation_id),"Retained capture identity differs");
+#ifdef EXR_READER_WINDOWS_RAW3
+  }
+#endif
   from_record(decoded.value,captured,a,f);
  }
  uint64_t bytes=0;auto identity=reader_revision_book_identity(s.revisions,b.key.c_str(),&bytes,nullptr);
@@ -250,7 +323,12 @@ void apply(store &s,const book &b,const winrecords_request &r,const fields &p,wi
  reader_rc_context context={s.revisions,p[REVISION].c_str(),parents,observed.count,p[PARSER].c_str()};
  reader_rc_command command={(reader_rc_kind)kind,(reader_rc_operation)operation,b.key.c_str(),kind==READER_RC_PROGRESS?nullptr:p[ANNOTATION].c_str(),
   kind==READER_RC_NOTE_TEXT?nullptr:&captured,(size_t)decoded.value.part,kind==READER_RC_PROGRESS||operation==READER_RC_DELETE?nullptr:p[BODY].c_str()};
+#ifdef EXR_READER_WINDOWS_RAW3
+ reader_rc_result saved{};reader_rc_error problem{};
+ auto code=reader_rc_apply_raw_v3(&context,&command,(unsigned)number(p[WRITER_VERSION]),&saved,&problem);
+#else
  reader_rc_result saved{};reader_rc_error problem{};auto code=reader_rc_apply(&context,&command,&saved,&problem);
+#endif
  out.command_code=code;out.created=saved.created;out.committed=code==READER_RC_OK;
  copy(out.saved_revision,sizeof(out.saved_revision),p[REVISION]);copy(out.saved_annotation,sizeof(out.saved_annotation),p[ANNOTATION]);
  need(code==READER_RC_OK,code==READER_RC_UNSAFE||code==READER_RC_SOURCE?"History changed; original request retained for review":"Save is unconfirmed; original request retained",EXR_DATABASE);
