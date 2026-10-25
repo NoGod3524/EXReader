@@ -8,6 +8,7 @@ from inside the archive. Rejects missing, extra, cross-source, cross-attempt or
 tampered artifacts instead of summing what happens to be present.
 """
 import argparse
+import copy
 import hashlib
 import json
 import os
@@ -43,6 +44,60 @@ REQUIRED = {
 }
 PLATFORMS = {'Linux': 'linux', 'Windows': 'win32', 'macOS': 'darwin'}
 CONSUMERS = ('status-view-consumer', 'status-view-consumer.exe')
+WORKFLOW = '.github/workflows/reader-sync-status-view.yml'
+PRODUCERS = {'installed read-only status view (' + runner + ')'
+             for runner in ('ubuntu-22.04', 'windows-2022', 'macos-14')}
+
+
+def authenticate_producers(metadata, jobs, source, run, attempt):
+    if (str(metadata.get('id')), metadata.get('head_sha'), str(metadata.get('run_attempt')),
+        metadata.get('path', '').split('@')[0]) != (run, source, attempt, WORKFLOW):
+        raise ValueError('run source/attempt/workflow differs')
+    producers = [job for job in jobs if job.get('name') != 'strict same-run artifact aggregation']
+    if len(producers) != 3 or {job.get('name') for job in producers} != PRODUCERS:
+        raise ValueError('missing, duplicate or foreign producer')
+    if any((job.get('head_sha'), str(job.get('run_attempt')), job.get('status'), job.get('conclusion')) !=
+           (source, attempt, 'completed', 'success') for job in producers):
+        raise ValueError('producer not completed/success on this source and attempt')
+
+
+def payload_members(names):
+    if len(names) != len(set(names)):
+        raise ValueError('duplicate ZIP members')
+    reports = [name for name in names if name.endswith('/result.json')]
+    binaries = [name for name in names if name.rsplit('/', 1)[-1] in CONSUMERS]
+    if len(reports) != 1 or len(binaries) != 1:
+        raise ValueError('exactly one status report and one consumer binary are required')
+    return reports[0], binaries[0]
+
+
+def protocol_selftest():
+    metadata = dict(id=7, head_sha='source', run_attempt=1, path=WORKFLOW)
+    jobs = [dict(name=name, head_sha='source', run_attempt=1, status='completed', conclusion='success')
+            for name in sorted(PRODUCERS)]
+    authenticate_producers(metadata, jobs, 'source', '7', '1')
+    rejected = 0
+    for key, value in (('id', 8), ('head_sha', 'foreign'), ('run_attempt', 2), ('path', 'foreign.yml')):
+        bad = dict(metadata);bad[key] = value
+        try: authenticate_producers(bad, jobs, 'source', '7', '1')
+        except ValueError: rejected += 1
+        else: raise AssertionError('foreign ' + key + ' accepted')
+    bad_jobs = [jobs[:-1], jobs + [jobs[0]]]
+    for key, value in (('head_sha', 'foreign'), ('run_attempt', 2), ('status', 'in_progress'),
+                       ('conclusion', 'failure'), ('conclusion', 'skipped'), ('name', jobs[1]['name'])):
+        bad = copy.deepcopy(jobs);bad[0][key] = value;bad_jobs.append(bad)
+    for bad in bad_jobs:
+        try: authenticate_producers(metadata, bad, 'source', '7', '1')
+        except ValueError: rejected += 1
+        else: raise AssertionError('invalid producers accepted')
+    names = ['status-view-evidence/result.json', 'bin/status-view-consumer']
+    payload_members(names)
+    for bad in (names + [names[0]], names + ['other/result.json'],
+                names + ['other/status-view-consumer.exe'], names[:1], names[1:]):
+        try: payload_members(bad)
+        except ValueError: rejected += 1
+        else: raise AssertionError('ambiguous or missing payload accepted')
+    print(json.dumps(dict(protocol_negative_cases=rejected, accepted=True)))
 
 
 def gh(*arguments, capture=True):
@@ -63,8 +118,10 @@ def main():
     folder.mkdir(parents=True)
     listing = json.loads(gh('api', 'repos/%s/actions/runs/%s/artifacts?per_page=100'
                             % (options.repository, options.run_id)))
-    jobs = json.loads(gh('api', 'repos/%s/actions/runs/%s/jobs?per_page=100'
-                         % (options.repository, options.run_id)))['jobs']
+    metadata = json.loads(gh('api', 'repos/%s/actions/runs/%s' % (options.repository, options.run_id)))
+    jobs = json.loads(gh('api', 'repos/%s/actions/runs/%s/attempts/%s/jobs?per_page=100'
+                         % (options.repository, options.run_id, options.attempt)))['jobs']
+    authenticate_producers(metadata, jobs, options.source, options.run_id, options.attempt)
     expected = {value: 'reader-sync-status-view-%s-%s-%s' % (value, options.run_id, options.attempt)
                 for value in PLATFORMS}
     observed = {}
@@ -72,6 +129,8 @@ def main():
     for artifact in listing['artifacts']:
         for value, name in expected.items():
             if artifact['name'] == name:
+                if value in observed:
+                    raise ValueError('duplicate platform artifact ' + name)
                 observed[value] = artifact
     for value, name in expected.items():
         if value not in observed:
@@ -100,12 +159,9 @@ def main():
         report = None
         consumer = None
         with zipfile.ZipFile(archive) as bundle:
-            for entry in bundle.namelist():
-                if entry.endswith('/result.json'):
-                    report = json.loads(bundle.read(entry))
-                base = entry.rsplit('/', 1)[-1]
-                if base in CONSUMERS:
-                    consumer = hashlib.sha256(bundle.read(entry)).hexdigest()
+            report_name, consumer_name = payload_members(bundle.namelist())
+            report = json.loads(bundle.read(report_name))
+            consumer = hashlib.sha256(bundle.read(consumer_name)).hexdigest()
         if report is None:
             problems.append(name + ' has no report')
             continue
@@ -149,4 +205,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if sys.argv[1:] == ['--protocol-selftest']:
+        protocol_selftest()
+    else:
+        main()

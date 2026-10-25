@@ -1,235 +1,245 @@
 {
   "schema": "reader-sync-status-view-acceptance-v1",
-  "accepted": true,
-  "source_sha": "d427875579f714c0874c1b3cc5388b95a7f4e950",
-  "run_id": 40124617915,
-  "attempt": 1,
-  "branch": "codex/reader-sync-status-view",
-  "frozen_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "accepted": false,
+  "state": "root_review_strict_producer_and_zip_binding_pending_actions",
+  "branch": "codex/reader-sync-status-review",
+  "source_sha": null,
+  "run_id": null,
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "scope": "Installed read-only sync/status/pending view on Windows, Linux and macOS (native TLS session, 256 shards)",
-  "jobs": [
-    {
-      "job_id": 120963276896,
-      "report": {
-        "accepted": true,
-        "source_sha": "d427875579f714c0874c1b3cc5388b95a7f4e950",
-        "run_id": "40124617915",
-        "attempt": "1",
-        "platform": "linux",
-        "checks": [
-          "installed_c_and_cpp_consumers_bind_the_public_package",
-          "idle_session_only_capture_is_read_only_and_requests_nothing",
-          "empty_snapshot_paging_and_argument_paths",
-          "running_capture_reports_syncing_phase_before_any_step_completes",
-          "cancelled_snapshot_keeps_cursor_and_partial_history_resumable",
-          "one_completed_256_shard_sweep_is_not_a_complete_library",
-          "outbox_page_counts_distinct_records_and_pages_inside_the_snapshot",
-          "conflict_probe_is_opt_in_and_marks_only_listed_records",
-          "retried_records_and_fixed_reason_come_from_module_tokens",
-          "rows_expose_only_closed_tokens_and_ids",
-          "repeated_captures_leave_product_storage_byte_identical",
-          "row_limit_hard_bounds_and_default_are_enforced",
-          "revisions_owner_violation_fails_closed_without_a_snapshot",
-          "revisions_free_capture_is_safe_from_many_threads",
-          "bounded_page_records_are_published_and_acknowledged_by_the_real_session",
-          "pending_original_is_surfaced_and_never_acknowledged",
-          "metadata_wait_observations_mirror_the_session_counter",
-          "credential_failure_maps_to_one_fixed_safe_reason",
-          "unreachable_native_transport_is_reported_as_offline",
-          "closing_and_closed_phases_stay_observable",
-          "snapshot_outlives_session_and_revisions_and_releases_once",
-          "evidence_contains_no_credentials_server_body_or_origin_text"
-        ],
-        "count": 22,
-        "consumer_sha256": "6365e9a8c328864d5d56cc55a503b901107fd7a975a30431f76e57bd05e250d0",
-        "c_consumer_sha256": "c5674202d826f4e35e7da94d8528b7facc98b7abed94f61f42c7374fb6acafcc",
-        "sdk_changed": false,
-        "schema_changed": false,
-        "wire_changed": false,
-        "anchor_changed": false,
-        "host_ui_accepted": false,
-        "product_wiring_accepted": false,
-        "metadata_wait_positive_covered": false,
-        "fixture_endpoint": "IPv4 loopback with verified certificate IP SAN"
-      },
-      "artifact": {
-        "id": 12572950281,
-        "name": "reader-sync-status-view-Linux-40124617915-1",
-        "size_in_bytes": 2808934,
-        "digest": "sha256:ad0a69713f02f3e35dcc9e341a92619e2f6f97f7c03ceb8b6cc1915b20356338",
-        "expired": false,
-        "expires_at": "2027-01-22T19:17:29Z"
-      }
-    },
-    {
-      "job_id": 120963277062,
-      "report": {
-        "accepted": true,
-        "source_sha": "d427875579f714c0874c1b3cc5388b95a7f4e950",
-        "run_id": "40124617915",
-        "attempt": "1",
-        "platform": "win32",
-        "checks": [
-          "installed_c_and_cpp_consumers_bind_the_public_package",
-          "idle_session_only_capture_is_read_only_and_requests_nothing",
-          "empty_snapshot_paging_and_argument_paths",
-          "running_capture_reports_syncing_phase_before_any_step_completes",
-          "cancelled_snapshot_keeps_cursor_and_partial_history_resumable",
-          "one_completed_256_shard_sweep_is_not_a_complete_library",
-          "outbox_page_counts_distinct_records_and_pages_inside_the_snapshot",
-          "conflict_probe_is_opt_in_and_marks_only_listed_records",
-          "retried_records_and_fixed_reason_come_from_module_tokens",
-          "rows_expose_only_closed_tokens_and_ids",
-          "repeated_captures_leave_product_storage_byte_identical",
-          "row_limit_hard_bounds_and_default_are_enforced",
-          "revisions_owner_violation_fails_closed_without_a_snapshot",
-          "revisions_free_capture_is_safe_from_many_threads",
-          "bounded_page_records_are_published_and_acknowledged_by_the_real_session",
-          "pending_original_is_surfaced_and_never_acknowledged",
-          "metadata_wait_observations_mirror_the_session_counter",
-          "credential_failure_maps_to_one_fixed_safe_reason",
-          "unreachable_native_transport_is_reported_as_offline",
-          "closing_and_closed_phases_stay_observable",
-          "snapshot_outlives_session_and_revisions_and_releases_once",
-          "evidence_contains_no_credentials_server_body_or_origin_text"
-        ],
-        "count": 22,
-        "consumer_sha256": "2ef0e63cd5e53dc5bfca53994efd20237aa83bf9ee23e86817f063585e92493f",
-        "c_consumer_sha256": "6e6aa7133db1fc74db839f45b53efee259d6c09471d9d47dd4d49339e5e29121",
-        "sdk_changed": false,
-        "schema_changed": false,
-        "wire_changed": false,
-        "anchor_changed": false,
-        "host_ui_accepted": false,
-        "product_wiring_accepted": false,
-        "metadata_wait_positive_covered": false,
-        "fixture_endpoint": "IPv4 loopback with verified certificate IP SAN"
-      },
-      "artifact": {
-        "id": 12572069143,
-        "name": "reader-sync-status-view-Windows-40124617915-1",
-        "size_in_bytes": 2495443,
-        "digest": "sha256:61737f60a44ab0835d3f412c4f72aaaf663e7b1e92159484cf4e516d282ce788",
-        "expired": false,
-        "expires_at": "2027-01-22T19:17:29Z"
-      }
-    },
-    {
-      "job_id": 120963276635,
-      "report": {
-        "accepted": true,
-        "source_sha": "d427875579f714c0874c1b3cc5388b95a7f4e950",
-        "run_id": "40124617915",
-        "attempt": "1",
-        "platform": "darwin",
-        "checks": [
-          "installed_c_and_cpp_consumers_bind_the_public_package",
-          "idle_session_only_capture_is_read_only_and_requests_nothing",
-          "empty_snapshot_paging_and_argument_paths",
-          "running_capture_reports_syncing_phase_before_any_step_completes",
-          "cancelled_snapshot_keeps_cursor_and_partial_history_resumable",
-          "one_completed_256_shard_sweep_is_not_a_complete_library",
-          "outbox_page_counts_distinct_records_and_pages_inside_the_snapshot",
-          "conflict_probe_is_opt_in_and_marks_only_listed_records",
-          "retried_records_and_fixed_reason_come_from_module_tokens",
-          "rows_expose_only_closed_tokens_and_ids",
-          "repeated_captures_leave_product_storage_byte_identical",
-          "row_limit_hard_bounds_and_default_are_enforced",
-          "revisions_owner_violation_fails_closed_without_a_snapshot",
-          "revisions_free_capture_is_safe_from_many_threads",
-          "bounded_page_records_are_published_and_acknowledged_by_the_real_session",
-          "pending_original_is_surfaced_and_never_acknowledged",
-          "metadata_wait_observations_mirror_the_session_counter",
-          "credential_failure_maps_to_one_fixed_safe_reason",
-          "unreachable_native_transport_is_reported_as_offline",
-          "closing_and_closed_phases_stay_observable",
-          "snapshot_outlives_session_and_revisions_and_releases_once",
-          "evidence_contains_no_credentials_server_body_or_origin_text"
-        ],
-        "count": 22,
-        "consumer_sha256": "7527e1f9ec54fa8f19218af7e999f7c8c88d1a02b6c08fc6ea73904ca3f9e8be",
-        "c_consumer_sha256": "234eef0380df409b82b10e28831c98c0c8d203ac88de194db759e90525989a2e",
-        "sdk_changed": false,
-        "schema_changed": false,
-        "wire_changed": false,
-        "anchor_changed": false,
-        "host_ui_accepted": false,
-        "product_wiring_accepted": false,
-        "metadata_wait_positive_covered": false,
-        "fixture_endpoint": "IPv4 loopback with verified certificate IP SAN"
-      },
-      "artifact": {
-        "id": 12573315552,
-        "name": "reader-sync-status-view-macOS-40124617915-1",
-        "size_in_bytes": 2418831,
-        "digest": "sha256:6227060374f9534966ef41edaebf7dd8759a9324be1100760de30f4960d14757",
-        "expired": false,
-        "expires_at": "2027-01-22T19:17:29Z"
-      }
-    }
-  ],
-  "aggregate": {
-    "job_id": 120965848353,
-    "artifact": {
-      "id": 12573235566,
-      "name": "reader-sync-status-view-aggregate-40124617915-1",
-      "size_in_bytes": 7704671,
-      "digest": "sha256:8814d9b954ce18de6c26956a56d8edbb467b761b7fe25f7e8d136688b42d032d",
-      "expired": false,
-      "expires_at": "2027-01-22T19:17:29Z"
-    },
+  "complete_product": false,
+  "previous_authenticated_delivery": {
+    "schema": "reader-sync-status-view-acceptance-v1",
     "accepted": true,
-    "problems": [],
-    "verification": "aggregate.py downloaded each archive inside Actions, recomputed its SHA-256 against the API digest, re-read result.json and the installed consumer bytes from the archive, and required identical named check lists bound to this source, run and attempt"
-  },
-  "retained_failed_runs": [
-    {
-      "run_id": 40122530644,
-      "attempt": 1,
-      "source_sha": "f52900ad829f98fbb63ea3ae3a7b3585e5c74c49",
-      "result": "Linux and Windows failed while configuring sync: the revisions install prefix was only exported to later steps. Explicit -DCMAKE_PREFIX_PATH per configure; run cancelled after the fix."
+    "source_sha": "d427875579f714c0874c1b3cc5388b95a7f4e950",
+    "run_id": 40124617915,
+    "attempt": 1,
+    "branch": "codex/reader-sync-status-view",
+    "frozen_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+    "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+    "scope": "Installed read-only sync/status/pending view on Windows, Linux and macOS (native TLS session, 256 shards)",
+    "jobs": [
+      {
+        "job_id": 120963276896,
+        "report": {
+          "accepted": true,
+          "source_sha": "d427875579f714c0874c1b3cc5388b95a7f4e950",
+          "run_id": "40124617915",
+          "attempt": "1",
+          "platform": "linux",
+          "checks": [
+            "installed_c_and_cpp_consumers_bind_the_public_package",
+            "idle_session_only_capture_is_read_only_and_requests_nothing",
+            "empty_snapshot_paging_and_argument_paths",
+            "running_capture_reports_syncing_phase_before_any_step_completes",
+            "cancelled_snapshot_keeps_cursor_and_partial_history_resumable",
+            "one_completed_256_shard_sweep_is_not_a_complete_library",
+            "outbox_page_counts_distinct_records_and_pages_inside_the_snapshot",
+            "conflict_probe_is_opt_in_and_marks_only_listed_records",
+            "retried_records_and_fixed_reason_come_from_module_tokens",
+            "rows_expose_only_closed_tokens_and_ids",
+            "repeated_captures_leave_product_storage_byte_identical",
+            "row_limit_hard_bounds_and_default_are_enforced",
+            "revisions_owner_violation_fails_closed_without_a_snapshot",
+            "revisions_free_capture_is_safe_from_many_threads",
+            "bounded_page_records_are_published_and_acknowledged_by_the_real_session",
+            "pending_original_is_surfaced_and_never_acknowledged",
+            "metadata_wait_observations_mirror_the_session_counter",
+            "credential_failure_maps_to_one_fixed_safe_reason",
+            "unreachable_native_transport_is_reported_as_offline",
+            "closing_and_closed_phases_stay_observable",
+            "snapshot_outlives_session_and_revisions_and_releases_once",
+            "evidence_contains_no_credentials_server_body_or_origin_text"
+          ],
+          "count": 22,
+          "consumer_sha256": "6365e9a8c328864d5d56cc55a503b901107fd7a975a30431f76e57bd05e250d0",
+          "c_consumer_sha256": "c5674202d826f4e35e7da94d8528b7facc98b7abed94f61f42c7374fb6acafcc",
+          "sdk_changed": false,
+          "schema_changed": false,
+          "wire_changed": false,
+          "anchor_changed": false,
+          "host_ui_accepted": false,
+          "product_wiring_accepted": false,
+          "metadata_wait_positive_covered": false,
+          "fixture_endpoint": "IPv4 loopback with verified certificate IP SAN"
+        },
+        "artifact": {
+          "id": 12572950281,
+          "name": "reader-sync-status-view-Linux-40124617915-1",
+          "size_in_bytes": 2808934,
+          "digest": "sha256:ad0a69713f02f3e35dcc9e341a92619e2f6f97f7c03ceb8b6cc1915b20356338",
+          "expired": false,
+          "expires_at": "2027-01-22T19:17:29Z"
+        }
+      },
+      {
+        "job_id": 120963277062,
+        "report": {
+          "accepted": true,
+          "source_sha": "d427875579f714c0874c1b3cc5388b95a7f4e950",
+          "run_id": "40124617915",
+          "attempt": "1",
+          "platform": "win32",
+          "checks": [
+            "installed_c_and_cpp_consumers_bind_the_public_package",
+            "idle_session_only_capture_is_read_only_and_requests_nothing",
+            "empty_snapshot_paging_and_argument_paths",
+            "running_capture_reports_syncing_phase_before_any_step_completes",
+            "cancelled_snapshot_keeps_cursor_and_partial_history_resumable",
+            "one_completed_256_shard_sweep_is_not_a_complete_library",
+            "outbox_page_counts_distinct_records_and_pages_inside_the_snapshot",
+            "conflict_probe_is_opt_in_and_marks_only_listed_records",
+            "retried_records_and_fixed_reason_come_from_module_tokens",
+            "rows_expose_only_closed_tokens_and_ids",
+            "repeated_captures_leave_product_storage_byte_identical",
+            "row_limit_hard_bounds_and_default_are_enforced",
+            "revisions_owner_violation_fails_closed_without_a_snapshot",
+            "revisions_free_capture_is_safe_from_many_threads",
+            "bounded_page_records_are_published_and_acknowledged_by_the_real_session",
+            "pending_original_is_surfaced_and_never_acknowledged",
+            "metadata_wait_observations_mirror_the_session_counter",
+            "credential_failure_maps_to_one_fixed_safe_reason",
+            "unreachable_native_transport_is_reported_as_offline",
+            "closing_and_closed_phases_stay_observable",
+            "snapshot_outlives_session_and_revisions_and_releases_once",
+            "evidence_contains_no_credentials_server_body_or_origin_text"
+          ],
+          "count": 22,
+          "consumer_sha256": "2ef0e63cd5e53dc5bfca53994efd20237aa83bf9ee23e86817f063585e92493f",
+          "c_consumer_sha256": "6e6aa7133db1fc74db839f45b53efee259d6c09471d9d47dd4d49339e5e29121",
+          "sdk_changed": false,
+          "schema_changed": false,
+          "wire_changed": false,
+          "anchor_changed": false,
+          "host_ui_accepted": false,
+          "product_wiring_accepted": false,
+          "metadata_wait_positive_covered": false,
+          "fixture_endpoint": "IPv4 loopback with verified certificate IP SAN"
+        },
+        "artifact": {
+          "id": 12572069143,
+          "name": "reader-sync-status-view-Windows-40124617915-1",
+          "size_in_bytes": 2495443,
+          "digest": "sha256:61737f60a44ab0835d3f412c4f72aaaf663e7b1e92159484cf4e516d282ce788",
+          "expired": false,
+          "expires_at": "2027-01-22T19:17:29Z"
+        }
+      },
+      {
+        "job_id": 120963276635,
+        "report": {
+          "accepted": true,
+          "source_sha": "d427875579f714c0874c1b3cc5388b95a7f4e950",
+          "run_id": "40124617915",
+          "attempt": "1",
+          "platform": "darwin",
+          "checks": [
+            "installed_c_and_cpp_consumers_bind_the_public_package",
+            "idle_session_only_capture_is_read_only_and_requests_nothing",
+            "empty_snapshot_paging_and_argument_paths",
+            "running_capture_reports_syncing_phase_before_any_step_completes",
+            "cancelled_snapshot_keeps_cursor_and_partial_history_resumable",
+            "one_completed_256_shard_sweep_is_not_a_complete_library",
+            "outbox_page_counts_distinct_records_and_pages_inside_the_snapshot",
+            "conflict_probe_is_opt_in_and_marks_only_listed_records",
+            "retried_records_and_fixed_reason_come_from_module_tokens",
+            "rows_expose_only_closed_tokens_and_ids",
+            "repeated_captures_leave_product_storage_byte_identical",
+            "row_limit_hard_bounds_and_default_are_enforced",
+            "revisions_owner_violation_fails_closed_without_a_snapshot",
+            "revisions_free_capture_is_safe_from_many_threads",
+            "bounded_page_records_are_published_and_acknowledged_by_the_real_session",
+            "pending_original_is_surfaced_and_never_acknowledged",
+            "metadata_wait_observations_mirror_the_session_counter",
+            "credential_failure_maps_to_one_fixed_safe_reason",
+            "unreachable_native_transport_is_reported_as_offline",
+            "closing_and_closed_phases_stay_observable",
+            "snapshot_outlives_session_and_revisions_and_releases_once",
+            "evidence_contains_no_credentials_server_body_or_origin_text"
+          ],
+          "count": 22,
+          "consumer_sha256": "7527e1f9ec54fa8f19218af7e999f7c8c88d1a02b6c08fc6ea73904ca3f9e8be",
+          "c_consumer_sha256": "234eef0380df409b82b10e28831c98c0c8d203ac88de194db759e90525989a2e",
+          "sdk_changed": false,
+          "schema_changed": false,
+          "wire_changed": false,
+          "anchor_changed": false,
+          "host_ui_accepted": false,
+          "product_wiring_accepted": false,
+          "metadata_wait_positive_covered": false,
+          "fixture_endpoint": "IPv4 loopback with verified certificate IP SAN"
+        },
+        "artifact": {
+          "id": 12573315552,
+          "name": "reader-sync-status-view-macOS-40124617915-1",
+          "size_in_bytes": 2418831,
+          "digest": "sha256:6227060374f9534966ef41edaebf7dd8759a9324be1100760de30f4960d14757",
+          "expired": false,
+          "expires_at": "2027-01-22T19:17:29Z"
+        }
+      }
+    ],
+    "aggregate": {
+      "job_id": 120965848353,
+      "artifact": {
+        "id": 12573235566,
+        "name": "reader-sync-status-view-aggregate-40124617915-1",
+        "size_in_bytes": 7704671,
+        "digest": "sha256:8814d9b954ce18de6c26956a56d8edbb467b761b7fe25f7e8d136688b42d032d",
+        "expired": false,
+        "expires_at": "2027-01-22T19:17:29Z"
+      },
+      "accepted": true,
+      "problems": [],
+      "verification": "aggregate.py downloaded each archive inside Actions, recomputed its SHA-256 against the API digest, re-read result.json and the installed consumer bytes from the archive, and required identical named check lists bound to this source, run and attempt"
     },
-    {
-      "run_id": 40123173490,
-      "attempt": 1,
-      "source_sha": "5810243394ca3af40bd3a0b3b931962fd0b02060",
-      "result": "Linux failed on -Werror=misleading-indentation in the new component source; Windows passed four checks and then asserted a non-empty cursor that a completed shard never retains. Both retained."
+    "retained_failed_runs": [
+      {
+        "run_id": 40122530644,
+        "attempt": 1,
+        "source_sha": "f52900ad829f98fbb63ea3ae3a7b3585e5c74c49",
+        "result": "Linux and Windows failed while configuring sync: the revisions install prefix was only exported to later steps. Explicit -DCMAKE_PREFIX_PATH per configure; run cancelled after the fix."
+      },
+      {
+        "run_id": 40123173490,
+        "attempt": 1,
+        "source_sha": "5810243394ca3af40bd3a0b3b931962fd0b02060",
+        "result": "Linux failed on -Werror=misleading-indentation in the new component source; Windows passed four checks and then asserted a non-empty cursor that a completed shard never retains. Both retained."
+      },
+      {
+        "run_id": 40123647670,
+        "attempt": 1,
+        "source_sha": "4e0cb525282ac2d151a6d4add0b56ebc0aa080cb",
+        "result": "Source built on both hosts, then the acceptance script still carried the one-record-per-shard fixture and failed the empty-cursor assertion; macOS never started and the run was cancelled after the fixture rework."
+      },
+      {
+        "run_id": 40123947125,
+        "attempt": 1,
+        "source_sha": "a78b7286eb03f814b826924eac6a09d68c03aca7",
+        "result": "Linux and Windows reached the resumed sweep and failed with KeyError completed_sweeps: the test read a summary field name the consumer does not publish. Retained."
+      },
+      {
+        "run_id": 40124504199,
+        "attempt": 1,
+        "source_sha": "154b1d4038e535e36624e778b7c85242fa84011a",
+        "result": "Cancelled to re-arm the fixture release gate before the pause assertion; no acceptance claim."
+      }
+    ],
+    "claims": {
+      "module_implemented": true,
+      "installed_c_and_cpp_consumers": true,
+      "windows_linux_macos_cloud_acceptance": true,
+      "strict_same_run_artifact_aggregation": true,
+      "host_ui_accepted": false,
+      "product_wiring_accepted": false,
+      "mobile_accepted": false,
+      "metadata_wait_positive_covered": false,
+      "six_platform_accepted": false,
+      "complete_product": false
     },
-    {
-      "run_id": 40123647670,
-      "attempt": 1,
-      "source_sha": "4e0cb525282ac2d151a6d4add0b56ebc0aa080cb",
-      "result": "Source built on both hosts, then the acceptance script still carried the one-record-per-shard fixture and failed the empty-cursor assertion; macOS never started and the run was cancelled after the fixture rework."
-    },
-    {
-      "run_id": 40123947125,
-      "attempt": 1,
-      "source_sha": "a78b7286eb03f814b826924eac6a09d68c03aca7",
-      "result": "Linux and Windows reached the resumed sweep and failed with KeyError completed_sweeps: the test read a summary field name the consumer does not publish. Retained."
-    },
-    {
-      "run_id": 40124504199,
-      "attempt": 1,
-      "source_sha": "154b1d4038e535e36624e778b7c85242fa84011a",
-      "result": "Cancelled to re-arm the fixture release gate before the pause assertion; no acceptance claim."
-    }
-  ],
-  "claims": {
-    "module_implemented": true,
-    "installed_c_and_cpp_consumers": true,
-    "windows_linux_macos_cloud_acceptance": true,
-    "strict_same_run_artifact_aggregation": true,
-    "host_ui_accepted": false,
-    "product_wiring_accepted": false,
-    "mobile_accepted": false,
-    "metadata_wait_positive_covered": false,
-    "six_platform_accepted": false,
-    "complete_product": false
-  },
-  "uncovered": [
-    "host sync panel and product wiring remain root work",
-    "positive pending-metadata path has no independent fixture; only the per-field mirror against reader_session_snapshot is covered",
-    "Android and iOS native hosts, audio/TTS, performance and accessibility are separate packages"
-  ]
+    "uncovered": [
+      "host sync panel and product wiring remain root work",
+      "positive pending-metadata path has no independent fixture; only the per-field mirror against reader_session_snapshot is covered",
+      "Android and iOS native hosts, audio/TTS, performance and accessibility are separate packages"
+    ]
+  }
 }

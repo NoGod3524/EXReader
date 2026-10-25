@@ -121,3 +121,9 @@ run/attempt 内逐个下载三份归档，重算 SHA-256 与 API digest 比对�
 - 待 metadata 的**正向真实路径**没有独立夹具（需要既有 reading 事务面）；只验证
   `metadata_wait_observations` 与 `reader_session_snapshot` 逐字段相等。
 - 移动端（Android/iOS）真机与宿主音频/朗读、性能、无障碍范围分别登记，不由本包授予。
+# Root 严格汇总修复候选
+
+从原交回 HEAD `823bd01962432b70cd8f0728443fab95ca55404f` 独立建立 `codex/reader-sync-status-review`，模块实现不改。原汇总只列出jobs，未强制三个同源码同attempt的上游作业均completed/success；ZIP内多个结果或消费者会取最后一个匹配项。
+
+现认证真实运行/workflow与三个明确上游作业，拒绝重复工件及重复ZIP成员，并要求恰有一份报告、一份真实消费者二进制。增加17个运行/作业/ZIP成员负例在Actions执行；原三平台22项真实TLS、256分片、取消/重试/凭据、存储不变及秘密扫描全部保留。当前候选待新同源整轮，旧source `d427875579f714c0874c1b3cc5388b95a7f4e950` / run `40124617915` 仅归原交回。
+
