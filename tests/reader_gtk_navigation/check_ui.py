@@ -126,7 +126,9 @@ def main():
     def image(name):
         path=output/(name+'.png');command('import','-window',host.window,str(path));value=host.read();prefs=observed('preferences')
         width,height=int(prefs['bitmap_width']),int(prefs['bitmap_height']);x=value['page_x']+(value['page_width']-width)//2;y=value['page_y']+(value['page_height']-height)//2
-        return hashlib.sha256(Image.open(path).convert('RGB').crop((x,y,x+width,y+height)).tobytes()).hexdigest()
+        digest=hashlib.sha256(Image.open(path).convert('RGB').crop((x,y,x+width,y+height)).tobytes()).hexdigest()
+        report.setdefault('image_observations',[]).append(dict(name=name,host=value,preferences=prefs,crop=[x,y,width,height],sha256=digest))
+        return digest
     def cfi(name):
         click('Full EPUB CFI',{'text'});host.key('ctrl+a');host.paste((args.fixtures/name).read_text());return action('Return')
     def active_directory():
@@ -171,7 +173,9 @@ def main():
         record('external_link_stays_visible_and_does_not_open_or_change_reading',observed()['code']=='12' and frame()==prior and storage()==saved)
         action('alt+b');choose(8);record('unsafe_target_refuses_without_fallback',observed()['code']=='7' and frame()==prior and storage()==saved)
         choose(7);record('missing_target_refuses_without_fallback',observed()['code']=='9' and frame()==prior and storage()==saved)
-        close_directory();record('read_only_browsing_close_preserves_pixels_notes_progress_and_product',frame()==prior and storage()==saved and image('after-directory')==pixels)
+        close_directory();after_frame=frame();after_storage=storage();after_pixels=image('after-directory')
+        record('read_only_browsing_close_preserves_pixels_notes_progress_and_product',after_frame==prior and after_storage==saved and after_pixels==pixels,
+               dict(before_frame=prior,after_frame=after_frame,before_storage=saved,after_storage=after_storage,before_pixels=pixels,after_pixels=after_pixels))
         notes=storage(True);open_directory();select(0);action('alt+h');choose(1)
         record('actual_unicode_fragment_uses_independent_found_and_correct_spine',observed()['visible']=='0' and observed()['match']=='1' and host.read()['book']==book and host.read()['part']==1 and host.read()['position']==0 and host.read()['font']==28 and storage(True)==notes,frame())
         open_directory();choose(5);prior=frame();saved=storage()
