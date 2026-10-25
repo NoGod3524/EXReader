@@ -24,7 +24,7 @@ Actions原工件提供 `D01-clean.txt`、`D01-duplicate.txt`（相同字节）�
 |M-R08|GTK More>Collections…>Shelves；Android More>Organize；其他入口需补证；创建D01父架及子架，把测试书放入子架|父子关系重开保留，移动不会丢书；失败保留原结构不重写库|
 |M-R09|同组织入口切Tags/分类，创建D01-tag并赋给测试书|筛选命中且去除标签不删除书；需独立于子书架测试|
 |M-R10|同组织入口切Series，创建D01-series，两册设置顺序并重开|系列与顺序保持；不能以标签列表代替|
-|M-R11|打开正常多页EPUB/PDF/CBZ；Windows阅读>下一页、GTK Next F4、Apple下一页；Android使用实际阅读翻页控件并补入口|实际页内容变化、前后导航、固定/重排各记；Android字号入口只为阅读源线索，不授翻页通过|
+|M-R11|打开正常多页EPUB/PDF/CBZ；Windows阅读>下一页、GTK Next F4、Apple下一页；Android默认方向/点击模式下轻点阅读页右侧30%区域|实际页内容变化、前后导航、固定/重排各记；Android实际onTapZone→turnPage，字号变化不算翻页|
 |M-R12|测试文本含D01 unique phrase；按R12搜索入口输入该词、选结果，再取消新搜索|结果对应实际正文、无错书跳转；取消不冻结，重新搜索可用|
 |M-R13|有目录EPUB按R13目录入口，点第2章；PDF/CBZ按页入口独立记录|章节/页确实对应，缺失目录有明确状态；不能把页入口等同章节目录|
 |M-R14|读至非首页，正常返回书架并关闭，重开同书；再从远端发送不同进度|本地进度保留；远端不得强制跳当前阅读位置；失败保留原锚点和resolve结果|
@@ -42,3 +42,11 @@ Actions原工件提供 `D01-clean.txt`、`D01-duplicate.txt`（相同字节）�
 ## 范围结论
 
 一行运行通过只授予该source、程序、平台和案例。一次成功不填补其他平台；功能计数不换算“完整产品百分比”。首次使用、取消、重复/损坏、账号故障、离线、冲突、重开、定位与清理均须独立原始证据。真机、TalkBack/VoiceOver/NVDA实际朗读、USB、性能预算本包全部pending。
+
+## 精确平台/配置勘误（优先于上方概述）
+
+- Windows表中所有compact菜单路径：`apps/reader/windows-account`目标需 `EXR_READER_WINDOWS_COMPACT=ON`（默认OFF）；R12 SEARCH、R13 NAVIGATION、R15 RECORDS分别显式ON。账号来自该target编译定义。未开启时不是产品缺陷，也不能说入口已暴露。第三方Provider R02没有精确入口，不使用WebDAV云盘对话框代替。
+- Linux产品宿主需 `EXR_READER_BUILD_GTK=ON`（默认OFF）。Import file/folder下拉需GTK_BATCH_IMPORT=ON；拖放需GTK_DROP_IMPORT=ON；账号、搜索、目录、记录、设置分别需GTK_ACCOUNT/SEARCH/NAVIGATION/READING_RECORDS/PREFERENCES=ON。组织入口还需READER_METADATA_PREFIX，GTK Collections面板选Shelves/Tags/Series。完整构建由owner提供，测试者不猜默认可见性。
+- Android R11准确操作：打开多页测试书，默认 `turnDirection=1, turnInput=1`，取消选文后轻点阅读页右侧30%区域；`ReaderView`在ACTION_UP调用listener.onTapZone(1)，MainActivity调用turnPage(1)。字号键不是翻页证据。若改过输入/方向设置先恢复默认，或记录实际设置另测。R12/13/15/17的exrSearch/exrNavigation/exrReading/exrPreferences Gradle属性分别必须等于true；同步需exrSync=true。
+- macOS：`compactLibrary=false`，书架点“打开文件…”；iPhone/iPad常规竖屏同“打开文件…”；iPhone/iPad横屏compact或辅助字号模式点顶部“打开文件”图标。阅读记录在阅读页ellipsis菜单 > 阅读记录，非工具栏直接按钮。分别记录平台和布局，不用一台设备结果填另两平台。
+- Apple R17 A+只覆盖字号子项，不代表完整设置；各平台完整主题/取消语义必须另外找到精确入口才测。

@@ -1,7 +1,7 @@
 """D01 source tracing and remote metadata audit, not a product test."""
 import copy, hashlib, json, os, re, subprocess, sys
 from pathlib import Path
-from catalog import BASE, SDK, PLATFORMS, REQUIREMENTS, ENTRIES, EVIDENCE
+from catalog import BASE, SDK, PLATFORMS, REQUIREMENTS, ENTRIES, EVIDENCE, CONFIG_FILES, GUARDS, CONFIG_ANCHORS, DEFAULTS, HANDLER_LINKS
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'tools'))
 from check_parallel_integration import fetch, require
@@ -30,7 +30,9 @@ def validate(matrix):
     for r in matrix:
         require(r['target_sha']==BASE and re.fullmatch('[0-9a-f]{40}',r['target_sha']),'mutable source')
         require(r['evidence_refs']==[e['id'] for e in EVIDENCE if r['platform'] in e['platforms']],'dangling evidence')
-        require(r['manual_pending'] and not r['product_accepted'] and not r['evidenced'],'fabricated pass at unaudited runtime')
+        require(r['manual_pending'] and not r['product_accepted'] and not r['evidenced'] and not r['exposed'] and r['implemented'] is None,'fabricated pass at unaudited runtime')
+        require(r['status']=='manual_pending' and r['candidate_status_transferred'] is False,'cross-source status transfer')
+        require(r['source_declared']==bool(r['entry']),'wrong source tracing claim')
         require(r['status'] in ('exposed','missing','blocked','manual_pending','implemented','evidenced'),'unknown status')
         require(not (r['implemented'] or r['exposed'] or r['status'] in ('implemented','exposed','evidenced')) or bool(r['entry']),'implementation without entry')
         if r['entry']:
@@ -38,6 +40,11 @@ def validate(matrix):
             require(entry['anchor'] in source and entry['handler'] in source,'unresolved source symbol')
             require(entry['url'].startswith('https://github.com/NoGod3524/EXReader/blob/'+BASE+'/'),'mutable entry URL')
             require(all(entry[k] for k in ('ui_path','visible_label','data_owner','build_scope')),'incomplete entry')
+            config=r['configuration'];config_source=git('show',BASE+':'+config['file'])
+            require(all(anchor in config_source for anchor in config['anchors']),'unresolved configuration source')
+            require(config['candidate_visibility']=='not_inspected' and config['runtime_visibility']=='not_executed','invented visibility')
+            if r['platform']=='Windows':require(config['default_route_enabled'] is False,'default OFF compact exposed')
+            if r['requirement_id']=='R11' and r['platform']=='Android':require(entry['handler']=='turnPage(delta)' and 'onTapZone' in entry['anchor'],'font size is not page turn')
 
 def negative_controls(matrix):
     controls={}
@@ -49,7 +56,11 @@ def negative_controls(matrix):
       'implemented_without_entry':lambda x:x[0].update(entry=None,implemented=True),
       'dangling_evidence':lambda x:x[0].update(evidence_refs=['E-NONEXISTENT']),
       'mutable_commit':lambda x:x[0].update(target_sha='main'),
-      'missing_handler':lambda x:x[0]['entry'].update(handler='invented_handler_d01')}.items():
+      'missing_handler':lambda x:x[0]['entry'].update(handler='invented_handler_d01'),
+      'declaration_not_runtime_exposure':lambda x:x[0].update(exposed=True),
+      'candidate_failure_not_base_failure':lambda x:x[0].update(status='blocked',candidate_status_transferred=True),
+      'default_off_not_visible':lambda x:x[0]['configuration'].update(default_route_enabled=True),
+      'font_change_not_page_turn':lambda x:next(r for r in x if r['id']=='R11-Android')['entry'].update(handler='changeFont(1)')}.items():
         bad=copy.deepcopy(matrix);mutate(bad)
         try:validate(bad)
         except (ValueError,KeyError):controls[name]='rejected'
@@ -88,11 +99,17 @@ def main():
                     file,anchor,label,route,handler,owner=raw
                     source=git('show',BASE+':'+file);line=next(i+1 for i,s in enumerate(source.splitlines()) if anchor in s)
                     entry=dict(file=file,anchor=anchor,handler=handler,visible_label=label,ui_path=route,data_owner=owner,line=line,url=f'https://github.com/NoGod3524/EXReader/blob/{BASE}/{file}#L{line}',build_scope='source-declared conditional UI; feature flags/platform guards must be enabled; runtime reachability untested')
-                state='exposed' if entry else 'missing'
-                if platform in ('iPhone','iPad'):state='blocked'
-                row=dict(id=req+'-'+platform,requirement_id=req,title=title,platform=platform,target_sha=BASE,status=state,module=module,module_present=(ROOT/module).exists(),implemented=bool(entry),exposed=bool(entry),evidenced=False,manual_pending=True,product_accepted=False,entry=entry,evidence_refs=[e['id'] for e in EVIDENCE if platform in e['platforms']],manual_case='M-'+req,limitation='Source-level entry only; no runtime grant' if entry else 'No exact entry traced in this audit; missing TRACE, not proof feature absent')
+                state='manual_pending'
+                family=platform if platform in ('Windows','Linux','Android') else 'Apple'
+                guards=GUARDS[family]['all']+GUARDS[family].get(req,[])
+                configuration=dict(file=CONFIG_FILES[family],anchors=CONFIG_ANCHORS[family],guards=guards,defaults=DEFAULTS[family],default_route_enabled=False if family in ('Windows','Linux') or guards else None,candidate_visibility='not_inspected',runtime_visibility='not_executed')
+                if entry and (family,req) in HANDLER_LINKS:
+                    file,anchor=HANDLER_LINKS[(family,req)];source=git('show',BASE+':'+file)
+                    require(anchor in source,'missing actual handler linkage')
+                    entry['handler_link']=dict(file=file,anchor=anchor,url=f'https://github.com/NoGod3524/EXReader/blob/{BASE}/{file}')
+                row=dict(id=req+'-'+platform,requirement_id=req,title=title,platform=platform,target_sha=BASE,status=state,trace_status='source_declared' if entry else 'untraced',source_declared=bool(entry),candidate_status_transferred=False,configuration=configuration,module=module,module_present=(ROOT/module).exists(),implemented=None,exposed=False,evidenced=False,manual_pending=True,product_accepted=False,entry=entry,evidence_refs=[e['id'] for e in EVIDENCE if platform in e['platforms']],manual_case='M-'+req,limitation='Source-level entry only; runtime implementation and visibility unverified' if entry else 'No exact entry traced in this audit; missing TRACE, not proof feature absent')
                 matrix.append(row)
-                if not entry or state=='blocked':
+                if not entry:
                     findings.append(dict(finding_id='F-'+row['id'],requirement_id=req,platform=platform,target_sha=BASE,entry=entry,expected='exact reachable host entry plus same-source runtime evidence',actual=row['limitation'] if not entry else 'Apple mobile candidate whole run failed',reproduction='Use manual case '+row['manual_case']+'; inspect fixed entry/source and candidate run',raw_evidence=row['evidence_refs'],root_cause_or_hypothesis='untraced host wiring / unexecuted integration; not a confirmed absent implementation',owner='root/platform host owner'))
         validate(matrix);report['negative_controls']=negative_controls(matrix)
         report['historical_evidence']=metadata()
@@ -108,7 +125,7 @@ def main():
         rows=['# D01 generated requirement matrix','Source-level tracing only; all manual and product acceptance pending.','|ID|Requirement|Platform|Status|Entry|','|---|---|---|---|---|']
         rows += [f"|{r['id']}|{r['title']}|{r['platform']}|{r['status']}|"+(f"[{r['entry']['visible_label']}]({r['entry']['url']})" if r['entry'] else '未追踪入口')+'|' for r in matrix]
         (OUT/'matrix.md').write_text('\n'.join(rows)+'\n')
-        report.update(accepted=True,audit_completed=True,requirements_total=len(REQUIREMENTS),platform_rows=len(matrix),traced=len(matrix),implemented_exposed=sum(r['exposed'] for r in matrix),evidenced=0,manual_pending=len(matrix),missing=sum(r['status']=='missing' for r in matrix),blocked=sum(r['status']=='blocked' for r in matrix),findings=len(findings))
+        report.update(accepted=True,audit_completed=True,trace_complete=all(r['source_declared'] for r in matrix),audit_scope='matrix structure, source declarations and provenance review only; incomplete entry tracing explicitly retained',requirements_total=len(REQUIREMENTS),platform_rows=len(matrix),traced=sum(r['source_declared'] for r in matrix),untraced=sum(not r['source_declared'] for r in matrix),implemented_exposed=0,evidenced=0,manual_pending=len(matrix),missing=0,blocked=0,findings=len(findings))
         report['files']={p.name:dict(bytes=p.stat().st_size,sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in OUT.iterdir() if p.name!='report.json'}
         report['program']=dict(kind='Python audit tool; no host program executed',python=sys.version,sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),catalog_sha256=hashlib.sha256((Path(__file__).parent/'catalog.py').read_bytes()).hexdigest())
         for p in OUT.iterdir():

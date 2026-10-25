@@ -7,8 +7,8 @@
 - 入口源码固定 `0889f7d1e9a537c6c1b05456547e016b26e1cd85`，不是文档 HEAD。
 - 指定 SDK `edddc463c06ed5731195cdb8f06b2df6dff7699e`（3.41.0 / ABI1 / core3.40.0）；本包不安装 SDK，因此该身份是目标约束，不是实际构建结论。
 - [可审阅注册表](../../tests/reader_final_d01/catalog.py) 定义24条稳定需求及六平台入口。Actions 生成144行 `matrix.json`、可读 `matrix.md`、`findings.json` 和具名负例。不是空模板。
-- `implemented` 仅指已追踪源内处理入口，`exposed` 仅指条件编译 UI 声明；**不证明可执行程序、构建开关或UI实际可达**。模块存在独立列 `module_present`。`evidenced` 表示当前固定目标的运行证据，本包全部 false。
-- `missing` 是审查尚未追踪到精确入口，不是证明功能不存在。Apple 移动整轮历史失败标为 `blocked`。所有行 `manual_pending=true`。
+- `source_declared` 仅指已追踪源内处理入口；`implemented=null`、`exposed=false`，因为没有运行宿主。模块存在独立列 `module_present`。`evidenced` 表示当前固定目标的运行证据，本包全部 false。
+- `trace_status=untraced` 是审查尚未追踪到精确入口，不是功能missing。Apple移动旧候选整轮失败仅留在其自身历史证据，不授予BASE blocked。所有行 `status=manual_pending`。
 - 窗口/GTK/Android部分按钮本来为英文，注册表按真实标签记录，不伪造中文。一个组织面板内子书架/标签/系列分三条，入口共享不代表三条都通过。
 - 原件落点由SDK owner管理；产品 `reader-catalog.db` 是独立目录/修订库。凭据属于平台安全存储或仅本次会话，不能写入产品同步载荷。记录中的数据 owner 为源码/文档归属，不是本包数据库检查结论。
 
@@ -37,3 +37,9 @@
 ## 再运行
 
 在授权分支修改本包注册表/审查器并push；工作流只监听自身分支/路径。全部语法/测试/夹具生成仅在Actions。更新来源时必须同时更新目标约束/入口和原run身份，禁止只换成移动HEAD。最终文档封存使用 `[skip ci]`。
+
+## 首轮结构绿灯后的语义纠正
+
+首轮 `ee167af40c5bc43309e3bf6410b101e312ff2d38` / run `40215207810` 两job成功只证明当时的检查器接受数据。人工源码复查指出：Android翻页误连字号；Apple移动旧候选失败错误传播到BASE；条件源码声明误计实际exposed；144行矩阵误计144条入口已追踪。这些缺陷保留为首轮审查失败，不以CI绿灯覆盖。
+
+修订：Android改为 `ReaderView.onTouchEvent → onTapZone → turnPage`，默认轻点右侧30%触区；Windows云盘导入不是第三方Provider，R02改为未追踪。每行独立 `source_declared`、`trace_status`、配置文件/原锚点/guards/defaults、`default_route_enabled`、`candidate_visibility`、`runtime_visibility`。未执行宿主，故 `implemented=null`、`exposed=false`、`evidenced=false`；全部状态manual_pending。旧Apple失败只保留在自身E-APPLE-FAILED历史记录，不传播到BASE。`traced`只计有精确入口者，`untraced`单列，`trace_complete=false`；`audit_completed`仅指结构与来源审查完成，不表示入口追踪完整或产品完成。

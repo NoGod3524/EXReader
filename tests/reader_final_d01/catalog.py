@@ -82,3 +82,30 @@ EVIDENCE=[
 # Source-traced record entry is distinct from exercising FOUND navigation.
 ENTRIES['Apple']['R15']=(S,'model.prepareReadingRecords()','阅读记录','阅读 > 阅读记录','model.prepareReadingRecords','HostReadingRecords owner / 产品修订 + SDK resolve')
 ENTRIES['Linux']['R15']=(L,'G_CALLBACK(reading_records_open)','Reading records…','Reading records… / Ctrl+Shift+R','reading_records_open','records worker / 产品记录')
+# Corrected after source review of first green structural audit. Never transfer
+# candidate failure/success to BASE, and never equate a declaration with exposure.
+ENTRIES['Android']['R11']=(A,'@Override public void onTapZone(int delta)','无文字标签：阅读页右侧点击区','默认从左向右/点击模式：打开书，轻点阅读页右侧30%区域（非长按/选文）','turnPage(delta)','ReaderView.onTouchEvent → onTapZone → SDK host worker')
+CONFIG_FILES={'Windows':'apps/reader/windows-account/CMakeLists.txt','Linux':'apps/reader/desktop/CMakeLists.txt','Android':'examples/android/app/build.gradle','Apple':S}
+# Source/config declarations, not runtime evidence. Unknown deployment remains unknown.
+GUARDS={
+ 'Windows':{'all':['EXR_READER_WINDOWS_COMPACT'], 'R02':['EXR_READER_WINDOWS_IMPORT_ORGANIZE'],'R03':['EXR_READER_WINDOWS_ACCOUNT'],'R12':['EXR_READER_WINDOWS_SEARCH'],'R13':['EXR_READER_WINDOWS_NAVIGATION'],'R15':['EXR_READER_WINDOWS_RECORDS']},
+ 'Linux':{'all':['EXR_READER_BUILD_GTK'],'R01':['EXR_READER_BATCH_IMPORT_UI'],'R03':['EXR_READER_ACCOUNT'],'R05':['EXR_READER_BATCH_IMPORT_UI'],'R06':['EXR_READER_DROP_IMPORT_UI'],'R07':['EXR_READER_PRODUCT_CATALOG'],'R08':['EXR_READER_DESKTOP_METADATA'],'R09':['EXR_READER_DESKTOP_METADATA'],'R10':['EXR_READER_DESKTOP_METADATA'],'R12':['EXR_READER_SEARCH_UI'],'R13':['EXR_READER_NAVIGATION_UI'],'R15':['EXR_READER_READING_RECORDS_UI'],'R17':['EXR_READER_PREFERENCES_UI']},
+ 'Android':{'all':[],'R03':['READER_SYNC'],'R12':['READER_SEARCH'],'R13':['READER_NAVIGATION'],'R15':['READER_READING'],'R17':['READER_PREFERENCES']},
+ 'Apple':{'all':[]}}
+CONFIG_ANCHORS={
+ 'Windows':['option(EXR_READER_WINDOWS_COMPACT','EXR_READER_WINDOWS_ACCOUNT=1'],
+ 'Linux':['option(EXR_READER_BUILD_GTK','option(EXR_READER_GTK_ACCOUNT','option(EXR_READER_GTK_BATCH_IMPORT','option(EXR_READER_GTK_DROP_IMPORT','READER_METADATA_PREFIX'],
+ 'Android':["project.findProperty('exrSync') == 'true'","project.findProperty('exrSearch') == 'true'","project.findProperty('exrNavigation') == 'true'","project.findProperty('exrReading') == 'true'","project.findProperty('exrPreferences') == 'true'"],
+ 'Apple':['private var compactLibrary: Bool','return verticalSizeClass == .compact || dynamicTypeSize.isAccessibilitySize']}
+DEFAULTS={'Windows':'compact route disabled: EXR_READER_WINDOWS_COMPACT defaults OFF; optional search/navigation/records/import-organize also OFF; account macro supplied by windows-account target',
+ 'Linux':'product GTK host build OFF; all EXR_READER_GTK_* optional features OFF; metadata requires nonempty READER_METADATA_PREFIX',
+ 'Android':'READER_SYNC/SEARCH/NAVIGATION/READING/PREFERENCES false unless corresponding exr* Gradle property equals true; ungated controls remain source-declared, not runtime-verified',
+ 'Apple':'host source contains these routes; actual built target not tested. macOS compactLibrary=false; iOS compact at verticalSizeClass.compact or accessibility Dynamic Type; runtime layout and busy-state affect visibility'}
+HANDLER_LINKS={
+ ('Windows','R02'):('examples/reader.c','winio_show(id==IDC_CLOUD_IMPORT ? WINIO_CLOUD:WINIO_BULK)'),
+ ('Windows','R12'):('examples/reader.c','winsearch_show();return;'),
+ ('Windows','R13'):('examples/reader.c','winnav_show();return;'),
+ ('Windows','R15'):('examples/reader.c','winrecords_show();return;'),
+ ('Android','R11'):('examples/android/app/src/main/java/org/exreader/host/ReaderView.java','if(zone!=0&&listener!=null)listener.onTapZone(zone);')}
+# WebDAV cloud-import dialog is not a third-party system DocumentsProvider.
+ENTRIES['Windows'].pop('R02')
