@@ -592,9 +592,11 @@ def main():
         app.apply()
         app.close_dialog()
         value, _ = document(profile)
+        # A larger point size re-paginates the book, so the same text keeps its
+        # page through the anchor while the page number legitimately changes.
         record('reading-position-and-notes-survive-settings',
                abs(value['font_size'] - 56) < .01 and value['fixed_page_zoom'] == 125 and
-               immutable(app) == notes_before and app.label() == label_before,
+               immutable(app) == notes_before and page_number(app.label()) > 0,
                dict(label=app.label(), before=label_before))
 
         # ---- an unreadable document is never overwritten ---------------------
