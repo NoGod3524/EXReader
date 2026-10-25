@@ -15,7 +15,7 @@ MODULES = ('revisions','reading-state','reading-commands','annotation-view','com
 
 
 def git(*args):
-    return subprocess.check_output(['git', *args], cwd=ROOT, text=True).strip()
+    return subprocess.check_output(['git', *args], cwd=ROOT, text=True, encoding='utf-8').strip()
 
 
 def legacy_cpp(text):
@@ -88,11 +88,11 @@ def main():
         if git('rev-parse','HEAD:'+path)!=git('rev-parse',CODEC+':'+path):
             raise RuntimeError('Tested private codec changed: '+path)
     for path in ('examples/reader.c','apps/reader/desktop/windows_records.inc','apps/reader/desktop/windows_records_owner.cpp'):
-        original=subprocess.check_output(['git','show',WINDOWS+':'+path],cwd=ROOT,text=True)
-        if legacy_cpp((ROOT/path).read_text())!=original:
+        original=subprocess.check_output(['git','show',WINDOWS+':'+path],cwd=ROOT,text=True,encoding='utf-8')
+        if legacy_cpp((ROOT/path).read_text(encoding='utf-8'))!=original:
             raise RuntimeError('Default-OFF source changed: '+path)
     path='apps/reader/windows-account/CMakeLists.txt'
-    if legacy_cmake((ROOT/path).read_text())!=subprocess.check_output(['git','show',WINDOWS+':'+path],cwd=ROOT,text=True):
+    if legacy_cmake((ROOT/path).read_text(encoding='utf-8'))!=subprocess.check_output(['git','show',WINDOWS+':'+path],cwd=ROOT,text=True,encoding='utf-8'):
         raise RuntimeError('Default-OFF CMake profile changed')
     subprocess.run(['git','diff','--exit-code',WINDOWS,'HEAD','--','tests/reader_windows_compact',
                     'apps/reader/desktop/windows_compact_ui.inc','tests/reader_windows_records'],cwd=ROOT,check=True)
@@ -105,7 +105,7 @@ def main():
                   windows_baseline=WINDOWS,raw_modules=git('rev-parse',RAW),sdk_source=SDK,
                   source_preflight_passed=True,legacy_source_projection_exact=True,host_raw3_accepted=False,accepted=False,
                   scope='source composition only; no Windows compilation, runtime or interchange grant')
-    (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+    (out/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(report),flush=True)
 
 
