@@ -117,6 +117,12 @@ static void compat_adopt(linux_reader *reader,const char *annotation,const char 
   compat_check(reader_rs_decode(owner->revisions,wire,bytes,&decoded,NULL)==READER_RS_OK,"selected original record decodes without tag rewrite");
   reader_command command=compat_command(READER_RECORDS_JUMP);command.records_id=annotation;command.records_head=revision;command.records_sha=sha;command.records_progress=progress;
   reader_result result={0};linux_reader_execute(reader,&command,&result);
+  if(result.status!=EXR_OK || !result.has_frame || result.records_match!=EXR_ANCHOR_FOUND)
+    fprintf(stderr,"adopt progress=%d annotation=%s revision=%s mode=%d anchor_version=%llu parser=%s part=%llu route=%s page=%llu range=%llu..%llu current_part=%zu current_page=%zu status=%d frame=%d match=%d message=%s\n",
+      progress,annotation ? annotation:"",revision,(int)decoded.mode,(unsigned long long)decoded.anchor_version,decoded.parser_version,
+      (unsigned long long)decoded.part,decoded.part_path ? decoded.part_path:"",(unsigned long long)decoded.page,
+      (unsigned long long)decoded.start,(unsigned long long)decoded.end,reader->current.part,reader->current.page,
+      result.status,result.has_frame,result.records_match,result.message);
   compat_check(result.status==EXR_OK && result.has_frame && result.records_match==EXR_ANCHOR_FOUND,"actual GTK jump independently proves FOUND and emits accepted frame");
   compat_check(result.note_count==0,"product record adoption never invents an SDK note");
   compat_check(result.selected_start==decoded.start && result.selected_end==decoded.end,"actual GTK landing exactly matches retained selector range");
