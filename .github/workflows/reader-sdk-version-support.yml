@@ -1,0 +1,41 @@
+name: Explicit SDK version support in installed reader modules
+on:
+  push:
+    branches: [codex/reader-sdk-version-support]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consumers:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Keep both SDK sources and common production unchanged
+        run: |
+          python3 tests/reader_sdk_version/guard.py
+          python3 -m py_compile tests/reader_sdk_version/run.py tools/build_linux_host.py
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Install each actual SDK and run the unchanged module consumers
+        run: python3 tests/reader_sdk_version/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-sdk-version-support-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/sdk-version/result.json
+            build/sdk-version/results-*/reading/summary.json
+            build/sdk-version/results-*/search/result.json
+            build/sdk-version/results-*/navigation/result.json
+            build/sdk-version/results-*/batch/report.json
+            build/sdk-version/results-*/batch-review/review.json
+            build/sdk-version/modules-*/lib/cmake/
+            build/sdk-version/consumer-*/
+            build/sdk-version/*version.log
+          if-no-files-found: error
