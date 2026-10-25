@@ -1,0 +1,63 @@
+name: Windows raw3 composition source preflight only
+on:
+  push:
+    branches: [codex/reader-windows-raw3-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate accepted Windows source and exact seven raw families
+        run: |
+          python3 -m compileall -q tests/reader_windows_raw3
+          python3 tests/reader_windows_raw3/guard.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-raw3-source-only-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-raw3-preflight/
+          if-no-files-found: error
+  installed-metadata:
+    needs: source-preflight
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Build installed legacy and raw metadata and run original complete29 checks each
+        run: python tests/reader_windows_raw3/metadata.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-raw3-metadata-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-raw3-metadata/
+          if-no-files-found: error
+  metadata-summary:
+    if: always()
+    needs: [source-preflight, installed-metadata]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate complete same-source jobs original ZIPs and actual installed consumers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_windows_raw3/metadata_strict.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-raw3-metadata-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-raw3-metadata-summary/
+          if-no-files-found: error

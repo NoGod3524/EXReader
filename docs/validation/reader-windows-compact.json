@@ -1,0 +1,27 @@
+{
+  "accepted": true,
+  "source": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+  "run": 40201283788,
+  "attempt": 1,
+  "compact_checks": 22,
+  "compact_program_sha256": "37caa77499e94ed060a2fc71f503fbf22be8abf2f3bb943af59890d785dcc7ff",
+  "jobs": {"preflight":121192805744,"native":121192850915,"strict":121197293392},
+  "artifacts": [
+    {"id":12601764928,"name":"reader-windows-search-initial-40201283788-1","bytes":169964880,"digest":"sha256:4e158bdda8c18561b972b85d22ea8e71c6c6dcdc997b3f23a55747fc195954d3","expires_at":"2027-01-23T14:14:14Z"},
+    {"id":12602637196,"name":"reader-windows-search-summary-40201283788-1","bytes":9142,"digest":"sha256:66cae39b5cc7aebbf08119245679ab74251705253eaa4878517685c09ca3927e","expires_at":"2027-01-23T14:14:14Z"}
+  ],
+  "original_OFF_full_F3_and_atomic13_accepted": true,
+  "branch": "codex/reader-windows-compact",
+  "base": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
+  "runs": [
+    {"source":"7400fa4e91bf0cfe45946c55333103618da7c0af","run":40198400279,"attempt":1,"conclusion":"failure","reason":"compact ON compiled; early UI stage missing its reused uiautomation dependency; strict refused"},
+    {"source":"69b604f83c3e823a923d41aafdd0c931923ce04e","run":40199103895,"attempt":1,"conclusion":"failure","reason":"initial compact library visibility assertion failed; no UI checks granted; add actual window readiness and explicit state/screenshot evidence"},
+    {"source":"740d47b1c4885eddbe61ec16e77a8d697c9b189c","run":40199849523,"attempt":1,"conclusion":"failure","reason":"8 UI checks passed; test reused reflow-only page label parser for PDF; preserve fixed page label and validate its actual page/total syntax"},
+    {"source":"6c4fad985bf46603f0afc5baaa4e2b2b9e82c870","run":40200467006,"attempt":1,"conclusion":"failure","reason":"12 UI checks passed; Ctrl+L conflicts with existing reading-records shortcut; use Alt+Left for library and test original Ctrl+L"}
+  ],
+  "earlier_cancelled_run": {"run":40197968923,"source":"1fd2a40c4535269ab6063448cc398585ad760963","reason":"small-window note editor geometry fix before native UI tests"},
+  "scope": "independent Windows compact native UI plus complete original default-OFF regression",
+  "default_enabled": false,
+  "performance_accepted": false,
+  "complete_product": false
+}

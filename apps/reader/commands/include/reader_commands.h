@@ -2,7 +2,11 @@
 #ifndef READER_COMMANDS_H
 #define READER_COMMANDS_H
 #include <reader_projection.h>
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_COMMANDS_VERSION "0.2.0"
+#else
 #define READER_COMMANDS_VERSION "0.1.0"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -80,6 +84,15 @@ reader_command_status reader_command_apply_group(const reader_command_context *,
    returns NEEDS_BOOK_BOOTSTRAP otherwise, including existing catalog-only books. */
 reader_command_status reader_command_apply_membership(const reader_command_context *,const reader_membership_command *,
   reader_command_result *,reader_command_error *);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Explicit raw-store metadata commands; unchanged wire/schema and one transaction. */
+reader_command_status reader_command_apply_book_raw_v3(const reader_command_context *context,const reader_book_command *input,
+    reader_command_result *result,reader_command_error *error);
+reader_command_status reader_command_apply_group_raw_v3(const reader_command_context *context,const reader_group_command *input,
+    reader_command_result *result,reader_command_error *error);
+reader_command_status reader_command_apply_membership_raw_v3(const reader_command_context *context,const reader_membership_command *input,
+    reader_command_result *result,reader_command_error *error);
+#endif
 #ifdef __cplusplus
 }
 #endif

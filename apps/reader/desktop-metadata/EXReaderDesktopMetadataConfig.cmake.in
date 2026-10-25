@@ -1,4 +1,18 @@
 @PACKAGE_INIT@
 include(CMakeFindDependencyMacro)
-find_dependency(EXReaderCommands 0.1.0 EXACT CONFIG)
+find_dependency(EXReaderCommands @EXR_COMMANDS_VERSION@ EXACT CONFIG)
 include("${CMAKE_CURRENT_LIST_DIR}/EXReaderDesktopMetadataTargets.cmake")
+get_target_property(_metadata_command_defs EXReaderCommands::reader_commands INTERFACE_COMPILE_DEFINITIONS)
+if(@EXR_READER_SELECTOR_BYTES_CANDIDATE@)
+  if(NOT "EXR_READER_SELECTOR_BYTES_CANDIDATE=1" IN_LIST _metadata_command_defs)
+    message(FATAL_ERROR "Raw metadata cannot consume legacy commands")
+  endif()
+  _exr_raw_guard_target(EXReaderCommands::reader_commands "${EXReaderCommands_DIR}"
+    reader_commands.h READER_COMMANDS_VERSION 0.2.0 TRUE)
+  _exr_raw_guard_target(EXReaderDesktopMetadata::reader_desktop_metadata "${CMAKE_CURRENT_LIST_DIR}"
+    reader_metadata.h READER_METADATA_VERSION 0.2.0 TRUE)
+else()
+  if("EXR_READER_SELECTOR_BYTES_CANDIDATE=1" IN_LIST _metadata_command_defs)
+    message(FATAL_ERROR "Legacy metadata cannot consume raw commands")
+  endif()
+endif()
