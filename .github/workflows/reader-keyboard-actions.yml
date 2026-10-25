@@ -1,0 +1,144 @@
+name: Reader keyboard actions
+on:
+  push:
+    branches: [codex/reader-keyboard-actions]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+jobs:
+  consumers:
+    name: keyboard actions (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: Linux
+          - os: windows-2022
+            platform: Windows
+          - os: macos-14
+            platform: macOS
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, fixed start, protected SDK, product SQL and the ownership list
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START_SHA" HEAD
+          git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START_SHA" HEAD -- apps/reader/store examples apps/reader/commands apps/reader/desktop apps/reader/desktop-metadata apps/reader/reading-state apps/reader/preferences apps/reader/revisions apps/reader/search apps/reader/session apps/reader/sync apps/reader/batch-import
+          if git diff --name-only "$START_SHA" HEAD | grep -v -E '^(apps/reader/keyboard-actions/|tests/reader_keyboard_actions/|\.github/workflows/reader-keyboard-actions\.yml$|docs/READER-KEYBOARD-ACTIONS\.md$|docs/validation/reader-keyboard-actions\.json$)'; then
+            echo "files outside the J08 ownership list changed"; exit 1
+          fi
+          for path in apps/reader/keyboard-actions/CMakeLists.txt apps/reader/keyboard-actions/include/reader_keyboard_actions.h apps/reader/keyboard-actions/include/reader_keyboard_actions.hpp apps/reader/keyboard-actions/src/keyboard_actions.c apps/reader/keyboard-actions/src/native.c tests/reader_keyboard_actions/check_keyboard.py tests/reader_keyboard_actions/check_artifacts.py; do
+            test -f "$path"
+          done
+      - name: Install the Linux GTK3 XTest and Xvfb dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev libxtst-dev xvfb openbox
+          Xvfb :99 -screen 0 1280x1024x24 &
+          sleep 2
+          DISPLAY=:99 openbox --sm-disable &
+          sleep 2
+          pgrep -a Xvfb
+          pgrep -a openbox || true
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
+          echo "GDK_BACKEND=x11" >> "$GITHUB_ENV"
+          echo "GTK_A11Y=none" >> "$GITHUB_ENV"
+          echo "NO_AT_BRIDGE=1" >> "$GITHUB_ENV"
+      - name: Use the Apple system SDK and ninja
+        if: runner.os == 'macOS'
+        run: |
+          command -v ninja >/dev/null 2>&1 || brew install ninja
+          xcodebuild -version
+          sw_vers
+      - name: Enter the Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install preferences and the keyboard-actions package
+        run: |
+          mkdir -p build/kbd-logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); exe=.exe; else ws="$PWD"; exe=; fi
+          echo "K_WS=$ws" >> "$GITHUB_ENV"
+          echo "K_EXE=$exe" >> "$GITHUB_ENV"
+          cmake -S apps/reader/preferences -B build/kbd-pref -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/kbd-pref-stage" 2>&1 | tee build/kbd-logs/preferences-configure.log
+          cmake --build build/kbd-pref --parallel 4 --verbose 2>&1 | tee build/kbd-logs/preferences-build.log
+          cmake --install build/kbd-pref 2>&1 | tee build/kbd-logs/preferences-install.log
+          cmake -S apps/reader/keyboard-actions -B build/kbd-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/kbd-pref-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/kbd-stage" 2>&1 | tee build/kbd-logs/package-configure.log
+          cmake --build build/kbd-package --parallel 4 --verbose 2>&1 | tee build/kbd-logs/package-build.log
+          cmake --install build/kbd-package 2>&1 | tee build/kbd-logs/package-install.log
+      - name: Compile the installed consumers and the real native probe
+        run: |
+          cmake -S tests/reader_keyboard_actions/consumer -B build/kbd-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$K_WS/build/kbd-stage;$K_WS/build/kbd-pref-stage" 2>&1 | tee build/kbd-logs/consumer-configure.log
+          cmake --build build/kbd-consumer --verbose 2>&1 | tee build/kbd-logs/consumer-build.log
+          cmake -S tests/reader_keyboard_actions/probes -B build/kbd-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$K_WS/build/kbd-stage;$K_WS/build/kbd-pref-stage" 2>&1 | tee build/kbd-logs/probe-configure.log
+          cmake --build build/kbd-probe --verbose 2>&1 | tee build/kbd-logs/probe-build.log
+      - name: Run the installed consumers and the native key probe
+        run: |
+          python3 tests/reader_keyboard_actions/check_keyboard.py \
+            --c "build/kbd-consumer/keyboard-c-consumer$K_EXE" \
+            --cpp "build/kbd-consumer/keyboard-cpp-consumer$K_EXE" \
+            --probe "build/kbd-probe/keyboard-probe$K_EXE" \
+            --output build/keyboard-evidence \
+            --platform "${{ matrix.platform }}" \
+            --stage build/kbd-stage \
+            --build-log build/kbd-logs/consumer-build.log \
+            --cache build/kbd-consumer/CMakeCache.txt 2>&1 | tee build/kbd-logs/check.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-keyboard-actions-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/kbd-logs/
+            build/keyboard-evidence/
+            build/kbd-stage/
+            build/kbd-consumer/CMakeCache.txt
+            build/kbd-probe/CMakeCache.txt
+            build/kbd-consumer/keyboard-c-consumer*
+            build/kbd-consumer/keyboard-cpp-consumer*
+            build/kbd-probe/keyboard-probe*
+          if-no-files-found: error
+  evidence:
+    name: strict keyboard-actions evidence
+    needs: [consumers]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate the three platform ZIPs and compare the named outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_keyboard_actions/check_artifacts.py build/kbd-summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-keyboard-actions-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/kbd-summary/
+          if-no-files-found: error
