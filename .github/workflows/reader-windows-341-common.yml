@@ -61,6 +61,7 @@ jobs:
         run: python3 -m py_compile tests/reader_windows_search/guard.py tests/reader_windows_search/check_ui.py tests/reader_windows_search/check_formats.py tests/reader_windows_search/check_keyboard.py tests/reader_windows_search/verify.py
       - name: Check preferences syntax and strict protocol in Actions
         run: |
+          python3 tests/reader_windows_341/catalog.py --self-test
           python3 -m py_compile tests/reader_windows_preferences/guard.py tests/reader_windows_preferences/make_fixtures.py tests/reader_windows_preferences/check_ui.py tests/reader_windows_preferences/verify.py
           python3 tests/reader_windows_preferences/verify.py --protocol-selftest
       - name: Check records syntax and strict protocol in Actions
