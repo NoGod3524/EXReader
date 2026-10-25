@@ -41,7 +41,33 @@ also exposed a missing CRT-warning define in the new consumer. Those are
 consumer issues; the second candidate uses a cancellation-callback mask witness
 and the CRT define. No first-run fragments are combined with later results.
 
-Only an entire passing later run grants this transport candidate. C03 must
-combine the resulting candidate source and rerun its original reset/stall/cancel
-case. This document grants no SDK, host UI, Android/iOS, real-device, performance
-or complete-product acceptance.
+## Same-source candidate result
+
+Run **40220541331 / attempt 1**, source
+`8cc57c078f50c7e81bd2a75620a4acf9b23bb456`, completed **success** for all four
+jobs. Each row below is one entire job from that same run/source/attempt.
+
+| Profile | Original TLS | Original compatibility | New reset/signal cases | Job |
+| --- | ---: | ---: | ---: | ---: |
+| Linux curl | 77 | 12 | 15 | 121250959510 |
+| Windows WinHTTP | 76 | 12 | 6 | 121250959790 |
+| macOS curl | 77 | 12 | 15 | 121250959620 |
+| macOS URLSession | 77 | 12 | 12 | 121250959707 |
+
+Linux's separately compiled **original 0889 WebDAV module** terminated with
+SIGPIPE in all **8/8** abortive-reset controls. The candidate survived every
+reset, returned a normal failure status, published no output, removed temporary
+files, preserved the caller's thread signal mask and preexisting pending signal,
+and kept the process-wide handler active on another thread during the guarded
+curl call. macOS curl also passed that independent-thread test. The unchanged
+Windows and Apple native paths passed their original suites and reset cases.
+
+The exact program hashes, artifact IDs/bytes/digests/expiry, scope and earlier
+failure are recorded in
+`docs/validation/reader-webdav-sigpipe-candidate.json`. Artifact identity comes
+from the GitHub API; check counts and consumer hashes come from same-run job
+logs. A following documentation-only commit seals these observations.
+
+C03 must combine this candidate and rerun its original reset/stall/cancel case.
+The candidate grants only the tested installed transport scopes. It grants no
+SDK, host UI, Android/iOS, real-device, performance or complete-product acceptance.
