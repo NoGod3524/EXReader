@@ -42,7 +42,8 @@ if(EXR_LINK_POLICY_SOURCE)
   set_target_properties(link-worker PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
 endif()
 
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core)
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed reading SDK")
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core)
 add_executable(link-sdk-consumer link_sdk_consumer.c)
 target_link_libraries(link-sdk-consumer PRIVATE
   EXReaderLinkPolicy::reader_link_policy EXReader::exr_core)

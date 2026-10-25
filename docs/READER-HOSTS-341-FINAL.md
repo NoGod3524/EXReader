@@ -27,7 +27,65 @@ SDK 保护树精确为独立候选 `edddc463c06ed5731195cdb8f06b2df6dff7699e`；
 `reader-later-module-sdk.yml` 在 Windows、Linux、macOS 分别构建真实旧/新 SDK，
 分别安装四模块及公开依赖，编译并运行安装后的 C 消费者，并测试错误版本、
 错误 SDK 请求和两个方向的混用拒绝。此门禁只证明依赖安装/链接与拒绝行为，
-不能代替完整 27 包组合、原功能测试、原生 UI 或六平台互通门禁。当前尚无通过结果。
+不能代替完整 27 包组合、原功能测试、原生 UI 或六平台互通门禁。
+
+受测源码 `49b2a7c86173181f8f79a760315ddb8ca2312bd1`，
+[40185877681](https://github.com/NoGod3524/EXReader/actions/runs/40185877681) attempt1，
+Windows/Linux/macOS 三个 producer 全部 success，各 16/16。只授予上述安装/链接/拒绝范围。
+本轮没有独立 ZIP 汇总作业；以下为 Actions API 声明的工件信息，本地未下载或解析工件。
+
+| 平台 | 工件 ID | 字节 | 声明 SHA-256 |
+| --- | ---: | ---: | --- |
+| Linux | 12595393891 | 8,370,259 | `c8661ea83579ac9e81248d0aaa27a323f744c91bfa1a2f1dcb9eda41b0cbd9bb` |
+| macOS | 12595499367 | 7,111,243 | `a4665a6e5de3422f57bad28febe0d75703a1ab1ec34e5148bd12d83b2f20e63e` |
+| Windows | 12596053321 | 4,672,055 | `02c872fdc0b14706bc6fde124a51664be406c37ade9456282b4b3bd51247dfcc` |
+
+有效期均为 `2027-01-23T10:42:28Z`。
+
+## 完整组合的显式 3.41 配置
+
+独立准备分支 `codex/reader-composition-341` 保持上面的生产代码不变。
+配置提交 `f9671923a854901d19bddd0396073dbc90fab222` 只为八个安装后消费者增加
+默认 3.40 的显式版本参数，并在三个原配置调用点传递该参数。
+原消费者、夹具、功能判断、配额、单提供者检查和全部失败断言不改。
+
+G1 原本会另编译 `7817caa9…` 的旧本地下载实现作为回归负对照。
+在显式 3.41 模式下，只把它归档副本的两个 CMake SDK 依赖声明改为实际请求版本，
+源码实现逐字不改；原/新两个配置文件都保留在各阶段证据中。
+默认 3.40 路径不做这项替换。不能把改过构建配置的副本称为完全未改的旧包。
+
+新工作流的 compose/aggregate 两 job 从原共同运行 `07ebe878…` 逐字保留，
+只允许源 guard 入口、显式 SDK 配置参数和严格汇总调用身份这三类适配。
+Actions 先比对整段原 job，随后在三平台运行完整原测试、前缀迁移和 41 个严格协议负例。
+该完整运行现已独立通过，结果来自下述完整运行，并非前面四模块结果的转授。
+
+## 完整 27 包组合证据
+
+受测源码 **`b5e49d1753a6b4b88811b03fa904fe9447865247`**，
+[40186697513](https://github.com/NoGod3524/EXReader/actions/runs/40186697513) attempt1。
+源码/配置 preflight `121148903660`、macOS `121148940682`、Linux `121148940690`、
+Windows `121148940743`、strict `121151720419` 均 success。
+
+同一次运行实际安装 SDK 3.41 与 26 个可选包，执行所有原消费者和判断，
+在迁移安装前缀前后完整运行原 G1 链与模块测试；单 SDK/SQLite 提供者、
+真实 TLS WebDAV、共享 owner/session、故障和配额检查均保留。
+strict 下载并认证三平台原 ZIP，重验同 source/run/attempt、字节/digest/有效期、
+原报告、实际程序散列及平台间测试身份；41 项原协议负例保留。
+结果为 `accepted=true`、`task_wide_accepted=true`、`problems=[]`，范围仅完整桌面包组合。
+
+| 工件 | ID | 字节 | SHA-256 |
+| --- | ---: | ---: | --- |
+| Linux | 12596229813 | 168,799,743 | `bb91f802bc64f89ed9550ff2865f0e0b8894da204a0290ce905b8237007e1a08` |
+| macOS | 12596960237 | 145,863,927 | `f17b3af047a2b0c934ba185a950e08db5ba4c1862cfc0d5d0cd458d6103399d6` |
+| Windows | 12597180367 | 130,183,857 | `304711d9f0ee747ed8d92d0e92118c5d30ee0cfac23b85a9cb015f0244a3aab9` |
+| strict summary | 12597560057 | 12,648 | `436d0efd311f4666a686394d1c185adcdf32c36eda708a769acf71d8e9dbeedd` |
+
+有效期均为 `2027-01-23T10:54:45Z`。本地未下载或解析工件。
+键盘原生 probe 的 `ime-composing-passthrough` 三平台均为原允许的 SKIP；
+安装后的键盘接口测试均 PASS，不能从该 probe 声称真实 IME 验收。
+`host_ui_accepted=false`、`performance_accepted=false`、`android_accepted=false`、
+`ios_accepted=false`、`complete_product=false`。同源码重复 dispatch `40186762063`
+已取消，不用于证据；本节后的文档提交不改变受测代码。
 
 ## 共同源码仍需完成
 
