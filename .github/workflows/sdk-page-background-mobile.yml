@@ -1,0 +1,95 @@
+name: Additive SDK background on mobile simulators
+on:
+  push:
+    branches: [codex/sdk-page-background]
+    paths:
+      - 'tests/sdk_page_background_mobile/**'
+      - '.github/workflows/sdk-page-background-mobile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  mobile:
+    name: background mobile (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, platform: android}
+          - {os: macos-15, platform: ios-iphone}
+          - {os: macos-15, platform: ios-ipad}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require isolated SDK candidate and unchanged production source
+        run: |
+          python3 tests/sdk_page_background/guard.py
+          git diff --exit-code edddc463c06ed5731195cdb8f06b2df6dff7699e HEAD -- src include cmake CMakeLists.txt tests/fixtures tests/sdk_page_background/probe.c tests/sdk_page_background/CMakeLists.txt tests/sdk_page_background/make_fixture.py
+      - uses: actions/setup-java@v4
+        if: matrix.platform == 'android'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install native build and emulator tools
+        run: |
+          if [ '${{ matrix.platform }}' = android ]; then
+            sudo apt-get update
+            sudo apt-get install -y ninja-build
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;27.0.12077973' 'platform-tools' 'platforms;android-34'
+            echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+            sudo udevadm control --reload-rules
+            sudo udevadm trigger --name-match=kvm
+          else
+            command -v ninja || brew install ninja
+            xcodebuild -version
+          fi
+      - name: Cross-build two independent installed SDK consumers
+        run: python3 tests/sdk_page_background_mobile/run.py build '${{ matrix.platform }}'
+      - name: Execute unchanged installed probes on Android API34
+        if: matrix.platform == 'android'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: default
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 tests/sdk_page_background_mobile/run.py run android
+      - name: Execute unchanged installed probes on actual iPhone or iPad simulator
+        if: matrix.platform != 'android'
+        run: python3 tests/sdk_page_background_mobile/run.py run '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sdk-page-background-mobile-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/background-mobile/evidence/
+          if-no-files-found: error
+  evidence:
+    name: strict mobile background evidence
+    needs: mobile
+    if: always()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate actual original consumers pixels device records and exact-attempt ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/sdk_page_background_mobile/aggregate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sdk-page-background-mobile-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/background-mobile-summary/result.json
+          if-no-files-found: error
