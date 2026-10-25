@@ -357,6 +357,10 @@ def main():
 
     def launch(exe, where, existing=False):
         nonlocal app
+        # One host per profile: a previous instance would keep the profile lock
+        # and the database open, so it is closed before a new one starts.
+        if app is not None and app.process.poll() is None:
+            app.close_app()
         app = App(exe.resolve(), args.font.resolve(), where, existing=existing)
         app.wait_idle()
         app.settle()
