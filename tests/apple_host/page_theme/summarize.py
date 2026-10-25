@@ -11,6 +11,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'tools'))
 from check_parallel_integration import download_artifact_zip, fetch
+from run_native import native_ids
 
 
 def require(value, message):
@@ -65,6 +66,9 @@ def main():
                 reports = {'sdk': sdk, 'guard': guard}
             elif artifact['name'].startswith('apple-theme-native-'):
                 value = report('native.json')
+                protocol = report('protocol.json')
+                require(protocol['accepted'] is False and protocol['protocol_checks_passed'] is True and
+                        len(protocol['rejected']) == len(set(protocol['rejected'])) == 10, 'theme protocol negatives incomplete')
                 require(value['accepted'] is True and value['original_on_off_exact'] is True and value['mixed_version_rejections'] == 5 and
                         value['sdk_version'] == '3.41.0' and value['sdk_abi'] == 1 and value['old_340_migration_tested'] is False,
                         'native theme contract incomplete')
@@ -72,11 +76,12 @@ def main():
                     raw = report(mode + '/theme-review.json')
                     require(raw == value['reports'][mode] and raw['accepted'] is True and raw['theme_enabled'] == (mode == 'on') and
                             len(raw['checks']) == len({row['id'] for row in raw['checks']}) == count and
+                            {row['id'] for row in raw['checks']} == native_ids(mode) and
                             all(row['passed'] is True for row in raw['checks']), 'native named checks differ')
                     provider = json.loads(archive.read('theme-review-' + mode + '.product.json'))
                     require(provider['static_sdk_linked'] is False and provider['binary_sha256'] == value['binaries'][mode]['sha256'] ==
                             hashlib.sha256(archive.read('theme-review-' + mode)).hexdigest(), 'native executable/provider differs')
-                reports['native'] = value
+                reports['native'] = value; reports['protocol'] = protocol
             else:
                 value = report('evidence/theme-ui.json')
                 require(value['accepted'] is True and len(value['cases']) == len(value['observations']) == 4 and

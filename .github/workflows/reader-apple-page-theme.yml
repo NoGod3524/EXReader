@@ -60,6 +60,7 @@ jobs:
       - name: Syntax and real installed native consumers
         run: |
           python3 -m compileall -q tests/apple_host/page_theme tools/build_apple_product.py tools/build_apple_host.py
+          python3 tests/apple_host/page_theme/test_protocol.py
           python3 tests/apple_host/page_theme/run_native.py --sdk sdk-artifact/stage/macos --resources build/apple-resources --output build/apple-theme-native
       - uses: actions/upload-artifact@v4
         if: always()

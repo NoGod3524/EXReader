@@ -1298,6 +1298,7 @@ final class HostReaderModel: ObservableObject {
             } catch {
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
+                    if epoch == self.pageThemeEpoch { self.requestedPageTheme = self.pageThemeChoice }
                     self.fail(error)
                 }
             }
