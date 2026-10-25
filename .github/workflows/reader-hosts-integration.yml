@@ -7,7 +7,7 @@ on:
       verify_run:
         type: string
         default: ''
-        description: Read one preserved common-source run without granting this validator revision
+        description: Read a preserved run, or nav:<run> to diagnose its original GTK binary without acceptance
 permissions:
   contents: read
 defaults:
@@ -31,7 +31,7 @@ jobs:
       - name: Parse authored workflow and Python only in Actions
         run: |
           python3 -m pip install 'PyYAML==6.0.3'
-          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_windows_search/verify.py tests/reader_windows_navigation/verify.py tests/reader_windows_navigation/check_ui.py tests/reader_gtk_preferences/retain_account.py tests/reader_gtk_navigation/check_ui.py tests/reader_gtk_search/check_ui.py tests/reader_android_fixed_pan/verify_saved.py
+          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_hosts_integration/probe_navigation.py tests/reader_windows_search/verify.py tests/reader_windows_navigation/verify.py tests/reader_windows_navigation/check_ui.py tests/reader_gtk_preferences/retain_account.py tests/reader_gtk_navigation/check_ui.py tests/reader_gtk_search/check_ui.py tests/reader_android_fixed_pan/verify_saved.py
           python3 - <<'PY'
           from pathlib import Path
           import yaml
@@ -1058,13 +1058,50 @@ jobs:
       - name: Install independent PNG decoding for raw viewport proof
         run: python3 -m pip install 'Pillow==11.3.0'
       - name: Authenticate the preserved source and reports with the repaired verifier
+        if: ${{ !startsWith(inputs.verify_run, 'nav:') }}
         env:
           GH_TOKEN: ${{github.token}}
           INSPECT_RUN: ${{inputs.verify_run}}
         run: python3 tests/reader_hosts_integration/final.py --inspect-run "$INSPECT_RUN"
+      - name: Install native runtime for original-program navigation diagnostics
+        if: startsWith(inputs.verify_run, 'nav:')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 libcurl4 libxml2 libssl3 at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil dbus-x11
+      - name: Authenticate original ZIP program and unchanged navigation source
+        if: startsWith(inputs.verify_run, 'nav:')
+        env:
+          GH_TOKEN: ${{github.token}}
+          PROBE: ${{inputs.verify_run}}
+        run: |
+          python3 tests/reader_hosts_integration/probe_navigation.py "${PROBE#nav:}"
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/navigation-probe/fixtures
+          python3 tests/reader_gtk_navigation/make_inputs.py build/navigation-probe/fixtures
+          python3 tests/linux_host/generate_fixed.py build/navigation-probe/fixed-inputs
+      - name: Diagnose native focus acknowledgment and actual scanning without granting current production
+        if: startsWith(inputs.verify_run, 'nav:')
+        env:
+          GTK_NAVIGATION_DIAGNOSTIC_ONLY: 'true'
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/navigation-probe/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload "$NAV_PROBE_PAYLOAD" --fixtures build/navigation-probe/fixtures --fixed-inputs build/navigation-probe/fixed-inputs --output build/navigation-probe/ui
+          '
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: reader-hosts-inspection-${{github.run_id}}-${{github.run_attempt}}
-          path: build/hosts-summary/result.json
+          path: |
+            build/hosts-summary/result.json
+            build/navigation-probe/input.json
+            build/navigation-probe/original-report.json
+            build/navigation-probe/openbox.log
+            build/navigation-probe/ui/
           if-no-files-found: error
