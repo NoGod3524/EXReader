@@ -11,6 +11,7 @@ import json
 import os
 import pathlib
 import re
+import shlex
 import shutil
 import sqlite3
 import subprocess
@@ -55,10 +56,11 @@ class Driver:
         return text
 
     def shell(self, *args, **kwargs):
-        return self.adb('shell', *args, **kwargs)
+        return self.adb('shell', shlex.join(map(str, args)), **kwargs)
 
     def run_as(self, *args, **kwargs):
-        return self.adb('exec-out', 'run-as', PACKAGE, *args, binary=True, **kwargs)
+        return self.adb('exec-out', shlex.join(['run-as', PACKAGE, *map(str, args)]),
+                        binary=True, **kwargs)
 
     def check(self, name, passed, observed=None, detail=None, mandatory=True):
         self.checks.append({'name': name, 'pass': bool(passed), 'observed': observed,

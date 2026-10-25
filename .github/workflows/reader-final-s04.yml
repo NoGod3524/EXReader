@@ -113,11 +113,7 @@ jobs:
           ram-size: 4096M
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: |
-            set -o pipefail
-            export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
-            export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools"
-            python3 tests/reader_final_s04/emulator.py --contract docs/reader-final-s04/apk-contract.json --inventory build/s04-authenticate/inventory.json --output build/s04-emulator 2>&1 | tee build/s04-logs/emulator.log
+          script: bash tests/reader_final_s04/run_emulator.sh
       - name: Preserve the emulator evidence under one upload root
         if: always()
         run: |

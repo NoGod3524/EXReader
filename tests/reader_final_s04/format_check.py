@@ -1,9 +1,11 @@
 """Actions-only format and injected-persistence rejection regression."""
 import copy
+import shlex
 
 import common
 from static_apks import manifest_booleans
 from summary import application_persisted
+from emulator import Driver, PACKAGE
 
 
 def main():
@@ -39,6 +41,16 @@ def main():
     bad = copy.deepcopy(valid)
     bad['checks'] = []
     assert not application_persisted(bad)
+    driver = Driver.__new__(Driver)
+    calls = []
+    driver.adb = lambda *args, **kwargs: calls.append((args, kwargs))
+    script = 'printf %s "s04 original" > files/book.title'
+    driver.shell('run-as', PACKAGE, 'sh', '-c', script)
+    assert calls[-1][0][0] == 'shell'
+    assert shlex.split(calls[-1][0][1]) == ['run-as', PACKAGE, 'sh', '-c', script]
+    driver.run_as('sh', '-c', 'ls files/books 2>/dev/null')
+    assert calls[-1][0][0] == 'exec-out' and calls[-1][1]['binary'] is True
+    assert shlex.split(calls[-1][0][1]) == ['run-as', PACKAGE, 'sh', '-c', 'ls files/books 2>/dev/null']
     print('S04 strict boolean formats and injected-persistence negatives passed', flush=True)
 
 
