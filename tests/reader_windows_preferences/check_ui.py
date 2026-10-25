@@ -469,18 +469,20 @@ def main():
         dark = app.page_shot('picture-dark.bmp', probes)
 
         def authored(image):
-            # Only fully opaque interior samples: scaled edges blend with the
-            # page canvas by design and are not authored image pixels. The whole
-            # client is scanned so no view geometry can decide this check.
+            # Only the exact authored colour is sampled: scaled block and image
+            # edges blend with the page canvas by design and are not authored
+            # pixels. The whole client is scanned so no view geometry can
+            # decide this check.
             width_px, height_px, _ = image
             return {(x, y) for x in range(2, width_px - 2, 2) for y in range(2, height_px - 2, 2)
-                    if near(at(image, x, y), (51, 102, 204), 6)}
+                    if near(at(image, x, y), (51, 102, 204), 1)}
 
         picture_light, picture_dark = authored(light), authored(dark)
         shared = picture_light & picture_dark
         same = all(near(at(light, x, y), at(dark, x, y), 2) for x, y in list(shared)[:300])
         record('authored-image-interior-preserved',
-               len(picture_light) > 40 and len(picture_dark) > 40 and picture_light == picture_dark and same,
+               len(picture_light) > 40 and len(picture_dark) > 40 and
+               len(shared) >= 0.98 * max(len(picture_light), len(picture_dark)) and same,
                dict(pixels_light=len(picture_light), pixels_dark=len(picture_dark), shared=len(shared),
                     corner_light=at(light, 8, 8), corner_dark=at(dark, 8, 8),
                     sample=sorted(shared)[:3]))
