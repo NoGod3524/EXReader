@@ -129,6 +129,7 @@ if(EXR_READER_BUILD_GTK)
       target_compile_definitions(reader-gtk-batch-owner-faults PRIVATE EXR_READER_PRODUCT_CATALOG=1
         EXR_READER_BATCH_IMPORT=1 EXR_READER_BATCH_IMPORT_UI=1)
       target_compile_options(reader-gtk-batch-owner-faults PRIVATE -Wall -Wextra -Werror)
+      target_link_options(reader-gtk-batch-owner-faults PRIVATE "-Wl,--wrap=calloc")
       target_link_libraries(reader-gtk-batch-owner-faults PRIVATE reader_catalog_sdk reader_catalog_sqlite
         EXReaderBatchImport::reader_batch_import EXReader::exr_core EXReader::exr_library PkgConfig::GTK_BATCH_FAULTS)
     endif()
