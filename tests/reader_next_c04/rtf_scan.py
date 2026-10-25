@@ -27,6 +27,7 @@ def survey(data):
     ucodes = {"out_of_range": [], "count": 0}
     bad_hex = []
     codepages = []
+    identity_controls = []
     depth = max_depth = 0
     root_end = None
     first_unbalanced = None
@@ -58,6 +59,10 @@ def survey(data):
                 has = m > k
                 value = int(data[k:m]) * (-1 if neg else 1) if has else None
                 words[word] += 1
+                if word in ("list", "listid", "listtemplateid", "listoverride", "listoverridecount", "ls", "f", "deff"):
+                    identity_controls.append({"word": word, "value": value, "offset": i - 1,
+                                              "depth": depth,
+                                              "context": data[max(0, i - 65):min(n, m + 65)].decode("latin-1")})
                 if has and (value > INT_MAX or value < -INT_MAX - 1):
                     big.append({"word": word, "value": value, "offset": i})
                 if word == "ansicpg" and has:
@@ -99,6 +104,7 @@ def survey(data):
     out["ansicpg"] = sorted(set(codepages))
     out["distinct_words"] = len(words)
     out["words_top"] = words.most_common(40)
+    out["identity_controls"] = identity_controls
     return out
 
 

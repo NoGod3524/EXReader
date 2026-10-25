@@ -30,6 +30,14 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.F5_SHA }}
+          path: f5
+      - name: Survey original identity controls without executing a candidate
+        run: |
+          python3 tests/reader_next_c04/run_c04.py fetch --f5 f5 --out build/c04-inspect/corpus
+          python3 tests/reader_next_c04/rtf_scan.py build/c04-inspect/corpus/assets/rtf-crowley-policy.rtf build/c04-inspect/corpus/assets/rtf-micro-republics.rtf --out build/c04-inspect/identity-survey.json
       - name: Authenticate both historical runs and separate base/candidate evidence in Actions
         env:
           GH_TOKEN: ${{ github.token }}
