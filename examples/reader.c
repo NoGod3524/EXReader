@@ -53,6 +53,9 @@
 #define HOST_NOTE_PREVIEW 96
 #define HOST_PAGE_TEXT_LIMIT ((size_t)1024 * 1024)
 #define HOST_PAGE_GLYPH_LIMIT ((size_t)65536)
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+#include "../apps/reader/desktop/windows_import_organize_types.h"
+#endif
 #ifdef EXR_READER_WINDOWS_SEARCH
 #include "../apps/reader/desktop/windows_search_types.h"
 #endif
@@ -824,7 +827,7 @@ enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB
   JOB_PRODUCT_ATTACH, JOB_PRODUCT_REPAIR, JOB_PRODUCT_DELETE, JOB_PRODUCT_SHELF,
   JOB_METADATA_PREPARE, JOB_METADATA_SAVE, JOB_METADATA_RETRY, JOB_METADATA_DISCARD,
   JOB_ACCOUNT_LOAD, JOB_ACCOUNT_SET, JOB_ACCOUNT_FORGET, JOB_ACCOUNT_STAGE, JOB_ACCOUNT_RECEIVE,
-  JOB_SEARCH_BATCH, JOB_SEARCH_OPEN, JOB_NAVIGATION_ROWS, JOB_NAVIGATION_OPEN, JOB_RECORDS };
+  JOB_SEARCH_BATCH, JOB_SEARCH_OPEN, JOB_NAVIGATION_ROWS, JOB_NAVIGATION_OPEN, JOB_RECORDS, JOB_IMPORT_ORGANIZE };
 #ifdef EXR_READER_WINDOWS_ACCOUNT
 static int account_job_kind(int kind) { return kind>=JOB_ACCOUNT_LOAD && kind<=JOB_ACCOUNT_RECEIVE; }
 #endif
@@ -839,6 +842,9 @@ static int product_job_kind(int kind) {
 #endif
 
 struct host_job {
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+  winio_job *io;
+#endif
   LONG refs;
   volatile LONG cancel;
   int kind;
@@ -1001,6 +1007,9 @@ static void winrecords_close(void);
 
 static void job_free(host_job *job) {
   if (!job) return;
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+  winio_job_free(job->io);
+#endif
 #ifdef EXR_READER_WINDOWS_RECORDS
   free(job->records_body);winrecords_response_free(&job->records);
 #endif
@@ -2057,10 +2066,13 @@ static exr_status job_import(host_job *job) {
 #ifdef EXR_READER_WINDOWS_ACCOUNT
 #include "../apps/reader/desktop/windows_accounts.inc"
 #endif
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+#include "../apps/reader/desktop/windows_import_organize.inc"
+#endif
 static unsigned __stdcall job_thread(void *context) {
   host_job *job = context;
   job_pause(job);
-  if (job_cancel_flag(job) && job->kind != JOB_ROLLBACK && !job_commit_barrier(job->kind))
+  if (job_cancel_flag(job) && job->kind != JOB_ROLLBACK && job->kind != JOB_IMPORT_ORGANIZE && !job_commit_barrier(job->kind))
     job->status = EXR_CANCELLED;
   else
     job->status = job_run(job);
@@ -2074,6 +2086,9 @@ static unsigned __stdcall job_thread(void *context) {
   }
 #endif
   if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+      && !winio_kind(job->kind)
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
       && !metadata_job_kind(job->kind)
 #endif
@@ -2113,6 +2128,9 @@ static exr_status job_save(host_job *job) {
 
 static exr_status job_run(host_job *job) {
   switch (job->kind) {
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+    case JOB_IMPORT_ORGANIZE: return winio_job_run(job);
+#endif
     case JOB_OPEN: return job_open(job);
     case JOB_GO: return job_go(job);
     case JOB_LAYOUT: return job_layout(job);
@@ -2188,6 +2206,9 @@ static HWND make_static(HWND parent, int id, const wchar_t *text) {
 #endif
 #ifdef EXR_READER_WINDOWS_ACCOUNT
 #include "../apps/reader/desktop/windows_accounts_ui.inc"
+#endif
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+#include "../apps/reader/desktop/windows_import_organize_ui.inc"
 #endif
 #if defined(EXR_READER_WINDOWS_SEARCH) || defined(EXR_READER_WINDOWS_NAVIGATION) || defined(EXR_READER_WINDOWS_RECORDS)
 #include "../apps/reader/desktop/windows_source.inc"
@@ -3285,6 +3306,9 @@ static void host_update_controls(void) {
 }
 
 static void handle_job_complete(host_job *job) {
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+  if(winio_kind(job->kind)) { winio_accept(job);return; }
+#endif
 #ifdef EXR_READER_WINDOWS_SEARCH
   if(job->kind==JOB_SEARCH_BATCH || job->kind==JOB_SEARCH_OPEN) { winsearch_accept(job);return; }
 #endif
@@ -3531,6 +3555,10 @@ static void handle_job_complete(host_job *job) {
 }
 
 static void host_command(int id) {
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+  if(id==IDC_CLOUD_IMPORT || id==IDC_BULK_ORGANIZE) { winio_show(id==IDC_CLOUD_IMPORT ? WINIO_CLOUD:WINIO_BULK);return; }
+  if(winio.dialog) return;
+#endif
 #ifdef EXR_READER_WINDOWS_SEARCH
   if(id==IDC_INBOOK) { winsearch_show();return; }
 #endif
@@ -4590,6 +4618,9 @@ static void finish_close(HWND window) {
 }
 
 static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+  if(message==WM_CONTEXTMENU && winio_context((HWND)wparam,lparam)) return 0;
+#endif
 #ifdef EXR_HOST_WORKER_REVIEW
   if (message == WM_APP + 30) return review_message(window, wparam, lparam);
 #endif
@@ -4703,6 +4734,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       return 0;
     case WM_CLOSE:
       if (g.closing) return 0;
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+      winio_close();
+#endif
 #ifdef EXR_READER_WINDOWS_SEARCH
       winsearch_close();
 #endif
@@ -4782,6 +4816,13 @@ static int message_loop(void) {
     if(message.message==WM_KEYDOWN && message.wParam=='A' && (GetKeyState(VK_CONTROL)&0x8000) && (GetKeyState(VK_SHIFT)&0x8000) &&
        !acct.dialog && g.window && IsWindowEnabled(g.window)) { acct_open_dialog();continue; }
 #endif
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+    if(winio.dialog && IsDialogMessageW(winio.dialog,&message)) continue;
+    if(message.message==WM_KEYDOWN && (GetKeyState(VK_CONTROL)&0x8000) && (GetKeyState(VK_SHIFT)&0x8000) &&
+       g.window && IsWindowEnabled(g.window) && (message.wParam=='I' || message.wParam=='O')) {
+      winio_show(message.wParam=='I' ? WINIO_CLOUD:WINIO_BULK);continue;
+    }
+#endif
     if (g.window && IsDialogMessageW(g.window, &message)) continue;
     TranslateMessage(&message);
     DispatchMessageW(&message);
@@ -4817,6 +4858,9 @@ static void host_cleanup(void) {
 #endif
 #ifdef EXR_READER_WINDOWS_ACCOUNT
   acct_shutdown();
+#endif
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+  if(winio.profile_lock) { CloseHandle(winio.profile_lock);winio.profile_lock=NULL; }
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   free(g.shelf_query);g.shelf_query=NULL;
