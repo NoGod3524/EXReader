@@ -1,0 +1,40 @@
+name: Reviewed production foundation composition
+on:
+  push:
+    branches: [codex/reader-production-foundation-plan]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  preflight:
+    name: composition preflight
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Authenticate exact package trees and refuse actual source mutations
+        run: |
+          python3 -m py_compile tests/reader_production_foundation/guard.py
+          python3 tests/reader_production_foundation/guard.py preflight
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-foundation-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-production-foundation/source.json
+          if-no-files-found: error
+  strict:
+    needs: preflight
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original source receipt ZIP and completed same-attempt producer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_production_foundation/guard.py strict
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-foundation-source-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-production-foundation/strict.json
+          if-no-files-found: error
