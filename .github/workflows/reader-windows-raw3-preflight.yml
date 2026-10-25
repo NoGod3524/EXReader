@@ -1,0 +1,25 @@
+name: Windows raw3 composition source preflight only
+on:
+  push:
+    branches: [codex/reader-windows-raw3-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate accepted Windows source and exact seven raw families
+        run: |
+          python3 -m compileall -q tests/reader_windows_raw3
+          python3 tests/reader_windows_raw3/guard.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-raw3-source-only-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-raw3-preflight/
+          if-no-files-found: error
