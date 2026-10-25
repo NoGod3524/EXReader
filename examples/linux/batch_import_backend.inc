@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 /* The existing serial SDK worker owns the enumerator and at most 32 receipts. */
+#ifdef EXR_READER_DROP_IMPORT
+#include <exr_desktop_drop.h>
+#endif
 typedef struct {
   linux_reader *reader;
   reader_batch_enumerator *scan;
@@ -10,6 +13,12 @@ typedef struct {
   reader_batch_control *observe;
   int request,complete,truncated,stopped,cancelled,needs_map,done;
   uint64_t token,seen,attempted,imported,duplicates,failed,pending;
+#ifdef EXR_READER_DROP_IMPORT
+  exr_drop_request *drop;
+  exr_drop_request_info drop_info;
+  size_t drop_next;
+  exr_drop_item_status drop_status[READER_BATCH_DEFAULT_BATCH];
+#endif
 } gtk_batch_owner;
 static int batch_cancelled(void *context) {
   gtk_batch_owner *batch=context;reader_batch_control *control=batch->observe;
@@ -29,6 +38,9 @@ static void batch_progress(void *context,exr_stage stage,uint64_t completed,uint
 static void batch_free(linux_reader *reader) {
   gtk_batch_owner *batch=reader->batch_data;if(!batch) return;
   reader_batch_enumerate_close(batch->scan);reader_batch_candidates_free(batch->items,batch->count);
+#ifdef EXR_READER_DROP_IMPORT
+  exr_drop_request_release(batch->drop);
+#endif
   if(batch->staging) { g_rmdir(batch->staging);g_free(batch->staging); }
   free(batch);reader->batch_data=NULL;
 }
@@ -75,6 +87,11 @@ static void batch_copy(gtk_batch_owner *batch,reader_result *result) {
   result->batch_seen=batch->seen;result->batch_attempted=batch->attempted;
   result->batch_imported=batch->imported;result->batch_duplicates=batch->duplicates;
   result->batch_failed=batch->failed;result->batch_pending=batch->pending;
+#ifdef EXR_READER_DROP_IMPORT
+  result->batch_source_items=batch->drop_info.item_count;
+  result->batch_source_duplicates=batch->drop_info.duplicate_count;
+  result->batch_source_overflow=batch->drop_info.overflow_count;
+#endif
   if(batch->rows) {
     result->batch_rows=malloc(batch->rows*sizeof(*result->batch_rows));
     if(result->batch_rows) {
@@ -82,11 +99,41 @@ static void batch_copy(gtk_batch_owner *batch,reader_result *result) {
     } else { result->status=EXR_MEMORY;batch_stop(batch);result->batch_map=1; }
   }
 }
+#ifdef EXR_READER_DROP_IMPORT
+static reader_batch_status batch_drop_next(gtk_batch_owner *batch) {
+  size_t remaining=batch->drop_info.item_count-batch->drop_next;
+  batch->count=MIN(remaining,(size_t)READER_BATCH_DEFAULT_BATCH);
+  batch->items=calloc(batch->count ? batch->count:1,sizeof(*batch->items));
+  if(!batch->items) { batch->count=0;return READER_BATCH_MEMORY; }
+  for(size_t i=0;i<batch->count;i++) {
+    exr_drop_item item={.struct_size=sizeof(item)};
+    if(exr_drop_request_get_item(batch->drop,batch->drop_next+i,&item)!=EXR_DROP_OK) return READER_BATCH_INTERNAL;
+    reader_batch_candidate *candidate=&batch->items[i];candidate->struct_size=sizeof(*candidate);
+    candidate->path=strdup(item.path ? item.path:"");
+    const char *base=item.path ? strrchr(item.path,'/'):NULL;
+    candidate->relative_path=strdup(base && base[1] ? base+1:item.path ? item.path:item.source);
+    if(!candidate->path || !candidate->relative_path) return READER_BATCH_MEMORY;
+    candidate->path_bytes=strlen(candidate->path);candidate->relative_bytes=strlen(candidate->relative_path);
+    candidate->format=file_format(candidate->path);batch->drop_status[i]=item.status;
+  }
+  batch->drop_next+=batch->count;
+  if(batch->drop_next==batch->drop_info.item_count) {
+    batch->truncated=batch->drop_info.truncated;batch->complete=!batch->truncated;
+  }
+  return READER_BATCH_OK;
+}
+#endif
 static void batch_execute(linux_reader *reader,const reader_command *command,reader_result *result) {
   gtk_batch_owner *batch=reader->batch_data;reader_batch_error error={0};reader_batch_status code=READER_BATCH_OK;
   result->has_batch=1;result->batch_token=command->batch_token;
   if(command->action==READER_BATCH_BEGIN) {
-    if(batch || !command->batch_token || !command->batch_root || !command->batch_control) {
+    int valid_input=command->batch_root!=NULL;
+#ifdef EXR_READER_DROP_IMPORT
+    if(command->batch_input) valid_input=(command->batch_input==1 || command->batch_input==2) &&
+      command->batch_payload && command->batch_payload_bytes && command->batch_payload_bytes<=EXR_DROP_MAX_INPUT_BYTES &&
+      (command->batch_origin==EXR_DROP_ORIGIN_DROP || command->batch_origin==EXR_DROP_ORIGIN_CLIPBOARD);
+#endif
+    if(batch || !command->batch_token || !valid_input || !command->batch_control) {
       result->status=EXR_ARGUMENT;snprintf(result->message,sizeof(result->message),"Finish the current folder import first");return;
     }
     batch=calloc(1,sizeof(*batch));
@@ -97,6 +144,22 @@ static void batch_execute(linux_reader *reader,const reader_command *command,rea
     if(!batch->staging || !g_mkdtemp_full(batch->staging,0700)) {
       result->status=EXR_IO;batch_free(reader);return;
     }
+#ifdef EXR_READER_DROP_IMPORT
+    if(command->batch_input) {
+      exr_drop_control control={sizeof(control),batch_cancelled,batch};batch_phase(batch,1);
+      exr_drop_status parsed=command->batch_input==2 ?
+        exr_drop_request_from_gnome_files(command->batch_payload,command->batch_payload_bytes,(exr_drop_origin)command->batch_origin,&control,&batch->drop):
+        exr_drop_request_from_uri_list(command->batch_payload,command->batch_payload_bytes,(exr_drop_origin)command->batch_origin,&control,&batch->drop);
+      batch->drop_info.struct_size=sizeof(batch->drop_info);
+      if(parsed==EXR_DROP_OK) parsed=exr_drop_request_get_info(batch->drop,&batch->drop_info);
+      if(parsed!=EXR_DROP_OK) {
+        result->status=parsed==EXR_DROP_NO_MEMORY ? EXR_MEMORY:parsed==EXR_DROP_CANCELLED ? EXR_CANCELLED:EXR_ARGUMENT;
+        result->batch_done=1;result->batch_cancelled=parsed==EXR_DROP_CANCELLED;
+        snprintf(result->message,sizeof(result->message),"File input: %s",exr_drop_status_name(parsed));batch_free(reader);return;
+      }
+    } else
+#endif
+    {
     reader_batch_scan_options options;reader_batch_scan_options_init(&options);
     options.root=command->batch_root;options.recursive=command->batch_recursive;
     options.max_candidates=command->batch_candidate_limit;
@@ -105,6 +168,7 @@ static void batch_execute(linux_reader *reader,const reader_command *command,rea
     if(code!=READER_BATCH_OK) {
       result->status=batch_status(code,&error);result->batch_done=1;result->batch_cancelled=code==READER_BATCH_CANCELLED;
       g_strlcpy(result->message,error.message,sizeof(result->message));batch_free(reader);return;
+    }
     }
   } else if(!batch || command->batch_token!=batch->token) {
     result->status=EXR_ARGUMENT;result->batch_done=1;return;
@@ -123,6 +187,10 @@ static void batch_execute(linux_reader *reader,const reader_command *command,rea
     reader_batch_candidates_free(batch->items,batch->count);batch->items=NULL;
     batch->count=batch->index=batch->rows=0;memset(batch->receipts,0,sizeof(batch->receipts));
     batch_phase(batch,1);
+#ifdef EXR_READER_DROP_IMPORT
+    if(batch->drop) code=batch_drop_next(batch);
+    else
+#endif
     code=reader_batch_enumerate_next(batch->scan,&batch->items,&batch->count,&batch->complete,&batch->truncated,&error);
     if(code!=READER_BATCH_OK) {
       if(code==READER_BATCH_CANCELLED) batch_stop(batch);else { batch->done=1;result->status=batch_status(code,&error); }
@@ -131,6 +199,18 @@ static void batch_execute(linux_reader *reader,const reader_command *command,rea
     batch->seen+=batch->count;
     if(!batch->count) { batch->needs_map=1;batch_copy(batch,result);return; }
   }
+#ifdef EXR_READER_DROP_IMPORT
+  if(batch->drop && batch->drop_status[batch->index]!=EXR_DROP_ITEM_FILE) {
+    reader_batch_candidate *candidate=&batch->items[batch->index];reader_batch_receipt *row=&batch->receipts[batch->rows++];
+    row->status=READER_BATCH_ITEM_FAILED;row->code=EXR_UNSUPPORTED;
+    char *short_path=g_utf8_substring(candidate->relative_path,0,MIN(g_utf8_strlen(candidate->relative_path,-1),100));
+    g_strlcpy(row->path,short_path,sizeof(row->path));g_free(short_path);
+    snprintf(row->message,sizeof(row->message),"File input refused: %s%s",exr_drop_item_status_name(batch->drop_status[batch->index]),
+      batch->drop_status[batch->index]==EXR_DROP_ITEM_DIRECTORY ? "; use Import folder explicitly":"");
+    batch->attempted++;batch->failed++;batch->index++;if(batch->index==batch->count) batch->needs_map=1;
+    batch_copy(batch,result);return;
+  }
+#endif
   /* A displayed frame must commit before any SQLite import invalidates its
      borrowed source. Yield without touching it if the acceptance is pending. */
   if(reader->has_pending && command->batch_idle) pending_discard(reader);
