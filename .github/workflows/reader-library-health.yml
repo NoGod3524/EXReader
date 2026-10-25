@@ -1,7 +1,7 @@
 name: Reader library health
 on:
   push:
-    branches: [codex/reader-library-health]
+    branches: [codex/reader-library-health, codex/reader-library-health-review]
   workflow_dispatch:
 permissions:
   contents: read

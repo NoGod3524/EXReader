@@ -426,6 +426,7 @@ static int cancel_after(void *context) {
 typedef struct {
   size_t calls;
   size_t after;
+  int at_eof;
 } progress_cancel;
 static int progress_cancel_poll(void *context) {
   progress_cancel *p = (progress_cancel *)context;
@@ -435,9 +436,7 @@ static void progress_cancel_count(void *context, exr_stage stage, uint64_t compl
                                   uint64_t total) {
   progress_cancel *p = (progress_cancel *)context;
   (void)stage;
-  (void)completed;
-  (void)total;
-  p->calls++;
+  if (!p->at_eof || completed == total) p->calls++;
 }
 
 static int run_steps(reader_health_scanner *scanner, reader_health_cursor *cursor, sink *target,
@@ -747,8 +746,36 @@ typedef struct {
   int step_reentry;
   int destroy_reentry;
   int progress_calls;
+  int cancel_calls;
+  int cancel_step_reentry;
+  int cancel_destroy_reentry;
+  int polling;
   int wrong_status;
 } reentry_state;
+
+static int reentry_cancelled(void *context) {
+  reentry_state *state = (reentry_state *)context;
+  reader_health_step_info info;
+  reader_health_error error;
+  reader_health_scanner *copy;
+  if (state->polling) return 0;
+  state->polling = 1;
+  state->cancel_calls++;
+  if (reader_health_step(state->scanner, state->cursor, noop_visit, NULL, &info, &error)
+      != READER_HEALTH_REENTRY) {
+    /* Reject the old behavior without actually freeing a live outer scanner. */
+    state->wrong_status = 1;
+    state->polling = 0;
+    return 1;
+  }
+  state->cancel_step_reentry++;
+  copy = state->scanner;
+  if (reader_health_destroy(&copy, &error) == READER_HEALTH_REENTRY && copy == state->scanner)
+    state->cancel_destroy_reentry++;
+  else state->wrong_status = 1;
+  state->polling = 0;
+  return 0;
+}
 
 static int reentry_visit(void *context, const reader_health_row *row) {
   reentry_state *state = (reentry_state *)context;
@@ -910,7 +937,24 @@ static int scenario_cancel_mid_read(const char *workdir, const char *fixtures, c
               (unsigned long long)info.rows_delivered, (unsigned long long)rows.count,
               (unsigned long long)progress.calls);
     reader_health_destroy(&scanner, &error);
-    /* Re-run the same row with cancellation disabled. */
+    /* Request cancellation only at the last read progress notification. */
+    progress.calls = 0;
+    progress.after = 1;
+    progress.at_eof = 1;
+    if (reader_health_create(catalog, library, &options, &scanner, &error) == READER_HEALTH_OK) {
+      reader_health_cursor before;
+      reader_health_cursor_init(&cursor);
+      before = cursor;
+      status = reader_health_step(scanner, &cursor, sink_visit, &rows, &info, &error);
+      add_check("cancel_final_progress_not_delivered",
+                status == READER_HEALTH_CANCELLED && rows.count == 0 && info.rows_delivered == 0 &&
+                    progress.calls == 1 && memcmp(&cursor, &before, sizeof(cursor)) == 0,
+                "status=%s delivered=%llu eof_notifications=%llu",
+                reader_health_status_name(status), (unsigned long long)rows.count,
+                (unsigned long long)progress.calls);
+      reader_health_destroy(&scanner, &error);
+    } else add_check("cancel_final_progress_not_delivered", 0, "scanner create failed");
+    /* Retry the unchanged cancelled cursor with cancellation disabled. */
     progress.after = (size_t)-1;
     options.control.cancelled = NULL;
     options.control.progress = NULL;
@@ -918,7 +962,6 @@ static int scenario_cancel_mid_read(const char *workdir, const char *fixtures, c
     rows.order_ok = 1;
     rows.identity_ok = 1;
     if (reader_health_create(catalog, library, &options, &scanner, &error) == READER_HEALTH_OK) {
-      reader_health_cursor_init(&cursor);
       status = reader_health_step(scanner, &cursor, sink_visit, &rows, &info, &error);
       reader_health_destroy(&scanner, &error);
       add_check("cancel_mid_read_resume_verified",
@@ -1111,6 +1154,7 @@ static int scenario_reentry(const char *workdir, const char *fixtures, const pla
   options.buffer_bytes = READER_HEALTH_MIN_BUFFER_BYTES;
   state.rows = &rows;
   state.cursor = &cursor;
+  options.control.cancelled = reentry_cancelled;
   options.control.progress = reentry_progress;
   options.control.context = &state;
   reader_health_cursor_init(&cursor);
@@ -1133,9 +1177,16 @@ static int scenario_reentry(const char *workdir, const char *fixtures, const pla
               "status=%s rows=%llu step=%d destroy=%d progress=%d",
               reader_health_status_name(status), (unsigned long long)rows.count,
               state.step_reentry, state.destroy_reentry, state.progress_calls);
+    add_check("cancel_callback_reentry_is_rejected",
+              status == READER_HEALTH_OK && info.done == 1 && rows.count == 11 && state.cancel_calls > 0 &&
+                  state.cancel_step_reentry == state.cancel_calls &&
+                  state.cancel_destroy_reentry == state.cancel_calls && !state.wrong_status,
+              "cancel_polls=%d refused_steps=%d refused_destroys=%d",
+              state.cancel_calls, state.cancel_step_reentry, state.cancel_destroy_reentry);
     reader_health_destroy(&scanner, &error);
   } else {
     add_check("reentry_is_rejected", 0, "scanner create failed");
+    add_check("cancel_callback_reentry_is_rejected", 0, "scanner create failed");
   }
   (void)steps;
   (void)bytes;

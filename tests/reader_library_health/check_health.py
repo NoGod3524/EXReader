@@ -35,6 +35,8 @@ REQUIRED_ADVERSARIAL_CHECKS = (
     'cancel_resume_completes',
     'cancel_mid_read_not_delivered',
     'cancel_mid_read_resume_verified',
+    'cancel_final_progress_not_delivered',
+    'cancel_callback_reentry_is_rejected',
     'budget_splits_steps_without_loss',
     'limit_stops_at_max',
     'limit_continues_to_done',

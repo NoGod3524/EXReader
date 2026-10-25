@@ -160,6 +160,8 @@ digests and verdict counts to agree.
 
 ## Acceptance record
 
+Root复审候选在独立分支 `codex/reader-library-health-review` 修复两处取消边界：首次取消回调前先设置防重入状态；原件观察完成后、推进游标前再次轮询取消。新增回归实际在取消回调内调用step/destroy，以及只在最终读取进度回调请求取消并重试未推进游标。严格汇总另核原始具名结果及真实C/C++消费者文件摘要。该候选尚未云端验收；下述原通过只归原受测source。
+
 Tested source `a600cf3df53fdc8b97e47872e44f9b5c5ff6becb` (branch
 `codex/reader-library-health`), run
 [40125980818](https://github.com/NoGod3524/EXReader/actions/runs/40125980818)

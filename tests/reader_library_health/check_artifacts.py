@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Strict same-run artifact summary for reader-library-health.yml (Actions only)."""
 import hashlib
+from datetime import datetime, timezone
 import io
 import json
 import os
@@ -12,6 +13,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
 from check_parallel_integration import download_artifact_zip, fetch, pages, require  # noqa: E402
+from check_health import REQUIRED_ADVERSARIAL_CHECKS
 
 PLATFORMS = (
     ('Linux', 'ubuntu-22.04'),
@@ -67,6 +69,8 @@ def main():
                     'artifact identity differs')
             require(isinstance(artifact.get('expires_at'), str) and artifact['expires_at'],
                     'artifact has no validity window')
+            require(datetime.fromisoformat(artifact['expires_at'].replace('Z', '+00:00')) > datetime.now(timezone.utc),
+                    'artifact validity window ended')
             with tempfile.TemporaryFile() as stream:
                 download_artifact_zip(artifact['id'], stream)
                 stream.seek(0)
@@ -75,10 +79,26 @@ def main():
                     'sha256:' + hashlib.sha256(data).hexdigest() == artifact['digest'],
                     'ZIP bytes/digest differ')
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                require(len(archive.namelist()) == len(set(archive.namelist())), 'duplicate ZIP member')
                 names = [entry for entry in archive.namelist()
                          if entry.endswith('lh-evidence/result.json')]
                 require(len(names) == 1, 'result.json missing or duplicated in ' + name)
                 report = json.loads(archive.read(names[0]))
+                raw_names = [entry for entry in archive.namelist() if entry.endswith('lh-work/ev/adversarial.json')]
+                require(len(raw_names) == 1, 'raw adversarial report missing or duplicated')
+                raw = json.loads(archive.read(raw_names[0]))
+                checks = raw.get('checks', [])
+                require(len(checks) == len({c['id'] for c in checks}) and
+                        set(REQUIRED_ADVERSARIAL_CHECKS) <= {c['id'] for c in checks} and
+                        all(c.get('passed') is True for c in checks), 'raw cancellation/reentry outcomes incomplete')
+                for key, binary in (('probe', 'library-health-probe'), ('cpp_consumer', 'library-health-cpp-consumer')):
+                    suffix = 'lh-consumer/' + binary + ('.exe' if platform == 'Windows' else '')
+                    matches = [entry for entry in archive.namelist() if entry.endswith(suffix)]
+                    require(len(matches) == 1, 'actual installed consumer missing or duplicated')
+                    executable = archive.read(matches[0])
+                    require(report['identity']['executables'][key] ==
+                            {'bytes': len(executable), 'sha256': hashlib.sha256(executable).hexdigest()},
+                            'actual installed consumer differs from report')
             require(report.get('accepted') is True, 'platform report is not accepted')
             require(report.get('source_sha') == source and int(report.get('run_id', 0)) == run_id
                     and int(report.get('attempt', 0)) == attempt, 'report identity differs')

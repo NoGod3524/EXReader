@@ -410,11 +410,12 @@ reader_health_status reader_health_step(reader_health_scanner *s, reader_health_
   remaining = s->options.max_total_rows - cursor->rows_done;
   limit = s->options.rows_per_step;
   if ((uint64_t)limit > remaining) limit = (size_t)remaining;
-  if (health_cancelled(&s->options))
-    return health_fail(e, READER_HEALTH_CANCELLED, 0, "Cancelled before the step");
-
   s->active = 1;
   s->count = 0;
+  if (health_cancelled(&s->options)) {
+    result = health_fail(e, READER_HEALTH_CANCELLED, 0, "Cancelled before the step");
+    goto finish;
+  }
   memset(&gather, 0, sizeof(gather));
   gather.scanner = s;
   gather.limit = limit;
@@ -456,7 +457,7 @@ reader_health_status reader_health_step(reader_health_scanner *s, reader_health_
     row.expected_bytes = r->bytes;
     memcpy(row.expected_sha256, r->key + format_bytes + 1, 64);
     row.expected_sha256[64] = 0;
-    if (health_observe(s, r, &row)) {
+    if (health_observe(s, r, &row) || health_cancelled(&s->options)) {
       result = health_fail(e, READER_HEALTH_CANCELLED, 0, "Cancelled while reading an original");
       goto finish;
     }
