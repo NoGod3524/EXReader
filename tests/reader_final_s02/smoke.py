@@ -130,7 +130,9 @@ def main():
     import atspi_client as bus  # noqa: E402  (the pinned audited AT-SPI client)
 
     initialised, diagnostic = bus.init()
-    common.need(initialised, 'AT-SPI is unavailable: %s' % diagnostic)
+    checks.add('atspi_available', initialised,
+               'accessibility bus initialised' if initialised
+               else 'AT-SPI is unavailable: %s' % diagnostic)
 
     def node(app, name, roles=None):
         for candidate in bus.walk(app):
@@ -496,8 +498,9 @@ def main():
             wait_no_application(15)
 
     try:
-        for name, function in (('default', phase_default), ('desktop', phase_desktop),
-                               ('readback', phase_readback)):
+        phases = (('default', phase_default), ('desktop', phase_desktop),
+                  ('readback', phase_readback)) if initialised else ()
+        for name, function in phases:
             try:
                 function()
             except Exception as error:

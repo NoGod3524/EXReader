@@ -126,7 +126,7 @@ def safe_extract_tar(archive, destination, expect_root=None):
     destination = Path(destination)
     need(not destination.exists(), 'tar destination already exists: %s' % destination)
     destination.mkdir(parents=True)
-    entries, roots = [], set()
+    entries, named, flat = [], set(), False
     with tarfile.open(str(archive), 'r:gz') as tar:
         for member in tar.getmembers():
             name = member.name
@@ -137,17 +137,19 @@ def safe_extract_tar(archive, destination, expect_root=None):
                  'tar links are refused: %s' % name)
             if not parts:
                 need(member.isdir(), 'archive root member is not a directory: %s' % name)
-                roots.add('.')
+                flat = True
                 continue
             need(member.isdir() or member.isfile(), 'unexpected tar member: %s' % name)
-            roots.add(parts[0])
             if member.isdir():
+                named.add(parts[0])
                 continue
             entries.append((parts, member))
-    need(roots, 'empty tar archive: %s' % archive)
-    named = {root for root in roots if root != '.'}
-    need(len(named) <= 1, 'tar has several roots: %s' % sorted(roots))
-    root = named.pop() if named else '.'
+    need(entries, 'empty tar archive: %s' % archive)
+    if flat or not named:
+        root = '.'
+    else:
+        need(len(named) == 1, 'tar has %d root directories: %s' % (len(named), sorted(named)))
+        root = named.pop()
     need(expect_root is None or root in (expect_root, '.'),
          'tar root %r differs from %r' % (root, expect_root))
     members = []
