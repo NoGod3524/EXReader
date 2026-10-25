@@ -1,0 +1,10 @@
+[
+"installed_c_abi", "nine_format_byte_roundtrips", "selected_unselected_isolation",
+"duplicate_same_bytes", "same_title_distinct_bytes", "existing_conflict_no_overwrite",
+"display_name_restricted", "bad_utf8", "traversal_rejected", "device_name_rejected",
+"directory_alias_rejected", "target_alias_rejected", "count_101_rejected", "count_100_accepted",
+"per_book_limit", "batch_limit", "hard_limit", "owner_refusal", "wrong_thread", "callback_reentry",
+"missing_source", "source_invalidated_mid_read", "cancel_before_start", "cancel_after_commit",
+"temporary_readback_verified", "cleanup_receipt", "process_kill_reopen_retry",
+"sdk_original_notes_progress_unchanged", "product_history_outbox_unchanged"
+]
