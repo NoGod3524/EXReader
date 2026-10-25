@@ -1,5 +1,13 @@
 # S12：Unicode 路径与书库状态跨配置回归
 
+## 2026-10-25 Root 复核结果
+
+受测 source `936fe17f1439383695546ca70bb7c567126a749a`，
+[run 40222671621](https://github.com/NoGod3524/EXReader/actions/runs/40222671621) / attempt 1，5/5 作业通过。
+Windows/Linux 各 167 条 C++ 与 18 条 C 观测、跨平台逐字节相等、原 ZIP 严格认证均通过。
+机器记录见 [validation.json](validation.json) 的 `root_review`；原三轮失败及 root 日志目录失败保留。
+仅授予安装后模块和路径回归，不授予 UI、SDK 接线、网络、真机、发布或性能。
+
 本包只新增独立消费者、工作流与证据，不改任何现有文件。受测实现起点
 `0889f7d1e9a537c6c1b05456547e016b26e1cd85`；受保护 SDK 树固定为批准的 3.41
 `edddc463c06ed5731195cdb8f06b2df6dff7699e`（3.40 冻结树 `9854061b…` 在该起点上已被 3.41 替换，

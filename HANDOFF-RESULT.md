@@ -1,5 +1,22 @@
 # S12 交回结果：Unicode 路径与书库状态跨配置回归
 
+## Root 隔离复核封存（2026-10-25）
+
+当前验收：**Windows/Linux 安装包与路径回归通过**。受测源码
+`936fe17f1439383695546ca70bb7c567126a749a`，run
+[40222671621](https://github.com/NoGod3524/EXReader/actions/runs/40222671621)，attempt 1，5/5 作业成功。
+两平台各 167 条 C++、18 条 C 记录；跨平台观测逐字节一致；strict 作业实际下载本轮四份原 ZIP，
+逐项复算 digest、成员、消费者及数据库稳定性并输出 `accepted:true`。
+完整 job/artifact 身份、字节数、SHA-256、到期时间见 `docs/reader-final-s12/validation.json` 的 `root_review`。
+
+Root 仅在独立分支 `codex/reader-fw-s12-root-review` 修正本包工具：竞争修订从公开只读验证接口取得
+实际 wire 的 SHA-256，再传给要求该值的 receive；strict 管道前创建日志目录。
+此前 root run `40222343675` 因 `tee` 目录缺失整体失败，保留为失败，未拼接其通过项。
+原 DS worktree、owner 模块、SDK 与断言未修改。授予范围仍只有 Windows/Linux 安装包与路径回归，
+不含宿主 UI、SDK 接线、网络、真机、签名、发布或性能。
+
+以下保留原 DS 三轮交回记录，其当时的未验收状态已由上述同源整轮结果接续。
+
 **状态：未验收（accepted=false）。** 三轮 CI 全部失败，失败原因全部在本包新增的测试工具里，
 不在 owner 代码；第三轮之后已按证据修正，但**修正后的源码尚未在 Actions 执行**，因此不授予任何通过。
 本包没有修改 `apps/`、SDK、原 `tests/`、原 workflow、预算或任何现有文件。

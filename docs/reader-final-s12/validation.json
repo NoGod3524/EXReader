@@ -1,131 +1,387 @@
 {
- "package": "S12",
- "document": "docs/reader-final-s12/S12-UNICODE-STATE.md",
- "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
- "protected_sdk": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
- "branch": "codex/reader-fw-s12",
- "workflow": ".github/workflows/reader-final-s12.yml",
- "accepted": false,
- "status": "blocked_after_three_runs",
- "grant_summary": "no acceptance: the S12 tool itself still had expectation defects after the third cloud round; the corrected source is not cloud-verified",
- "corrected_source": "afceae3a3a7a009ab396a273f729e115acf397fc",
- "docs_seal_source": "417bb76ad68e78aa6e25edb7dbb1ad89058a4876",
- "new_paths": [
-  "tests/reader_final_s12/CMakeLists.txt",
-  "tests/reader_final_s12/api.c",
-  "tests/reader_final_s12/check_s12.py",
-  "tests/reader_final_s12/compare_platforms.py",
-  "tests/reader_final_s12/fixtures.py",
-  "tests/reader_final_s12/probe.cpp",
-  "tests/reader_final_s12/static_check.py",
-  "tests/reader_final_s12/strict.py",
-  ".github/workflows/reader-final-s12.yml",
-  "docs/reader-final-s12/S12-UNICODE-STATE.md",
-  "docs/reader-final-s12/validation.json",
-  "HANDOFF-RESULT.md"
- ],
- "runs": [
-  {
-   "run": 40215053846,
-   "attempt": 1,
-   "source": "9babde994eaf81e8be162b7e3b2149f07ef428f6",
-   "jobs": {
-    "source-preflight": {"id": 121234282420, "conclusion": "success"},
-    "unicode-regression (windows-2022)": {"id": 121234341419, "conclusion": "failure"},
-    "unicode-regression (ubuntu-22.04)": {"id": 121234341423, "conclusion": "failure"},
-    "cross-platform byte equality": {"id": 121234557226, "conclusion": "skipped"},
-    "strict artifact authentication": {"id": 121234557807, "conclusion": "skipped"}
-   },
-   "artifacts": [
-    {"id": 12607480605, "name": "reader-final-s12-source-40215053846-1", "bytes": 9313, "digest": "sha256:d757b7e52aef29769f39d93623b0d386a1daa2452c8e0717acc2850b7edd560d", "expires_at": "2027-01-23T17:08:58Z"},
-    {"id": 12607128109, "name": "reader-final-s12-Windows-40215053846-1", "bytes": 878792, "digest": "sha256:1ea08fed981ba5a7186810ce6e8b85d987493b1caa98a4e4a2ad4529eeca831f", "expires_at": "2027-01-23T17:08:58Z"},
-    {"id": 12607123184, "name": "reader-final-s12-Linux-40215053846-1", "bytes": 894568, "digest": "sha256:e46fffa8500d42e0459b97f9a23414c0d91807b927097adb9f02bb87dfe26265", "expires_at": "2027-01-23T17:08:58Z"}
-   ],
-   "failure": "consumer build: reader_metadata_stage_book called with four arguments in the stale-intent case (missing book command), page::size instead of page::rows.size, and a string literal closed with a single quote; identical diagnosis on both hosts",
-   "fix": "pass the typed book command, use the delivered page rows, close the literal"
+  "package": "S12",
+  "document": "docs/reader-final-s12/S12-UNICODE-STATE.md",
+  "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "protected_sdk": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "branch": "codex/reader-fw-s12-root-review",
+  "workflow": ".github/workflows/reader-final-s12.yml",
+  "accepted": true,
+  "status": "root_review_accepted",
+  "grant_summary": "Windows and Linux installed module/path regression only; same-source full run including byte comparison and strict original-artifact authentication passed",
+  "corrected_source": "afceae3a3a7a009ab396a273f729e115acf397fc",
+  "docs_seal_source": "417bb76ad68e78aa6e25edb7dbb1ad89058a4876",
+  "new_paths": [
+    "tests/reader_final_s12/CMakeLists.txt",
+    "tests/reader_final_s12/api.c",
+    "tests/reader_final_s12/check_s12.py",
+    "tests/reader_final_s12/compare_platforms.py",
+    "tests/reader_final_s12/fixtures.py",
+    "tests/reader_final_s12/probe.cpp",
+    "tests/reader_final_s12/static_check.py",
+    "tests/reader_final_s12/strict.py",
+    ".github/workflows/reader-final-s12.yml",
+    "docs/reader-final-s12/S12-UNICODE-STATE.md",
+    "docs/reader-final-s12/validation.json",
+    "HANDOFF-RESULT.md"
+  ],
+  "runs": [
+    {
+      "run": 40215053846,
+      "attempt": 1,
+      "source": "9babde994eaf81e8be162b7e3b2149f07ef428f6",
+      "jobs": {
+        "source-preflight": {
+          "id": 121234282420,
+          "conclusion": "success"
+        },
+        "unicode-regression (windows-2022)": {
+          "id": 121234341419,
+          "conclusion": "failure"
+        },
+        "unicode-regression (ubuntu-22.04)": {
+          "id": 121234341423,
+          "conclusion": "failure"
+        },
+        "cross-platform byte equality": {
+          "id": 121234557226,
+          "conclusion": "skipped"
+        },
+        "strict artifact authentication": {
+          "id": 121234557807,
+          "conclusion": "skipped"
+        }
+      },
+      "artifacts": [
+        {
+          "id": 12607480605,
+          "name": "reader-final-s12-source-40215053846-1",
+          "bytes": 9313,
+          "digest": "sha256:d757b7e52aef29769f39d93623b0d386a1daa2452c8e0717acc2850b7edd560d",
+          "expires_at": "2027-01-23T17:08:58Z"
+        },
+        {
+          "id": 12607128109,
+          "name": "reader-final-s12-Windows-40215053846-1",
+          "bytes": 878792,
+          "digest": "sha256:1ea08fed981ba5a7186810ce6e8b85d987493b1caa98a4e4a2ad4529eeca831f",
+          "expires_at": "2027-01-23T17:08:58Z"
+        },
+        {
+          "id": 12607123184,
+          "name": "reader-final-s12-Linux-40215053846-1",
+          "bytes": 894568,
+          "digest": "sha256:e46fffa8500d42e0459b97f9a23414c0d91807b927097adb9f02bb87dfe26265",
+          "expires_at": "2027-01-23T17:08:58Z"
+        }
+      ],
+      "failure": "consumer build: reader_metadata_stage_book called with four arguments in the stale-intent case (missing book command), page::size instead of page::rows.size, and a string literal closed with a single quote; identical diagnosis on both hosts",
+      "fix": "pass the typed book command, use the delivered page rows, close the literal"
+    },
+    {
+      "run": 40215267638,
+      "attempt": 1,
+      "source": "911db25d552a5d63d036eeda7709e392d72abeca",
+      "jobs": {
+        "source-preflight": {
+          "id": 121234927295,
+          "conclusion": "success"
+        },
+        "unicode-regression (ubuntu-22.04)": {
+          "id": 121234974661,
+          "conclusion": "failure"
+        },
+        "unicode-regression (windows-2022)": {
+          "id": 121234974689,
+          "conclusion": "failure"
+        },
+        "cross-platform byte equality": {
+          "id": 121235285655,
+          "conclusion": "skipped"
+        },
+        "strict artifact authentication": {
+          "id": 121235286151,
+          "conclusion": "skipped"
+        }
+      },
+      "artifacts": [
+        {
+          "id": 12607710102,
+          "name": "reader-final-s12-Linux-40215267638-1",
+          "bytes": 1893206,
+          "digest": "sha256:2bebabc0084a1b423e6427172d781a040777c8987883b56265be2ac11be556f7",
+          "expires_at": "2027-01-23T17:11:37Z"
+        },
+        {
+          "id": 12607455904,
+          "name": "reader-final-s12-source-40215267638-1",
+          "bytes": 9312,
+          "digest": "sha256:0682ba6cfc1b03c96c0868079c0b5e9fc073a71d11061efc77f23a27a61479ec",
+          "expires_at": "2027-01-23T17:11:37Z"
+        },
+        {
+          "id": 12607163011,
+          "name": "reader-final-s12-Windows-40215267638-1",
+          "bytes": 2041803,
+          "digest": "sha256:e64af2ab1aa314e7d09eeff0eb99952c063a3ffa26b72d016d7e8053db848803",
+          "expires_at": "2027-01-23T17:11:37Z"
+        }
+      ],
+      "failure": "both consumers built and ran; the C++ consumer aborted with 'container item is not ASCII: query.ascii' because the fixture stores that text as UTF-16LE while the consumer read it as an ASCII identity",
+      "fix": "read the query text through the counted UTF-16 boundary; add a static container-kind gate so this class cannot recur"
+    },
+    {
+      "run": 40218361806,
+      "attempt": 1,
+      "source": "66379633ab5b341749092279fa50d3c14f6cdb8c",
+      "jobs": {
+        "source-preflight": {
+          "id": 121244318470,
+          "conclusion": "success"
+        },
+        "unicode-regression (windows-2022)": {
+          "id": 121244373097,
+          "conclusion": "failure"
+        },
+        "unicode-regression (ubuntu-22.04)": {
+          "id": 121244373163,
+          "conclusion": "failure"
+        },
+        "cross-platform byte equality": {
+          "id": 121244698653,
+          "conclusion": "skipped"
+        },
+        "strict artifact authentication": {
+          "id": 121244698986,
+          "conclusion": "skipped"
+        }
+      },
+      "artifacts": [
+        {
+          "id": 12608775312,
+          "name": "reader-final-s12-Linux-40218361806-1",
+          "bytes": 1904652,
+          "digest": "sha256:a92b0716c512e7202de1c9d322b864e2dc35ed876b9bd39e8230dc28e79f3e27",
+          "expires_at": "2027-01-23T17:50:05Z"
+        },
+        {
+          "id": 12608405799,
+          "name": "reader-final-s12-Windows-40218361806-1",
+          "bytes": 2053261,
+          "digest": "sha256:aab085cb8b99a7e52d4cec73eb4695eb12fc0f5805332af8346c191dd0ce46b3",
+          "expires_at": "2027-01-23T17:50:05Z"
+        },
+        {
+          "id": 12607994738,
+          "name": "reader-final-s12-source-40218361806-1",
+          "bytes": 9912,
+          "digest": "sha256:c0c52b9c906cdf77127cda9d69f3f988f440bd4780bc47a69591eaca21c9590d",
+          "expires_at": "2027-01-23T17:50:05Z"
+        }
+      ],
+      "observations_sha256": {
+        "Windows": "607ac32f22f65106caa13ccd1b9ae04c166dbc8f55f8a9ec34953d765e972e0a",
+        "Linux": "a1919f6858ca97676679dbd40e8d855c84824a68751156fccfdfc4792b4aab10"
+      },
+      "c_observations_sha256": {
+        "Windows": "0b6d3db29f5282074f7e4d63a7706ee1bc80e854796539820647bc5702b19f37",
+        "Linux": "0b6d3db29f5282074f7e4d63a7706ee1bc80e854796539820647bc5702b19f37"
+      },
+      "verified_by_this_run": [
+        "five installed packages plus both consumers build and link on both hosts with the raw 0.2.0 metadata profile",
+        "167 consumer records and 18 C records are produced on both hosts, no crash, no abort",
+        "six byte-stability assertions pass: seed equal after re-attach, settled equal after reopen and equal to the final snapshot, mirror receive1 equal receive2, mirror equal after reopen, sidecar equal after reopen",
+        "the read-only reopen of the live product database does not change its bytes (checker raised no such problem)",
+        "account isolation, original entry, bootstrap/replay, NFD retention and stale-head CONFLICT records match"
+      ],
+      "failure": "8 consumer records and 5 C records differ; the two hosts also differ in two random revision identities",
+      "diagnosis": [
+        "the competing-revision identities in the fixture were 34 hex characters, so identifier() refused both receives with ARGUMENT and no concurrent head set was created (six metadata.book5.* records)",
+        "metadata.book5.bootstrap never emitted its revision length field",
+        "metadata.get.book1.bytes expected 401 characters instead of 417 UTF-8 bytes",
+        "the C ABI consumer read the live database after the C++ consumer had rewritten two titles, so five C records described the post-edit state",
+        "metadata.wire.book1 carried the randomly assigned revision identity into the cross-platform file; metadata.book5.prepare.head0 leaked the bootstrap head after the failed receives"
+      ]
+    }
+  ],
+  "checks": {
+    "consumer_records": 167,
+    "c_records": 18,
+    "container_records": 146,
+    "agreement_pairs": 9,
+    "stability_pairs": 5
   },
-  {
-   "run": 40215267638,
-   "attempt": 1,
-   "source": "911db25d552a5d63d036eeda7709e392d72abeca",
-   "jobs": {
-    "source-preflight": {"id": 121234927295, "conclusion": "success"},
-    "unicode-regression (ubuntu-22.04)": {"id": 121234974661, "conclusion": "failure"},
-    "unicode-regression (windows-2022)": {"id": 121234974689, "conclusion": "failure"},
-    "cross-platform byte equality": {"id": 121235285655, "conclusion": "skipped"},
-    "strict artifact authentication": {"id": 121235286151, "conclusion": "skipped"}
-   },
-   "artifacts": [
-    {"id": 12607710102, "name": "reader-final-s12-Linux-40215267638-1", "bytes": 1893206, "digest": "sha256:2bebabc0084a1b423e6427172d781a040777c8987883b56265be2ac11be556f7", "expires_at": "2027-01-23T17:11:37Z"},
-    {"id": 12607455904, "name": "reader-final-s12-source-40215267638-1", "bytes": 9312, "digest": "sha256:0682ba6cfc1b03c96c0868079c0b5e9fc073a71d11061efc77f23a27a61479ec", "expires_at": "2027-01-23T17:11:37Z"},
-    {"id": 12607163011, "name": "reader-final-s12-Windows-40215267638-1", "bytes": 2041803, "digest": "sha256:e64af2ab1aa314e7d09eeff0eb99952c063a3ffa26b72d016d7e8053db848803", "expires_at": "2027-01-23T17:11:37Z"}
-   ],
-   "failure": "both consumers built and ran; the C++ consumer aborted with 'container item is not ASCII: query.ascii' because the fixture stores that text as UTF-16LE while the consumer read it as an ASCII identity",
-   "fix": "read the query text through the counted UTF-16 boundary; add a static container-kind gate so this class cannot recur"
+  "never_modified": [
+    "apps/reader/store/001_catalog.sql",
+    "apps/reader/{store,revisions,commands,desktop-metadata,account-profiles}",
+    "src include cmake CMakeLists.txt tests/fixtures bindings (approved SDK 3.41 tree)",
+    "tests/reader_unicode_interop, tests/reader_metadata and the original 29 metadata checks"
+  ],
+  "not_granted": [
+    "host UI of any platform",
+    "screen reader or real device behaviour",
+    "SDK original verification, original export or network sync",
+    "performance budget, 1710 counts or release readiness"
+  ],
+  "pending": [],
+  "root_review": {
+    "source": "936fe17f1439383695546ca70bb7c567126a749a",
+    "run": 40222671621,
+    "attempt": 1,
+    "conclusion": "success",
+    "strict_job": 121257858658,
+    "strict_evidence": {
+      "accepted": true,
+      "artifacts": [
+        {
+          "digest": "sha256:d784fbec07011c01e3a4be0f1420821f1a55b18ab4e39164cb7b0d84647684f2",
+          "expires_at": "2027-01-23T18:44:22Z",
+          "id": 12609827529,
+          "name": "reader-final-s12-Linux-40222671621-1",
+          "size_in_bytes": 1903239
+        },
+        {
+          "digest": "sha256:967d839f3649b3596708cf0fc3c67273459e62b9c8d085d5c0f7acb75890f4e2",
+          "expires_at": "2027-01-23T18:44:22Z",
+          "id": 12610530856,
+          "name": "reader-final-s12-Windows-40222671621-1",
+          "size_in_bytes": 2052495
+        },
+        {
+          "digest": "sha256:712182fc37dd9ec78a5f477083abc074bbc4f9794901d37e451d3c6c760bd923",
+          "expires_at": "2027-01-23T18:44:22Z",
+          "id": 12610027301,
+          "name": "reader-final-s12-compare-40222671621-1",
+          "size_in_bytes": 958
+        },
+        {
+          "digest": "sha256:6a65df0769651aaff4afa40c59ba79b69454cb4642c405a40123bd8b8903847f",
+          "expires_at": "2027-01-23T18:44:22Z",
+          "id": 12610275654,
+          "name": "reader-final-s12-source-40222671621-1",
+          "size_in_bytes": 9975
+        }
+      ],
+      "attempt": "1",
+      "binaries": {
+        "Linux": {
+          "c_consumer": "c4f95059bb59c9fcaa034e4e59887f46395eb87c0a8f78dd440029f60ee90328",
+          "consumer": "fe598ccc4037828c6f00f9dc11d9b25a06b10f167101464559ecdf12490c6fb0"
+        },
+        "Windows": {
+          "c_consumer": "de003cfac87d32c6feb1c35d0d6a082fcab7c8a421e96a35966ac3b397dd99af",
+          "consumer": "077be56cf18837aaa63cc4c3853ae536031593706fa55638d773e450797c2424"
+        }
+      },
+      "c_records": {
+        "Linux": 18,
+        "Windows": 18
+      },
+      "jobs": {
+        "cross-platform byte equality": 121257808017,
+        "source-preflight": 121257427501,
+        "unicode-regression (ubuntu-22.04)": 121257475020,
+        "unicode-regression (windows-2022)": 121257475126
+      },
+      "platforms": [
+        "Linux",
+        "Windows"
+      ],
+      "records": {
+        "Linux": 167,
+        "Windows": 167
+      },
+      "run": "40222671621",
+      "scope": "installed module and path regression only; no host UI, SDK wiring, signing or release grant",
+      "source": "936fe17f1439383695546ca70bb7c567126a749a"
+    },
+    "jobs": [
+      {
+        "databaseId": 121257427501,
+        "name": "source-preflight",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "databaseId": 121257475020,
+        "name": "unicode-regression (ubuntu-22.04)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "databaseId": 121257475126,
+        "name": "unicode-regression (windows-2022)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "databaseId": 121257808017,
+        "name": "cross-platform byte equality",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "databaseId": 121257858658,
+        "name": "strict artifact authentication",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12610530856,
+        "name": "reader-final-s12-Windows-40222671621-1",
+        "size_in_bytes": 2052495,
+        "digest": "sha256:967d839f3649b3596708cf0fc3c67273459e62b9c8d085d5c0f7acb75890f4e2",
+        "expires_at": "2027-01-23T18:44:22Z",
+        "expired": false
+      },
+      {
+        "id": 12610275654,
+        "name": "reader-final-s12-source-40222671621-1",
+        "size_in_bytes": 9975,
+        "digest": "sha256:6a65df0769651aaff4afa40c59ba79b69454cb4642c405a40123bd8b8903847f",
+        "expires_at": "2027-01-23T18:44:22Z",
+        "expired": false
+      },
+      {
+        "id": 12610027301,
+        "name": "reader-final-s12-compare-40222671621-1",
+        "size_in_bytes": 958,
+        "digest": "sha256:712182fc37dd9ec78a5f477083abc074bbc4f9794901d37e451d3c6c760bd923",
+        "expires_at": "2027-01-23T18:44:22Z",
+        "expired": false
+      },
+      {
+        "id": 12609922472,
+        "name": "reader-final-s12-strict-40222671621-1",
+        "size_in_bytes": 1942,
+        "digest": "sha256:90df81d217f6b24cb7529f04c17dd30a36e316c94ff10ddefce8d67895868b40",
+        "expires_at": "2027-01-23T18:44:22Z",
+        "expired": false
+      },
+      {
+        "id": 12609827529,
+        "name": "reader-final-s12-Linux-40222671621-1",
+        "size_in_bytes": 1903239,
+        "digest": "sha256:d784fbec07011c01e3a4be0f1420821f1a55b18ab4e39164cb7b0d84647684f2",
+        "expires_at": "2027-01-23T18:44:22Z",
+        "expired": false
+      }
+    ],
+    "prior_root_round": {
+      "source": "5f3e0f64d1f7b9db22d08421724ac85d0cbdbb94",
+      "run": 40222343675,
+      "attempt": 1,
+      "conclusion": "failure",
+      "cause": "strict.py authenticated original ZIPs successfully but tee failed because build/ did not yet exist",
+      "fix": "mkdir -p build before strict pipeline"
+    }
   },
-  {
-   "run": 40218361806,
-   "attempt": 1,
-   "source": "66379633ab5b341749092279fa50d3c14f6cdb8c",
-   "jobs": {
-    "source-preflight": {"id": 121244318470, "conclusion": "success"},
-    "unicode-regression (windows-2022)": {"id": 121244373097, "conclusion": "failure"},
-    "unicode-regression (ubuntu-22.04)": {"id": 121244373163, "conclusion": "failure"},
-    "cross-platform byte equality": {"id": 121244698653, "conclusion": "skipped"},
-    "strict artifact authentication": {"id": 121244698986, "conclusion": "skipped"}
-   },
-   "artifacts": [
-    {"id": 12608775312, "name": "reader-final-s12-Linux-40218361806-1", "bytes": 1904652, "digest": "sha256:a92b0716c512e7202de1c9d322b864e2dc35ed876b9bd39e8230dc28e79f3e27", "expires_at": "2027-01-23T17:50:05Z"},
-    {"id": 12608405799, "name": "reader-final-s12-Windows-40218361806-1", "bytes": 2053261, "digest": "sha256:aab085cb8b99a7e52d4cec73eb4695eb12fc0f5805332af8346c191dd0ce46b3", "expires_at": "2027-01-23T17:50:05Z"},
-    {"id": 12607994738, "name": "reader-final-s12-source-40218361806-1", "bytes": 9912, "digest": "sha256:c0c52b9c906cdf77127cda9d69f3f988f440bd4780bc47a69591eaca21c9590d", "expires_at": "2027-01-23T17:50:05Z"}
-   ],
-   "observations_sha256": {"Windows": "607ac32f22f65106caa13ccd1b9ae04c166dbc8f55f8a9ec34953d765e972e0a", "Linux": "a1919f6858ca97676679dbd40e8d855c84824a68751156fccfdfc4792b4aab10"},
-   "c_observations_sha256": {"Windows": "0b6d3db29f5282074f7e4d63a7706ee1bc80e854796539820647bc5702b19f37", "Linux": "0b6d3db29f5282074f7e4d63a7706ee1bc80e854796539820647bc5702b19f37"},
-   "verified_by_this_run": [
-    "five installed packages plus both consumers build and link on both hosts with the raw 0.2.0 metadata profile",
-    "167 consumer records and 18 C records are produced on both hosts, no crash, no abort",
-    "six byte-stability assertions pass: seed equal after re-attach, settled equal after reopen and equal to the final snapshot, mirror receive1 equal receive2, mirror equal after reopen, sidecar equal after reopen",
-    "the read-only reopen of the live product database does not change its bytes (checker raised no such problem)",
-    "account isolation, original entry, bootstrap/replay, NFD retention and stale-head CONFLICT records match"
-   ],
-   "failure": "8 consumer records and 5 C records differ; the two hosts also differ in two random revision identities",
-   "diagnosis": [
-    "the competing-revision identities in the fixture were 34 hex characters, so identifier() refused both receives with ARGUMENT and no concurrent head set was created (six metadata.book5.* records)",
-    "metadata.book5.bootstrap never emitted its revision length field",
-    "metadata.get.book1.bytes expected 401 characters instead of 417 UTF-8 bytes",
-    "the C ABI consumer read the live database after the C++ consumer had rewritten two titles, so five C records described the post-edit state",
-    "metadata.wire.book1 carried the randomly assigned revision identity into the cross-platform file; metadata.book5.prepare.head0 leaked the bootstrap head after the failed receives"
-   ]
-  }
- ],
- "fixes_not_yet_verified": [
-  "competing identities are 32 lowercase hex characters",
-  "metadata.book5.bootstrap records its revision length",
-  "wire byte counts are UTF-8 bytes, not characters",
-  "the C ABI consumer reads a byte-frozen copy of the post-seed database; the checker proves that copy is unchanged and that the live database is unchanged by the read-only run",
-  "the retained wire identity moved out of the cross-platform file into platform-local evidence, where check_s12.py still reconstructs the whole document from the published command shape"
- ],
- "checks": {
-  "consumer_records": 167,
-  "c_records": 18,
-  "container_records": 146,
-  "agreement_pairs": 9,
-  "stability_pairs": 5
- },
- "never_modified": [
-  "apps/reader/store/001_catalog.sql",
-  "apps/reader/{store,revisions,commands,desktop-metadata,account-profiles}",
-  "src include cmake CMakeLists.txt tests/fixtures bindings (approved SDK 3.41 tree)",
-  "tests/reader_unicode_interop, tests/reader_metadata and the original 29 metadata checks"
- ],
- "not_granted": [
-  "host UI of any platform",
-  "screen reader or real device behaviour",
-  "SDK original verification, original export or network sync",
-  "performance budget, 1710 counts or release readiness"
- ],
- "pending": [
-  "one more cloud round on the corrected source is required before any acceptance",
-  "the frozen-copy ABI path, the corrected wire byte counts and the 32-hex competing identities are not yet executed in Actions"
- ]
+  "fixes_verified_root_review": [
+    "competing identities are 32 lowercase hex characters",
+    "metadata.book5.bootstrap records its revision length",
+    "wire byte counts are UTF-8 bytes, not characters",
+    "the C ABI consumer reads a byte-frozen copy of the post-seed database; the checker proves that copy is unchanged and that the live database is unchanged by the read-only run",
+    "the retained wire identity moved out of the cross-platform file into platform-local evidence, where check_s12.py still reconstructs the whole document from the published command shape"
+  ]
 }
