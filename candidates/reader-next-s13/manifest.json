@@ -15,12 +15,12 @@
   },
   "patch": {
     "path": "candidates/reader-next-s13/s13-cbz-leading-slash.patch",
-    "sha256": "0f55b9f6e408b49bc830aaaf2b5b493e983b834e70fa9fa77cc0fef864b568b0",
+    "sha256": "8320206c0efafe398cab0e63d2d59869e83292a32a56a33c53a894e5fa3ab78a",
     "target": "src/cbz.c",
     "target_blob": "b30803adb79a0a4c2e66320a749dee14f2bb52de",
     "pre_sha256": "85f90ad69432a2a8d5979844694fa96715bdb2ef7186d276e374a684eb0d4d52",
     "post_image": "candidates/reader-next-s13/src/cbz.c",
-    "post_sha256": "10016746d9a7f2539286574696afb181d7b2a5f3e3640207c5e08488d96727db",
+    "post_sha256": "49ef7cb5f7160ceaa471fbfdeb194638a5cbbcca5fb9d44d3199e857f565c49d",
     "insertions": 45,
     "deletions": 2,
     "files": 1

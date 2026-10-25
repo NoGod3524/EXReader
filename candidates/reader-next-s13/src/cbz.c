@@ -320,7 +320,7 @@ static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_opt
   if(total>10000) { status=exr_fail(e,EXR_LIMIT,"CBZ exceeds 10000 archive members");goto done; }
   capacity=total ? total : 1;d->pages=calloc(capacity,sizeof(*d->pages));if(!d->pages) { status=exr_fail(e,EXR_MEMORY,"CBZ page directory allocation failed");goto done; }
   for(i=0;i<total;i++) {
-    mz_zip_archive_file_stat st;char name[2049];const char *member;mz_uint length;int kind;size_t at=0;uint32_t cp;
+    mz_zip_archive_file_stat st;char name[2049],stored[2049];const char *member;mz_uint length;int kind;size_t at=0;uint32_t cp;
     status=exr_control_poll(d->control,EXR_STAGE_READ,i,total,e);if(status!=EXR_OK) goto done;
     if(!mz_zip_reader_file_stat(&d->zip,i,&st)) { status=archive_error(d,e,"Invalid CBZ member directory");goto done; }
     if(st.m_is_directory) continue;
@@ -334,7 +334,7 @@ static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_opt
        name. '//', "..", drive/UNC, backslash, NUL and normalized collisions still
        fail on the name below. */
     member=name;
-    if(name[0]=='/') { memmove(name,name+1,length-1);length--; }
+    if(name[0]=='/') { memcpy(stored,name,length);memmove(name,name+1,length-1);length--;member=stored; }
     if(!strncmp(name,"__MACOSX/",9) || name[0]=='.' || strstr(name,"/.")!=NULL) continue;
     kind=image_kind(name);
     if(!kind && !equal(name,"ComicInfo.xml")) continue;
