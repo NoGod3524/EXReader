@@ -42,6 +42,13 @@ jobs:
           python3 tests/reader_hosts_integration/final.py --self-test
           python3 tests/reader_hosts_integration/aggregate.py windows --protocol-selftest
           python3 tests/reader_hosts_integration/check_apple_workflows.py
+          python3 tests/reader_hosts_integration/apple.py --self-test
+          python3 - <<'PY'
+          from pathlib import Path
+          import yaml
+          value = yaml.load(Path('.github/workflows/reader-apple-common-evidence.yml').read_text(), Loader=yaml.BaseLoader)
+          assert set(value['on']) == {'workflow_dispatch'} and set(value['jobs']) == {'authenticate'}
+          PY
   compose:
     if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
