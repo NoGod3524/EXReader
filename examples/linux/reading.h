@@ -103,6 +103,9 @@ typedef struct {
   reader_preferences preferences;
   const char *preferences_path;
   int preferences_set;
+#ifdef EXR_READER_PAGE_BACKGROUND
+  int preferences_system_theme; /* Immutable UI platform-theme snapshot for this job. */
+#endif
 #endif
 } reader_command;
 typedef struct { int64_t id;size_t part,start,end;char *text; } reader_note;
@@ -196,6 +199,9 @@ typedef struct {
 #ifdef EXR_READER_PREFERENCES
   reader_preferences preferences;
   int has_preferences;
+#ifdef EXR_READER_PAGE_BACKGROUND
+  int page_system_theme;
+#endif
 #endif
 } reader_result;
 exr_status linux_reader_open(const char *database,const char *font,const exr_control *control,

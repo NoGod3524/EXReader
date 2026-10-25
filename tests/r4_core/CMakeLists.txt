@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(EXReaderAnchorDiagnostic LANGUAGES C CXX)
 list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core)
 add_executable(r4-anchor-probe ../../tools/r4_anchor_probe.c)
 target_link_libraries(r4-anchor-probe PRIVATE EXReader::exr_core m)
 target_compile_options(r4-anchor-probe PRIVATE -Wall -Wextra -Werror)

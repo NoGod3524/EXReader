@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(EXReaderRealMeasurement LANGUAGES C CXX)
 list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
 add_executable(reading-real-benchmark ../../tools/reading_real_benchmark.c)
 target_link_libraries(reading-real-benchmark PRIVATE EXReader::exreader m)
 set_target_properties(reading-real-benchmark PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
