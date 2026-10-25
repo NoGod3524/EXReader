@@ -81,26 +81,52 @@
       "run": 40214594172,
       "attempt": 1,
       "result": "static refused: the verifier asserted byte equality between the packaged JNI blob (288b0efe…) and the same-run sdk-stage blob (88ebe479…); root cause is Gradle stripping prebuilt jniLibs at packaging, not a producer defect",
-      "accepted": false
+      "accepted": false,
+      "static_job": 121232886097,
+      "summary_job": 121233199903,
+      "emulator_job": 121233201079
     },
     {
       "source": "69fc2a90d2a11ba17fd62a1f3d14c321cbfb1291",
       "run": 40214931094,
       "attempt": 1,
       "result": "JNI identity then passed through exports and ELF sections; static still failed on two verifier defects: expected JNI names missed the Java_ prefix, and aapt2's minSdk line did not match parse_badging (AttributeError)",
-      "accepted": false
+      "accepted": false,
+      "static_job": 121233900496,
+      "summary_job": 121234192779,
+      "emulator_job": 121234193740
     },
     {
       "source": "e7b91fa9ccee4e42de8906f2e9da54d5efb2b84d",
       "run": 40218466254,
       "attempt": 1,
       "result": "py_compile SyntaxError at static_apks.py line 307 (a newline escaped into a Python string literal while writing the file); sealed pins and the strip-aware identity checks never executed",
-      "accepted": false
+      "accepted": false,
+      "static_job": 121244630206,
+      "summary_job": 121244683162,
+      "emulator_job": 121244683703
     }
   ],
   "tip_status": {
     "commit_after_fix": "see the branch tip; the one-line print defect is repaired and no fourth run was started (round cap)",
     "rerun": "gh workflow run reader-final-s04.yml --ref codex/reader-fw-s04"
   },
-  "complete_product": false
+  "complete_product": false,
+  "run_attempts": [
+    {
+      "run": 40214594172,
+      "attempt": 1,
+      "source": "d37a9bc6fbedb9e164a2a50aee4dd92098cba8fa"
+    },
+    {
+      "run": 40214931094,
+      "attempt": 1,
+      "source": "69fc2a90d2a11ba17fd62a1f3d14c321cbfb1291"
+    },
+    {
+      "run": 40218466254,
+      "attempt": 1,
+      "source": "e7b91fa9ccee4e42de8906f2e9da54d5efb2b84d"
+    }
+  ]
 }

@@ -76,3 +76,15 @@ gh workflow run reader-final-s04.yml --ref codex/reader-fw-s04
 ## 8. 结论
 
 只做了"读源码 + 设计并实现 + 3 轮云端实跑"。**已证据化的只有**：原工件 ZIP 认证、APK 清单、ZIP/ABI 结构、APK 内 JNI 与同 run SDK stage 的同源身份（导出+section）。**版本/权限/资源/签名与全部实机项都还是 pending**，`accepted=false`，不授商店/签名/真机，也不构成 Android 交付 APK 的整体通过。
+
+## 9. run / attempt / job / artifact 一览（全部 terminal，无 live run）
+
+| source | run / attempt | static job | summary job | emulator job |
+| --- | --- | --- | --- | --- |
+| d37a9bc6 | 40214594172 / 1 | 121232886097 (failure) | 121233199903 (failure) | 121233201079 (skipped) |
+| 69fc2a90 | 40214931094 / 1 | 121233900496 (failure) | 121234192779 (failure) | 121234193740 (skipped) |
+| e7b91fa9 | 40218466254 / 1 | 121244630206 (failure) | 121244683162 (failure) | 121244683703 (skipped) |
+| 52cf775f（tip） | 未跑（[skip ci]，轮次上限） | — | — | — |
+
+工作流自身产出的 artifact（均为本包证据，非 producer 原件）：reader-final-s04-static-<run>-1 / reader-final-s04-emulator-<run>-1 / reader-final-s04-summary-<run>-1。
+producer 原件见第 2 节。没有开 PR、没有推默认分支、没有 tag/Release。
