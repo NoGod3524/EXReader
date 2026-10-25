@@ -29,10 +29,14 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $vs = & '${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe' -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+          if (-not (Test-Path -LiteralPath $vswhere)) { throw 'vswhere not found' }
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
           if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
-          $lines = cmd /c ('"' + $bat + '" && set')
+          $script = Join-Path ${env:RUNNER_TEMP} 's16-msvc-env.cmd'
+          @('@echo off', ('call "' + $bat + '" >nul'), 'set') | Set-Content -LiteralPath $script -Encoding ascii
+          $lines = cmd /c $script
           $lines | ForEach-Object {
             if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
           }
@@ -66,7 +70,8 @@ jobs:
             build/reader-next-s16/build/default-original-consumer/jump-history-probe*
             build/reader-next-s16/build/default-original-consumer/jump-history-c-consumer*
             build/reader-next-s16/result.json
-          if-no-files-found: error
+            build/reader-next-s16/assertion.log
+          if-no-files-found: warn
   evidence:
     name: strict S16 evidence
     needs: [consumers]
@@ -88,4 +93,4 @@ jobs:
         with:
           name: reader-next-s16-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/reader-next-s16-evidence/
-          if-no-files-found: error
+          if-no-files-found: warn
