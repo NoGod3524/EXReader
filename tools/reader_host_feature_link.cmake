@@ -44,13 +44,15 @@ set(EXR_READER_HOST_FEATURE_LINK_INCLUDED 1)
 
 set(EXR_HOST_FEATURE_LINK_VERSION "1.0.0")
 set(EXR_HOST_FEATURE_MODULES annotations font original history sync)
+# One record per imported package: module|package|exact version|imported target.
+# '|' is used because a CMake list value cannot itself contain ';'.
 set(_exr_hfl_packages
-  "annotations;EXReaderAnnotationImport;0.1.0;EXReaderAnnotationImport::reader_annotation_import"
-  "annotations;EXReaderAnnotationExport;0.1.0;EXReaderAnnotationExport::reader_annotation_export"
-  "font;EXReaderFontLibrary;0.1.0;EXReaderFontLibrary::reader_font_library"
-  "original;EXReaderOriginalExport;0.1.0;EXReaderOriginalExport::reader_original_export"
-  "history;EXReaderJumpHistory;0.1.0;EXReaderJumpHistory::reader_jump_history"
-  "sync;EXReaderSyncView;0.1.0;EXReaderSyncView::reader_sync_view")
+  "annotations|EXReaderAnnotationImport|0.1.0|EXReaderAnnotationImport::reader_annotation_import"
+  "annotations|EXReaderAnnotationExport|0.1.0|EXReaderAnnotationExport::reader_annotation_export"
+  "font|EXReaderFontLibrary|0.1.0|EXReaderFontLibrary::reader_font_library"
+  "original|EXReaderOriginalExport|0.1.0|EXReaderOriginalExport::reader_original_export"
+  "history|EXReaderJumpHistory|0.1.0|EXReaderJumpHistory::reader_jump_history"
+  "sync|EXReaderSyncView|0.1.0|EXReaderSyncView::reader_sync_view")
 
 function(_exr_hfl_fail message)
   message(FATAL_ERROR "EXReaderHostFeatureLink: ${message}")
@@ -131,10 +133,11 @@ function(exr_reader_host_feature_link_declare target)
 
   set(_link_targets)
   foreach(_entry IN LISTS _exr_hfl_packages)
-    list(GET _entry 0 _module)
-    list(GET _entry 1 _package)
-    list(GET _entry 2 _version)
-    list(GET _entry 3 _link)
+    string(REPLACE "|" ";" _fields "${_entry}")
+    list(GET _fields 0 _module)
+    list(GET _fields 1 _package)
+    list(GET _fields 2 _version)
+    list(GET _fields 3 _link)
     if(NOT TARGET "${_link}")
       _exr_hfl_fail("module ${_module} is not imported; find_package(${_package} ${_version} EXACT CONFIG REQUIRED) first")
     endif()

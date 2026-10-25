@@ -236,8 +236,10 @@ int seed_annotations(const fs::path &work, const std::string &book_key,
   options.revisions = sender;
   options.book_key = book_key.c_str();
   options.book_title = kBookTitle;
-  options.jsonl_path = jsonl.string().c_str();
-  options.markdown_path = markdown.string().c_str();
+  std::string jsonl_text = jsonl.string();
+  std::string markdown_text = markdown.string();
+  options.jsonl_path = jsonl_text.c_str();
+  options.markdown_path = markdown_text.c_str();
   reader_annotation_export_stats exported{};
   reader_annotation_export_error export_error{};
   counts->export_status = (int)reader_annotation_export_run(&options, &exported, &export_error);
@@ -271,8 +273,8 @@ int seed_annotations(const fs::path &work, const std::string &book_key,
   reader_annotation_import_options import{};
   import.struct_size = sizeof(import);
   import.revisions = receiver;
-  std::string jsonl_text = jsonl.string();
-  import.jsonl_path = jsonl_text.c_str();
+  std::string import_path = jsonl.string();
+  import.jsonl_path = import_path.c_str();
   import.target_book_key = book_key.c_str();
   import.item = preview_item;
   import.metadata = preview_metadata;
