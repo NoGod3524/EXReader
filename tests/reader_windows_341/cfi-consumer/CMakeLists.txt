@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.24)
+project(Windows341OriginalNavigationFixture LANGUAGES C)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core)
+add_executable(navigation-fixture-cfi "${CMAKE_CURRENT_LIST_DIR}/../../reader_windows_navigation/consumer/cfi.c")
+target_compile_options(navigation-fixture-cfi PRIVATE /utf-8 /W4 /WX)
+target_link_libraries(navigation-fixture-cfi PRIVATE EXReader::exr_core)
