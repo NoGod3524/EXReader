@@ -127,9 +127,10 @@ def validate(run, jobs, artifacts, blobs, source, run_id, attempt, module_tree, 
                                   config_text)
             require(bindings == [spec['sdk']], 'installed package SDK binding')
             require(len(re.findall(r'find_dependency\(EXReader ', config_text)) == 1, 'multiple SDK dependencies')
-            sdk_config = z.read('sdk-exreader-config.cmake').decode()
-            require(hashlib.sha256(sdk_config.encode()).hexdigest() == r['sdk_exreader_config_sha256'],
+            sdk_config_bytes = z.read('sdk-exreader-config.cmake')
+            require(hashlib.sha256(sdk_config_bytes).hexdigest() == r['sdk_exreader_config_sha256'],
                     'installed SDK config binding')
+            sdk_config = sdk_config_bytes.decode()
             require('set(EXReader_VERSION "%s")' % spec['sdk'] in sdk_config, 'installed SDK version')
             require(hashlib.sha256(z.read('sdk-font-header.h')).hexdigest() == r['sdk_font_header_sha256'],
                     'installed SDK header binding')
@@ -314,11 +315,11 @@ def negative_tests(run, jobs, artifacts, blobs, source, run_id, attempt, module_
             b[target] = stream.getvalue()
             first['size_in_bytes'] = len(b[target])
             first['digest'] = 'sha256:' + hashlib.sha256(b[target]).hexdigest()
+        current = dict(pinned)
         if case == 'reused-module-differs':
-            pinned = dict(pinned)
-            pinned['src/library.cpp'] = '0' * 40
+            current['src/library.cpp'] = '0' * 40
         try:
-            validate(r, j, a, b, source, run_id, attempt, module_tree, pinned)
+            validate(r, j, a, b, source, run_id, attempt, module_tree, current)
         except (ValueError, KeyError, AssertionError, zipfile.BadZipFile) as error:
             outcomes.append({'case': case, 'rejected': True, 'reason': str(error)})
         else:
@@ -381,7 +382,8 @@ def synthetic(spec, source, run_id, attempt, module_tree, pinned):
                              'readiness_file': 'ready-' + stage})
     command_records = []
     for index, (role, output, okay) in enumerate(commands, 1):
-        files['command-%02d.log' % index] = output.encode()
+        files['command-%02d.log' % index] = (output + '
+').encode()
         arguments = [cname] if role == 'c-consumer' else ['probe', role]
         command_records.append({'number': index, 'role': role, 'arguments': arguments,
                                 'log': 'command-%02d.log' % index,
