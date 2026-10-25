@@ -1223,6 +1223,8 @@ jobs:
             build/hosts-summary/result.json
             build/navigation-probe/input.json
             build/navigation-probe/original-report.json
+            build/navigation-probe/original-pixel-difference.json
+            build/navigation-probe/original-*.png
             build/navigation-probe/openbox.log
             build/navigation-probe/ui/
             build/apple-common-evidence/
