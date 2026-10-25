@@ -444,7 +444,8 @@ def main():
         record('pending_original_is_surfaced_and_never_acknowledged')
 
         missing = Device('待元数据设备')
-        orphan = revision(802, shard=201, kind='progress', key='txt:' + '9' * 64, operation='delete')
+        orphan = revision(802, shard=201, kind='progress', key='txt:' + '9' * 64,
+                          operation='delete', mode='reflow_global')
         orphan_id = seed(missing.db, orphan)
         missing.command('start')
         observed = missing.wait(4, 300)
