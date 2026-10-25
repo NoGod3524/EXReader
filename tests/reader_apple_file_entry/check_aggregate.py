@@ -11,14 +11,14 @@ from pathlib import Path
 import sys
 import zipfile
 
-from evidence import EvidenceError, artifact_name, expected_checks, verify_archive, verify_artifact, verify_report
+from evidence import EvidenceError, artifact_name, expected_checks, verify_archive, verify_artifact, verify_report, verify_jobs, verify_download
 
 SHA, RUN, ATTEMPT = "a" * 40, 4242, 2
 NOW = datetime(2026, 10, 24, tzinfo=timezone.utc)
 
 
 def good_report(platform):
-    expected = expected_checks()
+    expected = expected_checks(platform)
     reports = {}
     for name in ("probe", "consumer"):
         checks = [{"id": i, "result": "pass", "detail": "ok"} for i in expected[name]]
@@ -26,9 +26,10 @@ def good_report(platform):
     total = sum(len(v["checks"]) for v in reports.values())
     digest = lambda text: hashlib.sha256(text.encode()).hexdigest()
     return {"schema": 1, "platform": platform, "accepted": True, "problems": [], "source_sha": SHA,
-            "run_id": str(RUN), "run_attempt": str(ATTEMPT), "job": "native " + platform, "reports": reports,
+            "run_id": str(RUN), "run_attempt": str(ATTEMPT), "job": "native", "reports": reports,
             "total_checks": total, "passed_checks": total, "not_exercised": ["real iCloud"],
             "binaries": {"probe": digest("probe"), "consumer": digest("consumer")},
+            "installed_module_sha256": digest("library"),
             "simulator": None if platform == "macos" else {"fresh_device": True, "boot": 0}}
 
 
@@ -50,9 +51,25 @@ def archive(report, mutate=None, skip=()):
 
 def meta(**override):
     value = {"name": artifact_name("macos", RUN, ATTEMPT), "id": 7, "expired": False, "size_in_bytes": 1000,
-             "expires_at": (NOW + timedelta(days=30)).isoformat(), "workflow_run": {"id": RUN, "head_sha": SHA}}
+             "expires_at": (NOW + timedelta(days=30)).isoformat(), "workflow_run": {"id": RUN, "head_sha": SHA},
+             "digest": "sha256:" + "d" * 64}
     value.update(override)
     return value
+
+
+def good_jobs(**override):
+    names = ["scope and negative regressions", "SDK macos", "SDK iphonesimulator", "native macos", "native iphone", "native ipad"]
+    jobs = [dict(id=index + 1, name=name, status="completed", conclusion="success", head_sha=SHA, run_id=RUN, run_attempt=ATTEMPT)
+            for index, name in enumerate(names)]
+    jobs[0].update(override)
+    return jobs
+
+
+def duplicate_zip():
+    data = io.BytesIO(archive(good_report("macos")))
+    with zipfile.ZipFile(data, "a") as target:
+        target.writestr("out/report.json", b"{}")
+    return data.getvalue()
 
 
 def rejects(label, code, action):
@@ -84,6 +101,12 @@ def main():
         results.append({"id": f"accepts-complete-{platform}-evidence", "result": "pass"})
     verify_artifact(meta(), "macos", SHA, RUN, ATTEMPT, NOW)
     results.append({"id": "accepts-matching-artifact-metadata", "result": "pass"})
+    verify_jobs(good_jobs(), SHA, RUN, ATTEMPT)
+    results.append({"id": "accepts-authenticated-upstream-jobs", "result": "pass"})
+    data = archive(good_report("macos"))
+    download_meta = meta(size_in_bytes=len(data), digest="sha256:" + hashlib.sha256(data).hexdigest())
+    verify_download(data, download_meta)
+    results.append({"id": "accepts-api-bound-zip-bytes", "result": "pass"})
 
     def check(report):
         verify_report(report, "macos", SHA, RUN, ATTEMPT)
@@ -119,6 +142,21 @@ def main():
         ("rejects-path-traversal-member", "zip_path", lambda: verify_archive(archive(good_report("macos"), lambda f: f.update({"../escape": b"x"})), "macos", SHA, RUN, ATTEMPT)),
         ("rejects-corrupt-zip", "zip_invalid", lambda: verify_archive(b"not a zip", "macos", SHA, RUN, ATTEMPT)),
         ("rejects-duplicate-json-key", "json_duplicate_key", lambda: verify_archive(archive(good_report("macos"), lambda f: f.update({"out/report.json": b'{"schema":1,"schema":1}'})), "macos", SHA, RUN, ATTEMPT)),
+        ("rejects-missing-api-digest", "artifact_digest", lambda: verify_artifact(meta(digest=None), "macos", SHA, RUN, ATTEMPT, NOW)),
+        ("rejects-api-size-mismatch", "download_size", lambda: verify_download(data + b"x", download_meta)),
+        ("rejects-api-digest-mismatch", "download_digest", lambda: verify_download(data[:-1] + bytes([data[-1] ^ 1]), download_meta)),
+        ("rejects-duplicate-zip-member", "zip_member", lambda: verify_archive(duplicate_zip(), "macos", SHA, RUN, ATTEMPT)),
+        ("rejects-second-report", "zip_report_duplicate", lambda: verify_archive(archive(good_report("macos"), lambda f: f.update({"other/report.json": b"{}"})), "macos", SHA, RUN, ATTEMPT)),
+        ("rejects-installed-module-swapped", "installed_module_digest_mismatch", lambda: verify_archive(archive(good_report("macos"), lambda f: f.update({"prefix/lib/libEXRFileEntry.a": b"other"})), "macos", SHA, RUN, ATTEMPT)),
+        ("rejects-result-text-failure-with-same-count", "result_file_mismatch", lambda: verify_archive(archive(good_report("macos"), lambda f: f.update({"out/evidence/probe/result.txt": f["out/evidence/probe/result.txt"].replace(b" pass ", b" fail ", 1)})), "macos", SHA, RUN, ATTEMPT)),
+        ("rejects-wrong-job-label", "report_job", lambda: check(mutated("macos", lambda r: r.update(job="sdk")))),
+        ("rejects-missing-upstream-job", "job_unique", lambda: verify_jobs(good_jobs()[1:], SHA, RUN, ATTEMPT)),
+        ("rejects-duplicate-upstream-job", "job_unique", lambda: verify_jobs(good_jobs() + [good_jobs()[0]], SHA, RUN, ATTEMPT)),
+        ("rejects-running-upstream-job", "job_success", lambda: verify_jobs(good_jobs(status="in_progress"), SHA, RUN, ATTEMPT)),
+        ("rejects-failed-upstream-job", "job_success", lambda: verify_jobs(good_jobs(conclusion="failure"), SHA, RUN, ATTEMPT)),
+        ("rejects-wrong-source-job", "job_identity", lambda: verify_jobs(good_jobs(head_sha="b" * 40), SHA, RUN, ATTEMPT)),
+        ("rejects-wrong-run-job", "job_identity", lambda: verify_jobs(good_jobs(run_id=1), SHA, RUN, ATTEMPT)),
+        ("rejects-wrong-attempt-job", "job_identity", lambda: verify_jobs(good_jobs(run_attempt=1), SHA, RUN, ATTEMPT)),
     ]
     for label, code, action in negatives:
         results.append(rejects(label, code, action))

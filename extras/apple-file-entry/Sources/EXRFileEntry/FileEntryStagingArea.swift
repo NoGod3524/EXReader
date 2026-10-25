@@ -64,6 +64,12 @@ public final class FileEntryStagingArea {
         self.hooks = hooks
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
+        var directoryInfo = stat()
+        guard lstat(directory.path, &directoryInfo) == 0,
+              (directoryInfo.st_mode & 0o170000) == 0o040000,
+              directoryInfo.st_uid == geteuid(), chmod(directory.path, 0o700) == 0 else {
+            throw FileEntryError.accessDenied
+        }
         var root = directory
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
@@ -152,9 +158,13 @@ public final class FileEntryStagingArea {
     public func stageInBackground(urls: [URL], origin: FileEntryRequest.Origin = .picker,
                                   cancellation: FileEntryCancellation = FileEntryCancellation(),
                                   completion: @escaping ([Result<FileEntryRequest, FileEntryError>]) -> Void) {
+        // Enqueue under the same lock as close: all pre-close callbacks must
+        // have drained before close returns. Later calls still receive .closed.
+        lock.lock()
         worker.async {
             completion(self.stage(urls: urls, origin: origin, cancellation: cancellation))
         }
+        lock.unlock()
     }
 
     // MARK: Ownership
@@ -170,7 +180,8 @@ public final class FileEntryStagingArea {
             guard Self.isID(id), let manifest = readManifest(id: id), manifest.id == id else { continue }
             let path = dataPath(id)
             var info = stat()
-            guard stat(path, &info) == 0, UInt64(info.st_size) == manifest.byteCount else { continue }
+            guard lstat(path, &info) == 0, (info.st_mode & 0o170000) == 0o100000,
+                  info.st_size >= 0, UInt64(info.st_size) == manifest.byteCount else { continue }
             if verifyContents, Self.hash(file: path) != manifest.sha256 { continue }
             found.append(FileEntryRequest(id: id, stagedPath: path, displayName: manifest.displayName,
                                           byteCount: manifest.byteCount, sha256: manifest.sha256,
@@ -186,17 +197,18 @@ public final class FileEntryStagingArea {
     /// after the SDK import committed or when the user dropped the request.
     public func release(_ request: FileEntryRequest) {
         guard Self.isID(request.id) else { return }
+        lock.lock()
+        defer { lock.unlock() }
         let data = dataPath(request.id), manifest = manifestPath(request.id)
         var info = stat()
         let had = stat(manifest, &info) == 0
         let size = readManifest(id: request.id)?.byteCount ?? 0
-        unlink(data)
-        unlink(manifest)
-        if had {
-            lock.lock()
+        // Do not free a reservation unless the pair was actually removed.
+        if unlink(data) != 0 && errno != ENOENT { return }
+        let removed = unlink(manifest) == 0
+        if had && removed {
             pendingCount = max(0, pendingCount - 1)
             pendingBytes = pendingBytes >= size ? pendingBytes - size : 0
-            lock.unlock()
         }
     }
 
@@ -206,9 +218,8 @@ public final class FileEntryStagingArea {
     @discardableResult
     public func sweepOrphans() -> Int {
         lock.lock()
-        let busy = !running.isEmpty
-        lock.unlock()
-        if busy { return 0 }
+        defer { lock.unlock() }
+        if !running.isEmpty { return 0 }
         guard let names = try? FileManager.default.contentsOfDirectory(atPath: directory.path) else { return 0 }
         let committed = Set(pendingRequests().map { $0.id })
         var removed = 0
@@ -222,6 +233,9 @@ public final class FileEntryStagingArea {
             guard Self.isID(id) else { continue }
             if temporary || !committed.contains(id), unlink(path) == 0 { removed += 1 }
         }
+        let remaining = pendingRequests()
+        pendingCount = remaining.count
+        pendingBytes = remaining.reduce(0) { $0 + $1.byteCount }
         return removed
     }
 
@@ -236,6 +250,7 @@ public final class FileEntryStagingArea {
         lock.unlock()
         for item in active { item.cancel() }
         running_group.wait()
+        worker.sync {} // Includes callbacks and queued-but-not-started batches.
     }
 
     // MARK: Internals
@@ -268,14 +283,10 @@ public final class FileEntryStagingArea {
         reservedBytes += bytes
     }
 
-    private func unreserve(_ bytes: UInt64, committed: Bool) {
+    private func unreserve(_ bytes: UInt64) {
         lock.lock()
         reservedCount -= 1
         reservedBytes -= bytes
-        if committed {
-            pendingCount += 1
-            pendingBytes += bytes
-        }
         lock.unlock()
     }
 
@@ -283,8 +294,15 @@ public final class FileEntryStagingArea {
     private func manifestPath(_ id: String) -> String { directory.appendingPathComponent(id + ".json").path }
 
     private func readManifest(id: String) -> Manifest? {
+        var info = stat()
+        guard lstat(manifestPath(id), &info) == 0, (info.st_mode & 0o170000) == 0o100000,
+              info.st_size > 0 && info.st_size <= 65_536 else { return nil }
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath(id))) else { return nil }
-        return try? JSONDecoder().decode(Manifest.self, from: data)
+        guard let manifest = try? JSONDecoder().decode(Manifest.self, from: data), manifest.version == 1,
+              manifest.byteCount <= FileEntryLimits.maxFileBytes,
+              manifest.sha256.utf8.count == 64,
+              manifest.sha256.utf8.allSatisfy({ (0x30...0x39).contains($0) || (0x61...0x66).contains($0) }) else { return nil }
+        return manifest
     }
 
     /// Last path component as the file system names it (the bytes of the file-system
@@ -344,8 +362,8 @@ public final class FileEntryStagingArea {
         }
     }
 
-    private static func sync(_ descriptor: Int32) {
-        if fcntl(descriptor, F_FULLFSYNC) == -1 { _ = fsync(descriptor) }
+    private static func sync(_ descriptor: Int32) -> Bool {
+        return fcntl(descriptor, F_FULLFSYNC) == 0 || fsync(descriptor) == 0
     }
 
     private static func writeAll(_ descriptor: Int32, _ buffer: UnsafeRawPointer, _ count: Int) -> Bool {
@@ -356,6 +374,7 @@ public final class FileEntryStagingArea {
                 if errno == EINTR { continue }
                 return false
             }
+            if written == 0 { errno = EIO; return false }
             done += written
         }
         return true
@@ -371,12 +390,12 @@ public final class FileEntryStagingArea {
         var before = stat()
         if fstat(input, &before) != 0 { return .failure(Self.fail("stat-source")) }
         if (before.st_mode & 0o170000) != 0o100000 { return .failure(.notRegularFile) }
-        let size = UInt64(before.st_size)
+        guard before.st_size >= 0 else { return .failure(.changedDuringCopy) }
+        let size = hooks.reportedSize?(UInt64(before.st_size)) ?? UInt64(before.st_size)
         let limit = min(maxFileBytes, format?.byteLimit ?? FileEntryLimits.maxFileBytes)
         if size > limit { return .failure(.tooLarge(limit: limit)) }
         do { try reserve(size) } catch { return .failure(.tooManyPending) }
-        var committed = false
-        defer { unreserve(size, committed: committed) }
+        defer { unreserve(size) }
 
         let id = UUID().uuidString.lowercased()
         let temp = directory.appendingPathComponent(".tmp-" + id + ".data").path
@@ -417,7 +436,7 @@ public final class FileEntryStagingArea {
             || after.st_mtimespec.tv_nsec != before.st_mtimespec.tv_nsec {
             return .failure(.changedDuringCopy)
         }
-        Self.sync(output)
+        if !Self.sync(output) { return .failure(Self.fail("sync-staged")) }
         if Darwin.close(output) != 0 { outputOpen = false; return .failure(Self.fail("close-staged")) }
         outputOpen = false
 
@@ -442,9 +461,16 @@ public final class FileEntryStagingArea {
             guard let base = raw.baseAddress else { return true }
             return Self.writeAll(manifestOut, base, raw.count)
         }
-        Self.sync(manifestOut)
-        Darwin.close(manifestOut)
-        if !wrote || rename(manifestTemp, manifestPath(id)) != 0 {
+        let synced = Self.sync(manifestOut)
+        let closedManifest = Darwin.close(manifestOut) == 0
+        lock.lock()
+        defer { lock.unlock() }
+        if closed || cancellation.isCancelled {
+            unlink(manifestTemp)
+            unlink(dataFinal)
+            return .failure(.cancelled)
+        }
+        if !wrote || !synced || !closedManifest || rename(manifestTemp, manifestPath(id)) != 0 {
             let error = Self.fail("publish-manifest")
             unlink(manifestTemp)
             unlink(dataFinal)
@@ -452,10 +478,11 @@ public final class FileEntryStagingArea {
         }
         let folder = open(directory.path, O_RDONLY | O_CLOEXEC)
         if folder >= 0 {
-            Self.sync(folder)
+            _ = Self.sync(folder)
             Darwin.close(folder)
         }
-        committed = true
+        pendingCount += 1
+        pendingBytes += size
         return .success(FileEntryRequest(id: id, stagedPath: dataFinal, displayName: displayName, byteCount: size,
                                          sha256: digest, format: format, origin: origin))
     }

@@ -34,7 +34,7 @@ private var pickerRetainKey: UInt8 = 0
 /// not copies (asCopy is false), so the scope pairing is done by the staging
 /// area, not here.
 public final class FileEntryPicker: NSObject, UIDocumentPickerDelegate {
-    private let completion: ([URL]) -> Void
+    private var completion: (([URL]) -> Void)?
 
     private init(completion: @escaping ([URL]) -> Void) {
         self.completion = completion
@@ -44,20 +44,36 @@ public final class FileEntryPicker: NSObject, UIDocumentPickerDelegate {
     /// user cancelled). The picker retains itself until then.
     public static func present(from presenter: UIViewController, allowsMultipleSelection: Bool = true,
                                completion: @escaping ([URL]) -> Void) {
+        let controller = makeController(allowsMultipleSelection: allowsMultipleSelection, completion: completion)
+        presenter.present(controller, animated: true)
+    }
+
+    /// Build the system controller for a host-managed presentation. The
+    /// delegate consumes its completion once, before invoking it: duplicate or
+    /// reentrant callbacks from an older controller cannot hand off URLs twice.
+    /// Create and use on the main thread, like present(from:).
+    public static func makeController(allowsMultipleSelection: Bool = true,
+                                      completion: @escaping ([URL]) -> Void) -> UIDocumentPickerViewController {
         let controller = UIDocumentPickerViewController(forOpeningContentTypes: FileEntryTypes.openTypes, asCopy: false)
         controller.allowsMultipleSelection = allowsMultipleSelection
         let delegate = FileEntryPicker(completion: completion)
         controller.delegate = delegate
         objc_setAssociatedObject(controller, &pickerRetainKey, delegate, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-        presenter.present(controller, animated: true)
+        return controller
     }
 
     public func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        completion(urls)
+        finish(urls)
     }
 
     public func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        completion([])
+        finish([])
+    }
+
+    private func finish(_ urls: [URL]) {
+        let callback = completion
+        completion = nil
+        callback?(urls)
     }
 }
 #elseif os(macOS)
@@ -73,7 +89,10 @@ public enum FileEntryPicker {
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = allowsMultipleSelection
         panel.allowedContentTypes = FileEntryTypes.openTypes
+        var delivered = false
         let finish: (NSApplication.ModalResponse) -> Void = { response in
+            guard !delivered else { return }
+            delivered = true
             completion(response == .OK ? panel.urls : [])
         }
         if let window = window {

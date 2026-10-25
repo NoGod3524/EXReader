@@ -73,7 +73,30 @@ bash extras/apple-file-entry/install.sh <prefix> macos|iphonesimulator
 SDK事务失败或取消时暂存请求保留，宿主可重试或`release`；SDK已提交的结果优先于取消。
 Inbox原件在暂存成功后是否删除由宿主决定，建议只在SDK导入持久成功后调用`removeOriginal`。
 
-## 验收
+## T04 定向复审（新源码验收待 Actions）
+
+复审固定起点为`3c355b4ea3faab974861f4863893c6018653740c`，独占分支
+`codex/dot-apple-file-entry-review`。已用 GitHub API 核实下节原 run 的七个作业确为
+同 source/run/attempt 的 completed/success，原交回 HEAD 相对原受测 SHA 只有本页与验收 JSON。
+原始运行和失败记录保留；下节绿灯不授予此次修改。
+
+定向修复：关闭排空关闭前入队的后台批次及完成回调（仍禁止从完成回调内调用`close()`）；
+已经提交的结果仍优先，关闭后的新调用仍异步收到`.closed`。iOS picker 的 delegate
+先消耗一次性回调再执行，旧控制器的重复/重入事件不能重复移交；新增`makeController`供宿主管理呈现。
+macOS 系统 completion 同样防重复，但系统面板 UI 仍未驱动。
+提交清单与 pending 记账在同一锁内完成；并发 release 幂等，sweep 与新复制互斥；
+文件 fsync/close 失败不得作为成功提交。清单发布前再次检查关闭/取消，目录 fsync 仍为尽力操作，
+不授予断电耐久性。恢复只接受 version 1、合法摘要、至多64 KiB的普通清单及非符号链接普通数据文件；
+已有暂存目录须属于当前用户，收紧至0700且拒绝符号链接。调用方须保持目录及祖先路径稳定，
+一个目录只允许一个可变 owner（并非跨进程共享队列）。
+
+新增真实进程在首块复制后`_exit(73)`、另一 invocation 重开并清理实际半成品的回归；
+未知/小报长度通过独立 seam 验证一直读至EOF、发现超出声明长度即拒绝，不静默截断。
+此 seam 不替代真实 iCloud/File Provider 权限撤销测试。
+严格汇总新增真实作业 source/run/attempt 认证、API ZIP大小及SHA-256核对、重复 ZIP成员/报告拒绝、
+逐行原始结果与报告一致性以及安装模块摘要绑定，并保留原全部具名用例。
+
+## 原 J05 验收（历史源码）
 
 受测源码`cb0dcfc854ea33caa7b86750279344a6e3515f2d`，
 [run40147364965](https://github.com/NoGod3524/EXReader/actions/runs/40147364965)（attempt 1）七作业同次成功：

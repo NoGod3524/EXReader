@@ -6,6 +6,9 @@
 import Foundation
 import CryptoKit
 import EXRFileEntry
+#if os(iOS)
+import UIKit
+#endif
 
 struct Fail: Error { let message: String }
 
@@ -170,6 +173,18 @@ let expectations = try! JSONSerialization.jsonObject(with: Data(contentsOf: root
 let fixtures = expectations["fixtures"] as! [String: [String: Any]]
 let fixtureRoot = root.appendingPathComponent("fixtures", isDirectory: true)
 let chunk = FileEntryLimits.copyChunkBytes
+
+// A separate invocation really terminates mid-copy. The normal invocation
+// below reopens that same directory; this is not a fabricated orphan fixture.
+if arguments.last == "--terminate-mid-copy" {
+    let directory = root.appendingPathComponent("terminated-stage", isDirectory: true)
+    let area = makeArea(directory, hooks: FileEntryHooks(afterChunk: { _, _ in
+        try! Data("terminated-after-first-chunk".utf8).write(to: root.appendingPathComponent("termination-marker"))
+        _exit(73)
+    }))
+    _ = stage(area, fixtureRoot.appendingPathComponent("multi-chunk.epub"))
+    exit(74)
+}
 
 // MARK: checks
 
@@ -747,6 +762,121 @@ run("inbox-candidates-filter-sort-cap-and-explicit-removal") {
     for index in 0..<(FileEntryLimits.maxInboxEntries + 4) { put(crowded.appendingPathComponent(String(format: "n%03d.txt", index)), [1]) }
     try expect(FileEntryInbox.candidates(documentsDirectory: crowded).count == FileEntryLimits.maxInboxEntries, "cap")
 }
+
+run("underreported-zero-and-short-length-never-silently-truncates") {
+    let dirs = scratch()
+    let source = dirs.src.appendingPathComponent("provider.epub")
+    put(source, pattern(chunk * 2 + 1, seed: 151))
+    for reported in [UInt64(0), UInt64(7), UInt64(chunk)] {
+        let staging = scratch().stage
+        let area = makeArea(staging, hooks: FileEntryHooks(reportedSize: { _ in reported }))
+        try expect(try failed(stage(area, source)) == .changedDuringCopy, "small length was accepted")
+        try expect(entries(staging).isEmpty && area.pendingRequests().isEmpty, "partial request remains")
+    }
+}
+
+run("close-drains-old-background-callbacks-and-queued-batches") {
+    let dirs = scratch()
+    let source = dirs.src.appendingPathComponent("queued.txt"); put(source, [1, 2, 3])
+    let area = makeArea(dirs.stage)
+    let entered = DispatchSemaphore(value: 0), releaseCallback = DispatchSemaphore(value: 0)
+    let closeReturned = DispatchSemaphore(value: 0), queuedDone = Counter()
+    var first: [Staged] = [], second: [Staged] = []
+    area.stageInBackground(urls: [source]) { results in
+        first = results
+        entered.signal()
+        releaseCallback.wait()
+    }
+    try expect(entered.wait(timeout: .now() + 30) == .success, "first callback did not enter")
+    area.stageInBackground(urls: [source]) { second = $0; queuedDone.bump() }
+    DispatchQueue.global().async { area.close(); closeReturned.signal() }
+    let premature = closeReturned.wait(timeout: .now() + 0.3) == .success
+    releaseCallback.signal()
+    if !premature { try expect(closeReturned.wait(timeout: .now() + 30) == .success, "close did not finish") }
+    try expect(!premature, "close returned before old callback finished")
+    try expect(queuedDone.count == 1, "queued callback outlived close")
+    _ = try succeeded(first[0]) // A committed result wins; close does not revoke it.
+    try expect(try failed(second[0]) == .closed, "queued work started after close")
+    try expect(makeArea(dirs.stage).pendingRequests(verifyContents: true).count == 1, "committed request lost")
+}
+
+run("concurrent-release-does-not-free-another-request-budget") {
+    let dirs = scratch(), area = makeArea(scratch().stage, maxBytes: 20_000)
+    let a = dirs.src.appendingPathComponent("a.txt"), b = dirs.src.appendingPathComponent("b.txt")
+    put(a, pattern(8000, seed: 157)); put(b, pattern(12_000, seed: 159))
+    let released = try succeeded(stage(area, a)), kept = try succeeded(stage(area, b))
+    let group = DispatchGroup()
+    for _ in 0..<32 { group.enter(); DispatchQueue.global().async { area.release(released); group.leave() } }
+    try expect(group.wait(timeout: .now() + 30) == .success, "release timeout")
+    _ = try succeeded(stage(area, a))
+    try expect(try failed(stage(area, a)) == .tooManyPending, "released another request budget")
+    try expect(bytes(kept.stagedPath).count == 12_000, "other data removed")
+}
+
+run("recovery-rejects-foreign-manifest-version-and-data-symlink") {
+    let dirs = scratch(), area = makeArea(scratch().stage)
+    let source = dirs.src.appendingPathComponent("recover.txt"); put(source, [1, 2, 3])
+    let request = try succeeded(stage(area, source))
+    let manifest = area.directory.appendingPathComponent(request.id + ".json")
+    var object = try JSONSerialization.jsonObject(with: Data(contentsOf: manifest)) as! [String: Any]
+    object["version"] = 2
+    try JSONSerialization.data(withJSONObject: object).write(to: manifest)
+    try expect(area.pendingRequests().isEmpty, "unsupported manifest accepted")
+    object["version"] = 1
+    try JSONSerialization.data(withJSONObject: object).write(to: manifest)
+    unlink(request.stagedPath)
+    try expect(symlink(source.path, request.stagedPath) == 0, "symlink")
+    try expect(area.pendingRequests(verifyContents: true).isEmpty, "external bytes accepted as private staging")
+    try expect(area.sweepOrphans() == 2, "invalid pair not swept")
+    try expect(bytes(source.path) == Data([1, 2, 3]), "external target deleted")
+}
+
+run("existing-staging-directory-hardened-and-symlink-refused") {
+    let dirs = scratch()
+    try FileManager.default.createDirectory(at: dirs.stage, withIntermediateDirectories: true)
+    chmod(dirs.stage.path, 0o755)
+    _ = try FileEntryStagingArea(directory: dirs.stage)
+    var info = stat(); stat(dirs.stage.path, &info)
+    try expect(info.st_mode & 0o777 == 0o700, "existing directory remained public")
+    let link = dirs.src.appendingPathComponent("staging-link")
+    try expect(symlink(dirs.stage.path, link.path) == 0, "symlink")
+    do {
+        _ = try FileEntryStagingArea(directory: link)
+        throw Fail(message: "symlink staging accepted")
+    } catch is FileEntryError { }
+}
+
+run("terminated-copy-reopen-sweeps-real-partial-data") {
+    let directory = root.appendingPathComponent("terminated-stage", isDirectory: true)
+    try expect(bytes(root.appendingPathComponent("termination-marker").path) == Data("terminated-after-first-chunk".utf8), "no terminated process marker")
+    let area = makeArea(directory)
+    try expect(area.pendingRequests().isEmpty, "partial copy was committed")
+    try expect(entries(directory).count == 1 && entries(directory)[0].hasPrefix(".tmp-"), "missing real partial file")
+    try expect(area.sweepOrphans() == 1 && entries(directory).isEmpty, "real partial data not swept")
+    let request = try succeeded(stage(area, fixtureRoot.appendingPathComponent("multi-chunk.epub")))
+    try expect(request.sha256 == fixtures["multi-chunk.epub"]!["sha256"] as! String, "recovery retry bytes")
+}
+
+#if os(iOS)
+run("picker-old-duplicate-and-reentrant-delegate-callbacks-consumed-once") {
+    let url = URL(fileURLWithPath: "/tmp/picker.txt")
+    var count = 0
+    var old: UIDocumentPickerViewController!
+    old = FileEntryPicker.makeController { urls in
+        count += 1
+        old.delegate?.documentPickerWasCancelled?(old)
+    }
+    let delegate = old.delegate!
+    delegate.documentPicker?(old, didPickDocumentsAt: [url])
+    delegate.documentPicker?(old, didPickDocumentsAt: [url])
+    delegate.documentPickerWasCancelled?(old)
+    try expect(count == 1, "old generation delivered more than once")
+    let newer = FileEntryPicker.makeController { urls in count += 1 }
+    newer.delegate?.documentPickerWasCancelled?(newer)
+    delegate.documentPicker?(old, didPickDocumentsAt: [url])
+    try expect(count == 2, "old callback affected newer selection")
+}
+#endif
 
 try! output.joined(separator: "\n").appending("\n").write(toFile: resultPath, atomically: true, encoding: .utf8)
 let failures = output.filter { $0.contains(" fail ") }.count

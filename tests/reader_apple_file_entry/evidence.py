@@ -37,8 +37,27 @@ def decode(data):
         raise EvidenceError("json_decode")
 
 
-def expected_checks():
-    return decode((HERE / "expected_checks.json").read_bytes())
+def expected_checks(platform="macos"):
+    checks = decode((HERE / "expected_checks.json").read_bytes())
+    if platform != "macos":
+        checks["probe"] += checks["probe_ios"]
+    return checks
+
+
+def verify_jobs(jobs, sha, run_id, attempt):
+    required = ["scope and negative regressions", "SDK macos", "SDK iphonesimulator"] + [f"native {p}" for p in PLATFORMS]
+    found = {}
+    for name in required:
+        rows = [job for job in jobs if job.get("name") == name]
+        need(len(rows) == 1, "job_unique")
+        job = rows[0]
+        need(job.get("status") == "completed" and job.get("conclusion") == "success", "job_success")
+        need(job.get("head_sha") == sha and job.get("run_id") == int(run_id)
+             and job.get("run_attempt") == int(attempt), "job_identity")
+        need(type(job.get("id")) is int and job["id"] > 0, "job_id")
+        found[name] = job["id"]
+    need(len(set(found.values())) == len(found), "job_duplicate_id")
+    return found
 
 
 def artifact_name(platform, run_id, attempt):
@@ -51,10 +70,16 @@ def verify_artifact(meta, platform, sha, run_id, attempt, now=None):
     need(meta.get("name") == artifact_name(platform, run_id, attempt), "artifact_name")
     need(type(meta.get("id")) is int and not meta.get("expired"), "artifact_expired")
     need(type(meta.get("size_in_bytes")) is int and 0 < meta["size_in_bytes"] <= MAX_ZIP, "artifact_size")
+    need(re.fullmatch(r"sha256:[0-9a-f]{64}", str(meta.get("digest", ""))) is not None, "artifact_digest")
     run = meta.get("workflow_run") or {}
     need(run.get("id") == int(run_id) and run.get("head_sha") == sha, "artifact_run")
     expires = datetime.fromisoformat(meta["expires_at"].replace("Z", "+00:00"))
     need(expires > now, "artifact_expiry")
+
+
+def verify_download(data, meta):
+    need(len(data) == meta["size_in_bytes"], "download_size")
+    need("sha256:" + hashlib.sha256(data).hexdigest() == meta["digest"], "download_digest")
 
 
 def read_zip(data):
@@ -64,8 +89,10 @@ def read_zip(data):
         archive = zipfile.ZipFile(io.BytesIO(data))
     except zipfile.BadZipFile:
         raise EvidenceError("zip_invalid")
-    members = {}
+    members, names = {}, set()
     for info in archive.infolist():
+        need(info.filename not in names, "zip_member")
+        names.add(info.filename)
         if info.is_dir():
             continue
         name = info.filename
@@ -81,7 +108,8 @@ def verify_report(report, platform, sha, run_id, attempt):
     need(str(report.get("run_id")) == str(run_id) and str(report.get("run_attempt")) == str(attempt), "report_run")
     need(report.get("platform") == platform, "report_platform")
     need(report.get("accepted") is True and report.get("problems") == [], "report_not_accepted")
-    expected = expected_checks()
+    expected = expected_checks(platform)
+    need(report.get("job") == "native", "report_job")
     need(set(report.get("reports", {})) == {"probe", "consumer"}, "report_sections")
     total = 0
     for name in ("probe", "consumer"):
@@ -97,6 +125,7 @@ def verify_report(report, platform, sha, run_id, attempt):
     need(type(pending) is list and pending and all(type(item) is str and item for item in pending), "pending_not_listed")
     binaries = report.get("binaries")
     need(type(binaries) is dict and all(re.fullmatch(r"[0-9a-f]{64}", str(binaries.get(n, ""))) for n in ("probe", "consumer")), "binary_digests")
+    need(re.fullmatch(r"[0-9a-f]{64}", str(report.get("installed_module_sha256", ""))) is not None, "module_digest")
     if platform != "macos":
         simulator = report.get("simulator") or {}
         need(simulator.get("fresh_device") is True and simulator.get("boot") == 0, "simulator_not_fresh")
@@ -109,6 +138,7 @@ def verify_archive(data, platform, sha, run_id, attempt):
     """Zip bytes -> verified report; binaries inside the zip must match the report."""
     members = read_zip(data)
     need("out/report.json" in members, "zip_report_missing")
+    need([name for name in members if Path(name).name == "report.json"] == ["out/report.json"], "zip_report_duplicate")
     report = decode(members["out/report.json"])
     total = verify_report(report, platform, sha, run_id, attempt)
     for name in ("probe", "consumer"):
@@ -117,8 +147,10 @@ def verify_archive(data, platform, sha, run_id, attempt):
     for name in ("probe", "consumer"):
         need(("out/evidence/%s/result.txt" % name) in members, "zip_result_missing")
         lines = [l for l in members["out/evidence/%s/result.txt" % name].decode("utf-8").splitlines() if l.startswith("check ")]
-        need(len(lines) == len(report["reports"][name]["checks"]), "result_file_mismatch")
+        expected = [f"check {c['id']} {c['result']} {c['detail']}" for c in report["reports"][name]["checks"]]
+        need(lines == expected, "result_file_mismatch")
     need("prefix/lib/libEXRFileEntry.a" in members, "installed_module_missing")
+    need(hashlib.sha256(members["prefix/lib/libEXRFileEntry.a"]).hexdigest() == report["installed_module_sha256"], "installed_module_digest_mismatch")
     return report, total
 
 

@@ -1,7 +1,7 @@
 name: Apple file entry
 on:
   push:
-    branches: [codex/reader-apple-file-entry]
+    branches: [codex/dot-apple-file-entry-review]
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,7 +10,7 @@ defaults:
   run:
     shell: bash
 env:
-  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  START_SHA: 3c355b4ea3faab974861f4863893c6018653740c
   FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
 jobs:
   guard:
@@ -48,6 +48,7 @@ jobs:
       - name: Build and install the unchanged public SDK
         run: |
           set -o pipefail
+          bash tests/reader_apple_file_entry/check_scope.sh
           mkdir -p build/logs
           target='${{ matrix.target }}'
           flags=()
@@ -134,6 +135,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen trees and package-only changes
+        run: bash tests/reader_apple_file_entry/check_scope.sh
       - name: Strictly bind reports, installed modules and actual ZIPs to this run
         working-directory: tests/reader_apple_file_entry
         env:

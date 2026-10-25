@@ -186,13 +186,18 @@ public struct FileEntryHooks {
     /// Called on the copying thread after each chunk with its zero-based index
     /// and the source URL. Must not call close() on the staging area.
     public var afterChunk: ((Int, URL) -> Void)?
+    /// Test-only provider length seam. Live copies use fstat directly and read
+    /// through EOF; an under-reported length must never truncate a request.
+    public var reportedSize: ((UInt64) -> UInt64)?
 
     public init(scope: FileEntryScopeAccess = LiveScopeAccess(),
                 ubiquity: @escaping (URL) -> FileEntryUbiquity = FileEntryHooks.liveUbiquity,
-                afterChunk: ((Int, URL) -> Void)? = nil) {
+                afterChunk: ((Int, URL) -> Void)? = nil,
+                reportedSize: ((UInt64) -> UInt64)? = nil) {
         self.scope = scope
         self.ubiquity = ubiquity
         self.afterChunk = afterChunk
+        self.reportedSize = reportedSize
     }
 
     public static var live: FileEntryHooks { FileEntryHooks() }

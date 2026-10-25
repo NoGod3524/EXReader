@@ -32,8 +32,15 @@
     "tampered-or-shortened-staging-detected-on-reopen",
     "release-removes-only-its-own-staged-pair-and-is-idempotent",
     "staging-directory-private-and-excluded-from-backup",
-    "inbox-candidates-filter-sort-cap-and-explicit-removal"
+    "inbox-candidates-filter-sort-cap-and-explicit-removal",
+    "underreported-zero-and-short-length-never-silently-truncates",
+    "close-drains-old-background-callbacks-and-queued-batches",
+    "concurrent-release-does-not-free-another-request-budget",
+    "recovery-rejects-foreign-manifest-version-and-data-symlink",
+    "existing-staging-directory-hardened-and-symlink-refused",
+    "terminated-copy-reopen-sweeps-real-partial-data"
   ],
+  "probe_ios": ["picker-old-duplicate-and-reentrant-delegate-callbacks-consumed-once"],
   "consumer": [
     "format-txt-stage-import-readback",
     "format-html-stage-import-readback",

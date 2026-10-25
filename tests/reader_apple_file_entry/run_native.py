@@ -101,12 +101,12 @@ def pick_device(platform):
     return runtime, types[-1]
 
 
-def run_binary(args, name, work, logs, udid):
+def run_binary(args, name, work, logs, udid, extra=()):
     result = work / f"{name}-result.txt"
-    command = [str(Path(args.out) / name), str(work), str(result)]
+    command = [str(Path(args.out) / name), str(work), str(result)] + list(extra)
     if udid:
         command = ["xcrun", "simctl", "spawn", udid] + command
-    log = logs / f"run-{name}.log"
+    log = logs / (f"terminate-{name}.log" if extra else f"run-{name}.log")
     with log.open("w", encoding="utf-8") as stream:
         process = subprocess.Popen(command, stdout=stream, stderr=subprocess.STDOUT, text=True)
         try:
@@ -148,6 +148,8 @@ def main():
     logs = out / "logs"
     logs.mkdir(parents=True)
     expected = json.loads((HERE / "expected_checks.json").read_text())
+    if args.platform != "macos":
+        expected["probe"] += expected["probe_ios"]
     triple = compile_all(args, logs)
 
     device = None
@@ -165,6 +167,10 @@ def main():
         for name in ("probe", "consumer"):
             work = out / f"work-{name}"
             make_fixtures(work)
+            if name == "probe":
+                terminated, _ = run_binary(args, name, work, logs, udid, ("--terminate-mid-copy",))
+                if terminated != 73:
+                    raise SystemExit(f"termination probe exited {terminated}, expected 73")
             code, lines = run_binary(args, name, work, logs, udid)
             keep = out / "evidence" / name
             keep.mkdir(parents=True)
@@ -200,6 +206,7 @@ def main():
         "total_checks": total, "passed_checks": passed,
         "not_exercised": NOT_EXERCISED["all"] + NOT_EXERCISED[args.platform],
         "binaries": {n: sha256(out / n) for n in ("probe", "consumer")},
+        "installed_module_sha256": sha256(Path(args.prefix) / "lib/libEXRFileEntry.a"),
     }
     (out / "report.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     for name, report in reports.items():

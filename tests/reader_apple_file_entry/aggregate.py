@@ -9,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from evidence import EvidenceError, PLATFORMS, artifact_name, need, verify_archive, verify_artifact
+from evidence import EvidenceError, PLATFORMS, artifact_name, need, verify_archive, verify_artifact, verify_download, verify_jobs
 
 
 def api(path):
@@ -44,22 +44,14 @@ def main():
         run_id, attempt = os.environ["GITHUB_RUN_ID"], os.environ["GITHUB_RUN_ATTEMPT"]
         prefix = f"/repos/{repo}/actions/runs/{run_id}"
         run = api(prefix + f"/attempts/{attempt}")
-        need(run.get("head_sha") == sha and run.get("path", "").endswith("reader-apple-file-entry.yml"), "run_identity")
+        need(run.get("head_sha") == sha and run.get("id") == int(run_id)
+             and run.get("run_attempt") == int(attempt)
+             and run.get("path") == ".github/workflows/reader-apple-file-entry.yml", "run_identity")
         jobs = pages(prefix + f"/attempts/{attempt}/jobs", "jobs")
         artifacts = pages(prefix + "/artifacts", "artifacts")
         names = [a["name"] for a in artifacts]
         need(len(names) == len(set(names)), "artifact_duplicate")
-        required = {
-            "sdk": ["SDK macos", "SDK iphonesimulator"],
-            "native": [f"native {p}" for p in PLATFORMS],
-            "guard": ["scope and negative regressions"],
-        }
-        job_rows = {}
-        for group, wanted in required.items():
-            for name in wanted:
-                rows = [j for j in jobs if j["name"] == name]
-                need(len(rows) == 1 and rows[0]["status"] == "completed" and rows[0]["conclusion"] == "success", f"job_{name}")
-                job_rows[name] = rows[0]["id"]
+        job_rows = verify_jobs(jobs, sha, run_id, attempt)
         platforms = {}
         for platform in PLATFORMS:
             meta = [a for a in artifacts if a["name"] == artifact_name(platform, run_id, attempt)]
@@ -71,11 +63,14 @@ def main():
                                       stdout=target, stderr=subprocess.PIPE, timeout=300)
             need(done.returncode == 0, "artifact_download")
             data = path.read_bytes()
+            verify_download(data, meta[0])
             report, total = verify_archive(data, platform, sha, run_id, attempt)
             platforms[platform] = {
                 "artifact_id": meta[0]["id"], "artifact_name": meta[0]["name"], "bytes": len(data),
                 "sha256": hashlib.sha256(data).hexdigest(), "expires_at": meta[0]["expires_at"],
-                "checks": total, "job": report.get("job"), "not_exercised": report["not_exercised"],
+                "api_digest": meta[0]["digest"], "checks": total, "job": job_rows[f"native {platform}"],
+                "binaries": report["binaries"], "installed_module_sha256": report["installed_module_sha256"],
+                "not_exercised": report["not_exercised"],
                 "xcode": report.get("xcode"), "simulator": report.get("simulator"),
             }
         summary = {"schema": 1, "accepted": True, "source_sha": sha, "run_id": int(run_id), "attempt": int(attempt),
