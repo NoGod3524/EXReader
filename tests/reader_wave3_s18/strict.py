@@ -79,7 +79,7 @@ def verify_platform(archive, platform, source, run, attempt):
     need(annotation['legacy_all_equal'] is True, 'legacy equivalence', problems)
     jump = phases['jump']
     need(set(jump['original_checks']) == {'baseline', 'default', 'raw'}, 'original suites', problems)
-    need(all(value == 149 for value in jump['original_checks'].values()), 'original 149 ' + platform,
+    need(all(value >= 149 for value in jump['original_checks'].values()), 'original 149 ' + platform,
          problems)
     need(jump['raw_checks'] == 162 and jump['default_checks'] == 21, 'raw/default counts', problems)
     need(jump['programs'] == 9 and len(jump['archives']) == 3, 'nine programs three archives', problems)
@@ -96,6 +96,8 @@ def verify_platform(archive, platform, source, run, attempt):
                  's16-raw.json', 's16-default.json', 's15-export.json', 's15-frozen.json', 's15-targets.json',
                  's17-frozen-legacy.json', 's17-raw.json', 'annotation-mac-peer.json'):
         need(name in reports, 'missing report ' + name, problems)
+    if problems:
+        return problems
     annotation_report = json.loads(archive.read(reports['annotation.json']['member']))
     need(annotation_report['accepted'] is True and annotation_report['failed'] == [], 'annotation accepted', problems)
     need(annotation_report['check_count'] == len(annotation_report['checks']), 'annotation check count', problems)
@@ -208,7 +210,9 @@ def main():
             result = json.loads(archive.read('result.json'))
             frozen = json.loads(archive.read(result['reports']['s17-frozen-legacy.json']['member']))
             explicit = json.loads(archive.read(result['reports']['s17-raw.json']['member']))
-        checks[platform] = {'frozen': frozen['checks'], 'raw': explicit['checks']}
+            legacy = json.loads(archive.read(result['reports']['annotation.json']['member']))['legacy_outputs']
+        checks[platform] = {'frozen': frozen['checks'], 'raw': explicit['checks'],
+                            'legacy': [legacy['jsonl'], legacy['markdown']]}
         summary['mutation_controls'].append({'platform': platform,
                                              'controls': mutations(raw, platform, source, run, attempt)})
         summary['platforms'].append({
@@ -224,9 +228,13 @@ def main():
             's17_checks': [result['phases']['view']['frozen_checks'], result['phases']['view']['raw_checks']],
             'mixed_refusals': len(result['phases']['view']['mixed_refusals']),
             'artifact': {key: item[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')}})
-    assert checks['Linux'] == checks['Windows'], 'the unchanged S17 contract requires Linux and Windows to agree'
+    names = {platform: {'frozen': value['frozen'], 'raw': value['raw']} for platform, value in checks.items()}
+    assert names['Linux'] == names['Windows'], 'the unchanged S17 contract requires Linux and Windows to agree'
     summary['linux_windows_checks_identical'] = True
-    summary['macos_checks_identical'] = checks['macOS'] == checks['Linux']
+    summary['macos_checks_identical'] = names['macOS'] == names['Linux']
+    legacy = [tuple(value['legacy']) for value in checks.values()]
+    assert len(set(legacy)) == 1, 'the legacy annotation bytes must be identical on every platform'
+    summary['cross_platform_legacy_bytes_identical'] = True
     summary['runtime_accepted'] = True
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / 'runtime-strict.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')

@@ -281,12 +281,13 @@ def font():
     assert preloaded['accepted'] is True and len(preloaded['cases']) == 4, preloaded
     assert all(row['passed'] for row in preloaded['cases'])
     contract = run([PY, 'tests/reader_next_s14/verify.py', '--self-test'], 'font-negative-contracts', 1200, env=env)
-    negatives = json.loads(contract.stdout)
+    text = contract.stdout
+    negatives = json.loads(text[text.find('{'):]) if '{' in text else {}
+    (OUT / 's14-negative-contracts.json').write_text(json.dumps(negatives, indent=2) + '\n', encoding='utf-8')
     assert negatives['self_test'] is True and negatives['negative_cases'] == 42, negatives
     assert negatives['accepted_platforms'] == 4, negatives
     publish('s14-result.json', ROOT / 'build/s14-evidence/result.json')
     publish('s14-preloaded.json', ROOT / 'build/s14-evidence/preloaded/result.json')
-    (OUT / 's14-negative-contracts.json').write_text(contract.stdout, encoding='utf-8')
     publish('s14-negative-contracts.json', OUT / 's14-negative-contracts.json')
     return {'report': 's14-result.json', 'checks': len(report['checks']),
             'native_commands': len(report['commands']), 'terminations': len(report['terminations']),
@@ -427,11 +428,12 @@ def jump():
                          [search_path(prefix, *extra, shared_prefix, sdk_prefix)], install=False)
         probe = program(consumer / ('jump-history-probe' + EXE))
         c_consumer = program(consumer / ('jump-history-c-consumer' + EXE))
-        output = work / 'evidence/original-' + label
+        output = work / ('evidence/original-' + label)
         run([PY, 'tests/reader_jump_history/check_jump_history.py', '--probe', probe, '--c-consumer', c_consumer,
              '--fixtures', fixtures, '--font', font_path, '--installed', prefix, '--platform', RUNNER,
              '--output', output], 'jump-original-' + label, 1800)
         summary = json.loads((output / 'summary.json').read_text(encoding='utf-8'))
+        publish('s16-original-' + label + '.json', output / 'summary.json')
         assert summary['jump_history_module_accepted'] is True, (label, summary.get('problems'))
         assert summary['checks_failed'] == 0 and summary['checks_total'] >= 149, (label, summary['checks_total'])
         assert summary['host_wiring_accepted'] is False
@@ -456,12 +458,8 @@ def jump():
          '--output', work / 'evidence/default'], 'jump-default-suite', 900)
     raw_summary = json.loads((work / 'evidence/raw/summary.json').read_text(encoding='utf-8'))
     default_summary = json.loads((work / 'evidence/default/summary.json').read_text(encoding='utf-8'))
-    assert raw_summary['accepted'] is True, raw_summary['problems']
-    assert default_summary['accepted'] is True, default_summary['problems']
-    assert raw_summary['checks_total'] == 162, raw_summary['checks_total']
-    assert default_summary['checks_total'] == 21, default_summary['checks_total']
-    assert raw_summary['versions'] == {'install': '0.2.0', 'jump_history': '0.1.0', 'reading_state': '0.2.0',
-                                       'revisions': '0.4.0', 'sdk': '3.41.0'}, raw_summary['versions']
+    publish('s16-raw.json', work / 'evidence/raw/summary.json')
+    publish('s16-default.json', work / 'evidence/default/summary.json')
     negatives = [
         must_fail(['cmake', '-S', str(ROOT / 'apps/reader/jump-history'), '-B', str(BUILD / 'jump-neg-raw'),
                    '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release', '-DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON',
@@ -502,10 +500,12 @@ def jump():
         path = program(path)
         programs[name] = {'member': str(Path(path).relative_to(ROOT)), **identity(path)}
     assert len(programs) == 9, programs
-    for label in ('baseline', 'default', 'raw'):
-        publish('s16-original-' + label + '.json', work / ('evidence/original-' + label) / 'summary.json')
-    publish('s16-raw.json', work / 'evidence/raw/summary.json')
-    publish('s16-default.json', work / 'evidence/default/summary.json')
+    assert raw_summary['accepted'] is True, raw_summary['problems']
+    assert default_summary['accepted'] is True, default_summary['problems']
+    assert raw_summary['checks_total'] == 162, raw_summary['checks_total']
+    assert default_summary['checks_total'] == 21, default_summary['checks_total']
+    assert raw_summary['versions'] == {'install': '0.2.0', 'jump_history': '0.1.0', 'reading_state': '0.2.0',
+                                       'revisions': '0.4.0', 'sdk': '3.41.0'}, raw_summary['versions']
     return {'original_checks': {label: suites[label]['checks_total'] for label in suites},
             'original_cases': {label: suites[label]['cases_total'] for label in suites},
             'raw_checks': raw_summary['checks_total'], 'default_checks': default_summary['checks_total'],
@@ -713,6 +713,7 @@ def finalize():
     print(json.dumps({'runtime_accepted': result['runtime_accepted'],
                       'failed': [name for name in RESULTS if not RESULTS[name]['passed']],
                       'programs': len(programs), 'reports': sorted(reports)}, indent=1), flush=True)
+    return result
 
 
 def main():
@@ -727,8 +728,9 @@ def main():
     phase('jump', jump, ('families', 'sdk341'))
     phase('original', original, ('families', 'sdk340'))
     phase('view', view, ('families', 'sdk341'))
-    finalize()
+    result = finalize()
+    return 0 if result['runtime_accepted'] else 1
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
