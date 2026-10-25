@@ -13,7 +13,7 @@
 | 远端分支 | `codex/reader-fw-s12`（只此分支，无 PR、无默认分支、无 tag、无 Release） |
 | 受测源码（三轮，全部失败） | `9babde99…`(run 40215053846) / `911db25d…`(40215267638) / `66379633…`(40218361806) |
 | 修正后源码（未上云） | `afceae3a3a7a009ab396a273f729e115acf397fc` |
-| 文档封存 | 见本文件所在提交（docs-only，`[skip ci]`） |
+| 文档封存 | `417bb76ad68e78aa6e25edb7dbb1ad89058a4876`（docs-only，`[skip ci]`），其后仅追加 `docs_seal_source` 字段 |
 
 ## 2. 新增路径（独占）
 
@@ -82,6 +82,12 @@ run 40215267638 是容器类型不匹配（`query.ascii` 以 UTF-16 存储、消
 2. 若第四轮只差"随机 ID 泄漏"或"冻结副本"之类的本包问题，按 `validation.json` 的
    `fixes_not_yet_verified` 逐条对照即可；
 3. 只有第四轮同一 source/run/attempt 的 `strict` 作业 success，才可把 S12 记为通过；本包不冒领。
+
+## 6a. 复核入口
+
+- 工作流只看本分支与四个路径；`source-preflight` 每轮都 success，可单独用来确认"只改本包路径、owner/SDK 未动"。
+- 重放在 Actions 里只依赖 `tests/reader_final_s12/fixtures.py`（唯一输入与预期源）与两个消费者；
+  本地不构建、不跑夹具。
 
 ## 7. 明确缺口（一律 pending）
 

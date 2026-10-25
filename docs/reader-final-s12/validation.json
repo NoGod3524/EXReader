@@ -9,6 +9,7 @@
  "status": "blocked_after_three_runs",
  "grant_summary": "no acceptance: the S12 tool itself still had expectation defects after the third cloud round; the corrected source is not cloud-verified",
  "corrected_source": "afceae3a3a7a009ab396a273f729e115acf397fc",
+ "docs_seal_source": "417bb76ad68e78aa6e25edb7dbb1ad89058a4876",
  "new_paths": [
   "tests/reader_final_s12/CMakeLists.txt",
   "tests/reader_final_s12/api.c",
