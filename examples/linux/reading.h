@@ -58,6 +58,7 @@ typedef struct {
 #ifdef EXR_READER_BATCH_IMPORT
   uint64_t batch_token;
   int batch_recursive,batch_request;
+  int batch_idle; /* UI confirms no frame is awaiting acceptance or COMMIT. */
   const char *batch_root;
   reader_batch_control *batch_control;
   size_t batch_candidate_limit; /* Private host regression: zero keeps module default. */

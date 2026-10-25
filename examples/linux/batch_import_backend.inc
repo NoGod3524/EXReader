@@ -132,6 +132,7 @@ static void batch_execute(linux_reader *reader,const reader_command *command,rea
   }
   /* A displayed frame must commit before any SQLite import invalidates its
      borrowed source. Yield without touching it if the acceptance is pending. */
+  if(reader->has_pending && command->batch_idle) pending_discard(reader);
   if(reader->has_pending) { result->batch_deferred=1;batch_copy(batch,result);return; }
 #ifdef EXR_READER_NAVIGATION
   navigation_free(reader);
