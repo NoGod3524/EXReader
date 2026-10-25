@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "package": "S01 Windows 最终可迁移包核验",
+  "accepted": false,
+  "source": {
+    "implementation": null,
+    "implementation_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+    "producer": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+    "producer_tree": "6c4fad985bf46603f0afc5baaa4e2b2b9e82c870",
+    "sdk_approved": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+    "sdk_frozen": "9854061be331fe603a1822d9b2b36ee357154927",
+    "sdk_version": "3.41.0"
+  },
+  "run": null,
+  "artifact": null,
+  "checks": [],
+  "not_verified": [
+    "default-OFF full host acceptance (tools/check_windows_host.py) is bound to the workflow checkout and was not rerun",
+    "network interface isolation",
+    "real device, screen reader, USB",
+    "performance budget",
+    "code signature or notarisation",
+    "release, tag, store publication",
+    "six-platform interop and the final unified source (root)"
+  ],
+  "note": "未执行时 accepted=false；真实 run/attempt/job/工件与逐项结果在首次云端运行后写入。"
+}

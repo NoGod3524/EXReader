@@ -1,0 +1,167 @@
+name: S01 portable Windows candidate package
+# Only this package's own branch and paths trigger the workflow. The producer
+# source is a separate checkout of eab342ef; nothing here builds or rewrites it.
+on:
+  push:
+    branches: [codex/reader-fw-s01]
+    paths:
+      - '.github/workflows/reader-final-s01.yml'
+      - 'tests/reader_final_s01/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-final-s01
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  preflight:
+    name: S01 boundary and source identity
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check out the fixed producer source as a separate tree
+        uses: actions/checkout@v4
+        with:
+          ref: eab342ef456be4a8a1811e5249e3c217d906ce8a
+          path: producer-src
+          fetch-depth: 0
+      - name: Check the S01 boundary, the producer identity and approved SDK 3.41
+        run: python3 tests/reader_final_s01/guard.py --producer producer-src
+      - name: Check the S01 tool syntax and refusal self-tests in Actions
+        run: |
+          python3 -m py_compile tests/reader_final_s01/contract.py tests/reader_final_s01/guard.py tests/reader_final_s01/make_candidate.py tests/reader_final_s01/verify_moved.py tests/reader_final_s01/summarize.py
+          python3 tests/reader_final_s01/contract.py --self-test
+  produce:
+    name: assemble the candidate package from the fixed producer
+    needs: preflight
+    runs-on: windows-2022
+    timeout-minutes: 240
+    outputs:
+      artifact_id: ${{steps.upload.outputs.artifact-id}}
+      artifact_digest: ${{steps.upload.outputs.artifact-digest}}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check out the fixed producer source as a separate tree
+        uses: actions/checkout@v4
+        with:
+          ref: eab342ef456be4a8a1811e5249e3c217d906ce8a
+          path: producer-src
+          fetch-depth: 0
+      - name: Enter the Windows native compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the approved SDK 3.41 from the fixed producer source
+        run: |
+          set -o pipefail
+          src=$(cygpath -m "$GITHUB_WORKSPACE/producer-src")
+          echo "PRODUCER=$src" >> "$GITHUB_ENV"
+          mkdir -p build/s01-logs
+          cmake --preset reading-library -S "$src" -B "$src/build/reading-library" -DCMAKE_INSTALL_PREFIX="$src/build/reading-library/stage" 2>&1 | tee build/s01-logs/sdk-configure.log
+          cmake --build "$src/build/reading-library" --parallel 4 2>&1 | tee build/s01-logs/sdk-build.log
+          cmake --install "$src/build/reading-library" 2>&1 | tee build/s01-logs/sdk-install.log
+      - name: Install the product catalog provider into the same prefix
+        run: |
+          set -o pipefail
+          prefix="$PRODUCER/build/s01-prefix"
+          echo "PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S "$PRODUCER/apps/reader/store/native" -B "$PRODUCER/build/s01-product" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/s01-logs/product-configure.log
+          cmake --build "$PRODUCER/build/s01-product" --parallel 4 2>&1 | tee build/s01-logs/product-build.log
+          ctest --test-dir "$PRODUCER/build/s01-product" --output-on-failure --no-tests=error --timeout 180 2>&1 | tee build/s01-logs/product-test.log
+          cmake --install "$PRODUCER/build/s01-product" 2>&1 | tee build/s01-logs/product-install.log
+      - name: Install the unchanged public modules into the same prefix
+        run: |
+          set -o pipefail
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation apps/reader/cloud-import apps/reader/bulk-organization apps/reader/preferences; do
+            name=$(basename "$module")
+            cmake -S "$PRODUCER/$module" -B "$PRODUCER/build/s01-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PRODUCER/build/reading-library/stage" -DREADER_PRODUCT_PREFIX="$PREFIX" -DCMAKE_PREFIX_PATH="$PREFIX;$PRODUCER/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$PREFIX" 2>&1 | tee "build/s01-logs/$name-configure.log"
+            cmake --build "$PRODUCER/build/s01-$name" --parallel 4 2>&1 | tee "build/s01-logs/$name-build.log"
+            cmake --install "$PRODUCER/build/s01-$name" 2>&1 | tee "build/s01-logs/$name-install.log"
+          done
+      - name: Build the actual compact host from the fixed producer source
+        env:
+          MSYS_NO_PATHCONV: '1'
+        run: |
+          set -o pipefail
+          cmake -S "$PRODUCER/apps/reader/windows-account" -B "$PRODUCER/build/s01-compact" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PRODUCER/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$PREFIX;$PRODUCER/build/reading-library/stage" -DREADER_METADATA_PREFIX="$PREFIX" -DREADER_ACCOUNT_PREFIX="$PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON -DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON -DEXR_READER_WINDOWS_PREFERENCES=ON -DEXR_READER_WINDOWS_COMPACT=ON 2>&1 | tee build/s01-logs/compact-configure.log
+          cmake --build "$PRODUCER/build/s01-compact" --target EXReaderProduct --parallel 4 2>&1 | tee build/s01-logs/compact-build.log
+      - name: Package the compact program with the unchanged producer packager
+        run: |
+          set -o pipefail
+          python3 "$PRODUCER/tools/build_windows_host.py" --sdk "$PRODUCER/build/reading-library/stage" --binary "$PRODUCER/build/s01-compact/EXReaderProduct.exe" --output "$PRODUCER/build/s01-package" --static-reading 2>&1 | tee build/s01-logs/package.log
+      - name: Record the licensed materials of the installed SDK with the G09 checker
+        run: |
+          python3 "$PRODUCER/tools/check_reading_licenses.py" reading-library "$PRODUCER/build/reading-library" "$PRODUCER/build/reading-library/stage" build/s01-input/licenses.json 2>&1 | tail -n 30
+      - name: Assemble the portable candidate archive and its provenance manifest
+        run: |
+          python3 tests/reader_final_s01/make_candidate.py --payload "$PRODUCER/build/s01-package/EXReader" --stage "$PRODUCER/build/reading-library/stage" --licenses build/s01-input/licenses.json --producer-src "$PRODUCER" --build "$PRODUCER/build/s01-compact" --program "$PRODUCER/build/s01-compact/EXReaderProduct.exe" --selftest "$PRODUCER/build/s01-package/report.json" --build-root "$PRODUCER" --output build/s01 2>&1 | tee build/s01-logs/assembly.log
+      - name: Preserve the assembled candidate
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s01-candidate-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/s01/candidate.zip
+            build/s01/manifest.json
+            build/s01/licenses.json
+            build/s01/selftest-report.json
+            build/s01/selftest-page.png
+            build/s01/identity/
+            build/s01/assembly.json
+          if-no-files-found: error
+      - name: Preserve the producer build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s01-build-${{github.run_id}}-${{github.run_attempt}}
+          path: build/s01-logs/
+          if-no-files-found: warn
+  verify:
+    name: move the package to a Unicode path and run the retained acceptance
+    needs: produce
+    runs-on: windows-2022
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the candidate artifact of this exact run
+        uses: actions/download-artifact@v4
+        with:
+          name: reader-final-s01-candidate-${{github.run_id}}-${{github.run_attempt}}
+          path: build/s01-in
+      - name: Install the pinned native UI automation dependency of the retained checks
+        run: python3 -m pip install --disable-pip-version-check "uiautomation==2.0.29"
+      - name: Generate the authored fixtures in this job
+        run: python3 tests/reader_windows_preferences/make_fixtures.py --output build/s01-fixtures
+      - name: Move the package to a Unicode path with spaces and run it there
+        run: python3 tests/reader_final_s01/verify_moved.py --artifacts build/s01-in --fixtures build/s01-fixtures --output build/s01-moved
+      - name: Consolidate the evidence and authenticate the uploaded artifact
+        env:
+          GH_TOKEN: ${{github.token}}
+          ARTIFACT_ID: ${{needs.produce.outputs.artifact_id}}
+        run: python3 tests/reader_final_s01/summarize.py --manifest build/s01-in/manifest.json --moved build/s01-moved/moved.json --artifact-id "$ARTIFACT_ID" --output build/s01-result.json
+      - name: Preserve the moved-package evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s01-evidence-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/s01-moved/
+            build/s01-result.json
+          if-no-files-found: error
