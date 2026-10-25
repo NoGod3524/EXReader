@@ -11,7 +11,7 @@ def main():
     for case in ('wrong-dpi','main-window-modal-focus','missing-screenshot','incomplete-configuration'):
         r=copy.deepcopy(base);c=r['configurations'][0]
         if case=='wrong-dpi':c['checks']['dpi']={'status':'pass','actual':{'monitor_scale':{'scale_percent':150},'window_dpi':96}}
-        if case=='main-window-modal-focus':c['checks']['search']={'status':'pass','actual':{'focus':[{'descendant':False,'visible':True,'enabled':True}]}}
+        if case=='main-window-modal-focus':c['checks']['search']={'status':'pass','actual':{'focus':[{'descendant':False,'visible':True,'enabled':True} for _ in range(3)],'after':{'descendant':True,'visible':True,'enabled':True}}}
         if case=='missing-screenshot':c['screenshots']=[]
         if case=='incomplete-configuration':r['configurations'].pop()
         try:validate(r,'h','r','a')

@@ -58,6 +58,9 @@ def summary():
         jobs=api(f'actions/runs/{run}/attempts/{attempt}/jobs')['jobs']
         native=[j for j in jobs if j['name']=='d08-native'];assert len(native)==1
         proof=download(int(os.environ['ARTIFACT_ID']),out/'raw',run,source,os.environ['UPLOAD_DIGEST'].removeprefix('sha256:'))
+        expected_name=f'reader-dot-d08-raw-{run}-{attempt}'
+        candidates=[a for a in api(f'actions/runs/{run}/artifacts?per_page=100')['artifacts'] if a['name']==expected_name]
+        assert len(candidates)==1 and candidates[0]['id']==proof['id'] and proof['name']==expected_name
         root=out/'raw'
         r=json.loads((root/'report.json').read_text(encoding='utf-8'));validate(r,source,run,attempt)
         for item in r['files']:
@@ -66,7 +69,12 @@ def summary():
         for c in r['configurations']:
             for name in c['screenshots']:
                 assert 'observations/'+name in indexed and (root/'observations'/name).read_bytes()[:2]==b'BM'
+        negative=json.loads((root/'negative-controls.json').read_text());assert {x['case'] for x in negative}=={'wrong-dpi','main-window-modal-focus','missing-screenshot','incomplete-configuration'} and all(x['rejected'] is True for x in negative)
         identity=json.loads((root/'build-identity.json').read_text());assert identity['target_sha']==TARGET and identity['sdk_source']==SDK
+        assert identity['installed_libraries'] and identity['actual_product_compilation']
+        cache=(root/'build-identity/host/CMakeCache.txt').read_text();assert all('EXR_READER_WINDOWS_'+flag+':BOOL=ON' in cache for flag in ('COMPACT','SEARCH','NAVIGATION','RECORDS','PREFERENCES','IMPORT_ORGANIZE'))
+        assert 'EXR_READER_WINDOWS_RAW3:BOOL=OFF' in cache and 'EXR_READER_PREFS_COMMIT_REVIEW_BUILD:BOOL=OFF' in cache
+        assert (root/'build-identity/host/windows-host.map').stat().st_size>0
         assert r['program_sha256']==identity['program_sha256']==sha(root/'programs/EXReaderProduct.exe')
         assert native[0]['conclusion']=='success' and os.environ['NATIVE_RESULT']=='success'
         result.update(verified=True,artifact=proof,jobs=[{'id':j['id'],'name':j['name'],'conclusion':j['conclusion']} for j in jobs],report=r,credential_scan=credential_scan(root,api('actions/jobs/'+str(native[0]['id'])+'/logs',True)))
@@ -74,7 +82,13 @@ def summary():
         import traceback
         result['problems'].append(traceback.format_exc())
     (out/'validation.json').write_text(json.dumps(result,indent=2,ensure_ascii=False),encoding='utf-8')
-    print(json.dumps(result,ensure_ascii=False),flush=True)
+    print(json.dumps({k:v for k,v in result.items() if k!='report'},ensure_ascii=False),flush=True)
+    if 'report' in result:
+        print('PROGRAM',result['report']['program_sha256'],flush=True)
+        for config in result['report']['configurations']:
+            dpi=config['checks']['dpi']['actual'];samples=config['checks']['contrast']['actual'].get('samples',[])
+            measured=[s['measured_pair_ratio'] for s in samples if s.get('measured_pair_ratio') is not None]
+            print('CONFIGURATION',json.dumps({'configuration':config['configuration'],'checks':{k:v['status'] for k,v in config['checks'].items()},'shelf_search':config.get('shelf_search'),'dpi':{k:dpi.get(k) for k in ('window_dpi','monitor_scale','awareness')},'contrast_readback':config.get('contrast_readback'),'contrast_samples':len(samples),'measured_pairs':len(measured),'measured_ratios':sorted(set(measured)),'loaded_modules':len(config.get('loaded_modules',[])),'loaded_modules_error':config.get('loaded_modules_error'),'screenshots':len(config['screenshots'])},ensure_ascii=False),flush=True)
     assert result['verified'],result['problems']
 if __name__=='__main__':
     assert os.environ.get('GITHUB_ACTIONS')=='true'

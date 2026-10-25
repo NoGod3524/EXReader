@@ -17,5 +17,7 @@ def validate(r,sha,run,attempt):
             a=config['checks']['dpi']['actual'];assert a['monitor_scale']['scale_percent']==config['requested_scale'] and a['window_dpi']==96*config['requested_scale']/100
         for key in ('search','directory','records','settings'):
             if config['checks'][key]['status']=='pass':
+                assert len(config['checks'][key]['actual']['focus'])==3
+                assert all(config['checks'][key]['actual']['after'][k] for k in ('descendant','visible','enabled'))
                 assert all(x['descendant'] and x['visible'] and x['enabled'] for x in config['checks'][key]['actual']['focus'])
     assert r['files']

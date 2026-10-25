@@ -14,7 +14,7 @@ def main():
     assert os.environ.get('GITHUB_ACTIONS')=='true'
     OUT.mkdir(parents=True,exist_ok=True);(OUT/'logs').mkdir(exist_ok=True)
     assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=SOURCE,text=True).strip()==TARGET
-    run(['git','diff','--exit-code',SDK,'HEAD','--','src','include','cmake','CMakeLists.txt','bindings','tests/fixtures'],'approved-sdk-source')
+    run(['git','diff','--exit-code',SDK,'HEAD','--','src','include','cmake','CMakeLists.txt','CMakePresets.json','bindings','tests/fixtures'],'approved-sdk-source')
     sdk=BUILD/'sdk-stage';stage=BUILD/'stage'
     run(['cmake','--preset','reading-library','-B',BUILD/'sdk','-DCMAKE_INSTALL_PREFIX='+str(sdk)],'sdk-configure')
     run(['cmake','--build',BUILD/'sdk','--parallel','2','--verbose'],'sdk-build');run(['cmake','--install',BUILD/'sdk'],'sdk-install')
@@ -33,5 +33,8 @@ def main():
         if p.is_file() and (p.name in ('CMakeCache.txt','build.ninja','compile_commands.json') or p.suffix in ('.map','.dll')):
             dest=OUT/'build-identity'/p.relative_to(BUILD);dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,dest)
     identity={'target_sha':TARGET,'sdk_source':SDK,'harness_sha':os.environ['GITHUB_SHA'],'program_sha256':hashlib.sha256((programs/'EXReaderProduct.exe').read_bytes()).hexdigest(),'sdk_linkage':'installed static library; DLL inventory retained','configuration':'compact ON, raw3 OFF, review OFF','commands':'logs plus all CMakeCache/build.ninja/compile_commands retained'}
+    identity['installed_libraries']=[{'path':p.relative_to(BUILD).as_posix(),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in BUILD.rglob('*.lib') if 'stage' in p.as_posix()]
+    commands=json.loads((b/'compile_commands.json').read_text());identity['actual_product_compilation']=[c for c in commands if 'EXReaderProduct.dir' in c['command']]
+    assert identity['actual_product_compilation'] and all('EXR_HOST_WORKER_REVIEW' not in c['command'] and 'EXR_READER_PREFS_COMMIT_REVIEW' not in c['command'] for c in identity['actual_product_compilation'])
     (OUT/'build-identity.json').write_text(json.dumps(identity,indent=2));print(json.dumps(identity))
 if __name__=='__main__':main()

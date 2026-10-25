@@ -11,6 +11,21 @@ U.IsWindowVisible.argtypes=[W.HWND];U.IsWindowVisible.restype=W.BOOL
 
 def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def write(p,r):p.write_text(json.dumps(r,ensure_ascii=False,indent=2),encoding='utf-8')
+def loaded_modules(pid):
+    kernel=C.WinDLL('kernel32',use_last_error=True);psapi=C.WinDLL('psapi',use_last_error=True)
+    kernel.OpenProcess.argtypes=[W.DWORD,W.BOOL,W.DWORD];kernel.OpenProcess.restype=W.HANDLE
+    kernel.CloseHandle.argtypes=[W.HANDLE];kernel.CloseHandle.restype=W.BOOL
+    psapi.EnumProcessModulesEx.argtypes=[W.HANDLE,C.POINTER(W.HMODULE),W.DWORD,C.POINTER(W.DWORD),W.DWORD];psapi.EnumProcessModulesEx.restype=W.BOOL
+    psapi.GetModuleFileNameExW.argtypes=[W.HANDLE,W.HMODULE,W.LPWSTR,W.DWORD];psapi.GetModuleFileNameExW.restype=W.DWORD
+    process=kernel.OpenProcess(0x410,False,pid);assert process
+    try:
+        modules=(W.HMODULE*1024)();needed=W.DWORD();assert psapi.EnumProcessModulesEx(process,modules,C.sizeof(modules),C.byref(needed),3)
+        assert needed.value<=C.sizeof(modules);result=[]
+        for module in list(modules)[:needed.value//C.sizeof(W.HMODULE)]:
+            name=C.create_unicode_buffer(32768);assert psapi.GetModuleFileNameExW(process,module,name,len(name))
+            p=Path(name.value);result.append({'path':p.as_posix(),'bytes':p.stat().st_size,'sha256':digest(p),'origin':'Windows system' if 'windows' in [x.lower() for x in p.parts] else 'target or runner runtime'})
+        return result
+    finally:kernel.CloseHandle(process)
 class Driver(Audit):
     def __init__(self):
         self.out=OUT/'observations';self.out.mkdir(parents=True,exist_ok=True)
@@ -29,7 +44,7 @@ class Driver(Audit):
     def focus(self,parent):
         h=self.kb.focus();return {'hwnd':h,'parent':parent,'descendant':bool(h and U.IsChild(parent,h)), 'visible':bool(h and U.IsWindowVisible(h)),'enabled':bool(h and U.IsWindowEnabled(h)),'uia':self.uia.focused()}
     def check(self,key,status,actual):
-        self.config['checks'][key]={'status':status,'actual':actual,'snapshots':self.r['snapshots'][-2:]};print(json.dumps({'configuration':self.config['configuration'],'id':key,**self.config['checks'][key]},ensure_ascii=False),flush=True)
+        self.config['checks'][key]={'status':status,'actual':actual,'snapshots':self.r['snapshots'][-2:]};print(json.dumps({'configuration':self.config['configuration'],'id':key,'status':status,'actual':actual if key not in ('dpi','contrast') else ({k:actual.get(k) for k in ('window_dpi','system_dpi','monitor_scale','awareness')} if key=='dpi' else {'samples':len(actual.get('samples',[])),'measured_pairs':sum(x.get('measured_pair_ratio') is not None for x in actual.get('samples',[]))})},ensure_ascii=False),flush=True)
     def attempt(self,key,fn):
         try:self.check(key,'pass',fn())
         except Exception as exc:
@@ -41,7 +56,7 @@ class Driver(Audit):
                 self.trace.event('recovery_escape',{'failed':key});self.key('escape')
     def modal(self,name,key):
         before=self.focus(self.app.window);self.key(key,('ctrl',));d=self.wait_dialog();self.shot(name,d)
-        samples=[self.focus(d)];self.key('tab');samples.append(self.focus(d));self.key('tab',('shift',));samples.append(self.focus(d))
+        samples=[self.focus(d)];self.contrast_pixels(d,name);self.key('tab');samples.append(self.focus(d));self.key('tab',('shift',));samples.append(self.focus(d))
         self.shot(name+'-tab',d);self.key('escape');self.app.wait(lambda:not U.IsWindow(d),timeout=8);after=self.focus(self.app.window);self.shot(name+'-closed')
         actual={'focus':samples,'before':before,'after':after,'dialog':d,'closed':True}
         okay=all(x['descendant'] and x['visible'] and x['enabled'] for x in samples) and all(after[x] for x in ('descendant','visible','enabled'))
@@ -52,33 +67,38 @@ class Driver(Audit):
         if r[0]<work.left or r[1]<work.top or r[2]>work.right or r[3]>work.bottom:issues.append({'window_outside_work_area':r})
         bounds=[]
         def walk(n):
-            if n.get('native_hwnd') and n.get('rect') and not n.get('offscreen') and n.get('depth',0)>0:
+            if n.get('native_hwnd') and U.IsChild(self.app.window,n['native_hwnd']) and n.get('rect') and not n.get('offscreen') and n.get('depth',0)>0:
                 b=n['rect'];bounds.append(b)
                 x,y=s['client_origin_screen'];w,h=s['bitmap_pixels']
                 if b[0]<x or b[1]<y or b[2]>x+w or b[3]>y+h:issues.append({'control_outside_client':n})
             for c in n.get('children',[]):walk(c)
         walk(s['tree']);self.check('layout','fail' if issues else 'pass',{'issues':issues,'work_area':[work.left,work.top,work.right,work.bottom],'bounds_count':len(bounds),'scope':'native exposed rectangle containment; glyph clipping unverified'})
-        # Capture each native text-bearing button's own client pixels. No screen/client subtraction guesses.
+        self.contrast_pixels(self.app.window,'shelf-initial')
+    def contrast_pixels(self,parent,scene):
         samples=[]
-        for id in (103,):
-            h=U.GetDlgItem(self.app.window,id)
-            if not h or not U.IsWindowVisible(h):continue
-            image=P.shot(h,self.out/f'{self.config["configuration"]}-button-{id}.bmp');name=f'{self.config["configuration"]}-button-{id}.bmp';self.config['screenshots'].append(name)
-            fg=rgb(U.GetSysColor(18));bg=rgb(U.GetSysColor(15));counts={'fg':0,'bg':0};coords={'fg':[],'bg':[]}
+        for h in w32.child_windows(parent):
+            kind=w32.class_name(h).lower();label=w32.window_text(h)
+            if kind not in ('button','static','edit') or not label or not U.IsWindowVisible(h):continue
+            rect=W.RECT();U.GetClientRect(h,C.byref(rect))
+            if rect.right<16 or rect.bottom<16:continue
+            name=f'{self.n:04d}-{self.config["configuration"]}-{scene}-control-{h}.bmp';self.n+=1
+            image=P.shot(h,self.out/name);self.config['screenshots'].append(name)
+            enabled=bool(U.IsWindowEnabled(h));fg=rgb(U.GetSysColor(17 if not enabled else (18 if kind=='button' else 8)));bg=rgb(U.GetSysColor(5 if kind=='edit' else 15));counts={'fg':0,'bg':0};coords={'fg':[],'bg':[]}
             for y in range(2,image[1]-2):
                 for x in range(2,image[0]-2):
                     pixel=P.at(image,x,y)
-                    for label,color in (('fg',fg),('bg',bg)):
+                    for color_name,color in (('fg',fg),('bg',bg)):
                         if list(pixel)==color:
-                            counts[label]+=1
-                            if len(coords[label])<8:coords[label].append([x,y,list(pixel)])
-            lo,hi=sorted((lum(fg),lum(bg)));ratio=(hi+.05)/(lo+.05)
-            samples.append({'control':id,'hwnd':h,'screenshot':name,'pixels':image[:2],'foreground':fg,'background':bg,'exact_pixel_counts':counts,'pixel_coordinates':coords,'ratio':ratio,'coordinate_space':'own-control client bitmap','color_space':'8-bit GDI device RGB, sRGB assumed; no ICC measurement'})
-        # Sample is useful diagnostic, but no measured ICC or exhaustive glyph/focus/disabled coverage.
-        status='fail' if any(x['exact_pixel_counts']['fg'] and x['exact_pixel_counts']['bg'] and x['ratio']<4.5 for x in samples) else 'pending'
-        self.check('contrast',status,{'samples':samples,'reason':'actual sampled pixels retained; ICC/sRGB mapping and all text/focus/disabled paints not certified'})
+                            counts[color_name]+=1
+                            if len(coords[color_name])<8:coords[color_name].append([x,y,list(pixel)])
+            lo,hi=sorted((lum(fg),lum(bg)));palette_ratio=(hi+.05)/(lo+.05)
+            actual_ratio=palette_ratio if counts['fg']>0 and counts['bg']>0 and fg!=bg else None
+            samples.append({'scene':scene,'hwnd':h,'class':kind,'label':label,'enabled':enabled,'screenshot':name,'pixels':image[:2],'foreground_candidate':fg,'background_candidate':bg,'exact_pixel_counts':counts,'pixel_coordinates':coords,'measured_pair_ratio':actual_ratio,'coordinate_space':'own-control client bitmap','color_space':'8-bit GDI device RGB, sRGB assumed; no ICC measurement'})
+        previous=self.config['checks'].get('contrast',{}).get('actual',{}).get('samples',[]);samples=previous+samples
+        status='fail' if any(x['enabled'] and x['measured_pair_ratio'] is not None and x['measured_pair_ratio']<4.5 for x in samples) else 'pending'
+        self.check('contrast',status,{'samples':samples,'reason':'ratio exists only when both distinct candidate colors occur in actual pixels; exact coordinates retained; font-semantic attribution, ICC mapping and full glyph/focus paints remain unverified'})
     def returning(self):
-        self.key('left',('alt',));self.shot('return-shelf');f=self.focus(self.app.window)
+        self.key('left',('alt',));self.shot('return-shelf');self.contrast_pixels(self.app.window,'shelf-populated');f=self.focus(self.app.window)
         assert U.IsWindowVisible(self.app.control('books')) and all(f[k] for k in ('descendant','visible','enabled')),f
         return f
     def run_all(self):
@@ -92,6 +112,8 @@ class Driver(Audit):
                             ok=bool(U.SystemParametersInfoW(0x009F,{100:0,150:1,200:2}[scale],None,0));time.sleep(.3)
                             h=hc_read();h.dwFlags=(h.dwFlags|1) if contrast=='high' else (h.dwFlags&~1);hc_ok=bool(U.SystemParametersInfoW(0x43,h.cbSize,C.byref(h),2))
                             self.launch(self.config['configuration'])
+                            try:self.config['loaded_modules']=loaded_modules(self.app.process.pid)
+                            except Exception as exc:self.config['loaded_modules_error']=str(exc)
                             if size=='small':self.app.settle((700,480))
                             s=self.shot('launch');self.config['contrast_readback']={'set_return':hc_ok,'flags':hc_read().dwFlags};self.config['dpi_request_return']=ok
                             good=s['monitor_scale']['scale_percent']==scale and s['window_dpi']==scale*96/100
