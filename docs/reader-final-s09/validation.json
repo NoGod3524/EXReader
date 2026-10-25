@@ -6,79 +6,270 @@
   "implementation_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "branch": "codex/reader-fw-s09",
   "workflow": ".github/workflows/reader-final-s09.yml",
-  "reuse": {
-    "licence_registry": "tools/check_reading_licenses.py (read-only import: COMPONENTS, enabled, preset_switches)",
-    "inventory_generators": "tests/reader_distribution_inventory/{contract,sbom,packages,inventory,combined}.py (read-only import)",
-    "probe_and_consumer": "tests/reader_distribution_inventory/probe, tests/reading_core (built, not modified)"
-  },
-  "added": [
-    "tests/reader_final_s09/closure.py",
-    "tests/reader_final_s09/authenticate.py",
-    "tests/reader_final_s09/check_closure.py",
-    "tests/reader_final_s09/check_scope.sh",
-    ".github/workflows/reader-final-s09.yml",
-    "docs/reader-final-s09/CONTRACT.md",
-    "docs/reader-final-s09/validation.json"
-  ],
   "sources": {
-    "tested": null,
-    "docs_sealed": null,
-    "producer_sdk_install": {
+    "tested": "44275bd51555829c33e43f9431ed4d024e24380f",
+    "docs_evidence_commit": "the docs-only commit that adds this file (descendant of the tested source); its SHA is reported in the handoff message",
+    "producer": {
+      "workflow": ".github/workflows/reader-distribution-inventory.yml",
       "source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
       "run_id": 40095313750,
       "attempt": 1,
-      "artifacts": [
-        {
-          "id": 12560228214,
-          "name": "reader-distribution-inventory-linux-core-40095313750-1",
-          "job": "inventory (ubuntu-22.04, reading-core)"
-        },
-        {
-          "id": 12560936421,
-          "name": "reader-distribution-combined-linux-40095313750-1",
-          "job": "combined (ubuntu-22.04)"
-        }
-      ],
-      "authenticated": false
-    }
+      "note": "G09 producer. Byte-identical tools/check_reading_licenses.py, tests/reader_distribution_inventory and sbom licence table at 0889f7d1, verified with git diff --name-only 93d2ad0d 0889f7d1."
+    },
+    "verifier": "44275bd51555829c33e43f9431ed4d024e24380f"
   },
   "run": {
-    "id": null,
-    "attempt": null,
-    "conclusion": null,
-    "jobs": {}
+    "id": 40215271134,
+    "attempt": 1,
+    "head_sha": "44275bd51555829c33e43f9431ed4d024e24380f",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40215271134",
+    "jobs": {
+      "protocol": {
+        "id": 121234937544,
+        "name": "closure protocol",
+        "conclusion": "success"
+      },
+      "stage-linux": {
+        "id": 121234990769,
+        "name": "closure (ubuntu-22.04)",
+        "conclusion": "success"
+      },
+      "stage-windows": {
+        "id": 121234990717,
+        "name": "closure (windows-2022)",
+        "conclusion": "success"
+      },
+      "producer": {
+        "id": 121234990712,
+        "name": "authenticated producer artifact",
+        "conclusion": "success"
+      }
+    }
   },
-  "evidence_requirements": {
-    "stage_kind": "real reading-library install built by this workflow on the tested source",
-    "artifact_kind": "named artifact authenticated by size, SHA-256 digest, expiry, workflow run and producing job upload log"
+  "protocol": {
+    "positive_control": true,
+    "rejections": 37,
+    "failures": 0,
+    "checks_in_positive_control": 11,
+    "fixture": "generated inside the job (tests/reader_final_s09/check_closure.py); no fixture bytes are committed",
+    "rejection_families": [
+      "licence material missing, drifted, unregistered, unpinned, checker not ready, checker source",
+      "stage file missing, unrecorded, tampered, empty",
+      "archive unowned, ambiguous owner, undeclared copy",
+      "link record missing, captured output tampered, classification drift, family overlap, bundled archive claimed as system",
+      "spdx document identity, file coverage, file checksum, verification code, hasFiles, component missing, licence concluded/declared, filesAnalyzed, source reference, licence CONTAINS link",
+      "cyclonedx document, component missing, licence missing/expression, file checksum, purl",
+      "claim of a legal or runtime conclusion",
+      "artifact identity: authentic accepted, expired flag, past expiry, malformed digest, wrong originating run"
+    ]
   },
-  "checks_declared": [
-    "materials_closed: every installed byte recorded, no missing, extra or drifted file",
-    "licence_closed: every registered original installed at its pin, no unregistered material, per-package materials present",
-    "link_closed: bundled archives and system libraries partitioned from the real link line, no overlap, no installed file named as a system library, every archive linked or declared unlinked",
-    "sbom_closed: SPDX 2.3 fields, per-file checksums, verification code, component licence identifiers, source references and licence CONTAINS edges; CycloneDX 1.5 components, licences, purls, file hashes and dependency refs",
-    "duplicates: every library shipped more than once recorded with its own path, owner, bytes and SHA-256",
-    "claims: runtime_accepted=false, legal_conclusion=false, product_granted=false, and any document asserting otherwise is rejected"
+  "closure_evidence": [
+    {
+      "kind": "sdk",
+      "platform": "linux",
+      "evidence_source": "real stage built by this workflow",
+      "sdk_identity": {
+        "version": "3.41.0",
+        "abi": 1,
+        "core_version": "3.40.0"
+      },
+      "totals": {
+        "files": 321,
+        "bytes": 21236518,
+        "archives": 29,
+        "owners": 13,
+        "duplicate_library_names": 4,
+        "link_lines": 1
+      },
+      "accepted": true,
+      "materials_closed": true,
+      "licence_closed": true,
+      "sbom_closed": true,
+      "link_closed": true,
+      "problems": [],
+      "closure_json": {
+        "bytes": 13221,
+        "sha256": "3fbd8367914d9fc0784fe402b40b01568afc891d0efcdb26f4db19ee0a8a9bce"
+      },
+      "artifact": {
+        "id": 12607306369,
+        "name": "reader-final-s09-stage-linux-40215271134-1",
+        "size_in_bytes": 317650,
+        "digest": "sha256:1839618affc3bc52c268373e5408509ec407dd35f5e84aed15d0b206c8b24f19",
+        "expires_at": "2027-01-23T17:11:40Z"
+      }
+    },
+    {
+      "kind": "sdk",
+      "platform": "windows",
+      "evidence_source": "real stage built by this workflow",
+      "sdk_identity": {
+        "version": "3.41.0",
+        "abi": 1,
+        "core_version": "3.40.0"
+      },
+      "totals": {
+        "files": 321,
+        "bytes": 29879200,
+        "archives": 29,
+        "owners": 13,
+        "duplicate_library_names": 4,
+        "link_lines": 1
+      },
+      "accepted": true,
+      "materials_closed": true,
+      "licence_closed": true,
+      "sbom_closed": true,
+      "link_closed": true,
+      "problems": [],
+      "closure_json": {
+        "bytes": 15524,
+        "sha256": "9dc3723a2da54e777f70ae574034dc27c9d724611cd7d6c2bd6fd6574f0d1424"
+      },
+      "artifact": {
+        "id": 12606939525,
+        "name": "reader-final-s09-stage-windows-40215271134-1",
+        "size_in_bytes": 2260127,
+        "digest": "sha256:7d4f8605dca501c18fef3076e575e82dca533ffa7d26e6969a9e7cab0818518e",
+        "expires_at": "2027-01-23T17:11:40Z"
+      }
+    },
+    {
+      "kind": "sdk",
+      "platform": "linux",
+      "evidence_source": "authenticated producer artifact (enclosing artifact 12607361078)",
+      "producer_artifact": {
+        "id": 12560228214,
+        "name": "reader-distribution-inventory-linux-reading-core-40095313750-1",
+        "size_in_bytes": 7009765,
+        "digest": "sha256:7b3621e5b370d80345702fd6d489529f031cd324478d8ac0599276e2bf17a6bc",
+        "expires_at": "2027-01-22T12:46:21Z",
+        "created_at": "2026-10-24T12:48:17Z",
+        "producer_job_id": 120876212765,
+        "producer_job": "inventory (ubuntu-22.04, reading-core)",
+        "producer_log_sha256": "810b6f7923d86974fc7d6b1ca17740b39f9809838a48fd6bf38c0139806ebfba",
+        "payload": {
+          "files": 331,
+          "stage_files": 262,
+          "stage_bytes": 18541669
+        }
+      },
+      "producer_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
+      "totals": {
+        "files": 262,
+        "bytes": 18541669,
+        "archives": 27,
+        "owners": 12,
+        "duplicate_library_names": 4,
+        "link_lines": 1
+      },
+      "accepted": true,
+      "materials_closed": true,
+      "licence_closed": true,
+      "sbom_closed": true,
+      "link_closed": true,
+      "problems": []
+    },
+    {
+      "kind": "combined",
+      "platform": "linux",
+      "evidence_source": "authenticated producer artifact (enclosing artifact 12607361078)",
+      "producer_artifact": {
+        "id": 12560936421,
+        "name": "reader-distribution-combined-linux-40095313750-1",
+        "size_in_bytes": 9197595,
+        "digest": "sha256:9ad81d61fc8ce37fea820bd0f1e7a9b286c1a6b5dc3951358c90b92390488481",
+        "expires_at": "2027-01-22T12:46:21Z",
+        "created_at": "2026-10-24T12:49:51Z",
+        "producer_job_id": 120876212706,
+        "producer_job": "combined (ubuntu-22.04)",
+        "producer_log_sha256": "8789b9715b4d3732debbe76afe98bc8cf16d3041365a27880c8d811cc146ddea",
+        "payload": {
+          "files": 504,
+          "stage_files": 350,
+          "stage_bytes": 24093888
+        }
+      },
+      "producer_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
+      "totals": {
+        "files": 350,
+        "bytes": 24093888,
+        "archives": 44,
+        "owners": 26,
+        "duplicate_library_names": 4,
+        "link_lines": 13
+      },
+      "accepted": true,
+      "materials_closed": true,
+      "licence_closed": true,
+      "sbom_closed": true,
+      "link_closed": true,
+      "problems": []
+    }
   ],
-  "granted": {
-    "material_closure": false,
-    "licence_material_closure": false,
-    "link_partition": false,
-    "sbom_field_closure": false,
-    "runtime": false,
-    "legal_conclusion": false,
-    "product": false
-  },
+  "accepted_checks": [
+    "materials: every installed file recorded byte for byte, no missing, extra, empty or drifted file, on four independent installs",
+    "licence: every registered original present at its pinned SHA-256, no unregistered material under share/exreader/licenses, per-component notice present, checker release_ready with no failures or pending",
+    "archive ownership: 29 archives over 13 owners (SDK stages) and 44 over 26 (composed prefix), each with exactly one owning component or package",
+    "duplicate libraries: four library names ship more than one archive on every install; each copy is recorded with its own path, owner, byte count and SHA-256, and no copy is silently merged",
+    "link partition: 1 consumer link line per SDK install and 13 per composed prefix, re-parsed from the captured output and compared with the recorded classification; bundled archives and system libraries do not overlap and no system token names an installed file",
+    "SPDX 2.3: file elements equal the installed files with matching SHA-1/SHA-256, packageVerificationCode recomputed per 7.9.4, hasFiles covers every element, every owner has a package whose licenseConcluded/licenseDeclared equal the registered identifiers, filesAnalyzed=false, source reference present (pinned archive hash in sourceInfo, or download location/comment/installed licence link) and CONTAINS edges to the installed licence originals",
+    "CycloneDX 1.5: component per owner with registered licence expression and purl, file elements with matching SHA-256, dependency refs resolvable",
+    "claims: no document asserts a runtime or legal conclusion; the closure reports runtime_accepted=false, legal_conclusion=false, product_granted=false"
+  ],
+  "inherited_not_regranted": [
+    "Producer release blockers remain: docs/CONVERSION.md and docs/WP7-SCRIPTS.md ship build-machine absolute paths (C:/Users/) in both SDK stages. Recorded by the producer inventory as release_blockers; this closure neither fixes nor grants them.",
+    "The 3.40 installed SDK used by the authenticated producer artifacts and the 3.41.0 SDK built here are different sources; both are recorded separately and neither is presented as the other."
+  ],
   "not_granted": [
     "Runtime behaviour of the shipped binaries",
     "Legal conclusion or licence adjudication",
     "Product, Release, signing, notarization, tag and store publication",
     "Android, iOS and Apple host packaging and their host fonts",
-    "Optional package behaviour (sync, accounts, import, interface)"
+    "Optional package behaviour (sync, accounts, import, interface)",
+    "Release readiness: the producer's build-machine path blockers are untouched"
   ],
-  "failures": [],
+  "failures_preserved": [
+    {
+      "run": 40214357391,
+      "attempt": 1,
+      "cause": "own guard: required tree equality with the frozen 3.40 SDK, which is an ancestor here, not an equal tree",
+      "fix": "compare the inherited SDK delta and assert this package changes none of the protected files"
+    },
+    {
+      "run": 40214474132,
+      "attempt": 1,
+      "cause": "own defects: ClosureError carried no code (a captured-output drift crashed instead of being rejected); the duplicate-split-owner branch was unreachable; the harness counted a successful artifact rejection as a failure",
+      "fix": "ClosureError(code), an undeclared-archive rejection instead of the dead branch, corrected harness predicate"
+    },
+    {
+      "run": 40214651090,
+      "attempt": 1,
+      "cause": "own fixture expectations for two checks that only inspected the partition derived from the captured output",
+      "fix": "inspect the derived partition and the claimed system list together"
+    },
+    {
+      "run": 40214778709,
+      "attempt": 1,
+      "cause": "shared probe tests/reader_distribution_inventory/probe pins find_package(EXReader 3.40.0 EXACT) while the reading preset installs 3.41.0; producer artifact name guessed as ...-linux-core-... instead of ...-linux-reading-core-...",
+      "fix": "own probe tests/reader_final_s09/probe without a version pin (shared probe untouched, reported for root); exact artifact name"
+    }
+  ],
   "pending": [
-    "No GitHub Actions run has recorded this package yet: accepted=false until a run produces a closure for a real stage and an authenticated producer artifact."
+    "macOS was not closed in this run: the closure tool is platform-neutral but only linux and windows stages were built and only linux producer artifacts were authenticated",
+    "The shared probe version pin (3.40.0 EXACT) blocks reuse at 3.41; root owns that file",
+    "The per-copy duplicate table, owner map and full check list of each closure live in the uploaded artifacts, which may only be read inside Actions"
   ],
-  "accepted": false
+  "granted": {
+    "material_closure": true,
+    "licence_material_closure": true,
+    "link_partition": true,
+    "sbom_field_closure": true,
+    "duplicate_library_closure": true,
+    "runtime": false,
+    "legal_conclusion": false,
+    "product": false
+  },
+  "accepted": true
 }
