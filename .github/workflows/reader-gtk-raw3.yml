@@ -1,0 +1,38 @@
+name: Explicit GTK raw3 actual owner candidate
+on:
+  push:
+    branches: [codex/reader-gtk-raw3-candidate]
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [build, full]
+        default: build
+permissions:
+  contents: read
+  actions: read
+jobs:
+  raw:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Native dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
+      - name: Syntax and actual raw host compilation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODE: ${{ inputs.mode || 'build' }}
+        run: |
+          python3 -m py_compile tests/reader_gtk_raw3/*.py
+          python3 tests/reader_gtk_raw3/run.py --mode "$MODE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-raw3-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/gtk-raw3/
+          if-no-files-found: error

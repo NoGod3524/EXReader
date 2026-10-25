@@ -133,7 +133,11 @@ static void accounts_start_network(void) {
   char *originals=g_build_filename(home,"sync-originals",NULL);reader_session_config config={0};
   config.product_path=product;config.private_directory=work;config.original_directory=originals;config.account_id=accounts.id;
   config.dav.root_url=accounts.bound_root;config.dav.authorization=authorization;
+#ifdef EXR_READER_GTK_RAW3
+  reader_session_status code=reader_session_create_raw_v3(&config,&accounts.session);
+#else
   reader_session_status code=reader_session_create(&config,&accounts.session);
+#endif
   reader_secret_free(authorization);g_free(product);g_free(work);g_free(originals);
   if(code==READER_SESSION_OK) { accounts.generation++;code=reader_session_start(accounts.session); }
   if(accounts.session) reader_session_observe(accounts.session,&accounts.view);

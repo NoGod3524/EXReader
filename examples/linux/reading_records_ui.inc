@@ -38,13 +38,21 @@ static void records_controls(void) {
   reader_av_item *item=records_selected_item();
   gboolean safe=records.progress_selected ? records.progress_state==READER_SELECTION_SAFE:item && item->state==READER_AV_STATE_SAFE;
   gboolean deleted=records.progress_selected ? records.progress_deleted:item && item->deleted;
+#ifdef EXR_READER_GTK_RAW3
+  gboolean location_safe=safe;
+  if(item && item->mode==READER_AV_MODE_FIXED && item->anchor_version==3 && !item->exact) location_safe=FALSE;
+#endif
   gboolean write=!records.running && !records.pending;
   gtk_widget_set_sensitive(records.save,write && !records.progress_deleted && (records.progress_state==READER_SELECTION_SAFE || records.progress_state==READER_SELECTION_MISSING));
   gtk_widget_set_sensitive(records.bookmark,write);gtk_widget_set_sensitive(records.highlight,write && records.has_range);
   gtk_widget_set_sensitive(records.more,!records.running && records.page.count>0 && !(records.page.next.direction>0 && records.page.complete));
   gtk_widget_set_sensitive(records.previous,!records.running && records.page.count>0 && !(records.page.next.direction<0 && records.page.complete));
   gtk_widget_set_sensitive(records.refresh,!records.running);gtk_widget_set_sensitive(records.list,!records.running);gtk_widget_set_sensitive(records.progress,!records.running);
+#ifdef EXR_READER_GTK_RAW3
+  gtk_widget_set_sensitive(records.jump,!records.running && location_safe && !deleted);gtk_widget_set_sensitive(records.edit,write && location_safe && !deleted && !records.progress_selected);
+#else
   gtk_widget_set_sensitive(records.jump,!records.running && safe && !deleted);gtk_widget_set_sensitive(records.edit,write && safe && !deleted && !records.progress_selected);
+#endif
   gtk_widget_set_sensitive(records.remove,write && safe && !deleted);gtk_widget_set_sensitive(records.restore,write && safe && deleted);
   gtk_widget_set_sensitive(records.retry,!records.running && records.pending && !records.pending_error);
   gtk_widget_set_sensitive(records.discard,!records.running && records.pending && !records.pending_error);
