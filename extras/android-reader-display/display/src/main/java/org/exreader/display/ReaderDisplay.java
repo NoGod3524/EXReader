@@ -71,7 +71,7 @@ public final class ReaderDisplay {
         if (window != null) return Status.ALREADY_ATTACHED;
         Activity owner = target == null ? null : findActivity(target.getContext());
         if (owner == null || owner.isDestroyed() || owner.isFinishing()
-                || owner.getWindow() != target || target.isDestroyed()) return Status.INVALID_WINDOW;
+                || owner.getWindow() != target) return Status.INVALID_WINDOW;
         if (LEASES.containsKey(target)) return Status.CONFLICT;
         busy = true;
         try {
@@ -105,7 +105,7 @@ public final class ReaderDisplay {
         } finally { busy = false; }
     }
     private boolean visible() {
-        return !activity.isDestroyed() && !activity.isFinishing() && !window.isDestroyed()
+        return !activity.isDestroyed() && !activity.isFinishing()
                 && decor.isAttachedToWindow() && decor.getWindowVisibility() == View.VISIBLE
                 && decor.getVisibility() == View.VISIBLE && decor.hasWindowFocus();
     }
