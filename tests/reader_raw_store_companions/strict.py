@@ -40,7 +40,7 @@ def main():
             assert len(result['original_regressions']) == 6 and all(x >= 20 for x in result['original_regressions'].values())
             assert len(result['mixed_profiles_refused']) == 3 and result['off_new_symbols_absent']
             profiles = json.loads(z.read('profiles.json'))
-            assert profiles['accepted'] and profiles['old_sdk_runtime'] == '3.40.0' and len(profiles['checks']) == 7
+            assert profiles['accepted'] and profiles['old_sdk_runtime'] == '3.40.0' and len(profiles['checks']) == 8
             tls = json.loads(z.read('actual-tls/result.json'))
             assert tls['accepted'] and tls['source_sha'] == source and tls['run_id'] == run and tls['attempt'] == attempt
             assert len(tls['checks']) == 9 and len(set(tls['checks'])) == 9 and len(tls['exact_wires']) == 11
