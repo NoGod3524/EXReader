@@ -146,6 +146,24 @@ static reader_tts_status set_wav(suite *s, reader_tts *handle, const char *name)
   return reader_tts_windows_set_wav_output(handle, wide, NULL);
 }
 
+/* Bytes of a file this phase just produced; 0 when it is missing. Both rate files use
+   the same PCM format, so their sizes compare the rendered duration directly. */
+static unsigned long long wav_file_bytes(const char *path) {
+  wchar_t wide[PATH_CAP];
+  HANDLE file;
+  LARGE_INTEGER size;
+  if (MultiByteToWideChar(CP_UTF8, 0, path, -1, wide, PATH_CAP) <= 0) return 0;
+  file = CreateFileW(wide, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                     FILE_ATTRIBUTE_NORMAL, NULL);
+  if (file == INVALID_HANDLE_VALUE) return 0;
+  if (!GetFileSizeEx(file, &size)) {
+    CloseHandle(file);
+    return 0;
+  }
+  CloseHandle(file);
+  return size.QuadPart > 0 ? (unsigned long long)size.QuadPart : 0;
+}
+
 static void announce_wav(suite *s, const char *name, unsigned long long minimum_ms) {
   printf("wavfile %s %llu\n", wav_name(s, name), minimum_ms);
   fflush(stdout);
@@ -505,10 +523,80 @@ static void phase_speak(suite *s) {
     info(s, "engine_event_calls", (unsigned long long)probe.event_calls);
     info(s, "engine_event_total", (unsigned long long)probe.event_total);
     info(s, "engine_last_event_id", (unsigned long long)probe.last_event_id);
+    snprintf(s->detail, sizeof s->detail, "event_calls=%llu event_total=%llu hresult=0x%08lx",
+             (unsigned long long)probe.event_calls, (unsigned long long)probe.event_total,
+             (unsigned long)probe.event_hresult);
+    /* The events of the speaking voice are read through ISpEventSource: S_OK or
+       S_FALSE means the queue was queried; a failed HRESULT means the package never
+       polled engine progress at all. */
+    check(s, "speak.engine_event_source",
+          probe.event_calls >= 1 && (uint32_t)probe.event_hresult <= 1u, s->detail);
   }
   reader_tts_observe(handle, &snap, NULL);
   check_state(s, "speak.state_ready", snap.state, READER_TTS_READY);
   check_count(s, "speak.idle_request_id", snap.request_id, 0, 0);
+
+  /* The frozen contract maps rate onto the SAPI -10..10 preference scale, so the same
+     text at 0.5 has to render substantially longer than at 2.0. A rate that never
+     reaches the engine leaves both files the same size. */
+  {
+    char slow_path[PATH_CAP], fast_path[PATH_CAP];
+    unsigned long long slow_bytes, fast_bytes;
+    int wav_ok;
+    fill_text(s, 200, 'R');
+    wav_ok = set_wav(s, handle, "rate-slow") == READER_TTS_OK;
+    snprintf(slow_path, sizeof slow_path, "%s", s->wav);
+    status = wav_ok ? reader_tts_speak(handle, 2, s->text, 200, NULL, 0.5, NULL) : READER_TTS_IO;
+    check_status(s, "speak.rate_slow.start", status, READER_TTS_OK);
+    tally_init(&t, 2, s->text, 200);
+    if (status == READER_TTS_OK) pump_until_terminal(handle, &t, 240000, &foreign);
+    snprintf(s->detail, sizeof s->detail, "finished=%d failed=%d", t.finished, t.failed);
+    check(s, "speak.rate_slow.finished", status == READER_TTS_OK && t.finished == 1 && t.failed == 0,
+          s->detail);
+    wav_ok = set_wav(s, handle, "rate-fast") == READER_TTS_OK;
+    snprintf(fast_path, sizeof fast_path, "%s", s->wav);
+    status = wav_ok ? reader_tts_speak(handle, 3, s->text, 200, NULL, 2.0, NULL) : READER_TTS_IO;
+    check_status(s, "speak.rate_fast.start", status, READER_TTS_OK);
+    tally_init(&t, 3, s->text, 200);
+    if (status == READER_TTS_OK) pump_until_terminal(handle, &t, 240000, &foreign);
+    snprintf(s->detail, sizeof s->detail, "finished=%d failed=%d", t.finished, t.failed);
+    check(s, "speak.rate_fast.finished", status == READER_TTS_OK && t.finished == 1 && t.failed == 0,
+          s->detail);
+    slow_bytes = wav_file_bytes(slow_path);
+    fast_bytes = wav_file_bytes(fast_path);
+    snprintf(s->detail, sizeof s->detail, "slow(0.5)=%llu fast(2.0)=%llu bytes",
+             slow_bytes, fast_bytes);
+    check(s, "speak.rate.applied",
+          slow_bytes > 0 && fast_bytes > 0 && slow_bytes >= fast_bytes + fast_bytes / 2, s->detail);
+    announce_wav(s, "rate-slow", 3000);
+    announce_wav(s, "rate-fast", 1000);
+  }
+
+  /* A real voice id from reader_tts_voices() must be accepted and applied; only the
+     rejection of an unknown id was covered before. */
+  {
+    reader_tts_voice_list voices;
+    const char *chosen = NULL;
+    reader_tts_status list_status;
+    int wav_ok;
+    memset(&voices, 0, sizeof voices);
+    list_status = reader_tts_voices(handle, &voices, NULL);
+    if (list_status == READER_TTS_OK && voices.count > 0) chosen = voices.voices[voices.count - 1].id;
+    fill_text(s, 60, 'V');
+    wav_ok = set_wav(s, handle, "voice") == READER_TTS_OK;
+    status = (wav_ok && chosen) ? reader_tts_speak(handle, 4, s->text, 60, chosen, 1.0, NULL)
+                                : READER_TTS_ARGUMENT;
+    snprintf(s->detail, sizeof s->detail, "voices=%llu chosen=%s status=%s",
+             (unsigned long long)voices.count, chosen ? chosen : "(none)", status_name(status));
+    check(s, "speak.voice.explicit", status == READER_TTS_OK, s->detail);
+    tally_init(&t, 4, s->text, 60);
+    if (status == READER_TTS_OK) pump_until_terminal(handle, &t, 120000, &foreign);
+    snprintf(s->detail, sizeof s->detail, "finished=%d failed=%d", t.finished, t.failed);
+    check(s, "speak.voice.explicit_finished",
+          status == READER_TTS_OK && t.finished == 1 && t.failed == 0, s->detail);
+    reader_tts_voice_list_free(&voices);
+    announce_wav(s, "voice", 500);
+  }
   announce_wav(s, "speak", 1500);
   close_and_destroy(s, &handle, "speak.closed");
   check_count(s, "speak.allocations.released",
@@ -717,6 +805,55 @@ static void phase_control(suite *s) {
   check_count(s, "control.second_finished", second.finished, 1, 0);
   check(s, "control.no_late_events", foreign == 0, "no event kept the stopped request id");
   check(s, "control.range_bounds", t.bad_range == 0 && second.bad_range == 0, "all ranges valid");
+
+  /* ISpVoice::Pause is a persistent voice state and Speak does not clear it, so a stop
+     that arrives while the request is PAUSED must leave the engine runnable. Otherwise
+     the next request is spoken into a paused voice and never reaches a terminal event. */
+  {
+    tally third, fourth;
+    reader_tts_status paused_status;
+    int wav_ok;
+    fill_text(s, 16000, 'D');
+    wav_ok = set_wav(s, handle, "control-paused") == READER_TTS_OK;
+    paused_status = wav_ok ? reader_tts_speak(handle, 3, s->text, 16000, NULL, 1.0, NULL)
+                           : READER_TTS_IO;
+    check_status(s, "control.paused_stop.start", paused_status, READER_TTS_OK);
+    tally_init(&third, 3, s->text, 16000);
+    if (paused_status == READER_TTS_OK) poll_events(handle, &third, &foreign);
+    paused_status = reader_tts_pause(handle, 3, NULL);
+    reader_tts_observe(handle, &snap, NULL);
+    snprintf(s->detail, sizeof s->detail, "pause=%s state=%s",
+             status_name(paused_status), state_name(snap.state));
+    check(s, "control.paused_stop.pause",
+          paused_status == READER_TTS_OK && snap.state == READER_TTS_PAUSED, s->detail);
+    paused_status = reader_tts_stop(handle, 3, NULL);
+    reader_tts_observe(handle, &snap, NULL);
+    snprintf(s->detail, sizeof s->detail, "stop=%s state=%s",
+             status_name(paused_status), state_name(snap.state));
+    check(s, "control.paused_stop.stop",
+          paused_status == READER_TTS_OK && snap.state == READER_TTS_READY, s->detail);
+    pump_until_terminal(handle, &third, 20000, &foreign);
+    snprintf(s->detail, sizeof s->detail, "stopped=%d finished=%d failed=%d",
+             third.stopped, third.finished, third.failed);
+    check(s, "control.paused_stop.terminal",
+          third.stopped == 1 && third.finished == 0 && third.failed == 0, s->detail);
+    fill_text(s, 200, 'E');
+    wav_ok = set_wav(s, handle, "control-after-paused") == READER_TTS_OK;
+    paused_status = wav_ok ? reader_tts_speak(handle, 4, s->text, 200, NULL, 1.0, NULL)
+                           : READER_TTS_IO;
+    check_status(s, "control.after_paused.start", paused_status, READER_TTS_OK);
+    tally_init(&fourth, 4, s->text, 200);
+    if (paused_status == READER_TTS_OK) {
+      outcome = pump_until_terminal(handle, &fourth, 120000, &foreign);
+      snprintf(s->detail, sizeof s->detail, "outcome=%d finished=%d failed=%d",
+               outcome, fourth.finished, fourth.failed);
+      check(s, "control.after_paused.finished",
+            outcome == 0 && fourth.finished == 1 && fourth.failed == 0, s->detail);
+    } else {
+      check(s, "control.after_paused.finished", 0, "the request after the paused stop never started");
+    }
+    announce_wav(s, "control-after-paused", 2000);
+  }
   close_and_destroy(s, &handle, "control.closed");
   check_count(s, "control.allocations.released",
               (unsigned long long)reader_tts_windows_debug_live_allocations(), 0, 0);

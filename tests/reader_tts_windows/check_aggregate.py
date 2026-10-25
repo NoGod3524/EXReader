@@ -51,8 +51,9 @@ def pack(files):
 
 
 WAV_LINES = {
-    "speak": [("speak.wav", 1500)],
+    "speak": [("speak.wav", 1500), ("rate-slow.wav", 3000), ("rate-fast.wav", 1000), ("voice.wav", 500)],
     "unicode": [("unicode.wav", 1500)],
+    "control": [("control-after-paused.wav", 2000)],
     "chunks": [("chunk0.wav", 1000), ("chunk1.wav", 1000), ("chunk2.wav", 1000)],
 }
 

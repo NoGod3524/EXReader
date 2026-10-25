@@ -1,7 +1,7 @@
 name: Windows native TTS
 on:
   push:
-    branches: [codex/reader-tts-windows]
+    branches: [codex/reader-tts-windows, codex/reader-tts-windows-review]
   workflow_dispatch:
     inputs:
       target_run_id:
