@@ -1,9 +1,126 @@
 {
-  "accepted": false,
+  "accepted": true,
   "adopted": false,
+  "source_sha": "eb0a4ac713be25c1487843c19c2d02d579258644",
   "base": "b93b4a2f9ac24d7d0fc4d48c917dae11bec4baf7",
-  "runs": [],
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "sdk_version": "3.41.0",
+  "scope": "explicit installed core codec/revisions/commands/typed-view candidate only",
+  "candidate_packages": {
+    "revisions": "0.4.0",
+    "reading_state": "0.2.0",
+    "annotation_view": "0.2.0",
+    "reading_commands": "0.2.0"
+  },
+  "runs": [
+    {
+      "accepted": true,
+      "adopted": false,
+      "source_sha": "eb0a4ac713be25c1487843c19c2d02d579258644",
+      "run_id": "40186400653",
+      "attempt": "1",
+      "scope": "explicit installed core codec/revisions/commands/typed-view candidate only",
+      "platforms": [
+        {
+          "platform": "Linux",
+          "producer_job": 121147996604,
+          "artifact": {
+            "id": 12595319907,
+            "name": "reader-selector-bytes-Linux-40186400653-1",
+            "digest": "sha256:67aa151c5a1ef67d5c7f4ec5d02e7de16c8086f3bb86c967d01ba0d878a2f4ee",
+            "size_in_bytes": 51299701,
+            "expires_at": "2027-01-23T10:50:16Z"
+          },
+          "protocol_checks": 30,
+          "graph_checks": 11,
+          "pdf_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc"
+        },
+        {
+          "platform": "Windows",
+          "producer_job": 121147996787,
+          "artifact": {
+            "id": 12595969192,
+            "name": "reader-selector-bytes-Windows-40186400653-1",
+            "digest": "sha256:25ac6f7d7ce4a2754946fd82593b3cfc2c187fbdbb7a6afbe4a2c7639a6fdfed",
+            "size_in_bytes": 55351821,
+            "expires_at": "2027-01-23T10:50:16Z"
+          },
+          "protocol_checks": 30,
+          "graph_checks": 11,
+          "pdf_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc"
+        }
+      ],
+      "cross_platform_wire_equal": true,
+      "actual_android_apple_interop": false,
+      "physical_device": false,
+      "complete_product": false,
+      "strict_summary_job": 121148786664,
+      "summary_artifact": {
+        "id": 12595954258,
+        "name": "reader-selector-bytes-summary-40186400653-1",
+        "size_in_bytes": 738,
+        "digest": "sha256:d38e56a23443504c7ce3d9778b692921d5a3d089fba0e375b28478438adbc968",
+        "expires_at": "2027-01-23T10:50:16Z"
+      }
+    }
+  ],
+  "earlier_failed_runs": [
+    {
+      "reason": "New probe called five-argument public SDK open with six arguments.",
+      "run_id": "40184612164",
+      "source_sha": "467f46cfbd5bef8a1712eb51c980d3616aee2327"
+    },
+    {
+      "reason": "New receive probe aliased expected SHA to cleared output info.",
+      "run_id": "40185241773",
+      "source_sha": "62e5a00d6c4f9132051f2316ca3747278bd9d377"
+    },
+    {
+      "reason": "Strict urllib forwarded API Authorization to signed Azure redirect; HTTP401.",
+      "producers": "both success",
+      "run_id": "40185570819",
+      "source_sha": "d0db6c61cffabdbdf9d5f8340ac6becc7128cbbc"
+    },
+    {
+      "reason": "Same strict signed-redirect HTTP401.",
+      "producers": "both success",
+      "run_id": "40186003111",
+      "source_sha": "f90beb576932d540471a5abdb5f8e3192803ca9a"
+    },
+    {
+      "reason": "Same strict signed-redirect HTTP401.",
+      "producers": "both success",
+      "run_id": "40186120685",
+      "source_sha": "fcc2277cf0274401b3bfa547c297d302f5b7425a"
+    }
+  ],
+  "prior_successful_runs": [
+    {
+      "scope": "same core candidate only; final source separately rerun",
+      "run_id": "40186197539",
+      "source_sha": "ce929e60fdb110f4778076f668a8f1c76e3a6cf3"
+    }
+  ],
+  "off_header_bytes_unchanged": false,
+  "off_installed_inventory_unchanged": true,
+  "off_new_symbols_absent": true,
+  "legacy_v1_v2_wire_bytes_unchanged": true,
   "actual_android_apple_interop": false,
+  "host_adoption": false,
   "physical_device": false,
-  "complete_product": false
+  "performance_accepted": false,
+  "complete_product": false,
+  "original_regression_checks_each_platform": {
+    "revision_protocol": 59,
+    "v2_protocol": 28,
+    "sdk_v1": 121,
+    "sdk_v2": 116,
+    "sdk_v2_cases": 18,
+    "reading_commands": 1413,
+    "annotation_view": 56
+  },
+  "new_protocol_checks_each_platform": 30,
+  "new_graph_checks_each_platform": 11,
+  "macos": "pending",
+  "candidate_sdk340_execution": "pending"
 }
