@@ -1,15 +1,21 @@
-name: Reader next C04 real RTF compatibility candidate
+name: Reader next C04 root review real RTF compatibility candidate
 
 on:
   push:
-    branches: [codex/reader-next-c04]
+    branches: [codex/reader-next-c04-root-review]
   workflow_dispatch:
+    inputs:
+      scope:
+        type: choice
+        options: [inspect, full]
+        default: inspect
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
-  group: reader-next-c04
+  group: reader-next-c04-root-review
   cancel-in-progress: false
 
 env:
@@ -18,7 +24,24 @@ env:
   PATCH: candidates/reader-next-c04/rtf-root-tail-padding.patch
 
 jobs:
+  inspect:
+    if: github.event_name == 'push' || inputs.scope == 'inspect'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate both historical runs and separate base/candidate evidence in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_next_c04/inspect_previous.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-c04-inspect-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c04-inspect/
+          if-no-files-found: error
   guard:
+    if: inputs.scope == 'full'
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
@@ -47,6 +70,7 @@ jobs:
           if-no-files-found: error
 
   diagnose:
+    if: inputs.scope == 'full'
     needs: guard
     runs-on: ubuntu-22.04
     timeout-minutes: 90
@@ -101,6 +125,7 @@ jobs:
           if-no-files-found: error
 
   acceptance:
+    if: inputs.scope == 'full'
     needs: guard
     timeout-minutes: 150
     strategy:
@@ -238,7 +263,7 @@ jobs:
           if-no-files-found: warn
 
   aggregate:
-    if: always()
+    if: always() && inputs.scope == 'full'
     needs: [guard, diagnose, acceptance]
     runs-on: ubuntu-22.04
     timeout-minutes: 10
