@@ -28,6 +28,9 @@ typedef struct {
 
 static long g_cancel_after;
 static long g_cancel_calls;
+static unsigned g_io_failure;
+
+int rd_test_io_failure(unsigned stage) { return g_io_failure == stage; }
 
 static void usage(void) {
   printf("usage: diagnostic-worker <command> [arguments]\n");
@@ -765,6 +768,11 @@ int main(int argc, char **argv) {
   }
   if (strcmp(argv[1], "build") == 0) return command_build(argc, argv);
   if (strcmp(argv[1], "write") == 0) return command_write(argc, argv);
+  if (strcmp(argv[1], "write-fail") == 0) {
+    if (argc < 7) return 2;
+    g_io_failure = (unsigned)parse_long(argv[6]);
+    return command_write(argc, argv);
+  }
   if (strcmp(argv[1], "write-bad-options") == 0) return command_write_bad_options(argc, argv);
   if (strcmp(argv[1], "build-cancel") == 0) return command_build_cancel(argc, argv);
   if (strcmp(argv[1], "build-bad-options") == 0) return command_build_bad_options(argc, argv);

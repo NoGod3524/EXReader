@@ -30,6 +30,7 @@ typedef struct {
 extern rd_test_limits rd_test_output_limits;
 extern void rd_test_pause_before_commit(void);
 extern void rd_test_pause_after_commit(void);
+extern int rd_test_io_failure(unsigned stage);
 #endif
 
 void rd_error_set(reader_diag_error *error, reader_diag_status status, int system_error,

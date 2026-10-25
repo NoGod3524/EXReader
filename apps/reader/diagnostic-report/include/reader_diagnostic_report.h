@@ -54,6 +54,12 @@ extern "C" {
    thread; they may call the read-only accessors of the report being written but
    must not free it.
 
+   The caller owns synchronization of its input snapshot: the input structure,
+   version string, entry arrays and options must stay alive and unchanged for
+   the entire call, including callbacks. Concurrent mutation of borrowed input
+   is not supported. Copy host state while holding the host's lock, then build
+   from that stable snapshot; after return the report has no borrowed data.
+
    Errors. Every entry point reports through a reader_diag_status return value and
    an optional reader_diag_error. error may be NULL and is always overwritten
    (cleared on success). status_name() never returns NULL. A NULL report is not

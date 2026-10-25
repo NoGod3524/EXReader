@@ -19,6 +19,7 @@ import time
 from pathlib import Path
 
 COMMON_START = "f43baf9182d75907c0cb5d6f77048f27bca8c950"
+REVIEW_START = "4793224343950b279a3591c8398f5a2a8514d754"
 MAX_COUNT = 9007199254740991
 MAX_UNIX = 4102444800
 ALL_PLATFORMS = ("Linux", "Windows", "macOS")
@@ -56,6 +57,14 @@ SECRETS = (
     "-----BEGIN PRIVATE KEY-----",
     "Bearer eyJhbGciOiJIUzI1NiJ9",
     "example.invalid",
+    "Authorization: Bearer T06_auth_secret_68ac",
+    "https://reader:pa55w0rd@example.invalid/dav?token=T06_query_74aa",
+    "T06_private_book_title_3e02",
+    "T06_private_book_body_d8f1",
+    "T06_private_annotation_a1b2",
+    '{"error":{"cause":{"message":"T06_nested_error_5d7e"}}}',
+    "T06_nested_error_5d7e",
+    "T06_query_74aa",
 )
 REQUIRED_CASES = (
     "installed-header-contract",
@@ -90,6 +99,10 @@ REQUIRED_CASES = (
     "unicode-target",
     "thread-safety",
     "output-lifetime",
+    "privacy-injection-installed",
+    "snapshot-reentrant-installed",
+    "injected-write-flush-commit-failures",
+    "all-output-secret-scan",
 )
 # Cases that only one platform family can exercise, with the reason it is skipped
 # elsewhere. The evidence job requires the exact per-platform set.
@@ -98,6 +111,7 @@ PLATFORM_CASES = {
     "invalid-utf8-target": ("Windows",),
 }
 cases = []
+observed_output = []
 
 
 class CheckFailure(RuntimeError):
@@ -122,6 +136,7 @@ def record(name, function):
 def run(command, code=0, timeout=240):
     process = subprocess.run([str(item) for item in command], capture_output=True, text=True,
                              encoding="utf-8", errors="replace", timeout=timeout)
+    observed_output.extend([process.stdout, process.stderr])
     if code is not None and process.returncode != code:
         raise CheckFailure("rc=%d expected %d: %s %s" % (
             process.returncode, code, process.stdout[-500:], process.stderr[-500:]))
@@ -140,6 +155,7 @@ def kv(process):
 def worker(*arguments, code=0, timeout=240):
     process = subprocess.run([WORKER] + [str(item) for item in arguments], capture_output=True,
                              text=True, encoding="utf-8", errors="replace", timeout=timeout)
+    observed_output.extend([process.stdout, process.stderr])
     if code is not None and process.returncode != code:
         raise CheckFailure("worker %s rc=%d: %s %s" % (
             arguments[0], process.returncode, process.stdout[-500:], process.stderr[-500:]))
@@ -236,6 +252,7 @@ def main():
     CONSUMER = str(consumer_dir / ("diagnostic-c-consumer" + suffix))
     CPP_CONSUMER = str(consumer_dir / ("diagnostic-cpp-consumer" + suffix))
     WORKER = str(consumer_dir / ("diagnostic-worker" + suffix))
+    audit_consumer = str(consumer_dir / ("diagnostic-audit-consumer" + suffix))
     installed = Path(arguments.installed).resolve()
     HEADER = installed / "include" / "reader_diagnostic_report.h"
     output = Path(arguments.output).resolve()
@@ -300,8 +317,11 @@ def main():
         lines = [line.replace("\\", "/") for line in
                  build_log.read_text(encoding="utf-8", errors="replace").splitlines()]
         include = str(installed).replace("\\", "/").lower()
-        seen = [line for line in lines if "c_consumer.c" in line]
-        require(seen, "build log has no c_consumer.c compile line")
+        seen = []
+        for source in ("c_consumer.c", "cpp_consumer.cpp", "audit_consumer.cpp"):
+            matches = [line for line in lines if source in line]
+            require(matches, "build log has no " + source + " compile line")
+            seen.extend(matches)
         for line in seen:
             require(include in line.lower(),
                     "consumer did not compile against the installed include directory: " + line[:300])
@@ -635,6 +655,8 @@ def main():
         wait_marker(marker, "before", process)
         process.kill()
         process.wait(timeout=60)
+        captured = process.communicate(timeout=60)
+        observed_output.extend(captured)
         require(not target.exists(), "a killed write published the target")
         leftovers = temp_leftovers(directory)
         require(len(leftovers) <= 1, "more than one temporary survived: %r" % (leftovers,))
@@ -654,6 +676,8 @@ def main():
         wait_marker(marker, "after", process)
         process.kill()
         process.wait(timeout=60)
+        captured = process.communicate(timeout=60)
+        observed_output.extend(captured)
         require(target.exists(), "a killed-after-commit write lost the target")
         require(target.read_bytes() == (work / "typical.json").read_bytes(),
                 "the committed report is not the whole report")
@@ -668,7 +692,9 @@ def main():
                                       encoding="utf-8", errors="replace") for _ in range(8)]
         statuses = []
         for process in processes:
-            out, _ = process.communicate(timeout=180)
+            out, err = process.communicate(timeout=180)
+            observed_output.extend([out, err])
+            require(process.returncode == 0, "concurrent worker failed")
             values = {}
             for line in out.splitlines():
                 if "=" in line:
@@ -706,6 +732,79 @@ def main():
         require(target.read_bytes() == (work / "typical.json").read_bytes(),
                 "the first report's bytes changed after a second build was freed")
 
+    def privacy_injection_installed():
+        # Exercise the actually installed library, not just a source-hook worker.
+        # Every free-text category is injected through the only string field.
+        # Embedded NUL ends a C string; following bytes must not be consumed.
+        vectors = [(secret.encode("utf-8"), "FIELD") for secret in SECRETS]
+        vectors += [(b"1.2.3" + suffix, "FIELD") for suffix in
+                    (b"\xff", b"\xc0\xaf", b"\xe2\x82", b"\n", b"\r", b"\t", b"\x1b")]
+        vectors += [(b"1.2.3" + b"a" * 32, "FIELD"),
+                    (b"123456.654321.999999-alpha.999", "OK"),
+                    (b"1.2.3\0T06_private_book_body_d8f1", "OK")]
+        for index, (value, expected) in enumerate(vectors):
+            directory = work / ("private-injection-%02d" % index)
+            directory.mkdir()
+            process = run([audit_consumer, "inject", value.hex(), directory])
+            values = kv(process)
+            require(values.get("status") == expected, "injection status differs")
+            require(values.get("system_error") == "0", "injection system error")
+            require(values.get("out_null") == ("1" if expected == "FIELD" else "0"),
+                    "injection output ownership differs")
+            if expected == "FIELD":
+                require(values.get("message") == "input.app_version", "refusal not static")
+                require(not list(directory.iterdir()), "refusal published bytes")
+            else:
+                payload = load_json(directory / "report.json")
+                require(payload["app_version"] == value.split(b"\0")[0].decode("ascii"),
+                        "C-string boundary changed")
+            scan_bytes(process.stdout.encode("utf-8"), "injection stdout")
+            require(not process.stderr, "injection stderr not empty")
+
+    def snapshot_reentrant_installed():
+        directory = work / "snapshot-reentrant"
+        directory.mkdir()
+        process = run([audit_consumer, "snapshot", directory])
+        values = kv(process)
+        require(values == {"snapshot_reads": "1600", "reentrant_calls": "1", "failures": "0"},
+                "snapshot or reentrancy failed")
+        payload = load_json(directory / "snapshot.json")
+        require(payload["app_version"] == "1.2.3" and
+                payload["counters"] == [{"id": "books_total", "value": 23}],
+                "report retained host input pointers")
+        require(not (directory / "cancelled.json").exists() and not temp_leftovers(directory),
+                "reentrant cancellation changed the filesystem")
+
+    def injected_write_flush_commit_failures():
+        for stage in (1, 2, 3):
+            for existing in (False, True):
+                directory = work / ("fault-%d-%s" % (stage, existing))
+                directory.mkdir()
+                target = directory / "report.json"
+                if existing:
+                    target.write_bytes((work / "minimal.json").read_bytes())
+                before = statistics(target) if existing else None
+                _, values = worker("write-fail", target, "typical", 0, -1, stage)
+                expect_refusal_status(values, "IO")
+                require(values.get("system_error") not in ("", "0"), "fault lacks OS error")
+                require(not temp_leftovers(directory), "fault left a temporary")
+                require(statistics(target) == before if existing else not target.exists(),
+                        "fault modified or published the destination")
+
+    def all_output_secret_scan():
+        scanned = 0
+        for path in sorted(work.rglob("*")):
+            if path.is_file() and not path.is_symlink():
+                raw = path.read_bytes()
+                if raw:
+                    scan_bytes(raw, "produced output")
+                    scanned += 1
+        for raw in observed_output:
+            if raw:
+                scan_bytes(raw.encode("utf-8"), "consumer stdout or stderr")
+                scanned += 1
+        require(scanned > 50, "too few actual output streams scanned")
+
     mapping = [
         ("installed-header-contract", installed_header_contract),
         ("c-consumer", c_consumer),
@@ -739,6 +838,10 @@ def main():
         ("unicode-target", unicode_target),
         ("thread-safety", thread_safety),
         ("output-lifetime", output_lifetime),
+        ("privacy-injection-installed", privacy_injection_installed),
+        ("snapshot-reentrant-installed", snapshot_reentrant_installed),
+        ("injected-write-flush-commit-failures", injected_write_flush_commit_failures),
+        ("all-output-secret-scan", all_output_secret_scan),
     ]
     applicable = [name for name, _ in mapping
                   if platform in PLATFORM_CASES.get(name, ALL_PLATFORMS)]
@@ -755,6 +858,7 @@ def main():
         "accepted": not failed,
         "package": "EXReaderDiagnosticReport 0.1.0",
         "common_start": COMMON_START,
+        "review_start": REVIEW_START,
         "source_sha": os.environ.get("GITHUB_SHA", ""),
         "run_id": int(os.environ.get("GITHUB_RUN_ID", "0")),
         "attempt": int(os.environ.get("GITHUB_RUN_ATTEMPT", "0")),
@@ -769,6 +873,12 @@ def main():
         "skipped": sorted(skipped),
         "cases": cases,
         "failed": failed,
+        "binaries": [{"path": "diag-consumer/" + Path(path).name,
+                      "bytes": Path(path).stat().st_size, "sha256": digest(path)}
+                     for path in (CONSUMER, CPP_CONSUMER, WORKER, audit_consumer)],
+        "installed_files": [{"path": "diag-stage/" + path.relative_to(installed).as_posix(),
+                             "bytes": path.stat().st_size, "sha256": digest(path)}
+                            for path in sorted(installed.rglob("*")) if path.is_file()],
     }
     (output / "result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n",
                                         encoding="utf-8")

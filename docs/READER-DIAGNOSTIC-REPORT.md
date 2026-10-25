@@ -5,7 +5,7 @@ User-triggered, bounded diagnostic export for import/sync/reading failures:
 (installed consumers, test-hook worker, cloud checker),
 `.github/workflows/reader-diagnostic-report.yml` (three-platform acceptance).
 
-Status: **module implemented and cloud-accepted for the module scope only.** The
+Status: **original J21 accepted; T06 review changes awaiting their own Actions.** The
 package does not wire itself into any host. Reports, module behaviour, host
 behaviour, performance, accessibility and real-device coverage are granted
 separately; nothing here is a host or product acceptance.
@@ -185,3 +185,47 @@ Retained original failures (kept as evidence, not rewritten):
 
 This evidence commit changes documentation only; the tested source is 7ee7ab80
 and no source or test byte changed after that run.
+
+## 6. T06 independent review
+
+The review starts at `4793224343950b279a3591c8398f5a2a8514d754`, on
+`codex/dot-diagnostic-report-review`. Section 5 remains the original, historical
+acceptance, not evidence for subsequent review changes. Its four jobs and four
+artifact metadata records were independently re-read through the GitHub API;
+the start differs from the original tested source only in the two evidence docs.
+
+Directed inspection followed validation, canonical rendering, error construction,
+build cancellation, immutable report lifetime, both publish backends and cleanup.
+No caller text is accepted except the bounded version grammar; domain/kind pairs
+cannot carry nested error messages. No production rendering defect was found.
+Borrowed input must remain alive and stable throughout a call, as with other C
+ABI pointer inputs; the header now makes that synchronization responsibility
+explicit. The module does not take a lock on mutable host data. The installed
+audit consumer verifies post-build input independence, concurrent immutable
+reads and builds from a stable shared snapshot, and cancellation callback reentry.
+
+Confirmed acceptance gaps and narrow fixes:
+
+- The prior secret corpus omitted Authorization header names, URL query tokens,
+  titles, body/annotation text and nested error messages. New generated vectors
+  inject those bytes into the actual installed module, plus malformed UTF-8,
+  controls, an over-limit version and an embedded-NUL C-string boundary case.
+  All produced files and captured consumer stdout/stderr are scanned at the end,
+  including files produced after the original `output-bytes-secret-scan` case.
+- The old IO failure case only used an absent directory. Test-only hooks now
+  inject failure after 17 actual written bytes, before flush and before commit,
+  for absent and existing targets. They preserve size/mtime/hash of existing
+  targets and require no temporary or new destination on refusal. No hook is
+  compiled into or exposed by the installed library.
+- Strict evidence now authenticates completed successful producer jobs against
+  source/run/attempt, artifact creation interval, unique ID/name, expiry, ZIP
+  size and API SHA256; rejects duplicate ZIP/report/JSON members; recomputes
+  identities of every installed package file and four actual consumer binaries;
+  and exercises negative mutations through the real verifier in Actions.
+
+All original 32 named cases and historical failures remain. Four additional cases
+bring the union to 36 (35 applicable per platform). Windows/macOS/Linux module
+coverage only: no host/UI/device/accessibility/performance acceptance, no host
+adapter for nested-error mapping, and no concurrent mutation of borrowed input.
+Fault hooks test cleanup branches, not physical disk failure or power-loss
+durability; original process termination and publication races remain exercised.

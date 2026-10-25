@@ -116,13 +116,30 @@ static reader_diag_status rd_publish(const char *utf8_path, const void *data, si
     }
     chunk = (DWORD)((size - offset) < (size_t)RD_CHUNK_BYTES ? (size - offset)
                                                              : (size_t)RD_CHUNK_BYTES);
+#ifdef READER_DIAGNOSTIC_TEST_HOOKS
+    if (rd_test_io_failure(1u) && chunk > 17u) chunk = 17u;
+#endif
     if (!WriteFile(handle, (const char *)data + offset, chunk, &done, NULL) || done == 0) {
       last = GetLastError();
       status = READER_DIAG_IO;
       goto fail;
     }
     offset += (size_t)done;
+#ifdef READER_DIAGNOSTIC_TEST_HOOKS
+    if (rd_test_io_failure(1u)) {
+      last = ERROR_WRITE_FAULT;
+      status = READER_DIAG_IO;
+      goto fail;
+    }
+#endif
   }
+#ifdef READER_DIAGNOSTIC_TEST_HOOKS
+  if (rd_test_io_failure(2u)) {
+    last = ERROR_WRITE_FAULT;
+    status = READER_DIAG_IO;
+    goto fail;
+  }
+#endif
   if (!FlushFileBuffers(handle)) {
     last = GetLastError();
     status = READER_DIAG_IO;
@@ -137,6 +154,13 @@ static reader_diag_status rd_publish(const char *utf8_path, const void *data, si
 #endif
   CloseHandle(handle);
   handle = INVALID_HANDLE_VALUE;
+#ifdef READER_DIAGNOSTIC_TEST_HOOKS
+  if (rd_test_io_failure(3u)) {
+    last = ERROR_WRITE_FAULT;
+    status = READER_DIAG_IO;
+    goto fail;
+  }
+#endif
   if (!MoveFileExW(temp, target, 0)) {
     last = GetLastError();
     if (last == ERROR_FILE_EXISTS || last == ERROR_ALREADY_EXISTS ||
@@ -229,6 +253,9 @@ static reader_diag_status rd_publish(const char *utf8_path, const void *data, si
       status = READER_DIAG_CANCELLED;
       goto fail;
     }
+#ifdef READER_DIAGNOSTIC_TEST_HOOKS
+    if (rd_test_io_failure(1u) && chunk > 17u) chunk = 17u;
+#endif
     done = write(descriptor, (const char *)data + offset, chunk);
     if (done < 0) {
       if (errno == EINTR) continue;
@@ -242,7 +269,21 @@ static reader_diag_status rd_publish(const char *utf8_path, const void *data, si
       goto fail;
     }
     offset += (size_t)done;
+#ifdef READER_DIAGNOSTIC_TEST_HOOKS
+    if (rd_test_io_failure(1u)) {
+      last = EIO;
+      status = READER_DIAG_IO;
+      goto fail;
+    }
+#endif
   }
+#ifdef READER_DIAGNOSTIC_TEST_HOOKS
+  if (rd_test_io_failure(2u)) {
+    last = EIO;
+    status = READER_DIAG_IO;
+    goto fail;
+  }
+#endif
   if (fsync(descriptor) != 0) {
     last = errno;
     status = READER_DIAG_IO;
@@ -261,6 +302,11 @@ static reader_diag_status rd_publish(const char *utf8_path, const void *data, si
   }
 #ifdef READER_DIAGNOSTIC_TEST_HOOKS
   rd_test_pause_before_commit();
+  if (rd_test_io_failure(3u)) {
+    last = EIO;
+    status = READER_DIAG_IO;
+    goto fail;
+  }
 #endif
   if (link(temp, utf8_path) != 0) {
     last = errno;

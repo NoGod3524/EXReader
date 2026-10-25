@@ -19,12 +19,18 @@ target_link_libraries(diagnostic-c-consumer PRIVATE
 add_executable(diagnostic-cpp-consumer cpp_consumer.cpp)
 target_link_libraries(diagnostic-cpp-consumer PRIVATE
   EXReaderDiagnosticReport::reader_diagnostic_report)
+find_package(Threads REQUIRED)
+add_executable(diagnostic-audit-consumer audit_consumer.cpp)
+target_link_libraries(diagnostic-audit-consumer PRIVATE
+  EXReaderDiagnosticReport::reader_diagnostic_report Threads::Threads)
 if(MSVC)
   target_compile_options(diagnostic-c-consumer PRIVATE /W4 /WX)
   target_compile_options(diagnostic-cpp-consumer PRIVATE /W4 /WX)
+  target_compile_options(diagnostic-audit-consumer PRIVATE /W4 /WX)
 else()
   target_compile_options(diagnostic-c-consumer PRIVATE -Wall -Wextra -Werror)
   target_compile_options(diagnostic-cpp-consumer PRIVATE -Wall -Wextra -Werror)
+  target_compile_options(diagnostic-audit-consumer PRIVATE -Wall -Wextra -Werror)
 endif()
 
 # The worker alone is built from package source with test hooks. Installed

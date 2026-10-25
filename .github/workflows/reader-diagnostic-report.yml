@@ -1,7 +1,7 @@
 name: Reader diagnostic report
 on:
   push:
-    branches: [codex/reader-diagnostic-report]
+    branches: [codex/dot-diagnostic-report-review]
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,6 +31,7 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+          git merge-base --is-ancestor 4793224343950b279a3591c8398f5a2a8514d754 HEAD
           git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
           git diff --exit-code f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD -- apps/reader/store/001_catalog.sql
           if git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD | grep -v -E '^(apps/reader/diagnostic-report/|tests/reader_diagnostic_report/|\.github/workflows/reader-diagnostic-report\.yml$|docs/READER-DIAGNOSTIC-REPORT\.md$|docs/validation/reader-diagnostic-report\.json$)'; then
@@ -74,6 +75,7 @@ jobs:
             build/diag-consumer/diagnostic-c-consumer*
             build/diag-consumer/diagnostic-cpp-consumer*
             build/diag-consumer/diagnostic-worker*
+            build/diag-consumer/diagnostic-audit-consumer*
             build/diag/CMakeCache.txt
           if-no-files-found: error
   evidence:
@@ -93,15 +95,12 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+          git merge-base --is-ancestor 4793224343950b279a3591c8398f5a2a8514d754 HEAD
           git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
           git diff --exit-code f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD -- apps/reader/store/001_catalog.sql
           if git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD | grep -v -E '^(apps/reader/diagnostic-report/|tests/reader_diagnostic_report/|\.github/workflows/reader-diagnostic-report\.yml$|docs/READER-DIAGNOSTIC-REPORT\.md$|docs/validation/reader-diagnostic-report\.json$)'; then
             echo "files outside the J21 ownership list changed"; exit 1
           fi
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: reader-diagnostic-report-*
-          path: build/diag-artifacts
       - name: Authenticate all three platform ZIPs and compare named outcomes
         env:
           GH_TOKEN: ${{ github.token }}
