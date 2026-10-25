@@ -1,6 +1,6 @@
 # Fixed-source native workflow upper collector — preparation
 
-Status: **Actions syntax and 63 synthetic refusal cases passed; native collection pending**.
+Status: **Actions syntax and 67 synthetic refusal cases passed; native collection pending**.
 Starting root source is `5e8b132626cfe7540f675285787d24bf488857a8`.
 Only this collector, its synthetic refusal tests, its new workflow and this
 document change. Callers, production, original collectors and leaf judges stay
@@ -130,7 +130,7 @@ actual complete run. The already accepted composition source `b5e49d17` /
 4. Configure separate product-fact adapters only after reviewing actual common
    source record/peer evidence. History never replaces these conditions.
 5. Collect only after all required complete same-source leaves finish. The
-   protocol suite now contains 63 negative controls for missing/failed/foreign/
+   protocol suite now contains 67 negative controls for missing/failed/foreign/
    duplicate/old-attempt/wrong-scope evidence, including absent theme-native or
    initialization/publication reports. These are synthetic collector checks.
 
@@ -142,6 +142,14 @@ attempt 1: protocol job success. Actions compiled both Python sources and
 reported `63 actual rejections; synthetic fixtures only`. No local checks ran.
 The collection job was skipped as intended; no native leaf or product was
 accepted by this run.
+
+Follow-up source `b1b1639639cffa6a7decce51a1f54027802429a3`,
+[run 40193923047](https://github.com/NoGod3524/EXReader/actions/runs/40193923047)
+attempt 1: protocol job success, `67 actual rejections`. The added positive
+fixture models all eight Apple theme jobs and eight artifacts; its four negative
+controls reject the old seven-job set, missing fast-import artifact, skipped
+source guard and previous-attempt fast-import artifact. Native collection stayed
+skipped. The 63-case run above remains the earlier source's evidence.
 
 Push runs the cheap protocol job. Manual dispatch defaults to `mode=protocol`;
 only explicit `mode=collect` runs the authenticated collection after protocol
