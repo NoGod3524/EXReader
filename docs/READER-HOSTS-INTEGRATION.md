@@ -44,3 +44,9 @@
 共同源码 `f0c272c87b2402979292d0cd973d4f5e7a9f62fd` / [run 40143985644](https://github.com/NoGod3524/EXReader/actions/runs/40143985644) / attempt 1 已终态。认证作业 `121026966594` 重新读取本轮工件，`problems=[]`。Windows 搜索、目录导航及全部原回归、三桌面18包组合及严格汇总、GTK阅读记录／搜索／目录、Android Reading16／Search15／Nav18／Prefs17 均在这一个源码上通过。
 
 整体 `accepted=false`；仅有的实际失败仍为 GTK 两项整页配色。Android设置控件有实际通过，但 `android_page_colors=false`。旧7adda轮原始记录、工件身份及失败历史保留在JSON中。Apple新宿主、GTK批量导入和Android CBZ仍未纳入这个共同源码的范围。
+# CBZ 共同轮与原生选择器驱动修正
+
+普通合入 Android CBZ 后生产基点为 `5a4168893e4c96f6496de26c9b284fca4f512daf`。共同 source `c217b29f86b78fa4e6d9a599690e8f6c42a9a56a` / run `40146977543` 终态 failure：三桌面 composition、Windows 搜索/目录与严格汇总、Android 作业 success；GTK 账户原生选择器在 Local-08 输入路径之前未收到剪贴板内容，账户 required step 失败，最终认证明确拒绝。不能把这次称为只有 palette 失败，也不能将 f0 的证据转授本轮。
+
+日志中原生 entry 已聚焦但内容 SHA-256 为空文本摘要、selected 为空、accept=0。root 保留产品实现和全部原断言，只修账户测试夹具的输入驱动：先核活动 chooser 的真实 entry 焦点，再向该 entry 输入 ASCII 夹具路径，核 entry 与 selected 摘要及 accept 敏感状态后才确认。此变化限定在测试驱动，守卫明确列出该文件；`apps/examples/extras` 仍与合并基点逐字一致。两项 palette 旧失败继续保留，当前整体仍未验收。
+

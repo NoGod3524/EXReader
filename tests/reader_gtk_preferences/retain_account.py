@@ -27,7 +27,7 @@ def dialog(self, path=None):
     self.key('F1')
     window = command('xdotool', 'search', '--sync', '--onlyvisible', '--name', '^Import book$').splitlines()[-1]
     command('xdotool', 'windowactivate', '--sync', window)
-    self.key('ctrl+l');self.paste(str(path))
+    self.key('ctrl+l')
     expected = hashlib.sha256(str(path).encode()).hexdigest()
     deadline = time.monotonic() + 30
 
@@ -35,13 +35,28 @@ def dialog(self, path=None):
         value = configparser.ConfigParser(interpolation=None);value.read(self.observe)
         return dict(value['native_import'])
 
-    try:
+    def wait_native(predicate, message):
         while time.monotonic() < deadline:
             value = observed()
-            if value['visible'] == '1' and value['selected_sha256'] == expected and value['accept_sensitive'] == '1': break
+            if predicate(value): return value
             assert self.process.poll() is None, 'host exited during native selection'
             time.sleep(.05)
-        else: raise TimeoutError('native selected file did not become ready: ' + repr(observed()))
+        raise TimeoutError(message + ': ' + repr(observed()))
+
+    try:
+        wait_native(lambda value: value['visible'] == '1' and value['active'] == '1' and
+                    value['entry_focused'] == '1', 'native location entry did not receive focus')
+        # These account fixtures are Local-NN.txt in the runner's ASCII work
+        # directory. Type into the verified native entry rather than racing a
+        # clipboard owner against an asynchronously opening chooser.
+        assert str(path).isascii(), 'account fixture keyboard driver requires an ASCII path'
+        self.key('ctrl+a')
+        command('xdotool', 'type', '--clearmodifiers', '--delay', '1', '--', str(path))
+        wait_native(lambda value: value['visible'] == '1' and value['active'] == '1' and
+                    value['entry_focused'] == '1' and value['entry_sha256'] == expected,
+                    'native location entry did not receive the exact fixture path')
+        wait_native(lambda value: value['visible'] == '1' and value['selected_sha256'] == expected and
+                    value['accept_sensitive'] == '1', 'native selected file did not become ready')
         self.key('Return')
         self.wait(lambda value: value['generation'] > before and not value['saving'] and observed()['visible'] == '0',
                   timeout=max(.1, deadline - time.monotonic()))
