@@ -58,7 +58,11 @@ Actions 中互相校验（patch 应用后必须是后像的 blob）。
 几何、首/中/末页 `exr_fixed_render`（scale 1）尺寸与 RGBA FNV-1a 64 摘要、
 同三页 `exr_fixed_draw` 实际交付的 image layer 摘要、越界页渲染拒绝与前后稳定性、
 点捕获/解析（`exr_fixed_load_text`+`exr_fixed_anchor_create/resolve`）、进程内重开、
-以及 SQLite 书架导入/笔记/重连。`--image <file>` 对**从原归档提取出的成员字节**单独
+以及 SQLite 书架导入/笔记/重连。
+
+CBZ 页无文本，因此捕获是**点书签**：`exact/prefix/suffix` 长度为 0，解析在空文档上按
+公开语义落到页首的**零长范围**（FOUND，start==end==0，不凭空扩大范围）；同一选择器用
+另一页 id 解析必须是 MISSING 且 start/end 为空，用于证明页路由而不是文本匹配。`--image <file>` 对**从原归档提取出的成员字节**单独
 `exr_image_decode`，用于证明“page id → 真实成员 → 实际读取/渲染”三者一致。
 
 ## 云端验收项
