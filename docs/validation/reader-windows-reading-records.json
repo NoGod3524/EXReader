@@ -1,11 +1,14 @@
 {
   "accepted": false,
-  "state": "reboot_checkpoint_current_full_run_pending",
+  "state": "reboot_checkpoint_failed_close_control_repaired_not_rerun",
   "candidate_source": "f8ff3de341383ed7bb513fbf050e7bcf2a6fa025",
   "branch": "codex/reader-windows-reading-records-ui",
   "current_run": 40147158548,
   "current_job": 121030839240,
-  "current_status": "in_progress_observed_before_restart",
+  "current_status": "completed_failure",
+  "current_named_checks_passed": 23,
+  "current_failure": "close-before-publication-discards-late-result",
+  "checkpoint_code_change": "Native close button was disabled for all running jobs. Keep it enabled: unpublished work is cancelled; a durable original request continues its existing commit barrier. This minimal fix has not yet been recompiled or rerun.",
   "base": "f0c272c87b2402979292d0cd973d4f5e7a9f62fd",
   "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "complete_product": false,
@@ -15,7 +18,7 @@
     {"id": 40145924785, "source": "21241ec5a63fdd8fa17daf7211213291281c8f7c", "state": "superseded_and_cancelled_after_source_fix"},
     {"id": 40145961543, "source": "1b41497e6942c1180da6a5ace5351e131f38d4a8", "state": "failure", "reason": "Windows max macro, missing public pager anchor control argument and missing selection_bounds declaration; all repaired"},
     {"id": 40146300669, "source": "9c3848568d156b525205dfaabf7ff0f594c7d24a", "state": "failure", "reason": "Records accessible list label failed the real UI assertion; all original F1/F2 and retained host suites passed; explicit accessible reading label added"},
-    {"id": 40147158548, "source": "f8ff3de341383ed7bb513fbf050e7bcf2a6fa025", "state": "in_progress_observed_before_restart"}
+    {"id": 40147158548, "source": "f8ff3de341383ed7bb513fbf050e7bcf2a6fa025", "state": "failure", "checks_passed": 23, "failed_check": "close-before-publication-discards-late-result"}
   ],
-  "next_action": "Read this same current run and its records-ui.json/real logs in Actions; fix the actual failed named check without weakening it. Do not restart a still-live run. No records acceptance has been granted."
+  "next_action": "After restart dispatch a new full same-source run for the saved close-button fix; keep the original assertion. The 23 passed cases belong only to f8ff3de3. Real kill/retry cases after the failed close check remain unexecuted. No records acceptance has been granted."
 }
