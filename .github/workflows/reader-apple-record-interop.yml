@@ -4,6 +4,11 @@ on:
     branches: [codex/reader-apple-record-interop]
   workflow_dispatch:
     inputs:
+      direction:
+        type: choice
+        options: [android-to-apple, apple-loopback]
+        default: android-to-apple
+        description: Explicit receive-only proof or original Apple sender (known PDF NUL gap)
       inspect_run:
         type: string
         default: ''
@@ -18,6 +23,9 @@ jobs:
     if: ${{github.event.inputs.inspect_run == ''}}
     runs-on: macos-15
     timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,10 +42,19 @@ jobs:
           paths=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines()
           assert all(p.startswith(allowed[0]) or p in allowed[1:] for p in paths),paths
           PY
-          python3 -m py_compile tests/apple_host/record_interop/run.py tests/apple_host/record_interop/verify.py
+          python3 -m py_compile tests/apple_host/record_interop/run.py tests/apple_host/record_interop/verify.py tests/apple_host/record_interop/incoming.py
+      - name: Authenticate sealed real Android sender and complete raw graph
+        if: ${{github.event.inputs.direction != 'apple-loopback'}}
+        env:
+          GH_TOKEN: ${{github.token}}
+        run: python3 tests/apple_host/record_interop/incoming.py --output build/apple-record-peer
       - name: Build both exact SDKs and retain every actual original owner control
         run: python3 tests/apple_host/record_compatibility/run.py
-      - name: Build and exercise actual Apple sender fresh receiver and reopened receiver
+      - name: Exercise actual Apple receiver and new-process reopen of real Android packet
+        if: ${{github.event.inputs.direction != 'apple-loopback'}}
+        run: python3 tests/apple_host/record_interop/run.py --sdk build/apple-record-compatibility/sdk-new --resources build/apple-record-compatibility/resources-new --output build/apple-record-interop --incoming build/apple-record-peer
+      - name: Exercise original actual Apple sender and loopback without replacing NUL PDF
+        if: ${{github.event.inputs.direction == 'apple-loopback'}}
         run: python3 tests/apple_host/record_interop/run.py --sdk build/apple-record-compatibility/sdk-new --resources build/apple-record-compatibility/resources-new --output build/apple-record-interop
       - uses: actions/upload-artifact@v4
         if: always()
@@ -55,6 +72,8 @@ jobs:
       actions: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Authenticate actual native program library raw wires and original controls
         env:
           GH_TOKEN: ${{github.token}}

@@ -63,6 +63,24 @@ func interopOutbox(_ context: UnsafeMutableRawPointer?, _ row: UnsafePointer<rea
         try need(unique.count == 1, "Actual loaded SDK DSO is missing or duplicated")
         return URL(fileURLWithPath: unique.first!)
     }
+    // The transport describes the stored public decoder, including NULL tags.
+    // The host separately reconstructs EPUB chapter scope from part_path.
+    static func wireCapture(_ wire: Data, history: OpaquePointer) throws -> [String: Any] {
+        var record = reader_rs_record(), error = reader_rs_error()
+        let status = wire.withUnsafeBytes { reader_rs_decode(history, $0.baseAddress, $0.count, &record, &error) }
+        try need(status == READER_RS_OK && record.has_location != 0, "Actual retained decoder refused location")
+        defer { reader_rs_record_free(&record) }
+        func text(_ pointer: UnsafeMutablePointer<CChar>?) -> Any {
+            pointer.map { String(cString: $0) } as Any? ?? NSNull()
+        }
+        func bytes(_ pointer: UnsafeMutablePointer<CChar>?, _ size: Int) -> Any {
+            pointer.map { Data(bytes: $0, count: size).base64EncodedString() } as Any? ?? NSNull()
+        }
+        let mode = record.mode == READER_RS_FIXED_PAGE ? 3 : record.mode == READER_RS_EPUB_CHAPTER ? 2 : 1
+        return ["numbers": [String(mode), String(mode == 3 ? record.page : mode == 2 ? record.part : 0), String(record.start), String(record.end)],
+                "route": [hostReadingField(record.book_key), hostReadingField(record.parser_version), text(record.part_path), text(record.page_id), text(record.chapter)],
+                "selectors": [bytes(record.exact, record.exact_size), bytes(record.prefix, record.prefix_size), bytes(record.suffix, record.suffix_size)]]
+    }
     static func main() throws {
         let args = CommandLine.arguments, env = ProcessInfo.processInfo.environment
         try need(env["GITHUB_ACTIONS"] == "true" && args.count == 6, "Actions-only actual host interop")
@@ -114,7 +132,7 @@ func interopOutbox(_ context: UnsafeMutableRawPointer?, _ row: UnsafePointer<rea
                         let wire = try catalog.withHistory { try HostReadingWorker.retained($0, revision: request.revision).0 }
                         let envelope = try object(wire), payload = envelope["payload"] as! [String: Any], locationJSON = payload["location"] as! [String: Any]
                         records.append(["revision_id": request.revision, "role": role, "kind": label, "mode": location.mode,
-                                        "anchor_version": locationJSON["anchor_version"]!, "capture": try capture(location, book: key, parser: request.parser)])
+                                        "anchor_version": locationJSON["anchor_version"]!, "capture": try catalog.withHistory { try wireCapture(wire, history: $0) }])
                         checks.append("send:" + role + ":" + label)
                     }
                 }
@@ -183,8 +201,13 @@ func interopOutbox(_ context: UnsafeMutableRawPointer?, _ row: UnsafePointer<rea
                     }
                     let (fresh, hit) = try session.readingResolution(wire, catalog: catalog, cancel: HostCancelBox())
                     try need(hit.bookID == id && fresh.mode == record["mode"] as! Int, "Actual receiving owner resolved another document/mode")
-                    try need(json(capture(fresh, book: originals.first { $0["role"] as? String == role }!["book_key"] as! String,
-                                          parser: sender["parser_version"] as! String)) == json(record["capture"]!), "Real receiver recapture differs")
+                    let key = originals.first { $0["role"] as? String == role }!["book_key"] as! String
+                    try catalog.withHistory { history in
+                        try need(json(wireCapture(wire, history: history)) == json(record["capture"]!), "Actual retained decoded transport differs")
+                        let reconstructed = try HostReadingWorker.decoded(wire, history: history).capture
+                        try need(json(capture(fresh, book: key, parser: sender["parser_version"] as! String)) ==
+                                 json(capture(reconstructed, book: key, parser: sender["parser_version"] as! String)), "Real receiver recapture differs from actual host reconstruction")
+                    }
                     try need(session.stateHash() == before && outbox(catalog).map { sha($0.1) } == retainedBefore, "Read-only receive resolution changed SDK or outbox")
                     rows.append(["role": role, "revision_id": revision, "wire_sha256": sha(wire), "found": true])
                     checks.append("receive:" + role + ":" + (record["kind"] as! String))
@@ -192,9 +215,13 @@ func interopOutbox(_ context: UnsafeMutableRawPointer?, _ row: UnsafePointer<rea
                 checks.append("receive:actual-owner-resolve-recapture-readonly")
             } else { throw HostError.invalidInput("Unknown interop mode") }
         }
+        let loadedSDK = try sdkImage()
         let result: [String: Any] = ["accepted": true, "source_sha": env["GITHUB_SHA"]!, "run_id": env["GITHUB_RUN_ID"]!,
             "attempt": env["GITHUB_RUN_ATTEMPT"]!, "pid": ProcessInfo.processInfo.processIdentifier, "mode": mode,
-            "checks": checks, "records": rows, "exr_version": version, "actual_android_host_interop_accepted": false,
+            "checks": checks, "records": rows, "exr_version": version,
+            "program_sha256": sha(try Data(contentsOf: URL(fileURLWithPath: args[0]).resolvingSymlinksInPath())),
+            "sdk_dso_basename": loadedSDK.lastPathComponent, "sdk_dso_sha256": sha(try Data(contentsOf: loadedSDK)),
+            "actual_android_host_interop_accepted": false,
             "host_ui_accepted": false, "physical_device_accepted": false]
         try json(result).write(to: report)
         print("ACTUAL_APPLE_RECORD_INTEROP " + String(decoding: try json(result), as: UTF8.self))

@@ -26,9 +26,20 @@ Apple 的 sender 声明真实裸版本 `3.41.0`，不替换成 Android 前缀。
 现有 `reader_rs_encode_v2` 对固定页 exact/prefix/suffix 的 NUL 明确返回
 `NOT_REPRESENTABLE / GAP_NUL`，所以不是 parser 标签差异。原请求和原件均未删改。
 
-首轮目标为实际 Apple sender 与本机独立进程回读；
-**实际 Android 双向互通仍 pending**。Android 实际 sender 工件到达后再绑定其原始字节
-交给 Apple receiver，并将本分支实际 sender bundle 交回 Android。
+**实际 Android 双向互通仍 pending**。新增独立 `android-to-apple` 运行路径，
+认证 Android 源码 `b93b4a2f9ac24d7d0fc4d48c917dae11bec4baf7` 的
+[40181402323](https://github.com/NoGod3524/EXReader/actions/runs/40181402323) attempt1：
+实际 producer 与 strict 均 success，138 项原检查；固定工件 `12594712144`
+（16,615 字节，SHA-256 `08ce264db1a6e6083e15ddd20a60f6f088b7d82afe24e4d44aa8681e6551cac3`）。
+原 strict summary 工件 `12593694660` 的摘要也独立固定并认证。
+
+Apple 两个实际接收进程分别首次接收与重开相同原字节，覆盖四原件、19 原始修订和
+11 个真实点/范围。原保留记录通过公开 decoder 与 manifest 比较；新 SDK 捕获则与
+实际宿主对原 wire 的重建比较，保留 EPUB `part_path` 与隐式 chapter 的真实区别。
+同时核对实际加载 DSO、安装来源、完整唯一父图及只读状态不变。
+这条新路径尚未运行通过；即使通过也只授予 Android→Apple 原生 owner 单向范围，
+不能授予 Apple→Android、双向互通或完整产品。原 `apple-loopback` 发送路径仍可显式运行，
+仍使用上述真实 NUL PDF，不因方向接收而宣称其失败已修复。
 本包不授予宿主 UI、真机、六平台同步或完整产品验收。
 
 ## 独立可选的选择器字节候选

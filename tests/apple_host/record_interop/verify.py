@@ -112,6 +112,54 @@ def validate(result, read, source, run, attempt):
                       lambda name: read('original-compatibility/' + name), source, run, attempt)
 
 
+def validate_direction(result, read, source, run, attempt):
+    from incoming import authenticate, members
+    identity(result, source, run, attempt)
+    require(result.get('accepted') is True and result.get('direction') == 'android-to-apple' and
+            result.get('android_to_apple_accepted') is True and result.get('apple_to_android_accepted') is False and
+            result.get('actual_apple_sender_accepted') is False and result.get('actual_android_host_interop_accepted') is False and
+            result.get('bidirectional_interoperability_accepted') is False and result.get('host_ui_accepted') is False and
+            result.get('physical_device_accepted') is False and result.get('actual_android_peer') == 'authenticated-sender-only', 'directional scope differs')
+    verified, receipt = authenticate(read('peer/packet.zip'), read('peer/upstream-summary.zip'))
+    require(result['peer_receipt'] == receipt == load(read('peer/receipt.json')), 'peer receipt differs')
+    peer_files = members(read('peer/packet.zip'))
+    require(all(read('peer/bundle/' + name) == peer_files[name] for name in verified['files']), 'actual receiver input differs from authenticated packet')
+    require(result['manifest_sha256'] == verified['manifest_sha256'], 'receiver manifest differs')
+    program = read('record-interop')
+    executable = hashlib.sha256(program).hexdigest()
+    require(program[:4] in (b'\xcf\xfa\xed\xfe', b'\xfe\xed\xfa\xcf', b'\xca\xfe\xba\xbe') and
+            result['program_sha256'] == executable, 'receiver is not actual native program')
+    product = load(read('record-interop.product.json'))
+    require(product['binary_sha256'] == executable and product['static_sdk_linked'] is False and
+            product['installed_reading_commands_linked'] is True, 'receiver provider differs')
+    phases = result['phases']
+    require(len(phases) == 2 and len({phase['pid'] for phase in phases}) == 2, 'fresh/reopen actual processes missing')
+    records = verified['manifest']['reading_records']
+    expected = ['receive:' + record['role'] + ':' + record['kind'] for record in records]
+    expected.append('receive:actual-owner-resolve-recapture-readonly')
+    revisions = {row['id']: row for row in verified['manifest']['revisions']}
+    for index, label in enumerate(('android-receive', 'android-reopen')):
+        value = load(read(label + '.json'))
+        identity(value, source, run, attempt)
+        require(value == phases[index] and value['accepted'] is True and value['mode'] == 'receive' and value['checks'] == expected and
+                value['program_sha256'] == executable and value['exr_version'] == '3.41.0' and
+                value['actual_android_host_interop_accepted'] is False and value['host_ui_accepted'] is False and
+                value['physical_device_accepted'] is False, 'actual named receive/reopen checks differ')
+        basename = value['sdk_dso_basename']
+        require(basename.startswith('libexreader') and basename.endswith('.dylib') and '/' not in basename and
+                '\\' not in basename and ':' not in basename and
+                hashlib.sha256(read('original-compatibility/libraries-new/' + basename)).hexdigest() == value['sdk_dso_sha256'], 'actual receiver loaded another SDK')
+        require(len(value['records']) == 11 and
+                [row['revision_id'] for row in value['records']] == [row['revision_id'] for row in records] and
+                all(row['found'] is True and row['wire_sha256'] == revisions[row['revision_id']]['sha256'] for row in value['records']),
+                'real receiver FOUND retained wires differ')
+    require(phases[0]['sdk_dso_sha256'] == phases[1]['sdk_dso_sha256'], 'reopen runtime changed')
+    spec = importlib.util.spec_from_file_location('original_compatibility_contract', ROOT / 'tests/apple_host/record_compatibility/verify.py')
+    original = importlib.util.module_from_spec(spec); spec.loader.exec_module(original)
+    original.validate(load(read('original-compatibility/result.json')),
+                      lambda name: read('original-compatibility/' + name), source, run, attempt)
+
+
 def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
     if '--inspect-run' in sys.argv:
@@ -172,20 +220,27 @@ def main():
             def read(name):
                 require(name in names and archive.getinfo(name).file_size <= 64 * 1024**2, 'missing or oversized raw member')
                 return archive.read(name)
-            result = load(read('result.json')); validate(result, read, source, run, attempt)
+            result = load(read('result.json'))
+            directional = result.get('direction') == 'android-to-apple'
+            validator = validate_direction if directional else validate
+            validator(result, read, source, run, attempt)
             for mutation in (dict(accepted=False), dict(source_sha='other'), dict(attempt='other'),
                              dict(actual_android_host_interop_accepted=True), dict(actual_android_peer='accepted'),
                              dict(phases=result['phases'][:-1]), dict(manifest_sha256='0' * 64)):
                 bad = copy.deepcopy(result); bad.update(mutation)
                 try:
-                    validate(bad, read, source, run, attempt)
+                    validator(bad, read, source, run, attempt)
                 except Exception:
                     continue
                 raise ValueError('protocol negative admitted')
-        summary.update(accepted=True, actual_apple_sender_accepted=True, actual_apple_loopback_accepted=True,
-                       native_phases=3, reading_records=11, original_compatibility_phases=18,
+        summary.update(accepted=True, actual_apple_sender_accepted=not directional, actual_apple_loopback_accepted=not directional,
+                       android_to_apple_accepted=directional, apple_to_android_accepted=False,
+                       bidirectional_interoperability_accepted=False,
+                       native_phases=2 if directional else 3, reading_records=11, original_compatibility_phases=18,
                        original_owner_cases_per_sdk=19, protocol_rejections=7,
                        artifact={key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
+        if directional:
+            summary.update(actual_android_peer='authenticated-sender-only', peer_receipt=result['peer_receipt'])
     except Exception as error:
         summary['failure'] = type(error).__name__ + ': ' + str(error)
     (out / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
