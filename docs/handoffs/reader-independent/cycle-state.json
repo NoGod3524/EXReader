@@ -1,17 +1,20 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-25T04:15:00Z",
+  "recorded_at_utc": "2026-10-25T04:52:00Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
   "next_audit_after_completed_cycle": 5,
-  "phase": "gtk_batch_android_pan_common_source_running_j_reviews_continuing",
+  "phase": "three_native_host_owners_running_apple_common_source_gate_preparation",
   "active_host_integration": {
     "source": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
     "production_baseline": "2b1fffa0d658c1c0a9054868cf56261b99265b8c",
     "run": 40159425518,
     "accepted": false,
-    "state": "running_awaiting_original_raw_reports",
+    "state": "completed_failure_retained_navigation_scan_observation_rejected",
+    "conclusion": "failure",
+    "authentication_job": 121072723355,
+    "android_raw_pan_final_authentication_reached": false,
     "gtk_batch_delivery": "374e6fbb88bfd7a0fd966ff2e85d7dbb698551fe",
     "android_pan_delivery": "c5f55fbedcd15a910a40626624e997b58f8fd1b6",
     "new_fault_paths": ["GTK committed receipt allocation MAP/CLOSE", "Android native PDF viewport cancellation"],
@@ -21,13 +24,22 @@
     "apple_included": false
   },
   "next_unverified_host_candidate": {
-    "head": "efc0317c",
-    "production_baseline": "84a69b0e1e8ab8407042a68d97ea3f2d1591a887",
+    "head": "7378be2b",
+    "production_baseline": "2c5a6cbb087c43abd7643e0085b3300fde95f125",
     "gtk_batch_owned_delivery": "2df6040666635bcd7b0349b035b8f4885757fdd0",
-    "state": "source_saved_no_new_full_run_waiting_on_current_navigation_failure_evidence",
+    "state": "candidate_saved_waiting_for_android_import_gtk_drop_and_apple_layout_regression_evidence",
+    "syntax_only_run": 40163167893,
+    "gtk_navigation_driver": "600ef981fb44acd91dca618850a25d1725de18f7",
+    "gtk_original_program_diagnostic": {"run": 40162074331, "checks": 29, "accepted": false, "diagnostic_only": true},
+    "apple_records_candidate": "25eeb6aaccdc50e670f0aaea73631818bc0551f8",
     "owner_fault_scenarios": 4,
     "allocation_failures": {"receipt": 2, "candidate": 1},
     "accepted": false
+  },
+  "live_native_host_owners": {
+    "android": {"agent": "/root/android_resume", "source": "c62bb54cc8300dd68be0e1bc426a381cd2fcca44", "run": 40162680652, "state": "running_import_entry_to_existing_sdk_owner", "expected_checks": 117},
+    "gtk": {"agent": "/root/gtk_resume", "source": "722eb4384b81a1aef6595efa849d3e017f371389", "run": 40163023408, "state": "running_drop_paste_and_all_retained_suites_with_pinned_navigation_driver", "earlier_run": 40161403296},
+    "apple": {"agent": "/root/apple_resume", "source": "19fde18968e03bb4e87d86b0ed650716ac02c9fa", "runs": [40163097702, 40163099176], "state": "running_original_wp13_and_records_after_actual_iphone_landscape_selection_layout_fix", "earlier_records_source": "25eeb6aaccdc50e670f0aaea73631818bc0551f8", "earlier_records_run": 40160552435, "earlier_retained_runs": [40161454864, 40161456543, 40161458572, 40161460346, 40161462179]}
   },
   "dot_seven": {
     "handoff_commit": "550663bfe9668182ee735a8b09786f9c22230aae",
@@ -45,7 +57,7 @@
       "checks_per_desktop": 47,
       "state": "root_repaired_cloud_success_awaiting_host_integration"
     },
-    "J04": {"state": "import_entry_review_and_actual_fault_repair_running_on_independent_branch"},
+    "J04": {"state": "root_review_closed_api34_component_only_actual_host_import_running", "source": "f5046e1fbe2cc91d2ec71a51d2020c1c38e4d969", "evidence_head": "e4f20df783872dd536f40a7431b200352aa2da17", "run": 40161341409, "checks": 95},
     "J10": {
       "source": "fd2c88e3c5f0f0c7a7bd8698e7efb3825079bd41",
       "run": 40159996464,
