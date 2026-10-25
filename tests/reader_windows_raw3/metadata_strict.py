@@ -28,8 +28,10 @@ def main():
     expected|={'windows-raw3-metadata-'+platform+'-'+run+'-'+attempt for platform in ('Windows','Linux')}
     selected=[row for row in artifacts if row['name'] in expected]
     require(len(selected)==3 and {r['name'] for r in selected}==expected,'missing/duplicate artifact')
-    expected_checks=re.findall(r"record\('([^']+)'\)",(ROOT/'tests/reader_metadata/check_metadata.py').read_text())
-    require(len(expected_checks)==len(set(expected_checks))==29,'original contract differs')
+    expected_checks=set(re.findall(r"record\('([^']+)'\)",(ROOT/'tests/reader_metadata/check_metadata.py').read_text()))
+    expected_checks|={'actual_process_kill_'+phase+'_recovers_exact_ids_payload_heads_and_releases_owner_lock'
+                      for phase in ('stage','apply')}
+    require(len(expected_checks)==29,'original contract differs')
     now=datetime.datetime.now(datetime.timezone.utc)
     retained=[]
     for item in selected:
@@ -59,7 +61,8 @@ def main():
                     name=row['profile']
                     original=report(name+'-original-checks/result.json')
                     require(row['original_checks']==29 and row['profile_open_passed'] is True and original['accepted'] is True
-                            and original['count']==29 and original['checks']==expected_checks,'original29 incomplete')
+                            and original['count']==29 and len(original['checks'])==len(set(original['checks']))==29
+                            and set(original['checks'])==expected_checks,'original29 incomplete')
                     require(original['desktop_ui_accepted'] is False and original['schema1_changed'] is False and
                             original['wire_changed'] is False and original['sdk_database_writes'] is False,'original scope differs')
                     binaries=row['binaries']
