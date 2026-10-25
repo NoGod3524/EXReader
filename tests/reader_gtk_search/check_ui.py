@@ -119,7 +119,25 @@ def main():
 
     def choose(index):
         selected=next(row for row in rows() if bus.name(row).startswith('Search result '+str(index+1)+':'))
-        before=int(observed()['actions']);click_accessible(selected)
+        before=int(observed()['actions'])
+        window=command('xdotool','search','--onlyvisible','--name','^Search within book$').splitlines()[-1]
+        command('xdotool','windowactivate','--sync',window)
+        deadline=time.monotonic()+10;previous=None;requested=False
+        while time.monotonic()<deadline:
+            rectangle=bus.extents(selected);states=bus.states(selected)
+            if (rectangle and rectangle['width']>50 and rectangle['height']>=12 and
+                    states.get('showing') and states.get('sensitive')):
+                if not requested:
+                    assert selected.get_component_iface().grab_focus(),'native result refused focus'
+                    requested=True
+                elif states.get('focused') and rectangle==previous:
+                    assert int(observed()['actions'])==before,'focus unexpectedly activated a result'
+                    report.setdefault('row_clicks',[]).append(dict(index=index,rectangle=rectangle,states=states))
+                    click_accessible(selected)
+                    break
+                previous=rectangle
+            time.sleep(.02)
+        else:raise TimeoutError('native result focus/allocation not ready: '+str(index))
         return wait(lambda value:int(value['actions'])>before)
 
     def storage(notes_only=False):

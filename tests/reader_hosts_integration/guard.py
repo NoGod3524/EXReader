@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 
-BASE = 'e0c28defc7f2113cb4ccdab5dfe1d2b072915a82'
+BASE = 'fcaf9d2e8faecabaf4416ff063f7073435bbefa1'
 SDK = '9854061be331fe603a1822d9b2b36ee357154927'
 DELIVERIES = {
     'g1': '3bcc6511c928665c0889a33bc98cf5e1bfadaccc',
@@ -15,6 +15,8 @@ DELIVERIES = {
     'android_preferences': '91270f8e7b5a3085430992b97dd27f612666480a',
     'android_cbz_reading': '6b43e83537aa6b03bda889d258fe73c0e317acb1',
     'windows_reading_records': '2dcd325b31590bbb5374842e6c7f26fa2dcedd21',
+    'gtk_batch_import': 'e6bb0b0bd96d02c2262f3ff509d1f4d0893e7c50',
+    'android_fixed_pan': 'c5f55fbedcd15a910a40626624e997b58f8fd1b6',
 }
 ALLOWED = (
     'tests/reader_hosts_integration/', '.github/workflows/reader-hosts-integration.yml',
@@ -22,6 +24,8 @@ ALLOWED = (
     'tests/reader_windows_navigation/verify.py',
     'tests/reader_windows_records/verify.py',
     'tests/reader_gtk_navigation/check_ui.py',
+    'tests/reader_gtk_search/check_ui.py',
+    'tests/reader_android_fixed_pan/verify_saved.py',
     # Root-reviewed chooser input driver; native production bytes stay pinned.
     'tests/reader_gtk_preferences/retain_account.py',
     'docs/READER-HOSTS-INTEGRATION.md',
