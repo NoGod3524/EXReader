@@ -261,6 +261,13 @@ int seed_annotations(const fs::path &work, const std::string &book_key,
     counts->error = std::string("open receiver: ") + revision_error.message;
     return 17;
   }
+  /* The host already holds the original, so its book head exists in the
+   * receiving store before any annotation head is replayed. */
+  if (!receive_wire(receiver, book_wire(revision_id(0x5300), book_key, bytes), &error)) {
+    counts->error = "receiver book head: " + error;
+    reader_revisions_close(&receiver, &revision_error);
+    return 17;
+  }
   reader_annotation_import_options import{};
   import.struct_size = sizeof(import);
   import.revisions = receiver;
@@ -377,8 +384,9 @@ int export_original(const fs::path &work, const fs::path &book, original_counts 
   fs::path directory = work / "originals";
   fs::create_directories(directory);
   roe_selection selection{book_id, "s19-original"};
+  std::string directory_path = directory.string();
   roe_options options{};
-  options.directory = directory.string().c_str();
+  options.directory = directory_path.c_str();
   options.naming = ROE_DISPLAY_NAME;
   roe_result *result = nullptr;
   counts->status = (int)roe_run(exporter, &selection, 1, &options, &result);
@@ -399,7 +407,7 @@ int export_original(const fs::path &work, const fs::path &book, original_counts 
   } else if (counts->status == ROE_OK) {
     counts->status = -2;
   }
-  roe_result_free(result);
+  if (result) roe_result_free(result);
   roe_destroy(&exporter);
   exr_library_close(library);
   counts->source_bytes = bytes.size();
@@ -442,7 +450,7 @@ int record_history(const fs::path &work, const std::string &book_key, history_co
     reader_jh_position position{};
     position.book_key = book_key.c_str();
     position.parser_version = exr_version();
-    position.kind = READER_JH_PAGE;
+    position.kind = index == 0 ? READER_JH_PAGE : READER_JH_SEARCH;
     position.capture = &captures[index];
     position.part = 0;
     reader_jh_result result{};
