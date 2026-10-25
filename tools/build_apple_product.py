@@ -13,20 +13,28 @@ def main():
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--target', choices=('macos', 'iphonesimulator', 'iphoneos'), required=True)
     parser.add_argument('--build', type=Path, required=True)
+    parser.add_argument('--product-prefix', type=Path)
+    parser.add_argument('--selector-bytes-candidate', action='store_true',
+                        default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
     parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'),
                         default=os.environ.get('EXR_APPLE_SDK_VERSION', '3.40.0'))
     args = parser.parse_args()
     if args.sdk_version not in ('3.40.0', '3.41.0'):
         parser.error('Unsupported explicit Apple SDK version')
     root = Path(__file__).absolute().parents[1]
-    stage = args.sdk.absolute()
-    version = re.search(r'#define EXR_VERSION "([^"]+)"', (stage / 'include/exr/base.h').read_text())
+    sdk = args.sdk.absolute()
+    stage = args.product_prefix.absolute() if args.product_prefix else sdk
+    if os.environ.get('EXR_APPLE_RAW3', 'OFF') not in ('OFF', 'ON'):
+        parser.error('EXR_APPLE_RAW3 must be explicitly OFF or ON')
+    if args.selector_bytes_candidate and (args.sdk_version != '3.41.0' or stage.resolve() == sdk.resolve()):
+        parser.error('Raw selector candidate requires SDK3.41 and an independent product prefix')
+    version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk / 'include/exr/base.h').read_text())
     if version is None or version[1] != args.sdk_version:
         parser.error('Installed SDK version differs from the explicitly selected version')
     native = 'macosx' if args.target == 'macos' else args.target
     sysroot = subprocess.check_output(['xcrun', '--sdk', native, '--show-sdk-path'], text=True).strip()
     common = ['-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_INSTALL_PREFIX=' + str(stage),
-              '-DCMAKE_PREFIX_PATH=' + str(stage), '-DEXR_SDK=' + str(stage),
+              '-DCMAKE_PREFIX_PATH=' + (';'.join(map(str, (stage, sdk))) if stage != sdk else str(stage)), '-DEXR_SDK=' + str(sdk),
               '-DEXR_SDK_VERSION=' + args.sdk_version,
               '-DREADER_PRODUCT_PREFIX=' + str(stage),
               '-DLIBXML2_INCLUDE_DIR=' + sysroot + '/usr/include/libxml2',
@@ -40,7 +48,8 @@ def main():
     packages = ('EXReader', 'EXReaderProductCatalog', 'EXReaderRevisions', 'EXReaderCommands',
                 'EXReaderWebDAV', 'EXReaderSync', 'EXReaderSession', 'EXReaderCredentials', 'EXReaderReadingState',
                 'EXReaderSearch', 'EXReaderNavigation', 'EXReaderReadingCommands', 'EXReaderAnnotationView')
-    common += ['-D' + name + '_DIR=' + str(stage / 'lib/cmake' / name) for name in packages]
+    common += ['-D' + name + '_DIR=' + str((sdk if name == 'EXReader' else stage) / 'lib/cmake' / name) for name in packages]
+    common += ['-DEXR_READER_SELECTOR_BYTES_CANDIDATE=' + ('ON' if args.selector_bytes_candidate else 'OFF')]
     modules = [('catalog', 'apps/reader/store/native'), ('revisions', 'apps/reader/revisions'),
                ('commands', 'apps/reader/commands'), ('webdav', 'extras/webdav'),
                ('sync', 'apps/reader/sync'), ('session', 'apps/reader/session'),
@@ -54,11 +63,26 @@ def main():
                         ['cmake', '--build', str(build), '--parallel', '4'],
                         ['cmake', '--install', str(build)]):
             subprocess.run(command, check=True)
+    family = {'EXReaderRevisions': '0.4.0', 'EXReaderReadingState': '0.2.0',
+              'EXReaderReadingCommands': '0.2.0', 'EXReaderAnnotationView': '0.2.0',
+              'EXReaderCommands': '0.2.0', 'EXReaderSync': '0.2.0', 'EXReaderSession': '0.2.0'}
+    if args.selector_bytes_candidate:
+        proof = args.build.absolute() / 'exact-family-source'
+        proof.mkdir(parents=True, exist_ok=True)
+        body = 'cmake_minimum_required(VERSION 3.24)\nproject(AppleRawFamily LANGUAGES C CXX)\n'
+        body += 'find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core library)\n'
+        body += ''.join('find_package(' + name + ' ' + version + ' EXACT CONFIG REQUIRED)\n'
+                        for name, version in family.items())
+        (proof / 'CMakeLists.txt').write_text(body)
+        subprocess.run(['cmake', '-S', str(proof), '-B', str(args.build.absolute() / 'exact-family'), *common], check=True)
     source = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
     manifest = {'source_sha': source, 'target': args.target, 'sdk_version': args.sdk_version,
                 'installed_modules': [x[0] for x in modules],
                 'sqlite_provider': 'libreader_catalog_sqlite.a', 'system_sqlite_fallback': False,
                 'reading_resolver_linked': False, 'webdav_transport': 'Foundation URLSession'}
+    manifest.update(selector_bytes_candidate=args.selector_bytes_candidate,
+                    product_prefix=str(stage), sdk_prefix=str(sdk),
+                    exact_candidate_family=family if args.selector_bytes_candidate else {})
     (stage / 'share/exreader-apple').mkdir(parents=True, exist_ok=True)
     (stage / 'share/exreader-apple/product.json').write_text(json.dumps(manifest, indent=2) + '\n')
 
