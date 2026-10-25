@@ -65,8 +65,11 @@ def build(platform):
                  '-DCMAKE_INSTALL_PREFIX=' + str(stage), *cross(platform)], log=kind + '-configure')
         execute(['cmake', '--build', sdk_build, '--parallel', '4'], log=kind + '-build')
         execute(['cmake', '--install', sdk_build], log=kind + '-install')
+        package = stage/'lib/cmake/EXReader'
+        assert (package/'EXReaderConfig.cmake').is_file(), 'installed package missing'
         execute(['cmake', '-S', 'tests/sdk_page_background', '-B', consumer, '-G', 'Ninja',
                  '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_PREFIX_PATH=' + str(stage),
+                 '-DEXReader_DIR=' + str(package), '-DCMAKE_FIND_ROOT_PATH=' + str(stage),
                  '-DBACKGROUND_BASELINE=' + ('ON' if kind == 'frozen' else 'OFF'), *cross(platform)],
                 log=kind + '-consumer-configure')
         execute(['cmake', '--build', consumer, '--parallel', '4'], log=kind + '-consumer-build')
