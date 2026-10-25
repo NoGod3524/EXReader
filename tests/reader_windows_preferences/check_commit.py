@@ -13,6 +13,16 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def content_pixels(image):
+    # The actual page painter has a four-pixel gutter. DrawFocusRect paints
+    # inside that gutter at inset one when keyboard focus enters the page.
+    # Keep every content pixel, omitting only three gutter pixels and unused
+    # DIB alpha. Full original BMP captures and raw edge differences remain.
+    width, height, raw = image
+    cropped = b''.join(raw[(y*width+3)*4:(y*width+width-3)*4] for y in range(3,height-3))
+    return width,height,cropped[0::4],cropped[1::4],cropped[2::4]
+
+
 def main():
     assert os.name == 'nt' and os.environ.get('GITHUB_ACTIONS') == 'true'
     parser = argparse.ArgumentParser()
@@ -97,7 +107,7 @@ def main():
                 assert value[key] == expected, facts
                 assert (after == before) == (stage == 11)
                 if filename:
-                    assert (frame == before_frame) == (stage == 11), facts
+                    assert (content_pixels(frame) == content_pixels(before_frame)) == (stage == 11), facts
                 app.open_dialog()
                 assert float(F.text(app.field(field))) == expected
                 app.close_dialog()
