@@ -90,6 +90,31 @@ def run_tests():
     wrong=copy.deepcopy(theme);wrong['artifacts'][-1]['reports']['initialization_and_publication']['cases'][0]['result']='Skipped';refuse('skipped-publication-case',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
     wrong=copy.deepcopy(theme);wrong['artifacts'][-2]['reports']['native']['reports']['on']['checks'].pop();refuse('missing-native-theme-case',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
     wrong=copy.deepcopy(theme);wrong['artifacts'].pop(-2);refuse('missing-native-theme-controls',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
+    theme_contract=a.SPECS['apple_page_theme']
+    theme_run=dict(run,path=theme_contract['workflow'])
+    theme_jobs=[]
+    for i in range(8):
+        job=copy.deepcopy(jobs[0] if i<7 else jobs[-1])
+        job.update(id=100+i,name='theme-producer-'+str(i) if i<7 else theme_contract['summary_job'])
+        if i<2:job['steps']=[dict(name=theme_contract['guard'][0],conclusion='success')]
+        theme_jobs.append(job)
+    theme_summary=theme_contract['summary_name'].format(run=123,attempt=2)
+    theme_artifacts=[]
+    for i,name in enumerate(sorted(a.expected_names('apple_page_theme',theme_contract,123,2))):
+        row=copy.deepcopy(artifacts[0]);row.update(id=100+i,name=name,
+            created_at='2026-01-01T00:03:30Z' if name==theme_summary else '2026-01-01T00:01:30Z')
+        theme_artifacts.append(row)
+    def verify_theme(j=theme_jobs,ar=theme_artifacts):
+        return a.validate_metadata('apple_page_theme',theme_contract,ref,theme_run,j,ar,source)
+    verify_theme()
+    refuse('old-seven-job-theme-contract',lambda:verify_theme(j=theme_jobs[:-2]+theme_jobs[-1:]))
+    fast=[row for row in theme_artifacts if '-fast-import-' in row['name']][0]
+    refuse('missing-fast-import-artifact',lambda:verify_theme(ar=[row for row in theme_artifacts if row['id']!=fast['id']]))
+    wrong=copy.deepcopy(theme_jobs);wrong[0]['steps'][0]['conclusion']='skipped'
+    refuse('skipped-theme-source-guard',lambda:verify_theme(j=wrong))
+    wrong=copy.deepcopy(theme_artifacts)
+    next(row for row in wrong if '-fast-import-' in row['name'])['name']=fast['name'].replace('-123-2','-123-1')
+    refuse('old-attempt-fast-import-artifact',lambda:verify_theme(ar=wrong))
     refuse('unreviewed-windows-schema',lambda:a.basic_summary('windows_full_f3',android,source,ref))
     result=dict(leaves={key:dict(status='verified') for key in a.REQUIRED},product_conditions={key:dict(status='pending') for key in a.PRODUCT_REQUIRED},problems=[])
     a.finish(result);a.require(result['accepted'] is False and set(result['pending_contracts'])==set(a.WINDOWS_CONTRACTS) and
@@ -97,7 +122,7 @@ def run_tests():
     wrong=copy.deepcopy(result);wrong['leaves'].pop('windows_full_f3');refuse('drop-required-slot-to-green',lambda:a.finish(wrong))
     wrong=copy.deepcopy(result);wrong['product_conditions'].pop('apple_to_android');refuse('drop-required-peer-condition',lambda:a.finish(wrong))
     a.require(a.SPECS['apple_mapping']['summary_name'] is None and len(a.expected_names('apple_mapping',a.SPECS['apple_mapping'],123,2))==6,'mapping summary invented')
-    a.require(len(rejected)==63,'a protocol refusal control was omitted')
+    a.require(len(rejected)==67,'a protocol refusal control was omitted')
     print('native upper collector protocol negatives: '+str(len(rejected))+' actual rejections; synthetic fixtures only',flush=True)
 
 
