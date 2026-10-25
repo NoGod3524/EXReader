@@ -53,6 +53,9 @@ typedef struct {
   int64_t id;
   int bounded,font,hold_progress;
   int zoom;
+#if defined(EXR_READER_PAGE_BACKGROUND) && defined(EXR_READER_PREFERENCES)
+  int page_system_theme; /* Theme snapshot used by this pager's CSS. */
+#endif
   size_t part,page,start,end,position;
 } reader_session;
 struct linux_reader {
@@ -364,6 +367,9 @@ static exr_status pager_create(linux_reader *reader,reader_session *session,size
     status=exr_publication_pager_create(session->publication,part,reader->font,&config,&options,out,error);
   } else status=exr_pager_create(session->document,reader->font,&config,out,error);
   if(status==EXR_OK) status=exr_pager_set_cache(*out,3,8u*1024u*1024u,error);
+#if defined(EXR_READER_PAGE_BACKGROUND) && defined(EXR_READER_PREFERENCES)
+  if(status==EXR_OK) session->page_system_theme=reader->appearance_system_theme;
+#endif
   return status;
 }
 typedef struct { char *bytes;size_t size,capacity; } text_copy;
@@ -437,10 +443,10 @@ static exr_status render(linux_reader *reader,reader_session *session,size_t ind
 #ifdef EXR_READER_PREFERENCES
   if(reader->appearance_enabled) {
     const reader_preferences *p=&reader->appearance;
-    int dark=reader_preferences_effective_theme(p,(reader_preferences_theme)reader->appearance_system_theme)==READER_PREFERENCES_THEME_DARK;
+    int dark=reader_preferences_effective_theme(p,(reader_preferences_theme)session->page_system_theme)==READER_PREFERENCES_THEME_DARK;
     const uint8_t *bg=dark ? p->dark_background:p->light_background;
     paper=((uint32_t)bg[0]<<24)|((uint32_t)bg[1]<<16)|((uint32_t)bg[2]<<8)|bg[3];
-    result->page_system_theme=reader->appearance_system_theme;
+    result->page_system_theme=session->page_system_theme;
   }
 #endif
   /* The SDK initializes the canvas; authored paints and images remain intact. */
