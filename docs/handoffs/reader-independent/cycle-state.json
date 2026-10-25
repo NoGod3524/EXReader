@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-25T08:02:23Z",
+  "recorded_at_utc": "2026-10-25T08:37:32Z",
   "latest_checkpoint": {
     "common_head": "6f7c14e9eea98b60d92c5b4d7796e66576bae4eb",
     "common_production_baseline": "cb20c8d0855f09938cac6233d5b368df6e2712b3",
@@ -11,6 +11,10 @@
     "common_full_state": "queued_original_cloud_adapter_semantic_guard_restored_no_production_changes",
     "common_previous_run": {"run":40175058872,"source":"071eb738a5cccf85627af2dd9a5ba0de3861a49a","conclusion":"failure","windows_full_chain":"success","composition":"three_platform_final_bundle_refused_missing_original_cloud_adapter_source_guard","android":"actual_fixed_pan_long_press_did_not_enter_selection","gtk":"all_other_retained_suites_pass_two_original_sdk340_palette_failures_retained"},
     "parser_tag_interop": {"source":"b1a7b7891cd394671842164a07a86c8e316dace3","branch":"codex/reader-parser-tag-interop","run":40176647484,"state":"queued","accepted":false,"actual_android_host_interop_accepted":false,"finding":"Android_writes_exreader-sdk-prefixed_version_desktop_and_Apple_write_bare_version_both_actual_receivers_reject_same_version_other_spelling","candidate_scope":"exact_known_spellings_on_actual341_only_preserve_old_formatter_and_wire_Apple_native_receive_fixtures_and_Java_policy20_real_Android_sender_still_required"},
+    "parser_tag_receiver_source_review": {"windows":"actual_windows_records_owner_has_no_parser_equality_gate","gtk":"actual_records_resolve_has_no_parser_equality_gate","android_artifact_gap":"current_UI_artifacts_do_not_export_complete_actual_sender_G03_wire_plus_original_for_independent_Apple_receive","next_actual_evidence":"Android_public_owner_retained_wire_and_original_export_bound_to_APK_SDK_source_run_then_actual_Apple_owner_receive_and_reverse"},
+    "android_341_theme": {"source":"271a18567145716fd9425e026b1efd0d8c975709","run":40177552847,"state":"in_progress","accepted":false,"previous_run":40176912569,"previous_actual_result":"Original_binding_pixel_identity_passed_TXT_dark_foreground_failed","fixes":"TXT_canvas_foreground_Navigation_ready_after_real_layout_RGBA_premultiplication_and_stale_publication","original_fixed_pan_assertions":"unchanged_added_failure_pointer_and_timer_diagnostics"},
+    "windows_preferences_ui_latest_observation": {"source":"a45dd5b4aa5084ffc6aaf44c78ef902331fd1982","run":40177324373,"state":"in_progress","accepted":false,"external_writer":"W01_existing_session_only_no_duplicate_worker"},
+    "gtk_341_record_compatibility_latest_observation": {"source":"126b4f78cb09a259fb8263d06dabf3a44f3f7a5f","run":40176886653,"state":"failure_under_diagnosis","accepted":false,"actual_result":"both_SDK_programs_built_old_original_records_suites_passed_first_old_to_old_EPUB_jump_control_failed","production_changed":false},
     "windows_cloud_import_organize_merged": "7d8a2ef5aa2b12444bb4f968efc8828080c1bb53",
     "windows_cloud_import_organize_original_run": 40167556466,
     "windows_cloud_import_organize_original_checks": 46,
