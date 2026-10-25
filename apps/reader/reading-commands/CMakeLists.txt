@@ -1,13 +1,22 @@
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.24)
-project(EXReaderReadingCommands VERSION 0.1.0 LANGUAGES C CXX)
+option(EXR_READER_SELECTOR_BYTES_CANDIDATE "Explicit independent raw selector candidate; never default" OFF)
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  project(EXReaderReadingCommands VERSION 0.2.0 LANGUAGES C CXX)
+else()
+  project(EXReaderReadingCommands VERSION 0.1.0 LANGUAGES C CXX)
+endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   add_compile_options(/utf-8)
 endif()
-find_package(EXReaderReadingState 0.1.0 EXACT CONFIG REQUIRED)
+set(EXR_READING_STATE_VERSION 0.1.0)
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  set(EXR_READING_STATE_VERSION 0.2.0)
+endif()
+find_package(EXReaderReadingState ${EXR_READING_STATE_VERSION} EXACT CONFIG REQUIRED)
 add_library(reader_reading_commands STATIC src/reading_commands.cpp)
 target_include_directories(reader_reading_commands PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -27,3 +36,7 @@ write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderReadingCom
   VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderReadingCommandsConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/EXReaderReadingCommandsConfigVersion.cmake" DESTINATION lib/cmake/EXReaderReadingCommands)
+
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  target_compile_definitions(reader_reading_commands PUBLIC EXR_READER_SELECTOR_BYTES_CANDIDATE=1)
+endif()

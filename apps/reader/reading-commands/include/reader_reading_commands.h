@@ -71,6 +71,12 @@ typedef struct {
 
 reader_rc_status reader_rc_apply(const reader_rc_context *, const reader_rc_command *,
   reader_rc_result *, reader_rc_error *);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Explicit candidate fixed_page writer. New captures use anchor3; NOTE_TEXT
+   keeps the selected source's actual version and nullable selector tags. */
+reader_rc_status reader_rc_apply_fixed_v3(const reader_rc_context *,const reader_rc_command *,
+  reader_rc_result *,reader_rc_error *);
+#endif
 #ifdef __cplusplus
 }
 #endif
