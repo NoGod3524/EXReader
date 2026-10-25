@@ -5,7 +5,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_SESSION_VERSION "0.2.0"
+#else
 #define READER_SESSION_VERSION "0.1.0"
+#endif
 typedef enum {READER_SESSION_OK=0,READER_SESSION_ARGUMENT,READER_SESSION_BUSY,
   READER_SESSION_IO,READER_SESSION_ACCOUNT,READER_SESSION_SYNC} reader_session_status;
 typedef enum {READER_SESSION_IDLE=0,READER_SESSION_RUNNING,READER_SESSION_CANCELLING,
@@ -34,6 +38,11 @@ typedef struct {
  * owner before start, release its borrowed source, then start the network.
  * Existing reader_sync verifies length/hash and snapshots before publication. */
 reader_session_status reader_session_create(const reader_session_config *,reader_session **);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Creates the same owner worker with explicit immutable raw store/sync
+   capability. Existing catalog/schema and retained wire are not migrated. */
+reader_session_status reader_session_create_raw_v3(const reader_session_config *,reader_session **);
+#endif
 /* Nonblocking: start/retry one 256-shard sweep. A failed/cancelled sweep
  * resumes its last successful cursor; FINISHED starts a fresh sweep at zero.
  * No overlapping requests or automatic retry loop. Counters count operations,

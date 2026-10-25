@@ -2369,6 +2369,9 @@ static HWND make_static(HWND parent, int id, const wchar_t *text) {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
 #include "../apps/reader/desktop/windows_preferences_ui.inc"
 #endif
+#ifdef EXR_READER_WINDOWS_COMPACT
+#include "../apps/reader/desktop/windows_compact_ui.inc"
+#endif
 
 static void create_controls(HWND parent) {
   g.import_label = make_static(parent, IDC_IMPORT_LABEL, L"导入路径");
@@ -2448,9 +2451,15 @@ static void create_controls(HWND parent) {
   /* One native menu entry; every low-frequency control lives inside it. */
   prefs_create_menu(parent);
 #endif
+#ifdef EXR_READER_WINDOWS_COMPACT
+  compact_create(parent);
+#endif
 }
 
 static void layout_controls(void) {
+#ifdef EXR_READER_WINDOWS_COMPACT
+  if (compact_layout()) return;
+#endif
   RECT area;
   int width, height, left_width, content_top = 76, content_bottom;
   int books_height, notes_top, notes_height;
@@ -3566,6 +3575,9 @@ static void host_update_controls(void) {
   host_a11y_focus_guard(focused);
   /* A modal dialog owns the keyboard: keep the truthful blocked state. */
   host_a11y_owner_reapply();
+#ifdef EXR_READER_WINDOWS_COMPACT
+  compact_controls();
+#endif
 }
 
 static void handle_job_complete(host_job *job) {
@@ -4931,8 +4943,19 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       MINMAXINFO *limits = (MINMAXINFO *)lparam;
       limits->ptMinTrackSize.x = 1060;
       limits->ptMinTrackSize.y = 660;
+#ifdef EXR_READER_WINDOWS_COMPACT
+      if (!compact_expanded) {
+        limits->ptMinTrackSize.x = 640;
+        limits->ptMinTrackSize.y = 420;
+      }
+#endif
       return 0;
     }
+#ifdef EXR_READER_WINDOWS_COMPACT
+    case WM_INITMENUPOPUP:
+      compact_menu_update();
+      return 0;
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
     case WM_SETTINGCHANGE:
     case WM_THEMECHANGED:
@@ -4944,6 +4967,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_COMMAND: {
       int id = LOWORD(wparam);
       int code = HIWORD(wparam);
+#ifdef EXR_READER_WINDOWS_COMPACT
+      if (code == 0 && compact_command(id)) return 0;
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       if(id==IDC_PREFERENCES) { prefs_show();return 0; }
 #endif
@@ -4995,6 +5021,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       WaitForSingleObject(job->thread, INFINITE);
       g.job = NULL;
       handle_job_complete(job);
+#ifdef EXR_READER_WINDOWS_COMPACT
+      compact_complete(job);
+#endif
       job_release(job);
       InvalidateRect(g.page, NULL, FALSE);
       if (!g.job && g.pending) {
@@ -5132,6 +5161,9 @@ static int message_loop(void) {
     if(prefs_ui_open() && IsDialogMessageW(prefs_dialog_handle(),&message)) continue;
     prefs_translate(&message);
     if(message.message==WM_NULL) continue;
+#endif
+#ifdef EXR_READER_WINDOWS_COMPACT
+    if (compact_translate(&message)) continue;
 #endif
     if (g.window && IsDialogMessageW(g.window, &message)) continue;
     TranslateMessage(&message);

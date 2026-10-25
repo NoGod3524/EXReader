@@ -5,7 +5,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifdef EXR_READER_METADATA_RAW3
+#define READER_METADATA_VERSION "0.2.0"
+#else
 #define READER_METADATA_VERSION "0.1.0"
+#endif
 #define READER_METADATA_PENDING_MAX_BYTES ((size_t)131072)
 typedef struct reader_metadata_owner reader_metadata_owner;
 typedef struct reader_metadata_snapshot reader_metadata_snapshot;
@@ -46,6 +50,13 @@ typedef struct {
  * pending_path is a private file in the existing host profile directory. */
 reader_metadata_status reader_metadata_open(const char *product_path,const char *pending_path,
   reader_metadata_owner **,reader_metadata_error *);
+#ifdef EXR_READER_METADATA_RAW3
+/* Opt-in package only. Opens the matching raw-capability revision/command
+ * family. Typed metadata and private pending bytes keep their original schema;
+ * metadata operations do not produce or reinterpret reading selectors. */
+reader_metadata_status reader_metadata_open_raw_v3(const char *product_path,const char *pending_path,
+  reader_metadata_owner **,reader_metadata_error *);
+#endif
 reader_metadata_status reader_metadata_close(reader_metadata_owner **,reader_metadata_error *);
 /* Preparation copies metadata and the COMPLETE observed head set. A conflict
  * or NEEDS_BOOTSTRAP may also return a snapshot, for explicit host presentation.

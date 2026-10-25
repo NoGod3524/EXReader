@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.24)
-project(EXReaderRevisions VERSION 0.3.0 LANGUAGES C CXX)
+option(EXR_READER_SELECTOR_BYTES_CANDIDATE "Explicit independent raw selector candidate; never default" OFF)
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  project(EXReaderRevisions VERSION 0.4.0 LANGUAGES C CXX)
+else()
+  project(EXReaderRevisions VERSION 0.3.0 LANGUAGES C CXX)
+endif()
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,3 +44,15 @@ write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderRevisionsC
   VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderRevisionsConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/EXReaderRevisionsConfigVersion.cmake" DESTINATION lib/cmake/EXReaderRevisions)
+
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  target_compile_definitions(reader_revisions PUBLIC EXR_READER_SELECTOR_BYTES_CANDIDATE=1)
+endif()
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  install(FILES include/reader_selector_bytes_detail.h DESTINATION include)
+endif()
+
+# RAW-CANDIDATE ORIGIN GUARD: append-only; never changes imported targets.
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE AND TARGET EXReaderRevisions::reader_revisions)
+  message(FATAL_ERROR "Raw candidate build cannot reuse an existing revisions target")
+endif()
