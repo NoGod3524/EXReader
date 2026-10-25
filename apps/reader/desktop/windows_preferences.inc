@@ -9,6 +9,8 @@ static void prefs_show(void);
 static void prefs_dialog_refresh(void);
 static void prefs_dialog_closed(void);
 static int prefs_ui_open(void);
+static void prefs_notice(const wchar_t *text);
+static void prefs_dialog_controls(void);
 static void page_step(int direction);
 
 static exr_status prefs_job(host_job *job) {
@@ -78,6 +80,11 @@ static void prefs_pump(void) {
    system-appearance re-render. Both use the existing single worker. */
 static void prefs_after_complete(void) {
   if (g.closing) return;
+  if (prefs_ui_open() && prefs_ui.running) {
+    prefs_ui.running = 0;
+    prefs_dialog_controls();
+    prefs_notice(prefs.last_ok ? L"当前的阅读设置已生效。" : L"设置未应用，原设置保持不变。");
+  }
   if (prefs_turn_pending && !g.job && !g.pending) {
     int turn = prefs_turn_pending;
     prefs_turn_pending = 0;

@@ -3555,6 +3555,7 @@ static void host_update_controls(void) {
 
 static void handle_job_complete(host_job *job) {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
+  prefs.last_ok = 0;
   if(job->kind==JOB_PREFERENCES) { prefs_accept(job);return; }
 #endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
@@ -3680,6 +3681,7 @@ static void handle_job_complete(host_job *job) {
       prefs.corrupt = 0;
       prefs.file_present = 1;
       prefs.load_status = READER_PREFERENCES_OK;
+      prefs.last_ok = 1;
     }
 #endif
     if (job->kind == JOB_OPEN) {

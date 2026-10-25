@@ -42,6 +42,7 @@ typedef struct {
   int system_theme;      /* sampled on the UI owner only */
   int system_events;
   int theme_pending;
+  int last_ok;
   unsigned long applied;
 } host_preferences;
 
