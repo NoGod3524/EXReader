@@ -7,6 +7,8 @@ import json
 import os
 from pathlib import Path
 import sys
+if hasattr(sys.stdout,"reconfigure"): sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr,"reconfigure"): sys.stderr.reconfigure(encoding="utf-8")
 import time
 import traceback
 from contract import *
@@ -24,6 +26,12 @@ U.GetWindowDpiAwarenessContext.argtypes=[W.HWND];U.GetWindowDpiAwarenessContext.
 U.GetAwarenessFromDpiAwarenessContext.argtypes=[W.HANDLE];U.GetAwarenessFromDpiAwarenessContext.restype=C.c_int
 U.SystemParametersInfoW.argtypes=[W.UINT,W.UINT,C.c_void_p,W.UINT];U.SystemParametersInfoW.restype=W.BOOL
 U.GetSysColor.argtypes=[C.c_int];U.GetSysColor.restype=W.DWORD
+U.MonitorFromWindow.argtypes=[W.HWND,W.DWORD];U.MonitorFromWindow.restype=W.HANDLE
+SHCORE=C.WinDLL("shcore")
+SHCORE.GetScaleFactorForMonitor.argtypes=[W.HANDLE,C.POINTER(C.c_int)];SHCORE.GetScaleFactorForMonitor.restype=C.c_long
+def monitor_scale(hwnd):
+    value=C.c_int();hr=SHCORE.GetScaleFactorForMonitor(U.MonitorFromWindow(hwnd,2),C.byref(value))
+    return {"hresult":hr,"scale_percent":value.value if hr==0 else None}
 class HC(C.Structure): _fields_=[('cbSize',W.UINT),('dwFlags',W.DWORD),('lpszDefaultScheme',W.LPWSTR)]
 def digest(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def write(p,data):Path(p).write_text(json.dumps(data,indent=2,ensure_ascii=False),encoding='utf-8')
@@ -70,7 +78,7 @@ class Audit:
         P.M.screenshot(hwnd,self.out/(name+'.bmp'));self.r['screenshots'].append(name+'.bmp')
         tree=self.uia.dump(hwnd,max_depth=5,pattern_depth=3)
         payload={'tree':tree,'focus':self.uia.focused(),'native_focus':self.kb.focus(),'window_rect':w32.window_rect(hwnd),
-                 'window_dpi':int(U.GetDpiForWindow(hwnd)),'system_dpi':int(U.GetDpiForSystem()),'awareness':int(U.GetAwarenessFromDpiAwarenessContext(U.GetWindowDpiAwarenessContext(hwnd)))}
+                 'monitor_scale':monitor_scale(hwnd),'window_dpi':int(U.GetDpiForWindow(hwnd)),'system_dpi':int(U.GetDpiForSystem()),'awareness':int(U.GetAwarenessFromDpiAwarenessContext(U.GetWindowDpiAwarenessContext(hwnd)))}
         write(self.out/(name+'.json'),payload);self.r['snapshots'].append(name+'.json');return payload
     def goto(self,id,back=False):
         target=U.GetDlgItem(self.app.window,id);seen=[]
@@ -97,7 +105,7 @@ class Audit:
             before=int(U.GetDpiForWindow(self.app.window));C.set_last_error(0)
             ok=bool(U.SystemParametersInfoW(0x009F,override,None,0));error=C.get_last_error();time.sleep(.5)
             snap=self.shot('dpi-request-'+str(scale));actual=snap['window_dpi']
-            self.check('dpi-'+str(scale),'pass' if actual==96*scale/100 else 'pending',{'requested_percent':scale,'relative_override_request':override,'api_return':ok,'winerror':error,'before':before,'readback':actual,'system_dpi':snap['system_dpi'],'awareness':snap['awareness'],'limitation':'Relative override is not an absolute DPI API; unavailable readback remains pending'},'dpi',[self.r['snapshots'][-1],self.r['screenshots'][-1]])
+            self.check('dpi-'+str(scale),'pass' if actual==96*scale/100 and snap['monitor_scale']['scale_percent']==scale else 'pending',{'requested_percent':scale,'relative_override_request':override,'api_return':ok,'winerror':error,'before':before,'readback':actual,'monitor_scale':snap['monitor_scale'],'system_dpi':snap['system_dpi'],'awareness':snap['awareness'],'limitation':'Relative override is not an absolute DPI API; unavailable readback remains pending'},'dpi',[self.r['snapshots'][-1],self.r['screenshots'][-1]])
         U.SystemParametersInfoW(0x009F,0,None,0)
     def geometry(self,label,size):
         self.app.settle(size);snap=self.shot(label);r=snap['window_rect'];issues=[];nodes=[]
@@ -107,6 +115,8 @@ class Audit:
                 if b[2]>b[0] and b[3]>b[1] and (b[0]<r[0] or b[1]<r[1] or b[2]>r[2] or b[3]>r[3]):issues.append({'outside_window':node})
             for child in node.get('children',[]):walk(child)
         walk(snap['tree'])
+        work=self.r['work_area']
+        if r[0]<work[0] or r[1]<work[1] or r[2]>work[2] or r[3]>work[3]:issues.append({'window_outside_work_area':r,'work_area':work})
         for i,a in enumerate(nodes):
             if a.get('control_type') not in ('ButtonControl','EditControl'):continue
             for b in nodes[i+1:]:
@@ -220,4 +230,5 @@ class Audit:
 if __name__=='__main__':
     assert os.name=='nt' and os.environ.get('GITHUB_ACTIONS')=='true'
     p=argparse.ArgumentParser();p.add_argument('--mode',choices=['ON','OFF'],required=True);p.add_argument('--output',type=Path,required=True)
+    w32.make_dpi_aware()  # Audit process only; never changes the target awareness.
     Audit(p.parse_args()).run()

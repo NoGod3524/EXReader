@@ -3,6 +3,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import urllib.request
@@ -39,6 +40,15 @@ def download(identifier, destination, expected_run, expected_sha, expected_diges
             assert not Path(name).is_absolute() and '..' not in Path(name).parts and '\\' not in name
         z.extractall(destination)
     return dict(id=identifier,name=meta['name'],bytes=len(raw),sha256=digest,expires_at=meta['expires_at'],workflow_run=meta['workflow_run'])
+def credential_scan(root, log_bytes):
+    patterns=[rb"gh[pousr]_[A-Za-z0-9]{30,}", rb"github_pat_[A-Za-z0-9_]{30,}", rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----", rb"https://[^\s\"]+[?&]sig=[^\s\"]+"]
+    count=0
+    for label,raw in [("native-job-log",log_bytes)]+[(str(p.relative_to(root)),p.read_bytes()) for p in root.rglob("*") if p.is_file()]:
+        count+=1
+        assert not any(re.search(pattern,raw) for pattern in patterns), "credential-shaped bytes found in "+label
+        assert os.environ["GH_TOKEN"].encode() not in raw, "ephemeral token found in "+label
+    return {"passed":True,"files_and_logs_scanned":count,"scope":"current native log and extracted current raw artifact; token and credential-pattern scan; no credential values logged"}
+
 def producer():
     root=Path('build/d02-producer')
     run=api('actions/runs/'+str(RUN));assert run['head_sha']==PRODUCER and run['run_attempt']==1 and run['conclusion']=='success'
@@ -67,6 +77,8 @@ def summary():
         proof=download(int(os.environ['ARTIFACT_ID']),out/'raw',run,source,os.environ['UPLOAD_DIGEST'].removeprefix('sha256:'))
         root=out/'raw'
         auth=json.loads((root/'producer-authentication.json').read_text());assert auth['id']==ARTIFACT and auth['sha256']==DIGEST
+        scan=credential_scan(root,api("actions/jobs/"+str(native[0]["id"])+"/logs",True))
+        result["credential_scan"]=scan
         reports=[]
         for mode in ('OFF','ON'):
             folder=root/mode;r=json.loads((folder/'report.json').read_text());validate(r,source,run,attempt,mode)
