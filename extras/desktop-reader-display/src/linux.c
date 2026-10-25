@@ -49,7 +49,7 @@ static int release_cookie(GDBusConnection *bus,const char *owner,guint cookie) {
   if(error) g_error_free(error);
   return r!=NULL;
 }
-static void revoke(exr_display_lease *l,exr_display_status s) {
+static void revoke_lease(exr_display_lease *l,exr_display_status s) {
   guint cookie=l->cookie; l->cookie=0; ++l->generation;
   if(!release_cookie(l->bus,l->service_owner,cookie)) { disconnect_bus(l); s=EXR_DISPLAY_UNAVAILABLE; }
   l->state=s;
@@ -112,10 +112,10 @@ static void replied(GObject *source,GAsyncResult *result,gpointer data) {
 static void refresh(exr_display_lease *l) {
   int ok; Request *q; guint32 xid=0; GdkWindow *w;
   if(l->closed || l->destroyed) return;
-  if(l->wanted && now_ms()>=l->deadline) { l->wanted=0; revoke(l,EXR_DISPLAY_EXPIRED); }
+  if(l->wanted && now_ms()>=l->deadline) { l->wanted=0; revoke_lease(l,EXR_DISPLAY_EXPIRED); }
   ok=l->wanted && eligible(l);
   if(!ok) {
-    if(l->was_eligible) revoke(l,l->wanted?EXR_DISPLAY_INACTIVE:l->state);
+    if(l->was_eligible) revoke_lease(l,l->wanted?EXR_DISPLAY_INACTIVE:l->state);
     l->was_eligible=0; return;
   }
   l->was_eligible=1;
@@ -135,19 +135,20 @@ static void visibility(GtkWidget *w,gpointer p) { (void)w; refresh(p); }
 static void active_notify(GObject *w,GParamSpec *s,gpointer p) { (void)w; (void)s; refresh(p); }
 static gboolean state_event(GtkWidget *w,GdkEventWindowState *e,gpointer p) {
   exr_display_lease *l=p; (void)w;
-  if(e->new_window_state&GDK_WINDOW_STATE_ICONIFIED) { revoke(l,EXR_DISPLAY_INACTIVE); l->was_eligible=0; }
+  if(e->new_window_state&GDK_WINDOW_STATE_ICONIFIED) { revoke_lease(l,EXR_DISPLAY_INACTIVE); l->was_eligible=0; }
   else refresh(l);
   return FALSE;
 }
 static void destroyed(GtkWidget *w,gpointer p) {
-  exr_display_lease *l=p; (void)w; l->destroyed=1; l->wanted=0; revoke(l,EXR_DISPLAY_WINDOW_GONE);
+  exr_display_lease *l=p; (void)w; l->destroyed=1; l->wanted=0; revoke_lease(l,EXR_DISPLAY_WINDOW_GONE);
 }
 exr_display_status exr_display_create(const exr_display_options *o,exr_display_lease **out) {
   exr_display_lease *l;
-  if(!out) return EXR_DISPLAY_ARGUMENT; *out=NULL;
+  if(!out) return EXR_DISPLAY_ARGUMENT;
+  *out=NULL;
   if(!exr_display_valid_options(o) || !GTK_IS_WINDOW(o->native_window) || gtk_widget_in_destruction(GTK_WIDGET(o->native_window))) return EXR_DISPLAY_ARGUMENT;
   if(g_main_context_get_thread_default()!=NULL && g_main_context_get_thread_default()!=g_main_context_default()) return EXR_DISPLAY_ARGUMENT;
-  if(g_atomic_int_add(&live_count,1)>=EXR_DISPLAY_MAX_LEASES) { g_atomic_int_add(&live_count,-1); return EXR_DISPLAY_LIMIT; }
+  if(g_atomic_int_add(&live_count,1)>=(gint)EXR_DISPLAY_MAX_LEASES) { g_atomic_int_add(&live_count,-1); return EXR_DISPLAY_LIMIT; }
   l=g_try_new0(exr_display_lease,1); if(!l) { g_atomic_int_add(&live_count,-1); return EXR_DISPLAY_NO_MEMORY; }
   l->refs=1; l->thread=g_thread_self(); l->window=g_object_ref(o->native_window); l->duration=o->lease_ms;
   l->generation=1; l->state=EXR_DISPLAY_INACTIVE; memcpy(l->reason,o->reason,strlen(o->reason)+1);
@@ -164,13 +165,13 @@ exr_display_status exr_display_set_active(exr_display_lease *l,int active) {
   if(l->destroyed) { l->busy=0; return EXR_DISPLAY_WINDOW_GONE; }
   if(l->state==EXR_DISPLAY_UNAVAILABLE) disconnect_bus(l);
   l->wanted=active; l->deadline=active?now_ms()+l->duration:0;
-  if(!active) revoke(l,EXR_DISPLAY_INACTIVE);
+  if(!active) revoke_lease(l,EXR_DISPLAY_INACTIVE);
   else { if(!l->cookie) l->state=EXR_DISPLAY_INACTIVE; refresh(l); }
   s=l->state; l->busy=0; return s;
 }
 exr_display_status exr_display_cancel(exr_display_lease *l) {
   exr_display_status s=enter(l); if(s) return s;
-  l->wanted=0; l->deadline=0; revoke(l,EXR_DISPLAY_CANCELLED); l->busy=0; return EXR_DISPLAY_OK;
+  l->wanted=0; l->deadline=0; revoke_lease(l,EXR_DISPLAY_CANCELLED); l->busy=0; return EXR_DISPLAY_OK;
 }
 exr_display_status exr_display_observe(exr_display_lease *l,exr_display_observation *o) {
   exr_display_status s;
@@ -182,7 +183,7 @@ exr_display_status exr_display_observe(exr_display_lease *l,exr_display_observat
 }
 exr_display_status exr_display_close(exr_display_lease *l) {
   exr_display_status s; if(!l) return EXR_DISPLAY_OK; s=enter(l); if(s) return s;
-  l->closed=1; l->wanted=0; revoke(l,EXR_DISPLAY_CANCELLED);
+  l->closed=1; l->wanted=0; revoke_lease(l,EXR_DISPLAY_CANCELLED);
   g_source_remove(l->timer); g_signal_handlers_disconnect_by_data(l->window,l); g_object_unref(l->window); l->window=NULL;
   disconnect_bus(l); l->busy=0; unref_lease(l); return EXR_DISPLAY_OK;
 }
