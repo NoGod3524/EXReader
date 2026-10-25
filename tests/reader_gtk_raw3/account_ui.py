@@ -21,7 +21,7 @@ def main():
     host=Session((args.payload/'bin/exreader-linux').resolve(),(args.payload/'Reader.otf').resolve(),args.output)
     pair=base64.b64decode(os.environ['GTK_RAW3_DAV_AUTH'].split(' ',1)[1]).decode();user,password=pair.split(':',1)
     report=dict(accepted=False,source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
-      program_sha256=hashlib.sha256(host.binary.read_bytes()).hexdigest(),actual_gtk_ui_executed=True,complete_product=False,physical_device_execution=False)
+      program_sha256=hashlib.sha256(host.binary.read_bytes()).hexdigest(),actual_gtk_ui_executed=False,complete_product=False,physical_device_execution=False)
     def account():
         value=configparser.ConfigParser(interpolation=None);value.read(host.observe)
         return dict(value['account']) if value.has_section('account') else {}
@@ -34,7 +34,16 @@ def main():
             time.sleep(.05)
         raise TimeoutError('actual raw account state: '+repr(account()))
     try:
-        host.launch();report['pid']=host.process.pid;host.key('ctrl+shift+a');wait(lambda value:value['visible']=='1')
+        # Retain the original host checker's desktop-ready barrier before Session.
+        end=time.monotonic()+30
+        while time.monotonic()<end:
+            ready=command('xprop','-root','_NET_SUPPORTING_WM_CHECK')
+            if 'window id #' in ready and '0x0' not in ready:break
+            time.sleep(.1)
+        else:raise TimeoutError('Window manager did not become ready')
+        report['window_manager_ready']=True
+        host.launch();report.update(pid=host.process.pid,actual_gtk_ui_executed=True)
+        host.key('ctrl+shift+a');wait(lambda value:value['visible']=='1')
         dialog=command('xdotool','search','--onlyvisible','--all','--pid',host.process.pid,'--name','^Account and Sync$').splitlines()[-1]
         command('xdotool','windowactivate','--sync',dialog)
         for mnemonic,value in [('w',os.environ['GTK_RAW3_DAV_URL']),('u',user),('p',password)]:
@@ -49,7 +58,11 @@ def main():
     except Exception as error:
         report['failure']=type(error).__name__+': '+str(error)
         if host.process is not None and host.process.poll() is None:
-            command('import','-window',host.window,args.output/'failure.png')
+            report['pid']=host.process.pid
+            tree=subprocess.run(['xwininfo','-root','-tree'],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=5)
+            (args.output/'window-tree.txt').write_text(tree.stdout)
+            if getattr(host,'window',None):
+                subprocess.run(['import','-window',host.window,str(args.output/'failure.png')],timeout=5,check=False)
         raise
     finally:
         if host.process is not None:
