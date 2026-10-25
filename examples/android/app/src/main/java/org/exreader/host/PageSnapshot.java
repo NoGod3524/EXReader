@@ -17,6 +17,9 @@ final class PageSnapshot {
     BoundedEpub boundedOwner;
     String[] boundedLocation;
     float layoutFont;
+    PageTheme pageTheme=PageTheme.ORIGINAL;
+    String themeSdk="original";
+    long[] themeBoxes=new long[0];
     float layoutLine=1.6f,layoutParagraph=12f,layoutMargin=32f;
     long preferencesPoint=-1;
     long preferencesRangeEnd=-1;

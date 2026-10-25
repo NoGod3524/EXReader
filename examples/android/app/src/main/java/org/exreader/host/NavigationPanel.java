@@ -47,7 +47,18 @@ final class NavigationPanel {
     private void failure(long request,Throwable error){if(!current(request))return;controls(false);message(error instanceof HostTask.Cancelled?"已取消，可关闭后重新读取":"目录读取失败，请关闭后重试");}
     private void page(long first){
         if(first<0)return;long request=request();controls(true);message("正在读取条目");
-        host.directoryPage(book,parent,first,task,value->activity.runOnUiThread(()->{if(!current(request))return;rows=value.rows;next=value.next;adapter.clear();for(NativeNavigation.Row row:rows)adapter.add(row.display());controls(false);message(info.kind==2?"按页入口 · 非作者大纲 · "+value.total+" 页":value.total==0?"此书没有自带目录":"目录 · "+value.total+" 项 · 本批 "+rows.length+" 项"+(next<0?" · 已列完":""));}),error->activity.runOnUiThread(()->failure(request,error)));
+        host.directoryPage(book,parent,first,task,value->activity.runOnUiThread(()->{
+            if(!current(request))return;rows=value.rows;next=value.next;
+            final ListView target=list;final String ready=info.kind==2?"按页入口 · 非作者大纲 · "+value.total+" 页":value.total==0?"此书没有自带目录":"目录 · "+value.total+" 项 · 本批 "+rows.length+" 项"+(next<0?" · 已列完":"");
+            target.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener(){
+                @Override public void onGlobalLayout(){
+                    if(!current(request)){if(target.getViewTreeObserver().isAlive())target.getViewTreeObserver().removeOnGlobalLayoutListener(this);return;}
+                    if(target.isLayoutRequested()||rows.length>0&&(target.getFirstVisiblePosition()!=0||target.getChildCount()==0||target.getChildAt(0).getHeight()<=0))return;
+                    target.getViewTreeObserver().removeOnGlobalLayoutListener(this);controls(false);message(ready);
+                }
+            });
+            adapter.setNotifyOnChange(false);adapter.clear();for(NativeNavigation.Row row:rows)adapter.add(row.display());target.setAdapter(adapter);target.setSelection(0);target.requestLayout();
+        }),error->activity.runOnUiThread(()->failure(request,error)));
     }
     private void select(NativeNavigation.Row row){
         if(row.children==0){resolve(row.index,-1,null,false);return;}
