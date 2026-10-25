@@ -1,0 +1,56 @@
+name: Common source Windows complete raw owner and receiver
+on:
+  push:
+    branches: [codex/reader-raw3-common-integration]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  host:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Authenticate exact SDK raw packages codec and unchanged default source
+        run: |
+          python -m compileall -q tests/reader_windows_raw3
+          python tests/reader_raw3_common_windows_owner/guard.py
+          python tests/reader_raw3_common_windows_owner/selftest.py
+      - name: Build actual SDK packages and both Win32 profiles and retain full original bulk checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_windows_raw3/host_build.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-installed-raw3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-raw3-host/
+            build/windows-raw3-preflight/
+          if-no-files-found: error
+
+  authenticate:
+    needs: host
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate this attempt original owner ZIP and common guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_raw3_common_windows_owner/strict.py --run "$GITHUB_RUN_ID" --source "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-common-owner-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-owner-authentication/*.json
+          if-no-files-found: warn
