@@ -49,7 +49,9 @@ static gboolean file_input_timeout(gpointer token) {
 }
 static void file_clipboard_received(GtkClipboard *clipboard,GtkSelectionData *selection,gpointer context) {
   file_clipboard_request *request=context;
-  if(file_input.closed || closing || request->token!=file_input.token || !file_input.pending) { file_input.inflight=0;g_free(request);return; }
+  if(file_input.closed || closing || request->token!=file_input.token || !file_input.pending) {
+    file_input.inflight=0;if(!file_input.closed && !closing) state();g_free(request);return;
+  }
   if((!selection || gtk_selection_data_get_length(selection)<0) && request->kind==1) {
     request->kind=2;
     gtk_clipboard_request_contents(clipboard,gdk_atom_intern_static_string("x-special/gnome-copied-files"),file_clipboard_received,request);return;

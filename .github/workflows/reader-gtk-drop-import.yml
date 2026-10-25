@@ -1,0 +1,431 @@
+name: Native GTK book file drop and paste
+on:
+  push:
+    branches: [codex/reader-gtk-drop-import-ui]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  account:
+    name: GTK book file drop paste and retained native suites
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed common start reviewed J03 and host-only changes
+        run: python3 tests/reader_gtk_drop_import/guard.py
+      - name: Install native GTK TLS XML and Secret Service dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11
+      - name: Install reviewed J03 and rerun installed portable and GTK consumers
+        run: |
+          mkdir -p build/gtk-drop-j03
+          cmake -S extras/desktop-drop -B build/drop-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/drop-stage"
+          cmake --build build/drop-module --parallel 4
+          cmake --install build/drop-module
+          cmake -S extras/desktop-drop/examples -B build/drop-examples -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/drop-stage"
+          cmake --build build/drop-examples --parallel 4
+          build/drop-examples/host-example-c | tee build/gtk-drop-j03/c.log
+          build/drop-examples/host-example-cxx | tee build/gtk-drop-j03/cxx.log
+          cmake -S tests/reader_desktop_drop -B build/drop-consumers -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/drop-stage"
+          cmake --build build/drop-consumers --parallel 4
+          build/drop-consumers/drop-check | tee build/gtk-drop-j03/portable.log
+          build/drop-consumers/drop-consumer-cxx | tee build/gtk-drop-j03/installed-cxx.log
+          xvfb-run -a build/drop-consumers/drop-probe | tee build/gtk-drop-j03/gtk.log
+      - name: Build installed product metadata and account modules with one product provider
+        run: |
+          mkdir -p build/account-logs
+          prefix="$PWD/build/account-stage"
+          echo "ACCOUNT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/account-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-product --parallel 4
+          ctest --test-dir build/account-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/account-product
+          cmake -S extras/webdav -B build/account-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-dav --parallel 4
+          cmake --install build/account-dav
+          cmake -S apps/reader/revisions -B build/account-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-revisions --parallel 4
+          cmake --install build/account-revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/account-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/account-$module" --parallel 4
+            cmake --install "build/account-$module"
+          done
+          cmake -S extras/credentials -B build/account-credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-credentials --parallel 4
+          cmake --install build/account-credentials
+          cmake -S tests/reader_commands/consumer -B build/account-command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-command-consumer --parallel 4
+          cmake -S tests/reader_metadata/consumer -B build/account-metadata-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-metadata-consumer --parallel 4
+          cmake -S tests/reader_revisions/consumer -B build/account-revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-revision-consumer --parallel 4
+      - name: Install unchanged frozen SDK and public original export module
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/account-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/account-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/account-logs/sdk-install.log
+          cmake -S extras/sideload -B build/account-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/account-sideload --parallel 4
+          cmake --install build/account-sideload
+      - name: Install fixed batch importer and retain original installed consumers and review regressions
+        run: |
+          cmake -S apps/reader/batch-import -B build/gtk-batch-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/gtk-batch-module --parallel 4
+          cmake --install build/gtk-batch-module
+          cmake -S tests/reader_batch_import/consumer -B build/gtk-batch-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/gtk-batch-consumer --parallel 4
+          python3 tests/reader_batch_import/make_fixtures.py --fixtures tests/fixtures --out build/gtk-batch-original-fixtures
+          python3 tests/reader_batch_import/check_batch_import.py --probe build/gtk-batch-consumer/batch-probe --cxx build/gtk-batch-consumer/batch-cpp-consumer --fixtures build/gtk-batch-original-fixtures --staging build/gtk-batch-staging --work build/gtk-batch-original-work --output build/gtk-batch-original
+          python3 tests/reader_batch_import/check_review.py --probe build/gtk-batch-consumer/batch-review-probe --original-probe build/gtk-batch-consumer/batch-probe --work build/gtk-batch-review-work --output build/gtk-batch-review
+      - name: Install public reading adapter and real-capture fixture consumers
+        run: |
+          cmake -S apps/reader/reading-state -B build/account-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/account-reading-state --parallel 4
+          cmake --install build/account-reading-state
+          cmake -S tests/reader_reading_v2/consumer -B build/account-reading-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/account-reading-probe --parallel 4
+          cmake -S tests/reader_gtk_receive -B build/account-inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/account-inspect --parallel 4
+          python3 tests/reader_reading_state/make_fixtures.py build/account-receive-fixtures
+          python3 -m py_compile tests/linux_host/check_account_ui.py tests/linux_host/receive_checks.py
+      - name: Install fixed G03 G04 and rerun their original public consumers
+        run: |
+          for module in reading-commands annotation-view; do
+            cmake -S "apps/reader/$module" -B "build/records-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+            cmake --build "build/records-$module" --parallel 4
+            cmake --install "build/records-$module"
+          done
+          for package in reader_reading_commands reader_annotation_view; do
+            cmake -S "tests/$package/consumer" -B "build/records-$package-consumer" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+            cmake --build "build/records-$package-consumer" --parallel 4
+          done
+          python3 tests/reader_reading_commands/make_fixtures.py build/records-command-fixtures
+          python3 tests/reader_reading_commands/check_reading_commands.py --probe build/records-reader_reading_commands-consumer/reading-commands-probe --c-consumer build/records-reader_reading_commands-consumer/reading-commands-c-consumer --fixtures build/records-command-fixtures --font tests/fixtures/fonts/primary.ttf --output build/records-commands-installed --link-map build/records-reader_reading_commands-consumer/reading-commands-link.map
+          python3 tests/reader_annotation_view/check_annotation_view.py --probe build/records-reader_annotation_view-consumer/annotation-view-probe --c-consumer build/records-reader_annotation_view-consumer/annotation-view-c-consumer --output build/records-view-installed --link-map build/records-reader_annotation_view-consumer/annotation-view-link.map
+      - name: Preserve the original 121 legacy checks and eighteen real v2 captures
+        run: |
+          mkdir -p build/records-legacy-source
+          git archive 210403d121d6484a8fff4ea7ffd911efa3163535 apps/reader/revisions extras/opds | tar -x -C build/records-legacy-source
+          legacy="$PWD/build/records-legacy-stage"
+          cmake -S build/records-legacy-source/apps/reader/revisions -B build/records-legacy-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_INSTALL_PREFIX="$legacy"
+          cmake --build build/records-legacy-revisions --parallel 4
+          cmake --install build/records-legacy-revisions
+          cmake -S apps/reader/reading-state -B build/records-legacy-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$legacy;$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$legacy"
+          cmake --build build/records-legacy-adapter --parallel 4
+          cmake --install build/records-legacy-adapter
+          cmake -S tests/reader_reading_state/consumer -B build/records-legacy-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$legacy;$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/records-legacy-consumer --parallel 4
+          python3 tests/reader_reading_v2/check_sdk.py --probe build/account-reading-probe/reading-v2-probe --legacy-probe build/records-legacy-consumer/reading-state-probe --legacy-c-consumer build/records-legacy-consumer/reading-state-c-consumer --fixtures build/account-receive-fixtures --font tests/fixtures/fonts/primary.ttf --legacy-map build/records-legacy-consumer/reading-state-link.map --link-map build/account-reading-probe/reading-v2-link.map --output build/records-reading-sdk
+      - name: Install unchanged F3 and run all twenty installed package checks
+        run: |
+          cmake -S apps/reader/preferences -B build/preferences-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/preferences-package --parallel 4
+          cmake --install build/preferences-package
+          cmake -S tests/reader_preferences/consumer -B build/preferences-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX" -DEXR_PREFERENCES_SOURCE="$PWD/apps/reader/preferences/src" -DEXR_PREFERENCES_INCLUDE="$PWD/apps/reader/preferences/include"
+          cmake --build build/preferences-consumer --parallel 4
+          python3 tests/reader_preferences/make_preferences_fixtures.py build/preferences-fixtures
+          python3 tests/reader_preferences/check_preferences.py --consumer build/preferences-consumer/preferences-c-consumer --cpp build/preferences-consumer/preferences-cpp-consumer --worker build/preferences-consumer/preferences-worker --fixtures build/preferences-fixtures --installed "$ACCOUNT_PREFIX" --output build/preferences-installed-check --platform Linux
+          cmake -S tests/reader_gtk_preferences -B build/preferences-host-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX"
+          cmake --build build/preferences-host-consumer --parallel 4
+      - name: Install unchanged Search and rerun its public installed consumers
+        run: |
+          cmake -S apps/reader/search -B build/gtk-search-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/gtk-search-module --parallel 4
+          cmake --install build/gtk-search-module
+          cmake -S tests/reader_search/consumer -B build/gtk-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/gtk-search-consumer --parallel 4
+          python3 tests/reader_search/make_search_fixtures.py build/gtk-search-fixtures
+          python3 tests/reader_gtk_search/make_inputs.py build/gtk-search-fixtures
+          python3 tests/reader_search/check_search.py --probe build/gtk-search-consumer/search-probe --c-consumer build/gtk-search-consumer/search-c-consumer --fixtures build/gtk-search-fixtures --font tests/fixtures/fonts/primary.ttf --installed "$ACCOUNT_PREFIX" --output build/gtk-search-installed
+      - name: Install fixed F2 and rerun all original public consumers
+        run: |
+          cmake -S apps/reader/navigation -B build/gtk-navigation-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/gtk-navigation-module --parallel 4
+          cmake --install build/gtk-navigation-module
+          cmake -S tests/reader_navigation/consumer -B build/gtk-navigation-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/gtk-navigation-consumer --parallel 4
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures
+          python3 tests/reader_navigation/check_navigation.py --probe build/gtk-navigation-consumer/navigation-probe --c-consumer build/gtk-navigation-consumer/navigation-c-consumer --fixtures build/gtk-navigation-fixtures --installed "$ACCOUNT_PREFIX" --output build/gtk-navigation-installed
+      - name: Build actual GTK host with optional navigation and retained installed integrations
+        run: |
+          cmake -S apps/reader/desktop -B build/account-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_BATCH_IMPORT=ON -DEXR_READER_GTK_DROP_IMPORT=ON -DREADER_DESKTOP_DROP_PREFIX="$PWD/build/drop-stage" -DREADER_BATCH_IMPORT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DREADER_PREFERENCES_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_SEARCH=ON -DREADER_SEARCH_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_READING_RECORDS=ON -DREADER_READING_RECORDS_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_NAVIGATION=ON -DREADER_NAVIGATION_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON 2>&1 | tee build/account-logs/host-configure.log
+          cmake --build build/account-desktop --parallel 4 --verbose 2>&1 | tee build/account-logs/host-build.log
+          python3 tests/reader_gtk_receive/check_link.py --map build/account-desktop/gtk-account-host.map --binary build/account-desktop/gtk-host/exreader-linux --output build/account-logs/host-link.json
+          nm --defined-only build/account-desktop/gtk-host/exreader-linux > build/account-logs/navigation-provider-symbols.txt
+          test "$(awk '$3=="reader_navigation_open_publication" {n++} END {print n+0}' build/account-logs/navigation-provider-symbols.txt)" = 1
+          test "$(awk '$3=="exr_version" {n++} END {print n+0}' build/account-logs/navigation-provider-symbols.txt)" = 1
+          grep -F "$ACCOUNT_PREFIX/lib/libreader_navigation.a" build/account-desktop/gtk-account-host.map > build/account-logs/navigation-provider-map.txt
+          ctest --test-dir build/account-desktop --output-on-failure --no-tests=error --timeout 180 --output-junit "$PWD/build/account-logs/desktop-tests.xml"
+          python3 -m py_compile tests/linux_host/check_account_ui.py
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --binary build/account-desktop/gtk-host/exreader-linux --output build/account-package
+      - name: Preserve fixed bounded backend and 2202-book installed SDK checks
+        run: |
+          mkdir -p build/desktop-evidence
+          cp build/account-logs/host-build.log build/desktop-evidence/build.log
+          python3 tests/reader_catalog/check_desktop_sdk.py build/account-desktop
+          python3 tests/linux_host/generate_fixed.py build/account-fixed-inputs
+          build/account-desktop/gtk-host/exreader-linux-fixed-backend build/account-fixed.sqlite build/account-package/EXReader-Linux/Reader.otf build/account-fixed-inputs | tee build/account-logs/fixed-backend.log
+          build/account-desktop/gtk-host/exreader-linux-fixed-import build/account-snapshot.sqlite build/account-package/EXReader-Linux/Reader.otf build/account-fixed-inputs/Pages.pdf build/account-fixed-inputs/mutable.pdf | tee build/account-logs/fixed-import.log
+          python3 tests/linux_host/generate_bounded.py build/account-bounded-inputs
+          build/account-desktop/gtk-host/exreader-linux-bounded-backend build/account-bounded.sqlite build/account-package/EXReader-Linux/Reader.otf build/account-bounded-inputs/routes.epub | tee build/account-logs/bounded-backend.log
+          mkdir -p build/account-shelf/profile
+          build/account-desktop/reader-gtk-shelf-check build/account-shelf/profile/library.sqlite build/account-package/EXReader-Linux/Reader.otf | tee build/account-logs/shelf-backend.log
+          build/account-desktop/reader-gtk-search-backend build/gtk-search-backend.sqlite build/account-package/EXReader-Linux/Reader.otf build/gtk-search-fixtures build/account-fixed-inputs | tee build/account-logs/search-backend.log
+          python3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures
+          build/account-desktop/reader-gtk-navigation-backend build/gtk-navigation-backend.sqlite build/account-package/EXReader-Linux/Reader.otf build/gtk-navigation-fixtures build/account-fixed-inputs | tee build/account-logs/navigation-backend.log
+      - name: Real reading owner writes keyset pages failed commit and true process retry
+        run: |
+          mkdir -p build/records-backend/profile
+          chmod 700 build/records-backend/profile
+          build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" first | tee build/records-backend/first.log
+          build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" resumed | tee build/records-backend/resumed.log
+          build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/routes.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.epub" routes | tee build/records-backend/routes.log
+          build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/graphs.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" graphs | tee build/records-backend/graphs.log
+      - name: Folder importer owner barriers bounded receipts and public original mapping
+        run: |
+          python3 -m py_compile tests/reader_gtk_batch_import/make_inputs.py tests/reader_gtk_batch_import/check_ui.py
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-backend-fixtures
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures
+          mkdir -p build/gtk-batch-backend/profile
+          chmod 700 build/gtk-batch-backend/profile
+          build/account-desktop/reader-gtk-batch-import-backend "$PWD/build/gtk-batch-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-backend-fixtures" "$PWD/build/gtk-batch-backend/originals.tsv" exercise | tee build/gtk-batch-backend/checks.log
+          mkdir -p build/gtk-batch-owner-faults
+          build/account-desktop/reader-gtk-batch-owner-faults "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-owner-faults" | tee build/gtk-batch-owner-faults/checks.log
+      - name: Actual native folder chooser finite receipt list cancellation and reopen
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/batch-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/account-desktop/reader-gtk-batch-import-backend
+          '
+      - name: Explicit file input backend and immutable public original readback
+        if: ${{ !cancelled() }}
+        run: |
+          python3 -m py_compile tests/reader_gtk_drop_import/*.py
+          python3 tests/reader_gtk_drop_import/make_inputs.py tests/fixtures build/gtk-drop-fixtures
+          python3 tests/reader_gtk_drop_import/check_backend.py --probe build/account-desktop/reader-gtk-drop-backend --font build/account-package/EXReader-Linux/Reader.otf --fixtures build/gtk-drop-fixtures --output build/gtk-drop-backend
+      - name: Real pointer drop asynchronous native clipboard cancellation and reopen
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/drop-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_drop_import/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-drop-fixtures --output build/gtk-drop-ui --backend build/account-desktop/reader-gtk-drop-backend --native-source build/account-desktop/reader-gtk-drop-native-source
+          '
+      - name: Actual native progress bookmark highlight edit delete restore and process recovery
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_reading_records/check_ui.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/records-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_reading_records/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/records-command-fixtures --output build/records-ui --backend build/account-desktop/reader-gtk-reading-records-backend
+          '
+      - name: Actual native directory explicit targets independent FOUND and lifecycle
+        env:
+          GTK_NAVIGATION_DIAGNOSTIC_ONLY: 'false'
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_navigation/check_ui.py tests/reader_gtk_navigation/make_inputs.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/navigation-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-navigation-fixtures --fixed-inputs build/account-fixed-inputs --output build/gtk-navigation-ui
+          '
+      - name: Actual native in-book query results selection cancellation and lifecycle
+        if: ${{ !cancelled() }}
+        env:
+          GTK_SEARCH_DIAGNOSTIC_ONLY: 'false'
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_search/check_ui.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/search-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_search/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-search-fixtures --fixed-inputs build/account-fixed-inputs --output build/gtk-search-ui
+          '
+      - name: Actual settings controls geometry pixels gestures portal and persistence
+        if: ${{ !cancelled() }}
+        env:
+          GTK_PREFERENCES_DIAGNOSTIC_ONLY: 'false'
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_preferences/check_ui.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export XDG_CURRENT_DESKTOP=GNOME
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/preferences-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            gsettings set org.gnome.desktop.interface color-scheme prefer-light
+            timeout 25s gdbus call --session --dest org.freedesktop.portal.Desktop --object-path /org/freedesktop/portal/desktop --method org.freedesktop.portal.Settings.Read org.freedesktop.appearance color-scheme
+            /usr/bin/python3 tests/reader_gtk_preferences/check_ui.py --payload build/account-package/EXReader-Linux --output build/preferences-ui --consumer build/preferences-host-consumer/gtk-preferences-load --fixed-inputs build/account-fixed-inputs
+          '
+      - name: Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/account-logs/account-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tests/reader_gtk_preferences/retain_account.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-ui --receive-fixtures build/account-receive-fixtures --reading-probe build/account-reading-probe/reading-v2-probe --inspect-consumer build/account-inspect/received-sdk-inspect
+          '
+      - name: Preserve twenty product five fixed twenty-four shelf fourteen metadata fifteen collections twenty-seven
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/account-logs/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tools/check_linux_host.py --payload build/account-package/EXReader-Linux --output build/account-original
+            python3 tests/reader_catalog/check_gtk_product.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --output build/account-product-ui
+            python3 tools/check_linux_host_regressions.py --payload build/account-package/EXReader-Linux --consumer build/account-desktop/gtk-host --output build/account-regressions
+            python3 tests/reader_gtk_preferences/retain_fixed.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --product-evidence build/account-product-ui --output build/account-fixed-ui
+            python3 tests/linux_host/check_shelf_ui.py --payload build/account-package/EXReader-Linux --output build/account-shelf
+            python3 tests/linux_host/check_metadata_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-metadata-ui
+            python3 tests/linux_host/check_collections_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-collections-ui
+          '
+      - name: Targeted real AT-SPI regressions for G13 production fixes
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_receive/check_atspi_fixes.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/account-logs/atspi-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_receive/check_atspi_fixes.py --payload build/account-package/EXReader-Linux --output build/account-atspi-fixes
+          '
+      - name: Strict source bound folder scope and retained palette failures
+        if: always()
+        env:
+          BATCH_DIAGNOSTIC: 'false'
+        run: |
+          diagnostic=""
+          if [ "$BATCH_DIAGNOSTIC" = true ]; then diagnostic=--diagnostic; fi
+          python3 tests/reader_gtk_batch_import/check_evidence.py --build build $diagnostic
+      - name: Authenticate source bound drop paste and retained host reports
+        if: always()
+        run: python3 tests/reader_gtk_drop_import/check_evidence.py --build build
+      - name: Preserve source-bound evidence and original logs without credentials or TLS private keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-gtk-drop-import-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/account-logs/
+            build/gtk-drop-j03/
+            build/gtk-drop-backend/
+            build/gtk-drop-ui/
+            build/gtk-drop-evidence.json
+            build/gtk-drop-fixtures/manifest.json
+            build/account-package/EXReader-Linux/bin/exreader-linux
+            build/account-desktop/verified.json
+            build/account-desktop/sdk-check/
+            build/account-desktop/native-check/
+            build/account-desktop/shelf-check/
+            build/account-desktop/organization-check/
+            build/account-desktop/kill-*/
+            build/account-desktop/sdk-link.map
+            build/account-desktop/gtk-account-host.map
+            build/account-desktop/Testing/Temporary/LastTest.log
+            build/account-desktop/CMakeCache.txt
+            build/account-stage/
+            build/account-original/
+            build/account-product-ui/
+            build/account-regressions/
+            build/account-fixed-ui/
+            build/account-shelf/
+            build/account-metadata-ui/
+            build/account-collections-ui/
+            build/account-ui/
+            build/account-atspi-fixes/
+            build/preferences-installed-check/
+            build/preferences-ui/
+            build/gtk-search-installed/
+            build/gtk-search-ui/
+            build/gtk-search-fixtures/
+            build/records-commands-installed/
+            build/records-view-installed/
+            build/records-reading-sdk/
+            build/records-backend/
+            build/records-ui/
+            build/gtk-batch-evidence.json
+            build/gtk-batch-backend/
+            build/gtk-batch-owner-faults/
+            build/gtk-batch-ui/
+            build/gtk-batch-original/
+            build/gtk-batch-review/
+            build/gtk-batch-consumer/
+            build/gtk-batch-backend-fixtures/manifest.json
+            build/gtk-batch-ui-fixtures/manifest.json
+            build/gtk-navigation-installed/
+            build/gtk-navigation-fixtures/
+            build/gtk-navigation-ui/
+            build/account-package/build.json
+            build/account-package/runtime-dependencies.txt
+            build/account-package/EXReader-Linux.tar.gz
+            !build/**/*.key
+          if-no-files-found: error
+  evidence:
+    name: Authenticate native file input ZIP and retain actual palette failures
+    needs: account
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate finished same-source attempt and every bound report
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_gtk_drop_import/aggregate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-gtk-drop-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/gtk-drop-summary/verified.json
+          if-no-files-found: error
+
+
