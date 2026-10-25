@@ -23,6 +23,7 @@ DELIVERIES = {
 ALLOWED = (
     'tests/reader_hosts_integration/', '.github/workflows/reader-hosts-integration.yml',
     '.github/workflows/reader-apple-reading-records.yml',
+    '.github/workflows/reader-apple-common-evidence.yml',
     '.github/workflows/reader-apple-navigation.yml',
     '.github/workflows/reader-apple-search.yml',
     '.github/workflows/reader-apple-shelf.yml',
@@ -52,7 +53,7 @@ def main():
     for source in [BASE, *DELIVERIES.values()]:
         subprocess.run(['git', 'merge-base', '--is-ancestor', source, sha], check=True)
     subprocess.run(['git', 'diff', '--exit-code', SDK, sha, '--', 'src', 'include', 'cmake',
-                    'CMakeLists.txt', 'tests/fixtures', 'bindings', '.github/workflows/native.yml',
+                    'CMakeLists.txt', 'tests/fixtures', 'bindings', 'licenses', 'tools/layers.json', '.github/workflows/native.yml',
                     '.github/workflows/reliability.yml'], check=True)
     subprocess.run(['git', 'diff', '--exit-code', DELIVERIES['g1'], sha, '--',
                     'apps/reader/store/001_catalog.sql'], check=True)

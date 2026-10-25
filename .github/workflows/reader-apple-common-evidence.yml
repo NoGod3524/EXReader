@@ -1,0 +1,34 @@
+name: Authenticate six Apple suites at one common source
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        type: string
+        required: true
+        description: JSON object with records navigation search shelf mapping wp13 run IDs at this exact source
+permissions:
+  contents: read
+  actions: read
+jobs:
+  authenticate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate exact production lineage
+        run: python3 tests/reader_hosts_integration/guard.py
+      - name: Reject foreign source attempt workflow and incomplete producer jobs
+        run: python3 tests/reader_hosts_integration/apple.py --self-test
+      - name: Rehash original artifacts and require all six same-source original suites
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPLE_RUNS: ${{ inputs.runs }}
+        run: python3 tests/reader_hosts_integration/apple.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-apple-common-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-common-evidence/
+          if-no-files-found: error
