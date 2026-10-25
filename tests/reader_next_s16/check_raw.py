@@ -374,6 +374,8 @@ def main():
         'probe_sha256': sha(args.probe) if args.probe and Path(args.probe).exists() else None,
         'report_sha256': sha(out / 'report.json') if (out / 'report.json').exists() else None,
         'checks_total': len(probe_checks) + len(c_checks),
+        'probe_checks_total': len(probe_checks),
+        'c_checks_total': len(c_checks),
         'checks_failed': len([c for c in probe_checks + c_checks if not c.get('pass')]),
         'cases_total': report.get('cases_total'),
         'moves': report.get('moves'),
