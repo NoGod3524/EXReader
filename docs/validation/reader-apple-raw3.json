@@ -1,15 +1,54 @@
 {
-  "accepted": false,
+  "accepted": true,
   "adopted": false,
   "branch": "codex/reader-apple-raw3",
-  "source_sha": null,
+  "source_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
   "base": "896420028fa3923f3713afb673f56b913f93373f",
   "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
   "core": "0737d03c1316295a210aa527833c05054d29c1d4",
   "family": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
   "family_run": 40192929457,
   "family_credit_transferred_to_host": false,
-  "runs": [],
+  "runs": [{
+    "id": 40196978163,
+    "attempt": 1,
+    "source_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+    "conclusion": "success",
+    "jobs": {"native": 121179826434, "strict": 121186031984},
+    "artifacts": [{
+      "id": 12600789926,
+      "name": "apple-raw3-native-40196978163-1",
+      "bytes": 77056135,
+      "digest": "sha256:92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5",
+      "expires_at": "2027-01-23T13:18:06Z"
+    }, {
+      "id": 12601910101,
+      "name": "apple-raw3-summary-40196978163-1",
+      "bytes": 509,
+      "digest": "sha256:ff5bf72b40c5481b82fa5ed2e4992d5db62b424e804b1b419f9a0eee87196f9c",
+      "expires_at": "2027-01-23T13:18:06Z"
+    }]
+  }],
+  "earlier_failed_runs": [{
+    "id": 40195832816,
+    "attempt": 1,
+    "source_sha": "336b083da6b9000735febdb6a72941a6202f9d81",
+    "reason": "New probe used fixed HostSnapshot's 0..<0 placeholder pageRange as a highlight; the actual command correctly refused an empty range.",
+    "fix": "Derive a bounded nonempty end from the real SDK zero-point suffix length and recapture through the actual SDK; production and original consumers unchanged."
+  }],
+  "scope": "actual macOS raw sender, independent owners and actual raw HTTPS account session only",
+  "original_compatibility_process_phases": 18,
+  "original_owner_cases_per_sdk": 19,
+  "java_policy_cases": 20,
+  "actual_raw_process_phases": 12,
+  "real_reading_records": 11,
+  "originals": 4,
+  "raw_program_sha256": "5f59e17cf48e77b1ef8766695bf109895feac5e628bc18d9804ee625a2749913",
+  "kill_boundary_exit_codes": {"before": -9, "after": -9},
+  "session_shards_per_sweep": 256,
+  "sender_bundle_manifest": "sender-bundle/manifest.json",
+  "sender_bundle_inventory": "result.json.files",
+  "artifact_zip_and_files_verified_in_actions": true,
   "default_raw_enabled": false,
   "default_max_anchor_version": 2,
   "schema": 1,
@@ -18,6 +57,8 @@
   "new_private_request_version": 2,
   "new_private_request_explicit_anchor_versions": [1, 2, 3],
   "actual_android_interop_accepted": false,
+  "ios_ui_accepted": false,
+  "performance_accepted": false,
   "physical_device_execution": false,
   "complete_product": false
 }
