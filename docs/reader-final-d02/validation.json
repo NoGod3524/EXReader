@@ -1,1 +1,3297 @@
-{"package":"D02","accepted":false,"audit_completed":false,"keyboard_accepted":false,"contrast_accepted":false,"screen_reader_accepted":false,"status":"pending Actions","target_sha":"f355525b74ae261db536c56200e46643919ef323","producer_sha":"eab342ef456be4a8a1811e5249e3c217d906ce8a","sdk_source":"edddc463c06ed5731195cdb8f06b2df6dff7699e","failed_runs":[]}
+{
+  "verified": true,
+  "accepted": false,
+  "problems": [],
+  "credential_scan": {
+    "passed": true,
+    "files_and_logs_scanned": 168,
+    "scope": "current native log and extracted current raw artifact; token and credential-pattern scan; no credential values logged"
+  },
+  "harness_sha": "e8b5b1bd200202c06a7a22e5a4ed1f801eb47706",
+  "run_id": 40215441500,
+  "attempt": 1,
+  "upstream_job": 121235461850,
+  "artifact": {
+    "id": 12607496289,
+    "name": "reader-final-d02-raw-40215441500-1",
+    "bytes": 2758064,
+    "sha256": "db75580f89715d5d3176de758823c2b9585314efdfa5d8f3e7cf814668a25c61",
+    "expires_at": "2026-11-24T17:15:54Z",
+    "workflow_run": {
+      "id": 40215441500,
+      "repository_id": 1421442522,
+      "head_repository_id": 1421442522,
+      "head_branch": "codex/reader-final-d02",
+      "head_sha": "e8b5b1bd200202c06a7a22e5a4ed1f801eb47706"
+    }
+  },
+  "reports": [
+    {
+      "harness_sha": "e8b5b1bd200202c06a7a22e5a4ed1f801eb47706",
+      "run_id": "40215441500",
+      "attempt": "1",
+      "target_sha": "f355525b74ae261db536c56200e46643919ef323",
+      "producer_sha": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+      "producer_run": 40201283788,
+      "producer_attempt": 1,
+      "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+      "sdk_version": "3.41.0",
+      "sdk_abi": 1,
+      "core_version": "3.40.0",
+      "sdk_linkage": "static; no standalone SDK DSO in audited producer package",
+      "sdk_sha256": null,
+      "compact": "OFF",
+      "program_sha256": "7406f67dd812392f4b57844e4e1cf239b96d9695aea6ae512bcf341aafb6c4cf",
+      "accepted": false,
+      "audit_completed": true,
+      "keyboard_accepted": false,
+      "contrast_accepted": false,
+      "screen_reader_accepted": false,
+      "checks": [
+        {
+          "id": "dpi-100",
+          "status": "pass",
+          "scope": "dpi",
+          "actual": {
+            "requested_percent": 100,
+            "relative_override_request": 0,
+            "api_return": true,
+            "winerror": 0,
+            "before": 96,
+            "readback": 96,
+            "monitor_scale": {
+              "hresult": 0,
+              "scale_percent": 100
+            },
+            "system_dpi": 96,
+            "awareness": 0,
+            "limitation": "Relative override is not an absolute DPI API; unavailable readback remains pending"
+          },
+          "evidence": [
+            "000-dpi-request-100.json",
+            "000-dpi-request-100.bmp"
+          ]
+        },
+        {
+          "id": "dpi-150",
+          "status": "pending",
+          "scope": "dpi",
+          "actual": {
+            "requested_percent": 150,
+            "relative_override_request": 1,
+            "api_return": true,
+            "winerror": 0,
+            "before": 96,
+            "readback": 96,
+            "monitor_scale": {
+              "hresult": 0,
+              "scale_percent": 100
+            },
+            "system_dpi": 96,
+            "awareness": 0,
+            "limitation": "Relative override is not an absolute DPI API; unavailable readback remains pending"
+          },
+          "evidence": [
+            "001-dpi-request-150.json",
+            "001-dpi-request-150.bmp"
+          ]
+        },
+        {
+          "id": "dpi-200",
+          "status": "pending",
+          "scope": "dpi",
+          "actual": {
+            "requested_percent": 200,
+            "relative_override_request": 2,
+            "api_return": true,
+            "winerror": 0,
+            "before": 96,
+            "readback": 96,
+            "monitor_scale": {
+              "hresult": 0,
+              "scale_percent": 100
+            },
+            "system_dpi": 96,
+            "awareness": 0,
+            "limitation": "Relative override is not an absolute DPI API; unavailable readback remains pending"
+          },
+          "evidence": [
+            "002-dpi-request-200.json",
+            "002-dpi-request-200.bmp"
+          ]
+        },
+        {
+          "id": "baseline-layout",
+          "status": "fail",
+          "scope": "geometry",
+          "actual": {
+            "requested_geometry": [
+              1100,
+              720
+            ],
+            "actual": [
+              0,
+              0,
+              1060,
+              720
+            ],
+            "measured_bounds_findings": [
+              {
+                "window_outside_work_area": [
+                  0,
+                  0,
+                  1060,
+                  720
+                ],
+                "work_area": [
+                  0,
+                  0,
+                  1024,
+                  728
+                ]
+              }
+            ],
+            "limited_to": "visible native button/edit overlap and exposed bounds, not glyph clipping"
+          },
+          "evidence": [
+            "003-baseline-layout.json",
+            "003-baseline-layout.bmp"
+          ]
+        },
+        {
+          "id": "small-layout",
+          "status": "fail",
+          "scope": "geometry",
+          "actual": {
+            "requested_geometry": [
+              700,
+              480
+            ],
+            "actual": [
+              0,
+              0,
+              1060,
+              660
+            ],
+            "measured_bounds_findings": [
+              {
+                "window_outside_work_area": [
+                  0,
+                  0,
+                  1060,
+                  660
+                ],
+                "work_area": [
+                  0,
+                  0,
+                  1024,
+                  728
+                ]
+              }
+            ],
+            "limited_to": "visible native button/edit overlap and exposed bounds, not glyph clipping"
+          },
+          "evidence": [
+            "004-small-layout.json",
+            "004-small-layout.bmp"
+          ]
+        },
+        {
+          "id": "G12-SH-01",
+          "status": "pass",
+          "scope": "uia",
+          "actual": {
+            "id": "SH-01",
+            "scope": "shelf",
+            "title": "main window exposes the product name and a window role",
+            "severity": "serious",
+            "status": "pass",
+            "automated": true,
+            "expected": "UI Automation exposes the top-level window with an accessible name and a window control type",
+            "actual": "name='EXReader' control_type='WindowControl' class='EXReaderHost'",
+            "steps": [
+              "launch EXReader.exe --data <temp>",
+              "ControlFromHandle(main window)",
+              "read Name/ControlType"
+            ],
+            "element": {
+              "hwnd": "0x2012c",
+              "class": "EXReaderHost",
+              "window_text": "EXReader"
+            },
+            "minimal_fix": "none needed while the window keeps its title",
+            "evidence": {}
+          },
+          "evidence": [
+            "g12-named-checks.json"
+          ]
+        },
+        {
+          "id": "G12-SH-02",
+          "status": "pass",
+          "scope": "uia",
+          "actual": {
+            "id": "SH-02",
+            "scope": "shelf",
+            "title": "book list exposes a name, list role and keyboard focus",
+            "severity": "blocking",
+            "status": "pass",
+            "automated": true,
+            "expected": "the bookshelf list is a List control with an accessible name and is reachable with the keyboard",
+            "actual": "name='书架' control_type='ListControl' keyboard_focusable=True",
+            "steps": [
+              "read the UIA element of control 119 (ListBox)"
+            ],
+            "element": {
+              "control_id": 119,
+              "class": "ListBox",
+              "hwnd": "0x201bc",
+              "window_text": "书架",
+              "tabstop": true,
+              "rect": [
+                16,
+                175,
+                261,
+                380
+              ]
+            },
+            "minimal_fix": "none needed while LB window text stays '书架'",
+            "evidence": {}
+          },
+          "evidence": [
+            "g12-named-checks.json"
+          ]
+        },
+        {
+          "id": "G12-SH-04",
+          "status": "pass",
+          "scope": "uia",
+          "actual": {
+            "id": "SH-04",
+            "scope": "shelf",
+            "title": "shelf search field has an accessible name",
+            "severity": "blocking",
+            "status": "pass",
+            "automated": true,
+            "expected": "the search box announces a name such as 书架搜索, independent of its role",
+            "actual": "name='搜索(S)' control_type='EditControl' help='' access_key='Alt+s'",
+            "steps": [
+              "read the UIA element of control 126 (Edit)"
+            ],
+            "element": {
+              "control_id": 126,
+              "class": "Edit",
+              "hwnd": "0x301b0",
+              "window_text": "",
+              "tabstop": true,
+              "rect": [
+                72,
+                147,
+                199,
+                171
+              ]
+            },
+            "minimal_fix": "give the search box its own window text or an IAccessible/UIA name such as 书架搜索",
+            "evidence": {}
+          },
+          "evidence": [
+            "g12-named-checks.json"
+          ]
+        },
+        {
+          "id": "G12-SH-06",
+          "status": "pass",
+          "scope": "uia",
+          "actual": {
+            "id": "SH-06",
+            "scope": "shelf",
+            "title": "shelf refresh and details buttons expose name, role and state",
+            "severity": "serious",
+            "status": "pass",
+            "automated": true,
+            "expected": "刷新 and 详情 are buttons with accessible names and an accurate enabled state",
+            "actual": "refresh name='刷新(F)' type='ButtonControl'; details disabled",
+            "steps": [
+              "read UIA for controls 127 (刷新) and 128 (详情)"
+            ],
+            "element": {
+              "control_id": 127,
+              "class": "Button",
+              "hwnd": "0x3010a",
+              "window_text": "刷新(&F)",
+              "tabstop": true,
+              "rect": [
+                205,
+                147,
+                261,
+                171
+              ]
+            },
+            "minimal_fix": "none needed while both buttons keep their text and EnableWindow state",
+            "evidence": {}
+          },
+          "evidence": [
+            "g12-named-checks.json"
+          ]
+        },
+        {
+          "id": "G12-SH-07",
+          "status": "pass",
+          "scope": "uia",
+          "actual": {
+            "id": "SH-07",
+            "scope": "shelf",
+            "title": "empty shelf exposes Open and Delete as unavailable",
+            "severity": "moderate",
+            "status": "pass",
+            "automated": true,
+            "expected": "with no books, 打开 and 删除 report IsEnabled=false to assistive technology",
+            "actual": "open_button IsEnabled=False, delete_button IsEnabled=False, shelf_items=0",
+            "steps": [
+              "launch with an empty data directory",
+              "read IsWindowEnabled and UIA IsEnabled"
+            ],
+            "element": {
+              "control_id": 103,
+              "class": "Button",
+              "hwnd": "0x200a6",
+              "window_text": "打开(&O)",
+              "tabstop": true,
+              "rect": [
+                876,
+                59,
+                956,
+                85
+              ]
+            },
+            "minimal_fix": "none needed while host_update_controls keeps the disable state",
+            "evidence": {}
+          },
+          "evidence": [
+            "g12-named-checks.json"
+          ]
+        },
+        {
+          "id": "tab-forward",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": {
+            "order": [
+              {
+                "hwnd": 131532,
+                "uia": {
+                  "name": "导入路径",
+                  "name_source": "com",
+                  "control_type": "EditControl",
+                  "control_type_id": 50004,
+                  "class_name": "Edit",
+                  "automation_id": "101",
+                  "localized_type": "edit",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 131532,
+                  "rect": [
+                    80,
+                    59,
+                    780,
+                    85
+                  ]
+                }
+              },
+              {
+                "hwnd": 197054,
+                "uia": {
+                  "name": "导入(I)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "102",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+i",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 197054,
+                  "rect": [
+                    784,
+                    59,
+                    864,
+                    85
+                  ]
+                }
+              },
+              {
+                "hwnd": 196968,
+                "uia": {
+                  "name": "书内查找(B)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "170",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+b",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 196968,
+                  "rect": [
+                    924,
+                    682,
+                    1044,
+                    706
+                  ]
+                }
+              },
+              {
+                "hwnd": 131516,
+                "uia": {
+                  "name": "书架",
+                  "name_source": "com",
+                  "control_type": "ListControl",
+                  "control_type_id": 50008,
+                  "class_name": "ListBox",
+                  "automation_id": "119",
+                  "localized_type": "list",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 131516,
+                  "rect": [
+                    16,
+                    175,
+                    261,
+                    380
+                  ]
+                }
+              },
+              {
+                "hwnd": 197040,
+                "uia": {
+                  "name": "搜索(S)",
+                  "name_source": "com",
+                  "control_type": "EditControl",
+                  "control_type_id": 50004,
+                  "class_name": "Edit",
+                  "automation_id": "126",
+                  "localized_type": "edit",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+s",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 197040,
+                  "rect": [
+                    72,
+                    147,
+                    199,
+                    171
+                  ]
+                }
+              },
+              {
+                "hwnd": 196874,
+                "uia": {
+                  "name": "刷新(F)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "127",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+f",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 196874,
+                  "rect": [
+                    205,
+                    147,
+                    261,
+                    171
+                  ]
+                }
+              },
+              {
+                "hwnd": 131628,
+                "uia": {
+                  "name": "账号(K)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "137",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+k",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 131628,
+                  "rect": [
+                    121,
+                    125,
+                    177,
+                    147
+                  ]
+                }
+              },
+              {
+                "hwnd": 66146,
+                "uia": {
+                  "name": "标注（双击跳转）",
+                  "name_source": "com",
+                  "control_type": "ListControl",
+                  "control_type_id": 50008,
+                  "class_name": "ListBox",
+                  "automation_id": "121",
+                  "localized_type": "list",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 66146,
+                  "rect": [
+                    16,
+                    404,
+                    261,
+                    596
+                  ]
+                }
+              },
+              {
+                "hwnd": 66150,
+                "uia": {
+                  "name": "标注内容(M)",
+                  "name_source": "com",
+                  "control_type": "EditControl",
+                  "control_type_id": 50004,
+                  "class_name": "Edit",
+                  "automation_id": "122",
+                  "localized_type": "edit",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+m",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 66150,
+                  "rect": [
+                    16,
+                    622,
+                    261,
+                    674
+                  ]
+                }
+              },
+              {
+                "hwnd": 66152,
+                "uia": {
+                  "name": "阅读区域",
+                  "name_source": "com",
+                  "control_type": "DocumentControl",
+                  "control_type_id": 50030,
+                  "class_name": "EXReaderPage",
+                  "automation_id": "IDC_PAGE",
+                  "localized_type": "正文",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "选择文字后可复制引用或添加标注",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 66152,
+                  "rect": [
+                    273,
+                    127,
+                    1044,
+                    672
+                  ]
+                }
+              },
+              {
+                "hwnd": 131532,
+                "uia": {
+                  "name": "导入路径",
+                  "name_source": "com",
+                  "control_type": "EditControl",
+                  "control_type_id": 50004,
+                  "class_name": "Edit",
+                  "automation_id": "101",
+                  "localized_type": "edit",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 131532,
+                  "rect": [
+                    80,
+                    59,
+                    780,
+                    85
+                  ]
+                }
+              }
+            ],
+            "limited_to": "observed initial page cycle; full journey separately gated"
+          },
+          "evidence": [
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "tab-reverse",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": {
+            "order": [
+              {
+                "hwnd": 66152,
+                "uia": {
+                  "name": "阅读区域",
+                  "name_source": "com",
+                  "control_type": "DocumentControl",
+                  "control_type_id": 50030,
+                  "class_name": "EXReaderPage",
+                  "automation_id": "IDC_PAGE",
+                  "localized_type": "正文",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "选择文字后可复制引用或添加标注",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 66152,
+                  "rect": [
+                    273,
+                    127,
+                    1044,
+                    672
+                  ]
+                }
+              },
+              {
+                "hwnd": 66150,
+                "uia": {
+                  "name": "标注内容(M)",
+                  "name_source": "com",
+                  "control_type": "EditControl",
+                  "control_type_id": 50004,
+                  "class_name": "Edit",
+                  "automation_id": "122",
+                  "localized_type": "edit",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+m",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 66150,
+                  "rect": [
+                    16,
+                    622,
+                    261,
+                    674
+                  ]
+                }
+              },
+              {
+                "hwnd": 66146,
+                "uia": {
+                  "name": "标注（双击跳转）",
+                  "name_source": "com",
+                  "control_type": "ListControl",
+                  "control_type_id": 50008,
+                  "class_name": "ListBox",
+                  "automation_id": "121",
+                  "localized_type": "list",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 66146,
+                  "rect": [
+                    16,
+                    404,
+                    261,
+                    596
+                  ]
+                }
+              },
+              {
+                "hwnd": 131628,
+                "uia": {
+                  "name": "账号(K)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "137",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+k",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 131628,
+                  "rect": [
+                    121,
+                    125,
+                    177,
+                    147
+                  ]
+                }
+              },
+              {
+                "hwnd": 196874,
+                "uia": {
+                  "name": "刷新(F)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "127",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+f",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 196874,
+                  "rect": [
+                    205,
+                    147,
+                    261,
+                    171
+                  ]
+                }
+              },
+              {
+                "hwnd": 197040,
+                "uia": {
+                  "name": "搜索(S)",
+                  "name_source": "com",
+                  "control_type": "EditControl",
+                  "control_type_id": 50004,
+                  "class_name": "Edit",
+                  "automation_id": "126",
+                  "localized_type": "edit",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+s",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 197040,
+                  "rect": [
+                    72,
+                    147,
+                    199,
+                    171
+                  ]
+                }
+              },
+              {
+                "hwnd": 131516,
+                "uia": {
+                  "name": "书架",
+                  "name_source": "com",
+                  "control_type": "ListControl",
+                  "control_type_id": 50008,
+                  "class_name": "ListBox",
+                  "automation_id": "119",
+                  "localized_type": "list",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 131516,
+                  "rect": [
+                    16,
+                    175,
+                    261,
+                    380
+                  ]
+                }
+              },
+              {
+                "hwnd": 196968,
+                "uia": {
+                  "name": "书内查找(B)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "170",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+b",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 196968,
+                  "rect": [
+                    924,
+                    682,
+                    1044,
+                    706
+                  ]
+                }
+              },
+              {
+                "hwnd": 197054,
+                "uia": {
+                  "name": "导入(I)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "102",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+i",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 197054,
+                  "rect": [
+                    784,
+                    59,
+                    864,
+                    85
+                  ]
+                }
+              },
+              {
+                "hwnd": 131532,
+                "uia": {
+                  "name": "导入路径",
+                  "name_source": "com",
+                  "control_type": "EditControl",
+                  "control_type_id": 50004,
+                  "class_name": "Edit",
+                  "automation_id": "101",
+                  "localized_type": "edit",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 131532,
+                  "rect": [
+                    80,
+                    59,
+                    780,
+                    85
+                  ]
+                }
+              },
+              {
+                "hwnd": 66152,
+                "uia": {
+                  "name": "阅读区域",
+                  "name_source": "com",
+                  "control_type": "DocumentControl",
+                  "control_type_id": 50030,
+                  "class_name": "EXReaderPage",
+                  "automation_id": "IDC_PAGE",
+                  "localized_type": "正文",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "选择文字后可复制引用或添加标注",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 2980,
+                  "native_hwnd": 66152,
+                  "rect": [
+                    273,
+                    127,
+                    1044,
+                    672
+                  ]
+                }
+              }
+            ],
+            "limited_to": "observed initial page cycle; full journey separately gated"
+          },
+          "evidence": [
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "picker-cancel",
+          "status": "pending",
+          "scope": "keyboard",
+          "actual": "Default OFF has no compact system picker shortcut; original path-field import is audited separately",
+          "evidence": [
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "normal-colors",
+          "status": "pass",
+          "scope": "contrast",
+          "actual": {
+            "source": "GetSysColor: WINDOW=5 WINDOWTEXT=8 HIGHLIGHT=13 HIGHLIGHTTEXT=14 BTNFACE=15 GRAYTEXT=17 BTNTEXT=18",
+            "rgb": {
+              "5": [
+                255,
+                255,
+                255
+              ],
+              "8": [
+                0,
+                0,
+                0
+              ],
+              "13": [
+                0,
+                120,
+                215
+              ],
+              "14": [
+                255,
+                255,
+                255
+              ],
+              "15": [
+                240,
+                240,
+                240
+              ],
+              "17": [
+                109,
+                109,
+                109
+              ],
+              "18": [
+                0,
+                0,
+                0
+              ]
+            },
+            "WCAG_2_relative_luminance_ratios": {
+              "8/5": 21,
+              "14/13": 4.498861479739532,
+              "18/15": 18.427342383975944,
+              "17/15": 4.540406005512178
+            },
+            "limitation": "system palette only, not proof of actual control/page paint; no antialiased screenshot compliance inference"
+          },
+          "evidence": [
+            "006-reverse-tab.bmp"
+          ]
+        },
+        {
+          "id": "high-contrast-colors",
+          "status": "pass",
+          "scope": "contrast",
+          "actual": {
+            "api_return": true,
+            "winerror": 0,
+            "readback_flags": 127,
+            "palette": {
+              "source": "GetSysColor: WINDOW=5 WINDOWTEXT=8 HIGHLIGHT=13 HIGHLIGHTTEXT=14 BTNFACE=15 GRAYTEXT=17 BTNTEXT=18",
+              "rgb": {
+                "5": [
+                  0,
+                  0,
+                  0
+                ],
+                "8": [
+                  255,
+                  255,
+                  255
+                ],
+                "13": [
+                  26,
+                  235,
+                  255
+                ],
+                "14": [
+                  0,
+                  0,
+                  0
+                ],
+                "15": [
+                  0,
+                  0,
+                  0
+                ],
+                "17": [
+                  63,
+                  242,
+                  63
+                ],
+                "18": [
+                  255,
+                  255,
+                  255
+                ]
+              },
+              "WCAG_2_relative_luminance_ratios": {
+                "8/5": 21,
+                "14/13": 14.371254724906631,
+                "18/15": 21,
+                "17/15": 13.983980878029234
+              },
+              "limitation": "system palette only, not proof of actual control/page paint; no antialiased screenshot compliance inference"
+            },
+            "paint_review": "raw BMP retained; semantic/focus/disabled paint not certified"
+          },
+          "evidence": [
+            "007-high-contrast.bmp"
+          ]
+        },
+        {
+          "id": "text-clipping",
+          "status": "pending",
+          "scope": "geometry",
+          "actual": "UIA bounds alone cannot establish glyph clipping; raw baseline/small BMP and trees retained for visual review",
+          "evidence": [
+            "000-dpi-request-100.bmp",
+            "001-dpi-request-150.bmp",
+            "002-dpi-request-200.bmp",
+            "003-baseline-layout.bmp",
+            "004-small-layout.bmp",
+            "005-forward-tab.bmp",
+            "006-reverse-tab.bmp",
+            "007-high-contrast.bmp"
+          ]
+        },
+        {
+          "id": "focus-visible",
+          "status": "pending",
+          "scope": "geometry",
+          "actual": {
+            "focus_before": 131372,
+            "focus_after": 131532,
+            "whole_window_changed_bytes": 152345,
+            "limitation": "whole-window repaint is not a verified focus-region difference"
+          },
+          "evidence": [
+            "008-focus-after-tab.bmp"
+          ]
+        },
+        {
+          "id": "txt-keyboard-import-open",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "009-txt-imported.json",
+            "010-txt-reading.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "keyboard-journey",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "015-journey-records-closed.json",
+            "016-journey-return.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "search",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "017-search.json",
+            "018-search-closed.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "directory",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "019-directory.json",
+            "020-directory-closed.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "records",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "021-records.json",
+            "022-records-closed.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "settings",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "023-settings.json",
+            "024-settings-closed.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "account",
+          "status": "fail",
+          "scope": "keyboard",
+          "actual": "Expected host transition did not complete",
+          "evidence": [
+            "025-account.json",
+            "026-account-failed.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "more-panel",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "026-account-failed.json",
+            "027-default-full-panel.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "epub-keyboard-import-open",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "028-epub-imported.json",
+            "029-epub-reading.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "pdf-keyboard-import-open",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "030-pdf-imported.json",
+            "031-pdf-reading.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "cbz-keyboard-import-open",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "032-cbz-imported.json",
+            "033-cbz-reading.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "screen-reader",
+          "status": "pending",
+          "scope": "screen-reader",
+          "actual": "NVDA, Narrator and human speech/navigation not executed",
+          "evidence": [
+            "key-trace.jsonl"
+          ]
+        }
+      ],
+      "snapshots": [
+        "000-dpi-request-100.json",
+        "001-dpi-request-150.json",
+        "002-dpi-request-200.json",
+        "003-baseline-layout.json",
+        "004-small-layout.json",
+        "005-forward-tab.json",
+        "006-reverse-tab.json",
+        "007-high-contrast.json",
+        "008-focus-after-tab.json",
+        "009-txt-imported.json",
+        "010-txt-reading.json",
+        "011-journey-turn.json",
+        "012-journey-search.json",
+        "013-journey-search-closed.json",
+        "014-journey-records.json",
+        "015-journey-records-closed.json",
+        "016-journey-return.json",
+        "017-search.json",
+        "018-search-closed.json",
+        "019-directory.json",
+        "020-directory-closed.json",
+        "021-records.json",
+        "022-records-closed.json",
+        "023-settings.json",
+        "024-settings-closed.json",
+        "025-account.json",
+        "026-account-failed.json",
+        "027-default-full-panel.json",
+        "028-epub-imported.json",
+        "029-epub-reading.json",
+        "030-pdf-imported.json",
+        "031-pdf-reading.json",
+        "032-cbz-imported.json",
+        "033-cbz-reading.json"
+      ],
+      "screenshots": [
+        "000-dpi-request-100.bmp",
+        "001-dpi-request-150.bmp",
+        "002-dpi-request-200.bmp",
+        "003-baseline-layout.bmp",
+        "004-small-layout.bmp",
+        "005-forward-tab.bmp",
+        "006-reverse-tab.bmp",
+        "007-high-contrast.bmp",
+        "008-focus-after-tab.bmp",
+        "009-txt-imported.bmp",
+        "010-txt-reading.bmp",
+        "011-journey-turn.bmp",
+        "012-journey-search.bmp",
+        "013-journey-search-closed.bmp",
+        "014-journey-records.bmp",
+        "015-journey-records-closed.bmp",
+        "016-journey-return.bmp",
+        "017-search.bmp",
+        "018-search-closed.bmp",
+        "019-directory.bmp",
+        "020-directory-closed.bmp",
+        "021-records.bmp",
+        "022-records-closed.bmp",
+        "023-settings.bmp",
+        "024-settings-closed.bmp",
+        "025-account.bmp",
+        "026-account-failed.bmp",
+        "027-default-full-panel.bmp",
+        "028-epub-imported.bmp",
+        "029-epub-reading.bmp",
+        "030-pdf-imported.bmp",
+        "031-pdf-reading.bmp",
+        "032-cbz-imported.bmp",
+        "033-cbz-reading.bmp"
+      ],
+      "limitations": [
+        "No human/NVDA/Narrator pass",
+        "Geometry resizing is not DPI scaling",
+        "Historical 22-check compact result is not rerun or transferred",
+        "System color ratios do not certify all painted pixels",
+        "One immutable producer candidate, not current unified source"
+      ],
+      "errors": [],
+      "work_area": [
+        0,
+        0,
+        1024,
+        728
+      ],
+      "files": [
+        {
+          "path": "000-dpi-request-100.bmp",
+          "bytes": 3341174,
+          "sha256": "d75c6caef9a95e710301484964aa5c639f5c00fbcc33b1ecec000ce66a1146ab"
+        },
+        {
+          "path": "000-dpi-request-100.json",
+          "bytes": 41051,
+          "sha256": "616738962115de07c815ec4c572f3ddba2e7777fe6d77b6bc692885c7bb5da0c"
+        },
+        {
+          "path": "001-dpi-request-150.bmp",
+          "bytes": 3341174,
+          "sha256": "d75c6caef9a95e710301484964aa5c639f5c00fbcc33b1ecec000ce66a1146ab"
+        },
+        {
+          "path": "001-dpi-request-150.json",
+          "bytes": 41051,
+          "sha256": "616738962115de07c815ec4c572f3ddba2e7777fe6d77b6bc692885c7bb5da0c"
+        },
+        {
+          "path": "002-dpi-request-200.bmp",
+          "bytes": 3341174,
+          "sha256": "d75c6caef9a95e710301484964aa5c639f5c00fbcc33b1ecec000ce66a1146ab"
+        },
+        {
+          "path": "002-dpi-request-200.json",
+          "bytes": 41051,
+          "sha256": "616738962115de07c815ec4c572f3ddba2e7777fe6d77b6bc692885c7bb5da0c"
+        },
+        {
+          "path": "003-baseline-layout.bmp",
+          "bytes": 3052854,
+          "sha256": "adc0fc4c69423a0696542757d982266a65eab49b3401d489886a7430020d257e"
+        },
+        {
+          "path": "003-baseline-layout.json",
+          "bytes": 41051,
+          "sha256": "ad02813d5a65898983760d6f0e2a1c3bd4c7420d9706f20e1c34e3ead2b78277"
+        },
+        {
+          "path": "004-small-layout.bmp",
+          "bytes": 2798454,
+          "sha256": "d8a1f668859a817df5911b355b1c8542b09e5f3037065a7d9535e171654b7c69"
+        },
+        {
+          "path": "004-small-layout.json",
+          "bytes": 41051,
+          "sha256": "e1aa47972d08f3fde62736824c595ad6126ccb06aa26f31848496910ff6bb0ca"
+        },
+        {
+          "path": "005-forward-tab.bmp",
+          "bytes": 3052854,
+          "sha256": "8bd0e30a421ccfeafe2beb53780fc0d7b3f91494cf4d025fd5afcc23dc9cc63f"
+        },
+        {
+          "path": "005-forward-tab.json",
+          "bytes": 41046,
+          "sha256": "1949224c98b54e05a882ba4734172acabe590781e43ce9dee3406e9403345138"
+        },
+        {
+          "path": "006-reverse-tab.bmp",
+          "bytes": 3052854,
+          "sha256": "bff291dc2efd84259c79c36b89d4a032973c01f89aba4426e731210e9979c416"
+        },
+        {
+          "path": "006-reverse-tab.json",
+          "bytes": 41112,
+          "sha256": "87eda4441695534cc436df2145b194be9438d5414fa46922833f44cb9a23f70b"
+        },
+        {
+          "path": "007-high-contrast.bmp",
+          "bytes": 3052854,
+          "sha256": "45871da2f97f1d818ff928ccd19f87f7571131d3d54b76d8f5ddcb06ad17092b"
+        },
+        {
+          "path": "007-high-contrast.json",
+          "bytes": 41051,
+          "sha256": "ad02813d5a65898983760d6f0e2a1c3bd4c7420d9706f20e1c34e3ead2b78277"
+        },
+        {
+          "path": "008-focus-after-tab.bmp",
+          "bytes": 3052854,
+          "sha256": "36d1094747f2e4031b7b2a17806e0f4aa186b5bf720efb2d5cfe8cc53b52e1dc"
+        },
+        {
+          "path": "008-focus-after-tab.json",
+          "bytes": 41046,
+          "sha256": "1949224c98b54e05a882ba4734172acabe590781e43ce9dee3406e9403345138"
+        },
+        {
+          "path": "009-txt-imported.bmp",
+          "bytes": 3341174,
+          "sha256": "42cc3e1668371b8fd15024c417dd9c17c7a9d2c12622bbc015f6c555310d38df"
+        },
+        {
+          "path": "009-txt-imported.json",
+          "bytes": 42079,
+          "sha256": "3f47346cff0dab52cf41c191bc8839bc35e607fdc2ccc265ee1323198eda42db"
+        },
+        {
+          "path": "010-txt-reading.bmp",
+          "bytes": 3341174,
+          "sha256": "77c26234beb05f1433e990e4b190b8ed98a0926dde24ea0ac6f707928a3b2de1"
+        },
+        {
+          "path": "010-txt-reading.json",
+          "bytes": 42141,
+          "sha256": "f4ef7df62e6926a2ca279ade0239bae2807db61d5401696334778f7176234186"
+        },
+        {
+          "path": "011-journey-turn.bmp",
+          "bytes": 3341174,
+          "sha256": "6b9662b22550a388c6fcadfa0cc3a123956ece48e13488e0a3c522fe60639d6f"
+        },
+        {
+          "path": "011-journey-turn.json",
+          "bytes": 42098,
+          "sha256": "3ebc41770ca2facd9cc0e682baa53f45244962cecf51628b9b18ea9597ed90cb"
+        },
+        {
+          "path": "012-journey-search.bmp",
+          "bytes": 1224054,
+          "sha256": "5f0e8139fed6744a2709e2410dd52dc4dabe767f677d290735e7f5c8ad6f82c0"
+        },
+        {
+          "path": "012-journey-search.json",
+          "bytes": 15480,
+          "sha256": "73967812cfbbc1ea1dbe5297ec811990c29791fadd6924184349762059641edc"
+        },
+        {
+          "path": "013-journey-search-closed.bmp",
+          "bytes": 3341174,
+          "sha256": "6b9662b22550a388c6fcadfa0cc3a123956ece48e13488e0a3c522fe60639d6f"
+        },
+        {
+          "path": "013-journey-search-closed.json",
+          "bytes": 42098,
+          "sha256": "3ebc41770ca2facd9cc0e682baa53f45244962cecf51628b9b18ea9597ed90cb"
+        },
+        {
+          "path": "014-journey-records.bmp",
+          "bytes": 2132054,
+          "sha256": "69f669fca777305c8b031dfd10c61617865e30d8cf89748e7dda6d169fc6c6f9"
+        },
+        {
+          "path": "014-journey-records.json",
+          "bytes": 27188,
+          "sha256": "34e35f18ded8b6410097967efa0f2466e7e9fb2dba2ff1a6aa8e33d2ff542424"
+        },
+        {
+          "path": "015-journey-records-closed.bmp",
+          "bytes": 3341174,
+          "sha256": "6b9662b22550a388c6fcadfa0cc3a123956ece48e13488e0a3c522fe60639d6f"
+        },
+        {
+          "path": "015-journey-records-closed.json",
+          "bytes": 42098,
+          "sha256": "3ebc41770ca2facd9cc0e682baa53f45244962cecf51628b9b18ea9597ed90cb"
+        },
+        {
+          "path": "016-journey-return.bmp",
+          "bytes": 3341174,
+          "sha256": "6b9662b22550a388c6fcadfa0cc3a123956ece48e13488e0a3c522fe60639d6f"
+        },
+        {
+          "path": "016-journey-return.json",
+          "bytes": 42098,
+          "sha256": "3ebc41770ca2facd9cc0e682baa53f45244962cecf51628b9b18ea9597ed90cb"
+        },
+        {
+          "path": "017-search.bmp",
+          "bytes": 1224054,
+          "sha256": "a33cd831d05da100c0dd0664de1c8b53ca5c0e2a34a0078ac04362e1e5314b9d"
+        },
+        {
+          "path": "017-search.json",
+          "bytes": 15497,
+          "sha256": "471e3830e12c7b6b766a230067cfb77fcfd9af869efc3e43775da4a99e9d8968"
+        },
+        {
+          "path": "018-search-closed.bmp",
+          "bytes": 3341174,
+          "sha256": "6b9662b22550a388c6fcadfa0cc3a123956ece48e13488e0a3c522fe60639d6f"
+        },
+        {
+          "path": "018-search-closed.json",
+          "bytes": 42098,
+          "sha256": "3ebc41770ca2facd9cc0e682baa53f45244962cecf51628b9b18ea9597ed90cb"
+        },
+        {
+          "path": "019-directory.bmp",
+          "bytes": 1368054,
+          "sha256": "f27967b1ec4145f0c23473a096e2ece8422f9db4d92679919c04deae686fbbe7"
+        },
+        {
+          "path": "019-directory.json",
+          "bytes": 15462,
+          "sha256": "9038eac86cffb8fda9471ab23651f15a0a13c5fa1346ffc4978a3ca5673d4b4c"
+        },
+        {
+          "path": "020-directory-closed.bmp",
+          "bytes": 3341174,
+          "sha256": "6b9662b22550a388c6fcadfa0cc3a123956ece48e13488e0a3c522fe60639d6f"
+        },
+        {
+          "path": "020-directory-closed.json",
+          "bytes": 42098,
+          "sha256": "3ebc41770ca2facd9cc0e682baa53f45244962cecf51628b9b18ea9597ed90cb"
+        },
+        {
+          "path": "021-records.bmp",
+          "bytes": 2132054,
+          "sha256": "40081740147870edf394fd308bdcd93782ac8a33875804f90f7f9eb4c4dd89f6"
+        },
+        {
+          "path": "021-records.json",
+          "bytes": 27228,
+          "sha256": "2315aa4b89729355a13a25dba7e76a3e12e3794b8b017a8a62e1e4fa9a1e889e"
+        },
+        {
+          "path": "022-records-closed.bmp",
+          "bytes": 3341174,
+          "sha256": "6b9662b22550a388c6fcadfa0cc3a123956ece48e13488e0a3c522fe60639d6f"
+        },
+        {
+          "path": "022-records-closed.json",
+          "bytes": 42098,
+          "sha256": "3ebc41770ca2facd9cc0e682baa53f45244962cecf51628b9b18ea9597ed90cb"
+        },
+        {
+          "path": "023-settings.bmp",
+          "bytes": 1249974,
+          "sha256": "aa064849143b8b9adf8d96f298941c0b9444e5bfe93957f941bcffb451ea6457"
+        },
+        {
+          "path": "023-settings.json",
+          "bytes": 28614,
+          "sha256": "f2bc399ff966e91319210bf61b243d48746ab6a67b16ae33821c4539bf027ad7"
+        },
+        {
+          "path": "024-settings-closed.bmp",
+          "bytes": 3341174,
+          "sha256": "6b9662b22550a388c6fcadfa0cc3a123956ece48e13488e0a3c522fe60639d6f"
+        },
+        {
+          "path": "024-settings-closed.json",
+          "bytes": 42098,
+          "sha256": "3ebc41770ca2facd9cc0e682baa53f45244962cecf51628b9b18ea9597ed90cb"
+        },
+        {
+          "path": "025-account.bmp",
+          "bytes": 1203254,
+          "sha256": "8ee6ec4a24687f7a286acd9088f70bf0d6a7dd9ba99b545a5a6011ec4288a284"
+        },
+        {
+          "path": "025-account.json",
+          "bytes": 15930,
+          "sha256": "4065154b716fc74df5d51ee0184e7cf00477e5df65a84ff63a7a66230d15a5a5"
+        },
+        {
+          "path": "026-account-failed.bmp",
+          "bytes": 3341174,
+          "sha256": "de4a81719acf537419a28e46cbaed4a583d42180213781035797b1c36c03227c"
+        },
+        {
+          "path": "026-account-failed.json",
+          "bytes": 59438,
+          "sha256": "c1c4bef4daaadf3bdf10929ccd143c36fbfb39e746a39d521b50ab32c546c802"
+        },
+        {
+          "path": "027-default-full-panel.bmp",
+          "bytes": 3341174,
+          "sha256": "de4a81719acf537419a28e46cbaed4a583d42180213781035797b1c36c03227c"
+        },
+        {
+          "path": "027-default-full-panel.json",
+          "bytes": 59438,
+          "sha256": "c1c4bef4daaadf3bdf10929ccd143c36fbfb39e746a39d521b50ab32c546c802"
+        },
+        {
+          "path": "028-epub-imported.bmp",
+          "bytes": 3341174,
+          "sha256": "096947ce5ae16ce612ef5abad83ce7b3811fca831bce75a3a8085f994ea879a7"
+        },
+        {
+          "path": "028-epub-imported.json",
+          "bytes": 42076,
+          "sha256": "1fe2e8b4152dc6f2606f47e9cfe26722ed8fc7813453c01f1262e606da7d836a"
+        },
+        {
+          "path": "029-epub-reading.bmp",
+          "bytes": 3341174,
+          "sha256": "66426b3e19e4f1fe2abc0943acb042f248132ed2ee86bbb4aeeb1df27272ab3e"
+        },
+        {
+          "path": "029-epub-reading.json",
+          "bytes": 42163,
+          "sha256": "c9d8f99d7c812860fe40a5afe792f647641aab9fe39fd26a82630e0c71af57f0"
+        },
+        {
+          "path": "030-pdf-imported.bmp",
+          "bytes": 3341174,
+          "sha256": "5d52fa563507691504a420165d48212b2648049bf08b66ba483ef6afba39a709"
+        },
+        {
+          "path": "030-pdf-imported.json",
+          "bytes": 42071,
+          "sha256": "7d2cffef1cb21207a203777460f56e299e3db48f206a60b2bd7a5b30b9769875"
+        },
+        {
+          "path": "031-pdf-reading.bmp",
+          "bytes": 3341174,
+          "sha256": "4114c5ec0e6fb7285f123f2342a7dd8070542f81e35f1bb63aaa6465795a1bf2"
+        },
+        {
+          "path": "031-pdf-reading.json",
+          "bytes": 42115,
+          "sha256": "86252ec1fb923a9ff82057988008e22908b018b6801c1d78d442d52e9031f44c"
+        },
+        {
+          "path": "032-cbz-imported.bmp",
+          "bytes": 3341174,
+          "sha256": "bfdb8a414bfd34ed58c6d08e26675f75c2e514f1d742632be20af998af3671c4"
+        },
+        {
+          "path": "032-cbz-imported.json",
+          "bytes": 42073,
+          "sha256": "8a005d8c9de28bf5ea6b712b0383864cc4b3039dc90bc6ec40454c0e2b82dfab"
+        },
+        {
+          "path": "033-cbz-reading.bmp",
+          "bytes": 3341174,
+          "sha256": "448da13dc7e64d208a6654ecec664d6bfb8b23d9573f8afc10da116f9af64e5e"
+        },
+        {
+          "path": "033-cbz-reading.json",
+          "bytes": 42117,
+          "sha256": "128734e08e30384616dad25b52a82086f54af4c96e8873c5a59f74b4991d87d2"
+        },
+        {
+          "path": "g12-named-checks.json",
+          "bytes": 4065,
+          "sha256": "cff19cee19a79e3e96a8523a7b52a2b600fb3744fa7e2e36f0c65a4150ce08cb"
+        },
+        {
+          "path": "key-trace.jsonl",
+          "bytes": 34195,
+          "sha256": "2d3ad84b31d27d5a6e2c321f40dd5fdb09f0af2bf3f3ed2ff364641fec1b665b"
+        },
+        {
+          "path": "reused-g12/screenshots/00-launch-empty.png",
+          "bytes": 17203,
+          "sha256": "687133c6a15fc0bf274ce8d066cbb74ccefa735836dcfa3e78df393de11c98de"
+        },
+        {
+          "path": "reused-g12/uia/t00-launch-empty.json",
+          "bytes": 40111,
+          "sha256": "21ef6d24c48c670cd98e48bd8d5ed80fd1d033cea4a23612b330d9f47e2ba992"
+        }
+      ]
+    },
+    {
+      "harness_sha": "e8b5b1bd200202c06a7a22e5a4ed1f801eb47706",
+      "run_id": "40215441500",
+      "attempt": "1",
+      "target_sha": "f355525b74ae261db536c56200e46643919ef323",
+      "producer_sha": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+      "producer_run": 40201283788,
+      "producer_attempt": 1,
+      "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+      "sdk_version": "3.41.0",
+      "sdk_abi": 1,
+      "core_version": "3.40.0",
+      "sdk_linkage": "static; no standalone SDK DSO in audited producer package",
+      "sdk_sha256": null,
+      "compact": "ON",
+      "program_sha256": "37caa77499e94ed060a2fc71f503fbf22be8abf2f3bb943af59890d785dcc7ff",
+      "accepted": false,
+      "audit_completed": true,
+      "keyboard_accepted": false,
+      "contrast_accepted": false,
+      "screen_reader_accepted": false,
+      "checks": [
+        {
+          "id": "dpi-100",
+          "status": "pass",
+          "scope": "dpi",
+          "actual": {
+            "requested_percent": 100,
+            "relative_override_request": 0,
+            "api_return": true,
+            "winerror": 0,
+            "before": 96,
+            "readback": 96,
+            "monitor_scale": {
+              "hresult": 0,
+              "scale_percent": 100
+            },
+            "system_dpi": 96,
+            "awareness": 0,
+            "limitation": "Relative override is not an absolute DPI API; unavailable readback remains pending"
+          },
+          "evidence": [
+            "000-dpi-request-100.json",
+            "000-dpi-request-100.bmp"
+          ]
+        },
+        {
+          "id": "dpi-150",
+          "status": "pending",
+          "scope": "dpi",
+          "actual": {
+            "requested_percent": 150,
+            "relative_override_request": 1,
+            "api_return": true,
+            "winerror": 0,
+            "before": 96,
+            "readback": 96,
+            "monitor_scale": {
+              "hresult": 0,
+              "scale_percent": 100
+            },
+            "system_dpi": 96,
+            "awareness": 0,
+            "limitation": "Relative override is not an absolute DPI API; unavailable readback remains pending"
+          },
+          "evidence": [
+            "001-dpi-request-150.json",
+            "001-dpi-request-150.bmp"
+          ]
+        },
+        {
+          "id": "dpi-200",
+          "status": "pending",
+          "scope": "dpi",
+          "actual": {
+            "requested_percent": 200,
+            "relative_override_request": 2,
+            "api_return": true,
+            "winerror": 0,
+            "before": 96,
+            "readback": 96,
+            "monitor_scale": {
+              "hresult": 0,
+              "scale_percent": 100
+            },
+            "system_dpi": 96,
+            "awareness": 0,
+            "limitation": "Relative override is not an absolute DPI API; unavailable readback remains pending"
+          },
+          "evidence": [
+            "002-dpi-request-200.json",
+            "002-dpi-request-200.bmp"
+          ]
+        },
+        {
+          "id": "baseline-layout",
+          "status": "fail",
+          "scope": "geometry",
+          "actual": {
+            "requested_geometry": [
+              1100,
+              720
+            ],
+            "actual": [
+              0,
+              0,
+              1044,
+              720
+            ],
+            "measured_bounds_findings": [
+              {
+                "window_outside_work_area": [
+                  0,
+                  0,
+                  1044,
+                  720
+                ],
+                "work_area": [
+                  0,
+                  0,
+                  1024,
+                  728
+                ]
+              }
+            ],
+            "limited_to": "visible native button/edit overlap and exposed bounds, not glyph clipping"
+          },
+          "evidence": [
+            "003-baseline-layout.json",
+            "003-baseline-layout.bmp"
+          ]
+        },
+        {
+          "id": "small-layout",
+          "status": "pass",
+          "scope": "geometry",
+          "actual": {
+            "requested_geometry": [
+              700,
+              480
+            ],
+            "actual": [
+              0,
+              0,
+              700,
+              480
+            ],
+            "measured_bounds_findings": [],
+            "limited_to": "visible native button/edit overlap and exposed bounds, not glyph clipping"
+          },
+          "evidence": [
+            "004-small-layout.json",
+            "004-small-layout.bmp"
+          ]
+        },
+        {
+          "id": "G12-SH-01",
+          "status": "pass",
+          "scope": "uia",
+          "actual": {
+            "id": "SH-01",
+            "scope": "shelf",
+            "title": "main window exposes the product name and a window role",
+            "severity": "serious",
+            "status": "pass",
+            "automated": true,
+            "expected": "UI Automation exposes the top-level window with an accessible name and a window control type",
+            "actual": "name='EXReader' control_type='WindowControl' class='EXReaderHost'",
+            "steps": [
+              "launch EXReader.exe --data <temp>",
+              "ControlFromHandle(main window)",
+              "read Name/ControlType"
+            ],
+            "element": {
+              "hwnd": "0x90096",
+              "class": "EXReaderHost",
+              "window_text": "EXReader"
+            },
+            "minimal_fix": "none needed while the window keeps its title",
+            "evidence": {}
+          },
+          "evidence": [
+            "g12-named-checks.json"
+          ]
+        },
+        {
+          "id": "G12-SH-02",
+          "status": "pass",
+          "scope": "uia",
+          "actual": {
+            "id": "SH-02",
+            "scope": "shelf",
+            "title": "book list exposes a name, list role and keyboard focus",
+            "severity": "blocking",
+            "status": "pass",
+            "automated": true,
+            "expected": "the bookshelf list is a List control with an accessible name and is reachable with the keyboard",
+            "actual": "name='书架' control_type='ListControl' keyboard_focusable=True",
+            "steps": [
+              "read the UIA element of control 119 (ListBox)"
+            ],
+            "element": {
+              "control_id": 119,
+              "class": "ListBox",
+              "hwnd": "0x7025e",
+              "window_text": "书架",
+              "tabstop": true,
+              "rect": [
+                20,
+                123,
+                1024,
+                676
+              ]
+            },
+            "minimal_fix": "none needed while LB window text stays '书架'",
+            "evidence": {}
+          },
+          "evidence": [
+            "g12-named-checks.json"
+          ]
+        },
+        {
+          "id": "G12-SH-04",
+          "status": "pass",
+          "scope": "uia",
+          "actual": {
+            "id": "SH-04",
+            "scope": "shelf",
+            "title": "shelf search field has an accessible name",
+            "severity": "blocking",
+            "status": "pass",
+            "automated": true,
+            "expected": "the search box announces a name such as 书架搜索, independent of its role",
+            "actual": "name='搜索(S)' control_type='EditControl' help='' access_key='Alt+s'",
+            "steps": [
+              "read the UIA element of control 126 (Edit)"
+            ],
+            "element": {
+              "control_id": 126,
+              "class": "Edit",
+              "hwnd": "0x801b4",
+              "window_text": "",
+              "tabstop": true,
+              "rect": [
+                76,
+                61,
+                756,
+                89
+              ]
+            },
+            "minimal_fix": "give the search box its own window text or an IAccessible/UIA name such as 书架搜索",
+            "evidence": {}
+          },
+          "evidence": [
+            "g12-named-checks.json"
+          ]
+        },
+        {
+          "id": "G12-SH-06",
+          "status": "pass",
+          "scope": "uia",
+          "actual": {
+            "id": "SH-06",
+            "scope": "shelf",
+            "title": "shelf refresh and details buttons expose name, role and state",
+            "severity": "serious",
+            "status": "pass",
+            "automated": true,
+            "expected": "刷新 and 详情 are buttons with accessible names and an accurate enabled state",
+            "actual": "refresh name='刷新(F)' type='ButtonControl'; details disabled",
+            "steps": [
+              "read UIA for controls 127 (刷新) and 128 (详情)"
+            ],
+            "element": {
+              "control_id": 127,
+              "class": "Button",
+              "hwnd": "0x700a0",
+              "window_text": "刷新(&F)",
+              "tabstop": true,
+              "rect": [
+                8,
+                51,
+                18,
+                61
+              ]
+            },
+            "minimal_fix": "none needed while both buttons keep their text and EnableWindow state",
+            "evidence": {}
+          },
+          "evidence": [
+            "g12-named-checks.json"
+          ]
+        },
+        {
+          "id": "G12-SH-07",
+          "status": "pass",
+          "scope": "uia",
+          "actual": {
+            "id": "SH-07",
+            "scope": "shelf",
+            "title": "empty shelf exposes Open and Delete as unavailable",
+            "severity": "moderate",
+            "status": "pass",
+            "automated": true,
+            "expected": "with no books, 打开 and 删除 report IsEnabled=false to assistive technology",
+            "actual": "open_button IsEnabled=False, delete_button IsEnabled=False, shelf_items=0",
+            "steps": [
+              "launch with an empty data directory",
+              "read IsWindowEnabled and UIA IsEnabled"
+            ],
+            "element": {
+              "control_id": 103,
+              "class": "Button",
+              "hwnd": "0x60266",
+              "window_text": "打开(&O)",
+              "tabstop": true,
+              "rect": [
+                856,
+                61,
+                936,
+                89
+              ]
+            },
+            "minimal_fix": "none needed while host_update_controls keeps the disable state",
+            "evidence": {}
+          },
+          "evidence": [
+            "g12-named-checks.json"
+          ]
+        },
+        {
+          "id": "tab-forward",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": {
+            "order": [
+              {
+                "hwnd": 393832,
+                "uia": {
+                  "name": "导入(I)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "102",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+i",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 6848,
+                  "native_hwnd": 393832,
+                  "rect": [
+                    944,
+                    61,
+                    1024,
+                    89
+                  ]
+                }
+              },
+              {
+                "hwnd": 459358,
+                "uia": {
+                  "name": "书架",
+                  "name_source": "com",
+                  "control_type": "ListControl",
+                  "control_type_id": 50008,
+                  "class_name": "ListBox",
+                  "automation_id": "119",
+                  "localized_type": "list",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 6848,
+                  "native_hwnd": 459358,
+                  "rect": [
+                    20,
+                    123,
+                    1024,
+                    676
+                  ]
+                }
+              },
+              {
+                "hwnd": 524724,
+                "uia": {
+                  "name": "搜索(S)",
+                  "name_source": "com",
+                  "control_type": "EditControl",
+                  "control_type_id": 50004,
+                  "class_name": "Edit",
+                  "automation_id": "126",
+                  "localized_type": "edit",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+s",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 6848,
+                  "native_hwnd": 524724,
+                  "rect": [
+                    76,
+                    61,
+                    756,
+                    89
+                  ]
+                }
+              },
+              {
+                "hwnd": 393832,
+                "uia": {
+                  "name": "导入(I)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "102",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+i",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 6848,
+                  "native_hwnd": 393832,
+                  "rect": [
+                    944,
+                    61,
+                    1024,
+                    89
+                  ]
+                }
+              }
+            ],
+            "limited_to": "observed initial page cycle; full journey separately gated"
+          },
+          "evidence": [
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "tab-reverse",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": {
+            "order": [
+              {
+                "hwnd": 524724,
+                "uia": {
+                  "name": "搜索(S)",
+                  "name_source": "com",
+                  "control_type": "EditControl",
+                  "control_type_id": 50004,
+                  "class_name": "Edit",
+                  "automation_id": "126",
+                  "localized_type": "edit",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+s",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 6848,
+                  "native_hwnd": 524724,
+                  "rect": [
+                    76,
+                    61,
+                    756,
+                    89
+                  ]
+                }
+              },
+              {
+                "hwnd": 459358,
+                "uia": {
+                  "name": "书架",
+                  "name_source": "com",
+                  "control_type": "ListControl",
+                  "control_type_id": 50008,
+                  "class_name": "ListBox",
+                  "automation_id": "119",
+                  "localized_type": "list",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 6848,
+                  "native_hwnd": 459358,
+                  "rect": [
+                    20,
+                    123,
+                    1024,
+                    676
+                  ]
+                }
+              },
+              {
+                "hwnd": 393832,
+                "uia": {
+                  "name": "导入(I)",
+                  "name_source": "com",
+                  "control_type": "ButtonControl",
+                  "control_type_id": 50000,
+                  "class_name": "Button",
+                  "automation_id": "102",
+                  "localized_type": "button",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+i",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 6848,
+                  "native_hwnd": 393832,
+                  "rect": [
+                    944,
+                    61,
+                    1024,
+                    89
+                  ]
+                }
+              },
+              {
+                "hwnd": 524724,
+                "uia": {
+                  "name": "搜索(S)",
+                  "name_source": "com",
+                  "control_type": "EditControl",
+                  "control_type_id": 50004,
+                  "class_name": "Edit",
+                  "automation_id": "126",
+                  "localized_type": "edit",
+                  "enabled": true,
+                  "keyboard_focusable": true,
+                  "has_focus": true,
+                  "offscreen": false,
+                  "help_text": "",
+                  "access_key": "Alt+s",
+                  "accelerator_key": "",
+                  "framework": "Win32",
+                  "process_id": 6848,
+                  "native_hwnd": 524724,
+                  "rect": [
+                    76,
+                    61,
+                    756,
+                    89
+                  ]
+                }
+              }
+            ],
+            "limited_to": "observed initial page cycle; full journey separately gated"
+          },
+          "evidence": [
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "picker-cancel",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": {
+            "focus_before": 524724,
+            "focus_after": 524724,
+            "closed": true
+          },
+          "evidence": [
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "normal-colors",
+          "status": "pass",
+          "scope": "contrast",
+          "actual": {
+            "source": "GetSysColor: WINDOW=5 WINDOWTEXT=8 HIGHLIGHT=13 HIGHLIGHTTEXT=14 BTNFACE=15 GRAYTEXT=17 BTNTEXT=18",
+            "rgb": {
+              "5": [
+                255,
+                255,
+                255
+              ],
+              "8": [
+                0,
+                0,
+                0
+              ],
+              "13": [
+                0,
+                120,
+                215
+              ],
+              "14": [
+                255,
+                255,
+                255
+              ],
+              "15": [
+                240,
+                240,
+                240
+              ],
+              "17": [
+                109,
+                109,
+                109
+              ],
+              "18": [
+                0,
+                0,
+                0
+              ]
+            },
+            "WCAG_2_relative_luminance_ratios": {
+              "8/5": 21,
+              "14/13": 4.498861479739532,
+              "18/15": 18.427342383975944,
+              "17/15": 4.540406005512178
+            },
+            "limitation": "system palette only, not proof of actual control/page paint; no antialiased screenshot compliance inference"
+          },
+          "evidence": [
+            "008-picker-cancel-after.bmp"
+          ]
+        },
+        {
+          "id": "high-contrast-colors",
+          "status": "pass",
+          "scope": "contrast",
+          "actual": {
+            "api_return": true,
+            "winerror": 0,
+            "readback_flags": 127,
+            "palette": {
+              "source": "GetSysColor: WINDOW=5 WINDOWTEXT=8 HIGHLIGHT=13 HIGHLIGHTTEXT=14 BTNFACE=15 GRAYTEXT=17 BTNTEXT=18",
+              "rgb": {
+                "5": [
+                  0,
+                  0,
+                  0
+                ],
+                "8": [
+                  255,
+                  255,
+                  255
+                ],
+                "13": [
+                  26,
+                  235,
+                  255
+                ],
+                "14": [
+                  0,
+                  0,
+                  0
+                ],
+                "15": [
+                  0,
+                  0,
+                  0
+                ],
+                "17": [
+                  63,
+                  242,
+                  63
+                ],
+                "18": [
+                  255,
+                  255,
+                  255
+                ]
+              },
+              "WCAG_2_relative_luminance_ratios": {
+                "8/5": 21,
+                "14/13": 14.371254724906631,
+                "18/15": 21,
+                "17/15": 13.983980878029234
+              },
+              "limitation": "system palette only, not proof of actual control/page paint; no antialiased screenshot compliance inference"
+            },
+            "paint_review": "raw BMP retained; semantic/focus/disabled paint not certified"
+          },
+          "evidence": [
+            "009-high-contrast.bmp"
+          ]
+        },
+        {
+          "id": "text-clipping",
+          "status": "pending",
+          "scope": "geometry",
+          "actual": "UIA bounds alone cannot establish glyph clipping; raw baseline/small BMP and trees retained for visual review",
+          "evidence": [
+            "000-dpi-request-100.bmp",
+            "001-dpi-request-150.bmp",
+            "002-dpi-request-200.bmp",
+            "003-baseline-layout.bmp",
+            "004-small-layout.bmp",
+            "005-forward-tab.bmp",
+            "006-reverse-tab.bmp",
+            "007-picker-cancel-before.bmp",
+            "008-picker-cancel-after.bmp",
+            "009-high-contrast.bmp"
+          ]
+        },
+        {
+          "id": "focus-visible",
+          "status": "pending",
+          "scope": "geometry",
+          "actual": {
+            "focus_before": 589974,
+            "focus_after": 393832,
+            "whole_window_changed_bytes": 2106,
+            "limitation": "whole-window repaint is not a verified focus-region difference"
+          },
+          "evidence": [
+            "010-focus-after-tab.bmp"
+          ]
+        },
+        {
+          "id": "txt-keyboard-import-open",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "012-txt-imported.json",
+            "013-txt-reading.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "keyboard-journey",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "018-journey-records-closed.json",
+            "019-journey-return.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "search",
+          "status": "fail",
+          "scope": "keyboard",
+          "actual": "Focus not restored: 655800 -> 459364",
+          "evidence": [
+            "021-search-closed.json",
+            "022-search-failed.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "directory",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "023-directory.json",
+            "024-directory-closed.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "records",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "025-records.json",
+            "026-records-closed.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "settings",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "027-settings.json",
+            "028-settings-closed.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "account",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "030-account.json",
+            "031-account-closed.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "expanded-small-layout",
+          "status": "fail",
+          "scope": "geometry",
+          "actual": {
+            "requested_geometry": [
+              700,
+              480
+            ],
+            "actual": [
+              0,
+              0,
+              1060,
+              660
+            ],
+            "measured_bounds_findings": [
+              {
+                "window_outside_work_area": [
+                  0,
+                  0,
+                  1060,
+                  660
+                ],
+                "work_area": [
+                  0,
+                  0,
+                  1024,
+                  728
+                ]
+              }
+            ],
+            "limited_to": "visible native button/edit overlap and exposed bounds, not glyph clipping"
+          },
+          "evidence": [
+            "034-expanded-small-layout.json",
+            "034-expanded-small-layout.bmp"
+          ]
+        },
+        {
+          "id": "more-panel",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "033-more-expanded.json",
+            "034-expanded-small-layout.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "epub-keyboard-import-open",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "036-epub-imported.json",
+            "037-epub-reading.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "pdf-keyboard-import-open",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "039-pdf-imported.json",
+            "040-pdf-reading.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "cbz-keyboard-import-open",
+          "status": "pass",
+          "scope": "keyboard",
+          "actual": "Actual keyboard/UIA step completed",
+          "evidence": [
+            "042-cbz-imported.json",
+            "043-cbz-reading.json",
+            "key-trace.jsonl"
+          ]
+        },
+        {
+          "id": "screen-reader",
+          "status": "pending",
+          "scope": "screen-reader",
+          "actual": "NVDA, Narrator and human speech/navigation not executed",
+          "evidence": [
+            "key-trace.jsonl"
+          ]
+        }
+      ],
+      "snapshots": [
+        "000-dpi-request-100.json",
+        "001-dpi-request-150.json",
+        "002-dpi-request-200.json",
+        "003-baseline-layout.json",
+        "004-small-layout.json",
+        "005-forward-tab.json",
+        "006-reverse-tab.json",
+        "007-picker-cancel-before.json",
+        "008-picker-cancel-after.json",
+        "009-high-contrast.json",
+        "010-focus-after-tab.json",
+        "011-txt-picker.json",
+        "012-txt-imported.json",
+        "013-txt-reading.json",
+        "014-journey-turn.json",
+        "015-journey-search.json",
+        "016-journey-search-closed.json",
+        "017-journey-records.json",
+        "018-journey-records-closed.json",
+        "019-journey-return.json",
+        "020-search.json",
+        "021-search-closed.json",
+        "022-search-failed.json",
+        "023-directory.json",
+        "024-directory-closed.json",
+        "025-records.json",
+        "026-records-closed.json",
+        "027-settings.json",
+        "028-settings-closed.json",
+        "029-menu-B.json",
+        "030-account.json",
+        "031-account-closed.json",
+        "032-view-menu.json",
+        "033-more-expanded.json",
+        "034-expanded-small-layout.json",
+        "035-epub-picker.json",
+        "036-epub-imported.json",
+        "037-epub-reading.json",
+        "038-pdf-picker.json",
+        "039-pdf-imported.json",
+        "040-pdf-reading.json",
+        "041-cbz-picker.json",
+        "042-cbz-imported.json",
+        "043-cbz-reading.json"
+      ],
+      "screenshots": [
+        "000-dpi-request-100.bmp",
+        "001-dpi-request-150.bmp",
+        "002-dpi-request-200.bmp",
+        "003-baseline-layout.bmp",
+        "004-small-layout.bmp",
+        "005-forward-tab.bmp",
+        "006-reverse-tab.bmp",
+        "007-picker-cancel-before.bmp",
+        "008-picker-cancel-after.bmp",
+        "009-high-contrast.bmp",
+        "010-focus-after-tab.bmp",
+        "011-txt-picker.bmp",
+        "012-txt-imported.bmp",
+        "013-txt-reading.bmp",
+        "014-journey-turn.bmp",
+        "015-journey-search.bmp",
+        "016-journey-search-closed.bmp",
+        "017-journey-records.bmp",
+        "018-journey-records-closed.bmp",
+        "019-journey-return.bmp",
+        "020-search.bmp",
+        "021-search-closed.bmp",
+        "022-search-failed.bmp",
+        "023-directory.bmp",
+        "024-directory-closed.bmp",
+        "025-records.bmp",
+        "026-records-closed.bmp",
+        "027-settings.bmp",
+        "028-settings-closed.bmp",
+        "029-menu-B.bmp",
+        "030-account.bmp",
+        "031-account-closed.bmp",
+        "032-view-menu.bmp",
+        "033-more-expanded.bmp",
+        "034-expanded-small-layout.bmp",
+        "035-epub-picker.bmp",
+        "036-epub-imported.bmp",
+        "037-epub-reading.bmp",
+        "038-pdf-picker.bmp",
+        "039-pdf-imported.bmp",
+        "040-pdf-reading.bmp",
+        "041-cbz-picker.bmp",
+        "042-cbz-imported.bmp",
+        "043-cbz-reading.bmp"
+      ],
+      "limitations": [
+        "No human/NVDA/Narrator pass",
+        "Geometry resizing is not DPI scaling",
+        "Historical 22-check compact result is not rerun or transferred",
+        "System color ratios do not certify all painted pixels",
+        "One immutable producer candidate, not current unified source"
+      ],
+      "errors": [],
+      "work_area": [
+        0,
+        0,
+        1024,
+        728
+      ],
+      "files": [
+        {
+          "path": "000-dpi-request-100.bmp",
+          "bytes": 3290742,
+          "sha256": "08258e30d0c88f76ae99801f991842cb4866272e74f13b381d8fb972849e3872"
+        },
+        {
+          "path": "000-dpi-request-100.json",
+          "bytes": 18433,
+          "sha256": "3b397e778ff7d828855a5ef03daff27a10daf39d179fbd9884666a9ab54e006d"
+        },
+        {
+          "path": "001-dpi-request-150.bmp",
+          "bytes": 3290742,
+          "sha256": "08258e30d0c88f76ae99801f991842cb4866272e74f13b381d8fb972849e3872"
+        },
+        {
+          "path": "001-dpi-request-150.json",
+          "bytes": 18433,
+          "sha256": "3b397e778ff7d828855a5ef03daff27a10daf39d179fbd9884666a9ab54e006d"
+        },
+        {
+          "path": "002-dpi-request-200.bmp",
+          "bytes": 3290742,
+          "sha256": "08258e30d0c88f76ae99801f991842cb4866272e74f13b381d8fb972849e3872"
+        },
+        {
+          "path": "002-dpi-request-200.json",
+          "bytes": 18433,
+          "sha256": "3b397e778ff7d828855a5ef03daff27a10daf39d179fbd9884666a9ab54e006d"
+        },
+        {
+          "path": "003-baseline-layout.bmp",
+          "bytes": 3006774,
+          "sha256": "0e41cea3bea94e479bda93c7a6049a3488d8c2935d125dd3c75e815c75fa3ad7"
+        },
+        {
+          "path": "003-baseline-layout.json",
+          "bytes": 18433,
+          "sha256": "d07a9b242da8d21f6e5f090ca31714abc24e4d8de299d7c339caae91fd9eb324"
+        },
+        {
+          "path": "004-small-layout.bmp",
+          "bytes": 1344054,
+          "sha256": "b8f5563c6b4164e8c5f6f62d522b15e50c27faa97b30efda0deab0bbfc2d4236"
+        },
+        {
+          "path": "004-small-layout.json",
+          "bytes": 18423,
+          "sha256": "c2a64494dd16548b98b5d26a6b5d4f1242ecdf9812f3e27be75fc0cc102f0ba1"
+        },
+        {
+          "path": "005-forward-tab.bmp",
+          "bytes": 3006774,
+          "sha256": "7cf0416807cea88c653fcfdc5eba63af17ca1d7abfa044de79c8b7e52b81f18a"
+        },
+        {
+          "path": "005-forward-tab.json",
+          "bytes": 18438,
+          "sha256": "ac1b3becbcd3210e19551158ddbd572acaacb8808db4e73551a09c6de339a056"
+        },
+        {
+          "path": "006-reverse-tab.bmp",
+          "bytes": 3006774,
+          "sha256": "c96f755d730215a09eabed0cd9df273ebc855d9c0ac15bf91615db007ad5565c"
+        },
+        {
+          "path": "006-reverse-tab.json",
+          "bytes": 18430,
+          "sha256": "d4bdcf2bddf188ecc0e32cca371842cbdba30989880f80df3edcebdbc77574ca"
+        },
+        {
+          "path": "007-picker-cancel-before.bmp",
+          "bytes": 1200054,
+          "sha256": "f4d36764fe66e704028014037d9aa7b3ab29c909c462ad4789cf1738a158f31b"
+        },
+        {
+          "path": "007-picker-cancel-before.json",
+          "bytes": 53380,
+          "sha256": "f0d56260ed0414f234b6a99b9a9b040814c86a54a9dd41425e8dc1944a58d859"
+        },
+        {
+          "path": "008-picker-cancel-after.bmp",
+          "bytes": 3006774,
+          "sha256": "c96f755d730215a09eabed0cd9df273ebc855d9c0ac15bf91615db007ad5565c"
+        },
+        {
+          "path": "008-picker-cancel-after.json",
+          "bytes": 18430,
+          "sha256": "d4bdcf2bddf188ecc0e32cca371842cbdba30989880f80df3edcebdbc77574ca"
+        },
+        {
+          "path": "009-high-contrast.bmp",
+          "bytes": 3006774,
+          "sha256": "25fe1e1e4325eca89629e25de86c51de615f28f460a8631745f363a013e5f193"
+        },
+        {
+          "path": "009-high-contrast.json",
+          "bytes": 18433,
+          "sha256": "d07a9b242da8d21f6e5f090ca31714abc24e4d8de299d7c339caae91fd9eb324"
+        },
+        {
+          "path": "010-focus-after-tab.bmp",
+          "bytes": 3006774,
+          "sha256": "7cf0416807cea88c653fcfdc5eba63af17ca1d7abfa044de79c8b7e52b81f18a"
+        },
+        {
+          "path": "010-focus-after-tab.json",
+          "bytes": 18438,
+          "sha256": "ac1b3becbcd3210e19551158ddbd572acaacb8808db4e73551a09c6de339a056"
+        },
+        {
+          "path": "011-txt-picker.bmp",
+          "bytes": 1200054,
+          "sha256": "fc3f2e879aaa75b8e2e0015dac7882cbca78a920eca2dcb5424c063cade13c4c"
+        },
+        {
+          "path": "011-txt-picker.json",
+          "bytes": 53388,
+          "sha256": "5262829969335fe03a9f3a74ff9ccfa4d41a5194337fb6edd336bb4938709aa1"
+        },
+        {
+          "path": "012-txt-imported.bmp",
+          "bytes": 3290742,
+          "sha256": "1563ff1e72a5f44b371ea63fa1463db12586781c58cfde0aa432520208e9a95a"
+        },
+        {
+          "path": "012-txt-imported.json",
+          "bytes": 19444,
+          "sha256": "5d1afaf7050ac2a8a4750125312d1958091d168240da73b640ed4f9f4f4aa2e8"
+        },
+        {
+          "path": "013-txt-reading.bmp",
+          "bytes": 3290742,
+          "sha256": "5f9782600afbf7f1ac4ab3351d2426f6ccf6042a6e0e6dfae16b0455ac087ab8"
+        },
+        {
+          "path": "013-txt-reading.json",
+          "bytes": 16985,
+          "sha256": "92939a190fe3d173e0cd6d4c7459a2aa21afbfe424af29d4c801f24498301c63"
+        },
+        {
+          "path": "014-journey-turn.bmp",
+          "bytes": 3290742,
+          "sha256": "c9e30fe534a30fda4cba4b65857cb608a0f41e1a850bc3c8b7551ef81ffba1d3"
+        },
+        {
+          "path": "014-journey-turn.json",
+          "bytes": 16942,
+          "sha256": "dcb318855b7b5dcfa906dec79c62199f763f9c652f759b0c040bbb6ae72b708d"
+        },
+        {
+          "path": "015-journey-search.bmp",
+          "bytes": 1224054,
+          "sha256": "fbca5dccd5910481492789be79cf48c03c777fc1bff39910ece04209d1749e32"
+        },
+        {
+          "path": "015-journey-search.json",
+          "bytes": 15481,
+          "sha256": "3dc73f1602c584a547d979837b7b8e3844dc86b4a716a8c083a4c37285421a37"
+        },
+        {
+          "path": "016-journey-search-closed.bmp",
+          "bytes": 3290742,
+          "sha256": "c9e30fe534a30fda4cba4b65857cb608a0f41e1a850bc3c8b7551ef81ffba1d3"
+        },
+        {
+          "path": "016-journey-search-closed.json",
+          "bytes": 16942,
+          "sha256": "dcb318855b7b5dcfa906dec79c62199f763f9c652f759b0c040bbb6ae72b708d"
+        },
+        {
+          "path": "017-journey-records.bmp",
+          "bytes": 2132054,
+          "sha256": "598bc0cffb4efa165d1a68b69a581615f628017cc72058687d45be82ec757dae"
+        },
+        {
+          "path": "017-journey-records.json",
+          "bytes": 27198,
+          "sha256": "168705cd9b4a030149b3313b22ca567ba2650567964a1303d9c498b97222e84d"
+        },
+        {
+          "path": "018-journey-records-closed.bmp",
+          "bytes": 3290742,
+          "sha256": "c9e30fe534a30fda4cba4b65857cb608a0f41e1a850bc3c8b7551ef81ffba1d3"
+        },
+        {
+          "path": "018-journey-records-closed.json",
+          "bytes": 16942,
+          "sha256": "dcb318855b7b5dcfa906dec79c62199f763f9c652f759b0c040bbb6ae72b708d"
+        },
+        {
+          "path": "019-journey-return.bmp",
+          "bytes": 3290742,
+          "sha256": "3e5390000649870ca90e12fe869e3ddfa8a7da22416c54c2d15b15ea7513c75b"
+        },
+        {
+          "path": "019-journey-return.json",
+          "bytes": 19429,
+          "sha256": "4bc3161b3c4ac96fe3de4a1d608fdb7df95d203960a3d58841d229320092ddfe"
+        },
+        {
+          "path": "020-search.bmp",
+          "bytes": 1224054,
+          "sha256": "812c751c4d9d7b3cae377d0b00d999c488b1192778101a54bfe254510d05838d"
+        },
+        {
+          "path": "020-search.json",
+          "bytes": 15497,
+          "sha256": "7b00d5a1b4a7ec569dad5d9b8fa45c975d08b83d3f7a94266c7abd9880997481"
+        },
+        {
+          "path": "021-search-closed.bmp",
+          "bytes": 3290742,
+          "sha256": "fff303a439c517f0b281da62e604b16b3dedcd1cdaabea7078b8a69e76a22fd7"
+        },
+        {
+          "path": "021-search-closed.json",
+          "bytes": 19470,
+          "sha256": "d5ad20162a497fb673f238647594442e1fd1f70e8ddbc28e0bd3f62cb1e5e9da"
+        },
+        {
+          "path": "022-search-failed.bmp",
+          "bytes": 3290742,
+          "sha256": "fff303a439c517f0b281da62e604b16b3dedcd1cdaabea7078b8a69e76a22fd7"
+        },
+        {
+          "path": "022-search-failed.json",
+          "bytes": 19470,
+          "sha256": "d5ad20162a497fb673f238647594442e1fd1f70e8ddbc28e0bd3f62cb1e5e9da"
+        },
+        {
+          "path": "023-directory.bmp",
+          "bytes": 1368054,
+          "sha256": "77c8ddf408dc6d3cd5f37f5eae32a6466ce68a4097f6481d720e215625efe9ff"
+        },
+        {
+          "path": "023-directory.json",
+          "bytes": 15462,
+          "sha256": "1057dd90c5fab8299bb11a677eb82761a4934f89c272ceb8bb1f23eda08f0086"
+        },
+        {
+          "path": "024-directory-closed.bmp",
+          "bytes": 3290742,
+          "sha256": "fff303a439c517f0b281da62e604b16b3dedcd1cdaabea7078b8a69e76a22fd7"
+        },
+        {
+          "path": "024-directory-closed.json",
+          "bytes": 19470,
+          "sha256": "d5ad20162a497fb673f238647594442e1fd1f70e8ddbc28e0bd3f62cb1e5e9da"
+        },
+        {
+          "path": "025-records.bmp",
+          "bytes": 2132054,
+          "sha256": "9210bbc854ffb4f95ddae7ac36b862c4e0338e98b4e23c4fe2cda181115c17bd"
+        },
+        {
+          "path": "025-records.json",
+          "bytes": 27229,
+          "sha256": "25d3a58be07f0e56caa373d0ae70e3e9441913c64a0c067c7b78f848d969264f"
+        },
+        {
+          "path": "026-records-closed.bmp",
+          "bytes": 3290742,
+          "sha256": "fff303a439c517f0b281da62e604b16b3dedcd1cdaabea7078b8a69e76a22fd7"
+        },
+        {
+          "path": "026-records-closed.json",
+          "bytes": 19470,
+          "sha256": "d5ad20162a497fb673f238647594442e1fd1f70e8ddbc28e0bd3f62cb1e5e9da"
+        },
+        {
+          "path": "027-settings.bmp",
+          "bytes": 1249974,
+          "sha256": "a2285a9e249d1a3a51bf8917ae60969cf9c625b98d97c3a50c644e76df68b418"
+        },
+        {
+          "path": "027-settings.json",
+          "bytes": 28625,
+          "sha256": "ac1e60413e0984875839687d62dc4a2720cfcfb75645962719047d5c14e5e6d0"
+        },
+        {
+          "path": "028-settings-closed.bmp",
+          "bytes": 3290742,
+          "sha256": "fff303a439c517f0b281da62e604b16b3dedcd1cdaabea7078b8a69e76a22fd7"
+        },
+        {
+          "path": "028-settings-closed.json",
+          "bytes": 19470,
+          "sha256": "d5ad20162a497fb673f238647594442e1fd1f70e8ddbc28e0bd3f62cb1e5e9da"
+        },
+        {
+          "path": "029-menu-B.bmp",
+          "bytes": 3290742,
+          "sha256": "bcbc3e9d662f39b53e07e1fa7b19e689e5e4f7c48f1646c76b50e3b0d307ad59"
+        },
+        {
+          "path": "029-menu-B.json",
+          "bytes": 35947,
+          "sha256": "e190cf2d265f3dcac4344dd13969158a727b53b793a54ea6b71836cd4177d9a4"
+        },
+        {
+          "path": "030-account.bmp",
+          "bytes": 1224054,
+          "sha256": "764bc5afc65d9ea08cb37c5acde85dc18d743eb5d72e761cbf441693dc3fde88"
+        },
+        {
+          "path": "030-account.json",
+          "bytes": 15471,
+          "sha256": "3947950195521b0b6485fc323a27ceb05038fe7dc1f730deebace7b67bb727ed"
+        },
+        {
+          "path": "031-account-closed.bmp",
+          "bytes": 3290742,
+          "sha256": "14c37bc0f23470e7890ce41cf22e8b8f245b392ae8c56cb25f4cf5a1123755ce"
+        },
+        {
+          "path": "031-account-closed.json",
+          "bytes": 19470,
+          "sha256": "d5ad20162a497fb673f238647594442e1fd1f70e8ddbc28e0bd3f62cb1e5e9da"
+        },
+        {
+          "path": "032-view-menu.bmp",
+          "bytes": 3290742,
+          "sha256": "835f499a4c3e72a1b9a13f5f6764079a71903d27e888ba3d99ff927bf5b3aa79"
+        },
+        {
+          "path": "032-view-menu.json",
+          "bytes": 23051,
+          "sha256": "186cab60596df890816837c0e841cbe74bd0d3f7ccc20203d51c1dfb4a400dcc"
+        },
+        {
+          "path": "033-more-expanded.bmp",
+          "bytes": 3341174,
+          "sha256": "8cd32ded52ad29301bbaa510d7a4e4c8913efd6ab52b51ec539011917ca80621"
+        },
+        {
+          "path": "033-more-expanded.json",
+          "bytes": 45043,
+          "sha256": "dddf27f47910dcfac00d951281e138c56bfe25ea062b5a480666253027a07d3c"
+        },
+        {
+          "path": "034-expanded-small-layout.bmp",
+          "bytes": 2798454,
+          "sha256": "a4033380e930277e8fa9420ddb207cbcc5c1dd0ae82222c77dae3ec34af9e5cb"
+        },
+        {
+          "path": "034-expanded-small-layout.json",
+          "bytes": 45043,
+          "sha256": "fa8206f216e2b2809affec1e2e1e9e0717a3d777eedbda29626ab54463c950c1"
+        },
+        {
+          "path": "035-epub-picker.bmp",
+          "bytes": 1200054,
+          "sha256": "201a1bfd568cb23b316f2d99ef360b15d59769a16f9a93ff41662eeef02e1b68"
+        },
+        {
+          "path": "035-epub-picker.json",
+          "bytes": 53392,
+          "sha256": "31f694848cad805a249b776b9266efa53a5010e09619d0860a0c46ea0fd46db9"
+        },
+        {
+          "path": "036-epub-imported.bmp",
+          "bytes": 3290742,
+          "sha256": "16d70f0eba588b222a8046eb1b7de4db77e74f45e96f019a3f4de1cd706d40dc"
+        },
+        {
+          "path": "036-epub-imported.json",
+          "bytes": 19441,
+          "sha256": "12bb1a7f84a1acc38f89a962c53bba867b9be4a1416b151e560122da25677496"
+        },
+        {
+          "path": "037-epub-reading.bmp",
+          "bytes": 3290742,
+          "sha256": "24bcf8363b8634ea4cd57bbca4750d1953972632f0f2c8e21cf61b1a2aeea203"
+        },
+        {
+          "path": "037-epub-reading.json",
+          "bytes": 17008,
+          "sha256": "380c343d6fd065df0a25ad527831f8340ed7a5bae366d44da9174a4a8a792d16"
+        },
+        {
+          "path": "038-pdf-picker.bmp",
+          "bytes": 1200054,
+          "sha256": "ea4e5da51dd341e03d4a3c7f2cc1d78da10e4133304abdbde3323089aa76984c"
+        },
+        {
+          "path": "038-pdf-picker.json",
+          "bytes": 53391,
+          "sha256": "22d7b89c9fbe455f77832269f4e5c425cfe8804b6cd6288eaedb2c93e462a97f"
+        },
+        {
+          "path": "039-pdf-imported.bmp",
+          "bytes": 3290742,
+          "sha256": "e1ede187f5c48781d670047531c45cda25fa54c047229642f708e6cb9ac8e28b"
+        },
+        {
+          "path": "039-pdf-imported.json",
+          "bytes": 19436,
+          "sha256": "ccf50c28ab7657ca17333dacb7a93aa2548106048d74e2e1bc35242e06fc01bd"
+        },
+        {
+          "path": "040-pdf-reading.bmp",
+          "bytes": 3290742,
+          "sha256": "f60d522460d4862f68c9d626e3f13077e3d0c3af4e9240453ad75def902f8a13"
+        },
+        {
+          "path": "040-pdf-reading.json",
+          "bytes": 16963,
+          "sha256": "d17e3d43ba1efba71da36f47be20a84fda68a1f46ad9e9cdc63831be69ff7832"
+        },
+        {
+          "path": "041-cbz-picker.bmp",
+          "bytes": 1200054,
+          "sha256": "ea4e5da51dd341e03d4a3c7f2cc1d78da10e4133304abdbde3323089aa76984c"
+        },
+        {
+          "path": "041-cbz-picker.json",
+          "bytes": 53391,
+          "sha256": "678a41a235e834accff58047cd04cb2c36feebe778ba4417533977375efa379d"
+        },
+        {
+          "path": "042-cbz-imported.bmp",
+          "bytes": 3290742,
+          "sha256": "23f04ecaa342c718269edc07294bdf47318e6cf4f28cea8afa27999ee88fd910"
+        },
+        {
+          "path": "042-cbz-imported.json",
+          "bytes": 19438,
+          "sha256": "7dd76d66ba2b751af406f7c912d2af262c81b6a11c452ce638914d9fbeba4b28"
+        },
+        {
+          "path": "043-cbz-reading.bmp",
+          "bytes": 3290742,
+          "sha256": "61033377a343601ee880f069853645c249855b030fe6acbc2acb93f6f30fc2b1"
+        },
+        {
+          "path": "043-cbz-reading.json",
+          "bytes": 16964,
+          "sha256": "d7489bf9c7bc540e38b4befce12c828c3b9c7edc369155e4cabda8b0b051e792"
+        },
+        {
+          "path": "g12-named-checks.json",
+          "bytes": 4059,
+          "sha256": "95c7766fba3b26a6fa4b1bc5c39156907a5de7da1131e7c000315cee7d282913"
+        },
+        {
+          "path": "key-trace.jsonl",
+          "bytes": 24861,
+          "sha256": "8452e92c0c47656816c9c45a3c563fa1ee028cc267cb75cbc88b74c510f13097"
+        },
+        {
+          "path": "reused-g12/screenshots/00-launch-empty.png",
+          "bytes": 7861,
+          "sha256": "07872ae74370c15118284f08b2d7ce8023810be386bd078694f22afc6f899475"
+        },
+        {
+          "path": "reused-g12/uia/t00-launch-empty.json",
+          "bytes": 17459,
+          "sha256": "e350f8e22d79da3ae02b902e22c74996f18abb46c44529e053c7e9cf752880b5"
+        }
+      ]
+    }
+  ],
+  "package": "D02",
+  "branch": "codex/reader-final-d02",
+  "audit_completed": true,
+  "keyboard_accepted": false,
+  "contrast_accepted": false,
+  "screen_reader_accepted": false,
+  "jobs": [
+    {
+      "id": 121235461850,
+      "name": "native-windows-audit",
+      "conclusion": "success"
+    },
+    {
+      "id": 121236012444,
+      "name": "strict-artifact-verification",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12607496289,
+      "name": "reader-final-d02-raw-40215441500-1",
+      "bytes": 2758064,
+      "sha256": "db75580f89715d5d3176de758823c2b9585314efdfa5d8f3e7cf814668a25c61",
+      "expires_at": "2026-11-24T17:15:54Z",
+      "verification": "raw ZIP downloaded, size/hash/expiry/source/job checked inside strict Actions"
+    },
+    {
+      "id": 12607486296,
+      "name": "reader-final-d02-summary-40215441500-1",
+      "bytes": 16197,
+      "sha256": "12dc461f15be0b4338971eee6d2b65e494b1572d742a70b659e6cedcb3abf188",
+      "expires_at": "2026-11-24T17:16:11Z",
+      "verification": "upload digest/size and GitHub metadata; not recursively ZIP-downloaded"
+    }
+  ],
+  "earlier_failed_runs": [
+    {
+      "run": 40215115650,
+      "attempt": 1,
+      "harness_sha": "01eae40b444c0414fca3e5256f1d188d709b5380",
+      "native_job": 121234467615,
+      "strict_job": 121234534414,
+      "reason": "urllib forwarded GitHub Authorization to signed storage; HTTP401 before UI; source guard/syntax passed"
+    },
+    {
+      "run": 40215226326,
+      "attempt": 1,
+      "harness_sha": "8edd68c28d580dec5f6cc6d6c690839d58fadc98",
+      "native_job": 121234794426,
+      "strict_job": 121234975156,
+      "reason": "Chinese UIA logging hit Windows cp1252 UnicodeEncodeError; DPI/layout partial observations retained",
+      "raw_artifact": {
+        "id": 12607680238,
+        "bytes": 216883,
+        "sha256": "03bf27943e64b9fed86ba681862b4a8ec4f2350961e381bbe0f25d81811d77d7",
+        "expires_at": "2026-11-24T17:11:44Z"
+      }
+    }
+  ],
+  "seal": {
+    "kind": "docs-only [skip ci]",
+    "tested_harness_sha": "e8b5b1bd200202c06a7a22e5a4ed1f801eb47706",
+    "final_docs_head": "Containing docs-only commit; resolved in HANDOFF final message and external D02-status.md",
+    "not_new_runtime_evidence": true
+  }
+}

@@ -1,1 +1,1 @@
-{"package":"D02","accepted":false,"status":"pending Actions","canonical_report":"docs/reader-final-d02/validation.json"}
+{"package":"D02","accepted":false,"audit_completed":true,"keyboard_accepted":false,"contrast_accepted":false,"screen_reader_accepted":false,"tested_harness_sha":"e8b5b1bd200202c06a7a22e5a4ed1f801eb47706","run_id":40215441500,"attempt":1,"conclusion":"success","canonical_report":"docs/reader-final-d02/validation.json","findings":"docs/reader-final-d02/FINDINGS.md"}

@@ -1,6 +1,6 @@
 # D02 Windows compact DPI / keyboard / contrast audit
 
-Status: implemented; Actions evidence pending. `accepted=false`.
+Status: automated audit completed and raw evidence verified in Actions run 40215441500; measured failures and pending scopes retained. `accepted=false`.
 
 ## Coverage inventory and reuse
 
@@ -32,3 +32,7 @@ G12 run 40084309431 measured unnamed search/note fields, missing page text provi
 D02 first failed run: 40215115650 attempt 1, harness `01eae40b444c0414fca3e5256f1d188d709b5380`, native job 121234467615. Guard/syntax passed; producer raw ZIP redirect returned HTTP401 because urllib retained GitHub Authorization across hosts. No UI checks ran. Fix strips that header only on cross-host redirects to the already-authorized signed artifact URL; authentication, ZIP digest and expiration checks remain mandatory.
 
 D02 second failed run: 40215226326 attempt 1, harness `8edd68c28d580dec5f6cc6d6c690839d58fadc98`, native 121234794426 / strict 121234975156. Producer identity authentication passed, actual OFF/ON host launch, DPI queries, layouts and initial G12 assertions executed. Native logging then failed on Chinese names under Windows cp1252 (`UnicodeEncodeError`); complete keyboard/contrast audit was not obtained. Raw artifact 12607680238, 216883 bytes, SHA256 `03bf27943e64b9fed86ba681862b4a8ec4f2350961e381bbe0f25d81811d77d7`, is retained. Fix configures only harness stdout/stderr UTF-8; product unchanged. Strict verification additionally scans current native job log and extracted current raw evidence for token/private-key/signed-query shapes and the ephemeral CI token without logging its value.
+
+## Final evidence (docs-only seal)
+
+[Run40215441500](https://github.com/NoGod3524/EXReader/actions/runs/40215441500), attempt1, harness `e8b5b1bd200202c06a7a22e5a4ed1f801eb47706`: native/strict jobs success. **Audit completed, not accepted.** OFF20pass/3fail/6pending;ON22pass/3fail/5pending;78BMPs. [FINDINGS.md](FINDINGS.md) gives precise observations/limitations; [validation.json](validation.json) contains complete source-bound strict output/file hashes. Earlier failed runs retained above. Current raw ZIP/source/job/expiry verified inside Actions; credential scan passed168inputs. Keyboard/contrast/screen-reader/product acceptance remains false.
