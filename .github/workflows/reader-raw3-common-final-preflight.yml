@@ -1,0 +1,77 @@
+name: Updated complete common source composition preflight
+on:
+  push:
+    branches: [codex/reader-raw3-common-integration]
+    paths:
+      - 'tests/reader_raw3_common/**'
+      - 'tests/reader_raw3_common_runtime/**'
+      - '.github/workflows/reader-raw3-common-final-preflight.yml'
+      - 'docs/READER-RAW3-COMMON-PREFLIGHT.md'
+      - 'docs/validation/reader-raw3-common-preflight.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: raw3-common-preflight-${{ github.ref }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  preflight:
+    name: composition preflight and refusal controls
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Parse only this package in Actions
+        run: python3 -m py_compile tests/reader_raw3_common/*.py tests/reader_raw3_common_runtime/*.py
+      - name: Inspect actual source without changing old guards or event identity
+        run: |
+          set -euo pipefail
+          mkdir -p build/reader-raw3-common
+          python3 tests/reader_raw3_common_runtime/combined.py inspect 2>&1 | tee build/reader-raw3-common/guard.log
+      - name: Mutate actual Git trees under isolated temporary indexes
+        run: |
+          set -euo pipefail
+          python3 tests/reader_raw3_common_runtime/combined.py selftest 2>&1 | tee build/reader-raw3-common/selftest.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-raw3-common-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-raw3-common/
+          if-no-files-found: error
+  strict:
+    name: authenticate same-source preflight
+    needs: preflight
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Recompute source inspection and original artifact bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/reader-raw3-common-strict
+          python3 tests/reader_raw3_common_runtime/combined.py strict 2>&1 | tee build/reader-raw3-common-strict/strict.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-raw3-common-strict-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-raw3-common-strict/
+          if-no-files-found: error
