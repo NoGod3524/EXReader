@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 project(EXReaderPaintWorkDiagnostic LANGUAGES C CXX)
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core)
 add_executable(r4-paint-probe ../../tools/r4_paint_probe.c)
 target_include_directories(r4-paint-probe PRIVATE "${EXR_ENGINE}/src" "${EXR_ENGINE}/include")
 target_link_libraries(r4-paint-probe PRIVATE EXReader::exr_core m)
