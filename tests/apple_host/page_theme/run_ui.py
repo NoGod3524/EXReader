@@ -59,6 +59,8 @@ def main():
                  '-default-test-execution-time-allowance', '180', '-maximum-test-execution-time-allowance', '300',
                  'EXR_SDK_DIR=' + str(args.sdk.absolute()), 'CODE_SIGNING_ALLOWED=' + ('NO' if udid else 'YES')]
     started = time.monotonic(); process = None
+    next_container_probe = started
+    built_info = Path('build/ThemeDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app/Info.plist')
     try:
         with (out / 'xcodebuild.log').open('wb') as log:
             process = subprocess.Popen([str(v) for v in arguments], stdout=log, stderr=subprocess.STDOUT)
@@ -67,11 +69,20 @@ def main():
                 if time.monotonic() - started > 1500:
                     raise RuntimeError('Theme UI exceeded 25 minutes')
                 if udid:
-                    if marker is None or not marker.parent.exists():
-                        probe = subprocess.run(['xcrun', 'simctl', 'get_app_container', udid, 'org.exreader.host', 'data'],
-                                               capture_output=True, text=True, timeout=20)
-                        if probe.returncode == 0:
-                            marker = Path(probe.stdout.strip()) / 'Documents/page-theme-system-request.json'
+                    # CoreSimulator can block lookup before Xcode has built and
+                    # installed the app. A read timeout must not kill that build.
+                    if (marker is None or not marker.parent.exists()) and built_info.is_file() and time.monotonic() >= next_container_probe:
+                        argv = ['xcrun', 'simctl', 'get_app_container', udid, 'org.exreader.host', 'data']
+                        try:
+                            probe = subprocess.run(argv, capture_output=True, text=True, timeout=15)
+                            commands.append({'argv': argv, 'exit_code': probe.returncode, 'stdout': probe.stdout, 'stderr': probe.stderr})
+                            if probe.returncode == 0:
+                                container = Path(probe.stdout.strip())
+                                assert container.is_absolute() and container.is_dir(), 'invalid actual app container'
+                                marker = container / 'Documents/page-theme-system-request.json'
+                        except subprocess.TimeoutExpired:
+                            commands.append({'argv': argv, 'exit_code': None, 'diagnostic': 'read-only container lookup timed out before a successful resolution'})
+                        next_container_probe = time.monotonic() + 10
                 else:
                     marker = Path.home() / 'Library/Application Support/EXReader/page-theme-system-request.json'
                 if marker is not None and marker.is_file():
