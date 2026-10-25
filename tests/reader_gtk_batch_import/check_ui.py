@@ -210,9 +210,10 @@ def main():
         # The later F2 assertion must prove an actual UI transition.
         command('xdotool', 'windowactivate', '--sync', host.window)
         host.key('F2')
-        host.wait(lambda state: not state['reader_visible'] and not state['saving'])
+        host.wait(lambda state: not state['reader_visible'] and not state['saving']
+                  and not state['shelf_loading'] and state['books'] == 35)
         shelf_rows = [node for node in bus.children(element('Bookshelf')) if bus.role(node) == 'list item']
-        assert shelf_rows, 'imported shelf has no actionable book'
+        assert shelf_rows, 'imported shelf has no actionable book: ' + repr(host.read())
         click_node(shelf_rows[0])
         host.wait(lambda state: state['reader_visible'] and state['book'] > 0 and not state['saving'])
         accepted_book = host.read()['book']
