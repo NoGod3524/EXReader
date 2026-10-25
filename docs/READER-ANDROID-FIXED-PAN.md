@@ -27,3 +27,13 @@
 - 首轮 `e2f177f5` / run `40145782695` 在去掉新四象限清单里无关的旧 PDF 搜索预期后取消，原工件 `12580996162` 保留。`1c7e1634` / run `40145939682` 在 ReaderView 平移条件少一右括号处编译失败，原工件 `12580242735` 保留；`d199f0dc` 已修该语法错误，未改测试断言。完整字节/散列见 [检查点 JSON](validation/reader-android-fixed-pan.json)。
 
 下个真实动作：重启后在 Actions 只读下载上述原 ZIP，核对完整身份后读取 `android-fixed-pan/ui/first-instrumentation.txt` 及实际留存文件，定位原仪器化/报告生成根因；本地不下载或解析 ZIP。随后按真实错误做最小修正，以包含诊断留存修正的源码跑完整同源整轮，保留所有旧断言与失败原件。只有新 first7 + reopen1 和全旧套件真实成功后，再开独立 `codex/reader-android-fixed-pan-proof`，在 Actions 独立解码保存的系统截图并严格复查 9 个角像素、15 份 PNG、14 次原件身份和两个真实进程。可参考此前只读 CBZ proof source `234389f986f8ea8c83d1b8e3c6e0f8174c3469a6`；Pan 报告字段为 `display_pixels`、`pan_frames`，检查名从本包 `run_ui.py` 的 `expected` 读取。诊断保持 `diagnostic_only=true, accepted=false`，不得合入 `*-proof`。本次不启动上述后续云端工作。
+
+## 重启后的原件诊断
+
+只读诊断 source `7d8a9913962517ec581220e00b383bb0951307ea` / run `40153537765` / job `121049911211` 在 Actions 内核对原失败 run、attempt、artifact 完整大小和 ZIP SHA-256 后成功读取 `first-instrumentation.txt`。原输出明确显示第一项四角像素检查 status 0；第二项 `panned_pdf_selection_and_clipped_semantic_bounds_match_actual_page` 开始后报 `INSTRUMENTATION_RESULT: shortMsg=Process crashed.`、`INSTRUMENTATION_CODE: 0`。因此后续空报告 JSON 解码错误不是最初故障；原 ZIP 不含 raw report 或 logcat，尚不能判定崩溃根因。
+
+诊断 source `d82f008c` / run `40153716101` / job `121050442774` 仅在 Actions 内恢复同一 ZIP 的原宿主 APK、原 Pan instrumentation APK 和七份原件，以原 API34 default x86_64 pixel_6 配置重放 Pan first 阶段并保存 main/crash/system logcat 与 raw report；不重编译、不替代原92项回归，不授予验收。该诊断由 `workflow_dispatch replay_saved_failure=true` 显式启用，完整工作流作业被排除。真实 crash log 明确为主线程 `AssertionError: panned real marker semantic node visible`，出自本包 `selectBottomRight`，不是 native 崩溃。主线程测试断言原来会直接杀进程，现转回 instrumentation 线程生成原失败报告，原断言保留。
+
+宿主 `FixedSession` 原把公开 PDF text 的原生坐标直接当 Canvas 左上坐标。修正只在 app-private JNI 使用原 PDF、公开 `exr_fixed_pages` 的 geometry 和公开 `exr_viewport_create(scale=1)`，读取与 `exr_fixed_render` 相同的 crop/rotation/y-axis 矩阵，再统一转换宿主选区和语义几何；不改冻结 SDK 或 Java bindings。矩阵目录限制 10,000 页，原件仍限 32 MiB。旋转后语义行沿实际文字基线聚合，避免 90/270 度文字逐字拆行。
+
+新 Pan 夹具另加四份 `/CropBox [100 200 700 1000]`、`/Rotate 0/90/180/270` 的真实 PDF，SDK 读取前手写声明每个旋转的可见/裁剪角标及 600×800 或 800×600 视口；没有复制另一套 viewport 矩阵。原第二项检查内逐一用真实宿主控件打开、缩放和平移，验证渲染尺寸、语义裁剪、实际指针选择的精确原文，以及 SDK/product/settings 不变。Pan 仍是 first7+reopen1，现有原件为11份，原92项夹具和断言不变。新源码尚待完整云端整轮，`accepted=false`。

@@ -43,8 +43,31 @@ xref=len(data);data+=f'xref\n0 {len(offsets)}\n'.encode()+b'0000000000 65535 f \
 for offset in offsets[1:]:data+=f'{offset:010d} 00000 n \n'.encode()
 data+=f'trailer\n<< /Size {len(offsets)} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n'.encode()
 (folder/'search.pdf').write_bytes(data)
+viewport_rows=[]
+# Expectations are authored from the four declared source corner labels and
+# clockwise PDF rotation, before any SDK read. No viewport math is duplicated.
+for rotation,visible,hidden in [(0,'BRA','TLA'),(90,'TRA','BLA'),(180,'TLA','BRA'),(270,'BLA','TRA')]:
+    commands=[]
+    for (x,y),rgb in zip([(100,600),(400,600),(100,200),(400,200)],colors):
+        commands.append(' '.join(f'{value/255:.9f}' for value in rgb)+f' rg {x} {y} 300 400 re f')
+    for marker,x,y in [('TLA',130,970),('TRA',660,970),('BLA',130,230),('BRA',660,230)]:
+        commands.append(f'0 0 0 rg BT /F1 12 Tf {x} {y} Td ({marker}) Tj ET')
+    content=('\n'.join(commands)+'\n').encode()
+    objects=[b'<< /Type /Catalog /Pages 2 0 R >>',b'<< /Type /Pages /Count 1 /Kids [3 0 R] >>',
+             f'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 900 1200] /CropBox [100 200 700 1000] /Rotate {rotation} /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>'.encode(),
+             f'<< /Length {len(content)} >>\nstream\n'.encode()+content+b'endstream',b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>']
+    data=bytearray(b'%PDF-1.7\n');offsets=[0]
+    for index,body in enumerate(objects,1):
+        offsets.append(len(data));data+=f'{index} 0 obj\n'.encode()+body+b'\nendobj\n'
+    xref=len(data);data+=f'xref\n0 {len(offsets)}\n'.encode()+b'0000000000 65535 f \n'
+    for offset in offsets[1:]:data+=f'{offset:010d} 00000 n \n'.encode()
+    data+=f'trailer\n<< /Size {len(offsets)} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n'.encode()
+    name=f'crop-{rotation}.pdf';(folder/name).write_bytes(data)
+    viewport_rows.append({'role':f'crop{rotation}','file':name,'title':f'Crop rotation {rotation}','format':'pdf','bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),
+                          'rotation':rotation,'visible_marker':visible,'hidden_marker':hidden,'viewport_width':800 if rotation%180 else 600,'viewport_height':600 if rotation%180 else 800})
 path=folder/'manifest.json';manifest=json.loads(path.read_text());manifest.pop('expected',None)
 for row in manifest['books']:
     payload=(folder/row['file']).read_bytes();row['bytes']=len(payload);row['sha256']=hashlib.sha256(payload).hexdigest()
+manifest['books'].extend(viewport_rows)
 manifest['pan_expected']={'width':600,'height':800,'rgb':colors,'points':[[30,30],[570,30],[30,770],[570,770]],'pdf_marker':'BOTTOMRIGHT','plan_precedes_sdk_read':True}
 path.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

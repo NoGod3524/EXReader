@@ -82,7 +82,11 @@
       ]
     }
   ],
-  "pending": "Actions-only read of original 40146403326 ZIP first-instrumentation.txt to diagnose missing/invalid private report; Pan remains unaccepted",
+  "diagnostics": [
+    {"source_sha":"7d8a9913962517ec581220e00b383bb0951307ea","run_id":40153537765,"job_id":121049911211,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Original APK first four-corner test completed; next selection test caused Process crashed. Original ZIP identity fully verified in Actions."},
+    {"source_sha":"d82f008c","run_id":40153716101,"job_id":121050442774,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Exact original APK replay crash log: main-thread AssertionError panned real marker semantic node visible. No native crash. No acceptance granted."}
+  ],
+  "pending": "App-private public viewport mapping fix and original Pan8 plus retained92 full same-source cloud regression; current candidate remains unaccepted",
   "next_actions": [
     "After restart, use Actions-only read-only diagnostic work to inspect artifact 12580498901 first-instrumentation.txt and available output files; verify exact ZIP id/bytes/digest/source before reading. Do not locally download or parse it.",
     "Identify and fix the actual instrumentation/report-generation root cause. No Pan check is granted; the JSON decode failure alone does not establish an SDK or panning fault.",
