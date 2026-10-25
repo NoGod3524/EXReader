@@ -119,7 +119,10 @@ static void raw_legacy_restore(linux_reader *reader) {
   compat_check(seen==6,"actual raw owner restored both retained v1 and v2 sources");reader_result_free(&listed);
 }
 static void raw_peer(linux_reader *reader,const char *index,int nullable) {
-  reader_command command=compat_command(READER_RECEIVE_BEGIN);reader_result result={0};
+  /* The real GTK startup loads its shelf before enabling Account/Receive. */
+  reader_command command=compat_command(READER_SHELF);command.book=0;reader_result result={0};
+  linux_reader_execute(reader,&command,&result);compat_check(result.status==EXR_OK && reader->catalog,"actual GTK startup shelf initializes the catalog owner before receiving");reader_result_free(&result);
+  command=compat_command(READER_RECEIVE_BEGIN);command.book=0;
   for(unsigned round=0;round<64;round++) {
     linux_reader_execute(reader,&command,&result);
     if(result.status!=EXR_OK)fprintf(stderr,"received-project status=%d response=%d seen=%llu projected=%llu pending=%d message=%s\n",
