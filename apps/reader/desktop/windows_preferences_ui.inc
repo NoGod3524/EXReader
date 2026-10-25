@@ -5,17 +5,6 @@
  * existing worker; the owner window stays disabled until the worker finishes,
  * so a second selection can never interleave with an accepted frame. */
 
-static struct {
-  HWND dialog, message, toggle, note;
-  HWND font, line, paragraph, margin, theme, direction, input, zoom;
-  HWND light_fg, light_bg, dark_fg, dark_bg;
-  HWND labels[12];
-  HWND apply, defaults, import, rebuild, close;
-  int expanded;
-  int running;
-  int want_close;
-} prefs_ui;
-
 static int prefs_ui_open(void) { return prefs_ui.dialog != NULL; }
 static HWND prefs_dialog_handle(void) { return prefs_ui.dialog; }
 
