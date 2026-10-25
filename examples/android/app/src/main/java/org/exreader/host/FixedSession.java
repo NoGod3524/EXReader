@@ -18,7 +18,7 @@ import java.nio.ByteBuffer;
  */
 final class FixedSession implements AutoCloseable {
     static { System.loadLibrary("exreader_host"); }
-    private static native double[] nativeViewports(byte[] bytes);
+    private static native double[] nativeViewports(byte[] bytes,HostTask task);
     private final EXReader.FixedDocument document;
     private final NativeCbz cbz;
     private final int pageCount;
@@ -46,7 +46,7 @@ final class FixedSession implements AutoCloseable {
             pageCount = cbz==null?document.pageCount():cbz.count();
             if (pageCount <= 0) throw new IllegalStateException("The document has no pages");
             task.check();
-            viewports = imageOnly ? null : nativeViewports(bytes);
+            viewports = imageOnly ? null : nativeViewports(bytes,task);
             task.check();
             if(!imageOnly&&(viewports==null||viewports.length!=pageCount*6))throw new IllegalStateException("Incomplete public PDF page viewport directory");
             int width=cbz==null?document.render(0,1.0).width:cbz.render(0,1.0,task).meta[0];
