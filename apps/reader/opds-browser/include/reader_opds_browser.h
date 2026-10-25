@@ -171,8 +171,9 @@ void reader_opds_config_defaults(reader_opds_config *config);
 /* Network phase. A browser never touches the SDK, creates no thread and keeps no global
    state. It is owned by one caller at a time: a call made while another call (including one
    from inside the control callback) is active returns READER_OPDS_BUSY without side effects.
-   Different browsers are independent. Every call may block up to the module's per-request
-   timeout; `control` (borrowed for the call only, NULL allowed) cancels it. Cancellation and
+   Different browsers are independent. Calls use the transport's connection/read timeout
+   budgets; these are not a hard whole-call deadline for slowly streaming responses.
+   `control` (borrowed for the call only, NULL allowed) cancels it. Cancellation and
    errors leave the sequence's cursor valid so the same call can be repeated: no page is
    recorded as visited unless the call returns it. */
 reader_opds_browser *reader_opds_browser_create(const reader_opds_config *config, opds_error *error);
