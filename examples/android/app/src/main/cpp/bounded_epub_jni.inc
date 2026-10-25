@@ -11,6 +11,9 @@ typedef struct {
   exr_layout *page;
   size_t part;
   uint64_t next_calls;
+  exr_document *document; /* Borrowed only by app-local themed reflow pagers. */
+  int borrowed_font, themed;
+  uint32_t background;
 } host_epub;
 typedef struct { JNIEnv *env; jobject task; jmethodID check; uint64_t deadline_ns; int expired; } host_control;
 static uint64_t host_now_ns(void) {
@@ -115,19 +118,26 @@ static void host_epub_free(host_epub *reader) {
   if(reader) {
     exr_layout_free(reader->page); exr_pager_free(reader->pager); exr_publication_free(reader->publication);
     if(reader->source.release) reader->source.release(reader->source.context);
-    exr_font_free(reader->font); free(reader);
+    if(!reader->borrowed_font) exr_font_free(reader->font); free(reader);
   }
 }
-JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *env,jclass type,jlong owner,jlong book,jint part,jbyteArray font,jfloat size,jfloat line,jfloat paragraph,jfloat margin,jlong budget,jobject task) {
+JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *env,jclass type,jlong owner,jlong book,jint part,jbyteArray font,jfloat size,jfloat line,jfloat paragraph,jfloat margin,jlong budget,jboolean themed,jint foreground,jint background,jobject task) {
   host_epub *reader=NULL; exr_library *store=library(env,owner); exr_error error={0};
   exr_status status=EXR_OK; exr_layout_config config=exr_layout_config_defaults();
   exr_chapter_options options=exr_chapter_options_defaults(); exr_font_input input={0};
   host_control context; exr_control control=host_task_control(env,task,&context);
   jbyte *bytes=NULL; jsize length=font?(*env)->GetArrayLength(env,font):0; (void)type;
+  char css[64];
   if(!store || (*env)->ExceptionCheck(env)) return 0;
   if(part<0 || size<4 || size>256 || length<=0 || length>64*1024*1024 || budget<1024*1024 || budget>8*1024*1024) { throw_argument(env,"Invalid chapter font/configuration"); return 0; }
   reader=calloc(1,sizeof(*reader)); if(!reader) { status=EXR_MEMORY; goto done; }
   reader->library=store; reader->book=(int64_t)book; reader->part=(size_t)part;
+#ifdef READER_HOST_PAGE_THEME
+  reader->themed=themed; reader->background=(uint32_t)background;
+  if(themed) { snprintf(css,sizeof(css),"body { color: #%08x; }",(unsigned)(uint32_t)foreground); config.user_css=css; }
+#else
+  (void)themed;(void)foreground;(void)background;(void)css;
+#endif
   status=exr_library_source(store,(int64_t)book,&reader->source,&error); if(status!=EXR_OK) goto done;
   {
     exr_source borrowed=reader->source; borrowed.release=NULL;
@@ -167,10 +177,10 @@ static jobject host_epub_frame(JNIEnv *env,jlong handle,jobject task,int advance
   host_control context; exr_control control=host_task_control(env,task,&context);
   const exr_page *page; const exr_glyph *glyphs; const exr_line *lines; size_t pages,gc=0,lc=0,i,start,end,n;
   exr_chapter_stats stats; jlong meta[9],*spans=NULL; jfloat *geometry=NULL;
-  jlongArray jm=NULL,js=NULL; jfloatArray jg=NULL; jbyteArray jt=NULL,jp=NULL;
+  jlongArray jm=NULL,js=NULL,jboxes=NULL; jfloatArray jg=NULL; jbyteArray jt=NULL,jp=NULL;
   jclass frame; jmethodID ctor; jobject result=NULL;
   if(!reader || (*env)->ExceptionCheck(env)) { if(!reader) throw_argument(env,"Bounded reader is closed"); return NULL; }
-  {
+  if(reader->source.read_at) {
     unsigned char byte;
     if(reader->source.read_at(reader->source.context,0,&byte,1)!=1) {
       status=EXR_IO; strcpy(error.message,"Library source invalidated by external storage change"); goto done;
@@ -189,8 +199,18 @@ static jobject host_epub_frame(JNIEnv *env,jlong handle,jobject task,int advance
   if(start==SIZE_MAX) start=0; if(end==SIZE_MAX) end=start;
   if(end<start || gc>200000 || lc>200000 || gc+lc>200000) { status=EXR_LIMIT; goto done; }
   if(render) {
-    status=exr_render_page_color(layout,exr_layout_font(layout),0,&bitmap,&error); if(status!=EXR_OK) goto done;
-    status=exr_pager_read_text(reader->pager,start,end,host_text_sink,&text,&control,&error); if(status!=EXR_OK) goto done;
+#ifdef READER_HOST_PAGE_THEME
+    if(reader->themed) status=exr_render_page_background(layout,exr_layout_font(layout),0,4,reader->background,&control,&bitmap,&error);
+    else
+#endif
+    status=exr_render_page_color(layout,exr_layout_font(layout),0,&bitmap,&error);
+    if(status!=EXR_OK) goto done;
+    if(reader->document) {
+      size_t length=0; const char *bytes=exr_document_text(reader->document,&length);
+      if(start>length || end>length) { status=EXR_FORMAT; goto done; }
+      status=host_text_sink(&text,bytes+start,end-start,&error);
+    } else status=exr_pager_read_text(reader->pager,start,end,host_text_sink,&text,&control,&error);
+    if(status!=EXR_OK) goto done;
   } else { gc=0; lc=0; }
   n=gc+lc; spans=calloc(n?n*2:1,sizeof(*spans)); geometry=calloc(n?n*4:1,sizeof(*geometry));
   if(!spans || !geometry || (uint64_t)bitmap.stride*bitmap.height>64*1024*1024) { status=EXR_LIMIT; goto done; }
@@ -211,10 +231,21 @@ static jobject host_epub_frame(JNIEnv *env,jlong handle,jobject task,int advance
   (*env)->SetFloatArrayRegion(env,jg,0,(jsize)(n*4),geometry);
   if(text.size) (*env)->SetByteArrayRegion(env,jt,0,(jsize)text.size,(const jbyte *)text.bytes);
   if(bitmap.pixels) (*env)->SetByteArrayRegion(env,jp,0,(jsize)((size_t)bitmap.stride*bitmap.height),(const jbyte *)bitmap.pixels);
+  {
+    size_t count=0;const exr_box *boxes=render&&reader->themed?exr_layout_boxes(layout,&count):NULL;
+    if(count>200000){status=EXR_LIMIT;goto done;}
+    jboxes=(*env)->NewLongArray(env,(jsize)(count*10));if(!jboxes)goto done;
+    for(i=0;i<count;i++){
+      const exr_box *box=boxes+i;uint32_t image_color=0;const exr_bitmap *image=box->kind==EXR_BOX_IMAGE?exr_layout_image(layout,box->resource):NULL;
+      if(image&&image->channels==4&&image->width&&image->height){const unsigned char *pixel=image->pixels+(size_t)(image->height/2)*image->stride+(image->width/2)*4;image_color=(uint32_t)pixel[0]<<24|(uint32_t)pixel[1]<<16|(uint32_t)pixel[2]<<8|pixel[3];}
+      jlong cells[10]={(jlong)box->kind,(jlong)box->resource,(jlong)box->background,(jlong)box->border_color,(jlong)(box->x*1000),(jlong)(box->y*1000),(jlong)(box->width*1000),(jlong)(box->height*1000),(jlong)image_color,(jlong)box->flags};
+      (*env)->SetLongArrayRegion(env,jboxes,(jsize)(i*10),10,cells);
+    }
+  }
   if((*env)->ExceptionCheck(env)) goto done;
   frame=(*env)->FindClass(env,"org/exreader/host/BoundedEpub$Frame"); if(!frame) goto done;
-  ctor=(*env)->GetMethodID(env,frame,"<init>","([J[J[F[B[B)V"); if(!ctor) goto done;
-  result=(*env)->NewObject(env,frame,ctor,jm,js,jg,jt,jp);
+  ctor=(*env)->GetMethodID(env,frame,"<init>","([J[J[F[B[BLjava/lang/String;[J)V"); if(!ctor) goto done;
+  result=(*env)->NewObject(env,frame,ctor,jm,js,jg,jt,jp,output_string(env,exr_version()),jboxes);
 done:
   exr_pager_set_control(reader->pager,NULL,NULL); exr_bitmap_free(&bitmap);
   free(text.bytes); free(spans); free(geometry);

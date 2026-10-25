@@ -11,6 +11,7 @@ def exrNavigation = project.findProperty('exrNavigation') == 'true'
 def exrNavigationPrefix = project.findProperty('exrNavigationPrefix') ?: "${rootProject.projectDir}/../../stage/android-navigation"
 def exrReading = project.findProperty('exrReading') == 'true'
 def exrPreferences = project.findProperty('exrPreferences') == 'true'
+def exrPageTheme = project.findProperty('exrPageTheme') == 'true'
 def exrPreferencesPrefix = project.findProperty('exrPreferencesPrefix') ?: "${rootProject.projectDir}/../../stage/android-preferences"
 def exrDav = project.findProperty('exrDav') ?: "${rootProject.projectDir}/../../stage/android-dav"
 def exrSideload = project.findProperty('exrSideload') ?: "${rootProject.projectDir}/../../stage/android-sideload"
@@ -32,6 +33,7 @@ android {
         buildConfigField 'boolean', 'READER_NAVIGATION', exrNavigation.toString()
         buildConfigField 'boolean', 'READER_READING', exrReading.toString()
         buildConfigField 'boolean', 'READER_PREFERENCES', exrPreferences.toString()
+        buildConfigField 'boolean', 'READER_PAGE_THEME', exrPageTheme.toString()
         testInstrumentationRunner (project.findProperty('exrTestRunner') ?: 'org.exreader.host.CatalogStoreTest')
         ndk {
             abiFilters 'x86_64'
@@ -44,6 +46,7 @@ android {
                 arguments "-DEXR_HOST_NAVIGATION=${exrNavigation ? 'ON' : 'OFF'}", "-DEXR_NAVIGATION_PREFIX=${exrNavigationPrefix}"
                 arguments "-DEXR_HOST_READING=${exrReading ? 'ON' : 'OFF'}"
                 arguments "-DEXR_HOST_PREFERENCES=${exrPreferences ? 'ON' : 'OFF'}", "-DEXR_PREFERENCES_PREFIX=${exrPreferencesPrefix}"
+                arguments "-DEXR_HOST_PAGE_THEME=${exrPageTheme ? 'ON' : 'OFF'}"
             }
         }
     }
@@ -88,7 +91,7 @@ android {
             }
             androidTest {
                 manifest.srcFile '../../../tests/reader_host_session_android/AndroidManifest.xml'
-                java.srcDir '../../../tests/reader_host_session_android/java'
+                java.srcDir (exrPageTheme ? '../../../build/android-page-theme/candidate/host-session/java' : '../../../tests/reader_host_session_android/java')
             }
         }
     }
@@ -105,7 +108,7 @@ android {
     if(exrPreferences) {
         sourceSets {
             debug { java.srcDir '../../../tests/reader_android_preferences/debug/java' }
-            androidTest { java.srcDir '../../../tests/reader_android_preferences/java' }
+            androidTest { java.srcDir (exrPageTheme ? '../../../build/android-page-theme/candidate/preferences/java' : '../../../tests/reader_android_preferences/java') }
         }
     }
     if(exrNavigation) {
@@ -123,6 +126,7 @@ android {
     if(project.findProperty('exrHostImport') == 'true') {
         sourceSets.androidTest.java.srcDir '../../../tests/reader_android_host_import/java'
     }
+    if(exrPageTheme) { sourceSets.androidTest.java.srcDir '../../../tests/reader_android_page_theme/java' }
 }
 dependencies {
     implementation project(':webdav')

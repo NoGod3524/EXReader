@@ -13,8 +13,10 @@ final class BoundedEpub implements AutoCloseable {
         final long[] meta, spans;
         final float[] geometry;
         final byte[] text, pixels;
-        Frame(long[] meta, long[] spans, float[] geometry, byte[] text, byte[] pixels) {
-            this.meta=meta; this.spans=spans; this.geometry=geometry; this.text=text; this.pixels=pixels;
+        final String sdk;
+        final long[] boxes;
+        Frame(long[] meta, long[] spans, float[] geometry, byte[] text, byte[] pixels,String sdk,long[] boxes) {
+            this.meta=meta; this.spans=spans; this.geometry=geometry; this.text=text; this.pixels=pixels;this.sdk=sdk;this.boxes=boxes;
         }
     }
     final NativeLibrary library;
@@ -30,6 +32,7 @@ final class BoundedEpub implements AutoCloseable {
     String unresolvedNotice;
     long chapterBudget=8*1024*1024;
     ReadingPreferences appearance;
+    PageTheme theme=PageTheme.ORIGINAL;
 
     BoundedEpub(NativeLibrary library,long book,byte[] font,float size) {
         this.library=library; this.book=book; this.font=font; this.size=size;
@@ -44,7 +47,7 @@ final class BoundedEpub implements AutoCloseable {
     private long open(int target,float fontSize,HostTask task) throws Exception {
         task.check();
         long began=System.nanoTime(); long opened=nativeOpen(library.checked(),book,target,font,fontSize,
-                appearance==null?1.6f:appearance.line,appearance==null?12f:appearance.paragraph,appearance==null?32f:appearance.margin,chapterBudget,task);
+                appearance==null?1.6f:appearance.line,appearance==null?12f:appearance.paragraph,appearance==null?32f:appearance.margin,chapterBudget,theme.enabled,theme.foreground,theme.background,task);
         Log.i("EXRHost","bounded open part="+target+" elapsed_ms="+((System.nanoTime()-began)/1000000L)); return opened;
     }
     private Frame next(long pager,HostTask task,boolean recovery,boolean render) throws Exception {
@@ -219,6 +222,9 @@ final class BoundedEpub implements AutoCloseable {
                     starts,ends,null,x,baseline,advance,sizes,text,bounds,0,book);
             result.part=target; result.path=parts[target][0]; result.textBase=frame.meta[0]; result.bounded=true;
             result.boundedOwner=this; result.boundedLocation=nativeCapture(pager,target,frame.meta[0]);
+            result.pageTheme=theme;
+            result.themeSdk=frame.sdk;
+            result.themeBoxes=frame.boxes;
             if(appearance!=null){result.layoutLine=appearance.line;result.layoutParagraph=appearance.paragraph;result.layoutMargin=appearance.margin;}
             Log.i("EXRHost","bounded page {\"book\":"+book+",\"part\":"+target+",\"text_bytes\":"+frame.text.length+
                     ",\"workspace_peak\":"+frame.meta[7]+",\"projection_bytes\":"+frame.meta[8]+"}");
@@ -227,7 +233,7 @@ final class BoundedEpub implements AutoCloseable {
     }
     @Override public void close() { closed=true; if(handle!=0) nativeClose(handle); handle=0; }
     private static native String[][] nativeParts(long library,long book);
-    private static native long nativeOpen(long library,long book,int part,byte[] font,float size,float line,float paragraph,float margin,long budget,HostTask task);
+    private static native long nativeOpen(long library,long book,int part,byte[] font,float size,float line,float paragraph,float margin,long budget,boolean themed,int foreground,int background,HostTask task);
     private static native Frame nativeNext(long handle,HostTask task,boolean render);
     private static native Frame nativeRender(long handle,HostTask task);
     private static native long nativeCalls(long handle);

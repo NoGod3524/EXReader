@@ -34,6 +34,23 @@ final class ReflowSession implements AutoCloseable {
     private long recoveryCalls;
     private BoundedEpub bounded;
     private ReadingPreferences appearance;
+    private PageTheme theme=PageTheme.ORIGINAL;
+    private ThemeReflow themed;
+    private long themedPager;
+
+    ReflowSession(BookStore store,long bookId,byte[] font,ReadingPreferences value,PageTheme theme){
+        this(store,bookId,font,value);this.theme=theme;bounded.theme=theme;
+    }
+    ReflowSession(long bookId,String path,byte[] font,ReadingPreferences value,PageTheme theme){
+        this.bookId=bookId;this.font=font;this.fontSize=value.font;this.appearance=value;this.theme=theme;
+        if(theme.enabled){
+            document=null;themed=new ThemeReflow(path,font);
+            try{text=themed.text();title=themed.title();}catch(RuntimeException|Error error){themed.close();throw error;}
+        }else{
+            document=new EXReader.Document(path);
+            try{text=document.utf8();title=document.title();}catch(RuntimeException|Error error){document.close();throw error;}
+        }
+    }
 
     ReflowSession(BookStore store,long bookId,byte[] font,ReadingPreferences value) {
         this(store,bookId,font,value.font);appearance=value;bounded.appearance=value;
@@ -110,6 +127,7 @@ final class ReflowSession implements AutoCloseable {
 
     PageLoad next(HostTask task) throws Exception {
         if(bounded!=null) return bounded.next(task);
+        if(themed!=null)return themeNext(task);
         if (pager == null) return prepare(index + 1, -1, fontSize, task);
         task.check();
         long started = System.nanoTime();
@@ -139,6 +157,7 @@ final class ReflowSession implements AutoCloseable {
     }
 
     private void recoverAcceptedCursor() {
+        if(themed!=null){recoverTheme();return;}
         if (pager != null) pager.close();
         pager = null;
         if (closed) return;
@@ -173,6 +192,7 @@ final class ReflowSession implements AutoCloseable {
 
     private PageLoad prepare(int target, long offset, float size, HostTask task) throws Exception {
         if (closed) throw new IllegalStateException("Reader is closed");
+        if(themed!=null)return themePrepare(target,offset,size,task);
         task.check();
         long started = System.nanoTime();
         final EXReader.Pager candidate = document.pager(font, 0, config(size));
@@ -219,6 +239,58 @@ final class ReflowSession implements AutoCloseable {
     private PageSnapshot build(EXReader.LayoutSnapshot layout, Bitmap bitmap, int pageIndex, float layoutFont) {
         try { return buildSnapshot(layout, bitmap, pageIndex, layoutFont); }
         catch (RuntimeException | Error error) { bitmap.recycle(); throw error; }
+    }
+
+    private PageSnapshot themeSnapshot(BoundedEpub.Frame frame,int at,float size){
+        int width=(int)frame.meta[2],height=(int)frame.meta[3],gc=(int)frame.meta[5],lc=(int)frame.meta[6];
+        Bitmap bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);
+        try{
+            if(frame.meta[4]!=(long)width*4)throw new IllegalStateException("Unexpected theme bitmap stride");
+            bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(frame.pixels));
+            long[] starts=new long[gc],ends=new long[gc];float[] x=new float[gc],baseline=new float[gc],advance=new float[gc],sizes=new float[gc];
+            for(int i=0;i<gc;i++){starts[i]=frame.spans[i*2];ends[i]=frame.spans[i*2+1];x[i]=frame.geometry[i*4];baseline[i]=frame.geometry[i*4+1];advance[i]=frame.geometry[i*4+2];sizes[i]=frame.geometry[i*4+3];}
+            String[] lines=new String[lc];RectF[] bounds=new RectF[lc];
+            for(int i=0;i<lc;i++){int n=gc+i;lines[i]=slice(text,frame.spans[n*2],frame.spans[n*2+1]).trim();bounds[i]=new RectF(frame.geometry[n*4],frame.geometry[n*4+1],frame.geometry[n*4]+frame.geometry[n*4+2],frame.geometry[n*4+1]+frame.geometry[n*4+3]);}
+            PageSnapshot result=new PageSnapshot(bitmap,false,at,-1,frame.meta[0],frame.meta[1],text,1f,width,height,starts,ends,null,x,baseline,advance,sizes,lines,bounds,0,bookId);
+            byte[] expected=java.util.Arrays.copyOfRange(text,(int)frame.meta[0],(int)frame.meta[1]);
+            if(!java.util.Arrays.equals(expected,frame.text))throw new IllegalStateException("Rendered document text projection mismatch");
+            if(!"3.41.0".equals(frame.sdk))throw new IllegalStateException("Page theme requires SDK3.41");
+            result.pageTheme=theme;result.themeSdk=frame.sdk;result.themeBoxes=frame.boxes;result.layoutFont=size;result.layoutLine=appearance.line;result.layoutParagraph=appearance.paragraph;result.layoutMargin=appearance.margin;return result;
+        }catch(RuntimeException|Error error){bitmap.recycle();throw error;}
+    }
+    private PageLoad themeNext(HostTask task)throws Exception{
+        if(themedPager==0)return themePrepare(index+1,-1,fontSize,task);
+        long began=System.nanoTime();
+        try{
+            task.check();nativeNextCalls++;BoundedEpub.Frame frame=ThemeReflow.next(themedPager,task,true);if(frame==null)return null;
+            task.check();PageSnapshot page=themeSnapshot(frame,index+1,fontSize);
+            return new PageLoad(page,(System.nanoTime()-began)/1000000L,()->{index=page.index;lastStart=page.start;logSteps();},this::recoverTheme);
+        }catch(Exception|Error error){recoverTheme();throw error;}
+    }
+    private PageLoad themePrepare(int target,long offset,float size,HostTask task)throws Exception{
+        task.check();long began=System.nanoTime(),candidate=themed.pager(size,appearance,theme,task);boolean transferred=false;
+        try{
+            for(int at=0;at<20000;at++){
+                task.check();nativeNextCalls++;BoundedEpub.Frame frame=ThemeReflow.next(candidate,task,false);
+                if(frame==null){if(target>=0)return null;throw new IllegalArgumentException("No page contains requested text position");}
+                boolean contains=offset>=frame.meta[0]&&(offset<frame.meta[1]||offset==text.length&&frame.meta[1]==offset);
+                if(target>=0?at!=target:!contains)continue;
+                frame=ThemeReflow.render(candidate,task);task.check();PageSnapshot page=themeSnapshot(frame,at,size);final int accepted=at;
+                PageLoad load=new PageLoad(page,(System.nanoTime()-began)/1000000L,()->{if(themedPager!=0)ThemeReflow.close(themedPager);themedPager=candidate;index=accepted;fontSize=size;lastStart=page.start;logSteps();},()->ThemeReflow.close(candidate));
+                transferred=true;return load;
+            }
+            throw new IllegalStateException("Seek exceeds the 20000-page host budget");
+        }finally{if(!transferred)ThemeReflow.close(candidate);}
+    }
+    private void recoverTheme(){
+        if(themedPager!=0)ThemeReflow.close(themedPager);themedPager=0;if(closed)return;
+        long candidate=0;try{
+            HostTask task=new HostTask(()->false);candidate=themed.pager(fontSize,appearance,theme,task);
+            if(index>=20000)throw new IllegalStateException("Recovery exceeds host budget");
+            for(int at=0;at<=index;at++){nativeNextCalls++;recoveryCalls++;if(ThemeReflow.next(candidate,task,false)==null)throw new IllegalStateException("Accepted page missing");}
+            themedPager=candidate;candidate=0;
+        }catch(RuntimeException error){Log.w("EXRHost","Theme cursor recovery failed: "+error.getMessage());}
+        finally{if(candidate!=0)ThemeReflow.close(candidate);}
     }
 
     private PageSnapshot buildSnapshot(EXReader.LayoutSnapshot layout, Bitmap bitmap, int pageIndex, float layoutFont) {
@@ -281,6 +353,7 @@ final class ReflowSession implements AutoCloseable {
         if (closed) return;
         closed = true;
         if(bounded!=null) { bounded.close(); return; }
+        if(themed!=null){if(themedPager!=0)ThemeReflow.close(themedPager);themedPager=0;themed.close();return;}
         if (pager != null) {
             pager.close();
             pager = null;

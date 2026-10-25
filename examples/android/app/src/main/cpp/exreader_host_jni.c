@@ -896,3 +896,6 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeDeleteBook(
 #ifdef READER_HOST_PREFERENCES
 #include "preferences_jni.inc"
 #endif
+#ifdef READER_HOST_PAGE_THEME
+#include "page_theme_jni.inc"
+#endif

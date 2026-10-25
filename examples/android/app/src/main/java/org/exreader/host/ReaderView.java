@@ -143,6 +143,8 @@ public final class ReaderView extends View {
                 .put("selection_mode",selectMode).put("selection_start",selection==null?-1:selection.start)
                 .put("selection_end",selection==null?-1:selection.end);
             if(BuildConfig.DEBUG && debugBitmapIdentity!=null) state.put("bitmap_identity",debugBitmapIdentity);
+            if(page!=null&&BuildConfig.DEBUG&&BuildConfig.READER_PAGE_THEME)state.put("page_theme",new org.json.JSONObject().put("enabled",page.pageTheme.enabled).put("foreground_rgba",String.format(java.util.Locale.ROOT,"%08x",page.pageTheme.foreground)).put("background_rgba",String.format(java.util.Locale.ROOT,"%08x",page.pageTheme.background)).put("system",page.pageTheme.system).put("sdk",page.themeSdk));
+            if(page!=null&&BuildConfig.DEBUG&&BuildConfig.READER_PAGE_THEME){org.json.JSONArray boxes=new org.json.JSONArray();for(long value:page.themeBoxes)boxes.put(value);state.put("theme_boxes",boxes);}
             if(page!=null) state.put("book",page.bookId).put("index",page.index).put("part",page.part)
                 .put("path",page.path==null?org.json.JSONObject.NULL:page.path).put("start",page.start).put("end",page.end)
                 .put("anchor_sha256",pointHash==null?org.json.JSONObject.NULL:pointHash)
