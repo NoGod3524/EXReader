@@ -57,7 +57,7 @@ final class NavigationPanel {
                     target.getViewTreeObserver().removeOnGlobalLayoutListener(this);controls(false);message(ready);
                 }
             });
-            adapter.setNotifyOnChange(false);adapter.clear();for(NativeNavigation.Row row:rows)adapter.add(row.display());adapter.notifyDataSetChanged();target.setSelection(0);target.requestLayout();
+            adapter.setNotifyOnChange(false);adapter.clear();for(NativeNavigation.Row row:rows)adapter.add(row.display());target.setAdapter(adapter);target.setSelection(0);target.requestLayout();
         }),error->activity.runOnUiThread(()->failure(request,error)));
     }
     private void select(NativeNavigation.Row row){
