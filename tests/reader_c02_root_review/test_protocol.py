@@ -77,6 +77,17 @@ def main():
     data,loaded,expected,preparations=fixture()
     assert R.validate(data,loaded,expected,preparations)['launches']==30
     first=next(iter(data['starts']));warm=next(key for key in data['inputs'] if '-warm-' in key)
+    surface=dict(data['starts'][first]['before_original'],page_key='')
+    assert R.startup_fault(surface) is None
+    assert R.startup_fault(dict(surface,window_visible=False,book_rows=0)) is None
+    assert R.startup_fault(dict(surface,book_rows=0)) is None
+    assert R.startup_fault(dict(surface,book_rows=1,legacy_rows=True)) is None
+    assert R.startup_fault(dict(surface,book_rows=1,metadata_enabled=False)) is None
+    assert R.startup_fault(dict(surface,book_rows=1,books_visible=False)) is None
+    assert R.startup_fault(dict(surface,book_rows=1)) is None
+    assert R.startup_fault(dict(surface,query_empty=False))=='C02_STARTUP_QUERY_NOT_CLEAN'
+    assert R.startup_fault(dict(surface,reading_visible=True,books_visible=False,page_key='1'))==\
+      'C02_STARTUP_READING_SURFACE_INSTEAD_OF_LIBRARY'
     def spoil_data(mutate):
         broken=copy.deepcopy(data);mutate(broken)
         refused(lambda:R.validate(broken,loaded,expected,preparations))

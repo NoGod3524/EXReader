@@ -1,12 +1,26 @@
 {
   "accepted": false,
-  "status": "root adapter source prepared; full Actions pending",
+  "status": "first full round retained; initialization refusal fixed; next full round pending",
   "base_source": "169b0be3c1c8199be0211649412d23d9e34041e4",
   "input_strategy": "warm-catalog-snapshot-clean-settings-v1",
   "windows_producer": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "gtk_producer": "57203a52aee439be5194ee0a4b13563a975e8daf",
   "original_timeout_run": 40214285241,
   "diagnostic_run": 40230793806,
+  "earlier_runs": [
+    {
+      "run_id": 40236796245,
+      "attempt": 1,
+      "source": "1054892f9857abe2fb3e74cbbec5c8821522a53f",
+      "accepted": false,
+      "windows_rounds": 2,
+      "launches_per_round": 30,
+      "planned_rows_per_round": 990,
+      "non_ok_rows_per_round": 910,
+      "failed_launches_per_round": 22,
+      "cause": "adapter treated initially enabled controls and zero/partial rows as completed shelf; extra refusal removed"
+    }
+  ],
   "budget_approved": false,
   "current_common_product_performance_accepted": false,
   "complete_product": false

@@ -10,6 +10,17 @@ STRATEGY='warm-catalog-snapshot-clean-settings-v1'
 COUNTS={'cold':4,'warm':4,'resume':4,'import':3}
 
 
+def startup_fault(value):
+    # CreateWindow exposes initially-enabled buttons before ShowWindow/reload_shelf.
+    # Partial rows do not prove completion; only the frozen readiness helper
+    # decides when >=50 product rows are ready.
+    if not value['window_visible'] or value['minimized']:return None
+    if not value['query_empty']:return 'C02_STARTUP_QUERY_NOT_CLEAN'
+    if value['reading_visible'] and value['page_key']:
+        return 'C02_STARTUP_READING_SURFACE_INSTEAD_OF_LIBRARY'
+    return None
+
+
 def natural(value):
     K.require(value.get('window_visible') is True and value.get('minimized') is False and
       value.get('books_visible') is True and value.get('reading_visible') is False and

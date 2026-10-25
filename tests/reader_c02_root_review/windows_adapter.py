@@ -70,12 +70,8 @@ class Round(B.Round):
 
     @staticmethod
     def reject_contradiction(value):
-        if not value['query_empty']:raise PW.MeasurementFault('C02_STARTUP_QUERY_NOT_CLEAN')
-        ready=value['metadata_enabled'] and not value['legacy_rows']
-        if ready and value['reading_visible'] and value['page_key']:
-            raise PW.MeasurementFault('C02_STARTUP_READING_SURFACE_INSTEAD_OF_LIBRARY')
-        if ready and value['book_rows']<50:
-            raise PW.MeasurementFault('C02_READY_UNFILTERED_SHELF_TOO_SMALL')
+        fault=R.startup_fault(value)
+        if fault:raise PW.MeasurementFault(fault)
 
     def run_start(self,host,state):
         receipt=dict(status='failed',identity=state['identity'],input_strategy=R.STRATEGY,
@@ -84,7 +80,7 @@ class Round(B.Round):
         try:
             first=PW.op_window(host,B.COLD_BUDGET_S)
             def visible():
-                value=self.surface(host);self.reject_contradiction(value)
+                value=self.surface(host);receipt['last_observed']=value;self.reject_contradiction(value)
                 if value['window_visible'] and not value['minimized'] and value['books_visible'] and not value['reading_visible']:
                     return (value,)
                 return None
@@ -92,7 +88,7 @@ class Round(B.Round):
             receipt['before_original']=before
             # The frozen helper still owns all row/ready/roundtrip predicates.
             marks=PW.op_first_screen(host,B.COLD_BUDGET_S)
-            after=self.surface(host);self.reject_contradiction(after);R.natural(after)
+            after=self.surface(host);receipt['last_observed']=after;self.reject_contradiction(after);R.natural(after)
             marks['window_ms']=first['window_ms'];marks['controls_ms']=first['controls_ms']
             receipt.update(after_original=after,marks=marks,
                            status='ok' if marks.get('first_screen_interactive_ms') is not None else 'failed')
