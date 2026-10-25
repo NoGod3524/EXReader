@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: MIT
 """Actions-only immutable ordinary-merge boundary guard."""
 import json
+import importlib.util
 import os
+import re
 import subprocess
 from pathlib import Path
 assert os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only'
@@ -30,6 +32,18 @@ chain=git('rev-list','--first-parent',START+'..'+MERGE).splitlines()
 assert len(chain)==8
 assert [git('rev-parse',sha+'^2') for sha in reversed(chain)]==list(DELIVERIES.values())
 assert all(len(git('show','-s','--format=%P',sha).split())==2 for sha in chain)
+# Reuse the original adapter guard's exact semantic rules and negative controls.
+# Its standalone path allowlist is replaced only by the stricter T05 merge/tree
+# boundary above; production source rules still run on this actual checkout.
+spec=importlib.util.spec_from_file_location('cloud_guard',Path('tests/reader_webdav_import/check_guards.py'))
+cloud=importlib.util.module_from_spec(spec);spec.loader.exec_module(cloud)
+cloud_controls=cloud.selftest();cloud_sources=sorted(p for p in Path('apps/reader/cloud-import').rglob('*') if p.suffix in ('.c','.h'));assert len(cloud_sources)>=2
+joined=''
+for path in cloud_sources:
+ text=path.read_text(encoding='utf-8');joined+=text
+ assert not [p for p in cloud.FORBIDDEN if re.search(p,text) and not (p=='Authorization' and path.suffix=='.h')],str(path)
+assert all(re.search(pattern,joined) for pattern,_ in cloud.BOUNDARY)
+assert 'EXR_SIDELOAD_STREAM_LIMIT' in joined and 'EXR_SIDELOAD_MEMORY_LIMIT' in joined
 p=Path('build/composition/source-guard.json');p.parent.mkdir(parents=True,exist_ok=True)
-p.write_text(json.dumps(dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],start=START,merge_point=MERGE,deliveries=DELIVERIES,merge_chain=list(reversed(chain)),paths=paths,accepted=True),indent=2)+'\n')
+p.write_text(json.dumps(dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],start=START,merge_point=MERGE,deliveries=DELIVERIES,merge_chain=list(reversed(chain)),paths=paths,cloud_adapter_source_guard=True,cloud_source_controls=cloud_controls,accepted=True),indent=2)+'\n')
 print(p.read_text())

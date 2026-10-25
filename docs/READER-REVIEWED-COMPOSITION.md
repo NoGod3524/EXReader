@@ -47,6 +47,11 @@ The strict aggregate requires three completed/success jobs from the same
 source/run/attempt, unique artifact identity, non-empty unexpired ZIPs and API
 digests; it downloads and hashes ZIPs in Actions, rejects duplicate members and
 reports, verifies every required report and binds actual consumer binary bytes.
+Original cloud, link-policy and history installed headers/archives are retained
+and hashed after relocation; link/history report hashes bind those exact bytes.
+The original cloud adapter semantic guard and its negative controls run on this
+checkout alongside T05's stronger immutable merge/path boundary. Artifact and
+job IDs, not just their names, must be unique.
 All original reports and new named results are retained. A missing public API
 would keep overall accepted=false with the exact missing signature; no fallback
 mapping or private SQL is permitted.
