@@ -144,6 +144,8 @@ jobs:
       actions: read
     steps:
       - uses: actions/checkout@v4
+      - name: Run the deterministic artifact-protocol negatives before trusting the verifier
+        run: python3 tests/reader_ocr_overlay/check_artifacts.py --selftest build/j15-artifacts
       - name: Verify every same-run ZIP, every digest and the summary identity
         env:
           GH_TOKEN: ${{ github.token }}
