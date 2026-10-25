@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 
-BASE = '2b9159c9bd604b6811f9394ac33e537627e2195f'
+BASE = 'cb20c8d0855f09938cac6233d5b368df6e2712b3'
 SDK = '9854061be331fe603a1822d9b2b36ee357154927'
 DELIVERIES = {
     'g1': '3bcc6511c928665c0889a33bc98cf5e1bfadaccc',
@@ -23,6 +23,7 @@ DELIVERIES = {
     'apple_reading_records_final': '0f0cf3ba374b13d0e8a3c8fc1e04b3f3cfb6c9f6',
     'windows_cloud_import_organize': '7d8a2ef5aa2b12444bb4f968efc8828080c1bb53',
     'complete_reviewed_composition': '4f7d830733d6cafd61ae2edfdaa895420e1931c0',
+    'android_real_host_import': '8a564e817fec01538d9c6efc35d173c6f24d8fec',
 }
 ALLOWED = (
     'tests/reader_hosts_integration/', '.github/workflows/reader-hosts-integration.yml',
