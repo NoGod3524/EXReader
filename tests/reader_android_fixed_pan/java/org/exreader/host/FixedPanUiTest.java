@@ -25,6 +25,7 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.json.JSONArray;
@@ -188,6 +189,19 @@ public final class FixedPanUiTest extends Instrumentation {
     private void sameViewport(JSONObject before,JSONObject after)throws Exception{
         need(after.getInt("viewport_height")==before.getInt("viewport_height")&&after.getInt("viewport_width")==before.getInt("viewport_width")&&after.getDouble("offset_x")==before.getDouble("offset_x")&&after.getDouble("offset_y")==before.getDouble("offset_y")&&after.getLong("accepted_token")==before.getLong("accepted_token"),"selection entry and revealing actions never resize or shift the actual active page");
     }
+    private void viewportCancellation()throws Exception{
+        Method method=FixedSession.class.getDeclaredMethod("nativeViewports",byte[].class,HostTask.class);method.setAccessible(true);
+        byte[] original=Files.readAllBytes(new File(context.getFilesDir(),"fixed-pan-fixtures/search.pdf").toPath());AtomicInteger baselinePolls=new AtomicInteger();
+        double[] baseline=(double[])method.invoke(null,original,new HostTask(()->{baselinePolls.incrementAndGet();return false;}));
+        need(baseline.length==24&&baselinePolls.get()>5,"actual public four-page viewport polls throughout native open and directory copy");
+        for(int stop:new int[]{3,baselinePolls.get()-1}){
+            AtomicInteger polls=new AtomicInteger();boolean cancelled=false;
+            try{method.invoke(null,original,new HostTask(()->polls.incrementAndGet()>=stop));}
+            catch(InvocationTargetException failure){need(failure.getCause() instanceof HostTask.Cancelled,"native cancellation preserves original HostTask exception");cancelled=true;}
+            need(cancelled&&polls.get()==stop,"actual native PDF open/output loop cancels without returning a partial directory");
+        }
+        need(Arrays.equals(baseline,(double[])method.invoke(null,original,new HostTask(()->false))),"normal viewport reopen remains exact after native cancellations");
+    }
     private void croppedRotations()throws Exception{
         for(int rotation:new int[]{0,90,180,270}){
             String role="crop"+rotation;JSONObject plan=null;JSONArray originals=input.getJSONArray("books");
@@ -244,7 +258,7 @@ public final class FixedPanUiTest extends Instrumentation {
             need(BuildConfig.READER_PREFERENCES&&BuildConfig.READER_READING&&BuildConfig.READER_NAVIGATION&&BuildConfig.READER_SEARCH&&BuildConfig.READER_SYNC,"all inherited actual host integrations enabled");
             input=new JSONObject(new String(Files.readAllBytes(new File(context.getFilesDir(),"fixed-pan-input.json").toPath()),StandardCharsets.UTF_8));
             if(phase.equals("first")){
-                seed();launch();open("cbz");
+                seed();viewportCancellation();launch();open("cbz");
                 check("real_pdf_cbz_four_corners_strict_display_pixels_and_no_store_write",()->{for(String role:new String[]{"cbz","pdf"}){open(role);appearance(300,"从左向右","点击和滑动");String state=snapshot();byte[] file=saved();JSONObject original=settledFrame();need(original.getDouble("pan_limit_x")>0&&original.getDouble("pan_limit_y")>0,"native zoom overflows both real viewport axes");for(int which=0;which<4;which++){corner(which);observePixel(role,which);need(frame().getLong("accepted_token")==original.getLong("accepted_token")&&frame().getInt("index")==original.getInt("index"),"drag never turns or replaces the actual SDK page");capture(role+"-corner-"+which);}need(snapshot().equals(state)&&Arrays.equals(file,saved()),"four-corner panning writes neither SDK/product nor F3 settings");}});
                 check("panned_pdf_selection_and_clipped_semantic_bounds_match_actual_page",()->{croppedRotations();String state=snapshot();selectBottomRight();need(snapshot().equals(state),"selection after pan leaves SDK/product stores unchanged");});
                 check("directional_accessibility_pan_clamps_and_keeps_page_navigation_distinct",()->{String state=snapshot();long token=frame().getLong("accepted_token");for(int action:new int[]{AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.getId(),AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.getId(),AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.getId(),AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN.getId()}){int steps=0;while(panAction(action))need(++steps<=16,"directional semantic panning bounded");need(!panAction(action),"actual edge refuses additional viewport movement");}need(frame().getLong("accepted_token")==token&&snapshot().equals(state),"semantic pan never masquerades as next page or writes stores");capture("pdf-semantic-edge");});
