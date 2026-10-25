@@ -17,7 +17,7 @@
        "digest": "sha256:9ea2858145313296d39792d867794db1be687eb70dec38f155dcd1dfe156bf06",
        "expires_at": "2027-01-23T15:33:00Z"}
     ],
-    "apk_member": "build/android-raw3/apks/host-debug.apk",
+    "apk_member": "apks/host-debug.apk",
     "apk_sha256": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3",
     "apk_bytes": 29721554
   },

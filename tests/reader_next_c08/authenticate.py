@@ -90,9 +90,11 @@ def main():
         entry.update({'downloaded': downloaded, 'checks': checks})
         artifacts.append(entry)
         if row['role'] == 'raw3':
-            apks = common.find_suffix(root, producer['apk_member'])
+            every = common.find_suffix(root, '.apk')
+            apks = [path for path in every if path.relative_to(root).as_posix().endswith(producer['apk_member'])]
             if len(apks) != 1:
-                raise SystemExit('expected exactly one %s, found %d' % (producer['apk_member'], len(apks)))
+                raise SystemExit('expected exactly one *%s, found %d among %r' % (
+                    producer['apk_member'], len(apks), [path.relative_to(root).as_posix() for path in every]))
             apk = {'path': str(apks[0]), 'bytes': apks[0].stat().st_size,
                    'sha256': common.sha256_file(apks[0])}
             if apk['bytes'] != producer['apk_bytes'] or apk['sha256'] != producer['apk_sha256']:
