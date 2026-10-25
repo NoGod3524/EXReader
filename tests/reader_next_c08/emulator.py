@@ -98,7 +98,8 @@ class Driver:
         self.observed = {'preferences_injected': False, 'apk_modified': False}
         self.expect = {'format': contract['fixture']['format'], 'title_stem': contract['fixture']['title_stem'],
                        'sha256': contract['fixture']['sha256'], 'bytes': contract['fixture']['bytes'],
-                       'page': contract['expected_page'], 'notes': []}
+                       'ui_page': contract['expected_page'], 'notes': [contract['expected_note']],
+                       'sdk_version': contract['expected_sdk_version'], 'abi_version': contract['expected_abi_version']}
         self.stages = []
 
     # ---- plumbing -------------------------------------------------------
@@ -212,7 +213,9 @@ class Driver:
             if len(parts) != 3 or not parts[0].startswith('./'):
                 continue
             path = parts[0][2:]
-            data = self.run_as('cat', path, check=False)
+            data = self.run_as('cat', path)
+            if len(data) != int(parts[1]):
+                raise Refusal('Target snapshot read is incomplete for ' + path)
             files[path] = {'size': int(parts[1]), 'mtime': int(parts[2]),
                            'cat_bytes': len(data), 'sha256': common.sha256_bytes(data)}
         return files
@@ -235,6 +238,12 @@ class Driver:
         self.observed['consumer_library_stage_match'] = [
             {'path': row['path'], 'equals_apk_member': row['sha256'] == common.sha256_bytes(data)}
             for row in self.inventory['sdk_stage']['libs']]
+        actual = self.adb('exec-out', 'cat', WORK + '/c08_consumer', binary=True)
+        self.check('device_consumer_bytes_equal_built_program', len(actual) == consumer.stat().st_size and
+                   common.sha256_bytes(actual) == self.observed['consumer']['binary_sha256'], self.observed['consumer'])
+        self.check('consumer_build_identity_matches_this_run',
+                   self.observed['consumer']['build']['identity'] == common.identity(),
+                   self.observed['consumer']['build']['identity'])
 
     def identities(self):
         """UID, SELinux context and program origin for each execution mode."""
@@ -274,7 +283,8 @@ class Driver:
 
     def run_consumers(self, stage, installed_apk):
         before = self.snapshot()
-        result = {'stage': stage, 'modes': {}}
+        self.save('snapshots/' + stage + '-target-before.json', json.dumps(before, indent=2))
+        result = {'stage': stage, 'modes': {}, 'target_before': before}
         # (a) same UID: the consumer is executed as the target application's own UID.
         attempts = []
         for variant, library in self.library_variants(installed_apk):
@@ -292,16 +302,27 @@ class Driver:
         copied = {}
         for suffix in ('', '-wal', '-shm', '-journal'):
             name = 'files/library.db' + suffix
-            data = self.run_as('sh', '-c', 'if [ -f %s ]; then cat %s; fi' % (name, name))
-            if data:
-                local = self.output / 'copies' / stage / ('library.db' + suffix)
-                local.parent.mkdir(parents=True, exist_ok=True)
-                local.write_bytes(data)
-                self.adb('push', str(local), copy_dir + '/library.db' + suffix)
-                copied['library.db' + suffix] = {'bytes': len(data), 'sha256': common.sha256_bytes(data)}
+            if name not in before:
+                continue
+            data = self.run_as('cat', name)
+            expected = before[name]
+            if expected['size'] != len(data) or expected['sha256'] != common.sha256_bytes(data):
+                raise Refusal('Read-only copy is not identical to the pre-consumer target snapshot: ' + name)
+            local = self.output / 'copies' / stage / ('library.db' + suffix)
+            local.parent.mkdir(parents=True, exist_ok=True)
+            local.write_bytes(data)
+            self.adb('push', str(local), copy_dir + '/library.db' + suffix)
+            copied['library.db' + suffix] = {'bytes': len(data), 'sha256': common.sha256_bytes(data)}
+        if 'library.db' not in copied:
+            raise Refusal('No nonempty original library database was copied')
+        expected_names = {path[len('files/'):] for path in before if path in (
+            'files/library.db', 'files/library.db-wal', 'files/library.db-shm', 'files/library.db-journal')}
+        if set(copied) != expected_names:
+            raise Refusal('Read-only copy file inventory differs from the target database inventory')
         self.shell('chmod', '444', *[copy_dir + '/' + name for name in copied])
         self.shell('chmod', '555', copy_dir)
         result['copy'] = copied
+        result['copy_before'] = self.copy_snapshot(copy_dir)
         attempts = []
         for variant, library in self.library_variants(installed_apk):
             attempts.append(dict(self.consumer_attempt(
@@ -313,17 +334,28 @@ class Driver:
                 break
         result['modes']['shell_readonly_copy'] = attempts
         after = self.snapshot()
-        copy_after = {}
-        for name in copied:
-            data = self.adb('exec-out', 'cat', copy_dir + '/' + name, binary=True)
-            copy_after[name] = {'bytes': len(data), 'sha256': common.sha256_bytes(data)}
+        copy_after = self.copy_snapshot(copy_dir)
+        result['target_after'] = after
+        result['copy_after'] = copy_after
+        self.save('snapshots/' + stage + '-target-after.json', json.dumps(after, indent=2))
         result['snapshot_unchanged'] = before == after
         result['snapshot_changed_paths'] = sorted(path for path in set(before) | set(after)
                                                   if before.get(path) != after.get(path))
         result['snapshot_files'] = len(after)
-        result['copy_unchanged'] = copy_after == copied
+        result['copy_unchanged'] = copy_after == result['copy_before']
         self.stages.append(result)
         return result
+
+    def copy_snapshot(self, directory):
+        files = {}
+        listing = self.shell('find', directory, '-type', 'f').splitlines()
+        for path in listing:
+            if not path.startswith(directory + '/'):
+                raise Refusal('Unexpected read-only copy inventory path')
+            data = self.adb('exec-out', 'cat', path, binary=True)
+            metadata = self.shell('stat', '-c', '%s %Y %a %u %g', path).strip()
+            files[path[len(directory) + 1:]] = {'bytes': len(data), 'sha256': common.sha256_bytes(data), 'stat': metadata}
+        return files
 
     def judge(self, stage, result, expect):
         outcome = {}
@@ -333,6 +365,8 @@ class Driver:
                 report = attempt['report']
                 reasons = validate.validate(report, expect) if report else ['no JSON report (exit %s): %s' % (
                     attempt['exit'], attempt.get('stdout_head') or attempt['stderr'])]
+                if attempt['exit'] != 0:
+                    reasons.append('consumer process did not exit successfully: ' + str(attempt['exit']))
                 attempt['refusals'] = reasons
                 if not reasons and decided is None:
                     decided = {'variant': attempt['variant'], 'values': validate.normalize(report),
@@ -451,13 +485,14 @@ class Driver:
         self.check('book_imported_through_real_ui', True, self.observed['shelf_target'])
         self.screenshot('03-shelf')
 
-        # ---- open, turn to page 3, annotate when the UI allows -----------------
+        # ---- open, turn to page 3, and require an actual UI-created annotation --
         self.shell('logcat', '-c')
         self.shell('input', 'tap', shelf_point[0], shelf_point[1])
         opened = self.wait('the reader to render the book',
                            lambda: next(iter(self.metrics()), None), 180)
         book_id = opened['book']
         self.observed['ui_book_id'] = book_id
+        self.expect['book_id'] = book_id
         pages = [opened['page']]
         reader = next((item for item in self.nodes(self.dump('reader')) if item['id'] == PACKAGE + ':id/reader_view'), None)
         self.check('reader_view_present', reader is not None, {'reader': reader})
@@ -512,7 +547,7 @@ class Driver:
         offline['ping_exit'] = ping.returncode
         self.observed['offline'] = offline
         self.check('device_offline', offline['airplane_mode_on'] == '1' and offline['wifi_on'] == '0'
-                   and ping.returncode != 0, offline)
+                   and offline['mobile_data'] == '0' and ping.returncode != 0, offline)
         self.shell('logcat', '-c')
         self.start()
         reopened = self.wait('the offline reopen to restore the book', lambda: next(
@@ -528,7 +563,7 @@ class Driver:
         self.finish(installed_apk, book_id)
 
     def annotate(self, reader):
-        """Create one real annotation through the UI; any failure is recorded, never faked."""
+        """A required real note either succeeds or fails the package explicitly."""
         record = {'attempted': True, 'created': False}
         self.observed['annotation'] = record
         try:
@@ -556,8 +591,13 @@ class Driver:
                 return
             point = self.center(field['bounds'])
             self.shell('input', 'tap', point[0], point[1])
-            self.shell('input', 'text', 'c08note')
+            self.shell('input', 'text', self.contract['expected_note'])
             time.sleep(1)
+            edited = next((item for item in self.nodes(self.dump('annotate-text'))
+                           if item['id'] == PACKAGE + ':id/note_comment'), None)
+            if edited is None or edited['text'] != self.contract['expected_note']:
+                record['reason'] = 'the actual comment field does not contain the required note text'
+                return
             save = next((item for item in self.nodes(self.dump('annotate-3')) if item['text'].lower() == 'save'), None)
             if save is None:
                 record['reason'] = 'no Save button in the annotation dialog'
@@ -568,15 +608,14 @@ class Driver:
             label = next((item['text'] for item in self.nodes(self.dump('annotate-4'))
                           if item['id'] == PACKAGE + ':id/notes_button'), '')
             record['notes_button'] = label
-            if 'Notes (1)' in label:
+            if re.fullmatch(r'notes\s*\(\s*1\s*\)', label.strip(), re.IGNORECASE):
                 record['created'] = True
-                self.expect['notes'] = ['c08note']
             else:
                 record['reason'] = 'the notes counter did not reach 1'
         except (Refusal, StopIteration) as error:
             record['reason'] = 'annotation UI step failed: %s' % error
         finally:
-            self.check('annotation_created_through_ui', record['created'], record, mandatory=False)
+            self.check('annotation_created_through_ui', record['created'], record)
 
     def close_app(self, label):
         """Let the application settle through its own lifecycle, then close it."""
@@ -594,6 +633,9 @@ class Driver:
         self.check('readonly_copy_unchanged_' + name, copy_ok, {'copy': result['copy']})
         summary = {mode: bool(decided) for mode, decided in outcome.items()}
         self.observed.setdefault('readback_by_stage', {})[name] = summary
+        print(json.dumps({'actual_public_api_stage': name,
+                          'values': {mode: decided['values'] for mode, decided in outcome.items() if decided}},
+                         ensure_ascii=False), flush=True)
         # The values must be real API output from at least one independent route.
         self.check('public_api_readback_' + name, any(summary.values()),
                    {'summary': summary,
@@ -609,6 +651,19 @@ class Driver:
                     routes.setdefault(mode, []).append(decided['values'])
         stable = {mode: all(values == rows[0] for values in rows) for mode, rows in routes.items()}
         self.observed['route_values'] = routes
+        self.observed['progress_relationship'] = {
+            'public_api_page_number': None,
+            'independent_exact_page3_resolution_accepted': False,
+            'ui_page_numbers': {'initial': self.observed['pages'][-1],
+                                'fresh_reopen': self.observed['fresh_reopen_page']['page'],
+                                'offline_reopen': self.observed['offline_reopen_page']['page']},
+            'actual_api_offsets_by_route': {mode: [{'book_id': values[0]['id'],
+                'book_position': values[0]['position'], 'progress_start': values[0]['progress']['start'],
+                'progress_end': values[0]['progress']['end'], 'progress_state': values[0]['progress']['state']}
+                for values in rows] for mode, rows in routes.items()},
+            'interpretation': 'Public progress_get returns normalized-text offsets and selectors, not a page number. '
+                'UI page 3 and identical offsets/book/note values across three separate closes are recorded independently; '
+                'a positive offset is not independent exact page-3 navigation.'}
         self.check('values_stable_across_close_fresh_reopen_and_offline_reopen',
                    bool(stable) and all(stable.values()) and all(len(rows) == 3 for rows in routes.values()),
                    {'stable': stable, 'stages': {mode: len(rows) for mode, rows in routes.items()}})
@@ -638,9 +693,6 @@ class Driver:
                    bool(loaded) and all(path in allowed for path in loaded),
                    {'loaded': loaded, 'allowed': allowed})
 
-        # Diagnostic cross-check only: SQL is never API evidence.
-        self.diagnostic_sql(book_id)
-
         log = self.adb('logcat', '-d', '-v', 'threadtime', '-t', '8000', binary=True)
         self.save('logcat-last.txt', log)
         text = log.decode('utf-8', 'replace')
@@ -650,21 +702,6 @@ class Driver:
         self.check('no_preference_injection_or_apk_modification',
                    not self.observed['preferences_injected'] and not self.observed['apk_modified'],
                    {'preferences_injected': False, 'apk_modified': False})
-
-    def diagnostic_sql(self, book_id):
-        import sqlite3
-        data = self.run_as('cat', 'files/library.db', check=False)
-        rows = None
-        if data.startswith(b'SQLite format 3'):
-            path = self.save('diagnostic/library.db', data)
-            try:
-                connection = sqlite3.connect('file:%s?mode=ro' % path.as_posix(), uri=True)
-                rows = [list(map(str, row)) for row in connection.execute('SELECT * FROM book_progress LIMIT 5')]
-                connection.close()
-            except sqlite3.DatabaseError as error:
-                rows = 'unreadable: %s' % error
-        self.observed['diagnostic_sql_book_progress'] = {'rows': rows, 'role': 'diagnostic_only_not_api_evidence'}
-
 
 def main():
     parser = argparse.ArgumentParser()

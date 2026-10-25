@@ -1,7 +1,7 @@
-name: Reader next C08 independent public SDK readback
+name: Reader next C08 root review independent public SDK readback
 on:
   push:
-    branches: [codex/reader-next-c08]
+    branches: [codex/reader-next-c08-root-review]
     paths:
       - 'tests/reader_next_c08/**'
       - '.github/workflows/reader-next-c08.yml'
@@ -130,19 +130,21 @@ jobs:
     if: always()
     runs-on: ubuntu-22.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: reader-next-c08-*
-          path: build/in
-          merge-multiple: true
       - name: Join only identical source, run, attempt and producer artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          python3 tests/reader_next_c08/summary.py --static build/in/static --emulator build/in/emulator --output build/c08-summary
+          python3 tests/reader_next_c08/summary.py --output build/c08-summary
       - uses: actions/upload-artifact@v4
         if: always()
         with:

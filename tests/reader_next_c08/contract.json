@@ -38,6 +38,10 @@
     "format": 1
   },
   "expected_page": 3,
+  "expected_note": "c08note",
+  "annotation_required": true,
+  "expected_sdk_version": "3.41.0",
+  "expected_abi_version": 1,
   "owned_paths": [
     "tests/reader_next_c08/",
     ".github/workflows/reader-next-c08.yml",

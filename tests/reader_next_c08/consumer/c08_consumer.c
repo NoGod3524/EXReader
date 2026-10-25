@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <exr/library.h>
 
 static int first_item = 1;
@@ -113,8 +114,11 @@ typedef uint32_t (*abi_fn)(void);
 static void *library_handle;
 static void *symbol(const char *name) {
   void *found = dlsym(library_handle, name);
+  Dl_info owner;
+  memset(&owner, 0, sizeof(owner));
   comma();
-  printf("{\"symbol\":"); json_text(name); printf(",\"resolved\":%s}", found ? "true" : "false");
+  printf("{\"symbol\":"); json_text(name); printf(",\"resolved\":%s,\"object\":", found ? "true" : "false");
+  json_text(found && dladdr(found, &owner) ? owner.dli_fname : ""); printf("}");
   return found;
 }
 
@@ -145,6 +149,17 @@ int main(int argc, char **argv) {
   printf("{\"schema\":\"c08-public-api-readback-1\",\"mode\":"); json_text(mode);
   printf(",\"library_path\":"); json_text(library_path);
   printf(",\"database_path\":"); json_text(database);
+  {
+    char executable[4096], context[512]; ssize_t n;
+    printf(",\"process\":{\"pid\":%ld,\"uid\":%ld,\"euid\":%ld,\"executable\":",
+           (long)getpid(), (long)getuid(), (long)geteuid());
+    n = readlink("/proc/self/exe", executable, sizeof(executable) - 1);
+    executable[n >= 0 ? (size_t)n : 0] = 0; json_text(executable);
+    FILE *own_context = fopen("/proc/self/attr/current", "rb");
+    size_t size = own_context ? fread(context, 1, sizeof(context) - 1, own_context) : 0;
+    if (own_context) fclose(own_context);
+    context[size] = 0; printf(",\"selinux\":"); json_text(context); printf("}");
+  }
   library_handle = dlopen(library_path, RTLD_NOW | RTLD_LOCAL);
   if (!library_handle) {
     printf(",\"dlopen_error\":"); json_text(dlerror());
@@ -211,12 +226,16 @@ int main(int argc, char **argv) {
         printf(",\"source\":{\"status\":%d", (int)status);
         if (status == EXR_OK) {
           sha_init(&digest);
-          while (offset < source.size) {
+          printf(",\"reads\":["); int first_read = 1;
+          while (offset < source.size && source.read_at) {
             size_t want = source.size - offset > sizeof(buffer) ? sizeof(buffer) : (size_t)(source.size - offset);
             size_t got = source.read_at(source.context, offset, buffer, want);
-            if (got == 0) break;
+            printf("%s{\"offset\":%llu,\"requested\":%llu,\"returned\":%llu}", first_read ? "" : ",",
+                   (unsigned long long)offset, (unsigned long long)want, (unsigned long long)got); first_read = 0;
+            if (got == 0 || got > want) break;
             sha_update(&digest, buffer, got); offset += got;
           }
+          printf("]");
           source_ok = offset == source.size;
           sha_final(&digest, out);
           printf(",\"size\":%llu,\"read\":%llu,\"complete\":%s,\"sha256\":\"%s\"",
@@ -237,9 +256,10 @@ int main(int argc, char **argv) {
         hex(point.exact, point.exact ? strlen(point.exact) : 0);
         printf(",\"prefix_hex\":"); hex(point.prefix, point.prefix ? strlen(point.prefix) : 0);
         printf(",\"suffix_hex\":"); hex(point.suffix, point.suffix ? strlen(point.suffix) : 0);
-        printf(",\"chapter_present\":%s}", point.chapter ? "true" : "false");
-        if (status == EXR_OK) anchor_free(&point);
+        printf(",\"chapter_present\":%s,\"chapter_hex\":", point.chapter ? "true" : "false");
+        hex(point.chapter, point.chapter ? strlen(point.chapter) : 0); printf("}");
         call_record("exr_library_progress_get", (int)status, (long long)state, (long long)point.start);
+        if (status == EXR_OK) anchor_free(&point);
       }
       {
         exr_note *rows = NULL; size_t n = 0; exr_status status;

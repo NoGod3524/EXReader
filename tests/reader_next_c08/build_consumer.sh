@@ -37,13 +37,15 @@ clang="$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android26-cla
 sha256sum "$out/c08_consumer" | tee "$out/c08_consumer.sha256"
 file "$out/c08_consumer" || true
 python3 - "$out" "$include" "$origin" "$ndk" <<'PY'
-import hashlib, json, pathlib, sys
+import hashlib, json, os, pathlib, sys
 out, include, origin, ndk = sys.argv[1:]
 headers = {}
 for path in sorted(pathlib.Path(include).rglob('*.h')):
     headers[path.relative_to(include).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
 binary = pathlib.Path(out, 'c08_consumer')
 pathlib.Path(out, 'consumer-build.json').write_text(json.dumps({
+    'identity': {'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT']},
+    'producer_source': '4a04a9cc74dde67f755c87e87b278d63a254a3ac',
     'binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'bytes': binary.stat().st_size,
     'headers_origin': origin, 'headers': headers, 'ndk': ndk,
     'source_sha256': hashlib.sha256(pathlib.Path('tests/reader_next_c08/consumer/c08_consumer.c').read_bytes()).hexdigest(),
