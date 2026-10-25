@@ -1,14 +1,525 @@
 {
-  "package": "D04",
+  "package": "D04 / EXReaderAnnotationImport 0.1.0",
   "branch": "codex/dot-reader-annotation-import",
+  "fixed_start": "a826a65c9c66e43620eff61b49cb79f941a3c953",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "tested_sha": "9c7e276f13f42cb61a32507c36d1c22c4489bd01",
+  "tested_tree": "eff50dd1fc492e633180ba6b8ded7ced156778a2",
   "accepted": false,
-  "measured_capability_passed": false,
-  "status": "implementation awaiting Actions-only validation",
-  "tested_sha": null,
-  "gaps": [
-    "Original G05 JSONL retains head wires only, not non-head ancestor wires; full graph restore from this input is impossible on a fresh target",
-    "Advisory book_title/selection/tombstone/graph fields are delivered intact through callbacks but cannot be persisted as original revision entities without inventing identities",
-    "No host import UI acceptance"
+  "full_lossless_restore_accepted": false,
+  "measured_capability_passed": true,
+  "evidence_verified": true,
+  "status": "Three installed desktop consumer jobs and strict evidence succeeded; full restoration and host UI are not accepted",
+  "evidence_commit_contract": {
+    "parent_sha": "9c7e276f13f42cb61a32507c36d1c22c4489bd01",
+    "message_suffix": "[skip ci]",
+    "only_changed_paths": [
+      "docs/READER-ANNOTATION-IMPORT.md",
+      "docs/validation/reader-annotation-import.json"
+    ],
+    "code_and_workflow_equal_tested_source": true
+  },
+  "workflow": ".github/workflows/reader-annotation-import.yml",
+  "run": {
+    "id": 40171486469,
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171486469",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-25T07:05:39Z",
+    "updated_at": "2026-10-25T07:11:26Z"
+  },
+  "jobs": [
+    {
+      "id": 121103049052,
+      "name": "annotation import (macos-15)",
+      "head_sha": "9c7e276f13f42cb61a32507c36d1c22c4489bd01",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121103049294,
+      "name": "annotation import (windows-2022)",
+      "head_sha": "9c7e276f13f42cb61a32507c36d1c22c4489bd01",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121103049323,
+      "name": "annotation import (ubuntu-22.04)",
+      "head_sha": "9c7e276f13f42cb61a32507c36d1c22c4489bd01",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121104074407,
+      "name": "same-run artifact evidence",
+      "head_sha": "9c7e276f13f42cb61a32507c36d1c22c4489bd01",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success"
+    }
   ],
-  "retained_failures": []
+  "checks": {
+    "per_desktop": 52,
+    "desktop_total": 156,
+    "names": [
+      "installed_c_abi",
+      "real_g05_export_three_formats",
+      "exact_wire_fresh_roundtrip",
+      "omitted_history_gap_not_accepted",
+      "metadata_delivered_not_persisted",
+      "exact_duplicate_no_history_or_outbox",
+      "public_parent_arrival_restores_original_graph",
+      "complete_target_roundtrip",
+      "original_concurrent_tombstone_restore",
+      "preflight_cancel_no_mutation",
+      "callback_exception_preserves_cursor",
+      "file_exact_budget",
+      "cancel_preserves_commit_and_cursor",
+      "cancel_resume_exactly_once",
+      "real_process_kill_reopen_replay",
+      "same_private_spool_after_source_replacement",
+      "owner_thread_rejected",
+      "callback_reentry_rejected_without_stats_reset",
+      "empty_original_export",
+      "duplicate_json_header",
+      "duplicate_json_graph",
+      "duplicate_json_head",
+      "duplicate_json_wire",
+      "duplicate_annotation_id",
+      "duplicate_revision_id",
+      "same_id_different_wire",
+      "wrong_header_book",
+      "wrong_wire_book",
+      "wrong_wire_hash",
+      "wrong_wire_length",
+      "unknown_format_version",
+      "unknown_module_version",
+      "missing_footer",
+      "footer_count",
+      "truncated_string",
+      "truncated_final_lf",
+      "trailing_record",
+      "bad_escape",
+      "bad_utf8",
+      "bad_surrogate",
+      "inconsistent_graph_flags",
+      "impossible_parent_counts",
+      "unknown_entity_field",
+      "wire_limit",
+      "actual_overlong_wire_string",
+      "file_budget",
+      "hard_budget",
+      "resume_beyond_input",
+      "all_invalid_files_leave_existing_database_bytes_unchanged",
+      "rejected_item_keeps_wire_identity",
+      "receiver_fault_retains_prior_state",
+      "nonregular_source_rejected"
+    ],
+    "verifier_negative_count": 17,
+    "verifier_negative_names": [
+      "report_source_sha_0",
+      "report_attempt_1",
+      "report_accepted_2",
+      "report_measured_capability_passed_3",
+      "report_checks_4",
+      "report_checks_5",
+      "artifact_expired",
+      "artifact_size_in_bytes",
+      "artifact_expires_at",
+      "wrong_api_digest",
+      "wrong_zip_size",
+      "producer_wrong_attempt",
+      "producer_wrong_source",
+      "producer_incomplete",
+      "duplicate_json_key",
+      "duplicate_zip_report",
+      "missing_zip_report"
+    ]
+  },
+  "runtime_findings": {
+    "unchanged_G05_exporter": true,
+    "formats": [
+      "txt",
+      "epub",
+      "pdf"
+    ],
+    "fresh_TXT": {
+      "exported_heads": 26,
+      "created_exact_wires": 26,
+      "source_nonhead_revisions_omitted": 9,
+      "full_restore_accepted": false
+    },
+    "original_graph_restored_only_after_public_arrival_of_original_ancestor_wires": true,
+    "real_process_killed_after_first_commit_and_reopened": true,
+    "replay_duplicates_first_commit_and_creates_remaining_heads": true,
+    "source_replaced_after_validation_but_same_private_spool_used": true,
+    "invalid_file_tests_seed_target_with_unrelated_history_and_only_one_conflicting_head": true,
+    "negative_inputs_rejected_before_any_item_callback_or_commit": true,
+    "real_receiver_fault": {
+      "Linux": "RLIMIT_FSIZE at post-validation",
+      "macOS": "RLIMIT_FSIZE at post-validation",
+      "Windows": "Separate real SQLite BEGIN IMMEDIATE write lock; no private table access"
+    }
+  },
+  "producer_artifacts": [
+    {
+      "id": 12590541631,
+      "name": "reader-annotation-import-Linux-40171486469-1",
+      "size_in_bytes": 2403072,
+      "digest": "sha256:9073c8cfe86124c586c6fb2aa4f4e9a57478da384fd8a9cff02276ca0fa23eea",
+      "expires_at": "2027-01-23T07:05:39Z",
+      "recomputed_zip_sha256": "9073c8cfe86124c586c6fb2aa4f4e9a57478da384fd8a9cff02276ca0fa23eea",
+      "checks_count": 52,
+      "binaries": {
+        "annotation-import-probe": {
+          "bytes": 1837048,
+          "sha256": "fd387223332f96e24ec0a7869d0d5161e3ed05517d3bd302f0ba9d133c464176"
+        },
+        "annotation-import-c": {
+          "bytes": 1702008,
+          "sha256": "e4f66a075f42d1ebc652eadf3c4ed2aa0cc43fb79a2b0a45a5c3fdb2e39a206b"
+        }
+      },
+      "module_trees": {
+        "apps/reader/annotation-export": "83207b62d56834f9c0cd106f22edbf5e65d716e1",
+        "apps/reader/revisions": "1bab10d60c149edd1ff5745864d381836c4a7cb2",
+        "apps/reader/reading-state": "60127ae75fbac918237b1c8584e0f7ac2e6130a4",
+        "tests/reader_annotation_export": "a1af81f1565306581110e5d98a5b112f9f6a3491",
+        "apps/reader/annotation-import": "e0617ccd172ecb9be63832ff24c3c1bb93065cb9",
+        "tests/reader_annotation_import": "021e8fe680a6d0d22e283f18a22aa976017ad991"
+      },
+      "original_exporter_files": {
+        "include/reader_annotation_export.h": {
+          "bytes": 7217,
+          "sha256": "cc84723d018c8d14462f524fe9d1b085204ccd0c06016f5bfd7eb120954780da"
+        },
+        "lib/libreader_annotation_export.a": {
+          "bytes": 143810,
+          "sha256": "8d58f93efb74e6a59a7ace13efb7c81eb9d734bc2e19d034060415333d46d36e"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportConfig.cmake": {
+          "bytes": 1117,
+          "sha256": "4a504102026fa1258f64ca31e2065780283ecb4633a5a8eb8c12976347390247"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportTargets.cmake": {
+          "bytes": 4396,
+          "sha256": "fb9a4424375a5a5b4c3e9eebb8de2038fdee4149f6c6c44f2a87fbbbe0d77b5a"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportConfigVersion.cmake": {
+          "bytes": 3675,
+          "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportTargets-release.cmake": {
+          "bytes": 1059,
+          "sha256": "030d20e91978ed6f0743ffd4bb8a1320d14b3d4520710541bc5a4a2a59219d39"
+        }
+      },
+      "expired": false,
+      "installed_import_package": {
+        "include/reader_annotation_import.h": {
+          "bytes": 4694,
+          "sha256": "94f16b512af1c401b27d824a3df6d5dec36b0db24b300291e762d0ecf9b69a91"
+        },
+        "lib/libreader_annotation_import.a": {
+          "bytes": 80288,
+          "sha256": "2b22629f527eb096b938b1e754a8128f4ac983335915d8e4790b9dfe4e03191b"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportTargets.cmake": {
+          "bytes": 4347,
+          "sha256": "3128a31469f946dfd96165e73d88e324f7a8347694a89d19ff6298b6fcf3a351"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportConfigVersion.cmake": {
+          "bytes": 3675,
+          "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportConfig.cmake": {
+          "bytes": 1060,
+          "sha256": "7ebfcfc51142296a6e043dcb2ff65da903eb2c238cee85878cc3ab72213b32b0"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportTargets-release.cmake": {
+          "bytes": 1059,
+          "sha256": "c268fff6150d79c8c16876649253871866ddae8b12cd53897dab20112fb6d59a"
+        }
+      }
+    },
+    {
+      "id": 12590332065,
+      "name": "reader-annotation-import-Windows-40171486469-1",
+      "size_in_bytes": 2501688,
+      "digest": "sha256:36506a6a796499bf25174609b1469995331e5e779ebee142e54310fe71d93599",
+      "expires_at": "2027-01-23T07:05:39Z",
+      "recomputed_zip_sha256": "36506a6a796499bf25174609b1469995331e5e779ebee142e54310fe71d93599",
+      "checks_count": 52,
+      "binaries": {
+        "annotation-import-probe.exe": {
+          "bytes": 1511424,
+          "sha256": "9a286c32bb6398be73e156e56b2a72ee0cccc2b238e6857f4f9c487cad1da5a3"
+        },
+        "annotation-import-c.exe": {
+          "bytes": 1326080,
+          "sha256": "3baaefab196d0460787a2d4805c12b2f27b311c24bc0f395c7e1b732bd3e0abf"
+        }
+      },
+      "module_trees": {
+        "apps/reader/annotation-export": "83207b62d56834f9c0cd106f22edbf5e65d716e1",
+        "apps/reader/revisions": "1bab10d60c149edd1ff5745864d381836c4a7cb2",
+        "apps/reader/reading-state": "60127ae75fbac918237b1c8584e0f7ac2e6130a4",
+        "tests/reader_annotation_export": "a1af81f1565306581110e5d98a5b112f9f6a3491",
+        "apps/reader/annotation-import": "e0617ccd172ecb9be63832ff24c3c1bb93065cb9",
+        "tests/reader_annotation_import": "021e8fe680a6d0d22e283f18a22aa976017ad991"
+      },
+      "original_exporter_files": {
+        "include/reader_annotation_export.h": {
+          "bytes": 7217,
+          "sha256": "cc84723d018c8d14462f524fe9d1b085204ccd0c06016f5bfd7eb120954780da"
+        },
+        "lib/reader_annotation_export.lib": {
+          "bytes": 562304,
+          "sha256": "5ba2cfcede59671d679d3b8292eedeb75efd3d75df57e75fb5ea06599a60b1a6"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportConfig.cmake": {
+          "bytes": 1146,
+          "sha256": "49c2849264be4f41f20636b96afb55397d54813651d6d4bb07dc33e95bf415b6"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportConfigVersion.cmake": {
+          "bytes": 3760,
+          "sha256": "30a60e77c316270fec5a2eed509a16fb0669dbe22549720658bfbde3196da96d"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportTargets-release.cmake": {
+          "bytes": 1076,
+          "sha256": "43bece008e13990c28771997e8a623f3fd48674dc57da3b26471132bd9267a42"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportTargets.cmake": {
+          "bytes": 4503,
+          "sha256": "0cf54f6378da05657bdab34d7dc7b37bc71920f0de18d948da6baa8d4a686bd9"
+        }
+      },
+      "expired": false,
+      "installed_import_package": {
+        "include/reader_annotation_import.h": {
+          "bytes": 4694,
+          "sha256": "94f16b512af1c401b27d824a3df6d5dec36b0db24b300291e762d0ecf9b69a91"
+        },
+        "lib/reader_annotation_import.lib": {
+          "bytes": 370980,
+          "sha256": "e484ea36cd3ab3e84e2e7be4a1c8f2cdbee1b8280ada9774293abbda3dae36c3"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportConfig.cmake": {
+          "bytes": 1088,
+          "sha256": "151cd6a05c9a121484fa1ba869b8ab9f15bcd1f2438505a898a5c39f77d2d976"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportConfigVersion.cmake": {
+          "bytes": 3760,
+          "sha256": "30a60e77c316270fec5a2eed509a16fb0669dbe22549720658bfbde3196da96d"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportTargets-release.cmake": {
+          "bytes": 1076,
+          "sha256": "f73de003a693a73d8d1d805641a0d52032246d8393c8cd1845f4f03d7f40d8cd"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportTargets.cmake": {
+          "bytes": 4454,
+          "sha256": "4918bb71d06670bad203ff518e9959d181c7d7d281938729d9237d6896a4d539"
+        }
+      }
+    },
+    {
+      "id": 12590566848,
+      "name": "reader-annotation-import-macOS-40171486469-1",
+      "size_in_bytes": 2215691,
+      "digest": "sha256:aa68f0e5bbed243ad29eaef6d696bcdb29246376192e387fcce0ad4323d2738b",
+      "expires_at": "2027-01-23T07:05:39Z",
+      "recomputed_zip_sha256": "aa68f0e5bbed243ad29eaef6d696bcdb29246376192e387fcce0ad4323d2738b",
+      "checks_count": 52,
+      "binaries": {
+        "annotation-import-probe": {
+          "bytes": 1563528,
+          "sha256": "14e72537704c2967d904a7e8aa27ac729b5524c0c749ef935275eefd23056ec2"
+        },
+        "annotation-import-c": {
+          "bytes": 1484256,
+          "sha256": "b348c031f1618caec37e2989162b1e2684fadfdad34b202b85dec6e6db840293"
+        }
+      },
+      "module_trees": {
+        "apps/reader/annotation-export": "83207b62d56834f9c0cd106f22edbf5e65d716e1",
+        "apps/reader/revisions": "1bab10d60c149edd1ff5745864d381836c4a7cb2",
+        "apps/reader/reading-state": "60127ae75fbac918237b1c8584e0f7ac2e6130a4",
+        "tests/reader_annotation_export": "a1af81f1565306581110e5d98a5b112f9f6a3491",
+        "apps/reader/annotation-import": "e0617ccd172ecb9be63832ff24c3c1bb93065cb9",
+        "tests/reader_annotation_import": "021e8fe680a6d0d22e283f18a22aa976017ad991"
+      },
+      "original_exporter_files": {
+        "include/reader_annotation_export.h": {
+          "bytes": 7217,
+          "sha256": "cc84723d018c8d14462f524fe9d1b085204ccd0c06016f5bfd7eb120954780da"
+        },
+        "lib/libreader_annotation_export.a": {
+          "bytes": 84616,
+          "sha256": "72991dcaeb864f72ac4a0029cbc701ad01d7fd31947d4e6c86572dac2891db82"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportTargets-release.cmake": {
+          "bytes": 1059,
+          "sha256": "030d20e91978ed6f0743ffd4bb8a1320d14b3d4520710541bc5a4a2a59219d39"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportTargets.cmake": {
+          "bytes": 4395,
+          "sha256": "4481e2b52be33d241b70bce17ba23bd8f07e5e778d14563262c1c0d602220ffb"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportConfigVersion.cmake": {
+          "bytes": 3675,
+          "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+        },
+        "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportConfig.cmake": {
+          "bytes": 1117,
+          "sha256": "4a504102026fa1258f64ca31e2065780283ecb4633a5a8eb8c12976347390247"
+        }
+      },
+      "expired": false,
+      "installed_import_package": {
+        "include/reader_annotation_import.h": {
+          "bytes": 4694,
+          "sha256": "94f16b512af1c401b27d824a3df6d5dec36b0db24b300291e762d0ecf9b69a91"
+        },
+        "lib/libreader_annotation_import.a": {
+          "bytes": 48704,
+          "sha256": "e14d1819ab7f35a14dbe5b49d8a827c3d0bc7488a16843e310ba4d7d8d6ee721"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportConfigVersion.cmake": {
+          "bytes": 3675,
+          "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportConfig.cmake": {
+          "bytes": 1060,
+          "sha256": "7ebfcfc51142296a6e043dcb2ff65da903eb2c238cee85878cc3ab72213b32b0"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportTargets.cmake": {
+          "bytes": 4346,
+          "sha256": "22e9905eaee548df9a875a4bad4b7c31b32c7f20aca371ba17ba9ad6e348c852"
+        },
+        "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportTargets-release.cmake": {
+          "bytes": 1059,
+          "sha256": "c268fff6150d79c8c16876649253871866ddae8b12cd53897dab20112fb6d59a"
+        }
+      }
+    }
+  ],
+  "evidence_artifact": {
+    "id": 12590736638,
+    "name": "reader-annotation-import-evidence-40171486469-1",
+    "size_in_bytes": 2275,
+    "digest": "sha256:d4550401ec6dfcf7ff33ad5b0e49243fdb12af99ff16e335ada37ef3dc152540",
+    "expires_at": "2027-01-23T07:05:39Z",
+    "expired": false,
+    "zip_validation": "GitHub API digest/size and successful upload identity; not recursively re-downloaded by its own producing job"
+  },
+  "scope": {
+    "SDK_changed": false,
+    "product_schema_changed": false,
+    "private_SQL_in_importer": false,
+    "new_sync_entities": false,
+    "SDK_notes_or_progress_written": false,
+    "projection_or_conflict_resolution": false,
+    "host_UI_accepted": false,
+    "six_platform_accepted": false,
+    "performance_claimed": false,
+    "local_build_test_syntax_fixture_or_artifact_processing": false
+  },
+  "gaps": [
+    "Original G05 JSONL includes only current head wires, not non-head ancestor wires. No public API can reconstruct omitted original bytes/IDs from aggregate graph counters. Fresh receivers retain real missing-parent/unsafe state.",
+    "Advisory book_title/selection/tombstone/source graph fields are validated and delivered intact through metadata callbacks, not persisted as invented revision entities. The host may retain the original input or copy metadata.",
+    "Outer JSON fields must follow unchanged G05 0.1.0 field order; this is not a general reordered-JSON importer. Wire bytes themselves retain their original whitespace/key order/escapes and parent identities.",
+    "Windows source-symlink creation was not exercised. All platforms reject nonregular directory input; POSIX source-symlink rejection was additionally exercised.",
+    "No host import UI, six-target product, physical-device, accessibility, performance or full-lossless-restoration acceptance."
+  ],
+  "retained_failures": [
+    {
+      "run_id": 40170943525,
+      "attempt": 1,
+      "source_sha": "7260e58b4d638b7ca5e8dcb43109a6604ca89f78",
+      "conclusion": "failure",
+      "details": "Linux/macOS 45 cases passed. Windows /W4 /WX C4805 rejected int-versus-bool safe-tombstone comparison before consumers ran. Strict evidence refused failed producer. Fixed comparison without relaxing warning policy.",
+      "artifacts": [
+        {
+          "id": 12590830167,
+          "name": "reader-annotation-import-evidence-40170943525-1",
+          "size_in_bytes": 1146,
+          "digest": "sha256:59549cb4d832414ed5ccbc1bfce56a5474cdffebf90db481336ccff05151c543",
+          "expires_at": "2027-01-23T06:57:04Z",
+          "expired": false
+        },
+        {
+          "id": 12590725262,
+          "name": "reader-annotation-import-macOS-40170943525-1",
+          "size_in_bytes": 2184416,
+          "digest": "sha256:26c6b2fb6476684a410e9f3c12196eb2c429ee0935d2e603a82242851d25c0ba",
+          "expires_at": "2027-01-23T06:57:04Z",
+          "expired": false
+        },
+        {
+          "id": 12590266108,
+          "name": "reader-annotation-import-Linux-40170943525-1",
+          "size_in_bytes": 2371854,
+          "digest": "sha256:1257e748bdd8af703e2d17e2f19d596ab6e94d6ab4df4098c02649ff643c4bc3",
+          "expires_at": "2027-01-23T06:57:04Z",
+          "expired": false
+        },
+        {
+          "id": 12590256225,
+          "name": "reader-annotation-import-Windows-40170943525-1",
+          "size_in_bytes": 151313,
+          "digest": "sha256:49a7d7734b79dca16a22094482ff1ffc433a94addcb7f726b293afac09f527d4",
+          "expires_at": "2027-01-23T06:57:04Z",
+          "expired": false
+        }
+      ]
+    },
+    {
+      "run_id": 40171324393,
+      "attempt": 1,
+      "source_sha": "6ba1dc485023cd22b4ca1c6015753d1805d00fa7",
+      "conclusion": "failure",
+      "details": "All three consumer jobs passed 50 cases. Strict evidence rejected Windows package manifest backslash member paths: no item named ai-import-stage/include\\\\reader_annotation_import.h. Corrected producer paths with as_posix(); no verifier assertion removed. Final candidate also added two impossible-graph negative cases.",
+      "artifacts": [
+        {
+          "id": 12590206980,
+          "name": "reader-annotation-import-Windows-40171324393-1",
+          "size_in_bytes": 2491452,
+          "digest": "sha256:1873a45680adde5640f1d9542432778a0022eca73811b91ac40674909ce63521",
+          "expires_at": "2027-01-23T07:03:06Z",
+          "expired": false
+        },
+        {
+          "id": 12589344702,
+          "name": "reader-annotation-import-evidence-40171324393-1",
+          "size_in_bytes": 1595,
+          "digest": "sha256:322245de85dcf60fba827c73d57c71ecdb77cb7d580a04d85e3df64b8214f280",
+          "expires_at": "2027-01-23T07:03:06Z",
+          "expired": false
+        },
+        {
+          "id": 12589209849,
+          "name": "reader-annotation-import-macOS-40171324393-1",
+          "size_in_bytes": 2206148,
+          "digest": "sha256:fe46ecbde3e454ebb8248906a208cb99817178c26085807b07c1668577dd6cfe",
+          "expires_at": "2027-01-23T07:03:06Z",
+          "expired": false
+        },
+        {
+          "id": 12589159783,
+          "name": "reader-annotation-import-Linux-40171324393-1",
+          "size_in_bytes": 2393658,
+          "digest": "sha256:f95f6a9d519ef00bb7c16dbf4288e84d012a50cfab357ebc60c4bc1ca40552ad",
+          "expires_at": "2027-01-23T07:03:06Z",
+          "expired": false
+        }
+      ]
+    }
+  ],
+  "problems": [],
+  "evidence_sources": "Read-only GitHub Actions job logs and REST run/job/artifact metadata; producer ZIP bytes were downloaded/unpacked/rehashed only by the strict Actions job."
 }

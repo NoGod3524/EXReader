@@ -82,3 +82,56 @@ producer jobs; unique nonempty unexpired artifact ID/name/digest; recomputed ZIP
 size/SHA; unique ZIP/JSON members; exact case set; installed binary/package
 hashes and frozen original-module tree identities. Executable verifier rejection
 cases are run, not just described. See validation JSON for actual final results.
+
+## Verified desktop evidence — full acceptance remains false
+
+Tested source: `9c7e276f13f42cb61a32507c36d1c22c4489bd01`.
+[Actions run 40171486469](https://github.com/NoGod3524/EXReader/actions/runs/40171486469),
+attempt 1, completed successfully on 2026-10-25. Ubuntu 22.04, Windows 2022 and macOS 15
+installed C/C++ consumer jobs each passed **52 named cases** (156 platform-case
+executions). Strict evidence job 121104074407 passed **17 executable verifier
+rejection cases** and authenticated source/run/attempt, successful producer jobs,
+unique artifact identities, recomputed producer ZIP bytes/digests, exact named
+cases, frozen original module trees and actual installed binary/package bytes.
+
+The original TXT export imported **26 exact head wires** and reported **9 omitted
+non-head revisions**. Tests preserve that fresh-target missing-parent gap, then
+prove the original graph returns only after the original ancestor wires arrive
+through public receive. No history is synthesized and no unsafe head is selected.
+Actual process termination after the first committed item, reopen/replay,
+cancellation/cursor, callback exception, source replacement after preflight,
+and real receiving-storage failures all ran. Malformed-file tests use an
+existing target missing most incoming heads, so eager partial mutation would be
+visible, rather than testing only no-op duplicate receives.
+
+Artifact IDs/names/bytes/API digests/expiry, recomputed producer ZIP SHA256,
+C/C++ consumer identities, installed importer/original exporter archives,
+module tree IDs, all 52 case names and all 17 verifier-negative names are recorded
+in [validation JSON](validation/reader-annotation-import.json). The summary
+artifact's own identity comes from GitHub API/upload metadata; it is not
+recursively re-downloaded by the same job that produced it.
+
+Retained failures, with original expectations and artifacts preserved:
+
+- Run 40170943525 / `7260e58b4d638b7ca5e8dcb43109a6604ca89f78`:
+  Linux/macOS 45 cases passed; Windows strict MSVC rejected the safe-tombstone
+  comparison with C4805 (int versus bool). Corrected the comparison without
+  weakening `/W4 /WX`; strict evidence correctly refused the failed producer.
+- Run 40171324393 / `6ba1dc485023cd22b4ca1c6015753d1805d00fa7`:
+  all three consumers passed 50 cases, but strict evidence rejected Windows
+  manifest backslashes as nonexistent ZIP member paths. Corrected producer
+  paths to portable POSIX member names, retaining all verifier assertions.
+  The final candidate additionally rejects inconsistent graph flags and
+  impossible aggregate parent counts.
+
+Remaining interface/validation limits: outer fields require G05's original
+order; advisory metadata has no lossless product-write representation; omitted
+ancestry cannot be restored from this JSONL alone. Windows source-symlink
+creation was **not exercised** (regular-file rejection used a directory; POSIX
+also exercised symlink rejection). No host UI, six-target product, physical
+hardware, accessibility or performance grant. **accepted=false**, even though
+the measured desktop exact-head importer and its strict evidence passed.
+
+The separate evidence commit changes only this document and its validation JSON
+with `[skip ci]`; implementation, consumers and workflow remain exactly the
+tested source. The handoff supplies the resulting evidence HEAD explicitly.
