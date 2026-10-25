@@ -50,12 +50,13 @@ def main():
     def observed(section='directory'):
         value=configparser.ConfigParser(interpolation=None);value.read(host.observe)
         return dict(value[section]) if value.has_section(section) else {}
-    def wait(predicate=lambda value:True,idle=True,seconds=30):
+    scan_inputs=[]
+    def wait(predicate=lambda value:True,idle=True,seconds=30,interval=.02):
         end=time.monotonic()+seconds
         while time.monotonic()<end:
             assert host.process.poll() is None,'host exited';value=observed()
             if value and (not idle or (value['running']=='0' and not host.read()['busy'] and not host.read()['saving'])) and predicate(value):return value
-            time.sleep(.02)
+            time.sleep(interval)
         raise TimeoutError('directory: '+repr(observed())+' host: '+repr(host.read()))
     def element(name,roles=None):
         end=time.monotonic()+20
@@ -129,8 +130,11 @@ def main():
         click('Full EPUB CFI',{'text'});host.key('ctrl+a');host.paste((args.fixtures/name).read_text());return action('Return')
     def active_directory():
         command('xdotool','windowactivate','--sync',host.window)
-        command('xdotool','key','--clearmodifiers','--delay','0','ctrl+shift+t')
-        return wait(lambda v:v['phase']=='2' and int(v['polls'])>0,idle=False,seconds=15)
+        # Observe the real operation while the native input process is still
+        # dispatching, instead of starting the observer after it returns.
+        scan_inputs.append(subprocess.Popen(['xdotool','key','--clearmodifiers','--delay','0','ctrl+shift+t'],
+                                            stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True))
+        return wait(lambda v:v['phase']=='2' and int(v['polls'])>0,idle=False,seconds=15,interval=.001)
     try:
         assert bus.init()[0];launch();app=bus.wait_application('exreader-linux');wait()
         book=import_book(args.fixtures/'nav3.epub');host.key('F7','ctrl+Home','ctrl+shift+Right','F11');host.paste('Existing native directory note');host.key('F8');host.wait(lambda v:v['notes']==1)
@@ -181,6 +185,13 @@ def main():
         record('all_navigation_original_bytes_are_unchanged',all(hashlib.sha256(Path(name).read_bytes()).hexdigest()==sha for name,sha in originals.items()))
         report.update(navigation_scope_passed=True,count=len(checks),passed=len(checks),failed=0)
     finally:
+        report['scan_input_processes']=[]
+        for trigger in scan_inputs:
+            try:_,error=trigger.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                trigger.kill();_,error=trigger.communicate()
+            report['scan_input_processes'].append(dict(pid=trigger.pid,returncode=trigger.returncode,error=error))
+            if trigger.returncode!=0:report['navigation_scope_passed']=False
         if not report['navigation_scope_passed']:
             report['host_returncode_before_cleanup']=host.process.poll() if host.process else None
             report['failure_host']=host.read() if host.observe.exists() else {}
