@@ -13,12 +13,19 @@
       "attempt": 1,
       "source": "1054892f9857abe2fb3e74cbbec5c8821522a53f",
       "accepted": false,
+      "conclusion": "failure",
       "windows_rounds": 2,
       "launches_per_round": 30,
       "planned_rows_per_round": 990,
       "non_ok_rows_per_round": 910,
       "failed_launches_per_round": 22,
-      "cause": "adapter treated initially enabled controls and zero/partial rows as completed shelf; extra refusal removed"
+      "cause": "adapter treated initially enabled controls and zero/partial rows as completed shelf; extra refusal removed",
+      "gtk_round_1": {"rows": 358, "non_ok": 6, "disallowed_non_ok": 4,
+        "failures": "three import-worker-start timeouts and one page-turn timeout"},
+      "gtk_round_2": {"rows": 384, "non_ok": 0},
+      "strict_job_id": 121305031512,
+      "strict_summary_artifact_id": 12615284710,
+      "actual_zip_authentication": "six same-run build and round ZIPs authenticated before aggregation refused"
     }
   ],
   "budget_approved": false,

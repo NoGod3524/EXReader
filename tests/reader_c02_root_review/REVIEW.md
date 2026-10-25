@@ -58,3 +58,6 @@ Windows producer/apps仍绑定原固定0889树，GTK producer仍为57203a52的�
   `CreateWindow` 创建的按钮初始enabled，实际 `ShowWindow` 后才 `reload_shelf` 并启动product修复；因此初始enabled/零行
   或部分行不能证明加载完成。本分支删除了这项代理谓词，继续完整调用原>=50行/ready判定，只保留query/reading真实矛盾。
   新的协议用例明确要求hidden、零行、1行、legacy、disabled初始化均不得被当成完成后的矛盾；失败surface也逐次保留。
+  整轮最终failure，strict实际下载认证全部6个build/round ZIP后拒绝两轮Windows首屏收据。
+  GTK round1另有真实采样失败：358 rows/6 non-ok，其中4项不被旧规则允许（3次import worker start超时、1次page turn超时），
+  其余2项为原规则允许的resize not_observed；GTK round2为384 rows/0 non-ok。GTK原采样器未改动，也未把这些失败过滤掉。
