@@ -97,7 +97,7 @@ jobs:
           cmake --install build/account-reading-state
           cmake -S tests/reader_reading_v2/consumer -B build/account-reading-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
           cmake --build build/account-reading-probe --parallel 4
-          cmake -S tests/reader_gtk_receive -B build/account-inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake -S tests/reader_gtk_receive -B build/account-inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
           cmake --build build/account-inspect --parallel 4
           python3 tests/reader_reading_state/make_fixtures.py build/account-receive-fixtures
           python3 -m py_compile tests/linux_host/check_account_ui.py tests/linux_host/receive_checks.py
@@ -155,7 +155,7 @@ jobs:
           cmake -S apps/reader/navigation -B build/gtk-navigation-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
           cmake --build build/gtk-navigation-module --parallel 4
           cmake --install build/gtk-navigation-module
-          cmake -S tests/reader_navigation/consumer -B build/gtk-navigation-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake -S tests/reader_navigation/consumer -B build/gtk-navigation-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
           cmake --build build/gtk-navigation-consumer --parallel 4
           python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures
           python3 tests/reader_navigation/check_navigation.py --probe build/gtk-navigation-consumer/navigation-probe --c-consumer build/gtk-navigation-consumer/navigation-c-consumer --fixtures build/gtk-navigation-fixtures --installed "$ACCOUNT_PREFIX" --output build/gtk-navigation-installed
@@ -324,7 +324,7 @@ jobs:
             python3 tools/check_linux_host.py --payload build/account-package/EXReader-Linux --output build/account-original
             python3 tests/reader_catalog/check_gtk_product.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --output build/account-product-ui
             python3 tools/check_linux_host_regressions.py --payload build/account-package/EXReader-Linux --consumer build/account-desktop/gtk-host --output build/account-regressions
-            python3 tests/reader_gtk_preferences/retain_fixed.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --product-evidence build/account-product-ui --output build/account-fixed-ui
+            python3 tests/reader_gtk_preferences/retain_fixed.py --sdk-version 3.41.0 --payload build/account-package/EXReader-Linux --original-evidence build/account-original --product-evidence build/account-product-ui --output build/account-fixed-ui
             python3 tests/linux_host/check_shelf_ui.py --payload build/account-package/EXReader-Linux --output build/account-shelf
             python3 tests/linux_host/check_metadata_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-metadata-ui
             python3 tests/linux_host/check_collections_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-collections-ui
