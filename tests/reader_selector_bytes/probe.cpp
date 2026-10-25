@@ -21,6 +21,7 @@ static const std::string book="pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753
 static const std::string bookmark(32,'b'),highlight(32,'c');
 static unsigned sequence=100;
 static void check(bool pass,const std::string &name){if(!pass)throw std::runtime_error(name);std::cout<<"PASS "<<name<<std::endl;}
+static void check(bool pass,const char *name){check(pass,std::string(name));}
 static std::string id(){char buffer[33];std::snprintf(buffer,sizeof(buffer),"%032x",sequence++);return buffer;}
 static std::string read(const fs::path &p){std::ifstream f(p,std::ios::binary);if(!f)throw std::runtime_error("read "+p.u8string());std::ostringstream s;s<<f.rdbuf();return s.str();}
 static void write(const fs::path &p,const std::string &s){std::ofstream f(p,std::ios::binary);f.write(s.data(),(std::streamsize)s.size());if(!f)throw std::runtime_error("write "+p.u8string());}
@@ -108,7 +109,8 @@ static void view(history &h,bool pending_parent){
 }
 static void receive(history &h,const std::string &wire){reader_revision_info i{};reader_revision_error e{};int created=0;
   check(reader_revision_validate_raw_v3(h.store,wire.data(),wire.size(),nullptr,&i,&e)==READER_REV_OK,e.message);
-  check(reader_revision_receive_raw_v3(h.store,wire.data(),wire.size(),i.sha256,&i,&created,&e)==READER_REV_OK,e.message);
+  std::string expected=i.sha256;
+  check(reader_revision_receive_raw_v3(h.store,wire.data(),wire.size(),expected.c_str(),&i,&created,&e)==READER_REV_OK,e.message);
 }
 static void resolve(history &h,fixed &pdf,const std::string &wire){
   record r;decode(h,wire,r);exr_anchor_match match{};size_t page=SIZE_MAX;reader_rs_error e{};
@@ -150,7 +152,7 @@ static void accept(fixed &pdf,const fs::path &work,bool reopening){
   std::cout<<"PASS "<<(reopening?"third process reopen":"second process receive")<<std::endl;
 }
 static void protocol(const fs::path &work,const fs::path &input){history h(work/"protocol.sqlite");auto wire=read(input);reader_revision_info i{};reader_revision_error e{};auto status=reader_revision_validate_raw_v3(h.store,wire.data(),wire.size(),nullptr,&i,&e);std::cout<<"STATUS "<<status<<std::endl;}
-static void receive_wire(const fs::path &work,const fs::path &input){history h(work/"graph.sqlite");auto wire=read(input);reader_revision_info i{};reader_revision_error e{};int made=0;auto status=reader_revision_validate_raw_v3(h.store,wire.data(),wire.size(),nullptr,&i,&e);if(status==READER_REV_OK)status=reader_revision_receive_raw_v3(h.store,wire.data(),wire.size(),i.sha256,&i,&made,&e);std::cout<<"STATUS "<<status<<std::endl;
+static void receive_wire(const fs::path &work,const fs::path &input){history h(work/"graph.sqlite");auto wire=read(input);reader_revision_info i{};reader_revision_error e{};int made=0;auto status=reader_revision_validate_raw_v3(h.store,wire.data(),wire.size(),nullptr,&i,&e);std::string expected=i.sha256;if(status==READER_REV_OK)status=reader_revision_receive_raw_v3(h.store,wire.data(),wire.size(),expected.c_str(),&i,&made,&e);std::cout<<"STATUS "<<status<<std::endl;
   if(status==READER_REV_OK){reader_revision_state g{};reader_revision_heads_raw_v3(h.store,i.entity_kind,i.entity_key,nullptr,nullptr,&g,&e);std::cout<<"GRAPH "<<g.heads<<" "<<g.missing_parents<<" "<<g.foreign_parents<<" "<<g.projection_safe<<std::endl;}}
 static void nullable(fixed &pdf,const fs::path &work){
   history h(work/"nullable.sqlite");reader_rs_envelope env{};env.revision_id="00000000000000000000000000000055";env.entity_kind="annotation";env.annotation_id=bookmark.c_str();env.operation="put";env.book_key=book.c_str();env.parser_version=exr_version();env.note_text="nullable expression";
