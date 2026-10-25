@@ -169,3 +169,15 @@ and failed actual atomic cases. Collection stayed skipped.
 Push runs the cheap protocol job. Manual dispatch defaults to `mode=protocol`;
 only explicit `mode=collect` runs the authenticated collection after protocol
 passes. No long producer workflow is launched by this collector.
+
+`mode=source-preflight` is a separate cheap dispatch for the final common
+branch. It invokes the complete composition, GTK, Android130, all seven Apple,
+Windows and upper-collector source guards with full Git history, without a
+native build. Each platform guard runs even if an earlier guard fails, so the
+same run exposes all caller-pin conflicts. The actual preflight is deferred
+until the Windows caller is merged and every source pin is explicitly updated.
+Source `4643354a61c8b46afb4e788681c99f109fb6fe50`,
+[run 40194776632](https://github.com/NoGod3524/EXReader/actions/runs/40194776632)
+attempt 1, authenticated the workflow through Actions and passed the existing
+82-case protocol job. The source-preflight job stayed skipped on this push;
+this run does not prove the six source guards passed.
