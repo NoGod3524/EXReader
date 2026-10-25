@@ -44,3 +44,20 @@ UI execution; hardware keyboards/DPAD on mobile; repeated submit across all dial
 full modal focus trapping in every surface; NVDA/Narrator/Orca/VoiceOver/TalkBack speech.
 No missing surface is substituted with a private API. See `actions.md` for static
 mapping, context, focus promises and explicit unknowns.
+
+## Retained first failure and expanded second run
+
+Run 40215158098 / attempt 1, harness 43f2d96df2e43d4e31a041ae37b7881dd9297115:
+guard passed, GTK job 121234630458 and Windows job 121234630520 failed before
+native execution. Artifact metadata authenticated, but Python forwarded an API bearer
+header onto the signed storage redirect and storage returned HTTP 401. The next harness
+strips that header only across origins, leaving ZIP size/digest/expiry checks unchanged.
+Zero native actions in the first run; original job logs remain the failure record.
+
+Second run also attempts Android original search/navigation native UI on API34 x86_64,
+plus separate macOS/iPhone/iPad native SwiftUI representative paths. Apple uses unchanged
+project generator, newly built actual target app, and original authenticated SDK/product
+artifact from 40203714083. The SDK producer is 72c6, target app macOS is 15dab and mobile
+72c6; no collective success is inherited from the failed producer run. All Apple builds
+explicitly disable signing. If macOS XCTest requires signing, its refusal is retained,
+not bypassed. Native query typing tests focused input; no external keyboard grant.

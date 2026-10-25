@@ -1,16 +1,27 @@
 """Download/authenticate original producer ZIPs only inside Actions."""
-import datetime, hashlib, json, os, pathlib, sys, urllib.request, zipfile
+import datetime, hashlib, json, os, pathlib, sys, urllib.request, urllib.parse, zipfile
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
 CONFIG = {
+ 'android': (40207467982,12604537792,'4a04a9cc74dde67f755c87e87b278d63a254a3ac',133598571,'9ea2858145313296d39792d867794db1be687eb70dec38f155dcd1dfe156bf06'),
+ 'macos': (40203714083,12603310238,'72c6bbdd14ebf3be453fa7f0da81119d52675eb5',21887403,'9d454bb6a9ba9d354562dc5316059b1857277b45ffbf69b74a576fe040dc2150'),
+ 'iphone': (40203714083,12603156296,'72c6bbdd14ebf3be453fa7f0da81119d52675eb5',21891156,'538d6c2888505d6398e1ce7294f8178de0008d0ddee119d969025cb278845cc1'),
+ 'ipad': (40203714083,12603156296,'72c6bbdd14ebf3be453fa7f0da81119d52675eb5',21891156,'538d6c2888505d6398e1ce7294f8178de0008d0ddee119d969025cb278845cc1'),
  'windows': (40201283788,12601764928,'eab342ef456be4a8a1811e5249e3c217d906ce8a',169964880,'4e158bdda8c18561b972b85d22ea8e71c6c6dcdc997b3f23a55747fc195954d3'),
  'gtk': (40206458217,12604604561,'57203a52aee439be5194ee0a4b13563a975e8daf',112659381,'8d6c52593dd2017a6e13ffc2cf75fd3fd4546cdf3a5179b0da5afd55ac1fb685')}
+class SafeRedirect(urllib.request.HTTPRedirectHandler):
+ def redirect_request(self, req, fp, code, msg, headers, newurl):
+  new=super().redirect_request(req,fp,code,msg,headers,newurl)
+  if urllib.parse.urlparse(req.full_url).netloc != urllib.parse.urlparse(newurl).netloc:
+   new.remove_header('Authorization')
+  return new
 def request(path):
  req=urllib.request.Request('https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
- return urllib.request.urlopen(req).read()
+ return urllib.request.build_opener(SafeRedirect()).open(req).read()
 def main():
  host=sys.argv[1]; run,aid,sha,size,digest=CONFIG[host]
  out=pathlib.Path('build/d06');out.mkdir(parents=True,exist_ok=True)
  meta=json.loads(request('/actions/artifacts/'+str(aid)))
+ (out/(host+'-producer-metadata.json')).write_text(json.dumps(meta,indent=2))
  assert not meta['expired'] and meta['workflow_run']['id']==run and meta['workflow_run']['head_sha']==sha
  assert meta['size_in_bytes']==size and meta['digest']=='sha256:'+digest
  assert datetime.datetime.fromisoformat(meta['expires_at'].replace('Z','+00:00'))>datetime.datetime.now(datetime.timezone.utc)

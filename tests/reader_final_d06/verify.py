@@ -5,7 +5,7 @@ run=os.environ['GITHUB_RUN_ID'];attempt=os.environ['GITHUB_RUN_ATTEMPT'];sha=os.
 report=dict(harness_sha=sha,run_id=run,attempt=attempt,artifacts=[],platforms={},audit_completed=False,accepted=False,keyboard_accepted=False,complete_product=False,errors=[])
 try:
  artifacts=json.loads(request('/actions/runs/'+run+'/artifacts'))['artifacts']
- for host in ('source','windows','gtk'):
+ for host in ('source','windows','gtk','android','macos','iphone','ipad'):
   name='d06-'+host+'-'+run+'-'+attempt;matches=[a for a in artifacts if a['name']==name];assert len(matches)==1,(name,len(matches))
   a=matches[0];assert not a['expired'] and a['workflow_run']['head_sha']==sha
   assert datetime.datetime.fromisoformat(a['expires_at'].replace('Z','+00:00'))>datetime.datetime.now(datetime.timezone.utc)
@@ -21,9 +21,7 @@ try:
     data=z.read(candidates[0]);assert len(data)==value['bytes'] and hashlib.sha256(data).hexdigest()==value['sha256'],path
    report['platforms'][host]=e
  report['audit_completed']=True
- for host in ('macOS','iPhone','iPad','Android'):
-  report['platforms'][host]=dict(mapping_completed=True,executed_actions=[],passed=[],failed=[],pending=['native event/focus execution','external keyboard','screen reader'],keyboard_accepted=False)
- assert all(report['platforms'][host]['accepted'] for host in ('windows','gtk')),'Native execution failures retained, no acceptance'
+ assert all(report['platforms'][host]['accepted'] for host in ('windows','gtk','android','macos','iphone','ipad')),'Native execution failures retained, no acceptance'
 except Exception as error:
  report['errors'].append(type(error).__name__+': '+str(error));raise
 finally:

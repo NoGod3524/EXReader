@@ -31,6 +31,10 @@ jobs:
         include:
           - {host: windows, os: windows-2022, target: eab342ef456be4a8a1811e5249e3c217d906ce8a}
           - {host: gtk, os: ubuntu-22.04, target: 57203a52aee439be5194ee0a4b13563a975e8daf}
+          - {host: android, os: ubuntu-latest, target: 4a04a9cc74dde67f755c87e87b278d63a254a3ac}
+          - {host: macos, os: macos-15, target: 15dab6b2270dc296ed6239db67ced2e22d255e65}
+          - {host: iphone, os: macos-15, target: 72c6bbdd14ebf3be453fa7f0da81119d52675eb5}
+          - {host: ipad, os: macos-15, target: 72c6bbdd14ebf3be453fa7f0da81119d52675eb5}
     runs-on: ${{matrix.os}}
     timeout-minutes: 45
     defaults:
@@ -56,6 +60,25 @@ jobs:
       - name: Execute real Windows default and compact native action paths
         if: matrix.host == 'windows'
         run: python3 tests/reader_final_d06/run_desktop.py windows
+      - name: Enable runner-local Android hardware virtualization
+        if: matrix.host == 'android'
+        run: sudo chmod 666 /dev/kvm
+      - name: Execute unchanged Android native search and navigation UI drivers
+        if: matrix.host == 'android'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: python3 tests/reader_final_d06/run_android.py
+      - name: Install original Apple generator dependency
+        if: runner.os == 'macOS'
+        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document
+      - name: Execute unsigned native Apple representative actions
+        if: runner.os == 'macOS'
+        run: python3 tests/reader_final_d06/run_apple.py ${{matrix.host}}
       - name: Execute real GTK compact native action paths with focus observations
         if: matrix.host == 'gtk'
         run: |
@@ -74,6 +97,7 @@ jobs:
             build/d06/**
             !build/d06/*-producer/**
             !build/d06/*-producer.zip
+            !build/d06/*-derived/**
           if-no-files-found: error
   verify:
     needs: [guard, native]
