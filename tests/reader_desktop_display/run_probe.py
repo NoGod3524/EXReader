@@ -15,12 +15,52 @@ p = argparse.ArgumentParser()
 p.add_argument('--platform', choices=['linux','windows'], required=True)
 p.add_argument('--binary', required=True)
 p.add_argument('--output', required=True)
-p.add_argument('--mode', choices=['native','real','termination'], required=True)
+p.add_argument('--mode', choices=['native','real','termination','real_termination'], required=True)
 a = p.parse_args()
 root = Path(a.output); root.mkdir(parents=True, exist_ok=True)
 exe = str(Path(a.binary).resolve())
 def record(name, result, detail):
     return {'case':name, 'result':result, 'detail':detail, 'module':os.environ['GITHUB_SHA']}
+if a.mode == 'real_termination':
+    import dbus
+    import concurrent.futures
+    session = dbus.SessionBus()
+    try:
+        manager = dbus.Interface(session.get_object('org.gnome.SessionManager','/org/gnome/SessionManager'), 'org.gnome.SessionManager')
+        baseline = set(map(str, manager.GetInhibitors()))
+    except dbus.exceptions.DBusException:
+        records = [record('real_service_process_cleanup','UNAVAILABLE','No actual GNOME session manager; deterministic fixture cannot substitute')]
+    else:
+        child = subprocess.Popen([exe,'--child'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            with concurrent.futures.ThreadPoolExecutor(1) as pool:
+                future=pool.submit(child.stdout.readline)
+                try: ready=future.result(timeout=15)
+                except concurrent.futures.TimeoutError:
+                    child.kill(); ready=future.result(timeout=5)
+            observed=set(map(str,manager.GetInhibitors()))
+            added=observed-baseline
+            idle_only=False
+            if len(added)==1:
+                inhibitor=dbus.Interface(session.get_object('org.gnome.SessionManager',next(iter(added))),'org.gnome.SessionManager.Inhibitor')
+                idle_only=int(inhibitor.GetFlags())==8 and str(inhibitor.GetAppId())=='org.exreader.DesktopDisplay'
+            child.kill(); code=child.wait(timeout=10)
+            after=observed
+            stop=time.monotonic()+5
+            while time.monotonic()<stop:
+                after=set(map(str,manager.GetInhibitors()))
+                if not (after & added): break
+                time.sleep(.05)
+            passed=ready.startswith(b'READY ') and int(ready.split()[1])>0 and code!=0 and idle_only and len(added)==1 and not (after & added) and baseline<=after
+            records=[record('real_service_process_cleanup','PASS' if passed else 'FAIL',f'actual GNOME session; pid={child.pid}; {ready.decode().strip()}; added={sorted(added)}; remaining={sorted(after)}; idle_only={idle_only}; exit={code}')]
+            (root/'real-child.stderr').write_bytes(child.stderr.read())
+        finally:
+            if child.poll() is None: child.kill(); child.wait(timeout=5)
+    (root/'real_termination.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in records))
+    code=0 if all(x['result']!='FAIL' for x in records) else 1
+    (root/'real_termination.exit').write_text(str(code))
+    print((root/'real_termination.jsonl').read_text())
+    sys.exit(code)
 if a.mode != 'termination':
     command = [exe] + (['--real'] if a.mode == 'real' else [])
     r = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=90)

@@ -55,8 +55,12 @@ int main(int argc,char **argv) {
   gtk_widget_hide(w); pump(100); result("hidden_releases",!snapshot(l).native_identity && count("Count")==0);
   focus(w); w2=window(); focus(w2); result("window_switch_releases",!snapshot(l).native_identity);
   o.native_window=w2; exr_display_create(&o,&b); exr_display_set_active(b,1); pump(200); result("second_window_acquires",snapshot(b).state==EXR_DISPLAY_OK);
+  /* Reader 1 is no longer the host's active reading scene. Its prior request
+     must not legitimately reacquire when destroying reader 2 restores focus. */
+  exr_display_set_active(l,0);
   gtk_widget_destroy(w2); pump(100); result("destroy_releases",snapshot(b).state==EXR_DISPLAY_WINDOW_GONE && count("Count")==0); exr_display_close(b);
-  focus(w); pump(200); host_handler=g_signal_connect(w,"hide",G_CALLBACK(host_hide),l); gtk_widget_hide(w); pump(100);
+  focus(w); result("inactive_reader_stays_released",!snapshot(l).native_identity && count("Count")==0);
+  exr_display_set_active(l,1); pump(200); host_handler=g_signal_connect(w,"hide",G_CALLBACK(host_hide),l); gtk_widget_hide(w); pump(100);
   result("native_callback_reentry",reentered && snapshot(l).state==EXR_DISPLAY_CANCELLED); g_signal_handler_disconnect(w,host_handler);
   focus(w); mode("late"); exr_display_set_active(l,1); pump(100); a=snapshot(l); exr_display_cancel(l); pump(700); z=snapshot(l);
   result("late_cancel_cookie_released",a.pending && z.state==EXR_DISPLAY_CANCELLED && z.generation>a.generation && !z.native_identity && count("Count")==0);

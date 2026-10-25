@@ -30,7 +30,7 @@ def validate_raw(root, platform, sha):
     if set(cases)!=set(CASES[platform]): raise ValueError('missing/extra named cases: '+str(set(cases)^set(CASES[platform])))
     for p in (root/'raw').glob('*.exit'):
         if p.read_text().strip()!='0': raise ValueError('nonzero raw exit '+p.name)
-    required={'native.exit','termination.exit','consumer_c.exit','consumer_cpp.exit'} | ({'real.exit'} if platform=='linux' else set())
+    required={'native.exit','termination.exit','consumer_c.exit','consumer_cpp.exit'} | ({'real.exit','real_termination.exit'} if platform=='linux' else set())
     if not required <= {p.name for p in (root/'raw').glob('*.exit')}: raise ValueError('missing original exit')
     return cases
 

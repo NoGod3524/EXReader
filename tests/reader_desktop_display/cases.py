@@ -4,4 +4,5 @@ CASES = {
  'windows': COMMON + '''enable_display_request real_handle_identity cancel_own_handle_only destroyed_native_rejected physical_screen_energy installed_c_abi installed_cpp_abi real_process_termination process_native_cleanup'''.split(),
  'linux': COMMON + '''gtk_available fixture_cookie_identity idle_only_flag cancel_own_cookie_only late_cancel_cookie_released late_generation_retry denied_unavailable zero_cookie_unavailable service_disconnect_unavailable missing_service_unavailable reconnect_requires_retry explicit_reconnect timeout_disconnect_cleans_cookie late_destroy_cleans_cookie close_pending_sender_cleanup real_session_service wayland physical_screen_energy installed_c_abi installed_cpp_abi real_process_termination process_native_cleanup'''.split()
 }
-UNAVAILABLE = {'windows': {'physical_screen_energy','process_native_cleanup'}, 'linux': {'real_session_service','wayland','physical_screen_energy'}}
+CASES['linux'] += ['inactive_reader_stays_released', 'real_service_process_cleanup']
+UNAVAILABLE = {'windows': {'physical_screen_energy','process_native_cleanup'}, 'linux': {'real_session_service','wayland','physical_screen_energy','real_service_process_cleanup'}}

@@ -38,7 +38,7 @@ def validate(meta, payload, platform, source, run, attempt, job, module_tree, no
         require(sum(i.file_size for i in infos)<=128*1024*1024,'uncompressed limit')
         for i in infos:
             p=PurePosixPath(i.filename)
-            require(not p.is_absolute() and '..' not in p.parts and '\\' not in i.filename and not i.is_dir() and ((i.external_attr>>16)&0o170000)!=0o120000,'unsafe member')
+            require(not p.is_absolute() and '..' not in p.parts and '\\' not in i.filename and p.as_posix()==i.filename and not i.is_dir() and ((i.external_attr>>16)&0o170000)!=0o120000,'unsafe member')
         data={n:z.read(n) for n in names}
     r=strict_json(data['report.json'].decode())
     require(r['schema']==1 and r['source_sha']==source and r['run_id']==run and r['run_attempt']==attempt and r['platform']==platform,'wrong report source/run/attempt/platform')
@@ -73,6 +73,30 @@ def request(url, binary=False):
         # Signed artifact URL receives NO GitHub authorization header.
         with urllib.request.urlopen(e.headers['Location'],timeout=120) as r: b=r.read()
     return b if binary else strict_json(b.decode())
+
+def select_original(jobs, artifacts, platform, run, attempt):
+    ids=[a['id'] for a in artifacts]
+    require(len(ids)==len(set(ids)), 'duplicate artifact IDs')
+    selected=[j for j in jobs if j['name']==NAMES[platform]]
+    require(len(selected)==1, 'missing/duplicate native job')
+    selected_art=[a for a in artifacts if a['name']==f'd07-{platform}-{run}-{attempt}']
+    require(len(selected_art)==1, 'missing/duplicate unique artifact')
+    return selected[0], selected_art[0]
+
+def collection_mutations(jobs, artifacts, run, attempt):
+    passed=[]
+    _, original=select_original(jobs,artifacts,'linux',run,attempt)
+    for name, js, ars in [
+        ('duplicate_artifact_id',jobs,artifacts+[copy.deepcopy(original)]),
+        ('duplicate_artifact_name',jobs,artifacts+[dict(original,id=max(a['id'] for a in artifacts)+1)]),
+        ('missing_native_artifact',jobs,[a for a in artifacts if a['id']!=original['id']]),
+        ('duplicate_upstream_job',jobs+[next(j for j in jobs if j['name']==NAMES['linux'])],artifacts),
+        ('missing_upstream_job',[j for j in jobs if j['name']!=NAMES['linux']],artifacts),
+    ]:
+        try: select_original(js,ars,'linux',run,attempt)
+        except ValueError: passed.append(name); continue
+        raise ValueError('negative collection verifier accepted '+name)
+    return passed
 
 def mutations(meta,payload,platform,source,run,attempt,job,tree):
     passed=[]
@@ -128,15 +152,13 @@ def main():
     jobs=request(f'{base}/runs/{run}/attempts/{attempt}/jobs?per_page=100')['jobs']
     artifacts=request(f'{base}/runs/{run}/artifacts?per_page=100')['artifacts']
     require(len(jobs)<100 and len(artifacts)<100,'unhandled pagination')
-    ids=[a['id'] for a in artifacts]; require(len(ids)==len(set(ids)),'duplicate artifact IDs')
     tree=subprocess.check_output(['git','rev-parse',source+':extras/desktop-reader-display'],text=True).strip()
-    out={'source_sha':source,'run_id':run,'run_attempt':attempt,'module_tree':tree,'artifacts':[],'negative_cases':{}}
+    out={'source_sha':source,'run_id':run,'run_attempt':attempt,'module_tree':tree,'artifacts':[],'negative_cases':{'collections':collection_mutations(jobs,artifacts,run,attempt)}}
     for platform in NAMES:
-        selected=[j for j in jobs if j['name']==NAMES[platform]]; require(len(selected)==1,'missing/duplicate native job')
-        selected_art=[a for a in artifacts if a['name']==f'd07-{platform}-{run}-{attempt}']; require(len(selected_art)==1,'missing/duplicate unique artifact')
-        m=selected_art[0]; b=request(f'{base}/artifacts/{m["id"]}/zip',True)
-        r=validate(m,b,platform,source,run,attempt,selected[0],tree)
-        out['negative_cases'][platform]=mutations(m,b,platform,source,run,attempt,selected[0],tree)
-        out['artifacts'].append({'platform':platform,'job_id':selected[0]['id'],'id':m['id'],'name':m['name'],'size_in_bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'expires_at':m['expires_at'],'actual_binaries':{n:r['files'][n] for n in r['actual_binaries']},'results':{v:sum(c['result']==v for c in r['cases'].values()) for v in ['PASS','UNAVAILABLE']},'capabilities':r['capabilities']})
+        job,m=select_original(jobs,artifacts,platform,run,attempt)
+        b=request(f'{base}/artifacts/{m["id"]}/zip',True)
+        r=validate(m,b,platform,source,run,attempt,job,tree)
+        out['negative_cases'][platform]=mutations(m,b,platform,source,run,attempt,job,tree)
+        out['artifacts'].append({'platform':platform,'job_id':job['id'],'id':m['id'],'name':m['name'],'size_in_bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'expires_at':m['expires_at'],'actual_binaries':{n:r['files'][n] for n in r['actual_binaries']},'results':{v:sum(c['result']==v for c in r['cases'].values()) for v in ['PASS','UNAVAILABLE']},'capabilities':r['capabilities']})
     Path('authenticated.json').write_text(json.dumps(out,indent=2)+'\n'); print(json.dumps(out,indent=2))
 if __name__=='__main__': main()

@@ -82,8 +82,10 @@ jobs:
             dpkg-query -W gnome-session-bin libgtk-3-0 > evidence/raw/real-packages.txt
             /usr/bin/python3 tests/reader_desktop_display/run_probe.py --platform linux --binary evidence/bin/display_probe --output evidence/raw --mode real
             code=$?
+            /usr/bin/python3 tests/reader_desktop_display/run_probe.py --platform linux --binary evidence/bin/display_probe --output evidence/raw --mode real_termination
+            termination=$?
             kill "$session" "$wm" 2>/dev/null || true
-            exit "$code"
+            test "$code" = 0 && test "$termination" = 0
           '
       - name: Linux deterministic native-window and D-Bus fault cases
         if: runner.os == 'Linux'
