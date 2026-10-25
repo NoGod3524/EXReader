@@ -51,7 +51,7 @@ contract=Path('build/d10-contract.json')
 if contract.exists(): shutil.copy2(contract,out/contract.name)
 overlap=Path('build/overlap-regression.json')
 if overlap.exists(): shutil.copy2(overlap,out/'overlap-regression.json')
-for name in ('destination.txt','normal-content-size.txt','large-content-size.txt','keyboard-ui-mode.txt','appearance-service-preparation.json','make_xcodeproj.rb','appearance.jsonl'):
+for name in ('destination.txt','normal-content-size.txt','large-content-size.txt','keyboard-ui-mode.txt','appearance-service-preparation.json','make_xcodeproj.rb','appearance.jsonl','clean-startup.json'):
     if (root/name).exists(): shutil.copy2(root/name,out/name)
 project=root/'project/EXReaderHost.xcodeproj/project.pbxproj'
 review_macros=None

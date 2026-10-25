@@ -38,8 +38,23 @@ if [ "$platform" = macos ]; then
   defaults read -g AppleKeyboardUIMode > build/d10/keyboard-ui-mode.txt
 else
   scheme=EXReaderHost-iOS; suite=EXReaderHostUITests-iOS; signing=NO
-  xcrun simctl boot "$udid"
-  xcrun simctl bootstatus "$udid" -b
+  # Same clean ephemeral-device lifecycle as original page_theme/run_ui.py.
+  python3 - "$udid" <<'CLEAN'
+import subprocess,sys,json
+from pathlib import Path
+rows=[]
+for verb,budget,check in [('shutdown',45,False),('erase',45,True),('boot',45,True),('bootstatus',180,True)]:
+    argv=['xcrun','simctl',verb,sys.argv[1]]+(['-b'] if verb=='bootstatus' else [])
+    row={'argv':argv,'timeout_seconds':budget}
+    try:
+        p=subprocess.run(argv,capture_output=True,text=True,timeout=budget)
+        row.update(exit_code=p.returncode,stdout=p.stdout,stderr=p.stderr)
+    except subprocess.TimeoutExpired:
+        row.update(exit_code=None,timed_out=True)
+        rows.append(row);Path('build/d10/clean-startup.json').write_text(json.dumps(rows,indent=2));raise
+    rows.append(row);Path('build/d10/clean-startup.json').write_text(json.dumps(rows,indent=2))
+    if check: assert p.returncode==0,verb+' failed'
+CLEAN
   python3 - "$udid" <<'READY'
 import sys
 from pathlib import Path

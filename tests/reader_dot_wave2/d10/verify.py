@@ -3,7 +3,10 @@ import copy,datetime,hashlib,io,json,os,plistlib,re,subprocess,sys,zipfile,urlli
 from pathlib import Path
 assert os.environ.get('GITHUB_ACTIONS')=='true'
 repo=os.environ['GITHUB_REPOSITORY'];run=os.environ['GITHUB_RUN_ID'];attempt=os.environ['GITHUB_RUN_ATTEMPT'];source=os.environ['GITHUB_SHA']
-out=Path('build/verification');out.mkdir(parents=True,exist_ok=True)
+review_prior='--review-round2' in sys.argv
+if review_prior:
+    run='40226413800';attempt='1';source='48784fc302340904a4cadc1fdffb424a656c1e9f'
+out=Path('build/prior-verification' if review_prior else 'build/verification');out.mkdir(parents=True,exist_ok=True)
 TARGETS={'macos':'15dab6b2270dc296ed6239db67ced2e22d255e65','iphone':'5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a','ipad':'5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a'}
 class SafeRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,req,fp,code,msg,headers,newurl):
@@ -19,6 +22,9 @@ def download(artifact_id):
     except Exception as error:
         raise RuntimeError('artifact transport failed: '+type(error).__name__) from None
 def api(path):return json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/'+path]))
+run_meta=api(f'actions/runs/{run}')
+assert str(run_meta['id'])==run and run_meta['head_sha']==source and str(run_meta['run_attempt'])==attempt
+assert run_meta['path'].split('@')[0]=='.github/workflows/reader-dot-d10.yml'
 arts=api(f'actions/runs/{run}/artifacts?per_page=100')['artifacts']
 jobs=api(f'actions/runs/{run}/attempts/{attempt}/jobs?per_page=100')['jobs']
 def validate(a,body,p):
@@ -37,6 +43,22 @@ def default_configuration(report,project,logs):
     compile_flags=sorted(set(re.findall(r'-D\s*(EXR_[A-Z_]+)',logs)))
     assert report['review_macros']==actual==[], 'actual project/report review macro mismatch'
     assert compile_flags==[], 'actual compiler review macro leakage'
+def complete_named_audit(report,platform):
+    labels=['normal-light','normal-dark']+([] if platform=='macos' else ['large-light','large-dark'])
+    expected={'import':{'test01ProductionBodyNamesAndActualEdgeTap()'},
+        'original-compact' if platform=='macos' else 'original-large':{'test02CompactReaderActualTurnFontAndNotes()'}}
+    expected.update({label:{'test01DefaultShelfAndAccountDismissal()','test02DefaultReaderLowFrequencyJourney()'} for label in labels})
+    rows=report['checks']
+    if len(rows)!=len(expected) or {row['label'] for row in rows}!=set(expected):return False
+    for row in rows:
+        if row['exit']!=0 or len(row['cases'])!=len(expected[row['label']]):return False
+        if {case['name'] for case in row['cases']}!=expected[row['label']]:return False
+        if not all(case['result']=='Passed' for case in row['cases']):return False
+    for label in labels:
+        states=report['records'].get(label,{}).get('states',{})
+        for step in ('shelf','account-settings','reader','reader-font-settings','more-menu','records','returned-shelf'):
+            if not any(key.endswith('.'+step) for key in states):return False
+    return not report['problems']
 for p in ('macos','iphone','ipad'):
     match=[a for a in arts if a['name']==f'd10-{p}-{run}-{attempt}'];assert len(match)==1,(p,'unique artifact required')
     a=match[0];body=download(a['id'])
@@ -59,11 +81,16 @@ for p in ('macos','iphone','ipad'):
         project=z.read('project.pbxproj').decode()
         logs='\n'.join(z.read(n).decode(errors='replace') for n in z.namelist() if n.endswith('.log'))
         default_configuration(r,project,logs)
-        assert hashlib.sha256(z.read('EXReaderHost-executable')).hexdigest()==r['program']['executable_sha256']
-        plist_bytes=z.read('EXReaderHost-Info.plist')
-        assert hashlib.sha256(plist_bytes).hexdigest()==r['program']['info_sha256']
-        plist=plistlib.loads(plist_bytes)
-        assert plist['EXRSourceSHA']==r['target_sha'] and plist['EXRSDKVersion']=='3.41.0' and plist['EXRPageThemeEnabled'] is False
+        program_verified=False
+        if {'EXReaderHost-executable','EXReaderHost-Info.plist'} <= set(z.namelist()):
+            assert hashlib.sha256(z.read('EXReaderHost-executable')).hexdigest()==r['program']['executable_sha256']
+            plist_bytes=z.read('EXReaderHost-Info.plist')
+            assert hashlib.sha256(plist_bytes).hexdigest()==r['program']['info_sha256']
+            plist=plistlib.loads(plist_bytes)
+            assert plist['EXRSourceSHA']==r['target_sha'] and plist['EXRSDKVersion']=='3.41.0' and plist['EXRPageThemeEnabled'] is False
+            program_verified=True
+        else:
+            r['problems'].append('strict actual program authentication failed: executable/plist missing')
         for kind,badproject,badlogs in [('missing-configuration','',logs),('project-review-leak',project+'\nSWIFT_ACTIVE_COMPILATION_CONDITIONS = EXR_APPLE_HOST_REVIEW;',logs),('compiler-review-leak',project,logs+'\nswiftc -DEXR_APPLE_HOST_REVIEW')]:
             try:default_configuration(r,badproject,badlogs)
             except AssertionError:negatives.append(p+'/'+kind)
@@ -88,14 +115,31 @@ for p in ('macos','iphone','ipad'):
                 try:measured_state(bad)
                 except AssertionError:negatives.append(p+'/actual-foreign-window')
                 else:raise AssertionError('accepted foreign-window observation')
-        try:
-            assert hashlib.sha256(z.read('EXReaderHost-executable')+b'wrong').hexdigest()==r['program']['executable_sha256']
-        except AssertionError:negatives.append(p+'/actual-wrong-program')
-        else:raise AssertionError('accepted wrong program')
+        if program_verified:
+            try:
+                assert hashlib.sha256(z.read('EXReaderHost-executable')+b'wrong').hexdigest()==r['program']['executable_sha256']
+            except AssertionError:negatives.append(p+'/actual-wrong-program')
+            else:raise AssertionError('accepted wrong program')
+        named_complete=complete_named_audit(r,p)
+        if named_complete:
+            bad=copy.deepcopy(r);bad['checks'][0]['cases']=[]
+            assert complete_named_audit(bad,p) is False
+            negatives.append(p+'/missing-named-XCTest')
         candidates=[j for j in jobs if j['name']==f'D10 audit {p}'];assert len(candidates)==1
         j=candidates[0];assert j['status']=='completed' and j['head_sha']==source
-        results.append({'platform':p,'job':{'id':j['id'],'name':j['name'],'conclusion':j['conclusion']},'artifact':{k:a[k] for k in ('id','name','size_in_bytes','digest','expires_at')},'zip_sha256':hashlib.sha256(body).hexdigest(),'program':r['program'],'checks':r['checks'],'audit_completed':r['audit_completed'],'problems':r['problems'],'findings':[f for f in r['geometry_and_name_findings'] if f.get('verdict')=='fail'],'default_ui_accepted':False,'ax_semantics_accepted':False,'dynamic_type_accepted':False,'voiceover_accepted':False,'physical_device_execution':False})
-report={'harness_sha':source,'target_shas':TARGETS,'sdk_sha':os.environ['SDK_SHA'],'run_id':run,'attempt':attempt,'artifact_authentication':True,'negative_rejections':negatives,'targets':results,'accepted':False,'complete_product':False}
+        results.append({'platform':p,'job':{'id':j['id'],'name':j['name'],'conclusion':j['conclusion']},'artifact':{k:a[k] for k in ('id','name','size_in_bytes','digest','expires_at')},'zip_sha256':hashlib.sha256(body).hexdigest(),'program':r['program'],'program_authentication':program_verified,'checks':r['checks'],'audit_completed':named_complete and program_verified,'producer_audit_completed':r['audit_completed'],'problems':r['problems'],'findings':[f for f in r['geometry_and_name_findings'] if f.get('verdict')=='fail'],'default_ui_accepted':False,'ax_semantics_accepted':False,'dynamic_type_accepted':False,'voiceover_accepted':False,'physical_device_execution':False})
+report={'verifier_harness_sha':os.environ['GITHUB_SHA'],'review_prior':review_prior,'harness_sha':source,'target_shas':TARGETS,'sdk_sha':os.environ['SDK_SHA'],'run_id':run,'attempt':attempt,'artifact_authentication':True,'negative_rejections':negatives,'targets':results,'accepted':False,'complete_product':False}
+(out/'validation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+from contract import targets
+targets([row['platform'] for row in results])
+try:targets([row['platform'] for row in results if row['platform']!='ipad'])
+except AssertionError:negatives.append('actual-missing-ipad')
+else:raise AssertionError('accepted missing actual mobile target')
 (out/'validation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
 print('D10_VERIFIED '+json.dumps(report,ensure_ascii=False))
-assert all(r['audit_completed'] and r['job']['conclusion']=='success' for r in results),'real target audit incomplete; acceptance remains false'
+if review_prior:
+    assert all(row['program_authentication'] for row in results if row['platform']!='iphone')
+    assert next(row for row in results if row['platform']=='iphone')['program_authentication'] is False
+    print('D10_PRIOR_AUTHENTICATED_FAILURE '+json.dumps(report,ensure_ascii=False))
+else:
+    assert all(r['audit_completed'] and r['program_authentication'] and r['job']['conclusion']=='success' for r in results),'real target audit incomplete; acceptance remains false'
