@@ -56,8 +56,8 @@ def check_problems(report, summary):
         problems.append('required raw checks missing: ' + repr(sorted(set(REQUIRED) - set(names))))
     if any(check.get('pass') is not True for check in checks):
         problems.append('a raw named check is not a literal true')
-    if summary.get('checks_total') != len(checks):
-        problems.append('the summary check count differs from the raw checks')
+    if summary.get('probe_checks_total') != len(checks):
+        problems.append('the summary probe check count differs from the raw checks')
     if summary.get('checks_failed') != 0:
         problems.append('the summary reports failed checks')
     if summary.get('accepted') is not True or summary.get('problems'):
@@ -134,19 +134,19 @@ def protocol_selftest():
         else:
             raise AssertionError('accepted invalid upstream jobs')
     report = dict(checks=[dict(name=name, **{'pass': True}) for name in REQUIRED])
-    summary = dict(checks_total=len(REQUIRED), checks_failed=0, accepted=True, problems=[],
+    summary = dict(probe_checks_total=len(REQUIRED), checks_failed=0, accepted=True, problems=[],
                    host_wiring_accepted=False, gui_accepted=False)
     assert check_problems(report, summary) == []
-    bad_cases = [(dict(checks=[]), summary), (report, dict(checks_total=0)),
+    bad_cases = [(dict(checks=[]), summary), (report, dict(summary, probe_checks_total=0)),
                  (report, dict(summary, checks_failed=1)), (report, dict(summary, accepted=False)),
                  (report, dict(summary, problems=['x'])), (report, dict(summary, host_wiring_accepted=True)),
                  (report, dict(summary, gui_accepted=True))]
     duplicated = copy.deepcopy(report)
     duplicated['checks'].append(duplicated['checks'][0])
-    bad_cases.append((duplicated, dict(summary, checks_total=len(duplicated['checks']))))
+    bad_cases.append((duplicated, dict(summary, probe_checks_total=len(duplicated['checks']))))
     short = copy.deepcopy(report)
     short['checks'].pop()
-    bad_cases.append((short, dict(summary, checks_total=len(short['checks']))))
+    bad_cases.append((short, dict(summary, probe_checks_total=len(short['checks']))))
     for value in (False, 'true', 1):
         bad = copy.deepcopy(report)
         bad['checks'][0]['pass'] = value

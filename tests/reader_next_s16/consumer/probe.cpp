@@ -338,6 +338,7 @@ int main(int argc,char **argv){
    size_t count=0;const exr_fixed_page *pages=exr_fixed_pages(pdfDoc,&count);
    for(size_t i=0;i<count;i++)pdfIds.push_back(pages[i].id?pages[i].id:"");}
   std::vector<std::string> dbs{libraryPath,legacyPath,rawPath};
+  std::set<std::string> routes; /* every stored (mode, anchor version) route, in order */
   stage("prepared the originals");
   expect("the fixture EPUB keeps three spine parts",partCount==3,numv(partCount));
   expect("the public PDF original keeps its page IDs",!pdfIds.empty()&&pdfIds[0]=="page-1",numv(pdfIds.size()));
@@ -414,6 +415,7 @@ int main(int argc,char **argv){
      &&same_bytes(again.suffix,again.suffix_size,g.record.suffix,g.record.suffix_size),ce.message);
    exr_fixed_anchor_free(&again);
    record_stored("pdf-nul-point","pdf",rPdf,it,g.record);
+   routes.insert(std::string(mode_name(g.record.mode))+"/"+numv(g.record.anchor_version));
    anchor3_stored=true;
    expect("a raw FOUND resolve alone does not move the cursor",
      snapshot(H).count==1&&snapshot(H).cursor==0&&snapshot(H).generation==1,state_text(snapshot(H)));
@@ -482,7 +484,6 @@ int main(int argc,char **argv){
 
   /* ---------------- D: retained anchor v1/v2 wires replayed byte for byte ---------------- */
   stage("retained anchor versions");
-  std::set<std::string> routes;
   size_t txtFirst=locate(txtText,"\xe8\xaf\xbb");
   exr_anchor txtRange{};
   SDK(exr_anchor_create(txtDoc,txtFirst,txtFirst+3,&txtRange,&e_));
@@ -548,7 +549,8 @@ int main(int argc,char **argv){
    reader_jh_item it=current_item(H);rec_guard g;reader_rs_error re{};
    if(!decode_raw(std::string(it.wire,it.wire_bytes),g,&re))fatal(std::string("decode epub v2 wire: ")+re.message);
    expect("the stored v2 EPUB wire keeps the spine index and path",
-     g.record.anchor_version==2&&g.record.part==(uint64_t)uniquePart&&g.record.part_path&&parts[uniquePart].path==g.record.part_path,
+     g.record.anchor_version==2&&g.record.part==(uint64_t)uniquePart&&g.record.part_path
+       &&!std::strcmp(parts[uniquePart].path,g.record.part_path),
      "part="+numv(g.record.part)+" path="+(g.record.part_path?std::string(g.record.part_path):std::string("null")));
    size_t part=SIZE_MAX;reader_rs_error re2{};
    reader_rs_status ps=reader_rs_epub_record_part(pub,&g.record,&part,&re2);
@@ -572,7 +574,7 @@ int main(int argc,char **argv){
    reader_jh_item it=current_item(H);rec_guard g;reader_rs_error re{};
    if(!decode_raw(std::string(it.wire,it.wire_bytes),g,&re))fatal(std::string("decode epub v1 wire: ")+re.message);
    expect("the stored v1 EPUB wire keeps anchor version 1 and its path",
-     g.record.anchor_version==1&&g.record.part_path&&parts[uniquePart].path==g.record.part_path,
+     g.record.anchor_version==1&&g.record.part_path&&!std::strcmp(parts[uniquePart].path,g.record.part_path),
      "version="+numv(g.record.anchor_version)+" path="+(g.record.part_path?std::string(g.record.part_path):std::string("null")));
    size_t part=SIZE_MAX;reader_rs_error re2{};
    reader_rs_status ps=reader_rs_epub_record_part(pub,&g.record,&part,&re2);
