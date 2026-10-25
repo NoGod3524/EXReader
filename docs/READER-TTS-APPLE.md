@@ -157,8 +157,29 @@ CLOSED，且 detach 恰好一次（这条转换此前没有被任何用例覆盖
 
 ## 本轮证据（review 分支）
 
-本轮测试源与证据待本分支 Actions 运行后按真实结果填写（`accepted=false`，
-未跑完不授予任何范围）。
+受测源码 **`0cea18bfcd77465f81ee13dc3beb8065c772f57d`**，
+[run 40168798871](https://github.com/NoGod3524/EXReader/actions/runs/40168798871) attempt 1
+四个作业全部成功，严格汇总 `accepted=true`、`problems=[]`（一次通过，本轮没有
+失败原件）。
+
+| 执行平台 | 同次具名结果 | 工件 |
+| --- | --- | --- |
+| macOS 15.7.9 arm64（BlackHole 2ch 回环输出设备） | 逻辑 66 + 安装消费者 39 = **105 通过 / 0 失败 / 0 pending**；真实 PCM 75,456 B、37,706 帧、22,050 Hz、1.71 s、RMS 0.1356 | `reader-tts-apple-macos-40168798871-1` id 12589526192，73,700 B，`sha256:6a52abe3…56e9` |
+| iPhone 16 Pro / iPad (A16)，iOS 26.2 arm64 Simulator | 26 通过 / 0 失败 / 13 pending（朗读回调与 PCM：该运行时完全不产声）；iPad 25 通过 / 13 pending | `reader-tts-apple-ios-40168798871-1` id 12589417148，16,040 B，`sha256:3938e981…9885` |
+| 严格汇总（本分支） | 重新下载两个 producer ZIP、重算 SHA-256、核对 API 的 id/大小/digest/有效期/head_sha，解包核对报告身份与 WAV 摘要 | `reader-tts-apple-evidence-40168798871-1` id 12589358402，1,192 B，`sha256:eca8e7b8…a09f` |
+
+三个工件有效期至 2027-01-23T06:21:27Z。作业 id：guard 121095243510、macOS
+121095264212（48 s）、iOS 121095264230（12 m 25 s）、evidence 121097410263。
+安装消费者二进制：macOS `9771e4149ce04fd7af3f8d738b5145e07d457cab84f014980987813bbefe88f9`、
+Simulator `6d15db6462f7808e01dd37a47727dd8a77dfd29f5c9b8779567638ff27b38f75`。
+
+本轮新增的可验证身份：**报告里的 source/run/attempt 现在来自运行中的消费者自己**
+（macOS 进程环境、Simulator 应用经 `SIMCTL_CHILD_*` 转发），并由驱动在合并前
+核对其 `consumer_sha256` 与实测二进制摘要；两台模拟器设备各自通过同一套检查。
+
+范围仍分开登记：Simulator 只有 API/状态机/错误与限额被授予，真实朗读与音频记
+pending；宿主接线、真机、听感、性能均未授予（见
+[验收记录](validation/reader-tts-apple.json) 的 `capsule`）。
 
 ## 上一轮交付（本包原交付分支，历史记录）
 

@@ -1,18 +1,187 @@
 {
-  "accepted": false,
+  "accepted": true,
   "schema": 1,
   "package": "J17 reader-tts-apple",
   "branch": "codex/reader-tts-apple-review",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
   "review_base_sha": "24c498c6c69e382b1ff4dfaa50401a4031df400a",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "jobs": [],
-  "artifacts": [],
-  "platforms": {},
-  "named_results": {},
+  "source_sha": "0cea18bfcd77465f81ee13dc3beb8065c772f57d",
+  "run_id": 40168798871,
+  "attempt": 1,
+  "jobs": [
+    {
+      "id": 121095243510,
+      "name": "source, protected-tree and path guard",
+      "conclusion": "success"
+    },
+    {
+      "id": 121095264212,
+      "name": "macOS logic suite, installed probe and PCM",
+      "conclusion": "success",
+      "duration_seconds": 48
+    },
+    {
+      "id": 121095264230,
+      "name": "iOS Simulator native speech inside a UIKit app",
+      "conclusion": "success",
+      "duration_seconds": 745
+    },
+    {
+      "id": 121097410263,
+      "name": "strict same-source evidence",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12589526192,
+      "name": "reader-tts-apple-macos-40168798871-1",
+      "size_in_bytes": 73700,
+      "digest": "sha256:6a52abe3b320c08366bfd53c2dfb2faddd23f399aafdf91c36753bd5913056e9",
+      "zip_sha256_recomputed": "sha256:6a52abe3b320c08366bfd53c2dfb2faddd23f399aafdf91c36753bd5913056e9",
+      "expires_at": "2027-01-23T06:21:27Z",
+      "expired": false,
+      "head_sha": "0cea18bfcd77465f81ee13dc3beb8065c772f57d",
+      "platform": "macos",
+      "counts": {
+        "pass": 105,
+        "fail": 0,
+        "pending": 0
+      },
+      "logic_counts": {
+        "pass": 66,
+        "fail": 0,
+        "pending": 0
+      },
+      "probe_counts": {
+        "pass": 39,
+        "fail": 0,
+        "pending": 0
+      },
+      "consumer_sha256": "9771e4149ce04fd7af3f8d738b5145e07d457cab84f014980987813bbefe88f9",
+      "os": "15.7.9",
+      "arch": "arm64",
+      "speech_available": true,
+      "pcm": {
+        "file": "speech-result.json.wav",
+        "bytes": 75456,
+        "frames": 37706,
+        "sample_rate": 22050,
+        "duration_seconds": 1.710023,
+        "rms": 0.135588,
+        "sha256": "1816c23d5304b2a91dad6788c0a3783f8c68baaa64fc4afbaef4066c9fee66ba",
+        "recomputed_sha256": "1816c23d5304b2a91dad6788c0a3783f8c68baaa64fc4afbaef4066c9fee66ba",
+        "aggregate_verified": true
+      }
+    },
+    {
+      "id": 12589417148,
+      "name": "reader-tts-apple-ios-40168798871-1",
+      "size_in_bytes": 16040,
+      "digest": "sha256:3938e9815481a03e7882584fabff01916962cf5db91ba724ee4ee7dd8ee29885",
+      "zip_sha256_recomputed": "sha256:3938e9815481a03e7882584fabff01916962cf5db91ba724ee4ee7dd8ee29885",
+      "expires_at": "2027-01-23T06:21:27Z",
+      "expired": false,
+      "head_sha": "0cea18bfcd77465f81ee13dc3beb8065c772f57d",
+      "platform": "ios-simulator",
+      "counts": {
+        "pass": 26,
+        "fail": 0,
+        "pending": 13
+      },
+      "consumer_sha256": "6d15db6462f7808e01dd37a47727dd8a77dfd29f5c9b8779567638ff27b38f75",
+      "os": "Version 26.2 (Build 23C54)",
+      "arch": "arm64",
+      "devices": {
+        "iPhone 16 Pro": {
+          "pass": 25,
+          "fail": 0,
+          "pending": 13
+        },
+        "iPad (A16)": {
+          "pass": 25,
+          "fail": 0,
+          "pending": 13
+        }
+      },
+      "speech_available": false,
+      "speech_note": "no speech-start callback within 25 s (state 1, events 1); no usable audio route on this runner",
+      "pcm": null,
+      "devices_note": "the 13 pendings are the same live-speech cases on both devices; the merged count of 26 includes the single probe.ipad-simulator-run summary case that the driver appends after the iPad device run"
+    },
+    {
+      "id": 12589358402,
+      "name": "reader-tts-apple-evidence-40168798871-1",
+      "size_in_bytes": 1192,
+      "digest": "sha256:eca8e7b8729f25e7874b7852d56be065bb23bc23bf1f07455c9c5f5348dea09f",
+      "expires_at": "2027-01-23T06:21:27Z",
+      "expired": false,
+      "platform": "aggregate",
+      "contents": "aggregate result.json produced by tests/reader_tts_apple/aggregate.py"
+    }
+  ],
+  "platforms": {
+    "macos": {
+      "pass": 105,
+      "fail": 0,
+      "pending": 0
+    },
+    "ios-simulator": {
+      "pass": 26,
+      "fail": 0,
+      "pending": 13
+    }
+  },
+  "named_results": {
+    "logic-suite": {
+      "cases": 66,
+      "note": "platform-neutral state machine against a deterministic fake engine; every case is printed by name and any non-pass exits non-zero. This review fixed one case that could never reach the branch it was named after and added close.while-stopping-closes-after-the-cancel."
+    },
+    "macos-installed-probe": {
+      "cases": 39,
+      "live_speech": [
+        "probe.speak-english-lifecycle",
+        "probe.speak-english-callbacks",
+        "probe.speak-chinese-emoji-lifecycle",
+        "probe.range-byte-boundaries",
+        "probe.range-advances",
+        "probe.speak-named-voice",
+        "probe.pause-resume",
+        "probe.stop-after-pause",
+        "probe.queue-replacement-busy",
+        "probe.cancel-terminal-once",
+        "probe.late-callback-isolation",
+        "probe.post-cancel-utterance",
+        "probe.pcm-wav-captured"
+      ],
+      "note": "AVSpeechSynthesizer driven from the real main run loop on a runner whose default output device is a BlackHole loopback installed for the fixture"
+    },
+    "ios-simulator-probe": {
+      "cases": 26,
+      "pending_cases": [
+        "probe.speak-english-lifecycle",
+        "probe.speak-english-callbacks",
+        "probe.state-ready-after-finish",
+        "probe.speak-chinese-emoji-lifecycle",
+        "probe.range-byte-boundaries",
+        "probe.range-advances",
+        "probe.speak-named-voice",
+        "probe.pause-resume",
+        "probe.stop-after-pause",
+        "probe.queue-replacement-busy",
+        "probe.cancel-terminal-once",
+        "probe.late-callback-isolation",
+        "probe.pcm-wav-captured"
+      ],
+      "note": "on both the iPhone 16 Pro and the iPad (A16) simulator the runtime accepted speakUtterance: (state 1, events 1) but delivered no speech callback and no audio buffer; nothing is granted for live speech or PCM there"
+    },
+    "consumer-identity": {
+      "note": "verified from inside the running consumer in this review: the probe report's source_sha/run_id/attempt/platform come from the process that ran (macOS environment, simulator app via SIMCTL_CHILD_*) and its consumer_sha256 is compared with the driver's hash of the installed binary before merging",
+      "macos_consumer_sha256": "9771e4149ce04fd7af3f8d738b5145e07d457cab84f014980987813bbefe88f9",
+      "simulator_consumer_sha256": "6d15db6462f7808e01dd37a47727dd8a77dfd29f5c9b8779567638ff27b38f75"
+    }
+  },
   "review": {
     "scope": [
       "AVSpeechSynthesizer installed adapter: synthesizer/delegate creation, control calls, teardown",
@@ -190,5 +359,17 @@
     "the platform-neutral logic suite is executed on macOS only; the simulator runs the real backend probe instead",
     "premium/enhanced voice download (this package uses installed voices only)"
   ],
-  "execution": "All builds, tests, syntax checks, fixtures and artifact download/parsing in GitHub Actions; local source/docs/Git only"
+  "execution": "All builds, tests, syntax checks, fixtures and artifact download/parsing in GitHub Actions; local source/docs/Git only",
+  "capsule": {
+    "module_accepted": true,
+    "installed_consumer_accepted": true,
+    "macos_live_speech_accepted": true,
+    "ios_simulator_contract_accepted": true,
+    "ios_simulator_live_speech_accepted": false,
+    "host_function_accepted": false,
+    "physical_device_execution": false,
+    "listening_impression_evaluated": false,
+    "performance_budget_accepted": false,
+    "complete_product": false
+  }
 }
