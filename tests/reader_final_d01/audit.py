@@ -2,6 +2,7 @@
 import copy, hashlib, json, os, re, subprocess, sys
 from pathlib import Path
 from catalog import BASE, SDK, PLATFORMS, REQUIREMENTS, ENTRIES, EVIDENCE, CONFIG_FILES, GUARDS, CONFIG_ANCHORS, DEFAULTS, HANDLER_LINKS
+from research import GAPS, SEARCH_SCOPES, SEARCH_TERMS
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'tools'))
 from check_parallel_integration import fetch, require
@@ -33,6 +34,11 @@ def validate(matrix):
         require(r['manual_pending'] and not r['product_accepted'] and not r['evidenced'] and not r['exposed'] and r['implemented'] is None,'fabricated pass at unaudited runtime')
         require(r['status']=='manual_pending' and r['candidate_status_transferred'] is False,'cross-source status transfer')
         require(r['source_declared']==bool(r['entry']),'wrong source tracing claim')
+        require(r['research_complete'] and r['research']['classification'],'missing researched disposition')
+        if not r['entry']:
+            require(r['research']['references'] and r['research']['reason'],'unresearched placeholder gap')
+            for ref in r['research']['references']:
+                require(ref['anchor'] in git('show',BASE+':'+ref['file']),'gap research source missing')
         require(r['status'] in ('exposed','missing','blocked','manual_pending','implemented','evidenced'),'unknown status')
         require(not (r['implemented'] or r['exposed'] or r['status'] in ('implemented','exposed','evidenced')) or bool(r['entry']),'implementation without entry')
         if r['entry']:
@@ -60,7 +66,9 @@ def negative_controls(matrix):
       'declaration_not_runtime_exposure':lambda x:x[0].update(exposed=True),
       'candidate_failure_not_base_failure':lambda x:x[0].update(status='blocked',candidate_status_transferred=True),
       'default_off_not_visible':lambda x:x[0]['configuration'].update(default_route_enabled=True),
-      'font_change_not_page_turn':lambda x:next(r for r in x if r['id']=='R11-Android')['entry'].update(handler='changeFont(1)')}.items():
+      'font_change_not_page_turn':lambda x:next(r for r in x if r['id']=='R11-Android')['entry'].update(handler='changeFont(1)'),
+      'omitted_research':lambda x:next(r for r in x if not r['entry']).update(research_complete=False),
+      'unreferenced_gap':lambda x:next(r for r in x if not r['entry'])['research'].update(references=[])}.items():
         bad=copy.deepcopy(matrix);mutate(bad)
         try:validate(bad)
         except (ValueError,KeyError):controls[name]='rejected'
@@ -108,9 +116,23 @@ def main():
                     require(anchor in source,'missing actual handler linkage')
                     entry['handler_link']=dict(file=file,anchor=anchor,url=f'https://github.com/NoGod3524/EXReader/blob/{BASE}/{file}')
                 row=dict(id=req+'-'+platform,requirement_id=req,title=title,platform=platform,target_sha=BASE,status=state,trace_status='source_declared' if entry else 'untraced',source_declared=bool(entry),candidate_status_transferred=False,configuration=configuration,module=module,module_present=(ROOT/module).exists(),implemented=None,exposed=False,evidenced=False,manual_pending=True,product_accepted=False,entry=entry,evidence_refs=[e['id'] for e in EVIDENCE if platform in e['platforms']],manual_case='M-'+req,limitation='Source-level entry only; runtime implementation and visibility unverified' if entry else 'No exact entry traced in this audit; missing TRACE, not proof feature absent')
+                if entry:
+                    research=dict(classification='source_path_declared_runtime_evidence_absent',reason='Exact source path found; entry may be a submenu or implicit lifecycle, not an accepted full capability. Data owner/route and limitations are explicit.',references=[dict(file=entry['file'],anchor=entry['anchor'],url=entry['url'])])
+                else:
+                    gap=GAPS[req];refs=[]
+                    for file,anchor in zip(gap['files'],gap['anchors']):
+                        require(anchor in git('show',BASE+':'+file),'research reference absent')
+                        refs.append(dict(file=file,anchor=anchor,url=f'https://github.com/NoGod3524/EXReader/blob/{BASE}/{file}'))
+                    observations=[]
+                    for file in SEARCH_SCOPES[family]:
+                        content=git('show',BASE+':'+file)
+                        for term in SEARCH_TERMS.get(req,[]):
+                            observations.append(dict(file=file,term=term,matching_lines=[i+1 for i,line in enumerate(content.splitlines()) if term in line]))
+                    research=dict(gap,references=refs,source_searches=observations,search_scope_limit='Negative lexical observations apply only to listed source files; not proof of repository-wide feature absence')
+                row.update(research_complete=True,research=research)
                 matrix.append(row)
                 if not entry:
-                    findings.append(dict(finding_id='F-'+row['id'],requirement_id=req,platform=platform,target_sha=BASE,entry=entry,expected='exact reachable host entry plus same-source runtime evidence',actual=row['limitation'] if not entry else 'Apple mobile candidate whole run failed',reproduction='Use manual case '+row['manual_case']+'; inspect fixed entry/source and candidate run',raw_evidence=row['evidence_refs'],root_cause_or_hypothesis='untraced host wiring / unexecuted integration; not a confirmed absent implementation',owner='root/platform host owner'))
+                    findings.append(dict(finding_id='F-'+row['id'],requirement_id=req,platform=platform,target_sha=BASE,entry=entry,expected='exact reachable host entry plus same-source runtime evidence',actual=research['reason'],classification=research['classification'],reproduction='Use manual case '+row['manual_case']+'; inspect fixed research references and source search observations',raw_evidence=research['references'],root_cause_or_hypothesis='Source-scoped disposition; not a confirmed repository-wide absent implementation',owner='root/platform host owner'))
         validate(matrix);report['negative_controls']=negative_controls(matrix)
         report['historical_evidence']=metadata()
         links=[]
@@ -126,8 +148,10 @@ def main():
         rows += [f"|{r['id']}|{r['title']}|{r['platform']}|{r['status']}|"+(f"[{r['entry']['visible_label']}]({r['entry']['url']})" if r['entry'] else '未追踪入口')+'|' for r in matrix]
         (OUT/'matrix.md').write_text('\n'.join(rows)+'\n')
         report.update(accepted=True,audit_completed=True,trace_complete=all(r['source_declared'] for r in matrix),audit_scope='matrix structure, source declarations and provenance review only; incomplete entry tracing explicitly retained',requirements_total=len(REQUIREMENTS),platform_rows=len(matrix),traced=sum(r['source_declared'] for r in matrix),untraced=sum(not r['source_declared'] for r in matrix),implemented_exposed=0,evidenced=0,manual_pending=len(matrix),missing=0,blocked=0,findings=len(findings))
+        report.update(researched=len(matrix),research_complete=all(r['research_complete'] for r in matrix),gap_classifications={name:sum(f['classification']==name for f in findings) for name in sorted({f['classification'] for f in findings})})
         report['files']={p.name:dict(bytes=p.stat().st_size,sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in OUT.iterdir() if p.name!='report.json'}
         report['program']=dict(kind='Python audit tool; no host program executed',python=sys.version,sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),catalog_sha256=hashlib.sha256((Path(__file__).parent/'catalog.py').read_bytes()).hexdigest())
+        report['program']['research_sha256']=hashlib.sha256((Path(__file__).parent/'research.py').read_bytes()).hexdigest()
         for p in OUT.iterdir():
             require(not re.search(rb'(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|-----BEGIN .*PRIVATE KEY-----)',p.read_bytes()),'credential-shaped material in artifact')
     except Exception as exc:report['problems'].append(type(exc).__name__+': '+str(exc))

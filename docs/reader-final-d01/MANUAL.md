@@ -50,3 +50,13 @@ Actions原工件提供 `D01-clean.txt`、`D01-duplicate.txt`（相同字节）�
 - Android R11准确操作：打开多页测试书，默认 `turnDirection=1, turnInput=1`，取消选文后轻点阅读页右侧30%区域；`ReaderView`在ACTION_UP调用listener.onTapZone(1)，MainActivity调用turnPage(1)。字号键不是翻页证据。若改过输入/方向设置先恢复默认，或记录实际设置另测。R12/13/15/17的exrSearch/exrNavigation/exrReading/exrPreferences Gradle属性分别必须等于true；同步需exrSync=true。
 - macOS：`compactLibrary=false`，书架点“打开文件…”；iPhone/iPad常规竖屏同“打开文件…”；iPhone/iPad横屏compact或辅助字号模式点顶部“打开文件”图标。阅读记录在阅读页ellipsis菜单 > 阅读记录，非工具栏直接按钮。分别记录平台和布局，不用一台设备结果填另两平台。
 - Apple R17 A+只覆盖字号子项，不代表完整设置；各平台完整主题/取消语义必须另外找到精确入口才测。
+
+## 补查得到的可执行子路线
+
+- Windows R08/R09/R10：书库 > 批量整理…，Ctrl/Shift选择测试书，“明确动作”选加入子书架/加入标签/加入系列，选**现有**分组，应用到选中书籍。这不提供新建分组或系列排序证据；不得要求测试者凭该菜单完成不存在于已定位路径的新建动作。
+- Windows R14：阅读 > 书签与阅读记录… > 保存位置；R17：设置 > 阅读设置… / Ctrl+,（WINDOWS_PREFERENCES=ON）。R19选冲突记录后恢复，先保留原版本；账号失败在同步账号面板看错误后重试。
+- GTK R14：Reading records… > Save progress；R19：Account / Sync同步后的Version conflict列表；R21系统picker用Cancel，工作中用Escape（设置提交期间不强退）。
+- Android R02：Import打开DocumentsUI后选择已安装测试Provider；没有Provider标外部环境blocked。R14：阅读记录 > 保存进度；R19：More > 同步 > 云盘书目点冲突书，会明确提示需要先解决冲突或恢复，这是拒绝不安全接收，不是完整冲突解决器。
+- Apple R03/R23：顶栏本地书库/云盘书库 > 账号选择器 > 连接/更新授权；R14：阅读ellipsis > 阅读记录 > 保存阅读进度；R19同面板保留版本 > 明确恢复。
+- 四平台R18均是已有本地原件打开路径，R20是正常重开/状态保存或Android pendingReady恢复路线。它们是隐式宿主动作，不新增“离线/恢复”按钮；完整断网、真实进程终止仍需原手工案例执行。
+- R24共享reader_ld_remove模块未确立host入口；不要以删除书籍按钮代替。R04属于OS复制/真实线缆，不凭R01成功授予。

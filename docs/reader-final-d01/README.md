@@ -43,3 +43,9 @@
 首轮 `ee167af40c5bc43309e3bf6410b101e312ff2d38` / run `40215207810` 两job成功只证明当时的检查器接受数据。人工源码复查指出：Android翻页误连字号；Apple移动旧候选失败错误传播到BASE；条件源码声明误计实际exposed；144行矩阵误计144条入口已追踪。这些缺陷保留为首轮审查失败，不以CI绿灯覆盖。
 
 修订：Android改为 `ReaderView.onTouchEvent → onTapZone → turnPage`，默认轻点右侧30%触区；Windows云盘导入不是第三方Provider，R02改为未追踪。每行独立 `source_declared`、`trace_status`、配置文件/原锚点/guards/defaults、`default_route_enabled`、`candidate_visibility`、`runtime_visibility`。未执行宿主，故 `implemented=null`、`exposed=false`、`evidenced=false`；全部状态manual_pending。旧Apple失败只保留在自身E-APPLE-FAILED历史记录，不传播到BASE。`traced`只计有精确入口者，`untraced`单列，`trace_complete=false`；`audit_completed`仅指结构与来源审查完成，不表示入口追踪完整或产品完成。
+
+## 第二次源码研究：不把注册表遗漏当功能缺口
+
+[research.py](../../tests/reader_final_d01/research.py) 补查进度、离线打开、重开/Ready恢复、账号失败、冲突历史、重复导入及组织子操作。精确定位Windows现有分组批量加入（不声称新建分组或系列排序）、四宿主本地打开/进度路径、Apple账号选择器与阅读记录版本，以及Android实际Provider选择入口。隐式生命周期也有准确source handler，不要求必须新增按钮。
+
+剩余无host入口行逐项有 `research.classification/reason/references/source_searches`：外部OS线缆工作流；只有本机下载模块、未确立host调用；有文件夹/拖放模块而被审host未接对应路线；Apple共享catalog不等于组织编辑UI；Windows/GTK第三方Provider桥接未确立。搜索只证明所列source文件范围，不能称整个仓库不存在实现。每一行完成来源研究和状态归类，但仍不授予实际运行能力；精确入口完整度与144行研究覆盖分开。

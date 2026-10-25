@@ -14,6 +14,7 @@ def validate_report(report,source,run,attempt):
     require(len(report['negative_controls'])>=8 and set(report['negative_controls'].values())=={'rejected'},'negative controls missing')
     require(report['traced']+report['untraced']==144 and report['traced']<144 and not report['trace_complete'],'false complete tracing claim')
     require(report['implemented_exposed']==0 and report['missing']==0 and report['blocked']==0,'cross-source or declared-entry grant')
+    require(report['researched']==144 and report['research_complete'],'unfinished source disposition research')
 def main():
     require(os.environ.get('GITHUB_ACTIONS')=='true','Actions only');OUT.mkdir(parents=True,exist_ok=True)
     source=os.environ['GITHUB_SHA'];run=int(os.environ['GITHUB_RUN_ID']);attempt=int(os.environ['GITHUB_RUN_ATTEMPT'])
@@ -41,6 +42,7 @@ def main():
             from audit import validate
             validate(matrix)
             result.update(traced=report['traced'],untraced=report['untraced'],trace_complete=report['trace_complete'],audit_scope=report['audit_scope'])
+            result.update(researched=report['researched'],research_complete=report['research_complete'],gap_classifications=report['gap_classifications'])
             controls={}
             for name,mutation in {'wrong_source':{'source':'0'*40},'wrong_run':{'run':run+1},'wrong_attempt':{'attempt':attempt+1},'product_grant':{'complete_product':True},'missing_rows':{'platform_rows':143}}.items():
                 bad=copy.deepcopy(report);bad.update(mutation)
