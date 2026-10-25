@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "composition_base": "e67d87cbeabb2457e0852f681ef0b27b2c0da4d8",
+  "frozen_340_record": "docs/validation/reading-sdk-freeze-9854061.json",
+  "frozen_340_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "components": {
+    "approved_sdk_341": {
+      "source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+      "paths": ["src", "include", "cmake", "CMakeLists.txt", "bindings", "tests/fixtures", "licenses", ".github/workflows/native.yml", ".github/workflows/reliability.yml"]
+    },
+    "raw_seven": {
+      "source": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+      "paths": ["apps/reader/revisions", "apps/reader/reading-state", "apps/reader/reading-commands", "apps/reader/annotation-view", "apps/reader/commands", "apps/reader/sync", "apps/reader/session"]
+    },
+    "metadata_and_schema": {
+      "source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "paths": ["apps/reader/desktop-metadata", "apps/reader/store/001_catalog.sql"]
+    },
+    "windows": {
+      "source": "13abefbbe82b70d0e8eb3ae197d671e27edfec6c",
+      "paths": ["examples/reader.c", "apps/reader/windows-account", "apps/reader/bulk-organization", "apps/reader/desktop/windows_records.inc", "apps/reader/desktop/windows_records_owner.cpp", "apps/reader/desktop/windows_raw3_apis.h", "apps/reader/desktop/windows_compact_ui.inc", "apps/reader/desktop/reading_capture_bytes.h", "tests/reader_windows_raw3", "tests/reader_windows_compact", "tests/reader_windows_records", ".github/workflows/reader-windows-raw3-original-full.yml", ".github/workflows/reader-windows-raw3-host.yml", ".github/workflows/reader-windows-raw3-authenticate.yml"]
+    },
+    "android": {
+      "source": "caa84411ae79c866c28cf982243b6cb80b4bbe49",
+      "paths": ["examples/android", "tests/reader_android_raw3", ".github/workflows/reader-android-raw3.yml"]
+    },
+    "apple": {
+      "source": "3ee3b7de96cb2ec950c3ec78a36726fc7c3eb9a4",
+      "paths": ["examples/apple", "tools/apple_swift.py", "tools/build_apple_product.py", "tools/build_apple_host.py", "tools/check_apple_product.py", "tests/apple_host/raw3", "tests/reader_apple_records_ready", ".github/workflows/reader-apple-raw3.yml", ".github/workflows/reader-apple-raw3-ios.yml", ".github/workflows/reader-apple-raw3-ios-ready.yml", ".github/workflows/reader-apple-records-ready.yml"]
+    },
+    "webdav": {
+      "source": "98fa8e0f87dc47197677a0cc860e648dbae5b59b",
+      "paths": ["extras/webdav", "tests/reader_webdav_sigpipe", ".github/workflows/reader-webdav-sigpipe.yml"]
+    },
+    "gtk": {
+      "source": "8cc9f4eb49ad31f743f2bef762d4b2ec0c72f6b4",
+      "paths": ["examples/linux", "apps/reader/desktop/CMakeLists.txt", "tools/build_linux_host.py", "tests/reader_gtk_raw3", "tests/reader_gtk_compact", ".github/workflows/reader-gtk-raw3.yml", ".github/workflows/reader-gtk-compact.yml"]
+    }
+  }
+}
