@@ -123,7 +123,10 @@
       "source": "a600cf3df53fdc8b97e47872e44f9b5c5ff6becb",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "cloud_success_awaiting_root_review_and_integration"
+      "root_state": "root_cancel_boundary_repair_pending_three_desktop_cloud_evidence",
+      "review_branch": "codex/reader-library-health-review",
+      "repair_source": "10b038a55fabea493e3ef858d3171e8c65a54f0b",
+      "repair_run": 40163483001
     },
     {
       "id": "J15",

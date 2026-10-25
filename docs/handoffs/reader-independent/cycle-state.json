@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-25T04:52:00Z",
+  "recorded_at_utc": "2026-10-25T04:54:00Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -24,11 +24,14 @@
     "apple_included": false
   },
   "next_unverified_host_candidate": {
-    "head": "7378be2b",
+    "head": "dc17c5314580ad671d1b4e6115f2d4ab39a437e7",
     "production_baseline": "2c5a6cbb087c43abd7643e0085b3300fde95f125",
     "gtk_batch_owned_delivery": "2df6040666635bcd7b0349b035b8f4885757fdd0",
     "state": "candidate_saved_waiting_for_android_import_gtk_drop_and_apple_layout_regression_evidence",
     "syntax_only_run": 40163167893,
+    "apple_six_workflow_protocol_run": 40163313434,
+    "apple_six_workflow_protocol_conclusion": "success",
+    "apple_six_workflow_protocol_rejections": 13,
     "gtk_navigation_driver": "600ef981fb44acd91dca618850a25d1725de18f7",
     "gtk_original_program_diagnostic": {"run": 40162074331, "checks": 29, "accepted": false, "diagnostic_only": true},
     "apple_records_candidate": "25eeb6aaccdc50e670f0aaea73631818bc0551f8",
@@ -48,6 +51,14 @@
     "dispatched": false,
     "reason": "No existing-Dot message API; user given one manual coordinator prompt",
     "reserved_packages": ["Windows import and organization UI", "J11", "J22", "J05", "reviewed module composition", "J21", "J02"]
+  },
+  "root_additional_review": {
+    "package": "J14",
+    "branch": "codex/reader-library-health-review",
+    "source": "10b038a55fabea493e3ef858d3171e8c65a54f0b",
+    "run": 40163483001,
+    "accepted": false,
+    "state": "cloud_original_three_desktop_consumers_plus_cancel_callback_and_final_progress_regressions_pending"
   },
   "claude_p0_root_reviews": {
     "J01": {
