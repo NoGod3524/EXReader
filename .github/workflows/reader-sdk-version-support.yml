@@ -30,7 +30,7 @@ jobs:
           name: reader-sdk-version-support-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/sdk-version/result.json
-            build/sdk-version/results-*/reading/summary.json
+            build/sdk-version/results-*/reading/
             build/sdk-version/results-*/search/result.json
             build/sdk-version/results-*/navigation/result.json
             build/sdk-version/results-*/batch/report.json

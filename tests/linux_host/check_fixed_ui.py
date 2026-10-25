@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--original-evidence', type=Path, required=True)
     parser.add_argument('--product-evidence', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'), default='3.40.0')
     args = parser.parse_args()
     source, run, attempt = (os.environ[name] for name in ('GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT'))
     original = json.loads((args.original_evidence / 'report.json').read_text())
@@ -41,7 +42,7 @@ def main():
     cbz_bytes = cbz.read_bytes()
     host = Session((args.payload / 'bin/exreader-linux').resolve(), (args.payload / 'Reader.otf').resolve(), folder)
     package = json.loads((args.payload.parent / 'build.json').read_text())
-    assert package['source_sha'] == source and package['sdk_version'] == '3.40.0' and package['abi'] == 1
+    assert package['source_sha'] == source and package['sdk_version'] == args.sdk_version and package['abi'] == 1
     assert package['files']['bin/exreader-linux'] == hashlib.sha256(host.binary.read_bytes()).hexdigest()
     assert package['files']['Reader.otf'] == hashlib.sha256(host.font.read_bytes()).hexdigest()
     checks = []
