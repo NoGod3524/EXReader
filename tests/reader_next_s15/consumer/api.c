@@ -24,12 +24,19 @@ static int export_one(const char *db,const char *dir){
   exr_library *lib=NULL;exr_error error={0};roe_exporter *e=NULL;roe_owner owner={enter,leave,NULL};
   roe_selection selected={1,"C_Consumer"};
   roe_options options={0};roe_result *result=NULL;roe_status status;
-  if(exr_library_open(db,&lib,&error)!=EXR_OK)return 20;
-  if(roe_create(lib,&owner,&e)!=ROE_OK)return 21;
+  if(exr_library_open(db,&lib,&error)!=EXR_OK){fprintf(stderr,"c-export: library %d %s\n",(int)error.code,error.message);return 20;}
+  if(roe_create(lib,&owner,&e)!=ROE_OK){fprintf(stderr,"c-export: create\n");return 21;}
   options.directory=dir;options.naming=ROE_HASH_NAME;
   status=roe_run(e,&selected,1,&options,&result);
   if(status!=ROE_OK||!result||result->count!=1||result->items[0].status!=ROE_OK||
-     result->items[0].committed!=1)return 22;
+     result->items[0].committed!=1){
+    fprintf(stderr,"c-export: run status=%d item=%d sdk=%d\n",(int)status,
+      result&&result->count? (int)result->items[0].status : -1,
+      result&&result->count? (int)result->items[0].sdk_status : -1);
+    if(result)roe_result_free(result);
+    roe_destroy(&e);exr_library_close(lib);
+    return 22;
+  }
   printf("{\"c_abi\":1,\"version\":\"%s\",\"abi\":%u,\"call\":\"export\",\"hash\":\"%s\",\"path\":\"%s\",\"bytes\":%llu,\"created\":%d}\n",
     EXR_VERSION,EXR_ABI_VERSION,result->items[0].original_sha256,result->items[0].output_path,
     (unsigned long long)result->items[0].bytes,result->items[0].created);
