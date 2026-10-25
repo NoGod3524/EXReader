@@ -1,0 +1,15 @@
+{
+  "accepted": false,
+  "base_sha": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
+  "import_entry_head": "e4f20df783872dd536f40a7431b200352aa2da17",
+  "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "runs": [],
+  "scope": "API34 default x86_64 Android real host imports only",
+  "reading_limit_bytes": 33554432,
+  "physical_device": false,
+  "third_party_cloud_provider": false,
+  "performance_accepted": false,
+  "complete_product": false
+}

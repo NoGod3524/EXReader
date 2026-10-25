@@ -1,0 +1,15 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'org.exreader.hostimportsource'
+    compileSdk 35
+    defaultConfig { applicationId 'org.exreader.hostimportsource'; minSdk 26; targetSdk 34; versionCode 1; versionName '0.1.0' }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    lint { abortOnError false }
+}
+def fixtures = layout.buildDirectory.dir('generated/fixtures')
+tasks.register('copyFixtures', Copy) {
+    from("${rootDir}/../../tests/fixtures") { include 'cover-import.epub', 'pdf-public.pdf' }
+    into fixtures
+}
+android.sourceSets.main.assets.srcDir fixtures
+tasks.matching { it.name.startsWith('merge') && it.name.endsWith('Assets') }.configureEach { dependsOn 'copyFixtures' }

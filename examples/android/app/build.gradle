@@ -120,8 +120,12 @@ android {
             androidTest { java.srcDir '../../../tests/reader_android_search/java' }
         }
     }
+    if(project.findProperty('exrHostImport') == 'true') {
+        sourceSets.androidTest.java.srcDir '../../../tests/reader_android_host_import/java'
+    }
 }
 dependencies {
     implementation project(':webdav')
     implementation project(':credentials')
+    implementation project(':importentry')
 }
