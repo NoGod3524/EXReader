@@ -1566,7 +1566,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         super.onDestroy();
     }
 
-    private ReadingRequests readingRequests(){if(readingRequests==null)readingRequests=new ReadingRequests(getFilesDir());return readingRequests;}
+    private ReadingRequests readingRequests(){if(readingRequests==null)readingRequests=new ReadingRequests(getFilesDir(),BuildConfig.READER_SELECTOR_BYTES_CANDIDATE);return readingRequests;}
     private ReadingControl readingControl(HostTask task,String stage){return new ReadingControl(task,getFilesDir(),stage,BuildConfig.DEBUG&&getIntent().getBooleanExtra("exr_reading_gate",false));}
     private interface ReadingCall<T>{T run()throws Exception;}
     private <T> void readingCall(HostTask task,ReadingCall<T> action,java.util.function.Consumer<T> done,java.util.function.Consumer<Throwable> failed){
@@ -1607,13 +1607,13 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         readingCall(task,()->{
             if(readingRequests().read()!=null)throw new IOException("A previous reading request still needs confirmation");String key=readingBook(book,task);if(frame==null||frame.bookId!=book||!key.equals(frame.sourceKey))throw new IOException("Displayed reading frame changed");
             ReadingCapture.encode(action.body,65536);if(action.body.indexOf('\0')>=0)throw new IllegalArgumentException("Reading body contains NUL");
-            boolean progress=action.kind==NativeReadingProduct.PROGRESS;ReadingRecord fresh=null;String id="";String[] heads=new String[0];int mode=frame.fixed?ReadingCapture.FIXED:frame.bounded?ReadingCapture.EPUB:ReadingCapture.REFLOW;ReadingCapture capture=null;
+            boolean progress=action.kind==NativeReadingProduct.PROGRESS;ReadingRecord fresh=null;String id="";String[] heads=new String[0];int mode=frame.fixed?ReadingCapture.FIXED:frame.bounded?ReadingCapture.EPUB:ReadingCapture.REFLOW;int writerVersion=mode==ReadingCapture.FIXED?3:2;ReadingCapture capture=null;
             if(action.target!=null&&action.target.state==ReadingRecord.SAFE){fresh=readingSelected(book,action.target,task);id=fresh.id;heads=new String[]{fresh.head};mode=fresh.mode;}
             else if(action.target!=null&&action.target.state!=ReadingRecord.MISSING)throw new IOException("Unsafe reading graph cannot be chosen automatically");
             if(action.operation==NativeReadingProduct.RESTORE){
-                if(fresh==null||!fresh.deleted||action.version==null)throw new IOException("Choose a retained version and current tombstone explicitly");ReadingVersion retained=NativeReadingProduct.version(store,key,id,action.version.id,progress,readingControl(task,"history"));if(!retained.sha.equals(action.version.sha)||!retained.restorable())throw new IOException("Retained version changed");NativeReadingSdk.Match match=resolveReadingLocation(book,retained.capture,size,task);if(!match.found())throw new IOException("Retained location is not FOUND; nothing restored");capture=match.recaptured;mode=capture.mode;
+                if(fresh==null||!fresh.deleted||action.version==null)throw new IOException("Choose a retained version and current tombstone explicitly");ReadingVersion retained=NativeReadingProduct.version(store,key,id,action.version.id,progress,readingControl(task,"history"));if(!retained.sha.equals(action.version.sha)||!retained.restorable())throw new IOException("Retained version changed");NativeReadingSdk.Match match=resolveReadingLocation(book,retained.capture,size,task);if(!match.found())throw new IOException("Retained location is not FOUND; nothing restored");capture=match.recaptured;mode=capture.mode;writerVersion=retained.anchorVersion;
             }else if(action.operation==NativeReadingProduct.DELETE||action.kind==NativeReadingProduct.NOTE_TEXT){
-                if(fresh==null||fresh.deleted)throw new IOException("Select a current live reading head");
+                if(fresh==null||fresh.deleted)throw new IOException("Select a current live reading head");writerVersion=(int)fresh.anchorVersion;
             }else{
                 if(fresh!=null&&fresh.deleted)throw new IOException("Deleted records require explicit restore");long start=frame.start,end=start;if(action.kind==NativeReadingProduct.HIGHLIGHT){if(selectedRange==null||selectedRange.pageIndex!=frame.index||selectedRange.end<=selectedRange.start)throw new IOException("Select actual page text first");start=selectedRange.start;end=selectedRange.end;}
                 capture=NativeReadingSdk.capture(store,frame,start,end,fontBytes(),size,originalPath==null?null:new File(originalPath),task,readingControl(task,"capture"));mode=capture.mode;if(!progress&&id.isEmpty())id=ReadingRequests.newId();
@@ -1623,7 +1623,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     capture=actual.recaptured;
                 }
             }
-            ReadingRequests.Pending pending=new ReadingRequests.Pending(book,key,id,ReadingRequests.newId(),ReadingRequests.newId(),heads,action.kind,action.operation,mode,capture,action.body);task.check();readingRequests().save(pending);
+            String revisionId=ReadingRequests.newId(),bootstrapId=ReadingRequests.newId();ReadingRequests.Pending pending=BuildConfig.READER_SELECTOR_BYTES_CANDIDATE?new ReadingRequests.Pending(book,key,id,revisionId,bootstrapId,heads,action.kind,action.operation,mode,capture,action.body,writerVersion):new ReadingRequests.Pending(book,key,id,revisionId,bootstrapId,heads,action.kind,action.operation,mode,capture,action.body);task.check();readingRequests().save(pending);
             try{task.check();return commitReading(pending,task);}catch(HostTask.Cancelled cancelled){readingRequests().clear(pending.revision);throw cancelled;}
         },done,failed);
     }
@@ -1631,8 +1631,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         if(!readingBook(pending.sdkBook,task).equals(pending.book))throw new IOException("Pending request belongs to another original");final NativeReadingProduct.Result[] result={null};
         if(fixed!=null&&fixed.cbz()&&pending.capture!=null&&!resolveReadingLocation(pending.sdkBook,pending.capture,fontSize,task).found())throw new IOException("Pending CBZ location is not FOUND in both source and current renderer");
         task.commit(()->{String[] selection=NativeCatalog.selection(store.productOwner(),"book",pending.book);if("0".equals(selection[0])){NativeCatalog.Result bootstrap=store.bootstrapBook(pending.sdkBook,pending.bootstrap,new String[0],task);if(bootstrap.status!=NativeCatalog.Result.OK)throw new IOException("Book metadata could not be prepared for the reading request");}
-            result[0]=NativeReadingProduct.apply(store,pending.revision,pending.expected,pending.kind,pending.operation,pending.book,pending.id,pending.mode,pending.capture,pending.body);
+            result[0]=BuildConfig.READER_SELECTOR_BYTES_CANDIDATE?NativeReadingProduct.applyVersioned(store,pending.revision,pending.expected,pending.kind,pending.operation,pending.book,pending.id,pending.mode,pending.capture,pending.body,pending.anchorVersion):NativeReadingProduct.apply(store,pending.revision,pending.expected,pending.kind,pending.operation,pending.book,pending.id,pending.mode,pending.capture,pending.body);
         });
+        if(BuildConfig.READER_SELECTOR_BYTES_CANDIDATE&&!result[0].saved())return result[0];
         ReadingControl committed=readingControl(task,"committed");committed.check();committed.check();committed.check();readingRequests().clear(pending.revision);return result[0];
     }
     @Override public void readingRetry(long book,HostTask task,java.util.function.Consumer<NativeReadingProduct.Result> done,java.util.function.Consumer<Throwable> failed){
