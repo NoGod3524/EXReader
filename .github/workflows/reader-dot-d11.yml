@@ -1,0 +1,122 @@
+name: D11 six actual target semantic actions and focus
+on:
+  push:
+    branches: [codex/reader-dot-d11]
+    paths: ['tests/reader_dot_wave2/d11/**', '.github/workflows/reader-dot-d11.yml']
+permissions: {contents: read, actions: read}
+concurrency: {group: reader-dot-d11, cancel-in-progress: false}
+jobs:
+  guard:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: |
+          python3 -m py_compile tests/reader_dot_wave2/d11/*.py
+          bash -n tests/reader_dot_wave2/d11/build_gtk.sh
+          python3 tests/reader_dot_wave2/d11/audit.py
+          python3 tests/reader_dot_wave2/d11/contract.py
+      - name: Preserve authenticated original D06 failure logs
+        env: {GH_TOKEN: '${{github.token}}'}
+        run: python3 tests/reader_dot_wave2/d11/prior_failure.py
+      - uses: actions/upload-artifact@v4
+        with: {name: 'd11-source-${{github.run_id}}-${{github.run_attempt}}', path: build/d11/}
+  native:
+    needs: guard
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - {host: windows, os: windows-2022, target: 9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08}
+          - {host: gtk, os: ubuntu-22.04, target: 803098e9df1a365a9b8e206805c2d179aca8501f}
+          - {host: android, os: ubuntu-latest, target: 4a04a9cc74dde67f755c87e87b278d63a254a3ac}
+          - {host: macos, os: macos-15, target: 15dab6b2270dc296ed6239db67ced2e22d255e65}
+          - {host: iphone, os: macos-15, target: 5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a}
+          - {host: ipad, os: macos-15, target: 5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 65
+    defaults: {run: {shell: bash}}
+    env: {PYTHONIOENCODING: utf-8, PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with: {ref: '${{matrix.target}}', path: target}
+      - run: mkdir -p build/d11
+      - name: Authenticate original APK or SDK ZIP, not substitute target source
+        if: matrix.host != 'windows' && matrix.host != 'gtk'
+        env: {GH_TOKEN: '${{github.token}}'}
+        run: python3 tests/reader_dot_wave2/d11/producer.py ${{matrix.host}}
+      - name: Windows compiler environment
+        if: matrix.host == 'windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object { if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 } }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Fresh Windows fixed-source native build
+        if: matrix.host == 'windows'
+        run: python3 tests/reader_dot_wave2/d11/build_windows.py
+      - name: Execute Windows semantic paths
+        if: matrix.host == 'windows'
+        run: python3 tests/reader_dot_wave2/d11/run_desktop.py windows
+      - name: Install GTK build and observation dependencies
+        if: matrix.host == 'gtk'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11
+      - name: Fresh GTK fixed-source native build
+        if: matrix.host == 'gtk'
+        run: cd target && bash ../tests/reader_dot_wave2/d11/build_gtk.sh >../build/d11/gtk-build.log 2>&1
+      - name: Execute GTK semantic paths
+        if: matrix.host == 'gtk'
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            openbox >/tmp/d11-openbox.log 2>&1 &
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_dot_wave2/d11/run_desktop.py gtk
+          '
+      - name: Android emulator virtualization
+        if: matrix.host == 'android'
+        run: sudo chmod 666 /dev/kvm
+      - name: Actual Android picker, reading and modal actions
+        if: matrix.host == 'android'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: python3 tests/reader_dot_wave2/d11/run_android.py
+      - name: Apple project generator dependency
+        if: runner.os == 'macOS'
+        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document
+      - name: Actual Apple semantic action paths
+        if: runner.os == 'macOS'
+        run: python3 tests/reader_dot_wave2/d11/run_apple.py ${{matrix.host}}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d11-${{matrix.host}}-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/d11/**
+            !build/d11/*-producer/**
+            !build/d11/*-producer.zip
+            !build/d11/*-derived/**
+          if-no-files-found: error
+  verify:
+    needs: [guard, native]
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate every original same-attempt ZIP and actual program, deny partial scope
+        env: {GH_TOKEN: '${{github.token}}'}
+        run: python3 tests/reader_dot_wave2/d11/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: 'd11-verification-${{github.run_id}}-${{github.run_attempt}}', path: build/d11/verification.json}
