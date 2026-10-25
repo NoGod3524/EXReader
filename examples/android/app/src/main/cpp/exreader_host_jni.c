@@ -41,6 +41,38 @@ static void throw_argument(JNIEnv *env, const char *message) {
   (*env)->DeleteLocalRef(env, type);
 }
 
+/* App-local viewport directory; frozen Java SDK bindings expose text quads in
+   source space but not the public geometry used by the renderer. */
+JNIEXPORT jdoubleArray JNICALL Java_org_exreader_host_FixedSession_nativeViewports(
+    JNIEnv *env,jclass type,jbyteArray bytes) {
+  exr_fixed_document *document=NULL;
+  exr_fixed_open_options options={0};
+  const exr_fixed_page *pages;
+  exr_error error={0};exr_status status=EXR_ARGUMENT;
+  jsize size=bytes?(*env)->GetArrayLength(env,bytes):0;
+  jbyte *input=NULL;jdoubleArray result=NULL;size_t count=0,i;
+  (void)type;
+  if(size<=0||size>32*1024*1024){throw_argument(env,"Invalid PDF viewport original");return NULL;}
+  input=(*env)->GetByteArrayElements(env,bytes,NULL);if(!input)return NULL;
+  options.struct_size=sizeof(options);
+  status=exr_fixed_open_memory(EXR_PDF,input,(size_t)size,&options,&document,&error);
+  if(status!=EXR_OK)goto done;
+  pages=exr_fixed_pages(document,&count);
+  if(!count||count>10000){status=EXR_LIMIT;goto done;}
+  result=(*env)->NewDoubleArray(env,(jsize)(count*6));if(!result)goto done;
+  for(i=0;i<count&&!(*env)->ExceptionCheck(env);i++) {
+    exr_viewport viewport;
+    status=exr_viewport_create(&pages[i].geometry,1.0,&viewport,&error);
+    if(status!=EXR_OK)break;
+    (*env)->SetDoubleArrayRegion(env,result,(jsize)(i*6),6,viewport.matrix);
+  }
+done:
+  exr_fixed_free(document);
+  (*env)->ReleaseByteArrayElements(env,bytes,input,JNI_ABORT);
+  if(status!=EXR_OK){if(result)(*env)->DeleteLocalRef(env,result);result=NULL;throw_status(env,status,&error,"Cannot read public PDF viewport geometry");}
+  return (*env)->ExceptionCheck(env)?NULL:result;
+}
+
 static char *copy_string(const char *text) {
   size_t size = strlen(text) + 1;
   char *copy = (char *)malloc(size);
