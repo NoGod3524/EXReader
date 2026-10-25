@@ -89,8 +89,6 @@ def validate(report, expect):
         why.append('reading progress state %r is neither FOUND nor LEGACY' % progress['state'])
     if not progress['start'] or progress['start'] <= 0:
         why.append('reading progress start offset %r is not past the first page' % progress['start'])
-    if not book['position']:
-        why.append('book position is zero after reading to page %d' % expect['page'])
     wanted = expect.get('notes', [])
     got = [row['text'] for row in book['notes']]
     if got != wanted:

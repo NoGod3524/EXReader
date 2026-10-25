@@ -428,18 +428,32 @@ class Driver:
         self.wait('the picker to hand control back to the host',
                   lambda: PACKAGE in self.focused_package(), 60)
         self.observed['import_path'] = 'host import button -> system picker -> picked ' + device_name
-        shelf = self.wait('the imported title on the shelf',
-                          lambda: next((item for item in self.nodes(self.dump('shelf'))
-                                        if contract['fixture']['title_stem'] in item['text'] and item['bounds']), None),
-                          300, 3.0)
-        self.observed['shelf_row'] = shelf
-        self.check('book_imported_through_real_ui', True, {'row': shelf})
+        stem = contract['fixture']['title_stem']
+        status_id = PACKAGE + ':id/status_text'
+
+        def committed():
+            rows = self.nodes(self.dump('shelf'))
+            status = next((item for item in rows if item['id'] == status_id), None)
+            return rows if status and 'Imported ' + stem in status['text'] else None
+        rows = self.wait('the import commit status', committed, 300, 3.0)
+        self.check('import_status_reported_by_application', True,
+                   {'status': next(item['text'] for item in rows if item['id'] == status_id)})
+        row = next((item for item in rows if stem in item['text'] and item['id'] != status_id
+                    and not item['text'].startswith('Imported') and item['bounds']), None)
+        listing = next((item for item in rows if item['id'] == PACKAGE + ':id/book_list'), None)
+        if row is not None:
+            shelf_point, shelf = self.center(row['bounds']), {'via': 'shelf row text', 'row': row}
+        elif listing is not None and listing['bounds']:
+            shelf_point, shelf = self.center(listing['bounds'], 0.5, 0.12), {'via': 'first row of the book list', 'list': listing}
+        else:
+            raise Refusal('neither a shelf row nor the book list is on screen: %r' % rows[:30])
+        self.observed['shelf_target'] = dict(shelf, nodes=[(item['id'], item['text']) for item in rows][:40])
+        self.check('book_imported_through_real_ui', True, self.observed['shelf_target'])
         self.screenshot('03-shelf')
 
         # ---- open, turn to page 3, annotate when the UI allows -----------------
         self.shell('logcat', '-c')
-        point = self.center(shelf['bounds'])
-        self.shell('input', 'tap', point[0], point[1])
+        self.shell('input', 'tap', shelf_point[0], shelf_point[1])
         opened = self.wait('the reader to render the book',
                            lambda: next(iter(self.metrics()), None), 180)
         book_id = opened['book']
@@ -460,9 +474,11 @@ class Driver:
         self.screenshot('05-after-annotation-attempt')
         self.observed['expected_notes'] = list(self.expect['notes'])
 
-        maps_pid = self.shell('pidof', PACKAGE).strip()
-        maps = self.run_as('cat', '/proc/%s/maps' % maps_pid).decode('utf-8', 'replace')
-        self.save('proc-maps-host.txt', maps)
+        try:
+            maps_pid = self.shell('pidof', PACKAGE).strip()
+            self.save('proc-maps-host.txt', self.run_as('cat', '/proc/%s/maps' % maps_pid).decode('utf-8', 'replace'))
+        except Refusal as error:
+            self.observed['host_maps_unavailable'] = str(error)[:300]
 
         # ---- close through the application, then read back --------------------
         self.close_app('first')
@@ -671,6 +687,13 @@ def main():
         failure = '%s: %s' % (type(error).__name__, error)
         trace = traceback.format_exc()[-4000:]
     finally:
+        if not accepted:
+            try:
+                driver.screenshot('failure')
+                driver.dump('failure')
+                driver.save('logcat-failure.txt', driver.adb('logcat', '-d', '-v', 'threadtime', '-t', '4000', binary=True))
+            except Exception as error:
+                driver.observed['failure_capture_error'] = str(error)[:300]
         result = {'identity': common.identity(), 'apk': inventory['apk'], 'checks': driver.checks,
                   'checks_total': len(driver.checks),
                   'checks_passed': sum(1 for check in driver.checks if check['pass']),
