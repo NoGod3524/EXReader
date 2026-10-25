@@ -21,7 +21,7 @@ import zlib
 from pathlib import Path
 
 IMAGE_EXT = (b".png", b".jpg", b".jpeg", b".gif", b".webp", b".bmp", b".avif", b".tif", b".tiff")
-FIXTURE_PNG = (2, 2, ((255, 0, 0, 255), (0, 255, 0, 255)), ((0, 0, 255, 255), (255, 255, 0, 255)))
+FIXTURE_PNG = (2, 2, (((255, 0, 0, 255), (0, 255, 0, 255)), ((0, 0, 255, 255), (255, 255, 0, 255))))
 COMIC_INFO = "<ComicInfo><Title>S13 Slash Comic</Title><Writer>S13</Writer></ComicInfo>"
 
 
