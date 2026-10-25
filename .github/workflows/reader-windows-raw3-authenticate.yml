@@ -1,0 +1,36 @@
+name: Authenticate original Windows owner evidence
+on:
+  workflow_dispatch:
+    inputs:
+      producer_run:
+        required: true
+        default: '40218506868'
+      producer_source:
+        required: true
+        default: b4fc135ce64fc651a4b988ad1dd852076413aa10
+permissions:
+  contents: read
+  actions: read
+jobs:
+  authenticate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate original ZIP and all source-bound owner evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRODUCER_RUN: ${{ inputs.producer_run }}
+          PRODUCER_SOURCE: ${{ inputs.producer_source }}
+        run: python tests/reader_windows_raw3/authenticate.py --run "$PRODUCER_RUN" --source "$PRODUCER_SOURCE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-owner-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-owner-authentication/report.json
+          if-no-files-found: warn
