@@ -10,6 +10,8 @@
 #include <time.h>
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/stat.h>
 #endif
 
 static FILE *g_out;
@@ -334,6 +336,28 @@ int main(int argc, char **argv) {
              st2 == READER_OPDS_OK && again.already_present == 1 && !strcmp(again.sha256, staged.sha256) &&
                  !strcmp(again.path, staged.path),
              "%s already=%d", reader_opds_status_name(st2), again.already_present);
+      {
+        reader_opds_acquired receipt = again;
+        opds_error denied;
+        int setup_ok, restored;
+        reader_opds_status removal;
+#ifdef _WIN32
+        HANDLE held = CreateFileA(again.path, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                                  FILE_ATTRIBUTE_NORMAL, NULL);
+        setup_ok = held != INVALID_HANDLE_VALUE;
+        removal = reader_opds_staged_discard(&again, &denied);
+        restored = setup_ok ? CloseHandle(held) != 0 : 0;
+#else
+        struct stat mode;
+        setup_ok = stat(g_staging, &mode) == 0 && chmod(g_staging, 0) == 0;
+        removal = reader_opds_staged_discard(&again, &denied);
+        restored = setup_ok && chmod(g_staging, mode.st_mode & 0777) == 0;
+#endif
+        record("discard_denied_preserves_receipt", setup_ok && restored &&
+               removal == READER_OPDS_IO && !memcmp(&again, &receipt, sizeof again),
+               "setup=%d restored=%d status=%s", setup_ok, restored,
+               reader_opds_status_name(removal));
+      }
       {
         opds_error discarded;
         int first = reader_opds_staged_discard(&again, &discarded) == READER_OPDS_OK;

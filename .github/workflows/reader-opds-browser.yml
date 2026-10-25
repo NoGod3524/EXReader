@@ -1,7 +1,7 @@
 name: Reader OPDS browser
 on:
   push:
-    branches: ['codex/reader-opds-browser']
+    branches: ['codex/dot-opds-browser-review']
     paths:
       - 'apps/reader/opds-browser/**'
       - 'tests/reader_opds_browser/**'
@@ -15,7 +15,7 @@ defaults:
   run:
     shell: bash
 env:
-  START: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  START: 3ca9d9fed564dbcba11fc95a034244c5cfe8c762
   SDK_TREE: 9854061be331fe603a1822d9b2b36ee357154927
   PRODUCT_SQL: f32bb8aa18ed3de286900f19ce4230fd93435dd0
 jobs:
@@ -125,7 +125,9 @@ jobs:
       - name: Authenticate the three platform ZIPs and compare named outcomes
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python tests/reader_opds_browser/check_artifacts.py build/opds-artifact-evidence
+        run: |
+          python tests/reader_opds_browser/test_strict_review.py
+          python tests/reader_opds_browser/check_artifacts.py build/opds-artifact-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:

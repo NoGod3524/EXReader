@@ -3,6 +3,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 #include "reader_opds_browser.h"
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -167,10 +168,10 @@ static int remove_file(const char *path) {
   int count = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, NULL, 0);
   wchar_t *wide;
   int r;
-  if (count <= 0) return -1;
+  if (count <= 0) { errno = EINVAL; return -1; }
   wide = (wchar_t *)malloc((size_t)count * sizeof(*wide));
-  if (!wide) return -1;
-  if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, wide, count)) { free(wide); return -1; }
+  if (!wide) { errno = ENOMEM; return -1; }
+  if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, wide, count)) { free(wide); errno = EINVAL; return -1; }
   r = _wremove(wide);
   free(wide);
   return r;
@@ -976,8 +977,11 @@ reader_opds_status reader_opds_staged_discard(const reader_opds_acquired *staged
   for (i = 5; i < 29; i++) if (!((name[i] >= '0' && name[i] <= '9') || (name[i] >= 'a' && name[i] <= 'f'))) return (reader_opds_status)fail(err, READER_OPDS_ARGUMENT, "not a staged file name");
   if (strcmp(name + 29, ".epub") && strcmp(name + 29, ".pdf") && strcmp(name + 29, ".cbz")) return (reader_opds_status)fail(err, READER_OPDS_ARGUMENT, "not a staged file name");
   if (remove_file(staged->path) != 0) {
-    FILE *f = open_file(staged->path, 0);
-    if (f) { fclose(f); return (reader_opds_status)fail(err, READER_OPDS_IO, "cannot remove the staged file"); }
+    /* A failed reopen is not proof of absence: permission or sharing denial
+       also prevents reads. Keep the caller's receipt/ownership on every error
+       except an explicit missing-file result. */
+    if (errno != ENOENT)
+      return (reader_opds_status)fail(err, READER_OPDS_IO, "cannot remove the staged file");
   }
   return READER_OPDS_OK;
 }

@@ -180,3 +180,30 @@ after the run. No source, test, workflow or fixture byte changed, so the tested 
 Not granted: product-host wiring, PDF/CBZ import through the SDK (only envelope, staging and
 EPUB import are exercised), performance/CPU/accessibility/real-device claims, and release
 packaging or signing.
+
+## T07 independent review (2026-10-25, pending new Actions acceptance)
+
+Fixed review start: `3ca9d9fed564dbcba11fc95a034244c5cfe8c762`.
+The original tested source `dcf77c2776d7cdce180f303d2a85152cf538a8d6`
+run `40126660557` was independently checked through the GitHub jobs API:
+all three installed-consumer jobs and strict evidence job completed successfully.
+The review start differs from that tested source only in the two evidence documents.
+This historical success does not validate the following new changes.
+
+Source tracing covered snapshot allocation/copy/free, cursor sequence ownership,
+relative href resolution delegated to the frozen OPDS module, acquisition class and
+media policy, credential origin isolation, reentry guard, network staging and public
+SDK-owner import. The adapter does not add a parser or network backend.
+
+Confirmed cleanup defect: a denied removal followed by a denied reopen was
+reported as successful discard. The receipt is now retained and IO returned unless
+removal reports ENOENT. The installed C consumer locks the file on Windows or denies
+staging-directory access on POSIX, verifies IO and unchanged receipt, then restores
+access and preserves the original successful/idempotent discard regression.
+
+Strict review adds completed job/run/attempt authentication, artifact run identity,
+unique and unambiguous ZIP members/reports, exact platform binary identities, and
+strict boolean successful unique case outcomes with count consistency. Executable
+negative cases run in Actions before the strict real-artifact authentication.
+Original cases and historical failures remain intact. No new platform, host UI,
+performance or real-device scope is claimed. No local builds or tests were run.
