@@ -81,7 +81,8 @@ int main(int argc,char **argv) {
   value.action=READER_BATCH_BEGIN;value.batch_token++;run(reader,&value,&result);REQUIRE(result.batch_deferred && result.batch_attempted==0);reader_result_free(&result);
   value.action=READER_BATCH_NEXT;value.batch_idle=1;run(reader,&value,&result);REQUIRE(!result.batch_deferred && result.batch_attempted==1);value.batch_idle=0;finish(reader,&value,&result);
   REQUIRE(result.batch_imported==0 && result.batch_duplicates==36 && result.batch_failed==1);close_batch(reader,&value,&result);
-  reading.action=READER_PREVIOUS;linux_reader_execute(reader,&reading,&result);REQUIRE(result.status==EXR_OK && result.has_frame && result.font==26);commit(reader,&result);reader_result_free(&result);
+  reading.action=READER_NEXT;linux_reader_execute(reader,&reading,&result);REQUIRE(result.status==EXR_OK && result.has_frame && result.font==26 && result.page==1);commit(reader,&result);reader_result_free(&result);
+  reading.action=READER_PREVIOUS;linux_reader_execute(reader,&reading,&result);REQUIRE(result.status==EXR_OK && result.has_frame && result.font==26 && result.page==0);commit(reader,&result);reader_result_free(&result);
   value.action=READER_BATCH_BEGIN;value.batch_token++;value.batch_candidate_limit=3;run(reader,&value,&result);finish(reader,&value,&result);
   REQUIRE(!result.batch_complete && result.batch_truncated && result.batch_attempted==3);close_batch(reader,&value,&result);value.batch_candidate_limit=0;
   char *cancel_root=g_build_filename(argv[3],"cancel",NULL);value.batch_root=cancel_root;value.action=READER_BATCH_BEGIN;value.batch_token++;
