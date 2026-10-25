@@ -508,13 +508,13 @@ def main():
         set_text(app.field(ZOOM), '400')
         app.press(APPLY)
         app.wait_enabled(APPLY)
+        status = app.status()
+        app.close_dialog()
         after, after_raw = document(profile)
         comic_after = app.page_shot('comic-refused.bmp', probes)
         record('fixed-page-zoom-refusal-is-explicit',
                before_raw == after_raw and before['fixed_page_zoom'] == 150 and
-               inner(comic_before) == inner(comic_after),
-               dict(status=app.status()))
-        app.close_dialog()
+               inner(comic_before) == inner(comic_after), dict(status=status))
 
         # ---- a real system appearance notification ---------------------------
         app.open('Reading sample')
@@ -655,12 +655,13 @@ def main():
             app.choose(THEME, 1)
             app.press(APPLY)
             app.wait_enabled(APPLY)
+            status = app.status()
+            app.close_dialog()
             after, after_raw = document(profile)
             after_image = app.page_shot('save-refused.bmp', probes)
             record('failed-save-keeps-accepted-frame',
                    accepted_raw == after_raw and inner(before_image) == inner(after_image),
-                   dict(status=app.status()))
-            app.close_dialog()
+                   dict(status=status))
         finally:
             if handle and handle != W.HANDLE(-1).value:
                 KERNEL.CloseHandle(handle)
@@ -685,6 +686,10 @@ def main():
         width, height = page_client(app)
         set_mode(1, 0, 3)
         base = reopen()
+        # Give the page real keyboard focus first; this mode must not turn on tap.
+        app.click_client(page, width // 2, height // 2)
+        app.wait_idle()
+        base = page_number(app.label())
         A.tap(0x27)
         app.wait_idle()
         keyed = page_number(app.label())
