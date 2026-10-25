@@ -1,7 +1,7 @@
 name: Reader localization
 on:
   push:
-    branches: [codex/reader-localization]
+    branches: [codex/reader-localization, codex/reader-localization-review]
   workflow_dispatch:
 permissions:
   contents: read

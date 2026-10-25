@@ -304,17 +304,56 @@ def refusal_rows():
     rows.append(("reader.reading.bookmark.add", "en-US", "-", "4096", "OK"))
     rows.append(("reader.does.not.exist", "en-US", "-", "4096", "UNKNOWN_MESSAGE"))
     rows.append(("x" * 120, "en-US", "-", "4096", "ARGUMENT"))
+    # The message-id limit is a byte count: an id of exactly MAX_MESSAGE_ID
+    # bytes is well formed and simply unknown, one byte more is ARGUMENT.
+    rows.append(("x" * MAX_MESSAGE_ID, "en-US", "-", "4096", "UNKNOWN_MESSAGE"))
+    rows.append(("x" * (MAX_MESSAGE_ID + 1), "en-US", "-", "4096", "ARGUMENT"))
     for payload in ("c0af", "eda080", "f5808080", "e282", "80"):
         rows.append((missing, "en-US", "s:" + payload, "4096", "VALUE_INVALID"))
     rows.append((missing, "zh-CN", "s:c0af", "4096", "VALUE_INVALID"))
     rows.append((missing, "en-US", "s:" + ("78" * MAX_VALUE_BYTES), "4096", "OK"))
     rows.append((missing, "en-US", "s:" + ("78" * (MAX_VALUE_BYTES + 1)), "4096", "VALUE_TOO_LONG"))
+    # A value that is both over-long and not well-formed UTF-8 reports
+    # VALUE_TOO_LONG: the byte limit is checked before the encoding, as the
+    # public header documents.
+    rows.append((missing, "en-US", "s:" + ("e2" * (MAX_VALUE_BYTES + 1)), "4096",
+                 "VALUE_TOO_LONG"))
     rows.append((move, "en-US", "s:" + ("61" * MAX_VALUE_BYTES) + "|s:" + ("62" * MAX_VALUE_BYTES),
                  "4096", "LIMIT"))
     rows.append((missing, "en-US", spec_for("s"), "8", "CAPACITY"))
     rows.append((missing, "en-US", "s:78", "1", "CAPACITY"))
     rows.append((title, "en-US", "-", "0", "CAPACITY"))
     return rows
+
+def slot_layout_rows():
+    """Rows for the slot-layout hook: the unsigned kind and the slot maximum.
+
+    No shipped row declares a 'u' slot, and none declares more than three, so
+    these rows replace one row's layout and template in the hook build and then
+    call the formatter. The expectations are written from the public contract:
+    eight unsigned slots in reverse order, the unsigned maximum, the declared
+    kind enforced in both directions, the over-long layout refused as CATALOG, a
+    template that omits a declared slot refused as CATALOG, and a permuted
+    template bound by index rather than by position.
+    """
+    message_id = "reader.shelf.count"
+    unsigned = [18446744073709551615, 0, 7, 1, 2, 3, 4, 5]
+    eight = "".join(str(unsigned[index]) for index in (7, 6, 5, 4, 3, 2, 1, 0))
+    return (
+        ("eight-unsigned-slots", message_id, "en-US", "uuuuuuuu", "{7}{6}{5}{4}{3}{2}{1}{0}",
+         "|".join("u:%d" % value for value in unsigned), "OK", eight),
+        ("over-long-layout", message_id, "en-US", "u" * (MAX_SLOTS + 1), "{0}",
+         "u:1", "CATALOG", None),
+        ("unsigned-slot-signed-value", message_id, "en-US", "u", "{0}", "d:5",
+         "PARAMETER_TYPE", None),
+        ("unsigned-maximum", message_id, "en-US", "u", "{0}", "u:18446744073709551615",
+         "OK", "18446744073709551615"),
+        ("missing-slot", "reader.reading.page", "en-US", "dd", "{0}", "d:1|d:2",
+         "CATALOG", None),
+        ("permuted-slots", "reader.reading.page", "en-US", "dd", "{1}-{0}", "d:1|d:2",
+         "OK", "2-1"),
+    )
+
 
 def capacity_exact_rows():
     """One row per message whose capacity is exactly the measured byte size.

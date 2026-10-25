@@ -22,7 +22,7 @@ from localization_fixtures import (ABI_VERSION, CATALOG_FORMAT_VERSION, FORBIDDE
                                    LOCALES, MAX_MESSAGE_ID, MAX_OUTPUT_BYTES, MAX_SLOTS,
                                    MAX_VALUE_BYTES, MESSAGES, PACKAGE, VERSION_STRING,
                                    canonical_digest, capacity_exact_rows, refusal_rows, render,
-                                   spec_for)
+                                   slot_layout_rows, spec_for)
 
 REQUIRED_CASES = (
     "installed-package-layout",
@@ -45,6 +45,7 @@ REQUIRED_CASES = (
     "fallback-missing-translation",
     "missing-base-translation",
     "catalog-corruption-refusal",
+    "unsigned-and-max-slots",
     "no-internal-diagnostics",
 )
 cases = []
@@ -474,6 +475,31 @@ def main():
             require(values.get("hex") == "-", "template %r produced text" % template)
             require(values.get("len") == "0", "template %r published a length" % template)
 
+    def unsigned_and_max_slots():
+        """The unsigned slot kind, the 8-slot maximum and binding by index.
+
+        No shipped row declares a 'u' slot or more than three slots, so this is
+        the only way those parts of the ABI contract can be executed rather than
+        documented. Each row is a real call into the formatter through the hook
+        worker, with expectations frozen in slot_layout_rows()."""
+        for (label, message_id, locale, kinds, template, spec, wanted_status,
+             wanted_text) in slot_layout_rows():
+            process = run([worker, "slots", message_id, locale, spec, kinds, template], None)
+            values = parse_kv(process)
+            require(values.get("status") == wanted_status, "%s rendered as %s, expected %s" % (
+                label, values.get("status"), wanted_status))
+            require(values.get("digest") == state["digest"],
+                    "%s: a slot-layout hook changed the catalog digest" % label)
+            require(values.get("fallback") == "0", "%s reported a fallback" % label)
+            if wanted_text is None:
+                require(values.get("hex") == "-", "%s produced text" % label)
+                require(values.get("len") == "0", "%s published a length" % label)
+                continue
+            require(values.get("hex") == text_hex(wanted_text), "%s rendered %r, expected %r" % (
+                label, values.get("hex"), text_hex(wanted_text)))
+            require(values.get("len") == str(len(wanted_text.encode("utf-8"))),
+                    "%s published the wrong byte length" % label)
+
     def no_internal_diagnostics():
         _header, _messages, templates = parse_manifest(run([consumer, "--manifest"], 0))
         for _id, locale, text in templates:
@@ -507,6 +533,7 @@ def main():
     record("fallback-missing-translation", fallback_missing_translation)
     record("missing-base-translation", missing_base_translation)
     record("catalog-corruption-refusal", catalog_corruption)
+    record("unsigned-and-max-slots", unsigned_and_max_slots)
     record("no-internal-diagnostics", no_internal_diagnostics)
 
     problems = ["%s: %s" % (case["name"], case["detail"]) for case in cases if not case["ok"]]

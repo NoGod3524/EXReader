@@ -569,8 +569,16 @@ static void check_values(void) {
 
   /* Malformed UTF-8 is refused, never repaired or copied through. */
   {
-    static const char *const malformed[] = {"\xc0\xaf", "\xed\xa0\x80", "\xf5\x80\x80\x80",
-                                            "\xe2\x82", "\x80", "\xfe"};
+    static const char *const malformed[] = {
+        "\xc0\xaf",         /* overlong two-byte */
+        "\xed\xa0\x80",     /* UTF-16 surrogate */
+        "\xf5\x80\x80\x80", /* lead byte above U+10FFFF */
+        "\xf4\x90\x80\x80", /* four-byte encoding above U+10FFFF */
+        "\xf0\x80\x80\x80", /* overlong four-byte */
+        "\xe2\x82",         /* truncated three-byte at the end of the value */
+        "\xf0\x9f\x98",     /* truncated four-byte at the end of the value */
+        "\x80",             /* lone continuation byte */
+        "\xfe"};
     for (i = 0; i < sizeof(malformed) / sizeof(malformed[0]); ++i) {
       param = text_param(malformed[i]);
       memset(buffer, 0xa5, sizeof(buffer));
@@ -592,6 +600,8 @@ static void check_values(void) {
         "\xd9\x85\xd8\xb1\xd8\xad\xd8\xa8\xd8\xa7",     /* Arabic */
         "e\xcc\x81",                                      /* e + combining acute */
         "\xe2\x80\xae",                                  /* U+202E right-to-left override */
+        "\xf4\x8f\xbf\xbf",                              /* U+10FFFF, the last scalar */
+        "\xc2\x80",                                       /* U+0080, the first two-byte scalar */
         "{0} %s %n $1 {{0}}",                            /* formatting-looking data */
         "a\tb\nc",
     };

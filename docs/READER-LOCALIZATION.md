@@ -8,7 +8,8 @@ Host wiring is still root's work: this package changes no host string and adds
 no dependency to an existing host target.
 
 - Fixed start: `f43baf9182d75907c0cb5d6f77048f27bca8c950`
-- Branch: `codex/reader-localization`
+- Branch: `codex/reader-localization` (delivery), `codex/reader-localization-review`
+  (independent review of the same package; only these two branches trigger the workflow)
 - Package: `EXReaderLocalization 0.1.0` (static C library `reader_localization`, C ABI,
   installed CMake package, ABI 1)
 - Sources: `apps/reader/localization/`; consumers and checker: `tests/reader_localization/`;
@@ -39,6 +40,13 @@ slot layout of at most 8 slots (`READER_LOCALIZATION_MAX_SLOTS`), one of:
 | `s` | string | borrowed NUL-terminated UTF-8, at most 1024 bytes |
 | `d` | signed decimal | `int64_t`, ASCII digits, `-` for negatives, no grouping |
 | `u` | unsigned decimal | `uint64_t`, ASCII digits, no grouping |
+
+No shipped row declares a `u` slot and no row declares more than three slots, so
+the unsigned kind, the `int64_t`/`uint64_t` extremes and the 8-slot maximum are
+reached through the test-hook worker (case `unsigned-and-max-slots`), which
+replaces one row's layout and template inside the hook build and then calls the
+same installed formatter logic. That case also proves that binding is by index
+and not by position: `{1}-{0}` renders `2-1`.
 
 The slot layout is locale independent: zh-CN and en-US rows of the same id must
 use exactly the indices `{0}`..`{n-1}` once each, in any order. Word order may
@@ -74,16 +82,23 @@ reader_localization_status reader_localization_format(
 `measurement.bytes` includes the terminating NUL. Checked in this order:
 
 1. context (`ARGUMENT`): `struct_size`, locale value, zeroed reserved words
-2. message id (`ARGUMENT` for null/empty/over 96 bytes, then `UNKNOWN_MESSAGE`)
-3. parameter count (`PARAMETER_COUNT`: `param_count` must equal the declared slots)
-4. parameter struct and kind (`ARGUMENT` for an unset `struct_size` or an unknown
+2. message id (`ARGUMENT` for null/empty/over 96 bytes, then `UNKNOWN_MESSAGE`;
+   an id of exactly 96 bytes is well formed and only unknown, 97 bytes is
+   `ARGUMENT`)
+3. row layout (`CATALOG` when the catalog row declares more slots than
+   `READER_LOCALIZATION_MAX_SLOTS`; checked before the caller's parameters are
+   examined)
+4. parameter count (`PARAMETER_COUNT`: `param_count` must equal the declared slots)
+5. parameter struct and kind (`ARGUMENT` for an unset `struct_size` or an unknown
    kind enum, `PARAMETER_TYPE` for a declared-kind mismatch)
-5. string values (`ARGUMENT` for a null value, `VALUE_INVALID` for malformed UTF-8,
-   `VALUE_TOO_LONG` beyond 1024 bytes)
-6. template self-consistency (`CATALOG`; the shipped catalog never triggers it,
-   the hook build proves it is enforced)
-7. rendered length (`LIMIT` above 2048 bytes, `READER_LOCALIZATION_MAX_OUTPUT_BYTES`)
-8. capacity (`CAPACITY`)
+6. string values (`ARGUMENT` for a null value, `VALUE_TOO_LONG` beyond 1024 bytes,
+   then `VALUE_INVALID` for malformed UTF-8; a value that is both over-long and
+   malformed reports `VALUE_TOO_LONG`)
+7. template self-consistency (`CATALOG`; the shipped catalog never triggers it,
+   the hook build proves it is enforced for out-of-range, duplicated and missing
+   indices and for a stray `}`)
+8. rendered length (`LIMIT` above 2048 bytes, `READER_LOCALIZATION_MAX_OUTPUT_BYTES`)
+9. capacity (`CAPACITY`)
 
 **Buffer rule.** Every refusal except `CAPACITY` leaves the output buffer and the
 measurement byte-for-byte untouched. `CAPACITY` is the one failure that reports:
@@ -102,7 +117,8 @@ newlines, bidi controls, combining marks, CJK or emoji is emitted byte for byte
 and is never re-scanned, re-substituted, truncated or interpreted as markup.
 Templates come only from the shipped catalog, so a caller cannot inject a
 template. Values must be well-formed UTF-8; malformed sequences are refused
-(`VALUE_INVALID`) rather than repaired or copied through, because a broken byte
+(`VALUE_INVALID`, or `VALUE_TOO_LONG` when the value is also over the
+1024-byte limit) rather than repaired or copied through, because a broken byte
 sequence in a native UI string is a defect the caller must fix.
 
 ### Locale
@@ -212,7 +228,7 @@ or parsed locally.
    source.
 3. `make_localization_fixtures.py` freezes the expectations and the fixture
    tables **before** any consumer renders; `check_localization.py` then runs the
-   20 named cases below.
+   22 named cases below.
 4. The aggregation job downloads all three ZIPs, verifies artifact id, name,
    non-empty byte count, `sha256` digest, expiry and `head_sha`, re-reads
    `localization-evidence/result.json` out of the archive, and requires the three
@@ -228,13 +244,14 @@ Named cases (identical on every platform):
 `refusal-arity-and-kind`, `refusal-malformed-utf8`, `value-limit-boundary`,
 `capacity-atomicity`, `output-limit`, `fallback-missing-translation`,
 `missing-base-translation`, `catalog-corruption-refusal`,
-`no-internal-diagnostics`.
+`unsigned-and-max-slots`, `no-internal-diagnostics`.
 
-Reproduce: push to `codex/reader-localization` (or dispatch the workflow), then
-read the three `reader-localization-<platform>-<run>-<attempt>` artifacts and the
+Reproduce: push to `codex/reader-localization` or
+`codex/reader-localization-review` (or dispatch the workflow), then read the
+three `reader-localization-<platform>-<run>-<attempt>` artifacts and the
 `reader-localization-summary-<run>-<attempt>` artifact. The summary JSON is the
 same-source record; `docs/validation/reader-localization.json` records the
-accepted run.
+accepted runs.
 
 ## Limits and uncovered scope
 
@@ -276,6 +293,11 @@ An earlier accepted run (40126739701, source `aafb8fd0`) covered the first 20
 checks; it is recorded as superseded because it does not carry the binary
 digests, and its artifacts stay available until 2027-01-22.
 
+The only commit after `6e7ba4b6` on the delivery branch is the documentation
+commit `e2e60f6e` (validation record, `[skip ci]`), so the tested source and the
+delivery HEAD differ only in `docs/`. The review branch record is appended as
+`## Independent review` below once its own three-desktop run has finished.
+
 Earlier failed runs on this branch are kept as evidence, with their jobs,
 artifacts, digests and the exact case that failed. None of them was repaired by
 editing an expectation:
@@ -287,5 +309,6 @@ editing an expectation:
 | 40126019743 | 67ced03d | refusal-arity-and-kind, refusal-malformed-utf8, value-limit-boundary, capacity-atomicity, output-limit | the fixture buffer was exactly the value limit, so an over-long value could not reach the library and the fixture run aborted |
 | 40126404054 | ae8a9caa | capacity-atomicity | the exact-capacity fixture was sized in characters instead of UTF-8 bytes, so CJK rows were one byte short |
 
-The two later commits on the branch after `aafb8fd0` are documentation-only and
-carry `[skip ci]`; the tested source is `aafb8fd0`, not the documentation HEAD.
+Commits after a tested source are documentation-only and carry `[skip ci]`; a
+tested source is always the last non-documentation commit, never a
+documentation HEAD.

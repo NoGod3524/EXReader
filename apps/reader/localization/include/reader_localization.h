@@ -14,14 +14,17 @@ extern "C" {
 /* Canonical catalog serialization version mixed into the digest header. */
 #define READER_LOCALIZATION_CATALOG_FORMAT_VERSION 1
 
-/* Hard limits. They are part of the ABI contract: a message id longer than
-   READER_LOCALIZATION_MAX_MESSAGE_ID, a message declaring more than
-   READER_LOCALIZATION_MAX_SLOTS placeholders, one string value longer than
-   READER_LOCALIZATION_MAX_VALUE_BYTES or a rendered text longer than
-   READER_LOCALIZATION_MAX_OUTPUT_BYTES is refused with ARGUMENT,
-   VALUE_TOO_LONG or LIMIT. The shipped catalog uses at most 3 slots and 256
-   template bytes; the output limit is reachable with real values (two
-   1024-byte values plus a short template exceed it), so the refusal is
+/* Hard limits. They are part of the ABI contract, and each one has its own
+   refusal: a message id longer than READER_LOCALIZATION_MAX_MESSAGE_ID is
+   ARGUMENT, one string value longer than
+   READER_LOCALIZATION_MAX_VALUE_BYTES is VALUE_TOO_LONG (checked before
+   VALUE_INVALID, so a value that is both over-long and not well-formed UTF-8
+   reports VALUE_TOO_LONG), a rendered text longer than
+   READER_LOCALIZATION_MAX_OUTPUT_BYTES is LIMIT, and a catalog row that
+   declares more than READER_LOCALIZATION_MAX_SLOTS slots is CATALOG, refused
+   before any caller parameter is examined. The shipped catalog uses at most 3
+   slots and 256 template bytes; the output limit is reachable with real values
+   (two 1024-byte values plus a short template exceed it), so the refusal is
    exercised on every platform rather than left theoretical. */
 #define READER_LOCALIZATION_MAX_MESSAGE_ID 96u
 #define READER_LOCALIZATION_MAX_SLOTS 8u
@@ -93,6 +96,10 @@ typedef enum {
   READER_LOCALIZATION_LOCALE_EN_US = 2
 } reader_localization_locale;
 
+/* No shipped row declares a 'u' slot today: the kind is part of the ABI so a row
+   can gain one without an ABI change, and it stays reachable while no row uses
+   it, so its refusal and its rendering are exercised by the package's own
+   hook-worker checks rather than claimed. */
 typedef enum {
   READER_LOCALIZATION_PARAM_STRING = 1,   /* 's': borrowed UTF-8, copied verbatim */
   READER_LOCALIZATION_PARAM_INT = 2,      /* 'd': signed 64-bit decimal, ASCII, no grouping */
@@ -203,9 +210,11 @@ reader_localization_measure(const reader_localization_context *context, const ch
 
    Checked in this order, and the documented refusal leaves every caller buffer
    untouched: context (ARGUMENT), message id shape (ARGUMENT, then
-   UNKNOWN_MESSAGE), parameter count (PARAMETER_COUNT), parameter kind
-   (PARAMETER_TYPE), string values (VALUE_INVALID for malformed UTF-8,
-   VALUE_TOO_LONG), template self-consistency (CATALOG), rendered length
+   UNKNOWN_MESSAGE), row layout (CATALOG when the catalog row declares more
+   slots than READER_LOCALIZATION_MAX_SLOTS), parameter count
+   (PARAMETER_COUNT), parameter kind (PARAMETER_TYPE), string values
+   (VALUE_TOO_LONG first for a value over the byte limit, then VALUE_INVALID for
+   malformed UTF-8), template self-consistency (CATALOG), rendered length
    (LIMIT), capacity (CAPACITY).
 
    CAPACITY is the one failure that reports: out_measurement is filled with the

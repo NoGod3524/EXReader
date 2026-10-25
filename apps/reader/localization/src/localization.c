@@ -36,7 +36,26 @@ static int rl_override_lookup(size_t message, uint32_t locale, const char **repl
 }
 
 static int rl_override_set(const char *message_id, uint32_t locale, const char *replacement);
+
+/* Test-hook build only: at most one row at a time may have its slot layout
+   replaced. The Actions worker uses it to reach the unsigned slot kind and the
+   READER_LOCALIZATION_MAX_SLOTS row guard, neither of which any shipped row
+   exercises, and to prove that the row layout, not the caller, decides binding.
+   One character past the ABI maximum is accepted so the worker can prove that
+   an over-long layout is refused instead of rendered. */
+static int rl_kind_override_active;
+static size_t rl_kind_override_message;
+static char rl_kind_override[READER_LOCALIZATION_MAX_SLOTS + 2u];
 #endif
+
+/* The slot layout of one catalog row. Identical to the shipped table in a
+   production build; the test-hook build lets the worker replace one row. */
+static const char *rl_message_kinds(size_t index) {
+#if defined(READER_LOCALIZATION_TEST_HOOKS)
+  if (rl_kind_override_active && rl_kind_override_message == index) return rl_kind_override;
+#endif
+  return rl_messages[index].kinds;
+}
 
 size_t rl_slot_count(const char *kinds) { return strlen(kinds); }
 
@@ -264,8 +283,8 @@ reader_localization_status reader_localization_message_at(size_t index,
   if (index >= rl_message_count) return READER_LOCALIZATION_ARGUMENT;
   out->message_id = rl_messages[index].id;
   out->group = rl_messages[index].group;
-  out->kinds = rl_messages[index].kinds;
-  out->slots = (uint32_t)rl_slot_count(rl_messages[index].kinds);
+  out->kinds = rl_message_kinds(index);
+  out->slots = (uint32_t)rl_slot_count(rl_message_kinds(index));
   out->reserved = 0u;
   return READER_LOCALIZATION_OK;
 }
@@ -291,7 +310,7 @@ reader_localization_status reader_localization_template_at(size_t index,
   out->message_id = rl_messages[message_index].id;
   out->locale = reader_localization_locale_tag(locale);
   out->text = text;
-  out->slots = (uint32_t)rl_slot_count(rl_messages[message_index].kinds);
+  out->slots = (uint32_t)rl_slot_count(rl_message_kinds(message_index));
   out->fallback = 0u;
   out->reserved = 0u;
   return READER_LOCALIZATION_OK;
@@ -317,7 +336,7 @@ reader_localization_status reader_localization_resolve(const reader_localization
   out->message_id = rl_messages[index].id;
   out->locale = reader_localization_locale_tag(context->locale);
   out->text = text;
-  out->slots = (uint32_t)rl_slot_count(rl_messages[index].kinds);
+  out->slots = (uint32_t)rl_slot_count(rl_message_kinds(index));
   out->fallback = fallback;
   out->reserved = 0u;
   return READER_LOCALIZATION_OK;
@@ -362,6 +381,7 @@ static reader_localization_status rl_prepare(const reader_localization_context *
   uint32_t slot_count;
   uint32_t i;
   const char *text;
+  const char *kinds;
 
   status = rl_context_valid(context);
   if (status != READER_LOCALIZATION_OK) return status;
@@ -369,14 +389,17 @@ static reader_localization_status rl_prepare(const reader_localization_context *
   if (status != READER_LOCALIZATION_OK) return status;
   text = rl_resolve_text(index, context->locale, out_fallback);
   if (text == NULL) return READER_LOCALIZATION_UNKNOWN_MESSAGE;
-  slot_count = (uint32_t)rl_slot_count(rl_messages[index].kinds);
+  kinds = rl_message_kinds(index);
+  slot_count = (uint32_t)rl_slot_count(kinds);
+  /* A row that declares more slots than the ABI allows is a package defect, so
+     it is refused before the caller's parameter count is examined. */
   if (slot_count > READER_LOCALIZATION_MAX_SLOTS) return READER_LOCALIZATION_CATALOG;
   if (param_count != (size_t)slot_count) return READER_LOCALIZATION_PARAMETER_COUNT;
   if (slot_count > 0u && params == NULL) return READER_LOCALIZATION_ARGUMENT;
 
   for (i = 0u; i < slot_count; ++i) {
     const reader_localization_param *param = &params[i];
-    char expected = rl_messages[index].kinds[i];
+    char expected = kinds[i];
     if (param->struct_size != (uint32_t)sizeof(reader_localization_param)) {
       return READER_LOCALIZATION_ARGUMENT;
     }
@@ -644,7 +667,31 @@ int reader_localization_test_corrupt(const char *message_id, uint32_t locale, co
   return rl_override_set(message_id, locale, text);
 }
 
+/* Replace one row's slot layout. kinds must be at most one character past
+   READER_LOCALIZATION_MAX_SLOTS and consist only of the documented kind
+   characters, so a mistyped fixture fails here instead of binding a slot the
+   caller did not declare. */
+int reader_localization_test_kinds(const char *message_id, const char *kinds) {
+  size_t index = 0u;
+  size_t length = 0u;
+  size_t i;
+
+  if (kinds == NULL) return 0;
+  if (!rl_strlen_bounded(kinds, sizeof(rl_kind_override), &length)) return 0;
+  for (i = 0u; i < length; ++i) {
+    if (kinds[i] != 's' && kinds[i] != 'd' && kinds[i] != 'u') return 0;
+  }
+  if (rl_find_message(message_id, &index) != READER_LOCALIZATION_OK) return 0;
+  memcpy(rl_kind_override, kinds, length + 1u);
+  rl_kind_override_message = index;
+  rl_kind_override_active = 1;
+  return 1;
+}
+
 void reader_localization_test_reset(void) {
   rl_override_count = 0u;
+  rl_kind_override_active = 0;
+  rl_kind_override_message = 0u;
+  rl_kind_override[0] = '\0';
 }
 #endif

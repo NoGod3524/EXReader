@@ -276,6 +276,35 @@ int main(int argc, char **argv) {
       return ok ? 0 : 1;
     }
   }
+  if (strcmp(argv[1], "slots") == 0) {
+    /* slots <id> <locale> <spec> <kinds> <template>: replace one row's slot
+       layout and template, then render it. The shipped catalog declares no
+       unsigned slot and never more than three slots with every index bound
+       exactly once, so this is the only way the unsigned kind, the 8-slot
+       maximum and the over-long-layout refusal can be executed at all. The
+       checker owns the expectations; the digest line proves the hook does not
+       touch the shipped catalog. */
+    char digest[65];
+    int ok;
+    if (argc < 7) {
+      (void)printf("error=usage\n");
+      return 2;
+    }
+    if (!reader_localization_test_kinds(argv[2], argv[5])) {
+      (void)printf("error=kinds\n");
+      return 2;
+    }
+    if (!reader_localization_test_corrupt(argv[2], locale, argv[6])) {
+      reader_localization_test_reset();
+      (void)printf("error=corrupt\n");
+      return 2;
+    }
+    ok = render(argv[2], locale, &staged, NULL);
+    reader_localization_catalog_digest(digest);
+    (void)printf("digest=%s\n", digest);
+    reader_localization_test_reset();
+    return ok ? 0 : 1;
+  }
   (void)printf("error=mode\n");
   return 2;
 }
