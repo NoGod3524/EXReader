@@ -9,7 +9,11 @@ if(MSVC)
 endif()
 # The frozen installed SDK and the installed revision/product packages only;
 # no SDK private header, archive or second SQLite build is used here.
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core library
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed SDK: frozen 3.40.0 or explicit 3.41.0 candidate")
+if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
+  message(FATAL_ERROR "Unsupported exact reader SDK version: ${EXR_SDK_VERSION}")
+endif()
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core library
   PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
 find_package(EXReaderRevisions 0.3.0 EXACT CONFIG REQUIRED)
 add_library(reader_reading_state_codec STATIC src/reading_state.cpp)
