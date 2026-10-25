@@ -16,7 +16,7 @@ CI 在 `edddc463` 的隔离副本上应用；本分支 `src/include` 与批准 S
 3. 候选：根组关闭后只接受 NUL 与 CR/LF/空格/制表补白；其他尾部字节、第二个根组、多余 `}`、
    截断、整数溢出、非法 `\bin`、`\'00`、`\u` 越界及非 1252 代码页保持 `EXR_FORMAT` 且不产生文档。
    字体编号接受 0..32767，分配/读取/提交/释放使用同一上界；字体名仍受原 64 MiB 元数据预算与单名上界约束，指针表固定为 32768 项（64 位约 256 KiB）。
-   对真实 Word 流使用的保留 `listid=-1..-5` 增加只读兼容扩展：保留 signed int32 原值，按精确相等查找；不取绝对值、不偏移、不作为数组索引。`ls` 仍为独立的 1..2000 索引，重复定义、重复 override、缺少定义、数值溢出仍拒绝。此扩展偏离微软 RTF 规范的保留值要求，不称为规范原本允许。
+   对真实 Word 流使用的保留 `listid=-1..-5` 增加只读兼容扩展：保留 signed int32 原值，按精确相等查找；不取绝对值、不偏移、不作为数组索引。`ls` 仍为独立的 1..2000 索引，重复定义、重复 override、数值溢出仍拒绝；新增无定义且无显式 listtext 回退时的拒绝测试。此扩展偏离微软 RTF 规范的保留值要求，不称为规范原本允许。
 4. 回归：候选 SDK 全量 ctest（含原 `native-rtf*`），以及安装后公开 API 的边界测试
    `test_rtf_real_boundary.c`（保留原补白/坏流测试，增加字体上边界与重复定义、signed ID 0/-1..-5/INT_MIN/INT_MAX、正负不碰撞与无效引用）。
 5. 前后对照：同一 F5 消费者分别对未改 SDK 与候选 SDK 运行，保存原失败与补丁后结果。
@@ -31,7 +31,7 @@ root wrapper 将原件、消费者、字体与结果路径明确转为绝对路�
 
 规范来源：[Microsoft RTF 1.9.1 原文](https://interoperability.blob.core.windows.net/files/Archive_References/%5BMSFT-RTF%5D.pdf)（[美国国会图书馆的原文入口](https://www.loc.gov/preservation/digital/formats/fdd/fdd000473.shtml)）；微软旧 1.6 Header 链接现已重定向，规范镜像也保留了 -1..-5 reserved 条文。
 
-root 完整运行尚待云端结果，本候选始终 `accepted:false`。
+root 完整 run `40234424624` 两平台各 169/169 原 SDK 回归与 100 项边界通过，Micro 原 F5 全过；Crowley 原查询 miss 导致本轮整体失败。公开正文诊断 `40235597650` 证明原查询不在实际正文，保留原 F5 失败。详见 [root-review-validation.json](root-review-validation.json) 和独立 [新版清单提案](F5-MANIFEST-CORRECTION-PROPOSAL.md)。本候选始终 `accepted:false`。
 
 ## 性能
 
