@@ -13,7 +13,7 @@
 
 新流程复用原workflow作业内容及原消费者，在同一run/attempt执行三桌面组合、Windows搜索及原回归、GTK全部原回归、Android原全套。原始检查不删断言。GTK设置仍按实际35项报告登记，不把两项失败变成预期拒绝；整体accepted保持false，只有各自真实通过的声明范围可独立登记。Apple宿主原回归、Android后续Preferences和GTK新批量导入尚由各自owner推进，不在本候选中预先授予。
 
-最新受测源码 `7adda19cb5dd4108d4b4a434a8f2bb619519529d`， [run 40141520772](https://github.com/NoGod3524/EXReader/actions/runs/40141520772) / attempt 1 已结束。最终认证作业 `121018373358` 真实读取同一轮工件，`problems=[]`，各分项结果如下。整体 `accepted=false`，保留两项实际页面配色失败。
+前一受测源码 `7adda19cb5dd4108d4b4a434a8f2bb619519529d`， [run 40141520772](https://github.com/NoGod3524/EXReader/actions/runs/40141520772) / attempt 1 已结束。最终认证作业 `121018373358` 真实读取同一轮工件，`problems=[]`，各分项结果如下。整体 `accepted=false`，保留两项实际页面配色失败。
 
 | 同源范围 | 结果 |
 | --- | --- |
@@ -38,3 +38,9 @@
 新共同轮将原样重跑 Windows 导航31项、F2安装消费者130项及全部原Windows套件，并由同轮ZIP同时认证原搜索和新增目录报告；Android改跑已交回的设置完整作业，包含原Reading16/Search15/Nav18和新增Prefs17。Android仍明确保留 `page_colors_accepted=false`，不把记录公开API缺口的检查算作页面配色通过。
 
 在新共同轮终态并完成认证之前，本文上面的分项通过只归属 `7adda19c`，新增两宿主的独立通过分别归属它们自己的受测源码。尚未合入Apple新宿主、GTK批量导入或Android新CBZ包。
+
+## 导航与设置同源认证结果
+
+共同源码 `f0c272c87b2402979292d0cd973d4f5e7a9f62fd` / [run 40143985644](https://github.com/NoGod3524/EXReader/actions/runs/40143985644) / attempt 1 已终态。认证作业 `121026966594` 重新读取本轮工件，`problems=[]`。Windows 搜索、目录导航及全部原回归、三桌面18包组合及严格汇总、GTK阅读记录／搜索／目录、Android Reading16／Search15／Nav18／Prefs17 均在这一个源码上通过。
+
+整体 `accepted=false`；仅有的实际失败仍为 GTK 两项整页配色。Android设置控件有实际通过，但 `android_page_colors=false`。旧7adda轮原始记录、工件身份及失败历史保留在JSON中。Apple新宿主、GTK批量导入和Android CBZ仍未纳入这个共同源码的范围。
