@@ -1,0 +1,51 @@
+name: Private native capture codec
+on:
+  push:
+    branches: [codex/reader-private-capture]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  consumers:
+    name: private-capture-${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, platform: linux}
+          - {os: windows-2022, platform: windows}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Linux real 32-bit compiler runtime
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y gcc-multilib g++-multilib
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Compile C11 and C++ against public types and check golden bytes
+        run: python tests/reader_private_capture/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: private-capture-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/private-capture/
+          if-no-files-found: error
+  strict:
+    needs: consumers
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original ZIPs and cross-platform exact bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_private_capture/strict.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: private-capture-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/private-capture-summary/
