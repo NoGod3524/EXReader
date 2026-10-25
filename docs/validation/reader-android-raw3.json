@@ -39,6 +39,18 @@
       "actual_mac_null_network_received_and_first_ui_refusal_passed": true,
       "authenticated_null_manifest_sha256": "86bd72f1609f38b3e006af1eb62172104262e70416a0a8d3a6a83dd968e064b7",
       "authenticated_null_revisions": 3
+    },
+    {
+      "source_sha": "ade3fbffe928534891d9f91cb1fc44a994342501",
+      "run_id": 40204041412,
+      "attempt": 1,
+      "android_job": 121201060105,
+      "protocol_job": 121201059925,
+      "failed_phase": "kill-ui-host-poll",
+      "reason": "ADB exec-out returned zero for cat on the not-yet-published marker, and the host fixture incorrectly parsed its ENOENT text as JSON. Polling now retries only an absent marker, while an atomically published JSON object still requires strict parsing and exact identity checks. Production behavior is unchanged.",
+      "preceding_raw_checks_passed": 18,
+      "actual_mac_null_second_fresh_process_ui_refusal_passed": true,
+      "actual_source_versions_1_and_2_restore_passed": true
     }
   ],
   "scope": "explicit API34 default x86_64 Android raw3 native host candidate",
