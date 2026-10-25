@@ -25,7 +25,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # One prefix, every optional package, in dependency order.
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core library)
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed reading SDK")
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core library)
 find_package(EXReaderProductCatalog 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderRevisions 0.3.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderWebDAV 0.2.0 EXACT CONFIG REQUIRED)

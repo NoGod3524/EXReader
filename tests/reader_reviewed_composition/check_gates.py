@@ -107,9 +107,13 @@ def main():
 
     # 3. A second SQLite provider in the composed link graph must be refused.
     duplicate_build = scratch / 'duplicate-provider'
+    sdk_options = []
+    if 'EXR_SDK_VERSION' in os.environ:
+        assert os.environ['EXR_SDK_VERSION'] in ('3.40.0', '3.41.0')
+        sdk_options = ['-DEXR_SDK_VERSION=' + os.environ['EXR_SDK_VERSION']]
     configure = run(['cmake', '-S', str(source), '-B', str(duplicate_build), *generator,
                      '-DEXR_MODULE_PREFIX=' + str(prefix),
-                     '-DEXR_NEGATIVE_DUPLICATE_PROVIDER=ON'], out / 'duplicate-configure.log')
+                     '-DEXR_NEGATIVE_DUPLICATE_PROVIDER=ON', *sdk_options], out / 'duplicate-configure.log')
     record(configure.returncode == 0, 'the duplicate-provider control configures', str(configure.returncode))
     build = run(['cmake', '--build', str(duplicate_build), '--target', 'composition-cxx'],
                 out / 'duplicate-build.log')

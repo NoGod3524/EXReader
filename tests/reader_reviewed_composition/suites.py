@@ -22,6 +22,9 @@ def run(args,log):
  if proc.returncode:raise RuntimeError('command failed '+str(proc.returncode)+': '+' '.join(args))
 def configure(name,source,options=()):
  path=build/name
+ if 'EXR_SDK_VERSION' in os.environ:
+  assert os.environ['EXR_SDK_VERSION'] in ('3.40.0','3.41.0')
+  options=[*options,'-DEXR_SDK_VERSION='+os.environ['EXR_SDK_VERSION']]
  run(['cmake','-S',root/source,'-B',path,'-G','Ninja','-DCMAKE_BUILD_TYPE=Release','-DCMAKE_PREFIX_PATH='+prefix,'-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>',*options],name+'-configure')
  run(['cmake','--build',path,'--parallel','4','--verbose'],name+'-build')
  return path

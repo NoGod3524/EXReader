@@ -11,7 +11,8 @@ endif()
 # Installed packages only: the optional thumbnails package and the frozen SDK
 # (core + pdf + library are used directly by the consumers to build sources).
 find_package(EXReaderThumbnails 0.1.0 EXACT CONFIG REQUIRED)
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core pdf library)
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed reading SDK")
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core pdf library)
 find_package(Threads REQUIRED)
 add_library(thumb-peak STATIC peak.c)
 add_executable(thumb-c-consumer api.c)
