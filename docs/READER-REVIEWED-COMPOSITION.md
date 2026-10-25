@@ -57,3 +57,41 @@ No production host UI, physical-keyboard/IME, performance, Android or iOS credit
 is granted. No complete-product or complete-library-sync claim is made.
 Cloud results will be recorded in the evidence-only `[skip ci]` commit after
 execution; current implementation is not yet tested.
+
+## Frozen-baseline count discrepancy (not silently resolved)
+
+The handoff calls the prior suite “18 packages”. At fixed start
+`e4356a6e13223469fdf3b2f3d5171a6e99ab10a6`,
+`docs/READER-MODULE-COMPOSITION.md:32-42` explicitly says thirteen independent
+optional packages; `tests/reader_module_composition/consumer/CMakeLists.txt:29-43`
+finds those thirteen plus the SDK. The exact existing suite is preserved, not
+replaced with five guessed packages. Its unique package identities are:
+
+- EXReader (SDK)
+- EXReaderProductCatalog, EXReaderRevisions, EXReaderWebDAV, EXReaderSideload
+- EXReaderCredentials, EXReaderSearch, EXReaderPreferences, EXReaderBatchImport
+- EXReaderSync, EXReaderCommands, EXReaderDesktopMetadata, EXReaderSession,
+  EXReaderReadingState
+
+The eight authorized additions are EXReaderCloudImport,
+EXReaderBulkOrganization, EXReaderLinkPolicy, EXReaderJumpHistory,
+EXReaderKeyboardActions, EXReaderBookInformation, EXReaderSyncView and
+EXReaderAccountProfiles. Actual combined scope is **22 unique package configs**,
+not an invented “18 + 8” count. Task-wide acceptance stays withheld pending
+root's resolution of that discrepancy; independently verified cloud results
+will be reported for this exact graph only. No missing public API was found in
+the requested shared flow.
+
+## Preserved first-run failure
+
+Source `258f0c36a40f1bd0cc65091a70317d7cb489d81d`, run `40165114855`,
+Linux job `121084469699`: the original cloud allocator probe failed to compile
+because its line 19 includes `../../../../apps/reader/cloud-import/src/cloud_import.c`.
+Its source file actually sits three levels below the root. The standalone SDK
+prefix's deeper include-search path had accidentally made that path resolve;
+a single prefix exposes the error. Original tests are immutable here. The
+T05-only `cloud_consumer` wrapper compiles the original C/C++ consumers unchanged,
+uses the same allocation interception and original `cloud_probe.c`, and changes
+only the supplemental source include to the actual root. No case is removed.
+The Linux run separately passed both 37-check shared-owner flows, original
+composition, prefix relocation, and all 11 original negative gates.

@@ -37,7 +37,7 @@ def suite(name,action):
  record['binaries']={n:p for n,p in binaries.items() if n not in before};records.append(record)
  (out/'suites.json').write_text(json.dumps(dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],accepted=all(r['accepted'] for r in records),suites=records),indent=2)+'\n')
 def cloud():
- b=configure('cloud','tests/reader_webdav_import/consumer')
+ b=configure('cloud','tests/reader_reviewed_composition/cloud_consumer')
  judge('tests/reader_webdav_import/check_cloud_import.py','--probe',binary(b,'cloud-probe'),'--cxx',binary(b,'cloud-cpp-consumer'),'--review-probe',binary(b,'cloud-review-probe'),'--fixtures','tests/fixtures','--module-prefix',prefix,'--output',out/'cloud')
 def bulk():
  b=configure('bulk','tests/reader_bulk_organization/consumer')
@@ -63,5 +63,6 @@ def status():
 def profiles():
  b=configure('profiles','tests/reader_account_profiles/consumer',['-DEXR_ACCOUNT_PROFILES_SOURCE='+str(root/'apps/reader/account-profiles/src'),'-DEXR_ACCOUNT_PROFILES_INCLUDE='+str(root/'apps/reader/account-profiles/include')])
  judge('tests/reader_account_profiles/check_account_profiles.py','--probe',binary(b,'profiles-probe'),'--session',binary(b,'profiles-session-consumer'),'--worker',binary(b,'profiles-worker'),'--prefix',prefix,'--work',out/'work/profiles','--output',out/'profiles','--platform',platform)
+ if platform=='Linux':run(['bash','tests/reader_reviewed_composition/sanitizer.sh'],'sanitizer')
 for name,action in [('cloud',cloud),('bulk',bulk),('link',link),('history',history),('keyboard',keyboard),('information',information),('status',status),('profiles',profiles)]:suite(name,action)
 raise SystemExit(0 if len(records)==8 and all(r['accepted'] for r in records) else 1)

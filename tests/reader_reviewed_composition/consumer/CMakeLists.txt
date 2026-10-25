@@ -262,3 +262,11 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/composition-interface.json" "${exr_inter
 exr_header_probe("EXReaderKeyboardActions::reader_keyboard_actions" "reader_keyboard_actions.hpp" "CXX")
 add_executable(reviewed-flow reviewed_flow.cpp)
 target_link_libraries(reviewed-flow PRIVATE ${EXR_COMPOSED_LIBRARIES})
+
+if(MSVC)
+  target_link_options(reviewed-flow PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/reviewed-link.map")
+elseif(APPLE)
+  target_link_options(reviewed-flow PRIVATE "-Wl,-map,${CMAKE_CURRENT_BINARY_DIR}/reviewed-link.map")
+else()
+  target_link_options(reviewed-flow PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/reviewed-link.map")
+endif()
