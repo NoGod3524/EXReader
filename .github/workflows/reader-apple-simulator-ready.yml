@@ -93,8 +93,6 @@ jobs:
           python3 tests/apple_host/page_theme/prepare_fixtures.py --resources build/apple-resources
           ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
           ruby tests/apple_host/make_xcodeproj.rb build/apple-theme-project build/apple-resources tests/apple_host/page_theme/ui
-      - name: Prepare the native Simulator window before original initialization
-        run: python3 tests/apple_host/page_theme/simulator_ready.py '${{ matrix.platform }}'
       - name: Native theme selection and real system appearance changes
         id: ui
         continue-on-error: true
