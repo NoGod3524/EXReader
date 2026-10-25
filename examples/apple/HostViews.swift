@@ -573,7 +573,7 @@ struct SelectionSheet: View {
         return model.selectionContext == context
     }
 
-    var body: some View {
+    private var selectionContent: some View {
         VStack(spacing: 10) {
             Text("选择本页文字").font(.headline)
                 .accessibilityIdentifier("selection.title")
@@ -616,6 +616,16 @@ struct SelectionSheet: View {
             .buttonStyle(.bordered)
         }
         .padding()
+    }
+
+    var body: some View {
+        Group {
+#if os(iOS)
+            ScrollView { selectionContent }
+#else
+            selectionContent
+#endif
+        }
         .onChange(of: selection) { _ in refreshQuote() }
         .onChange(of: model.selectionContext) { _ in
             guard model.selectionContext != context else { return }
