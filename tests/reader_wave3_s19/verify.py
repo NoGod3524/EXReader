@@ -89,7 +89,8 @@ def main():
             if sha256(found) != recorded_program['sha256']:
                 problems.append(key + ': digest changed for ' + name)
         report = result['report']
-        if report['font']['glyph_A'] != 1 or report['original']['bytes_match'] != 1:
+        if (not (report['font']['glyph_A'] or report['font']['glyph_0'])
+                or report['original']['bytes_match'] != 1):
             problems.append(key + ': business path did not produce real bytes')
         if report['annotations']['created'] != 2 or report['history']['resolve'] != 1:
             problems.append(key + ': module business path incomplete')

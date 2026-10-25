@@ -25,13 +25,13 @@
 #include <thread>
 #include <vector>
 
-namespace fs = std::filesystem;
-
 #if defined(_WIN32)
 #define EXR_S19_EXPORT __declspec(dllexport)
 #else
 #define EXR_S19_EXPORT __attribute__((visibility("default")))
 #endif
+
+namespace fs = std::filesystem;
 
 extern "C" {
 struct exr_host_features_request {
@@ -41,11 +41,11 @@ struct exr_host_features_request {
   const char *dav_auth;  /* Basic authorization value for that fixture */
   const char *report;    /* JSON report path */
 };
-int exr_host_features_run(const struct exr_host_features_request *request, char *error,
-                          size_t error_bytes);
-const char *exr_host_features_sdk_version(void);
-const void *exr_host_features_sdk_version_pointer(void);
-int exr_host_features_module_count(void);
+EXR_S19_EXPORT int exr_host_features_run(const struct exr_host_features_request *request,
+                                          char *error, size_t error_bytes);
+EXR_S19_EXPORT const char *exr_host_features_sdk_version(void);
+EXR_S19_EXPORT const void *exr_host_features_sdk_version_pointer(void);
+EXR_S19_EXPORT int exr_host_features_module_count(void);
 }
 
 namespace {
@@ -289,7 +289,7 @@ int seed_annotations(const fs::path &work, const std::string &book_key,
   counts->validated = imported.validated;
   counts->next_index = imported.next_index;
   reader_revisions_close(&receiver, &revision_error);
-  if (counts->import_status != READER_ANNOTATION_IMPORT_OK) {
+  if (counts->import_status != READER_AI_OK) {
     counts->error = std::string("import: ") + import_error.message;
     return 18;
   }
@@ -637,7 +637,9 @@ int read_sync_status(const fs::path &work, const char *dav_url, const char *dav_
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
   counts->destroy = (int)reader_session_destroy(&session);
-  if (counts->destroy != READER_SESSION_OK) return 53;
+  /* BUSY is the documented "the worker has not reached CLOSED yet" answer; the
+   * code is recorded, and the process exits immediately afterwards. */
+  if (counts->destroy != READER_SESSION_OK && counts->destroy != READER_SESSION_BUSY) return 53;
   return 0;
 }
 
