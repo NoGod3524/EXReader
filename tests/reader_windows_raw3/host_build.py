@@ -114,6 +114,11 @@ def main():
     configure(ROOT/'apps/reader/store/native',OUT/'product-build',['-DCMAKE_INSTALL_PREFIX='+str(product)],'product')
     run(['ctest','--test-dir',OUT/'product-build','--output-on-failure','--no-tests=error','--timeout','180'],'product-original-tests')
     run(['cmake','--install',OUT/'product-build'],'product-install')
+    run([sys.executable,'-m','pip','install','uiautomation==2.0.29'],'native-ui-dependency')
+    run([sys.executable,'-c',"from tools.host_font import fetch; fetch('build/host-font-cache')"],'native-ui-font')
+    fixtures=OUT/'compact-fixtures'
+    run([sys.executable,ROOT/'tests/reader_windows_preferences/make_fixtures.py',
+         '--output',fixtures],'native-ui-fixtures')
     profiles=[]
     for raw in (False,True):
         name='raw' if raw else 'legacy'
@@ -137,6 +142,15 @@ def main():
                  '-DEXR_READER_WINDOWS_PREFERENCES=ON','-DEXR_READER_WINDOWS_COMPACT=ON',
                  '-DEXR_READER_PREFS_COMMIT_REVIEW_BUILD=ON']
         configure(ROOT/'apps/reader/windows-account',host,options,name+'-actual-host')
+        ui=OUT/(name+'-compact-ui')
+        run([sys.executable,ROOT/'tests/reader_windows_compact/check_ui.py',
+             '--candidate',host/'EXReaderProduct.exe','--font',ROOT/'build/host-font-cache/Reader.otf',
+             '--fixtures',fixtures,'--output',ui],name+'-original-compact-ui',900)
+        sys.path.insert(0,str(ROOT/'tests/reader_windows_compact'))
+        from contract import validate
+        compact=json.loads((ui/'report.json').read_text(encoding='utf-8'))
+        validate(compact,os.environ['GITHUB_SHA'],os.environ['GITHUB_RUN_ID'],
+                 os.environ['GITHUB_RUN_ATTEMPT'],hashlib.sha256((host/'EXReaderProduct.exe').read_bytes()).hexdigest())
         owner=OUT/(name+'-owner-probe')
         configure(ROOT/'tests/reader_windows_raw3/owner-probe',owner,
                   ['-DCMAKE_PREFIX_PATH='+prefix,'-DEXR_SDK='+str(sdk),
@@ -157,6 +171,8 @@ def main():
         binaries={target:hashlib.sha256((host/(target+'.exe')).read_bytes()).hexdigest()
                   for target in ('EXReaderProduct','EXReaderShelfReview')}
         profiles.append(dict(profile=name,programs=binaries,bulk_original_checks=len(original['checks']),
+                             original_compact_ui_checks=compact['count'],
+                             original_compact_ui_report=str((ui/'report.json').relative_to(OUT)),
                              bulk_original_report=str((OUT/(name+'-bulk-evidence')/'report.json').relative_to(OUT))))
     raw_exe=OUT/'raw-owner-probe/windows-owner-probe.exe'
     old_exe=OUT/'legacy-owner-probe/windows-owner-probe.exe'
@@ -167,7 +183,7 @@ def main():
     result=dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
                 installed_host_build_passed=True,original_bulk_profiles_passed=True,profiles=profiles,
                 actual_owner_profiles_passed=True,actual_owner_process_kill_recovery_passed=True,
-                host_raw3_accepted=False,scope='actual installed host build/link and original bulk regressions; no actual host UI/raw record grant')
+                host_raw3_accepted=False,scope='actual installed host build/link, original compact UI and bulk regressions, and owner recovery; no complete host/interoperability grant')
     (OUT/'report.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result),flush=True)
 
