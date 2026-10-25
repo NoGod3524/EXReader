@@ -49,7 +49,7 @@
     "common_syntax_protocol_conclusion": "success",
     "common_full_acceptance": false,
     "common_full_run": 40177143143,
-    "common_full_state": "tested6f_Windows_and_Linux_composition_Windows_full_strict_and_Android_success_macOS_queued_GTK_new_navigation_readonly_frame_storage_pixel_compound_failed",
+    "common_full_state": "tested6f_three_desktop_composition_and_strict_Windows_full_and_strict_Android120_success_GTK_navigation_screenshot_and_old340_palette_failures_retained_full_scope_false",
     "common_navigation_diagnostic": {"source":"7f9647740b3ae8266ca0be5090e605daa0ab1117","run":40179161759,"state":"in_progress_after_preflight_success","original_run":40177143143,"original_source":"6f7c14e9eea98b60d92c5b4d7796e66576bae4eb","accepted":false,"change":"only_split_actual_frame_storage_and_pixel_observations_original29_names_and_assertions_unchanged_no_production_change"},
     "windows_preferences_commit_latest": {"source":"8c05483eb4929a93e808a9ceeb589d0e47aa5fac","run":40179005379,"state":"in_progress","accepted":false,"previous_run":40178656356,"previous_actual_result":"real_production_review_and_negative_control_built_fixture_generator_failed_before_UI_ZipFile_writestr_missing_data","repair":"unpack_existing_entry_tuple_into_ZipFile_writestr"},
     "gtk_record_compatibility_latest": {"source":"80e8f6a7b49f49015c36a15f04ef0af060a2bb32","run":40179185109,"state":"in_progress","accepted":false,"root_cause":"probe_omitted_current_part_page_unlike_real_UI_stale_frame_guard_correctly_rejected_before_record_resolve","repair":"test_probe_only_pass_actual_current_part_page_no_SDK_or_GTK_production_change"},
