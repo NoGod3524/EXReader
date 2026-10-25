@@ -1,0 +1,140 @@
+name: Reader book information snapshot
+on:
+  push:
+    branches: [codex/reader-book-information, codex/reader-book-information-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  book-information:
+    name: book information (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, schema1 and package path ownership
+        run: |
+          FIXED=f43baf9182d75907c0cb5d6f77048f27bca8c950
+          K=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$FIXED" HEAD
+          git diff --exit-code "$K" HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code "$FIXED" HEAD -- apps/reader/store/001_catalog.sql apps/reader/store/native apps/reader/session apps/reader/commands apps/reader/revisions apps/reader/sync apps/reader/desktop apps/reader/desktop-metadata apps/reader/reading-state apps/reader/preferences apps/reader/search apps/reader/batch-import docs/handoffs
+          allowed='^(apps/reader/book-information/|tests/reader_book_information/|\.github/workflows/reader-book-information\.yml$|docs/READER-BOOK-INFORMATION\.md$|docs/validation/reader-book-information\.json$)'
+          changed=$(git diff --name-only "$FIXED" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          $quoted = '"' + $bat + '"'
+          cmd /c "$quoted >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record the source and configure the installed prefixes
+        run: |
+          mkdir -p build/bi-logs
+          git rev-parse HEAD > build/bi-logs/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "BI_WS=$ws" >> "$GITHUB_ENV"
+          echo "BI_PREFIX=$ws/build/bi-prefix" >> "$GITHUB_ENV"
+          echo "BI_SDK=$ws/build/reading-library/stage" >> "$GITHUB_ENV"
+      - name: Build and install the frozen reading-library SDK
+        run: |
+          set -o pipefail
+          cmake --preset reading-library 2>&1 | tee build/bi-logs/sdk-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/bi-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/bi-logs/sdk-install.log
+      - name: Build and install the unchanged product catalog provider
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/store/native -B build/bi-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$BI_PREFIX" 2>&1 | tee build/bi-logs/product-configure.log
+          cmake --build build/bi-product --parallel 4 2>&1 | tee build/bi-logs/product-build.log
+          cmake --install build/bi-product 2>&1 | tee build/bi-logs/product-install.log
+      - name: Build and install EXReaderBookInformation against installed packages only
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/book-information -B build/bi-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$BI_SDK" -DCMAKE_PREFIX_PATH="$BI_PREFIX;$BI_SDK" -DCMAKE_INSTALL_PREFIX="$BI_PREFIX" 2>&1 | tee build/bi-logs/adapter-configure.log
+          cmake --build build/bi-adapter --verbose 2>&1 | tee build/bi-logs/adapter-build.log
+          cmake --install build/bi-adapter 2>&1 | tee build/bi-logs/adapter-install.log
+      - name: Compile independent C and C++ consumers from the installed package
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_book_information/consumer -B build/bi-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$BI_PREFIX;$BI_SDK" 2>&1 | tee build/bi-logs/consumer-configure.log
+          cmake --build build/bi-consumer --verbose 2>&1 | tee build/bi-logs/consumer-build.log
+      - name: Generate fixtures, seed both stores and judge every named behaviour
+        run: |
+          set -o pipefail
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python3 tests/reader_book_information/make_fixtures.py --out build/bi-fixtures 2>&1 | tee build/bi-logs/fixtures.log
+          python3 tests/reader_book_information/check_book_information.py --probe "build/bi-consumer/book-info-probe$exe" --compare "build/bi-consumer/book-info-compare$exe" --fixtures build/bi-fixtures --work build/bi-work --output build/bi-evidence/book-info-evidence --platform "$RUNNER_OS" 2>&1 | tee build/bi-logs/checks.log
+      - name: Print the snapshot report so any refusal is readable in the log
+        if: always()
+        run: |
+          if [ -f build/bi-evidence/book-info-evidence/report.json ]; then
+            python3 -c "import json;r=json.load(open('build/bi-evidence/book-info-evidence/report.json',encoding='utf-8'));print(json.dumps([{k:c[k] for k in ('name','ok','assertions','problems')} for c in r['checks']],ensure_ascii=False))"
+          else
+            echo "no report.json produced"
+          fi
+      - name: Preserve fixture originals, both stores, packages and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-book-information-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/bi-logs/
+            build/bi-fixtures/
+            build/bi-work/
+            build/bi-evidence/
+            build/bi-prefix/
+            build/bi-consumer/book-info-probe*
+            build/bi-consumer/book-info-compare*
+            build/bi-consumer/CMakeCache.txt
+            build/bi-adapter/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: same-run artifact evidence
+    needs: book-information
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify artifact ids, bytes, digests and reports in the cloud
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_book_information/check_artifacts.py build/bi-artifact-evidence
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-book-information-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/bi-artifact-evidence/
+          if-no-files-found: error
