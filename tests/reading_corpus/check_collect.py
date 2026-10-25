@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """Offline collector protocol; invoked only by Actions before real collection."""
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
 from email.utils import formatdate
 import io
-import tempfile
+import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 import urllib.error
+import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools/reading_corpus'))
 import collect
+import frozen
 
 URL = 'https://publisher.invalid/original.pdf'
 NOW = 1800000000
@@ -44,34 +47,6 @@ def network(results):
 
 
 class CollectorProtocol(unittest.TestCase):
-    def test_exact_frozen_cache_bytes_and_refusals(self):
-        entry = dict(path='book.epub', size=8, sha256=collect.sha(b'original'),
-                     source_url=URL, limits={'download_bytes': 16})
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            path = root/'book.epub'
-            path.write_bytes(b'original')
-            with network([]) as (opened, slept):
-                self.assertEqual(collect.cached_input(root, entry), (b'original', URL))
-                opened.assert_not_called()
-            for bad in (b'changed!', b'origina', b'original!'):
-                path.write_bytes(bad)
-                with self.subTest(data=bad), self.assertRaisesRegex(ValueError, 'cache identity changed'):
-                    collect.cached_input(root, entry)
-            path.unlink()
-            with self.assertRaisesRegex(ValueError, 'Unsafe or missing'):
-                collect.cached_input(root, entry)
-            outside = root.parent/(root.name + '-outside')
-            try:
-                outside.write_bytes(b'original')
-                path.symlink_to(outside)
-                with self.assertRaisesRegex(ValueError, 'Unsafe or missing'):
-                    collect.cached_input(root, entry)
-            finally:
-                if path.is_symlink():
-                    path.unlink()
-                outside.unlink(missing_ok=True)
-
     def test_429_then_success_honors_retry_after_seconds(self):
         with network([error(retry_after='3'), response()]) as (opened, slept):
             self.assertEqual(collect.fetch(URL, 8), (b'original', URL))
@@ -141,6 +116,155 @@ class CollectorProtocol(unittest.TestCase):
                     collect.fetch(URL, 8)
                 self.assertEqual(opened.call_count, 1)
                 slept.assert_not_called()
+
+
+class FrozenInputProtocol(unittest.TestCase):
+    def setUp(self):
+        self.rights = b'Permission to copy'
+        self.entries = [{'id': 'document-' + str(i), 'path': 'epub/book-' + str(i) + '.epub',
+                         'format': 'EPUB', 'source_url': URL + '/' + str(i), 'license_url': URL + '/rights',
+                         'license_required_terms': ['Permission to copy'],
+                         'sha256': collect.sha(('fixed-' + str(i)).encode()), 'size': 7,
+                         'limits': {'download_bytes': 100}} for i in range(8)]
+        self.manifest = json.dumps({'files': self.entries}).encode()
+        prior = [dict(entry, retrieved_url=entry['source_url'],
+                      observed_license_sha256=collect.sha(self.rights)) for entry in self.entries]
+        archived = {'files': prior, 'complete': True, 'engine_executed': False,
+                    'original_manifest_sha256': collect.sha(self.manifest)}
+        self.members = {'inputs/manifest.json': json.dumps(archived).encode()}
+        for i, entry in enumerate(self.entries):
+            self.members['inputs/assets/' + entry['path']] = ('fixed-' + str(i)).encode()
+            self.members['inputs/licenses/' + entry['id'] + '.txt'] = self.rights
+        self.registry = {'repository': 'NoGod3524/EXReader', 'run_id': 1, 'run_attempt': 1, 'source_sha': 'a' * 40,
+                         'workflow': '.github/workflows/reading-required.yml',
+                         'artifact_id': 2, 'artifact_name': 'fixed',
+                         'manifest_sha256': collect.sha(self.manifest)}
+        self.run = {'id': 1, 'run_attempt': 1, 'head_sha': 'a' * 40,
+                    'path': self.registry['workflow'], 'status': 'completed', 'conclusion': 'success'}
+        self.raw = self.archive(self.members)
+        self.artifact = {'id': 2, 'name': 'fixed', 'expired': False,
+                         'digest': self.registry['artifact_digest'], 'size_in_bytes': len(self.raw),
+                         'workflow_run': {'id': 1, 'head_sha': 'a' * 40}}
+
+    def archive(self, members):
+        stream = io.BytesIO()
+        with zipfile.ZipFile(stream, 'w') as archive:
+            for name, raw in members.items():
+                archive.writestr(name, raw)
+        raw = stream.getvalue()
+        self.registry.update(artifact_bytes=len(raw), artifact_digest='sha256:' + collect.sha(raw))
+        return raw
+
+    def test_registered_archive_restores_eight_exact_raw_inputs(self):
+        frozen.verify_origin(self.registry, self.run, [self.artifact])
+        inputs, origins = frozen.restore_archive(self.raw, self.manifest, self.registry)
+        self.assertEqual(len(inputs), 8)
+        for entry in self.entries:
+            self.assertEqual(collect.sha(inputs[entry['path']]), entry['sha256'])
+            self.assertEqual(origins[entry['path']]['archived_license_sha256'], collect.sha(self.rights))
+
+    def test_changed_run_or_attempt_or_status_is_refused(self):
+        for key, value in [('id', 3), ('head_sha', 'b' * 40), ('run_attempt', 2),
+                           ('path', 'other.yml'), ('status', 'in_progress'), ('conclusion', 'failure')]:
+            with self.subTest(key=key):
+                run = dict(self.run, **{key: value})
+                with self.assertRaises(ValueError):
+                    frozen.verify_origin(self.registry, run, [self.artifact])
+
+    def test_changed_expired_missing_or_duplicate_artifact_is_refused(self):
+        for key, value in [('id', 3), ('name', 'other'), ('expired', True),
+                           ('size_in_bytes', 1), ('digest', 'sha256:' + 'f' * 64),
+                           ('workflow_run', {'id': 3, 'head_sha': 'a' * 40})]:
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                frozen.verify_origin(self.registry, self.run, [dict(self.artifact, **{key: value})])
+        for artifacts in ([], [self.artifact, self.artifact]):
+            with self.assertRaises(ValueError):
+                frozen.verify_origin(self.registry, self.run, artifacts)
+
+    def test_zip_and_manifest_digest_changes_are_refused(self):
+        for raw, manifest in ((self.raw + b'changed', self.manifest), (self.raw, self.manifest + b' ')):
+            with self.assertRaises(ValueError):
+                frozen.restore_archive(raw, manifest, self.registry)
+
+    def test_missing_extra_unsafe_and_duplicate_document_members_are_refused(self):
+        name = 'inputs/assets/' + self.entries[0]['path']
+        missing = dict(self.members); missing.pop(name)
+        for members in (missing, dict(self.members, **{'inputs/assets/extra.epub': b'other'}),
+                        dict(self.members, **{'../escape': b'other'}),
+                        dict(self.members, **{'C:/escape': b'other'})):
+            with self.subTest(names=list(members)[-1]), self.assertRaises(ValueError):
+                frozen.restore_archive(self.archive(members), self.manifest, self.registry)
+        stream = io.BytesIO()
+        with zipfile.ZipFile(stream, 'w') as archive:
+            archive.writestr(name, b'first')
+            archive.writestr(name, b'second')
+        raw = stream.getvalue()
+        self.registry.update(artifact_bytes=len(raw), artifact_digest='sha256:' + collect.sha(raw))
+        with self.assertRaisesRegex(ValueError, 'Duplicate'):
+            frozen.restore_archive(raw, self.manifest, self.registry)
+
+    def test_document_content_extent_bound_and_license_tampering_are_refused(self):
+        name = 'inputs/assets/' + self.entries[0]['path']
+        for replacement in (b'wrong-0', b'too-long', b'x' * 101):
+            with self.subTest(replacement=replacement), self.assertRaises(ValueError):
+                frozen.restore_archive(self.archive(dict(self.members, **{name: replacement})), self.manifest, self.registry)
+        license_name = 'inputs/licenses/' + self.entries[0]['id'] + '.txt'
+        with self.assertRaisesRegex(ValueError, 'license'):
+            frozen.restore_archive(self.archive(dict(self.members, **{license_name: b'changed'})), self.manifest, self.registry)
+
+    def test_cached_collection_still_fetches_current_licenses_and_inspects_every_document(self):
+        inputs, origins = frozen.restore_archive(self.raw, self.manifest, self.registry)
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); manifest = root / 'manifest.json'; manifest.write_bytes(self.manifest)
+            for rights, expected in ((self.rights, 0), (b'permission removed', 1)):
+                output = root / str(expected)
+                with patch.object(sys, 'argv', ['collect', 'cached', str(manifest), str(output)]), \
+                        patch.object(frozen, 'recover', return_value=(inputs, origins, self.registry)), \
+                        patch.object(collect, 'fetch', return_value=(rights, URL)) as fetched, \
+                        patch.object(collect, 'structure', return_value={'inspected': True}) as inspected, \
+                        patch.object(collect.time, 'sleep'), redirect_stdout(io.StringIO()):
+                    self.assertEqual(collect.main(), expected)
+                self.assertEqual(fetched.call_count, 8)
+                self.assertTrue(all(call.args[0] == URL + '/rights' for call in fetched.call_args_list))
+                self.assertEqual(inspected.call_count, 8 if expected == 0 else 0)
+                report = json.loads((output / 'manifest.json').read_bytes())
+                self.assertEqual(report['complete'], expected == 0)
+                self.assertEqual(report['raw_input_archive'], self.registry)
+                if expected == 0:
+                    self.assertIn('/actions/artifacts/2/zip#inputs/assets/', report['files'][0]['retrieved_url'])
+                    self.assertEqual(report['files'][0]['input_origin']['publisher_retrieved_url'], self.entries[0]['source_url'])
+
+    def test_archive_recovery_failure_writes_source_bound_incomplete_report(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); manifest = root / 'manifest.json'; manifest.write_bytes(self.manifest)
+            registry = root / 'registry.json'; registry.write_text(json.dumps(self.registry))
+            output = root / 'output'
+            with patch.object(sys, 'argv', ['collect', 'cached', str(manifest), str(output)]), \
+                    patch.object(frozen, 'REGISTRY', registry), \
+                    patch.object(frozen, 'recover', side_effect=ValueError('Frozen input ZIP size/digest refused')), \
+                    patch.object(collect, 'fetch') as fetched, redirect_stdout(io.StringIO()):
+                self.assertEqual(collect.main(), 1)
+            fetched.assert_not_called()
+            report = json.loads((output / 'manifest.json').read_bytes())
+            self.assertFalse(report['complete'])
+            self.assertFalse(report['engine_executed'])
+            self.assertEqual(report['raw_input_archive'], self.registry)
+            self.assertEqual(report['collection_failures'][0]['id'], 'raw-input-archive')
+
+    def test_direct_mismatch_retains_observed_identity_without_fallback(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); manifest = root / 'manifest.json'; manifest.write_bytes(self.manifest)
+            output = root / 'output'
+            with patch.object(sys, 'argv', ['collect', 'collect', str(manifest), str(output)]), \
+                    patch.object(collect, 'fetch', return_value=(b'changed', URL + '/final')), \
+                    patch.object(frozen, 'recover') as recovered, patch.object(collect.time, 'sleep'), \
+                    redirect_stdout(io.StringIO()):
+                self.assertEqual(collect.main(), 1)
+            recovered.assert_not_called()
+            report = json.loads((output / 'manifest.json').read_bytes())
+            self.assertEqual(len(report['collection_failures']), 8)
+            self.assertEqual(report['collection_failures'][0]['observed_source'],
+                             {'sha256': collect.sha(b'changed'), 'size': 7, 'final_url': URL + '/final'})
 
 
 if __name__ == '__main__':

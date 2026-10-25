@@ -58,14 +58,10 @@ jobs:
           python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"tools/reading_corpus"); from run import registered; import os; registered(Path(os.environ["R2_MANIFEST"]),os.environ["R2_REGISTRATION"])'
       - name: Verify bounded collector retry and download refusals
         run: python3 tests/reading_corpus/check_collect.py
-      - name: Restore only the exact originally frozen published input bytes
+      - name: Recover eight frozen originals and verify current publisher licenses
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tests/sdk_page_background/restore_inputs.py build/frozen-corpus-cache
-      - name: Collect all eight exact published sources and recheck current license policy
-        run: |
-          python3 tools/reading_corpus/collect.py collect "$R2_MANIFEST" build/r2/inputs --input-cache build/frozen-corpus-cache
-          cp build/frozen-corpus-cache/provenance.json build/r2/inputs/frozen-input-provenance.json
+        run: python3 tools/reading_corpus/collect.py cached "$R2_MANIFEST" build/r2/inputs
       - name: Build and install current native reading SDK
         run: |
           cmake --preset reading-core

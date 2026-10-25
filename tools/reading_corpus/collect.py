@@ -91,34 +91,33 @@ def structure(path, entry):
     return {'pdfinfo': proc.stdout}
 
 
-def cached_input(cache, entry):
-    """Read only the exact already-frozen bytes, never a replacement edition."""
-    root = cache.resolve(strict=True)
-    path = cache / entry['path']
-    if path.is_symlink() or not path.is_file() or not path.resolve(strict=True).is_relative_to(root):
-        raise ValueError('Unsafe or missing frozen input cache file')
-    with path.open('rb') as stream:
-        data = stream.read(min(entry['size'], entry['limits']['download_bytes']) + 1)
-    if len(data) != entry['size'] or sha(data) != entry['sha256']:
-        raise ValueError('Frozen cache identity changed')
-    return data, entry['source_url']
-
-
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('mode', choices=['discover', 'collect'])
+    p.add_argument('mode', choices=['discover', 'collect', 'cached'])
     p.add_argument('manifest', type=Path)
     p.add_argument('output', type=Path)
-    p.add_argument('--input-cache', type=Path, help='Explicit hash-checked original bytes restored from an authenticated immutable artifact')
     a = p.parse_args()
-    if a.input_cache and a.mode != 'collect':
-        p.error('Frozen input cache is available only for collect, never discovery')
     if a.output.exists():
         p.error('Choose a new output; previous failures are retained')
     a.output.mkdir(parents=True)
     manifest_bytes = a.manifest.read_bytes()
     manifest = json.loads(manifest_bytes)
     records, failures, hashes = [], [], set()
+    inputs, origins, registry = {}, {}, None
+    if a.mode == 'cached':
+        from frozen import REGISTRY, recover
+        try:
+            registry = json.loads(REGISTRY.read_bytes())
+            inputs, origins, registry = recover(manifest_bytes)
+        except Exception as error:
+            failure = {'id': 'raw-input-archive', 'error_type': type(error).__name__, 'error': str(error)}
+            result = dict(manifest, files=[], complete=False, target=len(manifest['files']),
+                          collection_failures=[failure], raw_input_archive=registry,
+                          original_manifest_sha256=sha(manifest_bytes), engine_executed=False)
+            (a.output / 'manifest.json').write_text(json.dumps(result, indent=2, ensure_ascii=False) + '\n')
+            print(json.dumps({'collection_failure': failure, 'collection_complete': False,
+                              'collected': 0, 'required': len(manifest['files']), 'engine_executed': False}), flush=True)
+            return 1
     for original in manifest['files']:
         entry = dict(original)
         relative = Path(entry['path'])
@@ -127,11 +126,18 @@ def main():
         folder = a.output / 'assets'
         target = folder / relative
         target.parent.mkdir(parents=True, exist_ok=True)
+        observed = None
         try:
-            time.sleep(0.5)
-            data, final_url = (cached_input(a.input_cache, entry) if a.input_cache else
-                               fetch(entry['source_url'], entry['limits']['download_bytes']))
-            if a.mode == 'collect' and (sha(data) != entry['sha256'] or len(data) != entry['size']):
+            if a.mode == 'cached':
+                data = inputs[entry['path']]
+                final_url = (f"https://api.github.com/repos/{registry['repository']}/actions/artifacts/"
+                             f"{registry['artifact_id']}/zip#inputs/assets/{entry['path']}")
+                entry['input_origin'] = dict(origins[entry['path']], artifact_id=registry['artifact_id'])
+            else:
+                time.sleep(0.5)
+                data, final_url = fetch(entry['source_url'], entry['limits']['download_bytes'])
+            observed = {'sha256': sha(data), 'size': len(data), 'final_url': final_url}
+            if a.mode != 'discover' and (sha(data) != entry['sha256'] or len(data) != entry['size']):
                 raise ValueError('Frozen source identity changed')
             if sha(data) in hashes:
                 raise ValueError('Duplicate document content')
@@ -145,24 +151,27 @@ def main():
             policy = PolicyText()
             policy.feed(rights.decode('utf-8'))
             policy_text = ' '.join(' '.join(policy.words).split())
-            if a.mode == 'collect' and not all(term in policy_text for term in entry['license_required_terms']):
+            if a.mode != 'discover' and not all(term in policy_text for term in entry['license_required_terms']):
                 raise ValueError('Required license terms absent from current publisher policy')
             entry.update(sha256=sha(data), size=len(data), bytes=len(data),
                          retrieved_url=final_url, retrieved_license_url=rights_url,
                          source_structure=structure(target, entry))
             entry['observed_license_sha256'] = sha(rights)
-            entry['retrieval_method'] = 'explicit_frozen_input_cache' if a.input_cache else 'publisher_https'
             if a.mode == 'discover':
                 entry['license_sha256'] = sha(rights)
             records.append(entry)
             print(json.dumps({'asset': entry}, ensure_ascii=False), flush=True)
         except Exception as error:
             failure = {'id': entry['id'], 'error_type': type(error).__name__, 'error': str(error)}
+            if observed is not None:
+                failure['observed_source'] = observed
             failures.append(failure)
             print(json.dumps({'collection_failure': failure}), flush=True)
     result = dict(manifest, files=records, complete=not failures,
                   target=len(manifest['files']), collection_failures=failures,
                   original_manifest_sha256=sha(manifest_bytes), engine_executed=False)
+    if registry is not None:
+        result['raw_input_archive'] = registry
     (a.output / 'manifest.json').write_text(json.dumps(result, indent=2, ensure_ascii=False) + '\n')
     print(json.dumps({'collection_complete': not failures, 'collected': len(records),
                       'required': len(manifest['files']), 'engine_executed': False}), flush=True)

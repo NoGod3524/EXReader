@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "repository": "NoGod3524/EXReader",
+  "run_id": 39974986212,
+  "run_attempt": 1,
+  "source_sha": "cdfe48231853d6e70fba2c41b42bdd187155901a",
+  "workflow": ".github/workflows/reading-required.yml",
+  "artifact_id": 12510622310,
+  "artifact_name": "r2-real-corpus-39974986212-1",
+  "artifact_bytes": 41084658,
+  "artifact_digest": "sha256:11ae13cd9b10d063c7a17e465c53544c54d7114d1847453aee73e7910bb2e352",
+  "manifest_sha256": "f71f8a24faff664a03b7e15a7f424ec354f83c53fbd14f602d4b050f3fd19de1",
+  "expires_at_observed": "2026-11-22T15:06:11Z",
+  "scope": "Raw inputs only; all current-source engine and reference measurements must run again"
+}

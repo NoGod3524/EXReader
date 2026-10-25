@@ -1,0 +1,105 @@
+name: Native reader modules
+on:
+  push:
+    branches: [codex/reader-modules-v1]
+  pull_request:
+    paths:
+      - extras/sideload/**
+      - apps/reader/store/**
+      - tests/sideload/**
+      - tests/reader_catalog/**
+      - .github/workflows/reader-modules.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  sideload:
+    name: installed sideload (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require unchanged frozen SDK trees
+        run: |
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record source and configure the installed reading library
+        run: |
+          mkdir -p build/reader-modules
+          git rev-parse HEAD > build/reader-modules/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then
+            ws=$(cygpath -m "$PWD")
+          else
+            ws="$PWD"
+          fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/reader-modules/sdk-configure.log
+      - name: Build and install the frozen SDK
+        run: |
+          cmake --build --preset reading-library 2>&1 | tee build/reader-modules/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/reader-modules/sdk-install.log
+      - name: Build and check the standalone module against the installed SDK
+        run: |
+          cmake -S extras/sideload -B build/sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DEXR_SIDELOAD_TEST_FIXTURES="$WS/tests/fixtures" -DCMAKE_INSTALL_PREFIX="$WS/build/sideload-stage" 2>&1 | tee build/reader-modules/module-configure.log
+          cmake --build build/sideload --parallel 4 2>&1 | tee build/reader-modules/module-build.log
+          ctest --test-dir build/sideload --output-on-failure --no-tests=error --output-junit "$WS/build/reader-modules/module-tests.xml"
+          cmake --install build/sideload 2>&1 | tee build/reader-modules/module-install.log
+      - name: Consume only the installed module and SDK
+        run: |
+          cmake -S tests/sideload -B build/sideload-installed -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DEXR_SIDELOAD_PREFIX="$WS/build/sideload-stage" -DEXR_SIDELOAD_TEST_FIXTURES="$WS/tests/fixtures" 2>&1 | tee build/reader-modules/consumer-configure.log
+          cmake --build build/sideload-installed --parallel 4 2>&1 | tee build/reader-modules/consumer-build.log
+          ctest --test-dir build/sideload-installed --output-on-failure --no-tests=error --output-junit "$WS/build/reader-modules/consumer-tests.xml"
+      - name: Preserve original module checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-sideload-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reader-modules/
+            build/sideload/Testing/Temporary/LastTest.log
+            build/sideload-installed/Testing/Temporary/LastTest.log
+            build/sideload-stage/
+          if-no-files-found: error
+  catalog:
+    name: product catalog storage contract
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Execute production schema constraints and pagination
+        run: python tests/reader_catalog/check_schema.py --output build/reader-catalog/result.json
+      - name: Preserve storage contract evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-catalog-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-catalog/
+          if-no-files-found: error
