@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 
-SDK = 'b911815e26a10e7c45f50f56bf7c4e46cbca010b'
+SDK = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 REPORTS = {
     'preferences-ui/result.json': (41, 'page_background_scope_passed'),
     'gtk-drop-ui/report.json': (20, 'drop_import_scope_passed'),

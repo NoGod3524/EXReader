@@ -60,8 +60,18 @@ def main():
             'Complete versioned settings suite canvas images authored white and portal',
             'Preserve original batch checker for its own bounded import scope',
             'Authenticate candidate canvas and all retained non-palette scopes'}.issubset(successes)
-    foundation = get('/actions/runs/40164920053')
-    assert foundation['head_sha'] == SDK and foundation['status'] == 'completed' and foundation['conclusion'] == 'success'
+    foundation = get('/actions/runs/40165924012')
+    assert foundation['head_sha'] == SDK and foundation['status'] == 'completed' and foundation['run_attempt'] == 1
+    foundation_jobs = get('/actions/runs/40165924012/attempts/1/jobs?per_page=100')['jobs']
+    for platform in ('linux', 'windows', 'macos'):
+        consumers = [job for job in foundation_jobs if job['name'] == 'background consumers (' + platform + ')']
+        assert len(consumers) == 1 and consumers[0]['conclusion'] == 'success'
+    sdk_validation = get('/actions/runs/40166642441')
+    assert sdk_validation['head_sha'] == '4a5a793ebe2a98a96ed119334399821e923c19ab'
+    assert sdk_validation['status'] == 'completed' and sdk_validation['conclusion'] == 'success'
+    version_support = get('/actions/runs/40166479919')
+    assert version_support['head_sha'] == 'f680aeaddfb1ecc67ead353554f5b91a5703f72f'
+    assert version_support['status'] == 'completed' and version_support['conclusion'] == 'success'
     artifacts = get('/actions/runs/' + run + '/artifacts?per_page=100')['artifacts']
     matches = [row for row in artifacts if row['name'] == 'reader-gtk-page-background-%s-%s' % (run, attempt)]
     assert len(matches) == 1
@@ -146,7 +156,10 @@ def main():
         assert expected_pngs and expected_pngs.issubset(actual_pngs)
     report = dict(accepted=False, authenticated=True, page_background_scope_passed=True,
                   settings_whole_page_palette_accepted=True, source_sha=source, run_id=run, attempt=attempt,
-                  sdk_candidate_source=SDK, sdk_foundation_run=40164920053, program_sha256=value['program_sha256'],
+                  sdk_candidate_source=SDK, sdk_foundation_run=40165924012, sdk_validation_run=40166642441,
+                  sdk_validator_source='4a5a793ebe2a98a96ed119334399821e923c19ab',
+                  shared_version_support_source='f680aeaddfb1ecc67ead353554f5b91a5703f72f',
+                  shared_version_support_run=40166479919, program_sha256=value['program_sha256'],
                   host_job_id=hosts[0]['id'], protocol_rejections=len(mutations), native_pixel_pngs_authenticated=len(expected_pngs),
                   artifact={key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')},
                   bound_files=bound, complete_product=False, six_platform_accepted=False, performance_accepted=False)
