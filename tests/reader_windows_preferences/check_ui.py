@@ -97,7 +97,7 @@ class INPUTUNION(C.Union):
     _fields_ = [('mi', MOUSEINPUT)]
 
 
-class INPUT(C.Structure):
+class SENDINPUT(C.Structure):
     _fields_ = [('type', C.c_ulong), ('u', INPUTUNION)]
 
 
@@ -288,10 +288,10 @@ class App(M.MetadataApp):
 
     @staticmethod
     def inject(absolute, flags):
-        item = INPUT(type=0)
+        item = SENDINPUT(type=0)
         item.u.mi = MOUSEINPUT(dx=absolute[0], dy=absolute[1], mouseData=0, dwFlags=flags, time=0,
                                dwExtraInfo=None)
-        assert A.USER32.SendInput(1, C.byref(item), C.sizeof(INPUT)) == 1
+        assert A.USER32.SendInput(1, C.byref(item), C.sizeof(SENDINPUT)) == 1
 
     def choose(self, identifier, index):
         send(U.GetDlgItem(self.dialog(), identifier), 0x14E, index, 0)
