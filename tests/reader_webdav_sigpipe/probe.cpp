@@ -18,11 +18,23 @@ static volatile sig_atomic_t handled=0;
 static void handler(int){handled=1;}
 static bool same_mask(const sigset_t &a,const sigset_t &b){for(int n=1;n<NSIG;n++){if(sigismember(&a,n)!=sigismember(&b,n))return false;}return true;}
 #endif
+struct callback_state {std::atomic<bool> ready{false},done{false};bool test_other=false;};
+static int observe_guard(void *opaque){
+  auto &state=*(callback_state *)opaque;
+#ifndef _WIN32
+  if(state.test_other){sigset_t current{};if(!pthread_sigmask(SIG_SETMASK,nullptr,&current)&&sigismember(&current,SIGPIPE)==1){
+    state.ready.store(true);while(!state.done.load())std::this_thread::yield();
+  }}
+#else
+  (void)state;
+#endif
+  return 0;
+}
 int main(int argc,char **argv){
   if(argc!=5||!std::getenv("GITHUB_ACTIONS")||std::strcmp(std::getenv("GITHUB_ACTIONS"),"true"))return 2;
   const std::string mode=argv[1],url=argv[2];const fs::path directory=fs::u8path(argv[3]);
   if(mode!="default"&&mode!="handler"&&mode!="pending"&&mode!="blocked")return 2;
-  std::atomic<bool> progress{false},finished{false};bool masks=true,disposition=true,preserved=true,other=true;
+  callback_state state;state.test_other=mode=="handler";std::atomic<bool> finished{false};bool masks=true,disposition=true,preserved=true,other=true;
 #ifndef _WIN32
   struct sigaction initial{},before{},after{};sigset_t original{},saved{},post{},pipe{};
   if(sigaction(SIGPIPE,nullptr,&initial)||pthread_sigmask(SIG_SETMASK,nullptr,&original))return 3;
@@ -37,9 +49,9 @@ int main(int argc,char **argv){
   auto status=exr_webdav_create(&cfg,&client,&error);
   std::thread worker;
 #ifndef _WIN32
-  if(mode=="handler")worker=std::thread([&]{while(!progress.load()&&!finished.load())std::this_thread::yield();if(progress.load())pthread_kill(pthread_self(),SIGPIPE);});
+  if(mode=="handler")worker=std::thread([&]{while(!state.ready.load()&&!finished.load())std::this_thread::yield();if(state.ready.load())pthread_kill(pthread_self(),SIGPIPE);state.done.store(true);});
 #endif
-  exr_webdav_control control{};control.context=&progress;control.progress=[](void *p,uint64_t){((std::atomic<bool>*)p)->store(true);};
+  exr_webdav_control control{};control.context=&state;control.cancelled=observe_guard;
   if(status==EXR_DAV_OK)status=exr_webdav_download_file(client,argv[4],directory.u8string().c_str(),"output.epub",&control,&result,&error);
   exr_webdav_free(client);finished.store(true);if(worker.joinable())worker.join();
 #ifndef _WIN32

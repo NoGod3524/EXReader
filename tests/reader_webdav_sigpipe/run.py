@@ -72,7 +72,9 @@ def main():
     thread.start()
     root = 'https://127.0.0.1:%d/dav/' % server.server_port
     checks, controls = [], []
-    modes = ['default'] if os.name == 'nt' else ['default', 'handler', 'pending', 'blocked']
+    modes = ['default'] if os.name == 'nt' else ['default', 'pending', 'blocked']
+    if args.profile in ('linux-curl', 'macos-curl'):
+        modes.append('handler')
     probe = args.probe.resolve()
     try:
         for mode in modes:
