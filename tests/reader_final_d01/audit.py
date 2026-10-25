@@ -49,7 +49,7 @@ def validate(matrix):
             config=r['configuration'];config_source=git('show',BASE+':'+config['file'])
             require(all(anchor in config_source for anchor in config['anchors']),'unresolved configuration source')
             require(config['candidate_visibility']=='not_inspected' and config['runtime_visibility']=='not_executed','invented visibility')
-            if r['platform']=='Windows':require(config['default_route_enabled'] is False,'default OFF compact exposed')
+            if r['platform']=='Windows' and 'EXR_READER_WINDOWS_COMPACT' in config['guards']:require(config['default_route_enabled'] is False,'default OFF compact exposed')
             if r['requirement_id']=='R11' and r['platform']=='Android':require(entry['handler']=='turnPage(delta)' and 'onTapZone' in entry['anchor'],'font size is not page turn')
 
 def negative_controls(matrix):
@@ -111,6 +111,10 @@ def main():
                 family=platform if platform in ('Windows','Linux','Android') else 'Apple'
                 guards=GUARDS[family]['all']+GUARDS[family].get(req,[])
                 configuration=dict(file=CONFIG_FILES[family],anchors=CONFIG_ANCHORS[family],guards=guards,defaults=DEFAULTS[family],default_route_enabled=False if family in ('Windows','Linux') or guards else None,candidate_visibility='not_inspected',runtime_visibility='not_executed')
+                if family=='Windows' and req in ('R18','R20'):
+                    configuration.update(guards=[],default_route_enabled=None,defaults='Implicit SDK local-open/progress owner path in examples/reader.c; not gated by compact UI. No tested executable, so actual runtime exposure unknown.')
+                elif family=='Windows' and req=='R17':
+                    configuration.update(guards=['EXR_READER_WINDOWS_PREFERENCES'],defaults='Settings menu independent of compact; EXR_READER_WINDOWS_PREFERENCES defaults OFF.')
                 if entry and (family,req) in HANDLER_LINKS:
                     file,anchor=HANDLER_LINKS[(family,req)];source=git('show',BASE+':'+file)
                     require(anchor in source,'missing actual handler linkage')
