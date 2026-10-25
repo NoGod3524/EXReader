@@ -74,8 +74,9 @@ def main():
     if 'sha256:' + artifact['download_sha256'] != (meta.get('digest') or ''):
         problems.append('the downloaded artifact digest differs from the API record')
     member_digest = None
+    expected_member = manifest['zip']['name']
     with zipfile.ZipFile(io.BytesIO(raw)) as container:
-        names = [name for name in container.namelist() if name.endswith('candidate.zip')]
+        names = [name for name in container.namelist() if name.split('/')[-1] == expected_member]
         if len(names) != 1:
             problems.append('the uploaded artifact does not carry exactly one candidate archive')
         else:

@@ -117,14 +117,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: reader-final-s01-candidate-${{github.run_id}}-${{github.run_attempt}}
-          path: |
-            build/s01/candidate.zip
-            build/s01/manifest.json
-            build/s01/licenses.json
-            build/s01/selftest-report.json
-            build/s01/selftest-page.png
-            build/s01/identity/
-            build/s01/assembly.json
+          path: build/s01/
           if-no-files-found: error
       - name: Preserve the producer build logs
         if: always()
