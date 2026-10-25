@@ -3,42 +3,70 @@
   "package": "J24 Unix relocatable distribution",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "branch": "codex/reader-distribution-unix",
+  "branch": "codex/reader-distribution-unix-review",
   "accepted": true,
-  "accepted_scope": "Linux/x64 and macOS/ARM64 reading-core relocatable candidate: external-argument build, pcfiledir pkg-config unit, removal of private absolute-prefix units, duplicate material removal, archive round trip and installed C/C++ consumers plus nine-format smoke",
+  "accepted_scope": "Linux/x64 and macOS/ARM64 reading-core relocatable candidate: external-argument build, pcfiledir pkg-config unit with the exported compile definitions, removal of private absolute-prefix units, duplicate material removal under a shared permission bit, archive round trip, and installed C, C++ and pkg-config consumers plus nine-format smoke on the relocated prefix and on the extracted archive",
   "release_ready": true,
   "quality_accepted": false,
   "published": false,
   "tag_created": false,
   "scope": "Candidate distribution only; SDK freeze, product schema, wire v1 and reading anchors untouched",
-  "tested_source_sha": "2f5677f13efc34b200af697f1b6f7bff2b656e3b",
+  "tested_source_sha": "8975fa6c0ed21b9357b80394a9474491adb8dc1e",
   "head_delta_note": "Evidence-only commits after the tested SHA change this file and docs/READER-DISTRIBUTION-UNIX.md; no source, test or workflow difference exists between the tested SHA and the final HEAD.",
+  "review": {
+    "reviewed_delivery": {
+      "branch": "codex/reader-distribution-unix",
+      "run": 40130016878,
+      "attempt": 1,
+      "tested_source_sha": "2f5677f13efc34b200af697f1b6f7bff2b656e3b",
+      "head_sha": "9919608678f2764e74d3075c949303443e35e03d",
+      "verdict": "the delivered build, relocation, dedupe, seal, extraction and consumer runs were real; six concrete packaging/evidence defects were found and repaired on the review branch"
+    },
+    "repairs": [
+      "exreader.pc Cflags omitted the compile definitions the installed CMake package exports (EXR_STATIC); a pkg-config consumer therefore got a different compile interface than the package it describes",
+      "the public pkg-config unit was only validated as text and never used to build anything",
+      "permission bits were recorded but never verified, and byte-identical materials with different executable bits would have been hardlinked into one mode",
+      "the sealed manifest's identity, stage_sha256, dedupe_sha256, duplicate saving, root name and member modes were written but never re-derived; the runner identity was unchecked and the protocol artifact's content was never read",
+      "check_scope.sh compiled only some package python files, leaving the same-source report tools unchecked",
+      "seal.py opened gzip.GzipFile for writing without a mode, emitting a FutureWarning into the protocol log"
+    ],
+    "new_protocol_cases": [
+      "link-order-through-interface",
+      "stage-refuses-foreign-runner",
+      "compile-definitions",
+      "dedupe-plan-keeps-modes",
+      "seal-records-modes"
+    ],
+    "protocol_cases": 16,
+    "audit_checks": 14
+  },
   "run": {
-    "id": 40130016878,
+    "id": 40169400495,
     "attempt": 1,
     "workflow": ".github/workflows/reader-distribution-unix.yml",
     "event": "push",
     "conclusion": "success",
-    "head_sha": "2f5677f13efc34b200af697f1b6f7bff2b656e3b"
+    "head_sha": "8975fa6c0ed21b9357b80394a9474491adb8dc1e",
+    "branch": "codex/reader-distribution-unix-review"
   },
   "jobs": [
     {
-      "id": 120979543711,
+      "id": 121097001803,
       "name": "rejection protocol",
       "conclusion": "success"
     },
     {
-      "id": 120979569441,
+      "id": 121097025472,
       "name": "unix (linux)",
       "conclusion": "success"
     },
     {
-      "id": 120979569393,
+      "id": 121097025479,
       "name": "unix (macos)",
       "conclusion": "success"
     },
     {
-      "id": 120980157792,
+      "id": 121097465223,
       "name": "same-source report",
       "conclusion": "success"
     }
@@ -46,52 +74,58 @@
   "artifacts": [
     {
       "kind": "platform",
-      "name": "reader-distribution-unix-linux-40130016878-1",
-      "id": 12574438658,
-      "bytes": 6539950,
-      "digest": "sha256:6deef361683806f7eecc8679b33f02eec59520b23604daaff7eca71b1ee353b3",
-      "expires_at": "2027-01-22T20:29:38Z"
+      "name": "reader-distribution-unix-linux-40169400495-1",
+      "id": 12590111026,
+      "bytes": 6553688,
+      "digest": "sha256:e8be5b508590dbb9e4491adfae9d08e7f66ff53aa25ce4456771eb774820c5df",
+      "expires_at": "2027-01-23T06:31:43Z"
     },
     {
       "kind": "platform",
-      "name": "reader-distribution-unix-macos-40130016878-1",
-      "id": 12573872540,
-      "bytes": 5767126,
-      "digest": "sha256:00d2c7f1211643c0d3dbbe77aec52461040631b8a7cbdebb6a2dd4ecf79495d0",
-      "expires_at": "2027-01-22T20:29:38Z"
+      "name": "reader-distribution-unix-macos-40169400495-1",
+      "id": 12589797947,
+      "bytes": 5780029,
+      "digest": "sha256:82c3266f27c545a0a4d6a646905e7e6984858e6153109178c68ffd15febe38a9",
+      "expires_at": "2027-01-23T06:31:43Z"
     },
     {
       "kind": "protocol",
-      "name": "reader-distribution-protocol-40130016878-1",
-      "id": 12574348478,
-      "bytes": 491,
-      "digest": "sha256:ca365b1e86739aab112cd826b3f8f965d8854ff428538feaf2b5cd99a82f39ff",
-      "expires_at": "2027-01-22T20:29:38Z"
+      "name": "reader-distribution-protocol-40169400495-1",
+      "id": 12589727804,
+      "bytes": 365,
+      "digest": "sha256:d007f871b1d8fda88cc19e0b105674afcd4327365ae2800bf5dd33eba7e6f0d0",
+      "expires_at": "2027-01-23T06:31:43Z"
     },
     {
       "kind": "report",
-      "name": "reader-distribution-unix-report-40130016878-1",
-      "id": 12574308810,
-      "bytes": 24591741,
-      "digest": "sha256:9579dae25eb466cd41e237ac2d01e7c56ffc1f9f6d4c2a797d6bcfa43e2d27cb",
-      "expires_at": "2027-01-22T20:29:38Z"
+      "name": "reader-distribution-unix-report-40169400495-1",
+      "id": 12589623138,
+      "bytes": 24623181,
+      "digest": "sha256:c8ebd7f3d758460780512129227de8fe3505e8f56ad134ab1ebf4de61365e177",
+      "expires_at": "2027-01-23T06:31:43Z"
     }
   ],
   "platforms": {
     "linux": {
+      "runner_os": "Linux",
+      "architecture": "X64",
       "sdk_version": "3.40.0",
       "abi": 1,
       "files": 257,
-      "installed_bytes": 18540390,
-      "pkgconfig_sha256": "1a5fa363543d21bbce27d7149eb2dbab7030d169e7dc58b86916f6b0121c268a",
+      "installed_bytes": 18540403,
+      "pkgconfig_sha256": "65416246838e4ef803fb2e2426bcc8ad5a0afc3cc41b7a615066e38b66abab04",
+      "compile_definitions": [
+        "EXR_STATIC"
+      ],
+      "foreign_pkgconfig": "every removed private unit was judged an absolute-prefix defect before removal; a relocatable upstream unit now fails the stage",
       "duplicate_groups": 4,
       "duplicate_bytes_removed": 46583,
       "duplicate_members_in_archive": 4,
       "relocated_destination": "/home/runner/work/EXReader/EXReader/build/relocated-prefix/reading-core-sdk-relocated-to-another-directory",
       "archive": {
         "name": "EXReader-reading-core-3.40.0-linux-X64.tar.gz",
-        "bytes": 6426196,
-        "sha256": "1f55f73f53b6918ae2adbddeaaa3bd885dd135aa5cf45f5f4b2e0d995bfaa258"
+        "bytes": 6426212,
+        "sha256": "8ac844d72da6da503116d48ef297cf19e43ee4e3658c9c19f17333c4cf9b65b9"
       },
       "consumer_c": {
         "version": "3.40.0",
@@ -114,17 +148,39 @@
         "negative_checks": 1,
         "failures": 0
       },
+      "consumer_pkgconfig": {
+        "version": "3.40.0",
+        "abi": 1,
+        "format": 4,
+        "pages": 1,
+        "text_bytes": 291,
+        "bitmap_width": 720,
+        "bitmap_height": 1040,
+        "png_bytes": 18974,
+        "negative_checks": 4,
+        "failures": 0
+      },
+      "pkgconfig_consumer": {
+        "relocated_prefix": {
+          "accepted": true,
+          "rendered_png_sha256_equal": true
+        },
+        "extracted_archive": {
+          "accepted": true,
+          "rendered_png_sha256_equal": true
+        }
+      },
       "audits": {
         "before": {
-          "checks": 13,
+          "checks": 14,
           "release_ready": true
         },
         "after": {
-          "checks": 13,
+          "checks": 14,
           "release_ready": true
         },
         "extracted": {
-          "checks": 13,
+          "checks": 14,
           "release_ready": true
         }
       },
@@ -134,19 +190,25 @@
       }
     },
     "macos": {
+      "runner_os": "macOS",
+      "architecture": "ARM64",
       "sdk_version": "3.40.0",
       "abi": 1,
       "files": 257,
-      "installed_bytes": 14858502,
-      "pkgconfig_sha256": "cae96587fa32dc6c372fda5f53f6b32a374e82464785d259de8cefa4ee41da44",
+      "installed_bytes": 14858515,
+      "pkgconfig_sha256": "0755d45c3e203726034f9e4afc29b425754818290d32e853e567fc7d1cc8af64",
+      "compile_definitions": [
+        "EXR_STATIC"
+      ],
+      "foreign_pkgconfig": "every removed private unit was judged an absolute-prefix defect before removal; a relocatable upstream unit now fails the stage",
       "duplicate_groups": 4,
       "duplicate_bytes_removed": 46583,
       "duplicate_members_in_archive": 4,
       "relocated_destination": "/Users/runner/work/EXReader/EXReader/build/relocated-prefix/reading-core-sdk-relocated-to-another-directory",
       "archive": {
         "name": "EXReader-reading-core-3.40.0-macos-ARM64.tar.gz",
-        "bytes": 5661697,
-        "sha256": "7aafa4efc7389383558176c006c81f6900381996bbf8ac46acc6efaa359c8028"
+        "bytes": 5661567,
+        "sha256": "f15a3c4a54cebaf8965f37596a74f4c96b3885a7e1b3144608bc27c07c7de3a7"
       },
       "consumer_c": {
         "version": "3.40.0",
@@ -169,17 +231,39 @@
         "negative_checks": 1,
         "failures": 0
       },
+      "consumer_pkgconfig": {
+        "version": "3.40.0",
+        "abi": 1,
+        "format": 4,
+        "pages": 1,
+        "text_bytes": 291,
+        "bitmap_width": 720,
+        "bitmap_height": 1040,
+        "png_bytes": 18974,
+        "negative_checks": 4,
+        "failures": 0
+      },
+      "pkgconfig_consumer": {
+        "relocated_prefix": {
+          "accepted": true,
+          "rendered_png_sha256_equal": true
+        },
+        "extracted_archive": {
+          "accepted": true,
+          "rendered_png_sha256_equal": true
+        }
+      },
       "audits": {
         "before": {
-          "checks": 13,
+          "checks": 14,
           "release_ready": true
         },
         "after": {
-          "checks": 13,
+          "checks": 14,
           "release_ready": true
         },
         "extracted": {
-          "checks": 13,
+          "checks": 14,
           "release_ready": true
         }
       },
@@ -190,56 +274,90 @@
     }
   },
   "named_results": [
-    "rejection protocol: 11/11 self-check cases passed (link-order, vendor-and-system, pkgconfig-round-trip, pkgconfig-rejects-absolute-prefix, pkgconfig-rejects-absolute-library, pkgconfig-requires-every-archive, foreign-pkgconfig, dedupe-plan, tree-scan, path-safety, seal-extract-hardlink)",
-    "unix (linux): external-argument configure, build and install succeeded; licence materials release ready",
-    "unix (linux): stage 257 files / 18,540,390 bytes, pkg-config 1a5fa363..., 6 private absolute-prefix units removed, 4 duplicate materials planned",
+    "rejection protocol: 16/16 self-check cases passed (link-order, link-order-through-interface, stage-refuses-foreign-runner, vendor-and-system, pkgconfig-round-trip, compile-definitions, pkgconfig-rejects-absolute-prefix, pkgconfig-rejects-absolute-library, pkgconfig-requires-every-archive, foreign-pkgconfig, dedupe-plan, dedupe-plan-keeps-modes, tree-scan, path-safety, seal-extract-hardlink, seal-records-modes)",
+    "unix (linux): external-argument configure, build (608 targets) and install succeeded; licence materials release ready",
+    "unix (linux): stage 257 files / 18,540,403 bytes, pkg-config 65416246..., definitions [EXR_STATIC], 6 private absolute-prefix units removed, 4 duplicate materials planned",
     "unix (linux): relocation to a longer absolute path accepted; C and C++ consumers ran (720x1040 PNG, 18,974 bytes, 291 text bytes, 1 page)",
+    "unix (linux): the public C consumer built with pkg-config flags alone produced the same counters and identical PNG bytes, from the relocated prefix and from the extracted archive",
     "unix (linux): nine-format smoke 9/9 passed before dedupe, after dedupe and from the extracted archive",
-    "unix (linux): audits before/after/extracted 13/13 checks, release_ready true; both comparisons accepted",
-    "unix (linux): 4 hardlink groups removed 46,583 duplicate bytes; archive 6,426,196 bytes, 257 members, 4 hardlink members",
+    "unix (linux): audits before/after/extracted 14/14 checks, release_ready true; both comparisons accepted",
+    "unix (linux): 4 hardlink groups removed 46,583 duplicate bytes; archive 6,426,212 bytes, 257 members, 4 hardlink members, permission bits verified",
     "unix (macos): external-argument configure, build and install succeeded; licence materials release ready",
-    "unix (macos): stage 257 files / 14,858,502 bytes, pkg-config cae96587..., 6 private absolute-prefix units removed, 4 duplicate materials planned",
+    "unix (macos): stage 257 files / 14,858,515 bytes, pkg-config 0755d45c..., definitions [EXR_STATIC], 6 private absolute-prefix units removed, 4 duplicate materials planned",
     "unix (macos): relocation to a longer absolute path accepted; C and C++ consumers ran (720x1040 PNG, 18,974 bytes, 291 text bytes, 1 page)",
+    "unix (macos): the public C consumer built with pkg-config flags alone produced the same counters and identical PNG bytes, from the relocated prefix and from the extracted archive",
     "unix (macos): nine-format smoke 9/9 passed before dedupe, after dedupe and from the extracted archive",
-    "unix (macos): audits before/after/extracted 13/13 checks, release_ready true; both comparisons accepted",
-    "unix (macos): 4 hardlink groups removed 46,583 duplicate bytes; archive 5,661,697 bytes, 257 members, 4 hardlink members",
-    "same-source report: both platform artifacts re-downloaded, ZIP digests recomputed, archives re-extracted and re-audited from uploaded bytes; accepted true, problems []"
+    "unix (macos): audits before/after/extracted 14/14 checks, release_ready true; both comparisons accepted",
+    "unix (macos): 4 hardlink groups removed 46,583 duplicate bytes; archive 5,661,567 bytes, 257 members, 4 hardlink members, permission bits verified",
+    "same-source report: both platform artifacts re-downloaded, ZIP digests recomputed, archive identity bound to this stage.json and dedupe.json, member and extracted permission bits re-checked, archives re-extracted and re-audited from uploaded bytes, protocol log re-read with 16 named cases and 0 failures; accepted true, problems []"
   ],
   "failures_preserved": [
     {
       "run": 40126280536,
+      "phase": "original delivery",
       "reason": "stage resolved component target names instead of installed archive names (missing component archive exr_pdf)"
     },
     {
       "run": 40126751529,
+      "phase": "original delivery",
       "reason": "C++ consumer brace-initialised the public exr_error record (invalid conversion to exr_status)"
     },
     {
       "run": 40127067933,
+      "phase": "original delivery",
       "reason": "audit found six private dependency pkg-config units (libwebp/aom/sharpyuv) with absolute build prefixes before the candidate removed them"
     },
     {
       "run": 40127472386,
+      "phase": "original delivery",
       "reason": "audit compared unnormalised pkg-config flags with the relocated prefix and reported false leaks"
     },
     {
       "run": 40128098316,
+      "phase": "original delivery",
       "reason": "same-source report keyed the expected artifact map by an unbound name"
     },
     {
       "run": 40128787392,
+      "phase": "original delivery",
       "reason": "same-source report wrote the downloaded archive into a missing directory"
     },
     {
       "run": 40129338843,
+      "phase": "original delivery",
       "reason": "all jobs green, superseded because the C consumer reported bitmap dimensions after releasing the bitmap (0x0 instead of 720x1040)"
+    },
+    {
+      "run": 40168866092,
+      "phase": "review round",
+      "reason": "the new permission-bit loop in audit.py named its iterator `record`, shadowing the check recorder; both platform jobs failed at `audit before` with TypeError"
+    },
+    {
+      "run": 40169161316,
+      "phase": "review round",
+      "reason": "both platforms and the protocol passed, but the same-source report refused two of its own new bindings: the archive root was compared with the uploaded member path instead of the file name, and gzip.GzipFile emitted a two-line FutureWarning that the new protocol-log guard counts as an unbound line"
+    }
+  ],
+  "prior_rounds": [
+    {
+      "branch": "codex/reader-distribution-unix",
+      "run": 40130016878,
+      "attempt": 1,
+      "head_sha": "9919608678f2764e74d3075c949303443e35e03d",
+      "tested_source_sha": "2f5677f13efc34b200af697f1b6f7bff2b656e3b",
+      "conclusion": "success",
+      "protocol_cases": 11,
+      "audit_checks": 13,
+      "note": "kept as the reviewed delivery; its 11 protocol cases and 13 audit checks passed, and the review round above added the checks it was missing"
     }
   ],
   "uncovered": [
     "Windows candidate distribution",
     "reading-library and optional component profiles",
     "performance, accessibility, real-device and audio scope",
-    "product host wiring (root)"
+    "product host wiring (root)",
+    "binary archives are not scanned for embedded absolute build paths (only text files up to 4 MiB are)",
+    "a runnable reader, audio playback, signing and notarisation are out of scope: the candidate ships static archives, headers, materials and one pkg-config unit"
   ],
-  "note": "Accepted only for the stated Unix reading-core candidate scope. published=false, no tag/Release, no change to the six accepted R6 SDK packages or their hashes. Artifact identities were read from the Actions API; no artifact was downloaded outside Actions."
+  "note": "Accepted only for the stated Unix reading-core candidate scope. published=false, no tag/Release, no change to the six accepted R6 SDK packages or their hashes. Artifact identities were read from the Actions API; no artifact was downloaded or extracted outside Actions."
 }
