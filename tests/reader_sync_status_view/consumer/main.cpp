@@ -141,17 +141,24 @@ int main(int argc,char **argv){
         unsigned threads=(unsigned)std::stoul(line.substr(16,space-16));
         unsigned iterations=(unsigned)std::stoul(line.substr(space+1));
         unsigned ok=0,failed=0;int first=0;int first_revision=0;
+        struct totals {unsigned ok=0,failed=0;int first=0,revision=0;};
+        std::vector<totals> results(threads);
         std::vector<std::thread> pool;
-        for(unsigned n=0;n<threads;n++)pool.emplace_back([&]{
+        for(unsigned n=0;n<threads;n++)pool.emplace_back([&,n]{
+          totals &own=results[n];
           for(unsigned i=0;i<iterations;i++){
             reader_sync_view_options options{};options.row_limit=4;
             reader_sync_view_snapshot *out=nullptr;reader_sync_view_error error{};
             reader_sync_view_status status=reader_sync_view_capture(session,nullptr,&options,&out,&error);
-            if(status==READER_SYNC_VIEW_OK&&out&&reader_sync_view_release(&out)==READER_SYNC_VIEW_OK)ok++;
-            else{failed++;if(!first){first=(int)status;first_revision=error.revision_code;}}
+            if(status==READER_SYNC_VIEW_OK&&out&&reader_sync_view_release(&out)==READER_SYNC_VIEW_OK)own.ok++;
+            else{own.failed++;if(!own.first){own.first=(int)status;own.revision=error.revision_code;}}
           }
         });
         for(std::thread &entry:pool)entry.join();
+        for(const totals &own:results){
+          ok+=own.ok;failed+=own.failed;
+          if(!first&&own.first){first=own.first;first_revision=own.revision;}
+        }
         std::cout<<"{\"cmd\":\"capture-threads\",\"ok\":"<<ok<<",\"failed\":"<<failed
           <<",\"first_status\":"<<first<<",\"first_revision\":"<<first_revision<<"}"<<std::endl;
       }else if(line.rfind("rows-null",0)==0){
