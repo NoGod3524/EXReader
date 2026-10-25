@@ -1,0 +1,200 @@
+name: S13 CBZ leading-slash safety candidate
+on:
+  push:
+    branches: [codex/reader-next-s13]
+    paths:
+      - 'candidates/reader-next-s13/**'
+      - 'tests/reader_next_s13/**'
+      - '.github/workflows/reader-next-s13.yml'
+      - 'docs/reader-next-s13/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  BASE_SHA: e67d87cbeabb2457e0852f681ef0b27b2c0da4d8
+  SDK_SHA: edddc463c06ed5731195cdb8f06b2df6dff7699e
+jobs:
+  candidate:
+    name: candidate-${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            os: ubuntu-22.04
+          - platform: windows
+            os: windows-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install an independent image inspector
+        run: python -m pip install --disable-pip-version-check --quiet pillow
+      - name: Refuse foreign paths, frozen SDK edits and a rewritten patch
+        run: |
+          set -euo pipefail
+          mkdir -p build/s13/logs build/s13/reports
+          git rev-parse HEAD | tee build/s13/logs/source.txt
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python -m py_compile tests/reader_next_s13/run.py tests/reader_next_s13/strict.py tests/reader_next_s13/verify_tree.py
+          python tests/reader_next_s13/verify_tree.py --base "$BASE_SHA" --sdk "$SDK_SHA" \
+            --manifest candidates/reader-next-s13/manifest.json --out build/s13/reports/checks-workspace.json
+      - name: Materialise the fixed start and the isolated candidate tree
+        run: |
+          set -euo pipefail
+          git worktree add --detach build/s13/base "$BASE_SHA"
+          git worktree add --detach build/s13/candidate "$BASE_SHA"
+          git -C build/s13/candidate apply "$PWD/candidates/reader-next-s13/s13-cbz-leading-slash.patch"
+          test "$(git -C build/s13/candidate status --porcelain)" = " M src/cbz.c"
+          test "$(git -C build/s13/candidate hash-object src/cbz.c)" = "$(git hash-object candidates/reader-next-s13/src/cbz.c)"
+          git -C build/s13/base status --porcelain
+          git -C build/s13/candidate diff --stat | tee build/s13/logs/candidate-tree.diff
+      - name: Recover the two fixed real CBZ files and inventory their members
+        run: |
+          set -euo pipefail
+          python tests/reader_next_s13/run.py collect --real tests/reader_next_s13/real.json --out build/s13/inputs
+          python tests/reader_next_s13/run.py extract --inventory build/s13/inputs/inventory.json --out build/s13/inputs/members
+      - name: Build the declared synthetic boundary archives
+        run: |
+          set -euo pipefail
+          python tests/reader_next_s13/run.py fixtures --cases tests/reader_next_s13/cases.json --out build/s13/fixtures/cases
+      - name: Build and install the unchanged fixed start and the candidate
+        run: |
+          set -euo pipefail
+          for tree in base candidate; do
+            cmake -S "build/s13/$tree" -B "build/s13/$tree-build" \
+              -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/build/s13/sdk-$tree" \
+              -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF 2>&1 | tee "build/s13/logs/$tree-configure.log"
+            cmake --build "build/s13/$tree-build" --config Release --parallel 4 2>&1 | tee "build/s13/logs/$tree-build.log"
+            cmake --install "build/s13/$tree-build" --config Release 2>&1 | tee "build/s13/logs/$tree-install.log"
+          done
+      - name: Run the original native suite in both trees
+        run: |
+          set -euo pipefail
+          for tree in base candidate; do
+            set +e
+            ctest --test-dir "build/s13/$tree-build" -C Release --output-on-failure \
+              --output-junit "build/s13/logs/$tree-junit.xml" 2>&1 | tee "build/s13/logs/$tree-ctest.log"
+            echo "$tree ctest exit: $?" | tee "build/s13/logs/$tree-ctest.exit"
+            set -e
+          done
+      - name: Build the installed public SDK consumer for both trees
+        run: |
+          set -euo pipefail
+          for tree in base candidate; do
+            cmake -S tests/reader_next_s13 -B "build/s13/consumer-$tree" -DCMAKE_BUILD_TYPE=Release \
+              -DEXR_SDK="${{ github.workspace }}/build/s13/sdk-$tree" 2>&1 | tee "build/s13/logs/consumer-$tree-configure.log"
+            cmake --build "build/s13/consumer-$tree" --config Release --parallel 4 2>&1 | tee "build/s13/logs/consumer-$tree-build.log"
+            if [ -d "build/s13/sdk-$tree/bin" ]; then cp build/s13/sdk-$tree/bin/*.dll "build/s13/consumer-$tree/bin/" 2>/dev/null || true; fi
+          done
+      - name: Run every synthetic boundary archive through both SDK builds
+        run: |
+          set -euo pipefail
+          probe_base=build/s13/consumer-base/bin/reader-next-s13-probe
+          probe_candidate=build/s13/consumer-candidate/bin/reader-next-s13-probe
+          if [ -f "$probe_base.exe" ]; then probe_base="$probe_base.exe"; fi
+          if [ -f "$probe_candidate.exe" ]; then probe_candidate="$probe_candidate.exe"; fi
+          printf '%s\n' "$probe_base" "$probe_candidate" > build/s13/logs/probes.txt
+          sdk_library=build/s13/sdk-candidate/lib/libexreader.so
+          if [ -f build/s13/sdk-candidate/bin/exreader.dll ]; then sdk_library=build/s13/sdk-candidate/bin/exreader.dll; fi
+          python tests/reader_next_s13/run.py program --file "$probe_base" --file "$probe_candidate" \
+            --file "$sdk_library" --out build/s13/reports/programs.json
+          python tests/reader_next_s13/run.py run-fixtures --dir build/s13/fixtures/cases \
+            --candidate "$probe_candidate" --base "$probe_base" --out build/s13/fixtures/reports
+      - name: Run the two fixed real CBZ files in separate processes
+        run: |
+          set -euo pipefail
+          probe_candidate=build/s13/consumer-candidate/bin/reader-next-s13-probe
+          probe_base=build/s13/consumer-base/bin/reader-next-s13-probe
+          if [ -f "$probe_candidate.exe" ]; then probe_candidate="$probe_candidate.exe"; fi
+          if [ -f "$probe_base.exe" ]; then probe_base="$probe_base.exe"; fi
+          python tests/reader_next_s13/run.py run-real --real tests/reader_next_s13/real.json \
+            --inputs build/s13/inputs --base "$probe_base" --candidate "$probe_candidate" \
+            --out build/s13/reports/real --databases build/s13/databases
+          mkdir -p build/s13/reports/real/images
+          python tests/reader_next_s13/run.py plan-real --inventory build/s13/inputs/inventory.json \
+            --members build/s13/inputs/members/members.json --reports build/s13/reports/real \
+            --out build/s13/reports/real/plan.json
+          python tests/reader_next_s13/run.py image-digests --plan build/s13/reports/real/plan.json \
+            --probe "$probe_candidate"
+      - name: Compare every claim with the declared expectations
+        run: |
+          set -euo pipefail
+          python tests/reader_next_s13/run.py check-fixtures --cases tests/reader_next_s13/cases.json \
+            --candidate build/s13/fixtures/reports/candidate --base build/s13/fixtures/reports/base \
+            --out build/s13/reports/checks-fixtures.json || echo "fixture checks failed" | tee build/s13/logs/checks-fixtures.failed
+          python tests/reader_next_s13/run.py check-real --real tests/reader_next_s13/real.json \
+            --inventory build/s13/inputs/inventory.json --members build/s13/inputs/members/members.json \
+            --reports build/s13/reports/real --plan build/s13/reports/real/plan.json \
+            --out build/s13/reports/checks-real.json || echo "real checks failed" | tee build/s13/logs/checks-real.failed
+          python tests/reader_next_s13/run.py check-suite --base build/s13/logs/base-junit.xml \
+            --candidate build/s13/logs/candidate-junit.xml \
+            --out build/s13/reports/checks-suite.json || echo "suite checks failed" | tee build/s13/logs/checks-suite.failed
+      - name: Bind the run, source and every named check
+        run: |
+          set -euo pipefail
+          python tests/reader_next_s13/run.py summary \
+            --parts build/s13/reports/checks-workspace.json build/s13/reports/checks-fixtures.json \
+                    build/s13/reports/checks-real.json build/s13/reports/checks-suite.json \
+            --out build/s13/reports/summary.json --platform "${{ matrix.platform }}"
+      - name: Preserve every report, refusal and log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-next-s13-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/s13/reports/
+            build/s13/inputs/
+            build/s13/fixtures/
+            build/s13/logs/
+          if-no-files-found: error
+          retention-days: 30
+  strict:
+    name: strict-summary
+    needs: candidate
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read the artifact identity from the Actions API for this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/strict
+          gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?per_page=100" > build/strict/artifacts.json
+      - name: Download the artifacts of the producer jobs
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          pattern: reader-next-s13-*
+          path: build/strict/download
+      - name: Authenticate artifacts, original ZIPs and all named checks
+        run: |
+          set -euo pipefail
+          mkdir -p build/strict/reports
+          python tests/reader_next_s13/strict.py --artifacts build/strict/artifacts.json \
+            --download build/strict/download --pinned tests/reader_next_s13/real.json \
+            --source-sha "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --out build/strict/reports/strict-summary.json
+      - name: Preserve the strict summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-next-s13-strict-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/strict/reports/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,515 @@
+{
+ "schema": 1,
+ "note": "Declared before execution. expect = candidate patch outcome, base_expect = pristine e67d87c (approved SDK) outcome on the identical bytes. Fixtures are synthetic boundary archives and are never counted as real documents.",
+ "png": {
+  "width": 2,
+  "height": 2,
+  "mode": "RGBA"
+ },
+ "cases": [
+  {
+   "id": "single-leading-slash",
+   "members": [
+    {
+     "name": "/page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "/page.png"
+    ]
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "nested-leading-slash",
+   "members": [
+    {
+     "name": "/book/pages/001.png",
+     "data": "png"
+    },
+    {
+     "name": "/book/pages/002.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "/book/pages/001.png",
+     "/book/pages/002.png"
+    ]
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "double-leading-slash",
+   "members": [
+    {
+     "name": "//page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "leading-slash-parent",
+   "members": [
+    {
+     "name": "/../page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "leading-slash-inner-parent",
+   "members": [
+    {
+     "name": "/book/../page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "leading-slash-drive",
+   "members": [
+    {
+     "name": "/C:/page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "leading-slash-unc",
+   "members": [
+    {
+     "name": "//server/share/page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "leading-slash-backslash",
+   "members": [
+    {
+     "name": "/dir\\page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "leading-slash-nul",
+   "members": [
+    {
+     "name_hex": "2f70610067652e706e67",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "CBZ member name contains NUL"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "CBZ member name contains NUL"
+   }
+  },
+  {
+   "id": "leading-slash-empty-segment",
+   "members": [
+    {
+     "name": "/a//b.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "collision-slash-and-plain",
+   "members": [
+    {
+     "name": "/page.png",
+     "data": "png"
+    },
+    {
+     "name": "page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "Duplicate CBZ member path after leading-slash normalization"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "collision-nested",
+   "members": [
+    {
+     "name": "/book/1.png",
+     "data": "png"
+    },
+    {
+     "name": "book/1.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "Duplicate CBZ member path after leading-slash normalization"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "exact-duplicate-member",
+   "members": [
+    {
+     "name": "page.png",
+     "data": "png"
+    },
+    {
+     "name": "page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "Duplicate CBZ page path or frame id"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Duplicate CBZ page path or frame id"
+   }
+  },
+  {
+   "id": "macosx-leading-slash",
+   "members": [
+    {
+     "name": "/__MACOSX/._page.png",
+     "data": "png"
+    },
+    {
+     "name": "/page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "/page.png"
+    ]
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "dot-leading-slash",
+   "members": [
+    {
+     "name": "/.hidden.png",
+     "data": "png"
+    },
+    {
+     "name": "/page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "/page.png"
+    ]
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "comicinfo-leading-slash",
+   "members": [
+    {
+     "name": "/ComicInfo.xml",
+     "data": "comicinfo"
+    },
+    {
+     "name": "/page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "/page.png"
+    ],
+    "title": "S13 Slash Comic"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "comicinfo-collision",
+   "members": [
+    {
+     "name": "/ComicInfo.xml",
+     "data": "comicinfo"
+    },
+    {
+     "name": "ComicInfo.xml",
+     "data": "comicinfo"
+    },
+    {
+     "name": "/page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 5
+   },
+   "base_expect": {
+    "status": 5
+   }
+  },
+  {
+   "id": "plain-unchanged",
+   "members": [
+    {
+     "name": "page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "page.png"
+    ]
+   },
+   "base_expect": {
+    "status": 0,
+    "page_ids": [
+     "page.png"
+    ]
+   }
+  },
+  {
+   "id": "no-supported-pages",
+   "members": [
+    {
+     "name": "/notes.txt",
+     "data": "text"
+    }
+   ],
+   "expect": {
+    "status": 5,
+    "message": "CBZ contains no supported image pages"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "CBZ contains no supported image pages"
+   }
+  },
+  {
+   "id": "bare-slash-member",
+   "members": [
+    {
+     "name": "/",
+     "data": "text"
+    },
+    {
+     "name": "/page.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "/page.png"
+    ]
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "utf8-dir-leading-slash",
+   "members": [
+    {
+     "name": "/页/一.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "/页/一.png"
+    ]
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "bad-utf8-leading-slash",
+   "members": [
+    {
+     "name_hex": "2f7061ff67652e706e67",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 4,
+    "message": "CBZ member name is not UTF-8"
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "order-leading-slash",
+   "members": [
+    {
+     "name": "/b.png",
+     "data": "png"
+    },
+    {
+     "name": "/a.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "/a.png",
+     "/b.png"
+    ]
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "numeric-order-leading-slash",
+   "members": [
+    {
+     "name": "/10.png",
+     "data": "png"
+    },
+    {
+     "name": "/2.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "/2.png",
+     "/10.png"
+    ]
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  },
+  {
+   "id": "mixed-slash-and-plain",
+   "members": [
+    {
+     "name": "a/1.png",
+     "data": "png"
+    },
+    {
+     "name": "/b/2.png",
+     "data": "png"
+    }
+   ],
+   "expect": {
+    "status": 0,
+    "page_ids": [
+     "/b/2.png",
+     "a/1.png"
+    ]
+   },
+   "base_expect": {
+    "status": 5,
+    "message": "Unsafe CBZ member path"
+   }
+  }
+ ]
+}
