@@ -2,7 +2,7 @@
 
 Status: **source candidate; no executed UI acceptance yet**.
 Start: `25bc0c67971f81491f50e0a3caaaf7e509bb7e35`.
-Reviewed production pin: `a7bcf0483fb52ecf9cd3cdf7dda07a4aa742f174`.
+Reviewed production pin: `fedce16a4ea6d9e1f0364d149f4f90b7a9caae5c`.
 
 Preflight runs `40200750312` and `40201452800` passed the exact OFF byte
 projection and all 24 independent refusals. Initial full `40200828327` was
@@ -24,6 +24,16 @@ Alt+M had opened More and focused Reading, whose real GTK accessible role is
 The harness now requests these actual roles and prints requested names and
 visible menu/focus state on failure. The complete TXT sweep runs after new menu
 interactions so new menu failures surface before repeating all page turns.
+
+Full `40204507162` passed 20 ON cases, including keyboard More, text/notes,
+both window sizes and search/directory dialogs, then found an actual missing
+initial focus in the empty records modal. Diagnosis `40205198425` authenticated
+the raw modal state: active, visible and modal, with no focused node and an
+enabled focusable Close button. Its original owner disables the initial list
+while its asynchronous request runs. The compact entry now gives its existing
+Close button stable focus after invoking that owner. A new keyboard case tabs
+to Add bookmark, saves through the original dialog, then tabs to the real row
+and presses Down. The original owner and OFF source remain unchanged.
 
 `EXR_READER_GTK_COMPACT` defaults **OFF** in `examples/linux/CMakeLists.txt`.
 Only that file and `examples/linux/reader.c` change production. SDK3.41,
