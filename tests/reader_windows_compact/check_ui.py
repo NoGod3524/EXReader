@@ -5,6 +5,7 @@ from ctypes import wintypes as W
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import time
@@ -105,7 +106,11 @@ def main():
             send(app.control('books'),0x186,0);app.click('open');app.wait_idle()
             app.wait(lambda:visible(app,123) and not visible(app,119))
             assert visible(app,46001) and not any(visible(app,i) for i in (101,121,122,107,109))
-            assert P.page_number(app.label())>=1
+            label=app.label()
+            if kind in ('pdf','cbz'):
+                position=re.search(r'第 (\d+) / (\d+) 页',label)
+                assert position and 1<=int(position[1])<=int(position[2]),label
+            else:assert P.page_number(label)>=1,label
             shot(kind+'-reading.bmp');record(kind+'-reading-view')
             app.close();app=None
         app=P.App(args.candidate.resolve(),args.font.resolve(),out/'profile-txt',existing=True);app.wait_idle()
