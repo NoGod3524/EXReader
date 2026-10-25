@@ -1,0 +1,266 @@
+{
+  "accepted": true,
+  "adopted": false,
+  "base": "3c8c9eabbd9e8a5001db10b7a1a92cf69be1c223",
+  "family": "0793b26256e1397ba0f60d27de7d090fad61af81",
+  "family_source": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+  "merge": "09377761748cd5549bc864e932e5edd38019142b",
+  "source_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+  "runs": [
+    {
+      "source_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+      "run_id": "40207467982",
+      "attempt": "1",
+      "accepted": true,
+      "adopted": false,
+      "scope": "API34 default x86_64 independent Android raw3 native host candidate",
+      "inherited_business_checks": 130,
+      "retained_default_sender_checks": 8,
+      "original_protocol_phases": 18,
+      "java_policy_cases": 20,
+      "raw_checks": 19,
+      "real_process_boundaries": 1,
+      "reading_records": 11,
+      "revisions": 19,
+      "originals": 4,
+      "manifest_sha256": "65a7c6e2be7a0d80e1a7c9eed3731383aa9bdbc71cfd09f89ce63861193b5345",
+      "artifacts": [
+        {
+          "id": 12604233206,
+          "name": "reader-android-raw3-bundle-40207467982-1",
+          "digest": "sha256:a38bffdb57ca35699e21b902def18a9d584a6055b7fbef41995e61b240c6168c",
+          "size_in_bytes": 18682,
+          "expires_at": "2027-01-23T15:33:00Z"
+        },
+        {
+          "id": 12604412854,
+          "name": "reader-android-raw3-40207467982-1",
+          "digest": "sha256:c3db2ad1a2e31bc53d01620f2ef90e02a976e3b4f90ac76ed2e179c7c9052805",
+          "size_in_bytes": 113970957,
+          "expires_at": "2027-01-23T15:33:00Z"
+        },
+        {
+          "id": 12604077135,
+          "name": "reader-android-raw3-protocol-40207467982-1",
+          "digest": "sha256:3a4785c3f9060ecb6053db898fbeebc9c60f52688df9374830db0f1a5bf948ee",
+          "size_in_bytes": 53286742,
+          "expires_at": "2027-01-23T15:33:00Z"
+        }
+      ],
+      "jobs": [
+        {
+          "id": 121211375764,
+          "name": "protocol",
+          "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+          "conclusion": "success"
+        },
+        {
+          "id": 121211376063,
+          "name": "android",
+          "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+          "conclusion": "success"
+        }
+      ],
+      "incoming_apple_status": "passed",
+      "authentic_apple_null_status": "passed",
+      "actual_apple_attestation": {
+        "source_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+        "run_id": 40196978163,
+        "attempt": 1,
+        "native_job": 121179826434,
+        "strict_job": 121186031984,
+        "artifact_id": 12600789926,
+        "bytes": 77056135,
+        "digest": "sha256:92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5",
+        "program_sha256": "5f59e17cf48e77b1ef8766695bf109895feac5e628bc18d9804ee625a2749913",
+        "artifact": {
+          "id": 12600789926,
+          "name": "apple-raw3-native-40196978163-1",
+          "digest": "sha256:92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5",
+          "size_in_bytes": 77056135,
+          "expires_at": "2027-01-23T13:18:06Z"
+        },
+        "accepted": true,
+        "manifest_sha256": "f0960b35374e12827a8966f7022dc3f632e44c87419ca1482288386fb8031566",
+        "originals": 4,
+        "revisions": 15,
+        "reading_records": 11,
+        "complete_graph": true,
+        "original_inventory_verified": true,
+        "actual_native_sender": {
+          "attempt": "1",
+          "exr_version": "3.41.0",
+          "parser_version": "3.41.0",
+          "pid": 61195,
+          "platform": "macos",
+          "program_sha256": "5f59e17cf48e77b1ef8766695bf109895feac5e628bc18d9804ee625a2749913",
+          "run_id": "40196978163",
+          "sdk_dso_basename": "libexreader.3.41.0.dylib",
+          "sdk_dso_sha256": "64fa27c57d88eebd0e348908c3f8831d900363a3220af7a24c80db00ee3f37e0",
+          "source_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65"
+        },
+        "null_negative": {
+          "manifest_sha256": "86bd72f1609f38b3e006af1eb62172104262e70416a0a8d3a6a83dd968e064b7",
+          "revisions": 3,
+          "null_revision": "2a490dc51d514032a2815e802c8b3f48",
+          "complete_graph": true,
+          "origin_database": {
+            "file": "profiles/source-version-and-NULL-operations/reader-catalog.db",
+            "bytes": 147456,
+            "sha256": "4731ac025a34c435b8b7cc50ba128e0c484c736c2fde6d3ae5658593ed9f3389",
+            "sidecars": {}
+          }
+        }
+      },
+      "bidirectional_interoperability_accepted": false,
+      "physical_device": false,
+      "complete_product": false
+    }
+  ],
+  "earlier_failed_runs": [
+    {
+      "source_sha": "6f4399225ac5c61eb8aad79272fe0f11dd9c6f90",
+      "run_id": 40198642719,
+      "attempt": 1,
+      "android_job": 121184878356,
+      "failed_phase": "raw-contract",
+      "reason": "The new source-version fixture incorrectly tried to encode a point as anchor1, whose unchanged contract rejects GAP_POINT. The fixture now captures a genuine nonempty SDK range; production behavior is unchanged."
+    },
+    {
+      "source_sha": "58ddb147e912c06e4b85086ff53d014699994af9",
+      "run_id": 40200484893,
+      "attempt": 1,
+      "android_job": 121190419983,
+      "protocol_job": 121190419760,
+      "failed_phase": "session-reopen",
+      "reason": "The native metadata projection correctly retained the original product title, while the new fixture filtered the actual shelf by the SDK import's temporary title. The fixture now uses the title returned by the actual projection; production behavior is unchanged.",
+      "authenticated_apple_manifest_sha256": "f0960b35374e12827a8966f7022dc3f632e44c87419ca1482288386fb8031566",
+      "authenticated_apple_revisions": 15
+    },
+    {
+      "source_sha": "c6c094e42d50d77825b09e3b1a9fb90a7b1ab14c",
+      "run_id": 40202090557,
+      "attempt": 1,
+      "android_job": 121195208315,
+      "protocol_job": 121195208548,
+      "failed_phase": "apple-null-reopen-again",
+      "reason": "The second fresh-process test assumed the shelf was visible, while the actual host correctly restored the PDF reading screen. The fixture now uses its unchanged open helper to return to the shelf before selecting the persisted book; production behavior is unchanged.",
+      "actual_apple_11_network_records_found": true,
+      "actual_mac_null_network_received_and_first_ui_refusal_passed": true,
+      "authenticated_null_manifest_sha256": "86bd72f1609f38b3e006af1eb62172104262e70416a0a8d3a6a83dd968e064b7",
+      "authenticated_null_revisions": 3
+    },
+    {
+      "source_sha": "ade3fbffe928534891d9f91cb1fc44a994342501",
+      "run_id": 40204041412,
+      "attempt": 1,
+      "android_job": 121201060105,
+      "protocol_job": 121201059925,
+      "failed_phase": "kill-ui-host-poll",
+      "reason": "ADB exec-out returned zero for cat on the not-yet-published marker, and the host fixture incorrectly parsed its ENOENT text as JSON. Polling now retries only an absent marker, while an atomically published JSON object still requires strict parsing and exact identity checks. Production behavior is unchanged.",
+      "preceding_raw_checks_passed": 18,
+      "actual_mac_null_second_fresh_process_ui_refusal_passed": true,
+      "actual_source_versions_1_and_2_restore_passed": true
+    },
+    {
+      "source_sha": "9498f3ed469a37063f0106c106ddaa08b2cfdce0",
+      "run_id": 40205927667,
+      "attempt": 1,
+      "android_job": 121206723756,
+      "protocol_job": 121206723917,
+      "failed_phase": "reopen-ui-initialization",
+      "reason": "The real kill boundary completed, but the shared test precondition looked only for the shelf SDK label while the actual host restored the PDF reader. The isolated raw test now accepts either initialized UI and directly checks the real SDK owner, native parser and seven raw providers. Original default and protocol suites remain unchanged.",
+      "preceding_raw_checks_passed": 18,
+      "real_kill_boundary_completed": true
+    }
+  ],
+  "scope": "explicit API34 default x86_64 Android raw3 native host candidate",
+  "incoming_apple_status": "passed",
+  "bidirectional_interoperability_accepted": false,
+  "physical_device": false,
+  "complete_product": false,
+  "summary_job": 121216568574,
+  "all_artifacts": [
+    {
+      "bytes": 3328,
+      "expired": false,
+      "id": 12604863663,
+      "name": "reader-android-raw3-summary-40207467982-1",
+      "expires_at": "2027-01-23T15:33:00Z",
+      "digest": "sha256:03b8c54ea4b8e15a379d10bd508b09cc80b25cecf2fb90fff5e73e7773bf98f7"
+    },
+    {
+      "bytes": 133598571,
+      "expired": false,
+      "id": 12604537792,
+      "name": "reader-android-page-theme-40207467982-1",
+      "expires_at": "2027-01-23T15:33:00Z",
+      "digest": "sha256:9ea2858145313296d39792d867794db1be687eb70dec38f155dcd1dfe156bf06"
+    },
+    {
+      "bytes": 16618,
+      "expired": false,
+      "id": 12604412857,
+      "name": "reader-android-record-bundle-40207467982-1",
+      "expires_at": "2027-01-23T15:33:00Z",
+      "digest": "sha256:616552b26869f532870467a450a85813080f502c054765fcdbcc06c2979cb2d4"
+    },
+    {
+      "bytes": 113970957,
+      "expired": false,
+      "id": 12604412854,
+      "name": "reader-android-raw3-40207467982-1",
+      "expires_at": "2027-01-23T15:33:00Z",
+      "digest": "sha256:c3db2ad1a2e31bc53d01620f2ef90e02a976e3b4f90ac76ed2e179c7c9052805"
+    },
+    {
+      "bytes": 18682,
+      "expired": false,
+      "id": 12604233206,
+      "name": "reader-android-raw3-bundle-40207467982-1",
+      "expires_at": "2027-01-23T15:33:00Z",
+      "digest": "sha256:a38bffdb57ca35699e21b902def18a9d584a6055b7fbef41995e61b240c6168c"
+    },
+    {
+      "bytes": 53286742,
+      "expired": false,
+      "id": 12604077135,
+      "name": "reader-android-raw3-protocol-40207467982-1",
+      "expires_at": "2027-01-23T15:33:00Z",
+      "digest": "sha256:3a4785c3f9060ecb6053db898fbeebc9c60f52688df9374830db0f1a5bf948ee"
+    }
+  ],
+  "binary_checks": [
+    {
+      "variant": "debug",
+      "apk_sha256": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3",
+      "sdk_dso_sha256": "a345ab4c1def2e864a76b9e879da8a372e8821ad09b7991c8fe4e04626b2e8ac",
+      "libraries": {
+        "exreader_host": {
+          "sha256": "77c5d9f8038edfbca931dc8f9893f1d071f626dd90d340e2bc2e45dad572afeb",
+          "build_id": "00a30394942e35467fdc060007ba1695998db778"
+        },
+        "exreader_product": {
+          "sha256": "f368dcd6e84d63bb7686bc8c2bf6bb09c365aed436b823534389035f54e2144e",
+          "build_id": "bc85070c436cc19d0f2aeec2ac5003783c8dd03a"
+        }
+      }
+    },
+    {
+      "variant": "release",
+      "apk_sha256": "348c8c5bc81ab323ffb12577cd89bdb90bc2cf290bc0dc6511ef97eb755a1416",
+      "sdk_dso_sha256": "a345ab4c1def2e864a76b9e879da8a372e8821ad09b7991c8fe4e04626b2e8ac",
+      "libraries": {
+        "exreader_host": {
+          "sha256": "7afcacd885f1ab8e23f053dfc1f5b3cf21c6ca02db529820c13e6820774de60f",
+          "build_id": "f4115cee5191b976db5032a6891fa010b2d29d5b"
+        },
+        "exreader_product": {
+          "sha256": "aa2b037bae8cbe2097c5800e952f82dc7cd7d0cf5c4c009b7098c7203737d4cd",
+          "build_id": "22be45cabf7d6051ed1ad903c240613fee7b57f5"
+        }
+      }
+    }
+  ],
+  "authentic_apple_null_status": "passed"
+}

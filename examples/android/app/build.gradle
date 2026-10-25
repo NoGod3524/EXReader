@@ -12,6 +12,7 @@ def exrNavigationPrefix = project.findProperty('exrNavigationPrefix') ?: "${root
 def exrReading = project.findProperty('exrReading') == 'true'
 def exrPreferences = project.findProperty('exrPreferences') == 'true'
 def exrPageTheme = project.findProperty('exrPageTheme') == 'true'
+def exrSelectorBytes = project.findProperty('exrSelectorBytes') == 'true'
 def exrRecordInterop = project.findProperty('exrRecordInterop') == 'true'
 def exrPreferencesPrefix = project.findProperty('exrPreferencesPrefix') ?: "${rootProject.projectDir}/../../stage/android-preferences"
 def exrDav = project.findProperty('exrDav') ?: "${rootProject.projectDir}/../../stage/android-dav"
@@ -35,6 +36,7 @@ android {
         buildConfigField 'boolean', 'READER_READING', exrReading.toString()
         buildConfigField 'boolean', 'READER_PREFERENCES', exrPreferences.toString()
         buildConfigField 'boolean', 'READER_PAGE_THEME', exrPageTheme.toString()
+        buildConfigField 'boolean', 'READER_SELECTOR_BYTES_CANDIDATE', exrSelectorBytes.toString()
         testInstrumentationRunner (project.findProperty('exrTestRunner') ?: 'org.exreader.host.CatalogStoreTest')
         ndk {
             abiFilters 'x86_64'
@@ -48,6 +50,7 @@ android {
                 arguments "-DEXR_HOST_READING=${exrReading ? 'ON' : 'OFF'}"
                 arguments "-DEXR_HOST_PREFERENCES=${exrPreferences ? 'ON' : 'OFF'}", "-DEXR_PREFERENCES_PREFIX=${exrPreferencesPrefix}"
                 arguments "-DEXR_HOST_PAGE_THEME=${exrPageTheme ? 'ON' : 'OFF'}"
+                arguments "-DEXR_READER_SELECTOR_BYTES_CANDIDATE=${exrSelectorBytes ? 'ON' : 'OFF'}"
                 arguments "-DEXR_ANDROID_RECORD_INTEROP_REVIEW=${exrRecordInterop ? 'ON' : 'OFF'}"
             }
         }
@@ -132,6 +135,10 @@ android {
     if(exrRecordInterop) {
         sourceSets.debug.java.srcDir '../../../tests/reader_android_record_interop/debug/java'
         sourceSets.androidTest.java.srcDir '../../../tests/reader_android_record_interop/java'
+        if(exrSelectorBytes) {
+            sourceSets.debug.java.srcDir '../../../tests/reader_android_raw3/debug/java'
+            sourceSets.androidTest.java.srcDir '../../../build/android-raw3/candidate/java'
+        }
     }
 }
 dependencies {

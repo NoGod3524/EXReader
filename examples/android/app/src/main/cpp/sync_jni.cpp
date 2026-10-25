@@ -10,6 +10,13 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define reader_revisions_open reader_revisions_open_raw_v3
+#define reader_revision_entities_page reader_revision_entities_page_raw_v3
+#define reader_revision_book_title reader_revision_book_title_raw_v3
+#define reader_revision_project reader_revision_project_raw_v3
+#define reader_session_create reader_session_create_raw_v3
+#endif
 
 /* Shared strict Unicode conversion from the existing product JNI. */
 namespace product_jni {
