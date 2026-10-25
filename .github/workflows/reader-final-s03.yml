@@ -48,9 +48,6 @@ jobs:
     needs: [guard]
     runs-on: macos-15
     timeout-minutes: 150
-    env:
-      S03_WORK: ${{ runner.temp }}/s03
-      S03_EVIDENCE: ${{ github.workspace }}/build/s03/evidence
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,8 +56,12 @@ jobs:
         run: |
           set -euo pipefail
           test "$(uname -m)" = arm64
+          S03_WORK="$RUNNER_TEMP/s03"
+          S03_EVIDENCE="$GITHUB_WORKSPACE/build/s03/evidence"
           test ! -e "$S03_EVIDENCE"
           mkdir -p "$S03_EVIDENCE" "$S03_WORK"
+          echo "S03_WORK=$S03_WORK" >> "$GITHUB_ENV"
+          echo "S03_EVIDENCE=$S03_EVIDENCE" >> "$GITHUB_ENV"
           sw_vers
           uname -a
           xcodebuild -version
