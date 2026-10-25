@@ -756,7 +756,6 @@ jobs:
 
   android:
     needs: pin
-    if: ${{ github.event.inputs.verify_run == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -773,12 +772,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Authenticate exact integrated native host production trees
+      - name: Authenticate common source and Android CBZ syntax
         run: |
           python3 tests/reader_hosts_integration/guard.py
           mkdir -p build/session-android/logs
           git rev-parse HEAD > build/session-android/logs/source.txt
-          python3 -m py_compile tests/reader_android_preferences/audit.py tests/reader_android_preferences/run_ui.py tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py tests/reader_host_session_android/run_ui.py tests/reader_host_session_android/audit.py tests/reader_android_search/fixtures.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/fixtures.py tests/reader_android_navigation/fixture_module.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_android_reading/fixtures.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py
+          python3 -m py_compile tests/reader_android_cbz_reading/fixtures.py tests/reader_android_cbz_reading/audit.py tests/reader_android_cbz_reading/run_ui.py tests/reader_android_preferences/audit.py tests/reader_android_preferences/run_ui.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_session_android/audit.py tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_host_session_android/audit.py tests/reader_host_session_android/run_ui.py
       - name: Install Android compiler and API34 emulator
         run: |
           sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
@@ -800,6 +799,7 @@ jobs:
           python tests/reader_android_search/fixtures.py build/android-search/fixtures
           python tests/reader_android_navigation/fixtures.py build/android-navigation/fixtures
           python tests/reader_android_reading/fixtures.py build/android-reading/fixtures
+          python tests/reader_android_cbz_reading/fixtures.py build/android-cbz-reading/fixtures
           mkdir -p tests/reader_host_session_android/debug/res/raw
           cp build/webdav-android/fixture/public/ca.crt tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
       - name: Build and install the frozen public library SDK targeting API26
@@ -865,6 +865,9 @@ jobs:
           mkdir -p build/android-preferences/test-apks
           gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.PreferencesUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/preferences-ui-runner-build.log
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-preferences/test-apks/preferences-ui.apk
+          mkdir -p build/android-cbz-reading/test-apks
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.CbzReadingUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/cbz-reading-ui-runner-build.log
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-cbz-reading/test-apks/cbz-reading-ui.apk
           cp build/host-session-android/test-apks/original-owner.apk examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           python tests/reader_session_android/audit.py --output build/session-android/native
           python tests/reader_host_session_android/audit.py --output build/host-session-android/native
@@ -872,6 +875,7 @@ jobs:
           python tests/reader_android_navigation/audit.py --output build/android-navigation/native
           python tests/reader_android_reading/audit.py --output build/android-reading/native
           python tests/reader_android_preferences/audit.py --output build/android-preferences/native
+          python tests/reader_android_cbz_reading/audit.py --output build/android-cbz-reading/native
       - name: Enable hosted runner emulator acceleration
         run: sudo chmod 666 /dev/kvm
       - name: Actual SDK owner import and public original export in Android private storage
@@ -900,12 +904,15 @@ jobs:
             python tests/reader_android_reading/run_ui.py --fixtures build/android-reading/fixtures --output build/android-reading/ui
             adb install -r -t build/android-preferences/test-apks/preferences-ui.apk
             python tests/reader_android_preferences/run_ui.py --fixtures build/android-reading/fixtures --output build/android-preferences/ui
+            adb install -r -t build/android-cbz-reading/test-apks/cbz-reading-ui.apk
+            python tests/reader_android_cbz_reading/run_ui.py --fixtures build/android-cbz-reading/fixtures --output build/android-cbz-reading/ui
       - name: Preserve SDK consumer identity native logs and every export result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reader-android-preferences-${{ github.run_id }}-${{ github.run_attempt }}
+          name: reader-android-cbz-reading-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
+            build/android-cbz-reading/
             build/android-preferences/
             build/android-reading/
             build/android-navigation/
