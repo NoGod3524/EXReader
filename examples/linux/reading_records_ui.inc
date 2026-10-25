@@ -223,7 +223,10 @@ static void reading_records_open(GtkWidget *button,gpointer unused) {
   records.token++;records.selected=SIZE_MAX;records.page.complete=1;records.pending=records.pending_error=FALSE;records.code=records.match=0;
   g_signal_connect(records.dialog,"destroy",G_CALLBACK(records_destroyed),NULL);g_signal_connect(records.dialog,"delete-event",G_CALLBACK(records_delete),NULL);
   g_signal_connect(records.dialog,"response",G_CALLBACK(records_response),NULL);g_signal_connect(records.dialog,"window-state-event",G_CALLBACK(records_background),NULL);
-  gtk_widget_show_all(records.dialog);records_queue(READER_RECORDS_LIST,0,0,NULL,NULL,0);gtk_widget_grab_focus(records.list);state();
+  gtk_widget_show_all(records.dialog);records_queue(READER_RECORDS_LIST,0,0,NULL,NULL,0);state();
+  /* The initial list is insensitive while its owner request is in flight.
+     All entry paths, including the keyboard shortcut, need modal focus now. */
+  gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(records.dialog),GTK_RESPONSE_CLOSE));
 }
 static void records_choose_history(reader_result *result) {
   if(!records.dialog || !result->records_version_count) return;

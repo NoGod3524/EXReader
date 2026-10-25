@@ -120,15 +120,16 @@ static void winrecords_controls(void) {
   int safe=progress?records.result.progress.kind==READER_SELECTION_SAFE:item&&item->state==READER_AV_STATE_SAFE;
   int deleted=progress?records.result.progress.graph.deleted:item&&item->deleted;
   int live=safe&&!deleted,ready=!busy&&!records.result.pending;
+  int located=progress?records.result.progress_has_location:item&&item->has_location;
   for(int i=0;i<14;i++) EnableWindow(records.controls[i],!busy);
   EnableWindow(records.controls[0],ready&&!records.history&&(records.result.progress.kind==READER_SELECTION_MISSING||
     (records.result.progress.kind==READER_SELECTION_SAFE&&!records.result.progress.graph.deleted)));
   EnableWindow(records.controls[1],ready&&!records.history);
   EnableWindow(records.controls[2],ready&&!records.history&&g.selection.active&&g.selection.start!=g.selection.end);
-  EnableWindow(records.controls[3],ready&&!records.history&&live&&!progress);
+  EnableWindow(records.controls[3],ready&&!records.history&&live&&located&&!progress);
   EnableWindow(records.controls[4],ready&&!records.history&&live);
   EnableWindow(records.controls[5],ready&&(records.history?records.result.version_count>0:safe&&deleted));
-  EnableWindow(records.controls[6],!busy&&!records.history&&live);
+  EnableWindow(records.controls[6],!busy&&!records.history&&live&&located);
   EnableWindow(records.controls[7],!busy&&!records.history&&records.result.has_previous);
   EnableWindow(records.controls[8],!busy&&!records.history&&records.result.has_next);
   EnableWindow(records.controls[10],!busy&&records.result.pending&&!records.result.pending_corrupt);
@@ -141,7 +142,7 @@ static void winrecords_close(void) {
   if(g.job&&g.job->kind==JOB_RECORDS&&!job_commit_barrier(g.job->kind)) InterlockedExchange(&g.job->cancel,1);
   records.generation++;HWND window=records.dialog;records.dialog=NULL;if(window) DestroyWindow(window);
   winrecords_response_free(&records.result);records.rows=records.body=records.message=NULL;records.history=0;
-  if(!g.closing&&g.page) SetFocus(g.page);
+  host_restore_content_focus();
 }
 static void winrecords_submit(int action,int kind,int operation,const char *after,int direction) {
   if(!records.dialog||records.running||g.job||g.pending||g.closing||records.book_id!=g.current.id) return;
