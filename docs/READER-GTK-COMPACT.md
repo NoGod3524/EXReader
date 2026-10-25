@@ -1,8 +1,37 @@
 # Optional compact native GTK candidate
 
-Status: **source candidate; no executed UI acceptance yet**.
+Status: **compact ON native functions and complete original OFF scopes accepted
+at one exact source/run/attempt**.
 Start: `25bc0c67971f81491f50e0a3caaaf7e509bb7e35`.
 Reviewed production pin: `fedce16a4ea6d9e1f0364d149f4f90b7a9caae5c`.
+
+Tested source: `57203a52aee439be5194ee0a4b13563a975e8daf`.
+Run [40206458217](https://github.com/NoGod3524/EXReader/actions/runs/40206458217),
+attempt 1, completed success. The preflight, actual native producer, unchanged
+original OFF strict collector and distinct ON/OFF strict collector all passed;
+the optional old-failure diagnostic was explicitly skipped. The producer has
+all 35 actual steps successful, retaining all 31 original authored OFF steps.
+Both collectors authenticated actual ZIP bytes, sizes, digests, expiry,
+source/run/attempt, reports, programs and native screenshots.
+
+The ON UI passed all **45 checks** and activated all **22 native More leaf
+entries**. It completed every page forward and backward for TXT **13 pages**,
+EPUB **2 chapters/pages**, PDF **3 pages** and CBZ **3 pages**, with unchanged
+first/last positions when the existing owner refused boundary turns. It also
+verified PDF menu zoom, initial page focus, stable records Close focus and
+keyboard access to a bookmark created through the original native editor,
+both window geometries, every dialog, real duplicate paste, and close/reopen.
+The independent collector executed all **24 refusal controls**.
+
+| Artifact | ID | ZIP bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| Raw ON + complete OFF evidence | 12604604561 | 112659381 | `8d6c52593dd2017a6e13ffc2cf75fd3fd4546cdf3a5179b0da5afd55ac1fb685` |
+| Original OFF strict report | 12605108334 | 15706 | `9e5b43cb209b151eb1042722d31fc7f02c431194ef3779a1482179410b3559d5` |
+| Distinct compact ON/OFF summary | 12604909051 | 19348 | `4533df7c38b597b70645f4c764f0c602468593c567b86b6e07968e3ce4244044` |
+
+All three expire `2027-01-23T15:20:23Z`. Exact job IDs, prior failed/cancelled
+runs and the scope flags are recorded in
+[reader-gtk-compact.json](validation/reader-gtk-compact.json).
 
 Preflight runs `40200750312` and `40201452800` passed the exact OFF byte
 projection and all 24 independent refusals. Initial full `40200828327` was
@@ -74,8 +103,7 @@ pages, focus, dialog dismissal, notes, import cancellation/paste, library
 search, two window sizes and close/reopen/continue. Native PNG screenshots,
 AT-SPI trees, failures' visibility dictionaries, programs, maps and configuration
 are retained. A final collector authenticates the real ZIPs and separate scopes
-at the same source/run/attempt. Its 24 independent refusal controls and UI
-cases are unexecuted until Actions runs them.
+at the same source/run/attempt. Run `40206458217` executed the full chain.
 
 No local build, syntax test, fixture generation, UI execution or PNG/ZIP
 processing is allowed. These functional checks grant no ON frame correctness,
