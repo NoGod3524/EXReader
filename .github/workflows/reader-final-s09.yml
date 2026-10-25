@@ -116,7 +116,7 @@ jobs:
       - name: Compile and run the installed identity probe
         run: |
           set -o pipefail
-          cmake -S tests/reader_distribution_inventory/probe -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" 2>&1 | tee "build/$PROFILE/probe-configure.log"
+          cmake -S tests/reader_final_s09/probe -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" 2>&1 | tee "build/$PROFILE/probe-configure.log"
           cmake --build build/probe 2>&1 | tee "build/$PROFILE/probe-build.log"
           "build/probe/probe$EXE" > "build/$PROFILE/probe.json"
           cat "build/$PROFILE/probe.json"
@@ -199,7 +199,7 @@ jobs:
           mkdir -p build/producer/linux-core
           python3 tests/reader_final_s09/authenticate.py \
             --artifact-id 12560228214 \
-            --artifact-name reader-distribution-inventory-linux-core-40095313750-1 \
+            --artifact-name reader-distribution-inventory-linux-reading-core-40095313750-1 \
             --job-name 'inventory (ubuntu-22.04, reading-core)' \
             --run-id "$PRODUCER_RUN" --attempt "$PRODUCER_ATTEMPT" --source-sha "$PRODUCER_SHA" \
             --extract build/producer/linux-core/artifact --output build/producer/linux-core \

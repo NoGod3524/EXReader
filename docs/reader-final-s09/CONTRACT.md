@@ -88,6 +88,26 @@ SBOM 若把它们合并成一个文件元素，`spdx_file_missing`/`cdx_file_mis
 `closure.json` 的 `sources`/`verifier` 两个对象分别记录，不合并。消费原工件时**不**把当前分支 HEAD
 当作 producer。
 
+
+## 3a. 本包自带探针（并说明为什么不复用共享探针）
+
+共享探针 `tests/reader_distribution_inventory/probe/CMakeLists.txt:7` 写死
+`find_package(EXReader 3.40.0 EXACT ...)`。在固定起点 `0889f7d1` 上 `reading-library` 预设实际安装的是
+**3.41.0**，于是该探针在配置阶段直接失败（真实失败：run 40214778709 attempt 1，两个平台同因）：
+
+```
+CMake Error at CMakeLists.txt:7 (find_package):
+  Could not find a configuration file for package "EXReader" that exactly
+  matches requested version "3.40.0".
+    .../build/reading-library/stage/lib/cmake/EXReader/EXReaderConfig.cmake, version: 3.41.0
+```
+
+本包因此新增 `tests/reader_final_s09/probe/`（同名目标 `probe`、同一份诊断 JSON 契约、同样的
+`EXReader::exreader` + `EXReader::exr_pdf` + 可选 `EXReader::exr_library` 链接面），**只去掉版本 pin**。
+共享探针是本包不得修改的既有文件，建议由 root 决定：把它改成无版本 `find_package` 并与安装头
+`EXR_VERSION` 比对，而不是钉死冻结的 3.40。`tests/reading_core` 消费者在同一 run 中已按 3.41.0 成功链接
+（`reading-document`），因此该缺口只影响探针，不影响消费者。
+
 ## 4. 不授予（`not_granted` 常驻字段）
 
 - 运行结论：闭包只读字节与链接行，从不执行候选二进制；
