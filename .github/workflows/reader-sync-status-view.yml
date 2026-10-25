@@ -2,7 +2,7 @@
 name: Reader sync status view
 on:
   push:
-    branches: [codex/reader-sync-status-view]
+    branches: [codex/reader-sync-status-view, codex/reader-sync-status-review]
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,6 +45,10 @@ jobs:
             esac
           done <<< "$(git diff --name-only "$FROZEN_START" HEAD)"
           test "$bad" = 0
+      - name: Reject foreign producers and ambiguous ZIP payloads in Actions
+        run: |
+          python3 -m py_compile tests/reader_sync_status_view/aggregate.py
+          python3 tests/reader_sync_status_view/aggregate.py --protocol-selftest
       - name: Install Linux native TLS XML and SHA dependencies
         if: runner.os == 'Linux'
         run: |
