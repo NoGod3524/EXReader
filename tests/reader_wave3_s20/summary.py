@@ -57,7 +57,7 @@ def main(argv=None):
     parser.add_argument('--attempt', default=os.environ.get('GITHUB_RUN_ATTEMPT', '1'))
     args = parser.parse_args(argv)
     token = os.environ.get('GH_TOKEN') or os.environ.get('GITHUB_TOKEN')
-    server = os.environ.get('GITHUB_SERVER_URL', 'https://github.com')
+    server = os.environ.get('GITHUB_API_URL', 'https://api.github.com')
     repository = os.environ.get('GITHUB_REPOSITORY', '')
     problems, results = [], {}
     if not token:

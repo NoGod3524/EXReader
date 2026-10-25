@@ -424,7 +424,7 @@ jobs:
           set -euo pipefail
           out="$PWD/build/s20-android"
           mkdir -p "$out"
-          python3 tools/reader_wave3_package/assemble.py --target android --payload build/android-host --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0
+          python3 tools/reader_wave3_package/assemble.py --target android --payload build/android-host --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --exclude product
           archive=$(ls "$out"/delivery/EXReader-android-*.zip)
           fresh="$RUNNER_TEMP/s20-fresh-android"
           python3 tools/reader_wave3_package/unpack.py --target android --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
