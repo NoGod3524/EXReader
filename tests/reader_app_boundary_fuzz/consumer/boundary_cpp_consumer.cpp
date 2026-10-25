@@ -119,6 +119,18 @@ void remove_file(const std::string &path) {
 /* ------------------------------------------------------------------ */
 
 bool preferences_known(int value) { return value >= 0 && value <= 7; }
+/* Mutated input may be refused for content, never for an environment or
+   resource reason: MEMORY, DATABASE, SDK, OWNER, NOT_FOUND and IO/ARGUMENT/
+   CANCELLED on a real, readable, non-null case are defects, not expected rejects. */
+bool preferences_input_ok(int value) {
+  return value == 0 || value == 3 || value == 4 || value == 5 || value == 7;
+}
+bool revision_input_ok(int value) {
+  return value >= 0 && value <= 12 && value != 2 && value != 3 && value != 11 && value != 12;
+}
+bool reading_input_ok(int value) {
+  return value >= 0 && value <= 7 && value != 2 && value != 3;
+}
 
 const char *preferences_name(reader_preferences_status status) {
   const char *name = reader_preferences_status_name(status);
@@ -202,18 +214,6 @@ std::string preferences_observe(const std::string &bytes, const std::string &pat
 
 bool revision_known(int value) { return value >= 0 && value <= 12; }
 bool reading_known(int value) { return value >= 0 && value <= 7; }
-/* Mutated input may be refused for content, never for an environment or
-   resource reason: MEMORY, DATABASE, SDK, OWNER, NOT_FOUND and IO/ARGUMENT/
-   CANCELLED on a real, readable, non-null case are defects, not expected rejects. */
-bool preferences_input_ok(int value) {
-  return value == 0 || value == 3 || value == 4 || value == 5 || value == 7;
-}
-bool revision_input_ok(int value) {
-  return revision_known(value) && value != 2 && value != 3 && value != 11 && value != 12;
-}
-bool reading_input_ok(int value) {
-  return reading_known(value) && value != 2 && value != 3;
-}
 
 const char *revision_name(reader_revision_status status) {
   switch (status) {
@@ -1286,9 +1286,9 @@ int command_selftest(const std::vector<std::string> &args) {
     return value == 0 ? 0 : 0;
   }
   if (kind == "leak") {
-    static void *volatile kept;
-    kept = std::malloc(4096);
-    kept = nullptr;
+    void *volatile leaked = std::malloc(4096);
+    std::memset(leaked, 1, 8);
+    leaked = nullptr;
     return 0;
   }
   if (kind == "abort") std::abort();
