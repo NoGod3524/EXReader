@@ -1,6 +1,6 @@
 # Windows SDK3.41 complete common host caller
 
-Current status: **candidate source, complete acceptance pending**. Reviewed production
+Current status: **complete Windows caller independently accepted on its tested source**. Reviewed production
 boundary: `436c5bd57b2b6acc0076a0942e7c7f93f38fcb96`.
 
 Preflight `40191472981` passed on source `84b53274`; complete attempt
@@ -85,10 +85,57 @@ five distinct hashes. The installed SDK package is explicitly 3.41/ABI1; the
 compatibility core remains 3.40 where the SDK declares it.
 
 The new identity protocol has 13 synthetic rejection controls, in addition
-to all original protocols. They are pending until Actions executes them.
+to all original protocols. All 13 passed in the accepted run, alongside the
+original F3 17, atomic9 and preserved original suite protocols.
 All scope flags for complete product, performance, physical device, upgrades
 and bidirectional interoperability stay false.
 
 After final Apple/global integration the root may advance the caller's BASE
 to the reviewed final production boundary, retaining identical Windows bytes,
 then rerun the complete workflow at that exact final source.
+
+## Sealed independent run
+
+Tested source: `2e0d7ba6f5dd45e00cf585d148c10fd9f7ab17ee`.
+[Run 40193777488](https://github.com/NoGod3524/EXReader/actions/runs/40193777488),
+attempt **1**, complete success. All execution and raw ZIP authentication took
+place in Actions; locally only source edits, Git and API metadata/log reads ran.
+
+| Job | ID | Result |
+| --- | ---: | --- |
+| preflight | 121170139132 | success |
+| complete native producer (30 actual steps) | 121170179530 | success |
+| original strict chain plus independent full/atomic reports | 121174372106 | success |
+
+The strict log confirms `full_f3_accepted=true`, `atomic13_accepted=true`,
+`problems=[]`. It reauthenticated raw bytes before all original strict judges.
+The shared production hash is
+`0ff40bc8ab5b57f3035c5f5116c384e90ad6a0c7719fa90e162eaa490ec9d79a`;
+the actual independent 3.40 baseline is
+`f9c67d885ae266b72e8f2291f395ec1b9be4564b6916a0dc96908cd6750222dd`.
+The SDK3.41 identity, all 19 actual files, five enabled host options, distinct
+atomic/control executables, maps, source-bound catalog adaptation and every
+atomic named check are authenticated inside the two small strict reports.
+
+| Artifact | ID | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| original complete producer ZIP | 12598984339 | 165080443 | `eb34edab690293f2a55c158276935fd153808cadf8e995074b524b4360b81d0a` |
+| strict summary ZIP | 12600005221 | 8526 | `52d3821e864c6c3fb06a4f48608f8e8484b189e3e4160b14f5254f59a297e60e` |
+
+Both artifacts expire at `2027-01-23T12:35:26Z`. Full metadata and the three
+earlier failed complete runs are recorded in
+[`validation/reader-windows-341-common.json`](validation/reader-windows-341-common.json).
+
+This grants only this complete Windows foundation caller at `2e0d7ba6`.
+The final common-source run at a later mainline SHA must independently pass;
+the ordinary source merge and these evidence-only documents grant nothing to
+another SHA. All complete-product, performance, physical-device, upgrade and
+bidirectional flags remain false.
+
+For the root's final pin: update `BASE` and the changed-path allowlist in
+`tests/reader_windows_341/guard.py`. The allowlist currently admits only this
+new test directory, new workflow and two evidence document paths. Admit the
+explicit cross-platform caller-pin files needed for the one reviewed final
+pin commit, then run all guards cheaply before dispatching whole workflows.
+Keep production unchanged from that reviewed BASE, the SDK exactly `eddd…`,
+the original business judges unchanged and the actual MAX2 header enforced.
