@@ -38,6 +38,10 @@ REQUIRED = {
     'cancel_sweep_commit_boundary_中文 书名.epub',
     'credentials_stay_at_configured_origin_and_no_foreign_request',
     'independent_c_and_cpp_consumers_from_installed_package',
+    'invalid_webdav_argument_allows_null_error_without_network',
+    'real_cleanup_refusal_keeps_receipt_and_owned_retry_without_deleting_sdk_book',
+    'all_owned_download_allocations_fail_before_network_without_published_orphans',
+    'explicit_and_derived_title_oom_never_silently_import_with_other_metadata',
 }
 
 
@@ -131,13 +135,25 @@ def main():
         name = 'reader-webdav-import-%s%s' % (platform_name, suffix)
         item = {'os': platform_name, 'name': name}
         record['artifacts'].append(item)
-        artifact = next((a for a in artifacts if a['name'] == name), None)
+        matches = [a for a in artifacts if a['name'] == name]
+        artifact = matches[0] if len(matches) == 1 else None
         if not artifact:
             record['failures'].append(name + ': missing')
             continue
         item.update(id=artifact.get('id'), size_in_bytes=artifact.get('size_in_bytes'), digest=artifact.get('digest'),
                     expires_at=artifact.get('expires_at'))
         try:
+            run = json.loads(call('/repos/%s/actions/runs/%s' % (repo, run_id), token))
+            if run['head_sha'] != source or str(run['run_attempt']) != attempt or run['path'] != '.github/workflows/reader-webdav-import.yml':
+                raise ValueError('foreign run/source/workflow')
+            jobs = json.loads(call('/repos/%s/actions/runs/%s/attempts/%s/jobs?per_page=100' % (repo, run_id, attempt), token))['jobs']
+            runner = {'Linux': 'ubuntu-22.04', 'Windows': 'windows-2022', 'macOS': 'macos-15'}[platform_name]
+            producers = [j for j in jobs if j['name'] == 'WebDAV import (%s)' % runner]
+            if len(producers) != 1 or producers[0]['head_sha'] != source or producers[0]['status'] != 'completed' or producers[0]['conclusion'] != 'success':
+                raise ValueError('real producer did not complete successfully')
+            item['job_id'] = producers[0]['id']
+            if artifact['workflow_run']['head_sha'] != source or str(artifact['workflow_run']['id']) != run_id:
+                raise ValueError('artifact belongs to another source/run')
             if (type(artifact['id']) is not int or type(artifact['size_in_bytes']) is not int or artifact['size_in_bytes'] <= 0
                     or artifact.get('expired') is not False or not re.fullmatch(r'sha256:[0-9a-f]{64}', artifact.get('digest') or '')):
                 raise ValueError('strict artifact metadata missing')
@@ -154,6 +170,10 @@ def main():
                 raise ValueError('result or guards report absent')
             report = json.loads(bundle.read(result[0]).decode('utf-8'))
             require_report(report, source, run_id, attempt)
+            for stem, key in (('cloud-probe', 'probe_sha256'), ('cloud-review-probe', 'review_probe_sha256')):
+                programs = [n for n in bundle.namelist() if n.endswith('wi-consumer/' + stem + ('.exe' if platform_name == 'Windows' else ''))]
+                if len(programs) != 1 or hashlib.sha256(bundle.read(programs[0])).hexdigest() != report[key]:
+                    raise ValueError('consumer bytes differ from report')
             if json.loads(bundle.read(guards[0]).decode('utf-8')).get('ok') is not True:
                 raise ValueError('guards not ok')
             if not any(n.endswith('wi-prefix/include/reader_cloud_import.h') for n in bundle.namelist()):

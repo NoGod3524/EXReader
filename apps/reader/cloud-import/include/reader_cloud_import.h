@@ -89,12 +89,15 @@ typedef struct reader_cloud_staged reader_cloud_staged;
 
 void reader_cloud_request_init(reader_cloud_request *request);
 
-/* Phase 1. client is borrowed and must not be used concurrently by the caller;
+/* All error output pointers are optional (NULL discards diagnostics).
+   Phase 1. client is borrowed and must not be used concurrently by the caller;
    this call performs one exr_webdav_download_file. On OK *staged is a new
    value owning a published, complete, SHA-256-recorded regular file; free it
    with reader_cloud_import or reader_cloud_staged_discard. On any other
-   status *staged is NULL, the temporary and any partial staging file are
-   removed, and the client remains usable for a retry. Redirects, TLS, 401 and
+   status *staged is NULL after cleanup. If removal of a published copy is
+   refused by the OS, *staged retains ownership for a later discard; it is not
+   an importable successful download. The client remains usable for a retry.
+   Redirects, TLS, 401 and
    same-origin credential rules are exr_webdav's; a blocking native HTTPS call
    is bounded by the client's timeout, not interrupted instantly. Once the
    file is published the call returns OK even if cancellation arrives later;
@@ -113,8 +116,10 @@ uint64_t reader_cloud_staged_bytes(const reader_cloud_staged *staged);
 exr_format reader_cloud_staged_format(const reader_cloud_staged *staged);
 const char *reader_cloud_staged_sha256(const reader_cloud_staged *staged);
 
-/* Removes the staging file and frees the value; *staged becomes NULL. Safe for
-   NULL. Use it after a cancellation between the phases. Never touches the SDK. */
+/* Removes the staging file and frees the value; *staged becomes NULL only
+   after successful removal (a missing file also counts). If removal fails,
+   ownership remains with the caller for retry. Safe for NULL. Use it after a
+   cancellation between the phases. Never touches the SDK. */
 void reader_cloud_staged_discard(reader_cloud_staged **staged);
 
 typedef struct {
@@ -133,8 +138,8 @@ typedef struct {
   int committed;   /* 1 only after exr_sideload_import_file succeeded */
   int created;     /* 1 for a new SDK row; 0 for an exact duplicate */
   int64_t book_id; /* durable when committed */
-  /* 1 when the staging copy was removed (always, once the call got as far as
-     consuming the staged value). */
+  /* 1 when the staging copy was removed or already absent. If zero, *staged
+     retains ownership for cleanup retry, including after a successful commit. */
   int staging_removed;
 } reader_cloud_import_result;
 
@@ -142,7 +147,10 @@ void reader_cloud_import_options_init(reader_cloud_import_options *options);
 
 /* Phase 2, on the SDK owner. Consumes *staged: whatever the outcome (other
    than READER_CLOUD_ARGUMENT, which leaves it untouched) the staging file is
-   removed, the value freed and *staged set to NULL. Only the staging copy is
+   removed, the value freed and *staged set to NULL. If OS removal fails,
+   staging_removed=0 and *staged remains owned by the caller for discard retry;
+   this cannot reverse a successful SDK commit or hide its receipt.
+   Only the staging copy is
    ever deleted; a committed or deduplicated SDK book is never removed on any
    failure path. Steps: cancellation check; re-read the staged file and verify
    length and SHA-256 (cancellable per 64 KiB; mismatch is READER_CLOUD_CORRUPT

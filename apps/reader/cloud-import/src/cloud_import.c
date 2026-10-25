@@ -105,15 +105,17 @@ static FILE *rc_open_read(const char *path) {
 }
 
 /* Removes only the named staging file; a missing file is not an error. */
-static void rc_remove(const char *path) {
+static int rc_remove(const char *path) {
+  int status;
 #ifdef _WIN32
   wchar_t *wide = rc_widen(path);
-  if (!wide) return;
-  _wremove(wide);
+  if (!wide) return 0;
+  status = _wremove(wide);
   free(wide);
 #else
-  unlink(path);
+  status = unlink(path);
 #endif
+  return status == 0 || errno == ENOENT;
 }
 
 static char rc_sep(const char *directory) {
@@ -347,7 +349,7 @@ static void rc_staged_free(reader_cloud_staged *s) {
 
 void reader_cloud_staged_discard(reader_cloud_staged **staged) {
   if (!staged || !*staged) return;
-  if ((*staged)->path) rc_remove((*staged)->path);
+  if ((*staged)->path && !rc_remove((*staged)->path)) return;
   rc_staged_free(*staged);
   *staged = NULL;
 }
@@ -466,44 +468,33 @@ reader_cloud_status reader_cloud_download(exr_webdav_client *client,
   control.progress = rc_net_progress;
   control.context = &state;
   seed = rc_name_seed(request);
+  /* Prepare every owned allocation before publication. Failure must never
+     require another allocation merely to discover the published path. */
+  staged = calloc(1, sizeof(*staged));
+  if (staged) {
+    staged->path = malloc(dir_len + sizeof(filename) + 1);
+    staged->display_name = rc_dup(request->display_name, name_len);
+  }
+  if (!staged || !staged->path || !staged->display_name) {
+    rc_staged_free(staged);
+    rc_fail(error, READER_CLOUD_MEMORY, "out of memory");
+    return READER_CLOUD_MEMORY;
+  }
+  if (request->staging_dir[dir_len - 1] == '/' || request->staging_dir[dir_len - 1] == '\\') dir_len--;
+  memcpy(staged->path, request->staging_dir, dir_len);
+  staged->path[dir_len] = rc_sep(request->staging_dir);
   for (attempt = 0; attempt < RC_NAME_TRIES; attempt++) {
     memset(&download, 0, sizeof(download));
     memset(&dav, 0, sizeof(dav));
     seed = rc_mix(seed + attempt);
     snprintf(filename, sizeof(filename), "cloud-%016llx.%s", (unsigned long long)seed, ext);
+    strcpy(staged->path + dir_len + 1, filename);
     status = exr_webdav_download_file(client, request->resource, request->staging_dir, filename,
         &control, &download, &dav);
     if (status != EXR_DAV_EXISTS) break;
   }
 
-  staged = calloc(1, sizeof(*staged));
-  if (!staged) {
-    /* A published file cannot be tracked without memory; do not leave it behind. */
-    status = status == EXR_DAV_OK ? EXR_DAV_MEMORY : status;
-  } else {
-    staged->path = malloc(dir_len + 1 + strlen(filename) + 1);
-    staged->display_name = rc_dup(request->display_name, name_len);
-    if (staged->path) {
-      memcpy(staged->path, request->staging_dir, dir_len);
-      if (staged->path[dir_len - 1] == '/' || staged->path[dir_len - 1] == '\\') dir_len--;
-      staged->path[dir_len] = rc_sep(request->staging_dir);
-      strcpy(staged->path + dir_len + 1, filename);
-    }
-    if (!staged->path || !staged->display_name) status = status == EXR_DAV_OK ? EXR_DAV_MEMORY : status;
-  }
-
   if (status != EXR_DAV_OK) {
-    /* Nothing was published on failure; on a memory failure after publish the
-       file is removed here so no unreferenced staging file remains. */
-    if (staged && staged->path && download.published) rc_remove(staged->path);
-    else if (!staged && download.published) {
-      char *path = malloc(dir_len + 1 + strlen(filename) + 1);
-      if (path) {
-        snprintf(path, dir_len + 1 + strlen(filename) + 1, "%s%c%s", request->staging_dir, rc_sep(NULL), filename);
-        rc_remove(path);
-        free(path);
-      }
-    }
     rc_staged_free(staged);
     if (state.limit_hit || status == EXR_DAV_LIMIT) {
       rc_fail(error, READER_CLOUD_LIMIT, "download exceeds the byte limit");
@@ -519,7 +510,7 @@ reader_cloud_status reader_cloud_download(exr_webdav_client *client,
     }
     if (status == EXR_DAV_ARGUMENT) {
       rc_remote_error(error, &dav);
-      error->code = READER_CLOUD_ARGUMENT;
+      if (error) error->code = READER_CLOUD_ARGUMENT;
       return READER_CLOUD_ARGUMENT;
     }
     rc_remote_error(error, &dav);
@@ -531,17 +522,20 @@ reader_cloud_status reader_cloud_download(exr_webdav_client *client,
   staged->bytes = download.bytes;
   if (request->expected_bytes && download.bytes != request->expected_bytes) {
     reader_cloud_staged_discard(&staged);
+    *out = staged;
     rc_fail(error, READER_CLOUD_LENGTH, "received length differs from the declared length");
     return READER_CLOUD_LENGTH;
   }
   if (download.bytes > limit) {
     reader_cloud_staged_discard(&staged);
+    *out = staged;
     rc_fail(error, READER_CLOUD_LIMIT, "download exceeds the byte limit");
     return READER_CLOUD_LIMIT;
   }
   hashed = rc_hash_file(staged->path, NULL, &verified, hex);
   if (hashed != RC_HASH_OK || verified != download.bytes) {
     reader_cloud_staged_discard(&staged);
+    *out = staged;
     if (hashed == RC_HASH_MEMORY) {
       rc_fail(error, READER_CLOUD_MEMORY, "out of memory");
       return READER_CLOUD_MEMORY;
@@ -576,10 +570,17 @@ static char *rc_title(const reader_cloud_import_options *options, const reader_c
     length = rc_len(source, READER_CLOUD_MAX_NAME_BYTES + 1);
     if (length > READER_CLOUD_MAX_NAME_BYTES || !rc_utf8_valid(source, 0)) {
       rc_fail(error, READER_CLOUD_ARGUMENT, "title is too long, not valid UTF-8 or contains control characters");
-      *failed = 1;
+      *failed = READER_CLOUD_ARGUMENT;
       return NULL;
     }
-    return rc_dup(source, length);
+    {
+      char *title = rc_dup(source, length);
+      if (!title) {
+        rc_fail(error, READER_CLOUD_MEMORY, "out of memory");
+        *failed = READER_CLOUD_MEMORY;
+      }
+      return title;
+    }
   }
   source = s->display_name;
   length = strlen(source);
@@ -590,6 +591,11 @@ static char *rc_title(const reader_cloud_import_options *options, const reader_c
   if (!length) return NULL;
   {
     char *derived = rc_dup(source, length);
+    if (!derived) {
+      rc_fail(error, READER_CLOUD_MEMORY, "out of memory");
+      *failed = READER_CLOUD_MEMORY;
+      return NULL;
+    }
     /* A remote name with control characters is display-only: fall back to
        the book's embedded metadata instead of storing it as a title. */
     if (derived && !rc_utf8_valid(derived, 0)) {
@@ -631,11 +637,13 @@ reader_cloud_status reader_cloud_import(exr_library *library, reader_cloud_stage
     result->struct_size = size;
   }
   title = rc_title(options, s, error, &title_failed);
-  if (title_failed) return READER_CLOUD_ARGUMENT;
+  if (title_failed == READER_CLOUD_ARGUMENT) return READER_CLOUD_ARGUMENT;
   /* From here the staged value is consumed. */
   limit = rc_effective_limit(s->format, options ? options->max_input_bytes : 0);
 
-  if (control->cancelled && control->cancelled(control->context)) {
+  if (title_failed == READER_CLOUD_MEMORY) {
+    code = READER_CLOUD_MEMORY;
+  } else if (control->cancelled && control->cancelled(control->context)) {
     code = READER_CLOUD_CANCELLED;
     rc_fail(error, code, "cancelled before the SDK import");
   } else if (s->bytes > limit) {
@@ -690,10 +698,11 @@ reader_cloud_status reader_cloud_import(exr_library *library, reader_cloud_stage
   }
 
   /* Only the staging copy is removed. The SDK row is untouched on every path. */
-  rc_remove(s->path);
-  result->staging_removed = 1;
+  result->staging_removed = rc_remove(s->path);
   free(title);
-  rc_staged_free(s);
-  *staged = NULL;
+  if (result->staging_removed) {
+    rc_staged_free(s);
+    *staged = NULL;
+  }
   return code;
 }

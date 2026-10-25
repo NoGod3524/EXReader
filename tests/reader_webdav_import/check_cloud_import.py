@@ -65,6 +65,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--probe', type=Path, required=True)
     parser.add_argument('--cxx', type=Path, required=True)
+    parser.add_argument('--review-probe', type=Path, required=True)
     parser.add_argument('--fixtures', type=Path, required=True)
     parser.add_argument('--module-prefix', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
@@ -256,7 +257,9 @@ def main():
         case = folder / ('%03d-%s' % (counter[0], re.sub(r'[^A-Za-z0-9_.-]', '_', name)))
         case.mkdir()
         (case / 'spec.txt').write_text(''.join('%s=%s\n' % (k, v) for k, v in spec.items()), encoding='utf-8', newline='\n')
-        result = subprocess.run([str(probe_exe), str(case / 'spec.txt')], capture_output=True, timeout=170)
+        executable = args.review_probe.resolve() if spec.get('review') else probe_exe
+        environment = dict(os.environ, READER_CLOUD_FAIL_ALLOC=str(spec.get('fail_alloc', 0)))
+        result = subprocess.run([str(executable), str(case / 'spec.txt')], capture_output=True, timeout=170, env=environment)
         (case / 'stdout.json').write_bytes(result.stdout)
         (case / 'stderr.log').write_bytes(result.stderr)
         if 'auth' in spec:
@@ -353,6 +356,40 @@ def main():
         assert set(stored) == {ra['book_id'], rb['book_id']}, stored
         assert stored[ra['book_id']]['title'] == 'same' and stored[ra['book_id']]['sha256'] == sha(sample_epub)
         record('duplicate_keeps_existing_book_title_and_survives_every_failure_cleanup')
+
+        # Root review: invalid WebDAV input must also be safe without diagnostics.
+        before = len(requests)
+        invalid = transfer('invalid_resource_null_error', '../outside.epub', display='safe.epub', listed=False, null_error=1)
+        assert invalid['download_status'] == 'argument' and invalid['staged'] == 0 and len(requests) == before, invalid
+        staging_empty(invalid, 'invalid resource with NULL diagnostics')
+        record('invalid_webdav_argument_allows_null_error_without_network')
+
+        blocked = transfer('cleanup_refused_after_commit', copy, block_cleanup=1)
+        assert blocked['import_status'] == 'ok' and blocked['committed'] == 1 and blocked['created'] == 1, blocked
+        assert blocked['staging_removed'] == 0 and blocked['consumed'] == 0 and blocked['staging_file_exists'] == 1, blocked
+        assert blocked['blocked_discard_retained'] == 1 and blocked['cleanup_retry_consumed'] == 1 and blocked['cleanup_retry_file_exists'] == 0, blocked
+        staging_empty(blocked, 'cleanup retry')
+        stored = readback(blocked['_case'], blocked['_library'])
+        assert len(stored) == 1 and stored[0]['sha256'] == sha(sample_epub), stored
+        record('real_cleanup_refusal_keeps_receipt_and_owned_retry_without_deleting_sdk_book')
+
+        for allocation in (1, 2, 3):
+            before = len(requests)
+            failed = transfer('prepublish_oom_' + str(allocation), copy, review=1, fail_alloc=allocation)
+            assert failed['download_status'] == 'memory' and failed['staged'] == 0 and len(requests) == before, failed
+            staging_empty(failed, 'prepublication allocation failure')
+        record('all_owned_download_allocations_fail_before_network_without_published_orphans')
+
+        for explicit in (False, True):
+            title = 'Exact explicit title' if explicit else ''
+            baseline = transfer('title_allocation_baseline_' + str(explicit), copy, review=1, title=title)
+            allocation = baseline['review_before_import'] + 1
+            failed = transfer('title_allocation_failure_' + str(explicit), copy, review=1, title=title, fail_alloc=allocation)
+            assert failed['download_status'] == 'ok' and failed['import_status'] == 'memory' and failed['committed'] == 0, failed
+            assert failed['import_message'] and failed['consumed'] == 1 and failed['staging_removed'] == 1, failed
+            assert not readback(failed['_case'], failed['_library']), failed
+            staging_empty(failed, 'title allocation failure')
+        record('explicit_and_derived_title_oom_never_silently_import_with_other_metadata')
 
         # ---- 3. corruption after download and invalid books ----
         for mode, status in (('flip', 'corrupt'), ('truncate', 'corrupt'), ('append', 'corrupt'), ('delete', 'io')):
@@ -486,7 +523,8 @@ def main():
 
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'checks': checks, 'count': len(checks),
-                  'probe_sha256': sha(probe_exe.read_bytes()), 'installed_files': installed,
+                  'probe_sha256': sha(probe_exe.read_bytes()),
+                  'review_probe_sha256': sha(args.review_probe.resolve().read_bytes()), 'installed_files': installed,
                   'tls': 'native certificate and hostname verification against a runner-trusted temporary CA',
                   'scope': 'desktop WebDAV download plus sideload import adapter; no host UI, no mobile or device claim, '
                            'no real user cloud provider',
