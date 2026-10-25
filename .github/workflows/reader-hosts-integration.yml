@@ -464,29 +464,36 @@ jobs:
             build/winrecords-summary/verified.json
           if-no-files-found: error
   gtk:
-    needs: pin
     if: ${{ github.event.inputs.verify_run == '' }}
-    name: GTK G03 G04 reading records and retained native suites
+    needs: pin
+    name: GTK book file drop paste and retained native suites
     runs-on: ubuntu-22.04
     timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Authenticate common production and exact installed module trees
-        run: |
-          python3 tests/reader_hosts_integration/guard.py
-          test "$(git rev-parse HEAD:apps/reader/batch-import)" = 40ccc040a65970df056dfb635f247517f8c382df
-          # Common source includes b26f59ce's Android-only no-replace export.
-          # The desktop branches of that package are byte-identical.
-          test "$(git rev-parse HEAD:extras/sideload)" = 78c8785171861ba239517c0d7cb5130b0168d57f
-          test "$(git rev-parse HEAD:apps/reader/reading-commands)" = cf067b8be378d4195817d1106b81f358579e2280
-          test "$(git rev-parse HEAD:apps/reader/annotation-view)" = 9d30b6c54f61496010f647695dedd7ea7ab0c7c1
-          test "$(git rev-parse HEAD:apps/reader/reading-state)" = 60127ae75fbac918237b1c8584e0f7ac2e6130a4
+      - name: Require fixed common start reviewed J03 and host-only changes
+        run: python3 tests/reader_hosts_integration/guard.py
       - name: Install native GTK TLS XML and Secret Service dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11
+      - name: Install reviewed J03 and rerun installed portable and GTK consumers
+        run: |
+          mkdir -p build/gtk-drop-j03
+          cmake -S extras/desktop-drop -B build/drop-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/drop-stage"
+          cmake --build build/drop-module --parallel 4
+          cmake --install build/drop-module
+          cmake -S extras/desktop-drop/examples -B build/drop-examples -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/drop-stage"
+          cmake --build build/drop-examples --parallel 4
+          build/drop-examples/host-example-c | tee build/gtk-drop-j03/c.log
+          build/drop-examples/host-example-cxx | tee build/gtk-drop-j03/cxx.log
+          cmake -S tests/reader_desktop_drop -B build/drop-consumers -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/drop-stage"
+          cmake --build build/drop-consumers --parallel 4
+          build/drop-consumers/drop-check | tee build/gtk-drop-j03/portable.log
+          build/drop-consumers/drop-consumer-cxx | tee build/gtk-drop-j03/installed-cxx.log
+          xvfb-run -a build/drop-consumers/drop-probe | tee build/gtk-drop-j03/gtk.log
       - name: Build installed product metadata and account modules with one product provider
         run: |
           mkdir -p build/account-logs
@@ -605,7 +612,7 @@ jobs:
           python3 tests/reader_navigation/check_navigation.py --probe build/gtk-navigation-consumer/navigation-probe --c-consumer build/gtk-navigation-consumer/navigation-c-consumer --fixtures build/gtk-navigation-fixtures --installed "$ACCOUNT_PREFIX" --output build/gtk-navigation-installed
       - name: Build actual GTK host with optional navigation and retained installed integrations
         run: |
-          cmake -S apps/reader/desktop -B build/account-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_BATCH_IMPORT=ON -DREADER_BATCH_IMPORT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DREADER_PREFERENCES_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_SEARCH=ON -DREADER_SEARCH_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_READING_RECORDS=ON -DREADER_READING_RECORDS_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_NAVIGATION=ON -DREADER_NAVIGATION_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON 2>&1 | tee build/account-logs/host-configure.log
+          cmake -S apps/reader/desktop -B build/account-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_BATCH_IMPORT=ON -DEXR_READER_GTK_DROP_IMPORT=ON -DREADER_DESKTOP_DROP_PREFIX="$PWD/build/drop-stage" -DREADER_BATCH_IMPORT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DREADER_PREFERENCES_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_SEARCH=ON -DREADER_SEARCH_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_READING_RECORDS=ON -DREADER_READING_RECORDS_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_NAVIGATION=ON -DREADER_NAVIGATION_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON 2>&1 | tee build/account-logs/host-configure.log
           cmake --build build/account-desktop --parallel 4 --verbose 2>&1 | tee build/account-logs/host-build.log
           python3 tests/reader_gtk_receive/check_link.py --map build/account-desktop/gtk-account-host.map --binary build/account-desktop/gtk-host/exreader-linux --output build/account-logs/host-link.json
           nm --defined-only build/account-desktop/gtk-host/exreader-linux > build/account-logs/navigation-provider-symbols.txt
@@ -661,6 +668,26 @@ jobs:
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/account-desktop/reader-gtk-batch-import-backend
           '
+      - name: Explicit file input backend and immutable public original readback
+        if: ${{ !cancelled() }}
+        run: |
+          python3 -m py_compile tests/reader_gtk_drop_import/*.py
+          python3 tests/reader_gtk_drop_import/make_inputs.py tests/fixtures build/gtk-drop-fixtures
+          python3 tests/reader_gtk_drop_import/check_backend.py --probe build/account-desktop/reader-gtk-drop-backend --font build/account-package/EXReader-Linux/Reader.otf --fixtures build/gtk-drop-fixtures --output build/gtk-drop-backend
+      - name: Real pointer drop asynchronous native clipboard cancellation and reopen
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/drop-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_drop_import/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-drop-fixtures --output build/gtk-drop-ui --backend build/account-desktop/reader-gtk-drop-backend --native-source build/account-desktop/reader-gtk-drop-native-source
+          '
       - name: Actual native progress bookmark highlight edit delete restore and process recovery
         run: |
           mkdir -p build/gtk-atspi-client
@@ -692,7 +719,7 @@ jobs:
             /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-navigation-fixtures --fixed-inputs build/account-fixed-inputs --output build/gtk-navigation-ui
           '
       - name: Actual native in-book query results selection cancellation and lifecycle
-        if: always() && !cancelled()
+        if: ${{ !cancelled() }}
         env:
           GTK_SEARCH_DIAGNOSTIC_ONLY: 'false'
         run: |
@@ -709,7 +736,7 @@ jobs:
             /usr/bin/python3 tests/reader_gtk_search/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-search-fixtures --fixed-inputs build/account-fixed-inputs --output build/gtk-search-ui
           '
       - name: Actual settings controls geometry pixels gestures portal and persistence
-        if: always() && !cancelled()
+        if: ${{ !cancelled() }}
         env:
           GTK_PREFERENCES_DIAGNOSTIC_ONLY: 'false'
         run: |
@@ -729,7 +756,7 @@ jobs:
             /usr/bin/python3 tests/reader_gtk_preferences/check_ui.py --payload build/account-package/EXReader-Linux --output build/preferences-ui --consumer build/preferences-host-consumer/gtk-preferences-load --fixed-inputs build/account-fixed-inputs
           '
       - name: Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown
-        if: always() && !cancelled()
+        if: ${{ !cancelled() }}
         run: |
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
             openbox >build/account-logs/account-openbox.log 2>&1 &
@@ -738,7 +765,7 @@ jobs:
             python3 tests/reader_gtk_preferences/retain_account.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-ui --receive-fixtures build/account-receive-fixtures --reading-probe build/account-reading-probe/reading-v2-probe --inspect-consumer build/account-inspect/received-sdk-inspect
           '
       - name: Preserve twenty product five fixed twenty-four shelf fourteen metadata fifteen collections twenty-seven
-        if: always() && !cancelled()
+        if: ${{ !cancelled() }}
         run: |
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
             openbox >build/account-logs/openbox.log 2>&1 &
@@ -753,7 +780,7 @@ jobs:
             python3 tests/linux_host/check_collections_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-collections-ui
           '
       - name: Targeted real AT-SPI regressions for G13 production fixes
-        if: always() && !cancelled()
+        if: ${{ !cancelled() }}
         run: |
           mkdir -p build/gtk-atspi-client
           git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
@@ -775,13 +802,22 @@ jobs:
           diagnostic=""
           if [ "$BATCH_DIAGNOSTIC" = true ]; then diagnostic=--diagnostic; fi
           python3 tests/reader_gtk_batch_import/check_evidence.py --build build $diagnostic
+      - name: Authenticate source bound drop paste and retained host reports
+        if: always()
+        run: python3 tests/reader_gtk_drop_import/check_evidence.py --build build
       - name: Preserve source-bound evidence and original logs without credentials or TLS private keys
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reader-gtk-reading-records-${{ github.run_id }}-${{ github.run_attempt }}
+          name: reader-gtk-drop-import-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/account-logs/
+            build/gtk-drop-j03/
+            build/gtk-drop-backend/
+            build/gtk-drop-ui/
+            build/gtk-drop-evidence.json
+            build/gtk-drop-fixtures/manifest.json
+            build/account-package/EXReader-Linux/bin/exreader-linux
             build/account-desktop/verified.json
             build/account-desktop/sdk-check/
             build/account-desktop/native-check/
@@ -829,7 +865,6 @@ jobs:
             build/account-package/EXReader-Linux.tar.gz
             !build/**/*.key
           if-no-files-found: error
-
   android:
     needs: pin
     if: ${{ github.event.inputs.verify_run == '' }}
