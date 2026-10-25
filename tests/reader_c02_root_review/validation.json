@@ -1,6 +1,35 @@
 {
   "accepted": false,
-  "status": "first full round retained; initialization refusal fixed; next full round pending",
+  "status": "two full failures retained; natural startup input contract validated; original resume/import measurements incomplete",
+  "latest_run": {
+    "source": "bac5606fa8a6efa395a88c148b28ff25d52185ec",
+    "run_id": 40238597205, "attempt": 1, "conclusion": "failure",
+    "strict_job_id": 121311235125,
+    "root_input_receipts_validated": true,
+    "windows": [
+      {"round": 1, "job_id": 121306376613, "launches": 30, "rows": 1062, "non_ok": 15,
+       "failed_launches": ["w1-n5000-resume-02", "w1-n5000-resume-03"]},
+      {"round": 2, "job_id": 121306376601, "launches": 30, "rows": 1063, "non_ok": 0}
+    ],
+    "gtk": [
+      {"round": 1, "job_id": 121307148137, "launches": 24, "rows": 364, "non_ok": 4,
+       "failures": "two import-worker-start timeouts and two page-turn timeouts"},
+      {"round": 2, "job_id": 121307148090, "launches": 24, "rows": 376, "non_ok": 2,
+       "disallowed_non_ok": 1, "failures": "one import-worker-start timeout; one allowed resize not_observed"}
+    ],
+    "actual_zip_authentication": "six same-run build and round ZIPs authenticated in Actions before unchanged original aggregation refused",
+    "artifacts_expires_at": "2027-01-23T22:06:07Z",
+    "artifacts": [
+      {"role": "preflight", "id": 12615833488, "bytes": 527, "sha256": "054a889e62d856b85bedb3bf468c18eeca9e1cf76a0a33b808db8787d0b273e0"},
+      {"role": "win-build", "id": 12615868797, "bytes": 20442894, "sha256": "2b6d84cd4d1d89705d564bdf6afb6f5e6dbb5aef4c2cb93b09d63fe0001b506b"},
+      {"role": "gtk-build", "id": 12615464867, "bytes": 40764253, "sha256": "5e716813adfa4b495291c5a94f9c86be92ff3b7145bffc4b52d78239b9e6ce01"},
+      {"role": "win-r1", "id": 12616560567, "bytes": 193888, "sha256": "120fb26db3e65860c060884f5d9aa9d82e2a3fd73f3dcfafffe1026cdf6ee9db"},
+      {"role": "win-r2", "id": 12615179616, "bytes": 186542, "sha256": "9874b9842ab6db4599fe88fe7d920431dc439b3e5636c84b51426dd7565c52f7"},
+      {"role": "gtk-r1", "id": 12616807417, "bytes": 3983942, "sha256": "2490f91d494610e8ba89da8a624a44ae99e8ed9b00d5188d5c57cf7367b8aaa9"},
+      {"role": "gtk-r2", "id": 12616875764, "bytes": 3859817, "sha256": "cf7bd0cec5e23b6da2a3f19e071fb1e1dec683dcebc1c8e342fabdbc73ae87db"},
+      {"role": "summary", "id": 12616726703, "bytes": 12203, "sha256": "0dd2f5d28c3a7e9882dd87f4e57d02fc949ee6ecfea84049df96add37c8d1251"}
+    ]
+  },
   "base_source": "169b0be3c1c8199be0211649412d23d9e34041e4",
   "input_strategy": "warm-catalog-snapshot-clean-settings-v1",
   "windows_producer": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",

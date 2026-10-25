@@ -1,6 +1,6 @@
 # C02 root-review：最小输入状态适配方案
 
-状态：root 已批准以下方案，adapter、严格入口与拒绝用例已实现；首次完整云端暴露初始化误拒绝，已修正，待下轮完整验收。未运行本地语法/测试/构建。
+状态：两次新完整云端均为failure。自然首屏及warm输入修正已通过第二轮严格收据核验；原恢复翻页、GTK导入测量仍有失败，C02整体未通过。未运行本地语法/测试/构建。
 
 ## 依据与起点
 
@@ -61,3 +61,13 @@ Windows producer/apps仍绑定原固定0889树，GTK producer仍为57203a52的�
   整轮最终failure，strict实际下载认证全部6个build/round ZIP后拒绝两轮Windows首屏收据。
   GTK round1另有真实采样失败：358 rows/6 non-ok，其中4项不被旧规则允许（3次import worker start超时、1次page turn超时），
   其余2项为原规则允许的resize not_observed；GTK round2为384 rows/0 non-ok。GTK原采样器未改动，也未把这些失败过滤掉。
+- 第二轮 `40238597205/1`，source `bac5606fa8a6efa395a88c148b28ff25d52185ec`：
+  源保护、协议回归和两平台重新构建通过，strict job `121311235125`认证6个实际同次ZIP，
+  两个Windows round的30份输入/22份自然首屏/8份warm catalog收据均通过；全部cold/warm/import启动正常。
+  Windows round1为1062 rows/15 non-ok：n5000 resume-02原翻页25秒无transition；随后resume-03恢复位置与旧expected不符。
+  原逻辑只在四次forward均成功后更新expected，但close会保留已前进位置，因此第二个失配是连锁结果；首个超时原因尚未证实。
+  长书为2000段，不能推断是页尾。Windows round2为1063 rows/0 non-ok，两轮各30 launches。
+  GTK round1为364 rows/4 non-ok（2次import worker start超时、2次翻页超时），round2为376 rows/2 non-ok
+  （1次import start失败及1次允许的resize not_observed），两轮各24 launches。
+  strict按原规则拒绝整轮，`measurement_complete=false`。所有job/artifact ID、ZIP字节及digest见同目录validation.json。
+  原sampler要求inotify观测到busy=1；当前证据不能区分未启动与漏观测，失败保留。
