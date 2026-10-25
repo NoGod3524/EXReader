@@ -1,0 +1,61 @@
+name: Actual Apple reading record sender and receiver
+on:
+  push:
+    branches: [codex/reader-apple-record-interop]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  native:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require unchanged actual owners SDK and every original control
+        run: |
+          python3 - <<'PY'
+          import os,subprocess
+          base='b1a7b7891cd394671842164a07a86c8e316dace3'
+          assert os.environ.get('GITHUB_ACTIONS')=='true'
+          subprocess.run(['git','merge-base','--is-ancestor',base,'HEAD'],check=True)
+          subprocess.run(['git','diff','--exit-code',base,'HEAD','--','apps','examples','extras','src','include','cmake','CMakeLists.txt','bindings','tests/fixtures','tests/apple_host/record_compatibility'],check=True)
+          allowed=('tests/apple_host/record_interop/','.github/workflows/reader-apple-record-interop.yml','docs/READER-APPLE-RECORD-INTEROP.md')
+          paths=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines()
+          assert all(p.startswith(allowed[0]) or p in allowed[1:] for p in paths),paths
+          PY
+          python3 -m py_compile tests/apple_host/record_interop/run.py tests/apple_host/record_interop/verify.py
+      - name: Build both exact SDKs and retain every actual original owner control
+        run: python3 tests/apple_host/record_compatibility/run.py
+      - name: Build and exercise actual Apple sender fresh receiver and reopened receiver
+        run: python3 tests/apple_host/record_interop/run.py --sdk build/apple-record-compatibility/sdk-new --resources build/apple-record-compatibility/resources-new --output build/apple-record-interop
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-host-record-interop-${{github.run_id}}-${{github.run_attempt}}
+          path: build/apple-record-interop/
+          if-no-files-found: error
+  evidence:
+    needs: native
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate actual native program library raw wires and original controls
+        env:
+          GH_TOKEN: ${{github.token}}
+        run: python3 tests/apple_host/record_interop/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-host-record-interop-summary-${{github.run_id}}-${{github.run_attempt}}
+          path: build/apple-record-interop-summary/
+          if-no-files-found: error
