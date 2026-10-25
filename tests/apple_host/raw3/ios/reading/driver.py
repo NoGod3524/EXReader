@@ -40,6 +40,7 @@ def main():
     commands = []
 
     def run(argv, name, env=None, timeout=1800):
+        print('ACTUAL_MOBILE_PHASE_BEGIN ' + name, flush=True)
         log = evidence / (name + '.log')
         with log.open('wb') as stream:
             value = subprocess.run(list(map(str, argv)), cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=timeout)
@@ -118,11 +119,24 @@ def main():
         result = evidence / (name + '.xcresult')
         argv = ['xcodebuild', 'test', '-project', projects[mode] / 'EXReaderHost.xcodeproj', '-scheme', 'EXReaderHost-iOS',
                 '-destination', destination, '-derivedDataPath', out / ('derived-' + mode), '-resultBundlePath', result,
-                '-parallel-testing-enabled', 'NO', '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '180',
+                '-parallel-testing-enabled', 'NO', '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '180' if mode == 'control' else '600',
                 '-maximum-test-execution-time-allowance', '300' if mode == 'control' else '600',
                 'EXR_SDK_DIR=' + str(mobile_sdk), 'EXR_PRODUCTS_DIR=' + str(raw_prefix), 'CODE_SIGNING_ALLOWED=NO']
         if case: argv += ['-only-testing:EXReaderHostUITests-iOS/RawSelectorUITests/' + case]
-        run(argv, name, env=dict(env, **(extra_env or {})), timeout=2200)
+        try:
+            run(argv, name, env=dict(env, **(extra_env or {})), timeout=2200)
+        except BaseException:
+            # Failed UI runs still retain their actual container/program. They
+            # never produce an accepted report or substitute for a passing case.
+            try:
+                container = Path(subprocess.check_output(['xcrun', 'simctl', 'get_app_container', udid, 'org.exreader.host', 'data'], text=True).strip())
+                source = container / 'Library/Application Support/EXReader'
+                if source.exists(): shutil.copytree(source, evidence / ('profile-' + name))
+                app = out / ('derived-' + mode) / 'Build/Products/Debug-iphonesimulator/EXReaderHost.app'
+                if app.exists(): shutil.copytree(app, evidence / ('failed-program-' + name) / 'EXReaderHost.app')
+            except Exception as failure:
+                (evidence / (name + '-snapshot-error.txt')).write_text(str(failure) + '\n')
+            raise
         cases = load_results(result)
         if mode == 'control':
             assert len(cases) == 7 and all(row['result'] == 'Passed' for row in cases)
