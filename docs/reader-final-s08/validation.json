@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "package": "S08",
+  "title": "诊断输出与账号信息泄漏验收",
+  "accepted": false,
+  "complete_product": false,
+  "scope": "Independent red-action acceptance of the existing diagnostics, request-log, credential and account-profile modules: exact leakage scope for password/token/Authorization/cookie/user paths, retained status/system error/offset/HTTP status/request line, account isolation, scanning after the worker exits, and no access to real user credentials.",
+  "fixed_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "owner_modules": {
+    "credentials": {
+      "path": "extras/credentials",
+      "version": "0.1.0",
+      "delivery": "J21",
+      "source": "e2247deb35b52615810508092441922c4e4f7913",
+      "ancestor_of_fixed_base": true,
+      "original_evidence": {
+        "run_id": 40057087875,
+        "attempt": 1,
+        "strict_review_source": "32f72ba7738d22d8cef3796a3c48195f1d46ee6d",
+        "strict_review_run": 40060725476,
+        "strict_artifact_id": 12546829304,
+        "strict_artifact_sha256": "5adcdf053a28363a3f4a1da79ae86f7be2473a2f8e97f8248ee1234968a265f4"
+      }
+    },
+    "account_profiles": {
+      "path": "apps/reader/account-profiles",
+      "version": "0.1.0"
+    },
+    "opds_log": {
+      "path": "extras/opds",
+      "version": "0.2.0",
+      "surface": "opds_redact_url and the host log callback's redacted request lines"
+    }
+  },
+  "branch": "codex/reader-fw-s08",
+  "source_sha": null,
+  "docs_seal_sha": null,
+  "run": null,
+  "attempt": null,
+  "jobs": [],
+  "artifacts": [],
+  "checks": {
+    "guard": null,
+    "windows": null,
+    "linux": null
+  },
+  "red_actions": {
+    "detector_cases": null,
+    "aggregator_cases": null
+  },
+  "secret_scan": {
+    "hits": null,
+    "bytes": null,
+    "encodings": "raw, 32-byte window, hex/HEX, base64/base64url padded and unpadded, percent-encoded, UTF-16LE/BE"
+  },
+  "platforms": {
+    "windows-2022": "pending",
+    "ubuntu-22.04": "pending",
+    "macos-15": "not run by this package",
+    "ios-simulator": "not run by this package",
+    "android-emulator": "not run by this package"
+  },
+  "not_exercised": [
+    "Windows Credential Manager UNAVAILABLE: not induced by this job; J21 documented that low integrity, a stopped VaultSvc and an S4U task all remained available. pending",
+    "macOS/iOS/Android credential backends: this package does not rerun them; only the J21 original run is referenced, not re-granted."
+  ],
+  "failures": [],
+  "runs": [],
+  "notes": "accepted=false until the Actions run in this file is terminal, same-source and green. No local build, test or artifact parse was performed."
+}

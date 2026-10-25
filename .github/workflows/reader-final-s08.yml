@@ -1,0 +1,154 @@
+name: Reader final S08 diagnostics and account leakage
+on:
+  push:
+    branches: [codex/reader-fw-s08]
+    paths:
+      - 'tests/reader_final_s08/**'
+      - '.github/workflows/reader-final-s08.yml'
+      - 'docs/reader-final-s08/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+concurrency:
+  group: reader-final-s08
+  cancel-in-progress: false
+env:
+  FIXED_BASE: 0889f7d1e9a537c6c1b05456547e016b26e1cd85
+  FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  guard:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reject stale sources, rewritten reports, unsafe archives and leaks
+        run: python3 tests/reader_final_s08/check_aggregate.py
+      - name: Require the fixed base, owner identity and a log-free credential module
+        run: python3 tests/reader_final_s08/guard.py --output build/s08-guard
+      - name: Preserve the guard verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s08-guard-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s08-guard/
+          if-no-files-found: error
+
+  platform:
+    name: platform (${{ matrix.os }})
+    needs: guard
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - os: windows-2022
+            key: windows
+          - os: ubuntu-22.04
+            key: linux
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the Linux Secret Service, D-Bus and libsecret development files
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsecret-1-dev gnome-keyring dbus libglib2.0-bin pkg-config ninja-build
+      - name: Enter the Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c ('"' + $bat + '" >nul && set') | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build the three unchanged owner modules from this source
+        run: |
+          set -o pipefail
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "S08_WS=$ws" >> "$GITHUB_ENV"
+          mkdir -p build/s08/build-logs
+          cmake --version 2>&1 | tee build/s08/build-logs/cmake-version.log
+          cmake -S extras/credentials -B build/s08/credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/s08/cred-stage" 2>&1 | tee build/s08/build-logs/credentials-configure.log
+          cmake --build build/s08/credentials --verbose 2>&1 | tee build/s08/build-logs/credentials-build.log
+          cmake --install build/s08/credentials 2>&1 | tee build/s08/build-logs/credentials-install.log
+          cmake -S apps/reader/account-profiles -B build/s08/profiles -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/s08/profiles-stage" 2>&1 | tee build/s08/build-logs/profiles-configure.log
+          cmake --build build/s08/profiles --verbose 2>&1 | tee build/s08/build-logs/profiles-build.log
+          cmake --install build/s08/profiles 2>&1 | tee build/s08/build-logs/profiles-install.log
+          cmake -S extras/opds -B build/s08/opds -G Ninja -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/s08/build-logs/opds-configure.log
+          cmake --build build/s08/opds --verbose 2>&1 | tee build/s08/build-logs/opds-build.log
+          cp build/s08/credentials/CMakeCache.txt build/s08/build-logs/credentials-CMakeCache.txt
+          cp build/s08/profiles/CMakeCache.txt build/s08/build-logs/profiles-CMakeCache.txt
+          cp build/s08/opds/CMakeCache.txt build/s08/build-logs/opds-CMakeCache.txt
+      - name: Compile the independent consumer from installed packages only
+        run: |
+          set -o pipefail
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          echo "S08_EXE=$exe" >> "$GITHUB_ENV"
+          lib="$(ls build/s08/opds/libopds.a 2>/dev/null || ls build/s08/opds/opds.lib 2>/dev/null || true)"
+          test -n "$lib"
+          cmake -S tests/reader_final_s08/consumer -B build/s08/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$S08_WS/build/s08/cred-stage;$S08_WS/build/s08/profiles-stage" \
+            -DEXR_OPDS_LIB="$S08_WS/$lib" -DEXR_OPDS_INCLUDE="$S08_WS/extras/opds/include" 2>&1 | tee build/s08/build-logs/consumer-configure.log
+          cmake --build build/s08/consumer --verbose 2>&1 | tee build/s08/build-logs/consumer-build.log
+          cp build/s08/consumer/CMakeCache.txt build/s08/build-logs/consumer-CMakeCache.txt
+      - name: Red-action acceptance with job-generated secrets, then scan every log and artifact
+        run: |
+          python3 tests/reader_final_s08/runner.py \
+            --platform ${{ matrix.key }} \
+            --consumer "$S08_WS/build/s08/consumer/reader-final-s08-consumer$S08_EXE" \
+            --credentials-prefix "$S08_WS/build/s08/cred-stage" \
+            --profiles-prefix "$S08_WS/build/s08/profiles-stage" \
+            --output "$S08_WS/build/s08/evidence" \
+            --scan "$S08_WS/build/s08/build-logs" \
+            --scan "$S08_WS/build/s08/consumer" \
+            --scan "$S08_WS/build/s08/cred-stage" \
+            --scan "$S08_WS/build/s08/profiles-stage" \
+            --scan "$S08_WS/build/s08/opds"
+      - name: Preserve the source-bound evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s08-${{ matrix.key }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s08/evidence/
+          if-no-files-found: error
+
+  report:
+    name: report
+    needs: [guard, platform]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Strictly bind jobs, artifacts and ZIP bytes to this run and source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tests/reader_final_s08/aggregate.py --downloads build/s08-zips --output build/s08-report
+      - name: Preserve the same-source aggregate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s08-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s08-report/
+          if-no-files-found: error
