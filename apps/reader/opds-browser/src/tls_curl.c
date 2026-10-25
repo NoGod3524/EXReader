@@ -185,6 +185,8 @@ opds_status reader_opds_platform_tls_fetch(const opds_request *request, unsigned
   curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
   curl_easy_setopt(handle, CURLOPT_HTTP_VERSION, (long)CURL_HTTP_VERSION_1_1);
   curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT_MS, (long)timeout_ms);
+  /* The public transport contract forbids ambient proxy configuration. */
+  curl_easy_setopt(handle, CURLOPT_PROXY, "");
   curl_easy_setopt(handle, CURLOPT_LOW_SPEED_LIMIT, 1L);
   curl_easy_setopt(handle, CURLOPT_LOW_SPEED_TIME, (long)((timeout_ms + 999) / 1000));
   curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 1L);

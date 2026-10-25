@@ -162,14 +162,20 @@ def main():
         wait_port(bases["other"])
         network_cases = work / "network-cases.jsonl"
         import_cases = work / "import-cases.jsonl"
+        # A transport promising no proxy must ignore ambient proxy variables,
+        # including when NO_PROXY does not exempt the loopback TLS fixture.
+        consumer_env = dict(os.environ)
+        for key in ('http_proxy', 'https_proxy', 'all_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY'):
+            consumer_env[key] = 'http://127.0.0.1:9'
+        consumer_env['no_proxy'] = consumer_env['NO_PROXY'] = ''
         network = subprocess.run([arguments.consumer, str(staging), bases["plain"], bases["tls"], bases["other"],
                                   str(network_cases)], capture_output=True, text=True, encoding="utf-8",
-                                 errors="replace")
+                                 errors="replace", env=consumer_env)
         (work / "network-consumer.log").write_text(
             "exit=%d\nstdout:\n%s\nstderr:\n%s\n" % (network.returncode, network.stdout, network.stderr),
             encoding="utf-8")
         import_result = subprocess.run([arguments.import_consumer, str(staging), bases["plain"], str(import_cases)],
-                                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+                                       capture_output=True, text=True, encoding="utf-8", errors="replace", env=consumer_env)
         (work / "import-consumer.log").write_text(
             "exit=%d\nstdout:\n%s\nstderr:\n%s\n" % (import_result.returncode, import_result.stdout,
                                                      import_result.stderr),
