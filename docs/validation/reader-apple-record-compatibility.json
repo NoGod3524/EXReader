@@ -1,7 +1,23 @@
 {
-  "accepted": false,
-  "status": "known bare/prefixed parser spelling successor pending Actions; earlier native upgrade scope retained",
-  "current_tested_source": null,
+  "accepted": true,
+  "status": "native Apple upgrade and exact known parser spellings passed; actual Android peer exchange remains pending",
+  "current_tested_source": "b1a7b7891cd394671842164a07a86c8e316dace3",
+  "current_run": {
+    "id": 40176647484,
+    "attempt": 1,
+    "conclusion": "success",
+    "producer_job": 121118647082,
+    "strict_job": 121127045183,
+    "native_process_phases": 18,
+    "original_owner_checks_per_sdk": 19,
+    "java_policy_checks": 20,
+    "protocol_rejections": 6,
+    "public_android_spelling_fixture_is_real_android_sender": false,
+    "artifacts": [
+      {"id":12592549982,"bytes":53257384,"sha256":"af40a35b4b916c68f4cc4ea9307e6baf4be165375d7d79698c0a31f40b8da88e","expires_at":"2027-01-23T08:26:53Z"},
+      {"id":12594080612,"bytes":566,"sha256":"e03a340b56e3df8e8454864ad60ecd7349b1471c9ac98be88fb6cb9150bebe2a","expires_at":"2027-01-23T08:26:53Z"}
+    ]
+  },
   "actual_android_host_interop_accepted": false,
   "base": "eea3087c2ef27b9d45e00333ef0a16e586a0ac6e",
   "sdk_candidate": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
