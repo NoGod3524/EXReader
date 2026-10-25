@@ -1,0 +1,10 @@
+{
+  "accepted": false,
+  "branch": "codex/reader-windows-compact",
+  "base": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
+  "runs": [],
+  "scope": "independent Windows compact native UI plus complete original default-OFF regression",
+  "default_enabled": false,
+  "performance_accepted": false,
+  "complete_product": false
+}
