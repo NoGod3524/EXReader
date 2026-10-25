@@ -116,13 +116,59 @@ def run_tests():
     next(row for row in wrong if '-fast-import-' in row['name'])['name']=fast['name'].replace('-123-2','-123-1')
     refuse('old-attempt-fast-import-artifact',lambda:verify_theme(ar=wrong))
     refuse('unreviewed-windows-schema',lambda:a.basic_summary('windows_full_f3',android,source,ref))
-    result=dict(leaves={key:dict(status='verified') for key in a.REQUIRED},product_conditions={key:dict(status='pending') for key in a.PRODUCT_REQUIRED},problems=[])
-    a.finish(result);a.require(result['accepted'] is False and set(result['pending_contracts'])==set(a.WINDOWS_CONTRACTS) and
+    file_names=('production','packaged_production','f3_production','shelf_review','atomic_review','old_veto_control','baseline',
+                'production_map','atomic_map','control_map','baseline_map','host_cache','baseline_cache','sdk_header','sdk_config',
+                'sdk_version','baseline_header','baseline_config','baseline_version')
+    files={name:dict(path=name,bytes=100,sha256=format(i+1,'064x')) for i,name in enumerate(file_names)}
+    for name in ('packaged_production','f3_production'):files[name]['sha256']=files['production']['sha256']
+    identity=dict(source_sha=source,run_id=123,attempt=2,sdk_version='3.41.0',sdk_abi=1,sdk_source=a.SDK,
+        baseline_sdk_version='3.40.0',baseline_source='9854061be331fe603a1822d9b2b36ee357154927',complete_product=False,
+        full_host_options={name:True for name in ('SEARCH','NAVIGATION','RECORDS','IMPORT_ORGANIZE','PREFERENCES')},files=files)
+    product=files['production']['sha256'];review=files['atomic_review']['sha256'];control=files['old_veto_control']['sha256']
+    common=dict(accepted=True,source_sha=source,run_id=123,attempt=2,sdk_version='3.41.0',sdk_abi=1,complete_product=False,
+        original_judges_preserved=True,protocol_rejections=13,identity=identity,consumer_sha256=product,
+        atomic_review_sha256=review,old_veto_control_sha256=control,production_map_sha256=files['production_map']['sha256'],
+        catalog_identity_adapter=dict(source_sha=source,run_id=123,attempt=2,changed_literal_count=1,expected_runtime='3.41.0',
+            original_assertions_retained=True,original_source_sha256='d'*64,adapted_source_sha256='e'*64))
+    retained=dict(accepted=True,source_sha=source,run_id=123,attempt=2,consumer_sha256=product)
+    full=dict(common,scope=a.SCOPES['windows_full_f3'],f3_checks=25,original_f1_checks=264,original_f2_checks=130,
+        navigation_checks=31,records_checks=32,original_ui158=158,original_j01_checks=47,original_j10_checks=21,
+        import_organize_checks=10,import_organize_summary=dict(retained,ui_checks=10),
+        retained_summaries={name:dict(retained) for name in ('winsearch-summary','winnav-summary','winrecords-summary','wprefs-summary')})
+    names=[role+suffix for role in ('empty','txt','epub','pdf') for suffix in
+           ('-before-save-cancel-retains','-after-save-cancel-publishes','-reopened-committed-choice')]+['old-post-save-veto-control-rejected']
+    boundary=dict(common,scope=a.SCOPES['windows_atomic13'],checks=13,original_atomic_protocol_rejections=9,
+        original_f3_suite_accepted=False,atomic_report=dict(accepted=True,source_sha=source,run_id=123,attempt=2,count=13,
+            checks=[dict(name=name,passed=True,pid=1) for name in names],consumer_sha256=review,control_sha256=control,
+            complete_product=False,original_f3_suite_accepted=False))
+    a.basic_summary('windows_full_f3',full,source,ref);a.basic_summary('windows_atomic13',boundary,source,ref)
+    def windows_negative(label,record,path,new_value,key='windows_full_f3'):
+        wrong=copy.deepcopy(record);target=wrong
+        for part in path[:-1]:target=target[part]
+        target[path[-1]]=new_value
+        refuse(label,lambda:a.basic_summary(key,wrong,source,ref))
+    for label,path,new_value in (
+        ('missing-full-F3',('f3_checks',),24),('missing-full-host-option',('identity','full_host_options'),{}),
+        ('split-F3-production',('identity','files','f3_production','sha256'),'f'*64),
+        ('control-equals-review',('identity','files','old_veto_control','sha256'),review),
+        ('missing-sdk-header-digest',('identity','files','sdk_header','sha256'),''),
+        ('catalog-rewrites-more-than-identity',('catalog_identity_adapter','changed_literal_count'),2),
+        ('foreign-retained-attempt',('retained_summaries','wprefs-summary','attempt'),1),
+        ('missing-import-suite',('import_organize_checks',),0),('old-Windows-SDK',('sdk_version',),'3.40.0'),
+        ('missing-identity-refusal',('protocol_rejections',),12),('substituted-production-map',('production_map_sha256',),'f'*64)):
+        windows_negative(label,full,path,new_value)
+    for label,path,new_value in (
+        ('atomic12-instead-of13',('checks',),12),('failed-actual-atomic-case',('atomic_report','checks',0,'passed'),False),
+        ('foreign-atomic-source',('atomic_report','source_sha'),'b'*40),('substituted-atomic-control',('atomic_report','control_sha256'),'f'*64)):
+        windows_negative(label,boundary,path,new_value,'windows_atomic13')
+    result=dict(leaves={key:dict(status='pending' if key in a.WINDOWS_CONTRACTS else 'verified') for key in a.REQUIRED},
+                product_conditions={key:dict(status='pending') for key in a.PRODUCT_REQUIRED},problems=[])
+    a.finish(result);a.require(result['accepted'] is False and result['pending_contracts']==[] and
         all(result['leaves'][key]['status']=='pending' for key in a.WINDOWS_CONTRACTS),'unresolved Windows contract gave green')
     wrong=copy.deepcopy(result);wrong['leaves'].pop('windows_full_f3');refuse('drop-required-slot-to-green',lambda:a.finish(wrong))
     wrong=copy.deepcopy(result);wrong['product_conditions'].pop('apple_to_android');refuse('drop-required-peer-condition',lambda:a.finish(wrong))
     a.require(a.SPECS['apple_mapping']['summary_name'] is None and len(a.expected_names('apple_mapping',a.SPECS['apple_mapping'],123,2))==6,'mapping summary invented')
-    a.require(len(rejected)==67,'a protocol refusal control was omitted')
+    a.require(len(rejected)==82,'a protocol refusal control was omitted')
     print('native upper collector protocol negatives: '+str(len(rejected))+' actual rejections; synthetic fixtures only',flush=True)
 
 
