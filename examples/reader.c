@@ -523,6 +523,11 @@ static void selection_clear(void) {
   if (g.page) InvalidateRect(g.page, NULL, FALSE);
 }
 
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+/* Defined with the other preference state below, after the job record. */
+static void prefs_initialize(void);
+#endif
+
 /* Settings: host preferences only. Books, progress and annotations live in SQLite. */
 static void settings_load(void) {
   g.font_percent = (int)GetPrivateProfileIntW(L"Host", L"FontPercent", 150, g.settings_path);
