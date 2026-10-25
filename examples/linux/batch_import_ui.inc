@@ -26,8 +26,8 @@ static void folder_message(void) {
   char *message=g_strdup_printf("%"G_GUINT64_FORMAT" checked · %"G_GUINT64_FORMAT" added · %"G_GUINT64_FORMAT" exact duplicates · %"G_GUINT64_FORMAT" failed\n%s%s",
     folder.attempted,folder.imported,folder.duplicates,folder.failed,
     folder.pending ? "Books saved; bookshelf update pending. Reopen the library to retry.":
-    folder.done ? (folder.cancelled ? "Cancelled; committed books kept.":folder.truncated ? "Input limit reached; some entries omitted.":folder.complete ? (folder.files ? "File import completed.":"Scan completed."):"Import stopped; scan did not complete."):
-    g_atomic_int_get(&folder.control.cancelled) ? "Cancelling; committed books are kept…":"Importing; total unknown until scan ends…",
+    folder.done ? (folder.cancelled ? "Cancelled; committed books kept.":folder.truncated ? (folder.files ? "Input limit reached; some entries omitted.":"Scan stopped at a limit or unreadable folder; some files omitted."):folder.complete ? (folder.files ? "File import completed.":"Scan completed."):"Import stopped; scan did not complete."):
+    g_atomic_int_get(&folder.control.cancelled) ? "Cancelling; committed books are kept…":folder.files ? "Importing selected files…":"Importing; total unknown until scan ends…",
     folder.files ? "\nOnly the latest 32 results are shown. Directories are not scanned.":"\nOnly the latest 32 results are shown. Links and unsupported files are omitted.");
   gtk_label_set_text(GTK_LABEL(folder.message),message);g_free(message);
   gtk_widget_set_sensitive(folder.cancel,!folder.done && !g_atomic_int_get(&folder.control.cancelled));
