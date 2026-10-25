@@ -1,6 +1,8 @@
 """Actions-only exact merge provenance; production bytes stay pinned."""
 import json
+import importlib.util
 import os
+import re
 from pathlib import Path
 import subprocess
 
@@ -68,9 +70,29 @@ def main():
     # tree. Only verifier/workflow/docs edits follow this reviewed merge.
     for path in ('apps', 'examples', 'extras'):
         subprocess.run(['git', 'diff', '--exit-code', BASE, sha, '--', path], check=True)
+    # The common merge boundary replaces T05's standalone ownership allowlist,
+    # but the original cloud adapter's semantic guard still runs on these bytes.
+    spec = importlib.util.spec_from_file_location(
+        'cloud_guard', Path('tests/reader_webdav_import/check_guards.py'))
+    cloud = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cloud)
+    cloud_controls = cloud.selftest()
+    sources = sorted(p for p in Path('apps/reader/cloud-import').rglob('*')
+                     if p.suffix in ('.c', '.h'))
+    assert len(sources) >= 2
+    joined = ''
+    for path in sources:
+        text = path.read_text(encoding='utf-8')
+        joined += text
+        assert not [pattern for pattern in cloud.FORBIDDEN
+                    if re.search(pattern, text)
+                    and not (pattern == 'Authorization' and path.suffix == '.h')], str(path)
+    assert all(re.search(pattern, joined) for pattern, _ in cloud.BOUNDARY)
+    assert 'EXR_SIDELOAD_STREAM_LIMIT' in joined and 'EXR_SIDELOAD_MEMORY_LIMIT' in joined
     report = dict(source_sha=sha, run_id=os.environ['GITHUB_RUN_ID'],
                   attempt=os.environ['GITHUB_RUN_ATTEMPT'], accepted=True, baseline=BASE,
-                  deliveries=DELIVERIES, sdk_changed=False, schema_changed=False)
+                  deliveries=DELIVERIES, sdk_changed=False, schema_changed=False,
+                  cloud_adapter_source_guard=True, cloud_source_controls=cloud_controls)
     target = Path('build/hosts-input.json');target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report))
