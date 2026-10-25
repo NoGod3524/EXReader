@@ -1,5 +1,6 @@
 """Actions-only upper collector: whole current-attempt leaves, never platform splicing."""
 import argparse
+import importlib.util
 from datetime import datetime,timezone
 import json
 import os
@@ -19,9 +20,9 @@ import apple as original_apple
 APPLE=('records','navigation','search','shelf','mapping','wp13','page_theme')
 REQUIRED=('composition','gtk41','android130','windows_full_f3','windows_atomic13',*('apple_'+name for name in APPLE))
 PRODUCT_REQUIRED=('apple_record_compatibility','android_to_apple','apple_to_android')
-# These are required, unresolved contracts. The root must fill their actual
-# complete workflow/job/artifact/schema identities after reviewing the delivery.
-WINDOWS_CONTRACTS={'windows_full_f3':None,'windows_atomic13':None}
+# Reviewed Windows strict schemas use one whole run for two required scopes.
+# Product peer contracts still require separate actual common-source evidence.
+WINDOWS_CONTRACTS={}
 PRODUCT_CONTRACTS={name:None for name in PRODUCT_REQUIRED}
 SCOPES={
  'composition':'fixed-source 26 optional packages plus SDK: 27 installed package configs',
@@ -30,6 +31,8 @@ SCOPES={
  'apple_records':'native Apple product reading records only',
  'apple_navigation':'native Apple navigation interface only',
  'apple_search':'native Apple search interface only',
+ 'windows_full_f3':'Windows SDK3.41 same full native host: original retained suites plus F3 25',
+ 'windows_atomic13':'Windows SDK3.41 actual full-host atomic preference commit13 and old-veto control',
  'apple_page_theme':'SDK3.41 Apple explicit page themes on macOS and iPhone/iPad simulators only'}
 
 
@@ -48,6 +51,12 @@ SPECS={
  'android130':spec('reader-android-page-theme',2,'summary','reader-android-page-theme-summary-{run}-{attempt}',
    'summary.json',('reader-android-page-theme-{run}-{attempt}',)),
 }
+for key,report in (('windows_full_f3','full-f3.json'),('windows_atomic13','atomic13.json')):
+    WINDOWS_CONTRACTS[key]=spec('reader-windows-341-common',3,
+        'same-source native Windows search artifact authentication',
+        'reader-windows-search-summary-{run}-{attempt}','windows-341-summary/'+report,
+        ('reader-windows-search-initial-{run}-{attempt}',),
+        guard=('Pin exact common production and unchanged original judges',1))
 for key in APPLE:
     if key=='page_theme':
         SPECS['apple_'+key]=spec('reader-apple-page-theme',8,'Strict same-source page theme summary',
@@ -170,7 +179,6 @@ def bind_jobs(rows,live):
 
 
 def basic_summary(key,value,source,ref):
-    require(not key.startswith('windows_'),'Windows summary schema is required but not yet reviewed/pinned')
     require(isinstance(value,dict) and value.get('accepted') is True,'real strict summary did not accept')
     actual_run=value.get('run_id',value.get('run',{}).get('id'));actual_attempt=value.get('attempt',value.get('run',{}).get('attempt'))
     require(value.get('source_sha')==source and str(actual_run)==str(ref['run_id']) and str(actual_attempt)==str(ref['attempt']),'strict summary source/run/attempt differs')
@@ -178,7 +186,9 @@ def basic_summary(key,value,source,ref):
             value.get('performance_accepted',False) is False and value.get('physical_device_execution',False) is False and
             value.get('physical_device',False) is False,'wrong/failed/broader strict scope')
     if key in SCOPES:require(value.get('acceptance_scope',value.get('scope'))==SCOPES[key],'wrong leaf scope')
-    if key=='composition':
+    if key.startswith('windows_'):
+        windows_summary(key,value,source,ref)
+    elif key=='composition':
         require(value.get('task_wide_accepted') is True and len(value.get('packages',[]))==27 and value.get('negative_controls')==41 and
                 set(value.get('platforms',{}))=={'linux','windows','macos'},'complete 27-package three-platform composition absent')
         for platform in value['platforms'].values():
@@ -240,13 +250,61 @@ def basic_summary(key,value,source,ref):
                 report['provider']['static_sdk_linked'] is False,'actual same-source initialization/publication cases incomplete')
 
 
+def windows_summary(key,value,source,ref):
+    require(value.get('sdk_version')=='3.41.0' and value.get('sdk_abi')==1 and
+            value.get('original_judges_preserved') is True and value.get('protocol_rejections')==13,
+            'complete original Windows strict judges/SDK identity absent')
+    identity=value['identity'];files=identity['files']
+    require(identity['source_sha']==source and str(identity['run_id'])==str(ref['run_id']) and
+            str(identity['attempt'])==str(ref['attempt']) and identity['sdk_version']=='3.41.0' and
+            identity['sdk_abi']==1 and identity['sdk_source']==SDK and identity['baseline_sdk_version']=='3.40.0' and
+            identity['baseline_source']=='9854061be331fe603a1822d9b2b36ee357154927' and
+            identity['complete_product'] is False and identity['full_host_options']==
+            {name:True for name in ('SEARCH','NAVIGATION','RECORDS','IMPORT_ORGANIZE','PREFERENCES')},
+            'one full native Windows host and independent old SDK baseline absent')
+    expected={'production','packaged_production','f3_production','shelf_review','atomic_review','old_veto_control',
+              'baseline','production_map','atomic_map','control_map','baseline_map','host_cache','baseline_cache',
+              'sdk_header','sdk_config','sdk_version','baseline_header','baseline_config','baseline_version'}
+    require(set(files)==expected and all(positive(row['bytes']) and isinstance(row['path'],str) and
+            re.fullmatch('[0-9a-f]{64}',row['sha256']) for row in files.values()),'actual Windows file identity inventory incomplete')
+    product=files['production']['sha256'];review=files['atomic_review']['sha256'];control=files['old_veto_control']['sha256']
+    require(product==files['packaged_production']['sha256']==files['f3_production']['sha256']==value['consumer_sha256'] and
+            len({files[name]['sha256'] for name in ('production','shelf_review','atomic_review','old_veto_control','baseline')})==5 and
+            review==value['atomic_review_sha256'] and control==value['old_veto_control_sha256'] and
+            files['production_map']['sha256']==value['production_map_sha256'],'substituted/split Windows production or control identity')
+    proof=value['catalog_identity_adapter']
+    require(proof['source_sha']==source and str(proof['run_id'])==str(ref['run_id']) and str(proof['attempt'])==str(ref['attempt']) and
+            proof['changed_literal_count']==1 and proof['expected_runtime']=='3.41.0' and proof['original_assertions_retained'] is True and
+            all(re.fullmatch('[0-9a-f]{64}',proof[field]) for field in ('original_source_sha256','adapted_source_sha256')) and
+            proof['original_source_sha256']!=proof['adapted_source_sha256'],'original catalog identity adaptation absent')
+    if key=='windows_full_f3':
+        counts={'f3_checks':25,'original_f1_checks':264,'original_f2_checks':130,'navigation_checks':31,
+                'records_checks':32,'original_ui158':158,'original_j01_checks':47,'original_j10_checks':21}
+        require(all(value.get(name)==count for name,count in counts.items()),'full retained Windows suites incomplete')
+        retained=value['retained_summaries']
+        require(set(retained)=={'winsearch-summary','winnav-summary','winrecords-summary','wprefs-summary'},'original recursive strict summaries absent')
+        for row in [*retained.values(),value['import_organize_summary']]:
+            require(row['accepted'] is True and not row.get('problems') and row['source_sha']==source and
+                    str(row['run_id'])==str(ref['run_id']) and str(row['attempt'])==str(ref['attempt']) and
+                    row['consumer_sha256']==product,'foreign/failed original Windows strict result')
+        require(positive(value['import_organize_checks']) and
+                value['import_organize_summary']['ui_checks']==value['import_organize_checks'], 'full import organization suite missing')
+    else:
+        require(value['checks']==13 and value['original_atomic_protocol_rejections']==9 and
+                value['original_f3_suite_accepted'] is False,'actual atomic13 control scope incomplete')
+        path=ROOT/'tests/reader_windows_preferences/verify_commit.py'
+        module_spec=importlib.util.spec_from_file_location('native_original_atomic',path)
+        original=importlib.util.module_from_spec(module_spec);module_spec.loader.exec_module(original)
+        original.validate(value['atomic_report'],source,ref['run_id'],ref['attempt'],review,control)
+
+
 def load_summary(key,contract,ref,run,jobs,selected,summary_job,source):
     name=contract['summary_name'].format(run=ref['run_id'],attempt=ref['attempt']);meta=selected[name]
     bundle=Bundle(meta)
     try:value=bundle.report(contract['report'])
     finally:bundle.close()
     basic_summary(key,value,source,ref);upstream={name:row for name,row in selected.items() if row['id']!=meta['id']}
-    if key in ('gtk41','android130'):bind_declared([value['artifact']],upstream)
+    if key in ('gtk41','android130') or key.startswith('windows_'):bind_declared([value['artifact']],upstream)
     elif key!='apple_wp13':bind_declared(value['artifacts'],upstream)
     # WP13's actual schema has no copied API manifest. Keep that limitation:
     # authenticate its original strict result and the complete live metadata,
@@ -257,6 +315,9 @@ def load_summary(key,contract,ref,run,jobs,selected,summary_job,source):
         bind_jobs(value['jobs'],actual)
     if key=='gtk41':require(value['host_job_id']==next(row['id'] for row in jobs if row['name']=='GTK 3.41 complete retained suites and actual owner record compatibility'),'GTK actual host job differs')
     if key=='android130':require(value['producer_job']==next(row['id'] for row in jobs if row['name']=='android'),'Android producer job differs')
+    if key.startswith('windows_'):
+        require(value['producer_job']==next(row['id'] for row in jobs if row['name']=='installed F1 and native Windows search controls and lifecycle'),
+                'Windows complete native producer differs')
     return dict(mode='actual original strict summary ZIP plus complete current-attempt metadata',summary_artifact=compact(meta),
                 upstream_artifacts=[compact(row) for row in upstream.values()],summary_scope=value.get('acceptance_scope',value.get('scope',value.get('package'))),
                 original_strict_accepted=True,upstream_manifest_present=key!='apple_wp13')
