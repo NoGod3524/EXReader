@@ -1,0 +1,22 @@
+{
+  "accepted": false,
+  "adopted": false,
+  "branch": "codex/reader-apple-raw3-ios",
+  "base": "44eabdc86b3b84d986f81dbaf8cee92b1829cea8",
+  "source_sha": null,
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "family_source": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+  "runs": [],
+  "original_OFF_reading_cases_per_platform": 7,
+  "original_UI_wait_seconds": 90,
+  "default_raw_enabled": false,
+  "schema": 1,
+  "wire_envelope": 1,
+  "default_anchor_max": 2,
+  "mobile_HTTPS_scope": "actual retained NULL wire inbound only; no full mobile sync grant",
+  "physical_device_execution": false,
+  "android_interop_accepted": false,
+  "full_mobile_sync_accepted": false,
+  "performance_accepted": false,
+  "complete_product": false
+}

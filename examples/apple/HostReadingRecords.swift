@@ -424,6 +424,9 @@ enum HostReadingWorker {
             try afterDurableSave?()
 #endif
             let result = try apply(request, session: session, catalog: catalog, cancel: cancel)
+#if EXR_APPLE_RAW3_REVIEW && EXR_APPLE_HOST_REVIEW
+            try HostRaw3Review.audit(session: session, catalog: catalog, root: root, event: "actual-submit", submission: request, created: result.created)
+#endif
 #if EXR_APPLE_HOST_REVIEW
             try afterCommit?()
 #endif
@@ -435,6 +438,9 @@ enum HostReadingWorker {
         try HostReadingRequests.withLock(root) { file in
             guard let request = try HostReadingRequests.read(file) else { throw HostError.invalidInput("没有待完成记录") }
             let result = try apply(request, session: session, catalog: catalog, cancel: cancel)
+#if EXR_APPLE_RAW3_REVIEW && EXR_APPLE_HOST_REVIEW
+            try HostRaw3Review.audit(session: session, catalog: catalog, root: root, event: "actual-replay", submission: request, created: result.created)
+#endif
             try HostReadingRequests.clear(request.revision, file: file)
             return result
         }
