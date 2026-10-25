@@ -138,26 +138,49 @@ def dependency_closure():
 
 @register
 def reachability_and_sdk_uniqueness():
-    machos = [spec.BUNDLE_EXECUTABLE, 'Contents/Frameworks/libexreader.1.dylib']
-    expect_clean(spec.reachability_problems(GOOD_DEPENDENCIES, machos), 'reachability good')
-    orphan = machos + ['Contents/Frameworks/libother.dylib']
-    expect(spec.reachability_problems(GOOD_DEPENDENCIES, orphan), 'framework_not_referenced:',
-           'framework orphan')
-    expect_clean(spec.sdk_uniqueness_problems(GOOD_FILES, GOOD_DEPENDENCIES), 'sdk unique good')
-    two = dict(GOOD_FILES)
-    two['Contents/Frameworks/libexreader.2.dylib'] = {'bytes': 1, 'sha256': 'd'}
-    expect(spec.sdk_uniqueness_problems(two, GOOD_DEPENDENCIES), 'sdk_library_count:', 'sdk count')
-    copy = dict(GOOD_FILES)
+    primary = 'Contents/Frameworks/libexreader.1.dylib'
+    alias = 'Contents/Frameworks/libexreader.3.41.0.dylib'
+    machos = [spec.BUNDLE_EXECUTABLE, primary, alias]
+    identities = {spec.BUNDLE_EXECUTABLE: None, primary: '@rpath/libexreader.1.dylib',
+                  alias: '@rpath/libexreader.1.dylib'}
+    expect_clean(spec.reachability_problems(GOOD_DEPENDENCIES, machos, identities),
+                 'reachability good')
+    orphan = 'Contents/Frameworks/libother.dylib'
+    orphaned = dict(identities)
+    orphaned[orphan] = '@rpath/libother.dylib'
+    expect(spec.reachability_problems(GOOD_DEPENDENCIES, machos + [orphan], orphaned),
+           'framework_not_referenced:' + orphan, 'framework orphan')
+    libraries = {primary: {'install_name': '@rpath/libexreader.1.dylib', 'code_digest': 'c'},
+                 alias: {'install_name': '@rpath/libexreader.1.dylib', 'code_digest': 'c'}}
+    files = dict(GOOD_FILES)
+    files[alias] = {'bytes': 1, 'sha256': 'd'}
+    expect_clean(spec.sdk_uniqueness_problems(files, GOOD_DEPENDENCIES, libraries), 'sdk unique good')
+    split = dict(libraries)
+    split[alias] = {'install_name': '@rpath/libexreader.2.dylib', 'code_digest': 'c'}
+    expect(spec.sdk_uniqueness_problems(files, GOOD_DEPENDENCIES, split), 'sdk_library_identity:',
+           'sdk identity')
+    recoded = dict(libraries)
+    recoded[alias] = {'install_name': '@rpath/libexreader.1.dylib', 'code_digest': 'z'}
+    expect(spec.sdk_uniqueness_problems(files, GOOD_DEPENDENCIES, recoded), 'sdk_library_code:',
+           'sdk code')
+    copy = dict(files)
     copy['Contents/Resources/libexreader.1.dylib'] = {'bytes': 1, 'sha256': 'd'}
-    expect(spec.sdk_uniqueness_problems(copy, GOOD_DEPENDENCIES), 'sdk_library_duplicate:',
+    expect(spec.sdk_uniqueness_problems(copy, GOOD_DEPENDENCIES, libraries), 'sdk_library_duplicate:',
            'sdk duplicate')
-    unmatched = [dict(GOOD_DEPENDENCIES[0], install_name='/usr/lib/libc++.1.dylib')]
-    expect(spec.sdk_uniqueness_problems(GOOD_FILES, unmatched), 'sdk_library_not_referenced_by_executable',
-           'sdk unreferenced')
-    static = dict(GOOD_FILES)
+    expect(spec.sdk_uniqueness_problems(GOOD_FILES, GOOD_DEPENDENCIES, {}), 'sdk_library_count:0',
+           'sdk none')
+    unmatched = [dict(GOOD_DEPENDENCIES[0], install_name='@rpath/libexreader.9.dylib'),
+                 GOOD_DEPENDENCIES[1]]
+    expect(spec.sdk_uniqueness_problems(files, unmatched, libraries), 'sdk_library_reference_name:',
+           'sdk reference')
+    doubled = list(GOOD_DEPENDENCIES) + [dict(GOOD_DEPENDENCIES[0],
+                                              install_name='@rpath/libexreader.2.dylib')]
+    expect(spec.sdk_uniqueness_problems(files, doubled, libraries), 'sdk_library_references:',
+           'sdk two references')
+    static = dict(files)
     static['Contents/Frameworks/libreader_catalog.a'] = {'bytes': 1, 'sha256': 'd'}
-    expect(spec.sdk_uniqueness_problems(static, GOOD_DEPENDENCIES), 'static_archive_shipped:',
-           'static archive')
+    expect(spec.sdk_uniqueness_problems(static, GOOD_DEPENDENCIES, libraries),
+           'static_archive_shipped:', 'static archive')
 
 
 @register

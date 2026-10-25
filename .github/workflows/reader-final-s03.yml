@@ -104,6 +104,14 @@ jobs:
           python3 tools/build_apple_host.py --sdk "$S03_WORK/stage" --platform macos \
             --sdk-version "$SDK_VERSION" --product-prefix "$S03_WORK/products-raw" \
             --selector-bytes-candidate --output "$S03_WORK/app-raw"
+      - name: Source, SDK and installed identity
+        run: |
+          set -euo pipefail
+          python3 tests/reader_final_s03/identity.py \
+            --producer "$S03_WORK/producer" --sdk-source "$S03_WORK/sdk-source" \
+            --sdk-source-sha "$SDK_SHA" --stage "$S03_WORK/stage" \
+            --archive "$S03_WORK/sdk-source.tar" --verifier-sha "$GITHUB_SHA" \
+            --output "$S03_EVIDENCE/identity.json" || echo 'identity evidence recorded a rejection'
       - name: Dependency, resource and product-library manifest for each candidate
         run: |
           set -euo pipefail
@@ -118,15 +126,7 @@ jobs:
               failures="$failures manifest-$candidate"
             fi
           done
-          if [ -n "$failures" ]; then echo "rejected:$failures"; exit 1; fi
-      - name: Source, SDK and installed identity
-        run: |
-          set -euo pipefail
-          python3 tests/reader_final_s03/identity.py \
-            --producer "$S03_WORK/producer" --sdk-source "$S03_WORK/sdk-source" \
-            --sdk-source-sha "$SDK_SHA" --stage "$S03_WORK/stage" \
-            --archive "$S03_WORK/sdk-source.tar" --verifier-sha "$GITHUB_SHA" \
-            --output "$S03_EVIDENCE/identity.json"
+          echo "manifest rejections: $failures (the aggregate step is the gate)"
       - name: Relocate into a space and Unicode path, then offline open and reopen
         run: |
           set -euo pipefail
@@ -139,7 +139,7 @@ jobs:
               failures="$failures smoke-$candidate"
             fi
           done
-          if [ -n "$failures" ]; then echo "rejected:$failures"; exit 1; fi
+          echo "smoke rejections: $failures (the aggregate step is the gate)"
       - name: Verify and aggregate this run's evidence
         if: always()
         run: |

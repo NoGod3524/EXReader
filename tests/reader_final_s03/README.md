@@ -16,7 +16,10 @@ decide whether the resulting bytes prove the claim.
 | `check_spec.py` | Feeds every decision a good input plus one single mutation and requires a named rejection. |
 
 Accepted per candidate means: closed dependency closure with exactly one dynamic
-SDK, no static archive, Info.plist/arch/minos/SDK-source match, resources and
+SDK identity (the producer ships it under every versioned name the linker asks
+for, so aliases are accepted only when their `LC_ID_DYLIB` and exported symbols
+are the same library and no copy exists outside `Contents/Frameworks`), no static
+archive, Info.plist/arch/minos/SDK-source match, resources and
 licence originals matching the installed tree, producer `build.json` equal to the
 recomputed hashes, byte-identical relocation into a space+Unicode path, a proven
 network-denied envelope, and open+reopen reports with `check_count >= 20` from the

@@ -93,12 +93,15 @@ def main():
                 candidate_problems.append('smoke_bundle_not_relocated_here')
             if manifest is not None:
                 libraries = manifest.get('sdk_library') or {}
-                if len(libraries) != 1:
-                    candidate_problems.append('manifest_sdk_library_count')
-                for relative, entry_library in libraries.items():
-                    install = entry_library.get('install_name') or ''
-                    if not install.startswith('@rpath/' + spec.SDK_LIBRARY_TOKEN):
-                        candidate_problems.append('manifest_sdk_install_name:' + str(relative))
+                names, codes = spec.sdk_library_identities(libraries)
+                if not libraries:
+                    candidate_problems.append('manifest_sdk_library_missing')
+                if len(names) != 1:
+                    candidate_problems.append('manifest_sdk_library_identity:' + ','.join(names))
+                if len(codes) != 1:
+                    candidate_problems.append('manifest_sdk_library_code:' + str(len(codes)))
+                if names and not names[0].startswith('@rpath/' + spec.SDK_LIBRARY_TOKEN):
+                    candidate_problems.append('manifest_sdk_install_name:' + names[0])
                 if (manifest.get('info_plist') or {}).get('EXRSourceSHA') != producer_sha:
                     candidate_problems.append('info_plist_source_sha')
         entry['accepted'] = not candidate_problems

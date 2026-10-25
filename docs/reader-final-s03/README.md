@@ -36,7 +36,7 @@ producer 的 SDK 承载路径（`include`、`src`、`cmake`、`CMakeLists.txt`�
 ## 每个候选的接受条件
 
 - 依赖闭包：所有 `otool -L` 条目要么在 bundle 内按 LC_RPATH 解析到真实文件，要么是系统库；无外部绝对依赖。
-- 唯一来源：`Contents/Frameworks` 恰好一个 `libexreader*.dylib`，bundle 内无第二份副本、无静态 `.a`，可执行文件必须引用它；SQLite 提供者唯一来自 `libreader_catalog_sqlite.a(sqlite3.c.o)`，无系统 SQLite、无第二个静态 SDK。
+- 唯一来源：`Contents/Frameworks` 里的 `libexreader*.dylib` 必须同属一个动态库身份（`LC_ID_DYLIB` 与导出符号摘要一致），即 producer 按链接器所需把同一库以带版本别名一并放入；bundle 内不得出现 `Contents/Frameworks` 之外的副本，不得携带静态 `.a`，可执行文件恰好引用该身份一次；SQLite 提供者唯一来自 `libreader_catalog_sqlite.a(sqlite3.c.o)`，无系统 SQLite、无第二个静态 SDK。
 - Info.plist：`CFBundleShortVersionString == 3.41.0`、`LSMinimumSystemVersion == 12.0`、`NSHighResolutionCapable`、`EXRSourceSHA == producer 提交`、`EXRRawSelectorEnabled` 与候选一致。
 - 架构：可执行文件与每个 Frameworks 动态库均为单一 `arm64`；可执行文件 minos 固定 12.0，SDK/产品动态库的 minos 由 CMake 工具链缺省决定（记录而不固定），但必须都是 macOS 平台构建。
 - 资源：`Sample.pdf`/`Sample.epub`/`reader-catalog-v1.sql`/`Reader.otf`/`Noto-OFL.txt`/`EXReader-LICENSE.txt`/`THIRD_PARTY_NOTICES.md`/`licenses/` 齐备，字体与许可证散列与 pin/安装树一致。

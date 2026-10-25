@@ -8,6 +8,7 @@ contract (tests/reader_distribution_inventory/contract.py) for digests and for
 the private-path and test-secret scans instead of restating them.
 """
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -80,6 +81,14 @@ def load_commands(path):
                     identity = match.group(1)
                     break
     return rpaths, build, identity
+
+
+def code_digest(path):
+    """Digest the exported symbol lines, so signing cannot change this identity."""
+    code, text = command('nm', '-g', path)
+    if code != 0:
+        return None
+    return hashlib.sha256('\n'.join(sorted(text.splitlines())).encode('utf-8')).hexdigest()
 
 
 def dependencies(path, identity):
@@ -233,15 +242,18 @@ def main():
                                                        loader_dir, bundle_root)
             records.append({'owner': relative, 'install_name': name, 'kind': kind,
                             'resolved': resolved})
+    identities = {relative: command_map[relative][2] for relative in machos}
     problems += spec.dependency_problems(records, files)
-    problems += spec.reachability_problems(records, machos)
-    problems += spec.sdk_uniqueness_problems(files, records)
+    problems += spec.reachability_problems(records, machos, identities)
     libraries = [path for path in files
                  if path.startswith(spec.BUNDLE_FRAMEWORKS + '/')
                  and posixpath.basename(path).startswith(spec.SDK_LIBRARY_TOKEN)]
-    sdk_library = {path: files[path] for path in libraries}
-    for path in sdk_library:
-        sdk_library[path]['install_name'] = command_map[path][2]
+    sdk_library = {}
+    for path in libraries:
+        sdk_library[path] = dict(files[path])
+        sdk_library[path]['install_name'] = identities.get(path)
+        sdk_library[path]['code_digest'] = code_digest(app / path)
+    problems += spec.sdk_uniqueness_problems(files, records, sdk_library)
 
     resources = spec.sub_map(files, spec.BUNDLE_RESOURCES)
     resource_digests = {path: entry['sha256'] for path, entry in resources.items()}

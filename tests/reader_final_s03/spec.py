@@ -306,34 +306,56 @@ def dependency_problems(records, files):
     return problems
 
 
-def reachability_problems(records, macho_files):
+def reachability_problems(records, macho_files, identities):
+    """No orphan framework binary; a byte alias of a referenced library is allowed.
+
+    The producer copies every name the SDK installs, so one dynamic library can
+    appear under its versioned names. An unreferenced copy is only accepted when
+    it carries the same LC_ID_DYLIB as a library that is referenced.
+    """
     referenced = {record['resolved'] for record in records
                   if record['kind'] == 'bundle' and record.get('resolved')}
+    referenced_names = {identities.get(path) for path in referenced if identities.get(path)}
     problems = []
     for relative in sorted(macho_files):
-        if relative.startswith(BUNDLE_FRAMEWORKS + '/') and relative not in referenced:
-            problems.append('framework_not_referenced:' + relative)
+        if not relative.startswith(BUNDLE_FRAMEWORKS + '/') or relative in referenced:
+            continue
+        name = identities.get(relative)
+        if name and name in referenced_names:
+            continue
+        problems.append('framework_not_referenced:' + relative)
     return problems
 
 
-def sdk_uniqueness_problems(files, records):
+def sdk_library_identities(libraries):
+    """The distinct dynamic-library identities the bundle ships."""
+    names = sorted({entry.get('install_name') or '' for entry in libraries.values()})
+    codes = sorted({entry.get('code_digest') or '' for entry in libraries.values()})
+    return names, codes
+
+
+def sdk_uniqueness_problems(files, records, libraries):
+    """Exactly one dynamic SDK identity, shipped only under its own aliases."""
     problems = []
-    libraries = [path for path in files
-                 if path.startswith(BUNDLE_FRAMEWORKS + '/')
-                 and posixpath.basename(path).startswith(SDK_LIBRARY_TOKEN)
-                 and path.endswith('.dylib')]
-    if len(libraries) != 1:
-        problems.append('sdk_library_count:' + str(len(libraries)))
+    if not libraries:
+        problems.append('sdk_library_count:0')
+    names, codes = sdk_library_identities(libraries)
+    if len(names) > 1:
+        problems.append('sdk_library_identity:' + ','.join(names))
+    if libraries and len(codes) > 1:
+        problems.append('sdk_library_code:' + str(len(codes)))
     copies = [path for path in files
               if posixpath.basename(path).startswith(SDK_LIBRARY_TOKEN)
               and path not in libraries]
     if copies:
         problems.append('sdk_library_duplicate:' + ','.join(sorted(copies)))
-    executable_links = [record['install_name'] for record in records
-                        if record['owner'] == BUNDLE_EXECUTABLE]
-    if not any(posixpath.basename(name).startswith(SDK_LIBRARY_TOKEN)
-               for name in executable_links):
-        problems.append('sdk_library_not_referenced_by_executable')
+    links = [record['install_name'] for record in records
+             if record['owner'] == BUNDLE_EXECUTABLE
+             and posixpath.basename(record['install_name']).startswith(SDK_LIBRARY_TOKEN)]
+    if len(links) != 1:
+        problems.append('sdk_library_references:' + str(len(links)))
+    elif names and links[0] not in names:
+        problems.append('sdk_library_reference_name:' + links[0])
     static = [path for path in files if path.endswith('.a')]
     if static:
         problems.append('static_archive_shipped:' + ','.join(sorted(static)))
