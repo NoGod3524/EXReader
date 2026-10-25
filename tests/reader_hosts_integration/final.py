@@ -89,6 +89,22 @@ def windows_import_summary(report, source, run, attempt, consumer):
             'Windows cloud import or organization proof missing or substituted')
 
 
+def android_import_named(report, expected, source, run, attempt):
+    identity(report, source, run, attempt)
+    require(report.get('accepted') is True and report.get('checks') == 20 and
+            report.get('reading_limit_bytes') == 32 * 1024 * 1024 and
+            report.get('api') == 34 and report.get('abi') == 'x86_64' and
+            report.get('physical_device') is False and report.get('complete_product') is False,
+            'Android host import scope differs')
+    phases = report.get('phases', [])
+    require(len(phases) == len(expected) == 9 and {p['phase'] for p in phases} == set(expected) and
+            len({p['pid'] for p in phases}) == 9, 'Android import phases or process isolation missing')
+    for phase in phases:
+        identity(phase, source, run, attempt)
+        named(phase, len(expected[phase['phase']]), 'passed', 'count', expected=expected[phase['phase']])
+    return 20
+
+
 class Bundle:
     def __init__(self, meta):
         self.meta = meta
@@ -193,6 +209,24 @@ def self_test():
         raise ValueError('Windows import summary accepted a negative control')
     print(json.dumps({'host_protocol_rejections': len(controls) + 1,
                       'windows_import_protocol_rejections': len(changes)}))
+    expected = declaration(ROOT / 'tests/reader_android_host_import/run_ui.py', 'expected')
+    imported = dict(source_sha='s', run_id=1, attempt=2, accepted=True, checks=20, api=34, abi='x86_64',
+                    physical_device=False, complete_product=False, reading_limit_bytes=32 * 1024 * 1024,
+                    phases=[dict(source_sha='s', run_id=1, attempt=2, phase=phase, pid=index + 1,
+                                 passed=True, count=len(names), checks=[dict(name=name, **{'pass': True}) for name in names])
+                            for index, (phase, names) in enumerate(expected.items())])
+    android_import_named(imported, expected, 's', 1, 2)
+    invalid = [dict(source_sha='other'), dict(checks=19), dict(reading_limit_bytes=128 * 1024 * 1024),
+               dict(physical_device=True), dict(phases=imported['phases'][:-1])]
+    duplicate = copy.deepcopy(imported)
+    duplicate['phases'][1]['pid'] = duplicate['phases'][0]['pid']
+    for bad in [imported | change for change in invalid] + [duplicate]:
+        try:
+            android_import_named(bad, expected, 's', 1, 2)
+        except ValueError:
+            continue
+        raise ValueError('Android import verifier accepted a negative control')
+    print(json.dumps({'android_import_protocol_rejections': len(invalid) + 1}))
 
 
 def authenticate_cbz(bundle, report, source, run, attempt):
@@ -477,7 +511,7 @@ def main():
                 require(report['ok'] is True, 'GTK selected-file owner failed')
         result['scopes']['gtk_native_drop_paste_import'] = True
 
-        android, _ = open_bundle('reader-android-cbz-reading', 'android')
+        android, android_job = open_bundle('reader-android-host-import', 'android')
         for feature, total, phases in (('reading', 16, 3), ('search', 15, 2), ('navigation', 18, 2), ('preferences', 17, 3), ('cbz_reading', 10, 3)):
             report = android.report('android-%s/ui/result.json' % feature.replace('_', '-'));identity(report, source, run, attempt)
             require(report['accepted'] is True and report['checks'] == total and len(report['phases']) == phases and
@@ -511,6 +545,22 @@ def main():
         from verify_saved import verify_saved
         result['android_fixed_pan_raw_proof'] = verify_saved(android.bytes, source, run, attempt)
         result['scopes']['android_fixed_page_pan_emulator'] = True
+        imports = android.report('android-host-import/ui/result.json')
+        expected_imports = declaration(ROOT / 'tests/reader_android_host_import/run_ui.py', 'expected')
+        android_import_named(imports, expected_imports, source, run, attempt)
+        # Run the complete original 120-check authenticator without changing its
+        # default source or API contract. Diagnostic targets have an explicitly
+        # authenticated source/run/attempt supplied by this caller above.
+        environment = dict(os.environ, GITHUB_SHA=source, GITHUB_RUN_ID=str(run), GITHUB_RUN_ATTEMPT=str(attempt))
+        subprocess.run([sys.executable, str(ROOT / 'tests/reader_android_host_import/check_evidence.py')],
+                       cwd=ROOT, env=environment, check=True)
+        original = json.loads((ROOT / 'build/android-host-import-summary/summary.json').read_text())
+        identity(original, source, run, attempt)
+        require(original.get('accepted') is True and original.get('checks') == 120 and
+                original.get('producer_job') == android_job['id'] and
+                original['artifact']['id'] == android.meta['id'], 'original Android120 strict proof differs')
+        result['android_original_120_authentication'] = original
+        result['scopes']['android_real_host_import_emulator'] = True
         result['scopes']['android_page_colors'] = False
         result['accepted'] = not failures and not diagnostic
     except Exception as error:
