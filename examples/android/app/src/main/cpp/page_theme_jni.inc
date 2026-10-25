@@ -23,7 +23,8 @@ JNIEXPORT jlong JNICALL Java_org_exreader_host_ThemeReflow_nativePager(JNIEnv *e
   host_control context;exr_control control=host_task_control(env,task,&context);char css[64];(void)type;
   if(reader){
     reader->document=owner->document;reader->font=owner->font;reader->borrowed_font=1;reader->themed=1;reader->background=(uint32_t)background;
-    snprintf(css,sizeof(css),"body { color: #%08x; }",(unsigned)(uint32_t)foreground);
+    /* Plain text has paragraph model nodes and no HTML body element. */
+    snprintf(css,sizeof(css),"%s { color: #%08x; }",exr_document_format(owner->document)==EXR_TXT?"*":"body",(unsigned)(uint32_t)foreground);
     config.page=(exr_layout_options){600,860,margin,size,line,paragraph};config.document_css=1;config.embedded_fonts=1;config.user_css=css;config.control=control;
     status=exr_pager_create(owner->document,owner->font,&config,&reader->pager,&error);
     if(status==EXR_OK)status=exr_pager_set_control(reader->pager,NULL,&error);
