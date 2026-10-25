@@ -55,6 +55,15 @@ def pull(remote, destination):
     return data
 
 
+def describe_cases(report, mode):
+    """Prints every named case that is not a pass so the log carries the detail."""
+    for case in report.get('cases') or []:
+        if case.get('result') != 'pass':
+            detail = (case.get('detail') or '').replace('\n', ' ')
+            print('%s %s %s | %s' % (mode, case.get('result'), case.get('name'), detail[:400]),
+                  flush=True)
+
+
 def instrument(mode, output, source, run_id, attempt):
     output.mkdir(parents=True, exist_ok=True)
     raw = adb('shell', 'am', 'instrument', '-w', '-r',
@@ -160,13 +169,16 @@ def main():
     if not engine_report.get('engine_packages'):
         raise SystemExit('no real TTS engine could be made available on the image')
     if not engine_report.get('pass'):
+        describe_cases(engine_report, 'engine')
         raise SystemExit('engine-present probe failed: ' + json.dumps(engine_report.get('failed_cases')))
 
     removed = disable_engines(engine_report, [])
     missing_report = instrument('none', output / 'none', source, run_id, attempt)
     if missing_report.get('engine_packages'):
         raise SystemExit('engines still registered after removal: %s' % missing_report['engine_packages'])
+    describe_cases(engine_report, 'engine-skipped')
     if not missing_report.get('pass'):
+        describe_cases(missing_report, 'none')
         raise SystemExit('missing-engine probe failed: ' + json.dumps(missing_report.get('failed_cases')))
 
     result = {
