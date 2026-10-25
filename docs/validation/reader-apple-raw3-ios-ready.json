@@ -1,15 +1,57 @@
 {
-  "accepted": false,
+  "accepted": true,
   "branch": "codex/reader-apple-raw3-ios-ready",
   "ordinary_merge_source": "4749131d722f4f585be767207ed16b32dd9d9b3d",
   "raw_producer_source": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
   "readiness_source": "7c457fb68a24d917ac3bd60aa1f961b16fe9ae6b",
-  "source_sha": null,
-  "runs": [],
+  "source_sha": "5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a",
+  "runs": [{
+    "run_id": 40217963443, "attempt": 1, "conclusion": "success",
+    "jobs": [
+      {"id": 121243123378, "name": "Installed SDK and exact raw products iphonesimulator", "conclusion": "success"},
+      {"id": 121243123534, "name": "Installed SDK and exact raw products macos", "conclusion": "success"},
+      {"id": 121243863572, "name": "Actual raw iOS UI ipad", "conclusion": "success"},
+      {"id": 121243863628, "name": "Actual raw iOS UI iphone", "conclusion": "success"},
+      {"id": 121249802254, "name": "summary", "conclusion": "success"}
+    ],
+    "artifacts": [
+      {"id": 12607454469, "name": "raw3-ios-sdk-macos-40217963443-1", "size_in_bytes": 21887243, "digest": "sha256:0cd31b77e8cbe268c58ebc94c3357fd98be247f52ed5803f16f6827b8c231cb5", "expires_at": "2027-01-23T17:45:06Z"},
+      {"id": 12607854433, "name": "raw3-ios-sdk-iphonesimulator-40217963443-1", "size_in_bytes": 21891089, "digest": "sha256:9771004eb2309a7d9a35ec97a1e1e545f90ef1c8c5a10f45b5116c8acf18b973", "expires_at": "2027-01-23T17:45:06Z"},
+      {"id": 12608976777, "name": "apple-raw3-ios-iphone-40217963443-1", "size_in_bytes": 152515213, "digest": "sha256:06cf2e467ce225e927b32f36dccf7febe93fc15bc60fc0d5450cfc56b068f49f", "expires_at": "2027-01-23T17:45:06Z"},
+      {"id": 12608483488, "name": "apple-raw3-ios-ipad-40217963443-1", "size_in_bytes": 186145203, "digest": "sha256:2a37546c8d0bbcb8f171e6f2292bb3d2a94fa24e2ea07d4dcdd12ffe07fd7ead", "expires_at": "2027-01-23T17:45:06Z"},
+      {"id": 12608502348, "name": "apple-raw3-ios-summary-40217963443-1", "size_in_bytes": 3514, "digest": "sha256:31a6215c9c11e24397adbee25def395b957b40a6428fffd3595cf0a5cc057a62", "expires_at": "2027-01-23T17:45:06Z"}
+    ]
+  }],
+  "original_full_raw_strict_passed": true,
+  "same_run_bounded_query_preparation_verified": true,
+  "platforms": [
+    {"platform": "iphone", "device": "iPhone SE (3rd generation)", "runtime": "iOS-26-2", "owner_observations": 54, "real_pdf_point_records": 2, "real_pdf_NUL_range_records": 1, "actual_public_FOUND_observations": 2, "real_received_NULL_typed_rows": 1, "source_versions_edited_and_restored": [1, 2], "original_peer_wires_unchanged": 12, "appearance_query_seconds": 28.1247975,
+      "kill_before": {"created": 1, "pids": [29746, 30234], "pending_sha256": "4be873d4e4e265e78c7b8141377d3d7558d8bd38318450957c74b6d1f5350335"},
+      "kill_after": {"created": 0, "pids": [31784, 32797], "pending_sha256": "e93db539c902f1d6d52b9a2fd6dbe947702648de76f03a29f8da87d4a52ac60d"},
+      "old_pending_sha256": "7707b41da834b41d88c8ab7e734f66faca3c5721a70da50f1a9c12b4dadd055e"},
+    {"platform": "ipad", "device": "iPad mini (A17 Pro)", "runtime": "iOS-26-2", "owner_observations": 54, "real_pdf_point_records": 2, "real_pdf_NUL_range_records": 1, "actual_public_FOUND_observations": 2, "real_received_NULL_typed_rows": 1, "source_versions_edited_and_restored": [1, 2], "original_peer_wires_unchanged": 12, "appearance_query_seconds": 5.1437545,
+      "kill_before": {"created": 1, "pids": [61197, 61916], "pending_sha256": "a65c0b85c0359f49d80c63206baf05cce0275c2be5ac6c97652145b632d4eba6"},
+      "kill_after": {"created": 0, "pids": [64047, 64573], "pending_sha256": "73e5c4cc1569a5fe7bcbf71cb9d33413150413357ecc76b55d4314ad9e0f49d0"},
+      "old_pending_sha256": "8c61a1c05b5ec7af9ff3dc661ca2fe51035ca1e24a341f3eb71094bb19890f5d"}
+  ],
+  "peer": {"source_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65", "run_id": 40196978163, "attempt": 1, "artifact_id": 12600789926,
+    "zip_sha256": "92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5",
+    "operations_database_sha256": "4731ac025a34c435b8b7cc50ba128e0c484c736c2fde6d3ae5658593ed9f3389",
+    "operations_revision_count": 12, "null_revision": "2a490dc51d514032a2815e802c8b3f48",
+    "null_wire_sha256": "a4d655ded931966dc268f01ab4ffb2717e7c31fb98b3823ad277ef4c2d0c1dbc"},
+  "earlier_unaccepted_runs": [
+    {"run_id": 40201199879, "conclusion": "cancelled", "reason": "superseded before SDK execution to preserve original DB and SHM evidence bytes"},
+    {"run_id": 40201417886, "source_sha": "94830df63077ed01241a2ef3082525387fc9ae73", "conclusion": "failure", "reason": "iPhone complete passed; iPad raw case default180 budget ended despite max600; no cross-run acceptance"},
+    {"run_id": 40203714083, "source_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5", "conclusion": "failure", "reason": "iPad complete passed; iPhone original OFF7 had two tap-related failures before raw; no cross-run acceptance"}
+  ],
   "original_off_cases_per_platform": 7,
   "raw_phases_per_platform": 6,
   "production_diff_from_72": false,
   "original_tests_and_judges_changed": false,
+  "default_raw_enabled": false,
+  "sdk_anchor_max_default": 2,
+  "schema": 1,
+  "wire_envelope": 1,
   "physical_device_execution": false,
   "android_interop_accepted": false,
   "full_mobile_sync_accepted": false,
