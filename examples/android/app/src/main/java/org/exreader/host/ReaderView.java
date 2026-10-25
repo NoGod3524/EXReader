@@ -525,7 +525,7 @@ public final class ReaderView extends View {
                 }
                 if(!selectMode&&!longPress&&moved){
                     float dx=x-downX,dy=y-downY;
-                    if(!panning&&((Math.abs(dx)>=Math.abs(dy)&&panLimitX>0)||(Math.abs(dy)>Math.abs(dx)&&panLimitY>0)){
+                    if(!panning&&((Math.abs(dx)>=Math.abs(dy)&&panLimitX>0)||(Math.abs(dy)>Math.abs(dx)&&panLimitY>0))){
                         panning=true;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(true);
                     }
                     if(panning)panBy(downPanX+dx-panX,downPanY+dy-panY);
