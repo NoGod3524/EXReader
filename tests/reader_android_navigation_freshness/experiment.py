@@ -135,14 +135,20 @@ def rebuild_pair():
     host = ROOT / 'examples/android/app/build/outputs/apk/debug/app-debug.apk'
     probe = ROOT / 'examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'
     configs = list((ROOT / 'examples/android/app/build/generated/source/buildConfig').rglob('BuildConfig.java'))
-    need(len(configs) == 1 and 'READER_SELECTOR_BYTES_CANDIDATE = false;' in configs[0].read_text(),
+    for number, path in enumerate(configs):
+        shutil.copyfile(path, EVIDENCE / f'rebuilt-BuildConfig-{number}.java')
+    owners = [path for path in configs if 'package org.exreader.host;' in path.read_text()
+              and 'READER_SELECTOR_BYTES_CANDIDATE' in path.read_text()]
+    print(json.dumps({'generated_build_configs': [str(path.relative_to(ROOT)) for path in configs],
+                      'owner_build_configs': [str(path.relative_to(ROOT)) for path in owners]}), flush=True)
+    need(len(owners) == 1 and 'READER_SELECTOR_BYTES_CANDIDATE = false;' in owners[0].read_text(),
          'rebuilt owner lacks explicit baseline/OFF BuildConfig')
     caches = list((ROOT / 'examples/android/app/.cxx').rglob('CMakeCache.txt'))
     need(caches and all('EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=OFF' in path.read_text() for path in caches),
          'rebuilt native owner does not prove selector candidate OFF')
     for number, path in enumerate(caches):
         shutil.copyfile(path, EVIDENCE / f'rebuilt-cmake-{number}.txt')
-    shutil.copyfile(configs[0], EVIDENCE / 'rebuilt-BuildConfig.java')
+    shutil.copyfile(owners[0], EVIDENCE / 'rebuilt-BuildConfig.java')
     shutil.copyfile(host, EVIDENCE / 'rebuilt-baseline.apk'); shutil.copyfile(probe, EVIDENCE / 'rebuilt-probe.apk')
     identities = {'scope': 'fixed bd8 source rebuilt baseline/OFF host + trace probe signed together',
                   'same_original_apk': False, 'owner_source': BASE,
