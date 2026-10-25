@@ -1,6 +1,7 @@
 # C02 root-review：最小输入状态适配方案
 
-状态：两次新完整云端均为failure。自然首屏及warm输入修正已通过第二轮严格收据核验；原恢复翻页、GTK导入测量仍有失败，C02整体未通过。未运行本地语法/测试/构建。
+状态：三次新完整云端均为failure，预算已用完，已停止重跑。自然首屏及warm输入修正通过收据核验；最后一轮全部数值样本正常，
+但GTK launch失败标记使原聚合拒绝，C02整体未通过。未运行本地语法/测试/构建，也未本地下载或处理工件。
 
 暂停checkpoint `6a795c64` 保留断网前未验证草稿；用户已重连并授权继续最后第3轮。第二轮证据已在远端 `ff81936a` 封存。
 恢复后完成源码审查：只新增9个自有文件，169的全部既有blob/mode未改；workflow仍精确投影原完整scope，
@@ -79,3 +80,29 @@ Windows producer/apps仍绑定原固定0889树，GTK producer仍为57203a52的�
   （1次import start失败及1次允许的resize not_observed），两轮各24 launches。
   strict按原规则拒绝整轮，`measurement_complete=false`。所有job/artifact ID、ZIP字节及digest见同目录validation.json。
   原sampler要求inotify观测到busy=1；当前证据不能区分未启动与漏观测，失败保留。
+- 第三轮（最后完整轮）[`40243807845/1`](https://github.com/NoGod3524/EXReader/actions/runs/40243807845)，
+  source `c86ddb57bfb3dd8ed7dc53cd07fcbfc94e95d32a`：源保护、协议用例、两平台构建通过。
+  Windows两轮分别1057/1058 rows，各30 launches；GTK两轮各384 rows/24 launches；总2883 rows全部`not_ok=0`。
+  strict `121323232484`实际下载并认证6个同次ZIP及完整bundle，核对输入/自然首屏收据、Windows每轮168份操作记录、
+  GTK每轮24份timeline/16次导入busy等待。Windows无失败操作，16次恢复均与真实expected页面匹配；本次未复现此前恢复/导入超时，
+  不据此声称根因修复。原watch捕获全部32次busy；部分独立通知后快照没有busy，说明这类最新快照的缺失不能证明worker未启动。
+  最终仍为failure、`measurement_complete=false`：原聚合列出GTK r1的10个、r2的11个failed launch；全部GTK launch日志均exit=0，
+  没有`LAUNCH-FAILURE`或数值指标失败。失败标记和零non-ok的矛盾保留，不把失败降级成not_observed。
+
+## 第三轮关闭期诊断差异（纯源码对照）
+
+源码审查遗漏了新增诊断对原failure读取时机的影响：
+
+1. 原 [`observe.py:179`](https://github.com/NoGod3524/EXReader/blob/169b0be3c1c8199be0211649412d23d9e34041e4/tests/reader_perf_gtk/observe.py#L179)
+   的`Watch.close`置running=false并关闭inotify fd，未join原watch线程；原`_loop`的select/read异常分支会写入`self.failure`。
+2. 第三轮 [`gtk_adapter.py:66`](https://github.com/NoGod3524/EXReader/blob/c86ddb57bfb3dd8ed7dc53cd07fcbfc94e95d32a/tests/reader_c02_root_review/gtk_adapter.py#L66)
+   在原close之后再等待独立observer退出（最多2秒），随后写诊断JSON，才返回原sampler。
+3. 原 [`sample.py:709`](https://github.com/NoGod3524/EXReader/blob/169b0be3c1c8199be0211649412d23d9e34041e4/tests/reader_perf_gtk/sample.py#L709)
+   随后才读取`watch.failure`保存到`observation_failure`；原aggregate第104行将该字段非空的launch判失败。
+
+因此新增诊断扩大了原fd关闭后到failure取样之间的时窗；这是明确的执行时序差异。EBADF/关闭竞态是源码线索，
+当前打印日志没有具体`original_failure`值，不能作为已证实的实际故障原因。工件保留完整original_failure与独立时间线，
+后续由root安排实际sample closure修复及单独有界验收，本包不启动第4轮、不改变原failure语义，不冒称性能达标。
+
+所有最终job/artifact ID、大小、digest与2027-01-23到期时间见`validation.json`。原summary工件保留CPU分层p50/p95/max及RSS，
+预算仍为未批准的建议；本包只测旧Windows0889/GTK572 producer，不授予当前共同源码、完整产品或旧SDK预算达标。

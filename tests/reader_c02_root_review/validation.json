@@ -1,7 +1,47 @@
 {
   "accepted": false,
-  "status": "two full failures sealed; final diagnostic full round authorized after source review; original measurements remain incomplete",
+  "status": "three full failures sealed; final raw samples all ok but GTK launch failure flags remain; closure race requires separate bounded acceptance",
+  "measurement_complete": false,
+  "full_rounds_used": 3,
+  "full_rounds_limit": 3,
   "latest_run": {
+    "source": "c86ddb57bfb3dd8ed7dc53cd07fcbfc94e95d32a",
+    "run_id": 40243807845, "attempt": 1, "conclusion": "failure",
+    "strict_job_id": 121323232484,
+    "root_input_receipts_validated": true,
+    "raw_rows_total": 2883, "raw_non_ok_total": 0,
+    "windows": [
+      {"round": 1, "job_id": 121322018437, "launches": 30, "rows": 1057, "non_ok": 0,
+       "failed_launches": 0, "traced_operations": 168, "failed_operations": 0},
+      {"round": 2, "job_id": 121322018483, "launches": 30, "rows": 1058, "non_ok": 0,
+       "failed_launches": 0, "traced_operations": 168, "failed_operations": 0}
+    ],
+    "gtk": [
+      {"round": 1, "job_id": 121322788388, "launches": 24, "rows": 384, "non_ok": 0,
+       "failed_launches": ["g1-n500-01", "g1-n500-04", "g1-n500-09", "g1-n500-10", "g1-n5000-00", "g1-n5000-02", "g1-n5000-03", "g1-n5000-05", "g1-n5000-09", "g1-n5000-11"],
+       "diagnostic_timelines": 24, "import_busy_waits": 16, "busy_wait_failures": 0},
+      {"round": 2, "job_id": 121322788322, "launches": 24, "rows": 384, "non_ok": 0,
+       "failed_launches": ["g2-n5000-02", "g2-n5000-04", "g2-n5000-08", "g2-n5000-09", "g2-n5000-10", "g2-n500-01", "g2-n500-03", "g2-n500-04", "g2-n500-07", "g2-n500-09", "g2-n500-11"],
+       "diagnostic_timelines": 24, "import_busy_waits": 16, "busy_wait_failures": 0}
+    ],
+    "native_exit_log": "all GTK launch lines report exit=0; no LAUNCH-FAILURE printed",
+    "closure_source_comparison": "original Watch.close closes fd without joining original watch thread; TraceWatch.close then joins the independent observer and writes diagnostics before original Sampler reads watch.failure",
+    "closure_inference": "new diagnostic delay expands the post-close interval in which original thread may set failure; exact failure string and EBADF cause not confirmed by printed logs",
+    "prior_resume_import_failures": "not reproduced in final diagnostic source; no root-cause fix claimed",
+    "actual_zip_authentication": "six same-run build and round ZIPs plus member bundles authenticated in Actions; original aggregate refused GTK launch failure flags",
+    "artifacts_expires_at": "2027-01-23T23:13:57Z",
+    "artifacts": [
+      {"role": "preflight", "id": 12617299030, "bytes": 526, "sha256": "436d1cf5dccc4e1e8a32b0b58728dc1eee345b8579a5a3a4f2827bd1c14fbfcf"},
+      {"role": "win-build", "id": 12617449173, "bytes": 20442858, "sha256": "0d63925a57f43680221d4f4d2b21a22ee6e1e91c0f17ad303d6ef4215e54b476"},
+      {"role": "gtk-build", "id": 12617703541, "bytes": 40764682, "sha256": "43cb7cf82de3a97684ee5b0f9635cd3a6c75991efccbcfeb4b322a5f5caf153f"},
+      {"role": "win-r1", "id": 12618336224, "bytes": 201234, "sha256": "f65941c00cd3e36503c247ef557e1646ccf1b25f049cb3d5503d54c3aa3344c1"},
+      {"role": "win-r2", "id": 12617459587, "bytes": 201900, "sha256": "d2c0ed18e6d5eaf0e8a8959ab6f6dbd1a218dead8e2d67f2e2975c6bac4292ce"},
+      {"role": "gtk-r1", "id": 12618218149, "bytes": 4520427, "sha256": "172aa8ce21d610c5e8d2d96cec3a3bdc5a24744398d458af7eaf4da7815f8810"},
+      {"role": "gtk-r2", "id": 12618137194, "bytes": 4519211, "sha256": "42452b47d533b955ec3b66c2b6e06ae98ce0549a5765f63efbbd5077250be1f9"},
+      {"role": "summary", "id": 12618132295, "bytes": 13228, "sha256": "f58b18fa3271a481002ec57d90b822d929955ee8a53440075649ff58f02902d0"}
+    ]
+  },
+  "second_full_round": {
     "source": "bac5606fa8a6efa395a88c148b28ff25d52185ec",
     "run_id": 40238597205, "attempt": 1, "conclusion": "failure",
     "strict_job_id": 121311235125,
