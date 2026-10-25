@@ -1,0 +1,140 @@
+name: Reader desktop display lease
+on:
+  push:
+    branches: [codex/dot-reader-desktop-display]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  native:
+    name: native (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            os: ubuntu-22.04
+          - platform: windows
+            os: windows-2022
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fixed source, SDK 3.40, product tree and exact path guard
+        run: bash tests/reader_desktop_display/check_scope.sh
+      - name: Linux native dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev ninja-build xvfb xauth openbox dbus-x11 python3-dbus python3-gi gnome-session-bin
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Build then install independent production module
+        run: |
+          set -o pipefail
+          mkdir -p evidence/raw evidence/bin evidence/lib
+          prefix="$RUNNER_TEMP/d07-install"
+          if [[ "$RUNNER_OS" == Windows ]]; then prefix=$(cygpath -m "$prefix"); fi
+          echo "DISPLAY_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S extras/desktop-reader-display -B "$RUNNER_TEMP/d07-module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" -DEXR_DISPLAY_SOURCE_SHA="$GITHUB_SHA" 2>&1 | tee evidence/raw/module-configure.log
+          cmake --build "$RUNNER_TEMP/d07-module" 2>&1 | tee evidence/raw/module-build.log
+          cmake --install "$RUNNER_TEMP/d07-module" 2>&1 | tee evidence/raw/module-install.log
+          cp "$prefix"/lib/*.* evidence/lib/
+      - name: Fresh installed C and C++ consumers and native probe
+        run: |
+          set -o pipefail
+          consumer="$RUNNER_TEMP/d07-consumer-source"
+          mkdir -p "$consumer"
+          cp tests/reader_desktop_display/CMakeLists.txt tests/reader_desktop_display/probe* "$consumer/"
+          cp extras/desktop-reader-display/examples/consumer.* "$consumer/"
+          cmake -S "$consumer" -B "$RUNNER_TEMP/d07-consumers" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$DISPLAY_PREFIX" 2>&1 | tee evidence/raw/consumer-configure.log
+          cmake --build "$RUNNER_TEMP/d07-consumers" 2>&1 | tee evidence/raw/consumer-build.log
+          suffix=''; if [[ "$RUNNER_OS" == Windows ]]; then suffix=.exe; fi
+          for binary in display_probe consumer_c consumer_cpp; do cp "$RUNNER_TEMP/d07-consumers/$binary$suffix" evidence/bin/; done
+          for binary in consumer_c consumer_cpp; do
+            set +e
+            "evidence/bin/$binary$suffix" > "evidence/raw/$binary.jsonl" 2> "evidence/raw/$binary.stderr"
+            code=$?
+            set -e
+            echo "$code" > "evidence/raw/$binary.exit"
+            cat "evidence/raw/$binary.jsonl"
+            test "$code" = 0
+          done
+      - name: Real Linux session availability, separate from fault fixtures
+        if: runner.os == 'Linux'
+        env:
+          NO_AT_BRIDGE: '1'
+        run: |
+          set -o pipefail
+          dbus-run-session -- xvfb-run -a bash -c '
+            openbox > evidence/raw/real-window-manager.log 2>&1 & wm=$!
+            conf="$RUNNER_TEMP/d07-real-config"
+            mkdir -p "$conf/gnome-session/sessions"
+            printf "[GNOME Session]\nName=D07 real GNOME session\nRequiredComponents=\n" > "$conf/gnome-session/sessions/d07.session"
+            XDG_CONFIG_HOME="$conf" gnome-session --session=d07 --builtin --disable-acceleration-check > evidence/raw/real-session.log 2>&1 & session=$!
+            sleep 2
+            dpkg-query -W gnome-session-bin libgtk-3-0 > evidence/raw/real-packages.txt
+            /usr/bin/python3 tests/reader_desktop_display/run_probe.py --platform linux --binary evidence/bin/display_probe --output evidence/raw --mode real
+            code=$?
+            kill "$session" "$wm" 2>/dev/null || true
+            exit "$code"
+          '
+      - name: Linux deterministic native-window and D-Bus fault cases
+        if: runner.os == 'Linux'
+        env:
+          NO_AT_BRIDGE: '1'
+        run: |
+          dbus-run-session -- xvfb-run -a bash -c '
+            openbox > evidence/raw/fixture-window-manager.log 2>&1 & wm=$!
+            /usr/bin/python3 tests/reader_desktop_display/fixture_service.py > evidence/raw/fixture.log 2>&1 & fixture=$!
+            sleep 1
+            /usr/bin/python3 tests/reader_desktop_display/run_probe.py --platform linux --binary evidence/bin/display_probe --output evidence/raw --mode native
+            code=$?
+            /usr/bin/python3 tests/reader_desktop_display/run_probe.py --platform linux --binary evidence/bin/display_probe --output evidence/raw --mode termination
+            termination=$?
+            kill "$fixture" "$wm" 2>/dev/null || true
+            test "$code" = 0 && test "$termination" = 0
+          '
+      - name: Windows native power requests and real process termination
+        if: runner.os == 'Windows'
+        run: |
+          python tests/reader_desktop_display/run_probe.py --platform windows --binary evidence/bin/display_probe.exe --output evidence/raw --mode native
+          python tests/reader_desktop_display/run_probe.py --platform windows --binary evidence/bin/display_probe.exe --output evidence/raw --mode termination
+      - name: Bind original raw cases and actual installed binaries
+        if: always()
+        run: python tests/reader_desktop_display/report.py '${{ matrix.platform }}' evidence
+      - name: Preserve all raw failures, installed module and consumers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d07-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 14
+  authenticate:
+    name: authenticate exact source artifacts
+    needs: native
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fixed source guard again
+        run: bash tests/reader_desktop_display/check_scope.sh
+      - name: Authenticate actual completed jobs, ZIP bytes, raw cases and binaries; reject mutations
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tests/reader_desktop_display/authenticate.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d07-authenticated-${{ github.run_id }}-${{ github.run_attempt }}
+          path: authenticated.json
+          if-no-files-found: error
+          retention-days: 14

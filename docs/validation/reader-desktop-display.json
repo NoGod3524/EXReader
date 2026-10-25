@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "package": "D07",
+  "branch": "codex/dot-reader-desktop-display",
+  "fixed_start": "a826a65c9c66e43620eff61b49cb79f941a3c953",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "status": "PENDING_ACTIONS",
+  "tested_sha": null,
+  "evidence_head": null,
+  "capabilities": {
+    "physical_screen_energy": "UNAVAILABLE",
+    "wayland": "UNAVAILABLE",
+    "linux_real_service": "PENDING_MEASUREMENT"
+  },
+  "retained_failures": [],
+  "remaining_gaps": ["Actions validation pending", "Host integration remains root-owned", "Physical screen, battery and Wayland are untested"]
+}

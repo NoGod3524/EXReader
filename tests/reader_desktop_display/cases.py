@@ -1,0 +1,7 @@
+"""Named expectations are source-controlled, never inferred from passed output."""
+COMMON = '''null_options bad_options_size bad_utf8 surrogate_utf8 control_reason lease_lower_bound lease_upper_bound reason_upper_bound reason_exact_bound lease_count_bound lease_count_recovered observe_failure_atomic invalid_active_atomic close_null create_native_window wrong_thread_no_mutation second_lease retry_after_cancel minimize_releases restore_reacquires hidden_releases window_switch_releases second_window_acquires destroy_releases native_callback_reentry bounded_expiry'''.split()
+CASES = {
+ 'windows': COMMON + '''enable_display_request real_handle_identity cancel_own_handle_only destroyed_native_rejected physical_screen_energy installed_c_abi installed_cpp_abi real_process_termination process_native_cleanup'''.split(),
+ 'linux': COMMON + '''gtk_available fixture_cookie_identity idle_only_flag cancel_own_cookie_only late_cancel_cookie_released late_generation_retry denied_unavailable zero_cookie_unavailable service_disconnect_unavailable missing_service_unavailable reconnect_requires_retry explicit_reconnect timeout_disconnect_cleans_cookie late_destroy_cleans_cookie close_pending_sender_cleanup real_session_service wayland physical_screen_energy installed_c_abi installed_cpp_abi real_process_termination process_native_cleanup'''.split()
+}
+UNAVAILABLE = {'windows': {'physical_screen_energy','process_native_cleanup'}, 'linux': {'real_session_service','wayland','physical_screen_energy'}}
