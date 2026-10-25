@@ -14,10 +14,12 @@ import re
 import shlex
 import shutil
 import sqlite3
+import struct
 import subprocess
 import sys
 import time
 import xml.etree.ElementTree as ElementTree
+import zipfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
@@ -32,6 +34,76 @@ IDENTITY = re.compile(r'^EXReader (\d+\.\d+\.\d+)/(\d+) · (\S+)$')
 
 class Refusal(Exception):
     pass
+
+
+def executable_file_ranges(data):
+    if len(data) < 64 or data[:6] != b'\x7fELF\x02\x01':
+        raise Refusal('native load identity requires a complete little-endian ELF64')
+    offset = struct.unpack_from('<Q', data, 32)[0]
+    stride, count = struct.unpack_from('<HH', data, 54)
+    if stride < 56 or offset + stride * count > len(data):
+        raise Refusal('native ELF program header table is out of bounds')
+    ranges = []
+    for index in range(count):
+        start = offset + index * stride
+        kind, flags, file_offset = struct.unpack_from('<IIQ', data, start)
+        size = struct.unpack_from('<Q', data, start + 32)[0]
+        if kind == 1 and flags & 1 and size:
+            if file_offset + size > len(data):
+                raise Refusal('native executable segment is out of bounds')
+            ranges.append((file_offset, file_offset + size))
+    if not ranges:
+        raise Refusal('native library has no executable PT_LOAD segment')
+    return ranges
+
+
+def apk_executable_ranges(apk, libraries):
+    result = {}
+    with zipfile.ZipFile(apk) as archive, open(apk, 'rb') as raw:
+        for library in libraries:
+            item = archive.getinfo('lib/x86_64/' + library)
+            if item.compress_type != zipfile.ZIP_STORED or item.compress_size != item.file_size:
+                raise Refusal('direct-mapped native library is not a stored APK member')
+            raw.seek(item.header_offset)
+            header = raw.read(30)
+            if len(header) != 30 or header[:4] != b'PK\x03\x04':
+                raise Refusal('invalid native APK local member header')
+            name_bytes, extra_bytes = struct.unpack_from('<HH', header, 26)
+            payload = item.header_offset + 30 + name_bytes + extra_bytes
+            result[library] = [(payload + begin, payload + end)
+                               for begin, end in executable_file_ranges(archive.read(item))]
+    return result
+
+
+def loaded_native_mappings(text, installed_apk, libraries):
+    rows = []
+    for line in text.splitlines():
+        parts = line.split(None, 5)
+        if len(parts) != 6 or 'x' not in parts[1]:
+            continue
+        address = parts[0].split('-')
+        if len(address) != 2:
+            continue
+        try:
+            span = int(address[1], 16) - int(address[0], 16)
+            offset = int(parts[2], 16)
+        except ValueError:
+            continue
+        if span > 0:
+            rows.append((parts[5], offset, offset + span, line))
+    loaded = {}
+    package_dir = installed_apk.rsplit('/', 1)[0] + '/'
+    for library, expected in libraries.items():
+        named = [line for path, _, _, line in rows
+                 if path.startswith(package_dir) and path.endswith('/' + library)]
+        apk_rows = [(begin, end, line) for path, begin, end, line in rows if path == installed_apk]
+        covered = bool(expected) and all(any(begin <= wanted_begin and end >= wanted_end
+                                            for begin, end, _ in apk_rows)
+                                        for wanted_begin, wanted_end in expected)
+        loaded[library] = named or ([line for begin, end, line in apk_rows
+                                    if any(begin <= a and end >= b for a, b in expected)]
+                                   if covered else [])
+    return loaded
 
 
 class Driver:
@@ -245,12 +317,11 @@ class Driver:
 
         maps = self.run_as('cat', '/proc/%s/maps' % pid).decode('utf-8', 'replace')
         self.save('proc-maps.txt', maps)
-        loaded = {name: [line for line in maps.splitlines() if name in line][:2]
-                  for name in ('libexreader_host.so', 'libexreader_jni.so')}
+        ranges = apk_executable_ranges(self.apk, ('libexreader_host.so', 'libexreader_jni.so'))
+        loaded = loaded_native_mappings(maps, self.observed['installed']['path'], ranges)
         self.check('native_libraries_loaded_from_package',
-                   all(rows and any('base.apk' in line or '/data/app/' in line for line in rows)
-                       for rows in loaded.values()),
-                   {name: rows for name, rows in loaded.items()})
+                   all(loaded.values()),
+                   {'mapping_rows': loaded, 'apk_executable_file_ranges': ranges})
 
         screenshot = self.adb('exec-out', 'screencap', '-p', binary=True)
         self.save('screenshots/01-launch.png', screenshot)

@@ -1,11 +1,12 @@
 """Actions-only format and injected-persistence rejection regression."""
 import copy
 import shlex
+import struct
 
 import common
 from static_apks import manifest_booleans
 from summary import application_persisted
-from emulator import Driver, PACKAGE
+from emulator import Driver, PACKAGE, Refusal, executable_file_ranges, loaded_native_mappings
 
 
 def main():
@@ -51,6 +52,29 @@ def main():
     driver.run_as('sh', '-c', 'ls files/books 2>/dev/null')
     assert calls[-1][0][0] == 'exec-out' and calls[-1][1]['binary'] is True
     assert shlex.split(calls[-1][0][1]) == ['run-as', PACKAGE, 'sh', '-c', 'ls files/books 2>/dev/null']
+    elf = bytearray(0x1800)
+    elf[:6] = b'\x7fELF\x02\x01'
+    struct.pack_into('<Q', elf, 32, 64)
+    struct.pack_into('<HH', elf, 54, 56, 1)
+    struct.pack_into('<IIQ', elf, 64, 1, 5, 0x1000)
+    struct.pack_into('<Q', elf, 96, 0x300)
+    assert executable_file_ranges(elf) == [(0x1000, 0x1300)]
+    for bad in (b'', bytes(elf[:80]), b'bad' + bytes(elf[3:])):
+        try:
+            executable_file_ranges(bad)
+        except Refusal:
+            pass
+        else:
+            raise AssertionError('malformed ELF was accepted')
+    apk = '/data/app/package/base.apk'
+    ranges = {'libfirst.so': [(0x3000, 0x3300)], 'libsecond.so': [(0x6000, 0x6400)]}
+    maps = ('10000-11000 r-xp 00003000 00:01 1 ' + apk + '\n'
+            '20000-21000 r-xp 00006000 00:01 1 ' + apk + '\n')
+    assert all(loaded_native_mappings(maps, apk, ranges).values())
+    for bad in (maps.replace(apk, '/data/app/other/base.apk'),
+                maps.replace('r-xp', 'r--p'), maps.replace('00006000', '00007000'),
+                maps.splitlines()[0], maps.replace('20000-21000', '20000-20200')):
+        assert not all(loaded_native_mappings(bad, apk, ranges).values())
     print('S04 strict boolean formats and injected-persistence negatives passed', flush=True)
 
 
