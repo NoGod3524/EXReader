@@ -1,0 +1,10 @@
+{
+  "accepted": false,
+  "state": "candidate_not_yet_run",
+  "base": "f0c272c87b2402979292d0cd973d4f5e7a9f62fd",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "complete_product": false,
+  "screen_reader_accepted": false,
+  "performance_accepted": false,
+  "runs": []
+}
