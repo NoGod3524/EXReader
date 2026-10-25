@@ -27,9 +27,10 @@ public final class ImportTicket {
      * provider stalls, and the temporary is removed. Returns false when the ticket is already committed or done;
      * a committed file is never withdrawn, the host releases it instead.
      */
-    public boolean cancel() {
+    public synchronized boolean cancel() {
+        if (state.get() >= COMMITTED) return false;
         cancelRequested = true;
-        return state.get() < COMMITTED;
+        return true;
     }
 
     boolean cancelRequested() { return cancelRequested; }
@@ -37,7 +38,7 @@ public final class ImportTicket {
     boolean begin() { return state.compareAndSet(QUEUED, COPYING); }
 
     /** The commit boundary: after this returns true cancellation can no longer win. */
-    boolean commit() { return !cancelRequested && state.compareAndSet(COPYING, COMMITTED); }
+    synchronized boolean commit() { return !cancelRequested && state.compareAndSet(COPYING, COMMITTED); }
 
     void fail() { state.set(FAILED); }
 

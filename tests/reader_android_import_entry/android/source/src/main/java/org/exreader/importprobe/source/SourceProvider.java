@@ -35,6 +35,7 @@ public final class SourceProvider extends DocumentsProvider {
         {"txt-gated", "Gated.txt", "text/plain", "5000"},
         {"txt-error", "Error.txt", "text/plain", "-1"},
         {"txt-truncated", "Truncated.txt", "text/plain", "300000"},
+        {"txt-overlong", "Underreported.txt", "text/plain", "1000"},
         {"txt-32m", "Exact32.txt", "text/plain", "-1"},
         {"txt-33m", "Over32.txt", "text/plain", "-1"},
         {"epub-129m", "Over128.epub", "application/epub+zip", "-1"},
@@ -173,6 +174,7 @@ public final class SourceProvider extends DocumentsProvider {
                         fds[1].closeWithError("provider failed mid-stream");
                         break;
                     case "txt-truncated": Streams.text(out, 100_000, 65536, false); break;
+                    case "txt-overlong": Streams.text(out, 2000, 65536, false); break;
                     case "txt-32m": Streams.text(out, (int) (32 * MIB), 65536, false); break;
                     case "txt-33m": Streams.text(out, (int) (32 * MIB) + 1, 65536, false); break;
                     case "epub-129m": Streams.epubLike(out, 128 * MIB + 1); break;

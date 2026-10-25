@@ -8,11 +8,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.exreader.importentry.ImportEntry;
 import org.exreader.importentry.ImportError;
 import org.exreader.importentry.ImportOwner;
 import org.exreader.importentry.ImportTicket;
 import org.exreader.importentry.ReadyRequest;
+import org.exreader.importentry.ReviewChecks;
 import org.exreader.importentry.sample.NativeBridge;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,6 +35,8 @@ final class ProbeHost implements ImportOwner {
     private long handle;
     private ImportEntry entry;
     private ImportTicket lastTicket;
+    private ReadyRequest staleRequest;
+    private ImportEntry staleEntry;
 
     static synchronized ProbeHost get(Context context) {
         if (instance == null) instance = new ProbeHost(context.getApplicationContext());
@@ -83,9 +89,76 @@ final class ProbeHost implements ImportOwner {
                     log("submitted", "count", 1, "action", "submit-uri");
                     break;
                 }
+                case "review-ticket-races":
+                    try { log("review-ticket-races", "result", ReviewChecks.ticketRaces()); }
+                    catch (Throwable error) { log("review-ticket-races", "ok", false, "error", android.util.Log.getStackTraceString(error)); }
+                    break;
+                case "review-release-first": reviewFirstLease(); break;
+                case "review-release-last": reviewLastLease(); break;
+                case "review-stale-release": reviewStaleLease(); break;
+                case "review-foreign-release": reviewForeignLease(); break;
+                case "review-close-generation": reviewCloseGeneration(); break;
+                case "review-fd-count": {
+                    String[] files = new File("/proc/self/fd").list();
+                    log("review-fd-count", "count", files == null ? -1 : files.length);
+                    break;
+                }
                 default: log("command-unknown", "cmd", cmd);
             }
         });
+    }
+
+    private void reviewFirstLease() {
+        List<ReadyRequest> values = entry.pendingReady();
+        boolean valid = values.size() == 2 && values.get(0) != values.get(1) && values.get(0).id().equals(values.get(1).id());
+        if (valid) {
+            staleRequest = values.get(0); staleEntry = entry; entry.release(staleRequest);
+            valid = entry.pendingReady().size() == 1 && values.get(1).file().isFile();
+        }
+        log("review-release-first", "ok", valid);
+    }
+
+    private void reviewLastLease() {
+        List<ReadyRequest> values = entry.pendingReady(); boolean valid = values.size() == 1;
+        if (valid) { ReadyRequest last = values.get(0); commitOne(last); valid = !last.file().exists() && entry.pendingReady().isEmpty(); }
+        log("review-release-last", "ok", valid);
+    }
+
+    private void reviewStaleLease() {
+        List<ReadyRequest> values = entry.pendingReady(); boolean valid = values.size() == 1 && staleRequest != null;
+        if (valid) { staleEntry.release(staleRequest); entry.release(staleRequest); valid = values.get(0).file().isFile() && entry.pendingReady().size() == 1; }
+        log("review-stale-release", "ok", valid);
+    }
+
+    private void reviewForeignLease() {
+        ImportEntry foreign = null; ReadyRequest other = null;
+        try {
+            List<ReadyRequest> values = entry.pendingReady(); if (values.size() != 1) throw new AssertionError("one current lease required");
+            ReadyRequest current = values.get(0); CountDownLatch finished = new CountDownLatch(1);
+            AtomicReference<ReadyRequest> result = new AtomicReference<>(); AtomicReference<ImportError> failure = new AtomicReference<>();
+            foreign = ImportEntry.create(app, new File(app.getFilesDir(), "foreign-entry"), Runnable::run, new ImportOwner() {
+                public void onReady(ImportTicket ticket, ReadyRequest ready) { result.set(ready); finished.countDown(); }
+                public void onFailed(ImportTicket ticket, ImportError error) { failure.set(error); finished.countDown(); }
+            });
+            foreign.submit(android.net.Uri.parse("content://org.exreader.importprobe.source.docs/document/txt-short"), "text/plain");
+            if (!finished.await(30, TimeUnit.SECONDS) || failure.get() != null) throw new AssertionError("foreign actual provider copy failed");
+            other = result.get(); entry.release(other); foreign.release(current);
+            boolean valid = other.file().isFile() && current.file().isFile() && entry.pendingReady().size() == 1 && foreign.pendingReady().size() == 1;
+            foreign.release(other); valid &= !other.file().exists() && current.file().isFile();
+            log("review-foreign-release", "ok", valid);
+        } catch (Throwable error) { log("review-foreign-release", "ok", false, "error", android.util.Log.getStackTraceString(error)); }
+        finally { if (foreign != null) { if (other != null) foreign.release(other); foreign.close(); } }
+    }
+
+    private void reviewCloseGeneration() {
+        List<ReadyRequest> values = entry.pendingReady(); boolean valid = values.size() == 1;
+        if (valid) {
+            ImportEntry old = entry; ReadyRequest oldRequest = values.get(0); closeAndRecreate();
+            List<ReadyRequest> recovered = entry.pendingReady(); old.release(oldRequest); entry.release(oldRequest);
+            valid = recovered.size() == 1 && recovered.get(0) != oldRequest && recovered.get(0).file().isFile();
+            if (valid) { ReadyRequest current = recovered.get(0); commitOne(current); valid = !current.file().exists(); }
+        }
+        log("review-close-generation", "ok", valid);
     }
 
     /** close() releases the staging lock once the copy thread has drained, so a new entry may need a moment. */

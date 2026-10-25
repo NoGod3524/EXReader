@@ -1,4 +1,9 @@
 {
+  "accepted": false,
+  "review_branch": "codex/reader-android-import-entry-review",
+  "review_base": "635ddcb3f865059fd481f8deb9f7927e75743c6d",
+  "review_state": "source_written_cloud_execution_pending",
+  "original_delivery": {
   "work_package": "J04",
   "branch": "codex/reader-android-import-entry",
   "start_commit": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
@@ -43,4 +48,5 @@
     "system DocumentsUI picker (self-built picker Activity used)",
     "third-party cloud providers"
   ]
+  }
 }
