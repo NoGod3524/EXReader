@@ -25,6 +25,11 @@ extern "C" {
 #else
 #include <openssl/evp.h>
 #endif
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_SYNC_REV(name) (s.raw_api?name##_raw_v3:name)
+#else
+#define READER_SYNC_REV(name) name
+#endif
 namespace fs=std::filesystem;
 namespace {
 struct failure {reader_sync_status code;const char *message;int dav=0,revision=0,http=0;};
@@ -113,9 +118,9 @@ std::string object_path(const std::string &key){size_t colon=key.find(':');retur
 std::string revision_name(const reader_revision_info &i){return std::string(i.revision_id)+"-"+i.sha256+".json";}
 bool revision_leaf(const std::string &s){return s.size()==102&&hex(s.substr(0,32),32)&&s[32]=='-'&&hex(s.substr(33,64),64)&&s.substr(97)==".json";}
 }
-struct reader_sync {exr_webdav_client *dav;reader_revisions *revisions;fs::path directory;reader_sync_original_fn original;void *context;std::thread::id owner=std::this_thread::get_id();bool active=false;};
+struct reader_sync {const bool raw_api;explicit reader_sync(bool raw=false):raw_api(raw){} exr_webdav_client *dav;reader_revisions *revisions;fs::path directory;reader_sync_original_fn original;void *context;std::thread::id owner=std::this_thread::get_id();bool active=false;};
 namespace {
-struct guard {reader_sync *sync;explicit guard(reader_sync *s):sync(s){if(!s||s->owner!=std::this_thread::get_id()||s->active)reject(READER_SYNC_ARGUMENT,"Sync requires its creating worker without reentry");s->active=true;}~guard(){sync->active=false;}};
+struct guard {reader_sync *sync;explicit guard(reader_sync *s,bool raw=false):sync(s){if(s&&s->raw_api!=raw)reject(READER_SYNC_ARGUMENT,"Use the explicit step matching the sync capability");if(!s||s->owner!=std::this_thread::get_id()||s->active)reject(READER_SYNC_ARGUMENT,"Sync requires its creating worker without reentry");s->active=true;}~guard(){sync->active=false;}};
 struct listing {exr_webdav_listing value{};~listing(){exr_webdav_listing_free(&value);}};
 struct step {
   reader_sync &s;const exr_webdav_control *control;reader_sync_report &report;
@@ -142,7 +147,7 @@ struct step {
   }
   bool local_original(const reader_revision_info &i){
     if(!i.book_key[0])return true;
-    uint64_t bytes=0;reader_revision_status status=reader_revision_book_identity(s.revisions,i.book_key,&bytes,nullptr);
+    uint64_t bytes=0;reader_revision_status status=READER_SYNC_REV(reader_revision_book_identity)(s.revisions,i.book_key,&bytes,nullptr);
     if(status==READER_REV_NOT_FOUND){++report.pending_metadata;return false;}revision_check(status);
     char path[8192]{};
     bool available=s.original&&!s.original(s.context,i.book_key,path,sizeof(path))&&path[0]&&!path[sizeof(path)-1];
@@ -159,16 +164,16 @@ struct step {
     publish(object_path(i.book_key),snapshot.name,bytes,expected);++report.originals_verified;return true;
   }
   void push(size_t limit){
-    std::vector<queue_row> rows;revision_check(reader_revision_outbox(s.revisions,limit,queued,&rows,nullptr));
+    std::vector<queue_row> rows;revision_check(READER_SYNC_REV(reader_revision_outbox)(s.revisions,limit,queued,&rows,nullptr));
     for(const auto &row:rows){cancelled(control);if(!local_original(row.info))continue;
       private_file wire(s.directory);{std::ofstream output(wire.name,std::ios::binary);output.write(row.wire.data(),(std::streamsize)row.wire.size());if(!output)reject(READER_SYNC_IO,"Cannot stage exact revision bytes");}
       std::string resource=collection("revisions",std::string(row.info.revision_id,2))+revision_name(row.info);
-      publish(resource,wire.name,row.wire.size(),row.info.sha256);revision_check(reader_revision_ack(s.revisions,row.info.revision_id,row.info.sha256,nullptr));++report.pushed;
+      publish(resource,wire.name,row.wire.size(),row.info.sha256);revision_check(READER_SYNC_REV(reader_revision_ack)(s.revisions,row.info.revision_id,row.info.sha256,nullptr));++report.pushed;
     }
   }
   void remote_original(const reader_revision_info &i){
     if(!i.book_key[0])return;
-    uint64_t bytes=i.source_bytes;reader_revision_status status=bytes?READER_REV_OK:reader_revision_book_identity(s.revisions,i.book_key,&bytes,nullptr);
+    uint64_t bytes=i.source_bytes;reader_revision_status status=bytes?READER_REV_OK:READER_SYNC_REV(reader_revision_book_identity)(s.revisions,i.book_key,&bytes,nullptr);
     if(status==READER_REV_NOT_FOUND){++report.pending_metadata;return;}revision_check(status);
     std::string key=i.book_key,expected=key.substr(key.find(':')+1);fs::path cached=s.directory/fs::u8path(object_name(key));
     if(fs::exists(cached)){if(hash_file(cached,bytes,control)!=expected)reject(READER_SYNC_HASH,"Private original cache identity differs");}
@@ -187,19 +192,19 @@ struct step {
     for(size_t n=0;n<count;n++){
       cancelled(control);private_file file(s.directory);download(folder+leaves[n],file);uint64_t size=fs::file_size(file.name);if(size>READER_REVISION_MAX_BYTES)reject(READER_SYNC_LIMIT,"Revision exceeds wire byte ceiling");
       std::ifstream input(file.name,std::ios::binary);std::string wire((std::istreambuf_iterator<char>(input)),{});reader_revision_info info{};
-      revision_check(reader_revision_validate(s.revisions,wire.data(),wire.size(),leaves[n].substr(33,64).c_str(),&info,nullptr));
+      revision_check(READER_SYNC_REV(reader_revision_validate)(s.revisions,wire.data(),wire.size(),leaves[n].substr(33,64).c_str(),&info,nullptr));
       if(std::string(info.revision_id)!=leaves[n].substr(0,32))reject(READER_SYNC_HASH,"Remote revision ID differs from immutable path");
       // Verify a book's claimed immutable length before adopting it as the
       // authority for future references. Bad first metadata cannot poison the
       // retained book identity and block a later correct revision.
-      if(info.source_bytes){uint64_t known=0;reader_revision_status book_status=reader_revision_book_identity(s.revisions,info.book_key,&known,nullptr);
+      if(info.source_bytes){uint64_t known=0;reader_revision_status book_status=READER_SYNC_REV(reader_revision_book_identity)(s.revisions,info.book_key,&known,nullptr);
         if(book_status!=READER_REV_NOT_FOUND)revision_check(book_status);
         if(book_status==READER_REV_OK&&known!=info.source_bytes)revision_check(READER_REV_FORMAT);
         remote_original(info);
       }
       // Non-book history is retained even without metadata; it remains
       // explicitly pending and is verified on the next complete sweep.
-      int created=0;revision_check(reader_revision_receive(s.revisions,wire.data(),wire.size(),info.sha256,nullptr,&created,nullptr));
+      int created=0;revision_check(READER_SYNC_REV(reader_revision_receive)(s.revisions,wire.data(),wire.size(),info.sha256,nullptr,&created,nullptr));
       if(!info.source_bytes)remote_original(info);
       ++report.pulled;std::snprintf(report.after,sizeof(report.after),"%s",leaves[n].c_str());
     }
@@ -209,13 +214,22 @@ struct step {
 };
 template<class Function>reader_sync_status call(reader_sync_error *error,Function function){if(error)std::memset(error,0,sizeof(*error));try{function();return READER_SYNC_OK;}catch(const failure &f){if(error){error->code=f.code;error->dav_code=f.dav;error->revision_code=f.revision;error->http_status=f.http;std::snprintf(error->message,sizeof(error->message),"%s",f.message);}return f.code;}catch(...){if(error){error->code=READER_SYNC_IO;std::snprintf(error->message,sizeof(error->message),"Private sync operation failed");}return READER_SYNC_IO;}}
 }
-extern "C" reader_sync_status reader_sync_create(const reader_sync_config *config,reader_sync **out,reader_sync_error *error){if(out)*out=nullptr;return call(error,[&]{
+static reader_sync_status reader_sync_create_impl(bool raw_api,const reader_sync_config *config,reader_sync **out,reader_sync_error *error){if(out)*out=nullptr;return call(error,[&]{
   if(!config||!out||!config->dav||!config->revisions||!config->private_directory)reject(READER_SYNC_ARGUMENT,"Missing borrowed sync dependencies");
   fs::path folder=fs::u8path(config->private_directory);if(fs::is_symlink(fs::symlink_status(folder))||!fs::is_directory(folder))reject(READER_SYNC_ARGUMENT,"Sync requires a stable private cache directory");
-  std::unique_ptr<reader_sync> s(new reader_sync);s->dav=config->dav;s->revisions=config->revisions;s->directory=folder;s->original=config->original;s->context=config->context;*out=s.release();
+  std::unique_ptr<reader_sync> s(new reader_sync(raw_api));s->dav=config->dav;s->revisions=config->revisions;s->directory=folder;s->original=config->original;s->context=config->context;*out=s.release();
 });}
 extern "C" void reader_sync_free(reader_sync *sync){delete sync;}
-extern "C" reader_sync_status reader_sync_step(reader_sync *sync,unsigned shard,const char *after,size_t limit,const exr_webdav_control *control,reader_sync_report *out,reader_sync_error *error){if(out)std::memset(out,0,sizeof(*out));return call(error,[&]{
-  guard owner(sync);if(shard>255||!after||!out||!limit||limit>100||(*after&&!revision_leaf(after)))reject(READER_SYNC_ARGUMENT,"Invalid bounded sync shard/cursor request");
+static reader_sync_status reader_sync_step_impl(bool raw_api,reader_sync *sync,unsigned shard,const char *after,size_t limit,const exr_webdav_control *control,reader_sync_report *out,reader_sync_error *error){if(out)std::memset(out,0,sizeof(*out));return call(error,[&]{
+  guard owner(sync,raw_api);if(shard>255||!after||!out||!limit||limit>100||(*after&&!revision_leaf(after)))reject(READER_SYNC_ARGUMENT,"Invalid bounded sync shard/cursor request");
   out->shard=shard;out->next_shard=shard;out->shard_count=256;cancelled(control);step session(*sync,control,*out);session.push(limit);session.pull(shard,after,limit);
 });}
+
+extern "C" reader_sync_status reader_sync_create(const reader_sync_config *config,reader_sync **out,reader_sync_error *error){return reader_sync_create_impl(false,config,out,error);}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_sync_status reader_sync_create_raw_v3(const reader_sync_config *config,reader_sync **out,reader_sync_error *error){return reader_sync_create_impl(true,config,out,error);}
+#endif
+extern "C" reader_sync_status reader_sync_step(reader_sync *sync,unsigned shard,const char *after,size_t limit,const exr_webdav_control *control,reader_sync_report *out,reader_sync_error *error){return reader_sync_step_impl(false,sync,shard,after,limit,control,out,error);}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_sync_status reader_sync_step_raw_v3(reader_sync *sync,unsigned shard,const char *after,size_t limit,const exr_webdav_control *control,reader_sync_report *out,reader_sync_error *error){return reader_sync_step_impl(true,sync,shard,after,limit,control,out,error);}
+#endif

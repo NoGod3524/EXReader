@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #include "reading_internal.h"
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#include <reader_projection.h>
+#include <reader_selector_bytes_detail.h>
+#endif
 #include <sqlite3.h>
 #include <cstdio>
 #include <cstdlib>
@@ -68,6 +72,17 @@ std::string location(const reader_rs_capture *c,const char *parser,unsigned vers
     exact=a->exact;prefix=a->prefix?a->prefix:"";suffix=a->suffix?a->suffix:"";
     exact_size=std::strlen(exact);prefix_size=std::strlen(prefix);suffix_size=std::strlen(suffix);start=a->start;end=a->end;
   }
+  #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(version==3){
+    auto raw=[&](const char *value,size_t count){
+      if(count>65536)reject(READER_RS_NOT_REPRESENTABLE,"Raw selector exceeds its byte bound",READER_RS_GAP_LIMIT);
+      out+="{\"base64\":";if(value)quote(out,reader_selector_bytes_detail::encode(value,count).c_str());else out+="null";
+      out+=",\"size\":"+std::to_string(count)+"}";
+    };
+    out+=",\"selector\":{\"exact\":";raw(exact,exact_size);out+=",\"prefix\":";raw(prefix,prefix_size);out+=",\"suffix\":";raw(suffix,suffix_size);
+    out+=",\"start\":"+std::to_string(start)+",\"end\":"+std::to_string(end)+"}}";return out;
+  }
+#endif
   out+=",\"selector\":{\"exact\":";quote(out,exact,exact_size);
   out+=",\"prefix\":";quote(out,prefix,prefix_size);out+=",\"suffix\":";quote(out,suffix,suffix_size);
   out+=",\"start\":"+std::to_string((unsigned long long)start)+",\"end\":"+std::to_string((unsigned long long)end);
@@ -76,8 +91,14 @@ std::string location(const reader_rs_capture *c,const char *parser,unsigned vers
   return out;
 }
 char *copy(const std::string &s){char *out=(char *)std::malloc(s.size()+1);if(!out)throw std::bad_alloc();std::memcpy(out,s.data(),s.size());out[s.size()]=0;return out;}
-void validate(reader_revisions *store,const std::string &wire,reader_revision_info *info){
-  reader_revision_error e{};reader_revision_status status=reader_revision_validate(store,wire.data(),wire.size(),nullptr,info,&e);
+void validate(reader_revisions *store,const std::string &wire,reader_revision_info *info,bool raw=false){
+    reader_revision_error e{};reader_revision_status status;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(raw)status=reader_revision_validate_raw_v3(store,wire.data(),wire.size(),nullptr,info,&e);else
+#else
+  (void)raw;
+#endif
+  status=reader_revision_validate(store,wire.data(),wire.size(),nullptr,info,&e);
   if(status!=READER_REV_OK)reject(READER_RS_REVISION,"Revision module refused the reading-state wire",READER_RS_GAP_NONE,0,(int)status);
 }
 struct database {
@@ -106,7 +127,7 @@ extern "C" reader_rs_gap reader_rs_classify(const reader_rs_capture *capture){
   return gap_of(capture);
 }
 extern "C" void reader_rs_free(void *memory){std::free(memory);}
-static reader_rs_status encode(reader_revisions *store,const reader_rs_envelope *v,const reader_rs_capture *c,unsigned version,size_t part,char **wire,size_t *bytes,reader_rs_error *error){
+static reader_rs_status encode(reader_revisions *store,const reader_rs_envelope *v,const reader_rs_capture *c,unsigned version,size_t part,char **wire,size_t *bytes,reader_rs_error *error,bool raw_api=false){
   if(wire)*wire=nullptr;
   if(bytes)*bytes=0;
   return call(error,[&]{
@@ -125,6 +146,8 @@ static reader_rs_status encode(reader_revisions *store,const reader_rs_envelope 
     if(deleted)out+="null";
     else{
       require_capture(c);
+      if(version==3&&c->mode==READER_RS_FIXED_PAGE&&(c->fixed->exact_size>65536||c->fixed->prefix_size>128||c->fixed->suffix_size>128))
+        reject(READER_RS_NOT_REPRESENTABLE,"Raw selector exceeds its byte bound",READER_RS_GAP_LIMIT);
       reader_rs_gap gap=gap_of(c);
       if(version==1&&gap!=READER_RS_GAP_NONE)reject(READER_RS_NOT_REPRESENTABLE,"SDK capture has no lossless wire v1 selector",gap);
       if(version==2){
@@ -137,6 +160,7 @@ static reader_rs_status encode(reader_revisions *store,const reader_rs_envelope 
         }
         if(gap==READER_RS_GAP_LIMIT||gap==READER_RS_GAP_ROUTE)reject(READER_RS_NOT_REPRESENTABLE,"Capture route exceeds the wire contract",gap);
       }
+      if(version==3&&c->mode!=READER_RS_FIXED_PAGE)reject(READER_RS_ARGUMENT,"Anchor3 is fixed_page only");
       if(!v->parser_version)reject(READER_RS_ARGUMENT,"Parser version is required for a location");
       out+="{\"book_key\":";quote(out,v->book_key);
       if(annotation){out+=",\"annotation_id\":";quote(out,v->annotation_id);}
@@ -145,7 +169,7 @@ static reader_rs_status encode(reader_revisions *store,const reader_rs_envelope 
       out+='}';
     }
     out+='}';
-    reader_revision_info info{};validate(store,out,&info);
+    reader_revision_info info{};validate(store,out,&info,raw_api);
     *wire=copy(out);*bytes=out.size();
   });
 }
@@ -160,11 +184,12 @@ extern "C" void reader_rs_record_free(reader_rs_record *r){
   std::free(r->part_path);std::free(r->page_id);std::free(r->exact);std::free(r->prefix);std::free(r->suffix);std::free(r->note_text);std::free(r->chapter);
   std::memset(r,0,sizeof(*r));
 }
-extern "C" reader_rs_status reader_rs_decode(reader_revisions *store,const void *wire,size_t bytes,reader_rs_record *out,reader_rs_error *error){
+static reader_rs_status decode(bool raw_api,reader_revisions *store,const void *wire,size_t bytes,reader_rs_record *out,reader_rs_error *error){
   if(out)std::memset(out,0,sizeof(*out));
   reader_rs_status status=call(error,[&]{
     if(!store||!wire||!out)reject(READER_RS_ARGUMENT,"Missing wire or record output");
-    std::string w((const char *)wire,bytes);reader_revision_info info{};validate(store,w,&info);
+    if(raw_api&&(bytes<2||bytes>READER_REVISION_MAX_BYTES))reject(READER_RS_REVISION,"Raw wire exceeds its bounded envelope",READER_RS_GAP_NONE,0,READER_REV_LIMIT);
+    std::string w((const char *)wire,bytes);reader_revision_info info{};validate(store,w,&info,raw_api);
     if(std::strcmp(info.entity_kind,"progress")&&std::strcmp(info.entity_kind,"annotation"))reject(READER_RS_ARGUMENT,"Wire is not reading state");
     database json;statement q(json.db,"SELECT json_extract(?1,'$.location_kind'),json_extract(?1,'$.payload.location.parser_version'),"
       "json_extract(?1,'$.payload.location.anchor_version'),json_extract(?1,'$.payload.location.part_path'),"
@@ -185,7 +210,20 @@ extern "C" reader_rs_status reader_rs_decode(reader_revisions *store,const void 
     out->anchor_version=(uint64_t)sqlite3_column_int64(q.s,2);
     out->part_path=column(q.s,3);out->page_id=column(q.s,4);
     if(present(q.s,5))out->page=(uint64_t)sqlite3_column_int64(q.s,5);
-    out->exact=column(q.s,6,&out->exact_size);out->prefix=column(q.s,7,&out->prefix_size);out->suffix=column(q.s,8,&out->suffix_size);
+    #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+    if(out->anchor_version==3){
+      statement raw(json.db,"SELECT json_extract(?1,'$.payload.location.selector.exact.base64'),json_extract(?1,'$.payload.location.selector.exact.size'),json_extract(?1,'$.payload.location.selector.prefix.base64'),json_extract(?1,'$.payload.location.selector.prefix.size'),json_extract(?1,'$.payload.location.selector.suffix.base64'),json_extract(?1,'$.payload.location.selector.suffix.size')");
+      if(sqlite3_bind_text64(raw.s,1,w.data(),w.size(),SQLITE_TRANSIENT,SQLITE_UTF8)!=SQLITE_OK||sqlite3_step(raw.s)!=SQLITE_ROW)reject(READER_RS_MEMORY,"Cannot read validated raw selector");
+      auto take=[&](int col,size_t limit,size_t scalars,size_t &count)->char *{
+        count=(size_t)sqlite3_column_int64(raw.s,col+1);if(!present(raw.s,col))return nullptr;
+        const char *p=(const char *)sqlite3_column_text(raw.s,col);size_t n=(size_t)sqlite3_column_bytes(raw.s,col);std::string decoded;
+        if(reader_selector_bytes_detail::decode(std::string(p,n),count,limit,scalars,decoded)!=reader_selector_bytes_detail::result::ok)reject(READER_RS_REVISION,"Invalid validated raw selector");
+        return copy(decoded);
+      };
+      out->exact=take(0,65536,SIZE_MAX,out->exact_size);out->prefix=take(2,128,32,out->prefix_size);out->suffix=take(4,128,32,out->suffix_size);
+    }else
+#endif
+    {out->exact=column(q.s,6,&out->exact_size);out->prefix=column(q.s,7,&out->prefix_size);out->suffix=column(q.s,8,&out->suffix_size);}
     out->start=(uint64_t)sqlite3_column_int64(q.s,9);out->end=(uint64_t)sqlite3_column_int64(q.s,10);
     out->note_text=column(q.s,11);
     if(present(q.s,12))out->part=(uint64_t)sqlite3_column_int64(q.s,12);
@@ -194,3 +232,19 @@ extern "C" reader_rs_status reader_rs_decode(reader_revisions *store,const void 
   if(status!=READER_RS_OK)reader_rs_record_free(out);
   return status;
 }
+
+extern "C" reader_rs_status reader_rs_decode(reader_revisions *s,const void *w,size_t n,reader_rs_record *r,reader_rs_error *e){return decode(false,s,w,n,r,e);}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_rs_status reader_rs_decode_raw_v3(reader_revisions *s,const void *w,size_t n,reader_rs_record *r,reader_rs_error *e){return decode(true,s,w,n,r,e);}
+extern "C" reader_rs_status reader_rs_encode_fixed_v3(reader_revisions *s,const reader_rs_envelope *e,const reader_rs_capture *c,char **w,size_t *n,reader_rs_error *error){
+  if(w)*w=nullptr;
+  if(n)*n=0;
+  if(!c||c->mode!=READER_RS_FIXED_PAGE)return call(error,[&]{reject(READER_RS_ARGUMENT,"Anchor3 is fixed_page only");});
+  return encode(s,e,c,3,0,w,n,error,true);
+}
+/* Internal command-only preservation of an already-retained legacy selector.
+   The old public encoders still require a legacy store and never write v3. */
+reader_rs_status reader_rs_encode_retained_raw_v3(reader_revisions *s,const reader_rs_envelope *e,const reader_rs_capture *c,unsigned version,size_t part,char **w,size_t *n,reader_rs_error *error){
+  return encode(s,e,c,version,part,w,n,error,true);
+}
+#endif
