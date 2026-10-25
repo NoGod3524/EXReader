@@ -177,13 +177,14 @@ def judge_diagnostics(diags: list[dict], context: dict, coverage: bool = True) -
                 problems.append(where + ": request line lost method/path/status")
             else:
                 opds_lines.append(line)
-                if status == "http":
-                    http_lines += 1
             if not _int(entry, "http_status"):
                 problems.append(where + ": missing http_status")
-            if status == "http":
+            if status == "request":
+                http_lines += 1
                 if entry.get("code") != entry.get("http_status"):
-                    problems.append(where + ": http line status disagrees")
+                    problems.append(where + ": request line status disagrees")
+                elif not 100 <= entry.get("code", 0) <= 599:
+                    problems.append(where + ": request line status out of range")
             elif OPDS_STATUS.get(status) != code:
                 problems.append(where + ": status/code disagree")
             if status == "auth_required" and not entry.get("auth_scheme"):
@@ -228,6 +229,8 @@ def judge_diagnostics(diags: list[dict], context: dict, coverage: bool = True) -
     for status in REQUIRED_OPDS_STATUS:
         if status not in seen.get("opds", set()):
             problems.append("opds coverage missing " + status)
+    if "request" not in seen.get("opds", set()):
+        problems.append("opds coverage missing request lines")
     if http_lines < 6:
         problems.append("opds request-line coverage too small")
     if seen.get("opds-redact") != {"ok"}:

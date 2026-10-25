@@ -194,9 +194,10 @@ def main() -> int:
                                  "expires_at": artifact.get("expires_at"),
                                  "guard_checks": len(guard.get("checks", []))})
             else:
+                # GITHUB_JOB is the workflow job id, not the matrix display name.
                 detail = check_zip(zip_bytes, digest=digest, expected={
                     "source_sha": source, "run_id": run_id, "attempt": attempt,
-                    "platform": key, "job": PLATFORMS[key]})
+                    "platform": key, "job": "platform"})
                 verified.append({"key": key, "name": name, "id": artifact["id"],
                                  "bytes": artifact["size_in_bytes"], "api_sha256": digest,
                                  "zip_sha256": hashlib.sha256(zip_bytes).hexdigest(),

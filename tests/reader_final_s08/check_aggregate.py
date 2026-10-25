@@ -30,7 +30,7 @@ def good_report(platform: str = "windows", **overrides) -> tuple[dict, dict]:
     manifest = [{"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
                 for name, data in sorted(files.items())]
     report = {"schema": 1, "package": "S08", "accepted": True, "platform": platform,
-              "job": PLATFORMS[platform], "source_sha": SOURCE, "run_id": 7, "run_attempt": 2,
+              "job": "platform", "source_sha": SOURCE, "run_id": 7, "run_attempt": 2,
               "checks": 34, "expected_checks": 34, "passed": 34, "judge_problems": [],
               "detector": {"passed": True},
               "scans": {"final": {"files": 4, "bytes": 120, "hits": 0}},
@@ -81,7 +81,7 @@ def main() -> int:
     archive = make_zip(report, files)
     digest = hashlib.sha256(archive).hexdigest()
     expected = {"source_sha": SOURCE, "run_id": 7, "attempt": 2, "platform": "windows",
-                "job": PLATFORMS["windows"]}
+                "job": "platform"}
     try:
         detail = check_zip(archive, digest=digest, expected=expected)
         results.append({"case": "clean-control", "passed": detail["checks"] == 34,

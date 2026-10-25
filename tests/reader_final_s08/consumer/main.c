@@ -312,7 +312,7 @@ static void diag_opds_line(const char *op, const char *line) {
   int status = line_status(line);
   json_escape(line, escaped, sizeof escaped);
   snprintf(extra, sizeof extra, "\"http_status\":%d,\"log_line\":\"%s\"", status, escaped);
-  diag_line("opds", op, "http", status, extra);
+  diag_line("opds", op, "request", status, extra);
 }
 
 static void diag_opds_result(const char *op, opds_status status, const opds_error *error) {
@@ -1251,7 +1251,7 @@ static void verify_clean_phase(const char *account_a, const char *account_c, con
       check("verify-unavailable-second-namespace", 0, "status=open-failed");
     }
     free(list);
-    phase_end("verify-clean");
+    phase_end("verify-unavailable-clean");
     return;
   }
 

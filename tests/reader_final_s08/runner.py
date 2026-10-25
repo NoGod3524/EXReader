@@ -125,12 +125,16 @@ def make_material(root: Path) -> dict:
     io_parent = root / "io-parent"
     io_parent.write_bytes(b"regular file in the way of a store\n")
     stores["store-io"] = str(io_parent / "store")
-    (root / "store-version" / "profiles.json").write_text(
-        '{\n  "format": "reader-account-profiles",\n  "version": 7,\n  "generation": 0,\n'
-        '  "profiles": []\n}\n', encoding="utf-8")
-    (root / "store-format" / "profiles.json").write_text(
-        '{\n  "format": "reader-account-profiles",\n  "version": 1,\n  "generation": 0,\n'
-        '  "profiles": [ ]\n}\n', encoding="utf-8")
+    # Bytes only: a text-mode write would turn 
+ into 
+ on Windows and make
+    # the canonical-shape check fail before it can report VERSION/FORMAT.
+    (root / "store-version" / "profiles.json").write_bytes(
+        b'{\n  "format": "reader-account-profiles",\n  "version": 7,\n  "generation": 0,\n'
+        b'  "profiles": []\n}\n')
+    (root / "store-format" / "profiles.json").write_bytes(
+        b'{\n  "format": "reader-account-profiles",\n  "version": 1,\n  "generation": 0,\n'
+        b'  "profiles": [ ]\n}\n')
     identity = {
         "namespace": "test.exr-s08." + secrets.token_hex(8),
         "namespace2": "test.exr-s08." + secrets.token_hex(8),
@@ -427,7 +431,7 @@ def main() -> int:
         plan += [
             ("unavailable-locked", "unavailable", UNAVAILABLE_CHECKS),
             ("unavailable-no-service", "unavailable", UNAVAILABLE_CHECKS),
-            ("verify-unavailable-clean", "verify-clean", VERIFY_UNAVAILABLE_CHECKS),
+            ("verify-unavailable-clean", "verify-unavailable-clean", VERIFY_UNAVAILABLE_CHECKS),
         ]
     plan += [("cleanup", "cleanup", CLEANUP_CHECKS), ("verify-clean", "verify-clean", VERIFY_CHECKS)]
 
