@@ -212,7 +212,9 @@ def main():
         host.key('F2')
         host.wait(lambda state: not state['reader_visible'] and not state['saving']
                   and not state['shelf_loading'] and state['books'] == 35)
-        shelf_rows = [node for node in bus.children(element('Bookshelf')) if bus.role(node) == 'list item']
+        # The enclosing native scroll pane intentionally shares this name.
+        # Inspect the actual list box, not its viewport wrapper.
+        shelf_rows = [node for node in bus.children(element('Bookshelf', {'list box'})) if bus.role(node) == 'list item']
         assert shelf_rows, 'imported shelf has no actionable book: ' + repr(host.read())
         click_node(shelf_rows[0])
         host.wait(lambda state: state['reader_visible'] and state['book'] > 0 and not state['saving'])
