@@ -78,7 +78,7 @@ the view, apply an explicit `put`, free and close. `main.cpp` is the C++
 driver used by the acceptance script (two real client databases exchange
 revisions with `reader_revision_receive`).
 
-## Acceptance
+## Original J11 acceptance
 
 `.github/workflows/reader-explicit-conflict-actions.yml` runs on Linux,
 Windows and macOS: protected-tree and allowed-path guards against
@@ -125,8 +125,44 @@ add changed-field collision on the same snapshot/stable ID, snapshot view
 lifetime after owner close with cross-worker release, and membership restore
 refusal until both the group and book have been explicitly restored. The
 strict verifier has executable rejection fixtures; these test verifier
-behavior, not substitute platform acceptance. New-source acceptance is pending
-until the exact source has completed all three Actions jobs and strict summary.
+behavior, not substitute platform acceptance.
+
+### Verified T02 acceptance
+
+Tested source: `f800907fac3097fb99e3ea52e8b8066c4c23f499`.
+[Run 40164827613, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40164827613)
+is completed/success. The independent installed consumers passed all 32 named
+behavior checks on Linux (job `121083628879`), Windows (`121083629016`) and
+macOS (`121083629051`). Strict summary job `121084471719` passed its 35
+verifier cases (one positive, 34 rejections) and authenticated/recomputed all
+three actual platform ZIPs and their native consumers/package manifests.
+
+| Artifact | ID | ZIP bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| Linux | 12587876434 | 1827222 | `5801cc7dd3030b57eb95647437fef584bf18618745f5ef72ae3e5b0d0ef7bd6b` |
+| Windows | 12587816553 | 1882828 | `ba68c3f2752acab176f019cac9fce81783fce7a491873e60059e08a8db65a625` |
+| macOS | 12587801883 | 1645112 | `4e8eeeb24ce177e479842173ce79ce4141467acd1658d32878f521864acbce72` |
+| Summary | 12588410433 | 5354575 | `965f43f52839168d59c9c58f9480f434b075ce08a9afdde1b34590b71f39392e` |
+
+The API reports all four artifacts nonexpired, expiring
+`2027-01-23T05:14:52Z`. The summary artifact retains the three verified original
+ZIPs, `summary.json` and `rejection-checks.json`; its own identity is from the
+upload/API metadata, not recursive self-certification. Full artifact names,
+native C/C++ consumer hashes/sizes, installed package manifest hashes, all
+named results and historical failures are in
+`docs/validation/reader-explicit-conflict-actions.json`.
+
+No T02 run failed. Original run `40139960162`, attempt 1, at
+`00a9b3e01738970a50392077dbae9d11a382b9c9` is preserved: summary job
+`121009814018` failed `AssertionError: []` because its report glob found no
+files, despite three successful platform jobs. The original successor
+`be093a95d5eb6beceb23ce5ba76cac3a79610555` corrected the glob. Neither failure
+nor historical artifacts have been removed or relabeled.
+
+This final evidence-only `[skip ci]` commit changes only this document and
+the validation JSON relative to the tested source. Source, tests and workflow
+remain exactly those exercised above. No local build, test, syntax check,
+fixture generation, service, benchmark or artifact processing was performed.
 
 Unchanged scope gaps: no production-host UI integration, SDK original-source
 verification, UI desktop controls, simulators/physical devices, accessibility,

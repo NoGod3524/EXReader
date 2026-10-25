@@ -1,30 +1,685 @@
 {
-  "review": {
-    "package": "T02 explicit conflict actions review",
-    "accepted": false,
-    "base_commit": "37fdc830d75eee8590120d52d4d881102e0d9dc4",
-    "branch": "codex/dot-conflict-actions-review",
-    "status": "Actions acceptance pending for revised evidence verifier and added regressions",
-    "historical_run_attempt": 1,
-    "historical_jobs": [121010009316, 121010009480, 121010009494, 121010290934],
-    "historical_artifact_ids": [12579020164, 12578975246, 12578506436, 12577264908],
-    "module_source_changed": false,
-    "local_validation_performed": false
-  },
-  "package": "J11 explicit conflict actions",
-  "base_commit": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "tested_commit": "be093a95d5eb6beceb23ce5ba76cac3a79610555",
+  "package": "T02 explicit conflict actions review",
+  "accepted": true,
+  "base_commit": "37fdc830d75eee8590120d52d4d881102e0d9dc4",
+  "frozen_sdk_commit": "9854061be331fe603a1822d9b2b36ee357154927",
+  "branch": "codex/dot-conflict-actions-review",
+  "tested_commit": "f800907fac3097fb99e3ea52e8b8066c4c23f499",
   "workflow": ".github/workflows/reader-explicit-conflict-actions.yml",
-  "run_id": 40140153887,
-  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40140153887",
-  "platforms": {"ubuntu-22.04": "success", "windows-2022": "success", "macos-14": "success"},
-  "summary_job": "success (identical SHA, OS set and 29-check list on every platform)",
-  "checks": 29,
-  "scope_covered": [
-    "real two-client concurrency", "late parent", "tombstone then put/explicit restore for book, group, membership",
-    "32/33 head bound", "foreign revision after prepare", "stable-ID retry", "cancellation before commit",
-    "native transaction failure rollback", "owner/reentry rules", "installed C and C++ consumers",
-    "history and schema preserved, no SDK files"
+  "run_id": 40164827613,
+  "run_attempt": 1,
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40164827613",
+  "status": "completed",
+  "conclusion": "success",
+  "api_verified_at_utc": "2026-10-25T05:20:09Z",
+  "evidence_head": "The evidence-only [skip ci] commit containing this record; full final SHA is supplied in the integration handoff.",
+  "tested_to_evidence_diff": [
+    "docs/READER-EXPLICIT-CONFLICT-ACTIONS.md",
+    "docs/validation/reader-explicit-conflict-actions.json"
   ],
-  "scope_not_covered": ["host UI wiring", "SDK original verification", "simulator/desktop/device runs", "audio/reading aloud", "cross-process durable retry intent"]
+  "module_source_changed": false,
+  "local_validation_performed": false,
+  "platforms": [
+    {
+      "runner": "ubuntu-22.04",
+      "status": "completed",
+      "conclusion": "success",
+      "job_id": 121083628879,
+      "checks_passed": 32,
+      "cxx_consumer": {
+        "path": "consumer/conflict-consumer",
+        "bytes": 1797264,
+        "sha256": "2145f6db591458302469babba443404bc40f199a38aff3bfc044b13370f0d162"
+      },
+      "c_consumer": {
+        "path": "consumer/conflict-c-consumer",
+        "bytes": 1736000,
+        "sha256": "de5dde4d10e8b5a50eaa0aff350d36143848785fe98489cd4f71044a46dc53da"
+      },
+      "installed_package_manifest_sha256": "35bfa5edb4afad9f741ffe01fb6dabf57e73af991b0c611840905fbee2b8dbe5"
+    },
+    {
+      "runner": "windows-2022",
+      "status": "completed",
+      "conclusion": "success",
+      "job_id": 121083629016,
+      "checks_passed": 32,
+      "cxx_consumer": {
+        "path": "consumer/conflict-consumer.exe",
+        "bytes": 1519616,
+        "sha256": "6faebec6cad7ed22deddc39a0be52515ebdcad6718d84fb7300aa5adf2e428c0"
+      },
+      "c_consumer": {
+        "path": "consumer/conflict-c-consumer.exe",
+        "bytes": 1351168,
+        "sha256": "bde0ea30fa552a51b66fb305ae55eafab2e138ae9b4650670e682a538aa7b9b6"
+      },
+      "installed_package_manifest_sha256": "92619bda5080421296f0e54f4dd0ccf0e1e1b2417912bf819eb49f4c21eeac9f"
+    },
+    {
+      "runner": "macos-14",
+      "status": "completed",
+      "conclusion": "success",
+      "job_id": 121083629051,
+      "checks_passed": 32,
+      "cxx_consumer": {
+        "path": "consumer/conflict-consumer",
+        "bytes": 1561824,
+        "sha256": "6da563260d92c63cac32098f2b918559fb8f9426676a69424e07b15421324b9b"
+      },
+      "c_consumer": {
+        "path": "consumer/conflict-c-consumer",
+        "bytes": 1518576,
+        "sha256": "216b2c90b7ef5f05bf4e250fe71f8ae01d2f4ecdfde2599e21a62510e955a451"
+      },
+      "installed_package_manifest_sha256": "02928eb347e585482d239f43dbfe4770115cc0b547d8e6ab54ee1e2b5a87693e"
+    }
+  ],
+  "summary_job": {
+    "id": 121084471719,
+    "status": "completed",
+    "conclusion": "success",
+    "verifier_cases": 35,
+    "positive_cases": 1,
+    "negative_cases": 34,
+    "zip_recomputed_in_actions": true,
+    "binary_and_installed_package_identity_verified": true
+  },
+  "named_behavior_results": [
+    {
+      "name": "installed_consumer_uses_one_verified_product_sqlite_provider",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "two_real_clients_expose_every_concurrent_head_with_exact_validated_wire",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "prepare_never_chooses_a_head_or_writes_history_projection_or_outbox",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "explicit_resolution_names_all_observed_heads_and_user_fields_not_clock_or_order",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "resolution_preserves_original_histories_schema_and_adds_exactly_one_revision_and_outbox_row",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "merge_revision_replicates_to_the_other_client_as_the_single_safe_head",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "single_safe_head_refuses_conflict_action",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "same_snapshot_retry_after_commit_is_exact_noop_without_requeue",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "committed_revision_id_reused_with_a_fresh_snapshot_is_refused_and_writes_nothing",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "revision_arriving_after_prepare_is_stale_and_the_command_writes_nothing",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "stale_snapshot_is_refreshed_and_retried_once_with_the_same_stable_id",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "missing_parent_heads_are_displayed_but_resolution_is_refused_without_writes",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "late_parent_arrival_makes_the_same_entity_resolvable_after_a_new_prepare",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "put_after_observed_tombstone_is_refused_before_any_write",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "explicit_restore_names_the_delete_and_concurrent_heads_and_revives_the_group",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "group_tombstone_resolution_does_not_cascade_to_membership_or_book_history",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "single_tombstone_allows_only_explicit_restore_and_a_repeated_delete_is_refused",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "restore_without_a_direct_delete_head_is_refused_and_explicit_delete_merges_all_heads",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "book_tombstone_and_explicit_restore_are_resolved_independently",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "membership_tombstone_and_restore_are_resolved_without_touching_book_or_group_history",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "membership_without_retained_book_history_reports_needs_bootstrap_without_writes",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "thirty_two_heads_merge_with_thirty_two_parents_and_thirty_three_are_refused",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "progress_and_annotation_conflicts_show_exact_wire_and_are_never_resolved_or_navigated_here",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "typed_command_identity_invalid_targets_and_missing_entities_are_refused_before_writing",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "cancellation_is_observed_only_before_the_commit_boundary_and_leaves_no_partial_state",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "native_transaction_failure_rolls_back_history_outbox_and_projection_then_retries_exactly_once",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "foreign_worker_and_callback_reentry_are_rejected_without_state_change",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "installed_c_header_prepares_inspects_and_applies_an_explicit_group_resolution",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "no_sdk_database_notes_or_original_book_files_are_created_or_modified",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "same_snapshot_stable_id_with_changed_fields_is_collision_without_duplicate_history_or_outbox",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "snapshot_view_outlives_owner_close_and_is_released_on_another_worker",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    },
+    {
+      "name": "membership_restore_waits_for_explicit_group_and_book_restores_without_partial_writes",
+      "result": "pass",
+      "platforms": [
+        "ubuntu-22.04",
+        "windows-2022",
+        "macos-14"
+      ]
+    }
+  ],
+  "named_verifier_results": [
+    {
+      "name": "valid_same_source_attempt_job_zip_and_native_binary_fixture_is_accepted",
+      "result": "pass"
+    },
+    {
+      "name": "wrong_run_source",
+      "result": "pass"
+    },
+    {
+      "name": "wrong_job_head_sha",
+      "result": "pass"
+    },
+    {
+      "name": "wrong_job_run_id",
+      "result": "pass"
+    },
+    {
+      "name": "wrong_job_run_attempt",
+      "result": "pass"
+    },
+    {
+      "name": "unsuccessful_job_status",
+      "result": "pass"
+    },
+    {
+      "name": "unsuccessful_job_conclusion",
+      "result": "pass"
+    },
+    {
+      "name": "missing_upstream_job",
+      "result": "pass"
+    },
+    {
+      "name": "duplicate_upstream_job",
+      "result": "pass"
+    },
+    {
+      "name": "missing_artifact",
+      "result": "pass"
+    },
+    {
+      "name": "duplicate_artifact_name",
+      "result": "pass"
+    },
+    {
+      "name": "bad_artifact_size_in_bytes",
+      "result": "pass"
+    },
+    {
+      "name": "bad_artifact_expired",
+      "result": "pass"
+    },
+    {
+      "name": "bad_artifact_expires_at",
+      "result": "pass"
+    },
+    {
+      "name": "bad_artifact_digest",
+      "result": "pass"
+    },
+    {
+      "name": "bad_artifact_created_at",
+      "result": "pass"
+    },
+    {
+      "name": "bad_artifact_workflow_run",
+      "result": "pass"
+    },
+    {
+      "name": "artifact_previous_attempt_name",
+      "result": "pass"
+    },
+    {
+      "name": "zip_byte_count_tampered",
+      "result": "pass"
+    },
+    {
+      "name": "zip_digest_tampered",
+      "result": "pass"
+    },
+    {
+      "name": "duplicate_zip_member",
+      "result": "pass"
+    },
+    {
+      "name": "duplicate_report_member",
+      "result": "pass"
+    },
+    {
+      "name": "zip_path_traversal",
+      "result": "pass"
+    },
+    {
+      "name": "bad_report_sha",
+      "result": "pass"
+    },
+    {
+      "name": "bad_report_run_id",
+      "result": "pass"
+    },
+    {
+      "name": "bad_report_run_attempt",
+      "result": "pass"
+    },
+    {
+      "name": "bad_report_os",
+      "result": "pass"
+    },
+    {
+      "name": "bad_report_job",
+      "result": "pass"
+    },
+    {
+      "name": "bad_report_accepted",
+      "result": "pass"
+    },
+    {
+      "name": "bad_report_local_run",
+      "result": "pass"
+    },
+    {
+      "name": "bad_report_checks",
+      "result": "pass"
+    },
+    {
+      "name": "bad_report_installed_package_sha256",
+      "result": "pass"
+    },
+    {
+      "name": "missing_actual_c_consumer",
+      "result": "pass"
+    },
+    {
+      "name": "consumer_binary_tampered_with_fresh_zip_digest",
+      "result": "pass"
+    },
+    {
+      "name": "text_is_not_an_executable_even_with_matching_manifest",
+      "result": "pass"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12588410433,
+      "name": "reader-conflict-actions-summary-f800907fac3097fb99e3ea52e8b8066c4c23f499-40164827613-1",
+      "size_in_bytes": 5354575,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12588410433",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12588410433/zip",
+      "expired": false,
+      "created_at": "2026-10-25T05:19:44Z",
+      "expires_at": "2027-01-23T05:14:52Z",
+      "updated_at": "2026-10-25T05:19:44Z",
+      "digest": "sha256:965f43f52839168d59c9c58f9480f434b075ce08a9afdde1b34590b71f39392e",
+      "workflow_run": {
+        "id": 40164827613,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dot-conflict-actions-review",
+        "head_sha": "f800907fac3097fb99e3ea52e8b8066c4c23f499"
+      }
+    },
+    {
+      "id": 12587876434,
+      "name": "reader-conflict-actions-Linux-f800907fac3097fb99e3ea52e8b8066c4c23f499-40164827613-1",
+      "size_in_bytes": 1827222,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12587876434",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12587876434/zip",
+      "expired": false,
+      "created_at": "2026-10-25T05:16:33Z",
+      "expires_at": "2027-01-23T05:14:52Z",
+      "updated_at": "2026-10-25T05:16:33Z",
+      "digest": "sha256:5801cc7dd3030b57eb95647437fef584bf18618745f5ef72ae3e5b0d0ef7bd6b",
+      "workflow_run": {
+        "id": 40164827613,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dot-conflict-actions-review",
+        "head_sha": "f800907fac3097fb99e3ea52e8b8066c4c23f499"
+      }
+    },
+    {
+      "id": 12587816553,
+      "name": "reader-conflict-actions-Windows-f800907fac3097fb99e3ea52e8b8066c4c23f499-40164827613-1",
+      "size_in_bytes": 1882828,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12587816553",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12587816553/zip",
+      "expired": false,
+      "created_at": "2026-10-25T05:16:04Z",
+      "expires_at": "2027-01-23T05:14:52Z",
+      "updated_at": "2026-10-25T05:16:04Z",
+      "digest": "sha256:ba68c3f2752acab176f019cac9fce81783fce7a491873e60059e08a8db65a625",
+      "workflow_run": {
+        "id": 40164827613,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dot-conflict-actions-review",
+        "head_sha": "f800907fac3097fb99e3ea52e8b8066c4c23f499"
+      }
+    },
+    {
+      "id": 12587801883,
+      "name": "reader-conflict-actions-macOS-f800907fac3097fb99e3ea52e8b8066c4c23f499-40164827613-1",
+      "size_in_bytes": 1645112,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12587801883",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12587801883/zip",
+      "expired": false,
+      "created_at": "2026-10-25T05:19:30Z",
+      "expires_at": "2027-01-23T05:14:52Z",
+      "updated_at": "2026-10-25T05:19:30Z",
+      "digest": "sha256:4e8eeeb24ce177e479842173ce79ce4141467acd1658d32878f521864acbce72",
+      "workflow_run": {
+        "id": 40164827613,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dot-conflict-actions-review",
+        "head_sha": "f800907fac3097fb99e3ea52e8b8066c4c23f499"
+      }
+    }
+  ],
+  "artifact_recomputation": {
+    "scope": "The three upstream platform ZIPs, downloaded and recomputed inside summary job 121084471719; summary artifact itself is identified by upload log and API digest, not recursively certified.",
+    "platform_zip_sha256": [
+      {
+        "artifact_id": 12587876434,
+        "bytes": 1827222,
+        "sha256": "5801cc7dd3030b57eb95647437fef584bf18618745f5ef72ae3e5b0d0ef7bd6b"
+      },
+      {
+        "artifact_id": 12587816553,
+        "bytes": 1882828,
+        "sha256": "ba68c3f2752acab176f019cac9fce81783fce7a491873e60059e08a8db65a625"
+      },
+      {
+        "artifact_id": 12587801883,
+        "bytes": 1645112,
+        "sha256": "4e8eeeb24ce177e479842173ce79ce4141467acd1658d32878f521864acbce72"
+      }
+    ]
+  },
+  "failures_this_review_run": [],
+  "historical_acceptance": {
+    "package": "J11 explicit conflict actions",
+    "base_commit": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+    "tested_commit": "be093a95d5eb6beceb23ce5ba76cac3a79610555",
+    "delivered_head": "37fdc830d75eee8590120d52d4d881102e0d9dc4",
+    "tested_to_delivered_diff": [
+      "docs/validation/reader-explicit-conflict-actions.json"
+    ],
+    "run_id": 40140153887,
+    "run_attempt": 1,
+    "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40140153887",
+    "jobs": [
+      121010009316,
+      121010009480,
+      121010009494,
+      121010290934
+    ],
+    "status": "completed",
+    "conclusion": "success",
+    "artifacts": [
+      12579020164,
+      12578975246,
+      12578506436,
+      12577264908
+    ],
+    "checks": 29,
+    "limitation": "Original summary matched report SHA/OS/check list but did not authenticate all required job/attempt/ZIP/native binary identities; replaced in T02."
+  },
+  "historical_failures": [
+    {
+      "tested_commit": "00a9b3e01738970a50392077dbae9d11a382b9c9",
+      "run_id": 40139960162,
+      "run_attempt": 1,
+      "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40139960162",
+      "job_id": 121009814018,
+      "failure": "Original summary report glob found no files: AssertionError: []. All three native platform jobs succeeded; the summary failed.",
+      "preserved_artifact_ids": [
+        12578785761,
+        12578486186,
+        12578426161
+      ],
+      "corrected_by": "be093a95d5eb6beceb23ce5ba76cac3a79610555"
+    }
+  ],
+  "scope_covered": [
+    "installed native Linux/Windows/macOS C and C++ command-line consumers",
+    "all 29 original named behavior cases",
+    "same-snapshot changed-field stable-ID collision with no duplicate history/outbox",
+    "snapshot view after owner close and cross-worker release",
+    "membership restore requires explicit group and book restores",
+    "35 evidence-verifier cases",
+    "same-source/run/attempt successful upstream job authentication",
+    "unique nonempty nonexpired API artifacts and Actions ZIP digest/size recomputation",
+    "native consumer binary and installed package manifest binding"
+  ],
+  "scope_not_covered": [
+    "production host UI wiring",
+    "SDK original-source verification",
+    "desktop UI controls",
+    "simulator and physical-device runs",
+    "accessibility",
+    "performance acceptance",
+    "audio or reading aloud",
+    "cross-process durable retry intent"
+  ],
+  "integration_owner": "root; no default branch push, PR creation/merge, release, signing, or protected setting change performed"
 }
