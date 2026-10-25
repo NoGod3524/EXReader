@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "source_sha": "313ebbb4f8e73ba42eb3bbe2b04b292f854886b4",
+  "run_id": 40236345116,
+  "attempt": 1,
+  "root_round": 3,
+  "accepted": true,
+  "failed": [],
+  "scope": "isolated CBZ leading-slash patch candidate on Windows and Linux",
+  "sdk_adopted": false,
+  "performance_accepted": false,
+  "host_integration_accepted": false,
+  "complete_product": false,
+  "native_suites_per_platform": {"baseline": 169, "candidate": 169, "all_passed": true},
+  "named_observations_per_platform": 103,
+  "actual_programs_authenticated_per_platform": 3,
+  "original_real_cbz_files_per_platform": 2,
+  "jobs": [
+    {"id": 121298645811, "name": "candidate-windows", "conclusion": "success"},
+    {"id": 121298646055, "name": "candidate-linux", "conclusion": "success"},
+    {"id": 121302021704, "name": "strict-summary", "conclusion": "success"}
+  ],
+  "artifacts": [
+    {"id": 12615243218, "name": "reader-next-s13-windows-40236345116-1", "bytes": 44652140, "digest": "sha256:93b7d245379ffd54536e830bc5b85fb96f3619af9947c0693f702790559d8ca6", "expires_at": "2026-11-24T21:51:47Z"},
+    {"id": 12614768074, "name": "reader-next-s13-linux-40236345116-1", "bytes": 51013781, "digest": "sha256:3f81de8d6043b0f46b24d4ac8e93769f0053a2dd9b3065535d8992fcda440903", "expires_at": "2026-11-24T21:44:16Z"},
+    {"id": 12615682149, "name": "reader-next-s13-strict-40236345116-1", "bytes": 2927, "digest": "sha256:d4de96715a23eaceccb4c9dc25c34f0ba401678e760538482e7b06800197586b", "expires_at": "2026-11-24T21:52:07Z"}
+  ],
+  "earlier_root_runs": [
+    {"run_id": 40235577328, "attempt": 1, "source": "1a0530fead817bef300d0a16b4f07fb7fa4d35b4", "conclusion": "failure", "reason": "Windows ZIP-writer normalization invalidated the new malformed-path test; Linux passed"},
+    {"run_id": 40235804635, "attempt": 1, "source": "7a0f328c87e910c28f81ea4bb8a504a806599817", "conclusion": "failure", "reason": "Windows ZIP-reader normalization also required validation of orig_filename"}
+  ],
+  "original_worker_round_limit_violation_retained": true,
+  "evidence_access": "Original ZIP download/hash/member and binary processing only in Actions; root locally read GitHub API metadata and completed text logs."
+}

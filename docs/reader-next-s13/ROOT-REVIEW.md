@@ -1,5 +1,19 @@
 # S13 root review
 
+Final root round 3 passed at source
+`313ebbb4f8e73ba42eb3bbe2b04b292f854886b4`, run `40236345116/1`.
+Windows and Linux producers and strict-summary all completed/success. Each
+producer passed both 169-test original native suites and all 103 named
+candidate observations. The strict job downloaded the actual two ZIPs and
+authenticated their real program bytes, pinned original CBZ inputs, complete
+parts and cross-platform observations; accepted=true, failed=[].
+Artifact identities are recorded in `root-review-validation.json`.
+
+This is independent patch-candidate evidence. Frozen SDK files remain
+unchanged; this does not adopt the candidate into an SDK release or reader
+host, and does not grant performance or a complete reader product.
+The earlier pending descriptions below are historical review steps.
+
 The original green run 40233303849 does not establish root acceptance: its
 summary did not hash the API artifact ZIP or include actual measured programs.
 The original worker also exceeded its three-round limit; all earlier failures
