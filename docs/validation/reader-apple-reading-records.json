@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "accepted": false,
-  "status": "implementation awaiting cloud compilation and native/UI results",
+  "status": "native19 diagnostic passed; real Xcode preflight and focused shelf recovery pending before formal full",
   "start_sha": "f5d25b4c71ea39bd22bebea4eedfee16ca178c35",
   "module_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
   "g03_tree": "cf067b8be378d4195817d1106b81f358579e2280",
@@ -55,6 +55,60 @@
   ],
   "native_preflights": [
     {
+      "source_sha": "72f2ca2fd8281d8c3ef36917091aba46419ce446",
+      "run_id": 40144185965,
+      "attempt": 1,
+      "job_id": 121021931954,
+      "status": "success",
+      "diagnostic_only": true,
+      "accepted": false,
+      "native_passed": 19,
+      "native_expected": 19,
+      "scope": "direct macOS app compilation and installed native consumer, no Xcode/UI execution grant",
+      "artifact": {
+        "id": 12580840342,
+        "bytes": 3575312,
+        "digest": "sha256:43171bcd92dee10c08976e9e63442e87c91cb4d79d89a4bfd5fa0095d181a444",
+        "expires_at": "2027-01-22T23:47:57Z"
+      }
+    },
+    {
+      "source_sha": "1b4acf2d430ec7702d3071306a1a5116875d19c6",
+      "run_id": 40144674393,
+      "attempt": 1,
+      "job_id": 121023367239,
+      "status": "success",
+      "diagnostic_only": true,
+      "accepted": false,
+      "native_passed": 19,
+      "native_expected": 19,
+      "scope": "direct app compilation and native19 including real Unicode-equivalent CBZ page IDs with distinct UTF-8 bytes",
+      "artifact": {
+        "id": 12580256984,
+        "bytes": 3582411,
+        "digest": "sha256:f6f12e689291a1a4235e7eebec3e4e6d372277439d1f188b251dafbb89e6f75e",
+        "expires_at": "2027-01-22T23:55:33Z"
+      }
+    },
+    {
+      "source_sha": "9d9a9dc085bc79848d974fd6e1cd7f716927f8f1",
+      "run_id": 40145615101,
+      "attempt": 1,
+      "job_id": 121026190895,
+      "status": "success",
+      "diagnostic_only": true,
+      "accepted": false,
+      "native_passed": 19,
+      "native_expected": 19,
+      "scope": "direct app compilation and native19, not Xcode batch or native shelf recovery",
+      "artifact": {
+        "id": 12581195682,
+        "bytes": 3583633,
+        "digest": "sha256:87b4f9ab2b09f7ffe146b98b07a90bb24da492771175ae20ebb19ab13be7909c",
+        "expires_at": "2027-01-23T00:09:51Z"
+      }
+    },
+    {
       "source_sha": "3f7bcbede9ef6a175eaf66d742bb67ab1450995f",
       "run_id": 40143531917,
       "attempt": 1,
@@ -72,6 +126,27 @@
         "digest": "sha256:1ba807edd310c968d439863d5c75f18e1cdfed188527f8573d92635df050dc1d",
         "expires_at": "2027-01-22T23:38:03Z"
       }
+    }
+  ],
+  "shelf_recovery_attempts": [
+    {
+      "source_sha": "9d9a9dc085bc79848d974fd6e1cd7f716927f8f1",
+      "run_id": 40145621010,
+      "attempt": 1,
+      "diagnostic_only": true,
+      "accepted": false,
+      "status": "failure",
+      "sdk_jobs": [121026210046, 121026210151],
+      "native_job": 121026963916,
+      "failed_ui_jobs": {"macos": 121027580170, "iphone": 121027580383, "ipad": 121027580168},
+      "ui_cases_executed": 0,
+      "reason": "Real Xcode batch app build cannot see public SDK enum globals in HostSDK.swift after product headers import SDK subheaders; direct whole-app swiftc and native19 had passed. Preserve this build failure before actual focused UI execution",
+      "ui_artifacts": {
+        "macos": {"id": 12581271110, "bytes": 30545, "digest": "sha256:cf2bb9daae117393adc4e83282ffa3c29ef83af3cd79fd5fd50e7bbcb6a7b1a5"},
+        "iphone": {"id": 12580462823, "bytes": 36060, "digest": "sha256:0fc62996c86d8d37463a4c4c7322428fa524889814f3dc809e594de65be709d9"},
+        "ipad": {"id": 12580821959, "bytes": 42445, "digest": "sha256:6530f8556efc2472aac3bbd8ebf7f535c8cb6cf9227954ed564058cbf3d7b2b6"}
+      },
+      "artifacts_expires_at": "2027-01-23T00:09:57Z"
     }
   ],
   "initial_compile_diagnostic": {
