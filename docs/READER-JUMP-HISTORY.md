@@ -225,3 +225,5 @@ that embedded each runner's own path. Nothing here runs on a developer machine.
 
 当前修复尚待 Actions 验证，原 run `40125391353` 的通过仍只归原 source `4ff8c803faec4d4bb351175290ad9f1cb9b82938`，不能转授当前候选。
 
+首个修复 source `1902a41bc9bb1c8b0dc7dcbd608d915f1948d669` / run `40153658637` 已三平台与 strict 全绿。继续补齐原汇总遗漏的上游作业身份认证：必须三个同源码同 attempt 的 completed/success 作业，并从 ZIP 原始报告重新核具名结果，不能仅依赖报告摘要。新增12个作业/运行身份负例仅在 Actions 执行；该汇总强化版本需新源码完整验证。
+

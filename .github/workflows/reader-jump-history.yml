@@ -49,6 +49,10 @@ jobs:
           }
           'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Reject foreign or failed upstream job identities in Actions
+        run: |
+          python3 -m py_compile tests/reader_jump_history/check_artifacts.py tests/reader_jump_history/check_jump_history.py
+          python3 tests/reader_jump_history/check_artifacts.py --protocol-selftest
       - name: Install the product provider, the unchanged revisions and the reading-state adapter
         run: |
           set -o pipefail
