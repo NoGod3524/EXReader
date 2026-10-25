@@ -1,8 +1,24 @@
 # S04 HANDOFF-RESULT — Android 交付 APK 核验
 
-## Root 隔离复核进度（2026-10-25）
+## Root 本轮最终结果（2026-10-25）
 
-本节接续原 DS 交回，原失败记录保留。当前仍 `accepted=false`，受测 source
+原 APK 协议 **3/3 作业通过**：source `49fe49d36b24cd692ec907e07b5cf5c098fa548e`，
+[run 40224699973](https://github.com/NoGod3524/EXReader/actions/runs/40224699973) / attempt 1。
+模拟器 25/25；全链 71/72，唯一 false 是明确非必需的 `JNI_OnLoad` 存在性诊断，必需项均通过。
+原件导入 → UI 实际点击开书 → 真实两库 executable maps → p1/p2/p3 → 应用保存选择与进度 →
+airplane=1、wifi=0、mobile_data=0、ping exit=2 → force-stop → 离线重开 p3 → 原文私有副本字节未变。
+`restore_input=app`、`preferences_injected=false`；不通过注入偏好修复宿主。
+本轮缺失的 WAL/SHM 没有保存为错误文本，真实快照只有 77,824 B 的 `library.db`。
+
+**本包总体仍 `accepted=false`；单列 `apk_protocol_accepted=true`。** 独立公开 SDK 原件/进度值回读
+仍 pending。SQL 仅诊断、文件哈希仅证明私有副本；真实离线宿主路径会调用公开 SDK source/progress API，
+但本包没有独立消费者逐项检查它们的返回值。summary 也明确将该项标为 pending，不授予此范围。
+完整同轮 source/job/artifact/bytes/digest/到期时间和全部日志检查项见 `validation.json`。
+原 producer/APK 身份不变，仅 API34 default x86_64 debug 模拟器范围，不含真机、签名、商店或性能。
+
+## Root 前轮隔离复核进度（保留当时记录）
+
+本节接续原 DS 交回，原失败记录保留。当时仍 `accepted=false`，受测 source
 `0852c015f349e4ef8ce0672a18f6255640d886a0`，run `40223913409` / attempt 1。
 静态必需项通过，模拟器已通过原件导入与私有副本字节校验、UI 实际开书、p1→p2→p3、
 宿主自己保存的 `lastReader=true` / `lastBook=1`（`restore_input=app`，无偏好注入）。

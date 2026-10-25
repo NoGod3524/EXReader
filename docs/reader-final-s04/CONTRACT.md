@@ -1,5 +1,19 @@
 # S04 Android 交付 APK 核验（契约）
 
+## Root 复核状态（2026-10-25）
+
+原 APK 协议在 source `49fe49d36b24cd692ec907e07b5cf5c098fa548e`、
+[run 40224699973](https://github.com/NoGod3524/EXReader/actions/runs/40224699973) / attempt 1 上 3/3 通过。
+25 项模拟器检查全通过，实际断网冷重开从 p3 恢复 p3；选择由应用自己保存，禁止注入偏好获验收。
+初始化检查分两阶段：空书架运行期 SDK 标签执行 host/core；首次实际 UI 出页后再核对两库映射。
+Gradle `useLegacyPackaging=false` 使库直接映射 APK，故用认证 APK 的 ZIP payload 与 ELF executable
+PT_LOAD 文件偏移对应实际安装路径的 executable maps，不以 `.so` 文件名是否出现在 maps 中推断加载。
+
+`apk_protocol_accepted=true`，总体 `accepted=false`：独立公开 SDK 原件/进度值回读尚 pending。
+下文 SQL `book_progress` 是诊断观察，私有副本哈希是文件完整性；均不冒充公开 API 回读。
+真实宿主复开走 source/progress 公共 SDK 路径，但本包尚无独立消费者核对这些返回值。
+完整身份和全部保留失败见 [validation.json](validation.json)。
+
 固定实现起点 `0889f7d1e9a537c6c1b05456547e016b26e1cd85`，分支 `codex/reader-fw-s04`。只新增
 `tests/reader_final_s04/`、`.github/workflows/reader-final-s04.yml`、`docs/reader-final-s04/`、`HANDOFF-RESULT.md`；
 `guard.py` 逐路径校验，并对 8 类越界路径做负向自检。

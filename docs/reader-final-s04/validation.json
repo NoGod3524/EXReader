@@ -1,7 +1,7 @@
 {
   "package": "S04",
   "accepted": false,
-  "reason": "root review reached real app-persisted selection and both native executable mappings, but API34 rejected the tools protected airplane-mode broadcast; offline cold reopen remains unverified",
+  "reason": "same-source delivered APK protocol passed all 3 jobs and 25 emulator checks, including app-owned persistence and actual offline p3 reopen; independent public SDK source/progress value readback is still pending, so complete S04 acceptance is not granted",
   "start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "branch": "codex/reader-fw-s04-root-review",
   "producer": {
@@ -108,8 +108,8 @@
     }
   ],
   "tip_status": {
-    "commit_after_fix": "0852c015f349e4ef8ce0672a18f6255640d886a0; root review latest round terminal failure, offline reopen not granted",
-    "rerun": "requires a further authorized tool correction; root review three additional iterations were exhausted"
+    "commit_after_fix": "49fe49d36b24cd692ec907e07b5cf5c098fa548e",
+    "rerun": "APK protocol terminal success; separate installed/public SDK source/progress value consumer remains pending"
   },
   "complete_product": false,
   "run_attempts": [
@@ -391,18 +391,75 @@
           "expired": false
         }
       ]
+    },
+    {
+      "run": 40224699973,
+      "attempt": 1,
+      "source": "49fe49d36b24cd692ec907e07b5cf5c098fa548e",
+      "conclusion": "success",
+      "apk_protocol_accepted": true,
+      "accepted": false,
+      "scope": "API34 default x86_64 debug delivered APK protocol only; independent public SDK value readback pending",
+      "jobs": [
+        {
+          "databaseId": 121263489266,
+          "name": "S04 authenticated static APK acceptance",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "databaseId": 121263718767,
+          "name": "S04 clean install, launch and offline reopen on a fresh emulator",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "databaseId": 121264297890,
+          "name": "S04 cross-job identity and result",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12610955981,
+          "name": "reader-final-s04-static-40224699973-1",
+          "size_in_bytes": 498533562,
+          "digest": "sha256:3df6c6e1d9d92a8c2d3d0005eafe6fb01392c5d62f9b5b3236ee98ca93829995",
+          "expires_at": "2027-01-23T19:09:47Z",
+          "expired": false
+        },
+        {
+          "id": 12610950742,
+          "name": "reader-final-s04-summary-40224699973-1",
+          "size_in_bytes": 7178,
+          "digest": "sha256:37e68b23fcc1a4ebc47492742376be55340d0b3fcc9f063035d1bab3bebc21b2",
+          "expires_at": "2027-01-23T19:09:47Z",
+          "expired": false
+        },
+        {
+          "id": 12610637770,
+          "name": "reader-final-s04-emulator-40224699973-1",
+          "size_in_bytes": 228782029,
+          "digest": "sha256:4b23a094569f5e1e6d2358f2ee70746cbdfb136bd9ead23911d3ac81f7a5a9b7",
+          "expires_at": "2027-01-23T19:09:47Z",
+          "expired": false
+        }
+      ]
     }
   ],
   "root_review_latest": {
-    "source": "0852c015f349e4ef8ce0672a18f6255640d886a0",
-    "run": 40223913409,
+    "source": "49fe49d36b24cd692ec907e07b5cf5c098fa548e",
+    "run": 40224699973,
     "attempt": 1,
     "accepted": false,
-    "emulator_job": 121261478721,
+    "apk_protocol_accepted": true,
+    "emulator_job": 121263718767,
+    "summary_job": 121264297890,
     "driver_outcome": {
-      "accepted": false,
-      "checks": 19,
-      "failure": "adb shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true failed (255): Broadcasting: Intent { act=android.intent.action.AIRPLANE_MODE flg=0x400000 (has extras) }\n\nException occurred while executing 'broadcast':\njava.lang.SecurityException: Permission Denial: not allowed to send broadcast android.intent.action.AIRPLANE_MODE from pid=2780, uid=2000\n\tat com.android.server.am.ActivityManagerService.broadcastIntentLockedTraced(ActivityManagerService.java:14573)\n\tat com.android.server.am.ActivityManagerService.broadcastIntentLocked(ActivityManagerService.java:14370)\n\tat com.android.server.am.ActivityManagerService.broadcastIntentWithFeature(ActivityManagerService.java:15336)\n\tat com.android.server.am.ActivityManagerShellCommand.runSendBroadcast(ActivityManagerShellCommand.java:928)\n\tat com.android.server.am.ActivityManagerShellCommand.onCommand(ActivityManagerShellCommand.java:246)\n\tat com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)\n\tat android.os.ShellCommand.exec(ShellCommand.java:38)\n\tat com.android.server.am.ActivityManagerService.onShellCommand(ActivityManagerService.java:9697)\n\tat android.os.Binder.shellCommand(Binder.java:1068)\n\tat android.os.Binder.onTransact(Binder.java:888)\n\tat android.app.IActivityManager$Stub.onTransact(IActivityManager.java:5267)\n\tat com.android.server.am.ActivityManagerService.onTransact(ActivityManagerService.java:2720)\n\tat android.os.Binder.execTransactInternal(Binder.java:1344)\n\tat android.os.Binder.execTransact(Binder.java:1275)\n"
+      "accepted": true,
+      "checks": 25,
+      "failure": null
     },
     "emulator_checks": [
       {
@@ -417,7 +474,7 @@
           "ro.boot.qemu.avd_name": "test",
           "sys.boot_completed": "1",
           "ro.debuggable": "1",
-          "uptime_seconds": 26.29
+          "uptime_seconds": 28.8
         }
       },
       {
@@ -451,7 +508,7 @@
             "sha256": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3"
           },
           "installed": {
-            "path": "/data/app/~~8fEydUkOnknpYDvxQ5vI4w==/org.exreader.host-10JP0KLwqXdeAN4cXyFSEA==/base.apk",
+            "path": "/data/app/~~0C_ZSDuhbfeeTn8bN_crjA==/org.exreader.host-NEKOpdPmuFRzaUr0tpaBPg==/base.apk",
             "bytes": 29721554,
             "sha256": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3"
           }
@@ -479,7 +536,7 @@
         "check": "cold_launch_reported",
         "pass": true,
         "observed": {
-          "am_start": "Starting: Intent { cmp=org.exreader.host/.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: org.exreader.host/.MainActivity\nTotalTime: 1394\nWaitTime: 1397\nComplete"
+          "am_start": "Starting: Intent { cmp=org.exreader.host/.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: org.exreader.host/.MainActivity\nTotalTime: 1136\nWaitTime: 1137\nComplete"
         }
       },
       {
@@ -487,8 +544,8 @@
         "pass": true,
         "observed": {
           "sample": [
-            "topResumedActivity=ActivityRecord{7ace46a u0 org.exreader.host/.MainActivity t8}",
-            "ResumedActivity: ActivityRecord{7ace46a u0 org.exreader.host/.MainActivity t8}"
+            "topResumedActivity=ActivityRecord{e366995 u0 org.exreader.host/.MainActivity t8}",
+            "ResumedActivity: ActivityRecord{e366995 u0 org.exreader.host/.MainActivity t8}"
           ]
         }
       },
@@ -561,13 +618,13 @@
         "check": "native_libraries_loaded_from_package",
         "pass": true,
         "observed": {
-          "pid": "2597",
+          "pid": "2586",
           "mapping_rows": {
             "libexreader_host.so": [
-              "7f1e65cb1000-7f1e65d2e000 r-xp 00758000 fe:26 32771                      /data/app/~~8fEydUkOnknpYDvxQ5vI4w==/org.exreader.host-10JP0KLwqXdeAN4cXyFSEA==/base.apk"
+              "711d67a75000-711d67af2000 r-xp 00758000 fe:26 32771                      /data/app/~~0C_ZSDuhbfeeTn8bN_crjA==/org.exreader.host-NEKOpdPmuFRzaUr0tpaBPg==/base.apk"
             ],
             "libexreader_jni.so": [
-              "7f1e68c66000-7f1e68c70000 r-xp 0074c000 fe:26 32771                      /data/app/~~8fEydUkOnknpYDvxQ5vI4w==/org.exreader.host-10JP0KLwqXdeAN4cXyFSEA==/base.apk"
+              "711d68955000-711d6895f000 r-xp 0074c000 fe:26 32771                      /data/app/~~0C_ZSDuhbfeeTn8bN_crjA==/org.exreader.host-NEKOpdPmuFRzaUr0tpaBPg==/base.apk"
             ]
           },
           "apk_executable_file_ranges": {
@@ -602,7 +659,7 @@
         "check": "reader_panel_visible",
         "pass": true,
         "observed": {
-          "page_label": "p.3 · 2.0 MiB · 19 ms"
+          "page_label": "p.3 · 2.0 MiB · 20 ms"
         }
       },
       {
@@ -640,9 +697,7 @@
             }
           },
           "database_files": {
-            "library.db": 77824,
-            "library.db-wal": 53,
-            "library.db-shm": 53
+            "library.db": 77824
           }
         }
       },
@@ -662,14 +717,537 @@
           ],
           "preferences_injected": false
         }
+      },
+      {
+        "check": "device_offline",
+        "pass": true,
+        "observed": {
+          "airplane_mode_on": "1",
+          "wifi_on": "0",
+          "mobile_data": "0",
+          "ping_exit": 2
+        }
+      },
+      {
+        "check": "process_stopped_before_offline_reopen",
+        "pass": true,
+        "observed": {
+          "pidof": ""
+        }
+      },
+      {
+        "check": "offline_reopen_same_reading_record",
+        "pass": true,
+        "observed": {
+          "before": 3,
+          "after": 3
+        }
+      },
+      {
+        "check": "offline_reader_panel_visible",
+        "pass": true,
+        "observed": {
+          "page_label": "p.3 · 2.0 MiB · 92 ms"
+        }
+      },
+      {
+        "check": "original_bytes_intact_after_offline_reopen",
+        "pass": true,
+        "observed": {
+          "fixture_sha256": "fe0e65a92ff83503015b42253a17ac643e4894058a062bb532ba61aaf5bf583b",
+          "copies": {
+            "fe0e65a92ff83503015b42253a17ac643e4894058a062bb532ba61aaf5bf583b.txt": {
+              "bytes": 10635,
+              "sha256": "fe0e65a92ff83503015b42253a17ac643e4894058a062bb532ba61aaf5bf583b"
+            }
+          }
+        }
+      },
+      {
+        "check": "no_fatal_process_state",
+        "pass": true,
+        "observed": {
+          "fatal": []
+        }
+      }
+    ],
+    "static_checks": [
+      {
+        "check": "producer_source_sealed",
+        "pass": true,
+        "observed": {
+          "sealed": true,
+          "checked": 14
+        }
+      },
+      {
+        "check": "documented_expectations_match_source",
+        "pass": true,
+        "observed": {}
+      },
+      {
+        "check": "candidate_present",
+        "pass": true,
+        "observed": {
+          "path": "build/s04-authenticate/artifacts/raw3/apks/host-debug.apk"
+        }
+      },
+      {
+        "check": "apk_zip_integrity",
+        "pass": true,
+        "observed": {
+          "entries": 28,
+          "testzip": null
+        }
+      },
+      {
+        "check": "apk_manifest_present",
+        "pass": true,
+        "observed": {
+          "manifest_bytes": 3700
+        }
+      },
+      {
+        "check": "apk_resources_index_present",
+        "pass": true,
+        "observed": {
+          "resources_bytes": 3280
+        }
+      },
+      {
+        "check": "apk_dex_present",
+        "pass": true,
+        "observed": {
+          "dex": [
+            "classes.dex",
+            "classes2.dex",
+            "classes3.dex",
+            "classes4.dex",
+            "classes6.dex",
+            "classes5.dex"
+          ]
+        }
+      },
+      {
+        "check": "apk_abi_set",
+        "pass": true,
+        "observed": {
+          "observed": [
+            "x86_64"
+          ],
+          "derived": [
+            "x86_64"
+          ]
+        }
+      },
+      {
+        "check": "apk_jni_present",
+        "pass": true,
+        "observed": {
+          "libs": [
+            "lib/x86_64/libexreader.so",
+            "lib/x86_64/libexreader_host.so",
+            "lib/x86_64/libexreader_jni.so",
+            "lib/x86_64/libexreader_product.so"
+          ]
+        }
+      },
+      {
+        "check": "pin_candidate_sha256",
+        "pass": true,
+        "observed": {
+          "sealed": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3",
+          "observed": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3"
+        }
+      },
+      {
+        "check": "pin_candidate_bytes",
+        "pass": true,
+        "observed": {
+          "sealed": 29721554,
+          "observed": 29721554
+        }
+      },
+      {
+        "check": "pin_baseline_sha256",
+        "pass": true,
+        "observed": {
+          "sealed": "a4627d562df9c2436a9f91f1371112de5ad6801e4f43544546c412195e1d0c74",
+          "observed": "a4627d562df9c2436a9f91f1371112de5ad6801e4f43544546c412195e1d0c74"
+        }
+      },
+      {
+        "check": "pin_test_apk_sha256",
+        "pass": true,
+        "observed": {
+          "sealed": "dae5e91a5480d68d69d164efc2ee56abfb7bb9cf4084eb4e2fae80fa94aa13bf",
+          "observed": "dae5e91a5480d68d69d164efc2ee56abfb7bb9cf4084eb4e2fae80fa94aa13bf"
+        }
+      },
+      {
+        "check": "pin_release_apk_sha256",
+        "pass": true,
+        "observed": {
+          "sealed": "348c8c5bc81ab323ffb12577cd89bdb90bc2cf290bc0dc6511ef97eb755a1416",
+          "observed": "348c8c5bc81ab323ffb12577cd89bdb90bc2cf290bc0dc6511ef97eb755a1416"
+        }
+      },
+      {
+        "check": "pin_sdk_jni_sha256",
+        "pass": true,
+        "observed": {
+          "sealed": "88ebe479a3aab9e5bc6ee93e3bb4d8dcc67301fd1e7c310da84118027310dc19",
+          "observed": "88ebe479a3aab9e5bc6ee93e3bb4d8dcc67301fd1e7c310da84118027310dc19"
+        }
+      },
+      {
+        "check": "pin_apk_jni_sha256",
+        "pass": true,
+        "observed": {
+          "sealed": "288b0efe39ba577ef923957d24dff3c4e9e70aaab6b92701e25e214717e3818a",
+          "observed": "288b0efe39ba577ef923957d24dff3c4e9e70aaab6b92701e25e214717e3818a"
+        }
+      },
+      {
+        "check": "jni_source_symbols_complete",
+        "pass": true,
+        "observed": {
+          "derived": 87,
+          "exported": 1463,
+          "missing": []
+        }
+      },
+      {
+        "check": "jni_native_classes_exported",
+        "pass": true,
+        "observed": {
+          "classes": 13,
+          "uncovered": {}
+        }
+      },
+      {
+        "check": "jni_native_methods_complete",
+        "pass": true,
+        "observed": {
+          "expected": 138,
+          "missing": []
+        }
+      },
+      {
+        "check": "jni_onload_exported",
+        "pass": false,
+        "observed": {
+          "sampled": []
+        }
+      },
+      {
+        "check": "jni_elf_x86_64",
+        "pass": true,
+        "observed": {
+          "lib/x86_64/libexreader.so": {
+            "machine": "x86-64",
+            "type": "DYN"
+          },
+          "lib/x86_64/libexreader_jni.so": {
+            "machine": "x86-64",
+            "type": "DYN"
+          },
+          "lib/x86_64/libexreader_host.so": {
+            "machine": "x86-64",
+            "type": "DYN"
+          },
+          "lib/x86_64/libexreader_product.so": {
+            "machine": "x86-64",
+            "type": "DYN"
+          }
+        }
+      },
+      {
+        "check": "jni_exports_match_same_run_sdk",
+        "pass": true,
+        "observed": {
+          "stage": 38,
+          "apk": 38,
+          "missing": [],
+          "extra": []
+        }
+      },
+      {
+        "check": "jni_same_build_as_same_run_sdk",
+        "pass": true,
+        "observed": {
+          "shared_sections": 18,
+          "code_sections": [
+            ".text",
+            ".rodata"
+          ],
+          "differing": [],
+          "removed_by_packaging": [
+            ".debug_abbrev",
+            ".debug_info",
+            ".debug_line",
+            ".debug_loc",
+            ".debug_ranges",
+            ".debug_str"
+          ],
+          "apk_only_sections": [],
+          "apk_sha256": "288b0efe39ba577ef923957d24dff3c4e9e70aaab6b92701e25e214717e3818a",
+          "stage_sha256": "88ebe479a3aab9e5bc6ee93e3bb4d8dcc67301fd1e7c310da84118027310dc19",
+          "apk_bytes": 40392,
+          "stage_bytes": 176496
+        }
+      },
+      {
+        "check": "sdk_version_string_in_shipped_libs",
+        "pass": true,
+        "observed": {
+          "version": "3.41.0",
+          "libraries": [
+            "lib/x86_64/libexreader.so"
+          ]
+        }
+      },
+      {
+        "check": "manifest_package",
+        "pass": true,
+        "observed": {
+          "derived": "org.exreader.host",
+          "observed": "org.exreader.host"
+        }
+      },
+      {
+        "check": "manifest_versionCode",
+        "pass": true,
+        "observed": {
+          "derived": "1",
+          "observed": "1"
+        }
+      },
+      {
+        "check": "manifest_versionName",
+        "pass": true,
+        "observed": {
+          "derived": "0.1.0",
+          "observed": "0.1.0"
+        }
+      },
+      {
+        "check": "manifest_sdkVersion",
+        "pass": true,
+        "observed": {
+          "derived": "26",
+          "observed": "26"
+        }
+      },
+      {
+        "check": "manifest_targetSdkVersion",
+        "pass": true,
+        "observed": {
+          "derived": "35",
+          "observed": "35"
+        }
+      },
+      {
+        "check": "manifest_compileSdkVersion",
+        "pass": true,
+        "observed": {
+          "derived": "35",
+          "observed": "35"
+        }
+      },
+      {
+        "check": "manifest_native_code",
+        "pass": true,
+        "observed": {
+          "derived": [
+            "x86_64"
+          ],
+          "observed": [
+            "x86_64"
+          ]
+        }
+      },
+      {
+        "check": "manifest_launchable_activity",
+        "pass": true,
+        "observed": {
+          "derived": "org.exreader.host.MainActivity",
+          "observed": "org.exreader.host.MainActivity"
+        }
+      },
+      {
+        "check": "permissions_unchanged",
+        "pass": true,
+        "observed": {
+          "derived": [
+            "android.permission.INTERNET"
+          ],
+          "observed": [
+            "android.permission.INTERNET"
+          ]
+        }
+      },
+      {
+        "check": "manifest_allowBackup",
+        "pass": true,
+        "observed": {
+          "derived": "false",
+          "observed": [
+            false
+          ]
+        }
+      },
+      {
+        "check": "manifest_single_exported_activity",
+        "pass": true,
+        "observed": {
+          "activity_elements": 1,
+          "exported_attributes": [
+            true
+          ],
+          "derived": "true"
+        }
+      },
+      {
+        "check": "manifest_debug_network_security",
+        "pass": true,
+        "observed": {
+          "derived": true,
+          "observed": true
+        }
+      },
+      {
+        "check": "manifest_permission_elements",
+        "pass": true,
+        "observed": {
+          "elements": 1
+        }
+      },
+      {
+        "check": "signature_verifies",
+        "pass": true,
+        "observed": {
+          "schemes": {
+            "v1": false,
+            "v2": true,
+            "v3": false
+          },
+          "signers": 1
+        }
+      },
+      {
+        "check": "signature_single_signer",
+        "pass": true,
+        "observed": {
+          "signers": [
+            1
+          ]
+        }
+      },
+      {
+        "check": "signature_debug_only",
+        "pass": true,
+        "observed": {
+          "dn": "C=US, O=Android, CN=Android Debug"
+        }
+      },
+      {
+        "check": "signature_v2_or_v3",
+        "pass": true,
+        "observed": {
+          "schemes": {
+            "v1": false,
+            "v2": true,
+            "v3": false
+          }
+        }
+      },
+      {
+        "check": "resource_layout_present",
+        "pass": true,
+        "observed": {
+          "sample": [
+            "res/layout/activity_main.xml"
+          ]
+        }
+      },
+      {
+        "check": "asset_font_matches_source_pin",
+        "pass": true,
+        "observed": {
+          "name": "Reader.otf",
+          "sealed": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+          "observed": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+        }
+      },
+      {
+        "check": "asset_license_present",
+        "pass": true,
+        "observed": {
+          "assets": [
+            "assets/OFL.txt",
+            "assets/Reader.otf",
+            "assets/reader-catalog-v1.json"
+          ]
+        }
+      },
+      {
+        "check": "asset_catalog_from_source",
+        "pass": true,
+        "observed": {
+          "regenerated_sha256": "185bacc993b779fb5c0358a1ea6aee358aa8be7c1c9e32ce472be5aaacda1f73",
+          "apk_sha256": "185bacc993b779fb5c0358a1ea6aee358aa8be7c1c9e32ce472be5aaacda1f73",
+          "catalog_sql_blob": "6d6230265e562a3743ca9982019f13f2884e5c3e"
+        }
+      },
+      {
+        "check": "baseline_is_distinct_apk",
+        "pass": true,
+        "observed": {
+          "raw3": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3",
+          "default_off": "a4627d562df9c2436a9f91f1371112de5ad6801e4f43544546c412195e1d0c74"
+        }
+      },
+      {
+        "check": "baseline_same_identity",
+        "pass": true,
+        "observed": {
+          "package": "org.exreader.host",
+          "versionCode": "1",
+          "permissions": [
+            "android.permission.INTERNET"
+          ]
+        }
+      },
+      {
+        "check": "summary",
+        "pass": true,
+        "observed": {
+          "failed": [],
+          "checks": 47
+        }
       }
     ],
     "pending": [
-      "system-supported airplane-mode command and actual offline cold reopen",
-      "read optional SQLite sidecars only when they exist, rather than saving cat stderr as file bytes"
+      "independent public SDK original/progress value readback; private SQL and private-copy hashes are diagnostic only"
     ],
-    "initialization": "empty-shelf cold launch invokes the host/core identity path; EXReader.Document initializes standalone SDK JNI only after the book is opened",
+    "initialization": "empty-shelf SDK label invokes host/core identity; real UI first-book open initializes the independent JNI and both executable mappings are verified against authenticated APK payload/ELF ranges",
     "preferences_injected": false,
-    "restore_input": "app"
-  }
+    "restore_input": "app",
+    "pages": [
+      1,
+      2,
+      3
+    ],
+    "offline_reopen_page": 3,
+    "offline": {
+      "airplane_mode_on": 1,
+      "wifi_on": 0,
+      "mobile_data": 0,
+      "ping_exit": 2
+    },
+    "independent_public_sdk_readback": false
+  },
+  "apk_protocol_accepted": true,
+  "status": "apk_protocol_passed_public_api_pending"
 }
