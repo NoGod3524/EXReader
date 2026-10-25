@@ -15,6 +15,7 @@ from check_parallel_integration import fetch, download_artifact_zip
 RUNS = {
     40226933116: ('2bc682da196e8f737fa44b66fcc33dea69b442f8', {12612560327, 12612025078, 12611906192, 12611730900, 12611224502}),
     40227936319: ('255871b38f3b3252a917e920a11641255cc2b485', {12612590453, 12612361524, 12611907317, 12611802102, 12611697795}),
+    40234424624: ('bfc6447798d533c4d5d5fe7ca02e9a54fc928999', None),
 }
 
 
@@ -29,7 +30,11 @@ def main():
         metadata = fetch(f'actions/runs/{run}/attempts/1')
         assert metadata['head_sha'] == source and metadata['status'] == 'completed' and metadata['conclusion'] == 'failure'
         artifacts = fetch(f'actions/runs/{run}/artifacts?per_page=100')['artifacts']
-        assert {row['id'] for row in artifacts} == expected_ids
+        if expected_ids is not None:
+            assert {row['id'] for row in artifacts} == expected_ids
+        else:
+            required = {f'reader-next-c04-{part}-{run}-1' for part in ('guard', 'diagnose', 'ubuntu-22.04', 'windows-latest')}
+            assert required <= {row['name'] for row in artifacts} <= required | {f'reader-next-c04-aggregate-{run}-1'}
         record = {'run_id': run, 'attempt': 1, 'source_sha': source, 'conclusion': 'failure', 'artifacts': []}
         for artifact in artifacts:
             assert not artifact['expired'] and artifact['workflow_run']['head_sha'] == source and artifact['workflow_run']['id'] == run
