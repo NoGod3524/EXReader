@@ -106,6 +106,8 @@ class State:
                 "phase_labels": [label for label, _ in PHASES], "checks": TOTAL_CHECKS,
                 "passed": TOTAL_CHECKS, "expected_checks": TOTAL_CHECKS, "wavs": [],
                 "consumer": {}, "probe": {}, "installed_files": [], "capabilities": {"pause": True, "range": True},
+                "engine": {"range_events": 12, "range_capability": 1, "status_samples": 40,
+                           "event_calls": 40, "event_total": 46},
                 "audio_scope": {"listening": "not verified"}, "not_exercised": ["human listening judgement"],
                 "diagnostics": [], "unavailable_scenarios": []}
 
@@ -324,6 +326,13 @@ def main():
     case.repack_files()
     record("reject.probe_capability", expect("probe_range_capability", case.strict),
            "capability claimed without engine positions")
+
+    case = State()
+    case.report["engine"]["range_events"] = 0
+    case.files["evidence/report.json"] = json.dumps(case.report).encode()
+    case.repack_files()
+    record("reject.report_capability_range", expect("report_capability_range", case.strict),
+           "the report claims the range capability without engine positions")
 
     case = State()
     case.artifacts.append(dict(case.artifacts[0]))

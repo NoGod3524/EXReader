@@ -287,6 +287,13 @@ def verify_report(files, run):
                      "stage/lib/reader_tts.lib",
                      "stage/lib/cmake/EXReaderTTSWindows/EXReaderTTSWindowsConfig.cmake"):
         need(required in stage, "installed_required_file")
+    engine_info = report.get("engine")
+    need(type(engine_info) is dict and integer(engine_info.get("range_events")), "engine_block")
+    capabilities = report.get("capabilities")
+    need(type(capabilities) is dict and capabilities.get("pause") is True, "report_capabilities")
+    # A capability bit may not outrun what the run observed: the range bit is claimed
+    # only when engine progress was seen, exactly like the probe rule above.
+    need(capabilities.get("range") is (engine_info["range_events"] > 0), "report_capability_range")
     need(report.get("audio_scope", {}).get("listening") == "not verified", "audio_scope")
     need(isinstance(report.get("not_exercised"), list) and report["not_exercised"], "not_exercised")
     return {"checks": total, "passed": total, "phase_labels": labels,

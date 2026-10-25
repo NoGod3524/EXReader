@@ -328,13 +328,23 @@ def main():
                           "sha256": file_digest(consumer) if consumer.is_file() else ""}
     report["probe"] = probe_record
     report["installed_files"] = installed
-    report["capabilities"] = {"pause": True, "range": True}
     info_values = {}
+    range_events = 0
+    range_capability = 0
     for record in phase_records:
         for item in record.get("infos", []):
-            info_values[item["key"]] = item["value"]
-    range_events = info_values.get("range_events", 0)
-    range_capability = info_values.get("range_capability", 0)
+            key, value = item["key"], item["value"]
+            if key == "range_events":
+                range_events += value          # every phase that reports progress
+            elif key == "range_capability":
+                range_capability = max(range_capability, value)
+            else:
+                info_values[key] = value
+    # Capability bits describe what this run actually observed. A request that started,
+    # queued or finished is not evidence of engine progress, so the range bit is claimed
+    # only when a word position was really reported.
+    report["capabilities"] = {"pause": True,
+                              "range": bool(range_events > 0 and range_capability == 1)}
     report["engine"] = {"range_events": range_events, "range_capability": range_capability,
                         "status_samples": info_values.get("engine_samples", 0),
                         "event_calls": info_values.get("engine_event_calls", 0),
