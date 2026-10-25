@@ -11,7 +11,6 @@
    hrLastResult carries the engine's result for it, so a device or engine failure is
    reported as FAILED instead of a silent success. */
 #include "internal.h"
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #if defined(_MSC_VER)
@@ -45,21 +44,9 @@ typedef struct {
   int speaking;
   int started;
   int saw_stream;
-  int paused;              /* ISpVoice::Pause is still in effect for this voice */
 } exr_tts_utterance;
 
 /* ---- small helpers ---- */
-
-/* The frozen contract maps rate onto the SAPI -10..10 preference scale as
-   round(log2(rate) * 10). This is an engine preference, never a promised duration
-   ratio; rate is validated to 0.5..2.0 before it reaches the worker. */
-static LONG sapi_rate(double rate) {
-  double steps = (rate > 0.0) ? (log2(rate) * 10.0) : 0.0;
-  LONG value = (LONG)floor(steps + 0.5);
-  if (value > 10) value = 10;
-  if (value < -10) value = -10;
-  return value;
-}
 
 static WAVEFORMATEX wave_format(void) {
   WAVEFORMATEX format;
@@ -395,7 +382,6 @@ static void finish_request(reader_tts *handle, exr_tts_utterance *utterance,
   utterance->speaking = 0;
   utterance->started = 0;
   utterance->saw_stream = 0;
-  utterance->paused = 0;
   if (exr_tts_closing(handle)) return;
   if (status == READER_TTS_OK) publish_ready(handle);
   else exr_tts_publish(handle, READER_TTS_READY, status, exr_tts_capabilities(handle), 0);
@@ -438,10 +424,7 @@ static void push_started(reader_tts *handle, exr_tts_utterance *utterance) {
 
 static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
   ISpEventSource *source = (ISpEventSource *)utterance->voice;
-  /* ISpEventSource::GetEvents fills an array of SPEVENT records; SPEVENTEX belongs to
-     ISpEventSource2::GetEventsEx. Indexing an SPEVENTEX array here read the second and
-     later events at the wrong stride, so their id and word parameters were garbage. */
-  SPEVENT events[8];
+  SPEVENTEX events[8];   /* wider than SPEVENT: GetEvents may fill extended data */
   ULONG fetched = 0, index;
   HRESULT events_hr = E_FAIL;
   SPVOICESTATUS status;
@@ -469,7 +452,7 @@ static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
       utterance->saw_stream = 1;
     }
   }
-  if (source) events_hr = source->lpVtbl->GetEvents(source, 8, events, &fetched);
+  if (source) events_hr = source->lpVtbl->GetEvents(source, 8, (SPEVENT *)events, &fetched);
   EnterCriticalSection(&handle->lock);
   handle->probe_event_hresult = (int)events_hr;
   handle->probe_event_calls++;
@@ -562,13 +545,6 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
     reader_tts_status applied = apply_voice(voice, command->voice_id, native);
     if (applied != READER_TTS_OK) return applied;
   }
-  /* The rate is set per request and after the voice, because a new token starts from
-     its own default rate. */
-  hr = voice->lpVtbl->SetRate(voice, sapi_rate(command->rate));
-  if (FAILED(hr)) {
-    *native = (int)hr;
-    return READER_TTS_IO;
-  }
   wav = exr_tts_copy_wav_path(handle);
   if (wav) {
     ISpStream *fresh = NULL;
@@ -602,7 +578,6 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
   LeaveCriticalSection(&handle->lock);
   utterance->started = 0;
   utterance->saw_stream = 0;
-  utterance->paused = 0;
   command->text = NULL;
   command->unit_map = NULL;
   hr = voice->lpVtbl->Speak(voice, utterance->text, SPF_ASYNC | SPF_PURGEBEFORESPEAK, NULL);
@@ -640,7 +615,6 @@ static int handle_command(reader_tts *handle, exr_tts_utterance *utterance, ISpV
         status = READER_TTS_IO;
         break;
       }
-      utterance->paused = 1;
       exr_tts_publish(handle, READER_TTS_PAUSED, READER_TTS_OK, exr_tts_capabilities(handle), utterance->request_id);
       break;
     case EXR_TTS_CMD_RESUME:
@@ -652,21 +626,12 @@ static int handle_command(reader_tts *handle, exr_tts_utterance *utterance, ISpV
         status = READER_TTS_IO;
         break;
       }
-      utterance->paused = 0;
       exr_tts_publish(handle, READER_TTS_SPEAKING, READER_TTS_OK, exr_tts_capabilities(handle), utterance->request_id);
       break;
     case EXR_TTS_CMD_STOP:
       if (!utterance->speaking) {
         status = READER_TTS_ARGUMENT;
         break;
-      }
-      /* ISpVoice::Pause stays in effect until Resume is called, and neither Speak nor
-         a purge clears it. A stop accepted while the request is PAUSED must therefore
-         leave the voice runnable, otherwise the next request is spoken into a paused
-         engine and can never reach a terminal event. */
-      if (utterance->paused && *voice) {
-        (*voice)->lpVtbl->Resume(*voice);
-        utterance->paused = 0;
       }
       purge(*voice);
       finish_request(handle, utterance, READER_TTS_STOPPED, READER_TTS_OK);
