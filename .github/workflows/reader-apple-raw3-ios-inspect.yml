@@ -8,6 +8,7 @@ permissions:
   actions: read
 jobs:
   inspect:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-15
     timeout-minutes: 20
     steps:
@@ -27,5 +28,30 @@ jobs:
         with:
           name: apple-raw3-ios-original-inspection-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/apple-raw3-ios-inspection/
+          include-hidden-files: true
+          if-no-files-found: error
+  reproduce:
+    if: github.event_name == 'push'
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Original Xcode project dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Two unchanged original cases with failure-only target AX observations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_raw3_ios_inspect/reproduce.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-raw3-ios-failure-target-reproduction-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/apple-raw3-ios-reproduce/attachments/
+            build/apple-raw3-ios-reproduce/two-original-cases.xcresult/
+            build/apple-raw3-ios-reproduce/xcodebuild.log
+            build/apple-raw3-ios-reproduce/report.json
           include-hidden-files: true
           if-no-files-found: error
