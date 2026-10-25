@@ -29,7 +29,8 @@ def run(args, label, timeout=2400, okay=True):
 
 
 def build(source, label, prefix, extra=(), install=True, target=None):
-    target = target or OUT / 'build' / label
+    # FetchContent's SQLite stamp names exceed Windows MAX_PATH under OUT.
+    target = target or ROOT / 'build/pfb' / label
     run(['cmake', '-S', source, '-B', target, '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
          '-DCMAKE_INSTALL_PREFIX=' + str(prefix), *extra], label + '-configure')
     run(['cmake', '--build', target, '--parallel', '4'], label + '-build')
@@ -61,7 +62,12 @@ def main():
     result = {'source_sha': source, 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': os.environ['RUNNER_OS'],
               'runtime_accepted': False, 'legacy_guards_executed': False,
-              'complete_product': False, 'reports': {}, 'programs': {}}
+              'complete_product': False, 'foundation_accepted': False,
+              'scope': 'shared-install original business replay only',
+              'pending_gates': ['full original root artifact-mutation refusal suites',
+                                'cross-family already-imported target refusal suites',
+                                'product DSO and host adoption'],
+              'reports': {}, 'programs': {}}
     try:
         run(['cmake', '--preset', 'reading-library'], 'sdk-configure')
         run(['cmake', '--build', '--preset', 'reading-library'], 'sdk-build', 3600)
