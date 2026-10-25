@@ -36,6 +36,11 @@ STRICT_UPLOAD = ('      - name: Preserve added common-kind strict provenance\n'
 
 def original_projection(text):
     changes = (
+        ('          python tests/reader_android_navigation_cache/adapter.py prepare\n', '', 1),
+        ('gradle -I "$PWD/tests/reader_android_navigation_cache/init.gradle" -p examples/android', 'gradle -p examples/android', 1),
+        ('          python tests/reader_android_navigation_cache/adapter.py build\n', '', 1),
+        ('            python tests/reader_android_navigation_cache/adapter.py runtime\n', '', 1),
+        ('          python tests/reader_android_navigation_cache/adapter.py strict\n', '', 1),
         ('name: Common source Android complete raw3 chain',
          'name: Android explicit raw3 native host candidate', 1),
         ('branches: [codex/reader-raw3-common-integration]',
