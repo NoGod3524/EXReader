@@ -237,6 +237,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          mkdir -p build
           python3 tests/reader_final_s12/strict.py 2>&1 | tee build/strict.log
       - uses: actions/upload-artifact@v4
         if: always()
