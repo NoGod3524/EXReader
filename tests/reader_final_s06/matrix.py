@@ -419,10 +419,11 @@ def selftest(spec, output):
                     record_value["status"] = "fail"
                 handle.write(json.dumps(record_value) + "\n")
     report, problems = compile_matrix(spec, root, identity)
+    failed_cells = [cell["id"] for target in report["targets"] for cell in target["cells"]
+                    if cell["status"] == "fail"]
     record("refuses_failed_required_case",
-           not report["accepted"] and bool(problems) and any(
-               cell["status"] == "fail" for target in report["targets"] for cell in target["cells"]),
-           "problems=%d" % len(problems))
+           not report["accepted"] and set(failed_cells) == {"bad_file"},
+           "failed cells=%s problems=%d" % (sorted(set(failed_cells)), len(problems)))
 
     # 6. A duplicated case record is damage, not a second chance.
     root = fresh("duplicate_case", duplicate="local_file_private_path_import")

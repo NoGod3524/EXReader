@@ -92,6 +92,7 @@
       "title": "Already present identical original",
       "layer_required": "host",
       "required_cases": [
+        "duplicate_text_original_imported",
         "duplicate_same_path_created_zero",
         "duplicate_renamed_copy_created_zero",
         "duplicate_preserves_title_progress_notes",

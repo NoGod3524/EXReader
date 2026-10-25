@@ -584,39 +584,83 @@ static void cloud_group(held_fixture *epub, held_fixture *pdf) {
 }
 
 /* ------------------------------------------------------- identical original -- */
-static void duplicate_group(const char *work, held_fixture *epub) {
-  char copy_path[S06_PATH], detail[S06_DETAIL];
+static void duplicate_group(const char *work, held_fixture *original) {
+  char copy_path[S06_PATH], local_path[S06_PATH], detail[S06_DETAIL];
   int count_ok = 0;
-  size_t before = count_books(library, &count_ok);
+  size_t before;
+
+  /* The identical-original cell runs on a memory-route original: the bounded
+     EPUB mode has no legacy global progress or notes, so an EPUB could not
+     prove that those records survive a duplicate import. */
+  original->id = 0;
+  if (!join_path(local_path, sizeof(local_path), work, "duplicate/text-original.txt") ||
+      !write_file(local_path, original->bytes, original->size)) {
+    report("duplicate_text_original_imported", 0, "cannot stage the text original");
+  } else {
+    exr_sideload_result prepared = {sizeof(prepared), 0, 0};
+    exr_status prepared_status = exr_sideload_import_file(library, EXR_TXT, local_path,
+        "S06 text original", NULL, &prepared, &error);
+    if (prepared_status == EXR_OK && prepared.created && prepared.book_id > 0) {
+      exr_book *books = NULL;
+      size_t count = 0, at;
+      original->id = prepared.book_id;
+      snprintf(original->path, sizeof(original->path), "%s", local_path);
+      if (exr_library_books(library, NULL, &books, &count, &error) == EXR_OK) {
+        for (at = 0; at < count; at++) {
+          if (books[at].id != original->id) continue;
+          books[at].position = 7;
+          books[at].favorite = 1;
+          if (exr_library_update(library, &books[at], &error) != EXR_OK)
+            fprintf(stderr, "progress capture failed: %s\n", error.message);
+        }
+        exr_books_free(books, count);
+      }
+      {
+        exr_note note = {0};
+        int64_t note_id = 0;
+        note.book_id = original->id;
+        note.start = 0;
+        note.end = 5;
+        note.text = "S06 keep this note";
+        if (exr_library_note(library, &note, &note_id, &error) != EXR_OK)
+          fprintf(stderr, "note capture failed: %s\n", error.message);
+      }
+    }
+    report("duplicate_text_original_imported",
+        prepared_status == EXR_OK && prepared.created && prepared.book_id > 0,
+        "status %d created %d id %lld: %s", (int)prepared_status, prepared.created,
+        (long long)prepared.book_id, error.message);
+  }
+  before = count_books(library, &count_ok);
 
   {
     exr_sideload_result result = {sizeof(result), 0, 0};
     int after_ok = 0;
-    exr_status status = exr_sideload_import_file(library, EXR_EPUB, epub->path,
+    exr_status status = exr_sideload_import_file(library, EXR_TXT, original->path,
         "Renamed duplicate", NULL, &result, &error);
     size_t after = count_books(library, &after_ok);
     report("duplicate_same_path_created_zero",
-        status == EXR_OK && !result.created && epub->id > 0 && result.book_id == epub->id &&
+        status == EXR_OK && !result.created && original->id > 0 && result.book_id == original->id &&
             after_ok && after == before,
         "status %d created %d id %lld, books %zu -> %zu (original id %lld)",
-        (int)status, result.created, (long long)result.book_id, before, after, (long long)epub->id);
+        (int)status, result.created, (long long)result.book_id, before, after, (long long)original->id);
   }
   {
     exr_sideload_result result = {sizeof(result), 0, 0};
     int after_ok = 0;
     exr_status status;
-    int staged = join_path(copy_path, sizeof(copy_path), work, "duplicate/another-name.epub") &&
-                 write_file(copy_path, epub->bytes, epub->size);
+    int staged = join_path(copy_path, sizeof(copy_path), work, "duplicate/another-name.txt") &&
+                 write_file(copy_path, original->bytes, original->size);
     size_t after;
     if (!staged) {
       report("duplicate_renamed_copy_created_zero", 0, "cannot stage the renamed copy");
       goto renamed_done;
     }
-    status = exr_sideload_import_file(library, EXR_EPUB, copy_path, "Third title",
+    status = exr_sideload_import_file(library, EXR_TXT, copy_path, "Third title",
         NULL, &result, &error);
     after = count_books(library, &after_ok);
     report("duplicate_renamed_copy_created_zero",
-        status == EXR_OK && !result.created && epub->id > 0 && result.book_id == epub->id &&
+        status == EXR_OK && !result.created && original->id > 0 && result.book_id == original->id &&
             after_ok && after == before,
         "status %d created %d id %lld, books %zu -> %zu", (int)status, result.created,
         (long long)result.book_id, before, after);
@@ -628,9 +672,9 @@ renamed_done:
     int found = 0, title_ok = 0, progress_ok = 0;
     if (exr_library_books(library, NULL, &books, &count, &error) == EXR_OK) {
       for (index = 0; index < count; index++) {
-        if (books[index].id != epub->id) continue;
+        if (books[index].id != original->id) continue;
         found = 1;
-        title_ok = books[index].title && !strcmp(books[index].title, "S06 local original");
+        title_ok = books[index].title && !strcmp(books[index].title, "S06 text original");
         progress_ok = books[index].favorite == 1 && books[index].position == 7;
       }
       exr_books_free(books, count);
@@ -638,7 +682,7 @@ renamed_done:
     {
       exr_note *notes = NULL;
       size_t note_count = 0;
-      int notes_ok = exr_library_notes(library, epub->id, &notes, &note_count, &error) == EXR_OK &&
+      int notes_ok = exr_library_notes(library, original->id, &notes, &note_count, &error) == EXR_OK &&
                      note_count == 1 && notes[0].text && !strcmp(notes[0].text, "S06 keep this note");
       exr_notes_free(notes, note_count);
       report("duplicate_preserves_title_progress_notes",
@@ -656,12 +700,12 @@ renamed_done:
     options.struct_size = sizeof(options);
     options.control.cancelled = cancel_now;
     cancel_flag = 1;
-    status = exr_sideload_import_file(library, EXR_EPUB, epub->path, NULL, &options, &result, &error);
+    status = exr_sideload_import_file(library, EXR_TXT, original->path, NULL, &options, &result, &error);
     cancel_flag = 0;
     after = count_books(library, &after_ok);
     {
       int ok = status == EXR_CANCELLED && !result.book_id && !result.created && after_ok &&
-               after == before && source_matches(library, epub->id, epub->bytes, epub->size,
+               after == before && source_matches(library, original->id, original->bytes, original->size,
                    detail, sizeof(detail));
       report("duplicate_cancel_retains_old_book", ok,
           "status %d created %d, books %zu -> %zu, old original %s",
@@ -851,7 +895,7 @@ static int usage(void) {
 }
 
 int main(int argc, char **argv) {
-  held_fixture epub, fb2, cbz, pdf, docx, handoff_book;
+  held_fixture epub, fb2, cbz, pdf, docx, handoff_book, text;
   char library_path[S06_PATH], sub[S06_PATH];
   char escaped_work[4096], escaped_fixtures[4096], escaped_cloud[4096];
   int index;
@@ -874,6 +918,7 @@ int main(int argc, char **argv) {
   memset(&pdf, 0, sizeof(pdf));
   memset(&docx, 0, sizeof(docx));
   memset(&handoff_book, 0, sizeof(handoff_book));
+  memset(&text, 0, sizeof(text));
   if (!join_path(sub, sizeof(sub), work_dir, "local") || !make_dir(work_dir) ||
       !make_dir(sub) || !join_path(sub, sizeof(sub), work_dir, "handoff") || !make_dir(sub) ||
       !join_path(sub, sizeof(sub), work_dir, "exports") || !make_dir(sub) ||
@@ -893,7 +938,8 @@ int main(int argc, char **argv) {
 
   if (!load_fixture("sample.epub", &epub) || !load_fixture("sample.fb2", &fb2) ||
       !load_fixture("comic.cbz", &cbz) || !load_fixture("pdf-public.pdf", &pdf) ||
-      !load_fixture("sample.docx", &docx) || !load_fixture("layout.epub", &handoff_book)) {
+      !load_fixture("sample.docx", &docx) || !load_fixture("layout.epub", &handoff_book) ||
+      !load_fixture("sample.txt", &text)) {
     fprintf(stderr, "cannot read the pinned fixtures under %s\n", fixture_dir);
     return 2;
   }
@@ -908,35 +954,9 @@ int main(int argc, char **argv) {
   }
 
   local_file_group(work_dir, &epub, &fb2, &cbz);
-  if (epub.id > 0) {
-    exr_book *books = NULL;
-    size_t count = 0;
-    if (exr_library_books(library, NULL, &books, &count, &error) == EXR_OK) {
-      size_t at;
-      for (at = 0; at < count; at++) {
-        if (books[at].id != epub.id) continue;
-        books[at].position = 7;
-        books[at].favorite = 1;
-        if (exr_library_update(library, &books[at], &error) != EXR_OK)
-          fprintf(stderr, "progress capture failed: %s\n", error.message);
-      }
-      exr_books_free(books, count);
-    }
-    {
-      exr_note note = {0};
-      int64_t note_id = 0;
-      note.book_id = epub.id;
-      note.start = 0;
-      note.end = 5;
-      note.text = "S06 keep this note";
-      if (exr_library_note(library, &note, &note_id, &error) != EXR_OK)
-        fprintf(stderr, "note capture failed: %s\n", error.message);
-    }
-  }
-
   handoff_group(work_dir, &handoff_book);
   cloud_group(&epub, &pdf);
-  duplicate_group(work_dir, &epub);
+  duplicate_group(work_dir, &text);
   bad_group(work_dir, &epub);
   identity_group(work_dir, &epub, &docx);
   expected_books = count_books(library, &count_ok);
