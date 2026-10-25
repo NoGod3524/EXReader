@@ -188,7 +188,7 @@ jobs:
             2>&1 | tee build/composition/logs/relocated-configure.log
           cmake --build build/relocated/build --verbose 2>&1 | tee build/composition/logs/relocated-build.log
           cp build/relocated/build/composition-interface.json build/composition/interface-relocated.json
-          python3 "$COMPOSITION_TESTS/check_prefix.py" --prefix "$COMP_PREFIX_RELOCATED" --source-root "$COMP_WS" --interface build/composition/interface-relocated.json --expect clean --scan-output build/composition/prefix-scan-relocated.json
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --prefix "$COMP_WS/build/prefix-relocated" --source-root "$COMP_WS" --interface build/composition/interface-relocated.json --expect clean --scan-output build/composition/prefix-scan-relocated.json
       - name: Judge the composed flow with a real TLS WebDAV fixture
         run: |
           set -o pipefail

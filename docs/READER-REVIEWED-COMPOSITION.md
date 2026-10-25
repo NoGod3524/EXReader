@@ -95,3 +95,19 @@ uses the same allocation interception and original `cloud_probe.c`, and changes
 only the supplemental source include to the actual root. No case is removed.
 The Linux run separately passed both 37-check shared-owner flows, original
 composition, prefix relocation, and all 11 original negative gates.
+
+The same first-run Windows job `121084469476` also rejected the T05
+orchestrator's native backslashes in the link-policy/account-profile CMake
+`-D` source paths (`Invalid character escape '\a'`). T05 now passes those
+values as forward-slash paths, matching the original standalone workflows.
+Original test sources and expectations are unchanged. Windows separately
+passed both shared-owner flows and all original composition negative gates.
+
+Repair source `ad2d94af43410e7ed63eb874dac81911916bddb6`, run `40165661710`,
+Linux job `121086065595` passed all eight original suites, including all cloud
+cases and the unchanged J13 ASan/UBSan commands. A newly added relocated-prefix
+audit was incorrectly given an environment variable written to `GITHUB_ENV`
+earlier in that same step (available only to later steps). The audit correctly
+refused the resulting empty path. T05 now supplies the explicit relocated path;
+no audit or acceptance rule is removed. Later scenario steps were not run on
+that source; the failed attempt remains preserved.

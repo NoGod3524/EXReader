@@ -62,7 +62,7 @@ def self_test():
  for field,value in [('expired',True),('size_in_bytes',0),('digest',None),('expires_at','2000-01-01T00:00:00Z')]:
   changed=dict(artifact);changed[field]=value;rejected(lambda:authenticate_artifact([changed],'a','source',1))
  rejected(lambda:authenticate_artifact([artifact,artifact],'a','source',1));rejected(lambda:check_zip_bytes(b'bad',artifact))
- records={p:b'{}' for p in REPORTS+RAW};records.update({'binaries/'+n:b'bin' for n in BINARIES});manifest=dict(files={p:dict(bytes=len(v),sha256=digest(v)) for p,v in records.items()})
+ records={p:b'{}' for p in REPORTS+RAW};records['original/history/summary.json']=json.dumps(dict(report_sha256=digest(b'{}'))).encode();records.update({'binaries/'+n:b'bin' for n in BINARIES});manifest=dict(files={p:dict(bytes=len(v),sha256=digest(v)) for p,v in records.items()})
  validate_files(manifest,records.__getitem__)
  changed=copy.deepcopy(manifest);changed['files'].pop(REPORTS[0]);rejected(lambda:validate_files(changed,records.__getitem__))
  records[REPORTS[0]]=b'{"accepted":true}';rejected(lambda:validate_files(manifest,records.__getitem__))
@@ -82,7 +82,7 @@ def main():
  try:
   result['negative_controls']=self_test()
   run=fetch('actions/runs/'+run_id);jobs=pages('actions/runs/'+run_id+'/attempts/'+attempt+'/jobs','jobs');result['jobs']=authenticate_run(run,jobs,source,run_id,attempt)
-  artifacts=pages('actions/runs/'+run_id+'/artifacts','artifacts');case_sets={};keyboard_sets={}
+  artifacts=pages('actions/runs/'+run_id+'/artifacts','artifacts');case_sets={};keyboard_sets={};original_sets={};history_stable={}
   for key,platform in PLATFORMS:
    name='reader-reviewed-composition-'+key+'-'+run_id+'-'+attempt;a_meta=authenticate_artifact(artifacts,name,source,run_id)
    with tempfile.TemporaryFile() as stream:download_artifact_zip(a_meta['id'],stream);stream.seek(0);data=stream.read()
@@ -94,9 +94,14 @@ def main():
     named_results=validate(docs,binary_hashes,source,run_id,attempt,platform)
     case_sets[key]=[r['name'] for r in docs['reviewed/run0/report.json']['checks']]
     keyboard_sets[key]={(c['suite'],c['name']):c['status'] for c in docs['original/keyboard/result.json']['cases']}
+    original_sets[key]={name:sorted(r[field] for r in docs[path][rows]) for name,path,rows,field in [('cloud','original/cloud/result.json','checks','id'),('bulk','original/bulk/report.json','checks','name'),('link','original/link/report.json','checks','name'),('history','original/history/report.json','checks','name'),('information','original/information/report.json','checks','name'),('profiles','original/profiles/result.json','cases','name')]}
+    original_sets[key]['status']=docs['original/status/result.json']['checks']
+    hs=docs['original/history/summary.json'];history_stable[key]=dict(originals=hs['originals'],cases=sorted(c['id'] for c in hs['cases']),steps=sorted(s['step'] for s in hs['lifecycle']),no_write={k:hs['no_write'][k] for k in ('revision_rows','outbox_rows','sdk_progress_records','sdk_notes','sdk_fixed_notes','sdk_epub_notes','databases_unchanged','control_write_changed')})
    result['platforms'][key]=dict(named_results=named_results,binaries=binary_hashes)
    result['artifacts'].append({f:a_meta[f] for f in ('id','name','size_in_bytes','digest','expires_at')})
   require(case_sets['linux']==case_sets['windows']==case_sets['macos'],'cross-platform shared-flow case identity differs')
+  require(original_sets['linux']==original_sets['windows']==original_sets['macos'],'cross-platform original case identity differs')
+  require(history_stable['linux']==history_stable['windows']==history_stable['macos'],'cross-platform original history proof differs')
   require(set(keyboard_sets['linux'])==set(keyboard_sets['windows'])==set(keyboard_sets['macos']),'keyboard case identity differs across platforms')
   skipped_everywhere=[]
   for suite,name in keyboard_sets['linux']:

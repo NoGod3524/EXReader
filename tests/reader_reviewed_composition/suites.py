@@ -11,7 +11,7 @@ import subprocess
 import sys
 assert os.environ.get('GITHUB_ACTIONS')=='true','Actions only'
 p=argparse.ArgumentParser();p.add_argument('--prefix',required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
-root=Path.cwd();prefix=str(Path(a.prefix).resolve());out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
+root=Path.cwd();prefix=Path(a.prefix).resolve().as_posix();out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
 build=root/'build/reviewed-original-build';build.mkdir(parents=True,exist_ok=True)
 exe='.exe' if os.name=='nt' else '';platform=os.environ['RUNNER_OS'];records=[]
 current='';binaries={}
@@ -43,7 +43,7 @@ def bulk():
  b=configure('bulk','tests/reader_bulk_organization/consumer')
  judge('tests/reader_bulk_organization/check_bulk.py','--probe',binary(b,'bulk-probe'),'--c-consumer',binary(b,'bulk-c-consumer'),'--link-map',b/'bulk-link.map','--output',out/'bulk')
 def link():
- b=configure('link','tests/reader_external_link_policy/consumer',['-DEXR_LINK_POLICY_SOURCE='+str(root/'apps/reader/link-policy/src'),'-DEXR_LINK_POLICY_INCLUDE='+str(root/'apps/reader/link-policy/include')])
+ b=configure('link','tests/reader_external_link_policy/consumer',['-DEXR_LINK_POLICY_SOURCE='+(root/'apps/reader/link-policy/src').as_posix(),'-DEXR_LINK_POLICY_INCLUDE='+(root/'apps/reader/link-policy/include').as_posix()])
  control=next(p for p in b.glob('*link-unsafe-control*') if p.suffix in ('.a','.lib'))
  judge('tests/reader_external_link_policy/check_link_policy.py','--probe',binary(b,'link-probe'),'--cpp',binary(b,'link-cpp-consumer'),'--worker',binary(b,'link-worker'),'--sdk',binary(b,'link-sdk-consumer'),'--control-lib',control,'--prefix',prefix,'--epub','tests/fixtures/navigation-epub3.epub','--source','apps/reader/link-policy/src/policy.c','--source-header','apps/reader/link-policy/include/reader_link_policy.h','--installed-header',Path(prefix)/'include/reader_link_policy.h','--output',out/'link','--platform',platform)
 def history():
@@ -61,7 +61,7 @@ def status():
  rev=configure('revisions','tests/reader_revisions/consumer');b=configure('status','tests/reader_sync_status_view/consumer')
  judge('tests/reader_sync_status_view/check_status_view.py','--consumer',binary(b,'status-view-consumer'),'--c-consumer',binary(b,'status-view-c-consumer'),'--revision-consumer',binary(rev,'revision-consumer'),'--output',out/'status')
 def profiles():
- b=configure('profiles','tests/reader_account_profiles/consumer',['-DEXR_ACCOUNT_PROFILES_SOURCE='+str(root/'apps/reader/account-profiles/src'),'-DEXR_ACCOUNT_PROFILES_INCLUDE='+str(root/'apps/reader/account-profiles/include')])
+ b=configure('profiles','tests/reader_account_profiles/consumer',['-DEXR_ACCOUNT_PROFILES_SOURCE='+(root/'apps/reader/account-profiles/src').as_posix(),'-DEXR_ACCOUNT_PROFILES_INCLUDE='+(root/'apps/reader/account-profiles/include').as_posix()])
  judge('tests/reader_account_profiles/check_account_profiles.py','--probe',binary(b,'profiles-probe'),'--session',binary(b,'profiles-session-consumer'),'--worker',binary(b,'profiles-worker'),'--prefix',prefix,'--work',out/'work/profiles','--output',out/'profiles','--platform',platform)
  if platform=='Linux':run(['bash','tests/reader_reviewed_composition/sanitizer.sh'],'sanitizer')
 for name,action in [('cloud',cloud),('bulk',bulk),('link',link),('history',history),('keyboard',keyboard),('information',information),('status',status),('profiles',profiles)]:suite(name,action)
