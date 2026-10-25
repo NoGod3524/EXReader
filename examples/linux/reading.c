@@ -598,8 +598,8 @@ static size_t file_read(void *context,size_t offset,void *bytes,size_t size) {
 }
 static exr_format file_format(const char *path) {
   const char *ext=strrchr(path,'.');if(!ext) return EXR_CUSTOM;
-  const char *names[]={".epub",".txt",".html",".xhtml",".fb2",".rtf",".docx",".mobi",".pdf",".cbz"};
-  const exr_format formats[]={EXR_EPUB,EXR_TXT,EXR_HTML,EXR_HTML,EXR_FB2,EXR_RTF,EXR_DOCX,EXR_MOBI,EXR_PDF,EXR_CBZ};
+  const char *names[]={".epub",".txt",".html",".xhtml",".fb2",".rtf",".docx",".mobi",".pdf",".cbz",".htm",".prc",".azw",".azw3",".kf8"};
+  const exr_format formats[]={EXR_EPUB,EXR_TXT,EXR_HTML,EXR_HTML,EXR_FB2,EXR_RTF,EXR_DOCX,EXR_MOBI,EXR_PDF,EXR_CBZ,EXR_HTML,EXR_MOBI,EXR_MOBI,EXR_MOBI,EXR_MOBI};
   for(size_t i=0;i<sizeof(formats)/sizeof(formats[0]);i++) if(!strcasecmp(ext,names[i])) return formats[i];
   return EXR_CUSTOM;
 }

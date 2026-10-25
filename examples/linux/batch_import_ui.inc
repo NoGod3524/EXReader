@@ -110,7 +110,8 @@ static gboolean folder_apply(host_result *done) {
       char *title=g_strdup_printf("%s · %s%s%s%s",row->path,outcome,row->committed ? row->mapped ? "":" · Bookshelf update pending":"",
         row->message[0] ? " · ":"",row->message);
       GtkWidget *label_row=gtk_label_new(title);gtk_label_set_xalign(GTK_LABEL(label_row),0);
-      gtk_label_set_line_wrap(GTK_LABEL(label_row),TRUE);gtk_list_box_insert(GTK_LIST_BOX(folder.list),label_row,-1);g_free(title);
+      gtk_label_set_line_wrap(GTK_LABEL(label_row),TRUE);gtk_list_box_insert(GTK_LIST_BOX(folder.list),label_row,-1);
+      atk_object_set_name(gtk_widget_get_accessible(gtk_widget_get_parent(label_row)),title);g_free(title);
     }
     gtk_widget_show_all(folder.list);
   }

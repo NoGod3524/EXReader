@@ -1,0 +1,20 @@
+{
+  "accepted": false,
+  "drop_import_scope_passed": false,
+  "status": "implementation_pending_first_cloud_run",
+  "branch": "codex/reader-gtk-drop-import-ui",
+  "base": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
+  "reviewed_j03": "5988ee7fed3cfbf823f0ff55ffc1906a5166d145",
+  "reviewed_j03_tree": "8b1d14b57c78195083e410d4439e7e2de7f71ebd",
+  "owner_fix": "2df6040666635bcd7b0349b035b8f4885757fdd0",
+  "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "runs": [],
+  "complete_product": false,
+  "six_platform_accepted": false,
+  "settings_whole_page_palette_accepted": false,
+  "performance_accepted": false,
+  "physical_device_execution": false,
+  "local_build_test_syntax_or_artifact_processing": false
+}
