@@ -15,7 +15,7 @@ import zipfile
 
 API = "https://api.github.com"
 EXPECTED = ("Windows", "Linux", "macOS")
-CHECKS = 20
+CHECKS = 21
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -105,7 +105,8 @@ def main():
         name = "reader-bulk-organization-{}{}".format(os_name, suffix)
         item = {"os": os_name, "name": name}
         record["artifacts"].append(item)
-        artifact = next((a for a in artifacts if a.get("name") == name), None)
+        found = [a for a in artifacts if a.get("name") == name]
+        artifact = found[0] if len(found) == 1 else None
         if not artifact:
             item["error"] = "artifact not found"
             record["failures"].append(name + ": missing")
@@ -120,6 +121,17 @@ def main():
             record['ok'] = False
             continue
         try:
+            run = json.loads(request('/repos/%s/actions/runs/%s' % (repo, run_id), token))
+            if run['head_sha'] != source or str(run['run_attempt']) != attempt or run['path'] != '.github/workflows/reader-bulk-organization.yml':
+                raise ValueError('foreign source/run/workflow')
+            jobs = json.loads(request('/repos/%s/actions/runs/%s/attempts/%s/jobs?per_page=100' % (repo, run_id, attempt), token))['jobs']
+            runner = {'Linux': 'ubuntu-22.04', 'Windows': 'windows-2022', 'macOS': 'macos-15'}[os_name]
+            producers = [j for j in jobs if j['name'] == 'bulk organization (%s)' % runner]
+            if len(producers) != 1 or producers[0]['head_sha'] != source or producers[0]['status'] != 'completed' or producers[0]['conclusion'] != 'success':
+                raise ValueError('required producer did not succeed')
+            item['job_id'] = producers[0]['id']
+            if artifact['workflow_run']['head_sha'] != source or str(artifact['workflow_run']['id']) != run_id:
+                raise ValueError('foreign artifact')
             expires = dt.datetime.fromisoformat(artifact["expires_at"].replace("Z", "+00:00"))
             if expires <= dt.datetime.now(dt.timezone.utc):
                 raise ValueError('expiry in the past')
@@ -135,6 +147,9 @@ def main():
                 raise ValueError('exactly one report.json is required')
             report = json.loads(bundle.read(entries[0]).decode('utf-8'))
             require_report(report, source, CHECKS, run_id, attempt)
+            programs = [entry for entry in bundle.namelist() if entry.endswith('bulk-consumer/bulk-probe' + ('.exe' if os_name == 'Windows' else ''))]
+            if len(programs) != 1 or hashlib.sha256(bundle.read(programs[0])).hexdigest() != report['probe_sha256']:
+                raise ValueError('consumer identity differs')
             item["report_checks"] = len(report["checks"])
             item["timings"] = report.get("timings")
         except Exception as exc:

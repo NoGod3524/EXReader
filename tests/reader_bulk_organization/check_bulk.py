@@ -143,7 +143,7 @@ def main():
     record('independent_installed_c_consumer_runs_a_batch_and_acknowledges_its_journal')
     before = totals()
     bad = invoke('bad-request', expect=OK)
-    assert bad['refused'] == 7 and not journal.exists() and totals() == before
+    assert bad['refused'] == 8 and not journal.exists() and totals() == before
     record('duplicate_empty_oversize_group_ordinal_capacity_and_struct_size_requests_are_refused_without_a_journal')
     wrong = invoke('wrong-thread', expect=OWNER)
     assert not journal.exists() and totals() == before
@@ -326,6 +326,29 @@ def main():
     assert not journal.exists()
     record('a_damaged_journal_is_refused_by_resume_and_inspect_changes_nothing_and_can_be_abandoned')
 
+    # Real commit followed by a filesystem refusal while clearing its intent.
+    # Isolate this DB so all original 2202-book expectations stay unchanged.
+    recovery = folder / 'cleanup-refused'
+    recovery.mkdir()
+    other_db, other_pending, other_journal = recovery / 'product.sqlite', recovery / 'typed.pending', recovery / 'bulk.journal'
+    invoke('seed', 'count=1', database=other_db, pend=other_pending, jour=other_journal)
+    failed = invoke('run', 'action=0', 'count=1', 'block_cleanup=1', expect=METADATA,
+                    database=other_db, pend=other_pending, jour=other_journal)
+    assert failed['cleanup_failure_injected'] is True and failed['items'][0]['committed'] == 1, failed
+    assert failed['summary']['committed'] == 1 and failed['summary']['not_run'] == 0 and failed['summary']['complete'] == 0, failed
+    receipt = failed['items'][0]['revision']
+    def recovery_rows():
+        with sqlite3.connect(other_db) as connection:
+            return connection.execute('SELECT revision_id FROM reader_revisions ORDER BY revision_id').fetchall(), connection.execute('SELECT revision_id FROM reader_outbox ORDER BY revision_id').fetchall()
+    before_recovery = recovery_rows()
+    assert (receipt,) in before_recovery[0] and (receipt,) in before_recovery[1]
+    resumed = invoke('resume', expect=OK, database=other_db, pend=other_pending, jour=other_journal)
+    assert resumed['summary']['complete'] == 1 and resumed['items'][0]['committed'] == 1 and resumed['items'][0]['replayed'] == 1, resumed
+    assert resumed['items'][0]['revision'] == receipt and recovery_rows() == before_recovery, resumed
+    invoke('ack', expect=OK, database=other_db, pend=other_pending, jour=other_journal)
+    assert not other_pending.exists() and not other_journal.exists()
+    record('apply_success_keeps_committed_receipt_when_pending_cleanup_fails_and_resume_reuses_original_revision')
+
     integrity = sql('PRAGMA integrity_check')
     assert integrity == [('ok',)]
     assert sql('SELECT count(*) FROM reader_outbox WHERE revision_id NOT IN (SELECT revision_id FROM reader_revisions)')[0][0] == 0
@@ -341,6 +364,7 @@ def main():
     report = {'ok': True, 'source': source, 'run_id': os.environ.get('GITHUB_RUN_ID'), 'attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
               'platform': sys.platform, 'books': BOOKS, 'max_batch': BATCH, 'checks': checks, 'timings': timings,
               'final_database_sha256': digest, 'revisions_outbox': list(totals())}
+    report['probe_sha256'] = hashlib.sha256(a.probe.read_bytes()).hexdigest()
     (folder / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True), encoding='utf-8')
     print('bulk organization checks passed: %d' % len(checks))
 
