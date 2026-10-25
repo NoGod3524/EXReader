@@ -14,6 +14,7 @@ static void folder_queue(reader_action action,const char *root,int recursive) {
   job->command.action=action;job->command.batch_token=folder.token;
   job->command.batch_control=&folder.control;job->command.batch_request=g_atomic_int_get(&folder.control.request);
   job->command.batch_root=g_strdup(root);job->command.batch_recursive=recursive;
+  job->command.batch_idle=!busy && !saving && !save_failed;
   folder.running=1;g_async_queue_push(queue,job);state();
 }
 static void folder_message(void) {

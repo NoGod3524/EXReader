@@ -399,7 +399,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libsecret-1-0 at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
-      - name: Verify old run artifact bytes and unchanged host trees entirely on Actions
+      - name: Verify old artifact bytes frozen SDK modules and explicit program identity on Actions
         env:
           GH_TOKEN: ${{ github.token }}
           PROBE_RUN: ${{ inputs.probe_run }}
