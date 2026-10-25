@@ -65,6 +65,7 @@ struct account_binding {
 };
 }
 struct reader_session {
+  const bool raw_api;explicit reader_session(bool raw=false):raw_api(raw){}
   std::string product,directory,originals,account,root,authorization;
   exr_webdav_config limits{};
   std::mutex mutex;std::condition_variable changed;std::thread worker;
@@ -95,10 +96,18 @@ std::unique_ptr<connection> connect(reader_session &s){
   config.root_url=s.root.c_str();config.authorization=s.authorization.c_str();exr_webdav_error de{};
   if(exr_webdav_create(&config,&c->dav,&de)!=EXR_DAV_OK){failure f{READER_SESSION_SYNC};f.error.dav_code=(int)de.code;throw f;}
   reader_revision_error re{};
-  if(reader_revisions_open(s.product.c_str(),&c->revisions,&re)!=READER_REV_OK){failure f{READER_SESSION_SYNC};f.error.revision_code=(int)re.code;throw f;}
+  auto open_history=reader_revisions_open;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(s.raw_api)open_history=reader_revisions_open_raw_v3;
+#endif
+  if(open_history(s.product.c_str(),&c->revisions,&re)!=READER_REV_OK){failure f{READER_SESSION_SYNC};f.error.revision_code=(int)re.code;throw f;}
   c->binding.bind(fs::canonical(fs::u8path(s.product)),s.account,s.root);
   reader_sync_config sc{c->dav,c->revisions,s.directory.c_str(),original,&s};reader_sync_error se{};
-  if(reader_sync_create(&sc,&c->sync,&se)!=READER_SYNC_OK)throw failure{READER_SESSION_SYNC,se};
+  auto create_sync=reader_sync_create;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(s.raw_api)create_sync=reader_sync_create_raw_v3;
+#endif
+  if(create_sync(&sc,&c->sync,&se)!=READER_SYNC_OK)throw failure{READER_SESSION_SYNC,se};
   return c;
 }
 void work(reader_session *s){
@@ -119,7 +128,11 @@ void work(reader_session *s){
         if(!c)c=connect(*s);
         exr_webdav_control control{cancellation,progress,s};
         for(;;){
-          reader_sync_report report{};reader_sync_status step=reader_sync_step(c->sync,shard,after.c_str(),100,&control,&report,&error);
+          auto advance=reader_sync_step;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+          if(s->raw_api)advance=reader_sync_step_raw_v3;
+#endif
+          reader_sync_report report{};reader_sync_status step=advance(c->sync,shard,after.c_str(),100,&control,&report,&error);
           {
             std::lock_guard<std::mutex> lock(s->mutex);s->view.pushed+=report.pushed;s->view.pulled+=report.pulled;s->view.originals_verified+=report.originals_verified;
             s->view.pending_metadata_observations+=report.pending_metadata;s->view.pending_original_observations+=report.pending_local_original;
@@ -138,14 +151,14 @@ void work(reader_session *s){
   {std::lock_guard<std::mutex> lock(s->mutex);s->view.state=READER_SESSION_CLOSED;}
 }
 }
-extern "C" reader_session_status reader_session_create(const reader_session_config *config,reader_session **out){
+static reader_session_status create_session(bool raw_api,const reader_session_config *config,reader_session **out){
   if(out)*out=nullptr;
   if(!out||!config||!bounded(config->product_path,8192)||!bounded(config->private_directory,8192)||
     !bounded(config->original_directory,8192)||!uuid(config->account_id)||!bounded(config->dav.root_url,8192)||
     (config->dav.authorization&&*config->dav.authorization&&!bounded(config->dav.authorization,8192)))return READER_SESSION_ARGUMENT;
   try{
     for(const char *p:{config->private_directory,config->original_directory}){fs::path folder=fs::u8path(p);if(fs::is_symlink(fs::symlink_status(folder))||!fs::is_directory(folder))return READER_SESSION_ARGUMENT;}
-    std::unique_ptr<reader_session> s(new reader_session);s->product=config->product_path;s->directory=config->private_directory;s->originals=config->original_directory;
+    std::unique_ptr<reader_session> s(new reader_session(raw_api));s->product=config->product_path;s->directory=config->private_directory;s->originals=config->original_directory;
     s->account=config->account_id;s->root=config->dav.root_url;s->authorization=config->dav.authorization?config->dav.authorization:"";
     s->limits=config->dav;s->limits.root_url=s->limits.authorization=nullptr;s->worker=std::thread(work,s.get());*out=s.release();return READER_SESSION_OK;
   }catch(...){return READER_SESSION_IO;}
@@ -170,3 +183,8 @@ extern "C" reader_session_status reader_session_destroy(reader_session **pointer
   {std::lock_guard<std::mutex> lock(s->mutex);if(s->view.state!=READER_SESSION_CLOSED)return READER_SESSION_BUSY;}
   s->worker.join();delete s;*pointer=nullptr;return READER_SESSION_OK;
 }
+
+extern "C" reader_session_status reader_session_create(const reader_session_config *c,reader_session **s){return create_session(false,c,s);}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_session_status reader_session_create_raw_v3(const reader_session_config *c,reader_session **s){return create_session(true,c,s);}
+#endif

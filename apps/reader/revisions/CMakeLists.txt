@@ -51,3 +51,8 @@ endif()
 if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
   install(FILES include/reader_selector_bytes_detail.h DESTINATION include)
 endif()
+
+# RAW-CANDIDATE ORIGIN GUARD: append-only; never changes imported targets.
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE AND TARGET EXReaderRevisions::reader_revisions)
+  message(FATAL_ERROR "Raw candidate build cannot reuse an existing revisions target")
+endif()

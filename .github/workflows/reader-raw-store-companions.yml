@@ -1,0 +1,82 @@
+name: Reader raw store companion optional candidate
+on:
+  push:
+    branches: [codex/reader-raw-store-companions]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Enter native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install Linux native TLS dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
+      - name: Build original regressions and real raw-store TLS sessions
+        shell: bash
+        run: python tests/reader_raw_store_companions/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-selector-bytes-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/selector-bytes/
+            !build/selector-bytes/*-source/
+            !build/selector-bytes/**/*.key
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-raw-store-companions-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/raw-store-companions/
+            !build/raw-store-companions/*-source/
+            !build/raw-store-companions/sdk340-build/
+            !build/raw-store-companions/**/*.key
+          if-no-files-found: error
+  summary:
+    needs: [candidate]
+    if: always()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate preserved core and companion original artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tests/reader_selector_bytes/strict.py
+          python tests/reader_raw_store_companions/strict.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-raw-store-companions-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/selector-bytes-summary/
+            build/raw-store-companions-summary/
+          if-no-files-found: error
+

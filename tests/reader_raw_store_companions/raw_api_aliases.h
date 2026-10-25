@@ -1,0 +1,27 @@
+/* Test-only instantiation of the unchanged original consumers on explicit raw
+   APIs. Production defaults and original consumer sources are not edited. */
+#include <reader_commands.h>
+#include <reader_session.h>
+#define reader_revisions_open reader_revisions_open_raw_v3
+#define reader_revision_validate reader_revision_validate_raw_v3
+#define reader_revision_local reader_revision_local_raw_v3
+#define reader_revision_receive reader_revision_receive_raw_v3
+#define reader_revision_get reader_revision_get_raw_v3
+#define reader_revision_heads reader_revision_heads_raw_v3
+#define reader_revision_book_identity reader_revision_book_identity_raw_v3
+#define reader_revision_outbox reader_revision_outbox_raw_v3
+#define reader_revision_retry reader_revision_retry_raw_v3
+#define reader_revision_ack reader_revision_ack_raw_v3
+#define reader_revision_local_project reader_revision_local_project_raw_v3
+#define reader_revision_local_reading reader_revision_local_reading_raw_v3
+#define reader_revision_project reader_revision_project_raw_v3
+#define reader_revision_selected reader_revision_selected_raw_v3
+#define reader_revision_annotations_page reader_revision_annotations_page_raw_v3
+#define reader_revision_entities_page reader_revision_entities_page_raw_v3
+#define reader_revision_book_title reader_revision_book_title_raw_v3
+#define reader_command_apply_book reader_command_apply_book_raw_v3
+#define reader_command_apply_group reader_command_apply_group_raw_v3
+#define reader_command_apply_membership reader_command_apply_membership_raw_v3
+#define reader_sync_create reader_sync_create_raw_v3
+#define reader_sync_step reader_sync_step_raw_v3
+#define reader_session_create reader_session_create_raw_v3

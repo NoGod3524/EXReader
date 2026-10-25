@@ -1,13 +1,33 @@
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.24)
-project(EXReaderCommands VERSION 0.1.0 LANGUAGES C CXX)
+option(EXR_READER_SELECTOR_BYTES_CANDIDATE "Explicit raw store companion candidate; never default" OFF)
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  project(EXReaderCommands VERSION 0.2.0 LANGUAGES C CXX)
+else()
+  project(EXReaderCommands VERSION 0.1.0 LANGUAGES C CXX)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   add_compile_options(/utf-8)
 endif()
-find_package(EXReaderRevisions 0.3.0 EXACT CONFIG REQUIRED)
+set(EXR_REVISIONS_VERSION 0.3.0)
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  set(EXR_REVISIONS_VERSION 0.4.0)
+endif()
+find_package(EXReaderRevisions ${EXR_REVISIONS_VERSION} EXACT CONFIG REQUIRED)
+get_target_property(_raw_dependency_defs EXReaderRevisions::reader_revisions INTERFACE_COMPILE_DEFINITIONS)
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  if(NOT "EXR_READER_SELECTOR_BYTES_CANDIDATE=1" IN_LIST _raw_dependency_defs)
+    message(FATAL_ERROR "Exact dependency target belongs to the legacy capability family")
+  endif()
+else()
+  if("EXR_READER_SELECTOR_BYTES_CANDIDATE=1" IN_LIST _raw_dependency_defs)
+    message(FATAL_ERROR "Default profile cannot consume a raw candidate dependency target")
+  endif()
+endif()
 add_library(reader_commands STATIC src/commands.cpp)
 target_include_directories(reader_commands PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -27,3 +47,12 @@ write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderCommandsCo
   VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderCommandsConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/EXReaderCommandsConfigVersion.cmake" DESTINATION lib/cmake/EXReaderCommands)
+
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  target_compile_definitions(reader_commands PUBLIC EXR_READER_SELECTOR_BYTES_CANDIDATE=1)
+endif()
+
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  _exr_raw_guard_target(EXReaderRevisions::reader_revisions "${EXReaderRevisions_DIR}"
+    reader_revisions.h READER_REVISIONS_VERSION 0.4.0 TRUE)
+endif()
