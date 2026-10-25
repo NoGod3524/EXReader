@@ -1,0 +1,189 @@
+name: Apple shelf diagnostic only
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [native, ui, anchor, traversal]
+        default: native
+  workflow_call:
+    inputs:
+      mode:
+        type: string
+        default: native
+permissions:
+  contents: read
+  actions: read
+env:
+  SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  diagnostic:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the unchanged SDK and schema
+        run: |
+          git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code a6d7dd81eef36e83e004fdc381a565a2ffee5462 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Recover the authenticated frozen macOS SDK in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIAGNOSTIC_MODE: ${{ inputs.mode }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, sys, zipfile
+          from pathlib import Path, PurePosixPath
+          sys.path[:0] = ['tools', 'tests/apple_host']
+          from check_parallel_integration import download_artifact_zip, fetch, require
+          from evidence_contract import validate_sdk
+          require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions execution required')
+          source = '8ed6f228fccc242dbcaf093dd595b81b4395370f'
+          run, artifact, job, target, size = 40045317110, 12541458288, 120725582256, 'macos', 18842452
+          expected = 'sha256:68ea93b280604cd7c50f7d56b7f6d621ceb3566754dfde67274a7cac0ea5fc8b'
+          if os.environ['DIAGNOSTIC_MODE'] == 'anchor':
+              artifact, job, target, size = 12541262723, 120725582028, 'iphonesimulator', 18842241
+              expected = 'sha256:8e13fda8c04c84f9bb1977eaf418feb75802c31e88fd42e1c6b2248941126ea3'
+          origin = fetch(f'actions/runs/{run}')
+          require(origin['head_sha'] == source and origin['run_attempt'] == 1 and
+                  origin['path'] == '.github/workflows/reader-apple-shelf.yml', 'SDK source run differs')
+          producer = fetch(f'actions/jobs/{job}')
+          require(producer['run_id'] == run and producer['conclusion'] == 'success' and
+                  producer['name'] == 'SDK ' + target, 'SDK producer did not succeed')
+          def recover(artifact_id, name, size, checksum, destination, prefix=''):
+              metadata = fetch(f'actions/artifacts/{artifact_id}')
+              require(metadata['id'] == artifact_id and metadata['name'] == name and
+                      metadata['workflow_run']['id'] == run and metadata['workflow_run']['head_sha'] == source and
+                      metadata['expired'] is False and metadata['size_in_bytes'] == size and
+                      metadata['digest'] == checksum, 'Artifact registration differs')
+              raw = download_artifact_zip(artifact_id)
+              require(len(raw) == size and 'sha256:' + hashlib.sha256(raw).hexdigest() == checksum,
+                      'Artifact ZIP size/digest differs')
+              with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                  names = archive.namelist()
+                  selected = [item for item in archive.infolist() if item.filename.startswith(prefix)]
+                  require(len(names) == len(set(names)) and 0 < len(selected) <= 300 and
+                          sum(item.file_size for item in selected) <= 256 * 1024 * 1024 and
+                          all(not PurePosixPath(name).is_absolute() and '..' not in PurePosixPath(name).parts and
+                              '\\' not in name and ':' not in name for name in names), 'Artifact ZIP entries refused')
+                  for item in selected:
+                      archive.extract(item, destination)
+              return metadata
+          metadata = recover(artifact, f'apple-shelf-sdk-{target}-{run}-1', size, expected, 'sdk-artifact')
+          identity = json.loads(Path('sdk-artifact/build/sdk-identity.json').read_text())
+          validate_sdk(Path('sdk-artifact/stage') / target, identity, source, str(run), '1', target)
+          root = Path('build/apple-shelf-diagnostic')
+          root.mkdir(parents=True)
+          (root / 'sdk-origin.json').write_text(json.dumps(metadata, indent=2) + '\n')
+          if os.environ['DIAGNOSTIC_MODE'] != 'native':
+              producer = fetch('actions/jobs/120730473650')
+              require(producer['run_id'] == run and producer['conclusion'] == 'success' and
+                      producer['name'] == 'native', 'Seed producer did not succeed')
+              metadata = recover(12541940786, f'apple-shelf-native-{run}-1', 26780122,
+                  'sha256:f0b73cf843478bf621ed0c6b52bf07c3400f15779a5baff4770307bc2fbdebff',
+                  'seed-artifact', 'seed/')
+              seed = json.loads(Path('seed-artifact/seed/shelf-seed.json').read_text())
+              require(seed['accepted'] is True and seed['source_sha'] == source and
+                      str(seed['run_id']) == str(run) and str(seed['attempt']) == '1' and
+                      len(seed['checks']) == 16 and len(set(seed['source_keys'])) == seed['books'] == 2202,
+                      'Native seed identity differs')
+              (root / 'seed-origin.json').write_text(json.dumps(metadata, indent=2) + '\n')
+              failures = {
+                  'ipad_refresh': ['91dbfd37bceac753c8443e0a985596edfc7f167a5940c876fbeb144221ad7df7', '84e60ab99999d3e9e6bee3e6bc82c1a46197480ae58bdc1c1b8ad3b1aab6cdd1'],
+                  'ipad_relaunch': ['ea0a51a055cdc0b5c6acb528a3fa73221ab17c6cd6eaed08317f75e66198e541', '5277785d23d48cd8fa9c9c5f760c1e4c161759ec281484acefcfb527c78f2762'],
+                  'iphone_refresh': ['6e8b2851060ed435f45a5b081fe66525e0a0479d872ecd078368ea22185b3a8f', '46e79ff0b8cd0ad8e20d6966bd308e5ad1e29efc1b0df280fb519b64c150622e'],
+                  'iphone_rotation': ['8a79dfcda9d22eebb933a320d75dc7751424cfc1845d2c80e6199394660e6901', '71953a5d0407554dd3cdf48cdaeca2fd1f70cd92cf62f925b4d0010e7e707a4d'],
+              }
+              for name, pair in failures.items():
+                  indexes = [seed['source_keys'].index('txt:' + key) for key in pair]
+                  print(json.dumps({'preserved_failure': name, 'seed_indexes': indexes, 'delta': indexes[1] - indexes[0]}))
+          print(json.dumps({'diagnostic_only': True, 'accepted': False, 'sdk_artifact': artifact,
+              'sdk_source_sha': source, 'sdk_run_id': run, 'sdk_attempt': 1, 'zip_digest': expected}))
+          PY
+      - name: Compile and execute the unchanged native catalog and shelf checks
+        if: inputs.mode == 'native'
+        id: probe
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          root=build/apple-shelf-diagnostic
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          xcrun swiftc -swift-version 5 -parse-as-library examples/apple/HostCatalog.swift tests/reader_catalog/apple_catalog_check.swift -lsqlite3 -o "$root/catalog-check"
+          "$root/catalog-check" apps/reader/store/001_catalog.sql "$root/catalog.json"
+          sdk="$PWD/sdk-artifact/stage/macos"
+          xcrun swiftc -swift-version 5 -parse-as-library -O -I "$sdk/include" -L "$sdk/lib" -lexreader -lsqlite3 \
+            -Xlinker -rpath -Xlinker "$sdk/lib" examples/apple/HostSDK.swift examples/apple/HostModel.swift \
+            examples/apple/HostCatalog.swift examples/apple/SelectableText.swift tests/apple_host/shelf/ShelfReview.swift \
+            -o "$root/shelf-review" 2>&1 | tee "$root/build.log"
+          "$root/shelf-review" build/apple-resources "$root/seed" 2>&1 | tee "$root/review.log"
+      - name: Diagnose only the selected original shelf UI cases
+        if: inputs.mode != 'native'
+        id: ui_probe
+        continue-on-error: true
+        env:
+          DIAGNOSTIC_MODE: ${{ inputs.mode }}
+        run: |
+          set -o pipefail
+          root=build/apple-shelf-diagnostic
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          cp seed-artifact/seed/ShelfSeed-* seed-artifact/seed/shelf-seed.json build/apple-resources/
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-shelf-project build/apple-resources tests/apple_host/shelf/ui
+          scheme=EXReaderHost-macOS
+          destination=platform=macOS
+          target=macos
+          signing=YES
+          cases=(-only-testing:EXReaderHostUITests-macOS/ShelfUITests/test01RealShelfAndBoundedInteractiveRows)
+          if test "$DIAGNOSTIC_MODE" = traversal; then
+            cases=(-only-testing:EXReaderHostUITests-macOS/ShelfUITests/test02ForwardTraversalOfAllOriginals)
+          fi
+          if test "$DIAGNOSTIC_MODE" = anchor; then
+            python3 - > "$root/destination.txt" <<'PY'
+          import json, subprocess
+          data = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))
+          choices = [(runtime, device['name'], device['udid']) for runtime, devices in data['devices'].items()
+                     for device in devices if device.get('isAvailable') and device['name'].startswith('iPad')]
+          runtime, name, udid = max(choices)
+          subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False, capture_output=True)
+          subprocess.run(['xcrun', 'simctl', 'erase', udid], check=True)
+          print('platform=iOS Simulator,id=' + udid)
+          PY
+            destination=$(cat "$root/destination.txt")
+            scheme=EXReaderHost-iOS
+            target=iphonesimulator
+            signing=NO
+            cases=(-only-testing:EXReaderHostUITests-iOS/ShelfUITests/test05RapidSearchRefreshAndNativeViewport -only-testing:EXReaderHostUITests-iOS/ShelfUITests/test06RotationBackgroundAndProcessRestore)
+          fi
+          xcodebuild test -project build/apple-shelf-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+            -destination "$destination" -derivedDataPath build/ShelfDiagnosticDerivedData \
+            -resultBundlePath "$root/$DIAGNOSTIC_MODE.xcresult" -parallel-testing-enabled NO "${cases[@]}" \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 2700 -maximum-test-execution-time-allowance 2700 \
+            EXR_SDK_DIR="$PWD/sdk-artifact/stage/$target" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "$root/ui.log"
+      - name: Mark the entire run as diagnostic without acceptance
+        if: always()
+        env:
+          PROBE_OUTCOME: ${{ inputs.mode != 'native' && steps.ui_probe.outcome || steps.probe.outcome }}
+          DIAGNOSTIC_MODE: ${{ inputs.mode }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path('build/apple-shelf-diagnostic')
+          root.mkdir(parents=True, exist_ok=True)
+          report = {'diagnostic_only': True, 'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'probe_outcome': os.environ['PROBE_OUTCOME'], 'mode': os.environ['DIAGNOSTIC_MODE'],
+              'sdk_baseline': os.environ['SDK_BASELINE']}
+          (root / 'scope.json').write_text(json.dumps(report, indent=2) + '\n')
+          print(json.dumps(report))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-shelf-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-shelf-diagnostic/
+          if-no-files-found: error
+      - if: always() && ((inputs.mode != 'native' && steps.ui_probe.outcome != 'success') || (inputs.mode == 'native' && steps.probe.outcome != 'success'))
+        run: exit 1

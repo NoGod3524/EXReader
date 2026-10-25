@@ -1,0 +1,3067 @@
+{
+  "schema": 1,
+  "accepted": true,
+  "scope": "native Apple navigation interface only",
+  "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+  "start_sha": "356c57a4c641f05e10cff13850e24bd94336454e",
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "f1_tree": "2e09cb2945564f25085074a816b95472392df205",
+  "f2_source": "cbd7832b914bddcf99e06a85962d301a00b47efa",
+  "f2_tree": "9395914832e191ad63f18f6188ca5044260d2f12",
+  "specialized": {
+    "run_id": 40132480954,
+    "attempt": 1,
+    "accepted": true,
+    "summary_job_id": 120989689758,
+    "jobs": [
+      {
+        "id": 120986947283,
+        "name": "Frozen SDK and installed F2 iphonesimulator",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 40132480954,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Require fixed SDK schema and tested F2 module",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Build unchanged public SDK and install optional products",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          }
+        ]
+      },
+      {
+        "id": 120986947445,
+        "name": "Frozen SDK and installed F2 macos",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 40132480954,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Require fixed SDK schema and tested F2 module",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Build unchanged public SDK and install optional products",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          }
+        ]
+      },
+      {
+        "id": 120987496273,
+        "name": "Native navigation and container contracts",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 40132480954,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/download-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Prepare fixtures and compile the actual owner bridge",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          }
+        ]
+      },
+      {
+        "id": 120987752574,
+        "name": "Navigation UI iphone",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 40132480954,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/download-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Build separate navigation UI project and select real destination",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Actual navigation cancel selection and process restart",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Require exact raw navigation evidence and installed providers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run exit 1",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      },
+      {
+        "id": 120987752581,
+        "name": "Navigation UI macos",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 40132480954,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/download-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Build separate navigation UI project and select real destination",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Actual navigation cancel selection and process restart",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Require exact raw navigation evidence and installed providers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run exit 1",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      },
+      {
+        "id": 120987752662,
+        "name": "Navigation UI ipad",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 40132480954,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/download-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Build separate navigation UI project and select real destination",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Actual navigation cancel selection and process restart",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Require exact raw navigation evidence and installed providers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run exit 1",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      },
+      {
+        "id": 120989689758,
+        "name": "Strict same-source navigation summary",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 40132480954,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Recheck completed jobs original ZIP identity and raw reports",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          }
+        ]
+      }
+    ],
+    "native_checks": 12,
+    "container_report_checks": 5,
+    "platforms": {
+      "macos": {
+        "cases": 6,
+        "failed": 0,
+        "steps": 23,
+        "attachments": 29,
+        "accepted": true
+      },
+      "iphone": {
+        "cases": 6,
+        "failed": 0,
+        "steps": 23,
+        "attachments": 29,
+        "accepted": true
+      },
+      "ipad": {
+        "cases": 6,
+        "failed": 0,
+        "steps": 23,
+        "attachments": 29,
+        "accepted": true
+      }
+    },
+    "artifacts": [
+      {
+        "id": 12576220133,
+        "name": "apple-navigation-sdk-iphonesimulator-40132480954-1",
+        "bytes": 20294823,
+        "digest": "sha256:4350fb2c3b9c338271a30bf41a1b483a032ae1889356f12369a96aebbb84ef0e",
+        "expires_at": "2027-01-22T21:02:47Z",
+        "expired": false,
+        "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+        "run_id": 40132480954
+      },
+      {
+        "id": 12575792013,
+        "name": "apple-navigation-ui-ipad-40132480954-1",
+        "bytes": 40200295,
+        "digest": "sha256:fcdc03101ee8c148439c31d782cc294512063b1ab9a06a342fc535989e7fe2d9",
+        "expires_at": "2027-01-22T21:02:47Z",
+        "expired": false,
+        "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+        "run_id": 40132480954
+      },
+      {
+        "id": 12575624276,
+        "name": "apple-navigation-summary-40132480954-1",
+        "bytes": 96767,
+        "digest": "sha256:9ca466669fa4732e7afe456ac6fcaf534400be7af3e0d41685f5cca6c8f690b6",
+        "expires_at": "2027-01-22T21:02:47Z",
+        "expired": false,
+        "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+        "run_id": 40132480954
+      },
+      {
+        "id": 12575538146,
+        "name": "apple-navigation-native-40132480954-1",
+        "bytes": 1424832,
+        "digest": "sha256:79cfd0d706c58d646126a84aed431d43a335bd6c3972e9b4900cc16412fb540c",
+        "expires_at": "2027-01-22T21:02:47Z",
+        "expired": false,
+        "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+        "run_id": 40132480954
+      },
+      {
+        "id": 12575537981,
+        "name": "apple-navigation-sdk-macos-40132480954-1",
+        "bytes": 20288373,
+        "digest": "sha256:9e4b73e807732ee8efe17f2549774194c2d3ca326e81677e56caa2d231f5a1b6",
+        "expires_at": "2027-01-22T21:02:47Z",
+        "expired": false,
+        "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+        "run_id": 40132480954
+      },
+      {
+        "id": 12575483604,
+        "name": "apple-navigation-ui-macos-40132480954-1",
+        "bytes": 34433228,
+        "digest": "sha256:9a6c3548d6fc520804defe62abbcd6bd40a105d171e7e96c59b013da22619690",
+        "expires_at": "2027-01-22T21:02:47Z",
+        "expired": false,
+        "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+        "run_id": 40132480954
+      },
+      {
+        "id": 12575119720,
+        "name": "apple-navigation-ui-iphone-40132480954-1",
+        "bytes": 32986550,
+        "digest": "sha256:0d5a8d0c5459e45f40d01bb188a3100ee36794d8a5ee7c948eb9600bfeddf726",
+        "expires_at": "2027-01-22T21:02:47Z",
+        "expired": false,
+        "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+        "run_id": 40132480954
+      }
+    ]
+  },
+  "full_original_regressions_on_final_source": false,
+  "original_regressions": {
+    "search": {
+      "run_id": 40133477416,
+      "attempt": 1,
+      "accepted": true,
+      "summary_job_id": 120998185144,
+      "native_search": 11,
+      "catalog": 8,
+      "mapping": 16,
+      "cases_per_platform": 4,
+      "steps_per_platform": 14,
+      "attachments_per_platform": 18,
+      "jobs": [
+        {
+          "id": 120989969292,
+          "name": "Frozen SDK and installed F1 iphonesimulator",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133477416,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Require fixed SDK schema and tested F1 module",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build unchanged public SDK and install optional products",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 120989969410,
+          "name": "Frozen SDK and installed F1 macos",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133477416,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Require fixed SDK schema and tested F1 module",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build unchanged public SDK and install optional products",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 120990545050,
+          "name": "Native search and original adapter contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133477416,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Prepare fixtures and compile the actual owner bridge",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Retain all original catalog and mapping checks",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            }
+          ]
+        },
+        {
+          "id": 120991087478,
+          "name": "Search UI ipad",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133477416,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build separate search UI project and select real destination",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Actual search cancel selection and process restart",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Require exact raw search evidence and installed providers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Run exit 1",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 8
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            }
+          ]
+        },
+        {
+          "id": 120991087491,
+          "name": "Search UI iphone",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133477416,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build separate search UI project and select real destination",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Actual search cancel selection and process restart",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Require exact raw search evidence and installed providers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Run exit 1",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 8
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            }
+          ]
+        },
+        {
+          "id": 120991087512,
+          "name": "Search UI macos",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133477416,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build separate search UI project and select real destination",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Actual search cancel selection and process restart",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Require exact raw search evidence and installed providers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Run exit 1",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 8
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            }
+          ]
+        },
+        {
+          "id": 120998185144,
+          "name": "Strict same-source search summary",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133477416,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Recheck completed jobs original ZIP identity and raw reports",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12577050147,
+          "name": "apple-search-ui-iphone-40133477416-1",
+          "bytes": 32025888,
+          "digest": "sha256:c57c9d58482b097a55e5e01116ebc5828fc7367d3021a89c82132a21fb91184d",
+          "expires_at": "2027-01-22T21:16:21Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133477416
+        },
+        {
+          "id": 12576612211,
+          "name": "apple-search-ui-macos-40133477416-1",
+          "bytes": 31902677,
+          "digest": "sha256:f1efc25d745a3e5c154437a3fbcc448ff6b9bdd8639061c464ed5a49881596b8",
+          "expires_at": "2027-01-22T21:16:21Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133477416
+        },
+        {
+          "id": 12576517142,
+          "name": "apple-search-ui-ipad-40133477416-1",
+          "bytes": 37527914,
+          "digest": "sha256:e5f1a705eba55e889f5e6f6142910fd58ff9785145b7f996008a4f472c4ad1e7",
+          "expires_at": "2027-01-22T21:16:21Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133477416
+        },
+        {
+          "id": 12576415039,
+          "name": "apple-search-sdk-iphonesimulator-40133477416-1",
+          "bytes": 20294784,
+          "digest": "sha256:fa99b0d30a4f332e0a85363805403694c75e34d16ca44eb9d3a5fc1da24e2156",
+          "expires_at": "2027-01-22T21:16:21Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133477416
+        },
+        {
+          "id": 12576359598,
+          "name": "apple-search-summary-40133477416-1",
+          "bytes": 95353,
+          "digest": "sha256:d84de5a803a5eae00b7adcf26a79d9aea8beefbf5a964a07b8a5a00fcbd73f2d",
+          "expires_at": "2027-01-22T21:16:21Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133477416
+        },
+        {
+          "id": 12575841839,
+          "name": "apple-search-sdk-macos-40133477416-1",
+          "bytes": 20288451,
+          "digest": "sha256:50523bee491b76f36581ec23e04e0740a085960a6e2388b6d827ddd706810977",
+          "expires_at": "2027-01-22T21:16:21Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133477416
+        },
+        {
+          "id": 12575704975,
+          "name": "apple-search-native-40133477416-1",
+          "bytes": 4165430,
+          "digest": "sha256:518daf9ff604233d780eb93077ef6c0a6021371989383c12f2eb2345a037aac0",
+          "expires_at": "2027-01-22T21:16:21Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133477416
+        }
+      ]
+    },
+    "wp13": {
+      "run_id": 40133494188,
+      "attempt": 1,
+      "accepted": true,
+      "summary_job_id": 120995120973,
+      "cases_per_platform": 13,
+      "steps_per_platform": 67,
+      "attachments_per_platform": 50,
+      "gate_rejection_checks": 97,
+      "problems": [],
+      "jobs": [
+        {
+          "id": 120990020523,
+          "name": "sdk (iphonesimulator)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133494188,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Verify the frozen reading SDK trees",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/cache@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Build and install the iphonesimulator SDK",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Install product packages with their single SQLite provider",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Record SDK identity",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Compile the bounded Swift consumer before scheduling UI jobs",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 8
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Run actions/cache@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            }
+          ]
+        },
+        {
+          "id": 120990020742,
+          "name": "sdk (iphoneos)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133494188,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Verify the frozen reading SDK trees",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/cache@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Build and install the iphoneos SDK",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Install product packages with their single SQLite provider",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Record SDK identity",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Compile the bounded Swift consumer before scheduling UI jobs",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 8
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Run actions/cache@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            }
+          ]
+        },
+        {
+          "id": 120990020795,
+          "name": "sdk (macos)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133494188,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Verify the frozen reading SDK trees",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/cache@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Build and install the macos SDK",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Install product packages with their single SQLite provider",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Record SDK identity",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Compile the bounded Swift consumer before scheduling UI jobs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Run actions/cache@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            }
+          ]
+        },
+        {
+          "id": 120990796648,
+          "name": "uitest (macos)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133494188,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Stage the installed SDKs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Build fixtures and the UI test project",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Select destination and reset simulator state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run UI acceptance on macos",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Collect per-case evidence and persisted state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Retain actual executable provider symbols and link map",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Enforce the UI and evidence results",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 11
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            }
+          ]
+        },
+        {
+          "id": 120990796656,
+          "name": "uitest (ipad)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133494188,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Stage the installed SDKs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Build fixtures and the UI test project",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Select destination and reset simulator state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run UI acceptance on ipad",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Collect per-case evidence and persisted state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Retain actual executable provider symbols and link map",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Enforce the UI and evidence results",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 11
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            }
+          ]
+        },
+        {
+          "id": 120990796678,
+          "name": "package",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133494188,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Stage the installed SDKs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Build shared fixtures and run the real SDK bridge review",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run the real session and persistence review",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run bounded EPUB storage, chapter, notes and long source review",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Build and self-check the macOS reference host",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Build and self-check the iPhone and iPad simulator hosts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Build the unsigned iOS device package",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Bind the package to this cloud run and attempt",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25
+            }
+          ]
+        },
+        {
+          "id": 120990796760,
+          "name": "uitest (iphone)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133494188,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Stage the installed SDKs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Build fixtures and the UI test project",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Select destination and reset simulator state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run UI acceptance on iphone",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Collect per-case evidence and persisted state",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Retain actual executable provider symbols and link map",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Enforce the UI and evidence results",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 11
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            }
+          ]
+        },
+        {
+          "id": 120995120973,
+          "name": "summary",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133494188,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Revalidate all platform, program, SDK, state and package evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Reject missing, mismatched and failed evidence using real cloud outputs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Bind the final acceptance to the gate regression result",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Preserve the strict acceptance result",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Enforce the combined evidence result",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 8
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12576651510,
+          "name": "wp13-apple-macos",
+          "bytes": 38683637,
+          "digest": "sha256:c558993581cf1ff0e1c3c0291efdeb20c7c0ffa54b16297a377613e969082e99",
+          "expires_at": "2026-11-23T21:31:00Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133494188
+        },
+        {
+          "id": 12576602679,
+          "name": "wp13-apple-ipad",
+          "bytes": 47296656,
+          "digest": "sha256:ae259ecb97468b7474429820102a4a5b0cabe5d084f26e54519bb4502b349179",
+          "expires_at": "2026-11-23T21:39:17Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133494188
+        },
+        {
+          "id": 12576594639,
+          "name": "wp13-apple-validation",
+          "bytes": 82625,
+          "digest": "sha256:0a774463c5ce4d804dd56b2b16fd94a2853fa0968bf8c513af4a196340b63c49",
+          "expires_at": "2026-11-23T21:55:12Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133494188
+        },
+        {
+          "id": 12576360270,
+          "name": "wp13-apple-sdk-iphonesimulator",
+          "bytes": 20294914,
+          "digest": "sha256:7ea3f45c71f7ceece8794fa41af9777a0534379d539b5a899a283cb80019418b",
+          "expires_at": "2026-11-23T21:19:11Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133494188
+        },
+        {
+          "id": 12576221586,
+          "name": "wp13-apple-sdk-macos",
+          "bytes": 20288520,
+          "digest": "sha256:d5a453acc3bab7ec28ce523bd79da6cfe60f6eff5d92228806cf133278037448",
+          "expires_at": "2026-11-23T21:20:00Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133494188
+        },
+        {
+          "id": 12576102717,
+          "name": "wp13-apple-package",
+          "bytes": 138560705,
+          "digest": "sha256:16306e1af46c80b5ad0d8c386f78d5a444dbc6fed2658b9545d91566e6f7a38a",
+          "expires_at": "2026-11-23T21:29:43Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133494188
+        },
+        {
+          "id": 12576061681,
+          "name": "wp13-apple-sdk-iphoneos",
+          "bytes": 19989848,
+          "digest": "sha256:469d02bea9d6ffbdc135a5512db184c269547a38096d8f9dca3d21fe88483a74",
+          "expires_at": "2026-11-23T21:18:52Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133494188
+        },
+        {
+          "id": 12575768805,
+          "name": "wp13-apple-iphone",
+          "bytes": 38005200,
+          "digest": "sha256:fd543db790442568dc45d68cba702a3ccc2c8b3e2a27c7fb6724443d1177873f",
+          "expires_at": "2026-11-23T21:36:17Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133494188
+        }
+      ]
+    },
+    "mapping": {
+      "run_id": 40133512224,
+      "attempt": 1,
+      "accepted": true,
+      "status": "complete",
+      "catalog": 8,
+      "mapping": 16,
+      "cases_per_platform": 5,
+      "steps_per_platform": 22,
+      "attachments_per_platform": 14,
+      "problems": [],
+      "jobs": [
+        {
+          "id": 120990075484,
+          "name": "SDK iphonesimulator",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133512224,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Keep all eight frozen SDK trees and shared bindings unchanged",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build the unchanged public SDK",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 120990075749,
+          "name": "SDK macos",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133512224,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Keep all eight frozen SDK trees and shared bindings unchanged",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build the unchanged public SDK",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 120991183075,
+          "name": "native",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133512224,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Execute the original exact eight catalog adapter checks",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Compile and execute the actual public SDK mapping consumer",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            }
+          ]
+        },
+        {
+          "id": 120994554322,
+          "name": "Mapping UI iphone",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133512224,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build the separate UI test project with real production import code",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Select an actual platform destination",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run five actual UI cases including two real process terminations",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Preserve and strictly inspect original UI and catalog evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Retain actual executable provider symbols and link map",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Run exit 1",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            }
+          ]
+        },
+        {
+          "id": 120994554356,
+          "name": "Mapping UI ipad",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133512224,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build the separate UI test project with real production import code",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Select an actual platform destination",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run five actual UI cases including two real process terminations",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Preserve and strictly inspect original UI and catalog evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Retain actual executable provider symbols and link map",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Run exit 1",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            }
+          ]
+        },
+        {
+          "id": 120994554376,
+          "name": "Mapping UI macos",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133512224,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build the separate UI test project with real production import code",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Select an actual platform destination",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run five actual UI cases including two real process terminations",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Preserve and strictly inspect original UI and catalog evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Retain actual executable provider symbols and link map",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Run exit 1",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12577560476,
+          "name": "apple-import-mapping-ui-ipad-40133512224-1",
+          "bytes": 32088805,
+          "digest": "sha256:d47c1a0ce1bdd913cf81f647abe3511124cf59f8c69cb7d0b5c8580805b696ad",
+          "expires_at": "2027-01-22T21:16:51Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133512224
+        },
+        {
+          "id": 12576970868,
+          "name": "apple-import-mapping-ui-macos-40133512224-1",
+          "bytes": 30466211,
+          "digest": "sha256:f4ce34a0b2ade627ca0a731c5b386d64fbc4c46752e160587829664aa9c9e89e",
+          "expires_at": "2027-01-22T21:16:51Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133512224
+        },
+        {
+          "id": 12576437388,
+          "name": "apple-import-mapping-native-40133512224-1",
+          "bytes": 2745171,
+          "digest": "sha256:653818915483f79d8a6954ef303de669efe96a3484cea8470145fa90b49b8aff",
+          "expires_at": "2027-01-22T21:16:51Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133512224
+        },
+        {
+          "id": 12575966940,
+          "name": "apple-import-mapping-sdk-iphonesimulator-40133512224-1",
+          "bytes": 20294718,
+          "digest": "sha256:a582348b7d65273b76ec871b6bd291e68daa63f208938303cfc15564ced52deb",
+          "expires_at": "2027-01-22T21:16:51Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133512224
+        },
+        {
+          "id": 12575769778,
+          "name": "apple-import-mapping-ui-iphone-40133512224-1",
+          "bytes": 31482991,
+          "digest": "sha256:ec0caca7ec2b2670767f01734e04729aecbf677cfc8c0641ba37a22275dd1c8c",
+          "expires_at": "2027-01-22T21:16:51Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133512224
+        },
+        {
+          "id": 12575714929,
+          "name": "apple-import-mapping-sdk-macos-40133512224-1",
+          "bytes": 20288588,
+          "digest": "sha256:c961060f05588399f1d971885fe9305a593b372b082590277295ee3725c2bc0b",
+          "expires_at": "2027-01-22T21:16:51Z",
+          "expired": false,
+          "source_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896",
+          "run_id": 40133512224
+        }
+      ]
+    },
+    "shelf": {
+      "run_id": 40133527618,
+      "attempt": 1,
+      "scope": "full",
+      "accepted": false,
+      "status": "completed_failure",
+      "native_catalog": 8,
+      "native_shelf": 16,
+      "native_account": 22,
+      "actual_sdk_originals": 2202,
+      "jobs": [
+        {
+          "id": 120990121329,
+          "name": "SDK iphonesimulator",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133527618,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Verify frozen SDK and unchanged schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build public SDK",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 120990121448,
+          "name": "SDK macos",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133527618,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Verify frozen SDK and unchanged schema",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build public SDK",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 120991167786,
+          "name": "native",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133527618,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Original exact catalog checks and real SDK shelf corpus",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 120993618580,
+          "name": "Shelf UI iphone",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133527618,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Build separate native shelf UI project with real SDK originals",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Select actual destination",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Exercise actual SwiftUI scrolling search and process restoration",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Strict native evidence and original-byte identity",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Exercise production account chooser and account-isolated libraries",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Verify production reader semantics and real compact-layout actions",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Preserve raw native layout observations",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Mark focused execution as diagnostic only",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 12
+            },
+            {
+              "name": "Retain actual executable provider symbols and link maps",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Run exit 1",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 15
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 30
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 31
+            }
+          ]
+        },
+        {
+          "id": 120993618619,
+          "name": "Shelf UI macos",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40133527618,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Build separate native shelf UI project with real SDK originals",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Select actual destination",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Exercise actual SwiftUI scrolling search and process restoration",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Strict native evidence and original-byte identity",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Exercise production account chooser and account-isolated libraries",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Verify production reader semantics and real compact-layout actions",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Preserve raw native layout observations",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Mark focused execution as diagnostic only",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 12
+            },
+            {
+              "name": "Retain actual executable provider symbols and link maps",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Run exit 1",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 15
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 30
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 31
+            }
+          ]
+        },
+        {
+          "id": 120993618662,
+          "name": "Shelf UI ipad",
+          "status": "completed",
+          "conclusion": "failure",
+          "run_id": 40133527618,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/download-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Build separate native shelf UI project with real SDK originals",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Select actual destination",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Exercise actual SwiftUI scrolling search and process restoration",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Strict native evidence and original-byte identity",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Exercise production account chooser and account-isolated libraries",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 9
+            },
+            {
+              "name": "Verify production reader semantics and real compact-layout actions",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Preserve raw native layout observations",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Mark focused execution as diagnostic only",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 12
+            },
+            {
+              "name": "Retain actual executable provider symbols and link maps",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Run exit 1",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 15
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 30
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 31
+            }
+          ]
+        },
+        {
+          "id": 121004936760,
+          "name": "summary",
+          "status": "completed",
+          "conclusion": "skipped",
+          "run_id": 40133527618,
+          "logs_url": null,
+          "steps": null
+        }
+      ],
+      "platforms": {
+        "macos": {
+          "accepted": true,
+          "shelf_cases": 7,
+          "shelf_observations": 11,
+          "shelf_attachments": 14,
+          "originals": 2202,
+          "account_cases": 3,
+          "account_steps": 14,
+          "account_attachments": 6,
+          "profiles": 4,
+          "https_requests": 530,
+          "completed_256_shard_sweeps": 2,
+          "verified_original_bytes": 7724,
+          "remote_revisions": 1,
+          "semantic_cases": 2,
+          "semantic_observations": 9,
+          "semantic_attachments": 4
+        },
+        "iphone": {
+          "accepted": true,
+          "shelf_cases": 7,
+          "shelf_observations": 11,
+          "shelf_attachments": 14,
+          "originals": 2202,
+          "account_cases": 3,
+          "account_steps": 14,
+          "account_attachments": 6,
+          "profiles": 4,
+          "https_requests": 530,
+          "completed_256_shard_sweeps": 2,
+          "verified_original_bytes": 7724,
+          "remote_revisions": 1,
+          "semantic_cases": 2,
+          "semantic_observations": 9,
+          "semantic_attachments": 4
+        },
+        "ipad": {
+          "accepted": false,
+          "shelf_passed": 6,
+          "shelf_expected": 7,
+          "failed_case": "test07StoredOriginalReadingAndFilteredReturn",
+          "failure": "Returned filtered original is measured at minY=0 in current complete native geometry, but restoration waits forever for an unneeded scroll issue",
+          "account_cases": "skipped",
+          "semantic_cases": "skipped",
+          "container_locator_succeeded": true
+        }
+      },
+      "artifacts": [
+        {
+          "id": 12577950137,
+          "name": "apple-shelf-ui-macos-40133527618-1",
+          "size_in_bytes": 39481544,
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12577950137",
+          "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12577950137/zip",
+          "expired": false,
+          "created_at": "2026-10-24T22:00:48Z",
+          "expires_at": "2027-01-22T21:17:03Z",
+          "updated_at": "2026-10-24T22:00:48Z",
+          "digest": "sha256:4440ab8df2316b8df54a182508d40c75308e10179b322a2d34cb69d769602e88",
+          "workflow_run": {
+            "id": 40133527618,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-navigation-ui",
+            "head_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896"
+          }
+        },
+        {
+          "id": 12577623533,
+          "name": "apple-shelf-ui-iphone-40133527618-1",
+          "size_in_bytes": 48884776,
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12577623533",
+          "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12577623533/zip",
+          "expired": false,
+          "created_at": "2026-10-24T22:24:47Z",
+          "expires_at": "2027-01-22T21:17:03Z",
+          "updated_at": "2026-10-24T22:24:47Z",
+          "digest": "sha256:ad641bcfc217ee3ebe51cab1e030c9ef95b1186196ea6b4e11de869475b66fd6",
+          "workflow_run": {
+            "id": 40133527618,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-navigation-ui",
+            "head_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896"
+          }
+        },
+        {
+          "id": 12577227656,
+          "name": "apple-shelf-ui-ipad-40133527618-1",
+          "size_in_bytes": 226856392,
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12577227656",
+          "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12577227656/zip",
+          "expired": false,
+          "created_at": "2026-10-24T22:23:51Z",
+          "expires_at": "2027-01-22T21:17:03Z",
+          "updated_at": "2026-10-24T22:23:51Z",
+          "digest": "sha256:56181a157e13eefad8ce4c3d1d5427f31cae490dff1e5f9df6ad58bedaa7cc74",
+          "workflow_run": {
+            "id": 40133527618,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-navigation-ui",
+            "head_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896"
+          }
+        },
+        {
+          "id": 12576590365,
+          "name": "apple-shelf-sdk-macos-40133527618-1",
+          "size_in_bytes": 20288547,
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12576590365",
+          "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12576590365/zip",
+          "expired": false,
+          "created_at": "2026-10-24T21:21:46Z",
+          "expires_at": "2027-01-22T21:17:03Z",
+          "updated_at": "2026-10-24T21:21:46Z",
+          "digest": "sha256:428ec164ce701d22cff122bb90ed5345fd3a761b3c9293d87c44fbfe9f44b926",
+          "workflow_run": {
+            "id": 40133527618,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-navigation-ui",
+            "head_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896"
+          }
+        },
+        {
+          "id": 12576312027,
+          "name": "apple-shelf-native-40133527618-1",
+          "size_in_bytes": 31254258,
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12576312027",
+          "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12576312027/zip",
+          "expired": false,
+          "created_at": "2026-10-24T21:32:43Z",
+          "expires_at": "2027-01-22T21:17:03Z",
+          "updated_at": "2026-10-24T21:32:43Z",
+          "digest": "sha256:5f30a1948806531bdcfe922334cc17427a8b9366fd59f69a60e827bd505a13e2",
+          "workflow_run": {
+            "id": 40133527618,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-navigation-ui",
+            "head_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896"
+          }
+        },
+        {
+          "id": 12576246371,
+          "name": "apple-shelf-sdk-iphonesimulator-40133527618-1",
+          "size_in_bytes": 20294691,
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12576246371",
+          "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12576246371/zip",
+          "expired": false,
+          "created_at": "2026-10-24T21:21:09Z",
+          "expires_at": "2027-01-22T21:17:03Z",
+          "updated_at": "2026-10-24T21:21:09Z",
+          "digest": "sha256:57db4a02dabe3f841f4ba5802f4d41cd4fe44971c1ff5af263040ce2cdc194d8",
+          "workflow_run": {
+            "id": 40133527618,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-navigation-ui",
+            "head_sha": "1e86ddac59a415d18370ce40bdd0489622e9a896"
+          }
+        }
+      ],
+      "summary_job_id": 121004936760,
+      "summary_conclusion": "skipped"
+    }
+  },
+  "earlier_failed_runs": [
+    {
+      "source_sha": "eb123aa82140eafbe5143f7b67a7f2f65e8544f0",
+      "run_id": 40130739432,
+      "attempt": 1,
+      "native_passed": 11,
+      "native_expected": 12,
+      "reason": "Probe reused an intentionally expired source lease after independent progress commit",
+      "native_artifact": {
+        "id": 12575235245,
+        "bytes": 1415543,
+        "digest": "sha256:498b10832c9408338461e8e4a01010f964c5aaf993a1bc9f29bf36de4497e8b6"
+      },
+      "diagnostic_run_id": 40131164773,
+      "diagnostic_only": true,
+      "diagnostic_accepted": false
+    },
+    {
+      "source_sha": "abdc772b27e7ee95ac76fb0b2b4ed1655bfdf821",
+      "run_id": 40131358600,
+      "attempt": 1,
+      "native_passed": 12,
+      "macos_ui_passed": 5,
+      "iphone_ui_passed": 4,
+      "ipad_ui_passed": 4,
+      "ui_expected_per_platform": 5,
+      "reason": "iOS automatic List button style also selected parent row when child action tapped",
+      "artifacts": [
+        {
+          "id": 12575660980,
+          "name": "apple-navigation-native-40131358600-1",
+          "bytes": 1419631,
+          "digest": "sha256:bb231a3c2669420ed97a7e82cb985f896735b33ee6fe18d334c937d1e00d4322",
+          "expires_at": "2027-01-22T20:47:24Z",
+          "expired": false,
+          "source_sha": "abdc772b27e7ee95ac76fb0b2b4ed1655bfdf821",
+          "run_id": 40131358600
+        },
+        {
+          "id": 12575321603,
+          "name": "apple-navigation-ui-macos-40131358600-1",
+          "bytes": 33598260,
+          "digest": "sha256:b5e7fc4f853f01dfcb993f613c4bb045df389735328b5a119c841991bbd242c7",
+          "expires_at": "2027-01-22T20:47:24Z",
+          "expired": false,
+          "source_sha": "abdc772b27e7ee95ac76fb0b2b4ed1655bfdf821",
+          "run_id": 40131358600
+        },
+        {
+          "id": 12575091444,
+          "name": "apple-navigation-sdk-macos-40131358600-1",
+          "bytes": 20288177,
+          "digest": "sha256:19a045a54ed11e135c0bd19685ca9b034bc614f14605be680ddf293c15bcffb4",
+          "expires_at": "2027-01-22T20:47:24Z",
+          "expired": false,
+          "source_sha": "abdc772b27e7ee95ac76fb0b2b4ed1655bfdf821",
+          "run_id": 40131358600
+        },
+        {
+          "id": 12575082710,
+          "name": "apple-navigation-ui-ipad-40131358600-1",
+          "bytes": 113599741,
+          "digest": "sha256:20ddc4eb2c734b6bd180255639f54ed8e65c106504eb90b0adbfcab1236769c9",
+          "expires_at": "2027-01-22T20:47:24Z",
+          "expired": false,
+          "source_sha": "abdc772b27e7ee95ac76fb0b2b4ed1655bfdf821",
+          "run_id": 40131358600
+        },
+        {
+          "id": 12574519936,
+          "name": "apple-navigation-ui-iphone-40131358600-1",
+          "bytes": 108889176,
+          "digest": "sha256:8e8d21ea8342249512eab1cf579ef15ab5cd2bcd14e8bc3356407ed3f8857332",
+          "expires_at": "2027-01-22T20:47:24Z",
+          "expired": false,
+          "source_sha": "abdc772b27e7ee95ac76fb0b2b4ed1655bfdf821",
+          "run_id": 40131358600
+        },
+        {
+          "id": 12574429037,
+          "name": "apple-navigation-sdk-iphonesimulator-40131358600-1",
+          "bytes": 20294612,
+          "digest": "sha256:536c32d2131424fa923ed4feda88303b9553dcec8df2de742e0ed8a5ca672608",
+          "expires_at": "2027-01-22T20:47:24Z",
+          "expired": false,
+          "source_sha": "abdc772b27e7ee95ac76fb0b2b4ed1655bfdf821",
+          "run_id": 40131358600
+        }
+      ]
+    }
+  ],
+  "complete_product": false,
+  "physical_device_execution": false,
+  "performance_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "local_builds_tests_or_artifact_downloads": false
+}

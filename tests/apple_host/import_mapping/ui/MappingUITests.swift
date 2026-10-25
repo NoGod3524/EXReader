@@ -41,8 +41,15 @@ final class ImportMappingUITests: XCTestCase {
     private func launch(fresh: Bool, extra: [String] = []) {
         app.launchArguments = ["-EXRUITestFixtures", "1"] + (fresh ? ["-EXRFreshState", "1"] : []) + extra
         app.launch()
-        XCTAssertTrue(wait { self.element("library.import.mapping-state").exists &&
-            !self.element("library.busy").exists && !self.probe.isEmpty }, "Startup/mapping repair did not finish: \(app.debugDescription)")
+        var previous = "", stableSince = Date()
+        XCTAssertTrue(wait {
+            guard self.app.state == .runningForeground, self.element("library.import.mapping-state").exists,
+                  !self.element("library.busy").exists, !self.probe.isEmpty else { previous = ""; return false }
+            let identity = self.probe + self.text("library.status") +
+                String(describing: self.app.windows.firstMatch.frame) + String(describing: self.element("library.import.epub").frame)
+            if identity != previous { previous = identity; stableSince = Date() }
+            return Date().timeIntervalSince(stableSince) >= 0.6
+        }, "Startup/mapping repair did not finish: \(app.debugDescription)")
         mark(fresh ? "fresh-start" : "restart-and-repair")
     }
     private func mark(_ id: String, screenshot: Bool = false) {
@@ -57,10 +64,23 @@ final class ImportMappingUITests: XCTestCase {
         }
     }
     private func importBook(_ button: String, count: Int, duplicate: Bool = false) {
+        let deadline = Date().addingTimeInterval(30)
         let target = app.buttons.matching(identifier: button).firstMatch
-        XCTAssertTrue(target.waitForExistence(timeout: 30))
-        XCTAssertTrue(wait(30) { target.isEnabled && target.isHittable })
+        XCTAssertTrue(target.waitForExistence(timeout: max(0, deadline.timeIntervalSinceNow)))
+        var previous = "", stableSince = Date()
+        XCTAssertTrue(wait(max(0, deadline.timeIntervalSinceNow)) {
+            guard self.app.state == .runningForeground, self.app.buttons.matching(identifier: button).count == 1,
+                  !self.element("library.busy").exists, let node = try? target.snapshot(), node.isEnabled,
+                  !node.frame.isEmpty, self.app.windows.firstMatch.frame.contains(node.frame), target.isHittable else {
+                previous = ""; return false
+            }
+            let identity = String(describing: node.frame) + self.probe + self.text("library.status")
+            if identity != previous { previous = identity; stableSince = Date() }
+            return Date().timeIntervalSince(stableSince) >= 0.6
+        }, "Import action must be foreground, unique, enabled, hittable and stable")
+        print("EXR_MAPPING_SINGLE_TAP before id=\(button) frame=\(target.frame) trace=\(String(describing: self.element("library.title").value))")
         target.tap()
+        print("EXR_MAPPING_SINGLE_TAP after id=\(button) trace=\(String(describing: self.element("library.title").value))")
         XCTAssertTrue(wait { !self.element("library.busy").exists &&
             self.probe.contains("books=\(count);local=\(count);") &&
             self.text("library.status").contains(duplicate ? "已存在" : "已导入") }, "Import mapping did not complete: \(app.debugDescription)")

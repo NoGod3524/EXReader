@@ -5,6 +5,7 @@
 import Foundation
 import CryptoKit
 import CEXReader
+import Darwin
 
 enum HostError: Error, LocalizedError {
     case engine(code: Int, message: String)
@@ -212,7 +213,7 @@ final class HostPublication {
     func bind(_ cancel: HostCancelBox) throws { try cancel.check(); controlOwner.active = cancel }
     func route(_ part: Int, path: String? = nil) throws -> HostPart {
         guard parts.indices.contains(part), parts[part].reading,
-              path == nil || path == parts[part].path else { throw HostError.invalidInput("EPUB 章节路由无效") }
+              path.map({ $0.utf8.elementsEqual(parts[part].path.utf8) }) ?? true else { throw HostError.invalidInput("EPUB 章节路由无效") }
         return parts[part]
     }
 }
@@ -279,6 +280,14 @@ final class HostDocument {
     let text: Data
     let title: String
 
+    init(adopting document: OpaquePointer) {
+        handle = document
+        var size = 0
+        if let pointer = exr_document_text(document, &size), size > 0 { text = Data(bytes: pointer, count: size) }
+        else { text = Data() }
+        title = hostString(exr_document_title(document))
+    }
+
     init(library: HostLibrary, bookID: Int64, cancel: HostCancelBox? = nil) throws {
         try cancel?.check()
         var document: OpaquePointer?
@@ -302,12 +311,17 @@ final class HostDocument {
     deinit { exr_document_free(handle) }
 
     func resolve(_ anchor: HostAnchor, cancel: HostCancelBox? = nil) throws -> HostAnchorMatch {
+        try withExtendedLifetime(anchor) { try resolveInput(anchor.raw, cancel: cancel) }
+    }
+
+    func resolveInput(_ input: exr_anchor, cancel: HostCancelBox? = nil) throws -> HostAnchorMatch {
         let active = cancel ?? HostCancelBox()
         try active.check()
+        var anchor = input
         var match = exr_anchor_match()
         var error = exr_error()
         var control = hostControl(active)
-        try hostCheck(exr_anchor_resolve_ex(handle, &anchor.raw, &control, &match, &error), error)
+        try hostCheck(exr_anchor_resolve_ex(handle, &anchor, &control, &match, &error), error)
         try active.check()
         let range: Range<Int>? = match.state == EXR_ANCHOR_FOUND ? Int(match.start)..<Int(match.end) : nil
         return HostAnchorMatch(state: match.state, range: range)
@@ -384,6 +398,29 @@ final class HostPager {
 
     var extent: Int { document?.text.count ?? Int(exr_pager_chapter_statistics(pager).projection_bytes) }
     var statistics: exr_chapter_stats { exr_pager_chapter_statistics(pager) }
+
+    func verifyProjection(_ expected: Data, cancel: HostCancelBox) throws {
+        try bind(cancel)
+        guard extent == expected.count else { throw HostError.invalidInput("独立文档与实际分页文本长度不一致") }
+        if let document {
+            guard document.text == expected else { throw HostError.invalidInput("独立文档与实际分页文本不一致") }
+            return
+        }
+        var start = 0
+        while start < expected.count {
+            try cancel.check()
+            var end = min(start + 32768, expected.count)
+            while end < expected.count && (expected[end] & 0xc0) == 0x80 { end -= 1 }
+            guard end > start else { throw HostError.invalidInput("分页文本 UTF-8 边界无效") }
+            let owner = HostPageText()
+            var error = exr_error(), control = hostControl(cancel)
+            try hostCheck(exr_pager_read_text(pager, start, end, hostPageTextSink,
+                Unmanaged.passUnretained(owner).toOpaque(), &control, &error), error)
+            guard owner.data == expected[start..<end] else { throw HostError.invalidInput("独立文档与实际分页文本不一致") }
+            start = end
+        }
+        try cancel.check()
+    }
 
     func text(_ range: Range<Int>, cancel: HostCancelBox) throws -> String {
         if let document { return String(decoding: document.text[range], as: UTF8.self) }
@@ -475,6 +512,11 @@ final class HostPager {
     func resolveLocation(_ location: HostEPUBLocation, cancel: HostCancelBox) throws -> HostAnchorMatch {
         try bind(cancel)
         return try withExtendedLifetime(location) { try resolveRaw(location.raw.selector) }
+    }
+    func resolveInput(_ anchor: exr_anchor, cancel: HostCancelBox) throws -> HostAnchorMatch {
+        try bind(cancel)
+        if let document { return try document.resolveInput(anchor, cancel: cancel) }
+        return try resolveRaw(anchor)
     }
     private func resolveRaw(_ raw: exr_anchor) throws -> HostAnchorMatch {
         var anchor = raw, match = exr_anchor_match(), error = exr_error(), control = hostControl(box)
@@ -978,6 +1020,58 @@ final class HostLibrary {
         try cancel?.check()
         return HostSourceFingerprint(format: format,
             sha256: hash.finalize().map { String(format: "%02x", $0) }.joined(), bytes: Int64(offset))
+    }
+
+    // One bounded public source lease; no source or SDK handle enters the network worker.
+    func exportSyncOriginal(bookID: Int64, expected: HostSourceFingerprint, directory: URL, cancel: HostCancelBox) throws {
+        guard expected.bytes > 0, expected.bytes <= 128 * 1024 * 1024,
+              expected.sha256.utf8.count == 64, expected.sha256.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }),
+              ["epub", "pdf", "cbz", "txt", "html", "fb2", "docx", "rtf", "mobi"].contains(expected.format) else {
+            throw HostError.invalidInput("同步原件身份无效")
+        }
+        try cancel.check()
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
+                                                attributes: [.posixPermissions: 0o700])
+        let attributes = try directory.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+        guard attributes.isDirectory == true, attributes.isSymbolicLink != true else { throw HostError.invalidInput("同步目录无效") }
+        let temporary = directory.appendingPathComponent("." + UUID().uuidString + ".part")
+        let descriptor = Darwin.open(temporary.path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600)
+        guard descriptor >= 0 else { throw HostError.invalidResult("无法创建同步原件副本") }
+        let output = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
+        defer { try? output.close(); try? FileManager.default.removeItem(at: temporary) }
+        var source = exr_source(), error = exr_error()
+        try hostCheck(exr_library_source(handle, bookID, &source, &error), error)
+        defer { source.release?(source.context) }
+        guard source.size == UInt64(expected.bytes), let read = source.read_at else { throw HostError.invalidResult("SDK 原件长度与产品身份不一致") }
+        var buffer = [UInt8](repeating: 0, count: 64 * 1024), offset: UInt64 = 0, hash = SHA256()
+        while offset < source.size {
+            try cancel.check()
+            let request = Int(min(UInt64(buffer.count), source.size - offset))
+            let received = buffer.withUnsafeMutableBytes { read(source.context, offset, $0.baseAddress, request) }
+            guard received > 0, received <= request else { throw HostError.invalidResult("SDK 原件读取不完整") }
+            let chunk = Data(buffer.prefix(received)); hash.update(data: chunk); try output.write(contentsOf: chunk)
+            offset += UInt64(received)
+        }
+        guard hash.finalize().map({ String(format: "%02x", $0) }).joined() == expected.sha256 else { throw HostError.invalidResult("SDK 原件摘要与产品身份不一致") }
+        try output.synchronize(); try output.close(); try cancel.check()
+        let destination = directory.appendingPathComponent(expected.sha256 + "." + expected.format)
+        if FileManager.default.fileExists(atPath: destination.path) {
+            let existingDescriptor = Darwin.open(destination.path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
+            guard existingDescriptor >= 0 else { throw HostError.invalidResult("已有同步副本无效") }
+            let existing = FileHandle(fileDescriptor: existingDescriptor, closeOnDealloc: true)
+            defer { try? existing.close() }
+            var status = stat()
+            guard fstat(existingDescriptor, &status) == 0, (UInt32(status.st_mode) & UInt32(S_IFMT)) == UInt32(S_IFREG),
+                  status.st_size == expected.bytes else { throw HostError.invalidResult("已有同步副本长度无效") }
+            var total = 0, digest = SHA256()
+            while Int64(total) < expected.bytes {
+                try cancel.check()
+                let chunk = try existing.read(upToCount: Int(min(Int64(64 * 1024), expected.bytes - Int64(total)))) ?? Data()
+                guard !chunk.isEmpty else { throw HostError.invalidResult("已有同步副本读取不完整") }
+                digest.update(data: chunk); total += chunk.count
+            }
+            guard digest.finalize().map({ String(format: "%02x", $0) }).joined() == expected.sha256 else { throw HostError.invalidResult("已有同步副本摘要无效") }
+        } else { try FileManager.default.moveItem(at: temporary, to: destination) }
     }
 
     func locationKind(book: HostBook) throws -> String {

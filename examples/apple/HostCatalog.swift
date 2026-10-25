@@ -1,6 +1,42 @@
 // SPDX-License-Identifier: MIT
 import Foundation
-import SQLite3
+// tools/apple_swift.py selects the installed product SQLite header/provider.
+import CReaderSQLite
+import CReaderProduct
+import Darwin
+
+func hostProductStrings<T>(_ values: [String], _ body: ([UnsafePointer<CChar>?]) throws -> T) rethrows -> T {
+    let buffers = values.map { strdup($0) }
+    defer { for buffer in buffers { free(buffer) } }
+    return try body(buffers.map { $0.map { UnsafePointer($0) } })
+}
+
+struct HostProductBook {
+    let key: String
+    let sdkID: Int64
+    let format: String
+    let sha256: String
+    let bytes: Int64
+    let title: String
+    let author: String
+    let sort: String
+    let favorite: Int32
+    let locationKind: String
+}
+
+struct HostShelfKey: Codable, Equatable {
+    let sort: String
+    let key: String
+}
+struct HostShelfBook: Identifiable {
+    let key: HostShelfKey
+    let sdkID: Int64
+    let title: String
+    let author: String
+    let format: String
+    let bytes: Int64
+    var id: String { key.key }
+}
 
 enum HostCatalogValue {
     case text(String)
@@ -25,6 +61,7 @@ final class HostCatalog {
     static let schemaVersion: Int64 = 1
     static let resourceName = "reader-catalog-v1"
     private let ownerQueue: DispatchQueue
+    private let path: URL
     private var handle: OpaquePointer?
 #if EXR_APPLE_IMPORT_REVIEW
     static var afterProductBookWrite: (() throws -> Void)?
@@ -46,6 +83,7 @@ final class HostCatalog {
             throw HostCatalogError.invalid("产品书库迁移必须为有界的 UTF-8 原始 SQL")
         }
         self.ownerQueue = ownerQueue
+        self.path = path
         var opened: OpaquePointer?
         let status = sqlite3_open_v2(path.path, &opened,
                                     SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nil)
@@ -138,6 +176,140 @@ final class HostCatalog {
         }
         try check(status, database, expected: SQLITE_DONE)
         return result
+    }
+
+    // Each scoped native history is opened, consumed and closed in the same
+    // synchronous owner task. A serial DispatchQueue may reuse different OS
+    // threads between tasks; native revision handles never cross that boundary.
+    func withHistory<T>(_ body: (OpaquePointer) throws -> T) throws -> T {
+        dispatchPrecondition(condition: .onQueue(ownerQueue))
+        var store: OpaquePointer?, error = reader_revision_error()
+        guard reader_revisions_open(path.path, &store, &error) == READER_REV_OK, let opened = store else {
+            throw HostCatalogError.invalid("无法打开产品修订历史")
+        }
+        defer { _ = reader_revisions_close(&store, &error) }
+        return try body(opened)
+    }
+
+    func searchSourceKey(sdkID: Int64) throws -> String {
+        let (database, statement) = try prepare("SELECT b.format,b.source_sha256,b.source_bytes FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE l.sdk_book_id=? AND b.deleted=0 LIMIT 2", [.integer(sdkID)])
+        defer { sqlite3_finalize(statement) }
+        try check(sqlite3_step(statement), database, expected: SQLITE_ROW)
+        guard let format = columnText(statement, 0), let sha = columnText(statement, 1),
+              sha.utf8.count == 64, sha.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }),
+              sqlite3_column_type(statement, 2) == SQLITE_INTEGER, sqlite3_column_int64(statement, 2) > 0 else {
+            throw HostCatalogError.invalid("搜索原件身份无效")
+        }
+        let value = "exr3.40.0:projection1:\(format):\(sha):\(sqlite3_column_int64(statement, 2))"
+        try check(sqlite3_step(statement), database, expected: SQLITE_DONE)
+        return value
+    }
+
+    func syncPage(after: String? = nil) throws -> [HostProductBook] {
+        let fields = "b.book_key,l.sdk_book_id,b.format,b.source_sha256,b.source_bytes,b.title,b.author,b.sort_title,b.favorite,l.location_kind"
+        var sql = "SELECT " + fields + " FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE b.deleted=0"
+        var values: [HostCatalogValue] = []
+        if let after { sql += " AND b.book_key>?"; values.append(.text(after)) }
+        sql += " ORDER BY b.book_key LIMIT 50"
+        let (database, statement) = try prepare(sql, values)
+        defer { sqlite3_finalize(statement) }
+        var result: [HostProductBook] = [], status = sqlite3_step(statement)
+        while status == SQLITE_ROW {
+            guard let key = columnText(statement, 0), let format = columnText(statement, 2),
+                  let sha = columnText(statement, 3), let title = columnText(statement, 5),
+                  let author = columnText(statement, 6), let sort = columnText(statement, 7),
+                  let mode = columnText(statement, 9), sqlite3_column_type(statement, 1) == SQLITE_INTEGER,
+                  sqlite3_column_type(statement, 4) == SQLITE_INTEGER,
+                  sqlite3_column_type(statement, 8) == SQLITE_INTEGER else {
+                throw HostCatalogError.invalid("产品同步原件身份无效")
+            }
+            result.append(HostProductBook(key: key, sdkID: sqlite3_column_int64(statement, 1), format: format,
+                sha256: sha, bytes: sqlite3_column_int64(statement, 4), title: title, author: author, sort: sort,
+                favorite: sqlite3_column_int(statement, 8), locationKind: mode))
+            status = sqlite3_step(statement)
+        }
+        try check(status, database, expected: SQLITE_DONE)
+        return result
+    }
+
+    func readingBook(sdkID: Int64) throws -> HostProductBook {
+        let (database, statement) = try prepare("SELECT b.book_key,b.format,b.source_sha256,b.source_bytes,b.title,b.author,b.sort_title,b.favorite,l.location_kind FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE b.deleted=0 AND l.sdk_book_id=? LIMIT 2", [.integer(sdkID)])
+        defer { sqlite3_finalize(statement) }
+        try check(sqlite3_step(statement), database, expected: SQLITE_ROW)
+        guard let key = columnText(statement, 0), let format = columnText(statement, 1), let sha = columnText(statement, 2),
+              let title = columnText(statement, 4), let author = columnText(statement, 5), let sort = columnText(statement, 6),
+              let location = columnText(statement, 8), sqlite3_column_type(statement, 3) == SQLITE_INTEGER,
+              sqlite3_column_type(statement, 7) == SQLITE_INTEGER else { throw HostCatalogError.invalid("阅读记录原件映射无效") }
+        let value = HostProductBook(key: key, sdkID: sdkID, format: format, sha256: sha, bytes: sqlite3_column_int64(statement, 3),
+            title: title, author: author, sort: sort, favorite: sqlite3_column_int(statement, 7), locationKind: location)
+        try check(sqlite3_step(statement), database, expected: SQLITE_DONE)
+        return value
+    }
+
+    func bootstrapVerified(_ book: HostProductBook, store: OpaquePointer) throws {
+        var state = reader_revision_state(), error = reader_revision_error()
+        let status = book.key.withCString { reader_revision_heads(store, "book", $0, nil, nil, &state, &error) }
+        guard status == READER_REV_OK else { throw HostCatalogError.invalid("无法读取书籍历史") }
+        if state.revisions > 0 {
+            var bytes: UInt64 = 0
+            guard book.key.withCString({ reader_revision_book_identity(store, $0, &bytes, &error) }) == READER_REV_OK,
+                  bytes == UInt64(book.bytes) else { throw HostCatalogError.invalid("书籍历史与已验证原件不一致") }
+            return
+        }
+        try hostProductStrings([book.key, book.format, book.sha256, book.title, book.author, book.sort]) { strings in
+            var context = reader_command_context(); context.store = store
+            var command = reader_book_command(); command.operation = READER_COMMAND_PUT
+            command.book_key = strings[0]; command.format = strings[1]; command.source_sha256 = strings[2]
+            command.title = strings[3]; command.author = strings[4]; command.sort_title = strings[5]
+            command.source_bytes = UInt64(book.bytes); command.favorite = book.favorite
+            var result = reader_command_result(), failure = reader_command_error()
+            guard reader_command_apply_book(&context, &command, &result, &failure) == READER_COMMAND_OK else {
+                throw HostCatalogError.invalid("已保留原书，产品历史提交失败")
+            }
+        }
+    }
+
+    func shelf(query: String, anchor: HostShelfKey?, before: Bool = false,
+               inclusive: Bool = false) throws -> [HostShelfBook] {
+        let normalized = query.precomposedStringWithCanonicalMapping
+        guard normalized.unicodeScalars.count <= 256, !normalized.utf8.contains(0) else {
+            throw HostCatalogError.invalid("搜索文字超过上限或包含空字符")
+        }
+        func escaped(_ value: String) -> String {
+            value.replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "%", with: "\\%")
+                .replacingOccurrences(of: "_", with: "\\_")
+        }
+        let literal = escaped(normalized)
+        var sql = "SELECT b.sort_title,b.book_key,l.sdk_book_id,b.title,b.author,b.format,b.source_bytes FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE b.deleted=0"
+        var values: [HostCatalogValue] = []
+        if !query.isEmpty {
+            sql += " AND (b.sort_title LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\')"
+            values += [.text("%" + literal + "%"), .text("%" + literal + "%"),
+                       .text("%" + escaped(normalized.decomposedStringWithCanonicalMapping) + "%")]
+        }
+        if let anchor {
+            sql += " AND (b.sort_title,b.book_key) " + (before ? (inclusive ? "<=" : "<") : (inclusive ? ">=" : ">")) + " (?,?)"
+            values += [.text(anchor.sort), .text(anchor.key)]
+        }
+        sql += before ? " ORDER BY b.sort_title DESC,b.book_key DESC LIMIT 50" : " ORDER BY b.sort_title,b.book_key LIMIT 50"
+        let (database, statement) = try prepare(sql, values)
+        defer { sqlite3_finalize(statement) }
+        var result: [HostShelfBook] = []
+        var status = sqlite3_step(statement)
+        while status == SQLITE_ROW {
+            guard let sort = columnText(statement, 0), let key = columnText(statement, 1),
+                  let title = columnText(statement, 3), let author = columnText(statement, 4),
+                  let format = columnText(statement, 5), sqlite3_column_type(statement, 2) == SQLITE_INTEGER,
+                  sqlite3_column_type(statement, 6) == SQLITE_INTEGER else {
+                throw HostCatalogError.invalid("书架行身份无效")
+            }
+            result.append(HostShelfBook(key: HostShelfKey(sort: sort, key: key), sdkID: sqlite3_column_int64(statement, 2),
+                title: title, author: author, format: format, bytes: sqlite3_column_int64(statement, 6)))
+            status = sqlite3_step(statement)
+        }
+        try check(status, database, expected: SQLITE_DONE)
+        return before ? Array(result.reversed()) : result
     }
 
     @discardableResult
