@@ -1,0 +1,53 @@
+name: D12 actual received-record navigation and original NULL
+on:
+  push:
+    branches: [codex/reader-dot-d12]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-dot-d12
+  cancel-in-progress: false
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08
+          path: target
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Authenticate original ZIP programs and installed packages
+        run: |
+          python -m compileall -q tests/reader_dot_wave2/d12
+          python tests/reader_dot_wave2/d12/prepare.py
+          python -m pip install uiautomation==2.0.29
+      - name: Build unchanged public SDK consumer with explicit harness identity
+        shell: pwsh
+        run: |
+          $r = "$env:GITHUB_WORKSPACE/build/d12/installed"
+          cmake -S tests/reader_dot_wave2/d12 -B build/d12/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release "-DTARGET_ROOT=$env:GITHUB_WORKSPACE/target" "-DEXR_SDK=$r/sdk-stage" "-DCMAKE_PREFIX_PATH=$r/raw-stage;$r/product-stage;$r/sdk-stage"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cmake --build build/d12/consumer --parallel 2 --verbose
+          exit $LASTEXITCODE
+      - name: Actual account HTTPS and all records GUI and real NULL closure
+        run: python tests/reader_dot_wave2/d12/check.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d12-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/d12/*.json
+            build/d12/programs/
+            build/d12/consumer/windows-peer-owner.exe
+            build/d12/consumer/windows-peer-owner.map
+            build/d12/evidence/
+          if-no-files-found: error
