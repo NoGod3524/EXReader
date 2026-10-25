@@ -2,13 +2,13 @@
 import argparse,importlib.util,json,os,platform as platform_module,sqlite3,subprocess,sys,threading,time,traceback
 from pathlib import Path
 import psutil
-from contract import ACTIONS,FORMATS,ROUNDS,SDK,digest,write,validate
+from contract import ACTIONS,FORMATS,ROUNDS,DWELL_SECONDS,SDK,digest,write,validate
 assert os.environ.get('GITHUB_ACTIONS')=='true'
 p=argparse.ArgumentParser();p.add_argument('platform',choices=('windows','gtk'));args=p.parse_args()
 out=Path('evidence').resolve();identity=json.loads((out/'build-identity.json').read_text())
 paths=dict(txt=out/'fixtures/Reading.txt',epub=out/'fixtures/D14 EPUB.epub',pdf=out/'fixtures/Fixed.pdf',cbz=out/'fixtures/Comic.cbz')
 originals={p.relative_to(out).as_posix():digest(p) for p in (out/'fixtures').rglob('*') if p.is_file()}
-report=dict(identity,accepted=False,plan=dict(stages=2,rounds=ROUNDS,formats=list(FORMATS),actions=list(ACTIONS),ceiling_seconds=2700),actions=[],stages=[],resources=[],failures=[],sampler_errors=[],completed_cycles=0,duration_seconds=0,performance_accepted=False,physical_device_accepted=False,screenreader_accepted=False,leak_free_claim=False,originals=originals,environment=dict(os=platform_module.platform(),cpu=platform_module.processor(),logical_cpus=os.cpu_count()),allowed_writes='native imported originals and implicit progress saves only; no annotations or setting commits')
+report=dict(identity,accepted=False,plan=dict(stages=2,rounds=ROUNDS,formats=list(FORMATS),actions=list(ACTIONS),ceiling_seconds=2700,dwell_seconds_per_cycle=DWELL_SECONDS),actions=[],stages=[],resources=[],failures=[],sampler_errors=[],completed_cycles=0,duration_seconds=0,performance_accepted=False,physical_device_accepted=False,screenreader_accepted=False,leak_free_claim=False,originals=originals,environment=dict(os=platform_module.platform(),cpu=platform_module.processor(),logical_cpus=os.cpu_count()),allowed_writes='native imported originals and implicit progress saves only; no annotations or setting commits')
 started=time.monotonic();stop=threading.Event();driver=None;process=None;current_stage=None
 
 def save():
@@ -61,7 +61,7 @@ try:
     driver=module.Driver(out,out/identity['program'],out/'Reader.otf')
     for stage in (1,2):
         process=driver.launch(stage);proc=psutil.Process(process.pid)
-        current_stage=dict(stage=stage,pid=process.pid,create_time=proc.create_time(),exe=proc.exe(),program_sha256=digest(proc.exe()),exit_code=None,completed_cycles=0)
+        current_stage=dict(stage=stage,pid=process.pid,create_time=proc.create_time(),exe=proc.exe(),program_sha256=digest(proc.exe()),exit_code=None,completed_cycles=0,dwells=[])
         assert current_stage['program_sha256']==identity['program_sha256']
         report['stages'].append(current_stage);stop.clear();sampler=threading.Thread(target=sample,args=(stage,process.pid),daemon=True);sampler.start()
         if stage==2:
@@ -75,6 +75,14 @@ try:
                     else:fn=getattr(driver,name)
                     action(base+'/'+name,fn)
                 current_stage['completed_cycles']+=1;report['completed_cycles']+=1
+                # Sustained reading dwell is separately observed, never counted as a cycle.
+                dwell=dict(cycle=base,status='running',started_seconds=time.monotonic()-started,elapsed_seconds=0)
+                current_stage['dwells'].append(dwell);save();dwell_start=time.monotonic()
+                while time.monotonic()-dwell_start<DWELL_SECONDS:
+                    assert process.poll() is None,'product exited during sustained dwell'
+                    assert time.monotonic()-started<2640,'bounded lifecycle deadline during dwell'
+                    time.sleep(.25)
+                dwell.update(status='completed',elapsed_seconds=time.monotonic()-dwell_start,finished_seconds=time.monotonic()-started)
                 snapshot=driver.snapshot(f'stage-{stage}-round-{round_}-{kind}');snapshot['profile_audit']=profile_audit()
                 write(out/f'stage-{stage}-round-{round_}-{kind}.json',snapshot);save()
         if stage==1:action('1/close_processing',lambda:driver.close_processing(out/'fixtures/Processing.txt'),False)

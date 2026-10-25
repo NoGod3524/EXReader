@@ -64,3 +64,41 @@ our platform modules under explicit unique names. No product edits.
 Iteration 2 also records actual installed SDK header identity, corrects GDI query
 handle rights, forces authored TXT LF bytes, binds each launched executable hash,
 and records read-only absence of pending files and annotation rows per cycle.
+
+## Retained iteration 2 and final selector repair
+
+Run `40226184382` attempt 1, harness `c466aa835b412555cadd5a3734ea766f366b925a`:
+Windows passed all 24 cycles and four lifecycle checks using two real PIDs
+3328 and 828, with 130 resource observations over 67.313 seconds. Original
+Windows ZIP ID 12611541837 and GTK ZIP ID 12610978837 were both independently
+authenticated in Actions; the overall run still failed. GTK completed its first
+four-format round (4 cycles, 52 resource samples), then the tool selected a
+same-named `Bookshelf` scroll pane instead of the contained list box. Fixed target
+source `examples/linux/reader.c:1055–1058` explicitly copies the child's accessible
+name to the scroll wrapper. Final iteration constrains the exact native list-box
+role and walks its visible rows, with one actual single click (the product's
+single-click activation is enabled); it does not inject opening or skip the
+failed loop. CI2 failure and raw native tree remain preserved and authenticated.
+The CI2 early snapshot also confirmed the CI1 9 MB TXT failure verbatim:
+`导入失败：超出宿主或SDK限制（Native parser failed (6)）`.
+
+Explicit owner approval to continue D14 feature commits, pushes, remaining
+Actions and final evidence seal was verified from room message
+`Sentinel_3fc8195067848191984aeea41256b99b` at 19:26:24 UTC, answering the exact
+scope request `Sentinel_38496d4b9f6881918e3a697844de0d02`.
+
+## Predeclared final-iteration sustained dwell
+
+The 67.313-second CI2 Windows result is **short-cycle coverage only**, not a
+long-duration stability conclusion. Final iteration adds a fixed 30-second live
+reading dwell after each of the same 24 completed cycles: at least 720 seconds
+(12 minutes) of actual product dwell across two independent process stages, plus
+UI-action time, still within the 45-minute overall test ceiling. RSS/CPU/handles
+or fd/thread sampling continues every 0.5 seconds during every dwell. Product
+exit/deadline is checked every 0.25 seconds; the next native action and screenshot
+must still complete. Dwell has separate running/completed status, cycle identity
+and measured duration; it never increments cycle counts. The contract rejects
+missing/short/interrupted dwells and total runtime below 720 seconds. This is an
+explicit plan amendment before the final run, not padding prior elapsed results,
+CI build time, or introducing any performance/resource budget. The old short
+iteration and its failures remain preserved.

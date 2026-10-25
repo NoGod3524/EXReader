@@ -47,10 +47,13 @@ class Driver:
             self.host.wait(lambda v:v['generation']>before and v['reader_visible']==1 and not v['saving'])
             self.wait(lambda:not self.nodes('Import book',{'file chooser'}))
         else:
-            shelf=self.element('Bookshelf')
-            rows=[n for n in bus.children(shelf) if bus.role(n)=='list item' and path.stem in bus.name(n)]
+            self.idle()
+            # scroll() copies the child's name to the outer scroll pane. Resolve
+            # the actual list role, not the first same-named accessible object.
+            shelf=self.element('Bookshelf',{'list box'})
+            rows=[n for n in bus.walk(shelf) if bus.role(n)=='list item' and bus.states(n).get('showing') and path.stem in bus.name(n)]
             assert len(rows)==1,[(bus.name(n),bus.role(n)) for n in bus.children(shelf)]
-            self.click_node(rows[0]);self.host.key('Return');self.host.wait(lambda v:v['reader_visible']==1 and not v['saving'])
+            self.click_node(rows[0]);self.host.wait(lambda v:v['reader_visible']==1 and not v['saving'])
         assert self.host.read()['error']==0 and self.host.read()['frame_generation']>0
     def forward(self):
         self.before_page=self.position();generation=self.host.read()['generation'];self.click('Next page')
