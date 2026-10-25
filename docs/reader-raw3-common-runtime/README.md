@@ -47,6 +47,19 @@ Apple和GTK的合并扩展负例、Android遗漏已批准文件负例另有保�
 新组合尚无运行结果；将从同一提交执行全部叶子，不拼接上述不同source的历史绿灯。
 # Next common-source review
 
+The 9a432d86 Android full run 40235643574 failed in the unchanged WebDAV
+Activity-exit test. Its last native result was status0, published1, clients0,
+uploads0 and attached=detached274; lifecycle flags were not recorded, so the
+precise failing condition remains unknown. Source review found a separate
+race: the test waited only for worker done before asserting asynchronous
+Activity destruction. A second generated instrumentation projection now waits
+for both original final conditions within the same 10s/20ms budget, retains
+all final assertions and records only safe lifecycle flags. It executes the
+full unchanged original runner first and authenticates actual compiled,
+installed and executed APK bytes. Original test and Activity files remain
+unchanged; this adds exactly three owned projection files. No acceptance is
+inherited from the 9a432d86 failed run.
+
 The bd8c3638 source retains its Android navigation failure (run 40229070687).
 The independent diagnostic 40233907741 observed a stale accessibility cache at
 First & chapter, not the original Group failure; it is not proof of that

@@ -55,6 +55,9 @@ EXTENSIONS = {
     'tests/reader_android_navigation_cache/adapter.py',
     'tests/reader_android_navigation_cache/init.gradle',
     'tests/reader_android_navigation_cache/README.md',
+    'tests/reader_android_webdav_exit/adapter.py',
+    'tests/reader_android_webdav_exit/init.gradle',
+    'tests/reader_android_webdav_exit/README.md',
 }
 
 
