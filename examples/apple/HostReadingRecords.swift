@@ -5,6 +5,26 @@ import CEXReader
 import CReaderProduct
 import Darwin
 
+#if EXR_APPLE_RAW3
+private let hostReadingDecode = reader_rs_decode_raw_v3
+private let hostReadingHeads = reader_revision_heads_raw_v3
+private let hostReadingGet = reader_revision_get_raw_v3
+private let hostReadingIdentity = reader_revision_book_identity_raw_v3
+private let hostReadingBook = reader_command_apply_book_raw_v3
+private let hostReadingSelected = reader_revision_selected_raw_v3
+private let hostReadingViewOpen = reader_av_open_raw_v3
+private let hostReadingViewPage = reader_av_page_get_raw_v3
+#else
+private let hostReadingDecode = reader_rs_decode
+private let hostReadingHeads = reader_revision_heads
+private let hostReadingGet = reader_revision_get
+private let hostReadingIdentity = reader_revision_book_identity
+private let hostReadingBook = reader_command_apply_book
+private let hostReadingSelected = reader_revision_selected
+private let hostReadingViewOpen = reader_av_open
+private let hostReadingViewPage = reader_av_page_get
+#endif
+
 func hostReadingField<T>(_ input: T) -> String {
     var value = input
     return withUnsafePointer(to: &value) {
@@ -78,6 +98,9 @@ struct HostReadingRequest: Codable {
     let author: String
     let sort: String
     let favorite: Int32
+    var anchor_version: UInt64? = nil
+
+    var writerVersion: UInt64 { version == 1 ? 2 : anchor_version ?? 0 }
 
     var entityKind: String { kind == 1 ? "progress" : "annotation" }
     var entityKey: String { kind == 1 ? bookKey : bookKey + ":" + annotation }
@@ -86,7 +109,14 @@ struct HostReadingRequest: Codable {
         value.utf8.count == 32 && value.utf8.allSatisfy { (48...57).contains($0) || (97...102).contains($0) }
     }
     func validate() throws {
-        guard version == 1, bookID > 0, Self.id(revision), Self.id(bootstrap),
+        let supported: Bool
+#if EXR_APPLE_RAW3
+        supported = version == 1 ? anchor_version == nil || anchor_version == 2 :
+            version == 2 && (1...3).contains(anchor_version ?? 0)
+#else
+        supported = version == 1 && (anchor_version == nil || anchor_version == 2)
+#endif
+        guard supported, bookID > 0, Self.id(revision), Self.id(bootstrap),
               (1...4).contains(kind), (0...2).contains(operation), (1...3).contains(mode),
               kind == 1 ? annotation.isEmpty : Self.id(annotation),
               heads.count <= 32, Set(heads).count == heads.count, heads.allSatisfy(Self.id),
@@ -95,6 +125,7 @@ struct HostReadingRequest: Codable {
               HostReadingWorker.acceptsParser(parser), body.utf8.count <= 65536, !body.utf8.contains(0) else {
             throw HostError.invalidInput("待完成阅读记录无效；请显式放弃后重试")
         }
+        guard writerVersion != 3 || mode == 3 else { throw HostError.invalidInput("原始选择器只适用于固定页") }
         if operation != 1 && kind != 4 {
             guard let capture, capture.mode == mode else { throw HostError.invalidInput("待完成记录位置缺失") }
             try capture.validate()
@@ -185,6 +216,7 @@ struct HostReadingRow: Identifiable {
     let quote: String
     let body: String
     let hasLocation: Bool
+    var quoteBytes: Data? = nil
     var id: String { entityKind + ":" + annotation }
     var safe: Bool { state == 1 }
     var deleted: Bool { kind == 4 }
@@ -239,7 +271,7 @@ enum HostReadingWorker {
 
     static func decoded(_ wire: Data, history: OpaquePointer) throws -> (capture: HostReadingCapture, version: UInt64, book: String, body: String) {
         var record = reader_rs_record(), error = reader_rs_error()
-        let status = wire.withUnsafeBytes { reader_rs_decode(history, $0.baseAddress, $0.count, &record, &error) }
+        let status = wire.withUnsafeBytes { hostReadingDecode(history, $0.baseAddress, $0.count, &record, &error) }
         guard status == READER_RS_OK else { throw HostError.invalidInput("阅读记录格式无法读取") }
         defer { reader_rs_record_free(&record) }
         guard record.has_location != 0, acceptsParser(hostReadingField(record.parser_version)),
@@ -267,7 +299,8 @@ enum HostReadingWorker {
 
     static func request(session: HostSession, catalog: HostCatalog, kind: Int, operation: Int,
                         annotation: String = "", mode: Int, capture: HostReadingCapture?, body: String,
-                        observedHeads: [String]? = nil, cancel: HostCancelBox) throws -> HostReadingRequest {
+                        observedHeads: [String]? = nil, anchorVersion: UInt64? = nil,
+                        cancel: HostCancelBox) throws -> HostReadingRequest {
         try cancel.check()
         guard let sdkBook = session.book else { throw HostError.invalidInput("请先打开书籍") }
         let book = try catalog.readingBook(sdkID: sdkBook.id)
@@ -277,17 +310,29 @@ enum HostReadingWorker {
         let heads = try observedHeads ?? catalog.withHistory { history in
             try self.heads(history, kind: kind == 1 ? "progress" : "annotation", key: kind == 1 ? book.key : book.key + ":" + annotation)
         }
-        let value = HostReadingRequest(version: 1, bookID: sdkBook.id, bookKey: book.key, revision: HostReadingRequest.newID(),
+        let requestVersion: Int
+#if EXR_APPLE_RAW3
+        requestVersion = 2
+#else
+        requestVersion = 1
+        guard anchorVersion == nil || anchorVersion == 2 || kind == 4 || operation == 1 else {
+            throw HostError.invalidInput("默认构建不能改写此保留版本")
+        }
+#endif
+        var value = HostReadingRequest(version: requestVersion, bookID: sdkBook.id, bookKey: book.key, revision: HostReadingRequest.newID(),
             bootstrap: HostReadingRequest.newID(), annotation: annotation, kind: kind, operation: operation,
             heads: heads, parser: String(cString: exr_version()), body: body, capture: capture, mode: mode,
             format: book.format, sha256: book.sha256, bytes: book.bytes, title: book.title, author: book.author,
             sort: book.sort, favorite: book.favorite)
+#if EXR_APPLE_RAW3
+        value.anchor_version = anchorVersion ?? (mode == 3 ? 3 : 2)
+#endif
         try value.validate(); return value
     }
 
     static func heads(_ history: OpaquePointer, kind: String, key: String) throws -> [String] {
         let values = HostReadingHeads(); var graph = reader_revision_state(), error = reader_revision_error()
-        let result = reader_revision_heads(history, kind, key, hostReadingHead,
+        let result = hostReadingHeads(history, kind, key, hostReadingHead,
             Unmanaged.passUnretained(values).toOpaque(), &graph, &error)
         guard result == READER_REV_OK, values.ids.count <= 32, values.ids.count == graph.heads,
               Set(values.ids).count == values.ids.count else { throw HostError.invalidInput("阅读记录分支过多或无法完整读取") }
@@ -296,7 +341,7 @@ enum HostReadingWorker {
 
     static func retained(_ history: OpaquePointer, revision: String) throws -> (Data, reader_revision_info) {
         var wire: UnsafeMutablePointer<CChar>?, count = 0, info = reader_revision_info(), error = reader_revision_error()
-        guard HostReadingRequest.id(revision), reader_revision_get(history, revision, &wire, &count, &info, &error) == READER_REV_OK,
+        guard HostReadingRequest.id(revision), hostReadingGet(history, revision, &wire, &count, &info, &error) == READER_REV_OK,
               let wire, count > 0, count <= 1024 * 1024 else { throw HostError.invalidInput("保留版本无法读取") }
         defer { reader_revision_bytes_free(wire) }
         return (Data(bytes: wire, count: count), info)
@@ -311,7 +356,7 @@ enum HostReadingWorker {
               try catalog.searchSourceKey(sdkID: book.id) == actual.searchKey else { throw HostError.invalidInput("阅读记录与当前原件不一致") }
         return try catalog.withHistory { history in
             var bookBytes: UInt64 = 0, bookError = reader_revision_error()
-            let identity = reader_revision_book_identity(history, request.bookKey, &bookBytes, &bookError)
+            let identity = hostReadingIdentity(history, request.bookKey, &bookBytes, &bookError)
             if identity == READER_REV_NOT_FOUND {
                 try hostProductStrings([request.bootstrap, request.bookKey, request.format, request.sha256,
                                         request.title, request.author, request.sort]) { strings in
@@ -322,7 +367,7 @@ enum HostReadingWorker {
                     command.source_bytes = UInt64(request.bytes); command.favorite = request.favorite
                     var result = reader_command_result(), error = reader_command_error()
                     try cancel.commit {
-                        guard reader_command_apply_book(&context, &command, &result, &error) == READER_COMMAND_OK else {
+                        guard hostReadingBook(&context, &command, &result, &error) == READER_COMMAND_OK else {
                             throw HostError.invalidInput("原件历史准备失败；待完成记录已保留")
                         }
                     }
@@ -345,7 +390,13 @@ enum HostReadingWorker {
                         var result = reader_rc_result(), error = reader_rc_error()
                         func commit() throws -> reader_rc_result {
                             try cancel.commit {
-                                guard reader_rc_apply(&context, &command, &result, &error) == READER_RC_OK else {
+                                let status: reader_rc_status
+#if EXR_APPLE_RAW3
+                                status = reader_rc_apply_raw_v3(&context, &command, UInt32(request.writerVersion), &result, &error)
+#else
+                                status = reader_rc_apply(&context, &command, &result, &error)
+#endif
+                                guard status == READER_RC_OK else {
                                     throw HostError.invalidInput("阅读记录未提交；保留原请求，可重试或显式放弃")
                                 }
                             }
@@ -373,6 +424,9 @@ enum HostReadingWorker {
             try afterDurableSave?()
 #endif
             let result = try apply(request, session: session, catalog: catalog, cancel: cancel)
+#if EXR_APPLE_RAW3_REVIEW && EXR_APPLE_HOST_REVIEW
+            try HostRaw3Review.audit(session: session, catalog: catalog, root: root, event: "actual-submit", submission: request, created: result.created)
+#endif
 #if EXR_APPLE_HOST_REVIEW
             try afterCommit?()
 #endif
@@ -384,6 +438,9 @@ enum HostReadingWorker {
         try HostReadingRequests.withLock(root) { file in
             guard let request = try HostReadingRequests.read(file) else { throw HostError.invalidInput("没有待完成记录") }
             let result = try apply(request, session: session, catalog: catalog, cancel: cancel)
+#if EXR_APPLE_RAW3_REVIEW && EXR_APPLE_HOST_REVIEW
+            try HostRaw3Review.audit(session: session, catalog: catalog, root: root, event: "actual-replay", submission: request, created: result.created)
+#endif
             try HostReadingRequests.clear(request.revision, file: file)
             return result
         }
@@ -404,12 +461,12 @@ enum HostReadingWorker {
             options.cancel_context = Unmanaged.passUnretained(cancel).toOpaque()
             options.cancel = { context in context.map { Unmanaged<HostCancelBox>.fromOpaque($0).takeUnretainedValue().isCancelled ? 1 : 0 } ?? 1 }
             var view: OpaquePointer?, error = reader_av_error()
-            guard reader_av_open(history, bookKey, &options, &view, &error) == READER_AV_OK else { throw HostError.invalidResult("阅读记录列表无法打开") }
+            guard hostReadingViewOpen(history, bookKey, &options, &view, &error) == READER_AV_OK else { throw HostError.invalidResult("阅读记录列表无法打开") }
             defer { _ = reader_av_close(&view, &error) }
             var cursor = from ?? reader_av_cursor()
             if from == nil { guard reader_av_cursor_start(view, 1, &cursor, &error) == READER_AV_OK else { throw HostError.invalidResult("阅读记录分页无法开始") } }
             var page = reader_av_page()
-            guard reader_av_page_get(view, &cursor, 32, &page, &error) == READER_AV_OK else {
+            guard hostReadingViewPage(view, &cursor, 32, &page, &error) == READER_AV_OK else {
                 try cancel.check(); throw HostError.invalidResult("阅读记录分页失败，保留上一批")
             }
             defer { reader_av_page_free(&page) }
@@ -418,12 +475,18 @@ enum HostReadingWorker {
                 try cancel.check()
                 guard let items = page.items else { throw HostError.invalidResult("阅读记录页缺失") }
                 let value = items[index], safe = value.state == READER_AV_STATE_SAFE
+                guard value.exact_size <= 65536, value.exact != nil || value.exact_size == 0 else {
+                    throw HostError.invalidResult("阅读记录选文长度无效")
+                }
+                let quote = safe && value.content_available != 0 ? value.exact.map { Data(bytes: $0, count: value.exact_size) } : nil
                 rows.append(HostReadingRow(bookID: bookID, bookKey: bookKey, annotation: hostReadingField(value.annotation_id),
                     entityKind: "annotation", state: Int(value.state.rawValue), kind: safe ? Int(value.kind.rawValue) : 0,
                     revision: safe ? hostReadingField(value.revision_id) : "", mode: safe ? Int(value.mode.rawValue) : 0,
                     revisions: value.revisions, heads: value.heads, missing: value.missing_parents + value.foreign_parents,
-                    requiresRestore: value.requires_restore != 0, quote: safe && value.content_available != 0 ? hostString(value.exact) : "",
-                    body: safe && value.content_available != 0 ? hostString(value.note_text) : "", hasLocation: safe && value.has_location != 0))
+                    requiresRestore: value.requires_restore != 0, quote: quote.map { String(decoding: $0, as: UTF8.self) } ?? "",
+                    body: safe && value.content_available != 0 ? hostString(value.note_text) : "",
+                    hasLocation: safe && value.content_available != 0 && value.has_location != 0 && value.exact != nil,
+                    quoteBytes: quote))
             }
             try cancel.check()
             return HostReadingPage(rows: rows, next: page.next, complete: page.complete != 0)
@@ -435,7 +498,7 @@ enum HostReadingWorker {
             var wire: UnsafeMutablePointer<CChar>?, count = 0, info = reader_revision_info()
             var selection = reader_revision_selection(), error = reader_revision_error()
             let key = row.entityKind == "progress" ? row.bookKey : row.bookKey + ":" + row.annotation
-            let status = reader_revision_selected(history, row.entityKind, key, &wire, &count, &info, &selection, &error)
+            let status = hostReadingSelected(history, row.entityKind, key, &wire, &count, &info, &selection, &error)
             defer { reader_revision_bytes_free(wire) }
             guard row.safe, status == READER_REV_OK, selection.kind == READER_SELECTION_SAFE,
                   hostReadingField(info.revision_id) == row.revision, let wire, count > 0 else {
@@ -449,7 +512,7 @@ enum HostReadingWorker {
         try catalog.withHistory { history in
             var wire: UnsafeMutablePointer<CChar>?, count = 0, info = reader_revision_info()
             var selection = reader_revision_selection(), error = reader_revision_error()
-            let status = reader_revision_selected(history, "progress", bookKey, &wire, &count, &info, &selection, &error)
+            let status = hostReadingSelected(history, "progress", bookKey, &wire, &count, &info, &selection, &error)
             defer { reader_revision_bytes_free(wire) }
             if status == READER_REV_NOT_FOUND { return nil }
             guard status == READER_REV_OK || status == READER_REV_UNSAFE else { throw HostError.invalidInput("阅读进度记录无法读取") }
@@ -461,7 +524,8 @@ enum HostReadingWorker {
             return HostReadingRow(bookID: bookID, bookKey: bookKey, annotation: "", entityKind: "progress", state: safe ? 1 : 2,
                 kind: deleted ? 4 : 1, revision: safe ? hostReadingField(info.revision_id) : "", mode: decoded?.capture.mode ?? 0,
                 revisions: graph.revisions, heads: graph.heads, missing: graph.missing_parents + graph.foreign_parents,
-                requiresRestore: graph.requires_restore != 0, quote: "", body: "", hasLocation: decoded != nil)
+                requiresRestore: graph.requires_restore != 0, quote: "", body: "",
+                hasLocation: decoded.map { $0.capture.mode == 3 ? $0.capture.fixed?.fields[1] != nil : $0.capture.anchor?.fields[0] != nil } ?? false)
         }
     }
 

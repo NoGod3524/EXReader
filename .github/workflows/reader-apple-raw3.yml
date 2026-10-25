@@ -1,0 +1,50 @@
+name: Independent actual Apple raw3 host candidate
+on:
+  push:
+    branches: [codex/reader-apple-raw3]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  native:
+    name: Actual macOS raw host and original controls
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact SDK schema original controls and passed raw family
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/raw3/guard.py
+      - name: Actions-only syntax and actual installed host paths
+        run: |
+          python3 -m compileall -q tests/apple_host/raw3 tools/apple_swift.py tools/build_apple_product.py tools/build_apple_host.py tools/check_apple_product.py
+          python3 tests/apple_host/raw3/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-raw3-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-raw3/evidence/
+          if-no-files-found: error
+  summary:
+    if: always()
+    needs: native
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Original ZIP identity and complete actual host evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/raw3/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-raw3-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-raw3-summary/
+          if-no-files-found: error

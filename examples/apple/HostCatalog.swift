@@ -5,6 +5,18 @@ import CReaderSQLite
 import CReaderProduct
 import Darwin
 
+#if EXR_APPLE_RAW3
+private let hostCatalogHistoryOpen = reader_revisions_open_raw_v3
+private let hostCatalogHeads = reader_revision_heads_raw_v3
+private let hostCatalogIdentity = reader_revision_book_identity_raw_v3
+private let hostCatalogBook = reader_command_apply_book_raw_v3
+#else
+private let hostCatalogHistoryOpen = reader_revisions_open
+private let hostCatalogHeads = reader_revision_heads
+private let hostCatalogIdentity = reader_revision_book_identity
+private let hostCatalogBook = reader_command_apply_book
+#endif
+
 func hostProductStrings<T>(_ values: [String], _ body: ([UnsafePointer<CChar>?]) throws -> T) rethrows -> T {
     let buffers = values.map { strdup($0) }
     defer { for buffer in buffers { free(buffer) } }
@@ -184,7 +196,7 @@ final class HostCatalog {
     func withHistory<T>(_ body: (OpaquePointer) throws -> T) throws -> T {
         dispatchPrecondition(condition: .onQueue(ownerQueue))
         var store: OpaquePointer?, error = reader_revision_error()
-        guard reader_revisions_open(path.path, &store, &error) == READER_REV_OK, let opened = store else {
+        guard hostCatalogHistoryOpen(path.path, &store, &error) == READER_REV_OK, let opened = store else {
             throw HostCatalogError.invalid("无法打开产品修订历史")
         }
         defer { _ = reader_revisions_close(&store, &error) }
@@ -248,11 +260,11 @@ final class HostCatalog {
 
     func bootstrapVerified(_ book: HostProductBook, store: OpaquePointer) throws {
         var state = reader_revision_state(), error = reader_revision_error()
-        let status = book.key.withCString { reader_revision_heads(store, "book", $0, nil, nil, &state, &error) }
+        let status = book.key.withCString { hostCatalogHeads(store, "book", $0, nil, nil, &state, &error) }
         guard status == READER_REV_OK else { throw HostCatalogError.invalid("无法读取书籍历史") }
         if state.revisions > 0 {
             var bytes: UInt64 = 0
-            guard book.key.withCString({ reader_revision_book_identity(store, $0, &bytes, &error) }) == READER_REV_OK,
+            guard book.key.withCString({ hostCatalogIdentity(store, $0, &bytes, &error) }) == READER_REV_OK,
                   bytes == UInt64(book.bytes) else { throw HostCatalogError.invalid("书籍历史与已验证原件不一致") }
             return
         }
@@ -263,7 +275,7 @@ final class HostCatalog {
             command.title = strings[3]; command.author = strings[4]; command.sort_title = strings[5]
             command.source_bytes = UInt64(book.bytes); command.favorite = book.favorite
             var result = reader_command_result(), failure = reader_command_error()
-            guard reader_command_apply_book(&context, &command, &result, &failure) == READER_COMMAND_OK else {
+            guard hostCatalogBook(&context, &command, &result, &failure) == READER_COMMAND_OK else {
                 throw HostCatalogError.invalid("已保留原书，产品历史提交失败")
             }
         }

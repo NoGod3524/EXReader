@@ -402,6 +402,14 @@ struct LibraryScreen: View {
                 }
             }
 #endif
+#if EXR_APPLE_RAW3_REVIEW && EXR_APPLE_HOST_REVIEW
+            if model.showsTestFixtures {
+                Button("导入原始选择器 PDF 示例") { model.importFixture("RawSelectorNUL", extension: "pdf") }
+                    .accessibilityIdentifier("library.import.raw3-pdf")
+                Button("导入保留记录原文示例") { model.importFixture("RetainedMacRecords", extension: "txt") }
+                    .accessibilityIdentifier("library.import.raw3-mac-text")
+            }
+#endif
 #if EXR_APPLE_HOST_REVIEW
             if model.reviewFastImportEnabled {
                 Button("单回合真实快速导入") { model.reviewImportFixtureInOneMainTurn() }
