@@ -196,7 +196,7 @@ def reproduce(report,output):
         host.close();report['persisted_after_first_close']=profile_state(profile);host=None
         host=launch('second-warm-launch');PW.op_window(host,8)
         host.poll(lambda:(True,) if host.enabled('metadata') and host.lb_count(300)>0 else None,8)
-        before=snapshot('same_profile_reopened_before_original_predicate')
+        snapshot('same_profile_reopened_before_original_predicate')
         try:
             PW.op_first_screen(host,4)
             report['original_predicate_observation']=dict(status='unexpectedly_completed',diagnostic_deadline_seconds=4)
@@ -204,12 +204,13 @@ def reproduce(report,output):
             report['original_predicate_observation']=dict(status='failed',fault_class=type(error).__name__,
               no_transition='no transition' in str(error),diagnostic_deadline_seconds=4,
               original_3600_second_budget_unchanged=True)
-        snapshot('after_bounded_original_predicate')
+        settled=snapshot('after_bounded_original_predicate')
         host.set_text(host.control('search'),'')
         host.poll(lambda:(True,) if host.lb_count(300)>=50 and host.enabled('metadata') else None,8)
         PW.op_first_screen(host,4);after=snapshot('clear_via_real_search_control_restores_50_rows')
-        report['persistent_query_wait_condition_confirmed']=(before['book_rows']==1 and
-          before['search_equals_generated_long_title'] and before['ui_roundtrip_ms']<500 and
+        report['persistent_query_wait_condition_confirmed']=(settled['book_rows']==1 and
+          settled['search_equals_generated_long_title'] and settled['controls']['metadata']['enabled'] and
+          not settled['first_row_contains_legacy_offset'] and settled['ui_roundtrip_ms']<500 and
           report['original_predicate_observation']['status']=='failed' and after['exact_original_rows_ready'])
         # Isolate compact compatibility after preserving the query failure above.
         opened=PW.op_open(host,'Shelf 0000',timeout=8);key=opened['key']
