@@ -1,0 +1,90 @@
+name: Reader final D05 Android default audit
+on:
+  push:
+    branches: [codex/reader-final-d05]
+    paths: ['tests/reader_final_d05/**', '.github/workflows/reader-final-d05.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-final-d05
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard fixed base and exclusive paths
+        run: |
+          set -euo pipefail
+          base=0889f7d1e9a537c6c1b05456547e016b26e1cd85
+          git merge-base --is-ancestor "$base" HEAD
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code edddc463c06ed5731195cdb8f06b2df6dff7699e HEAD -- src include bindings cmake CMakeLists.txt
+          unexpected="$(git diff --name-only "$base" HEAD | grep -vE '^(tests/reader_final_d05/|docs/reader-final-d05/|docs/validation/reader-final-d05.json$|\.github/workflows/reader-final-d05.yml$|HANDOFF-RESULT.md$)' || true)"
+          test -z "$unexpected" || { echo "$unexpected"; exit 1; }
+          mkdir -p build/final-d05
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install pinned tools and actual API34 default image
+        run: |
+          sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'build-tools;34.0.0' 'ndk;27.0.12077973' 'cmake;3.22.1' 'system-images;android-34;default;x86_64' 'emulator'
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+          python3 -m pip install ninja==1.11.1.1
+          cp "$ANDROID_HOME/system-images/android-34/default/x86_64/source.properties" build/final-d05/image-source.properties
+      - name: Build unchanged formal default and independent audits
+        env:
+          ANDROID_CANDIDATE_SDK_BASE: 0889f7d1e9a537c6c1b05456547e016b26e1cd85
+          ANDROID_OWNERSHIP_HEAD: 0889f7d1e9a537c6c1b05456547e016b26e1cd85
+        run: |
+          set -euo pipefail
+          python3 tools/build_android_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/final-d05/host-build.log
+          cp build/android-host/build.json build/final-d05/host-build.json
+          gradle -p tests/reader_final_d05/harness --no-daemon --stacktrace :a11y:assembleDebug :a11y:assembleDebugAndroidTest 2>&1 | tee build/final-d05/harness-build.log
+          mkdir -p build/final-d05/apks
+          cp tests/reader_final_d05/harness/a11y/build/outputs/apk/debug/*.apk build/final-d05/apks/
+          cp tests/reader_final_d05/harness/a11y/build/outputs/apk/androidTest/debug/*.apk build/final-d05/apks/
+      - run: sudo chmod 666 /dev/kvm
+      - name: Exercise unchanged legacy assertions and missing default UI coverage
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash tests/reader_final_d05/emulator.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-d05-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/final-d05/
+          retention-days: 30
+          if-no-files-found: error
+  verify:
+    needs: audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original ZIP bytes and same-run complete evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_final_d05/evidence.py verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-d05-verified-${{ github.run_id }}-${{ github.run_attempt }}
+          path: verified-evidence.json
+          retention-days: 30
