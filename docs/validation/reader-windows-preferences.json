@@ -1,0 +1,133 @@
+{
+  "workflow": ".github/workflows/reader-windows-preferences-ui.yml",
+  "workflow_run": "Windows F3 reading preferences and page theme with retained host checks",
+  "source_sha": "c65bab768a5ff384ac282da80f4330c609ba6688",
+  "post_merge_base": "6ba247d06b040fdf7d02c522820b1d19fcdc0e85",
+  "sdk_candidate": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "sdk_version_support": "f680aeaddfb1ecc67ead353554f5b91a5703f72f",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "preferences_package_commit": "1f51b4066cd705a670b3139061336c298e479081",
+  "run": {
+    "id": 40188013300,
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40188013300",
+    "conclusion": "success",
+    "jobs": {
+      "native_windows_ui": {
+        "id": 121152836413,
+        "conclusion": "success",
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40188013300/job/121152836413"
+      },
+      "strict_authentication": {
+        "id": 121155835978,
+        "conclusion": "success",
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40188013300/job/121155835978"
+      }
+    }
+  },
+  "artifacts": {
+    "native_evidence": {
+      "id": 12597182105,
+      "name": "reader-windows-search-initial-40188013300-1",
+      "size_in_bytes": 118183816,
+      "digest": "sha256:9b1ae076c8b56a92899a29e2d74052c0bb859357554d97e3e5068b0c1e388b9f",
+      "expires_at": "2027-01-23T11:14:18Z"
+    },
+    "strict_summary": {
+      "id": 12597303039,
+      "name": "reader-windows-search-summary-40188013300-1",
+      "size_in_bytes": 2696,
+      "digest": "sha256:aafc3ed6ae3762240896eade85d271766d4d043de191499bf63ec2a501985669",
+      "expires_at": "2027-01-23T11:14:18Z"
+    }
+  },
+  "scope": {
+    "platform": "windows-2022",
+    "transport": "SendInput+UIAutomation+Win32",
+    "complete_product": false,
+    "performance_accepted": false,
+    "screen_reader_accepted": false,
+    "device_accepted": false,
+    "note": "native Windows UI on a hosted runner; not device, performance or screen-reader acceptance"
+  },
+  "f3_native_checks": {
+    "accepted": true,
+    "count": 25,
+    "problems": [],
+    "consumer_sha256": "dcd51e245473aad2a88cac7d7595a49c50690a5ebef59fd2f6800b215ff908b0",
+    "baseline_sha256": "799977fccba9c5a4310e87fd8ad78f93aabeb0c8874ecfac20196326ad9d076f",
+    "captures": [
+      "comic-refused.bmp",
+      "comic.bmp",
+      "dark.bmp",
+      "default-off.bmp",
+      "default-on.bmp",
+      "fixed-dark.bmp",
+      "fixed-light.bmp",
+      "fixed-zoom150.bmp",
+      "light.bmp",
+      "picture-dark.bmp",
+      "picture-light.bmp",
+      "rapid.bmp",
+      "restart.bmp",
+      "save-before.bmp",
+      "save-refused.bmp"
+    ],
+    "names": [
+      "native-shortcut-opens-settings-dialog",
+      "one-native-menu-entry-and-collapsible-controls",
+      "default-start-keeps-original-page-pixels",
+      "explicit-apply-writes-public-f3-document",
+      "light-theme-page-corner-and-ink",
+      "dark-theme-uses-actual-sdk-background",
+      "authored-image-interior-preserved",
+      "fixed-page-content-and-colours-untouched",
+      "fixed-page-zoom-uses-real-renderer",
+      "fixed-page-zoom-refusal-is-explicit",
+      "system-theme-notification-repaints",
+      "rapid-changes-end-in-one-accepted-state",
+      "close-and-reopen-generations",
+      "restart-reopens-accepted-persistence",
+      "legacy-import-is-explicit",
+      "reading-position-and-notes-survive-settings",
+      "unknown-version-file-not-overwritten",
+      "corrupt-file-not-overwritten",
+      "explicit-rebuild-of-unreadable-file",
+      "failed-save-keeps-accepted-frame",
+      "hardware-keys-follow-selected-mode",
+      "tap-mode-turns-pages",
+      "rtl-direction-reverses-tap",
+      "swipe-mode-turns-pages",
+      "close-during-settings-job-keeps-one-consistent-state"
+    ]
+  },
+  "retained_producer_gates": {
+    "original_f1_checks": 264,
+    "original_f2_checks": 130,
+    "original_navigation_ui": 31,
+    "original_records_ui": 32,
+    "original_ui158": 158,
+    "original_j01_checks": 47,
+    "original_j10_checks": 21,
+    "all_preserved": true,
+    "note": "the retained J01/J10/F1/F2/NavUI/records/UI158/account/shelf/metadata/worker/a11y gates ran unchanged in the same job and were re-authenticated by the retained strict verifiers"
+  },
+  "rejections": {
+    "f3_protocol_mutations": 16,
+    "retained_protocol_rejections": 80,
+    "negative_controls": [
+      "default rendering byte-compared with the option-off host",
+      "fixed page byte-compared across both themes",
+      "unknown-version and corrupt documents kept byte-identical",
+      "refused save kept the accepted file and frame",
+      "a valid F3 zoom beyond the host bound was refused, not clamped"
+    ]
+  },
+  "gaps": [
+    "hosted windows-2022 runner only; no physical device or touch hardware",
+    "no performance or memory acceptance was claimed",
+    "no screen-reader acceptance was claimed",
+    "the 3.41.0 candidate and this F3 surface are a separate branch; the frozen common branch is untouched",
+    "cloud import and bulk organization were retained on the frozen 3.40 host only, because those unchanged modules pin the frozen SDK version"
+  ]
+}
