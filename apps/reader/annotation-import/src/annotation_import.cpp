@@ -107,7 +107,11 @@ size_t bounded_count(parser &p,uint64_t max){uint64_t n=p.number();need(n<=max,"
 reader_revision_state graph(parser &p){reader_revision_state g{};p.ch('{');p.key("revisions",true);g.revisions=bounded_count(p,READER_REVISION_MAX_ENTITY_HISTORY);p.key("heads");g.heads=bounded_count(p,READER_REVISION_MAX_ENTITY_HISTORY);
   p.key("missing_parents");g.missing_parents=bounded_count(p,READER_REVISION_MAX_ENTITY_HISTORY*READER_REVISION_MAX_PARENTS);p.key("foreign_parents");g.foreign_parents=bounded_count(p,READER_REVISION_MAX_ENTITY_HISTORY*READER_REVISION_MAX_PARENTS);
   p.key("projection_safe");g.projection_safe=p.boolean();p.key("deleted");g.deleted=p.boolean();p.key("requires_restore");g.requires_restore=p.boolean();p.ch('}');
-  need(g.revisions>=g.heads,"Graph has fewer revisions than heads");need(!g.projection_safe||(g.heads==1&&!g.missing_parents&&!g.foreign_parents&&!g.requires_restore),"Unsafe graph marked safe");need(!g.deleted||g.projection_safe,"Unsafe graph marked deleted");return g;}
+  need(g.revisions>=g.heads,"Graph has fewer revisions than heads");
+  need((g.revisions==0)==(g.heads==0),"Nonempty acyclic graph must have heads");
+  need(g.missing_parents+g.foreign_parents<=g.revisions*READER_REVISION_MAX_PARENTS,"Graph parent counts exceed total parent slots");
+  need(g.heads||!g.requires_restore,"Empty graph cannot require restore");
+  need((g.projection_safe!=0)==(g.heads==1&&!g.missing_parents&&!g.foreign_parents&&!g.requires_restore),"Projection safety differs from graph flags");need(!g.deleted||g.projection_safe,"Unsafe graph marked deleted");return g;}
 const char *selection(const reader_revision_state &g){if(!g.heads)return "missing";if(g.missing_parents||g.foreign_parents)return "pending_parents";if(g.heads>1)return "concurrent";return g.projection_safe?"safe":"blocked_restore";}
 struct wire_guard {char *data=nullptr;~wire_guard(){reader_revision_bytes_free(data);}};
 void notify(const reader_annotation_import_options &o,const reader_annotation_import_item &item){if(o.item){int stop=0;try{stop=o.item(o.context,&item);}catch(...){fail(READER_AI_CALLBACK,"Item callback threw after reported commit");}if(stop)fail(READER_AI_CANCELLED,"Item callback cancelled; reported commit retained");}}
@@ -144,6 +148,7 @@ class importer {
         if(status!=READER_REV_OK)fail(READER_AI_REVISION,"Public wire validation rejected input",status);
         need(rid==info.revision_id&&op==info.operation&&key==info.entity_key&&std::strcmp(info.entity_kind,"annotation")==0&&std::strcmp(info.book_key,o.target_book_key)==0,"Head metadata differs from exact wire identity");
         if(g.projection_safe)need((g.deleted!=0)==(op=="delete"),"Safe head operation differs from graph");
+        need(g.revisions+g.missing_parents+g.foreign_parents>=g.heads+info.parent_count,"Graph omits required head parent slots");
         if(!apply){
           wire_guard old;size_t size=0;reader_revision_info prior{};status=reader_revision_get(o.revisions,rid.c_str(),&old.data,&size,&prior,&re);
           if(status==READER_REV_OK){if(size!=wire.size()||std::memcmp(old.data,wire.data(),size))fail(READER_AI_REVISION,"Existing revision ID has different exact wire",READER_REV_COLLISION);}

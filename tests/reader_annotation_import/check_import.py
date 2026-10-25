@@ -27,7 +27,7 @@ REQUIRED = {
  'resume_beyond_input', 'empty_original_export', 'original_concurrent_tombstone_restore',
  'all_invalid_files_leave_existing_database_bytes_unchanged', 'metadata_delivered_not_persisted',
  'receiver_fault_retains_prior_state', 'nonregular_source_rejected',
- 'rejected_item_keeps_wire_identity', 'preflight_cancel_no_mutation', 'callback_exception_preserves_cursor', 'file_exact_budget', 'actual_overlong_wire_string',
+ 'inconsistent_graph_flags', 'impossible_parent_counts', 'rejected_item_keeps_wire_identity', 'preflight_cancel_no_mutation', 'callback_exception_preserves_cursor', 'file_exact_budget', 'actual_overlong_wire_string',
 }
 
 def digest(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
@@ -119,6 +119,8 @@ def main():
         malformed=json.loads(json.dumps(rows));malformed[-1]['annotations']+=1;reject('footer_count',encode(malformed))
         reject('truncated_string',raw[:raw.find(b'"wire":')+15]);reject('truncated_final_lf',raw[:-1]);reject('trailing_record',raw+b'{}\n')
         reject('bad_escape',raw.replace(b'Original title',b'\\qOriginal title',1));reject('bad_utf8',raw.replace(b'Original title',b'\xffOriginal title',1));reject('bad_surrogate',raw.replace(b'Original title',b'\\ud800Original title',1))
+        malformed=json.loads(json.dumps(rows));malformed[1]['graph']['projection_safe']=False;malformed[1]['selection']='blocked_restore';reject('inconsistent_graph_flags',encode(malformed))
+        malformed=json.loads(json.dumps(rows));malformed[1]['graph']['missing_parents']=1000;malformed[1]['graph']['projection_safe']=False;malformed[1]['selection']='pending_parents';reject('impossible_parent_counts',encode(malformed))
         reject('unknown_entity_field',raw.replace(b'"tombstone":',b'"unknown":1,"tombstone":',1))
         malformed=json.loads(json.dumps(rows));malformed[1]['heads'][0]['bytes']=1048577;reject('wire_limit',encode(malformed))
         malformed=json.loads(json.dumps(rows));malformed[1]['heads'][0]['bytes']=1048576;malformed[1]['heads'][0]['wire']=' '*1048577;reject('actual_overlong_wire_string',encode(malformed))
@@ -150,9 +152,9 @@ def main():
     # Bind actual consumer/package files and original exporter/revision source trees.
     report['checks_count']=len(checks);report['required']=sorted(REQUIRED)
     report['binaries']={p.name:{'bytes':p.stat().st_size,'sha256':digest(p)} for p in [probe,c_consumer] if p.exists()}
-    report['package_files']={str(p.relative_to(package)):{'bytes':p.stat().st_size,'sha256':digest(p)} for p in package.rglob('*') if p.is_file()}
+    report['package_files']={p.relative_to(package).as_posix():{'bytes':p.stat().st_size,'sha256':digest(p)} for p in package.rglob('*') if p.is_file()}
     export_package=Path(v.export_package).resolve()
-    report['original_exporter_files']={str(p.relative_to(export_package)):{'bytes':p.stat().st_size,'sha256':digest(p)} for p in export_package.rglob('*') if p.is_file()}
+    report['original_exporter_files']={p.relative_to(export_package).as_posix():{'bytes':p.stat().st_size,'sha256':digest(p)} for p in export_package.rglob('*') if p.is_file()}
     report['module_trees']={p:subprocess.check_output(['git','rev-parse','HEAD:'+p],text=True).strip() for p in ['apps/reader/annotation-export','apps/reader/revisions','apps/reader/reading-state','tests/reader_annotation_export','apps/reader/annotation-import','tests/reader_annotation_import']}
     (out/'result.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8');print(json.dumps(report),flush=True)
     raise SystemExit(0 if report['measured_capability_passed'] else 1)
