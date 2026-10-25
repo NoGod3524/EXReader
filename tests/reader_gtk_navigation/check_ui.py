@@ -133,9 +133,18 @@ def main():
         command('xdotool','windowactivate','--sync',host.window)
         # X11 activation acknowledges the WM; wait for GTK's actual focus event
         # before delivering the shortcut after minimize/restore.
-        before_host=host.wait(lambda value:value.get('focused')==1 and value.get('visible')==1)
+        # The observation file is event-driven; its focused bit may still be
+        # from the minimize event. Query the live native frame through AT-SPI.
+        native_frame=element('EXReader Linux',{'frame'});deadline=time.monotonic()+10
+        while time.monotonic()<deadline:
+            native_states=bus.states(native_frame)
+            if native_states.get('active') and native_states.get('showing'):break
+            assert host.process.poll() is None,'host exited before native focus'
+            time.sleep(.02)
+        else:raise TimeoutError('actual native main frame did not activate: '+repr(native_states))
+        before_host=host.wait(lambda value:value.get('visible')==1)
         before_actions=int(observed()['actions'])
-        trace=dict(before_host=before_host,before_actions=before_actions,samples=[])
+        trace=dict(before_host=before_host,native_frame_states=native_states,before_actions=before_actions,samples=[])
         report.setdefault('scan_observations',[]).append(trace);started=time.monotonic()
         def scanning(value):
             sample={key:value.get(key) for key in ('visible','running','phase','polls','actions','active','token')}
