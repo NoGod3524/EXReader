@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "package": "S09",
+  "title": "final distribution licence and SBOM closure",
+  "scope": "Closure over one installed candidate: installed bytes, registered licence originals, real link lines and both SBOM documents. Materials closure only; no runtime and no legal conclusion.",
+  "implementation_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "branch": "codex/reader-fw-s09",
+  "workflow": ".github/workflows/reader-final-s09.yml",
+  "reuse": {
+    "licence_registry": "tools/check_reading_licenses.py (read-only import: COMPONENTS, enabled, preset_switches)",
+    "inventory_generators": "tests/reader_distribution_inventory/{contract,sbom,packages,inventory,combined}.py (read-only import)",
+    "probe_and_consumer": "tests/reader_distribution_inventory/probe, tests/reading_core (built, not modified)"
+  },
+  "added": [
+    "tests/reader_final_s09/closure.py",
+    "tests/reader_final_s09/authenticate.py",
+    "tests/reader_final_s09/check_closure.py",
+    "tests/reader_final_s09/check_scope.sh",
+    ".github/workflows/reader-final-s09.yml",
+    "docs/reader-final-s09/CONTRACT.md",
+    "docs/reader-final-s09/validation.json"
+  ],
+  "sources": {
+    "tested": null,
+    "docs_sealed": null,
+    "producer_sdk_install": {
+      "source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
+      "run_id": 40095313750,
+      "attempt": 1,
+      "artifacts": [
+        {
+          "id": 12560228214,
+          "name": "reader-distribution-inventory-linux-core-40095313750-1",
+          "job": "inventory (ubuntu-22.04, reading-core)"
+        },
+        {
+          "id": 12560936421,
+          "name": "reader-distribution-combined-linux-40095313750-1",
+          "job": "combined (ubuntu-22.04)"
+        }
+      ],
+      "authenticated": false
+    }
+  },
+  "run": {
+    "id": null,
+    "attempt": null,
+    "conclusion": null,
+    "jobs": {}
+  },
+  "evidence_requirements": {
+    "stage_kind": "real reading-library install built by this workflow on the tested source",
+    "artifact_kind": "named artifact authenticated by size, SHA-256 digest, expiry, workflow run and producing job upload log"
+  },
+  "checks_declared": [
+    "materials_closed: every installed byte recorded, no missing, extra or drifted file",
+    "licence_closed: every registered original installed at its pin, no unregistered material, per-package materials present",
+    "link_closed: bundled archives and system libraries partitioned from the real link line, no overlap, no installed file named as a system library, every archive linked or declared unlinked",
+    "sbom_closed: SPDX 2.3 fields, per-file checksums, verification code, component licence identifiers, source references and licence CONTAINS edges; CycloneDX 1.5 components, licences, purls, file hashes and dependency refs",
+    "duplicates: every library shipped more than once recorded with its own path, owner, bytes and SHA-256",
+    "claims: runtime_accepted=false, legal_conclusion=false, product_granted=false, and any document asserting otherwise is rejected"
+  ],
+  "granted": {
+    "material_closure": false,
+    "licence_material_closure": false,
+    "link_partition": false,
+    "sbom_field_closure": false,
+    "runtime": false,
+    "legal_conclusion": false,
+    "product": false
+  },
+  "not_granted": [
+    "Runtime behaviour of the shipped binaries",
+    "Legal conclusion or licence adjudication",
+    "Product, Release, signing, notarization, tag and store publication",
+    "Android, iOS and Apple host packaging and their host fonts",
+    "Optional package behaviour (sync, accounts, import, interface)"
+  ],
+  "failures": [],
+  "pending": [
+    "No GitHub Actions run has recorded this package yet: accepted=false until a run produces a closure for a real stage and an authenticated producer artifact."
+  ],
+  "accepted": false
+}

@@ -1,0 +1,267 @@
+name: Final distribution licence and SBOM closure
+on:
+  push:
+    branches: [codex/reader-fw-s09]
+    paths:
+      - 'tests/reader_final_s09/**'
+      - '.github/workflows/reader-final-s09.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  START_SHA: 0889f7d1e9a537c6c1b05456547e016b26e1cd85
+  FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
+  PRODUCER_RUN: '40095313750'
+  PRODUCER_ATTEMPT: '1'
+  PRODUCER_SHA: 93d2ad0db2d75af50eddc0843a4da9c7090a15aa
+jobs:
+  protocol:
+    name: closure protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, unchanged licence originals and package-only changes
+        run: bash tests/reader_final_s09/check_scope.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reject unproven closures and forged artifact identity
+        run: |
+          set -o pipefail
+          mkdir -p build/final-s09
+          python3 tests/reader_final_s09/check_closure.py 2>&1 | tee build/final-s09/protocol.log
+      - name: Preserve the protocol record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s09-protocol-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/final-s09/protocol.log
+            build/final-s09/fixtures/protocol.json
+            build/final-s09/fixtures/fixture-artifact/
+          if-no-files-found: error
+
+  stage:
+    name: closure (${{ matrix.os }})
+    needs: [protocol]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - {os: ubuntu-22.04, key: linux, py: python3}
+          - {os: windows-2022, key: windows, py: python}
+    env:
+      PROFILE: reading-library
+      KEY: ${{ matrix.key }}
+      PY: ${{ matrix.py }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, unchanged licence originals and package-only changes
+        run: bash tests/reader_final_s09/check_scope.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the pinned Ninja generator
+        run: $PY -m pip install 'ninja==1.11.1.1'
+      - name: Enter the Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path $bat)) { throw "vcvars64.bat not found under $vs" }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          "CC=cl" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record the workspace layout
+        run: |
+          mkdir -p build/$PROFILE
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "WS=$(cygpath -m "$PWD")" >> "$GITHUB_ENV"
+            echo "EXE=.exe" >> "$GITHUB_ENV"
+            echo "HOST=Windows" >> "$GITHUB_ENV"
+          else
+            echo "WS=$PWD" >> "$GITHUB_ENV"
+            echo "EXE=" >> "$GITHUB_ENV"
+            echo "HOST=Linux" >> "$GITHUB_ENV"
+          fi
+          { echo "## cmake"; cmake --version; echo "## ninja"; ninja --version; echo "## python"; $PY --version
+            echo "## runner"; echo "ImageOS=$ImageOS ImageVersion=$ImageVersion RUNNER_ARCH=$RUNNER_ARCH"; } > "build/$PROFILE/toolchain.log" 2>&1
+          cat "build/$PROFILE/toolchain.log"
+      - name: Configure, build and install the reading preset
+        run: |
+          set -o pipefail
+          cmake --preset "$PROFILE" 2>&1 | tee "build/$PROFILE/configure.log"
+          cmake --build --preset "$PROFILE" 2>&1 | tee "build/$PROFILE/build.log"
+          cmake --install "build/$PROFILE" 2>&1 | tee "build/$PROFILE/install.log"
+      - name: Compile the installed public-API consumer
+        run: |
+          set -o pipefail
+          cmake -S tests/reading_core -B build/reading-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" -DEXR_EXPECT_LIBRARY=ON -DEXR_TEST_FONT="$WS/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$WS/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$WS/tests/fixtures" 2>&1 | tee "build/$PROFILE/consumer-configure.log"
+          cmake --build build/reading-consumer --target reading-document --parallel 4 2>&1 | tee "build/$PROFILE/consumer-build.log"
+      - name: Compile and run the installed identity probe
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_distribution_inventory/probe -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" 2>&1 | tee "build/$PROFILE/probe-configure.log"
+          cmake --build build/probe 2>&1 | tee "build/$PROFILE/probe-build.log"
+          "build/probe/probe$EXE" > "build/$PROFILE/probe.json"
+          cat "build/$PROFILE/probe.json"
+      - name: Require complete release licence materials on this installed stage
+        run: |
+          set -o pipefail
+          set +e
+          $PY tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json" --require-release-ready > "build/$PROFILE/licenses.log" 2>&1
+          echo $? > "build/$PROFILE/licenses.exit"
+          set -e
+          cat "build/$PROFILE/licenses.log"
+          test "$(cat build/$PROFILE/licenses.exit)" = "0"
+      - name: Generate the inventory, both SBOM documents and the dependency record
+        run: |
+          set -o pipefail
+          set +e
+          $PY tests/reader_distribution_inventory/inventory.py --profile "$PROFILE" --platform "$KEY" --runner-os "$HOST" --architecture "$RUNNER_ARCH" --build "build/$PROFILE" --stage "build/$PROFILE/stage" --licenses "build/$PROFILE/licenses.json" --consumer "build/reading-consumer/reading-document$EXE" --probe "build/probe/probe$EXE" --probe-build build/probe --output "build/$PROFILE/inventory" > "build/$PROFILE/inventory.log" 2>&1
+          echo $? > "build/$PROFILE/inventory.exit"
+          set -e
+          cat "build/$PROFILE/inventory.log"
+          test "$(cat build/$PROFILE/inventory.exit)" = "0"
+      - name: Close every licence, archive, link line and SBOM element
+        run: |
+          set -o pipefail
+          art=build/final-s09/artifact
+          rm -rf "$art"
+          mkdir -p "$art"
+          cp -r "build/$PROFILE/stage" "$art/stage"
+          cp "build/$PROFILE/inventory/inventory.json" "$art/inventory.json"
+          cp "build/$PROFILE/inventory/inventory.spdx.json" "$art/inventory.spdx.json"
+          cp "build/$PROFILE/inventory/inventory.cdx.json" "$art/inventory.cdx.json"
+          cp -r "build/$PROFILE/inventory/tools" "$art/tools"
+          cp "build/$PROFILE/licenses.json" "$art/licenses.json"
+          set +e
+          $PY tests/reader_final_s09/closure.py --artifact "$art" --output build/final-s09/closure --platform "$KEY" --kind sdk --preset "$PROFILE" --producer-source-sha "$GITHUB_SHA" > build/final-s09/closure.log 2>&1
+          echo $? > build/final-s09/closure.exit
+          set -e
+          cat build/final-s09/closure.log
+      - name: Gate on the closure
+        run: |
+          test "$(cat build/final-s09/closure.exit)" = "0"
+      - name: Preserve the closure and the documents it closed over
+        if: always()
+        run: |
+          rm -rf build/final-s09/artifact/stage
+          ls -l build/final-s09 || true
+          ls -l build/final-s09/closure || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s09-stage-${{ matrix.key }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/final-s09/
+            build/reading-library/licenses.json
+            build/reading-library/licenses.log
+            build/reading-library/inventory.log
+            build/reading-library/probe.json
+          if-no-files-found: warn
+
+  producer:
+    name: authenticated producer artifact
+    needs: [protocol]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, unchanged licence originals and package-only changes
+        run: bash tests/reader_final_s09/check_scope.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate and close the published SDK install
+        run: |
+          set -o pipefail
+          mkdir -p build/producer/linux-core
+          python3 tests/reader_final_s09/authenticate.py \
+            --artifact-id 12560228214 \
+            --artifact-name reader-distribution-inventory-linux-core-40095313750-1 \
+            --job-name 'inventory (ubuntu-22.04, reading-core)' \
+            --run-id "$PRODUCER_RUN" --attempt "$PRODUCER_ATTEMPT" --source-sha "$PRODUCER_SHA" \
+            --extract build/producer/linux-core/artifact --output build/producer/linux-core \
+            2>&1 | tee build/producer/linux-core/authenticate.log
+      - name: Close the authenticated SDK install
+        run: |
+          set -o pipefail
+          python3 tests/reader_final_s09/closure.py \
+            --artifact build/producer/linux-core/artifact \
+            --output build/producer/linux-core/closure --platform linux --kind sdk \
+            --producer-source-sha "$PRODUCER_SHA" --producer-run "$PRODUCER_RUN" \
+            --producer-attempt "$PRODUCER_ATTEMPT" --producer-artifact 12560228214 \
+            2>&1 | tee build/producer/linux-core/closure.log
+      - name: Authenticate and close the published composed prefix
+        run: |
+          set -o pipefail
+          mkdir -p build/producer/combined-linux
+          python3 tests/reader_final_s09/authenticate.py \
+            --artifact-id 12560936421 \
+            --artifact-name reader-distribution-combined-linux-40095313750-1 \
+            --job-name 'combined (ubuntu-22.04)' \
+            --run-id "$PRODUCER_RUN" --attempt "$PRODUCER_ATTEMPT" --source-sha "$PRODUCER_SHA" \
+            --extract build/producer/combined-linux/artifact --output build/producer/combined-linux \
+            2>&1 | tee build/producer/combined-linux/authenticate.log
+      - name: Close the authenticated composed prefix
+        run: |
+          set -o pipefail
+          python3 tests/reader_final_s09/closure.py \
+            --artifact build/producer/combined-linux/artifact \
+            --output build/producer/combined-linux/closure --platform linux --kind combined \
+            --producer-source-sha "$PRODUCER_SHA" --producer-run "$PRODUCER_RUN" \
+            --producer-attempt "$PRODUCER_ATTEMPT" --producer-artifact 12560936421 \
+            2>&1 | tee build/producer/combined-linux/closure.log
+      - name: Report both sources separately
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys
+          summary = {'verifier_source': None, 'items': {}}
+          for name in ('linux-core', 'combined-linux'):
+              base = pathlib.Path('build/producer') / name / 'closure' / 'closure.json'
+              artifact = pathlib.Path('build/producer') / name / 'artifact.json'
+              item = {'closure': None, 'artifact': None}
+              if base.is_file():
+                  doc = json.loads(base.read_text(encoding='utf-8'))
+                  item['closure'] = {key: doc.get(key) for key in
+                                     ('accepted', 'materials_closed', 'licence_closed',
+                                      'sbom_closed', 'link_closed', 'totals', 'sources')}
+                  item['problems'] = doc.get('problems')
+              if artifact.is_file():
+                  item['artifact'] = json.loads(artifact.read_text(encoding='utf-8'))
+              summary['items'][name] = item
+          print(json.dumps(summary, indent=2))
+          PY
+      - name: Preserve the authenticated producer evidence
+        if: always()
+        run: |
+          rm -rf build/producer/*/artifact/stage || true
+          rm -f build/producer/*/*.zip || true
+          ls -l build/producer/linux-core build/producer/combined-linux || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s09-producer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/producer/
+          if-no-files-found: warn
