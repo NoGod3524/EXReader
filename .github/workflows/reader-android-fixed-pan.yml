@@ -12,6 +12,11 @@ on:
         description: Reproduce only the original APK Pan phase with logcat; diagnostic only
         type: boolean
         default: false
+      failure_case:
+        description: Fixed retained failure identity for cloud-only inspection
+        type: choice
+        options: [original, viewport]
+        default: original
 permissions:
   contents: read
   actions: read
@@ -29,6 +34,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PREPARE_REPLAY: ${{ inputs.replay_saved_failure }}
+          FAILURE_CASE: ${{ inputs.failure_case }}
         run: python tests/reader_android_fixed_pan/inspect_failure.py
       - name: Enable diagnostic emulator acceleration
         if: inputs.replay_saved_failure
