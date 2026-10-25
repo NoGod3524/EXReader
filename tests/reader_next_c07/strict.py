@@ -18,6 +18,8 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent / 'reader_android_raw3'))
 from bundle import verify, parse, sha  # noqa: E402
 import fetch  # noqa: E402
+from capture_contract import judge
+from test_capture_contract import exercise
 
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
 IDENT = fetch.IDENTITY
@@ -220,6 +222,9 @@ def main():
                       len(rows) == 11 and {r['revision_id'] for r in rows} == set(expected_ids) and all(r['found'] and r['sender_platform'] == 'android' for r in rows))
                 check('mac ' + name + ' kept every original wire byte', all(r['wire_sha256'] == revisions[r['revision_id']]['sha256'] for r in rows))
                 check('mac ' + name + ' covered every role/kind', {(r['role'], r['kind']) for r in rows} == KINDS)
+                checked = [(r['revision_id'], judge(r, expected_ids[r['revision_id']])) for r in rows]
+                check('mac ' + name + ' exact sender numbers/selectors and registered route contract',
+                      all(not failures for _, failures in checked), checked)
                 if name.startswith('android-session'):
                     session = report['actual_native_session']
                     check('mac ' + name + ' used the actual HostAccountSession over 256 shards', session['actual_host_account_session'] and session['completed_shards'] == 256 and session['completed_sweeps'] == 1)
@@ -229,7 +234,14 @@ def main():
                 for r in rows:
                     t, c = r['transport_capture'], r['recapture']
                     separate.append({'role': r['role'], 'kind': r['kind'], 'numbers_equal': t['numbers'] == c['numbers'],
-                                     'selectors_equal': t['selectors'] == c['selectors'], 'route_equal': t['route'] == c['route']})
+                                     'selectors_equal': t['selectors'] == c['selectors'], 'route_equal': t['route'] == c['route'],
+                                     'contract_passed': not judge(r, expected_ids[r['revision_id']])})
+            mutation_report = exercise(receive, android_manifest)
+            mutation_out = Path('build/c07-strict')
+            mutation_out.mkdir(parents=True, exist_ok=True)
+            (mutation_out / 'capture-contract-regression.json').write_text(json.dumps(mutation_report, indent=2) + '\n')
+            check('real artifact capture mutations are all rejected', mutation_report['positives'] == 44 and mutation_report['all_rejected'],
+                  {'positives': mutation_report['positives'], 'mutants': mutation_report['mutants']})
             net = receive.json('native-https.json')
             check('mac network receive authenticated every HTTPS request', net['requests'] and all(q['authenticated'] for q in net['requests']) and net['tls_trust_checked'])
             for name in ('android-null-receive', 'android-null-reopen'):

@@ -1,8 +1,13 @@
-name: C07 same-source Android and Apple bidirectional record protocol
+name: C07 root review same-source Android and Apple bidirectional record protocol
 on:
   push:
-    branches: [codex/reader-next-c07]
+    branches: [codex/reader-next-c07-root-review]
   workflow_dispatch:
+    inputs:
+      scope:
+        type: choice
+        options: [inspect, full]
+        default: inspect
 permissions:
   contents: read
   actions: read
@@ -10,7 +15,26 @@ defaults:
   run:
     shell: bash
 jobs:
+  contract-inspect:
+    if: github.event_name == 'push' || inputs.scope == 'inspect'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate real original C07 ZIPs and reject capture mutations in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m py_compile tests/reader_next_c07/*.py
+          python3 tests/reader_next_c07/test_capture_contract.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c07-root-contract-inspect-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c07-contract-inspect/
+          if-no-files-found: error
   fixtures:
+    if: inputs.scope == 'full'
     name: fixtures
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -39,6 +63,7 @@ jobs:
           if-no-files-found: error
 
   mac-send:
+    if: inputs.scope == 'full'
     name: mac-send
     needs: fixtures
     runs-on: macos-15
@@ -73,6 +98,7 @@ jobs:
           if-no-files-found: error
 
   android:
+    if: inputs.scope == 'full'
     name: android
     needs: [fixtures, mac-send]
     runs-on: ubuntu-latest
@@ -232,6 +258,7 @@ jobs:
           if-no-files-found: error
 
   mac-receive:
+    if: inputs.scope == 'full'
     name: mac-receive
     needs: [fixtures, mac-send, android]
     runs-on: macos-15
@@ -267,7 +294,7 @@ jobs:
 
   strict:
     name: strict
-    if: always()
+    if: always() && inputs.scope == 'full'
     needs: [fixtures, mac-send, android, mac-receive]
     runs-on: ubuntu-latest
     timeout-minutes: 30
