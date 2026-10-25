@@ -7,7 +7,11 @@ on:
       verify_run:
         type: string
         default: ''
-        description: syntax for input checks only, a preserved run, or nav:<run> for original GTK binary diagnostics
+        description: syntax for input checks, apple for six same-source suites, a preserved run, or nav:<run> for GTK diagnostics
+      apple_runs:
+        type: string
+        default: ''
+        description: For apple mode only, JSON object with records navigation search shelf mapping wp13 run IDs at this exact source
 permissions:
   contents: read
 defaults:
@@ -43,12 +47,6 @@ jobs:
           python3 tests/reader_hosts_integration/aggregate.py windows --protocol-selftest
           python3 tests/reader_hosts_integration/check_apple_workflows.py
           python3 tests/reader_hosts_integration/apple.py --self-test
-          python3 - <<'PY'
-          from pathlib import Path
-          import yaml
-          value = yaml.load(Path('.github/workflows/reader-apple-common-evidence.yml').read_text(), Loader=yaml.BaseLoader)
-          assert set(value['on']) == {'workflow_dispatch'} and set(value['jobs']) == {'authenticate'}
-          PY
   compose:
     if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
@@ -1051,11 +1049,11 @@ jobs:
           path: build/hosts-summary/result.json
           if-no-files-found: error
   inspect:
-    name: read one preserved common-source run without acceptance
+    name: inspect preserved source or authenticate six same-source Apple suites
     needs: pin
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.verify_run != '' && github.event.inputs.verify_run != 'syntax' }}
     runs-on: ubuntu-22.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: read
       actions: read
@@ -1064,13 +1062,20 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install independent PNG decoding for raw viewport proof
+        if: inputs.verify_run != 'apple'
         run: python3 -m pip install 'Pillow==11.3.0'
       - name: Authenticate the preserved source and reports with the repaired verifier
-        if: ${{ !startsWith(inputs.verify_run, 'nav:') }}
+        if: ${{ !startsWith(inputs.verify_run, 'nav:') && inputs.verify_run != 'apple' }}
         env:
           GH_TOKEN: ${{github.token}}
           INSPECT_RUN: ${{inputs.verify_run}}
         run: python3 tests/reader_hosts_integration/final.py --inspect-run "$INSPECT_RUN"
+      - name: Authenticate all six original Apple workflows at this exact source
+        if: inputs.verify_run == 'apple'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPLE_RUNS: ${{ inputs.apple_runs }}
+        run: python3 tests/reader_hosts_integration/apple.py
       - name: Install native runtime for original-program navigation diagnostics
         if: startsWith(inputs.verify_run, 'nav:')
         run: |
@@ -1110,4 +1115,5 @@ jobs:
             build/navigation-probe/original-report.json
             build/navigation-probe/openbox.log
             build/navigation-probe/ui/
+            build/apple-common-evidence/
           if-no-files-found: error

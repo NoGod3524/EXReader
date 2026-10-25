@@ -23,7 +23,6 @@ DELIVERIES = {
 ALLOWED = (
     'tests/reader_hosts_integration/', '.github/workflows/reader-hosts-integration.yml',
     '.github/workflows/reader-apple-reading-records.yml',
-    '.github/workflows/reader-apple-common-evidence.yml',
     '.github/workflows/reader-apple-navigation.yml',
     '.github/workflows/reader-apple-search.yml',
     '.github/workflows/reader-apple-shelf.yml',
