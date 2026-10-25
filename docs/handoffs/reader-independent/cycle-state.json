@@ -4,20 +4,23 @@
   "latest_checkpoint": {
     "current_common_341_head": {
       "branch": "codex/reader-hosts-341-final",
-      "head": "f7bd5381c9d41087a8ac23d91ac5c5b6d6fc259b",
+      "head": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
       "worktree": "C:/Users/Oscar/.codex/worktrees/reader-windows-preferences-commit-review/EXReader",
       "ordinary_merged_full_composition": "7ac0ac74e40155391dce2ba28b098fe1ee83f39f",
       "ordinary_merged_GTK_caller_prep": "10d313e375c8767f7981b53424e1574a443e4e25",
       "Android_caller_ready": "69bc0c88e8adbf884bc71f94188e89b219349ca3",
       "ordinary_merged_Android_caller_prep": "69bc0c88e8adbf884bc71f94188e89b219349ca3",
-      "common_callers_run": false,
+      "common_callers_run": true,
       "full_product_accepted": false,
       "ordinary_merged_Windows_F3_delivery": "dd7900146ba0b73771d251c356585a40241cc371",
       "ordinary_merged_Windows_atomic_repair": "2dcf333aeb2081ba34ff5764d92f13a54be9bd84",
       "Windows_production_boundary": "436c5bd57b2b6acc0076a0942e7c7f93f38fcb96",
       "ordinary_merged_Apple_seven_suite_delivery": "8bba2f5328e738b40b3c72050004cbe6157583a7",
       "ordinary_merged_Apple_callers": "22b5407d2d45740891dd85e6a58c128c5b8c8969",
-      "next": "await_full_Windows341_combined_run_then_merge_caller_review_schema_and_repin_one_final_production_boundary_before_full_same_source_runs"
+      "reviewed_common_production_boundary": "a33117c243ebd67d9ca29a4d52a99920de727a10",
+      "source_preflight": {"run":40195153704,"attempt":1,"state":"protocol82_and_all_six_source_guards_success"},
+      "complete_same_source_runs": "native-341-run-table.json",
+      "next": "monitor_eleven_complete_workflows_at25bc_and_collect_all_twelve_required_slots_only_after_terminal_results"
     },
     "upper_native_collector_protocol": {
       "source": "63dff918e552d7c648b39ca3a1fc59880a24b323",
@@ -32,7 +35,7 @@
       "complete_product_accepted": false
     },
     "current_independent_candidate_runs": {
-      "Windows_full341": {"source_prefix":"2e0d7ba6", "run":40193777488, "state":"preflight_success_full_run_in_progress_after_UTF8_catalog_wrapper_repair", "previous_failed_run":40192852460},
+      "Windows_full341": {"source_prefix":"2e0d7ba6", "run":40193777488, "state":"all_three_jobs_success_root_API_confirmed_F325_atomic13_and_all_original_suites", "previous_failed_run":40192852460},
       "raw_companions_previous": {"source":"40a26619526c073daa8ccfcbc2459f69ad238c6d", "run":40192474330, "state":"both_platforms_and_strict_success_agent_report"},
       "raw_companions_final": {"source":"56793e7ca4f8ecdc5f2d9c3394fce4e201aca275", "run":40192929457, "evidence_head":"0793b26256e1397ba0f60d27de7d090fad61af81", "state":"both_platforms_and_strict_success_root_API_confirmed_includes_original_unlabelled03_consumer_positive"},
       "Apple_raw3_host": {"state":"agent_proceeding_exact_final56793_family_merge_and_actual_native_harness", "common_main_adopted":false},
