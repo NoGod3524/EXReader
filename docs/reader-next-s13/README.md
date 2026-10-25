@@ -36,7 +36,7 @@ Actions 中互相校验（patch 应用后必须是后像的 blob）。
 | 形态 | 期望 |
 | --- | --- |
 | `//page.png`、`//server/share/page.png` | `Unsafe CBZ member path` |
-| `/../page.png`、`/book/../page.png` | `Unsafe CBZ member path` |
+| `/../page.png`、`/book/../page.png` | 先被既有 junk 规则（首字符 `.` 或含 `/.`）跳过，两树同为 `CBZ contains no supported image pages`；该类成员从不被读取 |
 | `/C:/page.png`（驱动器） | `Unsafe CBZ member path` |
 | `/dir\\page.png`（反斜杠歧义） | `Unsafe CBZ member path` |
 | `/pa\0ge.png`（嵌 NUL） | `CBZ member name contains NUL` |

@@ -82,8 +82,9 @@ jobs:
           set -euo pipefail
           for tree in base candidate; do
             set +e
+            junit="$(python -c 'import os,sys;print(os.path.abspath(sys.argv[1]))' "build/s13/logs/$tree-junit.xml")"
             ctest --test-dir "build/s13/$tree-build" -C Release --output-on-failure \
-              --output-junit "build/s13/logs/$tree-junit.xml" 2>&1 | tee "build/s13/logs/$tree-ctest.log"
+              --output-junit "$junit" 2>&1 | tee "build/s13/logs/$tree-ctest.log"
             echo "$tree ctest exit: $?" | tee "build/s13/logs/$tree-ctest.exit"
             set -e
           done
@@ -138,7 +139,7 @@ jobs:
             --candidate build/s13/fixtures/reports/candidate --base build/s13/fixtures/reports/base \
             --out build/s13/reports/checks-fixtures.json || echo "fixture checks failed" | tee build/s13/logs/checks-fixtures.failed
           python tests/reader_next_s13/run.py check-real --real tests/reader_next_s13/real.json \
-            --inventory build/s13/inputs/inventory.json --members build/s13/inputs/members/members.json \
+            --inventory build/s13/inputs/inventory.json \
             --reports build/s13/reports/real --plan build/s13/reports/real/plan.json \
             --out build/s13/reports/checks-real.json || echo "real checks failed" | tee build/s13/logs/checks-real.failed
           python tests/reader_next_s13/run.py check-suite --base build/s13/logs/base-junit.xml \

@@ -77,12 +77,13 @@
    ],
    "expect": {
     "status": 5,
-    "message": "Unsafe CBZ member path"
+    "message": "CBZ contains no supported image pages"
    },
    "base_expect": {
     "status": 5,
-    "message": "Unsafe CBZ member path"
-   }
+    "message": "CBZ contains no supported image pages"
+   },
+   "note": "A '..' segment is skipped by the pre-existing junk rules (leading dot or '/.'), so the member is never read in either tree; the path gate itself is exercised by the drive, UNC, backslash, empty-segment and double-slash cases."
   },
   {
    "id": "leading-slash-inner-parent",
@@ -94,12 +95,13 @@
    ],
    "expect": {
     "status": 5,
-    "message": "Unsafe CBZ member path"
+    "message": "CBZ contains no supported image pages"
    },
    "base_expect": {
     "status": 5,
-    "message": "Unsafe CBZ member path"
-   }
+    "message": "CBZ contains no supported image pages"
+   },
+   "note": "A '..' segment is skipped by the pre-existing junk rules (leading dot or '/.'), so the member is never read in either tree; the path gate itself is exercised by the drive, UNC, backslash, empty-segment and double-slash cases."
   },
   {
    "id": "leading-slash-drive",
