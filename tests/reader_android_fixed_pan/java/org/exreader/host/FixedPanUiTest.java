@@ -168,7 +168,7 @@ public final class FixedPanUiTest extends Instrumentation {
         long deadline=SystemClock.elapsedRealtime()+10000;while(SystemClock.elapsedRealtime()<deadline){JSONObject actual=frame();if(actual.optLong("selection_end",-1)>actual.optLong("selection_start",-1))return;SystemClock.sleep(40);}throw new AssertionError("real pointer gesture did not select page text");
     }
     private void highlight(String body)throws Exception{selectText();panel();click("标注选中文本");setText(body);click("保存");settled();}
-    private final JSONArray pixels=new JSONArray(),panFrames=new JSONArray();
+    private final JSONArray pixels=new JSONArray(),panFrames=new JSONArray(),gestures=new JSONArray();
     private void idle()throws Exception{owner(store->true);long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){AtomicReference<Boolean> ready=new AtomicReference<>(false);onMain(()->{try{ready.set(((Integer)ReadingReview.field(activity(),"operation"))==0);}catch(Exception error){throw new RuntimeException(error);}});if(ready.get())return;SystemClock.sleep(40);}throw new AssertionError("actual SDK worker idle");}
     private JSONObject settledFrame()throws Exception{long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){JSONObject value=frame();if(value.getLong("drawn_token")==value.getLong("accepted_token")&&value.getLong("settled_token")==value.getLong("accepted_token")&&value.getLong("drawn_revision")==value.getLong("revision")&&value.getLong("settled_revision")==value.getLong("revision"))return value;SystemClock.sleep(40);}throw new AssertionError("actual drawn/settled viewport");}
     private void settings(){until(node->description(node,"阅读更多操作")&&node.isEnabled(),this::tap,"reader More",30000);click("阅读设置");until(node->description(node,"字号 pt"),null,"actual native settings",30000);}
@@ -184,7 +184,10 @@ public final class FixedPanUiTest extends Instrumentation {
     private void observePixel(String role,int which)throws Exception{JSONObject actual=settledFrame();JSONArray point=input.getJSONObject("pan_expected").getJSONArray("points").getJSONArray(which),rgb=input.getJSONObject("pan_expected").getJSONArray("rgb").getJSONArray(which);int expected=0xff000000|(rgb.getInt(0)<<16)|(rgb.getInt(1)<<8)|rgb.getInt(2);Rect box=readerBounds();double scale=actual.getDouble("fit")*actual.getDouble("render_scale");int x=Math.round((float)(box.left+actual.getDouble("offset_x")+point.getInt(0)*scale)),y=Math.round((float)(box.top+actual.getDouble("offset_y")+point.getInt(1)*scale));need(box.contains(x,y),"independent actual page-corner point lies inside visible reader after pan");Bitmap screen=getUiAutomation().takeScreenshot();need(screen!=null,"actual viewport screenshot");int color;try{color=screen.getPixel(x,y);}finally{screen.recycle();}pixels.put(new JSONObject().put("role",role).put("corner",which).put("source_x",point.getInt(0)).put("source_y",point.getInt(1)).put("screen_x",x).put("screen_y",y).put("argb",color&0xffffffffL).put("expected_argb",expected&0xffffffffL));need(color==expected,"real displayed page-corner RGB actual="+Integer.toHexString(color)+" expected="+Integer.toHexString(expected));panFrames.put(new JSONObject().put("role",role).put("corner",which).put("frame",actual));}
     private byte[] saved()throws Exception{return Files.readAllBytes(new File(context.getFilesDir(),"reading-settings/preferences.json").toPath());}
     private void changed(long token)throws Exception{long end=SystemClock.elapsedRealtime()+120000;while(frame().getLong("accepted_token")<=token&&SystemClock.elapsedRealtime()<end)SystemClock.sleep(50);need(frame().getLong("accepted_token")>token,"original page navigation actually published a new SDK frame");idle();settledFrame();}
-    private void fresh(long old)throws Exception{long end=SystemClock.elapsedRealtime()+120000;while(SystemClock.elapsedRealtime()<end){try{JSONObject actual=frame();if(actual.getLong("book")==book("cbz")&&actual.getLong("view")!=old){idle();settledFrame();return;}}catch(AssertionError absent){}SystemClock.sleep(60);}throw new AssertionError("actual recreated CBZ view ready");}
+    private void fresh(long old)throws Exception{long end=SystemClock.elapsedRealtime()+120000;while(SystemClock.elapsedRealtime()<end){try{JSONObject actual=frame();if(actual.optLong("book",-1)==book("cbz")&&actual.optLong("view",old)!=old){idle();settledFrame();return;}}catch(AssertionError absent){}SystemClock.sleep(60);}throw new AssertionError("actual recreated CBZ view ready");}
+    private void sameViewport(JSONObject before,JSONObject after)throws Exception{
+        need(after.getInt("viewport_height")==before.getInt("viewport_height")&&after.getInt("viewport_width")==before.getInt("viewport_width")&&after.getDouble("offset_x")==before.getDouble("offset_x")&&after.getDouble("offset_y")==before.getDouble("offset_y")&&after.getLong("accepted_token")==before.getLong("accepted_token"),"selection entry and revealing actions never resize or shift the actual active page");
+    }
     private void croppedRotations()throws Exception{
         for(int rotation:new int[]{0,90,180,270}){
             String role="crop"+rotation;JSONObject plan=null;JSONArray originals=input.getJSONArray("books");
@@ -192,8 +195,10 @@ public final class FixedPanUiTest extends Instrumentation {
             need(plan!=null,"predeclared cropped PDF plan");String visible=plan.getString("visible_marker"),hidden=plan.getString("hidden_marker");
             open(role);appearance(300,"从左向右","点击和滑动");corner(3);String state=snapshot();byte[] file=saved();JSONObject actual=settledFrame();
             need(Math.abs(actual.getDouble("bitmap_width")/actual.getDouble("render_scale")-plan.getDouble("viewport_width"))<1&&Math.abs(actual.getDouble("bitmap_height")/actual.getDouble("render_scale")-plan.getDouble("viewport_height"))<1,"actual renderer uses cropped and rotated public viewport dimensions");
-            click("Select");actual=settledFrame();AtomicReference<float[]> endpoints=new AtomicReference<>();
+            for(boolean longPress:new boolean[]{false,true}){
+            JSONObject beforeMode=settledFrame();if(!longPress)click("Select");actual=settledFrame();sameViewport(beforeMode,actual);AtomicReference<float[]> endpoints=new AtomicReference<>();
             onMain(()->{
+                need(!activity().findViewById(R.id.selection_bar).isShown(),"no persistent empty selection toolbar");
                 ReaderView view=activity().findViewById(R.id.reader_view);PageSnapshot page=view.page();boolean visibleSeen=false,hiddenSeen=false;
                 for(int i=0;i<page.lineText.length;i++){
                     AccessibilityNodeInfo node=view.getAccessibilityNodeProvider().createAccessibilityNodeInfo(i+1);
@@ -209,12 +214,24 @@ public final class FixedPanUiTest extends Instrumentation {
             });
             Rect box=readerBounds();double scale=actual.getDouble("render_scale")*actual.getDouble("fit");float[] points=endpoints.get();
             for(int end=0;end<2;end++){points[end*2]=(float)(box.left+actual.getDouble("offset_x")+points[end*2]*scale);points[end*2+1]=(float)(box.top+actual.getDouble("offset_y")+points[end*2+1]*scale);need(box.contains(Math.round(points[end*2]),Math.round(points[end*2+1])),"rotated selection endpoint lies in real visible viewport");}
-            long now=SystemClock.uptimeMillis();sendPointerSync(MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,points[0],points[1],0));SystemClock.sleep(60);sendPointerSync(MotionEvent.obtain(now,now+60,MotionEvent.ACTION_MOVE,points[2],points[3],0));sendPointerSync(MotionEvent.obtain(now,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,points[2],points[3],0));
+            long now=SystemClock.uptimeMillis();JSONObject held;
+            sendPointerSync(MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,points[0],points[1],0));
+            try{
+                SystemClock.sleep(longPress?650:60);held=settledFrame();
+                need(held.getBoolean("selection_mode")&&held.getLong("selection_end")>held.getLong("selection_start"),"actual timer/pointer enters real selection mode before drag");sameViewport(actual,held);
+                sendPointerSync(MotionEvent.obtain(now,SystemClock.uptimeMillis(),MotionEvent.ACTION_MOVE,points[2],points[3],0));
+            }catch(Exception|Error failure){sendPointerSync(MotionEvent.obtain(now,SystemClock.uptimeMillis(),MotionEvent.ACTION_CANCEL,points[0],points[1],0));throw failure;}
+            sendPointerSync(MotionEvent.obtain(now,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,points[2],points[3],0));
             AtomicReference<String> selected=new AtomicReference<>();onMain(()->{Selection selection=((ReaderView)activity().findViewById(R.id.reader_view)).getSelection();selected.set(selection==null?"":selection.text);});
             need(selected.get().equals(visible),"actual rotated cropped PDF pointer selects exact visible source marker role="+role+" actual="+selected.get()+" expected="+visible);
-            JSONObject after=settledFrame();need(after.getInt("viewport_height")==actual.getInt("viewport_height")&&after.getInt("viewport_width")==actual.getInt("viewport_width")&&after.getDouble("offset_x")==actual.getDouble("offset_x")&&after.getDouble("offset_y")==actual.getDouble("offset_y"),"revealing selection actions never shifts the active page underneath a real gesture");
-            capture(role+"-panned-selection");click("Selecting");
+            JSONObject after=settledFrame();sameViewport(actual,after);AtomicReference<Rect> toolbar=new AtomicReference<>();
+            onMain(()->{android.view.View bar=activity().findViewById(R.id.selection_bar);Rect bounds=new Rect();need(bar.isShown()&&bar.getGlobalVisibleRect(bounds),"actual contextual selection actions visible");toolbar.set(bounds);});
+            Rect selectedBounds=new Rect((int)Math.floor(Math.min(points[0],points[2])),(int)Math.floor(Math.min(points[1],points[3])),(int)Math.ceil(Math.max(points[0],points[2]))+1,(int)Math.ceil(Math.max(points[1],points[3]))+1);
+            need(!Rect.intersects(toolbar.get(),selectedBounds),"contextual actions stay opposite actual selected marker");
+            gestures.put(new JSONObject().put("role",role).put("long_press",longPress).put("held_ms",longPress?650:60).put("expected",visible).put("selected",selected.get()).put("before_mode",beforeMode).put("before_down",actual).put("held",held).put("after",after).put("toolbar",new JSONArray().put(toolbar.get().left).put(toolbar.get().top).put(toolbar.get().right).put(toolbar.get().bottom)));
+            capture(role+(longPress?"-longpress-selection":"-panned-selection"));click("Selecting");
             need(snapshot().equals(state)&&Arrays.equals(file,saved()),"cropped rotated pan and selection never modify SDK product or settings");
+            }
         }
         open("pdf");appearance(300,"从左向右","点击和滑动");corner(3);
     }
@@ -241,7 +258,7 @@ public final class FixedPanUiTest extends Instrumentation {
             }else throw new AssertionError("unknown fixed pan phase");
         }catch(Throwable error){failure=error;try{capture("failure");}catch(Throwable captureError){error.addSuppressed(captureError);}}
         try{
-            JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("passed",failure==null).put("checks",checks).put("count",checks.length()).put("observations",observations).put("display_pixels",pixels).put("pan_frames",panFrames);
+            JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("passed",failure==null).put("checks",checks).put("count",checks.length()).put("observations",observations).put("display_pixels",pixels).put("pan_frames",panFrames).put("selection_gestures",gestures);
             if(failure!=null)report.put("failed_check",active).put("failure",failure.getMessage()).put("failure_trace",android.util.Log.getStackTraceString(failure));
             Files.write(new File(context.getFilesDir(),"fixed-pan-ui-"+phase+".json").toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));result.putString("stream",failure==null?"FIXED_PAN_UI_PASS "+phase:"FIXED_PAN_UI_FAIL "+phase);finish(failure==null?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);
         }catch(Exception error){result.putString("shortMsg","Fixed pan evidence unavailable");finish(Activity.RESULT_CANCELED,result);}

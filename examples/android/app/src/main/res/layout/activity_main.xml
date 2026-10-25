@@ -242,17 +242,23 @@
             android:textSize="12sp"
             android:text="" />
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
         <org.exreader.host.ReaderView
             android:id="@+id/reader_view"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="match_parent"
             android:contentDescription="Reading page" />
 
         <LinearLayout
             android:id="@+id/selection_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="?android:attr/colorBackground"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:padding="4dp"
@@ -288,6 +294,7 @@
                 android:text="Clear"
                 android:contentDescription="Clear selection" />
         </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
 
     <LinearLayout

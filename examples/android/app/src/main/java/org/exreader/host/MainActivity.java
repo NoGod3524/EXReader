@@ -20,10 +20,12 @@ import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
+import android.view.Gravity;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -1735,19 +1737,19 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     @Override public void onSelectionChanged(Selection selection) {
+        FrameLayout.LayoutParams position=(FrameLayout.LayoutParams)selectionBar.getLayoutParams();
+        int gravity=readerView.selectionInLowerHalf()?Gravity.TOP:Gravity.BOTTOM;
+        if(position.gravity!=gravity){position.gravity=gravity;selectionBar.setLayoutParams(position);}
         selectionBar.setVisibility(View.VISIBLE);
         selectionStatus.setText("Selected: " + ReaderView.clip(selection.text, 80));
     }
 
     @Override public void onSelectionCleared() {
-        selectionBar.setVisibility(readerView.isSelectMode()?View.INVISIBLE:View.GONE);
+        selectionBar.setVisibility(View.GONE);
         selectionStatus.setText("");
     }
 
     @Override public void onSelectModeChanged(boolean enabled) {
-        // Reserve the toolbar before a selection gesture: revealing its actions
-        // must not resize/reposition the page underneath the active pointer.
-        selectionBar.setVisibility(enabled?(readerView.getSelection()==null?View.INVISIBLE:View.VISIBLE):View.GONE);
         selectButton.setText(enabled ? "Selecting" : "Select");
         setStatus(enabled ? "Select mode on" : "Select mode off");
     }
