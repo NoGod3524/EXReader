@@ -1,0 +1,10 @@
+{
+  "accepted": false,
+  "adopted": false,
+  "base": "0737d03c1316295a210aa527833c05054d29c1d4",
+  "scope": "explicit commands/sync/session raw-store companion candidate only",
+  "source_sha": null,
+  "runs": [],
+  "actual_hosts": false,
+  "complete_product": false
+}
