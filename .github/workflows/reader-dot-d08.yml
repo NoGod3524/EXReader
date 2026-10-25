@@ -1,0 +1,69 @@
+name: D08 Windows DPI focus and painted pixels
+on:
+  push:
+    branches: [codex/reader-dot-d08]
+    paths: ['tests/reader_dot_wave2/d08/**', '.github/workflows/reader-dot-d08.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-dot-d08
+  cancel-in-progress: false
+jobs:
+  native:
+    name: d08-native
+    runs-on: windows-2022
+    timeout-minutes: 90
+    outputs:
+      artifact_id: ${{ steps.raw.outputs.artifact-id }}
+      artifact_digest: ${{ steps.raw.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/checkout@v4
+        with:
+          ref: 9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08
+          path: target
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Syntax and fail-closed negative controls only in Actions
+        run: |
+          python -m compileall -q tests/reader_dot_wave2/d08
+          python tests/reader_dot_wave2/d08/negative.py
+      - name: Build install exact target SDK modules and compact executable
+        run: python tests/reader_dot_wave2/d08/build.py
+      - name: Native keyboard and screenshot matrix
+        run: python tests/reader_dot_wave2/d08/audit.py
+      - name: Preserve actual programs configuration observations and failures
+        id: raw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-dot-d08-raw-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/d08-evidence/
+            !build/d08-evidence/**/profile-*/
+          retention-days: 30
+          if-no-files-found: error
+  strict:
+    name: d08-strict
+    needs: native
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate same run original ZIP and all named results
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NATIVE_RESULT: ${{ needs.native.result }}
+          ARTIFACT_ID: ${{ needs.native.outputs.artifact_id }}
+          UPLOAD_DIGEST: ${{ needs.native.outputs.artifact_digest }}
+        run: python tests/reader_dot_wave2/d08/artifacts.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-dot-d08-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/d08-summary/validation.json
+          retention-days: 30
+          if-no-files-found: error
