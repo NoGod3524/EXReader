@@ -1,11 +1,35 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-25T03:10:05Z",
+  "recorded_at_utc": "2026-10-25T03:46:00Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
   "next_audit_after_completed_cycle": 5,
-  "phase": "windows_records_and_android_cbz_common_scopes_authenticated_j_reviews_continuing",
+  "phase": "gtk_batch_android_pan_common_source_running_j_reviews_continuing",
+  "active_host_integration": {
+    "source": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
+    "production_baseline": "2b1fffa0d658c1c0a9054868cf56261b99265b8c",
+    "run": 40159425518,
+    "accepted": false,
+    "state": "running_awaiting_original_raw_reports",
+    "gtk_batch_delivery": "374e6fbb88bfd7a0fd966ff2e85d7dbb698551fe",
+    "android_pan_delivery": "c5f55fbedcd15a910a40626624e997b58f8fd1b6",
+    "new_fault_paths": ["GTK committed receipt allocation MAP/CLOSE", "Android native PDF viewport cancellation"],
+    "superseded_run": 40159238563,
+    "superseded_reason": "GTK copied guard pinned pre-Android-export sideload tree; exact reviewed Android-only export fix was already in common source",
+    "superseded_cancellation_requested": true,
+    "apple_included": false
+  },
+  "claude_p0_root_reviews": {
+    "J01": {
+      "source": "80b743c6f51bee6d95e7cf116b4e65000a599063",
+      "run": 40158826151,
+      "evidence_head": "0d07d23bf53cd288de7a0af152d48553c18be241",
+      "checks_per_desktop": 47,
+      "state": "root_repaired_cloud_success_awaiting_host_integration"
+    },
+    "J04": {"state": "three_confirmed_import_entry_defects_under_independent_review_repair"}
+  },
   "host_integration_candidate": {
     "branch": "codex/reader-hosts-integration",
     "source": "f0c272c87b2402979292d0cd973d4f5e7a9f62fd",
