@@ -1,9 +1,175 @@
 {
+  "id": "T06",
+  "schema": 1,
+  "package": "EXReaderDiagnosticReport 0.1.0",
+  "accepted": true,
+  "status": "module-review-accepted-cloud",
+  "acceptance_scope": "module and installed C/C++ consumers on Windows, Linux and macOS only",
+  "branch": "codex/dot-diagnostic-report-review",
+  "workflow": ".github/workflows/reader-diagnostic-report.yml",
+  "review_start": "4793224343950b279a3591c8398f5a2a8514d754",
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "source_sha": "da86e2107249801a97f39d47ec6ea047b624c594",
+  "evidence_head": {
+    "identity": "the containing [skip ci] documentation commit; full SHA in coordinator handoff",
+    "parent_sha": "da86e2107249801a97f39d47ec6ea047b624c594",
+    "source_and_head_identical": false,
+    "delta_paths": [
+      "docs/READER-DIAGNOSTIC-REPORT.md",
+      "docs/validation/reader-diagnostic-report.json"
+    ]
+  },
+  "run": {
+    "id": 40164861121,
+    "attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40164861121",
+    "created_at": "2026-10-25T05:15:21Z",
+    "updated_at": "2026-10-25T05:29:58Z"
+  },
+  "jobs": [
+    {
+      "id": 121083721192,
+      "name": "diagnostic report consumers (macos-15)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164861121
+    },
+    {
+      "id": 121083721389,
+      "name": "diagnostic report consumers (windows-2022)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164861121
+    },
+    {
+      "id": 121083721392,
+      "name": "diagnostic report consumers (ubuntu-22.04)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164861121
+    },
+    {
+      "id": 121086275459,
+      "name": "strict diagnostic evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164861121
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12588596093,
+      "name": "reader-diagnostic-report-summary-40164861121-1",
+      "size_in_bytes": 1927,
+      "digest": "sha256:2053e9831dd84953d59e5348e2eaf56dba599018015e368c5bdd49923302a105",
+      "expired": false,
+      "created_at": "2026-10-25T05:29:55Z",
+      "expires_at": "2027-01-23T05:15:21Z",
+      "source_sha": "da86e2107249801a97f39d47ec6ea047b624c594",
+      "run_id": 40164861121
+    },
+    {
+      "id": 12588316564,
+      "name": "reader-diagnostic-report-macOS-40164861121-1",
+      "size_in_bytes": 90334,
+      "digest": "sha256:785c413a5e46df922417420a970d24d1f3fb0cb6348c07d378c6797906a1e59f",
+      "expired": false,
+      "created_at": "2026-10-25T05:29:41Z",
+      "expires_at": "2027-01-23T05:15:21Z",
+      "source_sha": "da86e2107249801a97f39d47ec6ea047b624c594",
+      "run_id": 40164861121
+    },
+    {
+      "id": 12587966373,
+      "name": "reader-diagnostic-report-Linux-40164861121-1",
+      "size_in_bytes": 98161,
+      "digest": "sha256:3d051eab43332fd748b755b3decb577e9474fd566995b81f3f388990ef972cf1",
+      "expired": false,
+      "created_at": "2026-10-25T05:15:29Z",
+      "expires_at": "2027-01-23T05:15:21Z",
+      "source_sha": "da86e2107249801a97f39d47ec6ea047b624c594",
+      "run_id": 40164861121
+    },
+    {
+      "id": 12587329752,
+      "name": "reader-diagnostic-report-Windows-40164861121-1",
+      "size_in_bytes": 436444,
+      "digest": "sha256:cfffd26a1734ce0a2689ee645ef55eb709c0cbf2ce0b488a7ae18872f66a7acf",
+      "expired": false,
+      "created_at": "2026-10-25T05:16:08Z",
+      "expires_at": "2027-01-23T05:15:21Z",
+      "source_sha": "da86e2107249801a97f39d47ec6ea047b624c594",
+      "run_id": 40164861121
+    }
+  ],
+  "named_results": {
+    "case_count": 36,
+    "checks_per_platform": 35,
+    "retained_original_cases": 32,
+    "new_passes": [
+      "privacy-injection-installed",
+      "snapshot-reentrant-installed",
+      "injected-write-flush-commit-failures",
+      "all-output-secret-scan"
+    ],
+    "strict_negative_cases": 26,
+    "review_failures": [],
+    "platform_specific": {
+      "dangling-symlink-target": [
+        "Linux",
+        "macOS"
+      ],
+      "invalid-utf8-target": [
+        "Windows"
+      ]
+    }
+  },
+  "grants": {
+    "module": true,
+    "installed_c_consumer": true,
+    "installed_cpp_consumer": true,
+    "installed_audit_consumer": true,
+    "windows": true,
+    "linux": true,
+    "macos": true,
+    "host_ui": false,
+    "host_wiring": false,
+    "performance": false,
+    "real_device": false,
+    "accessibility": false,
+    "auto_upload": false
+  },
+  "verification": {
+    "builds_tests_syntax_and_artifact_processing": "GitHub Actions only",
+    "local_actions": "source/docs/Git only",
+    "original_evidence_api_rechecked": true,
+    "original_head_difference": "4793224343950b279a3591c8398f5a2a8514d754 differs from 7ee7ab8050fca0f471cc2321c3ccc2c1aaca2e6d only in the two evidence documents",
+    "platform_zip_digest_recomputed_in_actions": true,
+    "summary_zip_digest_scope": "uploader/API identity, not self-authenticated by summary job",
+    "consumer_identity": "four binary hashes per platform recomputed from authenticated ZIP members in Actions",
+    "sdk_unchanged": true,
+    "product_schema_unchanged": true,
+    "wire_unchanged": true,
+    "anchor_unchanged": true
+  },
+  "uncovered": [
+    "Host wiring, actual host UI, desktop interaction, accessibility and real-device coverage remain with root.",
+    "No performance claim or automatic upload.",
+    "Caller must provide a stable borrowed-input snapshot; concurrent mutation of borrowed inputs is unsupported.",
+    "Fault hooks exercise cleanup after actual partial bytes, before flush and before commit; no physical disk failure or power-loss durability claim.",
+    "Windows targets beyond MAX_PATH and POSIX filesystems without hard links retain original limitations.",
+    "Nested error messages have no input field; installed injection verifies rejection at the one string field, not an unimplemented host mapping adapter."
+  ]
+,
+  "cloud_verified_summary": {"accepted": true, "package": "EXReaderDiagnosticReport 0.1.0", "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950", "review_start": "4793224343950b279a3591c8398f5a2a8514d754", "source_sha": "da86e2107249801a97f39d47ec6ea047b624c594", "run_id": 40164861121, "attempt": 1, "artifacts": [{"id": 12587966373, "name": "reader-diagnostic-report-Linux-40164861121-1", "size_in_bytes": 98161, "digest": "sha256:3d051eab43332fd748b755b3decb577e9474fd566995b81f3f388990ef972cf1", "created_at": "2026-10-25T05:15:29Z", "expires_at": "2027-01-23T05:15:21Z"}, {"id": 12587329752, "name": "reader-diagnostic-report-Windows-40164861121-1", "size_in_bytes": 436444, "digest": "sha256:cfffd26a1734ce0a2689ee645ef55eb709c0cbf2ce0b488a7ae18872f66a7acf", "created_at": "2026-10-25T05:16:08Z", "expires_at": "2027-01-23T05:15:21Z"}, {"id": 12588316564, "name": "reader-diagnostic-report-macOS-40164861121-1", "size_in_bytes": 90334, "digest": "sha256:785c413a5e46df922417420a970d24d1f3fb0cb6348c07d378c6797906a1e59f", "created_at": "2026-10-25T05:29:41Z", "expires_at": "2027-01-23T05:15:21Z"}], "jobs": [{"id": 121083721392, "name": "diagnostic report consumers (ubuntu-22.04)", "status": "completed", "conclusion": "success", "head_sha": "da86e2107249801a97f39d47ec6ea047b624c594", "run_id": 40164861121, "run_attempt": 1}, {"id": 121083721389, "name": "diagnostic report consumers (windows-2022)", "status": "completed", "conclusion": "success", "head_sha": "da86e2107249801a97f39d47ec6ea047b624c594", "run_id": 40164861121, "run_attempt": 1}, {"id": 121083721192, "name": "diagnostic report consumers (macos-15)", "status": "completed", "conclusion": "success", "head_sha": "da86e2107249801a97f39d47ec6ea047b624c594", "run_id": 40164861121, "run_attempt": 1}], "problems": [], "granted_platforms": ["linux", "windows", "macos"], "contract_limits": {"READER_DIAG_ABI_VERSION": 1, "READER_DIAG_FORMAT_VERSION": 1, "READER_DIAG_MAX_ERROR_ENTRIES": 32, "READER_DIAG_MAX_COUNTER_ENTRIES": 16, "READER_DIAG_MAX_APP_VERSION_BYTES": 32, "READER_DIAG_MAX_JSON_BYTES": 8192, "READER_DIAG_MAX_SUMMARY_BYTES": 4096, "READER_DIAG_MAX_COUNT": 9007199254740991, "READER_DIAG_MAX_UNIX_TIME": 4102444800}, "negative_cases": [{"name": "reject-job-status", "ok": true}, {"name": "reject-job-conclusion", "ok": true}, {"name": "reject-job-head_sha", "ok": true}, {"name": "reject-job-run_id", "ok": true}, {"name": "reject-job-run_attempt", "ok": true}, {"name": "reject-missing-job", "ok": true}, {"name": "reject-duplicate-job", "ok": true}, {"name": "reject-missing-artifact", "ok": true}, {"name": "reject-duplicate-artifact", "ok": true}, {"name": "reject-expired-artifact", "ok": true}, {"name": "reject-stale-expiry", "ok": true}, {"name": "reject-artifact-source", "ok": true}, {"name": "reject-artifact-run", "ok": true}, {"name": "reject-empty-artifact", "ok": true}, {"name": "reject-zip-digest", "ok": true}, {"name": "reject-zip-size", "ok": true}, {"name": "reject-duplicate-member", "ok": true}, {"name": "reject-duplicate-report", "ok": true}, {"name": "reject-missing-report", "ok": true}, {"name": "reject-tampered-consumer", "ok": true}, {"name": "reject-missing-consumer", "ok": true}, {"name": "reject-missing-binary-identity", "ok": true}, {"name": "reject-report-source", "ok": true}, {"name": "reject-report-attempt", "ok": true}, {"name": "reject-missing-cases", "ok": true}, {"name": "reject-changed-limit", "ok": true}], "binaries": {"Linux": [{"bytes": 34800, "path": "diag-consumer/diagnostic-c-consumer", "sha256": "78c8369a3f1b1bf211cd3e43ba1584acbd87d4f405bc08fcb7589e6740a6a8f3"}, {"bytes": 35208, "path": "diag-consumer/diagnostic-cpp-consumer", "sha256": "0daba7eff74d69de79cda29fdd6e1459e12b58ede31be919e8de47faaa68f8de"}, {"bytes": 43936, "path": "diag-consumer/diagnostic-worker", "sha256": "ee6dc008a1b47084df10d58e7cfc2ff80bd6237b76f98dcfffc54ae6cd40395e"}, {"bytes": 41112, "path": "diag-consumer/diagnostic-audit-consumer", "sha256": "6629c2f7ecfc0d413b6715066f41e7aed3102f5bbb11b631a18ec651a4f3d0ee"}], "Windows": [{"bytes": 171520, "path": "diag-consumer/diagnostic-c-consumer.exe", "sha256": "c383c1288622c43700c4d0b1deac1d2406a48a7ce8bb1605e401f431a1524487"}, {"bytes": 171008, "path": "diag-consumer/diagnostic-cpp-consumer.exe", "sha256": "5bf009aab92a7c1a45854a8f5d839c3083badce103bb27fe2407dd1130a016ed"}, {"bytes": 181760, "path": "diag-consumer/diagnostic-worker.exe", "sha256": "c17c9576cae4e5fc3ccf4a3f8638c40c2482059d679d004f39b3c61cf4b66631"}, {"bytes": 187904, "path": "diag-consumer/diagnostic-audit-consumer.exe", "sha256": "3d23f6ccf5726469f264ec54a5016cf8dea20b9f23cc6406b8a6e07d12f3c5c3"}], "macOS": [{"bytes": 52376, "path": "diag-consumer/diagnostic-c-consumer", "sha256": "bf8fdf1b7b636e624d4251d6a8c486a5d2b100fed896c11ea3b8211efde7f30c"}, {"bytes": 36792, "path": "diag-consumer/diagnostic-cpp-consumer", "sha256": "bb3f9c28e1fdf2c1c8a2f8494c6a6236efe745fc3df455a0c100b12e51032564"}, {"bytes": 53712, "path": "diag-consumer/diagnostic-worker", "sha256": "cb5370767dff93ee49fe5b8c4660f7e42b0790049c7d4083a3bb567a7eea17dd"}, {"bytes": 55704, "path": "diag-consumer/diagnostic-audit-consumer", "sha256": "f919043dc06e0c08a502b319a927e40959751086201780ae52224e832dcf6404"}]}, "host_ui_accepted": false, "auto_upload": false, "performance_claimed": false, "complete_product": false, "sdk_changed": false, "schema_changed": false},
+  "original_j21_evidence": {
   "package": "EXReaderDiagnosticReport 0.1.0",
   "id": "J21",
   "schema": 1,
-  "accepted": false,
-  "status": "T06-review-cloud-pending; original J21 evidence retained below",
+  "accepted": true,
+  "status": "module-accepted-cloud",
   "acceptance_scope": "module and installed consumers on Windows, Linux and macOS only",
   "owner_worktree": "C:/Users/Oscar/exreader-agents/j21-diagnostic-report/EXReader",
   "branch": "codex/reader-diagnostic-report",
@@ -208,4 +374,5 @@
     "POSIX filesystems without hard links refuse the commit with IO",
     "auto upload is out of scope by contract"
   ]
+}
 }

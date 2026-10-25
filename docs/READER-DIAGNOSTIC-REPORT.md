@@ -5,7 +5,7 @@ User-triggered, bounded diagnostic export for import/sync/reading failures:
 (installed consumers, test-hook worker, cloud checker),
 `.github/workflows/reader-diagnostic-report.yml` (three-platform acceptance).
 
-Status: **original J21 accepted; T06 review changes awaiting their own Actions.** The
+Status: **T06 cloud-accepted for the module and installed-consumer scope only.** The
 package does not wire itself into any host. Reports, module behaviour, host
 behaviour, performance, accessibility and real-device coverage are granted
 separately; nothing here is a host or product acceptance.
@@ -183,8 +183,8 @@ Retained original failures (kept as evidence, not rewritten):
   alphabetically instead of by id and refused a correct report on all three
   platforms.
 
-This evidence commit changes documentation only; the tested source is 7ee7ab80
-and no source or test byte changed after that run.
+The original evidence commit `4793224343950b279a3591c8398f5a2a8514d754`
+changed documentation only relative to tested source `7ee7ab80`.
 
 ## 6. T06 independent review
 
@@ -229,3 +229,32 @@ coverage only: no host/UI/device/accessibility/performance acceptance, no host
 adapter for nested-error mapping, and no concurrent mutation of borrowed input.
 Fault hooks test cleanup branches, not physical disk failure or power-loss
 durability; original process termination and publication races remain exercised.
+
+### T06 cloud evidence
+
+Tested source: `da86e2107249801a97f39d47ec6ea047b624c594`.
+[Run 40164861121, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40164861121)
+completed successfully at 2026-10-25T05:29:58Z. All three platform logs report
+35 applicable checks and zero failures; their union covers the original 32
+cases and the four new review cases. Strict evidence passed all 26 negative
+mutations against its actual authenticated Linux bundle. No review run failed;
+the original two J21 failed runs remain recorded, unchanged.
+
+| platform | successful job | artifact ID | ZIP bytes | API/recomputed ZIP SHA256 |
+| --- | --- | --- | --- | --- |
+| Linux | 121083721392 | 12587966373 | 98161 | `3d051eab43332fd748b755b3decb577e9474fd566995b81f3f388990ef972cf1` |
+| Windows | 121083721389 | 12587329752 | 436444 | `cfffd26a1734ce0a2689ee645ef55eb709c0cbf2ce0b488a7ae18872f66a7acf` |
+| macOS | 121083721192 | 12588316564 | 90334 | `785c413a5e46df922417420a970d24d1f3fb0cb6348c07d378c6797906a1e59f` |
+| strict summary | 121086275459 | 12588596093 | 1927 | `2053e9831dd84953d59e5348e2eaf56dba599018015e368c5bdd49923302a105` |
+
+All four artifacts expire at `2027-01-23T05:15:21Z`. Platform ZIP hashes were
+recomputed inside the strict Actions job; the summary ZIP identity is the
+uploader/API identity (the summary does not authenticate its own enclosing ZIP).
+The complete emitted cloud summary, including all 12 consumer binary sizes and
+SHA256s, is transcribed into `docs/validation/reader-diagnostic-report.json`.
+No ZIP was downloaded, unpacked or parsed outside Actions.
+
+The final `[skip ci]` evidence commit changes only this Markdown and that JSON
+relative to the tested source. Its exact SHA is reported in the handoff; the JSON
+identifies it as its containing commit to avoid a self-referential Git hash.
+Root still owns integration and any host-level acceptance.
