@@ -13,7 +13,7 @@ import tempfile
 import zipfile
 from contract import BINARIES,REPORTS,RAW,SANITIZER,digest,identity,require,validate,validate_files
 from check_prefix import PACKAGES
-from g1 import REPORT_TAILS as G1_REPORT_TAILS
+from g1 import REPORT_TAILS as G1_REPORT_TAILS, load as load_g1
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'tools'))
 from check_parallel_integration import download_artifact_zip,fetch,pages
 WORKFLOW='.github/workflows/reader-reviewed-composition.yml'
@@ -46,6 +46,7 @@ def archive_root(names):
   require(matches==[prefix+relative],'missing/duplicate report or binary '+relative)
  return prefix
 def self_test():
+ load_g1('reader_g1_integration','aggregate.py').self_test()
  run=dict(id=1,head_sha='source',run_attempt=2,path=WORKFLOW)
  jobs=[dict(id=i,name='one-prefix composition ('+key+')',head_sha='source',run_id=1,run_attempt=2,status='completed',conclusion='success') for i,(key,_) in enumerate(PLATFORMS,1)]
  authenticate_run(run,jobs,'source',1,2)
@@ -117,7 +118,8 @@ def main():
      base='g1/'+phase+'/'
      g1_sets[key][phase]={name:sorted(row['name'] for row in docs[base+path]['checks']) for name,path in [('chain','chain.json'),('commands','reading-commands/report.json'),('view','annotation-view/work/report.json'),('local','local-downloads/report.json')]}
      tr=docs[base+'thumbnails/result.json']
-     g1_sets[key][phase].update(thumbnails=sorted(n for n in tr['check_names'] if not n.startswith('threads:')),thumbnail_regressions=sorted(tr['regress_check_names']),thumbnail_faults=sorted(tr['fault_check_names']),export=sorted(docs[base+'annotation-export/result.json']['checks']),local_regressions=sorted(docs[base+'local-regressions/regressions.json']['cases']))
+     export_gate=load_g1('reader_annotation_export','check_artifacts.py');er=docs[base+'annotation-export/result.json']
+     g1_sets[key][phase].update(thumbnails=sorted(n for n in tr['check_names'] if not n.startswith('threads:')),thumbnail_regressions=sorted(tr['regress_check_names']),thumbnail_faults=sorted(tr['fault_check_names']),export=sorted(set(er['checks'])-export_gate.OPTIONS),export_outcomes={'cases':{c['id']:c for c in er['cases'] if c['id'].startswith('export-')},'digests':er['digests']},local_regressions=sorted(docs[base+'local-regressions/regressions.json']['cases']))
     hs=docs['original/history/summary.json'];history_stable[key]=dict(originals=hs['originals'],cases=sorted(c['id'] for c in hs['cases']),steps=sorted(s['step'] for s in hs['lifecycle']),no_write={k:hs['no_write'][k] for k in ('revision_rows','outbox_rows','sdk_progress_records','sdk_notes','sdk_fixed_notes','sdk_epub_notes','databases_unchanged','control_write_changed')})
    result['platforms'][key]=dict(named_results=named_results,binaries=binary_hashes)
    result['artifacts'].append({f:a_meta[f] for f in ('id','name','size_in_bytes','digest','expires_at')})
