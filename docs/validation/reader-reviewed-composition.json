@@ -13,6 +13,7 @@
     "reviewed_additions": 8,
     "omitted_packages_restored": ["EXReaderThumbnails", "EXReaderReadingCommands", "EXReaderAnnotationView", "EXReaderAnnotationExport", "EXReaderLocalDownloads"],
     "original_production_and_judges_changed": false,
+    "earlier_runs": [{"source_sha": "a7a4e96e66b2823c9816ff3ab45fb4c219d675a4", "run_id": 40171264203, "attempt": 1, "accepted": false, "reason": "T05 checker added a global raw-check name uniqueness requirement absent from original G1 judges; original arrays and platform-specific annotation-export criteria are preserved in the correction."}],
     "run_id": null
   },
   "status": "verified_composition_complete_task_baseline_scope_unresolved",

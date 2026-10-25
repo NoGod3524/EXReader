@@ -50,9 +50,9 @@ def validate(doc, hashes, source, run, attempt, platform):
         need(str(value.get('GITHUB_RUN_ID', value.get('run_id', value.get('run')))) == str(run) and
              str(value.get('GITHUB_RUN_ATTEMPT', value.get('attempt'))) == str(attempt), 'run/attempt differs')
 
-    def passed(rows, field='pass'):
+    def passed(rows, field='pass', unique=False):
         names = [row['name'] for row in rows]
-        need(bool(names) and len(names) == len(set(names)) and all(row.get(field) is True for row in rows),
+        need(bool(names) and (not unique or len(names) == len(set(names))) and all(row.get(field) is True for row in rows),
              'missing/duplicate/failing named check')
         return names
 
@@ -61,6 +61,7 @@ def validate(doc, hashes, source, run, attempt, platform):
     commands = load('reader_reading_commands', 'check_reading_commands.py')
     view = load('reader_annotation_view', 'check_annotation_view.py')
     local = load('reader_local_downloads', 'check_local_downloads.py')
+    export_gate = load('reader_annotation_export', 'check_artifacts.py')
     counts = {}
     for phase in PHASES:
         base = 'g1/' + phase + '/'
@@ -82,7 +83,7 @@ def validate(doc, hashes, source, run, attempt, platform):
         need(chain.get('failures') == 0 and chain.get('resolved_state') == 'FOUND' and
              chain.get('check_count') == len(chain.get('checks', [])) and len(chain['checks']) >= 20,
              'chain failed')
-        passed(chain['checks'])
+        passed(chain['checks'], unique=True)
         codec = d('codec/result.json'); identity(codec)
         need(codec.get('accepted') is True and codec.get('sdk_symbols') is False and
              len(codec.get('sqlite_providers', [])) == 1 and
@@ -98,7 +99,7 @@ def validate(doc, hashes, source, run, attempt, platform):
              set(thumb.REQUIRED_EXACT).issubset(names),
              'thumbnail original categories missing')
         for field, required in [('regress_results', thumb.REQUIRED_REGRESS), ('fault_results', thumb.REQUIRED_FAULT)]:
-            need(set(required).issubset(passed(tr[field])), 'thumbnail regression/fault missing')
+            need(set(required).issubset(passed(tr[field], unique=field == 'regress_results')), 'thumbnail regression/fault missing')
         for field, name in [('probe_sha256', 'thumb-probe'), ('c_consumer_sha256', 'thumb-c-consumer'),
                             ('regress_sha256', 'thumb-regress'), ('fault_sha256', 'thumb-fault')]:
             need(tr[field] == b(name), 'thumbnail binary differs')
@@ -123,9 +124,15 @@ def validate(doc, hashes, source, run, attempt, platform):
              vr['c_consumer_sha256'] == b('annotation-view-c-consumer') and
              vr['report_sha256'] == pr['reports']['annotation-view/work/report.json'], 'annotation view actual bytes differ')
         er = d('annotation-export/result.json'); identity(er)
+        export_platform = {'Linux': 'linux', 'Windows': 'windows', 'macOS': 'darwin'}[platform]
         need(er.get('accepted') is True and er.get('database_unchanged') is True and
              er.get('count') == len(er.get('checks', [])) and er.get('count', 0) > 0 and
              len(er['checks']) == len(set(er['checks'])), 'annotation export refused')
+        need(er.get('granted_platform') == export_platform and
+             export_gate.WRITE_FAILURE[export_platform] in er['checks'] and
+             len(export_gate.OPTIONS & set(er['checks'])) == 1 and
+             all(row['name'] in export_gate.SHARED_SKIPS for row in er['skipped']),
+             'annotation export original platform write-failure/skip contract differs')
         lr = d('local-downloads/report.json'); identity(lr)
         need(lr.get('ok') is True and passed(lr['checks'], 'ok') == local.EXPECTED_CHECKS,
              'local download original checks differ')

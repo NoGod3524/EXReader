@@ -25,8 +25,22 @@ mode, including its original five module judges and old-build failure control;
 the runner and all original judges remain unchanged. Raw original reports,
 maps, actual binaries and installed header/archive proofs are authenticated in
 the T05 ZIP. The old 22-package consumer criteria, all 11 negative gates and
-both 37-check shared-owner chains remain required. No old result grants this
+both 37-check shared-owner chains remain required. The original G1 aggregate's
+9 base and 6 extension refusal controls run unchanged alongside the extended
+T05 protocol controls. No old result grants this
 new source acceptance; its validation stays pending until a complete new run.
+
+The first review source `a7a4e96e66b2823c9816ff3ab45fb4c219d675a4`, run
+`40171264203`, retained the actual 27-package prefix, both original G1 full
+runs and both shared-owner flows. Its T05 bundle checker refused original
+passing raw checks because it added a global check-name uniqueness rule that
+the original judges do not impose. The follow-up keeps uniqueness exactly
+where the original judges require it (G1 chain and thumbnail regressions),
+and preserves their complete raw arrays elsewhere. Source review also restored
+the annotation-export judge's original platform-specific Windows locked-target
+versus POSIX RLIMIT failure cases, skip rules and cross-platform output digest
+comparison. These are checker corrections; no original judge, test fixture or
+production module changes.
 
 ## Boundaries and exact ordinary merges
 
