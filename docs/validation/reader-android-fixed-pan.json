@@ -1,7 +1,7 @@
 {
   "accepted": true,
   "source_sha": "b25975b45f021bdf1bd086088634cfc2a4b4d2d4",
-  "acceptance":{"run_id":40156615296,"attempt":1,"job_id":121059247720,"conclusion":"success","scope":"Android API34 default x86_64 emulator host only","pan_checks":8,"inherited_ui":{"host":16,"search":15,"navigation":18,"reading":16,"preferences":17,"cbz":10,"total":92},"total_ui_checks":100,"phases":[{"phase":"first","pid":9124,"checks":7},{"phase":"reopen","pid":9370,"checks":1}],"screenshots":23,"display_corner_samples":9,"original_reads":22,"cropped_rotation_selection_gestures":8,"artifact":{"id":12585631849,"bytes":147551041,"sha256":"1826428c4f0c35075d620f496b5a3ccef4a6e121bf9e797dd74ad881599b28b4","expires_at":"2027-01-23T03:00:46Z"},"independent_zip_png_proof_pending":true},
+  "acceptance":{"run_id":40156615296,"attempt":1,"job_id":121059247720,"conclusion":"success","scope":"Android API34 default x86_64 emulator host only","pan_checks":8,"inherited_ui":{"host":16,"search":15,"navigation":18,"reading":16,"preferences":17,"cbz":10,"total":92},"total_ui_checks":100,"phases":[{"phase":"first","pid":9124,"checks":7},{"phase":"reopen","pid":9370,"checks":1}],"screenshots":23,"display_corner_samples":9,"original_reads":22,"cropped_rotation_selection_gestures":8,"artifact":{"id":12585631849,"bytes":147551041,"sha256":"1826428c4f0c35075d620f496b5a3ccef4a6e121bf9e797dd74ad881599b28b4","expires_at":"2027-01-23T03:00:46Z"},"independent_zip_png_proof_pending":false},
   "fixed_base": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "checkpoint": {
