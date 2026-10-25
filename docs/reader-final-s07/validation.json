@@ -1,17 +1,25 @@
 {
   "package": "S07 raw synchronization multi-peer faults and idempotency",
-  "state": "in_progress",
-  "accepted": false,
+  "state": "passed_two_platforms",
+  "accepted": true,
   "adopted": false,
   "start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "branch": "codex/reader-fw-s07",
   "workflow": ".github/workflows/reader-final-s07.yml",
-  "source_sha": null,
-  "docs_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "jobs": [],
-  "artifacts": [],
+  "source_sha": "a436bfbeb522e129c790bd93d614c5fb84427048",
+  "docs_sha": "the docs-only commit that contains this file on codex/reader-fw-s07 (no code or workflow change in it)",
+  "run_id": "40218562325",
+  "attempt": 1,
+  "jobs": [
+    {"id": 121244918949, "name": "three-peer regression (ubuntu-22.04)", "conclusion": "success", "started_at": "2026-10-25T17:52:33Z", "completed_at": "2026-10-25T18:00:02Z"},
+    {"id": 121244919145, "name": "three-peer regression (windows-2022)", "conclusion": "success", "started_at": "2026-10-25T17:52:33Z", "completed_at": "2026-10-25T17:59:03Z"},
+    {"id": 121246669515, "name": "strict same-attempt aggregate", "conclusion": "success", "started_at": "2026-10-25T18:00:04Z", "completed_at": "2026-10-25T18:00:20Z"}
+  ],
+  "artifacts": [
+    {"id": 12608383795, "name": "reader-final-s07-Linux-40218562325-1", "size_in_bytes": 147636, "sha256": "d5fbb5aba1139f345adb24ac2df6cad76f85b7c43e3dc22fb839203711143012", "expires_at": "2027-01-23T17:52:31Z", "expired": false},
+    {"id": 12608354542, "name": "reader-final-s07-Windows-40218562325-1", "size_in_bytes": 147926, "sha256": "a70f1c37eb66764b7509d94d40680df749b7f109dafd19d36afeb51c88840c6a", "expires_at": "2027-01-23T17:52:31Z", "expired": false},
+    {"id": 12609355634, "name": "reader-final-s07-summary-40218562325-1", "size_in_bytes": 1192, "sha256": "3345748d970d03305b31cfa37ca697324560af65f785b40742b3c9efcdfa7372", "expires_at": "2027-01-23T17:52:31Z", "expired": false}
+  ],
   "checks": [
     "real_capture_graph_and_original_identity_bootstrap",
     "network_drop_before_commit_then_explicit_retry_publishes_once",
@@ -22,18 +30,80 @@
     "legacy_max2_consumers_coexist_without_corruption",
     "exact_wire_ids_parents_and_original_hash_after_cross_process_reopen"
   ],
-  "check_results": [],
-  "preconditions": {
-    "frozen_capture_core": "not_measured",
-    "frozen_raw7_two_peer_tls": "not_measured",
-    "frozen_g07_original_session_20": "not_measured",
-    "frozen_g07_fault_boundaries_21": "not_measured"
-  },
+  "check_results": [
+    {"name": "real_capture_graph_and_original_identity_bootstrap", "platforms": ["Linux", "Windows"], "actual": {"capture_wires": 9, "exported_wires": 11, "pdf_bytes": 8845, "pdf_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc", "book_identity_bytes": 8845}},
+    {"name": "network_drop_before_commit_then_explicit_retry_publishes_once", "platforms": ["Linux", "Windows"], "actual": {"failed_status": 3, "failed_dav_code": 5, "failed_http_status": 404, "dropped_upload_bytes": 8845, "dropped_upload_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc", "remote_object_absent_after_drop": true, "outbox_rows_after_drop": 11, "retry_pushed": 11, "outbox_rows_after_retry": 0, "remote_revision_objects": 11}},
+    {"name": "response_lost_newer_head_then_old_request_retry_keeps_head_and_outbox", "platforms": ["Linux", "Windows"], "actual": {"lost_status": 3, "lost_dav_code": 3, "lost_http_status": 0, "remote_committed_after_lost_response": true, "outbox_rows_after_loss": 1, "head_at_loss": "00000000000000000000000000000300", "history_at_loss": 2, "heads_after_retry": "00000000000000000000000000000600", "history_after_retry": 3, "old_revision_is_head_after_retry": false, "outbox_rows_after_retry": 0, "retry_request_order": [["put-old", 412], ["get-old", 200], ["get-old", 200], ["get-newer", 200]], "remote_object_count_old": 1, "remote_object_count_newer": 1, "old_wire_unchanged": true}},
+    {"name": "out_of_order_parent_graph_child_before_parent_then_complete", "platforms": ["Linux", "Windows"], "actual": {"child_revision_id": "00000000000000000000000000000400", "parent_revision_id": "00000000000000000000000000000500", "child_leaf_sorts_before_parent": true, "delivered_pulled": 1, "missing_parents_before_parent": 1, "heads_before_parent": 2, "projection_safe_before_parent": 0, "child_head_complete_before_parent": 0, "heads_after_parent": 1, "missing_parents_after_parent": 0, "history_after_parent": 5}},
+    {"name": "duplicate_wire_receive_is_idempotent_for_both_receivers", "platforms": ["Linux", "Windows"], "actual": {"duplicate_pulled": 1, "duplicate_receive_created": 0, "history_before": 5, "history_after": 5, "head_ids_before": ["00000000000000000000000000000400"], "head_ids_after": ["00000000000000000000000000000400"], "outbox_after_duplicate": 0, "window_requests": 2, "window_puts": 0, "window_gets": 1, "remote_object_count_child": 1, "second_receiver_repeat_sweep_pulled": 15}},
+    {"name": "unknown_anchor_version_refused_over_network_and_direct_receive", "platforms": ["Linux", "Windows"], "actual": {"unknown_anchor_mutation": "payload.location.anchor_version 3 -> 4, no other byte", "unknown_anchor_bytes": 569, "unknown_anchor_wire_sha256": "4548d02f80504024f38b32872f60439a879218b5e91a25605b0fda69201e80d6", "raw_network_status": 4, "raw_network_revision_code": 4, "raw_direct_receive_status": 4, "raw_direct_receive_created": 0, "max2_network_status": 4, "max2_network_revision_code": 4, "max2_direct_raw3_status": 4, "max2_direct_unknown_status": 4, "raw_history_unchanged": true, "max2_history_unchanged": true}},
+    {"name": "legacy_max2_consumers_coexist_without_corruption", "platforms": ["Linux", "Windows"], "actual": {"legacy1_anchor_version": 1, "legacy2_anchor_version": 2, "legacy1_pushed": 2, "legacy2_pushed": 2, "legacy_receiver_pulled": 2, "legacy_receiver_pending_metadata": 0, "legacy_receiver_originals_verified": 2, "received_wire_exact": true, "received_original_exact": true, "legacy_heads": {"revisions": 1, "heads": 1, "projection_safe": 1}, "remote_legacy1_objects": {"00000000000000000000000000009999": 1, "00000000000000000000000000000001": 1}, "remote_legacy2_objects": {"00000000000000000000000000009999": 1, "00000000000000000000000000000001": 1}, "remote_raw3_objects": 15, "txt_sha256": "602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6"}},
+    {"name": "exact_wire_ids_parents_and_original_hash_after_cross_process_reopen", "platforms": ["Linux", "Windows"], "actual": {"wire_count": 15, "chain": ["00000000000000000000000000000001", "00000000000000000000000000000300", "00000000000000000000000000000600", "00000000000000000000000000000500", "00000000000000000000000000000400"], "reopens": {"sender": {"outbox": 0, "transfer_temporaries": 0, "cached_original_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc"}, "receiver-one": {"outbox": 0, "transfer_temporaries": 0, "cached_original_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc"}, "receiver-two": {"outbox": 0, "transfer_temporaries": 0, "cached_original_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc"}}, "cross_platform_equal": true}}
+  ],
   "original_wire_identity": {
     "wire_count": 15,
+    "measured": true,
     "pdf_bytes": 8845,
     "pdf_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc",
-    "measured": false
+    "wires": {
+      "00000000000000000000000000000001": {"sha256": "937cd0f566d49a9729322ed74c0528a56d3b01de21ed0113e9a96f2877a46156", "bytes": 392, "parents": []},
+      "00000000000000000000000000000064": {"sha256": "79d32397c80ef2e9e3a080f513e75c02e9e8bd87e09239a2b72151ec065ffc71", "bytes": 569, "parents": []},
+      "00000000000000000000000000000065": {"sha256": "a1a5bc79052f9b1234a31872f1ec9f4f6323da6c308601c6e9b5929be494a575", "bytes": 603, "parents": ["00000000000000000000000000000064"]},
+      "00000000000000000000000000000066": {"sha256": "eb21b5c6eb7ec452db96a44bd9095eb0f0d20c89fd24c1e81872560d5e63c3bc", "bytes": 670, "parents": []},
+      "00000000000000000000000000000067": {"sha256": "ab253edf9140df6be8cac8f24d7dd26979d4b6ccccc870fd4307dbe11d52723d", "bytes": 710, "parents": ["00000000000000000000000000000066"]},
+      "00000000000000000000000000000068": {"sha256": "389511142c03c171338f29bffa3ffaff326202d9f4e1905a828dc83fe81aa77a", "bytes": 671, "parents": []},
+      "00000000000000000000000000000069": {"sha256": "d55c3630a6f98ebeaeab6bc904a677c8ac472bb234c7ba6e1b7e6fa47b01b498", "bytes": 706, "parents": ["00000000000000000000000000000068"]},
+      "0000000000000000000000000000006a": {"sha256": "90460825fee47c80a64639c2cae89e025b8cdf1abb750777bb0177f05ff06a42", "bytes": 309, "parents": ["00000000000000000000000000000069"]},
+      "0000000000000000000000000000006b": {"sha256": "582d7ce1096f65fab04bf55d7628b6805d309636e3e0cc5e97a64fbc8e74e3aa", "bytes": 712, "parents": ["0000000000000000000000000000006a"]},
+      "00000000000000000000000000000300": {"sha256": "e65a34502f89b39b45ebba175389535c686200d9efbca10ca805189d64fcf3f1", "bytes": 431, "parents": ["00000000000000000000000000000001"]},
+      "00000000000000000000000000000600": {"sha256": "8ae9428128890b109c269b9c49bf6774da176436598d650eb02c24611682a83c", "bytes": 430, "parents": ["00000000000000000000000000000300"]},
+      "00000000000000000000000000000500": {"sha256": "a1d0607b4ddfc2f2999dfcee9777904635d010747b3e70f7d26118b6d6f76df6", "bytes": 434, "parents": ["00000000000000000000000000000600"]},
+      "00000000000000000000000000000400": {"sha256": "932f63bb1857fdad93d99cc86908e4cef962e23e97b61b8dc63219bf785c6874", "bytes": 433, "parents": ["00000000000000000000000000000500"]},
+      "00000000000000000000000000001000": {"sha256": "242e52dedacd5a3bf6b4d4a37a0b2dbd9c965d876fff7ca2b41851f5830307e9", "bytes": 210, "parents": []},
+      "00000000000000000000000000001001": {"sha256": "d09c66dc800f20ea097f7e98cbec4ce43445300b576098d2621689da250414a5", "bytes": 436, "parents": []}
+    }
+  },
+  "preconditions": {
+    "frozen_capture_core": {"accepted": true, "protocol_checks": 30, "graph_checks": 11, "result_sha256": "5593972db58532770f13aec3a002d0e351f9194cb20725278c309fb5848e564b", "consumer_sha256": "37ed848f689c614dccf8662d2e516a94bc95bf8612a1dffcebbb4854dd2b6bf6"},
+    "frozen_raw7_two_peer_tls": {"accepted": true, "count": 9, "result_sha256": "bd65667337a27be4afff6ea654bf9a740bb9f2bde1e9ac2d41cbf510a3dc6dc7"},
+    "frozen_g07_original_session": {"accepted": true, "count": 20, "result_sha256": "966ab18ebd11b9951c6f6798b3e001eaa8ffb979ba9ce56d094fc880695694b4"},
+    "frozen_g07_fault_boundaries": {"accepted": true, "count": 21, "result_sha256": "ac605a3801c1b291666e20d52e036c31825834f3190fc446f29e11859bcb851d", "uncovered": ["atomic_rename_to_revision_receive_single_instruction_window", "fixture_store_durability_before_response_flush", "sqlite_page_torn_write_under_sigkill", "host_ui_projection_and_other_platform_hosts", "third_party_server_retry_and_backoff_policy"]}
+  },
+  "read_only_guard": {
+    "start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+    "frozen_tree_diff": 0,
+    "changed_paths": [".github/workflows/reader-final-s07.yml", "docs/reader-final-s07/READER-FINAL-S07.md", "docs/reader-final-s07/validation.json", "tests/reader_final_s07/checks.py", "tests/reader_final_s07/run.py", "tests/reader_final_s07/source_guard.py", "tests/reader_final_s07/strict.py", "tests/reader_final_s07/three_peers.py"],
+    "producer_manifest_rows": 35,
+    "producer_manifest_sha256": "6b00393cef1d7177c930732445def40239655c51b34b6a6bf46e31d42ca5faa7",
+    "frozen_identities": {
+      "raw7_run_py_sha256": "03e62f45126400b7c464754debe56d8913ed8657d8306820804fef1d4dc81038",
+      "raw7_tls_py_sha256": "22e83f09373b45bc0c5b3471cbb4e9c8738e8d0c53ed15d4d47838e829ffe647",
+      "raw7_consumers_cmake_sha256": "ed9bfc7b36b45438e1414454d8342d4087436db06e1b7a5850d02c097477f233",
+      "core_run_py_sha256": "416c7b35f75ed1819b5eb79eda2bd32dce4a6cc0f799a53f891912f17cdf0cf0",
+      "g07_checker_sha256": "1d32818c6c7bfcc316512c3e2338760a076934e6b472b52a1e65586faf288986",
+      "g07_boundaries_sha256": "52ba643a994fb145a788e79865a44281e8abe4e6ebff903958a591b086505efe",
+      "revisions_consumer_sha256": "1eeada63af244b45db133bdb3692927778fe8425ec0305271e595af46269cebe",
+      "sync_consumer_sha256": "5c44581a8a8fde5b95424662e4c93a1940f3db6f6960e0391166296068efce7e",
+      "commands_consumer_sha256": "ff81845acc09e3c60841b6e1c1db4137996653faf2aee979c89bd8a668d29953",
+      "revisions_header_sha256": "7e7a39735f65bbb234ffba796931bc7fe635005559446b54624ef6cddae6d0d4",
+      "sync_header_sha256": "1366dc90333870ff01f7ed12bdfb32f53bc474ba3a0de294af8bd5b7c86fb734"
+    },
+    "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+    "frozen_sdk_source": "9854061be331fe603a1822d9b2b36ee357154927"
+  },
+  "capture_core_ownership_replacement": {
+    "capture_core_source_sha256": "416c7b35f75ed1819b5eb79eda2bd32dce4a6cc0f799a53f891912f17cdf0cf0",
+    "capture_core_patched_sha256": "1c4ab668cd29f76649491678b4d483d81066f76e988bceb798a1eef17405c5c1",
+    "replaced_block_sha256": "4b352ffad264575518dcea1aec4390b8722b44283f5560072a3cf26c6327f3ca",
+    "replacement_sha256": "a6a6b559b7d2dbaaefcb9e24770745fa69ffd3c237b59a42602d30820176a712"
+  },
+  "aggregate": {
+    "job": 121246669515,
+    "cross_platform_wire_table_equal": true,
+    "cross_platform_parent_graph_equal": true,
+    "cross_platform_remote_inventory_equal": true,
+    "requests_per_platform": 348,
+    "summary_sha256": "3345748d970d03305b31cfa37ca697324560af65f785b40742b3c9efcdfa7372"
   },
   "gaps": [
     "real_third_party_webdav_service_and_real_account",
@@ -44,8 +114,8 @@
     "android_apple_windows_gtk_host_projection"
   ],
   "grants": {
-    "three_peer_raw_sync_faults": false,
-    "raw7_module_unchanged": false,
+    "three_peer_raw_sync_faults": true,
+    "raw7_module_unchanged": true,
     "real_host_ui": false,
     "six_platform_interop": false,
     "real_third_party_service": false
@@ -61,16 +131,10 @@
         {"id": 121233408366, "name": "three-peer regression (windows-2022)", "conclusion": "failure"},
         {"id": 121235287830, "name": "strict same-attempt aggregate", "conclusion": "failure"}
       ],
-      "preconditions_that_passed": [
-        "frozen_capture_core accepted",
-        "frozen_raw7_two_peer_tls 9/9",
-        "frozen_g07_original_session 20/20",
-        "frozen_g07_fault_boundaries 21/21",
-        "three_peer item 1 real_capture_graph_and_original_identity_bootstrap"
-      ],
-      "linux_root_cause": "fixture closed the TLS connection before reading the upload body, so the writing client process was terminated by SIGPIPE (returncode -13) instead of reporting READER_SYNC_DAV; my fixture's fault was wrong, not the module's",
-      "windows_root_cause": "fixture expected the sender's outbox row to stay pending while a pull-only step delivered the newer head, but reader_sync_step replays pending rows before pulling in the same step, so the newer head was pushed-and-acked first; my scenario ordering assumption was wrong",
-      "disposition": "replaced the mid-write reset with a read-and-discard upload gate; restructured item 3 to the reachable and stronger ordering with the request trace proving 412 then GET then the newer head; SIGPIPE behaviour reported to root as an owner-boundary observation, no owner file changed"
+      "preconditions_that_passed": ["frozen_capture_core accepted", "frozen_raw7_two_peer_tls 9/9", "frozen_g07_original_session 20/20", "frozen_g07_fault_boundaries 21/21", "three_peer item 1"],
+      "linux_root_cause": "my fixture closed the TLS connection before reading the upload body, so the writing client process was terminated by SIGPIPE (raw-sync returncode -13) instead of reporting READER_SYNC_DAV",
+      "windows_root_cause": "my fixture assumed the sender's outbox row stays pending across a pull-only step, but reader_sync_step replays pending rows before pulling, so the newer head was pushed and acked first",
+      "disposition": "replaced the mid-write reset with a read-and-discard upload gate and moved item 3 to the reachable and stronger ordering with the request trace; SIGPIPE behaviour reported to root as an owner-boundary observation, no owner file changed"
     }
   ],
   "actual_hosts": false,

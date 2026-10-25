@@ -102,7 +102,91 @@ unknown    只放一条真实 v3 wire 把 anchor_version 改成 4（给 raw 消�
 
 含义：宿主进程若不忽略 SIGPIPE，可能被对端在上传途中的 RST 直接终止。这属于原生传输/宿主边界，本包**不修改** owner 代码，只交可复现步骤与两份原日志；建议由传输 owner 评估 `MSG_NOSIGNAL`/忽略 SIGPIPE，或由六平台宿主统一忽略。S07 的验收夹具已改为"读完 body 再断连"，不再依赖该行为。
 
-## 9. 授予与缺口
+## 9. 本轮结果（实际证据）
+
+### 9.1 源与运行
+
+| 项 | 值 |
+| --- | --- |
+| 完整受测 source SHA | `a436bfbeb522e129c790bd93d614c5fb84427048` |
+| docs-only 封存 | 只含 `docs/reader-final-s07/` 与本包交回文件的后续提交（见分支 HEAD 与 `HANDOFF-RESULT.md`） |
+| run / attempt | `40218562325` / `1` |
+| workflow | `.github/workflows/reader-final-s07.yml`（矩阵 `max-parallel: 2`，同时仅一个 live run） |
+| 固定实现起点 | `0889f7d1`（祖先；守卫实测 `frozen_tree_diff=0`） |
+| 冻结 producer 清单 | 35 行，`sha256=6b00393cef1d7177c930732445def40239655c51b34b6a6bf46e31d42ca5faa7` |
+| SDK | 批准 3.41 `edddc463…`；3.40 `9854061b…` 仅作祖先证明，本轮不构建 |
+
+### 9.2 作业
+
+| job id | 名称 | 结论 | 起止（UTC） |
+| --- | --- | --- | --- |
+| 121244918949 | three-peer regression (ubuntu-22.04) | success | 17:52:33 → 18:00:02 |
+| 121244919145 | three-peer regression (windows-2022) | success | 17:52:33 → 17:59:03 |
+| 121246669515 | strict same-attempt aggregate | success | 18:00:04 → 18:00:20 |
+
+### 9.3 工件（`gh api` 认证的字节 / 摘要 / 有效期）
+
+| 名称 | id | 字节 | SHA-256 | 过期 |
+| --- | --- | --- | --- | --- |
+| `reader-final-s07-Linux-40218562325-1` | 12608383795 | 147636 | `d5fbb5aba1139f345adb24ac2df6cad76f85b7c43e3dc22fb839203711143012` | 2027-01-23 |
+| `reader-final-s07-Windows-40218562325-1` | 12608354542 | 147926 | `a70f1c37eb66764b7509d94d40680df749b7f109dafd19d36afeb51c88840c6a` | 2027-01-23 |
+| `reader-final-s07-summary-40218562325-1` | 12609355634 | 1192 | `3345748d970d03305b31cfa37ca697324560af65f785b40742b3c9efcdfa7372` | 2027-01-23 |
+
+工件内不含私钥（`!build/reader-final-s07/**/*.key`），两平台各 348 条受认证请求（全部带凭据、零未认证）。
+
+### 9.4 同次运行的冻结前置（不拼接其它 run）
+
+| 前置 | 结果 | result.json SHA-256 |
+| --- | --- | --- |
+| 冻结捕获 core | accepted，协议 30 项 + 图 11 项 | `5593972db58532770f13aec3a002d0e351f9194cb20725278c309fb5848e564b` |
+| 冻结 raw7 双 peer 真 TLS | accepted，9/9，11 条精确 wire | `bd65667337a27be4afff6ea654bf9a740bb9f2bde1e9ac2d41cbf510a3dc6dc7` |
+| G07 原 20 项账号会话 | accepted，20/20 | `966ab18ebd11b9951c6f6798b3e001eaa8ffb979ba9ce56d094fc880695694b4` |
+| G07 21 条故障边界 | accepted，21/21（未覆盖 5 条原样记录） | `ac605a3801c1b291666e20d52e036c31825834f3190fc446f29e11859bcb851d` |
+
+### 9.5 八条实测（两平台一致）
+
+| # | id | 实测 |
+| --- | --- | --- |
+| 1 | bootstrap | 捕获 9 条 + 类型化 2 条 = 11 条；PDF 8845 B / `5627a430…`；book identity 8845 |
+| 2 | 断网重试 | 失败 `status=3 dav=5 http=404`；被丢弃的上传 8845 B（同一 `5627a430…`）；远端无对象；outbox 11 条全留；重试 `pushed=11`、outbox 0、远端 revision 对象 11 |
+| 3 | 响应丢失→更新 head→重试 | 丢失时 `status=3 dav=3 http=0`；远端已提交（`true`）、outbox 1；head@loss=`…0300`、history=2；重试后 head=`…0600`、history=3、outbox 0、旧 RID 不是 head、两条对象各 1 份、旧 wire 字节不变；请求序 `put-old 412 → get-old 200 → get-old 200 → get-newer 200` |
+| 4 | 乱序父图 | 子件 `…0400` 先投递（`pulled=1`）：字节精确、`missing_parents=1`、`heads=2`、`projection_safe=0`、子 head `complete=0`；父件 `…0500` 到达后 `heads=1`（子件）、`complete=1`、`missing_parents=0`、history=5 |
+| 5 | 重复 wire | 重复 `pulled=1`、created 0、history 5→5、head 集不变、outbox 0、窗口内 0 个 PUT、远端该对象 1 份；整 shard 重扫 `pulled=15` 仍不变 |
+| 6 | 未知 anchor | 真实 wire 569 B（`anchor_version:3→4`）经真实网络与直接 receive 均 `status=4 / revision_code=4`；MAX2 对 v3 与 v4 均 4；两侧历史与 outbox 不变 |
+| 7 | MAX2 共存 | legacy1/legacy2 各 `pushed=2`；MAX2 接收方 `pulled=2`、`pending_metadata=0`、`originals_verified=2`、wire 与原文字节精确、单一完整 head；同一 root 上 raw3 命名空间 15 个对象并存 |
+| 8 | 精确字节/ID/parents/原件 hash + 跨进程重开 | 15 条 wire 在三 peer 上 `(id, sha256, bytes, parents)` 逐项相等；链 `…0001→…0300→…0600→…0500→…0400`；三 peer 新进程 `bootstrap check` 全过、outbox 0、无传输临时文件、缓存原件 `5627a430…` |
+
+15 条 wire 的 SHA-256（两平台逐字一致，汇总作业复算）：
+
+```
+000…0001 937cd0f566d49a9729322ed74c0528a56d3b01de21ed0113e9a96f2877a46156  392B  []
+000…0064 79d32397c80ef2e9e3a080f513e75c02e9e8bd87e09239a2b72151ec065ffc71  569B  []
+000…0065 a1a5bc79052f9b1234a31872f1ec9f4f6323da6c308601c6e9b5929be494a575  603B  [0064]
+000…0066 eb21b5c6eb7ec452db96a44bd9095eb0f0d20c89fd24c1e81872560d5e63c3bc  670B  []
+000…0067 ab253edf9140df6be8cac8f24d7dd26979d4b6ccccc870fd4307dbe11d52723d  710B  [0066]
+000…0068 389511142c03c171338f29bffa3ffaff326202d9f4e1905a828dc83fe81aa77a  671B  []
+000…0069 d55c3630a6f98ebeaeab6bc904a677c8ac472bb234c7ba6e1b7e6fa47b01b498  706B  [0068]
+000…006a 90460825fee47c80a64639c2cae89e025b8cdf1abb750777bb0177f05ff06a42  309B  [0069]
+000…006b 582d7ce1096f65fab04bf55d7628b6805d309636e3e0cc5e97a64fbc8e74e3aa  712B  [006a]
+000…0300 e65a34502f89b39b45ebba175389535c686200d9efbca10ca805189d64fcf3f1  431B  [0001]
+000…0400 932f63bb1857fdad93d99cc86908e4cef962e23e97b61b8dc63219bf785c6874  433B  [0500]
+000…0500 a1d0607b4ddfc2f2999dfcee9777904635d010747b3e70f7d26118b6d6f76df6  434B  [0600]
+000…0600 8ae9428128890b109c269b9c49bf6774da176436598d650eb02c24611682a83c  430B  [0300]
+000…1000 242e52dedacd5a3bf6b4d4a37a0b2dbd9c965d876fff7ca2b41851f5830307e9  210B  []
+000…1001 d09c66dc800f20ea097f7e98cbec4ce43445300b576098d2621689da250414a5  436B  []
+```
+
+汇总作业实算：两平台 wire 表、父图、远端对象清单逐项相等（`true/true/true`）。平台报告自报 `adopted/actual_hosts/complete_product = false`，汇总也不授予这些。
+
+### 9.6 原失败（保留，未删断言）
+
+见 `validation.json` 的 `failures` 与第 8 节：第 1 轮 `3ccfe9f5` / run 40214771240 attempt 1 三作业失败，根因都在**本包自己的夹具**（Linux 写 body 期间断连 → 客户端 SIGPIPE；Windows 对"先收 head 再重试"的不可达顺序假设），冻结前置与第 1 项当时已通过。修复只动 `tests/reader_final_s07/` 与文档。
+
+### 9.7 未验证（逐条 pending）
+
+见 `gaps`：真实第三方 WebDAV/真实账号、六目标 SDK 互通与宿主 UI、同 store 并发多写、掉电级页撕裂、服务端重试/退避策略、四平台宿主投影。均**未测**，不授予。
+
+## 10. 授予与缺口
 
 授予（本轮成功时）：三 peer raw 同步故障与幂等回归、冻结 raw7 模块未改、同次运行的冻结双 peer TLS 与 G07 前置。
 
