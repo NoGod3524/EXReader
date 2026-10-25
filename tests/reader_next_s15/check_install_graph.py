@@ -108,7 +108,7 @@ try:
         'message(STATUS "graph-340-resolves ${EXReader_VERSION}")\n', encoding='utf-8')
     configure('relabelled_graph_resolves_as_340', tiny, work / 'graph-340-build', graph, [],
               expect_fail=False, markers=[])
-    configure('mixed_sdk_graph_refused', consumer, work / 'consumer-mixed', stage + ';' + str(graph), [],
+    configure('mixed_sdk_graph_refused', consumer, work / 'consumer-mixed', str(stage) + ';' + str(graph), [],
               expect_fail=True, markers=['EXReader', '3.41.0'])
     summary['accepted'] = True
 except Exception as exc:
