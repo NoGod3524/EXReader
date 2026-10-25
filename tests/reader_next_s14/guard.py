@@ -76,7 +76,7 @@ def main():
             problems.append('reused module bytes differ: ' + path)
     workflow = '.github/workflows/reader-next-s14.yml'
     text = subprocess.check_output(['git', 'show', 'HEAD:' + workflow], text=True)
-    if 'branches: [codex/reader-next-s14]' not in text or 'on:\n  push:' not in text:
+    if 'branches: [codex/reader-next-s14-root-review]' not in text or 'on:\n  push:' not in text:
         problems.append('workflow trigger is not restricted to the package branch')
     if not diff_empty(START, 'HEAD', '--', 'docs/handoffs', '.github/workflows/parallel-integration.yml'):
         problems.append('handoff or integration workflows changed')
