@@ -17,7 +17,7 @@ def check(core, out, raw, old, product, sdk, dav):
     core.run(['cmake', '--install', out / 'sdk340-build'], 'sdk340-install')
     sdk340 = out / 'sdk340-stage'
     prefix = ';'.join(map(str, [raw, dav, product, sdk]))
-    def path(p): return p.resolve().as_posix()
+    def path(p): return p.absolute().as_posix()
     def find(package, version, location, components=''):
         return ('find_package(' + package + ' ' + version + ' EXACT CONFIG REQUIRED ' + components
                 + ' PATHS "' + path(location / 'lib/cmake' / package) + '" NO_DEFAULT_PATH)\n')
