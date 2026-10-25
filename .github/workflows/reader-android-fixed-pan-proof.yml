@@ -1,0 +1,54 @@
+name: Read original Android Pan evidence without rebuilding
+on:
+  push:
+    branches: [codex/reader-android-fixed-pan-proof]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.3.0
+      - name: Authenticate the successful original ZIP and independently read every Pan observation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: python
+        run: |
+          import datetime,hashlib,io,json,pathlib,subprocess,sys,zipfile
+          source='b25975b45f021bdf1bd086088634cfc2a4b4d2d4';run=40156615296;job=121059247720;artifact=12585631849
+          size=147551041;digest='1826428c4f0c35075d620f496b5a3ccef4a6e121bf9e797dd74ad881599b28b4'
+          repo='repos/NoGod3524/EXReader/'
+          def api(path):return json.loads(subprocess.check_output(['gh','api',repo+path]))
+          original=api(f'actions/runs/{run}');assert original['head_sha']==source and original['run_attempt']==1 and original['status']=='completed' and original['conclusion']=='success'
+          jobs=api(f'actions/runs/{run}/jobs')['jobs'];real=[row for row in jobs if row['name']=='android'];assert len(real)==1 and real[0]['id']==job and real[0]['conclusion']=='success'
+          metadata=api(f'actions/artifacts/{artifact}');assert metadata['workflow_run']['id']==run and metadata['workflow_run']['head_sha']==source and not metadata['expired']
+          assert metadata['size_in_bytes']==size and metadata['digest']=='sha256:'+digest
+          assert datetime.datetime.fromisoformat(metadata['expires_at'].replace('Z','+00:00'))>datetime.datetime.now(datetime.timezone.utc)
+          raw=subprocess.check_output(['gh','api',repo+f'actions/artifacts/{artifact}/zip']);assert len(raw)==size and hashlib.sha256(raw).hexdigest()==digest
+          subprocess.check_call(['git','diff','--exit-code',source,'HEAD','--','apps/reader','examples/android','tests/reader_android_fixed_pan/fixtures.py','tests/reader_android_fixed_pan/run_ui.py','tests/reader_android_fixed_pan/java'])
+          sys.path.insert(0,'tests/reader_android_fixed_pan');from verify_saved import verify_saved
+          with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              names=archive.namelist();assert len(names)==len(set(names)) and sum(row.file_size for row in archive.infolist())<1024**3
+              for name in names:
+                  path=pathlib.PurePosixPath(name);assert not path.is_absolute() and '..' not in path.parts and '\\' not in name
+              def read(suffix,limit):
+                  found=[name for name in names if name.endswith(suffix)];assert len(found)==1 and archive.getinfo(found[0]).file_size<=limit
+                  return archive.read(found[0])
+              summary=verify_saved(read,source,run,1)
+          output={'diagnostic_only':True,'accepted':False,'original_source':source,'original_run':run,'original_attempt':1,'original_job':job,'artifact':{'id':artifact,'bytes':size,'sha256':digest,'expires_at':metadata['expires_at']},**summary}
+          folder=pathlib.Path('build/android-pan-proof');folder.mkdir(parents=True);(folder/'proof.json').write_text(json.dumps(output,indent=2)+'\n');print(json.dumps(output),flush=True)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-pan-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-pan-proof/
+          if-no-files-found: error
