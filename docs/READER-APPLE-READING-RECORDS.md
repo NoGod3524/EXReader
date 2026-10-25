@@ -65,8 +65,13 @@ UI 实际看到私有请求落盘/产品提交后的原生观测，再由 UI run
 三目标实际 Xcode batch 编译均因 HostSDK 公共 SDK 枚举不可见失败，真实恢复用例尚未开始。
 产品桥头先显式引入公开 `exreader.h`；新的预检使用真实 Xcode app/test bundle build-for-testing，
 同时保留同一个 native19 消费者，不再以直接整批 swiftc 替代 Xcode 编译检查。
-目前新增完整套件尚未取得云端结果，验收记录为 `accepted:false`。源码、测试、语法检查与工件解析
-全部在 Actions，本地仅源码/文档/Git。性能、真机、跨平台产品联合验收继续单列。
+最终受测源码 `19fde18968e03bb4e87d86b0ed650716ac02c9fa` 的正式 run
+[`40163099176`](https://github.com/NoGod3524/EXReader/actions/runs/40163099176) 全7作业 success：
+native19/19，macOS/iPhone/iPad 各7个真实 UI 用例，严格汇总 `accepted:true`。
+同源旧 WP13 [`40163097702`](https://github.com/NoGod3524/EXReader/actions/runs/40163097702)
+全8作业 success；三目标各13/13、67步骤，汇总 `problems=[]`，门禁97项通过。
+源码、测试、语法检查与工件解析全部在 Actions，本地仅源码/文档/Git。
+此处授予 Apple 产品阅读记录；性能、真机和共同源码联合验收仍独立记录。
 
 ## 重启接续点
 
@@ -82,10 +87,37 @@ iPad 原05/07通过，原06重开恢复时 `restoring_layout=true`、`issued_res
 
 `109dd671bf4a39f44433129e28d1a471a8765eb1` 改为订阅实际 Published restore 请求，
 在主线程下一轮读取已赋值 revision 并拒绝过期请求，再执行原生 scroll；只有后续真实几何可确认恢复。
-新 recovery `40153506967` 已启动，原用例断言未放宽；该轮尚无最终结果。
+新 recovery `40153506967` 三目标已全部 success，原用例断言未放宽。
 
 旧 `f5d25b4c` 的 Shelf full `40140560610` 保留为失败：macOS/iPhone 完整通过，iPad 原02已遍历
 2202份原件并原07通过，原06在进程重开后目标仍在屏幕外，真实 native scroll 未发出。
-当前修复改为随真实 restore request 发 native scroll；focused 尚未给出结果，不授予该修复或 G03/G04 UI。
-下一步读取真实 Xcode预检与三目标恢复结果，修根因并保留原断言；稳定后才在最终共同 Apple 源码启动
-一轮正式 reading records full，并保留 Nav/Search/WP13/Mapping/Shelf 全套同源回归。
+完整 Shelf 后续在 `25eeb6aaccdc50e670f0aaea73631818bc0551f8` 的
+[`40161462179`](https://github.com/NoGod3524/EXReader/actions/runs/40161462179) 全7作业 success，
+三目标各原7例通过，包含2202份原件正反遍历及原06旋转、后台与真实进程重开恢复。
+
+## 正式运行中保留的失败与修复
+
+- `eff7ab64` / `40154557074` 的 macOS 6/7 通过，通用按钮辅助器在 TextEditor 的
+  AXEnabled 属性处拒绝。后续 `986fca5c` / `40155811151` 的扁平编辑页尝试没有解决问题，已回退。
+  `9c58e1c4` 改为操作真实 TextView，并保留实际键入、保存正文、删除和恢复断言，macOS7/7通过。
+- `40155811151`、`40156690279`、`40158362929` 的 iOS 用例被 Menu 包装层及内部 Button 的
+  XCTest hit-point 属性挡住，未进入阅读记录。最终探针核对已标识 Menu 中实际原生 Button 的正尺寸、
+  屏幕内 frame，对测量中心发真实触摸；必须看到真实菜单项并完成原后续结果断言。
+  `25eeb6aa` / `40159907949` 仅执行原进度/书签/重开一例，三目标真实通过，明确
+  `diagnostic_only=true, accepted=false`；同源正式全套 `40160552435` 随后全绿。
+- `25eeb6aa` 的旧 WP13 `40161458572` 保留真实 iPhone 12/13 失败：新增高亮操作挤高原选文
+  面板，横屏关闭按钮位于屏幕外，原 test11 的 AXScrollToVisible 失败。`19fde189` 仅在 iOS 将原
+  选文内容放入原生 ScrollView；macOS 布局保持原样，旧 tap、选文失效与禁用断言均未修改。
+  最终同源 WP13 `40163097702` 三目标各13/13通过，iPhone 原 test11 实际通过。
+
+## 证据归属与集成边界
+
+| 源码 | 工作流 / run | 结果 |
+| --- | --- | --- |
+| `19fde189…` | records `40163099176`、WP13 `40163097702` | 两轮正式 success，含各自严格汇总 |
+| `25eeb6aa…` | Nav `40161454864`、Search `40161456543`、Mapping `40161460346`、Shelf full `40161462179` | 各轮 success，证据只归这个旧源码 |
+
+四份旧回归没有转授 `19fde189`。共同分支合入最终布局后，由联合出口在新的完整 SHA 上执行六套并认证。
+最终工件 id、大小、完整 SHA-256、有效期和运行历史见
+[reader-apple-reading-records.json](validation/reader-apple-reading-records.json)。
+后续证据 HEAD 只改本页与该 JSON；SDK3.40分支不混入 SDK3.41 整页主题或记录迁移声明。
