@@ -4,7 +4,12 @@
   "start_source": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
   "production_pin": "a7bcf0483fb52ecf9cd3cdf7dda07a4aa742f174",
   "default_option": "EXR_READER_GTK_COMPACT=OFF",
-  "runs": [],
+  "runs": [
+    {"run_id": 40200750312, "scope": "preflight only", "conclusion": "success"},
+    {"run_id": 40200828327, "scope": "full candidate", "conclusion": "cancelled", "reason": "Added necessary explicit four-format positive turns/boundaries and PDF zoom coverage while this run was still in module installation"},
+    {"run_id": 40201452800, "scope": "preflight only", "conclusion": "success"},
+    {"run_id": 40201561236, "scope": "full candidate", "conclusion": "failure", "reason": "Harness expected page focus after physically clicking Previous; entry-focus assertion moved before turns and button-focus assertion added after turns"}
+  ],
   "off_full_original_scope_accepted": false,
   "compact_native_ui_accepted": false,
   "complete_product": false,

@@ -4,6 +4,18 @@ Status: **source candidate; no executed UI acceptance yet**.
 Start: `25bc0c67971f81491f50e0a3caaaf7e509bb7e35`.
 Reviewed production pin: `a7bcf0483fb52ecf9cd3cdf7dda07a4aa742f174`.
 
+Preflight runs `40200750312` and `40201452800` passed the exact OFF byte
+projection and all 24 independent refusals. Initial full `40200828327` was
+cancelled during module installation to add explicit four-format forward/back,
+first/last boundary and PDF menu-zoom coverage before expensive original tests.
+Full `40201561236` passed the ON compile, compact default views and all 13 TXT
+pages in both directions. The next focus assertion was ordered after real
+Previous-button clicks, where retaining button focus is correct. The harness
+now checks page focus immediately on entry and button focus after turns. Only
+the harness changes; the production pin stays fixed. Real failure screenshots
+and visibility dictionaries remain in that run. No OFF or ON acceptance is
+granted from these incomplete runs.
+
 `EXR_READER_GTK_COMPACT` defaults **OFF** in `examples/linux/CMakeLists.txt`.
 Only that file and `examples/linux/reader.c` change production. SDK3.41,
 schema1, record/MAX2/wire formats, owners, existing dialogs and budgets remain
