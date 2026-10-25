@@ -111,7 +111,7 @@ static gboolean folder_apply(host_result *done) {
     if(folder.message) gtk_label_set_text(GTK_LABEL(folder.message),result->message[0] ? result->message:"Import stopped; committed books retained");
   } else folder_message();
   if(done->action==READER_BATCH_MAP && !closing && !folder_paused()) shelf_request(0,TRUE);
-  if(done->action==READER_BATCH_CLOSE || (done->action==READER_BATCH_BEGIN && result->status!=EXR_OK && !result->batch_map)) {
+  if(done->action==READER_BATCH_CLOSE || (done->action==READER_BATCH_BEGIN && result->status!=EXR_OK && !result->batch_owned)) {
     folder.has_owner=0;
     if(folder.timer) { g_source_remove(folder.timer);folder.timer=0; }
     if(done->action==READER_BATCH_CLOSE && folder.dialog) {
