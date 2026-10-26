@@ -148,6 +148,26 @@ int reader_catalog_close(reader_catalog **catalog,reader_catalog_error *e) {
   free(c);*catalog=NULL;return SQLITE_OK;
 }
 
+#ifdef _WIN32
+void reader_catalog_prepare_repair(reader_catalog *c) {
+  sqlite3_stmt *s=NULL;
+  if(enter(c,NULL)!=SQLITE_OK) return;
+  /* Preserve non-default modes and fall back immediately if another worker
+   * holds a lock. Durability and the per-book transaction remain unchanged. */
+  sqlite3_busy_timeout(c->database,0);
+  if(sqlite3_prepare_v2(c->database,"PRAGMA journal_mode",-1,&s,NULL)==SQLITE_OK &&
+     sqlite3_step(s)==SQLITE_ROW) {
+    const char *mode=(const char *)sqlite3_column_text(s,0);
+    int is_delete=mode && !strcmp(mode,"delete");
+    sqlite3_finalize(s);s=NULL;
+    if(is_delete) sqlite3_exec(c->database,"PRAGMA journal_mode=PERSIST",NULL,NULL,NULL);
+  }
+  sqlite3_finalize(s);
+  sqlite3_busy_timeout(c->database,5000);
+  c->active=0;
+}
+#endif
+
 int reader_catalog_attach(reader_catalog *c,const reader_catalog_book *b,reader_catalog_error *e) {
   sqlite3_stmt *s=NULL; char key[72]; int exists=0,mapped=0,status=enter(c,e);int64_t old_id=0;
   if(status!=SQLITE_OK) return status;
