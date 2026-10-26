@@ -1,0 +1,54 @@
+name: Windows group page diagnostic from recorded package
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnostic:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Fetch the preserved package from the failed original run
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-organization-40407588078-1
+          path: build/original
+          run-id: '40407588078'
+          github-token: ${{ github.token }}
+      - name: Bind the package to the recorded source and program bytes
+        shell: pwsh
+        run: |
+          $report = Get-Content -Raw build/original/c09/report.json | ConvertFrom-Json
+          if ($report.source_sha -ne 'a7fbe0e102d966a559184289b4cdeba17681f9d0' -or "$($report.run_id)" -ne '40407588078' -or "$($report.attempt)" -ne '1' -or -not $report.accepted) { throw 'Recorded host identity does not match' }
+          $exe = 'build/original/c09/package/EXReader/EXReader.exe'
+          if ((Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash.ToLowerInvariant() -ne $report.program_sha256) { throw 'Recorded program hash does not match' }
+          New-Item -ItemType Directory -Force build/c09, build/cloud-readback | Out-Null
+          Copy-Item -LiteralPath build/original/c09/package -Destination build/c09/package -Recurse
+          Copy-Item -LiteralPath build/original/cloud-readback/group-page-seed.exe -Destination build/cloud-readback/group-page-seed.exe
+      - name: Configure the original native UI driver
+        shell: pwsh
+        run: |
+          python -m pip install uiautomation==2.0.29
+          if ($LASTEXITCODE) { throw 'UI dependency failed' }
+          python tests/reader_wave3_c09/desktop.py --output build/display.json
+          if ($LASTEXITCODE) { throw 'Native desktop configuration failed' }
+      - name: Diagnose group paging on the preserved host only
+        run: python tests/windows_organization_projection/paged_ui.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-group-page-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/display.json
+            build/group-page-ui/result.json
+            build/group-page-ui/seed.log
+            build/group-page-ui/failure.bmp
+            build/group-page-ui/profile/application.log
+            build/group-page-ui/profile/library.sqlite.product.sqlite
+          if-no-files-found: warn
