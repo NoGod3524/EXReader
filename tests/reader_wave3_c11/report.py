@@ -17,6 +17,10 @@ import sys
 SEED = 'd263ce5228838ac90c0a0dc13a5193d4a7739681'
 APP_REQUIRED_CASES = ('import_epub', 'open_epub', 'page_next', 'page_prev', 'font_increase', 'font_decrease')
 WAVE3_REQUIRED = (
+    'stage_cancel_before_and_after_rename_removes_private_files',
+    'original_export_cancel_receipt_and_ordinary_exception_under_checkjni',
+    'closed_panel_drops_real_pending_jump_peek_on_owner',
+    'annotation_batch_cancel_retains_committed_receipt_and_stops_remaining_items',
     'wave3_surfaces_present_and_no_leases',
     'local_font_saf_import_select_lease_and_release',
     'invalid_font_rejected_and_library_unchanged',
@@ -108,6 +112,17 @@ def main():
                 problems.append('walkthrough: different ' + key)
         if execution.get('installed_sha256') != app_sha or execution.get('app_sha256') != app_sha:
             problems.append('walkthrough: the device did not run the packaged application bytes')
+        expected_titles = {name: {'title': Path(name).stem, 'format': Path(name).suffix[1:].upper()}
+                           for name in ('Sample.epub', 'Sample.txt', 'Sample.pdf',
+                                        'BigChapter.epub', 'Ambiguous.epub', 'Second.epub')}
+        if execution.get('expected_titles') != expected_titles:
+            problems.append('walkthrough: explicit stem title and format contract is missing or changed')
+        provenance = load(args.walkthrough / 'candidate-provenance.json')
+        if any(provenance['expected_titles'].get(name) != value for name, value in expected_titles.items()):
+            problems.append('walkthrough: candidate title expectations differ')
+        drivers = provenance.get('drivers') or []
+        if len(drivers) != 2 or any(not item.get('original_sha256') or not item.get('candidate_sha256') for item in drivers):
+            problems.append('walkthrough: original and candidate driver hashes are missing')
         validation = load(args.walkthrough / 'walkthrough-evidence' / 'validation.json')
         summary = validation.get('summary') or {}
         if int(summary.get('failed') or 0) != 0 or int(summary.get('skipped') or 0) != 0:
@@ -133,9 +148,11 @@ def main():
                 problems.append('wave3: different ' + key)
         if wave3.get('apk_sha256') != app_sha or wave3.get('installed_apk_sha256') != app_sha:
             problems.append('wave3: the device did not run the packaged application bytes')
+        if wave3.get('checkjni') != '1':
+            problems.append('wave3: CheckJNI was not enabled')
         phases = {report.get('phase'): report for report in wave3.get('phases') or []}
         checks = {}
-        for name in ('first', 'restore'):
+        for name in ('first', 'cancel', 'restore'):
             report = phases.get(name)
             if report is None:
                 problems.append('wave3: missing phase ' + name)
@@ -150,7 +167,7 @@ def main():
         if missing:
             problems.append('wave3: not passing: ' + ', '.join(missing))
         stops = wave3.get('process_stops') or []
-        if len(stops) != 2 or any(stop.get('pid_after_stop') for stop in stops):
+        if len(stops) != 3 or any(stop.get('pid_after_stop') for stop in stops):
             problems.append('wave3: the instrumented process was not actually stopped')
         sources = {item.get('what'): item for item in wave3.get('sources') or []}
         original = sources.get('saf-saved-original') or {}
@@ -174,6 +191,24 @@ def main():
             operations[operation] = OPERATIONS[operation]
     except (OSError, ValueError, KeyError) as error:
         problems.append('wave3: ' + type(error).__name__ + ': ' + str(error))
+    try:
+        navigation = load(args.wave3.parent / 'navigation' / 'result.json')
+        if navigation.get('accepted') is not True or navigation.get('navigation_ui_accepted') is not True:
+            problems.append('navigation: original 18-case suite did not accept')
+        for key in ('source_sha', 'run_id', 'attempt'):
+            if navigation.get(key) != identity[key]:
+                problems.append('navigation: different ' + key)
+        phases = navigation.get('phases') or []
+        if navigation.get('checks') != 18 or [(item.get('phase'), item.get('count')) for item in phases] != [('first', 16), ('reopen', 2)]:
+            problems.append('navigation: original 16+2 case counts changed')
+        for phase in phases:
+            if phase.get('passed') is not True or phase.get('native_live') != 0 or not all(item.get('pass') is True for item in phase.get('checks') or []):
+                problems.append('navigation: failed case or native snapshot leak')
+        stops = navigation.get('process_stops') or []
+        if len(stops) != 2 or any(item.get('pid_after_stop') for item in stops):
+            problems.append('navigation: process-stop regression failed')
+    except (OSError, ValueError, KeyError) as error:
+        problems.append('navigation: ' + type(error).__name__ + ': ' + str(error))
     accepted = not problems and all(name in operations for name in OPERATIONS)
     result = {**identity, 'schema': 1, 'kind': 'reader-wave3-c11-android-acceptance', 'seed': SEED,
               'accepted': accepted, 'problems': problems,

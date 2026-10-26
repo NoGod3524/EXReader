@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 
@@ -22,6 +23,10 @@ SUITES = (
     ('review', 'org.exreader.host.uitest.HostReviewTest', 'review', 'review-evidence', 900),
     ('bounded', 'org.exreader.host.uitest.HostReviewTest', 'bounded', 'bounded-evidence', 900),
 )
+# Picker names stay intact; exact shelf title and format follow ImportEntry.
+EXPECTED_TITLES = {name: {'title': Path(name).stem, 'format': Path(name).suffix[1:].upper()}
+                   for name in ('Sample.epub', 'Sample.txt', 'Sample.pdf',
+                                'BigChapter.epub', 'Ambiguous.epub', 'Second.epub')}
 
 
 def sha256(path):
@@ -43,7 +48,8 @@ def main():
     identity = {'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                 'attempt': os.environ['GITHUB_RUN_ATTEMPT']}
     report = {**identity, 'schema': 1, 'completed': False, 'app_sha256': sha256(args.app),
-              'installed_sha256': '', 'fixtures': {}, 'suites': {}, 'errors': [], 'commands': []}
+              'installed_sha256': '', 'fixtures': {}, 'suites': {}, 'errors': [], 'commands': [],
+              'expected_titles': EXPECTED_TITLES}
 
     def command(argv, timeout=120, destination=None):
         record = {'argv': argv, 'timeout_seconds': timeout}
@@ -62,6 +68,11 @@ def main():
         return process.returncode, process.stdout
 
     try:
+        candidate = Path('build/wave3/candidate/provenance.json')
+        provenance = json.loads(candidate.read_text(encoding='utf-8'))
+        if any(provenance['expected_titles'].get(name) != value for name, value in EXPECTED_TITLES.items()):
+            raise RuntimeError('candidate does not enforce the independent title and format expectations')
+        (output / 'candidate-provenance.json').write_bytes(candidate.read_bytes())
         installed = output / 'installed'
         installed.mkdir()
         code, raw = command(['adb', 'shell', 'pm', 'path', PACKAGE])
@@ -92,6 +103,8 @@ def main():
                     UITEST + '.test/androidx.test.runner.AndroidJUnitRunner']
             code, unused = command(argv, timeout=timeout, destination=output / (suite + '-instrumentation.txt'))
             log_code, unused = command(['adb', 'logcat', '-d'], timeout=180, destination=output / (suite + '-logcat.txt'))
+            if re.search(rb'JNI DETECTED ERROR IN APPLICATION|JNI WARNING|JNI call made with exception pending', unused):
+                report['errors'].append(suite + ': CheckJNI rejected a JNI call')
             if (output / (suite + '-evidence')).exists():
                 raise RuntimeError('earlier evidence folder must not be reused: ' + suite)
             pull_code, unused = command(['adb', 'pull',

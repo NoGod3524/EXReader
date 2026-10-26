@@ -38,6 +38,8 @@ abstract class Wave3Dialog {
     }
     final boolean current(long value){return dialog!=null&&dialog.isShowing()&&epoch.get()==value;}
     final void post(long value,Runnable action){activity.runOnUiThread(()->{if(current(value))action.run();});}
+    /** Resource-bearing results must release on rejection, even after a panel is closed. */
+    final void post(long value,Runnable action,Runnable stale){activity.runOnUiThread(()->{if(current(value))action.run();else stale.run();});}
     final void message(String text){if(status!=null)status.setText(text);}
     final void cancelTask(){if(task!=null)task.cancel();}
     private void closed() {

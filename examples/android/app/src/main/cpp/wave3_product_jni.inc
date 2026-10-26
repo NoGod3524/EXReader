@@ -14,6 +14,16 @@ namespace wave3 {
 using product_jni::pending;
 using product_jni::reject;
 
+/* Only cooperative cancellation becomes a result status. Ordinary callback
+   exceptions still leave Java with the original failure, without JNI allocation. */
+void receipt_exception(JNIEnv *env,jclass cancelled){
+  if(!env->ExceptionCheck())return;
+  jthrowable thrown=env->ExceptionOccurred();env->ExceptionClear();
+  bool cancellation=env->IsInstanceOf(thrown,cancelled);
+  if(!cancellation)env->Throw(thrown);
+  env->DeleteLocalRef(thrown);pending(env);
+}
+
 /* ---- raw0.2 portable annotations ------------------------------------------- */
 struct import_run {
   reading_product::control *control;jobject sink;jmethodID found;size_t total=0;
@@ -32,6 +42,7 @@ int import_item(void *opaque,const reader_ai3_item *item){
 /* Only a genuine public SDK FOUND returns 1: the Java sink resolves the copied capture on the SDK owner. */
 int import_resolve(void *opaque,const reader_rs_record *record,uint64_t){
   auto &run=*static_cast<import_run *>(opaque);JNIEnv *env=run.control->env;
+  if(env->ExceptionCheck())return 0;
   try{
     reader_av_item view{};reading_product::capture_fields(view,*record);
     jobject capture=reading_product::capture(env,record->book_key,view);
@@ -99,6 +110,7 @@ void build_capture(JNIEnv *env,built_capture &b,jint mode,jlongArray numeric,job
 extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeWave3_annotationImport(JNIEnv *env,jclass,jlong handle,jstring book,jstring path,jboolean commit,jstring fingerprint,jobject task,jobject sink){
   return product_jni::call(env,handle,[&](product_jni::owner &owner)->jobjectArray{
     reading_product::control control(env,task);control.poll();
+    jclass cancelled=env->FindClass("org/exreader/host/HostTask$Cancelled");pending(env);
     std::string key=product_jni::utf8(env,book),file=product_jni::utf8(env,path),confirm=product_jni::utf8(env,fingerprint,true);
     wave3::import_run run{};run.control=&control;run.sink=sink;
     if(!sink)reject("java/lang/IllegalArgumentException","A public FOUND resolver is required");
@@ -109,19 +121,20 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeWave3_ann
     options.resume_index=0;options.policy=READER_AI3_RESOLVE_REQUIRED;options.resolve=wave3::import_resolve;options.cancel=wave3::import_cancel;options.item=wave3::import_item;options.context=&run;
     reader_ai3_stats stats{};reader_ai3_error error{};
     reader_ai3_status status=reader_annotation_import_raw3_run(&options,&stats,&error);
-    pending(env);
+    wave3::receipt_exception(env,cancelled);env->DeleteLocalRef(cancelled);
     return wave3::import_result(env,stats,error,status,run);
   });
 }
 extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeWave3_annotationExport(JNIEnv *env,jclass,jlong handle,jstring book,jstring title,jstring jsonl,jstring markdown,jobject task){
   return product_jni::call(env,handle,[&](product_jni::owner &owner)->jobjectArray{
     reading_product::control control(env,task);control.poll();
+    jclass cancelled=env->FindClass("org/exreader/host/HostTask$Cancelled");pending(env);
     std::string key=product_jni::utf8(env,book),name=product_jni::utf8(env,title,true),json=product_jni::utf8(env,jsonl,true),md=product_jni::utf8(env,markdown,true);
     reader_annotation_export_options options{};options.struct_size=sizeof(options);options.revisions=owner.revisions;options.book_key=key.c_str();options.book_title=title?name.c_str():nullptr;
     options.jsonl_path=jsonl?json.c_str():nullptr;options.markdown_path=markdown?md.c_str():nullptr;options.max_output_bytes=0;options.cancel=reading_product::control::cancelled;options.cancel_context=&control;
     reader_annotation_export_stats stats{};reader_annotation_export_error error{};
     reader_annotation_export_status status=reader_annotation_export_raw3_run(&options,&stats,&error);
-    pending(env);
+    wave3::receipt_exception(env,cancelled);env->DeleteLocalRef(cancelled);
     return product_jni::strings(env,{std::to_string(static_cast<int>(status)),std::to_string(error.revision_code),std::to_string(error.rs_code),std::to_string(error.os_error),error.message,
       std::to_string(stats.annotations),std::to_string(stats.current),std::to_string(stats.tombstones),std::to_string(stats.pending_parents),std::to_string(stats.concurrent),std::to_string(stats.blocked_restore),
       std::to_string(stats.head_wires),std::to_string(stats.jsonl_bytes),std::to_string(stats.markdown_bytes),std::to_string(stats.jsonl_published),std::to_string(stats.markdown_published)});
@@ -151,6 +164,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeWave3_jum
 /* out = [status, token, index, count]; returns the decoded capture or null when EMPTY/refused. */
 extern "C" JNIEXPORT jobject JNICALL Java_org_exreader_host_NativeWave3_jumpPeek(JNIEnv *env,jclass,jlong handle,jint direction,jlongArray out){
   return product_jni::call(env,handle,[&](product_jni::owner &owner)->jobject{
+    if(!out||env->GetArrayLength(out)!=4)reject("java/lang/IllegalArgumentException","Jump result needs four fields");
     wave3::jump_owner &jump=wave3::jump_for(handle);reader_jh_item item{};reader_jh_error error{};
     reader_jh_status status=reader_jh_peek(jump.history,static_cast<reader_jh_direction>(direction),&item,&error);
     jlong meta[4]={static_cast<jlong>(status),0,0,0};jobject capture=nullptr;
@@ -163,10 +177,13 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_exreader_host_NativeWave3_jumpPeek
       }catch(...){reader_rs_record_free(&record);reader_jh_item_release(&item);throw;}
       reader_rs_record_free(&record);
       if(!capture){reader_jh_item_release(&item);meta[0]=100;}
-      else{jlong token=++jump.sequence;meta[1]=token;meta[2]=static_cast<jlong>(item.index);jump.peeks.emplace(token,item);}
+      else{jlong token=++jump.sequence;meta[1]=token;meta[2]=static_cast<jlong>(item.index);
+        try{jump.peeks.emplace(token,item);}catch(...){reader_jh_item_release(&item);throw;}}
     }
     reader_jh_state state{};state.struct_version=READER_JH_STRUCT_VERSION;reader_jh_error ignored{};reader_jh_state_get(jump.history,&state,&ignored);meta[3]=static_cast<jlong>(state.count);
-    env->SetLongArrayRegion(out,0,4,meta);pending(env);
+    env->SetLongArrayRegion(out,0,4,meta);
+    if(env->ExceptionCheck()&&meta[1]){auto found=jump.peeks.find(meta[1]);reader_jh_item_release(&found->second);jump.peeks.erase(found);}
+    pending(env);
     return capture;
   });
 }

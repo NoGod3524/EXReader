@@ -8,14 +8,27 @@
 
 static volatile int wave3_live_leases = 0;
 
-typedef struct {JNIEnv *env;jobject task;jmethodID check;} wave3_control;
+typedef struct {JNIEnv *env;jobject task;jmethodID check;jclass cancelled;} wave3_control;
 static int wave3_control_init(JNIEnv *env,jobject task,wave3_control *control) {
   jclass type;
-  control->env=env;control->task=task;control->check=NULL;
+  control->env=env;control->task=task;control->check=NULL;control->cancelled=NULL;
   if(!task) return 0;
   type=(*env)->GetObjectClass(env,task);if(!type) return 0;
   control->check=(*env)->GetMethodID(env,type,"check","()V");(*env)->DeleteLocalRef(env,type);
-  return control->check!=NULL;
+  if(!control->check) return 0;
+  control->cancelled=(*env)->FindClass(env,"org/exreader/host/HostTask$Cancelled");
+  return control->cancelled!=NULL;
+}
+/* Receipts must survive cooperative cancellation. Inspect only after clearing the
+   pending exception; every other Java failure is restored unchanged. */
+static int wave3_receipt_exception(wave3_control *control) {
+  JNIEnv *env=control->env;jthrowable thrown;jboolean cancelled;
+  if(!(*env)->ExceptionCheck(env)) return 1;
+  thrown=(*env)->ExceptionOccurred(env);(*env)->ExceptionClear(env);
+  cancelled=(*env)->IsInstanceOf(env,thrown,control->cancelled);
+  if(!cancelled) (*env)->Throw(env,thrown);
+  (*env)->DeleteLocalRef(env,thrown);
+  return cancelled?1:0;
 }
 static int wave3_cancelled(wave3_control *control) {
   if((*control->env)->ExceptionCheck(control->env)) return 1;
@@ -82,7 +95,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeFonts_importFile(JNI
   callbacks.progress=wave3_font_progress;callbacks.context=&control;
   status=rfl_import_file(library_handle,file,label,&callbacks,&record,&created,&error);
   free(file);free(label);
-  if(status==RFL_OK||status==RFL_COMMIT_UNCERTAIN) (*env)->ExceptionClear(env);
+  if((status==RFL_OK||status==RFL_COMMIT_UNCERTAIN)&&!wave3_receipt_exception(&control)) return NULL;
   if((*env)->ExceptionCheck(env)) return NULL;
   row=new_row(env,6);if(!row) return NULL;
   if(!set_number(env,row,0,(long long)status)||!set_number(env,row,1,created)||!set_cell(env,row,2,record.hash)||!set_cell(env,row,3,record.display_name)||!set_number(env,row,4,(long long)record.bytes)||!set_cell(env,row,5,error.message)) return NULL;
@@ -153,6 +166,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeOriginalExport_run(J
   status=roe_run(exporter,selection,(size_t)count,&options,&result);
   free(path);
   {roe_status destroyed=roe_destroy(&exporter);(void)destroyed;}
+  if(!wave3_receipt_exception(&state.control)) {roe_result_free(result);return NULL;}
   if(!result) {if(!(*env)->ExceptionCheck(env)) wave3_throw(env,"java/lang/IllegalStateException","Original export produced no receipt");return NULL;}
   rows=new_rows(env,(jsize)(result->count+1));
   if(rows) {
@@ -160,6 +174,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeOriginalExport_run(J
     if(head&&set_number(env,head,0,(long long)status)&&set_number(env,head,1,(long long)result->count)) (*env)->SetObjectArrayElement(env,rows,0,head);
     else rows=NULL;
     if(head) (*env)->DeleteLocalRef(env,head);
+    if((*env)->ExceptionCheck(env)) rows=NULL;
   }
   for(i=0;rows&&i<result->count;i++) {
     const roe_item *item=&result->items[i];jobjectArray row=new_row(env,12);
@@ -169,6 +184,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeOriginalExport_run(J
        !set_number(env,row,7,(long long)item->format)||!set_number(env,row,8,(long long)item->bytes)||!set_cell(env,row,9,item->original_sha256)||
        !set_cell(env,row,10,item->output_path)||!set_cell(env,row,11,item->cleanup_path)) {(*env)->DeleteLocalRef(env,row);rows=NULL;break;}
     (*env)->SetObjectArrayElement(env,rows,(jsize)(i+1),row);(*env)->DeleteLocalRef(env,row);
+    if((*env)->ExceptionCheck(env)) {rows=NULL;break;}
   }
   roe_result_free(result);
   if((*env)->ExceptionCheck(env)) return NULL;

@@ -34,7 +34,9 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Preserve ownership seed and the frozen SDK before any build
-        run: python3 tests/reader_wave3_c11/guard.py
+        run: |
+          python3 tests/reader_wave3_c11/guard.py
+          python3 tests/reader_wave3_c11/candidate.py
       - name: Parse every C11 script and this workflow in Actions
         run: |
           python3 -m py_compile tests/reader_wave3_c11/guard.py tests/reader_wave3_c11/fixtures.py \
@@ -107,7 +109,7 @@ jobs:
           build_module reading-state apps/reader/reading-state
           build_module reading-commands apps/reader/reading-commands
           build_module annotation-view apps/reader/annotation-view
-          build_module annotation-import apps/reader/annotation-import
+          build_module annotation-import apps/reader/annotation-import -DREADER_ANNOTATION_IMPORT_BUILD=ON
           build_module annotation-export apps/reader/annotation-export
           build_module jump-history apps/reader/jump-history
           build_module sync-status-view apps/reader/sync-status-view
@@ -121,6 +123,7 @@ jobs:
           set -o pipefail
           ws="$PWD/build/wave3"
           python3 tests/reader_wave3_c11/fixtures.py --output "$ws/fixtures"
+          python3 tests/reader_android_navigation/fixtures.py "$ws/navigation-fixtures"
           python3 - <<'PY'
           import sys
           from pathlib import Path
@@ -148,7 +151,7 @@ jobs:
           ws="$PWD/build/wave3"
           stage="$ws/stage"
           mkdir -p "$ws/artifacts"
-          gradle -p examples/android --no-daemon --stacktrace \
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_wave3_c11/candidate.init.gradle" \
             -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
             -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
             -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
@@ -160,6 +163,14 @@ jobs:
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/app-debug-androidTest.apk"
           cp examples/android/uitest/build/outputs/apk/debug/uitest-debug.apk "$ws/artifacts/uitest-debug.apk"
           cp examples/android/uitest/build/outputs/apk/androidTest/debug/uitest-debug-androidTest.apk "$ws/artifacts/uitest-debug-androidTest.apk"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_wave3_c11/candidate.init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.NavigationUiTest \
+            :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/navigation-runner-gradle.log"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/navigation-debug-androidTest.apk"
           sha256sum "$ws"/artifacts/*.apk | tee "$ws/artifacts/sha256.txt"
       - name: Enable the hosted emulator accelerator
         run: sudo chmod 666 /dev/kvm
