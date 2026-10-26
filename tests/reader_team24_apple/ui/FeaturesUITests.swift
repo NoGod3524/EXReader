@@ -29,9 +29,8 @@ final class FeaturesUITests: XCTestCase {
 #if os(macOS)
                 scroll.scroll(byDeltaX: 0, deltaY: above ? 140 : -140)
 #else
-                let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: above ? 0.3 : 0.7))
-                let end = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: above ? 0.7 : 0.3))
-                start.press(forDuration: 0.1, thenDragTo: end)
+                if above { scroll.swipeDown(velocity: .slow) }
+                else { scroll.swipeUp(velocity: .slow) }
 #endif
             }
         }
@@ -126,7 +125,9 @@ final class FeaturesUITests: XCTestCase {
         XCTAssertTrue(wait { hits.count == 1 }); hits.firstMatch.tap(); ready()
         XCTAssertNotEqual(text("reader.location"), original); let destination = text("reader.location")
         features(); tap("features.history.back"); status("已精确定位历史位置"); XCTAssertTrue(e("features.history.forward").isEnabled); mark("native-history-back-after-found")
-        tap("features.history.forward"); status("已精确定位历史位置"); XCTAssertTrue(e("features.history.back").isEnabled); mark("native-history-forward-after-found")
+        tap("features.history.forward"); status("已精确定位历史位置")
+        XCTAssertTrue(wait { self.text("reader.location") == destination && self.e("features.history.back").isEnabled && !self.e("features.cancel").exists })
+        mark("native-history-forward-after-found")
 #if os(iOS)
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(wait { self.e("features.close").isHittable }); mark("large-font-landscape-close")
