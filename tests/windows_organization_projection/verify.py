@@ -33,6 +33,11 @@ try:
         expected.update({'native-tag-browse-shows-only-members','native-group-search-stays-within-group','native-empty-group-shows-no-books','native-return-to-all-books'})
         assert set(report['checks'])==expected and len(report['checks'])==len(expected)
         assert report['metadata_consumer_sha256']==sha('organization-consumer/metadata-consumer.exe')
+        paged=json.loads(read('group-page-ui/result.json'))
+        assert paged['accepted'] and not paged['problems'] and paged['source_sha']==result['source'] and str(paged['run_id'])==result['run'] and str(paged['attempt'])==result['attempt']
+        assert paged['program_sha256']==report['program_sha256'] and paged['seed_sha256']==sha('cloud-readback/group-page-seed.exe')
+        assert paged['originals']==2202 and paged['members_per_group']==170
+        assert set(paged['checks'])=={'shelf-forward-reverse-bounded-170','tag-forward-reverse-bounded-170','series-forward-reverse-bounded-170','shelf-literal-search','tag-literal-search','series-literal-search','return-to-all-books-after-each-group'} and len(paged['checks'])==7
         audit=report['cancel_readback'];assert audit['ok']==1 and len(audit['books'])==2 and all(item['read_ok']==1 for item in audit['books'])
         assert {sha('organization-ui/cancel-readback/book-%d.bin'%item['id']) for item in audit['books']}==set(report['cancel_input_hashes'])
         deleted=report['deleted_readback'];assert deleted['ok']==1 and len(deleted['books'])==1 and deleted['books'][0]['read_ok']==1
