@@ -34,6 +34,7 @@ jobs:
       - name: Inspect recorded review and bounded device logs
         run: |
           python3 - <<'PY'
+          import json
           from pathlib import Path
           for name in ('review', 'bounded'):
               path = Path('build/audit/evidence/walkthrough') / (name + '-logcat.txt')
@@ -41,6 +42,17 @@ jobs:
               lines = path.read_text(errors='replace').splitlines()
               for line in lines:
                   if any(x in line for x in ('EXRHost', 'FATAL EXCEPTION', 'AndroidRuntime', 'ActivityTaskManager', ' font ')):
+                      print(line)
+          report = Path('build/audit/evidence/wave3/first-report.json')
+          if report.exists():
+              data = json.loads(report.read_text())
+              for item in data.get('observations', []):
+                  if item.get('name', '').startswith('failure-'):
+                      print('FAILURE_OBSERVATION', json.dumps(item, ensure_ascii=False))
+          path = Path('build/audit/evidence/wave3/first-logcat.txt')
+          if path.exists():
+              for line in path.read_text(errors='replace').splitlines():
+                  if 'EXRHost' in line or 'EXRWave3' in line:
                       print(line)
           PY
   android:
