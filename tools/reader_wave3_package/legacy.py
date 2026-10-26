@@ -99,7 +99,7 @@ def main(argv=None):
                   '```json', json.dumps(record['failed_cases'], ensure_ascii=False, indent=2), '```', '']
     lines.extend('- 提取问题：' + problem for problem in report['problems'])
     markdown.write_text('\n'.join(lines) + '\n', encoding='utf-8')
-    print(json.dumps({'diagnostics_complete': report['diagnostics_complete'], 'problems': report['problems']}))
+    print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report['diagnostics_complete'] else 1
 
 

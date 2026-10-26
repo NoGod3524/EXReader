@@ -17,6 +17,10 @@ on:
         description: Extract original Android and iPad failures in Actions; never grants new acceptance
         type: boolean
         default: false
+      show_legacy_report:
+        description: Print the already authenticated original failure report without rerunning old tests
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -84,6 +88,13 @@ jobs:
           python tests/reader_wave3_s20/test_diagnostics.py
       - name: Prove the archive assemble unpack and refusal contract offline
         run: python tests/reader_wave3_s20/selftest.py
+      - name: Read the existing authenticated original failure report
+        if: ${{ inputs.show_legacy_report }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 40276021294 --repo "$GITHUB_REPOSITORY" --name reader-wave3-s20-original-failures-40276021294-1 --dir build/s20-guard/original-failures
+          cat build/s20-guard/original-failures/original-failures.json
       - name: Preserve the guard record
         if: always()
         uses: actions/upload-artifact@v4

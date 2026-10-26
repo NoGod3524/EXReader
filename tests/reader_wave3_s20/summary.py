@@ -176,6 +176,7 @@ def main(argv=None):
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(delivery, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     args.output.with_suffix('.md').write_text(matrix_markdown(delivery), encoding='utf-8')
+    print(matrix_markdown(delivery), flush=True)
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as stream:
             stream.write(matrix_markdown(delivery))
