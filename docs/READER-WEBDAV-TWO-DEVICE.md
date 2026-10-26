@@ -46,3 +46,5 @@
 初次 [run 40384258547](https://github.com/NoGod3524/EXReader/actions/runs/40384258547)（源码 `442604ab67972a1db94b61c663a563d42ce54ab0`）实际 sender 六项成功，但同步 UI 准备报 `UI target did not become ready`；原始 Apache access log 只有独立检查的 PROPFIND，没有 Android 请求。[run 40385748498](https://github.com/NoGod3524/EXReader/actions/runs/40385748498) 在 Actions 中读取原失败工件确认上述现象。该轮没有实际上传，不计互通。后续测试将启动和回书架、打开同步、账号设置、同步分别记录，不改生产宿主。GTK 独立构建诊断 [run 40384592342](https://github.com/NoGod3524/EXReader/actions/runs/40384592342) 成功，仅证明构建。
 
 [run 40385936562](https://github.com/NoGod3524/EXReader/actions/runs/40385936562)（源码 `e478b5e07ab89a633bf00fbca58c08ff25cab19d`）完成 sender 后，在 `open_sync_panel` 失败。Actions 内 [run 40388218100](https://github.com/NoGod3524/EXReader/actions/runs/40388218100) 读取失败时的实际无障碍树，显示阅读页仍可见；先前的就绪谓词误识别后台隐藏的书架控件。已收紧为可见且可操作后重跑；该失败不得计入 WebDAV 上传通过。
+
+共同源码接线审查：`examples/android/app/src/main/cpp/sync_jni.cpp` 的远端投影调用与 `examples/linux/received.inc` 的接收投影都限定 `book`；两处未接入 shelf、tag、series 或 membership 的远端投影。现有修订 API 支持这些实体，但现有宿主接收入口没有将其串起来；仅同步到 history 不等于书架组织已显示。修订/账户不属于本包可改宿主范围，应作为后续接入任务。
