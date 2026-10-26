@@ -44,6 +44,14 @@ def starts_with(expected):
     # A tall native window can prefetch the next 50-row page before the test
     # observes the first one; require a complete ordered prefix and cache bound.
     return values is not None and 50<=len(values)<=150 and values==expected[:len(values)]
+def stable_top():
+    box=app.control('books');before=ui.U.GetPropW(box,'EXReaderShelfSnapshot') or 0
+    values=stable_numbers();index=ui.send(box,0x18E)
+    after=ui.U.GetPropW(box,'EXReaderShelfSnapshot') or 0
+    return values[index] if before==after and before>=2 and not before%2 and values and 0<=index<len(values) else None
+def stable_edge(value,at_end):
+    values=stable_numbers()
+    return bool(values and (values[-1] if at_end else values[0])==value and stable_top()==value)
 def organizer():
     app.wait_idle();ui.U.SetForegroundWindow(app.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,ui.A.VK_SHIFT))
     def find():
@@ -132,30 +140,30 @@ try:
         app.search('');app.wait(lambda:starts_with(expected),timeout=90);checks.append(kind+'-literal-search')
         if kind=='shelf':
             phase='removed-anchor'
-            app.scroll(1,lambda values:app.top() is not None and 25<app.top()<110)
-            top=app.top();assert top is not None
+            app.scroll(1,lambda values:stable_top() is not None and 25<stable_top()<110)
+            top=stable_top();assert top is not None
             with sqlite3.connect(database,timeout=30) as db:
                 db.execute('UPDATE reader_book_shelves SET ordinal=200 WHERE shelf_id=? AND book_key=?',(ids['shelf'],rows[top][0]))
-            refresh();app.wait(lambda:app.top()==top and stable_numbers() and stable_numbers()[-1]==top,timeout=90)
+            refresh();app.wait(lambda:stable_edge(top,True),timeout=90)
             checks.append('moved-anchor-follows-current-order')
             with sqlite3.connect(database,timeout=30) as db:
                 db.execute('UPDATE reader_book_shelves SET ordinal=? WHERE shelf_id=? AND book_key=?',(169-top,ids['shelf'],rows[top][0]))
-            refresh();app.wait(lambda:app.top()==top and stable_numbers() and stable_numbers()[0]==top,timeout=90)
+            refresh();app.wait(lambda:stable_edge(top,False),timeout=90)
             with sqlite3.connect(database,timeout=30) as db:
                 db.execute('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',(ids['shelf'],rows[top][0]))
             removed=top
             refresh();app.wait(lambda:stable_numbers() is not None and top not in stable_numbers(),timeout=90)
-            assert app.top() is not None and abs(app.top()-top)<=2,(top,app.top(),stable_numbers())
+            assert stable_top() is not None and abs(stable_top()-top)<=2,(top,stable_top(),stable_numbers())
             ui.M.screenshot(app.window,out/'removed-anchor.bmp')
             checks.append('removed-top-anchor-keeps-neighbor')
             phase='removed-tail'
             app.scroll(1,lambda values:values[-1]==0)
-            top=app.top();assert top is not None and top<100
+            top=stable_top();assert top is not None and top<100
             with sqlite3.connect(database,timeout=30) as db:
                 db.executemany('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',[(ids['shelf'],rows[i][0]) for i in range(top+1)])
             refresh();app.wait(lambda:stable_numbers() and all(n>top for n in stable_numbers()),timeout=90)
             assert min(stable_numbers())==top+1,(top,stable_numbers())
-            assert top+1<=app.top()<=top+30,(top,app.top(),stable_numbers())
+            assert stable_top() is not None and top+1<=stable_top()<=top+30,(top,stable_top(),stable_numbers())
             ui.M.screenshot(app.window,out/'removed-tail.bmp')
             checks.append('removed-tail-falls-back-to-predecessors')
             walk([n for n in range(169,top,-1) if n!=removed],-1)
