@@ -39,6 +39,11 @@ def stable_numbers():
     matches=[re.search(r'Shelf (\d{4})',title) for title in titles]
     if any(match is None for match in matches):return None
     return [int(match[1]) for match in matches]
+def starts_with(expected):
+    values=stable_numbers()
+    # A tall native window can prefetch the next 50-row page before the test
+    # observes the first one; require a complete ordered prefix and cache bound.
+    return values is not None and 50<=len(values)<=150 and values==expected[:len(values)]
 def organizer():
     app.wait_idle();ui.U.SetForegroundWindow(app.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,ui.A.VK_SHIFT))
     def find():
@@ -67,7 +72,7 @@ def open_group(action,name):
 def show_all():
     d=organizer();ui.send(ui.U.GetDlgItem(d,261),ui.ACCOUNT.BM_CLICK)
     app.wait(lambda:not ui.U.IsWindow(d),timeout=30)
-    app.wait(lambda:stable_numbers()==list(range(50)),timeout=90)
+    app.wait(lambda:starts_with(list(range(2202))),timeout=90)
 def walk(expected,direction):
     positions={value:i for i,value in enumerate(expected)};seen=set()
     box=app.control('books')
@@ -89,7 +94,7 @@ try:
     with (out/'seed.log').open('wb') as log:
         subprocess.run([str(seed),str(profile/'library.sqlite')],stdout=log,stderr=subprocess.STDOUT,check=True,timeout=180)
     app=Product(exe,exe.parent/'Reader.otf',profile,existing=True)
-    app.wait(lambda:stable_numbers()==list(range(50)),timeout=180);app.wait_idle()
+    app.wait(lambda:starts_with(list(range(2202))),timeout=180);app.wait_idle()
     phase='fixture-projection'
     database=str(profile/'library.sqlite')+'.product.sqlite'
     ids={'shelf':'a'*32,'tag':'b'*32,'series':'c'*32}
@@ -107,10 +112,10 @@ try:
     for kind,action,name,expected in [('shelf',2,'Paged shelf',list(range(169,-1,-1))),
                                       ('tag',4,'Paged tag',tag_order),
                                       ('series',6,'Paged series',list(range(169,-1,-1)))]:
-        phase=kind;open_group(action,name);app.wait(lambda:stable_numbers()==expected[:50],timeout=90)
+        phase=kind;open_group(action,name);app.wait(lambda:starts_with(expected),timeout=90)
         walk(expected,1);walk(expected,-1);checks.append(kind+'-forward-reverse-bounded-170')
         app.search('Shelf 0001');app.wait(lambda:stable_numbers()==[1],timeout=90)
-        app.search('');app.wait(lambda:stable_numbers()==expected[:50],timeout=90);checks.append(kind+'-literal-search')
+        app.search('');app.wait(lambda:starts_with(expected),timeout=90);checks.append(kind+'-literal-search')
         show_all()
     checks.append('return-to-all-books-after-each-group')
     app.close();assert app.process.returncode==0,'host did not close cleanly'
