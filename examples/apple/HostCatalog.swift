@@ -272,7 +272,8 @@ final class HostCatalog {
         return value
     }
 
-    func bootstrapVerified(_ book: HostProductBook, store: OpaquePointer) throws {
+    func bootstrapVerified(_ book: HostProductBook, store: OpaquePointer,
+                           verifyOriginal: (() throws -> Void)? = nil) throws {
         var state = reader_revision_state(), error = reader_revision_error()
         let status = book.key.withCString { hostCatalogHeads(store, "book", $0, nil, nil, &state, &error) }
         guard status == READER_REV_OK else { throw HostCatalogError.invalid("无法读取书籍历史") }
@@ -282,6 +283,7 @@ final class HostCatalog {
                   bytes == UInt64(book.bytes) else { throw HostCatalogError.invalid("书籍历史与已验证原件不一致") }
             return
         }
+        try verifyOriginal?()
         try hostProductStrings([book.key, book.format, book.sha256, book.title, book.author, book.sort]) { strings in
             var context = reader_command_context(); context.store = store
             var command = reader_book_command(); command.operation = READER_COMMAND_PUT

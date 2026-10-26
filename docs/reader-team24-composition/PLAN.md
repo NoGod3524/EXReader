@@ -163,3 +163,8 @@ Build, test, fixture generation, screenshots, benchmark and artifact parsing
 remain Actions-only. No default-branch update, PR, tag or Release is authorized
 by this composition. Physical devices, screen readers and performance grants
 require their own actual evidence; package counts do not establish completion.
+
+## Current root follow-up
+S19 same-source installed native business/provider round 40364729547/1, source 18558686f4a820c40a339256c4554708ae04327c: all three platform jobs and strict original-ZIP/program identity aggregation passed. Earlier failed/cancelled rounds remain recorded in the core branch; this does not grant full product UI or six-platform delivery.
+Apple input now pins d684ed369fbd8357d5430f9e4286694a47ef3399, adding first-open verified book identity before read-only annotation preview. Source attachment remains unchanged; actual original bytes are verified before the first history bootstrap, and existing verified history avoids an extra export. This candidate needs new native compilation/startup and real feature validation. Other Apple font/search/theme failures remain open. The next production run also covers the previously unvalidated macOS deployment-target correction, without claiming execution on macOS 12.
+

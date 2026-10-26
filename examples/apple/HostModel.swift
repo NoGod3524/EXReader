@@ -2515,6 +2515,20 @@ final class HostReaderModel: ObservableObject {
                 candidate.configurePagePalette(palette)
 #endif
                 let snapshot = try candidate.open(bookID: row.id, cancel: box)
+#if EXR_APPLE_WAVE3 && EXR_APPLE_RAW3
+                // Establish original identity when opening the verified local
+                // book, before any later read-only annotation preview.
+                guard let catalog = self.catalog else { throw HostError.invalidInput("产品书库未就绪") }
+                let book = try catalog.readingBook(sdkID: row.id)
+                try catalog.withHistory { history in
+                    try catalog.bootstrapVerified(book, store: history) {
+                        try candidate.library.exportSyncOriginal(bookID: book.sdkID,
+                            expected: HostSourceFingerprint(format: book.format, sha256: book.sha256, bytes: book.bytes),
+                            directory: self.storageFolder().appendingPathComponent("sync-originals", isDirectory: true), cancel: box)
+                        try box.check()
+                    }
+                }
+#endif
                 if self.completeFrame(snapshot, session: candidate, token: myToken, status: "就绪", opening: true) {
                     // Only the accepted candidate replaces SDK handles, on their serial owner queue.
                     self.session = candidate
