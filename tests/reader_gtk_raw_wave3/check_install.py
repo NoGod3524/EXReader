@@ -70,14 +70,14 @@ def main():
         check("candidate-declares-public-encoder", "reader_rs_encode_capture_raw_candidate(" in text)
         check("candidate-requires-both-definitions",
               "EXR_READER_SELECTOR_BYTES_CANDIDATE" in text and "EXR_READER_PURE_CAPTURE_CANDIDATE" in text)
-    # The installed jump-history header only names 0.2.0 inside the raw family;
-    # the legacy install keeps the original 0.1.0 entry.
-    jump = read(headers / "reader_jump_history.h")
-    check("jump-history-raw-entry-points",
-          ("reader_jh_commit_fixed_v3" in jump) == raw and ("reader_jh_commit_wire_raw_v3" in jump) == raw)
-    sync = read(headers / "reader_sync_view.h")
-    check("sync-view-raw-version-guard",
-          ('#define READER_SYNC_VIEW_VERSION "0.2.0"' in sync) == raw)
+    # The two headers are one file with family #ifdef branches, so the installed
+    # family is read from the exported target properties, not from header text.
+    for package, target in (("EXReaderJumpHistory", "reader_jump_history"),
+                            ("EXReaderSyncView", "reader_sync_view")):
+        exported = prefix / "lib" / "cmake" / package / (package + "Targets.cmake")
+        text = read(exported) if exported.is_file() else ""
+        check(package + "-target-capability",
+              ("EXR_READER_SELECTOR_BYTES_CANDIDATE=1" in text) == raw, str(exported))
     # The package configs carry the family they were configured for.
     for package in ("EXReaderAnnotationImport", "EXReaderJumpHistory", "EXReaderSyncView", "EXReaderAnnotationExport"):
         path = config(prefix, package)
