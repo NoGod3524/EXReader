@@ -1,0 +1,60 @@
+name: Paired startup repair comparison
+on:
+  push:
+    branches: [codex/reader-startup-root-cause]
+    paths: ['.github/workflows/startup-paired-repair.yml', 'apps/reader/store/native/**', 'apps/reader/desktop/catalog_sdk.c']
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build both actual catalog implementations against the same installed SDK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p build/paired-evidence
+          git rev-parse HEAD | tee build/paired-evidence/candidate-source.txt
+          git worktree add --detach build/paired-baseline 4e4a2f90
+          git -C build/paired-baseline rev-parse HEAD | tee build/paired-evidence/baseline-source.txt
+          cmake --preset reading-library 2>&1 | tee build/paired-evidence/sdk-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/paired-evidence/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/paired-evidence/sdk-install.log
+          ws=$(cygpath -m "$PWD")
+          for mode in baseline candidate; do
+            source=tests/reader_startup_profile
+            if [ "$mode" = baseline ]; then source=build/paired-baseline/tests/reader_startup_profile; fi
+            cmake -S "$source" -B "build/paired-$mode" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" 2>&1 | tee "build/paired-evidence/$mode-configure.log"
+            cmake --build "build/paired-$mode" --parallel 4 2>&1 | tee "build/paired-evidence/$mode-build.log"
+          done
+          sha256sum build/paired-{baseline,candidate}/startup_profile.exe build/paired-candidate/seed_shelf.exe | tee build/paired-evidence/hashes.txt
+      - name: Measure alternating fresh and verified mapped profiles
+        shell: bash
+        run: |
+          set -euxo pipefail
+          build/paired-candidate/seed_shelf.exe build/paired-evidence/library.sqlite | tee build/paired-evidence/seed.json
+          for n in 1 2 3 4 5 6; do
+            if [ $((n % 2)) -eq 1 ]; then modes='baseline candidate'; else modes='candidate baseline'; fi
+            for mode in $modes; do
+              cp build/paired-evidence/library.sqlite "build/paired-evidence/$mode-$n.sqlite"
+              "build/paired-$mode/startup_profile.exe" "build/paired-evidence/$mode-$n.sqlite" "build/paired-evidence/product-$mode-$n.sqlite" first 2>&1 | tee "build/paired-evidence/$mode-first-$n.json"
+              "build/paired-$mode/startup_profile.exe" "build/paired-evidence/$mode-$n.sqlite" "build/paired-evidence/product-$mode-$n.sqlite" repeat 2>&1 | tee "build/paired-evidence/$mode-repeat-$n.json"
+            done
+          done
+          systeminfo > build/paired-evidence/environment.txt
+      - name: Preserve evidence and original failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-paired-repair-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/paired-evidence/*.json
+            build/paired-evidence/*.log
+            build/paired-evidence/*.txt
+          if-no-files-found: warn
