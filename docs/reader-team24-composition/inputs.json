@@ -159,6 +159,18 @@
       ]
     },
     {
+      "name": "windows-cloud-ui-verification",
+      "source": "0dd5a62603cbf4d90b28a5819bc54ab2bf0c26ba",
+      "tested_source": "0dd5a62603cbf4d90b28a5819bc54ab2bf0c26ba",
+      "tested_run": 40386732358,
+      "paths": [
+        ".github/workflows/windows-cloud-ui-binding.yml",
+        "tests/windows_cloud_binding/CMakeLists.txt",
+        "tests/windows_cloud_binding/check.py",
+        "tests/windows_cloud_binding/verify.py"
+      ]
+    },
+    {
       "name": "gtk-raw-wave3-host",
       "source": "77d4c5ec055d463c818b26414f34b15fc9bf01ad",
       "tested_source": "af87ba8db0c43f4fcf878983eaa2290e7889b0ee",
