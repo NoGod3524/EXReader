@@ -9,6 +9,9 @@ import sys
 sys.path.insert(0, str(Path('tests/reader_perf_gtk').resolve()))
 import sample
 
+# The wave-3 host's native minimum width is 1088 px; retain a fixed viewport.
+sample.WINDOW_WIDTH = 1088
+
 class RetainingSampler(sample.Sampler):
     def collect_environment(self):
         super().collect_environment()

@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 SCREEN = '1440x900x24'
-WINDOW = (1040, 820)
+WINDOW = (1088, 820)
 MIN_LAUNCHES = 30
 LIMITATIONS = [
     'Measurements cover the GTK host built in this run with the options recorded in its CMake cache.',
