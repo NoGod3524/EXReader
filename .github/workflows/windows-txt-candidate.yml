@@ -1,0 +1,41 @@
+name: Windows bounded TXT candidate
+on:
+  push:
+    branches: [codex/windows-txt-limit-diagnostic]
+    paths: ['tests/windows_txt_candidate/**', '.github/workflows/windows-txt-candidate.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Verify and build unchanged SDK
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/txt-candidate-evidence
+          git diff --exit-code 7aab6e559d17e730067594ee7da5189bf00f6dd8 HEAD -- src include cmake CMakeLists.txt CMakePresets.json
+          git rev-parse HEAD | tee build/txt-candidate-evidence/source.txt
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+      - name: Build and run opt-in host on the original fixture
+        shell: bash
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          cmake -S tests/windows_txt_candidate -B build/txt-candidate -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage"
+          cmake --build build/txt-candidate --parallel 4
+          python tests/windows_txt_candidate/run.py
+          sha256sum build/txt-candidate/bounded_txt_host.exe | tee build/txt-candidate-evidence/program.sha256
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-txt-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/txt-candidate-evidence/
+          if-no-files-found: warn

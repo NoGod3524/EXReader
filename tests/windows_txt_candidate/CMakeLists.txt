@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.24)
+project(BoundedTxtCandidate LANGUAGES C)
+set(CMAKE_C_STANDARD 11)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
+add_executable(bounded_txt_host bounded_txt.c host.c)
+target_link_libraries(bounded_txt_host PRIVATE EXReader::exr_core psapi)
