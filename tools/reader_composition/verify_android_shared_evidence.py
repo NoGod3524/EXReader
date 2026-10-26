@@ -1,4 +1,4 @@
-"""Verify immutable Actions evidence from two separately scoped source revisions."""
+"""Verify immutable Actions evidence from separately scoped source revisions."""
 import hashlib
 import io
 import json
@@ -16,10 +16,12 @@ REPO = 'NoGod3524/EXReader'
 RUNS = {
     40413221092: ('532b9f0dd6ce3e2ee94ec7b002e57f8a43a3bce9',
                   {f'{s} on {o}' for s in ('font', 'export') for o in ('ubuntu-22.04', 'windows-2022', 'macos-15')}),
+    40413780626: ('715fc865a9f063ae453c4d97e44f927772139fc3',
+                  {f'{s} on {o}' for s in ('font', 'export') for o in ('ubuntu-22.04', 'windows-2022', 'macos-15')}),
     40413886507: ('c9e4b3ac1634748179ae33cba48a0b20df950a22', {'frozen'}),
 }
 OUTPUT = Path('build/android-shared-evidence-verification.json')
-result = {'accepted': False, 'scope': 'two separate source revisions; no same-source acceptance', 'runs': {}, 'failures': []}
+result = {'accepted': False, 'scope': 'separate source revisions; no same-source acceptance', 'runs': {}, 'failures': []}
 
 def require(value, message):
     if not value:
@@ -105,6 +107,17 @@ def verify_artifact(a, sha, run):
                 data = member(z, item['member'])
                 require(len(data) == item['bytes'] and digest(data) == item['sha256'], 'export binary mismatch: ' + role)
                 checked[role] = digest(data)
+            if run == 40413780626 and platform == 'Linux':
+                fault = decode(member(z, 's15-evidence/publish-io.json'))
+                require(fault.get('source') == sha and str(fault.get('run')) == str(run)
+                        and str(fault.get('attempt')) == '1', 'publication fault identity mismatch')
+                receipt = fault['receipt']
+                require(receipt['status'] == 6 and len(receipt['items']) == 1, 'publication fault status')
+                item = receipt['items'][0]
+                require(item['status'] == 6 and not item['committed'] and not item['created']
+                        and not item['cleanup_pending'], 'publication fault item mismatch')
+                require(member(z, 's15-evidence/publish-io-hit') == b'x', 'publication fault marker mismatch')
+                checked['publication_fault_marker_sha256'] = digest(b'x')
         else:
             report = decode(member(z, 's15-frozen-work/frozen.json'))
             identity(report, sha, run)
