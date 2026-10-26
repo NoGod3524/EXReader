@@ -133,7 +133,14 @@ jobs:
                     "raw_backend_checks": result["raw_backend"].get("check_count", 0),
                     "raw_backend_error": result["raw_backend"].get("error", ""),
                     "legacy_configured": result.get("legacy_host", {}).get("configured_and_linked", False),
-                    "gui_executed": result["gui"]["executed"], "accepted": result["accepted"]}
+                    "gui_executed": result["gui"]["executed"],
+                    "gui_prepared": result.get("gui_preparation", {}),
+                    "gui_driver": result["gui"].get("driver", ""),
+                    "gui_driver_source_blob": result["gui"].get("driver_source_blob", ""),
+                    "gui_checks": result["gui"].get("checks", []),
+                    "gui_accepted": result["gui"].get("accepted", False),
+                    "navigation_and_batch_import": result["gui"].get("navigation_and_batch_import", ""),
+                    "accepted": result["accepted"]}
           out = Path("build/gtk-raw-wave3-identity"); out.mkdir(parents=True, exist_ok=True)
           (out / "identity.json").write_text(json.dumps(report, indent=2) + "\n")
           print(json.dumps(report))
