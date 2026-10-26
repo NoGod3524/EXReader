@@ -553,3 +553,20 @@ presentation timing or a direct dropped-frame count. These are cloud samples,
 not approved performance budgets, physical-device results, final composition
 acceptance or six-platform performance evidence. The Windows 16 MiB TXT import
 measurement remained skipped after an import rejection; it is not a pass.
+
+## Public SDK multiline TXT limit diagnosis
+
+The full Windows host's original approximately 16 MiB multiline TXT was
+rejected with `EXR_LIMIT` and no imported catalog entry. Independent public SDK
+probe [40401376637/1](https://github.com/NoGod3524/EXReader/actions/runs/40401376637),
+test source `9e74ab6da3ef05312bf9fede58dfcb713e4adcb4`, verified that its SDK
+source tree matches the earlier full-host source. Inputs of 64-byte nonempty
+lines succeeded at 131,070 and 131,071 lines and returned `EXR_LIMIT` at
+131,072 lines. A larger 17,010,000-byte input with 10,000 lines succeeded.
+This controlled result matches the existing 262,144 model-node limit with two
+root nodes and two nodes per nonempty line. It does not prove other texts cannot
+hit separate limits. The original long-line-count import remains unaccepted;
+public paragraph and text nodes are observable and cannot simply be merged as a
+compatible fix. No SDK limit, memory budget, ABI or existing acceptance changed.
+The Actions artifact `12688139192` is 14,969 bytes, SHA-256
+`e1e711b8f5919e14a5cb651d6117383d585679653897caf078b1c37008b68496`.
