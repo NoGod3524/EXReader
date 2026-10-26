@@ -141,22 +141,35 @@ def main():
         window = command('xdotool', 'search', '--sync', '--onlyvisible', '--name', '^' + name + '$').splitlines()[-1]
         command('xdotool', 'windowactivate', '--sync', window)
         dialog = element(name, {'file chooser'})
-        host.key('ctrl+l')
-        entry = wait_nodes(lambda: [node for node in bus.walk(dialog)
-                                    if bus.role(node) == 'text' and bus.states(node).get('showing')
-                                    and bus.states(node).get('sensitive')])
-        click_node(entry[0])
-        host.key('ctrl+a')
-        host.paste(str(path))
-        time.sleep(.4)
-        host.key('Return')
-        time.sleep(.6)
-        if accept and nodes(name, {'file chooser'}):
-            # SELECT_FOLDER: Enter browses into the folder; the accept button then
-            # chooses that current folder without a second dialog.
+        if accept:
+            # SELECT_FOLDER has different location-entry acceptance semantics
+            # from OPEN. Reuse the retained folder-import driver's real native
+            # table traversal: enter each parent, then select the final folder.
+            click('Home', {'label'})
+            parts = path.relative_to(Path.home()).parts
+            for index, part in enumerate(parts):
+                row = element(part, {'table cell'})
+                click_node(row)
+                wait_nodes(lambda: [row] if bus.states(row).get('selected') else [])
+                if index + 1 < len(parts):
+                    box = bus.extents(row)
+                    command('xdotool', 'mousemove', '--sync',
+                            str(box['x'] + box['width'] // 2), str(box['y'] + box['height'] // 2))
+                    command('xdotool', 'click', '--repeat', '2', '--delay', '150', '1')
             click(accept, {'push button'})
-        elif nodes(name, {'file chooser'}):
+        else:
+            host.key('ctrl+l')
+            entry = wait_nodes(lambda: [node for node in bus.walk(dialog)
+                                        if bus.role(node) == 'text' and bus.states(node).get('showing')
+                                        and bus.states(node).get('sensitive')])
+            click_node(entry[0])
+            host.key('ctrl+a')
+            host.paste(str(path))
+            time.sleep(.4)
             host.key('Return')
+            time.sleep(.6)
+            if nodes(name, {'file chooser'}):
+                host.key('Return')
         deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
             if subprocess.run(['xdotool', 'search', '--onlyvisible', '--name', '^' + name + '$'],
