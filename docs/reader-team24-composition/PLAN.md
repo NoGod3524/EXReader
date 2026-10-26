@@ -820,3 +820,20 @@ and an ordered first 100 visible cached rows: the host had prefetched a second
 checks a stable ordered prefix and the existing 150-row cache cap, and still
 requires all 170 members in both directions and each group search. These
 observations do not replace the original failed runs or grant pagination.
+
+The follow-up preserved-package diagnostic
+[40411586178/1](https://github.com/NoGod3524/EXReader/actions/runs/40411586178)
+passed its seven browsing checks: shelf, tag and series each visited 170 seeded
+members forward and backward with the 150-row cache bound and literal search,
+then returned to all books. The driver source was
+`570852bcdc6902faf72a10442fed0c37b8424eb1`. The actual host was the retained
+program from the failed `40407588078/1` build, source
+`a7fbe0e102d966a559184289b4cdeba17681f9d0`, SHA-256
+`1588efb255fb465e4db8e242e4102670230403fce0a3a1ce9970da4c30e3f5f0`.
+That original run's artifact `12692206699` has SHA-256
+`4d7da5979697c81cbda974c2b8172aca637e8bb98105f3b727822236dee34432`.
+The diagnostic artifact `12693876568` has SHA-256
+`a6e6879aacbfdce97a714dcb185103250a9b2fd7142cdae598143ca290955417`.
+The memberships are isolated projected fixtures, not a sync test. This is
+bounded diagnostic evidence across two runs; the current candidate requires
+its own full same-source regression and artifact verification before admission.
