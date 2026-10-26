@@ -234,6 +234,7 @@ public final class Wave3UiTest extends Instrumentation {
 
     private void fonts()throws Exception {
         File font=new File(context.getFilesDir(),"wave3-fixtures/"+input.getString("font_file"));need(font.isFile(),"font fixture present");
+        String fontLabel=input.getString("font_label"),badFontFile=input.getString("bad_font_file");
         check("wave3_surfaces_present_and_no_leases",()->{
             need(BuildConfig.READER_WAVE3&&BuildConfig.READER_SELECTOR_BYTES_CANDIDATE&&BuildConfig.READER_SYNC&&BuildConfig.READER_READING,"formal wave3 feature build");
             need(NativeFonts.live()==0,"no font lease before any layout");
@@ -248,7 +249,7 @@ public final class Wave3UiTest extends Instrumentation {
             shelfMore("本地字体");described("字体状态","字体仅用于",30000);click("导入字体…");
             described("字体状态","已导入",60000);removeMonitor(picker);need(picker.getHits()>=1,"system document picker was invoked");
             capture("font-imported");
-            until(node->node.isVisibleToUser()&&id(node,"text1")&&text(node).contains(input.getString("font_label")),this::tap,"imported font row",30000);click("使用此字体");described("字体状态","已选择",30000);
+            until(node->node.isVisibleToUser()&&id(node,"text1")&&text(node).contains(fontLabel),this::tap,"imported font row",30000);click("使用此字体");described("字体状态","已选择",30000);
             closeDialog();need(NativeFonts.live()==0,"selection alone holds no lease");
             open("epub");String fontBitmap=bitmap(frame());need(!fontBitmap.equals(defaultBitmap),"selected local font changes the real page pixels");
             need(NativeFonts.live()>=1,"paging layout borrows the selected font lease");capture("font-reading");
@@ -257,7 +258,7 @@ public final class Wave3UiTest extends Instrumentation {
         check("invalid_font_rejected_and_library_unchanged",()->{
             ActivityMonitor picker=stub(Intent.ACTION_OPEN_DOCUMENT,sandbox("wave3-fixtures/"+input.getString("bad_font_file")));
             shelfMore("本地字体");described("字体状态","个本地字体",30000);String before=described("字体状态");click("导入字体…");described("字体状态","字体未导入",60000);removeMonitor(picker);
-            need(described("字体状态").contains("原有字体保留"),"previous fonts retained");need(!present(node->id(node,"text1")&&text(node).contains(input.getString("bad_font_file"))),"rejected file is not listed");
+            need(described("字体状态").contains("原有字体保留"),"previous fonts retained");need(!present(node->id(node,"text1")&&text(node).contains(badFontFile)),"rejected file is not listed");
             need(present(node->id(node,"text1")&&text(node).contains("使用中")),"selected font still active");capture("font-rejected");closeDialog();
         });
     }
@@ -292,11 +293,12 @@ public final class Wave3UiTest extends Instrumentation {
         });
     }
     private void jumps()throws Exception {
+        String query=input.getJSONObject("expected").getString("txt_unique_query");
         check("jump_history_back_forward_over_real_search_landing",()->{
             open("txt");JSONObject first=frame();long firstStart=first.getLong("start");
             readerMore("位置历史");described("位置历史状态","位置",30000);need(present(node->node.isVisibleToUser()&&!node.isEnabled()&&text(node).equals("返回上一位置")),"nothing earlier before any jump");closeDialog();
             readerMore("书内搜索");setText(input.getJSONObject("expected").getString("txt_unique_query"),"书内搜索词");click("搜索");described("搜索状态","1 个结果",120000);
-            long token=frame().getLong("accepted_token");until(node->id(node,"text1")&&node.isVisibleToUser()&&node.isEnabled()&&text(node).contains(input.getJSONObject("expected").getString("txt_unique_query")),this::tap,"search result",30000);settledFrame(token);
+            long token=frame().getLong("accepted_token");until(node->id(node,"text1")&&node.isVisibleToUser()&&node.isEnabled()&&text(node).contains(query),this::tap,"search result",30000);settledFrame(token);
             JSONObject target=waitFrame(book("txt"));long targetStart=target.getLong("start");need(targetStart>firstStart,"search jump landed on a later real page");
             readerMore("位置历史");described("位置历史状态","可返回",30000);String before=described("位置历史状态");need(before.contains("/ 2"),"two real landings recorded: "+before);
             long beforeToken=frame().getLong("accepted_token");click("返回上一位置");settledFrame(beforeToken);JSONObject back=waitFrame(book("txt"));need(back.getLong("start")==firstStart,"back returned to the earlier real page");
@@ -330,6 +332,7 @@ public final class Wave3UiTest extends Instrumentation {
         });
     }
     private void rotation()throws Exception {
+        String fontLabel=input.getString("font_label");
         check("rotation_keeps_selected_font_and_releases_leases",()->{
             open("epub");String before=bitmap(frame());need(NativeFonts.live()>=1,"selected font leased while reading");
             long token=frame().getLong("accepted_token");getUiAutomation().setRotation(android.view.Surface.ROTATION_90);SystemClock.sleep(1500);
@@ -337,8 +340,8 @@ public final class Wave3UiTest extends Instrumentation {
             SystemClock.sleep(1500);JSONObject after=waitFrame(book("epub"));need(after.optLong("accepted_token",-1)!=token||!bitmap(after).isEmpty(),"reader restored after rotation");
             shelf();waitLeases(0,"leaving after rotation releases every lease");
             shelfMore("本地字体");described("字体状态","使用中",30000);need(present(node->id(node,"text1")&&text(node).contains("使用中")),"selection survived the Activity restart");
-            until(node->node.isVisibleToUser()&&id(node,"text1")&&text(node).contains(input.getString("font_label")),this::tap,"font row",30000);click("删除此字体");click("删除");described("字体状态","已删除",30000);
-            need(!present(node->id(node,"text1")&&text(node).contains(input.getString("font_label"))),"removed font no longer listed");closeDialog();
+            until(node->node.isVisibleToUser()&&id(node,"text1")&&text(node).contains(fontLabel),this::tap,"font row",30000);click("删除此字体");click("删除");described("字体状态","已删除",30000);
+            need(!present(node->id(node,"text1")&&text(node).contains(fontLabel)),"removed font no longer listed");closeDialog();
             open("epub");need(bitmap(frame()).equals(before)==false,"default font restored after removal");need(NativeFonts.live()==0,"bundled font after removal holds no lease");
         });
     }
