@@ -1115,8 +1115,10 @@ done:
   if(owned_session) session_free(&next);
   else if(new_pager) exr_pager_free(next.pager);
 #ifdef EXR_READER_WAVE3
-  /* A refused frame must not keep a leased face or a peeked history item. */
-  if(status!=EXR_OK && command->action!=READER_COMMIT) w3_pending_discard(reader);
+  /* A refused frame must not keep a peeked history item. A leased candidate font
+     belongs to the frame still pending (pending_discard already released that
+     one), so only the peek is dropped here. */
+  if(status!=EXR_OK && command->action!=READER_COMMIT) w3_item_discard(reader);
 #endif
   if(status!=EXR_OK) result->has_frame=0;
   result->status=status;

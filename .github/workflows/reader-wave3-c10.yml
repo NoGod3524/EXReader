@@ -1,0 +1,208 @@
+name: C10 GTK native wave-3 adoption
+on:
+  push:
+    branches: [codex/reader-wave3-c10]
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  guard:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fixed seed and exact owned path scope
+        run: python3 tests/reader_wave3_c10/guard.py
+  linux:
+    needs: guard
+    runs-on: ubuntu-22.04
+    timeout-minutes: 300
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    env:
+      GITHUB_SHA: ${{ github.sha }}
+      GITHUB_RUN_ID: ${{ github.run_id }}
+      GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install native GTK AT-SPI X11 and image dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+      - name: Build the installed product revision and account family
+        run: |
+          set -eu
+          mkdir -p build/c10/logs
+          prefix="$PWD/build/c10/stage"
+          echo "ACCOUNT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/c10-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/c10/logs/product-configure.log
+          cmake --build build/c10-product --parallel 4 2>&1 | tee build/c10/logs/product-build.log
+          cmake --install build/c10-product 2>&1 | tee build/c10/logs/product-install.log
+          cmake -S extras/webdav -B build/c10-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/c10-dav --parallel 4
+          cmake --install build/c10-dav
+          cmake -S apps/reader/revisions -B build/c10-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/c10-revisions --parallel 4
+          cmake --install build/c10-revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/c10-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/c10-$module" --parallel 4
+            cmake --install "build/c10-$module"
+          done
+          cmake -S extras/credentials -B build/c10-credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/c10-credentials --parallel 4
+          cmake --install build/c10-credentials
+      - name: Install the fixed SDK and the remaining installed packages
+        run: |
+          set -eu
+          cmake --preset reading-library 2>&1 | tee build/c10/logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/c10/logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/c10/logs/sdk-install.log
+          sdk="$PWD/build/reading-library/stage"
+          echo "SDK_STAGE=$sdk" >> "$GITHUB_ENV"
+          cmake -S extras/sideload -B build/c10-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$sdk" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/c10-sideload --parallel 4
+          cmake --install build/c10-sideload
+          cmake -S extras/desktop-drop -B build/c10-drop -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/c10/drop-stage"
+          cmake --build build/c10-drop --parallel 4
+          cmake --install build/c10-drop
+          echo "DROP_STAGE=$PWD/build/c10/drop-stage" >> "$GITHUB_ENV"
+          cmake -S apps/reader/reading-state -B build/c10-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$sdk" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$sdk" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/c10-reading-state --parallel 4
+          cmake --install build/c10-reading-state
+          for module in reading-commands annotation-view batch-import preferences search navigation; do
+            cmake -S "apps/reader/$module" -B "build/c10-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$sdk" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$sdk" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+            cmake --build "build/c10-$module" --parallel 4
+            cmake --install "build/c10-$module"
+          done
+      - name: Install the five wave-3 packages and the export producer
+        run: |
+          set -eu
+          cmake -S apps/reader/annotation-import -B build/c10-annotation-import -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_ANNOTATION_IMPORT_BUILD=ON -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$SDK_STAGE" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$SDK_STAGE" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/c10-annotation-import --parallel 4
+          cmake --install build/c10-annotation-import
+          cmake -S apps/reader/font-library -B build/c10-font-library -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_FONT_LIBRARY_BUILD=ON -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$SDK_STAGE" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$SDK_STAGE" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/c10-font-library --parallel 4
+          cmake --install build/c10-font-library
+          for module in original-export jump-history sync-status-view annotation-export; do
+            cmake -S "apps/reader/$module" -B "build/c10-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$SDK_STAGE" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$SDK_STAGE" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+            cmake --build "build/c10-$module" --parallel 4
+            cmake --install "build/c10-$module"
+          done
+      - name: Build the wave-3 compact host and the unchanged OFF host
+        run: |
+          set -eu
+          common=(-G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$SDK_STAGE"
+            -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX"
+            -DEXR_READER_PAGE_BACKGROUND=ON -DEXR_READER_GTK_BATCH_IMPORT=ON -DREADER_BATCH_IMPORT_PREFIX="$ACCOUNT_PREFIX"
+            -DEXR_READER_GTK_DROP_IMPORT=ON -DREADER_DESKTOP_DROP_PREFIX="$DROP_STAGE"
+            -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DREADER_PREFERENCES_PREFIX="$ACCOUNT_PREFIX"
+            -DEXR_READER_GTK_SEARCH=ON -DREADER_SEARCH_PREFIX="$ACCOUNT_PREFIX"
+            -DEXR_READER_GTK_NAVIGATION=ON -DREADER_NAVIGATION_PREFIX="$ACCOUNT_PREFIX"
+            -DEXR_READER_GTK_READING_RECORDS=ON -DREADER_READING_RECORDS_PREFIX="$ACCOUNT_PREFIX"
+            -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$SDK_STAGE" -DEXR_READER_FIXTURES="$PWD/tests/fixtures"
+            -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON)
+          cmake -S apps/reader/desktop -B build/c10-compact "${common[@]}" -DEXR_READER_GTK_COMPACT=ON -DEXR_READER_GTK_WAVE3=ON -DREADER_WAVE3_PREFIX="$ACCOUNT_PREFIX" 2>&1 | tee build/c10/logs/compact-configure.log
+          cmake --build build/c10-compact --parallel 4 2>&1 | tee build/c10/logs/compact-build.log
+          python3 tools/build_linux_host.py --sdk "$SDK_STAGE" --sdk-version 3.41.0 --binary build/c10-compact/gtk-host/exreader-linux --output build/c10/compact-package
+          cmake -S apps/reader/desktop -B build/c10-off "${common[@]}" 2>&1 | tee build/c10/logs/off-configure.log
+          cmake --build build/c10-off --parallel 4 2>&1 | tee build/c10/logs/off-build.log
+          python3 tools/build_linux_host.py --sdk "$SDK_STAGE" --sdk-version 3.41.0 --binary build/c10-off/gtk-host/exreader-linux --output build/c10/off-package
+          mkdir -p build/c10/atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/c10/atspi-client/atspi_client.py
+          python3 -m py_compile tests/reader_wave3_c10/check_ui.py
+      - name: Owner backend real store leases export identity preview and confirmed import
+        run: |
+          set -eu
+          backend=$(find build/c10-compact -maxdepth 2 -type f -name 'reader-gtk-wave3-backend' | head -n 1)
+          test -n "$backend"
+          mkdir -p build/c10/backend/work
+          "$backend" build/c10/backend/library-a.sqlite build/c10/backend/library-b.sqlite build/c10/compact-package/EXReader-Linux/Reader.otf tests/fixtures/fonts build/c10/backend/work 2>&1 | tee build/c10/logs/backend.log
+          test -s build/c10/backend/work/history.txt
+          test -s build/c10/backend/work/annotations.jsonl
+      - name: Real GTK wave-3 tools on the packaged compact host
+        run: |
+          set -eu
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/c10/atspi-client"
+            openbox >build/c10/logs/wave3-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_wave3_c10/check_ui.py --payload build/c10/compact-package/EXReader-Linux --work build/c10/backend/work --output build/c10/wave3-ui
+          '
+      - name: Retained compact 45 native checks on the same packaged host
+        if: ${{ !cancelled() }}
+        run: |
+          set -eu
+          python3 tests/reader_gtk_compact/make_inputs.py build/c10/compact-fixtures
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/c10/atspi-client"
+            openbox >build/c10/logs/compact-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_compact/check_ui.py --payload build/c10/compact-package/EXReader-Linux --fixtures build/c10/compact-fixtures --output build/c10/compact-ui
+          '
+      - name: Retained G13 ten real AT-SPI regressions on the unchanged OFF host
+        if: ${{ !cancelled() }}
+        run: |
+          set -eu
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/c10/atspi-client"
+            openbox >build/c10/logs/g13-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_receive/check_atspi_fixes.py --payload build/c10/off-package/EXReader-Linux --output build/c10/g13
+          '
+      - name: Preserve every report and both packages
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c10-gtk-wave3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c10/logs/
+            build/c10/backend/
+            build/c10/wave3-ui/
+            build/c10/compact-ui/
+            build/c10/g13/
+            build/c10/compact-package/
+            build/c10/off-package/
+          if-no-files-found: warn
+  authenticate:
+    needs: linux
+    if: always() && needs.linux.result != 'skipped'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: c10-gtk-wave3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c10-download
+      - name: Bind reports programs packages and the artifact identity to this run and attempt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ needs.linux.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.linux.outputs.artifact_digest }}
+          LINUX_RESULT: ${{ needs.linux.result }}
+        run: python3 tests/reader_wave3_c10/identity.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c10-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c10-authentication/
+          if-no-files-found: warn

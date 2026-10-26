@@ -1114,6 +1114,20 @@ static GtkWidget *scroll(GtkWidget *child) {
   atk_object_set_name(gtk_widget_get_accessible(s),name && name[0] ? name:"Reading content");return s;
 }
 
+/* GTK re-creates a GtkMenuButton's inner label after the explicit ATK name is
+   set, and the resulting accessible-name change can reach AT-SPI as an empty
+   value. Re-publish the same name whenever the control takes keyboard focus, so
+   a screen reader never announces an unnamed toggle on any tab cycle. The stored
+   name is copied first because atk_object_set_name frees the previous one. */
+static gboolean accessible_name_on_focus(GtkWidget *widget,GdkEvent *event,gpointer unused) {
+  (void)event;(void)unused;
+  AtkObject *accessible=gtk_widget_get_accessible(widget);
+  if(accessible) {
+    const char *current=atk_object_get_name(accessible);
+    if(current && current[0]) { char *copy=g_strdup(current);atk_object_set_name(accessible,copy);g_free(copy); }
+  }
+  return FALSE;
+}
 int main(int argc,char **argv) {
   if(argc==2 && !strcmp(argv[1],"--version")) { printf("%s %u\n",exr_version(),exr_abi_version());return 0; }
   if(argc!=1 && argc!=3 && argc!=4) { fprintf(stderr,"Usage: exreader-linux [FONT STATE_DIRECTORY [OBSERVATION_FILE]]\n");return 2; }
@@ -1165,7 +1179,12 @@ int main(int argc,char **argv) {
 #ifdef EXR_READER_BATCH_IMPORT_UI
     if(i==0) {
       GtkWidget *sources=gtk_menu_button_new(),*source_menu=gtk_menu_new();
-      gtk_button_set_label(GTK_BUTTON(sources),"▾");atk_object_set_name(gtk_widget_get_accessible(sources),"Import sources");
+      /* G13 shelf_tab_stops_named: a symbol-only label gave the platform no text
+         to derive a name from, and the second Tab cycle read the focused toggle
+         with an empty name. The label is now the name, so every AT-SPI read of
+         this control returns it without a one-shot ATK override to lose. */
+      gtk_button_set_label(GTK_BUTTON(sources),"Import sources");
+      gtk_widget_set_tooltip_text(sources,"Import a book file, a folder or pasted files");
       GtkWidget *file_item=gtk_menu_item_new_with_label("Import file…"),*folder_item=gtk_menu_item_new_with_label("Import folder…");
       gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),file_item);gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),folder_item);
       g_signal_connect(file_item,"activate",G_CALLBACK(action),(gpointer)"import");
@@ -1175,6 +1194,7 @@ int main(int argc,char **argv) {
       gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),paste_files);g_signal_connect(paste_files,"activate",G_CALLBACK(file_input_paste),NULL);
 #endif
       gtk_widget_show_all(source_menu);gtk_menu_button_set_popup(GTK_MENU_BUTTON(sources),source_menu);
+      g_signal_connect(sources,"focus-in-event",G_CALLBACK(accessible_name_on_focus),NULL);
       gtk_box_pack_start(GTK_BOX(toolbar),sources,FALSE,FALSE,0);
     }
 #endif
@@ -1208,6 +1228,7 @@ int main(int argc,char **argv) {
   g_signal_connect(edit,"clicked",G_CALLBACK(metadata_edit),NULL);
   GtkWidget *more=gtk_menu_button_new();gtk_button_set_label(GTK_BUTTON(more),"_More");
   gtk_button_set_use_underline(GTK_BUTTON(more),TRUE);atk_object_set_name(gtk_widget_get_accessible(more),"More library actions");
+  g_signal_connect(more,"focus-in-event",G_CALLBACK(accessible_name_on_focus),NULL);
   GtkWidget *menu=gtk_menu_new(),*organize=gtk_menu_item_new_with_label("Collections…");
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),organize);g_signal_connect(organize,"activate",G_CALLBACK(collections_open),NULL);
 #ifdef EXR_READER_ACCOUNT

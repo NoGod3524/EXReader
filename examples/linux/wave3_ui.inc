@@ -317,6 +317,8 @@ static gboolean w3_apply(host_result *done) {
   reader_result *result=&done->value;
   if(done->action<READER_W3_ANNOTATION_PREVIEW || done->action>READER_W3_SYNC_STATUS ||
      done->action==READER_W3_FONT_USE || done->action==READER_W3_HISTORY) return FALSE;
+  /* A result from a superseded book switch must not open or update a tool view. */
+  if(done->generation!=g_atomic_int_get(&generation)) return TRUE;
   switch(done->action) {
     case READER_W3_ANNOTATION_PREVIEW: w3_annotation_previewed(result);break;
     case READER_W3_ANNOTATION_IMPORT: w3_annotation_imported(result);break;
@@ -341,11 +343,17 @@ static void w3_result(const reader_result *result,reader_action action) {
     w3.history_count=result->w3_history_count;w3.history_cursor=result->w3_history_cursor;w3.history_code=result->w3_history_code;
     if(moved) w3.history_moves++;
     w3_history_update();
-    if(w3.font_active && strcmp(w3.font_active,result->w3_font_active)) {
+    /* NULL means this window never learned the active face yet; "" is the real
+       built-in face, so a first lease from it must count as an applied change. */
+    if(w3.font_active==NULL) w3.font_active=g_strdup(result->w3_font_active);
+    else if(strcmp(w3.font_active,result->w3_font_active)) {
       g_free(w3.font_active);w3.font_active=g_strdup(result->w3_font_active);w3.font_applied++;
       if(w3.font_dialog) { w3_font_notice("Reading font applied");w3_fonts_list_request(); }
-    } else if(!w3.font_active) w3.font_active=g_strdup(result->w3_font_active);
+    }
   }
+  /* The accepted frame and its history/lease bookkeeping are now complete, so the
+     observation file must carry them before the next user operation. */
+  state();
 }
 static gboolean w3_key(GdkEventKey *event) {
   if(w3_opened()) return TRUE;

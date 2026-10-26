@@ -162,12 +162,17 @@ int main(int argc,char **argv) {
   /* A stored font changed on disk is an anomaly: the previous font and page stay usable. */
   {
     char *directory=g_path_get_dirname(library_a),*stored=g_strconcat(directory,"/fonts/",fallback_hash,".font",NULL);
-    gchar *bytes=NULL;gsize size=0;REQUIRE(g_file_get_contents(stored,&bytes,&size,NULL) && size>16);bytes[size/2]^=0x55;
-    REQUIRE(g_file_set_contents(stored,bytes,(gssize)size,NULL));g_free(bytes);g_free(stored);g_free(directory);
+    gchar *bytes=NULL,*original=NULL;gsize size=0,original_size=0;
+    REQUIRE(g_file_get_contents(stored,&original,&original_size,NULL) && original_size>16);
+    bytes=g_malloc(original_size);memcpy(bytes,original,original_size);bytes[original_size/2]^=0x55;
+    REQUIRE(g_file_set_contents(stored,bytes,(gssize)original_size,NULL));g_free(bytes);
     use.w3_hash=fallback_hash;reader_result broken=run(reader,use);
     REQUIRE(broken.status!=EXR_OK && !broken.has_frame && strstr(broken.message,"previous"));reader_result_free(&broken);
     reader_result still=run(reader,command(READER_PREVIOUS,book));REQUIRE(still.status==EXR_OK && still.has_frame);
     landed=commit(reader,&still);REQUIRE(!strcmp(landed.w3_font_active,primary_hash));reader_result_free(&landed);reader_result_free(&still);
+    /* The anomaly is repaired on disk so the later reopen opens the reviewed library. */
+    REQUIRE(g_file_set_contents(stored,original,(gssize)original_size,NULL));
+    g_free(original);g_free(stored);g_free(directory);
   }
   PASS("font_corrupt_stored_font_keeps_previous_font_and_reading");
   linux_reader_close(reader);reader=NULL;
