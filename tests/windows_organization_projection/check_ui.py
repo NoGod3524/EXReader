@@ -116,6 +116,14 @@ try:
     ui.send(ui.U.GetDlgItem(dialog,ui.ACTION),0x14E,4);ui.send(dialog,0x111,(1<<16)|ui.ACTION,ui.U.GetDlgItem(dialog,ui.ACTION))
     b.wait(lambda:any('Remote tag' in x for x in names(dialog,ui.GROUPS)),timeout=30)
     record('native-organizer-shows-remote-tag',True);ui.M.screenshot(dialog,out/'organizer.bmp')
+    ui.send(ui.U.GetDlgItem(dialog,ui.ACTION),0x14E,2);ui.send(dialog,0x111,(1<<16)|ui.ACTION,ui.U.GetDlgItem(dialog,ui.ACTION))
+    b.wait(lambda:any('Parent shelf' in x for x in names(dialog,ui.GROUPS)),timeout=30)
+    group=ui.U.GetDlgItem(dialog,ui.GROUPS);rows=names(dialog,ui.GROUPS)
+    ui.send(group,0x186,next(i for i,value in enumerate(rows) if 'Parent shelf' in value));ui.send(dialog,0x111,(2<<16)|ui.GROUPS,group)
+    b.wait(lambda:any('Child shelf' in x for x in names(dialog,ui.GROUPS)),timeout=30)
+    record('native-organizer-shows-hierarchy',True)
+    ui.send(ui.U.GetDlgItem(dialog,ui.ACTION),0x14E,6);ui.send(dialog,0x111,(1<<16)|ui.ACTION,ui.U.GetDlgItem(dialog,ui.ACTION))
+    b.wait(lambda:any('Remote series' in x for x in names(dialog,ui.GROUPS)),timeout=30);record('native-organizer-shows-series',True)
     ui.send(ui.U.GetDlgItem(dialog,ui.CLOSE),0xF5);b.wait(lambda:not ui.U.IsWindow(dialog));b.wait_idle()
     ancestor=revision(83,shard=0x61,kind='tag',key='4'*32,payload={'name':'Ancestor'});ancestor['id']='e'*32
     resolved=revision(84,shard=0x61,kind='tag',key='5'*32,payload={'name':'Resolved'},parents=[conflict1['id'],conflict2['id']])
@@ -171,13 +179,13 @@ try:
     lock=None;deadline=time.monotonic()+240
     while time.monotonic()<deadline:
         try:
-            if sql(other,'SELECT count(*) FROM reader_books')[0][0]>=2:
+            if sql(other,'SELECT count(*) FROM reader_books')[0][0]>=2 and sql(other,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(bookkey,))==[(1,)]:
                 lock=sqlite3.connect(str(other.db)+'.product.sqlite',timeout=.05,isolation_level=None);lock.execute('BEGIN IMMEDIATE');break
         except sqlite3.OperationalError:
             if lock:lock.close()
             lock=None
         time.sleep(.003)
-    assert lock is not None,'no projected books before mapping fault'
+    assert lock is not None,'no committed first mapping before second mapping fault'
     try:other.wait_note(d,'映射待恢复',300)
     finally:lock.rollback();lock.close()
     other.close_account(d)
