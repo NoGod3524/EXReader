@@ -22,6 +22,9 @@ adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
 adb shell settings put global hide_error_dialogs 1
+adb shell setprop debug.checkjni 1
+[ "$(adb shell getprop debug.checkjni | tr -d '\r')" = "1" ] || { echo "CheckJNI was not enabled"; exit 1; }
+adb shell getprop debug.checkjni > "$EVIDENCE/checkjni.txt"
 
 adb install -r -t "$ARTIFACTS/app-debug.apk"
 adb install -r -t "$ARTIFACTS/uitest-debug.apk"
@@ -35,11 +38,16 @@ for fixture in "$DOWNLOAD"/* "$FIXTURES"/*; do
 done
 adb shell ls -l /sdcard/Download > "$EVIDENCE/device-downloads.txt" 2>&1 || true
 
+status=0
 python3 tests/reader_wave3_c11/walkthrough.py --app "$ARTIFACTS/app-debug.apk" \
-  --fixtures "$DOWNLOAD" --output "$EVIDENCE/walkthrough"
+  --fixtures "$DOWNLOAD" --output "$EVIDENCE/walkthrough" || status=1
 
 adb install -r -t "$ARTIFACTS/app-debug-androidTest.apk"
 mkdir -p "$EVIDENCE/wave3"
 python3 tests/reader_wave3_c11/run_ui.py --fixtures "$FIXTURES" \
   --font tests/fixtures/fonts/primary.ttf --app "$ARTIFACTS/app-debug.apk" \
-  --output "$EVIDENCE/wave3"
+  --output "$EVIDENCE/wave3" || status=1
+adb install -r -t "$ARTIFACTS/navigation-debug-androidTest.apk"
+python3 tests/reader_android_navigation/run_ui.py --fixtures "$BASE/navigation-fixtures" \
+  --output "$EVIDENCE/navigation" || status=1
+exit "$status"

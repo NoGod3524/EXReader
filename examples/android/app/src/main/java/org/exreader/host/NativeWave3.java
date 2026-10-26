@@ -40,11 +40,11 @@ final class NativeWave3 {
             switch(status){
                 case AI_FORMAT:return "文件不是本应用的标注导出文件，或内容已损坏（第 "+line+" 行）";
                 case AI_LIMIT:return "文件超过大小或条目上限";
-                case AI_REVISION:return "文件与当前书库的记录格式不兼容或存在冲突，未写入";
+                case AI_REVISION:return "文件与当前书库的记录格式不兼容或存在冲突";
                 case AI_CANCELLED:return "已取消；已提交的记录保留";
-                case AI_IDENTITY:return "文件属于另一本书或原件长度不同，未写入";
-                case AI_UNRESOLVED:return "有 "+unresolved+" 条位置在当前书中无法确认，未写入任何记录";
-                case AI_UNCONFIRMED:return "预览指纹不一致，文件可能已变化，未写入";
+                case AI_IDENTITY:return "文件属于另一本书或原件长度不同";
+                case AI_UNRESOLVED:return "有 "+unresolved+" 条位置在当前书中无法确认";
+                case AI_UNCONFIRMED:return "预览指纹不一致，文件可能已变化";
                 default:return "导入未完成（"+message+"）";
             }
         }

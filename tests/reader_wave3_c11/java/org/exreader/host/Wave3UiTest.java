@@ -25,6 +25,8 @@ import java.security.MessageDigest;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.json.JSONArray;
@@ -155,6 +157,72 @@ public final class Wave3UiTest extends Instrumentation {
     }
     private void waitLeases(int expected,String label)throws Exception {long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){if(NativeFonts.live()==expected)return;SystemClock.sleep(50);}throw new AssertionError(label+": live font leases "+NativeFonts.live()+" expected "+expected);}
     private void closeDialog(){click("关闭");}
+    interface HostCall<T> {void begin(MainActivity host,Consumer<T> done,Consumer<Throwable> failed);}
+    private <T> T hostCall(HostCall<T> action)throws Exception {
+        AtomicReference<T> result=new AtomicReference<>();AtomicReference<Throwable> failure=new AtomicReference<>();CountDownLatch finished=new CountDownLatch(1);
+        runOnMainSync(()->action.begin((MainActivity)readerMonitor.getLastActivity(),value->{result.set(value);finished.countDown();},error->{failure.set(error);finished.countDown();}));
+        need(finished.await(120,TimeUnit.SECONDS),"actual host owner call completed");
+        if(failure.get()!=null)throw new AssertionError("actual host call failed",failure.get());
+        return result.get();
+    }
+
+    private void annotationCancellation()throws Exception {
+        check("annotation_batch_cancel_retains_committed_receipt_and_stops_remaining_items",()->{
+            open("txt");File staged=new File(context.getFilesDir(),"wave3-fixtures/annotations.jsonl");long selected=book("txt");
+            NativeWave3.ImportResult preview=hostCall((host,done,failed)->host.annotationImport(selected,staged,false,"",new HostTask(()->false),done,failed));
+            need(preview.ok()&&preview.wouldCreate>=2&&preview.found>0,"real FOUND preview offers a multi-item batch");
+            boolean genuine=false;for(NativeWave3.ImportItem item:preview.items)if(item.found==NativeWave3.FOUND_YES&&item.kind.equals("annotation"))genuine=true;
+            need(genuine,"at least one nonNULL annotation selector resolves through the real SDK FOUND callback");
+            int baseline=count("reader_revisions");HostTask task=new HostTask(()->{try{return count("reader_revisions")>baseline;}catch(Exception error){throw new IllegalStateException(error);}});
+            NativeWave3.ImportResult result=hostCall((host,done,failed)->host.annotationImport(selected,staged,true,preview.fingerprint,task,done,failed));
+            need(result.status==NativeWave3.AI_CANCELLED,"batch observes cancellation after the first committed revision");
+            need(result.committed>0&&result.created>0&&result.nextIndex>0&&result.nextIndex<preview.heads,"receipt retains committed prefix and an unprocessed suffix");
+            need(count("reader_revisions")>baseline,"already committed records survive cancellation");
+            long committedItems=0;for(NativeWave3.ImportItem item:result.items)if(item.committed)committedItems++;
+            need(committedItems==result.committed,"per-item receipt agrees with retained committed count");
+        });
+    }
+
+    private void staleJump()throws Exception {
+        check("closed_panel_drops_real_pending_jump_peek_on_owner",()->{
+            NativeWave3.Move move=hostCall((host,done,failed)->host.jumpMove(bookUnchecked("txt"),NativeWave3.BACK,new HostTask(()->false),done,failed));
+            need(move.navigable()&&move.token!=0,"real public FOUND owns a pending jump token");
+            NativeWave3.State pending=hostCall((host,done,failed)->host.jumpState(new HostTask(()->false),done,failed));need(pending.outstanding==1,"real copied peek remains pending before stale delivery");
+            java.lang.reflect.Field field=MainActivity.class.getDeclaredField("jumpPanel");field.setAccessible(true);AtomicReference<Throwable> failure=new AtomicReference<>();
+            runOnMainSync(()->{try{MainActivity host=(MainActivity)readerMonitor.getLastActivity();JumpPanel panel=(JumpPanel)field.get(host);panel.show(bookUnchecked("txt"));long stamp=panel.request();panel.close();panel.post(stamp,()->failure.set(new AssertionError("stale jump callback reached closed UI")),()->host.dropJump(move));}catch(Throwable error){failure.set(error);}});
+            if(failure.get()!=null)throw new AssertionError(failure.get());
+            NativeWave3.State released=hostCall((host,done,failed)->host.jumpState(new HostTask(()->false),done,failed));need(released.outstanding==0,"stale UI delivery released token on existing product owner");
+            need(released.cursor==pending.cursor&&released.count==pending.count,"dropping stale peek does not move history");
+        });
+    }
+    private long bookUnchecked(String role){try{return book(role);}catch(Exception error){throw new IllegalStateException(error);}}
+
+    private void cancellationBoundaries()throws Exception {
+        check("stage_cancel_before_and_after_rename_removes_private_files",()->{
+            File source=new File(context.getFilesDir(),"wave3-fixtures/not-a-font.txt");
+            for(int boundary:new int[]{2,3}) {
+                File directory=new File(context.getFilesDir(),"stage-cancel-"+boundary);need(directory.mkdirs(),"fresh private staging directory");
+                int[] checks={0};HostTask task=new HostTask(()->++checks[0]>=boundary);
+                try {Wave3Files.stage(context.getContentResolver(),Uri.fromFile(source),directory,".font",1048576,task);throw new AssertionError("stage ignored cancellation");}
+                catch(HostTask.Cancelled expected) {need(checks[0]==boundary,"exact EOF/rename cancellation boundary");}
+                File[] remaining=directory.listFiles();need(remaining!=null&&remaining.length==0,"cancelled staging retained neither .part nor renamed file");
+            }
+        });
+        check("original_export_cancel_receipt_and_ordinary_exception_under_checkjni",()->{
+            JSONObject original=input.getJSONArray("books").getJSONObject(0);
+            File source=new File(context.getFilesDir(),"wave3-fixtures/"+original.getString("file"));
+            try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"cancel-export.db").getAbsolutePath())) {
+                long selected=library.importFile(source.getAbsolutePath(),format(original.getString("format")),"Cancellation original").id;
+                File directory=new File(context.getFilesDir(),"cancel-export");need(directory.mkdirs(),"fresh export directory");
+                NativeOriginalExport.Result cancelled=NativeOriginalExport.export(library.checked(),new long[]{selected},directory.getAbsolutePath(),new HostTask(()->true));
+                need(cancelled.status==NativeOriginalExport.CANCELLED,"cooperative cancellation returns the real receipt");
+                for(NativeOriginalExport.Item item:cancelled.items)need(!item.committed,"cancel before processing committed no item");
+                RuntimeException sentinel=new RuntimeException("ordinary cancellation callback failure");
+                try {NativeOriginalExport.export(library.checked(),new long[]{selected},directory.getAbsolutePath(),new HostTask(()->{throw sentinel;}));throw new AssertionError("ordinary exception was swallowed");}
+                catch(RuntimeException actual) {need(actual==sentinel,"ordinary Java exception identity preserved across JNI");}
+            }
+        });
+    }
 
     private void fonts()throws Exception {
         File font=new File(context.getFilesDir(),"wave3-fixtures/"+input.getString("font_file"));need(font.isFile(),"font fixture present");
@@ -270,7 +338,7 @@ public final class Wave3UiTest extends Instrumentation {
         check("annotation_preview_confirm_import_creates_records",()->{
             open("txt");int revisions=count("reader_revisions");need(annotationCount()==0,"fresh store: no annotation to duplicate");
             ActivityMonitor picker=stub(Intent.ACTION_OPEN_DOCUMENT,sandbox("wave3-fixtures/annotations.jsonl"));readerMore("标注导入 / 导出");click("导入标注文件…");
-            described("标注状态","预览（尚未写入）",120000);removeMonitor(picker);String preview=described("标注状态");need(preview.contains("将新增 2")||preview.contains("将新增 3"),"preview reports what would be created: "+preview);need(preview.contains("位置已确认"),"public FOUND confirmed every head: "+preview);
+            described("标注状态","预览（尚未写入）",120000);removeMonitor(picker);String preview=described("标注状态");need(preview.contains("将新增 2")||preview.contains("将新增 3"),"preview reports what would be created: "+preview);need(java.util.regex.Pattern.compile("位置已确认 [1-9][0-9]*").matcher(preview).find(),"nonNULL selector received a genuine public FOUND: "+preview);
             need(count("reader_revisions")==revisions,"preview wrote nothing");need(present(node->node.isVisibleToUser()&&node.isEnabled()&&text(node).equals("确认导入")),"explicit confirm offered");capture("annotation-preview");
             click("确认导入");described("标注状态","导入完成",120000);String done=described("标注状态");need(done.contains("新增 2")||done.contains("新增 3"),"records created: "+done);
             need(count("reader_revisions")>revisions&&count("reader_outbox")>0,"imported heads are real revisions queued for sync");capture("annotation-imported");closeDialog();
@@ -298,7 +366,8 @@ public final class Wave3UiTest extends Instrumentation {
         try{
             AccessibilityServiceInfo service=getUiAutomation().getServiceInfo();readerMonitor=addMonitor(MainActivity.class.getName(),null,false);service.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS|AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;getUiAutomation().setServiceInfo(service);
             need(BuildConfig.READER_WAVE3,"wave3 feature-on formal app");input=new JSONObject(new String(Files.readAllBytes(new File(context.getFilesDir(),"wave3-input.json").toPath()),StandardCharsets.UTF_8));
-            if(phase.equals("first")){seed();launch();jumps();fonts();originals();annotations();syncView();rotation();toc();}
+            if(phase.equals("first")){seed();cancellationBoundaries();launch();jumps();staleJump();fonts();originals();annotations();syncView();rotation();toc();}
+            else if(phase.equals("cancel")){seed();launch();annotationCancellation();}
             else if(phase.equals("restore")){seed();launch();restore();}
             else throw new AssertionError("Unknown wave3 UI phase");
         }catch(Throwable error){failure=error;try{capture("failure");}catch(Throwable captureError){error.addSuppressed(captureError);}}

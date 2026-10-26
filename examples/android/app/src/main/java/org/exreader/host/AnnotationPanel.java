@@ -67,11 +67,10 @@ final class AnnotationPanel extends Wave3Dialog {
         if(selected<=0){activity.runOnUiThread(()->android.widget.Toast.makeText(activity,"请先打开要导入标注的书籍",android.widget.Toast.LENGTH_LONG).show());return;}
         show(selected,name);staged=null;preview=null;controls(true);message("正在复制所选文件…");
         long stamp=request();
-        host.stage(uri,"annotations",LIMIT,task,file->{
-            if(!current(stamp)){host.discard(file.file);return;}
-            post(stamp,()->{staged=file;message("正在预览（不写入）…");});
+        host.stage(uri,"annotations",LIMIT,task,file->post(stamp,()->{
+            staged=file;message("正在预览（不写入）…");
             host.annotationImport(book,file.file,false,null,task,result->post(stamp,()->preview(result)),error->post(stamp,()->failed(error)));
-        },error->post(stamp,()->failed(error)));
+        },()->host.discard(file.file)),error->post(stamp,()->failed(error)));
     }
     private void failed(Throwable error){
         File file=staged==null?null:staged.file;staged=null;preview=null;if(file!=null)host.discard(file);
@@ -80,7 +79,7 @@ final class AnnotationPanel extends Wave3Dialog {
     private void preview(NativeWave3.ImportResult result) {
         preview=result;ArrayList<String> rows=new ArrayList<>();for(NativeWave3.ImportItem item:result.items)rows.add(item.label());if(result.totalItems>result.items.length)rows.add("… 另有 "+(result.totalItems-result.items.length)+" 条");lines(rows);
         if(!result.ok()){File file=staged==null?null:staged.file;staged=null;preview=result;if(file!=null)host.discard(file);controls(false);message("不能导入："+result.reason()+"。没有写入任何记录。");return;}
-        controls(false);
+        confirm.setText("确认导入");controls(false);
         message("预览（尚未写入）："+(staged==null?"":staged.name+" · ")+result.inputBytes+" 字节 · 标注 "+result.annotations+" · 版本头 "+result.heads+" · 将新增 "+result.wouldCreate+" · 已存在 "+result.wouldDuplicate
             +" · 位置已确认 "+result.found+" · 空选择器保留（不可跳转）"+result.nulls+" · 历史缺口 "+result.omitted+"（文件只含最新版本）\n指纹 "+result.fingerprint.substring(0,16)+"…  确认后才会写入。");
     }
@@ -90,9 +89,12 @@ final class AnnotationPanel extends Wave3Dialog {
         controls(true);message("正在导入…");long stamp=request();
         host.annotationImport(book,file.file,true,confirmed.fingerprint,task,result->post(stamp,()->{
             ArrayList<String> rows=new ArrayList<>();for(NativeWave3.ImportItem item:result.items)rows.add(item.label());lines(rows);
-            File done=staged==null?null:staged.file;staged=null;preview=null;if(done!=null)host.discard(done);controls(false);
-            message(result.ok()?"导入完成：新增 "+result.created+" · 已存在 "+result.duplicates+" · 已提交 "+result.committed+"。历史缺口 "+result.omitted+"（只含最新版本）；不代表完整产品验收。"
-                :"导入未完成："+result.reason()+"；已提交 "+result.committed+" 条保留（下次从 "+result.nextIndex+" 继续）。");
-        }),error->post(stamp,()->failed(error)));
+            if(result.ok()){
+                File done=staged==null?null:staged.file;staged=null;preview=null;if(done!=null)host.discard(done);
+            } else confirm.setText("重试导入");
+            controls(false);
+            message(result.ok()?"导入完成：新增 "+result.created+" · 已存在 "+result.duplicates+" · 已提交 "+result.committed+"。历史缺口 "+result.omitted+"（只含最新版本）。"
+                :"导入未完成："+result.reason()+"；已提交 "+result.committed+" 条保留，下一项 "+(result.nextIndex+1)+"。可重试；已有记录会重新核对。");
+        }),error->post(stamp,()->{confirm.setText("重试导入");controls(false);message("导入中断："+reason(error)+"。已提交的记录保留；可重试核对结果。");}));
     }
 }

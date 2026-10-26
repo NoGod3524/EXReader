@@ -691,7 +691,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     private interface PageAction { PageLoad run(HostTask task) throws Exception; }
 
     private void runPage(PageAction action, Runnable accepted, String empty) {
-        if (worker == null || current == null || operation != 0 || pageBusy) return;
+        runPage(action, accepted, empty, () -> {});
+    }
+    private void runPage(PageAction action, Runnable accepted, String empty, Runnable abandoned) {
+        if (worker == null || current == null || operation != 0 || pageBusy) { abandoned.run(); return; }
         final long owner = current.bookId;
         final String pageSourceKey=current.sourceKey;
         final HostTask task = beginTask(3);
@@ -727,6 +730,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 }
                 load = action.run(task);
                 if (load == null) {
+                    abandoned.run();
                     postUi(() -> { if (gen == generation) { finishTask(gen); setStatus(empty); } });
                     return;
                 }
@@ -734,12 +738,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 try { task.commit(() -> { delivery[0]=persistPage(delivery[0],task);delivery[0].snapshot.sourceKey=pageSourceKey;delivery[0].accept(); }); }
                 finally { load=delivery[0]; }
                 final PageLoad result=load;
-                postUi(() -> {
-                    if (gen != generation) return;
-                    accepted.run();
-                    applyPage(gen, result, null);
+                ui.post(() -> {
+                    if (destroyed || gen != generation) { abandoned.run(); return; }
+                    try { accepted.run(); applyPage(gen, result, null); }
+                    catch (Throwable error) { abandoned.run(); Log.e(TAG, "UI action failed: " + message(error)); }
                 });
-            } catch (Throwable error) { taskFailed(gen, "Page error: ", error); }
+            } catch (Throwable error) { abandoned.run(); taskFailed(gen, "Page error: ", error); }
             finally {
                 if (fault != null) {
                     try { fault.execSQL("DROP TRIGGER IF EXISTS host_review_progress"); }
@@ -1142,18 +1146,6 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         imports.submit(intent);return true;
     }
 
-    /**
-     * The staging identity ends with the reader's own format extension; ImportEntry
-     * removes it from the provider display name. The host shows the full file name
-     * so the shelf, the status line and a later duplicate import name the same book.
-     */
-    private static String importDisplayName(ReadyRequest ready) {
-        String title = ready.title(), id = ready.id();
-        if (title.isEmpty()) return id;
-        int dot = id.lastIndexOf('.');
-        return dot > 0 && dot + 1 < id.length() ? title + "." + id.substring(dot + 1) : title;
-    }
-
     void importStatus(String text) { if(!destroyed)setStatus(text); }
     void importCopying(boolean copying) {
         if(destroyed)return;
@@ -1163,7 +1155,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     boolean importReady(ReadyRequest ready) {
         if (destroyed || worker == null || store == null || pageBusy || operation != 0) return false;
-        final String name = importDisplayName(ready);
+        final String name = ready.title();
         final int format=ready.format().exrCode();
         final HostTask task = beginTask(1);
         final long gen = generation;
@@ -1606,8 +1598,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     private ReadingControl readingControl(HostTask task,String stage){return new ReadingControl(task,getFilesDir(),stage,BuildConfig.DEBUG&&getIntent().getBooleanExtra("exr_reading_gate",false));}
     private interface ReadingCall<T>{T run()throws Exception;}
     private <T> void readingCall(HostTask task,ReadingCall<T> action,java.util.function.Consumer<T> done,java.util.function.Consumer<Throwable> failed){
+        readingCall(task,action,done,failed,true,value->{});
+    }
+    private <T> void readingCall(HostTask task,ReadingCall<T> action,java.util.function.Consumer<T> done,java.util.function.Consumer<Throwable> failed,boolean checkResult,java.util.function.Consumer<T> undelivered){
         ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
-        owner.execute(()->{try{task.check();if(store==null)throw new HostTask.Cancelled();T value=action.run();task.check();done.accept(value);}catch(Throwable error){failed.accept(error);}});
+        owner.execute(()->{T value=null;boolean delivered=false;try{task.check();if(store==null)throw new HostTask.Cancelled();value=action.run();if(checkResult)task.check();done.accept(value);delivered=true;}catch(Throwable error){failed.accept(error);}finally{if(!delivered&&value!=null)undelivered.accept(value);}});
     }
     private String readingBook(long book,HostTask task)throws Exception {
         task.check();if(sessionBookId!=book)throw new HostTask.Cancelled();BookStore.VerifiedSource source=store.verifySource(book,null,0,task);CatalogStore.ShelfBook local=store.localShelfBook(book);if(local==null||!source.key.equals(local.key.bookKey)||source.bytes!=local.sourceBytes)throw new IOException("Reading original no longer matches this book");return source.key;
@@ -1680,14 +1675,17 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         navigateRecorded(book,match,"已跳转到阅读记录",()->{if(BuildConfig.READER_WAVE3)ui.post(()->landed(NativeWave3.JH_TOC));});
     }
     private void navigateRecorded(long book,NativeReadingSdk.Match match,String done,Runnable accepted){
-        if(!match.found()||currentBook==null||currentBook.id!=book||current==null||operation!=0||pageBusy||match.unit<0||match.unit>Integer.MAX_VALUE||match.start<0||match.end<match.start)return;final float scale=zoom;final boolean isFixed=current.fixed;
+        navigateRecorded(book,match,done,accepted,()->{});
+    }
+    private void navigateRecorded(long book,NativeReadingSdk.Match match,String done,Runnable accepted,Runnable abandoned){
+        if(!match.found()||currentBook==null||currentBook.id!=book||current==null||operation!=0||pageBusy||match.unit<0||match.unit>Integer.MAX_VALUE||match.start<0||match.end<match.start){abandoned.run();return;}final float scale=zoom;final boolean isFixed=current.fixed;
         runPage(task->{
             if(!readingBook(book,task).equals(match.recaptured.bookKey))throw new IOException("Reading original changed before navigation");
             NativeReadingSdk.Match location=isFixed&&fixed.cbz()?resolveReadingLocation(book,match.recaptured,fontSize,task):match;if(!location.found())throw new IOException("Current CBZ renderer cannot confirm the selected page");
             PageLoad load=isFixed?fixed.load((int)location.unit,scale,task):reflow.seekReading(location,task);
             try{if(load!=null){if(isFixed&&fixed.cbz()&&(!location.recaptured.pageId.equals(load.snapshot.fixedPageId)||!readingBook(book,task).equals(location.recaptured.bookKey)))throw new IOException("Rendered CBZ page/source changed before publication");load.snapshot.highlightStart=location.recaptured.start;load.snapshot.highlightEnd=location.recaptured.end;}return load;}
             catch(Exception|Error error){if(load!=null)load.close();throw error;}
-        },()->{setStatus(done);accepted.run();},"阅读位置不可用");
+        },()->{setStatus(done);accepted.run();},"阅读位置不可用",abandoned);
     }
 
     private void closeDirectoryNative(){if(navigation!=null){navigation.close();navigation=null;}}
@@ -1919,11 +1917,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     @Override public void discard(File staged) {
         ExecutorService owner = worker;
         Runnable remove = () -> { if (staged != null && staged.exists() && !staged.delete()) Log.w(TAG, "staged file remains: " + staged.getName()); };
-        if (owner != null && !owner.isShutdown()) owner.execute(remove); else remove.run();
+        if (owner != null && !owner.isShutdown()) {
+            try { owner.execute(remove); }
+            catch (java.util.concurrent.RejectedExecutionException closed) { remove.run(); }
+        } else remove.run();
     }
 
     @Override public void stage(Uri uri, String kind, long limit, HostTask task, java.util.function.Consumer<Wave3Files.Staged> done, java.util.function.Consumer<Throwable> failed) {
-        readingCall(task, () -> Wave3Files.stage(getContentResolver(), uri, wave3Directory("wave3-staging/" + kind), ".stage", limit, task), done, failed);
+        readingCall(task, () -> Wave3Files.stage(getContentResolver(), uri, wave3Directory("wave3-staging/" + kind), ".stage", limit, task), done, failed, true, value -> discard(value.file));
     }
 
     @Override public void saveTo(File source, Uri destination, HostTask task, java.util.function.Consumer<Long> done, java.util.function.Consumer<Throwable> failed) {
@@ -1953,13 +1954,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 catch (RuntimeException error) { throw error; }
                 catch (Exception error) { throw new SinkFailure(error); }
             };
-            final NativeWave3.ImportResult[] result = {null};
             try {
-                if (commit) task.commit(() -> result[0] = NativeWave3.importFile(store.productOwner(), key, staged.getPath(), true, fingerprint, task, sink));
-                else result[0] = NativeWave3.importFile(store.productOwner(), key, staged.getPath(), false, null, task, sink);
+                return NativeWave3.importFile(store.productOwner(), key, staged.getPath(), commit, commit ? fingerprint : null, task, sink);
             } catch (SinkFailure error) { throw (Exception) error.getCause(); }
-            return result[0];
-        }, done, failed);
+        }, done, failed, false, value -> {});
     }
 
     /** The display mode of the book that is actually open; -1 when another book is shown. */
@@ -2043,7 +2041,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     @Override public void originalExport(long book, HostTask task, java.util.function.Consumer<NativeOriginalExport.Result> done, java.util.function.Consumer<Throwable> failed) {
-        readingCall(task, () -> NativeOriginalExport.export(store.nativeLibrary().checked(), new long[]{book}, wave3Directory("original-export").getPath(), task), done, failed);
+        readingCall(task, () -> NativeOriginalExport.export(store.nativeLibrary().checked(), new long[]{book}, wave3Directory("original-export").getPath(), task), done, failed, false, value -> {});
     }
 
     @Override public void jumpState(HostTask task, java.util.function.Consumer<NativeWave3.State> done, java.util.function.Consumer<Throwable> failed) {
@@ -2069,7 +2067,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 NativeWave3.jumpDrop(store.productOwner(), token);
                 throw error;
             }
-        }, done, failed);
+        }, done, failed, true, move -> { if (move.token != 0) NativeWave3.jumpDrop(store.productOwner(), move.token); });
     }
 
     @Override public void navigateJump(long book, NativeWave3.Move move) {
@@ -2083,13 +2081,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     if (status != NativeWave3.JH_OK) postStatus(status == NativeWave3.JH_STALE ? "位置历史已变化，历史游标未移动" : "位置历史未能完成（" + status + "）");
                 } catch (Throwable error) { postStatus("位置历史未能完成：" + message(error)); }
             });
-        });
+        }, () -> dropJump(move));
     }
 
     @Override public void dropJump(NativeWave3.Move move) {
         ExecutorService owner = worker;
         if (owner == null || owner.isShutdown() || move == null || move.token == 0) return;
-        owner.execute(() -> { try { NativeWave3.jumpDrop(store.productOwner(), move.token); } catch (Throwable ignored) { Log.i(TAG, "jump target drop skipped"); } });
+        try { owner.execute(() -> { try { NativeWave3.jumpDrop(store.productOwner(), move.token); } catch (Throwable ignored) { Log.i(TAG, "jump target drop skipped"); } }); }
+        catch (java.util.concurrent.RejectedExecutionException closed) { /* Owner teardown releases all remaining peeks. */ }
     }
 
     /** Records one real landing after its page is shown; a refusal never disturbs reading. */

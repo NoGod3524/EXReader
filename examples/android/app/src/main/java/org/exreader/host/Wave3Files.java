@@ -49,8 +49,9 @@ final class Wave3Files {
         if(!directory.isDirectory()&&!directory.mkdirs())throw new IOException("无法创建暂存目录");
         String name=displayName(resolver,uri);
         File part=new File(directory,UUID.randomUUID().toString().replace("-","")+suffix+".part"),done=new File(part.getPath().substring(0,part.getPath().length()-5));
-        long total=0;boolean ok=false;
-        try(InputStream in=resolver.openInputStream(uri);FileOutputStream out=new FileOutputStream(part)) {
+        long total=0;boolean transferred=false;
+        try {
+          try(InputStream in=resolver.openInputStream(uri);FileOutputStream out=new FileOutputStream(part)) {
             if(in==null)throw new IOException("所选文档无法读取");
             byte[] chunk=new byte[65536];int count;
             while((count=in.read(chunk))>0) {
@@ -58,11 +59,15 @@ final class Wave3Files {
                 if(total>limit)throw new IOException("文件超过 "+(limit/1048576)+" MiB 上限");
                 out.write(chunk,0,count);
             }
-            out.getFD().sync();ok=true;
-        } finally { if(!ok)part.delete(); }
-        task.check();
-        if(!part.renameTo(done)) { part.delete();throw new IOException("无法保存暂存文件"); }
-        return new Staged(done,name,total);
+            out.getFD().sync();
+          }
+          task.check();
+          if(!part.renameTo(done))throw new IOException("无法保存暂存文件");
+          task.check();
+          Staged staged=new Staged(done,name,total);
+          transferred=true;
+          return staged;
+        } finally { if(!transferred){part.delete();done.delete();} }
     }
     /** Streams a private result to the document the user chose; the source is never moved or altered. */
     static long copyOut(File source,ContentResolver resolver,Uri destination,HostTask task) throws IOException {

@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -19,11 +20,15 @@ a.output.mkdir(parents=True, exist_ok=True)
 identity = {key: os.environ[value] for key, value in [('source_sha', 'GITHUB_SHA'), ('run_id', 'GITHUB_RUN_ID'), ('attempt', 'GITHUB_RUN_ATTEMPT')]}
 package = 'org.exreader.host'
 expected = {
-    'first': ['jump_history_back_forward_over_real_search_landing', 'wave3_surfaces_present_and_no_leases',
+    'first': ['stage_cancel_before_and_after_rename_removes_private_files',
+              'original_export_cancel_receipt_and_ordinary_exception_under_checkjni',
+              'jump_history_back_forward_over_real_search_landing', 'closed_panel_drops_real_pending_jump_peek_on_owner',
+              'wave3_surfaces_present_and_no_leases',
               'local_font_saf_import_select_lease_and_release', 'invalid_font_rejected_and_library_unchanged',
               'original_export_private_original_receipt_and_saf_save', 'annotation_export_private_files_and_saf_save',
               'annotation_import_wrong_book_rejected_without_write', 'sync_status_view_without_session_and_real_failed_session',
               'rotation_keeps_selected_font_and_releases_leases', 'toc_directory_entry_reaches_real_chapter'],
+    'cancel': ['annotation_batch_cancel_retains_committed_receipt_and_stops_remaining_items'],
     'restore': ['annotation_preview_confirm_import_creates_records', 'annotation_reimport_all_duplicates_no_new_rows',
                 'tampered_file_rejected_before_any_write', 'imported_bookmark_navigable_by_public_found'],
 }
@@ -50,6 +55,8 @@ def push_private(local, name):
 
 
 app_sha256 = hashlib.sha256(a.app.read_bytes()).hexdigest()
+checkjni = adb('shell', 'getprop', 'debug.checkjni').decode().strip()
+assert checkjni == '1', 'CheckJNI must be enabled before the application starts'
 installed_path = adb('shell', 'pm', 'path', package).decode().strip()
 assert installed_path.startswith('package:'), installed_path
 installed_apk = a.output / 'installed.apk'
@@ -111,7 +118,8 @@ def instrument(phase):
     print(json.dumps({'phase': phase, 'expected': expected[phase], 'actual': report['checks'], 'passed': report.get('passed'),
                       'failed_check': report.get('failed_check'), 'failure': report.get('failure'),
                       'failure_trace': report.get('failure_trace')}, ensure_ascii=False), flush=True)
-    save(phase + '-logcat.txt', adb('logcat', '-d', '-v', 'threadtime', '-t', '4000'))
+    logcat = adb('logcat', '-d', '-v', 'threadtime')
+    save(phase + '-logcat.txt', logcat)
     for observation in report['observations']:
         image = private('wave3-captures/' + observation['name'] + '.png')
         assert image.startswith(b'\x89PNG\r\n\x1a\n') and len(image) > 1000
@@ -122,6 +130,7 @@ def instrument(phase):
     assert [check['name'] for check in report['checks']] == expected[phase] and all(check['pass'] is True for check in report['checks'])
     assert ('WAVE3_UI_PASS ' + phase).encode() in raw and b'INSTRUMENTATION_CODE: -1' in raw
     assert report['font_leases'] == 0, 'a font lease survived the phase'
+    assert not re.search(rb'JNI DETECTED ERROR IN APPLICATION|JNI WARNING|JNI call made with exception pending', logcat), 'CheckJNI reported an unsafe JNI call'
     reports.append(report)
     pid = subprocess.run(['adb', 'shell', 'pidof', package], capture_output=True, text=True, timeout=10).stdout.strip()
     adb('shell', 'am', 'force-stop', package)
@@ -152,12 +161,14 @@ try:
     assert tampered != exported and len(tampered) == len(exported)
     # A fresh data profile receives the same originals: identical global keys, an empty product store.
     prepare({'annotations.jsonl': exported, 'annotations-tampered.jsonl': tampered})
+    instrument('cancel')
+    prepare({'annotations.jsonl': exported, 'annotations-tampered.jsonl': tampered})
     instrument('restore')
     sources.append({'what': 'portable-annotations', 'bytes': len(exported), 'sha256': hashlib.sha256(exported).hexdigest()})
     accepted = True
 finally:
     result = {**identity, 'accepted': accepted, 'apk_sha256': app_sha256, 'installed_apk_sha256': installed_sha256,
-              'checks': sum(report['count'] for report in reports), 'phases': reports, 'captures': captures,
+              'checks': sum(report['count'] for report in reports), 'phases': reports, 'captures': captures, 'checkjni': checkjni,
               'sources': sources, 'process_stops': stops, 'api': 34, 'abi': 'x86_64', 'physical_device': False, 'wave3_ui_accepted': accepted,
               'picker_mode': 'framework activity-result stubs returning private-file URIs; the system DocumentsUI is not driven for wave3 pickers',
               'share_intent': 'not available: the host manifest declares no content provider',

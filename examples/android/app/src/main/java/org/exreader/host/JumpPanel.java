@@ -36,6 +36,6 @@ final class JumpPanel extends Wave3Dialog {
                 refresh(why);return;
             }
             long selected=book;close();host.navigateJump(selected,result);
-        }),error->post(stamp,()->{controls(false,null);message(error instanceof HostTask.Cancelled?"已取消，位置未移动":"未能移动，位置未改变："+reason(error));}));
+        },()->host.dropJump(result)),error->post(stamp,()->{controls(false,null);message(error instanceof HostTask.Cancelled?"已取消，位置未移动":"未能移动，位置未改变："+reason(error));}));
     }
 }

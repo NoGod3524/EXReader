@@ -1,0 +1,7 @@
+// Use generated candidates without changing any frozen original UI driver.
+gradle.projectsEvaluated {
+    def suite = gradle.rootProject.project(':uitest')
+    def candidate = new File(gradle.rootProject.projectDir, '../../build/wave3/candidate/java').canonicalFile
+    if (!candidate.isDirectory()) throw new GradleException('C11 candidate UI sources are missing')
+    suite.android.sourceSets.androidTest.java.setSrcDirs([candidate])
+}
