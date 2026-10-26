@@ -239,7 +239,13 @@ def main():
     result["raw_install"] = installed("raw", PREFIX)
     binary, payload = build_raw_host()
     result["raw_host"] = host_identity(binary)
-    result["raw_backend"] = backend("tests/fixtures/fonts/primary.ttf")
+    try:
+        result["raw_backend"] = backend("tests/fixtures/fonts/primary.ttf")
+    except Exception as error:
+        # Keep the remaining scopes honest inside the same attempt: a failed probe
+        # is recorded as failed and the legacy OFF check still runs.
+        result["raw_backend"] = {"accepted": False, "check_count": 0,
+                                 "error": str(error)[-3000:]}
     if not options.skip_legacy:
         install_family("legacy", LEGACY, False)
         result["legacy_install"] = installed("legacy", LEGACY)
@@ -257,7 +263,7 @@ def main():
     result["accepted"] = bool(accepted)
     (OUT / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"accepted": result["accepted"],
-                      "raw_checks": result["raw_backend"]["check_count"],
+                      "raw_checks": result["raw_backend"].get("check_count", 0),
                       "gui": result["gui"]["executed"]}))
     return 0 if accepted else 1
 

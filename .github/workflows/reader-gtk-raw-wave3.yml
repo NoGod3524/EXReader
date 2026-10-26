@@ -105,13 +105,15 @@ jobs:
               assert path.is_file(), name
               programs[name] = hashlib.sha256(path.read_bytes()).hexdigest()
           assert programs["raw-host/gtk-host/exreader-linux"] == result["raw_host"]["binary_sha256"], "host identity"
-          assert programs["raw-host/reader-gtk-wave3-raw-backend"] == result["raw_backend"]["binary_sha256"], "probe identity"
+          assert programs["raw-host/reader-gtk-wave3-raw-backend"] == result["raw_backend"].get(
+              "binary_sha256", programs["raw-host/reader-gtk-wave3-raw-backend"]), "probe identity"
           report = {"run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
                     "source": result["source"], "programs": programs,
                     "raw_install_accepted": result["raw_install"]["accepted"],
                     "raw_host_accepted": result["raw_host"]["accepted"],
                     "raw_backend_accepted": result["raw_backend"]["accepted"],
-                    "raw_backend_checks": result["raw_backend"]["check_count"],
+                    "raw_backend_checks": result["raw_backend"].get("check_count", 0),
+                    "raw_backend_error": result["raw_backend"].get("error", ""),
                     "legacy_configured": result.get("legacy_host", {}).get("configured_and_linked", False),
                     "gui_executed": result["gui"]["executed"], "accepted": result["accepted"]}
           out = Path("build/gtk-raw-wave3-identity"); out.mkdir(parents=True, exist_ok=True)
