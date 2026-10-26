@@ -3,6 +3,15 @@
   "base": "d263ce5228838ac90c0a0dc13a5193d4a7739681",
   "inputs": [
     {
+      "name": "public-pure-capture-candidate",
+      "source": "a911cd0e8405a362dae1bb489190de02c4c81d51",
+      "paths": [
+        "apps/reader/reading-state/CMakeLists.txt",
+        "apps/reader/reading-state/src/reading_state.cpp",
+        "apps/reader/reading-state/include/reader_reading_state_capture_raw_candidate.h"
+      ]
+    },
+    {
       "name": "sdk-format-candidate",
       "source": "9d3a3f8bfa06c099ebba0d9e1ba613d276c3af09",
       "paths": ["src/rtf.c", "src/cbz.c"]
