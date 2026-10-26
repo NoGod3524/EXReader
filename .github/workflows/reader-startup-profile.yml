@@ -2,7 +2,7 @@ name: Reader startup mapping phase profiling
 on:
   push:
     branches: [codex/reader-startup-mapping]
-    paths: ['.github/workflows/reader-startup-profile.yml', 'tests/reader_startup_profile/**']
+    paths: ['.github/workflows/reader-startup-profile.yml', 'tests/reader_startup_profile/**', 'apps/reader/store/native/**', 'apps/reader/desktop/catalog_sdk.c']
 permissions:
   contents: read
 jobs:
@@ -42,6 +42,14 @@ jobs:
           done
           sha256sum build/startup-profile/startup_profile.exe build/startup-profile/seed_shelf.exe build/startup-profile-evidence/library.sqlite | tee build/startup-profile-evidence/hashes.txt
           systeminfo > build/startup-profile-evidence/environment.txt
+      - name: Run original catalog, cancellation, and process interruption checks
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/startup-profile/sdk-check build/startup-profile/native-check
+          build/startup-profile/reader-desktop-catalog-check.exe "$PWD/build/startup-profile/sdk-check" "$PWD/tests/fixtures" 2>&1 | tee build/startup-profile-evidence/desktop-check.log
+          build/startup-profile/reader-native-catalog-check.exe "$PWD/build/startup-profile/native-check" "$PWD/apps/reader/store/001_catalog.sql" 2>&1 | tee build/startup-profile-evidence/native-check.log
+          python tests/reader_catalog/check_desktop_sdk.py build/startup-profile 2>&1 | tee build/startup-profile-evidence/recovery-check.log
       - name: Preserve original profiling results and failures
         if: always()
         uses: actions/upload-artifact@v4
@@ -52,4 +60,9 @@ jobs:
             build/startup-profile-evidence/*.txt
             build/startup-profile-evidence/*.log
             build/startup-profile/CMakeCache.txt
+            build/startup-profile/sdk-check/sdk-result.json
+            build/startup-profile/native-check/result.json
+            build/startup-profile/verified.json
+            build/startup-profile/kill-*/
+            build/startup-profile/sdk-link.map
           if-no-files-found: warn
