@@ -155,7 +155,7 @@ typedef struct {
 
 typedef struct host_job host_job;
 #ifdef EXR_READER_PRODUCT_CATALOG
-typedef struct { char *key,*sort_title; } host_shelf_cursor;
+typedef struct { char *key,*sort_title;uint64_t ordinal; } host_shelf_cursor;
 #endif
 
 typedef struct {
@@ -179,6 +179,7 @@ typedef struct {
   WNDPROC shelf_procedure;
   host_shelf_cursor *shelf_cursors;
   char *shelf_query;
+  char shelf_group_id[33];int shelf_group_kind;
   char shelf_top_key[72],shelf_selected_key[72];
   unsigned long shelf_generation;
   int shelf_before,shelf_after,shelf_filter_pending,shelf_applying;
@@ -940,6 +941,7 @@ struct host_job {
 #ifdef EXR_READER_PRODUCT_CATALOG
   int product_auto_open,product_deleted;
   int product_shelf_direction,product_shelf_before,product_shelf_after;
+  char product_group_id[33];int product_group_kind;uint64_t product_cursor_ordinal;
   unsigned long product_shelf_generation;
   char *product_shelf_query,*product_cursor_title,*product_cursor_key,*product_anchor_key;
   exr_book *product_books;size_t product_book_count;
