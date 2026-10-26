@@ -1,0 +1,40 @@
+name: Authenticate GTK received SDK originals
+on:
+  push:
+    branches: [codex/reader-webdav-two-device]
+    paths: ['.github/workflows/reader-android-gtk-originals.yml', 'tests/reader_android_real_dav/verify_sdk_originals.py']
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 034a4a38d3818f1b24889aeeb04d6f3167ef4095
+          path: source
+      - name: Build public SDK inspector from exact tested source
+        run: |
+          test "$(git -C source rev-parse HEAD)" = 034a4a38d3818f1b24889aeeb04d6f3167ef4095
+          cd source
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+          cmake -S tests/reader_gtk_receive -B build/interop-sdk-inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/interop-sdk-inspect --parallel 4
+      - name: Authenticate original run ZIP and compare public SDK byte readback
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_android_real_dav/verify_sdk_originals.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-gtk-sdk-originals-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-gtk-sdk-originals/
+          if-no-files-found: warn
