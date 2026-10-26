@@ -33,9 +33,12 @@ jobs:
           set -o pipefail
           build/startup-profile/seed_shelf.exe build/startup-profile-evidence/library.sqlite | tee build/startup-profile-evidence/seed.json
           for n in 1 2 3; do
-            cp build/startup-profile-evidence/library.sqlite "build/startup-profile-evidence/fresh-$n.sqlite"
-            build/startup-profile/startup_profile.exe "build/startup-profile-evidence/fresh-$n.sqlite" "build/startup-profile-evidence/product-$n.sqlite" first 2>&1 | tee "build/startup-profile-evidence/first-$n.json"
-            build/startup-profile/startup_profile.exe "build/startup-profile-evidence/fresh-$n.sqlite" "build/startup-profile-evidence/product-$n.sqlite" repeat 2>&1 | tee "build/startup-profile-evidence/repeat-$n.json"
+            for mode in default persist; do
+              cp build/startup-profile-evidence/library.sqlite "build/startup-profile-evidence/fresh-$mode-$n.sqlite"
+              if [ "$mode" = persist ]; then export EXR_PROFILE_PERSIST=1; else unset EXR_PROFILE_PERSIST; fi
+              build/startup-profile/startup_profile.exe "build/startup-profile-evidence/fresh-$mode-$n.sqlite" "build/startup-profile-evidence/product-$mode-$n.sqlite" first 2>&1 | tee "build/startup-profile-evidence/first-$mode-$n.json"
+              build/startup-profile/startup_profile.exe "build/startup-profile-evidence/fresh-$mode-$n.sqlite" "build/startup-profile-evidence/product-$mode-$n.sqlite" repeat 2>&1 | tee "build/startup-profile-evidence/repeat-$mode-$n.json"
+            done
           done
           sha256sum build/startup-profile/startup_profile.exe build/startup-profile/seed_shelf.exe build/startup-profile-evidence/library.sqlite | tee build/startup-profile-evidence/hashes.txt
           systeminfo > build/startup-profile-evidence/environment.txt

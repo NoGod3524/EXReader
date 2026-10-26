@@ -8,6 +8,7 @@
 #include <string.h>
 
 static unsigned long long sql_ns, commit_ns, commit_count, statement_count;
+static int persist_set;
 static int trace(unsigned kind, void *context, void *statement, void *duration) {
   (void)context;
   if (kind == SQLITE_TRACE_PROFILE) {
@@ -23,7 +24,18 @@ static int trace(unsigned kind, void *context, void *statement, void *duration) 
   return 0;
 }
 static int instrument(sqlite3 *db, char **message, const sqlite3_api_routines *api) {
+  const char *path = sqlite3_db_filename(db, "main");
   (void)message; (void)api;
+  if (path && strstr(path, "product-") && getenv("EXR_PROFILE_PERSIST")) {
+    sqlite3_stmt *stmt = NULL;
+    int rc = sqlite3_prepare_v2(db, "PRAGMA journal_mode=PERSIST", -1, &stmt, NULL);
+    if (rc == SQLITE_OK && sqlite3_step(stmt) == SQLITE_ROW) {
+      const char *mode = (const char *)sqlite3_column_text(stmt, 0);
+      persist_set = mode && !strcmp(mode, "persist");
+    }
+    sqlite3_finalize(stmt);
+    if (!persist_set) return SQLITE_ERROR;
+  }
   return sqlite3_trace_v2(db, SQLITE_TRACE_PROFILE, trace, NULL);
 }
 static double millis(void) {
@@ -45,6 +57,7 @@ int main(int argc, char **argv) {
   begin = millis();
   REQUIRE(exr_library_open(argv[1], &library, &error) == EXR_OK);
   REQUIRE(reader_catalog_open(argv[2], &catalog, NULL) == SQLITE_OK);
+  REQUIRE(persist_set == (getenv("EXR_PROFILE_PERSIST") != NULL));
   opened = millis();
   REQUIRE(exr_library_books(library, "", &books, &count, &error) == EXR_OK && count == 2202);
   listed = millis();
@@ -54,6 +67,7 @@ int main(int argc, char **argv) {
   repaired = millis();
   REQUIRE(statement_count > 0 && commit_count == (first ? 2202 : 0));
   REQUIRE(reader_catalog_close(&catalog, NULL) == SQLITE_OK);
+  REQUIRE(sqlite3_cancel_auto_extension((void (*)(void))instrument) == 1);
   REQUIRE(sqlite3_open_v2(argv[2], &verify, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK);
   REQUIRE(sqlite3_trace_v2(verify, 0, NULL, NULL) == SQLITE_OK);
   REQUIRE(sqlite3_prepare_v2(verify, "SELECT count(*),count(DISTINCT l.sdk_book_id),sum(CASE WHEN b.book_key IS NOT NULL AND b.deleted=0 THEN 1 ELSE 0 END) FROM reader_local_books l LEFT JOIN reader_books b ON b.book_key=l.book_key", -1, &check, NULL) == SQLITE_OK);
@@ -64,9 +78,9 @@ int main(int argc, char **argv) {
   REQUIRE(sqlite3_step(check) == SQLITE_ROW && !strcmp((const char *)sqlite3_column_text(check, 0), "ok"));
   REQUIRE(sqlite3_finalize(check) == SQLITE_OK);
   REQUIRE(sqlite3_close(verify) == SQLITE_OK);
-  printf("{\"books\":%zu,\"open_ms\":%.3f,\"enumerate_ms\":%.3f,\"repair_ms\":%.3f,"
+  printf("{\"books\":%zu,\"persist\":%d,\"open_ms\":%.3f,\"enumerate_ms\":%.3f,\"repair_ms\":%.3f,"
          "\"sql_profile_ms\":%.3f,\"commit_profile_ms\":%.3f,\"commit_count\":%llu,\"statement_count\":%llu}\n",
-         count, opened-begin, listed-opened, repaired-repair_start, (double)sql_ns/1000000.0,
+         count, persist_set, opened-begin, listed-opened, repaired-repair_start, (double)sql_ns/1000000.0,
          (double)commit_ns/1000000.0, commit_count, statement_count);
   exr_books_free(books,count); exr_library_close(library);
   return 0;
