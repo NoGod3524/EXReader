@@ -89,3 +89,20 @@ full revision and outbox rows as well as counts around the idle view and again
 around a failed-session view refresh. It records both snapshots spanning the
 separate sync preparation and the reported failure in device logcat, rather
 than attributing preparation to the read-only view.
+
+## Import identity follow-up
+
+Run `40393784913/1`, source `63a835e4976ce5e7081547759a47829326d333aa`,
+passed the first 15 wave3 checks and the walkthrough 45/45, review 10/10,
+bounded 11/11, navigation 18 and reading 19 checks. The cancel preview failed
+before input parsing: the fresh target had no retained book identity. Its
+export artifact contains two annotation heads; no cancellation or restore
+acceptance was obtained. Audit `40398326030` records the same attempt.
+
+The candidate now creates a book revision for a verified original on completed
+import or when repairing a previously unmapped or unversioned local book. It
+reuses the existing stable sync request identity and only bootstraps when there
+are no book heads; existing heads and deleted/conflicted graphs are not replaced.
+The new revision enters the sync outbox. The cancel check also compares the full
+revision and outbox snapshots around preview, preserving the no-write contract.
+Full Actions verification is pending.
