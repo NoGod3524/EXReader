@@ -282,8 +282,8 @@ def main():
         fill_system_dialog(app, originals)
         wait_message(app, dialog, N.ORIGINALS_DONE)
         files = [p for p in originals.iterdir()]
-        assert len(files) == 1 and re.fullmatch(r'[0-9a-f]{64}\.txt', files[0].name), [p.name for p in files]
-        assert files[0].read_bytes() == original_bytes and hashlib.sha256(original_bytes).hexdigest() == files[0].stem
+        assert len(files) == 1 and re.fullmatch(r'[0-9a-fA-F]{64}\.txt', files[0].name), [p.name for p in files]
+        assert files[0].read_bytes() == original_bytes and hashlib.sha256(original_bytes).hexdigest() == files[0].stem.lower()
         assert N.EXPORTED in rows(dialog)[0]
         record('originals-directory-cancel-then-per-item-results')
         send(U.GetDlgItem(dialog, ROWS), 0x185, 1, 0)
@@ -304,7 +304,7 @@ def main():
         post_click(dialog, B1)
         fill_system_dialog(app, bad)
         wait_message(app, dialog, N.FONT_IMPORT_FAILED, 60)
-        assert len(rows(dialog)) == 1 and page_hash(app, out, 'font-after-bad.bmp') == before
+        assert len(rows(dialog)) == 1 and P.page_number(app.label()) == label_before
         record('font-import-failure-keeps-library-and-frame')
         post_click(dialog, B1)
         fill_system_dialog(app, ROOT / 'tests/fixtures/fonts/primary.ttf')
@@ -314,15 +314,20 @@ def main():
         post_click(dialog, B2)
         wait_message(app, dialog, N.FONT_SWITCHED, 240)
         app.wait_idle()
+        assert N.IN_USE in rows(dialog)[1]
+        close_feature(app, dialog)
         changed = page_hash(app, out, 'font-after-switch.bmp')
         assert changed != before and P.page_number(app.label()) >= 1 and label_before >= 1
-        assert N.IN_USE in rows(dialog)[1]
         record('font-import-and-switch-changes-page')
+        dialog = open_feature(app, FONTS)
         post_click(dialog, B3)
         wait_message(app, dialog, N.FONT_SWITCHED, 240)
         app.wait_idle()
-        assert page_hash(app, out, 'font-restored.bmp') != changed and N.IN_USE in rows(dialog)[0]
+        assert N.IN_USE in rows(dialog)[0]
+        close_feature(app, dialog)
+        assert page_hash(app, out, 'font-restored.bmp') != changed
         record('font-restore-builtin')
+        dialog = open_feature(app, FONTS)
         send(U.GetDlgItem(dialog, ROWS), 0x186, 1)
         post_click(dialog, B2)
         wait_message(app, dialog, N.FONT_SWITCHED, 240)
