@@ -423,9 +423,19 @@ int main(int argc,char **argv) {
       reader_result frame=w3_run(reader,back);REQUIRE(frame.status==EXR_OK && frame.has_frame);
       reader_result reopened=w3_accept(reader,&frame);reader_result_free(&reopened);reader_result_free(&frame);
     }
-    size_t start=reader->current.start,end=start+6;REQUIRE(end<=reader->current.end && start<end);
-    w3_save(reader,READER_RC_HIGHLIGHT,"Roundtrip highlight",start,end,NULL);
-    w3_save(reader,READER_RC_BOOKMARK,"Roundtrip bookmark",reader->current.position,reader->current.position,NULL);
+    /* Two ranges over the book's own unique marker text: the importer only
+       commits heads its public FOUND callback really resolves, so a repeated
+       phrase would be an ambiguity test, not an import test. */
+    {
+      const char *needles[2]={"NEEDLEONE","NEEDLETWO"};
+      for(int needle=0;needle<2;needle++) {
+        reader_result hit=w3_search(reader,text_book,(uint64_t)(7+needle),needles[needle],&search);
+        size_t hit_start=hit.selected_start,hit_end=hit.selected_end;
+        REQUIRE(hit_end>hit_start);
+        reader_result moved=w3_accept(reader,&hit);reader_result_free(&moved);reader_result_free(&hit);
+        w3_save(reader,READER_RC_HIGHLIGHT,needles[needle],hit_start,hit_end,NULL);
+      }
+    }
     original_count=w3_annotation_selectors(reader,text_book,original,4);REQUIRE(original_count==2);
     char key[73];REQUIRE(w3_book_key(reader,key)==EXR_OK);
     char *product=g_strconcat(library_a,".product.sqlite",NULL),*jsonl=g_build_filename(work,"annotations.jsonl",NULL);
