@@ -1,0 +1,126 @@
+name: Reader GTK raw Wave 3 family
+on:
+  push:
+    branches: [codex/dsf-gtk-raw-wave3]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  EXR_SDK_VERSION: '3.41.0'
+jobs:
+  source:
+    name: Own paths and frozen originals on top of the recorded base
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse the new drivers and refuse any path outside the package
+        run: |
+          python3 -m pip install 'PyYAML==6.0.3'
+          python3 -m py_compile tests/reader_gtk_raw_wave3/*.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import yaml
+          value = yaml.load(Path('.github/workflows/reader-gtk-raw-wave3.yml').read_text(), Loader=yaml.BaseLoader)
+          assert set(value['jobs']) == {'source', 'installed', 'authenticate'}, value['jobs'].keys()
+          PY
+          python3 tests/reader_gtk_raw_wave3/guard.py --output build/reader-gtk-raw-wave3/guard.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reader-gtk-raw-wave3-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-gtk-raw-wave3/guard.json
+          if-no-files-found: error
+
+  installed:
+    name: Installed raw0.2 family, actual GTK host and the five tool probe
+    needs: source
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Native GTK, TLS, XML, Secret Service and X dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring \
+            libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor \
+            python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick \
+            python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Install both real families, build the host and run the raw probe
+        run: |
+          python3 -m py_compile tests/reader_gtk_raw_wave3/*.py
+          python3 tests/reader_gtk_raw_wave3/run.py
+      - name: Preserve the attempt, both prefixes and the actual programs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-gtk-raw-wave3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-raw-wave3/*.json
+            build/gtk-raw-wave3/*.log
+            build/gtk-raw-wave3/raw-host/gtk-host/exreader-linux
+            build/gtk-raw-wave3/raw-host/reader-gtk-wave3-raw-backend
+            build/gtk-raw-wave3/raw-host/CMakeCache.txt
+            build/gtk-raw-wave3/legacy-host/gtk-host/exreader-linux
+            build/gtk-raw-wave3/legacy-host/CMakeCache.txt
+            build/gtk-raw-wave3/package/
+            build/gtk-raw-wave3/work/
+            build/gtk-raw-wave3/gui/
+          if-no-files-found: error
+
+  authenticate:
+    name: Bind this attempt to its own artifact and programs
+    needs: installed
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download this run's own artifact and record every actual identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/gtk-raw-wave3-artifact
+          artifact_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
+            --jq ".artifacts[] | select(.name == \"reader-gtk-raw-wave3-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT\") | .id")
+          test -n "$artifact_id"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > build/gtk-raw-wave3-original.zip
+          unzip -q build/gtk-raw-wave3-original.zip -d build/gtk-raw-wave3-artifact
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path("build/gtk-raw-wave3-artifact")
+          result = json.loads((root / "result.json").read_text())
+          programs = {}
+          for name in ("raw-host/gtk-host/exreader-linux", "raw-host/reader-gtk-wave3-raw-backend",
+                       "legacy-host/gtk-host/exreader-linux"):
+              path = root / name
+              assert path.is_file(), name
+              programs[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+          assert programs["raw-host/gtk-host/exreader-linux"] == result["raw_host"]["binary_sha256"], "host identity"
+          assert programs["raw-host/reader-gtk-wave3-raw-backend"] == result["raw_backend"]["binary_sha256"], "probe identity"
+          report = {"run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+                    "source": result["source"], "programs": programs,
+                    "raw_install_accepted": result["raw_install"]["accepted"],
+                    "raw_host_accepted": result["raw_host"]["accepted"],
+                    "raw_backend_accepted": result["raw_backend"]["accepted"],
+                    "raw_backend_checks": result["raw_backend"]["check_count"],
+                    "legacy_configured": result.get("legacy_host", {}).get("configured_and_linked", False),
+                    "gui_executed": result["gui"]["executed"], "accepted": result["accepted"]}
+          out = Path("build/gtk-raw-wave3-identity"); out.mkdir(parents=True, exist_ok=True)
+          (out / "identity.json").write_text(json.dumps(report, indent=2) + "\n")
+          print(json.dumps(report))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-gtk-raw-wave3-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/gtk-raw-wave3-identity/identity.json
+          if-no-files-found: error
