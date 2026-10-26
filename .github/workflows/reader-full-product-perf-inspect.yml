@@ -10,6 +10,8 @@ jobs:
   inspect:
     runs-on: windows-2022
     timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
       - name: Download original failed run artifact in Actions
