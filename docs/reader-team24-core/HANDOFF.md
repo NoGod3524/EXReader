@@ -1,5 +1,9 @@
 # Core handoff: integrated candidate, acceptance held
 
+Latest update: `STATUS.md` records the independently accepted public pure
+capture capability, accepted S18 strict bindings, and the remaining S19 UUID
+caller repair. The initial handoff below is retained as historical context.
+
 Branch `codex/team24-core` starts at `d263ce5228838ac90c0a0dc13a5193d4a7739681`.
 Code/proposal HEAD is `5ddd1c9bbd023d6b42a3475107c70cc33b1353d6`; subsequent
 handoff-only documentation does not change its implementation. Worktree:

@@ -87,6 +87,13 @@ rerun the four unrelated feature suites, SDK format/corpus or performance
 acceptance. The original two complete failures are not renumbered or reset.
 This additional run is pending dispatch from the current documentation source.
 
+Update: the authorized targeted round was `40350033756/1`, source
+`98b0bb3478588074a9df44bb88d02917397192e7`. S18 all three producers and complete
+9+3+3 original semantic binding controls passed. S19 failed on the invalid UUID
+test caller at session creation. `STATUS.md` records the accepted S18 original
+ZIPs and the separate unvalidated S19 caller repair `8a58c537`; no extra
+execution is silently added to the authorization above.
+
 ## Historical evidence, kept separate
 
 SDK format combination: `8015c576822d5284dedfea17428ecf1a240befd0`,
