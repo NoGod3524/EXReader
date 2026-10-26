@@ -317,3 +317,20 @@ Windows and GTK observation workflows after the exact source guard. These calls
 preserve the independent sampling and artifact checks; their host configurations
 and resulting program hashes must still be compared with the final product. A
 completed observation is not a frozen-budget or full-product acceptance.
+
+## Android to GTK real-service evidence
+
+Independent source `034a4a38d3818f1b24889aeeb04d6f3167ef4095` completed
+[40388334083/1](https://github.com/NoGod3524/EXReader/actions/runs/40388334083).
+The actual Android activity uploaded to the runner's Apache WebDAV service;
+the actual GTK program synchronized, received and opened four books. Independent
+[40390426526/1](https://github.com/NoGod3524/EXReader/actions/runs/40390426526)
+authenticated the original ZIP, APK and SDK, GTK executable and received product
+database; it checked 19 exact revisions, four book mappings and 11 FOUND
+resolutions against the captured positions. Original artifact `12681039806`
+is 25,164,497 bytes, SHA-256
+`98a216c7203c2965218449ac26deae046c5a9452f7683960cdddb76367bb9cb7`.
+The original report's `desktop_receiver=false` is an obsolete incorrect field;
+the independent verifier checked the actual receive evidence separately.
+This is one-way evidence on that independent source, not acceptance of the
+composition source, reverse exchange, organization, physical devices or F02-F05.
