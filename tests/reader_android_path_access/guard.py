@@ -10,7 +10,7 @@ SEED = 'd263ce5228838ac90c0a0dc13a5193d4a7739681'
 BLOBS = {
     'examples/android/app/src/main/java/org/exreader/host/ReadingPanel.java': 'ad22ae5c330938110ae280cf58e3beebb1130b54',
     'examples/android/app/src/main/java/org/exreader/host/FontPanel.java': '9b6c24c77ccb1d82e489e9e130899d574f0e1c56',
-    'examples/android/app/src/main/java/org/exreader/host/BookStore.java': '8a2c21fbf9fa3cc4592c107736e7baaf4dd2db1f',
+    'examples/android/app/src/main/java/org/exreader/host/BookStore.java': '8e8e5556a4e1797e787ea202c248092618b29f06',
     'apps/reader/font-library/src/library.cpp': 'ba1df4e12c3e9d59dbae830eafd244cb160a6411',
     'apps/reader/original-export/src/original_export.cpp': '52b5c467453d77b7450634a82bc83f1ea171a01b',
     'tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java': '02e8fdce97c7bb749f61ee8791672591f4134adb',
