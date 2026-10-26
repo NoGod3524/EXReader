@@ -276,6 +276,8 @@
     {
       "name": "windows-group-membership-tests-candidate",
       "source": "8e0ad94904622bd5cda9a96401a26c9a7afe95c6",
+      "tested_source": "0b54a15ee9b96a6a4f51beb3600eda72e57594c8",
+      "tested_run": 40414564325,
       "paths": [
         "tests/windows_organization_projection/check_ui.py",
         "tests/windows_organization_projection/verify.py"

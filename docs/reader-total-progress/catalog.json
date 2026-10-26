@@ -85,6 +85,11 @@
       "doc": "docs/READER-WINDOWS-ACCOUNT.md",
       "source_prefix": "c74e861b"
     },
+    "windows_organization": {
+      "run": 40414564325,
+      "doc": "docs/reader-team24-composition/PLAN.md",
+      "source_prefix": "0b54a15e"
+    },
     "gtk_base": {
       "run": 40184639030,
       "doc": "docs/READER-GTK-341-FINAL.md",
@@ -364,9 +369,11 @@
       "group": "host",
       "platform": "windows",
       "title": "Windows：宿主子书架/分类、标签、系列与显式整理",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "windows_organization"
+      ],
+      "note": "原生界面建立分组并对三类成员增删，第二个 Windows 宿主接收；不授予跨平台或最终同源码产品验收。"
     },
     {
       "id": "H.windows.reading",
