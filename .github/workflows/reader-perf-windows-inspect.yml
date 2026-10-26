@@ -1,5 +1,8 @@
 name: Inspect Windows performance evidence
 on:
+  push:
+    branches: [codex/reader-product-perf-evidence]
+    paths: ['.github/workflows/reader-perf-windows-inspect.yml']
   workflow_dispatch:
     inputs:
       run_id:
@@ -16,7 +19,7 @@ jobs:
       - name: Download and report original observation
         env:
           GH_TOKEN: ${{ github.token }}
-          RUN_ID: ${{ inputs.run_id }}
+          RUN_ID: ${{ inputs.run_id || '40381230058' }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
