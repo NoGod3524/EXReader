@@ -29,7 +29,7 @@ int main(int argc,char **argv) {
   } else if(code==READER_REV_OK && action=="page" && argc==6) {
     reader_organization_projection_row rows[100]{}; size_t count=0;
     code=PAGE(s,argv[3],std::string(argv[4])=="-"?nullptr:argv[4],std::stoul(argv[5]),rows,&count,&e);
-    std::cout<<"{\"status\":"<<code<<",\"rows\":[";
+    std::cout<<"{\"status\":"<<code<<",\"error\":"<<e.code<<",\"rows\":[";
     for(size_t i=0;i<count;i++) {if(i)std::cout<<',';std::cout<<"{\"key\":\""<<rows[i].entity_key<<"\",\"result\":"<<rows[i].result<<",\"selection\":"<<rows[i].selection.kind<<"}";}
     std::cout<<"]}"<<std::endl;
     reader_revisions_close(&s,nullptr); return 0;
