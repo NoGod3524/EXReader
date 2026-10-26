@@ -334,3 +334,18 @@ The original report's `desktop_receiver=false` is an obsolete incorrect field;
 the independent verifier checked the actual receive evidence separately.
 This is one-way evidence on that independent source, not acceptance of the
 composition source, reverse exchange, organization, physical devices or F02-F05.
+
+## Shared organization projection input
+
+Source `a67fe8c6c094c4bb59ffc94f4a84c90261d5e722` adds bounded,
+per-kind projection pages for shelf, tag, series and membership using the
+existing safe-head selection and transactional expected-head checks. It leaves
+history and outbox unchanged and reports unresolved or changed heads rather than
+choosing conflicts. [40390641129/1](https://github.com/NoGod3524/EXReader/actions/runs/40390641129)
+passed installed consumers in Linux legacy and raw modes and the original legacy
+projection regression. The checks cover dependencies, hierarchy, paging,
+memberships, deletion/restore, missing ancestors, conflicts and storage failure.
+The head-change branch lacks deterministic concurrent injection. No host invokes
+the new API yet; a source admission or this Linux test cannot establish user-visible
+organization sync or cross-device acceptance. Rebuild the combined source and
+independently integrate each host with explicit dependency ordering.

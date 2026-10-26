@@ -1,0 +1,48 @@
+name: Organization projection consumer
+on:
+  push:
+    branches: [codex/organization-projection]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  product:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        raw: ['OFF', 'ON']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and install real product catalog and revisions
+        run: |
+          set -euxo pipefail
+          cmake -S apps/reader/store/native -B build/product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/product-stage"
+          cmake --build build/product
+          ctest --test-dir build/product --output-on-failure --no-tests=error
+          cmake --install build/product
+          cmake -S apps/reader/revisions -B build/revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$PWD/build/product-stage" -DCMAKE_INSTALL_PREFIX="$PWD/build/revision-stage" -DEXR_READER_SELECTOR_BYTES_CANDIDATE=${{ matrix.raw }}
+          cmake --build build/revisions
+          cmake --install build/revisions
+      - name: Build independent installed consumer and exercise real catalog
+        run: |
+          set -euxo pipefail
+          cmake -S tests/reader_organization_projection -B build/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/revision-stage;$PWD/build/product-stage"
+          cmake --build build/consumer
+          python3 tests/reader_organization_projection/check.py build/consumer/organization-consumer build/organization-evidence
+      - name: Original projection regression
+        if: matrix.raw == 'OFF'
+        run: |
+          set -euxo pipefail
+          cmake -S tests/reader_revisions/consumer -B build/original-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/revision-stage;$PWD/build/product-stage"
+          cmake --build build/original-consumer
+          python3 tests/reader_projection/check_projection.py --consumer build/original-consumer/revision-consumer --output build/original-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: organization-projection-${{ matrix.raw }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/organization-evidence/
+            build/original-evidence/
+            build/product/Testing/
+          if-no-files-found: warn
