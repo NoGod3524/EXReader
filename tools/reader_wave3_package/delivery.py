@@ -30,7 +30,7 @@ TARGETS = {
     'linux': {
         'label': 'Linux x86_64 (GTK3)',
         'entry': 'EXReader-Linux/bin/exreader-linux',
-        'launch': '解压后运行 EXReader-Linux/bin/exreader-linux Reader.otf <书库目录> <状态文件>（需 GTK3）。',
+        'launch': '解压后运行 EXReader-Linux/Start-EXReader.sh（需 GTK3）；书库和状态默认保存在当前用户数据目录。',
         'limits': [
             '未打包为 deb/rpm；系统需自带 GTK3 与基础 X11 库。',
             '只在 ubuntu-22.04 上构建与验证，其他发行版未声称。',

@@ -9,6 +9,10 @@ on:
         description: Full 40-hex candidate source commit to package and launch (defaults to this run SHA)
         type: string
         default: ''
+      verification_only:
+        description: Run delivery protocol checks only; does not grant platform acceptance
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -41,6 +45,12 @@ jobs:
             tools/reader_wave3_package/unpack.py tests/reader_wave3_s20/guard.py tests/reader_wave3_s20/report.py \
             tests/reader_wave3_s20/xctest.py tests/reader_wave3_s20/summary.py tests/reader_wave3_s20/selftest.py
           bash -n tests/reader_wave3_s20/android_device.sh
+          python -m py_compile tools/reader_wave3_package/desktop.py tools/reader_wave3_package/mobile.py tools/reader_wave3_package/diagnostics.py
+      - name: Check delivery configuration and diagnostics contracts
+        run: |
+          python tests/reader_wave3_s20/test_desktop.py
+          python tests/reader_wave3_s20/test_mobile.py
+          python tests/reader_wave3_s20/test_diagnostics.py
       - name: Prove the archive assemble unpack and refusal contract offline
         run: python tests/reader_wave3_s20/selftest.py
       - name: Preserve the guard record
@@ -51,6 +61,7 @@ jobs:
           path: build/s20-guard/
           if-no-files-found: warn
   windows:
+    if: ${{ !inputs.verification_only }}
     name: Windows delivery and real Win32 operations
     needs: [guard]
     runs-on: windows-2022
@@ -115,7 +126,7 @@ jobs:
           set -euo pipefail
           out="$PWD/build/s20-windows"
           mkdir -p "$out"
-          python3 tools/reader_wave3_package/assemble.py --target windows --payload build/s20-win-payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --exclude EXReader-Windows.zip
+          python3 tools/reader_wave3_package/assemble.py --target windows --payload build/s20-win-payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --require-build-identity --exclude EXReader-Windows.zip
           archive=$(ls "$out"/delivery/EXReader-windows-*.zip)
           fresh="$RUNNER_TEMP/s20-fresh-windows"
           python3 tools/reader_wave3_package/unpack.py --target windows --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
@@ -123,6 +134,7 @@ jobs:
           test -f "$fresh/EXReader/EXReader.exe"
           test -f "$fresh/build.json"
           test -f "$fresh/report.json"
+          python3 tools/reader_wave3_package/desktop.py verify --target windows --root "$fresh" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --report "$out/desktop-runtime.json"
       - name: Execute the installed 158 action Win32 plan on the unpacked delivery
         run: |
           set -o pipefail
@@ -149,6 +161,7 @@ jobs:
             !build/**/*.key
           if-no-files-found: error
   linux:
+    if: ${{ !inputs.verification_only }}
     name: Linux GTK delivery and real X11 operations
     needs: [guard]
     runs-on: ubuntu-22.04
@@ -202,12 +215,14 @@ jobs:
           set -euo pipefail
           out="$PWD/build/s20-linux"
           mkdir -p "$out"
-          python3 tools/reader_wave3_package/assemble.py --target linux --payload build/s20-linux-payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --exclude EXReader-Linux.tar.gz
+          python3 tools/reader_wave3_package/desktop.py prepare --target linux --root build/s20-linux-payload
+          python3 tools/reader_wave3_package/assemble.py --target linux --payload build/s20-linux-payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --require-build-identity --exclude EXReader-Linux.tar.gz
           archive=$(ls "$out"/delivery/EXReader-linux-*.zip)
           fresh="$RUNNER_TEMP/s20-fresh-linux"
           python3 tools/reader_wave3_package/unpack.py --target linux --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
           echo "S20_FRESH=$fresh" >> "$GITHUB_ENV"
           test -x "$fresh/EXReader-Linux/bin/exreader-linux"
+          python3 tools/reader_wave3_package/desktop.py verify --target linux --root "$fresh" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --report "$out/desktop-runtime.json"
       - name: Execute the twenty real X11 operations on the unpacked delivery
         run: |
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
@@ -218,11 +233,9 @@ jobs:
           '
       - name: Execute the real in-book search operations on the unpacked delivery
         run: |
-          mkdir -p build/s20-atspi
-          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/s20-atspi/atspi_client.py
           /usr/bin/python3 -m py_compile tests/reader_gtk_search/check_ui.py
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
-            export PYTHONPATH="$PWD/build/s20-atspi"
+            export PYTHONPATH="$PWD/tests/reader_a11y_gtk"
             openbox > build/s20-linux/search-openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
@@ -243,6 +256,7 @@ jobs:
             !build/**/*.key
           if-no-files-found: error
   macos:
+    if: ${{ !inputs.verification_only }}
     name: macOS delivery and real native operations
     needs: [guard]
     runs-on: macos-15
@@ -271,12 +285,13 @@ jobs:
           set -euo pipefail
           out="$PWD/build/s20-macos"
           mkdir -p "$out"
-          python3 tools/reader_wave3_package/assemble.py --target macos --payload build/s20-macos/payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0
+          python3 tools/reader_wave3_package/assemble.py --target macos --payload build/s20-macos/payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --require-build-identity
           archive=$(ls "$out"/delivery/EXReader-macos-*.zip)
           fresh="$RUNNER_TEMP/s20-fresh-macos"
           python3 tools/reader_wave3_package/unpack.py --target macos --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
           echo "S20_FRESH=$fresh" >> "$GITHUB_ENV"
           test -x "$fresh/EXReader.app/Contents/MacOS/EXReader"
+          python3 tools/reader_wave3_package/desktop.py verify --target macos --root "$fresh" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --report "$out/desktop-runtime.json"
       - name: Launch the delivered bundle and run its native self-check
         id: macos_selfcheck
         run: python3 tools/check_apple_host.py --bundle "$S20_FRESH/EXReader.app" --device macos --output build/s20-macos/evidence/macos-selfcheck
@@ -317,6 +332,7 @@ jobs:
             !build/**/*.key
           if-no-files-found: error
   ios:
+    if: ${{ !inputs.verification_only }}
     name: iPhone and iPad simulator delivery and real native operations
     needs: [guard]
     runs-on: macos-15
@@ -346,7 +362,7 @@ jobs:
           for target in iphone ipad; do
             out="$PWD/build/s20-$target"
             mkdir -p "$out"
-            python3 tools/reader_wave3_package/assemble.py --target "$target" --payload build/s20-ios/payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0
+            python3 tools/reader_wave3_package/assemble.py --target "$target" --payload build/s20-ios/payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --require-build-identity
             archive=$(ls "$out"/delivery/EXReader-"$target"-*.zip)
             fresh="$RUNNER_TEMP/s20-fresh-$target"
             python3 tools/reader_wave3_package/unpack.py --target "$target" --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
@@ -424,6 +440,7 @@ jobs:
             !build/**/*.key
           if-no-files-found: error
   android:
+    if: ${{ !inputs.verification_only }}
     name: Android delivery and real emulator operations
     needs: [guard]
     runs-on: ubuntu-latest
@@ -460,13 +477,13 @@ jobs:
           ANDROID_OWNERSHIP_HEAD: edddc463c06ed5731195cdb8f06b2df6dff7699e
         run: |
           set -o pipefail
-          python3 tools/build_android_host.py 2>&1 | tee build/s20-android-build.log
+          python3 tools/reader_wave3_package/mobile.py build-android 2>&1 | tee build/s20-android-build.log
       - name: Assemble check and unpack the delivery archive in a fresh directory
         run: |
           set -euo pipefail
           out="$PWD/build/s20-android"
           mkdir -p "$out"
-          python3 tools/reader_wave3_package/assemble.py --target android --payload build/android-host --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --exclude product
+          python3 tools/reader_wave3_package/assemble.py --target android --payload build/android-host --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --require-build-identity --exclude product
           archive=$(ls "$out"/delivery/EXReader-android-*.zip)
           fresh="$RUNNER_TEMP/s20-fresh-android"
           python3 tools/reader_wave3_package/unpack.py --target android --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
@@ -505,7 +522,7 @@ jobs:
   summary:
     name: strict same-run six target aggregation
     needs: [guard, windows, linux, macos, ios, android]
-    if: always()
+    if: ${{ always() && !inputs.verification_only }}
     runs-on: ubuntu-22.04
     timeout-minutes: 40
     permissions:

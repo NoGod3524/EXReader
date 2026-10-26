@@ -11,7 +11,11 @@ import argparse
 import hashlib
 import json
 import os
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).absolute().parents[2] / 'tools' / 'reader_wave3_package'))
+from diagnostics import android_cases
 
 TARGETS = ('windows', 'linux', 'macos', 'android', 'iphone', 'ipad')
 REQUIRED = ('import', 'open', 'page', 'settings')
@@ -224,7 +228,10 @@ def apple(evidence, unpack, target):
     with section(problems, target + '-xctest-broad'):
         broad_path = evidence / (target + '-xctest-broad') / 'status.json'
         broad = load(broad_path)
-        require(broad.get('exit') == 0, 'broad XCUITest suite failed')
+        require(broad.get('exit') == 0, 'broad XCUITest suite failed: ' + json.dumps(
+            {'failed_cases': broad.get('failed_cases'), 'first_assertion': broad.get('first_assertion')}, ensure_ascii=True))
+        require(broad.get('succeeded_marker') is True and not broad.get('failed_marker'),
+                'broad XCUITest lacks an unambiguous success marker')
         require(int(broad.get('failed') or 0) == 0 and int(broad.get('passed') or 0) > 0,
                 'broad XCUITest suite reported no passing test')
         broad_tests = [item.get('name') for item in broad.get('tests') or [] if item.get('result') == 'Passed']
@@ -242,6 +249,8 @@ def apple(evidence, unpack, target):
         search_path = evidence / (target + '-xctest-search') / 'status.json'
         search = load(search_path)
         require(search.get('exit') == 0, 'search XCUITest suite failed')
+        require(search.get('succeeded_marker') is True and not search.get('failed_marker'),
+                'search XCUITest lacks an unambiguous success marker')
         require(int(search.get('failed') or 0) == 0 and int(search.get('passed') or 0) > 0,
                 'search XCUITest suite reported no passing test')
         search_tests = [item.get('name') for item in search.get('tests') or [] if item.get('result') == 'Passed']
@@ -263,6 +272,8 @@ def android(evidence, unpack):
         require(execution.get('source_sha') == source, 'device execution ran another source')
         validation_path = evidence / 'device' / 'validation.json'
         validation = load(validation_path)
+        named = android_cases(validation)
+        require(named['accepted'], 'walkthrough named verdicts failed: ' + json.dumps(named, ensure_ascii=True))
         summary = validation.get('summary') or {}
         require(int(summary.get('failed') or 0) == 0 and int(summary.get('skipped') or 0) == 0,
                 'walkthrough reported a failed or skipped case')
