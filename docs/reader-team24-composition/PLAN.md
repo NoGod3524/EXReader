@@ -659,3 +659,25 @@ summary `12691140138` is 4,501 bytes, SHA-256
 Both expire 2027-01-24T21:16:38Z. Eight exact candidate paths are admitted;
 source admission does not establish the resulting combined-source regression,
 other platforms, a physical second device or a production WebDAV provider.
+
+## Full desktop cold and prepared startup observations
+
+Independent full-product source `f140a1cdeeb06c7fe0607eb1478d3bdf73351443`
+completed Windows [40400107428/1](https://github.com/NoGod3524/EXReader/actions/runs/40400107428)
+and GTK [40400107395/1](https://github.com/NoGod3524/EXReader/actions/runs/40400107395).
+Original artifacts were verified by [40401592846/1](https://github.com/NoGod3524/EXReader/actions/runs/40401592846).
+Windows artifact `12687589690` SHA-256 is
+`994b28d8f2dc0bd6e119dbd9b1277d7d8a20d596fa6599a651081c7712132193`;
+GTK artifact `12689061371` SHA-256 is
+`c048a4ff10885fb174a6678fbd3a645d496a00c99b93fc5d54bec89ab9061d97`.
+
+On the Windows Actions runner, twelve starts that first created product mappings
+had a 5.56 s p95 to interactive first view; twelve starts reusing a catalog after
+checking 2,202 valid local mappings had a 195 ms p95. Disk cache and cloud load
+were not controlled. The long wait overlapped catalog mapping population but
+these measurements do not identify a specific cause. GTK ran under Xvfb: 32
+starts and 520 UI samples were collected, together with 4,088 instrumented GDK
+after-paint signals. Those signals include idle intervals and probe overhead;
+they are not a measured display-frame or dropped-frame rate. These observations
+are not a product performance budget, physical-device result, or evidence for
+current composition source `39625ec7c7de7731016199a460ba09c315dadebf`.
