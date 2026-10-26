@@ -55,6 +55,11 @@ jobs:
                   if 'EXRHost' in line or 'EXRWave3' in line:
                       print(line)
           PY
+          for image in build/audit/evidence/wave3/captures/first-failure-*.png; do
+            test -f "$image" || continue
+            echo "SCREEN $image"
+            tesseract "$image" stdout 2>/dev/null
+          done
   android:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.audit_run_id == '' }}
     name: build the complete wave3 host and execute it on a real API34 emulator
