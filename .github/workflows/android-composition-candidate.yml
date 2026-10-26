@@ -1,5 +1,7 @@
 name: Android composition candidate
 on:
+  push:
+    branches: [codex/android-composed-candidate]
   workflow_dispatch:
     inputs:
       diagnostic_only:
