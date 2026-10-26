@@ -943,7 +943,11 @@ separate original HostSync UI sequence passed; the latter reported 16 checks
 over four phases. These results do not convert the original failure into a pass.
 The run uploaded artifact `12697280724` (108,135,836 bytes, reported SHA-256
 `1c2f4dd5c985e435b74cac7096a8ac41b38c756da07110187de0b2a4949d42de`);
-its original and adapted outputs have not yet been independently authenticated.
+cloud-only audit [40418892684/1](https://github.com/NoGod3524/EXReader/actions/runs/40418892684),
+source `2d0ad4f8`, checked the run and artifact identity, downloaded the ZIP,
+verified its full byte count and SHA-256, and read the original instrumentation,
+adapted report, and host UI report. It confirmed the same four original failed
+case names, 18 adapted cases, and 16 host UI checks across four phases.
 This is an API-34 x86_64 emulator investigation on the stated source, not a
 physical-device or final combined-source acceptance.
 
