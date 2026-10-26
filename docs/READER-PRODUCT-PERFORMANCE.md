@@ -28,3 +28,11 @@ jobs:
 源码 `c11b8cfc7d8872db22f967b919cf650f58efbb2a`，Actions [40381215897](https://github.com/NoGod3524/EXReader/actions/runs/40381215897)，attempt 1：Linux `ubuntu-22.04`、Xvfb，32 次启动、520/520 样本，11 项观测完整性检查与独立工件身份核验通过。包中程序 SHA-256 `a31ca88780befa05fe06ef267dff0c7062b3c821f409f287fdc22a0989207aca`，归档 SHA-256 `10fc2387ec67e056a798c5fac0ff807526b83bbb6428b7c728cd37cc2bd11335`，27 文件共 25,873,656 字节。工件 `reader-perf-gtk-40381215897-1`，ID `12678228026`，SHA-256 `01907e96ac668d8d71fe3371c03051644fd39951eb0de1910c35ba7b663e4985`，有效期至 2027-01-24。
 
 首个 50 行书架从启动到观测 p50/p95/max 为 147.066/247.908/3492.426 ms（24 次）；下一页输入至首次绘制 p50/p95/max 为 33.807/36.480/40.829 ms（112 次）；进程 RSS 高水位最大 208,604 KiB。完整原始样本、环境、冷/热策略和包配置在工件中；这些是端到端观测，不是逐帧时间，且未冻结 UI 数值预算。早期失败 [40380951236](https://github.com/NoGod3524/EXReader/actions/runs/40380951236) 保留：打包工具当时仍默认 3.40，后续显式传入 3.41。
+
+## 2026-10-26 当前组合 Windows 观测
+
+源码 `c11b8cfc7d8872db22f967b919cf650f58efbb2a`，Actions [40381230058](https://github.com/NoGod3524/EXReader/actions/runs/40381230058)，attempt 1：Windows Server 2022、AMD EPYC 9V74、4 逻辑处理器。实际打包程序 SDK 3.41/ABI 1，自检 26 项；EXE 为 7,224,832 字节，SHA-256 `28533c0bc7573c3b78a054fc30cff1d93f0270b931518194ce850643fee93ccb`。48 次测量启动，冷书架、热书架、阅读、EPUB 导入各 12 次，同源完整性门通过；`performance_accepted=false`。
+
+热书架首屏可交互 p50/p95/max 为 136.961/151.575/151.575 ms（12 次）；书内翻页 p50/p95/max 为 24.644/33.212/34.582 ms（96 次）；阅读组进程工作集峰值 p50/p95/max 为 48,179,200/48,340,992/48,340,992 字节。测量是控件状态的端到端延迟，不是帧时间。原 16 MiB TXT 输入诊断依旧为 `import_rejected`，该 TXT 测量组跳过；EPUB 是单独组，不能代替 TXT 结论。
+
+原始工件 `reader-perf-windows-40381230058-1`，ID `12677938567`，SHA-256 `9eb4492cd034423a034406afc3f4c98433c1bbf8cbb60ba6d7753eda9e477c88`，有效期至 2027-01-24；原始工件经 Actions [40382511094](https://github.com/NoGod3524/EXReader/actions/runs/40382511094) 下载解析。旧版运行 [40380841008](https://github.com/NoGod3524/EXReader/actions/runs/40380841008) 在宿主构建阶段失败，保留其日志；后续运行显式选择 3.41。
