@@ -306,7 +306,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     private void wireActions() {
         findViewById(R.id.more_button).setOnClickListener(view->new android.app.AlertDialog.Builder(this)
-                .setTitle("More").setItems(BuildConfig.READER_WAVE3?new String[]{"Organize","同步","本地字体"}:BuildConfig.READER_SYNC?new String[]{"Organize","同步"}:new String[]{"Organize"},(dialog,which)->{if(which==0)organizationPanel.show(0);else if(which==1)syncPanel.show();else fontPanel.show();}).show());
+                .setTitle("More").setItems(BuildConfig.READER_WAVE3?new String[]{"Organize","同步","本地字体"}:BuildConfig.READER_SYNC?new String[]{"Organize","同步"}:new String[]{"Organize"},(dialog,which)->{if(which==0)organizationPanel.show(0);else if(which==1)syncPanel.show();else if(operation==0&&!pageBusy)fontPanel.show();}).show());
         bookList.setOnItemLongClickListener((parent,view,position,id)->{
             if(operation!=0||pageBusy||id<=0)return true;
             final String title=catalogShelf.cachedBook(id)==null?"":catalogShelf.cachedBook(id).title;
@@ -697,11 +697,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     private interface PageAction { PageLoad run(HostTask task) throws Exception; }
+    /** The only fallible step that may accompany a publication, inside its commit. */
+    private interface PagePublish { void publish(HostTask task) throws Exception; }
 
     private void runPage(PageAction action, Runnable accepted, String empty) {
-        runPage(action, accepted, empty, () -> {});
+        runPage(action, accepted, empty, () -> {}, null);
     }
     private void runPage(PageAction action, Runnable accepted, String empty, Runnable abandoned) {
+        runPage(action, accepted, empty, abandoned, null);
+    }
+    private void runPage(PageAction action, Runnable accepted, String empty, Runnable abandoned, PagePublish published) {
         if (worker == null || current == null || operation != 0 || pageBusy) { abandoned.run(); return; }
         final long owner = current.bookId;
         final String pageSourceKey=current.sourceKey;
@@ -743,7 +748,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     return;
                 }
                 final PageLoad[] delivery={load};
-                try { task.commit(() -> { delivery[0]=persistPage(delivery[0],task);delivery[0].snapshot.sourceKey=pageSourceKey;delivery[0].accept(); }); }
+                // One publication: progress, acceptance and any stored appearance travel together.
+                // Cancellation can only stop the request before this commit starts.
+                try { task.commit(() -> { delivery[0]=persistPage(delivery[0],task);delivery[0].snapshot.sourceKey=pageSourceKey;delivery[0].accept();if(published!=null)published.publish(task); }); }
                 finally { load=delivery[0]; }
                 final PageLoad result=load;
                 ui.post(() -> {
@@ -774,21 +781,26 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         // The quick size control is an ordinary page request: it keeps the accepted
         // position, exposes the loading/cancel path and reports the size it applied.
         final float chosen = size;
-        runPage(task -> {
-            PageLoad load = reflow.setFontSize(chosen, task);
-            if (BuildConfig.READER_PREFERENCES) keepAppearanceSize(chosen, task);
-            return load;
-        }, () -> {
+        runPage(task -> reflow.setFontSize(chosen, task), () -> {
             fontSize = chosen;
             prefs.edit().putFloat("font", chosen).apply();
             setStatus("Font size " + (int) chosen);
-        }, "The book has no readable pages");
+        }, "The book has no readable pages", () -> {}, task -> keepAppearanceSize(chosen, task));
     }
 
-    /** The appearance module owns the stored size, so it follows the size the reader now shows. */
+    /**
+     * The appearance module owns the stored size, so it follows the page this request
+     * published. This runs inside the page's own commit: cancellation cannot reach it,
+     * a progress or rendering failure never saves it, and a failed save leaves the
+     * in-memory appearance exactly as stored.
+     */
     private void keepAppearanceSize(float size, HostTask task) throws Exception {
         ReadingPreferences value = readingPreferences;
         if (value == null || value.font == size) return;
+        if (BuildConfig.DEBUG && getIntent().getBooleanExtra("review_fail_preferences", false)) {
+            getIntent().removeExtra("review_fail_preferences");
+            throw new IOException("Reading settings were not saved");
+        }
         ReadingPreferences next = value.with(size, value.line, value.paragraph, value.margin, value.theme, value.direction, value.input, value.zoom);
         NativePreferences.save(next, preferencesFile().getPath(), task);
         readingPreferences = next;
