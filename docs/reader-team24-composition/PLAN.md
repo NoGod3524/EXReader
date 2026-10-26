@@ -318,6 +318,19 @@ preserve the independent sampling and artifact checks; their host configurations
 and resulting program hashes must still be compared with the final product. A
 completed observation is not a frozen-budget or full-product acceptance.
 
+[40389751881/1](https://github.com/NoGod3524/EXReader/actions/runs/40389751881)
+ran both composition observation workflows on source
+`af4eb73c74bd7b497b532fd33403cdaa87efb47a`. The source guard, Windows
+observation, GTK 32-launch observation and GTK artifact verification all
+succeeded. Windows reported `performance_accepted=false`; the GTK report
+records 520 observations and 32 launches. These are measured limited host
+configurations, not the final complete product or an accepted performance
+budget. Windows sample artifact `12682886311` has SHA-256
+`6c6beadb5a162f35b67e27bbf9dc269fdc823cac8b38ef8aad3761e2158b4388`;
+GTK sample artifact `12683961005` has SHA-256
+`11af3f0a7bb5c9a65a8ae8ab3104ead967004744ce1193ac6bed8ba0a670c62d`.
+Both expire 2027-01-24T19:46:39Z.
+
 ## Android to GTK real-service evidence
 
 Independent source `034a4a38d3818f1b24889aeeb04d6f3167ef4095` completed
