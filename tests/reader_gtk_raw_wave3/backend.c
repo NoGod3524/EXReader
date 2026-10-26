@@ -16,6 +16,13 @@ static int never(void *unused) { (void)unused;return 0; }
 static reader_command w3_command(reader_action action,int64_t book) {
   reader_command value={0};value.action=action;value.book=book;value.font=24;value.zoom=100;value.records_token=1;return value;
 }
+/* The worker refuses a bound command whose part/page disagree with the live
+   session, so every history or font command is built from the current state. */
+static reader_command w3_bound(linux_reader *reader,reader_action action,int64_t book) {
+  reader_command value=w3_command(action,book);
+  value.part=reader->current.part;value.page=reader->current.page;
+  return value;
+}
 static reader_result w3_run(linux_reader *reader,reader_command value) {
   reader_result result={0};linux_reader_execute(reader,&value,&result);return result;
 }
@@ -33,7 +40,7 @@ static reader_result w3_search(linux_reader *reader,int64_t book,uint64_t token,
   g_atomic_int_inc(&control->request);g_atomic_int_set(&control->phase,0);g_atomic_int_set(&control->polls,0);
   value.search_request=g_atomic_int_get(&control->request);
   reader_result found=w3_run(reader,value);REQUIRE(found.status==EXR_OK && found.search_count>=1);reader_result_free(&found);
-  value=w3_command(READER_SEARCH_CHOOSE,book);value.search_token=token;value.search_index=0;
+  value=w3_bound(reader,READER_SEARCH_CHOOSE,book);value.search_token=token;value.search_index=0;
   reader_result frame=w3_run(reader,value);
   REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.search_match==EXR_ANCHOR_FOUND && frame.select_range);return frame;
 }
@@ -183,12 +190,12 @@ int main(int argc,char **argv) {
     w3_slot(reader,1,&item,&record);
     REQUIRE(record.anchor_version==2 && record.start==one_start && record.start==record.end && record.mode==READER_RS_REFLOW_GLOBAL);
     reader_rs_record_free(&record);reader_jh_item_release(&item);
-    reader_command value=w3_command(READER_W3_HISTORY,text_book);value.direction=-1;
+    reader_command value=w3_bound(reader,READER_W3_HISTORY,text_book);value.direction=-1;
     reader_result frame=w3_run(reader,value);
     REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range && frame.selected_start==one_start);
     reader_result moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==1 && moved.w3_can_forward);
     reader_result_free(&moved);reader_result_free(&frame);
-    value=w3_command(READER_W3_HISTORY,text_book);value.direction=1;frame=w3_run(reader,value);
+    value=w3_bound(reader,READER_W3_HISTORY,text_book);value.direction=1;frame=w3_run(reader,value);
     REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.selected_start==two_start);
     moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==2 && !moved.w3_can_forward);
     reader_result_free(&moved);reader_result_free(&frame);
@@ -231,7 +238,7 @@ int main(int argc,char **argv) {
     moved=w3_accept(reader,&second_hit);reader_result_free(&moved);reader_result_free(&second_hit);
     REQUIRE(w3_count(reader)==before+3);
     {
-      reader_command value=w3_command(READER_W3_HISTORY,epub_book);value.direction=-1;
+      reader_command value=w3_bound(reader,READER_W3_HISTORY,epub_book);value.direction=-1;
       reader_result frame=w3_run(reader,value);
       printf("{\"info\":\"epub_history_jump\",\"status\":%d,\"match\":%d,\"message\":\"%s\"}\n",
         (int)frame.status,(int)frame.search_match,frame.message);fflush(stdout);
@@ -287,7 +294,7 @@ int main(int argc,char **argv) {
     }
     REQUIRE(w3_count(reader)==before+2);
     {
-      reader_command value=w3_command(READER_W3_HISTORY,pdf_book);value.direction=-1;
+      reader_command value=w3_bound(reader,READER_W3_HISTORY,pdf_book);value.direction=-1;
       reader_result frame=w3_run(reader,value);
       printf("{\"info\":\"fixed_history_jump\",\"status\":%d,\"page\":%zu,\"message\":\"%s\"}\n",
         (int)frame.status,frame.page,frame.message);fflush(stdout);
@@ -310,7 +317,7 @@ int main(int argc,char **argv) {
     reader_command open=w3_command(READER_OPEN,pdf_book);open.font=24;
     reader_result frame=w3_run(reader,open);REQUIRE(frame.status==EXR_OK && frame.has_frame);
     reader_result landed=w3_accept(reader,&frame);reader_result_free(&landed);reader_result_free(&frame);
-    reader_command use=w3_command(READER_W3_FONT_USE,pdf_book);use.w3_hash=hash;use.font=24;
+    reader_command use=w3_bound(reader,READER_W3_FONT_USE,pdf_book);use.w3_hash=hash;use.font=24;
     reader_result candidate=w3_run(reader,use);
     REQUIRE(candidate.status!=EXR_OK && !candidate.has_frame && strstr(candidate.message,"fixed pages"));
     reader_result_free(&candidate);
