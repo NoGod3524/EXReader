@@ -130,24 +130,50 @@ def database_state(profile):
 
 def fill_system_dialog(app, path):
     """Type a path into the native file/folder dialog and accept it, as a user would."""
-    dialog = app.wait(lambda: system_dialog(app), timeout=30)
-    candidates = []
+    observed = []
 
-    @P.ENUM
-    def child(window, unused):
-        if class_of(window) == 'Edit' and U.IsWindowVisible(window):
-            parent = window
-            for _ in range(5):
-                if U.GetDlgCtrlID(parent) in (1148, 1152):
-                    candidates.append(window)
-                    break
-                parent = U.GetParent(parent)
-                if not parent or parent == dialog:
-                    break
-        return True
-    U.EnumChildWindows(dialog, child, 0)
-    assert len(candidates) == 1, ('native filename edit', len(candidates))
-    P.set_text(candidates[0], str(Path(path).resolve()))
+    def ready():
+        dialog = system_dialog(app)
+        if not dialog:
+            return None
+        candidates = []
+        observed.clear()
+
+        @P.ENUM
+        def child(window, unused):
+            parent = U.GetParent(window)
+            visible, enabled = bool(U.IsWindowVisible(window)), bool(U.IsWindowEnabled(window))
+            observed.append(dict(handle=int(window), kind=class_of(window), identifier=U.GetDlgCtrlID(window),
+                                 visible=visible, enabled=enabled,
+                                 parent=int(parent or 0), parent_kind=class_of(parent) if parent else None,
+                                 parent_identifier=U.GetDlgCtrlID(parent) if parent else None))
+            if class_of(window) == 'Edit' and visible and enabled:
+                ancestor = window
+                while ancestor and ancestor != dialog:
+                    # edt1 is the classic filename edit; cmb13 contains the
+                    # Explorer-style filename edit. Do not select the search
+                    # box or address bar merely because it is also editable.
+                    if U.GetDlgCtrlID(ancestor) in (1152, 1148):
+                        candidates.append(window)
+                        break
+                    ancestor = U.GetParent(ancestor)
+            return True
+
+        U.EnumChildWindows(dialog, child, 0)
+        accept = U.GetDlgItem(dialog, 1)
+        if len(candidates) == 1 and accept and U.IsWindowVisible(accept):
+            return dialog, candidates[0]
+        return None
+
+    try:
+        # A visible #32770 with IDOK can precede creation of its filename
+        # controls. Wait for the identified editable control, not just its owner.
+        dialog, filename = app.wait(ready, timeout=30)
+    except BaseException:
+        print('native-file-dialog-controls ' + json.dumps(observed, ensure_ascii=False), flush=True)
+        raise
+    P.set_text(filename, str(Path(path).resolve()))
+    app.wait(lambda: U.IsWindowEnabled(U.GetDlgItem(dialog, 1)), timeout=30)
     for _ in range(4):
         if not U.IsWindow(dialog):
             break
