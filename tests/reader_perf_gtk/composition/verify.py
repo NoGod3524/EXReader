@@ -103,14 +103,21 @@ def main():
     require(record['id'] == run_id, 'run id differs')
     require(record['head_sha'] == source, 'run head differs from the verified source')
     require(record['run_attempt'] == attempt, 'run attempt differs')
-    require(record['path'].split('@')[0] == WORKFLOW, 'run workflow path differs')
-    require(record['event'] in ('push', 'workflow_dispatch'), 'unexpected triggering event')
+    workflow_ref = os.environ['GITHUB_WORKFLOW_REF'].split('@', 1)[0]
+    prefix = os.environ['GITHUB_REPOSITORY'] + '/'
+    require(workflow_ref.startswith(prefix), 'caller workflow repository differs')
+    require(record['path'].split('@')[0] == workflow_ref[len(prefix):], 'run workflow path differs')
 
     jobs = pages('actions/runs/%d/jobs' % run_id, 'jobs')
-    names = {job['name'] for job in jobs}
-    require(names == {PERF_JOB, VERIFY_JOB}, 'job set differs: %r' % sorted(names))
-    perf = [job for job in jobs if job['name'] == PERF_JOB]
+    # A caller can contain other jobs; reusable job names receive a caller prefix.
+    def matching(name):
+        return [job for job in jobs if job['name'] == name or job['name'].endswith(' / ' + name)]
+    perf = matching(PERF_JOB)
+    verifier = matching(VERIFY_JOB)
     require(len(perf) == 1, 'the sampling job must appear exactly once')
+    require(len(verifier) == 1, 'the verification job must appear exactly once')
+    require(verifier[0]['head_sha'] == source and verifier[0]['run_id'] == run_id
+            and verifier[0]['run_attempt'] == attempt, 'verification job source or attempt differs')
     perf = perf[0]
     require(perf['status'] == 'completed' and perf['conclusion'] == 'success',
             'sampling job did not succeed: %s/%s' % (perf['status'], perf['conclusion']))
