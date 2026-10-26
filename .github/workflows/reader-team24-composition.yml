@@ -12,6 +12,10 @@ on:
         description: Build, archive, unpack and launch the actual Apple production profile
         type: boolean
         default: false
+      observe_performance:
+        description: Record Windows and GTK performance observations on this source
+        type: boolean
+        default: false
       inspect_apple_failure:
         description: Read the fixed failed Apple artifact without building or testing
         type: boolean
@@ -56,6 +60,14 @@ jobs:
           name: composition-source-${{ github.sha }}
           path: build/composition-source.json
           if-no-files-found: error
+  observe-windows:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.observe_performance }}
+    needs: source
+    uses: ./.github/workflows/reader-composition-perf-windows.yml
+  observe-gtk:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.observe_performance }}
+    needs: source
+    uses: ./.github/workflows/reader-composition-perf-gtk.yml
   inspect-apple:
     if: ${{ github.event_name == 'workflow_dispatch' && (inputs.inspect_apple_failure || inputs.inspect_android_failure) }}
     needs: source
