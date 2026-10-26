@@ -1,0 +1,159 @@
+name: Full GTK product performance observation
+on:
+  push:
+    branches: [codex/reader-full-product-performance]
+    paths: ['.github/workflows/reader-full-product-perf-gtk.yml', 'tests/reader_perf_full_gtk/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  EXR_SDK_VERSION: '3.41.0'
+jobs:
+  gtk:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Native GTK accessibility and Secret Service dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring \
+            libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor \
+            python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick \
+            python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Install the exact SDK candidate into one stage
+        run: |
+          set -o pipefail
+          mkdir -p build/c10-logs
+          echo "C10_SDK=$PWD/build/reading-library/stage" >> "$GITHUB_ENV"
+          echo "C10_PREFIX=$PWD/build/c10-prefix" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/c10-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/c10-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/c10-logs/sdk-install.log
+      - name: Install every product owner and the five reviewed modules into one prefix
+        run: |
+          set -o pipefail
+          prefix="$C10_PREFIX"
+          sdk="$C10_SDK"
+          logs=build/c10-logs
+          build_module() {
+            name="$1"; source="$2"; shift 2
+            cmake -S "$source" -B "build/c10-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DEXR_SDK_VERSION="$EXR_SDK_VERSION" -DCMAKE_PREFIX_PATH="$prefix;$sdk" \
+              -DCMAKE_INSTALL_PREFIX="$prefix" "$@" 2>&1 | tee "$logs/$name-configure.log"
+            cmake --build "build/c10-$name" --parallel 4 2>&1 | tee "$logs/$name-build.log"
+            cmake --install "build/c10-$name" 2>&1 | tee "$logs/$name-install.log"
+          }
+          cmake -S extras/desktop-drop -B build/c10-drop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/c10-drop-stage" 2>&1 | tee build/c10-logs/drop-configure.log
+          cmake --build build/c10-drop --parallel 4 2>&1 | tee build/c10-logs/drop-build.log
+          cmake --install build/c10-drop 2>&1 | tee build/c10-logs/drop-install.log
+          build_module product apps/reader/store/native
+          build_module revisions apps/reader/revisions -DREADER_PRODUCT_PREFIX="$prefix"
+          build_module webdav extras/webdav
+          build_module credentials extras/credentials
+          build_module sideload extras/sideload -DEXR_SDK="$sdk"
+          build_module sync apps/reader/sync
+          build_module session apps/reader/session
+          build_module commands apps/reader/commands
+          build_module metadata apps/reader/desktop-metadata
+          build_module reading-state apps/reader/reading-state -DEXR_SDK="$sdk"
+          build_module search apps/reader/search -DEXR_SDK="$sdk"
+          build_module navigation apps/reader/navigation -DEXR_SDK="$sdk"
+          build_module reading-commands apps/reader/reading-commands
+          build_module annotation-view apps/reader/annotation-view
+          build_module annotation-export apps/reader/annotation-export
+          build_module batch-import apps/reader/batch-import -DEXR_SDK="$sdk"
+          build_module preferences apps/reader/preferences
+          build_module font-library apps/reader/font-library -DREADER_FONT_LIBRARY_BUILD=ON -DEXR_SDK="$sdk"
+          build_module original-export apps/reader/original-export -DEXR_SDK="$sdk"
+          build_module jump-history apps/reader/jump-history -DEXR_SDK="$sdk"
+          build_module sync-status-view apps/reader/sync-status-view -DEXR_SDK="$sdk"
+          build_module annotation-import apps/reader/annotation-import -DREADER_ANNOTATION_IMPORT_BUILD=ON
+      - name: Build the non-compact host with the five tools and every reviewed owner
+        run: |
+          set -o pipefail
+          prefix="$C10_PREFIX"; sdk="$C10_SDK"
+          cmake -S apps/reader/desktop -B build/c10-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK_VERSION="$EXR_SDK_VERSION" -DEXR_SDK="$sdk" \
+            -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" \
+            -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" \
+            -DREADER_BATCH_IMPORT_PREFIX="$prefix" -DREADER_PREFERENCES_PREFIX="$prefix" \
+            -DREADER_SEARCH_PREFIX="$prefix" -DREADER_NAVIGATION_PREFIX="$prefix" \
+            -DREADER_READING_RECORDS_PREFIX="$prefix" \
+            -DREADER_DESKTOP_DROP_PREFIX="$PWD/build/c10-drop-stage" \
+            -DREADER_WAVE3_PREFIX="$prefix" \
+            -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DEXR_READER_GTK_SEARCH=ON \
+            -DEXR_READER_GTK_NAVIGATION=ON -DEXR_READER_GTK_READING_RECORDS=ON \
+            -DEXR_READER_GTK_BATCH_IMPORT=ON -DEXR_READER_GTK_DROP_IMPORT=ON \
+            -DEXR_READER_GTK_WAVE3=ON -DEXR_READER_PAGE_BACKGROUND=ON \
+            -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON \
+            2>&1 | tee build/c10-logs/host-configure.log
+          cmake --build build/c10-desktop --parallel 4 2>&1 | tee build/c10-logs/host-build.log
+          ctest --test-dir build/c10-desktop --output-on-failure --no-tests=error --timeout 180 \
+            --output-junit "$PWD/build/c10-logs/desktop-tests.xml" 2>&1 | tee build/c10-logs/host-ctest.log
+          python3 tools/build_linux_host.py --sdk "$sdk" --sdk-version "$EXR_SDK_VERSION" \
+            --binary build/c10-desktop/gtk-host/exreader-linux --output build/c10-package 2>&1 | tee build/c10-logs/package.log
+
+      - name: Build public SDK 2202-book corpus probe and extract actual tarball
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_perf_gtk/composition -B build/full-gtk-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$C10_SDK"
+          cmake --build build/full-gtk-probe --parallel 4
+          mkdir -p build/full-gtk-extracted/EXReader-Linux build/full-gtk-guards
+          tar -xzf build/c10-package/EXReader-Linux.tar.gz -C build/full-gtk-extracted/EXReader-Linux
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          def git(*args): return subprocess.check_output(['git', *args], text=True).strip()
+          source = git('rev-parse', 'HEAD')
+          assert source == os.environ['GITHUB_SHA']
+          components = {path: git('rev-parse', 'HEAD:' + path) for path in ('src', 'include', 'apps/reader', 'examples/linux')}
+          Path('build/full-gtk-guards/guards.json').write_text(json.dumps({'head': source, 'github_sha': source, 'components': components}, indent=2) + '\n')
+          PY
+          python3 tests/reader_perf_full_gtk/bind.py --preflight
+      - name: Observe the extracted full GTK package with real X11 inputs
+        run: |
+          set -o pipefail
+          Xvfb :99 -screen 0 1440x900x24 -nolisten tcp > build/c10-logs/perf-xvfb.log 2>&1 &
+          xvfb=$!
+          trap 'kill $xvfb 2>/dev/null || true' EXIT
+          sleep 2
+          export DISPLAY=:99
+          dbus-run-session -- bash -euc '
+            openbox > build/c10-logs/perf-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm 2>/dev/null || true" EXIT
+            sleep 1
+            python3 tests/reader_perf_gtk/sample.py \
+              --payload build/full-gtk-extracted/EXReader-Linux \
+              --tarball "$PWD/build/c10-package/EXReader-Linux.tar.gz" \
+              --seed build/full-gtk-probe/seed_library \
+              --output build/full-gtk-evidence --launches 32 2>&1 | tee build/c10-logs/perf-sampler.log
+          '
+      - name: Aggregate without a performance budget
+        if: always()
+        run: |
+          set -o pipefail
+          mkdir -p build/c10-logs
+          python3 tests/reader_perf_full_gtk/summarize.py --output build/full-gtk-evidence --guards build/full-gtk-guards/guards.json 2>&1 | tee build/c10-logs/perf-summary.log
+          python3 tests/reader_perf_full_gtk/bind.py 2>&1 | tee build/c10-logs/perf-bind.log
+      - name: Preserve raw observations, package configuration and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-product-perf-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/full-gtk-evidence/
+            build/full-gtk-guards/
+            build/c10-logs/
+            build/c10-desktop/CMakeCache.txt
+            build/c10-package/build.json
+            build/c10-package/runtime-dependencies.txt
+            build/c10-package/EXReader-Linux.tar.gz
+          if-no-files-found: warn
