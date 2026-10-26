@@ -38,7 +38,7 @@ public final class OrganizationSyncTest extends Instrumentation {
         for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null){describe(child,out,depth+1);child.recycle();}}
     }
     private static String text(AccessibilityNodeInfo n){return n.getText()==null?"":n.getText().toString();}
-    private void click(String label){target="click "+label;waitFor(n->n.isEnabled()&&text(n).equals(label),n->need(n.performAction(AccessibilityNodeInfo.ACTION_CLICK),"click "+label),30000);}
+    private void click(String label){target="click "+label;waitFor(n->n.isEnabled()&&text(n).equalsIgnoreCase(label),n->need(n.performAction(AccessibilityNodeInfo.ACTION_CLICK),"click "+label),30000);}
     private void field(String label,String value){target="field "+label;waitFor(n->label.contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),n->{Bundle b=new Bundle();b.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);need(n.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,b),"field");},30000);}
     private void status(String value){target="status "+value;waitFor(n->"同步状态".contentEquals(n.getContentDescription()==null?"":n.getContentDescription())&&text(n).contains(value),null,180000);}
     private void launch(){target="launch More shelf actions";context.startActivity(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));waitFor(n->"More shelf actions".contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),null,30000);}
