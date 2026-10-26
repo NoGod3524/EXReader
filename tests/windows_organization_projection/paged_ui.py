@@ -51,7 +51,12 @@ def stable_top():
     return values[index] if before==after and before>=2 and not before%2 and values and 0<=index<len(values) else None
 def stable_edge(value,at_end):
     values=stable_numbers()
-    return bool(values and (values[-1] if at_end else values[0])==value and stable_top()==value)
+    if not values or (values[-1] if at_end else values[0])!=value:return False
+    box=app.control('books');before=ui.U.GetPropW(box,'EXReaderShelfSnapshot') or 0
+    top=ui.send(box,0x18E);height=ui.send(box,0x1A1,0);area=W.RECT();ui.U.GetClientRect(box,C.byref(area))
+    after=ui.U.GetPropW(box,'EXReaderShelfSnapshot') or 0
+    visible=(area.bottom+height-1)//height if height>0 else 0
+    return before==after and before>=2 and not before%2 and top<=values.index(value)<top+visible
 def organizer():
     app.wait_idle();ui.U.SetForegroundWindow(app.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,ui.A.VK_SHIFT))
     def find():
