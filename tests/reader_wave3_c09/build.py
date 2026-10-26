@@ -6,6 +6,7 @@ owner probe judge) instead of a second build protocol. Every step is recorded; o
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -51,6 +52,7 @@ def main():
             result['failures'].append(name)
             return None
 
+    content_bound = os.environ.get('EXR_COMPOSITION_CONTENT_BOUND') == '1'
     sdk, product, stage = OUT / 'sdk-stage', OUT / 'product-stage', OUT / 'raw-stage'
     prefix = ';'.join(map(str, (stage, product, sdk)))
 
@@ -67,6 +69,8 @@ def main():
             label = Path(module).name
             options = ['-DCMAKE_INSTALL_PREFIX=' + str(stage), '-DCMAKE_PREFIX_PATH=' + prefix, '-DEXR_SDK=' + str(sdk),
                        '-DEXR_SDK_VERSION=3.41.0', '-DREADER_PRODUCT_PREFIX=' + str(product)] + EXTRA_FLAGS.get(label, [])
+            if label == 'cloud-import' and content_bound:
+                options.append('-DREADER_CLOUD_BUILD_CONTENT_BOUND=ON')
             if label in raw:
                 options.append('-DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON')
             build = OUT / ('raw-' + label)
@@ -78,8 +82,13 @@ def main():
         H.run(['cmake', '-S', ROOT / 'apps/reader/desktop', '-B', host, '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
                '-DCMAKE_PREFIX_PATH=' + prefix, '-DEXR_SDK=' + str(sdk), '-DEXR_SDK_VERSION=3.41.0',
                '-DREADER_METADATA_PREFIX=' + str(stage), '-DREADER_ACCOUNT_PREFIX=' + str(stage),
-               '-DEXR_READER_WINDOWS_WAVE3=ON'], 'wave3-host-configure')
+               '-DEXR_READER_WINDOWS_WAVE3=ON',
+               '-DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=' + ('ON' if content_bound else 'OFF')], 'wave3-host-configure')
         H.run(['cmake', '--build', host, '--target', 'EXReaderWave3', '--parallel', '4', '--verbose'], 'wave3-host-build')
+        if content_bound:
+            link_map = (host / 'windows-host.map').read_text(encoding='utf-8', errors='replace')
+            assert re.search(r'\bexr_webdav_download_observed\b', link_map), 'content-bound transfer missing from Windows host link map'
+            result['cloud_content_bound'] = True
         H.run([sys.executable, ROOT / 'tools/build_windows_host.py', '--sdk', sdk, '--binary', host / 'EXReaderWave3.exe',
                '--output', OUT / 'package', '--static-reading'], 'package')
         original = json.loads((OUT / 'package/report.json').read_text(encoding='utf-8'))

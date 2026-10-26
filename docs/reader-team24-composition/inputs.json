@@ -91,7 +91,6 @@
       "paths": [
         ".github/workflows/reader-team24-windows.yml",
         "apps/reader/desktop/windows_compact_ui.inc",
-        "apps/reader/desktop/windows_feature_integration.cmake",
         "apps/reader/desktop/windows_records_owner.cpp",
         "apps/reader/desktop/windows_records_owner.h",
         "apps/reader/desktop/windows_wave3.inc",
@@ -102,7 +101,6 @@
         "docs/reader-wave3-c09/root-validation.json",
         "docs/reader-wave3-c09/team24.md",
         "examples/reader.c",
-        "tests/reader_wave3_c09/build.py",
         "tests/reader_wave3_c09/check_ui.py",
         "tests/reader_wave3_c09/desktop.py",
         "tests/reader_wave3_c09/guard.py",

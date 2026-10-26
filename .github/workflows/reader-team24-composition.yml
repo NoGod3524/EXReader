@@ -190,6 +190,7 @@ jobs:
     env:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: utf-8
+      EXR_COMPOSITION_CONTENT_BOUND: '1'
     outputs:
       artifact_id: ${{ steps.upload.outputs.artifact-id }}
       artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
@@ -267,6 +268,8 @@ jobs:
           assert os.environ['WINDOWS_RESULT'] == 'success'
           assert identity['verified'] and identity['report']['accepted'] is True
           assert not identity['report']['failures']
+          report = json.loads(Path('build/c09-download/report.json').read_text())
+          assert report['cloud_content_bound'] is True
           artifact = identity['artifact']
           assert str(artifact['id']) == os.environ['ARTIFACT_ID']
           assert not artifact['expired'] and artifact['digest'] == 'sha256:' + os.environ['ARTIFACT_DIGEST']

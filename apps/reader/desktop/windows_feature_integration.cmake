@@ -16,7 +16,14 @@ find_package(EXReaderSession 0.2.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderSideload CONFIG REQUIRED)
 find_package(EXReaderSearch 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderNavigation 0.1.0 EXACT CONFIG REQUIRED)
-find_package(EXReaderCloudImport 0.1.0 EXACT CONFIG REQUIRED)
+option(EXR_READER_WINDOWS_CLOUD_CONTENT_BOUND "Use the separate content-bound cloud import candidate" OFF)
+if(EXR_READER_WINDOWS_CLOUD_CONTENT_BOUND)
+  find_package(EXReaderCloudImportContentBound 0.1.0 EXACT CONFIG REQUIRED)
+  set(_w3_cloud_target EXReaderCloudImportContentBound::reader_cloud_import_content_bound)
+else()
+  find_package(EXReaderCloudImport 0.1.0 EXACT CONFIG REQUIRED)
+  set(_w3_cloud_target EXReaderCloudImport::reader_cloud_import)
+endif()
 find_package(EXReaderBulkOrganization 0.2.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderPreferences 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderReadingCommands 0.2.0 EXACT CONFIG REQUIRED)
@@ -64,7 +71,7 @@ target_link_libraries(EXReaderWave3 PRIVATE reader_catalog_sdk EXReader::exr_cor
   EXReaderDesktopMetadata::reader_desktop_metadata EXReaderSession::reader_session
   EXReaderCredentials::exr_credentials EXReaderSideload::exr_sideload
   EXReaderSearch::reader_search EXReaderNavigation::reader_navigation reader_windows_records_w3
-  EXReaderCloudImport::reader_cloud_import EXReaderBulkOrganization::reader_bulk EXReaderPreferences::reader_preferences
+  ${_w3_cloud_target} EXReaderBulkOrganization::reader_bulk EXReaderPreferences::reader_preferences
   EXReaderAnnotationImport::reader_annotation_import EXReaderAnnotationExport::reader_annotation_export
   EXReaderFontLibrary::reader_font_library EXReaderOriginalExport::reader_original_export
   EXReaderJumpHistory::reader_jump_history EXReaderSyncView::reader_sync_view
