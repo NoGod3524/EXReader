@@ -365,6 +365,13 @@
         "tests/reader_startup_profile/profile.c",
         "tests/reader_startup_profile/wal_crash.c"
       ]
+    },
+    {
+      "name": "windows-combined-wal-profile-candidate",
+      "source": "27e45b2f6e58d6d2b2aeae20f52d4097872a0d76",
+      "paths": [
+        ".github/workflows/combined-wal-profile.yml"
+      ]
     }
   ]
 }
