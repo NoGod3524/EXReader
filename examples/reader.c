@@ -1096,6 +1096,9 @@ static void winrecords_close(void);
 #ifdef EXR_READER_WINDOWS_WAVE3
 static void w3_job_free(w3_job *job);
 static exr_status w3_run(host_job *job);
+#ifdef EXR_READER_WINDOWS_RAW3
+static exr_status w3_prepare_open(host_job *job, const exr_book *book, exr_error *error);
+#endif
 static void w3_failed_to_start(host_job *job);
 #endif
 
@@ -1801,6 +1804,9 @@ static exr_status job_open(host_job *job) {
     book_clear(&book);
     return EXR_CANCELLED;
   }
+#if defined(EXR_READER_WINDOWS_WAVE3) && defined(EXR_READER_WINDOWS_RAW3)
+  if (status == EXR_OK) status = w3_prepare_open(job, &book, &error);
+#endif
   if (status == EXR_OK) {
     session.active = 1;
     job->have_frame = 1;

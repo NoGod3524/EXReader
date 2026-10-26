@@ -458,6 +458,17 @@ extern "C" exr_status winrecords_execute(const winrecords_request *request,winre
   need(request&&request->database&&request->pending_path&&request->book_key,"Missing native owner input");auto &r=*request;
   cancel(r);store s(r.database);book b=verified_book(s,r);copy(out->key,sizeof(out->key),b.key);
   if(r.action==WINRECORDS_LIST)list(s,b,r,*out);
+  else if(r.action==WINRECORDS_BOOTSTRAP) {
+   uint64_t bytes=0;auto identity=reader_revision_book_identity(s.revisions,b.key.c_str(),&bytes,nullptr);
+   if(identity==READER_REV_NOT_FOUND) {
+    char id[33];need(reader_revision_new_id(id,nullptr)==READER_REV_OK,"Cannot allocate book identity",EXR_DATABASE);
+    reader_command_context context={s.revisions,id,nullptr,0};
+    reader_book_command command={READER_COMMAND_PUT,b.key.c_str(),b.format.c_str(),std::strchr(b.key.c_str(),':')+1,
+      b.title.c_str(),b.author.c_str(),b.sort.c_str(),b.bytes,b.favorite};
+    reader_command_result result{};cancel(r);
+    need(reader_command_apply_book(&context,&command,&result,nullptr)==READER_COMMAND_OK,"Verified book bootstrap refused",EXR_DATABASE);
+   }else need(identity==READER_REV_OK&&bytes==b.bytes,"Book history differs from verified original",EXR_DATABASE);
+  }
   else if(r.action==WINRECORDS_READ)read_record(s,b,r,*out);
   else if(r.action==WINRECORDS_HISTORY)history(s,b,r,*out);
   else if(r.action==WINRECORDS_DISCARD) {need(hex(z(r.pending_revision),32),"Choose the exact pending request");clear(r.pending_path,r.pending_revision);}
