@@ -117,7 +117,7 @@ try:
     (a.output / 'reverse-record-report.json').write_bytes(raw)
     received = json.loads(raw)
     require(process.returncode == 0 and b'RECORD_INTEROP_SENDER_PASS' in process.stdout and
-            received['passed'] is True and len(received['resolutions']) == 2 and
+            received['passed'] is True and len(received['resolutions']) == len(reverse) == 11 and
             all(received.get(k) == v for k, v in identity.items()), 'actual Android reverse resolve failed')
     report.update(accepted=True, bidirectional=True, gtk_reverse_records=reverse,
                   android_reverse_resolutions=received['resolutions'])

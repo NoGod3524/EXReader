@@ -16,6 +16,7 @@ RUN = int(os.environ.get('VERIFY_RUN', '40388334083'))
 SOURCE = os.environ.get('VERIFY_SOURCE', '034a4a38d3818f1b24889aeeb04d6f3167ef4095')
 ARTIFACT = int(os.environ.get('VERIFY_ARTIFACT', '12681039806'))
 BIDIRECTIONAL = os.environ.get('VERIFY_BIDIRECTIONAL') == 'true'
+EXPANDED = os.environ.get('VERIFY_EXPANDED') == 'true'
 repo = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/'
 def api(path): return json.loads(subprocess.check_output(['gh', 'api', repo + path]))
 record = api('actions/runs/' + str(RUN))
@@ -71,7 +72,12 @@ with zipfile.ZipFile(io.BytesIO(rawzip)) as z:
             assert data == read('sender/bundle/' + row['file'])
         if BIDIRECTIONAL:
             reverse = result['gtk_reverse_records']
-            assert len(reverse) == 2 and {row['kind'] for row in reverse} == {'progress', 'annotation'}
+            if EXPANDED:
+                expected = {(role, kind) for role in ('txt', 'epub', 'pdf', 'cbz') for kind in ('progress', 'bookmark')}
+                expected |= {(role, 'highlight') for role in ('txt', 'epub', 'pdf')}
+                assert len(reverse) == 11 and {(row['role'], row['kind']) for row in reverse} == expected
+            else:
+                assert len(reverse) == 2 and {row['kind'] for row in reverse} == {'progress', 'annotation'}
             assert reverse == desktop['reverse_records'] and desktop['gtk_reverse_uploaded'] is True
             for row in reverse:
                 wire = read('android-real-dav/gtk/' + row['file'])
@@ -79,8 +85,15 @@ with zipfile.ZipFile(io.BytesIO(rawzip)) as z:
                 stored, = db.execute('SELECT CAST(body_json AS BLOB) FROM reader_revisions WHERE revision_id=?', (row['id'],)).fetchone()
                 assert stored == wire
                 envelope = json.loads(wire)
-                assert envelope['id'] == row['id'] and envelope['entity_kind'] == row['kind']
+                assert envelope['id'] == row['id'] and envelope['entity_kind'] == ('progress' if row['kind'] == 'progress' else 'annotation')
                 assert envelope['payload']['location']['parser_version'] == '3.41.0'
+                if EXPANDED:
+                    loc = envelope['payload']['location']
+                    assert envelope['payload']['book_key'] == row['book_key'] and loc['mode'] == row['mode']
+                    assert loc['selector']['start'] == row['start'] and loc['selector']['end'] == row['end']
+                    assert (row['end'] > row['start']) == (row['kind'] == 'highlight')
+                    if row['mode'] == 'epub_chapter': assert loc['part'] == row['part'] and loc['part_path'] == row['part_path']
+                    if row['mode'] == 'fixed_page': assert loc['page'] == row['page'] and loc['page_id'] == row['page_id']
             reverse_report = json.loads(read('android-real-dav/reverse-record-report.json'))
             reverse_sync = json.loads(read('android-real-dav/reverse-sync-report.json'))
             assert reverse_report['source_sha'] == SOURCE and reverse_report['run_id'] == str(RUN) and reverse_report['attempt'] == '1'
@@ -90,6 +103,7 @@ with zipfile.ZipFile(io.BytesIO(rawzip)) as z:
             for row in reverse:
                 match = matches[row['id']]
                 assert match['found'] is True and match['start'] == row['start'] and match['end'] == row['end']
+                if EXPANDED: assert match['role'] == row['role'] and match['kind'] == row['kind'] and match['mode'] == {'reflow_global': 1, 'epub_chapter': 2, 'fixed_page': 3}[row['mode']]
             assert b'RECORD_INTEROP_SENDER_PASS' in read('android-real-dav/reverse-record-instrumentation.txt')
             assert b'HOST_SYNC_UI_PASS interop-send' in read('android-real-dav/reverse-sync-instrumentation.txt')
         for row in m['originals']:
@@ -109,8 +123,8 @@ summary = {'accepted': True, 'source_sha': SOURCE, 'run_id': RUN, 'attempt': 1, 
            'android_sdk_sha256': sender['sdk_dso_sha256'], 'gtk_program_sha256': desktop['program_sha256'],
            'originals': len(m['originals']), 'revisions': len(m['revisions']), 'found': len(found),
            'service_app_requests': len(app), 'legacy_desktop_receiver_field_incorrect': not BIDIRECTIONAL,
-           'actual_desktop_receive': True, 'bidirectional': BIDIRECTIONAL, 'reverse_record_count': 2 if BIDIRECTIONAL else 0,
-           'reverse_scope': 'TXT progress and bookmark' if BIDIRECTIONAL else None, 'organization_accepted': False}
+           'actual_desktop_receive': True, 'bidirectional': BIDIRECTIONAL, 'reverse_record_count': (11 if EXPANDED else 2) if BIDIRECTIONAL else 0,
+           'reverse_scope': ('four-format progress/bookmark and TXT/EPUB/PDF highlight' if EXPANDED else 'TXT progress and bookmark') if BIDIRECTIONAL else None, 'organization_accepted': False}
 out = Path('build/android-gtk-verified');out.mkdir(parents=True, exist_ok=True)
 (out / 'result.json').write_text(json.dumps(summary, indent=2) + '\n')
 print(json.dumps(summary))

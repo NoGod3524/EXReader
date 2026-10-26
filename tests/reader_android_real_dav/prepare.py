@@ -24,16 +24,20 @@ assert s.count(needle) == 1
 s = s.replace(needle, '''    private void receiveGtkSync()throws Exception{
         JSONObject incoming=new JSONObject(new String(Files.readAllBytes(new File(context.getFilesDir(),"gtk-reverse.json").toPath()),StandardCharsets.UTF_8));
         books=new JSONObject(new String(Files.readAllBytes(new File(context.getFilesDir(),"preferences-books.json").toPath()),StandardCharsets.UTF_8));
-        open("txt");idle();String before=snapshot();JSONArray rows=incoming.getJSONArray("records");need(rows.length()==2,"two actual GTK revisions expected");
-        owner(store->{for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);String rid=row.getString("id");
+        JSONArray rows=incoming.getJSONArray("records");need(rows.length()==11,"eleven actual GTK revisions expected");
+        for(String role:new String[]{"txt","epub","pdf","cbz"}){open(role);idle();String before=snapshot();
+        owner(store->{for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);if(!role.equals(row.getString("role")))continue;String rid=row.getString("id");
             byte[] expected=Files.readAllBytes(new File(context.getFilesDir(),"gtk-reverse/"+rid+".json").toPath());
             byte[] retained=RecordWireProbe.retained(store.productOwner(),rid);need(Arrays.equals(expected,retained)&&digest(retained).equals(row.getString("sha256")),"actual synced original GTK wire bytes retained");
-            boolean progress=row.getString("kind").equals("progress");ReadingRecord actual=NativeReadingProduct.selected(store,key("txt"),row.getString("annotation_id"),rid,progress,control());
-            need(actual.readable()&&actual.missingParents==0&&actual.capture.parser.equals("3.41.0"),"actual selected GTK record is complete and parser preserved");
-            NativeReadingSdk.Match found=resolve(store,book("txt"),actual.capture);
+            boolean progress=row.getString("kind").equals("progress");ReadingRecord actual=NativeReadingProduct.selected(store,key(role),row.getString("annotation_id"),rid,progress,control());
+            need(actual.readable()&&actual.missingParents==0&&actual.capture.parser.equals("3.41.0")&&actual.capture.bookKey.equals(row.getString("book_key")),"actual selected GTK record is complete and parser preserved");
+            String mode=row.getString("mode");int expectedMode=mode.equals("reflow_global")?1:mode.equals("epub_chapter")?2:mode.equals("fixed_page")?3:0;need(actual.capture.mode==expectedMode,"original location mode retained");
+            if(expectedMode==2)need(actual.capture.unit==row.getLong("part")&&actual.capture.partPath.equals(row.getString("part_path")),"original EPUB route retained");
+            if(expectedMode==3)need(actual.capture.unit==row.getLong("page")&&actual.capture.pageId.equals(row.getString("page_id")),"original fixed page identity retained");
+            NativeReadingSdk.Match found=resolve(store,book(role),actual.capture);
             need(found.found()&&found.start==row.getLong("start")&&found.end==row.getLong("end")&&Arrays.deepEquals(found.recaptured.bytes(),actual.capture.bytes()),"actual Android SDK independently resolves exact GTK selector");
-            resolutionRows.put(new JSONObject().put("revision_id",rid).put("found",true).put("start",found.start).put("end",found.end));
-        }return true;});need(snapshot().equals(before),"read-only reverse resolve preserves SDK and outbox");
+            resolutionRows.put(new JSONObject().put("revision_id",rid).put("role",role).put("kind",row.getString("kind")).put("mode",expectedMode).put("found",true).put("start",found.start).put("end",found.end));
+        }return true;});need(snapshot().equals(before),"read-only reverse resolve preserves SDK and outbox");}
     }
 ''' + needle)
 s = s.replace('phase.equals("sender")||phase.equals("incoming")||phase.equals("missing-parent")',

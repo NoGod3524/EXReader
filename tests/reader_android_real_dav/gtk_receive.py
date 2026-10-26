@@ -56,6 +56,75 @@ def open_account():
 def field(key, value):
     host.key('alt+' + key, 'ctrl+a');host.paste(value)
 
+def records_state():
+    parser = configparser.ConfigParser(interpolation=None);parser.read(host.observe)
+    return dict(parser['reading_records']) if parser.has_section('reading_records') else {}
+
+def wait_records(predicate):
+    end = time.monotonic() + 60
+    while time.monotonic() < end:
+        state = records_state()
+        if state and state['running'] == '0' and predicate(state): return state
+        time.sleep(.05)
+    raise TimeoutError('GTK record controls: ' + repr(records_state()))
+
+def edit_record(shortcut, body):
+    actions = int(records_state()['actions']);host.key(shortcut)
+    end = time.monotonic() + 30
+    while time.monotonic() < end:
+        entry = next((node for node in bus.walk(app) if bus.name(node) == 'Reading record text' and
+                      bus.role(node) == 'text' and bus.states(node).get('showing')), None)
+        if entry: break
+        time.sleep(.05)
+    else: raise TimeoutError('GTK record text input missing')
+    rect = bus.extents(entry);assert rect and rect['width'] > 4 and rect['height'] > 4
+    command('xdotool', 'mousemove', '--sync', rect['x'] + rect['width'] // 2, rect['y'] + rect['height'] // 2)
+    command('xdotool', 'click', '1');host.paste(body);host.key('alt+s')
+    wait_records(lambda s: int(s['actions']) >= actions + 2)
+
+def create_reverse(original):
+    role = original['role']
+    before = {r[0] for r in sql('SELECT revision_id FROM reader_revisions')}
+    command('xdotool', 'windowactivate', '--sync', host.window)
+    if role != 'cbz':
+        host.key('F7', 'ctrl+Home', 'ctrl+shift+Right')
+        selection = host.wait(lambda s: s['selected'] > 0, timeout=60)
+        assert selection['reader_visible'] == 1
+    host.key('ctrl+shift+r')
+    state = wait_records(lambda s: s['visible'] == '1')
+    if role != 'cbz':
+        assert state['has_range'] == '1' and int(state['range_end']) > int(state['range_start']), state
+    else:
+        assert state['has_range'] == '0', state
+    window = command('xdotool', 'search', '--onlyvisible', '--name', '^Reading records$').splitlines()[-1]
+    command('xdotool', 'windowactivate', '--sync', window)
+    actions = int(state['actions']);host.key('alt+s')
+    wait_records(lambda s: int(s['actions']) > actions and s['progress_state'] == '4')
+    edit_record('alt+a', 'GTK reverse bookmark ' + role)
+    if role != 'cbz':
+        edit_record('alt+h', 'GTK reverse highlight ' + role)
+    rows = sql("SELECT revision_id,CAST(body_json AS BLOB) FROM reader_revisions WHERE entity_kind IN ('progress','annotation')")
+    created = [(rid, bytes(wire)) for rid, wire in rows if rid not in before]
+    assert len(created) == (2 if role == 'cbz' else 3), (role, len(created))
+    records = []
+    for rid, wire in created:
+        envelope = json.loads(wire); location = envelope['payload']['location']
+        assert envelope['payload']['book_key'] == original['book_key']
+        assert location['parser_version'] == '3.41.0'
+        start, end = location['selector']['start'], location['selector']['end']
+        kind = 'progress' if envelope['entity_kind'] == 'progress' else ('highlight' if end > start else 'bookmark')
+        if kind != 'progress': assert envelope['payload']['text'] == 'GTK reverse ' + kind + ' ' + role
+        if kind == 'highlight': assert end > start
+        target = output / (rid + '.json');target.write_bytes(wire)
+        records.append({'id': rid, 'file': target.name, 'sha256': hashlib.sha256(wire).hexdigest(),
+                        'role': role, 'kind': kind, 'book_key': original['book_key'],
+                        'mode': location['mode'], 'part': location.get('part'), 'part_path': location.get('part_path'),
+                        'page': location.get('page'), 'page_id': location.get('page_id'),
+                        'annotation_id': envelope['payload'].get('annotation_id', ''), 'start': start, 'end': end})
+    assert {row['kind'] for row in records} == ({'progress', 'bookmark'} if role == 'cbz' else {'progress', 'bookmark', 'highlight'})
+    host.key('alt+F4');wait_records(lambda s: s['visible'] == '0')
+    return records
+
 try:
     end = time.monotonic() + 30
     while time.monotonic() < end:
@@ -81,7 +150,8 @@ try:
     assert projected['projection_status'] == '0', projected
     host.key('alt+F4'); ready(lambda s: s['visible'] == '0' and s['session_present'] == '0')
     expected = {r['revision_id']: r for r in manifest['reading_records']}
-    for original in sorted(manifest['originals'], key=lambda row: row['role'] == 'txt'):
+    reverse = []
+    for original in manifest['originals']:
         role = original['role']
         bookrow = next(row for row in manifest['revisions'] if row['entity_kind'] == 'book' and row['book_key'] == original['book_key'])
         title = json.loads((bundle / bookrow['file']).read_bytes())['payload']['title']
@@ -107,59 +177,13 @@ try:
         wanted = {key for key, row in expected.items() if row['role'] == role}
         assert set(found) == wanted and int(opened['reading_rows']) == len(wanted) and opened['reading_more'] == '0', opened
         result['books'].append({'role': role, 'book_key': original['book_key'], 'sdk_book_id': mapped(), 'resolutions': found})
+        reverse.extend(create_reverse(original))
     result['actual_desktop_receive'] = True
-    # The last book is the Android-sent TXT. Create new records through the
-    # real GTK controls, then upload them with the same live account session.
-    before = {r[0] for r in sql('SELECT revision_id FROM reader_revisions')}
-    command('xdotool', 'windowactivate', '--sync', host.window);host.key('ctrl+shift+r')
-    def records_state():
-        parser = configparser.ConfigParser(interpolation=None);parser.read(host.observe)
-        return dict(parser['reading_records']) if parser.has_section('reading_records') else {}
-    def wait_records(predicate):
-        end = time.monotonic() + 60
-        while time.monotonic() < end:
-            state = records_state()
-            if state and state['running'] == '0' and predicate(state): return state
-            time.sleep(.05)
-        raise TimeoutError('GTK record controls: ' + repr(records_state()))
-    wait_records(lambda s: s['visible'] == '1')
-    window = command('xdotool', 'search', '--onlyvisible', '--name', '^Reading records$').splitlines()[-1]
-    command('xdotool', 'windowactivate', '--sync', window)
-    actions = int(records_state()['actions']);host.key('alt+s')
-    wait_records(lambda s: int(s['actions']) > actions and s['progress_state'] == '4')
-    actions = int(records_state()['actions']);host.key('alt+a')
-    end = time.monotonic() + 30
-    while time.monotonic() < end:
-        entry = next((node for node in bus.walk(app) if bus.name(node) == 'Reading record text' and
-                      bus.role(node) == 'text' and bus.states(node).get('showing')), None)
-        if entry: break
-        time.sleep(.05)
-    else: raise TimeoutError('GTK bookmark text input missing')
-    rect = bus.extents(entry);assert rect and rect['width'] > 4 and rect['height'] > 4
-    command('xdotool', 'mousemove', '--sync', rect['x'] + rect['width'] // 2, rect['y'] + rect['height'] // 2)
-    command('xdotool', 'click', '1');host.paste('GTK actual reverse bookmark');host.key('alt+s')
-    wait_records(lambda s: int(s['actions']) >= actions + 2)
-    rows = sql("SELECT revision_id,CAST(body_json AS BLOB) FROM reader_revisions WHERE entity_kind IN ('progress','annotation')")
-    created = [(rid, bytes(wire)) for rid, wire in rows if rid not in before]
-    assert len(created) == 2
-    reverse = []
-    for rid, wire in created:
-        envelope = json.loads(wire); location = envelope['payload']['location']
-        assert envelope['payload']['book_key'] == next(r['book_key'] for r in manifest['originals'] if r['role'] == 'txt')
-        if envelope['entity_kind'] == 'annotation': assert envelope['payload']['text'] == 'GTK actual reverse bookmark'
-        assert location['parser_version'] == '3.41.0'
-        target = output / (rid + '.json');target.write_bytes(wire)
-        reverse.append({'id': rid, 'file': target.name, 'sha256': hashlib.sha256(wire).hexdigest(),
-                        'kind': envelope['entity_kind'], 'book_key': envelope['payload']['book_key'],
-                        'annotation_id': envelope['payload'].get('annotation_id', ''),
-                        'start': location['selector']['start'], 'end': location['selector']['end']})
-    assert {r['kind'] for r in reverse} == {'progress', 'annotation'}
-    host.key('alt+F4');wait_records(lambda s: s['visible'] == '0')
     open_account();field('u', os.environ['INTEROP_USER']);field('p', os.environ['INTEROP_PASSWORD'])
     host.key('alt+h', 'alt+a');ready(lambda s: s['bound'] == '1' and s['has_password'] == '1')
     generation = int(account()['session_generation']);host.key('alt+s')
     sent = ready(lambda s: int(s['session_generation']) > generation and s['session_state'] in ('4','5'), 300)
-    assert sent['session_state'] == '4' and int(sent['pushed']) >= 2, sent
+    assert sent['session_state'] == '4' and int(sent['pushed']) >= len(reverse), sent
     result['reverse_records'] = reverse
     result['gtk_reverse_uploaded'] = True
     result['accepted'] = True
