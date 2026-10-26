@@ -20,13 +20,19 @@ final class FeaturesUITests: XCTestCase {
     private func tap(_ id: String) {
         let scroll = e("features.scroll")
         let scrollTarget = id.hasPrefix("features.") && !["features.close", "features.refresh", "features.share"].contains(id)
-        for _ in 0..<12 {
+        for _ in 0..<24 {
             let target = e(id)
             let inViewport = !scrollTarget || !scroll.exists || (target.exists && scroll.frame.contains(CGPoint(x: target.frame.midX, y: target.frame.midY)))
             if target.exists && inViewport && target.isHittable { break }
             if scrollTarget && scroll.exists {
-                if target.exists && target.frame.midY < scroll.frame.midY { scroll.swipeDown(velocity: .slow) }
-                else { scroll.swipeUp(velocity: .slow) }
+                let above = target.exists && target.frame.midY < scroll.frame.midY
+#if os(macOS)
+                scroll.scroll(byDeltaX: 0, deltaY: above ? 140 : -140)
+#else
+                let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: above ? 0.3 : 0.7))
+                let end = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: above ? 0.7 : 0.3))
+                start.press(forDuration: 0.1, thenDragTo: end)
+#endif
             }
         }
         XCTAssertTrue(wait {
