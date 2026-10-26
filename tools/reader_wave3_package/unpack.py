@@ -137,6 +137,7 @@ def main(argv=None):
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     print(json.dumps({'target': args.target, 'files': len(files), 'entry': entry,
+                      'entry_sha256': files[entry]['sha256'], 'source_sha': manifest['source_sha'],
                       'archive_sha256': digest, 'into': str(into)}, indent=2))
     return 0
 

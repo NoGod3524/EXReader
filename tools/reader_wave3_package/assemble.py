@@ -119,6 +119,8 @@ def main(argv=None):
     print(json.dumps({'target': args.target, 'archive': str(archive), 'bytes': outer['archive']['bytes'],
                       'sha256': outer['archive']['sha256'], 'files': len(covered),
                       'entry': outer['entry'], 'source_sha': args.source_sha,
+                      'entry_sha256': covered.get(outer['entry'], {}).get('sha256'),
+                      'sdk_version': args.sdk_version, 'producer': outer.get('producer'),
                       'instructions_sha256': covered[delivery.INSTRUCTIONS]['sha256']}, indent=2))
     return 0
 
