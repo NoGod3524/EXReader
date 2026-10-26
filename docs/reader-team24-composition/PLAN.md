@@ -642,3 +642,20 @@ Both expire 2027-01-24T21:14:14Z. This remains independent source evidence;
 it does not establish a real provider, physical second device, final composed
 source or other-platform organization sync. A later status-text correction
 requires its own source-bound validation before admission.
+
+## Windows organization host source admission
+
+Candidate `1be614da31240ee588d519024586bb494a4d4604` completed
+[40402982430/1](https://github.com/NoGod3524/EXReader/actions/runs/40402982430):
+Windows host job `121853397544` and independent artifact verification job
+`121857541514` both succeeded. This retains the cloud import regression and
+checks organization, conflict/dependency reporting, delete/restore, edit-intent
+blocking, cancellation/resumption and original-byte readback as described for
+the previous candidate. The two host profiles used the same local HTTPS test
+service. Artifact `12690565682` is 54,319,823 bytes, SHA-256
+`2a257c48a490fa5f58a2b5c846447215f4bf98a102c19806e2ac12d74eb4871b`;
+summary `12691140138` is 4,501 bytes, SHA-256
+`24b808a223763b1f3cc9b0036fe7dd44d6b29f6d5d4e973d3a7e21794f0f6309`.
+Both expire 2027-01-24T21:16:38Z. Eight exact candidate paths are admitted;
+source admission does not establish the resulting combined-source regression,
+other platforms, a physical second device or a production WebDAV provider.
