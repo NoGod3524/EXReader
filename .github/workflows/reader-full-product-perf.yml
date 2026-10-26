@@ -22,7 +22,7 @@ jobs:
       - name: Check performance tools and preserve original frozen gates
         shell: bash
         run: |
-          python -m py_compile tests/reader_perf_full_windows/bind.py tests/reader_perf_windows/verify_composition.py tests/reader_perf_windows/perf_windows.py tests/reader_perf_windows/diagnose_txt_import.py
+          python -m py_compile tests/reader_perf_full_windows/*.py tests/reader_perf_windows/verify_composition.py tests/reader_perf_windows/perf_windows.py tests/reader_perf_windows/diagnose_txt_import.py
           git diff --exit-code a19fef7d7cdb0be90b0e54b92910502016c33df9 HEAD -- .github/workflows/reader-perf-windows.yml tests/reader_perf_windows/verify_perf_windows.py
       - name: Build, test and package the real full C09 Windows host
         shell: pwsh
@@ -41,12 +41,12 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          python tests/reader_perf_windows/diagnose_txt_import.py --package build/c09/unzipped/EXReader --seed build/full-perf-seed/seed_shelf.exe --output build/full-perf-txt --runs 3 2>&1 | tee build/full-perf-logs/txt.log
+          python tests/reader_perf_full_windows/diagnose.py --package build/c09/unzipped/EXReader --seed build/full-perf-seed/seed_shelf.exe --output build/full-perf-txt --runs 3 2>&1 | tee build/full-perf-logs/txt.log
       - name: Observe actual full-package native controls and reading
         shell: bash
         run: |
           set -o pipefail
-          python tests/reader_perf_windows/perf_windows.py --package build/c09/unzipped/EXReader --seed build/full-perf-seed/seed_shelf.exe --output build/full-perf-windows --cohorts cold_shelf,warm_shelf,reading,import,import_epub --launches-per-cohort 12 --txt-diagnostic build/full-perf-txt/diagnosis.json 2>&1 | tee build/full-perf-logs/measurement.log
+          python tests/reader_perf_full_windows/measure.py --package build/c09/unzipped/EXReader --seed build/full-perf-seed/seed_shelf.exe --output build/full-perf-windows --cohorts cold_shelf,warm_shelf,reading,import,import_epub --launches-per-cohort 12 --txt-diagnostic build/full-perf-txt/diagnosis.json 2>&1 | tee build/full-perf-logs/measurement.log
       - name: Verify complete same-source evidence and bind to the full package
         if: always()
         shell: bash
@@ -70,5 +70,6 @@ jobs:
             build/c09/logs/
             build/full-perf-logs/
             build/full-perf-txt/
+            build/full-perf-txt-work/template/library.sqlite
             build/full-perf-windows/
           if-no-files-found: warn
