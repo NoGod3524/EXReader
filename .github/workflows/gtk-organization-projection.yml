@@ -144,6 +144,32 @@ jobs:
             trap "kill $wm || true" EXIT
             python3 tests/linux_host/check_account_ui.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-original-receive-ui --receive-fixtures build/account-receive-fixtures --reading-probe build/account-reading-probe/reading-v2-probe --inspect-consumer build/account-inspect/received-sdk-inspect
           '
+      - name: Retrieve prior run evidence for identity verification
+        uses: actions/download-artifact@v4
+        with:
+          name: gtk-organization-projection-40392950450-1
+          run-id: 40392950450
+          github-token: ${{ github.token }}
+          path: build/prior-evidence
+      - name: Verify both account reports and executable identity
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          results = []
+          for root, source, run in [(Path('build/prior-evidence'), 'deb2b907840a67aeaeae53de76acb45f84a9af99', '40392950450'), (Path('build'), os.environ['GITHUB_SHA'], os.environ['GITHUB_RUN_ID'])]:
+              package = json.loads((root/'account-package/build.json').read_text())
+              reports = [json.loads((root/name/'result.json').read_text()) for name in ('account-ui','account-original-receive-ui')]
+              identity = package['files']['bin/exreader-linux']
+              assert package['source_sha'] == source and package['sdk_version'] == '3.41.0' and package['abi'] == 1
+              for report, count in zip(reports, (47,46)):
+                  assert report['accepted'] and report['count'] == count and report['source_sha'] == source and report['run_id'] == run and report['attempt'] == '1' and report['program_sha256'] == identity
+              results.append({'source_sha':source,'run_id':run,'program_sha256':identity,'new_checks':47,'original_checks':46})
+          current = hashlib.sha256(Path('build/account-package/EXReader-Linux/bin/exreader-linux').read_bytes()).hexdigest()
+          assert current == results[-1]['program_sha256']
+          Path('build/account-logs/account-identities.json').write_text(json.dumps(results,indent=2))
+          print(json.dumps(results))
+          PY
       - name: Preserve twenty product five fixed twenty-four shelf fourteen metadata fifteen collections twenty-seven
         run: |
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
@@ -153,7 +179,7 @@ jobs:
             python3 tools/check_linux_host.py --payload build/account-package/EXReader-Linux --output build/account-original
             python3 tests/reader_catalog/check_gtk_product.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --output build/account-product-ui
             python3 tools/check_linux_host_regressions.py --payload build/account-package/EXReader-Linux --consumer build/account-desktop/gtk-host --output build/account-regressions
-            python3 tests/linux_host/check_fixed_ui.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --product-evidence build/account-product-ui --output build/account-fixed-ui
+            python3 tests/linux_host/check_fixed_ui.py --sdk-version 3.41.0 --payload build/account-package/EXReader-Linux --original-evidence build/account-original --product-evidence build/account-product-ui --output build/account-fixed-ui
             python3 tests/linux_host/check_shelf_ui.py --payload build/account-package/EXReader-Linux --output build/account-shelf
             python3 tests/linux_host/check_metadata_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-metadata-ui
             python3 tests/linux_host/check_collections_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-collections-ui
