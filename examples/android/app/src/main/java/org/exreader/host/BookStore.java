@@ -19,6 +19,7 @@ final class BookStore implements AutoCloseable {
     void searchOwner(){if(Thread.currentThread()!=sdkOwner)throw new IllegalStateException("Search requires the existing SDK owner");}
     private final NativeLibrary library;
     private final CatalogStore catalog;
+    private final android.content.SharedPreferences bookRequests;
     private boolean metadataRepairPending;
     private final OrganizationStore organization;
     OrganizationStore organization() { return organization; }
@@ -38,6 +39,7 @@ final class BookStore implements AutoCloseable {
         }
         catalog = openedCatalog;
         library = openedLibrary;
+        bookRequests = context.getSharedPreferences("sync-requests", Context.MODE_PRIVATE);
         organization = new OrganizationStore(this,context.getSharedPreferences("organization",Context.MODE_PRIVATE));
         try { repairMissingMappings(); }
         catch (RuntimeException | Error error) {
@@ -110,8 +112,15 @@ final class BookStore implements AutoCloseable {
     }
 
     void finalizeImport(VerifiedSource source) {
-        try { catalog.attach(source); }
+        try { catalog.attach(source); ensureOriginalRevision(source); }
         catch (RuntimeException error) { metadataRepairPending = true; throw error; }
+    }
+
+    private void ensureOriginalRevision(VerifiedSource source) {
+        if (!"0".equals(NativeCatalog.selection(catalog.nativeOwner(),"book",source.key)[0])) return;
+        String[] ids=NativeCatalog.prepareCreate(bookRequests,"book-"+source.key);
+        if(catalog.bootstrap(source,ids[0],new String[0]).status!=NativeCatalog.Result.OK)
+            throw new IllegalStateException("Book original identity could not be prepared");
     }
 
     NativeCatalog.Result bootstrapBook(long id,String revision,String[] expected,HostTask task) throws IOException {
@@ -153,8 +162,13 @@ final class BookStore implements AutoCloseable {
         }
         for (NativeLibrary.Book book : books) {
             try {
-                if (!catalog.hasLocalBook(book.id))
-                    catalog.attach(verifySource(book, null, 0, new HostTask(() -> false)));
+                boolean missing=!catalog.hasLocalBook(book.id);
+                CatalogStore.ShelfBook local=missing?null:catalog.localShelfBook(book.id);
+                if(missing||(local!=null&&"0".equals(NativeCatalog.selection(catalog.nativeOwner(),"book",local.key.bookKey)[0])) {
+                    VerifiedSource source=verifySource(book, null, 0, new HostTask(() -> false));
+                    if(missing)catalog.attach(source);
+                    ensureOriginalRevision(source);
+                }
             } catch (IOException | RuntimeException error) {
                 metadataRepairPending = true;
                 Log.w("EXRHost", "Metadata repair pending for SDK book " + book.id, error);
