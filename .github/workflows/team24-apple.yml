@@ -169,4 +169,6 @@ jobs:
               for i, line in enumerate(lines):
                   if 'error:' in line:
                       print('\n'.join(lines[max(0, i-160):i+90]))
+                  if 'Swipe ' in line or 'Tap "features.' in line:
+                      print('\n'.join(lines[max(0, i-3):i+5]))
           PY
