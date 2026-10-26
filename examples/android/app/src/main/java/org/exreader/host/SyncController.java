@@ -21,7 +21,10 @@ final class SyncController {
         void prepareOriginals(HostTask task,Runnable done,Consumer<Throwable> failed);
         void receive(NativeSync.RemoteBook book,File cached,HostTask task,Consumer<Long> done,Consumer<Throwable> failed);
     }
-    interface Listener {void update(String status,String root,List<NativeSync.RemoteBook> books,boolean busy);}
+    interface Listener {
+        void update(String status,String root,List<NativeSync.RemoteBook> books,boolean busy);
+        default void view(String[][] rows){}
+    }
     private static SyncController instance;
     static synchronized SyncController get(Context context){if(instance==null)instance=new SyncController(context.getApplicationContext());return instance;}
     private final ScheduledExecutorService worker=Executors.newSingleThreadScheduledExecutor(r->new Thread(r,"reader-sync-controls"));
@@ -33,6 +36,7 @@ final class SyncController {
     private long session,epoch;
     private boolean preparing,receiving,pollQueued;
     private HostTask sdkTask;
+    private volatile String[][] view;
     private String status="就绪",accountNotice="";
     private int state=NativeSync.CLOSED;
     private SyncController(Context context){
@@ -42,7 +46,8 @@ final class SyncController {
     void attach(Listener value){worker.execute(()->{listener=value;publish();});}
     void detach(Listener value){worker.execute(()->{if(listener==value){listener=null;closeOwned();}});}
     private boolean busy(){return preparing||receiving||state==NativeSync.RUNNING||state==NativeSync.CANCELLING||state==NativeSync.CLOSING;}
-    private void publish(){Listener target=listener;if(target==null)return;String message=accountNotice.isEmpty()?status:accountNotice,root=account.root();boolean active=busy();List<NativeSync.RemoteBook> rows=Collections.unmodifiableList(new ArrayList<>(books));ui.post(()->{if(listener==target)target.update(message,root,rows,active);});}
+    private void captureView(){if(!BuildConfig.READER_WAVE3){return;}if(session==0){view=null;return;}try{view=NativeSync.view(session,product.getAbsolutePath());}catch(Throwable failure){view=new String[0][];}}
+    private void publish(){Listener target=listener;if(target==null)return;captureView();final String[][] shown=view;String message=accountNotice.isEmpty()?status:accountNotice,root=account.root();boolean active=busy();List<NativeSync.RemoteBook> rows=Collections.unmodifiableList(new ArrayList<>(books));ui.post(()->{if(listener==target){target.update(message,root,rows,active);target.view(shown);}});}
     private void error(Throwable error){status=error instanceof HostTask.Cancelled?"已取消，可重试":error.getMessage()==null?"操作未完成，可重试":error.getMessage();publish();}
     void configure(String root,byte[] secret,boolean remember){byte[] copy=secret.clone();worker.execute(()->{
         try{closeOwned();int code=account.configure(root,copy,remember);accountNotice=code==CredentialStore.OK?(remember?"凭据已安全保存":"仅本次使用凭据"):code==CredentialStore.UNAVAILABLE?"安全存储不可用，可选择仅本次使用":"凭据保存失败";publish();}

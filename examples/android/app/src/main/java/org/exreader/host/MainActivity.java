@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Single-activity Android host. All SDK access runs on one worker thread; the UI
  * only receives immutable page snapshots and never touches a native handle.
  */
-public final class MainActivity extends Activity implements ReaderView.Listener,SyncController.Host,SearchPanel.Host,NavigationPanel.Host,ReadingPanel.Host,PreferencesPanel.Host {
+public final class MainActivity extends Activity implements ReaderView.Listener,SyncController.Host,SearchPanel.Host,NavigationPanel.Host,ReadingPanel.Host,PreferencesPanel.Host,Wave3Host {
     private static final String TAG = "EXRHost";
     private static final Object IMPORT_LOCK = new Object();
     private static final Object PROGRESS_LOCK = new Object();
@@ -80,6 +80,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     private NativeNavigation navigation;
     private ReadingPanel readingPanel;
     private PreferencesPanel preferencesPanel;
+    private FontPanel fontPanel;
+    private AnnotationPanel annotationPanel;
+    private OriginalExportPanel originalPanel;
+    private JumpPanel jumpPanel;
+    private NativeFonts fonts; // Worker-owned; closed on the worker after every layout.
     private volatile ReadingPreferences readingPreferences;
     private volatile boolean pageThemeOriginal=true;
     private volatile long themeRevision;
@@ -219,6 +224,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     store = new BookStore(getApplicationContext(), new File(getFilesDir(), "library.db"));
                 }
                 if (store.metadataRepairPending()) postStatus("Metadata repair pending; originals retained");
+                if (BuildConfig.READER_WAVE3) {
+                    // Interrupted SAF copies leave only staging files; originals and stores are never touched here.
+                    File staging = new File(getFilesDir(), "wave3-staging");
+                    File[] stale = new File[0];
+                    if (staging.isDirectory()) { File[] kinds = staging.listFiles(); stale = kinds == null ? stale : kinds; }
+                    for (File kind : stale) { File[] leftovers = kind.isDirectory() ? kind.listFiles() : new File[]{kind}; if (leftovers != null) for (File leftover : leftovers) if (leftover.isFile() && !leftover.delete()) Log.w(TAG, "stale staging file remains"); }
+                    try { fontLibrary(); } catch (Throwable error) { postStatus("本地字体不可用，使用默认字体：" + message(error)); }
+                }
             } catch (Throwable error) {
                 postStatus("Library error: " + message(error));
                 return;
@@ -281,14 +294,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         if(BuildConfig.READER_NAVIGATION)navigationPanel=new NavigationPanel(this,this);
         if(BuildConfig.READER_READING)readingPanel=new ReadingPanel(this,this);
         if(BuildConfig.READER_PREFERENCES)preferencesPanel=new PreferencesPanel(this,this);
+        if(BuildConfig.READER_WAVE3){fontPanel=new FontPanel(this,this);annotationPanel=new AnnotationPanel(this,this);originalPanel=new OriginalExportPanel(this,this);jumpPanel=new JumpPanel(this,this);}
     }
 
     private void wireActions() {
         findViewById(R.id.more_button).setOnClickListener(view->new android.app.AlertDialog.Builder(this)
-                .setTitle("More").setItems(BuildConfig.READER_SYNC?new String[]{"Organize","同步"}:new String[]{"Organize"},(dialog,which)->{if(which==0)organizationPanel.show(0);else syncPanel.show();}).show());
+                .setTitle("More").setItems(BuildConfig.READER_WAVE3?new String[]{"Organize","同步","本地字体"}:BuildConfig.READER_SYNC?new String[]{"Organize","同步"}:new String[]{"Organize"},(dialog,which)->{if(which==0)organizationPanel.show(0);else if(which==1)syncPanel.show();else if(operation==0&&!pageBusy)fontPanel.show();}).show());
         bookList.setOnItemLongClickListener((parent,view,position,id)->{
             if(operation!=0||pageBusy||id<=0)return true;
-            new android.app.AlertDialog.Builder(this).setItems(new String[]{"Organize book"},(dialog,which)->organizationPanel.show(id)).show();return true;
+            final String title=catalogShelf.cachedBook(id)==null?"":catalogShelf.cachedBook(id).title;
+            new android.app.AlertDialog.Builder(this).setItems(BuildConfig.READER_WAVE3?new String[]{"Organize book","导出原件"}:new String[]{"Organize book"},(dialog,which)->{if(which==0)organizationPanel.show(id);else originalPanel.start(id,title);}).show();return true;
         });
         importButton.setOnClickListener(view -> {
             if(imports.isCopying()){imports.cancelStaging();setStatus(imports.isCopying()?"Canceling import...":"Import canceled");}
@@ -302,11 +317,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         rebuildView.setOnClickListener(view -> {
             saveInstancePrefs();recreate();
         });
-        View readerMore=findViewById(R.id.reader_more);readerMore.setVisibility(BuildConfig.READER_SEARCH||BuildConfig.READER_NAVIGATION||BuildConfig.READER_READING||BuildConfig.READER_PREFERENCES?View.VISIBLE:View.GONE);
+        View readerMore=findViewById(R.id.reader_more);readerMore.setVisibility(BuildConfig.READER_SEARCH||BuildConfig.READER_NAVIGATION||BuildConfig.READER_READING||BuildConfig.READER_PREFERENCES||BuildConfig.READER_WAVE3?View.VISIBLE:View.GONE);
         if((BuildConfig.READER_SEARCH||BuildConfig.READER_NAVIGATION)&&!BuildConfig.DEBUG)rebuildView.setVisibility(View.GONE);
-        readerMore.setOnClickListener(view->{ArrayList<String> actions=new ArrayList<>();if(BuildConfig.READER_PREFERENCES)actions.add("阅读设置");if(BuildConfig.READER_SEARCH)actions.add("书内搜索");if(BuildConfig.READER_NAVIGATION)actions.add("目录 / 按页入口");if(BuildConfig.READER_READING)actions.add("阅读记录");new AlertDialog.Builder(this).setTitle("阅读更多操作").setItems(actions.toArray(new String[0]),(dialog,which)->{
+        readerMore.setOnClickListener(view->{ArrayList<String> actions=new ArrayList<>();if(BuildConfig.READER_PREFERENCES)actions.add("阅读设置");if(BuildConfig.READER_SEARCH)actions.add("书内搜索");if(BuildConfig.READER_NAVIGATION)actions.add("目录 / 按页入口");if(BuildConfig.READER_READING)actions.add("阅读记录");if(BuildConfig.READER_WAVE3){actions.add("标注导入 / 导出");actions.add("位置历史");}new AlertDialog.Builder(this).setTitle("阅读更多操作").setItems(actions.toArray(new String[0]),(dialog,which)->{
             if(currentBook==null||current==null||operation!=0||pageBusy){setStatus("请先完成当前阅读操作");return;}
-            String action=actions.get(which);if(action.equals("阅读设置"))preferencesPanel.show();else if(action.equals("书内搜索"))searchPanel.show(currentBook.id);else if(action.equals("目录 / 按页入口"))navigationPanel.show(currentBook.id);else{readingPanel.close();readingFrame=current;readingSelection=readerView.getSelection();readingPanel.show(currentBook.id,readingSelection!=null&&readingSelection.end>readingSelection.start);}
+            String action=actions.get(which);if(action.equals("阅读设置"))preferencesPanel.show();else if(action.equals("书内搜索"))searchPanel.show(currentBook.id);else if(action.equals("目录 / 按页入口"))navigationPanel.show(currentBook.id);else if(action.equals("标注导入 / 导出"))annotationPanel.show(currentBook.id,currentBook.title);else if(action.equals("位置历史"))jumpPanel.show(currentBook.id);else{readingPanel.close();readingFrame=current;readingSelection=readerView.getSelection();readingPanel.show(currentBook.id,readingSelection!=null&&readingSelection.end>readingSelection.start);}
         }).show();});
         backButton.setOnClickListener(view -> leaveReader());
         fontDown.setOnClickListener(view -> changeFont(-1));
@@ -554,6 +569,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     setStatus("Opened " + target.title);
                     applyPage(gen, result, restored);
                     refreshNotesCount();
+                    if (BuildConfig.READER_WAVE3) ui.post(() -> landed(NativeWave3.JH_PAGE));
                 });
             } catch (Throwable error) {
                 taskFailed(gen, "Could not open " + resolvedTitle + ": ", error);
@@ -669,7 +685,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         final float scale = zoom;
         runPage(task -> isFixed ? fixed.load(fixed.index() + delta, scale, task) :
                 (delta > 0 ? reflow.next(task) : reflow.previous(task)),
-                () -> {}, delta > 0 ? "End of book" : "Start of book");
+                () -> { if (BuildConfig.READER_WAVE3) ui.post(() -> landed(NativeWave3.JH_PAGE)); }, delta > 0 ? "End of book" : "Start of book");
     }
 
     private interface PageAction { PageLoad run(HostTask task) throws Exception; }
@@ -817,6 +833,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             closed = true;
         }
         if (closed) Log.i(TAG, "handle close book=" + sessionBookId);
+        if (BuildConfig.READER_WAVE3 && closed && store != null) {
+            try { NativeWave3.clear(store.productOwner()); }
+            catch (Throwable error) { Log.i(TAG, "jump history clear failed: " + message(error)); }
+        }
         sessionBookId = 0;
     }
 
@@ -1032,6 +1052,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if(BuildConfig.READER_WAVE3&&requestCode>=1101&&requestCode<=1105){wave3Result(requestCode,resultCode,data);return;}
         if (requestCode != REQUEST_IMPORT) return;
         if(BuildConfig.DEBUG)Log.i(TAG,"system import result request="+requestCode+" result="+resultCode
                 +" data="+(data!=null&&data.getData()!=null)+" flags="+(data==null?0:data.getFlags())
@@ -1517,12 +1538,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         if(searchPanel!=null)searchPanel.close();
         if(navigationPanel!=null)navigationPanel.close();
         if(syncPanel!=null)syncPanel.background();
+        closeWave3Panels();
         super.onStop();
         saveInstancePrefs();
     }
 
     @Override public void onBackPressed() {
         if(preferencesPanel!=null&&preferencesPanel.visible()){preferencesPanel.close();return;}
+        if(closeVisibleWave3Panel())return;
         if(readingPanel!=null&&readingPanel.visible()){readingPanel.close();return;}
         if(navigationPanel!=null&&navigationPanel.visible()){navigationPanel.close();return;}
         if(searchPanel!=null&&searchPanel.visible()){searchPanel.close();return;}
@@ -1545,6 +1568,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         if(searchPanel!=null)searchPanel.close();
         if(navigationPanel!=null)navigationPanel.close();
         if(syncPanel!=null)syncPanel.close();
+        closeWave3Panels();
         if(organizationPanel!=null)organizationPanel.close();
         if (shelfMetrics!=null) shelfMetrics.close();
         if (catalogShelf!=null) catalogShelf.close();
@@ -1555,7 +1579,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         worker = null;
         if (service != null) {
             service.execute(() -> {
-                try { closeSessionsLocked(); }
+                try { closeSessionsLocked(); closeFonts(); }
                 finally {
                     if (store != null) { store.close(); store = null; }
                     Log.i(TAG, "worker shutdown complete");
@@ -1641,6 +1665,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
     @Override public void readingDiscard(HostTask task,Runnable done,java.util.function.Consumer<Throwable> failed){readingCall(task,()->{task.check();readingRequests().clear();return true;},ignored->done.run(),failed);}
     @Override public void navigateReading(long book,NativeReadingSdk.Match match){
+        navigateRecorded(book,match,"已跳转到阅读记录",()->{if(BuildConfig.READER_WAVE3)ui.post(()->landed(NativeWave3.JH_TOC));});
+    }
+    private void navigateRecorded(long book,NativeReadingSdk.Match match,String done,Runnable accepted){
         if(!match.found()||currentBook==null||currentBook.id!=book||current==null||operation!=0||pageBusy||match.unit<0||match.unit>Integer.MAX_VALUE||match.start<0||match.end<match.start)return;final float scale=zoom;final boolean isFixed=current.fixed;
         runPage(task->{
             if(!readingBook(book,task).equals(match.recaptured.bookKey))throw new IOException("Reading original changed before navigation");
@@ -1648,7 +1675,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             PageLoad load=isFixed?fixed.load((int)location.unit,scale,task):reflow.seekReading(location,task);
             try{if(load!=null){if(isFixed&&fixed.cbz()&&(!location.recaptured.pageId.equals(load.snapshot.fixedPageId)||!readingBook(book,task).equals(location.recaptured.bookKey)))throw new IOException("Rendered CBZ page/source changed before publication");load.snapshot.highlightStart=location.recaptured.start;load.snapshot.highlightEnd=location.recaptured.end;}return load;}
             catch(Exception|Error error){if(load!=null)load.close();throw error;}
-        },()->setStatus("已跳转到阅读记录"),"阅读位置不可用");
+        },()->{setStatus(done);accepted.run();},"阅读位置不可用");
     }
 
     private void closeDirectoryNative(){if(navigation!=null){navigation.close();navigation=null;}}
@@ -1671,7 +1698,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         NativeNavigation.Result target=destination.result;
         if((target.status!=NativeNavigation.OK&&target.status!=NativeNavigation.PART_ONLY)||currentBook==null||currentBook.id!=destination.book||current==null||operation!=0||pageBusy||target.part<0||target.part>Integer.MAX_VALUE||target.offset<0)return;
         final boolean isFixed=current.fixed;final float scale=zoom;
-        runPage(task->{BookStore.VerifiedSource source=store.verifySource(destination.book,null,0,task);if(!(source.key+"@exreader-sdk-"+NativeNavigation.nativeParser()).equals(destination.key))throw new IOException("目录原件已改变");return isFixed?fixed.load((int)target.part,scale,task):reflow.seekNavigation(destination,task);},()->setStatus("已跳转到目录目标"),"目录目标不可用");
+        runPage(task->{BookStore.VerifiedSource source=store.verifySource(destination.book,null,0,task);if(!(source.key+"@exreader-sdk-"+NativeNavigation.nativeParser()).equals(destination.key))throw new IOException("目录原件已改变");return isFixed?fixed.load((int)target.part,scale,task):reflow.seekNavigation(destination,task);},()->{setStatus("已跳转到目录目标");if(BuildConfig.READER_WAVE3)ui.post(()->landed(NativeWave3.JH_TOC));},"目录目标不可用");
     }
     private void closeSearchNative(){if(search!=null){search.close();search=null;}}
     @Override public void releaseSearch(){ExecutorService owner=worker;if(owner!=null&&!owner.isShutdown())owner.execute(this::closeSearchNative);}
@@ -1696,7 +1723,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         if(match.state!=NativeSearch.FOUND||currentBook==null||currentBook.id!=book||current==null||operation!=0||pageBusy)return;
         if(match.unit<0||match.unit>Integer.MAX_VALUE||match.start<0||match.end<match.start){setStatus("搜索位置不可用");return;}
         final boolean isFixed=current.fixed;final float scale=zoom;
-        runPage(task->{PageLoad load=isFixed?fixed.load((int)match.unit,scale,task):reflow.seekSearch(hit,match,task);if(load!=null){load.snapshot.highlightStart=match.start;load.snapshot.highlightEnd=match.end;}return load;},()->setStatus("已跳转到搜索结果"),"搜索位置不可用");
+        runPage(task->{PageLoad load=isFixed?fixed.load((int)match.unit,scale,task):reflow.seekSearch(hit,match,task);if(load!=null){load.snapshot.highlightStart=match.start;load.snapshot.highlightEnd=match.end;}return load;},()->{setStatus("已跳转到搜索结果");if(BuildConfig.READER_WAVE3)ui.post(()->landed(NativeWave3.JH_SEARCH));},"搜索位置不可用");
     }
     @Override public void prepareOriginals(HostTask task,Runnable done,java.util.function.Consumer<Throwable> failed){
         ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
@@ -1827,5 +1854,229 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     @Override public void onSelectModeChanged(boolean enabled) {
         selectButton.setText(enabled ? "Selecting" : "Select");
         setStatus(enabled ? "Select mode on" : "Select mode off");
+    }
+
+    // ---- reviewed annotation / font / original-export / jump-history modules ------------------
+
+    private static final class SinkFailure extends RuntimeException { SinkFailure(Exception cause) { super(cause); } }
+
+    private File wave3Directory(String name) throws IOException {
+        File directory = new File(getFilesDir().getCanonicalFile(), name);
+        if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("无法创建目录 " + name);
+        return directory;
+    }
+
+    private void closeWave3Panels() {
+        if (fontPanel != null) fontPanel.close();
+        if (annotationPanel != null) annotationPanel.close();
+        if (originalPanel != null) originalPanel.close();
+        if (jumpPanel != null) jumpPanel.close();
+    }
+
+    private boolean closeVisibleWave3Panel() {
+        for (Wave3Dialog panel : new Wave3Dialog[]{fontPanel, annotationPanel, originalPanel, jumpPanel}) {
+            if (panel != null && panel.visible()) { panel.close(); return true; }
+        }
+        return false;
+    }
+
+    private void wave3Result(int request, int result, Intent data) {
+        Uri uri = result == RESULT_OK && data != null ? data.getData() : null;
+        if (uri == null) { setStatus("已取消选择"); return; }
+        long book = currentBook == null ? 0 : currentBook.id;
+        String title = currentBook == null ? "" : currentBook.title;
+        if (request == FontPanel.REQUEST) fontPanel.picked(uri);
+        else if (request == AnnotationPanel.REQUEST_PICK) annotationPanel.picked(uri, book, title);
+        else if (request == AnnotationPanel.REQUEST_JSONL || request == AnnotationPanel.REQUEST_MARKDOWN) annotationPanel.saved(request, uri);
+        else if (request == OriginalExportPanel.REQUEST) originalPanel.saved(uri);
+    }
+
+    @Override public void pick(int request) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(DOWNLOADS_URI));
+        try { startActivityForResult(intent, request); }
+        catch (ActivityNotFoundException error) { setStatus("No system file picker is available"); }
+    }
+
+    @Override public void create(int request, String name, String mime) {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(mime).putExtra(Intent.EXTRA_TITLE, name);
+        try { startActivityForResult(intent, request); }
+        catch (ActivityNotFoundException error) { setStatus("No system file picker is available"); }
+    }
+
+    @Override public void discard(File staged) {
+        ExecutorService owner = worker;
+        Runnable remove = () -> { if (staged != null && staged.exists() && !staged.delete()) Log.w(TAG, "staged file remains: " + staged.getName()); };
+        if (owner != null && !owner.isShutdown()) owner.execute(remove); else remove.run();
+    }
+
+    @Override public void stage(Uri uri, String kind, long limit, HostTask task, java.util.function.Consumer<Wave3Files.Staged> done, java.util.function.Consumer<Throwable> failed) {
+        readingCall(task, () -> Wave3Files.stage(getContentResolver(), uri, wave3Directory("wave3-staging/" + kind), ".stage", limit, task), done, failed);
+    }
+
+    @Override public void saveTo(File source, Uri destination, HostTask task, java.util.function.Consumer<Long> done, java.util.function.Consumer<Throwable> failed) {
+        readingCall(task, () -> Wave3Files.copyOut(source, getContentResolver(), destination, task), done, failed);
+    }
+
+    @Override public void annotationExport(long book, HostTask task, java.util.function.Consumer<Wave3Host.Export> done, java.util.function.Consumer<Throwable> failed) {
+        readingCall(task, () -> {
+            String key = readingBook(book, task);
+            CatalogStore.ShelfBook local = store.localShelfBook(book);
+            File directory = wave3Directory("annotation-export/" + key.substring(key.indexOf(':') + 1));
+            File json = new File(directory, "annotations.jsonl"), markdown = new File(directory, "annotations.md");
+            NativeWave3.ExportResult stats = NativeWave3.export(store.productOwner(), key, local == null ? null : local.title, json.getPath(), markdown.getPath(), task);
+            return new Wave3Host.Export(stats, json, markdown);
+        }, done, failed);
+    }
+
+    @Override public void annotationImport(long book, File staged, boolean commit, String fingerprint, HostTask task, java.util.function.Consumer<NativeWave3.ImportResult> done, java.util.function.Consumer<Throwable> failed) {
+        final float size = fontSize;
+        readingCall(task, () -> {
+            String key = readingBook(book, task);
+            // Every non-delete head is resolved on this SDK owner; only a public FOUND lets the module proceed.
+            NativeWave3.FoundSink sink = capture -> {
+                try { return resolveReadingLocation(book, capture, size, task).found(); }
+                catch (RuntimeException error) { throw error; }
+                catch (Exception error) { throw new SinkFailure(error); }
+            };
+            final NativeWave3.ImportResult[] result = {null};
+            try {
+                if (commit) task.commit(() -> result[0] = NativeWave3.importFile(store.productOwner(), key, staged.getPath(), true, fingerprint, task, sink));
+                else result[0] = NativeWave3.importFile(store.productOwner(), key, staged.getPath(), false, null, task, sink);
+            } catch (SinkFailure error) { throw (Exception) error.getCause(); }
+            return result[0];
+        }, done, failed);
+    }
+
+    private NativeFonts fontLibrary() throws Exception {
+        if (fonts != null) return fonts;
+        File directory = wave3Directory("local-fonts");
+        IllegalStateException last = null;
+        for (int attempt = 0; attempt < 30 && fonts == null; attempt++) {
+            // A just-destroyed Activity may still hold the library's cross-process lock for a moment.
+            try { fonts = NativeFonts.open(directory.getPath()); }
+            catch (IllegalStateException busy) { last = busy; Thread.sleep(100); }
+        }
+        if (fonts == null) throw last == null ? new IOException("字体库不可用") : last;
+        String selected = prefs.getString("wave3Font", "");
+        if (!selected.isEmpty()) {
+            boolean present = false;
+            for (NativeFonts.Font font : fonts.list()) if (font.hash.equals(selected)) present = true;
+            if (!present) { selected = ""; prefs.edit().putString("wave3Font", "").apply(); }
+        }
+        FontSelection.attach(fonts.handle, selected);
+        return fonts;
+    }
+
+    private void closeFonts() {
+        if (fonts == null) return;
+        FontSelection.detach();
+        int status = fonts.close();
+        if (status != NativeFonts.OK) Log.w(TAG, "font library close status=" + status + " leases=" + NativeFonts.live());
+        fonts = null;
+    }
+
+    @Override public void fontList(HostTask task, java.util.function.Consumer<Wave3Host.Fonts> done, java.util.function.Consumer<Throwable> failed) {
+        readingCall(task, () -> { NativeFonts library = fontLibrary(); return new Wave3Host.Fonts(library.list(), FontSelection.hash()); }, done, failed);
+    }
+
+    @Override public void fontImport(File staged, String name, HostTask task, java.util.function.Consumer<NativeFonts.Imported> done, java.util.function.Consumer<Throwable> failed) {
+        readingCall(task, () -> fontLibrary().importFile(staged.getPath(), name, task), done, failed);
+    }
+
+    @Override public void fontSelect(String hash, HostTask task, Runnable done, java.util.function.Consumer<Throwable> failed) {
+        readingCall(task, () -> {
+            NativeFonts library = fontLibrary();
+            if (!hash.isEmpty()) {
+                int status = library.probe(hash);
+                if (status != NativeFonts.OK) throw new IOException("字体无法打开（" + status + "），选择未改变");
+            }
+            if (!prefs.edit().putString("wave3Font", hash).commit()) throw new IOException("字体选择保存失败");
+            FontSelection.select(hash);
+            return Boolean.TRUE;
+        }, ignored -> done.run(), failed);
+    }
+
+    @Override public void fontRemove(String hash, HostTask task, java.util.function.Consumer<Integer> done, java.util.function.Consumer<Throwable> failed) {
+        readingCall(task, () -> {
+            NativeFonts library = fontLibrary();
+            int status = library.remove(hash);
+            if (status == NativeFonts.OK && hash.equals(FontSelection.hash())) {
+                FontSelection.select("");
+                prefs.edit().putString("wave3Font", "").apply();
+            }
+            return status;
+        }, done, failed);
+    }
+
+    @Override public void originalExport(long book, HostTask task, java.util.function.Consumer<NativeOriginalExport.Result> done, java.util.function.Consumer<Throwable> failed) {
+        readingCall(task, () -> NativeOriginalExport.export(store.nativeLibrary().checked(), new long[]{book}, wave3Directory("original-export").getPath(), task), done, failed);
+    }
+
+    @Override public void jumpState(HostTask task, java.util.function.Consumer<NativeWave3.State> done, java.util.function.Consumer<Throwable> failed) {
+        readingCall(task, () -> NativeWave3.state(store.productOwner()), done, failed);
+    }
+
+    @Override public void jumpMove(long book, int direction, HostTask task, java.util.function.Consumer<NativeWave3.Move> done, java.util.function.Consumer<Throwable> failed) {
+        final float size = fontSize;
+        readingCall(task, () -> {
+            String key = readingBook(book, task);
+            long[] meta = new long[4];
+            ReadingCapture target = NativeWave3.jumpPeek(store.productOwner(), direction, meta);
+            int status = (int) meta[0];
+            if (status != NativeWave3.JH_OK || target == null) return new NativeWave3.Move(direction, status, 0, null);
+            long token = meta[1];
+            try {
+                if (!key.equals(target.bookKey)) throw new IOException("位置历史条目属于另一本书");
+                return new NativeWave3.Move(direction, status, token, resolveReadingLocation(book, target, size, task));
+            } catch (Exception | Error error) {
+                NativeWave3.jumpDrop(store.productOwner(), token);
+                throw error;
+            }
+        }, done, failed);
+    }
+
+    @Override public void navigateJump(long book, NativeWave3.Move move) {
+        final boolean back = move.direction == NativeWave3.BACK;
+        navigateRecorded(book, move.match, back ? "已返回上一位置" : "已前进到下一位置", () -> {
+            ExecutorService owner = worker;
+            if (owner == null || owner.isShutdown()) return;
+            owner.execute(() -> {
+                try {
+                    int status = NativeWave3.jumpComplete(store.productOwner(), move.token);
+                    if (status != NativeWave3.JH_OK) postStatus(status == NativeWave3.JH_STALE ? "位置历史已变化，历史游标未移动" : "位置历史未能完成（" + status + "）");
+                } catch (Throwable error) { postStatus("位置历史未能完成：" + message(error)); }
+            });
+        });
+    }
+
+    @Override public void dropJump(NativeWave3.Move move) {
+        ExecutorService owner = worker;
+        if (owner == null || owner.isShutdown() || move == null || move.token == 0) return;
+        owner.execute(() -> { try { NativeWave3.jumpDrop(store.productOwner(), move.token); } catch (Throwable ignored) { Log.i(TAG, "jump target drop skipped"); } });
+    }
+
+    /** Records one real landing after its page is shown; a refusal never disturbs reading. */
+    private void landed(int kind) {
+        if (!BuildConfig.READER_WAVE3 || destroyed || worker == null || current == null || currentBook == null || store == null) return;
+        final PageSnapshot frame = current;
+        final long book = currentBook.id;
+        final float size = fontSize;
+        final String path = prefs.getString("path_" + book, null);
+        worker.execute(() -> {
+            try {
+                HostTask task = new HostTask(() -> destroyed || sessionBookId != book);
+                task.check();
+                String key = readingBook(book, task);
+                if (frame.sourceKey == null || !key.equals(frame.sourceKey)) return;
+                ReadingCapture capture = NativeReadingSdk.capture(store, frame, frame.start, frame.start, fontBytes(), size, path == null ? null : new File(path), task, readingControl(task, "jump"));
+                NativeWave3.Jump result = NativeWave3.commit(store.productOwner(), kind, capture, capture.mode == ReadingCapture.FIXED ? 3 : 2);
+                Log.i(TAG, "jump history landing kind=" + kind + " status=" + result.status + " outcome=" + result.outcome + " count=" + result.count + " cursor=" + result.cursor);
+            } catch (HostTask.Cancelled ignored) {
+                Log.i(TAG, "jump history landing cancelled");
+            } catch (Throwable error) {
+                Log.i(TAG, "jump history landing skipped: " + message(error));
+            }
+        });
     }
 }
