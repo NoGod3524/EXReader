@@ -11,7 +11,7 @@
 | iPad | 通过 | 包体真实安装启动自检；同源 broad 13/13、search 4/4 | [12631884927](https://github.com/NoGod3524/EXReader/actions/runs/40275945447/artifacts/12631884927) |
 | Android | 未通过 | 四feature APK构建、解包、安装成功；原45走查为3 passed/42 failed/0 skipped | [12630259597](https://github.com/NoGod3524/EXReader/actions/runs/40275945447/artifacts/12630259597) |
 
-[同轮汇总索引 12632335985](https://github.com/NoGod3524/EXReader/actions/runs/40275945447/artifacts/12632335985) 内的 `delivery-index.json` 分列六目标 source/run/attempt、SDK、原 ZIP、实际入口及 `entry_sha256`、原始工件 ID/digest 和验收结果。每个目标另保存 `delivery/manifest.json`、`unpack.json`、`target.json`、原 ZIP 与失败证据。GitHub 外层工件 ZIP 摘要不代替原 delivery ZIP 或实际程序摘要。
+[同轮汇总索引 12632335985](https://github.com/NoGod3524/EXReader/actions/runs/40275945447/artifacts/12632335985) 内的 `delivery.json` 分列六目标 source/run/attempt、SDK、原 ZIP、实际入口及 `entry_sha256`、原始工件 ID/digest 和验收结果。每个目标另保存 `delivery/manifest.json`、`unpack.json`、`target.json`、原 ZIP 与失败证据。GitHub 外层工件 ZIP 摘要不代替原 delivery ZIP 或实际程序摘要。
 
 ## 原 ZIP 与程序身份
 
