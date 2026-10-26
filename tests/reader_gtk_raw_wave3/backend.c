@@ -258,6 +258,17 @@ int main(int argc,char **argv) {
   {
     size_t before=w3_count(reader);reader_result landed={0};
     pdf_book=w3_open(reader,READER_IMPORT,pdf,0,&landed);reader_result_free(&landed);
+    {
+      reader_rs_capture captured;exr_anchor anchor={0};exr_fixed_anchor fixed={0};exr_error capture_error={0};
+      size_t unit=reader->current.fixed_document ? reader->current.page:reader->current.part;
+      exr_status probe=records_capture(reader,&reader->current,unit,0,0,&captured,&anchor,&fixed,&capture_error);
+      printf("{\"info\":\"fixed_import\",\"count\":%zu,\"before\":%zu,\"history_code\":%d,\"page\":%zu,"
+             "\"fixed\":%d,\"capture\":%d,\"mode\":%d,\"exact\":%zu,\"prefix\":%zu,\"suffix\":%zu,"
+             "\"message\":\"%s\"}\n",(size_t)w3_count(reader),before,reader->w3_history_code,
+        (size_t)reader->current.page,reader->current.fixed_document?1:0,(int)probe,(int)captured.mode,
+        fixed.exact_size,fixed.prefix_size,fixed.suffix_size,capture_error.message);fflush(stdout);
+      exr_anchor_free(&anchor);exr_fixed_anchor_free(&fixed);
+    }
     REQUIRE(w3_count(reader)==before+1);
     {
       reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,before,&item,&record);
