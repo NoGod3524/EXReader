@@ -284,3 +284,15 @@ identity artifact `12681373580` is 1,958 bytes, SHA-256
 Both expire 2027-01-24T19:21:05Z. Original navigation and batch-import suites
 were not run in this GUI round; they remain separate unresolved regressions.
 Source admission is not a combined-product acceptance.
+
+## Windows cloud UI verification input
+
+The four independent verification files are pinned to source
+`0dd5a62603cbf4d90b28a5819bc54ab2bf0c26ba`. Run
+[40386732358/1](https://github.com/NoGod3524/EXReader/actions/runs/40386732358)
+passed its Windows build, native UI checks and same-run artifact authentication.
+The checks used an HTTPS WebDAV service on the Actions host and an independent
+installed SDK consumer to read the nine imported originals, including after
+failure and cancellation. This is ordinary-flow evidence for that source; it
+does not establish a real provider exchange, path-race safety or final combined
+product acceptance. The combined source must be run again.
