@@ -99,7 +99,7 @@ def main():
         expected=data['windows_original_sha256'] if a.phase=='gtk-first' else data['return_original_sha256']
         assert hashlib.sha256(readback.read_bytes()).hexdigest()==expected
         checks.append('gtk_public_sdk_reads_exact_windows_original')
-        data['checks_'+a.phase]=checks;relay.save(dav,a.out,a.phase,data);dav=None
+        data['checks_'+a.phase]=checks;data['program_'+a.phase]=identity;relay.save(dav,a.out,a.phase,data);dav=None
     finally:
         if host and host.process and host.process.poll() is None:host.process.kill();host.process.wait(timeout=15)
         if dav:dav.server.shutdown();dav.server.server_close();(a.out/'key.pem').unlink(missing_ok=True)

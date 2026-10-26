@@ -115,7 +115,7 @@ jobs:
           python3 tests/reader_reading_state/make_fixtures.py build/receive-fixtures
           cmake -S tests/reader_gtk_receive -B build/inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
           cmake --build build/inspect --parallel 4
-          cmake -S apps/reader/desktop -B build/desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON
+          cmake -S apps/reader/desktop -B build/desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_BUILD_GTK=ON -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON
           cmake --build build/desktop --parallel 4
           ctest --test-dir build/desktop --output-on-failure --no-tests=error
           python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.41.0 --binary build/desktop/gtk-host/exreader-linux --output build/package
@@ -243,6 +243,14 @@ jobs:
         with:
           name: windows-gtk-final-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/audit/gtk2
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/audit/windows-package
+      - uses: actions/download-artifact@v4
+        with:
+          name: gtk-windows-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/audit/gtk-package
       - name: Verify exact relayed bytes, real host operations and identities
         env:
           GH_TOKEN: ${{ github.token }}

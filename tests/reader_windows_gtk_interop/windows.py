@@ -99,7 +99,7 @@ def main():
             assert any(r['method']=='PUT' and '/revisions/' in r['path'] for r in dav.requests)
             assert any(r['method']=='PUT' and '/objects/' in r['path'] and digest in r['path'] for r in dav.requests)
             checks.append('windows_publishes_membership_change_and_second_original')
-        data['checks_'+a.phase]=checks
+        data['checks_'+a.phase]=checks;data['program_'+a.phase]=identity
         relay.save(dav,a.out,a.phase,data);dav=None
     except Exception:
         traceback.print_exc();raise
