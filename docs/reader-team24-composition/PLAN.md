@@ -900,6 +900,24 @@ and [40415259935/1](https://github.com/NoGod3524/EXReader/actions/runs/404152599
 The original failed result is retained; neither compatibility mode is accepted
 until its own run and evidence are checked.
 
+The 3.40 rerun `40415252185/1` built the frozen SDK and the combination
+host and passed the four version/feature refusal checks, but the original
+17-case ProductOwnerTest reported four failures before HostSyncTest was
+executed. Cloud-only inspection
+[40416663153/1](https://github.com/NoGod3524/EXReader/actions/runs/40416663153)
+authenticated original artifact `12695457660` (102,578,860 bytes,
+SHA-256 `704f92e9a7dc737d725a16b78e18da6f0fe392b67b83716999cd7b0cf2fbdc87`)
+and preserved the original instrumentation output. The failures are
+`membershipNeedsExplicitBookBootstrap`,
+`publicSdkBootstrapKeepsCurrentProductTitle`,
+`shelfAndSeriesMembershipOrder`, and
+`missingAndDeletedDependenciesRefused`. The old fixture calls
+`finalizeImport` before expecting no book revision or explicitly bootstrapping;
+the current host's `finalizeImport` now establishes the original book revision.
+This source-level contract mismatch needs a review of both the original command
+boundary and the new automatic-bootstrap behavior; no case has been granted by
+the failed run. The 3.41 run remains separate.
+
 Source `715fc865a9f063ae453c4d97e44f927772139fc3` then passed all six
 desktop jobs in [40413780626/1](https://github.com/NoGod3524/EXReader/actions/runs/40413780626).
 Its additional Linux export test confirmed an injected publication I/O failure
