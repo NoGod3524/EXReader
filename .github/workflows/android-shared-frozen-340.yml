@@ -1,0 +1,62 @@
+name: Android candidate shared frozen 3.40 regression
+on:
+  push:
+    branches: [codex/android-frozen-340]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frozen:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Admit exact composition source
+        run: python tools/reader_composition/guard.py --source "$GITHUB_SHA" --report build/frozen-source.json
+      - run: python -m pip install ninja==1.11.1.1
+      - name: Build the unchanged frozen 3.40 SDK
+        run: |
+          set -euo pipefail
+          mkdir -p build/s15-frozen-logs build/s15-frozen-src
+          git archive 9854061be331fe603a1822d9b2b36ee357154927 | tar -x -C build/s15-frozen-src
+          cd build/s15-frozen-src
+          cmake --preset reading-library 2>&1 | tee ../s15-frozen-logs/sdk-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee ../s15-frozen-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee ../s15-frozen-logs/sdk-install.log
+          cd "$GITHUB_WORKSPACE"
+          grep -q 'set(EXReader_VERSION "3.40.0")' build/s15-frozen-src/build/reading-library/stage/lib/cmake/EXReader/EXReaderConfig.cmake
+      - name: Run the original frozen SDK compatibility and package tests
+        run: |
+          set -euo pipefail
+          ws="$PWD"
+          python tests/reader_next_s15/make_fixtures.py build/s15-frozen-fixtures
+          python tests/reader_next_s15/check_frozen_sdk.py --sdk "$ws/build/s15-frozen-src/build/reading-library/stage" --module-src apps/reader/original-export --stage "$ws/build/s15-frozen-stage" --consumer "$ws/tests/reader_next_s15/consumer" --fixtures "$ws/build/s15-frozen-fixtures" --work "$ws/build/s15-frozen-work" --output "$ws/build/s15-frozen-work/frozen.json"
+      - name: Build the composed 3.41 SDK and module for provider-origin controls
+        run: |
+          set -euo pipefail
+          cmake --preset reading-library 2>&1 | tee build/s15-frozen-logs/composed-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/s15-frozen-logs/composed-build.log
+          cmake --install build/reading-library 2>&1 | tee build/s15-frozen-logs/composed-install.log
+          sdk="$PWD/build/reading-library/stage"
+          cmake -S apps/reader/original-export -B build/s15-preload-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$sdk" -DEXR_SDK_VERSION=3.41.0 -DCMAKE_INSTALL_PREFIX="$PWD/build/s15-preload-stage"
+          cmake --build build/s15-preload-module --parallel 4 --target install
+      - name: Run the original preloaded SDK origin controls
+        run: |
+          set -euo pipefail
+          python tests/reader_next_s15/check_existing_targets.py --sdk340 "$PWD/build/s15-frozen-src/build/reading-library/stage" --sdk341 "$PWD/build/reading-library/stage" --stage340 "$PWD/build/s15-frozen-stage" --stage341 "$PWD/build/s15-preload-stage" --module "$PWD/apps/reader/original-export" --output build/s15-frozen-work/target-provenance/result.json
+      - name: Preserve both SDK build logs, source identity and all results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-shared-frozen-340-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/frozen-source.json
+            build/s15-frozen-logs/
+            build/s15-frozen-work/
+          if-no-files-found: warn
