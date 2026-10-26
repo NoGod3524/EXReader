@@ -122,6 +122,9 @@ jobs:
         run: |
           set -o pipefail
           ws="$PWD/build/wave3"
+          python3 tests/webdav_android/fixture.py prepare --output "$ws/network-fixture"
+          mkdir -p tests/reader_host_session_android/debug/res/raw
+          cp "$ws/network-fixture/public/ca.crt" tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
           python3 tests/reader_wave3_c11/fixtures.py --output "$ws/fixtures"
           python3 tests/reader_android_navigation/fixtures.py "$ws/navigation-fixtures"
           python3 - <<'PY'

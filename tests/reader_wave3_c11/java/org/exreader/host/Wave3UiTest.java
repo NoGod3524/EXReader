@@ -220,6 +220,14 @@ public final class Wave3UiTest extends Instrumentation {
                 RuntimeException sentinel=new RuntimeException("ordinary cancellation callback failure");
                 try {NativeOriginalExport.export(library.checked(),new long[]{selected},directory.getAbsolutePath(),new HostTask(()->{throw sentinel;}));throw new AssertionError("ordinary exception was swallowed");}
                 catch(RuntimeException actual) {need(actual==sentinel,"ordinary Java exception identity preserved across JNI");}
+                JSONObject second=input.getJSONArray("books").getJSONObject(1);File secondSource=new File(context.getFilesDir(),"wave3-fixtures/"+second.getString("file"));
+                long next=library.importFile(secondSource.getAbsolutePath(),format(second.getString("format")),"Second cancellation original").id;
+                File published=new File(directory,original.getString("sha256")+"."+original.getString("format"));
+                NativeOriginalExport.Result partial=NativeOriginalExport.export(library.checked(),new long[]{selected,next},directory.getAbsolutePath(),new HostTask(published::isFile));
+                need(partial.status==NativeOriginalExport.CANCELLED&&partial.items.length==2,"second item cancellation returns both original receipts");
+                need(partial.items[0].saved()&&partial.items[0].book==selected&&partial.items[0].bytes==original.getLong("bytes")&&partial.items[0].sha.equals(original.getString("sha256")),"completed first original keeps its committed receipt and identity");
+                need(partial.items[1].book==next&&partial.items[1].status==NativeOriginalExport.CANCELLED&&!partial.items[1].committed,"remaining original is cancelled before publication");
+                need(published.isFile()&&hash(published).equals(original.getString("sha256")),"first complete original survives batch cancellation byte for byte");
             }
         });
     }
