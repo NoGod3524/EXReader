@@ -42,6 +42,7 @@ jobs:
           for n in 1 2 3 4 5 6; do
             if [ $((n % 2)) -eq 1 ]; then modes='baseline candidate'; else modes='candidate baseline'; fi
             for mode in $modes; do
+              if [ "$mode" = candidate ]; then export EXR_EXPECT_MODE=wal; else unset EXR_EXPECT_MODE; fi
               cp build/paired-evidence/library.sqlite "build/paired-evidence/$mode-$n.sqlite"
               "build/paired-$mode/startup_profile.exe" "build/paired-evidence/$mode-$n.sqlite" "build/paired-evidence/product-$mode-$n.sqlite" first 2>&1 | tee "build/paired-evidence/$mode-first-$n.json"
               "build/paired-$mode/startup_profile.exe" "build/paired-evidence/$mode-$n.sqlite" "build/paired-evidence/product-$mode-$n.sqlite" repeat 2>&1 | tee "build/paired-evidence/$mode-repeat-$n.json"
