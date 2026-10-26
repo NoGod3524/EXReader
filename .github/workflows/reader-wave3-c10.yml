@@ -153,18 +153,25 @@ jobs:
         run: |
           python3 tests/reader_gtk_compact/make_inputs.py build/compact-fixtures
           python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures
-          python3 tests/reader_gtk_search/make_search_fixtures.py build/gtk-search-fixtures
+          python3 tests/reader_gtk_drop_import/make_inputs.py tests/fixtures build/c10-drop-fixtures
+          python3 tests/reader_search/make_search_fixtures.py build/gtk-search-fixtures
           python3 tests/reader_gtk_search/make_inputs.py build/gtk-search-fixtures
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures
           python3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures
           python3 tests/reader_reading_commands/make_fixtures.py build/records-command-fixtures
           python3 tests/linux_host/generate_fixed.py build/c10-fixed-inputs
           mkdir -p build/wave3-backend/a build/wave3-backend/b build/wave3-backend/work
           chmod 700 build/wave3-backend/a build/wave3-backend/b
-          build/c10-desktop/gtk-host/reader-gtk-wave3-backend \
+          build/c10-desktop/reader-gtk-wave3-backend \
             "$PWD/build/wave3-backend/a/library.sqlite" "$PWD/build/wave3-backend/b/library.sqlite" \
             "$PWD/build/c10-package/EXReader-Linux/Reader.otf" "$PWD/tests/fixtures/fonts" \
             "$PWD/build/wave3-backend/work" 2>&1 | tee build/c10-logs/wave3-backend.log
+          python3 tests/reader_gtk_drop_import/check_backend.py \
+            --probe build/c10-desktop/reader-gtk-drop-backend \
+            --font build/c10-package/EXReader-Linux/Reader.otf --fixtures build/c10-drop-fixtures \
+            --output build/c10-drop-backend
       - name: Preserve the original forty-five compact checks with the five tools present
+        if: ${{ !cancelled() }}
         run: |
           mkdir -p build/gtk-atspi-client
           git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
@@ -179,6 +186,7 @@ jobs:
               --fixtures build/compact-fixtures --output build/c10-compact-ui
           '
       - name: Real five tool user flow on the compact host
+        if: ${{ !cancelled() }}
         run: |
           mkdir -p build/gtk-atspi-client
           git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
@@ -194,6 +202,7 @@ jobs:
               --font tests/fixtures/fonts/primary.ttf --output build/c10-wave3-ui
           '
       - name: Real G13 ten production fixes on the non-compact host
+        if: ${{ !cancelled() }}
         run: |
           mkdir -p build/gtk-atspi-client
           git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
@@ -208,6 +217,7 @@ jobs:
               --output build/c10-atspi-fixes
           '
       - name: Retained search directory records and import business suites
+        if: ${{ !cancelled() }}
         run: |
           mkdir -p build/gtk-atspi-client
           git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
@@ -218,16 +228,22 @@ jobs:
             trap "kill $wm || true" EXIT
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            failed=0
             /usr/bin/python3 tests/reader_gtk_search/check_ui.py --payload build/c10-package/EXReader-Linux \
-              --fixtures build/gtk-search-fixtures --fixed-inputs build/c10-fixed-inputs --output build/c10-search-ui
+              --fixtures build/gtk-search-fixtures --fixed-inputs build/c10-fixed-inputs --output build/c10-search-ui || failed=1
             /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/c10-package/EXReader-Linux \
-              --fixtures build/gtk-navigation-fixtures --fixed-inputs build/c10-fixed-inputs --output build/c10-navigation-ui
+              --fixtures build/gtk-navigation-fixtures --fixed-inputs build/c10-fixed-inputs --output build/c10-navigation-ui || failed=1
             /usr/bin/python3 tests/reader_gtk_reading_records/check_ui.py --payload build/c10-package/EXReader-Linux \
               --fixtures build/records-command-fixtures --output build/c10-records-ui \
-              --backend build/c10-desktop/gtk-host/reader-gtk-reading-records-backend
+              --backend build/c10-desktop/reader-gtk-reading-records-backend || failed=1
             /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/c10-package/EXReader-Linux \
               --fixtures build/gtk-batch-ui-fixtures --output build/c10-batch-ui \
-              --backend build/c10-desktop/gtk-host/reader-gtk-batch-import-backend
+              --backend build/c10-desktop/reader-gtk-batch-import-backend || failed=1
+            /usr/bin/python3 tests/reader_gtk_drop_import/check_ui.py --payload build/c10-package/EXReader-Linux \
+              --fixtures build/c10-drop-fixtures --output build/c10-drop-ui \
+              --backend build/c10-desktop/reader-gtk-drop-backend \
+              --native-source build/c10-desktop/reader-gtk-drop-native-source || failed=1
+            exit "$failed"
           '
       - name: Preserve source bound evidence and both packages
         if: always()
@@ -239,9 +255,11 @@ jobs:
             build/c10-package/
             build/c10-compact-package/
             build/c10-desktop/gtk-host/exreader-linux
-            build/c10-desktop/gtk-host/reader-gtk-wave3-backend
-            build/c10-desktop/gtk-host/reader-gtk-reading-records-backend
-            build/c10-desktop/gtk-host/reader-gtk-batch-import-backend
+            build/c10-desktop/reader-gtk-wave3-backend
+            build/c10-desktop/reader-gtk-reading-records-backend
+            build/c10-desktop/reader-gtk-batch-import-backend
+            build/c10-desktop/reader-gtk-drop-backend
+            build/c10-desktop/reader-gtk-drop-native-source
             build/c10-desktop/CMakeCache.txt
             build/c10-compact/CMakeCache.txt
             build/c10-desktop/Testing/Temporary/LastTest.log
@@ -254,6 +272,9 @@ jobs:
             build/c10-navigation-ui/
             build/c10-records-ui/
             build/c10-batch-ui/
+            build/c10-drop-ui/
+            build/c10-drop-backend/
+            build/c10-drop-fixtures/manifest.json
           if-no-files-found: error
 
   authenticate:
