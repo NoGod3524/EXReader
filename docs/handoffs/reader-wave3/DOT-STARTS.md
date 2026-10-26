@@ -1,29 +1,29 @@
-# Dot 六包启动说明
+# Dot 六包启动说明（仅 Dot 原生云端，不使用 Codex）
 
-每包各开一个独立会话。不要在主工作区切分支或覆盖其他包。
+每包各开一个 Dot 云端独立会话。使用 Dot 自己的工具，不调用任何本机或云端 Codex，也不通过会创建 Codex 会话的电脑任务接口执行。不要求使用用户电脑上的 C: 路径。
 
 ## D15 Apple 三端五模块原生接入交付
 
-执行 NoGod3524/EXReader 固定交接提交 `e4e175c8234301f903e043f3101613c7d5408f34` 中 `docs/handoffs/reader-wave3/D15.md` 和同目录 `README.md` 的完整任务。先读任务书；从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建独立 worktree `C:/Users/Oscar/exreader-wave3-20261025/worktrees/D15` 和分支 `codex/reader-wave3-d15`（如已存在先核对，不重置）。完整负责实现/驱动修复、接入与云端验收，修自己的编译、业务、报告问题；仅自有路径，所有构建/语法/测试/截图/工件解析只在Actions，本地只源码/文档/Git。功能分支push已授权，不反复问；最多三完整轮，保留旧失败、不拼旧结果。不派新agent、不cpuse，不PR/默认分支/tag/Release。最终中文交回真实完整SHA、run/attempt、原ZIP/程序身份、限定通过和剩余缺口。
+执行 NoGod3524/EXReader 固定交接提交 `f8808893f8deafaaeed042ec58ad64a9acc56465` 中 `docs/handoffs/reader-wave3/D15.md` 和同目录 `README.md`。使用 Dot 自己的云端原生工作区/工具；不得创建、调用、转交 Codex 会话（本机和云端都不允许）。从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建本包独立云端仓库/工作树和分支 `codex/reader-wave3-d15`，不操作用户主工作区，不声称在 C: 路径执行。完整负责本包的实现/驱动、接入和返修；只写独占路径。云端工作区只用于源码/文档/Git；构建、语法、测试、夹具、截图和工件解析仍仅在 GitHub Actions。功能分支 push 已授权，最多三完整轮，保留旧失败，不派子代理，不用 cpuse，不开 PR、不改默认分支、不打 tag/Release。若 Dot 缺少原生源码/Git能力，报告该能力缺口，不自行改用 Codex。最后中文交回真实完整SHA、run/attempt、原工件身份和限定范围。
 
-## D16 修复 Apple 大字体验收驱动并交付完整三目标结果
+## D16 Apple 大字体验收驱动修复
 
-执行 NoGod3524/EXReader 固定交接提交 `e4e175c8234301f903e043f3101613c7d5408f34` 中 `docs/handoffs/reader-wave3/D16.md` 和同目录 `README.md` 的完整任务。先读任务书；从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建独立 worktree `C:/Users/Oscar/exreader-wave3-20261025/worktrees/D16` 和分支 `codex/reader-wave3-d16`（如已存在先核对，不重置）。完整负责实现/驱动修复、接入与云端验收，修自己的编译、业务、报告问题；仅自有路径，所有构建/语法/测试/截图/工件解析只在Actions，本地只源码/文档/Git。功能分支push已授权，不反复问；最多三完整轮，保留旧失败、不拼旧结果。不派新agent、不cpuse，不PR/默认分支/tag/Release。最终中文交回真实完整SHA、run/attempt、原ZIP/程序身份、限定通过和剩余缺口。
+执行 NoGod3524/EXReader 固定交接提交 `f8808893f8deafaaeed042ec58ad64a9acc56465` 中 `docs/handoffs/reader-wave3/D16.md` 和同目录 `README.md`。使用 Dot 自己的云端原生工作区/工具；不得创建、调用、转交 Codex 会话（本机和云端都不允许）。从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建本包独立云端仓库/工作树和分支 `codex/reader-wave3-d16`，不操作用户主工作区，不声称在 C: 路径执行。完整负责本包的实现/驱动、接入和返修；只写独占路径。云端工作区只用于源码/文档/Git；构建、语法、测试、夹具、截图和工件解析仍仅在 GitHub Actions。功能分支 push 已授权，最多三完整轮，保留旧失败，不派子代理，不用 cpuse，不开 PR、不改默认分支、不打 tag/Release。若 Dot 缺少原生源码/Git能力，报告该能力缺口，不自行改用 Codex。最后中文交回真实完整SHA、run/attempt、原工件身份和限定范围。
 
-## D17 修复 macOS 导入拒绝/取消回归的前置条件与全17项
+## D17 macOS 导入取消/拒绝回归
 
-执行 NoGod3524/EXReader 固定交接提交 `e4e175c8234301f903e043f3101613c7d5408f34` 中 `docs/handoffs/reader-wave3/D17.md` 和同目录 `README.md` 的完整任务。先读任务书；从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建独立 worktree `C:/Users/Oscar/exreader-wave3-20261025/worktrees/D17` 和分支 `codex/reader-wave3-d17`（如已存在先核对，不重置）。完整负责实现/驱动修复、接入与云端验收，修自己的编译、业务、报告问题；仅自有路径，所有构建/语法/测试/截图/工件解析只在Actions，本地只源码/文档/Git。功能分支push已授权，不反复问；最多三完整轮，保留旧失败、不拼旧结果。不派新agent、不cpuse，不PR/默认分支/tag/Release。最终中文交回真实完整SHA、run/attempt、原ZIP/程序身份、限定通过和剩余缺口。
+执行 NoGod3524/EXReader 固定交接提交 `f8808893f8deafaaeed042ec58ad64a9acc56465` 中 `docs/handoffs/reader-wave3/D17.md` 和同目录 `README.md`。使用 Dot 自己的云端原生工作区/工具；不得创建、调用、转交 Codex 会话（本机和云端都不允许）。从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建本包独立云端仓库/工作树和分支 `codex/reader-wave3-d17`，不操作用户主工作区，不声称在 C: 路径执行。完整负责本包的实现/驱动、接入和返修；只写独占路径。云端工作区只用于源码/文档/Git；构建、语法、测试、夹具、截图和工件解析仍仅在 GitHub Actions。功能分支 push 已授权，最多三完整轮，保留旧失败，不派子代理，不用 cpuse，不开 PR、不改默认分支、不打 tag/Release。若 Dot 缺少原生源码/Git能力，报告该能力缺口，不自行改用 Codex。最后中文交回真实完整SHA、run/attempt、原工件身份和限定范围。
 
-## D18 补齐 iPhone/iPad 导入拒绝后的真实存储变异验证
+## D18 iPhone/iPad 导入后存储验证
 
-执行 NoGod3524/EXReader 固定交接提交 `e4e175c8234301f903e043f3101613c7d5408f34` 中 `docs/handoffs/reader-wave3/D18.md` 和同目录 `README.md` 的完整任务。先读任务书；从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建独立 worktree `C:/Users/Oscar/exreader-wave3-20261025/worktrees/D18` 和分支 `codex/reader-wave3-d18`（如已存在先核对，不重置）。完整负责实现/驱动修复、接入与云端验收，修自己的编译、业务、报告问题；仅自有路径，所有构建/语法/测试/截图/工件解析只在Actions，本地只源码/文档/Git。功能分支push已授权，不反复问；最多三完整轮，保留旧失败、不拼旧结果。不派新agent、不cpuse，不PR/默认分支/tag/Release。最终中文交回真实完整SHA、run/attempt、原ZIP/程序身份、限定通过和剩余缺口。
+执行 NoGod3524/EXReader 固定交接提交 `f8808893f8deafaaeed042ec58ad64a9acc56465` 中 `docs/handoffs/reader-wave3/D18.md` 和同目录 `README.md`。使用 Dot 自己的云端原生工作区/工具；不得创建、调用、转交 Codex 会话（本机和云端都不允许）。从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建本包独立云端仓库/工作树和分支 `codex/reader-wave3-d18`，不操作用户主工作区，不声称在 C: 路径执行。完整负责本包的实现/驱动、接入和返修；只写独占路径。云端工作区只用于源码/文档/Git；构建、语法、测试、夹具、截图和工件解析仍仅在 GitHub Actions。功能分支 push 已授权，最多三完整轮，保留旧失败，不派子代理，不用 cpuse，不开 PR、不改默认分支、不打 tag/Release。若 Dot 缺少原生源码/Git能力，报告该能力缺口，不自行改用 Codex。最后中文交回真实完整SHA、run/attempt、原工件身份和限定范围。
 
-## D19 GTK 长驻生命周期完整第二阶段收口
+## D19 GTK 长驻生命周期第二阶段
 
-执行 NoGod3524/EXReader 固定交接提交 `e4e175c8234301f903e043f3101613c7d5408f34` 中 `docs/handoffs/reader-wave3/D19.md` 和同目录 `README.md` 的完整任务。先读任务书；从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建独立 worktree `C:/Users/Oscar/exreader-wave3-20261025/worktrees/D19` 和分支 `codex/reader-wave3-d19`（如已存在先核对，不重置）。完整负责实现/驱动修复、接入与云端验收，修自己的编译、业务、报告问题；仅自有路径，所有构建/语法/测试/截图/工件解析只在Actions，本地只源码/文档/Git。功能分支push已授权，不反复问；最多三完整轮，保留旧失败、不拼旧结果。不派新agent、不cpuse，不PR/默认分支/tag/Release。最终中文交回真实完整SHA、run/attempt、原ZIP/程序身份、限定通过和剩余缺口。
+执行 NoGod3524/EXReader 固定交接提交 `f8808893f8deafaaeed042ec58ad64a9acc56465` 中 `docs/handoffs/reader-wave3/D19.md` 和同目录 `README.md`。使用 Dot 自己的云端原生工作区/工具；不得创建、调用、转交 Codex 会话（本机和云端都不允许）。从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建本包独立云端仓库/工作树和分支 `codex/reader-wave3-d19`，不操作用户主工作区，不声称在 C: 路径执行。完整负责本包的实现/驱动、接入和返修；只写独占路径。云端工作区只用于源码/文档/Git；构建、语法、测试、夹具、截图和工件解析仍仅在 GitHub Actions。功能分支 push 已授权，最多三完整轮，保留旧失败，不派子代理，不用 cpuse，不开 PR、不改默认分支、不打 tag/Release。若 Dot 缺少原生源码/Git能力，报告该能力缺口，不自行改用 Codex。最后中文交回真实完整SHA、run/attempt、原工件身份和限定范围。
 
-## D20 Windows 实际高DPI与高对比度可用性缺口收口
+## D20 Windows 实际高DPI/高对比度
 
-执行 NoGod3524/EXReader 固定交接提交 `e4e175c8234301f903e043f3101613c7d5408f34` 中 `docs/handoffs/reader-wave3/D20.md` 和同目录 `README.md` 的完整任务。先读任务书；从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建独立 worktree `C:/Users/Oscar/exreader-wave3-20261025/worktrees/D20` 和分支 `codex/reader-wave3-d20`（如已存在先核对，不重置）。完整负责实现/驱动修复、接入与云端验收，修自己的编译、业务、报告问题；仅自有路径，所有构建/语法/测试/截图/工件解析只在Actions，本地只源码/文档/Git。功能分支push已授权，不反复问；最多三完整轮，保留旧失败、不拼旧结果。不派新agent、不cpuse，不PR/默认分支/tag/Release。最终中文交回真实完整SHA、run/attempt、原ZIP/程序身份、限定通过和剩余缺口。
+执行 NoGod3524/EXReader 固定交接提交 `f8808893f8deafaaeed042ec58ad64a9acc56465` 中 `docs/handoffs/reader-wave3/D20.md` 和同目录 `README.md`。使用 Dot 自己的云端原生工作区/工具；不得创建、调用、转交 Codex 会话（本机和云端都不允许）。从固定源码 `d263ce5228838ac90c0a0dc13a5193d4a7739681` 建本包独立云端仓库/工作树和分支 `codex/reader-wave3-d20`，不操作用户主工作区，不声称在 C: 路径执行。完整负责本包的实现/驱动、接入和返修；只写独占路径。云端工作区只用于源码/文档/Git；构建、语法、测试、夹具、截图和工件解析仍仅在 GitHub Actions。功能分支 push 已授权，最多三完整轮，保留旧失败，不派子代理，不用 cpuse，不开 PR、不改默认分支、不打 tag/Release。若 Dot 缺少原生源码/Git能力，报告该能力缺口，不自行改用 Codex。最后中文交回真实完整SHA、run/attempt、原工件身份和限定范围。
 
 
