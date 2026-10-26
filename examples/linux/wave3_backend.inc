@@ -208,6 +208,7 @@ static exr_status w3_font_use(linux_reader *reader,reader_session *next,const re
     g_strlcpy(hash,command->w3_hash,sizeof(hash));
   }
   exr_anchor point={0};exr_anchor_match match={0};size_t position=next->position;
+  next->font=command->font;
   exr_status status=capture(reader,next,position,position,&point,error);
   if(status==EXR_OK) {
     exr_font *previous=reader->font;
