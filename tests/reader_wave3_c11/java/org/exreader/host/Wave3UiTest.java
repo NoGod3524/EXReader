@@ -83,7 +83,11 @@ public final class Wave3UiTest extends Instrumentation {
     private void clickId(String value){until(node->id(node,value)&&node.isVisibleToUser()&&node.isEnabled(),this::tap,"click "+value,30000);}
     private void disabled(String label){until(node->node.isVisibleToUser()&&!node.isEnabled()&&text(node).equalsIgnoreCase(label),null,"disabled "+label,15000);}
     private String described(String value){String[] out={null};act(node->description(node,value),node->out[0]=text(node));return out[0];}
-    private void described(String value,String contains,long timeout){until(node->description(node,value)&&text(node).contains(contains),null,value+" containing "+contains,timeout);}
+    private void described(String value,String contains,long timeout){
+        try{until(node->description(node,value)&&text(node).contains(contains),null,value+" containing "+contains,timeout);}
+        catch(AssertionError missing){String observed;try{observed=described(value);}catch(Throwable unreadable){observed="<unreadable "+unreadable.getClass().getSimpleName()+">";}
+            throw new AssertionError(missing.getMessage()+"; observed "+value+"="+(observed==null?"<absent>":observed));}
+    }
     private void setText(String value,String field){until(node->description(node,field)&&node.isEnabled(),node->{Bundle args=new Bundle();args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);need(node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,args),"set "+field);},"set "+field,30000);}
     private JSONObject frame()throws Exception {
         List<AccessibilityWindowInfo> windows=getUiAutomation().getWindows();try{for(AccessibilityWindowInfo window:windows){
@@ -215,7 +219,7 @@ public final class Wave3UiTest extends Instrumentation {
                 long selected=library.importFile(source.getAbsolutePath(),format(original.getString("format")),"Cancellation original").id;
                 File directory=new File(context.getFilesDir(),"cancel-export");need(directory.mkdirs(),"fresh export directory");
                 NativeOriginalExport.Result cancelled=NativeOriginalExport.export(library.checked(),new long[]{selected},directory.getAbsolutePath(),new HostTask(()->true));
-                need(cancelled.status==NativeOriginalExport.CANCELLED,"cooperative cancellation returns the real receipt");
+                need(cancelled.status==NativeOriginalExport.CANCELLED,"cooperative cancellation returns the real receipt: status="+cancelled.status+" items="+cancelled.items.length+" format="+original.getString("format"));
                 for(NativeOriginalExport.Item item:cancelled.items)need(!item.committed,"cancel before processing committed no item");
                 RuntimeException sentinel=new RuntimeException("ordinary cancellation callback failure");
                 try {NativeOriginalExport.export(library.checked(),new long[]{selected},directory.getAbsolutePath(),new HostTask(()->{throw sentinel;}));throw new AssertionError("ordinary exception was swallowed");}

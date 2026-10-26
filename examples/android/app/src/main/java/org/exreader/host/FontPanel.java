@@ -14,6 +14,9 @@ import java.util.List;
 final class FontPanel extends Wave3Dialog {
     static final int REQUEST=1101;
     static final long LIMIT=16L*1024*1024+1;
+    /** Kept on its own line for the whole panel lifetime; states come and go above it. */
+    static final String HINT="字体仅用于 EPUB 阅读排版；选择后下次打开书籍生效";
+    private String hint="";
     private ListView list;private ArrayAdapter<String> adapter;private List<NativeFonts.Font> fonts=new ArrayList<>();private String selected="";private Button importButton,defaultButton,cancelButton;private boolean busy;
     private AlertDialog choice;
     FontPanel(android.app.Activity activity,Wave3Host host){super(activity,host);}
@@ -24,23 +27,25 @@ final class FontPanel extends Wave3Dialog {
         content.addView(list,new LinearLayout.LayoutParams(-1,dp(220)));
         list.setOnItemClickListener((parent,view,position,id)->{if(!busy&&position>=0&&position<fonts.size())choose(fonts.get(position));});
     }
-    void show(){open("本地字体","字体状态");controls(false);load("字体仅用于 EPUB 阅读排版；选择后下次打开书籍生效");}
+    void show(){hint=HINT;open("本地字体","字体状态");controls(false);load("");}
     @Override void released(){if(choice!=null){choice.dismiss();choice=null;}}
     private void controls(boolean value){busy=value;if(importButton==null)return;importButton.setEnabled(!value);defaultButton.setEnabled(!value);cancelButton.setEnabled(value);list.setEnabled(!value);}
+    /** Every state keeps the standing hint, so the panel never loses what a local font is for. */
+    private void say(String state){message(hint.isEmpty()?state:state+"\n"+hint);}
     private void load(String note) {
-        long stamp=request();controls(true);message("正在读取字体库");
-        host.fontList(task,state->post(stamp,()->{fonts=state.fonts;selected=state.selected;adapter.clear();for(NativeFonts.Font font:fonts)adapter.add((font.hash.equals(selected)?"✓ 使用中 · ":"")+font.label());adapter.notifyDataSetChanged();controls(false);message(fonts.isEmpty()?"尚未导入字体。"+note:fonts.size()+" 个本地字体。"+note);}),
-            error->post(stamp,()->{controls(false);message("字体库不可用："+reason(error));}));
+        long stamp=request();controls(true);say("正在读取字体库");
+        host.fontList(task,state->post(stamp,()->{fonts=state.fonts;selected=state.selected;adapter.clear();for(NativeFonts.Font font:fonts)adapter.add((font.hash.equals(selected)?"✓ 使用中 · ":"")+font.label());adapter.notifyDataSetChanged();controls(false);say((fonts.isEmpty()?"尚未导入字体。":fonts.size()+" 个本地字体。")+note);}),
+            error->post(stamp,()->{controls(false);say("字体库不可用："+reason(error));}));
     }
     private void pick(){if(busy)return;host.pick(REQUEST);}
     /** The system picker returned while the panel was closed with the stopped Activity. */
     void picked(Uri uri) {
-        show();long stamp=request();controls(true);message("正在复制所选字体");
+        show();long stamp=request();controls(true);say("正在复制所选字体");
         host.stage(uri,"fonts",LIMIT,task,staged->post(stamp,()->{
             host.fontImport(staged.file,Wave3Files.label(staged.name,"font",true),task,result->{host.discard(staged.file);post(stamp,()->{
                 load(result.ok()?(result.created!=0?"已导入 ":"已存在 ")+result.name+"（"+result.hash.substring(0,8)+"）":"字体未导入："+result.reason()+"，原有字体保留");
-            });},error->{host.discard(staged.file);post(stamp,()->{controls(false);message("字体未导入："+reason(error)+"，原有字体保留");});});
-        },()->host.discard(staged.file)),error->post(stamp,()->{controls(false);message("无法读取所选文件："+reason(error));}));
+            });},error->{host.discard(staged.file);post(stamp,()->{controls(false);say("字体未导入："+reason(error)+"，原有字体保留");});});
+        },()->host.discard(staged.file)),error->post(stamp,()->{controls(false);say("无法读取所选文件："+reason(error));}));
     }
     private void choose(NativeFonts.Font font) {
         long stamp=request();
@@ -53,17 +58,17 @@ final class FontPanel extends Wave3Dialog {
     private void select(String hash,String label) {
         long stamp=request();controls(true);
         host.fontSelect(hash,task,()->post(stamp,()->load(hash.isEmpty()?"已恢复默认字体，下次打开书籍生效":"已选择 "+label+"，下次打开书籍生效")),
-            error->post(stamp,()->{controls(false);message("未能切换字体："+reason(error));}));
+            error->post(stamp,()->{controls(false);say("未能切换字体："+reason(error));}));
     }
     private void confirmRemove(NativeFonts.Font font) {
         long stamp=request();
         choice=new AlertDialog.Builder(activity).setTitle("删除字体？").setMessage(font.label()+"\n正在使用的书籍排版不受影响，之后恢复默认字体。").setPositiveButton("删除",(d,w)->{
             if(!current(stamp))return;
-            controls(true);message("正在删除");
+            controls(true);say("正在删除");
             host.fontRemove(font.hash,task,code->post(stamp,()->{
                 if(code==NativeFonts.OK)load("已删除 "+font.name);
-                else{controls(false);message(code==NativeFonts.BUSY?"字体正被阅读页借用，请先退出阅读再删除":code==NativeFonts.COMMIT_UNCERTAIN?"删除结果不确定，请重新打开本面板核对":"未能删除（"+code+"）");}
-            }),error->post(stamp,()->{controls(false);message("未能删除："+reason(error));}));
+                else{controls(false);say(code==NativeFonts.BUSY?"字体正被阅读页借用，请先退出阅读再删除":code==NativeFonts.COMMIT_UNCERTAIN?"删除结果不确定，请重新打开本面板核对":"未能删除（"+code+"）");}
+            }),error->post(stamp,()->{controls(false);say("未能删除："+reason(error));}));
         }).setNegativeButton("返回",null).show();
     }
 }

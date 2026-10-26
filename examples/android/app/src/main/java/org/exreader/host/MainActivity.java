@@ -306,7 +306,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     private void wireActions() {
         findViewById(R.id.more_button).setOnClickListener(view->new android.app.AlertDialog.Builder(this)
-                .setTitle("More").setItems(BuildConfig.READER_WAVE3?new String[]{"Organize","同步","本地字体"}:BuildConfig.READER_SYNC?new String[]{"Organize","同步"}:new String[]{"Organize"},(dialog,which)->{if(which==0)organizationPanel.show(0);else if(which==1)syncPanel.show();else if(operation==0&&!pageBusy)fontPanel.show();}).show());
+                .setTitle("More").setItems(BuildConfig.READER_WAVE3?new String[]{"Organize","同步","本地字体"}:BuildConfig.READER_SYNC?new String[]{"Organize","同步"}:new String[]{"Organize"},(dialog,which)->{if(which==0)organizationPanel.show(0);else if(which==1)syncPanel.show();else fontPanel.show();}).show());
         bookList.setOnItemLongClickListener((parent,view,position,id)->{
             if(operation!=0||pageBusy||id<=0)return true;
             final String title=catalogShelf.cachedBook(id)==null?"":catalogShelf.cachedBook(id).title;
@@ -771,12 +771,27 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             setStatus("Font size limit");
             return;
         }
-        if(BuildConfig.READER_PREFERENCES){ReadingPreferences p=readingPreferences;preferencesApply(p.with(size,p.line,p.paragraph,p.margin,p.theme,p.direction,p.input,p.zoom),()->{},error->setStatus(message(error)));return;}
-        runPage(task -> reflow.setFontSize(size, task), () -> {
-            fontSize = size;
-            prefs.edit().putFloat("font", size).apply();
-            setStatus("Font size " + (int) size);
+        // The quick size control is an ordinary page request: it keeps the accepted
+        // position, exposes the loading/cancel path and reports the size it applied.
+        final float chosen = size;
+        runPage(task -> {
+            PageLoad load = reflow.setFontSize(chosen, task);
+            if (BuildConfig.READER_PREFERENCES) keepAppearanceSize(chosen, task);
+            return load;
+        }, () -> {
+            fontSize = chosen;
+            prefs.edit().putFloat("font", chosen).apply();
+            setStatus("Font size " + (int) chosen);
         }, "The book has no readable pages");
+    }
+
+    /** The appearance module owns the stored size, so it follows the size the reader now shows. */
+    private void keepAppearanceSize(float size, HostTask task) throws Exception {
+        ReadingPreferences value = readingPreferences;
+        if (value == null || value.font == size) return;
+        ReadingPreferences next = value.with(size, value.line, value.paragraph, value.margin, value.theme, value.direction, value.input, value.zoom);
+        NativePreferences.save(next, preferencesFile().getPath(), task);
+        readingPreferences = next;
     }
 
     private void changeZoom(int direction) {
