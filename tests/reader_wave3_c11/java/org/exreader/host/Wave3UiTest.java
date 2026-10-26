@@ -37,9 +37,21 @@ public final class Wave3UiTest extends Instrumentation {
     interface Check {void run()throws Exception;}
     @Override public void onCreate(Bundle args){super.onCreate(args);arguments=args;start();}
     static void need(boolean condition,String message){if(!condition)throw new AssertionError(message);}
-    private void check(String name,Check action)throws Exception {
+    private String firstFailure,firstFailedCheck;private int failedChecks;
+    /** Each check records its own real outcome; one failure never hides the rest. */
+    private void check(String name,Check action){
         active=name;Bundle report=new Bundle();report.putString("class",getClass().getName());report.putString("test",name);sendStatus(1,report);
-        action.run();checks.put(new JSONObject().put("name",name).put("pass",true));sendStatus(0,report);
+        try{
+            action.run();
+            checks.put(new JSONObject().put("name",name).put("pass",true));
+        }catch(Throwable error){
+            failedChecks++;
+            try{checks.put(new JSONObject().put("name",name).put("pass",false).put("failure_class",error.getClass().getName()).put("failure",error.getMessage()==null?"":error.getMessage()));}catch(Exception ignored){}
+            if(firstFailure==null){firstFailedCheck=name;firstFailure=android.util.Log.getStackTraceString(error);}
+            try{capture("failure-"+name);}catch(Throwable captureError){error.addSuppressed(captureError);}
+            android.util.Log.i("EXRWave3","check failed "+name+": "+error);
+        }
+        sendStatus(0,report);
     }
     private AccessibilityNodeInfo find(AccessibilityNodeInfo node,Predicate<AccessibilityNodeInfo> match){
         if(node==null)return null;if(match.test(node))return node;
@@ -118,12 +130,16 @@ public final class Wave3UiTest extends Instrumentation {
     private int count(String table)throws Exception {
         try(SQLiteDatabase product=SQLiteDatabase.openDatabase(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath(),null,SQLiteDatabase.OPEN_READONLY);Cursor cursor=product.rawQuery("SELECT COUNT(*) FROM "+table,null)){cursor.moveToFirst();return cursor.getInt(0);}
     }
+    private int annotationCount()throws Exception {
+        try(SQLiteDatabase product=SQLiteDatabase.openDatabase(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath(),null,SQLiteDatabase.OPEN_READONLY);
+            Cursor cursor=product.rawQuery("SELECT COUNT(*) FROM reader_revisions WHERE entity_kind='annotation'",null)){cursor.moveToFirst();return cursor.getInt(0);}
+    }
     private String sdkState()throws Exception {
         JSONArray rows=new JSONArray();try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
             NativeLibrary.Book[] items=library.books();java.util.Arrays.sort(items,(a,b)->Long.compare(a.id,b.id));
             for(NativeLibrary.Book value:items){JSONObject row=new JSONObject().put("id",value.id).put("title",value.title).put("position",value.position);
                 if(!value.fixed()&&!(value.format==NativeLibrary.FORMAT_EPUB&&library.bounded(value.id)))row.put("progress",new JSONArray(library.progress(value.id)));
-                if(!value.fixed())row.put("notes",library.notes(value.id).size());rows.put(row);}
+                if(!value.fixed())row.put("notes",library.notes(value.id).length);rows.put(row);}
         }
         return rows.toString();
     }
@@ -145,7 +161,7 @@ public final class Wave3UiTest extends Instrumentation {
         check("wave3_surfaces_present_and_no_leases",()->{
             need(BuildConfig.READER_WAVE3&&BuildConfig.READER_SELECTOR_BYTES_CANDIDATE&&BuildConfig.READER_SYNC&&BuildConfig.READER_READING,"formal wave3 feature build");
             need(NativeFonts.live()==0,"no font lease before any layout");
-            until(node->id(node,"import_button")&&node.isVisibleToUser(),null,"shelf visible",60000);
+            shelf();
             until(node->id(node,"more_button")&&node.isEnabled(),this::tap,"shelf More",30000);need(present(node->text(node).equals("本地字体")),"本地字体 menu item");need(present(node->text(node).equals("同步")),"同步 menu item");
             getUiAutomation().performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK);
         });
@@ -226,6 +242,17 @@ public final class Wave3UiTest extends Instrumentation {
             need(count("reader_revisions")==revisions&&count("reader_outbox")==outbox,"the status view did not ack, retry or write any revision");closeDialog();
         });
     }
+    private void toc()throws Exception {
+        check("toc_directory_entry_reaches_real_chapter",()->{
+            open("epub");long token=frame().getLong("accepted_token");
+            readerMore("目录 / 按页入口");
+            described("目录状态","项",120000);
+            until(node->node.isVisibleToUser()&&node.isEnabled()&&text(node).contains("Chapter 2"),this::tap,"directory chapter row",30000);
+            settledFrame(token);
+            until(node->id(node,"reader_status")&&text(node).contains("已跳转到目录目标"),null,"toc landing",60000);
+            capture("toc-landing");
+        });
+    }
     private void rotation()throws Exception {
         check("rotation_keeps_selected_font_and_releases_leases",()->{
             open("epub");String before=bitmap(frame());need(NativeFonts.live()>=1,"selected font leased while reading");
@@ -241,7 +268,7 @@ public final class Wave3UiTest extends Instrumentation {
     }
     private void restore()throws Exception {
         check("annotation_preview_confirm_import_creates_records",()->{
-            open("txt");int revisions=count("reader_revisions");need(revisions==0,"fresh store: nothing to duplicate");
+            open("txt");int revisions=count("reader_revisions");need(annotationCount()==0,"fresh store: no annotation to duplicate");
             ActivityMonitor picker=stub(Intent.ACTION_OPEN_DOCUMENT,sandbox("wave3-fixtures/annotations.jsonl"));readerMore("标注导入 / 导出");click("导入标注文件…");
             described("标注状态","预览（尚未写入）",120000);removeMonitor(picker);String preview=described("标注状态");need(preview.contains("将新增 2")||preview.contains("将新增 3"),"preview reports what would be created: "+preview);need(preview.contains("位置已确认"),"public FOUND confirmed every head: "+preview);
             need(count("reader_revisions")==revisions,"preview wrote nothing");need(present(node->node.isVisibleToUser()&&node.isEnabled()&&text(node).equals("确认导入")),"explicit confirm offered");capture("annotation-preview");
@@ -271,15 +298,17 @@ public final class Wave3UiTest extends Instrumentation {
         try{
             AccessibilityServiceInfo service=getUiAutomation().getServiceInfo();readerMonitor=addMonitor(MainActivity.class.getName(),null,false);service.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS|AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;getUiAutomation().setServiceInfo(service);
             need(BuildConfig.READER_WAVE3,"wave3 feature-on formal app");input=new JSONObject(new String(Files.readAllBytes(new File(context.getFilesDir(),"wave3-input.json").toPath()),StandardCharsets.UTF_8));
-            if(phase.equals("first")){seed();launch();fonts();originals();annotations();jumps();syncView();rotation();}
+            if(phase.equals("first")){seed();launch();jumps();fonts();originals();annotations();syncView();rotation();toc();}
             else if(phase.equals("restore")){seed();launch();restore();}
             else throw new AssertionError("Unknown wave3 UI phase");
         }catch(Throwable error){failure=error;try{capture("failure");}catch(Throwable captureError){error.addSuppressed(captureError);}}
         try{
-            JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("passed",failure==null).put("checks",checks).put("count",checks.length()).put("observations",observations).put("font_leases",NativeFonts.live());
+            boolean passed=failure==null&&failedChecks==0;
+            JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("passed",passed).put("failed_checks",failedChecks).put("checks",checks).put("count",checks.length()).put("observations",observations).put("font_leases",NativeFonts.live());
             if(failure!=null)report.put("failed_check",active).put("failure_class",failure.getClass().getName()).put("failure",failure.getMessage()).put("failure_trace",android.util.Log.getStackTraceString(failure));
+            else if(firstFailure!=null)report.put("failed_check",firstFailedCheck).put("failure_trace",firstFailure);
             Files.write(new File(context.getFilesDir(),"wave3-ui-"+phase+".json").toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));
-            result.putString("stream",failure==null?"WAVE3_UI_PASS "+phase:"WAVE3_UI_FAIL "+phase);finish(failure==null?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);
+            result.putString("stream",passed?"WAVE3_UI_PASS "+phase:"WAVE3_UI_FAIL "+phase);finish(passed?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);
         }catch(Exception error){result.putString("shortMsg","Wave3 UI evidence unavailable");finish(Activity.RESULT_CANCELED,result);}
     }
 }

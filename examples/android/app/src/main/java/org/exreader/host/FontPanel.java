@@ -51,7 +51,7 @@ final class FontPanel extends Wave3Dialog {
     private void useDefault(){select("","默认字体");}
     private void select(String hash,String label) {
         long stamp=request();controls(true);
-        host.fontSelect(hash,task,()->post(stamp,()->{message(hash.isEmpty()?"已恢复默认字体，下次打开书籍生效":"已选择 "+label+"，下次打开书籍生效");load(hash.isEmpty()?"默认字体":"使用 "+label);}),
+        host.fontSelect(hash,task,()->post(stamp,()->load(hash.isEmpty()?"已恢复默认字体，下次打开书籍生效":"已选择 "+label+"，下次打开书籍生效")),
             error->post(stamp,()->{controls(false);message("未能切换字体："+reason(error));}));
     }
     private void confirmRemove(NativeFonts.Font font) {
