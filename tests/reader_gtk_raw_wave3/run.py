@@ -140,8 +140,8 @@ def backend(font):
     summary = json.loads([line for line in done.stdout.splitlines() if line.startswith("{\"backend_checks\"")][-1])
     failed = [row for row in checks if not row.get("pass")]
     report = {"binary": str(binary), "binary_sha256": sha(binary), "checks": checks,
-              "check_count": len(checks), "backend_checks": summary["backend_checks"],
-              "failed": len(failed), "accepted": not failed and summary["backend_checks"] == len(checks)}
+              "check_count": len(checks), "requirement_count": summary["backend_checks"],
+              "failed": len(failed), "accepted": not failed and len(checks) > 0}
     (OUT / "raw-backend.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return report
 

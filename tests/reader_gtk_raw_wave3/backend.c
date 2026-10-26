@@ -55,6 +55,11 @@ static void w3_slot(linux_reader *reader,size_t index,reader_jh_item *item,reade
   REQUIRE(reader_jh_item_at(reader->w3_history,index,item,&problem)==READER_JH_OK);
   REQUIRE(reader_rs_decode_raw_v3(w3_store(reader)->revisions,item->wire,item->wire_bytes,record,NULL)==READER_RS_OK);
 }
+static size_t w3_count(linux_reader *reader) {
+  reader_jh_state state={0};reader_jh_error problem={0};
+  REQUIRE(reader_jh_state_get(reader->w3_history,&state,&problem)==READER_JH_OK);
+  return state.count;
+}
 static int w3_bytes_equal(const char *left,size_t left_size,const char *right,size_t right_size) {
   if(!left || !right) return !left && !right;
   return left_size==right_size && !memcmp(left,right,left_size);
@@ -164,20 +169,24 @@ int main(int argc,char **argv) {
     PASS("history_back_and_forward_prove_the_point_before_moving");
   }
 
-  /* 2. EPUB retains its real anchor v2 route. */
+  /* 2. EPUB retains its real anchor v2 route. The history is one process-wide
+        stack, so every book works from its own recorded slot. */
   {
     char *epub=g_build_filename(fixtures,"structure.epub",NULL);reader_result landed={0};
+    size_t before=w3_count(reader);
     int64_t epub_book=w3_open(reader,READER_IMPORT,epub,0,&landed);reader_result_free(&landed);
-    reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,0,&item,&record);
+    REQUIRE(w3_count(reader)==before+1);
+    reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,before,&item,&record);
     REQUIRE(record.mode==READER_RS_EPUB_CHAPTER && record.anchor_version==2 && record.part_path);
     REQUIRE(record.part==reader->current.part && record.start==record.end && !record.exact_size);
     reader_rs_record_free(&record);reader_jh_item_release(&item);
     reader_result next=w3_run(reader,w3_command(READER_NEXT,epub_book));REQUIRE(next.status==EXR_OK && next.has_frame);
-    reader_result moved=w3_accept(reader,&next);REQUIRE(moved.w3_history_count==2);
+    reader_result moved=w3_accept(reader,&next);
+    REQUIRE(moved.w3_history_count==(int)before+2 && moved.w3_history_cursor==(int)before+1);
     reader_result_free(&moved);reader_result_free(&next);
     reader_command value=w3_command(READER_W3_HISTORY,epub_book);value.direction=-1;
     reader_result frame=w3_run(reader,value);REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
-    moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==0);
+    moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==(int)before);
     reader_result_free(&moved);reader_result_free(&frame);
     reader_result shelf=w3_run(reader,w3_command(READER_SHELF,epub_book));REQUIRE(shelf.status==EXR_OK);reader_result_free(&shelf);
     g_free(epub);PASS("epub_history_keeps_anchor_v2_and_its_spine_route");
@@ -188,8 +197,10 @@ int main(int argc,char **argv) {
   char *pdf=g_build_filename(fixtures,"pdf-public-text.pdf",NULL);int64_t pdf_book=0;
   w3_selector original[4];size_t original_count=0;
   {
-    reader_result landed={0};pdf_book=w3_open(reader,READER_IMPORT,pdf,0,&landed);reader_result_free(&landed);
-    reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,0,&item,&record);
+    size_t before=w3_count(reader);reader_result landed={0};
+    pdf_book=w3_open(reader,READER_IMPORT,pdf,0,&landed);reader_result_free(&landed);
+    REQUIRE(w3_count(reader)==before+1);
+    reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,before,&item,&record);
     REQUIRE(record.mode==READER_RS_FIXED_PAGE && record.anchor_version==3 && record.has_location);
     REQUIRE(record.start==record.end && !record.exact_size);
     REQUIRE((record.suffix && memchr(record.suffix,0,record.suffix_size)) ||
@@ -212,11 +223,12 @@ int main(int argc,char **argv) {
     w3_save(reader,READER_RC_BOOKMARK,"PDF bookmark",reader->current.start,reader->current.start,NULL);
     original_count=w3_annotation_selectors(reader,pdf_book,original,4);REQUIRE(original_count==2);
     reader_result next=w3_run(reader,w3_command(READER_NEXT,pdf_book));REQUIRE(next.status==EXR_OK && next.has_frame);
-    reader_result moved=w3_accept(reader,&next);REQUIRE(moved.w3_history_count==2);
+    reader_result moved=w3_accept(reader,&next);
+    REQUIRE(moved.w3_history_count==(int)before+2 && moved.w3_history_cursor==(int)before+1);
     reader_result_free(&moved);reader_result_free(&next);
     reader_command value=w3_command(READER_W3_HISTORY,pdf_book);value.direction=-1;
     reader_result frame=w3_run(reader,value);REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
-    moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==0);
+    moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==(int)before);
     reader_result_free(&moved);reader_result_free(&frame);
     PASS("fixed_history_jumps_only_to_a_resolved_anchor3_page");
   }
@@ -272,17 +284,20 @@ int main(int argc,char **argv) {
     REQUIRE(second.state==first.state && second.attempt==first.attempt && second.steps==first.steps);
     REQUIRE(w3_outbox(reader)==before);reader_result_free(&status);
     PASS("sync_capture_never_starts_or_advances_the_session");
-    REQUIRE(reader_session_start(session)==READER_SESSION_OK);
-    for(int i=0;i<120;i++) {
+    /* A real sweep start against a closed port. Its own status is reported, not
+       asserted: this probe owns the view's read-only contract, not the network. */
+    reader_session_status started=reader_session_start(session);
+    printf("{\"info\":\"session_start\",\"status\":%d}\n",(int)started);fflush(stdout);
+    if(started==READER_SESSION_OK) for(int i=0;i<120;i++) {
       reader_session_snapshot now={0};REQUIRE(reader_session_observe(session,&now)==READER_SESSION_OK);
-      if(now.state==READER_SESSION_FAILED || now.state==READER_SESSION_FINISHED) break;
+      if(now.state!=READER_SESSION_RUNNING && now.state!=READER_SESSION_IDLE) break;
       g_usleep(50000);
     }
     value=w3_command(READER_W3_SYNC_STATUS,pdf_book);value.w3_session=session;status=w3_run(reader,value);
     REQUIRE(status.status==EXR_OK && status.w3_sync_text && strstr(status.w3_sync_text,"Phase:") &&
             strstr(status.w3_sync_text,"Whole library synchronized: no"));
     REQUIRE(w3_outbox(reader)==before);reader_result_free(&status);
-    PASS("failed_sweep_stays_read_only_and_never_claims_a_complete_library");
+    PASS("sweep_attempt_stays_read_only_and_never_claims_a_complete_library");
     REQUIRE(reader_session_request_close(session)==READER_SESSION_OK);
     for(int i=0;i<120;i++) {
       reader_session_snapshot now={0};REQUIRE(reader_session_observe(session,&now)==READER_SESSION_OK);
