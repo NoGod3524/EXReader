@@ -40,6 +40,11 @@ foreach(_w3_target EXReaderRevisions::reader_revisions EXReaderReadingState::rea
   endif()
 endforeach()
 
+get_target_property(_w3_capture_defs EXReaderReadingState::reader_reading_state_codec INTERFACE_COMPILE_DEFINITIONS)
+if(NOT "EXR_READER_PURE_CAPTURE_CANDIDATE=1" IN_LIST _w3_capture_defs)
+  message(FATAL_ERROR "Wave-3 Windows history requires the explicitly installed pure raw capture capability")
+endif()
+
 add_library(reader_windows_records_w3 STATIC "${EXR_W3_DESKTOP}/windows_records_owner.cpp")
 target_link_libraries(reader_windows_records_w3 PUBLIC EXReaderReadingCommands::reader_reading_commands
   EXReaderAnnotationView::reader_annotation_view EXReaderReadingState::reader_reading_state

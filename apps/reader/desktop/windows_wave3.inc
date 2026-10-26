@@ -935,7 +935,7 @@ static void w3_history_land(host_job *job) {
     envelope.revision_id = id; envelope.operation = "put"; envelope.entity_kind = "progress";
     envelope.book_key = key; envelope.parser_version = exr_version();
     code = g.session.fixed ? reader_rs_encode_fixed_v3(store, &envelope, &capture, &wire, &bytes, &error)
-                           : w3_encode_retained(store, &envelope, &capture, 2, unit, &wire, &bytes, &error);
+                           : reader_rs_encode_capture_raw_candidate(store, &envelope, &capture, 2, unit, &wire, &bytes, &error);
     if (code == READER_RS_OK) {
       memset(&history_error, 0, sizeof(history_error));
       reader_jh_commit_wire_raw_v3(w3.jh, store, kind, wire, bytes, &result, &history_error);

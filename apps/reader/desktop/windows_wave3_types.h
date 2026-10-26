@@ -14,13 +14,10 @@
 #include <reader_original_export.h>
 #include <reader_jump_history.h>
 #include <reader_sync_view.h>
+#include <reader_reading_state_capture_raw_candidate.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Thin C bridge: the retained v1/v2 raw encoder has C++ linkage in the installed
-   reading-state archive (it is the command module's own boundary). */
-reader_rs_status w3_encode_retained(reader_revisions *,const reader_rs_envelope *,const reader_rs_capture *,
-  unsigned version,size_t part,char **wire,size_t *bytes,reader_rs_error *);
 /* A full product snapshot: a missing raw revision store is an error, never an
    empty pending queue. Open, read and close stay on this caller's owner thread. */
 reader_sync_view_status w3_sync_capture(reader_session *,const char *database_utf8,

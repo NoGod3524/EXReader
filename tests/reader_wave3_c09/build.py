@@ -22,7 +22,8 @@ OUT = ROOT / 'build/c09'
 NEW_MODULES = ('apps/reader/annotation-export', 'apps/reader/annotation-import', 'apps/reader/font-library',
                'apps/reader/original-export', 'apps/reader/jump-history', 'apps/reader/sync-status-view')
 RAW_NEW = {'annotation-export', 'annotation-import', 'jump-history', 'sync-status-view'}
-EXTRA_FLAGS = {'annotation-import': ['-DREADER_ANNOTATION_IMPORT_BUILD=ON'], 'font-library': ['-DREADER_FONT_LIBRARY_BUILD=ON']}
+EXTRA_FLAGS = {'reading-state': ['-DEXR_READER_PURE_CAPTURE_CANDIDATE=ON'],
+               'annotation-import': ['-DREADER_ANNOTATION_IMPORT_BUILD=ON'], 'font-library': ['-DREADER_FONT_LIBRARY_BUILD=ON']}
 
 
 def sha(path):
