@@ -227,10 +227,16 @@ int main(int argc,char **argv) {
       reader_rs_record_free(&record);reader_jh_item_release(&item);
     }
     PASS("epub_search_landing_is_appended_as_a_real_anchor_v2_point");
+    reader_result second_hit=w3_search(reader,epub_book,4,"NEEDLETWO",&search);
+    moved=w3_accept(reader,&second_hit);reader_result_free(&moved);reader_result_free(&second_hit);
+    REQUIRE(w3_count(reader)==before+3);
     {
       reader_command value=w3_command(READER_W3_HISTORY,epub_book);value.direction=-1;
-      reader_result frame=w3_run(reader,value);REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
-      moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==(int)before);
+      reader_result frame=w3_run(reader,value);
+      printf("{\"info\":\"epub_history_jump\",\"status\":%d,\"match\":%d,\"message\":\"%s\"}\n",
+        (int)frame.status,(int)frame.search_match,frame.message);fflush(stdout);
+      REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
+      moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==(int)before+1);
       reader_result_free(&moved);reader_result_free(&frame);
     }
     PASS("epub_history_jumps_only_to_a_resolved_anchor_v2_route");
@@ -282,7 +288,10 @@ int main(int argc,char **argv) {
     REQUIRE(w3_count(reader)==before+2);
     {
       reader_command value=w3_command(READER_W3_HISTORY,pdf_book);value.direction=-1;
-      reader_result frame=w3_run(reader,value);REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
+      reader_result frame=w3_run(reader,value);
+      printf("{\"info\":\"fixed_history_jump\",\"status\":%d,\"page\":%zu,\"message\":\"%s\"}\n",
+        (int)frame.status,frame.page,frame.message);fflush(stdout);
+      REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
       reader_result moved=w3_accept(reader,&frame);
       REQUIRE(moved.w3_history_cursor==(int)before && moved.w3_history_count==(int)before+2);
       REQUIRE(reader->current.page==1);
