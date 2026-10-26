@@ -38,3 +38,9 @@
 在同一源码、同一运行中启动两个实际程序，核对实际安装包/执行程序及加载 SDK 的散列；各端通过真实公开操作导入并打开原件、建立组织和捕获进度/标注。各端通过自己的同步会话向同一真实 WebDAV 目录写入并从对方读回，保留原始网络日志、原件散列、原始 revision 字节与完整祖先。接收端实际打开原件、检查组织投影，并由 SDK 对原始锚点返回 FOUND 后核对位置；反向重复。删除、恢复、离线及冲突另留真实操作和结果。禁止手工生成记录、替换 parser、重编码原始 wire 或把两个测试数据库当作两个宿主。
 
 各平台和每项缺口单独登记源码、run/attempt、真实程序与工件身份、原始失败及作用范围；云盘身份校验由其专责团队处理。本分支不改其宿主或云导入代码。
+
+## 实际 Android→GTK 联合运行
+
+在独立测试包中新增同一作业内的真实 Android 同步界面、固定镜像 Apache 与实际 GTK 接收驱动。服务端验证 Android 原件和 revision 原字节后，GTK 从同一服务扫描并通过实际宿主入口接收书籍及检查记录定位；整个链路以运行中的 APK、GTK 可执行文件与服务镜像身份绑定。组织及反向路径仍未覆盖。
+
+初次 [run 40384258547](https://github.com/NoGod3524/EXReader/actions/runs/40384258547)（源码 `442604ab67972a1db94b61c663a563d42ce54ab0`）实际 sender 六项成功，但同步 UI 准备报 `UI target did not become ready`；原始 Apache access log 只有独立检查的 PROPFIND，没有 Android 请求。[run 40385748498](https://github.com/NoGod3524/EXReader/actions/runs/40385748498) 在 Actions 中读取原失败工件确认上述现象。该轮没有实际上传，不计互通。后续测试将启动和回书架、打开同步、账号设置、同步分别记录，不改生产宿主。GTK 独立构建诊断 [run 40384592342](https://github.com/NoGod3524/EXReader/actions/runs/40384592342) 成功，仅证明构建。
