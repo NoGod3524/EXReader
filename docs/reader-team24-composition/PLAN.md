@@ -570,3 +570,18 @@ public paragraph and text nodes are observable and cannot simply be merged as a
 compatible fix. No SDK limit, memory budget, ABI or existing acceptance changed.
 The Actions artifact `12688139192` is 14,969 bytes, SHA-256
 `e1e711b8f5919e14a5cb651d6117383d585679653897caf078b1c37008b68496`.
+
+## Composed GTK organization regression
+
+The adopted candidate was rebuilt on composition source
+`dc8d725acd7a06e152224f607bb41d7259915d9c` in
+[40400540730/1](https://github.com/NoGod3524/EXReader/actions/runs/40400540730).
+Job `121844923357` passed the new 48-check and unchanged 46-check account/receive
+suites, source/run and packaged-executable identity checks, fixed business
+regressions, and the targeted G13 AT-SPI checks. The Actions artifact
+`12689188509` is 40,451,315 bytes with SHA-256
+`8648fbbf319cd23b37ec3c97157566927cba04389ea59d5c54e54a2d536e7eba`,
+and expires 2027-01-24T20:59:50Z. The following commits through this evidence
+record are documentation-only. This is GTK same-source regression evidence,
+not proof of the untested 10,000-item boundary, full screen-reader support,
+real-provider behavior, cross-device organization or six-platform acceptance.
