@@ -253,17 +253,29 @@ jobs:
           ARTIFACT_DIGEST: ${{ needs.production-windows.outputs.artifact_digest }}
           WINDOWS_RESULT: ${{ needs.production-windows.result }}
         run: python3 tests/reader_wave3_c09/identity.py
-      - name: Require successful Windows job and accepted report
+      - name: Require successful Windows job, accepted report and exact outer artifact
         env:
+          GH_TOKEN: ${{ github.token }}
           WINDOWS_RESULT: ${{ needs.production-windows.result }}
+          ARTIFACT_ID: ${{ needs.production-windows.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.production-windows.outputs.artifact_digest }}
         run: |
           python3 - <<'PY'
-          import json, os
+          import hashlib, json, os, subprocess
           from pathlib import Path
           identity = json.loads(Path('build/c09-authentication/identity.json').read_text())
           assert os.environ['WINDOWS_RESULT'] == 'success'
           assert identity['verified'] and identity['report']['accepted'] is True
           assert not identity['report']['failures']
+          artifact = identity['artifact']
+          assert str(artifact['id']) == os.environ['ARTIFACT_ID']
+          assert not artifact['expired'] and artifact['digest'] == 'sha256:' + os.environ['ARTIFACT_DIGEST']
+          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/{artifact['id']}"
+          metadata = json.loads(subprocess.check_output(['gh', 'api', api], text=True))
+          assert str(metadata['workflow_run']['id']) == os.environ['GITHUB_RUN_ID']
+          assert metadata['workflow_run']['head_sha'] == os.environ['GITHUB_SHA']
+          raw = subprocess.run(['gh', 'api', api + '/zip'], stdout=subprocess.PIPE, check=True, timeout=360).stdout
+          assert len(raw) == artifact['size_in_bytes'] and hashlib.sha256(raw).hexdigest() == os.environ['ARTIFACT_DIGEST']
           PY
       - uses: actions/upload-artifact@v4
         if: always()
