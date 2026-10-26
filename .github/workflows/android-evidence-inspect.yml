@@ -65,5 +65,13 @@ jobs:
           org=read(root/'evidence/organization-sync/result.json');assert org['source_sha']==source and org['run_id']=='40407771850' and org['accepted'] and org['host_apk_sha256']==expected and org['device']['count']==5
           original=read(root/'evidence/original-sync/first-report.json');assert original['passed'] is False and original['failed_check']=='explicit_receive_preserves_sdk_and_product' and original['failure']=='same shared public SDK provider'
           walk=read(root/'evidence/walkthrough/execution.json');assert walk['completed'] and walk['source_sha']==source and walk['app_sha256']==sha(app) and walk['installed_sha256']==sha(app)
+          suites={}
+          for name,minimum in (('walkthrough',45),('review',10),('bounded',11)):
+              validation=read(root/'evidence/walkthrough'/f'{name}-evidence'/'validation.json'); summary=validation['summary']
+              assert summary['total']>=minimum and summary['passed']==summary['total'] and summary['failed']==0 and summary['skipped']==0,(name,summary)
+              assert len(validation['cases'])==summary['total'] and all(row['status']=='pass' for row in validation['cases'])
+              assert validation['source_sha']==source and validation['run_id']=='40407771850' and str(validation['attempt'])=='1' and validation['apk_sha256']==sha(app)
+              suites[name]=summary
           print(json.dumps({'source':source,'run_id':'40407771850','attempt':1,'host_sha256':sha(app),'installed_apk_matches':True,'checks':result,'organization_checks':org['device']['count'],'original_sync_failed_check':original['failed_check'],'original_sync_failure':original['failure'],'walkthrough_completed':walk['completed'],'suites':walk['suites']}))
+          print(json.dumps({'strict_ui_summaries':suites}))
           PY
