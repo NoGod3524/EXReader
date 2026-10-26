@@ -3,7 +3,7 @@
 
 Runs in the Actions authenticate job against the artifact this run uploaded: it
 reads the artifact through the GitHub API (id, size, digest, expiry), hashes the
-two real GTK programs inside it, and requires the three deciding reports to name
+two real GTK programs inside it, and requires every retained business report to name
 this source, run and attempt with the same program bytes.
 """
 import argparse
@@ -14,13 +14,16 @@ import subprocess
 import sys
 from pathlib import Path
 
-REQUIRED = {'wave3_tools': ('c10-wave3-ui', 'result.json'),
-            'compact45': ('c10-compact-ui', 'report.json'),
-            'g13_ten': ('c10-atspi-fixes', 'result.json')}
-OPTIONAL = {'search': 'c10-search-ui', 'navigation': 'c10-navigation-ui',
-            'records': 'c10-records-ui', 'batch_import': 'c10-batch-ui'}
+REQUIRED = {
+    'wave3_tools': ('c10-wave3-ui', 'result.json', 'accepted', 'wave3', 10),
+    'compact45': ('c10-compact-ui', 'report.json', 'accepted', 'wave3', 45),
+    'g13_ten': ('c10-atspi-fixes', 'result.json', 'accepted', 'off', 10),
+    'search': ('c10-search-ui', 'result.json', 'search_scope_passed', 'off', None),
+    'navigation': ('c10-navigation-ui', 'result.json', 'navigation_scope_passed', 'off', None),
+    'records': ('c10-records-ui', 'report.json', 'reading_records_scope_passed', 'off', None),
+    'batch_import': ('c10-batch-ui', 'report.json', 'batch_import_scope_passed', 'off', None),
+}
 PROGRAMS = {'wave3': 'c10-compact-package', 'off': 'c10-package'}
-REPORT_FILES = ('result.json', 'report.json')
 
 
 def sha(path):
@@ -36,6 +39,7 @@ def find_report(root, folder, name):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--artifact', type=Path, required=True)
+    parser.add_argument('--archive', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     run, attempt = os.environ['GITHUB_RUN_ID'], os.environ['GITHUB_RUN_ATTEMPT']
@@ -53,6 +57,12 @@ def main():
     problems = []
     try:
         assert artifact['expired'] is False, 'artifact already expired'
+        if args.archive:
+            archive_sha = sha(args.archive)
+            archive_size = args.archive.stat().st_size
+            identity['archive'] = {'sha256': archive_sha, 'size_in_bytes': archive_size}
+            assert artifact.get('digest') == 'sha256:' + archive_sha, 'original ZIP digest'
+            assert archive_size == artifact['size_in_bytes'], 'original ZIP size'
         root = args.artifact
         programs = {}
         for key, folder in PROGRAMS.items():
@@ -63,29 +73,26 @@ def main():
             programs[key] = {'path': str(found[0].relative_to(root)), 'sha256': sha(found[0])}
         identity['programs'] = programs
         reports = {}
-        for key, (folder, filename) in REQUIRED.items():
+        for key, (folder, filename, passed_field, program, expected_count) in REQUIRED.items():
             path = find_report(root, folder, filename)
             report = json.loads(path.read_text(encoding='utf-8'))
             assert report['source_sha'] == source, key + ' source'
             assert str(report['run_id']) == run and str(report['attempt']) == attempt, key + ' run'
-            assert report.get('accepted') is True, key + ' not accepted'
-            reports[key] = {'report_sha256': sha(path), 'accepted': True,
+            assert report.get(passed_field) is True, key + ' scope did not pass'
+            assert not report.get('diagnostic_only'), key + ' diagnostic only'
+            assert report.get('program_source_sha', source) == source, key + ' program source'
+            assert report['program_sha256'] == programs[program]['sha256'], key + ' program'
+            checks = report['checks']
+            assert checks and all(row.get('pass', row.get('passed')) is True for row in checks), key + ' checks'
+            count = report.get('count', report.get('checks_total', len(checks)))
+            assert count == len(checks), key + ' count'
+            if expected_count is not None:
+                assert count == expected_count, (key, count, expected_count)
+            reports[key] = {'report_sha256': sha(path), 'scope_passed': True,
                             'program_sha256': report['program_sha256'],
-                            'checks': report.get('count', len(report.get('checks', []))),
+                            'checks': count,
                             'path': str(path.relative_to(root))}
-        assert reports['wave3_tools']['program_sha256'] == programs['wave3']['sha256'], 'wave3 program'
-        assert reports['compact45']['program_sha256'] == programs['wave3']['sha256'], 'compact45 program'
-        assert reports['g13_ten']['program_sha256'] == programs['off']['sha256'], 'g13 program'
         identity['reports'] = reports
-        optional = {}
-        for key, folder in OPTIONAL.items():
-            directory = [path for path in root.rglob(folder) if path.is_dir()]
-            if not directory:
-                optional[key] = {'present': False}
-                continue
-            files = {path.name: sha(path) for path in sorted(directory[0].glob('*.json'))}
-            optional[key] = {'present': True, 'files': files}
-        identity['optional_suites'] = optional
         identity['verified'] = True
     except BaseException as error:
         problems.append(repr(error))

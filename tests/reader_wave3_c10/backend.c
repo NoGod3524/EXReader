@@ -16,7 +16,8 @@
 static unsigned checks;
 #define REQUIRE(test) do { checks++;if(!(test)) { fprintf(stderr,"check %u failed at %d: %s\n",checks,__LINE__,#test);exit(1); } } while(0)
 #define PASS(name) printf("{\"check\":\"%s\",\"pass\":true}\n",name)
-static int never(void *unused) { (void)unused;return 0; }
+static unsigned cancel_polls,cancel_at;
+static int never(void *unused) { (void)unused;return cancel_at && ++cancel_polls>=cancel_at; }
 static reader_command command(reader_action action,int64_t book) {
   reader_command value={0};value.action=action;value.book=book;value.font=24;value.zoom=100;value.records_token=1;return value;
 }
@@ -147,6 +148,16 @@ int main(int argc,char **argv) {
   reader_command removal=command(READER_W3_FONT_REMOVE,book);removal.w3_hash=primary_hash;
   reader_result discarded=run(reader,command(READER_SHELF,book));REQUIRE(discarded.status==EXR_OK);reader_result_free(&discarded);
   char active[RFL_HASH_BYTES];REQUIRE(font_count(reader,book,active)==2 && !active[0]);
+  /* Cancel inside FONT_USE after the entry check: a candidate lease has been
+     acquired before capture/render polls, but no replacement frame is accepted. */
+  cancel_polls=0;cancel_at=2;candidate=run(reader,use);cancel_at=0;
+  REQUIRE(candidate.status==EXR_CANCELLED && !candidate.has_frame && cancel_polls>=2);reader_result_free(&candidate);
+  REQUIRE(font_count(reader,book,active)==2 && !active[0]);
+  reader_result released=run(reader,removal);REQUIRE(released.status==EXR_OK && released.w3_font_count==1);reader_result_free(&released);
+  reader_result usable=run(reader,command(READER_NEXT,book));REQUIRE(usable.status==EXR_OK && usable.has_frame);
+  landed=commit(reader,&usable);reader_result_free(&landed);reader_result_free(&usable);
+  importing.w3_path=primary;added=run(reader,importing);REQUIRE(added.status==EXR_OK && added.w3_font_count==2);reader_result_free(&added);
+  PASS("cancelled_font_candidate_releases_lease_and_previous_reader_works");
   candidate=run(reader,use);REQUIRE(candidate.status==EXR_OK && candidate.has_frame);
   landed=commit(reader,&candidate);REQUIRE(!strcmp(landed.w3_font_active,primary_hash));reader_result_free(&landed);
   REQUIRE(candidate.end>candidate.start && candidate.font==24);reader_result_free(&candidate);
@@ -224,9 +235,20 @@ int main(int argc,char **argv) {
     reader_result_free(&checked);empty=run(reader,listing);REQUIRE(empty.status==EXR_OK && empty.records_page.count==0);reader_result_free(&empty);
     PASS("annotation_preview_validates_without_writing");
     reader_command confirm=command(READER_W3_ANNOTATION_IMPORT,imported);confirm.w3_path=jsonl;
+    reader_result cancelled=run(reader,command(READER_W3_ANNOTATION_DISCARD,imported));
+    REQUIRE(cancelled.status==EXR_OK);reader_result_free(&cancelled);
+    reader_result unconfirmed=run(reader,confirm);REQUIRE(unconfirmed.status!=EXR_OK && !unconfirmed.w3_ann_committed);reader_result_free(&unconfirmed);
+    empty=run(reader,listing);REQUIRE(empty.status==EXR_OK && empty.records_page.count==0);reader_result_free(&empty);
+    checked=run(reader,preview);REQUIRE(checked.status==EXR_OK && checked.w3_ann_validated);reader_result_free(&checked);
+    gchar *preview_bytes=NULL;gsize preview_size=0;
+    REQUIRE(g_file_get_contents(jsonl,&preview_bytes,&preview_size,NULL) && preview_size>12);
+    REQUIRE(g_file_set_contents(jsonl,preview_bytes,(gssize)(preview_size-12),NULL));
     reader_result done=run(reader,confirm);
     REQUIRE(done.status==EXR_OK && done.w3_ann_committed==2 && done.w3_ann_created==2 && done.w3_ann_duplicates==0);reader_result_free(&done);
+    REQUIRE(g_file_set_contents(jsonl,preview_bytes,(gssize)preview_size,NULL));g_free(preview_bytes);
+    PASS("annotation_cancel_discards_preview_and_confirmation_uses_checked_snapshot");
     reader_result listed=run(reader,listing);REQUIRE(listed.status==EXR_OK && listed.records_page.count==2);reader_result_free(&listed);
+    checked=run(reader,preview);REQUIRE(checked.status==EXR_OK && checked.w3_ann_validated);reader_result_free(&checked);
     done=run(reader,confirm);REQUIRE(done.status==EXR_OK && done.w3_ann_created==0 && done.w3_ann_duplicates==2);reader_result_free(&done);
     PASS("annotation_confirmed_import_and_exact_retry");
     int64_t other=open_book(reader,READER_IMPORT,other_path,0,&landed);reader_result_free(&landed);
