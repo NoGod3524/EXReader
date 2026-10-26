@@ -22,6 +22,10 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef __ANDROID__
+#include <linux/fs.h>
+#include <sys/syscall.h>
+#endif
 #endif
 struct roe_exporter {
   exr_library *library; roe_owner owner; std::thread::id thread; bool busy=false;
@@ -118,7 +122,12 @@ struct directory {
     size_t start=3;
 #else
     need(path[0]=='/'&&path.size()>1,ROE_ARGUMENT);size_t start=1;
-    fd=::open("/",O_RDONLY|O_DIRECTORY|O_CLOEXEC);need(fd!=invalid,ROE_IO);
+#ifdef __ANDROID__
+    constexpr int traversal_access=O_PATH;
+#else
+    constexpr int traversal_access=O_RDONLY;
+#endif
+    fd=::open("/",traversal_access|O_DIRECTORY|O_CLOEXEC);need(fd!=invalid,ROE_IO);
 #endif
     need(path.back()!='/',ROE_ARGUMENT);
     for(size_t pos=start;pos<=path.size();) {
@@ -132,7 +141,8 @@ struct directory {
       if(!GetFileInformationByHandle(h,&i)||(i.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)||!(i.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)){closefile(h);throw failure{ROE_ARGUMENT};}
       try{held.push_back(h);}catch(...){closefile(h);throw;}
 #else
-      file next=openat(fd,part.c_str(),O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);need(next!=invalid,ROE_ARGUMENT);closefile(fd);fd=next;
+      int access=end==path.size()?O_RDONLY:traversal_access;
+      file next=openat(fd,part.c_str(),access|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);need(next!=invalid,ROE_ARGUMENT);closefile(fd);fd=next;
 #endif
       if(end==path.size())break;
       pos=end+1;
@@ -162,6 +172,8 @@ struct directory {
   bool publish(const std::string &tmp,const std::string &dst) {
 #ifdef _WIN32
     return MoveFileExW(wide(path+"/"+tmp).c_str(),wide(path+"/"+dst).c_str(),MOVEFILE_WRITE_THROUGH)!=0;
+#elif defined(__ANDROID__)
+    return syscall(__NR_renameat2,fd,tmp.c_str(),fd,dst.c_str(),RENAME_NOREPLACE)==0;
 #else
     return linkat(fd,tmp.c_str(),fd,dst.c_str(),0)==0;
 #endif
@@ -265,11 +277,16 @@ extern "C" roe_status roe_run(roe_exporter *e,const roe_selection *selected,size
         closefile(f.f);f.f=invalid;
         if(dir.publish(temp,name)){
           r.committed=1;r.created=1;r.status=ROE_OK;
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__ANDROID__)
           temporary=false;r.cleanup_pending=0;r.cleanup_path[0]=0;
 #endif
           r.durable=dir.sync()?1:0;
         }else{
+#ifdef _WIN32
+          need(GetLastError()==ERROR_FILE_EXISTS||GetLastError()==ERROR_ALREADY_EXISTS,ROE_IO);
+#else
+          need(errno==EEXIST,ROE_IO);
+#endif
           handle existing;existing.f=dir.existing(name);uint64_t size=0;char existing_hash[65];
           need(existing.f!=invalid&&regular(existing.f,&size)&&size==r.bytes&&hashfile(existing.f,size,existing_hash,buffer)&&std::strcmp(existing_hash,r.original_sha256)==0,ROE_CONFLICT);
           r.committed=1;r.created=0;r.durable=1;r.status=ROE_OK;

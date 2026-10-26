@@ -22,7 +22,9 @@ expected = {
               'epub_actual_capture_keeps_spine_path_and_current_font', 'pdf_and_cbz_real_page_id_points',
               'missing_legacy_nul_and_fixed_page_id_are_never_guessed', 'unsafe_graphs_display_counts_without_exposing_or_choosing_heads',
               'stale_selected_head_never_overwrites_new_head', 'cancel_real_capture_keeps_stores_and_actual_frame',
-              'close_rotation_background_drop_real_pending_reads', 'bounded_record_pagination_and_plain_text_labels'],
+              'close_rotation_background_drop_real_pending_reads', 'bounded_record_pagination_and_plain_text_labels',
+              'saved_bookmark_survives_cancelled_refresh', 'saved_bookmark_survives_failed_refresh',
+              'conflict_remains_reachable_with_saved_bookmarks'],
     'retry': ['real_process_kill_after_commit_replays_identical_request_without_duplicate'],
     'reopen': ['process_reopen_retains_reading_graph_and_releases_old_panels'],
 }
@@ -139,7 +141,7 @@ try:
         assert not after
         stops.append({'phase': phase, 'instrumentation_pid': report['pid'], 'pid_before_stop': pid,
                       'ended_with_instrumentation': not bool(pid), 'pid_after_stop': after, 'requested': True})
-    assert len({report['pid'] for report in reports}) == 3 and sum(report['count'] for report in reports) == 16 and kill
+    assert len({report['pid'] for report in reports}) == 3 and sum(report['count'] for report in reports) == 19 and kill
     accepted = True
 finally:
     result = {**identity, 'accepted': accepted, 'checks': sum(report['count'] for report in reports), 'phases': reports,
