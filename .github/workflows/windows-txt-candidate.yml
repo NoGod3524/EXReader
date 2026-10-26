@@ -24,6 +24,14 @@ jobs:
           cmake --preset reading-library
           cmake --build --preset reading-library
           cmake --install build/reading-library
+      - name: Run frozen installed SDK consumer regressions
+        shell: bash
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          cmake -S tests/reading_core -B build/txt-legacy-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DEXR_EXPECT_LIBRARY=ON -DEXR_TEST_FONT="$ws/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$ws/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$ws/tests/fixtures"
+          cmake --build build/txt-legacy-consumer --parallel 4
+          ctest --test-dir build/txt-legacy-consumer --output-on-failure --no-tests=error --output-junit "$ws/build/txt-candidate-evidence/legacy-tests.xml"
       - name: Build and run opt-in host on the original fixture
         shell: bash
         run: |
