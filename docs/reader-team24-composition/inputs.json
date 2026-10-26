@@ -269,9 +269,15 @@
         "apps/reader/desktop/windows_import_organize_ui.inc",
         "apps/reader/desktop/windows_shelf.inc",
         "examples/reader.c",
-        "tests/windows_organization_projection/check_ui.py",
         "tests/windows_organization_projection/cloud/CMakeLists.txt",
-        "tests/windows_organization_projection/paged_ui.py",
+        "tests/windows_organization_projection/paged_ui.py"
+      ]
+    },
+    {
+      "name": "windows-group-membership-tests-candidate",
+      "source": "8e0ad94904622bd5cda9a96401a26c9a7afe95c6",
+      "paths": [
+        "tests/windows_organization_projection/check_ui.py",
         "tests/windows_organization_projection/verify.py"
       ]
     }

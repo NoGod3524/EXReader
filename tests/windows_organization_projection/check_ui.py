@@ -290,6 +290,39 @@ try:
         ui.send(w,0x111,(1<<16)|ui.ACTION,ui.U.GetDlgItem(w,ui.ACTION))
         a.wait(lambda:label in names(w,ui.GROUPS),timeout=60)
         group=ui.U.GetDlgItem(w,ui.GROUPS);ui.send(group,0x186,names(w,ui.GROUPS).index(label))
+    def membership_action(action,label,table,column,group_id,present):
+        w=organizer()
+        ui.send(ui.U.GetDlgItem(w,ui.ACTION),0x14E,action)
+        ui.send(w,0x111,(1<<16)|ui.ACTION,ui.U.GetDlgItem(w,ui.ACTION))
+        a.wait(lambda:label in names(w,ui.GROUPS),timeout=60)
+        group=ui.U.GetDlgItem(w,ui.GROUPS)
+        ui.send(group,0x186,names(w,ui.GROUPS).index(label))
+        items=ui.A.auto.ControlFromHandle(ui.U.GetDlgItem(w,ui.ROWS)).GetChildren()
+        matches=[item for item in items if 'Book' in item.Name];assert len(matches)==1
+        matches[0].GetSelectionItemPattern().Select()
+        ui.send(ui.U.GetDlgItem(w,ui.GO),ui.ACCOUNT.BM_CLICK)
+        query='SELECT count(*) FROM '+table+' WHERE '+column+'=? AND book_key=?'
+        a.wait(lambda:sql(a,query,(group_id,bookkey))==[(present,)],timeout=120)
+        a.wait(lambda:ui.U.IsWindowEnabled(ui.U.GetDlgItem(w,ui.ACK)),timeout=120)
+        ui.send(ui.U.GetDlgItem(w,ui.ACK),ui.ACCOUNT.BM_CLICK)
+        a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(w,ui.CANCEL)),timeout=120)
+        ui.send(ui.U.GetDlgItem(w,ui.CLOSE),ui.ACCOUNT.BM_CLICK)
+        a.wait(lambda:not ui.U.IsWindow(w),timeout=20)
+    series_id=sql(a,'SELECT series_id FROM reader_series WHERE name=?',('Local series 系列',))[0][0]
+    membership_action(2,'Local shelf 父','reader_book_shelves','shelf_id',parent,1)
+    membership_action(6,'Local series 系列','reader_book_series','series_id',series_id,1)
+    d,message,detail=sync(a);assert '同步完成' in message;a.close_account(d)
+    d,message,detail=sync(b);assert '同步完成' in message;b.close_account(d)
+    record('native-shelf-series-memberships-sync',
+        sql(b,'SELECT count(*) FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',(parent,bookkey))==[(1,)] and
+        sql(b,'SELECT count(*) FROM reader_book_series WHERE series_id=? AND book_key=?',(series_id,bookkey))==[(1,)])
+    membership_action(3,'Local shelf 父','reader_book_shelves','shelf_id',parent,0)
+    membership_action(7,'Local series 系列','reader_book_series','series_id',series_id,0)
+    d,message,detail=sync(a);assert '同步完成' in message;a.close_account(d)
+    d,message,detail=sync(b);assert '同步完成' in message;b.close_account(d)
+    record('native-shelf-series-removals-sync',
+        sql(b,'SELECT count(*) FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',(parent,bookkey))==[(0,)] and
+        sql(b,'SELECT count(*) FROM reader_book_series WHERE series_id=? AND book_key=?',(series_id,bookkey))==[(0,)])
     dialog=organizer();tag_selection(dialog,'Local tag 标签')
     items=ui.A.auto.ControlFromHandle(ui.U.GetDlgItem(dialog,ui.ROWS)).GetChildren()
     matches=[item for item in items if 'Book' in item.Name];assert len(matches)==1
@@ -316,6 +349,14 @@ try:
     a.wait(lambda:not ui.U.IsWindow(dialog),timeout=20)
     a.wait(lambda:ui.send(a.control('books'),0x18B)>=2 and a.has_row('Book'),timeout=60)
     record('native-return-to-all-books',ui.text(ui.U.GetDlgItem(a.window,118))=='书架')
+    d,message,detail=sync(a);assert '同步完成' in message;a.close_account(d)
+    d,message,detail=sync(b);assert '同步完成' in message;b.close_account(d)
+    tag_added=sql(b,'SELECT count(*) FROM reader_book_tags WHERE tag_id=? AND book_key=?',(tag_id,bookkey))==[(1,)]
+    membership_action(5,'Local tag 标签','reader_book_tags','tag_id',tag_id,0)
+    d,message,detail=sync(a);assert '同步完成' in message;a.close_account(d)
+    d,message,detail=sync(b);assert '同步完成' in message;b.close_account(d)
+    record('native-tag-membership-and-removal-sync',tag_added and
+        sql(b,'SELECT count(*) FROM reader_book_tags WHERE tag_id=? AND book_key=?',(tag_id,bookkey))==[(0,)])
     report['accepted']=True
 except Exception as error:
     problems.append(phase+': '+type(error).__name__+': '+str(error));traceback.print_exc()
