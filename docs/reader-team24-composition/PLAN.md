@@ -793,3 +793,19 @@ retains the same reporter failure and a separate timeout waiting for the first
 candidate branch; the latter remains under diagnosis, with additional UI,
 catalog and log observations requested in the next Actions run. Neither failed
 run grants the group browser or its 170-member paging checks.
+
+## Android composition dependency boundary
+
+Android organization source `51ee764e434678f8f15cc35f7f4996243b934a45`
+combines the independently passing `2bb0c9e1` host with an organization owner.
+The composition checkout is not identical to this source: its admitted SDK
+CBZ/RTF candidates and shared font, original-export and reading-state trees
+must not be replaced by the older Android tree. The tested organization JNI
+uses raw 0.2 revisions, the organization projection API, the same product
+catalog/SQLite, raw session/sync and the Android organization intent journal.
+Its six host integration paths need explicit reconciliation against the current
+composition. The independent Android workflow does not enable the composition
+pure-capture candidate; the combined build must explicitly install/enable and
+verify that capability, run the original source guard and preserve the 3.40
+original test result separately from the strict 3.41 adapter. A completed
+independent run cannot establish any of those combined-source checks.
