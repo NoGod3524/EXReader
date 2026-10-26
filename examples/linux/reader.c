@@ -90,6 +90,23 @@ static gboolean directory_apply(host_result *);
 #ifdef EXR_READER_SEARCH_UI
 static gboolean inbook_apply(host_result *);
 #endif
+#ifdef EXR_READER_WAVE3_UI
+static void w3_annotation_open(GtkWidget *,gpointer);
+static void w3_fonts_open(GtkWidget *,gpointer);
+static void w3_export_open(GtkWidget *,gpointer);
+static void w3_history_menu(GtkWidget *,gpointer);
+static void w3_sync_open(GtkWidget *,gpointer);
+static void w3_register_history(GtkWidget *,GtkWidget *);
+static gboolean w3_opened(void);
+static gboolean w3_key(GdkEventKey *);
+static char *w3_observation(void);
+static gboolean w3_apply(host_result *);
+static void w3_result(const reader_result *,reader_action);
+static void w3_prepare(reader_command *);
+static gboolean w3_sync_busy(void);
+static void w3_sync_attach(GtkWidget *,GtkWidget *);
+static void w3_sync_detach(void);
+#endif
 static void stop_worker(void);
 static gboolean close_window(GtkWidget *,GdkEvent *,gpointer);
 #ifdef EXR_READER_ACCOUNT
@@ -246,6 +263,16 @@ static void compact_toolbar(GtkWidget *toolbar) {
 #ifdef EXR_READER_DROP_IMPORT_UI
   compact_item(imports,"Paste book files",G_CALLBACK(file_input_paste),NULL);
 #endif
+#ifdef EXR_READER_WAVE3_UI
+  GtkWidget *tools=compact_submenu(menu,"Reading tools");
+  compact_item(tools,"Import annotations…",G_CALLBACK(w3_annotation_open),NULL);
+  compact_item(tools,"Reading font…",G_CALLBACK(w3_fonts_open),NULL);
+  compact_item(tools,"Export original…",G_CALLBACK(w3_export_open),NULL);
+  GtkWidget *back=compact_item(tools,"Back to previous position",G_CALLBACK(w3_history_menu),GINT_TO_POINTER(-1));
+  GtkWidget *forward=compact_item(tools,"Forward to next position",G_CALLBACK(w3_history_menu),GINT_TO_POINTER(1));
+  w3_register_history(back,forward);
+  compact_item(tools,"Sync status…",G_CALLBACK(w3_sync_open),NULL);
+#endif
   compact_item(menu,"Retry saving position",G_CALLBACK(action),(gpointer)"save");
   compact_item(menu,"Cancel current operation",G_CALLBACK(action),(gpointer)"cancel");
   gtk_widget_show_all(menu);gtk_menu_button_set_popup(GTK_MENU_BUTTON(more),menu);
@@ -331,6 +358,10 @@ static void state(void) {
 #ifdef EXR_READER_DROP_IMPORT_UI
   char *input_state=file_input_observation();
   complete=g_strconcat(data,input_state,NULL);g_free(data);g_free(input_state);data=complete;
+#endif
+#ifdef EXR_READER_WAVE3_UI
+  char *wave_state=w3_observation();
+  complete=g_strconcat(data,wave_state,NULL);g_free(data);g_free(wave_state);data=complete;
 #endif
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
@@ -552,6 +583,9 @@ static void job_free(host_job *job) {
   g_free((gpointer)job->command.records_version);g_free((gpointer)job->command.records_text);
 #endif
   g_free(job->path);g_free(job->comment);
+#ifdef EXR_READER_WAVE3
+  g_free((gpointer)job->command.w3_path);g_free((gpointer)job->command.w3_name);g_free((gpointer)job->command.w3_hash);
+#endif
 #ifdef EXR_READER_NAVIGATION
   g_free((gpointer)job->command.navigation_cfi);
 #endif
@@ -593,6 +627,9 @@ static gboolean apply_result(gpointer data) {
 #endif
 #ifdef EXR_READER_READING_RECORDS_UI
   if(done->action>=READER_RECORDS_LIST && done->action<=READER_RECORDS_JUMP && reading_records_apply(done)) goto free_result;
+#endif
+#ifdef EXR_READER_WAVE3_UI
+  if(w3_apply(done)) goto free_result;
 #endif
 #ifdef EXR_READER_NAVIGATION_UI
   if(done->action>=READER_NAVIGATION_BEGIN && done->action<=READER_NAVIGATION_CLOSE && directory_apply(done)) goto free_result;
@@ -683,6 +720,9 @@ free_result:
 #ifdef EXR_READER_PREFERENCES_UI
   if(done->generation==g_atomic_int_get(&generation)) preferences_result(result,done->action);
 #endif
+#ifdef EXR_READER_WAVE3_UI
+  if(done->generation==g_atomic_int_get(&generation)) w3_result(result,done->action);
+#endif
   reader_result_free(result);g_free(done);return G_SOURCE_REMOVE;
 }
 static gboolean worker_stopped(gpointer unused) { (void)unused;gtk_widget_destroy(window);return G_SOURCE_REMOVE; }
@@ -714,6 +754,10 @@ static gpointer work(gpointer font_path) {
 #endif
 #ifdef EXR_READER_ACCOUNT
     barrier=barrier || (job->command.action>=READER_ACCOUNT_LOAD && job->command.action<=READER_RECEIVE_CONFLICTS_NEXT);
+#endif
+#ifdef EXR_READER_WAVE3_UI
+    barrier=barrier || (job->command.action>=READER_W3_ANNOTATION_PREVIEW && job->command.action<=READER_W3_SYNC_STATUS &&
+      job->command.action!=READER_W3_FONT_USE && job->command.action!=READER_W3_HISTORY);
 #endif
     if(!barrier && job->generation!=g_atomic_int_get(&generation)) { job_free(job);continue; }
     worker_generation=barrier ? g_atomic_int_get(&generation):job->generation;
@@ -776,6 +820,9 @@ static void submit(reader_action action,int64_t id,const char *path,int size) {
   job->command.zoom=action==READER_ZOOM ? size:zoom_percent;
 #ifdef EXR_READER_PREFERENCES_UI
   preferences_prepare(&job->command);
+#endif
+#ifdef EXR_READER_WAVE3_UI
+  w3_prepare(&job->command);
 #endif
   if(path) { job->path=g_strdup(path);job->command.path=job->path; }
   if(action==READER_NOTE_ADD) {
@@ -847,6 +894,9 @@ static void import_dialog(void) {
 #ifdef EXR_READER_DROP_IMPORT_UI
 #include "drop_import_ui.inc"
 #endif
+#ifdef EXR_READER_WAVE3_UI
+#include "wave3_ui.inc"
+#endif
 #if defined(EXR_READER_PAGE_BACKGROUND) && defined(EXR_READER_PREFERENCES_UI)
 static gboolean preferences_theme_ready(void) {
   if(!profile_writable || busy || saving || save_failed || choosing_file || shelf_loading || preferences_opened() || preferences_busy()) return FALSE;
@@ -879,6 +929,9 @@ static void action(GtkWidget *widget,gpointer name) {
   (void)widget;const char *a=name;
 #ifdef EXR_READER_DROP_IMPORT_UI
   if(!strcmp(a,"cancel") && file_input.pending) { file_input_cancel();return; }
+#endif
+#ifdef EXR_READER_WAVE3_UI
+  if(w3_opened()) return;
 #endif
 #ifdef EXR_READER_NAVIGATION_UI
   if(directory_opened()) return;
@@ -966,6 +1019,9 @@ static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   if((event->state&GDK_CONTROL_MASK) && event->keyval==GDK_KEY_e) {
     metadata_edit(NULL,NULL);return TRUE;
   }
+#endif
+#ifdef EXR_READER_WAVE3_UI
+  if(w3_key(event)) return TRUE;
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   if((event->state&GDK_CONTROL_MASK) && event->keyval==GDK_KEY_f) {

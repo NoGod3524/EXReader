@@ -40,6 +40,13 @@
 #include <reader_projection.h>
 #include <reader_reading_state.h>
 #endif
+#ifdef EXR_READER_WAVE3
+/* The account module names its handle reader_session, as does this file's own
+   page-session struct below. Rename only the module's spelling for this include. */
+#define reader_session reader_account_session
+#include <reader_sync_view.h>
+#undef reader_session
+#endif
 #ifdef EXR_READER_GTK_RAW3
 #include "../../apps/reader/desktop/reading_capture_bytes.h"
 /* This translation unit owns every GTK metadata/received/records handle. */
@@ -129,6 +136,19 @@ struct linux_reader {
   void *account_data;
   void *received_data;
 #endif
+#ifdef EXR_READER_WAVE3
+  rfl_library *w3_fonts;
+  rfl_lease *w3_lease,*w3_candidate_lease;
+  exr_font *w3_base_font,*w3_candidate_font;
+  int w3_font_restored,w3_candidate_pending;
+  char w3_font_hash[RFL_HASH_BYTES],w3_candidate_hash[RFL_HASH_BYTES];
+  roe_exporter *w3_exporter;
+  roe_owner w3_owner;
+  int w3_export_depth;
+  reader_jh *w3_history;
+  reader_jh_item w3_item;
+  int w3_item_valid,w3_kind,w3_history_code;
+#endif
 };
 typedef struct {int64_t id;int font,zoom;} reader_import_saved;
 static exr_status reader_import_suspend(linux_reader *,reader_import_saved *);
@@ -155,11 +175,19 @@ static void session_free(reader_session *session) {
   exr_document_free(session->document);exr_fixed_free(session->fixed_document);
   exr_books_free(session->fixed_book,session->fixed_book ? 1:0);memset(session,0,sizeof(*session));
 }
+#ifdef EXR_READER_WAVE3
+static void w3_pending_discard(linux_reader *);
+static void w3_free(linux_reader *);
+#endif
 static void pending_discard(linux_reader *reader) {
   if(reader->pending_owns_session) session_free(&reader->pending);
   else if(reader->pending_new_pager) exr_pager_free(reader->pending.pager);
   memset(&reader->pending,0,sizeof(reader->pending));
   reader->has_pending=reader->pending_owns_session=reader->pending_new_pager=0;
+#ifdef EXR_READER_WAVE3
+  /* The candidate pager above is gone; only then may its leased font be released. */
+  w3_pending_discard(reader);
+#endif
 #ifdef EXR_READER_NAVIGATION
   reader->navigation_pending=0;
 #endif
@@ -184,6 +212,10 @@ void reader_result_free(reader_result *result) {
 #ifdef EXR_READER_SEARCH
   for(i=0;i<result->search_count;i++) free(result->search_rows[i].label);
   free(result->search_rows);
+#endif
+#ifdef EXR_READER_WAVE3
+  for(i=0;i<(size_t)result->w3_font_count;i++) { g_free(result->w3_font_hashes[i]);g_free(result->w3_font_names[i]); }
+  free(result->w3_font_hashes);free(result->w3_font_names);g_free(result->w3_sync_text);
 #endif
   free(result->metadata_title);free(result->metadata_author);
   free(result->account_id);free(result->account_root);
@@ -234,6 +266,9 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
   status=exr_library_open(database,&reader->library,error);
   if(status==EXR_OK) status=exr_font_open(font,&reader->font,error);
   if(status!=EXR_OK) { linux_reader_close(reader);return status; }
+#ifdef EXR_READER_WAVE3
+  reader->w3_base_font=reader->font;
+#endif
   *out=reader;return EXR_OK;
 }
 void linux_reader_close(linux_reader *reader) {
@@ -252,7 +287,13 @@ void linux_reader_close(linux_reader *reader) {
     accounts_free(reader);
 #endif
     pending_discard(reader);
-    session_free(&reader->current);exr_font_free(reader->font);
+    session_free(&reader->current);
+#ifdef EXR_READER_WAVE3
+    /* Every pager is gone, so leased faces, the exporter and history can retire
+       before the borrowed library; the built-in font is restored for the free below. */
+    w3_free(reader);
+#endif
+    exr_font_free(reader->font);
     exr_library_close(reader->library);
 #ifdef EXR_READER_PRODUCT_CATALOG
 #ifdef EXR_READER_DESKTOP_METADATA
@@ -787,6 +828,9 @@ done:
 #ifdef EXR_READER_READING_RECORDS
 #include "reading_records_backend.inc"
 #endif
+#ifdef EXR_READER_WAVE3
+#include "wave3_backend.inc"
+#endif
 #ifdef EXR_READER_BATCH_IMPORT
 #include "batch_import_backend.inc"
 #endif
@@ -803,6 +847,13 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
 #ifdef EXR_READER_READING_RECORDS
   if(command->action>=READER_RECORDS_LIST && command->action<=READER_RECORDS_HISTORY) {
     records_execute(reader,command,result);return;
+  }
+#endif
+#ifdef EXR_READER_WAVE3
+  /* These never replace the visible page, so a pending frame is left alone. */
+  if(command->action>=READER_W3_ANNOTATION_PREVIEW && command->action<=READER_W3_SYNC_STATUS &&
+     command->action!=READER_W3_FONT_USE && command->action!=READER_W3_HISTORY) {
+    w3_execute(reader,command,result);return;
   }
 #endif
 #ifdef EXR_READER_NAVIGATION
@@ -879,6 +930,9 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
 #ifdef EXR_READER_SEARCH
       reader->search_pending=0;
 #endif
+#ifdef EXR_READER_WAVE3
+      w3_after_commit(reader,result);
+#endif
     }
     goto done;
   }
@@ -889,6 +943,9 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   if(command->action==READER_SETTINGS && !next.id) goto preferences_saved;
 #endif
   if(command->action==READER_IMPORT || command->action==READER_OPEN) {
+#ifdef EXR_READER_WAVE3
+    w3_font_restore(reader,result);
+#endif
     if(command->action==READER_IMPORT) {
       reader_import_saved saved={0};status=reader_import_suspend(reader,&saved);
       if(status==EXR_OK) {
@@ -953,6 +1010,13 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
 #ifdef EXR_READER_READING_RECORDS
   else if(command->action==READER_RECORDS_JUMP) {
     status=records_jump(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
+  }
+#endif
+#ifdef EXR_READER_WAVE3
+  else if(command->action==READER_W3_FONT_USE) {
+    status=w3_font_use(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
+  } else if(command->action==READER_W3_HISTORY) {
+    status=w3_history_jump(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
   }
 #endif
   else if(command->action==READER_ZOOM || (command->action==READER_SETTINGS && next.fixed_document)) {
@@ -1026,6 +1090,9 @@ preferences_saved:
     next.page=result->page;next.start=result->start;next.end=result->end;
     result->position=next.position;reader->pending=next;reader->has_pending=1;
     reader->pending_owns_session=owned_session;reader->pending_new_pager=new_pager;
+#ifdef EXR_READER_WAVE3
+    w3_mark_pending(reader,command);
+#endif
 #ifdef EXR_READER_SEARCH
     reader->search_pending=command->action==READER_SEARCH_CHOOSE;
     reader->search_pending_token=reader->search_pending ? command->search_token:0;
@@ -1047,6 +1114,10 @@ done:
 #endif
   if(owned_session) session_free(&next);
   else if(new_pager) exr_pager_free(next.pager);
+#ifdef EXR_READER_WAVE3
+  /* A refused frame must not keep a leased face or a peeked history item. */
+  if(status!=EXR_OK && command->action!=READER_COMMIT) w3_pending_discard(reader);
+#endif
   if(status!=EXR_OK) result->has_frame=0;
   result->status=status;
   if(!result->message[0]) strcpy(result->message,status==EXR_OK ? "Ready":"Reading operation failed; accepted page retained");
