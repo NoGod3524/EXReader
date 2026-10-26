@@ -351,6 +351,20 @@
         "examples/android/app/build.gradle",
         "examples/android/app/src/main/cpp/CMakeLists.txt"
       ]
+    },
+    {
+      "name": "windows-fixed-volume-wal-candidate",
+      "source": "e7a79ca79d5e89675e3ef3391abbfd95449a76bf",
+      "tested_source": "e7a79ca79d5e89675e3ef3391abbfd95449a76bf",
+      "tested_run": 40411215820,
+      "paths": [
+        "apps/reader/desktop/catalog_sdk.c",
+        "apps/reader/store/native/catalog.c",
+        "apps/reader/store/native/catalog.h",
+        "tests/reader_startup_profile/CMakeLists.txt",
+        "tests/reader_startup_profile/profile.c",
+        "tests/reader_startup_profile/wal_crash.c"
+      ]
     }
   ]
 }
