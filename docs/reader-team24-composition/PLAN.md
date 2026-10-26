@@ -994,3 +994,23 @@ summary `12696060479` is 4,629 bytes, SHA-256
 `5d8bf2981c4cb3006593816aebb3bb2eb26f426b9f186aecb08b8743fe03da14`.
 Both expire 2027-01-24T22:40:05Z. The candidate is not admitted to the shared
 branch while its Android and remaining combined-source evidence are pending.
+
+The subsequent Windows/Android plus fixed-volume WAL candidate
+`ede0107b10a181458cb9a503730323a643341854` has passed the Windows retained
+host, cloud import, two-host HTTPS organization, group browsing and same-run
+artifact verifier in [40418007038/1](https://github.com/NoGod3524/EXReader/actions/runs/40418007038).
+Windows artifact `12696831669` is 59,307,595 bytes, SHA-256
+`81c0693e83adea8b3b5a45088d33a049e4b5e3570dd26f840daef8bbc9c5a0b9`;
+summary `12696326986` is 5,014 bytes, SHA-256
+`5deb4abf49c7f719027bddd39201c40d39ecf47f834d07e19b5115fb23f87b82`.
+Both expire 2027-01-24T23:11:20Z. On that same source,
+[40418007043/1](https://github.com/NoGod3524/EXReader/actions/runs/40418007043)
+passed original catalog and cancellation checks and recovered a committed,
+nonempty WAL after forced process termination. The original fixed-path guard
+failure [40416990662/1](https://github.com/NoGod3524/EXReader/actions/runs/40416990662)
+is retained; a separate workflow admitted precisely pinned WAL files while
+keeping the other original source checks and business tests.
+Windows and macOS installed organization consumers passed four configurations
+in [40418056222/1](https://github.com/NoGod3524/EXReader/actions/runs/40418056222).
+Android and Linux retained checks on this source remain pending; none of these
+results grants six-platform delivery or physical-device acceptance.
