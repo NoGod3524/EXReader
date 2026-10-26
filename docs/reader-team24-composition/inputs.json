@@ -260,6 +260,8 @@
     {
       "name": "windows-group-browser-candidate",
       "source": "570852bcdc6902faf72a10442fed0c37b8424eb1",
+      "tested_source": "570852bcdc6902faf72a10442fed0c37b8424eb1",
+      "tested_run": 40411767307,
       "paths": [
         ".github/workflows/windows-organization-projection.yml",
         "apps/reader/desktop/windows_catalog.inc",

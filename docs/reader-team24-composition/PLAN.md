@@ -837,3 +837,28 @@ The diagnostic artifact `12693876568` has SHA-256
 The memberships are isolated projected fixtures, not a sync test. This is
 bounded diagnostic evidence across two runs; the current candidate requires
 its own full same-source regression and artifact verification before admission.
+
+## Windows group browser on the composed source
+
+The independent browser source `570852bcdc6902faf72a10442fed0c37b8424eb1`
+completed [40411767307/1](https://github.com/NoGod3524/EXReader/actions/runs/40411767307):
+both the Windows job and its same-run artifact verifier passed. Artifact
+`12692164884` is 59,292,242 bytes, SHA-256
+`ee0e219a0c522339fd70370b5ea3734a7a58af7c6962cd92b078df999fad93be`;
+summary `12693099511` is 4,631 bytes, SHA-256
+`c0077417360436eb081401a1a55200b2f61590dc69b0e5e0bf7283db654f6143`.
+
+Composition source `0749579f2f9398ee543d2aec6a1f766fec8940ed` separately
+completed [40412385121/1](https://github.com/NoGod3524/EXReader/actions/runs/40412385121).
+The Windows job and same-run verifier passed. The verifier checked the actual
+host and seed identities, all 2,202 mappings, three groups of 170 seeded
+members, forward and reverse paging, search, the 150-row cache bound, return
+to all books, and retained host and HTTPS cloud regressions. The composed host
+SHA-256 was `445a390311fbe02f27240830a4058ec6749ba48d03e750182cbe95fd88e39452`.
+Artifact `12694004036` is 59,298,348 bytes, SHA-256
+`d71252bf367c8e7289af6f18f5bbda93049a151857c4281ec86cc8ec366fa42f`;
+summary `12694745818` is 4,639 bytes, SHA-256
+`9084e0c85ffb7d59b8aaf7166342e98071b3b5238fee2025fd68105b8fdb6a31`.
+Both expire 2027-01-24T22:26:01Z. Group paging memberships are fixture-seeded;
+the separate HTTPS checks do not turn this into cross-platform synchronization
+or physical-device acceptance. The ten exact candidate paths are now admitted.
