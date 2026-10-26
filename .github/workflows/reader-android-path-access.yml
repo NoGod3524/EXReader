@@ -4,6 +4,11 @@ on:
   push:
     branches: [codex/android-path-descriptors]
   workflow_dispatch:
+    inputs:
+      audit_run_id:
+        description: inspect a prior Android artifact without running the emulator
+        required: false
+        default: ''
 permissions:
   contents: read
   actions: read
@@ -15,7 +20,31 @@ env:
   C11_SDK: edddc463c06ed5731195cdb8f06b2df6dff7699e
   C11_NDK: 27.0.12077973
 jobs:
+  audit:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.audit_run_id != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-wave3-c11-android-*
+          path: build/audit
+          merge-multiple: true
+          run-id: ${{ inputs.audit_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Inspect recorded review and bounded device logs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ('review', 'bounded'):
+              path = Path('build/audit/evidence/walkthrough') / (name + '-logcat.txt')
+              print('---', path, '---')
+              lines = path.read_text(errors='replace').splitlines()
+              for line in lines:
+                  if any(x in line for x in ('EXRHost', 'FATAL EXCEPTION', 'AndroidRuntime', 'ActivityTaskManager', ' font ')):
+                      print(line)
+          PY
   android:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.audit_run_id == '' }}
     name: build the complete wave3 host and execute it on a real API34 emulator
     runs-on: ubuntu-latest
     timeout-minutes: 210
