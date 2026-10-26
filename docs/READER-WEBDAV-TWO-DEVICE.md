@@ -63,3 +63,11 @@
 - GTK→Android：GTK 实际界面新建 TXT 进度和书签，经服务上传，Android 实际界面同步并读取精确 wire；两条均由 Android 实际 SDK 返回 FOUND，范围均为 `0..0` 点锚。反向高亮、其他格式、书架组织、并发和真机未由此轮接受。
 
 原始工件 `12685855227` SHA-256 `5083ece4c791a4bff28bb218e89f8d27ef248ee615727805189076180f8369b4`；认证工件 `12686025698` SHA-256 `0736793d2da263baaac2115ab1df5e986be7382e0fe477019108c65d940c0416`。认证核对原 ZIP、程序与 SDK 身份、双向原始 wire、11+2 条定位、1258 条非独立检查服务请求和四份 GTK SDK 原件回读。仅授予上述两端和范围，不授予六平台完整互通。
+
+## GTK→Android 四格式及真实高亮扩展
+
+[实际运行 40396989966](https://github.com/NoGod3524/EXReader/actions/runs/40396989966)，attempt 1，源码 `77a10aa4c3ce35bffa58e9b39d8fa3ca5e776b85`；[独立认证 40398960306](https://github.com/NoGod3524/EXReader/actions/runs/40398960306) 成功。Android API34 x86_64 模拟器实际安装 APK SHA-256 `fac3f7a608a8b8f506b18f3c3656f138c3aa52dae1b6df0e4d2b56fa09313e60`，实际加载 SDK SHA-256 `b3fc325f187a612d0fc809565faba6e9fa1d5ece2a7f7ba8158210b52db46310`；运行中的 Linux GTK 程序 SHA-256 `1c9eaa35dc15d163ff3d3671a7610940df03ad6b1bdb00e374ee7db3d5db4323`。两程序访问同一 Apache httpd 2.4.68 mod_dav 服务，固定镜像 digest `sha256:03f858efb82c25cb0f9962946615cdcdaf26927cb971722149b563197cfd0fdd`，实际容器 image ID `sha256:92605b8e63296cc3f7f0a421d627b570a4278458b24b956de7de3bb282e24349`。
+
+GTK 实际用户界面为 TXT、EPUB、PDF 和 CBZ 各保存进度及书签，并为 TXT、EPUB、PDF 的真实可见文本选区保存非空高亮。经 GTK 实际同步上传、Android 实际同步接收后，Android 公开 retained 接口保留全部 11 份原始 GTK wire，实际 SDK 对这 11 条均返回 FOUND；高亮原始范围分别为 TXT `0..18`、EPUB `0..5`、PDF `0..5`，并核对 EPUB 的 `chapter.xhtml` 路由和 PDF 的 `page-1` 标识。该 CBZ 页面没有文本，界面选区为空，因此只接受进度与书签，不声称 CBZ 高亮通过。
+
+同轮 Android→GTK 的 4 份 TXT/EPUB/PDF/CBZ 原件在 GTK 实际接收并打开后，独立认证以该次精确源码构建的公开 SDK inspector 逐字节回读一致；19 份 Android revision 和 11 条选定记录也获原始字节与 FOUND 范围核对。独立认证重新下载并散列原 ZIP，核对 Android APK/SDK、GTK 运行程序、双向原始 wire 与 1338 条非独立检查服务请求。原工件 `12687597145` SHA-256 `4fe574873bd472188b9f8162429a3a94ef4a20a0ba28f0554afde24fdfa9d2ab`；认证工件 `12686729837` SHA-256 `4c42321d68f7d7638e46562aea3dece7977baf27f4d0c925e7555344345cdf64`。本结果限上述两端、模拟器、单一 Apache 服务、四格式和实际记录；组织、其他平台、真机、离线冲突与崩溃恢复不由此授予。
