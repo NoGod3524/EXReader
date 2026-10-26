@@ -41,6 +41,18 @@ jobs:
           ruby -c tests/reader_team24_apple/make_project.rb
       - name: Frozen SDK and exact installed five module family
         run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+      - name: Actual account session terminal callbacks
+        if: ${{ matrix.target == 'macos' }}
+        run: |
+          mkdir -p build/account-terminal
+          sdk="$PWD/build/raw3-ios-sdk/macos/sdk"
+          product="$PWD/build/raw3-ios-sdk/macos/raw-products"
+          python3 tools/apple_swift.py --sdk "$sdk" --product-prefix "$product" --selector-bytes-candidate -- \
+            -swift-version 5 -parse-as-library -O -I "$sdk/include" -L "$sdk/lib" -lexreader \
+            -Xlinker -rpath -Xlinker "$sdk/lib" examples/apple/HostSDK.swift \
+            examples/apple/HostCatalog.swift examples/apple/HostAccount.swift \
+            tests/reader_team24_apple/AccountTerminalReview.swift -o build/account-terminal/account-terminal
+          python3 tests/reader_team24_apple/run_account_terminal.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

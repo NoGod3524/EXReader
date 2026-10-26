@@ -188,6 +188,7 @@ final class HostAccountSession: ObservableObject {
     private var timer: Timer?
     private var closeRequested = false
     private var completion: (() -> Void)?
+    private var terminal: ((reader_session_state) -> Void)?
     private var cancelPreparation: (() -> Void)?
 
     func beginPreparation(cancel: @escaping () -> Void) throws {
@@ -213,7 +214,8 @@ final class HostAccountSession: ObservableObject {
         }
     }
 
-    func start(profile: HostAccountProfile, directory: URL, authorization: Data, completed: @escaping () -> Void) throws {
+    func start(profile: HostAccountProfile, directory: URL, authorization: Data,
+               terminal: ((reader_session_state) -> Void)? = nil, completed: @escaping () -> Void) throws {
 #if EXR_APPLE_WAVE3
         wave3HandleLock.lock()
         defer { wave3HandleLock.unlock() }
@@ -244,7 +246,7 @@ final class HostAccountSession: ObservableObject {
             guard result == READER_SESSION_OK else { throw HostError.invalidInput("无法创建云盘同步会话") }
         }
         guard let handle, reader_session_start(handle) == READER_SESSION_OK else { throw HostError.invalidInput("云盘同步会话尚未就绪") }
-        completion = completed; running = true; state = "正在同步"; message = ""
+        completion = completed; self.terminal = terminal; running = true; state = "正在同步"; message = ""
         if timer == nil {
             timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in self?.observe() }
         }
@@ -277,13 +279,18 @@ final class HostAccountSession: ObservableObject {
         case READER_SESSION_CLOSED:
             state = "已关闭"; running = false
             guard reader_session_destroy(&self.handle) == READER_SESSION_OK else { return }
-            closeRequested = false; timer?.invalidate(); timer = nil; completion = nil
+            closeRequested = false; timer?.invalidate(); timer = nil; completion = nil; terminal = nil
         case READER_SESSION_FINISHED, READER_SESSION_CANCELLED, READER_SESSION_FAILED:
             let wasRunning = running; running = false
             timer?.invalidate(); timer = nil
             state = snapshot.state == READER_SESSION_FINISHED ? "本轮扫描完成" : snapshot.state == READER_SESSION_CANCELLED ? "已取消" : "同步失败"
             message = snapshot.state == READER_SESSION_FINISHED ? "可再次同步以接收后续变更" : "已提交的历史会保留，可手动重试"
-            if wasRunning { let callback = completion; completion = nil; callback?() }
+            if wasRunning {
+                let callback = completion, terminalCallback = terminal
+                completion = nil; terminal = nil
+                terminalCallback?(snapshot.state)
+                if snapshot.state == READER_SESSION_FINISHED { callback?() }
+            }
         default: break
         }
     }
