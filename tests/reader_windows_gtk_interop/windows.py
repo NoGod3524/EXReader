@@ -90,6 +90,9 @@ def main():
             assert sql(app,'SELECT count(*) FROM reader_book_tags WHERE tag_id=? AND book_key=?',(tag,key))==[(0,)]
             message=ui.text(ui.U.GetDlgItem(d,ui.MESSAGE));assert 'committed=1' in message,message
             ui.M.screenshot(d,a.out/'windows-membership.bmp')
+            assert ui.U.IsWindowEnabled(ui.U.GetDlgItem(d,ui.ACK))
+            ui.send(ui.U.GetDlgItem(d,ui.ACK),0xF5);app.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(d,ui.CANCEL)),timeout=120)
+            assert not Path(str(app.db)+'.product.sqlite.bulk-action.pending').exists()
             ui.send(ui.U.GetDlgItem(d,ui.CLOSE),0xF5);app.wait(lambda:not ui.U.IsWindow(d));app.wait_idle()
             checks.append('windows_native_ui_removes_gtk_tag_membership')
             source=a.out/'Relay return.txt';source.write_bytes(('Windows return original.\n'*95).encode());digest=hashlib.sha256(source.read_bytes()).hexdigest()
