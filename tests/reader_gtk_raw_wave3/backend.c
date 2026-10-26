@@ -130,13 +130,15 @@ int main(int argc,char **argv) {
     reader_result_free(&landed);
     reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,0,&item,&record);
     REQUIRE(record.mode==READER_RS_REFLOW_GLOBAL && record.anchor_version==2 && record.has_location);
-    REQUIRE(record.start==record.end && record.exact && record.exact_size);
+    /* A landing is a caret: no range and no invented quote (the module's own
+       point rule keeps the selector empty and anchors it on the bytes around). */
+    REQUIRE(record.start==record.end && !record.exact_size);
     reader_rs_record_free(&record);reader_jh_item_release(&item);
     char progress[33]={0};w3_save(reader,READER_RC_PROGRESS,"",0,0,progress);
     received_owner *owner=w3_store(reader);char *wire=NULL;size_t bytes=0;reader_rs_record saved={0};
     REQUIRE(reader_revision_get_raw_v3(owner->revisions,progress,&wire,&bytes,NULL,NULL)==READER_REV_OK);
     REQUIRE(reader_rs_decode_raw_v3(owner->revisions,wire,bytes,&saved,NULL)==READER_RS_OK);
-    REQUIRE(saved.mode==READER_RS_REFLOW_GLOBAL && saved.anchor_version==2 && saved.start==saved.end && saved.exact_size);
+    REQUIRE(saved.mode==READER_RS_REFLOW_GLOBAL && saved.anchor_version==2 && saved.start==saved.end && !saved.exact_size);
     REQUIRE(bytes && wire);reader_rs_record_free(&saved);reader_revision_bytes_free(wire);
     reader_result one=w3_search(reader,text_book,1,"NEEDLEONE",&search);size_t one_start=one.selected_start;
     landed=w3_accept(reader,&one);
@@ -168,7 +170,7 @@ int main(int argc,char **argv) {
     int64_t epub_book=w3_open(reader,READER_IMPORT,epub,0,&landed);reader_result_free(&landed);
     reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,0,&item,&record);
     REQUIRE(record.mode==READER_RS_EPUB_CHAPTER && record.anchor_version==2 && record.part_path);
-    REQUIRE(record.part==reader->current.part && record.start==record.end && record.exact_size);
+    REQUIRE(record.part==reader->current.part && record.start==record.end && !record.exact_size);
     reader_rs_record_free(&record);reader_jh_item_release(&item);
     reader_result next=w3_run(reader,w3_command(READER_NEXT,epub_book));REQUIRE(next.status==EXR_OK && next.has_frame);
     reader_result moved=w3_accept(reader,&next);REQUIRE(moved.w3_history_count==2);
@@ -189,7 +191,7 @@ int main(int argc,char **argv) {
     reader_result landed={0};pdf_book=w3_open(reader,READER_IMPORT,pdf,0,&landed);reader_result_free(&landed);
     reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,0,&item,&record);
     REQUIRE(record.mode==READER_RS_FIXED_PAGE && record.anchor_version==3 && record.has_location);
-    REQUIRE(record.start==record.end && record.exact && record.exact_size);
+    REQUIRE(record.start==record.end && !record.exact_size);
     REQUIRE((record.suffix && memchr(record.suffix,0,record.suffix_size)) ||
             (record.exact && memchr(record.exact,0,record.exact_size)));
     {
