@@ -31,7 +31,11 @@ class Adapter:
 
 
 def submit(host, fixture, timeout):
-    """Time from first native IDOK click until import is idle; sample while busy."""
+    """Time from native IDOK until idle is observed after the chooser driver returns.
+
+    The retained chooser driver waits 0.4 s between IDOK attempts. That delay is
+    included in this end-to-end measurement; busy WM_NULL probes run concurrently.
+    """
     app = Adapter(host)
     samples, state = [], {'start': None, 'done': False, 'error': None}
     host.wait_enabled('import', 60)
@@ -116,7 +120,8 @@ def environment(*args):
     result = original_environment(*args)
     result['measurement']['input_delivery'] = ('Native file chooser and SendMessageTimeoutW to real Win32 controls; '
                                                'import timing begins at native IDOK; busy response uses WM_NULL')
-    result['measurement']['input_path_note'] = 'Native chooser driven with the retained wave3 dialog driver; no hidden path edit.'
+    result['measurement']['input_path_note'] = ('Native chooser driven with the retained wave3 dialog driver; '
+                                                'IDOK-to-observed-idle includes its 0.4 s wait; no hidden path edit.')
     return result
 
 
