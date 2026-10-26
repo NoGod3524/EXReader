@@ -1,0 +1,34 @@
+name: Read full product performance evidence
+on:
+  push:
+    branches: [codex/reader-full-product-performance]
+    paths: ['.github/workflows/reader-full-perf-results.yml', 'tests/reader_perf_full_results/**']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - run: '40397287811'
+            artifact: full-product-perf-windows-40397287811-1
+          - run: '40395860891'
+            artifact: full-product-perf-gtk-40395860891-1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate and parse original artifact in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_RUN: ${{ matrix.run }}
+          TARGET_NAME: ${{ matrix.artifact }}
+        run: python3 tests/reader_perf_full_results/inspect.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-perf-inspection-${{ matrix.run }}-${{ github.run_id }}
+          path: build/full-perf-result/result.json
+          if-no-files-found: warn
