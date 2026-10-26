@@ -497,3 +497,23 @@ authentication artifact `12686729837` is 1,309 bytes, SHA-256
 This is an independently tested source, not current composition acceptance; it
 does not establish synchronized organization, physical devices, other Apple or
 Windows clients, real provider behavior or final six-target acceptance.
+
+## Windows first-mapping startup observation
+
+[40399615507/1](https://github.com/NoGod3524/EXReader/actions/runs/40399615507)
+observed the exact packaged Windows EXE from source
+`77a54227a78b0160e98609032e7ceef87fb29d00`, built in `40397287811`, using
+observer source `9c386e0533cd6ded8699eec7f72d46a88642ce9c`. Eight profiles were
+created from the same 2,202-book SDK seed without existing product catalogs.
+For the four launches without catalog polling, the window appeared at a median
+24.704 ms and the shelf became interactive at a median 5,215.902 ms. This is
+initial product mapping, not an established measurement of a fully mapped
+profile, rendering frame time or an approved performance threshold. Three of
+four polled launches observed all 2,202 mappings shortly before the shelf became
+interactive; polling can contend with writes and does not isolate the cost of
+individual repair operations. Results were independently inspected in Actions
+[40399864380/1](https://github.com/NoGod3524/EXReader/actions/runs/40399864380).
+The source artifact `12688386499` SHA-256 is
+`a98b0160d27bf6820931f20ed4206bb00b0c5c29fe21484ba7aef324fa27158d`.
+The product source remains independent; a valid optimization needs same-source
+comparison and the original mapping, cancellation and recovery regressions.
