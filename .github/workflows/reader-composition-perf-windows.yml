@@ -112,6 +112,20 @@ jobs:
         run: |
           python tests/reader_perf_windows/perf_windows.py --package build/desktop-windows-package/EXReader --seed build/desktop-sdk/reader-windows-shelf-seed.exe --output build/perf-windows --cohorts cold_shelf,warm_shelf,reading,import,import_epub --launches-per-cohort 12 --txt-diagnostic build/perf-txt-diagnosis/diagnosis.json 2>&1 | tee build/perf-gate/measurement.log
 
+      - name: Verify all prepared mappings in the actual product profile
+        run: |
+          python - <<'PY' | tee build/perf-gate/mapping-verified.json
+          import hashlib, json, sqlite3
+          from pathlib import Path
+          path = Path('build/perf-windows-work/template/library.sqlite.product.sqlite')
+          with sqlite3.connect(path) as db:
+              mapping = db.execute('SELECT count(*),count(DISTINCT l.sdk_book_id),sum(CASE WHEN b.book_key IS NOT NULL AND b.deleted=0 THEN 1 ELSE 0 END) FROM reader_local_books l LEFT JOIN reader_books b ON b.book_key=l.book_key').fetchone()
+              integrity = db.execute('PRAGMA integrity_check').fetchone()[0]
+              foreign_keys = db.execute('PRAGMA foreign_key_check').fetchall()
+          assert mapping == (2202, 2202, 2202) and integrity == 'ok' and not foreign_keys
+          print(json.dumps({'mappings': mapping, 'integrity': integrity, 'foreign_key_errors': len(foreign_keys), 'catalog_sha256': hashlib.sha256(path.read_bytes()).hexdigest()}))
+          PY
+
       - name: Require complete same-source performance evidence
         if: always()
         run: |

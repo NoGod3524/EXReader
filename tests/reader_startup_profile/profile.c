@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
   REQUIRE(sqlite3_step(check) == SQLITE_ROW);
   snprintf(journal_mode, sizeof(journal_mode), "%s", (const char *)sqlite3_column_text(check, 0));
   REQUIRE(sqlite3_finalize(check) == SQLITE_OK);
+  REQUIRE(!getenv("EXR_EXPECT_MODE") || !strcmp(journal_mode, getenv("EXR_EXPECT_MODE")));
   REQUIRE(reader_catalog_close(&catalog, NULL) == SQLITE_OK);
   REQUIRE(sqlite3_cancel_auto_extension((void (*)(void))instrument) == 1);
   REQUIRE(sqlite3_open_v2(argv[2], &verify, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK);
