@@ -1,4 +1,8 @@
 /* SPDX-License-Identifier: MIT */
+#ifndef _WIN32
+#define _POSIX_C_SOURCE 200809L
+#define _FILE_OFFSET_BITS 64
+#endif
 #include "reader_cloud_import.h"
 #include <errno.h>
 #include <stdio.h>
@@ -8,7 +12,11 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <wchar.h>
+#include <io.h>
+#include <fcntl.h>
 #else
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -102,6 +110,106 @@ static FILE *rc_open_read(const char *path) {
 #else
   return fopen(path, "rb");
 #endif
+}
+
+/* Phase two owns this one opened object through verification and SDK import.
+   Windows PDF still needs a pathname: deny writes/deletes on the file and
+   hold every non-reparse parent against rename until the SDK returns. */
+typedef struct {
+  FILE *file;
+#ifdef _WIN32
+  HANDLE *parents;
+  size_t parent_count;
+#endif
+} rc_verified;
+
+static void rc_verified_close(rc_verified *verified) {
+  if (verified->file) fclose(verified->file);
+#ifdef _WIN32
+  while (verified->parent_count) CloseHandle(verified->parents[--verified->parent_count]);
+  free(verified->parents);
+#endif
+  memset(verified, 0, sizeof(*verified));
+}
+
+static int rc_verified_open(const char *path, rc_verified *verified) {
+  memset(verified, 0, sizeof(*verified));
+#ifdef _WIN32
+  wchar_t *wide = rc_widen(path), *full;
+  HANDLE file;
+  BY_HANDLE_FILE_INFORMATION information;
+  size_t length, i;
+  int fd;
+  if (!wide) return 0;
+  full = _wfullpath(NULL, wide, 0);
+  free(wide);
+  /* A private staging file must be on an absolute local drive, not a device
+     or network namespace whose path components cannot be pinned this way. */
+  if (!full) return 0;
+  length = wcslen(full);
+  if (length < 4 || full[1] != L':' || (full[2] != L'\\' && full[2] != L'/')) {
+    free(full);
+    return 0;
+  }
+  verified->parents = calloc(length, sizeof(HANDLE));
+  if (!verified->parents) { free(full); return 0; }
+  for (i = 3; i < length; i++) {
+    wchar_t separator;
+    HANDLE parent;
+    if (full[i] != L'\\' && full[i] != L'/') continue;
+    separator = full[i];
+    full[i] = 0;
+    parent = CreateFileW(full, FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, NULL);
+    full[i] = separator;
+    if (parent == INVALID_HANDLE_VALUE) goto failed;
+    if (!GetFileInformationByHandle(parent, &information) ||
+        !(information.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
+        (information.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
+      CloseHandle(parent);
+      goto failed;
+    }
+    verified->parents[verified->parent_count++] = parent;
+  }
+  file = CreateFileW(full, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+      FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+  if (file == INVALID_HANDLE_VALUE) goto failed;
+  if (!GetFileInformationByHandle(file, &information) ||
+      (information.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT))) {
+    CloseHandle(file);
+    goto failed;
+  }
+  fd = _open_osfhandle((intptr_t)file, _O_RDONLY | _O_BINARY);
+  if (fd < 0) { CloseHandle(file); goto failed; }
+  verified->file = _fdopen(fd, "rb");
+  if (!verified->file) { _close(fd); goto failed; }
+  free(full);
+  return 1;
+failed:
+  free(full);
+  rc_verified_close(verified);
+  return 0;
+#else
+  struct stat information;
+  int fd = open(path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+  if (fd < 0) return 0;
+  if (fstat(fd, &information) || !S_ISREG(information.st_mode)) { close(fd); return 0; }
+  verified->file = fdopen(fd, "rb");
+  if (!verified->file) { close(fd); return 0; }
+  return 1;
+#endif
+}
+
+static size_t rc_verified_read(void *context, uint64_t offset, void *buffer, size_t size) {
+  FILE *file = context;
+  if (offset > INT64_MAX) return 0;
+#ifdef _WIN32
+  if (_fseeki64(file, (__int64)offset, SEEK_SET)) return 0;
+#else
+  if (fseeko(file, (off_t)offset, SEEK_SET)) return 0;
+#endif
+  return fread(buffer, 1, size, file);
 }
 
 /* Removes only the named staging file; a missing file is not an error. */
@@ -284,24 +392,26 @@ static void rc_sha_hex(rc_sha *s, char out[65]) {
 typedef enum { RC_HASH_OK, RC_HASH_IO, RC_HASH_CANCELLED, RC_HASH_MEMORY } rc_hash_status;
 
 /* Streams the file in 64 KiB blocks; counts bytes independently of any stat. */
-static rc_hash_status rc_hash_file(const char *path, const reader_cloud_control *control,
+static rc_hash_status rc_hash_stream(FILE *file, const reader_cloud_control *control,
     uint64_t *bytes, char hex[65]) {
-  FILE *file = rc_open_read(path);
   unsigned char *buffer;
   rc_sha sha;
   size_t got;
   *bytes = 0;
   if (!file) return RC_HASH_IO;
+#ifdef _WIN32
+  if (_fseeki64(file, 0, SEEK_SET)) return RC_HASH_IO;
+#else
+  if (fseeko(file, 0, SEEK_SET)) return RC_HASH_IO;
+#endif
   buffer = malloc(RC_BLOCK);
   if (!buffer) {
-    fclose(file);
     return RC_HASH_MEMORY;
   }
   rc_sha_init(&sha);
   for (;;) {
     if (control && control->cancelled && control->cancelled(control->context)) {
       free(buffer);
-      fclose(file);
       return RC_HASH_CANCELLED;
     }
     got = fread(buffer, 1, RC_BLOCK, file);
@@ -312,12 +422,19 @@ static rc_hash_status rc_hash_file(const char *path, const reader_cloud_control 
     if (got < RC_BLOCK) {
       int failed = ferror(file);
       free(buffer);
-      fclose(file);
       if (failed) return RC_HASH_IO;
       rc_sha_hex(&sha, hex);
       return RC_HASH_OK;
     }
   }
+}
+
+static rc_hash_status rc_hash_file(const char *path, const reader_cloud_control *control,
+    uint64_t *bytes, char hex[65]) {
+  FILE *file = rc_open_read(path);
+  rc_hash_status status = rc_hash_stream(file, control, bytes, hex);
+  if (file) fclose(file);
+  return status;
 }
 
 /* ---- staged value ------------------------------------------------------- */
@@ -622,6 +739,7 @@ reader_cloud_status reader_cloud_import(exr_library *library, reader_cloud_stage
   char hex[65];
   char *title = NULL;
   int title_failed = 0;
+  rc_verified verified = {0};
 
   if (!library || !staged || !*staged || !result || result->struct_size < sizeof(*result) ||
       (options && options->struct_size < sizeof(*options))) {
@@ -650,7 +768,10 @@ reader_cloud_status reader_cloud_import(exr_library *library, reader_cloud_stage
     code = READER_CLOUD_LIMIT;
     rc_fail(error, code, "staged book exceeds the import limit");
   } else {
-    hashed = rc_hash_file(s->path, control, &seen, hex);
+    errno = 0;
+    hashed = rc_verified_open(s->path, &verified)
+        ? rc_hash_stream(verified.file, control, &seen, hex)
+        : (errno == ENOMEM ? RC_HASH_MEMORY : RC_HASH_IO);
     if (hashed == RC_HASH_CANCELLED) {
       code = READER_CLOUD_CANCELLED;
       rc_fail(error, code, "cancelled while verifying the staged file");
@@ -673,8 +794,33 @@ reader_cloud_status reader_cloud_import(exr_library *library, reader_cloud_stage
       state.user = control;
       sdk_options.control.cancelled = rc_sdk_cancelled;
       sdk_options.control.context = &state;
-      sdk_status = exr_sideload_import_file(library, s->format, s->path, title,
-          &sdk_options, &sdk_result, &sdk_error);
+      if (s->format == EXR_PDF) {
+#ifdef _WIN32
+        /* The read-only file and non-reparse parents remain pinned across
+           all SDK opens. No write/delete sharing is granted for the file. */
+        sdk_status = exr_sideload_import_file(library, s->format, s->path, title,
+            &sdk_options, &sdk_result, &sdk_error);
+#else
+        char descriptor_path[64];
+#ifdef __APPLE__
+        snprintf(descriptor_path, sizeof(descriptor_path), "/dev/fd/%d", fileno(verified.file));
+#else
+        snprintf(descriptor_path, sizeof(descriptor_path), "/proc/self/fd/%d", fileno(verified.file));
+#endif
+        /* Both PDF metadata and original reads reopen our live descriptor,
+           never the stage directory entry. The descriptor stays live. */
+        sdk_status = exr_sideload_import_file(library, s->format, descriptor_path, title,
+            &sdk_options, &sdk_result, &sdk_error);
+#endif
+      } else {
+        exr_source source = {0};
+        source.size = seen;
+        source.read_at = rc_verified_read;
+        source.context = verified.file;
+        source.control = sdk_options.control;
+        sdk_status = exr_sideload_import_source(library, s->format, &source, title,
+            &sdk_options, &sdk_result, &sdk_error);
+      }
       if (sdk_status == EXR_OK) {
         /* Commit boundary: a later cancellation request cannot undo this. */
         result->committed = 1;
@@ -697,7 +843,9 @@ reader_cloud_status reader_cloud_import(exr_library *library, reader_cloud_stage
     }
   }
 
-  /* Only the staging copy is removed. The SDK row is untouched on every path. */
+  rc_verified_close(&verified);
+  /* Cleanup still requires the documented private, host-stable stage directory.
+     No path-replacement experiment or atomic compare-and-unlink is claimed. */
   result->staging_removed = rc_remove(s->path);
   free(title);
   if (result->staging_removed) {
