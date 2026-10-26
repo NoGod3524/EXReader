@@ -29,6 +29,7 @@ struct HostWave3Actions {
 
 struct HostWave3Sheet: View {
     @ObservedObject var state: HostWave3State
+    let ownerBusy: Bool
     let actions: HostWave3Actions
     @Environment(\.presentationMode) private var presentation
     @State private var choosing = false
@@ -77,7 +78,7 @@ struct HostWave3Sheet: View {
             Text(state.message).font(.caption).frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityIdentifier("features.status")
             HStack {
-                Button("刷新详情", action: actions.refresh).disabled(state.busy)
+                Button("刷新详情", action: actions.refresh).disabled(state.busy || ownerBusy)
                     .accessibilityIdentifier("features.refresh")
                 Spacer()
                 if state.busy {
@@ -306,7 +307,7 @@ struct HostWave3Sheet: View {
                         perform: @escaping () -> Void) -> some View {
         Button(action: perform) {
             Text(title).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
-        }.buttonStyle(.borderless).disabled(state.busy || disabled).accessibilityIdentifier(id)
+        }.buttonStyle(.borderless).disabled(state.busy || ownerBusy || disabled).accessibilityIdentifier(id)
     }
 }
 

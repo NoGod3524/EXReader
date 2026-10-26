@@ -103,7 +103,9 @@ final class FeaturesUITests: XCTestCase {
     }
     func testNativeHistoryAfterFoundAndLargeRotationExit() {
         launch(large: true); let original = text("reader.location")
-        tap("reader.search"); tap("search.query"); e("search.query").typeText("C00P040W00"); tap("search.find")
+        // Chapter zero is intentionally repeated by the navigation fixture.
+        // Use the independently authored unique chapter for this FOUND jump.
+        tap("reader.search"); tap("search.query"); e("search.query").typeText("C01P040W00"); tap("search.find")
         let hits = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'search.hit.'"))
         XCTAssertTrue(wait { hits.count == 1 }); hits.firstMatch.tap(); ready()
         XCTAssertNotEqual(text("reader.location"), original); let destination = text("reader.location")
