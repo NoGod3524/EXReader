@@ -59,7 +59,7 @@ jobs:
           INSPECT_ANDROID: ${{ inputs.inspect_android_failure }}
         run: |
           python - <<'PY'
-          import hashlib, io, json, os, re, sys, zipfile
+          import hashlib, io, json, os, re, subprocess, sys, zipfile
           from pathlib import Path
           sys.path.insert(0, 'tools')
           from check_parallel_integration import fetch, download_artifact_zip
@@ -129,7 +129,7 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
         run: |
           python3 - <<'PY'
-          import hashlib, io, json, os, re, sys, zipfile
+          import hashlib, io, json, os, re, subprocess, sys, zipfile
           from pathlib import Path
           sys.path.insert(0, 'tools')
           from check_parallel_integration import fetch, download_artifact_zip
@@ -140,7 +140,7 @@ jobs:
           assert item['workflow_run']['id'] == 40369175290 and item['workflow_run']['head_sha'] == source
           assert not item['expired'] and item['size_in_bytes'] == int(os.environ['EXPECTED_SIZE'])
           assert item['digest'] == 'sha256:' + digest
-          raw = download_artifact_zip(artifact)
+          raw = subprocess.run(['gh', 'api', f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/artifacts/{artifact}/zip'], check=True, stdout=subprocess.PIPE, timeout=360).stdout
           assert len(raw) == int(os.environ['EXPECTED_SIZE']) and hashlib.sha256(raw).hexdigest() == digest
           with zipfile.ZipFile(io.BytesIO(raw)) as archive:
               candidates = [x for x in archive.infolist() if (x.filename == 'result.json' or x.filename.endswith('/result.json')) and x.file_size < 50_000_000]
@@ -166,7 +166,7 @@ jobs:
                   lines = archive.read(member).decode('utf-8', errors='replace').splitlines()
                   for i, line in enumerate(lines):
                       if re.search(r'XCTAssert|error:|failed -|failed \(', line):
-                          snippets.append({'file': member.filename, 'lines': lines[max(0, i-2):min(len(lines), i+4)]})
+                          snippets.append({'file': member.filename, 'lines': lines[max(0, i-8):min(len(lines), i+80)]})
               summary['failure_snippets'] = snippets[:40]
               out = Path('build/apple-latest-inspection'); out.mkdir(parents=True, exist_ok=True)
               (out / (os.environ['PLATFORM'] + '.json')).write_text(json.dumps(summary, indent=2, ensure_ascii=False) + '\n')
