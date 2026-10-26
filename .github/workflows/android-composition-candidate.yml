@@ -248,6 +248,20 @@ jobs:
           script: |
             adb shell pm clear org.exreader.host || true
             bash tests/reader_wave3_c11/device.sh "$PWD/build/wave3"
+      - name: Save an original after real system picker and background process kill
+        if: ${{ !cancelled() && steps.sync_runners.outcome == 'success' && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t build/wave3/artifacts/app-debug.apk
+            python3 tests/reader_wave3_c11/picker_process_recovery.py --fixtures build/wave3/fixtures --app build/wave3/artifacts/app-debug.apk --test-apk build/wave3/artifacts/app-debug-androidTest.apk --output build/wave3/evidence/picker-process-recovery
       - name: Execute sync UI and session regression with exact SDK 3.41
         if: ${{ !cancelled() && steps.sync_runners.outcome == 'success' && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
         uses: reactivecircus/android-emulator-runner@v2
