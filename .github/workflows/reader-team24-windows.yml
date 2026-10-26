@@ -1,7 +1,7 @@
 name: Team24 Windows native integration
 on:
   push:
-    branches: [codex/team24-windows]
+    branches: [codex/team24-windows, codex/dsf-windows-ui-close]
   workflow_dispatch:
 permissions:
   contents: read

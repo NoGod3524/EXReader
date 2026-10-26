@@ -186,7 +186,7 @@ def fill_system_dialog(app, path):
         raise
     P.set_text(filename, str(Path(path).resolve()))
     app.wait(lambda: U.IsWindowEnabled(U.GetDlgItem(dialog, 1)), timeout=30)
-    for _ in range(4):
+    for attempt in range(4):
         if not U.IsWindow(dialog):
             break
         try:
@@ -194,6 +194,18 @@ def fill_system_dialog(app, path):
         except TimeoutError:
             pass
         time.sleep(.4)
+        if attempt == 1 and U.IsWindow(dialog):
+            # The host keeps its own copy of the name in the identified owner of
+            # this exact edit (Edit 1001 under ComboBox under FloatNotifySink).
+            # A real edit announces its change with EN_CHANGE; repeat only that
+            # notification, then accept again. The dialog still has to close and
+            # the requested file still has to appear.
+            try:
+                send(U.GetParent(filename), 0x111,
+                     (U.GetDlgCtrlID(filename) & 0xFFFF) | (0x0300 << 16), filename)
+            except TimeoutError:
+                pass
+            time.sleep(.4)
     app.wait(lambda: not U.IsWindow(dialog), timeout=30)
 
 
