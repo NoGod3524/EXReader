@@ -1,0 +1,41 @@
+name: Public SDK TXT structure limit diagnostic
+on:
+  push:
+    branches: [codex/reader-full-product-performance]
+    paths: ['.github/workflows/reader-full-perf-txt-limit.yml', 'tests/reader_perf_txt_limit/**']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Verify original run SDK source and build public SDK
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/txt-limit-evidence
+          git diff --exit-code 7aab6e559d17e730067594ee7da5189bf00f6dd8 HEAD -- src include cmake CMakeLists.txt CMakePresets.json
+          git rev-parse HEAD | tee build/txt-limit-evidence/source.txt
+          git rev-parse HEAD:src HEAD:include | tee build/txt-limit-evidence/sdk-trees.txt
+          cmake --preset reading-library 2>&1 | tee build/txt-limit-evidence/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/txt-limit-evidence/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/txt-limit-evidence/sdk-install.log
+      - name: Build and run direct public SDK boundary controls
+        shell: bash
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          cmake -S tests/reader_perf_txt_limit -B build/txt-limit-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" 2>&1 | tee build/txt-limit-evidence/probe-configure.log
+          cmake --build build/txt-limit-probe --parallel 4 2>&1 | tee build/txt-limit-evidence/probe-build.log
+          build/txt-limit-probe/txt_limit_probe.exe 2>&1 | tee build/txt-limit-evidence/results.jsonl
+          sha256sum build/txt-limit-probe/txt_limit_probe.exe | tee build/txt-limit-evidence/probe-hash.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-perf-txt-limit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/txt-limit-evidence/
+          if-no-files-found: warn
