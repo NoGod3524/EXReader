@@ -10,13 +10,20 @@ on:
       - 'examples/android/app/src/main/cpp/**'
       - 'examples/android/app/build.gradle'
   workflow_dispatch:
+    inputs:
+      audit_run_id:
+        description: audit one recorded acceptance run instead of compiling
+        required: false
+        default: ''
 permissions:
   contents: read
+  actions: read
 defaults:
   run:
     shell: bash
 jobs:
   java:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.audit_run_id == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -87,3 +94,26 @@ jobs:
             build/wave3/logs/
             build/wave3/java-gate.json
           if-no-files-found: error
+  evidence:
+    # Actions-only audit of one recorded acceptance artifact: nothing is rebuilt
+    # and no device, emulator or native work is requested here.
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.audit_run_id != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download the recorded artifact of that run for this audit only
+        uses: actions/download-artifact@v4
+        with:
+          pattern: reader-wave3-c11-android-*
+          path: build/audit
+          merge-multiple: true
+          run-id: ${{ inputs.audit_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Print every summary, case and phase those bytes contain
+        run: python3 tests/reader_wave3_c11/evidence.py --root build/audit
