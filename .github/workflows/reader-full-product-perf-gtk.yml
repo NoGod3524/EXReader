@@ -21,7 +21,7 @@ jobs:
         with: {fetch-depth: 0}
       - name: Check performance tools and preserve original frozen gates
         run: |
-          python3 -m py_compile tests/reader_perf_full_gtk/bind.py tests/reader_perf_full_gtk/summarize.py tests/reader_perf_full_gtk/sample.py tests/reader_perf_gtk/sample.py tests/reader_perf_gtk/observe.py
+          python3 -m py_compile tests/reader_perf_full_gtk/*.py tests/reader_perf_gtk/sample.py tests/reader_perf_gtk/observe.py
           git diff --exit-code a19fef7d7cdb0be90b0e54b92910502016c33df9 HEAD -- .github/workflows/reader-perf-gtk.yml tests/reader_perf_gtk/CMakeLists.txt tests/reader_perf_gtk/summarize.py tests/reader_perf_gtk/verify.py
       - name: Native GTK accessibility and Secret Service dependencies
         run: |
@@ -109,6 +109,9 @@ jobs:
           set -o pipefail
           cmake -S tests/reader_perf_gtk/composition -B build/full-gtk-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$C10_SDK"
           cmake --build build/full-gtk-probe --parallel 4
+          mkdir -p build/full-gtk-frame
+          cc -shared -fPIC -Wall -Wextra -Werror tests/reader_perf_frame_clock/trace.c -o build/full-gtk-frame/trace.so $(pkg-config --cflags --libs gtk+-3.0) -ldl
+          echo "EXR_FRAME_PROBE=$PWD/build/full-gtk-frame/trace.so" >> "$GITHUB_ENV"
           mkdir -p build/full-gtk-extracted/EXReader-Linux build/full-gtk-guards
           tar -xzf build/c10-package/EXReader-Linux.tar.gz -C build/full-gtk-extracted/EXReader-Linux
           python3 - <<'PY'
@@ -148,6 +151,12 @@ jobs:
           mkdir -p build/c10-logs
           python3 tests/reader_perf_full_gtk/summarize.py --output build/full-gtk-evidence --guards build/full-gtk-guards/guards.json 2>&1 | tee build/c10-logs/perf-summary.log
           python3 tests/reader_perf_full_gtk/bind.py 2>&1 | tee build/c10-logs/perf-bind.log
+      - name: Record actual GDK clock cadence separately from UI latency
+        if: always()
+        run: |
+          set -o pipefail
+          mkdir -p build/c10-logs
+          python3 tests/reader_perf_full_gtk/frame_report.py 2>&1 | tee build/c10-logs/frame-clock.log
       - name: Preserve raw observations, package configuration and failures
         if: always()
         uses: actions/upload-artifact@v4
@@ -158,6 +167,7 @@ jobs:
             build/full-gtk-guards/
             build/c10-logs/
             build/c10-desktop/CMakeCache.txt
+            build/full-gtk-frame/trace.so
             build/c10-package/build.json
             build/c10-package/runtime-dependencies.txt
             build/c10-package/EXReader-Linux.tar.gz
