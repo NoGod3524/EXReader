@@ -16,6 +16,8 @@ jobs:
         include:
           - run: '40397287811'
             artifact: full-product-perf-windows-40397287811-1
+          - run: '40399315487'
+            artifact: full-product-perf-windows-40399315487-1
           - run: '40395860891'
             artifact: full-product-perf-gtk-40395860891-1
           - run: '40399315293'
