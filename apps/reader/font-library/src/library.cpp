@@ -88,9 +88,14 @@ file absolute_open(const fs::path&p,bool directory){
     need(f.valid(),GetLastError()==ERROR_FILE_NOT_FOUND?RFL_MISSING:RFL_IO,"open selected path");stat_file(f,dir);parents.push_back(std::move(f));
   }need(!parents.empty(),RFL_ARGUMENT,"root directory unsupported");return std::move(parents.back());
 #else
-  file current(::open("/",O_RDONLY|O_DIRECTORY|O_CLOEXEC));need(current.valid(),RFL_IO,"open root");
+#ifdef __ANDROID__
+  constexpr int traversal_access=O_PATH;
+#else
+  constexpr int traversal_access=O_RDONLY;
+#endif
+  file current(::open("/",traversal_access|O_DIRECTORY|O_CLOEXEC));need(current.valid(),RFL_IO,"open root");
   auto relative=p.relative_path();size_t index=0,total=size_t(std::distance(relative.begin(),relative.end()));
-  for(const auto &part:relative){bool dir=++index<total||directory;file next(openat(current.h,part.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK|(dir?O_DIRECTORY:0)));need(next.valid(),errno==ENOENT?RFL_MISSING:RFL_IO,"open nofollow selected path");stat_file(next,dir);current=std::move(next);}return current;
+  for(const auto &part:relative){bool intermediate=++index<total;bool dir=intermediate||directory;int access=intermediate?traversal_access:O_RDONLY;file next(openat(current.h,part.c_str(),access|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK|(dir?O_DIRECTORY:0)));need(next.valid(),errno==ENOENT?RFL_MISSING:RFL_IO,"open nofollow selected path");stat_file(next,dir);current=std::move(next);}return current;
 #endif
 }
 size_t read_at(file&f,uint64_t offset,void *buffer,size_t capacity){
