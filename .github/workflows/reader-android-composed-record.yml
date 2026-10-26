@@ -1,7 +1,7 @@
 name: Android composed-source record sender and receiver
 on:
   push:
-    branches: [codex/reader-webdav-android-composed]
+    branches: [codex/reader-webdav-two-device]
   workflow_dispatch:
 permissions:
   contents: read
