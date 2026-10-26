@@ -114,3 +114,7 @@ SDK 工件（同 run/attempt）：
 ## 身份边界
 
 三个 phase 的 app 仍是原 review 宏配置：`DEBUG`、`EXR_APPLE_PAGE_THEME`、`EXR_APPLE_HOST_REVIEW`、`EXR_APPLE_RAW3`、`EXR_APPLE_WAVE3`，仅 control 额外 `EXR_APPLE_READING_REVIEW`；Clang 侧 `EXR_READER_SELECTOR_BYTES_CANDIDATE=1`、`EXR_APPLE_WAVE3=1`，不定义 `EXR_APPLE_RAW3_REVIEW`。这些工件是 review 应用，不是无 review 宏的生产包，也不代表真机部署；生产 flags/package 绑定仍由 root 的 composition 入口承担，本包未改其工具。
+
+## Root follow-up candidate: original identity before preview
+Actions-only artifact inspection 40365635683 authenticated the original Mac ZIP and located the actual typed-NULL failure: Target store retains no original identity for this book. The existing round-trip test passed only after a local bookmark had caused book history to be established. Root added first-open original verification and book-history bootstrap, before later read-only annotation preview; existing history only checks identity and avoids another source export. Local source attachment semantics are unchanged, and preview still performs no bootstrap write. This candidate is not yet compiled or runtime-accepted. The font, search/history and OS theme failures are still open.
+
