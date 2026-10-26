@@ -9,6 +9,10 @@ on:
         description: Inspect the preserved 0d256c14 macOS failure attachments
         type: boolean
         default: false
+      inspect_macos_log:
+        description: Inspect the preserved 0d256c14 macOS action log
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -19,7 +23,7 @@ env:
 jobs:
   sdk:
     name: Team24 Apple installed ${{ matrix.target }}
-    if: ${{ !inputs.inspect_iphone_tree }}
+    if: ${{ !inputs.inspect_iphone_tree && !inputs.inspect_macos_log }}
     runs-on: macos-15
     timeout-minutes: 55
     strategy:
@@ -78,7 +82,7 @@ jobs:
   authenticate:
     name: Team24 Apple original ZIP authentication
     needs: [sdk, native]
-    if: ${{ always() && !inputs.inspect_iphone_tree }}
+    if: ${{ always() && !inputs.inspect_iphone_tree && !inputs.inspect_macos_log }}
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
@@ -135,4 +139,34 @@ jobs:
               for item in group['attachments']:
                   if 'final-native-tree' in item['suggestedHumanReadableName']:
                       print((root / 'attachments' / item['exportedFileName']).read_text())
+          PY
+  inspect-macos-log:
+    if: ${{ inputs.inspect_macos_log }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Authenticate and inspect the original macOS action log
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, subprocess, zipfile
+          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12682307446"
+          item = json.loads(subprocess.check_output(['gh', 'api', api]))
+          assert item['workflow_run']['id'] == 40385755134
+          assert item['workflow_run']['head_sha'] == '0d256c14a76fa795772f10d618fdf0200569cbe0'
+          digest = 'ab2259ca5109e7680225b2ff9a9c2a479fbba61e60c0495382bd907b274c488b'
+          assert item['size_in_bytes'] == 459011829 and item['digest'] == 'sha256:' + digest and not item['expired']
+          with open('artifact.zip', 'wb') as out:
+              subprocess.run(['gh', 'api', api + '/zip'], stdout=out, check=True)
+          with open('artifact.zip', 'rb') as source:
+              h = hashlib.sha256()
+              for block in iter(lambda: source.read(1024 * 1024), b''): h.update(block)
+          assert h.hexdigest() == digest
+          with zipfile.ZipFile('artifact.zip') as archive:
+              names = [n for n in archive.namelist() if n.endswith('wave3-native-ui.log')]
+              assert len(names) == 1
+              lines = archive.read(names[0]).decode('utf-8', 'replace').splitlines()
+              for i, line in enumerate(lines):
+                  if 'error:' in line:
+                      print('\n'.join(lines[max(0, i-160):i+90]))
           PY
