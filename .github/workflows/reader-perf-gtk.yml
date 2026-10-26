@@ -55,7 +55,7 @@ jobs:
           cmake -S tests/reader_perf_gtk -B build/perf-probe -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DEXR_SDK="$PWD/build/reading-library/stage" 2>&1 | tee build/perf-logs/probe-configure.log
           cmake --build build/perf-probe --parallel 4 2>&1 | tee build/perf-logs/probe-build.log
-          python3 tools/build_linux_host.py --sdk build/reading-library/stage \
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.41.0 \
             --binary build/perf-desktop/gtk-host/exreader-linux --output build/perf-package
           ls -l build/perf-package | tee build/perf-logs/package-archive.txt
           stat -c '%s %n' build/perf-package/EXReader-Linux.tar.gz | tee -a build/perf-logs/package-archive.txt
