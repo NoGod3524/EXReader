@@ -64,6 +64,33 @@ static int w3_bytes_equal(const char *left,size_t left_size,const char *right,si
   if(!left || !right) return !left && !right;
   return left_size==right_size && !memcmp(left,right,left_size);
 }
+/* The retained slot must equal a fresh public SDK capture of the live session. */
+static void w3_slot_matches_capture(linux_reader *reader,size_t index) {
+  reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,index,&item,&record);
+  reader_rs_capture captured;exr_anchor anchor={0};exr_fixed_anchor fixed={0};exr_error error={0};
+  size_t unit=reader->current.fixed_document ? reader->current.page:reader->current.part;
+  size_t at=reader->current.fixed_document ? 0:reader->current.position;
+  REQUIRE(records_capture(reader,&reader->current,unit,at,at,&captured,&anchor,&fixed,&error)==EXR_OK);
+  REQUIRE(record.mode==captured.mode && record.start==record.end);
+  if(record.mode==READER_RS_FIXED_PAGE) {
+    REQUIRE(record.anchor_version==3);
+    REQUIRE(fixed.exact_size==record.exact_size && fixed.prefix_size==record.prefix_size && fixed.suffix_size==record.suffix_size);
+    REQUIRE((fixed.exact?1:0)==(record.exact?1:0) && (fixed.prefix?1:0)==(record.prefix?1:0) &&
+            (fixed.suffix?1:0)==(record.suffix?1:0));
+    REQUIRE(w3_bytes_equal(fixed.exact,record.exact_size,record.exact,record.exact_size));
+    REQUIRE(w3_bytes_equal(fixed.prefix,record.prefix_size,record.prefix,record.prefix_size));
+    REQUIRE(w3_bytes_equal(fixed.suffix,record.suffix_size,record.suffix,record.suffix_size));
+  } else {
+    REQUIRE(record.anchor_version==2 && captured.anchor);
+    REQUIRE(w3_bytes_equal(captured.anchor->exact,record.exact_size,record.exact,record.exact_size));
+    REQUIRE(w3_bytes_equal(captured.anchor->prefix,record.prefix_size,record.prefix,record.prefix_size));
+    REQUIRE(w3_bytes_equal(captured.anchor->suffix,record.suffix_size,record.suffix,record.suffix_size));
+    REQUIRE(w3_bytes_equal(captured.part_path,captured.part_path?strlen(captured.part_path):0,
+      record.part_path,record.part_path?strlen(record.part_path):0));
+  }
+  exr_anchor_free(&anchor);exr_fixed_anchor_free(&fixed);
+  reader_rs_record_free(&record);reader_jh_item_release(&item);
+}
 static size_t outbox_rows;
 static int outbox_visit(void *opaque,const reader_revision_outbox_row *row) {
   (void)opaque;(void)row;outbox_rows++;return 0;
@@ -169,67 +196,99 @@ int main(int argc,char **argv) {
     PASS("history_back_and_forward_prove_the_point_before_moving");
   }
 
-  /* 2. EPUB retains its real anchor v2 route. The history is one process-wide
-        stack, so every book works from its own recorded slot. */
+  /* 2. EPUB: a page turn is one landing, not two, and a search landing keeps
+        the real anchor v2 route. The fixture carries its own markers so the
+        search target cannot coincide with the page caret. */
   {
-    char *epub=g_build_filename(fixtures,"structure.epub",NULL);reader_result landed={0};
+    char *epub=g_build_filename(work,"markers.epub",NULL);reader_result landed={0};
     size_t before=w3_count(reader);
     int64_t epub_book=w3_open(reader,READER_IMPORT,epub,0,&landed);reader_result_free(&landed);
     REQUIRE(w3_count(reader)==before+1);
-    reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,before,&item,&record);
-    REQUIRE(record.mode==READER_RS_EPUB_CHAPTER && record.anchor_version==2 && record.part_path);
-    REQUIRE(record.part==reader->current.part && record.start==record.end && !record.exact_size);
-    reader_rs_record_free(&record);reader_jh_item_release(&item);
+    {
+      reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,before,&item,&record);
+      REQUIRE(record.mode==READER_RS_EPUB_CHAPTER && record.anchor_version==2 && record.part_path);
+      REQUIRE(record.part==reader->current.part && record.start==record.end && !record.exact_size);
+      reader_rs_record_free(&record);reader_jh_item_release(&item);
+    }
+    w3_slot_matches_capture(reader,before);
+    PASS("epub_history_slot_is_the_real_anchor_v2_route_point");
     reader_result next=w3_run(reader,w3_command(READER_NEXT,epub_book));REQUIRE(next.status==EXR_OK && next.has_frame);
     reader_result moved=w3_accept(reader,&next);
-    REQUIRE(moved.w3_history_count==(int)before+2 && moved.w3_history_cursor==(int)before+1);
+    REQUIRE(moved.w3_history_count==(int)before+1 && moved.w3_history_cursor==(int)before);
     reader_result_free(&moved);reader_result_free(&next);
-    reader_command value=w3_command(READER_W3_HISTORY,epub_book);value.direction=-1;
-    reader_result frame=w3_run(reader,value);REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
-    moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==(int)before);
-    reader_result_free(&moved);reader_result_free(&frame);
+    w3_slot_matches_capture(reader,before);
+    PASS("epub_page_turn_replaces_one_landing_with_the_new_real_point");
+    reader_result hit=w3_search(reader,epub_book,3,"NEEDLEONE",&search);
+    moved=w3_accept(reader,&hit);reader_result_free(&moved);reader_result_free(&hit);
+    REQUIRE(w3_count(reader)==before+2);
+    {
+      reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,before+1,&item,&record);
+      REQUIRE(record.mode==READER_RS_EPUB_CHAPTER && record.anchor_version==2 && record.start==record.end);
+      reader_rs_record_free(&record);reader_jh_item_release(&item);
+    }
+    PASS("epub_search_landing_is_appended_as_a_real_anchor_v2_point");
+    {
+      reader_command value=w3_command(READER_W3_HISTORY,epub_book);value.direction=-1;
+      reader_result frame=w3_run(reader,value);REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
+      moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==(int)before);
+      reader_result_free(&moved);reader_result_free(&frame);
+    }
+    PASS("epub_history_jumps_only_to_a_resolved_anchor_v2_route");
     reader_result shelf=w3_run(reader,w3_command(READER_SHELF,epub_book));REQUIRE(shelf.status==EXR_OK);reader_result_free(&shelf);
-    g_free(epub);PASS("epub_history_keeps_anchor_v2_and_its_spine_route");
+    g_free(epub);
   }
 
-  /* 3. Fixed pages: anchor3 with every nullable selector byte, and the stored
-     slot equals a fresh public SDK capture of the same page. */
+  /* 3. Fixed pages: anchor3 with every nullable selector byte, one landing per
+        page, and a jump that only moves onto a resolved anchor3 page. */
   char *pdf=g_build_filename(fixtures,"pdf-public-text.pdf",NULL);int64_t pdf_book=0;
   w3_selector original[4];size_t original_count=0;
   {
     size_t before=w3_count(reader);reader_result landed={0};
     pdf_book=w3_open(reader,READER_IMPORT,pdf,0,&landed);reader_result_free(&landed);
     REQUIRE(w3_count(reader)==before+1);
-    reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,before,&item,&record);
-    REQUIRE(record.mode==READER_RS_FIXED_PAGE && record.anchor_version==3 && record.has_location);
-    REQUIRE(record.start==record.end && !record.exact_size);
-    REQUIRE((record.suffix && memchr(record.suffix,0,record.suffix_size)) ||
-            (record.exact && memchr(record.exact,0,record.exact_size)));
     {
-      reader_rs_capture captured;exr_anchor anchor={0};exr_fixed_anchor fixed={0};exr_error capture_error={0};
-      REQUIRE(records_capture(reader,&reader->current,reader->current.page,0,0,&captured,&anchor,&fixed,&capture_error)==EXR_OK);
-      REQUIRE(fixed.exact_size==record.exact_size && fixed.prefix_size==record.prefix_size && fixed.suffix_size==record.suffix_size);
-      REQUIRE((fixed.exact ? 1:0)==(record.exact ? 1:0) && (fixed.prefix ? 1:0)==(record.prefix ? 1:0) &&
-              (fixed.suffix ? 1:0)==(record.suffix ? 1:0));
-      REQUIRE(w3_bytes_equal(fixed.exact,record.exact_size,record.exact,record.exact_size));
-      REQUIRE(w3_bytes_equal(fixed.prefix,record.prefix_size,record.prefix,record.prefix_size));
-      REQUIRE(w3_bytes_equal(fixed.suffix,record.suffix_size,record.suffix,record.suffix_size));
-      exr_anchor_free(&anchor);exr_fixed_anchor_free(&fixed);
+      reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,before,&item,&record);
+      REQUIRE(record.mode==READER_RS_FIXED_PAGE && record.anchor_version==3 && record.has_location);
+      REQUIRE(record.start==record.end && !record.exact_size);
+      REQUIRE((record.suffix && memchr(record.suffix,0,record.suffix_size)) ||
+              (record.exact && memchr(record.exact,0,record.exact_size)) ||
+              (record.prefix && memchr(record.prefix,0,record.prefix_size)));
+      reader_rs_record_free(&record);reader_jh_item_release(&item);
     }
-    reader_rs_record_free(&record);reader_jh_item_release(&item);
+    w3_slot_matches_capture(reader,before);
     PASS("fixed_history_slot_is_anchor3_with_every_nullable_selector_byte");
     size_t start=reader->current.start,end=start+4;REQUIRE(end<=reader->current.end && start<end);
     w3_save(reader,READER_RC_HIGHLIGHT,"PDF highlight",start,end,NULL);
     w3_save(reader,READER_RC_BOOKMARK,"PDF bookmark",reader->current.start,reader->current.start,NULL);
     original_count=w3_annotation_selectors(reader,pdf_book,original,4);REQUIRE(original_count==2);
-    reader_result next=w3_run(reader,w3_command(READER_NEXT,pdf_book));REQUIRE(next.status==EXR_OK && next.has_frame);
-    reader_result moved=w3_accept(reader,&next);
-    REQUIRE(moved.w3_history_count==(int)before+2 && moved.w3_history_cursor==(int)before+1);
-    reader_result_free(&moved);reader_result_free(&next);
-    reader_command value=w3_command(READER_W3_HISTORY,pdf_book);value.direction=-1;
-    reader_result frame=w3_run(reader,value);REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
-    moved=w3_accept(reader,&frame);REQUIRE(moved.w3_history_cursor==(int)before);
-    reader_result_free(&moved);reader_result_free(&frame);
+    /* One real page turn replaces that landing; the new page is the entry. */
+    {
+      reader_result next=w3_run(reader,w3_command(READER_NEXT,pdf_book));REQUIRE(next.status==EXR_OK && next.has_frame);
+      reader_result moved=w3_accept(reader,&next);
+      REQUIRE(moved.w3_history_count==(int)before+1 && moved.w3_history_cursor==(int)before);
+      reader_result_free(&moved);reader_result_free(&next);
+    }
+    REQUIRE(reader->current.page==1);
+    w3_slot_matches_capture(reader,before);
+    PASS("fixed_page_turn_replaces_one_landing_with_the_new_anchor3_page");
+    /* A search hit on the first page is a different location, so the same book
+       now really holds two entries and the older one can be jumped to. */
+    {
+      reader_result hit=w3_search(reader,pdf_book,4,"A",&search);
+      reader_result moved=w3_accept(reader,&hit);
+      REQUIRE(moved.w3_history_count==(int)before+2);
+      reader_result_free(&moved);reader_result_free(&hit);
+    }
+    REQUIRE(w3_count(reader)==before+2);
+    {
+      reader_command value=w3_command(READER_W3_HISTORY,pdf_book);value.direction=-1;
+      reader_result frame=w3_run(reader,value);REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
+      reader_result moved=w3_accept(reader,&frame);
+      REQUIRE(moved.w3_history_cursor==(int)before && moved.w3_history_count==(int)before+2);
+      REQUIRE(reader->current.page==1);
+      reader_result_free(&moved);reader_result_free(&frame);
+    }
+    w3_slot_matches_capture(reader,before);
     PASS("fixed_history_jumps_only_to_a_resolved_anchor3_page");
   }
 
