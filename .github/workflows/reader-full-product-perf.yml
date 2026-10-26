@@ -1,0 +1,69 @@
+name: Full product performance observation
+on:
+  push:
+    branches: [codex/reader-full-product-performance]
+    paths: ['.github/workflows/reader-full-product-perf.yml', 'tests/reader_perf_full_windows/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+      EXR_COMPOSITION_CONTENT_BOUND: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build, test and package the real full C09 Windows host
+        shell: pwsh
+        run: |
+          python tests/reader_wave3_c09/build.py
+          if ($LASTEXITCODE) { throw 'Full production build or retained checks failed' }
+      - name: Build the original public SDK 2202-book seed
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/full-perf-logs
+          ws=$(cygpath -m "$PWD")
+          cmake -S tests/reader_perf_full_windows -B build/full-perf-seed -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/c09/sdk-stage" 2>&1 | tee build/full-perf-logs/seed-configure.log
+          cmake --build build/full-perf-seed --parallel 4 2>&1 | tee build/full-perf-logs/seed-build.log
+      - name: Diagnose original TXT import against the extracted full production package
+        shell: bash
+        run: |
+          set -o pipefail
+          python tests/reader_perf_windows/diagnose_txt_import.py --package build/c09/unzipped/EXReader --seed build/full-perf-seed/seed_shelf.exe --output build/full-perf-txt --runs 3 2>&1 | tee build/full-perf-logs/txt.log
+      - name: Observe actual full-package native controls and reading
+        shell: bash
+        run: |
+          set -o pipefail
+          python tests/reader_perf_windows/perf_windows.py --package build/c09/unzipped/EXReader --seed build/full-perf-seed/seed_shelf.exe --output build/full-perf-windows --cohorts cold_shelf,warm_shelf,reading,import,import_epub --launches-per-cohort 12 --txt-diagnostic build/full-perf-txt/diagnosis.json 2>&1 | tee build/full-perf-logs/measurement.log
+      - name: Verify complete same-source evidence and bind to the full package
+        if: always()
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/full-perf-logs
+          python tests/reader_perf_windows/verify_composition.py --summary build/full-perf-windows/summary.json --package build/c09/unzipped/EXReader --start "$GITHUB_SHA" --launches 30 --per-cohort 10 2>&1 | tee build/full-perf-logs/verify.log
+          python tests/reader_perf_full_windows/bind.py 2>&1 | tee build/full-perf-logs/bind.log
+      - name: Preserve build, package identity, raw observations and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-product-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c09/report.json
+            build/c09/package/build.json
+            build/c09/package/report.json
+            build/c09/EXReader-wave3-windows.zip
+            build/c09/wave3-host/CMakeCache.txt
+            build/c09/wave3-host/windows-host.map
+            build/c09/logs/
+            build/full-perf-logs/
+            build/full-perf-txt/
+            build/full-perf-windows/
+          if-no-files-found: warn

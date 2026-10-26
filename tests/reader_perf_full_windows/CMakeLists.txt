@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+project(FullProductPerfSeed LANGUAGES C)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS library PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
+add_executable(seed_shelf ../windows_host/seed_shelf.c)
+target_link_libraries(seed_shelf PRIVATE EXReader::exr_library)
