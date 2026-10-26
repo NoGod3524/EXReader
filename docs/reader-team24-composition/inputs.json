@@ -289,8 +289,6 @@
         "docs/reader-android-path-access/README.md",
         "docs/reader-wave3-c11/HANDOFF-DSF-N01.md",
         "docs/reader-wave3-c11/README.md",
-        "examples/android/app/build.gradle",
-        "examples/android/app/src/main/cpp/CMakeLists.txt",
         "examples/android/app/src/main/cpp/bounded_epub_jni.inc",
         "examples/android/app/src/main/cpp/catalog_jni.cpp",
         "examples/android/app/src/main/cpp/exreader_host_jni.c",
@@ -347,9 +345,11 @@
     },
     {
       "name": "android-legacy-340-host-regression-candidate",
-      "source": "adbcc61e22b240b36ec6e9e4c27ef738915be36f",
+      "source": "ba381f09bcab6432f8544a7160aa257ec2b4ffdb",
       "paths": [
-        ".github/workflows/android-composition-legacy-340.yml"
+        ".github/workflows/android-composition-legacy-340.yml",
+        "examples/android/app/build.gradle",
+        "examples/android/app/src/main/cpp/CMakeLists.txt"
       ]
     }
   ]
