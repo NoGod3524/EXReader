@@ -181,3 +181,6 @@ Root round 40364954464 advanced beyond originals, fonts and the actual failed-ac
 
 Run 40367648443 reached the second documented exclusive owner file: library.sqlite.product.sqlite.sync-account (account-profiles README contract), before shutdown. The live scan now defers that exact persistent binding as well as the verified-empty product lock; the subsequent post-exit pass still reads every remaining file with no exclusions and checks both UTF-8 and UTF-16 secret bytes. Unknown inaccessible files still fail. Earlier failure and its source/run identity remain retained.
 
+
+Run 40369325127 stopped at the other exclusive empty product profile lock. Root reviewed the actual CreateFileW ownership sites in examples/reader.c: the profile holds product.profile.lock and library.sqlite.product.lock, both without sharing; the persistent session binding is separate. Both empty lock files now receive the same live-size assertion and mandatory post-exit scan; the binding remains deferred to the full post-exit scan. All other read errors still fail. This correction covers the source ownership contract rather than adding an arbitrary catch-all scan bypass.
+

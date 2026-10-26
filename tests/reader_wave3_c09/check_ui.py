@@ -488,7 +488,7 @@ def main():
             assert database_state(profile) == state_before
             for path in profile.rglob('*'):
                 if path.is_file():
-                    if path == profile / 'library.sqlite.product.lock':
+                    if path in (profile / 'library.sqlite.product.lock', profile / 'product.profile.lock'):
                         # The live store holds this empty lock exclusively.
                         # Read it with every other file after normal shutdown.
                         assert path.stat().st_size == 0, 'Product lock unexpectedly contains data'
