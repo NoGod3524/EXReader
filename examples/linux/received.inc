@@ -7,6 +7,9 @@ typedef struct {
   received_book page[50];size_t count,index;
   reader_received_conflict conflicts[50];size_t conflict_count;
   uint64_t seen,projected,conflicted,waiting;
+  uint64_t org_conflicted,org_waiting,org_pass_conflicted,org_pass_waiting,org_budget;
+  unsigned org_stage,org_pass;
+  int org_paused;
   int scanning,conflicts_only,conflict_more;
 } received_owner;
 
@@ -129,6 +132,33 @@ static exr_status received_copy_conflicts(received_owner *owner,reader_result *r
   }
   return EXR_OK;
 }
+/* One item per owner command. Shelf parents can follow children in key order;
+   up to eight passes cover the product's bounded shelf depth. A paused cursor
+   is retained for an explicit continuation, never a restart of the prefix. */
+static exr_status received_project_organization(received_owner *owner) {
+  static const char *kinds[]={"shelf","tag","series","membership"};
+  reader_organization_projection_row row={0};size_t count=0;
+  reader_revision_status code=reader_organization_project_page(owner->revisions,kinds[owner->org_stage-1],
+    owner->cursor,1,&row,&count,NULL);
+  if(code!=READER_REV_OK) { owner->scanning=0;return EXR_DATABASE; }
+  if(count) {
+    g_free(owner->cursor);owner->cursor=g_strdup(row.entity_key);
+    owner->org_budget++;
+    if(row.result==READER_ORGANIZATION_UNSAFE_HISTORY) owner->org_pass_conflicted++;
+    else if(row.result!=READER_ORGANIZATION_PROJECTED) owner->org_pass_waiting++;
+    if(owner->org_budget>=10000) { owner->org_paused=1;return EXR_OK; }
+  } else {
+    g_clear_pointer(&owner->cursor,g_free);
+    if(owner->org_stage==1 && owner->org_pass_waiting && ++owner->org_pass<8) {
+      owner->org_pass_conflicted=owner->org_pass_waiting=0;
+    } else {
+      owner->org_conflicted+=owner->org_pass_conflicted;owner->org_waiting+=owner->org_pass_waiting;
+      owner->org_pass_conflicted=owner->org_pass_waiting=0;
+      if(++owner->org_stage>4) owner->scanning=0;
+    }
+  }
+  return EXR_OK;
+}
 static exr_status received_project(linux_reader *reader,received_owner *owner,const reader_command *command,reader_result *result) {
   account_control control={reader,command->account_control};exr_status status=EXR_OK;
   int begin=command->action==READER_RECEIVE_BEGIN || command->action==READER_RECEIVE_CONFLICTS_BEGIN;
@@ -138,10 +168,17 @@ static exr_status received_project(linux_reader *reader,received_owner *owner,co
     received_page_clear(owner);received_conflicts_clear(owner);g_free(owner->cursor);
     owner->cursor=command->receive_key && command->receive_key[0] ? g_strdup(command->receive_key):NULL;
     owner->seen=owner->projected=owner->conflicted=owner->waiting=0;owner->conflict_more=0;owner->scanning=1;
+    owner->org_conflicted=owner->org_waiting=owner->org_pass_conflicted=owner->org_pass_waiting=owner->org_budget=0;
+    owner->org_stage=owner->org_pass=0;owner->org_paused=0;
     owner->conflicts_only=command->action==READER_RECEIVE_CONFLICTS_BEGIN;
   }
+  else if(owner->org_paused) { owner->org_paused=0;owner->org_budget=0; }
   if(!owner->scanning) return EXR_ARGUMENT;
   if(accounts_cancelled(&control)) { owner->scanning=0;return EXR_CANCELLED; }
+  if(owner->org_stage) {
+    status=received_project_organization(owner);
+    goto report;
+  }
   if(owner->index==owner->count) {
     received_page_clear(owner);
     if(reader_revision_entities_page(owner->revisions,"book",owner->cursor,1,50,received_copy_book,owner,NULL)!=READER_REV_OK) {
@@ -157,9 +194,16 @@ static exr_status received_project(linux_reader *reader,received_owner *owner,co
     if(status!=EXR_OK || (owner->index==owner->count && owner->count<50)) owner->scanning=0;
     if(owner->conflicts_only && owner->conflict_count==50) { owner->conflict_more=1;owner->scanning=0; }
   }
+  if(!owner->scanning && status==EXR_OK && !owner->conflicts_only) {
+    g_clear_pointer(&owner->cursor,g_free);owner->org_stage=1;owner->scanning=1;
+  }
+report:
   result->receive_seen=owner->seen;result->receive_projected=owner->projected;
   result->receive_conflicted=owner->conflicted;result->receive_waiting=owner->waiting;
-  result->receive_more=owner->scanning;result->receive_page_rows=owner->count;
+  result->receive_org_conflicted=owner->org_conflicted+owner->org_pass_conflicted;
+  result->receive_org_waiting=owner->org_waiting+owner->org_pass_waiting;
+  result->receive_org_paused=owner->org_paused;
+  result->receive_more=owner->scanning && !owner->org_paused;result->receive_page_rows=owner->count;
   if(!owner->scanning && status==EXR_OK) status=received_copy_conflicts(owner,result);
   return status;
 }

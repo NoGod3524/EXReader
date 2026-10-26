@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 """Supplement the unchanged account checks with explicit native receive actions."""
 import hashlib
+import configparser
 import json
 import os
 from pathlib import Path
@@ -8,13 +9,14 @@ import sqlite3
 import subprocess
 import time
 from check_linux_host import command
-from check_sync import raw
+from check_sync import raw, revision
 
 REQUIRED_CHECKS = [
     'received_seed_uses_four_exact_originals_and_eighteen_public_sdk_captures',
     'received_scan_retains_exact_history_without_projecting_or_importing_books',
     'received_explicit_native_action_projects_safe_metadata_in_bounded_owner_pages_without_sdk_import',
     'received_unresolved_book_versions_remain_retained_and_visible_without_choosing_a_head',
+    'received_organization_is_visible_in_actual_gtk_collections_and_unresolved_is_reported',
     'received_hash_mismatch_refuses_import_without_replacing_the_existing_reader_or_cache',
     'received_symlink_cache_is_refused_without_following_or_modifying_its_target',
     'received_sdk_commit_survives_product_mapping_failure_without_replacing_current_reading',
@@ -83,6 +85,24 @@ def run_receive_checks(context):
         item = manifest[role];body = (fixtures / item['file']).read_bytes()
         prefix = '/dav/exreader-sync-v1/objects/' + item['sha256'][:2] + '/'
         directories.add(prefix);entries[prefix + item['sha256'] + '.' + role] = body
+    parent, child, tag, series, conflict, missing = ('f'*32, '1'*32, '2'*32, '3'*32, '4'*32, '5'*32)
+    organizations = [
+        revision(201,shard=225,kind='shelf',key=parent,payload={'name':'Cloud parent','parent_id':None,'ordinal':1}),
+        revision(202,shard=225,kind='shelf',key=child,payload={'name':'Cloud child','parent_id':parent,'ordinal':2}),
+        revision(203,shard=225,kind='tag',key=tag,payload={'name':'Cloud tag'}),
+        revision(204,shard=225,kind='series',key=series,payload={'name':'Cloud series'}),
+        revision(205,shard=225,kind='tag',key=conflict,payload={'name':'Conflict A'}),
+        revision(206,shard=225,kind='tag',key=conflict,payload={'name':'Conflict B'}),
+        revision(207,shard=225,kind='shelf',key=missing,payload={'name':'Waiting','parent_id':'6'*32,'ordinal':0}),
+    ]
+    for n,kind,ident in [(208,'shelf',child),(209,'tag',tag),(210,'series',series)]:
+        key=book_keys['txt']
+        organizations.append(revision(n,shard=225,kind='membership',key=kind+':'+ident+':'+key,
+          payload={'book_key':key,'collection_kind':kind,'collection_id':ident,'ordinal':3}))
+    for value in organizations:
+        body=raw(value);exact[value['id']]=body
+        prefix='/dav/exreader-sync-v1/revisions/'+value['id'][:2]+'/'
+        directories.add(prefix);entries[prefix+value['id']+'-'+hashlib.sha256(body).hexdigest()+'.json']=body
     checked('received_seed_uses_four_exact_originals_and_eighteen_public_sdk_captures')
 
     old_metadata = sql('SELECT book_key,title,author,sort_title,favorite FROM reader_books ORDER BY book_key')
@@ -97,7 +117,7 @@ def run_receive_checks(context):
     checked('received_scan_retains_exact_history_without_projecting_or_importing_books')
     active = host.read();assert active['book'] > 0
     window();host.key('alt+r')
-    projected = ready(lambda state: int(state['receive_seen']) >= 56 and state['phase'] == '0' and state['projection_status'] == '0')
+    projected = ready(lambda state: int(state['receive_seen']) >= 56 and state['phase'] == '0' and state['projection_status'] != '0')
     assert int(projected['max_receive_page_rows']) == 50
     for role, key in book_keys.items():
         assert sql('SELECT title,author,favorite FROM reader_books WHERE book_key=?', (key,)) == [(titles[role], '远端作者 café', 1)]
@@ -109,7 +129,28 @@ def run_receive_checks(context):
     assert int(projected['conflict_rows']) >= 1 and first in projected['conflict_keys']
     assert all(head['id'] in projected['conflict_heads'] for head in head_rows)
     checked('received_unresolved_book_versions_remain_retained_and_visible_without_choosing_a_head')
+    assert 'conflicting or incomplete versions' in projected['notice']
     close_account()
+    def collections():
+        state=configparser.ConfigParser();state.read(host.observe)
+        return dict(state['collections']) if state.has_section('collections') else {}
+    command('xdotool','windowactivate','--sync',host.window);host.key('F2','ctrl+shift+c')
+    host.wait(lambda state: collections().get('visible')=='1' and parent in collections().get('group_ids',''),timeout=60)
+    state=collections();ids=state['group_ids'].split(',');host.key('alt+g','Home')
+    for _ in range(ids.index(parent)): host.key('Down')
+    host.wait(lambda state: collections().get('selected_id')==parent,timeout=60)
+    assert collections()['selected_name']=='Cloud parent'
+    host.key('alt+e');host.wait(lambda state: collections().get('parent_id')==parent and child in collections().get('group_ids',''),timeout=60)
+    host.key('alt+g','Home');host.wait(lambda state: collections().get('selected_id')==child and book_keys['txt'] in collections().get('member_keys',''),timeout=60)
+    assert collections()['selected_name']=='Cloud child' and collections()['member_ordinals']=='3'
+    host.key('alt+t','Home','Down');host.wait(lambda state: collections().get('kind')=='1' and tag in collections().get('group_ids',''),timeout=60)
+    host.key('alt+g','Home');host.wait(lambda state: collections().get('selected_id')==tag and book_keys['txt'] in collections().get('member_keys',''),timeout=60)
+    assert collections()['selected_name']=='Cloud tag' and conflict not in collections()['group_ids'].split(',')
+    host.key('alt+t','Home','Down','Down');host.wait(lambda state: collections().get('kind')=='2' and series in collections().get('group_ids',''),timeout=60)
+    host.key('alt+g','Home');host.wait(lambda state: collections().get('selected_id')==series and book_keys['txt'] in collections().get('member_keys',''),timeout=60)
+    assert collections()['selected_name']=='Cloud series'
+    host.key('alt+F4');host.wait(lambda state: collections().get('visible')=='0',timeout=60)
+    checked('received_organization_is_visible_in_actual_gtk_collections_and_unresolved_is_reported')
 
     def search(title):
         command('xdotool', 'windowactivate', '--sync', host.window)
@@ -251,7 +292,7 @@ def run_receive_checks(context):
     checked('received_downloaded_book_reopens_offline_from_the_sdk_when_cache_and_server_are_unavailable')
     context['flags']['http'] = 0
     open_account()
-    assert names == REQUIRED_CHECKS and len(names) == 23
+    assert names == REQUIRED_CHECKS and len(names) == 24
     return {'checks': names, 'selected_captures': len(expected), 'resolutions': resolutions,
             'found': sum(value['status'] == 0 for value in resolutions.values()), 'mislocated': 0,
             'mapped_conflict_offline_frame': conflict_frame,

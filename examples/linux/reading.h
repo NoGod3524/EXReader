@@ -167,6 +167,8 @@ typedef struct {
   int receive_response,receive_more,receive_needs_download,receive_pending,receive_created,receive_conflict_more;
   int64_t receive_book;
   uint64_t receive_seen,receive_projected,receive_conflicted,receive_waiting;
+  uint64_t receive_org_conflicted,receive_org_waiting;
+  int receive_org_paused;
   size_t receive_page_rows,receive_conflict_count;
   reader_received_conflict *receive_conflicts;
   int receive_restore_failed;
