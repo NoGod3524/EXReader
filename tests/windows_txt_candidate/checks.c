@@ -2,12 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-typedef struct { const unsigned char *bytes; size_t size; int stop; } memory_source;
+typedef struct { const unsigned char *bytes; size_t size; int stop, stop_after_read; } memory_source;
 static size_t read_at(void *p,uint64_t offset,void *out,size_t n) {
   memory_source *m=p; if (offset>=m->size) return 0;
   if (n>m->size-(size_t)offset) n=m->size-(size_t)offset;
   if (n>11) n=11; /* Exercise short-read retry. */
-  memcpy(out,m->bytes+(size_t)offset,n); return n;
+  memcpy(out,m->bytes+(size_t)offset,n); if (m->stop_after_read) m->stop=1; return n;
 }
 static int cancelled(void *p) { return ((memory_source *)p)->stop; }
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"check failed at %d: %s (%d %s)\n",__LINE__,#x,error.code,error.message); return 1; } } while (0)
@@ -50,6 +50,13 @@ int main(int argc,char **argv) {
   exr_document_free(whole);
   exr_font_free(font);
   m.stop=1; cursor=0; CHECK(bounded_txt_next(&source,&cursor,&part,&error)==EXR_CANCELLED && cursor==0 && !part); m.stop=0;
+  m.stop_after_read=1; CHECK(bounded_txt_next(&source,&cursor,&part,&error)==EXR_CANCELLED && cursor==0 && !part);
+  m.stop=0; m.stop_after_read=0; CHECK(bounded_txt_next(&source,&cursor,&part,&error)==EXR_OK && cursor>0 && part);
+  exr_document_free(part); part=NULL;
+  m.bytes=(const unsigned char *)"\xe4\xb8\xad\n"; m.size=source.size=4; cursor=0;
+  CHECK(bounded_txt_next(&source,&cursor,&part,&error)==EXR_OK && part);
+  text=exr_document_text(part,&n); CHECK(n==3 && !memcmp(text,"\xe4\xb8\xad",3));
+  exr_document_free(part); part=NULL;
   m.bytes=(const unsigned char *)"a\r\nb"; m.size=source.size=4; cursor=0;
   CHECK(bounded_txt_next(&source,&cursor,&part,&error)==EXR_UNSUPPORTED && cursor==0 && !part);
   m.bytes=(const unsigned char *)"\xff\xfe"; m.size=source.size=2; cursor=0;
