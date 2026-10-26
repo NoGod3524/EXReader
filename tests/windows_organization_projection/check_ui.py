@@ -41,8 +41,12 @@ def sync(device):
     message=device.note(dialog);detail=device.detail(dialog);return dialog,message,detail
 def names(dialog,control):
     box=ui.U.GetDlgItem(dialog,control);values=[]
-    for i in range(ui.send(box,0x18B)):
-        n=ui.send(box,0x18A,i);buf=C.create_unicode_buffer(n+1);ui.send(box,0x189,i,C.addressof(buf));values.append(buf.value)
+    count=C.c_ssize_t(ui.send(box,0x18B)).value
+    if count<0:return []
+    for i in range(count):
+        n=C.c_ssize_t(ui.send(box,0x18A,i)).value
+        if n<0:return []
+        buf=C.create_unicode_buffer(n+1);ui.send(box,0x189,i,C.addressof(buf));values.append(buf.value)
     return values
 def import_book(app,path):
     ui.U.SetForegroundWindow(app.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,))
@@ -120,6 +124,7 @@ try:
     b.wait(lambda:any('Parent shelf' in x for x in names(dialog,ui.GROUPS)),timeout=30)
     group=ui.U.GetDlgItem(dialog,ui.GROUPS);rows=names(dialog,ui.GROUPS)
     ui.send(group,0x186,next(i for i,value in enumerate(rows) if 'Parent shelf' in value));ui.send(dialog,0x111,(2<<16)|ui.GROUPS,group)
+    b.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)))
     b.wait(lambda:any('Child shelf' in x for x in names(dialog,ui.GROUPS)),timeout=30)
     record('native-organizer-shows-hierarchy',True)
     ui.send(ui.U.GetDlgItem(dialog,ui.ACTION),0x14E,6);ui.send(dialog,0x111,(1<<16)|ui.ACTION,ui.U.GetDlgItem(dialog,ui.ACTION))
