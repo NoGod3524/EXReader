@@ -9,6 +9,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __cplusplus
+#define PURE_ZERO {}
+#else
+#define PURE_ZERO {0}
+#endif
 
 static FILE *report;
 static size_t checks, failures;
@@ -57,7 +62,7 @@ static void text_case(const char *name, reader_revisions *store, reader_revision
     const reader_rs_envelope *env, const reader_rs_capture *capture, unsigned version,
     size_t part, exr_document *doc, exr_publication *pub, exr_pager *pager) {
   char *wire = NULL, *reference = NULL; size_t bytes = 0, reference_bytes = 0;
-  reader_rs_error error = {0}; reader_rs_record record = {0}; exr_anchor_match match = {0}; char label[160];
+  reader_rs_error error = PURE_ZERO; reader_rs_record record = PURE_ZERO; exr_anchor_match match = PURE_ZERO; char label[160];
   reader_rs_status status = encode_capture(store, env, capture, version, part, &wire, &bytes, &error);
   snprintf(label, sizeof(label), "%s-encode", name); expect(label, status == READER_RS_OK);
   require_ok(status == READER_RS_OK && wire != NULL, error.message);
@@ -87,14 +92,14 @@ static void text_case(const char *name, reader_revisions *store, reader_revision
 #ifdef PURE_CAPTURE_TEST_ON
 static void refused_case(const char *name, reader_revisions *store, const reader_rs_envelope *env,
     const reader_rs_capture *capture, unsigned version, size_t part) {
-  char sentinel = 0, *wire = &sentinel; size_t bytes = 777; reader_rs_error error = {0};
+  char sentinel = 0, *wire = &sentinel; size_t bytes = 777; reader_rs_error error = PURE_ZERO;
   reader_rs_status status = reader_rs_encode_capture_raw_candidate(store, env, capture, version, part, &wire, &bytes, &error);
   expect(name, status != READER_RS_OK && wire == NULL && bytes == 0);
 }
 static void fixed_case(const char *name, reader_revisions *store, reader_revisions *legacy,
     const reader_rs_envelope *env, const exr_fixed_anchor *anchor, const exr_fixed_text *text, int resolve) {
-  reader_rs_capture capture = {0}; reader_rs_record record = {0}; reader_rs_error error = {0};
-  char *wire = NULL; size_t bytes = 0; char label[160]; exr_anchor_match match = {0}; exr_error sdk_error = {0};
+  reader_rs_capture capture = PURE_ZERO; reader_rs_record record = PURE_ZERO; reader_rs_error error = PURE_ZERO;
+  char *wire = NULL; size_t bytes = 0; char label[160]; exr_anchor_match match = PURE_ZERO; exr_error sdk_error = PURE_ZERO;
   capture.mode = READER_RS_FIXED_PAGE; capture.fixed = anchor;
   require_ok(encode_capture(store, env, &capture, 3, 0, &wire, &bytes, &error) == READER_RS_OK, error.message);
   require_ok(reader_rs_decode_raw_v3(store, wire, bytes, &record, &error) == READER_RS_OK, "decode fixed3");
@@ -105,24 +110,24 @@ static void fixed_case(const char *name, reader_revisions *store, reader_revisio
     same_nullable(record.exact, anchor->exact, anchor->exact_size) &&
     same_nullable(record.prefix, anchor->prefix, anchor->prefix_size) && same_nullable(record.suffix, anchor->suffix, anchor->suffix_size));
   if (resolve) {
-    exr_fixed_anchor decoded = {0}; decoded.start = (size_t)record.start; decoded.end = (size_t)record.end;
+    exr_fixed_anchor decoded = PURE_ZERO; decoded.start = (size_t)record.start; decoded.end = (size_t)record.end;
     decoded.page_id = record.page_id; decoded.exact = record.exact; decoded.prefix = record.prefix; decoded.suffix = record.suffix;
     decoded.exact_size = record.exact_size; decoded.prefix_size = record.prefix_size; decoded.suffix_size = record.suffix_size;
     require_ok(exr_fixed_anchor_resolve(record.page_id, text, &decoded, NULL, &match, &sdk_error) == EXR_OK, "resolve fixed SDK");
     snprintf(label, sizeof(label), "%s-real-sdk-resolve", name);
     expect(label, match.state == EXR_ANCHOR_FOUND && match.start == anchor->start && match.end == anchor->end);
   }
-  { reader_revision_info info = {0}; reader_revision_error revision_error = {0};
+  { reader_revision_info info = PURE_ZERO; reader_revision_error revision_error = PURE_ZERO;
     snprintf(label, sizeof(label), "%s-old-validator-refuses-v3", name);
     expect(label, reader_revision_validate(legacy, wire, bytes, NULL, &info, &revision_error) != READER_REV_OK); }
   reader_rs_record_free(&record); reader_rs_free(wire);
 }
 #endif
 static int pure_capture_main(int argc, char **argv) {
-  reader_revisions *legacy = NULL, *raw = NULL, *store; reader_revision_error revision_error = {0};
+  reader_revisions *legacy = NULL, *raw = NULL, *store; reader_revision_error revision_error = PURE_ZERO;
   exr_library *library = NULL; exr_document *doc = NULL; exr_publication *pub = NULL; exr_pager *pager = NULL;
-  exr_font *font = NULL; exr_anchor range = {0}, point = {0}, epub_range = {0}, epub_point = {0};
-  exr_error sdk_error = {0}; reader_rs_envelope env = {0}; reader_rs_capture capture = {0};
+  exr_font *font = NULL; exr_anchor range = PURE_ZERO, point = PURE_ZERO, epub_range = PURE_ZERO, epub_point = PURE_ZERO;
+  exr_error sdk_error = PURE_ZERO; reader_rs_envelope env = PURE_ZERO; reader_rs_capture capture = PURE_ZERO;
   char legacy_path[2048], raw_path[2048], library_path[2048], fixture[2048]; int64_t book = 0;
   const exr_part *parts; size_t count = 0; exr_layout_config layout; exr_chapter_options chapter;
   sqlite3_int64 before_revisions, before_outbox;
@@ -183,8 +188,8 @@ static int pure_capture_main(int argc, char **argv) {
   { reader_rs_capture bad = capture; bad.mode = (reader_rs_mode)99;
     refused_case("wrong-mode-clears-output", raw, &env, &bad, 2, 1); }
   { static const char source[] = {'L','e','f','t',' ','A',0,'B',' ','R','i','g','h','t'};
-    exr_fixed_text *text = NULL; exr_fixed_anchor fixed = {0}, variant; char empty[] = "";
-    reader_rs_capture fixed_capture = {0}; reader_rs_error error = {0}; char *wire; size_t bytes;
+    exr_fixed_text *text = NULL; exr_fixed_anchor fixed = PURE_ZERO, variant; char empty[] = "";
+    reader_rs_capture fixed_capture = PURE_ZERO; reader_rs_error error = PURE_ZERO; char *wire; size_t bytes;
     require_ok(exr_fixed_text_create(source, sizeof(source), NULL, 0, NULL, &text, &sdk_error) == EXR_OK, "actual fixed text NUL");
     require_ok(exr_fixed_anchor_create("page-raw", text, 5, 8, &fixed, &sdk_error) == EXR_OK, "actual fixed NUL capture");
     env.book_key = "pdf:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
@@ -202,7 +207,7 @@ static int pure_capture_main(int argc, char **argv) {
     expect("old-encode-v2-still-refuses-raw-store", reader_rs_encode_v2(raw, &env, &fixed_capture, 0, &wire, &bytes, &error) != READER_RS_OK && wire == NULL && bytes == 0);
     exr_fixed_anchor_free(&fixed); exr_fixed_text_free(text); }
 #elif defined(PURE_CAPTURE_TEST_RAW)
-  { reader_rs_error error = {0}; char sentinel = 0, *wire = &sentinel; size_t bytes = 777;
+  { reader_rs_error error = PURE_ZERO; char sentinel = 0, *wire = &sentinel; size_t bytes = 777;
     expect("pure-off-old-codec-refuses-raw-store", reader_rs_encode_v2(raw, &env, &capture, 1, &wire, &bytes, &error) != READER_RS_OK && wire == NULL && bytes == 0); }
 #endif
   expect("legacy-revision-history-unchanged", row_count(legacy_path, "reader_revisions") == before_revisions);
@@ -217,4 +222,5 @@ static int pure_capture_main(int argc, char **argv) {
   fprintf(report, "],\"count\":%zu,\"accepted\":%s}\n", checks, failures ? "false" : "true");
   fclose(report); return failures ? 1 : 0;
 }
+
 

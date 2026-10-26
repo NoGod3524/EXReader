@@ -17,3 +17,11 @@ Source review follows `encode` through `validate(..., true)` to `reader_revision
 `tests/reader_pure_capture/source.py` is Actions-only. It requires `PURE_CAPTURE_SOURCE` to name the exact production candidate above, checks its sole base parent and three blob identities, verifies the checked-out event source descends from it, and freezes every other production and existing test/guard path. Only the new test directory, dedicated workflow and this implementation note may differ from the candidate. It independently compares SDK source/header/build/binding/fixture objects to `9d3a3f8bfa06c099ebba0d9e1ba613d276c3af09`. The original seven-module guards are not edited or executed as if they accepted this independent production delta.
 
 Its source receipt explicitly grants no runtime, option-OFF, old `0.1.0`/`0.2.0` behavior, or no-write acceptance. Those require the parent's one focused Actions run with installed C/C++ consumers, actual reflow/EPUB history resolution and fixed-page raw selectors. The two earlier core complete rounds and their failures remain recorded separately; no result from another source is combined with this candidate. This independent candidate is not merged into the protected core baseline, and physical-device/screen-reader/product-wide acceptance is not claimed.
+
+Focused gate attempt 1, source `0b814698b442dce98732587eb0824ed91f8a4380`,
+run `40279580785/1`, failed in the C++ consumer build: shared C-style `{0}`
+initializers require an explicit C++ zero-initializer for enum-first structs.
+The shared test header now selects `{}` for C++ and `{0}` for C. This is a
+consumer-only repair; all three production blobs and the capability source
+above are unchanged. The failed run and artifacts remain separate from the
+following focused-gate repair attempt; no SDK/format full acceptance is rerun.
