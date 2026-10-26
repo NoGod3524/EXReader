@@ -39,3 +39,31 @@ jobs:
              'installed_apk_matches':True,'reports':{k:{'checks':v['checks'],'accepted':v['accepted']} for k,v in reports.items()},
              'walkthrough_completed':walkthrough['completed'],'suites':walkthrough['suites'],'matrix_accepted':matrix['accepted']}))
           PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-organization-sync-build-40407771850-1
+          path: combined
+          run-id: 40407771850
+          github-token: ${{ github.token }}
+      - name: Verify combined APK and every saved scope
+        run: |
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          root=Path('combined/wave3');source='51ee764e434678f8f15cc35f7f4996243b934a45'
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          def read(p):return json.loads(p.read_text())
+          app=root/'artifacts/app-debug.apk'; installed=root/'evidence/reading-installed.apk'
+          expected='c2796aeab2e4d92387f2965a593c31ae514d35b9d5ed5b5719b969e3deccaf2a'
+          assert sha(app)==sha(installed)==expected
+          result={}
+          for name,count in (('wave3',20),('navigation',18),('reading',19),('sync-341',16)):
+              row=read(root/'evidence'/name/'result.json')
+              assert row['source_sha']==source and row['run_id']=='40407771850' and str(row['attempt'])=='1',name
+              assert row['accepted'] and row['checks']==count,(name,row.get('accepted'),row.get('checks'))
+              result[name]=row['checks']
+          org=read(root/'evidence/organization-sync/result.json');assert org['source_sha']==source and org['run_id']=='40407771850' and org['accepted'] and org['host_apk_sha256']==expected and org['device']['count']==5
+          original=read(root/'evidence/original-sync/first-report.json');assert original['passed'] is False and original['failed_check']=='explicit_receive_preserves_sdk_and_product' and original['failure']=='same shared public SDK provider'
+          walk=read(root/'evidence/walkthrough/execution.json');assert walk['completed'] and walk['source_sha']==source and walk['app_sha256']==sha(app) and walk['installed_sha256']==sha(app)
+          print(json.dumps({'source':source,'run_id':'40407771850','attempt':1,'host_sha256':sha(app),'installed_apk_matches':True,'checks':result,'organization_checks':org['device']['count'],'original_sync_failed_check':original['failed_check'],'original_sync_failure':original['failure'],'walkthrough_completed':walk['completed'],'suites':walk['suites']}))
+          PY
