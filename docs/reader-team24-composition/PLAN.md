@@ -951,6 +951,21 @@ case names, 18 adapted cases, and 16 host UI checks across four phases.
 This is an API-34 x86_64 emulator investigation on the stated source, not a
 physical-device or final combined-source acceptance.
 
+The separate 3.41 run [40415259935/1](https://github.com/NoGod3524/EXReader/actions/runs/40415259935)
+at `4d0d9d549f8412f3453b1e5a87485f5ae80bbe65` completed with overall
+**failure**. Its original navigation/reading suite and organization sync step
+passed; the unchanged HostSync test failed its `explicit_receive_preserves_sdk_and_product`
+case at the `same shared public SDK provider` assertion. The source of that
+assertion requires SDK `3.40.0`, while this run deliberately uses `3.41.0`.
+The separately generated 3.41 runner changes the runner/class names and that
+exact version expectation, retaining the remaining provider checks; its four
+phases and 16 UI checks passed. The original result is not reclassified.
+Cloud audit [40419212533/1](https://github.com/NoGod3524/EXReader/actions/runs/40419212533)
+at `39894597` authenticated and read the original report, adapted report and
+adapter provenance from artifact `12697245942` (130,101,080 bytes, SHA-256
+`72db46a5a11470909b3e898415ed1a9e74a2198ea31176de312b1887aacdd245`).
+This emulator evidence is not the final combined-source or physical-device gate.
+
 Source `715fc865a9f063ae453c4d97e44f927772139fc3` then passed all six
 desktop jobs in [40413780626/1](https://github.com/NoGod3524/EXReader/actions/runs/40413780626).
 Its additional Linux export test confirmed an injected publication I/O failure
