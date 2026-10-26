@@ -372,6 +372,13 @@
       "paths": [
         ".github/workflows/combined-wal-profile.yml"
       ]
+    },
+    {
+      "name": "windows-organization-wal-composition-regression",
+      "source": "129d558c0ec9647c858b3f8740f30f34c35b1c83",
+      "paths": [
+        ".github/workflows/windows-organization-wal-composition.yml"
+      ]
     }
   ]
 }
