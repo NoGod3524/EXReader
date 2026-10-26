@@ -40,4 +40,15 @@ with zipfile.ZipFile(io.BytesIO(raw)) as archive:
     out = Path('build/windows-txt-evidence.json')
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    print(json.dumps(result, ensure_ascii=False))
+    def find_peaks(value, path='txt_path'):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if 'peak' in key.lower() or 'memory' in key.lower():
+                    print(json.dumps({'path': path + '.' + key, 'value': item}, ensure_ascii=False))
+                else:
+                    find_peaks(item, path + '.' + key)
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                find_peaks(item, path + '[' + str(index) + ']')
+    print('PACKAGE ' + json.dumps(identity, ensure_ascii=False))
+    find_peaks(summary['txt_path'])
