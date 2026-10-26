@@ -1,6 +1,9 @@
 name: Windows group page diagnostic from recorded package
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/windows-group-browse]
+    paths: ['.github/workflows/windows-group-page-diagnostic.yml']
 permissions:
   contents: read
   actions: read
