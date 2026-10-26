@@ -25,6 +25,7 @@ def validate(r, source, run, attempt):
     assert r['seed'] == BASE and r['sdk_source'] == SDK and r['historical_source'] == D08
     assert r['accepted'] is False and r['screen_reader_accepted'] is False
     assert len(r['program_sha256']) == 64 and r['files'] and r['restoration']['high_contrast_restored']
+    assert r['restoration']['scale_restored'] and r['restoration']['mode_restored']
     configs = r['configurations']
     assert len(configs) == len(CONFIGS) and {x['configuration'] for x in configs} == set(CONFIGS)
     for c in configs:

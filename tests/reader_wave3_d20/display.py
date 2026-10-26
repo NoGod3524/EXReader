@@ -24,6 +24,7 @@ U = w32.user32
 K = C.WinDLL('kernel32', use_last_error=True)
 S = C.WinDLL('shcore', use_last_error=True)
 MONPROC = C.WINFUNCTYPE(W.BOOL, W.HANDLE, W.HDC, C.POINTER(W.RECT), W.LPARAM)
+_MODE = None
 
 
 class MonitorInfo(C.Structure):
@@ -131,6 +132,60 @@ def walk(control, max_depth=10):
             except Exception:continue
 
 
+def mode_api():
+    global _MODE
+    allowed()
+    if _MODE is None:
+        spec=importlib.util.spec_from_file_location('d20_mode_structs',ROOT/'tests/reader_native_owner_repairs/display.py')
+        original=importlib.util.module_from_spec(spec);spec.loader.exec_module(original)
+        _MODE=original.MODE
+    U.EnumDisplaySettingsW.argtypes=[W.LPCWSTR,W.DWORD,C.POINTER(_MODE)]
+    U.EnumDisplaySettingsW.restype=W.BOOL
+    U.ChangeDisplaySettingsExW.argtypes=[W.LPCWSTR,C.POINTER(_MODE),W.HWND,W.DWORD,W.LPVOID]
+    U.ChangeDisplaySettingsExW.restype=W.LONG
+    return _MODE
+
+
+def current_mode():
+    cls=mode_api();mode=cls();mode.size=C.sizeof(mode)
+    assert U.EnumDisplaySettingsW(None,0xFFFFFFFF,C.byref(mode))
+    return mode
+
+
+def mode_fields(mode):
+    return dict(width=mode.width,height=mode.height,bits=mode.bits,frequency=mode.frequency)
+
+
+def apply_mode(mode,label):
+    allowed();before=mode_fields(current_mode())
+    mode.fields=0x40000|0x80000|0x100000
+    test=int(U.ChangeDisplaySettingsExW(None,C.byref(mode),None,2,None))
+    result=int(U.ChangeDisplaySettingsExW(None,C.byref(mode),None,0,None)) if test==0 else None
+    time.sleep(1)
+    actual=mode_fields(current_mode())
+    r=dict(before=before,requested=mode_fields(mode),native_test_return=test,native_apply_return=result,
+           actual_mode=actual,readback=readback(),applied=result==0 and actual==mode_fields(mode),
+           method='enumerated native ChangeDisplaySettingsEx mode; no image rescaling or registry persistence')
+    save(label+'.json',r);print('DISPLAY_MODE',json.dumps(r),flush=True)
+    return r
+
+
+def prepare_high_scale_mode():
+    # CI1 enumerated real 1600x1200 support while the 1024x768 Settings UI
+    # exposed no high-scale option. Preserve the complete 100% run first,
+    # then use an actually enumerated mode with room for 800x600 at 200%.
+    cls=mode_api();modes=[]
+    for i in range(2048):
+        mode=cls();mode.size=C.sizeof(mode)
+        if not U.EnumDisplaySettingsW(None,i,C.byref(mode)):break
+        if mode.width>=1600 and mode.height>=1200 and mode.bits>=24:modes.append(mode)
+    if not modes:
+        r=dict(applied=False,reason='no enumerated physical mode with 1600x1200 capacity',readback=readback())
+        save('high-scale-mode.json',r);return r
+    mode=min(modes,key=lambda m:(m.width*m.height,-m.bits))
+    return apply_mode(mode,'high-scale-mode')
+
+
 def request_scale(percent, label):
     allowed()
     before=readback()
@@ -176,7 +231,21 @@ def request_scale(percent, label):
             else:
                 combo=combos[0];combo.GetExpandCollapsePattern().Expand();time.sleep(.4)
                 capture('expanded')
-                candidates=[n for n in walk(window) if n.ControlTypeName=='ListItemControl' and re.match(r'^'+str(percent)+r'%($|\s|\()',n.Name)]
+                # XAML ComboBox popup items may be a sibling desktop subtree,
+                # not descendants of ApplicationFrameWindow. Enumerate only
+                # the actual Settings provider PID and advertised selection
+                # items, preserving all offered option names/patterns.
+                provider_pid=combo.ProcessId
+                options=[];candidates=[];seen=set()
+                for n in walk(ui.auto.GetRootControl(),max_depth=14):
+                    if n.ProcessId!=provider_pid or not re.match(r'^\d+%($|\s|\()',n.Name):continue
+                    item=ui.describe(n,patterns=True)
+                    try:identity=tuple(n.Element.GetRuntimeId())
+                    except Exception:identity=(n.Name,n.AutomationId,str(n.BoundingRectangle))
+                    if identity in seen:continue
+                    seen.add(identity);options.append(item)
+                    if re.match(r'^'+str(percent)+r'%($|\s|\()',n.Name) and not item['offscreen'] and 'SelectionItemPattern' in item.get('patterns',[]):candidates.append(n)
+                r['offered_scale_options']=options
                 r['matching_options']=[ui.describe(n,patterns=True) for n in candidates]
                 if len(candidates)!=1:
                     r['reason']='Requested exact scale is not uniquely offered by native Settings'

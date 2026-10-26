@@ -104,12 +104,13 @@ class Driver(old.Driver):
         return result
 
     def run_matrix(self):
-        original_hc=hc_read();initial=display.readback();configs=[];requests=[];restoration={}
+        original_hc=hc_read();initial=display.readback();original_mode=display.current_mode();configs=[];requests=[];restoration={};mode_request=None
         primary=[m for m in initial['monitors'] if m['primary']]
         assert len(primary)==1
         original_scale=primary[0]['scale_percent']
         try:
             for scale in (100,150,200):
+                if scale==150:mode_request=display.prepare_high_scale_mode()
                 request=display.request_scale(scale,'scale-'+str(scale));requests.append(request)
                 for contrast in ('normal','high'):
                     for size in ('default','small'):
@@ -168,11 +169,15 @@ class Driver(old.Driver):
             if not actual_scale(final_display,original_scale):
                 restored=display.request_scale(original_scale,'restore-scale');restoration['scale_restore_request']=restored
                 final_display=restored['readback']
+            if display.mode_fields(display.current_mode())!=display.mode_fields(original_mode):
+                restoration['mode_restore_request']=display.apply_mode(original_mode,'restore-mode')
+                final_display=display.readback()
             restoration.update(original_display=initial,final_display=final_display,scale_restored=actual_scale(final_display,original_scale))
+            restoration['mode_restored']=display.mode_fields(display.current_mode())==display.mode_fields(original_mode)
             r=dict(accepted=False,screen_reader_accepted=False,source_sha=TARGET,target_sha=TARGET,seed=BASE,sdk_source=SDK,
                 historical_source=D08,historical_results_reused=False,run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
                 program_sha256=old.digest(self.exe),configurations=configs,display_requests=requests,restoration=restoration,
-                coverage={str(s):sum(c['execution']=='executed' for c in configs if c['requested_scale']==s) for s in (100,150,200)},
+                coverage={str(s):sum(c['execution']=='executed' for c in configs if c['requested_scale']==s) for s in (100,150,200)},high_scale_mode_request=mode_request,
                 limitations=['No Narrator/NVDA/physical-keyboard acceptance','Target DPI unawareness is recorded separately from actual monitor scale',
                     'Original D08 contrast pixel judgment remains pending unless it measured a failing enabled pair; no semantic glyph/focus/ICC grant',
                     'More/status native bounds and pixel samples do not prove all glyph clipping absent',
@@ -183,6 +188,8 @@ class Driver(old.Driver):
             print('D20_RESULT',json.dumps({k:r[k] for k in ('source_sha','program_sha256','coverage','restoration')},ensure_ascii=True),flush=True)
             validate(r,TARGET,os.environ['GITHUB_RUN_ID'],os.environ['GITHUB_RUN_ATTEMPT'])
             assert restoration['scale_restored']
+            assert restoration['mode_restored']
+            assert not any(request.get('driver_exception') for request in requests), 'Settings driver exception is not a capability absence'
             assert not any(c.get('driver_exception') for c in configs)
             assert not any(v['status']=='error' for c in configs for v in c['checks'].values())
 

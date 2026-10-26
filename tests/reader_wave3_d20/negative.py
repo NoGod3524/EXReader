@@ -20,7 +20,7 @@ def main():
                contrast_readback=dict(flags=1 if high else 0),loaded_modules=['synthetic'],actual_transport='sendinput')
         configs.append(c)
     base=dict(source_sha='test',target_sha='test',run_id=1,attempt=1,seed=BASE,sdk_source=SDK,historical_source=D08,
-              accepted=False,screen_reader_accepted=False,program_sha256='0'*64,files=['synthetic'],restoration=dict(high_contrast_restored=True),
+              accepted=False,screen_reader_accepted=False,program_sha256='0'*64,files=['synthetic'],restoration=dict(high_contrast_restored=True,scale_restored=True,mode_restored=True),
               configurations=configs,coverage={'100':4,'150':0,'200':0})
     validate(base,'test',1,1)
     results=[]

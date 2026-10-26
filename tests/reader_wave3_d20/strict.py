@@ -61,6 +61,7 @@ def main():
         result.update(report=r,program_sha256=r['program_sha256'],credential_scan=a.credential_scan(root,a.api('actions/jobs/'+str(native[0]['id'])+'/logs',True)))
         assert native[0]['conclusion']=='success' and os.environ['NATIVE_RESULT']=='success'
         assert r['restoration']['scale_restored']
+        assert not any(request.get('driver_exception') for request in r['display_requests'])
         assert not any(c.get('driver_exception') for c in r['configurations'])
         assert not any(v['status']=='error' for c in r['configurations'] for v in c['checks'].values())
         result['verified']=True

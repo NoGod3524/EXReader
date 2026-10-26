@@ -85,3 +85,12 @@ seed observations are not retroactive passes for those runs.
 - [SystemParametersInfo](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfoa): old logical-DPI setter is documented “Do not use”; high-contrast and physical work-area contracts.
 - [GetDpiForWindow](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdpiforwindow): return depends on target awareness; unaware windows report 96.
 - [Launch Settings](https://learn.microsoft.com/en-us/windows/apps/develop/launch/launch-settings): documented display URI; availability varies by SKU/version.
+
+## CI1 后的能力驱动补全
+
+CI1 证明 Settings 缩放 ComboBox 存在且 enabled，但主窗子树中未找到150/200。
+CI2 将按真实 Settings provider PID 枚举可能位于 desktop sibling 的 XAML popup，
+记录全部实际提供的 percent 选择项。原1024×768的100%完整回归先执行；之后仅为
+高缩放探测选择已真实枚举的1600×1200模式（如存在），使用原生模式test/apply并
+回读，finally恢复原模式。此物理模式变化与缩放分别记录；不计成新的DPI能力，
+也不让较宽工作区覆盖原100% More失败。历史CI1见 ITERATION-1.md。
