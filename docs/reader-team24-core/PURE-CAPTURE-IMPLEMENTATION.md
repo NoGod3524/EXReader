@@ -25,3 +25,27 @@ The shared test header now selects `{}` for C++ and `{0}` for C. This is a
 consumer-only repair; all three production blobs and the capability source
 above are unchanged. The failed run and artifacts remain separate from the
 following focused-gate repair attempt; no SDK/format full acceptance is rerun.
+
+Focused gate repair attempt 2, source `5a48ce4c50f60bff32c0ebf2431c298793135a89`,
+run `40279921298/1`, compiled both consumers but failed the first actual default
+C execution on all three platforms: `setup failed: import TXT`. The public
+`exr_library_import_file` contract (`include/exr/library.h:116-126`) supports
+streaming EPUB/CBZ/PDF, not TXT. The test caller now reads the actual generated
+TXT file bytes and uses public `exr_library_import`, then opens the same stored
+original through `exr_library_document`; capture/resolve assertions are unchanged.
+Both calls now print actual status and SDK error messages on failure.
+
+This second repair also leaves production source `a911cd0e` and its exact three
+blobs unchanged. It is committed for review with CI skipped; no third focused
+dispatch has been issued. The prior two failed focused attempts are retained,
+and neither proves installed pure-capability, OFF compatibility or no-write
+acceptance. The second attempt's evidence artifact `12631493778` contains the
+three original producer ZIPs; size `11641072`, SHA-256
+`3e43c95e6812e8b2b061e20cce623b30a093ba4bc158a3ab8baafffe8aa0d750`.
+
+The minimum next verification is the same installed C/C++ capability gate on
+three platforms, with this TXT caller correction and the unchanged candidate
+pin. It builds only the prerequisite SDK, catalog, revisions and reading-state
+profiles; it runs no unrelated feature package or SDK format acceptance. Root's
+separately authorized one S18/S19 targeted round remains pending until this
+capability gate passes; the core branch's original protected tree is retained.

@@ -153,8 +153,20 @@ static int pure_capture_main(int argc, char **argv) {
 #endif
   require_ok(exr_library_open(library_path, &library, &sdk_error) == EXR_OK, "open SDK library");
   path_join(fixture, sizeof(fixture), argv[1], "book.txt");
-  require_ok(exr_library_import_file(library, EXR_TXT, fixture, "capture source", &book, &sdk_error) == EXR_OK, "import TXT");
-  require_ok(exr_library_document(library, book, &doc, &sdk_error) == EXR_OK, "open TXT document");
+  { FILE *input = fopen(fixture, "rb"); long length; unsigned char *data; exr_status status;
+    require_ok(input != NULL, "open generated TXT fixture");
+    require_ok(fseek(input, 0, SEEK_END) == 0, "seek TXT fixture"); length = ftell(input);
+    require_ok(length > 0 && fseek(input, 0, SEEK_SET) == 0, "size TXT fixture");
+    data = (unsigned char *)malloc((size_t)length); require_ok(data != NULL, "allocate TXT bytes");
+    require_ok(fread(data, 1, (size_t)length, input) == (size_t)length, "read exact TXT bytes");
+    require_ok(fclose(input) == 0, "close TXT fixture");
+    status = exr_library_import(library, EXR_TXT, data, (size_t)length, "capture source", &book, &sdk_error);
+    free(data);
+    fprintf(stderr, "SDK import TXT status=%d message=%s\n", (int)status, sdk_error.message);
+    require_ok(status == EXR_OK, "import TXT bytes"); }
+  { exr_status status = exr_library_document(library, book, &doc, &sdk_error);
+    fprintf(stderr, "SDK open TXT document status=%d message=%s\n", (int)status, sdk_error.message);
+    require_ok(status == EXR_OK, "open TXT document"); }
   { size_t text_bytes = 0; const char *text = exr_document_text(doc, &text_bytes); const char *needle = strstr(text, "Unique context alpha");
     size_t at; require_ok(text_bytes > 0 && needle != NULL, "fixture phrase"); at = (size_t)(needle - text);
     require_ok(exr_anchor_create(doc, at, at + strlen("Unique context alpha"), &range, &sdk_error) == EXR_OK, "actual TXT range capture");
@@ -222,5 +234,3 @@ static int pure_capture_main(int argc, char **argv) {
   fprintf(report, "],\"count\":%zu,\"accepted\":%s}\n", checks, failures ? "false" : "true");
   fclose(report); return failures ? 1 : 0;
 }
-
-
