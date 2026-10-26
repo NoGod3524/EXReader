@@ -1,0 +1,76 @@
+name: Windows normal cloud UI content binding
+on:
+  push:
+    branches: [codex/windows-cloud-ui-binding]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+      EXR_COMPOSITION_CONTENT_BOUND: '1'
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Check driver syntax
+        run: python -m py_compile tests/windows_cloud_binding/check.py tests/windows_cloud_binding/verify.py
+      - name: Build actual composed Windows host and retain existing results
+        id: build
+        shell: pwsh
+        run: |
+          python tests/reader_wave3_c09/build.py
+          if ($LASTEXITCODE) { throw 'Composed build or retained checks failed' }
+      - name: Build independent installed SDK readback consumer
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/c09/raw-stage;$pwd/build/c09/product-stage;$pwd/build/c09/sdk-stage"
+          cmake -S tests/windows_cloud_binding -B build/cloud-readback -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'readback configuration failed' }
+          cmake --build build/cloud-readback --parallel 4 --verbose
+          if ($LASTEXITCODE) { throw 'readback build failed' }
+      - name: Exercise native account and cloud picker through HTTPS
+        run: python tests/windows_cloud_binding/check.py
+      - name: Preserve all available evidence
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-cloud-ui-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/cloud-ui/
+            build/cloud-readback/cloud-probe.exe
+            build/cloud-readback/CMakeCache.txt
+            build/c09/package/
+            build/c09/report.json
+            build/c09/wave3-host/windows-host.map
+            build/c09/wave3-host/CMakeCache.txt
+            build/c09/logs/
+            build/c09/raw-cloud-import/CMakeCache.txt
+            !build/**/*.key
+          if-no-files-found: warn
+  verify:
+    if: always()
+    needs: windows
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate exact run, artifact and original bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WINDOWS_RESULT: ${{ needs.windows.result }}
+          ARTIFACT_ID: ${{ needs.windows.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.windows.outputs.digest }}
+        run: python tests/windows_cloud_binding/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-cloud-ui-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/cloud-ui-summary/
+          if-no-files-found: warn
