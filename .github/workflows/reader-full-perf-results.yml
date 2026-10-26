@@ -18,6 +18,8 @@ jobs:
             artifact: full-product-perf-windows-40397287811-1
           - run: '40395860891'
             artifact: full-product-perf-gtk-40395860891-1
+          - run: '40399315293'
+            artifact: full-product-perf-gtk-40399315293-1
     steps:
       - uses: actions/checkout@v4
       - name: Authenticate and parse original artifact in Actions

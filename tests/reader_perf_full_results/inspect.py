@@ -46,6 +46,19 @@ with zipfile.ZipFile(archive_path) as archive:
                   'metrics': summary['metrics'], 'environment': summary['environment'], 'rss': summary['rss'],
                   'observation_complete': report['accepted'], 'problems': report['problems'],
                   'grants': report['grants'], 'performance_accepted': False}
+        frame = read('full-gtk-evidence/frame-clock-observation.json', optional=True)
+        if frame:
+            assert frame['source_sha'] == summary['source_sha'] and str(frame['run_id']) == run_id
+            assert str(frame['attempt']) == str(run['run_attempt'])
+            for launch in frame['launches']:
+                raw_name = 'full-gtk-evidence/frame-clock-raw/' + str(launch['pid']) + '.tsv'
+                matches = [path for path in archive.namelist() if path.endswith(raw_name)]
+                assert len(matches) == 1 and hashlib.sha256(archive.read(matches[0])).hexdigest() == launch['raw_sha256']
+            result['frame_clock'] = {'complete': frame['clock_samples_complete'],
+                                     'launches': len(frame['launches']),
+                                     'after_paint_samples': sum(row['after_paint_samples'] for row in frame['launches']),
+                                     'scope': frame['scope'], 'probe': frame['probe'],
+                                     'physical_presentation_measured': frame['physical_presentation_measured']}
     assert result['source_sha'] == run['head_sha'] and str(result['run_id']) == run_id
     assert str(result['attempt']) == str(run['run_attempt'])
     result['artifact'] = {key: artifact[key] for key in ('id', 'name', 'digest', 'size_in_bytes', 'expires_at')}
@@ -60,5 +73,6 @@ with zipfile.ZipFile(archive_path) as archive:
         compact.update({'metrics': {k: {n: v.get(n) for n in ('count', 'p50_ms', 'p95_ms', 'max_ms')}
                                      for k, v in result['metrics'].items()},
                         'cpu': result['environment']['runner'], 'rss': result['rss'],
-                        'observation_complete': result['observation_complete'], 'problems': result['problems']})
+                        'observation_complete': result['observation_complete'], 'problems': result['problems'],
+                        'frame_clock': result.get('frame_clock')})
     print(json.dumps(compact, ensure_ascii=False))
