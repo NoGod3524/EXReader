@@ -553,6 +553,39 @@ final class HostSession {
 
     var currentViewport: CGSize { viewport }
 
+#if EXR_APPLE_WAVE3
+    func historyResolver(bookID: Int64, cancel: HostCancelBox) throws -> HostSession {
+        try cancel.check()
+        guard let target = try library.books().first(where: { $0.id == bookID }) else { throw HostError.invalidInput("历史原件不可用") }
+        let result = candidate()
+        result.book = target
+        return result
+    }
+
+    // Keep the accepted session alive until the replacement font has rendered.
+    func fontCandidate(_ replacement: HostFont, cancel: HostCancelBox) throws -> (HostSession, HostSnapshot) {
+        try cancel.check()
+        guard let book else { throw HostError.invalidInput("请先打开书籍") }
+        let result = HostSession(library: library, font: replacement, slowDelay: slowDelay,
+                                 viewport: viewport, fontSize: fontSize)
+        result.book = book; result.document = document; result.publication = publication
+        result.part = part; result.page = page; result.readingOffset = readingOffset
+        result.preserveUnresolvedProgress = preserveUnresolvedProgress
+#if EXR_APPLE_PAGE_THEME
+        result.pagePalette = pagePalette
+#endif
+        try result.begin(cancel)
+        if fixed != nil {
+            result.fixed = try library.fixed(bookID: book.id, font: replacement, cancel: cancel)
+        } else {
+            try result.rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+        }
+        let snapshot = try result.renderSnapshot(persistProgress: false)
+        try cancel.check()
+        return (result, snapshot)
+    }
+#endif
+
     func matches(_ context: HostSelectionContext) -> Bool {
         book?.id == context.bookID && pageText == context.text && pageRange.lowerBound == context.baseOffset &&
             part == context.part && currentPath == context.path
@@ -1220,7 +1253,25 @@ final class HostSession {
     }
 }
 
+#if EXR_APPLE_WAVE3
+private final class HostWave3AccessScope {
+    let url: URL
+    private let started: Bool
+    init(_ url: URL) { self.url = url; started = url.startAccessingSecurityScopedResource() }
+    deinit { if started { url.stopAccessingSecurityScopedResource() } }
+}
+#endif
+
 final class HostReaderModel: ObservableObject {
+#if EXR_APPLE_WAVE3
+    let wave3 = HostWave3State()
+    private let wave3History = HostWave3History()
+    private var wave3PreviewFile: URL?
+    private var wave3PreviewBook: Int64?
+    private var wave3PreviewFingerprint: String?
+    private var wave3PreviewAccess: HostWave3AccessScope?
+    private var wave3OutputAccess: HostWave3AccessScope?
+#endif
     let search = HostSearchState()
     let navigation = HostNavigationState()
     let readingRecords = HostReadingState()
@@ -1429,6 +1480,217 @@ final class HostReaderModel: ObservableObject {
     }
 
     var showsTestFixtures: Bool { testFixtures }
+#if EXR_APPLE_WAVE3
+    var wave3Actions: HostWave3Actions {
+        var actions = HostWave3Actions(refresh: refreshWave3, previewAnnotations: previewWave3Annotations,
+            confirmAnnotations: confirmWave3Annotations, discardPreview: discardWave3Preview,
+            importFont: importWave3Font, selectFont: selectWave3Font,
+            exportAnnotations: exportWave3Annotations, exportOriginal: exportWave3Original,
+            back: { self.jumpWave3History(back: true) }, forward: { self.jumpWave3History(back: false) },
+            cancel: cancelWork)
+#if EXR_APPLE_HOST_REVIEW
+        actions.reviewAnnotations = prepareWave3Fixture
+#endif
+        return actions
+    }
+
+    private func performWave3(_ work: @escaping (HostSession, HostCatalog, URL, HostCancelBox) throws -> (() -> Void)) {
+        guard !busy, current != nil else { return }
+        let (epoch, cancel) = begin()
+        wave3.busy = true; wave3.message = "处理中…"
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库未就绪") }
+                let publish = try work(session, catalog, self.storageFolder(), cancel)
+                DispatchQueue.main.async {
+                    guard epoch == self.token else { return }
+                    publish(); self.wave3.busy = false; self.finish()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    guard epoch == self.token else { return }
+                    if let partial = error as? HostWave3ImportFailure {
+                        self.wave3.annotationPreview = partial.preview
+                        self.wave3.canConfirmAnnotations = false
+                    }
+                    self.wave3.busy = false; self.wave3.message = self.describe(error); self.fail(error)
+                }
+            }
+        }
+    }
+
+    func refreshWave3() {
+        performWave3 { _, catalog, root, cancel in
+            let fonts = try HostWave3Fonts.records(root: root.appendingPathComponent("fonts"), cancel: cancel)
+            let history = try self.wave3History.state()
+            var sync = try self.accountSession?.wave3SyncSnapshot(catalog: catalog)
+#if EXR_APPLE_HOST_REVIEW
+            if sync == nil && self.testFixtures { sync = try HostWave3Review.idleSync(catalog: catalog, root: root) }
+#endif
+            return {
+                self.wave3.fonts = fonts; self.wave3.canBack = history.0; self.wave3.canForward = history.1
+                self.wave3.sync = sync; self.wave3.message = "详情已刷新"
+            }
+        }
+    }
+
+    func discardWave3Preview() {
+        guard !busy else { return }
+        wave3PreviewFile = nil; wave3PreviewBook = nil; wave3PreviewFingerprint = nil
+        wave3PreviewAccess = nil; wave3.canConfirmAnnotations = false
+        wave3.annotationPreview = nil; wave3.message = "已放弃预览，未导入标注"
+    }
+
+    func previewWave3Annotations(_ file: URL) { importWave3Annotations(file, confirmation: nil) }
+    func confirmWave3Annotations() {
+        guard let file = wave3PreviewFile, wave3PreviewBook == current?.id,
+              let fingerprint = wave3PreviewFingerprint else { return }
+        importWave3Annotations(file, confirmation: fingerprint)
+    }
+    private func importWave3Annotations(_ file: URL, confirmation: String?) {
+        guard !busy else { return }
+        if confirmation == nil {
+            wave3PreviewFile = nil; wave3PreviewBook = nil; wave3PreviewFingerprint = nil
+            wave3PreviewAccess = nil; wave3.annotationPreview = nil; wave3.canConfirmAnnotations = false
+        }
+        performWave3 { session, catalog, _, cancel in
+            guard let book = session.book else { throw HostError.invalidInput("请先打开书籍") }
+            let access = HostWave3AccessScope(file)
+            let key = try catalog.readingBook(sdkID: book.id).key
+            let resolver = try HostWave3AnnotationResolver(library: session.library, font: session.font,
+                                                         bookID: book.id, key: key, cancel: cancel)
+            let preview = try HostWave3Worker.annotations(catalog: catalog, key: key, file: file,
+                confirmation: confirmation, cancel: cancel) { record in
+                    try resolver.resolve(record)
+                }
+            return {
+                self.wave3.annotationPreview = preview
+                self.wave3PreviewFile = confirmation == nil ? file : nil
+                self.wave3PreviewBook = confirmation == nil ? book.id : nil
+                self.wave3PreviewFingerprint = confirmation == nil ? preview.fingerprint : nil
+                self.wave3PreviewAccess = confirmation == nil ? access : nil
+                self.wave3.canConfirmAnnotations = confirmation == nil && preview.unresolved == 0
+                self.wave3.message = confirmation == nil ? "预览完成，请确认后导入" : "标注已导入：\(preview.committed)"
+            }
+        }
+    }
+
+#if EXR_APPLE_HOST_REVIEW
+    func prepareWave3Fixture(_ nullSelector: Bool) {
+        guard testFixtures else { return }
+        performWave3 { session, catalog, root, cancel in
+            let bookID = session.book?.id
+            let file = try HostWave3Review.portableFixture(session: session, catalog: catalog, root: root,
+                                                         nullSelector: nullSelector, cancel: cancel)
+            return {
+                DispatchQueue.main.async {
+                    guard self.current?.id == bookID, !self.busy else { return }
+                    self.previewWave3Annotations(file)
+                }
+            }
+        }
+    }
+#endif
+
+    func importWave3Font(_ file: URL) {
+        performWave3 { _, _, root, cancel in
+            let scoped = file.startAccessingSecurityScopedResource()
+            defer { if scoped { file.stopAccessingSecurityScopedResource() } }
+            let rows = try HostWave3Fonts.records(root: root.appendingPathComponent("fonts"), importing: file, cancel: cancel)
+            return { self.wave3.fonts = rows; self.wave3.message = "字体已导入，相同内容自动去重" }
+        }
+    }
+
+    func selectWave3Font(_ hash: String?) {
+        guard !busy, current != nil else { return }
+        let (epoch, cancel) = begin(); wave3.busy = true
+        queue.async {
+            do {
+                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                let font: HostFont
+                let sha: String
+                if let hash {
+                    let lease = try HostWave3FontLease.acquire(root: self.storageFolder().appendingPathComponent("fonts"), hash: hash)
+                    font = HostFont(borrowed: lease.font, lifetime: lease); sha = hash
+                } else {
+                    guard let file = Bundle.main.url(forResource: "Reader", withExtension: "otf") else { throw HostError.invalidInput("缺少默认字体") }
+                    let data = try Data(contentsOf: file); font = try HostFont(data: data)
+                    sha = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+                }
+                let (candidate, frame) = try session.fontCandidate(font, cancel: cancel)
+                let previousSHA = self.fontSHA
+                self.fontSHA = sha
+                if self.completeFrame(frame, session: candidate, token: epoch, status: "字体已应用", recordHistory: false,
+                    publishAccepted: {
+                        self.defaults.set(hash, forKey: "EXRImportedFont")
+                        self.wave3.selectedFont = hash; self.wave3.message = "字体已应用"
+                    }) {
+                    self.session = candidate
+                } else { self.fontSHA = previousSHA }
+            } catch {
+                DispatchQueue.main.async {
+                    guard epoch == self.token else { return }
+                    self.wave3.busy = false; self.wave3.message = self.describe(error); self.fail(error)
+                }
+            }
+        }
+    }
+
+    func exportWave3Original(_ directory: URL) {
+        performWave3 { session, _, _, cancel in
+            guard let book = session.book else { throw HostError.invalidInput("请先打开书籍") }
+            let access = HostWave3AccessScope(directory)
+            let output = try HostWave3Worker.exportOriginal(library: session.library, bookID: book.id, directory: directory, cancel: cancel)
+            return { self.wave3OutputAccess = access; self.wave3.exportURL = output; self.wave3.message = "原件已导出，可分享副本" }
+        }
+    }
+
+    func exportWave3Annotations(_ directory: URL, markdown: Bool) {
+        performWave3 { session, catalog, _, cancel in
+            guard let book = session.book else { throw HostError.invalidInput("请先打开书籍") }
+            let access = HostWave3AccessScope(directory)
+            let key = try catalog.readingBook(sdkID: book.id).key
+            let output = try HostWave3Worker.exportAnnotations(catalog: catalog, key: key, directory: directory, markdown: markdown, cancel: cancel)
+            return { self.wave3OutputAccess = access; self.wave3.exportURL = output; self.wave3.message = "标注已导出，可分享副本" }
+        }
+    }
+
+    func jumpWave3History(back: Bool) {
+        guard !busy, current != nil else { return }
+        let (epoch, cancel) = begin(); wave3.busy = true
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库未就绪") }
+                let ticket = try self.wave3History.peek(back: back)
+                let identity = try catalog.withHistory { try HostReadingWorker.decoded(ticket.wire, history: $0).book }
+                guard identity == ticket.bookKey else { throw HostError.invalidInput("历史原件身份不一致") }
+                let resolver: HostSession
+                if let book = session.book, try catalog.readingBook(sdkID: book.id).key == identity { resolver = session }
+                else {
+                    guard let book = try session.library.books().first(where: { (try? catalog.readingBook(sdkID: $0.id).key) == identity }) else { throw HostError.invalidInput("历史原件不可用") }
+                    resolver = try session.historyResolver(bookID: book.id, cancel: cancel)
+                }
+                let (_, hit) = try resolver.readingResolution(ticket.wire, catalog: catalog, cancel: cancel)
+                let (candidate, frame) = try resolver.searchCandidate(hit, cancel: cancel)
+                if self.completeFrame(frame, session: candidate, token: epoch, status: back ? "已返回历史位置" : "已前进历史位置", recordHistory: false, finishWork: false) {
+                    self.session = candidate
+                    try self.wave3History.complete(ticket)
+                    let state = try self.wave3History.state()
+                    DispatchQueue.main.async {
+                        guard epoch == self.token else { return }
+                        self.wave3.canBack = state.0; self.wave3.canForward = state.1
+                        self.wave3.message = "已精确定位历史位置"; self.finish()
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    guard epoch == self.token else { return }
+                    self.wave3.busy = false; self.wave3.message = self.describe(error); self.fail(error)
+                }
+            }
+        }
+    }
+#endif
     var shelfDefaults: UserDefaults { defaults }
 
     func closeAccountSession() {
@@ -1541,6 +1803,9 @@ final class HostReaderModel: ObservableObject {
                         try? FileManager.default.removeItem(at: folder.appendingPathComponent(name))
                     }
                     self.defaults.removeObject(forKey: "EXRLastBook")
+#if EXR_APPLE_WAVE3
+                    self.defaults.removeObject(forKey: "EXRImportedFont")
+#endif
                 }
                 guard let migration = Bundle.main.url(forResource: HostCatalog.resourceName, withExtension: "sql") else {
                     throw HostError.invalidInput("缺少原始产品书库迁移资源")
@@ -1568,8 +1833,20 @@ final class HostReaderModel: ObservableObject {
                 let fontURL = Bundle.main.url(forResource: "Reader", withExtension: "otf")
                 guard let fontURL else { throw HostError.invalidInput("缺少 Reader.otf") }
                 let fontData = try Data(contentsOf: fontURL)
-                let font = try HostFont(data: fontData)
+                var font = try HostFont(data: fontData)
                 self.fontSHA = SHA256.hash(data: fontData).map { String(format: "%02x", $0) }.joined()
+#if EXR_APPLE_WAVE3
+                if let selected = self.defaults.string(forKey: "EXRImportedFont") {
+                    do {
+                        let lease = try HostWave3FontLease.acquire(root: folder.appendingPathComponent("fonts"), hash: selected)
+                        font = HostFont(borrowed: lease.font, lifetime: lease)
+                        self.fontSHA = selected
+                        DispatchQueue.main.async { self.wave3.selectedFont = selected }
+                    } catch {
+                        DispatchQueue.main.async { self.wave3.message = "导入字体不可用，已使用内置字体：\(self.describe(error))" }
+                    }
+                }
+#endif
                 let savedWidth = self.defaults.double(forKey: "EXRViewportWidth")
                 let savedHeight = self.defaults.double(forKey: "EXRViewportHeight")
                 let viewport = savedWidth > 200 && savedHeight > 200
@@ -1696,6 +1973,9 @@ final class HostReaderModel: ObservableObject {
     }
 
     private func finish() {
+#if EXR_APPLE_WAVE3
+        wave3.busy = false
+#endif
         activeCancel = nil
         if let request = pendingViewport {
             pendingViewport = nil
@@ -1717,7 +1997,9 @@ final class HostReaderModel: ObservableObject {
 
     @discardableResult
     private func completeFrame(_ snapshot: HostSnapshot, session: HostSession, token: Int,
-                               status: String, opening: Bool = false) -> Bool {
+                               status: String, opening: Bool = false, historyKind: Int = 1,
+                               recordHistory: Bool = true, finishWork: Bool = true,
+                               publishAccepted: (() -> Void)? = nil) -> Bool {
         let notes = Result {
 #if EXR_APPLE_HOST_REVIEW
             try HostModelReviewGate.beforeFrameNotes?(session)
@@ -1732,7 +2014,7 @@ final class HostReaderModel: ObservableObject {
         do { try writeState(session: session) }
         catch { warnings.append("状态记录失败：\(describe(error))") }
         let warning = warnings.joined(separator: "；")
-        return DispatchQueue.main.sync {
+        let accepted = DispatchQueue.main.sync {
             guard token == self.token else { return false }
             if self.current?.id != snapshot.book.id {
                 self.notes = []
@@ -1749,9 +2031,26 @@ final class HostReaderModel: ObservableObject {
             self.defaults.set(Double(viewport.height), forKey: "EXRViewportHeight")
             self.statusText = warning.isEmpty ? status : "页面已更新，状态刷新失败"
             self.errorText = warning
-            self.finish()
+            publishAccepted?()
+            if finishWork { self.finish() }
             return true
         }
+#if EXR_APPLE_WAVE3
+        if accepted && recordHistory {
+            do {
+                guard let catalog else { throw HostError.invalidInput("产品书库未就绪") }
+                let capture = try session.readingCapture(cancel: HostCancelBox())
+                let key = try catalog.readingBook(sdkID: snapshot.book.id).key
+                try wave3History.commit(catalog: catalog, capture: capture, key: key,
+                                        kind: historyKind == 2 ? READER_JH_SEARCH : historyKind == 3 ? READER_JH_TOC : READER_JH_PAGE)
+                let state = try wave3History.state()
+                DispatchQueue.main.async { self.wave3.canBack = state.0; self.wave3.canForward = state.1 }
+            } catch {
+                DispatchQueue.main.async { self.wave3.message = "页面已更新，历史未记录：\(self.describe(error))" }
+            }
+        }
+#endif
+        return accepted
     }
 
     private func completeMutation(session: HostSession, token: Int, status: String, imported: Bool = false) {
@@ -1785,6 +2084,13 @@ final class HostReaderModel: ObservableObject {
     }
 
     private func apply(_ snapshot: HostSnapshot, persist: Bool = true) {
+#if EXR_APPLE_WAVE3
+        if current?.id != snapshot.book.id {
+            wave3PreviewFile = nil; wave3PreviewBook = nil; wave3PreviewFingerprint = nil
+            wave3PreviewAccess = nil; wave3.canConfirmAnnotations = false
+            wave3.annotationPreview = nil
+        }
+#endif
         current = HostBookRow(id: snapshot.book.id, title: snapshot.book.title,
                               detail: "\(snapshot.book.formatLabel) · 位置 \(snapshot.book.position)",
                               isFixed: snapshot.book.isFixed, position: snapshot.book.position)
@@ -2097,7 +2403,7 @@ final class HostReaderModel: ObservableObject {
                     return
                 }
                 let (candidate, snapshot) = try session.navigationCandidate(selection, acceptPart: acceptPart, cancel: box)
-                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "已精确定位目录目标") {
+                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "已精确定位目录目标", historyKind: 3) {
                     self.session = candidate
                     DispatchQueue.main.async { self.navigation.didCommit(generation: epoch) }
                 }
@@ -2161,7 +2467,7 @@ final class HostReaderModel: ObservableObject {
                     throw HostError.invalidInput("原件身份已变化")
                 }
                 let (candidate, snapshot) = try session.searchCandidate(hit, cancel: box)
-                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "已精确定位选文") {
+                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "已精确定位选文", historyKind: 2) {
                     self.session = candidate
                 }
             } catch {

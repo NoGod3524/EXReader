@@ -135,7 +135,12 @@ enum HostSDKReview {
 
 final class HostFont {
     let handle: OpaquePointer
+    private let borrowedLifetime: AnyObject?
+    init(borrowed handle: OpaquePointer, lifetime: AnyObject) {
+        self.handle = handle; borrowedLifetime = lifetime
+    }
     init(data: Data) throws {
+        borrowedLifetime = nil
         var font: OpaquePointer?
         var error = exr_error()
         var input = exr_font_input()
@@ -149,7 +154,7 @@ final class HostFont {
         guard let font else { throw HostError.invalidResult("字体无法创建") }
         handle = font
     }
-    deinit { exr_font_free(handle) }
+    deinit { if borrowedLifetime == nil { exr_font_free(handle) } }
 }
 
 final class HostAnchor {

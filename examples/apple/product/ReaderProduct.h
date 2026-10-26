@@ -9,3 +9,7 @@
 #include <reader_navigation.h>
 #include <reader_reading_commands.h>
 #include <reader_annotation_view.h>
+
+#ifdef EXR_APPLE_WAVE3
+#include "../../../apps/reader/apple-feature-integration/include/reader_apple_features.h"
+#endif
