@@ -109,6 +109,8 @@ SDK 工件（同 run/attempt）：
 
 原 `tests/reader_team24_apple/guard.py`、`build.py`、`make_project.rb`、`verify.py`、`tests/apple_host/**`、SDK 源码与其余 canonical 工具在本次 diff 中逐字未变。
 
+分支上另有文档提交 `46b729c0`（本文件与提案文档的“已应用”注记，`[skip ci]`，只改 `docs/handoffs/team24-apple*`）：未触发任何工作流，`team24-apple.yml` 的 `paths-ignore` 已覆盖该路径。该分支对应的工作流运行仍只有 `40350153254` 一次。
+
 ## 身份边界
 
 三个 phase 的 app 仍是原 review 宏配置：`DEBUG`、`EXR_APPLE_PAGE_THEME`、`EXR_APPLE_HOST_REVIEW`、`EXR_APPLE_RAW3`、`EXR_APPLE_WAVE3`，仅 control 额外 `EXR_APPLE_READING_REVIEW`；Clang 侧 `EXR_READER_SELECTOR_BYTES_CANDIDATE=1`、`EXR_APPLE_WAVE3=1`，不定义 `EXR_APPLE_RAW3_REVIEW`。这些工件是 review 应用，不是无 review 宏的生产包，也不代表真机部署；生产 flags/package 绑定仍由 root 的 composition 入口承担，本包未改其工具。
