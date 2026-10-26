@@ -4,6 +4,11 @@ on:
     branches: [codex/team24-apple, codex/dsf-apple-ui-close]
     paths-ignore: ['docs/handoffs/team24-apple*']
   workflow_dispatch:
+    inputs:
+      inspect_iphone_tree:
+        description: Inspect the preserved 7189 iPhone failure attachments
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -14,6 +19,7 @@ env:
 jobs:
   sdk:
     name: Team24 Apple installed ${{ matrix.target }}
+    if: ${{ !inputs.inspect_iphone_tree }}
     runs-on: macos-15
     timeout-minutes: 55
     strategy:
@@ -72,7 +78,7 @@ jobs:
   authenticate:
     name: Team24 Apple original ZIP authentication
     needs: [sdk, native]
-    if: always()
+    if: ${{ always() && !inputs.inspect_iphone_tree }}
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
@@ -88,3 +94,45 @@ jobs:
           path: build/team24-apple-summary/summary.json
           retention-days: 30
           if-no-files-found: error
+  inspect-iphone-tree:
+    if: ${{ inputs.inspect_iphone_tree }}
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Authenticate and inspect the original iPhone result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, zipfile
+          root = pathlib.Path('inspection'); root.mkdir()
+          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12681063497"
+          item = json.loads(subprocess.check_output(['gh', 'api', api]))
+          assert item['workflow_run']['id'] == 40380039862
+          assert item['workflow_run']['head_sha'] == '7189a5b55cda1bc8680d35a8350bd0bae4fe7c37'
+          assert item['size_in_bytes'] == 409141929
+          digest = '35291c3dca64c1ffd295d98a07c41fe16d12770a7685833c8a5182f94506a29c'
+          assert item['digest'] == 'sha256:' + digest and not item['expired']
+          with (root / 'artifact.zip').open('wb') as out:
+              subprocess.run(['gh', 'api', api + '/zip'], stdout=out, check=True)
+          assert hashlib.file_digest((root / 'artifact.zip').open('rb'), 'sha256').hexdigest() == digest
+          with zipfile.ZipFile(root / 'artifact.zip') as archive:
+              names = [name for name in archive.namelist() if name.startswith('wave3.xcresult/')]
+              assert names
+              for name in names:
+                  assert '..' not in pathlib.PurePosixPath(name).parts
+                  archive.extract(name, root)
+              for name in archive.namelist():
+                  if name.endswith('wave3-native-ui.log'):
+                      lines = archive.read(name).decode('utf-8', 'replace').splitlines()
+                      for i, line in enumerate(lines):
+                          if 'search.query' in line or 'search.find' in line:
+                              print('\n'.join(lines[max(0, i-3):i+8]))
+          subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', str(root / 'wave3.xcresult'), '--output-path', str(root / 'attachments')], check=True)
+          manifest = json.loads((root / 'attachments/manifest.json').read_text())
+          for group in manifest:
+              if 'testNativeHistoryAfterFoundAndLargeRotationExit' not in str(group): continue
+              for item in group['attachments']:
+                  if 'final-native-tree' in item['suggestedHumanReadableName']:
+                      print((root / 'attachments' / item['exportedFileName']).read_text())
+          PY
