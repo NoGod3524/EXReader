@@ -232,6 +232,16 @@ try:
     a.wait_idle();ui.U.SetForegroundWindow(a.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,ui.A.VK_SHIFT));dialog=a.io_dialog()
     a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)),timeout=120)
     name_control,create_control=256,257
+    metadata_consumer=ROOT/'build/organization-consumer/metadata-consumer.exe'
+    product=str(a.db)+'.product.sqlite';pending=product+'.commands.pending'
+    staged=subprocess.run([str(metadata_consumer),'group',product,pending,'1','-','Recovery tag','-','0','0','stage'],
+                          capture_output=True,text=True,encoding='utf-8',timeout=60)
+    assert staged.returncode==0 and json.loads(staged.stdout)['status']==0 and Path(pending).exists(),staged.stdout+staged.stderr
+    report['metadata_consumer_sha256']=sha(metadata_consumer)
+    ui.send(ui.U.GetDlgItem(dialog,258),ui.ACCOUNT.BM_CLICK)
+    a.wait(lambda:sql(a,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('Recovery tag',))==[(1,)],timeout=120)
+    a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)),timeout=120)
+    record('native-recover-staged-group',not Path(pending).exists())
     def select_action(action):
         ui.send(ui.U.GetDlgItem(dialog,ui.ACTION),0x14E,action)
         ui.send(dialog,0x111,(1<<16)|ui.ACTION,ui.U.GetDlgItem(dialog,ui.ACTION))
@@ -264,6 +274,7 @@ try:
     record('native-created-groups-sync-to-second-host','同步完成' in message and
         sql(b,'SELECT parent_id FROM reader_shelves WHERE name=?',('Local shelf 子',))==[(parent,)] and
         sql(b,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('Local tag 标签',))==[(1,)] and
+        sql(b,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('Recovery tag',))==[(1,)] and
         sql(b,'SELECT count(*) FROM reader_series WHERE name=? AND deleted=0',('Local series 系列',))==[(1,)])
     b.close_account(d)
     report['accepted']=True
