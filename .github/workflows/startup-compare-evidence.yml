@@ -1,7 +1,7 @@
 name: Compare startup mapping evidence
 on:
   push:
-    branches: [codex/reader-startup-mapping]
+    branches: [codex/reader-startup-mapping, codex/reader-startup-root-cause]
     paths: ['.github/workflows/startup-compare-evidence.yml']
 permissions:
   contents: read
@@ -18,7 +18,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build/comparison
-          for run in 40406056620 40407618025; do
+          for run in 40406056620 40411215984; do
             gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/artifacts" > "build/comparison/$run-artifacts.json"
             id=$(python -c 'import json,sys; a=json.load(open(sys.argv[1])); print(next(x["id"] for x in a["artifacts"] if x["name"].startswith("reader-composition-perf-windows-") and "identity" not in x["name"]))' "build/comparison/$run-artifacts.json")
             gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > "build/comparison/$run.zip"
@@ -30,7 +30,7 @@ jobs:
           from pathlib import Path
           root = Path('build/comparison')
           result = []
-          for run in (40406056620, 40407618025):
+          for run in (40406056620, 40411215984):
               artifacts = json.loads((root / f'{run}-artifacts.json').read_text())['artifacts']
               artifact = next(a for a in artifacts if a['name'].startswith('reader-composition-perf-windows-') and 'identity' not in a['name'])
               archive = root / f'{run}.zip'
@@ -41,6 +41,10 @@ jobs:
                   summary = json.loads(z.read(summaries[0]))
                   databases = [n for n in z.namelist() if n.endswith('template/library.sqlite.product.sqlite')]
                   mapping = None
+                  verified = [n for n in z.namelist() if n.endswith('perf-gate/mapping-verified.json')]
+                  if verified:
+                      assert len(verified) == 1
+                      mapping = json.loads(z.read(verified[0]))
                   if len(databases) == 1:
                       with tempfile.TemporaryDirectory() as tmp:
                           dbpath = Path(tmp) / 'catalog.sqlite'
