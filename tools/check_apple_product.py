@@ -27,7 +27,7 @@ def validate(dependencies, symbols, link_map):
 def inspect(binary, link_map, selector_bytes_candidate=False):
     dependencies = subprocess.check_output(['otool', '-L', str(binary)], text=True)
     symbols = subprocess.check_output(['nm', '-g', str(binary)], text=True)
-    mapping = Path(link_map).read_text()
+    mapping = Path(link_map).read_text(encoding='utf-8', errors='surrogateescape')
     Path(str(link_map) + '.symbols.txt').write_text(symbols)
     Path(str(link_map) + '.dependencies.txt').write_text(dependencies)
     try:

@@ -106,7 +106,7 @@ def main():
                     'bundle_source_sha': info['EXRSourceSHA'], 'physical_device': False,
                     'packaged_app': str((saved / ('EXReaderHost-' + args.platform + '.zip')).relative_to(evidence))}
                 phase['original_checker'] = inspect(binary, mapping, selector_bytes_candidate=True)
-                deps = subprocess.check_output(['otool', '-L', binary], text=True); symbols = subprocess.check_output(['nm', '-g', binary], text=True); link = mapping.read_text()
+                deps = subprocess.check_output(['otool', '-L', binary], text=True); symbols = subprocess.check_output(['nm', '-g', binary], text=True); link = mapping.read_text(encoding='utf-8', errors='surrogateescape')
                 (saved / 'symbols.txt').write_text(symbols); (saved / 'dependencies.txt').write_text(deps)
                 assert not re.search(r'libsqlite3(?:\.|\s)', deps)
                 assert not re.search(r'libexr_(?:core|library)\.a', link)
