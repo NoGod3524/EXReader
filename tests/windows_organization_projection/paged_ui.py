@@ -29,7 +29,7 @@ seed=ROOT/'build/cloud-readback/group-page-seed.exe'
 checks=[];problems=[];app=None;phase='seed'
 report={'accepted':False,'source_sha':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
         'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checks':checks,'problems':problems,
-        'scope':'real Windows host group browser; fixture-only projected memberships, not sync'}
+        'scope':'real Windows host group browser; fixture-only projected memberships, not sync','anchor_observations':[]}
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 def stable_numbers():
     box=app.control('books');before=ui.U.GetPropW(box,'EXReaderShelfSnapshot') or 0
@@ -151,10 +151,13 @@ try:
             with sqlite3.connect(database,timeout=30) as db:
                 db.execute('UPDATE reader_book_shelves SET ordinal=200 WHERE shelf_id=? AND book_key=?',(ids['shelf'],rows[top][0]))
             refresh();app.wait(lambda:stable_edge(top,True),timeout=90)
+            prior=stable_top();assert prior is not None
+            report['anchor_observations'].append({'stage':'moved-to-end','moved':top,'visible_top':prior,'cached':stable_numbers()})
             checks.append('moved-anchor-follows-current-order')
             with sqlite3.connect(database,timeout=30) as db:
                 db.execute('UPDATE reader_book_shelves SET ordinal=? WHERE shelf_id=? AND book_key=?',(169-top,ids['shelf'],rows[top][0]))
-            refresh();app.wait(lambda:stable_edge(top,False),timeout=90)
+            refresh();app.wait(lambda:stable_edge(prior,False),timeout=90)
+            report['anchor_observations'].append({'stage':'restored-order','anchor':prior,'visible_top':stable_top(),'cached':stable_numbers()})
             top=stable_top();assert top is not None
             with sqlite3.connect(database,timeout=30) as db:
                 db.execute('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',(ids['shelf'],rows[top][0]))
