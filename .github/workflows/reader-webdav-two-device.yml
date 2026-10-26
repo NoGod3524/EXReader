@@ -2,7 +2,7 @@ name: Reader WebDAV composed-source interop
 on:
   push:
     branches: [codex/reader-webdav-two-device]
-    paths: ['.github/workflows/reader-webdav-two-device.yml', 'tests/reader_webdav_interop/**', 'tools/check_reader_webdav_interop.py', 'apps/reader/sync/**', 'apps/reader/revisions/**', 'apps/reader/store/native/**', 'extras/webdav/**']
+    paths: ['.github/workflows/reader-webdav-two-device.yml', 'tests/reader_webdav_interop/**', 'tests/reader_webdav_host_bundle/**', 'tools/check_reader_webdav_interop.py', 'apps/reader/sync/**', 'apps/reader/revisions/**', 'apps/reader/store/native/**', 'extras/webdav/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -29,7 +29,7 @@ jobs:
           mkdir -p build/interop-logs
           git rev-parse HEAD | tee build/interop-logs/source.txt
       - name: Syntax-check package Python in the cloud
-        run: python3 -m py_compile tests/reader_webdav_interop/run_interop.py tools/check_reader_webdav_interop.py
+        run: python3 -m py_compile tests/reader_webdav_interop/run_interop.py tests/reader_webdav_host_bundle/run.py tools/check_reader_webdav_interop.py
       - name: Install Linux native TLS XML and SHA dependencies
         run: |
           sudo apt-get update
@@ -65,6 +65,12 @@ jobs:
         run: |
           python3 tests/reader_webdav_interop/run_interop.py --service "${{ matrix.service }}" \
             --consumer build/interop-consumer/interop-consumer --output build/interop-evidence --work build/interop-work
+      - name: Replay authenticated Android host original and wire bytes over real service
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tests/reader_webdav_host_bundle/run.py --service "${{ matrix.service }}" \
+            --consumer build/interop-consumer/interop-consumer --output build/host-bundle-evidence --work build/host-bundle-work
       - name: Remove job-local service containers and test trust
         if: always()
         run: |
@@ -79,6 +85,7 @@ jobs:
           name: reader-webdav-interop-${{ matrix.service }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/interop-evidence/
+            build/host-bundle-evidence/
             build/interop-logs/
             !build/**/*.key
           if-no-files-found: error
