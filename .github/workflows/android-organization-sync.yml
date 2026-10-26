@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/android-organization-sync]
   workflow_dispatch:
+    inputs:
+      diagnostic_only:
+        description: Run only the focused organization diagnostic
+        type: boolean
+        default: false
 permissions:
   contents: read
 defaults:
@@ -178,6 +183,7 @@ jobs:
           git rev-parse HEAD > "$ws/artifacts/source.txt"
           sha256sum "$ws/artifacts/app-debug.apk" "$ws/artifacts/organization-debug-androidTest.apk" > "$ws/artifacts/organization-sha256.txt"
       - name: Build unchanged original sync UI runner
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only }}
         run: |
           set -o pipefail
           ws="$PWD/build/wave3"; stage="$ws/stage"
@@ -207,7 +213,7 @@ jobs:
             adb install -r -t build/wave3/artifacts/organization-debug-androidTest.apk
             python3 tests/reader_android_organization_sync/run.py --fixture build/wave3/network-fixture --output build/wave3/evidence/organization-sync
       - name: Execute original C11 navigation and reading suites
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -221,7 +227,7 @@ jobs:
             adb shell pm clear org.exreader.host || true
             bash tests/reader_wave3_c11/device.sh "$PWD/build/wave3"
       - name: Execute unchanged original sync UI and session regression
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -245,6 +251,7 @@ jobs:
             build/wave3/artifacts/
             build/wave3/evidence/
           if-no-files-found: error
+
 
 
 
