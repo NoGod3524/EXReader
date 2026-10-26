@@ -296,8 +296,17 @@ scenarios. The navigation report retains `accepted=false` for its broader scope;
 only `navigation_scope_passed=true` is granted. The original failed
 `40389691572` remains recorded. Artifact `12683042045` is 51,801,039 bytes,
 SHA-256 `7ba2606f9f0159271ff8fe1534241bd5039036bfd03db504efa40af21540d1b0`,
-expires 2027-01-24T19:50:04Z. The current composition additionally changes
-the revisions module; rerun this workflow against the final composed source.
+expires 2027-01-24T19:50:04Z.
+
+The combined revisions source was then exercised in
+[40392202392/1](https://github.com/NoGod3524/EXReader/actions/runs/40392202392)
+at `684610f2e6ef5369c48870c59b37926d490c614c`: the same scoped navigation
+29/29 and folder 27/27, 684 backend checks and four owner-fault cases passed.
+The wider navigation `accepted` field remains false. Artifact `12684499172`
+is 51,800,903 bytes, SHA-256
+`7e66a222e542d31ac92df96dded3c0a78b140de765f227bc096610e55cd40392`,
+expires 2027-01-24T20:03:15Z. This is a same-source GTK regression, not the
+complete six-platform final run.
 
 ## Windows cloud UI verification input
 
