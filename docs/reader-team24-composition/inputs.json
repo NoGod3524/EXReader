@@ -349,6 +349,13 @@
         "tests/reader_android_composition/check_publish_io.py",
         "tests/reader_android_composition/fail_publish.c"
       ]
+    },
+    {
+      "name": "android-frozen-340-regression-candidate",
+      "source": "2ee6c1f703f6a4c7810b75eef02f3fcc6b0d7984",
+      "paths": [
+        ".github/workflows/android-shared-frozen-340.yml"
+      ]
     }
   ]
 }
