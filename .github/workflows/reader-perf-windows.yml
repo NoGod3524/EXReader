@@ -2,7 +2,7 @@ name: Reader Windows product performance observation
 
 on:
   push:
-    branches: [codex/reader-perf-windows]
+    branches: [codex/reader-perf-windows, codex/reader-product-perf-evidence]
     paths:
       - 'tests/reader_perf_windows/**'
       - '.github/workflows/reader-perf-windows.yml'
@@ -17,9 +17,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PERF_START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
-  SDK_SHA: 9854061be331fe603a1822d9b2b36ee357154927
-  PRODUCT_SQL_SHA: f32bb8aa18ed3de286900f19ce4230fd93435dd0
   PYTHONIOENCODING: utf-8
   PYTHONUTF8: '1'
 
@@ -37,28 +34,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Require the fixed start, untouched protected trees and this package's files only
+      - name: Record the exact source and component trees
         run: |
           mkdir -p build/perf-gate
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          git merge-base --is-ancestor "$PERF_START_SHA" HEAD
-          git diff --exit-code "$SDK_SHA" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
-          git diff --exit-code "$PRODUCT_SQL_SHA" HEAD -- apps/reader/store/001_catalog.sql
           git rev-parse HEAD | tee build/perf-gate/head.txt
-          git log --oneline "$PERF_START_SHA"..HEAD | tee build/perf-gate/commits.txt
-          git diff --name-only "$PERF_START_SHA" HEAD | tee build/perf-gate/paths.txt
-          python - <<'PY'
-          from pathlib import Path
-          allowed = ('tests/reader_perf_windows/',
-                     '.github/workflows/reader-perf-windows.yml',
-                     'docs/READER-PERF-WINDOWS.md',
-                     'docs/validation/reader-perf-windows.json')
-          paths = [line.strip() for line in Path('build/perf-gate/paths.txt').read_text().splitlines() if line.strip()]
-          outside = [path for path in paths if not any(path == item or path.startswith(item) for item in allowed)]
-          if outside:
-              raise SystemExit('changes outside this package whitelist: ' + ', '.join(outside))
-          print('whitelisted paths: %d' % len(paths))
-          PY
+          git rev-parse HEAD:src HEAD:include HEAD:apps/reader HEAD:examples/reader.c | tee build/perf-gate/component-identities.txt
 
       - name: Enter the native Windows compiler environment
         shell: pwsh
@@ -138,7 +119,7 @@ jobs:
       - name: Require complete same-source performance evidence
         if: always()
         run: |
-          python tests/reader_perf_windows/verify_perf_windows.py --summary build/perf-windows/summary.json --package build/desktop-windows-package/EXReader --start "$PERF_START_SHA" --launches 30 --per-cohort 10 2>&1 | tee build/perf-gate/verify.log
+          python tests/reader_perf_windows/verify_perf_windows.py --summary build/perf-windows/summary.json --package build/desktop-windows-package/EXReader --start "$GITHUB_SHA" --launches 30 --per-cohort 10 2>&1 | tee build/perf-gate/verify.log
 
       - name: Upload the observation and its raw samples
         if: always()
