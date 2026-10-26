@@ -105,6 +105,7 @@ model alias.
 | A01 | `codex/dsf-apple-ui-close` | `8ebef083aa17272c5019c8f778c03ace78e9ea96` | Pin root lossless map decoder, then execute all three-target UI phases |
 | N01 | `codex/dsf-android-ui-close` | `59f8ca9607cf9e2a864f2a1f57bd1c40f2c76baf` | Diagnose original font/report failures and complete actual raw host suites |
 | G02 | `codex/dsf-gtk-raw-wave3` | `36d5deec` | Adopt the existing public raw0.2 family for GTK five-feature host; preserve legacy OFF |
+| W01 | `codex/dsf-windows-ui-close` | `683d5524575fd00b3e5e4d447e730fb3ba76fd75` | Validate the observed native filename edit fix and complete all 16 Windows feature checks |
 
 Root decoder source is `9979001fba4df9fceaed3ffc89d6d9e0bcc16337`.
 Only its exact `tools/check_apple_product.py` blob is an A01 shared-owner input;
@@ -122,6 +123,20 @@ not claim interoperability from the separate legacy GUI results. G02 owns
 product/backend/raw-profile files and a new focused workflow, while G01 owns
 the legacy chooser driver. G02 waits for the corrected chooser before spending
 its one full raw GUI round. No SDK/schema change or new feature is requested.
+
+## First production-profile Apple round
+
+Source `48b5001a1cada4db9749fb13d51a832c0df2cd93`, run `40350945698`,
+attempt 1: macOS completed native build, archive, fresh unpack and 21 actual
+startup checks successfully. Simulator was still running at this observation;
+no combined three-target success is granted here. Full feature GUI remains
+separately pending.
+
+The actual Mac linker logs also exposed SDK/product objects defaulting to
+macOS 15 while the canonical host targets 12. Root corrected both SDK and
+product CMake deployment targets to 12.0 for the next production source. The
+successful first program is retained under its original source; it does not
+prove this deployment correction or runtime compatibility on macOS 12.
 
 ## Final combined validation
 

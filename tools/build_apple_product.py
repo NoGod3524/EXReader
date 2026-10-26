@@ -43,7 +43,9 @@ def main():
               '-DREADER_PRODUCT_PREFIX=' + str(stage),
               '-DLIBXML2_INCLUDE_DIR=' + sysroot + '/usr/include/libxml2',
               '-DLIBXML2_LIBRARY=' + sysroot + '/usr/lib/libxml2.tbd']
-    if args.target != 'macos':
+    if args.target == 'macos':
+        common += ['-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0']
+    else:
         common += ['-DCMAKE_SYSTEM_NAME=iOS', '-DCMAKE_OSX_SYSROOT=' + args.target,
                    '-DCMAKE_OSX_ARCHITECTURES=arm64', '-DCMAKE_OSX_DEPLOYMENT_TARGET=15.0',
                    '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO']
