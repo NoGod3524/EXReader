@@ -3,6 +3,7 @@ package org.exreader.host;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
+import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
@@ -25,6 +26,7 @@ import java.security.MessageDigest;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -411,9 +413,24 @@ public final class Wave3UiTest extends Instrumentation {
         String fontLabel=input.getString("font_label");
         check("rotation_keeps_selected_font_and_releases_leases",()->{
             open("epub");String before=bitmap(frame());need(NativeFonts.live()>=1,"selected font leased while reading");
-            long token=frame().getLong("accepted_token");getUiAutomation().setRotation(android.view.Surface.ROTATION_90);SystemClock.sleep(1500);
-            try{waitLeases(1,"the recreated Activity reopens exactly one lease");waitFrame(book("epub"));}finally{getUiAutomation().setRotation(android.view.Surface.ROTATION_0);}
+            MainActivity previous=(MainActivity)readerMonitor.getLastActivity();need(previous!=null,"activity before rotation");
+            AtomicBoolean cleared=new AtomicBoolean();AtomicReference<Throwable> stateFailure=new AtomicReference<>();AtomicReference<File[]> expected=new AtomicReference<>();
+            Application.ActivityLifecycleCallbacks observer=new Application.ActivityLifecycleCallbacks(){
+                public void onActivityCreated(Activity a,Bundle b){} public void onActivityStarted(Activity a){} public void onActivityResumed(Activity a){} public void onActivityPaused(Activity a){} public void onActivityStopped(Activity a){} public void onActivitySaveInstanceState(Activity a,Bundle b){} public void onActivityDestroyed(Activity a){}
+                @Override public void onActivityPostSaveInstanceState(Activity a,Bundle b){
+                    if(a!=previous||!cleared.compareAndSet(false,true))return;
+                    try{java.lang.reflect.Field[] fields={OriginalExportPanel.class.getDeclaredField("pending"),AnnotationPanel.class.getDeclaredField("pendingJsonl"),AnnotationPanel.class.getDeclaredField("pendingMarkdown")};File[] files=new File[fields.length];for(int i=0;i<fields.length;i++){fields[i].setAccessible(true);files[i]=(File)fields[i].get(null);need(files[i]!=null&&files[i].isFile(),"export exists before activity recreation");fields[i].set(null,null);}expected.set(files);}catch(Throwable error){stateFailure.set(error);}
+                }
+            };
+            runOnMainSync(()->previous.getApplication().registerActivityLifecycleCallbacks(observer));
+            long token=frame().getLong("accepted_token");
+            try{getUiAutomation().setRotation(android.view.Surface.ROTATION_90);SystemClock.sleep(1500);waitLeases(1,"the recreated Activity reopens exactly one lease");waitFrame(book("epub"));}
+            finally{getUiAutomation().setRotation(android.view.Surface.ROTATION_0);runOnMainSync(()->previous.getApplication().unregisterActivityLifecycleCallbacks(observer));}
             SystemClock.sleep(1500);JSONObject after=waitFrame(book("epub"));need(after.optLong("accepted_token",-1)!=token||!bitmap(after).isEmpty(),"reader restored after rotation");
+            if(stateFailure.get()!=null)throw new AssertionError("clear process-local exports after actual save",stateFailure.get());
+            need(cleared.get()&&expected.get()!=null,"real activity save was observed");
+            java.lang.reflect.Field[] fields={OriginalExportPanel.class.getDeclaredField("pending"),AnnotationPanel.class.getDeclaredField("pendingJsonl"),AnnotationPanel.class.getDeclaredField("pendingMarkdown")};
+            for(int i=0;i<fields.length;i++){fields[i].setAccessible(true);File actual=(File)fields[i].get(null);need(actual!=null&&actual.getCanonicalFile().equals(expected.get()[i].getCanonicalFile()),"export restored after real activity recreation");}
             shelf();waitLeases(0,"leaving after rotation releases every lease");
             shelfMore("本地字体");described("字体状态","使用中",30000);need(present(node->id(node,"text1")&&text(node).contains("使用中")),"selection survived the Activity restart");
             until(node->node.isVisibleToUser()&&id(node,"text1")&&text(node).contains(fontLabel),this::tap,"font row",30000);click("删除此字体");click("删除");described("字体状态","已删除",30000);
