@@ -99,6 +99,12 @@ def run_receive_checks(context):
         key=book_keys['txt']
         organizations.append(revision(n,shard=225,kind='membership',key=kind+':'+ident+':'+key,
           payload={'book_key':key,'collection_kind':kind,'collection_id':ident,'ordinal':3}))
+    child_delete=revision(211,shard=225,kind='shelf',key=child,parents=[organizations[1]['id']],operation='delete')
+    child_restore=revision(212,shard=225,kind='shelf',key=child,parents=[child_delete['id']],operation='restore',payload=organizations[1]['payload'])
+    member=organizations[-2]
+    member_delete=revision(213,shard=225,kind='membership',key=member['entity_key'],parents=[member['id']],operation='delete')
+    member_restore=revision(214,shard=225,kind='membership',key=member['entity_key'],parents=[member_delete['id']],operation='restore',payload=member['payload'])
+    organizations.extend([child_delete,child_restore,member_delete,member_restore])
     for value in organizations:
         body=raw(value);exact[value['id']]=body
         prefix='/dav/exreader-sync-v1/revisions/'+value['id'][:2]+'/'
