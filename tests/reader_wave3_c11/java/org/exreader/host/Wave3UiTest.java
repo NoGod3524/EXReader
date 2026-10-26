@@ -161,6 +161,13 @@ public final class Wave3UiTest extends Instrumentation {
     }
     private void waitLeases(int expected,String label)throws Exception {long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){if(NativeFonts.live()==expected)return;SystemClock.sleep(50);}throw new AssertionError(label+": live font leases "+NativeFonts.live()+" expected "+expected);}
     private void closeDialog(){click("关闭");}
+    /** Drops a panel an earlier check left open so this check observes its own subject. */
+    private void settle(){for(int attempt=0;attempt<2;attempt++){if(!present(node->node.isVisibleToUser()&&node.isEnabled()&&text(node).equals("关闭")))return;click("关闭");SystemClock.sleep(300);}}
+    /** Real debug launch flags on the existing Activity, as the frozen review driver does. */
+    private void configure(String flags)throws Exception{getUiAutomation().executeShellCommand("am start --activity-single-top -n "+context.getPackageName()+"/.MainActivity --ez exr_review true "+flags);SystemClock.sleep(400);}
+    private String byId(String value){String[] out={null};act(node->id(node,value),node->out[0]=text(node));return out[0];}
+    private ReadingPreferences appearance()throws Exception{ReadingPreferences[] out={null};runOnMainSync(()->{Activity activity=readerMonitor.getLastActivity();if(activity instanceof MainActivity)out[0]=((MainActivity)activity).preferences();});need(out[0]!=null,"in-memory reading appearance available");return out[0];}
+    private byte[] storedAppearance()throws Exception{File file=new File(new File(context.getFilesDir(),"reading-settings"),"preferences.json");return Files.exists(file.toPath())?Files.readAllBytes(file.toPath()):new byte[0];}
     interface HostCall<T> {void begin(MainActivity host,Consumer<T> done,Consumer<Throwable> failed);}
     private <T> T hostCall(HostCall<T> action)throws Exception {
         AtomicReference<T> result=new AtomicReference<>();AtomicReference<Throwable> failure=new AtomicReference<>();CountDownLatch finished=new CountDownLatch(1);
@@ -264,6 +271,37 @@ public final class Wave3UiTest extends Instrumentation {
             shelfMore("本地字体");described("字体状态","个本地字体",30000);String before=described("字体状态");click("导入字体…");described("字体状态","字体未导入",60000);removeMonitor(picker);
             need(described("字体状态").contains("原有字体保留"),"previous fonts retained");need(!present(node->id(node,"text1")&&text(node).contains(badFontFile)),"rejected file is not listed");
             need(present(node->id(node,"text1")&&text(node).contains("使用中")),"selected font still active");capture("font-rejected");closeDialog();
+        });
+    }
+    /** The quick size control publishes page, progress and stored appearance together. */
+    private void quickSize()throws Exception {
+        check("quick_size_cancel_keeps_accepted_frame_and_stored_appearance",()->{
+            settle();open("epub");String accepted=bitmap(frame());String label=byId("font_label");
+            ReadingPreferences before=appearance();byte[] stored=storedAppearance();
+            configure("--es review_pause page-before-render");
+            clickId("font_up");
+            until(node->id(node,"loading_text")&&text(node).equals("Review page-before-render"),null,"size request gate",30000);
+            clickId("cancel_button");
+            until(node->id(node,"reader_status")&&text(node).contains("Operation canceled"),null,"size cancellation",30000);
+            configure("");
+            need(appearance().font==before.font,"cancelled request kept the in-memory size: "+appearance().font+" expected "+before.font);
+            need(java.util.Arrays.equals(stored,storedAppearance()),"cancelled request kept the stored appearance bytes");
+            need(bitmap(frame()).equals(accepted),"cancelled request kept the accepted page");
+            need(label!=null&&label.equals(byId("font_label")),"cancelled request kept the reported size: "+label+" -> "+byId("font_label"));
+            capture("size-cancelled");shelf();waitLeases(0,"leaving after a cancelled size request releases every lease");
+        });
+        check("quick_size_settings_failure_keeps_frame_and_stored_appearance",()->{
+            settle();open("epub");String accepted=bitmap(frame());String label=byId("font_label");
+            ReadingPreferences before=appearance();byte[] stored=storedAppearance();
+            configure("--ez review_fail_preferences true");
+            clickId("font_up");
+            until(node->id(node,"reader_status")&&text(node).contains("Reading settings were not saved"),null,"settings save failure",60000);
+            configure("");
+            need(appearance().font==before.font,"failed save kept the in-memory size: "+appearance().font+" expected "+before.font);
+            need(java.util.Arrays.equals(stored,storedAppearance()),"failed save kept the stored appearance bytes");
+            need(bitmap(frame()).equals(accepted),"failed save kept the accepted page");
+            need(label!=null&&label.equals(byId("font_label")),"failed save kept the reported size: "+label+" -> "+byId("font_label"));
+            capture("size-save-failed");shelf();waitLeases(0,"leaving after a failed size save releases every lease");
         });
     }
     private void originals()throws Exception {
@@ -381,7 +419,7 @@ public final class Wave3UiTest extends Instrumentation {
         try{
             AccessibilityServiceInfo service=getUiAutomation().getServiceInfo();readerMonitor=addMonitor(MainActivity.class.getName(),null,false);service.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS|AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;getUiAutomation().setServiceInfo(service);
             need(BuildConfig.READER_WAVE3,"wave3 feature-on formal app");input=new JSONObject(new String(Files.readAllBytes(new File(context.getFilesDir(),"wave3-input.json").toPath()),StandardCharsets.UTF_8));
-            if(phase.equals("first")){seed();cancellationBoundaries();launch();jumps();staleJump();fonts();originals();annotations();syncView();rotation();toc();}
+            if(phase.equals("first")){seed();cancellationBoundaries();launch();jumps();staleJump();fonts();quickSize();originals();annotations();syncView();rotation();toc();}
             else if(phase.equals("cancel")){seed();launch();annotationCancellation();}
             else if(phase.equals("restore")){seed();launch();restore();}
             else throw new AssertionError("Unknown wave3 UI phase");

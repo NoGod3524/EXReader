@@ -24,6 +24,8 @@ WAVE3_REQUIRED = (
     'wave3_surfaces_present_and_no_leases',
     'local_font_saf_import_select_lease_and_release',
     'invalid_font_rejected_and_library_unchanged',
+    'quick_size_cancel_keeps_accepted_frame_and_stored_appearance',
+    'quick_size_settings_failure_keeps_frame_and_stored_appearance',
     'original_export_private_original_receipt_and_saf_save',
     'annotation_export_private_files_and_saf_save',
     'annotation_import_wrong_book_rejected_without_write',
