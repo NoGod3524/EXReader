@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Drive full Windows import through the real native chooser, preserving timing samples."""
 import importlib.util
+import sqlite3
+from contextlib import closing
 import sys
 import threading
 import time
@@ -126,5 +128,26 @@ def environment(*args):
 
 
 original_environment = perf.environment
+
+original_verify_corpus = perf.verify_corpus
+
+
+def verify_corpus(template):
+    result = original_verify_corpus(template)
+    database = template / 'library.sqlite.product.sqlite'
+    with closing(sqlite3.connect(database.resolve().as_uri() + '?mode=ro', uri=True)) as connection:
+        total, distinct_ids, joined = connection.execute(
+            'SELECT count(*), count(DISTINCT l.sdk_book_id), '
+            'sum(CASE WHEN b.book_key IS NOT NULL AND b.deleted=0 THEN 1 ELSE 0 END) '
+            'FROM reader_local_books l LEFT JOIN reader_books b ON b.book_key=l.book_key').fetchone()
+    if (total, distinct_ids, joined) != (2202, 2202, 2202):
+        raise perf.MeasurementFault('prepared product mapping is incomplete: %r' % ((total, distinct_ids, joined),))
+    result['local_mapping_rows'] = total
+    result['distinct_sdk_ids'] = distinct_ids
+    result['visible_mapped_books'] = joined
+    return result
+
+
 perf.environment = environment
 perf.op_import = op_import
+perf.verify_corpus = verify_corpus
