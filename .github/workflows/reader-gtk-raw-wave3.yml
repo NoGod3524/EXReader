@@ -82,7 +82,7 @@ jobs:
             build/gtk-raw-wave3/raw-host/gtk-host/exreader-linux
             build/gtk-raw-wave3/raw-host/reader-gtk-wave3-raw-backend
             build/gtk-raw-wave3/raw-host/CMakeCache.txt
-            build/gtk-raw-wave3/legacy-host/gtk-host/exreader-linux
+            build/gtk-raw-wave3/legacy-host/reader-gtk-wave3-backend
             build/gtk-raw-wave3/legacy-host/CMakeCache.txt
             build/gtk-raw-wave3/compact-host/gtk-host/exreader-linux
             build/gtk-raw-wave3/compact-package/
@@ -118,7 +118,7 @@ jobs:
           result = json.loads((root / "result.json").read_text())
           programs = {}
           for name in ("raw-host/gtk-host/exreader-linux", "raw-host/reader-gtk-wave3-raw-backend",
-                       "legacy-host/gtk-host/exreader-linux"):
+                       "legacy-host/reader-gtk-wave3-backend"):
               path = root / name
               assert path.is_file(), name
               programs[name] = hashlib.sha256(path.read_bytes()).hexdigest()

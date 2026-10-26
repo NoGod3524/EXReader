@@ -294,14 +294,16 @@ def main():
     except Exception as error:
         # Keep the remaining scopes honest inside the same attempt: a failed probe
         # is recorded as failed and the legacy OFF check still runs.
+        print(str(error)[-3000:], flush=True)
         result["raw_backend"] = {"accepted": False, "check_count": 0,
                                  "error": str(error)[-3000:]}
     if not options.skip_legacy:
         install_family("legacy", LEGACY, False)
         result["legacy_install"] = installed("legacy", LEGACY)
         legacy = build_legacy_host()
-        result["legacy_host"] = {"binary": str(legacy / "gtk-host/exreader-linux"),
-                                 "binary_sha256": sha(legacy / "gtk-host/exreader-linux"),
+        result["legacy_host"] = {"binary": str(legacy / "reader-gtk-wave3-backend"),
+                                 "binary_sha256": sha(legacy / "reader-gtk-wave3-backend"),
+                                 "reading_library_sha256": sha(legacy / "gtk-host/libexreader-linux-reading.a"),
                                  "configured_and_linked": True,
                                  "suite_rerun": False,
                                  "note": "RAW3 OFF keeps the original 0.1 modules; only configure and link ran"}
