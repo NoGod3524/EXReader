@@ -1,0 +1,23 @@
+name: Authenticate Android GTK real WebDAV run
+on:
+  push:
+    branches: [codex/reader-webdav-two-device]
+    paths: ['.github/workflows/reader-android-gtk-authenticate.yml', 'tests/reader_android_real_dav/verify_run.py']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and independently check original run archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_android_real_dav/verify_run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-gtk-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-gtk-verified/
+          if-no-files-found: warn
