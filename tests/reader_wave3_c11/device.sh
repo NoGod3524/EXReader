@@ -50,4 +50,11 @@ python3 tests/reader_wave3_c11/run_ui.py --fixtures "$FIXTURES" \
 adb install -r -t "$ARTIFACTS/navigation-debug-androidTest.apk"
 python3 tests/reader_android_navigation/run_ui.py --fixtures "$BASE/navigation-fixtures" \
   --output "$EVIDENCE/navigation" || status=1
+adb install -r -t "$ARTIFACTS/reading-debug-androidTest.apk"
+# Bind the unchanged reading runner to the actual installed host, not just its package name.
+reading_apk="$(adb shell pm path org.exreader.host | tr -d '\r' | sed -n 's/^package://p')"
+[ -n "$reading_apk" ] || { echo "Installed reading host APK is missing"; exit 1; }
+adb pull "$reading_apk" "$EVIDENCE/reading-installed.apk"
+python3 tests/reader_android_reading/run_ui.py --fixtures "$BASE/reading-fixtures" \
+  --output "$EVIDENCE/reading" || status=1
 exit "$status"

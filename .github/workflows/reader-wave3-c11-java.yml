@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: MIT
+name: Reader wave3 C11 real Android Java compile gate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  java:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Verify source boundaries and generate the exact UI candidates
+        run: |
+          python3 tests/reader_wave3_c11/guard.py
+          python3 tests/reader_wave3_c11/candidate.py
+      - name: Prepare the real Android resources
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-35" "build-tools;35.0.0"
+          python3 tests/webdav_android/fixture.py prepare --output build/wave3/network-fixture
+          mkdir -p tests/reader_host_session_android/debug/res/raw
+          cp build/wave3/network-fixture/public/ca.crt tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
+      - name: Compile the real host and test Java before any native SDK build
+        run: |
+          set -o pipefail
+          mkdir -p build/wave3/logs
+          gradle -p examples/android --no-daemon --stacktrace \
+            -I "$PWD/tests/reader_wave3_c11/candidate.init.gradle" \
+            -I "$PWD/tests/reader_wave3_c11/java-gate.init.gradle" \
+            -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true \
+            -PexrPreferences=true -PexrSelectorBytes=true -PexrWave3=true \
+            -PexrTestRunner=org.exreader.host.Wave3UiTest \
+            :app:compileDebugAndroidTestJavaWithJavac :uitest:compileDebugAndroidTestJavaWithJavac \
+            2>&1 | tee build/wave3/logs/java-gate.log
+      - name: Record actual compiled classes and source identity
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          base = Path('examples/android')
+          paths = [base/'app/build/intermediates/javac/debugAndroidTest/compileDebugAndroidTestJavaWithJavac/classes/org/exreader/host'/name
+                   for name in ('Wave3UiTest.class', 'ReadingUiTest.class', 'NavigationUiTest.class')]
+          paths += [base/'uitest/build/intermediates/javac/debugAndroidTest/compileDebugAndroidTestJavaWithJavac/classes/org/exreader/host/uitest'/name
+                    for name in ('HostWalkthroughTest.class', 'HostReviewTest.class', 'ShelfWalkthroughTest.class', 'OrganizationWalkthroughTest.class')]
+          rows = []
+          for path in paths:
+              data = path.read_bytes()
+              assert data.startswith(bytes.fromhex('cafebabe')), path
+              rows.append({'path': str(path), 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)})
+          result = {'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
+                    'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'accepted': True, 'native_build': False,
+                    'real_android_test_classpath': True, 'compiled_classes': rows}
+          Path('build/wave3/java-gate.json').write_text(json.dumps(result, indent=2)+'\n')
+          print(json.dumps(result))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-wave3-c11-java-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/wave3/guard.json
+            build/wave3/candidate/
+            build/wave3/logs/
+            build/wave3/java-gate.json
+          if-no-files-found: error
