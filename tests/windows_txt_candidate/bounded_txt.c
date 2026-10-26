@@ -12,8 +12,9 @@ exr_status bounded_txt_next(const exr_source *source, uint64_t *cursor,
   unsigned char *data; size_t available, used=0, end=0, lines=0, i; exr_status s;
   if (!out) return fail(e,EXR_ARGUMENT,"Missing output");
   *out=NULL;
-  if (!source || !source->read_at || !cursor || *cursor>source->size || source->size>128u*1024u*1024u)
+  if (!source || !source->read_at || !cursor || *cursor>source->size)
     return fail(e,EXR_ARGUMENT,"Invalid source or cursor");
+  if (source->size>128u*1024u*1024u) return fail(e,EXR_LIMIT,"Source exceeds frozen input limit");
   if (source->control.cancelled && source->control.cancelled(source->control.context))
     return fail(e,EXR_CANCELLED,"Cancelled before read");
   if (*cursor==source->size) return EXR_OK;
