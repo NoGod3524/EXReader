@@ -899,3 +899,19 @@ fault receipt and its one-byte hit marker. Audit artifact `12694406592`
 is 2,737 bytes, SHA-256
 `0ce371bc6adaa31db76e847952829cc56824be00d1a3d0e1b8443a0164b166a0`,
 expiring 2027-01-24T22:43:39Z. The frozen 3.40 run remains a distinct source.
+
+## Windows/Android combined candidate
+
+Candidate `9a8ae10c726f4cc1745cae734c2f1baabd9b3e96` retains the Windows
+group browser and stages the Android organization host and shared module
+changes. Its source admission passed
+[40414183947/1](https://github.com/NoGod3524/EXReader/actions/runs/40414183947).
+The Windows retained host, HTTPS organization and bounded group browser checks
+and their same-run verifier passed
+[40414184017/1](https://github.com/NoGod3524/EXReader/actions/runs/40414184017).
+Artifact `12696060434` is 59,291,053 bytes, SHA-256
+`75672b44eb731f890230ca955b16eab4be0cd7295d4f1155a4728ab6fefb40b3`;
+summary `12696060479` is 4,629 bytes, SHA-256
+`5d8bf2981c4cb3006593816aebb3bb2eb26f426b9f186aecb08b8743fe03da14`.
+Both expire 2027-01-24T22:40:05Z. The candidate is not admitted to the shared
+branch while its Android and remaining combined-source evidence are pending.
