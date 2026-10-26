@@ -62,7 +62,9 @@ for index in range(8):
                         pass
                 now = round(perf.now_ms() - host.t0, 3)
                 if count and 'first_nonempty_list' not in marks: marks['first_nonempty_list'] = now
-                if snapshot and 'first_product_snapshot' not in marks: marks['first_product_snapshot'] = now
+                # The same property is also updated by the initial SDK list;
+                # it is not evidence that catalog repair or product paging ended.
+                if snapshot and 'first_shelf_snapshot' not in marks: marks['first_shelf_snapshot'] = now
                 if enabled and 'first_metadata_enabled' not in marks: marks['first_metadata_enabled'] = now
                 state = (count, bool(snapshot), enabled)
                 if state != previous:
@@ -105,7 +107,7 @@ summary = {'observer_source': os.environ['GITHUB_SHA'], 'observer_run': os.envir
                            'image_os': os.environ.get('ImageOS'), 'image_version': os.environ.get('ImageVersion')},
            'method': '8 fresh copies of same 2202-book SDK seed; alternating read-only catalog polls at 100 ms',
            'limitations': ['First window bounds combined process startup, SDK open and font open; no separate SDK duration.',
-                           'Product snapshot and metadata enabled are externally observed UI markers, not direct repair start/end probes.',
+                           'The shelf snapshot includes the initial SDK list; the first enabled metadata control may be transient during creation. Neither marks repair completion.',
                            'Read-only SQLite catalog polls can contend with the writer; compare alternating non-polled launches.',
                            'Cold describes a new profile only; operating-system cache and cloud co-tenant load are uncontrolled.',
                            'No frame time or budget acceptance is measured.'],
