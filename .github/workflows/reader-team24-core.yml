@@ -40,6 +40,7 @@ jobs:
         run: |
           python -m py_compile tests/reader_wave3_s18/guard.py tests/reader_wave3_s18/runtime.py tests/reader_wave3_s18/strict.py tests/reader_wave3_s18/bindings.py tests/reader_wave3_s19/run.py tests/reader_wave3_s19/verify.py tests/reader_wave3_s19/protocol.py
           python tests/reader_wave3_s18/guard.py preflight
+          python tests/reader_wave3_s19/test_map.py
       - uses: actions/upload-artifact@v4
         with:
           name: reader-wave3-s18-source-${{ github.run_id }}-${{ github.run_attempt }}

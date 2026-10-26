@@ -149,3 +149,6 @@ same run that produced the Linux and Windows link errors.
 
 Root follow-up: run 40362513151 retained the earlier script failures, passed the fixture-journal call, then refused the independently installed WebDAV extra because the SDK-object classifier treated every exr_ symbol as SDK code. WebDAV is a separately installed static package. The corrected classifier admits only functions named by its installed public header, rejects unknown WebDAV names, verifies those names do not occur in the actual loaded SDK image, and still forbids an extra copy in the host executable. No SDK/store/provider identity or mixed-graph assertion was removed. No acceptance is granted until the next actual run completes.
 
+
+Run 40363557618: Linux and macOS native providers passed; Windows completed all five real business paths but the map classifier treated repeated local static-inline exr_pixel/exr_doc_byte symbols as public provider duplicates. The parser now requires the MSVC Publics by Value section and ends before Static symbols. A preflight regression rejects duplicate public providers and missing public sections while retaining local helper definitions. Full three-platform acceptance remains pending; no mixed-source assembly is granted.
+

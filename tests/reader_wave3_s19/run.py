@@ -190,7 +190,13 @@ def needed_libraries(binary):
 def windows_static_ownership(link_map):
     """Read real MSVC public definitions and their archive/object owners."""
     definitions = {}
-    for line in link_map.read_text(encoding='utf-8', errors='replace').splitlines():
+    text = link_map.read_text(encoding='utf-8', errors='replace')
+    _, header, public = text.partition('Publics by Value')
+    assert header, 'MSVC public definition section missing'
+    # Static inline helpers legitimately occur in several translation units.
+    # They are listed separately and are not exported implementation owners.
+    public = public.split('Static symbols', 1)[0]
+    for line in public.splitlines():
         match = re.match(r'^\s+[0-9A-Fa-f]{4}:[0-9A-Fa-f]+\s+(\S+)\s+[0-9A-Fa-f]{8,16}\s+(?:f\s+)?(?:i\s+)?(\S+)\s*$', line)
         if match:
             name, owner = match.groups()
