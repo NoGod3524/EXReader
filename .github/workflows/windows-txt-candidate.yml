@@ -31,7 +31,7 @@ jobs:
           ws=$(cygpath -m "$PWD")
           cmake -S tests/windows_txt_candidate -B build/txt-candidate -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage"
           cmake --build build/txt-candidate --parallel 4
-          build/txt-candidate/bounded_txt_checks.exe | tee build/txt-candidate-evidence/checks.txt
+          build/txt-candidate/bounded_txt_checks.exe C:/Windows/Fonts/arial.ttf | tee build/txt-candidate-evidence/checks.txt
           python tests/windows_txt_candidate/run.py
           sha256sum build/txt-candidate/bounded_txt_host.exe | tee build/txt-candidate-evidence/program.sha256
       - uses: actions/upload-artifact@v4

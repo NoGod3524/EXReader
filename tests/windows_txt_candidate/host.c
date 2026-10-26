@@ -48,5 +48,5 @@ int main(int argc,char **argv) {
   printf("{\"source_bytes\":%llu,\"windows\":%zu,\"blocks\":%zu,\"max_window_nodes\":%zu,\"max_document_bytes\":%zu,\"peak_working_set_bytes\":%llu,\"elapsed_ms\":%.3f,\"cancel_resume\":true,\"first_page\":true,\"window_anchor_reload\":true}\n",
     (unsigned long long)source.size,windows,blocks,max_nodes,max_doc,(unsigned long long)memory.PeakWorkingSetSize,
     (double)(finish.QuadPart-begin.QuadPart)*1000.0/(double)frequency.QuadPart);
-  return blocks==212895 && source.size==16792975 && max_nodes<=262144 ? 0 : 1;
+  return blocks==212895 && source.size==16792975 && max_nodes<=262144 && max_doc<=32u*1024u*1024u ? 0 : 1;
 }
