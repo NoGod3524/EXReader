@@ -137,6 +137,12 @@ try:
     d,message,detail=sync(b);record('book-tombstone-soft-deletes','接收尚未完成' in message and sql(b,'SELECT deleted FROM reader_books WHERE book_key=?',(bookkey,))==[(1,)] and sql(b,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(bookkey,))==[(1,)])
     b.close_account(d);b.wait(lambda:not b.has_row('Book'),timeout=60)
     record('deleted-book-removed-from-shelf',True)
+    deleted_readback=out/'deleted-readback';deleted_readback.mkdir();deleted_spec=out/'deleted-readback.spec'
+    deleted_spec.write_text('cmd=readback\nlibrary=%s\nout=%s\n'%(b.db,deleted_readback),encoding='utf-8')
+    deleted_probe=subprocess.run([str(ROOT/'build/cloud-readback/cloud-probe.exe'),str(deleted_spec)],capture_output=True,text=True,encoding='utf-8',timeout=120)
+    assert deleted_probe.returncode==0,deleted_probe.stderr
+    deleted_audit=json.loads(deleted_probe.stdout);report['deleted_readback']=deleted_audit;report['deleted_original_sha256']=sha(book)
+    record('deleted-book-original-retained',deleted_audit['ok']==1 and len(deleted_audit['books'])==1 and deleted_audit['books'][0]['read_ok']==1 and sha(deleted_readback/('book-%d.bin'%deleted_audit['books'][0]['id']))==sha(book))
     restored=revision(87,shard=0x61,kind='book',key=bookkey,payload=original['payload'],parents=[deleted['id']],operation='restore');add_remote(restored)
     d,message,detail=sync(b);record('book-explicit-restore','同步完成' in message and sql(b,'SELECT deleted FROM reader_books WHERE book_key=?',(bookkey,))==[(0,)] and sql(b,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(bookkey,))==[(1,)])
     b.close_account(d);b.wait(lambda:b.has_row('Book'),timeout=60);record('restored-book-visible',True)
