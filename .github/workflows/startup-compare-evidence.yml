@@ -1,0 +1,57 @@
+name: Compare startup mapping evidence
+on:
+  push:
+    branches: [codex/reader-startup-mapping]
+    paths: ['.github/workflows/startup-compare-evidence.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Download exact run artifacts and check digests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/comparison
+          for run in 40406056620 40407618025; do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/artifacts" > "build/comparison/$run-artifacts.json"
+            id=$(python -c 'import json,sys; a=json.load(open(sys.argv[1])); print(next(x["id"] for x in a["artifacts"] if x["name"].startswith("reader-composition-perf-windows-") and "identity" not in x["name"]))' "build/comparison/$run-artifacts.json")
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > "build/comparison/$run.zip"
+          done
+      - name: Read raw summary, verify package and mapping evidence
+        run: |
+          python - <<'PY' | tee build/comparison/results.json
+          import hashlib, json, sqlite3, tempfile, zipfile
+          from pathlib import Path
+          root = Path('build/comparison')
+          result = []
+          for run in (40406056620, 40407618025):
+              artifacts = json.loads((root / f'{run}-artifacts.json').read_text())['artifacts']
+              artifact = next(a for a in artifacts if a['name'].startswith('reader-composition-perf-windows-') and 'identity' not in a['name'])
+              archive = root / f'{run}.zip'
+              assert 'sha256:' + hashlib.sha256(archive.read_bytes()).hexdigest() == artifact['digest']
+              with zipfile.ZipFile(archive) as z:
+                  summaries = [n for n in z.namelist() if n.endswith('perf-windows/summary.json')]
+                  assert len(summaries) == 1, summaries
+                  summary = json.loads(z.read(summaries[0]))
+                  databases = [n for n in z.namelist() if n.endswith('template/library.sqlite.product.sqlite')]
+                  mapping = None
+                  if len(databases) == 1:
+                      with tempfile.TemporaryDirectory() as tmp:
+                          dbpath = Path(tmp) / 'catalog.sqlite'
+                          dbpath.write_bytes(z.read(databases[0]))
+                          with sqlite3.connect(dbpath) as db:
+                              mapping = db.execute('SELECT count(*),count(DISTINCT l.sdk_book_id),sum(CASE WHEN b.book_key IS NOT NULL AND b.deleted=0 THEN 1 ELSE 0 END) FROM reader_local_books l LEFT JOIN reader_books b ON b.book_key=l.book_key').fetchone()
+                  result.append(dict(run=run, artifact_id=artifact['id'], artifact_digest=artifact['digest'], source=summary['source_sha'], exe_sha256=summary['environment']['artifacts']['exe_sha256'], complete=summary['complete'], prep_corpus=summary['preparation']['corpus'], mappings=mapping, cold=summary['aggregates']['cold_shelf']['first_screen_interactive_ms'], warm=summary['aggregates']['warm_shelf']['first_screen_interactive_ms'], problems=summary['problems']))
+          print(json.dumps(result, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: startup-comparison-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/comparison/*.json
