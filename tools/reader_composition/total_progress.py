@@ -70,7 +70,8 @@ def verify_evidence(pair):
                     rows = value.get('checks', []) if isinstance(value, dict) else []
                     if not isinstance(rows, list):
                         continue
-                    checks = {row.get('name'): row.get('pass') for row in rows if isinstance(row, dict)}
+                    checks = {row.get('name'): row.get(spec.get('case_result_field', 'pass'))
+                              for row in rows if isinstance(row, dict)}
                     if all(checks.get(name) is True for name in spec['required_cases']):
                         matching.append(member)
             assert matching, 'required actual passing cases absent in authenticated original ZIP'

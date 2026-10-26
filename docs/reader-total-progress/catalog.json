@@ -164,6 +164,7 @@
       ]
     },
     "windows_history": {
+      "case_result_field": "passed",
       "source_doc_commit": "d9c4c20f751f5f277e5ab89c2b111b794b80e551",
       "run": 40350379758,
       "doc": "docs/reader-wave3-c09/team24.md",
