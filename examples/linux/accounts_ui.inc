@@ -10,6 +10,7 @@ static struct {
   gboolean owner_busy,preparing,want_start,close_wanted,exit_wanted,applying;
   int credential_status,bound,stage_status;
   int phase,projection_status,import_pending;
+  int organization_paused;
   gboolean want_open,open_after_load,close_for_import,import_retry;
   int64_t open_book,imported_book,restored_book;
   int imported_created,restore_failed;
@@ -206,7 +207,7 @@ static void accounts_retry(GtkWidget *button,gpointer unused) {
   }
   if(accounts.projection_status && (!accounts.session || accounts.view.state==READER_SESSION_FINISHED)) {
     g_atomic_int_set(&accounts.control.cancelled,0);accounts.preparing=TRUE;accounts.phase=ACCOUNT_PROJECT;accounts.projection_status=0;
-    accounts_stage_next(READER_RECEIVE_BEGIN);accounts_update_controls();return;
+    accounts_stage_next(accounts.organization_paused ? READER_RECEIVE_NEXT:READER_RECEIVE_BEGIN);accounts_update_controls();return;
   }
   if(!accounts.session) return;
   reader_session_status code=reader_session_start(accounts.session);
@@ -271,12 +272,21 @@ static void accounts_received_apply(reader_result *result) {
       accounts_stage_next(result->receive_response==5 ? READER_RECEIVE_NEXT:READER_RECEIVE_CONFLICTS_NEXT);
     } else {
       accounts.preparing=FALSE;accounts.phase=ACCOUNT_IDLE;
-      if(result->receive_response==5) accounts.projection_status=(int)result->status;
+      if(result->receive_response==5) {
+        accounts.organization_paused=result->receive_org_paused;
+        accounts.projection_status=(int)result->status;
+        if(result->status==EXR_OK && (result->receive_org_paused || result->receive_org_conflicted || result->receive_org_waiting || result->receive_waiting))
+          accounts.projection_status=EXR_ARGUMENT;
+        shelf_filter_pending=TRUE;
+      }
       if(result->status==EXR_OK) {
-        accounts_present_conflicts(result);if(result->receive_response==5) shelf_filter_pending=TRUE;
-        accounts_notice(accounts.conflicted ? "Sync finished. Some books have version conflicts; open the others to add them to this device":
+        if(!result->receive_org_paused) accounts_present_conflicts(result);
+        accounts_notice(result->receive_org_paused ? "Library update paused with more organization to process. Select Retry to continue":
+          result->receive_org_conflicted ? "Some shelf organization has conflicting or incomplete versions. Sync or resolve them, then retry":
+          result->receive_org_waiting || result->receive_waiting ? "Some shelf organization is waiting for related items. Sync or retry to continue":
+          accounts.conflicted ? "Sync finished. Some books have version conflicts; open the others to add them to this device":
           "Sync finished. Open a book to add it to this device's reading library");
-        if(accounts.want_open && accounts.dialog && !accounts.close_wanted && !accounts.exit_wanted) {
+        if(!result->receive_org_paused && accounts.want_open && accounts.dialog && !accounts.close_wanted && !accounts.exit_wanted) {
           accounts.close_for_import=accounts.preparing=TRUE;accounts.phase=ACCOUNT_IMPORT;
           if(accounts.session) reader_session_request_close(accounts.session);
           else { accounts.close_for_import=FALSE;accounts_stage_next(READER_RECEIVE_OPEN); }
