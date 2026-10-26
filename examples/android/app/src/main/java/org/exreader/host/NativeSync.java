@@ -9,6 +9,8 @@ final class NativeSync {
     static native long create(String product,String cache,String originals,String account,String root,byte[] authorization);
     static native long[] command(long session,int action);
     static native String[][] books(String product,String after);
+    /** Read-only status view of the owned session; present only in the wave3 native library. */
+    static native String[][] view(long session,String product);
     static native String[] project(String product,String key,String revision,String sortTitle);
     static final int IDLE=0,RUNNING=1,CANCELLING=2,CANCELLED=3,FINISHED=4,FAILED=5,CLOSING=6,CLOSED=7;
     static final class Snapshot {
