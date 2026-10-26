@@ -180,7 +180,9 @@ static exr_status received_project(linux_reader *reader,received_owner *owner,co
   if(!owner->scanning) return EXR_ARGUMENT;
   if(accounts_cancelled(&control)) { owner->scanning=0;return EXR_CANCELLED; }
   if(owner->org_stage) {
-    status=received_project_organization(owner);
+    status=accounts_pending(reader,result);
+    if(status==EXR_OK) status=received_project_organization(owner);
+    else owner->scanning=0;
     goto report;
   }
   if(owner->index==owner->count) {
