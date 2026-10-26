@@ -123,6 +123,8 @@ def preflight():
     negative = []
     for name, path, mode in (
             ('sdk', 'include/exr/base.h', '100644'),
+            ('adopted_rtf', 'src/rtf.c', '100644'),
+            ('adopted_cbz', 'src/cbz.c', '100644'),
             ('package', 'apps/reader/jump-history/include/reader_jump_history.h', '100644'),
             ('raw', 'apps/reader/revisions/include/reader_revisions.h', '100644'),
             ('host', 'examples/reader.c', '100644'),
@@ -180,10 +182,17 @@ def _source_strict():
     assert result['runtime_accepted'] is False and result['legacy_guards_executed'] is False
     assert result['complete_product'] is False and result['errors'] == []
     assert {row['name'] for row in result['negative_controls']} == {
-        'sdk', 'package', 'raw', 'host', 'default_cmake', 'old_judge', 'unknown', 'symlink'}
-    assert len(result['negative_controls']) == 8 and all(row['rejected'] is True for row in result['negative_controls'])
+        'sdk', 'adopted_rtf', 'adopted_cbz', 'package', 'raw', 'host', 'default_cmake', 'old_judge', 'unknown', 'symlink'}
+    assert len(result['negative_controls']) == 10 and all(row['rejected'] is True for row in result['negative_controls'])
     assert result['positive_control'] == {'name': 'owned_addition', 'accepted': True}
     assert set(result['module_trees']) == set(PACKAGES) and set(result['original_judge_trees']) == set(OLD_JUDGES)
+    assert result['production_candidates'] == {'sdk': SDK_SOURCE, 'frozen_sdk': FROZEN_SDK, 'legacy_start': LEGACY_START}
+    for mapping, paths in (('module_trees', ['apps/reader/' + package for package in PACKAGES]),
+                           ('sdk_trees', SDK_PATHS), ('original_judge_trees', OLD_JUDGES)):
+        for path in paths:
+            key = path.removeprefix('apps/reader/') if mapping == 'module_trees' else path
+            assert result[mapping][key] == git('rev-parse', source + ':' + path).decode().strip(), path
+    assert not inspect(source)
     write('strict.json', dict(result, artifact={key: item[key] for key in
                                               ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')}))
     print(json.dumps({'composition_accepted': True, 'runtime_accepted': False, 'source_sha': source}), flush=True)
