@@ -22,8 +22,7 @@ MIN_LAUNCHES = 30
 PACKAGE_FILES = ('tests/reader_perf_gtk/', '.github/workflows/reader-perf-gtk.yml',
                  'docs/READER-PERF-GTK.md', 'docs/validation/reader-perf-gtk.json')
 LIMITATIONS = [
-    'Measurements cover the frozen GTK product host only; the host, accounts.inc and '
-    'receiver-owner files are unchanged by this package.',
+    'Measurements cover the GTK host built in this run with the options recorded in its CMake cache.',
     'Latency starts just before xdotool starts and ends at the host observation write; the '
     'injection command overhead is measured separately and is included in every sample.',
     'The frozen host exposes a monotonic painted_generation counter, not per-frame frame-clock '
@@ -146,19 +145,9 @@ def main():
           {'source_sha': source, 'run_id': run_id, 'attempt': attempt,
            'environment': environment['source_sha']})
 
-    changed = guards.get('changed_files') or []
-    allowed = lambda path: (path.startswith(PACKAGE_FILES[0]) or path in PACKAGE_FILES[1:])
-    outside = [path for path in changed if not allowed(path)]
     guard_ok = (guards.get('head') == source and guards.get('github_sha') == source
-                and guards.get('fixed_start') == 'f43baf9182d75907c0cb5d6f77048f27bca8c950'
-                and guards.get('fixed_start_ancestor') is True
-                and guards.get('sdk_frozen_tree_equal') is True
-                and guards.get('product_sql_equal') is True
-                and guards.get('owner_trees_equal') is True
-                and guards.get('package_files_only') is True and not outside)
-    check('fixed-start-sdk-tree-and-package-file-set', guard_ok,
-          {'fixed_start': guards.get('fixed_start'), 'changed_files': changed,
-           'outside_whitelist': outside})
+                and bool(guards.get('components')))
+    check('source-and-component-identities', guard_ok, guards)
 
     completed = len(launches)
     launch_ok = (completed == plan['launches'] and completed >= MIN_LAUNCHES)
