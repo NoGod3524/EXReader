@@ -5,7 +5,8 @@
    capture/resolve path. Nothing is simulated, no private symbol is externed and
    no schema, header or existing entry point is added. */
 #include REAL_READING_SOURCE
-#include <reader_annotation_export.h>
+/* The explicit raw0.2 exporter declares its own entry in the candidate header. */
+#include <reader_annotation_export_raw3.h>
 
 static unsigned checks;
 #define REQUIRE(test) do { checks++;if(!(test)) { fprintf(stderr,"check %u failed at %d: %s\n",checks,__LINE__,#test);exit(1); } } while(0)
