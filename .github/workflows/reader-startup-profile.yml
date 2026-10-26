@@ -57,6 +57,36 @@ jobs:
           set -o pipefail
           mkdir -p build/startup-profile/diagnostic-check
           build/startup-profile/reader-diagnostic-catalog-check.exe "$PWD/build/startup-profile/diagnostic-check" "$PWD/tests/fixtures" 2>&1 | tee build/startup-profile-evidence/diagnostic-check.log
+      - name: Kill after committed WAL mapping and verify recovery
+        shell: bash
+        run: |
+          python - <<'PY' 2>&1 | tee build/startup-profile-evidence/wal-crash.log
+          import pathlib, queue, subprocess, threading
+          folder = pathlib.Path('build/startup-profile/wal-kill').resolve()
+          folder.mkdir()
+          binary = pathlib.Path('build/startup-profile/reader-wal-crash-check.exe').resolve()
+          process = subprocess.Popen([str(binary), str(folder), 'seed'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+          lines = []
+          ready = queue.Queue()
+          def read():
+              for line in process.stdout:
+                  lines.append(line)
+                  if line.strip() == 'READY_TO_KILL_COMMITTED_WAL': ready.put(True)
+              ready.put(False)
+          thread = threading.Thread(target=read, daemon=True)
+          thread.start()
+          try:
+              assert ready.get(timeout=90), ''.join(lines)
+              assert process.poll() is None
+          finally:
+              if process.poll() is None: process.kill()
+              process.wait(timeout=20)
+              thread.join(timeout=10)
+          assert process.returncode != 0
+          recovered = subprocess.run([str(binary), str(folder), 'recover'], capture_output=True, text=True, timeout=90)
+          print(''.join(lines), recovered.stdout, recovered.stderr)
+          assert recovered.returncode == 0 and 'RECOVERED_COMMITTED_WAL' in recovered.stdout
+          PY
       - name: Preserve original profiling results and failures
         if: always()
         uses: actions/upload-artifact@v4

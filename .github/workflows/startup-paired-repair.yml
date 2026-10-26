@@ -2,7 +2,7 @@ name: Paired startup repair comparison
 on:
   push:
     branches: [codex/reader-startup-root-cause]
-    paths: ['.github/workflows/startup-paired-repair.yml', 'apps/reader/store/native/**', 'apps/reader/desktop/catalog_sdk.c']
+    paths: ['.github/workflows/startup-paired-repair.yml', 'tests/reader_startup_profile/**', 'apps/reader/store/native/**', 'apps/reader/desktop/catalog_sdk.c']
 permissions:
   contents: read
 jobs:
