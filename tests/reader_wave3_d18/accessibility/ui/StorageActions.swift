@@ -39,8 +39,11 @@ final class StorageActions: XCTestCase {
   XCTAssertTrue(wait{!self.node("reader.busy").exists && !self.node("library.busy").exists});snapshot(id+".after")
   let row:[String:Any]=["action":id,"native_id":native,"exposed":true,"enabled":enabled,"executed":true,"result":"passed","input":id == "no_unexpected_revision" ? "independent-public-readback" : "native-touch","keyboard_focus":"unverified","value":value,"before":id+".before","after":id+".after"]
   rows.append(row);let data=try! JSONSerialization.data(withJSONObject:row,options:[.sortedKeys]);print("D18_ACTION "+String(decoding:data,as:UTF8.self))
-  let tree=XCTAttachment(string:app.debugDescription);tree.name=id+"-tree";tree.lifetime = .keepAlways;add(tree)
-  let shot=XCTAttachment(screenshot:app.screenshot());shot.name=id+"-screen";shot.lifetime = .keepAlways;add(shot)
+  // Dots are treated as filename extensions by xcresult export. Keep semantic
+  // action IDs unchanged but give each attachment a unique extension-free stem.
+  let stem="d18-"+id.replacingOccurrences(of:".",with:"-")
+  let tree=XCTAttachment(string:app.debugDescription);tree.name=stem+"-tree";tree.lifetime = .keepAlways;add(tree)
+  let shot=XCTAttachment(screenshot:app.screenshot());shot.name=stem+"-screen";shot.lifetime = .keepAlways;add(shot)
  }
  func more(_ id:String,_ label:String) {
   let trigger=node("reader.more").buttons.firstMatch
@@ -88,7 +91,7 @@ final class StorageActions: XCTestCase {
   XCTAssertTrue(wait{self.node("library.title").exists && !self.node("library.busy").exists})
   observe("prepare")
   begin("import");tap("library.import.epub");XCTAssertTrue(wait{self.node("library.book.0").exists && !self.node("library.busy").exists});mark("import","library.import.epub","original D11 native fixture import")
-  snapshot("book.open.before");tap("library.book.0");XCTAssertTrue(wait{self.node("reader.page").exists && !self.node("reader.busy").exists});XCTAssertFalse(node("reader.state").exists,"HOST_REVIEW macro leak");snapshot("opened.idle")
+  snapshot("book.open.before");tap("library.book.0");XCTAssertTrue(wait{self.node("reader.page").exists && !self.node("reader.busy").exists});XCTAssertFalse(node("reader.state").exists,"HOST_REVIEW macro leak");let opened=observe("snapshot?label=opened.idle")
   let first=text("reader.location")
   begin("next");tap("reader.next");XCTAssertTrue(wait{!self.node("reader.busy").exists && self.text("reader.location") != first});mark("next","reader.next",text("reader.location"))
   begin("previous");tap("reader.previous");XCTAssertTrue(wait{!self.node("reader.busy").exists && self.text("reader.location")==first});mark("previous","reader.previous",first)
@@ -109,6 +112,10 @@ final class StorageActions: XCTestCase {
   begin("reject.badfile");selectBrokenInNativePicker();mark("reject.badfile","library.import.picker",text("library.error"))
   begin("resume");tap("library.book.0");XCTAssertTrue(wait{self.node("reader.page").exists && !self.node("reader.busy").exists});mark("resume","library.book.0","reopen; dedicated Continue not granted")
   begin("continue_after_return");tap("reader.next");XCTAssertTrue(wait{!self.node("reader.busy").exists && self.text("reader.location") != first});mark("continue_after_return","reader.next")
-  begin("no_unexpected_revision");snapshot("final.idle");mark("no_unexpected_revision","independent-public-sdk-and-readonly-catalog","offline verifier compares original bytes, revisions and outbox from opened.idle; ordinary progress kept separately")
+  begin("no_unexpected_revision");let finalObservation=observe("snapshot?label=final.idle")
+  let baseline=opened["semantic"] as! [String:String];let finalState=finalObservation["semantic"] as! [String:String]
+  XCTAssertEqual(baseline["sources_sha256"],finalState["sources_sha256"])
+  XCTAssertEqual(baseline["revisions_sha256"],finalState["revisions_sha256"])
+  mark("no_unexpected_revision","independent-public-sdk-and-readonly-catalog","original bytes, revisions and outbox match opened.idle; ordinary progress kept separately; independent verifier repeats comparison")
  }
 }

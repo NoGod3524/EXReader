@@ -48,7 +48,8 @@ def validate(host,e,rows,snapshots):
             assert s['paths']['sdk'].endswith('/library.sqlite') and s['paths']['catalog'].endswith('/reader-catalog.db')
             assert s['semantic']['product_sha256']==hashed(s['product'])
             mapping(s)
-        if r['action'] in REJECTS:invariants(snapshots[r['before']],snapshots[r['after']])
+        if r['action'] not in ('import','next','previous','resume','continue_after_return'):
+            invariants(snapshots[r['before']],snapshots[r['after']])
     assert snapshots['import.before']['public_sdk']['book_count']==0
     assert snapshots['import.after']['public_sdk']['book_count']==1
     base=snapshots['opened.idle'];final=snapshots['final.idle']
@@ -82,6 +83,10 @@ try:
                 if host=='source':
                     guard=value(z,'guard.json');assert guard['source_preflight'] and all(guard[k]==info[k] for k in info);continue
                 e=value(z,host+'/execution.json')
+                probe=value(z,'public-state-identity.json')
+                assert all(probe[k]==info[k] for k in info)
+                assert hashlib.sha256(z.read(unique(names,'public-state'))).hexdigest()==probe['program_sha256']
+                assert hashlib.sha256(z.read(unique(names,'public-state.cpp'))).hexdigest()==probe['source_sha256']
                 report['platforms'][host]=dict(native_accepted=e['accepted'],program=e['program'],executions=e['executions'],configuration=e['configuration'],test_cases=e['test_cases'])
                 # Bind every raw observation, screenshot, native log and xcresult.
                 for path,f in e['files'].items():
@@ -93,11 +98,13 @@ try:
                 logs=z.read(unique(names,host+'/native-actions.log')).decode(errors='replace')
                 rows=[json.loads(raw) for raw in re.findall(r'\bD18_ACTION (\{[^\r\n]+\})',logs)]
                 attachments=value(z,host+'/attachments/manifest.json')
+                exported_names=[a.get('suggestedHumanReadableName','') for group in attachments for a in group['attachments']]
+                print('D18_ATTACHMENT_NAMES '+json.dumps(dict(host=host,names=exported_names)),flush=True)
                 for row in rows:
                     for kind,ext in [('screen','png'),('tree','txt')]:
-                        role=row['action']+'-'+kind+'_'
+                        role='d18-'+row['action'].replace('.','-')+'-'+kind+'_'
                         found=[a for group in attachments for a in group['attachments'] if a.get('suggestedHumanReadableName','').startswith(role)]
-                        assert len(found)==1,(role,found)
+                        assert len(found)==1,(role,found,exported_names)
                         raw=z.read(unique(names,host+'/attachments/'+found[0]['exportedFileName']))
                         assert raw
                         if ext=='png':assert raw[:8]==b'\x89PNG\r\n\x1a\n' and int.from_bytes(raw[16:20],'big')>0 and int.from_bytes(raw[20:24],'big')>0
@@ -107,7 +114,8 @@ try:
                     if prefix in n:
                         suffix=n.split(prefix,1)[1]
                         if suffix.endswith('.json') and '/' not in suffix and suffix!='picker-fixtures.json': snapshots[suffix[:-5]]=json.loads(z.read(n))
-                report['platforms'][host].update(rows=rows,completed_rows=len(rows))
+                report['platforms'][host].update(rows=rows,completed_rows=len(rows),observer_program=probe)
+                print('D18_DATA_OBSERVATIONS '+json.dumps(dict(host=host,snapshots={key:{'semantic':s['semantic'],'public_sdk':s['public_sdk'],'product':s['product'],'idle':s['idle'],'paths':s['paths']} for key,s in snapshots.items()})),flush=True)
                 accepted=validate(host,e,rows,snapshots);report['platforms'][host].update(accepted)
                 matching=[j for j in jobs if j['name']=='D18 native '+host];assert len(matching)==1 and matching[0]['conclusion']=='success'
                 print('D18_PLATFORM '+json.dumps(dict(host=host,program=e['program'],passed_named_actions=17,rejections=accepted['rejection_comparisons'],configuration=e['configuration'])),flush=True)
