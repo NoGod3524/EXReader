@@ -14,6 +14,7 @@ stage. Subsequent independent work packages go to DeepSeek.
 | SDK format candidate | `9d3a3f8bfa06c099ebba0d9e1ba613d276c3af09` | `src/rtf.c`, `src/cbz.c` |
 | Cloud same-open-file candidate | `c92a2e06a73d5813e86537e5a5f4a8e76a32bbcd` | cloud-import implementation, its two regression scripts, workflow and PLAN |
 | Delivery assembly and diagnostics | `eb23d0f563ba08a22f2af80b6a9f89f8c14b68d0` | explicit 21 paths in inputs.json; original S20 entry unchanged |
+| Public pure capture candidate | `a911cd0e8405a362dae1bb489190de02c4c81d51` | reading-state CMake, implementation, new capability header; focused installed validation pending |
 
 These inputs retain their original records. SDK format acceptance belongs to
 `8015c576` / run `40244430230`; ordinary cloud regression belongs to
