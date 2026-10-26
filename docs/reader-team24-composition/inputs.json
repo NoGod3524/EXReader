@@ -337,7 +337,13 @@
         "examples/android/app/src/main/java/org/exreader/host/AnnotationPanel.java",
         "examples/android/app/src/main/java/org/exreader/host/MainActivity.java",
         "examples/android/app/src/main/java/org/exreader/host/OriginalExportPanel.java",
-        "examples/android/app/src/main/java/org/exreader/host/Wave3Files.java",
+        "examples/android/app/src/main/java/org/exreader/host/Wave3Files.java"
+      ]
+    },
+    {
+      "name": "android-export-rotation-regression",
+      "source": "f51b0e076d8a85f450d26703e50200407479ce33",
+      "paths": [
         "tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java"
       ]
     },
