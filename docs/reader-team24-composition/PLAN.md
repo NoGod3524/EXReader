@@ -862,3 +862,40 @@ summary `12694745818` is 4,639 bytes, SHA-256
 Both expire 2027-01-24T22:26:01Z. Group paging memberships are fixture-seeded;
 the separate HTTPS checks do not turn this into cross-platform synchronization
 or physical-device acceptance. The ten exact candidate paths are now admitted.
+
+## Android shared-module desktop and frozen-SDK evidence
+
+Source `532b9f0dd6ce3e2ee94ec7b002e57f8a43a3bce9` passed six
+font-library and original-export jobs on Windows, Linux and macOS in
+[40413221092/1](https://github.com/NoGod3524/EXReader/actions/runs/40413221092).
+The font harness pins the Android candidate module and the composed SDK; the
+existing export cases run against the composed SDK. The separate source
+`c9e4b3ac1634748179ae33cba48a0b20df950a22` passed the original
+Linux frozen SDK 3.40 export and preloaded-provider controls in
+[40413886507/1](https://github.com/NoGod3524/EXReader/actions/runs/40413886507).
+
+Independent cloud audit
+[40414457834/1](https://github.com/NoGod3524/EXReader/actions/runs/40414457834),
+audit source `9b18b53320adbb2516aa5453ab3e3df80b860072`, checked each
+run, job, unexpired ZIP, byte length and GitHub SHA-256; it checked report
+identity and required cases and recomputed the desktop report's binary hashes.
+The frozen report did not record a binary hash: the audit recorded the C
+consumer's actual hash without claiming a report comparison. Audit artifact
+`12694079691` is 1,929 bytes, SHA-256
+`e41845b6454474e4baa4f1cfc97f176088a41b716c7dff0fa50f6fc14eed04a6`,
+expiring 2027-01-24T22:42:14Z. These are two different tested sources; neither
+is a same-source product-wide acceptance. The full Windows/Android combination
+has its own pending runs.
+
+Source `715fc865a9f063ae453c4d97e44f927772139fc3` then passed all six
+desktop jobs in [40413780626/1](https://github.com/NoGod3524/EXReader/actions/runs/40413780626).
+Its additional Linux export test confirmed an injected publication I/O failure
+was reached exactly once and reported no commit or pending cleanup.
+The expanded cloud audit
+[40414632862/1](https://github.com/NoGod3524/EXReader/actions/runs/40414632862),
+source `c2fb0f5357d4f4cfe94487a466a97ad244b71a13`, authenticated all six
+ZIPs, original report identities and named checks, desktop binaries, the
+fault receipt and its one-byte hit marker. Audit artifact `12694406592`
+is 2,737 bytes, SHA-256
+`0ce371bc6adaa31db76e847952829cc56824be00d1a3d0e1b8443a0164b166a0`,
+expiring 2027-01-24T22:43:39Z. The frozen 3.40 run remains a distinct source.
