@@ -371,6 +371,21 @@ verification artifact `12683890627` is 592 bytes, SHA-256
 expires 2027-01-24T19:56:43Z. This strengthens original-byte evidence only;
 the independent run's one-way scope and remaining integration gaps are unchanged.
 
+Independent source `9ea6d1d56d6d38942cc996734776f865d0a18681` then ran
+[40390699668/1](https://github.com/NoGod3524/EXReader/actions/runs/40390699668);
+[40392496386/1](https://github.com/NoGod3524/EXReader/actions/runs/40392496386)
+independently authenticated its original artifact, actual programs, network
+requests, retained revision bytes and public SDK readback. Android to GTK
+covered four exact originals and 11 FOUND reading-record positions. GTK to
+Android covered two TXT point anchors (progress and bookmark), both FOUND with
+matching ranges. Original artifact `12685855227` has SHA-256
+`5083ece4c791a4bff28bb218e89f8d27ef248ee615727805189076180f8369b4`;
+authentication artifact `12686025698` has SHA-256
+`0736793d2da263baaac2115ab1df5e986be7382e0fe477019108c65d940c0416`.
+This establishes the stated two-app paths on this independent source and an
+Android API 34 simulator, not reverse highlighting, reverse other formats,
+organization, physical-device behavior, the final composition or F02-F05.
+
 ## Shared organization projection input
 
 Source `a67fe8c6c094c4bb59ffc94f4a84c90261d5e722` adds bounded,
