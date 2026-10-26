@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #if EXR_APPLE_WAVE3 && EXR_APPLE_RAW3 && EXR_APPLE_HOST_REVIEW
 import Foundation
+import CryptoKit
 import CEXReader
 import CReaderProduct
 import CReaderSQLite
@@ -71,7 +72,9 @@ enum HostWave3Review {
                     defer { if let wire { reader_rs_free(wire) } }
                     guard encoded == READER_RS_OK, let wire else { throw HostError.invalidResult(hostReadingField(error.message)) }
                     var info = reader_revision_info(), created: Int32 = 0
-                    guard reader_revision_receive_raw_v3(revisions, wire, bytes, nil, &info, &created, &revisionError) == READER_REV_OK,
+                    let digest = SHA256.hash(data: Data(bytes: wire, count: bytes)).map { String(format: "%02x", $0) }.joined()
+                    let received = digest.withCString { reader_revision_receive_raw_v3(revisions, wire, bytes, $0, &info, &created, &revisionError) }
+                    guard received == READER_REV_OK,
                           created == 1 else { throw HostError.invalidResult(hostReadingField(revisionError.message)) }
                 }
             }
@@ -127,5 +130,3 @@ enum HostWave3Review {
     }
 }
 #endif
-
-

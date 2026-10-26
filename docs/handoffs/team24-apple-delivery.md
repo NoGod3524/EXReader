@@ -25,4 +25,18 @@ S20 原 iPad 问题归于 `test01ImportDeduplicateAndErrors`，原 run `40248648
 
 ## 本队新完整轮次
 
-尚未启动。受测 source、run、attempt、原 ZIP 大小/SHA/有效期和实际程序 hash 在轮次结束后由父代理据真实结果追加。本记录的文字提交不触发新的功能验收。
+第一轮：source `560eba3f84ab6c7e0d51de3ed0cf765c6e850c66`，run [40276666182](https://github.com/NoGod3524/EXReader/actions/runs/40276666182)，attempt 1，最终 failure。Mac 与 iOS SDK/已安装模块构建成功；三个原生作业均在编译时因 `HostAccount.swift:4:8: no such module 'CReaderProduct'` 失败，三个阶段均为 0 个已执行 UI 用例，没有可启动程序。
+
+首次失败来自新增项目生成器：读回的 `SWIFT_INCLUDE_PATHS` 是字符串，使用 `.insert` 和 `<<` 后把原模块路径与新增路径拼成同一个无效路径。第二轮修复改为显式数组，保留原 SDK 路径和原 `examples/apple/product` 路径。
+
+同批源码复核修复：字体获取失败的 owner 自等待死锁；NULL/冲突夹具接收时缺失真实 wire SHA；标注定位误引用禁止链接的静态 resolver（改用现有动态 SDK 接口）；取消导入保留部分回执；仅 control 阶段启用额外阅读夹具按钮。原预算与原断言未改。
+
+第一轮原 ZIP 由同 run/attempt 的认证 job `121427980184` 在 Actions 内下载并核对，认证结论因原生任务失败而保持 failure：
+
+| 平台 | Artifact ID | 原 ZIP 字节 | SHA-256 | 到期 UTC |
+| --- | --- | ---: | --- | --- |
+| macOS | 12631575462 | 102233 | `8c9b2c2003ad2cbac44b731074b829fc9744c326bc4a6895e86d012234b62024` | 2026-11-25 06:17:09 |
+| iPhone Simulator | 12630863401 | 101015 | `e87b5434f6f25154e0d7225a76441ea9986ce33d0a3b1860b82bf4a269cc0e02` | 2026-11-25 06:17:59 |
+| iPad Simulator | 12631675261 | 101475 | `2a98ce5e866d075158afe79e8790a2c9746ead1a97ec7c6eaad288c66e814967` | 2026-11-25 06:13:24 |
+
+第二轮尚未启动；下一次功能提交启动第二轮。受测 source、run、attempt、最终原 ZIP 身份和实际程序 hash 在结束后追加，文档提交使用 `[skip ci]`。

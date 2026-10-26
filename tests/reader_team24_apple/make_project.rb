@@ -10,12 +10,22 @@ project.targets.each do |target|
   next unless target.product_type == 'com.apple.product-type.application'
   target.build_configurations.each do |config|
     s = config.build_settings
-    conditions = s['SWIFT_ACTIVE_COMPILATION_CONDITIONS'].split(' ') + ['EXR_APPLE_HOST_REVIEW', 'EXR_APPLE_READING_REVIEW']
+    conditions = s['SWIFT_ACTIVE_COMPILATION_CONDITIONS'].split(' ') -
+      ['EXR_APPLE_IMPORT_REVIEW', 'EXR_APPLE_READING_REVIEW']
+    conditions << 'EXR_APPLE_HOST_REVIEW'
+    conditions << 'EXR_APPLE_READING_REVIEW' if mode == 'control'
     conditions += ['EXR_APPLE_RAW3', 'EXR_APPLE_WAVE3']
     s['EXR_PRODUCTS_DIR'] = '$(SRCROOT)/raw-products'
-    ['LIBRARY_SEARCH_PATHS'].each { |key| s[key].insert(1, '$(EXR_PRODUCTS_DIR)/lib') }
-    ['HEADER_SEARCH_PATHS', 'SWIFT_INCLUDE_PATHS'].each { |key| s[key].insert(1, '$(EXR_PRODUCTS_DIR)/include/exreader-product'); s[key].insert(1, '$(EXR_PRODUCTS_DIR)/include') }
-    s['SWIFT_INCLUDE_PATHS'] << File.join(Dir.pwd, 'apps/reader/apple-feature-integration/include')
+    # xcodeproj reads some list-valued settings back as String. Assign complete
+    # lists so String#insert/#<< cannot concatenate unrelated include paths.
+    s['LIBRARY_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_PRODUCTS_DIR)/lib', '$(EXR_SDK_DIR)/lib']
+    s['HEADER_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_PRODUCTS_DIR)/include',
+      '$(EXR_PRODUCTS_DIR)/include/exreader-product', '$(EXR_SDK_DIR)/include',
+      '$(EXR_SDK_DIR)/include/exreader-product']
+    s['SWIFT_INCLUDE_PATHS'] = ['$(inherited)', '$(EXR_PRODUCTS_DIR)/include',
+      '$(EXR_PRODUCTS_DIR)/include/exreader-product', '$(EXR_SDK_DIR)/include',
+      '$(EXR_SDK_DIR)/include/exreader-product', File.join(Dir.pwd, 'examples/apple/product'),
+      File.join(Dir.pwd, 'apps/reader/apple-feature-integration/include')]
     s['OTHER_SWIFT_FLAGS'] = ['$(inherited)', '-Xcc', '-DEXR_READER_SELECTOR_BYTES_CANDIDATE=1',
       '-Xcc', '-DEXR_APPLE_WAVE3=1']
     s['OTHER_LDFLAGS'] += ['-lreader_annotation_import', '-lreader_annotation_export', '-lreader_font_library',

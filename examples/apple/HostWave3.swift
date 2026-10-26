@@ -16,6 +16,7 @@ struct HostWave3AnnotationPreview {
 struct HostWave3ImportFailure: Error, LocalizedError {
     let preview: HostWave3AnnotationPreview
     let message: String
+    let cancelled: Bool
     var errorDescription: String? { message + "；已提交 \(preview.committed) 个头，先前提交仍保留" }
 }
 struct HostWave3SyncSnapshot {
@@ -62,35 +63,45 @@ final class HostWave3AnnotationResolver {
     func resolve(_ record: UnsafePointer<reader_rs_record>) throws -> Bool {
         try cancel.check()
         let value = record.pointee
-        guard hostReadingField(value.book_key) == key else { return false }
-        var control = hostControl(cancel), match = exr_anchor_match(), error = reader_rs_error()
+        guard hostReadingField(value.book_key) == key, value.has_location != 0, value.exact != nil,
+              HostReadingWorker.acceptsParser(hostReadingField(value.parser_version)),
+              value.start <= UInt64(Int.max), value.end <= UInt64(Int.max), value.part <= UInt64(Int.max) else { return false }
         if value.mode == READER_RS_FIXED_PAGE && book.isFixed {
             if fixed == nil { fixed = try library.fixed(bookID: bookID, font: font, cancel: cancel) }
-            let fixed = self.fixed!
-            var page = 0
-            return reader_rs_resolve_fixed_v3(fixed.handle, record, &control, &page, &match, &error) == READER_RS_OK && match.state == EXR_ANCHOR_FOUND
+            let fixed = self.fixed!, pageID = hostString(value.page_id)
+            let choices = fixed.pageIDs.enumerated().filter { $0.element.utf8.elementsEqual(pageID.utf8) }
+            guard !pageID.isEmpty, choices.count == 1, value.page == UInt64(choices[0].offset) else { return false }
+            let text = try fixed.text(page: choices[0].offset, cancel: cancel)
+            var anchor = exr_fixed_anchor()
+            anchor.start = Int(value.start); anchor.end = Int(value.end)
+            anchor.page_id = value.page_id; anchor.exact = value.exact; anchor.prefix = value.prefix; anchor.suffix = value.suffix
+            anchor.exact_size = value.exact_size; anchor.prefix_size = value.prefix_size; anchor.suffix_size = value.suffix_size
+            return try text.resolve(anchor, pageID: pageID, cancel: cancel).isFound
         }
         guard !book.isFixed else { return false }
+        var anchor = exr_anchor()
+        anchor.start = Int(value.start); anchor.end = Int(value.end)
+        anchor.exact = value.exact; anchor.prefix = value.prefix; anchor.suffix = value.suffix
         if value.mode == READER_RS_EPUB_CHAPTER, try library.isBoundedEPUB(book: book) {
             if publication == nil { publication = try HostPublication(library: library, bookID: bookID, cancel: cancel) }
-            let publication = self.publication!
-            var part = 0
-            guard reader_rs_epub_record_part(publication.handle, record, &part, &error) == READER_RS_OK else { return false }
+            let publication = self.publication!, path = hostString(value.part_path), part: Int
+            if value.anchor_version == 1 {
+                let choices = publication.parts.filter { $0.reading && $0.path.utf8.elementsEqual(path.utf8) }
+                guard choices.count == 1 else { return false }
+                part = choices[0].index
+            } else {
+                part = Int(value.part); _ = try publication.route(part, path: path)
+            }
             if pagerPart != part { pager = try HostPager(publication: publication, part: part, font: font, width: 600, height: 800, fontSize: 28, box: cancel); pagerPart = part }
-            let pager = self.pager!
-            var anchor = exr_anchor()
-            anchor.start = Int(value.start); anchor.end = Int(value.end)
-            anchor.exact = value.exact; anchor.prefix = value.prefix; anchor.suffix = value.suffix; anchor.chapter = value.part_path
-            return try pager.resolveInput(anchor, cancel: cancel).isFound
+            anchor.chapter = value.part_path
+            return try self.pager!.resolveInput(anchor, cancel: cancel).isFound
         }
         guard value.mode == READER_RS_REFLOW_GLOBAL, try !library.isBoundedEPUB(book: book) else { return false }
         if document == nil { document = try library.document(bookID: bookID, cancel: cancel) }
-        let document = self.document!
-        return reader_rs_resolve_reflow(document.handle, record, &control, &match, &error) == READER_RS_OK && match.state == EXR_ANCHOR_FOUND
+        anchor.chapter = value.chapter
+        return try self.document!.resolveInput(anchor, cancel: cancel).isFound
     }
-
 }
-
 // All these operations run synchronously behind the existing host SDK owner.
 // No borrowed native value crosses an operation boundary.
 enum HostWave3Worker {
@@ -138,7 +149,7 @@ enum HostWave3Worker {
                 receivingGraphChecked: confirmation != nil && stats.committed > 0, unresolved: stats.unresolved,
                 wouldCreate: stats.would_create, wouldDuplicate: stats.would_duplicate)
             guard status == READER_AI3_OK else {
-                throw HostWave3ImportFailure(preview: receipt, message: status == READER_AI3_CANCELLED ? "导入已取消" : hostReadingField(error.message))
+                throw HostWave3ImportFailure(preview: receipt, message: status == READER_AI3_CANCELLED ? "导入已取消" : hostReadingField(error.message), cancelled: status == READER_AI3_CANCELLED)
             }
             return receipt
         }
@@ -281,7 +292,7 @@ final class HostWave3FontLease {
     deinit { let lease = lease; _ = try? owner.run { _ in rfl_lease_release(lease, nil) } }
     static func acquire(root: URL, hash: String) throws -> HostWave3FontLease {
         let owner = try HostWave3FontOwner.shared(root)
-        return try owner.run { library in
+        let opened: (OpaquePointer, OpaquePointer) = try owner.run { library in
             var lease: OpaquePointer?, font: OpaquePointer?, error = rfl_error()
             guard hash.withCString({ rfl_font_open(library, $0, 0, &lease, &error) }) == RFL_OK, let lease else {
                 throw HostError.invalidResult(hostReadingField(error.message))
@@ -289,8 +300,9 @@ final class HostWave3FontLease {
             guard rfl_lease_font(lease, &font, &error) == RFL_OK, let font else {
                 _ = rfl_lease_release(lease, nil); throw HostError.invalidResult(hostReadingField(error.message))
             }
-            return HostWave3FontLease(font: font, lease: lease, owner: owner)
+            return (font, lease)
         }
+        return HostWave3FontLease(font: opened.0, lease: opened.1, owner: owner)
     }
 }
 enum HostWave3Fonts {
@@ -381,10 +393,3 @@ final class HostWave3History {
     }
 }
 #endif
-
-
-
-
-
-
-
