@@ -117,7 +117,8 @@ static int outbox_visit(void *opaque,const reader_revision_outbox_row *row) {
 }
 static size_t w3_outbox(linux_reader *reader) {
   received_owner *owner=w3_store(reader);outbox_rows=0;
-  REQUIRE(reader_revision_outbox_raw_v3(owner->revisions,200,outbox_visit,NULL,NULL)==READER_REV_OK);
+  /* The installed outbox page is capped at 100 rows by the module itself. */
+  REQUIRE(reader_revision_outbox_raw_v3(owner->revisions,100,outbox_visit,NULL,NULL)==READER_REV_OK);
   return outbox_rows;
 }
 /* One decoded selector, byte for byte, including the nullable pointers. */
