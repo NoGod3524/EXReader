@@ -82,6 +82,9 @@ jobs:
             build/group-page-ui/result.json
             build/group-page-ui/seed.log
             build/group-page-ui/failure.bmp
+            build/group-page-ui/removed-anchor.bmp
+            build/group-page-ui/removed-tail.bmp
+            build/group-page-ui/removed-all.bmp
             build/group-page-ui/profile/application.log
             build/group-page-ui/profile/library.sqlite.product.sqlite
             !build/**/*.key
