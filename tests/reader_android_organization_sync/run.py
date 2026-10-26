@@ -29,6 +29,12 @@ def adb(*args, input=None, timeout=180):
 
 accepted=False
 try:
+    apk=Path('build/wave3/artifacts/app-debug.apk')
+    installed=adb('shell','pm','path','org.exreader.host').decode().strip()
+    assert installed.startswith('package:') and '\n' not in installed, installed
+    adb('pull',installed[len('package:'):],a.output/'installed-host.apk')
+    apk_sha=hashlib.sha256(apk.read_bytes()).hexdigest()
+    assert hashlib.sha256((a.output/'installed-host.apk').read_bytes()).hexdigest()==apk_sha
     key=book(b'first book without local SDK mapping\n','Remote metadata only','10000000000000000000000000000001')
     deleted=book(b'deleted book\n','Original deleted title','10000000000000000000000000000002')
     revision('10000000000000000000000000000003','book',deleted,None,['10000000000000000000000000000002'],'delete')
@@ -56,6 +62,8 @@ try:
 finally:
     server.server.shutdown();server.server.server_close()
     report = locals().get('report', {})
-    result={**identity,'accepted':accepted,'device':report,'requests':len(server.requests)}
+    result={**identity,'accepted':accepted,'device':report,'requests':len(server.requests),
+            'host_apk_sha256':locals().get('apk_sha'),
+            'test_apk_sha256':hashlib.sha256(Path('build/wave3/artifacts/organization-debug-androidTest.apk').read_bytes()).hexdigest()}
     (a.output/'result.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result),flush=True)
