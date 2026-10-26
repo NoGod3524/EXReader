@@ -27,6 +27,7 @@ EXPECTED_CHECKS = [
     'jump-history-real-landing-and-back',
     'sync-status-real-session-capture',
     'one-loaded-sdk-implementation',
+    'installed-webdav-extra-is-distinct-from-sdk',
     'host-executable-holds-no-sdk-module-or-store-copy',
     'product-dso-holds-no-sdk-object-copy',
     'one-sdk-shared-lib-per-image',
