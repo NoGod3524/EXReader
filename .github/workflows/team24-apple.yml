@@ -10,7 +10,7 @@ on:
         type: boolean
         default: false
       inspect_macos_log:
-        description: Inspect the preserved 963dadca iPhone action log
+        description: Inspect the preserved 6fe670a2 iPhone action log
         type: boolean
         default: false
 permissions:
@@ -183,12 +183,12 @@ jobs:
         run: |
           python3 - <<'PY'
           import hashlib, json, os, subprocess, zipfile
-          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12687984751"
+          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12692293390"
           item = json.loads(subprocess.check_output(['gh', 'api', api]))
-          assert item['workflow_run']['id'] == 40391651416
-          assert item['workflow_run']['head_sha'] == '963dadcafa87edfc9159501d6af2266c49bdb8d5'
-          digest = '48c190629b525fbd090903c9dbeaa5cddb9d71aa805dd5ca4f48c7b21a6b64d8'
-          assert item['size_in_bytes'] == 496408550 and item['digest'] == 'sha256:' + digest and not item['expired']
+          assert item['workflow_run']['id'] == 40401623420
+          assert item['workflow_run']['head_sha'] == '6fe670a22f8f79c79343fa6db7cfedf81ba8ee68'
+          digest = 'f01d9510a308737541570658afd937eb0f738d9c36a948ff30c877f94cc2df91'
+          assert item['size_in_bytes'] == 538753352 and item['digest'] == 'sha256:' + digest and not item['expired']
           with open('artifact.zip', 'wb') as out:
               subprocess.run(['gh', 'api', api + '/zip'], stdout=out, check=True)
           with open('artifact.zip', 'rb') as source:
