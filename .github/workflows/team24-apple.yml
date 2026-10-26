@@ -10,7 +10,7 @@ on:
         type: boolean
         default: false
       inspect_macos_log:
-        description: Inspect the preserved 4077d12c iPhone action log
+        description: Inspect the preserved 963dadca macOS action log
         type: boolean
         default: false
 permissions:
@@ -144,18 +144,18 @@ jobs:
     if: ${{ inputs.inspect_macos_log }}
     runs-on: ubuntu-22.04
     steps:
-      - name: Authenticate and inspect the original iPhone action log
+      - name: Authenticate and inspect the original macOS action log
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
           import hashlib, json, os, subprocess, zipfile
-          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12685719721"
+          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12687397036"
           item = json.loads(subprocess.check_output(['gh', 'api', api]))
-          assert item['workflow_run']['id'] == 40389430988
-          assert item['workflow_run']['head_sha'] == '4077d12c5576d70bed0c7450a759b03c036835fa'
-          digest = '1dc83f15385476da8b26f0e05c2ed5d52319958645b1f6fa8c564d957cb20f6f'
-          assert item['size_in_bytes'] == 457140392 and item['digest'] == 'sha256:' + digest and not item['expired']
+          assert item['workflow_run']['id'] == 40391651416
+          assert item['workflow_run']['head_sha'] == '963dadcafa87edfc9159501d6af2266c49bdb8d5'
+          digest = 'd5e7cd9273cef1b1da92aba0ead671ae0baa0be7d4d46d3b911b18f84d01d51c'
+          assert item['size_in_bytes'] == 429683044 and item['digest'] == 'sha256:' + digest and not item['expired']
           with open('artifact.zip', 'wb') as out:
               subprocess.run(['gh', 'api', api + '/zip'], stdout=out, check=True)
           with open('artifact.zip', 'rb') as source:
