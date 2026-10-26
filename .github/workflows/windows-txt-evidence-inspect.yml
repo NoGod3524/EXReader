@@ -1,0 +1,24 @@
+name: Inspect retained Windows TXT evidence
+on:
+  push:
+    branches: [codex/windows-txt-limit-diagnostic]
+    paths: ['.github/workflows/windows-txt-evidence-inspect.yml', 'tests/windows_txt_limit/inspect_evidence.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate and inspect retained artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/windows_txt_limit/inspect_evidence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-txt-evidence-inspection
+          path: build/windows-txt-evidence.json
+          if-no-files-found: warn
