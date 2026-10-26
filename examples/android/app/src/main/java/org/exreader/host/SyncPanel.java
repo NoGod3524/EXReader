@@ -41,6 +41,7 @@ final class SyncPanel implements SyncController.Listener {
         LinearLayout actions=new LinearLayout(activity);panel.addView(actions);
         start=button(actions,"立即同步",()->controller.start(host));cancel=button(actions,"取消同步",controller::cancel);button(actions,"断开",controller::close);
         refresh=button(panel,"刷新书目",()->controller.refresh(""));
+        button(panel,"继续更新书架",controller::continueProjection);
         ListView list=new ListView(activity);list.setContentDescription("云盘书目");adapter=new ArrayAdapter<>(activity,android.R.layout.simple_list_item_1,new ArrayList<>());list.setAdapter(adapter);panel.addView(list,new LinearLayout.LayoutParams(-1,(int)(260*activity.getResources().getDisplayMetrics().density)));
         list.setOnItemClickListener((parent,view,position,id)->{if(position>=books.size()||busy)return;NativeSync.RemoteBook book=books.get(position);if(!book.receivable()){new AlertDialog.Builder(activity).setMessage("这本书的同步记录需要先解决冲突或恢复").setPositiveButton("知道了",null).show();return;}new AlertDialog.Builder(activity).setTitle(book.title).setMessage(book.localId>0?"核对原件并保留本机阅读位置":"接收后加入本机书架").setPositiveButton("接收",(value,which)->controller.receive(host,book)).setNegativeButton("取消",null).show();});
         next=button(panel,"下一页",()->{if(!books.isEmpty())controller.refresh(books.get(books.size()-1).key);});
@@ -57,6 +58,7 @@ final class SyncPanel implements SyncController.Listener {
     }
     private void render(){if(summary==null)return;String message=status+(root.isEmpty()?"":"\n"+root);if(!message.contentEquals(summary.getText()))summary.setText(message);start.setEnabled(!busy);cancel.setEnabled(busy);refresh.setEnabled(!busy);next.setEnabled(!busy&&books.size()==50);adapter.clear();for(NativeSync.RemoteBook book:books)adapter.add(book.label());adapter.notifyDataSetChanged();}
     @Override public void update(String status,String root,List<NativeSync.RemoteBook> rows,boolean busy){this.status=status;this.root=root;this.books=new ArrayList<>(rows);this.busy=busy;render();}
+    @Override public void projected(){host.projectionChanged();}
     @Override public void view(String[][] rows){viewRows=rows;renderDetail();}
     private static String phaseLabel(String token){
         switch(token){case "idle":return "就绪（idle）";case "syncing":return "同步中（syncing）";case "cancelling":return "正在取消（cancelling）";case "cancelled":return "已取消，可重试（cancelled）";case "sweep-complete":return "一轮完成（sweep-complete）";case "failed":return "失败，可重试（failed）";case "closing":return "正在关闭（closing）";case "closed":return "已关闭（closed）";default:return "未知（"+token+"）";}

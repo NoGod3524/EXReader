@@ -74,6 +74,32 @@ typedef int (*reader_revision_entity_fn)(void *,const reader_revision_entity_row
 reader_revision_status reader_revision_entities_page(reader_revisions *,const char *entity_kind,
   const char *after_key,int direction,size_t limit,reader_revision_entity_fn,void *,
   reader_revision_error *);
+
+typedef enum { READER_ORGANIZATION_PROJECTED=0, READER_ORGANIZATION_UNSAFE_HISTORY,
+  READER_ORGANIZATION_PENDING_DEPENDENCY, READER_ORGANIZATION_HEAD_CHANGED } reader_organization_projection_result;
+typedef struct {
+  char entity_key[257];
+  reader_revision_selection selection;
+  reader_revision_info info;
+  reader_organization_projection_result result;
+} reader_organization_projection_row;
+/* Bounded forward keyset page for shelf/tag/series/membership. Each safe head
+   is independently projected with its expected-head fence, including deletes.
+   rows holds capacity 1..100; count receives completed rows and their last key
+   is the next cursor. Fewer than capacity means this scan has reached the end,
+   not that all rows are projected. A later scan from NULL is necessary after
+   new receives or dependency changes. Project books first, scan shelves until
+   dependencies settle, then tags/series and memberships; report unresolved
+   history and count pending dependencies/head changes to the host. Original
+   file download is independent of book metadata and membership projection.
+   UNSAFE_HISTORY retains the specific selection state. PENDING_DEPENDENCY is
+   a still-current safe head rejected by product dependency constraints;
+   HEAD_CHANGED requires a fresh scan. Other failures return their actual status;
+   count preserves prior committed rows, and the failed row is not counted.
+   No history/outbox or SDK writes; only call on the store's owner worker. */
+reader_revision_status reader_organization_project_page(reader_revisions *,const char *entity_kind,
+  const char *after_key,size_t capacity,reader_organization_projection_row *rows,size_t *count,
+  reader_revision_error *);
 /* Copy the exact title from one retained non-delete book revision for the
    host's existing NFC sort conversion. Does not select a head or normalize.
    project(expected_head) remains the authority before writing metadata.
@@ -89,6 +115,7 @@ reader_revision_status reader_revision_selected_raw_v3(reader_revisions *store,c
 reader_revision_status reader_revision_annotations_page_raw_v3(reader_revisions *store,const char *book_key,const char *after_id,int direction,size_t limit,reader_revision_annotation_fn visit,void *context,reader_revision_error *error);
 reader_revision_status reader_revision_entities_page_raw_v3(reader_revisions *store,const char *type,const char *after_key,int direction,size_t limit,reader_revision_entity_fn visit,void *context,reader_revision_error *error);
 reader_revision_status reader_revision_book_title_raw_v3(reader_revisions *store,const char *id,char **title,reader_revision_error *error);
+reader_revision_status reader_organization_project_page_raw_v3(reader_revisions *,const char *,const char *,size_t,reader_organization_projection_row *,size_t *,reader_revision_error *);
 #endif
 #ifdef __cplusplus
 }

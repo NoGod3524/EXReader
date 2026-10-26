@@ -12,6 +12,8 @@ final class NativeSync {
     /** Read-only status view of the owned session; present only in the wave3 native library. */
     static native String[][] view(long session,String product);
     static native String[] project(String product,String key,String revision,String sortTitle);
+    static native int projectBook(String product,String key,String revision,String sortTitle);
+    static native String[][] projectOrganization(String product,String kind,String after);
     static final int IDLE=0,RUNNING=1,CANCELLING=2,CANCELLED=3,FINISHED=4,FAILED=5,CLOSING=6,CLOSED=7;
     static final class Snapshot {
         final int code,state,status,davCode,httpStatus,completedShards;
