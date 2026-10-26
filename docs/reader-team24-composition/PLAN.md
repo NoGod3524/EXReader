@@ -477,3 +477,23 @@ failure remains in its own record. Reverse-ordered eight-level shelves and the
 10,000-item pause boundary need additional validation; this candidate is not yet
 adopted into the composition, and neither this run nor source adoption proves
 cross-device organization synchronization or final six-target acceptance.
+
+## Expanded GTK to Android reading records
+
+Independent source `77a10aa4c3ce35bffa58e9b39d8fa3ca5e776b85` completed
+[40396989966/1](https://github.com/NoGod3524/EXReader/actions/runs/40396989966).
+The actual GTK interface created progress and bookmark records for TXT, EPUB,
+PDF and CBZ, plus non-empty highlights for TXT, EPUB and PDF. The Android API 34
+x86_64 simulator received the 11 records through the runner's Apache WebDAV
+service, and the installed public SDK resolved each captured selector. CBZ has
+no text selection in this scenario; no CBZ highlight is claimed. The reverse
+records and original-byte readback were independently checked in Actions by
+[40398960306/1](https://github.com/NoGod3524/EXReader/actions/runs/40398960306),
+which built its SDK inspector from the exact tested source.
+Original artifact `12687597145` is 25,190,947 bytes, SHA-256
+`4fe574873bd472188b9f8162429a3a94ef4a20a0ba28f0554afde24fdfa9d2ab`;
+authentication artifact `12686729837` is 1,309 bytes, SHA-256
+`4c42321d68f7d7638e46562aea3dece7977baf27f4d0c925e7555344345cdf64`.
+This is an independently tested source, not current composition acceptance; it
+does not establish synchronized organization, physical devices, other Apple or
+Windows clients, real provider behavior or final six-target acceptance.
