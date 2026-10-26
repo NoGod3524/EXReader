@@ -30,3 +30,5 @@ iPad 原失败 `test01ImportDeduplicateAndErrors`；`test13` 明示通过。首�
 ## 运行和范围
 
 原 ZIP、SHA256SUMS、manifest.json 和中文安装说明随每个目标同轮工件上传；六目标汇总另列实际程序 SHA、SDK 和生产 source。Windows 解压启动 EXReader.exe；Linux 启动 Start-EXReader.sh；macOS 打开 EXReader.app；Android 仅 API34 x86_64 模拟器 APK；iPhone/iPad 仅模拟器 .app。真机、屏幕阅读器人工体验与商店发布未测。尚未组合其他五团队的新 UI，不声称整个六平台产品完成。
+
+后续轻量记录：`680d58156b796f47e71e45878c3cc4d423901005` / `40276021294` 已通过原工件身份验证和失败提取。`685aa1c4c28047e38970c05608ef7a39f18852cf` / `40276629900` 已通过交付协议检查并输出前述现存摘要。两轮业务平台均 skip，不能与 `5527e604` 的完整轮混用。
