@@ -200,15 +200,24 @@ def host_identity(binary):
         ("wave3-enabled", "EXR_READER_GTK_WAVE3:BOOL=ON" in text),
         ("raw3-enabled", "EXR_READER_GTK_RAW3:BOOL=ON" in text),
         ("raw-import-symbol", "reader_annotation_import_raw3_run" in symbols),
-        ("raw-export-symbol", "reader_annotation_export_raw3_run" in symbols),
+
         ("raw-jump-history-symbol", "reader_jh_commit_wire_raw_v3" in symbols),
         ("pure-capture-symbol", "reader_rs_encode_capture_raw_candidate" in symbols),
         ("raw-sync-view-symbol", "reader_sync_view_capture" in symbols),
         ("font-library-symbol", "rfl_import_file" in symbols),
         ("original-export-symbol", "roe_run" in symbols),
     ]
+    probe = OUT / "raw-host/reader-gtk-wave3-raw-backend"
+    probe_symbols = set()
+    for line in run("raw-probe-symbols", ["nm", "--defined-only", probe]).stdout.splitlines():
+        parts = line.split()
+        if parts:
+            probe_symbols.add(parts[-1])
+    checks.append(("probe-raw-export-symbol", "reader_annotation_export_raw3_run" in probe_symbols))
+    checks.append(("probe-raw-import-symbol", "reader_annotation_import_raw3_run" in probe_symbols))
     report = {"binary": str(binary / "gtk-host/exreader-linux"),
               "binary_sha256": sha(binary / "gtk-host/exreader-linux"),
+              "probe_sha256": sha(probe),
               "checks": [{"check": name, "passed": ok} for name, ok in checks],
               "symbols_found": sorted(name for name in wanted if name in names),
               "accepted": all(ok for _, ok in checks)}

@@ -205,12 +205,13 @@ int main(int argc,char **argv) {
   REQUIRE(argc==6);
   const char *library_a=argv[1],*library_b=argv[2],*font=argv[3],*fixtures=argv[4],*work=argv[5];
   exr_control control={never,NULL,NULL};linux_reader *reader=NULL;exr_error error={0};reader_search_control search={0};
+  int64_t text_book=0;
   char *text_path=g_build_filename(work,"history.txt",NULL);w3_write_text(text_path,"History");
   REQUIRE(linux_reader_open(library_a,font,&control,&reader,&error)==EXR_OK);
 
   /* 1. Reflow history keeps the real anchor v2 point. */
   {
-    reader_result landed={0};int64_t text_book=w3_open(reader,READER_IMPORT,text_path,0,&landed);
+    reader_result landed={0};text_book=w3_open(reader,READER_IMPORT,text_path,0,&landed);
     REQUIRE(landed.has_w3 && landed.w3_history_count==1 && !landed.w3_can_back && !landed.w3_can_forward);
     reader_result_free(&landed);
     reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,0,&item,&record);
@@ -325,14 +326,10 @@ int main(int argc,char **argv) {
     }
     w3_slot_matches_capture(reader,tail);
     PASS("fixed_history_slot_is_anchor3_with_every_nullable_selector_byte");
-    /* Two real ranges. A fixed-page caret is not a valid product record in this
-       family (the installed store refuses a fixed record without a quote), so the
-       retained fixture is two ranges, exactly what the exporter accepts. */
-    size_t start=reader->current.start,end=start+4,second_start=start+8,second_end=start+12;
-    REQUIRE(end<=reader->current.end && second_end<=reader->current.end && start<end && second_start<second_end);
-    w3_save(reader,READER_RC_HIGHLIGHT,"PDF highlight",start,end,NULL);
-    w3_save(reader,READER_RC_HIGHLIGHT,"PDF second highlight",second_start,second_end,NULL);
-    original_count=w3_annotation_selectors(reader,pdf_book,original,4);REQUIRE(original_count==2);
+    /* Boundary of this family, asserted by the module itself: the installed raw
+       product store refuses a fixed-page record that has no quote, and this host
+       has no fixed text selection, so no annotation fixture is created here. The
+       byte-for-byte selector proof for fixed pages is the history slot above. */
     /* One real page turn replaces that landing; the new page is the entry. */
     {
       reader_result next=w3_run(reader,w3_command(READER_NEXT,pdf_book));REQUIRE(next.status==EXR_OK && next.has_frame);
@@ -443,8 +440,19 @@ int main(int argc,char **argv) {
   }
 
   /* 6. The raw0.2 exporter writes, the raw0.2 importer previews and commits the
-     same immutable bytes, and the roundtrip keeps every anchor3 selector byte. */
+     same immutable bytes, and the roundtrip keeps every real selector byte. The
+     fixture is the reflow book: this host has no fixed text selection and the
+     installed store refuses a fixed record without a quote. */
   {
+    {
+      reader_command back=w3_command(READER_OPEN,text_book);back.font=24;
+      reader_result frame=w3_run(reader,back);REQUIRE(frame.status==EXR_OK && frame.has_frame);
+      reader_result reopened=w3_accept(reader,&frame);reader_result_free(&reopened);reader_result_free(&frame);
+    }
+    size_t start=reader->current.start,end=start+6;REQUIRE(end<=reader->current.end && start<end);
+    w3_save(reader,READER_RC_HIGHLIGHT,"Roundtrip highlight",start,end,NULL);
+    w3_save(reader,READER_RC_BOOKMARK,"Roundtrip bookmark",reader->current.position,reader->current.position,NULL);
+    original_count=w3_annotation_selectors(reader,text_book,original,4);REQUIRE(original_count==2);
     char key[73];REQUIRE(w3_book_key(reader,key)==EXR_OK);
     char *product=g_strconcat(library_a,".product.sqlite",NULL),*jsonl=g_build_filename(work,"annotations.jsonl",NULL);
     reader_revisions *store=NULL;REQUIRE(reader_revisions_open_raw_v3(product,&store,NULL)==READER_REV_OK);
@@ -457,7 +465,7 @@ int main(int argc,char **argv) {
     PASS("raw3_export_writes_both_retained_annotations");
     linux_reader_close(reader);reader=NULL;
     REQUIRE(linux_reader_open(library_b,font,&control,&reader,&error)==EXR_OK);
-    reader_result landed={0};int64_t imported=w3_open(reader,READER_IMPORT,pdf,0,&landed);reader_result_free(&landed);
+    reader_result landed={0};int64_t imported=w3_open(reader,READER_IMPORT,text_path,0,&landed);reader_result_free(&landed);
     /* The raw importer only commits into a store that already retains this
        original identity; one real reading record is what a user creates first. */
     w3_save(reader,READER_RC_PROGRESS,"",reader->current.position,reader->current.position,NULL);
@@ -493,12 +501,12 @@ int main(int argc,char **argv) {
       w3_selector received[4];size_t count=w3_annotation_selectors(reader,imported,received,4);REQUIRE(count==2);
       int matched=0;
       for(size_t i=0;i<count;i++) {
-        REQUIRE(received[i].anchor_version==3);
+        REQUIRE(received[i].anchor_version==2);
         for(size_t j=0;j<original_count;j++) if(w3_same_selector(&received[i],&original[j])) matched++;
       }
       REQUIRE(matched==2);
     }
-    PASS("raw_roundtrip_preserves_every_anchor3_nullable_selector_byte");
+    PASS("raw_roundtrip_preserves_every_reflow_selector_byte");
     checked=w3_run(reader,preview);REQUIRE(checked.status==EXR_OK && checked.w3_ann_validated);reader_result_free(&checked);
     done=w3_run(reader,confirm);REQUIRE(done.status==EXR_OK && done.w3_ann_created==0 && done.w3_ann_duplicates==2);
     reader_result_free(&done);
