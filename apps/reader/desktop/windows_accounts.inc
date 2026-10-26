@@ -542,9 +542,8 @@ static exr_status acct_project_step(host_job *job) {
       if (row->kind == READER_SELECTION_CONCURRENT) { o->concurrent++; continue; }
       if (row->kind == READER_SELECTION_PENDING_PARENTS) { o->pending_parents++; continue; }
       if (row->kind != READER_SELECTION_SAFE) { o->blocked++; continue; }
-      if (row->deleted) { o->tombstones++; continue; }
       char *title = NULL, *sort = NULL; reader_revision_error local = {0};
-      if (o->rkind == 0) {
+      if (!row->deleted) {
         if (reader_revision_book_title(store, row->revision, &title, &local) != READER_REV_OK) { o->project_failed++; continue; }
         sort = acct_nfc_title(title);
         reader_revision_bytes_free(title);
@@ -552,7 +551,7 @@ static exr_status acct_project_step(host_job *job) {
       }
       reader_revision_status code = reader_revision_project(store, kind, row->key, row->revision, sort, NULL, &local);
       free(sort);
-      if (code == READER_REV_OK) o->projected++;
+      if (code == READER_REV_OK) { o->projected++; if (row->deleted) o->tombstones++; }
       else if (code == READER_REV_MISSING_PARENT || code == READER_REV_UNSAFE) o->pending_parents++;
       else o->project_failed++;
     }
@@ -642,7 +641,11 @@ static exr_status acct_import_step(host_job *job) {
     if (o->rkind == 6 || !o->count) return EXR_OK;
   }
   if (acct_cancel_check(job)) return EXR_CANCELLED;
-  return acct_import_one(job, &o->page[o->index++]);
+  exr_status status=acct_import_one(job, &o->page[o->index]);
+  /* Cancellation before sideload commit must revisit the exact same original.
+     A committed import is mapped by acct_import_one even if cancel arrives. */
+  if (status==EXR_OK) o->index++;
+  return status;
 }
 static exr_status acct_receive_job(host_job *job) {
   acct_owner *o = &acct.owner; exr_status status;
