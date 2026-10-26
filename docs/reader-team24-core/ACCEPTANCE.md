@@ -70,6 +70,23 @@ It cannot build, execute business or grant acceptance. It also checks the
 unapplied pure-capture candidate diff structure only; that capability's behavior
 remains untested and outside both rounds.
 
+## Additional targeted authorization after independent capability admission
+
+Root subsequently authorized implementing the public pure-capture capability
+as an independent three-file candidate and, after its installed focused gate,
+one additional S18/S19 targeted Actions round. The candidate was admitted by
+`40348964690/1`; see `PURE-CAPTURE-ADMISSION.md` for its exact source, blobs and
+original ZIP identity. It is retained on its own branch and is not merged into
+the original protected core production tree for this round.
+
+The extra targeted round rechecks the caller/judge repairs in `5ddd1c9b`:
+S18 actual three-platform original/raw/default producers and complete original
+9+3+3 binding controls, S19 Linux/macOS shared providers and the actual Windows
+static Win32 GUI five-business path with the short-path negative. It does not
+rerun the four unrelated feature suites, SDK format/corpus or performance
+acceptance. The original two complete failures are not renumbered or reset.
+This additional run is pending dispatch from the current documentation source.
+
 ## Historical evidence, kept separate
 
 SDK format combination: `8015c576822d5284dedfea17428ecf1a240befd0`,
