@@ -1,0 +1,49 @@
+name: Authenticate expanded Android GTK reverse records
+on:
+  push:
+    branches: [codex/reader-webdav-two-device]
+    paths: ['.github/workflows/reader-android-gtk-expanded.yml']
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 77a10aa4c3ce35bffa58e9b39d8fa3ca5e776b85
+          path: source
+      - name: Build public SDK inspector from exact tested source
+        run: |
+          test "$(git -C source rev-parse HEAD)" = 77a10aa4c3ce35bffa58e9b39d8fa3ca5e776b85
+          cd source
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+          cmake -S tests/reader_gtk_receive -B build/interop-sdk-inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/interop-sdk-inspect --parallel 4
+      - name: Independently authenticate bidirectional run and public SDK original bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFY_RUN: '40396989966'
+          VERIFY_SOURCE: '77a10aa4c3ce35bffa58e9b39d8fa3ca5e776b85'
+          VERIFY_ARTIFACT: '12687597145'
+          VERIFY_BIDIRECTIONAL: 'true'
+          VERIFY_EXPANDED: 'true'
+        run: |
+          python3 tests/reader_android_real_dav/verify_run.py
+          python3 tests/reader_android_real_dav/verify_sdk_originals.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-gtk-expanded-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/android-gtk-sdk-originals/
+            build/android-gtk-verified/
+          if-no-files-found: warn
