@@ -1,0 +1,32 @@
+name: Inspect Windows performance evidence
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Windows observation run ID
+        required: true
+        type: string
+permissions:
+  actions: read
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download and report original observation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh run download "$RUN_ID" --name "reader-perf-windows-$RUN_ID-1" --dir evidence
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          paths = list(Path('evidence').rglob('summary.json'))
+          if len(paths) != 1:
+              raise SystemExit(f'expected one summary, found {paths}')
+          data = json.loads(paths[0].read_text(encoding='utf-8'))
+          print(json.dumps(data, ensure_ascii=False, indent=2))
+          PY
