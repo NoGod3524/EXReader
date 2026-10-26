@@ -343,7 +343,7 @@
     },
     {
       "name": "android-export-publication-io-candidate",
-      "source": "96950b6408667fc4b3873876ec3552dc737d28af",
+      "source": "6c36d128d3b5bedf14cab010c222a2c80079b390",
       "paths": [
         ".github/workflows/android-shared-desktop-regression.yml",
         "tests/reader_android_composition/check_publish_io.py",
