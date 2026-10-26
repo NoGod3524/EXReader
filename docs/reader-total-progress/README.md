@@ -88,3 +88,17 @@ requirements whose cited runs had completed by the cutoff, not an independently
 recorded historical snapshot. It may omit work whose earlier evidence is no
 longer represented by a currently verified item. The standard October 25
 cutoff and catalog on the composition branch remain unchanged.
+
+## 2026-10-26 latest audited snapshot
+
+The fixed catalog was re-audited in [40417554862/1](https://github.com/NoGod3524/EXReader/actions/runs/40417554862)
+at source `311d938e53c8a0bc2fc546c08780ec4abcd33af9`. The audit completed
+at 23:07:58 UTC, with `evidence_ok=true` and no reported problems. It recorded
+**66/108 (61.1%)**: foundation 12/12, platform host 54/84 and final combined
+delivery 0/12. The October 25 New York cutoff remains 58/108 (53.7%), a gain
+of eight outcomes and 7.4 percentage points. The audit artifact is `12695854108`,
+11,526 bytes, SHA-256 `2452960f873a13546455b85428b7352e044630194ff2f3be574a0ee3f81513b4`.
+
+This records the audited evidence at that source and time; it does not grant
+the still-running composition candidates or imply that six-platform delivery
+has passed. The remaining 42 outcomes do not have equal estimated effort.
