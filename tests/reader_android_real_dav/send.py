@@ -57,10 +57,11 @@ try:
     raw = adb('exec-out', 'run-as', package, 'cat', 'files/host-ui-interop-send.json')
     (a.output / 'sync-report.json').write_bytes(raw)
     observed = json.loads(raw)
+    print(json.dumps({'sync_checks': observed.get('checks'), 'failed_check': observed.get('failed_check'), 'failure': observed.get('failure')}), flush=True)
     require(process.returncode == 0 and b'HOST_SYNC_UI_PASS interop-send' in process.stdout and
             b'INSTRUMENTATION_CODE: -1' in process.stdout and observed['passed'] is True and
             all(observed.get(key) == value for key, value in identity.items()), 'actual sync UI failed')
-    require([c['name'] for c in observed['checks']] == ['actual_activity_syncs_existing_record_sender', 'actual_session_closes'], 'sync UI checks differ')
+    require([c['name'] for c in observed['checks']] == ['actual_activity_restores_shelf', 'open_sync_panel', 'configure_session_credentials', 'actual_activity_syncs_existing_record_sender', 'actual_session_closes'], 'sync UI checks differ')
     for row in manifest['originals']:
         path = '/dav/exreader-sync-v1/objects/' + row['sha256'][:2] + '/' + row['sha256'] + '.' + row['format']
         status, data = h.client.get(path)
