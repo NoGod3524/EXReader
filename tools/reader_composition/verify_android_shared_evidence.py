@@ -35,11 +35,17 @@ def pairs(items):
 def decode(data):
     return json.loads(data, object_pairs_hook=pairs)
 
+class SafeRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        redirected.remove_header('Authorization')
+        return redirected
+
 def api(path):
     req = urllib.request.Request('https://api.github.com/' + path, headers={
         'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
         'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'})
-    with urllib.request.urlopen(req, timeout=180) as response:
+    with urllib.request.build_opener(SafeRedirect()).open(req, timeout=180) as response:
         return response.read()
 
 def identity(report, sha, run):
@@ -142,3 +148,4 @@ finally:
     OUTPUT.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(result, indent=2))
 raise SystemExit(0 if result['accepted'] else 1)
+
