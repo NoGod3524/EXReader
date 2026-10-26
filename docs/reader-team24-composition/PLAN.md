@@ -529,3 +529,27 @@ The 10,000-item pause boundary is not claimed as directly tested. Seven exact
 candidate paths are adopted; three are transferred from the earlier GTK host
 input, while its other owned paths remain unchanged. This admission is not a
 combined-source build or an acceptance of cross-device organization sync.
+
+## Independent full desktop performance observations
+
+Independent source `7aab6e559d17e730067594ee7da5189bf00f6dd8` produced
+packaged-host measurements in separate runs on Windows
+[40399315487/1](https://github.com/NoGod3524/EXReader/actions/runs/40399315487)
+and GTK [40399315293/1](https://github.com/NoGod3524/EXReader/actions/runs/40399315293).
+Their original artifacts were authenticated in Actions
+[40400845380/1](https://github.com/NoGod3524/EXReader/actions/runs/40400845380)
+and [40400658924/1](https://github.com/NoGod3524/EXReader/actions/runs/40400658924),
+respectively. Windows artifact `12688856368` SHA-256 is
+`7d4b5189a6fabdda7f03a1a8fadb8aed0bff806dc11a4555a3f7d20f5838b008`;
+GTK artifact `12687543841` SHA-256 is
+`51fb1c413e2c4d2ff380c4634f04c33668a4b7633f6256888b38a3d4597dc7c3`.
+The Windows first-mapping and prepared-catalog groups each had 12 starts;
+interactive shelf p95 was 6,247.520 ms and 189.788 ms respectively. The old
+prepared-catalog measurement did not independently count all local mappings.
+GTK covered 32 starts and 520 planned UI observations; its first 50-row shelf
+p95 was 445.247 ms and page input-to-first-draw p95 was 94.145 ms. Its 3,940
+GDK after-paint events include idle intervals and probe overhead, not display
+presentation timing or a direct dropped-frame count. These are cloud samples,
+not approved performance budgets, physical-device results, final composition
+acceptance or six-platform performance evidence. The Windows 16 MiB TXT import
+measurement remained skipped after an import rejection; it is not a pass.
