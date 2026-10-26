@@ -326,7 +326,7 @@ static void acct_job_accept(host_job *job) {
     }
   } else if (job->kind == JOB_ACCOUNT_RECEIVE) {
     if (g.closing || acct.exit_wanted) { o->receiving = 0; }
-    else if (ok && o->receiving && !g.pending) {
+    else if (ok && o->receiving && !g.pending && !g.metadata_dialog) {
       next = acct_job(JOB_ACCOUNT_RECEIVE, ACCT_RECV_NEXT);
       if (next) job_submit(next); else { o->receiving = 0; acct.recv_failed = 1; acct_notice(L"无法继续接收云端书籍。"); }
     } else if (ok && o->receiving) {
@@ -382,7 +382,7 @@ static void acct_tick(void) {
       } else if (acct.view.state == READER_SESSION_CANCELLED) acct_notice(L"同步已取消；已完成的部分会保留。可重试。");
     }
     if (acct.session && acct.view.state == READER_SESSION_FINISHED && acct.received_attempt != acct.view.attempt &&
-        !g.job && !g.pending && !g.closing && !acct.exit_wanted) {
+        !g.job && !g.pending && !g.metadata_dialog && !g.closing && !acct.exit_wanted) {
       acct.received_attempt = acct.view.attempt; acct_begin_receive();
     }
   }
