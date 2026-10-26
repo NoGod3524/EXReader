@@ -1,0 +1,108 @@
+name: Android candidate shared desktop regressions
+on:
+  push:
+    branches: [codex/android-shared-desktop]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  desktop:
+    name: ${{ matrix.suite }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+        suite: [font, export]
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Admit the exact candidate source
+        run: python tools/reader_composition/guard.py --source "$GITHUB_SHA" --report build/shared-source.json
+      - name: Install build and font tools
+        run: python -m pip install ninja==1.11.1.1 fonttools==4.58.0
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Build and install the actual composed SDK
+        run: |
+          set -euo pipefail
+          mkdir -p build/shared-logs
+          cmake --preset reading-library 2>&1 | tee build/shared-logs/sdk-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/shared-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/shared-logs/sdk-install.log
+          if [ "$RUNNER_OS" = Windows ]; then
+            ws=$(cygpath -m "$PWD")
+            rtmp=$(cygpath -m "$RUNNER_TEMP")
+          else
+            ws="$PWD"
+            rtmp="$RUNNER_TEMP"
+          fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "S14_SDK_STAGE=$ws/build/reading-library/stage" >> "$GITHUB_ENV"
+          echo "S14_SDK_VERSION=3.41.0" >> "$GITHUB_ENV"
+          echo "S15_SDK_STAGE=$ws/build/reading-library/stage" >> "$GITHUB_ENV"
+          echo "S15_PREFIX=$ws/build/s15-prefix" >> "$GITHUB_ENV"
+          echo "S15_STAGE=$ws/build/s15-stage" >> "$GITHUB_ENV"
+          echo "S15_CONSUMER=$rtmp/s15-composition-consumer" >> "$GITHUB_ENV"
+      - name: Install font module and original consumers
+        if: matrix.suite == 'font'
+        run: |
+          set -euo pipefail
+          cmake -S apps/reader/font-library -B build/s14-default-off -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/s14-default-off
+          cmake -S apps/reader/font-library -B build/s14-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_FONT_LIBRARY_BUILD=ON -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$S14_SDK_STAGE" -DCMAKE_PREFIX_PATH="$S14_SDK_STAGE" -DCMAKE_INSTALL_PREFIX="$WS/build/s14-stage"
+          cmake --build build/s14-package --parallel 4 --target install
+          cmake -S tests/reader_next_s14/consumer -B build/s14-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXPECTED_SDK_VERSION=3.41.0 -DEXPECTED_SDK_TAG=sdk341 -DCMAKE_PREFIX_PATH="$WS/build/s14-stage;$S14_SDK_STAGE"
+          cmake --build build/s14-consumer --parallel 4
+      - name: Run original font cases on the composed candidate
+        if: matrix.suite == 'font'
+        run: |
+          set -euo pipefail
+          python tests/reader_android_composition/font_regression.py
+          python tests/reader_next_s14/preloaded.py
+      - name: Install original export and dependencies
+        if: matrix.suite == 'export'
+        run: |
+          set -euo pipefail
+          cmake -S extras/sideload -B build/s15-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$S15_SDK_STAGE" -DCMAKE_INSTALL_PREFIX="$S15_PREFIX"
+          cmake --build build/s15-sideload --parallel 4 --target install
+          cmake -S apps/reader/store/native -B build/s15-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$S15_PREFIX"
+          cmake --build build/s15-product --parallel 4 --target install
+          cmake -S apps/reader/revisions -B build/s15-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$S15_PREFIX" -DCMAKE_INSTALL_PREFIX="$S15_PREFIX"
+          cmake --build build/s15-revisions --parallel 4 --target install
+          cmake -S apps/reader/commands -B build/s15-commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S15_PREFIX" -DCMAKE_INSTALL_PREFIX="$S15_PREFIX"
+          cmake --build build/s15-commands --parallel 4 --target install
+          cmake -S apps/reader/original-export -B build/s15-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$S15_SDK_STAGE" -DEXR_SDK_VERSION=3.41.0 -DCMAKE_INSTALL_PREFIX="$S15_STAGE"
+          cmake --build build/s15-package --parallel 4 --target install
+          mkdir -p "$S15_CONSUMER"
+          cp tests/reader_next_s15/consumer/CMakeLists.txt tests/reader_next_s15/consumer/api.c tests/reader_next_s15/consumer/probe.cpp "$S15_CONSUMER/"
+          cmake -S "$S15_CONSUMER" -B build/s15-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S15_STAGE;$S15_SDK_STAGE;$S15_PREFIX"
+          cmake --build build/s15-consumer --parallel 4
+      - name: Run original export graph, fixtures and complete checks
+        if: matrix.suite == 'export'
+        run: |
+          set -euo pipefail
+          mkdir -p build/s15-evidence
+          python tests/reader_next_s15/check_install_graph.py --module-src apps/reader/original-export --stage "$S15_STAGE" --sdk "$S15_SDK_STAGE" --work build/s15-graph-work --consumer "$S15_CONSUMER" --output build/s15-evidence/graph.json
+          python tests/reader_next_s15/make_fixtures.py build/s15-fixtures
+          exe=""; module="$S15_STAGE/lib/libreader_original_export.a"
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; module="$S15_STAGE/lib/reader_original_export.lib"; fi
+          python tests/reader_next_s15/check_export.py "build/s15-consumer/original-export-probe$exe" "build/s15-consumer/original-export-c-consumer$exe" build/s15-fixtures build/s15-evidence "$module" "$S15_SDK_STAGE" build/s15-evidence/graph.json
+      - name: Preserve source, logs, reports and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-shared-${{ matrix.suite }}-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/shared-source.json
+            build/shared-logs/
+            build/s14-evidence/
+            build/s15-evidence/
+            build/s15-consumer/original-export-link.map
+          if-no-files-found: warn
