@@ -2,9 +2,9 @@ import hashlib, io, json, os, urllib.error, urllib.parse, urllib.request, zipfil
 from pathlib import PurePosixPath
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
 api = 'https://api.github.com/repos/NoGod3524/EXReader'
-run, artifact, size = 40417367269, 12697280724, 108135836
-source = '3e51b5a6cf59cfc5a4c032b497c6e86cbf40f118'
-digest = 'sha256:1c2f4dd5c985e435b74cac7096a8ac41b38c756da07110187de0b2a4949d42de'
+run, artifact, size = 40420011207, 12696409010, 108143179
+source = '3dd099b882749ed2bb5a1a31ef7db6af6164d931'
+digest = 'sha256:56b5c50d3deefe922a32e359dc37b6bad9b04ebbce845f4f4bb0416ebf4cd08e'
 headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'User-Agent': 'EXReader-owner-evidence-audit'}
 def get_json(path):
     with urllib.request.urlopen(urllib.request.Request(api + path, headers=headers), timeout=60) as response:
@@ -45,6 +45,7 @@ for report in (original_report, adapted_report, ui):
     assert report['source_sha'] == source and report['run_id'] == str(run) and report['attempt'] == '1'
 assert original_report['accepted'] is False and adapted_report['accepted'] is True
 assert ui['accepted'] is True and ui['checks'] == 16 and len(ui['phases']) == 4
+assert all(phase['expected_sdk_version'] == '3.40.0' for phase in ui['phases'])
 expected = ('membershipNeedsExplicitBookBootstrap', 'publicSdkBootstrapKeepsCurrentProductTitle', 'shelfAndSeriesMembershipOrder', 'missingAndDeletedDependenciesRefused')
 assert all(name in original for name in expected)
 checks = {item['name']: item['passed'] for item in adapted_report['checks']}
@@ -52,5 +53,5 @@ assert checks.get('adapted_owner_17_plus_auto_bootstrap_and_two_process_phases')
 print(json.dumps({'artifact': artifact, 'source': source, 'run': run, 'attempt': 1,
     'overall_run': 'failure', 'original_failed_cases': list(expected),
     'adapted_owner_cases': 18, 'adapted_roundtrip_accepted': True,
-    'host_sync_checks': ui['checks'], 'host_sync_phases': len(ui['phases']),
+    'host_sync_checks': ui['checks'], 'host_sync_phases': len(ui['phases']), 'expected_sdk': '3.40.0',
     'scope': 'API-34 x86_64 emulator; not original-suite or six-platform acceptance'}, indent=2))
