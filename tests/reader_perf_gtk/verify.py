@@ -193,8 +193,8 @@ def main():
     require(all(row['outcome'] == 'ok' for row in samples['samples']),
             'a planned sample failed or was missing')
     guards = summary['guards']
-    require(guards['package_files_only'] is True and guards['sdk_frozen_tree_equal'] is True
-            and guards['product_sql_equal'] is True, 'the run did not prove the frozen trees')
+    require(guards['head'] == source and guards['github_sha'] == source
+            and bool(guards['components']), 'source component identities are missing')
 
     verified = {
         'schema': 1, 'source_sha': source, 'run_id': run_id, 'attempt': attempt,
