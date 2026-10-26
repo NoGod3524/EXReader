@@ -70,10 +70,13 @@ jobs:
                   if not info.filename.endswith('.log') or info.file_size > 50 * 1024 * 1024:
                       continue
                   lines = archive.read(info).decode('utf-8', errors='replace').splitlines()
-                  selected = [line for line in lines if re.search(r'XCTAssert|Assertion|error:|failed -|failed \(', line)]
+                  failures = [index for index, line in enumerate(lines)
+                              if re.search(r'XCTAssert|Assertion|error:|failed -|failed \(', line)]
+                  indices = sorted({at for index in failures for at in range(index, min(index + 100, len(lines)))})
+                  selected = [lines[index] for index in indices]
                   if selected:
                       excerpts.append({'member': info.filename, 'sha256': hashlib.sha256(archive.read(info)).hexdigest(),
-                                       'lines': selected[:160], 'matching_lines': len(selected)})
+                                       'lines': selected[:800], 'matching_lines': len(selected)})
           assert excerpts, 'no actual failure diagnostics found'
           result = {'source': source, 'run': 40350153254, 'attempt': 1, 'artifact': artifact,
                     'artifact_sha256': digest, 'excerpts': excerpts, 'acceptance': False}
