@@ -16,6 +16,7 @@ REQUIRED_CHECKS = [
     'received_scan_retains_exact_history_without_projecting_or_importing_books',
     'received_explicit_native_action_projects_safe_metadata_in_bounded_owner_pages_without_sdk_import',
     'received_unresolved_book_versions_remain_retained_and_visible_without_choosing_a_head',
+    'received_reverse_key_eight_level_shelf_is_visible_in_gtk',
     'received_organization_is_visible_in_actual_gtk_collections_and_unresolved_is_reported',
     'received_hash_mismatch_refuses_import_without_replacing_the_existing_reader_or_cache',
     'received_symlink_cache_is_refused_without_following_or_modifying_its_target',
@@ -95,6 +96,10 @@ def run_receive_checks(context):
         revision(206,shard=225,kind='tag',key=conflict,payload={'name':'Conflict B'}),
         revision(207,shard=225,kind='shelf',key=missing,payload={'name':'Waiting','parent_id':'6'*32,'ordinal':0}),
     ]
+    reverse_shelves = ['%032x' % (1000-i) for i in range(8)]
+    for i, key in enumerate(reverse_shelves):
+        organizations.append(revision(220+i,shard=225,kind='shelf',key=key,
+            payload={'name':'Reverse '+str(i),'parent_id':reverse_shelves[i-1] if i else None,'ordinal':i}))
     for n,kind,ident in [(208,'shelf',child),(209,'tag',tag),(210,'series',series)]:
         key=book_keys['txt']
         organizations.append(revision(n,shard=225,kind='membership',key=kind+':'+ident+':'+key,
@@ -149,6 +154,15 @@ def run_receive_checks(context):
     host.key('alt+e');host.wait(lambda state: collections().get('parent_id')==parent and child in collections().get('group_ids',''),timeout=60)
     host.key('alt+g','Home');host.wait(lambda state: collections().get('selected_id')==child and book_keys['txt'] in collections().get('member_keys',''),timeout=60)
     assert collections()['selected_name']=='Cloud child' and collections()['member_ordinals']=='3'
+    host.key('alt+u');host.wait(lambda state: collections().get('parent_id')=='' and reverse_shelves[0] in collections().get('group_ids',''),timeout=60)
+    ids=collections()['group_ids'].split(',');host.key('alt+g','Home')
+    for _ in range(ids.index(reverse_shelves[0])): host.key('Down')
+    host.wait(lambda state: collections().get('selected_id')==reverse_shelves[0],timeout=60)
+    for i in range(7):
+        host.key('alt+e');host.wait(lambda state: collections().get('parent_id')==reverse_shelves[i] and reverse_shelves[i+1] in collections().get('group_ids',''),timeout=60)
+        host.key('alt+g','Home');host.wait(lambda state: collections().get('selected_id')==reverse_shelves[i+1],timeout=60)
+    assert collections()['selected_name']=='Reverse 7'
+    checked('received_reverse_key_eight_level_shelf_is_visible_in_gtk')
     host.key('alt+t','Home','Down');host.wait(lambda state: collections().get('kind')=='1' and tag in collections().get('group_ids',''),timeout=60)
     host.key('alt+g','Home');host.wait(lambda state: collections().get('selected_id')==tag and book_keys['txt'] in collections().get('member_keys',''),timeout=60)
     assert collections()['selected_name']=='Cloud tag' and conflict not in collections()['group_ids'].split(',')
@@ -298,7 +312,7 @@ def run_receive_checks(context):
     checked('received_downloaded_book_reopens_offline_from_the_sdk_when_cache_and_server_are_unavailable')
     context['flags']['http'] = 0
     open_account()
-    assert names == REQUIRED_CHECKS and len(names) == 24
+    assert names == REQUIRED_CHECKS and len(names) == 25
     return {'checks': names, 'selected_captures': len(expected), 'resolutions': resolutions,
             'found': sum(value['status'] == 0 for value in resolutions.values()), 'mislocated': 0,
             'mapped_conflict_offline_frame': conflict_frame,

@@ -162,9 +162,9 @@ jobs:
               reports = [json.loads((root/name/'result.json').read_text()) for name in ('account-ui','account-original-receive-ui')]
               identity = package['files']['bin/exreader-linux']
               assert package['source_sha'] == source and package['sdk_version'] == '3.41.0' and package['abi'] == 1
-              for report, count in zip(reports, (47,46)):
+              for report, count in zip(reports, (47 if run == '40392950450' else 48,46)):
                   assert report['accepted'] and report['count'] == count and report['source_sha'] == source and report['run_id'] == run and report['attempt'] == '1' and report['program_sha256'] == identity
-              results.append({'source_sha':source,'run_id':run,'program_sha256':identity,'new_checks':47,'original_checks':46})
+              results.append({'source_sha':source,'run_id':run,'program_sha256':identity,'new_checks':reports[0]['count'],'original_checks':46})
           current = hashlib.sha256(Path('build/account-package/EXReader-Linux/bin/exreader-linux').read_bytes()).hexdigest()
           assert current == results[-1]['program_sha256']
           Path('build/account-logs/account-identities.json').write_text(json.dumps(results,indent=2))
