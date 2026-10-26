@@ -9,6 +9,12 @@
 #ifdef EXR_READER_PREFERENCES
 #include <reader_preferences.h>
 #endif
+#ifdef EXR_READER_WAVE3
+#include <reader_annotation_import.h>
+#include <reader_font_library.h>
+#include <reader_jump_history.h>
+#include <reader_original_export.h>
+#endif
 
 /* Private GTK host messages. SDK handles stay on one worker; results own their
    page bytes and list strings and contain no borrowed layout pointers. */
@@ -29,7 +35,10 @@ typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_NAVIGATION_CLOSE, READER_RECORDS_LIST, READER_RECORDS_SAVE,
   READER_RECORDS_RETRY, READER_RECORDS_DISCARD, READER_RECORDS_HISTORY,
   READER_RECORDS_JUMP, READER_BATCH_BEGIN, READER_BATCH_NEXT,
-  READER_BATCH_MAP, READER_BATCH_CLOSE } reader_action;
+  READER_BATCH_MAP, READER_BATCH_CLOSE,
+  READER_W3_ANNOTATION_PREVIEW, READER_W3_ANNOTATION_IMPORT, READER_W3_FONT_LIST,
+  READER_W3_FONT_IMPORT, READER_W3_FONT_USE, READER_W3_FONT_REMOVE, READER_W3_EXPORT,
+  READER_W3_HISTORY, READER_W3_SYNC_STATUS } reader_action;
 #ifdef EXR_READER_BATCH_IMPORT
 typedef struct { int request,cancelled,phase,current_bytes,total_bytes; } reader_batch_control;
 typedef struct {
@@ -98,6 +107,10 @@ typedef struct {
   const char *search_query;
   reader_search_control *search_control;
   int search_request;
+#endif
+#ifdef EXR_READER_WAVE3
+  const char *w3_path,*w3_name,*w3_hash;
+  void *w3_session; /* UI-owned reader_session, kept alive until its status result is applied */
 #endif
 #ifdef EXR_READER_PREFERENCES
   reader_preferences preferences;
@@ -195,6 +208,21 @@ typedef struct {
   uint64_t search_token;
   reader_search_row *search_rows;
   size_t search_count;
+#endif
+#ifdef EXR_READER_WAVE3
+  int has_w3;
+  int w3_can_back,w3_can_forward,w3_history_count,w3_history_cursor,w3_history_code;
+  int w3_font_count,w3_font_active_missing;
+  char **w3_font_hashes,**w3_font_names;
+  char w3_font_active[RFL_HASH_BYTES];
+  int w3_ann_validated,w3_ann_code;
+  uint64_t w3_ann_bytes,w3_ann_annotations,w3_ann_heads,w3_ann_omitted,w3_ann_created,w3_ann_duplicates,w3_ann_committed;
+  char w3_ann_title[256];
+  int w3_export_code,w3_export_created,w3_export_durable,w3_export_sdk;
+  uint64_t w3_export_bytes;
+  char w3_export_path[ROE_PATH_CAP];
+  int w3_sync_code;
+  char *w3_sync_text;
 #endif
 #ifdef EXR_READER_PREFERENCES
   reader_preferences preferences;
