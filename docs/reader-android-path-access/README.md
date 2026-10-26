@@ -82,3 +82,10 @@ a failed or cancelled list refresh, with separate messages for each outcome.
 Two added real UI checks pause the post-save list read, cancel it or let its
 existing debug gate fail, and verify the saved bookmark remains. This candidate
 requires a fresh complete Actions run; no acceptance is claimed yet.
+
+The original sync check compared counts across a real sync start, whose source
+preparation can create book revisions and outbox entries. The test now checks
+full revision and outbox rows as well as counts around the idle view and again
+around a failed-session view refresh. It records both snapshots spanning the
+separate sync preparation and the reported failure in device logcat, rather
+than attributing preparation to the read-only view.
