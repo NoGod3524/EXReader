@@ -17,6 +17,7 @@ OWNED = (
     'tests/reader_wave3_c11/',
     '.github/workflows/reader-wave3-c11.yml',
     '.github/workflows/reader-wave3-c11-java.yml',
+    '.github/workflows/reader-wave3-c11-evidence.yml',
     'docs/reader-wave3-c11/',
     'HANDOFF-RESULT-C11.md',
 )

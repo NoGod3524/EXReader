@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: MIT
+# Read one recorded acceptance artifact and print the per-suite outcome it
+# contains. This job builds nothing and executes no device or native work: the
+# artifact of the requested run is downloaded and parsed inside Actions only.
+name: Reader wave3 C11 Android evidence audit
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: completed reader-wave3-c11 run whose artifact is audited
+        required: true
+        default: '40280046571'
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download the recorded artifact of that run for audit only
+        uses: actions/download-artifact@v4
+        with:
+          pattern: reader-wave3-c11-android-*
+          path: build/audit
+          merge-multiple: true
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Print every suite summary, case and phase that the bytes contain
+        run: python3 tests/reader_wave3_c11/evidence.py --root build/audit
