@@ -863,6 +863,19 @@ Both expire 2027-01-24T22:26:01Z. Group paging memberships are fixture-seeded;
 the separate HTTPS checks do not turn this into cross-platform synchronization
 or physical-device acceptance. The ten exact candidate paths are now admitted.
 
+The follow-up source `0b54a15ee9b96a6a4f51beb3600eda72e57594c8` passed
+[40414564325/1](https://github.com/NoGod3524/EXReader/actions/runs/40414564325),
+including the unchanged retained checks and same-run artifact verifier. Real
+Windows controls added and removed a book in a shelf, series and tag; the
+second Windows host received each addition and removal through the HTTPS
+fixture. The source and actual program identities were checked with the
+results. Artifact `12695193238` is 59,422,061 bytes, SHA-256
+`9a3433ed9e8c38e9ad5a5942cb33d09954e3cd043af0b1e9cbd12ce1abe26520`;
+summary `12694693655` is 4,661 bytes, SHA-256
+`6134611b17ae41b9e3431d59f4a8a4f6d57fda4136784cd356d3085b648278b6`.
+Both expire 2027-01-24T22:43:08Z. This exercises two isolated Windows
+profiles, not six devices or a third-party provider.
+
 ## Android shared-module desktop and frozen-SDK evidence
 
 Source `532b9f0dd6ce3e2ee94ec7b002e57f8a43a3bce9` passed six
