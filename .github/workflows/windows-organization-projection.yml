@@ -52,6 +52,9 @@ jobs:
       - name: Two Windows hosts synchronize organization through HTTPS
         if: ${{ always() && steps.cloud.outcome != 'skipped' }}
         run: python tests/windows_organization_projection/check_ui.py
+      - name: Browse 170 seeded members in each group on the real host
+        if: ${{ always() && steps.cloud.outcome != 'skipped' }}
+        run: python tests/windows_organization_projection/paged_ui.py
       - name: Preserve evidence and failures
         id: upload
         if: always()
@@ -73,7 +76,13 @@ jobs:
             build/organization-consumer/metadata-consumer.exe
             build/organization-ui/
             build/cloud-readback/cloud-probe.exe
+            build/cloud-readback/group-page-seed.exe
             build/cloud-ui/
+            build/group-page-ui/result.json
+            build/group-page-ui/seed.log
+            build/group-page-ui/failure.bmp
+            build/group-page-ui/profile/application.log
+            build/group-page-ui/profile/library.sqlite.product.sqlite
             !build/**/*.key
           if-no-files-found: warn
   verify:

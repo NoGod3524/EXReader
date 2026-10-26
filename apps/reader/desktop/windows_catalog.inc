@@ -24,9 +24,62 @@ static int product_page_row(void *context,const reader_catalog_row *row) {
 static int product_page_exists(void *context,const reader_catalog_row *row) {
   (void)row;*(int *)context=1;return 1;
 }
+static int product_group_row(void *context,const reader_catalog_group_book_row *row) {
+  product_page_copy *copy=context;size_t before=copy->job->product_book_count;
+  int stopped=product_page_row(context,&row->book);
+  if(copy->job->product_book_count>before) copy->job->product_cursors[before].ordinal=row->ordinal;
+  return stopped;
+}
+static int product_group_exists(void *context,const reader_catalog_group_book_row *row) {
+  (void)row;*(int *)context=1;return 1;
+}
+typedef struct { uint64_t ordinal;int active; } product_group_anchor;
+static int product_group_anchor_copy(void *context,const reader_catalog_membership_row *row) {
+  product_group_anchor *anchor=context;anchor->ordinal=row->ordinal;anchor->active=!row->group_deleted && !row->book_deleted;return 0;
+}
+static exr_status product_group_page(host_job *job,reader_catalog *catalog,reader_catalog_error *error) {
+  product_page_copy copy={job,0};int found=0,code=0,direction=job->product_shelf_direction<0 ? -1:1;
+  reader_catalog_group_kind kind=(reader_catalog_group_kind)job->product_group_kind;
+  reader_catalog_member_cursor cursor={job->product_cursor_ordinal,job->product_cursor_key};
+  const reader_catalog_member_cursor *after=job->product_cursor_key ? &cursor:NULL;
+  if(job->product_anchor_key && job->product_anchor_key[0]) {
+    product_group_anchor anchor={0};
+    code=reader_catalog_membership_find(catalog,kind,job->product_group_id,job->product_anchor_key,
+      product_group_anchor_copy,&anchor,&found,error);
+    if(!code && found && anchor.active) {
+      found=0;code=reader_catalog_find(catalog,job->product_anchor_key,job->product_shelf_query,product_page_row,&copy,&found,error);
+      if(found && job->product_book_count && !copy.failed) {
+        job->product_cursors[0].ordinal=anchor.ordinal;cursor.ordinal=anchor.ordinal;
+        cursor.book_key=job->product_cursors[0].key;after=&cursor;
+      } else after=NULL;
+    } else after=NULL;
+    direction=1;job->product_shelf_direction=0;
+  }
+  if(!code && !copy.failed && !job_cancel_flag(job)) code=reader_catalog_group_books_page(catalog,kind,
+    job->product_group_id,after,job->product_shelf_query,1,direction,50-job->product_book_count,product_group_row,&copy,error);
+  if(job_cancel_flag(job)) return EXR_CANCELLED;
+  if(copy.failed) return EXR_MEMORY;
+  if(code) return EXR_DATABASE;
+  if(direction<0) for(size_t i=0;i<job->product_book_count/2;i++) {
+    size_t j=job->product_book_count-1-i;exr_book book=job->product_books[i];host_shelf_cursor saved=job->product_cursors[i];
+    job->product_books[i]=job->product_books[j];job->product_cursors[i]=job->product_cursors[j];
+    job->product_books[j]=book;job->product_cursors[j]=saved;
+  }
+  if(job->product_book_count) {
+    host_shelf_cursor *first=&job->product_cursors[0],*last=&job->product_cursors[job->product_book_count-1];
+    reader_catalog_member_cursor edge={first->ordinal,first->key};
+    code=reader_catalog_group_books_page(catalog,kind,job->product_group_id,&edge,job->product_shelf_query,1,-1,1,
+      product_group_exists,&job->product_shelf_before,error);
+    edge.ordinal=last->ordinal;edge.book_key=last->key;
+    if(!code) code=reader_catalog_group_books_page(catalog,kind,job->product_group_id,&edge,job->product_shelf_query,1,1,1,
+      product_group_exists,&job->product_shelf_after,error);
+  }
+  return code ? EXR_DATABASE:job_cancel_flag(job) ? EXR_CANCELLED:EXR_OK;
+}
 static exr_status product_page_query(host_job *job,reader_catalog *catalog,reader_catalog_error *error) {
   job->product_books=calloc(50,sizeof(*job->product_books));job->product_cursors=calloc(50,sizeof(*job->product_cursors));
   if(!job->product_books || !job->product_cursors) return EXR_MEMORY;
+  if(job->product_group_id[0]) return product_group_page(job,catalog,error);
   product_page_copy copy={job,0};int found=0,code=0,direction=job->product_shelf_direction<0 ? -1:1;
   const char *title=job->product_cursor_title,*key=job->product_cursor_key;
   if(job->product_anchor_key && job->product_anchor_key[0]) {

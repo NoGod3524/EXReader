@@ -6,7 +6,7 @@ static void winio_accept(host_job *job);
 static void winio_controls(void) {
   if(!winio.dialog) return;
   int idle=!winio.running && !g.job && !g.pending && !g.closing;
-  const int controls[]={IDC_IO_GO,IDC_IO_ROOT,IDC_IO_UP,IDC_IO_ACTION,IDC_IO_GROUPS,IDC_IO_MORE,IDC_IO_RESUME,IDC_IO_ACK,IDC_IO_CLEANUP,IDC_IO_ROWS,IDC_IO_NAME,IDC_IO_CREATE_GROUP,IDC_IO_RECOVER_EDIT,IDC_IO_ABANDON_EDIT};
+  const int controls[]={IDC_IO_GO,IDC_IO_ROOT,IDC_IO_UP,IDC_IO_ACTION,IDC_IO_GROUPS,IDC_IO_MORE,IDC_IO_RESUME,IDC_IO_ACK,IDC_IO_CLEANUP,IDC_IO_ROWS,IDC_IO_NAME,IDC_IO_CREATE_GROUP,IDC_IO_RECOVER_EDIT,IDC_IO_ABANDON_EDIT,IDC_IO_BROWSE_GROUP,IDC_IO_SHOW_ALL};
   for(size_t i=0;i<sizeof(controls)/sizeof(controls[0]);i++) EnableWindow(GetDlgItem(winio.dialog,controls[i]),idle);
   EnableWindow(GetDlgItem(winio.dialog,IDC_IO_CANCEL),winio.running);
   EnableWindow(GetDlgItem(winio.dialog,IDC_IO_ACK),idle && winio.summary.complete);
@@ -177,6 +177,22 @@ static void winio_close(void) {
   if(winio.running && g.job && winio_kind(g.job->kind)) InterlockedExchange(&g.job->cancel,1);
   else winio_destroy();
 }
+static void winio_browse_group(int all) {
+  wchar_t message[640],label[640];
+  if(all) {
+    g.shelf_group_id[0]=0;copy_wstring(message,640,L"显示全部本机书籍。");copy_wstring(label,640,L"书架");
+  } else {
+    LRESULT selected=SendMessageW(winio.groups,LB_GETCURSEL,0,0);
+    if(winio.action_value<2 || winio.action_value>7 || selected<0 || (size_t)selected>=winio.group_count) {
+      SetWindowTextW(winio.message,L"先选择子书架、标签或系列及一个现有分组。");return;
+    }
+    g.shelf_group_kind=(winio.action_value-2)/2;
+    snprintf(g.shelf_group_id,sizeof(g.shelf_group_id),"%s",winio.group_rows[selected].id);
+    swprintf(message,640,L"正在查看分组：%ls。可在批量整理中选择显示全部。",winio.group_rows[selected].name);
+    swprintf(label,640,L"书架 · %ls：%ls",g.shelf_group_kind==0 ? L"子书架":g.shelf_group_kind==1 ? L"标签":L"系列",winio.group_rows[selected].name);
+  }
+  winio_close();SetWindowTextW(g.shelf_label,label);product_shelf_schedule(0,1);set_status(message);
+}
 static INT_PTR CALLBACK winio_dialog_proc(HWND dialog,UINT message,WPARAM wparam,LPARAM lparam) {
   (void)lparam;
   if(message==WM_INITDIALOG) {
@@ -213,6 +229,10 @@ static INT_PTR CALLBACK winio_dialog_proc(HWND dialog,UINT message,WPARAM wparam
     winio.message=make_static(dialog,IDC_IO_MESSAGE,L"明确选择后才会修改书库。");MoveWindow(winio.message,16,y,720,68,TRUE);
     MoveWindow(make_button(dialog,IDC_IO_GO,winio.mode==WINIO_CLOUD ? L"打开目录/导入选书(&I)":L"应用到选中书籍(&I)"),16,y+78,250,30,TRUE);
     MoveWindow(make_button(dialog,IDC_IO_CANCEL,L"取消未执行(&C)"),276,y+78,170,30,TRUE);
+    if(winio.mode==WINIO_BULK) {
+      MoveWindow(make_button(dialog,IDC_IO_BROWSE_GROUP,L"查看分组"),450,y+78,80,30,TRUE);
+      MoveWindow(make_button(dialog,IDC_IO_SHOW_ALL,L"显示全部"),534,y+78,78,30,TRUE);
+    }
     MoveWindow(make_button(dialog,IDC_IO_CLOSE,L"关闭"),616,y+78,120,30,TRUE);
     SendMessageW(dialog,DM_SETDEFID,IDC_IO_GO,0);winio_controls();SetFocus(winio.rows);return FALSE;
   }
@@ -244,6 +264,8 @@ static INT_PTR CALLBACK winio_dialog_proc(HWND dialog,UINT message,WPARAM wparam
     else if(id==IDC_IO_RECOVER_EDIT) winio_submit(winio_new(WINIO_RECOVER_EDIT));
     else if(id==IDC_IO_ABANDON_EDIT && MessageBoxW(dialog,L"放弃上次尚未提交的编辑？已提交的编辑不会被放弃。",L"确认放弃",MB_YESNO|MB_ICONQUESTION)==IDYES)
       winio_submit(winio_new(WINIO_ABANDON_EDIT));
+    else if(id==IDC_IO_BROWSE_GROUP) winio_browse_group(0);
+    else if(id==IDC_IO_SHOW_ALL) winio_browse_group(1);
     else if(id==IDC_IO_RESUME || id==IDC_IO_ACK || id==IDC_IO_CLEANUP)
       winio_submit(winio_new(id==IDC_IO_RESUME ? WINIO_RESUME:id==IDC_IO_ACK ? WINIO_ACK:WINIO_CLEAN));
     return TRUE;
