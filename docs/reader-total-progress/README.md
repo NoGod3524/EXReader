@@ -61,3 +61,16 @@ complete sync-account cancel/retry matrix remain separate unmet outcomes.
 Relative to yesterday this is five additional outcomes, 4.6 percentage points;
 45 fixed outcomes remain unaccepted. This replaces the earlier current snapshot,
 without changing its historical result or the fixed denominator.
+
+## GTK export and search-history evidence admitted
+
+Audit [40388795034 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40388795034),
+source `e3f9b773`, checked the original artifacts and reported 65/108 (60.2%).
+The historical cutoff remains 58/108 (53.7%): an increase of seven outcomes,
+or 6.5 percentage points. Foundation is 12/12, hosts 53/84, and final delivery
+0/12; 43 outcomes remain unaccepted.
+
+The two additional outcomes are Linux original export and search jump history,
+supported by GTK GUI run `40385948659/1`. That run did not execute the original
+navigation and batch-import retained suites. Annotation export and the full sync
+failure/cancellation/retry matrix are also not granted by this evidence.
