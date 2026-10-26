@@ -104,6 +104,7 @@ model alias.
 | G01 | `codex/dsf-gtk-export-close` | `36d5deec` | Real visible directory selection and remaining five-feature UI checks |
 | A01 | `codex/dsf-apple-ui-close` | `8ebef083aa17272c5019c8f778c03ace78e9ea96` | Pin root lossless map decoder, then execute all three-target UI phases |
 | N01 | `codex/dsf-android-ui-close` | `59f8ca9607cf9e2a864f2a1f57bd1c40f2c76baf` | Diagnose original font/report failures and complete actual raw host suites |
+| G02 | `codex/dsf-gtk-raw-wave3` | `36d5deec` | Adopt the existing public raw0.2 family for GTK five-feature host; preserve legacy OFF |
 
 Root decoder source is `9979001fba4df9fceaed3ffc89d6d9e0bcc16337`.
 Only its exact `tools/check_apple_product.py` blob is an A01 shared-owner input;
@@ -112,6 +113,15 @@ complete validation round, with Android requiring its real Java gate first.
 No earlier failure or budget is reset. Dispatch/runtime records live outside
 the repository under `exreader-team24-20261026/dispatch-deepseek`; running
 processes or emitted events do not grant product acceptance.
+
+G02 addresses an actual compatibility gap: the GTK five-feature CMake include
+currently refuses `EXR_READER_GTK_RAW3` and requires legacy feature packages.
+Other new platform hosts use raw products. The existing GTK raw reader path
+must extend to these features before granting a common raw-state format; do
+not claim interoperability from the separate legacy GUI results. G02 owns
+product/backend/raw-profile files and a new focused workflow, while G01 owns
+the legacy chooser driver. G02 waits for the corrected chooser before spending
+its one full raw GUI round. No SDK/schema change or new feature is requested.
 
 ## Final combined validation
 
