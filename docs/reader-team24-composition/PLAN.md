@@ -243,3 +243,19 @@ Composition source `b67e429f243fcb969dfba05350f12778b53a9f55` also passed
 lightweight entry protocol run `40383921001/1`. This validates the new tool
 protocol on the combined tree, without running product performance samples or
 changing the historical frozen gates.
+
+Windows opt-in run [40383119619 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40383119619)
+validated composition source `96ae2866ba86f4607c20204caa8c69a5aabde8e8`.
+Source admission, Windows job `121784391074` and authentication job
+`121787767831` all succeeded. The same retained26, compact22, raw-owner and
+16 extracted-program UI checks passed. The Windows link map contains
+`exr_webdav_download_observed`, confirming the candidate implementation is
+linked. Both the inner delivery ZIP/program and the actual outer artifact bytes
+and digest were bound to this run. Artifact `12680315131` is 19,287,962 bytes,
+SHA-256 `67d3470285ca3b750274e859892f7ce9219e9280b2407084a59338fc5bbc1366`;
+authentication artifact `12679508681` is 1,152 bytes, SHA-256
+`31775b39955c34cc73e01c1be3f19c41831bfc09cd5121f223ff14a756d5e548`.
+Both expire 2027-01-24T19:02:24Z. The test proves the linked candidate and
+retained UI checks, not a real cloud-import UI exchange, path-race safety, or
+six-platform delivery. Subsequent composition commits only pin or add other
+inputs and documentation; they require their own combined product replay.
