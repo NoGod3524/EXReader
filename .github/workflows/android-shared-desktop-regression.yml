@@ -16,8 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04]
-        suite: [export]
+        os: [ubuntu-22.04, windows-2022, macos-15]
+        suite: [font, export]
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
