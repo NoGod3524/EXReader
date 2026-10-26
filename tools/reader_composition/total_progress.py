@@ -42,9 +42,19 @@ def verify_evidence(pair):
             item = fetch('actions/artifacts/' + str(spec['artifact']))
             assert not item['expired'] and item['workflow_run']['id'] == spec['run']
             assert item['workflow_run']['head_sha'] == run['head_sha']
-            assert item['size_in_bytes'] == spec['bytes'] and item['digest'] == 'sha256:' + spec['sha256']
+            assert item['size_in_bytes'] == spec['bytes'], 'outer artifact byte count differs'
+            assert item['digest'] == 'sha256:' + spec['sha256'], 'outer artifact API digest differs'
             raw = download_artifact_zip(spec['artifact'])
             assert len(raw) == spec['bytes'] and hashlib.sha256(raw).hexdigest() == spec['sha256']
+            if spec.get('inner_zip'):
+                inner = spec['inner_zip']
+                with zipfile.ZipFile(io.BytesIO(raw)) as outer:
+                    candidates = [outer.read(info) for info in outer.infolist()
+                                  if info.filename.endswith('.zip') and info.file_size == inner['bytes']]
+                candidates = [data for data in candidates if hashlib.sha256(data).hexdigest() == inner['sha256']]
+                assert len(candidates) == 1, 'exact pinned inner ZIP absent or duplicated'
+                raw = candidates[0]
+                proof['inner_zip'] = inner
             matching = []
             with zipfile.ZipFile(io.BytesIO(raw)) as archive:
                 names = archive.namelist()

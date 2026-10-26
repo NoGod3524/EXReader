@@ -170,8 +170,12 @@
       "source_prefix": "08e1edf7",
       "expected_conclusion": "failure",
       "artifact": 12663945607,
-      "sha256": "8f245e154df69fc5218307bea76de214e1bcfe0ecb96f4c10a5bcc823be163f4",
-      "bytes": 17500770,
+      "sha256": "c528306681a1f0fc6352b3b860501e8a39e6394b4970c1ea80e69b36d50cf9c6",
+      "bytes": 19105651,
+      "inner_zip": {
+        "sha256": "8f245e154df69fc5218307bea76de214e1bcfe0ecb96f4c10a5bcc823be163f4",
+        "bytes": 17500770
+      },
       "required_cases": [
         "history-back-forward-after-real-location"
       ]
