@@ -13,6 +13,9 @@ ROOT_PATHS = frozenset((
     'tools/reader_composition/guard.py',
     'tests/reader_composition/test_guard.py',
     '.github/workflows/reader-team24-composition.yml',
+    'tools/apple_swift.py',
+    'tools/build_apple_product.py',
+    'tools/build_apple_host.py',
 ))
 BASE = 'd263ce5228838ac90c0a0dc13a5193d4a7739681'
 

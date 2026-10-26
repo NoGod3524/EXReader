@@ -16,6 +16,8 @@ jobs:
         with: {python-version: '3.12'}
       - name: Source guard negative controls
         run: python tests/reader_composition/test_guard.py
+      - name: Parse canonical production Apple build tools in Actions
+        run: python -m py_compile tools/apple_swift.py tools/build_apple_product.py tools/build_apple_host.py
       - name: Exact composition source admission
         run: python tools/reader_composition/guard.py --source "$GITHUB_SHA" --report build/composition-source.json
       - uses: actions/upload-artifact@v4
