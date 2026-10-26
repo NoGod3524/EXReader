@@ -362,3 +362,13 @@ The head-change branch lacks deterministic concurrent injection. No host invokes
 the new API yet; a source admission or this Linux test cannot establish user-visible
 organization sync or cross-device acceptance. Rebuild the combined source and
 independently integrate each host with explicit dependency ordering.
+
+Combined-source [40390918264/1](https://github.com/NoGod3524/EXReader/actions/runs/40390918264),
+source `fba9a21f25e6669614eae76ef22a3f81b3995886`, also passed both Linux
+consumer configurations and the original legacy projection regression. Its
+legacy artifact `12683195878` has SHA-256
+`7af280d97cc9c92ebb60183c27c493a361b73d3bd5c2d12d7a9bd59eaa5ccb4f`;
+raw artifact `12682386557` has SHA-256
+`61898382064402dc9d2f3125dbbd385a9a0785d65cedeca02d14c59843500681`.
+Both expire 2027-01-24T19:54:34Z. Windows/macOS builds and actual host adoption
+remain to be verified.
