@@ -117,7 +117,7 @@ static void product_shelf_accept(host_job *job) {
   g.shelf_evicted+=(unsigned)drop;if(count>g.shelf_max_cached) g.shelf_max_cached=(unsigned)count;
   product_shelf_snapshot_changed();
   SendMessageW(g.books,WM_SETREDRAW,FALSE,0);SendMessageW(g.books,LB_RESETCONTENT,0,0);
-  LRESULT top=0,selected=LB_ERR;
+  LRESULT top=job->product_anchor_predecessor && count ? (LRESULT)(count-1):0,selected=LB_ERR;
   for(size_t i=0;i<count;i++) {
     wchar_t line[512];shelf_display(&books[i],line,512);SendMessageW(g.books,LB_ADDSTRING,0,(LPARAM)line);
     if(cursors[i].key && !strcmp(cursors[i].key,top_key)) top=(LRESULT)i;
