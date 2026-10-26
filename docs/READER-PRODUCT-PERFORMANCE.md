@@ -4,7 +4,7 @@
 
 ## 可复用测量与边界
 
-原始 `reader-perf-windows.yml`、`reader-perf-gtk.yml` 及其原验证器、GTK 3.40 探针保留原有固定起点、冻结树和文件白名单检查。下列独立组合入口以当前实际源码和组件身份为依据，观测完整性检查不证明旧冻结门禁通过，也不覆盖原门禁。路径拆分后入口尚未运行验证，下一次需要组合测量时调用；下列历史结果仍属于当时运行的源码和原工作流路径。
+原始 `reader-perf-windows.yml`、`reader-perf-gtk.yml` 及其原验证器、GTK 3.40 探针保留原有固定起点、冻结树和文件白名单检查。下列独立组合入口以当前实际源码和组件身份为依据，观测完整性检查不证明旧冻结门禁通过，也不覆盖原门禁。路径拆分后的入口已进行轻量协议校验，下一次需要组合测量时再执行完整采样；下列历史结果仍属于当时运行的源码和原工作流路径。
 
 - Windows：`.github/workflows/reader-composition-perf-windows.yml` 支持手动触发和 `workflow_call`，以调用者源码构建 3.41 SDK 和实际桌面宿主，使用 `tests/windows_host/seed_shelf.c` 生成的 2202 本 SDK 原件，测量首屏、分页、搜索、翻页、恢复、导入响应和进程工作集。它记录源码、组件树、可执行文件、字体、语料、环境、逐进程结果和打包清单；不是帧时间。历史实测及 16 MiB TXT 拒绝见 `docs/READER-PERF-WINDOWS.md`。
 - Linux GTK：`.github/workflows/reader-composition-perf-gtk.yml` 支持手动触发和 `workflow_call`，使用 2202 本 SDK 原件、真实 X11 输入及宿主观测；汇总所有计划样本、RSS、包身份和环境，并以独立作业核对同次工件。没有帧时钟数据；旧实测见 `docs/READER-PERF-GTK.md`。
@@ -38,3 +38,9 @@ jobs:
 热书架首屏可交互 p50/p95/max 为 136.961/151.575/151.575 ms（12 次）；书内翻页 p50/p95/max 为 24.644/33.212/34.582 ms（96 次）；阅读组进程工作集峰值 p50/p95/max 为 48,179,200/48,340,992/48,340,992 字节。测量是控件状态的端到端延迟，不是帧时间。原 16 MiB TXT 输入诊断依旧为 `import_rejected`，该 TXT 测量组跳过；EPUB 是单独组，不能代替 TXT 结论。
 
 原始工件 `reader-perf-windows-40381230058-1`，ID `12677938567`，SHA-256 `9eb4492cd034423a034406afc3f4c98433c1bbf8cbb60ba6d7753eda9e477c88`，有效期至 2027-01-24；原始工件经 Actions [40382511094](https://github.com/NoGod3524/EXReader/actions/runs/40382511094) 下载解析。旧版运行 [40380841008](https://github.com/NoGod3524/EXReader/actions/runs/40380841008) 在宿主构建阶段失败，保留其日志；后续运行显式选择 3.41。
+
+## 组合入口轻量校验
+
+源码 `be53824393b3621a233181dfe01d7094dd20ed65`，[Actions 40383580356](https://github.com/NoGod3524/EXReader/actions/runs/40383580356) attempt 1 成功：actionlint 解析两个入口；Python 编译检查、引用文件和 CMake 种子路径检查通过；GTK 采样计划和百分位计算、直接运行及可复用调用的模拟身份检查通过，并拒绝跨 attempt 或被修改的工件；Windows 缺失或跨源码证据被拒绝。原冻结工作流、验证器和探针与起点 `11042994` 完全一致。记录工件 `reader-composition-perf-protocol-40383580356-1`，ID `12678184505`，SHA-256 `b954d55f4bd7b8927a7fcb92625a1a8f26ef18431df09a106ba977ce4d540ed6`。
+
+这些是合成证据协议检查，没有构建产品、运行实际可复用调用或重新采样；真实宿主及产物身份仍须由下次组合测量核验。
