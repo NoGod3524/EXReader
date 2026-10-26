@@ -147,11 +147,15 @@ def main(argv=None):
                 with archive.open('rb') as stream:
                     for chunk in iter(lambda: stream.read(1024 * 1024), b''):
                         value.update(chunk)
-                if value.hexdigest() != manifest['archive']['sha256']:
+                matches = value.hexdigest() == manifest['archive']['sha256']
+                size_matches = archive.stat().st_size == manifest['archive']['bytes']
+                if not matches:
                     entry['problems'].append('delivery archive bytes differ from its manifest')
+                if not size_matches:
+                    entry['problems'].append('delivery archive size differs from its manifest')
                 if manifest['files'].get(report.get('entry') or '', {}).get('sha256') != report.get('entry_sha256'):
                     entry['problems'].append('target report entry bytes differ from the delivery manifest')
-                entry['archive_verified_from_bytes'] = True
+                entry['archive_verified_from_bytes'] = matches and size_matches
             if report.get('source_sha') != args.source_sha:
                 entry['problems'].append('target report binds another source')
             if report.get('run_id') and report.get('run_id') != args.run:
