@@ -1,0 +1,53 @@
+name: Inspect Android legacy owner failure
+on:
+  push:
+    branches: [codex/android-legacy-owner-inspect]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Authenticate the failed run and inspect its original owner output
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, subprocess, zipfile
+          from pathlib import Path
+          repo = os.environ['GITHUB_REPOSITORY']
+          run = json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/actions/runs/40415252185']))
+          assert run['head_sha'] == '4d0d9d549f8412f3453b1e5a87485f5ae80bbe65'
+          assert run['run_attempt'] == 1 and run['conclusion'] == 'failure'
+          api = f'repos/{repo}/actions/artifacts/12695457660'
+          meta = json.loads(subprocess.check_output(['gh', 'api', api]))
+          assert meta['workflow_run']['id'] == 40415252185
+          assert meta['workflow_run']['head_sha'] == run['head_sha'] and not meta['expired']
+          raw = subprocess.check_output(['gh', 'api', api + '/zip'], timeout=360)
+          assert len(raw) == meta['size_in_bytes'] == 102578860
+          digest = hashlib.sha256(raw).hexdigest()
+          assert meta['digest'] == 'sha256:' + digest == 'sha256:704f92e9a7dc737d725a16b78e18da6f0fe392b67b83716999cd7b0cf2fbdc87'
+          with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              names = archive.namelist()
+              assert len(names) == len(set(names))
+              matches = [name for name in names if name.endswith('/roundtrip/original-owner.txt')]
+              assert len(matches) == 1, matches
+              owner = archive.read(matches[0])
+          out = Path('build/legacy-owner-inspect'); out.mkdir(parents=True)
+          (out/'original-owner.txt').write_bytes(owner)
+          result = {'source': run['head_sha'], 'run': run['id'], 'attempt': run['run_attempt'],
+                    'artifact': meta['id'], 'artifact_sha256': digest,
+                    'owner_sha256': hashlib.sha256(owner).hexdigest(), 'member': matches[0]}
+          (out/'identity.json').write_text(json.dumps(result, indent=2)+'\n')
+          print(json.dumps(result))
+          print(owner.decode('utf-8', errors='replace')[-12000:])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-legacy-owner-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/legacy-owner-inspect/
+          if-no-files-found: warn
