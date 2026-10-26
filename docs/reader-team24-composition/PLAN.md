@@ -124,6 +124,17 @@ product/backend/raw-profile files and a new focused workflow, while G01 owns
 the legacy chooser driver. G02 waits for the corrected chooser before spending
 its one full raw GUI round. No SDK/schema change or new feature is requested.
 
+## Core binding and provider status
+
+S18 passed its focused three-platform program/archive/header/report identity
+and original 9+3+3 semantic mutations in `40350033756` / attempt 1. The same
+run's S19 failed because its caller used a display label instead of the public
+session account UUID contract. Caller fix `8a58c537880f3b20ff0d1c2c56af9f1e573aae46`
+does not alter production contracts. Root reviewed that exact diff and started
+one S19-only round `40352943800` / attempt 1 at source
+`ad9cb9f5131301fbf93695f82db49ece573b6fc9`. S18 is skipped in this dispatch;
+the previous S19 failure remains. No S19 success is granted while it is pending.
+
 ## First production-profile Apple round
 
 Source `48b5001a1cada4db9749fb13d51a832c0df2cd93`, run `40350945698`,
