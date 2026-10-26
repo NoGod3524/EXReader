@@ -48,3 +48,7 @@
 [run 40385936562](https://github.com/NoGod3524/EXReader/actions/runs/40385936562)（源码 `e478b5e07ab89a633bf00fbca58c08ff25cab19d`）完成 sender 后，在 `open_sync_panel` 失败。Actions 内 [run 40388218100](https://github.com/NoGod3524/EXReader/actions/runs/40388218100) 读取失败时的实际无障碍树，显示阅读页仍可见；先前的就绪谓词误识别后台隐藏的书架控件。已收紧为可见且可操作后重跑；该失败不得计入 WebDAV 上传通过。
 
 共同源码接线审查：`examples/android/app/src/main/cpp/sync_jni.cpp` 的远端投影调用与 `examples/linux/received.inc` 的接收投影都限定 `book`；两处未接入 shelf、tag、series 或 membership 的远端投影。现有修订 API 支持这些实体，但现有宿主接收入口没有将其串起来；仅同步到 history 不等于书架组织已显示。修订/账户不属于本包可改宿主范围，应作为后续接入任务。
+
+[run 40388334083](https://github.com/NoGod3524/EXReader/actions/runs/40388334083)，attempt 1，源码 `034a4a38d3818f1b24889aeeb04d6f3167ef4095`：Android 实际应用经同步界面向 Apache 发送；同一作业构建的 GTK 程序经自己的同步界面接收，并实际打开 TXT、EPUB、PDF、CBZ，11 条选定进度/书签/高亮以 SDK 返回 FOUND 且范围与原始记录一致。APK SHA-256 `b9ee945d9ae871d48603378b2cec5c9d7e487ae6b278aa4dec66c34246451bdf`，加载 SDK SHA-256 `b3fc325f187a612d0fc809565faba6e9fa1d5ece2a7f7ba8158210b52db46310`；GTK 实际运行程序 SHA-256 `1c9eaa35dc15d163ff3d3671a7610940df03ad6b1bdb00e374ee7db3d5db4323`；原工件 `12681039806`，SHA-256 `98a216c7203c2965218449ac26deae046cfa9452f7683960cdddb76367bb9cb7`。
+
+独立认证 [run 40390426526](https://github.com/NoGod3524/EXReader/actions/runs/40390426526) 在 Actions 下载并散列原 ZIP，复核源码/作业、APK 与实际加载 SDK、GTK 程序、转运包 4 份原件、接收库中 19 份精确原 revision、4 个 SDK 本地映射、11 条 FOUND 数值和 682 条应用侧服务请求。报告中的 `desktop_receiver=false` 是初始化遗留值，实际 `actual_desktop_receive=true` 及接收原始结果经上述复核；它不应被改写成历史原报告。此结果只授予 Android→GTK 单向、模拟器与 Linux、所列格式和记录，不授予组织或反向。
