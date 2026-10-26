@@ -215,7 +215,7 @@ unaccepted. See `docs/reader-cloud-content-binding.md` for the full boundary.
 
 ### Windows opt-in integration
 
-The two composition-owned Windows integration/build files extend the prior
+The two Windows integration/build files are pinned to adapter source `96ae2866` and extend the prior
 Windows input. The default Wave3 host continues to select the legacy cloud
 package; the explicit `EXR_READER_WINDOWS_CLOUD_CONTENT_BOUND` option selects
 the separate installed content-bound target. The composition Windows workflow

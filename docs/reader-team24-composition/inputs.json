@@ -131,6 +131,14 @@
         "tests/reader_cloud_content/run.py",
         "tests/reader_cloud_content/strict.py"
       ]
+    },
+    {
+      "name": "windows-content-bound-adapter",
+      "source": "96ae2866ba86f4607c20204caa8c69a5aabde8e8",
+      "paths": [
+        "apps/reader/desktop/windows_feature_integration.cmake",
+        "tests/reader_wave3_c09/build.py"
+      ]
     }
   ]
 }
