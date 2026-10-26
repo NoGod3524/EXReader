@@ -58,7 +58,7 @@ def main():
         host.wait(lambda s:s['book']==identifier and s['reader_visible']==1,timeout=90)
         return identifier
     try:
-        host=Session(program.resolve(),(a.package/'Reader.otf').resolve(),a.out);(a.out/'profile').mkdir();host.launch()
+        host=Session(program.resolve(),(a.package/'Reader.otf').resolve(),a.out);(a.out/'profile').mkdir(mode=0o700);(a.out/'profile').chmod(0o700);host.launch()
         if a.phase=='gtk-first':
             book=a.out/'Relay GTK.txt';book.write_bytes(('GTK authored original.\n'*80).encode());digest=hashlib.sha256(book.read_bytes()).hexdigest()
             host.dialog(book.resolve());host.wait(lambda s:s['book']>0 and s['books']==1 and not s['error'],timeout=60)
