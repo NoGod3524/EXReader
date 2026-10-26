@@ -180,6 +180,12 @@
       "required_cases": [
         "history-back-forward-after-real-location"
       ]
+    },
+    "windows_wave3_complete": {
+      "run": 40375338225,
+      "doc": "docs/reader-wave3-c09/root-validation.json",
+      "source_doc_commit": "0d2903e62fdb0f1979f50722c3c972bf586ae085",
+      "source_prefix": "f92d1bb9"
     }
   },
   "requirements": [
@@ -399,26 +405,32 @@
       "platform": "windows",
       "title": "Windows：本地字体导入、选择/lease 与坏字体保留原页",
       "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "evidence": [
+        "windows_wave3_complete"
+      ],
+      "note": "字体导入/坏字体回滚/真实排版切换/进程重开通过；未直接测量宿主lease计数生命周期，保持partial计零。"
     },
     {
       "id": "H.windows.annotation_exchange",
       "group": "host",
       "platform": "windows",
       "title": "Windows：宿主标注文件导入/导出、预览确认及错误拒绝",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "windows_wave3_complete"
+      ],
+      "note": "同次受测原包的完整16项Windows原生UI及原包身份认证通过；最终六目标同源整合仍单独验收。"
     },
     {
       "id": "H.windows.original_export",
       "group": "host",
       "platform": "windows",
       "title": "Windows：宿主原件导出、系统保存及逐字节回读",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "windows_wave3_complete"
+      ],
+      "note": "同次受测原包的完整16项Windows原生UI及原包身份认证通过；最终六目标同源整合仍单独验收。"
     },
     {
       "id": "H.windows.jump_history",
@@ -437,8 +449,10 @@
       "platform": "windows",
       "title": "Windows：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
       "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "evidence": [
+        "windows_wave3_complete"
+      ],
+      "note": "真实失败会话及只读详情/秘密扫描通过；本轮未回放完整账号取消/重试矩阵，保持partial计零。"
     },
     {
       "id": "H.linux.startup",

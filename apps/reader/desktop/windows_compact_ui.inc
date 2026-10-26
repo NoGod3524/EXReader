@@ -154,6 +154,9 @@ static void compact_menu_update(void) {
   for(size_t i=0;i<sizeof(items)/sizeof(items[0]);i++)
     EnableMenuItem(menu,items[i].id,MF_BYCOMMAND|(IsWindowEnabled(items[i].control)?MF_ENABLED:MF_GRAYED));
   CheckMenuItem(menu,IDC_COMPACT_MORE,MF_BYCOMMAND|(compact_expanded?MF_CHECKED:MF_UNCHECKED));
+#ifdef EXR_READER_WINDOWS_WAVE3
+  w3_menu_update(menu);
+#endif
 }
 
 static void compact_create(HWND parent) {
@@ -195,6 +198,9 @@ static void compact_create(HWND parent) {
   AppendMenuW(reading,MF_STRING,IDC_ADD_NOTE,L"标注编辑…");
   AppendMenuW(reading,MF_STRING,IDC_FONT_DEC,L"缩小字号");AppendMenuW(reading,MF_STRING,IDC_FONT_INC,L"增大字号");
   AppendMenuW(reading,MF_STRING,IDC_ZOOM_DEC,L"缩小固定页");AppendMenuW(reading,MF_STRING,IDC_ZOOM_INC,L"放大固定页");
+#ifdef EXR_READER_WINDOWS_WAVE3
+  w3_menu_install(library,reading);
+#endif
   AppendMenuW(view,MF_STRING,IDC_COMPACT_SHELF,L"书架\tAlt+←");
   AppendMenuW(view,MF_STRING,IDC_COMPACT_MORE,L"更多操作(&M)");
   AppendMenuW(view,MF_STRING,IDC_CANCEL,L"取消当前任务");

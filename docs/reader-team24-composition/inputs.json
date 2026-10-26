@@ -83,6 +83,34 @@
         "tests/reader_team24_apple/ui/FeaturesUITests.swift",
         "tests/reader_team24_apple/verify.py"
       ]
+    },
+    {
+      "name": "windows-raw-wave3-host",
+      "source": "0d2903e62fdb0f1979f50722c3c972bf586ae085",
+      "tested_source": "f92d1bb9a40dd05ec6b8603172091648e4575b98",
+      "tested_run": 40375338225,
+      "paths": [
+        ".github/workflows/reader-team24-windows.yml",
+        "apps/reader/desktop/windows_compact_ui.inc",
+        "apps/reader/desktop/windows_feature_integration.cmake",
+        "apps/reader/desktop/windows_records_owner.cpp",
+        "apps/reader/desktop/windows_records_owner.h",
+        "apps/reader/desktop/windows_wave3.inc",
+        "apps/reader/desktop/windows_wave3_bridge.cpp",
+        "apps/reader/desktop/windows_wave3_types.h",
+        "docs/reader-wave3-c09/HANDOFF-DSF-W01.md",
+        "docs/reader-wave3-c09/README.md",
+        "docs/reader-wave3-c09/root-validation.json",
+        "docs/reader-wave3-c09/team24.md",
+        "examples/reader.c",
+        "tests/reader_wave3_c09/build.py",
+        "tests/reader_wave3_c09/check_ui.py",
+        "tests/reader_wave3_c09/desktop.py",
+        "tests/reader_wave3_c09/guard.py",
+        "tests/reader_wave3_c09/identity.py",
+        "tests/reader_wave3_c09/needles.py",
+        "tests/reader_wave3_c09/team24_guard.py"
+      ]
     }
   ]
 }
