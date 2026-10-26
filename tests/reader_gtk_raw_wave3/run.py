@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,6 +49,39 @@ def run(label, args, timeout=1800, env=None, expect=0):
 
 def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def make_epub(path):
+    """Two chapters with unique markers, so a search landing can never coincide
+    with the page caret the page turn produced. Same container shape as the
+    repository's sample.epub; nothing outside this attempt's work dir is read."""
+    lines = "".join("<p>line %d keeps ordinary reading words moving through the page so that "
+                    "several pages exist.</p>" % index for index in range(60))
+    chapter = ('<?xml version="1.0" encoding="utf-8"?>'
+               '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>%s</title></head><body>%s'
+               '<p>%s appears only here.</p>%s</body></html>')
+    container = ('<?xml version="1.0" encoding="utf-8"?>'
+                 '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
+                 '<rootfiles><rootfile full-path="OEBPS/book.opf" '
+                 'media-type="application/oebps-package+xml"/></rootfiles></container>')
+    package = ('<?xml version="1.0" encoding="utf-8"?>'
+               '<package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="id">'
+               '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">'
+               '<dc:identifier id="id">urn:uuid:11111111-2222-4333-8444-555555555555</dc:identifier>'
+               '<dc:title>Marker book</dc:title><dc:language>en</dc:language></metadata>'
+               '<manifest><item id="one" href="Text/first.xhtml" media-type="application/xhtml+xml"/>'
+               '<item id="two" href="Text/second.xhtml" media-type="application/xhtml+xml"/></manifest>'
+               '<spine><itemref idref="one"/><itemref idref="two"/></spine></package>')
+    path = Path(path)
+    with zipfile.ZipFile(path, "w") as archive:
+        info = zipfile.ZipInfo("mimetype")
+        archive.writestr(info, "application/epub+zip", zipfile.ZIP_STORED)
+        for name, text in (("META-INF/container.xml", container),
+                           ("OEBPS/book.opf", package),
+                           ("OEBPS/Text/first.xhtml", chapter % ("One", lines, "NEEDLEONE", lines)),
+                           ("OEBPS/Text/second.xhtml", chapter % ("Two", lines, "NEEDLETWO", lines))):
+            archive.writestr(name, text, zipfile.ZIP_DEFLATED)
+    return path
 
 
 def cmake(label, source, binary, prefix, extra=(), targets=(), install=False):
@@ -133,6 +167,7 @@ def backend(font):
             shutil.rmtree(path)
         path.mkdir(parents=True)
         path.chmod(0o700)
+    make_epub(work / "logs/markers.epub")
     binary = OUT / "raw-host/reader-gtk-wave3-raw-backend"
     done = run("raw-backend", [binary, work / "a/library.sqlite", work / "b/library.sqlite",
                                ROOT / font, ROOT / "tests/fixtures", work / "logs"], timeout=900)
@@ -147,7 +182,17 @@ def backend(font):
 
 
 def host_identity(binary):
-    symbols = run("raw-host-symbols", ["nm", "--defined-only", binary / "gtk-host/exreader-linux"]).stdout
+    wanted = ("reader_annotation_import_raw3_run", "reader_annotation_export_raw3_run",
+              "reader_jh_commit_wire_raw_v3", "reader_jh_commit_fixed_v3",
+              "reader_rs_encode_capture_raw_candidate", "reader_sync_view_capture",
+              "rfl_import_file", "roe_run")
+    names = set()
+    for line in run("raw-host-symbols", ["nm", "--defined-only",
+                                         binary / "gtk-host/exreader-linux"]).stdout.splitlines():
+        parts = line.split()
+        if parts:
+            names.add(parts[-1])
+    symbols = "\n".join(name for name in wanted if name in names)
     text = (binary / "CMakeCache.txt").read_text(encoding="utf-8", errors="replace")
     checks = [
         ("raw-prefix-selected", "READER_GTK_RAW3_PREFIX:PATH=" + str(PREFIX) in text),
