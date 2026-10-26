@@ -573,7 +573,7 @@ static void w3_font_apply(const char *hash) {
   memset(&error, 0, sizeof(error));
   if (g.job || g.pending || g.closing) { w3_message(L"当前有后台任务，完成后再切换字体。"); return; }
   if (hash) {
-    if (rfl_font_open(w3.fonts, hash, 0, &lease, &error) != RFL_OK || rfl_lease_font(lease, &font) != RFL_OK || !font) {
+    if (rfl_font_open(w3.fonts, hash, 0, &lease, &error) != RFL_OK || rfl_lease_font(lease, &font, &error) != RFL_OK || !font) {
       if (lease) rfl_lease_release(lease, &error);
       w3_message(L"字体无法打开；当前字体与画面保持不变。");
       return;
@@ -1065,7 +1065,7 @@ static void w3_startup(void) {
     exr_font *font = NULL;
     rfl_error font_error;
     memset(&font_error, 0, sizeof(font_error));
-    if (rfl_font_open(w3.fonts, saved, 0, &lease, &font_error) == RFL_OK && rfl_lease_font(lease, &font) == RFL_OK && font) {
+    if (rfl_font_open(w3.fonts, saved, 0, &lease, &font_error) == RFL_OK && rfl_lease_font(lease, &font, &font_error) == RFL_OK && font) {
       g.font = font; w3.lease = lease; snprintf(w3.selected_hash, sizeof(w3.selected_hash), "%s", saved);
     } else if (lease) rfl_lease_release(lease, &font_error);
   }
