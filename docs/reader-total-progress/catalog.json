@@ -1,0 +1,1248 @@
+{
+  "schema": 1,
+  "version": "reader-v1-total-1",
+  "scope_document": "docs/READER-PRODUCT-PLAN.md",
+  "scope_document_blob": "2667f8e7c08657eeace3bb4ab406d43d81ec0bec",
+  "definition": "完整首版固定验收目标的已核验工作比例；独立已验收功能可计其限定目标，六平台同源产品交付另列 F01-F12；不是代码行数、工作包数量、耗时比例或最终产品通过声明。",
+  "scoring": "每项 1 分；verified 且证据核对通过才计分；partial/pending/缺失证据均 0 分。分母固定 108，新增工作包不改变分母。",
+  "historical_cutoff_utc": "2026-10-26T03:59:59Z",
+  "historical_label": "2026-10-25 结束（America/New_York）",
+  "evidence": {
+    "r6_pr": {
+      "run": 39972628703,
+      "doc": "docs/READER-PRODUCT-PLAN.md"
+    },
+    "r6_default": {
+      "run": 39974986212,
+      "doc": "docs/READER-PRODUCT-PLAN.md"
+    },
+    "r6_ready": {
+      "run": 39975024792,
+      "doc": "docs/READER-PRODUCT-PLAN.md"
+    },
+    "sdk_formats": {
+      "run": 40244430230,
+      "doc": "docs/reader-team24-composition/PLAN.md",
+      "source_prefix": "8015c576"
+    },
+    "packages": {
+      "run": 40186697513,
+      "doc": "docs/READER-HOSTS-341-FINAL.md",
+      "source_prefix": "b5e49d17"
+    },
+    "store": {
+      "run": 40042300722,
+      "doc": "docs/READER-PRODUCT-PLAN.md",
+      "source_prefix": "32c31768"
+    },
+    "sideload": {
+      "run": 39980923147,
+      "doc": "docs/READER-PRODUCT-PLAN.md",
+      "source_prefix": "c2c75f99"
+    },
+    "batch": {
+      "run": 40068645513,
+      "doc": "docs/READER-PRODUCT-PLAN.md",
+      "source_prefix": "67cee469"
+    },
+    "sync": {
+      "run": 40065344267,
+      "doc": "docs/READER-PRODUCT-PLAN.md",
+      "source_prefix": "a32602be"
+    },
+    "credentials": {
+      "run": 40057087875,
+      "doc": "docs/READER-PRODUCT-PLAN.md",
+      "source_prefix": "e2247deb"
+    },
+    "pure_codec": {
+      "run": 40348964690,
+      "doc": "docs/reader-team24-composition/PLAN.md",
+      "source_prefix": "347165fe"
+    },
+    "preferences": {
+      "run": 40067465230,
+      "doc": "docs/READER-PRODUCT-PLAN.md",
+      "source_prefix": "1f51b406"
+    },
+    "search": {
+      "run": 40064018124,
+      "doc": "docs/READER-PRODUCT-PLAN.md",
+      "source_prefix": "971e528e"
+    },
+    "history_backend": {
+      "run": 40154247018,
+      "doc": "docs/READER-JUMP-HISTORY.md",
+      "source_prefix": "98cf5683"
+    },
+    "windows_base": {
+      "run": 40201283788,
+      "doc": "docs/READER-WINDOWS-COMPACT.md",
+      "source_prefix": "eab342ef"
+    },
+    "windows_cloud": {
+      "run": 40113587443,
+      "doc": "docs/READER-WINDOWS-ACCOUNT.md",
+      "source_prefix": "c74e861b"
+    },
+    "gtk_base": {
+      "run": 40184639030,
+      "doc": "docs/READER-GTK-341-FINAL.md",
+      "source_prefix": "d05946f0"
+    },
+    "gtk_receive": {
+      "run": 40087214516,
+      "doc": "docs/READER-GTK-RECEIVE.md",
+      "source_prefix": "ddaded9b"
+    },
+    "android_base": {
+      "run": 40178247177,
+      "doc": "docs/READER-ANDROID-PAGE-THEME.md",
+      "source_prefix": "57bc3966"
+    },
+    "android_shelf": {
+      "run": 40037805014,
+      "doc": "docs/READER-SHELF-ANDROID.md",
+      "source_prefix": "ed0008d6"
+    },
+    "android_organization": {
+      "run": 40059870895,
+      "doc": "docs/READER-PRODUCT-PLAN.md",
+      "source_prefix": "3f50a165"
+    },
+    "android_cloud": {
+      "run": 40081333678,
+      "doc": "docs/READER-SESSION-ANDROID.md"
+    },
+    "apple_read": {
+      "run": 40182825599,
+      "doc": "docs/READER-APPLE-HOSTS-FINAL.md",
+      "source_prefix": "2c2eabda"
+    },
+    "apple_import": {
+      "run": 40182811868,
+      "doc": "docs/READER-APPLE-HOSTS-FINAL.md",
+      "source_prefix": "2c2eabda"
+    },
+    "apple_shelf": {
+      "run": 40182804197,
+      "doc": "docs/READER-APPLE-HOSTS-FINAL.md",
+      "source_prefix": "2c2eabda"
+    },
+    "apple_records": {
+      "run": 40182795491,
+      "doc": "docs/READER-APPLE-HOSTS-FINAL.md",
+      "source_prefix": "2c2eabda"
+    },
+    "apple_search": {
+      "run": 40182794064,
+      "doc": "docs/READER-APPLE-HOSTS-FINAL.md",
+      "source_prefix": "2c2eabda"
+    },
+    "apple_navigation": {
+      "run": 40182792754,
+      "doc": "docs/READER-APPLE-HOSTS-FINAL.md",
+      "source_prefix": "2c2eabda"
+    },
+    "apple_settings": {
+      "run": 40182791189,
+      "doc": "docs/READER-APPLE-HOSTS-FINAL.md",
+      "source_prefix": "2c2eabda"
+    },
+    "gtk_fonts": {
+      "source_doc_commit": "36d5deec",
+      "run": 40279255603,
+      "doc": "docs/reader-wave3-c10/TEAM24-VALIDATION.md",
+      "source_prefix": "4561ef73",
+      "expected_conclusion": "failure",
+      "artifact": 12632725811,
+      "sha256": "03f2fef3820c41ba125bfc5eacce8a2af84e9dc5304ec5cd38766f877a2db20c",
+      "bytes": 99314481,
+      "required_cases": [
+        "font_import_lease_and_reading_agree",
+        "font_anomaly_keeps_previous_font_and_page"
+      ]
+    },
+    "windows_history": {
+      "source_doc_commit": "d9c4c20f751f5f277e5ab89c2b111b794b80e551",
+      "run": 40350379758,
+      "doc": "docs/reader-wave3-c09/team24.md",
+      "source_prefix": "08e1edf7",
+      "expected_conclusion": "failure",
+      "artifact": 12663945607,
+      "sha256": "8f245e154df69fc5218307bea76de214e1bcfe0ecb96f4c10a5bcc823be163f4",
+      "bytes": 17500770,
+      "required_cases": [
+        "history-back-forward-after-real-location"
+      ]
+    }
+  },
+  "requirements": [
+    {
+      "id": "B01",
+      "group": "foundation",
+      "title": "R6 修复、必过 PR 门禁、默认分支接纳及六原包发布准备",
+      "state": "verified",
+      "evidence": [
+        "r6_pr",
+        "r6_default",
+        "r6_ready"
+      ]
+    },
+    {
+      "id": "B02",
+      "group": "foundation",
+      "title": "原生 C11 多格式解析与自有 PDF 渲染，九格式真实文件基础",
+      "state": "verified",
+      "evidence": [
+        "sdk_formats"
+      ]
+    },
+    {
+      "id": "B03",
+      "group": "foundation",
+      "title": "冻结 SDK/ABI 与预算保留，独立版本候选及安装包边界",
+      "state": "verified",
+      "evidence": [
+        "r6_default",
+        "packages"
+      ]
+    },
+    {
+      "id": "B04",
+      "group": "foundation",
+      "title": "独立模块安装、C/C++ 公共接口、可迁移前缀和依赖组合",
+      "state": "verified",
+      "evidence": [
+        "packages"
+      ]
+    },
+    {
+      "id": "B05",
+      "group": "foundation",
+      "title": "独立产品书库、书籍身份、分类/标签/系列模型与事务式修订",
+      "state": "verified",
+      "evidence": [
+        "store"
+      ]
+    },
+    {
+      "id": "B06",
+      "group": "foundation",
+      "title": "侧载与文件夹批量导入、原件回读、去重/限额/取消",
+      "state": "verified",
+      "evidence": [
+        "sideload",
+        "batch"
+      ]
+    },
+    {
+      "id": "B07",
+      "group": "foundation",
+      "title": "用户 WebDAV 同步协议、原件/修订/outbox/冲突/墓碑",
+      "state": "verified",
+      "evidence": [
+        "sync"
+      ]
+    },
+    {
+      "id": "B08",
+      "group": "foundation",
+      "title": "平台安全凭据后端及不可用时的显式会话语义",
+      "state": "verified",
+      "evidence": [
+        "credentials"
+      ]
+    },
+    {
+      "id": "B09",
+      "group": "foundation",
+      "title": "公开纯阅读状态 codec：三模式、原始字节、点位置与无写入",
+      "state": "verified",
+      "evidence": [
+        "pure_codec"
+      ]
+    },
+    {
+      "id": "B10",
+      "group": "foundation",
+      "title": "阅读设置字段、严格解析、原子保存与故障保留",
+      "state": "verified",
+      "evidence": [
+        "preferences"
+      ]
+    },
+    {
+      "id": "B11",
+      "group": "foundation",
+      "title": "公开书内搜索和目录导航模块及真实 SDK 锚点接入",
+      "state": "verified",
+      "evidence": [
+        "search",
+        "gtk_base"
+      ]
+    },
+    {
+      "id": "B12",
+      "group": "foundation",
+      "title": "跳转历史模块、四格式重定位与隔离/无写入契约",
+      "state": "verified",
+      "evidence": [
+        "history_backend"
+      ]
+    },
+    {
+      "id": "H.windows.startup",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：原生程序可启动、离线打开书籍",
+      "state": "verified",
+      "evidence": [
+        "windows_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.windows.local_import",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：系统本地文件入口、原件导入/去重及重开（有线文件交接使用系统入口；不声称已做物理 USB 测试）",
+      "state": "verified",
+      "evidence": [
+        "windows_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.windows.cloud_import",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：宿主云端原件下载、校验、映射与可读接收",
+      "state": "verified",
+      "evidence": [
+        "windows_cloud"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.windows.bounded_shelf",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：大书库分页、搜索、继续阅读及有界列表",
+      "state": "verified",
+      "evidence": [
+        "windows_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.windows.organization",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：宿主子书架/分类、标签、系列与显式整理",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.windows.reading",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：原生重排与固定页阅读、翻页/后退/缩放；九格式引擎覆盖另列 B02",
+      "state": "verified",
+      "evidence": [
+        "windows_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.windows.records",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：产品进度、书签、标注增改删与显式 FOUND 定位",
+      "state": "verified",
+      "evidence": [
+        "windows_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.windows.search_navigation",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：书内搜索、目录与真实目标导航",
+      "state": "verified",
+      "evidence": [
+        "windows_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.windows.settings_theme",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：排版设置、浅深/系统主题及保留原内容颜色",
+      "state": "verified",
+      "evidence": [
+        "windows_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.windows.font_library",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：本地字体导入、选择/lease 与坏字体保留原页",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.windows.annotation_exchange",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：宿主标注文件导入/导出、预览确认及错误拒绝",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.windows.original_export",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：宿主原件导出、系统保存及逐字节回读",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.windows.jump_history",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：真实页面/搜索定位后的历史后退/前进",
+      "state": "verified",
+      "evidence": [
+        "windows_history"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.windows.sync_account_status",
+      "group": "host",
+      "platform": "windows",
+      "title": "Windows：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.linux.startup",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：原生程序可启动、离线打开书籍",
+      "state": "verified",
+      "evidence": [
+        "gtk_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.linux.local_import",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：系统本地文件入口、原件导入/去重及重开（有线文件交接使用系统入口；不声称已做物理 USB 测试）",
+      "state": "verified",
+      "evidence": [
+        "gtk_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.linux.cloud_import",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：宿主云端原件下载、校验、映射与可读接收",
+      "state": "verified",
+      "evidence": [
+        "gtk_receive"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.linux.bounded_shelf",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：大书库分页、搜索、继续阅读及有界列表",
+      "state": "verified",
+      "evidence": [
+        "gtk_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.linux.organization",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：宿主子书架/分类、标签、系列与显式整理",
+      "state": "verified",
+      "evidence": [
+        "gtk_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.linux.reading",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：原生重排与固定页阅读、翻页/后退/缩放；九格式引擎覆盖另列 B02",
+      "state": "verified",
+      "evidence": [
+        "gtk_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.linux.records",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：产品进度、书签、标注增改删与显式 FOUND 定位",
+      "state": "verified",
+      "evidence": [
+        "gtk_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.linux.search_navigation",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：书内搜索、目录与真实目标导航",
+      "state": "verified",
+      "evidence": [
+        "gtk_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.linux.settings_theme",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：排版设置、浅深/系统主题及保留原内容颜色",
+      "state": "verified",
+      "evidence": [
+        "gtk_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.linux.font_library",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：本地字体导入、选择/lease 与坏字体保留原页",
+      "state": "verified",
+      "evidence": [
+        "gtk_fonts"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.linux.annotation_exchange",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：宿主标注文件导入/导出、预览确认及错误拒绝",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.linux.original_export",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：宿主原件导出、系统保存及逐字节回读",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.linux.jump_history",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：真实页面/搜索定位后的历史后退/前进",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.linux.sync_account_status",
+      "group": "host",
+      "platform": "linux",
+      "title": "Linux GTK：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.macos.startup",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：原生程序可启动、离线打开书籍",
+      "state": "verified",
+      "evidence": [
+        "apple_read"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.macos.local_import",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：系统本地文件入口、原件导入/去重及重开（有线文件交接使用系统入口；不声称已做物理 USB 测试）",
+      "state": "verified",
+      "evidence": [
+        "apple_import"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.macos.cloud_import",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：宿主云端原件下载、校验、映射与可读接收",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.macos.bounded_shelf",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：大书库分页、搜索、继续阅读及有界列表",
+      "state": "verified",
+      "evidence": [
+        "apple_shelf"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.macos.organization",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：宿主子书架/分类、标签、系列与显式整理",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.macos.reading",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：原生重排与固定页阅读、翻页/后退/缩放；九格式引擎覆盖另列 B02",
+      "state": "verified",
+      "evidence": [
+        "apple_read"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.macos.records",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：产品进度、书签、标注增改删与显式 FOUND 定位",
+      "state": "verified",
+      "evidence": [
+        "apple_records"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.macos.search_navigation",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：书内搜索、目录与真实目标导航",
+      "state": "verified",
+      "evidence": [
+        "apple_search",
+        "apple_navigation"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.macos.settings_theme",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：排版设置、浅深/系统主题及保留原内容颜色",
+      "state": "verified",
+      "evidence": [
+        "apple_settings"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.macos.font_library",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：本地字体导入、选择/lease 与坏字体保留原页",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.macos.annotation_exchange",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：宿主标注文件导入/导出、预览确认及错误拒绝",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.macos.original_export",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：宿主原件导出、系统保存及逐字节回读",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.macos.jump_history",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：真实页面/搜索定位后的历史后退/前进",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.macos.sync_account_status",
+      "group": "host",
+      "platform": "macos",
+      "title": "macOS：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.android.startup",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：原生程序可启动、离线打开书籍",
+      "state": "verified",
+      "evidence": [
+        "android_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.android.local_import",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：系统本地文件入口、原件导入/去重及重开（有线文件交接使用系统入口；不声称已做物理 USB 测试）",
+      "state": "verified",
+      "evidence": [
+        "android_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.android.cloud_import",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：宿主云端原件下载、校验、映射与可读接收",
+      "state": "verified",
+      "evidence": [
+        "android_cloud"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.android.bounded_shelf",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：大书库分页、搜索、继续阅读及有界列表",
+      "state": "verified",
+      "evidence": [
+        "android_shelf"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.android.organization",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：宿主子书架/分类、标签、系列与显式整理",
+      "state": "verified",
+      "evidence": [
+        "android_organization"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.android.reading",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：原生重排与固定页阅读、翻页/后退/缩放；九格式引擎覆盖另列 B02",
+      "state": "verified",
+      "evidence": [
+        "android_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.android.records",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：产品进度、书签、标注增改删与显式 FOUND 定位",
+      "state": "verified",
+      "evidence": [
+        "android_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.android.search_navigation",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：书内搜索、目录与真实目标导航",
+      "state": "verified",
+      "evidence": [
+        "android_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.android.settings_theme",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：排版设置、浅深/系统主题及保留原内容颜色",
+      "state": "verified",
+      "evidence": [
+        "android_base"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.android.font_library",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：本地字体导入、选择/lease 与坏字体保留原页",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.android.annotation_exchange",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：宿主标注文件导入/导出、预览确认及错误拒绝",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.android.original_export",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：宿主原件导出、系统保存及逐字节回读",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.android.jump_history",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：真实页面/搜索定位后的历史后退/前进",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.android.sync_account_status",
+      "group": "host",
+      "platform": "android",
+      "title": "Android：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.iphone.startup",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：原生程序可启动、离线打开书籍",
+      "state": "verified",
+      "evidence": [
+        "apple_read"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.iphone.local_import",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：系统本地文件入口、原件导入/去重及重开（有线文件交接使用系统入口；不声称已做物理 USB 测试）",
+      "state": "verified",
+      "evidence": [
+        "apple_import"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.iphone.cloud_import",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：宿主云端原件下载、校验、映射与可读接收",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.iphone.bounded_shelf",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：大书库分页、搜索、继续阅读及有界列表",
+      "state": "verified",
+      "evidence": [
+        "apple_shelf"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.iphone.organization",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：宿主子书架/分类、标签、系列与显式整理",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.iphone.reading",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：原生重排与固定页阅读、翻页/后退/缩放；九格式引擎覆盖另列 B02",
+      "state": "verified",
+      "evidence": [
+        "apple_read"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.iphone.records",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：产品进度、书签、标注增改删与显式 FOUND 定位",
+      "state": "verified",
+      "evidence": [
+        "apple_records"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.iphone.search_navigation",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：书内搜索、目录与真实目标导航",
+      "state": "verified",
+      "evidence": [
+        "apple_search",
+        "apple_navigation"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.iphone.settings_theme",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：排版设置、浅深/系统主题及保留原内容颜色",
+      "state": "verified",
+      "evidence": [
+        "apple_settings"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.iphone.font_library",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：本地字体导入、选择/lease 与坏字体保留原页",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.iphone.annotation_exchange",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：宿主标注文件导入/导出、预览确认及错误拒绝",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.iphone.original_export",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：宿主原件导出、系统保存及逐字节回读",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.iphone.jump_history",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：真实页面/搜索定位后的历史后退/前进",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.iphone.sync_account_status",
+      "group": "host",
+      "platform": "iphone",
+      "title": "iPhone：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.ipad.startup",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：原生程序可启动、离线打开书籍",
+      "state": "verified",
+      "evidence": [
+        "apple_read"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.ipad.local_import",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：系统本地文件入口、原件导入/去重及重开（有线文件交接使用系统入口；不声称已做物理 USB 测试）",
+      "state": "verified",
+      "evidence": [
+        "apple_import"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.ipad.cloud_import",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：宿主云端原件下载、校验、映射与可读接收",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.ipad.bounded_shelf",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：大书库分页、搜索、继续阅读及有界列表",
+      "state": "verified",
+      "evidence": [
+        "apple_shelf"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.ipad.organization",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：宿主子书架/分类、标签、系列与显式整理",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.ipad.reading",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：原生重排与固定页阅读、翻页/后退/缩放；九格式引擎覆盖另列 B02",
+      "state": "verified",
+      "evidence": [
+        "apple_read"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.ipad.records",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：产品进度、书签、标注增改删与显式 FOUND 定位",
+      "state": "verified",
+      "evidence": [
+        "apple_records"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.ipad.search_navigation",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：书内搜索、目录与真实目标导航",
+      "state": "verified",
+      "evidence": [
+        "apple_search",
+        "apple_navigation"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.ipad.settings_theme",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：排版设置、浅深/系统主题及保留原内容颜色",
+      "state": "verified",
+      "evidence": [
+        "apple_settings"
+      ],
+      "note": "只授予引用证据的独立功能范围；最终共同源码仍受联合验收项约束"
+    },
+    {
+      "id": "H.ipad.font_library",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：本地字体导入、选择/lease 与坏字体保留原页",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.ipad.annotation_exchange",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：宿主标注文件导入/导出、预览确认及错误拒绝",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.ipad.original_export",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：宿主原件导出、系统保存及逐字节回读",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.ipad.jump_history",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：真实页面/搜索定位后的历史后退/前进",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "H.ipad.sync_account_status",
+      "group": "host",
+      "platform": "ipad",
+      "title": "iPad：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
+      "state": "partial",
+      "evidence": [],
+      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+    },
+    {
+      "id": "F01",
+      "group": "final",
+      "title": "六目标通过同一最终产品源码的完整功能验收",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F02",
+      "group": "final",
+      "title": "六目标原书传输：至少两端真实应用完成上传/下载/打开的共同闭环",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F03",
+      "group": "final",
+      "title": "六目标共享书架组织：子书架、分类、系列、删除与恢复一致",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F04",
+      "group": "final",
+      "title": "六目标进度/书签/标注与原始锚点双向互通，不误定位",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F05",
+      "group": "final",
+      "title": "完整客户端离线重连、并发多头/墓碑、取消/崩溃恢复闭环",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F06",
+      "group": "final",
+      "title": "最终六份程序/包从同一源码产出，解压/安装及实际程序身份绑定",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F07",
+      "group": "final",
+      "title": "最终宿主实际单 SDK/产品 SQLite 提供者与模块无私有入口依赖",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F08",
+      "group": "final",
+      "title": "固定书库/平台的产品帧时间、内存及可交互预算获真实验收",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F09",
+      "group": "final",
+      "title": "默认简洁且完整功能可达，六端完整键盘/可访问性与读屏证据分列",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F10",
+      "group": "final",
+      "title": "全链路隐私/凭据/文件稳定性/临时文件清理的真实安全出口",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F11",
+      "group": "final",
+      "title": "移动端可用部署架构与真机能力，未测项目逐项登记并补足交付缺口",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    },
+    {
+      "id": "F12",
+      "group": "final",
+      "title": "最终版本升级/旧库兼容、许可/依赖与用户安装/导入/同步说明完备",
+      "state": "pending",
+      "evidence": [],
+      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+    }
+  ]
+}

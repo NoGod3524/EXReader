@@ -1,0 +1,28 @@
+name: Fixed complete-reader progress audit
+on:
+  push:
+    branches: [codex/team24-composition]
+    paths: ['docs/reader-total-progress/**', 'tools/reader_composition/total_progress.py', '.github/workflows/reader-total-progress.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Audit the same fixed 108 outcomes at historical and current cutoffs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/reader_composition/total_progress.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-total-progress-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-total-progress/
+          if-no-files-found: error
