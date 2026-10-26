@@ -30,7 +30,7 @@ product owner；JNI 在分配收据前只消化协作取消，普通异常原样
 jump 结果时在原 owner 释放 peek。未完成的标注批次显示已提交收据，并提供明确重试。
 
 搜索与目录来自既有 `SearchPanel` / `NavigationPanel`（真实 `apps/reader/search`、
-`apps/reader/navigation` 原生包），本包交付的 APK 默认把这二者与 reading/settings/sync 一起
+`apps/reader/navigation` 原生包），本工作流的 APK 配置把这二者与 reading/settings/sync 一起
 编入，不存在“要另外加 panel 才有”的情况；共享默认构建仍保持 OFF，避免改变其它包的既有矩阵。
 
 ## 真实云端验收（仅 Actions）
