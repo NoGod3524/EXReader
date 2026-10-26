@@ -18,6 +18,9 @@ import sys
 import time
 import traceback
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tests/reader_windows_preferences'))
 import check_ui as P  # noqa: E402
@@ -485,11 +488,20 @@ def main():
             assert database_state(profile) == state_before
             for path in profile.rglob('*'):
                 if path.is_file():
+                    if path == profile / 'library.sqlite.product.lock':
+                        # The live store holds this empty lock exclusively.
+                        # Read it with every other file after normal shutdown.
+                        assert path.stat().st_size == 0, 'Product lock unexpectedly contains data'
+                        continue
                     data = path.read_bytes()
                     assert password.encode() not in data and password.encode('utf-16-le') not in data, 'Session secret persisted'
+            app.close_app()
+            for path in profile.rglob('*'):
+                if path.is_file():
+                    data = path.read_bytes()
+                    assert password.encode() not in data and password.encode('utf-16-le') not in data, 'Session secret persisted after shutdown'
             record('sync-status-read-only-failed-session')
 
-        app.close_app()
         app = P.App(args.candidate.resolve(), args.font.resolve(), out / 'profile-a', existing=True)
         app.wait_idle()
         dialog = open_feature(app, FONTS)
