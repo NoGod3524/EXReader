@@ -108,7 +108,7 @@ public final class Wave3UiTest extends Instrumentation {
         long end=SystemClock.elapsedRealtime()+30000;boolean clicked=false;
         while(SystemClock.elapsedRealtime()<end){
             if(present(node->node.isVisibleToUser()&&id(node,"import_button")))return;
-            if(!clicked&&present(node->id(node,"back_button")&&node.isVisibleToUser()&&node.isEnabled())){clickId("back_button");clicked=true;}
+            try{if(!clicked)clicked=act(node->id(node,"back_button")&&node.isVisibleToUser()&&node.isEnabled(),this::tap);}catch(IllegalStateException stale){}
             SystemClock.sleep(80);
         }
         throw new AssertionError("UI expected shelf in "+active);
