@@ -15,6 +15,7 @@ stage. Subsequent independent work packages go to DeepSeek.
 | Cloud same-open-file candidate | `c92a2e06a73d5813e86537e5a5f4a8e76a32bbcd` | cloud-import implementation, its two regression scripts, workflow and PLAN |
 | Delivery assembly and diagnostics | `eb23d0f563ba08a22f2af80b6a9f89f8c14b68d0` | explicit 21 paths in inputs.json; original S20 entry unchanged |
 | Public pure capture candidate | `a911cd0e8405a362dae1bb489190de02c4c81d51` | reading-state CMake, implementation, new capability header; focused installed validation pending |
+| Apple feature host candidate | `d9ca5805952f8069ecbdb7a724af43662d9b0a6e` | exact 21 Apple owner paths in inputs.json; full native review validation pending |
 
 These inputs retain their original records. SDK format acceptance belongs to
 `8015c576` / run `40244430230`; ordinary cloud regression belongs to
@@ -74,6 +75,21 @@ manifests record whether this profile is enabled.
 This build configuration is pending actual Apple compilation after platform
 source adoption. Actions syntax admission is not a native build or GUI grant.
 Keep the current team's separately built review apps under their own evidence.
+
+The composition workflow's explicit `production_apple` dispatch builds the
+current SDK and independent complete raw products, compiles the actual canonical
+host with wave3/page-theme enabled and review entry points absent, then uses
+the shared assemble/unpack contract and original native startup self-check on
+the unpacked binary. macOS and simulator builds run independently. Simulator
+delivery is checked on both iPhone and iPad; this is not physical-device or
+full-feature GUI acceptance.
+
+Public pure capture installed acceptance now passed: run `40348964690`,
+attempt 1, tested source `347165fe601f1bdb0cd3bb1da4c672f696195a4e`,
+unchanged production capability `a911cd0e8405a362dae1bb489190de02c4c81d51`.
+Linux, Windows, macOS consumers and strict original ZIP/program binding all
+succeeded. Earlier two failed consumer runs remain historical. Windows has
+been released to its approved combined host round `40350379758`.
 
 ## Post-stage repair routing
 

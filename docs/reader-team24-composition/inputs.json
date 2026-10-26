@@ -14,7 +14,10 @@
     {
       "name": "sdk-format-candidate",
       "source": "9d3a3f8bfa06c099ebba0d9e1ba613d276c3af09",
-      "paths": ["src/rtf.c", "src/cbz.c"]
+      "paths": [
+        "src/rtf.c",
+        "src/cbz.c"
+      ]
     },
     {
       "name": "cloud-same-open-file",
@@ -52,6 +55,33 @@
         "tools/reader_wave3_package/legacy.py",
         "tools/reader_wave3_package/mobile.py",
         "tools/reader_wave3_package/unpack.py"
+      ]
+    },
+    {
+      "name": "apple-feature-host-candidate",
+      "source": "d9ca5805952f8069ecbdb7a724af43662d9b0a6e",
+      "paths": [
+        ".github/workflows/team24-apple.yml",
+        "apps/reader/apple-feature-integration/README.md",
+        "apps/reader/apple-feature-integration/include/reader_apple_features.h",
+        "docs/handoffs/team24-apple-delivery.md",
+        "docs/handoffs/team24-apple-linkmap-owner-proposal.md",
+        "examples/apple/HostAccount.swift",
+        "examples/apple/HostCatalog.swift",
+        "examples/apple/HostModel.swift",
+        "examples/apple/HostSDK.swift",
+        "examples/apple/HostViews.swift",
+        "examples/apple/HostWave3.swift",
+        "examples/apple/HostWave3Review.swift",
+        "examples/apple/HostWave3Views.swift",
+        "examples/apple/product/ReaderProduct.h",
+        "tests/reader_team24_apple/build.py",
+        "tests/reader_team24_apple/guard.py",
+        "tests/reader_team24_apple/guard_owner.py",
+        "tests/reader_team24_apple/make_project.rb",
+        "tests/reader_team24_apple/run_ui.py",
+        "tests/reader_team24_apple/ui/FeaturesUITests.swift",
+        "tests/reader_team24_apple/verify.py"
       ]
     }
   ]
