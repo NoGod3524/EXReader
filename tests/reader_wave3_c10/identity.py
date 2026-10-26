@@ -22,8 +22,11 @@ REQUIRED = {
     'navigation': ('c10-navigation-ui', 'result.json', 'navigation_scope_passed', 'off', None),
     'records': ('c10-records-ui', 'report.json', 'reading_records_scope_passed', 'off', None),
     'batch_import': ('c10-batch-ui', 'report.json', 'batch_import_scope_passed', 'off', None),
+    'drop_import': ('c10-drop-ui', 'report.json', 'drop_import_scope_passed', 'off', None),
+    'drop_backend': ('c10-drop-backend', 'report.json', 'ok', 'drop_backend', None),
 }
 PROGRAMS = {'wave3': 'c10-compact-package', 'off': 'c10-package'}
+AUXILIARIES = {'drop_backend': 'reader-gtk-drop-backend', 'drop_source': 'reader-gtk-drop-native-source'}
 
 
 def sha(path):
@@ -71,6 +74,10 @@ def main():
                      and path.parent.parent.parent.name == folder]
             assert len(found) == 1, (folder, [str(path) for path in found])
             programs[key] = {'path': str(found[0].relative_to(root)), 'sha256': sha(found[0])}
+        for key, filename in AUXILIARIES.items():
+            found = [path for path in root.rglob(filename) if path.is_file()]
+            assert len(found) == 1, (filename, [str(path) for path in found])
+            programs[key] = {'path': str(found[0].relative_to(root)), 'sha256': sha(found[0])}
         identity['programs'] = programs
         reports = {}
         for key, (folder, filename, passed_field, program, expected_count) in REQUIRED.items():
@@ -81,7 +88,8 @@ def main():
             assert report.get(passed_field) is True, key + ' scope did not pass'
             assert not report.get('diagnostic_only'), key + ' diagnostic only'
             assert report.get('program_source_sha', source) == source, key + ' program source'
-            assert report['program_sha256'] == programs[program]['sha256'], key + ' program'
+            program_sha = report['probe_sha256' if key == 'drop_backend' else 'program_sha256']
+            assert program_sha == programs[program]['sha256'], key + ' program'
             checks = report['checks']
             assert checks and all(row.get('pass', row.get('passed')) is True for row in checks), key + ' checks'
             count = report.get('count', report.get('checks_total', len(checks)))
@@ -89,7 +97,7 @@ def main():
             if expected_count is not None:
                 assert count == expected_count, (key, count, expected_count)
             reports[key] = {'report_sha256': sha(path), 'scope_passed': True,
-                            'program_sha256': report['program_sha256'],
+                            'program_sha256': program_sha,
                             'checks': count,
                             'path': str(path.relative_to(root))}
         identity['reports'] = reports

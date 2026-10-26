@@ -26,3 +26,21 @@
 ## team24 新轮次
 
 尚待父代理登记 source、run/attempt、各 job 真实结论、原 ZIP 身份、实际程序身份、失败与未测范围。
+
+### 新第 1 轮（已完成，失败）
+
+source `a34fb18660244e0e6db121035b1ae99193b0b297`；run `40275931138` / attempt `1`。
+源码范围/冻结检查通过；SDK、所有模块、非紧凑与紧凑 GTK 宿主构建和打包、desktop ctest 通过。
+夹具步骤调用不存在的 `tests/reader_gtk_search/make_search_fixtures.py` 后失败；GUI 和五模块后端未运行。
+认证因此失败，不能将已构建包称为业务验收完成。
+
+原 ZIP id `12630401590`，78,859,779 bytes，SHA256
+`0cc2e22789ba41924f69caf5060ec47d6bf6809fdbec315a5f997de353a517d9`，
+到期 `2027-01-24T05:45:18Z`；Actions 内下载实测与 API digest/size 一致。
+本轮 compact 程序 SHA256 `7742a3b339863729ba20281200fb45a5ecd551ce51aab1c98b6ba540516979f6`；
+noncompact `09d7f28dca5f276a956f8c40a478e7325c0ebf729a5a26984e18fdd8a83fed90`。
+它们只属于本轮，不能替代后续 source 的结果。
+
+新第 2 轮准备：修正搜索基础夹具路径并先生成导航基础夹具；修正父目录定义的后端 target 路径；
+补原 drop backend 与真实拖放/粘贴 UI（此前 compact45 的粘贴条目不能覆盖完整业务）。
+各独立 GUI 套件即使前一套件失败仍执行，保留失败退出码；身份校验必须包含 drop UI/backend。
