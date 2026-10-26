@@ -1,0 +1,13 @@
+gradle.beforeProject { project ->
+    if (project.path == ':app') {
+        project.pluginManager.withPlugin('com.android.application') {
+            project.android.sourceSets.androidTest.java.srcDir new File(project.rootProject.projectDir, '../../tests/reader_android_organization_sync/java')
+            project.android.sourceSets.androidTest.java.srcDir new File(project.rootProject.projectDir, '../../build/android-organization-sync/candidate/java')
+        }
+    }
+    if (project.path == ':uitest') {
+        project.pluginManager.withPlugin('com.android.application') {
+            project.android.sourceSets.androidTest.java.setSrcDirs([new File(project.rootProject.projectDir, '../../build/wave3/candidate/java').canonicalFile])
+        }
+    }
+}
