@@ -153,6 +153,13 @@ def fill_system_dialog(app, path):
                                  parent=int(parent or 0), parent_kind=class_of(parent) if parent else None,
                                  parent_identifier=U.GetDlgCtrlID(parent) if parent else None))
             if class_of(window) == 'Edit' and visible and enabled:
+                # The Windows-2022 native Save dialog exposes its filename as
+                # Edit 1001 under ComboBox/FloatNotifySink (run 40350379758).
+                # Its address-bar 1001 is a ToolbarWindow32, not this edit.
+                if (U.GetDlgCtrlID(window) == 1001 and class_of(parent) == 'ComboBox' and
+                        class_of(U.GetParent(parent)) == 'FloatNotifySink'):
+                    candidates.append(window)
+                    return True
                 ancestor = window
                 while ancestor and ancestor != dialog:
                     # edt1 is the classic filename edit; cmb13 contains the
