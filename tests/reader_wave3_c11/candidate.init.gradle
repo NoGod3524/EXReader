@@ -1,0 +1,12 @@
+// Use generated candidates without changing any frozen original UI driver.
+// AGP snapshots variant sources while evaluating the project. Configure the
+// source set as soon as its plugin is applied, before that snapshot can occur.
+gradle.beforeProject { suite ->
+    if (suite.path == ':uitest') {
+        suite.pluginManager.withPlugin('com.android.application') {
+            def candidate = new File(suite.rootProject.projectDir, '../../build/wave3/candidate/java').canonicalFile
+            if (!candidate.isDirectory()) throw new GradleException('C11 candidate UI sources are missing')
+            suite.android.sourceSets.androidTest.java.setSrcDirs([candidate])
+        }
+    }
+}

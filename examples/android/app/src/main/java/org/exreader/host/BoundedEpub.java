@@ -46,7 +46,11 @@ final class BoundedEpub implements AutoCloseable {
     }
     private long open(int target,float fontSize,HostTask task) throws Exception {
         task.check();
-        long began=System.nanoTime(); long opened=nativeOpen(library.checked(),book,target,font,fontSize,
+        long began=System.nanoTime();
+        // A selected local font is leased per pager and released with it; otherwise the bundled font bytes are used.
+        long opened=BuildConfig.READER_WAVE3&&FontSelection.active()?nativeOpenLeased(library.checked(),book,target,FontSelection.library(),FontSelection.hash(),fontSize,
+                appearance==null?1.6f:appearance.line,appearance==null?12f:appearance.paragraph,appearance==null?32f:appearance.margin,chapterBudget,theme.enabled,theme.foreground,theme.background,task)
+                :nativeOpen(library.checked(),book,target,font,fontSize,
                 appearance==null?1.6f:appearance.line,appearance==null?12f:appearance.paragraph,appearance==null?32f:appearance.margin,chapterBudget,theme.enabled,theme.foreground,theme.background,task);
         Log.i("EXRHost","bounded open part="+target+" elapsed_ms="+((System.nanoTime()-began)/1000000L)); return opened;
     }
@@ -234,6 +238,8 @@ final class BoundedEpub implements AutoCloseable {
     @Override public void close() { closed=true; if(handle!=0) nativeClose(handle); handle=0; }
     private static native String[][] nativeParts(long library,long book);
     private static native long nativeOpen(long library,long book,int part,byte[] font,float size,float line,float paragraph,float margin,long budget,boolean themed,int foreground,int background,HostTask task);
+    /** Present only in the wave3 native library; reached only when a local font is selected. */
+    private static native long nativeOpenLeased(long library,long book,int part,long fontLibrary,String fontHash,float size,float line,float paragraph,float margin,long budget,boolean themed,int foreground,int background,HostTask task);
     private static native Frame nativeNext(long handle,HostTask task,boolean render);
     private static native Frame nativeRender(long handle,HostTask task);
     private static native long nativeCalls(long handle);
