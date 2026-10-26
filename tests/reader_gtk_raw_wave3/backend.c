@@ -471,16 +471,22 @@ int main(int argc,char **argv) {
     checked=w3_run(reader,preview);REQUIRE(checked.status==EXR_OK && checked.w3_ann_validated);reader_result_free(&checked);
     gchar *checked_bytes=NULL;gsize checked_size=0;
     REQUIRE(g_file_get_contents(jsonl,&checked_bytes,&checked_size,NULL) && checked_size>12);
+    /* The host commits the bytes it already checked, not the live pathname: the
+       damaged file below must not change what the confirmed import writes. */
     REQUIRE(g_file_set_contents(jsonl,checked_bytes,(gssize)(checked_size-12),NULL));
-    reader_result done=w3_run(reader,confirm);REQUIRE(done.status!=EXR_OK && !done.w3_ann_committed);reader_result_free(&done);
-    REQUIRE(g_file_set_contents(jsonl,checked_bytes,(gssize)checked_size,NULL));
-    PASS("raw_truncated_export_is_refused_without_commit");
-    checked=w3_run(reader,preview);REQUIRE(checked.status==EXR_OK && checked.w3_ann_validated);reader_result_free(&checked);
-    done=w3_run(reader,confirm);
+    reader_result done=w3_run(reader,confirm);
     REQUIRE(done.status==EXR_OK && done.w3_ann_committed==2 && done.w3_ann_created==2 && done.w3_ann_duplicates==0);
     reader_result_free(&done);
     rows=w3_run(reader,listing);REQUIRE(rows.status==EXR_OK && rows.records_page.count==2);reader_result_free(&rows);
-    PASS("raw_confirmed_import_commits_the_checked_file");
+    PASS("raw_confirmed_import_commits_the_checked_bytes_not_the_changed_file");
+    /* A damaged file is refused by its own preview: nothing is ever committed
+       from bytes this host has not validated. */
+    reader_result damaged=w3_run(reader,preview);
+    REQUIRE(damaged.status!=EXR_OK && !damaged.w3_ann_validated && !damaged.w3_ann_committed);
+    reader_result_free(&damaged);
+    rows=w3_run(reader,listing);REQUIRE(rows.status==EXR_OK && rows.records_page.count==2);reader_result_free(&rows);
+    REQUIRE(g_file_set_contents(jsonl,checked_bytes,(gssize)checked_size,NULL));
+    PASS("raw_damaged_export_is_refused_by_its_own_preview");
     {
       w3_selector received[4];size_t count=w3_annotation_selectors(reader,imported,received,4);REQUIRE(count==2);
       int matched=0;
