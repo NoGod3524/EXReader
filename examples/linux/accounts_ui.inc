@@ -282,6 +282,7 @@ static void accounts_received_apply(reader_result *result) {
       if(result->status==EXR_OK) {
         if(!result->receive_org_paused) accounts_present_conflicts(result);
         accounts_notice(result->receive_org_paused ? "Library update paused with more organization to process. Select Retry to continue":
+          result->receive_org_conflicted && result->receive_org_waiting ? "Some shelf organization has conflicting or incomplete versions; other items are waiting for related items. Sync or resolve them, then retry":
           result->receive_org_conflicted ? "Some shelf organization has conflicting or incomplete versions. Sync or resolve them, then retry":
           result->receive_org_waiting || result->receive_waiting ? "Some shelf organization is waiting for related items. Sync or retry to continue":
           accounts.conflicted ? "Sync finished. Some books have version conflicts; open the others to add them to this device":
