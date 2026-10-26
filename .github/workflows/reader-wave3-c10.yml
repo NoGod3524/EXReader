@@ -1,7 +1,7 @@
 name: Reader Wave 3 C10 GTK five tools
 on:
   push:
-    branches: [codex/reader-wave3-c10]
+    branches: [codex/reader-wave3-c10, codex/team24-gtk]
   workflow_dispatch:
 permissions:
   contents: read
@@ -86,8 +86,8 @@ jobs:
           build_module webdav extras/webdav
           build_module credentials extras/credentials
           build_module sideload extras/sideload -DEXR_SDK="$sdk"
-          build_module session apps/reader/session
           build_module sync apps/reader/sync
+          build_module session apps/reader/session
           build_module commands apps/reader/commands
           build_module metadata apps/reader/desktop-metadata
           build_module reading-state apps/reader/reading-state -DEXR_SDK="$sdk"
@@ -204,7 +204,7 @@ jobs:
             export PYTHONPATH="$PWD/build/gtk-atspi-client"
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
-            /usr/bin/python3 tests/reader_gtk_receive/check_atspi_fixes.py --payload build/c10-package/EXReader-Linux \
+            /usr/bin/python3 tests/reader_wave3_c10/g13_diagnostic.py --payload build/c10-package/EXReader-Linux \
               --output build/c10-atspi-fixes
           '
       - name: Retained search directory records and import business suites
@@ -269,11 +269,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p build/c10-artifact
-          gh run download "$GITHUB_RUN_ID" -n "reader-wave3-c10-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" -D build/c10-artifact
-          python3 tests/reader_wave3_c10/identity.py --artifact build/c10-artifact --output build/c10-authentication/identity.json
+          artifact_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
+            --jq ".artifacts[] | select(.name == \"reader-wave3-c10-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT\") | .id")
+          test -n "$artifact_id"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > build/c10-original.zip
+          unzip -q build/c10-original.zip -d build/c10-artifact
+          python3 tests/reader_wave3_c10/identity.py --artifact build/c10-artifact \
+            --archive build/c10-original.zip --output build/c10-authentication/identity.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: reader-wave3-c10-identity-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/c10-authentication/identity.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-wave3-c10-original-zip-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c10-original.zip
           if-no-files-found: error

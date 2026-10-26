@@ -137,6 +137,8 @@ struct linux_reader {
   void *received_data;
 #endif
 #ifdef EXR_READER_WAVE3
+  char *w3_annotation_snapshot;
+  char w3_annotation_key[73];
   rfl_library *w3_fonts;
   rfl_lease *w3_lease,*w3_candidate_lease;
   exr_font *w3_base_font,*w3_candidate_font;
@@ -1115,10 +1117,10 @@ done:
   if(owned_session) session_free(&next);
   else if(new_pager) exr_pager_free(next.pager);
 #ifdef EXR_READER_WAVE3
-  /* A refused frame must not keep a peeked history item. A leased candidate font
-     belongs to the frame still pending (pending_discard already released that
-     one), so only the peek is dropped here. */
-  if(status!=EXR_OK && command->action!=READER_COMMIT) w3_item_discard(reader);
+  /* Refused pagers above no longer borrow the candidate font. Drop both its
+     lease and any history peek; a failed COMMIT retains its pending frame for
+     the existing save retry path. */
+  if(status!=EXR_OK && command->action!=READER_COMMIT) w3_pending_discard(reader);
 #endif
   if(status!=EXR_OK) result->has_frame=0;
   result->status=status;

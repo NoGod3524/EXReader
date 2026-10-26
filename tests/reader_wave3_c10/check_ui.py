@@ -108,6 +108,13 @@ def main():
         print(json.dumps(row, ensure_ascii=False), flush=True)
         assert condition, row
 
+    def snapshot(name):
+        command('import', '-window', 'root', str(output / (name + '.png')))
+
+    def frame():
+        value = host.read()
+        return {key: value[key] for key in ('book', 'part', 'page', 'start', 'end', 'frame_generation')}
+
     def idle():
         host.wait(lambda value: not value['busy'] and not value['saving'])
 
@@ -195,9 +202,11 @@ def main():
         chooser('Import annotations', args.annotations.resolve())
         preview = element('Annotation import preview', {'dialog'})
         checked = wait_wave(lambda state: state['ann_phase'] == '2', label='preview')
+        snapshot('annotation-preview')
         record('annotation_preview_validates_without_writing',
                checked['ann_validated'] == '1' and int(checked['ann_annotations']) >= 1
-               and checked['ann_committed'] == '0' and preview is not None,
+               and checked['ann_committed'] == '0' and bus.states(preview).get('modal')
+               and any(bus.is_ancestor(preview, node) for node in bus.focused_all(app)),
                {key: checked[key] for key in ('ann_phase', 'ann_validated', 'ann_annotations', 'ann_heads',
                                               'ann_committed', 'ann_bytes')})
 
@@ -238,6 +247,7 @@ def main():
         applied = wait_wave(lambda state: state['font_busy'] == '0' and int(state['font_applied']) >= 1
                             and len(state['font_active']) == 64, label='font lease')
         primary_hash = applied['font_active']
+        snapshot('reading-font')
         click('Close', {'push button'})
         wait_nodes(lambda: not nodes('Reading font'))
         before = host.read()
@@ -256,23 +266,30 @@ def main():
         damaged = bytearray(original_bytes)
         damaged[len(damaged) // 2] ^= 0x55
         anomaly.write_bytes(bytes(damaged))
+        retained = frame()
         menu('Reading tools', 'Reading font…')
         element('Reading font', {'dialog'})
         click(second.name, {'list item'})
         click('Use selected', {'push button'})
         failed = wait_wave(lambda state: int(state['font_failed']) >= 1, label='refused font')
         notice = failed['font_notice']
+        after_failure = frame()
+        snapshot('font-failure-retains-page')
         click('Close', {'push button'})
         wait_nodes(lambda: not nodes('Reading font'))
         before = host.read()
-        host.key('F4')
-        after = host.wait(lambda value: value['generation'] > before['generation'] and not value['saving'])
+        click('Next page')
+        after = host.wait(lambda value: value['start'] != before['start'] and not value['saving'])
+        click('Previous page')
+        returned_page = host.wait(lambda value: value['start'] == before['start'] and not value['saving'])
         anomaly.write_bytes(original_bytes)
         record('font_anomaly_keeps_previous_font_and_page',
                'previous' in notice.lower() and failed['font_active'] == primary_hash
-               and after['error'] == 0 and after['book'] == before['book'],
+               and retained == after_failure and after['error'] == 0 and after['book'] == before['book']
+               and returned_page['error'] == 0 and returned_page['book'] == before['book'],
                {'font_notice': notice, 'font_active': failed['font_active'],
-                'font_failed': failed['font_failed'], 'book': after['book'], 'error': after['error']})
+                'font_failed': failed['font_failed'], 'retained': retained, 'after_failure': after_failure,
+                'next_start': after['start'], 'returned_start': returned_page['start'], 'error': after['error']})
 
         # 8. The original export reproduces the source bytes in an existing folder.
         menu('Reading tools', 'Export original…')
@@ -327,21 +344,32 @@ def main():
         # 10. Sync status is a read-only capture; it never starts a session.
         menu('Reading tools', 'Sync status…')
         element('Account and Sync', {'dialog'})
-        wait_nodes(lambda: nodes('Sync view', {'push button'}))
-        click('Sync view', {'push button'})
+        wait_nodes(lambda: nodes('Sync status', {'push button'}))
+        click('Sync status', {'push button'})
         synced = wait_wave(lambda state: int(state['sync_refreshes']) >= 1 and state['sync_busy'] == '0',
                            label='sync status')
         view = element('Sync status details', {'text'})
+        read_only = not bus.states(view).get('editable')
+        snapshot('sync-status-read-only')
+        host.key('Escape')
+        wait_nodes(lambda: not nodes('Account and Sync', {'dialog'}))
+        menu('Reading tools', 'Sync status…')
+        element('Account and Sync', {'dialog'})
+        reopened_view = element('Sync status details', {'text'})
+        reopened = wave()
+        reopened_text = bus.accessible_text(reopened_view)
         host.key('Escape')
         wait_nodes(lambda: not nodes('Account and Sync', {'dialog'}))
         account = configparser.ConfigParser(interpolation=None)
         account.read(host.observe, encoding='utf-8')
         section = dict(account['account']) if account.has_section('account') else {}
         record('sync_status_read_only',
-               synced['sync_text'].startswith('No sync session') and not bus.states(view).get('editable')
+               synced['sync_text'].startswith('No sync session') and read_only
+               and reopened['sync_text'] == synced['sync_text']
+               and reopened_text and reopened_text['text'] == synced['sync_text']
                and section.get('session_present', '0') == '0' and section.get('session_state', '0') == '0',
                {'sync_refreshes': synced['sync_refreshes'], 'sync_phase': synced['sync_phase'],
-                'sync_text': synced['sync_text'][:120], 'editable': bus.states(view).get('editable', False),
+                'sync_text': synced['sync_text'][:120], 'reopened_text': reopened_text, 'editable': not read_only,
                 'session_present': section.get('session_present'), 'session_state': section.get('session_state')})
 
         report['accepted'] = True

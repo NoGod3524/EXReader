@@ -16,25 +16,18 @@ Import F1 / Import sources(toggle button) / Shelf F2 / … / Named book.txt
 Import F1 / ""(toggle button)     / Shelf F2 / …
 ```
 
-同一位置、同一控件、同一角色，第一圈有名字，第二圈 AT-SPI 读到空名。不是"断言太严"，
-也不是重试能掩盖的抖动：
+同一位置、同一角色在两圈返回不同名字，这是已确认的失败现象。
+旧实现已有显式 ATK 名；GTK3 上游 `gtk_button_accessible_get_name` 会优先返回
+该名字。因此此前“焦点导致 accessible 对象重建”的解释未经证实，不能作为根因结论。
 
-1. 控件是 `GtkMenuButton`（GtkToggleButton 子类），当时唯一的可见内容是把标签设成符号
-   `"▾"`，再用 `atk_object_set_name()` 一次性覆盖成 `Import sources`。
-2. GTK3 的按钮名有两条来源：`AtkObject::name`（只有那一次显式赋值）与
-   `gtk_button_accessible_get_name()` 从子标签/子图像推导的后备。符号标签本身没有可读文本；
-   一旦焦点查询拿到的是重建后的可访问对象（`AtkObject::name` 为空），后备只能落到箭头
-   `GtkImage`，它的名字就是空串 —— 与 observed 的 `role=toggle button, name=""` 完全吻合。
-   同一圈里其它按钮都有文本标签，因此从未出现空名；这也解释了为什么"只此一个控件"失败。
-3. 结论：**这是产品命名缺陷**（一个只有符号的控件把自己的名字押在一次性的 ATK 覆盖上），
-   AT-SPI 只是如实报告。修断言或统一重试都会把真实缺陷藏起来。
+当前保留可读文本标签 `Import sources`，并明确设置同名 ATK 名，使可见名称与
+辅助技术名称一致。移除仅在已有非空名时重新赋同名的 focus 回调：该回调既不能
+恢复空名，也没有证据说明它修复了旧失败。原 G13 断言保持原样，新的 Actions 观测
+负责区分产品实际名称与 AT-SPI 读取/缓存异常；未通过前不声称 G13 修复完成。
 
-修法（`examples/linux/reader.c` 的 Import sources 控件）：把名字写进控件自己的可见标签
-`"Import sources"`，不再调用 `atk_object_set_name()`。平台每次查询都能从标签推出同一个名字，
-重建可访问对象也不会丢；同时补 tooltip 说明它是导入入口。控件仍是 `GtkMenuButton`，
-菜单项、鼠标点击与键盘激活路径不变（`tests/reader_gtk_batch_import`、
-`tests/reader_gtk_drop_import` 仍按 `Import sources` 名字点击）。
-
+上游依据：
+https://github.com/GNOME/gtk/blob/gtk-3-24/gtk/a11y/gtkbuttonaccessible.c
+（get_name 优先显式名，notify::label 仅处理未显式命名时的标签派生通知）。
 ## 2. 五模块接入（全部真实用户流程）
 
 `wave3_backend.inc`（SDK owner worker）与 `wave3_ui.inc`（GTK）通过 `reading.c`/`reader.c`

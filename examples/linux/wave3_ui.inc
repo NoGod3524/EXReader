@@ -19,10 +19,6 @@ static struct {
 
 static gboolean w3_opened(void) { return w3.ann_dialog!=NULL || w3.font_dialog!=NULL; }
 static gboolean w3_sync_busy(void) { return w3.sync_busy; }
-static void w3_register_history(GtkWidget *back,GtkWidget *forward) {
-  w3.back_item=back;w3.forward_item=forward;
-  gtk_widget_set_sensitive(back,FALSE);gtk_widget_set_sensitive(forward,FALSE);
-}
 static void w3_restore_focus(void) {
 #ifdef EXR_READER_GTK_COMPACT
   if(window && !closing) {
@@ -36,6 +32,9 @@ static gboolean w3_ready(void) {
     status(EXR_ARGUMENT,"Open a book to use the reading tools");return FALSE;
   }
   if(busy || saving || save_failed) { status(EXR_OK,"Reading operation in progress; try again when it finishes");return FALSE; }
+  if(w3.ann_phase==W3_CHECKING || w3.ann_phase==W3_IMPORTING || w3.font_busy || w3.export_phase==W3_CHECKING) {
+    status(EXR_OK,"Reading tool operation in progress; try again when it finishes");return FALSE;
+  }
   if(w3_opened()) return FALSE;
   return TRUE;
 }
@@ -78,7 +77,8 @@ static void w3_annotation_response(GtkDialog *dialog,int response,gpointer unuse
     host_job *job=w3_job(READER_W3_ANNOTATION_IMPORT);job->command.w3_path=g_strdup(w3.ann_path);
     w3.ann_phase=W3_IMPORTING;status(EXR_OK,"Importing annotations");w3_push(job);
   } else {
-    w3.ann_phase=W3_IDLE;status(EXR_OK,"Annotation import cancelled; nothing was imported");
+    w3.ann_phase=W3_IDLE;w3_push(w3_job(READER_W3_ANNOTATION_DISCARD));
+    status(EXR_OK,"Annotation import cancelled; nothing was imported");
   }
   gtk_widget_destroy(GTK_WIDGET(dialog));
 }
@@ -275,7 +275,8 @@ static void w3_export_open(GtkWidget *item,gpointer unused) {
 
 /* ---- read-only sync status, shown inside the Account and Sync window ---- */
 static void w3_sync_set_text(const char *text) {
-  g_free(w3.sync_text);w3.sync_text=g_strdup(text ? text:"");
+  /* Reopening the window passes the saved text back into this function. */
+  char *copy=g_strdup(text ? text:"");g_free(w3.sync_text);w3.sync_text=copy;
   if(w3.sync_view) gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w3.sync_view)),w3.sync_text,-1);
 }
 static void w3_sync_refresh(GtkWidget *button,gpointer unused) {
@@ -312,15 +313,48 @@ static void w3_synced(const reader_result *result) {
   if(w3.sync_button) gtk_widget_set_sensitive(w3.sync_button,TRUE);
 }
 
+/* Both desktop layouts expose the same low-frequency native actions. */
+static void w3_tools_menu(GtkWidget *menu) {
+  GtkWidget *heading=gtk_menu_item_new_with_label("Reading tools"),*tools=gtk_menu_new();
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(heading),tools);
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu),heading);
+  const char *titles[]={"Import annotations…","Reading font…","Export original…",
+    "Back to previous position","Forward to next position","Sync status…"};
+  GCallback callbacks[]={G_CALLBACK(w3_annotation_open),G_CALLBACK(w3_fonts_open),G_CALLBACK(w3_export_open),
+    G_CALLBACK(w3_history_menu),G_CALLBACK(w3_history_menu),G_CALLBACK(w3_sync_open)};
+  for(size_t i=0;i<G_N_ELEMENTS(titles);i++) {
+    GtkWidget *item=gtk_menu_item_new_with_label(titles[i]);
+    gtk_menu_shell_append(GTK_MENU_SHELL(tools),item);
+    gpointer value=i==3 ? GINT_TO_POINTER(-1):i==4 ? GINT_TO_POINTER(1):NULL;
+    g_signal_connect(item,"activate",callbacks[i],value);
+    if(i==3) w3.back_item=item;
+    if(i==4) w3.forward_item=item;
+  }
+  w3_history_update();
+}
+
 /* ---- dispatch ---- */
 static gboolean w3_apply(host_result *done) {
   reader_result *result=&done->value;
-  if(done->action<READER_W3_ANNOTATION_PREVIEW || done->action>READER_W3_SYNC_STATUS ||
-     done->action==READER_W3_FONT_USE || done->action==READER_W3_HISTORY) return FALSE;
+  if(done->action<READER_W3_ANNOTATION_PREVIEW || done->action>READER_W3_SYNC_STATUS) return FALSE;
   /* A result from a superseded book switch must not open or update a tool view. */
-  if(done->generation!=g_atomic_int_get(&generation)) return TRUE;
+  if(done->generation!=g_atomic_int_get(&generation)) {
+    /* The worker has released the borrowed inputs even when its view is stale.
+       In particular sync_busy must stop retaining the account session. */
+    if(done->action==READER_W3_SYNC_STATUS) {
+      w3.sync_busy=FALSE;w3.sync_phase=W3_IDLE;
+      if(w3.sync_button) gtk_widget_set_sensitive(w3.sync_button,TRUE);
+    } else if(done->action>=READER_W3_FONT_LIST && done->action<=READER_W3_FONT_REMOVE) {
+      w3.font_busy=FALSE;w3_fonts_update();
+    } else if(done->action==READER_W3_ANNOTATION_PREVIEW || done->action==READER_W3_ANNOTATION_IMPORT) {
+      w3.ann_phase=W3_IDLE;
+    } else if(done->action==READER_W3_EXPORT) w3.export_phase=W3_IDLE;
+    state();return TRUE;
+  }
+  if(done->action==READER_W3_FONT_USE || done->action==READER_W3_HISTORY) return FALSE;
   switch(done->action) {
     case READER_W3_ANNOTATION_PREVIEW: w3_annotation_previewed(result);break;
+    case READER_W3_ANNOTATION_DISCARD: break;
     case READER_W3_ANNOTATION_IMPORT: w3_annotation_imported(result);break;
     case READER_W3_FONT_LIST: case READER_W3_FONT_IMPORT: case READER_W3_FONT_REMOVE: w3_fonts_applied(result,done->action);break;
     case READER_W3_EXPORT: w3_exported(result);break;

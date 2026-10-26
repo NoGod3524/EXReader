@@ -68,9 +68,15 @@ static void w3_candidate_discard(linux_reader *reader) {
 static void w3_pending_discard(linux_reader *reader) {
   w3_candidate_discard(reader);w3_item_discard(reader);
 }
+static void w3_annotation_discard(linux_reader *reader) {
+  if(reader->w3_annotation_snapshot) unlink(reader->w3_annotation_snapshot);
+  g_clear_pointer(&reader->w3_annotation_snapshot,g_free);
+  reader->w3_annotation_key[0]=0;
+}
 /* Runs after the accepted pending frame replaced reader->current, so the old pager is gone. */
 static void w3_free(linux_reader *reader) {
   w3_pending_discard(reader);
+  w3_annotation_discard(reader);
   if(reader->w3_exporter) roe_destroy(&reader->w3_exporter);
   if(reader->w3_history) { reader_jh_error problem={0};reader_jh_close(&reader->w3_history,&problem); }
   if(reader->w3_lease) { rfl_error problem={0};rfl_lease_release(reader->w3_lease,&problem); }
@@ -207,6 +213,11 @@ static exr_status w3_font_use(linux_reader *reader,reader_session *next,const re
     }
     g_strlcpy(hash,command->w3_hash,sizeof(hash));
   }
+  /* Transfer the lease before creating anything that borrows its font. The
+     execute epilogue destroys a refused pager before discarding this candidate,
+     including failures after this helper returned (notes or cancellation). */
+  reader->w3_candidate_lease=lease;reader->w3_candidate_font=font;reader->w3_candidate_pending=1;
+  g_strlcpy(reader->w3_candidate_hash,hash,sizeof(reader->w3_candidate_hash));
   exr_anchor point={0};exr_anchor_match match={0};size_t position=next->position;
   next->font=command->font;
   exr_status status=capture(reader,next,position,position,&point,error);
@@ -228,16 +239,51 @@ static exr_status w3_font_use(linux_reader *reader,reader_session *next,const re
   if(status==EXR_OK) { status=render(reader,next,0,1,position,result,error);next->position=position; }
   exr_anchor_free(&point);
   if(status!=EXR_OK) {
-    if(lease) rfl_lease_release(lease,&problem);
     if(!result->message[0]) snprintf(result->message,sizeof(result->message),"Reading font could not be applied; previous font and page retained");
     return status;
   }
-  reader->w3_candidate_lease=lease;reader->w3_candidate_font=font;reader->w3_candidate_pending=1;
-  g_strlcpy(reader->w3_candidate_hash,hash,sizeof(reader->w3_candidate_hash));
   return EXR_OK;
 }
 
 typedef struct { linux_reader *reader;int preview;uint64_t records;char title[256]; } w3_import;
+/* Keep the checked bytes through confirmation. The importer itself also spools
+   each invocation, but reopening the user's pathname would check a new file. */
+static exr_status w3_annotation_snapshot(linux_reader *reader,const char *path) {
+  int source=-1,target=-1;char *temporary=NULL;exr_status status=EXR_IO;
+  struct stat info;uint64_t bytes=0;char block[16384];
+  w3_annotation_discard(reader);
+  if(!path || !path[0]) return EXR_ARGUMENT;
+  source=open(path,O_RDONLY|O_CLOEXEC|O_NOFOLLOW);
+  if(source<0 || fstat(source,&info) || !S_ISREG(info.st_mode)) goto done;
+  if(info.st_size<0 || (uint64_t)info.st_size>READER_ANNOTATION_IMPORT_DEFAULT_MAX_BYTES) { status=EXR_LIMIT;goto done; }
+  char *directory=g_path_get_dirname(reader->catalog_path);
+  if(!accounts_private_directory(directory,0)) { g_free(directory);goto done; }
+  temporary=g_build_filename(directory,".reader-annotation-XXXXXX",NULL);g_free(directory);
+  target=g_mkstemp_full(temporary,O_RDWR|O_CLOEXEC,0600);
+  if(target<0) goto done;
+  for(;;) {
+    status=cancel(reader);if(status!=EXR_OK) goto done;
+    ssize_t got=read(source,block,sizeof(block));
+    if(got<0 && errno==EINTR) continue;
+    if(got<0) { status=EXR_IO;goto done; }
+    if(!got) break;
+    bytes+=(uint64_t)got;
+    if(bytes>READER_ANNOTATION_IMPORT_DEFAULT_MAX_BYTES) { status=EXR_LIMIT;goto done; }
+    for(ssize_t at=0;at<got;) {
+      ssize_t written=write(target,block+at,(size_t)(got-at));
+      if(written<0 && errno==EINTR) continue;
+      if(written<=0) { status=EXR_IO;goto done; }
+      at+=written;
+    }
+  }
+  if(close(target)) { target=-1;status=EXR_IO;goto done; }target=-1;
+  reader->w3_annotation_snapshot=temporary;temporary=NULL;status=EXR_OK;
+done:
+  if(source>=0) close(source);
+  if(target>=0) close(target);
+  if(temporary) { unlink(temporary);g_free(temporary); }
+  return status;
+}
 static int w3_import_cancel(void *opaque) { return cancel(((w3_import *)opaque)->reader)==EXR_CANCELLED; }
 static int w3_import_metadata(void *opaque,const reader_annotation_import_metadata *meta) {
   w3_import *run=opaque;
@@ -253,10 +299,18 @@ static exr_status w3_annotation(linux_reader *reader,const reader_command *comma
   records_book book={0};received_owner *owner=NULL;
   exr_status status=records_book_identity(reader,command,result,&book);
   if(status==EXR_OK) status=received_ready(reader,&owner);
-  if(status!=EXR_OK) { snprintf(result->message,sizeof(result->message),"Open the book first; annotation import needs its verified original identity");records_book_free(&book);return status; }
+  if(status!=EXR_OK) { w3_annotation_discard(reader);snprintf(result->message,sizeof(result->message),"Open the book first; annotation import needs its verified original identity");records_book_free(&book);return status; }
   w3_import run;memset(&run,0,sizeof(run));run.reader=reader;run.preview=command->action==READER_W3_ANNOTATION_PREVIEW;
+  if(run.preview) {
+    status=w3_annotation_snapshot(reader,command->w3_path);
+    if(status==EXR_OK) g_strlcpy(reader->w3_annotation_key,result->records_key,sizeof(reader->w3_annotation_key));
+  } else if(!reader->w3_annotation_snapshot || strcmp(reader->w3_annotation_key,result->records_key)) status=EXR_ARGUMENT;
+  if(status!=EXR_OK) {
+    w3_annotation_discard(reader);records_book_free(&book);
+    snprintf(result->message,sizeof(result->message),"Check the annotation file again before importing; nothing was imported");return status;
+  }
   reader_annotation_import_options options={0};options.struct_size=sizeof(options);options.revisions=owner->revisions;
-  options.jsonl_path=command->w3_path;options.target_book_key=result->records_key;
+  options.jsonl_path=reader->w3_annotation_snapshot;options.target_book_key=result->records_key;
   options.cancel=w3_import_cancel;options.item=w3_import_item;options.metadata=w3_import_metadata;options.context=&run;
   reader_annotation_import_stats stats={0};reader_annotation_import_error problem={0};
   reader_annotation_import_status code=reader_annotation_import_run(&options,&stats,&problem);
@@ -275,6 +329,7 @@ static exr_status w3_annotation(linux_reader *reader,const reader_command *comma
     status=code==READER_AI_CANCELLED ? EXR_CANCELLED:EXR_FORMAT;
     snprintf(result->message,sizeof(result->message),"Annotation file refused: %.120s",problem.message);
   }
+  if(!run.preview || status!=EXR_OK) w3_annotation_discard(reader);
   records_book_free(&book);return status;
 }
 
@@ -375,6 +430,7 @@ static void w3_execute(linux_reader *reader,const reader_command *command,reader
   result->has_w3=1;
   switch(command->action) {
     case READER_W3_ANNOTATION_PREVIEW: case READER_W3_ANNOTATION_IMPORT: result->status=w3_annotation(reader,command,result);break;
+    case READER_W3_ANNOTATION_DISCARD: w3_annotation_discard(reader);result->status=EXR_OK;break;
     case READER_W3_EXPORT: result->status=w3_export(reader,command,result);break;
     case READER_W3_SYNC_STATUS: result->status=w3_sync(reader,command,result);break;
     default: {

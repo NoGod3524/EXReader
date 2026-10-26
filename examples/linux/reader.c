@@ -94,9 +94,8 @@ static gboolean inbook_apply(host_result *);
 static void w3_annotation_open(GtkWidget *,gpointer);
 static void w3_fonts_open(GtkWidget *,gpointer);
 static void w3_export_open(GtkWidget *,gpointer);
-static void w3_history_menu(GtkWidget *,gpointer);
 static void w3_sync_open(GtkWidget *,gpointer);
-static void w3_register_history(GtkWidget *,GtkWidget *);
+static void w3_tools_menu(GtkWidget *);
 static gboolean w3_opened(void);
 static gboolean w3_key(GdkEventKey *);
 static char *w3_observation(void);
@@ -159,6 +158,18 @@ static gboolean shelf_check_edges(gpointer unused) {
 }
 #endif
 
+#if defined(EXR_READER_GTK_COMPACT) || defined(EXR_READER_BATCH_IMPORT_UI) || defined(EXR_READER_DESKTOP_METADATA)
+/* Keep the product-side name alongside the AT-SPI observation when diagnosing
+   unnamed menu focus. This does not change names or retry an accessibility read. */
+static gboolean menu_focus_observation(GtkWidget *widget,GdkEvent *event,gpointer unused) {
+  (void)event;(void)unused;
+  AtkObject *accessible=gtk_widget_get_accessible(widget);
+  const char *name=atk_object_get_name(accessible);
+  g_print("GTK_MENU_FOCUS widget=%p accessible=%p label=%s name=%s\n",(void *)widget,(void *)accessible,
+    gtk_button_get_label(GTK_BUTTON(widget)),name ? name:"");
+  return FALSE;
+}
+#endif
 #ifdef EXR_READER_GTK_COMPACT
 static GtkWidget *compact_library_controls,*compact_reading_controls,*compact_continue;
 static GtkWidget *compact_details,*compact_page_focus,*compact_larger,*compact_smaller;
@@ -224,7 +235,7 @@ static void compact_toolbar(GtkWidget *toolbar) {
   GtkWidget *more=gtk_menu_button_new(),*menu=gtk_menu_new();
   gtk_button_set_label(GTK_BUTTON(more),"_More");gtk_button_set_use_underline(GTK_BUTTON(more),TRUE);
   atk_object_set_name(gtk_widget_get_accessible(more),"More reader actions");
-  g_signal_connect(more,"focus-in-event",G_CALLBACK(accessible_name_on_focus),NULL);
+  g_signal_connect(more,"focus-in-event",G_CALLBACK(menu_focus_observation),NULL);
   gtk_box_pack_end(GTK_BOX(toolbar),more,FALSE,FALSE,0);
   GtkWidget *reading=compact_submenu(menu,"Reading");
 #ifdef EXR_READER_SEARCH_UI
@@ -265,14 +276,7 @@ static void compact_toolbar(GtkWidget *toolbar) {
   compact_item(imports,"Paste book files",G_CALLBACK(file_input_paste),NULL);
 #endif
 #ifdef EXR_READER_WAVE3_UI
-  GtkWidget *tools=compact_submenu(menu,"Reading tools");
-  compact_item(tools,"Import annotations…",G_CALLBACK(w3_annotation_open),NULL);
-  compact_item(tools,"Reading font…",G_CALLBACK(w3_fonts_open),NULL);
-  compact_item(tools,"Export original…",G_CALLBACK(w3_export_open),NULL);
-  GtkWidget *back=compact_item(tools,"Back to previous position",G_CALLBACK(w3_history_menu),GINT_TO_POINTER(-1));
-  GtkWidget *forward=compact_item(tools,"Forward to next position",G_CALLBACK(w3_history_menu),GINT_TO_POINTER(1));
-  w3_register_history(back,forward);
-  compact_item(tools,"Sync status…",G_CALLBACK(w3_sync_open),NULL);
+  w3_tools_menu(menu);
 #endif
   compact_item(menu,"Retry saving position",G_CALLBACK(action),(gpointer)"save");
   compact_item(menu,"Cancel current operation",G_CALLBACK(action),(gpointer)"cancel");
@@ -1115,20 +1119,6 @@ static GtkWidget *scroll(GtkWidget *child) {
   atk_object_set_name(gtk_widget_get_accessible(s),name && name[0] ? name:"Reading content");return s;
 }
 
-/* GTK re-creates a GtkMenuButton's inner label after the explicit ATK name is
-   set, and the resulting accessible-name change can reach AT-SPI as an empty
-   value. Re-publish the same name whenever the control takes keyboard focus, so
-   a screen reader never announces an unnamed toggle on any tab cycle. The stored
-   name is copied first because atk_object_set_name frees the previous one. */
-static gboolean accessible_name_on_focus(GtkWidget *widget,GdkEvent *event,gpointer unused) {
-  (void)event;(void)unused;
-  AtkObject *accessible=gtk_widget_get_accessible(widget);
-  if(accessible) {
-    const char *current=atk_object_get_name(accessible);
-    if(current && current[0]) { char *copy=g_strdup(current);atk_object_set_name(accessible,copy);g_free(copy); }
-  }
-  return FALSE;
-}
 int main(int argc,char **argv) {
   if(argc==2 && !strcmp(argv[1],"--version")) { printf("%s %u\n",exr_version(),exr_abi_version());return 0; }
   if(argc!=1 && argc!=3 && argc!=4) { fprintf(stderr,"Usage: exreader-linux [FONT STATE_DIRECTORY [OBSERVATION_FILE]]\n");return 2; }
@@ -1180,11 +1170,11 @@ int main(int argc,char **argv) {
 #ifdef EXR_READER_BATCH_IMPORT_UI
     if(i==0) {
       GtkWidget *sources=gtk_menu_button_new(),*source_menu=gtk_menu_new();
-      /* G13 shelf_tab_stops_named: a symbol-only label gave the platform no text
-         to derive a name from, and the second Tab cycle read the focused toggle
-         with an empty name. The label is now the name, so every AT-SPI read of
-         this control returns it without a one-shot ATK override to lose. */
+      /* Give both the visible label and ATK name the same readable text. The
+         original G13 checker separately verifies repeated keyboard traversal. */
       gtk_button_set_label(GTK_BUTTON(sources),"Import sources");
+      atk_object_set_name(gtk_widget_get_accessible(sources),"Import sources");
+      g_signal_connect(sources,"focus-in-event",G_CALLBACK(menu_focus_observation),NULL);
       gtk_widget_set_tooltip_text(sources,"Import a book file, a folder or pasted files");
       GtkWidget *file_item=gtk_menu_item_new_with_label("Import file…"),*folder_item=gtk_menu_item_new_with_label("Import folder…");
       gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),file_item);gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),folder_item);
@@ -1195,7 +1185,6 @@ int main(int argc,char **argv) {
       gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),paste_files);g_signal_connect(paste_files,"activate",G_CALLBACK(file_input_paste),NULL);
 #endif
       gtk_widget_show_all(source_menu);gtk_menu_button_set_popup(GTK_MENU_BUTTON(sources),source_menu);
-      g_signal_connect(sources,"focus-in-event",G_CALLBACK(accessible_name_on_focus),NULL);
       gtk_box_pack_start(GTK_BOX(toolbar),sources,FALSE,FALSE,0);
     }
 #endif
@@ -1229,7 +1218,7 @@ int main(int argc,char **argv) {
   g_signal_connect(edit,"clicked",G_CALLBACK(metadata_edit),NULL);
   GtkWidget *more=gtk_menu_button_new();gtk_button_set_label(GTK_BUTTON(more),"_More");
   gtk_button_set_use_underline(GTK_BUTTON(more),TRUE);atk_object_set_name(gtk_widget_get_accessible(more),"More library actions");
-  g_signal_connect(more,"focus-in-event",G_CALLBACK(accessible_name_on_focus),NULL);
+  g_signal_connect(more,"focus-in-event",G_CALLBACK(menu_focus_observation),NULL);
   GtkWidget *menu=gtk_menu_new(),*organize=gtk_menu_item_new_with_label("Collections…");
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),organize);g_signal_connect(organize,"activate",G_CALLBACK(collections_open),NULL);
 #ifdef EXR_READER_ACCOUNT
@@ -1247,6 +1236,9 @@ int main(int argc,char **argv) {
 #ifdef EXR_READER_NAVIGATION_UI
   GtkWidget *directory_item=gtk_menu_item_new_with_label("Directory / page entries…");
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),directory_item);g_signal_connect(directory_item,"activate",G_CALLBACK(directory_open),NULL);
+#endif
+#ifdef EXR_READER_WAVE3_UI
+  w3_tools_menu(menu);
 #endif
   gtk_widget_show_all(menu);gtk_menu_button_set_popup(GTK_MENU_BUTTON(more),menu);
   gtk_widget_set_tooltip_text(more,"Organize shelves, tags and series (Ctrl+Shift+C)");

@@ -12,9 +12,8 @@ if(EXR_READER_GTK_WAVE3)
   if(NOT EXR_READER_BUILD_GTK OR NOT UNIX OR APPLE)
     message(FATAL_ERROR "GTK Wave 3 tools require the Linux GTK host")
   endif()
-  if(NOT EXR_READER_GTK_COMPACT)
-    message(FATAL_ERROR "GTK Wave 3 tools live in the compact More menu; enable EXR_READER_GTK_COMPACT")
-  endif()
+  # The compact host exposes the tools in More. The non-compact host also links
+  # the owners so the retained GTK business/a11y suites exercise the same graph.
   if(NOT EXR_READER_GTK_ACCOUNT OR NOT EXR_READER_GTK_READING_RECORDS OR NOT EXR_READER_GTK_SEARCH OR NOT EXR_READER_GTK_NAVIGATION)
     message(FATAL_ERROR "GTK Wave 3 tools borrow the account, records, search and navigation owners")
   endif()
