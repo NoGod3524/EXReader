@@ -34,7 +34,7 @@ final class FontPanel extends Wave3Dialog {
     private void say(String state){message(hint.isEmpty()?state:state+"\n"+hint);}
     private void load(String note) {
         long stamp=request();controls(true);say("正在读取字体库");
-        host.fontList(task,state->post(stamp,()->{fonts=state.fonts;selected=state.selected;adapter.clear();for(NativeFonts.Font font:fonts)adapter.add((font.hash.equals(selected)?"✓ 使用中 · ":"")+font.label());adapter.notifyDataSetChanged();controls(false);say((fonts.isEmpty()?"尚未导入字体。":fonts.size()+" 个本地字体。")+note);}),
+        host.fontList(task,state->post(stamp,()->{fonts=state.fonts;selected=state.selected;adapter.clear();boolean inUse=false;for(NativeFonts.Font font:fonts){boolean active=font.hash.equals(selected);inUse|=active;adapter.add((active?"✓ 使用中 · ":"")+font.label());}adapter.notifyDataSetChanged();controls(false);say((fonts.isEmpty()?"尚未导入字体。":fonts.size()+" 个本地字体。")+(inUse?"使用中。":"")+note);}),
             error->post(stamp,()->{controls(false);say("字体库不可用："+reason(error));}));
     }
     private void pick(){if(busy)return;host.pick(REQUEST);}
