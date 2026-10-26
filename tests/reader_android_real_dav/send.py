@@ -75,7 +75,7 @@ try:
     trust = '/usr/local/share/ca-certificates/exreader-android-gtk-interop.crt'
     subprocess.run(['sudo', 'cp', str(ca), trust], check=True)
     subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
-    gtk_env = dict(os.environ, INTEROP_GTK_OUTPUT=str((a.output / 'gtk').resolve()),
+    gtk_env = dict(os.environ, GTK_A11Y='atspi', INTEROP_GTK_OUTPUT=str((a.output / 'gtk').resolve()),
                    INTEROP_ANDROID_BUNDLE=str((a.output / 'sender/bundle').resolve()),
                    INTEROP_ROOT=payload['root'], INTEROP_USER=USER, INTEROP_PASSWORD=h.secret)
     gtk = subprocess.run(['xvfb-run', '-a', '-s', '-screen 0 1440x1400x24', 'dbus-run-session', '--',
@@ -85,8 +85,42 @@ try:
     require(gtk.returncode == 0, 'actual GTK receiver failed; see gtk/result.json and gtk-runner.log')
     desktop = json.loads((a.output / 'gtk/result.json').read_text())
     require(desktop['accepted'] is True and all(desktop.get(key) == value for key, value in identity.items()), 'GTK report identity differs')
-    report.update(accepted=True, actual_desktop_receive=True, gtk_program_sha256=desktop['program_sha256'],
+    report.update(desktop_receiver=True, actual_desktop_receive=True, gtk_program_sha256=desktop['program_sha256'],
                   gtk_pid=desktop['pid'], gtk_books=desktop['books'])
+    reverse = desktop['reverse_records']
+    for row in reverse:
+        path = '/dav/exreader-sync-v1/revisions/' + row['id'][:2] + '/' + row['id'] + '-' + row['sha256'] + '.json'
+        status, data = h.client.get(path)
+        require(status == 200 and data == (a.output / 'gtk' / row['file']).read_bytes(), 'GTK remote wire differs: ' + row['id'])
+    adb('shell', 'am', 'force-stop', package)
+    adb('shell', "run-as %s sh -c 'cat > files/host-ui-input.json'" % package, input=json.dumps(payload).encode())
+    process = subprocess.run(['adb', *command], capture_output=True, timeout=900)
+    (a.output / 'reverse-sync-instrumentation.txt').write_bytes(process.stdout + process.stderr)
+    raw = adb('exec-out', 'run-as', package, 'cat', 'files/host-ui-interop-send.json')
+    (a.output / 'reverse-sync-report.json').write_bytes(raw)
+    reverse_sync = json.loads(raw)
+    require(process.returncode == 0 and b'HOST_SYNC_UI_PASS interop-send' in process.stdout and
+            reverse_sync['passed'] is True and all(reverse_sync.get(k) == v for k, v in identity.items()),
+            'actual Android reverse sync failed')
+    adb('install', '-r', '-t', 'build/android-record-interop/test-apks/record-interop-ui.apk')
+    adb('exec-out', 'run-as', package, 'mkdir', '-p', 'files/gtk-reverse')
+    for row in reverse:
+        adb('shell', "run-as %s sh -c 'cat > files/gtk-reverse/%s.json'" % (package, row['id']),
+            input=(a.output / 'gtk' / row['file']).read_bytes())
+    adb('shell', "run-as %s sh -c 'cat > files/gtk-reverse.json'" % package, input=json.dumps({'records': reverse}).encode())
+    reverse_command = ['shell', 'am', 'instrument', '-w', '-r', '-e', 'phase', 'gtk-receive']
+    for key, value in identity.items(): reverse_command += ['-e', key, value]
+    reverse_command += [package + '.test/' + package + '.RecordInteropTest']
+    process = subprocess.run(['adb', *reverse_command], capture_output=True, timeout=900)
+    (a.output / 'reverse-record-instrumentation.txt').write_bytes(process.stdout + process.stderr)
+    raw = adb('exec-out', 'run-as', package, 'cat', 'files/record-interop-gtk-receive.json')
+    (a.output / 'reverse-record-report.json').write_bytes(raw)
+    received = json.loads(raw)
+    require(process.returncode == 0 and b'RECORD_INTEROP_SENDER_PASS' in process.stdout and
+            received['passed'] is True and len(received['resolutions']) == 2 and
+            all(received.get(k) == v for k, v in identity.items()), 'actual Android reverse resolve failed')
+    report.update(accepted=True, bidirectional=True, gtk_reverse_records=reverse,
+                  android_reverse_resolutions=received['resolutions'])
 except Exception as error:
     report['failure'] = str(error); report['trace'] = traceback.format_exc()
 finally:

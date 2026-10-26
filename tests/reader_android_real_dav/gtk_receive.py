@@ -14,6 +14,8 @@ import traceback
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
 sys.path.insert(0, 'tools')
 from check_linux_host import Session, command
+sys.path.insert(0, 'tests/reader_a11y_gtk')
+import atspi_client as bus
 
 output = Path(os.environ['INTEROP_GTK_OUTPUT']).resolve(); output.mkdir(parents=True)
 bundle = Path(os.environ['INTEROP_ANDROID_BUNDLE']).resolve()
@@ -59,7 +61,9 @@ try:
     while time.monotonic() < end:
         if 'window id #' in command('xprop', '-root', '_NET_SUPPORTING_WM_CHECK'): break
         time.sleep(.1)
+    assert bus.init()[0]
     host.launch()
+    app = bus.wait_application('exreader-linux')
     running = Path('/proc/%d/exe' % host.process.pid).resolve()
     require_sha = hashlib.sha256(binary.read_bytes()).hexdigest()
     assert running == binary and hashlib.sha256(running.read_bytes()).hexdigest() == require_sha
@@ -77,7 +81,7 @@ try:
     assert projected['projection_status'] == '0', projected
     host.key('alt+F4'); ready(lambda s: s['visible'] == '0' and s['session_present'] == '0')
     expected = {r['revision_id']: r for r in manifest['reading_records']}
-    for original in manifest['originals']:
+    for original in sorted(manifest['originals'], key=lambda row: row['role'] == 'txt'):
         role = original['role']
         bookrow = next(row for row in manifest['revisions'] if row['entity_kind'] == 'book' and row['book_key'] == original['book_key'])
         title = json.loads((bundle / bookrow['file']).read_bytes())['payload']['title']
@@ -103,7 +107,62 @@ try:
         wanted = {key for key, row in expected.items() if row['role'] == role}
         assert set(found) == wanted and int(opened['reading_rows']) == len(wanted) and opened['reading_more'] == '0', opened
         result['books'].append({'role': role, 'book_key': original['book_key'], 'sdk_book_id': mapped(), 'resolutions': found})
-    result['actual_desktop_receive'] = True; result['accepted'] = True
+    result['actual_desktop_receive'] = True
+    # The last book is the Android-sent TXT. Create new records through the
+    # real GTK controls, then upload them with the same live account session.
+    before = {r[0] for r in sql('SELECT revision_id FROM reader_revisions')}
+    command('xdotool', 'windowactivate', '--sync', host.window);host.key('ctrl+shift+r')
+    def records_state():
+        parser = configparser.ConfigParser(interpolation=None);parser.read(host.observe)
+        return dict(parser['reading_records']) if parser.has_section('reading_records') else {}
+    def wait_records(predicate):
+        end = time.monotonic() + 60
+        while time.monotonic() < end:
+            state = records_state()
+            if state and state['running'] == '0' and predicate(state): return state
+            time.sleep(.05)
+        raise TimeoutError('GTK record controls: ' + repr(records_state()))
+    wait_records(lambda s: s['visible'] == '1')
+    window = command('xdotool', 'search', '--onlyvisible', '--name', '^Reading records$').splitlines()[-1]
+    command('xdotool', 'windowactivate', '--sync', window)
+    actions = int(records_state()['actions']);host.key('alt+s')
+    wait_records(lambda s: int(s['actions']) > actions and s['progress_state'] == '4')
+    actions = int(records_state()['actions']);host.key('alt+a')
+    end = time.monotonic() + 30
+    while time.monotonic() < end:
+        entry = next((node for node in bus.walk(app) if bus.name(node) == 'Reading record text' and
+                      bus.role(node) == 'text' and bus.states(node).get('showing')), None)
+        if entry: break
+        time.sleep(.05)
+    else: raise TimeoutError('GTK bookmark text input missing')
+    rect = bus.extents(entry);assert rect and rect['width'] > 4 and rect['height'] > 4
+    command('xdotool', 'mousemove', '--sync', rect['x'] + rect['width'] // 2, rect['y'] + rect['height'] // 2)
+    command('xdotool', 'click', '1');host.paste('GTK actual reverse bookmark');host.key('alt+s')
+    wait_records(lambda s: int(s['actions']) >= actions + 2)
+    rows = sql("SELECT revision_id,CAST(body_json AS BLOB) FROM reader_revisions WHERE entity_kind IN ('progress','annotation')")
+    created = [(rid, bytes(wire)) for rid, wire in rows if rid not in before]
+    assert len(created) == 2
+    reverse = []
+    for rid, wire in created:
+        envelope = json.loads(wire); location = envelope['payload']['location']
+        assert envelope['payload']['book_key'] == next(r['book_key'] for r in manifest['originals'] if r['role'] == 'txt')
+        if envelope['entity_kind'] == 'annotation': assert envelope['payload']['text'] == 'GTK actual reverse bookmark'
+        assert location['parser_version'] == '3.41.0'
+        target = output / (rid + '.json');target.write_bytes(wire)
+        reverse.append({'id': rid, 'file': target.name, 'sha256': hashlib.sha256(wire).hexdigest(),
+                        'kind': envelope['entity_kind'], 'book_key': envelope['payload']['book_key'],
+                        'annotation_id': envelope['payload'].get('annotation_id', ''),
+                        'start': location['selector']['start'], 'end': location['selector']['end']})
+    assert {r['kind'] for r in reverse} == {'progress', 'annotation'}
+    host.key('alt+F4');wait_records(lambda s: s['visible'] == '0')
+    open_account();field('u', os.environ['INTEROP_USER']);field('p', os.environ['INTEROP_PASSWORD'])
+    host.key('alt+h', 'alt+a');ready(lambda s: s['bound'] == '1' and s['has_password'] == '1')
+    generation = int(account()['session_generation']);host.key('alt+s')
+    sent = ready(lambda s: int(s['session_generation']) > generation and s['session_state'] in ('4','5'), 300)
+    assert sent['session_state'] == '4' and int(sent['pushed']) >= 2, sent
+    result['reverse_records'] = reverse
+    result['gtk_reverse_uploaded'] = True
+    result['accepted'] = True
 except Exception as error:
     result['failure'] = str(error);result['trace'] = traceback.format_exc()
 finally:

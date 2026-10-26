@@ -121,7 +121,7 @@ jobs:
       - name: Build same-source actual GTK reader with account and record owners
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libsecret-1-dev libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config xvfb openbox xdotool xclip x11-utils dbus-x11 python3-pil
+          sudo apt-get install -y libgtk-3-dev libsecret-1-dev libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config xvfb openbox xdotool xclip x11-utils dbus-x11 python3-pil at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0
           mkdir -p build/interop-gtk-logs
           prefix="$PWD/build/interop-gtk-stage"
           cmake --preset reading-library 2>&1 | tee build/interop-gtk-logs/sdk-configure.log
