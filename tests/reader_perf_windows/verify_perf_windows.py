@@ -4,7 +4,7 @@
 
 The measurement reports observations and proposed budgets only; it never grants
 a product performance acceptance. This gate rejects incomplete, cross-source or
-forged evidence: it re-checks the source identity, the
+forged evidence: it re-checks the source identity, the protected trees, the
 package identity on disk, the corpus identity, the per-launch completeness and
 the explicit "no frame time / no enforced budget" statements.
 """
@@ -17,6 +17,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+ALLOWED = ('tests/reader_perf_windows/',
+           '.github/workflows/reader-perf-windows.yml',
+           'docs/READER-PERF-WINDOWS.md',
+           'docs/validation/reader-perf-windows.json')
+SDK_PATHS = ('src', 'include', 'cmake', 'CMakeLists.txt', 'tests/fixtures', 'bindings',
+             '.github/workflows/native.yml', '.github/workflows/reliability.yml')
 COHORTS = ('cold_shelf', 'warm_shelf', 'reading', 'import', 'import_epub')
 TXT_REJECTIONS = ('import_rejected', 'rejected_but_sdk_orphan', 'imported_not_in_catalog',
                   'catalog_identity_mismatch')
@@ -83,8 +89,21 @@ def main():
             'HEAD does not equal GITHUB_SHA')
     require(git('merge-base', '--is-ancestor', args.start, 'HEAD').returncode == 0,
             'fixed implementation start is not an ancestor of HEAD')
-    # The product under test may contain newer SDK and host changes. Its exact
-    # checkout and packaged binaries are checked here, not against an old tree.
+    protected = git('diff', '--name-only', '9854061be331fe603a1822d9b2b36ee357154927', 'HEAD', '--',
+                    *SDK_PATHS)
+    require(protected.returncode == 0 and not protected.stdout.strip(),
+            'protected SDK tree differs from 9854061be331fe603a1822d9b2b36ee357154927: '
+            + protected.stdout.strip())
+    product = git('diff', '--name-only', 'f32bb8aa18ed3de286900f19ce4230fd93435dd0', 'HEAD', '--',
+                  'apps/reader/store/001_catalog.sql')
+    require(product.returncode == 0 and not product.stdout.strip(),
+            'product catalog schema differs from f32bb8aa18ed3de286900f19ce4230fd93435dd0: '
+            + product.stdout.strip())
+    changed = git('diff', '--name-only', args.start, 'HEAD').stdout.splitlines()
+    outside = [path for path in changed
+               if path and not any(path == allowed or path.startswith(allowed)
+                                   for allowed in ALLOWED)]
+    require(not outside, 'changes outside this package whitelist: ' + ', '.join(outside))
 
     # Evidence documents.
     summary_path = args.summary.resolve()
