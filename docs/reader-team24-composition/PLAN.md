@@ -296,3 +296,11 @@ installed SDK consumer to read the nine imported originals, including after
 failure and cancellation. This is ordinary-flow evidence for that source; it
 does not establish a real provider exchange, path-race safety or final combined
 product acceptance. The combined source must be run again.
+
+## Composition performance dispatch
+
+The composition workflow exposes `observe_performance` to call the existing
+Windows and GTK observation workflows after the exact source guard. These calls
+preserve the independent sampling and artifact checks; their host configurations
+and resulting program hashes must still be compared with the final product. A
+completed observation is not a frozen-budget or full-product acceptance.
