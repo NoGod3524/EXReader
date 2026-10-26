@@ -5,6 +5,7 @@ installed headers and imported-target properties written by the modules
 themselves. Nothing is inferred from the source tree."""
 import argparse
 import json
+import sys
 from pathlib import Path
 
 
@@ -82,7 +83,9 @@ def main():
     for package in ("EXReaderAnnotationImport", "EXReaderJumpHistory", "EXReaderSyncView", "EXReaderAnnotationExport"):
         path = config(prefix, package)
         text = read(path) if path.is_file() else ""
-        check(package + "-config-guard", ("_exr_raw_guard_target" in text) == raw, str(path))
+        # The config template keeps the guard text in both installs and only the
+        # rendered condition changes, so the family is read from that condition.
+        check(package + "-config-family", ("if(ON)" in text) == raw, str(path))
     for package in ("EXReaderFontLibrary", "EXReaderOriginalExport"):
         path = config(prefix, package)
         text = read(path) if path.is_file() else ""
@@ -91,7 +94,7 @@ def main():
     # consumer cannot silently build the history encoder without it.
     codec = config(prefix, "EXReaderReadingState")
     text = read(codec) if codec.is_file() else ""
-    check("reading-state-family-guard", ("_exr_raw_guard_target" in text) == raw, str(codec))
+    check("reading-state-family-guard", ("if(ON)" in text) == raw, str(codec))
     exported = (prefix / "lib" / "cmake" / "EXReaderReadingState" / "EXReaderReadingStateTargets.cmake")
     text = read(exported) if exported.is_file() else ""
     check("codec-target-carries-selector-capability",
@@ -105,6 +108,9 @@ def main():
     output = Path(options.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    for row in failed:
+        print("FAILED " + row["check"] + " :: " + json.dumps(row.get("detail", ""), ensure_ascii=False),
+              file=sys.stderr)
     print(json.dumps({"family": options.family, "checks": len(results), "failed": len(failed)}))
     return 1 if failed else 0
 

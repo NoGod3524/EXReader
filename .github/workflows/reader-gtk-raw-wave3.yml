@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/dsf-gtk-raw-wave3]
   workflow_dispatch:
+    inputs:
+      gui:
+        description: Run the one full raw five-tool GUI round on the compact raw0.2 host
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -54,9 +59,18 @@ jobs:
             python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick \
             python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
       - name: Install both real families, build the host and run the raw probe
+        env:
+          GUI_ROUND: ${{ github.event_name == 'workflow_dispatch' && inputs.gui || 'false' }}
         run: |
           python3 -m py_compile tests/reader_gtk_raw_wave3/*.py
-          python3 tests/reader_gtk_raw_wave3/run.py
+          mkdir -p build/gtk-raw-wave3/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py \
+            > build/gtk-raw-wave3/gtk-atspi-client/atspi_client.py
+          if [ "$GUI_ROUND" = "true" ]; then
+            python3 tests/reader_gtk_raw_wave3/run.py --gui
+          else
+            python3 tests/reader_gtk_raw_wave3/run.py
+          fi
       - name: Preserve the attempt, both prefixes and the actual programs
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,6 +84,10 @@ jobs:
             build/gtk-raw-wave3/raw-host/CMakeCache.txt
             build/gtk-raw-wave3/legacy-host/gtk-host/exreader-linux
             build/gtk-raw-wave3/legacy-host/CMakeCache.txt
+            build/gtk-raw-wave3/compact-host/gtk-host/exreader-linux
+            build/gtk-raw-wave3/compact-package/
+            build/gtk-raw-wave3/gui-fixtures/
+            build/gtk-raw-wave3/gui/
             build/gtk-raw-wave3/package/
             build/gtk-raw-wave3/work/
             build/gtk-raw-wave3/gui/

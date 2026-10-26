@@ -215,21 +215,71 @@ def host_identity(binary):
     return report
 
 
-def gui(driver, payload, fixtures):
-    if not driver:
+def build_compact_host():
+    """The compact payload the five tools live in, on the raw0.2 family."""
+    binary = OUT / "compact-host"
+    cmake("compact-host", ROOT / "apps/reader/desktop", binary, PREFIX,
+          extra=host_options(PREFIX) + ["-DEXR_READER_GTK_RAW3=ON",
+                                        "-DREADER_GTK_RAW3_PREFIX=" + str(PREFIX),
+                                        "-DEXR_READER_GTK_COMPACT=ON"],
+          targets=("exreader-linux",))
+    payload = OUT / "compact-package"
+    run("compact-package", [sys.executable, "tools/build_linux_host.py", "--sdk", "build/reading-library/stage",
+                            "--sdk-version", "3.41.0", "--binary", binary / "gtk-host/exreader-linux",
+                            "--output", payload])
+    return payload
+
+
+def gui(enabled):
+    """One full raw five-tool GUI round: the exact DSF-G01 driver source plus its
+    documented raw identity precondition, on the compact raw0.2 host."""
+    if not enabled:
         return {"executed": False,
-                "reason": "the raw five-tool GUI driver is not part of this source; the known-broken "
-                          "legacy C10 driver was deliberately not used against the raw family"}
+                "reason": "the full raw GUI round is only requested explicitly, never by a push run"}
+    fixtures = OUT / "gui-fixtures"
+    seed = OUT / "seed"
+    for path in (fixtures, seed):
+        if path.exists():
+            shutil.rmtree(path)
+        path.mkdir(parents=True)
+    seed.chmod(0o700)
+    payload = build_compact_host()
+    book = fixtures / "history.txt"
+    probe = OUT / "raw-host/reader-gtk-wave3-raw-backend"
+    run("gui-seed", [probe, seed / "library.sqlite", seed / "unused.sqlite",
+                     ROOT / "tests/fixtures/fonts/primary.ttf", ROOT / "tests/fixtures", fixtures,
+                     "seed", book], timeout=600)
+    annotations = fixtures / "annotations.jsonl"
+    if not annotations.is_file() or not annotations.stat().st_size:
+        raise RuntimeError("seed produced no raw annotation file")
     output = OUT / "gui"
+    if output.exists():
+        shutil.rmtree(output)
+    script = ("openbox >/dev/null 2>&1 & "
+              "gsettings set org.gnome.desktop.interface toolkit-accessibility true; "
+              "gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; "
+              + sys.executable + " tests/reader_gtk_raw_wave3/ui_raw.py"
+              + " --payload " + str(payload)
+              + " --book " + str(book)
+              + " --annotations " + str(annotations)
+              + " --font tests/fixtures/fonts/primary.ttf"
+              + " --output " + str(output))
+    environment = dict(os.environ, PYTHONPATH=str(OUT / "gtk-atspi-client"))
     run("raw-gui", ["xvfb-run", "-a", "-s", "-screen 0 1440x3600x24", "dbus-run-session", "--",
-                    "bash", "-c", "openbox >/dev/null 2>&1 & " + driver + " --payload " + str(payload) +
-                    " --fixtures " + str(fixtures) + " --output " + str(output)])
-    return {"executed": True, "driver": driver, "output": str(output)}
+                    "bash", "-c", script], timeout=2400, env=environment)
+    report = json.loads((output / "result.json").read_text(encoding="utf-8"))
+    return {"executed": True, "driver": "tests/reader_gtk_raw_wave3/ui_raw.py",
+            "driver_source_blob": "43bab342c97cde24ae30556e46cebe269312d66e",
+            "program_sha256": report.get("program_sha256"),
+            "checks": report.get("checks", []), "accepted": bool(report.get("accepted")),
+            "output": str(output),
+            "navigation_and_batch_import": "not executed in this round and not counted as passed"}
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gui-driver", default=os.environ.get("EXR_RAW_WAVE3_UI_DRIVER", ""))
+    parser.add_argument("--gui", action="store_true",
+                        help="run the one full raw five-tool GUI round after every other scope passes")
     parser.add_argument("--skip-legacy", action="store_true")
     options = parser.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
@@ -255,16 +305,20 @@ def main():
                                  "configured_and_linked": True,
                                  "suite_rerun": False,
                                  "note": "RAW3 OFF keeps the original 0.1 modules; only configure and link ran"}
-    result["gui"] = gui(options.gui_driver, payload, OUT / "gui-fixtures")
-    accepted = (result["raw_install"]["accepted"] and result["raw_host"]["accepted"]
-                and result["raw_backend"]["accepted"]
-                and result.get("legacy_install", {}).get("accepted", True)
-                and (options.skip_legacy or result.get("legacy_host", {}).get("configured_and_linked", False)))
+    base = (result["raw_install"]["accepted"] and result["raw_host"]["accepted"]
+            and result["raw_backend"]["accepted"]
+            and result.get("legacy_install", {}).get("accepted", True)
+            and (options.skip_legacy or result.get("legacy_host", {}).get("configured_and_linked", False)))
+    # One full GUI round, only on an explicit request and only after every
+    # non-GUI scope of this same attempt already passed.
+    result["gui"] = gui(options.gui and base)
+    accepted = base and (not options.gui or result["gui"].get("accepted", False))
     result["accepted"] = bool(accepted)
     (OUT / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"accepted": result["accepted"],
                       "raw_checks": result["raw_backend"].get("check_count", 0),
-                      "gui": result["gui"]["executed"]}))
+                      "gui_executed": result["gui"]["executed"],
+                      "gui_accepted": result["gui"].get("accepted", False)}))
     return 0 if accepted else 1
 
 

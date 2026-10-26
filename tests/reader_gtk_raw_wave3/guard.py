@@ -108,6 +108,17 @@ def main():
           "find_package(EXReaderAnnotationImport 0.1.0 EXACT CONFIG REQUIRED)" in integration)
     check("raw-family-is-explicit", "find_package(EXReaderJumpHistory 0.2.0 EXACT CONFIG REQUIRED)" in integration)
     check("candidate-is-required-for-raw-history", "EXR_READER_PURE_CAPTURE_CANDIDATE=1" in integration)
+    # The raw GUI round reuses the exact DSF-G01 driver source and must keep every
+    # one of its ten business records, its reveal-based chooser and its timeouts.
+    ui = (ROOT / "tests/reader_gtk_raw_wave3/ui_raw.py").read_text(encoding="utf-8")
+    records = [line.strip() for line in ui.splitlines() if line.strip().startswith("record('")]
+    check("gui-driver-keeps-ten-records", len(records) == 10, records)
+    for token in ("def visible_cell(", "def cell_click(", "def points_into(", "def ancestor(",
+                  "seconds=45", "seconds=25", "seconds=20"):
+        check("gui-driver-keeps-" + token, token in ui)
+    check("gui-driver-declares-its-source-blob", "43bab342c97cde24ae30556e46cebe269312d66e" in ui)
+    check("gui-driver-adds-only-the-raw-precondition",
+          ui.count("save_identity_record") == 2 and "raw identity record" in ui)
 
     failed = [row for row in results if not row["passed"]]
     report = {"base": BASE, "changed": changed, "checks": results,
