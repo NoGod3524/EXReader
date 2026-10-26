@@ -175,3 +175,6 @@ of the check, so it is offered only as the alternative.
 ## Root follow-up: native common-dialog button
 The retained helper filled the exact native filename edit, then sent WM_COMMAND/IDOK with no originating button HWND. Root changed acceptance to the same real BM_CLICK path already used by the rest of this UI driver. All 16 business assertions, cancellation checks, file-byte checks, old suites, ownership checks and budgets remain unchanged. This is a driver candidate, not a verified product correction; the next cloud round determines whether the folder rerun proceeds. Prior 4/16 remains the accepted observation of the earlier failed run.
 
+
+Root round 40364954464 advanced beyond originals, fonts and the actual failed-account read-only view. The secret scan then attempted to read the live exclusively-held empty library.sqlite.product.lock and failed with PermissionError; report printing also hit cp1252 on Chinese UI evidence. The next candidate asserts the live lock is empty, scans every other live file, closes normally and scans every remaining profile file without exclusions, before the existing process-restart/font check. Console output is explicitly UTF-8. No secret check, business assertion or test budget is removed.
+
