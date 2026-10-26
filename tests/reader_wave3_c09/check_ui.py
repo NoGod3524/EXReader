@@ -37,7 +37,8 @@ U.PostMessageW.argtypes = [W.HWND, W.UINT, W.WPARAM, W.LPARAM]
 
 ANNOTATIONS, FONTS, ORIGINALS, BACK, FORWARD, SYNC = range(47001, 47007)
 ROWS, MESSAGE, B1, B2, B3, B4, B5, CLOSE = 47101, 47102, 47111, 47112, 47113, 47114, 47115, 47120
-RECORDS_ROWS, RECORDS_BOOKMARK, RECORDS_OPEN, RECORDS_CLOSE = 211, 215, 220, 227
+RECORDS_ROWS, RECORDS_HIGHLIGHT, RECORDS_OPEN, RECORDS_CLOSE = 211, 216, 220, 227
+SELECT_ALL = 107
 REQUIRED = ['native-menu-entries', 'history-back-forward-after-real-location', 'annotation-export-cancel-then-real-files',
             'originals-directory-cancel-then-per-item-results', 'originals-rerun-reports-existing',
             'font-import-failure-keeps-library-and-frame', 'font-import-and-switch-changes-page',
@@ -228,9 +229,14 @@ def main():
         record('native-menu-entries')
 
         # --- history: only a real located jump moves the cursor ---------------------------------
+        # A bookmark is a point capture and the records owner refuses to open it without
+        # content; a highlight of the real page text is located, so the jump is a true one.
         first = app.label()
+        app.focus()
+        send(app.window, 0x111, SELECT_ALL)
+        app.wait_idle()
         dialog, _ = record_count(app)
-        send(U.GetDlgItem(dialog, RECORDS_BOOKMARK), 0xF5, timeout=5000)
+        send(U.GetDlgItem(dialog, RECORDS_HIGHLIGHT), 0xF5, timeout=5000)
         app.wait(lambda: len(rows(dialog, RECORDS_ROWS)) >= 2, timeout=60)
         close_records(app, dialog)
         app.click('next')
