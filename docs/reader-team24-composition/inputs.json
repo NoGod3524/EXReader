@@ -342,7 +342,7 @@
     },
     {
       "name": "android-export-rotation-regression",
-      "source": "c65aac5212153388ecc85d87b99cff1b9a70488e",
+      "source": "90f49e60934518fc94cb3302368b64ced430f484",
       "paths": [
         "tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java",
         "tests/reader_wave3_c11/picker_process_recovery.py"
