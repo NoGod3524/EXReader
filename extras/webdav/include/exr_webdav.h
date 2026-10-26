@@ -60,6 +60,14 @@ exr_webdav_status exr_webdav_list(exr_webdav_client *, const char *collection,
 exr_webdav_status exr_webdav_download_file(exr_webdav_client *, const char *resource,
   const char *private_directory, const char *filename, const exr_webdav_control *,
   exr_webdav_download *, exr_webdav_error *);
+/* As above, additionally observes each successfully written body chunk in
+   order on the caller's thread. The borrowed bytes are valid only during the
+   callback. The observer must not reenter the client, retain the buffer, or
+   fail; its partial state must be discarded unless the call returns OK. */
+typedef void (*exr_webdav_write_observer)(void *context, const void *bytes, size_t size);
+exr_webdav_status exr_webdav_download_observed(exr_webdav_client *, const char *resource,
+  const char *private_directory, const char *filename, const exr_webdav_control *,
+  exr_webdav_write_observer, void *observer_context, exr_webdav_download *, exr_webdav_error *);
 /* Optional immutable-sync primitives. No write follows a redirect, even within
    the configured root. MKCOL accepts 201 or pre-existing 405; callers must
    subsequently prove the collection when using it. PUT streams a regular

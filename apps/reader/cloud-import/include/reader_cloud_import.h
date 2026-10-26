@@ -91,7 +91,9 @@ void reader_cloud_request_init(reader_cloud_request *request);
 
 /* All error output pointers are optional (NULL discards diagnostics).
    Phase 1. client is borrowed and must not be used concurrently by the caller;
-   this call performs one exr_webdav_download_file. On OK *staged is a new
+   this call performs a WebDAV download, retrying generated name collisions.
+   On OK the published readback matched the downloaded body by length and
+   SHA-256, and *staged is a new
    value owning a published, complete, SHA-256-recorded regular file; free it
    with reader_cloud_import or reader_cloud_staged_discard. On any other
    status *staged is NULL after cleanup. If removal of a published copy is

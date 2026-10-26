@@ -1,0 +1,76 @@
+name: Cloud import download content binding ordinary regressions
+on:
+  push:
+    branches: [codex/reader-cloud-content-binding]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  ordinary:
+    name: ordinary import ${{ matrix.platform }} SDK ${{ matrix.sdk }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, platform: Linux, sdk: '3.40.0'}
+          - {os: windows-2022, platform: Windows, sdk: '3.40.0'}
+          - {os: macos-15, platform: macOS, sdk: '3.40.0'}
+          - {os: ubuntu-22.04, platform: Linux, sdk: '3.41.0'}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install ninja==1.11.1.1
+      - name: Native Linux HTTPS dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev pkg-config
+      - name: Apple TLS fixture tooling
+        if: runner.os == 'macOS'
+        run: |
+          brew install openssl@3
+          echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"
+      - name: Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Original ordinary HTTPS import, cancellation and error regressions
+        env:
+          CLOUD_SDK_VERSION: ${{ matrix.sdk }}
+        run: |
+          python -m py_compile tests/reader_cloud_content/run.py tests/reader_cloud_content/strict.py
+          python tests/reader_cloud_content/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cloud-pinned-${{ runner.os }}-${{ matrix.sdk }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/cloud-pinned-evidence/
+            !build/cloud-pinned-evidence/**/*.key
+          if-no-files-found: error
+  evidence:
+    needs: ordinary
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate four original ordinary-regression ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_cloud_content/strict.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloud-pinned-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/cloud-pinned-summary/
+          if-no-files-found: error
