@@ -714,3 +714,19 @@ not a complete group browser. A separate candidate adds group creation and
 recovery, but its cloud run is still pending and it does not implement browsing
 members by group. Windows organization remains partial until a native group
 browser, bounded paging and real host validation are delivered.
+
+## Windows group creation: independent candidate
+
+Independent source `b908ce3896814e61634ea3b3f812e4575db2d833` completed
+[40405711500/1](https://github.com/NoGod3524/EXReader/actions/runs/40405711500):
+Windows job `121862799643` and the same-run evidence verifier `121868376064`
+passed. The actual host created a shelf, child shelf, tag and series; empty and
+257-character names were refused; those groups reached a second Windows profile
+through the test HTTPS service. Existing composed host and cloud-import checks
+were retained. Artifact `12691073556` is 55,087,629 bytes with SHA-256
+`bc4a3519b7357ae40b29da8cf5e27f1769b8aa136703520486d3689c7088d806`;
+summary `12690864597` is 4,565 bytes with SHA-256
+`c2b78a449325f3ad1160ce79ca158194f85912c79437b1c9a3b436f1783a03c8`.
+Both expire 2027-01-24T21:36:01Z. This independent source is not yet admitted to
+composition. A later fix for a 256-scalar display truncation and the group
+browser require their own same-source runs; neither inherits this result.
