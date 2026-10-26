@@ -238,3 +238,8 @@ adds that evidence to the documentation; no full build or observation of the
 newly separated entry has yet been run. Earlier desktop measurements and their
 program hashes are historical evidence documented in `READER-PRODUCT-PERFORMANCE.md`;
 final package matching, frame measurements, mobile devices and F08 remain open.
+
+Composition source `b67e429f243fcb969dfba05350f12778b53a9f55` also passed
+lightweight entry protocol run `40383921001/1`. This validates the new tool
+protocol on the combined tree, without running product performance samples or
+changing the historical frozen gates.
