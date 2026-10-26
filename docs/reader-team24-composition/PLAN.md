@@ -212,3 +212,16 @@ source admission does not mean any host has switched to it or passed a combined
 product run. The candidate binds downloaded content to the first readback, not
 file object identity; race safety, path cleanup, mobile profiles and D13 remain
 unaccepted. See `docs/reader-cloud-content-binding.md` for the full boundary.
+
+### Windows opt-in integration
+
+The two composition-owned Windows integration/build files extend the prior
+Windows input. The default Wave3 host continues to select the legacy cloud
+package; the explicit `EXR_READER_WINDOWS_CLOUD_CONTENT_BOUND` option selects
+the separate installed content-bound target. The composition Windows workflow
+builds that optional package and requests the option, requires the observed
+transfer symbol in the linked host map, and retains all original Windows UI,
+owner, package and identity checks. The final job requires this marker as well.
+These new source and workflow changes still need their own Windows run. The map
+binds the implementation to the program, but does not itself exercise a native
+cloud picker or establish the blocked path-replacement race result.

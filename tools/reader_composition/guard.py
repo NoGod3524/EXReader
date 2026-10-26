@@ -17,6 +17,8 @@ ROOT_PATHS = frozenset((
     'docs/reader-total-progress/README.md',
     '.github/workflows/reader-total-progress.yml',
     'tests/reader_composition/test_guard.py',
+    'apps/reader/desktop/windows_feature_integration.cmake',
+    'tests/reader_wave3_c09/build.py',
     '.github/workflows/reader-team24-composition.yml',
     'tools/apple_swift.py',
     'tools/build_apple_product.py',
