@@ -224,6 +224,7 @@ static void compact_toolbar(GtkWidget *toolbar) {
   GtkWidget *more=gtk_menu_button_new(),*menu=gtk_menu_new();
   gtk_button_set_label(GTK_BUTTON(more),"_More");gtk_button_set_use_underline(GTK_BUTTON(more),TRUE);
   atk_object_set_name(gtk_widget_get_accessible(more),"More reader actions");
+  g_signal_connect(more,"focus-in-event",G_CALLBACK(accessible_name_on_focus),NULL);
   gtk_box_pack_end(GTK_BOX(toolbar),more,FALSE,FALSE,0);
   GtkWidget *reading=compact_submenu(menu,"Reading");
 #ifdef EXR_READER_SEARCH_UI
