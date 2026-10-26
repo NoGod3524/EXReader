@@ -2,6 +2,7 @@ name: C09 Windows native wave-3 adoption
 on:
   push:
     branches: [codex/reader-wave3-c09]
+  workflow_dispatch:
 permissions:
   contents: read
   actions: read
