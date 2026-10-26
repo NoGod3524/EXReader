@@ -204,6 +204,7 @@ jobs:
             :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/original-sync-runner-gradle.log"
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/original-sync-debug-androidTest.apk"
       - name: Build strict 3.41 sync UI adapter
+        id: sync_runners
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only }}
         run: |
           set -o pipefail
@@ -234,7 +235,7 @@ jobs:
             adb install -r -t build/wave3/artifacts/organization-debug-androidTest.apk
             python3 tests/reader_android_organization_sync/run.py --fixture build/wave3/network-fixture --output build/wave3/evidence/organization-sync
       - name: Execute original C11 navigation and reading suites
-        if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
+        if: ${{ !cancelled() && steps.sync_runners.outcome == 'success' && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -248,7 +249,7 @@ jobs:
             adb shell pm clear org.exreader.host || true
             bash tests/reader_wave3_c11/device.sh "$PWD/build/wave3"
       - name: Execute unchanged original sync UI and session regression
-        if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
+        if: ${{ !cancelled() && steps.sync_runners.outcome == 'success' && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -263,7 +264,7 @@ jobs:
             adb install -r -t build/wave3/artifacts/original-sync-debug-androidTest.apk
             python3 tests/reader_host_session_android/run_ui.py --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/original-sync
       - name: Execute strict 3.41 sync UI adapter
-        if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
+        if: ${{ !cancelled() && steps.sync_runners.outcome == 'success' && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
