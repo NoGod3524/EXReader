@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 enum { WINRECORDS_LIST=1,WINRECORDS_SAVE,WINRECORDS_RETRY,WINRECORDS_DISCARD,
-  WINRECORDS_READ,WINRECORDS_HISTORY };
+  WINRECORDS_READ,WINRECORDS_HISTORY,WINRECORDS_BOOTSTRAP };
 typedef struct {
   const char *database,*book_key;
   const wchar_t *pending_path;

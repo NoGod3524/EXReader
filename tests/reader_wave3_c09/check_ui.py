@@ -238,7 +238,10 @@ def close_feature(app, dialog):
 
 
 def wait_message(app, dialog, needle, timeout=240):
-    app.wait(lambda: needle in message(dialog), timeout=timeout)
+    try:
+        app.wait(lambda: needle in message(dialog), timeout=timeout)
+    except TimeoutError as error:
+        raise AssertionError('Expected ' + needle + '; actual native status: ' + message(dialog) + '; rows: ' + repr(rows(dialog))) from error
     return message(dialog)
 
 

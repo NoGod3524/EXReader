@@ -105,6 +105,33 @@ static int w3_book_key(char out[73]) {
   return 1;
 }
 
+/* First-open book identity is prepared before later read-only import preview.
+   The SDK source is independently verified and the owner checks its mapping. */
+#ifdef EXR_READER_WINDOWS_RAW3
+static exr_status w3_prepare_open(host_job *job, const exr_book *book, exr_error *error) {
+  char hash[65], key[73];uint64_t bytes=0;
+  exr_control control={job_cancel_check,NULL,job};
+  const wchar_t *wide=w3_format_name(book->format);
+  char *format=wide?host_utf8(wide):NULL,*database=host_utf8(g.product_path);
+  wchar_t pending[HOST_PATH];winrecords_request request={0};winrecords_response response={0};
+  if(!format||!database){free(format);free(database);return EXR_MEMORY;}
+  EnterCriticalSection(&g.library_lock);
+  exr_status status=reader_catalog_sdk_original_identity(g.library,book->id,&control,hash,&bytes,error);
+  LeaveCriticalSection(&g.library_lock);
+  int length=swprintf(pending,HOST_PATH,L"%ls.reading.pending",g.product_path);
+  if(status==EXR_OK&&(length<0||length>=HOST_PATH)) status=EXR_LIMIT;
+  if(status==EXR_OK){
+    snprintf(key,sizeof(key),"%s:%s",format,hash);
+    request.database=database;request.pending_path=pending;request.book_key=key;
+    request.sdk_book=book->id;request.source_bytes=bytes;request.action=WINRECORDS_BOOTSTRAP;
+    request.context=job;request.cancelled=winrecords_cancelled;
+    status=winrecords_execute(&request,&response);
+    if(status!=EXR_OK&&error)snprintf(error->message,sizeof(error->message),"%s",response.message);
+  }
+  winrecords_response_free(&response);free(format);free(database);return status;
+}
+#endif
+
 static reader_revisions *w3_revisions_open(void) {
   char *database = host_utf8(g.product_path);
   reader_revisions *store = NULL;
