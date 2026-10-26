@@ -1,7 +1,7 @@
 name: Startup mapping retained Windows regression
 on:
   push:
-    branches: [codex/reader-startup-mapping]
+    branches: [codex/reader-startup-mapping, codex/reader-startup-root-cause]
     paths: ['.github/workflows/startup-retained-windows.yml', 'apps/reader/store/native/**', 'apps/reader/desktop/catalog_sdk.c']
 permissions:
   contents: read

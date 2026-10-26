@@ -1,7 +1,7 @@
 name: Startup mapping product evidence
 on:
   push:
-    branches: [codex/reader-startup-mapping]
+    branches: [codex/reader-startup-mapping, codex/reader-startup-root-cause]
     paths: ['.github/workflows/startup-product-evidence.yml', 'apps/reader/store/native/**', 'apps/reader/desktop/catalog_sdk.c']
 permissions:
   contents: read
