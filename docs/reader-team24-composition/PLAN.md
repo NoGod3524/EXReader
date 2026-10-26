@@ -748,3 +748,23 @@ Both expire 2027-01-24T21:41:57Z. Six exact paths are admitted; ownership of the
 workflow and two test files transfers from the previous Windows organization
 input. This is source admission, not a pass of the resulting combined source.
 It does not cover the separate group browser, physical devices or six targets.
+
+## Independent Android host result with book identity repair
+
+Independent source `2bb0c9e1fec118ca9e49b7530b205d5fcb3aed3b` completed
+[40404143400/1](https://github.com/NoGod3524/EXReader/actions/runs/40404143400)
+on the API 34 x86_64 emulator. The original artifact `12690229796` is
+143,504,785 bytes, SHA-256
+`b973e986d169979c70fe7a35e1d32856eb7e7ec08762a75a5cf1d4cee684860d`,
+and expires 2027-01-24T21:24:55Z. Independent Actions audit
+[40408150390/1](https://github.com/NoGod3524/EXReader/actions/runs/40408150390),
+audit source `3ed0f6d21e2f0bd21e53f26ad9e8884f3dd21930`, checked the recorded
+run identity and the generated and device-pulled APK bytes; both SHA-256 were
+`5aafe17c22328d857e5004956c26e700584e12139e3afd2a9964ab36bbff6020`.
+Wave3 reported 20/20, navigation 18/18 and reading 19/19; walkthrough, review
+and bounded suites each exited successfully. The earlier source
+`105058673032112b01651632b72eae53902e5f16` and run `40400268625` remain
+failed because the old reading fixture attempted a stale bootstrap head.
+The corrected fixture uses the actual current head and preserves the stale-head
+protection. These are independent-host results, not proof for the separate
+Android organization combination, a physical device or six targets.
