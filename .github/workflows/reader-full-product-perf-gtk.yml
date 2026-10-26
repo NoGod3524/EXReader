@@ -2,7 +2,7 @@ name: Full GTK product performance observation
 on:
   push:
     branches: [codex/reader-full-product-performance]
-    paths: ['.github/workflows/reader-full-product-perf-gtk.yml', 'tests/reader_perf_full_gtk/**']
+    paths: ['.github/workflows/reader-full-product-perf-gtk.yml', '.github/workflows/reader-full-product-perf.yml', 'tests/reader_perf_full_gtk/**', 'tests/reader_perf_full_windows/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,6 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
+      - name: Check performance tools and preserve original frozen gates
+        run: |
+          python3 -m py_compile tests/reader_perf_full_gtk/bind.py tests/reader_perf_full_gtk/summarize.py tests/reader_perf_gtk/sample.py tests/reader_perf_gtk/observe.py
+          git diff --exit-code a19fef7d7cdb0be90b0e54b92910502016c33df9 HEAD -- .github/workflows/reader-perf-gtk.yml tests/reader_perf_gtk/CMakeLists.txt tests/reader_perf_gtk/summarize.py tests/reader_perf_gtk/verify.py
       - name: Native GTK accessibility and Secret Service dependencies
         run: |
           sudo apt-get update
