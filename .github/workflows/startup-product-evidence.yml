@@ -1,0 +1,11 @@
+name: Startup mapping product evidence
+on:
+  push:
+    branches: [codex/reader-startup-mapping]
+    paths: ['.github/workflows/startup-product-evidence.yml', 'apps/reader/store/native/**', 'apps/reader/desktop/catalog_sdk.c']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  product-performance:
+    uses: ./.github/workflows/reader-composition-perf-windows.yml
