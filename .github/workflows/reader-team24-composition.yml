@@ -4,6 +4,10 @@ on:
     branches: [codex/team24-composition]
   workflow_dispatch:
     inputs:
+      production_windows:
+        description: Build, test, package and authenticate the composed Windows production profile
+        type: boolean
+        default: false
       production_apple:
         description: Build, archive, unpack and launch the actual Apple production profile
         type: boolean
@@ -178,6 +182,82 @@ jobs:
           name: apple-latest-inspection-${{ matrix.platform }}-${{ github.run_id }}
           path: build/apple-latest-inspection/
           if-no-files-found: error
+  production-windows:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.production_windows }}
+    needs: source
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Admit the exact composed source on this runner
+        shell: pwsh
+        run: |
+          python tools/reader_composition/guard.py --source "$env:GITHUB_SHA" --report build/windows-source-admission.json
+          if ($LASTEXITCODE) { throw 'Composition source admission failed' }
+      - name: Build raw SDK and modules, the wave-3 host, run retained and new native checks, package the ZIP
+        shell: pwsh
+        run: |
+          python tests/reader_wave3_c09/build.py
+          if ($LASTEXITCODE) { throw 'C09 Windows build or native checks failed' }
+      - name: Preserve the complete build evidence, including failures
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c09-windows-wave3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c09/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: composition-windows-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-source-admission.json
+          if-no-files-found: warn
+  authenticate-windows:
+    needs: production-windows
+    if: always() && needs.production-windows.result != 'skipped'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: c09-windows-wave3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c09-download
+      - name: Bind report, ZIP, program hash and artifact identity to this run and attempt
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ needs.production-windows.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.production-windows.outputs.artifact_digest }}
+          WINDOWS_RESULT: ${{ needs.production-windows.result }}
+        run: python3 tests/reader_wave3_c09/identity.py
+      - name: Require successful Windows job and accepted report
+        env:
+          WINDOWS_RESULT: ${{ needs.production-windows.result }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          identity = json.loads(Path('build/c09-authentication/identity.json').read_text())
+          assert os.environ['WINDOWS_RESULT'] == 'success'
+          assert identity['verified'] and identity['report']['accepted'] is True
+          assert not identity['report']['failures']
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c09-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c09-authentication/
+          if-no-files-found: warn
   production-apple:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.production_apple }}
     needs: source
