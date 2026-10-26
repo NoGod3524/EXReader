@@ -153,6 +153,9 @@ exr_status reader_catalog_sdk_attach(reader_catalog *catalog,exr_library *librar
 exr_status reader_catalog_sdk_repair(reader_catalog *catalog,exr_library *library,const exr_book *books,
                                     size_t count,const exr_control *control,size_t *failed,exr_error *error) {
   exr_status first=EXR_OK;if(error) memset(error,0,sizeof(*error));if(failed) *failed=0;
+#ifdef _WIN32
+  int repair_prepared=0;
+#endif
   if(!catalog || !library || (!books && count)) return fail(error,EXR_ARGUMENT,"Missing catalog repair input");
   for(size_t i=0;i<count;i++) {
     int present=0;reader_catalog_error product_error={0};exr_error current={0};exr_status status;
@@ -160,7 +163,12 @@ exr_status reader_catalog_sdk_repair(reader_catalog *catalog,exr_library *librar
     if(reader_catalog_has_local(catalog,books[i].id,&present,&product_error)!=0)
       status=fail(&current,EXR_DATABASE,product_error.message);
     else if(present) continue;
-    else status=reader_catalog_sdk_attach(catalog,library,&books[i],control,NULL,&current);
+    else {
+#ifdef _WIN32
+      if(!repair_prepared) { reader_catalog_prepare_repair(catalog);repair_prepared=1; }
+#endif
+      status=reader_catalog_sdk_attach(catalog,library,&books[i],control,NULL,&current);
+    }
     if(cancelled(control)) return fail(error,EXR_CANCELLED,"Catalog repair cancelled at publication boundary");
     if(status==EXR_OK) continue;
     if(failed) ++*failed;
