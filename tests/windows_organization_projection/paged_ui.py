@@ -135,9 +135,17 @@ try:
             app.scroll(1,lambda values:app.top() is not None and 25<app.top()<110)
             top=app.top();assert top is not None
             with sqlite3.connect(database,timeout=30) as db:
+                db.execute('UPDATE reader_book_shelves SET ordinal=200 WHERE shelf_id=? AND book_key=?',(ids['shelf'],rows[top][0]))
+            refresh();app.wait(lambda:app.top()==top and stable_numbers() and stable_numbers()[-1]==top,timeout=90)
+            checks.append('moved-anchor-follows-current-order')
+            with sqlite3.connect(database,timeout=30) as db:
+                db.execute('UPDATE reader_book_shelves SET ordinal=? WHERE shelf_id=? AND book_key=?',(169-top,ids['shelf'],rows[top][0]))
+            refresh();app.wait(lambda:app.top()==top and stable_numbers() and stable_numbers()[0]==top,timeout=90)
+            with sqlite3.connect(database,timeout=30) as db:
                 db.execute('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',(ids['shelf'],rows[top][0]))
             refresh();app.wait(lambda:stable_numbers() is not None and top not in stable_numbers(),timeout=90)
             assert app.top() is not None and abs(app.top()-top)<=2,(top,app.top(),stable_numbers())
+            ui.M.screenshot(app.window,out/'removed-anchor.bmp')
             checks.append('removed-top-anchor-keeps-neighbor')
             phase='removed-tail'
             app.scroll(1,lambda values:values[-1]==0)
@@ -146,10 +154,12 @@ try:
                 db.executemany('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',[(ids['shelf'],rows[i][0]) for i in range(top+1)])
             refresh();app.wait(lambda:stable_numbers() and all(n>top for n in stable_numbers()),timeout=90)
             assert min(stable_numbers())==top+1,(top,stable_numbers())
+            ui.M.screenshot(app.window,out/'removed-tail.bmp')
             checks.append('removed-tail-falls-back-to-predecessors')
             phase='removed-all'
             with sqlite3.connect(database,timeout=30) as db:db.execute('DELETE FROM reader_book_shelves WHERE shelf_id=?',(ids['shelf'],))
             refresh();app.wait(lambda:stable_numbers()==[],timeout=90)
+            ui.M.screenshot(app.window,out/'removed-all.bmp')
             checks.append('removed-all-shows-empty')
             with sqlite3.connect(database,timeout=30) as db:
                 db.executemany('INSERT INTO reader_book_shelves(shelf_id,book_key,ordinal) VALUES (?,?,?)',[(ids['shelf'],key,169-i) for i,(key,_) in enumerate(rows)])
