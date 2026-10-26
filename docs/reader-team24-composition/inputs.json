@@ -329,7 +329,7 @@
     },
     {
       "name": "android-composition-workflow-candidate",
-      "source": "7afbd7a912214fa77133b6ea13c994b20675471a",
+      "source": "05f80692801d42b9f7ffba00968720d6929d1e66",
       "paths": [
         ".github/workflows/android-composition-candidate.yml"
       ]
