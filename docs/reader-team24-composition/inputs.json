@@ -342,14 +342,15 @@
     },
     {
       "name": "android-export-rotation-regression",
-      "source": "f51b0e076d8a85f450d26703e50200407479ce33",
+      "source": "e0cdaec0cb4b510bfc172275d19efcece4793c7d",
       "paths": [
-        "tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java"
+        "tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java",
+        "tests/reader_wave3_c11/picker_process_recovery.py"
       ]
     },
     {
       "name": "android-composition-workflow-candidate",
-      "source": "d105dde816e67408cac421a060a9f7e40d998a77",
+      "source": "e0cdaec0cb4b510bfc172275d19efcece4793c7d",
       "paths": [
         ".github/workflows/android-composition-candidate.yml"
       ]
