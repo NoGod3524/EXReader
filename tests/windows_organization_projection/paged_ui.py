@@ -51,7 +51,8 @@ def stable_top():
     return values[index] if before==after and before>=2 and not before%2 and values and 0<=index<len(values) else None
 def stable_edge(value,at_end):
     values=stable_numbers()
-    if not values or (values[-1] if at_end else values[0])!=value:return False
+    if not values or value not in values or (at_end and values[-1]!=value):return False
+    if not at_end and any(a-b!=1 for a,b in zip(values,values[1:])):return False
     box=app.control('books');before=ui.U.GetPropW(box,'EXReaderShelfSnapshot') or 0
     top=ui.send(box,0x18E);height=ui.send(box,0x1A1,0);area=W.RECT();ui.U.GetClientRect(box,C.byref(area))
     after=ui.U.GetPropW(box,'EXReaderShelfSnapshot') or 0
@@ -154,6 +155,7 @@ try:
             with sqlite3.connect(database,timeout=30) as db:
                 db.execute('UPDATE reader_book_shelves SET ordinal=? WHERE shelf_id=? AND book_key=?',(169-top,ids['shelf'],rows[top][0]))
             refresh();app.wait(lambda:stable_edge(top,False),timeout=90)
+            top=stable_top();assert top is not None
             with sqlite3.connect(database,timeout=30) as db:
                 db.execute('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',(ids['shelf'],rows[top][0]))
             removed=top
