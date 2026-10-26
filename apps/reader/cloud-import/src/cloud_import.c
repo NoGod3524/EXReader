@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE 1
+#endif
 #ifndef _WIN32
 #define _POSIX_C_SOURCE 200809L
 #define _FILE_OFFSET_BITS 64
@@ -192,7 +195,7 @@ failed:
   return 0;
 #else
   struct stat information;
-  int fd = open(path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+  int fd = open(path, O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC);
   if (fd < 0) return 0;
   if (fstat(fd, &information) || !S_ISREG(information.st_mode)) { close(fd); return 0; }
   verified->file = fdopen(fd, "rb");

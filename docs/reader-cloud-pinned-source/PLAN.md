@@ -11,3 +11,5 @@
 旧消费者在云端复制后仅投影两处入口：CMake精确SDK请求按profile取3.40/3.41；allocator supplemental probe的相对include改为本候选cloud_import.c绝对路径，避免其通过安装include目录偶然找到另一份旧源码。原业务断言、分配失败hook及正常安装消费者不变，原文件未修改。
 
 所有构建、语法检查、夹具、测试、工件处理仅Actions。本地仅源码/文档/Git；本候选不提升BASE、不改默认分支、不发tag/Release。旧失败保留，首轮出错后先定位，最多三轮完整回归。
+
+第一轮639ba806/run40272739629：Windows3.40、Linux3.40及3.41原普通回归通过；macOS在编译时因严格POSIX feature选项隐藏O_NOFOLLOW而失败，尚未运行该平台业务，整体未通过。后续明确启用Darwin feature声明，POSIX初始打开加O_NONBLOCK避免非regular候选在fstat前阻塞；不增加路径替换实验，不修改旧业务断言。
