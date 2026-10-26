@@ -46,6 +46,7 @@ def main():
     exported = output / 'exported'
     exported.mkdir()
     checks = []
+    browsed = []
     app = None
     report = {'accepted': False, 'scope': 'five Wave 3 GTK tools only; not a full product acceptance',
               'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
@@ -93,11 +94,84 @@ def main():
 
     def click_node(node):
         box = bus.extents(node)
-        assert box and box['width'] > 0 and box['height'] > 0, bus.name(node)
+        assert box and box['x'] >= 0 and box['y'] >= 0 and box['width'] > 0 and box['height'] > 0, \
+            (bus.name(node), box)
         command('xdotool', 'mousemove', '--sync',
                 str(box['x'] + box['width'] // 2), str(box['y'] + box['height'] // 2))
         command('xdotool', 'click', '1')
         time.sleep(.15)
+
+    def ancestor(node, roles, stop):
+        current = bus._safe(lambda: node.get_parent())
+        for _ in range(24):
+            if current is None or bus.same(current, stop):
+                return None
+            if bus.role(current) in roles:
+                return current
+            current = bus._safe(lambda: current.get_parent())
+        return None
+
+    def centre(node):
+        box = bus.extents(node)
+        if not box:
+            return None, None
+        return box, (box['x'] + box['width'] // 2, box['y'] + box['height'] // 2)
+
+    def points_into(box, point, outer):
+        return (box['width'] > 3 and box['height'] > 3 and box['x'] >= 0 and box['y'] >= 0
+                and outer is not None
+                and outer['x'] <= point[0] < outer['x'] + outer['width']
+                and outer['y'] <= point[1] < outer['y'] + outer['height'])
+
+    def visible_cell(cell, dialog, seconds=25):
+        """Wait for GTK itself to report a real screen box for one native cell.
+
+        A tree cell that lies outside the tree view's visible rect is reported
+        with x = y = G_MININT (-2147483648) while its real width, height and the
+        ATK_STATE_SHOWING state stay set, so an off-screen directory row looks
+        actionable even though the click coordinate is -2147483313. The cell's
+        own AT-SPI Component focus action is GTK's native scroll-to-cell path
+        (gtk_tree_view_grab_cell_focus -> gtk_tree_view_set_cursor_on_cell), the
+        same reveal the retained folder-import driver uses. Real input only
+        happens once that rectangle is real and its centre lies inside the
+        native table, never on a sentinel coordinate.
+        """
+        component = bus._safe(lambda: cell.get_component_iface())
+        assert component is not None, 'native directory cell has no component: ' + bus.name(cell)
+        table = ancestor(cell, {'table'}, dialog)
+        outer = bus.extents(table) if table is not None else bus.extents(dialog)
+        before = bus.extents(cell)
+        revealed = bool(bus._safe(lambda: component.grab_focus(), False))
+        retry = time.monotonic() + 1
+        deadline = time.monotonic() + seconds
+        while time.monotonic() < deadline:
+            assert host.process.poll() is None, 'host exited'
+            box, point = centre(cell)
+            if box and points_into(box, point, outer):
+                print(json.dumps({'native_row_visible': bus.name(cell), 'reveal': revealed,
+                                  'before': before, 'after': box, 'table': outer,
+                                  'selected': bool(bus.states(cell).get('selected'))},
+                                 ensure_ascii=False), flush=True)
+                return box
+            if revealed is not True and time.monotonic() >= retry:
+                revealed = bool(bus._safe(lambda: component.grab_focus(), False))
+                retry = time.monotonic() + 1
+            time.sleep(.05)
+        raise TimeoutError('native directory row never entered the table viewport: '
+                           + bus.name(cell) + ' before ' + repr(before) + ' now '
+                           + repr(bus.extents(cell)) + ' table ' + repr(outer)
+                           + ' focus ' + repr(revealed))
+
+    def cell_click(cell, dialog, repeat=1):
+        box = visible_cell(cell, dialog)
+        x, y = box['x'] + box['width'] // 2, box['y'] + box['height'] // 2
+        command('xdotool', 'mousemove', '--sync', str(x), str(y))
+        if repeat > 1:
+            command('xdotool', 'click', '--repeat', str(repeat), '--delay', '150', '1')
+        else:
+            command('xdotool', 'click', '1')
+        time.sleep(.15)
+        return box
 
     def click(name, roles=None):
         click_node(element(name, roles))
@@ -149,13 +223,11 @@ def main():
             parts = path.relative_to(Path.home()).parts
             for index, part in enumerate(parts):
                 row = element(part, {'table cell'})
-                click_node(row)
+                box = cell_click(row, dialog)
                 wait_nodes(lambda: [row] if bus.states(row).get('selected') else [])
+                browsed.append({'name': part, 'x': box['x'], 'y': box['y']})
                 if index + 1 < len(parts):
-                    box = bus.extents(row)
-                    command('xdotool', 'mousemove', '--sync',
-                            str(box['x'] + box['width'] // 2), str(box['y'] + box['height'] // 2))
-                    command('xdotool', 'click', '--repeat', '2', '--delay', '150', '1')
+                    cell_click(row, dialog, repeat=2)
             click(accept, {'push button'})
         else:
             host.key('ctrl+l')
@@ -314,7 +386,8 @@ def main():
                and int(exported_state['export_bytes']) == book.stat().st_size
                and written.parent == exported,
                {'path': str(written), 'bytes': exported_state['export_bytes'],
-                'created': exported_state['export_created'], 'durable': exported_state['export_durable']})
+                'created': exported_state['export_created'], 'durable': exported_state['export_durable'],
+                'folder_selection': browsed})
 
         # 9. A real search landing makes history back and forward available, and only
         #    an accepted frame moves the cursor.
