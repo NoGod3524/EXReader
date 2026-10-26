@@ -212,4 +212,4 @@ jobs:
       - name: Authenticate and inspect retained original and adapted owner evidence
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tests/reader_android_owner_current/inspect_retained.py
+        run: python3 tests/reader_android_owner_current/inspect_sync_341.py
