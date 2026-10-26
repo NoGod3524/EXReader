@@ -333,6 +333,14 @@
       "paths": [
         ".github/workflows/android-composition-candidate.yml"
       ]
+    },
+    {
+      "name": "android-shared-desktop-regression-candidate",
+      "source": "82a41de7ae04896b650e39380f646d1140045c0c",
+      "paths": [
+        ".github/workflows/android-shared-desktop-regression.yml",
+        "tests/reader_android_composition/font_regression.py"
+      ]
     }
   ]
 }
