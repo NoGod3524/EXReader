@@ -102,6 +102,8 @@ def main():
         data['checks_'+a.phase]=checks;data['program_'+a.phase]=identity;relay.save(dav,a.out,a.phase,data);dav=None
     finally:
         if host and host.process and host.process.poll() is None:host.process.kill();host.process.wait(timeout=15)
-        if dav:dav.server.shutdown();dav.server.server_close();(a.out/'key.pem').unlink(missing_ok=True)
+        if dav:
+            (a.out/'failed-requests.json').write_text(json.dumps(dav.requests),encoding='utf-8')
+            dav.server.shutdown();dav.server.server_close();(a.out/'key.pem').unlink(missing_ok=True)
     print(json.dumps({'phase':a.phase,'source':os.environ['GITHUB_SHA'],'program_sha256':identity,'checks':checks}),flush=True)
 if __name__=='__main__':main()

@@ -1,5 +1,5 @@
 """Actual Windows host phases; no synthesized revision or object is sent."""
-import argparse, ctypes as C, hashlib, importlib.util, json, os, sqlite3, sys, traceback
+import argparse, ctypes as C, hashlib, importlib.util, json, os, sqlite3, subprocess, sys, traceback
 from ctypes import wintypes as W
 from pathlib import Path
 import relay
@@ -106,6 +106,7 @@ def main():
     finally:
         if app and app.process.poll() is None:app.process.kill();app.process.wait(timeout=20)
         if dav:
+            (a.out/'failed-requests.json').write_text(json.dumps(dav.requests),encoding='utf-8')
             dav.server.shutdown();dav.server.server_close();(a.out/'key.pem').unlink(missing_ok=True)
     print(json.dumps({'phase':a.phase,'source':os.environ['GITHUB_SHA'],'program_sha256':identity,'checks':checks}),flush=True)
 if __name__=='__main__':main()
