@@ -1,0 +1,22 @@
+name: Verify Android shared regression evidence
+on:
+  push:
+    branches: [codex/android-shared-evidence-audit]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the two independent runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/reader_composition/verify_android_shared_evidence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-shared-evidence-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-shared-evidence-verification.json
