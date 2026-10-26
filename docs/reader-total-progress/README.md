@@ -46,3 +46,18 @@ UI 报告所在层；当前分别严格核对两层身份，并读取外层所�
 第三轮另有一次 GitHub API 502。没有改动 108 项分母或失败运行的授予范围。
 
 原 14/17 交回率和 4/10 本轮门禁率保留其历史用途，不再作为完整阅读器总进度。
+
+## Windows full-UI evidence admitted
+
+Audit [40377996619 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40377996619),
+source `cf35f796`, completed its evidence audit at 2026-10-26 18:28:41 UTC.
+Historical cutoff remains unchanged: 58/108 (53.7%). Current accepted outcomes
+are 63/108 (58.3%): foundation 12/12, host 51/84, final 0/12.
+
+The two additional outcomes are Windows annotation exchange and original export,
+backed by run `40375338225/1` and the pinned reviewed evidence document.
+The full Windows UI round passed, but font lease lifecycle measurement and the
+complete sync-account cancel/retry matrix remain separate unmet outcomes.
+Relative to yesterday this is five additional outcomes, 4.6 percentage points;
+45 fixed outcomes remain unaccepted. This replaces the earlier current snapshot,
+without changing its historical result or the fixed denominator.
