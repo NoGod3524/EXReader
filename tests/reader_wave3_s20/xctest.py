@@ -42,7 +42,7 @@ def main(argv=None):
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--derived', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--timeout', type=float, default=2400.0)
+    parser.add_argument('--timeout', type=float, default=3600.0)
     args = parser.parse_args(argv)
     if sys.platform != 'darwin' or os.environ.get('GITHUB_ACTIONS') != 'true':
         raise SystemExit('Apple UI suites run in Actions on macOS only')

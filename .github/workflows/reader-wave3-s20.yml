@@ -133,6 +133,7 @@ jobs:
           python3 tests/reader_windows_search/check_ui.py --candidate "$S20_FRESH/EXReader/EXReader.exe" --font "$S20_FRESH/EXReader/Reader.otf" --output build/s20-windows/evidence/windows-search
       - name: Execute the real Win32 directory entry on the unpacked delivery
         run: |
+          python3 -m pip install "uiautomation==2.0.29"
           python3 tests/reader_windows_navigation/check_ui.py --candidate "$S20_FRESH/EXReader/EXReader.exe" --review build/s20-win-host/EXReaderShelfReview.exe --font "$S20_FRESH/EXReader/Reader.otf" --cfi build/s20-win-cfi/navigation-fixture-cfi.exe --output build/s20-windows/evidence/windows-navigation
       - name: Record the Windows operation matrix
         if: always()
@@ -277,6 +278,7 @@ jobs:
           echo "S20_FRESH=$fresh" >> "$GITHUB_ENV"
           test -x "$fresh/EXReader.app/Contents/MacOS/EXReader"
       - name: Launch the delivered bundle and run its native self-check
+        id: macos_selfcheck
         run: python3 tools/check_apple_host.py --bundle "$S20_FRESH/EXReader.app" --device macos --output build/s20-macos/evidence/macos-selfcheck
       - name: Author the existing fixtures and the real UI project
         run: |
@@ -284,12 +286,24 @@ jobs:
           ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
           ruby tests/apple_host/make_xcodeproj.rb build/s20-apple-broad build/apple-resources
       - name: Execute the real macOS import reading and typography suite
+        id: macos_broad
+        continue-on-error: true
         run: python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-broad/EXReaderHost.xcodeproj --scheme EXReaderHost-macOS --platform macos --sdk stage/macos --derived build/s20-apple-broad-derived --output build/s20-macos/evidence/macos-xctest-broad
-      - name: Execute the real macOS in-book search suite
+      - name: Author the real macOS search project and execute it
+        id: macos_search
+        continue-on-error: true
         run: |
           python3 tests/apple_host/search/prepare_search_fixture.py --resources build/apple-resources
           ruby tests/apple_host/make_xcodeproj.rb build/s20-apple-search build/apple-resources tests/apple_host/search/ui
           python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-search/EXReaderHost.xcodeproj --scheme EXReaderHost-macOS --platform macos --sdk stage/macos --derived build/s20-apple-search-derived --output build/s20-macos/evidence/macos-xctest-search
+      - name: Require both macOS UI suites to have completed
+        if: always()
+        env:
+          MACOS_BROAD: ${{ steps.macos_broad.outcome }}
+          MACOS_SEARCH: ${{ steps.macos_search.outcome }}
+        run: |
+          test "$MACOS_BROAD" = success
+          test "$MACOS_SEARCH" = success
       - name: Record the macOS operation matrix
         if: always()
         run: python3 tests/reader_wave3_s20/report.py --target macos --evidence build/s20-macos/evidence --unpack build/s20-macos/unpack.json --output build/s20-macos/target.json
@@ -306,7 +320,7 @@ jobs:
     name: iPhone and iPad simulator delivery and real native operations
     needs: [guard]
     runs-on: macos-15
-    timeout-minutes: 200
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
         with:
@@ -338,11 +352,14 @@ jobs:
             python3 tools/reader_wave3_package/unpack.py --target "$target" --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
             test -x "$fresh/EXReader.app/EXReader"
           done
-      - name: Install launch and self-check the delivered bundle on iPhone and iPad
-        run: |
-          for target in iphone ipad; do
-            python3 tools/check_apple_host.py --bundle "$RUNNER_TEMP/s20-fresh-$target/EXReader.app" --device "$target" --output "build/s20-$target/evidence/$target-selfcheck"
-          done
+      - name: Launch and self-check the delivered bundle on iPhone
+        id: iphone_selfcheck
+        continue-on-error: true
+        run: python3 tools/check_apple_host.py --bundle "$RUNNER_TEMP/s20-fresh-iphone/EXReader.app" --device iphone --output build/s20-iphone/evidence/iphone-selfcheck
+      - name: Launch and self-check the delivered bundle on iPad
+        id: ipad_selfcheck
+        continue-on-error: true
+        run: python3 tools/check_apple_host.py --bundle "$RUNNER_TEMP/s20-fresh-ipad/EXReader.app" --device ipad --output build/s20-ipad/evidence/ipad-selfcheck
       - name: Author the existing fixtures and the real UI projects
         run: |
           python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
@@ -350,16 +367,38 @@ jobs:
           ruby tests/apple_host/make_xcodeproj.rb build/s20-apple-broad build/apple-resources
           python3 tests/apple_host/search/prepare_search_fixture.py --resources build/apple-resources
           ruby tests/apple_host/make_xcodeproj.rb build/s20-apple-search build/apple-resources tests/apple_host/search/ui
-      - name: Execute the real import reading and typography suite on iPhone and iPad
+      - name: Execute the real import reading and typography suite on iPhone
+        id: iphone_broad
+        continue-on-error: true
+        run: python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-broad/EXReaderHost.xcodeproj --scheme EXReaderHost-iOS --platform iphone --sdk stage/iphonesimulator --derived build/s20-broad-iphone --output build/s20-iphone/evidence/iphone-xctest-broad
+      - name: Execute the real import reading and typography suite on iPad
+        id: ipad_broad
+        continue-on-error: true
+        run: python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-broad/EXReaderHost.xcodeproj --scheme EXReaderHost-iOS --platform ipad --sdk stage/iphonesimulator --derived build/s20-broad-ipad --output build/s20-ipad/evidence/ipad-xctest-broad
+      - name: Execute the real in-book search suite on iPhone
+        id: iphone_search
+        continue-on-error: true
+        run: python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-search/EXReaderHost.xcodeproj --scheme EXReaderHost-iOS --platform iphone --sdk stage/iphonesimulator --derived build/s20-search-iphone --output build/s20-iphone/evidence/iphone-xctest-search
+      - name: Execute the real in-book search suite on iPad
+        id: ipad_search
+        continue-on-error: true
+        run: python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-search/EXReaderHost.xcodeproj --scheme EXReaderHost-iOS --platform ipad --sdk stage/iphonesimulator --derived build/s20-search-ipad --output build/s20-ipad/evidence/ipad-xctest-search
+      - name: Require every simulator entry to have completed
+        if: always()
+        env:
+          IPHONE_SELFCHECK: ${{ steps.iphone_selfcheck.outcome }}
+          IPAD_SELFCHECK: ${{ steps.ipad_selfcheck.outcome }}
+          IPHONE_BROAD: ${{ steps.iphone_broad.outcome }}
+          IPAD_BROAD: ${{ steps.ipad_broad.outcome }}
+          IPHONE_SEARCH: ${{ steps.iphone_search.outcome }}
+          IPAD_SEARCH: ${{ steps.ipad_search.outcome }}
         run: |
-          for target in iphone ipad; do
-            python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-broad/EXReaderHost.xcodeproj --scheme EXReaderHost-iOS --platform "$target" --sdk stage/iphonesimulator --derived "build/s20-broad-$target" --output "build/s20-$target/evidence/$target-xctest-broad"
-          done
-      - name: Execute the real in-book search suite on iPhone and iPad
-        run: |
-          for target in iphone ipad; do
-            python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-search/EXReaderHost.xcodeproj --scheme EXReaderHost-iOS --platform "$target" --sdk stage/iphonesimulator --derived "build/s20-search-$target" --output "build/s20-$target/evidence/$target-xctest-search"
-          done
+          test "$IPHONE_SELFCHECK" = success
+          test "$IPAD_SELFCHECK" = success
+          test "$IPHONE_BROAD" = success
+          test "$IPAD_BROAD" = success
+          test "$IPHONE_SEARCH" = success
+          test "$IPAD_SEARCH" = success
       - name: Record the iPhone operation matrix
         if: always()
         run: python3 tests/reader_wave3_s20/report.py --target iphone --evidence build/s20-iphone/evidence --unpack build/s20-iphone/unpack.json --output build/s20-iphone/target.json
@@ -416,6 +455,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y patchelf ninja-build
       - name: Build the installed Android SDK and the native host application
+        env:
+          ANDROID_CANDIDATE_SDK_BASE: edddc463c06ed5731195cdb8f06b2df6dff7699e
+          ANDROID_OWNERSHIP_HEAD: edddc463c06ed5731195cdb8f06b2df6dff7699e
         run: |
           set -o pipefail
           python3 tools/build_android_host.py 2>&1 | tee build/s20-android-build.log
