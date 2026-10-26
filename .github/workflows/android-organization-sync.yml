@@ -162,6 +162,41 @@ jobs:
             :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/reading-runner-gradle.log"
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/reading-debug-androidTest.apk"
           sha256sum "$ws"/artifacts/*.apk | tee "$ws/artifacts/sha256.txt"
+      - name: Build independent organization sync instrumentation
+        run: |
+          set -o pipefail
+          python3 -m py_compile tests/reader_android_organization_sync/run.py
+          ws="$PWD/build/wave3"; stage="$ws/stage"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_android_organization_sync/init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.OrganizationSyncTest \
+            :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/organization-runner-gradle.log"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/organization-debug-androidTest.apk"
+          git rev-parse HEAD > "$ws/artifacts/source.txt"
+          sha256sum "$ws/artifacts/app-debug.apk" "$ws/artifacts/organization-debug-androidTest.apk" > "$ws/artifacts/organization-sha256.txt"
+      - name: Enable emulator accelerator
+        run: sudo chmod 666 /dev/kvm
+      - name: Execute original suites and organization sync on the same actual host
+        id: device
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            status=0
+            bash tests/reader_wave3_c11/device.sh "$PWD/build/wave3" || status=1
+            adb install -r -t build/wave3/artifacts/app-debug.apk || status=1
+            adb install -r -t build/wave3/artifacts/organization-debug-androidTest.apk || status=1
+            python3 tests/reader_android_organization_sync/run.py --fixture build/wave3/network-fixture --output build/wave3/evidence/organization-sync || status=1
+            exit "$status"
       - name: Preserve build and source evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -170,4 +205,6 @@ jobs:
           path: |
             build/wave3/logs/
             build/wave3/artifacts/
+            build/wave3/evidence/
           if-no-files-found: error
+
