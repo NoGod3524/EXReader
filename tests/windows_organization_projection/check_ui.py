@@ -14,6 +14,7 @@ import sys
 import time
 import traceback
 import uuid
+import zipfile
 
 ROOT=Path(__file__).resolve().parents[2]
 spec=importlib.util.spec_from_file_location('import_organize_ui',ROOT/'tests/reader_windows_import_organize/check_ui.py')
@@ -136,9 +137,11 @@ try:
     ui.M.screenshot(d,out/'pending.bmp');pending.unlink();b.press(d,ui.ACCOUNT.RETRY)
     b.wait(lambda:'同步完成' in b.note(d),timeout=240);record('retry-after-local-recovery',True);b.close_account(d)
     phase='cancel-original-import'
-    big=(b'large synchronized original text. '*900000);big_hash=hashlib.sha256(big).hexdigest();big_key='txt:'+big_hash
-    large=revision(90,shard=0x61,kind='book',key=big_key,payload={'format':'txt','source_sha256':big_hash,'source_bytes':len(big),'title':'ZZ large book','author':'','favorite':False});add_remote(large)
-    prefix='/dav/exreader-sync-v1/objects/'+big_hash[:2]+'/';dav.directories.add('/dav/exreader-sync-v1/objects/');dav.directories.add(prefix);dav.entries[prefix+big_hash+'.txt']=big
+    large_file=out/'large.cbz';ui.ACCOUNT.make_cbz(large_file)
+    with zipfile.ZipFile(large_file,'a',compression=zipfile.ZIP_STORED) as archive:archive.writestr('padding.bin',b'\0'*(100*1024*1024))
+    big=large_file.read_bytes();big_hash=hashlib.sha256(big).hexdigest();big_key='cbz:'+big_hash
+    large=revision(90,shard=0x61,kind='book',key=big_key,payload={'format':'cbz','source_sha256':big_hash,'source_bytes':len(big),'title':'ZZ large book','author':'','favorite':False});add_remote(large)
+    prefix='/dav/exreader-sync-v1/objects/'+big_hash[:2]+'/';dav.directories.add('/dav/exreader-sync-v1/objects/');dav.directories.add(prefix);dav.entries[prefix+big_hash+'.cbz']=big
     c=ui.App(exe,font,out/'device-c');devices.append(c);c.wait_initial_shelf();c.wait_idle()
     d=c.open_account();c.fill(d,dav.base+'/dav/',user,password,False);c.apply(d,'仅本次会话');c.press(d,ui.ACCOUNT.SYNC)
     c.wait(lambda:'正在应用云端书籍' in c.note(d),timeout=240)
@@ -157,6 +160,12 @@ try:
     c.press(d,ui.ACCOUNT.RETRY);c.wait(lambda:'同步完成' in c.note(d),timeout=240)
     record('resume-import-without-duplicate',sql(c,'SELECT count(*) FROM reader_local_books WHERE book_key IN (?,?)',(bookkey,big_key))==[(2,)] and sql(c,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(big_key,))==[(1,)])
     c.close_account(d)
+    readback=out/'cancel-readback';readback.mkdir();spec=out/'cancel-readback.spec'
+    spec.write_text('cmd=readback\nlibrary=%s\nout=%s\n'%(c.db,readback),encoding='utf-8')
+    probe=ROOT/'build/cloud-readback/cloud-probe.exe';value=subprocess.run([str(probe),str(spec)],capture_output=True,text=True,encoding='utf-8',timeout=240)
+    assert value.returncode==0,value.stderr
+    audit=json.loads(value.stdout);report['cancel_readback']=audit;report['cancel_input_hashes']=[sha(book),big_hash]
+    record('cancel-resume-original-hashes',audit['ok']==1 and len(audit['books'])==2 and all(item['read_ok']==1 for item in audit['books']) and {sha(readback/('book-%d.bin'%item['id'])) for item in audit['books']}==set(report['cancel_input_hashes']))
     phase='mapping-repair';other=ui.App(exe,font,out/'device-d');devices.append(other);other.wait_initial_shelf();other.wait_idle()
     d=other.open_account();other.fill(d,dav.base+'/dav/',user,password,False);other.apply(d,'仅本次会话');other.press(d,ui.ACCOUNT.SYNC)
     lock=None;deadline=time.monotonic()+240
