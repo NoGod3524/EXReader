@@ -49,6 +49,7 @@ def main():
                 assert len(data) == identity['bytes'] and hashlib.sha256(data).hexdigest() == identity['sha256'], name
             report = json.loads(archive.read('ordinary/result.json'))
             require_report(report, source, run, attempt)
+            require_report(json.loads(archive.read('legacy/result.json')), source, run, attempt)
             assert 'observed_bytes_redirect_collision_retry_and_cancellation' in {c['id'] for c in report['checks']}
             assert report['probe_sha256'] == result['programs']['cloud-probe']['sha256']
             assert report['review_probe_sha256'] == result['programs']['cloud-review-probe']['sha256']
