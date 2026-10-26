@@ -628,7 +628,7 @@ struct ReaderScreen: View {
         .sheet(isPresented: $showNavigation) { HostNavigationSheet(model: model) }
         .sheet(isPresented: $showReadingRecords) { HostReadingRecordsSheet(model: model) }
 #if EXR_APPLE_WAVE3
-        .sheet(isPresented: $showWave3) { HostWave3Sheet(state: model.wave3, actions: model.wave3Actions) }
+        .sheet(isPresented: $showWave3) { HostWave3Sheet(state: model.wave3, ownerBusy: model.busy, actions: model.wave3Actions) }
 #endif
 #if EXR_APPLE_PAGE_THEME
         .sheet(isPresented: $showPageTheme) { HostPageThemeSheet(model: model) }
