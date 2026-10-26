@@ -200,7 +200,7 @@ jobs:
               assert len(names) == 1
               lines = archive.read(names[0]).decode('utf-8', 'replace').splitlines()
               for i, line in enumerate(lines):
-                  if 'error:' in line:
+                  if 'error:' in line or ('Test Case' in line and 'failed' in line.lower()):
                       print('\n'.join(lines[max(0, i-160):i+90]))
                   if 'Swipe ' in line or 'Tap "features.' in line or 'Press ' in line or 'Drag ' in line:
                       print('\n'.join(lines[max(0, i-3):i+5]))
