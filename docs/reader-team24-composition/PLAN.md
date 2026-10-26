@@ -431,3 +431,14 @@ In [40391312081/1](https://github.com/NoGod3524/EXReader/actions/runs/4039131208
 source `1db1599c72349431e6817a3b5a6b4d310f8a5976`, both Windows configurations
 completed successfully, including the original legacy projection regression.
 The two macOS jobs remain queued; the overall run is not complete.
+
+## Apple UI retry resource handling
+
+In [40385755134/1](https://github.com/NoGod3524/EXReader/actions/runs/40385755134),
+source `0d256c14a76fa795772f10d618fdf0200569cbe0`, the macOS native UI job
+failed; original artifact `12682307446` remains available with SHA-256
+`ab2259ca5109e7680225b2ff9a9c2a479fbba61e60c0495382bd907b274c488b`.
+The iPhone and iPad jobs were cancelled while running to free macOS runners for
+the superseding retry; their results are incomplete. The retained macOS failure
+is not converted to a pass. Later Apple source and GUI results require their own
+same-run verification before admission.
