@@ -220,6 +220,40 @@ def main():
             problems.append('navigation: process-stop regression failed')
     except (OSError, ValueError, KeyError) as error:
         problems.append('navigation: ' + type(error).__name__ + ': ' + str(error))
+    try:
+        reading_folder = args.wave3.parent / 'reading'
+        reading = load(reading_folder / 'result.json')
+        if reading.get('accepted') is not True or reading.get('reading_ui_accepted') is not True:
+            problems.append('reading: original 16-case suite did not accept')
+        if sha256(args.wave3.parent / 'reading-installed.apk') != app_sha:
+            problems.append('reading: installed host differs from the delivered APK')
+        for key in ('source_sha', 'run_id', 'attempt'):
+            if reading.get(key) != identity[key]:
+                problems.append('reading: different ' + key)
+        phases = reading.get('phases') or []
+        if reading.get('checks') != 16 or [(item.get('phase'), item.get('count')) for item in phases] != [('first', 14), ('retry', 1), ('reopen', 1)]:
+            problems.append('reading: original 14+1+1 case counts changed')
+        for phase in phases:
+            if phase.get('passed') is not True or len(phase.get('checks') or []) != phase.get('count') or not all(item.get('pass') is True for item in phase.get('checks') or []):
+                problems.append('reading: missing or failed original case')
+            if any(phase.get(key) != identity[key] for key in identity):
+                problems.append('reading: phase has different source/run/attempt')
+        if len({phase.get('pid') for phase in phases}) != 3:
+            problems.append('reading: first/retry/reopen did not execute in three distinct processes')
+        stops = reading.get('process_stops') or []
+        if len(stops) != 3 or [item.get('phase') for item in stops] != ['first', 'retry', 'reopen'] or any(item.get('pid_after_stop') or item.get('requested') is not True for item in stops):
+            problems.append('reading: actual process-stop regression failed')
+        kill = reading.get('real_postcommit_kill') or {}
+        pending = reading_folder / 'killed-pending-request.json'
+        if kill.get('actual_postcommit_gate') is not True or not kill.get('pid_before_stop') or kill.get('pid_after_stop'):
+            problems.append('reading: real postcommit kill was not observed')
+        if sha256(pending) != kill.get('request_sha256') or pending.stat().st_size != kill.get('request_bytes'):
+            problems.append('reading: killed durable request evidence changed or is missing')
+        request = load(pending)
+        if request.get('revision') != kill.get('revision_id') or request.get('annotation') != kill.get('annotation_id') or request.get('body') != 'lost response exact request' or request.get('operation') != 0:
+            problems.append('reading: killed request identity differs from the exact retry')
+    except (OSError, ValueError, KeyError) as error:
+        problems.append('reading: ' + type(error).__name__ + ': ' + str(error))
     accepted = not problems and all(name in operations for name in OPERATIONS)
     result = {**identity, 'schema': 1, 'kind': 'reader-wave3-c11-android-acceptance', 'seed': SEED,
               'accepted': accepted, 'problems': problems,

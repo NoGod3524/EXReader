@@ -10,7 +10,7 @@ final class NativeOriginalExport {
         final long book;final int status,sdk,format;final boolean committed,created,durable,cleanup;final long bytes;final String sha,path,cleanupPath;
         Item(String[] r){if(r.length!=12)throw new IllegalStateException("Incomplete original receipt");book=Long.parseLong(r[0]);status=Integer.parseInt(r[1]);sdk=Integer.parseInt(r[2]);committed="1".equals(r[3]);created="1".equals(r[4]);
             durable="1".equals(r[5]);cleanup="1".equals(r[6]);format=Integer.parseInt(r[7]);bytes=Long.parseLong(r[8]);sha=r[9];path=r[10];cleanupPath=r[11];}
-        boolean saved(){return status==OK&&committed&&!path.isEmpty();}
+        boolean saved(){return committed&&durable&&!path.isEmpty()&&(status==OK||status==CLEANUP);}
         String reason(){
             switch(status){
                 case OK:return durable?"已完整形成并同步到存储":"已形成，等待存储确认";

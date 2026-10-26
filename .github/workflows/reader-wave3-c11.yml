@@ -127,6 +127,7 @@ jobs:
           cp "$ws/network-fixture/public/ca.crt" tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
           python3 tests/reader_wave3_c11/fixtures.py --output "$ws/fixtures"
           python3 tests/reader_android_navigation/fixtures.py "$ws/navigation-fixtures"
+          python3 tests/reader_android_reading/fixtures.py "$ws/reading-fixtures"
           python3 - <<'PY'
           import sys
           from pathlib import Path
@@ -174,6 +175,14 @@ jobs:
             -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.NavigationUiTest \
             :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/navigation-runner-gradle.log"
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/navigation-debug-androidTest.apk"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_wave3_c11/candidate.init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.ReadingUiTest \
+            :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/reading-runner-gradle.log"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/reading-debug-androidTest.apk"
           sha256sum "$ws"/artifacts/*.apk | tee "$ws/artifacts/sha256.txt"
       - name: Enable the hosted emulator accelerator
         run: sudo chmod 666 /dev/kvm

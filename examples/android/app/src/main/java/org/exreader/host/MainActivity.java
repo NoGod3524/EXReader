@@ -162,6 +162,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     private long restoreBook;
     private long restoreOffset = -1;
     private int restorePage = -1;
+    private long annotationPickBook;
+    private String annotationPickTitle = "";
+    private Uri annotationPickedUri;
 
     private long pendingStart;
     private long pendingEnd;
@@ -184,6 +187,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             restorePage = savedInstanceState.getInt("page", -1);
             fontSize = savedInstanceState.getFloat("font", fontSize);
             zoom = savedInstanceState.getFloat("zoom", zoom);
+            annotationPickBook = savedInstanceState.getLong("annotationPickBook", 0);
+            annotationPickTitle = savedInstanceState.getString("annotationPickTitle", "");
+            String picked = savedInstanceState.getString("annotationPickedUri");
+            if (picked != null) annotationPickedUri = Uri.parse(picked);
         } else {
             restoreReader = prefs.getBoolean("lastReader", false);
             restoreBook = prefs.getLong("lastBook", 0);
@@ -614,6 +621,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         Log.i(TAG, "metric {\"event\":\"page\",\"book\":" + bookId + ",\"page\":" + (current.index + 1)
                 + ",\"fixed\":" + isFixed + ",\"bytes\":" + current.bitmapBytes
                 + ",\"ms\":" + load.millis + "}");
+        if (annotationPickedUri != null) ui.post(this::resumeAnnotationPick);
     }
 
     private static void describeValue(View view,String label,CharSequence value){
@@ -1533,6 +1541,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         out.putFloat("font", fontSize);
         out.putFloat("zoom", zoom);
         out.putBoolean("reader", readerPanel.getVisibility() == View.VISIBLE);
+        out.putLong("annotationPickBook", annotationPickBook);
+        out.putString("annotationPickTitle", annotationPickTitle);
+        if (annotationPickedUri != null) out.putString("annotationPickedUri", annotationPickedUri.toString());
         saveInstancePrefs();
     }
 
@@ -1892,16 +1903,31 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     private void wave3Result(int request, int result, Intent data) {
         Uri uri = result == RESULT_OK && data != null ? data.getData() : null;
-        if (uri == null) { setStatus("已取消选择"); return; }
-        long book = currentBook == null ? 0 : currentBook.id;
-        String title = currentBook == null ? "" : currentBook.title;
+        if (uri == null) {
+            if (request == AnnotationPanel.REQUEST_PICK) { annotationPickBook = 0; annotationPickedUri = null; }
+            setStatus("已取消选择"); return;
+        }
         if (request == FontPanel.REQUEST) fontPanel.picked(uri);
-        else if (request == AnnotationPanel.REQUEST_PICK) annotationPanel.picked(uri, book, title);
+        else if (request == AnnotationPanel.REQUEST_PICK) { annotationPickedUri = uri; resumeAnnotationPick(); }
         else if (request == AnnotationPanel.REQUEST_JSONL || request == AnnotationPanel.REQUEST_MARKDOWN) annotationPanel.saved(request, uri);
         else if (request == OriginalExportPanel.REQUEST) originalPanel.saved(uri);
     }
 
+    private void resumeAnnotationPick() {
+        if (destroyed || annotationPickedUri == null) return;
+        if (annotationPickBook <= 0) { annotationPickedUri = null; setStatus("标注选取缺少目标书籍，请重新选择"); return; }
+        if (currentBook == null || current == null || operation != 0 || pageBusy) return;
+        if (currentBook.id != annotationPickBook) { setStatus("请打开 " + annotationPickTitle + " 后继续预览所选标注"); return; }
+        Uri uri = annotationPickedUri;long book = annotationPickBook;String title = annotationPickTitle;
+        annotationPickedUri = null;annotationPickBook = 0;
+        annotationPanel.picked(uri, book, title);
+    }
+
     @Override public void pick(int request) {
+        if (request == AnnotationPanel.REQUEST_PICK) {
+            if (currentBook == null || current == null) { setStatus("请先打开目标书籍"); return; }
+            annotationPickBook = currentBook.id;annotationPickTitle = currentBook.title;
+        }
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
         intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(DOWNLOADS_URI));
         try { startActivityForResult(intent, request); }
@@ -1939,7 +1965,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             File json = new File(directory, "annotations.jsonl"), markdown = new File(directory, "annotations.md");
             NativeWave3.ExportResult stats = NativeWave3.export(store.productOwner(), key, local == null ? null : local.title, json.getPath(), markdown.getPath(), task);
             return new Wave3Host.Export(stats, json, markdown);
-        }, done, failed);
+        }, done, failed, false, value -> {});
     }
 
     @Override public void annotationImport(long book, File staged, boolean commit, String fingerprint, HostTask task, java.util.function.Consumer<NativeWave3.ImportResult> done, java.util.function.Consumer<Throwable> failed) {
@@ -2012,7 +2038,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     @Override public void fontImport(File staged, String name, HostTask task, java.util.function.Consumer<NativeFonts.Imported> done, java.util.function.Consumer<Throwable> failed) {
-        readingCall(task, () -> fontLibrary().importFile(staged.getPath(), name, task), done, failed);
+        readingCall(task, () -> fontLibrary().importFile(staged.getPath(), name, task), done, failed, false, value -> {});
     }
 
     @Override public void fontSelect(String hash, HostTask task, Runnable done, java.util.function.Consumer<Throwable> failed) {
@@ -2025,7 +2051,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             if (!prefs.edit().putString("wave3Font", hash).commit()) throw new IOException("字体选择保存失败");
             FontSelection.select(hash);
             return Boolean.TRUE;
-        }, ignored -> done.run(), failed);
+        }, ignored -> done.run(), failed, false, value -> {});
     }
 
     @Override public void fontRemove(String hash, HostTask task, java.util.function.Consumer<Integer> done, java.util.function.Consumer<Throwable> failed) {
@@ -2037,7 +2063,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 prefs.edit().putString("wave3Font", "").apply();
             }
             return status;
-        }, done, failed);
+        }, done, failed, false, value -> {});
     }
 
     @Override public void originalExport(long book, HostTask task, java.util.function.Consumer<NativeOriginalExport.Result> done, java.util.function.Consumer<Throwable> failed) {
