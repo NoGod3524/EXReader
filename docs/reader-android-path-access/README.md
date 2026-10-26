@@ -106,3 +106,41 @@ are no book heads; existing heads and deleted/conflicted graphs are not replaced
 The new revision enters the sync outbox. The cancel check also compares the full
 revision and outbox snapshots around preview, preserving the no-write contract.
 Full Actions verification is pending.
+
+## Verified Android handoff
+
+Actions run `40404143400/1` passed on source
+`2bb0c9e1fec118ca9e49b7530b205d5fcb3aed3b`; independent Actions audit
+`40407736690/1` read that attempt's uploaded bytes and reported acceptance with
+no problems or missing operations. Artifact
+`reader-wave3-c11-android-40404143400-1`, ID `12690229796`, is retained with
+SHA-256 `b973e986d169979c70fe7a35e1d32856eb7e7ec08762a75a5cf1d4cee684860d`.
+The built and installed APK both hash to
+`5aafe17c22328d857e5004956c26e700584e12139e3afd2a9964ab36bbff6020`.
+
+The same run passed walkthrough 45/45, review 10/10, bounded 11/11, navigation
+18/18, wave3 20/20 (first 15, cancel 1, restore 4), and reading 19/19 (first
+17, retry 1, reopen 1). Reading includes a real process stop at the postcommit
+gate and exact-request retry; wave3 used CheckJNI and finished each phase with
+zero font leases. The two post-save refresh outcomes and conflict access with
+bookmarks and pagination passed. The legacy projection fixture now uses the
+existing verified book head and still asserts rejection of the wrong projection.
+
+Prior failures remain recorded: `40371294601` failed after ten wave3 checks on
+the overwritten save confirmation and also had review/bounded failures;
+`40378926513` passed those regressions but failed returning to the shelf;
+`40384044799` and `40384463098` reached the old cross-sync count assertion;
+`40385854867` and `40388731881` reached the font status mismatch;
+`40389883877` exposed the missing book identity and a reading list visibility
+failure; `40393784913` confirmed missing identity as the cancel-preview cause;
+`40399321442` failed to compile due to a missing parenthesis; `40400268625`
+passed wave3 but exposed the legacy fixture's empty-head assumption.
+
+This is an API 34 x86_64 emulator result, not physical-device or six-platform
+acceptance. Wave3 picker results use framework activity-result stubs rather than
+driving DocumentsUI; share intent, performance and TalkBack speech are not
+accepted by this run. The separate D13 path-replacement experiment remains
+blocked and no race-safety claim is made. Book identity creation queues a book
+revision on import or repair as explicitly approved; no existing heads are
+automatically replaced. The default branch, PRs, tags and releases were not
+modified, and `sync_jni.cpp` was not changed.
