@@ -31,6 +31,9 @@ checks, problems = [], []
 report = dict(accepted=False, source_sha=os.environ['GITHUB_SHA'], run_id=os.environ['GITHUB_RUN_ID'],
               attempt=os.environ['GITHUB_RUN_ATTEMPT'], checks=checks, problems=problems,
               scope='normal cloud UI only', inputs={name: sha(fixtures / fixture) for name, fixture in INPUTS})
+report['installed_libraries'] = {str(path.relative_to(ROOT / 'build')).replace('\\', '/'): sha(path)
+                                 for stage in ('raw-stage', 'product-stage', 'sdk-stage')
+                                 for path in (ROOT / 'build/c09' / stage).rglob('*.lib')}
 app = dav = None
 phase = 'setup'
 
@@ -80,6 +83,7 @@ def count():
 
 try:
     assert os.name == 'nt' and os.environ.get('GITHUB_ACTIONS') == 'true'
+    assert report['installed_libraries'], 'no installed library identities'
     certs = out / 'certificates'; certs.mkdir()
     key, cert = certs / 'server.key', certs / 'server.crt'
     openssl = shutil.which('openssl') or r'C:\Program Files\Git\usr\bin\openssl.exe'
@@ -125,6 +129,12 @@ try:
     record('cancel-listing-preserves-state', count() == len(INPUTS) and U.IsWindowEnabled(app.window))
     phase = 'unauthorized'; d = app.open_account(); app.fill(d, password='wrong-password'); app.apply(d, '仅本次会话'); app.close_account(d)
     d = show(); record('unauthorized-preserves-state', 'HTTP=401' in text(U.GetDlgItem(d, MESSAGE)) and not labels(d) and count() == len(INPUTS)); close(d)
+    phase = 'readback-after-failure-cancel'; readback2 = out / 'readback-after'; readback2.mkdir()
+    spec.write_text('cmd=readback\nlibrary=%s\nout=%s\n' % (app.db, readback2), encoding='utf-8')
+    value = subprocess.run([str(probe), str(spec)], capture_output=True, text=True, encoding='utf-8', timeout=120)
+    assert value.returncode == 0, value.stderr
+    after = json.loads(value.stdout); report['public_readback_after'] = after
+    record('originals-survive-failure-and-cancel', after['ok'] == 1 and len(after['books']) == len(INPUTS) and all(book['read_ok'] == 1 for book in after['books']) and {sha(readback2 / ('book-%d.bin' % book['id'])) for book in after['books']} == set(report['inputs'].values()))
     record('authenticated-downloads', sum(r['method'] == 'GET' and r['authenticated'] for r in dav.requests) >= len(INPUTS))
     record('fixtures-unchanged', all(sha(fixtures / fixture) == report['inputs'][name] for name, fixture in INPUTS))
     report['accepted'] = True

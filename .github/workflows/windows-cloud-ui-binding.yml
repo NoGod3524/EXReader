@@ -53,6 +53,9 @@ jobs:
             build/c09/wave3-host/CMakeCache.txt
             build/c09/logs/
             build/c09/raw-cloud-import/CMakeCache.txt
+            build/c09/raw-stage/**/*.lib
+            build/c09/product-stage/**/*.lib
+            build/c09/sdk-stage/**/*.lib
             !build/**/*.key
           if-no-files-found: warn
   verify:
