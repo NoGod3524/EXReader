@@ -48,6 +48,8 @@ def main(argv=None):
         problems.append('candidate input must be the full lowercase 40-hex commit id')
     if head and candidate and head != candidate:
         problems.append('checked-out HEAD differs from the requested candidate')
+    if candidate != os.environ.get('GITHUB_SHA', ''):
+        problems.append('candidate must equal the workflow source SHA; dispatch at the candidate branch or commit')
     if head and not SHA.match(args.seed):
         problems.append('seed must be the full lowercase 40-hex commit id')
     try:

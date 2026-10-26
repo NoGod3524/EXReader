@@ -31,6 +31,8 @@ def parse_args(argv=None):
                         help='Payload-relative path or directory to leave out (recorded in the manifest)')
     parser.add_argument('--provenance', type=Path, help='Optional JSON with cloud run identity')
     parser.add_argument('--force', action='store_true')
+    parser.add_argument('--require-build-identity', action='store_true',
+                        help='Require the platform producer build.json to bind this source and SDK')
     return parser.parse_args(argv)
 
 
@@ -49,6 +51,16 @@ def main(argv=None):
     payload = args.payload.resolve()
     if not payload.is_dir():
         raise SystemExit('payload directory does not exist: ' + str(payload))
+    build_identity = {}
+    identity_path = payload / 'build.json'
+    if identity_path.is_file():
+        build_identity = json.loads(identity_path.read_text(encoding='utf-8'))
+        if build_identity.get('source_sha') != args.source_sha:
+            raise SystemExit('platform producer build.json binds another source')
+        if build_identity.get('sdk_version') != args.sdk_version:
+            raise SystemExit('platform producer build.json binds another SDK version')
+    elif args.require_build_identity:
+        raise SystemExit('platform producer build.json is required')
     records = delivery.collect(payload, args.exclude)
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -72,6 +84,10 @@ def main(argv=None):
     sums = delivery.checksums(covered).encode('utf-8')
     inner = delivery.manifest(args.target, args.source_sha, args.sdk_version, covered, args.exclude, archive_name)
     inner['provenance'] = provenance
+    if build_identity:
+        inner['producer'] = {'source_sha': build_identity['source_sha'],
+                             'sdk_version': build_identity['sdk_version'],
+                             'build_json_sha256': delivery.sha256_file(identity_path)}
     inner['metadata_files'] = [delivery.MANIFEST, delivery.CHECKSUMS]
     extras = {
         delivery.INSTRUCTIONS: (notes, 0o644),

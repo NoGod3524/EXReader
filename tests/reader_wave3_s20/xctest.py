@@ -16,6 +16,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).absolute().parents[2] / 'tools' / 'reader_wave3_package'))
+from diagnostics import xctest_log
+
 TEST_LINE = re.compile(r"Test Case '-\[(?P<suite>[A-Za-z0-9_.]+) (?P<name>[A-Za-z0-9_]+)\]' (?P<result>passed|failed)")
 
 
@@ -76,15 +79,8 @@ def main(argv=None):
                 process.wait()
             code = 124
     text = (output / 'xcodebuild.log').read_text(encoding='utf-8', errors='replace')
-    tests, seen = [], set()
-    for match in TEST_LINE.finditer(text):
-        name = match.group('name')
-        if name in seen:
-            continue
-        seen.add(name)
-        tests.append({'name': name, 'suite': match.group('suite'), 'result': match.group('result').capitalize()})
-    passed = sum(1 for item in tests if item['result'] == 'Passed')
-    failed = sum(1 for item in tests if item['result'] == 'Failed')
+    parsed = xctest_log(text)
+    tests, passed, failed = parsed['tests'], parsed['passed'], parsed['failed']
     result = {
         'schema': 1,
         'kind': 'apple-xcuitest',
@@ -110,10 +106,13 @@ def main(argv=None):
         'result_bundle_bytes': sum(item.stat().st_size for item in bundle.rglob('*') if item.is_file()) if bundle.exists() else 0,
         'log': str(output / 'xcodebuild.log'),
     }
+    result.update(parsed)
     (output / 'status.json').write_text(json.dumps(result, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     print(json.dumps({'platform': args.platform, 'exit': code, 'passed': passed, 'failed': failed,
                       'tests': len(tests)}, ensure_ascii=True))
-    if code != 0 or failed:
+    if code != 0 or failed or not tests or not result['succeeded_marker'] or result['failed_marker']:
+        print(json.dumps({'failed_cases': parsed['failed_cases'],
+                          'first_assertion': parsed['first_assertion']}, ensure_ascii=True), flush=True)
         tail = '\n'.join(text.splitlines()[-80:])
         print(tail, flush=True)
         return 1

@@ -6,9 +6,13 @@ import datetime
 import hashlib
 import json
 import os
+import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).absolute().parents[2] / 'tools' / 'reader_wave3_package'))
+from diagnostics import candidate_identity, matrix_markdown
 
 TARGETS = ('windows', 'linux', 'macos', 'android', 'iphone', 'ipad')
 PREFIX = 'reader-wave3-s20-'
@@ -119,11 +123,17 @@ def main(argv=None):
             report = local_json(report_path)
             unpack = local_json(unpack_path)
             manifest = local_json(manifest_path)
+            entry['problems'].extend(candidate_identity(
+                manifest, unpack, report, source_sha=args.source_sha,
+                run_id=args.run, attempt=args.attempt, sdk_version='3.41.0'))
             archive = manifest_path.parent / manifest['archive']['name']
             entry.update({
                 'source_sha': report.get('source_sha'),
                 'entry': report.get('entry'),
                 'entry_sha256': report.get('entry_sha256'),
+                'run_id': report.get('run_id'), 'attempt': report.get('attempt'),
+                'sdk_version': manifest.get('sdk_version'),
+                'producer': manifest.get('producer'),
                 'operations': sorted(report.get('operations') or {}),
                 'missing': report.get('missing'),
                 'drivers': [item.get('name') for item in report.get('drivers') or []],
@@ -165,6 +175,10 @@ def main(argv=None):
                 'complete_product': False}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(delivery, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+    args.output.with_suffix('.md').write_text(matrix_markdown(delivery), encoding='utf-8')
+    if os.environ.get('GITHUB_STEP_SUMMARY'):
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as stream:
+            stream.write(matrix_markdown(delivery))
     print(json.dumps({'accepted': accepted, 'problems': problems,
                       'targets': {target: {'accepted': results[target]['accepted'],
                                            'missing': results[target].get('missing')} for target in TARGETS}},

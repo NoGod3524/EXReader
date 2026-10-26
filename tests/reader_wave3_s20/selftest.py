@@ -113,6 +113,22 @@ def main():
         run([UNPACK, '--target', 'linux', '--archive', archive, '--manifest', forged,
              '--into', workspace / 'forged-out', '--report', workspace / 'forged.json'], expect=1)
         checks.append('refuse-forged-digest')
+        run([ASSEMBLE, '--target', 'linux', '--payload', payload, '--output', workspace / 'no-producer',
+             '--source-sha', SOURCE, '--require-build-identity'], expect=1)
+        producer = payload / 'build.json'
+        producer.write_text(json.dumps({'source_sha': 'b' * 40, 'sdk_version': '3.41.0'}), encoding='utf-8')
+        run([ASSEMBLE, '--target', 'linux', '--payload', payload, '--output', workspace / 'wrong-producer',
+             '--source-sha', SOURCE, '--require-build-identity'], expect=1)
+        producer.write_text(json.dumps({'source_sha': SOURCE, 'sdk_version': '3.40.0'}), encoding='utf-8')
+        run([ASSEMBLE, '--target', 'linux', '--payload', payload, '--output', workspace / 'wrong-sdk',
+             '--source-sha', SOURCE, '--require-build-identity'], expect=1)
+        producer.write_text(json.dumps({'source_sha': SOURCE, 'sdk_version': '3.41.0'}), encoding='utf-8')
+        run([ASSEMBLE, '--target', 'linux', '--payload', payload, '--output', workspace / 'producer',
+             '--source-sha', SOURCE, '--require-build-identity'])
+        produced = json.loads((workspace / 'producer/manifest.json').read_text(encoding='utf-8'))
+        assert produced['producer']['source_sha'] == SOURCE
+        assert produced['producer']['build_json_sha256'] == produced['files']['build.json']['sha256']
+        checks.append('require-matching-platform-producer-source-and-sdk')
     finally:
         shutil.rmtree(workspace, ignore_errors=True)
     print(json.dumps({'passed': True, 'checks': checks, 'count': len(checks)}, ensure_ascii=False))
