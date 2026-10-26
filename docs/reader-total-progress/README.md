@@ -74,3 +74,17 @@ The two additional outcomes are Linux original export and search jump history,
 supported by GTK GUI run `40385948659/1`. That run did not execute the original
 navigation and batch-import retained suites. Annotation export and the full sync
 failure/cancellation/retry matrix are also not granted by this evidence.
+
+## 2026-10-24 historical reconstruction
+
+For the user's three-day comparison, independent Actions audit
+[40409045230/1](https://github.com/NoGod3524/EXReader/actions/runs/40409045230),
+source `3d40db4badeacaf3d04e76f3d7fd1c8dc2938c36`, reused the same fixed 108
+requirements and evidence and moved the historical cutoff to 2026-10-25
+03:59:59 UTC (2026-10-24 23:59:59 New York). It verified the evidence and
+reported 12/108 (11.1%) at that cutoff and 65/108 (60.2%) at the audit time.
+This is a retrospective count of presently catalogued, currently verified
+requirements whose cited runs had completed by the cutoff, not an independently
+recorded historical snapshot. It may omit work whose earlier evidence is no
+longer represented by a currently verified item. The standard October 25
+cutoff and catalog on the composition branch remain unchanged.
