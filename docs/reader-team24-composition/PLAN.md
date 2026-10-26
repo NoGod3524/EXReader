@@ -887,6 +887,19 @@ expiring 2027-01-24T22:42:14Z. These are two different tested sources; neither
 is a same-source product-wide acceptance. The full Windows/Android combination
 has its own pending runs.
 
+An Android 3.40 legacy-host candidate
+`5ea83c21396fd6966abb350e26a1adb2f85a63b1` failed
+[40414918550/1](https://github.com/NoGod3524/EXReader/actions/runs/40414918550)
+before host tests: its CMake required an exact 3.41 SDK while the installed
+frozen package reported 3.40.0. Candidate
+`4d0d9d549f8412f3453b1e5a87485f5ae80bbe65` adds an explicit exact SDK
+selection with 3.41 as the default and rejects 3.41-only flags for 3.40.
+It has separate pending 3.40 and 3.41 host runs, respectively
+[40415252185/1](https://github.com/NoGod3524/EXReader/actions/runs/40415252185)
+and [40415259935/1](https://github.com/NoGod3524/EXReader/actions/runs/40415259935).
+The original failed result is retained; neither compatibility mode is accepted
+until its own run and evidence are checked.
+
 Source `715fc865a9f063ae453c4d97e44f927772139fc3` then passed all six
 desktop jobs in [40413780626/1](https://github.com/NoGod3524/EXReader/actions/runs/40413780626).
 Its additional Linux export test confirmed an injected publication I/O failure
