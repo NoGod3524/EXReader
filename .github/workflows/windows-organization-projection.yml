@@ -13,9 +13,22 @@ jobs:
     env:
       PYTHONUTF8: '1'
       EXR_COMPOSITION_CONTENT_BOUND: '1'
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      digest: ${{ steps.upload.outputs.artifact-digest }}
     steps:
       - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
       - uses: ilammy/msvc-dev-cmd@v1
+      - name: Verify exact base and permitted source scope
+        shell: pwsh
+        run: |
+          git merge-base --is-ancestor a19fef7d7cdb0be90b0e54b92910502016c33df9 "$env:GITHUB_SHA"
+          if ($LASTEXITCODE) { throw 'Incorrect base' }
+          git diff --exit-code a19fef7d7cdb0be90b0e54b92910502016c33df9 "$env:GITHUB_SHA" -- src include cmake apps/reader/revisions apps/reader/store apps/reader/android apps/reader/apple apps/reader/gtk tests/reader_windows_account tests/reader_windows_import_organize
+          if ($LASTEXITCODE) { throw 'Shared, other platform or retained source changed' }
+          python -m py_compile tests/windows_organization_projection/check_ui.py tests/windows_organization_projection/verify.py
+          if ($LASTEXITCODE) { throw 'Driver syntax failed' }
       - name: Build and run retained composed Windows checks
         shell: pwsh
         run: |
@@ -29,7 +42,10 @@ jobs:
           if ($LASTEXITCODE) { throw 'Consumer configuration failed' }
           cmake --build build/organization-consumer --parallel 4
           if ($LASTEXITCODE) { throw 'Consumer build failed' }
+      - name: Two Windows hosts synchronize organization through HTTPS
+        run: python tests/windows_organization_projection/check_ui.py
       - name: Preserve evidence and failures
+        id: upload
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -44,4 +60,23 @@ jobs:
             build/organization-consumer/command-consumer.exe
             build/organization-ui/
             !build/**/*.key
+          if-no-files-found: warn
+  verify:
+    if: always()
+    needs: windows
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify same-run host, reports and artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WINDOWS_RESULT: ${{ needs.windows.result }}
+          ARTIFACT_ID: ${{ needs.windows.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.windows.outputs.digest }}
+        run: python tests/windows_organization_projection/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-organization-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/organization-summary/
           if-no-files-found: warn
