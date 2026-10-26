@@ -108,6 +108,20 @@ try:
     report.update(accepted=True,program_sha256=sha(exe),seed_sha256=sha(seed),fixture_catalog_sha256=sha(Path(database)),originals=2202,members_per_group=170)
 except Exception as error:
     problems.append(phase+': '+type(error).__name__+': '+str(error));traceback.print_exc()
+    if app and app.process.poll() is None:
+        observed={}
+        try:observed.update(status=app.status(),titles=app.titles(),process_id=app.process.pid)
+        except Exception as diagnostic:observed['ui_error']=repr(diagnostic)
+        try:
+            catalog=Path(str(profile/'library.sqlite')+'.product.sqlite')
+            assert catalog.is_file(),'product catalog absent'
+            with sqlite3.connect(catalog.resolve().as_uri()+'?mode=ro',uri=True,timeout=1) as db:
+                observed['book_count']=db.execute('SELECT count(*) FROM reader_books').fetchone()[0]
+                observed['local_count']=db.execute('SELECT count(*) FROM reader_local_books').fetchone()[0]
+        except Exception as diagnostic:observed['catalog_error']=repr(diagnostic)
+        try:ui.M.screenshot(app.window,out/'failure.bmp')
+        except Exception as diagnostic:observed['screenshot_error']=repr(diagnostic)
+        report['failure_observation']=observed
 finally:
     if app and app.process.poll() is None:
         app.process.kill();app.process.wait(timeout=20);app.log.close()
