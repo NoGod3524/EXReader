@@ -32,11 +32,12 @@ try:
         assert built['cloud_content_bound'] and built['program_sha256'] == report['program_sha256'] == sha('c09/package/EXReader/EXReader.exe')
         assert report['probe_sha256'] == sha('cloud-readback/cloud-probe.exe')
         assert report['font_sha256'] == sha('c09/package/EXReader/Reader.otf')
+        assert report['installed_libraries'] and all(sha(path) == digest for path, digest in report['installed_libraries'].items())
         mapping = read('c09/wave3-host/windows-host.map').decode('utf-8', errors='replace')
         assert 'exr_webdav_download_observed' in mapping and 'reader_cloud_import' in mapping
         expected = {'authenticated-https-listing', 'no-implicit-selection', 'directory-navigation',
                     'public-sdk-original-readback', 'duplicate-preserves-state', 'http-failure-preserves-state',
-                    'cancel-listing-preserves-state', 'unauthorized-preserves-state', 'authenticated-downloads', 'fixtures-unchanged'}
+                    'cancel-listing-preserves-state', 'unauthorized-preserves-state', 'originals-survive-failure-and-cancel', 'authenticated-downloads', 'fixtures-unchanged'}
         inputs = [('One text.txt','sample.txt'),('Two webpage.html','sample.html'),('Three fiction.fb2','sample.fb2'),('Four EPUB.epub','sample.epub'),('Five document.docx','sample.docx'),('Six richtext.rtf','sample.rtf'),('Seven mobi.mobi','sample.mobi'),('Eight PDF.pdf','pdf-public-text.pdf'),('Nine comic.cbz','comic.cbz')]
         expected.update('import-' + fixture for _, fixture in inputs)
         assert set(report['checks']) == expected and len(report['checks']) == len(expected)
@@ -44,6 +45,8 @@ try:
         audit = report['public_readback']; assert audit['ok'] == 1 and len(audit['books']) == len(inputs)
         assert all(book['read_ok'] == 1 for book in audit['books'])
         assert {sha('cloud-ui/readback/book-%d.bin' % book['id']) for book in audit['books']} == set(report['inputs'].values())
+        after = report['public_readback_after']; assert after['ok'] == 1 and len(after['books']) == len(inputs) and all(book['read_ok'] == 1 for book in after['books'])
+        assert {sha('cloud-ui/readback-after/book-%d.bin' % book['id']) for book in after['books']} == set(report['inputs'].values())
         assert report['server']['base'].startswith('https://127.0.0.1:')
         assert report['server']['certificate_sha256'] == sha('cloud-ui/certificates/server.crt')
         assert report['server']['implementation_sha256'] == hashlib.sha256(Path('tests/reader_windows_account/check_account_ui.py').read_bytes()).hexdigest()
@@ -52,6 +55,7 @@ try:
         assert read('cloud-ui/cloud-receipts.bmp').startswith(b'BM')
         result.update(accepted=True, checks=report['checks'], program_sha256=report['program_sha256'], probe_sha256=report['probe_sha256'],
                       server=report['server'], artifact=dict(id=artifact, digest=digest, size=meta['size_in_bytes']),
+                      installed_libraries=report['installed_libraries'],
                       build_accepted=built['accepted'], build_failures=built['failures'],
                       dependencies={p: subprocess.check_output(['git', 'rev-parse', result['source'] + ':' + p], text=True).strip()
                                     for p in ('apps/reader/cloud-import', 'extras/webdav', 'extras/sideload', 'apps/reader/desktop', 'src', 'include')})
