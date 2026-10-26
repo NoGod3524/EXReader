@@ -462,6 +462,9 @@ struct ReaderScreen: View {
     @State private var showSearch = false
     @State private var showNavigation = false
     @State private var showReadingRecords = false
+#if EXR_APPLE_WAVE3
+    @State private var showWave3 = false
+#endif
 #if EXR_APPLE_PAGE_THEME
     @State private var showPageTheme = false
 #endif
@@ -524,6 +527,10 @@ struct ReaderScreen: View {
                     .accessibilityAddTraits(.isHeader)
                 Spacer()
                 Menu {
+#if EXR_APPLE_WAVE3
+                    Button("文件、字体与同步详情") { model.refreshWave3(); showWave3 = true }
+                        .accessibilityIdentifier("reader.features")
+#endif
                     Button("阅读记录") { model.prepareReadingRecords(); showReadingRecords = true }
                         .accessibilityIdentifier("reader.records")
 #if EXR_APPLE_PAGE_THEME
@@ -620,6 +627,9 @@ struct ReaderScreen: View {
         .sheet(isPresented: $showSearch) { HostSearchSheet(model: model) }
         .sheet(isPresented: $showNavigation) { HostNavigationSheet(model: model) }
         .sheet(isPresented: $showReadingRecords) { HostReadingRecordsSheet(model: model) }
+#if EXR_APPLE_WAVE3
+        .sheet(isPresented: $showWave3) { HostWave3Sheet(state: model.wave3, actions: model.wave3Actions) }
+#endif
 #if EXR_APPLE_PAGE_THEME
         .sheet(isPresented: $showPageTheme) { HostPageThemeSheet(model: model) }
 #endif

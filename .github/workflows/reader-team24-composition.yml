@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/team24-composition]
   workflow_dispatch:
+    inputs:
+      production_apple:
+        description: Build, archive, unpack and launch the actual Apple production profile
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -17,7 +22,7 @@ jobs:
       - name: Source guard negative controls
         run: python tests/reader_composition/test_guard.py
       - name: Parse canonical production Apple build tools in Actions
-        run: python -m py_compile tools/apple_swift.py tools/build_apple_product.py tools/build_apple_host.py tools/check_apple_product.py
+        run: python -m py_compile tools/apple_swift.py tools/build_apple_product.py tools/build_apple_host.py tools/check_apple_product.py tools/reader_composition/apple_build.py
       - name: Exact composition source admission
         run: python tools/reader_composition/guard.py --source "$GITHUB_SHA" --report build/composition-source.json
       - uses: actions/upload-artifact@v4
@@ -25,4 +30,34 @@ jobs:
         with:
           name: composition-source-${{ github.sha }}
           path: build/composition-source.json
+          if-no-files-found: error
+  production-apple:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.production_apple }}
+    needs: source
+    runs-on: macos-15
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Admit the exact composed source on this runner
+        run: python tools/reader_composition/guard.py --source "$GITHUB_SHA" --report build/apple-source-admission.json
+      - name: Build and launch the actual unpacked production profile
+        run: python tools/reader_composition/apple_build.py --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: composition-apple-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/composition-apple/${{ matrix.target }}/production-startup.json
+            build/composition-apple/${{ matrix.target }}/delivery-*/
+            build/composition-apple/${{ matrix.target }}/startup-*/
+            build/composition-apple/${{ matrix.target }}/payload/build.json
+            build/composition-apple/${{ matrix.target }}/payload/product-link*
+            build/apple-source-admission.json
           if-no-files-found: error

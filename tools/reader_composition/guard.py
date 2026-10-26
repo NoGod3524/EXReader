@@ -11,6 +11,7 @@ ROOT_PATHS = frozenset((
     MANIFEST,
     'docs/reader-team24-composition/PLAN.md',
     'tools/reader_composition/guard.py',
+    'tools/reader_composition/apple_build.py',
     'tests/reader_composition/test_guard.py',
     '.github/workflows/reader-team24-composition.yml',
     'tools/apple_swift.py',
