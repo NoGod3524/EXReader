@@ -23,7 +23,6 @@
       "name": "cloud-same-open-file",
       "source": "c92a2e06a73d5813e86537e5a5f4a8e76a32bbcd",
       "paths": [
-        "apps/reader/cloud-import/src/cloud_import.c",
         "tests/reader_cloud_pinned/run.py",
         "tests/reader_cloud_pinned/strict.py",
         ".github/workflows/reader-cloud-pinned-source.yml",
@@ -110,6 +109,29 @@
         "tests/reader_wave3_c09/identity.py",
         "tests/reader_wave3_c09/needles.py",
         "tests/reader_wave3_c09/team24_guard.py"
+      ]
+    },
+    {
+      "name": "cloud-content-bound-candidate",
+      "source": "ccb1dd27f4e179799aec7c32522eb7f06dc32c85",
+      "tested_source": "ccb1dd27f4e179799aec7c32522eb7f06dc32c85",
+      "tested_run": 40381046417,
+      "paths": [
+        ".github/workflows/reader-cloud-content-binding.yml",
+        "apps/reader/cloud-import/CMakeLists.txt",
+        "apps/reader/cloud-import/EXReaderCloudImportContentBoundConfig.cmake.in",
+        "apps/reader/cloud-import/src/cloud_import.c",
+        "docs/reader-cloud-content-binding.md",
+        "extras/webdav/CMakeLists.txt",
+        "extras/webdav/EXReaderWebDAVObservedConfig.cmake.in",
+        "extras/webdav/include/exr_webdav.h",
+        "extras/webdav/src/webdav.cpp",
+        "tests/reader_cloud_content/CMakeLists.txt",
+        "tests/reader_cloud_content/mixed/CMakeLists.txt",
+        "tests/reader_cloud_content/mixed/main.c",
+        "tests/reader_cloud_content/observer.c",
+        "tests/reader_cloud_content/run.py",
+        "tests/reader_cloud_content/strict.py"
       ]
     }
   ]
