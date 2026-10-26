@@ -2,6 +2,7 @@
 import base64
 import ctypes as C
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -13,8 +14,11 @@ import traceback
 import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / 'tests/reader_windows_import_organize'))
-from check_ui import App, ACCOUNT, A, U, send, text, M, CLOUD, ROWS, MESSAGE, GO, CANCEL, CLOSE, INPUTS
+spec = importlib.util.spec_from_file_location('import_organize_ui', ROOT / 'tests/reader_windows_import_organize/check_ui.py')
+driver = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(driver)
+App, ACCOUNT, A, U, send, text, M = (driver.App, driver.ACCOUNT, driver.A, driver.U, driver.send, driver.text, driver.M)
+CLOUD, ROWS, MESSAGE, GO, CANCEL, CLOSE, INPUTS = (driver.CLOUD, driver.ROWS, driver.MESSAGE, driver.GO, driver.CANCEL, driver.CLOSE, driver.INPUTS)
 
 out = ROOT / 'build/cloud-ui'
 out.mkdir(parents=True, exist_ok=False)
