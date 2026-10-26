@@ -46,3 +46,20 @@ atomic rename. On any platform a failed publication now reports IO unless the
 OS reports an actual existing target; only that collision enters hash comparison.
 The original failure was misleadingly reporting a conflict for every link error.
 This candidate still needs real compilation and runtime verification.
+
+## Second actual result and save-confirmation candidate
+
+Run `40371294601/1`, source `5a9c0c3c`, failed. The first ten of fifteen
+initial UI cases passed, including real local font import and selection,
+original export, and both quick-size rollback cases. Annotation export first
+failed while creating its bookmark: a successful write immediately refreshed
+the records list and replaced the save confirmation with the list count.
+The following four cases failed after the panel remained open. Later phases
+were not executed; this is no overall phase or product acceptance.
+
+ReadingPanel now carries a request-local save confirmation into its successful
+list refresh, alongside the refreshed count. Ordinary refresh clears it, and
+failed/cancelled refresh still reports the existing error. Explicit pending
+request confirmation uses the same path. Request epochs, cancellation, owner
+operations and all existing UI assertions/timeouts remain unchanged. The guard
+pins the exact additional Java blob. Verification remains pending in Actions.
