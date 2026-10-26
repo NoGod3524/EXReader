@@ -3,6 +3,7 @@ plugins {
 }
 
 def exrSdk = project.findProperty('exrSdk') ?: ''
+def exrSdkVersion = project.findProperty('exrSdkVersion') ?: '3.41.0'
 def exrProduct = project.findProperty('exrProduct') ?: "${rootProject.projectDir}/../../stage/android-product"
 def exrSync = project.findProperty('exrSync') == 'true'
 def exrSearch = project.findProperty('exrSearch') == 'true'
@@ -46,7 +47,7 @@ android {
         }
         externalNativeBuild {
             cmake {
-                arguments "-DEXR_SDK=${exrSdk}", "-DEXR_PRODUCT=${exrProduct}", '-DANDROID_STL=c++_static'
+                arguments "-DEXR_SDK=${exrSdk}", "-DEXR_HOST_SDK_VERSION=${exrSdkVersion}", "-DEXR_PRODUCT=${exrProduct}", '-DANDROID_STL=c++_static'
                 arguments "-DEXR_HOST_SYNC=${exrSync ? 'ON' : 'OFF'}", "-DEXR_DAV=${exrDav}", "-DEXR_SIDELOAD=${exrSideload}"
                 arguments "-DEXR_HOST_SEARCH=${exrSearch ? 'ON' : 'OFF'}", "-DEXR_SEARCH_PREFIX=${exrSearchPrefix}"
                 arguments "-DEXR_HOST_NAVIGATION=${exrNavigation ? 'ON' : 'OFF'}", "-DEXR_NAVIGATION_PREFIX=${exrNavigationPrefix}"
