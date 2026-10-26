@@ -209,7 +209,7 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect fixed failed UI evidence only on this Actions runner
+      - name: Authenticate and inspect retained original and adapted owner evidence
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tests/reader_host_session_android/inspect.py
+        run: python3 tests/reader_android_owner_current/inspect_retained.py
