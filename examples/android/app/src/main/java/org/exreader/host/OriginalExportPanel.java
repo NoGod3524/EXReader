@@ -2,6 +2,7 @@
 package org.exreader.host;
 
 import android.net.Uri;
+import android.os.Bundle;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import java.io.File;
@@ -14,10 +15,13 @@ import java.util.Locale;
  */
 final class OriginalExportPanel extends Wave3Dialog {
     static final int REQUEST=1103;
-    /** The private original the user may still save; survives Activity recreation, never the process. */
+    /** The private original the user may still save. */
     private static volatile File pending;
+    private static final String STATE="wave3.original.pending";
     private long book;private String title="";private Button save,cancel;private boolean busy;
     OriginalExportPanel(android.app.Activity activity,Wave3Host host){super(activity,host);}
+    void saveState(Bundle state){File file=pending;if(file!=null)state.putString(STATE,file.getPath());}
+    void restoreState(Bundle state){pending=Wave3Files.restoreExport(activity.getFilesDir(),"original-export",state.getString(STATE));}
     @Override void build() {
         LinearLayout actions=row();
         save=button(actions,"保存到…",this::saveClicked);cancel=button(actions,"取消导出",this::cancelTask);
@@ -53,7 +57,7 @@ final class OriginalExportPanel extends Wave3Dialog {
     /** Back from the system document creator, possibly in a recreated Activity. */
     void saved(Uri destination) {
         File source=pending;
-        if(source==null||!source.isFile()){return;}
+        if(source==null||!source.isFile()){open("导出原件","原件导出状态");message("私有原件不可用，请重新导出后保存");return;}
         open("导出原件","原件导出状态");message("正在保存「"+source.getName()+"」");
         long stamp=request();controls(true);
         host.saveTo(source,destination,task,bytes->post(stamp,()->{controls(false);message("已保存 "+bytes+" 字节；私有原件保留");}),

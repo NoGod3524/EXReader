@@ -316,6 +316,23 @@ public final class Wave3UiTest extends Instrumentation {
             capture("size-save-failed");shelf();waitLeases(0,"leaving after a failed size save releases every lease");
         });
     }
+    /** Exercise the saved-state path after discarding the process-local references. */
+    private void restoreExportState(String panelName,String... fieldNames)throws Exception {
+        AtomicReference<Throwable> failure=new AtomicReference<>();
+        runOnMainSync(()->{try{
+            MainActivity activity=(MainActivity)readerMonitor.getLastActivity();
+            need(activity!=null,"live host for export state");
+            Bundle state=new Bundle();callActivityOnSaveInstanceState(activity,state);
+            java.lang.reflect.Field panelField=MainActivity.class.getDeclaredField(panelName);panelField.setAccessible(true);
+            Object panel=panelField.get(activity);File[] before=new File[fieldNames.length];
+            java.lang.reflect.Field[] fields=new java.lang.reflect.Field[fieldNames.length];
+            for(int i=0;i<fields.length;i++){fields[i]=panel.getClass().getDeclaredField(fieldNames[i]);fields[i].setAccessible(true);before[i]=(File)fields[i].get(null);need(before[i]!=null&&before[i].isFile(),"private export exists before recreation");fields[i].set(null,null);}
+            if(panel instanceof OriginalExportPanel)((OriginalExportPanel)panel).restoreState(state);else ((AnnotationPanel)panel).restoreState(state);
+            for(int i=0;i<fields.length;i++){File after=(File)fields[i].get(null);need(after!=null&&after.getCanonicalFile().equals(before[i].getCanonicalFile()),"private export recovered from activity state");}
+            need(Wave3Files.restoreExport(context.getFilesDir(),"original-export",new File(context.getFilesDir(),"library.db").getPath())==null,"unrelated private file is not an export");
+        }catch(Throwable error){failure.set(error);}});
+        if(failure.get()!=null)throw new AssertionError("export saved-state recovery",failure.get());
+    }
     private void originals()throws Exception {
         check("original_export_private_original_receipt_and_saf_save",()->{
             shelf();JSONObject epub=books.getJSONObject("epub");String title=epub.getString("title");
@@ -323,6 +340,7 @@ public final class Wave3UiTest extends Instrumentation {
             described("原件导出状态","✓",120000);String receipt=described("原件导出状态");need(receipt.contains("SHA-256 "+epub.getString("sha256").substring(0,12)),"per-item receipt carries the original identity");
             File exported=null;File[] produced=new File(context.getFilesDir().getCanonicalFile(),"original-export").listFiles();need(produced!=null,"private export directory");for(File candidate:produced)if(candidate.isFile()&&candidate.getName().toLowerCase(Locale.ROOT).endsWith(".epub")&&hash(candidate).equals(epub.getString("sha256")))exported=candidate;need(exported!=null,"complete private original equals the fixture byte for byte");
             capture("original-receipt");
+            restoreExportState("originalPanel","pending");
             File sink=new File(context.getFilesDir(),"wave3-sink/original.epub");sink.getParentFile().mkdirs();sink.delete();
             ActivityMonitor creator=stub(Intent.ACTION_CREATE_DOCUMENT,Uri.fromFile(sink));click("保存到…");described("原件导出状态","已保存",60000);removeMonitor(creator);
             need(creator.getHits()>=1&&sink.isFile()&&hash(sink).equals(epub.getString("sha256")),"SAF destination equals the private original");need(exported.isFile()&&hash(exported).equals(epub.getString("sha256")),"private original retained after save");closeDialog();
@@ -335,6 +353,7 @@ public final class Wave3UiTest extends Instrumentation {
             readerMore("标注导入 / 导出");click("导出标注");described("标注状态","已形成",120000);String status=described("标注状态");need(status.contains("条标注"),"export statistics shown");
             String sha=books.getJSONObject("txt").getString("sha256");File jsonl=new File(context.getFilesDir().getCanonicalFile(),"annotation-export/"+sha+"/annotations.jsonl"),markdown=new File(context.getFilesDir().getCanonicalFile(),"annotation-export/"+sha+"/annotations.md");
             need(jsonl.isFile()&&markdown.isFile(),"complete private export files");String json=new String(Files.readAllBytes(jsonl.toPath()),StandardCharsets.UTF_8);need(json.contains("exreader-annotation-export-raw3")&&json.contains("wave3 bookmark"),"portable raw0.2 export format with the actual bookmarks");
+            restoreExportState("annotationPanel","pendingJsonl","pendingMarkdown");
             File sink=new File(context.getFilesDir(),"wave3-sink/annotations.jsonl");sink.getParentFile().mkdirs();sink.delete();
             ActivityMonitor creator=stub(Intent.ACTION_CREATE_DOCUMENT,Uri.fromFile(sink));click("保存 JSONL…");described("标注状态","已保存",60000);removeMonitor(creator);
             need(sink.isFile()&&hash(sink).equals(hash(jsonl)),"SAF JSONL equals the private export");capture("annotation-export");closeDialog();

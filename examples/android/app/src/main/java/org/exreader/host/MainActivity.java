@@ -198,6 +198,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
         setContentView(R.layout.activity_main);
         bindViews();
+        if(savedInstanceState!=null&&BuildConfig.READER_WAVE3){originalPanel.restoreState(savedInstanceState);annotationPanel.restoreState(savedInstanceState);}
         shelfMetrics=ShelfWindowMetrics.start(this,activityStartedNs);
         if(shelfMetrics!=null)catalogShelf.observeFirstInteractive(activityStartedNs);
         wireActions();
@@ -1571,6 +1572,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         out.putLong("annotationPickBook", annotationPickBook);
         out.putString("annotationPickTitle", annotationPickTitle);
         if (annotationPickedUri != null) out.putString("annotationPickedUri", annotationPickedUri.toString());
+        if(BuildConfig.READER_WAVE3){originalPanel.saveState(out);annotationPanel.saveState(out);}
         saveInstancePrefs();
     }
 
