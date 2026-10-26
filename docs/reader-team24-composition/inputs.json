@@ -81,8 +81,7 @@
         "tests/reader_team24_apple/make_project.rb",
         "tests/reader_team24_apple/run_ui.py",
         "tests/reader_team24_apple/ui/FeaturesUITests.swift",
-        "tests/reader_team24_apple/verify.py",
-        "examples/apple/HostCatalog.swift"
+        "tests/reader_team24_apple/verify.py"
       ]
     }
   ]
