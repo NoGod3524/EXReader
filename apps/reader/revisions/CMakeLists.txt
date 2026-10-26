@@ -20,7 +20,7 @@ find_package(EXReaderProductCatalog 0.1.0 EXACT CONFIG REQUIRED
 # only to satisfy the module's static link, not exposed in its public header.
 add_library(reader_revision_hash STATIC ../../../extras/opds/src/opds_core.c)
 target_include_directories(reader_revision_hash PRIVATE ../../../extras/opds/include ../../../extras/opds/src)
-add_library(reader_revisions STATIC src/revisions.cpp)
+add_library(reader_revisions STATIC src/revisions.cpp src/organization_projection.cpp)
 target_include_directories(reader_revisions PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include> PRIVATE ../../../extras/opds/include)
 target_link_libraries(reader_revisions PRIVATE EXReaderProductCatalog::reader_catalog
