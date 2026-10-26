@@ -259,3 +259,11 @@ Both expire 2027-01-24T19:02:24Z. The test proves the linked candidate and
 retained UI checks, not a real cloud-import UI exchange, path-race safety, or
 six-platform delivery. Subsequent composition commits only pin or add other
 inputs and documentation; they require their own combined product replay.
+
+The composition source `7eaa048c` has SDK `src` tree
+`001bd8d0baa49ecde6fae82d799bafd0b007030f` and `include` tree
+`2a81956f632c2bc2769d06692a80b5ac9bb22b8c`, identical to the adopted format
+candidate `9d3a3f8bfa06c099ebba0d9e1ba613d276c3af09`. The separately tested
+18-document candidate round `40244430230/1` is retained under its original
+source and identity. Tree equality is evidence of unchanged SDK source, not a
+substitute for running the complete final product and corpus on one source.
