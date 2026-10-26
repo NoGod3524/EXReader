@@ -6,6 +6,9 @@ import Foundation
 import CryptoKit
 import CEXReader
 import Darwin
+#if EXR_APPLE_WAVE3
+import CReaderAppleFeatures
+#endif
 
 enum HostError: Error, LocalizedError {
     case engine(code: Int, message: String)
@@ -135,6 +138,10 @@ enum HostSDKReview {
 
 final class HostFont {
     let handle: OpaquePointer
+#if EXR_APPLE_WAVE3
+    private var lease: HostFontLease?
+    init(lease: HostFontLease) { self.lease = lease; handle = lease.font }
+#endif
     init(data: Data) throws {
         var font: OpaquePointer?
         var error = exr_error()
@@ -149,7 +156,13 @@ final class HostFont {
         guard let font else { throw HostError.invalidResult("字体无法创建") }
         handle = font
     }
-    deinit { exr_font_free(handle) }
+    deinit {
+#if EXR_APPLE_WAVE3
+        if lease == nil { exr_font_free(handle) }
+#else
+        exr_font_free(handle)
+#endif
+    }
 }
 
 final class HostAnchor {

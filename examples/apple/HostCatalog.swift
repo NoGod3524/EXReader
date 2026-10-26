@@ -203,6 +203,20 @@ final class HostCatalog {
         return try body(opened)
     }
 
+#if EXR_APPLE_WAVE3
+    // A short-lived legacy encoder view of the SAME catalog. No alternate store,
+    // schema, read model or write: public v2 encoding requires a legacy handle.
+    func withLegacyEncoder<T>(_ body: (OpaquePointer) throws -> T) throws -> T {
+        dispatchPrecondition(condition: .onQueue(ownerQueue))
+        var store: OpaquePointer?, error = reader_revision_error()
+        guard reader_revisions_open(path.path, &store, &error) == READER_REV_OK, let opened = store else {
+            throw HostCatalogError.invalid("历史编码 owner 无法打开")
+        }
+        defer { _ = reader_revisions_close(&store, &error) }
+        return try body(opened)
+    }
+#endif
+
     func searchSourceKey(sdkID: Int64) throws -> String {
         let (database, statement) = try prepare("SELECT b.format,b.source_sha256,b.source_bytes FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE l.sdk_book_id=? AND b.deleted=0 LIMIT 2", [.integer(sdkID)])
         defer { sqlite3_finalize(statement) }

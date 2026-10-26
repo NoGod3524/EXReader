@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+#if EXR_APPLE_WAVE3
+import CReaderAppleFeatures
+#endif
 import Combine
 import CReaderProduct
 
@@ -270,3 +273,19 @@ final class HostAccountSession: ObservableObject {
         }
     }
 }
+
+#if EXR_APPLE_WAVE3
+extension HostAccountSession {
+    func featureSnapshot() throws -> String {
+        precondition(Thread.isMainThread)
+        guard let handle else { return "同步会话尚未创建；没有已完成同步声明" }
+        var snapshot: OpaquePointer?, error = reader_sync_view_error(), summary = reader_sync_view_summary()
+        guard reader_sync_view_capture(handle, nil, nil, &snapshot, &error) == READER_SYNC_VIEW_OK, let captured = snapshot else {
+            throw HostError.invalidInput("只读同步快照失败：\(hostReadingField(error.message))")
+        }
+        defer { _ = reader_sync_view_release(&snapshot) }
+        guard reader_sync_view_summary_get(captured, &summary) == READER_SYNC_VIEW_OK else { throw HostError.invalidResult("同步快照无法读取") }
+        return "状态：\(String(cString: reader_sync_view_phase_text(summary.phase)))\n原因：\(String(cString: reader_sync_view_reason_text(summary.reason)))\n已扫描 \(summary.completed_shards)/\(summary.shard_count) 分片；操作 \(summary.operations)\n一次扫描完成不等于全库同步完成。此页面不启动网络、不重试、不确认队列。"
+    }
+}
+#endif

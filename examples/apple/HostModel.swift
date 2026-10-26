@@ -6,6 +6,9 @@ import CEXReader
 import CReaderProduct
 import Combine
 import Darwin
+#if EXR_APPLE_WAVE3
+import CReaderAppleFeatures
+#endif
 
 #if EXR_APPLE_PAGE_THEME
 enum HostPageThemeChoice: String, CaseIterable {
@@ -1221,6 +1224,11 @@ final class HostSession {
 }
 
 final class HostReaderModel: ObservableObject {
+#if EXR_APPLE_WAVE3
+    let features = HostFeatureState()
+    private let featureHistory = HostJumpHistory()
+    private var featureReturning = false
+#endif
     let search = HostSearchState()
     let navigation = HostNavigationState()
     let readingRecords = HostReadingState()
@@ -1423,7 +1431,13 @@ final class HostReaderModel: ObservableObject {
 
     deinit {
         let ownedCatalog = catalog
+#if EXR_APPLE_WAVE3
+        let ownedSession = session
+#endif
         queue.async {
+#if EXR_APPLE_WAVE3
+            ownedSession?.close()
+#endif
             try? ownedCatalog?.close()
         }
     }
@@ -1732,7 +1746,7 @@ final class HostReaderModel: ObservableObject {
         do { try writeState(session: session) }
         catch { warnings.append("状态记录失败：\(describe(error))") }
         let warning = warnings.joined(separator: "；")
-        return DispatchQueue.main.sync {
+        let accepted = DispatchQueue.main.sync {
             guard token == self.token else { return false }
             if self.current?.id != snapshot.book.id {
                 self.notes = []
@@ -1752,6 +1766,16 @@ final class HostReaderModel: ObservableObject {
             self.finish()
             return true
         }
+#if EXR_APPLE_WAVE3
+        if accepted && !featureReturning, let catalog {
+            do {
+                let kind = status.contains("目录") ? READER_JH_TOC : status.contains("定位") ? READER_JH_SEARCH : READER_JH_PAGE
+                try featureHistory.capture(session, catalog: catalog, kind: kind)
+                publishFeatureHistory()
+            } catch { DispatchQueue.main.async { self.features.status = error.localizedDescription } }
+        }
+#endif
+        return accepted
     }
 
     private func completeMutation(session: HostSession, token: Int, status: String, imported: Bool = false) {
@@ -2641,3 +2665,277 @@ final class HostReaderModel: ObservableObject {
     }
 #endif
 }
+
+#if EXR_APPLE_WAVE3
+extension HostSession {
+    func featureResolve(_ input: reader_rs_record, cancel: HostCancelBox) throws -> Bool {
+        try cancel.check()
+        guard let book else { return false }
+        let identity = try library.sourceFingerprint(book: book, cancel: cancel)
+        guard hostReadingField(input.book_key) == identity.format + ":" + identity.sha256,
+              HostReadingWorker.acceptsParser(hostReadingField(input.parser_version)),
+              input.start <= UInt64(Int.max), input.end <= UInt64(Int.max), input.part <= UInt64(Int.max) else { return false }
+        // The installed importer already decoded/validated these fields. Resolve
+        // through the SAME dynamic-SDK wrappers as the original reading owner;
+        // no extra parser, static SDK or second product resolver is linked.
+        let match: HostAnchorMatch
+        if input.mode == READER_RS_FIXED_PAGE && book.isFixed {
+            guard input.exact != nil else { return false }
+            let fixed = try library.fixed(bookID: book.id, font: font, cancel: cancel)
+            let id = hostString(input.page_id)
+            let choices = fixed.pageIDs.enumerated().filter { $0.element.utf8.elementsEqual(id.utf8) }
+            guard !id.isEmpty, choices.count == 1 else { return false }
+            var raw = exr_fixed_anchor(); raw.page_id = input.page_id; raw.start = Int(input.start); raw.end = Int(input.end)
+            raw.exact = input.exact; raw.prefix = input.prefix; raw.suffix = input.suffix
+            raw.exact_size = input.exact_size; raw.prefix_size = input.prefix_size; raw.suffix_size = input.suffix_size
+            let text = try fixed.text(page: choices[0].offset, cancel: cancel)
+            match = try text.resolve(raw, pageID: id, cancel: cancel)
+        } else if input.mode == READER_RS_EPUB_CHAPTER && !book.isFixed {
+            guard input.exact != nil else { return false }
+            let publication = try HostPublication(library: library, bookID: book.id, cancel: cancel)
+            let path = hostString(input.part_path), part: Int
+            if input.anchor_version == 1 {
+                let choices = publication.parts.filter { $0.path.utf8.elementsEqual(path.utf8) && $0.reading }
+                guard choices.count == 1 else { return false }; part = choices[0].index
+            } else { part = Int(input.part); _ = try publication.route(part, path: path) }
+            let pager = try HostPager(publication: publication, part: part, font: font, width: Double(viewport.width),
+                height: Double(viewport.height), fontSize: fontSize, box: cancel)
+            var raw = exr_anchor(); raw.start = Int(input.start); raw.end = Int(input.end)
+            raw.exact = input.exact; raw.prefix = input.prefix; raw.suffix = input.suffix; raw.chapter = input.part_path
+            match = try pager.resolveInput(raw, cancel: cancel)
+        } else if input.mode == READER_RS_REFLOW_GLOBAL && !book.isFixed {
+            guard input.exact != nil else { return false }
+            let document = try library.document(bookID: book.id, cancel: cancel)
+            var raw = exr_anchor(); raw.start = Int(input.start); raw.end = Int(input.end)
+            raw.exact = input.exact; raw.prefix = input.prefix; raw.suffix = input.suffix; raw.chapter = input.chapter
+            match = try document.resolveInput(raw, cancel: cancel)
+        } else { return false }
+        try cancel.check(); return match.isFound
+    }
+    func featureFontCandidate(_ font: HostFont, cancel: HostCancelBox) throws -> (HostSession, HostSnapshot) {
+        guard let book else { throw HostError.invalidInput("请先打开书籍") }
+        try cancel.check()
+        let result = HostSession(library: library, font: font, slowDelay: slowDelay, viewport: viewport, fontSize: fontSize)
+#if EXR_APPLE_PAGE_THEME
+        result.pagePalette = pagePalette
+#endif
+        result.book = book; result.document = document; result.publication = publication
+        result.part = part; result.page = page; result.readingOffset = readingOffset
+        result.preserveUnresolvedProgress = preserveUnresolvedProgress
+        try result.begin(cancel)
+        if book.isFixed { result.fixed = try library.fixed(bookID: book.id, font: font, cancel: cancel) }
+        else { try result.rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel) }
+        let snapshot = try result.renderSnapshot(persistProgress: false)
+        try cancel.check(); return (result, snapshot)
+    }
+}
+
+extension HostReaderModel {
+    private func publishFeatureHistory() {
+        guard let value = try? featureHistory.state() else { return }
+        DispatchQueue.main.async { self.features.canBack = value.can_back != 0; self.features.canForward = value.can_forward != 0 }
+    }
+    private func performFeature(_ body: @escaping (HostSession, HostCatalog, HostCancelBox) throws -> String) {
+        guard !busy, current != nil else { return }
+        let (myToken, cancel) = begin()
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库尚未就绪") }
+                let status = try body(session, catalog, cancel)
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.features.status = status; self.statusText = status; self.finish()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.features.status = error.localizedDescription; self.fail(error)
+                }
+            }
+        }
+    }
+    func previewFeatureAnnotations(_ selected: URL) {
+        features.preview = nil
+        performFeature { session, catalog, cancel in
+            let scoped = selected.startAccessingSecurityScopedResource()
+            defer { if scoped { selected.stopAccessingSecurityScopedResource() } }
+            // Retain a private immutable input, so picker access does not expire
+            // between preview and confirmation. The module bounds/validates it.
+            let folder = try self.storageFolder().appendingPathComponent("annotation-previews")
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+            let copy = folder.appendingPathComponent(UUID().uuidString + ".jsonl")
+            let size = try selected.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+            guard size.isRegularFile == true, let count = size.fileSize, count > 0, count <= 16 * 1024 * 1024 else { throw HostError.invalidInput("标注文件须为不超过 16 MiB 的普通文件") }
+            try FileManager.default.copyItem(at: selected, to: copy)
+            do {
+                let (preview, status) = try hostFeatureImport(copy, preview: nil, session: session, catalog: catalog, cancel: cancel)
+                DispatchQueue.main.async { self.features.preview = preview }
+                return status
+            } catch { try? FileManager.default.removeItem(at: copy); throw error }
+        }
+    }
+    func confirmFeatureAnnotations() {
+        guard let preview = features.preview else { return }
+        performFeature { session, catalog, cancel in
+            let (_, status) = try hostFeatureImport(preview.file, preview: preview, session: session, catalog: catalog, cancel: cancel)
+            try? FileManager.default.removeItem(at: preview.file)
+            DispatchQueue.main.async { self.features.preview = nil }
+            return status
+        }
+    }
+    func dismissFeaturePreview() {
+        if let preview = features.preview { let file = preview.file; queue.async { try? FileManager.default.removeItem(at: file) } }
+        features.preview = nil
+    }
+    func chooseFeatureFont(_ selected: URL?) {
+        guard !busy, current != nil else { return }
+        let (myToken, cancel) = begin()
+        queue.async {
+            do {
+                guard let session = self.session else { throw HostError.invalidInput("书库尚未就绪") }
+                let font: HostFont
+                if let selected {
+                    let scoped = selected.startAccessingSecurityScopedResource()
+                    defer { if scoped { selected.stopAccessingSecurityScopedResource() } }
+                    let folder = try self.storageFolder().appendingPathComponent("font-library")
+                    let lease = try HostFontThread.shared.call { try HostFontLease(directory: folder, selected: selected, cancel: cancel) }
+                    font = HostFont(lease: lease)
+                } else {
+                    guard let url = Bundle.main.url(forResource: "Reader", withExtension: "otf") else { throw HostError.invalidInput("内置字体缺失") }
+                    font = try HostFont(data: Data(contentsOf: url))
+                }
+                let (candidate, snapshot) = try session.featureFontCandidate(font, cancel: cancel)
+                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "字体已应用") {
+                    self.session = candidate
+                    DispatchQueue.main.async { self.features.fontName = selected?.lastPathComponent ?? "内置字体"; self.features.status = "字体已应用；旧页面与 lease 已安全释放" }
+                }
+            } catch { DispatchQueue.main.async { guard myToken == self.token else { return }; self.features.status = "字体未应用，保留旧页面：\(error.localizedDescription)"; self.fail(error) } }
+        }
+    }
+    func exportFeatureOriginal(_ selected: URL?) {
+        performFeature { session, _, cancel in
+            let directory = try selected ?? self.storageFolder().appendingPathComponent("original-exports")
+            let scoped = directory.startAccessingSecurityScopedResource()
+            defer { if scoped { directory.stopAccessingSecurityScopedResource() } }
+            if selected == nil { try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true) }
+            let file = try hostFeatureOriginal(directory, session: session, cancel: cancel)
+            DispatchQueue.main.async { self.features.exported = file }
+            return "已导出原件；未覆盖冲突目标"
+        }
+    }
+    func returnFeatureHistory(forward: Bool) {
+        guard !busy, current != nil else { return }
+        let (myToken, cancel) = begin()
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库尚未就绪") }
+                var item = try self.featureHistory.peek(forward ? READER_JH_FORWARD : READER_JH_BACK)
+                defer { reader_jh_item_release(&item) }
+                guard let wire = item.wire else { throw HostError.invalidInput("历史没有可导航位置") }
+                let data = Data(bytes: wire, count: item.wire_bytes)
+                let key = hostReadingField(item.book_key)
+                let rows = try session.library.books()
+                var source = session
+                if try catalog.readingBook(sdkID: session.book!.id).key != key {
+                    guard let book = try rows.first(where: { try catalog.readingBook(sdkID: $0.id).key == key }) else { throw HostError.invalidInput("历史原件已不在书库") }
+                    source = session.candidate(); _ = try source.open(bookID: book.id, cancel: cancel)
+                }
+                let (_, hit) = try source.readingResolution(data, catalog: catalog, cancel: cancel)
+                let (candidate, snapshot) = try source.searchCandidate(hit, cancel: cancel)
+                try cancel.check()
+                self.featureReturning = true; defer { self.featureReturning = false }
+                if self.completeFrame(snapshot, session: candidate, token: myToken, status: forward ? "已前进" : "已后退") {
+                    self.session = candidate; try self.featureHistory.complete(&item); self.publishFeatureHistory()
+                }
+            } catch { DispatchQueue.main.async { guard myToken == self.token else { return }; self.features.status = error.localizedDescription; self.fail(error) } }
+        }
+    }
+    func refreshFeatureSync() {
+        // Snapshot ownership stays inside the session's main-thread lifetime;
+        // the module reads no network and cannot start/cancel/retry anything.
+        do { features.sync = try accountSession?.featureSnapshot() ?? "本地书库：尚无同步会话（没有声称已同步）" }
+        catch { features.sync = error.localizedDescription }
+    }
+}
+#endif
+
+#if EXR_APPLE_WAVE3 && EXR_APPLE_HOST_REVIEW
+extension HostReaderModel {
+    // Test-only material creation uses the installed exporter and real current
+    // catalog, never a substitute importer, parser, revision or SDK response.
+    func reviewFeatureAnnotationRoundtrip() {
+        performFeature { session, catalog, cancel in
+            guard let book = session.book else { throw HostError.invalidInput("请先打开书籍") }
+            let identity = try catalog.readingBook(sdkID: book.id)
+            let output = try self.storageFolder().appendingPathComponent("wave3-roundtrip.jsonl")
+            try catalog.withHistory { history in
+                try hostProductStrings([identity.key, output.path]) { strings in
+                    var options = reader_annotation_export_options(), stats = reader_annotation_export_stats(), error = reader_annotation_export_error()
+                    options.struct_size = MemoryLayout<reader_annotation_export_options>.size
+                    options.revisions = history; options.book_key = strings[0]; options.jsonl_path = strings[1]
+                    guard reader_annotation_export_raw3_run(&options, &stats, &error) == READER_ANNOTATION_EXPORT_OK,
+                          stats.head_wires > 0 else { throw HostError.invalidInput("真实原生标注导出失败：\(hostReadingField(error.message))") }
+                }
+            }
+            let before = try catalog.scalar("SELECT count(*) FROM reader_revisions")
+            let (preview, _) = try hostFeatureImport(output, preview: nil, session: session, catalog: catalog, cancel: cancel)
+            let after = try catalog.scalar("SELECT count(*) FROM reader_revisions")
+            guard before == after else { throw HostError.invalidResult("预览修改了修订历史") }
+            DispatchQueue.main.async { self.features.preview = preview }
+            return "预览完成，尚未写入；真实 revisions \(before) → \(after)"
+        }
+    }
+    func reviewFeatureExportFailure(locked: Bool) {
+        performFeature { session, _, cancel in
+            let directory = try self.storageFolder().appendingPathComponent(locked ? "wave3-locked" : "wave3-conflict")
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            if locked {
+                try FileManager.default.setAttributes([.posixPermissions: 0], ofItemAtPath: directory.path)
+                defer { try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path) }
+                do { _ = try hostFeatureOriginal(directory, session: session, cancel: cancel) }
+                catch { return "真实锁定目录拒绝：\(error.localizedDescription)" }
+                throw HostError.invalidResult("锁定目录意外接受，不能声称通过")
+            }
+            let file = try hostFeatureOriginal(directory, session: session, cancel: cancel)
+            let conflict = Data("retained-conflict".utf8); try conflict.write(to: file)
+            do { _ = try hostFeatureOriginal(directory, session: session, cancel: cancel) }
+            catch {
+                guard try Data(contentsOf: file) == conflict else { throw HostError.invalidResult("冲突目标被覆盖") }
+                return "真实目标冲突拒绝；原目标未覆盖"
+            }
+            throw HostError.invalidResult("冲突目标意外接受")
+        }
+    }
+    func reviewFeatureSyncSnapshot() {
+        performFeature { _, catalog, _ in
+            let root = try self.storageFolder(), sync = root.appendingPathComponent("wave3-idle-sync"), originals = root.appendingPathComponent("wave3-idle-originals")
+            for folder in [sync, originals] { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true) }
+            var handle: OpaquePointer?
+            try hostProductStrings([root.appendingPathComponent("reader-catalog.db").path, sync.path, originals.path,
+                                    "d15-idle-review", "https://localhost.invalid/"]) { strings in
+                var config = reader_session_config(); config.product_path = strings[0]; config.private_directory = strings[1]
+                config.original_directory = strings[2]; config.account_id = strings[3]; config.dav.root_url = strings[4]; config.dav.timeout_ms = 1000
+                guard reader_session_create_raw_v3(&config, &handle) == READER_SESSION_OK else { throw HostError.invalidResult("真实 idle 会话创建失败") }
+            }
+            guard let opened = handle else { throw HostError.invalidResult("无会话") }
+            defer {
+                _ = reader_session_request_close(opened)
+                var snapshot = reader_session_snapshot()
+                while reader_session_observe(opened, &snapshot) == READER_SESSION_OK && snapshot.state != READER_SESSION_CLOSED { Thread.sleep(forTimeInterval: 0.01) }
+                _ = reader_session_destroy(&handle)
+            }
+            let before = try catalog.scalar("SELECT count(*) FROM reader_revisions")
+            let message = try catalog.withHistory { history -> String in
+                var options = reader_sync_view_options(), snapshot: OpaquePointer?, error = reader_sync_view_error(), summary = reader_sync_view_summary()
+                options.row_limit = 100; options.detect_conflicts = 1
+                guard reader_sync_view_capture(opened, history, &options, &snapshot, &error) == READER_SYNC_VIEW_OK, let value = snapshot else { throw HostError.invalidResult("只读原生快照失败") }
+                defer { _ = reader_sync_view_release(&snapshot) }
+                guard reader_sync_view_summary_get(value, &summary) == READER_SYNC_VIEW_OK, summary.library_complete == 0 else { throw HostError.invalidResult("错误的完整同步声明") }
+                return "原生只读快照：\(String(cString: reader_sync_view_phase_text(summary.phase)))；待发 \(summary.pending_records)，冲突 \(summary.conflict_records)；无网络启动"
+            }
+            guard before == (try catalog.scalar("SELECT count(*) FROM reader_revisions")) else { throw HostError.invalidResult("只读同步状态写入历史") }
+            DispatchQueue.main.async { self.features.sync = message }; return message
+        }
+    }
+}
+#endif
