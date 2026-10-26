@@ -97,3 +97,11 @@ python tests/reader_wave3_s20/summary.py --targets build/s20-downloads \
 ```
 
 本仓库遵守「本地不构建/不测试/不处理工件」：以上全部在 Actions 里执行。
+
+## 7. 本轮实测结果
+
+受测源码 `63d0c8d2f032f5c78c77c9f407b17185412e991f`、run `40248648454` / attempt `1`：
+Windows、Linux、macOS、iPhone **通过**；iPad（既有综合 UI 套件 12/13）与 Android（走查 3/45，
+首个失败 `import_epub: import status missing`）**未通过**，整体 `accepted=false`。
+逐目标身份、操作覆盖与失败原文见 `docs/reader-wave3-s20/validation.json` 与
+`HANDOFF-RESULT-S20.md`。

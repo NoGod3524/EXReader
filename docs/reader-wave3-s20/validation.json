@@ -1,0 +1,258 @@
+{
+  "schema": 1,
+  "kind": "exreader-native-delivery-validation",
+  "task": "S20 six-target native delivery pipeline and launch checks",
+  "seed": "d263ce5228838ac90c0a0dc13a5193d4a7739681",
+  "branch": "codex/reader-wave3-s20",
+  "workflow": ".github/workflows/reader-wave3-s20.yml",
+  "tested_source_sha": "63d0c8d2f032f5c78c77c9f407b17185412e991f",
+  "run_id": 40248648454,
+  "attempt": 1,
+  "sdk_version": "3.41.0",
+  "accepted": false,
+  "complete_product": false,
+  "physical_device_execution": false,
+  "jobs": {
+    "guard": 121335510732,
+    "windows": 121335559152,
+    "linux": 121335559151,
+    "macos": 121335559172,
+    "ios": 121335559096,
+    "android": 121335559092
+  },
+  "targets": {
+    "windows": {
+      "accepted": true,
+      "archive": {
+        "name": "EXReader-windows-63d0c8d2f032.zip",
+        "bytes": 17372224,
+        "sha256": "262092c62ab2cead3ae4c84b08d0b48d5011962be55b778b04103cb5b1d1c748"
+      },
+      "entry": "EXReader/EXReader.exe",
+      "entry_sha256": "dc30bdcd9a648e57892062d17341cf3c7f5f4d25323304cad55a0f70eb27a672",
+      "artifact": {
+        "id": 12619553422,
+        "bytes": 18801304,
+        "digest": "sha256:3b9f9a67778330d8472517537b7762a73aec0e643cb82d37a0ca2b2e8ee821c8",
+        "expires_at": "2027-01-24T00:17:40Z"
+      },
+      "drivers": [
+        "windows-search",
+        "windows-navigation",
+        "windows-host"
+      ],
+      "operations": [
+        "import",
+        "open",
+        "page",
+        "search",
+        "settings",
+        "toc"
+      ],
+      "missing": [],
+      "evidence": [
+        "158/158 actions in the fixed Win32 plan",
+        "13 named search checks",
+        "navigation checks including authored order and 32-row paging"
+      ]
+    },
+    "linux": {
+      "accepted": true,
+      "archive": {
+        "name": "EXReader-linux-63d0c8d2f032.zip",
+        "bytes": 18264801,
+        "sha256": "fbe17e55a1ea75c1de423336208cb98283994f0fe8de6b0958c59354da96784e"
+      },
+      "entry": "EXReader-Linux/bin/exreader-linux",
+      "entry_sha256": "7e763ad5a958a483ef2967127d627024857cb8c8c26c99f64dd6ccd647b710d9",
+      "artifact": {
+        "id": 12619273158,
+        "bytes": 18802425,
+        "digest": "sha256:48534b45c57e72ff955e7ff1e323b4fc084e295b5673386915ad1e51f0dcc298",
+        "expires_at": "2027-01-24T00:17:40Z"
+      },
+      "drivers": [
+        "gtk-host",
+        "gtk-search"
+      ],
+      "operations": [
+        "import",
+        "open",
+        "page",
+        "search",
+        "settings"
+      ],
+      "missing": [],
+      "evidence": [
+        "20/20 real X11 operations",
+        "29 named in-book search checks including 250 real result rows"
+      ]
+    },
+    "macos": {
+      "accepted": true,
+      "archive": {
+        "name": "EXReader-macos-63d0c8d2f032.zip",
+        "bytes": 27005409,
+        "sha256": "2a10ab14c8dc4331d078dd098e98a8f45b6b22e8e63d63816c9a73d3ad4dd5e8"
+      },
+      "entry": "EXReader.app/Contents/MacOS/EXReader",
+      "entry_sha256": "22bfb1541ec9e29c22fd52c6ab57c263185a0eea5dd2a169e8439b6b5154dd4e",
+      "artifact": {
+        "id": 12620028953,
+        "bytes": 255889637,
+        "digest": "sha256:3d80a6d7e5abef18a2a6e6b9a5dee0c92a69c8cac08cec97c750728c95fe5f7c",
+        "expires_at": "2027-01-24T00:17:40Z"
+      },
+      "drivers": [
+        "macos-selfcheck",
+        "macos-xctest-broad",
+        "macos-xctest-search"
+      ],
+      "operations": [
+        "import",
+        "open",
+        "page",
+        "search",
+        "settings"
+      ],
+      "missing": [],
+      "evidence": [
+        "packaged bundle launched and passed its native self-check",
+        "13/13 broad XCUITest",
+        "4/4 search XCUITest"
+      ]
+    },
+    "iphone": {
+      "accepted": true,
+      "archive": {
+        "name": "EXReader-iphone-63d0c8d2f032.zip",
+        "bytes": 27018537,
+        "sha256": "357762f48cf5f44ace7aa6633c44b5b2c4e443c85ebe3dd2785f7329bb6ccdfe"
+      },
+      "entry": "EXReader.app/EXReader",
+      "entry_sha256": "96e0a01e44c1e538881d0d19fcf9b8ca8bea2952e078656406a9a082d39e5d5a",
+      "artifact": {
+        "id": 12620818585,
+        "bytes": 36932446,
+        "digest": "sha256:b32519907977beb794fcc7d318baec871682431a90cd62084ce91e7d118c97d7",
+        "expires_at": "2027-01-24T00:17:40Z"
+      },
+      "drivers": [
+        "iphone-selfcheck",
+        "iphone-xctest-broad",
+        "iphone-xctest-search"
+      ],
+      "operations": [
+        "import",
+        "open",
+        "page",
+        "search",
+        "settings"
+      ],
+      "missing": [],
+      "evidence": [
+        "packaged bundle installed and self-checked on an iPhone simulator",
+        "13/13 broad XCUITest",
+        "4/4 search XCUITest"
+      ]
+    },
+    "ipad": {
+      "accepted": false,
+      "archive": {
+        "name": "EXReader-ipad-63d0c8d2f032.zip",
+        "bytes": 27018532,
+        "sha256": "0e201871a2b7003a9b7ac87153c349899a51ba3522b66dbf8684365cc69ecd6d"
+      },
+      "entry": "EXReader.app/EXReader",
+      "entry_sha256": "96e0a01e44c1e538881d0d19fcf9b8ca8bea2952e078656406a9a082d39e5d5a",
+      "artifact": {
+        "id": 12620563919,
+        "bytes": 171909007,
+        "digest": "sha256:2237f3d3f7389afb0f3047ebd300a1629977251e7eb038f37d5af743d3f4f8b9",
+        "expires_at": "2027-01-24T00:17:40Z"
+      },
+      "drivers": [
+        "ipad-selfcheck",
+        "ipad-xctest-search"
+      ],
+      "operations": [
+        "import",
+        "open",
+        "page",
+        "search",
+        "settings"
+      ],
+      "missing": [],
+      "problems": [
+        "ipad-xctest-broad: the 13-case broad XCUITest suite reported 12 passed and 1 failed on this attempt; an earlier attempt on source 979a34b5 passed 13/13"
+      ],
+      "evidence": [
+        "packaged bundle installed and self-checked on an iPad simulator",
+        "4/4 search XCUITest"
+      ]
+    },
+    "android": {
+      "accepted": false,
+      "archive": {
+        "name": "EXReader-android-63d0c8d2f032.zip",
+        "bytes": 70151353,
+        "sha256": "2ef256c58a074f8db487c102e800de889a3c1cae99ca1aa28fe331900492607f"
+      },
+      "entry": "artifacts/app-debug.apk",
+      "entry_sha256": "c0e7528e3159f7f98da68d8c4ed37c6c64836e6ba090bd841f05fd459fed4d6a",
+      "artifact": {
+        "id": 12620640994,
+        "bytes": 95759865,
+        "digest": "sha256:bee794881d49d9ec8364656ad627db2123f3c721966a2b198cabf04f86be15d4",
+        "expires_at": "2027-01-24T00:17:40Z"
+      },
+      "drivers": [],
+      "operations": [],
+      "missing": [
+        "import",
+        "open",
+        "page",
+        "settings",
+        "search_or_toc"
+      ],
+      "problems": [
+        "API34 x86_64 walkthrough: 3 of 45 named cases passed; first failure is import_epub with detail 'import status missing', followed by 'book row not found: Sample.epub'"
+      ],
+      "evidence": [
+        "the delivered APK hash equals the APK hash recorded by the device report",
+        "all three instrumentation suites exited 0 but the case-level report is 3/45"
+      ]
+    }
+  },
+  "retained_failures": [
+    {
+      "run_id": 40245766789,
+      "source_sha": "b4002e7ce7581520b417dedd85d8303d285a73b7",
+      "stage": "guard",
+      "detail": "offline archive self-test: inner and outer manifest differed because the archived manifest carried an archive:null key"
+    },
+    {
+      "run_id": 40245894358,
+      "source_sha": "d9d4b75a31b3c2936f0af7a76531ea6f974f13b3",
+      "stage": "guard",
+      "detail": "offline archive self-test used a payload without the declared Linux entry, and the aggregator called the web host instead of GITHUB_API_URL"
+    },
+    {
+      "run_id": 40245971457,
+      "source_sha": "979a34b5d60e9b707c6a6dd7ac4f11572119382",
+      "stage": "producers",
+      "detail": "Windows directory driver stopped at ModuleNotFoundError uiautomation; Android build refused because it compared the 3.41 SDK tree with the frozen 3.40 baseline; iPad search case testNoHitPreservesReader failed 1/4; Linux and macOS accepted"
+    },
+    {
+      "run_id": 40248648454,
+      "source_sha": "63d0c8d2f032f5c78c77c9f407b17185412e991f",
+      "stage": "producers",
+      "detail": "iPad broad XCUITest 12/13; Android walkthrough 3/45 starting at import_epub"
+    }
+  ],
+  "notes": [
+    "Six archives were produced from the same immutable candidate in one run and one attempt; every archive was unpacked into a fresh directory and every file digest, size and mode was re-checked against the manifest that travelled inside it.",
+    "No tag, Release, pull request or default-branch change was made; no store publication; unsigned iOS apps are granted for the simulator only.",
+    "Android and iPad are reported as not accepted with their exact failing evidence instead of being rewritten as passes."
+  ]
+}
