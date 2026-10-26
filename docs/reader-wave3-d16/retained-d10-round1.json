@@ -1,0 +1,275 @@
+{
+  "harness_sha": "bdafad551f9f574d329e592d57cc4b095fccb51e",
+  "target_shas": {
+    "macos": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+    "iphone": "5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a",
+    "ipad": "5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a"
+  },
+  "sdk_sha": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "run_id": "40224903723",
+  "attempt": "1",
+  "artifact_authentication": true,
+  "negative_rejections": [
+    "stale-node",
+    "foreign-window",
+    "coordinate-only",
+    "missing-configuration",
+    "wrong-program",
+    "coordinate-promoted-AX",
+    "missing-ipad",
+    "macos/expired",
+    "macos/size_in_bytes",
+    "macos/digest",
+    "macos/name",
+    "macos/expires_at",
+    "macos/project-review-leak",
+    "macos/compiler-review-leak",
+    "iphone/expired",
+    "iphone/size_in_bytes",
+    "iphone/digest",
+    "iphone/name",
+    "iphone/expires_at",
+    "iphone/project-review-leak",
+    "iphone/compiler-review-leak",
+    "ipad/expired",
+    "ipad/size_in_bytes",
+    "ipad/digest",
+    "ipad/name",
+    "ipad/expires_at",
+    "ipad/project-review-leak",
+    "ipad/compiler-review-leak"
+  ],
+  "targets": [
+    {
+      "platform": "macos",
+      "job": {
+        "id": 121264093917,
+        "name": "D10 audit macos",
+        "conclusion": "failure"
+      },
+      "artifact": {
+        "id": 12611256521,
+        "name": "d10-macos-40224903723-1",
+        "size_in_bytes": 2546307,
+        "digest": "sha256:b0d20232fd830612769a40cb80d675c9e0b50c378cfa615180ccc6f0b9111def",
+        "expires_at": "2026-11-24T19:18:23Z"
+      },
+      "zip_sha256": "b0d20232fd830612769a40cb80d675c9e0b50c378cfa615180ccc6f0b9111def",
+      "program": {
+        "executable_sha256": "bd45767dc86a0ad772963bdd68cb34708a792ce25c1a1bdb5ad866d6ced14785",
+        "info_sha256": "1ee5629361a966ac567d10885ea76365a6c367d9e0b3e8c130bb4d9477b509e8",
+        "source": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+        "sdk_version": "3.41.0",
+        "page_theme": false
+      },
+      "checks": [
+        {
+          "label": "import",
+          "exit": 65,
+          "cases": [],
+          "passed": false
+        },
+        {
+          "label": "normal-light",
+          "exit": 65,
+          "cases": [],
+          "passed": false,
+          "screenshot_count": 0
+        },
+        {
+          "label": "normal-dark",
+          "exit": 65,
+          "cases": [],
+          "passed": false,
+          "screenshot_count": 0
+        },
+        {
+          "label": "original-compact",
+          "exit": 65,
+          "cases": [],
+          "passed": false
+        }
+      ],
+      "audit_completed": false,
+      "problems": [
+        "normal-light: screenshots missing",
+        "normal-dark: screenshots missing",
+        "normal-light: default journey incomplete",
+        "normal-dark: default journey incomplete"
+      ],
+      "findings": [],
+      "default_ui_accepted": false,
+      "ax_semantics_accepted": false,
+      "dynamic_type_accepted": false,
+      "voiceover_accepted": false,
+      "physical_device_execution": false
+    },
+    {
+      "platform": "iphone",
+      "job": {
+        "id": 121264094101,
+        "name": "D10 audit iphone",
+        "conclusion": "failure"
+      },
+      "artifact": {
+        "id": 12611496089,
+        "name": "d10-iphone-40224903723-1",
+        "size_in_bytes": 2631069,
+        "digest": "sha256:e246a86e272495928f78ce9cc73f400bc02c86574240a452c043686f1a06c878",
+        "expires_at": "2026-11-24T19:21:20Z"
+      },
+      "zip_sha256": "e246a86e272495928f78ce9cc73f400bc02c86574240a452c043686f1a06c878",
+      "program": {
+        "executable_sha256": "1178340d9e43d5f15379c587aa9ac517ceb7fe28e4dc2f09d974cdf8186044c5",
+        "info_sha256": "28679c2422e55a19b3a43a20df6537ac5e46b5295d6de848904a9473138cfbd4",
+        "source": "5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a",
+        "sdk_version": "3.41.0",
+        "page_theme": false
+      },
+      "checks": [
+        {
+          "label": "import",
+          "exit": 65,
+          "cases": [],
+          "passed": false
+        },
+        {
+          "label": "normal-light",
+          "exit": 65,
+          "cases": [],
+          "passed": false,
+          "screenshot_count": 0
+        },
+        {
+          "label": "normal-dark",
+          "exit": 65,
+          "cases": [],
+          "passed": false,
+          "screenshot_count": 0
+        },
+        {
+          "label": "large-light",
+          "exit": 65,
+          "cases": [],
+          "passed": false,
+          "screenshot_count": 0
+        },
+        {
+          "label": "large-dark",
+          "exit": 65,
+          "cases": [],
+          "passed": false,
+          "screenshot_count": 0
+        },
+        {
+          "label": "original-large",
+          "exit": 65,
+          "cases": [],
+          "passed": false
+        }
+      ],
+      "audit_completed": false,
+      "problems": [
+        "normal-light: screenshots missing",
+        "normal-dark: screenshots missing",
+        "large-light: screenshots missing",
+        "large-dark: screenshots missing",
+        "normal-light: default journey incomplete",
+        "normal-dark: default journey incomplete",
+        "large-light: default journey incomplete",
+        "large-dark: default journey incomplete"
+      ],
+      "findings": [],
+      "default_ui_accepted": false,
+      "ax_semantics_accepted": false,
+      "dynamic_type_accepted": false,
+      "voiceover_accepted": false,
+      "physical_device_execution": false
+    },
+    {
+      "platform": "ipad",
+      "job": {
+        "id": 121264094036,
+        "name": "D10 audit ipad",
+        "conclusion": "failure"
+      },
+      "artifact": {
+        "id": 12610289838,
+        "name": "d10-ipad-40224903723-1",
+        "size_in_bytes": 2633739,
+        "digest": "sha256:a53b492e53d476fb678d97c1e4924bc126e5c9756a5a11f4c5fb7ae54eb6bfb2",
+        "expires_at": "2026-11-24T19:28:48Z"
+      },
+      "zip_sha256": "a53b492e53d476fb678d97c1e4924bc126e5c9756a5a11f4c5fb7ae54eb6bfb2",
+      "program": {
+        "executable_sha256": "a76a2873ea8d5d02d05c7340d2297a9eb0325755e421c06c882d5402ca397e5f",
+        "info_sha256": "28679c2422e55a19b3a43a20df6537ac5e46b5295d6de848904a9473138cfbd4",
+        "source": "5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a",
+        "sdk_version": "3.41.0",
+        "page_theme": false
+      },
+      "checks": [
+        {
+          "label": "import",
+          "exit": 65,
+          "cases": [],
+          "passed": false
+        },
+        {
+          "label": "normal-light",
+          "exit": 65,
+          "cases": [],
+          "passed": false,
+          "screenshot_count": 0
+        },
+        {
+          "label": "normal-dark",
+          "exit": 65,
+          "cases": [],
+          "passed": false,
+          "screenshot_count": 0
+        },
+        {
+          "label": "large-light",
+          "exit": 65,
+          "cases": [],
+          "passed": false,
+          "screenshot_count": 0
+        },
+        {
+          "label": "large-dark",
+          "exit": 65,
+          "cases": [],
+          "passed": false,
+          "screenshot_count": 0
+        },
+        {
+          "label": "original-large",
+          "exit": 65,
+          "cases": [],
+          "passed": false
+        }
+      ],
+      "audit_completed": false,
+      "problems": [
+        "normal-light: screenshots missing",
+        "normal-dark: screenshots missing",
+        "large-light: screenshots missing",
+        "large-dark: screenshots missing",
+        "normal-light: default journey incomplete",
+        "normal-dark: default journey incomplete",
+        "large-light: default journey incomplete",
+        "large-dark: default journey incomplete"
+      ],
+      "findings": [],
+      "default_ui_accepted": false,
+      "ax_semantics_accepted": false,
+      "dynamic_type_accepted": false,
+      "voiceover_accepted": false,
+      "physical_device_execution": false
+    }
+  ],
+  "accepted": false,
+  "complete_product": false,
+  "instrumentation_failure": "XCUIElementSnapshot has no debugDescription; no UI cases executed. Original artifacts authenticated, audit remains false."
+}

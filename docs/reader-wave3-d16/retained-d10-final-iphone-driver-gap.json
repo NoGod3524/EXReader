@@ -1,0 +1,113 @@
+{
+  "tested_harness": "d2e1b55c9cd4ded4201cbb4d1351bc490ef644df",
+  "run_id": 40229896420,
+  "attempt": 1,
+  "job_id": 121279248017,
+  "primary_error": "DefaultUITests.swift:64: Failed to determine hittability of reader.font.decrease Button: Activation point invalid and no suggested hit points based on element frame",
+  "observations": [
+    {
+      "snapshot_id": "E9103109-9D98-4F9B-B6C8-F505741D5013",
+      "step": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.font.decrease",
+      "window": {
+        "height": 667,
+        "width": 375,
+        "x": 0,
+        "y": 0
+      },
+      "metrics": {
+        "body_pt": 53,
+        "caption1_pt": 43,
+        "headline_pt": 53
+      },
+      "control": {
+        "current_window": true,
+        "enabled": true,
+        "frame": {
+          "height": 77.5,
+          "width": 100.5,
+          "x": -119,
+          "y": 532
+        },
+        "hit_test_observation": "not-queried-offscreen-or-missing",
+        "hittable": null,
+        "id": "reader.font.decrease",
+        "label": "减小字号",
+        "order": 13,
+        "path": "Application>Window>Other>Other>Other>Other>ScrollView[reader.tools.scroll]>Other>Button[reader.font.decrease]",
+        "role": "Button",
+        "snapshot_id": "E9103109-9D98-4F9B-B6C8-F505741D5013",
+        "value": "",
+        "visible_region_contains_frame": false
+      },
+      "container": {
+        "enabled": true,
+        "frame": {
+          "height": 77.5,
+          "width": 375,
+          "x": 0,
+          "y": 532
+        },
+        "id": "reader.tools.scroll",
+        "label": "",
+        "order": 9,
+        "path": "Application>Window>Other>Other>Other>Other>ScrollView[reader.tools.scroll]",
+        "role": "ScrollView",
+        "snapshot_id": "E9103109-9D98-4F9B-B6C8-F505741D5013",
+        "value": ""
+      }
+    },
+    {
+      "snapshot_id": "FE96F549-DF5D-4E56-874D-8F19A00E3532",
+      "step": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.font.decrease",
+      "window": {
+        "height": 667,
+        "width": 375,
+        "x": 0,
+        "y": 0
+      },
+      "metrics": {
+        "body_pt": 53,
+        "caption1_pt": 43,
+        "headline_pt": 53
+      },
+      "control": {
+        "current_window": true,
+        "enabled": true,
+        "frame": {
+          "height": 77.5,
+          "width": 100.5,
+          "x": -164,
+          "y": 532
+        },
+        "hit_test_observation": "not-queried-offscreen-or-missing",
+        "hittable": null,
+        "id": "reader.font.decrease",
+        "label": "减小字号",
+        "order": 13,
+        "path": "Application>Window>Other>Other>Other>Other>ScrollView[reader.tools.scroll]>Other>Button[reader.font.decrease]",
+        "role": "Button",
+        "snapshot_id": "FE96F549-DF5D-4E56-874D-8F19A00E3532",
+        "value": "",
+        "visible_region_contains_frame": false
+      },
+      "container": {
+        "enabled": true,
+        "frame": {
+          "height": 77.5,
+          "width": 375,
+          "x": 0,
+          "y": 532
+        },
+        "id": "reader.tools.scroll",
+        "label": "",
+        "order": 9,
+        "path": "Application>Window>Other>Other>Other>Other>ScrollView[reader.tools.scroll]",
+        "role": "ScrollView",
+        "snapshot_id": "FE96F549-DF5D-4E56-874D-8F19A00E3532",
+        "value": ""
+      }
+    }
+  ],
+  "conclusion": "Recorder successfully retained offscreen unknown AX, tree and screenshot. Bounded driver full-swipe loop exhausted and unconditionally queried offscreen isHittable. Instrumentation gap, not proven user unreachability. No source correction or fourth CI after final round.",
+  "next_unexecuted": "Add final window+scroll viewport containment precondition before any hit-test; use bounded measured smaller scroll deltas to avoid full-swipe overshoot, preserving original action/assertion/wait budgets. Independently execute remaining large-font More/records/settings cases rather than claiming cascaded missing coverage."
+}
