@@ -18,6 +18,7 @@
 #define reader_revision_entities_page reader_revision_entities_page_raw_v3
 #define reader_revision_book_title reader_revision_book_title_raw_v3
 #define reader_revision_project reader_revision_project_raw_v3
+#define reader_organization_project_page reader_organization_project_page_raw_v3
 #define reader_session_create reader_session_create_raw_v3
 #endif
 
@@ -81,6 +82,23 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeSync_book
 extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeSync_project(JNIEnv *env,jclass,jstring product,jstring key,jstring revision,jstring sort){
   try{
     std::string path=product_jni::utf8(env,product),entity=product_jni::utf8(env,key),head=product_jni::utf8(env,revision),title=product_jni::utf8(env,sort);revisions store(path);need(reader_revision_project(store.p,"book",entity.c_str(),head.c_str(),title.c_str(),nullptr,nullptr));catalog current(path);metadata value;int present=0;need(reader_catalog_metadata(current.p,entity.c_str(),copy_metadata,&value,&present,nullptr));if(value.memory)throw std::bad_alloc();if(!present||value.fields.size()!=7)throw std::runtime_error("projected metadata absent");return product_jni::strings(env,value.fields);
+  }catch(...){fail(env);return nullptr;}
+}
+extern "C" JNIEXPORT jint JNICALL Java_org_exreader_host_NativeSync_projectBook(JNIEnv *env,jclass,jstring product,jstring key,jstring revision,jstring sort){
+  try{
+    std::string path=product_jni::utf8(env,product),entity=product_jni::utf8(env,key),head=product_jni::utf8(env,revision),title=product_jni::utf8(env,sort);
+    revisions store(path);auto status=reader_revision_project(store.p,"book",entity.c_str(),head.c_str(),title.c_str(),nullptr,nullptr);
+    if(status==READER_REV_UNSAFE)return 1;need(status);return 0;
+  }catch(...){fail(env);return -1;}
+}
+extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeSync_projectOrganization(JNIEnv *env,jclass,jstring product,jstring kind,jstring after){
+  try{
+    std::string path=product_jni::utf8(env,product),type=product_jni::utf8(env,kind),cursor=product_jni::utf8(env,after,true);revisions store(path);
+    reader_organization_projection_row rows[50]{};size_t count=0;
+    need(reader_organization_project_page(store.p,type.c_str(),cursor.empty()?nullptr:cursor.c_str(),50,rows,&count,nullptr));
+    jclass row_type=env->FindClass("[Ljava/lang/String;");product_jni::pending(env);jobjectArray out=env->NewObjectArray((jsize)count,row_type,nullptr);env->DeleteLocalRef(row_type);product_jni::pending(env);
+    for(size_t i=0;i<count;i++){jobjectArray row=product_jni::strings(env,{rows[i].entity_key,std::to_string((int)rows[i].result)});env->SetObjectArrayElement(out,(jsize)i,row);env->DeleteLocalRef(row);product_jni::pending(env);}
+    return out;
   }catch(...){fail(env);return nullptr;}
 }
 #ifdef READER_PRODUCT_FIXTURES

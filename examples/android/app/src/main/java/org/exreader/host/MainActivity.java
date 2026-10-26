@@ -1798,6 +1798,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         }catch(Throwable error){failed.accept(error);}}});
     }
 
+    @Override public void projectionChanged(){if(!destroyed){if(organizationPanel!=null)organizationPanel.refreshProjected();loadShelf(false);}}
     private File preferencesFile(){return new File(new File(getFilesDir(),"reading-settings"),"preferences.json");}
     private int systemTheme(){return (getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES?2:1;}
     @Override protected void onResume(){super.onResume();observeSystemTheme();}
