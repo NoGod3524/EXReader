@@ -1,6 +1,7 @@
 """Real packaged Windows hosts and local authenticated HTTPS WebDAV fixture."""
 import base64
 import ctypes as C
+from ctypes import wintypes as W
 import hashlib
 import importlib.util
 import json
@@ -42,6 +43,33 @@ def names(dialog,control):
     for i in range(ui.send(box,0x18B)):
         n=ui.send(box,0x18A,i);buf=C.create_unicode_buffer(n+1);ui.send(box,0x189,i,C.addressof(buf));values.append(buf.value)
     return values
+def import_book(app,path):
+    app.focus();ui.A.tap(ord('O'),(ui.A.VK_CONTROL,))
+    def owned():
+        found=[]
+        @ui.ENUM
+        def visit(window,unused):
+            pid=W.DWORD();ui.U.GetWindowThreadProcessId(window,C.byref(pid))
+            name=C.create_unicode_buffer(100);ui.U.GetClassNameW(window,name,100)
+            if pid.value==app.process.pid and window!=app.window and ui.U.IsWindowVisible(window) and name.value=='#32770' and ui.U.GetDlgItem(window,1):found.append(window)
+            return True
+        ui.U.EnumWindows(visit,0);return found[-1] if found else None
+    dialog=app.wait(owned,timeout=20);candidates=[]
+    ui.U.GetParent.argtypes=[W.HWND];ui.U.GetParent.restype=W.HWND
+    ui.U.GetDlgCtrlID.argtypes=[W.HWND];ui.U.GetDlgCtrlID.restype=C.c_int
+    @ui.ENUM
+    def child(window,unused):
+        name=C.create_unicode_buffer(100);ui.U.GetClassNameW(window,name,100)
+        if name.value=='Edit' and ui.U.IsWindowVisible(window):
+            parent=window
+            for _ in range(5):
+                if ui.U.GetDlgCtrlID(parent) in (1148,1152):candidates.append(window);break
+                parent=ui.U.GetParent(parent)
+                if not parent or parent==dialog:break
+        return True
+    ui.U.EnumChildWindows(dialog,child,0);assert len(candidates)==1
+    ui.ACCOUNT.set_text(candidates[0],str(path.resolve()));ui.send(dialog,0x111,1)
+    app.wait(lambda:not ui.U.IsWindow(dialog),timeout=30);app.wait_idle()
 try:
     assert os.name=='nt' and os.environ.get('GITHUB_ACTIONS')=='true'
     certs=out/'certificates';certs.mkdir();key=certs/'server.key';cert=certs/'server.crt'
@@ -53,8 +81,7 @@ try:
     report['server']={'base':dav.base,'certificate_sha256':sha(cert),'source_sha256':sha(ROOT/'tests/reader_windows_account/check_account_ui.py')}
     book=out/'Book.txt';book.write_text('A real synchronized book. '*100,encoding='utf-8');bookkey='txt:'+sha(book)
     a=ui.App(exe,font,out/'device-a');devices.append(a);a.wait_initial_shelf();a.wait_idle()
-    ui.ACCOUNT.set_text(a.control('path'),str(book));ui.send(a.control('import'),ui.ACCOUNT.BM_CLICK,timeout=5000)
-    a.wait(lambda:'已导入' in a.status() or '去重' in a.status(),timeout=180);a.wait_idle()
+    import_book(a,book);a.wait(lambda:ui.send(a.control('books'),0x18B)==1,timeout=60)
     d=a.open_account();a.fill(d,dav.base+'/dav/',user,password,False);a.apply(d,'仅本次会话');a.close_account(d)
     d,message,detail=sync(a);record('producer-book-sync','同步完成' in message);a.close_account(d)
     original=json.loads(sql(a,"SELECT body_json FROM reader_revisions WHERE entity_kind='book' AND entity_key=?",(bookkey,))[0][0])
@@ -129,6 +156,29 @@ try:
     c.press(d,ui.ACCOUNT.RETRY);c.wait(lambda:'同步完成' in c.note(d),timeout=240)
     record('resume-import-without-duplicate',sql(c,'SELECT count(*) FROM reader_local_books WHERE book_key IN (?,?)',(bookkey,big_key))==[(2,)] and sql(c,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(big_key,))==[(1,)])
     c.close_account(d)
+    phase='mapping-repair';other=ui.App(exe,font,out/'device-d');devices.append(other);other.wait_initial_shelf();other.wait_idle()
+    d=other.open_account();other.fill(d,dav.base+'/dav/',user,password,False);other.apply(d,'仅本次会话');other.press(d,ui.ACCOUNT.SYNC)
+    lock=None;deadline=time.monotonic()+240
+    while time.monotonic()<deadline:
+        try:
+            if sql(other,'SELECT count(*) FROM reader_books')[0][0]>=2:
+                lock=sqlite3.connect(str(other.db)+'.product.sqlite',timeout=.05,isolation_level=None);lock.execute('BEGIN IMMEDIATE');break
+        except sqlite3.OperationalError:
+            if lock:lock.close()
+            lock=None
+        time.sleep(.003)
+    assert lock is not None,'no projected books before mapping fault'
+    try:other.wait_note(d,'映射待恢复',300)
+    finally:lock.rollback();lock.close()
+    other.close_account(d)
+    deadline=time.monotonic()+120
+    while time.monotonic()<deadline:
+        try:
+            if sql(other,'SELECT count(*) FROM reader_local_books')==[(2,)] and other.has_row('Book'):break
+        except sqlite3.OperationalError:pass
+        ui.send(ui.U.GetDlgItem(other.window,ui.ACCOUNT.REFRESH),ui.ACCOUNT.BM_CLICK);time.sleep(1)
+    with sqlite3.connect(str(other.db)) as db:sdk_count=db.execute('SELECT count(*) FROM books').fetchone()[0]
+    record('mapping-repair-reaches-shelf-without-reimport',sql(other,'SELECT count(*) FROM reader_local_books')==[(2,)] and other.has_row('Book') and sdk_count==2)
     record('authenticated-webdav-traffic',any(r['method']=='PUT' and r['authenticated'] for r in dav.requests) and any(r['method']=='GET' and r['authenticated'] for r in dav.requests))
     report['accepted']=True
 except Exception as error:
