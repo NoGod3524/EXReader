@@ -931,6 +931,22 @@ This source-level contract mismatch needs a review of both the original command
 boundary and the new automatic-bootstrap behavior; no case has been granted by
 the failed run. The 3.41 run remains separate.
 
+An independently identified 3.40 owner investigation at source
+`3e51b5a6cf59cfc5a4c032b497c6e86cbf40f118` completed
+[40417367269/1](https://github.com/NoGod3524/EXReader/actions/runs/40417367269)
+with overall **failure**: the unchanged original owner runner again failed its
+17-test assertion, so its original step stopped before HostSync. The same run
+then executed a separately generated runner that retains the no-bootstrap
+boundary through manual catalog attach, exercises the current head explicitly,
+and adds automatic-bootstrap/idempotence coverage. Its 18-case runner and
+separate original HostSync UI sequence passed; the latter reported 16 checks
+over four phases. These results do not convert the original failure into a pass.
+The run uploaded artifact `12697280724` (108,135,836 bytes, reported SHA-256
+`1c2f4dd5c985e435b74cac7096a8ac41b38c756da07110187de0b2a4949d42de`);
+its original and adapted outputs have not yet been independently authenticated.
+This is an API-34 x86_64 emulator investigation on the stated source, not a
+physical-device or final combined-source acceptance.
+
 Source `715fc865a9f063ae453c4d97e44f927772139fc3` then passed all six
 desktop jobs in [40413780626/1](https://github.com/NoGod3524/EXReader/actions/runs/40413780626).
 Its additional Linux export test confirmed an injected publication I/O failure
