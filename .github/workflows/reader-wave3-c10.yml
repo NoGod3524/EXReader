@@ -160,6 +160,13 @@ jobs:
           python3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures
           python3 tests/reader_reading_commands/make_fixtures.py build/records-command-fixtures
           python3 tests/linux_host/generate_fixed.py build/c10-fixed-inputs
+          mkdir -p build/c10-navigation-backend
+          chmod 700 build/c10-navigation-backend
+          build/c10-desktop/reader-gtk-navigation-backend \
+            "$PWD/build/c10-navigation-backend/library.sqlite" \
+            "$PWD/build/c10-package/EXReader-Linux/Reader.otf" \
+            "$PWD/build/gtk-navigation-fixtures" "$PWD/build/c10-fixed-inputs" \
+            2>&1 | tee build/c10-logs/navigation-backend.log
           mkdir -p build/wave3-backend/a build/wave3-backend/b build/wave3-backend/work
           chmod 700 build/wave3-backend/a build/wave3-backend/b
           build/c10-desktop/reader-gtk-wave3-backend \
@@ -275,6 +282,8 @@ jobs:
             build/c10-drop-ui/
             build/c10-drop-backend/
             build/c10-drop-fixtures/manifest.json
+            build/c10-navigation-backend/
+            build/gtk-navigation-fixtures/*.cfi
           if-no-files-found: error
 
   authenticate:

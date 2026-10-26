@@ -44,3 +44,31 @@ noncompact `09d7f28dca5f276a956f8c40a478e7325c0ebf729a5a26984e18fdd8a83fed90`。
 新第 2 轮准备：修正搜索基础夹具路径并先生成导航基础夹具；修正父目录定义的后端 target 路径；
 补原 drop backend 与真实拖放/粘贴 UI（此前 compact45 的粘贴条目不能覆盖完整业务）。
 各独立 GUI 套件即使前一套件失败仍执行，保留失败退出码；身份校验必须包含 drop UI/backend。
+### 新第 2 轮（已完成，失败）
+
+source `594ade6c131e575b41d74ecea9706d3b37674645`；run `40276509629` / attempt `1`。
+源码 guard、SDK 与全部模块安装、两种真实宿主构建打包及 desktop ctest 4/4 通过。
+五模块 owner probe 114 个断言通过，原 drop backend 通过；compact45、G13 十项、
+search30、records30、batch27、drop20 的已记录断言均通过。
+G13 `shelf_tab_stops_named` 两圈均读到 `Import sources`，但旧失败为何变空名仍未被证明。
+
+保留两项失败：
+
+1. 五模块 UI 前七项通过；原件导出在 SELECT_FOLDER 目录选择器未关闭超时，
+   未完成导出、历史和同步三项真实 UI 验收。后端对三者的通过不替代真实 UI。
+2. 原 navigation UI 在读取 `surrogate.cfi` 时 FileNotFoundError。
+   原 `reader-gtk-navigation-backend` 会生成 normal/surrogate/collapsed 三份 CFI，
+   继承 workflow 未执行它；此失败不能记为完整目录业务通过。
+
+整轮 gtk 与 authenticate 均 failure；身份认证正确拒绝 wave3_tools scope 未通过。
+原 ZIP id `12630799738`，99,247,221 bytes，SHA256
+`864220410ba20c421f9d5e73557259c6be491a4f42f3e32bc8890be7e72981e8`，
+到期 `2027-01-24T05:51:32Z`；Actions 内下载实测与 API digest/size 一致。
+本轮 compact 程序 SHA256 `7742a3b339863729ba20281200fb45a5ecd551ce51aab1c98b6ba540516979f6`；
+noncompact `09d7f28dca5f276a956f8c40a478e7325c0ebf729a5a26984e18fdd8a83fed90`。
+
+当前两文件待验修复：导出选择器采用原 batch driver 的原生目录表格选择流程，
+保留最终目录/字节断言；workflow 在导航 UI 前执行原 backend 生成三份真实 CFI。
+已向协调者列出两处根因和具体 diff，请求追加一次完整验收后封存；尚未自行启动第三轮。
+协调者已审阅两文件完整 diff，并明确批准提交修复与 ledger，追加完整第 3 轮后封存。
+导出目录与已通过 batch 驱动夹具都在同一 runner workspace/build 下；batch 的 Path.home 相对遍历已实际通过，导出仍使用产品真实目录，不为驱动移动路径。
