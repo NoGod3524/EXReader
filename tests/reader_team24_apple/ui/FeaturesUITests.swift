@@ -88,7 +88,10 @@ final class FeaturesUITests: XCTestCase {
         if close.exists && close.isHittable { close.tap() }
         else if chineseClose.exists && chineseClose.isHittable { chineseClose.tap() }
         else if native.exists { native.swipeDown() }
-        XCTAssertTrue(wait { !self.e("features.share.native").exists })
+        if !e("features.close").isHittable {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.15)).tap()
+        }
+        XCTAssertTrue(wait { !self.e("features.share.native").exists && self.e("features.close").isHittable })
 #else
         XCTAssertTrue(wait { self.app.menus.count > 0 }); mark("native-sharing-picker-presented")
         app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
