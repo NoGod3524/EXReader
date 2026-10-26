@@ -285,6 +285,20 @@ Both expire 2027-01-24T19:21:05Z. Original navigation and batch-import suites
 were not run in this GUI round; they remain separate unresolved regressions.
 Source admission is not a combined-product acceptance.
 
+### GTK retained navigation and folder import
+
+The independent regression workflow from source
+`4380c6162cb36426537664997108a5d51031da8a` passed
+[40390254271/1](https://github.com/NoGod3524/EXReader/actions/runs/40390254271).
+The packaged raw GTK host passed the original navigation scope 29/29 and folder
+import scope 27/27; the folder backend passed 684 checks and four owner-fault
+scenarios. The navigation report retains `accepted=false` for its broader scope;
+only `navigation_scope_passed=true` is granted. The original failed
+`40389691572` remains recorded. Artifact `12683042045` is 51,801,039 bytes,
+SHA-256 `7ba2606f9f0159271ff8fe1534241bd5039036bfd03db504efa40af21540d1b0`,
+expires 2027-01-24T19:50:04Z. The current composition additionally changes
+the revisions module; rerun this workflow against the final composed source.
+
 ## Windows cloud UI verification input
 
 The four independent verification files are pinned to source
