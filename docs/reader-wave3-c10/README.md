@@ -20,7 +20,16 @@
 
 ## G13 `shelf_tab_stops_named` 根因与修复
 
-共同 run 40237525525 的真实 twice-cycle 记录显示：第一圈 `Import sources`（toggle）有名，第二圈同位置为空名；源码里该控件的 ATK 名称只在构造时设置一次，之后不再改名。⇒ 不是产品改名，而是 GtkMenuButton 重建内部标签时把 accessible-name 变更推到 AT-SPI，缓存变成空串，而 AtkObject 里显式名称仍在。修复：`accessible_name_on_focus()` 在该控件获得键盘焦点时把同一名称重新发布一次（先复制再 `atk_object_set_name`），使每次 Tab 到达时都产生一次真实名称事件。该修复在 OFF 宿主上由原 `tests/reader_gtk_receive/check_atspi_fixes.py`（十项）复核，测试包本身未改。
+共同 run 40237525525 的真实 twice-cycle 记录显示：第一圈 `Import sources`（toggle button）有名，第二圈同位置读到空名；该控件当时只有一个符号标签 `"▾"`，名字靠构造时一次 `atk_object_set_name()`。
+
+判定：**产品命名缺陷**，不是 AT-SPI 观察错误。控件本身没有可读文本，ATK 名一旦没有落到当前可访问对象上（GtkMenuButton 会在内部标签变更后重建/重发名称），平台能推导出的后备只剩箭头图像的空名——与 observed 的 `role=toggle button, name=""` 一致；同圈其它有文本标签的按钮从未出现空名。
+
+两处修复（都不改断言、不加重试）：
+
+1. 名字写进控件自己的可见标签 `"Import sources"`，不再依赖一次性 ATK 覆盖，任何一次名称推导都得到同一个非空名字；同时补 tooltip 说明它是导入入口。
+2. `accessible_name_on_focus()`：菜单按钮获得键盘焦点时把当前名称重新发布一次（先复制再 `atk_object_set_name`），使每圈 Tab 到达都产生一次真实名称事件；用于 `Import sources` 与 `More reader actions` 两个 GtkMenuButton。
+
+该修复在 OFF 宿主上由原 `tests/reader_gtk_receive/check_atspi_fixes.py`（十项）复核，测试包本身未改；compact 宿主上由原 45 项一并复核。
 
 ## 测试与产物
 
