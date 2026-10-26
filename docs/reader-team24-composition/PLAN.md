@@ -225,3 +225,16 @@ owner, package and identity checks. The final job requires this marker as well.
 These new source and workflow changes still need their own Windows run. The map
 binds the implementation to the program, but does not itself exercise a native
 cloud picker or establish the blocked path-replacement race result.
+
+## Product performance observation tools
+
+The independent input `88ee2178` preserves the original frozen performance
+workflows and checks. Its new composition-specific workflows record actual
+source, component trees and program identities without claiming that observed
+numbers satisfy a product budget. Lightweight protocol run `40383580356/1`,
+source `be53824393b3621a233181dfe01d7094dd20ed65`, checked workflow, paths,
+parser and synthetic identity protocol only. The immediately following commit
+adds that evidence to the documentation; no full build or observation of the
+newly separated entry has yet been run. Earlier desktop measurements and their
+program hashes are historical evidence documented in `READER-PRODUCT-PERFORMANCE.md`;
+final package matching, frame measurements, mobile devices and F08 remain open.

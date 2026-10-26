@@ -139,6 +139,24 @@
         "apps/reader/desktop/windows_feature_integration.cmake",
         "tests/reader_wave3_c09/build.py"
       ]
+    },
+    {
+      "name": "composition-performance-observation",
+      "source": "88ee217898d900a7ccc18780b1f410afe5f5f355",
+      "tested_source": "be53824393b3621a233181dfe01d7094dd20ed65",
+      "tested_run": 40383580356,
+      "paths": [
+        ".github/workflows/reader-composition-perf-gtk.yml",
+        ".github/workflows/reader-composition-perf-protocol.yml",
+        ".github/workflows/reader-composition-perf-windows.yml",
+        ".github/workflows/reader-perf-windows-inspect.yml",
+        "docs/READER-PRODUCT-PERFORMANCE.md",
+        "tests/reader_perf_gtk/composition/CMakeLists.txt",
+        "tests/reader_perf_gtk/composition/summarize.py",
+        "tests/reader_perf_gtk/composition/verify.py",
+        "tests/reader_perf_protocol/check.py",
+        "tests/reader_perf_windows/verify_composition.py"
+      ]
     }
   ]
 }
