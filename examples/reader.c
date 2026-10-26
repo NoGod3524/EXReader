@@ -941,7 +941,7 @@ struct host_job {
 #ifdef EXR_READER_PRODUCT_CATALOG
   int product_auto_open,product_deleted;
   int product_shelf_direction,product_shelf_before,product_shelf_after;
-  char product_group_id[33];int product_group_kind;uint64_t product_cursor_ordinal;
+  char product_group_id[33];int product_group_kind;uint64_t product_cursor_ordinal;int product_anchor_predecessor;
   unsigned long product_shelf_generation;
   char *product_shelf_query,*product_cursor_title,*product_cursor_key,*product_anchor_key;
   exr_book *product_books;size_t product_book_count;

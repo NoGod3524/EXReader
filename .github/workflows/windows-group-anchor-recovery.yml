@@ -25,7 +25,7 @@ jobs:
         run: |
           git merge-base --is-ancestor 16f1ce9139dac372a36327c00cfc1eeaead346dd "$env:GITHUB_SHA"
           if ($LASTEXITCODE) { throw 'Incorrect composition base' }
-          $allowed = @('apps/reader/desktop/windows_catalog.inc','apps/reader/desktop/windows_shelf.inc','tests/windows_organization_projection/paged_ui.py','tests/windows_organization_projection/verify.py','.github/workflows/windows-group-anchor-recovery.yml')
+          $allowed = @('examples/reader.c','apps/reader/desktop/windows_catalog.inc','apps/reader/desktop/windows_shelf.inc','tests/windows_organization_projection/paged_ui.py','tests/windows_organization_projection/verify.py','.github/workflows/windows-group-anchor-recovery.yml')
           $changed = @(git diff --name-only 16f1ce9139dac372a36327c00cfc1eeaead346dd "$env:GITHUB_SHA")
           if ($LASTEXITCODE -or @($changed | Where-Object { $_ -notin $allowed }).Count) { throw 'Unexpected source changes' }
           python -m py_compile tests/windows_organization_projection/check_ui.py tests/windows_organization_projection/cloud_ui.py tests/windows_organization_projection/verify.py

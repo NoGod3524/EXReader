@@ -59,7 +59,7 @@ static exr_status product_group_page(host_job *job,reader_catalog *catalog,reade
     job->product_group_id,after,job->product_shelf_query,1,direction,50-job->product_book_count,product_group_row,&copy,error);
   /* If the remembered member vanished at the tail, retain nearby predecessors. */
   if(!code && !copy.failed && !job_cancel_flag(job) && job->product_anchor_key && after && !job->product_book_count) {
-    direction=-1;
+    direction=-1;job->product_anchor_predecessor=1;
     code=reader_catalog_group_books_page(catalog,kind,job->product_group_id,after,job->product_shelf_query,1,-1,50,product_group_row,&copy,error);
   }
   if(job_cancel_flag(job)) return EXR_CANCELLED;
