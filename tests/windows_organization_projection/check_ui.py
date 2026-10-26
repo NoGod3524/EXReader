@@ -199,11 +199,17 @@ try:
     record('cancel-resume-original-hashes',audit['ok']==1 and len(audit['books'])==2 and all(item['read_ok']==1 for item in audit['books']) and {sha(readback/('book-%d.bin'%item['id'])) for item in audit['books']}==set(report['cancel_input_hashes']))
     phase='mapping-repair';other=ui.App(exe,font,out/'device-d');devices.append(other);other.wait_initial_shelf();other.wait_idle()
     d=other.open_account();other.fill(d,dav.base+'/dav/',user,password,False);other.apply(d,'仅本次会话');other.press(d,ui.ACCOUNT.SYNC)
-    lock=None;deadline=time.monotonic()+240
+    other.wait(lambda:'正在应用云端书籍' in other.note(d),timeout=240)
+    other.wait(lambda:sql(other,'SELECT count(*) FROM reader_books')[0][0]>=2 and sql(other,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(bookkey,))==[(1,)],timeout=120)
+    def other_reads():
+        value=Io();assert kernel.GetProcessIoCounters(int(other.process._handle),C.byref(value));return value.read_bytes
+    before=other_reads();deadline=time.monotonic()+60
+    while other_reads()-before<1024*1024 and time.monotonic()<deadline and other.enabled(d,ui.ACCOUNT.CANCEL):time.sleep(.001)
+    assert other_reads()-before>=1024*1024 and other.enabled(d,ui.ACCOUNT.CANCEL),'second import never entered active reading'
+    lock=None;deadline=time.monotonic()+30
     while time.monotonic()<deadline:
         try:
-            if sql(other,'SELECT count(*) FROM reader_books')[0][0]>=2 and sql(other,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(bookkey,))==[(1,)]:
-                lock=sqlite3.connect(str(other.db)+'.product.sqlite',timeout=.05,isolation_level=None);lock.execute('BEGIN IMMEDIATE');break
+            lock=sqlite3.connect(str(other.db)+'.product.sqlite',timeout=.05,isolation_level=None);lock.execute('BEGIN IMMEDIATE');break
         except sqlite3.OperationalError:
             if lock:lock.close()
             lock=None
