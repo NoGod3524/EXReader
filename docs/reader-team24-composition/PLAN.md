@@ -681,3 +681,24 @@ after-paint signals. Those signals include idle intervals and probe overhead;
 they are not a measured display-frame or dropped-frame rate. These observations
 are not a product performance budget, physical-device result, or evidence for
 current composition source `39625ec7c7de7731016199a460ba09c315dadebf`.
+
+## Composed Windows organization regression
+
+Composition source `39625ec7c7de7731016199a460ba09c315dadebf` completed
+[40404471141/1](https://github.com/NoGod3524/EXReader/actions/runs/40404471141).
+Windows job `121858545084` and same-run verifier `121862934133` succeeded.
+The packaged host SHA-256 was
+`4ebb470e172140880812a7b5a66ad214b0ae95b626d6455ed73311eb42ef8211`.
+The run retained the composed host, packaged and extracted UI regressions,
+independent native cloud import with nine formats and original readback, and
+two actual Windows host profiles synchronizing organization against the local
+HTTPS fixture. The verifier checked the same-run source, executable and library
+identities, reports, original bytes and artifact digest in Actions.
+
+Artifact `12691656457` is 54,319,668 bytes, SHA-256
+`96d23e847772487786a8df88b0a4c5b46f0502dd8079b8896f032fbfa7ccd4dc`;
+summary `12690807460` is 4,508 bytes, SHA-256
+`9d789594cf8263dcc85d9aeebe7ab701eb86e90d6b6febedf456a03016725303`.
+Both expire 2027-01-24T21:27:13Z. Commits after this source through this record
+change documentation only. This is not Windows-to-GTK, physical-device, real
+provider or six-platform same-source acceptance.
