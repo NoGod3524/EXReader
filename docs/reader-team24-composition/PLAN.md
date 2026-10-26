@@ -602,3 +602,23 @@ Artifact `12689139156` is 122,663,856 bytes, SHA-256
 `9afafeb4905022b131562dbba18c0250296127439095ab128f7ee6bfd045ac2b`,
 and expires 2027-01-24T20:49:19Z. This failed source is not admitted as an
 Android or cross-device product acceptance.
+
+## Isolated GTK organization boundary probe
+
+Independent test source `6fd3143b0380b890900867324b2b3ed91aec0f8d` completed
+[40401002281/1](https://github.com/NoGod3524/EXReader/actions/runs/40401002281),
+job `121846504558`. The normal build retained the 48-check candidate, original
+46 checks, fixed business suites and targeted G13; its executable SHA-256 was
+`eb14023075c1def770a6dc7426a4f596363ab4c4f47c605475e6f9929c17a79e`, matching
+the earlier independent 3047 candidate. A distinct test-only executable with a
+three-item budget exercised actual GTK owner pause and continuation; ordered
+keys were checked for no skipped or repeated items within each scan pass. A
+controlled revision update after page selection was applied using a second
+public revision connection: the stale head was not projected, and a fresh scan
+projected the newer state. Test-only hooks and the test executable are not
+adopted into the production composition. This validates the small-budget state
+machine and head fence under the test conditions, not 10,000-item scale,
+physical-device behavior or the blocked D13 path-replacement scenario.
+Artifact `12690226085` is 40,733,017 bytes, SHA-256
+`4e2d3aea5246db20bb951dd41fef696335d708b74a7d4d205afa86f2032578ac`,
+and expires 2027-01-24T21:02:56Z.
