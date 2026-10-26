@@ -372,3 +372,8 @@ raw artifact `12682386557` has SHA-256
 `61898382064402dc9d2f3125dbbd385a9a0785d65cedeca02d14c59843500681`.
 Both expire 2027-01-24T19:54:34Z. Windows/macOS builds and actual host adoption
 remain to be verified.
+
+The composition workflow's `verify_organization_desktop` input runs the same
+installed product/revisions consumer on Windows and macOS in legacy and raw
+configurations, retaining the original legacy projection regression. This is a
+module compatibility check; actual host and cross-device behavior remain separate.
