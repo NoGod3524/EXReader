@@ -9,6 +9,11 @@ on:
         type: boolean
         required: false
         default: false
+      inspect_previous:
+        description: Read only the fixed failed round ZIPs; no build or runtime
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
   actions: read
@@ -17,6 +22,7 @@ defaults:
     shell: bash
 jobs:
   preflight:
+    if: github.event.inputs.inspect_previous != 'true'
     name: joint install preflight
     runs-on: ubuntu-22.04
     timeout-minutes: 15
@@ -208,6 +214,81 @@ jobs:
         with:
           name: reader-wave3-s19-${{ matrix.key }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/reader-wave3-s19/artifact
+          if-no-files-found: error
+          retention-days: 90
+  inspect-previous:
+    if: github.event.inputs.inspect_previous == 'true' && github.event.inputs.protocol_only == 'true'
+    name: read-only fixed failed round inspection
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Check the unapplied additive candidate patch structure only
+        run: git apply --check docs/reader-team24-core/pure-capture-candidate.patch
+      - name: Authenticate original failed ZIPs and record actual program bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import hashlib, io, json, os, sys, zipfile
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from check_parallel_integration import fetch, pages, download_artifact_zip
+          run, attempt = '40276498769', '1'
+          source = '6e2d4b09e8fcfb78acbd9afa3f246d6930fa371f'
+          metadata = fetch('actions/runs/' + run + '/attempts/' + attempt)
+          assert metadata['head_sha'] == source and str(metadata['run_attempt']) == attempt
+          assert metadata['status'] == 'completed'
+          assert metadata['path'].split('@')[0] == '.github/workflows/reader-team24-core.yml'
+          target = Path('build/core-failed-round-inspection')
+          target.mkdir(parents=True, exist_ok=True)
+          observed = {'tested_source': source, 'tested_run': run, 'tested_attempt': attempt,
+                      'inspection_source': os.environ['GITHUB_SHA'], 'inspection_run': os.environ['GITHUB_RUN_ID'],
+                      'accepted': False, 'scope': 'read-only historical failure inspection; no business execution', 'artifacts': []}
+          for item in pages('actions/runs/' + run + '/artifacts', 'artifacts'):
+              if not item['name'].endswith('-' + run + '-' + attempt):
+                  continue
+              assert item['workflow_run']['head_sha'] == source and str(item['workflow_run']['id']) == run
+              assert item['expired'] is False
+              raw = download_artifact_zip(item['id'])
+              assert len(raw) == item['size_in_bytes']
+              assert 'sha256:' + hashlib.sha256(raw).hexdigest() == item['digest']
+              (target / (item['name'] + '.zip')).write_bytes(raw)
+              record = {key: item[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')}
+              record['programs'] = {}
+              with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                  names = archive.namelist()
+                  assert len(names) == len(set(names))
+                  for name in names:
+                      assert not name.startswith('/') and '..' not in name.split('/') and '\\' not in name
+                      if name in ('result.json', 's16/result.json', 'host-evidence.json', 'driver-outcome.json'):
+                          document = json.loads(archive.read(name))
+                          if name == 'host-evidence.json':
+                              record['host_error'] = {key: document.get(key) for key in ('run', 'error', 'identity', 'sdk_version')}
+                          elif name == 'result.json':
+                              record['runtime_accepted'] = document.get('runtime_accepted', document.get('accepted'))
+                              record['phases'] = {key: {'passed': value.get('passed'), 'error': value.get('error')}
+                                                  for key, value in document.get('phases', {}).items()}
+                          for role, program in document.get('programs', {}).items():
+                              member = ('s16/' if name == 's16/result.json' else '') + program['member']
+                              binary = archive.read(member)
+                              identity = {'bytes': len(binary), 'sha256': hashlib.sha256(binary).hexdigest()}
+                              assert identity == {key: program[key] for key in identity}
+                              record['programs'][role] = dict(identity, member=member)
+                      elif name in ('EXReaderProduct.exe', 'reader-host-probe', 'libreader_host_features.so', 'libreader_host_features.dylib'):
+                          binary = archive.read(name)
+                          record['programs'][name] = {'bytes': len(binary), 'sha256': hashlib.sha256(binary).hexdigest()}
+              observed['artifacts'].append(record)
+          (target / 'inspection.json').write_text(json.dumps(observed, indent=2) + '\n')
+          print(json.dumps(observed, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: core-fixed-failed-round-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/core-failed-round-inspection/
           if-no-files-found: error
           retention-days: 90
   evidence:

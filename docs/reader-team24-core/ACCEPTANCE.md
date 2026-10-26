@@ -36,6 +36,40 @@ source receipt before the remaining complete round. It cannot grant business or
 GUI acceptance. No local build, syntax check, test, fixture, benchmark,
 screenshot or artifact download/parse has been performed.
 
+Bounded source-only run: source
+`6e2d4b09e8fcfb78acbd9afa3f246d6930fa371f`,
+[40276347409/1](https://github.com/NoGod3524/EXReader/actions/runs/40276347409),
+success. It grants source/receipt binding only.
+
+New complete round 2: the same source,
+[40276498769/1](https://github.com/NoGod3524/EXReader/actions/runs/40276498769),
+failure. Both authorized complete rounds are now consumed. Specific roots:
+
+- All three S18 producers passed the original three 149-check suites and the
+  raw/default 162/21 suites, but graph rejected the correct generated expression
+  owner `EXReaderReadingState::reader_reading_state_codec` because our assertion
+  incorrectly named its wrapper. The strict job correctly refused the failed
+  producers; original 9+3+3 binding mutations have not executed successfully.
+- Linux/macOS S19 linked the real shared DSO/host and passed the six mixed-graph
+  refusals. Actual jump-history business then returned code 44: its progress
+  capture was incorrectly a nonempty range; revision v2 requires a point.
+- Windows S19 built the actual `EXReaderProduct.exe`, then its real private-store
+  negative hit Ninja's 260-character FetchContent path limit before reaching the
+  expected ownership refusal. GUI runtime and its five business paths were
+  therefore not reached.
+
+Caller-only repairs now use the exact codec owner, two genuine progress point
+captures, preserved pre-cleanup error diagnostics and a short FetchContent base.
+No production module or frozen SDK contract is changed by these repairs. They
+are **not revalidated**; no third full run is authorized or launched. Root must
+decide any additional complete round with these roots visible.
+
+The fixed failed round's original ZIPs and actual program identities are read
+only through the Actions `inspect_previous` entry (also `protocol_only=true`).
+It cannot build, execute business or grant acceptance. It also checks the
+unapplied pure-capture candidate diff structure only; that capability's behavior
+remains untested and outside both rounds.
+
 ## Historical evidence, kept separate
 
 SDK format combination: `8015c576822d5284dedfea17428ecf1a240befd0`,

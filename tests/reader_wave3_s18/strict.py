@@ -59,7 +59,7 @@ def verify_imported_paths(archive, result, problems):
              ((lines[1] == 'exit=0') if case == 'known' else (lines[1] != 'exit=0')) and
              '-DCASE=' + case in lines[0] and message in log,
              'actual imported path configure outcome ' + case, problems)
-    expected = ('EXReaderReadingState::reader_reading_state|INTERFACE_INCLUDE_DIRECTORIES|'
+    expected = ('EXReaderReadingState::reader_reading_state_codec|INTERFACE_INCLUDE_DIRECTORIES|'
                 '$<TARGET_PROPERTY:EXReader::exr_core,INTERFACE_INCLUDE_DIRECTORIES>|EXReader::exr_core')
     need(set(graph.get('graphs', {})) == {'default', 'raw'}, 'both installed graphs', problems)
     for family, record in graph.get('graphs', {}).items():
@@ -71,7 +71,8 @@ def verify_imported_paths(archive, result, problems):
         lines = data.decode('utf-8').splitlines()
         need(hashlib.sha256(data).hexdigest() == record.get('genexpr_sha256') and
              lines == record.get('genexpr_origins') and expected in lines,
-             'actual generator-expression source ' + family, problems)
+             'actual generator-expression source ' + family + ': expected ' + expected +
+             '; actual ' + repr(lines), problems)
 
 
 def verify_platform(archive, platform, source, run, attempt, certificate, s16_only=False):

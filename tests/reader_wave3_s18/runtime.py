@@ -267,9 +267,11 @@ def graph():
         publish('graph-' + label + '-origins.txt', origins)
         expressions = target / 'genexpr-origins.txt'
         expression_lines = expressions.read_text(encoding='utf-8').splitlines()
-        expected_expression = ('EXReaderReadingState::reader_reading_state|INTERFACE_INCLUDE_DIRECTORIES|'
+        expected_expression = ('EXReaderReadingState::reader_reading_state_codec|INTERFACE_INCLUDE_DIRECTORIES|'
                                '$<TARGET_PROPERTY:EXReader::exr_core,INTERFACE_INCLUDE_DIRECTORIES>|EXReader::exr_core')
-        assert expected_expression in expression_lines, (label, expression_lines)
+        assert expected_expression in expression_lines, {
+            'family': label, 'missing_imported_expression': expected_expression,
+            'actual_imported_expressions': expression_lines}
         publish('graph-' + label + '-genexpr-origins.txt', expressions)
         entries[label] = {'binary_sha256': sha(binary), 'origins_sha256': sha(origins),
                           'origins_lines': len(lines), 'targets': sorted(targets),

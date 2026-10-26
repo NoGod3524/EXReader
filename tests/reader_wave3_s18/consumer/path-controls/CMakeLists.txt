@@ -9,15 +9,15 @@ foreach(prefix FAMILY_PREFIX SHARED_PREFIX SDK_PREFIX)
 endforeach()
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/foreign/include")
 add_library(EXReader::exr_core INTERFACE IMPORTED)
-add_library(EXReaderReadingState::reader_reading_state INTERFACE IMPORTED)
+add_library(EXReaderReadingState::reader_reading_state_codec INTERFACE IMPORTED)
 set_property(TARGET EXReader::exr_core PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${SDK_PREFIX}/include")
-set_property(TARGET EXReaderReadingState::reader_reading_state PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+set_property(TARGET EXReaderReadingState::reader_reading_state_codec PROPERTY INTERFACE_INCLUDE_DIRECTORIES
   "$<TARGET_PROPERTY:EXReader::exr_core,INTERFACE_INCLUDE_DIRECTORIES>")
 if(CASE STREQUAL "foreign")
   set_property(TARGET EXReader::exr_core PROPERTY INTERFACE_INCLUDE_DIRECTORIES
     "${CMAKE_CURRENT_BINARY_DIR}/foreign/include")
 elseif(CASE STREQUAL "unknown")
-  set_property(TARGET EXReaderReadingState::reader_reading_state PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+  set_property(TARGET EXReaderReadingState::reader_reading_state_codec PROPERTY INTERFACE_INCLUDE_DIRECTORIES
     "$<CONFIG:Release>")
 elseif(CASE STREQUAL "cycle")
   set_property(TARGET EXReader::exr_core PROPERTY INTERFACE_INCLUDE_DIRECTORIES
@@ -25,9 +25,9 @@ elseif(CASE STREQUAL "cycle")
 elseif(NOT CASE STREQUAL "known")
   message(FATAL_ERROR "Unknown path control ${CASE}")
 endif()
-s18_imported_paths(paths EXReaderReadingState::reader_reading_state INTERFACE_INCLUDE_DIRECTORIES "")
+s18_imported_paths(paths EXReaderReadingState::reader_reading_state_codec INTERFACE_INCLUDE_DIRECTORIES "")
 foreach(path IN LISTS paths)
-  s18_owned_path(actual EXReaderReadingState::reader_reading_state INTERFACE_INCLUDE_DIRECTORIES "${path}")
+  s18_owned_path(actual EXReaderReadingState::reader_reading_state_codec INTERFACE_INCLUDE_DIRECTORIES "${path}")
 endforeach()
 file(REAL_PATH "${SDK_PREFIX}/include" expected)
 if(NOT actual STREQUAL expected)
