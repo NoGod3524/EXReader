@@ -21,12 +21,18 @@ try:
         assert built['accepted'] and not built['failures'] and built['source_sha']==result['source'] and str(built['run_id'])==result['run'] and str(built['attempt'])==result['attempt']
         assert built['cloud_content_bound'] and report['program_sha256']==built['program_sha256']==sha('c09/package/EXReader/EXReader.exe')
         assert 'reader_organization_project_page_raw_v3' in read('c09/wave3-host/windows-host.map').decode('utf-8',errors='replace')
+        cloud=json.loads(read('cloud-ui/report.json'))
+        assert cloud['accepted'] and not cloud['problems'] and cloud['source_sha']==result['source'] and str(cloud['run_id'])==result['run'] and str(cloud['attempt'])==result['attempt']
+        assert cloud['program_sha256']==report['program_sha256'] and cloud['probe_sha256']==sha('cloud-readback/cloud-probe.exe')
+        for audit_name,folder in (('public_readback','readback'),('public_readback_after','readback-after')):
+            audit=cloud[audit_name];assert audit['ok']==1 and len(audit['books'])==9 and all(book['read_ok']==1 for book in audit['books'])
+            assert {sha('cloud-ui/'+folder+'/book-%d.bin'%book['id']) for book in audit['books']}==set(cloud['inputs'].values())
         expected={'producer-book-sync','unresolved-history-not-complete','hierarchy-and-pagination','three-memberships','unsafe-tags-not-projected','native-organizer-shows-remote-tag','retry-after-history-resolution','membership-tombstone-applied','book-tombstone-soft-deletes','deleted-book-removed-from-shelf','book-explicit-restore','restored-book-visible','pending-local-intent-blocks-receive','retry-after-local-recovery','cancel-active-original-read','resume-import-without-duplicate','mapping-repair-reaches-shelf-without-reimport','authenticated-webdav-traffic'}
         assert set(report['checks'])==expected and len(report['checks'])==len(expected)
         assert report['server']['base'].startswith('https://127.0.0.1:') and report['server']['certificate_sha256']==sha('organization-ui/certificates/server.crt')
         assert report['server']['source_sha256']==hashlib.sha256(Path('tests/reader_windows_account/check_account_ui.py').read_bytes()).hexdigest()
         for name in ('unresolved.bmp','organizer.bmp','pending.bmp'):assert read('organization-ui/'+name).startswith(b'BM')
-        result.update(accepted=True,checks=report['checks'],program_sha256=report['program_sha256'],server=report['server'],artifact={'id':identity,'digest':digest},retained_build=built)
+        result.update(accepted=True,checks=report['checks'],cloud_checks=cloud['checks'],program_sha256=report['program_sha256'],server=report['server'],artifact={'id':identity,'digest':digest},retained_build=built)
 except Exception as error:result['problems'].append(type(error).__name__+': '+str(error))
 (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
 print(json.dumps(result),flush=True)

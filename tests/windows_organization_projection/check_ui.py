@@ -44,7 +44,7 @@ def names(dialog,control):
         n=ui.send(box,0x18A,i);buf=C.create_unicode_buffer(n+1);ui.send(box,0x189,i,C.addressof(buf));values.append(buf.value)
     return values
 def import_book(app,path):
-    app.focus();ui.A.tap(ord('O'),(ui.A.VK_CONTROL,))
+    ui.U.SetForegroundWindow(app.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,))
     def owned():
         found=[]
         @ui.ENUM
@@ -57,6 +57,7 @@ def import_book(app,path):
     dialog=app.wait(owned,timeout=20);candidates=[]
     ui.U.GetParent.argtypes=[W.HWND];ui.U.GetParent.restype=W.HWND
     ui.U.GetDlgCtrlID.argtypes=[W.HWND];ui.U.GetDlgCtrlID.restype=C.c_int
+    ui.U.EnumChildWindows.argtypes=[W.HWND,ui.ENUM,W.LPARAM]
     @ui.ENUM
     def child(window,unused):
         name=C.create_unicode_buffer(100);ui.U.GetClassNameW(window,name,100)
