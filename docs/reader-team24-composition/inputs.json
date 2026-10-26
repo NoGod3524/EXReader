@@ -352,6 +352,15 @@
       ]
     },
     {
+      "name": "android-340-owner-and-sync-retained-checks",
+      "source": "a89fb87ff3898eb2ff46fbb66b367053c2607139",
+      "paths": [
+        ".github/workflows/android-current-owner-340.yml",
+        "tests/reader_android_owner_current/init.gradle",
+        "tests/reader_android_owner_current/prepare.py"
+      ]
+    },
+    {
       "name": "android-legacy-340-host-regression-candidate",
       "source": "ba381f09bcab6432f8544a7160aa257ec2b4ffdb",
       "paths": [
