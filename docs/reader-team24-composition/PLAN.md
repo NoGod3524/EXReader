@@ -297,6 +297,19 @@ failure and cancellation. This is ordinary-flow evidence for that source; it
 does not establish a real provider exchange, path-race safety or final combined
 product acceptance. The combined source must be run again.
 
+Combined-source run [40389325623/1](https://github.com/NoGod3524/EXReader/actions/runs/40389325623)
+passed on source `f61cf77d60fcf43187eb543a78e15b768c69c283`: the Windows
+job and the independent artifact verifier both succeeded. Twenty checks covered
+the native account and cloud picker against the runner's HTTPS WebDAV service,
+nine format imports and public SDK original readback, including readback after
+failure and cancellation. The authenticated artifact `12682194200` is 51,757,265
+bytes, SHA-256 `de7e395f17557ed7789a0de7bef4da6fb8bd1b101945df43434bf7addc0ca522`;
+summary artifact `12680869868` is 3,469 bytes, SHA-256
+`f5766e8ad65aefff68774a0d93fb10c9fd4daa3e9c64b23edfa06d3a22b17883`.
+Both expire 2027-01-24T19:43:49Z. This proves ordinary-flow behavior for the
+tested source and service; real cloud-provider behavior, D13 race safety and
+future final-source acceptance remain separate.
+
 ## Composition performance dispatch
 
 The composition workflow exposes `observe_performance` to call the existing
