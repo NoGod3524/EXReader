@@ -344,6 +344,13 @@
       "paths": [
         ".github/workflows/android-composition-candidate.yml"
       ]
+    },
+    {
+      "name": "android-legacy-340-host-regression-candidate",
+      "source": "adbcc61e22b240b36ec6e9e4c27ef738915be36f",
+      "paths": [
+        ".github/workflows/android-composition-legacy-340.yml"
+      ]
     }
   ]
 }
