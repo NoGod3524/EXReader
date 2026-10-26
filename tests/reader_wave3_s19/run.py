@@ -227,7 +227,8 @@ def declare(name, prefix, sdk_link='shared', package_prefix=None):
 
 def expect_failure(folder, message, prefix, name):
     process = subprocess.run(['cmake', '-S', str(folder), '-B', str(folder / 'build'), '-G', 'Ninja',
-                              '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_PREFIX_PATH=' + path(prefix)],
+                              '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_PREFIX_PATH=' + path(prefix),
+                              '-DFETCHCONTENT_BASE_DIR=' + path(ROOT / 'build/s19-fc')],
                              env=sdk_environment(prefix), capture_output=True, text=True,
                              encoding='utf-8', errors='replace')
     log = process.stdout + process.stderr

@@ -57,6 +57,7 @@ int fail(int code, const std::string &message) {
   if (g_error && g_error_bytes) {
     std::snprintf(g_error, g_error_bytes, "%s", message.c_str());
   }
+  std::fprintf(stderr, "S19 feature failure code=%d: %s\n", code, message.c_str());
   return code;
 }
 
@@ -424,6 +425,7 @@ struct history_counts {
   int commits = 0, peek = -1, complete = -1, resolve = -1, open = -1, close = -1;
   unsigned long long count = 0, cursor = 99, cursor_after = 99, wire_bytes = 0, generation = 0;
   int can_back = 0;
+  std::string error;
 };
 
 int record_history(const fs::path &work, const std::string &book_key, history_counts *counts) {
@@ -442,7 +444,10 @@ int record_history(const fs::path &work, const std::string &book_key, history_co
   }
   text_capture first, second;
   std::string error;
-  if (!first.open(0, 8, &error) || !second.open(20, 30, &error)) {
+  /* History commits a progress position: anchor-v2 progress requires a point,
+   * while the annotation path above intentionally captures a selected range. */
+  if (!first.open(0, 0, &error) || !second.open(20, 20, &error)) {
+    counts->error = error;
     reader_jh_close(&history, &history_error);
     reader_revisions_close(&store, &revision_error);
     return 43;
@@ -458,6 +463,13 @@ int record_history(const fs::path &work, const std::string &book_key, history_co
     reader_jh_result result{};
     reader_jh_status status = reader_jh_commit(history, store, &position, &result, &history_error);
     if (status != READER_JH_OK) {
+      /* Closing zeroes the caller's error objects; preserve the actual refusal first. */
+      counts->error = "commit index=" + std::to_string(index) +
+          " status=" + std::to_string((int)status) +
+          " rs=" + std::to_string((int)history_error.rs_code) +
+          " gap=" + std::to_string((int)history_error.gap) +
+          " revision=" + std::to_string(history_error.revision_code) +
+          " message=" + history_error.message;
       reader_jh_close(&history, &history_error);
       reader_revisions_close(&store, &revision_error);
       return 44;
@@ -683,7 +695,7 @@ extern "C" EXR_S19_EXPORT int exr_host_features_run(const struct exr_host_featur
 
   history_counts history;
   code = record_history(work, book_key, &history);
-  if (code) return fail(code, "jump history failed at step " + std::to_string(code));
+  if (code) return fail(code, "jump history failed at step " + std::to_string(code) + ": " + history.error);
 
   sync_counts sync;
   code = read_sync_status(work, request->dav_url, request->dav_auth, &sync);
