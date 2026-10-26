@@ -73,6 +73,20 @@ def show_all():
     d=organizer();ui.send(ui.U.GetDlgItem(d,261),ui.ACCOUNT.BM_CLICK)
     app.wait(lambda:not ui.U.IsWindow(d),timeout=30)
     app.wait(lambda:starts_with(list(range(2202))),timeout=90)
+def refresh():
+    app.wait_idle();ui.send(ui.U.GetDlgItem(app.window,ui.ACCOUNT.ACCOUNT),ui.ACCOUNT.BM_CLICK)
+    def find():
+        found=[]
+        @ui.ENUM
+        def visit(w,_):
+            pid=W.DWORD();ui.U.GetWindowThreadProcessId(w,C.byref(pid))
+            if pid.value==app.process.pid and ui.U.IsWindowVisible(w) and ui.U.GetDlgItem(w,ui.ACCOUNT.FORGET):found.append(w)
+            return True
+        ui.U.EnumWindows(visit,0);return found[0] if len(found)==1 else None
+    d=app.wait(find,timeout=30)
+    app.wait(lambda:ui.U.IsWindowEnabled(ui.U.GetDlgItem(d,ui.ACCOUNT.FORGET)),timeout=60)
+    ui.send(ui.U.GetDlgItem(d,ui.ACCOUNT.CLOSE),ui.ACCOUNT.BM_CLICK)
+    app.wait(lambda:not ui.U.IsWindow(d),timeout=30)
 def walk(expected,direction):
     positions={value:i for i,value in enumerate(expected)};seen=set()
     box=app.control('books')
@@ -116,6 +130,29 @@ try:
         walk(expected,1);walk(expected,-1);checks.append(kind+'-forward-reverse-bounded-170')
         app.search('Shelf 0001');app.wait(lambda:stable_numbers()==[1],timeout=90)
         app.search('');app.wait(lambda:starts_with(expected),timeout=90);checks.append(kind+'-literal-search')
+        if kind=='shelf':
+            phase='removed-anchor'
+            app.scroll(1,lambda values:app.top() is not None and 25<app.top()<110)
+            top=app.top();assert top is not None
+            with sqlite3.connect(database,timeout=30) as db:
+                db.execute('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',(ids['shelf'],rows[top][0]))
+            refresh();app.wait(lambda:stable_numbers() is not None and top not in stable_numbers(),timeout=90)
+            assert app.top() is not None and abs(app.top()-top)<=2,(top,app.top(),stable_numbers())
+            checks.append('removed-top-anchor-keeps-neighbor')
+            phase='removed-tail'
+            app.scroll(1,lambda values:values[-1]==0)
+            top=app.top();assert top is not None and top<100
+            with sqlite3.connect(database,timeout=30) as db:
+                db.executemany('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',[(ids['shelf'],rows[i][0]) for i in range(top+1)])
+            refresh();app.wait(lambda:stable_numbers() and all(n>top for n in stable_numbers()),timeout=90)
+            assert min(stable_numbers())==top+1,(top,stable_numbers())
+            checks.append('removed-tail-falls-back-to-predecessors')
+            phase='removed-all'
+            with sqlite3.connect(database,timeout=30) as db:db.execute('DELETE FROM reader_book_shelves WHERE shelf_id=?',(ids['shelf'],))
+            refresh();app.wait(lambda:stable_numbers()==[],timeout=90)
+            checks.append('removed-all-shows-empty')
+            with sqlite3.connect(database,timeout=30) as db:
+                db.executemany('INSERT INTO reader_book_shelves(shelf_id,book_key,ordinal) VALUES (?,?,?)',[(ids['shelf'],key,169-i) for i,(key,_) in enumerate(rows)])
         show_all()
     checks.append('return-to-all-books-after-each-group')
     app.close();assert app.process.returncode==0,'host did not close cleanly'

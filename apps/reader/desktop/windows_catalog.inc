@@ -51,12 +51,17 @@ static exr_status product_group_page(host_job *job,reader_catalog *catalog,reade
       if(found && job->product_book_count && !copy.failed) {
         job->product_cursors[0].ordinal=anchor.ordinal;cursor.ordinal=anchor.ordinal;
         cursor.book_key=job->product_cursors[0].key;after=&cursor;
-      } else after=NULL;
-    } else after=NULL;
+      }
+    }
     direction=1;job->product_shelf_direction=0;
   }
   if(!code && !copy.failed && !job_cancel_flag(job)) code=reader_catalog_group_books_page(catalog,kind,
     job->product_group_id,after,job->product_shelf_query,1,direction,50-job->product_book_count,product_group_row,&copy,error);
+  /* If the remembered member vanished at the tail, retain nearby predecessors. */
+  if(!code && !copy.failed && !job_cancel_flag(job) && job->product_anchor_key && after && !job->product_book_count) {
+    direction=-1;
+    code=reader_catalog_group_books_page(catalog,kind,job->product_group_id,after,job->product_shelf_query,1,-1,50,product_group_row,&copy,error);
+  }
   if(job_cancel_flag(job)) return EXR_CANCELLED;
   if(copy.failed) return EXR_MEMORY;
   if(code) return EXR_DATABASE;

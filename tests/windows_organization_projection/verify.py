@@ -48,7 +48,7 @@ try:
             assert titles[0]==('Shelf 0169',) and titles[-1]==('Shelf 0000',)
         catalog_file.unlink()
         assert paged['originals']==2202 and paged['members_per_group']==170
-        assert set(paged['checks'])=={'shelf-forward-reverse-bounded-170','tag-forward-reverse-bounded-170','series-forward-reverse-bounded-170','shelf-literal-search','tag-literal-search','series-literal-search','return-to-all-books-after-each-group'} and len(paged['checks'])==7
+        assert set(paged['checks'])=={'shelf-forward-reverse-bounded-170','tag-forward-reverse-bounded-170','series-forward-reverse-bounded-170','shelf-literal-search','tag-literal-search','series-literal-search','return-to-all-books-after-each-group','removed-top-anchor-keeps-neighbor','removed-tail-falls-back-to-predecessors','removed-all-shows-empty'} and len(paged['checks'])==10
         audit=report['cancel_readback'];assert audit['ok']==1 and len(audit['books'])==2 and all(item['read_ok']==1 for item in audit['books'])
         assert {sha('organization-ui/cancel-readback/book-%d.bin'%item['id']) for item in audit['books']}==set(report['cancel_input_hashes'])
         deleted=report['deleted_readback'];assert deleted['ok']==1 and len(deleted['books'])==1 and deleted['books'][0]['read_ok']==1
