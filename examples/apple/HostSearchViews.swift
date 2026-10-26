@@ -5,6 +5,7 @@ struct HostSearchSheet: View {
     @ObservedObject var model: HostReaderModel
     @ObservedObject var search: HostSearchState
     @Environment(\.presentationMode) private var presentation
+    @FocusState private var queryFocused: Bool
 
     init(model: HostReaderModel) { self.model = model; self.search = model.search }
 
@@ -18,10 +19,11 @@ struct HostSearchSheet: View {
             }
             TextField("查找文字（区分大小写）", text: $search.query)
                 .textFieldStyle(.roundedBorder).accessibilityIdentifier("search.query")
-                .onSubmit { model.findInBook() }
+                .focused($queryFocused)
+                .onSubmit { queryFocused = false; model.findInBook() }
                 .onChange(of: search.query) { _ in search.queryChanged() }
             HStack {
-                Button("查找") { model.findInBook() }
+                Button("查找") { queryFocused = false; model.findInBook() }
                     .disabled(model.busy || search.running || search.query.isEmpty || search.query.utf8.count > 4096)
                     .accessibilityIdentifier("search.find")
                 if search.running {
