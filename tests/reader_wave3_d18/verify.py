@@ -11,6 +11,23 @@ def value(z,suffix):return json.loads(z.read(unique(z.namelist(),suffix)))
 def invariants(before,after):
     assert before['semantic']==after['semantic'],'failure/no-op changed SDK or catalog'
 
+def mapping(snapshot):
+    """Prove that the SDK originals are precisely the product's mapped books."""
+    product=snapshot['product'];public=snapshot['public_sdk']
+    def records(table):
+        value=product[table]
+        return [dict(zip(value['columns'],row)) for row in value['rows']]
+    books=records('reader_books');locals=records('reader_local_books')
+    originals={b['id']:b for b in public['originals']}
+    assert len(originals)==public['book_count']==len(books)==len(locals)
+    for row in locals:
+        candidates=[b for b in books if b['book_key']==row['book_key']]
+        assert len(candidates)==1 and candidates[0]['deleted']==0
+        book=candidates[0];source=originals[row['sdk_book_id']]
+        assert source['sha256']==book['source_sha256'] and source['bytes']==book['source_bytes']
+        assert book['book_key']==book['format']+':'+source['sha256']
+        assert book['format']=='epub' and row['location_kind']=='epub_chapter'
+
 def validate(host,e,rows,snapshots):
     assert all(e[k]==info[k] for k in info) and e['host']==host and e['accepted']
     assert len(rows)==18 and len({r['action'] for r in rows})==18
@@ -19,6 +36,7 @@ def validate(host,e,rows,snapshots):
     assert e['configuration']['product_manifest']['source_sha']==info['source_sha']
     assert e['program']['info_plist']['EXRSourceSHA']==info['source_sha']
     assert e['program']['installed_sha256']==e['program']['sha256']
+    assert e['program']['info_plist']['UIFileSharingEnabled'] is True
     assert e['physical_device'] is False and e['physical_keyboard'] is False and e['keyboard_focus'] is False
     for r in rows:
         assert r['result']=='passed' and r['executed'] and r['exposed'] and r['input']==('independent-public-readback' if r['action']=='no_unexpected_revision' else 'native-touch')
@@ -29,16 +47,19 @@ def validate(host,e,rows,snapshots):
             assert s['public_sdk']['sdk_version']=='3.41.0'
             assert s['paths']['sdk'].endswith('/library.sqlite') and s['paths']['catalog'].endswith('/reader-catalog.db')
             assert s['semantic']['product_sha256']==hashed(s['product'])
+            mapping(s)
         if r['action'] in REJECTS:invariants(snapshots[r['before']],snapshots[r['after']])
     assert snapshots['import.before']['public_sdk']['book_count']==0
     assert snapshots['import.after']['public_sdk']['book_count']==1
     base=snapshots['opened.idle'];final=snapshots['final.idle']
     assert base['public_sdk']['book_count']==final['public_sdk']['book_count']==1
+    assert snapshots['book.open.before']['monotonic'] < base['monotonic'] < snapshots['cancel.before']['monotonic'] < snapshots['cancel.after']['monotonic'] < snapshots['reject.badfile.before']['monotonic'] < snapshots['reject.badfile.after']['monotonic'] < final['monotonic']
     for key in ['sources_sha256','revisions_sha256']:
         assert base['semantic'][key]==final['semantic'][key],key
     for action in ['next','previous','continue_after_return']:
         assert snapshots[action+'.before']['semantic']['sdk_sha256']!=snapshots[action+'.after']['semantic']['sdk_sha256'],action+' did not independently change reading progress'
     return dict(accepted=True,passed_named_actions=len(ACTIONS),additional_badfile_rejection=True,
+        ordinary_open_progress={'before':snapshots['book.open.before']['public_sdk'],'after_idle':base['public_sdk']},
         ordinary_progress_changes={a:{p:snapshots[a+'.'+p]['public_sdk'] for p in ['before','after']} for a in ['next','previous','continue_after_return']},
         rejection_comparisons={a:{p:snapshots[a+'.'+p]['semantic'] for p in ['before','after']} for a in REJECTS},
         opened_idle_baseline=base,final_idle=final,rows=rows)
@@ -71,6 +92,15 @@ try:
                     assert members[0].mode==e['program']['mode'] and not e['program']['is_symlink']
                 logs=z.read(unique(names,host+'/native-actions.log')).decode(errors='replace')
                 rows=[json.loads(raw) for raw in re.findall(r'\bD18_ACTION (\{[^\r\n]+\})',logs)]
+                attachments=value(z,host+'/attachments/manifest.json')
+                for row in rows:
+                    for kind,ext in [('screen','png'),('tree','txt')]:
+                        role=row['action']+'-'+kind+'_'
+                        found=[a for group in attachments for a in group['attachments'] if a.get('suggestedHumanReadableName','').startswith(role)]
+                        assert len(found)==1,(role,found)
+                        raw=z.read(unique(names,host+'/attachments/'+found[0]['exportedFileName']))
+                        assert raw
+                        if ext=='png':assert raw[:8]==b'\x89PNG\r\n\x1a\n' and int.from_bytes(raw[16:20],'big')>0 and int.from_bytes(raw[20:24],'big')>0
                 snapshots={}
                 for n in names:
                     prefix=host+'/observations/'

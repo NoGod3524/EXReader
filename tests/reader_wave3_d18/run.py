@@ -36,13 +36,22 @@ try:
     resources=OUT/'resources';project=OUT/'project';derived=OUT/'derived'
     run('fixtures',[sys.executable,'tests/apple_host/prepare_fixtures.py','--resources',resources])
     run('project',['ruby','tests/apple_host/make_xcodeproj.rb',project,resources,ROOT/'tests/reader_wave3_d18/accessibility/ui'])
+    # The old generator declares this standard key in build settings, but the
+    # actual round-1 plist omitted it. Correct only our generated test packaging
+    # so Files can expose the authored Documents fixtures; no owner source edit.
+    plist=project/'Info-iOS.plist';fixture_info=plistlib.loads(plist.read_bytes())
+    fixture_info['UIFileSharingEnabled']=True
+    plist.write_bytes(plistlib.dumps(fixture_info))
     pbx=project/'EXReaderHost.xcodeproj/project.pbxproj';body=pbx.read_text()
     assert 'EXR_APPLE_HOST_REVIEW' not in body and 'EXR_APPLE_IMPORT_REVIEW' not in body and 'EXR_APPLE_PAGE_THEME' in body
     configuration=dict(review_macros_present=False,page_theme_enabled=True,raw3_enabled=False,signing_allowed=False,generated_project_sha256=digest(pbx),frozen_sdk_dylibs=frozen,product_manifest=json.loads((sdk/'share/exreader-apple/product.json').read_text()))
     devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','--json']))
-    prefix='iPhone' if host=='iphone' else 'iPad';choices=[(runtime,d['name'],d['udid']) for runtime,rows in devices['devices'].items() for d in rows if d.get('isAvailable') and d['name'].startswith(prefix)]
+    sdk_version=subprocess.check_output(['xcrun','--sdk','iphonesimulator','--show-sdk-version'],text=True).strip()
+    runtime_id='com.apple.CoreSimulator.SimRuntime.iOS-'+sdk_version.replace('.','-')
+    prefix='iPhone' if host=='iphone' else 'iPad';choices=[(runtime,d['name'],d['udid']) for runtime,rows in devices['devices'].items() for d in rows if runtime==runtime_id and d.get('isAvailable') and d['name'].startswith(prefix)]
+    assert choices, {'required_runtime':runtime_id,'available':devices}
     runtime,device,udid=max(choices);destination='platform=iOS Simulator,id='+udid
-    configuration.update(device=device,runtime=runtime,udid=udid,destination=destination)
+    configuration.update(device=device,runtime=runtime,udid=udid,destination=destination,active_simulator_sdk=sdk_version,test_fixture_file_sharing=True)
     # A prebooted selected device is not a failed operation; query before boot.
     state=next(d['state'] for rows in devices['devices'].values() for d in rows if d['udid']==udid)
     if state!='Booted':run('boot',['xcrun','simctl','boot',udid])
