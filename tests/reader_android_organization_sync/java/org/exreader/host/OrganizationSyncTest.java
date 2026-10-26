@@ -46,7 +46,23 @@ public final class OrganizationSyncTest extends Instrumentation {
                 IntentJournal.Command command=IntentJournal.Command.group(0,0,"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","Pending local edit","",0,new String[0]);
                 journal.create(command,null);launch();configure();click("立即同步");status("有待恢复的本地修改");
                 long owner=NativeCatalog.open(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath());try{need(NativeCatalog.metadata(owner,input.getString("book_key"))==null,"pending intent blocks book projection");}finally{NativeCatalog.close(owner);}
-                need(context.getSharedPreferences("organization",0).edit().clear().commit(),"test clears its pending intent");click("继续更新书架");status("书架有冲突或缺少依赖");
+                need(context.getSharedPreferences("organization",0).edit().clear().commit(),"test clears its pending intent");
+            });
+            check("queued_cancel_then_continue",()->{
+                SyncController controller=SyncController.get(context);
+                java.lang.reflect.Field field=SyncController.class.getDeclaredField("worker");field.setAccessible(true);
+                java.util.concurrent.ScheduledExecutorService worker=(java.util.concurrent.ScheduledExecutorService)field.get(controller);
+                java.util.concurrent.CountDownLatch entered=new java.util.concurrent.CountDownLatch(1),release=new java.util.concurrent.CountDownLatch(1);
+                worker.execute(()->{entered.countDown();try{release.await();}catch(InterruptedException e){Thread.currentThread().interrupt();}});
+                need(entered.await(10,java.util.concurrent.TimeUnit.SECONDS),"worker barrier");
+                controller.continueProjection();controller.cancel();release.countDown();status("投影已暂停");
+                java.lang.reflect.Field pages=SyncController.class.getDeclaredField("projectPages");pages.setAccessible(true);
+                java.util.concurrent.CountDownLatch enteredAgain=new java.util.concurrent.CountDownLatch(1),releaseAgain=new java.util.concurrent.CountDownLatch(1);
+                worker.execute(()->{enteredAgain.countDown();try{releaseAgain.await();}catch(InterruptedException e){Thread.currentThread().interrupt();}});
+                need(enteredAgain.await(10,java.util.concurrent.TimeUnit.SECONDS),"budget barrier");
+                controller.continueProjection();worker.execute(()->{try{pages.setInt(controller,200);}catch(IllegalAccessException e){throw new AssertionError(e);}});releaseAgain.countDown();
+                status("书架更新达到本轮上限");
+                click("继续更新书架");status("书架有冲突或缺少依赖");
             });
             check("metadata_without_sdk_original_and_same_page_delete_conflict",()->{
                 long owner=NativeCatalog.open(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath());try{
@@ -58,6 +74,17 @@ public final class OrganizationSyncTest extends Instrumentation {
                     need(NativeCatalog.groupFind(owner,0,input.getString("orphan_id")).length==0,"missing parent retained pending");
                 }finally{NativeCatalog.close(owner);}
                 try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){need(library.books().length==0,"metadata needs no imported SDK original");}
+            });
+            check("queued_close_retires_session_before_next_batch",()->{
+                SyncController controller=SyncController.get(context);
+                java.lang.reflect.Field field=SyncController.class.getDeclaredField("worker");field.setAccessible(true);
+                java.util.concurrent.ScheduledExecutorService worker=(java.util.concurrent.ScheduledExecutorService)field.get(controller);
+                java.util.concurrent.CountDownLatch entered=new java.util.concurrent.CountDownLatch(1),release=new java.util.concurrent.CountDownLatch(1);
+                worker.execute(()->{entered.countDown();try{release.await();}catch(InterruptedException e){Thread.currentThread().interrupt();}});
+                need(entered.await(10,java.util.concurrent.TimeUnit.SECONDS),"worker barrier");
+                controller.continueProjection();controller.close();release.countDown();
+                long end=SystemClock.elapsedRealtime()+30000;while(NativeSyncProbe.sessions()!=0&&SystemClock.elapsedRealtime()<end)SystemClock.sleep(80);
+                need(NativeSyncProbe.sessions()==0,"closed session must be destroyed");
             });
             check("visible_native_organization_panel",()->{click("关闭");click("More");click("Organize");waitFor(n->text(n).equals("Cloud Shelf"),null,30000);click("Cloud Shelf");click("Books");waitFor(n->text(n).contains("Remote metadata only"),null,30000);});
         }catch(Throwable error){failure=error;}

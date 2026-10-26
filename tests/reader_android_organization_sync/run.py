@@ -49,7 +49,7 @@ try:
     raw=adb(*command,'org.exreader.host.test/org.exreader.host.OrganizationSyncTest',timeout=900)
     report=json.loads(adb('exec-out','run-as','org.exreader.host','cat','files/organization-sync-report.json'))
     assert all(report.get(k)==v for k,v in identity.items())
-    assert report['passed'] and report['count']==3 and all(x['pass'] for x in report['checks']),report
+    assert report['passed'] and report['count']==5 and all(x['pass'] for x in report['checks']),report
     assert b'ORGANIZATION_SYNC_PASS' in raw and b'INSTRUMENTATION_CODE: -1' in raw
     accepted=True
 finally:
