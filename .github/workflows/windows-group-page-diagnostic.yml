@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [codex/windows-group-browse]
-    paths: ['.github/workflows/windows-group-page-diagnostic.yml']
+    paths: ['.github/workflows/windows-group-page-diagnostic.yml', 'tests/windows_organization_projection/paged_ui.py']
 permissions:
   contents: read
   actions: read
