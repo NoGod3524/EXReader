@@ -159,6 +159,21 @@
       ]
     },
     {
+      "name": "organization-projection",
+      "source": "a67fe8c6c094c4bb59ffc94f4a84c90261d5e722",
+      "tested_source": "a67fe8c6c094c4bb59ffc94f4a84c90261d5e722",
+      "tested_run": 40390641129,
+      "paths": [
+        ".github/workflows/reader-organization-projection.yml",
+        "apps/reader/revisions/CMakeLists.txt",
+        "apps/reader/revisions/include/reader_projection.h",
+        "apps/reader/revisions/src/organization_projection.cpp",
+        "tests/reader_organization_projection/CMakeLists.txt",
+        "tests/reader_organization_projection/check.py",
+        "tests/reader_organization_projection/main.cpp"
+      ]
+    },
+    {
       "name": "windows-cloud-ui-verification",
       "source": "0dd5a62603cbf4d90b28a5819bc54ab2bf0c26ba",
       "tested_source": "0dd5a62603cbf4d90b28a5819bc54ab2bf0c26ba",
