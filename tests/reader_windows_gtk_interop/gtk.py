@@ -61,7 +61,7 @@ def main():
         host=Session(program.resolve(),(a.package/'Reader.otf').resolve(),a.out);(a.out/'profile').mkdir();host.launch()
         if a.phase=='gtk-first':
             book=a.out/'Relay GTK.txt';book.write_bytes(('GTK authored original.\n'*80).encode());digest=hashlib.sha256(book.read_bytes()).hexdigest()
-            host.dialog(book);host.wait(lambda s:s['book']>0 and s['books']==1 and not s['error'],timeout=60)
+            host.dialog(book.resolve());host.wait(lambda s:s['book']>0 and s['books']==1 and not s['error'],timeout=60)
             data.update(gtk_book='txt:'+digest,gtk_original_sha256=digest,gtk_program_sha256=identity)
             checks.append('gtk_imports_original_in_native_host')
         account();setfield('w',dav.base+'/dav/');setfield('u',user);setfield('p',password);host.key('alt+h','alt+a')
