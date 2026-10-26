@@ -34,8 +34,8 @@ jobs:
           build/startup-profile/seed_shelf.exe build/startup-profile-evidence/library.sqlite | tee build/startup-profile-evidence/seed.json
           for n in 1 2 3; do
             cp build/startup-profile-evidence/library.sqlite "build/startup-profile-evidence/fresh-$n.sqlite"
-            build/startup-profile/startup_profile.exe "build/startup-profile-evidence/fresh-$n.sqlite" "build/startup-profile-evidence/product-$n.sqlite" | tee "build/startup-profile-evidence/first-$n.json"
-            build/startup-profile/startup_profile.exe "build/startup-profile-evidence/fresh-$n.sqlite" "build/startup-profile-evidence/product-$n.sqlite" | tee "build/startup-profile-evidence/repeat-$n.json"
+            build/startup-profile/startup_profile.exe "build/startup-profile-evidence/fresh-$n.sqlite" "build/startup-profile-evidence/product-$n.sqlite" first | tee "build/startup-profile-evidence/first-$n.json"
+            build/startup-profile/startup_profile.exe "build/startup-profile-evidence/fresh-$n.sqlite" "build/startup-profile-evidence/product-$n.sqlite" repeat | tee "build/startup-profile-evidence/repeat-$n.json"
           done
           sha256sum build/startup-profile/startup_profile.exe build/startup-profile/seed_shelf.exe build/startup-profile-evidence/library.sqlite | tee build/startup-profile-evidence/hashes.txt
           systeminfo | findstr /C:"OS Name" /C:"OS Version" /C:"Processor" /C:"Total Physical Memory" | tee build/startup-profile-evidence/environment.txt
