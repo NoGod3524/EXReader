@@ -1,7 +1,7 @@
 name: GTK received organization projection
 on:
   push:
-    branches: [codex/gtk-organization-projection]
+    branches: [codex/gtk-organization-boundaries]
   workflow_dispatch:
     inputs:
       status_diagnostic_only:
@@ -170,6 +170,26 @@ jobs:
           Path('build/account-logs/account-identities.json').write_text(json.dumps(results,indent=2))
           print(json.dumps(results))
           PY
+      - name: Build isolated instrumented GTK boundary probe
+        run: |
+          set -euo pipefail
+          cmake -S apps/reader/desktop -B build/boundary-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_BUILD_GTK=ON -DEXR_GTK_ORGANIZATION_BOUNDARY_PROBE=ON
+          cmake --build build/boundary-desktop --parallel 4
+          ! nm build/account-package/EXReader-Linux/bin/exreader-linux | grep '__wrap_reader_revision_entities_page' > /dev/null
+          nm build/boundary-desktop/gtk-host/exreader-linux | grep '__wrap_reader_revision_entities_page' > /dev/null
+          cp -a build/account-package/EXReader-Linux build/boundary-package
+          cp build/boundary-desktop/gtk-host/exreader-linux build/boundary-package/bin/exreader-linux
+          sha256sum build/account-package/EXReader-Linux/bin/exreader-linux build/boundary-package/bin/exreader-linux | tee build/account-logs/boundary-programs.txt
+      - name: Real GTK owner small-budget continuation and selected-head race
+        run: |
+          mkdir -p build/boundary-probe
+          export EXR_TEST_ORGANIZATION_PROBE="$PWD/build/boundary-probe"
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/account-logs/boundary-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tests/linux_host/check_account_ui.py --payload build/boundary-package --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-boundary-ui --receive-fixtures build/account-receive-fixtures --reading-probe build/account-reading-probe/reading-v2-probe --inspect-consumer build/account-inspect/received-sdk-inspect
+          '
       - name: Preserve twenty product five fixed twenty-four shelf fourteen metadata fifteen collections twenty-seven
         run: |
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
@@ -203,7 +223,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gtk-organization-projection-${{ github.run_id }}-${{ github.run_attempt }}
+          name: gtk-organization-boundaries-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/account-logs/
             build/account-desktop/verified.json
@@ -226,6 +246,8 @@ jobs:
             build/account-collections-ui/
             build/account-ui/
             build/account-original-receive-ui/
+            build/account-boundary-ui/
+            build/boundary-probe/
             build/account-atspi-fixes/
             build/account-package/build.json
             build/account-package/runtime-dependencies.txt

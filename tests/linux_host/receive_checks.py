@@ -128,6 +128,44 @@ def run_receive_checks(context):
     checked('received_scan_retains_exact_history_without_projecting_or_importing_books')
     active = host.read();assert active['book'] > 0
     window();host.key('alt+r')
+    probe_path=os.environ.get('EXR_TEST_ORGANIZATION_PROBE')
+    if probe_path:
+        probe=Path(probe_path);marker=probe/'selected';release=probe/'release';trace=probe/'trace.txt'
+        previous_lines=0;pauses=0;injected=False;deadline=time.monotonic()+240
+        while time.monotonic()<deadline:
+            current=account()
+            if marker.exists() and not injected:
+                assert not sql('SELECT name FROM reader_tags WHERE tag_id=?',(tag,))
+                newest=revision(250,shard=225,kind='tag',key=tag,parents=[organizations[2]['id']],payload={'name':'Cloud tag new'})
+                body=raw(newest);wire=probe/'new-head.json';wire.write_bytes(body)
+                assert protocol('receive',wire,hashlib.sha256(body).hexdigest())['created']==1
+                release.write_text('release');injected=True
+            lines=trace.read_text().splitlines() if trace.exists() else []
+            if current and current.get('phase')=='0' and current.get('owner_busy')=='0' and current.get('preparing')=='0' and len(lines)>previous_lines:
+                if 'paused before the scan could finish' in current.get('notice',''):
+                    assert current.get('retry_enabled')=='1'
+                    previous_lines=len(lines);pauses+=1;window();host.key('alt+t')
+                elif injected:
+                    break
+            time.sleep(.05)
+        else: raise AssertionError('instrumented owner did not complete: '+repr(account()))
+        assert injected and pauses>1 and not sql('SELECT name FROM reader_tags WHERE tag_id=?',(tag,))
+        rows=[line.split() for line in lines];assert any(row[0]=='2' and row[2]==tag and row[3]=='3' for row in rows)
+        groups={}
+        for stage,pass_no,key,result,budget in rows: groups.setdefault((stage,pass_no),[]).append(key)
+        kinds={'1':'shelf','2':'tag','3':'series','4':'membership'}
+        for (stage,pass_no),keys in groups.items():
+            expected=[x[0] for x in sql('SELECT DISTINCT entity_key FROM reader_revisions WHERE entity_kind=? ORDER BY entity_key',(kinds[stage],))]
+            assert keys==expected,(stage,pass_no,keys,expected)
+        assert sum(1 for row in rows if row[4]=='3')==pauses
+        record('instrumented_gtk_small_budget_pauses_and_continues_each_exact_keyset_page')
+        record('instrumented_gtk_rejects_selected_head_changed_before_projection')
+        (probe/'normal-budget').write_text('normal');window();host.key('alt+t')
+        end=time.monotonic()+120
+        while time.monotonic()<end:
+            if sql('SELECT name FROM reader_tags WHERE tag_id=?',(tag,))==[('Cloud tag new',)] and account().get('phase')=='0' and account().get('preparing')=='0': break
+            time.sleep(.05)
+        else: raise AssertionError('fresh scan did not project newer tag')
     projected = ready(lambda state: int(state['receive_seen']) >= 56 and state['phase'] == '0' and state['projection_status'] != '0')
     assert int(projected['max_receive_page_rows']) == 50
     for role, key in book_keys.items():
@@ -165,7 +203,7 @@ def run_receive_checks(context):
     checked('received_reverse_key_eight_level_shelf_is_visible_in_gtk')
     host.key('alt+t','Home','Down');host.wait(lambda state: collections().get('kind')=='1' and tag in collections().get('group_ids',''),timeout=60)
     host.key('alt+g','Home');host.wait(lambda state: collections().get('selected_id')==tag and book_keys['txt'] in collections().get('member_keys',''),timeout=60)
-    assert collections()['selected_name']=='Cloud tag' and conflict not in collections()['group_ids'].split(',')
+    assert collections()['selected_name']==('Cloud tag new' if probe_path else 'Cloud tag') and conflict not in collections()['group_ids'].split(',')
     host.key('alt+t','Home','Down','Down');host.wait(lambda state: collections().get('kind')=='2' and series in collections().get('group_ids',''),timeout=60)
     host.key('alt+g','Home');host.wait(lambda state: collections().get('selected_id')==series and book_keys['txt'] in collections().get('member_keys',''),timeout=60)
     assert collections()['selected_name']=='Cloud series'

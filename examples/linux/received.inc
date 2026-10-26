@@ -148,7 +148,19 @@ static exr_status received_project_organization(received_owner *owner) {
       owner->org_pass_conflicted++;
     else if(row.result!=READER_ORGANIZATION_PROJECTED) owner->org_pass_waiting++;
     if(row.result==READER_ORGANIZATION_PENDING_DEPENDENCY || row.result==READER_ORGANIZATION_HEAD_CHANGED) owner->org_pass_retry++;
-    if(owner->org_budget>=10000) { owner->org_paused=1;return EXR_OK; }
+    uint64_t budget=10000;
+#ifdef EXR_GTK_ORGANIZATION_BOUNDARY_PROBE
+    const char *probe=g_getenv("EXR_TEST_ORGANIZATION_PROBE");
+    if(probe && *probe) {
+      char *disable=g_build_filename(probe,"normal-budget",NULL);
+      if(!g_file_test(disable,G_FILE_TEST_EXISTS)) budget=3;
+      g_free(disable);
+      char *trace=g_build_filename(probe,"trace.txt",NULL);FILE *log=fopen(trace,"a");
+      if(log) { fprintf(log,"%u %u %s %d %"G_GUINT64_FORMAT"\n",owner->org_stage,owner->org_pass,row.entity_key,(int)row.result,owner->org_budget);fclose(log); }
+      g_free(trace);
+    }
+#endif
+    if(owner->org_budget>=budget) { owner->org_paused=1;return EXR_OK; }
   } else {
     g_clear_pointer(&owner->cursor,g_free);
     if(owner->org_stage==1 && owner->org_pass_retry && owner->org_pass_retry<owner->org_last_retry && ++owner->org_pass<8) {
