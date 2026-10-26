@@ -248,3 +248,19 @@ reader_rs_status reader_rs_encode_retained_raw_v3(reader_revisions *s,const read
   return encode(s,e,c,version,part,w,n,error,true);
 }
 #endif
+
+#if defined(EXR_READER_PURE_CAPTURE_CANDIDATE) && EXR_READER_PURE_CAPTURE_CANDIDATE == 1
+#include "reader_reading_state_capture_raw_candidate.h"
+extern "C" reader_rs_status reader_rs_encode_capture_raw_candidate(
+    reader_revisions *s,const reader_rs_envelope *e,const reader_rs_capture *c,
+    unsigned version,size_t part,char **w,size_t *n,reader_rs_error *error) {
+  if(w)*w=nullptr;
+  if(n)*n=0;
+  if(version<1 || version>3 || (version==3 && (!c || c->mode!=READER_RS_FIXED_PAGE))) {
+    return call(error,[&]{
+      reject(READER_RS_ARGUMENT,"Pure raw capture requires anchor 1/2, or fixed_page anchor3");
+    });
+  }
+  return encode(s,e,c,version,part,w,n,error,true);
+}
+#endif
