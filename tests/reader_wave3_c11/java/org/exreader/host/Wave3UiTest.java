@@ -141,6 +141,11 @@ public final class Wave3UiTest extends Instrumentation {
     private int count(String table)throws Exception {
         try(SQLiteDatabase product=SQLiteDatabase.openDatabase(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath(),null,SQLiteDatabase.OPEN_READONLY);Cursor cursor=product.rawQuery("SELECT COUNT(*) FROM "+table,null)){cursor.moveToFirst();return cursor.getInt(0);}
     }
+    private String syncRows()throws Exception {
+        JSONObject result=new JSONObject();try(SQLiteDatabase db=SQLiteDatabase.openDatabase(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath(),null,SQLiteDatabase.OPEN_READONLY)){
+            for(String table:new String[]{"reader_revisions","reader_outbox"}){JSONArray rows=new JSONArray();try(Cursor cursor=db.rawQuery("SELECT * FROM "+table+" ORDER BY revision_id",null)){while(cursor.moveToNext()){JSONArray row=new JSONArray();for(int i=0;i<cursor.getColumnCount();i++)row.put(cursor.isNull(i)?JSONObject.NULL:cursor.getString(i));rows.put(row);}}result.put(table,rows);}
+        }return result.toString();
+    }
     private int annotationCount()throws Exception {
         try(SQLiteDatabase product=SQLiteDatabase.openDatabase(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath(),null,SQLiteDatabase.OPEN_READONLY);
             Cursor cursor=product.rawQuery("SELECT COUNT(*) FROM reader_revisions WHERE entity_kind='annotation'",null)){cursor.moveToFirst();return cursor.getInt(0);}
@@ -356,15 +361,18 @@ public final class Wave3UiTest extends Instrumentation {
     }
     private void syncView()throws Exception {
         check("sync_status_view_without_session_and_real_failed_session",()->{
-            shelf();int revisions=count("reader_revisions"),outbox=count("reader_outbox");
+            shelf();int revisions=count("reader_revisions"),outbox=count("reader_outbox");String idleBefore=syncRows();
             shelfMore("同步");described("同步状态详情","尚未开始同步",30000);capture("sync-view-idle");
+            need(count("reader_revisions")==revisions&&count("reader_outbox")==outbox&&syncRows().equals(idleBefore),"the idle status view did not write, retry or ack");
             click("云盘账号");setText(input.getString("sync_root"),"云盘地址");setText("wave3-user","云盘用户名");setText("wave3-password-not-saved","云盘密码");click("仅本次使用");
             until(node->description(node,"同步状态")&&text(node).contains("仅本次使用"),null,"account kept in memory only",60000);
             click("立即同步");described("同步状态详情","阶段：",120000);
             long end=SystemClock.elapsedRealtime()+120000;String detail="";while(SystemClock.elapsedRealtime()<end){detail=described("同步状态详情");if(detail!=null&&detail.contains("（failed）"))break;SystemClock.sleep(200);}
             need(detail!=null&&detail.contains("（failed）"),"real failed session phase: "+detail);need(detail.contains("原因："),"a fixed safe reason is shown: "+detail);need(detail.contains("待上传记录"),"pending queue read from the real outbox: "+detail);
             need(!detail.contains("wave3-password-not-saved")&&!detail.contains("127.0.0.1"),"view never exposes credentials or the server");capture("sync-view-failed");
-            need(count("reader_revisions")==revisions&&count("reader_outbox")==outbox,"the status view did not ack, retry or write any revision");closeDialog();
+            String prepared=syncRows();android.util.Log.i("EXRWave3","sync preparation before="+idleBefore+" after="+prepared+" failure="+detail);
+            revisions=count("reader_revisions");outbox=count("reader_outbox");closeDialog();shelfMore("同步");described("同步状态详情","（failed）",30000);click("刷新书目");SystemClock.sleep(1000);
+            need(count("reader_revisions")==revisions&&count("reader_outbox")==outbox&&syncRows().equals(prepared),"the failed-session status refresh did not ack, retry or write any revision");closeDialog();
         });
     }
     private void toc()throws Exception {
