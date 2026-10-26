@@ -7,7 +7,7 @@ typedef struct {
   received_book page[50];size_t count,index;
   reader_received_conflict conflicts[50];size_t conflict_count;
   uint64_t seen,projected,conflicted,waiting;
-  uint64_t org_conflicted,org_waiting,org_pass_conflicted,org_pass_waiting,org_budget;
+  uint64_t org_conflicted,org_waiting,org_pass_conflicted,org_pass_waiting,org_pass_retry,org_last_retry,org_budget;
   unsigned org_stage,org_pass;
   int org_paused;
   int scanning,conflicts_only,conflict_more;
@@ -144,16 +144,19 @@ static exr_status received_project_organization(received_owner *owner) {
   if(count) {
     g_free(owner->cursor);owner->cursor=g_strdup(row.entity_key);
     owner->org_budget++;
-    if(row.result==READER_ORGANIZATION_UNSAFE_HISTORY) owner->org_pass_conflicted++;
+    if(row.result==READER_ORGANIZATION_UNSAFE_HISTORY && row.selection.kind!=READER_SELECTION_PENDING_PARENTS)
+      owner->org_pass_conflicted++;
     else if(row.result!=READER_ORGANIZATION_PROJECTED) owner->org_pass_waiting++;
+    if(row.result==READER_ORGANIZATION_PENDING_DEPENDENCY || row.result==READER_ORGANIZATION_HEAD_CHANGED) owner->org_pass_retry++;
     if(owner->org_budget>=10000) { owner->org_paused=1;return EXR_OK; }
   } else {
     g_clear_pointer(&owner->cursor,g_free);
-    if(owner->org_stage==1 && owner->org_pass_waiting && ++owner->org_pass<8) {
-      owner->org_pass_conflicted=owner->org_pass_waiting=0;
+    if(owner->org_stage==1 && owner->org_pass_retry && owner->org_pass_retry<owner->org_last_retry && ++owner->org_pass<8) {
+      owner->org_last_retry=owner->org_pass_retry;
+      owner->org_pass_conflicted=owner->org_pass_waiting=owner->org_pass_retry=0;
     } else {
       owner->org_conflicted+=owner->org_pass_conflicted;owner->org_waiting+=owner->org_pass_waiting;
-      owner->org_pass_conflicted=owner->org_pass_waiting=0;
+      owner->org_pass_conflicted=owner->org_pass_waiting=owner->org_pass_retry=0;
       if(++owner->org_stage>4) owner->scanning=0;
     }
   }
@@ -169,6 +172,7 @@ static exr_status received_project(linux_reader *reader,received_owner *owner,co
     owner->cursor=command->receive_key && command->receive_key[0] ? g_strdup(command->receive_key):NULL;
     owner->seen=owner->projected=owner->conflicted=owner->waiting=0;owner->conflict_more=0;owner->scanning=1;
     owner->org_conflicted=owner->org_waiting=owner->org_pass_conflicted=owner->org_pass_waiting=owner->org_budget=0;
+    owner->org_pass_retry=0;owner->org_last_retry=UINT64_MAX;
     owner->org_stage=owner->org_pass=0;owner->org_paused=0;
     owner->conflicts_only=command->action==READER_RECEIVE_CONFLICTS_BEGIN;
   }
