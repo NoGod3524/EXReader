@@ -622,3 +622,23 @@ physical-device behavior or the blocked D13 path-replacement scenario.
 Artifact `12690226085` is 40,733,017 bytes, SHA-256
 `4e2d3aea5246db20bb951dd41fef696335d708b74a7d4d205afa86f2032578ac`,
 and expires 2027-01-24T21:02:56Z.
+
+## Independent Windows organization host result
+
+Independent source `9333dcb6130f499977057f8214e0cf48381b1c02` completed
+[40402629336/1](https://github.com/NoGod3524/EXReader/actions/runs/40402629336).
+The Windows host and same-run artifact verifier jobs both succeeded. The
+workflow exercised two actual Windows host profiles against its local HTTPS
+WebDAV service, including hierarchy, memberships, unresolved history, deletion
+and explicit restore, edit-intent blocking, cancellation/resumption, mapping
+recovery and public SDK original readback; it also retained the native cloud
+import regression. The verifier checks source/run/attempt, packaged executable,
+installed cloud dependencies, reported checks and the original bytes in Actions.
+Artifact `12690006415` is 54,319,758 bytes, SHA-256
+`867909ff96666a97150e8feb09d4ce992bf4cce63f38468289b12dd76099214b`;
+summary artifact `12688569685` is 4,493 bytes, SHA-256
+`f30f3d2c7f2142bd820ba7ebcb730189584cdc0d202e0b2c5d2d5048dc502d66`.
+Both expire 2027-01-24T21:14:14Z. This remains independent source evidence;
+it does not establish a real provider, physical second device, final composed
+source or other-platform organization sync. A later status-text correction
+requires its own source-bound validation before admission.
