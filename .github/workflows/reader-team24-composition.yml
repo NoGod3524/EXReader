@@ -12,6 +12,10 @@ on:
         description: Read the fixed failed Apple artifact without building or testing
         type: boolean
         default: false
+      inspect_apple_latest:
+        description: Inspect three authenticated Apple UI failures from run 40369175290
+        type: boolean
+        default: false
       inspect_android_failure:
         description: Read the fixed Android path-candidate failure without rebuilding
         type: boolean
@@ -101,6 +105,78 @@ jobs:
         with:
           name: reader-fixed-failure-inspection-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/reader-failure-inspection/
+          if-no-files-found: error
+  inspect-apple-latest:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.inspect_apple_latest }}
+    needs: source
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {platform: macos, artifact: 12672428758, size: 436669306, digest: f82acc84c61a169f79b2ab0a8ed0b2aa6455619a78726288c6c3cb5a08129c64}
+          - {platform: iphone, artifact: 12676671407, size: 489564113, digest: bb9e875a8e95cd9a3b7252e4e7ff65f8d2ea09120fa2285dc57e35d10c5a105c}
+          - {platform: ipad, artifact: 12675650371, size: 486370049, digest: 766162ec750cee367095cd8cfa59a255f78d2450db00709bc3f628d99fc395cb}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original artifact and extract concise diagnostics
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT: ${{ matrix.artifact }}
+          EXPECTED_SIZE: ${{ matrix.size }}
+          EXPECTED_DIGEST: ${{ matrix.digest }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, re, sys, zipfile
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from check_parallel_integration import fetch, download_artifact_zip
+          artifact = int(os.environ['ARTIFACT'])
+          source = '2978d5ace765ac7fcc3c309be5b32ce7a7ff2bef'
+          digest = os.environ['EXPECTED_DIGEST']
+          item = fetch('actions/artifacts/' + str(artifact))
+          assert item['workflow_run']['id'] == 40369175290 and item['workflow_run']['head_sha'] == source
+          assert not item['expired'] and item['size_in_bytes'] == int(os.environ['EXPECTED_SIZE'])
+          assert item['digest'] == 'sha256:' + digest
+          raw = download_artifact_zip(artifact)
+          assert len(raw) == int(os.environ['EXPECTED_SIZE']) and hashlib.sha256(raw).hexdigest() == digest
+          with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              candidates = [x for x in archive.infolist() if (x.filename == 'result.json' or x.filename.endswith('/result.json')) and x.file_size < 50_000_000]
+              reports = []
+              for member in candidates:
+                  try:
+                      report = json.loads(archive.read(member))
+                  except (ValueError, UnicodeDecodeError):
+                      continue
+                  if report.get('source_sha') == source and str(report.get('run_id')) == '40369175290' and report.get('platform') == os.environ['PLATFORM']:
+                      reports.append(report)
+              assert len(reports) == 1, len(reports)
+              report = reports[0]
+              summary = {'platform': report['platform'], 'source': source, 'run': 40369175290, 'attempt': report['attempt'],
+                         'artifact': artifact, 'artifact_sha256': digest, 'accepted': report['accepted'], 'failure': report.get('failure'), 'phases': []}
+              for phase in report.get('phases', []):
+                  cases = [{'name': c.get('name'), 'result': c.get('result'), 'steps': c.get('steps', [])} for c in phase.get('cases', []) if c.get('result') != 'Passed']
+                  summary['phases'].append({'mode': phase.get('mode'), 'accepted': phase.get('accepted'), 'failure': phase.get('failure'), 'total': len(phase.get('cases', [])), 'failed': cases})
+              snippets = []
+              for member in archive.infolist():
+                  if not member.filename.endswith('.log') or member.file_size > 50_000_000:
+                      continue
+                  lines = archive.read(member).decode('utf-8', errors='replace').splitlines()
+                  for i, line in enumerate(lines):
+                      if re.search(r'XCTAssert|error:|failed -|failed \(', line):
+                          snippets.append({'file': member.filename, 'lines': lines[max(0, i-2):min(len(lines), i+4)]})
+              summary['failure_snippets'] = snippets[:40]
+              out = Path('build/apple-latest-inspection'); out.mkdir(parents=True, exist_ok=True)
+              (out / (os.environ['PLATFORM'] + '.json')).write_text(json.dumps(summary, indent=2, ensure_ascii=False) + '\n')
+              print(json.dumps(summary, ensure_ascii=False))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-latest-inspection-${{ matrix.platform }}-${{ github.run_id }}
+          path: build/apple-latest-inspection/
           if-no-files-found: error
   production-apple:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.production_apple }}
