@@ -1,4 +1,4 @@
-# D19 GTK 双阶段生命周期（待云端验证）
+# D19 GTK 双阶段生命周期（完整云端验证通过）
 
 固定 seed `d263ce5228838ac90c0a0dc13a5193d4a7739681`；SDK `edddc463c06ed5731195cdb8f06b2df6dff7699e`。seed 不是已验收生产 BASE。
 
@@ -13,3 +13,7 @@
 记录驱动 PID、真实 host PID/create time、Linux 线程 ID/名称（reading owner）、相位和实际 native input/close 子进程 PID 时间线。未到所测 live interval 不 cleanup。关闭退出必须为 0，然后 public SDK 原始 source hash 与同一安装 catalog provider 映射校验；新 PID 重开无 query replay 后必须走完第二阶段。最终再次退出、SDK/catalog readback，并比对六份真实导入原件身份。
 
 所有构建、语法、夹具、测试、截图、原 ZIP 下载/解析仅 Actions。本地仅源文件/文档/Git。最多三次完整轮次（attempt 重跑亦计）；原始 ZIP 每成员、真实程序 SHA、大小、服务 digest、有效期、run/attempt 同源检查使用原 D14 裁判。D19 再加阶段/worker/phase/catalog 负控。资源仅观测，不授予性能、泄漏自由、物理设备、读屏或完整产品验收。
+
+## 最终结果（2026-10-26）
+
+首轮 `40273253922` attempt 1 已完整通过，受测 SHA `97bec4a338719923b71ef88fb42f5ba3c4d20da8`。GTK 24 周期/244 原动作、24 次至少 30 秒 dwell、真实相位2关闭/新 PID 重开、SDK/catalog 六份原件和同 attempt 原 ZIP 验真均通过；1704 组资源样本，实测 862.659090104 秒。完整中文范围、旧失败、工作负载增补与工件身份见仓库根 `HANDOFF-RESULT-D19.md` 和本目录 `final-evidence.json`。本包独立交付，尚未主线接入。
