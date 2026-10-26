@@ -108,6 +108,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           swift -e 'import Foundation; let parent = FileManager.default.temporaryDirectory.resolvingSymlinksInPath(); let child = parent.appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true); try FileManager.default.createDirectory(at: child, withIntermediateDirectories: true); print("temporary URL: \(child.absoluteString)"); print("temporary path: [\(child.path)]"); print("components: \(child.pathComponents)"); try child.path.write(toFile: "inspection-temp-path.txt", atomically: true, encoding: .utf8)'
+          swift -e 'import Foundation; import Darwin; let resolved = realpath(FileManager.default.temporaryDirectory.path, nil)!; let child = URL(fileURLWithPath: String(cString: resolved), isDirectory: true).appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true); free(resolved); try FileManager.default.createDirectory(at: child, withIntermediateDirectories: true); print("realpath child: [\(child.path)]"); try child.path.write(toFile: "inspection-temp-path.txt", atomically: true, encoding: .utf8)'
           python3 - <<'PY'
           import hashlib, json, os, pathlib, subprocess, zipfile
           path = pathlib.Path('inspection-temp-path.txt').read_text()
