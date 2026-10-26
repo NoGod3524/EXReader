@@ -5,6 +5,7 @@
 #include <reader_reading_state.h>
 #include "windows_wave3_types.h"
 #include <cstdio>
+#include <cstring>
 #ifndef EXR_READER_SELECTOR_BYTES_CANDIDATE
 #error "The wave-3 bridge belongs to the explicit raw reading-state family"
 #endif
@@ -27,7 +28,7 @@ extern "C" reader_sync_view_status w3_sync_capture(reader_session *session,const
     return READER_SYNC_VIEW_ARGUMENT;
   }
   /* Keep the existing catalog from being deleted/replaced while opening it.
-     revisions_open may create a missing database; a status view must not. */
+     revisions_open may create or initialize a database; a status view must not. */
   wchar_t path[32768];
   HANDLE existing = INVALID_HANDLE_VALUE;
   if (MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,database,-1,path,32768))
@@ -38,6 +39,23 @@ extern "C" reader_sync_view_status w3_sync_capture(reader_session *session,const
       error->status = READER_SYNC_VIEW_REVISIONS;
       error->revision_code = READER_REV_DATABASE;
       std::snprintf(error->message,sizeof(error->message),"Product database is unavailable");
+    }
+    return READER_SYNC_VIEW_REVISIONS;
+  }
+  unsigned char header[100];
+  DWORD bytes = 0;
+  auto big_endian = [](const unsigned char *p) -> uint32_t {
+    return (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) |
+      (uint32_t(p[2]) << 8) | uint32_t(p[3]);
+  };
+  if (!ReadFile(existing,header,sizeof(header),&bytes,nullptr) || bytes != sizeof(header) ||
+      std::memcmp(header,"SQLite format 3",16) || big_endian(header + 68) != 1163416144u ||
+      big_endian(header + 60) != 1u) {
+    CloseHandle(existing);
+    if (error) {
+      error->status = READER_SYNC_VIEW_REVISIONS;
+      error->revision_code = READER_REV_DATABASE;
+      std::snprintf(error->message,sizeof(error->message),"Product database identity/version is unavailable");
     }
     return READER_SYNC_VIEW_REVISIONS;
   }
