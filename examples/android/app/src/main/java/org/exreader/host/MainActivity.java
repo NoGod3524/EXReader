@@ -750,7 +750,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 final PageLoad[] delivery={load};
                 // One publication: progress, acceptance and any stored appearance travel together.
                 // Cancellation can only stop the request before this commit starts.
-                try { task.commit(() -> { delivery[0]=persistPage(delivery[0],task);delivery[0].snapshot.sourceKey=pageSourceKey;delivery[0].accept();if(published!=null)published.publish(task); }); }
+                try { task.commit(() -> { delivery[0]=persistPage(delivery[0],task);delivery[0].snapshot.sourceKey=pageSourceKey;if(published!=null)published.publish(task);delivery[0].accept(); }); }
                 finally { load=delivery[0]; }
                 final PageLoad result=load;
                 ui.post(() -> {

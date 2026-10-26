@@ -153,3 +153,7 @@ gh workflow run reader-wave3-c11-java.yml --ref codex/dsf-android-ui-close -f au
 # 完整轮（由 root 统一安排，本包不再自开）
 gh workflow run reader-wave3-c11.yml --ref codex/dsf-android-ui-close
 ```
+
+## Root publication-order correction
+The prior follow-up accepted the candidate before the fallible preferences save. A save failure could therefore retain a new native pager behind the old visible frame. Root moved preferences publication before PageLoad.accept, after progress persistence, inside the same commit. The two new UI checks remain unexecuted; Java compilation alone does not grant rollback behavior. Progress persistence is still separate from preferences storage and is not claimed as a cross-store transaction.
+
