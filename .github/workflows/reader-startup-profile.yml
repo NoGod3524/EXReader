@@ -1,7 +1,7 @@
 name: Reader startup mapping phase profiling
 on:
   push:
-    branches: [codex/reader-startup-mapping]
+    branches: [codex/reader-startup-mapping, codex/reader-startup-root-cause]
     paths: ['.github/workflows/reader-startup-profile.yml', 'tests/reader_startup_profile/**', 'apps/reader/store/native/**', 'apps/reader/desktop/catalog_sdk.c']
 permissions:
   contents: read
@@ -50,6 +50,13 @@ jobs:
           build/startup-profile/reader-desktop-catalog-check.exe "$PWD/build/startup-profile/sdk-check" "$PWD/tests/fixtures" 2>&1 | tee build/startup-profile-evidence/desktop-check.log
           build/startup-profile/reader-native-catalog-check.exe "$PWD/build/startup-profile/native-check" "$PWD/apps/reader/store/001_catalog.sql" 2>&1 | tee build/startup-profile-evidence/native-check.log
           python tests/reader_catalog/check_desktop_sdk.py build/startup-profile 2>&1 | tee build/startup-profile-evidence/recovery-check.log
+      - name: Identify failing SQL and extended SQLite error
+        if: always()
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/startup-profile/diagnostic-check
+          build/startup-profile/reader-diagnostic-catalog-check.exe "$PWD/build/startup-profile/diagnostic-check" "$PWD/tests/fixtures" 2>&1 | tee build/startup-profile-evidence/diagnostic-check.log
       - name: Preserve original profiling results and failures
         if: always()
         uses: actions/upload-artifact@v4
