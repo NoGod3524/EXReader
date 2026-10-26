@@ -585,3 +585,20 @@ and expires 2027-01-24T20:59:50Z. The following commits through this evidence
 record are documentation-only. This is GTK same-source regression evidence,
 not proof of the untested 10,000-item boundary, full screen-reader support,
 real-provider behavior, cross-device organization or six-platform acceptance.
+
+## Android organization integration: retained full-run failure
+
+Independent source `dd39df6f360ebbbfcea58a1eac6f237f914d5d15` completed
+[40399032843/1](https://github.com/NoGod3524/EXReader/actions/runs/40399032843)
+with failure. The organization step succeeded, but the original C11 navigation
+and reading suites and the unchanged original sync UI step failed. Retained
+failure details include the multi-item FOUND preview, navigation cancel/close/
+retry, and the original sync test's strict SDK 3.40 identity assertion against
+this 3.41 host; the original reading suite has no complete pass claimed here.
+The original test and failure remain intact. A later independent combination
+separately builds the unchanged original and a strictly 3.41-adapted driver;
+it requires its own actual results and cannot inherit this run's partial pass.
+Artifact `12689139156` is 122,663,856 bytes, SHA-256
+`9afafeb4905022b131562dbba18c0250296127439095ab128f7ee6bfd045ac2b`,
+and expires 2027-01-24T20:49:19Z. This failed source is not admitted as an
+Android or cross-device product acceptance.
