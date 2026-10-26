@@ -35,7 +35,12 @@ def main():
         report = json.loads((DOWNLOAD / 'report.json').read_text(encoding='utf-8'))
         assert report['source_sha'] == source and str(report['run_id']) == run and str(report['attempt']) == attempt
         identity['report'] = dict(accepted=report['accepted'], failures=report['failures'], steps=report['steps'],
-                                  compact22_checks=report.get('compact22_checks'), wave3_ui_checks=report.get('wave3_ui_checks'))
+                                  compact22_checks=report.get('compact22_checks'),
+                                  compact22_accepted=report.get('compact22_accepted'),
+                                  retained26_checks=report.get('retained26_checks'),
+                                  extracted_retained26_checks=report.get('extracted_retained26_checks'),
+                                  extracted_native_ui_checks=report.get('extracted_native_ui_checks'),
+                                  desktop=report.get('desktop'), wave3_ui_checks=report.get('wave3_ui_checks'))
         archive = DOWNLOAD / 'EXReader-wave3-windows.zip'
         assert archive.is_file()
         data = archive.read_bytes()

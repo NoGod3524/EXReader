@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import traceback
 
@@ -80,6 +81,12 @@ def main():
         H.run(['cmake', '--build', host, '--target', 'EXReaderWave3', '--parallel', '4', '--verbose'], 'wave3-host-build')
         H.run([sys.executable, ROOT / 'tools/build_windows_host.py', '--sdk', sdk, '--binary', host / 'EXReaderWave3.exe',
                '--output', OUT / 'package', '--static-reading'], 'package')
+        original = json.loads((OUT / 'package/report.json').read_text(encoding='utf-8'))
+        manifest = json.loads((OUT / 'package/build.json').read_text(encoding='utf-8'))
+        assert original['passed'] is True and original['checks'] >= 26
+        assert manifest['source_sha'] == os.environ['GITHUB_SHA']
+        result['retained26_checks'] = original['checks']
+        result['package_manifest_sha256'] = sha(OUT / 'package/build.json')
         return OUT / 'package/EXReader/EXReader.exe'
 
     step('sdk-and-product', build_sdk)
@@ -94,16 +101,18 @@ def main():
         fixtures = OUT / 'fixtures'
         step('ui-fixtures', lambda: H.run([sys.executable, ROOT / 'tests/reader_windows_preferences/make_fixtures.py',
                                            '--output', fixtures], 'ui-fixtures'))
+        def desktop():
+            try:
+                H.run([sys.executable, ROOT / 'tests/reader_wave3_c09/desktop.py',
+                       '--output', OUT / 'desktop.json'], 'native-desktop-geometry')
+            finally:
+                if (OUT / 'desktop.json').is_file():
+                    result['desktop'] = json.loads((OUT / 'desktop.json').read_text(encoding='utf-8'))
+
+        step('native-desktop-geometry', desktop)
 
         def compact22():
-            """Run the unchanged product compact suite and keep its report.
-
-            The suite's own minimum-geometry assertion needs a 1060x660 work area. The Actions
-            desktop is 1024x768 (this run's own capture of the unexpanded window is 1024x728),
-            so the product compact host cannot reach that geometry here either. The suite stays
-            owned and gated by the compact package workflow; this package preserves its report
-            and screenshots and does not turn an environment bound into a fake pass.
-            """
+            """Gate on the unchanged product compact suite; preserve every failure."""
             ui = OUT / 'compact22'
             try:
                 H.run([sys.executable, ROOT / 'tests/reader_windows_compact/check_ui.py', '--candidate', exe, '--font', font,
@@ -121,15 +130,7 @@ def main():
                     result['compact22_problems'] = report.get('problems')
                 result['compact22_accepted'] = False
                 result['compact22_bound'] = str(error)[:400]
-
-        def wave3_ui():
-            ui = OUT / 'wave3-ui'
-            H.run([sys.executable, ROOT / 'tests/reader_wave3_c09/check_ui.py', '--candidate', exe, '--font', font,
-                   '--fixtures', fixtures, '--output', ui], 'wave3-ui', 2400)
-            report = json.loads((ui / 'report.json').read_text(encoding='utf-8'))
-            assert report['accepted'] is True and report['consumer_sha256'] == sha(exe) and not report['problems']
-            assert report['source_sha'] == os.environ['GITHUB_SHA']
-            result['wave3_ui_checks'] = [row['name'] for row in report['checks']]
+                raise
 
         def owner_probe():
             owner = OUT / 'raw-owner-probe'
@@ -139,8 +140,7 @@ def main():
             H.owner_run(owner / 'windows-owner-probe.exe', 'suite', OUT / 'raw-owner-suite', pdf)
             H.owner_run(owner / 'windows-owner-probe.exe', 'fresh', OUT / 'raw-owner-suite', pdf)
 
-        compact22()
-        step('wave3-native-ui', wave3_ui)
+        step('retained-compact22', compact22)
         step('retained-raw-owner-suite', owner_probe)
 
         def package_zip():
@@ -148,7 +148,36 @@ def main():
             result['zip'] = dict(name=Path(archive).name, bytes=Path(archive).stat().st_size, sha256=sha(archive))
             check = OUT / 'unzipped'
             shutil.unpack_archive(archive, check)
-            assert sha(check / 'EXReader/EXReader.exe') == result['program_sha256']
+            extracted = check / 'EXReader'
+            assert sha(extracted / 'EXReader.exe') == result['program_sha256']
+            manifest = json.loads((OUT / 'package/build.json').read_text(encoding='utf-8'))
+            assert {str(p.relative_to(extracted)).replace('\\', '/'): sha(p)
+                    for p in extracted.rglob('*') if p.is_file()} == manifest['files']
+            # Launch from the extracted directory with its bundled font and books,
+            # so a build-tree dependency cannot masquerade as a runnable ZIP.
+            evidence = OUT / 'extracted-ui'
+            evidence.mkdir()
+            with (evidence / 'selftest.log').open('wb') as log:
+                checked = subprocess.run([str(extracted / 'EXReader.exe'), '--self-test',
+                                          str(extracted / 'Reader.otf'), str(extracted / 'Sample.epub'),
+                                          str(extracted / 'Sample.pdf'), str(evidence / 'selftest.json'),
+                                          str(evidence / 'page.png')], cwd=extracted, stdout=log,
+                                         stderr=subprocess.STDOUT, timeout=120,
+                                         creationflags=subprocess.CREATE_NO_WINDOW)
+            assert checked.returncode == 0
+            retained = json.loads((evidence / 'selftest.json').read_text(encoding='utf-8'))
+            assert retained['passed'] is True and retained['checks'] >= 26
+            result['extracted_retained26_checks'] = retained['checks']
+            H.run([sys.executable, ROOT / 'tests/reader_wave3_c09/check_ui.py', '--candidate', extracted / 'EXReader.exe',
+                   '--font', extracted / 'Reader.otf', '--fixtures', fixtures, '--output', evidence / 'native'],
+                  'extracted-native-ui', 2400)
+            native = json.loads((evidence / 'native/report.json').read_text(encoding='utf-8'))
+            assert native['accepted'] is True and native['consumer_sha256'] == result['program_sha256']
+            assert not native['problems'] and native['source_sha'] == os.environ['GITHUB_SHA']
+            assert str(native['run_id']) == os.environ['GITHUB_RUN_ID']
+            assert str(native['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
+            result['wave3_ui_checks'] = [row['name'] for row in native['checks']]
+            result['extracted_native_ui_checks'] = [row['name'] for row in native['checks']]
 
         step('zip-roundtrip', package_zip)
     result['accepted'] = not result['failures']

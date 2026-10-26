@@ -1096,6 +1096,7 @@ static void winrecords_close(void);
 #ifdef EXR_READER_WINDOWS_WAVE3
 static void w3_job_free(w3_job *job);
 static exr_status w3_run(host_job *job);
+static void w3_failed_to_start(host_job *job);
 #endif
 
 static void job_free(host_job *job) {
@@ -1204,6 +1205,9 @@ static void job_start(host_job *job) {
     g.job = NULL;
     job->status = EXR_MEMORY;
     strcpy(job->error.message, "Cannot create host worker thread");
+#ifdef EXR_READER_WINDOWS_WAVE3
+    w3_failed_to_start(job);
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
     if(metadata_job_kind(job->kind)) metadata_failed_to_start(job);
 #endif
@@ -3808,6 +3812,11 @@ static void handle_job_complete(host_job *job) {
           g.pending_selection = 0;
           g.session.page = g.frame.page;
           update_page_label();
+#ifdef EXR_READER_WINDOWS_WAVE3
+          /* Capture only an accepted frame, before save_progress starts another worker. */
+          if (job == w3.font_job) w3_after_font_job(job);
+          else if (!job->w3) w3_history_land(job);
+#endif
           settings_save();
           if (reload_notes() != EXR_OK) { save_progress(); return; }
           if (!save_progress()) return;
@@ -3840,6 +3849,9 @@ static void handle_job_complete(host_job *job) {
         if (job->kind == JOB_LAYOUT && job->font_percent > 0) g.font_percent = job->font_percent;
         if (job->zoom_percent > 0) g.zoom_percent = job->zoom_percent;
         update_page_label();
+#ifdef EXR_READER_WINDOWS_WAVE3
+        if (job->kind == JOB_GO && !job->w3) w3_history_land(job);
+#endif
         settings_save();
         if (!save_progress()) { g.pending_selection = 0; return; }
         if (job->message[0]) set_status(job->message);
