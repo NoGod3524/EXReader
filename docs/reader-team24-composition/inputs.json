@@ -338,8 +338,16 @@
       "name": "android-shared-desktop-regression-candidate",
       "source": "82a41de7ae04896b650e39380f646d1140045c0c",
       "paths": [
-        ".github/workflows/android-shared-desktop-regression.yml",
         "tests/reader_android_composition/font_regression.py"
+      ]
+    },
+    {
+      "name": "android-export-publication-io-candidate",
+      "source": "96950b6408667fc4b3873876ec3552dc737d28af",
+      "paths": [
+        ".github/workflows/android-shared-desktop-regression.yml",
+        "tests/reader_android_composition/check_publish_io.py",
+        "tests/reader_android_composition/fail_publish.c"
       ]
     }
   ]
