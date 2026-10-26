@@ -428,9 +428,18 @@ configurations, retaining the original legacy projection regression. This is a
 module compatibility check; actual host and cross-device behavior remain separate.
 
 In [40391312081/1](https://github.com/NoGod3524/EXReader/actions/runs/40391312081),
-source `1db1599c72349431e6817a3b5a6b4d310f8a5976`, both Windows configurations
-completed successfully, including the original legacy projection regression.
-The two macOS jobs remain queued; the overall run is not complete.
+source `1db1599c72349431e6817a3b5a6b4d310f8a5976`, Windows and macOS
+legacy/raw configurations all completed successfully, including the original
+legacy projection regression on both systems. The artifact digests are:
+Windows OFF `92f3900de421e454d1ca1498a2de41896aba6dfb26bfc3595a2bd4e4f748fc67`
+(ID `12682636767`), Windows ON
+`6e1929afff99d862e334b25941a74ebff5879e1fab01a5b65023dba75d826e6f`
+(ID `12683116383`), macOS OFF
+`b0912282c4da8078089667dc41b4b4201c29d06d453c0f3bd280b9a6e6b94cc7`
+(ID `12686281588`) and macOS ON
+`a2f32515290af0a5803746bdfc63bf0e64e40a0b9481549a51a7673138930c8b`
+(ID `12685606289`); all expire 2027-01-24T19:57:13Z. These are module
+checks, not host integration or cross-device acceptance.
 
 ## Apple UI retry resource handling
 
