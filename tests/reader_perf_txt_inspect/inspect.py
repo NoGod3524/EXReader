@@ -29,7 +29,7 @@ with zipfile.ZipFile(io.BytesIO(raw)) as archive:
                      'status_after_import': imp['status_after_import'], 'catalog': catalog,
                      'probes': {k: {'count': v['count'], 'timed_out': v['timed_out']} for k, v in facts['probes'].items()},
                      'refresh': facts.get('refresh'), 'open': facts.get('open')})
-    bisect = [{'declared_mib': x['declared_mib'], 'bytes': x['bytes'], 'lines': x.get('lines'),
+    bisect = [{'declared_mib': x['declared_mib'], 'bytes': x['bytes'], 'lines': x.get('text_lines'),
                'completed': x.get('completed'), 'status_after_import': x.get('status_after_import'),
                'status_indicates_failure': x.get('status_indicates_failure'), 'catalog': x.get('catalog')}
               for x in diagnosis['bisect']['imports']]
