@@ -94,3 +94,10 @@ CI2 将按真实 Settings provider PID 枚举可能位于 desktop sibling 的 XA
 高缩放探测选择已真实枚举的1600×1200模式（如存在），使用原生模式test/apply并
 回读，finally恢复原模式。此物理模式变化与缩放分别记录；不计成新的DPI能力，
 也不让较宽工作区覆盖原100% More失败。历史CI1见 ITERATION-1.md。
+
+## 最终结论
+
+CI2 `b9baf1dfe7be86017d65449fac63a39566683a25` / `40274548891/1` 已真实
+达到150%/144DPI与200%/192DPI，100/150/200各四组完整执行，native与strict成功。
+能力驱动闭环；目标原生DPI、More/状态边界失败及完整contrast pending未改写。
+详见根 `HANDOFF-RESULT-D20.md` 的完整同源矩阵、原ZIP身份、失败复现与接入命令。
