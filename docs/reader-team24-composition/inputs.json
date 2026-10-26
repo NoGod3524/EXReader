@@ -296,25 +296,21 @@
         "examples/android/app/src/main/cpp/sync_jni.cpp",
         "examples/android/app/src/main/cpp/wave3_product_jni.inc",
         "examples/android/app/src/main/cpp/wave3_sdk_jni.inc",
-        "examples/android/app/src/main/java/org/exreader/host/AnnotationPanel.java",
         "examples/android/app/src/main/java/org/exreader/host/BookStore.java",
         "examples/android/app/src/main/java/org/exreader/host/BoundedEpub.java",
         "examples/android/app/src/main/java/org/exreader/host/FontPanel.java",
         "examples/android/app/src/main/java/org/exreader/host/FontSelection.java",
         "examples/android/app/src/main/java/org/exreader/host/JumpPanel.java",
-        "examples/android/app/src/main/java/org/exreader/host/MainActivity.java",
         "examples/android/app/src/main/java/org/exreader/host/NativeFonts.java",
         "examples/android/app/src/main/java/org/exreader/host/NativeOriginalExport.java",
         "examples/android/app/src/main/java/org/exreader/host/NativeReadingSdk.java",
         "examples/android/app/src/main/java/org/exreader/host/NativeSync.java",
         "examples/android/app/src/main/java/org/exreader/host/NativeWave3.java",
         "examples/android/app/src/main/java/org/exreader/host/OrganizationPanel.java",
-        "examples/android/app/src/main/java/org/exreader/host/OriginalExportPanel.java",
         "examples/android/app/src/main/java/org/exreader/host/ReadingPanel.java",
         "examples/android/app/src/main/java/org/exreader/host/SyncController.java",
         "examples/android/app/src/main/java/org/exreader/host/SyncPanel.java",
         "examples/android/app/src/main/java/org/exreader/host/Wave3Dialog.java",
-        "examples/android/app/src/main/java/org/exreader/host/Wave3Files.java",
         "examples/android/app/src/main/java/org/exreader/host/Wave3Host.java",
         "tests/reader_android_organization_sync/init.gradle",
         "tests/reader_android_organization_sync/java/org/exreader/host/OrganizationSyncTest.java",
@@ -329,10 +325,20 @@
         "tests/reader_wave3_c11/fixtures.py",
         "tests/reader_wave3_c11/guard.py",
         "tests/reader_wave3_c11/java-gate.init.gradle",
-        "tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java",
         "tests/reader_wave3_c11/report.py",
         "tests/reader_wave3_c11/run_ui.py",
         "tests/reader_wave3_c11/walkthrough.py"
+      ]
+    },
+    {
+      "name": "android-export-saved-state-candidate",
+      "source": "404c48747355527aad824c48242c4c87ebb6e0df",
+      "paths": [
+        "examples/android/app/src/main/java/org/exreader/host/AnnotationPanel.java",
+        "examples/android/app/src/main/java/org/exreader/host/MainActivity.java",
+        "examples/android/app/src/main/java/org/exreader/host/OriginalExportPanel.java",
+        "examples/android/app/src/main/java/org/exreader/host/Wave3Files.java",
+        "tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java"
       ]
     },
     {
