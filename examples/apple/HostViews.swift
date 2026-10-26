@@ -218,6 +218,44 @@ struct LibraryScreen: View {
         }
     }
 
+    private var importControls: some View {
+        VStack(spacing: 8) {
+            if model.showsTestFixtures {
+                HStack {
+                    Button("导入 EPUB 示例") { model.importFixture("Sample", extension: "epub") }
+                        .accessibilityIdentifier("library.import.epub")
+                    Button("再次导入同一 EPUB") { model.importFixture("Sample", extension: "epub") }
+                        .accessibilityIdentifier("library.import.epub.duplicate")
+                }
+            }
+            HStack {
+                if model.showsTestFixtures {
+                    Button("导入 PDF 示例") { model.importFixture("Sample", extension: "pdf") }
+                        .accessibilityIdentifier("library.import.pdf")
+                }
+                if !compactLibrary {
+                    Button("打开文件…") { importing = true }
+                        .accessibilityIdentifier("library.import.picker")
+                }
+            }
+            if model.showsTestFixtures {
+                HStack {
+                    Button("导入损坏文件") { model.importFixture("Broken", extension: "epub") }
+                        .accessibilityIdentifier("library.import.broken")
+                    Button("导入大文件") { model.importFixture("Large", extension: "epub") }
+                        .accessibilityIdentifier("library.import.large")
+                }
+                Button("导入 Unicode 示例") { model.importFixture("Unicode", extension: "epub") }
+                    .accessibilityIdentifier("library.import.unicode")
+                Button("导入跨章示例") { model.importFixture("Bounded", extension: "epub") }
+                    .accessibilityIdentifier("library.import.bounded")
+            }
+        }
+        .buttonStyle(.bordered)
+        .disabled(model.busy)
+        .padding(.vertical, 8)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -344,44 +382,11 @@ struct LibraryScreen: View {
             }
 
             if model.showsTestFixtures || !compactLibrary {
-            VStack(spacing: 8) {
-                if model.showsTestFixtures {
-                    HStack {
-                        Button("导入 EPUB 示例") { model.importFixture("Sample", extension: "epub") }
-                            .accessibilityIdentifier("library.import.epub")
-                        Button("再次导入同一 EPUB") { model.importFixture("Sample", extension: "epub") }
-                            .accessibilityIdentifier("library.import.epub.duplicate")
-                    }
+                if compactLibrary {
+                    ScrollView { importControls }.frame(maxHeight: 160)
+                } else {
+                    importControls
                 }
-                HStack {
-                    if model.showsTestFixtures {
-                        Button("导入 PDF 示例") { model.importFixture("Sample", extension: "pdf") }
-                            .accessibilityIdentifier("library.import.pdf")
-                    }
-                    if !compactLibrary {
-                        Button("打开文件…") { importing = true }
-                            .accessibilityIdentifier("library.import.picker")
-                    }
-                }
-                if model.showsTestFixtures {
-                    HStack {
-                        Button("导入损坏文件") { model.importFixture("Broken", extension: "epub") }
-                            .accessibilityIdentifier("library.import.broken")
-                        Button("导入大文件") { model.importFixture("Large", extension: "epub") }
-                            .accessibilityIdentifier("library.import.large")
-                    }
-                    Button("导入 Unicode 示例") { model.importFixture("Unicode", extension: "epub") }
-                        .accessibilityIdentifier("library.import.unicode")
-                    Button("导入跨章示例") { model.importFixture("Bounded", extension: "epub") }
-                        .accessibilityIdentifier("library.import.bounded")
-                }
-            }
-            .buttonStyle(.bordered)
-#if os(iOS)
-            .dynamicTypeSize(compactLibrary ? .medium : dynamicTypeSize)
-#endif
-            .disabled(model.busy)
-            .padding(.vertical, 8)
             }
 
             Text(model.statusText).font(.caption)
