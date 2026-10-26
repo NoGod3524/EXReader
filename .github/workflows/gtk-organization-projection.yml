@@ -111,7 +111,7 @@ jobs:
           python3 tests/reader_gtk_receive/check_link.py --map build/account-desktop/gtk-account-host.map --binary build/account-desktop/gtk-host/exreader-linux --output build/account-logs/host-link.json
           ctest --test-dir build/account-desktop --output-on-failure --no-tests=error --timeout 180 --output-junit "$PWD/build/account-logs/desktop-tests.xml"
           python3 -m py_compile tests/linux_host/check_account_ui.py
-          python3 tools/build_linux_host.py --sdk build/reading-library/stage --binary build/account-desktop/gtk-host/exreader-linux --output build/account-package
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.41.0 --binary build/account-desktop/gtk-host/exreader-linux --output build/account-package
       - name: Preserve fixed bounded backend and 2202-book installed SDK checks
         run: |
           mkdir -p build/desktop-evidence
@@ -206,5 +206,6 @@ jobs:
             build/account-package/EXReader-Linux.tar.gz
             !build/**/*.key
           if-no-files-found: error
+
 
 
