@@ -6,6 +6,17 @@
    single serialized owner. No GTK, SQL or network code lives here. */
 #define W3_LAND_MOVE 4
 #define W3_SELECTION_FILE "reader-font.sel"
+#if defined(EXR_READER_GTK_RAW3)
+/* The explicit raw0.2 installed family only: the raw importer names its own
+   anchor3 selectors, and the public pure raw capture candidate is the only
+   public encoder that validates a v2 wire against a raw store. No private
+   extern, no second schema and no change to the legacy entry points is used. */
+#include <reader_annotation_import_raw3.h>
+#if !defined(EXR_READER_PURE_CAPTURE_CANDIDATE) || EXR_READER_PURE_CAPTURE_CANDIDATE != 1
+#error "GTK raw Wave 3 jump history needs the installed public pure raw capture candidate"
+#endif
+#include <reader_reading_state_capture_raw_candidate.h>
+#endif
 
 static int w3_hash_valid(const char *hash) {
   if(!hash || strlen(hash)!=RFL_HASH_BYTES-1) return 0;
@@ -72,6 +83,9 @@ static void w3_annotation_discard(linux_reader *reader) {
   if(reader->w3_annotation_snapshot) unlink(reader->w3_annotation_snapshot);
   g_clear_pointer(&reader->w3_annotation_snapshot,g_free);
   reader->w3_annotation_key[0]=0;
+#if defined(EXR_READER_GTK_RAW3)
+  reader->w3_annotation_fingerprint[0]=0;
+#endif
 }
 /* Runs after the accepted pending frame replaced reader->current, so the old pager is gone. */
 static void w3_free(linux_reader *reader) {
@@ -124,7 +138,28 @@ static void w3_land(linux_reader *reader,int kind) {
   if(records_capture(reader,session,unit,at,at,&captured,&anchor,&fixed,&error)==EXR_OK) {
     reader_jh_position position={key,exr_version(),(reader_jh_kind)kind,&captured,session->bounded ? session->part:0};
     reader_jh_result landed;reader_jh_error problem={0};
+#if defined(EXR_READER_GTK_RAW3)
+    if(session->fixed_document) {
+      /* A fixed page is the only mode that owns an anchor3 byte selector. */
+      reader->w3_history_code=(int)reader_jh_commit_fixed_v3(reader->w3_history,owner->revisions,&position,&landed,&problem);
+    } else {
+      /* Reflow and EPUB keep their real anchor v2. The pure capture candidate
+         encodes that v2 wire against the raw store, so a v1/v2 landing is never
+         relabelled v3 and a landing without a lossless selector is not stored. */
+      char revision[33];reader_revision_error identity={0};reader_rs_error encode_problem={0};
+      char *wire=NULL;size_t bytes=0;
+      if(reader_revision_new_id(revision,&identity)==READER_REV_OK) {
+        reader_rs_envelope envelope={revision,"put","progress",key,NULL,NULL,0,NULL,exr_version()};
+        if(reader_rs_encode_capture_raw_candidate(owner->revisions,&envelope,&captured,2,position.part,
+             &wire,&bytes,&encode_problem)==READER_RS_OK)
+          reader->w3_history_code=(int)reader_jh_commit_wire_raw_v3(reader->w3_history,owner->revisions,
+            position.kind,wire,bytes,&landed,&problem);
+        reader_rs_free(wire);
+      }
+    }
+#else
     reader->w3_history_code=(int)reader_jh_commit(reader->w3_history,owner->revisions,&position,&landed,&problem);
+#endif
   }
   exr_anchor_free(&anchor);exr_fixed_anchor_free(&fixed);
 }
@@ -284,6 +319,7 @@ done:
   if(temporary) { unlink(temporary);g_free(temporary); }
   return status;
 }
+#if !defined(EXR_READER_GTK_RAW3)
 static int w3_import_cancel(void *opaque) { return cancel(((w3_import *)opaque)->reader)==EXR_CANCELLED; }
 static int w3_import_metadata(void *opaque,const reader_annotation_import_metadata *meta) {
   w3_import *run=opaque;
@@ -295,7 +331,75 @@ static int w3_import_metadata(void *opaque,const reader_annotation_import_metada
 static int w3_import_item(void *opaque,const reader_annotation_import_item *item) {
   (void)item;return cancel(((w3_import *)opaque)->reader)==EXR_CANCELLED;
 }
+#endif
+#if defined(EXR_READER_GTK_RAW3)
+static int w3_raw_poll(void *opaque) { return cancel(((w3_import *)opaque)->reader)==EXR_CANCELLED; }
+static int w3_raw_item(void *opaque,const reader_ai3_item *item) {
+  (void)item;return w3_raw_poll(opaque);
+}
+/* FOUND means an independent session really resolved this exact selector with
+   the public SDK. records_resolve never falls back to an old offset, so a typed
+   NULL record is never passed here and never becomes navigable. */
+static int w3_raw_found(void *opaque,const reader_rs_record *record,uint64_t index) {
+  w3_import *run=opaque;reader_session independent={0};exr_anchor_match match={0};size_t unit=0;
+  (void)index;
+  int found=record && records_resolve(run->reader,record,&independent,&match,&unit,NULL)==EXR_OK;
+  session_free(&independent);return found ? 1:0;
+}
+/* The installed raw0.2 importer is explicit: PREVIEW validates the whole file
+   (format, hashes, independently decoded locations) without a write and COMMIT
+   only replays the exact file whose fingerprint the host kept from that preview.
+   Nothing is invented: a head the public SDK does not resolve stays unresolved
+   and a commit that would need it writes nothing. */
+static exr_status w3_annotation_raw(linux_reader *reader,const reader_command *command,reader_result *result) {
+  records_book book={0};received_owner *owner=NULL;
+  exr_status status=records_book_identity(reader,command,result,&book);
+  if(status==EXR_OK) status=received_ready(reader,&owner);
+  if(status!=EXR_OK) { w3_annotation_discard(reader);snprintf(result->message,sizeof(result->message),"Open the book first; annotation import needs its verified original identity");records_book_free(&book);return status; }
+  w3_import run;memset(&run,0,sizeof(run));run.reader=reader;run.preview=command->action==READER_W3_ANNOTATION_PREVIEW;
+  if(run.preview) {
+    status=w3_annotation_snapshot(reader,command->w3_path);
+    if(status==EXR_OK) g_strlcpy(reader->w3_annotation_key,result->records_key,sizeof(reader->w3_annotation_key));
+  } else if(!reader->w3_annotation_snapshot || strcmp(reader->w3_annotation_key,result->records_key) ||
+            !reader->w3_annotation_fingerprint[0]) status=EXR_ARGUMENT;
+  if(status!=EXR_OK) {
+    w3_annotation_discard(reader);records_book_free(&book);
+    snprintf(result->message,sizeof(result->message),"Check the annotation file again before importing; nothing was imported");return status;
+  }
+  reader_ai3_options options={0};options.struct_size=sizeof(options);options.revisions=owner->revisions;
+  options.jsonl_path=reader->w3_annotation_snapshot;options.target_book_key=result->records_key;
+  options.mode=run.preview ? READER_AI3_PREVIEW:READER_AI3_COMMIT;options.policy=READER_AI3_RESOLVE_REQUIRED;
+  if(!run.preview) g_strlcpy(options.confirm_fingerprint,reader->w3_annotation_fingerprint,sizeof(options.confirm_fingerprint));
+  options.resolve=w3_raw_found;options.cancel=w3_raw_poll;options.item=w3_raw_item;options.context=&run;
+  reader_ai3_stats stats={0};reader_ai3_error problem={0};
+  reader_ai3_status code=reader_annotation_import_raw3_run(&options,&stats,&problem);
+  result->has_w3=1;result->w3_ann_code=(int)code;result->w3_ann_validated=stats.validated;
+  result->w3_ann_bytes=stats.input_bytes;result->w3_ann_annotations=stats.annotations;result->w3_ann_heads=stats.head_wires;
+  result->w3_ann_omitted=stats.omitted_history;result->w3_ann_created=stats.created;result->w3_ann_duplicates=stats.duplicates;
+  result->w3_ann_committed=stats.committed;
+  if(run.preview && code==READER_AI3_OK && stats.validated) {
+    status=EXR_OK;
+    g_strlcpy(reader->w3_annotation_fingerprint,stats.fingerprint,sizeof(reader->w3_annotation_fingerprint));
+    if(stats.unresolved) snprintf(result->message,sizeof(result->message),
+      "Annotation file checked; %llu location(s) do not resolve, so importing would be refused",
+      (unsigned long long)stats.unresolved);
+    else snprintf(result->message,sizeof(result->message),"Annotation file checked; nothing has been imported yet");
+  } else if(code==READER_AI3_OK) {
+    status=EXR_OK;
+    snprintf(result->message,sizeof(result->message),"Imported annotations: %llu new, %llu already present",
+      (unsigned long long)stats.created,(unsigned long long)stats.duplicates);
+  } else {
+    status=code==READER_AI3_CANCELLED ? EXR_CANCELLED:EXR_FORMAT;
+    snprintf(result->message,sizeof(result->message),"Annotation file refused: %.120s",problem.message);
+  }
+  if(!run.preview || status!=EXR_OK) w3_annotation_discard(reader);
+  records_book_free(&book);return status;
+}
+#endif
 static exr_status w3_annotation(linux_reader *reader,const reader_command *command,reader_result *result) {
+#if defined(EXR_READER_GTK_RAW3)
+  return w3_annotation_raw(reader,command,result);
+#else
   records_book book={0};received_owner *owner=NULL;
   exr_status status=records_book_identity(reader,command,result,&book);
   if(status==EXR_OK) status=received_ready(reader,&owner);
@@ -331,6 +435,7 @@ static exr_status w3_annotation(linux_reader *reader,const reader_command *comma
   }
   if(!run.preview || status!=EXR_OK) w3_annotation_discard(reader);
   records_book_free(&book);return status;
+#endif
 }
 
 static int w3_roe_enter(void *context) {

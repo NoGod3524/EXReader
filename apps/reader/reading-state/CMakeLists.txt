@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.24)
 option(EXR_READER_SELECTOR_BYTES_CANDIDATE "Explicit independent raw selector candidate; never default" OFF)
+option(EXR_READER_PURE_CAPTURE_CANDIDATE "Explicit public pure raw capture capability; never default" OFF)
+if(EXR_READER_PURE_CAPTURE_CANDIDATE AND NOT EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  message(FATAL_ERROR "Pure raw capture requires the explicit raw reading-state family")
+endif()
 if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
   project(EXReaderReadingState VERSION 0.2.0 LANGUAGES C CXX)
 else()
@@ -48,6 +52,10 @@ include(CMakePackageConfigHelpers)
 install(TARGETS reader_reading_state reader_reading_state_codec EXPORT EXReaderReadingStateTargets ARCHIVE DESTINATION lib)
 install(FILES include/reader_reading_state.h DESTINATION include)
 install(EXPORT EXReaderReadingStateTargets NAMESPACE EXReaderReadingState:: DESTINATION lib/cmake/EXReaderReadingState)
+if(EXR_READER_PURE_CAPTURE_CANDIDATE)
+  target_compile_definitions(reader_reading_state_codec PUBLIC EXR_READER_PURE_CAPTURE_CANDIDATE=1)
+  install(FILES include/reader_reading_state_capture_raw_candidate.h DESTINATION include)
+endif()
 configure_package_config_file(EXReaderReadingStateConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/EXReaderReadingStateConfig.cmake"
   INSTALL_DESTINATION lib/cmake/EXReaderReadingState)
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderReadingStateConfigVersion.cmake"

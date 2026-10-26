@@ -139,6 +139,10 @@ struct linux_reader {
 #ifdef EXR_READER_WAVE3
   char *w3_annotation_snapshot;
   char w3_annotation_key[73];
+#ifdef EXR_READER_GTK_RAW3
+  /* The raw importer commits only the exact file this host already validated. */
+  char w3_annotation_fingerprint[65];
+#endif
   rfl_library *w3_fonts;
   rfl_lease *w3_lease,*w3_candidate_lease;
   exr_font *w3_base_font,*w3_candidate_font;
