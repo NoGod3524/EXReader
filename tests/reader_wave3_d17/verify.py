@@ -44,11 +44,13 @@ try:
             executable=t.getmember('EXReaderHost.app/Contents/MacOS/EXReaderHost');verify_bytes(t.extractfile(executable).read(),e['program']);assert executable.mode==e['program']['mode'] and not e['program']['is_symlink']
         report['program_verified']=True
         rows=[json.loads(line) for line in re.findall(r'\bD17_ACTION (\{[^\r\n]+\})',z.read('native-actions.log').decode(errors='replace'))]
+        fixture_digest=hashlib.sha256(z.read('resources/Sample.epub')).hexdigest()
         seen=set()
         for row in rows:
             key=(row['case'],row['action']);assert key not in seen;seen.add(key)
             b=json.loads(z.read('snapshots/'+row['before']));a=json.loads(z.read('snapshots/'+row['after']))
             for snap in (a,b):assert snap['source_sha']==source and snap['run_id']==run and snap['attempt']==attempt and snap['observed_twice_equal'] and snap['observer_sha256']==e['files']['sdk-observer']['sha256']
+            for snap in (a,b):assert all(book['original_sha256']==fixture_digest for book in snap['state']['sdk']['books']),'stored SDK bytes differ from the real authored fixture'
             try:check(b['state'],a['state'],row['action']);row['storage_result']='passed'
             except Exception as error:row['storage_result']='failed';row['storage_error']=str(error);report['errors'].append(row['action']+': '+str(error))
             row.update(before_state=b['state'],after_state=a['state']);report['transitions'].append(row)

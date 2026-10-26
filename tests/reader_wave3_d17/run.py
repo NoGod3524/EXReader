@@ -12,6 +12,13 @@ def run(name,args,timeout=1800,required=True):
     commands.append(dict(name=name,returncode=rc));print(json.dumps(commands[-1]),flush=True)
     if rc:
         lines=(out/(name+'.log')).read_text(errors='replace').splitlines();print('\n'.join(x for x in lines if any(w in x for w in ('error:','failed','D17_ACTION','XCTAssert','caught error'))));print('\n'.join(lines[-60:]),flush=True)
+        # Preserve the full native picker hierarchy in job logs too, so a failed
+        # final round is diagnosable without another artifact-inspection run.
+        printing=False
+        for line in lines:
+            if 'D17_PICKER_TREE' in line or 'D17_PICKER_CONTROL' in line or 'D17_PICKER_SCREENS' in line:printing=True
+            if printing:print(line,flush=True)
+            if 'D17_PICKER_TREE END' in line or 'D17_PICKER_CONTROL' in line or 'D17_PICKER_SCREENS' in line:printing=False
         if required:raise RuntimeError(name+' failed '+str(rc))
     return rc
 try:

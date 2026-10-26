@@ -46,19 +46,35 @@ final class D17Actions: XCTestCase {
   tap("reader.more");XCTAssertTrue(wait{self.node(id).exists || self.app.menuItems[label].exists})
   if node(id).exists {tap(id)} else {app.menuItems[label].click()}
  }
- // NSOpenPanel may be represented as a sheet rather than a window descendant.
- // Filter *operable on-screen buttons*, exclude Touch Bar aliases, then require
- // one actual frame. Duplicate AX wrappers at the same frame are one control.
- func panelCancel()->XCUIElement? {
-  let matches=app.descendants(matching:.button).matching(NSPredicate(format:"label == %@ OR label == %@","Cancel","取消")).allElementsBoundByIndex
-  let visible=matches.filter { b in b.exists && b.isEnabled && b.isHittable && !b.frame.isEmpty && NSScreen.screens.contains{$0.frame.intersects(b.frame)} }
+ // The observed Touch Bar Cancel frame starts at y=-1, but INTERSECTS the
+ // desktop. Full containment (not intersection) is required. A remote native
+ // panel service may own the actual sheet; never launch or substitute one.
+ var pickerApplications:[XCUIApplication] {
+  var result=[app!]
+  let id="com.apple.appkit.xpc.openAndSavePanelService"
+  if !NSRunningApplication.runningApplications(withBundleIdentifier:id).isEmpty {result.append(XCUIApplication(bundleIdentifier:id))}
+  return result
+ }
+ func panelButton(_ labels:[String])->XCUIElement? {
+  let matches=pickerApplications.flatMap{$0.descendants(matching:.button).matching(NSPredicate(format:"label IN %@",labels)).allElementsBoundByIndex}
+  let visible=matches.filter { b in b.exists && b.isEnabled && b.isHittable && !b.frame.isEmpty && NSScreen.screens.contains{$0.frame.contains(b.frame)} }
   let frames=Set(visible.map{NSStringFromRect($0.frame)})
   return frames.count==1 ? visible.first:nil
  }
+ func panelCancel()->XCUIElement? {panelButton(["Cancel","取消"])}
+ func pickerDiagnostics(_ phase:String) {
+  print("D17_PICKER_SCREENS \(phase) \(NSScreen.screens.map{NSStringFromRect($0.frame)})")
+  for owner in pickerApplications {
+   print("D17_PICKER_TREE \(phase) BEGIN\n"+owner.debugDescription+"\nD17_PICKER_TREE END")
+   for b in owner.buttons.matching(NSPredicate(format:"label IN %@",["Cancel","取消","Open","打开"])).allElementsBoundByIndex {print("D17_PICKER_CONTROL \(phase) label=\(b.label) enabled=\(b.isEnabled) hittable=\(b.isHittable) frame=\(NSStringFromRect(b.frame))")}
+  }
+ }
  func showPicker() {
   app.activate();tap("library.import.picker")
-  XCTAssertTrue(wait{self.app.dialogs.count>0 || self.app.sheets.count>0 || self.app.buttons["Open"].exists || self.app.buttons["打开"].exists},app.debugDescription)
-  evidence("picker-visible");XCTAssertTrue(wait{self.panelCancel() != nil},app.debugDescription)
+  XCTAssertTrue(wait{self.pickerApplications.contains{$0.dialogs.count>0 || $0.sheets.count>0 || $0.buttons["Open"].exists || $0.buttons["打开"].exists}},app.debugDescription)
+  pickerDiagnostics("presented");evidence("picker-visible")
+  if panelCancel()==nil {app.activate();pickerDiagnostics("reactivated")}
+  XCTAssertTrue(wait{self.panelCancel() != nil},app.debugDescription)
  }
  func test01ReadingActions() throws {
   launch();try open("import")
@@ -90,10 +106,13 @@ final class D17Actions: XCTestCase {
   // A real existing malformed file is selected and submitted. This is rejection,
   // not cancellation, and must preserve the same independent storage boundary.
   try step("reject_existing_broken","library.import.picker") {
-   showPicker();app.typeKey("g",modifierFlags:[.command,.shift]);let path=app.descendants(matching:.textField).matching(NSPredicate(format:"value CONTAINS %@ OR placeholderValue CONTAINS %@","/","folder")).firstMatch
-   let field=path.exists ? path:app.textFields.firstMatch;XCTAssertTrue(field.waitForExistence(timeout:10));field.click();field.typeKey("a",modifierFlags:.command);field.typeText(config["broken"]!);field.typeKey(.return,modifierFlags:[])
-   let open=app.buttons["Open"].exists ? app.buttons["Open"]:app.buttons["打开"]
-   XCTAssertTrue(wait{open.exists && open.isEnabled && open.isHittable});open.click()
+   showPicker();XCTAssertTrue(FileManager.default.fileExists(atPath:config["broken"]!))
+   let cancel=try XCTUnwrap(panelCancel());cancel.typeKey("g",modifierFlags:[.command,.shift])
+   XCTAssertTrue(wait{self.pickerApplications.contains{$0.textFields.allElementsBoundByIndex.contains{$0.isHittable} || $0.comboBoxes.allElementsBoundByIndex.contains{$0.isHittable}}})
+   // Cmd-Shift-G gives focus to the native Go To Folder field. Keyboard input
+   // goes to that focused field; do not click the unrelated picker Search box.
+   app.typeKey("a",modifierFlags:.command);app.typeText(config["broken"]!);app.typeKey(.return,modifierFlags:[])
+   XCTAssertTrue(wait{self.panelButton(["Open","打开"]) != nil});pickerDiagnostics("broken-selected");try XCTUnwrap(panelButton(["Open","打开"])).click()
    XCTAssertTrue(wait{self.node("library.book.0").isHittable && self.panelCancel()==nil});idle()
    XCTAssertTrue(wait{self.node("library.error").exists || self.app.staticTexts.containing(NSPredicate(format:"label CONTAINS %@ OR label CONTAINS %@","失败","错误")).count>0},app.debugDescription)
   }
