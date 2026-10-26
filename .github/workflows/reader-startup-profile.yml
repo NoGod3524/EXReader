@@ -1,0 +1,52 @@
+name: Reader startup mapping phase profiling
+on:
+  push:
+    branches: [codex/reader-startup-mapping]
+    paths: ['.github/workflows/reader-startup-profile.yml', 'tests/reader_startup_profile/**']
+permissions:
+  contents: read
+jobs:
+  profile:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build current public SDK and production catalog adapter
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/startup-profile-evidence
+          git rev-parse HEAD | tee build/startup-profile-evidence/source.txt
+          cmake --preset reading-library 2>&1 | tee build/startup-profile-evidence/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/startup-profile-evidence/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/startup-profile-evidence/sdk-install.log
+          ws=$(cygpath -m "$PWD")
+          cmake -S tests/reader_startup_profile -B build/startup-profile -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" 2>&1 | tee build/startup-profile-evidence/configure.log
+          cmake --build build/startup-profile --parallel 4 2>&1 | tee build/startup-profile-evidence/build.log
+      - name: Seed the real 2202 originals and profile first repair and subsequent repair
+        shell: bash
+        run: |
+          set -o pipefail
+          build/startup-profile/seed_shelf.exe build/startup-profile-evidence/library.sqlite | tee build/startup-profile-evidence/seed.json
+          for n in 1 2 3; do
+            cp build/startup-profile-evidence/library.sqlite "build/startup-profile-evidence/fresh-$n.sqlite"
+            build/startup-profile/startup_profile.exe "build/startup-profile-evidence/fresh-$n.sqlite" "build/startup-profile-evidence/product-$n.sqlite" | tee "build/startup-profile-evidence/first-$n.json"
+            build/startup-profile/startup_profile.exe "build/startup-profile-evidence/fresh-$n.sqlite" "build/startup-profile-evidence/product-$n.sqlite" | tee "build/startup-profile-evidence/repeat-$n.json"
+          done
+          sha256sum build/startup-profile/startup_profile.exe build/startup-profile/seed_shelf.exe build/startup-profile-evidence/library.sqlite | tee build/startup-profile-evidence/hashes.txt
+          systeminfo | findstr /C:"OS Name" /C:"OS Version" /C:"Processor" /C:"Total Physical Memory" | tee build/startup-profile-evidence/environment.txt
+      - name: Preserve original profiling results and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-mapping-profile-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/startup-profile-evidence/*.json
+            build/startup-profile-evidence/*.txt
+            build/startup-profile-evidence/*.log
+            build/startup-profile/CMakeCache.txt
+          if-no-files-found: warn
