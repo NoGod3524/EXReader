@@ -17,6 +17,15 @@ import java.util.UUID;
 /** Bounded, cancellable SAF copies. Selected documents are never opened by the native modules directly. */
 final class Wave3Files {
     private Wave3Files() {}
+    /** Recover only an existing private export belonging to the named export directory. */
+    static File restoreExport(File files,String directory,String savedPath) {
+        if(savedPath==null||savedPath.isEmpty())return null;
+        try {
+            File root=new File(files,directory).getCanonicalFile();
+            File candidate=new File(savedPath).getCanonicalFile();
+            return candidate.isFile()&&candidate.getPath().startsWith(root.getPath()+File.separator)?candidate:null;
+        } catch(IOException|SecurityException ignored) { return null; }
+    }
     static final class Staged {
         final File file;final String name;final long bytes;
         Staged(File file,String name,long bytes){this.file=file;this.name=name;this.bytes=bytes;}

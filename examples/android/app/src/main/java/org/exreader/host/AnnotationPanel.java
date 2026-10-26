@@ -2,6 +2,7 @@
 package org.exreader.host;
 
 import android.net.Uri;
+import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -14,10 +15,13 @@ final class AnnotationPanel extends Wave3Dialog {
     static final int REQUEST_PICK=1102,REQUEST_JSONL=1104,REQUEST_MARKDOWN=1105;
     static final long LIMIT=16L*1024*1024+1;
     private static volatile File pendingJsonl,pendingMarkdown;
+    private static final String STATE_JSONL="wave3.annotation.jsonl",STATE_MARKDOWN="wave3.annotation.markdown";
     private long book;private String title="";
     private Button exportButton,importButton,saveJson,saveMarkdown,cancel,confirm;private ListView list;private ArrayAdapter<String> adapter;
     private Wave3Files.Staged staged;private NativeWave3.ImportResult preview;private boolean busy;
     AnnotationPanel(android.app.Activity activity,Wave3Host host){super(activity,host);}
+    void saveState(Bundle state){File jsonl=pendingJsonl,markdown=pendingMarkdown;if(jsonl!=null)state.putString(STATE_JSONL,jsonl.getPath());if(markdown!=null)state.putString(STATE_MARKDOWN,markdown.getPath());}
+    void restoreState(Bundle state){pendingJsonl=Wave3Files.restoreExport(activity.getFilesDir(),"annotation-export",state.getString(STATE_JSONL));pendingMarkdown=Wave3Files.restoreExport(activity.getFilesDir(),"annotation-export",state.getString(STATE_MARKDOWN));}
     @Override void build() {
         LinearLayout first=row();exportButton=button(first,"导出标注",this::export);importButton=button(first,"导入标注文件…",this::pick);
         LinearLayout second=row();saveJson=button(second,"保存 JSONL…",()->save(pendingJsonl,REQUEST_JSONL,"application/json"));saveMarkdown=button(second,"保存 Markdown…",()->save(pendingMarkdown,REQUEST_MARKDOWN,"text/markdown"));
@@ -55,7 +59,7 @@ final class AnnotationPanel extends Wave3Dialog {
     /** Back from the system document creator, possibly in a recreated Activity. */
     void saved(int request,Uri destination) {
         File source=request==REQUEST_JSONL?pendingJsonl:pendingMarkdown;
-        if(source==null||!source.isFile())return;
+        if(source==null||!source.isFile()){open("标注导入 / 导出","标注状态");message("私有标注文件不可用，请重新导出后保存");return;}
         open("标注导入 / 导出","标注状态");controls(true);message("正在保存 "+source.getName());
         long stamp=request();
         host.saveTo(source,destination,task,bytes->post(stamp,()->{controls(false);message("已保存 "+bytes+" 字节；私有导出文件保留");}),
