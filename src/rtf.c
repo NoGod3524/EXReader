@@ -2,6 +2,8 @@
 #include "formats_internal.h"
 #include "graphics_internal.h"
 #include <ctype.h>
+/* RTF font numbers are 16-bit; Word emits theme fonts such as lomajor31500. */
+#define RTF_FONTS 32768
 enum { BOLD, ITALIC, SIZE, COLOR, BACKGROUND, UNDERLINE, STRIKE, ALIGN, LEFT, RIGHT,
        INDENT, BEFORE, AFTER, LEADING, MULTIPLE, DIRECTION, RTF_PROPERTIES };
 enum { LIST_TABLE=8,LIST_DEF,LIST_LEVEL,LEVEL_TEXT,LEVEL_NUMBERS,OVERRIDE_TABLE,LIST_OVERRIDE,OVERRIDE_LEVEL };
@@ -137,7 +139,10 @@ static int number_control(rtf_context *c,rtf_state *s,const char *word,long valu
     s->font=-1; s->font_set=0; s->specified=0; memset(s->properties,0,sizeof(s->properties)); s->destination=LIST_LEVEL; return 1;
   }
   if(!strcmp(word,"listid") && (s->destination==LIST_DEF || s->destination==LIST_OVERRIDE)) {
-    if(!has || (value>= -5 && value<= -1)) goto invalid;
+    /* Read-only compatibility: real Word streams use reserved IDs -1..-5.
+       Keep their signed int32 identity intact, including 0 and INT_MIN;
+       only the independent, bounded ls value indexes override_map. */
+    if(!has) goto invalid;
     if(o) { o->list_id=(int)value; o->has_list_id=1; }
     else { c->number_definitions[s->definition].id=(int)value; c->number_definitions[s->definition].has_id=1; }
     return 1;
@@ -161,7 +166,7 @@ static int number_control(rtf_context *c,rtf_state *s,const char *word,long valu
   if(!strcmp(word,"levelstartat")) { if(!has) goto invalid; level->start=(int)value; level->has_start=1; return 1; }
   if(!strcmp(word,"levelfollow")) { if(!has || value<0 || value>2) goto invalid; level->follow=(int)value; return 1; }
   if(!strcmp(word,"levellegal") || !strcmp(word,"levelnorestart")) { int flag=!has || value!=0; if(!strcmp(word,"levellegal")) level->legal=flag; else level->norestart=flag; return 1; }
-  if(!strcmp(word,"f")) { if(!has || value<0 || value>=4096) goto invalid; s->font=(int)value; s->font_set=1; return 1; }
+  if(!strcmp(word,"f")) { if(!has || value<0 || value>=RTF_FONTS) goto invalid; s->font=(int)value; s->font_set=1; return 1; }
   return style_control(c,s,word,value,has);
 invalid:
   c->status=EXR_FORMAT; return 0;
@@ -313,7 +318,7 @@ static int css_color(rtf_context *c,exr_buffer *b,const char *property,int index
 }
 static int font_css(rtf_context *c,exr_buffer *css,const rtf_state *s) {
   int font=s->font<0 ? c->default_font : s->font; const char *family;
-  if(!c->fonts || font<0 || font>=4096 || !(family=c->fonts[font])) return 1;
+  if(!c->fonts || font<0 || font>=RTF_FONTS || !(family=c->fonts[font])) return 1;
   if(!put(css,"font-family:\"")) return 0;
   while(*family) {
     if((*family=='"' || *family=='\\') && !put(css,"\\")) return 0;
@@ -496,6 +501,7 @@ static int picture_bytes(rtf_context *c,int index,const void *data,size_t size) 
 static int font_commit(rtf_context *c,const rtf_state *s) {
   size_t start=0,end=c->font_name.size,old; char *name;
   if(s->font<0) { c->font_name.size=0; return 1; }
+  if(!c->fonts || s->font>=RTF_FONTS) { c->status=EXR_FORMAT; return 0; }
   while(start<end && isspace((unsigned char)c->font_name.data[start])) start++;
   while(end>start && isspace((unsigned char)c->font_name.data[end-1])) end--;
   old=c->fonts[s->font] ? strlen(c->fonts[s->font]) : 0;
@@ -717,7 +723,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
   rtf_state states[256] = {{0}};
   rtf_context context={0};
   size_t depth = 0, i = 0;
-  int fallback = 0;
+  int fallback = 0, closed = 0;
   uint32_t high = 0;
 
   exr_status result = EXR_FORMAT;
@@ -738,6 +744,12 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
   }
   while (i < n) {
     unsigned c = s[i++];
+    /* After the root group only the NUL/whitespace padding some writers append is accepted. */
+    if (closed) {
+      if (c == 0 || c == '\r' || c == '\n' || c == ' ' || c == '\t')
+        continue;
+      goto done;
+    }
     if (c == '{') {
       fallback = 0; /* Group delimiters terminate the Unicode fallback sequence. */
       if(!run_flush(&context)) goto done;
@@ -757,6 +769,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
       if(states[depth].picture>=0 && states[depth].picture!=states[depth-1].picture && !picture_finish(&context,&states[depth])) goto done;
       if(!destination_finish(&context,&states[depth],&states[depth-1])) goto done;
       depth--;
+      closed = !depth;
       continue;
     }
     if (c == '\\') {
@@ -839,7 +852,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
         if(!strcmp(word,"listtext") || !strcmp(word,"pntext")) { states[depth].skip=0; states[depth].list_text=1; if(!states[depth].list_id) states[depth].list_id=-1; continue; }
         if(!strcmp(word,"footnote")) { states[depth].skip=0; if(!note_start(&context,&states[depth])) goto done; continue; }
         if(!strcmp(word,"fonttbl")) {
-          if(!context.fonts) { context.fonts=calloc(4096,sizeof(*context.fonts)); if(!context.fonts) { context.status=EXR_MEMORY; goto done; } }
+          if(!context.fonts) { context.fonts=calloc(RTF_FONTS,sizeof(*context.fonts)); if(!context.fonts) { context.status=EXR_MEMORY; goto done; } }
           states[depth].skip=0; states[depth].destination=3; states[depth].font=-1; context.font_name.size=0; continue;
         }
         if(!strcmp(word,"field")) { states[depth].skip=0; if(!field_start(&context,&states[depth])) goto done; continue; }
@@ -856,7 +869,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
         if(!strcmp(word,"fldrslt")) { states[depth].skip=0; states[depth].destination=0; if(!field_link(&context,states[depth].field)) goto done; continue; }
       }
       if(!states[depth].skip && (states[depth].destination==0 || states[depth].destination==3) && (!strcmp(word,"f") || !strcmp(word,"deff"))) {
-        if(!has || value<0 || value>=4096) goto done;
+        if(!has || value<0 || value>=RTF_FONTS) goto done;
         if(!strcmp(word,"deff")) context.default_font=(int)value;
         else { states[depth].font=(int)value; states[depth].font_set=1; }
         continue;
@@ -950,7 +963,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
   for(i=0;i<context.note_count;i++) append_existing(&context,context.body,context.notes[i].node);
   result = EXR_OK;
 done:
-  if(context.fonts) { for(i=0;i<4096;i++) free(context.fonts[i]); }
+  if(context.fonts) { for(i=0;i<RTF_FONTS;i++) free(context.fonts[i]); }
   for(i=0;i<context.field_count;i++) { free(context.fields[i].instruction.data); free(context.fields[i].href); }
   free(context.fields); free(context.fonts); free(context.font_name.data); free(context.bookmark.data); free(context.title.data);
   for(i=0;i<context.picture_count;i++) free(context.pictures[i].bytes.data);
