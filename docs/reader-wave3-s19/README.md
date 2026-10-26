@@ -152,3 +152,9 @@ Root follow-up: run 40362513151 retained the earlier script failures, passed the
 
 Run 40363557618: Linux and macOS native providers passed; Windows completed all five real business paths but the map classifier treated repeated local static-inline exr_pixel/exr_doc_byte symbols as public provider duplicates. The parser now requires the MSVC Publics by Value section and ends before Static symbols. A preflight regression rejects duplicate public providers and missing public sections while retaining local helper definitions. Full three-platform acceptance remains pending; no mixed-source assembly is granted.
 
+
+## Same-source acceptance closed
+Run 40364729547, attempt 1, source 18558686f4a820c40a339256c4554708ae04327c succeeded: preflight, source receipt, Linux/macOS/Windows native jobs and strict same-run evidence all success. Linux/macOS execute the installed shared feature DSO and probe; Windows executes the actual static Win32 product with rendered native evidence. All five business paths and six invalid closure graphs are checked; API metadata, original ZIP bytes, extracted payloads, source/run/attempt and actual SDK/program identities were authenticated in the final job.
+Original artifacts: Linux 12668978951, 13609214 bytes, sha256 657cf410f06ff933f4f015788020b5e7b81b8c7779245959ebb846aa2607c4cb; macOS 12671030281, 11452254 bytes, sha256 e83c5800bfe171a68b638c8630293a6b1aabaf0ed2e3ed494cbdfb1cacb39d00; Windows 12670326382, 8069952 bytes, sha256 2fe2c4cc59470155fe3372709d39d435744e28bc99476c56ac4fd3c4df36331e. Final evidence artifact 12670656027, 33010925 bytes, sha256 940fa88eca86b7ba79580e257b5cd603ae16db2a0629f8942f4bec5314fc84b6.
+Earlier failures remain; 40363443578 was explicitly cancelled to include the corresponding new exact check in the strict verifier before restarting. Scope remains installed provider/business integration, not full host UI, performance, physical devices or six-platform product acceptance.
+
