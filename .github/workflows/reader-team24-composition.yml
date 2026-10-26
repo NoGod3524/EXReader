@@ -167,15 +167,18 @@ jobs:
               for phase in report.get('phases', []):
                   cases = [{'name': c.get('name'), 'result': c.get('result'), 'steps': c.get('steps', [])} for c in phase.get('cases', []) if c.get('result') != 'Passed']
                   summary['phases'].append({'mode': phase.get('mode'), 'accepted': phase.get('accepted'), 'failure': phase.get('failure'), 'total': len(phase.get('cases', [])), 'failed': cases})
-              snippets = []
+              snippets, actions = [], []
               for member in archive.infolist():
                   if not member.filename.endswith('.log') or member.file_size > 50_000_000:
                       continue
                   lines = archive.read(member).decode('utf-8', errors='replace').splitlines()
                   for i, line in enumerate(lines):
                       if re.search(r'XCTAssert|error:|failed -|failed \(', line):
-                          snippets.append({'file': member.filename, 'lines': lines[max(0, i-8):min(len(lines), i+80)]})
+                          snippets.append({'file': member.filename, 'lines': lines[max(0, i-150):min(len(lines), i+80)]})
+                      if re.search(r'Tap.*features\.(font\.fixture|preview\.discard)|Swipe', line, re.I):
+                          actions.append({'file': member.filename, 'lines': lines[max(0, i-3):min(len(lines), i+5)]})
               summary['failure_snippets'] = snippets[:40]
+              summary['action_snippets'] = actions[-150:]
               out = Path('build/apple-latest-inspection'); out.mkdir(parents=True, exist_ok=True)
               (out / (os.environ['PLATFORM'] + '.json')).write_text(json.dumps(summary, indent=2, ensure_ascii=False) + '\n')
               print(json.dumps(summary, ensure_ascii=False))
