@@ -532,7 +532,7 @@ struct sync_counts {
   int phase = -1, final_phase = -1, summary_status = -1, observe_state = -1, mirrored = 0;
   int outbox_included = 0;
   unsigned long long shard_count = 0, completed_shards = 0, pending = 0, rows = 0;
-  std::string phase_text, cursor;
+  std::string phase_text, cursor, error;
 };
 
 int read_sync_status(const fs::path &work, const char *dav_url, const char *dav_auth,
@@ -553,13 +553,18 @@ int read_sync_status(const fs::path &work, const char *dav_url, const char *dav_
   config.product_path = product_path.c_str();
   config.private_directory = private_path.c_str();
   config.original_directory = original_path.c_str();
-  config.account_id = "s19-fixture-account";
+  /* The public session account binding is a canonical UUID, not a display label. */
+  config.account_id = "51900000-0000-4000-8000-000000000001";
   config.dav.root_url = dav_url;
   config.dav.authorization = dav_auth;
   config.dav.timeout_ms = 5000;
   reader_session *session = nullptr;
   counts->create = (int)reader_session_create(&config, &session);
-  if (counts->create != READER_SESSION_OK) return 51;
+  if (counts->create != READER_SESSION_OK) {
+    counts->error = "reader_session_create status=" + std::to_string(counts->create) +
+        " (0=OK,1=ARGUMENT,2=BUSY,3=IO,4=ACCOUNT,5=SYNC)";
+    return 51;
+  }
   counts->start = (int)reader_session_start(session);
   reader_sync_view_options options{};
   options.row_limit = 16;
@@ -581,6 +586,9 @@ int read_sync_status(const fs::path &work, const char *dav_url, const char *dav_
   }
   counts->phase_text = reader_sync_view_phase_text((reader_sync_view_phase)counts->phase);
   if (counts->capture != READER_SYNC_VIEW_OK) {
+    counts->error = "reader_sync_view_capture status=" + std::to_string(counts->capture) +
+        " session=" + std::to_string(view_error.session_status) +
+        " revision=" + std::to_string(view_error.revision_code) + " message=" + view_error.message;
     reader_session_request_close(session);
     reader_session_destroy(&session);
     return 52;
@@ -651,7 +659,10 @@ int read_sync_status(const fs::path &work, const char *dav_url, const char *dav_
   counts->destroy = (int)reader_session_destroy(&session);
   /* BUSY is the documented "the worker has not reached CLOSED yet" answer; the
    * code is recorded, and the process exits immediately afterwards. */
-  if (counts->destroy != READER_SESSION_OK && counts->destroy != READER_SESSION_BUSY) return 53;
+  if (counts->destroy != READER_SESSION_OK && counts->destroy != READER_SESSION_BUSY) {
+    counts->error = "reader_session_destroy status=" + std::to_string(counts->destroy);
+    return 53;
+  }
   return 0;
 }
 
@@ -699,7 +710,7 @@ extern "C" EXR_S19_EXPORT int exr_host_features_run(const struct exr_host_featur
 
   sync_counts sync;
   code = read_sync_status(work, request->dav_url, request->dav_auth, &sync);
-  if (code) return fail(code, "sync status failed at step " + std::to_string(code));
+  if (code) return fail(code, "sync status failed at step " + std::to_string(code) + ": " + sync.error);
 
   std::string report = "{";
   report += "\"sdk_version\":" + json_escape(exr_version()) + ",";

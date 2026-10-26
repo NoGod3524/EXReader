@@ -14,6 +14,11 @@ on:
         type: boolean
         required: false
         default: false
+      s19_only:
+        description: Recheck only S19 providers and real Win32 GUI after source admission
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
   actions: read
@@ -60,7 +65,7 @@ jobs:
           path: build/reader-wave3-s18/strict.json
           if-no-files-found: error
   runtime:
-    if: github.event.inputs.protocol_only != 'true'
+    if: github.event.inputs.protocol_only != 'true' && github.event.inputs.s19_only != 'true'
     needs: preflight
     name: shared install (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -117,7 +122,7 @@ jobs:
           if-no-files-found: error
   runtime-strict:
     needs: [runtime, strict]
-    if: always() && github.event.inputs.protocol_only != 'true'
+    if: always() && github.event.inputs.protocol_only != 'true' && github.event.inputs.s19_only != 'true'
     name: runtime strict
     runs-on: ubuntu-22.04
     timeout-minutes: 30
