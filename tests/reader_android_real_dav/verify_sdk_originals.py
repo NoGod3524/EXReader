@@ -11,12 +11,15 @@ import tempfile
 import zipfile
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
 repo = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/'
-artifact = json.loads(subprocess.check_output(['gh', 'api', repo + 'actions/artifacts/12681039806']))
-raw = subprocess.check_output(['gh', 'api', repo + 'actions/artifacts/12681039806/zip'])
-assert artifact['workflow_run']['head_sha'] == '034a4a38d3818f1b24889aeeb04d6f3167ef4095'
+artifact_id = int(os.environ.get('VERIFY_ARTIFACT', '12681039806'))
+source = os.environ.get('VERIFY_SOURCE', '034a4a38d3818f1b24889aeeb04d6f3167ef4095')
+run_id = int(os.environ.get('VERIFY_RUN', '40388334083'))
+artifact = json.loads(subprocess.check_output(['gh', 'api', repo + 'actions/artifacts/' + str(artifact_id)]))
+raw = subprocess.check_output(['gh', 'api', repo + 'actions/artifacts/' + str(artifact_id) + '/zip'])
+assert artifact['workflow_run']['head_sha'] == source and artifact['workflow_run']['id'] == run_id
 assert len(raw) == artifact['size_in_bytes'] and 'sha256:' + hashlib.sha256(raw).hexdigest() == artifact['digest']
 out = Path('build/android-gtk-sdk-originals');out.mkdir(parents=True, exist_ok=True)
-report = {'accepted': False, 'run_id': 40388334083, 'source_sha': artifact['workflow_run']['head_sha'], 'books': []}
+report = {'accepted': False, 'run_id': run_id, 'source_sha': source, 'books': []}
 try:
     with zipfile.ZipFile(io.BytesIO(raw)) as z, tempfile.TemporaryDirectory() as temp:
         names = z.namelist(); assert len(names) == len(set(names))

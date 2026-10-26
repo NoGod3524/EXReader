@@ -2,7 +2,7 @@ name: Android actual Activity real WebDAV sender
 on:
   push:
     branches: [codex/reader-webdav-two-device]
-    paths: ['.github/workflows/reader-android-real-dav.yml', 'tests/reader_android_real_dav/**']
+    paths: ['.github/workflows/reader-android-real-dav.yml', 'tests/reader_android_real_dav/prepare.py', 'tests/reader_android_real_dav/send.py', 'tests/reader_android_real_dav/gtk_receive.py']
   workflow_dispatch:
 permissions:
   contents: read

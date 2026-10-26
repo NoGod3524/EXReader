@@ -12,9 +12,10 @@ import zipfile
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
 sys.path.insert(0, 'tests/reader_android_record_interop')
 from bundle import verify
-RUN = 40388334083
-SOURCE = '034a4a38d3818f1b24889aeeb04d6f3167ef4095'
-ARTIFACT = 12681039806
+RUN = int(os.environ.get('VERIFY_RUN', '40388334083'))
+SOURCE = os.environ.get('VERIFY_SOURCE', '034a4a38d3818f1b24889aeeb04d6f3167ef4095')
+ARTIFACT = int(os.environ.get('VERIFY_ARTIFACT', '12681039806'))
+BIDIRECTIONAL = os.environ.get('VERIFY_BIDIRECTIONAL') == 'true'
 repo = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/'
 def api(path): return json.loads(subprocess.check_output(['gh', 'api', repo + path]))
 record = api('actions/runs/' + str(RUN))
@@ -48,7 +49,7 @@ with zipfile.ZipFile(io.BytesIO(rawzip)) as z:
     assert desktop['accepted'] and desktop['actual_desktop_sync'] and desktop['actual_desktop_receive']
     assert desktop['program_sha256'] == hashlib.sha256(desktop_exe).hexdigest() == result['gtk_program_sha256']
     assert sync['passed'] and all(x['pass'] for x in sync['checks']) and result['android_activity_sync'] and result['actual_desktop_receive']
-    assert result['desktop_receiver'] is False and result['bidirectional'] is False
+    assert result['desktop_receiver'] is BIDIRECTIONAL and result['bidirectional'] is BIDIRECTIONAL
     selected = {r['revision_id']: r for r in m['reading_records']}
     found = {}
     for book in desktop['books']:
@@ -68,6 +69,29 @@ with zipfile.ZipFile(io.BytesIO(rawzip)) as z:
         for row in m['revisions']:
             data, = db.execute('SELECT CAST(body_json AS BLOB) FROM reader_revisions WHERE revision_id=?', (row['id'],)).fetchone()
             assert data == read('sender/bundle/' + row['file'])
+        if BIDIRECTIONAL:
+            reverse = result['gtk_reverse_records']
+            assert len(reverse) == 2 and {row['kind'] for row in reverse} == {'progress', 'annotation'}
+            assert reverse == desktop['reverse_records'] and desktop['gtk_reverse_uploaded'] is True
+            for row in reverse:
+                wire = read('android-real-dav/gtk/' + row['file'])
+                assert hashlib.sha256(wire).hexdigest() == row['sha256']
+                stored, = db.execute('SELECT CAST(body_json AS BLOB) FROM reader_revisions WHERE revision_id=?', (row['id'],)).fetchone()
+                assert stored == wire
+                envelope = json.loads(wire)
+                assert envelope['id'] == row['id'] and envelope['entity_kind'] == row['kind']
+                assert envelope['payload']['location']['parser_version'] == '3.41.0'
+            reverse_report = json.loads(read('android-real-dav/reverse-record-report.json'))
+            reverse_sync = json.loads(read('android-real-dav/reverse-sync-report.json'))
+            assert reverse_report['source_sha'] == SOURCE and reverse_report['run_id'] == str(RUN) and reverse_report['attempt'] == '1'
+            assert reverse_report['passed'] is True and reverse_sync['passed'] is True
+            matches = {item['revision_id']: item for item in reverse_report['resolutions']}
+            assert set(matches) == {row['id'] for row in reverse}
+            for row in reverse:
+                match = matches[row['id']]
+                assert match['found'] is True and match['start'] == row['start'] and match['end'] == row['end']
+            assert b'RECORD_INTEROP_SENDER_PASS' in read('android-real-dav/reverse-record-instrumentation.txt')
+            assert b'HOST_SYNC_UI_PASS interop-send' in read('android-real-dav/reverse-sync-instrumentation.txt')
         for row in m['originals']:
             assert db.execute('SELECT count(*) FROM reader_local_books WHERE book_key=?', (row['book_key'],)).fetchone() == (1,)
         db.close()
@@ -75,12 +99,18 @@ with zipfile.ZipFile(io.BytesIO(rawzip)) as z:
     app = [line for line in access if 'exreader-interop-independent/1' not in line]
     assert any('\tPUT ' in line and '\t201\t' in line for line in app)
     assert any('\tGET ' in line and '\t200\t' in line for line in app)
+    if BIDIRECTIONAL:
+        for row in reverse:
+            leaf = row['id'] + '-' + row['sha256'] + '.json'
+            assert any('\tPUT ' in line and leaf in line and '\t201\t' in line for line in app)
+            assert any('\tGET ' in line and leaf in line and '\t200\t' in line for line in app)
 summary = {'accepted': True, 'source_sha': SOURCE, 'run_id': RUN, 'attempt': 1, 'artifact_id': ARTIFACT,
            'artifact_digest': artifact['digest'], 'android_apk_sha256': sender['apk_sha256'],
            'android_sdk_sha256': sender['sdk_dso_sha256'], 'gtk_program_sha256': desktop['program_sha256'],
            'originals': len(m['originals']), 'revisions': len(m['revisions']), 'found': len(found),
-           'service_app_requests': len(app), 'legacy_desktop_receiver_field_incorrect': True,
-           'actual_desktop_receive': True, 'bidirectional': False, 'organization_accepted': False}
+           'service_app_requests': len(app), 'legacy_desktop_receiver_field_incorrect': not BIDIRECTIONAL,
+           'actual_desktop_receive': True, 'bidirectional': BIDIRECTIONAL, 'reverse_record_count': 2 if BIDIRECTIONAL else 0,
+           'reverse_scope': 'TXT progress and bookmark' if BIDIRECTIONAL else None, 'organization_accepted': False}
 out = Path('build/android-gtk-verified');out.mkdir(parents=True, exist_ok=True)
 (out / 'result.json').write_text(json.dumps(summary, indent=2) + '\n')
 print(json.dumps(summary))
