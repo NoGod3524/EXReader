@@ -12,16 +12,18 @@ assert os.environ.get('GITHUB_ACTIONS') == 'true'
 p = argparse.ArgumentParser()
 p.add_argument('--fixtures', type=Path, required=True)
 p.add_argument('--font', type=Path, required=True)
+p.add_argument('--app', type=Path, required=True)
 p.add_argument('--output', type=Path, required=True)
 a = p.parse_args()
 a.output.mkdir(parents=True, exist_ok=True)
 identity = {key: os.environ[value] for key, value in [('source_sha', 'GITHUB_SHA'), ('run_id', 'GITHUB_RUN_ID'), ('attempt', 'GITHUB_RUN_ATTEMPT')]}
 package = 'org.exreader.host'
 expected = {
-    'first': ['wave3_surfaces_present_and_no_leases', 'local_font_saf_import_select_lease_and_release', 'invalid_font_rejected_and_library_unchanged',
+    'first': ['jump_history_back_forward_over_real_search_landing', 'wave3_surfaces_present_and_no_leases',
+              'local_font_saf_import_select_lease_and_release', 'invalid_font_rejected_and_library_unchanged',
               'original_export_private_original_receipt_and_saf_save', 'annotation_export_private_files_and_saf_save',
-              'annotation_import_wrong_book_rejected_without_write', 'jump_history_back_forward_over_real_search_landing',
-              'sync_status_view_without_session_and_real_failed_session', 'rotation_keeps_selected_font_and_releases_leases'],
+              'annotation_import_wrong_book_rejected_without_write', 'sync_status_view_without_session_and_real_failed_session',
+              'rotation_keeps_selected_font_and_releases_leases', 'toc_directory_entry_reaches_real_chapter'],
     'restore': ['annotation_preview_confirm_import_creates_records', 'annotation_reimport_all_duplicates_no_new_rows',
                 'tampered_file_rejected_before_any_write', 'imported_bookmark_navigable_by_public_found'],
 }
@@ -46,6 +48,15 @@ def push_private(local, name):
     adb('push', local, temporary)
     adb('exec-out', 'run-as', package, 'cp', temporary, 'files/' + name)
 
+
+app_sha256 = hashlib.sha256(a.app.read_bytes()).hexdigest()
+installed_path = adb('shell', 'pm', 'path', package).decode().strip()
+assert installed_path.startswith('package:'), installed_path
+installed_apk = a.output / 'installed.apk'
+subprocess.run(['adb', 'pull', installed_path[len('package:'):].strip(), str(installed_apk)],
+               check=True, capture_output=True, timeout=300)
+installed_sha256 = hashlib.sha256(installed_apk.read_bytes()).hexdigest()
+assert installed_sha256 == app_sha256, 'the device did not install these application bytes'
 
 manifest = json.loads((a.fixtures / 'manifest.json').read_text(encoding='utf-8'))
 rows = [row for row in manifest['books'] if row['role'] in ('txt', 'epub')]
@@ -97,8 +108,9 @@ def instrument(phase):
     save(phase + '-instrumentation.txt', raw)
     report = json.loads(private('wave3-ui-' + phase + '.json'))
     save(phase + '-report.json', (json.dumps(report, ensure_ascii=False, indent=2) + '\n').encode())
-    print(json.dumps({'phase': phase, 'expected': expected[phase], 'actual': report['checks'], 'failed_check': report.get('failed_check'),
-                      'failure': report.get('failure'), 'failure_trace': report.get('failure_trace')}, ensure_ascii=False), flush=True)
+    print(json.dumps({'phase': phase, 'expected': expected[phase], 'actual': report['checks'], 'passed': report.get('passed'),
+                      'failed_check': report.get('failed_check'), 'failure': report.get('failure'),
+                      'failure_trace': report.get('failure_trace')}, ensure_ascii=False), flush=True)
     save(phase + '-logcat.txt', adb('logcat', '-d', '-v', 'threadtime', '-t', '4000'))
     for observation in report['observations']:
         image = private('wave3-captures/' + observation['name'] + '.png')
@@ -116,6 +128,8 @@ def instrument(phase):
     after = subprocess.run(['adb', 'shell', 'pidof', package], capture_output=True, text=True, timeout=10).stdout.strip()
     assert not after
     stops.append({'phase': phase, 'pid_before_stop': pid, 'pid_after_stop': after})
+    assert report['passed'] is True, 'phase ' + phase + ' recorded failing checks: ' + json.dumps(
+        [check for check in report['checks'] if not check['pass']], ensure_ascii=False)
     return report
 
 
@@ -142,7 +156,8 @@ try:
     sources.append({'what': 'portable-annotations', 'bytes': len(exported), 'sha256': hashlib.sha256(exported).hexdigest()})
     accepted = True
 finally:
-    result = {**identity, 'accepted': accepted, 'checks': sum(report['count'] for report in reports), 'phases': reports, 'captures': captures,
+    result = {**identity, 'accepted': accepted, 'apk_sha256': app_sha256, 'installed_apk_sha256': installed_sha256,
+              'checks': sum(report['count'] for report in reports), 'phases': reports, 'captures': captures,
               'sources': sources, 'process_stops': stops, 'api': 34, 'abi': 'x86_64', 'physical_device': False, 'wave3_ui_accepted': accepted,
               'picker_mode': 'framework activity-result stubs returning private-file URIs; the system DocumentsUI is not driven for wave3 pickers',
               'share_intent': 'not available: the host manifest declares no content provider',

@@ -1142,6 +1142,18 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         imports.submit(intent);return true;
     }
 
+    /**
+     * The staging identity ends with the reader's own format extension; ImportEntry
+     * removes it from the provider display name. The host shows the full file name
+     * so the shelf, the status line and a later duplicate import name the same book.
+     */
+    private static String importDisplayName(ReadyRequest ready) {
+        String title = ready.title(), id = ready.id();
+        if (title.isEmpty()) return id;
+        int dot = id.lastIndexOf('.');
+        return dot > 0 && dot + 1 < id.length() ? title + "." + id.substring(dot + 1) : title;
+    }
+
     void importStatus(String text) { if(!destroyed)setStatus(text); }
     void importCopying(boolean copying) {
         if(destroyed)return;
@@ -1151,7 +1163,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     boolean importReady(ReadyRequest ready) {
         if (destroyed || worker == null || store == null || pageBusy || operation != 0) return false;
-        final String name=ready.title().isEmpty()?ready.id():ready.title();
+        final String name = importDisplayName(ready);
         final int format=ready.format().exrCode();
         final HostTask task = beginTask(1);
         final long gen = generation;
@@ -1164,7 +1176,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             boolean published = false;
             boolean metadataFinalized = false;
             try {
-                if(ready.size()>MAX_INPUT_BYTES)throw new IOException("Current reader has a 32 MiB reading limit; the 128 MiB staging ceiling does not make larger books readable");
+                if(ready.size()>MAX_INPUT_BYTES)throw new IOException("Selected book exceeds 32 MiB, the current reader limit; the 128 MiB staging ceiling does not make larger books readable");
                 copied = copyUri(Uri.fromFile(ready.file()), ready.id(), task);
                 if(copied.bytes!=ready.size()||!ready.id().startsWith(copied.sha256+"."))throw new IOException("Staged original identity changed");
                 reviewGate("import-copied", task);
@@ -1931,11 +1943,13 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     @Override public void annotationImport(long book, File staged, boolean commit, String fingerprint, HostTask task, java.util.function.Consumer<NativeWave3.ImportResult> done, java.util.function.Consumer<Throwable> failed) {
         final float size = fontSize;
+        final int displayed = displayedMode(book);
         readingCall(task, () -> {
             String key = readingBook(book, task);
-            // Every non-delete head is resolved on this SDK owner; only a public FOUND lets the module proceed.
+            // The module already holds the product owner while it calls back; resolve the
+            // copied selector on the SDK owner only, never through the product owner.
             NativeWave3.FoundSink sink = capture -> {
-                try { return resolveReadingLocation(book, capture, size, task).found(); }
+                try { NativeReadingSdk.Match match = resolveCallback(book, key, capture, displayed, size, task); return match != null && match.found(); }
                 catch (RuntimeException error) { throw error; }
                 catch (Exception error) { throw new SinkFailure(error); }
             };
@@ -1946,6 +1960,25 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             } catch (SinkFailure error) { throw (Exception) error.getCause(); }
             return result[0];
         }, done, failed);
+    }
+
+    /** The display mode of the book that is actually open; -1 when another book is shown. */
+    private int displayedMode(long book) {
+        PageSnapshot frame = current;
+        if (frame == null || frame.bookId != book) return -1;
+        return frame.fixed ? ReadingCapture.FIXED : frame.bounded ? ReadingCapture.EPUB : ReadingCapture.REFLOW;
+    }
+
+    /**
+     * Resolves a copied selector while the product owner is inside a module callback.
+     * The book identity was already verified by the caller and by the module's own
+     * target identity; this path therefore touches only the SDK owner.
+     */
+    private NativeReadingSdk.Match resolveCallback(long book, String key, ReadingCapture capture, int displayed, float size, HostTask task) throws Exception {
+        task.check();
+        if (displayed < 0 || !key.equals(capture.bookKey) || capture.mode != displayed) return null;
+        if (!NativeReadingSdk.acceptsParser(capture.parser)) return null;
+        return NativeReadingSdk.resolveForCallback(store, book, capture, fontBytes(), size, task, readingControl(task, "callback"));
     }
 
     private NativeFonts fontLibrary() throws Exception {
@@ -2019,6 +2052,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     @Override public void jumpMove(long book, int direction, HostTask task, java.util.function.Consumer<NativeWave3.Move> done, java.util.function.Consumer<Throwable> failed) {
         final float size = fontSize;
+        final int displayed = displayedMode(book);
         readingCall(task, () -> {
             String key = readingBook(book, task);
             long[] meta = new long[4];
@@ -2028,7 +2062,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             long token = meta[1];
             try {
                 if (!key.equals(target.bookKey)) throw new IOException("位置历史条目属于另一本书");
-                return new NativeWave3.Move(direction, status, token, resolveReadingLocation(book, target, size, task));
+                NativeReadingSdk.Match match = resolveCallback(book, key, target, displayed, size, task);
+                if (match == null) throw new IOException("位置历史条目的原作或分页方式已改变，未移动");
+                return new NativeWave3.Move(direction, status, token, match);
             } catch (Exception | Error error) {
                 NativeWave3.jumpDrop(store.productOwner(), token);
                 throw error;

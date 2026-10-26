@@ -106,7 +106,7 @@ JNIEXPORT jint JNICALL Java_org_exreader_host_NativeFonts_probe(JNIEnv *env,jcla
   if(!library_handle||!value) {free(value);return RFL_ARGUMENT;}
   status=rfl_font_open(library_handle,value,0,&lease,&error);free(value);
   if(status!=RFL_OK) return (jint)status;
-  status=rfl_lease_font(lease,&font);
+  status=rfl_lease_font(lease,&font,&error);
   if(status==RFL_OK&&!font) status=RFL_FONT;
   {rfl_status released=rfl_lease_release(lease,&error);if(status==RFL_OK) status=released;}
   return (jint)status;
@@ -118,7 +118,7 @@ static exr_status host_lease_font(JNIEnv *env,jlong library_handle,jstring hash,
   if(!library_handle||!value) {free(value);return EXR_ARGUMENT;}
   status=rfl_font_open((rfl_library *)(intptr_t)library_handle,value,0,&lease,&local);free(value);
   if(status!=RFL_OK) {snprintf(error->message,sizeof(error->message),"Local font cannot be opened (font %d)",(int)status);return EXR_IO;}
-  status=rfl_lease_font(lease,font);
+  status=rfl_lease_font(lease,font,&local);
   if(status!=RFL_OK||!*font) {rfl_lease_release(lease,&local);*font=NULL;snprintf(error->message,sizeof(error->message),"Local font lease has no font (font %d)",(int)status);return EXR_IO;}
   __atomic_add_fetch(&wave3_live_leases,1,__ATOMIC_SEQ_CST);*lease_out=lease;return EXR_OK;
 }
