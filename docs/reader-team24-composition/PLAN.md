@@ -517,3 +517,15 @@ The source artifact `12688386499` SHA-256 is
 `a98b0160d27bf6820931f20ed4206bb00b0c5c29fe21484ba7aef324fa27158d`.
 The product source remains independent; a valid optimization needs same-source
 comparison and the original mapping, cancellation and recovery regressions.
+
+The later candidate `3047fcb4ed470f6ae276f94f7e45c4adb7ab1a69` completed
+[40397260554/1](https://github.com/NoGod3524/EXReader/actions/runs/40397260554),
+job `121833453729`. It passed the added 48-check GTK receive/account suite,
+including the actual UI's reverse-key eight-level shelf, the original 46-check
+suite, same-program/source identity checks, fixed business regressions and
+G13. Artifact `12689280904` is 40,449,485 bytes, SHA-256
+`9d1c01d40289ebeddc1a4e2e5a67238dea2df12417d9eb27b75a19bbd983f75d`.
+The 10,000-item pause boundary is not claimed as directly tested. Seven exact
+candidate paths are adopted; three are transferred from the earlier GTK host
+input, while its other owned paths remain unchanged. This admission is not a
+combined-source build or an acceptance of cross-device organization sync.

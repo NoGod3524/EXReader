@@ -207,10 +207,7 @@
         "docs/reader-wave3-c10/README.md",
         "docs/reader-wave3-c10/TEAM24-VALIDATION.md",
         "docs/reader_gtk_raw_wave3/HANDOFF.md",
-        "examples/linux/accounts_ui.inc",
         "examples/linux/reader.c",
-        "examples/linux/reading.c",
-        "examples/linux/reading.h",
         "examples/linux/wave3_backend.inc",
         "examples/linux/wave3_ui.inc",
         "tests/reader_gtk_raw_wave3/backend.c",
@@ -223,6 +220,21 @@
         "tests/reader_wave3_c10/g13_diagnostic.py",
         "tests/reader_wave3_c10/guard.py",
         "tests/reader_wave3_c10/identity.py"
+      ]
+    },
+    {
+      "name": "gtk-organization-host",
+      "source": "3047fcb4ed470f6ae276f94f7e45c4adb7ab1a69",
+      "tested_source": "3047fcb4ed470f6ae276f94f7e45c4adb7ab1a69",
+      "tested_run": 40397260554,
+      "paths": [
+        ".github/workflows/gtk-organization-projection.yml",
+        "examples/linux/accounts_ui.inc",
+        "examples/linux/reading.c",
+        "examples/linux/reading.h",
+        "examples/linux/received.inc",
+        "tests/linux_host/check_account_ui.py",
+        "tests/linux_host/receive_checks.py"
       ]
     }
   ]
