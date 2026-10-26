@@ -39,4 +39,20 @@ S20 原 iPad 问题归于 `test01ImportDeduplicateAndErrors`，原 run `40248648
 | iPhone Simulator | 12630863401 | 101015 | `e87b5434f6f25154e0d7225a76441ea9986ce33d0a3b1860b82bf4a269cc0e02` | 2026-11-25 06:17:59 |
 | iPad Simulator | 12631675261 | 101475 | `2a98ce5e866d075158afe79e8790a2c9746ead1a97ec7c6eaad288c66e814967` | 2026-11-25 06:13:24 |
 
-第二轮尚未启动；下一次功能提交启动第二轮。受测 source、run、attempt、最终原 ZIP 身份和实际程序 hash 在结束后追加，文档提交使用 `[skip ci]`。
+第二轮：source `b9b923f558012fe98ea265ec8f832cad71729653`，run [40279184530](https://github.com/NoGod3524/EXReader/actions/runs/40279184530)，attempt 1，最终 failure。三个原生作业都正确找到 `CReaderProduct` 后，在 `reader_apple_features.h:5` 因缺少 `reader_font_library.h` 编译失败；所有 UI 阶段为 0 个已执行用例，没有可启动程序。构建脚本漏开原模块默认 OFF 的 `READER_FONT_LIBRARY_BUILD` 与 `READER_ANNOTATION_IMPORT_BUILD`，导致两模块为空构建。修复显式开启两个选项、指定每个模块真实 target，并在写安装清单前要求库与头文件实际存在且非空。
+
+第二轮原 ZIP 经同 run 的认证 job `121431686055` 在 Actions 内核对，认证结论保持 failure：
+
+| 平台 | Artifact ID | 原 ZIP 字节 | SHA-256 | 到期 UTC |
+| --- | --- | ---: | --- | --- |
+| macOS | 12631393008 | 103003 | `eeb6d7ee67fd6bb0d4061c8c2808859622d71dd95d07385b837c73e7e7eb9579` | 2026-11-25 06:26:03 |
+| iPhone Simulator | 12631867741 | 103501 | `f2e2a27a4701d33ec0e4430662115f3380081e81f1fc7a0f367648e52ce78247` | 2026-11-25 06:30:17 |
+| iPad Simulator | 12631103178 | 103719 | `8faa0e930db47353e81e501361d479ae40dabe9a615b196b6b2ab7cce72c07d4` | 2026-11-25 06:29:39 |
+
+协调者在收到精确根因和修复差异后批准额外一次完整第 3 轮；前两失败不删除、不重置额度。第三轮待本次修复提交启动。
+
+## 本队 review 应用与生产组合边界
+
+三个 phase 的 app 都定义 `DEBUG`、`EXR_APPLE_PAGE_THEME`、`EXR_APPLE_HOST_REVIEW`、`EXR_APPLE_RAW3`、`EXR_APPLE_WAVE3`；仅 control 额外定义 `EXR_APPLE_READING_REVIEW`。Clang 定义 `EXR_READER_SELECTOR_BYTES_CANDIDATE=1` 和 `EXR_APPLE_WAVE3=1`。不定义 `EXR_APPLE_RAW3_REVIEW`。本队工件是该配置的 review 应用，不冒称无 review 宏的生产打包；生产 flags/package 绑定由根协调 composition 入口承担，本队不修改原 canonical tools。
+
+实际构建 app：`build/team24-apple/<platform>/derived-<phase>/Build/Products/Debug/EXReaderHost.app`（Mac），或 `Debug-iphonesimulator/EXReaderHost.app`（iPhone/iPad）。实际 executable 为 Mac 的 `Contents/MacOS/EXReaderHost` 或模拟器的 `EXReaderHost`。工件内保存为 `program-<phase>/EXReaderHost.app`，可启动 ZIP 为 `program-<phase>/EXReaderHost-<platform>.zip`。最终文档提交使用 `[skip ci]`，不把文字提交冒充受测源码。
