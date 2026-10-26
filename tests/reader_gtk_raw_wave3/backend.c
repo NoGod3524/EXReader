@@ -155,7 +155,36 @@ static void w3_save(linux_reader *reader,int kind,const char *body,size_t start,
   reader_result_free(&saved);
 }
 
+/* The raw GUI round needs the same book and an annotations file the raw0.2
+   importer really accepts: the file is written by the installed raw exporter
+   from a real raw store, never by hand. This mode is fixture production only. */
+static int w3_seed(char **argv) {
+  const char *library=argv[1],*font=argv[3],*work=argv[5],*book=argv[7];
+  exr_control control={never,NULL,NULL};linux_reader *reader=NULL;exr_error error={0};
+  w3_write_text(book,"History");
+  REQUIRE(linux_reader_open(library,font,&control,&reader,&error)==EXR_OK);
+  reader_result landed={0};REQUIRE(w3_open(reader,READER_IMPORT,book,0,&landed)>0);reader_result_free(&landed);
+  size_t start=reader->current.start,end=start+6;REQUIRE(end<=reader->current.end && start<end);
+  w3_save(reader,READER_RC_HIGHLIGHT,"Seed highlight",start,end,NULL);
+  w3_save(reader,READER_RC_BOOKMARK,"Seed bookmark",reader->current.start,reader->current.start,NULL);
+  char key[73];REQUIRE(w3_book_key(reader,key)==EXR_OK);
+  char *product=g_strconcat(library,".product.sqlite",NULL),*jsonl=g_build_filename(work,"annotations.jsonl",NULL);
+  reader_revisions *store=NULL;REQUIRE(reader_revisions_open_raw_v3(product,&store,NULL)==READER_REV_OK);
+  reader_annotation_export_options options={0};options.struct_size=sizeof(options);options.revisions=store;
+  options.book_key=key;options.jsonl_path=jsonl;
+  reader_annotation_export_stats stats={0};reader_annotation_export_error problem={0};
+  reader_annotation_export_status code=reader_annotation_export_raw3_run(&options,&stats,&problem);
+  if(code!=READER_ANNOTATION_EXPORT_OK)
+    fprintf(stderr,"seed export failed code=%d %s\n",(int)code,problem.message);
+  REQUIRE(code==READER_ANNOTATION_EXPORT_OK && stats.annotations==2 && stats.jsonl_published);
+  REQUIRE(reader_revisions_close(&store,NULL)==READER_REV_OK);
+  printf("{\"seed\":true,\"book\":\"%s\",\"key\":\"%s\",\"annotations\":%llu,\"annotations_path\":\"%s\"}\n",
+    book,key,(unsigned long long)stats.annotations,jsonl);fflush(stdout);
+  linux_reader_close(reader);g_free(product);g_free(jsonl);return 0;
+}
+
 int main(int argc,char **argv) {
+  if(argc==8 && !strcmp(argv[6],"seed")) return w3_seed(argv);
   REQUIRE(argc==6);
   const char *library_a=argv[1],*library_b=argv[2],*font=argv[3],*fixtures=argv[4],*work=argv[5];
   exr_control control={never,NULL,NULL};linux_reader *reader=NULL;exr_error error={0};reader_search_control search={0};
@@ -256,7 +285,19 @@ int main(int argc,char **argv) {
   char *pdf=g_build_filename(fixtures,"pdf-public-text.pdf",NULL);int64_t pdf_book=0;
   w3_selector original[4];size_t original_count=0;
   {
-    size_t before=w3_count(reader);reader_result landed={0};
+    size_t before=w3_count(reader);
+    {
+      reader_jh_state state={0};reader_jh_error problem={0};
+      if(reader_jh_state_get(reader->w3_history,&state,&problem)==READER_JH_OK && state.count) {
+        reader_jh_item tail={0};reader_rs_record tail_record={0};
+        w3_slot(reader,state.count-1,&tail,&tail_record);
+        printf("{\"info\":\"pre_fixed_import\",\"count\":%zu,\"cursor\":%zu,\"kind\":%d,\"mode\":%d,"
+               "\"book\":\"%.16s\"}\n",state.count,state.cursor,(int)tail.kind,(int)tail_record.mode,
+          tail_record.book_key);fflush(stdout);
+        reader_rs_record_free(&tail_record);reader_jh_item_release(&tail);
+      }
+    }
+    reader_result landed={0};
     pdf_book=w3_open(reader,READER_IMPORT,pdf,0,&landed);reader_result_free(&landed);
     {
       reader_rs_capture captured;exr_anchor anchor={0};exr_fixed_anchor fixed={0};exr_error capture_error={0};
