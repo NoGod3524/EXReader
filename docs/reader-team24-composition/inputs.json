@@ -351,6 +351,15 @@
         "examples/android/app/build.gradle",
         "examples/android/app/src/main/cpp/CMakeLists.txt"
       ]
+    },
+    {
+      "name": "android-current-owner-regression-candidate",
+      "source": "e554a69425b874129aeb72a281d340cc9fc6e415",
+      "paths": [
+        ".github/workflows/android-current-owner-340.yml",
+        "tests/reader_android_owner_current/init.gradle",
+        "tests/reader_android_owner_current/prepare.py"
+      ]
     }
   ]
 }
