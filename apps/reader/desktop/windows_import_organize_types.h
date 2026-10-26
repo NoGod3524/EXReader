@@ -7,11 +7,12 @@
 enum { IDC_CLOUD_IMPORT=240, IDC_BULK_ORGANIZE, IDC_IO_ROWS, IDC_IO_MESSAGE,
   IDC_IO_GO, IDC_IO_CANCEL, IDC_IO_CLOSE, IDC_IO_ROOT, IDC_IO_UP,
   IDC_IO_ACTION, IDC_IO_GROUPS, IDC_IO_MORE, IDC_IO_RESUME, IDC_IO_ACK,
-  IDC_IO_CLEANUP, IDC_IO_REPORT };
+  IDC_IO_CLEANUP, IDC_IO_REPORT, IDC_IO_NAME, IDC_IO_CREATE_GROUP, IDC_IO_RECOVER_EDIT, IDC_IO_ABANDON_EDIT };
 enum { WINIO_CLOUD=1, WINIO_BULK };
 enum { WINIO_LIST=1, WINIO_DOWNLOAD, WINIO_IMPORT, WINIO_CLEAN,
-  WINIO_GROUPS, WINIO_RUN, WINIO_RESUME, WINIO_INSPECT, WINIO_ACK };
-typedef struct { char id[33],parent[33];uint64_t ordinal;wchar_t name[512]; } winio_group;
+  WINIO_GROUPS, WINIO_RUN, WINIO_RESUME, WINIO_INSPECT, WINIO_ACK,
+  WINIO_CREATE_GROUP, WINIO_RECOVER_EDIT, WINIO_ABANDON_EDIT };
+typedef struct { char id[33],parent[33];uint64_t ordinal;wchar_t name[513]; } winio_group;
 typedef struct {
   int operation,mode,action,group_kind,more;
   unsigned long generation;
@@ -30,7 +31,7 @@ typedef struct {
   reader_bulk_item_result results[READER_BULK_MAX_BATCH];
   char superseded_bootstrap[33];
   winio_group groups[200];size_t group_count;
-  int mapped,receipt_saved,prepared,bootstrap_pending;
+  int mapped,receipt_saved,prepared,bootstrap_pending,edit_committed,edit_pending;
 } winio_job;
 static void winio_job_free(winio_job *value);
 static int winio_modal_blocked(void);

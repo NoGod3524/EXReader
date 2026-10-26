@@ -6,12 +6,13 @@ static void winio_accept(host_job *job);
 static void winio_controls(void) {
   if(!winio.dialog) return;
   int idle=!winio.running && !g.job && !g.pending && !g.closing;
-  const int controls[]={IDC_IO_GO,IDC_IO_ROOT,IDC_IO_UP,IDC_IO_ACTION,IDC_IO_GROUPS,IDC_IO_MORE,IDC_IO_RESUME,IDC_IO_ACK,IDC_IO_CLEANUP,IDC_IO_ROWS};
+  const int controls[]={IDC_IO_GO,IDC_IO_ROOT,IDC_IO_UP,IDC_IO_ACTION,IDC_IO_GROUPS,IDC_IO_MORE,IDC_IO_RESUME,IDC_IO_ACK,IDC_IO_CLEANUP,IDC_IO_ROWS,IDC_IO_NAME,IDC_IO_CREATE_GROUP,IDC_IO_RECOVER_EDIT,IDC_IO_ABANDON_EDIT};
   for(size_t i=0;i<sizeof(controls)/sizeof(controls[0]);i++) EnableWindow(GetDlgItem(winio.dialog,controls[i]),idle);
   EnableWindow(GetDlgItem(winio.dialog,IDC_IO_CANCEL),winio.running);
   EnableWindow(GetDlgItem(winio.dialog,IDC_IO_ACK),idle && winio.summary.complete);
   EnableWindow(GetDlgItem(winio.dialog,IDC_IO_MORE),idle && winio.group_count==200);
   EnableWindow(GetDlgItem(winio.dialog,IDC_IO_CLEANUP),idle && (winio.retained!=NULL || winio.orphans));
+  EnableWindow(GetDlgItem(winio.dialog,IDC_IO_CREATE_GROUP),idle && winio.action_value>=2 && winio.action_value<=7);
   if(winio.mode==WINIO_CLOUD) EnableWindow(GetDlgItem(winio.dialog,IDC_IO_GO),idle && !winio.retained && !winio.orphans);
 }
 static void winio_destroy(void) {
@@ -48,6 +49,24 @@ static void winio_groups_load(int more) {
     winio_group *last=&winio.group_rows[winio.group_count-1];
     snprintf(job->io->after,sizeof(job->io->after),"%s",last->id);job->io->after_ordinal=last->ordinal;
   }
+  winio_submit(job);
+}
+static void winio_create_group(void) {
+  int action=(int)SendMessageW(winio.action,CB_GETCURSEL,0,0);
+  HWND edit=GetDlgItem(winio.dialog,IDC_IO_NAME);
+  int length=GetWindowTextLengthW(edit);wchar_t name[1025];
+  if(action<2 || action>7 || length<1 || length>1024 || GetWindowTextW(edit,name,1025)!=length) {
+    SetWindowTextW(winio.message,L"选择子书架、标签或系列，并输入分组名称。");return;
+  }
+  size_t scalars=0;for(int i=0;i<length;i++) if(name[i]<0xdc00 || name[i]>0xdfff) scalars++;
+  if(scalars>256) { SetWindowTextW(winio.message,L"名称最多 256 个字符；未创建分组。");return; }
+  host_job *job=winio_new(WINIO_CREATE_GROUP);if(!job) return;
+  size_t bytes=0;reader_command_error error={0};
+  if(reader_command_utf16((const uint16_t *)name,(size_t)length,job->io->name,sizeof(job->io->name),&bytes,&error)!=READER_COMMAND_OK || !bytes) {
+    job_release(job);SetWindowTextW(winio.message,L"名称无效或过长；未创建分组。");return;
+  }
+  job->io->group_kind=(action-2)/2;
+  if(job->io->group_kind==READER_GROUP_SHELF) snprintf(job->io->parent,sizeof(job->io->parent),"%s",winio.parent);
   winio_submit(job);
 }
 static void winio_go(void) {
@@ -129,6 +148,12 @@ static void winio_accept(host_job *job) {
       winio.group_count=v->group_count;memcpy(winio.group_rows,v->groups,sizeof(v->groups));SendMessageW(winio.groups,LB_RESETCONTENT,0,0);
       for(size_t i=0;i<v->group_count;i++) SendMessageW(winio.groups,LB_ADDSTRING,0,(LPARAM)v->groups[i].name);
       SetWindowTextW(winio.message,L"选择现有分组；书架可双击进入下级。Ctrl/Shift 多选书籍，最多 100 本。");
+    } else if(v->operation==WINIO_CREATE_GROUP || v->operation==WINIO_RECOVER_EDIT || v->operation==WINIO_ABANDON_EDIT) {
+      SetWindowTextW(winio.message,job->message[0] ? job->message:L"编辑未完成。");
+      if(v->edit_committed) product_shelf_schedule(0,0);
+      if(job->status==EXR_OK && v->operation==WINIO_CREATE_GROUP) {
+        SetWindowTextW(GetDlgItem(winio.dialog,IDC_IO_NAME),L"");winio_groups_load(0);return;
+      }
     } else if(v->mode==WINIO_BULK) {
       winio_render_bulk(job);if(v->summary.committed || v->operation==WINIO_ACK) product_shelf_schedule(0,0);
     } else {
@@ -172,6 +197,11 @@ static INT_PTR CALLBACK winio_dialog_proc(HWND dialog,UINT message,WPARAM wparam
       MoveWindow(make_button(dialog,IDC_IO_MORE,L"更多分组"),636,290,100,28,TRUE);
       MoveWindow(make_button(dialog,IDC_IO_RESUME,L"恢复原请求(&R)"),420,330,150,28,TRUE);
       MoveWindow(make_button(dialog,IDC_IO_ACK,L"确认已完成报告"),580,330,156,28,TRUE);
+      MoveWindow(make_static(dialog,0,L"新分组名称(&N)"),16,370,110,24,TRUE);
+      CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,126,365,220,28,dialog,(HMENU)(INT_PTR)IDC_IO_NAME,NULL,NULL);
+      MoveWindow(make_button(dialog,IDC_IO_CREATE_GROUP,L"创建分组"),356,365,120,28,TRUE);
+      MoveWindow(make_button(dialog,IDC_IO_RECOVER_EDIT,L"恢复上次编辑"),486,365,130,28,TRUE);
+      MoveWindow(make_button(dialog,IDC_IO_ABANDON_EDIT,L"放弃未提交"),622,365,114,28,TRUE);
       winio.report=CreateWindowExW(WS_EX_CLIENTEDGE,L"LISTBOX",L"逐项提交与未执行回执",WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|WS_HSCROLL|LBS_NOTIFY,16,405,720,105,dialog,(HMENU)(INT_PTR)IDC_IO_REPORT,NULL,NULL);
       SendMessageW(winio.report,LB_SETHORIZONTALEXTENT,1600,0);
     } else {
@@ -192,7 +222,7 @@ static INT_PTR CALLBACK winio_dialog_proc(HWND dialog,UINT message,WPARAM wparam
     if(id==IDC_IO_CANCEL) { if(g.job && winio_kind(g.job->kind)) InterlockedExchange(&g.job->cancel,1);return TRUE; }
     if(winio.running || g.job || g.pending || g.closing) return TRUE;
     if(id==IDOK || id==IDC_IO_GO || (id==IDC_IO_ROWS && code==LBN_DBLCLK && winio.mode==WINIO_CLOUD)) winio_go();
-    else if(id==IDC_IO_ACTION && code==CBN_SELCHANGE) { winio.parent[0]=0;winio.depth=0;winio_groups_load(0); }
+    else if(id==IDC_IO_ACTION && code==CBN_SELCHANGE) { winio.parent[0]=0;winio.depth=0;winio_groups_load(0);winio_controls(); }
     else if(id==IDC_IO_GROUPS && code==LBN_DBLCLK && winio.action_value>=2 && winio.action_value<=3) {
       LRESULT selected=SendMessageW(winio.groups,LB_GETCURSEL,0,0);
       if(selected>=0 && (size_t)selected<winio.group_count && winio.depth<32) {
@@ -210,6 +240,10 @@ static INT_PTR CALLBACK winio_dialog_proc(HWND dialog,UINT message,WPARAM wparam
         winio_groups_load(0);
       }
     } else if(id==IDC_IO_MORE) winio_groups_load(1);
+    else if(id==IDC_IO_CREATE_GROUP) winio_create_group();
+    else if(id==IDC_IO_RECOVER_EDIT) winio_submit(winio_new(WINIO_RECOVER_EDIT));
+    else if(id==IDC_IO_ABANDON_EDIT && MessageBoxW(dialog,L"放弃上次尚未提交的编辑？已提交的编辑不会被放弃。",L"确认放弃",MB_YESNO|MB_ICONQUESTION)==IDYES)
+      winio_submit(winio_new(WINIO_ABANDON_EDIT));
     else if(id==IDC_IO_RESUME || id==IDC_IO_ACK || id==IDC_IO_CLEANUP)
       winio_submit(winio_new(id==IDC_IO_RESUME ? WINIO_RESUME:id==IDC_IO_ACK ? WINIO_ACK:WINIO_CLEAN));
     return TRUE;
@@ -225,7 +259,7 @@ static INT_PTR CALLBACK winio_dialog_proc(HWND dialog,UINT message,WPARAM wparam
 }
 static void winio_show(int mode) {
   if(winio.dialog || winio.running || g.closing || g.job || g.pending || g.metadata_dialog || acct.dialog || acct_busy() || !g.product_ready || g.product_pending) return;
-  winio.mode=mode;winio.generation++;winio.close_wanted=0;winio.depth=0;winio.parent[0]=winio.resource[0]=0;winio.group_count=0;
+  winio.mode=mode;winio.generation++;winio.close_wanted=0;winio.depth=0;winio.action_value=0;winio.parent[0]=winio.resource[0]=0;winio.group_count=0;
   if(mode==WINIO_BULK) {
     winio.count=g.shelf_count<150 ? g.shelf_count:150;
     for(size_t i=0;i<winio.count;i++) { snprintf(winio.keys[i],73,"%s",g.shelf_cursors[i].key);winio.ids[i]=g.shelf[i].id;shelf_display(&g.shelf[i],winio.titles[i],512); }

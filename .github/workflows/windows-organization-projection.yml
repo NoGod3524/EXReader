@@ -70,6 +70,7 @@ jobs:
             build/c09/compact22/
             build/c09/extracted-ui/
             build/organization-consumer/command-consumer.exe
+            build/organization-consumer/metadata-consumer.exe
             build/organization-ui/
             build/cloud-readback/cloud-probe.exe
             build/cloud-ui/

@@ -730,3 +730,21 @@ summary `12690864597` is 4,565 bytes with SHA-256
 Both expire 2027-01-24T21:36:01Z. This independent source is not yet admitted to
 composition. A later fix for a 256-scalar display truncation and the group
 browser require their own same-source runs; neither inherits this result.
+
+## Windows group creation source admission
+
+Candidate `c4f0e9c950fcfbfae2c0973604cd37689a26573d` passed
+[40406526589/1](https://github.com/NoGod3524/EXReader/actions/runs/40406526589),
+including the prior native host and cloud regressions. The same run exercised
+explicit recovery of a staged group intent, refusal of empty/oversize names,
+creation of a shelf, nested shelf, tag and series, a 256-scalar Unicode name, and
+synchronization to a second Windows host profile. The verifier job checked the
+same run's executable, installed libraries, reports and original bytes.
+Artifact `12692700047` is 55,924,359 bytes, SHA-256
+`8ecc5b4e21b59d3ebac7c6835944e7f8ae338c6c29439f61528eb0ac0f6ce0ce`;
+summary `12691569205` is 4,580 bytes, SHA-256
+`e49da28abd83523aa0e86b5b2ea089ad94299c72c71dd396538bec9a2a3602a6`.
+Both expire 2027-01-24T21:41:57Z. Six exact paths are admitted; ownership of the
+workflow and two test files transfers from the previous Windows organization
+input. This is source admission, not a pass of the resulting combined source.
+It does not cover the separate group browser, physical devices or six targets.
