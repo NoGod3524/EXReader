@@ -267,3 +267,20 @@ candidate `9d3a3f8bfa06c099ebba0d9e1ba613d276c3af09`. The separately tested
 18-document candidate round `40244430230/1` is retained under its original
 source and identity. Tree equality is evidence of unchanged SDK source, not a
 substitute for running the complete final product and corpus on one source.
+
+## GTK raw host input
+
+Source `77d4c5ec055d463c818b26414f34b15fc9bf01ad` is the tested
+`af87ba8db0c43f4fcf878983eaa2290e7889b0ee` plus its handoff document. Its
+three shared pure-capture files match the already admitted core input byte for
+byte and remain owned by that input. Run `40385003502/1` passed the installed
+raw family, real owner checks and legacy configure/link. The same source's
+[40385948659/1](https://github.com/NoGod3524/EXReader/actions/runs/40385948659)
+passed 10 actual GUI cases and same-run identity authentication. Artifact
+`12680198656` is 93,760,657 bytes, SHA-256
+`6a8fbff67acd1caf3136ba9c96fee373f89e8ca1bc21243eeeed3c8b4cb69e52`;
+identity artifact `12681373580` is 1,958 bytes, SHA-256
+`fe1e166b2dfa9e7440711851dd9b76a2a036f9aee95387f2e4572929b95b9aec`.
+Both expire 2027-01-24T19:21:05Z. Original navigation and batch-import suites
+were not run in this GUI round; they remain separate unresolved regressions.
+Source admission is not a combined-product acceptance.

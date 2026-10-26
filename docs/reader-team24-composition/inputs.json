@@ -157,6 +157,37 @@
         "tests/reader_perf_protocol/check.py",
         "tests/reader_perf_windows/verify_composition.py"
       ]
+    },
+    {
+      "name": "gtk-raw-wave3-host",
+      "source": "77d4c5ec055d463c818b26414f34b15fc9bf01ad",
+      "tested_source": "af87ba8db0c43f4fcf878983eaa2290e7889b0ee",
+      "tested_run": 40385948659,
+      "paths": [
+        ".github/workflows/reader-gtk-raw-wave3.yml",
+        ".github/workflows/reader-wave3-c10.yml",
+        "apps/reader/desktop/gtk_feature_integration.cmake",
+        "docs/reader-wave3-c10/PLAN.md",
+        "docs/reader-wave3-c10/README.md",
+        "docs/reader-wave3-c10/TEAM24-VALIDATION.md",
+        "docs/reader_gtk_raw_wave3/HANDOFF.md",
+        "examples/linux/accounts_ui.inc",
+        "examples/linux/reader.c",
+        "examples/linux/reading.c",
+        "examples/linux/reading.h",
+        "examples/linux/wave3_backend.inc",
+        "examples/linux/wave3_ui.inc",
+        "tests/reader_gtk_raw_wave3/backend.c",
+        "tests/reader_gtk_raw_wave3/check_install.py",
+        "tests/reader_gtk_raw_wave3/guard.py",
+        "tests/reader_gtk_raw_wave3/run.py",
+        "tests/reader_gtk_raw_wave3/ui_raw.py",
+        "tests/reader_wave3_c10/backend.c",
+        "tests/reader_wave3_c10/check_ui.py",
+        "tests/reader_wave3_c10/g13_diagnostic.py",
+        "tests/reader_wave3_c10/guard.py",
+        "tests/reader_wave3_c10/identity.py"
+      ]
     }
   ]
 }

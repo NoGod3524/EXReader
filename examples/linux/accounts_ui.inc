@@ -57,6 +57,9 @@ static void accounts_timer(void) {
   if(!accounts.timer) accounts.timer=g_timeout_add(150,accounts_tick,NULL);
 }
 static void accounts_destroyed(GtkWidget *widget,gpointer unused) {
+#ifdef EXR_READER_WAVE3_UI
+  w3_sync_detach();
+#endif
   (void)widget;(void)unused;accounts.dialog=accounts.form=accounts.root=accounts.user=accounts.password=NULL;
   accounts.remember=accounts.session_only=accounts.identity=accounts.notice=accounts.progress=NULL;
   accounts.load=accounts.apply=accounts.forget=accounts.scan=accounts.receive=accounts.cancel=accounts.retry=accounts.disconnect=NULL;
@@ -371,6 +374,10 @@ static gboolean accounts_tick(gpointer unused) {
           "Sync failed. Retry to continue");
     }
     if(accounts.view.state==READER_SESSION_CLOSED) {
+#ifdef EXR_READER_WAVE3_UI
+      /* A read-only status capture borrows the session on the SDK worker until its result is applied. */
+      if(!w3_sync_busy())
+#endif
       if(reader_session_destroy(&accounts.session)==READER_SESSION_OK) accounts.closed_generation=accounts.generation;
       if(!accounts.session && accounts.close_for_import) {
         accounts.close_for_import=FALSE;
@@ -451,6 +458,9 @@ static void accounts_open(GtkWidget *button,gpointer unused) {
   gtk_label_set_line_wrap(GTK_LABEL(accounts.notice),TRUE);gtk_label_set_line_wrap(GTK_LABEL(accounts.progress),TRUE);
   gtk_label_set_xalign(GTK_LABEL(accounts.notice),0);gtk_label_set_xalign(GTK_LABEL(accounts.progress),0);
   gtk_box_pack_start(GTK_BOX(area),accounts.notice,FALSE,FALSE,7);gtk_box_pack_start(GTK_BOX(area),accounts.progress,FALSE,FALSE,7);
+#ifdef EXR_READER_WAVE3_UI
+  w3_sync_attach(area,operations);
+#endif
   g_signal_connect(accounts.dialog,"response",G_CALLBACK(accounts_response),NULL);
   g_signal_connect(accounts.dialog,"delete-event",G_CALLBACK(accounts_delete),NULL);
   g_signal_connect(accounts.dialog,"destroy",G_CALLBACK(accounts_destroyed),NULL);
