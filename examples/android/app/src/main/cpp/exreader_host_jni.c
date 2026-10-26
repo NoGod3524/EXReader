@@ -257,6 +257,11 @@ static int set_number(JNIEnv *env, jobjectArray row, jsize column, long long val
   return set_cell(env, row, column, buffer);
 }
 
+#ifdef READER_HOST_WAVE3
+#include "wave3_sdk_jni.inc"
+#else
+static void host_release_lease(void *lease) {(void)lease;}
+#endif
 #include "bounded_epub_jni.inc"
 
 /* App-local viewport directory uses the same cooperative control as the other

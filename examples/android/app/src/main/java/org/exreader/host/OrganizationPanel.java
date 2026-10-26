@@ -81,6 +81,7 @@ final class OrganizationPanel {
         Button b=new Button(activity);b.setText(label);b.setContentDescription(label);b.setOnClickListener(action);row.addView(b,new LinearLayout.LayoutParams(0,-2,1));return b;
     }
     boolean visible() { return panel.getVisibility()==View.VISIBLE; }
+    void refreshProjected() { if(visible()&&!busy)load(null,false); }
     void show(long sdkId) {
         if(!visible()){previousFocus=activity.getCurrentFocus();shelf.clearFocus();shelfAccessibility=shelf.getImportantForAccessibility();shelfVisibility=shelf.getVisibility();shelf.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);shelf.setVisibility(View.INVISIBLE);}
         panel.setVisibility(View.VISIBLE);reset();selectedBook=null;

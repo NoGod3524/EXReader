@@ -28,6 +28,16 @@ final class NativeReadingSdk {
         int displayedMode=source.book.fixed()?ReadingCapture.FIXED:source.location.equals("epub_chapter")?ReadingCapture.EPUB:ReadingCapture.REFLOW;if(capture.mode!=displayedMode)throw new Projection();
         task.check();Match result=nativeResolve(store.nativeLibrary().checked(),book,capture.numbers(),capture.route(),capture.bytes(),font,size,control);task.check();return result;
     }
+    /**
+     * Resolution from inside a reviewed product module callback. The module call has
+     * already verified the target original identity and byte length, so this path
+     * must not reopen the product owner (it is active); only the SDK owner is used.
+     */
+    static Match resolveForCallback(BookStore store,long book,ReadingCapture capture,byte[] font,float size,HostTask task,ReadingControl control)throws Exception {
+        task.check();
+        Match result=nativeResolve(store.nativeLibrary().checked(),book,capture.numbers(),capture.route(),capture.bytes(),font,size,control);
+        task.check();return result;
+    }
     static String parser(){return "exreader-sdk-"+nativeVersion();}
     static boolean acceptsParser(String recorded){return ReadingParserPolicy.accepts(recorded,nativeVersion());}
     private static native String nativeVersion();

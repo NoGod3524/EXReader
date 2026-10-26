@@ -44,6 +44,10 @@
 #define reader_av_page_get reader_av_page_get_raw_v3
 #endif
 
+#ifdef READER_HOST_WAVE3
+namespace wave3 {void release(jlong);}
+#endif
+
 namespace product_jni {
 struct failure {const char *type;std::string message;};
 [[noreturn]] void reject(const char *type,const std::string &message){throw failure{type,message};}
@@ -173,7 +177,11 @@ extern "C" JNIEXPORT jlong JNICALL JNI_METHOD(open)(JNIEnv *env,jclass,jstring p
   }catch(const failure &e){report(env,e);}catch(...){report(env,{"java/lang/OutOfMemoryError","Cannot open product owner"});}return 0;
 }
 extern "C" JNIEXPORT void JNICALL JNI_METHOD(close)(JNIEnv *env,jclass,jlong id){
-  try{get(id);std::lock_guard<std::mutex> lock(registry_mutex);registry.erase(id);}
+  try{get(id);
+#ifdef READER_HOST_WAVE3
+    wave3::release(id);
+#endif
+    std::lock_guard<std::mutex> lock(registry_mutex);registry.erase(id);}
   catch(const failure &e){report(env,e);}
 }
 extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(provider)(JNIEnv *env,jclass,jlong id){return call(env,id,[&](owner &)->jobjectArray{
@@ -283,6 +291,9 @@ extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(membership)(JNIEnv *env,jcl
 
 #ifdef READER_HOST_READING
 #include "reading_product_jni.inc"
+#ifdef READER_HOST_WAVE3
+#include "wave3_product_jni.inc"
+#endif
 #endif
 #ifdef READER_RECORD_INTEROP_REVIEW
 #include "record_interop_probe.inc"

@@ -144,3 +144,34 @@ if(EXR_HOST_READING)
     target_compile_definitions(exreader_product PRIVATE READER_READING_FIXTURES=1)
   endif()
 endif()
+
+option(EXR_HOST_WAVE3 "Install the reviewed annotation/font/original-export/jump-history/sync-status host integration" OFF)
+if(EXR_HOST_WAVE3)
+  if(NOT EXR_READER_SELECTOR_BYTES_CANDIDATE OR NOT EXR_HOST_READING OR NOT EXR_HOST_SYNC)
+    message(FATAL_ERROR "Wave3 host integration requires the raw0.2 family with reading and sync")
+  endif()
+  list(APPEND CMAKE_PREFIX_PATH "${EXR_WAVE3_PREFIX}")
+  find_package(EXReaderAnnotationImport 0.2.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderAnnotationExport 0.2.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderJumpHistory 0.2.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderSyncView 0.2.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderFontLibrary 0.1.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderOriginalExport 0.1.0 EXACT CONFIG REQUIRED)
+  find_package(Threads REQUIRED)
+  # Product side: SDK-free archives only. Jump history is linked by file so that its
+  # SDK-resolving reading-state companion never enters the product library.
+  target_link_libraries(exreader_product PRIVATE EXReaderAnnotationImport::reader_annotation_import
+    EXReaderAnnotationExport::reader_annotation_export EXReaderSyncView::reader_sync_view
+    $<TARGET_FILE:EXReaderJumpHistory::reader_jump_history>)
+  target_include_directories(exreader_product PRIVATE
+    $<TARGET_PROPERTY:EXReaderJumpHistory::reader_jump_history,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_compile_definitions(exreader_product PRIVATE READER_HOST_WAVE3=1)
+  # SDK side: archives are consumed by file so the existing shared SDK stays the only provider.
+  target_compile_definitions(exreader_host PRIVATE READER_HOST_WAVE3=1)
+  target_include_directories(exreader_host PRIVATE
+    $<TARGET_PROPERTY:EXReaderFontLibrary::reader_font_library,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:EXReaderOriginalExport::reader_original_export,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_link_libraries(exreader_host PRIVATE $<TARGET_FILE:EXReaderFontLibrary::reader_font_library>
+    $<TARGET_FILE:EXReaderOriginalExport::reader_original_export> Threads::Threads dl)
+  set_target_properties(exreader_host PROPERTIES LINKER_LANGUAGE CXX)
+endif()

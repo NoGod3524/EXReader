@@ -1,0 +1,26 @@
+// This gate uses the real Android plugin, resources, Java bindings and test dependencies.
+// Native compilation belongs to the separate full acceptance workflow.
+gradle.taskGraph.whenReady { graph ->
+    def nativeTasks = graph.allTasks.findAll { it.name.toLowerCase().contains('cmake') || it.name.startsWith('externalNativeBuild') }
+    if (!nativeTasks.isEmpty()) throw new GradleException("Java gate unexpectedly requested native work: ${nativeTasks*.path}")
+}
+gradle.projectsEvaluated {
+    def suite = gradle.rootProject.project(':uitest')
+    def candidate = new File(suite.rootProject.projectDir, '../../build/wave3/candidate/java').canonicalFile
+    def expected = ['HostWalkthroughTest.java', 'HostReviewTest.java', 'ShelfWalkthroughTest.java', 'OrganizationWalkthroughTest.java'].sort()
+    def actual = suite.android.sourceSets.androidTest.java.srcDirs.collect { it.canonicalFile }
+    if (actual != [candidate]) throw new GradleException("Candidate must replace all original source directories: ${actual}")
+    suite.tasks.named('compileDebugAndroidTestJavaWithJavac').configure { task ->
+        doFirst {
+            def candidateSources = task.source.files.findAll { it.canonicalPath.startsWith(candidate.path + File.separator) }
+            if (candidateSources*.name.sort() != expected) throw new GradleException("Expected exactly four candidate classes: ${candidateSources}")
+            if (task.source.files.any { it.canonicalPath.contains('/uitest/src/androidTest/java/') }) throw new GradleException('Original and candidate classes must not compile together')
+            println "C11_JAVA_GATE_SOURCE_DIRS ${actual}"
+            println "C11_JAVA_GATE_CANDIDATE_CLASSES ${candidateSources*.name.sort()}"
+            println "C11_JAVA_GATE_REAL_TEST_CLASSPATH ${task.classpath.files}"
+        }
+    }
+    gradle.rootProject.project(':app').tasks.named('compileDebugAndroidTestJavaWithJavac').configure { task ->
+        doFirst { println "C11_JAVA_GATE_REAL_HOST_TEST_CLASSPATH ${task.classpath.files}" }
+    }
+}
