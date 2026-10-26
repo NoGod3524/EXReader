@@ -9,6 +9,7 @@
 
 static unsigned long long sql_ns, commit_ns, commit_count, statement_count;
 static int persist_set;
+static sqlite3 *product_db;
 static int trace(unsigned kind, void *context, void *statement, void *duration) {
   (void)context;
   if (kind == SQLITE_TRACE_PROFILE) {
@@ -26,6 +27,7 @@ static int trace(unsigned kind, void *context, void *statement, void *duration) 
 static int instrument(sqlite3 *db, char **message, const sqlite3_api_routines *api) {
   const char *path = sqlite3_db_filename(db, "main");
   (void)message; (void)api;
+  if (path && strstr(path, "product-")) product_db = db;
   if (path && strstr(path, "product-") && getenv("EXR_PROFILE_PERSIST")) {
     sqlite3_stmt *stmt = NULL;
     int rc = sqlite3_prepare_v2(db, "PRAGMA journal_mode=PERSIST", -1, &stmt, NULL);
@@ -49,7 +51,8 @@ int main(int argc, char **argv) {
   exr_book *books = NULL; size_t count = 0, failed = 0;
   double begin, opened, listed, repair_start, repaired;
   sqlite3 *verify = NULL; sqlite3_stmt *check = NULL;
-  int first;
+  int first, synchronous;
+  char journal_mode[32];
   REQUIRE(argc == 4);
   first = !strcmp(argv[3], "first");
   REQUIRE(first || !strcmp(argv[3], "repeat"));
@@ -66,6 +69,16 @@ int main(int argc, char **argv) {
   REQUIRE(reader_catalog_sdk_repair(catalog, library, books, count, NULL, &failed, &error) == EXR_OK && failed == 0);
   repaired = millis();
   REQUIRE(statement_count > 0 && commit_count == (first ? 2202 : 0));
+  REQUIRE(product_db != NULL);
+  REQUIRE(sqlite3_prepare_v2(product_db, "PRAGMA synchronous", -1, &check, NULL) == SQLITE_OK);
+  REQUIRE(sqlite3_step(check) == SQLITE_ROW);
+  synchronous = sqlite3_column_int(check, 0);
+  REQUIRE(sqlite3_finalize(check) == SQLITE_OK);
+  REQUIRE(synchronous == 2);
+  REQUIRE(sqlite3_prepare_v2(product_db, "PRAGMA journal_mode", -1, &check, NULL) == SQLITE_OK);
+  REQUIRE(sqlite3_step(check) == SQLITE_ROW);
+  snprintf(journal_mode, sizeof(journal_mode), "%s", (const char *)sqlite3_column_text(check, 0));
+  REQUIRE(sqlite3_finalize(check) == SQLITE_OK);
   REQUIRE(reader_catalog_close(&catalog, NULL) == SQLITE_OK);
   REQUIRE(sqlite3_cancel_auto_extension((void (*)(void))instrument) == 1);
   REQUIRE(sqlite3_open_v2(argv[2], &verify, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK);
@@ -78,9 +91,9 @@ int main(int argc, char **argv) {
   REQUIRE(sqlite3_step(check) == SQLITE_ROW && !strcmp((const char *)sqlite3_column_text(check, 0), "ok"));
   REQUIRE(sqlite3_finalize(check) == SQLITE_OK);
   REQUIRE(sqlite3_close(verify) == SQLITE_OK);
-  printf("{\"books\":%zu,\"persist\":%d,\"open_ms\":%.3f,\"enumerate_ms\":%.3f,\"repair_ms\":%.3f,"
+  printf("{\"books\":%zu,\"persist\":%d,\"journal_mode\":\"%s\",\"synchronous\":%d,\"open_ms\":%.3f,\"enumerate_ms\":%.3f,\"repair_ms\":%.3f,"
          "\"sql_profile_ms\":%.3f,\"commit_profile_ms\":%.3f,\"commit_count\":%llu,\"statement_count\":%llu}\n",
-         count, persist_set, opened-begin, listed-opened, repaired-repair_start, (double)sql_ns/1000000.0,
+         count, persist_set, journal_mode, synchronous, opened-begin, listed-opened, repaired-repair_start, (double)sql_ns/1000000.0,
          (double)commit_ns/1000000.0, commit_count, statement_count);
   exr_books_free(books,count); exr_library_close(library);
   return 0;
