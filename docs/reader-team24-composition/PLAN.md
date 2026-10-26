@@ -61,6 +61,20 @@ the shared assemble/unpack functions. Preserve source/SDK/module identities
 and runtime original-reading16/walkthrough45 checks. Do not claim that the
 historical adapter's four-feature build covers the new host.
 
+### Apple production profile
+
+Root owns the optional `--wave3` addition to the canonical Apple product/host
+builders and Swift dependency flags. Default behavior remains OFF. Opt-in
+requires the explicit independent raw product family, installs all six feature
+archives with the two required enable options, checks actual installed outputs,
+and adds Swift/Clang WAVE3 flags plus the reviewed bridge include. It does not
+define HOST_REVIEW, IMPORT_REVIEW or READING_REVIEW. Both product and host
+manifests record whether this profile is enabled.
+
+This build configuration is pending actual Apple compilation after platform
+source adoption. Actions syntax admission is not a native build or GUI grant.
+Keep the current team's separately built review apps under their own evidence.
+
 ## Final combined validation
 
 Use a separate composition entry and source guard. Original S20 and team

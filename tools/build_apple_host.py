@@ -29,6 +29,7 @@ def main():
     parser.add_argument('--platform', choices=['macos', 'simulator', 'iphoneos'], required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--product-prefix', type=Path)
+    parser.add_argument('--wave3', action='store_true', help='Enable the installed five-feature product without review entry points')
     parser.add_argument('--selector-bytes-candidate', action='store_true',
                         default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
     parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'),
@@ -47,6 +48,8 @@ def main():
     sdk, output = args.sdk.absolute(), args.output.absolute()
     if args.page_theme and args.sdk_version != '3.41.0':
         parser.error('--page-theme requires explicit --sdk-version=3.41.0')
+    if args.wave3 and not args.selector_bytes_candidate:
+        parser.error('--wave3 requires --selector-bytes-candidate')
     if output.exists():
         parser.error('Choose a new output directory to preserve earlier artifacts')
     for path in [sdk/'include/exreader.h', sdk/'lib', ROOT/'examples/apple/ReaderApp.swift',
@@ -72,7 +75,7 @@ def main():
     sources = sorted((ROOT/'examples/apple').glob('*.swift'))
     command = ['xcrun', '--sdk', native_sdk, 'swiftc', '-swift-version', '5', '-O', '-parse-as-library',
                '-sdk', sdk_path, '-target', target, '-I', sdk/'include', '-L', sdk/'lib',
-               '-lexreader', *product_flags(sdk, args.product_prefix, args.selector_bytes_candidate), '-Xlinker', '-rpath', '-Xlinker', rpath,
+               '-lexreader', *product_flags(sdk, args.product_prefix, args.selector_bytes_candidate, args.wave3), '-Xlinker', '-rpath', '-Xlinker', rpath,
                ROOT/'bindings/swift/EXReader.swift', *sources, '-o', executable,
                '-Xlinker', '-map', '-Xlinker', output/'product-link.map']
     if args.selector_bytes_candidate and args.product_prefix:
@@ -86,7 +89,7 @@ def main():
             'CFBundleName': 'EXReader', 'CFBundleDisplayName': 'EXReader',
             'CFBundlePackageType': 'APPL', 'CFBundleVersion': '1',
             'CFBundleShortVersionString': version, 'EXRSourceSHA': source_sha,
-            'EXRRawSelectorEnabled': args.selector_bytes_candidate}
+            'EXRRawSelectorEnabled': args.selector_bytes_candidate, 'EXRWave3Enabled': args.wave3}
     if mobile:
         info.update({'MinimumOSVersion': '15.0', 'LSRequiresIPhoneOS': True,
                      'UIApplicationSceneManifest': {'UIApplicationSupportsMultipleScenes': True},
@@ -123,6 +126,7 @@ def main():
     manifest = {'schema': 1, 'source_sha': source_sha, 'sdk_version': version,
                 'page_theme_enabled': args.page_theme,
                 'selector_bytes_candidate': args.selector_bytes_candidate,
+                'wave3_enabled': args.wave3,
                 'platform': args.platform, 'target': target, 'bundle': str(app),
                 'signing': 'ad-hoc; device installation requires the owner signing identity',
                 'files': {str(p.relative_to(app)): hashlib.sha256(p.read_bytes()).hexdigest()

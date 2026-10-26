@@ -6,6 +6,7 @@ import os
 import re
 from pathlib import Path
 import subprocess
+from apple_swift import WAVE3_MODULES
 
 
 def main():
@@ -14,6 +15,7 @@ def main():
     parser.add_argument('--target', choices=('macos', 'iphonesimulator', 'iphoneos'), required=True)
     parser.add_argument('--build', type=Path, required=True)
     parser.add_argument('--product-prefix', type=Path)
+    parser.add_argument('--wave3', action='store_true', help='Install the explicit raw five-feature host profile')
     parser.add_argument('--selector-bytes-candidate', action='store_true',
                         default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
     parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'),
@@ -28,6 +30,8 @@ def main():
         parser.error('EXR_APPLE_RAW3 must be explicitly OFF or ON')
     if args.selector_bytes_candidate and (args.sdk_version != '3.41.0' or stage.resolve() == sdk.resolve()):
         parser.error('Raw selector candidate requires SDK3.41 and an independent product prefix')
+    if args.wave3 and not args.selector_bytes_candidate:
+        parser.error('--wave3 requires --selector-bytes-candidate')
     version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk / 'include/exr/base.h').read_text())
     if version is None or version[1] != args.sdk_version:
         parser.error('Installed SDK version differs from the explicitly selected version')
@@ -56,13 +60,23 @@ def main():
                ('credentials', 'extras/credentials'), ('reading-state', 'apps/reader/reading-state'),
                ('search', 'apps/reader/search'), ('navigation', 'apps/reader/navigation'),
                ('reading-commands', 'apps/reader/reading-commands'), ('annotation-view', 'apps/reader/annotation-view')]
+    if args.wave3:
+        modules += [(name, 'apps/reader/' + name) for name, _, _ in WAVE3_MODULES]
+    wave3_options = {name: list(options) for name, _, options in WAVE3_MODULES}
     for name, relative in modules:
         build = args.build.absolute() / name
         options = ['-DEXR_WEBDAV_APPLE_URLSESSION=ON'] if name == 'webdav' else []
+        if args.wave3:
+            options += wave3_options.get(name, [])
         for command in (['cmake', '-S', str(root / relative), '-B', str(build), *common, *options],
                         ['cmake', '--build', str(build), '--parallel', '4'],
                         ['cmake', '--install', str(build)]):
             subprocess.run(command, check=True)
+    if args.wave3:
+        for _, target, _ in WAVE3_MODULES:
+            for path in (stage / 'lib' / ('lib' + target + '.a'), stage / 'include' / (target + '.h')):
+                if not path.is_file() or path.stat().st_size == 0:
+                    raise RuntimeError('Required installed wave3 product missing: ' + str(path))
     family = {'EXReaderRevisions': '0.4.0', 'EXReaderReadingState': '0.2.0',
               'EXReaderReadingCommands': '0.2.0', 'EXReaderAnnotationView': '0.2.0',
               'EXReaderCommands': '0.2.0', 'EXReaderSync': '0.2.0', 'EXReaderSession': '0.2.0'}
@@ -79,7 +93,8 @@ def main():
     manifest = {'source_sha': source, 'target': args.target, 'sdk_version': args.sdk_version,
                 'installed_modules': [x[0] for x in modules],
                 'sqlite_provider': 'libreader_catalog_sqlite.a', 'system_sqlite_fallback': False,
-                'reading_resolver_linked': False, 'webdav_transport': 'Foundation URLSession'}
+                'reading_resolver_linked': False, 'webdav_transport': 'Foundation URLSession',
+                'wave3_enabled': args.wave3}
     manifest.update(selector_bytes_candidate=args.selector_bytes_candidate,
                     product_prefix=str(stage), sdk_prefix=str(sdk),
                     exact_candidate_family=family if args.selector_bytes_candidate else {})

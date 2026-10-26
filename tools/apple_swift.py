@@ -13,10 +13,21 @@ LIBRARIES = ('reader_reading_commands', 'reader_annotation_view', 'reader_naviga
              'reader_reading_state_codec', 'reader_revisions', 'reader_revision_hash',
              'reader_catalog', 'reader_catalog_sqlite', 'exr_credentials')
 
+WAVE3_MODULES = (
+    ('annotation-export', 'reader_annotation_export', ()),
+    ('annotation-import', 'reader_annotation_import', ('-DREADER_ANNOTATION_IMPORT_BUILD=ON',)),
+    ('font-library', 'reader_font_library', ('-DREADER_FONT_LIBRARY_BUILD=ON',)),
+    ('original-export', 'reader_original_export', ()),
+    ('jump-history', 'reader_jump_history', ()),
+    ('sync-status-view', 'reader_sync_view', ()),
+)
 
-def flags(sdk, product_prefix=None, selector_bytes_candidate=False):
+
+def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False):
     sdk = Path(sdk).absolute()
     product = Path(product_prefix).absolute() if product_prefix else sdk
+    if wave3 and not selector_bytes_candidate:
+        raise RuntimeError('Wave3 requires the explicit raw selector product family')
     if selector_bytes_candidate:
         if product.resolve() == sdk.resolve():
             raise RuntimeError('Raw selector products must use an independent prefix')
@@ -26,6 +37,8 @@ def flags(sdk, product_prefix=None, selector_bytes_candidate=False):
                     'EXReaderCommands': '0.2.0', 'EXReaderSync': '0.2.0', 'EXReaderSession': '0.2.0'}
         if manifest.get('selector_bytes_candidate') is not True or manifest.get('exact_candidate_family') != expected:
             raise RuntimeError('Actual installed raw package family differs')
+        if wave3 and manifest.get('wave3_enabled') is not True:
+            raise RuntimeError('Installed products do not declare the wave3 profile')
         version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk / 'include/exr/base.h').read_text())
         if version is None or version[1] != '3.41.0' or Path(manifest['sdk_prefix']).resolve() != sdk.resolve():
             raise RuntimeError('Raw products are bound to another actual SDK')
@@ -37,7 +50,19 @@ def flags(sdk, product_prefix=None, selector_bytes_candidate=False):
     includes = (sdk / 'include', product / 'include/exreader-product', module)
     if product != sdk:
         includes = (product / 'include', sdk / 'include', product / 'include/exreader-product', module)
-    archives = [product / 'lib' / ('lib' + name + '.a') for name in LIBRARIES]
+    libraries = tuple(target for _, target, _ in WAVE3_MODULES) + LIBRARIES if wave3 else LIBRARIES
+    archives = [product / 'lib' / ('lib' + name + '.a') for name in libraries]
+    if wave3:
+        bridge = Path(__file__).absolute().parents[1] / 'apps/reader/apple-feature-integration/include'
+        includes = (*includes, bridge)
+        for _, target, _ in WAVE3_MODULES:
+            if not (product / 'include' / (target + '.h')).is_file():
+                raise RuntimeError('Missing installed wave3 header: ' + target)
+        for header in ('reader_annotation_import_raw3.h', 'reader_annotation_export_raw3.h'):
+            if not (product / 'include' / header).is_file():
+                raise RuntimeError('Missing installed raw wave3 header: ' + header)
+        if not (bridge / 'reader_apple_features.h').is_file():
+            raise RuntimeError('Missing Apple wave3 product bridge')
     for path in [*includes, *archives]:
         if not path.exists():
             raise RuntimeError('Missing installed Apple product dependency: ' + str(path))
@@ -47,6 +72,8 @@ def flags(sdk, product_prefix=None, selector_bytes_candidate=False):
                '-framework', 'Security']
     if selector_bytes_candidate:
         result += ['-Xcc', '-DEXR_READER_SELECTOR_BYTES_CANDIDATE=1', '-D', 'EXR_APPLE_RAW3']
+    if wave3:
+        result += ['-Xcc', '-DEXR_APPLE_WAVE3=1', '-D', 'EXR_APPLE_WAVE3']
     return result
 
 
