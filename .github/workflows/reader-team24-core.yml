@@ -3,6 +3,12 @@ on:
   push:
     branches: [codex/team24-core]
   workflow_dispatch:
+    inputs:
+      protocol_only:
+        description: Run only the bounded source guard and receipt binding
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
   actions: read
@@ -48,6 +54,7 @@ jobs:
           path: build/reader-wave3-s18/strict.json
           if-no-files-found: error
   runtime:
+    if: github.event.inputs.protocol_only != 'true'
     needs: preflight
     name: shared install (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -104,7 +111,7 @@ jobs:
           if-no-files-found: error
   runtime-strict:
     needs: [runtime, strict]
-    if: always()
+    if: always() && github.event.inputs.protocol_only != 'true'
     name: runtime strict
     runs-on: ubuntu-22.04
     timeout-minutes: 30
@@ -125,6 +132,7 @@ jobs:
             build/reader-wave3-s18/original-zips/
           if-no-files-found: error
   host:
+    if: github.event.inputs.protocol_only != 'true'
     name: one SDK and one store (${{ matrix.key }})
     needs: preflight
     timeout-minutes: 200

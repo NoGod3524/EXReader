@@ -22,8 +22,19 @@ completion of the six-platform product.
 
 At most two new complete acceptance runs are authorized for this refactor.
 This ledger is additional to all earlier runs; it never resets their history.
-The first new run is pending source push. No local build, syntax check, test,
-fixture, benchmark, screenshot or artifact download/parse has been performed.
+New complete round 1: source `91cc13f3c3e31817d7263c7f4be527ac6b185519`,
+[40276177912/1](https://github.com/NoGod3524/EXReader/actions/runs/40276177912),
+failed preflight because candidate `9d3a3f8b` was local-only and therefore absent
+from the runner's fetched graph. No business producer ran. The downstream S18
+strict also failed because no named platform producer existed. This round is
+retained and counted, leaving one complete round under the original allowance.
+
+Repair: retain the existing combined source tree while merging the exact SDK
+candidate as a provenance parent, making its object reachable in the pushed
+branch. A bounded `protocol_only` dispatch verifies only the source guard and
+source receipt before the remaining complete round. It cannot grant business or
+GUI acceptance. No local build, syntax check, test, fixture, benchmark,
+screenshot or artifact download/parse has been performed.
 
 ## Historical evidence, kept separate
 
