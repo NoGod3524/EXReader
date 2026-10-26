@@ -137,6 +137,17 @@ def main():
             problems.append('walkthrough: not passing: ' + ', '.join(missing))
         for operation in ('import', 'open', 'page', 'settings'):
             operations[operation] = OPERATIONS[operation]
+        for suite, total in (('review', 10), ('bounded', 11)):
+            regression = load(args.walkthrough / (suite + '-evidence') / 'validation.json')
+            if regression.get('summary') != {'total': total, 'passed': total, 'failed': 0, 'skipped': 0}:
+                problems.append(suite + ': frozen regression summary failed or changed')
+            if len(regression.get('cases') or []) != total or any(item.get('status') != 'pass' for item in regression.get('cases') or []):
+                problems.append(suite + ': missing or failing frozen regression case')
+            for key in ('source_sha', 'run_id', 'attempt'):
+                if regression.get(key) != identity[key]:
+                    problems.append(suite + ': different ' + key)
+            if regression.get('apk_sha256') != app_sha:
+                problems.append(suite + ': different installed application bytes')
     except (OSError, ValueError, KeyError) as error:
         problems.append('walkthrough: ' + type(error).__name__ + ': ' + str(error))
     try:

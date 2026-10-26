@@ -39,6 +39,9 @@ for name in ('HostWalkthroughTest.java', 'HostReviewTest.java'):
         old = 'device.wait(Until.hasObject(By.pkg(APP)), 10000);'
         assert candidate.count(old) == 1
         candidate = candidate.replace(old, 'assertTrue("picker must return to the reader", device.wait(Until.hasObject(By.pkg(APP)), 10000));')
+        old = 'if (device.hasObject(By.textContains(needle))) return true;'
+        assert candidate.count(old) == 1
+        candidate = candidate.replace(old, 'if (device.hasObject(needle.startsWith("Imported ") || needle.startsWith("Already in shelf: ") ? By.text(needle) : By.textContains(needle))) return true;')
     else:
         old = 'By.textStartsWith(name + "\\n")'
         assert candidate.count(old) == 2
@@ -46,12 +49,18 @@ for name in ('HostWalkthroughTest.java', 'HostReviewTest.java'):
         old = 'By.textStartsWith("Sample.epub\\n")'
         assert candidate.count(old) == 2
         candidate = candidate.replace(old, 'expectedRow("Sample.epub")')
+        old = 'device.wait(Until.hasObject(By.textContains(value)), 20000)'
+        assert candidate.count(old) == 1
+        candidate = candidate.replace(old, 'device.wait(Until.hasObject(value.startsWith("Imported ") || value.startsWith("Already in shelf: ") ? By.text(value) : By.textContains(value)), 20000)')
     for file, item in expected.items():
         for prefix in ('Imported ', 'Already in shelf: ', 'Opened ', 'Opening ', 'Could not open '):
             candidate = candidate.replace('"' + prefix + file, '"' + prefix + item['title'])
         candidate = candidate.replace('text("book_title").contains("' + file + '")',
                                       'text("book_title").equals("' + item['title'] + '")')
         candidate = candidate.replace('review_open_title ' + file + '"', 'review_open_title ' + item['title'] + '"')
+        candidate = candidate.replace('contains("Opened ' + item['title'] + '")', 'equals("Opened ' + item['title'] + '")')
+        candidate = candidate.replace('"Could not open ' + item['title'] + '"', '"Could not open ' + item['title'] + ':"')
+        candidate = candidate.replace('startsWith("Opening ' + item['title'] + '")', 'equals("Opening ' + item['title'] + '...")')
     position = candidate.rfind('}')
     assert position > 0
     candidate = candidate[:position] + helper + candidate[position:]

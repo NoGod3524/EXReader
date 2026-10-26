@@ -1,7 +1,7 @@
 # C11 Android 五模块真实宿主接入
 
 分配包：C11（Android）。固定 seed：`d263ce5228838ac90c0a0dc13a5193d4a7739681`。
-分支：`codex/reader-wave3-c11`。本目录只记录本包的实现、接入与验收方式；所有构建、测试、
+当前团队分支：`codex/team24-android`；团队接手起点：`28f49ee0399d48518cc2afb0048009b6c38edcfa`。本目录只记录本包的实现、接入与验收方式；所有构建、测试、
 夹具生成、APK 解析与截图都只在 GitHub Actions 内执行，本地只编辑源码、文档与 Git。
 
 ## 交付内容
@@ -18,13 +18,16 @@ SDK、解析器或第二套书库：
 | jump-history | 阅读页「更多 → 位置历史」 | 真实分页/搜索/目录落地后记录，返回/前进只在公共 FOUND 导航成功后移动游标 |
 | sync-status-view | 书架「更多 → 同步」 | 只读状态详情（阶段、安全原因、分片、待上传、冲突），不 ack/retry/写修订 |
 
-另修复了既有宿主的两个真实缺陷（来自 S20 run 40248648454 的 Android 失败）：
+标题遵循 `ImportEntry.ReadyRequest.title()` 的去扩展名契约。旧 S20 run 40248648454 的
+Android 3/45 不作为成功证据：旧 driver 期待 `Sample.epub` 等文件名，而实际标题是 `Sample`。
+本队在 Actions 中复制原 driver 到专用 candidate 目录，逐文件明确标题与格式；例如
+`Sample.epub`、`Sample.txt`、`Sample.pdf` 分别核对 `Sample` 与 EPUB/TXT/PDF，不使用任意标题匹配。
+picker 仍选择原文件名，并明确断言返回应用；原 driver 字节与失败记录保留。
 
-1. **导入状态与书架标题丢了扩展名**：`ImportEntry` 的 `ReadyRequest.title()` 是去扩展名的
-   提示名，宿主直接用它，导致真实 UI 只显示 `Imported Sample`、书架行是 `Sample`，
-   既有黑盒走查（要求 `Imported Sample.epub` / `Sample.epub`）整链失败。现在宿主从暂存
-   身份（`<sha256>.<format>`）恢复真实格式扩展名并用完整文件名显示与建库。
-2. **超限提示不含真实上限**：32 MiB 限制的错误文本不含既有走查断言的 `exceeds 32 MiB`。
+五项审阅反馈逐项处理：接手源码已有 SDK-only FOUND callback，预先验证书籍身份后不重入
+product owner；JNI 在分配收据前只消化协作取消，普通异常原样抛回；整批标注不再包入
+`HostTask.commit`，未提交条目继续取消；stage 文件到 UI 接手前持续承担清理责任；丢弃或中断
+jump 结果时在原 owner 释放 peek。未完成的标注批次显示已提交收据，并提供明确重试。
 
 搜索与目录来自既有 `SearchPanel` / `NavigationPanel`（真实 `apps/reader/search`、
 `apps/reader/navigation` 原生包），本包交付的 APK 默认把这二者与 reading/settings/sync 一起
@@ -43,11 +46,12 @@ SDK、解析器或第二套书库：
    `tests/fixtures/fonts/primary.ttf`，内嵌字体仍由 `tools/host_font.py` 的固定版本下载。
 4. gradle 编译 `app-debug.apk`（wave3 + search + navigation + reading + preferences + sync +
    selector bytes）、`app-debug-androidTest.apk`（runner = `Wave3UiTest`）与旧 `uitest` APK。
-5. API34 emulator 内：先跑既有 `HostWalkthroughTest`（真实 DocumentsUI 导入、阅读、字号、
-   标注、PDF、旋转、进程重启、取消），再跑 `Wave3UiTest` 的 `first`/`restore` 两个阶段。
+5. API34 emulator 内启用 CheckJNI：先跑 `HostWalkthroughTest`/`HostReviewTest` 的专用标题契约
+   candidate（真实 DocumentsUI 导入、阅读、字号、标注、PDF、旋转、进程重启、取消），再跑
+   `Wave3UiTest` 的 `first`/`cancel`/`restore` 三阶段及原 NavigationUiTest 16+2 项。
    `Wave3UiTest` 每个检查独立记录通过/失败，单个失败不掩盖其余检查。
 6. `tests/reader_wave3_c11/report.py` 只接受同 run/attempt 的证据：源码 SHA、run/attempt、
-   设备上实际安装 APK 的 SHA-256、夹具 SHA-256、旧走查 45 例全过、wave3 14 个检查全过、
+   设备上实际安装 APK 的 SHA-256、夹具 SHA-256、走查 45 项及全部 wave3/导航检查、
    捕获 PNG 的哈希、SAF 导出原件与夹具逐字节相同、标注导出哈希、进程确实被停止。
 
 ## 明确未主张
