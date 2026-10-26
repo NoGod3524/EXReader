@@ -54,3 +54,12 @@
 独立认证 [run 40390426526](https://github.com/NoGod3524/EXReader/actions/runs/40390426526) 在 Actions 下载并散列原 ZIP，复核源码/作业、APK 与实际加载 SDK、GTK 程序、转运包 4 份原件、接收库中 19 份精确原 revision、4 个 SDK 本地映射、11 条 FOUND 数值和 682 条应用侧服务请求。报告中的 `desktop_receiver=false` 是初始化遗留值，实际 `actual_desktop_receive=true` 及接收原始结果经上述复核；它不应被改写成历史原报告。此结果只授予 Android→GTK 单向、模拟器与 Linux、所列格式和记录，不授予组织或反向。
 
 四原件另由 [run 40391241316](https://github.com/NoGod3524/EXReader/actions/runs/40391241316) 独立回读：Actions 认证原 ZIP 后，以精确受测源码 `034a4a38d3818f1b24889aeeb04d6f3167ef4095` 构建公开 SDK inspector，从实际 GTK 接收库逐字节导出 TXT 4109、EPUB 13853、PDF 1892、CBZ 43936 字节，均与 Android 原件一致。认证工件 `12683890627`，SHA-256 `f22802647b2382ca2bc02533da185f82b9a26ce8ffb6bf88c434550e0a0d9a39`。
+
+## 已认证的限定双向结果
+
+[运行 40390699668](https://github.com/NoGod3524/EXReader/actions/runs/40390699668)，attempt 1，受测源码 `9ea6d1d56d6d38942cc996734776f865d0a18681`；[独立认证 40392496386](https://github.com/NoGod3524/EXReader/actions/runs/40392496386) 成功。实际 Android API34 x86_64 模拟器安装 APK SHA-256 `6b35db356ac76703c0a9a56a455eeb7e27300740930d03910f09f192e9c62d1b`，实际加载 SDK SHA-256 `b3fc325f187a612d0fc809565faba6e9fa1d5ece2a7f7ba8158210b52db46310`；实际 Linux GTK 执行程序 SHA-256 `1c9eaa35dc15d163ff3d3671a7610940df03ad6b1bdb00e374ee7db3d5db4323`。两端使用同一固定 Apache WebDAV 服务。
+
+- Android→GTK：TXT、EPUB、PDF、CBZ 四份原件经实际应用发送与接收；独立 SDK inspector 从 GTK 库读取的 4109、13853、1892、43936 字节分别与 Android 原件逐字节相同。19 份原始 revision 逐字节核对，11 条所选进度、书签、高亮由 GTK 实际 SDK 返回 FOUND，范围和原始记录一致。
+- GTK→Android：GTK 实际界面新建 TXT 进度和书签，经服务上传，Android 实际界面同步并读取精确 wire；两条均由 Android 实际 SDK 返回 FOUND，范围均为 `0..0` 点锚。反向高亮、其他格式、书架组织、并发和真机未由此轮接受。
+
+原始工件 `12685855227` SHA-256 `5083ece4c791a4bff28bb218e89f8d27ef248ee615727805189076180f8369b4`；认证工件 `12686025698` SHA-256 `0736793d2da263baaac2115ab1df5e986be7382e0fe477019108c65d940c0416`。认证核对原 ZIP、程序与 SDK 身份、双向原始 wire、11+2 条定位、1258 条非独立检查服务请求和四份 GTK SDK 原件回读。仅授予上述两端和范围，不授予六平台完整互通。
