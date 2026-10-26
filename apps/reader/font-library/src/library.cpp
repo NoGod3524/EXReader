@@ -20,6 +20,10 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef __ANDROID__
+#include <linux/fs.h>
+#include <sys/syscall.h>
+#endif
 #endif
 namespace fs=std::filesystem;
 namespace {
@@ -187,7 +191,13 @@ void rename_child(rfl_library&l,const std::string&from,const std::string&to,bool
   need(MoveFileExW((l.path/fs::u8path(from)).c_str(),(l.path/fs::u8path(to)).c_str(),MOVEFILE_WRITE_THROUGH|(replace?MOVEFILE_REPLACE_EXISTING:0))!=0,RFL_IO,"atomic rename");
 #else
   if(replace)need(renameat(l.directory.h,from.c_str(),l.directory.h,to.c_str())==0,RFL_IO,"atomic manifest rename");
-  else{need(linkat(l.directory.h,from.c_str(),l.directory.h,to.c_str(),0)==0,RFL_IO,"exclusive font publish");need(unlinkat(l.directory.h,from.c_str(),0)==0,RFL_IO,"unlink published temporary");}
+  else{
+#ifdef __ANDROID__
+    need(syscall(__NR_renameat2,l.directory.h,from.c_str(),l.directory.h,to.c_str(),RENAME_NOREPLACE)==0,RFL_IO,"exclusive font rename");
+#else
+    need(linkat(l.directory.h,from.c_str(),l.directory.h,to.c_str(),0)==0,RFL_IO,"exclusive font publish");need(unlinkat(l.directory.h,from.c_str(),0)==0,RFL_IO,"unlink published temporary");
+#endif
+  }
 #endif
 }
 std::string encode(const std::map<std::string,rfl_record>&records){std::string out="RFL1\n";for(const auto&p:records)out+=p.first+" "+std::to_string(p.second.bytes)+" "+hex(p.second.display_name)+"\n";return out;}
