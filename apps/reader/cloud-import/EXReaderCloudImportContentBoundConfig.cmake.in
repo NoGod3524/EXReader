@@ -1,0 +1,6 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(EXReader @EXR_SDK_VERSION@ EXACT CONFIG COMPONENTS library)
+find_dependency(EXReaderSideload CONFIG)
+find_dependency(EXReaderWebDAVObserved 0.1.0 CONFIG)
+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderCloudImportContentBoundTargets.cmake")

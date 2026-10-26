@@ -21,10 +21,12 @@ OWN = {'apps/reader/cloud-import/src/cloud_import.c',
        'apps/reader/cloud-import/include/reader_cloud_import.h',
        'apps/reader/cloud-import/CMakeLists.txt',
        'apps/reader/cloud-import/EXReaderCloudImportConfig.cmake.in',
+       'apps/reader/cloud-import/EXReaderCloudImportContentBoundConfig.cmake.in',
        'extras/webdav/include/exr_webdav.h', 'extras/webdav/src/webdav.cpp',
        'extras/webdav/CMakeLists.txt', 'extras/webdav/EXReaderWebDAVObservedConfig.cmake.in',
        'tests/reader_cloud_content/run.py', 'tests/reader_cloud_content/strict.py',
        'tests/reader_cloud_content/CMakeLists.txt', 'tests/reader_cloud_content/observer.c',
+       'tests/reader_cloud_content/mixed/CMakeLists.txt', 'tests/reader_cloud_content/mixed/main.c',
        '.github/workflows/reader-cloud-content-binding.yml',
        'docs/reader-cloud-content-binding.md'}
 
@@ -85,9 +87,26 @@ def main():
     build(ROOT / 'extras/webdav', 'webdav', prefix,
           ['-DEXR_WEBDAV_APPLE_URLSESSION=' + ('ON' if sys.platform == 'darwin' else 'OFF')])
     flags.append('-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [prefix, sdk])))
-    build(ROOT / 'apps/reader/cloud-import', 'cloud', prefix, flags)
+    build(ROOT / 'apps/reader/cloud-import', 'cloud', prefix, flags + ['-DREADER_CLOUD_BUILD_CONTENT_BOUND=ON'])
     observer_dir = build(ROOT / 'tests/reader_cloud_content', 'observer', prefix,
                          ['-DCMAKE_PREFIX_PATH=' + str(prefix)], False)
+    mixed = subprocess.run(['cmake', '-S', str(ROOT / 'tests/reader_cloud_content/mixed'),
+        '-B', str(ROOT / 'build/cpb/mixed'), '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
+        '-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [prefix, sdk]))], cwd=ROOT,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
+    (OUT / 'logs/mixed-refusal.log').write_text(mixed.stdout, encoding='utf-8')
+    assert mixed.returncode != 0 and 'READER_CLOUD_IMPLEMENTATION' in mixed.stdout
+    legacy_source = ROOT / 'build/legacy-webdav-source'
+    legacy_source.mkdir(parents=True)
+    data = subprocess.check_output(['git', 'archive', SEED, 'extras/webdav', 'LICENSE'], cwd=ROOT)
+    with tarfile.open(fileobj=io.BytesIO(data)) as archive:
+        archive.extractall(legacy_source, filter='data')
+    legacy_prefix = OUT / 'legacy-installed'
+    build(legacy_source / 'extras/webdav', 'legacy-webdav', legacy_prefix,
+          ['-DEXR_WEBDAV_APPLE_URLSESSION=' + ('ON' if sys.platform == 'darwin' else 'OFF')])
+    legacy_flags = ['-DEXR_SDK=' + str(sdk), '-DEXR_SDK_VERSION=' + version,
+                    '-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [legacy_prefix, prefix, sdk]))]
+    build(ROOT / 'apps/reader/cloud-import', 'legacy-cloud', legacy_prefix, legacy_flags)
     consumer_source = ROOT / 'build/cp-consumer-source'
     shutil.copytree(ROOT / 'tests/reader_webdav_import/consumer', consumer_source)
     cmake = consumer_source / 'CMakeLists.txt'
@@ -101,8 +120,26 @@ def main():
     assert text.count(old_include) == 1
     review.write_text(text.replace(old_include, '#include "' +
         (ROOT / 'apps/reader/cloud-import/src/cloud_import.c').as_posix() + '"'), encoding='utf-8')
-    directory = build(consumer_source, 'consumers', prefix, flags, False)
     suffix = '.exe' if os.name == 'nt' else ''
+    legacy_dir = build(consumer_source, 'legacy-consumers', legacy_prefix, legacy_flags, False)
+    run([sys.executable, ROOT / 'tests/reader_webdav_import/check_cloud_import.py',
+         '--probe', legacy_dir / ('cloud-probe' + suffix),
+         '--cxx', legacy_dir / ('cloud-cpp-consumer' + suffix),
+         '--review-probe', legacy_dir / ('cloud-review-probe' + suffix),
+         '--fixtures', ROOT / 'tests/fixtures', '--module-prefix', legacy_prefix,
+         '--output', OUT / 'legacy'], 'legacy-ordinary-full-regression')
+    candidate_source = ROOT / 'build/cp-content-consumer-source'
+    shutil.copytree(consumer_source, candidate_source)
+    cmake = candidate_source / 'CMakeLists.txt'
+    text = cmake.read_text(encoding='utf-8')
+    assert text.count('EXReaderCloudImport 0.1.0 EXACT') == 1
+    assert text.count('EXReaderCloudImport::reader_cloud_import') == 2
+    text = text.replace('EXReaderCloudImport 0.1.0 EXACT', 'EXReaderCloudImportContentBound 0.1.0 EXACT')
+    text = text.replace('EXReaderCloudImport::reader_cloud_import', 'EXReaderCloudImportContentBound::reader_cloud_import_content_bound')
+    cmake.write_text(text, encoding='utf-8')
+    review = candidate_source / 'cloud_review_probe.c'
+    review.write_text('#define READER_CLOUD_CONTENT_BOUND 1\n' + review.read_text(encoding='utf-8'), encoding='utf-8')
+    directory = build(candidate_source, 'consumers', prefix, flags, False)
     programs = {}
     binary_dir = OUT / 'programs'
     binary_dir.mkdir()
