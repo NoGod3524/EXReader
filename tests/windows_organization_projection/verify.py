@@ -1,4 +1,4 @@
-import hashlib, io, json, os, subprocess, zipfile
+import hashlib, io, json, os, sqlite3, subprocess, zipfile
 from pathlib import Path
 
 out=Path('build/organization-summary');out.mkdir(parents=True,exist_ok=True)
@@ -36,6 +36,17 @@ try:
         paged=json.loads(read('group-page-ui/result.json'))
         assert paged['accepted'] and not paged['problems'] and paged['source_sha']==result['source'] and str(paged['run_id'])==result['run'] and str(paged['attempt'])==result['attempt']
         assert paged['program_sha256']==report['program_sha256'] and paged['seed_sha256']==sha('cloud-readback/group-page-seed.exe')
+        catalog_path='group-page-ui/profile/library.sqlite.product.sqlite'
+        assert paged['fixture_catalog_sha256']==sha(catalog_path)
+        catalog_file=out/'fixture-catalog.sqlite';catalog_file.write_bytes(read(catalog_path))
+        with sqlite3.connect('file:'+str(catalog_file.resolve())+'?mode=ro',uri=True) as db:
+            assert db.execute('PRAGMA integrity_check').fetchone()==('ok',)
+            assert db.execute('SELECT count(*) FROM reader_local_books').fetchone()==(2202,)
+            for table,column,ident in (('reader_book_shelves','shelf_id','a'*32),('reader_book_tags','tag_id','b'*32),('reader_book_series','series_id','c'*32)):
+                assert db.execute('SELECT count(*) FROM '+table+' WHERE '+column+'=?',(ident,)).fetchone()==(170,)
+            titles=db.execute('SELECT b.title FROM reader_book_series m JOIN reader_books b ON b.book_key=m.book_key WHERE m.series_id=? ORDER BY m.ordinal,m.book_key',('c'*32,)).fetchall()
+            assert titles[0]==('Shelf 0169',) and titles[-1]==('Shelf 0000',)
+        catalog_file.unlink()
         assert paged['originals']==2202 and paged['members_per_group']==170
         assert set(paged['checks'])=={'shelf-forward-reverse-bounded-170','tag-forward-reverse-bounded-170','series-forward-reverse-bounded-170','shelf-literal-search','tag-literal-search','series-literal-search','return-to-all-books-after-each-group'} and len(paged['checks'])==7
         audit=report['cancel_readback'];assert audit['ok']==1 and len(audit['books'])==2 and all(item['read_ok']==1 for item in audit['books'])

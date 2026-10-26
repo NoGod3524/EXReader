@@ -103,7 +103,9 @@ try:
         app.search('');app.wait(lambda:app.numbers()==expected[:50],timeout=90);checks.append(kind+'-literal-search')
         show_all()
     checks.append('return-to-all-books-after-each-group')
-    report.update(accepted=True,program_sha256=sha(exe),seed_sha256=sha(seed),originals=2202,members_per_group=170)
+    app.close();assert app.process.returncode==0,'host did not close cleanly'
+    with sqlite3.connect(database,timeout=30) as db:db.execute('PRAGMA wal_checkpoint(TRUNCATE)').fetchall()
+    report.update(accepted=True,program_sha256=sha(exe),seed_sha256=sha(seed),fixture_catalog_sha256=sha(Path(database)),originals=2202,members_per_group=170)
 except Exception as error:
     problems.append(phase+': '+type(error).__name__+': '+str(error));traceback.print_exc()
 finally:
