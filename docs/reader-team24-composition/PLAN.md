@@ -460,3 +460,20 @@ The iPhone and iPad jobs were cancelled while running to free macOS runners for
 the superseding retry; their results are incomplete. The retained macOS failure
 is not converted to a pass. Later Apple source and GUI results require their own
 same-run verification before admission.
+
+## GTK organization host candidate
+
+Independent candidate `0e97877f29dc1c763b2e45111625d9a1393861d2` completed
+[40394887452/1](https://github.com/NoGod3524/EXReader/actions/runs/40394887452),
+job `121825182796`. Its same-source packaged GTK host passed the new 48-check
+account/receive suite and the unchanged 46-check baseline suite. The workflow
+verified both reports' source, run, attempt and packaged executable identity,
+and checked the prior run's corresponding reports and identity in Actions.
+The fixed business suite and targeted G13 AT-SPI regressions also completed.
+Artifact `12686612528` is 40,449,434 bytes, SHA-256
+`c0bcf8912ba563a7d47b0e4407706c369b8d43e59e60d0d00d35989adb1a1cb5`,
+expires 2027-01-24T20:21:23Z. The previous `deb2b907` round's fixed-business
+failure remains in its own record. Reverse-ordered eight-level shelves and the
+10,000-item pause boundary need additional validation; this candidate is not yet
+adopted into the composition, and neither this run nor source adoption proves
+cross-device organization synchronization or final six-target acceptance.
