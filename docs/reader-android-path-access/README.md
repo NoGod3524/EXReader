@@ -24,3 +24,25 @@ reuses all real installed-APK suites including the quick-size cancellation and
 save-failure checks. All build/runtime/evidence parsing occurs in Actions.
 
 Validation pending; no module or full-product acceptance is granted.
+
+## First actual result and next candidate
+
+Run `40364381911/1`, source `3afaec0d70285b28e115e5258d2f7984d8d1826e`, failed.
+The quick-size cancellation and settings-save failure invariants passed on the
+real installed APK. Original root-directory opening no longer blocks font-library
+initialization, but font import and original publication still fail. The first
+cancellation helper passed Android's uncanonicalized app-files alias and was
+rejected before polling cancellation; that one fixture directory now uses its
+canonical app-owned parent, matching the production host's existing policy.
+All cancellation and receipt assertions are unchanged, and the source guard pins
+this single exact driver edit alongside the two module files.
+
+The next Android backend uses `renameat2(RENAME_NOREPLACE)` for exclusive
+publication, preserving the no-overwrite contract without requiring a hard link.
+There is no unsafe fallback when that syscall or flag is unavailable. Rename
+consumes the temporary name, so the original-export receipt clears its temporary
+cleanup state on that path. Font manifest replacement remains the original
+atomic rename. On any platform a failed publication now reports IO unless the
+OS reports an actual existing target; only that collision enters hash comparison.
+The original failure was misleadingly reporting a conflict for every link error.
+This candidate still needs real compilation and runtime verification.

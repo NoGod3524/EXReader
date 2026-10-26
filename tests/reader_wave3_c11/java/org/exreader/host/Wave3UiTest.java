@@ -224,7 +224,7 @@ public final class Wave3UiTest extends Instrumentation {
             File source=new File(context.getFilesDir(),"wave3-fixtures/"+original.getString("file"));
             try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"cancel-export.db").getAbsolutePath())) {
                 long selected=library.importFile(source.getAbsolutePath(),format(original.getString("format")),"Cancellation original").id;
-                File directory=new File(context.getFilesDir(),"cancel-export");need(directory.mkdirs(),"fresh export directory");
+                File directory=new File(context.getFilesDir().getCanonicalFile(),"cancel-export");need(directory.mkdirs(),"fresh export directory");
                 NativeOriginalExport.Result cancelled=NativeOriginalExport.export(library.checked(),new long[]{selected},directory.getAbsolutePath(),new HostTask(()->true));
                 need(cancelled.status==NativeOriginalExport.CANCELLED,"cooperative cancellation returns the real receipt: status="+cancelled.status+" items="+cancelled.items.length+" format="+original.getString("format"));
                 for(NativeOriginalExport.Item item:cancelled.items)need(!item.committed,"cancel before processing committed no item");
