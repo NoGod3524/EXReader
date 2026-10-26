@@ -88,7 +88,7 @@ final class FeaturesUITests: XCTestCase {
         let close = native.buttons["Close"].firstMatch, chineseClose = native.buttons["关闭"].firstMatch
         if close.exists && close.isHittable { close.tap() }
         else if chineseClose.exists && chineseClose.isHittable { chineseClose.tap() }
-        else { native.swipeDown() }
+        else if native.exists { native.swipeDown() }
         XCTAssertTrue(wait { !self.e("features.share.native").exists })
 #else
         XCTAssertTrue(wait { self.app.menus.count > 0 }); mark("native-sharing-picker-presented")
