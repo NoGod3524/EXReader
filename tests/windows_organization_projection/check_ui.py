@@ -227,6 +227,59 @@ try:
     with sqlite3.connect(str(other.db)) as db:sdk_count=db.execute('SELECT count(*) FROM books').fetchone()[0]
     record('mapping-repair-reaches-shelf-without-reimport',sql(other,'SELECT count(*) FROM reader_local_books')==[(2,)] and other.has_row('Book') and sdk_count==2)
     record('authenticated-webdav-traffic',any(r['method']=='PUT' and r['authenticated'] for r in dav.requests) and any(r['method']=='GET' and r['authenticated'] for r in dav.requests))
+    phase='native-create-groups'
+    d,message,detail=sync(a);assert '同步完成' in message;a.close_account(d)
+    a.wait_idle();ui.U.SetForegroundWindow(a.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,ui.A.VK_SHIFT));dialog=a.io_dialog()
+    a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)),timeout=120)
+    name_control,create_control=256,257
+    metadata_consumer=ROOT/'build/organization-consumer/metadata-consumer.exe'
+    product=str(a.db)+'.product.sqlite';pending=product+'.commands.pending'
+    staged=subprocess.run([str(metadata_consumer),'group',product,pending,'1','-','Recovery tag','-','0','0','stage'],
+                          capture_output=True,text=True,encoding='utf-8',timeout=60)
+    assert staged.returncode==0 and json.loads(staged.stdout)['status']==0 and Path(pending).exists(),staged.stdout+staged.stderr
+    report['metadata_consumer_sha256']=sha(metadata_consumer)
+    ui.send(ui.U.GetDlgItem(dialog,258),ui.ACCOUNT.BM_CLICK)
+    a.wait(lambda:sql(a,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('Recovery tag',))==[(1,)],timeout=120)
+    a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)),timeout=120)
+    record('native-recover-staged-group',not Path(pending).exists())
+    def select_action(action):
+        ui.send(ui.U.GetDlgItem(dialog,ui.ACTION),0x14E,action)
+        ui.send(dialog,0x111,(1<<16)|ui.ACTION,ui.U.GetDlgItem(dialog,ui.ACTION))
+        a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)),timeout=120)
+    def create(name,table):
+        ui.ACCOUNT.set_text(ui.U.GetDlgItem(dialog,name_control),name)
+        ui.send(ui.U.GetDlgItem(dialog,create_control),ui.ACCOUNT.BM_CLICK)
+        a.wait(lambda:sql(a,'SELECT count(*) FROM '+table+' WHERE name=? AND deleted=0',(name,))==[(1,)],timeout=120)
+        a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)),timeout=120)
+    select_action(2)
+    before=sql(a,'SELECT count(*) FROM reader_shelves')
+    ui.send(ui.U.GetDlgItem(dialog,create_control),ui.ACCOUNT.BM_CLICK)
+    record('native-empty-group-name-refused',sql(a,'SELECT count(*) FROM reader_shelves')==before and not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)))
+    ui.ACCOUNT.set_text(ui.U.GetDlgItem(dialog,name_control),'x'*257)
+    ui.send(ui.U.GetDlgItem(dialog,create_control),ui.ACCOUNT.BM_CLICK)
+    record('native-long-group-name-refused',sql(a,'SELECT count(*) FROM reader_shelves')==before and not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)))
+    create('Local shelf 父','reader_shelves')
+    values=names(dialog,ui.GROUPS);index=values.index('Local shelf 父')
+    ui.send(ui.U.GetDlgItem(dialog,ui.GROUPS),0x186,index)
+    ui.send(dialog,0x111,(2<<16)|ui.GROUPS,ui.U.GetDlgItem(dialog,ui.GROUPS))
+    a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)),timeout=120)
+    create('Local shelf 子','reader_shelves')
+    select_action(4);create('Local tag 标签','reader_tags')
+    create('🍀'*256,'reader_tags')
+    record('native-256-scalar-group-name-preserved',sql(a,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('🍀'*256,))==[(1,)] and '🍀'*256 in names(dialog,ui.GROUPS))
+    select_action(6);create('Local series 系列','reader_series')
+    parent=sql(a,'SELECT shelf_id FROM reader_shelves WHERE name=?',('Local shelf 父',))[0][0]
+    record('native-create-shelf-tag-series-and-child',sql(a,'SELECT parent_id FROM reader_shelves WHERE name=?',('Local shelf 子',))==[(parent,)])
+    ui.send(ui.U.GetDlgItem(dialog,ui.CLOSE),ui.ACCOUNT.BM_CLICK);a.wait(lambda:not ui.U.IsWindow(dialog),timeout=20)
+    d,message,detail=sync(a);assert '同步完成' in message;a.close_account(d)
+    d,message,detail=sync(b)
+    record('native-created-groups-sync-to-second-host','同步完成' in message and
+        sql(b,'SELECT parent_id FROM reader_shelves WHERE name=?',('Local shelf 子',))==[(parent,)] and
+        sql(b,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('Local tag 标签',))==[(1,)] and
+        sql(b,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('🍀'*256,))==[(1,)] and
+        sql(b,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('Recovery tag',))==[(1,)] and
+        sql(b,'SELECT count(*) FROM reader_series WHERE name=? AND deleted=0',('Local series 系列',))==[(1,)])
+    b.close_account(d)
     report['accepted']=True
 except Exception as error:
     problems.append(phase+': '+type(error).__name__+': '+str(error));traceback.print_exc()

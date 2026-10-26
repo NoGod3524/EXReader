@@ -149,7 +149,7 @@ static int winio_group_visit(void *context,const reader_catalog_group_row *row) 
   winio_job *v=context;if(v->group_count>=200) return 1;
   winio_group *out=&v->groups[v->group_count++];
   snprintf(out->id,sizeof(out->id),"%s",row->id);snprintf(out->parent,sizeof(out->parent),"%s",row->parent_id ? row->parent_id:"");out->ordinal=row->ordinal;
-  wchar_t *name=host_wide(row->name,strlen(row->name));copy_wstring(out->name,512,name ? name:L"");free(name);return 0;
+  wchar_t *name=host_wide(row->name,strlen(row->name));copy_wstring(out->name,513,name ? name:L"");free(name);return 0;
 }
 static exr_status winio_groups(host_job *job) {
   winio_job *v=job->io;reader_catalog *catalog=NULL;reader_catalog_error error={0};
@@ -160,6 +160,41 @@ static exr_status winio_groups(host_job *job) {
     v->parent[0] ? v->parent:NULL,v->more ? &cursor:NULL,1,200,winio_group_visit,v,&error);
   if(catalog) reader_catalog_close(&catalog,&error);
   return code ? EXR_DATABASE:EXR_OK;
+}
+/* Use the existing editor intent and recovery path; never replace an earlier
+   intent, or claim cancellation after the native transaction has committed. */
+static exr_status winio_group_edit(host_job *job) {
+  winio_job *v=job->io;reader_metadata_owner *owner=NULL;
+  reader_metadata_snapshot *snapshot=NULL;reader_metadata_result result={0};
+  reader_metadata_error error={0};reader_metadata_status code;
+  if(v->operation==WINIO_CREATE_GROUP && acct_receive_barrier(job)!=EXR_OK) {
+    copy_wstring(job->message,512,L"请先恢复或确认之前的编辑和批量整理。");return EXR_DATABASE;
+  }
+  if(!acct_open_metadata(&owner,&error)) return EXR_DATABASE;
+  if(v->operation==WINIO_RECOVER_EDIT || v->operation==WINIO_ABANDON_EDIT) {
+    code=v->operation==WINIO_RECOVER_EDIT ? reader_metadata_finish_pending(owner,&result,&error):reader_metadata_abandon_pending(owner,&error);
+    if(code==READER_METADATA_NO_PENDING) code=READER_METADATA_OK;
+  } else if(job_cancel_flag(job)) {
+    reader_metadata_close(&owner,&error);return EXR_CANCELLED;
+  } else {
+    reader_group_kind kind=(reader_group_kind)v->group_kind;
+    reader_group_command input={READER_COMMAND_PUT,kind,"",v->name,
+      kind==READER_GROUP_SHELF && v->parent[0] ? v->parent:NULL,0};
+    code=reader_metadata_prepare_group(owner,kind,"",&snapshot,&error);
+    if(code==READER_METADATA_OK) code=reader_metadata_stage_group(owner,snapshot,&input,&result,&error);
+    if(code==READER_METADATA_OK) code=reader_metadata_finish_pending(owner,&result,&error);
+  }
+  v->edit_committed=result.committed;v->edit_pending=result.pending;
+  reader_metadata_snapshot_free(snapshot);
+  if(reader_metadata_close(&owner,&error)!=READER_METADATA_OK && code==READER_METADATA_OK) code=error.code;
+  if(code==READER_METADATA_OK) {
+    copy_wstring(job->message,512,v->operation==WINIO_CREATE_GROUP ? L"分组已创建。":
+      v->operation==WINIO_RECOVER_EDIT ? L"上次编辑已恢复或没有待恢复的编辑。":L"未提交的上次编辑已放弃或没有待处理编辑。");
+    return EXR_OK;
+  }
+  copy_wstring(job->message,512,result.committed ? L"编辑已提交，但清理未完成；请使用恢复上次编辑。":
+    result.pending ? L"编辑尚未完成；请使用恢复上次编辑。":L"无法创建或恢复分组，请检查名称及已有待处理操作。");
+  return EXR_DATABASE;
 }
 static exr_status winio_bootstrap(reader_metadata_owner *owner,host_job *job) {
   winio_job *v=job->io;
@@ -336,5 +371,6 @@ static exr_status winio_job_run(host_job *job) {
     v->receipt_saved=winio_receipt(job);return v->staged || winio.orphans ? EXR_IO:EXR_OK;
   }
   if(v->operation==WINIO_GROUPS) return winio_groups(job);
+  if(v->operation==WINIO_CREATE_GROUP || v->operation==WINIO_RECOVER_EDIT || v->operation==WINIO_ABANDON_EDIT) return winio_group_edit(job);
   return winio_bulk(job);
 }

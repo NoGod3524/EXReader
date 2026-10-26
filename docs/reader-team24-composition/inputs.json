@@ -243,13 +243,24 @@
       "tested_source": "1be614da31240ee588d519024586bb494a4d4604",
       "tested_run": 40402982430,
       "paths": [
-        ".github/workflows/windows-organization-projection.yml",
         "apps/reader/desktop/windows_accounts.inc",
         "apps/reader/desktop/windows_accounts_ui.inc",
         "apps/reader/desktop/windows_raw3_apis.h",
-        "tests/windows_organization_projection/check_ui.py",
         "tests/windows_organization_projection/cloud/CMakeLists.txt",
-        "tests/windows_organization_projection/cloud_ui.py",
+        "tests/windows_organization_projection/cloud_ui.py"
+      ]
+    },
+    {
+      "name": "windows-group-creation-host",
+      "source": "c4f0e9c950fcfbfae2c0973604cd37689a26573d",
+      "tested_source": "c4f0e9c950fcfbfae2c0973604cd37689a26573d",
+      "tested_run": 40406526589,
+      "paths": [
+        ".github/workflows/windows-organization-projection.yml",
+        "apps/reader/desktop/windows_import_organize.inc",
+        "apps/reader/desktop/windows_import_organize_types.h",
+        "apps/reader/desktop/windows_import_organize_ui.inc",
+        "tests/windows_organization_projection/check_ui.py",
         "tests/windows_organization_projection/verify.py"
       ]
     }
