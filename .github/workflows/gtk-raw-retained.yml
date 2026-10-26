@@ -29,7 +29,8 @@ jobs:
           raw.install_family('raw', raw.PREFIX, True)
           assert raw.installed('raw', raw.PREFIX)['accepted']
           raw.cmake('raw-batch-import', raw.ROOT / 'apps/reader/batch-import', raw.OUT / 'raw-batch-import', raw.PREFIX, install=True)
-          options = raw.host_options(raw.PREFIX) + ['-DEXR_READER_GTK_RAW3=ON', '-DREADER_GTK_RAW3_PREFIX=' + str(raw.PREFIX), '-DEXR_READER_GTK_BATCH_IMPORT=ON', '-DREADER_BATCH_IMPORT_PREFIX=' + str(raw.PREFIX)]
+          raw.cmake('raw-preferences', raw.ROOT / 'apps/reader/preferences', raw.OUT / 'raw-preferences', raw.PREFIX, install=True)
+          options = raw.host_options(raw.PREFIX) + ['-DEXR_READER_GTK_RAW3=ON', '-DREADER_GTK_RAW3_PREFIX=' + str(raw.PREFIX), '-DEXR_READER_GTK_BATCH_IMPORT=ON', '-DREADER_BATCH_IMPORT_PREFIX=' + str(raw.PREFIX), '-DEXR_READER_GTK_PREFERENCES=ON', '-DREADER_PREFERENCES_PREFIX=' + str(raw.PREFIX)]
           raw.cmake('retained-host', raw.ROOT / 'apps/reader/desktop', raw.OUT / 'retained-host', raw.PREFIX, extra=options, targets=('exreader-linux', 'reader-gtk-navigation-backend', 'reader-gtk-batch-import-backend', 'reader-gtk-batch-owner-faults'))
           raw.run('retained-package', [raw.sys.executable, 'tools/build_linux_host.py', '--sdk', raw.SDK, '--sdk-version', '3.41.0', '--binary', raw.OUT / 'retained-host/gtk-host/exreader-linux', '--output', raw.OUT / 'retained-package'])
           import json
@@ -94,3 +95,4 @@ jobs:
             build/gtk-batch-backend-fixtures/manifest.json
             build/gtk-batch-ui-fixtures/manifest.json
           if-no-files-found: error
+
