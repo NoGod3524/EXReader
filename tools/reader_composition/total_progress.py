@@ -53,7 +53,6 @@ def verify_evidence(pair):
                                   if info.filename.endswith('.zip') and info.file_size == inner['bytes']]
                 candidates = [data for data in candidates if hashlib.sha256(data).hexdigest() == inner['sha256']]
                 assert len(candidates) == 1, 'exact pinned inner ZIP absent or duplicated'
-                raw = candidates[0]
                 proof['inner_zip'] = inner
             matching = []
             with zipfile.ZipFile(io.BytesIO(raw)) as archive:
