@@ -22,6 +22,9 @@ typedef struct {
   char after[260];
   uint64_t projected, concurrent, pending_parents, blocked, tombstones, project_failed;
   uint64_t imported, import_waiting, import_failed;
+  uint64_t dependency, head_changed, shelf_pending, shelf_previous, shelf_conflicts, shelf_parents, shelf_blocked, shelf_tombstones;
+  unsigned receive_pages, shelf_pass;
+  int receive_resumable, receive_incomplete;
 } acct_owner;
 
 static struct {
@@ -343,6 +346,20 @@ static exr_status acct_pending_check(host_job *job) {
   acct_text(job, L"请先完成之前的书籍编辑恢复，再准备同步。");
   return EXR_DATABASE;
 }
+/* Refuse projection while any durable batch request or its owned intent is
+   present, including an unreadable or completed-but-unacknowledged journal. */
+static exr_status acct_receive_barrier(host_job *job) {
+  static const wchar_t *suffixes[] = {L".commands.pending", L".bulk.pending", L".bulk-action.pending", L".bulk-bootstrap.pending"};
+  wchar_t path[HOST_PATH];
+  for (size_t i=0; i<sizeof(suffixes)/sizeof(suffixes[0]); i++) {
+    int n=swprintf(path, HOST_PATH, L"%ls%ls", g.product_path, suffixes[i]);
+    if (n<0 || n>=HOST_PATH) return EXR_IO;
+    if (GetFileAttributesW(path)!=INVALID_FILE_ATTRIBUTES || GetLastError()!=ERROR_FILE_NOT_FOUND) {
+      acct_text(job, L"请先恢复或确认之前的书籍编辑和批量整理，再继续接收。"); return EXR_DATABASE;
+    }
+  }
+  return acct_pending_check(job);
+}
 static exr_status acct_bootstrap(host_job *job, const acct_book *book, const char *hash, uint64_t bytes) {
   reader_metadata_owner *owner = NULL; reader_metadata_error error = {0};
   reader_metadata_snapshot *snapshot = NULL; reader_metadata_result submitted = {0};
@@ -385,7 +402,7 @@ static exr_status acct_prepare_book(host_job *job, const acct_book *book) {
   if (status != EXR_OK || !colon || strcmp(colon + 1, hash) || bytes != book->bytes || bytes > EXR_SIDELOAD_STREAM_LIMIT) {
     o->failed++; acct_text(job, L"本机原书身份与书目不一致，未暂存。"); return EXR_DATABASE;
   }
-  status = acct_pending_check(job);
+  status = acct_receive_barrier(job);
   if (status != EXR_OK) { o->failed++; return status; }
   status = acct_bootstrap(job, book, hash, bytes);
   if (status != EXR_OK) { o->failed++; return status; }
@@ -422,7 +439,7 @@ static exr_status acct_stage_job(host_job *job) {
     if (!o->bound || !o->secret || !acct_directory(acct.work, 1) || !acct_directory(acct.originals, 1)) {
       acct_text(job, L"请先应用凭据和账号地址，再准备同步。"); return EXR_IO;
     }
-    status = acct_pending_check(job);
+    status = acct_receive_barrier(job);
     if (status != EXR_OK) return status;
     acct_page_clear(o); free(o->cursor_title); free(o->cursor_key); o->cursor_title = o->cursor_key = NULL;
     o->seen = o->prepared = o->existing = o->pending = o->failed = o->bootstraps = 0;
@@ -481,21 +498,52 @@ static exr_status acct_project_step(host_job *job) {
   if (reader_revisions_open(path, &store, &error) != READER_REV_OK) { free(page); free(path); acct_text(job, L"无法打开修订历史。"); return EXR_DATABASE; }
   free(path);
   const char *kind = acct_kinds[o->rkind];
+  if (o->rkind > 0) {
+    reader_organization_projection_row rows[8]; size_t count=0;
+    reader_revision_status code=reader_organization_project_page(store,kind,o->after[0] ? o->after : NULL,8,rows,&count,&error);
+    for (size_t i=0; i<count; i++) {
+      reader_organization_projection_row *row=&rows[i];
+      snprintf(o->after,sizeof(o->after),"%s",row->entity_key);
+      if (row->result==READER_ORGANIZATION_PROJECTED) {
+        o->projected++;
+        if (row->selection.graph.deleted) { if (o->rkind==1) o->shelf_tombstones++; else o->tombstones++; }
+      } else if (row->result==READER_ORGANIZATION_PENDING_DEPENDENCY) {
+        if (o->rkind==1) o->shelf_pending++; else o->dependency++;
+      } else if (row->result==READER_ORGANIZATION_HEAD_CHANGED) { o->head_changed++; }
+      else if (row->selection.kind==READER_SELECTION_CONCURRENT) { if (o->rkind==1) o->shelf_conflicts++; else o->concurrent++; }
+      else if (row->selection.kind==READER_SELECTION_PENDING_PARENTS) { if (o->rkind==1) o->shelf_parents++; else o->pending_parents++; }
+      else { if (o->rkind==1) o->shelf_blocked++; else o->blocked++; }
+    }
+    if (code!=READER_REV_OK) { o->project_failed++; status=EXR_DATABASE; acct_text(job,L"组织信息应用失败；已完成的部分保留，可重试。"); }
+    else if (count<8) {
+      o->after[0]=0;
+      if (o->rkind==1 && o->shelf_pending && (!o->shelf_pass || o->shelf_pending<o->shelf_previous)) {
+        o->shelf_previous=o->shelf_pending; o->shelf_pass++;
+        o->shelf_pending=o->shelf_conflicts=o->shelf_parents=o->shelf_blocked=o->shelf_tombstones=0;
+      } else {
+        if (o->rkind==1) {
+          o->dependency+=o->shelf_pending; o->concurrent+=o->shelf_conflicts; o->pending_parents+=o->shelf_parents;
+          o->blocked+=o->shelf_blocked; o->tombstones+=o->shelf_tombstones;
+        }
+        o->rkind++;
+      }
+    }
+    reader_revisions_close(&store,&error); free(page); return status;
+  }
   if (reader_revision_entities_page(store, kind, o->after[0] ? o->after : NULL, 1, 50, acct_collect, page, &error) != READER_REV_OK || page->overflow) {
     status = EXR_DATABASE; acct_text(job, L"无法分页读取接收到的修订。");
   } else if (!page->count) {
     o->rkind++; o->after[0] = 0;
   } else {
-    snprintf(o->after, sizeof(o->after), "%s", page->rows[page->count - 1].key);
     for (size_t i = 0; i < page->count && status == EXR_OK; i++) {
       acct_row *row = &page->rows[i];
       if (acct_cancel_check(job)) { status = EXR_CANCELLED; break; }
+      snprintf(o->after, sizeof(o->after), "%s", row->key);
       if (row->kind == READER_SELECTION_CONCURRENT) { o->concurrent++; continue; }
       if (row->kind == READER_SELECTION_PENDING_PARENTS) { o->pending_parents++; continue; }
       if (row->kind != READER_SELECTION_SAFE) { o->blocked++; continue; }
-      if (row->deleted) { o->tombstones++; continue; }
       char *title = NULL, *sort = NULL; reader_revision_error local = {0};
-      if (o->rkind == 0) {
+      if (!row->deleted) {
         if (reader_revision_book_title(store, row->revision, &title, &local) != READER_REV_OK) { o->project_failed++; continue; }
         sort = acct_nfc_title(title);
         reader_revision_bytes_free(title);
@@ -503,8 +551,18 @@ static exr_status acct_project_step(host_job *job) {
       }
       reader_revision_status code = reader_revision_project(store, kind, row->key, row->revision, sort, NULL, &local);
       free(sort);
-      if (code == READER_REV_OK) o->projected++;
-      else if (code == READER_REV_MISSING_PARENT || code == READER_REV_UNSAFE) o->pending_parents++;
+      if (code == READER_REV_OK) { o->projected++; if (row->deleted) o->tombstones++; }
+      else if (code == READER_REV_MISSING_PARENT) o->pending_parents++;
+      else if (code == READER_REV_UNSAFE) {
+        char *wire=NULL; size_t bytes=0; reader_revision_info current={0}; reader_revision_selection selection={0};
+        reader_revision_status selected=reader_revision_selected(store,kind,row->key,&wire,&bytes,&current,&selection,&local);
+        reader_revision_bytes_free(wire);
+        if (selection.kind==READER_SELECTION_CONCURRENT) o->concurrent++;
+        else if (selection.kind==READER_SELECTION_PENDING_PARENTS) o->pending_parents++;
+        else if (selection.kind==READER_SELECTION_BLOCKED_RESTORE) o->blocked++;
+        else if (selected==READER_REV_OK || selected==READER_REV_NOT_FOUND) o->head_changed++;
+        else o->project_failed++;
+      }
       else o->project_failed++;
     }
   }
@@ -593,7 +651,11 @@ static exr_status acct_import_step(host_job *job) {
     if (o->rkind == 6 || !o->count) return EXR_OK;
   }
   if (acct_cancel_check(job)) return EXR_CANCELLED;
-  return acct_import_one(job, &o->page[o->index++]);
+  exr_status status=acct_import_one(job, &o->page[o->index]);
+  /* Cancellation before sideload commit must revisit the exact same original.
+     A committed import is mapped by acct_import_one even if cancel arrives. */
+  if (status==EXR_OK) o->index++;
+  return status;
 }
 static exr_status acct_receive_job(host_job *job) {
   acct_owner *o = &acct.owner; exr_status status;
@@ -601,14 +663,20 @@ static exr_status acct_receive_job(host_job *job) {
     status = acct_ready(job);
     if (status != EXR_OK) return status;
     if (!acct_directory(acct.work, 1)) { acct_text(job, L"同步缓存目录不可用。"); return EXR_IO; }
+    status=acct_receive_barrier(job); if (status!=EXR_OK) { o->receive_resumable=0; return status; }
     acct_page_clear(o); free(o->cursor_title); free(o->cursor_key); o->cursor_title = o->cursor_key = NULL;
     o->rkind = 0; o->after[0] = 0; o->rseen = 0;
     o->projected = o->concurrent = o->pending_parents = o->blocked = o->tombstones = o->project_failed = 0;
     o->imported = o->import_waiting = o->import_failed = 0;
+    o->dependency=o->head_changed=o->shelf_pending=o->shelf_previous=0;
+    o->shelf_conflicts=o->shelf_parents=o->shelf_blocked=o->shelf_tombstones=0;
+    o->shelf_pass=0; o->receive_pages=0; o->receive_resumable=1; o->receive_incomplete=0;
     o->receiving = 1;
   }
   if (!o->receiving) return EXR_ARGUMENT;
+  status=acct_receive_barrier(job); if (status!=EXR_OK) { o->receiving=0; o->receive_resumable=0; return status; }
   if (acct_cancel_check(job)) { o->receiving = 0; return EXR_CANCELLED; }
+  if (o->receive_pages++ >= 1000) { o->receiving=0; o->receive_incomplete=1; return EXR_OK; }
   if (o->rkind < 5) {
     status = acct_project_step(job);
     if (status == EXR_OK && o->rkind == 5) { /* entering the import phase */
@@ -617,6 +685,7 @@ static exr_status acct_receive_job(host_job *job) {
   } else if (o->rkind == 5) status = acct_import_step(job);
   else status = EXR_OK;
   if (status != EXR_OK || o->rkind >= 6) o->receiving = 0;
+  if (o->rkind>=6) o->receive_resumable=0;
   return status;
 }
 static exr_status account_job_run(host_job *job) {
