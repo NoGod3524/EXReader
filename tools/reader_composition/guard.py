@@ -16,6 +16,7 @@ ROOT_PATHS = frozenset((
     'tools/apple_swift.py',
     'tools/build_apple_product.py',
     'tools/build_apple_host.py',
+    'tools/check_apple_product.py',
 ))
 BASE = 'd263ce5228838ac90c0a0dc13a5193d4a7739681'
 
