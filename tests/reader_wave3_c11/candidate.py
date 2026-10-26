@@ -36,9 +36,10 @@ for name in ('HostWalkthroughTest.java', 'HostReviewTest.java'):
         old = 'By.textContains(title)'
         assert candidate.count(old) == 2
         candidate = candidate.replace(old, 'expectedRow(title)')
-        old = 'device.wait(Until.hasObject(By.pkg(APP)), 10000);'
-        assert candidate.count(old) == 1
-        candidate = candidate.replace(old, 'assertTrue("picker must return to the reader", device.wait(Until.hasObject(By.pkg(APP)), 10000));')
+        # The frozen picker statement is left exactly as written: the candidate only
+        # projects the public title stem and format, it never turns a tolerant wait
+        # into a new hard gate.
+        assert candidate.count('device.wait(Until.hasObject(By.pkg(APP)), 10000);') == 1
         old = 'if (device.hasObject(By.textContains(needle))) return true;'
         assert candidate.count(old) == 1
         candidate = candidate.replace(old, 'if (device.hasObject(needle.startsWith("Imported ") || needle.startsWith("Already in shelf: ") ? By.text(needle) : By.textContains(needle))) return true;')
