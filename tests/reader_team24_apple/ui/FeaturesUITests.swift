@@ -18,14 +18,22 @@ final class FeaturesUITests: XCTestCase {
         return check()
     }
     private func tap(_ id: String) {
-        for _ in 0..<5 {
-            if e(id).exists && e(id).isHittable { break }
-            if e("features.close").exists {
-                let scroll = e("features.scroll")
-                if e(id).exists && e(id).frame.midY < scroll.frame.midY { scroll.swipeDown() } else { scroll.swipeUp() }
+        let scroll = e("features.scroll")
+        let scrollTarget = id.hasPrefix("features.") && !["features.close", "features.refresh", "features.share"].contains(id)
+        for _ in 0..<12 {
+            let target = e(id)
+            let inViewport = !scrollTarget || !scroll.exists || (target.exists && scroll.frame.contains(CGPoint(x: target.frame.midX, y: target.frame.midY)))
+            if target.exists && inViewport && target.isHittable { break }
+            if scrollTarget && scroll.exists {
+                if target.exists && target.frame.midY < scroll.frame.midY { scroll.swipeDown(velocity: .slow) }
+                else { scroll.swipeUp(velocity: .slow) }
             }
         }
-        XCTAssertTrue(wait { self.e(id).exists && self.e(id).isEnabled && self.e(id).isHittable }, "Unavailable \(id) \(app.debugDescription)")
+        XCTAssertTrue(wait {
+            let target = self.e(id)
+            let inViewport = !scrollTarget || !scroll.exists || (target.exists && scroll.frame.contains(CGPoint(x: target.frame.midX, y: target.frame.midY)))
+            return target.exists && inViewport && target.isEnabled && target.isHittable
+        }, "Unavailable \(id) \(app.debugDescription)")
         e(id).tap()
     }
     private func mark(_ name: String) {
