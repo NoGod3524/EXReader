@@ -173,7 +173,7 @@ static exr_status w3_font_import(linux_reader *reader,const reader_command *comm
   const char *name=command->w3_name && command->w3_name[0] ? command->w3_name:base;
   rfl_status code=rfl_import_file(reader->w3_fonts,command->w3_path,name,&control,&record,&created,&problem);
   if(code==RFL_OK) snprintf(result->message,sizeof(result->message),created ? "Font added to the library":"That font is already in the library");
-  else snprintf(result->message,sizeof(result->message),"Font was not added; library unchanged (%.120s)",problem.message);
+  else snprintf(result->message,sizeof(result->message),"Font was not added; library unchanged (%.100s)",problem.message);
   g_free(base);return w3_rfl_status(code);
 }
 static exr_status w3_font_remove(linux_reader *reader,const reader_command *command,reader_result *result) {

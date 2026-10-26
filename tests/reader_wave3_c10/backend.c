@@ -162,7 +162,7 @@ int main(int argc,char **argv) {
   /* A stored font changed on disk is an anomaly: the previous font and page stay usable. */
   {
     char *directory=g_path_get_dirname(library_a),*stored=g_strconcat(directory,"/fonts/",fallback_hash,".font",NULL);
-    gchar *bytes=NULL,*original=NULL;gsize size=0,original_size=0;
+    gchar *bytes=NULL,*original=NULL;gsize original_size=0;
     REQUIRE(g_file_get_contents(stored,&original,&original_size,NULL) && original_size>16);
     bytes=g_malloc(original_size);memcpy(bytes,original,original_size);bytes[original_size/2]^=0x55;
     REQUIRE(g_file_set_contents(stored,bytes,(gssize)original_size,NULL));g_free(bytes);
