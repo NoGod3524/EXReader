@@ -1,0 +1,55 @@
+name: Composition performance entry protocol
+on:
+  push:
+    branches: [codex/reader-product-perf-evidence]
+    paths:
+      - '.github/workflows/reader-composition-perf-protocol.yml'
+      - 'tests/reader_perf_protocol/**'
+      - 'tests/reader_perf_gtk/composition/**'
+      - 'tests/reader_perf_windows/verify_composition.py'
+      - '.github/workflows/reader-composition-perf-gtk.yml'
+      - '.github/workflows/reader-composition-perf-windows.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      - name: Parse and lint both workflows
+        run: |
+          set -o pipefail
+          mkdir -p build/perf-protocol
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 -shellcheck= \
+            .github/workflows/reader-composition-perf-gtk.yml \
+            .github/workflows/reader-composition-perf-windows.yml \
+            .github/workflows/reader-composition-perf-protocol.yml 2>&1 | tee build/perf-protocol/actionlint.log
+      - name: Compile scripts and exercise source, path and evidence protocols
+        run: |
+          set -o pipefail
+          python3 -m py_compile tests/reader_perf_protocol/check.py \
+            tests/reader_perf_gtk/observe.py tests/reader_perf_gtk/sample.py \
+            tests/reader_perf_gtk/composition/summarize.py tests/reader_perf_gtk/composition/verify.py \
+            tests/reader_perf_windows/perf_windows.py tests/reader_perf_windows/diagnose_txt_import.py \
+            tests/reader_perf_windows/verify_composition.py tests/reader_perf_windows/record_artifact.py
+          python3 tests/reader_perf_protocol/check.py 2>&1 | tee build/perf-protocol/protocol.log
+          git diff --exit-code 11042994df180754a11e6d5f828df4277e839c3d HEAD -- \
+            .github/workflows/reader-perf-gtk.yml .github/workflows/reader-perf-windows.yml \
+            tests/reader_perf_gtk/CMakeLists.txt tests/reader_perf_gtk/summarize.py \
+            tests/reader_perf_gtk/verify.py tests/reader_perf_windows/verify_perf_windows.py
+          git rev-parse HEAD | tee build/perf-protocol/source.txt
+          printf 'run=%s attempt=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" | tee build/perf-protocol/run.txt
+      - name: Preserve protocol logs even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-composition-perf-protocol-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/perf-protocol/
+          if-no-files-found: warn
