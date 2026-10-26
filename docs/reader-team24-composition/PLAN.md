@@ -171,3 +171,6 @@ Apple input now pins d684ed369fbd8357d5430f9e4286694a47ef3399, adding first-open
 
 Production round 40367589904/1, source 7840f6a2e0ff7c76cae6416d13c819bb7d6fc2ea, succeeded for macOS and the iPhone/iPad simulator targets: each actual packaged/unpacked production program passed the original 21 native startup checks. This round compiles the verified-original bootstrap and the explicit macOS 12 build target; it does not run macOS 12 or claim the full feature GUI. Apple feature-owner availability and isolated original-control fixtures are later candidates on the Apple branch and are not covered by this production proof.
 
+
+GTK raw static review at 022e66dd: the independent records_resolve callback returns EXR_OK only after public FOUND; reflow/EPUB history is encoded as its actual v2 capture while fixed pages use the dedicated v3 entry. Installed family/capability/origin checks remain explicit and the legacy OFF branch is retained. This is source review only; the GTK candidate remains outside this composition until its native/backend/GUI evidence is reviewed.
+
