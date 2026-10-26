@@ -1,0 +1,64 @@
+name: D18 same-source iPhone iPad native actions and independent storage
+on:
+  push:
+    branches: [codex/reader-wave3-d18]
+    paths: ['tests/reader_wave3_d18/**', '.github/workflows/reader-wave3-d18.yml']
+permissions: {contents: read, actions: read}
+concurrency: {group: reader-wave3-d18, cancel-in-progress: false}
+jobs:
+  guard:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Actions-only syntax and strict seed/add-only policy
+        run: |
+          python3 -m py_compile tests/reader_wave3_d18/*.py
+          python3 tests/reader_wave3_d18/guard.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: 'd18-source-${{github.run_id}}-${{github.run_attempt}}', path: build/d18/guard.json, if-no-files-found: error}
+  native:
+    name: D18 native ${{matrix.host}}
+    needs: guard
+    runs-on: macos-15
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix: {host: [iphone, ipad]}
+    defaults: {run: {shell: bash}}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original frozen SDK ZIPs on Actions only
+        env: {GH_TOKEN: '${{github.token}}'}
+        run: |
+          python3 tests/reader_wave3_d18/producer.py macos
+          python3 tests/reader_wave3_d18/producer.py ${{matrix.host}}
+      - name: Existing native project generator dependency
+        run: ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document
+      - name: Fresh candidate product and real native UI with independent readback
+        run: python3 tests/reader_wave3_d18/run.py ${{matrix.host}}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d18-${{matrix.host}}-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/d18/${{matrix.host}}/
+            build/d18/*-producer-identity.json
+            build/d18/*-producer-metadata.json
+            build/d18/public-state*
+          include-hidden-files: true
+          if-no-files-found: error
+  verify:
+    needs: [guard, native]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original same-run same-attempt ZIPs and all observed actions
+        env: {GH_TOKEN: '${{github.token}}'}
+        run: python3 tests/reader_wave3_d18/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: 'd18-verification-${{github.run_id}}-${{github.run_attempt}}', path: build/d18/verification/verification.json, if-no-files-found: error}
