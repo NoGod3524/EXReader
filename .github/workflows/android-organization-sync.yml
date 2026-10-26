@@ -170,7 +170,9 @@ jobs:
       - name: Build independent organization sync instrumentation
         run: |
           set -o pipefail
-          python3 -m py_compile tests/reader_android_organization_sync/run.py
+          python3 -m py_compile tests/reader_android_organization_sync/run.py tests/reader_android_organization_sync/prepare_sync_341.py
+          python3 tests/reader_android_organization_sync/prepare_sync_341.py
+          python3 -m py_compile tests/reader_android_organization_sync/host_sync_341.py
           ws="$PWD/build/wave3"; stage="$ws/stage"
           gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_android_organization_sync/init.gradle" \
             -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
@@ -196,6 +198,20 @@ jobs:
             -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.HostSyncTest \
             :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/original-sync-runner-gradle.log"
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/original-sync-debug-androidTest.apk"
+      - name: Build strict 3.41 sync UI adapter
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only }}
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"; stage="$ws/stage"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_android_organization_sync/init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.HostSync341Test \
+            :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/sync-341-runner-gradle.log"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/sync-341-debug-androidTest.apk"
+          sha256sum "$ws/artifacts/sync-341-debug-androidTest.apk" > "$ws/artifacts/sync-341-sha256.txt"
       - name: Enable emulator accelerator
         run: sudo chmod 666 /dev/kvm
       - name: Execute organization sync on the actual host
@@ -241,6 +257,21 @@ jobs:
             adb install -r -t build/wave3/artifacts/app-debug.apk
             adb install -r -t build/wave3/artifacts/original-sync-debug-androidTest.apk
             python3 tests/reader_host_session_android/run_ui.py --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/original-sync
+      - name: Execute strict 3.41 sync UI adapter
+        if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t build/wave3/artifacts/app-debug.apk
+            adb install -r -t build/wave3/artifacts/sync-341-debug-androidTest.apk
+            python3 tests/reader_android_organization_sync/host_sync_341.py --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/sync-341
       - name: Preserve build and source evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -250,7 +281,9 @@ jobs:
             build/wave3/logs/
             build/wave3/artifacts/
             build/wave3/evidence/
+            build/android-organization-sync/candidate/provenance.json
           if-no-files-found: error
+
 
 
 
