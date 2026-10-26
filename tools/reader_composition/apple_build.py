@@ -28,7 +28,9 @@ def main():
     sdk, products = out / 'sdk', out / 'products'
     options = ['-DCMAKE_BUILD_TYPE=Release', '-DEXR_BUILD_TESTS=OFF', '-DEXR_BUILD_TOOLS=OFF',
                '-DEXR_ENABLE_AAC=OFF', '-DCMAKE_INSTALL_PREFIX=' + str(sdk)]
-    if args.target == 'iphonesimulator':
+    if args.target == 'macos':
+        options += ['-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0']
+    else:
         options += ['-DCMAKE_SYSTEM_NAME=iOS', '-DCMAKE_OSX_SYSROOT=iphonesimulator',
                     '-DCMAKE_OSX_ARCHITECTURES=arm64', '-DCMAKE_OSX_DEPLOYMENT_TARGET=15.0',
                     '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO']
