@@ -12,6 +12,10 @@ on:
         description: Read the fixed failed Apple artifact without building or testing
         type: boolean
         default: false
+      inspect_android_failure:
+        description: Read the fixed Android path-candidate failure without rebuilding
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -37,7 +41,7 @@ jobs:
           path: build/composition-source.json
           if-no-files-found: error
   inspect-apple:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.inspect_apple_failure }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (inputs.inspect_apple_failure || inputs.inspect_android_failure) }}
     needs: source
     runs-on: ubuntu-22.04
     timeout-minutes: 15
@@ -45,42 +49,48 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
-      - name: Authenticate and inspect only the fixed failed Mac artifact
+      - name: Authenticate and inspect only the selected fixed failure artifact
         env:
           GH_TOKEN: ${{ github.token }}
+          INSPECT_ANDROID: ${{ inputs.inspect_android_failure }}
         run: |
           python - <<'PY'
-          import hashlib, io, json, re, sys, zipfile
+          import hashlib, io, json, os, re, sys, zipfile
           from pathlib import Path
           sys.path.insert(0, 'tools')
           from check_parallel_integration import fetch, download_artifact_zip
-          artifact = 12666310175
-          source = 'd9ca5805952f8069ecbdb7a724af43662d9b0a6e'
+          android = os.environ['INSPECT_ANDROID'] == 'true'
+          if android:
+              artifact, run_id, expected_bytes = 12671293390, 40364381911, 143609682
+              source = '3afaec0d70285b28e115e5258d2f7984d8d1826e'
+              digest = 'd4f6210fc22638ffbf76545b62415c5d4a7e853e5c8fc5de6ffe8d71e8a4d1fb'
+          else:
+              artifact, run_id, expected_bytes = 12666310175, 40350153254, 467513155
+              source = 'd9ca5805952f8069ecbdb7a724af43662d9b0a6e'
+              digest = '9d1f1ff7cba7c4f4c3a1b7a3e068a12e891aa99e2b4fae16a8ad7e2a493b7f10'
           item = fetch('actions/artifacts/' + str(artifact))
-          assert item['workflow_run']['id'] == 40350153254
-          assert item['workflow_run']['head_sha'] == source and not item['expired']
-          assert item['size_in_bytes'] == 467513155
-          digest = '9d1f1ff7cba7c4f4c3a1b7a3e068a12e891aa99e2b4fae16a8ad7e2a493b7f10'
+          assert item['workflow_run']['id'] == run_id and item['workflow_run']['head_sha'] == source
+          assert not item['expired'] and item['size_in_bytes'] == expected_bytes
           assert item['digest'] == 'sha256:' + digest
           raw = download_artifact_zip(artifact)
           assert len(raw) == item['size_in_bytes'] and hashlib.sha256(raw).hexdigest() == digest
           excerpts = []
           with zipfile.ZipFile(io.BytesIO(raw)) as archive:
               for info in archive.infolist():
-                  if not info.filename.endswith('.log') or info.file_size > 50 * 1024 * 1024:
+                  if not info.filename.endswith(('.log', '.txt')) or info.file_size > 50 * 1024 * 1024:
                       continue
                   lines = archive.read(info).decode('utf-8', errors='replace').splitlines()
                   failures = [index for index, line in enumerate(lines)
-                              if re.search(r'XCTAssert|Assertion|error:|failed -|failed \(', line)]
+                              if re.search(r'XCTAssert|Assertion|error:|failed -|failed \(|avc: denied|linkat|open nofollow|RFL_|ROE_', line)]
                   indices = sorted({at for index in failures for at in range(index, min(index + 100, len(lines)))})
                   selected = [lines[index] for index in indices]
                   if selected:
                       excerpts.append({'member': info.filename, 'sha256': hashlib.sha256(archive.read(info)).hexdigest(),
                                        'lines': selected[:800], 'matching_lines': len(selected)})
           assert excerpts, 'no actual failure diagnostics found'
-          result = {'source': source, 'run': 40350153254, 'attempt': 1, 'artifact': artifact,
+          result = {'source': source, 'run': run_id, 'attempt': 1, 'artifact': artifact,
                     'artifact_sha256': digest, 'excerpts': excerpts, 'acceptance': False}
-          out = Path('build/apple-failure-inspection'); out.mkdir(parents=True, exist_ok=True)
+          out = Path('build/reader-failure-inspection'); out.mkdir(parents=True, exist_ok=True)
           (out / 'excerpts.json').write_text(json.dumps(result, indent=2) + '\n')
           for entry in excerpts:
               print(entry['member'])
@@ -89,8 +99,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: apple-fixed-failure-inspection-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/apple-failure-inspection/
+          name: reader-fixed-failure-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-failure-inspection/
           if-no-files-found: error
   production-apple:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.production_apple }}
