@@ -402,7 +402,7 @@ static exr_status acct_prepare_book(host_job *job, const acct_book *book) {
   if (status != EXR_OK || !colon || strcmp(colon + 1, hash) || bytes != book->bytes || bytes > EXR_SIDELOAD_STREAM_LIMIT) {
     o->failed++; acct_text(job, L"本机原书身份与书目不一致，未暂存。"); return EXR_DATABASE;
   }
-  status = acct_pending_check(job);
+  status = acct_receive_barrier(job);
   if (status != EXR_OK) { o->failed++; return status; }
   status = acct_bootstrap(job, book, hash, bytes);
   if (status != EXR_OK) { o->failed++; return status; }
@@ -439,7 +439,7 @@ static exr_status acct_stage_job(host_job *job) {
     if (!o->bound || !o->secret || !acct_directory(acct.work, 1) || !acct_directory(acct.originals, 1)) {
       acct_text(job, L"请先应用凭据和账号地址，再准备同步。"); return EXR_IO;
     }
-    status = acct_pending_check(job);
+    status = acct_receive_barrier(job);
     if (status != EXR_OK) return status;
     acct_page_clear(o); free(o->cursor_title); free(o->cursor_key); o->cursor_title = o->cursor_key = NULL;
     o->seen = o->prepared = o->existing = o->pending = o->failed = o->bootstraps = 0;

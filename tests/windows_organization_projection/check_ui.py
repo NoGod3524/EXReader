@@ -107,6 +107,28 @@ try:
     d,message,detail=sync(b);record('pending-local-intent-blocks-receive','请先恢复' in message and pending.read_bytes()==b'preserve unfinished request')
     ui.M.screenshot(d,out/'pending.bmp');pending.unlink();b.press(d,ui.ACCOUNT.RETRY)
     b.wait(lambda:'同步完成' in b.note(d),timeout=240);record('retry-after-local-recovery',True);b.close_account(d)
+    phase='cancel-original-import'
+    big=(b'large synchronized original text. '*900000);big_hash=hashlib.sha256(big).hexdigest();big_key='txt:'+big_hash
+    large=revision(90,shard=0x61,kind='book',key=big_key,payload={'format':'txt','source_sha256':big_hash,'source_bytes':len(big),'title':'ZZ large book','author':'','favorite':False});add_remote(large)
+    prefix='/dav/exreader-sync-v1/objects/'+big_hash[:2]+'/';dav.directories.add('/dav/exreader-sync-v1/objects/');dav.directories.add(prefix);dav.entries[prefix+big_hash+'.txt']=big
+    c=ui.App(exe,font,out/'device-c');devices.append(c);c.wait_initial_shelf();c.wait_idle()
+    d=c.open_account();c.fill(d,dav.base+'/dav/',user,password,False);c.apply(d,'仅本次会话');c.press(d,ui.ACCOUNT.SYNC)
+    c.wait(lambda:'正在应用云端书籍' in c.note(d),timeout=240)
+    c.wait(lambda:sql(c,'SELECT count(*) FROM reader_books WHERE book_key=?',(big_key,))==[(1,)] and sql(c,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(bookkey,))==[(1,)],timeout=120)
+    class Io(C.Structure):
+        _fields_=[(name,C.c_ulonglong) for name in ('read_ops','write_ops','other_ops','read_bytes','write_bytes','other_bytes')]
+    kernel=C.WinDLL('kernel32',use_last_error=True);kernel.GetProcessIoCounters.argtypes=[C.c_void_p,C.POINTER(Io)];kernel.GetProcessIoCounters.restype=C.c_int
+    def reads():
+        value=Io();assert kernel.GetProcessIoCounters(int(c.process._handle),C.byref(value));return value.read_bytes
+    before=reads();deadline=time.monotonic()+60
+    while reads()-before<1024*1024 and time.monotonic()<deadline and c.enabled(d,ui.ACCOUNT.CANCEL):time.sleep(.001)
+    delta=reads()-before
+    assert delta>=1024*1024 and c.enabled(d,ui.ACCOUNT.CANCEL),('import did not expose an active read boundary',delta,c.note(d))
+    c.press(d,ui.ACCOUNT.CANCEL);c.wait(lambda:'接收已取消' in c.note(d),timeout=120)
+    record('cancel-active-original-read',sql(c,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(big_key,))==[(0,)] and sql(c,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(bookkey,))==[(1,)])
+    c.press(d,ui.ACCOUNT.RETRY);c.wait(lambda:'同步完成' in c.note(d),timeout=240)
+    record('resume-import-without-duplicate',sql(c,'SELECT count(*) FROM reader_local_books WHERE book_key IN (?,?)',(bookkey,big_key))==[(2,)] and sql(c,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(big_key,))==[(1,)])
+    c.close_account(d)
     record('authenticated-webdav-traffic',any(r['method']=='PUT' and r['authenticated'] for r in dav.requests) and any(r['method']=='GET' and r['authenticated'] for r in dav.requests))
     report['accepted']=True
 except Exception as error:
