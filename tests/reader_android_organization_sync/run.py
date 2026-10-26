@@ -41,6 +41,7 @@ try:
     revision('10000000000000000000000000000008','shelf',orphan,{'name':'Missing parent child','parent_id':'30000000000000000000000000000000','ordinal':2})
     revision('10000000000000000000000000000009','membership','shelf:'+shelf+':'+key,{'book_key':key,'collection_kind':'shelf','collection_id':shelf,'ordinal':1})
     assert adb('shell','pm','clear','org.exreader.host').strip()==b'Success'
+    adb('shell','am','start','-W','-n','org.exreader.host/.MainActivity')
     adb('reverse',f'tcp:{server.server.server_port}',f'tcp:{server.server.server_port}')
     payload={'root':'https://127.0.0.1:'+str(server.server.server_port)+'/dav/','user':user,'password':password,'book_key':key,'deleted_key':deleted,'conflict_key':conflict,'shelf_id':shelf,'orphan_id':orphan}
     adb('shell',"run-as org.exreader.host sh -c 'cat > files/organization-sync-input.json'",input=json.dumps(payload).encode())
