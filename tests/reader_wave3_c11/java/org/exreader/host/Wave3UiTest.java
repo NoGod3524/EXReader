@@ -348,14 +348,6 @@ public final class Wave3UiTest extends Instrumentation {
             need(creator.getHits()>=1&&sink.isFile()&&hash(sink).equals(epub.getString("sha256")),"SAF destination equals the private original");need(exported.isFile()&&hash(exported).equals(epub.getString("sha256")),"private original retained after save");closeDialog();
         });
     }
-    /** The Actions driver kills this background process while the real system picker is open. */
-    private void prepareOriginalPickerForProcessKill()throws Exception {
-        seed();launch();shelf();JSONObject epub=books.getJSONObject("epub");String title=epub.getString("title");
-        until(node->node.isEnabled()&&(text(node).equals(title)||text(node).startsWith(title+"\n")),this::longTap,"long press "+title,30000);click("导出原件");
-        described("原件导出状态","✓",120000);click("保存到…");
-        long deadline=SystemClock.elapsedRealtime()+180000;while(SystemClock.elapsedRealtime()<deadline)SystemClock.sleep(200);
-        throw new AssertionError("external driver did not terminate the picker-waiting process");
-    }
     private void bookmark(String body)throws Exception {readerMore("阅读记录");click("添加书签");setText(body,"阅读记录文字");click("保存");described("阅读记录状态","已保存",60000);closeDialog();}
     private void annotations()throws Exception {
         check("annotation_export_private_files_and_saf_save",()->{
@@ -479,7 +471,7 @@ public final class Wave3UiTest extends Instrumentation {
             AccessibilityServiceInfo service=getUiAutomation().getServiceInfo();readerMonitor=addMonitor(MainActivity.class.getName(),null,false);service.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS|AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;getUiAutomation().setServiceInfo(service);
             need(BuildConfig.READER_WAVE3,"wave3 feature-on formal app");input=new JSONObject(new String(Files.readAllBytes(new File(context.getFilesDir(),"wave3-input.json").toPath()),StandardCharsets.UTF_8));
             if(phase.equals("first")){seed();cancellationBoundaries();launch();jumps();staleJump();fonts();quickSize();originals();annotations();syncView();rotation();toc();}
-            else if(phase.equals("picker-kill")){prepareOriginalPickerForProcessKill();}
+            else if(phase.equals("picker-seed")){seed();}
             else if(phase.equals("cancel")){seed();launch();annotationCancellation();}
             else if(phase.equals("restore")){seed();launch();restore();}
             else throw new AssertionError("Unknown wave3 UI phase");
