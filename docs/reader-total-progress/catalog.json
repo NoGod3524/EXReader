@@ -186,6 +186,19 @@
       "doc": "docs/reader-wave3-c09/root-validation.json",
       "source_doc_commit": "0d2903e62fdb0f1979f50722c3c972bf586ae085",
       "source_prefix": "f92d1bb9"
+    },
+    "gtk_wave3_export_history": {
+      "run": 40385948659,
+      "doc": "docs/reader_gtk_raw_wave3/HANDOFF.md",
+      "source_doc_commit": "77d4c5ec055d463c818b26414f34b15fc9bf01ad",
+      "source_prefix": "af87ba8d",
+      "artifact": 12680198656,
+      "sha256": "6a8fbff67acd1caf3136ba9c96fee373f89e8ca1bc21243eeeed3c8b4cb69e52",
+      "bytes": 93760657,
+      "required_cases": [
+        "original_export_matches_source_bytes",
+        "history_back_forward_after_real_landing"
+      ]
     }
   },
   "requirements": [
@@ -578,18 +591,22 @@
       "group": "host",
       "platform": "linux",
       "title": "Linux GTK：宿主原件导出、系统保存及逐字节回读",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "gtk_wave3_export_history"
+      ],
+      "note": "真实 GTK GUI 单独验收；最终共同源码与其他保留回归仍需另行复验。"
     },
     {
       "id": "H.linux.jump_history",
       "group": "host",
       "platform": "linux",
       "title": "Linux GTK：真实页面/搜索定位后的历史后退/前进",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "gtk_wave3_export_history"
+      ],
+      "note": "真实 GTK GUI 单独验收；最终共同源码与其他保留回归仍需另行复验。"
     },
     {
       "id": "H.linux.sync_account_status",
