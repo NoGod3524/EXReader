@@ -465,7 +465,7 @@ same-run verification before admission.
 
 Independent candidate `0e97877f29dc1c763b2e45111625d9a1393861d2` completed
 [40394887452/1](https://github.com/NoGod3524/EXReader/actions/runs/40394887452),
-job `121825182796`. Its same-source packaged GTK host passed the new 48-check
+job `121825182796`. Its same-source packaged GTK host passed the new 47-check
 account/receive suite and the unchanged 46-check baseline suite. The workflow
 verified both reports' source, run, attempt and packaged executable identity,
 and checked the prior run's corresponding reports and identity in Actions.
