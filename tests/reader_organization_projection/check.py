@@ -61,6 +61,13 @@ ancestor=rev(16,'tag','4'*32,{'name':'Ancestor'});ancestor['id']='e'*32;receive(
 resolved=rev(17,'tag','5'*32,{'name':'Resolved'},[a['id'],b['id']]);receive(resolved)
 assert all(r['result']==0 for r in scan('tag',1))
 assert sql("select name from reader_tags where tag_id in ('"+'4'*32+"','"+'5'*32+"') order by name")==[('Missing',),('Resolved',)]
+fault=rev(18,'tag','6'*32,{'name':'Fault'});receive(fault)
+with sqlite3.connect(db) as conn:
+    conn.execute("CREATE TRIGGER projection_failure BEFORE INSERT ON reader_tags WHEN NEW.name='Fault' BEGIN SELECT RAISE(ABORT,'test failure'); END")
+failed=json.loads(subprocess.run([str(exe),str(db),'page','tag','-','100'],check=True,capture_output=True,text=True).stdout)
+assert failed['status']==failed['error']==3 and len(failed['rows'])==3, failed
+with sqlite3.connect(db) as conn: conn.execute('DROP TRIGGER projection_failure')
+assert all(r['result']==0 for r in scan('tag',1))
 assert sql('select count(*) from reader_outbox')==[(0,)]
 (folder/'evidence.json').write_text(json.dumps({'head':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checks':['bounded_pages','dependency_rescan','hierarchy','memberships_without_local_original','tombstones_restore','replay','missing_ancestor','concurrent_heads','no_outbox']}))
 
