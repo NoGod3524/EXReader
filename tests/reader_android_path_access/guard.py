@@ -14,7 +14,7 @@ BLOBS = {
     'apps/reader/font-library/src/library.cpp': 'ba1df4e12c3e9d59dbae830eafd244cb160a6411',
     'apps/reader/original-export/src/original_export.cpp': '52b5c467453d77b7450634a82bc83f1ea171a01b',
     'tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java': '02e8fdce97c7bb749f61ee8791672591f4134adb',
-    'tests/reader_android_reading/java/org/exreader/host/ReadingUiTest.java': 'f1fcaa8123a99b02aa27a857e8a4ec28e08fc323',
+    'tests/reader_android_reading/java/org/exreader/host/ReadingUiTest.java': '220192316a255d25af86cee3c38a030b3498ef75',
     'tests/reader_android_reading/run_ui.py': 'c8ede1e690f9f626baacbb6750f7837a941d485e',
     'tests/reader_wave3_c11/report.py': 'ddbb7e50820239f1e6281e41959c4d4bbca921b3',
 }
