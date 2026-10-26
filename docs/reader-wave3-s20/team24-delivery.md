@@ -32,3 +32,18 @@ iPad 原失败 `test01ImportDeduplicateAndErrors`；`test13` 明示通过。首�
 原 ZIP、SHA256SUMS、manifest.json 和中文安装说明随每个目标同轮工件上传；六目标汇总另列实际程序 SHA、SDK 和生产 source。Windows 解压启动 EXReader.exe；Linux 启动 Start-EXReader.sh；macOS 打开 EXReader.app；Android 仅 API34 x86_64 模拟器 APK；iPhone/iPad 仅模拟器 .app。真机、屏幕阅读器人工体验与商店发布未测。尚未组合其他五团队的新 UI，不声称整个六平台产品完成。
 
 后续轻量记录：`680d58156b796f47e71e45878c3cc4d423901005` / `40276021294` 已通过原工件身份验证和失败提取。`685aa1c4c28047e38970c05608ef7a39f18852cf` / `40276629900` 已通过交付协议检查并输出前述现存摘要。两轮业务平台均 skip，不能与 `5527e604` 的完整轮混用。
+
+## 最终组合可复用接口与原入口边界
+
+| 接口 | 实际作用 | 最终组合使用条件 |
+|---|---|---|
+| `assemble.py` / `unpack.py` | 平台产出组装、生产 build.json source/SDK 绑定、内外 manifest、原 ZIP 字节及每文件摘要核验 | root composition guard 先登记唯一组合 source 与 SDK/profile 依赖；传相同不可变候选，不混旧 source |
+| `delivery.py` | 六目标路径、短安装说明、摘要和 manifest 公共契约 | 延用实际包形态与既有版本 |
+| `desktop.py` | Linux 用户启动器、fresh 解包程序与生产清单一致性、运行依赖核验 | 在真实平台 Actions runner 执行，再跑原业务 GUI 驱动 |
+| `mobile.py` 的 Android adapter | 原 builder 安装 SDK/product 后安装六模块，显式开启四 feature，并保留原构建身份/门禁 | SDK、NDK、extra prefix 与 profile 来源必须被 composition guard 显式登记；不能代表其他 Android 新 UI HEAD 已通过 |
+| `diagnostics.py` / `report.py` | 具名失败、首次断言、45项逐case判定、source/run/attempt/ZIP/程序矩阵 | 使用同轮真实驱动结果；纯函数不授予平台验收 |
+| 原 `.github/workflows/reader-wave3-s20.yml` / `guard.py` | d263 固定 seed、S20 exclusive write set、冻结 SDK/platform 判据与原驱动完整轮 | 只授予 S20 独占来源；未放宽为六队最终组合入口 |
+
+最终 root 使用独立 composition guard；本队本源完整业务证据只绑定 `5527e604d681afd28858c93c3ba19c9f3a569f94`。本轮既不包含另外五队新 UI 的最终组合，也不包含 Android 团队尚未通过的新 UI HEAD。
+
+报告标记修正源码 `a41bcf2f5ab3a47a079d0f76d238352e3a6e4174` 的轻量 run `40278164857` 已通过；完整业务平台均 skip。这只验证后续报告源码，不能给该源码补贴 `5527e604` 的业务通过。
