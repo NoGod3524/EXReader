@@ -61,9 +61,9 @@ struct HostWave3Sheet: View {
             }
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    originalSection
                     annotationSection
                     fontSection
-                    originalSection
                     historySection
                     syncSection
 #if EXR_APPLE_HOST_REVIEW
@@ -77,6 +77,9 @@ struct HostWave3Sheet: View {
             }
             Text(state.message).font(.caption).frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityIdentifier("features.status")
+            if let url = state.exportURL {
+                HostWave3ShareButton(url: url).disabled(state.busy)
+            }
             HStack {
                 Button("刷新详情", action: actions.refresh).disabled(state.busy || ownerBusy)
                     .accessibilityIdentifier("features.refresh")
@@ -201,7 +204,6 @@ struct HostWave3Sheet: View {
                 if let url = state.exportURL {
                     Text(url.lastPathComponent).font(.caption).lineLimit(2)
                         .accessibilityIdentifier("features.export.filename")
-                    HostWave3ShareButton(url: url).disabled(state.busy)
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
         } label: { Text("导出与分享") }

@@ -377,6 +377,9 @@ struct LibraryScreen: View {
                 }
             }
             .buttonStyle(.bordered)
+#if os(iOS)
+            .dynamicTypeSize(compactLibrary ? .medium : dynamicTypeSize)
+#endif
             .disabled(model.busy)
             .padding(.vertical, 8)
             }
@@ -505,12 +508,12 @@ struct ReaderScreen: View {
 
     private var annotationTools: some View {
         HStack(spacing: 10) {
+            Button { model.prepareSearch(); showSearch = true } label: { hostActionLabel("查找") }
+                .accessibilityIdentifier("reader.search")
             Button { showSelection = true } label: { hostActionLabel("选文") }
                 .accessibilityIdentifier("reader.select")
             Button { showNotes = true } label: { hostActionLabel("标注 \(model.notes.count)") }
                 .accessibilityIdentifier("reader.notes")
-            Button { model.prepareSearch(); showSearch = true } label: { hostActionLabel("查找") }
-                .accessibilityIdentifier("reader.search")
             Button { model.prepareNavigation(); showNavigation = true } label: { hostActionLabel("目录") }
                 .accessibilityIdentifier("reader.navigation")
         }.buttonStyle(.bordered).disabled(model.busy)
@@ -599,7 +602,7 @@ struct ReaderScreen: View {
 
             if compactTools {
                 ScrollView(.horizontal) {
-                    HStack(spacing: 16) { pagingTools; fontTools; annotationTools }.padding(.horizontal, 8)
+                    HStack(spacing: 16) { annotationTools; pagingTools; fontTools }.padding(.horizontal, 8)
                 }.fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("reader.tools.scroll")
             } else {
