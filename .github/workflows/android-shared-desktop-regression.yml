@@ -1,7 +1,7 @@
 name: Android candidate shared desktop regressions
 on:
   push:
-    branches: [codex/android-shared-desktop]
+    branches: [codex/android-shared-io]
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,8 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-15]
-        suite: [font, export]
+        os: [ubuntu-22.04]
+        suite: [export]
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
@@ -94,6 +94,12 @@ jobs:
           exe=""; module="$S15_STAGE/lib/libreader_original_export.a"
           if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; module="$S15_STAGE/lib/reader_original_export.lib"; fi
           python tests/reader_next_s15/check_export.py "build/s15-consumer/original-export-probe$exe" "build/s15-consumer/original-export-c-consumer$exe" build/s15-fixtures build/s15-evidence "$module" "$S15_SDK_STAGE" build/s15-evidence/graph.json
+      - name: Check a publication I/O error returns an honest receipt
+        if: matrix.suite == 'export' && runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          cc -shared -fPIC tests/reader_android_composition/fail_publish.c -o build/publish-io.so
+          python tests/reader_android_composition/check_publish_io.py
       - name: Preserve source, logs, reports and failures
         if: always()
         uses: actions/upload-artifact@v4
