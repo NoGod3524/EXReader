@@ -87,7 +87,7 @@ public final class HostSyncTest extends Instrumentation {
     }
     private String sourceHash(NativeLibrary library,long id)throws Exception{MessageDigest digest=MessageDigest.getInstance("SHA-256");try(NativeLibrary.Source source=library.source(id)){byte[] chunk=new byte[65536];for(long at=0;at<source.size;){int count=source.read(at,chunk,(int)Math.min(chunk.length,source.size-at));need(count>0,"public source read");digest.update(chunk,0,count);at+=count;}}StringBuilder hash=new StringBuilder();for(byte value:digest.digest())hash.append(String.format(java.util.Locale.ROOT,"%02x",value&255));return hash.toString();}
     private void inspect()throws Exception{
-        String[] identity=NativeLibrary.syncIdentity();need(identity.length==4&&identity[0].equals("3.40.0")&&identity[1].contains("libexreader.so")&&identity[2].equals(identity[1])&&identity[3].contains("libexreader_host.so"),"same shared public SDK provider");
+        String[] identity=NativeLibrary.syncIdentity();need(identity.length==4&&identity[0].equals(arguments.getString("sdk_version","3.40.0"))&&identity[1].contains("libexreader.so")&&identity[2].equals(identity[1])&&identity[3].contains("libexreader_host.so"),"same shared public SDK provider");
         try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath());CatalogStore catalog=new CatalogStore(context,new File(context.getFilesDir(),"reader-catalog.db"))){
             NativeLibrary.Book[] books=library.books();need(books.length==2,"exact original deduplication");long local=0,remote=0;for(NativeLibrary.Book book:books){if(book.format==NativeLibrary.FORMAT_TXT)local=book.id;else if(book.format==NativeLibrary.FORMAT_EPUB)remote=book.id;}
             need(local>0&&remote>0,"both SDK originals retained");long[] progress=library.progress(local);need(progress[0]==1&&progress[1]==8,"existing local progress unchanged");need(library.notes(local).length==0,"zero local SDK note copies");
@@ -99,6 +99,7 @@ public final class HostSyncTest extends Instrumentation {
         context=getTargetContext();phase=arguments.getString("phase");Bundle result=new Bundle();Throwable failure=null;
         try{
             AccessibilityServiceInfo service=getUiAutomation().getServiceInfo();service.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;getUiAutomation().setServiceInfo(service);
+            String expectedSdk=arguments.getString("sdk_version","3.40.0");need(expectedSdk.equals("3.40.0")||expectedSdk.equals("3.41.0"),"supported expected SDK version");
             need(BuildConfig.READER_SYNC,"formal sync build enabled");File incoming=new File(context.getFilesDir(),"host-ui-input.json");input=new JSONObject(new String(Files.readAllBytes(incoming.toPath()),StandardCharsets.UTF_8));Files.delete(incoming.toPath());
             if(phase.equals("first")){
                 check("public_sdk_seed_then_real_activity",()->{seed();launch();panel();});
@@ -138,7 +139,7 @@ public final class HostSyncTest extends Instrumentation {
         }catch(Throwable error){failure=error;if("semantics".equals(phase))try{capture("failure");}catch(Throwable captureError){error.addSuppressed(captureError);}}
         finally{if("semantics".equals(phase))try{getUiAutomation().executeShellCommand("settings put system font_scale 1.0").close();}catch(Exception ignored){}}
         try{
-            JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("api",android.os.Build.VERSION.SDK_INT).put("abi",android.os.Build.SUPPORTED_ABIS[0]).put("passed",failure==null).put("checks",checks).put("count",checks.length()).put("observations",observations);
+            JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("expected_sdk_version",arguments.getString("sdk_version","3.40.0")).put("phase",phase).put("pid",android.os.Process.myPid()).put("api",android.os.Build.VERSION.SDK_INT).put("abi",android.os.Build.SUPPORTED_ABIS[0]).put("passed",failure==null).put("checks",checks).put("count",checks.length()).put("observations",observations);
             if(failure!=null)report.put("failed_check",activeCheck).put("failure_class",failure.getClass().getName()).put("failure",failure.getMessage());
             Files.write(new File(context.getFilesDir(),"host-ui-"+phase+".json").toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));
             result.putString("stream",failure==null?"HOST_SYNC_UI_PASS "+phase:"HOST_SYNC_UI_FAIL "+phase);finish(failure==null?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);

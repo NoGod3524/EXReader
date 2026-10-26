@@ -17,6 +17,7 @@ def main():
     assert os.environ.get('GITHUB_ACTIONS')=='true'
     p=argparse.ArgumentParser()
     for name in ('fixture','reading-fixtures','output'):p.add_argument('--'+name,type=Path,required=True)
+    p.add_argument('--sdk-version',choices=('3.40.0','3.41.0'),default='3.40.0')
     a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
     identity={key:os.environ[value] for key,value in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]}
     user='host-'+secrets.token_hex(16);password=secrets.token_hex(32);authorization='Basic '+base64.b64encode((user+':'+password).encode()).decode();sensitive=[value.encode() for value in (user,password,authorization)]
@@ -88,13 +89,13 @@ def main():
                 except BaseException as error:monitor_failure.append(type(error).__name__+': '+str(error))
                 finally:server.release.set();listing_release.set()
             thread=threading.Thread(target=monitor,daemon=True);thread.start()
-            command=['shell','am','instrument','-w','-r','-e','phase',phase]
+            command=['shell','am','instrument','-w','-r','-e','phase',phase,'-e','sdk_version',a.sdk_version]
             for key,value in identity.items():command.extend(('-e',key,value))
             raw=adb(*command,package+'.test/'+package+'.HostSyncTest',timeout=300);save(phase+'-instrumentation.txt',raw)
             report=json.loads(adb('exec-out','run-as',package,'cat','files/host-ui-'+phase+'.json'));save(phase+'-report.json',(json.dumps(report,ensure_ascii=False,indent=2)+'\n').encode())
             print(json.dumps({'phase':phase,'passed':report.get('passed'),'expected_checks':expected[phase],'actual_checks':report.get('checks'),'failed_check':report.get('failed_check'),'failure_class':report.get('failure_class'),'failure':report.get('failure'),'observations':report.get('observations',[])},ensure_ascii=False),flush=True)
             stop.set();thread.join(10);assert not thread.is_alive() and not monitor_failure,monitor_failure
-            assert all(report.get(key)==value for key,value in identity.items()) and report['phase']==phase and report['passed'] is True
+            assert all(report.get(key)==value for key,value in identity.items()) and report['expected_sdk_version']==a.sdk_version and report['phase']==phase and report['passed'] is True
             assert [row['name'] for row in report['checks']]==expected[phase] and all(row['pass'] is True for row in report['checks'])
             assert ('HOST_SYNC_UI_PASS '+phase).encode() in raw and b'INSTRUMENTATION_CODE: -1' in raw
             assert report['count']==len(expected[phase]);phases.append(report)
