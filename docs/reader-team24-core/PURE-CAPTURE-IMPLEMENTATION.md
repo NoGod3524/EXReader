@@ -49,3 +49,51 @@ pin. It builds only the prerequisite SDK, catalog, revisions and reading-state
 profiles; it runs no unrelated feature package or SDK format acceptance. Root's
 separately authorized one S18/S19 targeted round remains pending until this
 capability gate passes; the core branch's original protected tree is retained.
+
+## Accepted focused installed capability
+
+Root authorized focused attempt 3 after review of the TXT fix and existing
+reader-reading-state fixture/API use. Source
+`347165fe601f1bdb0cd3bb1da4c672f696195a4e`,
+[run 40348964690/1](https://github.com/NoGod3524/EXReader/actions/runs/40348964690),
+passed all three actual producer jobs and independent same-source/attempt
+original-ZIP/program binding. The admitted production candidate remains
+`a911cd0e8405a362dae1bb489190de02c4c81d51` with the three exact blobs above.
+
+The installed C11/C++17 programs ran separately against default 0.1.0, raw
+0.2.0 with the pure option OFF, and raw 0.2.0 with it ON. Each uses an independent
+work directory and each profile has its own clean install prefix. They passed
+actual TXT/EPUB capture, v1/v2 exact old-wire comparison and public resolve;
+fixed-page NUL range and nullable/empty tag preservation; invalid version,
+mode/store and output-clear refusals; revision/history and outbox row-count
+before/after checks. Both capability macros were independently refused when
+zero or undefined. Installed old-header bytes, library-symbol capability and
+exported compile definitions matched the declared OFF/ON profiles.
+
+[Strict evidence artifact 12662907379](https://github.com/NoGod3524/EXReader/actions/runs/40348964690/artifacts/12662907379)
+contains `evidence.json` and all three original platform ZIPs. Size `69132640`,
+SHA-256 `bdf5dfc7110fb2d25c68ab0eda71d7d456198d35e18de3d5b48d6703d83a2ee9`.
+
+| Original platform ZIP | ID | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| Linux | 12662903106 | 26628880 | `efd63cd62ca220723796daedaaf40500a995b99a7a4fe0f7f28c0645f39f696c` |
+| Windows | 12662663077 | 20116158 | `73ad00d3733cde654519224a6e06bffc8f3a41b9a6127a5777ffff3f947f5ded` |
+| macOS | 12663346083 | 22762946 | `0939be5cc519c21eec4a622f2d8d6af7a1a964bc7640c46a59acb60dd94989d7` |
+
+Windows ON C program: `6804480` bytes, SHA-256
+`bab968278627bf21767693345a971c49c5306e4c94c90b99ddac6dc938c7a748`;
+ON C++: `6804480` bytes, SHA-256
+`c3f48571f79145dc1046ef6cd9273cd2ae4de73fcadc33ee41c47265c81d1346`.
+The strict JSON records all eighteen actual program identities and the
+platform reports. The earlier focused failures `40279580785/1` and
+`40279921298/1` remain failures for their own sources.
+
+Windows adoption must consume the exact three-file candidate, enable both
+`EXR_READER_SELECTOR_BYTES_CANDIDATE=ON` and
+`EXR_READER_PURE_CAPTURE_CANDIDATE=ON`, include the new public header and link
+the installed `EXReaderReadingState::reader_reading_state_codec` target (or the
+existing resolver target that publicly carries it). Package 0.2.0 alone is not
+the capability admission. Delete the handwritten private encoder declaration;
+pass the actual anchor version and preserve all caller error handling.
+No SDK or old guard change is part of this admission. GUI, device, screen-reader
+and full-product acceptance are still separate.
