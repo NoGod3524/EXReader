@@ -58,10 +58,10 @@ static void acct_detail_refresh(void) {
     }
   }
   if (!acct_job_running())
-    swprintf(at, left, L"接收：已应用 %llu，并发版本 %llu（不自动选择），待依赖 %llu，受限 %llu，墓碑 %llu（保留本机副本），"
+    swprintf(at, left, L"接收：已应用 %llu，并发版本 %llu（不自动选择），缺祖先 %llu，受限 %llu，墓碑 %llu，待依赖 %llu，版本已变化 %llu，"
       L"已导入 %llu，等待原件 %llu，导入失败 %llu，应用失败 %llu",
       (unsigned long long)o->projected, (unsigned long long)o->concurrent, (unsigned long long)o->pending_parents,
-      (unsigned long long)o->blocked, (unsigned long long)o->tombstones, (unsigned long long)o->imported,
+      (unsigned long long)o->blocked, (unsigned long long)o->tombstones, (unsigned long long)o->dependency, (unsigned long long)o->head_changed, (unsigned long long)o->imported,
       (unsigned long long)o->import_waiting, (unsigned long long)o->import_failed, (unsigned long long)o->project_failed);
   if (acct.detail) SetWindowTextW(acct.detail, acct.detail_text);
 }
@@ -88,14 +88,18 @@ static void acct_begin_stage(void) {
   host_job *job;
   InterlockedExchange(&acct.cancelled, 0);
   acct.stage_failed = acct.recv_failed = acct.recv_done = 0; acct.want_stage = 0;
+  acct.owner.receive_resumable = 0;
   job = acct_job(JOB_ACCOUNT_STAGE, ACCT_STAGE_BEGIN);
   if (!job) { acct_notice(L"无法建立同步准备任务。"); acct_controls(); return; }
   acct_notice(L"正在准备本机原书；完成前不会启动网络。");
   job_submit(job); acct_timer(); acct_controls();
 }
 static void acct_begin_receive(void) {
-  host_job *job = acct_job(JOB_ACCOUNT_RECEIVE, ACCT_RECV_BEGIN);
+  int resume=acct.owner.receive_resumable;
+  host_job *job = acct_job(JOB_ACCOUNT_RECEIVE, resume ? ACCT_RECV_NEXT : ACCT_RECV_BEGIN);
   if (!job) { acct.recv_failed = 1; acct_notice(L"无法建立接收任务。"); acct_controls(); return; }
+  InterlockedExchange(&acct.cancelled,0);
+  if (resume) { acct.owner.receiving=1; acct.owner.receive_pages=0; acct.owner.receive_incomplete=0; }
   acct.recv_failed = acct.recv_done = 0;
   acct_notice(L"正在应用云端书籍信息并导入已下载的原书。");
   job_submit(job); acct_controls();
@@ -325,12 +329,24 @@ static void acct_job_accept(host_job *job) {
     else if (ok && o->receiving && !g.pending) {
       next = acct_job(JOB_ACCOUNT_RECEIVE, ACCT_RECV_NEXT);
       if (next) job_submit(next); else { o->receiving = 0; acct.recv_failed = 1; acct_notice(L"无法继续接收云端书籍。"); }
+    } else if (ok && o->receiving) {
+      o->receiving=0; acct.recv_failed=1;
+      acct_notice(L"接收已暂停；本地任务完成后可重试继续。");
+    } else if (ok && o->receive_incomplete) {
+      acct.recv_failed=1;
+      acct_notice(L"接收达到本次工作量上限；已完成的部分保留，可重试继续。");
+      product_shelf_schedule(0, 0);
     } else if (ok) {
       wchar_t text[256];
-      acct.recv_done = 1;
+      int unresolved=o->concurrent || o->pending_parents || o->blocked || o->dependency || o->head_changed || o->project_failed || o->import_failed || o->import_waiting;
+      acct.recv_done = !unresolved; acct.recv_failed = unresolved;
       if (o->import_failed)
-        swprintf(text, 256, L"同步已完成，但 %llu 本原书的书目映射待恢复；正在自动修复，也可点击“刷新”。",
+        swprintf(text, 256, L"接收尚未完成：%llu 本原书的书目映射待恢复；正在自动修复，也可重试。",
           (unsigned long long)o->import_failed);
+      else if (unresolved)
+        swprintf(text, 256, L"接收尚未完成：并发 %llu，缺祖先 %llu，待依赖 %llu，版本变化 %llu；详见状态，可重试。",
+          (unsigned long long)o->concurrent, (unsigned long long)o->pending_parents,
+          (unsigned long long)o->dependency, (unsigned long long)o->head_changed);
       else
         swprintf(text, 256, L"同步完成：已应用 %llu 项，导入 %llu 本；并发 %llu、墓碑 %llu 保持显式状态。",
           (unsigned long long)o->projected, (unsigned long long)o->imported, (unsigned long long)o->concurrent, (unsigned long long)o->tombstones);
@@ -340,7 +356,7 @@ static void acct_job_accept(host_job *job) {
         if (repair) { g.product_ready = 0; job_submit(repair); }
       } else product_shelf_schedule(0, 0);
     } else {
-      o->receiving = 0; acct.recv_failed = !cancelled;
+      o->receiving = 0; acct.recv_failed = 1;
       acct_notice(cancelled ? L"接收已取消；已应用的信息会保留。可重试。" : job->message[0] ? job->message : L"接收云端书籍失败，可重试。");
     }
   }
