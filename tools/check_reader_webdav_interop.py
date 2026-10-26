@@ -119,15 +119,17 @@ def verify_service(service, archive, source, run_id, attempt, module):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--workflow', default=WORKFLOW)
     args = parser.parse_args()
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'verify only in GitHub Actions')
+    workflow = args.workflow
     source = os.environ['GITHUB_SHA']
     run_id, attempt = int(os.environ['GITHUB_RUN_ID']), int(os.environ['GITHUB_RUN_ATTEMPT'])
     args.output.mkdir(parents=True, exist_ok=False)
     module = harness()
     jobs_expected = {'real WebDAV interop (%s)' % s: s for s in module.SERVICES}
     result = {'schema': 'reader-webdav-interop-summary-v1', 'accepted': False, 'source_sha': source, 'run_id': run_id,
-              'attempt': attempt, 'workflow': WORKFLOW, 'start_point': module.START,
+              'attempt': attempt, 'workflow': workflow, 'start_point': module.START,
               'scope': 'Job-local pinned real WebDAV services against installed EXReaderWebDAV/Revisions/Sync on Linux',
               'real_user_cloud': False, 'six_platform_client_accepted': False, 'windows_winhttp_covered': False,
               'inherits_tls_fixture_conclusions': False, 'complete_product': False,
@@ -135,7 +137,7 @@ def main():
     try:
         run = fetch(f'actions/runs/{run_id}')
         require(run.get('id') == run_id and run.get('head_sha') == source and run.get('run_attempt') == attempt and
-                run.get('path') == WORKFLOW and run.get('event') in ('push', 'workflow_dispatch'), 'caller identity differs')
+                run.get('path') == workflow and run.get('event') in ('push', 'workflow_dispatch'), 'caller identity differs')
         jobs = pages(f'actions/runs/{run_id}/attempts/{attempt}/jobs', 'jobs')
         require({job['name'] for job in jobs} == set(jobs_expected) | {SUMMARY_JOB}, 'job set differs')
         for job in jobs:

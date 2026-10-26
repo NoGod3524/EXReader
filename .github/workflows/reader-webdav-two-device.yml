@@ -1,0 +1,105 @@
+name: Reader WebDAV composed-source interop
+on:
+  push:
+    branches: [codex/reader-webdav-two-device]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  service:
+    name: real WebDAV interop (${{ matrix.service }})
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [apache, nextcloud]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Bind checkout to the composed-source commit
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor 11042994df180754a11e6d5f828df4277e839c3d HEAD
+          mkdir -p build/interop-logs
+          git rev-parse HEAD | tee build/interop-logs/source.txt
+      - name: Syntax-check package Python in the cloud
+        run: python3 -m py_compile tests/reader_webdav_interop/run_interop.py tools/check_reader_webdav_interop.py
+      - name: Install Linux native TLS XML and SHA dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
+      - name: Build install and test the original product provider
+        run: |
+          mkdir -p build/interop-logs
+          ws="$PWD"
+          echo "INTEROP_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/interop-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/interop-product-stage" 2>&1 | tee build/interop-logs/product-configure.log
+          cmake --build build/interop-product --verbose 2>&1 | tee build/interop-logs/product-build.log
+          ctest --test-dir build/interop-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/interop-product 2>&1 | tee build/interop-logs/product-install.log
+      - name: Build and install the unchanged WebDAV revision and sync modules
+        run: |
+          cmake -S extras/webdav -B build/interop-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$INTEROP_WORKSPACE/build/interop-dav-stage" 2>&1 | tee build/interop-logs/dav-configure.log
+          cmake --build build/interop-dav --verbose 2>&1 | tee build/interop-logs/dav-build.log
+          cmake --install build/interop-dav
+          cmake -S apps/reader/revisions -B build/interop-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$INTEROP_WORKSPACE/build/interop-product-stage" -DCMAKE_INSTALL_PREFIX="$INTEROP_WORKSPACE/build/interop-revision-stage" 2>&1 | tee build/interop-logs/revision-configure.log
+          cmake --build build/interop-revisions --verbose 2>&1 | tee build/interop-logs/revision-build.log
+          cmake --install build/interop-revisions
+          prefixes="$INTEROP_WORKSPACE/build/interop-dav-stage;$INTEROP_WORKSPACE/build/interop-revision-stage;$INTEROP_WORKSPACE/build/interop-product-stage;$INTEROP_WORKSPACE/build/interop-sync-stage"
+          echo "INTEROP_PREFIXES=$prefixes" >> "$GITHUB_ENV"
+          cmake -S apps/reader/sync -B build/interop-sync -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefixes" -DCMAKE_INSTALL_PREFIX="$INTEROP_WORKSPACE/build/interop-sync-stage" 2>&1 | tee build/interop-logs/sync-configure.log
+          cmake --build build/interop-sync --verbose 2>&1 | tee build/interop-logs/sync-build.log
+          cmake --install build/interop-sync
+      - name: Build the installed-package interop consumer
+        run: |
+          cmake -S tests/reader_webdav_interop/consumer -B build/interop-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$INTEROP_PREFIXES" 2>&1 | tee build/interop-logs/consumer-configure.log
+          cmake --build build/interop-consumer --verbose 2>&1 | tee build/interop-logs/consumer-build.log
+          sha256sum build/interop-consumer/interop-consumer | tee build/interop-logs/consumer.sha256
+      - name: Real ${{ matrix.service }} service over verified TLS with two product libraries
+        run: |
+          python3 tests/reader_webdav_interop/run_interop.py --service "${{ matrix.service }}" \
+            --consumer build/interop-consumer/interop-consumer --output build/interop-evidence --work build/interop-work
+      - name: Remove job-local service containers and test trust
+        if: always()
+        run: |
+          docker ps -aq --filter label=exreader-interop=1 | xargs -r docker rm -f -v
+          sudo rm -f /usr/local/share/ca-certificates/exreader-interop-*.crt
+          sudo update-ca-certificates --fresh >/dev/null
+          sudo rm -rf build/interop-work
+      - name: Preserve service evidence and raw logs without keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-webdav-interop-${{ matrix.service }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/interop-evidence/
+            build/interop-logs/
+            !build/**/*.key
+          if-no-files-found: error
+  summary:
+    name: interop summary
+    needs: service
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify this run's service artifacts against the raw server logs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/check_reader_webdav_interop.py --workflow .github/workflows/reader-webdav-two-device.yml --output build/interop-summary
+      - name: Preserve the summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-webdav-interop-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/interop-summary/
+          if-no-files-found: error
