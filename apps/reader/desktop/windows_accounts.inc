@@ -552,7 +552,17 @@ static exr_status acct_project_step(host_job *job) {
       reader_revision_status code = reader_revision_project(store, kind, row->key, row->revision, sort, NULL, &local);
       free(sort);
       if (code == READER_REV_OK) { o->projected++; if (row->deleted) o->tombstones++; }
-      else if (code == READER_REV_MISSING_PARENT || code == READER_REV_UNSAFE) o->pending_parents++;
+      else if (code == READER_REV_MISSING_PARENT) o->pending_parents++;
+      else if (code == READER_REV_UNSAFE) {
+        char *wire=NULL; size_t bytes=0; reader_revision_info current={0}; reader_revision_selection selection={0};
+        reader_revision_status selected=reader_revision_selected(store,kind,row->key,&wire,&bytes,&current,&selection,&local);
+        reader_revision_bytes_free(wire);
+        if (selection.kind==READER_SELECTION_CONCURRENT) o->concurrent++;
+        else if (selection.kind==READER_SELECTION_PENDING_PARENTS) o->pending_parents++;
+        else if (selection.kind==READER_SELECTION_BLOCKED_RESTORE) o->blocked++;
+        else if (selected==READER_REV_OK || selected==READER_REV_NOT_FOUND) o->head_changed++;
+        else o->project_failed++;
+      }
       else o->project_failed++;
     }
   }
