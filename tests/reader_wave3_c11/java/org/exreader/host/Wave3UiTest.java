@@ -191,7 +191,7 @@ public final class Wave3UiTest extends Instrumentation {
         check("annotation_batch_cancel_retains_committed_receipt_and_stops_remaining_items",()->{
             open("txt");File staged=new File(context.getFilesDir(),"wave3-fixtures/annotations.jsonl");long selected=book("txt");
             NativeWave3.ImportResult preview=hostCall((host,done,failed)->host.annotationImport(selected,staged,false,"",new HostTask(()->false),done,failed));
-            need(preview.ok()&&preview.wouldCreate>=2&&preview.found>0,"real FOUND preview offers a multi-item batch");
+            need(preview.ok()&&preview.wouldCreate>=2&&preview.found>0,"real FOUND preview offers a multi-item batch: status="+preview.status+" reason="+preview.message+" heads="+preview.heads+" new="+preview.wouldCreate+" found="+preview.found+" unresolved="+preview.unresolved+" nulls="+preview.nulls);
             boolean genuine=false;for(NativeWave3.ImportItem item:preview.items)if(item.found==NativeWave3.FOUND_YES&&item.kind.equals("annotation"))genuine=true;
             need(genuine,"at least one nonNULL annotation selector resolves through the real SDK FOUND callback");
             int baseline=count("reader_revisions");HostTask task=new HostTask(()->{try{return count("reader_revisions")>baseline;}catch(Exception error){throw new IllegalStateException(error);}});

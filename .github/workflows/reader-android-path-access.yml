@@ -51,6 +51,10 @@ jobs:
               for item in data.get('observations', []):
                   if item.get('name', '').startswith('failure-'):
                       print('FAILURE_OBSERVATION', json.dumps(item, ensure_ascii=False))
+          exported = Path('build/audit/evidence/wave3/exported-annotations.jsonl')
+          if exported.exists():
+              for line in exported.read_text(encoding='utf-8').splitlines():
+                  print('EXPORTED_ANNOTATION', json.dumps(json.loads(line), ensure_ascii=False, sort_keys=True))
           path = Path('build/audit/evidence/wave3/first-logcat.txt')
           if path.exists():
               for line in path.read_text(errors='replace').splitlines():

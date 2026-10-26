@@ -233,8 +233,8 @@ def main():
             if reading.get(key) != identity[key]:
                 problems.append('reading: different ' + key)
         phases = reading.get('phases') or []
-        if reading.get('checks') != 16 or [(item.get('phase'), item.get('count')) for item in phases] != [('first', 14), ('retry', 1), ('reopen', 1)]:
-            problems.append('reading: original 14+1+1 case counts changed')
+        if reading.get('checks') != 19 or [(item.get('phase'), item.get('count')) for item in phases] != [('first', 17), ('retry', 1), ('reopen', 1)]:
+            problems.append('reading: required 17+1+1 case counts changed')
         for phase in phases:
             if phase.get('passed') is not True or len(phase.get('checks') or []) != phase.get('count') or not all(item.get('pass') is True for item in phase.get('checks') or []):
                 problems.append('reading: missing or failed original case')
