@@ -23,6 +23,9 @@
 | run / attempt | `40350391595` / `1`，整轮 failure |
 | workflow | `.github/workflows/reader-wave3-c10.yml`（**未改动**；`gh workflow run reader-wave3-c10.yml -r codex/dsf-gtk-export-close`） |
 
+本轮运行以 `0be6a226` 为 source。之后仅有 docs 提交（本文件与台账）回填结果，不改被测 source、
+不触发新的 workflow（该分支没有 push 触发）。
+
 ## 3. 唯一修复：原生目录行先进入视口，再点击
 
 ### 3.1 根因（GTK 3.24 源码，不是驱动猜测）
