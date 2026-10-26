@@ -92,8 +92,10 @@ try:
     assert seeded.returncode == 0 and b'WAVE3_UI_PASS picker-seed' in seeded.stdout
     report = json.loads(adb('exec-out', 'run-as', package, 'cat', 'files/wave3-ui-picker-seed.json'))
     assert report['passed'] is True and all(report.get(key) == value for key, value in identity.items())
+    seeded_books = json.loads(adb('exec-out', 'run-as', package, 'cat', 'files/wave3-books.json'))
     adb('shell', 'am', 'start', '-W', '-n', package + '/.MainActivity')
-    epub = next(row for row in rows if row['role'] == 'epub'); title = epub['title']
+    epub = next(row for row in rows if row['role'] == 'epub'); title = seeded_books['epub']['title']
+    assert seeded_books['epub']['sha256'] == epub['sha256']
     book = wait_for(lambda nodes: next((node for node in nodes if node.get('package') == package and (node.get('text') == title or node.get('text', '').startswith(title + '\n'))), None), 120)
     long_tap(book)
     tap(wait_for(lambda nodes: next((node for node in nodes if text_is(node, '导出原件') and node.get('package') == package), None), 30))
