@@ -281,7 +281,7 @@ static void accounts_received_apply(reader_result *result) {
       }
       if(result->status==EXR_OK) {
         if(!result->receive_org_paused) accounts_present_conflicts(result);
-        if(result->receive_org_paused) accounts_notice("Library update paused with more organization to process. Select Retry to continue");
+        if(result->receive_org_paused) accounts_notice("Library update paused before the scan could finish. Select Retry to continue");
         else if(result->receive_org_conflicted || result->receive_org_waiting || result->receive_waiting) {
           char *notice=g_strdup_printf("Shelf organization: %"G_GUINT64_FORMAT" conflicting or incomplete versions; %"G_GUINT64_FORMAT" waiting for related items. Sync or resolve them, then retry",
             result->receive_org_conflicted,result->receive_org_waiting+result->receive_waiting);
