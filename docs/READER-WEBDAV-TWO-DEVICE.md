@@ -17,6 +17,7 @@
 [run 40381289997](https://github.com/NoGod3524/EXReader/actions/runs/40381289997)，attempt 1，源码 `d84f0071808f6669f4def22846c5759a486e03e0`：Apache job `121777892436` 和 Nextcloud job `121777892798` 均成功，原服务场景各 33/33；summary job `121781546688` 下载并核对两份工件的 SHA-256、源码/运行身份及原服务 access log。各服务工件同时保存本轮真实 Android 包重放的调用、产品库、服务日志和结果：Apache 工件 `12678778986`，SHA-256 `0d5ccada25f3a24527bd8d818c2f729a881334fd0a6372e0ced34371f9162e8b`；Nextcloud 工件 `12679451399`，SHA-256 `2bc34b43a1283cba68baf8da0e6cfa5421859b83c9ef56c9305b07c3036eec55`。
 
 重放先核对历史真实 Android sender 的 run、源码、原 ZIP 散列和 manifest，再以公开 revision 接口按祖先顺序写入独立产品库，通过当前源码的公开 sync/WebDAV 接口上传并由另一库拉取。两服务均核对 4 份原件、19 份原始 revision 与服务端和接收库字节一致，发送和接收库均为 19 条历史、0 条待发。该测试的发送端和接收端均是模块驱动；它没有在宿主中触发同步、投影组织或定位，也没有反向写入。sender 使用历史源码而非本次源码。原有 summary 校验整个工件 ZIP 的身份和原服务测试，不独立复核新增重放结果的语义；新增步骤结果及原始证据保存在同一已认证工件内。
+[Android run 40381154018](https://github.com/NoGod3524/EXReader/actions/runs/40381154018)，attempt 1，源码 `2b34566f3ef0eed20ebc1970262f2a2d9e253ed9`：实际 Android API34 x86_64 sender 及严格 summary 均成功，共 138 项；sender 包含 4 份原件、19 份 revision、11 条阅读记录，另以独立进程核验缺父时 PENDING、祖先齐备后 FOUND。原安装 APK SHA-256 `cbadbdfabac6a069c3315bcc274d9fba50dd933c27d3eedc747a4ae43bd20e78`，实际加载 SDK SHA-256 `b3fc325f187a612d0fc809565faba6e9fa1d5ece2a7f7ba8158210b52db46310`；sender 包工件 `12679821614`，SHA-256 `399b8ff46bc1d34c53496bea17c67e9e749745299b621b1feb80f99eb72ed94b`。该 Android 源码与上述 WebDAV 重放源码 SHA 不同，而且 WebDAV 重放使用的是更早的历史 sender 包，不能合并为同源端到端结果；Apple incoming 仍 pending，双向互通为 false。
 ## 六端缺口
 
 以下是指定起点目录的独立宿主功能状态，并非同源跨设备结论：
