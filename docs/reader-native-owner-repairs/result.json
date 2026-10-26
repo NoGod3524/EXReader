@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "status": "both_native_producers_passed_final_authentication_environment_failed",
+  "branch": "codex/reader-native-owner-repairs",
+  "base_sha": "96270a2b478b673eb45b7e2467e2e2acb6b64a88",
+  "tested_source_sha": "4bdf59ade3389b9a3e454511f6a30de7d0ddc112",
+  "run_id": 40245803457,
+  "attempt": 1,
+  "run_conclusion": "failure",
+  "complete_rounds_used": 3,
+  "complete_round_limit": 3,
+  "producer_jobs": {
+    "windows": {
+      "id": 121326987256,
+      "conclusion": "success",
+      "selector_profiles": ["legacy", "raw"],
+      "original_compact_checks_per_profile": 22,
+      "original_bulk_checks_per_profile": 21,
+      "native_focus_and_bounds_observations_per_profile": 11,
+      "actual_display_mode": {"width": 1440, "height": 900, "bits": 32, "frequency": 64},
+      "actual_work_area": [0, 0, 1440, 860],
+      "dedicated_work_areas": [[1024, 728], [800, 600]],
+      "actual_received_gui_processes": 2,
+      "independently_resolved_records_per_process": 11,
+      "actual_highlight_selection_formats": ["txt", "epub", "pdf"],
+      "public_metadata_notes_and_originals_unchanged": true,
+      "legal_public_progress_changes_per_process": [2, 0],
+      "product_history_and_outbox_unchanged": true,
+      "genuine_null_gui_processes": 2,
+      "genuine_null_open_edit_restore_disabled": true,
+      "genuine_null_full_public_sdk_and_product_rows_unchanged": true
+    },
+    "gtk": {
+      "id": 121326987701,
+      "conclusion": "success",
+      "original_raw_legacy_owner_kill_and_mac_receive_full": true,
+      "original_compact_checks": 45,
+      "original_d09_environments": ["normal", "scale2", "dark", "large"],
+      "original_d09_findings_per_environment": [0, 0, 0, 0],
+      "native_records_focus_profiles": ["legacy", "raw"],
+      "native_records_focus_routes_per_profile": ["shortcut", "menu", "shortcut-reopen", "menu-reopen"],
+      "native_chooser_accept_keys_per_profile": [1, 1],
+      "second_round_failed_zip_read_only_diagnostic_authenticated_in_actions": true
+    }
+  },
+  "authentication_job": {
+    "id": 121330899113,
+    "conclusion": "failure",
+    "error": "AttributeError: module 'hashlib' has no attribute 'file_digest'",
+    "failure_location": "original tests/reader_windows_raw3/authenticate.py original ZIP digest calculation",
+    "remaining_scope": "original producer ZIP digests/members/program identities and preserved final business judges",
+    "python_3_12_setup_prepared": true,
+    "runtime_setup_fix_executed": false,
+    "fourth_complete_round_started": false
+  },
+  "artifacts": [
+    {"id": 12618658271, "name": "windows-installed-raw3-40245803457-1", "bytes": 257630708, "digest": "sha256:eb4080ad1f2a56bd262482a148889cd8f7d2da4f3f6940a3ecf3a619884f8c18", "expires_at": "2027-01-23T23:40:14Z"},
+    {"id": 12618858791, "name": "native-owner-gtk-40245803457-1", "bytes": 128409709, "digest": "sha256:105f82cb6e9dc7cfb4376dd55e424e8910d776e84ff127e3c51ef6d7036e2814", "expires_at": "2027-01-23T23:40:14Z"},
+    {"id": 12618794197, "name": "native-owner-authentication-40245803457-1", "bytes": 550, "digest": "sha256:604f6600009f6b8e7f489e5ebe8af7b5081c64af01ec99be333a5474539ab9da", "expires_at": "2027-01-23T23:40:14Z"}
+  ],
+  "earlier_failed_rounds": [
+    {"source_sha": "627e51c645f3e46216c93131fcadd0933a8158a1", "run_id": 40239866130, "attempt": 1, "windows": "original compact16/22 then hardcoded width1060 exceeds actual width1024 work area", "gtk": "legacy chooser incorrectly depended on preferences-only native_import observation"},
+    {"source_sha": "b11b0dd3b1354134dc1c82525e7e8578f3633758", "run_id": 40243909026, "attempt": 1, "windows": "new harness incorrectly froze normal positive-navigation SDK progress", "gtk": "new Tab-to-Import prerequisite failed before records opened"}
+  ],
+  "legacy_guard_executed": false,
+  "guard_kind": "native-owner-repairs",
+  "original_gtk_off35_rerun": false,
+  "original_windows_off_f3_atomic13_rerun": false,
+  "dpi_150_200_accepted": false,
+  "screen_reader_accepted": false,
+  "six_platform_accepted": false,
+  "same_source_bidirectional_accepted": false,
+  "complete_product": false
+}

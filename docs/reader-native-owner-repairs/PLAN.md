@@ -134,3 +134,40 @@ GTK `12618471568`, 128105447 B,
 SHA256 `3234dcf05413fcadb55f9ea84b02394caeb3aa7af0a8ee353c74c60d7309681d`.
 No final owner-repair acceptance is granted from this failed round. One
 complete round remains; it has not been started yet.
+
+## Third complete round: producers pass, final authentication pending
+
+Source `4bdf59ade3389b9a3e454511f6a30de7d0ddc112`, run `40245803457` /
+attempt 1 used the final authorized complete round. Windows job `121326987256`
+and GTK job `121326987701` both succeeded. Windows observed the real supported
+1440x900 display (actual work area 1440x860), both profiles' eleven native
+focus/bounds observations, two complete eleven-record GUI processes, and two
+strict genuine NULL refusal/no-write processes. Public metadata/notes and all
+four original byte streams stayed unchanged. The first GUI process changed
+two legal public SDK progress records; the reopened process changed none.
+
+GTK passed its complete original owner/kill/receive suites, compact45 and
+all four D09 environments without findings. Both legacy/raw profiles passed
+all four shortcut/menu/reopen focus routes. Each native file chooser accepted
+with one Return after actual full-path/enabled-button and X11 identity
+readback. The authenticated old failure trees showed the Tab-based harness
+still observing focus on a text entry; this is retained as a failed prerequisite,
+not reclassified as an established product keyboard defect.
+
+Final job `121330899113` failed before its original Windows ZIP digest judge:
+the runner default Python lacks `hashlib.file_digest`; this workflow omitted
+the original entry's Python3.12 setup. This is an authentication environment
+failure. The producer results are observed passes, but the joint package
+record remains **accepted:false** until original ZIP/member/program/business
+authentication finishes successfully. A Python3.12 setup is prepared locally
+and has not been executed. No fourth complete round is started.
+
+Third-round original artifacts (all expire `2027-01-23T23:40:14Z`):
+
+| Producer | ID | ZIP bytes | SHA256 |
+| --- | ---: | ---: | --- |
+| Windows | 12618658271 | 257630708 | `eb4080ad1f2a56bd262482a148889cd8f7d2da4f3f6940a3ecf3a619884f8c18` |
+| GTK | 12618858791 | 128409709 | `105f82cb6e9dc7cfb4376dd55e424e8910d776e84ff127e3c51ef6d7036e2814` |
+| Failed authenticator | 12618794197 | 550 | `604f6600009f6b8e7f489e5ebe8af7b5081c64af01ec99be333a5474539ab9da` |
+
+See `result.json` for the sealed identities and remaining authentication scope.
