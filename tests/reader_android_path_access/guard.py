@@ -13,7 +13,7 @@ BLOBS = {
     'apps/reader/original-export/src/original_export.cpp': '52b5c467453d77b7450634a82bc83f1ea171a01b',
     'tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java': 'abfd7d3a758354dd723cf8822c0a02f7948c0004',
     'tests/reader_android_reading/java/org/exreader/host/ReadingUiTest.java': '3b9a6a1ee721b76a99b4db3e4f23e5fcd8b92442',
-    'tests/reader_android_reading/run_ui.py': '98d8d42ec86d1ed1523610e6bbf918f844197547',
+    'tests/reader_android_reading/run_ui.py': '0c408588c450daa42434c2e5cf8a27e8e6bd5b15',
 }
 OWNED = {'tests/reader_android_path_access/guard.py',
          '.github/workflows/reader-android-path-access.yml',

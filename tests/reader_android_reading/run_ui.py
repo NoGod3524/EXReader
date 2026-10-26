@@ -140,7 +140,7 @@ try:
         assert not after
         stops.append({'phase': phase, 'instrumentation_pid': report['pid'], 'pid_before_stop': pid,
                       'ended_with_instrumentation': not bool(pid), 'pid_after_stop': after, 'requested': True})
-    assert len({report['pid'] for report in reports}) == 3 and sum(report['count'] for report in reports) == 16 and kill
+    assert len({report['pid'] for report in reports}) == 3 and sum(report['count'] for report in reports) == 18 and kill
     accepted = True
 finally:
     result = {**identity, 'accepted': accepted, 'checks': sum(report['count'] for report in reports), 'phases': reports,
