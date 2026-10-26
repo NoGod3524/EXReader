@@ -13,6 +13,10 @@ on:
         description: Run delivery protocol checks only; does not grant platform acceptance
         type: boolean
         default: false
+      legacy_diagnostics:
+        description: Extract original Android and iPad failures in Actions; never grants new acceptance
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -26,6 +30,33 @@ defaults:
     shell: bash
 
 jobs:
+  legacy:
+    name: original S20 failed cases and first assertions
+    if: ${{ inputs.legacy_diagnostics }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download original failed artifacts inside Actions only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 40248648454 --repo "$GITHUB_REPOSITORY" --name reader-wave3-s20-ipad-40248648454-1 --dir build/s20-legacy/ipad
+          gh run download 40248648454 --repo "$GITHUB_REPOSITORY" --name reader-wave3-s20-android-40248648454-1 --dir build/s20-legacy/android
+      - name: Authenticate original ZIPs and extract named failures
+        run: |
+          python tools/reader_wave3_package/legacy.py --root build/s20-legacy --output build/s20-legacy-summary/original-failures.json
+          cat build/s20-legacy-summary/original-failures.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve original failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-s20-original-failures-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s20-legacy-summary/
+          if-no-files-found: error
   guard:
     name: fixed seed candidate and exclusive write set
     runs-on: ubuntu-22.04
