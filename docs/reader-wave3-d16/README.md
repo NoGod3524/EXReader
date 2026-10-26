@@ -19,3 +19,7 @@
 `audit_completed` 仅表示限定 journey 全套通过；不等于全产品、完整 AX/VoiceOver、物理设备、签名、文字裁剪或 macOS 系统大字体通过。Menu wrapper 原始 `isHittable=false` 不被坐标触发成功改写。
 
 轮次最多 3（attempt 重跑也算）。结果待当前功能提交的 Actions；最终证据文档使用独立 `[skip ci]` 提交。
+
+## 最终状态（2026-10-26）
+
+首轮 `40275499967/1` 已 success，受测 `8104bcd872c49da2c683fb482b8c67e958aa4747`。Mac6/6、iPhone10/10、iPad10/10，PNG64/148/134，原ZIP/实际程序/PID同源验证通过；47项负例拒绝。完整中文结果和接入命令在根 `HANDOFF-RESULT-D16.md`。本次仅文档 `[skip ci]` 封存，不改变已受测源码、不启动第二轮。
