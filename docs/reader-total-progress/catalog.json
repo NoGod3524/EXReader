@@ -5,8 +5,8 @@
   "scope_document_blob": "2667f8e7c08657eeace3bb4ab406d43d81ec0bec",
   "definition": "完整首版固定验收目标的已核验工作比例；独立已验收功能可计其限定目标，六平台同源产品交付另列 F01-F12；不是代码行数、工作包数量、耗时比例或最终产品通过声明。",
   "scoring": "每项 1 分；verified 且证据核对通过才计分；partial/pending/缺失证据均 0 分。分母固定 108，新增工作包不改变分母。",
-  "historical_cutoff_utc": "2026-10-26T03:59:59Z",
-  "historical_label": "2026-10-25 结束（America/New_York）",
+  "historical_cutoff_utc": "2026-10-25T03:59:59Z",
+  "historical_label": "2026-10-24 结束（America/New_York）",
   "evidence": {
     "r6_pr": {
       "run": 39972628703,

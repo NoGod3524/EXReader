@@ -130,10 +130,10 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     (out / 'report.json').write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
     lines = ['# 完整首版固定验收目标审计', '', f'固定分母：108；catalog `{catalog["version"]}`。',
-             f'昨日截止：{historical_count}/108（{report["historical_percent"]}%）。',
+             f'2026-10-24 截止：{historical_count}/108（{report["historical_percent"]}%）。',
              f'当前：{current_count}/108（{report["current_percent"]}%）。',
              '', '这是固定功能验收工作覆盖率，不是剩余工时；最终同源码六平台产品尚未通过。', '',
-             '| ID | 目标 | 当前计分 | 昨日计分 |', '|---|---|---|---|']
+             '| ID | 目标 | 当前计分 | 10 月 24 日计分 |', '|---|---|---|---|']
     lines += [f'| {row["id"]} | {row["title"]} | {int(row["counted"])} | {int(row["counted_at_historical_cutoff"])} |' for row in current]
     (out / 'report.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
     with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
