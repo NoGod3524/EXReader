@@ -383,9 +383,10 @@ def annotation():
         for name in ('legacy.jsonl', 'legacy.md'):
             publish('annotation-legacy-' + label + '-' + name, c06.OUT / ('legacy-' + label) / name)
     publish('annotation-mac-peer.json', c06.OUT / 'mac/peer/peer.json')
-    return {'checks': len(checks), 'legacy_outputs': hashes[0], 'raw_books': len(digests),
-            'mac_heads': mac['totals']['heads'], 'mac_null_heads': mac['totals']['null_heads'],
-            'mac_found_claimed': False, 'mac_anchor_versions': mac['totals']['versions']}
+    return {'checks': len(checks), 'legacy_outputs': hashes[0], 'legacy_all_equal': True,
+            'raw_books': len(digests), 'mac_heads': mac['totals']['heads'],
+            'mac_null_heads': mac['totals']['null_heads'], 'mac_found_claimed': False,
+            'mac_anchor_versions': mac['totals']['versions']}
 
 
 def jump():
