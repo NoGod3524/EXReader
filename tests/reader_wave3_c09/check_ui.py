@@ -493,6 +493,10 @@ def main():
                         # Read it with every other file after normal shutdown.
                         assert path.stat().st_size == 0, 'Product lock unexpectedly contains data'
                         continue
+                    if path == profile / 'library.sqlite.product.sqlite.sync-account':
+                        # Session owns the documented persistent account binding
+                        # exclusively; its complete bytes are scanned below.
+                        continue
                     data = path.read_bytes()
                     assert password.encode() not in data and password.encode('utf-16-le') not in data, 'Session secret persisted'
             app.close_app()

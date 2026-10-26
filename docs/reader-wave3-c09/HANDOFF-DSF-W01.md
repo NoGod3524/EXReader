@@ -178,3 +178,6 @@ The retained helper filled the exact native filename edit, then sent WM_COMMAND/
 
 Root round 40364954464 advanced beyond originals, fonts and the actual failed-account read-only view. The secret scan then attempted to read the live exclusively-held empty library.sqlite.product.lock and failed with PermissionError; report printing also hit cp1252 on Chinese UI evidence. The next candidate asserts the live lock is empty, scans every other live file, closes normally and scans every remaining profile file without exclusions, before the existing process-restart/font check. Console output is explicitly UTF-8. No secret check, business assertion or test budget is removed.
 
+
+Run 40367648443 reached the second documented exclusive owner file: library.sqlite.product.sqlite.sync-account (account-profiles README contract), before shutdown. The live scan now defers that exact persistent binding as well as the verified-empty product lock; the subsequent post-exit pass still reads every remaining file with no exclusions and checks both UTF-8 and UTF-16 secret bytes. Unknown inaccessible files still fail. Earlier failure and its source/run identity remain retained.
+
