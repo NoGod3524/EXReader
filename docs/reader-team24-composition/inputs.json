@@ -17,6 +17,33 @@
         ".github/workflows/reader-cloud-pinned-source.yml",
         "docs/reader-cloud-pinned-source/PLAN.md"
       ]
+    },
+    {
+      "name": "delivery-assembly-and-diagnostics",
+      "source": "eb23d0f563ba08a22f2af80b6a9f89f8c14b68d0",
+      "paths": [
+        ".github/workflows/reader-wave3-s20.yml",
+        "docs/reader-wave3-s20/README.md",
+        "docs/reader-wave3-s20/team24-delivery.md",
+        "docs/reader-wave3-s20/team24-diagnostics.md",
+        "docs/reader-wave3-s20/validation.json",
+        "tests/reader_wave3_s20/android_device.sh",
+        "tests/reader_wave3_s20/guard.py",
+        "tests/reader_wave3_s20/report.py",
+        "tests/reader_wave3_s20/selftest.py",
+        "tests/reader_wave3_s20/summary.py",
+        "tests/reader_wave3_s20/test_desktop.py",
+        "tests/reader_wave3_s20/test_diagnostics.py",
+        "tests/reader_wave3_s20/test_mobile.py",
+        "tests/reader_wave3_s20/xctest.py",
+        "tools/reader_wave3_package/assemble.py",
+        "tools/reader_wave3_package/delivery.py",
+        "tools/reader_wave3_package/desktop.py",
+        "tools/reader_wave3_package/diagnostics.py",
+        "tools/reader_wave3_package/legacy.py",
+        "tools/reader_wave3_package/mobile.py",
+        "tools/reader_wave3_package/unpack.py"
+      ]
     }
   ]
 }

@@ -1,0 +1,598 @@
+# SPDX-License-Identifier: MIT
+name: Reader wave3 S20 six-target native delivery
+on:
+  push:
+    branches: [codex/reader-wave3-s20]
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-hex candidate source commit to package and launch (defaults to this run SHA)
+        type: string
+        default: ''
+      verification_only:
+        description: Run delivery protocol checks only; does not grant platform acceptance
+        type: boolean
+        default: false
+      legacy_diagnostics:
+        description: Extract original Android and iPad failures in Actions; never grants new acceptance
+        type: boolean
+        default: false
+      show_legacy_report:
+        description: Print the already authenticated original failure report without rerunning old tests
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  actions: read
+env:
+  S20_SEED: d263ce5228838ac90c0a0dc13a5193d4a7739681
+  S20_CANDIDATE: ${{ github.event.inputs.candidate_sha || github.sha }}
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+  EXR_APPLE_PAGE_THEME: 'OFF'
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  legacy:
+    name: original S20 failed cases and first assertions
+    if: ${{ inputs.legacy_diagnostics }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download original failed artifacts inside Actions only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 40248648454 --repo "$GITHUB_REPOSITORY" --name reader-wave3-s20-ipad-40248648454-1 --dir build/s20-legacy/ipad
+          gh run download 40248648454 --repo "$GITHUB_REPOSITORY" --name reader-wave3-s20-android-40248648454-1 --dir build/s20-legacy/android
+      - name: Authenticate original ZIPs and extract named failures
+        run: |
+          python tools/reader_wave3_package/legacy.py --root build/s20-legacy --output build/s20-legacy-summary/original-failures.json
+          cat build/s20-legacy-summary/original-failures.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve original failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-s20-original-failures-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s20-legacy-summary/
+          if-no-files-found: error
+  guard:
+    name: fixed seed candidate and exclusive write set
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard the seed the candidate and the exclusive paths
+        run: python tests/reader_wave3_s20/guard.py --output build/s20-guard/guard.json
+      - name: Syntax-check every S20 script in Actions
+        run: |
+          python -m py_compile tools/reader_wave3_package/delivery.py tools/reader_wave3_package/assemble.py \
+            tools/reader_wave3_package/unpack.py tests/reader_wave3_s20/guard.py tests/reader_wave3_s20/report.py \
+            tests/reader_wave3_s20/xctest.py tests/reader_wave3_s20/summary.py tests/reader_wave3_s20/selftest.py
+          bash -n tests/reader_wave3_s20/android_device.sh
+          python -m py_compile tools/reader_wave3_package/desktop.py tools/reader_wave3_package/mobile.py tools/reader_wave3_package/diagnostics.py
+      - name: Check delivery configuration and diagnostics contracts
+        run: |
+          python tests/reader_wave3_s20/test_desktop.py
+          python tests/reader_wave3_s20/test_mobile.py
+          python tests/reader_wave3_s20/test_diagnostics.py
+      - name: Prove the archive assemble unpack and refusal contract offline
+        run: python tests/reader_wave3_s20/selftest.py
+      - name: Read the existing authenticated original failure report
+        if: ${{ inputs.show_legacy_report }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 40276021294 --repo "$GITHUB_REPOSITORY" --name reader-wave3-s20-original-failures-40276021294-1 --dir build/s20-guard/original-failures
+          cat build/s20-guard/original-failures/original-failures.json
+      - name: Preserve the guard record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-s20-guard-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s20-guard/
+          if-no-files-found: warn
+  windows:
+    if: ${{ !inputs.verification_only }}
+    name: Windows delivery and real Win32 operations
+    needs: [guard]
+    runs-on: windows-2022
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard the seed the candidate and the exclusive paths
+        run: python3 tests/reader_wave3_s20/guard.py --output build/s20-windows/guard.json
+      - name: Enter the native Windows compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $vs) { throw 'MSVC environment not found' }
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build the installed SDK and one product provider prefix
+        run: |
+          set -o pipefail
+          mkdir -p build/s20-windows/logs
+          ws=$(cygpath -m "$PWD")
+          stage="$ws/build/reading-library/stage"
+          prefix="$ws/build/s20-win-prefix"
+          echo "S20_WS=$ws" >> "$GITHUB_ENV"
+          echo "S20_SDK_STAGE=$stage" >> "$GITHUB_ENV"
+          echo "S20_WIN_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake --preset reading-library -B build/reading-library -DCMAKE_INSTALL_PREFIX="$stage" 2>&1 | tee build/s20-windows/logs/sdk-configure.log
+          cmake --build build/reading-library --parallel 4 2>&1 | tee build/s20-windows/logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/s20-windows/logs/sdk-install.log
+          cmake -S apps/reader/store/native -B build/s20-win-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/s20-win-product --parallel 4
+          ctest --test-dir build/s20-win-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/s20-win-product
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation; do
+            name=$(basename "$module")
+            cmake -S "$module" -B "build/s20-win-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$stage" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$stage" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/s20-windows/logs/$name-configure.log"
+            cmake --build "build/s20-win-$name" --parallel 4 2>&1 | tee "build/s20-windows/logs/$name-build.log"
+            cmake --install "build/s20-win-$name"
+          done
+      - name: Build the real Windows host with the reviewed search and directory entries
+        env:
+          MSYS_NO_PATHCONV: '1'
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/windows-account -B build/s20-win-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$S20_SDK_STAGE" -DCMAKE_PREFIX_PATH="$S20_WIN_PREFIX;$S20_SDK_STAGE" -DREADER_METADATA_PREFIX="$S20_WIN_PREFIX" -DREADER_ACCOUNT_PREFIX="$S20_WIN_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DCMAKE_EXE_LINKER_FLAGS=/MAP 2>&1 | tee build/s20-windows/logs/host-configure.log
+          cmake --build build/s20-win-host --parallel 4 --verbose 2>&1 | tee build/s20-windows/logs/host-build.log
+          cmake -S tests/reader_windows_341/cfi-consumer -B build/s20-win-cfi -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DCMAKE_PREFIX_PATH="$S20_WIN_PREFIX;$S20_SDK_STAGE"
+          cmake --build build/s20-win-cfi --parallel 4
+      - name: Package the payload with the unchanged Windows reference packager
+        run: |
+          python3 tools/build_windows_host.py --sdk "$S20_SDK_STAGE" --binary build/s20-win-host/EXReaderProduct.exe --output build/s20-win-payload --static-reading
+      - name: Assemble check and unpack the delivery archive in a fresh directory
+        run: |
+          set -euo pipefail
+          out="$PWD/build/s20-windows"
+          mkdir -p "$out"
+          python3 tools/reader_wave3_package/assemble.py --target windows --payload build/s20-win-payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --require-build-identity --exclude EXReader-Windows.zip
+          archive=$(ls "$out"/delivery/EXReader-windows-*.zip)
+          fresh="$RUNNER_TEMP/s20-fresh-windows"
+          python3 tools/reader_wave3_package/unpack.py --target windows --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
+          echo "S20_FRESH=$fresh" >> "$GITHUB_ENV"
+          test -f "$fresh/EXReader/EXReader.exe"
+          test -f "$fresh/build.json"
+          test -f "$fresh/report.json"
+          python3 tools/reader_wave3_package/desktop.py verify --target windows --root "$fresh" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --report "$out/desktop-runtime.json"
+      - name: Execute the installed 158 action Win32 plan on the unpacked delivery
+        run: |
+          set -o pipefail
+          python3 tests/windows_host/make_fixtures.py --output build/s20-win-fixtures
+          python3 tools/check_windows_host.py --package "$S20_FRESH/EXReader" --output build/s20-windows/evidence/windows-host --sdk "$S20_SDK_STAGE" --manifest "$S20_FRESH/build.json" --steps tests/windows_host --fixtures build/s20-win-fixtures --selftest-report "$S20_FRESH/report.json" --consumer-binary build/s20-win-host/EXReaderProduct.exe --static-link-map build/s20-win-host/windows-host.map
+      - name: Execute the real Win32 search entry on the unpacked delivery
+        run: |
+          python3 tests/reader_windows_search/check_ui.py --candidate "$S20_FRESH/EXReader/EXReader.exe" --font "$S20_FRESH/EXReader/Reader.otf" --output build/s20-windows/evidence/windows-search
+      - name: Execute the real Win32 directory entry on the unpacked delivery
+        run: |
+          python3 -m pip install "uiautomation==2.0.29"
+          python3 tests/reader_windows_navigation/check_ui.py --candidate "$S20_FRESH/EXReader/EXReader.exe" --review build/s20-win-host/EXReaderShelfReview.exe --font "$S20_FRESH/EXReader/Reader.otf" --cfi build/s20-win-cfi/navigation-fixture-cfi.exe --output build/s20-windows/evidence/windows-navigation
+      - name: Record the Windows operation matrix
+        if: always()
+        run: python3 tests/reader_wave3_s20/report.py --target windows --evidence build/s20-windows/evidence --unpack build/s20-windows/unpack.json --output build/s20-windows/target.json
+      - name: Preserve the delivery checksums evidence and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-s20-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/s20-windows/
+            build/s20-win-host/windows-host.map
+            !build/**/*.key
+          if-no-files-found: error
+  linux:
+    if: ${{ !inputs.verification_only }}
+    name: Linux GTK delivery and real X11 operations
+    needs: [guard]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 130
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard the seed the candidate and the exclusive paths
+        run: python3 tests/reader_wave3_s20/guard.py --output build/s20-linux/guard.json
+      - name: Install the native GTK accessibility and desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11
+      - name: Build the installed SDK and the product prefix
+        run: |
+          set -o pipefail
+          mkdir -p build/s20-linux/logs
+          prefix="$PWD/build/s20-linux-prefix"
+          echo "S20_GTK_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/s20-linux/logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/s20-linux/logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/s20-linux/logs/sdk-install.log
+          sdk="$PWD/build/reading-library/stage"
+          cmake -S apps/reader/store/native -B build/s20-linux-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/s20-linux-product --parallel 4
+          ctest --test-dir build/s20-linux-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/s20-linux-product
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/preferences apps/reader/search apps/reader/navigation; do
+            name=$(basename "$module")
+            cmake -S "$module" -B "build/s20-linux-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$sdk" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/s20-linux/logs/$name-configure.log"
+            cmake --build "build/s20-linux-$name" --parallel 4 2>&1 | tee "build/s20-linux/logs/$name-build.log"
+            cmake --install "build/s20-linux-$name"
+          done
+      - name: Build the real GTK host with the reviewed search and directory entries
+        run: |
+          set -o pipefail
+          sdk="$PWD/build/reading-library/stage"
+          cmake -S apps/reader/desktop -B build/s20-linux-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$sdk" -DCMAKE_PREFIX_PATH="$S20_GTK_PREFIX;$sdk" -DREADER_METADATA_PREFIX="$S20_GTK_PREFIX" -DREADER_ACCOUNT_PREFIX="$S20_GTK_PREFIX" -DREADER_PREFERENCES_PREFIX="$S20_GTK_PREFIX" -DREADER_SEARCH_PREFIX="$S20_GTK_PREFIX" -DREADER_NAVIGATION_PREFIX="$S20_GTK_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DEXR_READER_GTK_SEARCH=ON -DEXR_READER_GTK_NAVIGATION=ON -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON 2>&1 | tee build/s20-linux/logs/host-configure.log
+          cmake --build build/s20-linux-desktop --parallel 4 --verbose 2>&1 | tee build/s20-linux/logs/host-build.log
+      - name: Package the payload with the unchanged Linux reference packager
+        run: |
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.41.0 --binary build/s20-linux-desktop/gtk-host/exreader-linux --output build/s20-linux-payload
+      - name: Author the existing search and fixed-page fixtures
+        run: |
+          python3 tests/reader_search/make_search_fixtures.py build/s20-search-fixtures
+          python3 tests/reader_gtk_search/make_inputs.py build/s20-search-fixtures
+          python3 tests/linux_host/generate_fixed.py build/s20-linux/fixed-inputs
+      - name: Assemble check and unpack the delivery archive in a fresh directory
+        run: |
+          set -euo pipefail
+          out="$PWD/build/s20-linux"
+          mkdir -p "$out"
+          python3 tools/reader_wave3_package/desktop.py prepare --target linux --root build/s20-linux-payload
+          python3 tools/reader_wave3_package/assemble.py --target linux --payload build/s20-linux-payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --require-build-identity --exclude EXReader-Linux.tar.gz
+          archive=$(ls "$out"/delivery/EXReader-linux-*.zip)
+          fresh="$RUNNER_TEMP/s20-fresh-linux"
+          python3 tools/reader_wave3_package/unpack.py --target linux --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
+          echo "S20_FRESH=$fresh" >> "$GITHUB_ENV"
+          test -x "$fresh/EXReader-Linux/bin/exreader-linux"
+          python3 tools/reader_wave3_package/desktop.py verify --target linux --root "$fresh" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --report "$out/desktop-runtime.json"
+      - name: Execute the twenty real X11 operations on the unpacked delivery
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox > build/s20-linux/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tools/check_linux_host.py --payload "$S20_FRESH/EXReader-Linux" --output build/s20-linux/evidence/linux-host
+          '
+      - name: Execute the real in-book search operations on the unpacked delivery
+        run: |
+          /usr/bin/python3 -m py_compile tests/reader_gtk_search/check_ui.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/tests/reader_a11y_gtk"
+            openbox > build/s20-linux/search-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_search/check_ui.py --payload "$S20_FRESH/EXReader-Linux" --fixtures build/s20-search-fixtures --fixed-inputs build/s20-linux/fixed-inputs --output build/s20-linux/evidence/linux-search
+          '
+      - name: Record the Linux operation matrix
+        if: always()
+        run: python3 tests/reader_wave3_s20/report.py --target linux --evidence build/s20-linux/evidence --unpack build/s20-linux/unpack.json --output build/s20-linux/target.json
+      - name: Preserve the delivery checksums evidence and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-s20-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/s20-linux/
+            !build/**/*.key
+          if-no-files-found: error
+  macos:
+    if: ${{ !inputs.verification_only }}
+    name: macOS delivery and real native operations
+    needs: [guard]
+    runs-on: macos-15
+    timeout-minutes: 160
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard the seed the candidate and the exclusive paths
+        run: python3 tests/reader_wave3_s20/guard.py --output build/s20-macos/guard.json
+      - name: Build the installed SDK and the Apple product packages
+        run: |
+          set -o pipefail
+          mkdir -p build/s20-macos/logs
+          cmake -S . -B build/s20-macos/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF 2>&1 | tee build/s20-macos/logs/sdk-configure.log
+          cmake --build build/s20-macos/sdk --parallel 4 2>&1 | tee build/s20-macos/logs/sdk-build.log
+          cmake --install build/s20-macos/sdk --prefix stage/macos 2>&1 | tee build/s20-macos/logs/sdk-install.log
+          python3 tools/build_apple_product.py --sdk stage/macos --target macos --build build/s20-macos/product --sdk-version 3.41.0
+      - name: Build the delivered macOS app bundle with the unchanged builder
+        run: python3 tools/build_apple_host.py --sdk stage/macos --platform macos --output build/s20-macos/payload --sdk-version 3.41.0
+      - name: Assemble check and unpack the delivery archive in a fresh directory
+        run: |
+          set -euo pipefail
+          out="$PWD/build/s20-macos"
+          mkdir -p "$out"
+          python3 tools/reader_wave3_package/assemble.py --target macos --payload build/s20-macos/payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --require-build-identity
+          archive=$(ls "$out"/delivery/EXReader-macos-*.zip)
+          fresh="$RUNNER_TEMP/s20-fresh-macos"
+          python3 tools/reader_wave3_package/unpack.py --target macos --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
+          echo "S20_FRESH=$fresh" >> "$GITHUB_ENV"
+          test -x "$fresh/EXReader.app/Contents/MacOS/EXReader"
+          python3 tools/reader_wave3_package/desktop.py verify --target macos --root "$fresh" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --report "$out/desktop-runtime.json"
+      - name: Launch the delivered bundle and run its native self-check
+        id: macos_selfcheck
+        run: python3 tools/check_apple_host.py --bundle "$S20_FRESH/EXReader.app" --device macos --output build/s20-macos/evidence/macos-selfcheck
+      - name: Author the existing fixtures and the real UI project
+        run: |
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/s20-apple-broad build/apple-resources
+      - name: Execute the real macOS import reading and typography suite
+        id: macos_broad
+        continue-on-error: true
+        run: python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-broad/EXReaderHost.xcodeproj --scheme EXReaderHost-macOS --platform macos --sdk stage/macos --derived build/s20-apple-broad-derived --output build/s20-macos/evidence/macos-xctest-broad
+      - name: Author the real macOS search project and execute it
+        id: macos_search
+        continue-on-error: true
+        run: |
+          python3 tests/apple_host/search/prepare_search_fixture.py --resources build/apple-resources
+          ruby tests/apple_host/make_xcodeproj.rb build/s20-apple-search build/apple-resources tests/apple_host/search/ui
+          python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-search/EXReaderHost.xcodeproj --scheme EXReaderHost-macOS --platform macos --sdk stage/macos --derived build/s20-apple-search-derived --output build/s20-macos/evidence/macos-xctest-search
+      - name: Require both macOS UI suites to have completed
+        if: always()
+        env:
+          MACOS_BROAD: ${{ steps.macos_broad.outcome }}
+          MACOS_SEARCH: ${{ steps.macos_search.outcome }}
+        run: |
+          test "$MACOS_BROAD" = success
+          test "$MACOS_SEARCH" = success
+      - name: Record the macOS operation matrix
+        if: always()
+        run: python3 tests/reader_wave3_s20/report.py --target macos --evidence build/s20-macos/evidence --unpack build/s20-macos/unpack.json --output build/s20-macos/target.json
+      - name: Preserve the delivery checksums evidence and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-s20-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/s20-macos/
+            !build/**/*.key
+          if-no-files-found: error
+  ios:
+    if: ${{ !inputs.verification_only }}
+    name: iPhone and iPad simulator delivery and real native operations
+    needs: [guard]
+    runs-on: macos-15
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard the seed the candidate and the exclusive paths
+        run: python3 tests/reader_wave3_s20/guard.py --output build/s20-ios/guard.json
+      - name: Build the installed simulator SDK and the Apple product packages
+        run: |
+          set -o pipefail
+          mkdir -p build/s20-ios/logs
+          cmake -S . -B build/s20-ios/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO 2>&1 | tee build/s20-ios/logs/sdk-configure.log
+          cmake --build build/s20-ios/sdk --parallel 4 2>&1 | tee build/s20-ios/logs/sdk-build.log
+          cmake --install build/s20-ios/sdk --prefix stage/iphonesimulator 2>&1 | tee build/s20-ios/logs/sdk-install.log
+          python3 tools/build_apple_product.py --sdk stage/iphonesimulator --target iphonesimulator --build build/s20-ios/product --sdk-version 3.41.0
+      - name: Build the delivered simulator app bundle with the unchanged builder
+        run: python3 tools/build_apple_host.py --sdk stage/iphonesimulator --platform simulator --output build/s20-ios/payload --sdk-version 3.41.0
+      - name: Assemble check and unpack both simulator deliveries in fresh directories
+        run: |
+          set -euo pipefail
+          for target in iphone ipad; do
+            out="$PWD/build/s20-$target"
+            mkdir -p "$out"
+            python3 tools/reader_wave3_package/assemble.py --target "$target" --payload build/s20-ios/payload --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --require-build-identity
+            archive=$(ls "$out"/delivery/EXReader-"$target"-*.zip)
+            fresh="$RUNNER_TEMP/s20-fresh-$target"
+            python3 tools/reader_wave3_package/unpack.py --target "$target" --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
+            test -x "$fresh/EXReader.app/EXReader"
+          done
+      - name: Launch and self-check the delivered bundle on iPhone
+        id: iphone_selfcheck
+        continue-on-error: true
+        run: python3 tools/check_apple_host.py --bundle "$RUNNER_TEMP/s20-fresh-iphone/EXReader.app" --device iphone --output build/s20-iphone/evidence/iphone-selfcheck
+      - name: Launch and self-check the delivered bundle on iPad
+        id: ipad_selfcheck
+        continue-on-error: true
+        run: python3 tools/check_apple_host.py --bundle "$RUNNER_TEMP/s20-fresh-ipad/EXReader.app" --device ipad --output build/s20-ipad/evidence/ipad-selfcheck
+      - name: Author the existing fixtures and the real UI projects
+        run: |
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/s20-apple-broad build/apple-resources
+          python3 tests/apple_host/search/prepare_search_fixture.py --resources build/apple-resources
+          ruby tests/apple_host/make_xcodeproj.rb build/s20-apple-search build/apple-resources tests/apple_host/search/ui
+      - name: Execute the real import reading and typography suite on iPhone
+        id: iphone_broad
+        continue-on-error: true
+        run: python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-broad/EXReaderHost.xcodeproj --scheme EXReaderHost-iOS --platform iphone --sdk stage/iphonesimulator --derived build/s20-broad-iphone --output build/s20-iphone/evidence/iphone-xctest-broad
+      - name: Execute the real import reading and typography suite on iPad
+        id: ipad_broad
+        continue-on-error: true
+        run: python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-broad/EXReaderHost.xcodeproj --scheme EXReaderHost-iOS --platform ipad --sdk stage/iphonesimulator --derived build/s20-broad-ipad --output build/s20-ipad/evidence/ipad-xctest-broad
+      - name: Execute the real in-book search suite on iPhone
+        id: iphone_search
+        continue-on-error: true
+        run: python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-search/EXReaderHost.xcodeproj --scheme EXReaderHost-iOS --platform iphone --sdk stage/iphonesimulator --derived build/s20-search-iphone --output build/s20-iphone/evidence/iphone-xctest-search
+      - name: Execute the real in-book search suite on iPad
+        id: ipad_search
+        continue-on-error: true
+        run: python3 tests/reader_wave3_s20/xctest.py --project build/s20-apple-search/EXReaderHost.xcodeproj --scheme EXReaderHost-iOS --platform ipad --sdk stage/iphonesimulator --derived build/s20-search-ipad --output build/s20-ipad/evidence/ipad-xctest-search
+      - name: Require every simulator entry to have completed
+        if: always()
+        env:
+          IPHONE_SELFCHECK: ${{ steps.iphone_selfcheck.outcome }}
+          IPAD_SELFCHECK: ${{ steps.ipad_selfcheck.outcome }}
+          IPHONE_BROAD: ${{ steps.iphone_broad.outcome }}
+          IPAD_BROAD: ${{ steps.ipad_broad.outcome }}
+          IPHONE_SEARCH: ${{ steps.iphone_search.outcome }}
+          IPAD_SEARCH: ${{ steps.ipad_search.outcome }}
+        run: |
+          test "$IPHONE_SELFCHECK" = success
+          test "$IPAD_SELFCHECK" = success
+          test "$IPHONE_BROAD" = success
+          test "$IPAD_BROAD" = success
+          test "$IPHONE_SEARCH" = success
+          test "$IPAD_SEARCH" = success
+      - name: Record the iPhone operation matrix
+        if: always()
+        run: python3 tests/reader_wave3_s20/report.py --target iphone --evidence build/s20-iphone/evidence --unpack build/s20-iphone/unpack.json --output build/s20-iphone/target.json
+      - name: Record the iPad operation matrix
+        if: always()
+        run: python3 tests/reader_wave3_s20/report.py --target ipad --evidence build/s20-ipad/evidence --unpack build/s20-ipad/unpack.json --output build/s20-ipad/target.json
+      - name: Preserve the iPhone delivery checksums evidence and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-s20-iphone-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/s20-iphone/
+            !build/**/*.key
+          if-no-files-found: error
+      - name: Preserve the iPad delivery checksums evidence and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-s20-ipad-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/s20-ipad/
+            !build/**/*.key
+          if-no-files-found: error
+  android:
+    if: ${{ !inputs.verification_only }}
+    name: Android delivery and real emulator operations
+    needs: [guard]
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Guard the seed the candidate and the exclusive paths
+        run: python3 tests/reader_wave3_s20/guard.py --output build/s20-android/guard.json
+      - name: Install the pinned Android compiler and API34 emulator image
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.31.1" "ndk;27.0.12077973" "emulator" "system-images;android-34;default;x86_64"
+          sudo apt-get update
+          sudo apt-get install -y patchelf ninja-build
+      - name: Build the installed Android SDK and the native host application
+        env:
+          ANDROID_CANDIDATE_SDK_BASE: edddc463c06ed5731195cdb8f06b2df6dff7699e
+          ANDROID_OWNERSHIP_HEAD: edddc463c06ed5731195cdb8f06b2df6dff7699e
+        run: |
+          set -o pipefail
+          python3 tools/reader_wave3_package/mobile.py build-android 2>&1 | tee build/s20-android-build.log
+      - name: Assemble check and unpack the delivery archive in a fresh directory
+        run: |
+          set -euo pipefail
+          out="$PWD/build/s20-android"
+          mkdir -p "$out"
+          python3 tools/reader_wave3_package/assemble.py --target android --payload build/android-host --output "$out/delivery" --source-sha "$S20_CANDIDATE" --sdk-version 3.41.0 --require-build-identity --exclude product
+          archive=$(ls "$out"/delivery/EXReader-android-*.zip)
+          fresh="$RUNNER_TEMP/s20-fresh-android"
+          python3 tools/reader_wave3_package/unpack.py --target android --archive "$archive" --manifest "$out/delivery/manifest.json" --into "$fresh" --report "$out/unpack.json"
+          echo "S20_FRESH=$fresh" >> "$GITHUB_ENV"
+          test -f "$fresh/artifacts/app-debug.apk"
+      - name: Enable hosted runner emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Install the unpacked APKs and run the real walkthrough on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            bash tests/reader_wave3_s20/android_device.sh "$S20_FRESH" "$PWD/build/s20-android/evidence"
+      - name: Record the Android operation matrix
+        if: always()
+        run: python3 tests/reader_wave3_s20/report.py --target android --evidence build/s20-android/evidence --unpack build/s20-android/unpack.json --output build/s20-android/target.json
+      - name: Preserve the delivery checksums evidence and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-s20-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/s20-android/
+            build/s20-android-build.log
+            !build/**/*.key
+          if-no-files-found: error
+
+  summary:
+    name: strict same-run six target aggregation
+    needs: [guard, windows, linux, macos, ios, android]
+    if: ${{ always() && !inputs.verification_only }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard the seed the candidate and the exclusive paths
+        run: python tests/reader_wave3_s20/guard.py --output build/s20-summary/guard.json
+      - name: Download this run and attempt artifacts only
+        uses: actions/download-artifact@v4
+        with:
+          pattern: reader-wave3-s20-*
+          path: build/s20-downloads
+      - name: Authenticate original artifacts and aggregate the six targets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tests/reader_wave3_s20/summary.py --targets build/s20-downloads --source-sha "$S20_CANDIDATE" --output build/s20-summary/delivery.json --run "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
+      - name: Preserve the aggregated delivery index
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-wave3-s20-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s20-summary/
+          if-no-files-found: error

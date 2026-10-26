@@ -13,11 +13,20 @@ stage. Subsequent independent work packages go to DeepSeek.
 | --- | --- | --- |
 | SDK format candidate | `9d3a3f8bfa06c099ebba0d9e1ba613d276c3af09` | `src/rtf.c`, `src/cbz.c` |
 | Cloud same-open-file candidate | `c92a2e06a73d5813e86537e5a5f4a8e76a32bbcd` | cloud-import implementation, its two regression scripts, workflow and PLAN |
+| Delivery assembly and diagnostics | `eb23d0f563ba08a22f2af80b6a9f89f8c14b68d0` | explicit 21 paths in inputs.json; original S20 entry unchanged |
 
 These inputs retain their original records. SDK format acceptance belongs to
 `8015c576` / run `40244430230`; ordinary cloud regression belongs to
 `3584390d` / run `40273482304`. Neither proves this new combined source.
 D13 race acceptance remains false; no blocked race experiment is retried.
+
+Initial composition admission `d14fd5babc1f2c16b14b641a7100e556c09de34d` /
+run `40279362653`, attempt 1 passed the six negative-control tests and exact
+Git tree admission in Actions. This is source-only evidence before delivery
+adoption. It grants no build, GUI, package or performance acceptance.
+Delivery summary repair `a41bcf2f` / `40278164857` passed its protocol-only
+check. Its complete business source remains separately `5527e604`; Android
+walkthrough failed 3/45 and Apple ZIP binary binding is limited as documented.
 
 ## Pending immutable inputs
 
