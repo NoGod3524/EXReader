@@ -264,9 +264,16 @@ def gui_prepare():
     annotations = fixtures / "annotations.jsonl"
     if not annotations.is_file() or not annotations.stat().st_size:
         raise RuntimeError("seed produced no raw annotation file")
-    return {"payload": payload, "book": book, "annotations": annotations,
+    # The driver takes the packaged product directory, exactly like the retained
+    # C10 run (build/c10-compact-package/EXReader-Linux), not its parent.
+    product = payload / "EXReader-Linux"
+    program = product / "bin/exreader-linux"
+    if not program.is_file():
+        raise RuntimeError("compact payload has no program at " + str(program))
+    return {"payload": payload, "product": product, "program": program,
+            "book": book, "annotations": annotations,
             "annotations_sha256": sha(annotations), "book_sha256": sha(book),
-            "compact_host_sha256": sha(payload / "EXReader-Linux/bin/exreader-linux"),
+            "compact_host_sha256": sha(program),
             "seed_stdout": done.stdout.strip().splitlines()[-1:]}
 
 
@@ -278,7 +285,7 @@ def gui(enabled, prepared):
                 "reason": "the full raw GUI round is only requested explicitly, never by a push run"}
     if prepared is None:
         return {"executed": False, "prepared": False, "reason": "the GUI preparation itself failed"}
-    payload, book, annotations = prepared["payload"], prepared["book"], prepared["annotations"]
+    product, book, annotations = prepared["product"], prepared["book"], prepared["annotations"]
     output = OUT / "gui"
     if output.exists():
         shutil.rmtree(output)
@@ -286,7 +293,7 @@ def gui(enabled, prepared):
               "gsettings set org.gnome.desktop.interface toolkit-accessibility true; "
               "gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; "
               + sys.executable + " tests/reader_gtk_raw_wave3/ui_raw.py"
-              + " --payload " + str(payload)
+              + " --payload " + str(product)
               + " --book " + str(book)
               + " --annotations " + str(annotations)
               + " --font tests/fixtures/fonts/primary.ttf"
