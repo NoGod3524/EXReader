@@ -1,0 +1,82 @@
+name: Team24 Windows native integration
+on:
+  push:
+    branches: [codex/team24-windows, codex/dsf-windows-ui-close]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+jobs:
+  guard:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fixed seed and exact owned path scope
+        run: python3 tests/reader_wave3_c09/team24_guard.py
+  windows:
+    needs: guard
+    runs-on: windows-2022
+    timeout-minutes: 240
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build raw SDK and modules, the wave-3 host, run retained and new native checks, package the ZIP
+        shell: pwsh
+        run: |
+          python tests/reader_wave3_c09/build.py
+          if ($LASTEXITCODE) { throw 'C09 Windows build or native checks failed' }
+      - name: Preserve the exact ZIP and every report, including failures
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c09-windows-wave3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c09/report.json
+            build/c09/desktop.json
+            build/c09/EXReader-wave3-windows.zip
+            build/c09/wave3-ui/
+            build/c09/compact22/
+            build/c09/retained26/
+            build/c09/extracted-ui/
+            build/c09/package/build.json
+            build/c09/package/report.json
+            build/c09/raw-owner-suite/
+            build/c09/wave3-host/windows-host.map
+            build/c09/logs/
+          if-no-files-found: warn
+  authenticate:
+    needs: windows
+    if: always() && needs.windows.result != 'skipped'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: c09-windows-wave3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c09-download
+      - name: Bind report, ZIP, program hash and artifact identity to this run and attempt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ needs.windows.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.windows.outputs.artifact_digest }}
+          WINDOWS_RESULT: ${{ needs.windows.result }}
+        run: python3 tests/reader_wave3_c09/identity.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c09-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c09-authentication/
+          if-no-files-found: warn

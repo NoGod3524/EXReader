@@ -174,3 +174,7 @@ Production round 40367589904/1, source 7840f6a2e0ff7c76cae6416d13c819bb7d6fc2ea,
 
 GTK raw static review at 022e66dd: the independent records_resolve callback returns EXR_OK only after public FOUND; reflow/EPUB history is encoded as its actual v2 capture while fixed pages use the dedicated v3 entry. Installed family/capability/origin checks remain explicit and the legacy OFF branch is retained. This is source review only; the GTK candidate remains outside this composition until its native/backend/GUI evidence is reviewed.
 
+
+## Accepted Windows input admitted
+Windows raw Wave3 input pins 0d2903e62fdb0f1979f50722c3c972bf586ae085; only its two close-out docs differ from tested source f92d1bb9a40dd05ec6b8603172091648e4575b98. Run 40375338225/1 passed all 16 native feature cases on the unpacked original EXE, compact22, retained26 and archive/program authentication. The input owns exactly the changed Windows host/driver paths; the public codec remains the separate existing core-owned input. This root composition still requires its own combined native replay. Fixed progress newly counts only annotation exchange and original export; direct host font lease lifetime and the complete account cancel/retry matrix remain partial.
+

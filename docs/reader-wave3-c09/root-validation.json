@@ -1,0 +1,37 @@
+{
+  "source_sha": "f92d1bb9a40dd05ec6b8603172091648e4575b98",
+  "run_id": 40375338225,
+  "attempt": 1,
+  "platform": "Windows",
+  "workflow_conclusion": "success",
+  "jobs": {"guard": "success", "windows": "success", "authenticate": "success"},
+  "native_wave3_ui": {"accepted": true, "checks": 16},
+  "retained_compact_ui": {"accepted": true, "checks": 22},
+  "extracted_retained_host": {"accepted": true, "checks": 26},
+  "program_sha256": "ebd60ea097f188d8193d0dde6c033b7bfabfd6d4614f21f3cb741e1a82ff76b1",
+  "product_zip": {
+    "bytes": 17501519,
+    "sha256": "698df643de22de632651acc348c65253963b8deee7bec165c9a280ecd5958273"
+  },
+  "artifact": {
+    "id": 12675056541,
+    "bytes": 19268437,
+    "sha256": "b5a43d993df36b2db037d0d110e0d4e96324a72acf163f27cb1d34456105b645",
+    "expires_at": "2027-01-24T18:10:15Z"
+  },
+  "authentication_artifact": {
+    "id": 12674618358,
+    "bytes": 1154,
+    "sha256": "912ce83aeb701bae2edc7656d7cc56e3c3d0254598e18e918d90b61a0d9bc45d"
+  },
+  "counted_total_progress_outcomes": [
+    "H.windows.annotation_exchange",
+    "H.windows.original_export"
+  ],
+  "scope": "Explicit raw Windows Wave3 host executed from its unpacked product ZIP; module UI integration only",
+  "host_font_lease_counter_measured": false,
+  "complete_account_cancel_retry_matrix_replayed": false,
+  "same_source_six_platform_product_accepted": false,
+  "performance_accepted": false,
+  "earlier_failed_runs": [40353197461, 40364954464, 40366194984, 40367648443, 40369325127, 40370819405, 40371933786]
+}

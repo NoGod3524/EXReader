@@ -71,6 +71,9 @@
 #ifdef EXR_READER_WINDOWS_RAW3
 #include "../apps/reader/desktop/windows_raw3_apis.h"
 #endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+#include "../apps/reader/desktop/windows_wave3_types.h"
+#endif
 
 enum {
   IDC_IMPORT_LABEL = 100, IDC_IMPORT_EDIT, IDC_IMPORT_BUTTON, IDC_OPEN_BUTTON,
@@ -849,7 +852,7 @@ enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB
   JOB_METADATA_PREPARE, JOB_METADATA_SAVE, JOB_METADATA_RETRY, JOB_METADATA_DISCARD,
   JOB_ACCOUNT_LOAD, JOB_ACCOUNT_SET, JOB_ACCOUNT_FORGET, JOB_ACCOUNT_STAGE, JOB_ACCOUNT_RECEIVE,
   JOB_SEARCH_BATCH, JOB_SEARCH_OPEN, JOB_NAVIGATION_ROWS, JOB_NAVIGATION_OPEN, JOB_RECORDS, JOB_IMPORT_ORGANIZE,
-  JOB_PREFERENCES };
+  JOB_PREFERENCES, JOB_WAVE3 };
 #ifdef EXR_READER_WINDOWS_ACCOUNT
 static int account_job_kind(int kind) { return kind>=JOB_ACCOUNT_LOAD && kind<=JOB_ACCOUNT_RECEIVE; }
 #endif
@@ -958,6 +961,9 @@ struct host_job {
   reader_preferences prefs;
   int prefs_valid,prefs_persist,system_theme;
   volatile LONG prefs_committed;
+#endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+  w3_job *w3;
 #endif
 };
 
@@ -1087,9 +1093,20 @@ static exr_status winrecords_job(host_job *job);
 static void winrecords_accept(host_job *job);
 static void winrecords_close(void);
 #endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+static void w3_job_free(w3_job *job);
+static exr_status w3_run(host_job *job);
+#ifdef EXR_READER_WINDOWS_RAW3
+static exr_status w3_prepare_open(host_job *job, const exr_book *book, exr_error *error);
+#endif
+static void w3_failed_to_start(host_job *job);
+#endif
 
 static void job_free(host_job *job) {
   if (!job) return;
+#ifdef EXR_READER_WINDOWS_WAVE3
+  w3_job_free(job->w3);
+#endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
   winio_job_free(job->io);
 #endif
@@ -1153,6 +1170,9 @@ static void job_start(host_job *job) {
   unsigned thread_id = 0;
   g.job = job;
   if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_IMPORT_ORGANIZE
+#ifdef EXR_READER_WINDOWS_WAVE3
+      && job->kind != JOB_WAVE3
+#endif
 #ifdef EXR_READER_WINDOWS_SEARCH
       && job->kind != JOB_SEARCH_BATCH
 #endif
@@ -1188,6 +1208,9 @@ static void job_start(host_job *job) {
     g.job = NULL;
     job->status = EXR_MEMORY;
     strcpy(job->error.message, "Cannot create host worker thread");
+#ifdef EXR_READER_WINDOWS_WAVE3
+    w3_failed_to_start(job);
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
     if(metadata_job_kind(job->kind)) metadata_failed_to_start(job);
 #endif
@@ -1781,6 +1804,9 @@ static exr_status job_open(host_job *job) {
     book_clear(&book);
     return EXR_CANCELLED;
   }
+#if defined(EXR_READER_WINDOWS_WAVE3) && defined(EXR_READER_WINDOWS_RAW3)
+  if (status == EXR_OK) status = w3_prepare_open(job, &book, &error);
+#endif
   if (status == EXR_OK) {
     session.active = 1;
     job->have_frame = 1;
@@ -2267,6 +2293,9 @@ static unsigned __stdcall job_thread(void *context) {
 #endif
   if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE
       && !job_preferences_committed(job)
+#ifdef EXR_READER_WINDOWS_WAVE3
+      && job->kind != JOB_WAVE3
+#endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
       && !winio_kind(job->kind)
 #endif
@@ -2314,6 +2343,9 @@ static exr_status job_run(host_job *job) {
 #endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
     case JOB_PREFERENCES: return prefs_job(job);
+#endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+    case JOB_WAVE3: return w3_run(job);
 #endif
     case JOB_OPEN: return job_open(job);
     case JOB_GO: return job_go(job);
@@ -2405,6 +2437,9 @@ static HWND make_static(HWND parent, int id, const wchar_t *text) {
 #endif
 #ifdef EXR_READER_WINDOWS_RECORDS
 #include "../apps/reader/desktop/windows_records.inc"
+#endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+#include "../apps/reader/desktop/windows_wave3.inc"
 #endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
 #include "../apps/reader/desktop/windows_preferences_ui.inc"
@@ -3602,6 +3637,9 @@ static void host_update_controls(void) {
 #ifdef EXR_READER_WINDOWS_RECORDS
   winrecords_controls();
 #endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+  w3_controls();
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   EnableWindow(g.shelf_refresh,!busy && !g.closing);
 #endif
@@ -3636,6 +3674,9 @@ static void handle_job_complete(host_job *job) {
 #endif
 #ifdef EXR_READER_WINDOWS_RECORDS
   if(job->kind==JOB_RECORDS) { winrecords_accept(job);return; }
+#endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+  if(job->kind==JOB_WAVE3) { w3_accept(job);return; }
 #endif
 #ifdef EXR_READER_WINDOWS_ACCOUNT
   if(account_job_kind(job->kind)) { acct_job_accept(job);return; }
@@ -3768,12 +3809,20 @@ static void handle_job_complete(host_job *job) {
 #ifdef EXR_READER_WINDOWS_RECORDS
           winrecords_close();
 #endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+          w3_book_changed();
+#endif
           g.active_book_id = g.current.id;
           frame_move(&g.frame, &job->frame);
           memset(&g.selection, 0, sizeof(g.selection));
           g.pending_selection = 0;
           g.session.page = g.frame.page;
           update_page_label();
+#ifdef EXR_READER_WINDOWS_WAVE3
+          /* Capture only an accepted frame, before save_progress starts another worker. */
+          if (job == w3.font_job) w3_after_font_job(job);
+          else if (!job->w3) w3_history_land(job);
+#endif
           settings_save();
           if (reload_notes() != EXR_OK) { save_progress(); return; }
           if (!save_progress()) return;
@@ -3806,6 +3855,9 @@ static void handle_job_complete(host_job *job) {
         if (job->kind == JOB_LAYOUT && job->font_percent > 0) g.font_percent = job->font_percent;
         if (job->zoom_percent > 0) g.zoom_percent = job->zoom_percent;
         update_page_label();
+#ifdef EXR_READER_WINDOWS_WAVE3
+        if (job->kind == JOB_GO && !job->w3) w3_history_land(job);
+#endif
         settings_save();
         if (!save_progress()) { g.pending_selection = 0; return; }
         if (job->message[0]) set_status(job->message);
@@ -3905,6 +3957,9 @@ static void host_command(int id) {
 #endif
 #ifdef EXR_READER_WINDOWS_RECORDS
   if(id==IDC_RECORDS) { winrecords_show();return; }
+#endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+  if(w3_command(id)) return;
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
   if(g.metadata_running) { set_status(L"正在提交书籍编辑，已接受的结果将保留。");return; }
@@ -5080,6 +5135,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       WaitForSingleObject(job->thread, INFINITE);
       g.job = NULL;
       handle_job_complete(job);
+#ifdef EXR_READER_WINDOWS_WAVE3
+      w3_after_complete(job);
+#endif
 #ifdef EXR_READER_WINDOWS_COMPACT
       compact_complete(job);
 #endif
@@ -5135,6 +5193,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #endif
 #ifdef EXR_READER_WINDOWS_RECORDS
       winrecords_close();
+#endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+      w3_close();
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
       product_shelf_remember();KillTimer(window,3);KillTimer(window,4);
@@ -5201,6 +5262,9 @@ static int message_loop(void) {
 #ifdef EXR_READER_WINDOWS_RECORDS
     if(winrecords_translate(&message)) continue;
 #endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+    if(w3_translate(&message)) continue;
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
     if(g.metadata_dialog && IsDialogMessageW(g.metadata_dialog,&message)) continue;
 #endif
@@ -5265,6 +5329,9 @@ static void host_cleanup(void) {
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   free(g.shelf_query);g.shelf_query=NULL;
+#endif
+#ifdef EXR_READER_WINDOWS_WAVE3
+  w3_shutdown();
 #endif
   if (g.library) exr_library_close(g.library);
   g.library = NULL;
@@ -5416,6 +5483,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   host_fit_work_area(g.window);
   ShowWindow(g.window, show ? show : SW_SHOWNORMAL);
   UpdateWindow(g.window);
+#ifdef EXR_READER_WINDOWS_WAVE3
+  w3_startup();
+#endif
   reload_shelf();
 #ifdef EXR_READER_PRODUCT_CATALOG
   {
