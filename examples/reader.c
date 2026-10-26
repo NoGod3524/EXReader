@@ -4359,6 +4359,14 @@ static int drive_execute(void) {
   char detail[1024];
   int launches = 0;
   memset(detail, 0, sizeof(detail));
+#ifdef EXR_S19_WINDOWS_FEATURES
+  if (!strcmp(action, "s19_features")) {
+    extern int exr_s19_windows_features(void);
+    int code = exr_s19_windows_features();
+    drive_step_finish(code == 0, "S19 five installed package paths");
+    return 1;
+  }
+#endif
   if (!strcmp(action, "wait_idle")) {
     drive_expect_idle = 1;
     return 1;
