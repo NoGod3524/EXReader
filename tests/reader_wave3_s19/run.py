@@ -168,6 +168,14 @@ def defined_symbols(binary):
     return names
 
 
+def embedded_sdk_symbols(names, webdav_api):
+    # WebDAV is an independently installed static extra, not the SDK image.
+    # Permit only its installed public functions and compiler cold fragments.
+    return [name for name in names if name.startswith('exr_')
+            and not name.startswith('exr_host_features')
+            and name.removesuffix('.cold') not in webdav_api]
+
+
 def needed_libraries(binary):
     binary = str(binary)
     if os.name == 'nt':
@@ -442,8 +450,16 @@ def main():
       assert loaded.count(FEATURE_LIBRARY) == 1, loaded
       check('one-loaded-sdk-implementation', sdk_modules[0])
 
-      sdk_defined = [name for name in defined_symbols(probe)
-                   if name.startswith('exr_') and not name.startswith('exr_host_features')]
+      webdav_header = prefix / 'include/exr_webdav.h'
+      webdav_api = set(re.findall(r'\b(exr_webdav_\w+)\s*\(', webdav_header.read_text(encoding='utf-8')))
+      assert webdav_api and not webdav_api.intersection(defined_symbols(sdk_provider['path']))
+      assert embedded_sdk_symbols(['exr_document_open', 'exr_webdav_create',
+                                   'exr_webdav_create.cold', 'exr_webdav_unknown'], webdav_api) == [
+                                       'exr_document_open', 'exr_webdav_unknown']
+      check('installed-webdav-extra-is-distinct-from-sdk', sha256(webdav_header))
+
+      sdk_defined = embedded_sdk_symbols(defined_symbols(probe), webdav_api)
+      assert not [name for name in defined_symbols(probe) if name.removesuffix('.cold') in webdav_api]
       assert not sdk_defined, sdk_defined
       module_prefixes = ('rfl_', 'roe_', 'reader_jh_', 'reader_sync_view_', 'reader_annotation_', 'reader_catalog')
       copies = [name for name in defined_symbols(probe) if name.startswith(module_prefixes)]
@@ -451,8 +467,7 @@ def main():
       check('host-executable-holds-no-sdk-module-or-store-copy', probe.name)
 
       dso_defined = defined_symbols(dso)
-      embedded = [name for name in dso_defined
-                if name.startswith('exr_') and not name.startswith('exr_host_features')]
+      embedded = embedded_sdk_symbols(dso_defined, webdav_api)
       assert not embedded, embedded
       assert 'exr_host_features_run' in dso_defined, dso_defined
       check('product-dso-holds-no-sdk-object-copy', str(len(dso_defined)) + ' defined')

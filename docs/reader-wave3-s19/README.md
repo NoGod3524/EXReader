@@ -146,3 +146,6 @@ same run that produced the Linux and Windows link errors.
 * The forty-two S14 negative verifier cases, the S15 graph controls and the S17
   mixed-profile matrix are not re-run here; they stay with their own packages.
 * No physical device, no packaged installer, no performance claim.
+
+Root follow-up: run 40362513151 retained the earlier script failures, passed the fixture-journal call, then refused the independently installed WebDAV extra because the SDK-object classifier treated every exr_ symbol as SDK code. WebDAV is a separately installed static package. The corrected classifier admits only functions named by its installed public header, rejects unknown WebDAV names, verifies those names do not occur in the actual loaded SDK image, and still forbids an extra copy in the host executable. No SDK/store/provider identity or mixed-graph assertion was removed. No acceptance is granted until the next actual run completes.
+
