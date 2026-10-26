@@ -10,6 +10,7 @@ def call(*args):
     p = subprocess.run([str(exe),str(db),*map(str,args)],check=True,capture_output=True,text=True)
     value=json.loads(p.stdout)
     assert value['status']==0, (args,value,p.stderr)
+    assert value.get('error',0)==0, (args,value)
     return value
 def receive(v):
     body=raw(v); path=folder/(hashlib.sha256(body).hexdigest()+'.json');path.write_bytes(body);call('receive',path)
@@ -34,6 +35,7 @@ m=[]
 for n,kind,ident in [(6,'shelf',child),(7,'tag',t['entity_key']),(8,'series',s['entity_key'])]:
     m.append(rev(n,'membership',kind+':'+ident+':'+bookkey,{'collection_kind':kind,'collection_id':ident,'book_key':bookkey,'ordinal':n}))
 for v in [c,p,t,s,*m]:receive(v)
+assert all(r['result']==2 for r in scan('membership',1))
 first=scan('shelf',1);assert [r['result'] for r in first]==[2,0],first
 assert [r['result'] for r in scan('shelf',1)]==[0,0]
 assert sql('select name,parent_id from reader_shelves order by name')==[('Child',parent),('Parent',None)]
