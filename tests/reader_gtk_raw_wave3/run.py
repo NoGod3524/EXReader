@@ -210,7 +210,11 @@ def host_identity(binary):
     report = {"binary": str(binary / "gtk-host/exreader-linux"),
               "binary_sha256": sha(binary / "gtk-host/exreader-linux"),
               "checks": [{"check": name, "passed": ok} for name, ok in checks],
+              "symbols_found": sorted(name for name in wanted if name in names),
               "accepted": all(ok for _, ok in checks)}
+    failed = [row["check"] for row in report["checks"] if not row["passed"]]
+    if failed:
+        print("HOST IDENTITY FAILED: " + ", ".join(failed), flush=True)
     (OUT / "raw-host-identity.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return report
 

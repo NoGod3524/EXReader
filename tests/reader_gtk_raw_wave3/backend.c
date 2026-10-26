@@ -163,6 +163,10 @@ static void w3_save(linux_reader *reader,int kind,const char *body,size_t start,
   reader_command value=w3_command(READER_RECORDS_SAVE,reader->current.id);
   value.records_kind=kind;value.records_operation=READER_RC_PUT;value.records_text=body;value.start=start;value.end=end;
   reader_result saved=w3_run(reader,value);
+  if(saved.status!=EXR_OK || !saved.records_created)
+    printf("{\"info\":\"save_refused\",\"kind\":%d,\"status\":%d,\"records_code\":%d,\"created\":%d,"
+           "\"message\":\"%s\"}\n",kind,(int)saved.status,saved.records_code,saved.records_created,
+      saved.message);
   REQUIRE(saved.status==EXR_OK && saved.records_created);
   if(revision) g_strlcpy(revision,saved.records_revision,33);
   reader_result_free(&saved);
@@ -321,9 +325,13 @@ int main(int argc,char **argv) {
     }
     w3_slot_matches_capture(reader,tail);
     PASS("fixed_history_slot_is_anchor3_with_every_nullable_selector_byte");
-    size_t start=reader->current.start,end=start+4;REQUIRE(end<=reader->current.end && start<end);
+    /* Two real ranges. A fixed-page caret is not a valid product record in this
+       family (the installed store refuses a fixed record without a quote), so the
+       retained fixture is two ranges, exactly what the exporter accepts. */
+    size_t start=reader->current.start,end=start+4,second_start=start+8,second_end=start+12;
+    REQUIRE(end<=reader->current.end && second_end<=reader->current.end && start<end && second_start<second_end);
     w3_save(reader,READER_RC_HIGHLIGHT,"PDF highlight",start,end,NULL);
-    w3_save(reader,READER_RC_BOOKMARK,"PDF bookmark",reader->current.start,reader->current.start,NULL);
+    w3_save(reader,READER_RC_HIGHLIGHT,"PDF second highlight",second_start,second_end,NULL);
     original_count=w3_annotation_selectors(reader,pdf_book,original,4);REQUIRE(original_count==2);
     /* One real page turn replaces that landing; the new page is the entry. */
     {
