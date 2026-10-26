@@ -7,6 +7,7 @@ on:
       - 'tests/reader_perf_windows/**'
       - '.github/workflows/reader-perf-windows.yml'
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
