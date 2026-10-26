@@ -75,7 +75,7 @@ final class SyncController {
             }catch(Throwable failure){error(failure);}finally{Arrays.fill(secret,(byte)0);}
         }),failure->worker.execute(()->{Arrays.fill(secret,(byte)0);if(request==epoch){preparing=false;sdkTask=null;error(failure);}})));
     });}
-    void cancel(){worker.execute(()->{if(projecting){projecting=false;projectionResumable=true;++epoch;status="投影已暂停，可继续";publish();return;}if(sdkTask!=null)sdkTask.cancel();if(session!=0){NativeSync.Snapshot view=new NativeSync.Snapshot(NativeSync.command(session,2));state=view.state;status=view.label();schedulePoll();}else status="已请求取消";publish();});}
+    void cancel(){worker.execute(()->{if(projecting){projectionResumable=true;++epoch;finishProjection("投影已暂停，可继续");return;}if(sdkTask!=null)sdkTask.cancel();if(session!=0){NativeSync.Snapshot view=new NativeSync.Snapshot(NativeSync.command(session,2));state=view.state;status=view.label();schedulePoll();}else status="已请求取消";publish();});}
     void close(){worker.execute(this::closeOwned);}
     private void closeOwned(){
         ++epoch;if(sdkTask!=null)sdkTask.cancel();sdkTask=null;preparing=receiving=projecting=projectionResumable=false;account.clearMemory();
