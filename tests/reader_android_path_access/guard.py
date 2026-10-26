@@ -9,6 +9,7 @@ BASE = '7752663d285ce9d47621b12a4e902d4da4f5cb6d'
 SEED = 'd263ce5228838ac90c0a0dc13a5193d4a7739681'
 BLOBS = {
     'examples/android/app/src/main/java/org/exreader/host/ReadingPanel.java': 'ad22ae5c330938110ae280cf58e3beebb1130b54',
+    'examples/android/app/src/main/java/org/exreader/host/FontPanel.java': '9b6c24c77ccb1d82e489e9e130899d574f0e1c56',
     'apps/reader/font-library/src/library.cpp': 'ba1df4e12c3e9d59dbae830eafd244cb160a6411',
     'apps/reader/original-export/src/original_export.cpp': '52b5c467453d77b7450634a82bc83f1ea171a01b',
     'tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java': 'abfd7d3a758354dd723cf8822c0a02f7948c0004',
