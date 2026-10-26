@@ -95,14 +95,18 @@ def main():
             source=a.out/'Relay return.txt';source.write_bytes(('Windows return original.\n'*95).encode());digest=hashlib.sha256(source.read_bytes()).hexdigest()
             import_book(app,source);app.wait(lambda:app.has_row('Relay return'),timeout=60)
             data.update(return_book='txt:'+digest,return_original_sha256=digest)
-            dialog=app.open_account();app.run_sync(dialog);app.close_account(dialog)
+            dialog=app.open_account();app.fill(dialog,root=dav.base+'/dav/',user=user,password=password,remember=False);app.apply(dialog,'仅本次会话');app.run_sync(dialog);app.close_account(dialog)
             assert any(r['method']=='PUT' and '/revisions/' in r['path'] for r in dav.requests)
             assert any(r['method']=='PUT' and '/objects/' in r['path'] and digest in r['path'] for r in dav.requests)
             checks.append('windows_publishes_membership_change_and_second_original')
         data['checks_'+a.phase]=checks;data['program_'+a.phase]=identity
         relay.save(dav,a.out,a.phase,data);dav=None
     except Exception:
-        traceback.print_exc();raise
+        traceback.print_exc()
+        if app and app.process.poll() is None:
+            try:app.diagnose(a.out)
+            except Exception:traceback.print_exc()
+        raise
     finally:
         if app and app.process.poll() is None:app.process.kill();app.process.wait(timeout=20)
         if dav:
