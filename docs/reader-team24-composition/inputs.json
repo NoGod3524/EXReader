@@ -159,6 +159,15 @@
       ]
     },
     {
+      "name": "gtk-raw-retained-regression",
+      "source": "4380c6162cb36426537664997108a5d51031da8a",
+      "tested_source": "4380c6162cb36426537664997108a5d51031da8a",
+      "tested_run": 40390254271,
+      "paths": [
+        ".github/workflows/gtk-raw-retained.yml"
+      ]
+    },
+    {
       "name": "organization-projection",
       "source": "a67fe8c6c094c4bb59ffc94f4a84c90261d5e722",
       "tested_source": "a67fe8c6c094c4bb59ffc94f4a84c90261d5e722",
