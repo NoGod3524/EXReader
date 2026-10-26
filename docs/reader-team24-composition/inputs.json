@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "base": "d263ce5228838ac90c0a0dc13a5193d4a7739681",
+  "inputs": [
+    {
+      "name": "sdk-format-candidate",
+      "source": "9d3a3f8bfa06c099ebba0d9e1ba613d276c3af09",
+      "paths": ["src/rtf.c", "src/cbz.c"]
+    },
+    {
+      "name": "cloud-same-open-file",
+      "source": "c92a2e06a73d5813e86537e5a5f4a8e76a32bbcd",
+      "paths": [
+        "apps/reader/cloud-import/src/cloud_import.c",
+        "tests/reader_cloud_pinned/run.py",
+        "tests/reader_cloud_pinned/strict.py",
+        ".github/workflows/reader-cloud-pinned-source.yml",
+        "docs/reader-cloud-pinned-source/PLAN.md"
+      ]
+    }
+  ]
+}
