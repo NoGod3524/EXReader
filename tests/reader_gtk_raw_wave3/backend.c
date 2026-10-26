@@ -83,6 +83,14 @@ static void w3_slot_matches_capture(linux_reader *reader,size_t index) {
   size_t unit=reader->current.fixed_document ? reader->current.page:reader->current.part;
   size_t at=reader->current.fixed_document ? 0:reader->current.position;
   REQUIRE(records_capture(reader,&reader->current,unit,at,at,&captured,&anchor,&fixed,&error)==EXR_OK);
+  if(record.mode==READER_RS_FIXED_PAGE) {
+    printf("{\"info\":\"slot_vs_capture\",\"mode\":%d,\"rec_a\":%llu,\"rec_ex\":%zu,\"rec_pre\":%zu,"
+           "\"rec_suf\":%zu,\"rec_hx\":%d,\"rec_hp\":%d,\"rec_hs\":%d,\"cap_ex\":%zu,\"cap_pre\":%zu,"
+           "\"cap_suf\":%zu,\"cap_hx\":%d,\"cap_hp\":%d,\"cap_hs\":%d}\n",(int)record.mode,
+      (unsigned long long)record.anchor_version,record.exact_size,record.prefix_size,record.suffix_size,
+      record.exact?1:0,record.prefix?1:0,record.suffix?1:0,fixed.exact_size,fixed.prefix_size,fixed.suffix_size,
+      fixed.exact?1:0,fixed.prefix?1:0,fixed.suffix?1:0);fflush(stdout);
+  }
   REQUIRE(record.mode==captured.mode && record.start==record.end);
   if(record.mode==READER_RS_FIXED_PAGE) {
     REQUIRE(record.anchor_version==3);
