@@ -29,6 +29,7 @@ try:
             audit=cloud[audit_name];assert audit['ok']==1 and len(audit['books'])==9 and all(book['read_ok']==1 for book in audit['books'])
             assert {sha('cloud-ui/'+folder+'/book-%d.bin'%book['id']) for book in audit['books']}==set(cloud['inputs'].values())
         expected={'producer-book-sync','unresolved-history-not-complete','hierarchy-and-pagination','three-memberships','unsafe-tags-not-projected','native-organizer-shows-remote-tag','native-organizer-shows-hierarchy','native-organizer-shows-series','retry-after-history-resolution','membership-tombstone-applied','book-tombstone-soft-deletes','deleted-book-removed-from-shelf','deleted-book-original-retained','book-explicit-restore','restored-book-visible','group-tombstones-applied','group-explicit-restores','pending-local-intent-blocks-receive','retry-after-local-recovery','cancel-active-original-read','resume-import-without-duplicate','cancel-resume-original-hashes','mapping-repair-reaches-shelf-without-reimport','authenticated-webdav-traffic'}
+        expected.update({'native-empty-group-name-refused','native-create-shelf-tag-series-and-child','native-created-groups-sync-to-second-host'})
         assert set(report['checks'])==expected and len(report['checks'])==len(expected)
         audit=report['cancel_readback'];assert audit['ok']==1 and len(audit['books'])==2 and all(item['read_ok']==1 for item in audit['books'])
         assert {sha('organization-ui/cancel-readback/book-%d.bin'%item['id']) for item in audit['books']}==set(report['cancel_input_hashes'])
