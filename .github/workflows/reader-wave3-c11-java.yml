@@ -1,6 +1,14 @@
 # SPDX-License-Identifier: MIT
 name: Reader wave3 C11 real Android Java compile gate
 on:
+  push:
+    branches: [codex/team24-android]
+    paths:
+      - '.github/workflows/reader-wave3-c11*.yml'
+      - 'tests/reader_wave3_c11/**'
+      - 'examples/android/app/src/main/java/org/exreader/host/**'
+      - 'examples/android/app/src/main/cpp/**'
+      - 'examples/android/app/build.gradle'
   workflow_dispatch:
 permissions:
   contents: read
