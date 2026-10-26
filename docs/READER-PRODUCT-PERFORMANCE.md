@@ -44,3 +44,20 @@ jobs:
 源码 `be53824393b3621a233181dfe01d7094dd20ed65`，[Actions 40383580356](https://github.com/NoGod3524/EXReader/actions/runs/40383580356) attempt 1 成功：actionlint 解析两个入口；Python 编译检查、引用文件和 CMake 种子路径检查通过；GTK 采样计划和百分位计算、直接运行及可复用调用的模拟身份检查通过，并拒绝跨 attempt 或被修改的工件；Windows 缺失或跨源码证据被拒绝。原冻结工作流、验证器和探针与起点 `11042994` 完全一致。记录工件 `reader-composition-perf-protocol-40383580356-1`，ID `12678184505`，SHA-256 `b954d55f4bd7b8927a7fcb92625a1a8f26ef18431df09a106ba977ce4d540ed6`。
 
 这些是合成证据协议检查，没有构建产品、运行实际可复用调用或重新采样；真实宿主及产物身份仍须由下次组合测量核验。
+## 2026-10-26 完整桌面配置性能推进
+
+独立分支以共同源码 `a19fef7d7cdb0be90b0e54b92910502016c33df9` 为起点。新增完整产品性能工作流和采样工具，未修改原始 SDK 冻结门禁。Windows 复用 C09 的 wave-3、原生模块和内容绑定构建，测量 ZIP 解压后的程序；GTK 复用 C10 的非紧凑 wave-3 构建，包含账号、设置、搜索、导航、阅读记录、批量导入、拖入、页面背景和五个工具，测量 tar.gz 解压后的程序。两者使用各自既有的 2202 本公共 SDK 原件，记录实际程序、包和构建配置身份。
+
+### Windows 首轮完整配置
+
+源码 `77a54227a78b0160e98609032e7ceef87fb29d00`，[Actions 40397287811](https://github.com/NoGod3524/EXReader/actions/runs/40397287811)，attempt 1：Windows Server 2022，AMD EPYC 7763，4 逻辑处理器。C09 完整构建、原生回归、解压运行、48 次性能启动与同源/包身份核对成功；冷、热书架、阅读、EPUB 导入各 12 次。程序 SHA-256 `1866af855e2264986ccf74f4d1f4ee1b62d3f3e9e206f3fbc84346ce5d8606cd`；ZIP 17,503,178 字节，SHA-256 `ce3d9424136b68e5e9ebfc9eb2acd47fe5cdbf26d30193108d3ef73c956f1009`；工件 ID `12687463168`，digest `sha256:3c9213a918b14332ce362ceb956d5595d75905c95ff20d34ccae35c047e10843`。原始工件由 [Actions 40399155792](https://github.com/NoGod3524/EXReader/actions/runs/40399155792) 验证并解析。
+
+冷书架首屏可交互 p50/p95 5089.170/5156.590 ms；热书架 169.021/179.770 ms；书内翻页 96 次 p50/p95 33.367/44.238 ms；阅读组峰值工作集 p95 50,102,272 字节。冷/热只描述 profile 策略，非受控磁盘缓存。原 16 MiB TXT 仍被诊断为导入拒绝，故该测量组保留跳过；EPUB 为独立组。完整宿主的导入使用原生文件选择器，复用既有驱动；IDOK 到观察空闲的时间包含驱动至少 0.4 秒等待，不能解释为纯解析耗时。`performance_accepted=false`；没有实际逐帧数据。
+
+旧驱动失败 [40395267422](https://github.com/NoGod3524/EXReader/actions/runs/40395267422) 和 [40395861060](https://github.com/NoGod3524/EXReader/actions/runs/40395861060) 已保留：完整宿主走系统文件选择器，而旧工具写隐藏路径框。补充的空库诊断 [40396805624](https://github.com/NoGod3524/EXReader/actions/runs/40396805624) 仅用于检查窗口树，不能作为 2202 本测量。
+
+### GTK 首轮和帧时钟探针
+
+源码 `4087049ece56c94317d779b612360c58aec2eee6`，[Actions 40395860891](https://github.com/NoGod3524/EXReader/actions/runs/40395860891) 完成 32 启动和全部 520 个计划样本，但汇总拒绝：实际完整宿主窗口为 1088×820，而旧裁剪宿主口径要求 1040×820。原失败工件 ID `12686294663`、digest `sha256:402308b441aa8e65f1de76325f4c801c83d2ef7f4f0faba2e845383451d1c334`，仍保留；不能称该轮完整性通过。完整宿主独立入口现改为固定 1088×820，不改原冻结门禁。
+
+性能测试专用 GDK 探针通过 [Actions 40397480865](https://github.com/NoGod3524/EXReader/actions/runs/40397480865) 的独立 GTK workload 检查，采集到 20 条 `after-paint` 时钟记录。新完整包入口使用外部预加载探针记录每进程原始时钟和单调时间，存在测量开销；它测的是 GTK 工具包绘制节拍，不是帧渲染耗时或物理屏幕呈现。探针与完整包同源运行结果须以相应 Actions 原始记录为准，不能由合成 workload 转授。
