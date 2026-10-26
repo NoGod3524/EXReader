@@ -250,9 +250,10 @@ public:
 struct sink {
   uint64_t maximum,received=0;const exr_webdav_control *control;
   std::vector<unsigned char> *buffer=nullptr;temporary *file=nullptr;
+  exr_webdav_write_observer observer=nullptr;void *observer_context=nullptr;
   void append(const void *data,size_t bytes) {
     cancelled(control);if(bytes>maximum-received) reject(EXR_DAV_LIMIT,"Transfer byte limit exceeded");
-    if(file) file->write(data,bytes);
+    if(file) { file->write(data,bytes);if(observer) observer(observer_context,data,bytes); }
     else { const unsigned char *p=(const unsigned char *)data;buffer->insert(buffer->end(),p,p+bytes); }
     received+=(uint64_t)bytes;if(control && control->progress) control->progress(control->context,received);
   }
@@ -705,7 +706,7 @@ extern "C" exr_webdav_status exr_webdav_list(exr_webdav_client *client,const cha
     cancelled(control);return EXR_DAV_OK;
   } catch(const failure &f) { exr_webdav_listing_free(out);return report(error,f); } catch(...) { exr_webdav_listing_free(out);return report(error,{EXR_DAV_MEMORY,"Cannot allocate WebDAV listing",0}); }
 }
-extern "C" exr_webdav_status exr_webdav_download_file(exr_webdav_client *client,const char *resource,const char *directory,const char *filename,const exr_webdav_control *control,exr_webdav_download *out,exr_webdav_error *error) {
+static exr_webdav_status download_file(exr_webdav_client *client,const char *resource,const char *directory,const char *filename,const exr_webdav_control *control,exr_webdav_write_observer observer,void *observer_context,exr_webdav_download *out,exr_webdav_error *error) {
   clean(error);if(out) std::memset(out,0,sizeof(*out));
   try {
     if(!client || !resource || !directory || !filename || !out) reject(EXR_DAV_ARGUMENT,"Missing download request");
@@ -715,9 +716,15 @@ extern "C" exr_webdav_status exr_webdav_download_file(exr_webdav_client *client,
     apple_operation operation(client);
 #endif
     std::string relative=path(resource,false);if(relative.empty() || relative.back()=='/') reject(EXR_DAV_ARGUMENT,"Download requires a file resource");
-    cancelled(control);temporary file(directory,filename);sink s{client->max_download,0,control,nullptr,&file};url target=client->root;target.path+=relative;
+    cancelled(control);temporary file(directory,filename);sink s{client->max_download,0,control,nullptr,&file,observer,observer_context};url target=client->root;target.path+=relative;
     fetch(*client,target,"GET",200,s);file.publish(control);out->bytes=s.received;out->published=1;return EXR_DAV_OK;
   } catch(const failure &f) { return report(error,f); } catch(...) { return report(error,{EXR_DAV_MEMORY,"Cannot allocate WebDAV transfer",0}); }
+}
+extern "C" exr_webdav_status exr_webdav_download_file(exr_webdav_client *client,const char *resource,const char *directory,const char *filename,const exr_webdav_control *control,exr_webdav_download *out,exr_webdav_error *error) {
+  return download_file(client,resource,directory,filename,control,nullptr,nullptr,out,error);
+}
+extern "C" exr_webdav_status exr_webdav_download_observed(exr_webdav_client *client,const char *resource,const char *directory,const char *filename,const exr_webdav_control *control,exr_webdav_write_observer observer,void *observer_context,exr_webdav_download *out,exr_webdav_error *error) {
+  return download_file(client,resource,directory,filename,control,observer,observer_context,out,error);
 }
 extern "C" exr_webdav_status exr_webdav_make_collection(exr_webdav_client *client,const char *collection,const exr_webdav_control *control,exr_webdav_error *error){
   clean(error);try{

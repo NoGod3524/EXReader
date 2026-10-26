@@ -440,6 +440,12 @@ static rc_hash_status rc_hash_file(const char *path, const reader_cloud_control 
   return status;
 }
 
+#ifdef READER_CLOUD_CONTENT_BOUND
+static void rc_download_hash(void *context, const void *bytes, size_t size) {
+  rc_sha_update((rc_sha *)context, (const unsigned char *)bytes, size);
+}
+#endif
+
 /* ---- staged value ------------------------------------------------------- */
 
 void reader_cloud_request_init(reader_cloud_request *request) {
@@ -548,8 +554,14 @@ reader_cloud_status reader_cloud_download(exr_webdav_client *client,
   uint64_t limit, seed;
   unsigned attempt;
   rc_hash_status hashed;
+#ifdef READER_CLOUD_CONTENT_BOUND
+  rc_sha downloaded_sha;
+#endif
   uint64_t verified;
   char hex[65];
+#ifdef READER_CLOUD_CONTENT_BOUND
+  char downloaded_hex[65];
+#endif
 
   if (out) *out = NULL;
   if (!client || !request || !out || request->struct_size < sizeof(*request) ||
@@ -604,13 +616,21 @@ reader_cloud_status reader_cloud_download(exr_webdav_client *client,
   memcpy(staged->path, request->staging_dir, dir_len);
   staged->path[dir_len] = rc_sep(request->staging_dir);
   for (attempt = 0; attempt < RC_NAME_TRIES; attempt++) {
+#ifdef READER_CLOUD_CONTENT_BOUND
+    rc_sha_init(&downloaded_sha);
+#endif
     memset(&download, 0, sizeof(download));
     memset(&dav, 0, sizeof(dav));
     seed = rc_mix(seed + attempt);
     snprintf(filename, sizeof(filename), "cloud-%016llx.%s", (unsigned long long)seed, ext);
     strcpy(staged->path + dir_len + 1, filename);
+#ifdef READER_CLOUD_CONTENT_BOUND
+    status = exr_webdav_download_observed(client, request->resource, request->staging_dir, filename,
+        &control, rc_download_hash, &downloaded_sha, &download, &dav);
+#else
     status = exr_webdav_download_file(client, request->resource, request->staging_dir, filename,
         &control, &download, &dav);
+#endif
     if (status != EXR_DAV_EXISTS) break;
   }
 
@@ -637,6 +657,9 @@ reader_cloud_status reader_cloud_download(exr_webdav_client *client,
     return READER_CLOUD_REMOTE;
   }
 
+#ifdef READER_CLOUD_CONTENT_BOUND
+  rc_sha_hex(&downloaded_sha, downloaded_hex);
+#endif
   /* Published: the file is complete. Fix length, then hash for the handoff. */
   staged->format = format;
   staged->bytes = download.bytes;
@@ -653,7 +676,11 @@ reader_cloud_status reader_cloud_download(exr_webdav_client *client,
     return READER_CLOUD_LIMIT;
   }
   hashed = rc_hash_file(staged->path, NULL, &verified, hex);
-  if (hashed != RC_HASH_OK || verified != download.bytes) {
+  if (hashed != RC_HASH_OK || verified != download.bytes
+#ifdef READER_CLOUD_CONTENT_BOUND
+      || strcmp(hex, downloaded_hex) != 0
+#endif
+      ) {
     reader_cloud_staged_discard(&staged);
     *out = staged;
     if (hashed == RC_HASH_MEMORY) {

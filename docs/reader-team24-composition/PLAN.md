@@ -197,3 +197,18 @@ Identity artifact `12678477144`: 1153 bytes, SHA-256
 Both expire 2027-01-24T18:41:23Z. The subsequent `3f91c82f` workflow change
 reduces uploaded intermediates while retaining the original diagnostic paths;
 that later source has not itself repeated the Windows run.
+
+## Content-bound cloud import candidate
+
+Source `ccb1dd27f4e179799aec7c32522eb7f06dc32c85` is admitted as an
+independent input; the prior cloud pinned-file test and documentation remain
+attributed to `c92a2e06`. Run
+[40381046417 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40381046417)
+passed the original ordinary regressions on Windows/macOS/Linux SDK 3.40 and
+Linux SDK 3.41, plus the separately enabled content-bound candidate and same-run
+evidence job. The old cloud package remains the default. A host must explicitly
+build and link `EXReaderCloudImportContentBound` to use the new content binding;
+source admission does not mean any host has switched to it or passed a combined
+product run. The candidate binds downloaded content to the first readback, not
+file object identity; race safety, path cleanup, mobile profiles and D13 remain
+unaccepted. See `docs/reader-cloud-content-binding.md` for the full boundary.
