@@ -47,6 +47,19 @@ SDK/module/desktop entry changes explicitly; do not restore entire team trees.
 The public codec's three dependency blobs must be identical in Core, Windows
 and the final composition. Do not carry Windows's private codec declaration.
 
+### Android profile admission
+
+The adopted S20 `mobile.py` is retained as its historical explicit four-feature
+adapter. It hardcodes selector bytes OFF and installs only six modules; do not
+use that builder for the new raw0.2 five-feature Android host. The Android
+team's actual full workflow installs the raw family ON and its complete module
+list, including annotation import/export, jump history, font library,
+original export and sync-status view. Final composition must reuse that real
+build/profile and its Gradle flags, then pass the resulting payload through
+the shared assemble/unpack functions. Preserve source/SDK/module identities
+and runtime original-reading16/walkthrough45 checks. Do not claim that the
+historical adapter's four-feature build covers the new host.
+
 ## Final combined validation
 
 Use a separate composition entry and source guard. Original S20 and team
