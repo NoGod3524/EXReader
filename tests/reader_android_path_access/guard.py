@@ -12,9 +12,10 @@ BLOBS = {
     'examples/android/app/src/main/java/org/exreader/host/FontPanel.java': '9b6c24c77ccb1d82e489e9e130899d574f0e1c56',
     'apps/reader/font-library/src/library.cpp': 'ba1df4e12c3e9d59dbae830eafd244cb160a6411',
     'apps/reader/original-export/src/original_export.cpp': '52b5c467453d77b7450634a82bc83f1ea171a01b',
-    'tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java': 'abfd7d3a758354dd723cf8822c0a02f7948c0004',
-    'tests/reader_android_reading/java/org/exreader/host/ReadingUiTest.java': '3b9a6a1ee721b76a99b4db3e4f23e5fcd8b92442',
-    'tests/reader_android_reading/run_ui.py': '0c408588c450daa42434c2e5cf8a27e8e6bd5b15',
+    'tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java': '7c4711c3f6dfebae7ae1137b9f63c56be8dbc88a',
+    'tests/reader_android_reading/java/org/exreader/host/ReadingUiTest.java': 'f1fcaa8123a99b02aa27a857e8a4ec28e08fc323',
+    'tests/reader_android_reading/run_ui.py': 'c8ede1e690f9f626baacbb6750f7837a941d485e',
+    'tests/reader_wave3_c11/report.py': 'ddbb7e50820239f1e6281e41959c4d4bbca921b3',
 }
 OWNED = {'tests/reader_android_path_access/guard.py',
          '.github/workflows/reader-android-path-access.yml',
