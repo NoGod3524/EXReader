@@ -388,7 +388,7 @@ def main():
             run([probe, '--work', path(work), '--fixtures', path(fixtures), '--dav-url', dav.root_url(),
                  '--dso', path(dso), '--out', path(evidence_path)], 'probe-run', 2400, env=env)
         dav.assert_secret_free(OUT)
-        requests = len(dav.redacted())
+        requests = len(dav.redactions())
     evidence = json.loads(evidence_path.read_text(encoding='utf-8'))
     assert evidence['run'] == 0, (evidence['run'], evidence.get('error'))
     report = evidence['report']
