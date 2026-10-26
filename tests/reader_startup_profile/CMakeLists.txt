@@ -22,3 +22,5 @@ string(REPLACE "if(result!=SQLITE_OK) fprintf(stderr,\"SQL: %s\\n\",message?mess
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/diagnostic_catalog.c" "${diagnostic_source}")
 add_executable(reader-diagnostic-catalog-check "${CMAKE_CURRENT_BINARY_DIR}/diagnostic_catalog.c")
 target_link_libraries(reader-diagnostic-catalog-check PRIVATE profile_adapter reader_catalog_sqlite)
+add_executable(reader-wal-crash-check wal_crash.c)
+target_link_libraries(reader-wal-crash-check PRIVATE profile_adapter reader_catalog_sqlite)
