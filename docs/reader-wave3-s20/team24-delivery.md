@@ -1,0 +1,49 @@
+# Team24 delivery 续接记录
+
+分支 `codex/team24-delivery`，起点 `c228c51b`；保留原 S20 代码与全部旧结果。
+
+## 旧轮次
+
+原受测 source `63d0c8d2f032f5c78c77c9f407b17185412e991f`，run `40248648454`，attempt `1`：Windows、Linux、macOS、iPhone 通过，Android、iPad 未通过。更早失败 run `40245971457`、`40245894358`、`40245766789` 仍保留。旧轮不计入本队新增最多两轮完整验收。
+
+## 本队接入
+
+- 桌面：组装前添加 Linux 零参数启动器；解包后检查实际程序、平台生产清单与运行依赖，再运行原 GUI 驱动。
+- Android：保留原构建器，通过专用 Gradle 适配入口，在 SDK/product 安装后安装 reading-state、reading-commands、annotation-view、search、navigation、preferences，显式启用四个功能。45 项走查仍逐项判定。
+- Apple：XCTest 报告保留具名失败、首次断言与相邻日志；重试通过不能抹去先前失败。
+- 候选：所有平台使用 workflow 当前 source。`candidate_sha` 只能填写该 source 的完整 SHA；不能在另一 workflow source 上贴候选标签。平台 build.json 的 source/SDK 必须一致，汇总要求六包 source/run/attempt/ZIP/实际程序身份一致。
+- GTK 辅助脚本从当前候选源码导入，不从历史提交提取。
+
+## 新增验收账本
+
+轻量协议检查：source `5527e604d681afd28858c93c3ba19c9f3a569f94`，run `40275823343`，attempt `1`，成功。仅验证交付协议，不授予 GUI 或产品通过。
+
+新增完整业务轮次 1：source `5527e604d681afd28858c93c3ba19c9f3a569f94`，run `40275945447`，attempt `1`，已启动，结果待定。另有错误候选参数派发 `40275914140` 已取消，guard cancelled、全部业务平台 cancelled；该记录保留，不伪装通过。
+新增完整轮次 2：尚未启动。
+
+## 跨队待修
+
+Android `HostWalkthroughTest` 的标题期望含扩展名，而 `ImportEntry.titleFrom` 去扩展名；同名 Sample 的 EPUB/TXT/PDF 应按公开标题加格式唯一选行，不能只改成模糊 Sample 匹配。picker 返回 wait 布尔值也必须断言。由 Android owner 修改，本队不越界。
+
+iPad 原失败 `test01ImportDeduplicateAndErrors`；`test13` 明示通过。首次断言以原始日志/新轮具名诊断为准。
+
+## 运行和范围
+
+原 ZIP、SHA256SUMS、manifest.json 和中文安装说明随每个目标同轮工件上传；六目标汇总另列实际程序 SHA、SDK 和生产 source。Windows 解压启动 EXReader.exe；Linux 启动 Start-EXReader.sh；macOS 打开 EXReader.app；Android 仅 API34 x86_64 模拟器 APK；iPhone/iPad 仅模拟器 .app。真机、屏幕阅读器人工体验与商店发布未测。尚未组合其他五团队的新 UI，不声称整个六平台产品完成。
+
+后续轻量记录：`680d58156b796f47e71e45878c3cc4d423901005` / `40276021294` 已通过原工件身份验证和失败提取。`685aa1c4c28047e38970c05608ef7a39f18852cf` / `40276629900` 已通过交付协议检查并输出前述现存摘要。两轮业务平台均 skip，不能与 `5527e604` 的完整轮混用。
+
+## 最终组合可复用接口与原入口边界
+
+| 接口 | 实际作用 | 最终组合使用条件 |
+|---|---|---|
+| `assemble.py` / `unpack.py` | 平台产出组装、生产 build.json source/SDK 绑定、内外 manifest、原 ZIP 字节及每文件摘要核验 | root composition guard 先登记唯一组合 source 与 SDK/profile 依赖；传相同不可变候选，不混旧 source |
+| `delivery.py` | 六目标路径、短安装说明、摘要和 manifest 公共契约 | 延用实际包形态与既有版本 |
+| `desktop.py` | Linux 用户启动器、fresh 解包程序与生产清单一致性、运行依赖核验 | 在真实平台 Actions runner 执行，再跑原业务 GUI 驱动 |
+| `mobile.py` 的 Android adapter | 原 builder 安装 SDK/product 后安装六模块，显式开启四 feature，并保留原构建身份/门禁 | SDK、NDK、extra prefix 与 profile 来源必须被 composition guard 显式登记；不能代表其他 Android 新 UI HEAD 已通过 |
+| `diagnostics.py` / `report.py` | 具名失败、首次断言、45项逐case判定、source/run/attempt/ZIP/程序矩阵 | 使用同轮真实驱动结果；纯函数不授予平台验收 |
+| 原 `.github/workflows/reader-wave3-s20.yml` / `guard.py` | d263 固定 seed、S20 exclusive write set、冻结 SDK/platform 判据与原驱动完整轮 | 只授予 S20 独占来源；未放宽为六队最终组合入口 |
+
+最终 root 使用独立 composition guard；本队本源完整业务证据只绑定 `5527e604d681afd28858c93c3ba19c9f3a569f94`。本轮既不包含另外五队新 UI 的最终组合，也不包含 Android 团队尚未通过的新 UI HEAD。
+
+报告标记修正源码 `a41bcf2f5ab3a47a079d0f76d238352e3a6e4174` 的轻量 run `40278164857` 已通过；完整业务平台均 skip。这只验证后续报告源码，不能给该源码补贴 `5527e604` 的业务通过。
