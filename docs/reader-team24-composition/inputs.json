@@ -318,7 +318,6 @@
         "examples/android/app/src/main/java/org/exreader/host/Wave3Host.java",
         "tests/reader_android_organization_sync/init.gradle",
         "tests/reader_android_organization_sync/java/org/exreader/host/OrganizationSyncTest.java",
-        "tests/reader_android_organization_sync/prepare_sync_341.py",
         "tests/reader_android_organization_sync/run.py",
         "tests/reader_android_path_access/guard.py",
         "tests/reader_android_reading/java/org/exreader/host/ReadingUiTest.java",
@@ -338,9 +337,18 @@
     },
     {
       "name": "android-composition-workflow-candidate",
-      "source": "f8d53ba60e6c4516689100d64bb79dee4eb6620f",
+      "source": "d105dde816e67408cac421a060a9f7e40d998a77",
       "paths": [
         ".github/workflows/android-composition-candidate.yml"
+      ]
+    },
+    {
+      "name": "android-exact-sdk-version-sync-checks",
+      "source": "d105dde816e67408cac421a060a9f7e40d998a77",
+      "paths": [
+        "tests/reader_android_organization_sync/prepare_sync_341.py",
+        "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
+        "tests/reader_host_session_android/run_ui.py"
       ]
     },
     {
