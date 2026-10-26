@@ -1,0 +1,41 @@
+name: Inspect original Android run evidence
+on:
+  push:
+    branches: [codex/android-evidence-inspect]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: reader-wave3-c11-android-40404143400-1
+          path: evidence
+          run-id: 40404143400
+          github-token: ${{ github.token }}
+      - name: Verify saved APK, installed bytes, reports and run identity
+        run: |
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root=Path('evidence')
+          def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
+          def read(path):return json.loads(path.read_text())
+          expected='2bb0c9e1fec118ca9e49b7530b205d5fcb3aed3b'
+          app=root/'artifacts/app-debug.apk'; installed=root/'evidence/reading-installed.apk'
+          assert digest(app)==digest(installed)=='5aafe17c22328d857e5004956c26e700584e12139e3afd2a9964ab36bbff6020'
+          reports={name:read(root/'evidence'/name/'result.json') for name in ('wave3','navigation','reading')}
+          for name,count in (('wave3',20),('navigation',18),('reading',19)):
+              row=reports[name]
+              assert row['source_sha']==expected and row['run_id']=='40404143400' and str(row['attempt'])=='1',name
+              assert row['accepted'] is True and row['checks']==count,(name,row.get('checks'),row.get('accepted'))
+          walkthrough=read(root/'evidence/walkthrough/execution.json')
+          assert walkthrough['source_sha']==expected and walkthrough['run_id']=='40404143400' and str(walkthrough['attempt'])=='1'
+          assert walkthrough['completed'] and walkthrough['app_sha256']==digest(app) and walkthrough['installed_sha256']==digest(app)
+          matrix=read(root/'result.json');assert matrix['accepted'] is True
+          print(json.dumps({'source':expected,'run_id':'40404143400','attempt':1,'app_sha256':digest(app),
+             'installed_apk_matches':True,'reports':{k:{'checks':v['checks'],'accepted':v['accepted']} for k,v in reports.items()},
+             'walkthrough_completed':walkthrough['completed'],'suites':walkthrough['suites'],'matrix_accepted':matrix['accepted']}))
+          PY
