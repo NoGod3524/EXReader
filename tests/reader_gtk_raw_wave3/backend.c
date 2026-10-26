@@ -67,6 +67,11 @@ static size_t w3_count(linux_reader *reader) {
   REQUIRE(reader_jh_state_get(reader->w3_history,&state,&problem)==READER_JH_OK);
   return state.count;
 }
+static size_t w3_cursor(linux_reader *reader) {
+  reader_jh_state state={0};reader_jh_error problem={0};
+  REQUIRE(reader_jh_state_get(reader->w3_history,&state,&problem)==READER_JH_OK);
+  return state.cursor;
+}
 static int w3_bytes_equal(const char *left,size_t left_size,const char *right,size_t right_size) {
   if(!left || !right) return !left && !right;
   return left_size==right_size && !memcmp(left,right,left_size);
@@ -285,34 +290,20 @@ int main(int argc,char **argv) {
   char *pdf=g_build_filename(fixtures,"pdf-public-text.pdf",NULL);int64_t pdf_book=0;
   w3_selector original[4];size_t original_count=0;
   {
-    size_t before=w3_count(reader);
-    {
-      reader_jh_state state={0};reader_jh_error problem={0};
-      if(reader_jh_state_get(reader->w3_history,&state,&problem)==READER_JH_OK && state.count) {
-        reader_jh_item tail={0};reader_rs_record tail_record={0};
-        w3_slot(reader,state.count-1,&tail,&tail_record);
-        printf("{\"info\":\"pre_fixed_import\",\"count\":%zu,\"cursor\":%zu,\"kind\":%d,\"mode\":%d,"
-               "\"book\":\"%.16s\"}\n",state.count,state.cursor,(int)tail.kind,(int)tail_record.mode,
-          tail_record.book_key);fflush(stdout);
-        reader_rs_record_free(&tail_record);reader_jh_item_release(&tail);
-      }
-    }
+    /* The pointer may sit behind forward entries; opening a new book is a new
+       landing, which truncates them and is then appended. */
+    size_t cursor_before=w3_cursor(reader),tail=0;
     reader_result landed={0};
     pdf_book=w3_open(reader,READER_IMPORT,pdf,0,&landed);reader_result_free(&landed);
     {
-      reader_rs_capture captured;exr_anchor anchor={0};exr_fixed_anchor fixed={0};exr_error capture_error={0};
-      size_t unit=reader->current.fixed_document ? reader->current.page:reader->current.part;
-      exr_status probe=records_capture(reader,&reader->current,unit,0,0,&captured,&anchor,&fixed,&capture_error);
-      printf("{\"info\":\"fixed_import\",\"count\":%zu,\"before\":%zu,\"history_code\":%d,\"page\":%zu,"
-             "\"fixed\":%d,\"capture\":%d,\"mode\":%d,\"exact\":%zu,\"prefix\":%zu,\"suffix\":%zu,"
-             "\"message\":\"%s\"}\n",(size_t)w3_count(reader),before,reader->w3_history_code,
-        (size_t)reader->current.page,reader->current.fixed_document?1:0,(int)probe,(int)captured.mode,
-        fixed.exact_size,fixed.prefix_size,fixed.suffix_size,capture_error.message);fflush(stdout);
-      exr_anchor_free(&anchor);exr_fixed_anchor_free(&fixed);
+      reader_jh_state state={0};reader_jh_error problem={0};
+      REQUIRE(reader_jh_state_get(reader->w3_history,&state,&problem)==READER_JH_OK);
+      REQUIRE(state.count==cursor_before+2 && state.cursor==state.count-1);
+      tail=state.count-1;
+      REQUIRE(reader->w3_history_code==(int)READER_JH_OK);
     }
-    REQUIRE(w3_count(reader)==before+1);
     {
-      reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,before,&item,&record);
+      reader_jh_item item={0};reader_rs_record record={0};w3_slot(reader,tail,&item,&record);
       REQUIRE(record.mode==READER_RS_FIXED_PAGE && record.anchor_version==3 && record.has_location);
       REQUIRE(record.start==record.end && !record.exact_size);
       REQUIRE((record.suffix && memchr(record.suffix,0,record.suffix_size)) ||
@@ -320,7 +311,7 @@ int main(int argc,char **argv) {
               (record.prefix && memchr(record.prefix,0,record.prefix_size)));
       reader_rs_record_free(&record);reader_jh_item_release(&item);
     }
-    w3_slot_matches_capture(reader,before);
+    w3_slot_matches_capture(reader,tail);
     PASS("fixed_history_slot_is_anchor3_with_every_nullable_selector_byte");
     size_t start=reader->current.start,end=start+4;REQUIRE(end<=reader->current.end && start<end);
     w3_save(reader,READER_RC_HIGHLIGHT,"PDF highlight",start,end,NULL);
@@ -330,21 +321,21 @@ int main(int argc,char **argv) {
     {
       reader_result next=w3_run(reader,w3_command(READER_NEXT,pdf_book));REQUIRE(next.status==EXR_OK && next.has_frame);
       reader_result moved=w3_accept(reader,&next);
-      REQUIRE(moved.w3_history_count==(int)before+1 && moved.w3_history_cursor==(int)before);
+      REQUIRE(moved.w3_history_count==(int)tail+1 && moved.w3_history_cursor==(int)tail);
       reader_result_free(&moved);reader_result_free(&next);
     }
     REQUIRE(reader->current.page==1);
-    w3_slot_matches_capture(reader,before);
+    w3_slot_matches_capture(reader,tail);
     PASS("fixed_page_turn_replaces_one_landing_with_the_new_anchor3_page");
     /* A search hit on the first page is a different location, so the same book
        now really holds two entries and the older one can be jumped to. */
     {
       reader_result hit=w3_search(reader,pdf_book,4,"A",&search);
       reader_result moved=w3_accept(reader,&hit);
-      REQUIRE(moved.w3_history_count==(int)before+2);
+      REQUIRE(moved.w3_history_count==(int)tail+2);
       reader_result_free(&moved);reader_result_free(&hit);
     }
-    REQUIRE(w3_count(reader)==before+2);
+    REQUIRE(w3_count(reader)==tail+2);
     {
       reader_command value=w3_bound(reader,READER_W3_HISTORY,pdf_book);value.direction=-1;
       reader_result frame=w3_run(reader,value);
@@ -352,11 +343,11 @@ int main(int argc,char **argv) {
         (int)frame.status,frame.page,frame.message);fflush(stdout);
       REQUIRE(frame.status==EXR_OK && frame.has_frame && frame.select_range);
       reader_result moved=w3_accept(reader,&frame);
-      REQUIRE(moved.w3_history_cursor==(int)before && moved.w3_history_count==(int)before+2);
+      REQUIRE(moved.w3_history_cursor==(int)tail && moved.w3_history_count==(int)tail+2);
       REQUIRE(reader->current.page==1);
       reader_result_free(&moved);reader_result_free(&frame);
     }
-    w3_slot_matches_capture(reader,before);
+    w3_slot_matches_capture(reader,tail);
     PASS("fixed_history_jumps_only_to_a_resolved_anchor3_page");
   }
 
