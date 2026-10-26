@@ -63,3 +63,22 @@ failed/cancelled refresh still reports the existing error. Explicit pending
 request confirmation uses the same path. Request epochs, cancellation, owner
 operations and all existing UI assertions/timeouts remain unchanged. The guard
 pins the exact additional Java blob. Verification remains pending in Actions.
+
+## Third result and follow-up candidate
+
+Run `40378926513/1`, source `7bd73855f5bd5372cf3d7003ae413db13c4ce951`,
+failed overall. The unchanged walkthrough (45/45), review (10/10), bounded
+(11/11), navigation (18 checks) and reading (16 checks) passed. Wave3 passed
+the first eleven checks, including annotation export and both saves; the next
+check failed waiting for the shelf. Later checks also failed, and cancel and
+restore phases were not reached. Its artifact is
+`reader-wave3-c11-android-40378926513-1`. Audits `40383312035`,
+`40383464071` and `40383795120` inspected it in Actions.
+
+The shelf helper now waits within its existing 30-second deadline for either
+the shelf or an enabled back button, instead of sampling the button only once.
+All original checks and timeouts remain. The saved confirmation also survives
+a failed or cancelled list refresh, with separate messages for each outcome.
+Two added real UI checks pause the post-save list read, cancel it or let its
+existing debug gate fail, and verify the saved bookmark remains. This candidate
+requires a fresh complete Actions run; no acceptance is claimed yet.

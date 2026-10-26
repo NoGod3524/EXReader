@@ -105,8 +105,13 @@ public final class Wave3UiTest extends Instrumentation {
     private void launch(){context.startActivity(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP));}
     private long book(String role)throws Exception{return books.getJSONObject(role).getLong("id");}
     private void shelf()throws Exception {
-        if(present(node->id(node,"back_button")&&node.isVisibleToUser()&&node.isEnabled()))clickId("back_button");
-        until(node->node.isVisibleToUser()&&id(node,"import_button"),null,"shelf",30000);
+        long end=SystemClock.elapsedRealtime()+30000;boolean clicked=false;
+        while(SystemClock.elapsedRealtime()<end){
+            if(present(node->node.isVisibleToUser()&&id(node,"import_button")))return;
+            if(!clicked&&present(node->id(node,"back_button")&&node.isVisibleToUser()&&node.isEnabled())){clickId("back_button");clicked=true;}
+            SystemClock.sleep(80);
+        }
+        throw new AssertionError("UI expected shelf in "+active);
     }
     private void open(String role)throws Exception {
         shelf();String title=books.getJSONObject(role).getString("title");

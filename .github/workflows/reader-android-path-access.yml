@@ -96,7 +96,7 @@ jobs:
           from pathlib import Path
           import yaml
           document = yaml.load(Path('.github/workflows/reader-android-path-access.yml').read_text(encoding='utf-8'), Loader=yaml.BaseLoader)
-          assert set(document['jobs']) == {'android'}, document['jobs']
+          assert set(document['jobs']) == {'android', 'audit'}, document['jobs']
           assert set(document['on']) == {'push', 'workflow_dispatch'}, document['on']
           jobs = document['jobs']['android']['steps']
           assert len(jobs) >= 12, len(jobs)
