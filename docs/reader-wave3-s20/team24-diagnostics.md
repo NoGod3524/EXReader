@@ -14,3 +14,11 @@
 父代理负责接入现有 `xctest.py`、`report.py`、`summary.py`，并在 workflow 的轻量检查中运行 `python tests/reader_wave3_s20/test_diagnostics.py`。这项协议检查只在 GitHub Actions 执行；不能替代六目标的真实启动与业务 GUI 验收。
 
 新完整轮次单列 source/run/attempt，不拼接旧源码通过结果。SDK 的基础来源与 extra prefix 来源由构建阶段记录，不能仅凭版本号推断二进制来源。真机和读屏尚未测试。
+
+## 已认证旧 iPad 首次断言
+
+原 source `63d0c8d2f032f5c78c77c9f407b17185412e991f` / run `40248648454` / attempt `1`：`test01ImportDeduplicateAndErrors` 首次失败位于 `tests/apple_host/EXReaderHostUITests.swift:390`（原 xcodebuild.log 行 1707）：`XCTAssertTrue failed - import result must arrive within its original budget`。
+
+期望 `library.status` 含“已导入”；实际为“就绪”，`book_count=0`，busy/error/reader 状态均未出现。导入按钮 `library.import.epub` 唯一匹配、enabled/hittable，单次点击后日志为 `phase=result-wait-failed`；trace 只有 token=0 的 startup/scene 事件，没有 import-start。摘要没有实际 picker 可见或返回状态，不能据此认定 picker 根因。原 broad 共 12 passed / 1 failed。
+
+认证提取 run `40276021294`，原摘要工件 `12630102397`；现有摘要只在 Actions 读取并打印到 run `40276629900` 的日志，没有重跑旧 GUI。原 ZIP SHA-256 `0e201871a2b7003a9b7ac87153c349899a51ba3522b66dbf8684365cc69ecd6d`，原程序 SHA-256 `96e0a01e44c1e538881d0d19fcf9b8ca8bea2952e078656406a9a082d39e5d5a`。这些只解释旧失败，不构成新轮通过。
