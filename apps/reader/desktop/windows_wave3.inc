@@ -58,6 +58,8 @@ static struct {
   /* originals */
   roe_result *roe;
   wchar_t export_directory[HOST_PATH];
+  int64_t original_ids[ROE_MAX_ITEMS];
+  size_t original_count;
   /* fonts */
   rfl_library *fonts;
   rfl_lease *lease, *pending_lease;
@@ -66,6 +68,7 @@ static struct {
   host_job *font_job;
   rfl_record *records;
   size_t record_count;
+  int fonts_uncertain;
   /* history */
   reader_jh *jh;
   reader_jh_item pending_item;
@@ -280,6 +283,10 @@ static void w3_controls(void) {
   if (w3.controls[2]) EnableWindow(w3.controls[2], !busy && (w3.kind == W3_FONTS || (w3.kind == W3_ANNOTATIONS && w3.preview_ok && book)));
   if (w3.controls[3]) EnableWindow(w3.controls[3], w3.kind == W3_FONTS ? !busy : w3.running);
   if (w3.controls[4]) EnableWindow(w3.controls[4], 0);
+  if (w3.kind == W3_FONTS && w3.fonts_uncertain) {
+    int i;
+    for (i = 0; i < 4; i++) EnableWindow(w3.controls[i], FALSE);
+  }
   EnableWindow(w3.controls[5], !g.closing);
 }
 
@@ -295,6 +302,7 @@ static void w3_close(void) {
   free(w3.row_data); w3.row_data = NULL; w3.row_count = 0;
   free(w3.records); w3.records = NULL; w3.record_count = 0;
   if (w3.roe) { roe_result_free(w3.roe); w3.roe = NULL; }
+  w3.original_count = 0;
   host_restore_content_focus();
 }
 
@@ -334,7 +342,7 @@ static int w3_create(int kind, const wchar_t *title, const wchar_t *intro, const
     MoveWindow(w3.controls[i], 12 + i * 156, 446, 150, 32, TRUE);
   }
   w3.controls[5] = make_button(window, IDC_W3_CLOSE, L"关闭(&C)");
-  MoveWindow(w3.controls[5], 12 + 5 * 156, 446, 100, 32, TRUE);
+  MoveWindow(w3.controls[5], 692, 488, 100, 32, TRUE);
   ShowWindow(window, SW_SHOW); SetFocus(w3.rows);
   return 1;
 }
@@ -367,10 +375,17 @@ static void w3_annotations_export(void) {
     w3_message(CommDlgExtendedError() ? L"无法打开系统保存窗口。" : L"已取消导出；没有写入任何文件。");
     return;
   }
-  wcsncpy(markdown, path, HOST_PATH - 4); markdown[HOST_PATH - 4] = 0;
-  length = wcslen(markdown);
-  if (length > 6 && !_wcsicmp(markdown + length - 6, L".jsonl")) markdown[length - 6] = 0;
+  length = wcslen(path);
+  if (length > 6 && !_wcsicmp(path + length - 6, L".jsonl")) length -= 6;
+  if (length + 3 >= HOST_PATH) { w3_message(L"导出路径过长，请选择更短的文件名。"); return; }
+  wmemcpy(markdown, path, length); markdown[length] = 0;
   wcscat(markdown, L".md");
+  if (GetFileAttributesW(markdown) != INVALID_FILE_ATTRIBUTES &&
+      MessageBoxW(w3.dialog, L"对应的 Markdown 文件已经存在。是否同时替换它？", L"确认替换 Markdown",
+        MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) != IDYES) {
+    w3_message(L"已取消导出；没有替换任何文件。");
+    return;
+  }
   job = w3_job_new(W3A_EXPORT);
   if (!job) { w3_message(L"内存不足，无法开始导出。"); return; }
   w3_path_utf8(path, &job->w3->out_jsonl); w3_path_utf8(markdown, &job->w3->out_markdown);
@@ -401,6 +416,7 @@ static void w3_annotations_preview(void) {
   if (!job->w3->path) { job_release(job); w3_message(L"路径无法转换为UTF-8。"); return; }
   free(w3.import_path); w3.import_path = host_strdup(job->w3->path);
   w3.preview_ok = 0; w3.fingerprint[0] = 0; w3_rows_reset();
+  if (!w3.import_path) { job_release(job); w3_message(L"内存不足，无法保存预览文件路径。"); w3_controls(); return; }
   w3.running = 1; w3_message(L"正在只读校验整个文件并在原书中核对位置，尚不写入…");
   job_submit(job); if (!g.job) w3.running = 0;
   w3_controls();
@@ -560,8 +576,10 @@ static void w3_show_fonts(void) {
   static const wchar_t *labels[] = { L"导入字体文件…(&I)", L"使用所选字体(&U)", L"恢复内置字体(&D)", L"删除所选字体(&R)" };
   if (!w3_fonts_open()) { set_status(L"无法打开字体库目录；字体与书库保持不变。"); return; }
   if (!w3_create(W3_FONTS, L"字体库", L"导入本地字体到私有字体库，并选择阅读使用的字体。导入失败不会改变当前字体或画面。", labels, 4, 0)) return;
-  w3_fonts_fill();
-  w3_message(L"选择一行后点“使用所选字体”。切换会保留当前阅读位置。");
+  if (w3.fonts_uncertain) w3_row_add(L"字体库需要在重启后恢复，当前字体继续保留。");
+  else w3_fonts_fill();
+  w3_message(w3.fonts_uncertain ? L"字体库上次提交状态不确定。请重启程序恢复字体库；当前字体与画面继续保留。" :
+    L"选择一行后点“使用所选字体”。切换会保留当前阅读位置。");
   w3_controls();
 }
 
@@ -604,6 +622,10 @@ static void w3_fonts_command(int id) {
   LRESULT selected = w3.rows ? SendMessageW(w3.rows, LB_GETCURSEL, 0, 0) : LB_ERR;
   rfl_error error;
   memset(&error, 0, sizeof(error));
+  if (w3.fonts_uncertain) {
+    w3_message(L"字体库提交状态不确定，请重启程序恢复后再操作。当前字体与画面继续保留。");
+    return;
+  }
   if (id == IDC_W3_B1) {
     wchar_t path[HOST_PATH] = { 0 }, *name, *dot;
     OPENFILENAMEW choose;
@@ -633,7 +655,11 @@ static void w3_fonts_command(int id) {
     status = rfl_import_file(w3.fonts, utf8, label, &control, &record, &created, &error);
     SetCursor(LoadCursor(NULL, IDC_ARROW));
     free(utf8); free(label);
-    if (status != RFL_OK) {
+    if (status == RFL_COMMIT_UNCERTAIN) {
+      w3.fonts_uncertain = 1;
+      w3_message(L"字体导入的提交状态不确定。请重启程序恢复字体库；当前字体与画面继续保留。");
+      w3_controls();
+    } else if (status != RFL_OK) {
       wchar_t message[400];
       swprintf(message, 400, L"字体导入失败（%d）：%.150hs。当前字体与字体库保持不变。", (int)status, error.message);
       w3_message(message);
@@ -655,6 +681,11 @@ static void w3_fonts_command(int id) {
     if (!strcmp(w3.records[selected - 1].hash, w3.selected_hash)) { w3_message(L"正在使用的字体不能删除；请先恢复内置字体。"); return; }
     status = rfl_remove(w3.fonts, w3.records[selected - 1].hash, &error);
     if (status == RFL_OK) { w3_fonts_fill(); w3_message(L"字体已从字体库删除。"); }
+    else if (status == RFL_COMMIT_UNCERTAIN) {
+      w3.fonts_uncertain = 1;
+      w3_message(L"字体删除的提交状态不确定。请重启程序恢复字体库；当前字体与画面继续保留。");
+      w3_controls();
+    }
     else w3_message(status == RFL_BUSY ? L"字体仍在使用，未删除。" : L"字体无法删除；字体库保持原状。");
   }
 }
@@ -725,11 +756,13 @@ static void w3_show_originals(void) {
   if (!g.shelf_count) { set_status(L"书架中没有可导出的原件。"); return; }
   if (!w3_create(W3_ORIGINALS, L"导出原件", L"选择书架中的书（可多选），再选择目录；导出的是导入时保存的原始文件，不覆盖已有文件。", labels, 4, 1)) return;
   ShowWindow(w3.controls[1], SW_HIDE); ShowWindow(w3.controls[2], SW_HIDE);
+  w3.original_count = 0;
   for (i = 0; i < g.shelf_count && i < ROE_MAX_ITEMS; i++) {
     wchar_t *title = g.shelf[i].title ? host_wide(g.shelf[i].title, strlen(g.shelf[i].title)) : NULL;
     swprintf(line, 320, L"%ls", title ? title : L"未命名");
     free(title);
     w3_row_add(line);
+    w3.original_ids[w3.original_count++] = g.shelf[i].id;
   }
   w3_message(L"选择一本或多本书，然后点“选择目录并导出”。");
   w3_controls();
@@ -748,8 +781,8 @@ static void w3_originals_export(void) {
   job = w3_job_new(W3A_ORIGINALS);
   if (!job) { w3_message(L"内存不足，无法开始导出。"); return; }
   for (i = 0; i < count; i++) {
-    if ((size_t)selected[i] >= g.shelf_count || g.shelf[selected[i]].id <= 0) continue;
-    job->w3->ids[job->w3->id_count++] = g.shelf[selected[i]].id;
+    if ((size_t)selected[i] >= w3.original_count || w3.original_ids[selected[i]] <= 0) continue;
+    job->w3->ids[job->w3->id_count++] = w3.original_ids[selected[i]];
   }
   w3_path_utf8(w3.export_directory, &job->w3->directory);
   if (!job->w3->id_count || !job->w3->directory) { job_release(job); w3_message(L"所选书籍尚未下载到本机，无法导出原件。"); return; }
@@ -764,6 +797,7 @@ static void w3_originals_accept(host_job *job) {
   size_t i, ok = 0;
   if (job->status != EXR_OK) { describe_error(message, 500, L"原件导出未执行", job->status, &job->error); w3_message(message); return; }
   w3_rows_reset();
+  w3.original_count = 0;
   if (w->roe) {
     for (i = 0; i < w->roe->count; i++) {
       const roe_item *item = &w->roe->items[i];
@@ -775,6 +809,7 @@ static void w3_originals_accept(host_job *job) {
         (unsigned long long)item->bytes, path ? path : L"");
       free(path);
       w3_row_add(line);
+      w3.original_ids[w3.original_count++] = item->book_id;
     }
   }
   swprintf(message, 500, L"原件导出结束：%llu / %llu 项成功（状态 %d）。已发布的文件不会回滚。", (unsigned long long)ok,
@@ -786,10 +821,10 @@ static void w3_originals_accept(host_job *job) {
 
 static void w3_sync_refresh(void) {
   reader_sync_view_snapshot *snapshot = NULL;
-  reader_sync_view_options options;
   reader_sync_view_error error;
   reader_sync_view_summary summary;
-  reader_revisions *store = NULL;
+  reader_sync_view_status captured;
+  char *database;
   wchar_t line[400], message[500];
   w3_rows_reset();
   if (!acct.session) {
@@ -798,12 +833,13 @@ static void w3_sync_refresh(void) {
     w3_message(L"状态未知不等于已同步：请先在“同步账号”中启动同步，再刷新本页。");
     return;
   }
-  memset(&options, 0, sizeof(options)); memset(&error, 0, sizeof(error)); memset(&summary, 0, sizeof(summary));
-  options.row_limit = READER_SYNC_VIEW_MAX_ROWS; options.detect_conflicts = 1;
-  store = w3_revisions_open();
-  if (reader_sync_view_capture(acct.session, store, &options, &snapshot, &error) != READER_SYNC_VIEW_OK ||
+  memset(&error, 0, sizeof(error)); memset(&summary, 0, sizeof(summary));
+  database = host_utf8(g.product_path);
+  captured = w3_sync_capture(acct.session, database, &snapshot, &error);
+  free(database);
+  if (captured != READER_SYNC_VIEW_OK ||
       reader_sync_view_summary_get(snapshot, &summary) != READER_SYNC_VIEW_OK) {
-    if (store) reader_revisions_close(&store, NULL);
+    reader_sync_view_release(&snapshot);
     w3_row_add(L"同步状态：未知（无法读取，读取没有改变任何数据）");
     swprintf(message, 500, L"状态读取失败：%.90hs。", error.message);
     w3_message(message);
@@ -814,11 +850,14 @@ static void w3_sync_refresh(void) {
   swprintf(line, 400, L"扫描：已完成 %llu 轮，当前分片 %u / %u（一轮扫描完成不等于整库已同步；整库完成：%ls）",
     (unsigned long long)summary.completed_sweeps, summary.completed_shards, summary.shard_count, summary.library_complete ? L"是" : L"否");
   w3_row_add(line);
-  swprintf(line, 400, L"待处理记录：%llu 条%ls · 其中重试过 %llu 条", (unsigned long long)summary.pending_records,
-    summary.more_may_exist ? L"（队列可能更长）" : L"", (unsigned long long)summary.retried_records);
+  if (summary.outbox_included)
+    swprintf(line, 400, L"待处理记录：%llu 条%ls · 其中重试过 %llu 条", (unsigned long long)summary.pending_records,
+      summary.more_may_exist ? L"（队列可能更长）" : L"", (unsigned long long)summary.retried_records);
+  else wcscpy(line, L"待处理记录：未知（本次未读取待处理队列）");
   w3_row_add(line);
-  swprintf(line, 400, L"冲突记录：%llu 条%ls", (unsigned long long)summary.conflict_records,
-    summary.conflicts_checked ? L"" : L"（未检查）");
+  if (summary.conflicts_checked)
+    swprintf(line, 400, L"冲突记录：%llu 条", (unsigned long long)summary.conflict_records);
+  else wcscpy(line, L"冲突记录：未知（未检查）");
   w3_row_add(line);
   {
     reader_sync_view_row rows[READER_SYNC_VIEW_MAX_ROWS];
@@ -832,7 +871,6 @@ static void w3_sync_refresh(void) {
     }
   }
   reader_sync_view_release(&snapshot);
-  if (store) reader_revisions_close(&store, NULL);
   w3_message(L"只读快照：未改变任何数据。状态未知、待处理、冲突分别显示。");
 }
 
@@ -991,8 +1029,20 @@ static void w3_accept(host_job *job) {
 
 static void w3_after_complete(host_job *job) {
   if (job == w3.font_job) { w3_after_font_job(job); return; }
-  if (job->w3 || job->status != EXR_OK) return;
-  if (job->kind == JOB_OPEN || job->kind == JOB_GO) w3_history_land(job);
+}
+
+/* Called before job_release when the serialized worker could not start. */
+static void w3_failed_to_start(host_job *job) {
+  if (job == w3.font_job) { w3_after_font_job(job); return; }
+  if (!job->w3) return;
+  w3.running = 0;
+  if (job->w3->action == W3A_HISTORY && w3.has_pending_item) {
+    reader_jh_item_release(&w3.pending_item);
+    w3.has_pending_item = 0;
+  }
+  if (w3.dialog && job->w3->ui_generation == w3.generation)
+    w3_message(L"无法启动后台任务；请重试。");
+  w3_controls();
 }
 
 static void w3_book_changed(void) {

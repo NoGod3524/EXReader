@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import sqlite3
 import sys
 import time
 import traceback
@@ -107,7 +108,24 @@ def message(dialog):
 
 
 def post_click(dialog, identifier):
+    assert U.IsWindowEnabled(U.GetDlgItem(dialog, identifier)), ('disabled button', identifier)
     assert U.PostMessageW(U.GetDlgItem(dialog, identifier), 0xF5, 0, 0)
+
+
+def select_row(dialog, index, control=ROWS):
+    box = U.GetDlgItem(dialog, control)
+    assert send(box, 0x186, index) == index
+    # LB_SETCURSEL does not emit the native selection-change notification.
+    send(dialog, 0x111, control | (1 << 16), box)
+
+
+def database_state(profile):
+    state = {}
+    for name in ('library.sqlite', 'library.sqlite.product.sqlite'):
+        path = profile / name
+        with sqlite3.connect(path.resolve().as_uri() + '?mode=ro', uri=True) as db:
+            state[name] = hashlib.sha256('\n'.join(db.iterdump()).encode('utf-8')).hexdigest()
+    return state
 
 
 def fill_system_dialog(app, path):
@@ -151,7 +169,14 @@ def open_feature(app, identifier):
     app.wait_idle()
     app.focus()
     send(app.window, 0x111, identifier)
-    return app.wait(lambda: feature_dialog(app), timeout=30)
+    dialog = app.wait(lambda: feature_dialog(app), timeout=30)
+    close = U.GetDlgItem(dialog, CLOSE)
+    bounds, button = W.RECT(), W.RECT()
+    assert close and U.IsWindowVisible(close)
+    assert U.GetWindowRect(dialog, C.byref(bounds)) and U.GetWindowRect(close, C.byref(button))
+    assert bounds.left <= button.left < button.right <= bounds.right
+    assert bounds.top <= button.top < button.bottom <= bounds.bottom
+    return dialog
 
 
 def close_feature(app, dialog):
@@ -246,7 +271,10 @@ def main():
         third = app.label()
         assert third != first
         dialog, _ = record_count(app)
-        send(U.GetDlgItem(dialog, RECORDS_ROWS), 0x186, 1)
+        highlights = [i for i, row in enumerate(rows(dialog, RECORDS_ROWS)) if row.startswith('划线')]
+        assert len(highlights) == 1, rows(dialog, RECORDS_ROWS)
+        select_row(dialog, highlights[0], RECORDS_ROWS)
+        app.wait(lambda: U.IsWindowEnabled(U.GetDlgItem(dialog, RECORDS_OPEN)), timeout=30)
         send(U.GetDlgItem(dialog, RECORDS_OPEN), 0xF5, timeout=5000)
         app.wait_idle()
         app.wait(lambda: app.label() == first, timeout=60)
@@ -311,12 +339,15 @@ def main():
         fill_system_dialog(app, bad)
         wait_message(app, dialog, N.FONT_IMPORT_FAILED, 60)
         assert len(rows(dialog)) == 1 and P.page_number(app.label()) == label_before
+        close_feature(app, dialog)
+        assert page_hash(app, out, 'font-after-failed-import.bmp') == before
         record('font-import-failure-keeps-library-and-frame')
+        dialog = open_feature(app, FONTS)
         post_click(dialog, B1)
         fill_system_dialog(app, ROOT / 'tests/fixtures/fonts/primary.ttf')
         wait_message(app, dialog, N.FONT_IMPORTED, 120)
         app.wait(lambda: len(rows(dialog)) == 2, timeout=30)
-        send(U.GetDlgItem(dialog, ROWS), 0x186, 1)
+        select_row(dialog, 1)
         post_click(dialog, B2)
         wait_message(app, dialog, N.FONT_SWITCHED, 240)
         app.wait_idle()
@@ -334,7 +365,7 @@ def main():
         assert page_hash(app, out, 'font-restored.bmp') != changed
         record('font-restore-builtin')
         dialog = open_feature(app, FONTS)
-        send(U.GetDlgItem(dialog, ROWS), 0x186, 1)
+        select_row(dialog, 1)
         post_click(dialog, B2)
         wait_message(app, dialog, N.FONT_SWITCHED, 240)
         app.wait_idle()
@@ -343,6 +374,7 @@ def main():
         assert re.fullmatch(r'[0-9a-f]{64}', saved), saved
 
         # --- sync status ---------------------------------------------------------------------------
+        state_before = database_state(out / 'profile-a')
         dialog = open_feature(app, SYNC)
         listing = rows(dialog)
         assert listing and N.UNKNOWN in listing[0], listing
@@ -352,6 +384,7 @@ def main():
         time.sleep(.5)
         assert N.UNKNOWN in rows(dialog)[0]
         close_feature(app, dialog)
+        assert database_state(out / 'profile-a') == state_before
         record('sync-status-read-only-unknown')
 
         app.close_app()
