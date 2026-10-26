@@ -58,7 +58,7 @@ static void acct_detail_refresh(void) {
     }
   }
   if (!acct_job_running())
-    swprintf(at, left, L"接收：已应用 %llu，并发版本 %llu（不自动选择），缺祖先 %llu，受限 %llu，墓碑 %llu，待依赖 %llu，版本已变化 %llu，"
+    swprintf(at, left, L"接收：投影检查 %llu，并发版本 %llu（不自动选择），缺祖先 %llu，受限 %llu，墓碑 %llu，待依赖 %llu，版本已变化 %llu，"
       L"已导入 %llu，等待原件 %llu，导入失败 %llu，应用失败 %llu",
       (unsigned long long)o->projected, (unsigned long long)o->concurrent, (unsigned long long)o->pending_parents,
       (unsigned long long)o->blocked, (unsigned long long)o->tombstones, (unsigned long long)o->dependency, (unsigned long long)o->head_changed, (unsigned long long)o->imported,
@@ -348,7 +348,7 @@ static void acct_job_accept(host_job *job) {
           (unsigned long long)o->concurrent, (unsigned long long)o->pending_parents,
           (unsigned long long)o->dependency, (unsigned long long)o->head_changed);
       else
-        swprintf(text, 256, L"同步完成：已应用 %llu 项，导入 %llu 本；并发 %llu、墓碑 %llu 保持显式状态。",
+        swprintf(text, 256, L"同步完成：投影检查 %llu 项，导入 %llu 本；并发 %llu、墓碑 %llu 保持显式状态。",
           (unsigned long long)o->projected, (unsigned long long)o->imported, (unsigned long long)o->concurrent, (unsigned long long)o->tombstones);
       acct_notice(text);
       if (o->import_failed) { /* repair mappings from the committed SDK imports */
