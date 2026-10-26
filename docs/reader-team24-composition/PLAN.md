@@ -809,3 +809,14 @@ pure-capture candidate; the combined build must explicitly install/enable and
 verify that capability, run the original source guard and preserve the 3.40
 original test result separately from the strict 3.41 adapter. A completed
 independent run cannot establish any of those combined-source checks.
+
+The isolated preserved-package diagnostics retained failures
+[40410804502](https://github.com/NoGod3524/EXReader/actions/runs/40410804502)
+and [40411045197](https://github.com/NoGod3524/EXReader/actions/runs/40411045197).
+The first observed the correct descending group page after the driver read a
+transient list during refresh. The second recorded all 2,202 catalog mappings
+and an ordered first 100 visible cached rows: the host had prefetched a second
+50-row page, while the driver incorrectly required exactly 50. The next driver
+checks a stable ordered prefix and the existing 150-row cache cap, and still
+requires all 170 members in both directions and each group search. These
+observations do not replace the original failed runs or grant pagination.
