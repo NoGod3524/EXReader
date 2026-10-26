@@ -295,7 +295,7 @@ struct HostWave3Sheet: View {
     }
 
     private func reviewDirectory() -> URL? {
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true)
+        let directory = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true)
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             return directory
