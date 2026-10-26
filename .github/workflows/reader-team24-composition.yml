@@ -1,0 +1,26 @@
+name: Native reader composition source admission
+on:
+  push:
+    branches: [codex/team24-composition]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Source guard negative controls
+        run: python tests/reader_composition/test_guard.py
+      - name: Exact composition source admission
+        run: python tools/reader_composition/guard.py --source "$GITHUB_SHA" --report build/composition-source.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: composition-source-${{ github.sha }}
+          path: build/composition-source.json
+          if-no-files-found: error
