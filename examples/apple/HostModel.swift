@@ -1513,7 +1513,10 @@ final class HostReaderModel: ObservableObject {
                         self.wave3.annotationPreview = partial.preview
                         self.wave3.canConfirmAnnotations = false
                     }
-                    self.wave3.busy = false; self.wave3.message = self.describe(error); self.fail(error)
+                    self.wave3.busy = false; self.wave3.message = self.describe(error)
+                    if let partial = error as? HostWave3ImportFailure, partial.cancelled {
+                        self.statusText = "已取消"; self.finish()
+                    } else { self.fail(error) }
                 }
             }
         }
