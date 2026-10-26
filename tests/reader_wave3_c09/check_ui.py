@@ -488,16 +488,20 @@ def main():
             assert database_state(profile) == state_before
             for path in profile.rglob('*'):
                 if path.is_file():
-                    if path in (profile / 'library.sqlite.product.lock', profile / 'product.profile.lock'):
+                    if path in (profile / 'library.sqlite.product.lock', profile / 'product.profile.lock',
+                                profile / 'fonts/.rfl-lock'):
                         # The live store holds this empty lock exclusively.
                         # Read it with every other file after normal shutdown.
-                        assert path.stat().st_size == 0, 'Product lock unexpectedly contains data'
+                        assert path.stat().st_size == 0, 'Owner lock unexpectedly contains data'
                         continue
                     if path == profile / 'library.sqlite.product.sqlite.sync-account':
                         # Session owns the documented persistent account binding
                         # exclusively; its complete bytes are scanned below.
                         continue
-                    data = path.read_bytes()
+                    try:
+                        data = path.read_bytes()
+                    except PermissionError as error:
+                        raise AssertionError('Unrecognized live locked file: ' + str(path.relative_to(profile))) from error
                     assert password.encode() not in data and password.encode('utf-16-le') not in data, 'Session secret persisted'
             app.close_app()
             for path in profile.rglob('*'):

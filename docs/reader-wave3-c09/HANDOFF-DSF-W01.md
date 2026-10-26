@@ -184,3 +184,6 @@ Run 40367648443 reached the second documented exclusive owner file: library.sqli
 
 Run 40369325127 stopped at the other exclusive empty product profile lock. Root reviewed the actual CreateFileW ownership sites in examples/reader.c: the profile holds product.profile.lock and library.sqlite.product.lock, both without sharing; the persistent session binding is separate. Both empty lock files now receive the same live-size assertion and mandatory post-exit scan; the binding remains deferred to the full post-exit scan. All other read errors still fail. This correction covers the source ownership contract rather than adding an arbitrary catch-all scan bypass.
 
+
+Run 40370819405 passed handle opening but failed a live ReadFile range lock. Font-library's actual implementation also uses LockFileEx on the first byte of fonts/.rfl-lock; even an empty file may refuse the attempted buffered read. That exact third empty lock joins the live zero-length assertions and mandatory full post-exit scan. Any other live permission failure now reports its relative path explicitly. Product/provider locks are retained; no production locking behavior changes.
+
