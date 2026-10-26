@@ -75,6 +75,28 @@ This build configuration is pending actual Apple compilation after platform
 source adoption. Actions syntax admission is not a native build or GUI grant.
 Keep the current team's separately built review apps under their own evidence.
 
+## Post-stage repair routing
+
+The initial GTK and Apple Sol teams are sealed with failed complete acceptance.
+New independent repairs use DeepSeek headless, configured `deepseek-flash`,
+high reasoning and PTC, in separate worktrees. Root retains shared-owner and
+final-composition edits. Exact service build identity is not inferred from the
+model alias.
+
+| Package | Branch | Starting source | Required outcome |
+| --- | --- | --- | --- |
+| G01 | `codex/dsf-gtk-export-close` | `36d5deec` | Real visible directory selection and remaining five-feature UI checks |
+| A01 | `codex/dsf-apple-ui-close` | `8ebef083aa17272c5019c8f778c03ace78e9ea96` | Pin root lossless map decoder, then execute all three-target UI phases |
+| N01 | `codex/dsf-android-ui-close` | `59f8ca9607cf9e2a864f2a1f57bd1c40f2c76baf` | Diagnose original font/report failures and complete actual raw host suites |
+
+Root decoder source is `9979001fba4df9fceaed3ffc89d6d9e0bcc16337`.
+Only its exact `tools/check_apple_product.py` blob is an A01 shared-owner input;
+all old ownership/symbol checks remain. Each repair has one newly authorized
+complete validation round, with Android requiring its real Java gate first.
+No earlier failure or budget is reset. Dispatch/runtime records live outside
+the repository under `exreader-team24-20261026/dispatch-deepseek`; running
+processes or emitted events do not grant product acceptance.
+
 ## Final combined validation
 
 Use a separate composition entry and source guard. Original S20 and team
