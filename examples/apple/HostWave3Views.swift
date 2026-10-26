@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import SwiftUI
 import UniformTypeIdentifiers
+import Darwin
 #if os(iOS)
 import UIKit
 #else
@@ -297,7 +298,13 @@ struct HostWave3Sheet: View {
     }
 
     private func reviewDirectory() -> URL? {
-        let directory = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true)
+        guard let resolved = realpath(FileManager.default.temporaryDirectory.path, nil) else {
+            pickerError = "无法解析临时文件夹"
+            return nil
+        }
+        defer { free(resolved) }
+        let directory = URL(fileURLWithPath: String(cString: resolved), isDirectory: true)
+            .appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true)
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             return directory
