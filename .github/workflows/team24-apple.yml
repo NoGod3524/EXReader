@@ -107,8 +107,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          swift -e 'import Foundation; let parent = FileManager.default.temporaryDirectory.resolvingSymlinksInPath(); let child = parent.appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true); try FileManager.default.createDirectory(at: child, withIntermediateDirectories: true); print("temporary URL: \(child.absoluteString)"); print("temporary path: [\(child.path)]"); print("components: \(child.pathComponents)"); try child.path.write(toFile: "inspection-temp-path.txt", atomically: true, encoding: .utf8)'
           python3 - <<'PY'
           import hashlib, json, os, pathlib, subprocess, zipfile
+          path = pathlib.Path('inspection-temp-path.txt').read_text()
+          print('trailing slash:', path.endswith('/'))
+          fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+          try:
+              for part in path.split('/')[1:]:
+                  try:
+                      next_fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+                  except OSError as error:
+                      print('no-follow failure:', repr(part), error); break
+                  os.close(fd); fd = next_fd
+              else: print('no-follow path: accepted')
+          finally: os.close(fd)
           root = pathlib.Path('inspection'); root.mkdir()
           api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12682307446"
           item = json.loads(subprocess.check_output(['gh', 'api', api]))
