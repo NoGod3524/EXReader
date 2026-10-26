@@ -1,0 +1,38 @@
+name: Inspect retained full Windows performance failure
+on:
+  push:
+    branches: [codex/reader-full-product-performance]
+    paths: ['.github/workflows/reader-full-product-perf-inspect.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download original failed run artifact in Actions
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 40395267422 --name full-product-perf-windows-40395267422-1 --dir build/retained
+          if ($LASTEXITCODE) { throw 'Artifact download failed' }
+          $archive = @(Get-ChildItem build/retained -Recurse -Filter EXReader-wave3-windows.zip)
+          if ($archive.Count -ne 1) { throw 'Expected exactly one product ZIP' }
+          Expand-Archive -LiteralPath $archive[0].FullName -DestinationPath build/retained-extracted
+          $exe = @(Get-ChildItem build/retained-extracted -Recurse -Filter EXReader.exe)
+          if ($exe.Count -ne 1) { throw 'Expected exactly one product EXE' }
+          "RETAINED_PACKAGE=$($exe[0].DirectoryName)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record first-screen error and actual control tree
+        shell: pwsh
+        run: |
+          python tests/reader_perf_full_windows/inspect_retained.py
+          if ($LASTEXITCODE) { throw 'Legacy observer failure preserved' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-product-perf-windows-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/full-perf-inspection/
+          if-no-files-found: warn
