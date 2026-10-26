@@ -1606,7 +1606,7 @@ final class HostReaderModel: ObservableObject {
 
     func selectWave3Font(_ hash: String?) {
         guard !busy, current != nil else { return }
-        let (epoch, cancel) = begin(); wave3.busy = true
+        let (epoch, cancel) = begin(); wave3.busy = true; wave3.message = "处理中…"
         queue.async {
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
@@ -1660,7 +1660,7 @@ final class HostReaderModel: ObservableObject {
 
     func jumpWave3History(back: Bool) {
         guard !busy, current != nil else { return }
-        let (epoch, cancel) = begin(); wave3.busy = true
+        let (epoch, cancel) = begin(); wave3.busy = true; wave3.message = "处理中…"
         queue.async {
             do {
                 guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库未就绪") }
