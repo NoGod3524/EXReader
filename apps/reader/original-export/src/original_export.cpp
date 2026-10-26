@@ -118,7 +118,12 @@ struct directory {
     size_t start=3;
 #else
     need(path[0]=='/'&&path.size()>1,ROE_ARGUMENT);size_t start=1;
-    fd=::open("/",O_RDONLY|O_DIRECTORY|O_CLOEXEC);need(fd!=invalid,ROE_IO);
+#ifdef __ANDROID__
+    constexpr int traversal_access=O_PATH;
+#else
+    constexpr int traversal_access=O_RDONLY;
+#endif
+    fd=::open("/",traversal_access|O_DIRECTORY|O_CLOEXEC);need(fd!=invalid,ROE_IO);
 #endif
     need(path.back()!='/',ROE_ARGUMENT);
     for(size_t pos=start;pos<=path.size();) {
@@ -132,7 +137,8 @@ struct directory {
       if(!GetFileInformationByHandle(h,&i)||(i.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)||!(i.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)){closefile(h);throw failure{ROE_ARGUMENT};}
       try{held.push_back(h);}catch(...){closefile(h);throw;}
 #else
-      file next=openat(fd,part.c_str(),O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);need(next!=invalid,ROE_ARGUMENT);closefile(fd);fd=next;
+      int access=end==path.size()?O_RDONLY:traversal_access;
+      file next=openat(fd,part.c_str(),access|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);need(next!=invalid,ROE_ARGUMENT);closefile(fd);fd=next;
 #endif
       if(end==path.size())break;
       pos=end+1;
