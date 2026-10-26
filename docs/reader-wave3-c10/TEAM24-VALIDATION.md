@@ -3,6 +3,8 @@
 最后受测 source：`4561ef738e073058c900b176062c2d95ae7c5a19`；
 [run 40279255603 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40279255603)：failure。
 本队初始两轮加协调者明确批准的一轮均已结束，不再启动第四轮。
+后续由独立 GTK 收尾任务（分支 `codex/dsf-gtk-export-close`）接管，见文末“独立 GTK 收尾轮”与
+[`HANDOFF-DSF-G01.md`](HANDOFF-DSF-G01.md)。
 
 
 团队起点：`05c8494eb8320c22b9e7b439cca82e21bc36a461`，分支 `codex/team24-gtk`。原 C10 guard 的 seed 仍为 `d263ce5228838ac90c0a0dc13a5193d4a7739681`；本轮没有重置旧失败记录或放宽 SDK、原 1710 项及 CPU 预算。
@@ -148,4 +150,34 @@ sync 窗口文本自赋值 UAF 与过期 busy 清理；两种布局共用原生�
 未覆盖：原 1710/CPU 整体重新验收、完整 G13/Orca/真实读屏、真机、其他五平台、
 本轮独立 preferences/page-background/record-compatibility 全套、带真实网络会话的 sync 状态。
 当前 history 拒绝跨书跳转；annotation 导入沿用模块 heads-only 合同，不恢复缺失祖先。
+本阶段未运行任何本地构建、测试、语法检查、夹具、benchmark、截图或工件操作。
+
+### 独立 GTK 收尾轮（已完成，整轮失败）
+
+起点 `36d5deec`，分支 `codex/dsf-gtk-export-close`；source `0be6a226540a8d54e6aa25ac2bf74cbc44d9971e`；
+run `40350391595` / attempt `1`，workflow 未改（既有 `workflow_dispatch`），旧 `push` 触发不变。
+
+唯一源码修复（`tests/reader_wave3_c10/check_ui.py`，+80/−7）：SELECT_FOLDER 的原生目录行先用
+单元 AT-SPI Component `grab_focus()`（GTK 的 scroll-to-cell）滚入视口，只接受 GTK 给出的非哨兵矩形
+（`x/y < 0` 即 `G_MININT`，见 `gtk_tree_view_accessible_get_cell_extents()`）且点击中心落在原生
+`table` 内，再真实点击并用 `ATK_STATE_SELECTED` 确认；父目录双击同走该路径；`click_node` 拒绝哨兵坐标。
+未加 `xdotool --`、未夹紧坐标、未模糊选择、未放宽超时、未删断言；旧 guard/SDK/预算与保留驱动不变。
+
+实际结果：guard、SDK 与全部模块、两种宿主与打包、desktop ctest 4/4、owner probe、
+compact45 45/45、G13 十项、search 30/30、records 30/30、drop 20/20 全部通过；
+**五模块真实 UI 10/10 PASS（`accepted=true`）**，含上一轮未执行的原件导出（89,048 bytes 逐字节、
+`parent == exported`）、history（count 2 / cursor 1 / moves 2）、sync（无会话只读快照，重开文本一致）。
+
+整轮仍失败于两条**保留**套件（受 guard 保护，本轮未触碰）：
+`navigation` 前 22 项通过后第 23 项 `active_directory()` 15s 超时（到期观测
+`phase=3, polls=40`：9000 条目录扫描实际执行并已推进，瞬态 `phase=2` 采样窗口被错过）；
+`batch_import` 前 14 项通过后第 3 次 `choose()` 在 `element('EXReader')` 超时（异常时原生选择器仍在
+`$HOME`，`work` 行仍 `selected+active`，`--repeat 2` 双击未产生目录跳转）。
+两者同一份字节在 run `40279255603` 通过，属真实 X11 时序竞争，非产品 owner 失败；原样保留，未重跑、
+未开第二轮完整验收。`authenticate` 因此 failure（`AssertionError('navigation scope did not pass')`）。
+
+本轮原 ZIP id `12664682969`，99,382,842 bytes，digest
+`sha256:70eff07ec8c419af4568dc438dcd24d1e3f1aa1bc5cecff878b7884d9002d23f`，到期 `2027-01-24T15:32:55Z`；
+compact 程序 `7742a3b339863729ba20281200fb45a5ecd551ce51aab1c98b6ba540516979f6`，
+noncompact `09d7f28dca5f276a956f8c40a478e7325c0ebf729a5a26984e18fdd8a83fed90`（与上一轮相同，未改产品）。
 本阶段未运行任何本地构建、测试、语法检查、夹具、benchmark、截图或工件操作。
