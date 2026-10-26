@@ -49,7 +49,29 @@ S20 原 iPad 问题归于 `test01ImportDeduplicateAndErrors`，原 run `40248648
 | iPhone Simulator | 12631867741 | 103501 | `f2e2a27a4701d33ec0e4430662115f3380081e81f1fc7a0f367648e52ce78247` | 2026-11-25 06:30:17 |
 | iPad Simulator | 12631103178 | 103719 | `8faa0e930db47353e81e501361d479ae40dabe9a615b196b6b2ab7cce72c07d4` | 2026-11-25 06:29:39 |
 
-协调者在收到精确根因和修复差异后批准额外一次完整第 3 轮；前两失败不删除、不重置额度。第三轮待本次修复提交启动。
+协调者在收到精确根因和修复差异后批准额外一次完整第 3 轮；前两失败不删除、不重置额度。
+
+第三轮：source `02dbb1a7cb0fa80920ad89dcdeec76bf3af5c6b0`，run [40280431991](https://github.com/NoGod3524/EXReader/actions/runs/40280431991)，attempt 1，最终 failure。两套 SDK/真实模块 target/安装库与头检查通过。三个 wave3 应用均编译链接并被脚本打包，但原 embed 检查阶段的 `tools/check_apple_product.py:30` 严格按 UTF-8 读取原始 link map 失败：Mac 字节位置 2259028–2259029、iPhone 2259196–2259197、iPad 2259152–2259153。随后本队脚本调用原 `inspect` 再次遇到相同错误，未进入 base/control 阶段。
+
+本轮没有执行 UI 用例，没有启动成功证明，不能把已链接工件称为可启动验收通过；签名/最终 embed 检查也未完成。原断言、预算与共享检查器都未修改。最小解码修复提案见 `team24-apple-linkmap-owner-proposal.md`，尚未应用；额外完整轮次也尚未批准。
+
+同 run/attempt 认证 job `121435998748` 在 Actions 内核对原 ZIP、其中所有记录文件与程序身份，认证结论因原生失败而保持 failure：
+
+| 平台 | Artifact ID（含已链接 review app ZIP） | 原 ZIP 字节 | 原 ZIP SHA-256 | 到期 UTC |
+| --- | --- | ---: | --- | --- |
+| macOS | [12631692990](https://github.com/NoGod3524/EXReader/actions/runs/40280431991/artifacts/12631692990) | 56412472 | `109c522511504742c15def49b1263a9e3da29890f7d11a1a97c70a056c515a1c` | 2026-11-25 06:37:55 |
+| iPhone Simulator | [12632265908](https://github.com/NoGod3524/EXReader/actions/runs/40280431991/artifacts/12632265908) | 56580842 | `437956bd8c2589c9e76f44a562f2e54020dd242bf25183a9af9b464f217fce03` | 2026-11-25 06:41:36 |
+| iPad Simulator | [12632250994](https://github.com/NoGod3524/EXReader/actions/runs/40280431991/artifacts/12632250994) | 56580730 | `fc5a693db231c94742784becadd37151a9416d5e514964e00fbeb5be1bde2165` | 2026-11-25 06:44:29 |
+
+| 平台 | 实际 executable 字节 | 实际 executable SHA-256 |
+| --- | ---: | --- |
+| macOS | 8241064 | `69004589efd300704e5aa93112dffd100438028ed1aebf7ce98ab8504dda2b58` |
+| iPhone Simulator | 8311872 | `c29158a90e86dbc9d800b3bf2de4600197e78417aaa120cd7a284d57e2a2e039` |
+| iPad Simulator | 8311824 | `62dc4eea1824e39a8613b5321a326a747f44fc094c5b4727f3e2a21e258cc496` |
+
+## 最小合入范围
+
+三个功能提交依次为 `560eba3f`、`b9b923f5`、`02dbb1a7`，基于 `d263ce5228838ac90c0a0dc13a5193d4a7739681`。只涉及 `examples/apple/`、新增 `apps/reader/apple-feature-integration/`、本队 `tests/reader_team24_apple/`、`.github/workflows/team24-apple.yml` 与本队 handoff 文档；原 SDK、其他平台、原测试和 canonical 工具未改。[功能源码差异](https://github.com/NoGod3524/EXReader/compare/d263ce5228838ac90c0a0dc13a5193d4a7739681...02dbb1a7cb0fa80920ad89dcdeec76bf3af5c6b0)。该差异仍受第三轮检查器失败阻断，不建议把它当作已验收产品合入。
 
 ## 本队 review 应用与生产组合边界
 
