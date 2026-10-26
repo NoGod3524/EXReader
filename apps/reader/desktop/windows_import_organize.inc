@@ -171,8 +171,8 @@ static exr_status winio_group_edit(host_job *job) {
     copy_wstring(job->message,512,L"请先恢复或确认之前的编辑和批量整理。");return EXR_DATABASE;
   }
   if(!acct_open_metadata(&owner,&error)) return EXR_DATABASE;
-  if(v->operation==WINIO_RECOVER_EDIT) {
-    code=reader_metadata_finish_pending(owner,&result,&error);
+  if(v->operation==WINIO_RECOVER_EDIT || v->operation==WINIO_ABANDON_EDIT) {
+    code=v->operation==WINIO_RECOVER_EDIT ? reader_metadata_finish_pending(owner,&result,&error):reader_metadata_abandon_pending(owner,&error);
     if(code==READER_METADATA_NO_PENDING) code=READER_METADATA_OK;
   } else if(job_cancel_flag(job)) {
     reader_metadata_close(&owner,&error);return EXR_CANCELLED;
@@ -188,7 +188,8 @@ static exr_status winio_group_edit(host_job *job) {
   reader_metadata_snapshot_free(snapshot);
   if(reader_metadata_close(&owner,&error)!=READER_METADATA_OK && code==READER_METADATA_OK) code=error.code;
   if(code==READER_METADATA_OK) {
-    copy_wstring(job->message,512,v->operation==WINIO_CREATE_GROUP ? L"分组已创建。":L"上次编辑已恢复或没有待恢复的编辑。");
+    copy_wstring(job->message,512,v->operation==WINIO_CREATE_GROUP ? L"分组已创建。":
+      v->operation==WINIO_RECOVER_EDIT ? L"上次编辑已恢复或没有待恢复的编辑。":L"未提交的上次编辑已放弃或没有待处理编辑。");
     return EXR_OK;
   }
   copy_wstring(job->message,512,result.committed ? L"编辑已提交，但清理未完成；请使用恢复上次编辑。":
@@ -370,6 +371,6 @@ static exr_status winio_job_run(host_job *job) {
     v->receipt_saved=winio_receipt(job);return v->staged || winio.orphans ? EXR_IO:EXR_OK;
   }
   if(v->operation==WINIO_GROUPS) return winio_groups(job);
-  if(v->operation==WINIO_CREATE_GROUP || v->operation==WINIO_RECOVER_EDIT) return winio_group_edit(job);
+  if(v->operation==WINIO_CREATE_GROUP || v->operation==WINIO_RECOVER_EDIT || v->operation==WINIO_ABANDON_EDIT) return winio_group_edit(job);
   return winio_bulk(job);
 }
