@@ -51,4 +51,14 @@ with zipfile.ZipFile(archive_path) as archive:
     result['artifact'] = {key: artifact[key] for key in ('id', 'name', 'digest', 'size_in_bytes', 'expires_at')}
     result['run_conclusion'] = run['conclusion']
     (out / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
-    print(json.dumps(result, ensure_ascii=False))
+    compact = {key: result[key] for key in ('source_sha', 'run_id', 'attempt', 'run_conclusion', 'artifact')}
+    if 'windows' in name:
+        compact.update({'cohorts': result['cohorts'], 'aggregates': result['aggregates'],
+                        'cpu': result['environment']['cpu'], 'package_identity': result['package_identity'],
+                        'performance_accepted': False, 'frame_time': result['frame_time']})
+    else:
+        compact.update({'metrics': {k: {n: v.get(n) for n in ('count', 'p50_ms', 'p95_ms', 'max_ms')}
+                                     for k, v in result['metrics'].items()},
+                        'cpu': result['environment']['runner'], 'rss': result['rss'],
+                        'observation_complete': result['observation_complete'], 'problems': result['problems']})
+    print(json.dumps(compact, ensure_ascii=False))
