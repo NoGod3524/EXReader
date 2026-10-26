@@ -59,7 +59,7 @@
     },
     {
       "name": "apple-feature-host-candidate",
-      "source": "d9ca5805952f8069ecbdb7a724af43662d9b0a6e",
+      "source": "d684ed369fbd8357d5430f9e4286694a47ef3399",
       "paths": [
         ".github/workflows/team24-apple.yml",
         "apps/reader/apple-feature-integration/README.md",
@@ -81,7 +81,8 @@
         "tests/reader_team24_apple/make_project.rb",
         "tests/reader_team24_apple/run_ui.py",
         "tests/reader_team24_apple/ui/FeaturesUITests.swift",
-        "tests/reader_team24_apple/verify.py"
+        "tests/reader_team24_apple/verify.py",
+        "examples/apple/HostCatalog.swift"
       ]
     }
   ]

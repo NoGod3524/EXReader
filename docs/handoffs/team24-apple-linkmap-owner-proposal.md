@@ -22,3 +22,7 @@
 本队 guard 仍冻结所有原工具。若获准接入上述共享 owner 修复，只为 `tools/check_apple_product.py` 钉住 seed 原文加这一处替换；其余原工具、SDK、预算和原断言继续逐字冻结。
 
 需要在 Actions 内再次构建并执行原生 UI，不能由该解码修复推断启动或业务成功。本提案没有修改共享工具，也没有启动新的完整轮次。
+
+## 已应用
+
+root 已在 `9979001fba4df9fceaed3ffc89d6d9e0bcc16337` 提交该唯一改动（blob `ed7f62597e01d4e045f679369805d27abc20b7bc`）。独立 owner 包按此 blob 精确恢复该文件，并在 `tests/reader_team24_apple/guard_owner.py` 内钉住 blob 与本行；三目标真实 UI 已在该源码上执行，结果见 `team24-apple-DSF-A01.md`。
