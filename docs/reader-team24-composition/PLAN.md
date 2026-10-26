@@ -951,6 +951,18 @@ case names, 18 adapted cases, and 16 host UI checks across four phases.
 This is an API-34 x86_64 emulator investigation on the stated source, not a
 physical-device or final combined-source acceptance.
 
+The subsequent version-parameterized test candidate
+`3dd099b882749ed2bb5a1a31ef7db6af6164d931` ran the same 3.40 investigation
+in [40420011207/1](https://github.com/NoGod3524/EXReader/actions/runs/40420011207).
+Its overall result remains failure because the unchanged original owner runner
+failed; the separately adapted owner suite and four-phase, 16-check host sync
+runner passed. [40421339472/1](https://github.com/NoGod3524/EXReader/actions/runs/40421339472)
+authenticated artifact `12696409010` (108,143,179 bytes, SHA-256
+`56b5c50d3deefe922a32e359dc37b6bad9b04ebbce845f4f4bb0416ebf4cd08e`),
+confirmed the original four failures and checked that all four host sync phases
+reported the explicit expected SDK version `3.40.0`. This does not change the
+original failure or grant the separately running 3.41 candidate.
+
 The separate 3.41 run [40415259935/1](https://github.com/NoGod3524/EXReader/actions/runs/40415259935)
 at `4d0d9d549f8412f3453b1e5a87485f5ae80bbe65` completed with overall
 **failure**. Its original navigation/reading suite and organization sync step
@@ -1012,5 +1024,12 @@ is retained; a separate workflow admitted precisely pinned WAL files while
 keeping the other original source checks and business tests.
 Windows and macOS installed organization consumers passed four configurations
 in [40418056222/1](https://github.com/NoGod3524/EXReader/actions/runs/40418056222).
-Android and Linux retained checks on this source remain pending; none of these
-results grants six-platform delivery or physical-device acceptance.
+On this same source, Linux retained navigation and folder import completed
+successfully in [40419483432/1](https://github.com/NoGod3524/EXReader/actions/runs/40419483432):
+the native navigation and folder backends reported 58 and 684 checks, and
+the GUI reports respectively stated navigation scope 29/29 and folder scope
+27/27. The navigation report's broader `accepted` field remains false; this
+does not grant a full Linux acceptance. Artifact `12696924935` is 51,814,021
+bytes, SHA-256 `d6e7e7ff174a10f452ba7d11dc87bd53aab54d75f51b934aceb4d8996496fbf6`,
+expiring 2027-01-24T23:24:00Z. Android checks on this source remain pending;
+none of these results grants six-platform delivery or physical-device acceptance.
