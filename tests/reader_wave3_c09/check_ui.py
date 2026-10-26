@@ -189,10 +189,9 @@ def fill_system_dialog(app, path):
     for attempt in range(4):
         if not U.IsWindow(dialog):
             break
-        try:
-            send(dialog, 0x111, 1)
-        except TimeoutError:
-            pass
+        # Drive the actual native accept button. A synthetic WM_COMMAND with
+        # no button HWND is not the notification emitted by a user click.
+        post_click(dialog, 1)
         time.sleep(.4)
         if attempt == 1 and U.IsWindow(dialog):
             # The host keeps its own copy of the name in the identified owner of
