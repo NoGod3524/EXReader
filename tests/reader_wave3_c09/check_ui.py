@@ -11,6 +11,8 @@ import json
 import os
 from pathlib import Path
 import re
+import secrets
+import socket
 import sqlite3
 import sys
 import time
@@ -21,6 +23,8 @@ sys.path.insert(0, str(ROOT / 'tests/reader_windows_preferences'))
 import check_ui as P  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import needles as N  # noqa: E402
+sys.path.insert(0, str(ROOT / 'tests/reader_windows_account'))
+import check_account_ui as account  # noqa: E402
 
 U, send, text, A = P.U, P.send, P.text, P.A
 U.GetSubMenu.argtypes = [W.HANDLE, C.c_int]
@@ -43,7 +47,8 @@ SELECT_ALL = 107
 REQUIRED = ['native-menu-entries', 'history-back-forward-after-real-location', 'annotation-export-cancel-then-real-files',
             'originals-directory-cancel-then-per-item-results', 'originals-rerun-reports-existing',
             'font-import-failure-keeps-library-and-frame', 'font-import-and-switch-changes-page',
-            'font-restore-builtin', 'font-choice-survives-restart', 'sync-status-read-only-unknown',
+            'font-restore-builtin', 'sync-status-read-only-unknown', 'sync-status-read-only-failed-session',
+            'font-choice-survives-restart',
             'annotation-preview-writes-nothing', 'annotation-confirm-cancel-writes-nothing',
             'annotation-confirmed-commit-writes-records', 'annotation-repeat-is-duplicate',
             'annotation-tampered-file-refused']
@@ -412,6 +417,59 @@ def main():
         close_feature(app, dialog)
         assert database_state(out / 'profile-a') == state_before
         record('sync-status-read-only-unknown')
+
+        # Drive the real account owner to a completed failed network attempt.
+        # Holding a bound, non-listening socket reserves the loopback port and
+        # makes a connection fail without a server, certificate or external peer.
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as reserved:
+            reserved.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            reserved.bind(('127.0.0.1', 0))
+            endpoint = 'https://127.0.0.1:%d/dav/' % reserved.getsockname()[1]
+            user, password = 'c09-' + secrets.token_hex(8), secrets.token_hex(24)
+            send(app.window, 0x111, account.ACCOUNT)
+            dialog = app.wait(lambda: owned(app, lambda w: bool(U.GetDlgItem(w, account.APPLY))), timeout=30)
+            account.Device.settle(app, dialog)
+            account.Device.fill(app, dialog, endpoint, user, password, False)
+            assert send(U.GetDlgItem(dialog, account.REMEMBER), account.BM_GETCHECK) == 0
+            post_click(dialog, account.APPLY)
+            app.wait(lambda: '仅本次会话' in account.Device.note(app, dialog) and
+                     U.IsWindowEnabled(U.GetDlgItem(dialog, account.SYNC)), timeout=60)
+            post_click(dialog, account.SYNC)
+            # FAILED is published under the same session mutex as running=false.
+            # Enabled Retry also proves the native account owner has no active job.
+            app.wait(lambda: '状态 FAILED' in account.Device.detail(app, dialog) and
+                     U.IsWindowEnabled(U.GetDlgItem(dialog, account.RETRY)), timeout=120)
+            assert '仅本次会话' in account.Device.detail(app, dialog)
+            result['failed_session_detail'] = account.Device.detail(app, dialog)
+            post_click(dialog, account.CLOSE)
+            app.wait(lambda: not U.IsWindow(dialog), timeout=30)
+            app.wait_idle()
+
+            profile = out / 'profile-a'
+            product = profile / 'library.sqlite.product.sqlite'
+            with sqlite3.connect(product.resolve().as_uri() + '?mode=ro', uri=True) as db:
+                pending = db.execute('SELECT count(*) FROM reader_outbox').fetchone()[0]
+            assert 0 < pending < 100, ('pending queue outside this small-fixture check', pending)
+            state_before = database_state(profile)
+            dialog = open_feature(app, SYNC)
+            expected_pending = '待处理记录：%d 条' % pending
+            for refresh in range(2):
+                listing = rows(dialog)
+                assert listing and '同步阶段：failed' in listing[0], listing
+                assert any(row.startswith(expected_pending) for row in listing), listing
+                assert '冲突记录：0 条' in listing, listing
+                assert not any('未知' in row for row in listing[:4]), listing
+                assert database_state(profile) == state_before
+                if refresh == 0:
+                    send(U.GetDlgItem(dialog, B1), account.BM_CLICK)
+            result['failed_session_pending_records'] = pending
+            close_feature(app, dialog)
+            assert database_state(profile) == state_before
+            for path in profile.rglob('*'):
+                if path.is_file():
+                    data = path.read_bytes()
+                    assert password.encode() not in data and password.encode('utf-16-le') not in data, 'Session secret persisted'
+            record('sync-status-read-only-failed-session')
 
         app.close_app()
         app = P.App(args.candidate.resolve(), args.font.resolve(), out / 'profile-a', existing=True)
