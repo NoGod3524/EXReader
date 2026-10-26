@@ -178,3 +178,22 @@ GTK raw static review at 022e66dd: the independent records_resolve callback retu
 ## Accepted Windows input admitted
 Windows raw Wave3 input pins 0d2903e62fdb0f1979f50722c3c972bf586ae085; only its two close-out docs differ from tested source f92d1bb9a40dd05ec6b8603172091648e4575b98. Run 40375338225/1 passed all 16 native feature cases on the unpacked original EXE, compact22, retained26 and archive/program authentication. The input owns exactly the changed Windows host/driver paths; the public codec remains the separate existing core-owned input. This root composition still requires its own combined native replay. Fixed progress newly counts only annotation exchange and original export; direct host font lease lifetime and the complete account cancel/retry matrix remain partial.
 
+
+## Windows on the composed source
+
+Run [40379950209 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40379950209)
+tested composition source `11042994df180754a11e6d5f828df4277e839c3d`.
+Source admission, actual Windows job `121773295179`, and same-run identity job
+`121776171215` all succeeded. The packaged and unpacked Windows program passed
+16 native feature UI cases, compact22, retained26 before and after extraction,
+and the raw owner checks. The authentication job verified the report, packaged
+ZIP and actual EXE identity from this run. This grants the tested Windows profile
+only; it does not grant the other five targets or six-target same-source release.
+
+Original full evidence artifact `12676649644`: 249350042 bytes, SHA-256
+`df98abc29fe4c008edf2511d076d6318bb6fdc9529522fbd59054d50ba695a70`.
+Identity artifact `12678477144`: 1153 bytes, SHA-256
+`d2e399773b0781d5824ea33a7444f27ce381ebb6042fade6f77bb70812131528`.
+Both expire 2027-01-24T18:41:23Z. The subsequent `3f91c82f` workflow change
+reduces uploaded intermediates while retaining the original diagnostic paths;
+that later source has not itself repeated the Windows run.
