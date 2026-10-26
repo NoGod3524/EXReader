@@ -15,7 +15,7 @@ if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
 endif()
 find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS library)
 find_package(EXReaderSideload CONFIG REQUIRED)
-find_package(EXReaderWebDAV CONFIG REQUIRED)
+find_package(EXReaderWebDAVObserved 0.1.0 CONFIG REQUIRED)
 add_library(reader_cloud_import STATIC src/cloud_import.c)
 target_include_directories(reader_cloud_import PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

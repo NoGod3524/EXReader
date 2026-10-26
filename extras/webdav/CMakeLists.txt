@@ -65,3 +65,6 @@ install(EXPORT EXReaderWebDAVTargets NAMESPACE EXReaderWebDAV:: DESTINATION ${CM
 configure_package_config_file(EXReaderWebDAVConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/EXReaderWebDAVConfig.cmake INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/EXReaderWebDAV)
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/EXReaderWebDAVConfigVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/EXReaderWebDAVConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/EXReaderWebDAVConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/EXReaderWebDAV)
+configure_package_config_file(EXReaderWebDAVObservedConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/EXReaderWebDAVObservedConfig.cmake INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/EXReaderWebDAVObserved)
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/EXReaderWebDAVObservedConfigVersion.cmake VERSION 0.1.0 COMPATIBILITY SameMinorVersion)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/EXReaderWebDAVObservedConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/EXReaderWebDAVObservedConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/EXReaderWebDAVObserved)

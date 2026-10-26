@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.24)
+project(content_observer LANGUAGES C CXX)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+find_package(EXReaderWebDAVObserved 0.1.0 CONFIG REQUIRED)
+add_executable(content-observer observer.c)
+target_link_libraries(content-observer PRIVATE EXReaderWebDAV::exr_webdav)
