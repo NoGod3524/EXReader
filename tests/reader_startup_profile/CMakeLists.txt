@@ -17,3 +17,8 @@ target_link_libraries(reader-desktop-catalog-check PRIVATE profile_adapter reade
 target_link_options(reader-desktop-catalog-check PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/sdk-link.map")
 add_executable(reader-native-catalog-check ../reader_catalog/native_catalog_check.c)
 target_link_libraries(reader-native-catalog-check PRIVATE reader_catalog reader_catalog_sqlite)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../reader_catalog/desktop_sdk_check.c" diagnostic_source)
+string(REPLACE "if(result!=SQLITE_OK) fprintf(stderr,\"SQL: %s\\n\",message?message:\"\");" "if(result!=SQLITE_OK) fprintf(stderr,\"SQL statement: %s; result: %d; extended: %d; message: %s\\n\",text,result,sqlite3_extended_errcode(db),message?message:\"\");" diagnostic_source "${diagnostic_source}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/diagnostic_catalog.c" "${diagnostic_source}")
+add_executable(reader-diagnostic-catalog-check "${CMAKE_CURRENT_BINARY_DIR}/diagnostic_catalog.c")
+target_link_libraries(reader-diagnostic-catalog-check PRIVATE profile_adapter reader_catalog_sqlite)
