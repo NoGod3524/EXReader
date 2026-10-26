@@ -17,13 +17,14 @@ identity = {key: os.environ[value] for key, value in [('source_sha', 'GITHUB_SHA
 package = 'org.exreader.host'
 expected = {
     'first': ['same_sdk_product_sqlite_and_installed_g03_g04', 'read_only_empty_list_preserves_sdk_product_and_pixels',
-              'saved_bookmark_survives_cancelled_refresh', 'saved_bookmark_survives_failed_refresh',
               'real_txt_progress_and_point_bookmark_do_not_write_sdk', 'real_txt_selection_highlight_and_note_edit_keep_selector',
               'explicit_current_found_navigation_renders_without_sdk_note_copy', 'delete_and_explicit_retained_restore_do_not_auto_navigate',
               'epub_actual_capture_keeps_spine_path_and_current_font', 'pdf_and_cbz_real_page_id_points',
               'missing_legacy_nul_and_fixed_page_id_are_never_guessed', 'unsafe_graphs_display_counts_without_exposing_or_choosing_heads',
               'stale_selected_head_never_overwrites_new_head', 'cancel_real_capture_keeps_stores_and_actual_frame',
-              'close_rotation_background_drop_real_pending_reads', 'bounded_record_pagination_and_plain_text_labels'],
+              'close_rotation_background_drop_real_pending_reads', 'bounded_record_pagination_and_plain_text_labels',
+              'saved_bookmark_survives_cancelled_refresh', 'saved_bookmark_survives_failed_refresh',
+              'conflict_remains_reachable_with_saved_bookmarks'],
     'retry': ['real_process_kill_after_commit_replays_identical_request_without_duplicate'],
     'reopen': ['process_reopen_retains_reading_graph_and_releases_old_panels'],
 }
@@ -140,7 +141,7 @@ try:
         assert not after
         stops.append({'phase': phase, 'instrumentation_pid': report['pid'], 'pid_before_stop': pid,
                       'ended_with_instrumentation': not bool(pid), 'pid_after_stop': after, 'requested': True})
-    assert len({report['pid'] for report in reports}) == 3 and sum(report['count'] for report in reports) == 18 and kill
+    assert len({report['pid'] for report in reports}) == 3 and sum(report['count'] for report in reports) == 19 and kill
     accepted = True
 finally:
     result = {**identity, 'accepted': accepted, 'checks': sum(report['count'] for report in reports), 'phases': reports,
