@@ -151,6 +151,37 @@ jobs:
           python tests/reader_android_cbz_reading/audit.py --output build/android-cbz-reading/native
           python tests/reader_android_page_theme/audit.py
           python tests/reader_android_record_interop/audit.py
+      - name: Build same-source actual GTK reader with account and record owners
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libsecret-1-dev libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config xvfb openbox xdotool xclip x11-utils dbus-x11 python3-pil
+          mkdir -p build/interop-gtk-logs
+          prefix="$PWD/build/interop-gtk-stage"
+          cmake --preset reading-library 2>&1 | tee build/interop-gtk-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/interop-gtk-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/interop-gtk-logs/sdk-install.log
+          cmake -S apps/reader/store/native -B build/interop-gtk-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/interop-gtk-product --parallel 4 --target install
+          cmake -S extras/webdav -B build/interop-gtk-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/interop-gtk-dav --parallel 4 --target install
+          cmake -S apps/reader/revisions -B build/interop-gtk-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/interop-gtk-revisions --parallel 4 --target install
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/interop-gtk-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/interop-gtk-$module" --parallel 4 --target install
+          done
+          cmake -S extras/credentials -B build/interop-gtk-credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/interop-gtk-credentials --parallel 4 --target install
+          cmake -S extras/sideload -B build/interop-gtk-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/interop-gtk-sideload --parallel 4 --target install
+          for module in reading-state reading-commands annotation-view; do
+            cmake -S "apps/reader/$module" -B "build/interop-gtk-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$prefix;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/interop-gtk-$module" --parallel 4 --target install
+          done
+          cmake -S apps/reader/desktop -B build/interop-gtk-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" -DREADER_READING_RECORDS_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$PWD/build/reading-library/stage" -DEXR_READER_BUILD_GTK=ON -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_READING_RECORDS=ON -DEXR_READER_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/interop-gtk-logs/host-configure.log
+          cmake --build build/interop-gtk-host --parallel 4 --verbose 2>&1 | tee build/interop-gtk-logs/host-build.log
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.41.0 --binary build/interop-gtk-host/gtk-host/exreader-linux --output build/interop-gtk-package
+          sha256sum build/interop-gtk-package/EXReader-Linux/bin/exreader-linux | tee build/interop-gtk-logs/program.sha256
       - name: Enable hosted runner emulator acceleration
         run: sudo chmod 666 /dev/kvm
       - name: Actual SDK owner import and public original export in Android private storage
@@ -173,6 +204,10 @@ jobs:
           name: reader-android-real-dav-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/android-real-dav/
+            build/interop-gtk-logs/
+            build/interop-gtk-host/gtk-account-host.map
+            build/interop-gtk-package/EXReader-Linux/bin/exreader-linux
+            build/interop-gtk-package/build.json
             build/session-android/logs/
             examples/android/app/build/outputs/apk/debug/app-debug.apk
             build/android-record-interop/test-apks/record-interop-ui.apk

@@ -69,8 +69,23 @@ try:
         path = '/dav/exreader-sync-v1/revisions/' + row['id'][:2] + '/' + row['id'] + '-' + row['sha256'] + '.json'
         status, data = h.client.get(path)
         require(status == 200 and data == (a.output / 'sender/bundle' / row['file']).read_bytes(), 'remote revision differs: ' + row['id'])
-    report.update(accepted=True, android_activity_sync=True, sender=manifest['sender'], manifest_sha256=checked['manifest_sha256'],
+    report.update(android_activity_sync=True, sender=manifest['sender'], manifest_sha256=checked['manifest_sha256'],
                   originals=len(manifest['originals']), revisions=len(manifest['revisions']), reading_records=len(manifest['reading_records']))
+    trust = '/usr/local/share/ca-certificates/exreader-android-gtk-interop.crt'
+    subprocess.run(['sudo', 'cp', str(ca), trust], check=True)
+    subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
+    gtk_env = dict(os.environ, INTEROP_GTK_OUTPUT=str((a.output / 'gtk').resolve()),
+                   INTEROP_ANDROID_BUNDLE=str((a.output / 'sender/bundle').resolve()),
+                   INTEROP_ROOT=payload['root'], INTEROP_USER=USER, INTEROP_PASSWORD=h.secret)
+    gtk = subprocess.run(['xvfb-run', '-a', '-s', '-screen 0 1440x1400x24', 'dbus-run-session', '--',
+                          'bash', '-euc', 'openbox >/dev/null 2>&1 & exec /usr/bin/python3 tests/reader_android_real_dav/gtk_receive.py'],
+                         env=gtk_env, capture_output=True, timeout=1500)
+    (a.output / 'gtk-runner.log').write_bytes(gtk.stdout + gtk.stderr)
+    require(gtk.returncode == 0, 'actual GTK receiver failed; see gtk/result.json and gtk-runner.log')
+    desktop = json.loads((a.output / 'gtk/result.json').read_text())
+    require(desktop['accepted'] is True and all(desktop.get(key) == value for key, value in identity.items()), 'GTK report identity differs')
+    report.update(accepted=True, actual_desktop_receive=True, gtk_program_sha256=desktop['program_sha256'],
+                  gtk_pid=desktop['pid'], gtk_books=desktop['books'])
 except Exception as error:
     report['failure'] = str(error); report['trace'] = traceback.format_exc()
 finally:
@@ -84,6 +99,8 @@ finally:
     for path in a.output.rglob('*'):
         if path.is_file() and any(secret.encode() in path.read_bytes() for secret in (h.secret, h.admin, h.auth)):
             path.write_text('removed generated credential\n'); report['accepted'] = False; report['credential_leak'] = str(path)
+    run(['sudo', 'rm', '-f', '/usr/local/share/ca-certificates/exreader-android-gtk-interop.crt'], check=False)
+    run(['sudo', 'update-ca-certificates', '--fresh'], check=False)
     run(['sudo', 'rm', '-rf', str(h.work)], check=False)
     (a.output / 'result.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report), flush=True)
