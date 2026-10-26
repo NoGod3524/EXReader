@@ -348,6 +348,15 @@ the independent verifier checked the actual receive evidence separately.
 This is one-way evidence on that independent source, not acceptance of the
 composition source, reverse exchange, organization, physical devices or F02-F05.
 
+[40391241316/1](https://github.com/NoGod3524/EXReader/actions/runs/40391241316)
+independently authenticated the same original run and used an installed public SDK
+inspector built from its exact source to read the GTK receiver's four SDK originals.
+TXT, EPUB, PDF and CBZ were byte-for-byte equal to the Android originals. The
+verification artifact `12683890627` is 592 bytes, SHA-256
+`f22802647b2382ca2bc02533da185f82b9a26ce8ffb6bf88c434550e0a0d9a39` and
+expires 2027-01-24T19:56:43Z. This strengthens original-byte evidence only;
+the independent run's one-way scope and remaining integration gaps are unchanged.
+
 ## Shared organization projection input
 
 Source `a67fe8c6c094c4bb59ffc94f4a84c90261d5e722` adds bounded,
@@ -377,3 +386,8 @@ The composition workflow's `verify_organization_desktop` input runs the same
 installed product/revisions consumer on Windows and macOS in legacy and raw
 configurations, retaining the original legacy projection regression. This is a
 module compatibility check; actual host and cross-device behavior remain separate.
+
+In [40391312081/1](https://github.com/NoGod3524/EXReader/actions/runs/40391312081),
+source `1db1599c72349431e6817a3b5a6b4d310f8a5976`, both Windows configurations
+completed successfully, including the original legacy projection regression.
+The two macOS jobs remain queued; the overall run is not complete.
