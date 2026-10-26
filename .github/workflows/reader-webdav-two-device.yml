@@ -2,6 +2,7 @@ name: Reader WebDAV composed-source interop
 on:
   push:
     branches: [codex/reader-webdav-two-device]
+    paths: ['.github/workflows/reader-webdav-two-device.yml', 'tests/reader_webdav_interop/**', 'tools/check_reader_webdav_interop.py', 'apps/reader/sync/**', 'apps/reader/revisions/**', 'apps/reader/store/native/**', 'extras/webdav/**']
   workflow_dispatch:
 permissions:
   contents: read

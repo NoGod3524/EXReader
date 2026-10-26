@@ -2,6 +2,7 @@ name: Android composed-source record sender and receiver
 on:
   push:
     branches: [codex/reader-webdav-two-device]
+    paths: ['.github/workflows/reader-android-composed-record.yml', 'tests/reader_android_record_interop/**', 'examples/android/**', 'apps/reader/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -227,3 +228,21 @@ jobs:
             tests/reader_android_host_import/source/build/outputs/apk/
           if-no-files-found: error
 
+
+  summary:
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original 130 plus actual sender bundle and parent-negative graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m pip install Pillow==11.1.0
+          python tests/reader_android_record_interop/check_evidence.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reader-android-record-interop-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-record-interop-summary/
+          if-no-files-found: error
