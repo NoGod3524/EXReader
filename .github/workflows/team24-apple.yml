@@ -1,7 +1,7 @@
 name: Team24 Apple three-target native feature integration
 on:
   push:
-    branches: [codex/team24-apple]
+    branches: [codex/team24-apple, codex/dsf-apple-ui-close]
     paths-ignore: ['docs/handoffs/team24-apple*']
   workflow_dispatch:
 permissions:
@@ -24,9 +24,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: New exact owner guard and Actions-only syntax
+      - name: Original owner guard rules plus one approved shared tool blob
         run: |
-          python3 tests/reader_team24_apple/guard.py
+          python3 tests/reader_team24_apple/guard_owner.py
           python3 -m compileall -q tests/reader_team24_apple tests/reader_team24_apple/build.py
           ruby -c tests/reader_team24_apple/make_project.rb
       - name: Frozen SDK and exact installed five module family
