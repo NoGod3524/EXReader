@@ -21,7 +21,7 @@ jobs:
         with: {fetch-depth: 0}
       - name: Check performance tools and preserve original frozen gates
         run: |
-          python3 -m py_compile tests/reader_perf_full_gtk/bind.py tests/reader_perf_full_gtk/summarize.py tests/reader_perf_gtk/sample.py tests/reader_perf_gtk/observe.py
+          python3 -m py_compile tests/reader_perf_full_gtk/bind.py tests/reader_perf_full_gtk/summarize.py tests/reader_perf_full_gtk/sample.py tests/reader_perf_gtk/sample.py tests/reader_perf_gtk/observe.py
           git diff --exit-code a19fef7d7cdb0be90b0e54b92910502016c33df9 HEAD -- .github/workflows/reader-perf-gtk.yml tests/reader_perf_gtk/CMakeLists.txt tests/reader_perf_gtk/summarize.py tests/reader_perf_gtk/verify.py
       - name: Native GTK accessibility and Secret Service dependencies
         run: |
@@ -122,6 +122,7 @@ jobs:
           PY
           python3 tests/reader_perf_full_gtk/bind.py --preflight
       - name: Observe the extracted full GTK package with real X11 inputs
+        timeout-minutes: 20
         run: |
           set -o pipefail
           Xvfb :99 -screen 0 1440x900x24 -nolisten tcp > build/c10-logs/perf-xvfb.log 2>&1 &
@@ -134,7 +135,7 @@ jobs:
             wm=$!
             trap "kill $wm 2>/dev/null || true" EXIT
             sleep 1
-            python3 tests/reader_perf_gtk/sample.py \
+            python3 tests/reader_perf_full_gtk/sample.py \
               --payload build/full-gtk-extracted/EXReader-Linux \
               --tarball "$PWD/build/c10-package/EXReader-Linux.tar.gz" \
               --seed build/full-gtk-probe/seed_library \
