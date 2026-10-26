@@ -37,6 +37,7 @@ with zipfile.ZipFile(archive_path) as archive:
         result = {'source_sha': summary['source_sha'], 'run_id': summary['run_id'], 'attempt': summary['attempt'],
                   'cohorts': summary['cohorts'], 'aggregates': summary['aggregates'],
                   'environment': summary['environment'], 'txt_path': summary['txt_path'],
+                  'preparation_corpus': summary['preparation']['corpus'],
                   'performance_accepted': summary['performance_accepted'], 'frame_time': summary['frame_time'],
                   'package_identity': identity}
     else:
@@ -68,6 +69,7 @@ with zipfile.ZipFile(archive_path) as archive:
     if 'windows' in name:
         compact.update({'cohorts': result['cohorts'], 'aggregates': result['aggregates'],
                         'cpu': result['environment']['cpu'], 'package_identity': result['package_identity'],
+                        'preparation_corpus': result['preparation_corpus'],
                         'performance_accepted': False, 'frame_time': result['frame_time']})
     else:
         compact.update({'metrics': {k: {n: v.get(n) for n in ('count', 'p50_ms', 'p95_ms', 'max_ms')}
