@@ -171,3 +171,7 @@ the current recipe, and every assertion of `originals-rerun-reports-existing` st
 prefers, the same check can instead be arranged on a second, empty directory that receives a copy of
 the file the program itself exported; that also leaves the assertions unchanged but changes the shape
 of the check, so it is offered only as the alternative.
+
+## Root follow-up: native common-dialog button
+The retained helper filled the exact native filename edit, then sent WM_COMMAND/IDOK with no originating button HWND. Root changed acceptance to the same real BM_CLICK path already used by the rest of this UI driver. All 16 business assertions, cancellation checks, file-byte checks, old suites, ownership checks and budgets remain unchanged. This is a driver candidate, not a verified product correction; the next cloud round determines whether the folder rerun proceeds. Prior 4/16 remains the accepted observation of the earlier failed run.
+
