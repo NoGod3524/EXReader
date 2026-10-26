@@ -63,6 +63,10 @@ jobs:
             build/c09/logs/
             build/c09/package/
             build/c09/wave3-host/windows-host.map
+            build/c09/raw-stage/lib/*.lib
+            build/c09/product-stage/lib/*.lib
+            build/c09/sdk-stage/lib/**/*.lib
+            build/c09/sdk-stage/lib/*.lib
             build/c09/compact22/
             build/c09/extracted-ui/
             build/organization-consumer/command-consumer.exe
