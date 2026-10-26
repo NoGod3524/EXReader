@@ -326,6 +326,13 @@
         "tests/reader_wave3_c11/run_ui.py",
         "tests/reader_wave3_c11/walkthrough.py"
       ]
+    },
+    {
+      "name": "android-composition-workflow-candidate",
+      "source": "7afbd7a912214fa77133b6ea13c994b20675471a",
+      "paths": [
+        ".github/workflows/android-composition-candidate.yml"
+      ]
     }
   ]
 }
