@@ -160,7 +160,7 @@ void reader_catalog_prepare_repair(reader_catalog *c) {
     const char *mode=(const char *)sqlite3_column_text(s,0);
     int is_delete=mode && !strcmp(mode,"delete");
     sqlite3_finalize(s);s=NULL;
-    if(is_delete) sqlite3_exec(c->database,"PRAGMA journal_mode=PERSIST",NULL,NULL,NULL);
+    if(is_delete) sqlite3_exec(c->database,"PRAGMA journal_mode=WAL",NULL,NULL,NULL);
   }
   sqlite3_finalize(s);
   sqlite3_busy_timeout(c->database,5000);
