@@ -243,12 +243,11 @@ def build_compact_host():
     return payload
 
 
-def gui(enabled):
-    """One full raw five-tool GUI round: the exact DSF-G01 driver source plus its
-    documented raw identity precondition, on the compact raw0.2 host."""
-    if not enabled:
-        return {"executed": False,
-                "reason": "the full raw GUI round is only requested explicitly, never by a push run"}
+def gui_prepare():
+    """Everything the one GUI round needs except the round itself: the compact
+    raw0.2 payload and the raw3 annotation fixture written by the installed
+    exporter. It runs on every attempt, so the round is never the first thing
+    that touches these paths."""
     fixtures = OUT / "gui-fixtures"
     seed = OUT / "seed"
     for path in (fixtures, seed):
@@ -259,12 +258,27 @@ def gui(enabled):
     payload = build_compact_host()
     book = fixtures / "history.txt"
     probe = OUT / "raw-host/reader-gtk-wave3-raw-backend"
-    run("gui-seed", [probe, seed / "library.sqlite", seed / "unused.sqlite",
-                     ROOT / "tests/fixtures/fonts/primary.ttf", ROOT / "tests/fixtures", fixtures,
-                     "seed", book], timeout=600)
+    done = run("gui-seed", [probe, seed / "library.sqlite", seed / "unused.sqlite",
+                            ROOT / "tests/fixtures/fonts/primary.ttf", ROOT / "tests/fixtures", fixtures,
+                            "seed", book], timeout=600)
     annotations = fixtures / "annotations.jsonl"
     if not annotations.is_file() or not annotations.stat().st_size:
         raise RuntimeError("seed produced no raw annotation file")
+    return {"payload": payload, "book": book, "annotations": annotations,
+            "annotations_sha256": sha(annotations), "book_sha256": sha(book),
+            "compact_host_sha256": sha(payload / "EXReader-Linux/bin/exreader-linux"),
+            "seed_stdout": done.stdout.strip().splitlines()[-1:]}
+
+
+def gui(enabled, prepared):
+    """One full raw five-tool GUI round: the exact DSF-G01 driver source plus its
+    documented raw identity precondition, on the compact raw0.2 host."""
+    if not enabled:
+        return {"executed": False, "prepared": prepared is not None,
+                "reason": "the full raw GUI round is only requested explicitly, never by a push run"}
+    if prepared is None:
+        return {"executed": False, "prepared": False, "reason": "the GUI preparation itself failed"}
+    payload, book, annotations = prepared["payload"], prepared["book"], prepared["annotations"]
     output = OUT / "gui"
     if output.exists():
         shutil.rmtree(output)
@@ -324,10 +338,20 @@ def main():
             and result["raw_backend"]["accepted"]
             and result.get("legacy_install", {}).get("accepted", True)
             and (options.skip_legacy or result.get("legacy_host", {}).get("configured_and_linked", False)))
-    # One full GUI round, only on an explicit request and only after every
-    # non-GUI scope of this same attempt already passed.
-    result["gui"] = gui(options.gui and base)
-    accepted = base and (not options.gui or result["gui"].get("accepted", False))
+    # The GUI fixture and the compact payload are prepared on every attempt; the
+    # one full round runs only on an explicit request, after every non-GUI scope
+    # of this same attempt already passed.
+    prepared = None
+    try:
+        prepared = gui_prepare()
+        result["gui_preparation"] = {key: prepared[key] for key in
+                                     ("book_sha256", "annotations_sha256", "compact_host_sha256", "seed_stdout")}
+    except Exception as error:
+        print("GUI PREPARATION FAILED: " + str(error)[-2000:], flush=True)
+        result["gui_preparation"] = {"error": str(error)[-2000:]}
+    result["gui"] = gui(options.gui and base and prepared is not None, prepared)
+    accepted = (base and prepared is not None
+                and (not options.gui or result["gui"].get("accepted", False)))
     result["accepted"] = bool(accepted)
     (OUT / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"accepted": result["accepted"],
