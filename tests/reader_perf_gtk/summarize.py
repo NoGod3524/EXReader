@@ -19,8 +19,6 @@ from pathlib import Path
 SCREEN = '1440x900x24'
 WINDOW = (1040, 820)
 MIN_LAUNCHES = 30
-PACKAGE_FILES = ('tests/reader_perf_gtk/', '.github/workflows/reader-perf-gtk.yml',
-                 'docs/READER-PERF-GTK.md', 'docs/validation/reader-perf-gtk.json')
 LIMITATIONS = [
     'Measurements cover the GTK host built in this run with the options recorded in its CMake cache.',
     'Latency starts just before xdotool starts and ends at the host observation write; the '
