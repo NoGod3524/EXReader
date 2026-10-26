@@ -37,9 +37,12 @@ static void product_shelf_dispatch(void) {
   host_job *job=job_new(JOB_PRODUCT_SHELF);
   if(!job) { g.shelf_need_refresh=0;set_status(L"无法建立书架查询任务。");return; }
   job->product_shelf_generation=g.shelf_generation;job->product_shelf_direction=g.shelf_requested_direction;
+  snprintf(job->product_group_id,sizeof(job->product_group_id),"%s",g.shelf_group_id);
+  job->product_group_kind=g.shelf_group_kind;
   job->product_shelf_query=host_strdup(g.shelf_query ? g.shelf_query:"");
   if(job->product_shelf_direction && g.shelf_cursors && g.shelf_count) {
     size_t at=job->product_shelf_direction<0 ? 0:g.shelf_count-1;
+    job->product_cursor_ordinal=g.shelf_cursors[at].ordinal;
     job->product_cursor_title=host_strdup(g.shelf_cursors[at].sort_title);
     job->product_cursor_key=host_strdup(g.shelf_cursors[at].key);
     if(!job->product_cursor_title || !job->product_cursor_key) { job_release(job);g.shelf_need_refresh=0;return; }

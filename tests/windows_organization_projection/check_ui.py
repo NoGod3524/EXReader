@@ -280,6 +280,41 @@ try:
         sql(b,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('Recovery tag',))==[(1,)] and
         sql(b,'SELECT count(*) FROM reader_series WHERE name=? AND deleted=0',('Local series 系列',))==[(1,)])
     b.close_account(d)
+    phase='native-group-browsing'
+    a.wait(lambda:ui.send(a.control('books'),0x18B)>=2,timeout=120)
+    def organizer():
+        a.wait_idle();ui.U.SetForegroundWindow(a.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,ui.A.VK_SHIFT));w=a.io_dialog()
+        a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(w,ui.CANCEL)),timeout=120);return w
+    def tag_selection(w,label):
+        ui.send(ui.U.GetDlgItem(w,ui.ACTION),0x14E,4)
+        ui.send(w,0x111,(1<<16)|ui.ACTION,ui.U.GetDlgItem(w,ui.ACTION))
+        a.wait(lambda:label in names(w,ui.GROUPS),timeout=60)
+        group=ui.U.GetDlgItem(w,ui.GROUPS);ui.send(group,0x186,names(w,ui.GROUPS).index(label))
+    dialog=organizer();tag_selection(dialog,'Local tag 标签')
+    items=ui.A.auto.ControlFromHandle(ui.U.GetDlgItem(dialog,ui.ROWS)).GetChildren()
+    matches=[item for item in items if 'Book' in item.Name];assert len(matches)==1
+    matches[0].GetSelectionItemPattern().Select();ui.send(ui.U.GetDlgItem(dialog,ui.GO),ui.ACCOUNT.BM_CLICK)
+    tag_id=sql(a,'SELECT tag_id FROM reader_tags WHERE name=?',('Local tag 标签',))[0][0]
+    a.wait(lambda:sql(a,'SELECT count(*) FROM reader_book_tags WHERE tag_id=? AND book_key=?',(tag_id,bookkey))==[(1,)],timeout=120)
+    a.wait(lambda:ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.ACK)),timeout=120)
+    ui.send(ui.U.GetDlgItem(dialog,ui.ACK),ui.ACCOUNT.BM_CLICK)
+    a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)),timeout=120)
+    ui.send(ui.U.GetDlgItem(dialog,260),ui.ACCOUNT.BM_CLICK)
+    a.wait(lambda:not ui.U.IsWindow(dialog),timeout=20)
+    a.wait(lambda:ui.send(a.control('books'),0x18B)==1 and a.has_row('Book'),timeout=60)
+    record('native-tag-browse-shows-only-members',not a.has_row('ZZ large book') and 'Local tag 标签' in ui.text(ui.U.GetDlgItem(a.window,118)))
+    ui.ACCOUNT.set_text(ui.U.GetDlgItem(a.window,126),'ZZ')
+    a.wait(lambda:ui.send(a.control('books'),0x18B)==0,timeout=60)
+    ui.ACCOUNT.set_text(ui.U.GetDlgItem(a.window,126),'')
+    a.wait(lambda:ui.send(a.control('books'),0x18B)==1 and a.has_row('Book'),timeout=60)
+    record('native-group-search-stays-within-group',True)
+    dialog=organizer();tag_selection(dialog,'Recovery tag')
+    ui.send(ui.U.GetDlgItem(dialog,260),ui.ACCOUNT.BM_CLICK);a.wait(lambda:not ui.U.IsWindow(dialog),timeout=20)
+    a.wait(lambda:ui.send(a.control('books'),0x18B)==0,timeout=60);record('native-empty-group-shows-no-books')
+    dialog=organizer();ui.send(ui.U.GetDlgItem(dialog,261),ui.ACCOUNT.BM_CLICK)
+    a.wait(lambda:not ui.U.IsWindow(dialog),timeout=20)
+    a.wait(lambda:ui.send(a.control('books'),0x18B)>=2 and a.has_row('Book'),timeout=60)
+    record('native-return-to-all-books',ui.text(ui.U.GetDlgItem(a.window,118))=='书架')
     report['accepted']=True
 except Exception as error:
     problems.append(phase+': '+type(error).__name__+': '+str(error));traceback.print_exc()
