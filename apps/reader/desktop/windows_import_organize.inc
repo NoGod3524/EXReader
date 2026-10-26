@@ -149,7 +149,7 @@ static int winio_group_visit(void *context,const reader_catalog_group_row *row) 
   winio_job *v=context;if(v->group_count>=200) return 1;
   winio_group *out=&v->groups[v->group_count++];
   snprintf(out->id,sizeof(out->id),"%s",row->id);snprintf(out->parent,sizeof(out->parent),"%s",row->parent_id ? row->parent_id:"");out->ordinal=row->ordinal;
-  wchar_t *name=host_wide(row->name,strlen(row->name));copy_wstring(out->name,512,name ? name:L"");free(name);return 0;
+  wchar_t *name=host_wide(row->name,strlen(row->name));copy_wstring(out->name,513,name ? name:L"");free(name);return 0;
 }
 static exr_status winio_groups(host_job *job) {
   winio_job *v=job->io;reader_catalog *catalog=NULL;reader_catalog_error error={0};

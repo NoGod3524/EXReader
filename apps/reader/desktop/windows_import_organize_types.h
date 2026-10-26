@@ -12,7 +12,7 @@ enum { WINIO_CLOUD=1, WINIO_BULK };
 enum { WINIO_LIST=1, WINIO_DOWNLOAD, WINIO_IMPORT, WINIO_CLEAN,
   WINIO_GROUPS, WINIO_RUN, WINIO_RESUME, WINIO_INSPECT, WINIO_ACK,
   WINIO_CREATE_GROUP, WINIO_RECOVER_EDIT, WINIO_ABANDON_EDIT };
-typedef struct { char id[33],parent[33];uint64_t ordinal;wchar_t name[512]; } winio_group;
+typedef struct { char id[33],parent[33];uint64_t ordinal;wchar_t name[513]; } winio_group;
 typedef struct {
   int operation,mode,action,group_kind,more;
   unsigned long generation;

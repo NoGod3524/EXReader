@@ -265,6 +265,8 @@ try:
     a.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog,ui.CANCEL)),timeout=120)
     create('Local shelf 子','reader_shelves')
     select_action(4);create('Local tag 标签','reader_tags')
+    create('🍀'*256,'reader_tags')
+    record('native-256-scalar-group-name-preserved',sql(a,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('🍀'*256,))==[(1,)] and '🍀'*256 in names(dialog,ui.GROUPS))
     select_action(6);create('Local series 系列','reader_series')
     parent=sql(a,'SELECT shelf_id FROM reader_shelves WHERE name=?',('Local shelf 父',))[0][0]
     record('native-create-shelf-tag-series-and-child',sql(a,'SELECT parent_id FROM reader_shelves WHERE name=?',('Local shelf 子',))==[(parent,)])
@@ -274,6 +276,7 @@ try:
     record('native-created-groups-sync-to-second-host','同步完成' in message and
         sql(b,'SELECT parent_id FROM reader_shelves WHERE name=?',('Local shelf 子',))==[(parent,)] and
         sql(b,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('Local tag 标签',))==[(1,)] and
+        sql(b,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('🍀'*256,))==[(1,)] and
         sql(b,'SELECT count(*) FROM reader_tags WHERE name=? AND deleted=0',('Recovery tag',))==[(1,)] and
         sql(b,'SELECT count(*) FROM reader_series WHERE name=? AND deleted=0',('Local series 系列',))==[(1,)])
     b.close_account(d)
