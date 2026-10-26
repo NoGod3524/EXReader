@@ -324,6 +324,17 @@ Both expire 2027-01-24T19:43:49Z. This proves ordinary-flow behavior for the
 tested source and service; real cloud-provider behavior, D13 race safety and
 future final-source acceptance remain separate.
 
+After the shared organization module was admitted, the same ordinary-flow
+workflow passed again in [40392307765/1](https://github.com/NoGod3524/EXReader/actions/runs/40392307765)
+on composition source `684610f2e6ef5369c48870c59b37926d490c614c`. Both
+the Windows job and same-run artifact verifier succeeded, with the 20 named
+checks and original readback passing. Artifact `12684797885` is 51,775,398
+bytes, SHA-256 `0178a9dea2aca2da553110adb1f9dbcb6d9e77dbfb823dd16b4362c62f79947f`;
+summary artifact `12685546075` is 3,478 bytes, SHA-256
+`498403293d19c3ef47346762c940bfe6bee18a4204d36bb9e4b3df2b560548f3`.
+Both expire 2027-01-24T20:03:59Z. Real cloud-provider behavior, path-race
+safety and final product acceptance are not inferred from this local test service.
+
 ## Composition performance dispatch
 
 The composition workflow exposes `observe_performance` to call the existing
