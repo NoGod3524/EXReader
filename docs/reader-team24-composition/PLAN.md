@@ -768,3 +768,28 @@ failed because the old reading fixture attempted a stale bootstrap head.
 The corrected fixture uses the actual current head and preserves the stale-head
 protection. These are independent-host results, not proof for the separate
 Android organization combination, a physical device or six targets.
+
+## Composed Windows group creation regression
+
+Composition source `ebf3ebf1890494dad06176e64a41aee6aa0e8b94` completed
+[40408344617/1](https://github.com/NoGod3524/EXReader/actions/runs/40408344617).
+Windows host job `121871833551` and same-run verifier `121877593117` succeeded,
+including retained host/cloud checks and actual group creation, recovery,
+Unicode boundary and second-profile synchronization. Original artifact
+`12692951277` is 55,930,595 bytes, SHA-256
+`1a8ab26934f1875853511691caeadf67c5553b9de8fce41316d16f06410594e6`;
+summary `12692911501` is 4,585 bytes, SHA-256
+`273862280809e311b05ed32a896af65167f347c3773ddb302d9a94eaf388521c`.
+Both expire 2027-01-24T21:55:14Z. Subsequent composition commits through this
+record only change documentation. This does not grant group browsing, physical
+or cross-platform devices, real providers, or six-target acceptance.
+
+The independent group-browser run [40407251603/1](https://github.com/NoGod3524/EXReader/actions/runs/40407251603)
+failed after its tag filter and group search checks because its test reporter
+was called without a required argument. Independent run
+[40407588078/1](https://github.com/NoGod3524/EXReader/actions/runs/40407588078)
+retains the same reporter failure and a separate timeout waiting for the first
+50 rows of the seeded 2,202-book test profile. The former is fixed on the
+candidate branch; the latter remains under diagnosis, with additional UI,
+catalog and log observations requested in the next Actions run. Neither failed
+run grants the group browser or its 170-member paging checks.
