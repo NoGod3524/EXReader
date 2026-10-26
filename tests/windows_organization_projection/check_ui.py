@@ -140,6 +140,18 @@ try:
     restored=revision(87,shard=0x61,kind='book',key=bookkey,payload=original['payload'],parents=[deleted['id']],operation='restore');add_remote(restored)
     d,message,detail=sync(b);record('book-explicit-restore','同步完成' in message and sql(b,'SELECT deleted FROM reader_books WHERE book_key=?',(bookkey,))==[(0,)] and sql(b,'SELECT count(*) FROM reader_local_books WHERE book_key=?',(bookkey,))==[(1,)])
     b.close_account(d);b.wait(lambda:b.has_row('Book'),timeout=60);record('restored-book-visible',True)
+    phase='group-tombstones';group_deletes=[]
+    for n,value in enumerate((values[1],values[2],values[3]),100):
+        removed=revision(n,shard=0x61,kind=value['entity_kind'],key=value['entity_key'],parents=[value['id']],operation='delete')
+        add_remote(removed);group_deletes.append(removed)
+    d,message,detail=sync(b)
+    record('group-tombstones-applied','接收尚未完成' in message and all(sql(b,'SELECT deleted FROM '+table+' WHERE '+column+'=?',(ident,))==[(1,)] for table,column,ident in [('reader_shelves','shelf_id',child),('reader_tags','tag_id',tag),('reader_series','series_id',series)]))
+    b.close_account(d)
+    for n,(value,removed) in enumerate(zip((values[1],values[2],values[3]),group_deletes),110):
+        add_remote(revision(n,shard=0x61,kind=value['entity_kind'],key=value['entity_key'],payload=value['payload'],parents=[removed['id']],operation='restore'))
+    d,message,detail=sync(b)
+    record('group-explicit-restores','同步完成' in message and all(sql(b,'SELECT deleted FROM '+table+' WHERE '+column+'=?',(ident,))==[(0,)] for table,column,ident in [('reader_shelves','shelf_id',child),('reader_tags','tag_id',tag),('reader_series','series_id',series)]))
+    b.close_account(d)
     phase='pending-barrier';pending=Path(str(b.db)+'.product.sqlite.bulk.pending');pending.write_bytes(b'preserve unfinished request')
     d,message,detail=sync(b);record('pending-local-intent-blocks-receive','请先恢复' in message and pending.read_bytes()==b'preserve unfinished request')
     ui.M.screenshot(d,out/'pending.bmp');pending.unlink();b.press(d,ui.ACCOUNT.RETRY)
