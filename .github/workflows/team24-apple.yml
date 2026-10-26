@@ -1,0 +1,90 @@
+name: Team24 Apple three-target native feature integration
+on:
+  push:
+    branches: [codex/team24-apple]
+    paths-ignore: ['docs/handoffs/team24-apple*']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  sdk:
+    name: Team24 Apple installed ${{ matrix.target }}
+    runs-on: macos-15
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: New exact owner guard and Actions-only syntax
+        run: |
+          python3 tests/reader_team24_apple/guard.py
+          python3 -m compileall -q tests/reader_team24_apple tests/reader_team24_apple/build.py
+          ruby -c tests/reader_team24_apple/make_project.rb
+      - name: Frozen SDK and exact installed five module family
+        run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: team24-apple-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/raw3-ios-sdk/${{ matrix.target }}/sdk/
+            build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
+            build/raw3-ios-sdk/${{ matrix.target }}/*.json
+          retention-days: 30
+          if-no-files-found: error
+  native:
+    name: Team24 Apple native ${{ matrix.platform }}
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: team24-apple-sdk-*
+          path: sdk-input
+      - name: Original project generator dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Actual native features and unchanged old reading navigation search theme suites
+        run: python3 tests/reader_team24_apple/run_ui.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: team24-apple-native-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/team24-apple/${{ matrix.platform }}/evidence/
+          retention-days: 30
+          if-no-files-found: error
+  authenticate:
+    name: Team24 Apple original ZIP authentication
+    needs: [sdk, native]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exact run attempt source jobs ZIP and actual programs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_team24_apple/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: team24-apple-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/team24-apple-summary/summary.json
+          retention-days: 30
+          if-no-files-found: error

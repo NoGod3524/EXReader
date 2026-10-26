@@ -175,6 +175,16 @@ final class HostAccountSession: ObservableObject {
     @Published private(set) var completedShards: UInt32 = 0
     @Published private(set) var message = ""
     private var handle: OpaquePointer?
+#if EXR_APPLE_WAVE3
+    private let wave3HandleLock = NSRecursiveLock()
+
+    func wave3SyncSnapshot(catalog: HostCatalog) throws -> HostWave3SyncSnapshot? {
+        wave3HandleLock.lock()
+        defer { wave3HandleLock.unlock() }
+        guard let handle else { return nil }
+        return try HostWave3Worker.sync(session: handle, catalog: catalog)
+    }
+#endif
     private var timer: Timer?
     private var closeRequested = false
     private var completion: (() -> Void)?
@@ -204,6 +214,10 @@ final class HostAccountSession: ObservableObject {
     }
 
     func start(profile: HostAccountProfile, directory: URL, authorization: Data, completed: @escaping () -> Void) throws {
+#if EXR_APPLE_WAVE3
+        wave3HandleLock.lock()
+        defer { wave3HandleLock.unlock() }
+#endif
         guard !running, !preparing, !closeRequested else { throw HostError.invalidInput("同步会话正在准备、运行或关闭") }
         if handle == nil {
             let privateDirectory = directory.appendingPathComponent("sync", isDirectory: true)
@@ -248,6 +262,10 @@ final class HostAccountSession: ObservableObject {
     }
 
     private func observe() {
+#if EXR_APPLE_WAVE3
+        guard wave3HandleLock.try() else { return }
+        defer { wave3HandleLock.unlock() }
+#endif
         guard let handle else { return }
         var snapshot = reader_session_snapshot()
         guard reader_session_observe(handle, &snapshot) == READER_SESSION_OK else { return }
