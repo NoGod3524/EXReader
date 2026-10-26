@@ -6,6 +6,8 @@ assert os.environ.get('GITHUB_ACTIONS') == 'true'
 exe, folder = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
 folder.mkdir(parents=True, exist_ok=True)
 db = folder / 'product.sqlite'
+bad = json.loads(subprocess.run([str(exe),str(db),'page','book','-','1'],check=True,capture_output=True,text=True).stdout)
+assert bad['status']==bad['error']==1 and not bad['rows']
 def call(*args):
     p = subprocess.run([str(exe),str(db),*map(str,args)],check=True,capture_output=True,text=True)
     value=json.loads(p.stdout)
@@ -55,6 +57,10 @@ missing=rev(13,'tag','4'*32,{'name':'Missing'},['e'*32]);receive(missing)
 a=rev(14,'tag','5'*32,{'name':'A'});b=rev(15,'tag','5'*32,{'name':'B'});receive(a);receive(b)
 rows=scan('tag',1);assert [(r['selection'],r['result']) for r in rows if r['key'] in ('4'*32,'5'*32)]==[(1,1),(2,1)]
 assert sql("select count(*) from reader_tags where tag_id in ('"+'4'*32+"','"+'5'*32+"')")==[(0,)]
+ancestor=rev(16,'tag','4'*32,{'name':'Ancestor'});ancestor['id']='e'*32;receive(ancestor)
+resolved=rev(17,'tag','5'*32,{'name':'Resolved'},[a['id'],b['id']]);receive(resolved)
+assert all(r['result']==0 for r in scan('tag',1))
+assert sql("select name from reader_tags where tag_id in ('"+'4'*32+"','"+'5'*32+"') order by name")==[('Missing',),('Resolved',)]
 assert sql('select count(*) from reader_outbox')==[(0,)]
 (folder/'evidence.json').write_text(json.dumps({'head':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checks':['bounded_pages','dependency_rescan','hierarchy','memberships_without_local_original','tombstones_restore','replay','missing_ancestor','concurrent_heads','no_outbox']}))
 
