@@ -702,3 +702,15 @@ summary `12690807460` is 4,508 bytes, SHA-256
 Both expire 2027-01-24T21:27:13Z. Commits after this source through this record
 change documentation only. This is not Windows-to-GTK, physical-device, real
 provider or six-platform same-source acceptance.
+
+## Windows organization UI: remaining group browsing gap
+
+The composed Windows organizer can select existing groups and change membership;
+its shelf query in `apps/reader/desktop/windows_catalog.inc` still calls
+`reader_catalog_local_page` for the whole local shelf. It does not pass a selected
+shelf, tag or series to `reader_catalog_group_books_page`. The organizer's book
+snapshot is also limited to the currently cached shelf window (at most 150),
+not a complete group browser. A separate candidate adds group creation and
+recovery, but its cloud run is still pending and it does not implement browsing
+members by group. Windows organization remains partial until a native group
+browser, bounded paging and real host validation are delivered.
