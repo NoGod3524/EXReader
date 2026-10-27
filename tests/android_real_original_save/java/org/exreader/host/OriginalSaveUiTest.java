@@ -131,7 +131,7 @@ public final class OriginalSaveUiTest extends Instrumentation {
         try(java.io.FileInputStream in=new android.os.ParcelFileDescriptor.AutoCloseInputStream(
             getUiAutomation().executeShellCommand("input touchscreen tap "+r.centerX()+" "+r.centerY()));
             java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream()){
-            byte[] buffer=new byte[4096];for(int n;(n=in.read(buffer))>0;)out.write(buffer,0,n);
+            byte[] buffer=new byte[4096];for(int count;(count=in.read(buffer))>0;)out.write(buffer,0,count);
             String reply=out.toString("UTF-8");
             need(!reply.contains("Usage:")&&!reply.contains("Error:"),"system touchscreen input");
         }catch(Exception error){throw new RuntimeException(error);}
