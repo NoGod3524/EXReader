@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.24)
-project(EXReaderProductCatalog VERSION 0.1.0 LANGUAGES C)
+project(EXReaderProductCatalog VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 if(MSVC)
@@ -31,6 +31,18 @@ string(REPLACE "\"" "\\\"" catalog_sql "${catalog_sql}")
 string(REPLACE "\n" "\\n\"\n\"" catalog_sql "${catalog_sql}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/catalog_migration.h"
   "/* Generated from the unchanged product migration. */\nstatic const char catalog_migration[] = \"${catalog_sql}\";\n")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../002_originals.sql" originals_sql)
+string(REPLACE "\\" "\\\\" originals_sql "${originals_sql}")
+string(REPLACE "\"" "\\\"" originals_sql "${originals_sql}")
+string(REPLACE "\n" "\\n\"\n\"" originals_sql "${originals_sql}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/originals_migration.h"
+  "static const char originals_migration[] = \"${originals_sql}\";\n")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../003_original_staging.sql" staging_sql)
+string(REPLACE "\\" "\\\\" staging_sql "${staging_sql}")
+string(REPLACE "\"" "\\\"" staging_sql "${staging_sql}")
+string(REPLACE "\n" "\\n\"\n\"" staging_sql "${staging_sql}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/staging_migration.h"
+  "static const char staging_migration[] = \"${staging_sql}\";\n")
 add_library(reader_catalog STATIC catalog.c)
 target_include_directories(reader_catalog PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:include/exreader-product>
@@ -45,7 +57,7 @@ include(CMakePackageConfigHelpers)
 install(TARGETS reader_catalog reader_catalog_sqlite EXPORT EXReaderProductCatalogTargets ARCHIVE DESTINATION lib)
 install(FILES catalog.h "${reader_catalog_sqlite_source_SOURCE_DIR}/sqlite3.h"
   DESTINATION include/exreader-product)
-install(FILES ../001_catalog.sql ../../../../licenses/sqlite-public-domain.txt
+install(FILES ../001_catalog.sql ../002_originals.sql ../003_original_staging.sql ../../../../licenses/sqlite-public-domain.txt
   DESTINATION share/exreader-product)
 install(EXPORT EXReaderProductCatalogTargets NAMESPACE EXReaderProductCatalog::
   DESTINATION lib/cmake/EXReaderProductCatalog)
@@ -59,8 +71,28 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderProductCatalogConfig.cmake"
   DESTINATION lib/cmake/EXReaderProductCatalog)
 if(PROJECT_IS_TOP_LEVEL)
   enable_testing()
+  add_executable(reader-originals-check ../../../../tests/reader_catalog/originals_check.c)
+  target_link_libraries(reader-originals-check PRIVATE reader_catalog reader_catalog_sqlite Threads::Threads)
+  add_test(NAME product-originals COMMAND reader-originals-check "${CMAKE_CURRENT_BINARY_DIR}/originals-check.db")
   add_executable(reader-catalog-check ../../../../tests/reader_catalog/native_catalog_check.c)
   target_link_libraries(reader-catalog-check PRIVATE reader_catalog reader_catalog_sqlite Threads::Threads)
   add_test(NAME native-product-catalog COMMAND reader-catalog-check
     "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/../001_catalog.sql")
+endif()
+
+# Product-owned originals are independent of the frozen SDK ABI.
+add_library(reader_original_import STATIC ../../original-import/original_import.cpp)
+target_compile_features(reader_original_import PRIVATE cxx_std_17)
+target_include_directories(reader_original_import PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../original-import> $<INSTALL_INTERFACE:include/exreader-product>)
+target_link_libraries(reader_original_import PUBLIC reader_catalog)
+if(MSVC)
+  target_compile_options(reader_original_import PRIVATE /W4 /WX)
+else()
+  target_compile_options(reader_original_import PRIVATE -Wall -Wextra -Werror)
+endif()
+install(TARGETS reader_original_import EXPORT EXReaderProductCatalogTargets ARCHIVE DESTINATION lib)
+install(FILES ../../original-import/original_import.h DESTINATION include/exreader-product)
+if(PROJECT_IS_TOP_LEVEL)
+  add_executable(reader-original-import-check ../../../../tests/reader_catalog/original_import_check.cpp)
+  target_link_libraries(reader-original-import-check PRIVATE reader_original_import)
 endif()

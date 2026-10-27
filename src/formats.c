@@ -1385,3 +1385,218 @@ done:
   }
   return EXR_OK;
 }
+
+/* Bounded TXT projection primitive. This deliberately does not construct a
+   document or reset a pager at arbitrary source boundaries. */
+typedef struct {
+  const exr_source *source;
+  uint64_t next;
+  unsigned char bytes[4096];
+  size_t pos, size;
+} txt_reader;
+static exr_status txt_byte(txt_reader *r, unsigned char *out, int *present, exr_error *e) {
+  size_t want, got;
+  *present=0;
+  if(r->pos==r->size) {
+    if(r->next==r->source->size) return EXR_OK;
+    if(exr_control_cancel(&r->source->control,e)!=EXR_OK) return EXR_CANCELLED;
+    want=(size_t)((r->source->size-r->next)<sizeof(r->bytes) ? r->source->size-r->next : sizeof(r->bytes));
+    got=r->source->read_at(r->source->context,r->next,r->bytes,want);
+    if(!got || got>want) return exr_fail(e,EXR_IO,"Invalid TXT source read");
+    r->next+=got;r->pos=0;r->size=got;
+  }
+  *out=r->bytes[r->pos++];*present=1;return EXR_OK;
+}
+static exr_status txt_scalar(txt_reader *r, int endian, uint32_t *cp, int *present, exr_error *e) {
+  unsigned char b[4];size_t n=1,i=0;int has;exr_status s;
+  s=txt_byte(r,&b[0],present,e);if(s!=EXR_OK || !*present) return s;
+  if(endian) {
+    s=txt_byte(r,&b[1],&has,e);if(s!=EXR_OK) return s;
+    if(!has) return exr_fail(e,EXR_ENCODING,"Truncated UTF-16");
+    *cp=endian==1 ? (uint32_t)(b[0]|(b[1]<<8)) : (uint32_t)((b[0]<<8)|b[1]);
+    if(*cp>=0xd800 && *cp<=0xdbff) {
+      uint32_t lo;
+      s=txt_byte(r,&b[2],&has,e);if(s!=EXR_OK) return s;
+      if(!has) return exr_fail(e,EXR_ENCODING,"Unpaired UTF-16 surrogate");
+      s=txt_byte(r,&b[3],&has,e);if(s!=EXR_OK) return s;
+      if(!has) return exr_fail(e,EXR_ENCODING,"Unpaired UTF-16 surrogate");
+      lo=endian==1 ? (uint32_t)(b[2]|(b[3]<<8)) : (uint32_t)((b[2]<<8)|b[3]);
+      if(lo<0xdc00 || lo>0xdfff) return exr_fail(e,EXR_ENCODING,"Unpaired UTF-16 surrogate");
+      *cp=0x10000+((*cp-0xd800)<<10)+(lo-0xdc00);
+    } else if(*cp>=0xdc00 && *cp<=0xdfff) return exr_fail(e,EXR_ENCODING,"Unpaired UTF-16 surrogate");
+  } else {
+    if(b[0]>=0xc0 && b[0]<0xe0) n=2;
+    else if(b[0]>=0xe0 && b[0]<0xf0) n=3;
+    else if(b[0]>=0xf0 && b[0]<0xf8) n=4;
+    for(i=1;i<n;i++) {
+      s=txt_byte(r,&b[i],&has,e);if(s!=EXR_OK) return s;
+      if(!has) return exr_fail(e,EXR_ENCODING,"Truncated UTF-8");
+    }
+    i=0;if(!exr_next((const char *)b,n,&i,cp) || i!=n) return exr_fail(e,EXR_ENCODING,"Invalid UTF-8");
+  }
+  if(!*cp) return exr_fail(e,EXR_ENCODING,"NUL is not text");
+  return EXR_OK;
+}
+struct exr_txt_cursor {
+  exr_source source;
+  txt_reader reader;
+  exr_buffer line;
+  uint64_t extent;
+  int endian, cr, finished, failed;
+};
+exr_status exr_txt_cursor_create(const exr_source *source,exr_txt_cursor **out,exr_error *e) {
+  exr_txt_cursor *c;unsigned char prefix[3];size_t count=0;int has;exr_status s;
+  if(out) *out=NULL;
+  if(!out || !source || !source->read_at) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT cursor arguments");
+  c=calloc(1,sizeof(*c));if(!c) return exr_fail(e,EXR_MEMORY,"TXT cursor allocation failed");
+  c->source=*source;c->reader.source=&c->source;
+  while(count<3 && count<source->size) {
+    s=txt_byte(&c->reader,&prefix[count],&has,e);if(s!=EXR_OK) { free(c);return s; } count++;
+  }
+  c->reader.next=0;c->reader.pos=c->reader.size=0;
+  if(count>=2 && prefix[0]==0xff && prefix[1]==0xfe) { c->endian=1;c->reader.next=2; }
+  else if(count>=2 && prefix[0]==0xfe && prefix[1]==0xff) { c->endian=2;c->reader.next=2; }
+  else if(count>=3 && prefix[0]==0xef && prefix[1]==0xbb && prefix[2]==0xbf) c->reader.next=3;
+  *out=c;return EXR_OK;
+}
+exr_status exr_txt_cursor_next(exr_txt_cursor *c,uint64_t *offset,const char **text,size_t *size,exr_error *e) {
+  uint32_t cp;int has;exr_status s;size_t start,end;
+  if(offset) *offset=0;if(text) *text=NULL;if(size) *size=0;
+  if(!c || !offset || !text || !size || c->failed) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT cursor");
+  if(c->finished) return EXR_OK;
+  c->line.size=0;if(c->line.data) c->line.data[0]=0;
+  for(;;) {
+    s=txt_scalar(&c->reader,c->endian,&cp,&has,e);
+    if(s!=EXR_OK) goto fail;
+    if(!has) { c->finished=1;s=exr_control_cancel(&c->source.control,e);if(s!=EXR_OK) goto fail; }
+    if(has && cp=='\n' && c->cr) { c->cr=0;continue; }
+    if(has) c->cr=cp=='\r';
+    if(!has || cp=='\r' || cp=='\n') {
+      start=0;end=c->line.size;
+      while(start<end && (c->line.data[start]==' ' || c->line.data[start]=='\t')) start++;
+      while(end>start && (c->line.data[end-1]==' ' || c->line.data[end-1]=='\t')) end--;
+      if(end>start) {
+        uint64_t at=c->extent ? c->extent+1 : 0;
+        if(at<c->extent || end-start>UINT64_MAX-at) { s=exr_fail(e,EXR_LIMIT,"TXT extent overflow");goto fail; }
+        *offset=at;*text=c->line.data+start;*size=end-start;c->extent=at+*size;return EXR_OK;
+      }
+      c->line.size=0;if(c->line.data) c->line.data[0]=0;
+      if(!has) return EXR_OK;
+    } else {
+      size_t n=cp<0x80 ? 1u : cp<0x800 ? 2u : cp<0x10000 ? 3u : 4u;
+      if(c->line.size>65536-n) { s=exr_fail(e,EXR_LIMIT,"TXT paragraph exceeds scan budget");goto fail; }
+      if(!exr_codepoint(&c->line,cp)) { s=exr_fail(e,EXR_MEMORY,"TXT paragraph allocation failed");goto fail; }
+    }
+  }
+fail: c->failed=1;return s;
+}
+exr_status exr_txt_cursor_checkpoint(const exr_txt_cursor *c,exr_txt_checkpoint *point,exr_error *e) {
+  if(!c || !point || c->failed) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT checkpoint");
+  point->source_offset=c->reader.next-(c->reader.size-c->reader.pos);
+  point->projection_offset=c->extent;point->encoding=(unsigned)c->endian;point->pending_cr=(unsigned)c->cr;
+  return EXR_OK;
+}
+exr_status exr_txt_cursor_restore(exr_txt_cursor *c,const exr_txt_checkpoint *point,exr_error *e) {
+  if(!c || !point || point->source_offset>c->source.size || point->encoding!=(unsigned)c->endian || point->pending_cr>1)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid TXT checkpoint");
+  c->reader.next=point->source_offset;c->reader.pos=c->reader.size=0;
+  c->extent=point->projection_offset;c->cr=(int)point->pending_cr;c->finished=c->failed=0;
+  c->line.size=0;return EXR_OK;
+}
+void exr_txt_cursor_free(exr_txt_cursor *c) { if(c) { free(c->line.data);free(c); } }
+exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragraph_fn emit,void *context,
+                               uint64_t *extent,exr_error *e) {
+  exr_txt_cursor *c=NULL;uint64_t offset;const char *text;size_t size;exr_status s;
+  if(extent) *extent=0;
+  if(!source || !emit || !extent) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT scan arguments");
+  s=exr_txt_cursor_create(source,&c,e);if(s!=EXR_OK) return s;
+  while((s=exr_txt_cursor_next(c,&offset,&text,&size,e))==EXR_OK && text) {
+    s=emit(context,offset,text,size,e);if(s!=EXR_OK) break;
+  }
+  if(s==EXR_OK) *extent=c->extent;
+  exr_txt_cursor_free(c);return s;
+}
+
+typedef struct {
+  const char *query;size_t length, matched;const uint32_t *prefix;
+  uint64_t from,start,end;int found;
+} txt_search;
+static void txt_match_byte(txt_search *search,unsigned char byte,uint64_t offset) {
+  if(search->found || offset<search->from) return;
+  while(search->matched && byte!=(unsigned char)search->query[search->matched])
+    search->matched=search->prefix[search->matched-1];
+  if(byte==(unsigned char)search->query[search->matched]) search->matched++;
+  if(search->matched==search->length) {
+    search->end=offset+1;search->start=search->end-search->length;search->found=1;
+  }
+}
+static exr_status txt_search_paragraph(void *context,uint64_t offset,const char *text,size_t size,exr_error *e) {
+  txt_search *search=context;size_t i;(void)e;
+  if(offset) txt_match_byte(search,'\n',offset-1);
+  for(i=0;i<size;i++) txt_match_byte(search,(unsigned char)text[i],offset+i);
+  return EXR_OK;
+}
+exr_status exr_txt_find_source(const exr_source *source,const char *query,uint64_t from,
+                               uint64_t *start,uint64_t *end,exr_error *e) {
+  txt_search search={0};uint32_t *prefix=NULL,cp;size_t at=0,n;uint64_t extent=0;exr_status s;
+  if(start) *start=UINT64_MAX;if(end) *end=UINT64_MAX;
+  if(!source || !query || !start || !end || !(n=strlen(query))) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT search arguments");
+  if(n>1024*1024) return exr_fail(e,EXR_LIMIT,"Search query exceeds 1 MiB");
+  while(at<n) {
+    if(!(at&4095) && exr_control_cancel(&source->control,e)!=EXR_OK) return EXR_CANCELLED;
+    if(!exr_next(query,n,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Invalid query UTF-8");
+  }
+  s=exr_kmp_prefix(query,n,&source->control,&prefix,e);if(s!=EXR_OK) return s;
+  search.query=query;search.length=n;search.prefix=prefix;search.from=from;
+  s=exr_txt_scan_source(source,txt_search_paragraph,&search,&extent,e);
+  free(prefix);
+  if(s!=EXR_OK) return s;
+  if(from>extent) return exr_fail(e,EXR_ARGUMENT,"TXT search offset beyond extent");
+  if(search.found) { *start=search.start;*end=search.end; }
+  return EXR_OK;
+}
+
+typedef struct {
+  uint64_t first,last;
+  char *data;
+  size_t size;
+} txt_anchor_window;
+static void txt_anchor_copy(txt_anchor_window *w,uint64_t offset,const char *text,size_t size) {
+  uint64_t end=offset+size,lo=offset>w->first ? offset : w->first;
+  uint64_t hi=end<w->last ? end : w->last;
+  if(lo<hi) { memcpy(w->data+w->size,text+(size_t)(lo-offset),(size_t)(hi-lo));w->size+=(size_t)(hi-lo); }
+}
+static exr_status txt_anchor_paragraph(void *context,uint64_t offset,const char *text,size_t size,exr_error *e) {
+  txt_anchor_window *w=context;(void)e;
+  if(offset) txt_anchor_copy(w,offset-1,"\n",1);
+  txt_anchor_copy(w,offset,text,size);return EXR_OK;
+}
+exr_status exr_txt_anchor_create_source(const exr_source *source,size_t start,size_t end,
+                                         exr_anchor *anchor,exr_error *e) {
+  txt_anchor_window w={0};exr_document doc={0};uint64_t extent=0;size_t skip=0,base,finish;
+  exr_status status;
+  if(!anchor) return exr_fail(e,EXR_ARGUMENT,"Missing anchor output");
+  memset(anchor,0,sizeof(*anchor));
+  if(!source || start>end) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT anchor range");
+  if(end-start>65536) return exr_fail(e,EXR_LIMIT,"Anchor quote exceeds 64 KiB");
+  w.first=start>128 ? start-128 : 0;
+  w.last=(uint64_t)end>UINT64_MAX-128 ? UINT64_MAX : (uint64_t)end+128;
+  w.data=malloc((end-start)+257);
+  if(!w.data) return exr_fail(e,EXR_MEMORY,"TXT anchor allocation failed");
+  status=exr_txt_scan_source(source,txt_anchor_paragraph,&w,&extent,e);
+  if(status!=EXR_OK) goto done;
+  if((uint64_t)end>extent) { status=exr_fail(e,EXR_ARGUMENT,"TXT anchor range beyond extent");goto done; }
+  while(skip<w.size && ((unsigned char)w.data[skip]&0xc0)==0x80) skip++;
+  base=(size_t)w.first+skip;finish=w.size;
+  /* The bounded right edge may cut a scalar. Keep complete final scalars. */
+  if(w.last<extent) {
+    size_t at=skip,previous;uint32_t cp;
+    while(at<finish) { previous=at;if(!exr_next(w.data,finish,&at,&cp)) { finish=previous;break; } }
+  }
+  if(start<base || end<base || end-base>finish-skip) { status=exr_fail(e,EXR_ARGUMENT,"TXT anchor range is not on UTF-8 boundaries");goto done; }
+  doc.text=w.data+skip;doc.size=finish-skip;
+  status=exr_anchor_create(&doc,start-base,end-base,anchor,e);
+  if(status==EXR_OK) { anchor->start=start;anchor->end=end; }
+done:
+  free(w.data);return status;
+}
