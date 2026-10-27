@@ -22,10 +22,12 @@ jobs:
         run: |
           git merge-base --is-ancestor 2f215f5793a7344d22db350276ba9f8a07abe86f "$env:GITHUB_SHA"
           if ($LASTEXITCODE) { throw 'base mismatch' }
-          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 "$env:GITHUB_SHA" -- apps examples src include cmake ':(exclude)examples/reader.c' ':(exclude)apps/reader/desktop/windows_search.inc' ':(exclude)apps/reader/desktop/windows_search_types.h' ':(exclude)apps/reader/desktop/windows_txt_search.inc'
+          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 "$env:GITHUB_SHA" -- apps examples src include cmake ':(exclude)examples/reader.c' ':(exclude)apps/reader/desktop/windows_search.inc' ':(exclude)apps/reader/desktop/windows_search_types.h' ':(exclude)apps/reader/desktop/windows_txt_search.inc' ':(exclude)apps/reader/desktop/windows_wave3.inc' ':(exclude)apps/reader/original-export/include/reader_original_export.h' ':(exclude)apps/reader/original-export/src/original_export.cpp'
           if ($LASTEXITCODE) { throw 'product paths changed' }
-          git diff --exit-code 2e4b3900fb18b0203b7e4a82e3a77e84218b3936 "$env:GITHUB_SHA" -- examples/reader.c apps/reader/desktop/windows_search.inc apps/reader/desktop/windows_search_types.h apps/reader/desktop/windows_txt_search.inc
+          git diff --exit-code 2e4b3900fb18b0203b7e4a82e3a77e84218b3936 "$env:GITHUB_SHA" -- apps/reader/desktop/windows_search.inc apps/reader/desktop/windows_search_types.h apps/reader/desktop/windows_txt_search.inc
           if ($LASTEXITCODE) { throw 'Windows TXT search differs from the reviewed source' }
+          git diff --exit-code 408a620823ba2890ca3699991e9ac4f3016cc4e2 "$env:GITHUB_SHA" -- examples/reader.c apps/reader/desktop/windows_wave3.inc apps/reader/original-export/include/reader_original_export.h apps/reader/original-export/src/original_export.cpp
+          if ($LASTEXITCODE) { throw 'Windows mixed original export differs from the reviewed source' }
           python -m py_compile tests/reader_d23_relay/relay.py tests/reader_d23_relay/windows.py tests/reader_d23_relay/gtk.py
           if ($LASTEXITCODE) { throw 'test syntax failed' }
       - name: Build real Windows package and retain existing checks

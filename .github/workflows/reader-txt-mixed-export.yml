@@ -1,7 +1,7 @@
 name: TXT mixed original export installed API
 on:
   push:
-    branches: [codex/windows-txt-original-export]
+    branches: [codex/windows-txt-original-export, codex/reader-integrated-progress]
   workflow_dispatch:
 permissions:
   contents: read
