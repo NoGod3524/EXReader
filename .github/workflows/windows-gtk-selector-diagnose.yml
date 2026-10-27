@@ -1,0 +1,44 @@
+name: Diagnose Windows GTK selector failure
+on:
+  push:
+    branches: [codex/windows-gtk-relay-selector]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-gtk-first-40425627113-1
+          run-id: 40425627113
+          github-token: ${{ github.token }}
+          path: build/prior
+      - name: Inspect retained selector evidence in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,os,sqlite3,subprocess
+          from pathlib import Path
+          meta=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GITHUB_REPOSITORY']+'/actions/artifacts/12700290413'],text=True))
+          assert meta['workflow_run']['id']==40425627113 and meta['workflow_run']['head_sha']=='e61b5edab505755edffaf1f6dc6cffe6f4297c26' and not meta['expired']
+          assert meta['digest']=='sha256:46ac259ca8b36a8544cb74c674e802bddf8f6172c09fad593a5232674f881318'
+          root=Path('build/prior');files=sorted(str(p.relative_to(root)) for p in root.rglob('*') if p.is_file())
+          print(json.dumps({'files':files},ensure_ascii=False))
+          for path in root.rglob('state.ini'):
+              print('STATE',str(path.relative_to(root)),path.read_text(errors='replace'))
+          for path in root.rglob('application.log'):
+              print('APPLICATION_LOG',str(path.relative_to(root)),path.read_text(errors='replace')[-12000:])
+          for path in root.rglob('library.sqlite'):
+              try:
+                  with sqlite3.connect('file:'+str(path.resolve())+'?mode=ro',uri=True) as db:
+                      print('LIBRARY',str(path.relative_to(root)),db.execute('SELECT count(*) FROM books').fetchone())
+              except Exception as exc:print('LIBRARY_READ_ERROR',repr(exc))
+          for path in root.rglob('failed-requests.json'):
+              print('REQUESTS',path.read_text(errors='replace'))
+          PY
