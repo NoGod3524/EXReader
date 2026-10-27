@@ -18,6 +18,14 @@ typedef exr_status (*exr_txt_paragraph_fn)(void *context,uint64_t offset,
 EXR_API exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragraph_fn paragraph,
   void *context,uint64_t *extent,exr_error *error);
 
+/* Exact UTF-8 byte search across the whole projected text, including paragraph
+   separators. The complete source is validated even after a match. A missing
+   match returns EXR_OK and UINT64_MAX in both outputs. `from` is a normalized
+   byte offset and may not exceed the extent. Query scratch is bounded to 4 MiB;
+   the paragraph budget and cancellation rules of the scanner also apply. */
+EXR_API exr_status exr_txt_find_source(const exr_source *source,const char *query,uint64_t from,
+  uint64_t *start,uint64_t *end,exr_error *error);
+
 /* Read document-subject XMP simple literals, Seq/Bag values and preferred Alt. */
 EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control,
   exr_metadata_entry **entries,size_t *count,exr_error *error);
