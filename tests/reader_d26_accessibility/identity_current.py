@@ -18,7 +18,7 @@ from pathlib import Path
 REQUIRED = {
     'g13_complete': ('d26-g13-current', 'result.json', 'accessibility_accepted', 'off', 32),
     'account_a11y': ('d26-account', 'result.json', 'accepted', 'off', 3),
-    'wave3_tools': ('d26-tools-current', 'result.json', 'accepted', 'wave3', 10),
+    'wave3_tools': ('d26-tools-current', 'result.json', 'accepted', 'wave3', 13),
     'compact45': ('c10-compact-ui', 'report.json', 'accepted', 'wave3', 45),
     'g13_ten': ('c10-atspi-fixes', 'result.json', 'accepted', 'off', 10),
     'search': ('c10-search-ui', 'result.json', 'search_scope_passed', 'off', None),
@@ -98,6 +98,11 @@ def main():
             assert program_sha == programs[program]['sha256'], key + ' program'
             checks = report['checks']
             assert checks and all(row.get('pass', row.get('passed')) is True for row in checks), key + ' checks'
+            if key == 'wave3_tools':
+                names = {row.get('name') for row in checks}
+                assert {'annotation_export_cancel_keeps_page_and_creates_no_file',
+                        'annotation_export_roundtrip_preserves_original_wires',
+                        'annotation_export_import_is_exact_duplicate'} <= names
             count = report.get('count', report.get('checks_total', len(checks)))
             assert count == len(checks), key + ' count'
             if expected_count is not None:

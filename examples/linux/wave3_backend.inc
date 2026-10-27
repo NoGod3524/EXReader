@@ -12,6 +12,7 @@
    public encoder that validates a v2 wire against a raw store. No private
    extern, no second schema and no change to the legacy entry points is used. */
 #include <reader_annotation_import_raw3.h>
+#include <reader_annotation_export_raw3.h>
 #if !defined(EXR_READER_PURE_CAPTURE_CANDIDATE) || EXR_READER_PURE_CAPTURE_CANDIDATE != 1
 #error "GTK raw Wave 3 jump history needs the installed public pure raw capture candidate"
 #endif
@@ -531,11 +532,40 @@ static exr_status w3_sync(linux_reader *reader,const reader_command *command,rea
   reader_sync_view_release(&snapshot);return EXR_OK;
 }
 
+/* Reuse the installed exporter and the worker-owned revision store. */
+static exr_status w3_annotation_export(linux_reader *reader,const reader_command *command,reader_result *result) {
+  received_owner *owner=NULL;char key[73];reader_annotation_export_options options={0};
+  reader_annotation_export_stats stats={0};reader_annotation_export_error error={0};
+  if(!command->w3_path || !command->w3_path[0] || command->book!=reader->current.id ||
+     w3_book_key(reader,key)!=EXR_OK || received_ready(reader,&owner)!=EXR_OK) {
+    snprintf(result->message,sizeof(result->message),"Open the book before exporting annotations");return EXR_ARGUMENT;
+  }
+  options.struct_size=sizeof(options);options.revisions=owner->revisions;
+  options.book_key=key;options.jsonl_path=command->w3_path;
+  options.cancel=w3_roe_cancelled;options.cancel_context=reader;
+#if defined(EXR_READER_GTK_RAW3)
+  reader_annotation_export_status code=reader_annotation_export_raw3_run(&options,&stats,&error);
+#else
+  reader_annotation_export_status code=reader_annotation_export_run(&options,&stats,&error);
+#endif
+  result->w3_ann_export_code=(int)code;result->w3_ann_export_published=stats.jsonl_published;
+  result->w3_ann_export_bytes=stats.jsonl_bytes;result->w3_ann_export_count=stats.annotations;
+  if(code==READER_ANNOTATION_EXPORT_OK && stats.jsonl_published) {
+    snprintf(result->message,sizeof(result->message),"Annotations exported: %llu records",
+             (unsigned long long)stats.annotations);return EXR_OK;
+  }
+  snprintf(result->message,sizeof(result->message),"Annotations were not exported: %.110s",error.message);
+  if(code==READER_ANNOTATION_EXPORT_CANCELLED) return EXR_CANCELLED;
+  if(code==READER_ANNOTATION_EXPORT_MEMORY) return EXR_MEMORY;
+  return code==READER_ANNOTATION_EXPORT_ARGUMENT ? EXR_ARGUMENT:EXR_IO;
+}
+
 static void w3_execute(linux_reader *reader,const reader_command *command,reader_result *result) {
   result->has_w3=1;
   switch(command->action) {
     case READER_W3_ANNOTATION_PREVIEW: case READER_W3_ANNOTATION_IMPORT: result->status=w3_annotation(reader,command,result);break;
     case READER_W3_ANNOTATION_DISCARD: w3_annotation_discard(reader);result->status=EXR_OK;break;
+    case READER_W3_ANNOTATION_EXPORT: result->status=w3_annotation_export(reader,command,result);break;
     case READER_W3_EXPORT: result->status=w3_export(reader,command,result);break;
     case READER_W3_SYNC_STATUS: result->status=w3_sync(reader,command,result);break;
     default: {

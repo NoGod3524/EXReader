@@ -44,16 +44,12 @@ if(EXR_READER_GTK_WAVE3)
     find_package(EXReaderAnnotationImport 0.2.0 EXACT CONFIG REQUIRED)
     find_package(EXReaderJumpHistory 0.2.0 EXACT CONFIG REQUIRED)
     find_package(EXReaderSyncView 0.2.0 EXACT CONFIG REQUIRED)
-    if(EXR_LINUX_REVIEW_TESTS)
-      find_package(EXReaderAnnotationExport 0.2.0 EXACT CONFIG REQUIRED)
-    endif()
+    find_package(EXReaderAnnotationExport 0.2.0 EXACT CONFIG REQUIRED)
   else()
     find_package(EXReaderAnnotationImport 0.1.0 EXACT CONFIG REQUIRED)
     find_package(EXReaderJumpHistory 0.1.0 EXACT CONFIG REQUIRED)
     find_package(EXReaderSyncView 0.1.0 EXACT CONFIG REQUIRED)
-    if(EXR_LINUX_REVIEW_TESTS)
-      find_package(EXReaderAnnotationExport 0.1.0 EXACT CONFIG REQUIRED)
-    endif()
+    find_package(EXReaderAnnotationExport 0.1.0 EXACT CONFIG REQUIRED)
   endif()
   # Single-family tools: their only install is 0.1.0 and they must not smuggle
   # the raw capability into a legacy host.
@@ -71,12 +67,11 @@ if(EXR_READER_GTK_WAVE3)
       reader_jump_history.h READER_JH_INSTALL_VERSION 0.2.0 TRUE)
     _exr_raw_guard_target(EXReaderSyncView::reader_sync_view "${EXReaderSyncView_DIR}"
       reader_sync_view.h READER_SYNC_VIEW_VERSION 0.2.0 TRUE)
-    if(EXR_LINUX_REVIEW_TESTS)
-      _exr_raw_guard_target(EXReaderAnnotationExport::reader_annotation_export "${EXReaderAnnotationExport_DIR}"
-        reader_annotation_export_raw3.h READER_ANNOTATION_EXPORT_RAW3_VERSION 0.2.0 TRUE)
-    endif()
+    _exr_raw_guard_target(EXReaderAnnotationExport::reader_annotation_export "${EXReaderAnnotationExport_DIR}"
+      reader_annotation_export_raw3.h READER_ANNOTATION_EXPORT_RAW3_VERSION 0.2.0 TRUE)
     foreach(_w3_raw_pair
         "EXReaderAnnotationImport::reader_annotation_import|EXReaderAnnotationImport"
+        "EXReaderAnnotationExport::reader_annotation_export|EXReaderAnnotationExport"
         "EXReaderJumpHistory::reader_jump_history|EXReaderJumpHistory"
         "EXReaderSyncView::reader_sync_view|EXReaderSyncView"
         "EXReaderFontLibrary::reader_font_library|EXReaderFontLibrary"
@@ -93,7 +88,7 @@ if(EXR_READER_GTK_WAVE3)
       if(NOT _w3_raw_origin STREQUAL _w3_raw_prefix)
         message(FATAL_ERROR "GTK raw Wave 3 family origin differs: ${_w3_raw_package}")
       endif()
-      if(_w3_raw_package STREQUAL "EXReaderAnnotationImport" OR _w3_raw_package STREQUAL "EXReaderJumpHistory" OR
+      if(_w3_raw_package STREQUAL "EXReaderAnnotationImport" OR _w3_raw_package STREQUAL "EXReaderAnnotationExport" OR _w3_raw_package STREQUAL "EXReaderJumpHistory" OR
          _w3_raw_package STREQUAL "EXReaderSyncView")
         if(NOT "EXR_READER_SELECTOR_BYTES_CANDIDATE=1" IN_LIST _w3_raw_definitions)
           message(FATAL_ERROR "GTK raw Wave 3 needs the raw0.2 family: ${_w3_raw_package}")
@@ -120,8 +115,8 @@ if(EXR_READER_GTK_WAVE3)
     target_compile_definitions(exreader-linux-reading PUBLIC EXR_READER_WAVE3_RAW3=1)
   endif()
   target_link_libraries(exreader-linux-reading PUBLIC
-    EXReaderAnnotationImport::reader_annotation_import EXReaderFontLibrary::reader_font_library
-    EXReaderOriginalExport::reader_original_export EXReaderJumpHistory::reader_jump_history
+    EXReaderAnnotationImport::reader_annotation_import EXReaderAnnotationExport::reader_annotation_export
+    EXReaderFontLibrary::reader_font_library EXReaderOriginalExport::reader_original_export EXReaderJumpHistory::reader_jump_history
     EXReaderSyncView::reader_sync_view)
   if(EXR_LINUX_REVIEW_TESTS)
     if(EXR_READER_GTK_RAW3)
