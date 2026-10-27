@@ -2,7 +2,7 @@
 name: Android font reader preservation and retained C11
 on:
   push:
-    branches: [codex/reader-android-font-integration]
+    branches: [codex/reader-android-font-integration, codex/reader-integrated-progress]
   workflow_dispatch:
 permissions:
   contents: read
