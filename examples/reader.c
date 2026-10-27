@@ -979,7 +979,8 @@ struct host_job {
   int product_auto_open,product_deleted;
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
   int original_import,original_recovery_failed;
-#endif  int product_shelf_direction,product_shelf_before,product_shelf_after;
+#endif
+  int product_shelf_direction,product_shelf_before,product_shelf_after;
   char product_group_id[33];int product_group_kind;uint64_t product_cursor_ordinal;int product_anchor_predecessor;
   unsigned long product_shelf_generation;
   char *product_shelf_query,*product_cursor_title,*product_cursor_key,*product_anchor_key;
@@ -1824,6 +1825,7 @@ static exr_status txt_frame(host_session *session, const exr_source *source, con
     }
   }
   (*frame).valid=1; (*frame).render_scale=1; (*frame).generation=++g.frame_sequence;
+  frame->hold_progress=session->hold_progress;
   frame->page=page;
   if(have_saved) { session->txt_checkpoint=saved; session->txt_checkpoint_valid=1; }
  done:

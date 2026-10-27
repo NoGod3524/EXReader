@@ -72,13 +72,14 @@ def main():
                   scope='native Windows host: product TXT position save/restore, relayout, identity isolation, refused write and SDK book regression',
                   accepted=False)
     app = None
+    product_db = None
 
     def record(name, detail=''):
         report['checks'].append(dict(name=name, passed=True, detail=str(detail)))
         print('CHECK ' + name + ' :: ' + str(detail), flush=True)
 
     def progress_heads(key):
-        with sqlite3.connect(str(app.db) + '.product.sqlite', timeout=20) as db:
+        with sqlite3.connect(product_db, timeout=20) as db:
             found = db.execute('SELECT revision_id, body_json, body_sha256 FROM reader_revisions '
                                "WHERE entity_kind='progress' AND entity_key=?", (key,)).fetchall()
         parents = {parent for _, body, _ in found for parent in json.loads(body)['parents']}
@@ -103,6 +104,7 @@ def main():
     try:
         profile = out / 'profile'
         app = ui.P.App(exe, font, profile)
+        product_db = str(app.db) + '.product.sqlite'
         app.wait_idle()
         automation = Uia()
         assert automation.available, automation.error
