@@ -301,6 +301,11 @@ def main():
         # Save a genuine page highlight and point bookmark through the existing
         # reading-record owner, then independently reopen the original and jump.
         first_label = app.label()
+        ui.command(app, 210)  # Native reading-records menu command.
+        dialog = app.wait(lambda: wave3.records_dialog(app), timeout=60)
+        app.wait(lambda: len(wave3.rows(dialog, wave3.RECORDS_ROWS)) >= 1, timeout=240)
+        wave3.close_records(app, dialog)
+        record('TXT reading records open from the native menu')
         dialog, original_records = wave3.record_count(app)
         ui.send(ui.U.GetDlgItem(dialog, wave3.RECORDS_HIGHLIGHT), 0xF5, timeout=5000)
         app.wait(lambda: len(wave3.rows(dialog, wave3.RECORDS_ROWS)) == original_records + 1, timeout=240)
