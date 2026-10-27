@@ -388,6 +388,46 @@ def main():
         record('TXT search resumes at the next batch without repeating hits')
         current = page_text(app, automation)
 
+        # Reproduce the search, relayout and refused-save sequence from
+        # run 40575156438 using the same font on both sides of the restart.
+        close_cleanly(app); app = None
+        app = ui.P.App(exe, font, profile, existing=True)
+        app.wait_idle()
+        automation = Uia()
+        assert automation.available, automation.error
+        app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=240)
+        app.wait_idle()
+        assert 'line 0100' in page_text(app, automation), page_text(app, automation)[:200]
+        search_heads, search_count = progress_heads('txt:' + expected)
+        lock = sqlite3.connect(str(app.db) + '.product.sqlite', isolation_level=None, timeout=0.2)
+        lock.execute('PRAGMA busy_timeout=200')
+        locked = False
+        for _ in range(60):
+            try:
+                lock.execute('BEGIN EXCLUSIVE')
+                locked = True
+                break
+            except sqlite3.OperationalError:
+                time.sleep(0.2)
+        assert locked, 'could not hold the product database write lock after search'
+        press_font_increase()
+        app.wait_idle()
+        app.wait(lambda: '\u9605\u8bfb\u4f4d\u7f6e\u672a\u4fdd\u5b58' in app.status(), timeout=120)
+        after_locked_relayout = page_text(app, automation)
+        close_cleanly(app); app = None
+        lock.execute('ROLLBACK')
+        lock.close()
+        assert progress_heads('txt:' + expected) == (search_heads, search_count)
+        app = ui.P.App(exe, font, profile, existing=True)
+        app.wait_idle()
+        automation = Uia()
+        assert automation.available, automation.error
+        app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=240)
+        app.wait_idle()
+        restored_after_search = page_text(app, automation)
+        assert restored_after_search == after_locked_relayout, (after_locked_relayout, restored_after_search)
+        record('search position survives relayout and a refused save at the same font')
+
         open_row(pdf.stem)
         sdk_first = page_text(app, automation)
         app.click('next')
