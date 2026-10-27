@@ -153,10 +153,12 @@ final class BoundedEpub implements AutoCloseable {
         long began=System.nanoTime(),extent=nativeExtent(candidate);
         boolean transferred=false;
         try {
-            if(extent==0) throw new IllegalArgumentException("Empty reading chapter is not supported");
             Frame selected=null; int selectedPage=-1;
             for(int p=0;p<20000;p++) {
                 Frame frame=next(candidate,task,recovery,false);
+                // projection_bytes counts text, not visual content. Keep an
+                // image-only cover, but retain the strict empty-chapter error.
+                if(extent==0 && (frame==null ? selected==null : frame.meta[9]==0)) throw new IllegalArgumentException("Empty reading chapter is not supported");
                 if(frame==null) break;
                 if(p>0 && p%16==0) Log.i("EXRHost","bounded scan part="+target+" pages="+(p+1));
                 if(pageTarget==-2) { selected=frame; selectedPage=p; continue; }
@@ -225,6 +227,7 @@ final class BoundedEpub implements AutoCloseable {
             PageSnapshot result=new PageSnapshot(bitmap,false,display,-1,frame.meta[0],frame.meta[1],frame.text,1f,width,height,
                     starts,ends,null,x,baseline,advance,sizes,text,bounds,0,book);
             result.part=target; result.path=parts[target][0]; result.textBase=frame.meta[0]; result.bounded=true;
+            result.boundedVisualBoxes=frame.meta[9];
             result.boundedOwner=this; result.boundedLocation=nativeCapture(pager,target,frame.meta[0]);
             result.pageTheme=theme;
             result.themeSdk=frame.sdk;
