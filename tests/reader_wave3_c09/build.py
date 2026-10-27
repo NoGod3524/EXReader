@@ -83,7 +83,8 @@ def main():
                '-DCMAKE_PREFIX_PATH=' + prefix, '-DEXR_SDK=' + str(sdk), '-DEXR_SDK_VERSION=3.41.0',
                '-DREADER_METADATA_PREFIX=' + str(stage), '-DREADER_ACCOUNT_PREFIX=' + str(stage),
                '-DEXR_READER_WINDOWS_WAVE3=ON',
-               '-DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=' + ('ON' if content_bound else 'OFF')], 'wave3-host-configure')
+               '-DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=' + ('ON' if content_bound else 'OFF'),
+               '-DEXR_READER_WINDOWS_TXT_PROGRESS=' + ('ON' if os.environ.get('EXR_COMPOSITION_TXT_PROGRESS') == '1' else 'OFF')], 'wave3-host-configure')
         H.run(['cmake', '--build', host, '--target', 'EXReaderWave3', '--parallel', '4', '--verbose'], 'wave3-host-build')
         if content_bound:
             link_map = (host / 'windows-host.map').read_text(encoding='utf-8', errors='replace')
@@ -120,6 +121,10 @@ def main():
                     result['desktop'] = json.loads((OUT / 'desktop.json').read_text(encoding='utf-8'))
 
         step('native-desktop-geometry', desktop)
+        if os.environ.get('EXR_COMPOSITION_TXT_PROGRESS') == '1':
+            step('native-txt-progress', lambda: H.run(
+                [sys.executable, ROOT / 'tests/windows_host/txt/check_progress.py', exe, font,
+                 OUT / 'txt-progress', fixtures / 'Fixed page.pdf'], 'native-txt-progress', 2400))
 
         def compact22():
             """Gate on the unchanged product compact suite; preserve every failure."""

@@ -34,6 +34,13 @@ find_package(EXReaderFontLibrary 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderOriginalExport 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderJumpHistory 0.2.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderSyncView 0.2.0 EXACT CONFIG REQUIRED)
+option(EXR_READER_WINDOWS_TXT_PROGRESS "Enable bounded TXT originals and content-based progress" OFF)
+if(EXR_READER_WINDOWS_TXT_PROGRESS)
+  find_package(EXReaderTxtProgress 0.1.0 EXACT CONFIG REQUIRED)
+  if(NOT TARGET EXReaderProductCatalog::reader_original_import)
+    message(FATAL_ERROR "TXT progress requires the installed product original importer")
+  endif()
+endif()
 # Every family member must be the explicit raw install; a legacy member never links.
 foreach(_w3_target EXReaderRevisions::reader_revisions EXReaderReadingState::reader_reading_state_codec
     EXReaderReadingCommands::reader_reading_commands EXReaderAnnotationView::reader_annotation_view
@@ -76,6 +83,10 @@ target_link_libraries(EXReaderWave3 PRIVATE reader_catalog_sdk EXReader::exr_cor
   EXReaderFontLibrary::reader_font_library EXReaderOriginalExport::reader_original_export
   EXReaderJumpHistory::reader_jump_history EXReaderSyncView::reader_sync_view
   comdlg32 gdi32 shell32 user32 advapi32 bcrypt normaliz ole32 uuid)
+if(EXR_READER_WINDOWS_TXT_PROGRESS)
+  target_compile_definitions(EXReaderWave3 PRIVATE EXR_READER_WINDOWS_TXT_RECOVERY=1 EXR_READER_WINDOWS_TXT_PROGRESS=1)
+  target_link_libraries(EXReaderWave3 PRIVATE EXReaderProductCatalog::reader_original_import EXReaderTxtProgress::reader_txt_progress)
+endif()
 if(MSVC)
   target_link_options(EXReaderWave3 PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/windows-host.map")
 endif()
