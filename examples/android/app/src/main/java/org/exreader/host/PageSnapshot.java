@@ -11,6 +11,7 @@ final class PageSnapshot {
     String path;
     String sourceKey;
     long textBase, boundedHandle;
+    long boundedVisualBoxes;
     boolean preserveProgress;
     String restoreNotice;
     long highlightStart=-1, highlightEnd=-1;

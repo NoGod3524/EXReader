@@ -22,6 +22,10 @@ for path in paths:
             'examples/android/app/src/main/java/org/exreader/host/SyncOriginal.java',
             'examples/android/app/src/main/java/org/exreader/host/NativeSync.java',
             'examples/android/app/src/main/java/org/exreader/host/ReadingPanel.java',
+            'examples/android/app/src/main/java/org/exreader/host/BoundedEpub.java',
+            'examples/android/app/src/main/java/org/exreader/host/PageSnapshot.java',
+            'examples/android/app/src/main/java/org/exreader/host/ReaderView.java',
+            'examples/android/app/src/main/cpp/bounded_epub_jni.inc',
             'examples/android/app/src/main/cpp/sync_jni.cpp'}), path
 for path in ('src', 'include', 'bindings', 'cmake', 'CMakeLists.txt', 'tests/fixtures',
              'tests/reader_d21_apple_receive', 'tests/reader_android_receive_d22',

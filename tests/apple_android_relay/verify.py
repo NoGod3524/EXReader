@@ -98,6 +98,14 @@ try:
             assert checks == ['empty_library_real_account_and_sync', 'explicit_application_receive_original',
                 'apple_progress_public_parse_real_jump', 'real_forward_pages_and_application_save', 'application_sync_outgoing_position']
             assert data['api'] == 34 and data['abi'] == 'x86_64'
+            boundary = data['independent_boundary_tests']
+            assert boundary['passed'] is True and boundary['app_database_seeded'] is False
+            assert 0 <= boundary['all_empty_failed_ms'] < 20000
+            assert boundary['leases_after_empty_failure'] == boundary['leases_after_image_discard'] == 0
+            assert boundary['image_leases_live'] > 0 and boundary['image_boxes'] > 0
+            cover = data['initial_frame']
+            assert cover['part'] == boundary['image_part'] and cover['start'] == cover['end'] == 0
+            assert cover['bounded_visual_boxes'] > 0 and cover['bitmap_width'] > 0 and cover['bitmap_height'] > 0
             assert all(data['incoming_location'][k] == states[0]['data']['location'][k] for k in ('part', 'path', 'start', 'end', 'exact', 'prefix', 'suffix'))
             assert data['location']['head'] != data['incoming_location']['head']
             frame = data['restored_frame']; loc = data['incoming_location']
