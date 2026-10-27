@@ -159,7 +159,7 @@
     },
     {
       "name": "gtk-raw-retained-regression",
-      "source": "a53032e122cb84c9cb0debebb78ff47d6de35e4a",
+      "source": "fd5c08f7364e418199c337e02acf5c1e1a4f35ba",
       "tested_source": "4380c6162cb36426537664997108a5d51031da8a",
       "tested_run": 40390254271,
       "paths": [
@@ -280,7 +280,7 @@
     },
     {
       "name": "windows-group-anchor-composition-candidate",
-      "source": "c9362acec3239c1106933dd9ed83f1a6f022fca8",
+      "source": "fd5c08f7364e418199c337e02acf5c1e1a4f35ba",
       "paths": [
         ".github/workflows/windows-group-anchor-recovery.yml",
         "apps/reader/desktop/windows_catalog.inc",
@@ -365,7 +365,7 @@
     },
     {
       "name": "android-composition-workflow-candidate",
-      "source": "a53032e122cb84c9cb0debebb78ff47d6de35e4a",
+      "source": "fd5c08f7364e418199c337e02acf5c1e1a4f35ba",
       "paths": [
         ".github/workflows/android-composition-candidate.yml"
       ]
@@ -389,7 +389,7 @@
     },
     {
       "name": "android-current-owner-combined-340",
-      "source": "a53032e122cb84c9cb0debebb78ff47d6de35e4a",
+      "source": "fd5c08f7364e418199c337e02acf5c1e1a4f35ba",
       "paths": [
         ".github/workflows/android-current-owner-340.yml",
         "examples/android/app/src/androidTest/java/org/exreader/host/ProductOwnerTest.java",
@@ -421,7 +421,7 @@
     },
     {
       "name": "windows-combined-wal-profile-candidate",
-      "source": "a53032e122cb84c9cb0debebb78ff47d6de35e4a",
+      "source": "fd5c08f7364e418199c337e02acf5c1e1a4f35ba",
       "paths": [
         ".github/workflows/combined-wal-profile.yml"
       ]
