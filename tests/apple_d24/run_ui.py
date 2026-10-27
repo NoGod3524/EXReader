@@ -31,6 +31,10 @@ def main():
         log = evidence / (role + '.log')
         with log.open('wb') as f: value = subprocess.run(argv, stdout=f, stderr=subprocess.STDOUT, timeout=timeout)
         commands.append({'role': role, 'argv': argv, 'exit': value.returncode})
+        lines = log.read_text(errors='replace').splitlines()
+        for line in lines:
+            if 'error:' in line or 'D24 page ' in line or 'Test Case ' in line and 'failed' in line:
+                print(line, flush=True)
         if value.returncode:
             print('\n'.join(log.read_text(errors='replace').splitlines()[-100:]), flush=True)
             raise RuntimeError(role + ' failed: ' + str(value.returncode))

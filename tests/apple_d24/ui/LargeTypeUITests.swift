@@ -56,6 +56,19 @@ final class LargeTypeUITests: XCTestCase {
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(wait { self.app.windows.firstMatch.frame.width > self.app.windows.firstMatch.frame.height })
         area(0.35); record("maximum-type-landscape-tools-visible")
+        let accountLocation = text("reader.location")
+        let more = e("reader.more").buttons.firstMatch
+        XCTAssertTrue(more.exists && more.isHittable)
+        more.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(e("account.choose").waitForExistence(timeout: 30))
+        e("account.choose").tap()
+        XCTAssertTrue(e("account.done").waitForExistence(timeout: 30))
+        e("account.done").tap()
+        XCTAssertTrue(wait { !self.e("account.done").exists })
+        area(0.35)
+        XCTAssertEqual(text("reader.location"), accountLocation)
+        XCTAssertTrue(e("reader.more").isHittable)
+        record("maximum-type-account-dismissed")
         let expanded = e("reader.page").frame.height
         tap("reader.tools.toggle")
         XCTAssertTrue(wait { !self.e("reader.tools.scroll").exists })
