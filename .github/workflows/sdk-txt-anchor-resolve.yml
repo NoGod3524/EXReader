@@ -1,0 +1,36 @@
+name: TXT anchor resolution candidate
+on:
+  push:
+    branches: [codex/sdk-txt-anchor-resolve]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  installed-consumers:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Install Ninja
+        run: python -m pip install ninja
+      - name: Build and install candidate SDK
+        run: |
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+      - name: Verify anchor and existing bounded TXT consumers
+        run: |
+          for suite in txt_anchor_resolve bounded_txt_scan; do
+            cmake -S "tests/$suite" -B "build/$suite" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+            cmake --build "build/$suite" --parallel 4
+            ctest --test-dir "build/$suite" --output-on-failure --no-tests=error
+          done
