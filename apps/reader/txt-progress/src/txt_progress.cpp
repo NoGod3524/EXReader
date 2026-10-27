@@ -126,6 +126,7 @@ reader_command_status apply_book(reader_txt_progress *store, const reader_comman
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
   if (store->raw) return reader_command_apply_book_raw_v3(context, input, result, detail);
 #endif
+  (void)store;
   return reader_command_apply_book(context, input, result, detail);
 }
 reader_rc_status apply_progress(reader_txt_progress *store, const reader_rc_context *context,
@@ -134,6 +135,7 @@ reader_rc_status apply_progress(reader_txt_progress *store, const reader_rc_cont
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
   if (store->raw) return reader_rc_apply_raw_v3(context, input, 2u, result, detail);
 #endif
+  (void)store;
   return reader_rc_apply(context, input, result, detail);
 }
 reader_txp_status selection_refusal(reader_txp_error *error, const reader_revision_selection &selection) {
