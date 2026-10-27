@@ -402,7 +402,7 @@ def main():
         db.execute('PRAGMA application_id=1163416131')
     invoke('identity', foreign_db, expected=DATABASE)
     record('sdk_or_foreign_database_identity_is_refused')
-    assert len(checks) == 59
+    assert len(checks) == 60
 
     report = {'accepted': True, 'source_sha': source_sha, 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'checks': checks,

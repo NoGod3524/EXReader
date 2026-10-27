@@ -8,8 +8,8 @@ Open one catalog beside one local SDK library. Before migration, require
 `application_id=0`, `user_version=0` and an empty main schema. The SQL checks
 those conditions again inside its transaction; run it only once. On any error,
 explicitly roll back and keep the previous database. On later opens require
-`application_id=1163416144` (`EXRP`) and `user_version=1`; reject other identities
-or versions. Enable `foreign_keys=ON` on **every** connection; use
+`application_id=1163416144` (`EXRP`) and a supported `user_version` (1 or 2);
+reject other identities or versions. Enable `foreign_keys=ON` on **every** connection; use
 `trusted_schema=OFF` where supported. The migration sets both for its connection.
 Use the host owner queue and a bounded busy timeout. A future migration must be
 explicit; do not rerun this file with `IF NOT EXISTS` added.
@@ -104,5 +104,6 @@ The native product catalog upgrades version 1 to version 2 with
 reference for product-owned content, with staged, ready and deleting states.
 The host is responsible for verifying the content hash, durable file publication,
 containment, and restart reconciliation. This is a storage prerequisite only:
-there is no bounded TXT import or reopen host path yet. Older v1-only adapters
-will reject a v2 catalog rather than migrate it backwards.
+there is no bounded TXT import or reopen host path yet. The revisions adapter
+accepts both versions; other independently deployed v1-only adapters still need
+an update before they can use a v2 catalog.
