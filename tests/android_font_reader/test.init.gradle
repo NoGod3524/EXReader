@@ -1,0 +1,8 @@
+// Adds only the new runner; all historic source sets remain intact.
+gradle.beforeProject { project ->
+    if (project.path == ':app') {
+        project.pluginManager.withPlugin('com.android.application') {
+            project.android.sourceSets.androidTest.java.srcDir new File(project.rootProject.projectDir, '../../tests/android_font_reader/java')
+        }
+    }
+}
