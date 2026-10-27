@@ -203,3 +203,19 @@ The prior candidate `247aa16be18be118820151bf2731dda09b411458`
 [run 40586579696](https://github.com/NoGod3524/EXReader/actions/runs/40586579696)
 failed because the TXT command gate blocked the annotation dialog; that result
 is retained. The later candidate explicitly enabled the real native menu entries.
+
+
+### Bounded TXT source anchor resolution on desktop SDK candidates
+
+[Run 40584271806/1](https://github.com/NoGod3524/EXReader/actions/runs/40584271806)
+passed on Windows, Linux and macOS at source
+`8fabe0cb462c80b6cf9c5b5bbe3d6ecd1ebd73d9`. Each platform ran the installed
+public resolver comparison and the four retained bounded TXT consumers.
+The comparison covers normalized TXT selectors, UTF-8/UTF-16, repeated and
+cross-paragraph matches, cancellation, bad encoding and an 8 MiB scan.
+
+The first [run 40583837468](https://github.com/NoGod3524/EXReader/actions/runs/40583837468)
+failed its Linux retained pager check because the existing test names a Windows
+Arial path. The next run supplied the installed fixture font at that path on
+Linux and macOS; Windows used its system Arial. The retained checks were not
+changed. These are SDK candidate results; combined-source validation is separate.
