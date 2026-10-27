@@ -122,9 +122,14 @@ def main():
 
         step('native-desktop-geometry', desktop)
         if os.environ.get('EXR_COMPOSITION_TXT_PROGRESS') == '1':
-            step('native-txt-progress', lambda: H.run(
-                [sys.executable, ROOT / 'tests/windows_host/txt/check_progress.py', exe, font,
-                 OUT / 'txt-progress', fixtures / 'Fixed page.pdf'], 'native-txt-progress', 2400))
+            def native_txt_progress():
+                injector = OUT / 'txt-progress-consumer'
+                H.configure(ROOT / 'tests/reader_txt_progress/consumer', injector,
+                            ['-DCMAKE_PREFIX_PATH=' + prefix], 'txt-progress-consumer')
+                H.run([sys.executable, ROOT / 'tests/windows_host/txt/check_progress.py', exe, font,
+                       OUT / 'txt-progress', fixtures / 'Fixed page.pdf', injector / 'txtp-inject.exe', 'raw'],
+                      'native-txt-progress', 2400)
+            step('native-txt-progress', native_txt_progress)
 
         def compact22():
             """Gate on the unchanged product compact suite; preserve every failure."""
