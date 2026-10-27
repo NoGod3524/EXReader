@@ -1,7 +1,7 @@
 name: Android composition candidate
 on:
   push:
-    branches: [codex/android-composed-candidate]
+    branches: [codex/android-composed-candidate, codex/android-reading-page-position]
   workflow_dispatch:
     inputs:
       diagnostic_only:
