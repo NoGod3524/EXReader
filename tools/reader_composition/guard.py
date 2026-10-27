@@ -18,6 +18,7 @@ ROOT_PATHS = frozenset((
     '.github/workflows/reader-total-progress.yml',
     'tests/reader_composition/test_guard.py',
     '.github/workflows/reader-team24-composition.yml',
+    '.github/workflows/reader-common-source-apple.yml',
     'tools/apple_swift.py',
     'tools/build_apple_product.py',
     'tools/build_apple_host.py',

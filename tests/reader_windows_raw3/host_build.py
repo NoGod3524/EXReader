@@ -150,13 +150,13 @@ def main():
         if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
             run([sys.executable,ROOT/'tests/windows_host/txt/check_import.py',host/'EXReaderProduct.exe',
                  ROOT/'build/host-font-cache/Reader.otf',OUT/(name+'-txt-import'),
-                 fixtures/'Fixed page.pdf'],name+'-txt-native-import',600)
+                 fixtures/'Fixed page.pdf',host/'EXReaderShelfReview.exe'],name+'-txt-native-import',600)
         if progress:
             run([sys.executable,ROOT/'tests/windows_host/txt/check_progress.py',host/'EXReaderProduct.exe',
                  ROOT/'build/host-font-cache/Reader.otf',OUT/(name+'-txt-progress'),
                  fixtures/'Fixed page.pdf'],name+'-txt-progress-host',2400)
         compact_host=host
-        if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
+        if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1' or progress:
             # Keep the original four-format SDK regression on a legacy host;
             # the TXT-enabled host is covered by the native original test above.
             compact_host=OUT/(name+'-legacy-compact-host')

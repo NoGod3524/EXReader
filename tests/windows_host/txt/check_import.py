@@ -22,7 +22,7 @@ from uia_layer import Uia
 
 def main():
     assert os.name == 'nt' and os.environ.get('GITHUB_ACTIONS') == 'true'
-    exe, font, out, pdf = map(lambda x: Path(x).resolve(), sys.argv[1:5])
+    exe, font, out, pdf, review_exe = map(lambda x: Path(x).resolve(), sys.argv[1:6])
     out.mkdir(parents=True, exist_ok=False)
     fixture = make_txt_fixture(out, 0)
     expected = '4f45393b25817f506a51b56cc5d61599556e4dd5b0bd59aa00f7eb43cbfc0a86'
@@ -80,10 +80,18 @@ def main():
         assert first in source_text and second in source_text
         assert source_text.index(second) >= source_text.index(first) + len(first)
         ui.P.M.screenshot(app.window, out / 'txt-second-page.bmp')
-        app.click('prev'); app.wait_idle()
-        back = automation.control(app.control('page')).GetValuePattern().Value
-        assert back == first, back
-        report['checks'].append('native next and previous show distinct consecutive source text and restore first page')
+        pages = [first, second]
+        for _ in range(3):
+            app.click('next'); app.wait_idle()
+            current = automation.control(app.control('page')).GetValuePattern().Value
+            assert current and current != pages[-1] and current in source_text, current
+            assert source_text.index(current) >= source_text.index(pages[-1]) + len(pages[-1])
+            pages.append(current)
+        for expected_page in reversed(pages[:-1]):
+            app.click('previous'); app.wait_idle()
+            current = automation.control(app.control('page')).GetValuePattern().Value
+            assert current == expected_page, (current, expected_page)
+        report['checks'].append('native next and previous show five consecutive source pages and restore them in reverse')
         ui.P.M.screenshot(app.window, out / 'txt-first-page.bmp')
         report['page_excerpt'] = value[:300]
         report['checks'].append('selected 16792975-byte original renders first page with expected UI Automation text and screenshot')
@@ -116,6 +124,26 @@ def main():
         app.click('open'); app.wait_idle()
         app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=60)
         report['checks'].append('filter and SDK selection/open remain functional')
+        app.close(); app = None
+        app = ui.P.App(review_exe, font, out / 'review-profile')
+        ui.picker(app, fixture)
+        app.wait(lambda: selected() >= 0 and selected() < len(rows()) and fixture.name in rows()[selected()], timeout=60)
+        app.click('open'); app.wait_idle()
+        app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=120)
+        automation = Uia()
+        assert automation.available, automation.error
+        def page_text():
+            return automation.control(app.control('page')).GetValuePattern().Value
+        before_cancel = page_text()
+        app.gate(2)
+        app.click('next')
+        app.stage(2)
+        app.click('cancel')
+        app.wait_idle()
+        assert page_text() == before_cancel, 'cancel changed the displayed page'
+        app.click('next'); app.wait_idle()
+        assert page_text() and page_text() != before_cancel, 'retry did not advance'
+        report['checks'].append('cancelled page turn keeps the displayed page and retry advances')
         report['accepted'] = True
     except Exception:
         report['error'] = traceback.format_exc()

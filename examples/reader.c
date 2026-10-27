@@ -144,6 +144,10 @@ typedef struct {
   int fixed;
   int txt; /* Product original, with no SDK book identity. */
   int txt_pager_invalid; /* Recreate after a failed or cancelled layout. */
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  int txt_checkpoint_valid;
+  exr_txt_checkpoint txt_checkpoint;
+#endif
   exr_source txt_source; /* Borrowed from the pager. */
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   char txt_key[73];      /* Product content identity of this session. */
@@ -1767,6 +1771,7 @@ static void txt_release(void *context) { CloseHandle((HANDLE)context); }
 static exr_status txt_frame(host_session *session, const exr_source *source, const exr_layout *layout,
                             size_t page, host_frame *frame, exr_error *error) {
   exr_txt_cursor *cursor=NULL; const exr_page *info; size_t count=0;
+  exr_txt_checkpoint saved={0}; int have_saved=0;
   exr_status status=EXR_OK;
   info=exr_layout_pages(layout,&count);
   if(!info || !count || info->start>info->end || info->end-info->start>HOST_PAGE_TEXT_LIMIT) return EXR_FORMAT;
@@ -1778,11 +1783,19 @@ static exr_status txt_frame(host_session *session, const exr_source *source, con
      through the public bounded cursor for accessibility and page text. */
   status=exr_txt_cursor_create(source,&cursor,error);
   if(status!=EXR_OK) goto done;
+  if(session->txt_checkpoint_valid && session->txt_checkpoint.projection_offset<=info->start) {
+    status=exr_txt_cursor_restore(cursor,&session->txt_checkpoint,error);
+    if(status!=EXR_OK) goto done;
+  }
   {
     size_t filled=0; uint64_t offset; const char *text; size_t length;
     while(filled<(*frame).text_bytes) {
+      exr_txt_checkpoint before;
+      status=exr_txt_cursor_checkpoint(cursor,&before,error);
+      if(status!=EXR_OK) goto done;
       status=exr_txt_cursor_next(cursor,&offset,&text,&length,error);
       if(status!=EXR_OK || !text) { if(status==EXR_OK) status=EXR_FORMAT;goto done; }
+      if(offset<=info->start) { saved=before; have_saved=1; }
       if(offset + length < info->start + filled) continue;
       if(offset>info->start+filled) {
         if(offset!=info->start+filled+1) { status=EXR_FORMAT;goto done; }
@@ -1812,6 +1825,7 @@ static exr_status txt_frame(host_session *session, const exr_source *source, con
   }
   (*frame).valid=1; (*frame).render_scale=1; (*frame).generation=++g.frame_sequence;
   frame->page=page;
+  if(have_saved) { session->txt_checkpoint=saved; session->txt_checkpoint_valid=1; }
  done:
   if(cursor) exr_txt_cursor_free(cursor);
   if(status!=EXR_OK) frame_clear(frame);

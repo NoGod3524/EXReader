@@ -1461,7 +1461,9 @@ exr_status exr_txt_cursor_create(const exr_source *source,exr_txt_cursor **out,e
 }
 exr_status exr_txt_cursor_next(exr_txt_cursor *c,uint64_t *offset,const char **text,size_t *size,exr_error *e) {
   uint32_t cp;int has;exr_status s;size_t start,end;
-  if(offset) *offset=0;if(text) *text=NULL;if(size) *size=0;
+  if(offset) *offset=0;
+  if(text) *text=NULL;
+  if(size) *size=0;
   if(!c || !offset || !text || !size || c->failed) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT cursor");
   if(c->finished) return EXR_OK;
   c->line.size=0;if(c->line.data) c->line.data[0]=0;
@@ -1539,7 +1541,8 @@ static exr_status txt_search_paragraph(void *context,uint64_t offset,const char 
 exr_status exr_txt_find_source(const exr_source *source,const char *query,uint64_t from,
                                uint64_t *start,uint64_t *end,exr_error *e) {
   txt_search search={0};uint32_t *prefix=NULL,cp;size_t at=0,n;uint64_t extent=0;exr_status s;
-  if(start) *start=UINT64_MAX;if(end) *end=UINT64_MAX;
+  if(start) *start=UINT64_MAX;
+  if(end) *end=UINT64_MAX;
   if(!source || !query || !start || !end || !(n=strlen(query))) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT search arguments");
   if(n>1024*1024) return exr_fail(e,EXR_LIMIT,"Search query exceeds 1 MiB");
   while(at<n) {

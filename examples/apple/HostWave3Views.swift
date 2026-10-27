@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import SwiftUI
 import UniformTypeIdentifiers
+import Darwin
 #if os(iOS)
 import UIKit
 #else
@@ -29,6 +30,7 @@ struct HostWave3Actions {
 
 struct HostWave3Sheet: View {
     @ObservedObject var state: HostWave3State
+    let ownerBusy: Bool
     let actions: HostWave3Actions
     @Environment(\.presentationMode) private var presentation
     @State private var choosing = false
@@ -60,9 +62,9 @@ struct HostWave3Sheet: View {
             }
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    originalSection
                     annotationSection
                     fontSection
-                    originalSection
                     historySection
                     syncSection
 #if EXR_APPLE_HOST_REVIEW
@@ -76,8 +78,11 @@ struct HostWave3Sheet: View {
             }
             Text(state.message).font(.caption).frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityIdentifier("features.status")
+            if let url = state.exportURL {
+                HostWave3ShareButton(url: url).disabled(state.busy)
+            }
             HStack {
-                Button("刷新详情", action: actions.refresh).disabled(state.busy)
+                Button("刷新详情", action: actions.refresh).disabled(state.busy || ownerBusy)
                     .accessibilityIdentifier("features.refresh")
                 Spacer()
                 if state.busy {
@@ -200,7 +205,6 @@ struct HostWave3Sheet: View {
                 if let url = state.exportURL {
                     Text(url.lastPathComponent).font(.caption).lineLimit(2)
                         .accessibilityIdentifier("features.export.filename")
-                    HostWave3ShareButton(url: url).disabled(state.busy)
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
         } label: { Text("导出与分享") }
@@ -294,7 +298,13 @@ struct HostWave3Sheet: View {
     }
 
     private func reviewDirectory() -> URL? {
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true)
+        guard let resolved = realpath(FileManager.default.temporaryDirectory.path, nil) else {
+            pickerError = "无法解析临时文件夹"
+            return nil
+        }
+        defer { free(resolved) }
+        let directory = URL(fileURLWithPath: String(cString: resolved), isDirectory: true)
+            .appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true)
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             return directory
@@ -306,7 +316,7 @@ struct HostWave3Sheet: View {
                         perform: @escaping () -> Void) -> some View {
         Button(action: perform) {
             Text(title).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
-        }.buttonStyle(.borderless).disabled(state.busy || disabled).accessibilityIdentifier(id)
+        }.buttonStyle(.borderless).disabled(state.busy || ownerBusy || disabled).accessibilityIdentifier(id)
     }
 }
 

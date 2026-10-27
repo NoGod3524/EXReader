@@ -51,11 +51,19 @@ def main():
         run([sys.executable, 'tests/apple_host/reading/prepare_reading_fixture.py', '--resources', resources], 'reading-fixtures')
         run([sys.executable, 'tests/apple_host/search/prepare_search_fixture.py', '--resources', resources], 'search-fixtures')
         run([sys.executable, 'tests/apple_host/page_theme/prepare_fixtures.py', '--resources', resources], 'theme-fixtures')
+        # Navigation deliberately repeats chapter zero. Search's frozen one-hit
+        # and exactly-32 assertions require its original, non-repeated book.
+        search_resources = out / 'search-resources'
+        run([sys.executable, 'tests/apple_host/prepare_fixtures.py', '--resources', search_resources], 'search-base-fixtures')
+        run([sys.executable, 'tests/apple_host/search/prepare_search_fixture.py', '--resources', search_resources], 'isolated-search-fixtures')
         control_tests = out / 'original-tests'; control_tests.mkdir()
+        search_tests = out / 'search-tests'; search_tests.mkdir()
+        theme_tests = out / 'theme-tests'; theme_tests.mkdir()
         original = {}
         for suite in ('reading', 'navigation', 'search', 'page_theme'):
             for source in (ROOT / 'tests/apple_host' / suite / 'ui').glob('*.swift'):
-                shutil.copyfile(source, control_tests / source.name); assert digest(source) == digest(control_tests / source.name)
+                target_tests = search_tests if suite == 'search' else theme_tests if suite == 'page_theme' else control_tests
+                shutil.copyfile(source, target_tests / source.name); assert digest(source) == digest(target_tests / source.name)
                 original[str(source.relative_to(ROOT))] = digest(source)
         base_tests = out / 'base-tests'; base_tests.mkdir()
         source = ROOT / 'tests/apple_host/EXReaderHostUITests.swift'
@@ -75,19 +83,34 @@ def main():
             run(['xcrun', 'simctl', 'bootstatus', udid, '-b'], 'boot-ready')
             destination = 'platform=iOS Simulator,id=' + udid; result['destination'] = {'runtime': runtime, 'device': name, 'udid': udid}
         sdk = sdks[target] / 'sdk'; products = sdks[target] / 'raw-products'
-        for mode, tests, expected in [('wave3', ROOT / 'tests/reader_team24_apple/ui', 5), ('base', base_tests, 13), ('control', control_tests, 21)]:
+        for mode, tests, expected in [('wave3', ROOT / 'tests/reader_team24_apple/ui', 5), ('base', base_tests, 13),
+                                     ('control', control_tests, 13), ('search', search_tests, 4), ('theme', theme_tests, 4)]:
             project = out / ('project-' + mode); derived = out / ('derived-' + mode)
-            run(['ruby', 'tests/reader_team24_apple/make_project.rb', project, resources, tests, mode], mode + '-project')
+            phase_resources = search_resources if mode == 'search' else resources
+            generator_mode = 'control' if mode in ('search', 'theme') else mode
+            run(['ruby', 'tests/reader_team24_apple/make_project.rb', project, phase_resources, tests, generator_mode], mode + '-project')
             if args.platform != 'macos': subprocess.run(['xcrun', 'simctl', 'uninstall', udid, 'org.exreader.host'], capture_output=True)
             bundle = evidence / (mode + '.xcresult')
             phase = {'mode': mode, 'expected_cases': expected, 'accepted': False}; phases.append(phase)
+            phase['resource_manifest_sha256'] = digest(phase_resources / 'manifest.json')
+            shutil.copyfile(phase_resources / 'manifest.json', evidence / (mode + '-resource-manifest.json'))
             failed = None
             try:
-                run(['xcodebuild', 'test', '-project', project / 'EXReaderHost.xcodeproj', '-scheme', scheme,
+                if mode == 'theme':
+                    # The original theme driver services the real OS requests;
+                    # running XCTest alone leaves its dark/light requests unanswered.
+                    (project / 'raw-products').symlink_to(products.resolve(), target_is_directory=True)
+                    derived = ROOT / 'build/ThemeDerivedData'
+                    bundle = evidence / 'theme-os/theme.xcresult'
+                    run([sys.executable, 'tests/apple_host/page_theme/run_ui.py', '--platform', args.platform,
+                         '--project', project / 'EXReaderHost.xcodeproj', '--sdk', sdk,
+                         '--output', evidence / 'theme-os'], mode + '-native-ui')
+                else:
+                    run(['xcodebuild', 'test', '-project', project / 'EXReaderHost.xcodeproj', '-scheme', scheme,
                     '-destination', destination, '-derivedDataPath', derived, '-resultBundlePath', bundle,
                     '-parallel-testing-enabled', 'NO', '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '240',
                     '-maximum-test-execution-time-allowance', '360', 'EXR_SDK_DIR=' + str(sdk), 'EXR_PRODUCTS_DIR=' + str(products),
-                    'CODE_SIGNING_ALLOWED=' + signing], mode + '-native-ui')
+                        'CODE_SIGNING_ALLOWED=' + signing], mode + '-native-ui')
             except Exception as error: failed = error
             app = derived / 'Build/Products' / suffix / 'EXReaderHost.app'
             binary = app / ('Contents/MacOS/EXReaderHost' if args.platform == 'macos' else 'EXReaderHost')
@@ -96,6 +119,9 @@ def main():
                 info = plistlib.loads((app / ('Contents/Info.plist' if args.platform == 'macos' else 'Info.plist')).read_bytes())
                 assert info['EXRSourceSHA'] == result['source_sha']
                 assert info['CFBundleIdentifier'] == 'org.exreader.host'
+                bundled_resources = app / 'Contents/Resources' if args.platform == 'macos' else app
+                for name, expected_digest in json.loads((phase_resources / 'manifest.json').read_text()).items():
+                    assert digest(bundled_resources / name) == expected_digest, (mode, name, 'bundled fixture differs')
                 saved = evidence / ('program-' + mode); shutil.copytree(app, saved / 'EXReaderHost.app')
                 # The nested archive preserves executable modes when downloaded.
                 run(['ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', app,
@@ -125,7 +151,7 @@ def main():
             else:
                 assert len(phase.get('cases', [])) == expected and all(x['result'] == 'Passed' for x in phase['cases'])
                 phase['accepted'] = True
-        result['accepted'] = len(phases) == 3 and all(x['accepted'] for x in phases)
+        result['accepted'] = len(phases) == 5 and all(x['accepted'] for x in phases)
     except Exception as error:
         result['failure'] = str(error); print('Team24 Apple FAILURE ' + str(error), flush=True)
     finally:
