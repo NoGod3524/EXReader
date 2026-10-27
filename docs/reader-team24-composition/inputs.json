@@ -277,7 +277,7 @@
     },
     {
       "name": "android-organization-host-candidate",
-      "source": "b0e7b1da2c1ddf55cb3d01dc472b2be40fffc66f",
+      "source": "bc7ae945da48629a2fcb940d1896a0263e4cb384",
       "paths": [
         ".github/workflows/android-organization-sync.yml",
         ".github/workflows/reader-android-path-access.yml",
