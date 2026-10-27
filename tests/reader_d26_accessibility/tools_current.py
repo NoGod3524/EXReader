@@ -366,6 +366,10 @@ def main():
         command('xdotool', 'windowactivate', '--sync', host.window)
         host.key('ctrl+shift+f')
         element('Search within book', {'dialog'})
+        search_window = command('xdotool', 'search', '--onlyvisible', '--all', '--pid',
+                                str(host.process.pid), '--name', '^Search within book$').splitlines()[-1]
+        command('xdotool', 'windowmove', '--sync', search_window, '80', '80')
+        command('xdotool', 'windowactivate', '--sync', search_window)
         click('In-book query', {'text'})
         host.key('ctrl+a')
         host.paste('NEEDLEONE')
@@ -378,7 +382,18 @@ def main():
             return [row for row in bus.children(listing)
                     if bus.role(row) == 'list item' and bus.name(row).startswith('Search result 1:')
                     and bus.states(row).get('showing') and bus.states(row).get('sensitive')]
-        result_row = wait_nodes(search_rows)
+        width, height = map(int, command('xdotool', 'getdisplaygeometry').split())
+        def visible_search_row():
+            found = search_rows()
+            if not found:
+                return []
+            box = bus.extents(found[0])
+            if not box or box['width'] < 2 or box['height'] < 2:
+                return []
+            x = box['x'] + box['width'] // 2
+            y = box['y'] + box['height'] // 2
+            return found if 0 <= x < width and 0 <= y < height else []
+        result_row = wait_nodes(visible_search_row, seconds=30)
         print(json.dumps({'search_result_before_click': {'name': bus.name(result_row[0]),
                          'states': bus.states(result_row[0]), 'box': bus.extents(result_row[0])}}), flush=True)
         click_node(result_row[0])
