@@ -155,3 +155,20 @@ Audit artifact `12768097289`, 12,414 bytes, SHA-256
 `6a4ae8db2e93e7335c740a3cb84460944275e2c4bd3585786a27591b0e4728be`,
 expires 2027-01-25T20:27:11Z. This documentation commit is not the audited
 source and does not change the fixed 108-outcome denominator.
+
+
+## GTK candidate follow-up: visible search and account status
+
+On source `00e370a28ed4b25718154ff68d914cbecb51fdb8`,
+[run 40587741187/1](https://github.com/NoGod3524/EXReader/actions/runs/40587741187)
+passed the current five-tool flow and the account status event checks. The
+search result had a real visible 480 by 55 pixel rectangle after the driver
+moved the native dialog; the observed history landing and back/forward steps
+passed. The account label retained its semantic description in this observation.
+
+The original [run 40585712410/1](https://github.com/NoGod3524/EXReader/actions/runs/40585712410)
+failed both checks: its result rectangle was off-screen and its account label
+could not be reacquired by description. No GTK product change was made and the
+account result does not establish the cause of the earlier failure. Original
+assertions remain. The same-run retained historical jobs and any final combined
+candidate remain separately pending; this note does not increment the catalog.
