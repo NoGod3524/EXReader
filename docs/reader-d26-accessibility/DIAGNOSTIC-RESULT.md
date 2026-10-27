@@ -16,3 +16,11 @@ run [40588875254](https://github.com/NoGod3524/EXReader/actions/runs/40588875254
 recorded a Python driver segmentation fault after the collections-dialog phase;
 its failure is retained. An additional focused diagnosis passed on its own
 source without reproducing the crash; it did not establish the root cause.
+
+
+The GTK host and retained/current D26 test paths are byte-identical between
+`00e370a28ed4b25718154ff68d914cbecb51fdb8` and
+`c45ac1a7508842f071e3d892635fdd9af444ae90`. The latter does change
+`src/formats.c` and `include/exr/formats.h` for the TXT anchor candidate, and
+also changes Windows-only host files. This narrows the source comparison but
+does not establish the cause of the Python driver crash or chooser failure.
