@@ -979,6 +979,9 @@ struct host_job {
   char *search_query;
   unsigned long search_generation;
   reader_search_cursor search_resume;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  host_txt_search_cursor search_txt_resume;
+#endif
   int search_has_resume;
   host_search_batch search_batch;
   host_search_hit search_hit;
@@ -4692,6 +4695,9 @@ static void host_command(int id) {
   if (g.session.txt && id != IDC_OPEN_BUTTON && id != IDC_IMPORT_BUTTON && id != IDC_CANCEL && id != IDC_DELETE_BUTTON && id != IDC_PREV && id != IDC_NEXT && id != IDC_SELECT_ALL && id != IDC_COPY_QUOTE
 #ifdef EXR_READER_WINDOWS_ACCOUNT
       && id != IDC_ACCOUNT_BUTTON
+#endif
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_SEARCH)
+      && id != IDC_INBOOK
 #endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
       && id != IDC_CLOUD_IMPORT && id != IDC_BULK_ORGANIZE

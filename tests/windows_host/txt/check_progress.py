@@ -123,7 +123,7 @@ def main():
     assert fixture.stat().st_size == 16792975 and digest(fixture) == expected
     # A second, independent identity: same shape, different bytes and size.
     isolated = out / 'Isolated.txt'
-    lines = ['Isolated Book %04d keeps its own reading position line %04d.' % (index, index) for index in range(1200)]
+    lines = ['Isolated Book %04d keeps its own reading position line %04d. \u4e66\u9875\u4f4d\u7f6e' % (index, index) for index in range(1200)]
     isolated.write_text(('\n'.join(lines) + '\n') * 256, encoding='utf-8')
     assert isolated.stat().st_size > 16 * 1024 * 1024
 
@@ -159,6 +159,24 @@ def main():
 
     def press_font_increase():
         ui.send(ui.U.GetDlgItem(app.window, FONT_INC), 0xF5)  # BM_CLICK
+
+    def search_dialog():
+        ui.command(app, 170)
+        return app.wait(lambda: ui.owned_dialog(app, 171), timeout=30)
+
+    def search_rows(dialog):
+        box = ui.U.GetDlgItem(dialog, 174)
+        result = []
+        for index in range(ui.send(box, 0x18B)):
+            value = C.create_unicode_buffer(2048)
+            ui.send(box, 0x189, index, C.addressof(value))
+            result.append(value.value)
+        return result
+
+    def search_query(dialog, value):
+        ui.P.set_text(ui.U.GetDlgItem(dialog, 171), value)
+        ui.send(dialog, 0x111, 172)
+        app.wait(lambda: ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog, 172)), timeout=240)
 
     try:
         profile = out / 'profile'
@@ -243,6 +261,33 @@ def main():
         assert ' '.join(clipboard_text(app).split()) == ' '.join(current.split())
         record('select and copy a later TXT page using its nonzero source offset')
 
+        before_missing = page_text(app, automation)
+        dialog = search_dialog()
+        search_query(dialog, 'query absent from the complete TXT original')
+        assert not search_rows(dialog)
+        assert '\u6ca1\u6709\u5339\u914d\u7ed3\u679c' in ui.P.text(ui.U.GetDlgItem(dialog, 178))
+        assert page_text(app, automation) == before_missing
+        record('TXT search reports a missing query without changing the page')
+        search_query(dialog, 'line 0100')
+        first_hits = search_rows(dialog)
+        assert len(first_hits) == 32, first_hits
+        ui.send(ui.U.GetDlgItem(dialog, 174), 0x186, 0)
+        ui.send(dialog, 0x111, 175)
+        app.wait(lambda: '\u5df2\u72ec\u7acb\u6838\u5bf9' in ui.P.text(ui.U.GetDlgItem(dialog, 178)), timeout=240)
+        app.wait_idle()
+        assert 'line 0100' in page_text(app, automation), page_text(app, automation)[:200]
+        record('TXT search independently verifies and locates the selected match')
+        ui.send(dialog, 0x111, 173)
+        app.wait(lambda: ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog, 172)), timeout=240)
+        next_hits = search_rows(dialog)
+        assert len(next_hits) == 32, next_hits
+        assert int(next_hits[0].split()[0]) > int(first_hits[-1].split()[0]), (first_hits[-1], next_hits[0])
+        ui.send(dialog, 0x10)
+        app.wait(lambda: not ui.U.IsWindow(dialog), timeout=30)
+        app.wait_idle()
+        record('TXT search resumes at the next batch without repeating hits')
+        current = page_text(app, automation)
+
         before_font = page_text(app, automation)
         label_before_font = app.label()
         press_font_increase()
@@ -288,6 +333,13 @@ def main():
         assert 'Isolated Book 0000' in isolated_text, isolated_text[:200]
         assert '还没有保存过阅读位置' in app.status(), app.status()
         record('a different book identity starts at its own first page', app.status())
+        dialog = search_dialog()
+        search_query(dialog, '\u4e66\u9875\u4f4d\u7f6e')
+        assert len(search_rows(dialog)) == 32
+        ui.send(dialog, 0x10)
+        app.wait(lambda: not ui.U.IsWindow(dialog), timeout=30)
+        app.wait_idle()
+        record('TXT search handles UTF-8 text on the independent original')
 
         close_cleanly(app); app = None
         app = ui.P.App(exe, font, profile, existing=True)
