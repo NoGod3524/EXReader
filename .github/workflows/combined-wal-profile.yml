@@ -1,7 +1,7 @@
 name: Combined Windows WAL mapping profile
 on:
   push:
-    branches: [codex/combined-wal-candidate, codex/android-merge-prep, codex/windows-android-combined]
+    branches: [codex/combined-wal-candidate, codex/android-merge-prep, codex/windows-android-combined, codex/reader-all-combined]
   workflow_dispatch:
 permissions:
   contents: read
