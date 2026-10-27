@@ -1764,7 +1764,18 @@ static size_t txt_read(void *context,uint64_t offset,void *buffer,size_t size) {
   if(!SetFilePointerEx(h,at,NULL,FILE_BEGIN) || !ReadFile(h,buffer,(DWORD)size,&got,NULL)) return 0;
   return (size_t)got;
 }
-static void txt_release(void *context) { CloseHandle((HANDLE)context); }
+static void txt_release(void *context) { CloseHandle((HANDLE)context); }#ifdef EXR_READER_WINDOWS_TXT_PROGRESS/* Worker-side breadcrumb: one line per step so a fault leaves its exact position
+   in the profile directory of the acceptance run. No product state is read. */
+static void txt_trace(const char *event, long long value) {
+  wchar_t path[HOST_PATH];
+  FILE *file;
+  if (!g.data_dir[0]) return;
+  swprintf(path, HOST_PATH, L"%ls\\txt-progress-trace.log", g.data_dir);
+  file = _wfopen(path, L"ab");
+  if (!file) return;
+  fprintf(file, "%s %lld\n", event, value);
+  fclose(file);
+}#endif
 static exr_status txt_frame(host_session *session, const exr_source *source, const exr_layout *layout,
                             size_t page, host_frame *frame, exr_error *error) {
   exr_txt_cursor *cursor=NULL; const exr_page *info; size_t count=0;
@@ -1921,18 +1932,7 @@ static exr_status job_txt_go(host_job *job) {
    captured together with a bounded window of the real projected text. Every
    product write and read runs on the serialized host worker; the UI only hands
    over copied values and never touches the revision store. */
-/* Worker-side breadcrumb: one line per step so a fault leaves its exact position
-   in the profile directory of the acceptance run. No product state is read. */
-static void txt_trace(const char *event, long long value) {
-  wchar_t path[HOST_PATH];
-  FILE *file;
-  if (!g.data_dir[0]) return;
-  swprintf(path, HOST_PATH, L"%ls\\txt-progress-trace.log", g.data_dir);
-  file = _wfopen(path, L"ab");
-  if (!file) return;
-  fprintf(file, "%s %lld\n", event, value);
-  fclose(file);
-}
+
 static int txt_store_open(reader_txt_progress **store, exr_error *error) {
   txt_trace("store_open", 1);
   char *path = host_utf8(g.product_path);
