@@ -1086,9 +1086,8 @@ def main():
         host.type_text(secret)
         driver.wait_until(lambda: host.number('account', 'has_password') == 1, 30,
                           description='the password entry to hold the typed secret')
-        password = a11y.find_one(current_app(),
-                                 roles=contract.BUTTON_ROLES + contract.ENTRY_ROLES,
-                                 text=contract.ACCOUNT_ENTRIES['password'])
+        password = wait_element(contract.ACCOUNT_ENTRIES['password'],
+                                roles=contract.BUTTON_ROLES + contract.ENTRY_ROLES, timeout=6)
         exported = a11y.accessible_text(password) if password is not None else None
         attributes = a11y.attributes(password) if password is not None else {}
         leaked = bool(exported and secret in (exported.get('text') or ''))
