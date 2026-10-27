@@ -275,6 +275,44 @@ def main():
                int(done['ann_committed']) >= 1 and int(done['ann_created']) >= 1 and int(done['ann_duplicates']) == 0,
                {key: done[key] for key in ('ann_phase', 'ann_created', 'ann_duplicates', 'ann_committed')})
 
+        if os.environ.get('EXR_GTK_ANNOTATION_EXPORT') == '1':
+            # Export through the actual menu and native save chooser. The file
+            # must retain the original imported revision wires byte for byte.
+            portable = output / 'exported-annotations.jsonl'
+            before_export = frame()
+            menu('Reading tools', 'Export annotations…')
+            element('Export annotations', {'file chooser'})
+            host.key('Escape')
+            wait_nodes(lambda: not nodes('Export annotations', {'file chooser'}))
+            record('annotation_export_cancel_keeps_page_and_creates_no_file',
+                   frame() == before_export and not portable.exists())
+            menu('Reading tools', 'Export annotations…')
+            chooser('Export annotations', portable)
+            saved = wait_wave(lambda state: state['ann_export_busy'] == '0'
+                              and state['ann_export_published'] == '1', label='annotation export')
+            raw = portable.read_bytes()
+            original = [json.loads(line) for line in args.annotations.read_bytes().splitlines()]
+            actual = [json.loads(line) for line in raw.splitlines()]
+            assert actual[0]['type'] == 'header' and actual[0]['format'] == original[0]['format']
+            assert actual[-1]['type'] == 'footer' and actual[-1]['complete'] is True
+            def wires(rows):
+                return sorted((row['annotation_id'], head['revision_id'], head['sha256'], head['wire'])
+                              for row in rows if row.get('type') == 'annotation' for head in row['heads'])
+            assert wires(actual) and wires(actual) == wires(original)
+            record('annotation_export_roundtrip_preserves_original_wires',
+                   int(saved['ann_export_bytes']) == len(raw)
+                   and int(saved['ann_export_count']) == 2,
+                   {'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest(), 'heads': len(wires(actual))})
+            # Re-import of the exported file is a confirmed exact duplicate.
+            menu('Reading tools', 'Import annotations…')
+            chooser('Import annotations', portable)
+            wait_wave(lambda state: state['ann_phase'] == '2', label='exported preview')
+            click('Import annotations', {'push button'})
+            duplicate = wait_wave(lambda state: state['ann_phase'] == '4', label='exported retry')
+            record('annotation_export_import_is_exact_duplicate',
+                   int(duplicate['ann_created']) == 0 and int(duplicate['ann_duplicates']) == 2,
+                   {'created': duplicate['ann_created'], 'duplicates': duplicate['ann_duplicates']})
+
         # 5. A truncated file is refused by the same preview and writes nothing.
         broken = output / 'broken.jsonl'
         payload = args.annotations.read_bytes()
