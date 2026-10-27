@@ -9,6 +9,35 @@ static void winrecords_phase(void *context,int phase) {
   review_pause(7+phase,phase==1 ? job:NULL);
 #endif
 }
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+/* Reopen the product original by its content identity before using a selector. */
+static exr_status winrecords_txt_source(host_job *job,exr_source *source,HANDLE *handle) {
+  reader_catalog *catalog=NULL;reader_catalog_error detail={0};
+  reader_original_callbacks callbacks={job,job_cancel_check,NULL};
+  char *database=host_utf8(g.product_path),*root=host_utf8(g.original_root);
+  void *opened=NULL;uint64_t bytes=0;reader_original_status result=ROI_IO;
+  memset(source,0,sizeof(*source));*handle=NULL;
+  if(!database||!root) {free(database);free(root);return EXR_MEMORY;}
+  if(!reader_catalog_open(database,&catalog,&detail))
+    result=reader_original_verified_handle(catalog,root,job->txt_key,&callbacks,&opened,&bytes);
+  if(catalog) reader_catalog_close(&catalog,&detail);
+  free(database);free(root);
+  if(result!=ROI_OK) return result==ROI_CANCELLED?EXR_CANCELLED:result==ROI_MEMORY?EXR_MEMORY:EXR_IO;
+  *handle=(HANDLE)opened;source->size=bytes;source->context=opened;source->read_at=txt_read;
+  source->control=(exr_control){job_cancel_check,NULL,job};return EXR_OK;
+}
+static exr_status winrecords_txt_match(host_job *job,exr_source *source,
+    const reader_rs_record *record,exr_anchor_match *match) {
+  exr_source controlled=*source;
+  exr_anchor anchor={0};anchor.start=anchor.end=SIZE_MAX;
+  if(!record->has_location||record->mode!=READER_RS_REFLOW_GLOBAL) return EXR_ARGUMENT;
+  anchor.exact=record->exact;anchor.prefix=record->prefix;anchor.suffix=record->suffix;anchor.chapter=record->chapter;
+  controlled.control=(exr_control){job_cancel_check,NULL,job};
+  exr_status status=exr_txt_anchor_resolve_source(&controlled,&anchor,match,&job->error);
+  if(status!=EXR_OK) return status;
+  return match->state==EXR_ANCHOR_FOUND?EXR_OK:EXR_ARGUMENT;
+}
+#endif
 static exr_status winrecords_resolve(host_job *job,host_session *input,const reader_rs_record *record,
     size_t *unit,exr_anchor_match *match,exr_pager **temporary) {
   exr_control control={job_cancel_check,NULL,job};reader_rs_error error={0};reader_rs_status code=READER_RS_IDENTITY;
@@ -39,6 +68,22 @@ static exr_status winrecords_capture(void *context,const reader_rs_record *histo
   exr_pager *first=NULL,*current=NULL;exr_anchor_match before={0},match={0};size_t unit=g.session.fixed?g.frame.page:g.frame.part;
   size_t start=job->note_start,end=job->note_end;exr_control control={job_cancel_check,NULL,job};
   if(job->book_id!=g.session.book_id || job->generation!=g.frame.generation) return EXR_ARGUMENT;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if(g.session.txt) {
+    exr_source source={0},live=g.session.txt_source;HANDLE handle=NULL;
+    if(strcmp(job->txt_key,g.session.txt_key)) return EXR_ARGUMENT;
+    status=winrecords_txt_source(job,&source,&handle);
+    if(status==EXR_OK && historical) status=winrecords_txt_match(job,&source,historical,&before);
+    if(status==EXR_OK && historical) status=winrecords_txt_match(job,&live,historical,&match);
+    if(status==EXR_OK && historical && (before.start!=match.start||before.end!=match.end)) status=EXR_FORMAT;
+    if(historical) {start=match.start;end=match.end;}
+    live.control=control;
+    if(status==EXR_OK) status=exr_txt_anchor_create_source(&live,start,end,anchor,&job->error);
+    if(handle) CloseHandle(handle);
+    out->mode=READER_RS_REFLOW_GLOBAL;out->anchor=anchor;*part=0;
+    return status;
+  }
+#endif
   if(historical) {
     size_t independent=0;status=winreader_fresh(job,&fresh);
     if(status==EXR_OK) status=winrecords_resolve(job,&fresh,historical,&independent,&before,&first);
@@ -68,6 +113,23 @@ static exr_status winrecords_route(host_job *job) {
   const reader_rs_record *record=&job->records.record;reader_rs_capture capture={0};
   exr_anchor anchor={0};exr_fixed_anchor fixed={0};size_t part=0;
   exr_status status=winrecords_capture(job,record,&capture,&anchor,&fixed,&part);
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if(status==EXR_OK && g.session.txt) {
+    exr_control control={job_cancel_check,NULL,job};size_t page=0;
+    if(g.session.txt_pager_invalid) status=EXR_ARGUMENT;
+    if(status==EXR_OK) status=page_for_offset(&g.session,anchor.start,&control,&page,NULL,NULL,&job->error);
+    if(status==EXR_OK) {
+      job->target_page=page;status=job_txt_go(job);
+      if(status==EXR_OK) {
+        job->applied_page=page;job->note_start=anchor.start;
+        job->note_end=anchor.end<job->frame.range_end?anchor.end:job->frame.range_end;
+        job->resolved_selection=job->note_start<job->note_end;
+      }
+    }
+    exr_anchor_free(&anchor);exr_fixed_anchor_free(&fixed);
+    return status==EXR_OK&&job_cancel_flag(job)?EXR_CANCELLED:status;
+  }
+#endif
   if(status==EXR_OK) {
     if(g.session.fixed) {job->target_page=part;job->note_start=fixed.start;job->note_end=fixed.end;job->resolved_selection=1;}
     else {
@@ -82,11 +144,25 @@ static exr_status winrecords_route(host_job *job) {
 static exr_status winrecords_job(host_job *job) {
   if(!g.session.active || job->book_id!=g.current.id || job->generation!=g.frame.generation) return EXR_ARGUMENT;
   char source[256],sha[65],key[73];uint64_t bytes=0;exr_control control={job_cancel_check,NULL,job};
-  exr_status status=winreader_identity(job->book_id,g.current.format,g.session.fixed,g.session.bounded,source,&control,&job->error);
-  if(status!=EXR_OK || strcmp(source,g.session.source_key)) return status!=EXR_OK?status:EXR_FORMAT;
-  EnterCriticalSection(&g.library_lock);
-  status=reader_catalog_sdk_original_identity(g.library,job->book_id,&control,sha,&bytes,&job->error);
-  LeaveCriticalSection(&g.library_lock);if(status!=EXR_OK) return status;
+  exr_status status=EXR_OK;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if(g.session.txt) {
+    exr_source verified={0};HANDLE handle=NULL;
+    if(strcmp(job->txt_key,g.session.txt_key)) return EXR_ARGUMENT;
+    status=winrecords_txt_source(job,&verified,&handle);
+    if(status!=EXR_OK) return status;
+    bytes=verified.size;if(handle) CloseHandle(handle);
+    if(strncmp(job->txt_key,"txt:",4)||strlen(job->txt_key)!=68) return EXR_FORMAT;
+    memcpy(sha,job->txt_key+4,65);
+  } else
+#endif
+  {
+    status=winreader_identity(job->book_id,g.current.format,g.session.fixed,g.session.bounded,source,&control,&job->error);
+    if(status!=EXR_OK || strcmp(source,g.session.source_key)) return status!=EXR_OK?status:EXR_FORMAT;
+    EnterCriticalSection(&g.library_lock);
+    status=reader_catalog_sdk_original_identity(g.library,job->book_id,&control,sha,&bytes,&job->error);
+    LeaveCriticalSection(&g.library_lock);if(status!=EXR_OK) return status;
+  }
   const char *format=g.current.format==EXR_EPUB?"epub":g.current.format==EXR_PDF?"pdf":g.current.format==EXR_CBZ?"cbz":
     g.current.format==EXR_TXT?"txt":g.current.format==EXR_HTML?"html":g.current.format==EXR_FB2?"fb2":
     g.current.format==EXR_DOCX?"docx":g.current.format==EXR_RTF?"rtf":g.current.format==EXR_MOBI?"mobi":NULL;
@@ -148,6 +224,9 @@ static void winrecords_submit(int action,int kind,int operation,const char *afte
   if(!records.dialog||records.running||g.job||g.pending||g.closing||records.book_id!=g.current.id) return;
   host_job *job=job_new(JOB_RECORDS);if(!job) return;
   job->book_id=records.book_id;job->generation=g.frame.generation;job->records_generation=records.generation;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if(g.session.txt) snprintf(job->txt_key,sizeof(job->txt_key),"%s",g.session.txt_key);
+#endif
   job->records_action=action;job->records_kind=kind;job->records_operation=operation;job->direction=direction;
   job->note_start=job->note_end=g.frame.range_start;
   if(g.session.fixed) job->note_start=job->note_end=0;
@@ -269,7 +348,9 @@ static LRESULT CALLBACK winrecords_procedure(HWND window,UINT message,WPARAM wpa
   return DefWindowProcW(window,message,wparam,lparam);
 }
 static void winrecords_show(void) {
+#ifndef EXR_READER_WINDOWS_TXT_PROGRESS
   if(g.session.txt) { set_status(L"TXT 目前仅支持第一页；此功能尚未实现。");return; }
+#endif
   if(records.dialog) {SetForegroundWindow(records.dialog);return;}
   if(g.job||g.pending||g.closing||!g.session.active) return;
   WNDCLASSW type={0};type.lpfnWndProc=winrecords_procedure;type.hInstance=GetModuleHandleW(NULL);type.hCursor=LoadCursor(NULL,IDC_ARROW);

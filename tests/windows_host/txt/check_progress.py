@@ -297,6 +297,30 @@ def main():
         ui.command(app, 108)
         assert ' '.join(clipboard_text(app).split()) == ' '.join(first_page.split())
         record('select and copy the first TXT page through native commands')
+
+        # Save a genuine page highlight and point bookmark through the existing
+        # reading-record owner, then independently reopen the original and jump.
+        first_label = app.label()
+        dialog, original_records = wave3.record_count(app)
+        ui.send(ui.U.GetDlgItem(dialog, wave3.RECORDS_HIGHLIGHT), 0xF5, timeout=5000)
+        app.wait(lambda: len(wave3.rows(dialog, wave3.RECORDS_ROWS)) == original_records + 1, timeout=240)
+        ui.send(ui.U.GetDlgItem(dialog, 215), 0xF5, timeout=5000)  # bookmark
+        app.wait(lambda: len(wave3.rows(dialog, wave3.RECORDS_ROWS)) == original_records + 2, timeout=240)
+        wave3.close_records(app, dialog)
+        app.click('next')
+        app.wait_idle()
+        assert app.label() != first_label
+        dialog, _ = wave3.record_count(app)
+        highlights = [i for i, row in enumerate(wave3.rows(dialog, wave3.RECORDS_ROWS))
+                      if row.startswith('\u5212\u7ebf')]
+        assert len(highlights) == 1, wave3.rows(dialog, wave3.RECORDS_ROWS)
+        wave3.select_row(dialog, highlights[0], wave3.RECORDS_ROWS)
+        app.wait(lambda: ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog, wave3.RECORDS_OPEN)), timeout=60)
+        ui.send(ui.U.GetDlgItem(dialog, wave3.RECORDS_OPEN), 0xF5, timeout=5000)
+        app.wait(lambda: app.label() == first_label, timeout=240)
+        wave3.close_records(app, dialog)
+        assert page_text(app, automation) == first_page
+        record('large TXT highlight and bookmark save; highlight resolves and returns to its original page')
         app.focus()
         drag_start, drag_end = selected_text_drag_points(app.control('page'), before_selection, after_selection)
         app.drag(app.control('page'), drag_start, drag_end)
