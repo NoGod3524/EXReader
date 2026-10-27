@@ -91,8 +91,11 @@ Mapping of corrected observations, without reducing behavior requirements:
   never synthesized by extra activation or navigation.
 - Current account labels are required and Receive books is additionally required.
 - Export retains the entire old five-tool script and byte/directory assertions;
-  its cell must be scrolled by native AT-SPI and have a valid on-screen center
-  before the original real pointer click. Unsupported scrolling fails explicitly.
+  its full target path is entered through the real focused Ctrl+L field,
+  followed by the explicit visible Export here response (twice only if GTK
+  navigates on the first response rather than accepting). The output must still match the exact chosen directory and bytes.
+  The attempted AT-SPI scroll_to route failed explicitly in run40457260445
+  (native scroll refused: work) and is preserved, not silently swallowed.
 - Original audit/tool outcomes run separately and retain their raw exit status,
   checks and error. The evidence collector validates source and report presence;
   it does not assert they passed. Strict current gates cannot pass on their behalf.

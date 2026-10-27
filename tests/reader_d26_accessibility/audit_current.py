@@ -160,6 +160,14 @@ def main():
             contract.NAMES['comment']: contract.ENTRY_ROLES,
             contract.NAMES['search']: contract.ENTRY_ROLES,
             contract.NAMES['page_image']: ('icon', 'image'),
+            contract.COLLECTIONS_DIALOG: contract.DIALOG_ROLES,
+            contract.ACCOUNT_DIALOG: contract.DIALOG_ROLES,
+            contract.METADATA_DIALOG: contract.DIALOG_ROLES,
+            contract.IMPORT_DIALOG: contract.DIALOG_ROLES + ('file chooser',),
+            contract.COLLECTIONS_NAMES['type']: ('combo box',),
+            contract.COLLECTIONS_NAMES['removed']: ('check box',),
+            contract.COLLECTIONS_NAMES['groups']: contract.LIST_ROLES,
+            contract.COLLECTIONS_NAMES['members']: contract.LIST_ROLES,
         }
         if roles is None:
             roles = named_roles.get(text)

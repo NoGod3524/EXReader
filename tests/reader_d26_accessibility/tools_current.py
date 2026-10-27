@@ -144,51 +144,28 @@ def main():
         command('xdotool', 'windowactivate', '--sync', window)
         dialog = element(name, {'file chooser'})
         if accept:
-            # SELECT_FOLDER has different location-entry acceptance semantics
-            # from OPEN. Reuse the retained folder-import driver's real native
-            # table traversal: enter each parent, then select the final folder.
-            click('Home', {'label'})
-            parts = path.relative_to(Path.home()).parts
-            for index, part in enumerate(parts):
-                row = element(part, {'table cell'})
-                # SHOWING alone does not mean a virtualized GTK cell is on screen.
-                # Ask the real accessibility component to scroll its own viewport,
-                # then require a fresh, visible cell before real pointer input.
-                component = row.get_component_iface()
-                assert component is not None, ('cell has no Component', part)
-                assert component.scroll_to(bus.Atspi.ScrollType.ANYWHERE), ('native scroll refused', part)
-                def visible_row():
-                    bounds = bus.extents(dialog)
-                    for candidate in nodes(part, {'table cell'}):
-                        if not bus.is_ancestor(dialog, candidate):
-                            continue
-                        box = bus.extents(candidate)
-                        if not bounds or not box or box['width'] <= 0 or box['height'] <= 0:
-                            continue
-                        cx, cy = box['x'] + box['width'] // 2, box['y'] + box['height'] // 2
-                        clips = [bounds]
-                        parent = candidate.get_parent()
-                        while parent is not None and parent != dialog:
-                            if bus.role(parent) == 'scroll pane':
-                                clip = bus.extents(parent)
-                                if not clip:
-                                    break
-                                clips.append(clip)
-                            parent = parent.get_parent()
-                        else:
-                            if all(clip['x'] <= cx < clip['x'] + clip['width'] and
-                                   clip['y'] <= cy < clip['y'] + clip['height'] for clip in clips):
-                                return candidate
-                    return None
-                row = wait_nodes(visible_row)
-                click_node(row)
-                wait_nodes(lambda: [row] if bus.states(row).get('selected') else [])
-                if index + 1 < len(parts):
-                    box = bus.extents(row)
-                    command('xdotool', 'mousemove', '--sync',
-                            str(box['x'] + box['width'] // 2), str(box['y'] + box['height'] // 2))
-                    command('xdotool', 'click', '--repeat', '2', '--delay', '150', '1')
-            click(accept, {'push button'})
+            # The previous run's GTK table cell refused AT-SPI scroll_to. Use the chooser's real keyboard location entry instead,
+            # never offscreen cell coordinates or programmatic file selection.
+            host.key('ctrl+l')
+            entry = wait_nodes(lambda: [node for node in bus.walk(dialog)
+                                        if bus.role(node) == 'text' and bus.states(node).get('showing')
+                                        and bus.states(node).get('sensitive')
+                                        and bus.states(node).get('focused')])
+            host.key('ctrl+a')
+            host.paste(str(path))
+            wait_nodes(lambda: [entry[0]] if (bus.accessible_text(entry[0]) or {}).get('text') == str(path) else [])
+            # SELECT_FOLDER can navigate on its first explicit response and
+            # accept on the second. Use only visible native response controls;
+            # final exported.parent and exact bytes prove the chosen directory.
+            for response in range(2):
+                if not nodes(name, {'file chooser'}):
+                    return
+                click(accept, {'push button'})
+                deadline = time.monotonic() + 5
+                while time.monotonic() < deadline:
+                    if not nodes(name, {'file chooser'}):
+                        return
+                    time.sleep(.1)
         else:
             host.key('ctrl+l')
             entry = wait_nodes(lambda: [node for node in bus.walk(dialog)
