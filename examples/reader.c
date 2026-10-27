@@ -1846,14 +1846,19 @@ static exr_status job_open_txt(host_job *job) {
      the captured projection window decide the page, never a stored page number. */
   {
     size_t target=0; wchar_t note[256]={0};
+    txt_trace("open_txt_before_restore", 0);
     status=txt_restore(&session,job->product_key,&target,note,256,&error);
+    txt_trace("open_txt_after_restore", (long long)status);
     if(status==EXR_OK) status=exr_pager_get(session.pager,target,&layout,&error);
+    txt_trace("open_txt_pager_get", (long long)status);
     if(status!=EXR_OK || !layout) { if(status==EXR_OK) status=EXR_FORMAT; goto done; }
     info=exr_layout_pages(layout,&count);
     if(!info || !count || info->start>info->end || info->end-info->start>HOST_PAGE_TEXT_LIMIT) { status=EXR_FORMAT;goto done; }
     status=txt_frame(&session,&source,layout,target,&job->frame,&error);
+    txt_trace("open_txt_frame", (long long)status);
     if(status!=EXR_OK) goto done;
     copy_wstring(job->message,512,note[0]?note:L"从第一页开始。");
+    txt_trace("open_txt_ready", (long long)target);
   }
 #else
   if(status==EXR_OK) status=exr_pager_get(session.pager,0,&layout,&error);
@@ -1869,6 +1874,9 @@ static exr_status job_open_txt(host_job *job) {
   job->session_swapped=job->have_frame=1;
 
  done:
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  txt_trace("open_txt_done", (long long)status);
+#endif
   session_clear(&session);
   if(handle) CloseHandle((HANDLE)handle);
   if(catalog && reader_catalog_close(&catalog,&ce) && status==EXR_OK) status=EXR_DATABASE;
@@ -1913,7 +1921,20 @@ static exr_status job_txt_go(host_job *job) {
    captured together with a bounded window of the real projected text. Every
    product write and read runs on the serialized host worker; the UI only hands
    over copied values and never touches the revision store. */
+/* Worker-side breadcrumb: one line per step so a fault leaves its exact position
+   in the profile directory of the acceptance run. No product state is read. */
+static void txt_trace(const char *event, long long value) {
+  wchar_t path[HOST_PATH];
+  FILE *file;
+  if (!g.data_dir[0]) return;
+  swprintf(path, HOST_PATH, L"%ls\\txt-progress-trace.log", g.data_dir);
+  file = _wfopen(path, L"ab");
+  if (!file) return;
+  fprintf(file, "%s %lld\n", event, value);
+  fclose(file);
+}
 static int txt_store_open(reader_txt_progress **store, exr_error *error) {
+  txt_trace("store_open", 1);
   char *path = host_utf8(g.product_path);
   reader_txp_error detail = {0};
   reader_txp_status status;
@@ -1924,6 +1945,7 @@ static int txt_store_open(reader_txt_progress **store, exr_error *error) {
   if (!path) { if (error) error->code = EXR_MEMORY; return 0; }
   status = reader_txp_open(path, raw, store, &detail);
   free(path);
+  txt_trace("store_opened", (long long)status);
   if (status != READER_TXP_OK) {
     if (error) {
       error->code = status == READER_TXP_MEMORY ? EXR_MEMORY : EXR_DATABASE;
@@ -2062,6 +2084,7 @@ static exr_status txt_restore(host_session *session, const char *key, size_t *pa
     return EXR_OK;
   }
   status = reader_txp_load(store, key, &saved, &meta, &detail);
+  txt_trace("restore_load", (long long)status);
   reader_txp_close(&store);
   if (status != READER_TXP_OK) {
     session->hold_progress = 1;

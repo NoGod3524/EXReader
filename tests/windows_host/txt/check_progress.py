@@ -241,6 +241,7 @@ def main():
         if app:
             try:
                 app.close()
+                report['host_exit_code'] = app.process.returncode
             except Exception:
                 pass
         (out / 'report.json').write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
