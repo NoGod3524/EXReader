@@ -2054,9 +2054,8 @@ static const wchar_t *txt_status_note(reader_txp_status status) {
   }
 }
 
-/* Restore step for one opened product original. Only an exact anchor v2 point
-   whose captured text still matches the current projection is used; everything
-   else keeps the page at the beginning and blocks the automatic overwrite. */
+/* Restore a matching anchor v2 point. A new book starts at the beginning and
+   may save normally; uncertain existing history blocks automatic overwrite. */
 static exr_status txt_restore(host_session *session, const char *key, size_t *page,
                               wchar_t *note, size_t capacity, exr_error *error) {
   reader_txt_progress *store = NULL;
@@ -2076,6 +2075,10 @@ static exr_status txt_restore(host_session *session, const char *key, size_t *pa
   }
   status = reader_txp_load(store, key, &saved, &meta, &detail);
   reader_txp_close(&store);
+  if (status == READER_TXP_MISSING) {
+    copy_wstring(note, capacity, txt_status_note(status));
+    return EXR_OK;
+  }
   if (status != READER_TXP_OK) {
     session->hold_progress = 1;
     copy_wstring(note, capacity, txt_status_note(status));

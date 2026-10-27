@@ -50,7 +50,7 @@ wire 仍是既有阅读位置 v1 封装中的 **anchor_version 2 点选择器**
 ## 宿主接线（`examples/reader.c`，`EXR_READER_WINDOWS_TXT_PROGRESS`）
 
 - `job_open_txt`：建立 pager 后先恢复——读安全头、核对捕获窗口、按偏移二分定位页，
-  再接受该页；`MISSING/LEGACY/CONFLICT/…` 或核对不一致时从第一页开始并置
+  再接受该页；无历史时从第一页开始并允许首次保存。`LEGACY/CONFLICT/…` 或核对不一致时从第一页开始并置
   `hold_progress`，且给出明确状态，**不覆盖**任何既有记录。
 - `save_txt_progress`：把已接受页的首偏移 + 上下文交给 `JOB_TXT_PROGRESS`，
   在工作线程写产品修订；未移动一个 32 KiB 块且没有强制请求时不写。

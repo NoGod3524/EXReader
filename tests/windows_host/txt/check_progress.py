@@ -117,6 +117,9 @@ def main():
         open_row(fixture.name)
         assert 'Perf Import 0000' in page_text(app, automation), page_text(app, automation)[:200]
         record('shelf selection opens the 16792975-byte original at its first page')
+        heads, count = progress_heads('txt:' + expected)
+        assert count >= 1 and heads, (count, heads)
+        record('first open saves a new reading position', 'revisions=%d heads=%d' % (count, len(heads)))
 
         seen = [first_line(page_text(app, automation))]
         for _ in range(6):
