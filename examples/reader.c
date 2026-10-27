@@ -2093,9 +2093,15 @@ static exr_status txt_restore(host_session *session, const char *key, size_t *pa
   txt_trace("restore_close_leave", 0);
   if (status != READER_TXP_OK) {
     txt_trace("restore_note_enter", (long long)status);
+    txt_trace("restore_note_capacity", (long long)capacity);
     session->hold_progress = 1;
-    copy_wstring(note, capacity, txt_status_note(status));
-    txt_trace("restore_note_copied", (long long)(capacity ? 1 : 0));
+    txt_trace("restore_note_flag", 1);
+    {
+      const wchar_t *text = txt_status_note(status);
+      txt_trace("restore_note_text", (long long)(text ? 1 : 0));
+      if (text && note && capacity) swprintf(note, capacity, L"%ls", text);
+    }
+    txt_trace("restore_note_copied", 1);
     if (error) memset(error, 0, sizeof(*error));
     txt_trace("restore_note_return", 0);
     return EXR_OK;
