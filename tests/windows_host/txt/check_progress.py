@@ -237,8 +237,12 @@ def main():
             except Exception:
                 pass
         (out / 'report.json').write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-    print(json.dumps(report, ensure_ascii=False), flush=True)
-    assert report['accepted']
+    # The runner console is cp1252: report the outcome as ASCII only, and keep the
+    # full record in report.json for the artifact.
+    summary = dict(accepted=report['accepted'], checks=[row['name'] for row in report['checks']],
+                   error=(report.get('error') or '').splitlines()[-1:] or None)
+    print(json.dumps(summary, ensure_ascii=True), flush=True)
+    assert report['accepted'], 'TXT position host acceptance failed; see report.json'
 
 
 if __name__ == '__main__':

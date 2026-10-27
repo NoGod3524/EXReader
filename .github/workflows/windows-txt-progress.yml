@@ -84,8 +84,8 @@ jobs:
         with:
           name: txt-progress-host-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            build/windows-raw3-host/legacy-txt-progress/
-            build/windows-raw3-host/raw-txt-progress/
+            build/windows-raw3-host/legacy-txt-progress-acceptance/
+            build/windows-raw3-host/raw-txt-progress-acceptance/
             build/windows-raw3-host/logs/
             build/native-owner-preflight/display.json
           if-no-files-found: warn
