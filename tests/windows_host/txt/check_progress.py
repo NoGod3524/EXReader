@@ -235,7 +235,7 @@ def main():
         assert position_marker in page_text(app, automation), page_text(app, automation)[:200]
         record('restart after the refused write restores the durable position', position_marker)
 
-        open_row(pdf.name)
+        open_row(pdf.stem)
         sdk_first = page_text(app, automation)
         app.click('next')
         app.wait_idle()
@@ -246,7 +246,7 @@ def main():
         automation = Uia()
         assert automation.available, automation.error
         app.wait(lambda: len(rows(app)) == 3, timeout=180)
-        open_row(pdf.name)
+        open_row(pdf.stem)
         sdk_restored = page_text(app, automation)
         if sdk_second and sdk_second != sdk_first:
             assert sdk_restored == sdk_second, (sdk_restored[:120], sdk_second[:120])
