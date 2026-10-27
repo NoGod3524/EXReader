@@ -155,3 +155,18 @@ Audit artifact `12768097289`, 12,414 bytes, SHA-256
 `6a4ae8db2e93e7335c740a3cb84460944275e2c4bd3585786a27591b0e4728be`,
 expires 2027-01-25T20:27:11Z. This documentation commit is not the audited
 source and does not change the fixed 108-outcome denominator.
+
+
+## 2026-10-27 Android reader font library
+
+The fixed-catalog audit [40590527294/1](https://github.com/NoGod3524/EXReader/actions/runs/40590527294)
+at source `c2650f4ad535618da357160222c8253ee7df96b3` completed with
+`evidence_ok=true`: **72/108 (66.7%)**, comprising 12/12 foundation, 60/84
+host, and 0/12 final delivery outcomes. The October 25 historical cutoff remains
+58/108 (53.7%). This adds the independently verified Android font-reader outcome
+to the previous 71/108; its API34 emulator scope is documented in
+[android-font-reader.md](android-font-reader.md).
+
+Audit artifact `12774156023`, 12729 bytes, SHA-256
+`212448a451b3d3693ba77c3d5d7039e658230fd1c774852fca9fe7856cadbe83`,
+expires 2027-01-25T21:53:52Z. Unified-source Android validation remains separate.
