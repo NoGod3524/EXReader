@@ -42,6 +42,10 @@ public final class RelayAndroidTest extends Instrumentation {
     }
     private void tap(AccessibilityNodeInfo node){Rect bounds=new Rect();node.getBoundsInScreen(bounds);need(bounds.width()>0&&bounds.height()>0,"visible UI control");if(node.performAction(AccessibilityNodeInfo.ACTION_CLICK))return;long now=SystemClock.uptimeMillis();sendPointerSync(android.view.MotionEvent.obtain(now,now,android.view.MotionEvent.ACTION_DOWN,bounds.centerX(),bounds.centerY(),0));sendPointerSync(android.view.MotionEvent.obtain(now,now+30,android.view.MotionEvent.ACTION_UP,bounds.centerX(),bounds.centerY(),0));}
     private void click(String name){until(n->n.isEnabled()&&text(n).equalsIgnoreCase(name),this::tap,name,30000);}
+    private JSONObject tree(AccessibilityNodeInfo node)throws Exception{
+        if(node==null)return new JSONObject();JSONArray children=new JSONArray();for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null){try{children.put(tree(child));}finally{child.recycle();}}}
+        return new JSONObject().put("id",node.getViewIdResourceName()).put("text",text(node)).put("description",String.valueOf(node.getContentDescription())).put("class",String.valueOf(node.getClassName())).put("enabled",node.isEnabled()).put("frame",node.getExtras().getString("exreader.frame","")).put("children",children);
+    }
     private void field(String name,String value){until(n->desc(n,name),n->{Bundle b=new Bundle();b.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);need(n.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,b),"account UI field");},name,30000);}
     private void status(String value){until(n->desc(n,"同步状态")&&text(n).contains(value),null,value,120000);}
     private void panel(){click("More");click("同步");}
@@ -82,7 +86,7 @@ public final class RelayAndroidTest extends Instrumentation {
                     StringBuilder hash=new StringBuilder();for(byte value:digest.digest())hash.append(String.format(java.util.Locale.ROOT,"%02x",value&255));
                     need(hash.toString().equals(input.getString("original_sha256")),"public SDK original SHA256 matches Apple");evidence.put("public_source_sha256",hash.toString());
                 }
-                click("关闭");until(n->n.isEnabled()&&text(n).contains(input.optString("remote_title")),this::tap,"local received book",30000);evidence.put("initial_frame",settled());
+                click("关闭");until(n->n.isEnabled()&&id(n,"text1")&&text(n).startsWith(input.optString("remote_title")+"\n"),n->{try{evidence.put("selected_shelf_control",tree(n));}catch(Exception error){throw new IllegalStateException(error);}tap(n);},"local received shelf row",30000);evidence.put("initial_frame",settled());
             });
             check("apple_progress_public_parse_real_jump",()->{
                 JSONObject incomingLocation=location(),expected=input.getJSONObject("location");for(String key:new String[]{"part","path","start","end","exact","prefix","suffix"})need(String.valueOf(incomingLocation.opt(key)).equals(String.valueOf(expected.opt(key))),"Apple wire location matches "+key);
@@ -96,7 +100,7 @@ public final class RelayAndroidTest extends Instrumentation {
                 JSONObject saved=location();onTarget(after,saved);need(!saved.getString("head").equals(evidence.getJSONObject("incoming_location").getString("head")),"new app revision");evidence.put("location",saved);click("关闭");
             });
             check("application_sync_outgoing_position",()->{click("Shelf");panel();click("立即同步");status("本轮同步结束");click("断开");});
-        }catch(Throwable error){failure=error;}
+        }catch(Throwable error){failure=error;AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();try{evidence.put("failure_ui",tree(root));}catch(Exception capture){error.addSuppressed(capture);}finally{if(root!=null)root.recycle();}}
         try{
             evidence.put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("passed",failure==null).put("checks",checks).put("phase","android").put("api",android.os.Build.VERSION.SDK_INT).put("abi",android.os.Build.SUPPORTED_ABIS[0]).put("physical_device",false).put("picker_used",false).put("pid",android.os.Process.myPid());
             if(input!=null)for(String key:new String[]{"original_sha256","original_bytes","book_identity","remote_title"})evidence.put(key,input.get(key));

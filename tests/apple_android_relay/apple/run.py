@@ -160,6 +160,10 @@ def main():
         data['installed_sdk_checker'] = inspect(binary, app.parent / 'EXReaderHost.link.map', selector_bytes_candidate=True)
         run(['ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', app, out / 'program.zip'], 'package')
         data['passed'] = True
+        print(json.dumps({'phase': args.phase, 'source_sha': data['source_sha'],
+                          'original_sha256': data['original_sha256'], 'original_bytes': data['original_bytes'],
+                          'remote_title': data['remote_title'], 'location': data['location'],
+                          'checks': data['checks'], 'passed': True}, ensure_ascii=False), flush=True)
         save(dav, out, args.phase, data); dav = None
     finally:
         if controller: controller.shutdown(); controller.server_close()

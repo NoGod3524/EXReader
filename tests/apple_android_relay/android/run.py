@@ -84,7 +84,13 @@ def main():
     finally:
         for name, command in [('logcat.txt', ('logcat', '-d', '-v', 'threadtime', '-t', '3000')),
                               ('screen.png', ('exec-out', 'screencap', '-p'))]:
-            try: save(name, adb(*command))
+            try:
+                captured = adb(*command)
+                save(name, captured)
+                if not succeeded and name == 'logcat.txt':
+                    selected = [line for line in captured.decode(errors='replace').splitlines()
+                        if any(key in line.lower() for key in ('exreader', 'exception', 'fatal', 'could not', 'sqlite', 'abort'))]
+                    print('FAILED APP LOGCAT\n' + '\n'.join(selected[-160:]), flush=True)
             except Exception as error: print('Evidence capture failed:', name, type(error).__name__, flush=True)
         if not succeeded:
             (args.output / 'requests.json').write_text(json.dumps(dav.requests, indent=2))
