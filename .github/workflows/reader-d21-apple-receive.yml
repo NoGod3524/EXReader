@@ -1,7 +1,7 @@
 name: D21 Apple explicit receive native three-target
 on:
   push:
-    branches: [codex/dot-d21-apple-receive]
+    branches: [codex/dot-d21-d26-integration, codex/dot-d21-apple-receive]
     paths-ignore: ['docs/handoffs/d21-*']
   workflow_dispatch:
 permissions:
