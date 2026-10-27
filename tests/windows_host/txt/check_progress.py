@@ -454,6 +454,16 @@ def main():
         assert isolated_records == 1, wave3.rows(dialog, wave3.RECORDS_ROWS)
         wave3.close_records(app, dialog)
         record('TXT reading records are isolated by the original book identity')
+        before_wrong_book = wave3.database_state(profile)
+        dialog = wave3.open_feature(app, wave3.ANNOTATIONS)
+        wave3.post_click(dialog, wave3.B2)
+        wave3.fill_system_dialog(app, annotation_file)
+        wave3.wait_message(app, dialog, wave3.N.PREVIEW_REFUSED, 240)
+        assert not ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog, wave3.B3))
+        wave3.close_feature(app, dialog)
+        assert wave3.database_state(profile) == before_wrong_book
+        assert page_text(app, automation) == isolated_text
+        record('TXT annotation import refuses the wrong original without writes')
         dialog = search_dialog()
         search_query(dialog, '\u4e66\u9875\u4f4d\u7f6e')
         assert len(search_rows(dialog)) == 32
