@@ -1,0 +1,18 @@
+name: Inspect TXT progress host failure
+on:
+  push:
+    branches: [codex/windows-txt-failure-inspect]
+permissions:
+  actions: read
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download and print the recorded host report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh run download 40454354558 -n txt-progress-host-40454354558-1 -D evidence
+          find evidence -path '*txt-progress-ui/report.json' -type f -print -exec cat {} \;
