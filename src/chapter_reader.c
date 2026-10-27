@@ -461,6 +461,9 @@ typedef struct {
   txt_point points[TXT_POINTS];
   size_t point_count, stride, count, cached, cached_start, cached_size;
   char *cache;
+  size_t cursor_paragraph, cursor_start, cursor_size;
+  const char *cursor_text;
+  void (*release_source)(void *);
   exr_document document;
   exr_document_view view;
   exr_chapter chapter;
@@ -490,15 +493,26 @@ static exr_status txt_find_paragraph(txt_view *v,size_t paragraph,size_t *start,
   size_t i,point=0;uint64_t offset;exr_status status;const char *line;size_t size;
   if(v->failure.code) return exr_fail(e,v->failure.code,v->failure.message);
   if(paragraph>=v->count) return txt_failure(v,exr_fail(e,EXR_FORMAT,"Invalid TXT paragraph"),e);
+  if(v->cursor_paragraph==paragraph) {
+    *start=v->cursor_start;*length=v->cursor_size;if(text) *text=v->cursor_text;
+    return EXR_OK;
+  }
   for(i=1;i<v->point_count && v->points[i].paragraph<=paragraph;i++) point=i;
-  status=exr_txt_cursor_restore(v->cursor,&v->points[point].cursor,e);
-  if(status!=EXR_OK) return txt_failure(v,status,e);
-  for(i=v->points[point].paragraph;i<=paragraph;i++) {
+  if(v->cursor_paragraph!=SIZE_MAX && v->cursor_paragraph<paragraph &&
+     v->cursor_paragraph+1>=v->points[point].paragraph) i=v->cursor_paragraph+1;
+  else {
+    status=exr_txt_cursor_restore(v->cursor,&v->points[point].cursor,e);
+    v->cursor_paragraph=SIZE_MAX;v->cursor_text=NULL;
+    if(status!=EXR_OK) return txt_failure(v,status,e);
+    i=v->points[point].paragraph;
+  }
+  for(;i<=paragraph;i++) {
     status=exr_control_cancel(&v->wrapped.control,e);
     if(status==EXR_OK) status=exr_txt_cursor_next(v->cursor,&offset,&line,&size,e);
     if(status!=EXR_OK) return txt_failure(v,status,e);
     if(!line || offset>SIZE_MAX) return txt_failure(v,exr_fail(e,EXR_FORMAT,"TXT source changed"),e);
   }
+  v->cursor_paragraph=paragraph;v->cursor_start=(size_t)offset;v->cursor_size=size;v->cursor_text=line;
   *start=(size_t)offset;*length=size;if(text) *text=line;
   return EXR_OK;
 }
@@ -573,10 +587,12 @@ static exr_status txt_status(void *context,exr_error *e) {
 }
 static void txt_free(void *context) {
   txt_view *v=context;if(!v) return;
-  exr_txt_cursor_free(v->cursor);free(v->cache);exr_styles_free(v->styles,4);free(v->fonts);free(v);
+  exr_txt_cursor_free(v->cursor);free(v->cache);exr_styles_free(v->styles,4);free(v->fonts);
+  if(v->release_source) v->release_source(v->source.context);
+  free(v);
 }
-exr_status exr_txt_pager_create_private(const exr_source *source,exr_font *font,
-  const exr_layout_config *config,exr_pager **out,exr_error *e) {
+static exr_status txt_pager_create(const exr_source *source,exr_font *font,
+  const exr_layout_config *config,void (*release_source)(void *),exr_pager **out,exr_error *e) {
   txt_view *v;exr_document sample={0};exr_layout_config defaults=exr_layout_config_defaults();
   exr_txt_checkpoint before;exr_status status;uint64_t offset;const char *line;size_t length,i;
   if(out) *out=NULL;
@@ -588,7 +604,7 @@ exr_status exr_txt_pager_create_private(const exr_source *source,exr_font *font,
   if(config->user_css && *config->user_css) return exr_fail(e,EXR_UNSUPPORTED,"TXT view does not support user CSS");
   v=calloc(1,sizeof(*v));if(!v) return exr_fail(e,EXR_MEMORY,"TXT view allocation failed");
   v->source=*source;v->wrapped=*source;v->wrapped.read_at=txt_read;v->wrapped.context=v;
-  v->wrapped.control=(exr_control){txt_cancel,NULL,v};v->control=config->control;v->stride=1;v->cached=SIZE_MAX;
+  v->wrapped.control=(exr_control){txt_cancel,NULL,v};v->control=config->control;v->stride=1;v->cached=SIZE_MAX;v->cursor_paragraph=SIZE_MAX;
   status=exr_txt_cursor_create(&v->wrapped,&v->cursor,e);
   if(status!=EXR_OK) goto fail;
   for(;;) {
@@ -629,7 +645,18 @@ sample_fail:
   if(status!=EXR_OK) goto fail;
   status=txt_status(v,e);
   if(status!=EXR_OK) { exr_pager_free(*out);*out=NULL;goto fail; }
+  v->release_source=release_source;
   exr_pager_adopt_view(*out,v,txt_free);return EXR_OK;
 fail:
   txt_free(v);return status;
+}
+
+exr_status exr_txt_pager_create_private(const exr_source *source,exr_font *font,
+  const exr_layout_config *config,exr_pager **out,exr_error *e) {
+  return txt_pager_create(source,font,config,NULL,out,e);
+}
+exr_status exr_txt_pager_create(const exr_source *source,exr_font *font,
+  const exr_layout_config *config,void (*release_source)(void *),exr_pager **out,exr_error *e) {
+  if(!release_source) { if(out) *out=NULL; return exr_fail(e,EXR_ARGUMENT,"TXT source release callback required"); }
+  return txt_pager_create(source,font,config,release_source,out,e);
 }

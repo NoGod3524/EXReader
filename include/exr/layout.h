@@ -153,6 +153,15 @@ EXR_API exr_status exr_layout_create_positioned(const exr_document *doc, exr_fon
 EXR_API exr_status exr_pager_create(const exr_document *doc, exr_font *font,
                                      const exr_layout_config *config, exr_pager **out,
                                      exr_error *error);
+/* Opt-in TXT pager. On success the pager owns source->context and calls
+   release_source exactly once when destroyed; on failure ownership remains
+   with the caller. The source must remain byte-for-byte immutable and seekable
+   until release; font and control contexts follow the ordinary pager contract.
+   Paragraphs are limited to 64 KiB decoded, user CSS is unsupported, and
+   pager CFI/anchor/text queries are not provided by this adapter. The source
+   identity and durable storage are the caller's responsibility. */
+EXR_API exr_status exr_txt_pager_create(const exr_source *source,exr_font *font,
+  const exr_layout_config *config,void (*release_source)(void *),exr_pager **out,exr_error *error);
 /* Independent bounded EPUB reading path; complete-document snapshot limits and
    borrowed arrays retain their existing contract. The publication is retained.
    The caller's font and callback contexts follow the ordinary pager lifetime. */

@@ -8,7 +8,7 @@ permissions:
 jobs:
   projection:
     runs-on: windows-2022
-    timeout-minutes: 60
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: ilammy/msvc-dev-cmd@v1
@@ -24,9 +24,9 @@ jobs:
           cmake -S tests/bounded_txt_scan -B build/bounded-txt-scan -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-core/stage"
           cmake --build build/bounded-txt-scan
           ctest --test-dir build/bounded-txt-scan --output-on-failure --no-tests=error
-      - name: Scan the original failure fixture and verify its bytes
+      - name: Scan and paginate the original failure fixture and verify its bytes
         shell: bash
-        run: python tests/bounded_txt_scan/large.py
+        run: python tests/bounded_txt_scan/large.py 2>&1 | tee build/bounded-txt-large.log
       - name: Inspect installed public candidate artifacts
         shell: bash
         run: |
@@ -37,4 +37,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: bounded-txt-installed-inventory
-          path: build/bounded-txt-installed-files.txt
+          path: |
+            build/bounded-txt-installed-files.txt
+            build/bounded-txt-large.log
