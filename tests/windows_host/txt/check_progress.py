@@ -71,7 +71,8 @@ def main():
     # A second, independent identity: same shape, different bytes and size.
     isolated = out / 'Isolated.txt'
     lines = ['Isolated Book %04d keeps its own reading position line %04d.' % (index, index) for index in range(1200)]
-    isolated.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    isolated.write_text(('\n'.join(lines) + '\n') * 256, encoding='utf-8')
+    assert isolated.stat().st_size > 16 * 1024 * 1024
 
     report = dict(source_sha=os.environ['GITHUB_SHA'], host_sha256=digest(exe), checks=[],
                   scope='native Windows host: product TXT position save/restore, relayout, identity isolation, refused write and SDK book regression',
