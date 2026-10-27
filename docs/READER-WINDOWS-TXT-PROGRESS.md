@@ -136,3 +136,16 @@ heads and count. Artifact `12769255420` is 331091 bytes, SHA-256
 `84374e6089137863825e6fefe420ef720dce80dda5c1d1ef20dafa057d63ccff`.
 The earlier failure remains recorded; this result addresses the specific
 changed-font comparison scenario.
+
+Dot's final [Actions 40579558382](https://github.com/NoGod3524/EXReader/actions/runs/40579558382)
+at source `85b67775e368d84115e83cdea5c3e058a5e981bc` passed the host and
+retained checks. Its diagnostic records 170% before relayout, 180% after and
+180% after restart, with matching page text and unchanged retained progress
+heads, count and content hash. This particular size change did not change the
+page text, so the result does not cover every page-boundary transition. The
+earlier failed comparison remains retained. The diagnostic made no product
+or SDK changes.
+
+Artifact `12769961018`, 332394 bytes, SHA-256
+`8985d89bed1990147ac7d14473f5888c0aa195828f6f8b915a2850ec9efbcc49`,
+expires 2027-01-25T20:36:28Z.
