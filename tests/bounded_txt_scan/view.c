@@ -69,5 +69,11 @@ int main(void) {
   compare(text,sizeof(text)-1,font);compare(utf16,sizeof(utf16),font);
   large=malloc(200000);if(!large) return 1;
   for(i=0;i<1800;i++) at+=(size_t)sprintf(large+at,"Paragraph %zu: stable positions and continuous pagination across the source.\n",i);
+  compare(large,at,font);free(large);
+  /* Exercise both sides of multiple cached span boundaries, including trimmed
+     whitespace, blank lines, CRLF and multi-byte UTF-8. */
+  large=malloc(400000);if(!large) return 1;at=0;
+  for(i=0;i<2600;i++)
+    at+=(size_t)sprintf(large+at,"  Span %zu: \xe4\xb8\xad \xf0\x9f\x98\x80 mixed text and navigation.  \r\n%s",i,(i%17)?"":"\r\n");
   compare(large,at,font);free(large);exr_font_free(font);return 0;
 }
