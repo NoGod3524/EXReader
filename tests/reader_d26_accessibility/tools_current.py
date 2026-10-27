@@ -373,11 +373,14 @@ def main():
 
         def search_rows():
             listing = next((node for node in bus.walk(app) if bus.name(node) == 'In-book results'), None)
-            if listing is None:
+            if listing is None or not bus.states(listing).get('sensitive'):
                 return []
             return [row for row in bus.children(listing)
-                    if bus.role(row) == 'list item' and bus.name(row).startswith('Search result 1:')]
+                    if bus.role(row) == 'list item' and bus.name(row).startswith('Search result 1:')
+                    and bus.states(row).get('showing') and bus.states(row).get('sensitive')]
         result_row = wait_nodes(search_rows)
+        print(json.dumps({'search_result_before_click': {'name': bus.name(result_row[0]),
+                         'states': bus.states(result_row[0]), 'box': bus.extents(result_row[0])}}), flush=True)
         click_node(result_row[0])
         landed = wait_wave(lambda state: int(state['history_count']) >= 2 and state['history_can_back'] == '1',
                            label='history landing')
