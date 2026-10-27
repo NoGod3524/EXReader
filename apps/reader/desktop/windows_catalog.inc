@@ -10,7 +10,6 @@ static exr_format product_format(const char *name) {
 }
 static int product_page_row(void *context,const reader_catalog_row *row) {
   product_page_copy *copy=context;host_job *job=copy->job;
-  if(!row->sdk_book_id) return 0;
   if(job_cancel_flag(job)) return 1;
   if(job->product_book_count>=50) { copy->failed=1;return 1; }
   size_t i=job->product_book_count++;
@@ -47,7 +46,7 @@ static exr_status product_group_page(host_job *job,reader_catalog *catalog,reade
     code=reader_catalog_membership_find(catalog,kind,job->product_group_id,job->product_anchor_key,
       product_group_anchor_copy,&anchor,&found,error);
     if(!code && found && anchor.active) {
-      found=0;code=reader_catalog_find(catalog,job->product_anchor_key,job->product_shelf_query,product_page_row,&copy,&found,error);
+      found=0;code=reader_catalog_local_find(catalog,job->product_anchor_key,job->product_shelf_query,product_page_row,&copy,&found,error);
       if(found && job->product_book_count && !copy.failed) {
         job->product_cursors[0].ordinal=anchor.ordinal;cursor.ordinal=anchor.ordinal;
         cursor.book_key=job->product_cursors[0].key;after=&cursor;
@@ -88,7 +87,7 @@ static exr_status product_page_query(host_job *job,reader_catalog *catalog,reade
   product_page_copy copy={job,0};int found=0,code=0,direction=job->product_shelf_direction<0 ? -1:1;
   const char *title=job->product_cursor_title,*key=job->product_cursor_key;
   if(job->product_anchor_key && job->product_anchor_key[0]) {
-    code=reader_catalog_find(catalog,job->product_anchor_key,job->product_shelf_query,product_page_row,&copy,&found,error);
+    code=reader_catalog_local_find(catalog,job->product_anchor_key,job->product_shelf_query,product_page_row,&copy,&found,error);
     if(found && job->product_book_count && !copy.failed) { title=job->product_cursors[0].sort_title;key=job->product_cursors[0].key; }
     else title=key=NULL;
     direction=1;job->product_shelf_direction=0;

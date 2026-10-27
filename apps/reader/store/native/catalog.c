@@ -336,7 +336,7 @@ static int query_page(reader_catalog *c,const char *title,const char *key,
   const char *order=direction>0 ? " ORDER BY b.sort_title,b.book_key":" ORDER BY b.sort_title DESC,b.book_key DESC";
   /* Only constant SQL fragments are interpolated. User strings stay bound.
      Separate first/continuation plans preserve the actual index range. */
-  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,b.deleted FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0%s%s%s%s LIMIT ?3",local ? " AND l.sdk_book_id IS NOT NULL":"",range,filter,order);
+  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,b.deleted FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0%s%s%s%s LIMIT ?3",local ? " AND (l.sdk_book_id IS NOT NULL OR EXISTS (SELECT 1 FROM reader_originals o WHERE o.book_key=b.book_key AND o.state='ready'))":"",range,filter,order);
   status=prepare(c,sql,&s,e);
   if(status==SQLITE_OK && title) status=bind_text(c,s,1,title,e);
   if(status==SQLITE_OK && key) status=bind_text(c,s,2,key,e);
@@ -364,9 +364,9 @@ int reader_catalog_page(reader_catalog *c,const char *title,const char *key,size
                         reader_catalog_visit visit,void *context,reader_catalog_error *e) {
   return reader_catalog_query_page(c,title,key,NULL,1,limit,visit,context,e);
 }
-int reader_catalog_find(reader_catalog *c,const char *key,const char *query,
+static int catalog_find(reader_catalog *c,const char *key,const char *query,int local,
                         reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
-  sqlite3_stmt *s=NULL;size_t count=0;int status=enter(c,e);char sql[640];
+  sqlite3_stmt *s=NULL;size_t count=0;int status=enter(c,e);char sql[1024];
   if(found) *found=0;
   if(status!=SQLITE_OK) return status;
   if(!found || !visit || !valid_text(key) || !key[0] || (query && !valid_text(query))) {
@@ -374,7 +374,7 @@ int reader_catalog_find(reader_catalog *c,const char *key,const char *query,
   }
   const char *filter=query && query[0] ?
     " AND (instr(lower(b.title),lower(?2))>0 OR instr(lower(b.author),lower(?2))>0)":"";
-  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,b.deleted FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0 AND b.book_key=?1%s LIMIT 1",filter);
+  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,b.deleted FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0 AND b.book_key=?1%s%s LIMIT 1",local ? " AND (l.sdk_book_id IS NOT NULL OR EXISTS (SELECT 1 FROM reader_originals o WHERE o.book_key=b.book_key AND o.state='ready'))":"",filter);
   status=prepare(c,sql,&s,e);
   if(status==SQLITE_OK) status=bind_text(c,s,1,key,e);
   if(status==SQLITE_OK && query && query[0]) status=bind_text(c,s,2,query,e);
@@ -507,6 +507,14 @@ int reader_catalog_membership_find(reader_catalog *c,reader_catalog_group_kind k
 leave:
   sqlite3_finalize(s);c->active=0;return status;
 }
+int reader_catalog_find(reader_catalog *c,const char *key,const char *query,
+                        reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
+  return catalog_find(c,key,query,0,visit,context,found,e);
+}
+int reader_catalog_local_find(reader_catalog *c,const char *key,const char *query,
+                        reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
+  return catalog_find(c,key,query,1,visit,context,found,e);
+}
 int reader_catalog_group_books_page(reader_catalog *c,reader_catalog_group_kind kind,const char *id,
   const reader_catalog_member_cursor *cursor,const char *query,int local_only,int direction,size_t limit,
   reader_catalog_group_book_visit visit,void *context,reader_catalog_error *e) {
@@ -531,7 +539,7 @@ int reader_catalog_group_books_page(reader_catalog *c,reader_catalog_group_kind 
    * Use the existing group/ordinal/key index, including during reverse paging. */
   snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,%s FROM %s m INDEXED BY %s JOIN %s g ON g.%s=m.%s JOIN reader_books b ON b.book_key=m.book_key LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE m.%s=?1 AND g.deleted=0 AND b.deleted=0%s%s%s ORDER BY %s LIMIT ?4",
     g->ordered_member?"m.ordinal":"0",g->members,g->index,g->table,g->id,g->id,g->id,
-    local_only?" AND l.sdk_book_id IS NOT NULL":"",range,
+    local_only?" AND (l.sdk_book_id IS NOT NULL OR EXISTS (SELECT 1 FROM reader_originals o WHERE o.book_key=b.book_key AND o.state='ready'))":"",range,
     query && query[0]?" AND (instr(lower(b.title),lower(?5))>0 OR instr(lower(b.author),lower(?5))>0)":"",order);
   status=prepare(c,sql,&s,e);
   if(status==SQLITE_OK) status=bind_text(c,s,1,id,e);
@@ -552,7 +560,7 @@ leave:
 }
 static int lookup(reader_catalog *c,int mode,int64_t id,const char *value,
                   reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
-  sqlite3_stmt *s=NULL;size_t count=0;int status=enter(c,e);char sql[640];
+  sqlite3_stmt *s=NULL;size_t count=0;int status=enter(c,e);char sql[1024];
   if(found)*found=0;
   if(status!=SQLITE_OK)return status;
   if(!found||!visit||(mode==0?id<=0:!valid_text(value))) {

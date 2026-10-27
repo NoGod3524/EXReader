@@ -54,7 +54,7 @@ int reader_catalog_page(reader_catalog *, const char *after_title, const char *a
 int reader_catalog_query_page(reader_catalog *, const char *cursor_title, const char *cursor_key,
                               const char *query, int direction, size_t limit,
                               reader_catalog_visit, void *, reader_catalog_error *);
-/* Same keyset contract restricted to rows with a local SDK mapping. Hosts that
+/* Same keyset contract restricted to rows with a local SDK mapping or a ready product original. Hosts that
  * show downloaded books use this; the global query still includes cloud-only metadata. */
 int reader_catalog_local_page(reader_catalog *, const char *cursor_title, const char *cursor_key,
                               const char *query, int direction, size_t limit,
@@ -63,6 +63,9 @@ int reader_catalog_local_page(reader_catalog *, const char *cursor_title, const 
  * Calls visit at most once; sets found=0 if deleted, missing or filtered out. */
 int reader_catalog_find(reader_catalog *, const char *book_key, const char *query,
                         reader_catalog_visit, void *, int *found, reader_catalog_error *);
+
+int reader_catalog_local_find(reader_catalog *, const char *book_key, const char *query,
+                              reader_catalog_visit, void *, int *found, reader_catalog_error *);
 
 /* Read-only organization views. Mutations use the native typed command module.
  * These callbacks have the same borrowed-string/owner/no-reentry contract as books. */
@@ -104,7 +107,7 @@ int reader_catalog_removed_groups_page(reader_catalog *, reader_catalog_group_ki
   const char *cursor_id, int direction, size_t limit,
   reader_catalog_group_visit, void *, reader_catalog_error *);
 /* Active group members ordered by (ordinal,book_key), or book_key for tags.
- * local_only=1 selects downloaded books; 0 retains cloud-only metadata.
+ * local_only=1 selects SDK books and ready product originals; 0 retains cloud-only metadata.
  * Title/author search remains a literal substring, with the existing UTF-8 rules.
  * A NULL cursor starts at an end; tags require cursor.ordinal=0. Limit 1..200. */
 int reader_catalog_group_books_page(reader_catalog *, reader_catalog_group_kind, const char *group_id,
