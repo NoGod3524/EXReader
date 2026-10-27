@@ -148,6 +148,46 @@ int reader_catalog_close(reader_catalog **catalog,reader_catalog_error *e) {
   free(c);*catalog=NULL;return SQLITE_OK;
 }
 
+#ifdef _WIN32
+static int local_fixed_catalog(sqlite3 *db) {
+  const char *path=sqlite3_db_filename(db,"main");
+  wchar_t *wide=NULL,*resolved=NULL,volume[MAX_PATH];HANDLE file=INVALID_HANDLE_VALUE;int local=0;
+  if(!path) return 0;
+  int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,path,-1,NULL,0);
+  if(n<=0) return 0;
+  wide=malloc((size_t)n*sizeof(*wide));resolved=malloc(32768*sizeof(*resolved));
+  if(!wide || !resolved || !MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,path,-1,wide,n)) goto done;
+  file=CreateFileW(wide,0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+  if(file==INVALID_HANDLE_VALUE) goto done;
+  DWORD length=GetFinalPathNameByHandleW(file,resolved,32768,FILE_NAME_NORMALIZED|VOLUME_NAME_DOS);
+  if(length==0 || length>=32768 || !GetVolumePathNameW(resolved,volume,MAX_PATH)) goto done;
+  local=GetDriveTypeW(volume)==DRIVE_FIXED;
+done:
+  if(file!=INVALID_HANDLE_VALUE) CloseHandle(file);
+  free(wide);free(resolved);return local;
+}
+void reader_catalog_prepare_repair(reader_catalog *c) {
+  sqlite3_stmt *s=NULL;
+  if(enter(c,NULL)!=SQLITE_OK) return;
+  /* SQLite WAL requires shared memory on the local host. Unknown and remote
+   * volumes keep the original rollback journal. */
+  if(!local_fixed_catalog(c->database)) { c->active=0;return; }
+  /* Preserve non-default modes and fall back immediately if another worker
+   * holds a lock. Durability and the per-book transaction remain unchanged. */
+  sqlite3_busy_timeout(c->database,0);
+  if(sqlite3_prepare_v2(c->database,"PRAGMA journal_mode",-1,&s,NULL)==SQLITE_OK &&
+     sqlite3_step(s)==SQLITE_ROW) {
+    const char *mode=(const char *)sqlite3_column_text(s,0);
+    int is_delete=mode && !strcmp(mode,"delete");
+    sqlite3_finalize(s);s=NULL;
+    if(is_delete) sqlite3_exec(c->database,"PRAGMA journal_mode=WAL",NULL,NULL,NULL);
+  }
+  sqlite3_finalize(s);
+  sqlite3_busy_timeout(c->database,5000);
+  c->active=0;
+}
+#endif
+
 int reader_catalog_attach(reader_catalog *c,const reader_catalog_book *b,reader_catalog_error *e) {
   sqlite3_stmt *s=NULL; char key[72]; int exists=0,mapped=0,status=enter(c,e);int64_t old_id=0;
   if(status!=SQLITE_OK) return status;

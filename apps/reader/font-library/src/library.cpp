@@ -20,6 +20,10 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef __ANDROID__
+#include <linux/fs.h>
+#include <sys/syscall.h>
+#endif
 #endif
 namespace fs=std::filesystem;
 namespace {
@@ -88,9 +92,14 @@ file absolute_open(const fs::path&p,bool directory){
     need(f.valid(),GetLastError()==ERROR_FILE_NOT_FOUND?RFL_MISSING:RFL_IO,"open selected path");stat_file(f,dir);parents.push_back(std::move(f));
   }need(!parents.empty(),RFL_ARGUMENT,"root directory unsupported");return std::move(parents.back());
 #else
-  file current(::open("/",O_RDONLY|O_DIRECTORY|O_CLOEXEC));need(current.valid(),RFL_IO,"open root");
+#ifdef __ANDROID__
+  constexpr int traversal_access=O_PATH;
+#else
+  constexpr int traversal_access=O_RDONLY;
+#endif
+  file current(::open("/",traversal_access|O_DIRECTORY|O_CLOEXEC));need(current.valid(),RFL_IO,"open root");
   auto relative=p.relative_path();size_t index=0,total=size_t(std::distance(relative.begin(),relative.end()));
-  for(const auto &part:relative){bool dir=++index<total||directory;file next(openat(current.h,part.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK|(dir?O_DIRECTORY:0)));need(next.valid(),errno==ENOENT?RFL_MISSING:RFL_IO,"open nofollow selected path");stat_file(next,dir);current=std::move(next);}return current;
+  for(const auto &part:relative){bool intermediate=++index<total;bool dir=intermediate||directory;int access=intermediate?traversal_access:O_RDONLY;file next(openat(current.h,part.c_str(),access|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK|(dir?O_DIRECTORY:0)));need(next.valid(),errno==ENOENT?RFL_MISSING:RFL_IO,"open nofollow selected path");stat_file(next,dir);current=std::move(next);}return current;
 #endif
 }
 size_t read_at(file&f,uint64_t offset,void *buffer,size_t capacity){
@@ -182,7 +191,13 @@ void rename_child(rfl_library&l,const std::string&from,const std::string&to,bool
   need(MoveFileExW((l.path/fs::u8path(from)).c_str(),(l.path/fs::u8path(to)).c_str(),MOVEFILE_WRITE_THROUGH|(replace?MOVEFILE_REPLACE_EXISTING:0))!=0,RFL_IO,"atomic rename");
 #else
   if(replace)need(renameat(l.directory.h,from.c_str(),l.directory.h,to.c_str())==0,RFL_IO,"atomic manifest rename");
-  else{need(linkat(l.directory.h,from.c_str(),l.directory.h,to.c_str(),0)==0,RFL_IO,"exclusive font publish");need(unlinkat(l.directory.h,from.c_str(),0)==0,RFL_IO,"unlink published temporary");}
+  else{
+#ifdef __ANDROID__
+    need(syscall(__NR_renameat2,l.directory.h,from.c_str(),l.directory.h,to.c_str(),RENAME_NOREPLACE)==0,RFL_IO,"exclusive font rename");
+#else
+    need(linkat(l.directory.h,from.c_str(),l.directory.h,to.c_str(),0)==0,RFL_IO,"exclusive font publish");need(unlinkat(l.directory.h,from.c_str(),0)==0,RFL_IO,"unlink published temporary");
+#endif
+  }
 #endif
 }
 std::string encode(const std::map<std::string,rfl_record>&records){std::string out="RFL1\n";for(const auto&p:records)out+=p.first+" "+std::to_string(p.second.bytes)+" "+hex(p.second.display_name)+"\n";return out;}

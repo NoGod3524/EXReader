@@ -3,6 +3,7 @@ plugins {
 }
 
 def exrSdk = project.findProperty('exrSdk') ?: ''
+def exrSdkVersion = project.findProperty('exrSdkVersion') ?: '3.41.0'
 def exrProduct = project.findProperty('exrProduct') ?: "${rootProject.projectDir}/../../stage/android-product"
 def exrSync = project.findProperty('exrSync') == 'true'
 def exrSearch = project.findProperty('exrSearch') == 'true'
@@ -14,6 +15,8 @@ def exrPreferences = project.findProperty('exrPreferences') == 'true'
 def exrPageTheme = project.findProperty('exrPageTheme') == 'true'
 def exrSelectorBytes = project.findProperty('exrSelectorBytes') == 'true'
 def exrRecordInterop = project.findProperty('exrRecordInterop') == 'true'
+def exrWave3 = project.findProperty('exrWave3') == 'true'
+def exrWave3Prefix = project.findProperty('exrWave3Prefix') ?: "${rootProject.projectDir}/../../stage/android-wave3"
 def exrPreferencesPrefix = project.findProperty('exrPreferencesPrefix') ?: "${rootProject.projectDir}/../../stage/android-preferences"
 def exrDav = project.findProperty('exrDav') ?: "${rootProject.projectDir}/../../stage/android-dav"
 def exrSideload = project.findProperty('exrSideload') ?: "${rootProject.projectDir}/../../stage/android-sideload"
@@ -37,13 +40,14 @@ android {
         buildConfigField 'boolean', 'READER_PREFERENCES', exrPreferences.toString()
         buildConfigField 'boolean', 'READER_PAGE_THEME', exrPageTheme.toString()
         buildConfigField 'boolean', 'READER_SELECTOR_BYTES_CANDIDATE', exrSelectorBytes.toString()
+        buildConfigField 'boolean', 'READER_WAVE3', exrWave3.toString()
         testInstrumentationRunner (project.findProperty('exrTestRunner') ?: 'org.exreader.host.CatalogStoreTest')
         ndk {
             abiFilters 'x86_64'
         }
         externalNativeBuild {
             cmake {
-                arguments "-DEXR_SDK=${exrSdk}", "-DEXR_PRODUCT=${exrProduct}", '-DANDROID_STL=c++_static'
+                arguments "-DEXR_SDK=${exrSdk}", "-DEXR_HOST_SDK_VERSION=${exrSdkVersion}", "-DEXR_PRODUCT=${exrProduct}", '-DANDROID_STL=c++_static'
                 arguments "-DEXR_HOST_SYNC=${exrSync ? 'ON' : 'OFF'}", "-DEXR_DAV=${exrDav}", "-DEXR_SIDELOAD=${exrSideload}"
                 arguments "-DEXR_HOST_SEARCH=${exrSearch ? 'ON' : 'OFF'}", "-DEXR_SEARCH_PREFIX=${exrSearchPrefix}"
                 arguments "-DEXR_HOST_NAVIGATION=${exrNavigation ? 'ON' : 'OFF'}", "-DEXR_NAVIGATION_PREFIX=${exrNavigationPrefix}"
@@ -52,6 +56,7 @@ android {
                 arguments "-DEXR_HOST_PAGE_THEME=${exrPageTheme ? 'ON' : 'OFF'}"
                 arguments "-DEXR_READER_SELECTOR_BYTES_CANDIDATE=${exrSelectorBytes ? 'ON' : 'OFF'}"
                 arguments "-DEXR_ANDROID_RECORD_INTEROP_REVIEW=${exrRecordInterop ? 'ON' : 'OFF'}"
+                arguments "-DEXR_HOST_WAVE3=${exrWave3 ? 'ON' : 'OFF'}", "-DEXR_WAVE3_PREFIX=${exrWave3Prefix}"
             }
         }
     }
@@ -132,6 +137,7 @@ android {
         sourceSets.androidTest.java.srcDir '../../../tests/reader_android_host_import/java'
     }
     if(exrPageTheme) { sourceSets.androidTest.java.srcDir '../../../tests/reader_android_page_theme/java' }
+    if(exrWave3) { sourceSets.androidTest.java.srcDir '../../../tests/reader_wave3_c11/java' }
     if(exrRecordInterop) {
         sourceSets.debug.java.srcDir '../../../tests/reader_android_record_interop/debug/java'
         sourceSets.androidTest.java.srcDir '../../../tests/reader_android_record_interop/java'
