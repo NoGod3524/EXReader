@@ -1152,3 +1152,19 @@ the scoped navigation UI report (29/29), folder UI report (27/27), navigation
 backend (58) and folder backend (684). The navigation report's broader
 `accepted` flag remains false; this is the stated retained scope, not full
 GTK or six-target acceptance.
+
+## Windows mapping observations on the combined candidate
+
+The Windows/Android candidate `d1b97161461f8fec6f6bdfebedd67a8ac9d0911e`
+passed [40428878647/1](https://github.com/NoGod3524/EXReader/actions/runs/40428878647).
+Cloud audit [40429490365/1](https://github.com/NoGod3524/EXReader/actions/runs/40429490365)
+authenticated artifact `12701251156` (536,619 bytes, SHA-256
+`7199020418ffd367195bdf3c7de721de19d2857abab86489bf5606dd91519522`),
+source admission, all twelve mapping observations, retained catalog logs and
+the committed-WAL process-kill recovery marker. Each observation covered
+2,202 books with synchronous mode FULL; first repairs committed each mapping
+and repeats did not create additional commits. Three same-runner first-repair
+observations had medians of 1,399 ms in the default WAL candidate and 3,853 ms
+in the PERSIST comparison. These measurements cover the isolated mapping
+consumer, not full product startup or a product performance budget. Actual
+power-loss and remote-volume behavior remain separately unverified.
