@@ -144,6 +144,9 @@ def main():
         if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
             options.append('-DEXR_READER_WINDOWS_TXT_RECOVERY=ON')
         configure(ROOT/'apps/reader/windows-account',host,options,name+'-actual-host')
+        if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
+            run([sys.executable,ROOT/'tests/windows_host/txt/check_import.py',host/'EXReaderProduct.exe',
+                 ROOT/'build/host-font-cache/Reader.otf',OUT/(name+'-txt-import')],name+'-txt-native-import',600)
         ui=OUT/(name+'-compact-ui')
         run([sys.executable,ROOT/'tests/reader_windows_compact/check_ui.py',
              '--candidate',host/'EXReaderProduct.exe','--font',ROOT/'build/host-font-cache/Reader.otf',

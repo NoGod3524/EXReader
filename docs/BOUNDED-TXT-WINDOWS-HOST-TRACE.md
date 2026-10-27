@@ -49,3 +49,27 @@ guards, and does not test the large TXT host path. Acceptance still requires a
 real native host Actions driver on the original 16,792,975-byte fixture: picker
 import, page turns, close and restart at a saved position, duplicate and
 interrupted recovery, plus existing-book compatibility, with evidence retained.
+
+## Picker import increment
+
+The opt-in picker now sends TXT to the product-original importer on the
+serialized host worker after startup recovery. It holds the picked file against
+writes while copying, applies the existing 96 MiB import limit, reconciles
+failed or cancelled staging on that catalog owner, and treats a completed or
+duplicate publication as committed even if cancellation arrives later. A
+recovery failure disables subsequent imports until repair. The UI explicitly
+says that the saved original cannot yet be displayed or read.
+
+The candidate Actions workflow now attempts an actual native picker import of
+16,792,975 bytes, verifies the stored digest and catalog state, restarts, and
+imports the same file again. This check does not claim reader acceptance. The
+existing compact UI suite assumes newly imported TXT can be opened and is
+expected to fail until the remaining host integration is implemented.
+
+Still required: establish and verify private-root access controls and ownership
+for the pager lifetime; expose original-only rows and safe selection/deletion;
+open an authenticated original through the TXT pager; implement rendering,
+page navigation and durable restart position; explicitly disable unsupported
+reader features; and exercise those paths, interrupted recovery, cancellation,
+and old SDK books through the real host. The importer increment alone is not a
+completed Windows bounded TXT host.

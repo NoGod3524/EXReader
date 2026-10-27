@@ -946,6 +946,9 @@ struct host_job {
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   int product_auto_open,product_deleted;
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  int original_import,original_recovery_failed;
+#endif
   int product_shelf_direction,product_shelf_before,product_shelf_after;
   char product_group_id[33];int product_group_kind;uint64_t product_cursor_ordinal;int product_anchor_predecessor;
   unsigned long product_shelf_generation;
@@ -2222,6 +2225,9 @@ static exr_status import_bounded_epub(host_job *job, int64_t *id, int *created, 
   CloseHandle(context.file); return status;
 }
 
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+static exr_status product_import_original(host_job *job);
+#endif
 static exr_status job_import(host_job *job) {
   exr_format format;
   exr_error error = {0};
@@ -2237,8 +2243,7 @@ static exr_status job_import(host_job *job) {
   }
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
   if (format == EXR_TXT) {
-    copy_wstring(job->message, 512, L"TXT 原书阅读功能尚未完成；此版本暂不能导入 TXT。已有书籍仍可打开。");
-    return EXR_UNSUPPORTED;
+    return product_import_original(job);
   }
 #endif
   status = format == EXR_EPUB ? EXR_OK : read_import_file(job, &data, &size, &error);
@@ -2318,6 +2323,9 @@ static unsigned __stdcall job_thread(void *context) {
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
       && !(job->kind==JOB_PRODUCT_DELETE && job->product_deleted)
+#endif
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+      && !job->original_import
 #endif
   )
     job->status = job->kind == JOB_IMPORT ? rollback_import(job) : EXR_CANCELLED;
@@ -3589,6 +3597,15 @@ static void import_path(const wchar_t *path, int dialog_fallback) {
     set_status(L"请输入要导入的文件路径。");
     return;
   }
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  {
+    exr_format format;
+    if (format_for_path(chosen, &format) && format == EXR_TXT && (!g.product_ready || g.product_pending)) {
+      set_status(L"书目恢复尚未完成，暂不能导入 TXT；请重试恢复或重启。");
+      return;
+    }
+  }
+#endif
   job = job_new(JOB_IMPORT);
   if (!job) { set_status(L"内存不足，无法导入。"); return; }
   copy_wstring(job->path, HOST_PATH, chosen);
@@ -3673,6 +3690,12 @@ static void host_update_controls(void) {
 }
 
 static void handle_job_complete(host_job *job) {
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  if(job->original_recovery_failed) {
+    g.product_pending=1;g.product_ready=0;
+    copy_wstring(job->message,512,L"TXT 导入恢复未完成；请重启后重试，原书状态需要恢复。");
+  }
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   prefs.last_ok = 0;
   if(job->kind==JOB_PREFERENCES) { prefs_accept(job);return; }
@@ -3776,7 +3799,11 @@ static void handle_job_complete(host_job *job) {
     g.auto_open_imported = 0;
     return;
   }
-  if (job->status == EXR_OK && job_cancel_flag(job) && job->kind == JOB_IMPORT) {
+  if (job->status == EXR_OK && job_cancel_flag(job) && job->kind == JOB_IMPORT
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+      && !job->original_import
+#endif
+  ) {
     if (job->created && job->imported_id > 0) {
       host_job *rollback = job_new(JOB_ROLLBACK);
       if (!rollback) {
@@ -3886,6 +3913,13 @@ static void handle_job_complete(host_job *job) {
         set_status(L"翻页失败：任务没有生成画面。");
       }
     } else if (job->kind == JOB_IMPORT) {
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+      if (job->original_import) {
+        g.auto_open_imported=0;
+        set_status(job->created ? L"TXT 原书已保存，但阅读与书架显示尚未完成。" : L"TXT 原书已存在；阅读与书架显示尚未完成。");
+        return;
+      }
+#endif
       if (reload_shelf() != EXR_OK) return;
       if (job->created && !import_title_fallback(job->path, job->imported_id)) return;
       {
