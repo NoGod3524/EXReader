@@ -165,6 +165,14 @@ def main():
         ui.command(app, 108)
         assert ' '.join(clipboard_text(app).split()) == ' '.join(first_page.split())
         record('select and copy the first TXT page through native commands')
+        app.focus()
+        app.drag(app.control('page'), (100, 180), (260, 180))
+        app.wait_idle()
+        ui.command(app, 108)
+        selected = ' '.join(clipboard_text(app).split())
+        whole_page = ' '.join(first_page.split())
+        assert 0 < len(selected) < len(whole_page) and selected in whole_page, selected[:100]
+        record('drag and copy a partial TXT selection using actual mouse input')
         ui.command(app, 137)  # IDC_ACCOUNT_BUTTON, the native account command
         account_dialog = app.wait(lambda: ui.owned_dialog(app, 138), timeout=30)
         assert account_dialog, 'account dialog unavailable while reading TXT'
