@@ -140,9 +140,9 @@ struct directory {
 #endif
   }
 };
-bool hashfile(file f,uint64_t size,char out[65],unsigned char (&buf)[65536]) {
+bool hashfile(file f,uint64_t size,char out[65],unsigned char (&buf)[65536],const reader_original_callbacks *cb=nullptr) {
   Sha256 s;s.init();if(!rewindfile(f))return false;
-  uint64_t pos=0;while(pos<size){size_t n=readfile(f,buf,static_cast<size_t>(std::min<uint64_t>(sizeof(buf),size-pos)));if(!n)return false;s.update(buf,n);pos+=n;}
+  uint64_t pos=0;while(pos<size){if(cb&&cb->cancelled&&cb->cancelled(cb->context)) throw failure{ROI_CANCELLED};size_t n=readfile(f,buf,static_cast<size_t>(std::min<uint64_t>(sizeof(buf),size-pos)));if(!n)return false;s.update(buf,n);pos+=n;}
   if(readfile(f,buf,1)!=0)return false;
   digest(s,out);return true;
 }
@@ -169,7 +169,8 @@ void check_catalog(int status) { need(status==0,ROI_CATALOG); }
 void notify(const reader_original_callbacks *c,int event) { if(c&&c->event)c->event(c->context,event); }
 bool cancelled(const reader_original_callbacks *c) { return c&&c->cancelled&&c->cancelled(c->context); }
 void reconcile(reader_catalog *c,directory &d,const row &r) {
-  need(valid_key(r.key)&&r.ref==leaf(r.key),ROI_CORRUPT);
+  /* Leave originals belonging to other product importers untouched. */
+  if(!valid_key(r.key)||r.ref!=leaf(r.key)) return;
   reader_catalog_error e{};
   if(r.state=="ready") return;
   if(r.state=="staged") need(absent_remove(d,temp(r.key)) && d.sync(),ROI_IO);
@@ -226,12 +227,19 @@ extern "C" reader_original_status reader_original_import(reader_catalog *c,const
     need(!cancelled(cb),ROI_CANCELLED);
     reader_catalog_book b{}; b.format="txt";b.sha256=hash;b.title=title;b.author=author;b.sort_title=sort_title;b.source_bytes=size;
     reader_catalog_error e{}; std::string dst=leaf(k),tmp=temp(k);
+    { handle prior; prior.f=d.existing(dst); need(prior.f==invalid,ROI_IO);
+#ifdef _WIN32
+      need(GetLastError()==ERROR_FILE_NOT_FOUND,ROI_IO);
+#else
+      need(errno==ENOENT,ROI_IO);
+#endif
+    }
     check_catalog(reader_catalog_original_stage(c,&b,dst.c_str(),&e)); notify(cb,1);
     need(!cancelled(cb),ROI_CANCELLED);
     handle output; output.f=d.create(tmp); need(output.f!=invalid,ROI_IO); need(rewindfile(input.f),ROI_IO);
     uint64_t pos=0; while(pos<size) { need(!cancelled(cb),ROI_CANCELLED); size_t n=readfile(input.f,buf,static_cast<size_t>(std::min<uint64_t>(sizeof(buf),size-pos))); need(n&&writefile(output.f,buf,n),ROI_IO); pos+=n; notify(cb,2); }
     need(regular(input.f,&after)&&after==size,ROI_IO); need(flushfile(output.f),ROI_IO);
-    char copied[65]; need(hashfile(output.f,size,copied,buf)&&std::strcmp(hash,copied)==0,ROI_CORRUPT);
+    char copied[65]; need(hashfile(output.f,size,copied,buf,cb)&&std::strcmp(hash,copied)==0,ROI_CORRUPT);
     need(!cancelled(cb),ROI_CANCELLED); closefile(output.f);output.f=invalid;
     need(d.publish(tmp,dst),ROI_IO); notify(cb,3);
     need(absent_remove(d,tmp)&&d.sync(),ROI_IO);
