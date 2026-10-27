@@ -22,8 +22,10 @@ jobs:
         run: |
           git merge-base --is-ancestor 2f215f5793a7344d22db350276ba9f8a07abe86f "$env:GITHUB_SHA"
           if ($LASTEXITCODE) { throw 'base mismatch' }
-          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 "$env:GITHUB_SHA" -- apps examples src include cmake
+          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 "$env:GITHUB_SHA" -- apps examples src include cmake ':(exclude)examples/reader.c'
           if ($LASTEXITCODE) { throw 'product paths changed' }
+          git diff --exit-code 4bc1bbf40fdbc31dfdf4332abf843c4b0ea971e1 "$env:GITHUB_SHA" -- examples/reader.c
+          if ($LASTEXITCODE) { throw 'Windows host differs from the reviewed TXT close fix' }
           python -m py_compile tests/reader_d23_relay/relay.py tests/reader_d23_relay/windows.py tests/reader_d23_relay/gtk.py
           if ($LASTEXITCODE) { throw 'test syntax failed' }
       - name: Build real Windows package and retain existing checks
