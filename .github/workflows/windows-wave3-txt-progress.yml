@@ -36,6 +36,7 @@ jobs:
           path: |
             build/c09/report.json
             build/c09/txt-progress/report.json
+            build/c09/txt-progress/txt-page-*.bmp
             build/c09/logs/
             build/native-owner-preflight/display.json
           if-no-files-found: warn

@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+import struct
 import subprocess
 import sys
 import time
@@ -77,6 +78,29 @@ def clipboard_text(app):
             kernel.GlobalUnlock(handle)
     finally:
         user.CloseClipboard()
+
+
+def selected_text_drag_points(window, before, selected):
+    from ctypes import wintypes as W
+    first, second = Path(before).read_bytes(), Path(selected).read_bytes()
+    width, height = struct.unpack_from('<ii', first, 18)
+    assert width > 0 and height > 0
+    assert struct.unpack_from('<ii', second, 18) == (width, height)
+    offset = struct.unpack_from('<I', first, 10)[0]
+    assert offset == struct.unpack_from('<I', second, 10)[0]
+    rect, client = W.RECT(), W.POINT(0, 0)
+    assert ui.U.GetWindowRect(window, C.byref(rect))
+    assert ui.U.ClientToScreen(window, C.byref(client))
+    border_x, border_y = client.x - rect.left, client.y - rect.top
+    for y in range(20, height - 20):
+        row = offset + (height - y - 1) * width * 4
+        changed = [x for x in range(20, width - 20)
+                   if first[row + x * 4:row + x * 4 + 3] != second[row + x * 4:row + x * 4 + 3]]
+        if len(changed) >= 30 and changed[-1] - changed[0] >= 100:
+            left = changed[0] + 2 - border_x
+            right = min(changed[-1] - 2, changed[0] + 160) - border_x
+            return (left, y - border_y), (right, y - border_y)
+    raise AssertionError('highlight has no selectable text span in the page screenshot')
 
 
 def first_line(text):
@@ -166,12 +190,19 @@ def main():
         assert ' '.join(clipboard_text(app).split()) == ' '.join(first_page.split())
         record('select and copy the first TXT page through native commands')
         app.focus()
-        app.drag(app.control('page'), (100, 180), (260, 180))
+        drag_start, drag_end = selected_text_drag_points(app.control('page'), before_selection, after_selection)
+        app.drag(app.control('page'), drag_start, drag_end)
         app.wait_idle()
+        drag_status = app.status()
+        ui.P.M.screenshot(app.control('page'), out / 'txt-page-after-drag.bmp')
         ui.command(app, 108)
+        copy_status = app.status()
         selected = ' '.join(clipboard_text(app).split())
         whole_page = ' '.join(first_page.split())
-        assert 0 < len(selected) < len(whole_page) and selected in whole_page, selected[:100]
+        assert 0 < len(selected) < len(whole_page) and selected in whole_page, {
+            'selected_length': len(selected), 'page_length': len(whole_page),
+            'selection_in_page': selected in whole_page, 'drag_status': drag_status,
+            'copy_status': copy_status, 'start': drag_start, 'end': drag_end}
         record('drag and copy a partial TXT selection using actual mouse input')
         ui.command(app, 137)  # IDC_ACCOUNT_BUTTON, the native account command
         account_dialog = app.wait(lambda: ui.owned_dialog(app, 138), timeout=30)
