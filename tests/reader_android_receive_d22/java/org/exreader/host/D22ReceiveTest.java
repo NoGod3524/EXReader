@@ -96,13 +96,15 @@ public final class D22ReceiveTest extends Instrumentation {
         }
     }
     private File originalCache()throws Exception{return new File(new File(context.getFilesDir(),"sync-cache"),input.getString("remote_sha")+".epub");}
+    private void verifiedCache()throws Exception{long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){File file=originalCache();if(file.isFile()&&BookStore.syncFileHash(file,new HostTask(()->false)).equals(input.getString("remote_sha")))return;SystemClock.sleep(80);}throw new AssertionError("verified remote cache never became available");}
+    private boolean remoteFrame(AccessibilityNodeInfo node){try{return id(node,"reader_view")&&new JSONObject(node.getExtras().getString("exreader.frame","{}")).optString("source_key").equals("epub:"+input.getString("remote_sha"));}catch(Exception missing){return false;}}
     private void evict()throws Exception{Files.deleteIfExists(originalCache().toPath());need(!originalCache().exists(),"cache really absent");}
     private void getMode(String mode)throws Exception{Files.deleteIfExists(new File(context.getFilesDir(),"d22-get-blocked").toPath());Files.deleteIfExists(new File(context.getFilesDir(),"d22-get-release").toPath());Files.write(new File(context.getFilesDir(),"d22-get-mode").toPath(),mode.getBytes(StandardCharsets.UTF_8));}
     private void receiveRemote(){clickContains(input.optString("remote_title"));click("接收");}
     private void onlyLocal()throws Exception{try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getPath())){need(library.books().length==1,"failed receive cannot import SDK original");}}
     private void readRemote()throws Exception{
         click("关闭");clickContains(input.getString("remote_title"));
-        until(node->id(node,"reader_view")&&!String.valueOf(node.getContentDescription()).isEmpty(),null,30000);
+        until(this::remoteFrame,null,30000);
         capture("d22-remote-reading");click("Shelf");panel();
     }
     @Override public void onStart(){
@@ -119,11 +121,11 @@ public final class D22ReceiveTest extends Instrumentation {
                 check("missing_cache_interrupted_https_rejected",()->{getMode("truncate");receiveRemote();status("原件下载未完成");need(!originalCache().exists(),"interrupted transfer not published");onlyLocal();});
                 check("missing_cache_cancel_native_https_and_retry",()->{getMode("block");receiveRemote();waitFile("d22-get-blocked");long before=SystemClock.elapsedRealtime();click("取消同步");need(SystemClock.elapsedRealtime()-before<2000,"transfer cancel UI responsive");marker("d22-get-release");status("已取消");need(!originalCache().exists(),"cancelled transfer not published");onlyLocal();});
                 check("background_cancels_original_receive_then_retry",()->{getMode("block");receiveRemote();waitFile("d22-get-blocked");getUiAutomation().executeShellCommand("input keyevent KEYCODE_HOME").close();marker("d22-get-release");closed();launch();panel();need(!originalCache().exists(),"backgrounded transfer not published");onlyLocal();});
-                check("explicit_receive_preserves_sdk_and_product",()->{receiveRemote();status("书籍已接收");inspect();});
+                check("explicit_receive_preserves_sdk_and_product",()->{receiveRemote();status("书籍已接收");verifiedCache();inspect();});
                 check("received_original_opens_actual_reader",this::readRemote);
-                check("corrupt_cache_repaired_without_duplicate",()->{Files.write(originalCache().toPath(),new byte[]{1,2,3});receiveRemote();status("书籍已接收");inspect();});
-                check("mapped_missing_cache_redownload",()->{evict();receiveRemote();status("书籍已接收");inspect();});
-                check("receive_exact_retry_does_not_duplicate",()->{clickContains(input.getString("remote_title"));click("接收");status("书籍已接收");inspect();});
+                check("corrupt_cache_repaired_without_duplicate",()->{Files.write(originalCache().toPath(),new byte[]{1,2,3});receiveRemote();status("书籍已接收");verifiedCache();inspect();});
+                check("mapped_missing_cache_redownload",()->{evict();receiveRemote();status("书籍已接收");verifiedCache();inspect();});
+                check("receive_exact_retry_does_not_duplicate",()->{clickContains(input.getString("remote_title"));click("接收");status("书籍已接收");verifiedCache();inspect();});
                 check("explicit_close_waits_for_closed_then_destroy",()->{click("断开");closed();});
             }else if(phase.equals("secure-reopen")){
                 check("secure_credentials_and_originals_survive_process_restart",()->{need(credential()==CredentialStore.OK,"Keystore reopened");inspect();launch();panel();});
