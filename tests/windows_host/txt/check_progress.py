@@ -119,6 +119,7 @@ def close_cleanly(app):
 
 def main():
     assert os.name == 'nt' and os.environ.get('GITHUB_ACTIONS') == 'true'
+    os.environ['EXR_TRACE_TXT'] = '1'
     exe, font, out, pdf, injector = map(lambda value: Path(value).resolve(), sys.argv[1:6])
     family = sys.argv[6]
     out.mkdir(parents=True, exist_ok=False)
@@ -743,6 +744,9 @@ def main():
             report['host_exit_code'] = app.process.poll()
             try:
                 report['host_status'] = app.status()
+                active_search = ui.owned_dialog(app, 171)
+                if active_search:
+                    report['search_status'] = ui.P.text(ui.U.GetDlgItem(active_search, 178))
                 report['visible_page'] = page_text(app, automation)[:1200]
             except Exception as diagnostic_error:
                 report['diagnostic_error'] = repr(diagnostic_error)
