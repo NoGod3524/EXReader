@@ -204,6 +204,7 @@ jobs:
           if-no-files-found: warn
   gtk-return:
     needs: windows-return
+    if: ${{ !cancelled() && needs.windows-return.result == 'success' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     steps:
