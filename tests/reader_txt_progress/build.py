@@ -45,8 +45,14 @@ def main():
     sdk = OUT / 'sdk-stage'
     product = OUT / 'product-stage'
     stage = OUT / ('module-stage-' + label)
-    run(['cmake', '--preset', 'reading-library', '-B', OUT / 'sdk-build',
-         '-DCMAKE_INSTALL_PREFIX=' + str(sdk)], 'sdk-configure')
+    sdk_options = ['cmake', '--preset', 'reading-library', '-B', OUT / 'sdk-build',
+                   '-DCMAKE_INSTALL_PREFIX=' + str(sdk)]
+    if os.name != 'nt':
+        # The frozen SDK tree is unchanged and its GCC 11 build reports an existing
+        # misleading-indentation warning; only the warning-to-error promotion is off
+        # for this Linux component build, no product assertion changes.
+        sdk_options.append('-DCMAKE_C_FLAGS=-Wno-error')
+    run(sdk_options, 'sdk-configure')
     run(['cmake', '--build', OUT / 'sdk-build', '--parallel', '4'], 'sdk-build')
     run(['cmake', '--install', OUT / 'sdk-build'], 'sdk-install')
     configure(ROOT / 'apps/reader/store/native', OUT / 'product-build',

@@ -123,6 +123,7 @@ reader_rs_status decode(reader_txt_progress *store, const void *wire, size_t byt
 reader_command_status apply_book(reader_txt_progress *store, const reader_command_context *context,
                                  const reader_book_command *input, reader_command_result *result,
                                  reader_command_error *detail) {
+  (void)store; /* the typed command carries its own store; only the raw family needs this one */
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
   if (store->raw) return reader_command_apply_book_raw_v3(context, input, result, detail);
 #endif
@@ -131,6 +132,7 @@ reader_command_status apply_book(reader_txt_progress *store, const reader_comman
 reader_rc_status apply_progress(reader_txt_progress *store, const reader_rc_context *context,
                                 const reader_rc_command *input, reader_rc_result *result,
                                 reader_rc_error *detail) {
+  (void)store; /* the reading command carries its own store; only the raw family needs this one */
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
   if (store->raw) return reader_rc_apply_raw_v3(context, input, 2u, result, detail);
 #endif
