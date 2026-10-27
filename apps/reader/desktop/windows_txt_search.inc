@@ -135,7 +135,13 @@ static exr_status wintxt_search_open(host_job *job) {
                                         &job->txt_history_after,&job->error);
   if(status==EXR_CANCELLED || job_cancel_flag(job)) return EXR_CANCELLED;
   if(status==EXR_OK) job->txt_history_ready=1;
-  else job->txt_history_failed=1;
+  else {
+    job->txt_history_failed=1;
+    if(getenv("EXR_TRACE_TXT")) {
+      fprintf(stderr,"TXT_HISTORY capture status=%d message=%s\n",(int)status,job->error.message);
+      fflush(stderr);
+    }
+  }
 #endif
   return job_cancel_flag(job) ? EXR_CANCELLED:EXR_OK;
 }

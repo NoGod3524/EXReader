@@ -1126,16 +1126,26 @@ static void w3_txt_search_history_land(host_job *job) {
   envelope.book_key = key; envelope.parser_version = exr_version();
   for (size_t i = 0; i < 2; i++) {
     w3_random_id(id); envelope.revision_id = id; capture.anchor = anchors[i];
-    if (reader_rs_encode_capture_raw_candidate(store, &envelope, &capture, 2, 0,
-                                               &wire[i], &bytes[i], &error) != READER_RS_OK) {
+    reader_rs_status code = reader_rs_encode_capture_raw_candidate(store, &envelope, &capture, 2, 0,
+                                                                    &wire[i], &bytes[i], &error);
+    if (code != READER_RS_OK) {
+      if (getenv("EXR_TRACE_TXT")) {
+        fprintf(stderr,"TXT_HISTORY encode index=%llu code=%d message=%s\n",
+                (unsigned long long)i,(int)code,error.message); fflush(stderr);
+      }
       job->txt_history_failed = 1; break;
     }
   }
   if (!job->txt_history_failed) {
     for (size_t i = 0; i < 2; i++) {
       memset(&history_error, 0, sizeof(history_error));
-      if (reader_jh_commit_wire_raw_v3(w3.jh, store, i ? READER_JH_SEARCH : READER_JH_PAGE,
-                                      wire[i], bytes[i], &result, &history_error) != READER_JH_OK) {
+      reader_jh_status code = reader_jh_commit_wire_raw_v3(w3.jh, store,
+        i ? READER_JH_SEARCH : READER_JH_PAGE, wire[i], bytes[i], &result, &history_error);
+      if (code != READER_JH_OK) {
+        if (getenv("EXR_TRACE_TXT")) {
+          fprintf(stderr,"TXT_HISTORY commit index=%llu code=%d message=%s\n",
+                  (unsigned long long)i,(int)code,history_error.message); fflush(stderr);
+        }
         job->txt_history_failed = 1; break;
       }
     }
