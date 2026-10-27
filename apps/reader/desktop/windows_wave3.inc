@@ -38,6 +38,7 @@ struct w3_job {
   int64_t ids[ROE_MAX_ITEMS];
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   char original_keys[ROE_MAX_ITEMS][73];
+  exr_source txt_source;HANDLE txt_handle;
 #endif
   size_t id_count;
   roe_result *roe;
@@ -171,6 +172,9 @@ static void w3_job_free(w3_job *job) {
   free(job->path); free(job->out_jsonl); free(job->out_markdown); free(job->title); free(job->directory); free(job->wire);
   free(job->rows);
   if (job->roe) roe_result_free(job->roe);
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if (job->txt_handle) CloseHandle(job->txt_handle);
+#endif
   if (job->fresh_open) session_clear(&job->fresh);
   free(job);
 }
@@ -197,10 +201,8 @@ static exr_status w3_verify_current(host_job *job, char key[73]) {
   if (!g.session.active || job->book_id != g.current.id || job->generation != g.frame.generation) return EXR_ARGUMENT;
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   if (g.session.txt) {
-    exr_source verified={0};HANDLE handle=NULL;
     if(strcmp(job->txt_key,g.session.txt_key)) return EXR_ARGUMENT;
-    status=winrecords_txt_source(job,&verified,&handle);
-    if(handle) CloseHandle(handle);
+    status=winrecords_txt_source(job,&job->w3->txt_source,&job->w3->txt_handle);
     if(status!=EXR_OK) return status;
     if(strncmp(job->txt_key,"txt:",4)||strlen(job->txt_key)!=68) return EXR_FORMAT;
     memcpy(key,job->txt_key,69);return EXR_OK;
@@ -242,10 +244,8 @@ static int w3_ai_resolve(void *context, const reader_rs_record *record, uint64_t
   memset(&match, 0, sizeof(match));
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   if (g.session.txt) {
-    exr_source source={0};HANDLE handle=NULL;
-    status=winrecords_txt_source(c->job,&source,&handle);
-    if(status==EXR_OK) status=winrecords_txt_match(c->job,&source,record,&match);
-    if(handle) CloseHandle(handle);
+    if(!c->w->txt_handle) return 0;
+    status=winrecords_txt_match(c->job,&c->w->txt_source,record,&match);
     return status==EXR_OK;
   }
 #endif
