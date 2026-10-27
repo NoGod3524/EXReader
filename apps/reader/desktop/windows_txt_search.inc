@@ -129,7 +129,9 @@ static exr_status wintxt_search_open(host_job *job) {
   status=exr_txt_anchor_create_source(&live,job->txt_history_origin,job->txt_history_origin,
                                       &job->txt_history_before,&job->error);
   if(status==EXR_OK)
-    status=exr_txt_anchor_create_source(&live,job->frame.range_start,job->frame.range_start,
+    /* Preserve the independently verified hit, which is often more distinctive
+       than a page-start point inside repeated boilerplate. */
+    status=exr_txt_anchor_create_source(&live,(size_t)start,(size_t)end,
                                         &job->txt_history_after,&job->error);
   if(status==EXR_CANCELLED || job_cancel_flag(job)) return EXR_CANCELLED;
   if(status==EXR_OK) job->txt_history_ready=1;
