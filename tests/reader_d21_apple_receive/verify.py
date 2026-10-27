@@ -28,6 +28,9 @@ try:
             result = json.loads(archive.read('result.json'))
             assert all(result[k] == v for k, v in (('source_sha', source), ('run_id', run), ('attempt', attempt), ('platform', platform)))
             assert result['accepted'] and not result['physical_device']
+            publication = json.loads(archive.read('publication-result.json'))
+            assert publication['accepted'] and len(publication['checks']) == 10
+            assert all(publication[k] == result[k] for k in ('source_sha', 'run_id', 'attempt'))
             assert len(result['cases']) == 1 and all(c['result'] == 'Passed' for c in result['cases'])
             assert result['program']['bundle_source_sha'] == source and result['program']['bundle_id'] == 'org.exreader.host'
             with zipfile.ZipFile(io.BytesIO(archive.read('receive-program.zip'))) as program:
@@ -38,7 +41,7 @@ try:
             controls = json.loads(archive.read('ui-fault-controls.json'))
             assert len(controls) == 6 and all(x['ok'] for x in controls)
             commands = result['commands']
-            required = {'native-owner-build', 'seed-upload', 'native-receive', 'hash-fault-preserves-local',
+            required = {'native-publication-build', 'native-publication-ordering', 'native-owner-build', 'seed-upload', 'native-receive', 'hash-fault-preserves-local',
                         'interrupted-response-preserves-local', 'cancel-in-flight-download', 'restored-original-retry',
                         'native-ui', 'independent-concurrent-author', 'concurrent-history-keeps-local'}
             assert required <= {c['role'] for c in commands if c['exit'] == 0}

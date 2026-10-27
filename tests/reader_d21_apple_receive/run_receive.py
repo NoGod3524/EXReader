@@ -39,6 +39,12 @@ try:
     identity = json.loads((mac / 'wave3-packages.json').read_text())
     assert all(identity[k] == result[k] for k in ('source_sha', 'run_id', 'attempt'))
     sdk = mac / 'sdk'; products = mac / 'raw-products' 
+    publication = out / 'receive-publication-review'
+    run([sys.executable, 'tools/apple_swift.py', '--sdk', sdk, '--product-prefix', products, '--selector-bytes-candidate', '--', '-swift-version', '5', '-parse-as-library', '-O', '-I', sdk / 'include', '-L', sdk / 'lib', '-lexreader', '-Xlinker', '-rpath', '-Xlinker', sdk / 'lib', 'examples/apple/HostSDK.swift', 'examples/apple/HostModel.swift', 'examples/apple/HostCatalog.swift', 'examples/apple/SelectableText.swift', 'tests/reader_d21_apple_receive/ReceivePublicationReview.swift', '-o', publication], 'native-publication-build')
+    run([publication, out / 'publication-result.json'], 'native-publication-ordering')
+    publication_result = json.loads((out / 'publication-result.json').read_text())
+    assert publication_result['accepted'] and len(publication_result['checks']) == 10
+    assert all(publication_result[k] == result[k] for k in ('source_sha', 'run_id', 'attempt'))
     consumer = out / 'receive-review'
     run(['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library', '-O', '-I', sdk / 'include', '-L', sdk / 'lib', '-lexreader', '-Xlinker', '-rpath', '-Xlinker', sdk / 'lib', 'examples/apple/HostSDK.swift', 'examples/apple/HostCatalog.swift', 'examples/apple/HostAccount.swift', 'tests/reader_d21_apple_receive/ReceiveReview.swift', '-o', consumer, *flags(str(sdk), str(products), True)], 'native-owner-build')
     source = out / 'remote.txt'; source.write_text('D21 remote original readable content.\n' * 300)
