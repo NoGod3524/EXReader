@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
 import traceback
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -63,8 +64,21 @@ def main():
         events = wait_until(lambda: [e for e in recorder.since(mark)
             if e['type'] == 'object:property-change:accessible-name'
             and e.get('source_name') == after], 30)
-        check('account_status_exposes_changed_name_event', bus.same(notice, control('Account operation status')),
-              dict(before=before, after=after, events=events, path=bus.path_of(notice)))
+        # The status label can be resized after its name changes. Compare the
+        # same two live nodes once the native layout has settled.
+        deadline = time.monotonic() + 6
+        peer = None
+        same_notice = False
+        while time.monotonic() < deadline:
+            peer = control('Account operation status')
+            same_notice = bus.same(notice, peer)
+            if same_notice:
+                break
+            time.sleep(.08)
+        check('account_status_exposes_changed_name_event', same_notice,
+              dict(before=before, after=after, events=events, path=bus.path_of(notice),
+                   peer_path=bus.path_of(peer), notice_extents=bus.extents(notice),
+                   peer_extents=bus.extents(peer)))
         check('progress_has_stable_semantic_description', progress.get_description() == 'Account sync progress',
               dict(name=bus.name(progress), path=bus.path_of(progress)))
         (folder / 'tree.json').write_text(json.dumps(bus.dump(app), indent=2))
