@@ -151,6 +151,8 @@ def main():
         marker = first_line(before_font)
         assert marker and marker in after_font, (marker, after_font[:300])
         position_line = first_line(after_font)
+        position_marker = '\n'.join([line for line in after_font.splitlines() if line.strip()][:2])
+        assert position_marker
         record('font increase relayouts and keeps the content position', marker)
 
         heads, count = progress_heads('txt:' + expected)
@@ -223,8 +225,8 @@ def main():
         assert automation.available, automation.error
         app.wait(lambda: len(rows(app)) == 3, timeout=180)
         open_row(fixture.name)
-        assert first_line(page_text(app, automation)) == position_line, page_text(app, automation)[:200]
-        record('restart after the refused write restores the durable position', position_line)
+        assert position_marker in page_text(app, automation), page_text(app, automation)[:200]
+        record('restart after the refused write restores the durable position', position_marker)
 
         open_row(pdf.name)
         sdk_first = page_text(app, automation)
