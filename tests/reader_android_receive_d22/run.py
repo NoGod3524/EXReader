@@ -109,8 +109,18 @@ def main():
             command=['shell','am','instrument','-w','-r','-e','phase',phase,'-e','sdk_version',a.sdk_version]
             for key,value in identity.items():command.extend(('-e',key,value))
             raw=adb(*command,package+'.test/'+package+'.D22ReceiveTest',timeout=300);save(phase+'-instrumentation.txt',raw)
+            print(raw.decode(errors='replace'),flush=True)
+            logcat=adb('logcat','-d','-v','threadtime','-t','2500');save(phase+'-early-logcat.txt',logcat)
+            if b'Process crashed' in raw:
+                print('::error title=D22 process crash::'+phase+' instrumentation process crashed; see early-logcat evidence',flush=True)
+                for line in logcat.decode(errors='replace').splitlines():
+                    if any(marker in line for marker in ('JNI DETECTED','Abort message','Fatal signal','FATAL EXCEPTION','backtrace:','libexreader_host','HostTask')):print(line,flush=True)
+                raise AssertionError('D22 actual host process crashed')
             report=json.loads(adb('exec-out','run-as',package,'cat','files/host-ui-'+phase+'.json'));save(phase+'-report.json',(json.dumps(report,ensure_ascii=False,indent=2)+'\n').encode())
             print(json.dumps({'phase':phase,'passed':report.get('passed'),'expected_checks':expected[phase],'actual_checks':report.get('checks'),'failed_check':report.get('failed_check'),'failure_class':report.get('failure_class'),'failure':report.get('failure'),'observations':report.get('observations',[])},ensure_ascii=False),flush=True)
+            if report.get('passed') is not True:
+                detail='D22 '+phase+' / '+str(report.get('failed_check'))+' / '+str(report.get('failure_class'))+': '+str(report.get('failure'))
+                print('::error title=D22 receive failure::'+detail.replace('%','%25').replace('\r','%0D').replace('\n','%0A'),flush=True)
             stop.set();thread.join(10);assert not thread.is_alive() and not monitor_failure,monitor_failure
             assert all(report.get(key)==value for key,value in identity.items()) and report['expected_sdk_version']==a.sdk_version and report['phase']==phase and report['passed'] is True
             assert [row['name'] for row in report['checks']]==expected[phase] and all(row['pass'] is True for row in report['checks'])

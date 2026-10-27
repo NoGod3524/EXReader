@@ -4,31 +4,13 @@ on:
     branches: [codex/dot-d22-android-receive]
 permissions:
   contents: read
-  actions: read
 defaults:
   run:
     shell: bash
 env:
   C11_NDK: '27.0.12077973'
 jobs:
-  inspect-prior:
-    if: contains(github.event.head_commit.message, 'D22 inspect prior')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          github-token: ${{ github.token }}
-          repository: NoGod3524/EXReader
-          run-id: 40450431849
-          name: d22-android-receive-40450431849-1
-          path: prior
-      - name: Read original failed instrumentation in Actions only
-        run: |
-          find prior -path '*d22-receive*' -type f
-          cat prior/wave3/evidence/d22-receive/first-instrumentation.txt
-          cat prior/wave3/evidence/d22-receive/result.json
   android:
-    if: ${{ !contains(github.event.head_commit.message, 'D22 inspect prior') }}
     runs-on: ubuntu-latest
     timeout-minutes: 210
     steps:
