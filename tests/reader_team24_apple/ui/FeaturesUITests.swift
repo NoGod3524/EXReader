@@ -87,7 +87,11 @@ final class FeaturesUITests: XCTestCase {
         let close = native.buttons["Close"].firstMatch, chineseClose = native.buttons["关闭"].firstMatch
         if close.exists && close.isHittable { close.tap() }
         else if chineseClose.exists && chineseClose.isHittable { chineseClose.tap() }
-        else if native.exists { native.swipeDown() }
+        else if native.exists {
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
+            start.press(forDuration: 0.1, thenDragTo: end)
+        }
         if !e("features.close").isHittable {
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.15)).tap()
         }
