@@ -1,7 +1,7 @@
 name: Inspect Apple macOS failed UI result
 on:
   push:
-    branches: [codex/reader-apple-404304-inspect]
+    branches: [codex/reader-apple-404352-inspect]
 permissions:
   actions: read
   contents: read
@@ -17,12 +17,12 @@ jobs:
           python3 - <<'PY'
           import hashlib, json, os, subprocess, zipfile
           repo = os.environ['GITHUB_REPOSITORY']
-          api = f'repos/{repo}/actions/artifacts/12703032200'
+          api = f'repos/{repo}/actions/artifacts/12703884617'
           item = json.loads(subprocess.check_output(['gh', 'api', api]))
-          assert item['workflow_run']['id'] == 40430452658
-          assert item['workflow_run']['head_sha'] == '937f61057b06c5c9de3b562046e52c91b5be62b9'
-          assert not item['expired'] and item['size_in_bytes'] == 430870483
-          digest = '2ee04448f3065f98e869805d99c68b96a536db92e5d7342d85a141fd24a285a3'
+          assert item['workflow_run']['id'] == 40435233965
+          assert item['workflow_run']['head_sha'] == '691e40ec29f20e2bf51b0ea5ea841f04e3d75617'
+          assert not item['expired'] and item['size_in_bytes'] == 433762355
+          digest = 'e6165137f45c5cf28a264f603de3170f987e9ceb565e08d3daf307e57b0bf984'
           assert item['digest'] == 'sha256:' + digest
           with open('artifact.zip', 'wb') as out:
               subprocess.run(['gh', 'api', api + '/zip'], stdout=out, check=True)
@@ -36,9 +36,10 @@ jobs:
               assert len(names) == 1, names
               lines = archive.read(names[0]).decode('utf-8', 'replace').splitlines()
               hits = [i for i, line in enumerate(lines) if
-                      'features.share' in line or 'Type key' in line or 'escape' in line.lower()]
+                      'testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot' in line or 'error:' in line.lower() or 'features.share' in line or 'Type key' in line or 'escape' in line.lower() or 'Assertion Failure' in line]
               for i in hits:
                   print('--- line', i + 1, '---')
                   print('\n'.join(lines[max(0, i-5):i+12]))
               print('diagnostic_hit_count', len(hits))
+              print('evidence_entries', '\n'.join(archive.namelist()))
           PY
