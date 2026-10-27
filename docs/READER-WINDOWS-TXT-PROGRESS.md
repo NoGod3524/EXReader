@@ -123,7 +123,16 @@ The earlier [Actions 40575156438](https://github.com/NoGod3524/EXReader/actions/
 on `6ffffe4fa0c837c04092d1b730c26a6b5b5b3f28` passed the new search
 checks but failed a subsequent locked-write restore assertion after the search
 changed the reading position. The later successful run moved the search checks
-after the existing restore checks. A separate candidate and cloud diagnostic
-are needed to determine whether the earlier changed-font comparison exposed a
-product defect. The search candidate is not yet part of the unified source
+after the existing restore checks. A separate candidate then checked the
+changed-font restore scenario, as described below. The search candidate is not yet part of the unified source
 `172f740ff885c5cea6b0e5b20f909cd054488a14`.
+
+The follow-up [Actions 40577953079](https://github.com/NoGod3524/EXReader/actions/runs/40577953079)
+at source `1e8bae3271b8a7c0f74d67ea5448d85c7449ebdf` passed the retained
+host suite with the explicit search, failed-save, relayout and restart check.
+It verifies that, at the same new font, the page before and after restart is
+identical and that the locked product database retained the same progress
+heads and count. Artifact `12769255420` is 331091 bytes, SHA-256
+`84374e6089137863825e6fefe420ef720dce80dda5c1d1ef20dafa057d63ccff`.
+The earlier failure remains recorded; this result addresses the specific
+changed-font comparison scenario.
