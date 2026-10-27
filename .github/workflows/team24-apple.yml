@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [macos]
+        target: [macos, iphonesimulator]
     steps:
       - uses: actions/checkout@v4
         with:
