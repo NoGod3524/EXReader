@@ -121,6 +121,15 @@ def main():
     record('local_revision_and_outbox_committed_together')
     assert put(a, first)['created'] == 0 and counts(a) == (1, 1)
     record('same_id_exact_bytes_is_idempotent')
+    # Upgrade a real v1 catalog containing committed revision/outbox rows, then
+    # exercise the installed adapter against it for the rest of this suite.
+    with sqlite3.connect(a) as db:
+        assert db.execute('PRAGMA user_version').fetchone()[0] == 1
+        db.executescript(Path('apps/reader/store/002_originals.sql').read_text(encoding='utf-8'))
+        assert db.execute('PRAGMA user_version').fetchone()[0] == 2
+    assert counts(a) == (1, 1)
+    assert put(a, first)['created'] == 0
+    record('migrated_v2_catalog_preserves_revision_and_outbox')
     queue = invoke('outbox', a)['outbox']
     assert len(queue) == 1 and queue[0]['wire'].encode() == first.read_bytes() and queue[0]['attempts'] == 0
     transport = wire('transport-a-to-b', queue[0]['wire'].encode())
