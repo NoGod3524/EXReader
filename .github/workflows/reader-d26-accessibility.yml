@@ -282,6 +282,9 @@ jobs:
       - name: Retained search directory records and import business suites
         if: ${{ !cancelled() }}
         run: |
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/d26-retained-batch-inputs
+          python3 tests/reader_gtk_drop_import/make_inputs.py tests/fixtures build/d26-retained-drop-inputs
+          python3 tests/reader_d26_accessibility/fixture_provenance.py
           mkdir -p build/gtk-atspi-client
           git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
@@ -300,10 +303,10 @@ jobs:
               --fixtures build/records-command-fixtures --output build/c10-records-ui \
               --backend build/c10-desktop/reader-gtk-reading-records-backend || failed=1
             /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/c10-package/EXReader-Linux \
-              --fixtures build/gtk-batch-ui-fixtures --output build/c10-batch-ui \
+              --fixtures build/d26-retained-batch-inputs --output build/c10-batch-ui \
               --backend build/c10-desktop/reader-gtk-batch-import-backend || failed=1
             /usr/bin/python3 tests/reader_gtk_drop_import/check_ui.py --payload build/c10-package/EXReader-Linux \
-              --fixtures build/c10-drop-fixtures --output build/c10-drop-ui \
+              --fixtures build/d26-retained-drop-inputs --output build/c10-drop-ui \
               --backend build/c10-desktop/reader-gtk-drop-backend \
               --native-source build/c10-desktop/reader-gtk-drop-native-source || failed=1
             exit "$failed"
@@ -323,7 +326,7 @@ jobs:
       - name: Preserve original G13 gate failure as explicit historical evidence
         if: always()
         run: |
-          /usr/bin/python3 tests/reader_d26_accessibility/g13_current.py gate --report build/d26-g13/result.json --self-test
+          /usr/bin/python3 tests/reader_d26_accessibility/retain_history.py --kind g13 --report build/d26-g13/result.json -- /usr/bin/python3 tests/reader_d26_accessibility/g13_current.py gate --report build/d26-g13/result.json --self-test
           /usr/bin/python3 tests/reader_d26_accessibility/retain_history.py --kind g13 --report build/d26-g13/result.json -- /usr/bin/python3 tests/reader_d26_accessibility/g13_current.py gate --report build/d26-g13/result.json --require-accepted
       - name: Expose original per-check results in Actions logs
         if: always()
@@ -344,6 +347,7 @@ jobs:
             build/d26-driver-provenance/
             build/d26-build-handoff.json
             build/d26-handoff-verified.json
+            build/d26-fixture-provenance.json
             build/d26-account/
             build/c10-package/
             build/c10-compact-package/
