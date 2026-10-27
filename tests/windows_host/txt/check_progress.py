@@ -139,8 +139,10 @@ def main():
         record('six forward page turns show consecutive source content', seen[-1])
 
         before_font = page_text(app, automation)
+        label_before_font = app.label()
         press_font_increase()
         app.wait_idle()
+        assert app.label() != label_before_font, app.label()
         after_font = page_text(app, automation)
         marker = first_line(before_font)
         assert marker and marker in after_font, (marker, after_font[:300])
