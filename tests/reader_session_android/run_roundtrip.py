@@ -209,17 +209,17 @@ def main():
         close('C');record('cancel_nonblocking_destroy_busy_then_retry_close_destroy',cancel_seconds=elapsed,cancelled=cancelled,retried=retried)
         stats=control('stats');assert stats['clients']==stats['uploads']==0 and stats['attaches']==stats['detaches'] and stats['attaches']>0
         schemas={profile:snapshot(profile) for profile in ('A','B')};record('sdk_and_product_files_distinct_and_native_lifecycle_balanced',stats=stats,schemas=schemas)
-        # Execute the original host's unchanged owner suite against this source
+        # Execute the current host owner suite against this source
         # and installed product packages, including its real process kills.
         apks=Path('examples/android/app/build/outputs/apk');adb('install','-r','-t',apks/'debug/app-debug.apk');adb('install','-r','-t',apks/'androidTest/debug/app-debug-androidTest.apk')
-        raw=instrument('original-owner');assert b'OK (17 tests)' in raw and b'INSTRUMENTATION_CODE: -1' in raw and b'FAILURES' not in raw
-        report=json.loads(adb('exec-out','run-as','org.exreader.host','cat','files/product-owner-report.json'));assert report['failed']==0 and report['count']==17 and all(report.get(k)==v for k,v in identity.items())
+        raw=instrument('original-owner');assert b'OK (18 tests)' in raw and b'INSTRUMENTATION_CODE: -1' in raw and b'FAILURES' not in raw
+        report=json.loads(adb('exec-out','run-as','org.exreader.host','cat','files/product-owner-report.json'));assert report['failed']==0 and report['count']==18 and all(report.get(k)==v for k,v in identity.items())
         (a.output/'original-owner-device.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
         for phase,witness in (('before',b'1,1,0'),('after',b'1,1,1')):
             killed=instrument('original-seed-'+phase,'seed-'+phase);assert b'Process crashed.' in killed
             assert adb('exec-out','run-as','org.exreader.host','cat','files/owner-kill-'+phase+'/witness.txt')==witness
             recovered=instrument('original-recover-'+phase,'recover-'+phase);assert ('EXR_OWNER_RECOVERED recover-'+phase).encode() in recovered and b'INSTRUMENTATION_CODE: -1' in recovered
-        record('unchanged_original_product_owner_17_and_two_process_phases',provider=report['provider'])
+        record('current_product_owner_18_and_two_process_phases',provider=report['provider'])
         reading=control('prepare-reading','ReadingA');assert len(reading['captures'])==18
         assert control('outbox','ReadingA')['count']==26
         create('ReadingA','reading');control('start','ReadingA');sent=wait('ReadingA',4);assert control('outbox','ReadingA')['count']==0;close('ReadingA')
