@@ -369,7 +369,7 @@
     },
     {
       "name": "android-composition-workflow-candidate",
-      "source": "609ab65555d16e2bf7f1533c5864a894ef0d6033",
+      "source": "60db85cc1a0389021e8deecfd633c62ec4b07ab0",
       "paths": [
         ".github/workflows/android-composition-candidate.yml"
       ]
@@ -447,7 +447,13 @@
         "tests/reader_windows_gtk_interop/verify.py",
         "tests/reader_windows_gtk_interop/windows.py"
       ]
+    },
+    {
+      "name": "android-navigation-scroll-driver",
+      "source": "60db85cc1a0389021e8deecfd633c62ec4b07ab0",
+      "paths": [
+        "tests/reader_android_navigation/java/org/exreader/host/NavigationUiTest.java"
+      ]
     }
   ]
 }
-
