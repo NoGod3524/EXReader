@@ -136,3 +136,10 @@ heads and count. Artifact `12769255420` is 331091 bytes, SHA-256
 `84374e6089137863825e6fefe420ef720dce80dda5c1d1ef20dafa057d63ccff`.
 The earlier failure remains recorded; this result addresses the specific
 changed-font comparison scenario.
+
+## Next unified candidate
+
+This candidate combines bounded Windows TXT search and the follow-up
+search/relayout/failed-save diagnostic with the earlier unified source. Its
+own seven same-source workflows must determine acceptance; standalone runs
+above document the individual changes.
