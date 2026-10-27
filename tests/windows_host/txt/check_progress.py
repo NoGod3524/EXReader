@@ -155,8 +155,13 @@ def main():
         assert 'Perf Import 0000' in page_text(app, automation), page_text(app, automation)[:200]
         record('shelf selection opens the 16792975-byte original at its first page')
         first_page = page_text(app, automation)
+        before_selection = out / 'txt-page-before-selection.bmp'
+        after_selection = out / 'txt-page-selected.bmp'
+        ui.P.M.screenshot(app.control('page'), before_selection)
         assert ui.U.IsWindowEnabled(app.control('select')) and ui.U.IsWindowEnabled(app.control('copy'))
         ui.command(app, 107)
+        ui.P.M.screenshot(app.control('page'), after_selection)
+        assert digest(before_selection) != digest(after_selection), 'selected TXT page has no visible highlight'
         ui.command(app, 108)
         assert ' '.join(clipboard_text(app).split()) == ' '.join(first_page.split())
         record('select and copy the first TXT page through native commands')
