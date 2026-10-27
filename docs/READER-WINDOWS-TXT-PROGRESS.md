@@ -170,3 +170,20 @@ content position, then releases the previous font lease only after accepting
 the new page; failure keeps the existing page and font. The Windows native
 UI checks cover invalid input, visible font change, restoration and lease
 release. This candidate awaits same-source Actions verification.
+
+
+### Product TXT reading records candidate (Windows Actions)
+
+The independent candidate source `e09b25aa02b03297dc8a7f1f6eb32c092e11d410`
+passed [run 40585543502, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40585543502).
+The native UI saved a bookmark and highlight from a 16,792,975-byte product TXT,
+independently resolved each and returned to the original page. Both records
+remained after restart and a different original had its own empty annotation
+list. The unchanged compact and raw owner suites and installed mixed original
+export consumer also passed in that run. This is Windows candidate evidence.
+
+The earlier source `76aae8670d8bb4a74d1ca947f6e5f4701944506e`
+[run 40584728415](https://github.com/NoGod3524/EXReader/actions/runs/40584728415)
+failed while waiting for the initial native PDF picker, before reaching the
+TXT checks. The result is retained. macOS, Linux and product-wide interoperability
+are not established by this Windows run.
