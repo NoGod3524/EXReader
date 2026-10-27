@@ -78,6 +78,7 @@ struct HostRootView: View {
                 ReaderScreen(model: model)
             }
         }
+        .preference(key: HostReadingRouteKey.self, value: !selfTesting && !model.showLibrary && model.current != nil)
 #if EXR_APPLE_HOST_REVIEW
         .overlay(alignment: .topTrailing) {
             if model.reviewInitializationHoldEnabled {
@@ -467,6 +468,9 @@ struct ReaderScreen: View {
     @ObservedObject var model: HostReaderModel
     @State private var showSelection = false
     @State private var toolsVisible = true
+    @Environment(\.hostChooseAccount) private var chooseAccount
+    @Environment(\.hostAccountChooserVisible) private var accountChooserVisible
+    @AccessibilityFocusState private var moreFocused: Bool
     @AccessibilityFocusState private var toolsToggleFocused: Bool
     @State private var showNotes = false
     @State private var showSearch = false
@@ -547,6 +551,10 @@ struct ReaderScreen: View {
                     .accessibilityFocused($toolsToggleFocused)
                 }
                 Menu {
+                    if let chooseAccount {
+                        Button("书库账号") { chooseAccount() }
+                            .accessibilityIdentifier("account.choose")
+                    }
 #if EXR_APPLE_WAVE3
                     Button("文件、字体与同步详情") { model.refreshWave3(); showWave3 = true }
                         .accessibilityIdentifier("reader.features")
@@ -560,6 +568,7 @@ struct ReaderScreen: View {
                 } label: { Image(systemName: "ellipsis").font(.system(size: 20)).frame(width: 44, height: 44) }
                     .accessibilityLabel(Text("更多阅读操作"))
                     .accessibilityIdentifier("reader.more").disabled(model.busy)
+                    .accessibilityFocused($moreFocused)
                 if model.busy {
                     if compactTools {
                         Image(systemName: "hourglass").frame(width: 20, height: 20)
@@ -668,6 +677,7 @@ struct ReaderScreen: View {
 #if EXR_APPLE_PAGE_THEME
         .sheet(isPresented: $showPageTheme, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostPageThemeSheet(model: model) }
 #endif
+        .onChange(of: accountChooserVisible) { visible in if !visible { moreFocused = true } }
         .onChange(of: toolsVisible) { _ in toolsToggleFocused = true }
         .onDisappear { model.detach() }
         .onChange(of: model.location) { value in hostAnnounce(value) }
