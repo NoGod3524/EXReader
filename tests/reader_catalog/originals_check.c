@@ -80,6 +80,16 @@ int main(int argc,char **argv) {
     CHECK(reader_catalog_find(c,cancel_key,NULL,book_seen,&books,&visible,&e)==SQLITE_OK && !visible && books==0);
     CHECK(reader_catalog_original_stage(c,&cancelled,"originals/cancel.txt",&e)==SQLITE_OK);
   }
+  { reader_catalog_book race={"txt","0000000000000000000000000000000000000000000000000000000000000005","Staged","Author","Staged","reflow_global",20,51,0};
+    const char *race_key="txt:0000000000000000000000000000000000000000000000000000000000000005";
+    int books=0, visible=0;
+    CHECK(reader_catalog_original_stage(c,&race,"originals/race.txt",&e)==SQLITE_OK);
+    race.title="Verified SDK"; race.sort_title="Verified SDK";
+    CHECK(reader_catalog_attach(c,&race,&e)==SQLITE_OK);
+    CHECK(reader_catalog_find(c,race_key,NULL,book_seen,&books,&visible,&e)==SQLITE_OK && visible && books==1);
+    CHECK(reader_catalog_original_transition(c,race_key,"staged","ready",&e)==SQLITE_OK);
+    CHECK(reader_catalog_has_local(c,51,&present,&e)==SQLITE_OK && present);
+  }
   CHECK(reader_catalog_close(&c,&e)==SQLITE_OK);
   puts("v1 migration, mapping preservation, staging, restart, transitions and deletion passed"); return 0;
 }
