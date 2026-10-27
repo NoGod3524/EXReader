@@ -218,7 +218,7 @@ extern "C" roe_status roe_destroy(roe_exporter **p){
   try{std::lock_guard<std::mutex> lock(owners_mutex);owners.erase(e->library);delete e;*p=nullptr;return ROE_OK;}catch(...){return ROE_MEMORY;}
 }
 extern "C" void roe_result_free(roe_result *r){std::free(r);}
-extern "C" roe_status roe_run(roe_exporter *e,const roe_selection *selected,size_t count,const roe_options *options,roe_result **out){
+extern "C" roe_status roe_run_mixed(roe_exporter *e,const roe_mixed_selection *selected,size_t count,const roe_options *options,roe_result **out){
   if(out)*out=nullptr;
   if(!e||!selected||!options||!out||!count)return ROE_ARGUMENT;
   if(e->thread!=std::this_thread::get_id()||e->busy)return ROE_OWNER;
@@ -231,7 +231,15 @@ extern "C" roe_status roe_run(roe_exporter *e,const roe_selection *selected,size
     const uint64_t book=o.per_book_bytes?o.per_book_bytes:ROE_DEFAULT_BOOK_BYTES,batch=o.batch_bytes?o.batch_bytes:ROE_DEFAULT_BATCH_BYTES;
     need(book<=ROE_DEFAULT_BOOK_BYTES&&batch<=ROE_HARD_BATCH_BYTES,ROE_LIMIT);
     need(o.naming==ROE_HASH_NAME||o.naming==ROE_DISPLAY_NAME,ROE_ARGUMENT);
-    std::string labels[ROE_MAX_ITEMS];for(size_t i=0;i<count;i++){need(selected[i].book_id>0,ROE_ARGUMENT);if(o.naming==ROE_DISPLAY_NAME)labels[i]=slug(selected[i].display_name);}
+    std::string labels[ROE_MAX_ITEMS];for(size_t i=0;i<count;i++){
+      if(selected[i].source){
+        need(selected[i].source->read_at&&extension(selected[i].format)&&selected[i].expected_sha256,ROE_ARGUMENT);
+        const char *hash=selected[i].expected_sha256;
+        for(size_t j=0;j<64;j++)need((hash[j]>='0'&&hash[j]<='9')||(hash[j]>='a'&&hash[j]<='f'),ROE_ARGUMENT);
+        need(hash[64]==0,ROE_ARGUMENT);
+      }else need(selected[i].book_id>0,ROE_ARGUMENT);
+      if(o.naming==ROE_DISPLAY_NAME)labels[i]=slug(selected[i].display_name);
+    }
     directory dir;dir.open(o.directory);need(!cancelled(o),ROE_CANCELLED);
     /* Snapshot public formats. SDK 3.40 has no per-ID format getter; this public
        metadata query is SDK-bounded (EXR_MAX_ITEMS), not original-byte loading. */
@@ -244,11 +252,16 @@ extern "C" roe_status roe_run(roe_exporter *e,const roe_selection *selected,size
     uint64_t total=0;
     /* One host lease covers all sources, SDK calls, and their release.
        Progress callbacks run after SDK calls return, never inside the SDK. */
-    source_set sources(e);
+    source_set sources(e);const exr_source *active[ROE_MAX_ITEMS]{};
     for(size_t i=0;i<count;i++){
-      roe_item &r=result->items[i];need(extension(r.format)!=nullptr,ROE_SOURCE);
-      exr_error error{};r.sdk_status=exr_library_source(e->library,r.book_id,&sources.sources[i],&error);
-      need(r.sdk_status==EXR_OK,ROE_SOURCE);r.bytes=sources.sources[i].size;
+      roe_item &r=result->items[i];
+      if(selected[i].source){r.format=selected[i].format;active[i]=selected[i].source;}
+      else {
+        need(extension(r.format)!=nullptr,ROE_SOURCE);
+        exr_error error{};r.sdk_status=exr_library_source(e->library,r.book_id,&sources.sources[i],&error);
+        need(r.sdk_status==EXR_OK,ROE_SOURCE);active[i]=&sources.sources[i];
+      }
+      r.bytes=active[i]->size;
       need(r.bytes<=book&&r.bytes<=batch-total,ROE_LIMIT);total+=r.bytes;
     }
     for(size_t i=0;i<count;i++){
@@ -266,11 +279,13 @@ extern "C" roe_status roe_run(roe_exporter *e,const roe_selection *selected,size
         handle f;f.f=dir.create(temp);need(f.f!=invalid,ROE_IO);temporary=true;r.cleanup_pending=1;
         notify(o,i,ROE_STAGED,r);Sha256 sha;sha.init();unsigned char buffer[65536];uint64_t pos=0;
         while(pos<r.bytes){need(!cancelled(o),ROE_CANCELLED);size_t got;
-          {const exr_source &s=sources.sources[i];got=s.read_at(s.context,pos,buffer,static_cast<size_t>(std::min<uint64_t>(sizeof(buffer),r.bytes-pos)));}
+          {const exr_source &s=*active[i];got=s.read_at(s.context,pos,buffer,static_cast<size_t>(std::min<uint64_t>(sizeof(buffer),r.bytes-pos)));}
           if(!got||got>std::min<uint64_t>(sizeof(buffer),r.bytes-pos)){r.sdk_status=EXR_IO;throw failure{ROE_SOURCE};}
           need(writefile(f.f,buffer,got),ROE_IO);sha.update(buffer,got);pos+=got;notify(o,i,ROE_COPYING,r);
         }
-        digest(sha,r.original_sha256);need(flushfile(f.f),ROE_IO);char verified[65];
+        digest(sha,r.original_sha256);
+        if(selected[i].source)need(std::strcmp(r.original_sha256,selected[i].expected_sha256)==0,ROE_SOURCE);
+        need(flushfile(f.f),ROE_IO);char verified[65];
         need(hashfile(f.f,r.bytes,verified,buffer)&&std::strcmp(verified,r.original_sha256)==0,ROE_IO);
         std::string name=(o.naming==ROE_DISPLAY_NAME?labels[i]+"--":"")+r.original_sha256+"."+extension(r.format);
         pathcopy(r.output_path,dir.path+"/"+name);need(!cancelled(o),ROE_CANCELLED);
@@ -305,4 +320,14 @@ extern "C" roe_status roe_run(roe_exporter *e,const roe_selection *selected,size
   catch(const std::bad_alloc &){result->status=ROE_MEMORY;}
   catch(...){result->status=ROE_IO;}
   return result->status;
+}
+
+extern "C" roe_status roe_run(roe_exporter *e,const roe_selection *selected,size_t count,const roe_options *options,roe_result **out){
+  if(out)*out=nullptr;
+  if(!e||!selected||!options||!out||!count)return ROE_ARGUMENT;
+  if(e->thread!=std::this_thread::get_id()||e->busy)return ROE_OWNER;
+  if(count>ROE_MAX_ITEMS)return ROE_LIMIT;
+  roe_mixed_selection mixed[ROE_MAX_ITEMS]{};
+  for(size_t i=0;i<count;i++){mixed[i].book_id=selected[i].book_id;mixed[i].display_name=selected[i].display_name;}
+  return roe_run_mixed(e,mixed,count,options,out);
 }

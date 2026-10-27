@@ -36,6 +36,9 @@ struct w3_job {
   reader_annotation_export_error ex_error;
   reader_annotation_export_status ex_status;
   int64_t ids[ROE_MAX_ITEMS];
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  char original_keys[ROE_MAX_ITEMS][73];
+#endif
   size_t id_count;
   roe_result *roe;
   roe_status roe_code;
@@ -59,6 +62,9 @@ static struct {
   roe_result *roe;
   wchar_t export_directory[HOST_PATH];
   int64_t original_ids[ROE_MAX_ITEMS];
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  char original_keys[ROE_MAX_ITEMS][73];
+#endif
   size_t original_count;
   /* fonts */
   rfl_library *fonts;
@@ -233,6 +239,41 @@ static int w3_roe_enter(void *context) { (void)context; EnterCriticalSection(&g.
 static void w3_roe_leave(void *context) { (void)context; LeaveCriticalSection(&g.library_lock); }
 static int w3_roe_cancelled(void *context) { return job_cancel_flag((host_job *)context); }
 
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+/* Verify each product TXT on its retained immutable handle before publishing
+   the mixed batch. The exporter borrows those handles only during the call. */
+static exr_status w3_roe_mixed(host_job *job,roe_exporter *exporter,const roe_options *options) {
+  w3_job *w=job->w3;reader_catalog *catalog=NULL;reader_catalog_error ce={0};
+  reader_original_callbacks callbacks={job,job_cancel_check,NULL};
+  roe_mixed_selection selection[ROE_MAX_ITEMS]={0};exr_source sources[ROE_MAX_ITEMS]={0};
+  HANDLE handles[ROE_MAX_ITEMS]={0};char *database=NULL,*root=NULL;
+  exr_status status=EXR_OK;int product=0;
+  for(size_t i=0;i<w->id_count;i++) if(w->original_keys[i][0]) product=1;
+  if(product) {
+    database=host_utf8(g.product_path);root=host_utf8(g.original_root);
+    if(!database||!root) { status=EXR_MEMORY;goto done; }
+    if(reader_catalog_open(database,&catalog,&ce)) { status=EXR_DATABASE;goto done; }
+  }
+  for(size_t i=0;i<w->id_count;i++) {
+    selection[i].book_id=w->ids[i];
+    if(w->original_keys[i][0]) {
+      void *opened=NULL;uint64_t size=0;
+      reader_original_status rs=reader_original_verified_handle(catalog,root,w->original_keys[i],&callbacks,&opened,&size);
+      if(rs!=ROI_OK) { status=rs==ROI_CANCELLED?EXR_CANCELLED:rs==ROI_MEMORY?EXR_MEMORY:EXR_IO;goto done; }
+      handles[i]=(HANDLE)opened;sources[i].size=size;sources[i].context=opened;sources[i].read_at=txt_read;
+      selection[i].source=&sources[i];selection[i].format=EXR_TXT;
+      selection[i].expected_sha256=w->original_keys[i]+4;
+    }
+  }
+  if(catalog && reader_catalog_close(&catalog,&ce)) { status=EXR_DATABASE;goto done; }
+  w->roe_code=roe_run_mixed(exporter,selection,w->id_count,options,&w->roe);
+done:
+  if(catalog) reader_catalog_close(&catalog,&ce);
+  for(size_t i=0;i<w->id_count;i++) if(handles[i]) CloseHandle(handles[i]);
+  free(database);free(root);return status;
+}
+#endif
+
 static exr_status w3_run(host_job *job) {
   w3_job *w = job->w3;
   char key[73];
@@ -242,20 +283,29 @@ static exr_status w3_run(host_job *job) {
   if (w->action == W3A_ORIGINALS) {
     roe_exporter *exporter = NULL;
     roe_owner owner;
+#ifndef EXR_READER_WINDOWS_TXT_PROGRESS
     roe_selection selection[ROE_MAX_ITEMS];
-    roe_options options;
     size_t i;
+#endif
+    roe_options options;
     memset(&owner, 0, sizeof(owner)); memset(&options, 0, sizeof(options));
     owner.enter = w3_roe_enter; owner.leave = w3_roe_leave;
     w->roe_code = roe_create(g.library, &owner, &exporter);
     if (w->roe_code != ROE_OK) { w->ran = 1; return EXR_OK; }
+#ifndef EXR_READER_WINDOWS_TXT_PROGRESS
     for (i = 0; i < w->id_count; i++) { selection[i].book_id = w->ids[i]; selection[i].display_name = NULL; }
+#endif
     options.directory = w->directory; options.naming = ROE_HASH_NAME;
     options.callbacks.cancelled = w3_roe_cancelled; options.callbacks.context = job;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    status = w3_roe_mixed(job, exporter, &options);
+#else
     w->roe_code = roe_run(exporter, selection, w->id_count, &options, &w->roe);
+    status = EXR_OK;
+#endif
     roe_destroy(&exporter);
     w->ran = 1;
-    return EXR_OK;
+    return status;
   }
   status = w3_verify_current(job, key);
   if (status != EXR_OK) return status;
@@ -789,7 +839,13 @@ static void w3_show_originals(void) {
     swprintf(line, 320, L"%ls", title ? title : L"未命名");
     free(title);
     w3_row_add(line);
-    w3.original_ids[w3.original_count++] = g.shelf[i].id;
+    w3.original_ids[w3.original_count] = g.shelf[i].id;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    w3.original_keys[w3.original_count][0]=0;
+    if(g.shelf[i].id==0 && g.shelf[i].format==EXR_TXT && g.shelf_cursors && g.shelf_cursors[i].key)
+      snprintf(w3.original_keys[w3.original_count],sizeof(w3.original_keys[0]),"%s",g.shelf_cursors[i].key);
+#endif
+    w3.original_count++;
   }
   w3_message(L"选择一本或多本书，然后点“选择目录并导出”。");
   w3_controls();
@@ -802,13 +858,27 @@ static void w3_originals_export(void) {
   if (w3_busy()) return;
   count = (int)SendMessageW(w3.rows, LB_GETSELITEMS, ROE_MAX_ITEMS, (LPARAM)selected);
   if (count <= 0) { w3_message(L"请先选择至少一本书。"); return; }
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  for(i=0;i<count;i++) {
+    if((size_t)selected[i]>=w3.original_count ||
+       (w3.original_ids[selected[i]]<=0 && strncmp(w3.original_keys[selected[i]],"txt:",4))) {
+      w3_message(L"\u6240\u9009\u4e66\u7c4d\u5c1a\u672a\u4e0b\u8f7d\uff0c\u672a\u5f00\u59cb\u5bfc\u51fa\u3002");return;
+    }
+  }
+#endif
   chosen = w3_choose_directory(w3.export_directory);
   if (chosen == 0) { w3_message(L"已取消选择目录；没有创建任何文件。"); return; }
   if (chosen < 0) { w3_message(L"无法打开系统目录选择器。"); return; }
   job = w3_job_new(W3A_ORIGINALS);
   if (!job) { w3_message(L"内存不足，无法开始导出。"); return; }
   for (i = 0; i < count; i++) {
-    if ((size_t)selected[i] >= w3.original_count || w3.original_ids[selected[i]] <= 0) continue;
+    if ((size_t)selected[i] >= w3.original_count) continue;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    if(w3.original_ids[selected[i]]<=0 && !w3.original_keys[selected[i]][0]) continue;
+    snprintf(job->w3->original_keys[job->w3->id_count],sizeof(job->w3->original_keys[0]),"%s",w3.original_keys[selected[i]]);
+#else
+    if(w3.original_ids[selected[i]]<=0) continue;
+#endif
     job->w3->ids[job->w3->id_count++] = w3.original_ids[selected[i]];
   }
   w3_path_utf8(w3.export_directory, &job->w3->directory);
@@ -832,11 +902,23 @@ static void w3_originals_accept(host_job *job) {
       const wchar_t *state = item->status == ROE_OK ? (item->created ? L"已导出" : L"已存在·内容一致") :
         item->status == ROE_CONFLICT ? L"拒绝·同名文件内容不同" : item->status == ROE_CANCELLED ? L"已取消" : L"失败";
       if (item->status == ROE_OK) ok++;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      if(w->original_keys[i][0]) {
+        wchar_t *key=host_wide(w->original_keys[i],strlen(w->original_keys[i]));
+        swprintf(line,640,L"%ls · %ls · %llu 字节 · %ls",key?key:L"TXT",state,
+          (unsigned long long)item->bytes,path?path:L"");
+        free(key);
+      } else
+#endif
       swprintf(line, 640, L"书 %lld · %ls · %llu 字节 · %ls", (long long)item->book_id, state,
         (unsigned long long)item->bytes, path ? path : L"");
       free(path);
       w3_row_add(line);
-      w3.original_ids[w3.original_count++] = item->book_id;
+      w3.original_ids[w3.original_count] = item->book_id;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      snprintf(w3.original_keys[w3.original_count],sizeof(w3.original_keys[0]),"%s",w->original_keys[i]);
+#endif
+      w3.original_count++;
     }
   }
   swprintf(message, 500, L"原件导出结束：%llu / %llu 项成功（状态 %d）。已发布的文件不会回滚。", (unsigned long long)ok,
