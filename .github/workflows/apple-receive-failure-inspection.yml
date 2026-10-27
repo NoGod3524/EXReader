@@ -1,0 +1,37 @@
+name: Inspect Apple receive failure evidence
+on:
+  push:
+    branches: [codex/apple-receive-failure-inspection]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: d21-receive-macos-40448440042-1
+          run-id: 40448440042
+          github-token: ${{ github.token }}
+          path: evidence
+      - name: Report failed stages and bounded diagnostics
+        run: |
+          python3 - <<'PY'
+          import json,re
+          from pathlib import Path
+          root=Path('evidence')
+          for path in root.rglob('result.json'):
+              data=json.loads(path.read_text(encoding='utf-8'))
+              if 'commands' in data:
+                  print('RESULT',data.get('source_sha'),data.get('platform'),data.get('accepted'))
+                  for item in data['commands']:
+                      print('STAGE',item.get('role'),item.get('exit'))
+          for path in root.rglob('*.log'):
+              rows=path.read_text(errors='replace').splitlines()
+              hits=[row for row in rows if re.search(r'error:|RuntimeError|AssertionError|fatal error|Traceback|failed',row,re.I)]
+              print('LOG',path.name,'error_count',len(hits))
+              for row in hits[-12:]:
+                  if re.search(r'password|authorization|bearer|token|credential|https?://',row,re.I): continue
+                  print(row[:500])
+          PY
