@@ -278,6 +278,7 @@ typedef struct {
   /* Last durably committed TXT position. The UI never treats the in-memory page
      as saved: only a completed product revision updates these values. */
   char txt_saved_key[73];
+  char active_txt_key[73];
   uint64_t txt_saved_offset;
   int txt_saved_valid;
   int txt_force_save; /* one-shot: close, book switch or relayout must persist */
@@ -587,6 +588,12 @@ static void settings_load(void) {
   char *utf8=host_utf8(key);if(utf8 && strlen(utf8)<sizeof(g.shelf_top_key)) strcpy(g.shelf_top_key,utf8);free(utf8);
   GetPrivateProfileStringW(L"Shelf",L"SelectedKey",L"",key,73,g.settings_path);
   utf8=host_utf8(key);if(utf8 && strlen(utf8)<sizeof(g.shelf_selected_key)) strcpy(g.shelf_selected_key,utf8);free(utf8);
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  GetPrivateProfileStringW(L"Host",L"ActiveTxtKey",L"",key,73,g.settings_path);
+  utf8=host_utf8(key);
+  if(utf8 && strlen(utf8)==68 && !strncmp(utf8,"txt:",4)) strcpy(g.active_txt_key,utf8);
+  free(utf8);
+#endif
 #endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   /* Bounded local read of the installed F3 record; no SDK work here. */
@@ -616,6 +623,13 @@ static void settings_save(void) {
   WritePrivateProfileStringW(L"Host", L"WindowHeight", number, g.settings_path);
   swprintf(number, 64, L"%lld", (long long)g.active_book_id);
   WritePrivateProfileStringW(L"Host", L"ActiveBook", number, g.settings_path);
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  {
+    wchar_t *key=host_wide(g.active_txt_key,strlen(g.active_txt_key));
+    WritePrivateProfileStringW(L"Host",L"ActiveTxtKey",key ? key:L"",g.settings_path);
+    free(key);
+  }
+#endif
 }
 
 /* ------------------------------------------------------------------ */
@@ -1838,6 +1852,15 @@ static exr_status txt_frame(host_session *session, const exr_source *source, con
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
 static exr_status txt_restore(host_session *session, const char *key, size_t *page,
                               wchar_t *note, size_t capacity, exr_error *error);
+static int txt_open_book_row(void *context, const reader_catalog_row *row) {
+  exr_book *book = context;
+  if (row->deleted || strcmp(row->format, "txt")) return 1;
+  book->format = EXR_TXT;
+  book->favorite = row->favorite;
+  book->title = host_strdup(row->title ? row->title : "");
+  book->author = host_strdup(row->author ? row->author : "");
+  return 1;
+}
 #endif
 
 static exr_status job_open_txt(host_job *job) {
@@ -1849,6 +1872,15 @@ static exr_status job_open_txt(host_job *job) {
   exr_status status=EXR_IO; const exr_page *info; size_t count=0;
   if(!root || !path) { status=EXR_MEMORY; goto done; }
   if(reader_catalog_open(path,&catalog,&ce)) { status=EXR_DATABASE; goto done; }
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if (!job->opened_book.title) {
+    int found=0;
+    if (reader_catalog_metadata(catalog,job->product_key,txt_open_book_row,&job->opened_book,&found,&ce) ||
+        !found || !job->opened_book.title || !job->opened_book.author) {
+      status=EXR_IO; goto done;
+    }
+  }
+#endif
   rs=reader_original_verified_handle(catalog,root,job->product_key,&callbacks,&handle,&bytes);
   if(rs!=ROI_OK) { status=rs==ROI_CANCELLED?EXR_CANCELLED:rs==ROI_MEMORY?EXR_MEMORY:EXR_IO; goto done; }
   source.size=bytes; source.context=handle; source.read_at=txt_read; source.release=txt_release;
@@ -4136,6 +4168,9 @@ static void show_deleted_book(int64_t id) {
     if (g.notes) SendMessageW(g.notes, LB_RESETCONTENT, 0, 0);
     memset(&g.selection, 0, sizeof(g.selection));
     g.active_book_id = 0;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    g.active_txt_key[0] = 0;
+#endif
     settings_save();
     update_page_label();
     InvalidateRect(g.page, NULL, TRUE);
@@ -4484,6 +4519,9 @@ static void handle_job_complete(host_job *job) {
           w3_book_changed();
 #endif
           g.active_book_id = g.current.id;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+          snprintf(g.active_txt_key,sizeof(g.active_txt_key),"%s",g.session.txt ? g.session.txt_key : "");
+#endif
           frame_move(&g.frame, &job->frame);
           memset(&g.selection, 0, sizeof(g.selection));
           g.pending_selection = 0;
@@ -6215,6 +6253,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     }
 #else
     import_path(book_path, 0);
+#endif
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  } else if (g.active_txt_key[0]) {
+    host_job *job = job_new(JOB_OPEN);
+    if (job) {
+      snprintf(job->product_key,sizeof(job->product_key),"%s",g.active_txt_key);
+      job->font_percent=g.font_percent;
+      if(g.job) g.pending=job; else job_submit(job);
+    }
 #endif
   } else if (g.active_book_id > 0
 #ifndef EXR_READER_PRODUCT_CATALOG
