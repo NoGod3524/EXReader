@@ -209,6 +209,9 @@ static void winsearch_submit(int next,int open_hit) {
   if(g.session.txt) snprintf(job->txt_key,sizeof(job->txt_key),"%s",inbook.txt_key);
 #endif
   if(open_hit) {
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_WAVE3)
+    if(g.session.txt) job->txt_history_origin=g.frame.range_start;
+#endif
     LRESULT selected=SendMessageW(inbook.rows,LB_GETCURSEL,0,0);
     if(selected==LB_ERR || (size_t)selected>=inbook.batch.count ||
        !winsearch_hit_copy(&job->search_hit,&inbook.batch.hits[selected])) { job_release(job);return; }
@@ -251,7 +254,13 @@ static void winsearch_accept(host_job *job) {
     /* Reuse the host's existing frame acceptance/progress path after the worker
        independently resolved FOUND. No search offset becomes a navigation hint. */
     job->kind=JOB_GO;handle_job_complete(job);
-    SetWindowTextW(inbook.message,L"已独立核对原文并定位。");winsearch_controls();return;
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_WAVE3)
+    if(g.session.txt && job->txt_history_failed)
+      SetWindowTextW(inbook.message,L"已定位；此位置未能加入跳转历史。");
+    else
+#endif
+      SetWindowTextW(inbook.message,L"已独立核对原文并定位。");
+    winsearch_controls();return;
   }
   if(job->search_batch.count || !inbook.have_cursor) {
     winsearch_batch_free(&inbook.batch);inbook.batch=job->search_batch;

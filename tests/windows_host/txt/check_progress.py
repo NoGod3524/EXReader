@@ -676,6 +676,42 @@ def main():
         wave3.close_records(app, records_dialog)
         record('TXT annotations preview without writes and import into a fresh profile')
         close_cleanly(app); app = None
+
+        # Unique content permits an actual selector-based back/forward round trip.
+        history_file = out / 'HistoryUnique.txt'
+        with history_file.open('w', encoding='utf-8', newline='\n') as target:
+            for index in range(200000):
+                target.write('Unique history line %08d with distinct content and a readable paragraph for page navigation.\n' % index)
+        assert history_file.stat().st_size > 16 * 1024 * 1024
+        app = ui.P.App(exe, font, out / 'history-profile')
+        app.wait_idle()
+        automation = Uia()
+        assert automation.available, automation.error
+        ui.picker(app, history_file)
+        app.wait(lambda: len(rows(app)) == 1, timeout=300)
+        open_row(history_file.name)
+        origin = page_text(app, automation)
+        assert 'Unique history line 00000000' in origin, origin[:200]
+        dialog = search_dialog()
+        search_query(dialog, 'Unique history line 00010000')
+        assert len(search_rows(dialog)) == 1, search_rows(dialog)
+        ui.send(ui.U.GetDlgItem(dialog, 174), 0x186, 0)
+        ui.send(dialog, 0x111, 175)
+        app.wait(lambda: '\u5df2\u72ec\u7acb\u6838\u5bf9' in ui.P.text(ui.U.GetDlgItem(dialog, 178)), timeout=300)
+        app.wait_idle()
+        landed = page_text(app, automation)
+        assert 'Unique history line 00010000' in landed, landed[:200]
+        ui.send(dialog, 0x10)
+        app.wait(lambda: not ui.U.IsWindow(dialog), timeout=30)
+        app.wait_idle()
+        ui.command(app, wave3.BACK)
+        app.wait(lambda: page_text(app, automation) == origin, timeout=300)
+        app.wait_idle()
+        ui.command(app, wave3.FORWARD)
+        app.wait(lambda: page_text(app, automation) == landed, timeout=300)
+        app.wait_idle()
+        record('large TXT search history back and forward resolve the actual source')
+        close_cleanly(app); app = None
         report['accepted'] = True
     except Exception:
         report['error'] = traceback.format_exc()

@@ -95,6 +95,13 @@ static const wchar_t *w3_format_name(exr_format format) {
 /* "format:sha256" derived from the already verified source identity of the open
    book (projection key "sdk:projection:format:mode:digest:bytes"): no second hash. */
 static int w3_book_key(char out[73]) {
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if (g.session.active && g.session.txt) {
+    if (strncmp(g.session.txt_key, "txt:", 4) || strlen(g.session.txt_key) != 68) return 0;
+    memcpy(out, g.session.txt_key, 69);
+    return 1;
+  }
+#endif
   const wchar_t *wide = w3_format_name(g.current.format);
   const char *at = g.session.source_key;
   char format[8], hash[65];
@@ -1095,6 +1102,48 @@ static void w3_history_land(host_job *job) {
   exr_anchor_free(&anchor);
   exr_fixed_anchor_free(&fixed);
 }
+
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_SEARCH)
+/* Called after the target frame is accepted on the history owner thread.
+   Both anchors were captured by the serialized search worker. */
+static void w3_txt_search_history_land(host_job *job) {
+  reader_revisions *store;
+  reader_rs_capture capture = {0};
+  reader_rs_envelope envelope = {0};
+  reader_rs_error error = {0};
+  reader_jh_result result;
+  reader_jh_error history_error;
+  char key[73], id[33], *wire[2] = {NULL, NULL};
+  size_t bytes[2] = {0, 0};
+  exr_anchor *anchors[2] = {&job->txt_history_before, &job->txt_history_after};
+  if (!w3.jh || !w3_book_key(key) || strcmp(key, job->txt_key)) {
+    job->txt_history_failed = 1; return;
+  }
+  store = w3_revisions_open();
+  if (!store) { job->txt_history_failed = 1; return; }
+  capture.mode = READER_RS_REFLOW_GLOBAL;
+  envelope.operation = "put"; envelope.entity_kind = "progress";
+  envelope.book_key = key; envelope.parser_version = exr_version();
+  for (size_t i = 0; i < 2; i++) {
+    w3_random_id(id); envelope.revision_id = id; capture.anchor = anchors[i];
+    if (reader_rs_encode_capture_raw_candidate(store, &envelope, &capture, 2, 0,
+                                               &wire[i], &bytes[i], &error) != READER_RS_OK) {
+      job->txt_history_failed = 1; break;
+    }
+  }
+  if (!job->txt_history_failed) {
+    for (size_t i = 0; i < 2; i++) {
+      memset(&history_error, 0, sizeof(history_error));
+      if (reader_jh_commit_wire_raw_v3(w3.jh, store, i ? READER_JH_SEARCH : READER_JH_PAGE,
+                                      wire[i], bytes[i], &result, &history_error) != READER_JH_OK) {
+        job->txt_history_failed = 1; break;
+      }
+    }
+  }
+  reader_rs_free(wire[0]); reader_rs_free(wire[1]);
+  reader_revisions_close(&store, NULL);
+}
+#endif
 
 static void w3_history_go(int direction) {
   reader_jh_error error;
