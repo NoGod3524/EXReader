@@ -33,10 +33,13 @@ jobs:
           raw = download_artifact_zip(artifact)
           assert len(raw) == item['size_in_bytes'] and hashlib.sha256(raw).hexdigest() == digest
           with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              for name in ('wave3/evidence/reading/result.json',
+                           'wave3/evidence/reading/first-instrumentation.txt'):
+                  print('FOCUSED', name)
+                  print(archive.read(name).decode('utf-8', errors='replace'))
               for info in archive.infolist():
                   if 'evidence/' not in info.filename and 'logs/' not in info.filename:
                       continue
-                  print('MEMBER', info.filename, info.file_size)
                   if not info.filename.endswith(('.json', '.log', '.txt', '.xml')) or info.file_size > 20_000_000:
                       continue
                   content = archive.read(info).decode('utf-8', errors='replace').splitlines()
