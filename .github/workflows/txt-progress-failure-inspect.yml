@@ -14,5 +14,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh run download 40454354558 -n txt-progress-host-40454354558-1 -D evidence
+          gh run download 40454856592 -n txt-progress-host-40454856592-1 -D evidence
           find evidence -path '*txt-progress-ui/report.json' -type f -print -exec cat {} \;
