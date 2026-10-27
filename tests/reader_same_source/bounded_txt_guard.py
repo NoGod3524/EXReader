@@ -20,6 +20,7 @@ ALLOWED = {
     'tests/reader_same_source/bounded_txt_guard.py',
     'src/formats.c',
     'src/chapter_reader.c',
+    'apps/reader/desktop/windows_wave3_bridge.cpp',
 }
 
 def git(*args):
@@ -52,6 +53,12 @@ def main():
         '  txt_view *v=context;exr_node n={0};size_t paragraph,start=0,length=0;exr_error e={0};')
     if Path('src/chapter_reader.c').read_text() != expected_chapter or expected_chapter == original_chapter:
         raise ValueError('unexpected bounded TXT chapter change')
+    original_bridge = subprocess.check_output(['git', 'show', MERGE + ':apps/reader/desktop/windows_wave3_bridge.cpp'], text=True)
+    expected_bridge = original_bridge.replace(
+        '      big_endian(header + 60) != 1u) {',
+        '      (big_endian(header + 60) < 1u || big_endian(header + 60) > 3u)) {')
+    if Path('apps/reader/desktop/windows_wave3_bridge.cpp').read_text() != expected_bridge or expected_bridge == original_bridge:
+        raise ValueError('unexpected sync status bridge change')
     for platform in ('android', 'gtk', 'apple', 'windows'):
         original = subprocess.check_output(['git', 'show', MERGE + ':.github/workflows/reader-same-source-' + platform + '.yml'], text=True)
         expected = original.replace('branches: [codex/reader-same-source-integration]', 'branches: [codex/reader-integrated-bounded-txt]').replace('tests/reader_same_source/guard.py --source', 'tests/reader_same_source/bounded_txt_guard.py --source')
