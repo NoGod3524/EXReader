@@ -1,0 +1,59 @@
+name: Verify combined Windows mapping evidence
+on:
+  push:
+    branches: [codex/windows-wal-combined-proof]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate mapping observations and recovery
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, statistics, sys, zipfile
+          sys.path.insert(0, 'tools')
+          from check_parallel_integration import fetch, download_artifact_zip
+          source = 'd1b97161461f8fec6f6bdfebedd67a8ac9d0911e'
+          run_id, artifact, size = 40428878647, 12701251156, 536619
+          digest = '7199020418ffd367195bdf3c7de721de19d2857abab86489bf5606dd91519522'
+          run = fetch(f'actions/runs/{run_id}')
+          assert run['head_sha'] == source and run['run_attempt'] == 1
+          assert run['status'] == 'completed' and run['conclusion'] == 'success'
+          item = fetch(f'actions/artifacts/{artifact}')
+          assert item['workflow_run']['id'] == run_id and item['workflow_run']['head_sha'] == source
+          assert not item['expired'] and item['size_in_bytes'] == size and item['digest'] == 'sha256:' + digest
+          raw = download_artifact_zip(artifact)
+          assert len(raw) == size and hashlib.sha256(raw).hexdigest() == digest
+          with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              names = archive.namelist()
+              assert len(names) == len(set(names))
+              def data(suffix):
+                  found = [name for name in names if name.endswith(suffix)]
+                  assert len(found) == 1, (suffix, found)
+                  return archive.read(found[0])
+              admission = json.loads(data('composition-wal-source.json'))
+              assert admission['source'] == source and admission['ok'] is True
+              assert data('source.txt').decode().strip() == source
+              values = {}
+              for mode in ('default','persist'):
+                  values[mode] = {}
+                  for phase in ('first','repeat'):
+                      rows = [json.loads(data(f'{phase}-{mode}-{n}.json')) for n in (1,2,3)]
+                      assert all(row['books'] == 2202 and row['synchronous'] == 2 for row in rows)
+                      assert all(row['commit_count'] == (2202 if phase == 'first' else 0) for row in rows)
+                      assert all(row['journal_mode'].lower() == ('wal' if mode == 'default' else 'persist') for row in rows)
+                      values[mode][phase] = [row['repair_ms'] for row in rows]
+              assert b'RECOVERED_COMMITTED_WAL' in data('wal-crash.log')
+              assert data('desktop-check.log') and data('native-check.log') and data('recovery-check.log')
+              print(json.dumps({'source': source, 'run': run_id, 'artifact': artifact, 'sha256': digest,
+                    'repair_ms': values,
+                    'first_median_ms': {mode: statistics.median(values[mode]['first']) for mode in values},
+                    'book_count': 2202, 'physical_power_loss_tested': False,
+                    'complete_product_performance_accepted': False}))
+          PY
