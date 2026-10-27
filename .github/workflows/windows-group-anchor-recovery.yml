@@ -1,7 +1,7 @@
 name: Windows group anchor recovery
 on:
   push:
-    branches: [codex/windows-group-anchor-recovery]
+    branches: [codex/windows-anchor-composition-prep]
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,11 +23,8 @@ jobs:
       - name: Verify exact base and permitted source scope
         shell: pwsh
         run: |
-          git merge-base --is-ancestor 16f1ce9139dac372a36327c00cfc1eeaead346dd "$env:GITHUB_SHA"
-          if ($LASTEXITCODE) { throw 'Incorrect composition base' }
-          $allowed = @('examples/reader.c','apps/reader/desktop/windows_catalog.inc','apps/reader/desktop/windows_shelf.inc','tests/windows_organization_projection/paged_ui.py','tests/windows_organization_projection/verify.py','.github/workflows/windows-group-anchor-recovery.yml')
-          $changed = @(git diff --name-only 16f1ce9139dac372a36327c00cfc1eeaead346dd "$env:GITHUB_SHA")
-          if ($LASTEXITCODE -or @($changed | Where-Object { $_ -notin $allowed }).Count) { throw 'Unexpected source changes' }
+          python tools/reader_composition/guard.py --source "$env:GITHUB_SHA" --report build/composition-source-windows.json
+          if ($LASTEXITCODE) { throw 'Composition source admission failed' }
           python -m py_compile tests/windows_organization_projection/check_ui.py tests/windows_organization_projection/cloud_ui.py tests/windows_organization_projection/verify.py
           if ($LASTEXITCODE) { throw 'Driver syntax failed' }
       - name: Build and run retained composed Windows checks
@@ -63,6 +60,7 @@ jobs:
         with:
           name: windows-organization-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
+            build/composition-source-windows.json
             build/c09/report.json
             build/c09/logs/
             build/c09/package/
@@ -95,6 +93,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      - name: Verify exact composition source
+        run: python3 tools/reader_composition/guard.py --source "$GITHUB_SHA" --report build/composition-source-verify.json
       - name: Verify same-run host, reports and artifact
         env:
           GH_TOKEN: ${{ github.token }}
@@ -108,4 +108,5 @@ jobs:
           name: windows-organization-summary-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/organization-summary/
           if-no-files-found: warn
+
 
