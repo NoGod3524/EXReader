@@ -11,12 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3c30ff8c25caf5155c7e8ec380adc813080631b8
+          ref: b0269fd2d2365ba20e54cda7e181493a39f75091
           fetch-depth: 0
       - name: Execute actual D23 Windows source admission
         shell: pwsh
         run: |
-          $env:GITHUB_SHA = '3c30ff8c25caf5155c7e8ec380adc813080631b8'
+          $env:GITHUB_SHA = 'b0269fd2d2365ba20e54cda7e181493a39f75091'
           if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw 'candidate mismatch' }
           $lines = Get-Content .github/workflows/reader-d23-relay.yml
           $start = [Array]::IndexOf($lines, '      - name: Confirm exact base and unchanged product paths')
