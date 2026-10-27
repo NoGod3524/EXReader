@@ -1643,9 +1643,20 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
      distant offset then bisecting can repeatedly replay the entire prefix.
      Walk forward once, preserving the same last-start-at-or-before rule. */
   if (session->txt) {
-    size_t index, chosen = 0, chosen_start = 0, chosen_end = 0;
+    size_t index, first = 0, chosen = 0, chosen_start = 0, chosen_end = 0;
     int have = 0;
-    for (index = 0; index <= 1000000; index++) {
+    /* The active pager already knows its displayed page. Start there when it
+       precedes the target, so forward jumps do not paginate that prefix again.
+       Fresh pagers used for font/layout changes still start at page zero. */
+    if (session == &g.session && session->active && session->page &&
+        session->page <= 1000000) {
+      status = OFFSET_GET(session->pager, session->page, &layout, error);
+      if (status != EXR_OK) return status;
+      info = exr_layout_pages(layout, &count);
+      if (!info || count < 1) return EXR_FORMAT;
+      if (info->start <= offset) first = session->page;
+    }
+    for (index = first; index <= 1000000; index++) {
       if (control && control->cancelled && control->cancelled(control->context)) return EXR_CANCELLED;
       status = OFFSET_GET(session->pager, index, &layout, error);
       if (status != EXR_OK) {
