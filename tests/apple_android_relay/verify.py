@@ -26,6 +26,13 @@ def digest(data): return hashlib.sha256(data).hexdigest()
 def check_id(value):
     assert all(str(value[key]) == expected for key, expected in ID.items()), 'source/run/attempt mismatch'
 
+def report_suffix(archive, suffix):
+    names = [name for name in archive.namelist() if name == suffix or name.endswith('/' + suffix)]
+    assert len(names) == 1, 'report missing or ambiguous: ' + suffix
+    value = json.loads(archive.read(names[0])); check_id(value)
+    assert value['accepted'] is True, suffix
+    return value
+
 def artifact(prefix, rows):
     name = prefix + '-' + ID['run_id'] + '-' + ID['attempt']
     matches = [row for row in rows if row['name'] == name and not row['expired']]
@@ -123,6 +130,9 @@ try:
         states.append(state); previous = raw
         phase_rows.append({'phase': phase, 'snapshot_sha256': digest(raw), 'checks': checks, 'location': data['location']})
     retained = artifact('relay-apple-retained', artifacts)
+    d21 = report_suffix(retained, 'd21-receive/iphone/result.json')
+    assert len(d21['cases']) == 1 and d21['cases'][0]['result'] == 'Passed'
+    assert all(row['exit'] == 0 for row in d21['commands'])
     # Upload roots are build/, preserving both original evidence locations.
     apple_reports = [json.loads(retained.read(n)) for n in retained.namelist()
         if n.endswith('/evidence/result.json') or n == 'team24-apple/iphone/evidence/result.json']
@@ -135,8 +145,16 @@ try:
     assert states[1]['data']['program']['sha256'] == digest(apk)
     assert states[1]['data']['program']['bytes'] == len(apk)
     assert states[1]['data']['program']['installed_equals_same_run_apk'] is True
-    artifact('d22-retained', artifacts)
-    artifact('d22-android-receive', artifacts)
+    android_retained = artifact('d22-retained', artifacts)
+    for suite in ('original-sync', 'sync-341'):
+        retained_report = report_suffix(android_retained, 'evidence/' + suite + '/result.json')
+        assert retained_report['api'] == 34 and retained_report['abi'] == 'x86_64'
+        assert len(retained_report['phases']) == 4 and all(phase['passed'] for phase in retained_report['phases'])
+    android_receive = artifact('d22-android-receive', artifacts)
+    receive_report = report_suffix(android_receive, 'evidence/d22-receive/result.json')
+    assert receive_report['checks'] == 24 and len(receive_report['phases']) == 4
+    assert all(phase['passed'] for phase in receive_report['phases'])
+    report_suffix(android_receive, 'evidence/organization-sync/result.json')
     summary.update(accepted=True, original_sha256=sha, original_bytes=len(book), phases=phase_rows)
 except Exception as error:
     summary['failures'].append(type(error).__name__ + ': ' + str(error))
