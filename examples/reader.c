@@ -1835,6 +1835,11 @@ static exr_status txt_frame(host_session *session, const exr_source *source, con
   return status;
 }
 
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+static exr_status txt_restore(host_session *session, const char *key, size_t *page,
+                              wchar_t *note, size_t capacity, exr_error *error);
+#endif
+
 static exr_status job_open_txt(host_job *job) {
   reader_catalog *catalog=NULL; reader_catalog_error ce={0};
   reader_original_callbacks callbacks={job,job_cancel_check,NULL};
