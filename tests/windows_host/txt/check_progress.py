@@ -128,15 +128,19 @@ def main():
         assert count >= 1 and heads, (count, heads)
         record('first open saves a new reading position', 'revisions=%d heads=%d' % (count, len(heads)))
 
-        seen = [first_line(page_text(app, automation))]
+        source_text = fixture.read_text(encoding='utf-8')
+        current = page_text(app, automation)
+        position = source_text.find(current) if current else -1
+        assert position >= 0, current[:200]
+        end = position + len(current)
         for _ in range(6):
             app.click('next')
             app.wait_idle()
-            current = first_line(page_text(app, automation))
-            assert current and current not in seen, (current, seen)
-            assert current > seen[-1], (current, seen[-1])
-            seen.append(current)
-        record('six forward page turns show consecutive source content', seen[-1])
+            current = page_text(app, automation)
+            position = source_text.find(current, end) if current else -1
+            assert position >= end, (position, end, current[:200])
+            end = position + len(current)
+        record('six forward page turns show consecutive source content', first_line(current))
 
         before_font = page_text(app, automation)
         label_before_font = app.label()
