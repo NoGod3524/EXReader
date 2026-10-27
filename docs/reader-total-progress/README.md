@@ -102,3 +102,20 @@ of eight outcomes and 7.4 percentage points. The audit artifact is `12695854108`
 This records the audited evidence at that source and time; it does not grant
 the still-running composition candidates or imply that six-platform delivery
 has passed. The remaining 42 outcomes do not have equal estimated effort.
+
+## 2026-10-27 D21 receive evidence
+
+[Actions audit 40545409342, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40545409342)
+audited source `3fd35c03dac8e987b633b576157860e2c8c40891`. It reported
+`evidence_ok=true`, no problems, and **69/108 (63.9%)**: foundation 12/12,
+platform host 57/84, final delivery 0/12. The fixed historical October 25
+cutoff remains 58/108 (53.7%). The previously audited current count was 66/108
+(61.1%); the three added items are D21 cloud-original receive on macOS,
+iPhone simulator and iPad simulator. Each uses the exact independent D21
+source and run recorded in the catalog; physical-device and combined-source
+delivery remain separately assessed.
+
+Audit artifact `12751913273`, 11,787 bytes, SHA-256
+`44130afd04d613eb32159b04bafa2b9d25275ba7f83e99e0097363d05d055794`;
+expires 2027-01-25T16:54:01Z. This documentation commit is not the audited
+source and does not alter the 108-item denominator.
