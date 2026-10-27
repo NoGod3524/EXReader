@@ -118,6 +118,9 @@ def main():
             assert report['program_sha256'] == programs[program]['sha256']
             execution_path = path.parent / 'execution.json'
             execution = json.loads(execution_path.read_text())
+            assert execution['source_sha'] == source and str(execution['run_id']) == run and str(execution['attempt']) == attempt
+            assert execution['kind'] == ('g13' if key == 'full_g13' else 'tools')
+            assert execution['exit_code'] == (0 if report[field] else (2 if key == 'full_g13' else 1))
             assert execution['report_sha256'] == sha(path)
             assert execution['historical_accepted'] == report[field]
             if key == 'full_g13':
@@ -161,6 +164,9 @@ def main():
             artifact_id=account_artifact['id'], digest=account_artifact['digest'],
             phases=len(raw['phases']), https_phases=len(raw['network']['phases']),
             scope=raw['scope'], historical_apple_packet_only=raw['network']['peer'])
+        job_results = {name: os.environ.get(name) for name in ('D26_GTK_RESULT', 'D26_ACCOUNT_RESULT')}
+        identity['job_results'] = job_results
+        assert all(value == 'success' for value in job_results.values()), job_results
         identity['current_verified'] = True
     except BaseException as error:
         problems.append(repr(error))

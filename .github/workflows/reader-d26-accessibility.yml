@@ -26,6 +26,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor 2f215f5793a7344d22db350276ba9f8a07abe86f HEAD
           git diff --exit-code 2f215f5793a7344d22db350276ba9f8a07abe86f HEAD -- src include cmake CMakeLists.txt bindings tests/fixtures tests/reader_a11y_gtk tests/linux_host tests/reader_wave3_c10 tests/reader_gtk_compact tests/reader_gtk_search tests/reader_gtk_navigation tests/reader_gtk_reading_records tests/reader_gtk_batch_import tests/reader_gtk_drop_import
+      - name: Check independent current driver syntax on Actions
+        run: python3 -m py_compile tests/reader_d26_accessibility/*.py
       - name: Native GTK accessibility and Secret Service dependencies
         run: |
           sudo apt-get update
@@ -156,6 +158,44 @@ jobs:
             --probe build/c10-desktop/reader-gtk-drop-backend \
             --font build/c10-package/EXReader-Linux/Reader.otf --fixtures build/c10-drop-fixtures \
             --output build/c10-drop-backend
+      - name: Current complete five-tool user flow with visible chooser interaction
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/c10-logs/d26-tools-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_d26_accessibility/tools_current.py --payload build/c10-compact-package/EXReader-Linux \
+              --book build/wave3-backend/work/history.txt --annotations build/wave3-backend/work/annotations.jsonl \
+              --font tests/fixtures/fonts/primary.ttf --output build/d26-tools-current
+          '
+      - name: Complete corrected current G13 behavior audit (all original intents)
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox >build/c10-logs/d26-g13-current-openbox.log 2>&1 & wm=$!
+            trap "kill $wm || true" EXIT
+            unset NO_AT_BRIDGE || true
+            export GTK_A11Y=atspi
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_d26_accessibility/audit_current.py --payload build/c10-package/EXReader-Linux --output build/d26-g13-current
+          '
+      - name: Account status event and keyboard error recovery
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox >build/c10-logs/d26-account-openbox.log 2>&1 & wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_d26_accessibility/account_status.py --payload build/c10-package/EXReader-Linux --output build/d26-account
+          '
       - name: Preserve the original forty-five compact checks with the five tools present
         if: ${{ !cancelled() }}
         run: |
@@ -186,22 +226,6 @@ jobs:
             /usr/bin/python3 tests/reader_d26_accessibility/retain_history.py --kind tools --report build/c10-wave3-ui/result.json -- /usr/bin/python3 tests/reader_wave3_c10/check_ui.py --payload build/c10-compact-package/EXReader-Linux \
               --book build/wave3-backend/work/history.txt --annotations build/wave3-backend/work/annotations.jsonl \
               --font tests/fixtures/fonts/primary.ttf --output build/c10-wave3-ui
-          '
-      - name: Current complete five-tool user flow with visible chooser interaction
-        if: ${{ !cancelled() }}
-        run: |
-          mkdir -p build/gtk-atspi-client
-          git show "$ATSPI_SOURCE:tests/reader_a11y_gtk/atspi_client.py" > build/gtk-atspi-client/atspi_client.py
-          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
-            export PYTHONPATH="$PWD/build/gtk-atspi-client"
-            openbox >build/c10-logs/d26-tools-openbox.log 2>&1 &
-            wm=$!
-            trap "kill $wm || true" EXIT
-            gsettings set org.gnome.desktop.interface toolkit-accessibility true
-            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
-            /usr/bin/python3 tests/reader_d26_accessibility/tools_current.py --payload build/c10-compact-package/EXReader-Linux \
-              --book build/wave3-backend/work/history.txt --annotations build/wave3-backend/work/annotations.jsonl \
-              --font tests/fixtures/fonts/primary.ttf --output build/d26-tools-current
           '
       - name: Real G13 ten production fixes on the non-compact host
         if: ${{ !cancelled() }}
@@ -258,28 +282,6 @@ jobs:
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_d26_accessibility/g13_current.py audit --payload build/c10-package/EXReader-Linux --output build/d26-g13
-          '
-      - name: Complete corrected current G13 behavior audit (all original intents)
-        if: ${{ !cancelled() }}
-        run: |
-          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
-            openbox >build/c10-logs/d26-g13-openbox.log 2>&1 & wm=$!
-            trap "kill $wm || true" EXIT
-            unset NO_AT_BRIDGE || true
-            export GTK_A11Y=atspi
-            gsettings set org.gnome.desktop.interface toolkit-accessibility true
-            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
-            /usr/bin/python3 tests/reader_d26_accessibility/audit_current.py --payload build/c10-package/EXReader-Linux --output build/d26-g13-current
-          '
-      - name: Account status event and keyboard error recovery
-        if: ${{ !cancelled() }}
-        run: |
-          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
-            openbox >build/c10-logs/d26-account-openbox.log 2>&1 & wm=$!
-            trap "kill $wm || true" EXIT
-            gsettings set org.gnome.desktop.interface toolkit-accessibility true
-            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
-            /usr/bin/python3 tests/reader_d26_accessibility/account_status.py --payload build/c10-package/EXReader-Linux --output build/d26-account
           '
       - name: Preserve original G13 gate failure as explicit historical evidence
         if: always()
@@ -347,6 +349,8 @@ jobs:
       - name: Download this run's own artifact and authenticate it
         env:
           GH_TOKEN: ${{ github.token }}
+          D26_GTK_RESULT: ${{ needs.gtk.result }}
+          D26_ACCOUNT_RESULT: ${{ needs['retained-account'].result }}
         run: |
           mkdir -p build/c10-artifact
           artifact_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
