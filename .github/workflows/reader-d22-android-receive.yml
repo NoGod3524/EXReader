@@ -273,6 +273,7 @@ jobs:
           name: d22-runtime-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/wave3/artifacts/
+            build/wave3/candidate/provenance.json
             build/wave3/fixtures/
             build/wave3/navigation-fixtures/
             build/wave3/reading-fixtures/
