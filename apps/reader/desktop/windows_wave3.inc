@@ -184,6 +184,9 @@ static host_job *w3_job_new(int action) {
   job->w3->ui_generation = w3.generation;
   job->book_id = g.has_current ? g.current.id : 0;
   job->generation = g.frame.generation;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if (g.session.txt) snprintf(job->txt_key,sizeof(job->txt_key),"%s",g.session.txt_key);
+#endif
   return job;
 }
 
@@ -192,6 +195,17 @@ static exr_status w3_verify_current(host_job *job, char key[73]) {
   exr_control control = { job_cancel_check, NULL, job };
   exr_status status;
   if (!g.session.active || job->book_id != g.current.id || job->generation != g.frame.generation) return EXR_ARGUMENT;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if (g.session.txt) {
+    exr_source verified={0};HANDLE handle=NULL;
+    if(strcmp(job->txt_key,g.session.txt_key)) return EXR_ARGUMENT;
+    status=winrecords_txt_source(job,&verified,&handle);
+    if(handle) CloseHandle(handle);
+    if(status!=EXR_OK) return status;
+    if(strncmp(job->txt_key,"txt:",4)||strlen(job->txt_key)!=68) return EXR_FORMAT;
+    memcpy(key,job->txt_key,69);return EXR_OK;
+  }
+#endif
   status = winreader_identity(job->book_id, g.current.format, g.session.fixed, g.session.bounded, source, &control, &job->error);
   if (status != EXR_OK) return status;
   if (strcmp(source, g.session.source_key) || !w3_book_key(key)) return EXR_FORMAT;
@@ -226,6 +240,15 @@ static int w3_ai_resolve(void *context, const reader_rs_record *record, uint64_t
   exr_status status;
   (void)index;
   memset(&match, 0, sizeof(match));
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if (g.session.txt) {
+    exr_source source={0};HANDLE handle=NULL;
+    status=winrecords_txt_source(c->job,&source,&handle);
+    if(status==EXR_OK) status=winrecords_txt_match(c->job,&source,record,&match);
+    if(handle) CloseHandle(handle);
+    return status==EXR_OK;
+  }
+#endif
   if (!c->w->fresh_open) {
     if (winreader_fresh(c->job, &c->w->fresh) != EXR_OK) return 0;
     c->w->fresh_open = 1;

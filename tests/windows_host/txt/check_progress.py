@@ -333,6 +333,24 @@ def main():
         wave3.close_records(app, dialog)
         assert page_text(app, automation) == first_page
         record('large TXT highlight and bookmark save; highlight resolves and returns to its original page')
+
+        annotation_file = out / 'txt-annotations.jsonl'
+        dialog = wave3.open_feature(app, wave3.ANNOTATIONS)
+        wave3.post_click(dialog, wave3.B1)
+        wave3.fill_system_dialog(app, annotation_file)
+        wave3.wait_message(app, dialog, wave3.N.EXPORT_DONE, 240)
+        exported = [json.loads(line) for line in annotation_file.read_text(encoding='utf-8').splitlines()]
+        assert len(exported) >= 3 and annotation_file.with_suffix('.md').is_file(), exported
+        before_preview = wave3.database_state(profile)
+        wave3.post_click(dialog, wave3.B2)
+        wave3.fill_system_dialog(app, annotation_file)
+        summary = wave3.wait_message(app, dialog, wave3.N.PREVIEW_DONE, 300)
+        assert wave3.N.DUPLICATE in summary and wave3.N.WILL_ADD + ' 0' in summary, summary
+        assert ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog, wave3.B3)), summary
+        wave3.close_feature(app, dialog)
+        assert wave3.database_state(profile) == before_preview
+        assert page_text(app, automation) == first_page
+        record('TXT annotations export and preview against the verified original without writes')
         app.focus()
         drag_start, drag_end = selected_text_drag_points(app.control('page'), before_selection, after_selection)
         app.drag(app.control('page'), drag_start, drag_end)
@@ -612,6 +630,37 @@ def main():
         after_heads, after_count = progress_heads('txt:' + expected)
         assert (after_heads, after_count) == (mismatch_heads, mismatch_count)
         record('mismatched position remains intact across page turn and relayout')
+
+        # A fresh profile receives the exported revisions for the identical
+        # product original through the real preview and confirmation dialogs.
+        profile_b = out / 'annotation-import-profile'
+        app = ui.P.App(exe, font, profile_b)
+        app.wait_idle()
+        automation = Uia()
+        assert automation.available, automation.error
+        ui.picker(app, fixture)
+        app.wait(lambda: len(rows(app)) == 1, timeout=300)
+        open_row(fixture.name)
+        records_dialog, prior_count = wave3.record_count(app)
+        wave3.close_records(app, records_dialog)
+        before_import = wave3.database_state(profile_b)
+        dialog = wave3.open_feature(app, wave3.ANNOTATIONS)
+        wave3.post_click(dialog, wave3.B2)
+        wave3.fill_system_dialog(app, annotation_file)
+        summary = wave3.wait_message(app, dialog, wave3.N.PREVIEW_DONE, 300)
+        assert wave3.N.WILL_ADD + ' 0' not in summary, summary
+        assert ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog, wave3.B3)), summary
+        assert wave3.database_state(profile_b) == before_import
+        wave3.post_click(dialog, wave3.B3)
+        confirm = app.wait(lambda: wave3.system_dialog(app), timeout=30)
+        ui.send(confirm, 0x111, 1)
+        wave3.wait_message(app, dialog, wave3.N.IMPORT_DONE, 300)
+        wave3.close_feature(app, dialog)
+        records_dialog, imported_count = wave3.record_count(app)
+        assert imported_count >= prior_count + 2, (prior_count, imported_count)
+        wave3.close_records(app, records_dialog)
+        record('TXT annotations preview without writes and import into a fresh profile')
+        close_cleanly(app); app = None
         report['accepted'] = True
     except Exception:
         report['error'] = traceback.format_exc()
