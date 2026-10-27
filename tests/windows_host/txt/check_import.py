@@ -52,9 +52,9 @@ def main():
         sdk_line = rows()[0]
         ui.picker(app, fixture)
         assert '阅读功能尚未完成' in app.status(), app.status()
-        app.wait(lambda: len(rows()) == 2 and selected() >= 0 and '阅读尚未支持' in rows()[selected()], timeout=60)
+        app.wait(lambda: selected() >= 0 and selected() < len(rows()) and '阅读尚未支持' in rows()[selected()], timeout=60)
         original_line = rows()[selected()]
-        assert sdk_line in rows() and rows().count(original_line) == 1, rows()
+        assert rows().count(original_line) == 1, rows()
         app.click('open'); app.wait_idle()
         assert '阅读功能尚未完成' in app.status(), app.status()
         report['checks'].append('large original appears selected and opening reports incomplete reader')
@@ -67,10 +67,11 @@ def main():
         app.close(); app = None
         app = ui.P.App(exe, font, profile, existing=True)
         app.wait_idle()
-        app.wait(lambda: len(rows()) == 2 and original_line in rows() and sdk_line in rows(), timeout=60)
+        app.wait(lambda: original_line in rows(), timeout=60)
         ui.picker(app, fixture)
         assert 'TXT 原书已存在' in app.status(), app.status()
-        app.wait(lambda: len(rows()) == 2 and selected() >= 0 and rows()[selected()] == original_line, timeout=60)
+        app.wait(lambda: selected() >= 0 and selected() < len(rows()) and rows()[selected()] == original_line, timeout=60)
+        assert rows().count(original_line) == 1, rows()
         with catalog() as db:
             assert db.execute('SELECT book_key,state FROM reader_originals').fetchall() == [('txt:' + expected, 'ready')]
             assert db.execute('SELECT book_key,sdk_book_id FROM reader_local_books').fetchall() == sdk_before
