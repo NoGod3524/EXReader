@@ -277,7 +277,7 @@
     },
     {
       "name": "android-organization-host-candidate",
-      "source": "51ee764e434678f8f15cc35f7f4996243b934a45",
+      "source": "b0e7b1da2c1ddf55cb3d01dc472b2be40fffc66f",
       "paths": [
         ".github/workflows/android-organization-sync.yml",
         ".github/workflows/reader-android-path-access.yml",
@@ -350,7 +350,7 @@
     },
     {
       "name": "android-composition-workflow-candidate",
-      "source": "6fd95b8008aaf5949771b35e4d1ce1245af06065",
+      "source": "b0e7b1da2c1ddf55cb3d01dc472b2be40fffc66f",
       "paths": [
         ".github/workflows/android-composition-candidate.yml"
       ]
