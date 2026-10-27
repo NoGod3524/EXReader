@@ -18,6 +18,7 @@ ALLOWED = {
     '.github/workflows/integrated-bounded-txt-apple.yml',
     '.github/workflows/integrated-bounded-txt-windows.yml',
     'tests/reader_same_source/bounded_txt_guard.py',
+    'src/formats.c',
 }
 
 def git(*args):
@@ -36,6 +37,14 @@ def main():
     changed = set(filter(None, subprocess.check_output(['git', 'diff', '--name-only', '-z', MERGE, args.source]).decode().split('\0')))
     if changed != ALLOWED:
         raise ValueError('unexpected integration paths: ' + repr(sorted(changed)))
+    original_formats = subprocess.check_output(['git', 'show', MERGE + ':src/formats.c'], text=True)
+    expected_formats = original_formats.replace(
+        '  if(offset) *offset=0;if(text) *text=NULL;if(size) *size=0;',
+        '  if(offset) *offset=0;\n  if(text) *text=NULL;\n  if(size) *size=0;').replace(
+        '  if(start) *start=UINT64_MAX;if(end) *end=UINT64_MAX;',
+        '  if(start) *start=UINT64_MAX;\n  if(end) *end=UINT64_MAX;')
+    if Path('src/formats.c').read_text() != expected_formats or expected_formats == original_formats:
+        raise ValueError('unexpected bounded TXT SDK change')
     for platform in ('android', 'gtk', 'apple', 'windows'):
         original = subprocess.check_output(['git', 'show', MERGE + ':.github/workflows/reader-same-source-' + platform + '.yml'], text=True)
         expected = original.replace('branches: [codex/reader-same-source-integration]', 'branches: [codex/reader-integrated-bounded-txt]').replace('tests/reader_same_source/guard.py --source', 'tests/reader_same_source/bounded_txt_guard.py --source')
