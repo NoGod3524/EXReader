@@ -152,9 +152,12 @@ def main():
                  ROOT/'build/host-font-cache/Reader.otf',OUT/(name+'-txt-import'),
                  fixtures/'Fixed page.pdf',host/'EXReaderShelfReview.exe'],name+'-txt-native-import',600)
         if progress:
+            injector=OUT/(name+'-txt-consumer')
+            configure(ROOT/'tests/reader_txt_progress/consumer',injector,
+                      ['-DCMAKE_PREFIX_PATH='+prefix],name+'-txt-consumer')
             run([sys.executable,ROOT/'tests/windows_host/txt/check_progress.py',host/'EXReaderProduct.exe',
                  ROOT/'build/host-font-cache/Reader.otf',OUT/(name+'-txt-progress-ui'),
-                 fixtures/'Fixed page.pdf'],name+'-txt-progress-host',2400)
+                 fixtures/'Fixed page.pdf',injector/'txtp-inject.exe',name],name+'-txt-progress-host',2400)
         compact_host=host
         if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1' or progress:
             # Keep the original four-format SDK regression on a legacy host;
