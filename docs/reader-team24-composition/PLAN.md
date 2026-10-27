@@ -1033,3 +1033,19 @@ does not grant a full Linux acceptance. Artifact `12696924935` is 51,814,021
 bytes, SHA-256 `d6e7e7ff174a10f452ba7d11dc87bd53aab54d75f51b934aceb4d8996496fbf6`,
 expiring 2027-01-24T23:24:00Z. Android checks on this source remain pending;
 none of these results grants six-platform delivery or physical-device acceptance.
+
+## Current Android 3.40 owner and host evidence
+
+The current-owner 3.40 source `57585506a297921246a6e9476de49464caef4982`
+completed [40423047854/1](https://github.com/NoGod3524/EXReader/actions/runs/40423047854)
+successfully on an API 34 x86_64 emulator. Cloud audit
+[40424840954/1](https://github.com/NoGod3524/EXReader/actions/runs/40424840954)
+authenticated artifact `12698607070` (108,013,392 bytes, SHA-256
+`25ae0dc0ab99e111ad7a86f79f9bb756f7880f41bb21a412c0e043e2158dcbec`)
+and its run, attempt and source. It checked the public SDK export report, the
+current original owner report (18 cases, no failures), 12 roundtrip checks,
+and all 16 passing host UI checks across the four original phases. This
+current runner includes the current automatic-import-bootstrap contract; it
+does not reclassify the earlier unchanged runner's four failures on earlier
+sources. This result is for the stated independent candidate and emulator,
+not the final composition source, a physical device, or six-platform delivery.
