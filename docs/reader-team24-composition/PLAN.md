@@ -1128,3 +1128,15 @@ fixture-driven; the actual Windows UI performed the refresh. This does not
 prove a transactionally consistent snapshot during concurrent database queries.
 The current composition and the Android merge candidate need their own
 same-source Windows run before this result can be admitted there.
+
+## Android 3.40 on the merge candidate
+
+Merge candidate `1c42ddf6fe7e57f6bd0ac45f1ed78717bd4f3092` passed the
+Android 3.40 job in [40427833573/1](https://github.com/NoGod3524/EXReader/actions/runs/40427833573).
+Independent Actions audit [40428967506/1](https://github.com/NoGod3524/EXReader/actions/runs/40428967506)
+authenticated original artifact `12700119957` (108,018,935 bytes, SHA-256
+`70bbc832f34eba519c28eaf6e28ed917b4b54377613548cec068889a68646611`),
+source/run identity, original 18-case current owner report, 12 roundtrip checks,
+four-phase 16-check host report and SDK export report. This is the API 34
+x86_64 emulator and SDK 3.40 profile on that candidate; the separate 3.41 and
+desktop jobs on the same merge remain necessary and are not inferred here.
