@@ -277,6 +277,7 @@ typedef struct {
   int txt_saved_valid;
   int txt_force_save; /* one-shot: close, book switch or relayout must persist */
   int txt_save_abandoned; /* a refused close-time write must not trap the exit */
+  int txt_close_forced;   /* the close-time forced write is requested once */
 #endif
   unsigned long saved_generation;
   unsigned long frame_sequence;
@@ -5710,7 +5711,7 @@ static void finish_close(HWND window) {
 #endif
   KillTimer(window, 2);
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
-  if (g.session.txt) g.txt_force_save = 1;
+  if (g.session.txt && !g.txt_close_forced) { g.txt_force_save = 1; g.txt_close_forced = 1; }
 #endif
   if (!save_progress()) {
     g.closing = 0;
