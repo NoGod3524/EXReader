@@ -26,7 +26,8 @@ jobs:
           if ($LASTEXITCODE) { throw 'product paths changed' }
           git diff --exit-code 2e4b3900fb18b0203b7e4a82e3a77e84218b3936 "$env:GITHUB_SHA" -- apps/reader/desktop/windows_search.inc apps/reader/desktop/windows_search_types.h apps/reader/desktop/windows_txt_search.inc
           if ($LASTEXITCODE) { throw 'Windows TXT search differs from the reviewed source' }
-          git diff --exit-code a11c52e74b549c94c5831fe0f7a273f7f9cd99a2 "$env:GITHUB_SHA" -- examples/reader.c apps/reader/desktop/windows_wave3.inc apps/reader/original-export/include/reader_original_export.h apps/reader/original-export/src/original_export.cpp
+          git diff --exit-code 3dc0284417bab16dd1fa1f51ad10fcd311fbefe5 "$env:GITHUB_SHA" -- examples/reader.c apps/reader/desktop/windows_wave3.inc
+          git diff --exit-code a11c52e74b549c94c5831fe0f7a273f7f9cd99a2 "$env:GITHUB_SHA" -- apps/reader/original-export/include/reader_original_export.h apps/reader/original-export/src/original_export.cpp
           if ($LASTEXITCODE) { throw 'Windows mixed original export differs from the reviewed source' }
           git diff --exit-code 9727ca1624ee59e561fd6aad7a22bb85a0fd2632 "$env:GITHUB_SHA" -- src/formats.c include/exr/formats.h
           if ($LASTEXITCODE) { throw 'TXT SDK candidate differs from the exercised source' }
