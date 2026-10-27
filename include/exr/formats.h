@@ -26,6 +26,14 @@ EXR_API exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragrap
 EXR_API exr_status exr_txt_find_source(const exr_source *source,const char *query,uint64_t from,
   uint64_t *start,uint64_t *end,exr_error *error);
 
+/* Create the same quote and 32-scalar context selector as exr_anchor_create
+   for normalized whole-source byte offsets. The complete immutable source is
+   validated; the host must associate the selector with the original source's
+   identity. Uses at most a 64 KiB quote plus context and scanner scratch.
+   The caller frees the result with exr_anchor_free. */
+EXR_API exr_status exr_txt_anchor_create_source(const exr_source *source,size_t start,size_t end,
+  exr_anchor *anchor,exr_error *error);
+
 /* Read document-subject XMP simple literals, Seq/Bag values and preferred Alt. */
 EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control,
   exr_metadata_entry **entries,size_t *count,exr_error *error);

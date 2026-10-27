@@ -27,3 +27,14 @@ jobs:
       - name: Scan the original failure fixture and verify its bytes
         shell: bash
         run: python tests/bounded_txt_scan/large.py
+      - name: Inspect installed public candidate artifacts
+        shell: bash
+        run: |
+          test -f build/reading-core/stage/include/exr/formats.h
+          grep -q exr_txt_anchor_create_source build/reading-core/stage/include/exr/formats.h
+          find build/reading-core/stage -type f | sort > build/bounded-txt-installed-files.txt
+          cat build/bounded-txt-installed-files.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bounded-txt-installed-inventory
+          path: build/bounded-txt-installed-files.txt
