@@ -22,20 +22,22 @@ jobs:
         run: |
           git merge-base --is-ancestor 2f215f5793a7344d22db350276ba9f8a07abe86f "$env:GITHUB_SHA"
           if ($LASTEXITCODE) { throw 'base mismatch' }
-          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 "$env:GITHUB_SHA" -- apps examples src include cmake ':(exclude)examples/reader.c' ':(exclude)apps/reader/desktop/windows_search.inc' ':(exclude)apps/reader/desktop/windows_search_types.h' ':(exclude)apps/reader/desktop/windows_txt_search.inc' ':(exclude)apps/reader/desktop/windows_wave3.inc' ':(exclude)apps/reader/original-export/include/reader_original_export.h' ':(exclude)apps/reader/original-export/src/original_export.cpp' ':(exclude)src/formats.c' ':(exclude)include/exr/formats.h' ':(exclude)apps/reader/desktop/windows_records.inc' ':(exclude)apps/reader/desktop/windows_records_owner.cpp' ':(exclude)apps/reader/desktop/gtk_feature_integration.cmake' ':(exclude)examples/linux/reading.h' ':(exclude)examples/linux/wave3_backend.inc' ':(exclude)examples/linux/wave3_ui.inc' ':(exclude)examples/android/app/src/main/java/org/exreader/host/MainActivity.java'
+          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 "$env:GITHUB_SHA" -- apps examples src include cmake ':(exclude)examples/reader.c' ':(exclude)apps/reader/desktop/windows_search.inc' ':(exclude)apps/reader/desktop/windows_search_types.h' ':(exclude)apps/reader/desktop/windows_txt_search.inc' ':(exclude)apps/reader/desktop/windows_wave3.inc' ':(exclude)apps/reader/original-export/include/reader_original_export.h' ':(exclude)apps/reader/original-export/src/original_export.cpp' ':(exclude)src/formats.c' ':(exclude)src/chapter_reader.c' ':(exclude)include/exr/formats.h' ':(exclude)apps/reader/desktop/windows_records.inc' ':(exclude)apps/reader/desktop/windows_records_owner.cpp' ':(exclude)apps/reader/desktop/gtk_feature_integration.cmake' ':(exclude)examples/linux/reading.h' ':(exclude)examples/linux/wave3_backend.inc' ':(exclude)examples/linux/wave3_ui.inc' ':(exclude)examples/android/app/src/main/java/org/exreader/host/MainActivity.java'
           if ($LASTEXITCODE) { throw 'product paths changed' }
           git diff --exit-code 41870a040bb6ff995a7adddc13756880ada8c731 "$env:GITHUB_SHA" -- examples/android/app/src/main/java/org/exreader/host/MainActivity.java
           if ($LASTEXITCODE) { throw 'Android font reader differs from the candidate source' }
           git diff --exit-code cc75214cb5e6dce389625e33399e1b120aedf4c4 "$env:GITHUB_SHA" -- apps/reader/desktop/gtk_feature_integration.cmake examples/linux/reading.h examples/linux/wave3_backend.inc examples/linux/wave3_ui.inc
           if ($LASTEXITCODE) { throw 'GTK annotation export differs from the candidate source' }
-          git diff --exit-code e21c0287defac1615230bc8bddfe57885f837efb "$env:GITHUB_SHA" -- apps/reader/desktop/windows_search.inc apps/reader/desktop/windows_search_types.h apps/reader/desktop/windows_txt_search.inc
+          git diff --exit-code 642bb8efe124fdd301410f0b3e8e17292d6a5069 "$env:GITHUB_SHA" -- apps/reader/desktop/windows_search.inc apps/reader/desktop/windows_search_types.h apps/reader/desktop/windows_txt_search.inc
           if ($LASTEXITCODE) { throw 'Windows TXT search differs from the reviewed source' }
-          git diff --exit-code e21c0287defac1615230bc8bddfe57885f837efb "$env:GITHUB_SHA" -- examples/reader.c apps/reader/desktop/windows_wave3.inc
+          git diff --exit-code 642bb8efe124fdd301410f0b3e8e17292d6a5069 "$env:GITHUB_SHA" -- examples/reader.c apps/reader/desktop/windows_wave3.inc
           if ($LASTEXITCODE) { throw 'Windows TXT history differs from the reviewed source' }
           git diff --exit-code a11c52e74b549c94c5831fe0f7a273f7f9cd99a2 "$env:GITHUB_SHA" -- apps/reader/original-export/include/reader_original_export.h apps/reader/original-export/src/original_export.cpp
           if ($LASTEXITCODE) { throw 'Windows mixed original export differs from the reviewed source' }
           git diff --exit-code 9727ca1624ee59e561fd6aad7a22bb85a0fd2632 "$env:GITHUB_SHA" -- src/formats.c include/exr/formats.h
           if ($LASTEXITCODE) { throw 'TXT SDK candidate differs from the exercised source' }
+          git diff --exit-code 642bb8efe124fdd301410f0b3e8e17292d6a5069 "$env:GITHUB_SHA" -- src/chapter_reader.c
+          if ($LASTEXITCODE) { throw 'TXT span SDK differs from the candidate source' }
           git diff --exit-code e09b25aa02b03297dc8a7f1f6eb32c092e11d410 "$env:GITHUB_SHA" -- apps/reader/desktop/windows_records.inc apps/reader/desktop/windows_records_owner.cpp
           if ($LASTEXITCODE) { throw 'TXT records differ from the exercised source' }
           python -m py_compile tests/reader_d23_relay/relay.py tests/reader_d23_relay/windows.py tests/reader_d23_relay/gtk.py
