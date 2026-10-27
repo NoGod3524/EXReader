@@ -1,6 +1,7 @@
 """Actions-only native shelf coverage for product-owned TXT originals."""
 import ctypes as C
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -10,7 +11,9 @@ import traceback
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'tests/reader_windows_compact'))
-import check_ui as ui
+spec = importlib.util.spec_from_file_location("compact_ui", ROOT / "tests/reader_windows_compact/check_ui.py")
+ui = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ui)
 sys.path.insert(0, str(ROOT / 'tests/reader_perf_windows'))
 from perf_windows import make_txt_fixture
 
