@@ -23,6 +23,8 @@ jobs:
           cmake -S apps/reader/store/native -B build/catalog -G Ninja -DCMAKE_BUILD_TYPE=Release
           cmake --build build/catalog --parallel 4
           python tests/reader_catalog/original_import_actions.py
+      - name: Verify candidate bulk suite retains all original checks
+        run: python tests/sdk_bulk_v3/verify_parity.py
       - name: Build installed candidate and exercise existing Windows host checks
         env:
           GH_TOKEN: ${{ github.token }}

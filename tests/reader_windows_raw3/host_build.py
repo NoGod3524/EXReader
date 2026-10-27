@@ -177,17 +177,17 @@ def main():
         bulk=OUT/(name+'-bulk-consumer')
         configure(ROOT/'tests/reader_windows_raw3/bulk-consumer',bulk,
                   ['-DCMAKE_PREFIX_PATH='+prefix,'-DPROBE_RAW='+('ON' if raw else 'OFF')],name+'-bulk-consumer')
-        run([sys.executable,ROOT/'tests/reader_bulk_organization/check_bulk.py','--probe',bulk/'bulk-probe.exe',
+        run([sys.executable,ROOT/'tests/sdk_bulk_v3/check_bulk_v3.py','--probe',bulk/'bulk-probe.exe',
              '--c-consumer',bulk/'bulk-c-consumer.exe','--link-map',bulk/'bulk-link.map',
-             '--output',OUT/(name+'-bulk-evidence')],name+'-original-bulk',1800)
+             '--output',OUT/(name+'-bulk-evidence')],name+'-candidate-v3-bulk',1800)
         original=json.loads((OUT/(name+'-bulk-evidence')/'report.json').read_text(encoding='utf-8'))
-        if original['ok'] is not True:raise RuntimeError('Original bulk acceptance failed')
+        if original['ok'] is not True:raise RuntimeError('Candidate v3 bulk acceptance failed')
         binaries={target:hashlib.sha256((host/(target+'.exe')).read_bytes()).hexdigest()
                   for target in ('EXReaderProduct','EXReaderShelfReview')}
-        profiles.append(dict(profile=name,programs=binaries,bulk_original_checks=len(original['checks']),
+        profiles.append(dict(profile=name,programs=binaries,bulk_v3_checks=len(original['checks']),
                              original_compact_ui_checks=compact['count'],
                              original_compact_ui_report=str((ui/'report.json').relative_to(OUT)),
-                             bulk_original_report=str((OUT/(name+'-bulk-evidence')/'report.json').relative_to(OUT))))
+                             bulk_v3_report=str((OUT/(name+'-bulk-evidence')/'report.json').relative_to(OUT))))
     raw_exe=OUT/'raw-owner-probe/windows-owner-probe.exe'
     old_exe=OUT/'legacy-owner-probe/windows-owner-probe.exe'
     pdf=ROOT/'tests/fixtures/pdf-public-text.pdf'
@@ -239,11 +239,11 @@ def main():
                 raise RuntimeError('Actual received record did not independently resolve/recapture')
         previous_pid=peer['pid']
     result=dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
-                installed_host_build_passed=True,original_bulk_profiles_passed=True,profiles=profiles,
+                installed_host_build_passed=True,candidate_v3_bulk_profiles_passed=True,profiles=profiles,
                 actual_owner_profiles_passed=True,actual_owner_process_kill_recovery_passed=True,
                 actual_account_window_mac_receive_passed=True,
                 actual_received_owner_all11_two_processes_passed=True,
-                host_raw3_accepted=False,scope='actual installed host build/link, original compact UI and bulk regressions, and owner recovery; no complete host/interoperability grant')
+                host_raw3_accepted=False,scope='actual installed host build/link, original compact UI and candidate v3 bulk regressions, and owner recovery; no complete host/interoperability grant')
     (OUT/'report.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result),flush=True)
 
