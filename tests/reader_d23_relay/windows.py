@@ -74,6 +74,19 @@ def main():
             hashes={hashlib.sha256((readback/('book-%d.bin'%book['id'])).read_bytes()).hexdigest() for book in audit['books']}
             assert data['gtk_original_sha256'] in hashes and data['windows_original_sha256'] in hashes
             checks.append('windows_public_sdk_reads_exact_gtk_original')
+            # Public SDK readback alone does not prove the received book opens
+            # in the actual product reader. Exercise the retained native shelf
+            # control and copy its rendered selection, then reopen the old book.
+            for title, marker, shot in (
+                ('Relay GTK', 'GTK authored original.', 'windows-reads-gtk.bmp'),
+                ('Relay Windows', 'Windows authored original.', 'windows-reopens-local.bmp')):
+                ui.U.SetForegroundWindow(app.window)
+                app.open(title);app.wait_idle()
+                app.click('select');app.click('copy')
+                copied=ui.ACCOUNT.clipboard_text(app)
+                assert marker in copied, (title, copied, app.status())
+                ui.M.screenshot(app.window,a.out/shot)
+            checks.append('windows_native_reader_opens_gtk_original_and_reopens_prior_local_book')
             app.wait(lambda:app.has_row('Relay Windows'),timeout=60)
             ui.U.SetForegroundWindow(app.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,ui.A.VK_SHIFT));d=app.io_dialog()
             app.wait(lambda:not ui.U.IsWindowEnabled(ui.U.GetDlgItem(d,ui.CANCEL)))
