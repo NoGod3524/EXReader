@@ -280,7 +280,7 @@
     },
     {
       "name": "windows-group-anchor-composition-candidate",
-      "source": "609ab65555d16e2bf7f1533c5864a894ef0d6033",
+      "source": "746fcc94726f5bcc1514e1ea3711825c05d5db9d",
       "paths": [
         ".github/workflows/windows-group-anchor-recovery.yml",
         "apps/reader/desktop/windows_catalog.inc",
