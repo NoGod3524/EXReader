@@ -210,6 +210,17 @@
       "doc": "docs/handoffs/d21-final-results.md",
       "source_doc_commit": "25bb4a3a7391ba55cd94ef2d4719328e16080544",
       "source_prefix": "0b464821b864ef3c7e8f18ed4a8aecc31b00ee1e"
+    },
+    "android_d22_jump": {
+      "run": 40460333186,
+      "doc": "docs/reader-total-progress/android-jump-d22.md",
+      "source_prefix": "92d453e374725896a7d1666c313e5d369ff83b3c",
+      "artifact": 12715880811,
+      "bytes": 112475779,
+      "sha256": "369380a70797fd8bc1e5b3212720b716d3c010436c0a4cf1825b780bf79ded06",
+      "required_cases": [
+        "jump_history_back_forward_over_real_search_landing"
+      ]
     }
   },
   "requirements": [
@@ -904,9 +915,11 @@
       "group": "host",
       "platform": "android",
       "title": "Android：真实页面/搜索定位后的历史后退/前进",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "android_d22_jump"
+      ],
+      "note": "API 34 emulator: actual search result and page-start comparisons for back and forward; physical device and unified source assessed separately."
     },
     {
       "id": "H.android.sync_account_status",
