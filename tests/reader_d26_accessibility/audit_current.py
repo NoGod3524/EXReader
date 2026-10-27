@@ -1157,6 +1157,7 @@ def main():
                   + (recorder.error or repr(recorder.rejected)))
 
     def run_phase(name, function):
+        print('PHASE %s start' % name, flush=True)
         started_phase = time.monotonic()
         try:
             function()

@@ -1,7 +1,7 @@
 name: D26 GTK retained accessibility and native regression
 on:
   push:
-    branches: [codex/reader-integrated-progress, codex/dot-d26-gtk-accessibility]
+    branches: [codex/reader-integrated-progress, codex/dot-d26-gtk-accessibility, codex/gtk-accessibility-crash-diagnostic]
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,6 +11,7 @@ defaults:
     shell: bash
 env:
   EXR_SDK_VERSION: '3.41.0'
+  PYTHONFAULTHANDLER: '1'
   ATSPI_SOURCE: 67e2f8c4941205c5581e82fd5a1469d18f696019
 jobs:
   gtk:
@@ -235,7 +236,7 @@ jobs:
   regressions:
     name: Retained historical audit and native regression on identical build
     needs: gtk
-    if: always()
+    if: always() && github.ref_name != 'codex/gtk-accessibility-crash-diagnostic'
     runs-on: ubuntu-22.04
     timeout-minutes: 80
     steps:
@@ -421,7 +422,7 @@ jobs:
   authenticate:
     name: Strict current acceptance and explicit historical outcomes
     needs: [gtk, regressions, retained-account]
-    if: always()
+    if: always() && github.ref_name != 'codex/gtk-accessibility-crash-diagnostic'
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
@@ -461,6 +462,7 @@ jobs:
           if-no-files-found: error
 
   retained-account:
+    if: github.ref_name != 'codex/gtk-accessibility-crash-diagnostic'
     runs-on: ubuntu-22.04
     timeout-minutes: 90
     steps:
