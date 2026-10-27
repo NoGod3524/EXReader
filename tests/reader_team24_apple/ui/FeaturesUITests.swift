@@ -101,8 +101,22 @@ final class FeaturesUITests: XCTestCase {
         }
         XCTAssertTrue(wait { !self.e("features.share.native").exists && self.e("features.close").isHittable })
 #else
-        XCTAssertTrue(wait { self.app.menus.count > 0 }); mark("native-sharing-picker-presented")
+        // Menu-bar menus remain in the accessibility tree even when closed.
+        // Require an on-screen, hittable menu before trying to dismiss the picker.
+        let pickerVisible = {
+            self.app.menus.allElementsBoundByIndex.contains { menu in
+                menu.frame.width > 0 && menu.frame.height > 0 && menu.isHittable
+            }
+        }
+        XCTAssertTrue(wait { pickerVisible() },
+                      "Native sharing menu did not appear: \(app.debugDescription)")
+        mark("native-sharing-picker-presented")
         app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
+        XCTAssertTrue(wait {
+            !pickerVisible() &&
+            self.e("features.close").isEnabled && self.e("features.close").isHittable
+        }, "Native sharing menu did not close or the feature panel remained unavailable: \(app.debugDescription)")
+        mark("native-sharing-picker-dismissed")
 #endif
         tap("features.original.locked"); status("原件导出未完成")
         XCTAssertEqual(text("features.export.filename"), file); mark("locked-directory-rejected")
