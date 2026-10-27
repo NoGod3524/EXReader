@@ -24,7 +24,7 @@ def main():
     server=Dav(a.fixture,authorization);package='org.exreader.host';phases=[];scans=[];boundaries=[];captures=[];accepted=False
     def adb(*args,input=None,timeout=90):return subprocess.check_output(['adb',*map(str,args)],input=input,stderr=subprocess.STDOUT,timeout=timeout)
     def write_private(name,body):adb('shell',f"run-as {package} sh -c 'cat > files/{name}'",input=body)
-    def private_exists(name):return subprocess.run(['adb','exec-out','run-as',package,'test','-f','files/'+name],capture_output=True,timeout=10).returncode==0
+    def private_exists(name):return subprocess.run(['adb','shell','run-as',package,'test','-f','files/'+name],capture_output=True,timeout=10).returncode==0
     def save(name,data):
         leaked=any(value in data for value in sensitive)
         if leaked:
@@ -52,7 +52,7 @@ def main():
         def do_GET(self):
             if self.path.endswith('/'+sha+'.epub'):
                 assert not private_exists('d22-offline'), 'offline reopening attempted network'
-                mode=subprocess.run(['adb','exec-out','run-as',package,'cat','files/d22-get-mode'],capture_output=True,timeout=10)
+                mode=subprocess.run(['adb','shell','run-as',package,'cat','files/d22-get-mode'],capture_output=True,timeout=10)
                 if mode.returncode==0:
                     adb('shell','run-as',package,'rm','files/d22-get-mode')
                     value=mode.stdout.decode().strip()
@@ -72,7 +72,7 @@ def main():
             super().do_PROPFIND()
     server.server.RequestHandlerClass=ListingGate
     expected={
-        'first':['public_sdk_seed_then_real_activity','real_settings_secure_storage','ui_cancel_blocked_native_request_then_retry','missing_cache_corrupt_https_rejected','missing_cache_interrupted_https_rejected','missing_cache_cancel_native_https_and_retry','explicit_receive_preserves_sdk_and_product','received_original_opens_actual_reader','corrupt_cache_repaired_without_duplicate','mapped_missing_cache_redownload','receive_exact_retry_does_not_duplicate','explicit_close_waits_for_closed_then_destroy'],
+        'first':['public_sdk_seed_then_real_activity','real_settings_secure_storage','ui_cancel_blocked_native_request_then_retry','missing_cache_corrupt_https_rejected','missing_cache_interrupted_https_rejected','missing_cache_cancel_native_https_and_retry','background_cancels_original_receive_then_retry','explicit_receive_preserves_sdk_and_product','received_original_opens_actual_reader','corrupt_cache_repaired_without_duplicate','mapped_missing_cache_redownload','receive_exact_retry_does_not_duplicate','explicit_close_waits_for_closed_then_destroy'],
         'secure-reopen':['secure_credentials_and_originals_survive_process_restart','offline_actual_reader_after_process_restart','background_close_does_not_wait_on_ui','manual_sync_after_background_reopens_owned_session','forget_credentials_keeps_library_and_binding','explicit_session_only_credentials'],
         'session-reopen':['session_only_credential_not_restored_after_kill'],
         'semantics':['polite_status_semantics','organizer_hides_covered_shelf_semantics','reader_semantic_scroll_changes_real_page','font_value_and_large_font_controls']}
