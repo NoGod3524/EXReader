@@ -58,6 +58,15 @@ def stable_edge(value,at_end):
     after=ui.U.GetPropW(box,'EXReaderShelfSnapshot') or 0
     visible=(area.bottom+height-1)//height if height>0 else 0
     return before==after and before>=2 and not before%2 and top<=values.index(value)<top+visible
+def stable_without(value):
+    values=stable_numbers()
+    visible_top=stable_top()
+    return bool(values and value not in values and visible_top is not None and abs(visible_top-value)<=2)
+def stable_above(value):
+    values=stable_numbers()
+    visible_top=stable_top()
+    return bool(values and all(n>value for n in values) and min(values)==value+1
+                and visible_top is not None and value+1<=visible_top<=value+30)
 def organizer():
     app.wait_idle();ui.U.SetForegroundWindow(app.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,ui.A.VK_SHIFT))
     def find():
@@ -162,8 +171,7 @@ try:
             with sqlite3.connect(database,timeout=30) as db:
                 db.execute('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',(ids['shelf'],rows[top][0]))
             removed=top
-            refresh();app.wait(lambda:stable_numbers() is not None and top not in stable_numbers(),timeout=90)
-            assert stable_top() is not None and abs(stable_top()-top)<=2,(top,stable_top(),stable_numbers())
+            refresh();app.wait(lambda:stable_without(top),timeout=90)
             ui.M.screenshot(app.window,out/'removed-anchor.bmp')
             checks.append('removed-top-anchor-keeps-neighbor')
             phase='removed-tail'
@@ -171,9 +179,7 @@ try:
             top=stable_top();assert top is not None and top<100
             with sqlite3.connect(database,timeout=30) as db:
                 db.executemany('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',[(ids['shelf'],rows[i][0]) for i in range(top+1)])
-            refresh();app.wait(lambda:stable_numbers() and all(n>top for n in stable_numbers()),timeout=90)
-            assert min(stable_numbers())==top+1,(top,stable_numbers())
-            assert stable_top() is not None and top+1<=stable_top()<=top+30,(top,stable_top(),stable_numbers())
+            refresh();app.wait(lambda:stable_above(top),timeout=90)
             ui.M.screenshot(app.window,out/'removed-tail.bmp')
             checks.append('removed-tail-falls-back-to-predecessors')
             walk([n for n in range(169,top,-1) if n!=removed],-1)
