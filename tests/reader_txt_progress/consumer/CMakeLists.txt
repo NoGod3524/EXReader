@@ -11,3 +11,6 @@ endif()
 find_package(EXReaderTxtProgress 0.1.0 EXACT CONFIG REQUIRED)
 add_executable(txtp-probe main.cpp)
 target_link_libraries(txtp-probe PRIVATE EXReaderTxtProgress::reader_txt_progress)
+
+add_executable(txtp-inject inject.cpp)
+target_link_libraries(txtp-inject PRIVATE EXReaderTxtProgress::reader_txt_progress)

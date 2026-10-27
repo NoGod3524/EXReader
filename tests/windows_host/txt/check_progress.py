@@ -14,9 +14,13 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+import subprocess
 import sys
 import time
 import traceback
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'tests/reader_windows_compact'))
@@ -58,7 +62,8 @@ def first_line(text):
 
 def main():
     assert os.name == 'nt' and os.environ.get('GITHUB_ACTIONS') == 'true'
-    exe, font, out, pdf = map(lambda value: Path(value).resolve(), sys.argv[1:5])
+    exe, font, out, pdf, injector = map(lambda value: Path(value).resolve(), sys.argv[1:6])
+    family = sys.argv[6]
     out.mkdir(parents=True, exist_ok=False)
     fixture = make_txt_fixture(out, 0)
     expected = '4f45393b25817f506a51b56cc5d61599556e4dd5b0bd59aa00f7eb43cbfc0a86'
@@ -232,6 +237,27 @@ def main():
         else:
             assert sdk_restored == sdk_first, (sdk_restored[:120], sdk_first[:120])
             record('existing SDK fixed-page book reopens with its single page', sdk_restored[:80])
+
+        # A valid but mismatching capture must remain untouched through page
+        # turns and relayout, using the installed module to create the fixture.
+        app.close(); app = None
+        subprocess.run([str(injector), product_db, family, 'txt:' + expected],
+                       check=True, capture_output=True, timeout=60)
+        mismatch_heads, mismatch_count = progress_heads('txt:' + expected)
+        assert mismatch_heads
+        app = ui.P.App(exe, font, profile, existing=True)
+        app.wait_idle()
+        automation = Uia()
+        assert automation.available, automation.error
+        app.wait(lambda: len(rows(app)) == 3, timeout=180)
+        open_row(fixture.name)
+        assert '不一致' in app.status(), app.status()
+        app.click('next'); app.wait_idle()
+        press_font_increase(); app.wait_idle()
+        app.close(); app = None
+        after_heads, after_count = progress_heads('txt:' + expected)
+        assert (after_heads, after_count) == (mismatch_heads, mismatch_count)
+        record('mismatched position remains intact across page turn and relayout')
         report['accepted'] = True
     except Exception:
         report['error'] = traceback.format_exc()
