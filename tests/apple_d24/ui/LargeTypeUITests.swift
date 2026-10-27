@@ -28,12 +28,14 @@ final class LargeTypeUITests: XCTestCase {
     }
     func record(_ name: String) {
         let a = XCTAttachment(screenshot: app.screenshot()); a.name = name; a.lifetime = .keepAlways; add(a)
+        print("D24 native hierarchy \(name): \(app.debugDescription)")
         let t = XCTAttachment(string: app.debugDescription); t.name = name + "-tree"; t.lifetime = .keepAlways; add(t)
     }
     func area(_ minimum: CGFloat) {
         ready()
         let window = app.windows.firstMatch.frame
         let page = e("reader.page").frame
+        print("D24 page \(page) window \(window) ratio \(page.height / window.height)")
         XCTAssertTrue(window.insetBy(dx: -2, dy: -2).contains(page))
         XCTAssertGreaterThanOrEqual(page.height / window.height, minimum, "Real readable page area: \(page), window: \(window)")
         XCTAssertTrue(e("reader.back").isHittable)
