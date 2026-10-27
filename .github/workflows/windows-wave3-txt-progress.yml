@@ -1,7 +1,7 @@
 name: Windows composed host TXT progress
 on:
   push:
-    branches: [codex/reader-integrated-progress, codex/windows-wave3-txt-progress, codex/reader-txt-account, codex/reader-txt-select-copy, codex/reader-windows-txt-search]
+    branches: [codex/reader-integrated-progress, codex/windows-wave3-txt-progress, codex/reader-txt-account, codex/reader-txt-select-copy, codex/reader-windows-txt-search, codex/windows-txt-original-export]
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,6 +28,17 @@ jobs:
         run: python tests/reader_native_owner_repairs/display.py
       - name: Build and exercise the composed native Windows host
         run: python tests/reader_wave3_c09/build.py
+      - name: Verify installed mixed original export API
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/c09/raw-stage;$pwd/build/c09/product-stage;$pwd/build/c09/sdk-stage"
+          cmake -S tests/reader_txt_mixed_export -B build/txt-mixed-export -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'mixed exporter configure failed' }
+          cmake --build build/txt-mixed-export --parallel 4
+          if ($LASTEXITCODE) { throw 'mixed exporter build failed' }
+          New-Item -ItemType Directory -Path build/txt-mixed-output | Out-Null
+          & build/txt-mixed-export/txt-mixed-export.exe "$pwd/build/txt-mixed-output"
+          if ($LASTEXITCODE) { throw 'mixed exporter validation failed' }
       - name: Preserve reports and logs
         if: always()
         uses: actions/upload-artifact@v4

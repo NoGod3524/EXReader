@@ -143,3 +143,13 @@ This candidate combines bounded Windows TXT search and the follow-up
 search/relayout/failed-save diagnostic with the earlier unified source. Its
 own seven same-source workflows must determine acceptance; standalone runs
 above document the individual changes.
+
+## Mixed original export candidate
+
+The Windows original-export dialog now prepares SDK-backed books and verified
+product TXT handles in the same selection. The exporter enforces the existing
+batch and per-book limits, verifies each product TXT hash again while copying,
+publishes without replacement, and reports each result in selection order.
+Unavailable remote entries stop the selection before choosing a destination.
+The native mixed-export and installed-package checks run in Actions; this
+candidate is pending that validation.

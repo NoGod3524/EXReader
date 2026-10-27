@@ -21,6 +21,18 @@ typedef struct roe_exporter roe_exporter;
  * The library must outlive this exporter; this module never opens/closes it. */
 typedef struct { int (*enter)(void *); void (*leave)(void *); void *context; } roe_owner;
 typedef struct { int64_t book_id; const char *display_name; } roe_selection;
+/* A product-owned immutable original can be exported alongside SDK books.
+ * source==NULL selects book_id through the SDK. Otherwise source is borrowed
+ * for this call, format is its public format, and expected_sha256 is the
+ * lowercase 64-character identity previously verified by the host. The host
+ * owns and serializes the source and must keep it immutable through return. */
+typedef struct {
+  int64_t book_id;
+  const char *display_name;
+  const exr_source *source;
+  exr_format format;
+  const char *expected_sha256;
+} roe_mixed_selection;
 typedef struct {
   int64_t book_id;
   roe_status status;
@@ -67,6 +79,11 @@ roe_status roe_destroy(roe_exporter **);
  * with matching actual bytes/hash. No target is overwritten. Path strings are
  * owned inline in result; callbacks must copy their borrowed views. */
 roe_status roe_run(roe_exporter *, const roe_selection *, size_t, const roe_options *, roe_result **);
+/* Mixed SDK and host-verified original sources preserve input order and the
+ * same preflight limits, per-item receipts and no-replace publication. A
+ * supplied source is never released here. Its copied hash must match the
+ * expected identity before publication. */
+roe_status roe_run_mixed(roe_exporter *, const roe_mixed_selection *, size_t, const roe_options *, roe_result **);
 void roe_result_free(roe_result *);
 #ifdef __cplusplus
 }
