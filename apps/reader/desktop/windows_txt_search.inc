@@ -126,7 +126,7 @@ static exr_status wintxt_search_open(host_job *job) {
 #ifdef EXR_READER_WINDOWS_WAVE3
   /* Full-source validation stays on the serial worker, never the UI thread. */
   live.control=control;
-  status=exr_txt_anchor_create_source(&live,job->txt_history_origin,job->txt_history_origin,
+  status=exr_txt_anchor_create_source(&live,job->txt_history_origin,job->txt_history_origin_end,
                                       &job->txt_history_before,&job->error);
   if(status==EXR_OK)
     /* Preserve the independently verified hit, which is often more distinctive

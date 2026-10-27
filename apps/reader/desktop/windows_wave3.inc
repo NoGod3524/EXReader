@@ -1180,6 +1180,11 @@ static void w3_history_accept(host_job *job) {
   int moved = 0;
   memset(&error, 0, sizeof(error));
   if (job->status == EXR_OK && job->have_frame) {
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    /* The bounded page quote identifies the page; it is not a selection. */
+    if (g.session.txt && w3.has_pending_item && w3.pending_item.kind == READER_JH_PAGE)
+      job->resolved_selection = 0;
+#endif
     job->kind = JOB_GO;
     handle_job_complete(job);
     moved = g.has_current && g.frame.valid && job->frame.valid == 0;
