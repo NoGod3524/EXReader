@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.24)
+project(bounded_txt_scan C)
+find_package(EXReader CONFIG REQUIRED)
+add_executable(bounded_txt_scan check.c)
+target_link_libraries(bounded_txt_scan PRIVATE EXReader::exr_core)
+enable_testing()
+add_test(NAME bounded_txt_scan COMMAND bounded_txt_scan)

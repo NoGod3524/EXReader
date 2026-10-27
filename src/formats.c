@@ -1385,3 +1385,96 @@ done:
   }
   return EXR_OK;
 }
+
+/* Bounded TXT projection primitive. This deliberately does not construct a
+   document or reset a pager at arbitrary source boundaries. */
+typedef struct {
+  const exr_source *source;
+  uint64_t next;
+  unsigned char bytes[4096];
+  size_t pos, size;
+} txt_reader;
+static exr_status txt_byte(txt_reader *r, unsigned char *out, int *present, exr_error *e) {
+  size_t want, got;
+  *present=0;
+  if(r->pos==r->size) {
+    if(r->next==r->source->size) return EXR_OK;
+    if(exr_control_cancel(&r->source->control,e)!=EXR_OK) return EXR_CANCELLED;
+    want=(size_t)((r->source->size-r->next)<sizeof(r->bytes) ? r->source->size-r->next : sizeof(r->bytes));
+    got=r->source->read_at(r->source->context,r->next,r->bytes,want);
+    if(!got || got>want) return exr_fail(e,EXR_IO,"Invalid TXT source read");
+    r->next+=got;r->pos=0;r->size=got;
+  }
+  *out=r->bytes[r->pos++];*present=1;return EXR_OK;
+}
+static exr_status txt_scalar(txt_reader *r, int endian, uint32_t *cp, int *present, exr_error *e) {
+  unsigned char b[4];size_t n=1,i=0;int has;exr_status s;
+  s=txt_byte(r,&b[0],present,e);if(s!=EXR_OK || !*present) return s;
+  if(endian) {
+    s=txt_byte(r,&b[1],&has,e);if(s!=EXR_OK) return s;
+    if(!has) return exr_fail(e,EXR_ENCODING,"Truncated UTF-16");
+    *cp=endian==1 ? (uint32_t)(b[0]|(b[1]<<8)) : (uint32_t)((b[0]<<8)|b[1]);
+    if(*cp>=0xd800 && *cp<=0xdbff) {
+      uint32_t lo;
+      s=txt_byte(r,&b[2],&has,e);if(s!=EXR_OK) return s;
+      if(!has) return exr_fail(e,EXR_ENCODING,"Unpaired UTF-16 surrogate");
+      s=txt_byte(r,&b[3],&has,e);if(s!=EXR_OK) return s;
+      if(!has) return exr_fail(e,EXR_ENCODING,"Unpaired UTF-16 surrogate");
+      lo=endian==1 ? (uint32_t)(b[2]|(b[3]<<8)) : (uint32_t)((b[2]<<8)|b[3]);
+      if(lo<0xdc00 || lo>0xdfff) return exr_fail(e,EXR_ENCODING,"Unpaired UTF-16 surrogate");
+      *cp=0x10000+((*cp-0xd800)<<10)+(lo-0xdc00);
+    } else if(*cp>=0xdc00 && *cp<=0xdfff) return exr_fail(e,EXR_ENCODING,"Unpaired UTF-16 surrogate");
+  } else {
+    if(b[0]>=0xc0 && b[0]<0xe0) n=2;
+    else if(b[0]>=0xe0 && b[0]<0xf0) n=3;
+    else if(b[0]>=0xf0 && b[0]<0xf8) n=4;
+    for(i=1;i<n;i++) {
+      s=txt_byte(r,&b[i],&has,e);if(s!=EXR_OK) return s;
+      if(!has) return exr_fail(e,EXR_ENCODING,"Truncated UTF-8");
+    }
+    i=0;if(!exr_next((const char *)b,n,&i,cp) || i!=n) return exr_fail(e,EXR_ENCODING,"Invalid UTF-8");
+  }
+  if(!*cp) return exr_fail(e,EXR_ENCODING,"NUL is not text");
+  return EXR_OK;
+}
+static exr_status txt_emit(exr_buffer *line,uint64_t *extent,exr_txt_paragraph_fn emit,void *context,exr_error *e) {
+  size_t start=0,end=line->size;exr_status s;
+  while(start<end && (line->data[start]==' ' || line->data[start]=='\t')) start++;
+  while(end>start && (line->data[end-1]==' ' || line->data[end-1]=='\t')) end--;
+  if(end>start) {
+    uint64_t offset=*extent ? *extent+1 : 0;
+    if(offset<*extent || end-start>UINT64_MAX-offset) return exr_fail(e,EXR_LIMIT,"TXT extent overflow");
+    s=emit(context,offset,line->data+start,end-start,e);if(s!=EXR_OK) return s;
+    *extent=offset+(end-start);
+  }
+  line->size=0;if(line->data) line->data[0]=0;return EXR_OK;
+}
+exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragraph_fn emit,void *context,
+                               uint64_t *extent,exr_error *e) {
+  txt_reader r={0};exr_buffer line={0};uint64_t total=0;uint32_t cp;int has,endian=0,cr=0;
+  unsigned char prefix[3];size_t count=0;exr_status s=EXR_OK;
+  if(extent) *extent=0;
+  if(!source || !source->read_at || !emit || !extent) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT scan arguments");
+  r.source=source;
+  while(count<3 && count<source->size) { s=txt_byte(&r,&prefix[count],&has,e);if(s!=EXR_OK) goto done;count++; }
+  r.next=0;r.pos=0;r.size=0;
+  if(count>=2 && prefix[0]==0xff && prefix[1]==0xfe) { endian=1;r.next=2; }
+  else if(count>=2 && prefix[0]==0xfe && prefix[1]==0xff) { endian=2;r.next=2; }
+  else if(count>=3 && prefix[0]==0xef && prefix[1]==0xbb && prefix[2]==0xbf) r.next=3;
+  for(;;) {
+    s=txt_scalar(&r,endian,&cp,&has,e);if(s!=EXR_OK || !has) break;
+    if(cp=='\n' && cr) { cr=0;continue; }
+    cr=cp=='\r';
+    if(cr || cp=='\n') { s=txt_emit(&line,&total,emit,context,e);if(s!=EXR_OK) break; }
+    else {
+      /* Limit the indivisible paragraph, including whitespace, before growth. */
+      if(line.size>65536-(cp<0x80 ? 1u : cp<0x800 ? 2u : cp<0x10000 ? 3u : 4u)) { s=exr_fail(e,EXR_LIMIT,"TXT paragraph exceeds scan budget");break; }
+      if(!exr_codepoint(&line,cp)) { s=exr_fail(e,EXR_MEMORY,"TXT paragraph allocation failed");break; }
+    }
+  }
+  if(s==EXR_OK) s=txt_emit(&line,&total,emit,context,e);
+  if(s==EXR_OK) s=exr_control_cancel(&source->control,e);
+  if(s==EXR_OK) *extent=total;
+done:
+  free(line.data);return s;
+}

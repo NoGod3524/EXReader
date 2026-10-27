@@ -5,6 +5,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/* Scan an immutable source without retaining it. Callbacks receive nonempty,
+   trimmed paragraphs and their whole-document normalized UTF-8 byte offset;
+   consecutive paragraphs are separated by one LF. Views last only for the call.
+   This primitive does not create a document, pager, identity, or durable anchor.
+   A decoded paragraph including whitespace must fit within 64 KiB. Reads retry
+   short results; cancellation is checked during reads and before success. A
+   callback error stops the scan. On failure extent is zero; callbacks already
+   delivered cannot be rolled back. Source context remains owned by the caller. */
+typedef exr_status (*exr_txt_paragraph_fn)(void *context,uint64_t offset,
+  const char *text,size_t size,exr_error *error);
+EXR_API exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragraph_fn paragraph,
+  void *context,uint64_t *extent,exr_error *error);
+
 /* Read document-subject XMP simple literals, Seq/Bag values and preferred Alt. */
 EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control,
   exr_metadata_entry **entries,size_t *count,exr_error *error);
