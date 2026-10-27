@@ -141,3 +141,9 @@ failed before its first behavior check: Session.launch could not find a mapped
 PID-qualified host window. Workflow now requires actual Openbox readiness before
 launch; failures also retain root window tree/process list/application log inline.
 No host-launch timeout, original test expectation or total job budget was enlarged.
+
+Historical collector now captures command output to a regular file rather than
+a pipe: GUI clipboard helpers may inherit stdout and outlive the original driver,
+so PIPE communicate waits for a descendant EOF after the driver has exited.
+The original process exit and raw output remain unchanged; no test timeout/expectation
+is relaxed and current acceptance is still independent.

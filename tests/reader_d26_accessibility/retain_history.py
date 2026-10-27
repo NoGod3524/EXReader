@@ -15,7 +15,14 @@ p.add_argument('command', nargs=argparse.REMAINDER)
 a = p.parse_args()
 command = a.command[1:] if a.command[:1] == ['--'] else a.command
 assert command
-result = subprocess.run(command, check=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+# Real GUI helpers (notably xclip) can inherit stdout after the driver exits.
+# A PIPE would keep communicate() blocked waiting for those descendants' EOF.
+# Preserve raw output in a regular file and wait only for the original process.
+log_path = a.report.parent.parent / (a.report.parent.name + ('-self-test' if '--self-test' in command else '') + '-historical-command.log')
+log_path.parent.mkdir(parents=True, exist_ok=True)
+with log_path.open('w') as log:
+    result = subprocess.run(command, check=False, stdout=log, stderr=subprocess.STDOUT, text=True)
+result.stdout = log_path.read_text(errors='replace')
 print(result.stdout, end="", flush=True)
 # An absent/malformed/unbound report is an infrastructure failure, not a
 # historical incompatibility; it must still stop the evidence job.
