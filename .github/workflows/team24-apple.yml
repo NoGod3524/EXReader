@@ -183,12 +183,12 @@ jobs:
         run: |
           python3 - <<'PY'
           import hashlib, json, os, subprocess, zipfile
-          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12694439602"
+          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12698627245"
           item = json.loads(subprocess.check_output(['gh', 'api', api]))
-          assert item['workflow_run']['id'] == 40410440820
-          assert item['workflow_run']['head_sha'] == '16398111b48846ccd51aaa83eca53a005eaa8a45'
-          digest = '13b850c9341b6fbe9a0487f3cec3ed815d7787838d5d47277de3227a3ade7a16'
-          assert item['size_in_bytes'] == 495383582 and item['digest'] == 'sha256:' + digest and not item['expired']
+          assert item['workflow_run']['id'] == 40417669413
+          assert item['workflow_run']['head_sha'] == 'd1bfd79fb2be31079f32a8993f67f9fd16baa2d9'
+          digest = '9819440e9e9bfbb7fd2f69de9288c79d3facdc361eacfb78c776f3983b1dc1f6'
+          assert item['size_in_bytes'] == 430147102 and item['digest'] == 'sha256:' + digest and not item['expired']
           with open('artifact.zip', 'wb') as out:
               subprocess.run(['gh', 'api', api + '/zip'], stdout=out, check=True)
           with open('artifact.zip', 'rb') as source:
