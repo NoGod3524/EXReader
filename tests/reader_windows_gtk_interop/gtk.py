@@ -57,11 +57,50 @@ def main():
         identifier=sql('SELECT sdk_book_id FROM reader_local_books WHERE book_key=?',(key,))[0][0]
         host.wait(lambda s:s['book']==identifier and s['reader_visible']==1,timeout=90)
         return identifier
+    def import_local(book):
+        # Target only this process's actual chooser. A second Enter is sent only
+        # while that same chooser is visible and no import has started.
+        events=[];start=time.monotonic();chooser=None
+        def visible():
+            result=subprocess.run(['xdotool','search','--onlyvisible','--all','--pid',str(host.process.pid),
+                '--name','^Import book$'],capture_output=True,text=True)
+            return result.stdout.split()
+        def capture(action):
+            events.append({'elapsed':round(time.monotonic()-start,3),'action':action,
+                           'choosers':visible(),'host':host.read()})
+        try:
+            command('xdotool','windowactivate','--sync',host.window);host.key('F1')
+            chooser=window('Import book');capture('chooser-opened')
+            host.key('ctrl+l');host.paste(str(book.resolve()))
+            command('xdotool','key','--clearmodifiers','Return');capture('first-enter')
+            second=False;deadline=time.monotonic()+60
+            while time.monotonic()<deadline:
+                assert host.process.poll() is None
+                ids=visible();current=host.read()
+                assert all(value==chooser for value in ids),('unexpected chooser',ids,chooser)
+                if not ids and current.get('book',0)>0 and current.get('books')==1 and not current.get('error') and not current.get('busy'):
+                    capture('chooser-closed-and-book-imported');return
+                if not second and ids and time.monotonic()-start>=3 and not current.get('book') and not current.get('busy'):
+                    command('xdotool','windowactivate','--sync',chooser)
+                    current=host.read()
+                    if chooser in visible() and not current.get('book') and not current.get('busy'):
+                        command('xdotool','key','--clearmodifiers','Return');second=True;capture('second-enter')
+                time.sleep(.1)
+            capture('timeout')
+            raise TimeoutError('Import requires both chooser closure and completed book import')
+        except Exception:
+            capture('failure')
+            with (a.out/'selector-window-tree.txt').open('w',encoding='utf-8') as output:
+                subprocess.run(['xwininfo','-root','-tree'],stdout=output,stderr=subprocess.STDOUT,check=False)
+            subprocess.run(['import','-window','root',str(a.out/'selector-failure.png')],check=False)
+            raise
+        finally:
+            (a.out/'selector-events.json').write_text(json.dumps(events,indent=2),encoding='utf-8')
     try:
         host=Session(program.resolve(),(a.package/'Reader.otf').resolve(),a.out);(a.out/'profile').mkdir(mode=0o700);(a.out/'profile').chmod(0o700);host.launch()
         if a.phase=='gtk-first':
             book=a.out/'Relay GTK.txt';book.write_bytes(('GTK authored original.\n'*80).encode());digest=hashlib.sha256(book.read_bytes()).hexdigest()
-            host.dialog(book.resolve());host.wait(lambda s:s['book']>0 and s['books']==1 and not s['error'],timeout=60)
+            import_local(book)
             data.update(gtk_book='txt:'+digest,gtk_original_sha256=digest,gtk_program_sha256=identity)
             checks.append('gtk_imports_original_in_native_host')
         account();setfield('w',dav.base+'/dav/');setfield('u',user);setfield('p',password);host.key('alt+h','alt+a')
