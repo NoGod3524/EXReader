@@ -137,3 +137,21 @@ Audit artifact `12768660772`, 12,085 bytes, SHA-256
 `0f64f81a1bce34c7e850bac4033ab309a95ad3fff0cd2748dc789eb575ccfdd7`,
 expires 2027-01-25T20:24:44Z. This documentation commit is not the audited
 source and does not change the fixed 108-outcome denominator.
+
+## 2026-10-27 Android annotation exchange
+
+The fixed-catalog audit [40578168891/1](https://github.com/NoGod3524/EXReader/actions/runs/40578168891)
+at source `3ca92aee66109eac224d91082fdb08eef7419fed` completed with
+`evidence_ok=true` and **71/108 (65.7%)**: foundation 12/12, hosts 59/84,
+final delivery 0/12. The October 25 cutoff stays 58/108 (53.7%).
+
+The added outcome is Android annotation exchange, including real host export,
+preview, confirmation, duplicate and malformed-input refusal on an API 34
+emulator. Picker and destination intents use test stubs. See
+[android-annotations-d22.md](android-annotations-d22.md) for the actual
+source, original report and authenticated artifact.
+
+Audit artifact `12768097289`, 12,414 bytes, SHA-256
+`6a4ae8db2e93e7335c740a3cb84460944275e2c4bd3585786a27591b0e4728be`,
+expires 2027-01-25T20:27:11Z. This documentation commit is not the audited
+source and does not change the fixed 108-outcome denominator.
