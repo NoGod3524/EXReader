@@ -29,6 +29,8 @@ if a.kind == 'g13':
 else:
     accepted = r['accepted']
     assert accepted or r.get('failure'), 'historical failure must retain its original error'
+expected_exit = 0 if accepted else (2 if a.kind == 'g13' else 1)
+assert result.returncode == expected_exit, ('unexpected historical process outcome', result.returncode, expected_exit)
 evidence = dict(source_sha=r['source_sha'], run_id=r['run_id'], attempt=r['attempt'],
                 kind=a.kind, historical_accepted=accepted, exit_code=result.returncode,
                 command=command, report_sha256=hashlib.sha256(a.report.read_bytes()).hexdigest(),

@@ -160,12 +160,25 @@ def main():
                 def visible_row():
                     bounds = bus.extents(dialog)
                     for candidate in nodes(part, {'table cell'}):
+                        if not bus.is_ancestor(dialog, candidate):
+                            continue
                         box = bus.extents(candidate)
                         if not bounds or not box or box['width'] <= 0 or box['height'] <= 0:
                             continue
                         cx, cy = box['x'] + box['width'] // 2, box['y'] + box['height'] // 2
-                        if bounds['x'] <= cx < bounds['x'] + bounds['width'] and bounds['y'] <= cy < bounds['y'] + bounds['height']:
-                            return candidate
+                        clips = [bounds]
+                        parent = candidate.get_parent()
+                        while parent is not None and parent != dialog:
+                            if bus.role(parent) == 'scroll pane':
+                                clip = bus.extents(parent)
+                                if not clip:
+                                    break
+                                clips.append(clip)
+                            parent = parent.get_parent()
+                        else:
+                            if all(clip['x'] <= cx < clip['x'] + clip['width'] and
+                                   clip['y'] <= cy < clip['y'] + clip['height'] for clip in clips):
+                                return candidate
                     return None
                 row = wait_nodes(visible_row)
                 click_node(row)

@@ -485,8 +485,10 @@ def main():
                 node = a11y.find_one(frame(), roles=contract.BUTTON_ROLES + contract.ENTRY_ROLES,
                                      text=text)
                 box = a11y.extents(node) if node is not None else None
-                if box and box['width'] > 0 and box['height'] > 0 and box['x'] > -10000:
+                if (box and a11y.states(node).get('showing') and box['width'] > 0
+                        and box['height'] > 0 and box['x'] > -10000 and box['y'] > -10000):
                     break
+                box = None
                 time.sleep(.08)
             if box is not None:
                 boxes.append((text, box))
@@ -832,9 +834,10 @@ def main():
             within_reader &= bool(a11y.is_ancestor(main, node) and a11y.name(node))
             host.key('Tab')
             previous = node
-            node = driver.wait_until(lambda: (focus_node() if focus_node() is not None
-                                      and focus_node() != previous else None),
-                                     6, description='next real reader focus stop')
+            def next_focus():
+                candidate = focus_node()
+                return candidate if candidate is not None and candidate != previous else None
+            node = driver.wait_until(next_focus, 6, description='next real reader focus stop')
             if node == anchor:
                 cycle_complete = True
                 break
@@ -900,6 +903,15 @@ def main():
                 after, after_text = candidate, text
                 break
             time.sleep(0.2)
+        # Label updates and AT-SPI delivery are asynchronous; wait for the actual
+        # matching source event without fabricating focus or changing the name.
+        deadline = time.monotonic() + 6
+        while time.monotonic() < deadline:
+            with recorder.lock:
+                sources = list(recorder.name_sources[source_mark:])
+            if any(source == before and name == after_text for source, name in sources):
+                break
+            time.sleep(.08)
         events = recorder.since(mark)
         name_events = [event for event in events
                        if event['type'] == 'object:property-change:accessible-name'
