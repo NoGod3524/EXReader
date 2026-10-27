@@ -35,6 +35,7 @@
 #endif
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
 #include <reader_txt_progress.h>
+#define TXT_TRACE(step) do { if (getenv("EXR_TRACE_TXT")) { fprintf(stderr, "TXT_TRACE %s\n", step); fflush(stderr); } } while (0)
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
 #include <reader_metadata.h>
@@ -1857,16 +1858,21 @@ static exr_status job_open_txt(host_job *job) {
   session.txt_source=source;
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   snprintf(session.txt_key,sizeof(session.txt_key),"%s",job->product_key);
+  TXT_TRACE("pager-created");
   /* Restore before the first page is accepted: the product content identity and
      the captured projection window decide the page, never a stored page number. */
   {
     size_t target=0; wchar_t note[256]={0};
+    TXT_TRACE("restore-start");
     status=txt_restore(&session,job->product_key,&target,note,256,&error);
+    TXT_TRACE("restore-finished");
     if(status==EXR_OK) status=exr_pager_get(session.pager,target,&layout,&error);
     if(status!=EXR_OK || !layout) { if(status==EXR_OK) status=EXR_FORMAT; goto done; }
     info=exr_layout_pages(layout,&count);
     if(!info || !count || info->start>info->end || info->end-info->start>HOST_PAGE_TEXT_LIMIT) { status=EXR_FORMAT;goto done; }
+    TXT_TRACE("first-page-ready");
     status=txt_frame(&session,&source,layout,target,&job->frame,&error);
+    TXT_TRACE("first-frame-finished");
     if(status!=EXR_OK) goto done;
     copy_wstring(job->message,512,note[0]?note:L"从第一页开始。");
   }
@@ -2069,14 +2075,18 @@ static exr_status txt_restore(host_session *session, const char *key, size_t *pa
   if (page) *page = 0;
   if (note && capacity) note[0] = 0;
   if (!key || !key[0]) { copy_wstring(note, capacity, L"缺少书籍身份；从第一页开始。"); return EXR_OK; }
+  TXT_TRACE("store-open-start");
   if (!txt_store_open(&store, error)) {
     session->hold_progress = 1;
     copy_wstring(note, capacity, L"无法打开阅读位置记录；从第一页开始，原记录未被覆盖。");
     if (error) memset(error, 0, sizeof(*error));
     return EXR_OK;
   }
+  TXT_TRACE("store-open-finished");
   status = reader_txp_load(store, key, &saved, &meta, &detail);
+  TXT_TRACE("position-load-finished");
   reader_txp_close(&store);
+  TXT_TRACE("store-close-finished");
   if (status == READER_TXP_MISSING) {
     copy_wstring(note, capacity, txt_status_note(status));
     return EXR_OK;
@@ -4441,6 +4451,9 @@ static void handle_job_complete(host_job *job) {
     }
 #endif
     if (job->kind == JOB_OPEN) {
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      if (job->product_key[0]) TXT_TRACE("ui-open-accept");
+#endif
       if (job->session_swapped && job->have_frame && job->candidate.book_id == job->book_id && job->frame.book_id == job->book_id) {
         exr_book next = {0};
         if (job->opened_book.id == job->book_id) {
@@ -4473,6 +4486,9 @@ static void handle_job_complete(host_job *job) {
 #endif
           settings_save();
           if (reload_notes() != EXR_OK) { save_progress(); return; }
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+          if (g.session.txt) TXT_TRACE("ui-before-save");
+#endif
           if (!save_progress()) return;
           {
             wchar_t *title = g.current.title ? host_wide(g.current.title, strlen(g.current.title)) : NULL;
