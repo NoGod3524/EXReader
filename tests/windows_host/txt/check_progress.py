@@ -311,6 +311,18 @@ def main():
         app.wait_idle()
         assert app.label() != first_label
         dialog, _ = wave3.record_count(app)
+        bookmarks = [i for i, row in enumerate(wave3.rows(dialog, wave3.RECORDS_ROWS))
+                     if row.startswith('\u4e66\u7b7e')]
+        assert len(bookmarks) == 1, wave3.rows(dialog, wave3.RECORDS_ROWS)
+        wave3.select_row(dialog, bookmarks[0], wave3.RECORDS_ROWS)
+        app.wait(lambda: ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog, wave3.RECORDS_OPEN)), timeout=60)
+        ui.send(ui.U.GetDlgItem(dialog, wave3.RECORDS_OPEN), 0xF5, timeout=5000)
+        app.wait(lambda: app.label() == first_label, timeout=240)
+        wave3.close_records(app, dialog)
+        app.click('next')
+        app.wait_idle()
+        assert app.label() != first_label
+        dialog, _ = wave3.record_count(app)
         highlights = [i for i, row in enumerate(wave3.rows(dialog, wave3.RECORDS_ROWS))
                       if row.startswith('\u5212\u7ebf')]
         assert len(highlights) == 1, wave3.rows(dialog, wave3.RECORDS_ROWS)
@@ -420,6 +432,10 @@ def main():
         assert 'Isolated Book 0000' in isolated_text, isolated_text[:200]
         assert '还没有保存过阅读位置' in app.status(), app.status()
         record('a different book identity starts at its own first page', app.status())
+        dialog, isolated_records = wave3.record_count(app)
+        assert isolated_records == 1, wave3.rows(dialog, wave3.RECORDS_ROWS)
+        wave3.close_records(app, dialog)
+        record('TXT reading records are isolated by the original book identity')
         dialog = search_dialog()
         search_query(dialog, '\u4e66\u9875\u4f4d\u7f6e')
         assert len(search_rows(dialog)) == 32
@@ -440,6 +456,13 @@ def main():
         open_row(fixture.name)
         assert first_line(page_text(app, automation)) == position_line, page_text(app, automation)[:200]
         record('restart keeps both content identities independent')
+        dialog, reopened_records = wave3.record_count(app)
+        assert reopened_records >= 3, wave3.rows(dialog, wave3.RECORDS_ROWS)
+        saved_rows = wave3.rows(dialog, wave3.RECORDS_ROWS)
+        assert any(row.startswith('\u5212\u7ebf') for row in saved_rows), saved_rows
+        assert any(row.startswith('\u4e66\u7b7e') for row in saved_rows), saved_rows
+        wave3.close_records(app, dialog)
+        record('TXT bookmark and highlight survive process restart')
 
         heads_before, count_before = progress_heads('txt:' + expected)
         lock = sqlite3.connect(str(app.db) + '.product.sqlite', isolation_level=None, timeout=0.2)
