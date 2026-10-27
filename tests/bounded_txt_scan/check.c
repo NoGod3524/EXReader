@@ -39,6 +39,19 @@ static void check(const unsigned char *data,size_t size,size_t chunk) {
       exr_anchor_free(&a);exr_anchor_free(&b);
     }
   }
+  {
+    exr_txt_cursor *cursor=NULL;exr_txt_checkpoint mark;uint64_t at,again;
+    const char *text;size_t n,copy_size;char *copy;
+    if(exr_txt_cursor_create(&source,&cursor,&error)!=EXR_OK ||
+       exr_txt_cursor_next(cursor,&at,&text,&n,&error)!=EXR_OK || !text ||
+       exr_txt_cursor_checkpoint(cursor,&mark,&error)!=EXR_OK ||
+       exr_txt_cursor_next(cursor,&at,&text,&n,&error)!=EXR_OK || !text) exit(11);
+    copy_size=n;copy=malloc(n);if(!copy) exit(12);memcpy(copy,text,n);
+    if(exr_txt_cursor_restore(cursor,&mark,&error)!=EXR_OK ||
+       exr_txt_cursor_next(cursor,&again,&text,&n,&error)!=EXR_OK ||
+       again!=at || n!=copy_size || memcmp(copy,text,n)) exit(13);
+    free(copy);exr_txt_cursor_free(cursor);
+  }
   free(out.data);exr_document_free(doc);
 }
 static size_t file_read(void *ctx,uint64_t at,void *buffer,size_t size) {
@@ -95,7 +108,21 @@ int main(int argc,char **argv) {
     if(exr_txt_scan_source(&large,count_paragraph,&count,&extent,&error)!=EXR_OK || count!=212895) {
       fprintf(stderr,"large scan failed: %s count=%zu\n",error.message,count);fclose(file);return 5;
     }
-    fclose(file);printf("large scan: %zu paragraphs, %llu projected bytes\n",count,(unsigned long long)extent);
+    {
+      exr_txt_cursor *cursor=NULL;exr_txt_checkpoint mark;uint64_t offset,again;
+      const char *text;size_t n,j,copy_size;char *copy;
+      if(exr_txt_cursor_create(&large,&cursor,&error)!=EXR_OK) return 14;
+      for(j=0;j<100000;j++)
+        if(exr_txt_cursor_next(cursor,&offset,&text,&n,&error)!=EXR_OK || !text) return 15;
+      if(exr_txt_cursor_checkpoint(cursor,&mark,&error)!=EXR_OK ||
+         exr_txt_cursor_next(cursor,&offset,&text,&n,&error)!=EXR_OK || !text) return 16;
+      copy_size=n;copy=malloc(n);if(!copy) return 17;memcpy(copy,text,n);
+      if(exr_txt_cursor_restore(cursor,&mark,&error)!=EXR_OK ||
+         exr_txt_cursor_next(cursor,&again,&text,&n,&error)!=EXR_OK ||
+         again!=offset || n!=copy_size || memcmp(copy,text,n)) return 18;
+      free(copy);exr_txt_cursor_free(cursor);
+    }
+    fclose(file);printf("large scan and cursor replay: %zu paragraphs, %llu projected bytes\n",count,(unsigned long long)extent);
   }
   puts("bounded TXT projection checks passed");return 0;
 }

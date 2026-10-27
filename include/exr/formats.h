@@ -18,6 +18,22 @@ typedef exr_status (*exr_txt_paragraph_fn)(void *context,uint64_t offset,
 EXR_API exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragraph_fn paragraph,
   void *context,uint64_t *extent,exr_error *error);
 
+/* Resumable projection cursor for continuous readers. The source and callback
+   context must outlive the cursor and remain immutable. Paragraph views remain
+   valid until the next cursor operation. Checkpoints are valid only for the
+   same source and originate at a returned paragraph boundary. */
+typedef struct exr_txt_cursor exr_txt_cursor;
+typedef struct {
+  uint64_t source_offset, projection_offset;
+  unsigned encoding, pending_cr;
+} exr_txt_checkpoint;
+EXR_API exr_status exr_txt_cursor_create(const exr_source *source,exr_txt_cursor **out,exr_error *error);
+EXR_API exr_status exr_txt_cursor_next(exr_txt_cursor *cursor,uint64_t *offset,
+  const char **text,size_t *size,exr_error *error);
+EXR_API exr_status exr_txt_cursor_checkpoint(const exr_txt_cursor *cursor,exr_txt_checkpoint *checkpoint,exr_error *error);
+EXR_API exr_status exr_txt_cursor_restore(exr_txt_cursor *cursor,const exr_txt_checkpoint *checkpoint,exr_error *error);
+EXR_API void exr_txt_cursor_free(exr_txt_cursor *cursor);
+
 /* Exact UTF-8 byte search across the whole projected text, including paragraph
    separators. The complete source is validated even after a match. A missing
    match returns EXR_OK and UINT64_MAX in both outputs. `from` is a normalized

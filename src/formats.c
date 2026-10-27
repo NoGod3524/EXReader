@@ -1437,46 +1437,84 @@ static exr_status txt_scalar(txt_reader *r, int endian, uint32_t *cp, int *prese
   if(!*cp) return exr_fail(e,EXR_ENCODING,"NUL is not text");
   return EXR_OK;
 }
-static exr_status txt_emit(exr_buffer *line,uint64_t *extent,exr_txt_paragraph_fn emit,void *context,exr_error *e) {
-  size_t start=0,end=line->size;exr_status s;
-  while(start<end && (line->data[start]==' ' || line->data[start]=='\t')) start++;
-  while(end>start && (line->data[end-1]==' ' || line->data[end-1]=='\t')) end--;
-  if(end>start) {
-    uint64_t offset=*extent ? *extent+1 : 0;
-    if(offset<*extent || end-start>UINT64_MAX-offset) return exr_fail(e,EXR_LIMIT,"TXT extent overflow");
-    s=emit(context,offset,line->data+start,end-start,e);if(s!=EXR_OK) return s;
-    *extent=offset+(end-start);
+struct exr_txt_cursor {
+  exr_source source;
+  txt_reader reader;
+  exr_buffer line;
+  uint64_t extent;
+  int endian, cr, finished, failed;
+};
+exr_status exr_txt_cursor_create(const exr_source *source,exr_txt_cursor **out,exr_error *e) {
+  exr_txt_cursor *c;unsigned char prefix[3];size_t count=0;int has;exr_status s;
+  if(out) *out=NULL;
+  if(!out || !source || !source->read_at) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT cursor arguments");
+  c=calloc(1,sizeof(*c));if(!c) return exr_fail(e,EXR_MEMORY,"TXT cursor allocation failed");
+  c->source=*source;c->reader.source=&c->source;
+  while(count<3 && count<source->size) {
+    s=txt_byte(&c->reader,&prefix[count],&has,e);if(s!=EXR_OK) { free(c);return s; } count++;
   }
-  line->size=0;if(line->data) line->data[0]=0;return EXR_OK;
+  c->reader.next=0;c->reader.pos=c->reader.size=0;
+  if(count>=2 && prefix[0]==0xff && prefix[1]==0xfe) { c->endian=1;c->reader.next=2; }
+  else if(count>=2 && prefix[0]==0xfe && prefix[1]==0xff) { c->endian=2;c->reader.next=2; }
+  else if(count>=3 && prefix[0]==0xef && prefix[1]==0xbb && prefix[2]==0xbf) c->reader.next=3;
+  *out=c;return EXR_OK;
 }
-exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragraph_fn emit,void *context,
-                               uint64_t *extent,exr_error *e) {
-  txt_reader r={0};exr_buffer line={0};uint64_t total=0;uint32_t cp;int has,endian=0,cr=0;
-  unsigned char prefix[3];size_t count=0;exr_status s=EXR_OK;
-  if(extent) *extent=0;
-  if(!source || !source->read_at || !emit || !extent) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT scan arguments");
-  r.source=source;
-  while(count<3 && count<source->size) { s=txt_byte(&r,&prefix[count],&has,e);if(s!=EXR_OK) goto done;count++; }
-  r.next=0;r.pos=0;r.size=0;
-  if(count>=2 && prefix[0]==0xff && prefix[1]==0xfe) { endian=1;r.next=2; }
-  else if(count>=2 && prefix[0]==0xfe && prefix[1]==0xff) { endian=2;r.next=2; }
-  else if(count>=3 && prefix[0]==0xef && prefix[1]==0xbb && prefix[2]==0xbf) r.next=3;
+exr_status exr_txt_cursor_next(exr_txt_cursor *c,uint64_t *offset,const char **text,size_t *size,exr_error *e) {
+  uint32_t cp;int has;exr_status s;size_t start,end;
+  if(offset) *offset=0;if(text) *text=NULL;if(size) *size=0;
+  if(!c || !offset || !text || !size || c->failed) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT cursor");
+  if(c->finished) return EXR_OK;
+  c->line.size=0;if(c->line.data) c->line.data[0]=0;
   for(;;) {
-    s=txt_scalar(&r,endian,&cp,&has,e);if(s!=EXR_OK || !has) break;
-    if(cp=='\n' && cr) { cr=0;continue; }
-    cr=cp=='\r';
-    if(cr || cp=='\n') { s=txt_emit(&line,&total,emit,context,e);if(s!=EXR_OK) break; }
-    else {
-      /* Limit the indivisible paragraph, including whitespace, before growth. */
-      if(line.size>65536-(cp<0x80 ? 1u : cp<0x800 ? 2u : cp<0x10000 ? 3u : 4u)) { s=exr_fail(e,EXR_LIMIT,"TXT paragraph exceeds scan budget");break; }
-      if(!exr_codepoint(&line,cp)) { s=exr_fail(e,EXR_MEMORY,"TXT paragraph allocation failed");break; }
+    s=txt_scalar(&c->reader,c->endian,&cp,&has,e);
+    if(s!=EXR_OK) goto fail;
+    if(!has) { c->finished=1;s=exr_control_cancel(&c->source.control,e);if(s!=EXR_OK) goto fail; }
+    if(has && cp=='\n' && c->cr) { c->cr=0;continue; }
+    if(has) c->cr=cp=='\r';
+    if(!has || cp=='\r' || cp=='\n') {
+      start=0;end=c->line.size;
+      while(start<end && (c->line.data[start]==' ' || c->line.data[start]=='\t')) start++;
+      while(end>start && (c->line.data[end-1]==' ' || c->line.data[end-1]=='\t')) end--;
+      if(end>start) {
+        uint64_t at=c->extent ? c->extent+1 : 0;
+        if(at<c->extent || end-start>UINT64_MAX-at) { s=exr_fail(e,EXR_LIMIT,"TXT extent overflow");goto fail; }
+        *offset=at;*text=c->line.data+start;*size=end-start;c->extent=at+*size;return EXR_OK;
+      }
+      c->line.size=0;if(c->line.data) c->line.data[0]=0;
+      if(!has) return EXR_OK;
+    } else {
+      size_t n=cp<0x80 ? 1u : cp<0x800 ? 2u : cp<0x10000 ? 3u : 4u;
+      if(c->line.size>65536-n) { s=exr_fail(e,EXR_LIMIT,"TXT paragraph exceeds scan budget");goto fail; }
+      if(!exr_codepoint(&c->line,cp)) { s=exr_fail(e,EXR_MEMORY,"TXT paragraph allocation failed");goto fail; }
     }
   }
-  if(s==EXR_OK) s=txt_emit(&line,&total,emit,context,e);
-  if(s==EXR_OK) s=exr_control_cancel(&source->control,e);
-  if(s==EXR_OK) *extent=total;
-done:
-  free(line.data);return s;
+fail: c->failed=1;return s;
+}
+exr_status exr_txt_cursor_checkpoint(const exr_txt_cursor *c,exr_txt_checkpoint *point,exr_error *e) {
+  if(!c || !point || c->failed) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT checkpoint");
+  point->source_offset=c->reader.next-(c->reader.size-c->reader.pos);
+  point->projection_offset=c->extent;point->encoding=(unsigned)c->endian;point->pending_cr=(unsigned)c->cr;
+  return EXR_OK;
+}
+exr_status exr_txt_cursor_restore(exr_txt_cursor *c,const exr_txt_checkpoint *point,exr_error *e) {
+  if(!c || !point || point->source_offset>c->source.size || point->encoding!=(unsigned)c->endian || point->pending_cr>1)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid TXT checkpoint");
+  c->reader.next=point->source_offset;c->reader.pos=c->reader.size=0;
+  c->extent=point->projection_offset;c->cr=(int)point->pending_cr;c->finished=c->failed=0;
+  c->line.size=0;return EXR_OK;
+}
+void exr_txt_cursor_free(exr_txt_cursor *c) { if(c) { free(c->line.data);free(c); } }
+exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragraph_fn emit,void *context,
+                               uint64_t *extent,exr_error *e) {
+  exr_txt_cursor *c=NULL;uint64_t offset;const char *text;size_t size;exr_status s;
+  if(extent) *extent=0;
+  if(!source || !emit || !extent) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT scan arguments");
+  s=exr_txt_cursor_create(source,&c,e);if(s!=EXR_OK) return s;
+  while((s=exr_txt_cursor_next(c,&offset,&text,&size,e))==EXR_OK && text) {
+    s=emit(context,offset,text,size,e);if(s!=EXR_OK) break;
+  }
+  if(s==EXR_OK) *extent=c->extent;
+  exr_txt_cursor_free(c);return s;
 }
 
 typedef struct {
