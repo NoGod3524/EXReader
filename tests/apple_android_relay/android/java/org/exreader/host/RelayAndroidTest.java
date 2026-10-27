@@ -71,7 +71,8 @@ public final class RelayAndroidTest extends Instrumentation {
             zip.putNextEntry(new java.util.zip.ZipEntry("nav.xhtml"));zip.write(("<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\"><head><title>Contents</title></head><body><nav epub:type=\"toc\"><ol><li><a href=\"a.xhtml\">Empty A</a></li><li><a href=\"b.xhtml\">Empty B</a></li></ol></nav></body></html>").getBytes(StandardCharsets.UTF_8));zip.closeEntry();
         }
         long priorFontLibrary=FontSelection.library();String priorFontHash=FontSelection.hash();
-        NativeFonts fonts=NativeFonts.open(new File(folder,"fonts").getPath());JSONObject bounds=new JSONObject();
+        File fontDirectory=new File(folder,"fonts");need(fontDirectory.mkdirs()||fontDirectory.isDirectory(),"isolated font library directory");
+        NativeFonts fonts=NativeFonts.open(fontDirectory.getPath());JSONObject bounds=new JSONObject();
         try(NativeLibrary library=new NativeLibrary(new File(folder,"library.db").getPath())){
             HostTask task=new HostTask(()->false);NativeFonts.Imported imported=fonts.importFile(fontFile.getPath(),"Boundary font",task);need(imported.ok(),"boundary local font imported by production module");FontSelection.attach(fonts.handle,imported.hash);
             long emptyBook=library.importFile(empty.getPath(),NativeLibrary.FORMAT_EPUB,"All empty").id;long began=SystemClock.elapsedRealtime();boolean rejected=false;
