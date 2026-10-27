@@ -17,8 +17,11 @@ with source.open('wb') as f:
         written += len(unit)
 expected = '4f45393b25817f506a51b56cc5d61599556e4dd5b0bd59aa00f7eb43cbfc0a86'
 def digest(p):
+    h = hashlib.sha256()
     with p.open('rb') as f:
-        return hashlib.file_digest(f, 'sha256').hexdigest()
+        for block in iter(lambda: f.read(65536), b''):
+            h.update(block)
+    return h.hexdigest()
 assert source.stat().st_size == 16792975 and digest(source) == expected
 exe = Path('build/catalog/reader-original-import-check' + ('.exe' if os.name == 'nt' else '')).resolve()
 def run(case, mode, code=0):
