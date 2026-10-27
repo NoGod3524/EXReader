@@ -147,7 +147,7 @@ def main():
         if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
             run([sys.executable,ROOT/'tests/windows_host/txt/check_import.py',host/'EXReaderProduct.exe',
                  ROOT/'build/host-font-cache/Reader.otf',OUT/(name+'-txt-import'),
-                 fixtures/'Fixed page.pdf'],name+'-txt-native-import',600)
+                 fixtures/'Fixed page.pdf',host/'EXReaderShelfReview.exe'],name+'-txt-native-import',600)
         compact_host=host
         if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
             # Keep the original four-format SDK regression on a legacy host;

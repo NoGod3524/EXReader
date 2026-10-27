@@ -22,7 +22,7 @@ from uia_layer import Uia
 
 def main():
     assert os.name == 'nt' and os.environ.get('GITHUB_ACTIONS') == 'true'
-    exe, font, out, pdf = map(lambda x: Path(x).resolve(), sys.argv[1:5])
+    exe, font, out, pdf, review_exe = map(lambda x: Path(x).resolve(), sys.argv[1:6])
     out.mkdir(parents=True, exist_ok=False)
     fixture = make_txt_fixture(out, 0)
     expected = '4f45393b25817f506a51b56cc5d61599556e4dd5b0bd59aa00f7eb43cbfc0a86'
@@ -124,6 +124,26 @@ def main():
         app.click('open'); app.wait_idle()
         app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=60)
         report['checks'].append('filter and SDK selection/open remain functional')
+        app.close(); app = None
+        app = ui.P.App(review_exe, font, out / 'review-profile')
+        ui.picker(app, fixture)
+        app.wait(lambda: selected() >= 0 and selected() < len(rows()) and fixture.name in rows()[selected()], timeout=60)
+        app.click('open'); app.wait_idle()
+        app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=120)
+        automation = Uia()
+        assert automation.available, automation.error
+        def page_text():
+            return automation.control(app.control('page')).GetValuePattern().Value
+        before_cancel = page_text()
+        app.gate(2)
+        app.click('next')
+        app.stage(2)
+        app.click('cancel')
+        app.wait_idle()
+        assert page_text() == before_cancel, 'cancel changed the displayed page'
+        app.click('next'); app.wait_idle()
+        assert page_text() and page_text() != before_cancel, 'retry did not advance'
+        report['checks'].append('cancelled page turn keeps the displayed page and retry advances')
         report['accepted'] = True
     except Exception:
         report['error'] = traceback.format_exc()
