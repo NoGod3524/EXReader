@@ -1008,6 +1008,7 @@ static int job_preferences_committed(host_job *job) {
 #endif
 }
 #ifdef EXR_HOST_WORKER_REVIEW
+static void page_step(int direction);
 #include EXR_HOST_WORKER_REVIEW_HEADER
 #define OFFSET_GET(pager,index,out,error) review_offset_get(pager,index,out,error)
 #else

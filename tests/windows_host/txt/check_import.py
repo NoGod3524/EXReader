@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import sqlite3
 import sys
+import time
 import traceback
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -144,6 +145,27 @@ def main():
         app.click('next'); app.wait_idle()
         assert page_text() and page_text() != before_cancel, 'retry did not advance'
         report['checks'].append('cancelled page turn keeps the displayed page and retry advances')
+        target = app.q(11) + 5000
+        start = time.monotonic()
+        assert app.q(306, 5000), 'deep page request was not started'
+        app.wait(lambda: app.q(14) == 0, timeout=300)
+        seek_seconds = time.monotonic() - start
+        assert app.q(11) == target, ('deep page was not reached', app.q(11), target, app.status())
+        deep = page_text()
+        assert deep and deep in source_text, 'deep page text differs from source'
+        start = time.monotonic()
+        app.click('next'); app.wait(lambda: app.q(14) == 0, timeout=120)
+        next_seconds = time.monotonic() - start
+        after_deep = page_text()
+        assert app.q(11) == target + 1 and after_deep and after_deep != deep
+        assert after_deep in source_text and source_text.index(after_deep) >= source_text.index(deep) + len(deep)
+        start = time.monotonic()
+        app.click('previous'); app.wait(lambda: app.q(14) == 0, timeout=120)
+        back_seconds = time.monotonic() - start
+        assert app.q(11) == target and page_text() == deep
+        report['deep_page_observation'] = dict(page=target + 1, initial_seek_seconds=seek_seconds,
+            next_seconds=next_seconds, previous_seconds=back_seconds)
+        report['checks'].append('deep source page and adjacent forward/backward host frames agree')
         report['accepted'] = True
     except Exception:
         report['error'] = traceback.format_exc()

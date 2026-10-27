@@ -65,6 +65,13 @@ static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
     InterlockedExchange(&review_armed, (LONG)code - 100);
     return review_event != NULL;
   }
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  if (code == 306) {
+    if (!g.session.txt || !value || value > 10000 || g.job || g.pending) return 0;
+    page_step((int)value);
+    return g.job != NULL;
+  }
+#endif
   if (code == 200) { if (review_event) SetEvent(review_event); return 1; }
   if (code == 300) {
     InterlockedExchange(&review_offset_calls, 0); InterlockedExchange(&review_offset_injected, 0);
