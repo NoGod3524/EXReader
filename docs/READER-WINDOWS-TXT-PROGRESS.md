@@ -187,3 +187,19 @@ The earlier source `76aae8670d8bb4a74d1ca947f6e5f4701944506e`
 failed while waiting for the initial native PDF picker, before reaching the
 TXT checks. The result is retained. macOS, Linux and product-wide interoperability
 are not established by this Windows run.
+
+
+### Product TXT annotation exchange and native menu candidate
+
+The independent candidate source `a11c52e74b549c94c5831fe0f7a273f7f9cd99a2`
+passed [Windows run 40587358983, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40587358983).
+The real native menu opened the reading records dialog. The real annotation
+dialog exported the product TXT records; preview against the verified original
+performed no writes; import into a fresh profile created the records; a different
+original was refused without writes. The run also retained the TXT, compact,
+owner and installed mixed-export checks. This evidence is for Windows only.
+
+The prior candidate `247aa16be18be118820151bf2731dda09b411458`
+[run 40586579696](https://github.com/NoGod3524/EXReader/actions/runs/40586579696)
+failed because the TXT command gate blocked the annotation dialog; that result
+is retained. The later candidate explicitly enabled the real native menu entries.
