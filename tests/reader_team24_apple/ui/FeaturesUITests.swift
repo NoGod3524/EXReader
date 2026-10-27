@@ -84,8 +84,12 @@ final class FeaturesUITests: XCTestCase {
 #if os(iOS)
         XCTAssertTrue(wait { self.e("features.share.native").exists }); mark("native-share-presented")
         let native = e("features.share.native")
+        let systemClose = app.buttons["header.closeButton"].firstMatch
         let close = native.buttons["Close"].firstMatch, chineseClose = native.buttons["关闭"].firstMatch
-        if close.exists && close.isHittable { close.tap() }
+        if systemClose.waitForExistence(timeout: 15) {
+            XCTAssertTrue(wait { systemClose.isHittable })
+            systemClose.tap()
+        } else if close.exists && close.isHittable { close.tap() }
         else if chineseClose.exists && chineseClose.isHittable { chineseClose.tap() }
         else if native.exists {
             let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55))
