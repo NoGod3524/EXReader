@@ -1,7 +1,7 @@
 name: D23 current-source Windows GTK native relay
 on:
   push:
-    branches: [codex/dot-d21-d26-integration, codex/dot-d23-windows-gtk-relay]
+    branches: [codex/reader-dot-txt-validation, codex/dot-d23-windows-gtk-relay]
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
         run: |
           git merge-base --is-ancestor 2f215f5793a7344d22db350276ba9f8a07abe86f "$env:GITHUB_SHA"
           if ($LASTEXITCODE) { throw 'base mismatch' }
-          git diff --exit-code 4079d4e8eefd6acd2e02fe5b7ad0810e08b004e1 "$env:GITHUB_SHA" -- apps examples src include cmake
+          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 "$env:GITHUB_SHA" -- apps examples src include cmake
           if ($LASTEXITCODE) { throw 'product paths changed' }
           python -m py_compile tests/reader_d23_relay/relay.py tests/reader_d23_relay/windows.py tests/reader_d23_relay/gtk.py
           if ($LASTEXITCODE) { throw 'test syntax failed' }

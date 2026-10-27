@@ -1,7 +1,7 @@
 name: D25 current SDK real formats
 on:
   push:
-    branches: [codex/dot-d21-d26-integration, codex/dot-d25-real-formats]
+    branches: [codex/reader-dot-txt-validation, codex/dot-d25-real-formats]
   workflow_dispatch:
 permissions:
   contents: read

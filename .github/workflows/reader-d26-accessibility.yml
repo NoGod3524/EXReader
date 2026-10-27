@@ -1,7 +1,7 @@
 name: D26 GTK retained accessibility and native regression
 on:
   push:
-    branches: [codex/dot-d21-d26-integration, codex/dot-d26-gtk-accessibility]
+    branches: [codex/reader-dot-txt-validation, codex/dot-d26-gtk-accessibility]
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,7 +25,8 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor 2f215f5793a7344d22db350276ba9f8a07abe86f HEAD
-          git diff --exit-code 2f215f5793a7344d22db350276ba9f8a07abe86f HEAD -- src include cmake CMakeLists.txt bindings tests/fixtures tests/reader_a11y_gtk tests/linux_host tests/reader_wave3_c10 tests/reader_gtk_compact tests/reader_gtk_search tests/reader_gtk_navigation tests/reader_gtk_reading_records tests/reader_gtk_batch_import tests/reader_gtk_drop_import
+          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 HEAD -- src include cmake CMakeLists.txt bindings
+          git diff --exit-code 2f215f5793a7344d22db350276ba9f8a07abe86f HEAD -- tests/fixtures tests/reader_a11y_gtk tests/linux_host tests/reader_wave3_c10 tests/reader_gtk_compact tests/reader_gtk_search tests/reader_gtk_navigation tests/reader_gtk_reading_records tests/reader_gtk_batch_import tests/reader_gtk_drop_import
       - name: Check independent current driver syntax on Actions
         run: python3 -m py_compile tests/reader_d26_accessibility/*.py
       - name: Native GTK accessibility and Secret Service dependencies
