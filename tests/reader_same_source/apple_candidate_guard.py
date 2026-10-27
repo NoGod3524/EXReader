@@ -12,9 +12,11 @@ INTEGRATION = 'e5ea7382b654ba56df42d5f3fe94318e822f876b'
 D24 = '45f7767f4ba6efc8f18e550ba8c2ab34b2b6ed04'
 D21 = '5fe9a9d7a23a1e70cbd0d4270b520f61f7523466'
 BASE = '2f215f5793a7344d22db350276ba9f8a07abe86f'
+TXT_FIX = '4b5320a893e81777de8f0671779834aea633a0a4'
 ALLOWED = {'.github/workflows/integrated-apple-receive.yml',
            '.github/workflows/integrated-apple-large-type.yml',
-           'tests/reader_same_source/apple_candidate_guard.py'}
+           'tests/reader_same_source/apple_candidate_guard.py',
+           'tests/reader_same_source/bounded_txt_guard.py', 'src/formats.c'}
 
 def git(*args):
     return subprocess.check_output(['git', *args], text=True).strip()
@@ -27,6 +29,10 @@ def main():
         raise ValueError('integration parents changed')
     subprocess.run(['git', 'merge-base', '--is-ancestor', MERGE, source], check=True)
     changed = set(filter(None, subprocess.check_output(['git', 'diff', '--name-only', '-z', MERGE, source]).decode().split('\0')))
+    subprocess.run(['git', 'merge-base', '--is-ancestor', TXT_FIX, source], check=True)
+    for path in ('src/formats.c', 'tests/reader_same_source/bounded_txt_guard.py'):
+        if Path(path).read_bytes() != subprocess.check_output(['git', 'show', TXT_FIX + ':' + path]):
+            raise ValueError('bounded TXT fix differs: ' + path)
     if changed != ALLOWED:
         raise ValueError('unexpected candidate paths: ' + repr(sorted(changed)))
     subprocess.run(['git', 'diff', '--exit-code', BASE, D24, '--', 'src', 'include', 'bindings', 'cmake', 'CMakeLists.txt',
