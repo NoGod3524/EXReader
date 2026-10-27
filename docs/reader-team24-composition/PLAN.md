@@ -1195,3 +1195,14 @@ source/run identity, SDK export, current owner 18/18, 12 roundtrip checks and
 16 host UI checks in four phases. This is API 34 x86_64 emulator evidence on
 the stated candidate; its 3.41, final combined source and physical-device
 results remain separate.
+
+The same source passed scoped GTK retained navigation and folder-import
+regression in [40428878701/1](https://github.com/NoGod3524/EXReader/actions/runs/40428878701).
+Cloud audit [40430156593/1](https://github.com/NoGod3524/EXReader/actions/runs/40430156593)
+authenticated original artifact `12701582004` (51,813,937 bytes, SHA-256
+`7e006875e6f0f71664133fecc2aacea35227274ec912f1883d6c126197d62ce0`),
+the built and packaged GTK executable SHA-256
+`4c2c7811e1ded678fc94b410fa3d7f79421a52360aab233a40e625e112cf920a`,
+29 navigation UI checks, 27 batch UI checks and the 58/684 backend checks.
+The broader navigation `accepted` flag remains false; full GTK and final
+six-target acceptance are not granted by these scoped results.
