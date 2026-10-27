@@ -1,4 +1,4 @@
-name: D26 original focus evidence
+name: TXT host exit evidence
 on:
   push:
     branches: [codex/d26-focus-diagnostic]
@@ -12,24 +12,23 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: reader-d26-current-40546423134-1
-          run-id: 40546423134
+          name: txt-progress-host-40548185504-1
+          run-id: 40548185504
           github-token: ${{ github.token }}
           path: evidence
-      - name: Read original search landing observation
+      - name: Read exact original report and worker breadcrumbs
         run: |
           python3 - <<'PY'
           import json
           from pathlib import Path
-          result = json.loads(Path('evidence/d26-tools-current/result.json').read_text())
-          assert result['source_sha'] == '838cc41f799580bf98d0015c800446a000365068'
-          assert result['run_id'] == '40546423134' and result['attempt'] == '1'
-          print(json.dumps({'source_sha':result['source_sha'],'accepted':result['accepted'],'checks':result['checks'],'failure':result.get('failure')},ensure_ascii=False))
-          tree = json.loads(Path('evidence/d26-tools-current/atspi-tree.json').read_text())
-          def walk(node):
-              if node.get('name','').startswith(('Search result 1:', 'In-book results', 'Search within book', 'In-book query')):
-                  print(json.dumps(node,ensure_ascii=False))
-              for child in node.get('children',[]):
-                  walk(child)
-          walk(tree)
+          reports = list(Path('evidence').rglob('report.json'))
+          assert reports, 'no original report'
+          for path in reports:
+              r = json.loads(path.read_text(encoding='utf-8'))
+              if r.get('source_sha') == 'f4ff78423ecdf87a7a17efa71797892c0f2a79ca':
+                  print(json.dumps({'path': str(path), 'source_sha': r['source_sha'],
+                        'accepted': r.get('accepted'), 'host_exit_code': r.get('host_exit_code'),
+                        'error': r.get('error'), 'checks': r.get('checks')}, ensure_ascii=False))
+          for path in Path('evidence').rglob('txt-progress-trace.log'):
+              print('TRACE', path, path.read_text(encoding='utf-8', errors='replace')[-4000:])
           PY
