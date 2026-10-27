@@ -1167,6 +1167,20 @@ backend (58) and folder backend (684). The navigation report's broader
 `accepted` flag remains false; this is the stated retained scope, not full
 GTK or six-target acceptance.
 
+On the same merge source `1c42ddf6fe7e57f6bd0ac45f1ed78717bd4f3092`,
+[40427833409/1](https://github.com/NoGod3524/EXReader/actions/runs/40427833409)
+passed the Windows host and same-run original-artifact verifier. It retained
+the packaged and extracted native host checks, normal cloud-import checks,
+two-host HTTPS organization synchronization and the bounded group-browser
+checks. The verifier checked source/run identity, ZIP length and digest,
+reports and actual program identity; the original artifact `12701441720`
+was 59,428,411 bytes with SHA-256
+`581e01af39eb081fe34514f6dd7a8c40dec567a37c0ccc8888addec6f30cef5a`.
+The tested Windows executable SHA-256 was
+`cda9b8a38a0f940598fdd91aa0e8e6eec6600dd49da34270e032952de19c50d5`.
+This run predates the additional anchor-recovery changes; the newer combined
+source must pass those checks independently.
+
 ## Windows mapping observations on the combined candidate
 
 The Windows/Android candidate `d1b97161461f8fec6f6bdfebedd67a8ac9d0911e`
