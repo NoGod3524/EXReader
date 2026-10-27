@@ -126,9 +126,14 @@ def main():
                 injector = OUT / 'txt-progress-consumer'
                 H.configure(ROOT / 'tests/reader_txt_progress/consumer', injector,
                             ['-DCMAKE_PREFIX_PATH=' + prefix], 'txt-progress-consumer')
-                H.run([sys.executable, ROOT / 'tests/windows_host/txt/check_progress.py', exe, font,
-                       OUT / 'txt-progress', fixtures / 'Fixed page.pdf', injector / 'txtp-inject.exe', 'raw'],
-                      'native-txt-progress', 2400)
+                try:
+                    H.run([sys.executable, ROOT / 'tests/windows_host/txt/check_progress.py', exe, font,
+                           OUT / 'txt-progress', fixtures / 'Fixed page.pdf', injector / 'txtp-inject.exe', 'raw'],
+                          'native-txt-progress', 2400)
+                finally:
+                    txt_report = OUT / 'txt-progress/report.json'
+                    if txt_report.is_file():
+                        print('TXT_PROGRESS_REPORT ' + txt_report.read_text(encoding='utf-8'), flush=True)
             step('native-txt-progress', native_txt_progress)
 
         def compact22():
