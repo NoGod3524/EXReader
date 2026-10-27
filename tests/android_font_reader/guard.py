@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
-SEED = '1dfd2c3ba3184eb9a9df531d3858eafb95c2e80c'
+SEED = 'c45ac1a7508842f071e3d892635fdd9af444ae90'
 OWNED = ('tests/android_font_reader/', '.github/workflows/reader-android-font-reader.yml',
          'docs/android-font-reader/', 'examples/android/app/src/main/java/org/exreader/host/MainActivity.java')
 def git(*args):

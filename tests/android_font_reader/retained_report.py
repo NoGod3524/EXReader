@@ -10,5 +10,5 @@ path = Path('tests/reader_wave3_c11/report.py')
 spec = importlib.util.spec_from_file_location('retained_c11_report', path)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
-module.SEED = '1dfd2c3ba3184eb9a9df531d3858eafb95c2e80c'
+module.SEED = 'c45ac1a7508842f071e3d892635fdd9af444ae90'
 raise SystemExit(module.main())
