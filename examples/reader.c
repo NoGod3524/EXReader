@@ -1829,6 +1829,16 @@ static exr_status txt_frame(host_session *session, const exr_source *source, con
   status=exr_render_page_ex(layout,exr_layout_font(layout),0,4,&session->config.control,&(*frame).bitmap,error);
   if(status!=EXR_OK) goto done;
   {
+    const exr_glyph *glyphs=exr_layout_glyphs(layout,&frame->glyph_count);
+    if(frame->glyph_count>HOST_PAGE_GLYPH_LIMIT) { status=EXR_LIMIT;goto done; }
+    if(frame->glyph_count) {
+      if(!glyphs) { status=EXR_FORMAT;goto done; }
+      frame->glyphs=malloc(frame->glyph_count*sizeof(*frame->glyphs));
+      if(!frame->glyphs) { status=EXR_MEMORY;goto done; }
+      memcpy(frame->glyphs,glyphs,frame->glyph_count*sizeof(*frame->glyphs));
+    }
+  }
+  {
     exr_bitmap *b=&(*frame).bitmap; size_t total=(size_t)b->width*b->height;
     if(b->channels!=4 || total>SIZE_MAX/sizeof(uint32_t)) { status=EXR_FORMAT;goto done; }
     (*frame).dib=malloc(total*sizeof(uint32_t));
@@ -3225,7 +3235,7 @@ static void paint_selection(HDC dc) {
     const exr_glyph *glyphs;
     size_t count = 0, i;
     if (g.session.page != g.frame.page || g.session.part != g.frame.part) return;
-    if (g.frame.bounded) { glyphs = g.frame.glyphs; count = g.frame.glyph_count; }
+    if (g.frame.bounded || g.session.txt) { glyphs = g.frame.glyphs; count = g.frame.glyph_count; }
     else if (g.frame.hit_layout) glyphs = exr_layout_glyphs(g.frame.hit_layout, &count);
     else return;
     if (!glyphs) return;
@@ -3379,7 +3389,8 @@ static void selection_report(void) {
     set_status(L"未选择到文字。请拖动选择或使用“全选本页”。");
     return;
   }
-  set_statusf(L"已选择 %llu 字节文字 · 可复制引用或添加标注。", (unsigned long long)(end - start));
+  if (g.session.txt) set_statusf(L"已选择 %llu 字节文字 · 可复制引用。", (unsigned long long)(end - start));
+  else set_statusf(L"已选择 %llu 字节文字 · 可复制引用或添加标注。", (unsigned long long)(end - start));
 }
 
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
@@ -3908,7 +3919,6 @@ static int clipboard_set(const char *utf8, size_t size) {
 }
 
 static void select_all_page(void) {
-  if(g.session.txt) { set_status(L"TXT 文字选择尚未实现。");return; }
   if (!g.frame.valid) { set_status(L"请先打开一本书。"); return; }
   memset(&g.selection, 0, sizeof(g.selection));
   if (g.frame.fixed) {
@@ -3942,7 +3952,7 @@ static void copy_quote(void) {
     return;
   }
   {
-    int index = notes_selected();
+    int index = g.session.txt ? -1 : notes_selected();
     if (index < 0) {
       set_status(L"请先选择文字，或在标注列表中选择一条标注。");
       return;
@@ -4285,8 +4295,8 @@ static void host_update_controls(void) {
   EnableWindow(g.delete_button, !busy && g.shelf_count > 0);
   EnableWindow(g.prev_button, !busy && can_page && (g.frame.page > 0 || (g.session.bounded && g.frame.part > 0)));
   EnableWindow(g.next_button, !busy && can_page);
-  EnableWindow(g.select_button, !busy && has);
-  EnableWindow(g.copy_button, !busy && has);
+  EnableWindow(g.select_button, !busy && can_page);
+  EnableWindow(g.copy_button, !busy && can_page);
   EnableWindow(g.add_button, !busy && has);
   EnableWindow(g.update_button, !busy && has);
   EnableWindow(g.remove_button, !busy && has);
@@ -4678,7 +4688,7 @@ static void handle_job_complete(host_job *job) {
 }
 
 static void host_command(int id) {
-  if (g.session.txt && id != IDC_OPEN_BUTTON && id != IDC_IMPORT_BUTTON && id != IDC_CANCEL && id != IDC_DELETE_BUTTON && id != IDC_PREV && id != IDC_NEXT
+  if (g.session.txt && id != IDC_OPEN_BUTTON && id != IDC_IMPORT_BUTTON && id != IDC_CANCEL && id != IDC_DELETE_BUTTON && id != IDC_PREV && id != IDC_NEXT && id != IDC_SELECT_ALL && id != IDC_COPY_QUOTE
 #ifdef EXR_READER_WINDOWS_ACCOUNT
       && id != IDC_ACCOUNT_BUTTON
 #endif
