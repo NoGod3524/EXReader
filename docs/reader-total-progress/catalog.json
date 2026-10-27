@@ -276,6 +276,18 @@
         "annotation_export_import_is_exact_duplicate",
         "annotation_broken_file_refused_without_writing"
       ]
+    },
+    "android_real_original_save": {
+      "run": 40603049703,
+      "doc": "docs/reader-total-progress/android-original-save.md",
+      "source_prefix": "748e93713c643243a96bab54f5ca1464a2f39efd",
+      "artifact": 12780380289,
+      "sha256": "e03942f47d365c991862738c5d4236beb01406b734ee5d91e66d099039b4e657",
+      "bytes": 40510883,
+      "required_cases": [
+        "real_documentsui_opened",
+        "system_saved_original_matches_source"
+      ]
     }
   },
   "requirements": [
@@ -968,9 +980,11 @@
       "group": "host",
       "platform": "android",
       "title": "Android：宿主原件导出、系统保存及逐字节回读",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "android_real_original_save"
+      ],
+      "note": "Actual API34 emulator DocumentsUI Downloads save of EPUB original and byte readback; independent candidate, unified source remains separate."
     },
     {
       "id": "H.android.jump_history",
