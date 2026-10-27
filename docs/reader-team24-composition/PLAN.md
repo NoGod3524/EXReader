@@ -1077,6 +1077,20 @@ Windows passed, but the GTK import chooser did not close, so the relay and
 same-run verifier failed or did not execute. The earlier independent pass is
 not transferred; the current-source failure remains under diagnosis.
 
+The follow-up source `f92e31c8f9db0cf71f098782223a0f9a54daf292` retained
+the real GTK file chooser and completed all four phases and the same-run
+verifier in [40427608248/1](https://github.com/NoGod3524/EXReader/actions/runs/40427608248).
+Its driver tracks the specific chooser window and requires both its closure
+and completed import before continuing. Cloud inspection
+[40429683476/1](https://github.com/NoGod3524/EXReader/actions/runs/40429683476)
+authenticated GTK phase artifact `12700343910` (589,489 bytes, SHA-256
+`ab8a4c747fc6e8cb629ad17246f8b02fc752249954c41c253d84739b373922e1`)
+and observed a single Enter followed by chooser closure and a successful
+import. The earlier failed artifact showed an imported book but did not retain
+enough window evidence to establish why the chooser remained visible. The
+successful run uses the same sequential local-service relay scope described
+above; the newer Windows/Android composition is being tested independently.
+
 ## Android 3.41 combined host evidence
 
 Candidate source `31d34f87b2013ef18201268b50db5b6b1ccafd71` passed
