@@ -7,7 +7,9 @@ from pathlib import Path
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
 SEED = 'c45ac1a7508842f071e3d892635fdd9af444ae90'
 OWNED = ('tests/android_font_reader/', '.github/workflows/reader-android-font-reader.yml',
-         'docs/android-font-reader/', 'examples/android/app/src/main/java/org/exreader/host/MainActivity.java')
+         'docs/android-font-reader/', 'examples/android/app/src/main/java/org/exreader/host/MainActivity.java',
+         'tests/reader_d21_apple_receive/guard.py', 'tests/reader_android_receive_d22/guard.py',
+         'tests/reader_d25_real_formats/run.py')
 def git(*args):
     return subprocess.check_output(['git', *args], text=True).strip()
 head = git('rev-parse', 'HEAD')
