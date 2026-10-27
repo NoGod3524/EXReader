@@ -1655,6 +1655,12 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
       }
       info = exr_layout_pages(layout, &count);
       if (!info || count < 1) return EXR_FORMAT;
+      if (getenv("EXR_TRACE_TXT") && !(index % 512)) {
+        fprintf(stderr, "TXT_SEEK page=%llu start=%llu target=%llu tick=%llu\n",
+                (unsigned long long)index, (unsigned long long)info->start,
+                (unsigned long long)offset, (unsigned long long)GetTickCount64());
+        fflush(stderr);
+      }
       if (have && info->start > offset) break;
       chosen = index; chosen_start = info->start; chosen_end = info->end; have = 1;
       if (!index && offset < info->end) break;
