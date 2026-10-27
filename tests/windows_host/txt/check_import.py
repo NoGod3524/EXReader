@@ -16,6 +16,8 @@ ui = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ui)
 sys.path.insert(0, str(ROOT / 'tests/reader_perf_windows'))
 from perf_windows import make_txt_fixture
+sys.path.insert(0, str(ROOT / 'tests/reader_a11y_windows'))
+from uia_layer import Uia
 
 
 def main():
@@ -29,7 +31,7 @@ def main():
             return hashlib.file_digest(f, 'sha256').hexdigest()
     assert fixture.stat().st_size == 16792975 and digest(fixture) == expected
     report = dict(source_sha=os.environ['GITHUB_SHA'], host_sha256=digest(exe), checks=[],
-                  scope='native shelf and picker; TXT reading is not implemented', accepted=False)
+                  scope='native shelf, verified TXT first page and SDK book; paging and restart position remain unimplemented', accepted=False)
     app = None
     try:
         profile = out / 'profile'
@@ -57,12 +59,21 @@ def main():
         sdk_line = rows()[0]
         ui.picker(app, fixture)
         assert '阅读功能尚未完成' in app.status(), app.status()
-        app.wait(lambda: selected() >= 0 and selected() < len(rows()) and '阅读尚未支持' in rows()[selected()], timeout=60)
+        app.wait(lambda: selected() >= 0 and selected() < len(rows()) and fixture.name in rows()[selected()], timeout=60)
         original_line = rows()[selected()]
         assert rows().count(original_line) == 1, rows()
         app.click('open'); app.wait_idle()
-        assert '阅读功能尚未完成' in app.status(), app.status()
-        report['checks'].append('large original appears selected and opening reports incomplete reader')
+        app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=120)
+        assert '仅显示第一页' in app.status() and '保存阅读位置尚未实现' in app.status(), app.status()
+        automation = Uia()
+        assert automation.available, automation.error
+        page = automation.control(app.control('page'))
+        value, error = automation.value(page)
+        assert value and 'Perf Import 0000' in value and 'line 0000' in value, (value, error)
+        assert not ui.P.U.IsWindowEnabled(app.control('next'))
+        ui.P.M.screenshot(app.window, out / 'txt-first-page.bmp')
+        report['page_excerpt'] = value[:300]
+        report['checks'].append('selected 16792975-byte original renders first page with expected UI Automation text and screenshot')
         original = Path(str(app.db) + '.originals') / (expected + '.txt')
         assert original.stat().st_size == 16792975 and digest(original) == expected
         with catalog() as db:

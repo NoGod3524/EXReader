@@ -134,6 +134,7 @@ typedef struct {
 typedef struct {
   int active;
   int fixed;
+  int txt; /* Product original, with no SDK book identity. */
   int64_t book_id;
   exr_document *document;
   exr_publication *publication;
@@ -638,7 +639,7 @@ static void shelf_display(const exr_book *book, wchar_t *out, size_t capacity) {
   wchar_t *author = book->author ? host_wide(book->author, strlen(book->author)) : NULL;
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(g.shelf_cursors) swprintf(out,capacity,L"《%ls》 — %ls · %ls%ls%ls",title ? title:L"Untitled",
-    author && author[0] ? author:L"未知作者",format_name(book->format),book->id ? L"":L" · 阅读尚未支持",mark);
+    author && author[0] ? author:L"未知作者",format_name(book->format),book->id || book->format==EXR_TXT ? L"":L" · 阅读尚未支持",mark);
   else
 #endif
   if (is_fixed_format(book->format))
@@ -733,7 +734,7 @@ static exr_status reload_notes(void) {
   exr_epub_note *epub = NULL;
   exr_fixed_note *fixed = NULL;
   size_t count = 0;
-  if (!g.has_current || !g.session.active) {
+  if (!g.has_current || !g.session.active || g.session.txt) {
     notes_clear();
     if (g.notes) SendMessageW(g.notes, LB_RESETCONTENT, 0, 0);
     return EXR_OK;
@@ -1708,7 +1709,100 @@ static exr_status bounded_restore(host_session *session, const exr_control *cont
   exr_epub_location_free(&location); return status;
 }
 
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+/* The verified handle is the source: no path reopen between verification and read.
+   The pager owns this context after successful creation. The worker serializes
+   catalog operations and session disposal; Windows sharing prevents mutation. */
+static size_t txt_read(void *context,uint64_t offset,void *buffer,size_t size) {
+  HANDLE h=(HANDLE)context; LARGE_INTEGER at; DWORD got=0;
+  if(offset>INT64_MAX || size>UINT32_MAX) return 0;
+  at.QuadPart=(LONGLONG)offset;
+  if(!SetFilePointerEx(h,at,NULL,FILE_BEGIN) || !ReadFile(h,buffer,(DWORD)size,&got,NULL)) return 0;
+  return (size_t)got;
+}
+static void txt_release(void *context) { CloseHandle((HANDLE)context); }
+static exr_status job_open_txt(host_job *job) {
+  reader_catalog *catalog=NULL; reader_catalog_error ce={0};
+  reader_original_callbacks callbacks={job,job_cancel_check,NULL};
+  reader_original_status rs; char *root=host_utf8(g.original_root),*path=host_utf8(g.product_path);
+  void *handle=NULL; uint64_t bytes=0; exr_source source={0}; exr_error error={0};
+  host_session session={0}; exr_layout *layout=NULL; exr_txt_cursor *cursor=NULL;
+  exr_status status=EXR_IO; const exr_page *info; size_t count=0;
+  if(!root || !path) { status=EXR_MEMORY; goto done; }
+  if(reader_catalog_open(path,&catalog,&ce)) { status=EXR_DATABASE; goto done; }
+  rs=reader_original_verified_handle(catalog,root,job->product_key,&callbacks,&handle,&bytes);
+  if(rs!=ROI_OK) { status=rs==ROI_CANCELLED?EXR_CANCELLED:rs==ROI_MEMORY?EXR_MEMORY:EXR_IO; goto done; }
+  source.size=bytes; source.context=handle; source.read_at=txt_read; source.release=txt_release;
+  source.control.cancelled=host_cancel_check;
+  session.txt=1; session_configure(&session,job);
+  session.config.control.cancelled=host_cancel_check;
+  status=exr_txt_pager_create(&source,g.font,&session.config,&session.pager,&error);
+  if(status!=EXR_OK) goto done;
+  handle=NULL; /* pager now owns it */
+  status=exr_pager_next(session.pager,&layout,&error);
+  if(status!=EXR_OK || !layout) { if(status==EXR_OK) status=EXR_FORMAT; goto done; }
+  info=exr_layout_pages(layout,&count);
+  if(!info || !count || info->start>info->end || info->end-info->start>HOST_PAGE_TEXT_LIMIT) { status=EXR_FORMAT;goto done; }
+  job->frame.range_start=info->start; job->frame.range_end=info->end;
+  job->frame.text_bytes=info->end-info->start;
+  job->frame.utf8=calloc(job->frame.text_bytes+1,1);
+  if(!job->frame.utf8) { status=EXR_MEMORY;goto done; }
+  /* TXT pager deliberately has no text query. Project the same page range
+     through the public bounded cursor for accessibility and page text. */
+  status=exr_txt_cursor_create(&source,&cursor,&error);
+  if(status!=EXR_OK) goto done;
+  {
+    size_t filled=0; uint64_t offset; const char *text; size_t length;
+    while(filled<job->frame.text_bytes) {
+      status=exr_txt_cursor_next(cursor,&offset,&text,&length,&error);
+      if(status!=EXR_OK || !text) { if(status==EXR_OK) status=EXR_FORMAT;goto done; }
+      if(offset>info->start+filled) {
+        if(offset!=info->start+filled+1) { status=EXR_FORMAT;goto done; }
+        job->frame.utf8[filled++]='\n';
+      }
+      if(offset+length>info->start+filled) {
+        size_t skip=(size_t)(info->start+filled-offset), n=length-skip;
+        if(n>job->frame.text_bytes-filled) n=job->frame.text_bytes-filled;
+        memcpy(job->frame.utf8+filled,text+skip,n);filled+=n;
+      }
+    }
+  }
+  job->frame.text=host_wide(job->frame.utf8,job->frame.text_bytes);
+  if(!job->frame.text) { status=EXR_MEMORY;goto done; }
+  status=exr_render_page_ex(layout,exr_layout_font(layout),0,4,&session.config.control,&job->frame.bitmap,&error);
+  if(status!=EXR_OK) goto done;
+  {
+    exr_bitmap *b=&job->frame.bitmap; size_t total=(size_t)b->width*b->height;
+    if(b->channels!=4 || total>SIZE_MAX/sizeof(uint32_t)) { status=EXR_FORMAT;goto done; }
+    job->frame.dib=malloc(total*sizeof(uint32_t));
+    if(!job->frame.dib) { status=EXR_MEMORY;goto done; }
+    for(size_t i=0;i<total;i++) {
+      const unsigned char *p=b->pixels+(i/b->width)*b->stride+(i%b->width)*4; unsigned a=p[3];
+      unsigned r=(p[0]*a+255*(255-a)+127)/255, g=(p[1]*a+255*(255-a)+127)/255, bl=(p[2]*a+255*(255-a)+127)/255;
+      job->frame.dib[i]=(r<<16)|(g<<8)|bl;
+    }
+  }
+  job->frame.valid=1; job->frame.render_scale=1; job->frame.generation=++g.frame_sequence;
+  { const char *title=job->opened_book.title?job->opened_book.title:"Untitled";
+    wchar_t *wide=host_wide(title,strlen(title));copy_wstring(job->frame.title,256,wide?wide:L"Untitled");free(wide); }
+  session.active=1;job->candidate=session;memset(&session,0,sizeof(session));
+  job->session_swapped=job->have_frame=1;
+  copy_wstring(job->message,512,L"仅显示第一页；翻页和保存阅读位置尚未实现。");
+ done:
+  if(cursor) exr_txt_cursor_free(cursor);
+  if(layout) exr_layout_free(layout);
+  session_clear(&session);
+  if(handle) CloseHandle((HANDLE)handle);
+  if(catalog && reader_catalog_close(&catalog,&ce) && status==EXR_OK) status=EXR_DATABASE;
+  free(root);free(path);
+  if(status!=EXR_OK) { frame_clear(&job->frame);job->error=error; }
+  return status;
+}
+#endif
 static exr_status job_open(host_job *job) {
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  if(job->product_key[0] && job->book_id==0) return job_open_txt(job);
+#endif
   host_session session;
   exr_error error = {0};
   exr_status status;
@@ -2852,7 +2946,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
     case WM_GETDLGCODE:
       return DLGC_WANTARROWS | DLGC_WANTCHARS;
     case WM_LBUTTONDOWN:
-      if (g.job || g.pending || !g.frame.valid) return 0;
+      if (g.job || g.pending || !g.frame.valid || g.session.txt) return 0;
       SetFocus(window);
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       prefs_press_active = 1;
@@ -3025,7 +3119,7 @@ static void update_page_label(void) {
 static int save_progress(void) {
   exr_error error = {0};
   exr_status status;
-  if (!g.has_current || !g.session.active || !g.frame.valid || g.job || g.pending) return 1;
+  if (!g.has_current || !g.session.active || !g.frame.valid || g.job || g.pending || g.session.txt) return 1;
   if (g.session.book_id != g.current.id || g.frame.book_id != g.current.id || g.frame.fixed != g.session.fixed) {
     g.progress_failed = 1; set_status(L"书籍状态不一致，未覆盖原进度。"); return 0;
   }
@@ -3107,6 +3201,7 @@ static void page_step(int direction) {
   size_t target;
   host_job *job;
   if (!g.has_current || !g.frame.valid || g.job || g.pending) return;
+  if (g.session.txt) { set_status(L"TXT 目前仅支持第一页；翻页和保存位置尚未实现。"); return; }
   if (!direction) return;
   if (direction <= -1000000) target = 0;
   else if (direction >= 1000000) target = (size_t)-1;
@@ -3144,6 +3239,7 @@ static void change_font(int delta) {
   exr_anchor anchor = {0};
   exr_error error = {0};
   if (!g.has_current || !g.frame.valid) { set_status(L"请先打开一本书。"); return; }
+  if (g.session.txt) { set_status(L"TXT 字号调整尚未实现。"); return; }
   if (g.frame.fixed) { set_status(L"当前是固定页书籍，请使用“缩放+”或“缩放-”。"); return; }
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   /* Once a reading preference is accepted it owns the point size. A request
@@ -3293,6 +3389,7 @@ static int clipboard_set(const char *utf8, size_t size) {
 }
 
 static void select_all_page(void) {
+  if(g.session.txt) { set_status(L"TXT 文字选择尚未实现。");return; }
   if (!g.frame.valid) { set_status(L"请先打开一本书。"); return; }
   memset(&g.selection, 0, sizeof(g.selection));
   if (g.frame.fixed) {
@@ -3525,14 +3622,20 @@ static void open_selected_book(void) {
     return;
   }
 #ifdef EXR_READER_PRODUCT_CATALOG
-  if(g.shelf_cursors && g.shelf[index].id<=0) {
-    set_status(L"TXT 原书已保存在本机；阅读功能尚未完成。");return;
+  if(g.shelf_cursors && g.shelf[index].id<=0 && g.shelf[index].format!=EXR_TXT) {
+    set_status(L"此书尚未下载到本机。");return;
   }
 #endif
   if (!g.job && !g.pending && !save_progress()) return;
   job = job_new(JOB_OPEN);
   if (!job) { set_status(L"内存不足，无法打开书籍。"); return; }
   job->book_id = g.shelf[index].id;
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  if(job->book_id==0 && g.shelf_cursors && g.shelf[index].format==EXR_TXT) {
+    snprintf(job->product_key,sizeof(job->product_key),"%s",g.shelf_cursors[index].key);
+    if(!book_copy(&job->opened_book,&g.shelf[index])) { job_release(job);return; }
+  } else
+#endif
   if(job->book_id<=0) { job_release(job);set_status(L"此书尚未下载到本机。");return; }
   job->font_percent = g.font_percent;
   job_submit(job);
@@ -3650,7 +3753,7 @@ static int import_title_fallback(const wchar_t *path, int64_t id) {
 static void host_update_controls(void) {
   HWND focused = GetFocus();
   int busy = (g.job != NULL) || (g.pending != NULL);
-  int has = g.has_current && g.frame.valid;
+  int has = g.has_current && g.frame.valid && !g.session.txt;
   EnableWindow(g.import_button, !busy);
   EnableWindow(g.open_button, g.shelf_count > 0);
   EnableWindow(g.delete_button, !busy && g.shelf_count > 0);
@@ -3867,7 +3970,7 @@ static void handle_job_complete(host_job *job) {
 #ifdef EXR_READER_WINDOWS_WAVE3
           /* Capture only an accepted frame, before save_progress starts another worker. */
           if (job == w3.font_job) w3_after_font_job(job);
-          else if (!job->w3) w3_history_land(job);
+          else if (!job->w3 && !g.session.txt) w3_history_land(job);
 #endif
           settings_save();
           if (reload_notes() != EXR_OK) { save_progress(); return; }
@@ -4002,6 +4105,9 @@ static void handle_job_complete(host_job *job) {
 }
 
 static void host_command(int id) {
+  if (g.session.txt && id != IDC_OPEN_BUTTON && id != IDC_IMPORT_BUTTON && id != IDC_CANCEL && id != IDC_DELETE_BUTTON) {
+    set_status(L"TXT 目前仅支持第一页；翻页和保存位置尚未实现。"); return;
+  }
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   if(prefs_ui_open() && id!=IDC_PREFERENCES) return;
 #endif
