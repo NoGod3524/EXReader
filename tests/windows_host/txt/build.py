@@ -92,6 +92,9 @@ def main():
                     '-DEXR_READER_WINDOWS_TXT_RECOVERY=ON', '-DEXR_READER_WINDOWS_TXT_PROGRESS=ON',
                     '-DEXR_READER_WINDOWS_RAW3=' + ('ON' if args.raw else 'OFF'),
                     '-DEXR_READER_WINDOWS_COMPACT=ON']
+    if args.raw:
+        # The raw profile is only valid together with the actual reading-record owner.
+        host_options.append('-DEXR_READER_WINDOWS_RECORDS=ON')
     configure(ROOT / 'apps/reader/windows-account', host, host_options, label + '-txt-progress-host')
     exe = host / 'EXReaderProduct.exe'
     evidence = OUT / ('acceptance-' + label)
