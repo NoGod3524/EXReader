@@ -1448,6 +1448,7 @@ final class HostReaderModel: ObservableObject {
     private var token = 0
     private var activeCancel: HostCancelBox?
     private var syncCancel: HostCancelBox?
+    private var receiveCancel: HostCancelBox?
     private var started = false
     private var lastViewport = CGSize.zero
     private var viewportWork: DispatchWorkItem?
@@ -1702,6 +1703,7 @@ final class HostReaderModel: ObservableObject {
         activeCancel?.cancel()
         readingRecords.bind(nil)
         syncCancel?.cancel()
+        receiveCancel = nil
         accountSession?.close()
     }
 
@@ -1762,9 +1764,27 @@ final class HostReaderModel: ObservableObject {
     // SDK progress, existing product metadata, or local reading state is changed.
     func receiveAccountBooks() {
         guard !syncPreparing, accountProfile != nil, accountSession?.running == false else { return }
-        let cancel = HostCancelBox()
-        syncCancel = cancel; syncPreparing = true
+        let cancel = beginReceivePublication()
         receiveAccountPage(after: nil, cancel: cancel, projected: 0, conflicts: 0, retained: 0)
+    }
+
+    // Main-thread publication belongs to one receive, not merely to whichever
+    // account operation happens to be current when an owner callback arrives.
+    func beginReceivePublication() -> HostCancelBox {
+        let cancel = HostCancelBox()
+        receiveCancel = cancel; syncCancel = cancel; syncPreparing = true
+        receiveMessage = "正在接收书架…"
+        return cancel
+    }
+
+    func finishReceivePublication(cancel: HostCancelBox, message: String) {
+        guard receiveCancel === cancel else { return }
+        receiveCancel = nil
+        if syncCancel === cancel { syncCancel = nil }
+        syncPreparing = false
+        receiveMessage = cancel.isCancelled ? "接收已取消；已提交书籍保留，可重试" : message
+        statusText = receiveMessage + "；阅读位置保持不变"
+        receivedShelfRevision += 1
     }
 
     private func receiveAccountPage(after: String?, cancel: HostCancelBox, projected: Int, conflicts: Int, retained: Int) {
@@ -1778,24 +1798,27 @@ final class HostReaderModel: ObservableObject {
                     self.receiveAccountPage(after: page.last, cancel: cancel, projected: count, conflicts: blocked, retained: kept)
                 } else {
                     DispatchQueue.main.async {
-                        self.syncPreparing = false
-                        guard !cancel.isCancelled else { return }
-                        self.receiveMessage = "已接收 \(count) 本；待处理冲突 \(blocked) 项；保留本地元数据 \(kept) 项"
-                        self.statusText = self.receiveMessage + "；阅读位置保持不变"
-                        self.receivedShelfRevision += 1
+                        self.finishReceivePublication(cancel: cancel,
+                            message: "已接收 \(count) 本；待处理冲突 \(blocked) 项；保留本地元数据 \(kept) 项")
                     }
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.syncPreparing = false
-                    self.receiveMessage = cancel.isCancelled ? "接收已取消；已提交书籍保留，可重试" : self.describe(error)
-                    self.receivedShelfRevision += 1
+                    self.finishReceivePublication(cancel: cancel, message: self.describe(error))
                 }
             }
         }
     }
 
-    func cancelReceive() { syncCancel?.cancel() }
+    func cancelReceive() {
+        syncCancel?.cancel()
+        guard let cancel = receiveCancel, cancel.isCancelled else { return }
+        receiveMessage = "接收已取消；已提交书籍保留，可重试"
+        statusText = receiveMessage + "；阅读位置保持不变"
+        receivedShelfRevision += 1
+        // Keep preparation busy until the owner has settled. A cancellation
+        // request must not allow another sweep to overlap the current owner.
+    }
 
     func openShelfBook(_ book: HostShelfBook) {
         // Existing local books remain independently available offline, including
