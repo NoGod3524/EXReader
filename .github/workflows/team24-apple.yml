@@ -143,12 +143,12 @@ jobs:
               else: print('no-follow path: accepted')
           finally: os.close(fd)
           root = pathlib.Path('inspection'); root.mkdir()
-          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12682307446"
+          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12701173864"
           item = json.loads(subprocess.check_output(['gh', 'api', api]))
-          assert item['workflow_run']['id'] == 40385755134
-          assert item['workflow_run']['head_sha'] == '0d256c14a76fa795772f10d618fdf0200569cbe0'
-          assert item['size_in_bytes'] == 459011829
-          digest = 'ab2259ca5109e7680225b2ff9a9c2a479fbba61e60c0495382bd907b274c488b'
+          assert item['workflow_run']['id'] == 40423806186
+          assert item['workflow_run']['head_sha'] == '8d5660d337b96d10f3d7daef836f16746c0073d7'
+          assert item['size_in_bytes'] == 462057514
+          digest = '6fdda08ab1269514b5530fd99117d500ba92d48c5fca40845fefcb4526f0711c'
           assert item['digest'] == 'sha256:' + digest and not item['expired']
           with (root / 'artifact.zip').open('wb') as out:
               subprocess.run(['gh', 'api', api + '/zip'], stdout=out, check=True)
