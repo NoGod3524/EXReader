@@ -93,7 +93,7 @@ def main():
                                      ('control', control_tests, 13), ('search', search_tests, 4), ('theme', theme_tests, 4)]:
             project = out / ('project-' + mode); derived = out / ('derived-' + mode)
             phase_resources = search_resources if mode == 'search' else resources
-            generator_mode = 'control' if mode in ('search', 'theme', 'd24') else mode
+            generator_mode = 'base' if mode == 'd24' else 'control' if mode in ('search', 'theme') else mode
             run(['ruby', 'tests/reader_team24_apple/make_project.rb', project, phase_resources, tests, generator_mode], mode + '-project')
             if args.platform != 'macos': subprocess.run(['xcrun', 'simctl', 'uninstall', udid, 'org.exreader.host'], capture_output=True)
             bundle = evidence / (mode + '.xcresult')

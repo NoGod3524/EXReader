@@ -66,3 +66,21 @@ jobs:
           path: build/apple-d24/${{ matrix.platform }}/evidence/
           if-no-files-found: error
           retention-days: 30
+  authenticate:
+    needs: [sdk, native]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate exact-source native programs and original artifact ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_d24/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-d24-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-d24-summary/summary.json
+          if-no-files-found: error
+          retention-days: 30
