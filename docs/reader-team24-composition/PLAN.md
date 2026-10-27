@@ -1140,3 +1140,15 @@ source/run identity, original 18-case current owner report, 12 roundtrip checks,
 four-phase 16-check host report and SDK export report. This is the API 34
 x86_64 emulator and SDK 3.40 profile on that candidate; the separate 3.41 and
 desktop jobs on the same merge remain necessary and are not inferred here.
+
+The same source passed retained GTK navigation and folder-import checks in
+[40427833492/1](https://github.com/NoGod3524/EXReader/actions/runs/40427833492).
+Cloud audit [40429226513/1](https://github.com/NoGod3524/EXReader/actions/runs/40429226513)
+authenticated artifact `12701320987` (51,813,861 bytes, SHA-256
+`4e18abcf326f5be61db4a4cc7c638503b088405c8c97855b2c780ed1f524cf35`),
+the built and packaged GTK program (SHA-256
+`4c2c7811e1ded678fc94b410fa3d7f79421a52360aab233a40e625e112cf920a`),
+the scoped navigation UI report (29/29), folder UI report (27/27), navigation
+backend (58) and folder backend (684). The navigation report's broader
+`accepted` flag remains false; this is the stated retained scope, not full
+GTK or six-target acceptance.
