@@ -709,10 +709,19 @@ def main():
         window = dialog_window(contract.IMPORT_DIALOG, True)
         host.activate(window)
         dialog = wait_element(contract.IMPORT_DIALOG)
-        focused = focus_snapshot()
-        node = focus_node()
-        inside = (dialog is not None and node is not None
-                  and (a11y.same(node, dialog) or a11y.is_ancestor(dialog, node)))
+        # Focus may arrive asynchronously as the native chooser maps. Observe
+        # one node per sample so the reported node is the one being checked.
+        deadline = time.monotonic() + 6
+        node = None
+        inside = False
+        while time.monotonic() < deadline:
+            node = focus_node()
+            inside = (dialog is not None and node is not None
+                      and (a11y.same(node, dialog) or a11y.is_ancestor(dialog, node)))
+            if inside:
+                break
+            time.sleep(.08)
+        focused = snapshot(node)
         audit.check('import_dialog_identity_and_focus',
                     dialog is not None
                     and a11y.role(dialog) in contract.DIALOG_ROLES + ('file chooser',)
