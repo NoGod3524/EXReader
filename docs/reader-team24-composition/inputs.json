@@ -264,13 +264,9 @@
       "tested_run": 40411767307,
       "paths": [
         ".github/workflows/windows-organization-projection.yml",
-        "apps/reader/desktop/windows_catalog.inc",
         "apps/reader/desktop/windows_import_organize_types.h",
         "apps/reader/desktop/windows_import_organize_ui.inc",
-        "apps/reader/desktop/windows_shelf.inc",
-        "examples/reader.c",
-        "tests/windows_organization_projection/cloud/CMakeLists.txt",
-        "tests/windows_organization_projection/paged_ui.py"
+        "tests/windows_organization_projection/cloud/CMakeLists.txt"
       ]
     },
     {
@@ -279,7 +275,18 @@
       "tested_source": "0b54a15ee9b96a6a4f51beb3600eda72e57594c8",
       "tested_run": 40414564325,
       "paths": [
-        "tests/windows_organization_projection/check_ui.py",
+        "tests/windows_organization_projection/check_ui.py"
+      ]
+    },
+    {
+      "name": "windows-group-anchor-composition-candidate",
+      "source": "c9362acec3239c1106933dd9ed83f1a6f022fca8",
+      "paths": [
+        ".github/workflows/windows-group-anchor-recovery.yml",
+        "apps/reader/desktop/windows_catalog.inc",
+        "apps/reader/desktop/windows_shelf.inc",
+        "examples/reader.c",
+        "tests/windows_organization_projection/paged_ui.py",
         "tests/windows_organization_projection/verify.py"
       ]
     },
@@ -428,3 +435,4 @@
     }
   ]
 }
+

@@ -50,6 +50,14 @@ static void product_shelf_dispatch(void) {
     job->product_shelf_direction=0;
     if(!g.shelf_filter_pending && g.shelf_top_key[0]) job->product_anchor_key=host_strdup(g.shelf_top_key);
     if(!g.shelf_filter_pending && g.shelf_top_key[0] && !job->product_anchor_key) { job_release(job);g.shelf_need_refresh=0;return; }
+    if(job->product_anchor_key && g.shelf_group_id[0]) {
+      for(size_t i=0;i<g.shelf_count;i++) if(!strcmp(g.shelf_cursors[i].key,job->product_anchor_key)) {
+        job->product_cursor_ordinal=g.shelf_cursors[i].ordinal;
+        job->product_cursor_key=host_strdup(g.shelf_cursors[i].key);
+        if(!job->product_cursor_key) { job_release(job);g.shelf_need_refresh=0;return; }
+        break;
+      }
+    }
   }
   if(!job->product_shelf_query) { job_release(job);g.shelf_need_refresh=0;return; }
   g.shelf_need_refresh=0;g.shelf_queries++;job_start(job);
@@ -109,7 +117,7 @@ static void product_shelf_accept(host_job *job) {
   g.shelf_evicted+=(unsigned)drop;if(count>g.shelf_max_cached) g.shelf_max_cached=(unsigned)count;
   product_shelf_snapshot_changed();
   SendMessageW(g.books,WM_SETREDRAW,FALSE,0);SendMessageW(g.books,LB_RESETCONTENT,0,0);
-  LRESULT top=0,selected=LB_ERR;
+  LRESULT top=job->product_anchor_predecessor && count ? (LRESULT)(count-1):0,selected=LB_ERR;
   for(size_t i=0;i<count;i++) {
     wchar_t line[512];shelf_display(&books[i],line,512);SendMessageW(g.books,LB_ADDSTRING,0,(LPARAM)line);
     if(cursors[i].key && !strcmp(cursors[i].key,top_key)) top=(LRESULT)i;
