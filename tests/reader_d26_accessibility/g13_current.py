@@ -16,7 +16,7 @@ sys.path.insert(0, str(original))
 import expectations
 
 expectations.START_SHA = '2f215f5793a7344d22db350276ba9f8a07abe86f'
-expectations.SDK_SHA = 'a7020b07b8515e0d4b8e2693522920e2ec78eb35'
+expectations.SDK_SHA = os.environ['GITHUB_SHA']
 expectations.SDK_VERSION = '3.41.0'
 kind = sys.argv.pop(1)
 assert kind in ('audit', 'gate')
