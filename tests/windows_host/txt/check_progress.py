@@ -57,6 +57,13 @@ def first_line(text):
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            # The Windows runner console is cp1252; host status text is Chinese and
+            # must never abort an observation. Escapes keep the log ASCII.
+            stream.reconfigure(errors='backslashreplace')
+        except Exception:
+            pass
     assert os.name == 'nt' and os.environ.get('GITHUB_ACTIONS') == 'true'
     exe, font, out, pdf = map(lambda value: Path(value).resolve(), sys.argv[1:5])
     out.mkdir(parents=True, exist_ok=False)
