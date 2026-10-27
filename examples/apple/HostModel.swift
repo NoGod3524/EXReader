@@ -833,10 +833,10 @@ final class HostSession {
         book = nil
     }
 
-    func importBook(url: URL, cancel: HostCancelBox, catalog: HostCatalog? = nil) throws -> (Int64, Bool) {
+    func importBook(url: URL, cancel: HostCancelBox, catalog: HostCatalog? = nil, receivedTitle: String? = nil) throws -> (Int64, Bool) {
         try begin(cancel)
         if slowDelay > 0 { try waitCancellable(cancel, seconds: slowDelay) }
-        let title = url.lastPathComponent
+        let title = receivedTitle ?? url.lastPathComponent
         guard let catalog else { return try library.importUnique(file: url, title: title, cancel: cancel) }
         guard !title.utf8.contains(0), title.unicodeScalars.count <= 4096 else {
             throw HostError.invalidInput("书名包含空字符或超过长度上限")
@@ -1369,6 +1369,8 @@ final class HostReaderModel: ObservableObject {
     @Published var busy = false
     @Published private(set) var libraryReady = false
     @Published private(set) var syncPreparing = false
+    @Published private(set) var receivedShelfRevision = 0
+    @Published private(set) var receiveMessage = ""
     @Published var notes: [HostNoteRow] = []
     @Published var showLibrary = true
     @Published var frameCount = 0
@@ -1446,6 +1448,7 @@ final class HostReaderModel: ObservableObject {
     private var token = 0
     private var activeCancel: HostCancelBox?
     private var syncCancel: HostCancelBox?
+    private var receiveCancel: HostCancelBox?
     private var started = false
     private var lastViewport = CGSize.zero
     private var viewportWork: DispatchWorkItem?
@@ -1700,6 +1703,7 @@ final class HostReaderModel: ObservableObject {
         activeCancel?.cancel()
         readingRecords.bind(nil)
         syncCancel?.cancel()
+        receiveCancel = nil
         accountSession?.close()
     }
 
@@ -1742,7 +1746,7 @@ final class HostReaderModel: ObservableObject {
                                 if state == READER_SESSION_CANCELLED { self?.statusText = "同步已取消" }
                                 else if state == READER_SESSION_FAILED { self?.statusText = "同步失败，请重试" }
                             }) { [weak self] in
-                                self?.statusText = "本轮云盘扫描结束；阅读位置保持不变"
+                                self?.receiveAccountBooks()
                             }
                         } catch { self.errorText = self.describe(error) }
                     }
@@ -1751,6 +1755,110 @@ final class HostReaderModel: ObservableObject {
                 DispatchQueue.main.async {
                     self.syncPreparing = false; self.accountSession?.finishPreparation()
                     if !cancel.isCancelled { self.errorText = self.describe(error) }
+                }
+            }
+        }
+    }
+
+    // Explicit sync completion projects only newly received books. No frame,
+    // SDK progress, existing product metadata, or local reading state is changed.
+    func receiveAccountBooks() {
+        guard !syncPreparing, accountProfile != nil, accountSession?.running == false else { return }
+        let cancel = beginReceivePublication()
+        receiveAccountPage(after: nil, cancel: cancel, projected: 0, conflicts: 0, retained: 0)
+    }
+
+    // Main-thread publication belongs to one receive, not merely to whichever
+    // account operation happens to be current when an owner callback arrives.
+    func beginReceivePublication() -> HostCancelBox {
+        let cancel = HostCancelBox()
+        receiveCancel = cancel; syncCancel = cancel; syncPreparing = true
+        receiveMessage = "正在接收书架…"
+        return cancel
+    }
+
+    func finishReceivePublication(cancel: HostCancelBox, message: String) {
+        guard receiveCancel === cancel else { return }
+        receiveCancel = nil
+        if syncCancel === cancel { syncCancel = nil }
+        syncPreparing = false
+        receiveMessage = cancel.isCancelled ? "接收已取消；已提交书籍保留，可重试" : message
+        statusText = receiveMessage + "；阅读位置保持不变"
+        receivedShelfRevision += 1
+    }
+
+    private func receiveAccountPage(after: String?, cancel: HostCancelBox, projected: Int, conflicts: Int, retained: Int) {
+        queue.async {
+            do {
+                try cancel.check()
+                guard let catalog = self.catalog else { throw HostError.invalidInput("产品书库未就绪") }
+                let page = try catalog.receivePage(after: after, checkCancellation: cancel.check)
+                let count = projected + page.projected, blocked = conflicts + page.conflicts, kept = retained + page.retained
+                if page.count == 50 {
+                    self.receiveAccountPage(after: page.last, cancel: cancel, projected: count, conflicts: blocked, retained: kept)
+                } else {
+                    DispatchQueue.main.async {
+                        self.finishReceivePublication(cancel: cancel,
+                            message: "已接收 \(count) 本；待处理冲突 \(blocked) 项；保留本地元数据 \(kept) 项")
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.finishReceivePublication(cancel: cancel, message: self.describe(error))
+                }
+            }
+        }
+    }
+
+    func cancelReceive() {
+        syncCancel?.cancel()
+        guard let cancel = receiveCancel, cancel.isCancelled else { return }
+        receiveMessage = "接收已取消；已提交书籍保留，可重试"
+        statusText = receiveMessage + "；阅读位置保持不变"
+        receivedShelfRevision += 1
+        // Keep preparation busy until the owner has settled. A cancellation
+        // request must not allow another sweep to overlap the current owner.
+    }
+
+    func openShelfBook(_ book: HostShelfBook) {
+        // Existing local books remain independently available offline, including
+        // when credentials expire or the remote history has unresolved versions.
+        if book.sdkID > 0 { openBook(id: book.sdkID); return }
+        guard !busy, !syncPreparing, accountSession?.running == false,
+              let profile = accountProfile else { return }
+        let authorization = try? accounts?.authorization(for: profile)
+        let (epoch, cancel) = begin()
+        statusText = "正在校验并接收原件…"
+        queue.async {
+            do {
+                guard let catalog = self.catalog, let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                let selected = try catalog.receivedBook(key: book.id)
+                let copy = try HostReceivedOriginal.prepare(selected, directory: self.storageFolder(), profile: profile,
+                                                           authorization: authorization ?? nil, cancel: cancel)
+                defer { try? copy.close() }
+                try cancel.check()
+                guard try catalog.receivedBook(key: book.id).revision == selected.revision else {
+                    throw HostError.invalidInput("接收期间版本改变；未打开，请重新同步")
+                }
+                // Use the existing import/mapping transaction and immutable-copy
+                // verification, not a second SDK bridge or sync protocol.
+                let (id, _) = try session.importBook(url: copy.url, cancel: cancel, catalog: catalog, receivedTitle: selected.title)
+                let current = try catalog.receivedBook(key: book.id)
+                guard current.revision == selected.revision else {
+                    throw HostError.invalidInput("书籍已缓存，但版本出现冲突；未改变当前阅读位置")
+                }
+                let rows = try session.listBooks()
+                DispatchQueue.main.async {
+                    guard epoch == self.token else { return }
+                    self.books = rows; self.receivedShelfRevision += 1; self.finish()
+                    if !cancel.isCancelled { self.openBook(id: id) }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    guard epoch == self.token else { return }
+                    self.receiveMessage = self.describe(error)
+                    self.receivedShelfRevision += 1
+                    self.fail(error)
                 }
             }
         }

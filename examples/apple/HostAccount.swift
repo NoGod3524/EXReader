@@ -295,3 +295,82 @@ final class HostAccountSession: ObservableObject {
         }
     }
 }
+
+// Download uses the established exreader-sync-v1 object address and transport.
+// No SDK handle crosses this worker; callers import only a verified private copy
+// back on the existing SDK owner. Corrupt cache is retained, never trusted.
+enum HostReceivedOriginal {
+    static func prepare(_ book: HostReceivedBook, directory: URL, profile: HostAccountProfile,
+                        authorization: Data?, cancel: HostCancelBox) throws -> HostImportCopy {
+        try cancel.check()
+        let cache = directory.appendingPathComponent("sync", isDirectory: true)
+        let staging = directory.appendingPathComponent("receive-staging", isDirectory: true)
+        try FileManager.default.createDirectory(at: cache, withIntermediateDirectories: true,
+                                               attributes: [.posixPermissions: 0o700])
+        let leaf = book.sha256 + "." + book.format
+        let existing = cache.appendingPathComponent(leaf)
+        let expected = HostSourceFingerprint(format: book.format, sha256: book.sha256, bytes: Int64(book.bytes))
+        if FileManager.default.fileExists(atPath: existing.path) {
+            do {
+                let copy = try HostImportCopy(file: existing, root: staging, cancel: cancel)
+                if copy.fingerprint == expected { return copy }
+                try copy.close()
+            } catch {
+                try cancel.check()
+                // A corrupt/short cache is not an offline success. Download a
+                // separately verified replacement without rewriting that cache.
+            }
+            // Keep the mismatching file as evidence. Retry downloads into a new
+            // private directory rather than replacing a file the sync owner uses.
+        }
+        guard let authorization, let secret = String(data: authorization, encoding: .utf8) else {
+            throw HostError.invalidInput("本机原件缺失或损坏；请连接云盘后重试下载")
+        }
+        let transfer = staging.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: transfer, withIntermediateDirectories: true,
+                                               attributes: [.posixPermissions: 0o700])
+        defer { try? FileManager.default.removeItem(at: transfer) }
+        var client: OpaquePointer?, error = exr_webdav_error()
+        let created = profile.root.withCString { root in secret.withCString { secret in
+            var config = exr_webdav_config(); config.root_url = root; config.authorization = secret
+            config.max_download_bytes = book.bytes; config.timeout_ms = 30000
+            return exr_webdav_create(&config, &client, &error)
+        } }
+        guard created == EXR_DAV_OK, let client else { throw HostError.invalidInput("无法创建原件下载连接") }
+        defer { exr_webdav_free(client) }
+        var control = exr_webdav_control()
+        control.context = Unmanaged.passUnretained(cancel).toOpaque()
+        control.cancelled = { context in
+            guard let context else { return 1 }
+            return Unmanaged<HostCancelBox>.fromOpaque(context).takeUnretainedValue().isCancelled ? 1 : 0
+        }
+        var result = exr_webdav_download()
+        let resource = "exreader-sync-v1/objects/" + book.sha256.prefix(2) + "/" + leaf
+        let downloaded = exr_webdav_download_file(client, resource, transfer.path, leaf, &control, &result, &error)
+        if downloaded == EXR_DAV_CANCELLED { throw HostError.cancelled }
+        guard downloaded == EXR_DAV_OK, result.published != 0, result.bytes == book.bytes else {
+            throw HostError.invalidInput("原件下载失败（状态 \(downloaded.rawValue)，HTTP \(error.http_status)）；可重试，旧书已保留")
+        }
+        let copy = try HostImportCopy(file: transfer.appendingPathComponent(leaf), root: staging, cancel: cancel)
+        guard copy.fingerprint == expected else {
+            try copy.close()
+            throw HostError.invalidInput("云端原件 SHA-256 或长度不匹配；未导入，可重试")
+        }
+        // Publication is on the account's serial owner while synchronization is
+        // stopped. Preserve a damaged cache as evidence, then publish only the
+        // independently verified bytes so the next sync can retry successfully.
+        try cancel.check()
+        if FileManager.default.fileExists(atPath: existing.path) {
+            let quarantine = directory.appendingPathComponent("receive-quarantine", isDirectory: true)
+            try FileManager.default.createDirectory(at: quarantine, withIntermediateDirectories: true,
+                                                   attributes: [.posixPermissions: 0o700])
+            try FileManager.default.moveItem(at: existing, to: quarantine.appendingPathComponent(UUID().uuidString + "." + book.format))
+        }
+        let publish = cache.appendingPathComponent(".receive-" + UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: publish) }
+        try FileManager.default.copyItem(at: copy.url, to: publish)
+        try cancel.check()
+        try FileManager.default.moveItem(at: publish, to: existing)
+        return copy
+    }
+}

@@ -309,7 +309,7 @@ final class HostCatalog {
                 .replacingOccurrences(of: "_", with: "\\_")
         }
         let literal = escaped(normalized)
-        var sql = "SELECT b.sort_title,b.book_key,l.sdk_book_id,b.title,b.author,b.format,b.source_bytes FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE b.deleted=0"
+        var sql = "SELECT b.sort_title,b.book_key,coalesce(l.sdk_book_id,0),b.title,b.author,b.format,b.source_bytes FROM reader_books b LEFT JOIN reader_local_books l USING(book_key) WHERE b.deleted=0"
         var values: [HostCatalogValue] = []
         if !query.isEmpty {
             sql += " AND (b.sort_title LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\' OR b.author LIKE ? ESCAPE '\\')"
@@ -452,6 +452,108 @@ final class HostCatalog {
     private func check(_ status: Int32, _ database: OpaquePointer, expected: Int32 = SQLITE_OK) throws {
         guard status == expected else {
             throw HostCatalogError.sqlite(status, String(cString: sqlite3_errmsg(database)))
+        }
+    }
+}
+
+// Explicit receive adapter. History is authoritative; SDK IDs are device-local.
+// Only first publication creates metadata: a later cloud scan never overwrites
+// a locally edited title, favorite, location, or the active reader's progress.
+struct HostReceivedBook {
+    let key: String, revision: String, title: String, format: String, sha256: String
+    let bytes: UInt64
+}
+struct HostReceivePage {
+    var last: String?
+    var count = 0, projected = 0, conflicts = 0, retained = 0
+}
+private struct HostReceiveEntity {
+    let key: String
+    let info: reader_revision_info
+    let selection: reader_revision_selection
+}
+private final class HostReceiveEntities { var rows: [HostReceiveEntity] = [] }
+private func hostReceiveCString<T>(_ value: T) -> String {
+    var value = value
+    return withUnsafeBytes(of: &value) { String(cString: $0.baseAddress!.assumingMemoryBound(to: CChar.self)) }
+}
+#if EXR_APPLE_RAW3
+private let hostReceiveEntities = reader_revision_entities_page_raw_v3
+private let hostReceiveSelected = reader_revision_selected_raw_v3
+private let hostReceiveTitle = reader_revision_book_title_raw_v3
+private let hostReceiveProject = reader_revision_project_raw_v3
+#else
+private let hostReceiveEntities = reader_revision_entities_page
+private let hostReceiveSelected = reader_revision_selected
+private let hostReceiveTitle = reader_revision_book_title
+private let hostReceiveProject = reader_revision_project
+#endif
+extension HostCatalog {
+    func receivePage(after: String?, checkCancellation: () throws -> Void) throws -> HostReceivePage {
+        try withHistory { history in
+            let copied = HostReceiveEntities()
+            let context = Unmanaged.passUnretained(copied).toOpaque()
+            let visit: reader_revision_entity_fn = { context, pointer in
+                guard let context, let pointer, let key = pointer.pointee.entity_key else { return 1 }
+                Unmanaged<HostReceiveEntities>.fromOpaque(context).takeUnretainedValue().rows.append(
+                    HostReceiveEntity(key: String(cString: key), info: pointer.pointee.info, selection: pointer.pointee.selection))
+                return 0
+            }
+            let status = hostProductStrings([after ?? ""]) { strings in
+                hostReceiveEntities(history, "book", after == nil ? nil : strings[0], 1, 50, visit, context, nil)
+            }
+            guard status == READER_REV_OK else { throw HostCatalogError.invalid("无法读取接收历史；请重试同步") }
+            var result = HostReceivePage()
+            for row in copied.rows {
+                try checkCancellation()
+                result.count += 1; result.last = row.key
+                guard row.selection.kind == READER_SELECTION_SAFE else { result.conflicts += 1; continue }
+                if row.selection.graph.deleted != 0 { result.retained += 1; continue }
+                let (_, statement) = try prepare("SELECT 1 FROM reader_books WHERE book_key=?", [.text(row.key)])
+                let exists = sqlite3_step(statement)
+                sqlite3_finalize(statement)
+                guard exists == SQLITE_ROW || exists == SQLITE_DONE else { throw HostCatalogError.invalid("无法检查本地元数据") }
+                if exists == SQLITE_ROW { result.retained += 1; continue }
+                let revision = hostReceiveCString(row.info.revision_id)
+                var title: UnsafeMutablePointer<CChar>?
+                guard hostReceiveTitle(history, revision, &title, nil) == READER_REV_OK, let title else {
+                    throw HostCatalogError.invalid("接收书籍缺少可验证标题")
+                }
+                let sort = String(cString: title).precomposedStringWithCanonicalMapping
+                reader_revision_bytes_free(title)
+                let projected = hostReceiveProject(history, "book", row.key, revision, sort, nil, nil)
+                if projected == READER_REV_UNSAFE || projected == READER_REV_MISSING_PARENT { result.conflicts += 1; continue }
+                guard projected == READER_REV_OK else { throw HostCatalogError.invalid("接收投影未完成；保留历史供重试") }
+                result.projected += 1
+            }
+            return result
+        }
+    }
+
+    func receivedBook(key: String) throws -> HostReceivedBook {
+        try withHistory { history in
+            var wire: UnsafeMutablePointer<CChar>?, size = 0
+            var info = reader_revision_info(), selection = reader_revision_selection()
+            let result = hostReceiveSelected(history, "book", key, &wire, &size, &info, &selection, nil)
+            defer { reader_revision_bytes_free(wire) }
+            guard result == READER_REV_OK, selection.kind == READER_SELECTION_SAFE, selection.graph.deleted == 0 else {
+                throw HostCatalogError.invalid("此书存在冲突、删除或未完整历史；请同步后处理，未替换本地书籍")
+            }
+            let parts = key.split(separator: ":", omittingEmptySubsequences: false)
+            guard parts.count == 2, ["epub", "pdf", "cbz", "txt", "html", "fb2", "docx", "rtf", "mobi"].contains(String(parts[0])),
+                  parts[1].count == 64, parts[1].utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }),
+                  hostReceiveCString(info.book_key) == key, info.source_bytes > 0,
+                  info.source_bytes <= (parts[0] == "epub" ? 128 : 32) * 1024 * 1024 else {
+                throw HostCatalogError.invalid("接收原件身份或大小超出已安装导入预算")
+            }
+            var title: UnsafeMutablePointer<CChar>?
+            let revision = hostReceiveCString(info.revision_id)
+            guard hostReceiveTitle(history, revision, &title, nil) == READER_REV_OK, let title else {
+                throw HostCatalogError.invalid("接收书名不可用")
+            }
+            defer { reader_revision_bytes_free(title) }
+            return HostReceivedBook(key: key, revision: revision, title: String(cString: title),
+                                    format: String(parts[0]), sha256: String(parts[1]), bytes: info.source_bytes)
         }
     }
 }

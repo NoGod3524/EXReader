@@ -1,0 +1,157 @@
+name: D21 Apple explicit receive native three-target
+on:
+  push:
+    branches: [codex/dot-d21-apple-receive]
+    paths-ignore: ['docs/handoffs/d21-*']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  sdk:
+    name: Team24 Apple installed ${{ matrix.target }}
+    runs-on: macos-15
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: D21 owner admission without frozen-tree or old-test edits
+        run: python3 tests/reader_d21_apple_receive/guard.py
+      - name: Frozen SDK and exact installed five module family
+        run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+      - name: Actual account session terminal callbacks
+        if: ${{ matrix.target == 'macos' }}
+        run: |
+          mkdir -p build/account-terminal
+          sdk="$PWD/build/raw3-ios-sdk/macos/sdk"
+          product="$PWD/build/raw3-ios-sdk/macos/raw-products"
+          python3 - "$sdk" "$product" <<'PY'
+          import subprocess, sys
+          sys.path.insert(0, 'tools')
+          from apple_swift import flags
+          sdk, product = sys.argv[1:]
+          sources = ['examples/apple/HostSDK.swift', 'examples/apple/HostCatalog.swift',
+                     'examples/apple/HostAccount.swift', 'tests/reader_team24_apple/AccountTerminalReview.swift']
+          subprocess.run(['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library', '-O',
+                          '-I', sdk + '/include', '-L', sdk + '/lib', '-lexreader',
+                          '-Xlinker', '-rpath', '-Xlinker', sdk + '/lib', *sources,
+                          '-o', 'build/account-terminal/account-terminal', *flags(sdk, product, True)], check=True)
+          PY
+          python3 tests/reader_team24_apple/run_account_terminal.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: team24-apple-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/raw3-ios-sdk/${{ matrix.target }}/sdk/
+            build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
+            build/raw3-ios-sdk/${{ matrix.target }}/*.json
+          retention-days: 30
+          if-no-files-found: error
+  receive:
+    name: D21 native receive ${{ matrix.platform }}
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: team24-apple-sdk-*
+          path: sdk-input
+      - name: Same-run macOS owner consumer uses original installation layout
+        uses: actions/download-artifact@v4
+        with:
+          name: team24-apple-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/raw3-ios-sdk/macos
+      - name: Original project generator dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Actual native receive with HTTPS and unchanged owner
+        run: python3 tests/reader_d21_apple_receive/run_receive.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d21-receive-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/d21-receive/${{ matrix.platform }}/*.log
+            build/d21-receive/${{ matrix.platform }}/*.json
+            build/d21-receive/${{ matrix.platform }}/receive-program.zip
+            build/d21-receive/${{ matrix.platform }}/receive.xcresult/
+            build/d21-receive/${{ matrix.platform }}/seed/result.json
+            build/d21-receive/${{ matrix.platform }}/receiver/*result.json
+          retention-days: 30
+  native:
+    name: Team24 Apple native ${{ matrix.platform }}
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: team24-apple-sdk-*
+          path: sdk-input
+      - name: Original project generator dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Actual native features and unchanged old reading navigation search theme suites
+        if: ${{ !cancelled() }}
+        run: python3 tests/reader_team24_apple/run_ui.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: team24-apple-native-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/team24-apple/${{ matrix.platform }}/evidence/
+          retention-days: 30
+          if-no-files-found: error
+  authenticate:
+    name: Team24 Apple original ZIP authentication
+    needs: [sdk, native, receive]
+    if: ${{ always() }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exact run attempt source jobs ZIP and actual programs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_team24_apple/verify.py
+      - name: D21 same-run native receive artifact authentication
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_d21_apple_receive/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d21-receive-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/d21-summary.json
+          retention-days: 30
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: team24-apple-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/team24-apple-summary/summary.json
+          retention-days: 30
+          if-no-files-found: error
