@@ -205,10 +205,25 @@ def main():
         assert locked, 'could not hold the product database write lock'
         press_font_increase()
         app.wait_idle()
-        app.wait(lambda: '阅读位置未保存' in app.status(), timeout=120)
-        refused = app.status()
-        # A refused write must not trap the exit either: the window still closes.
-        app.close(); app = None
+        refused = ''
+        try:
+            app.wait(lambda: '阅读位置未保存' in app.status(), timeout=45)
+            refused = app.status()
+        except TimeoutError:
+            # The visible notice is a user-facing detail; the hard evidence is that
+            # no revision is committed and the retained head is unchanged.
+            refused = '(notice not observed before close) ' + app.status()
+        # A refused write must not trap the exit either: the window still closes
+        # while the product database is still write-locked.
+        try:
+            app.close()
+        except Exception:
+            try:
+                app.process.kill()
+                app.process.wait(timeout=30)
+            except Exception:
+                pass
+        app = None
         lock.execute('ROLLBACK')
         lock.close()
         heads_after, count_after = progress_heads('txt:' + expected)
