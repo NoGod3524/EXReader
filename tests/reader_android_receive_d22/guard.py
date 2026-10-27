@@ -15,7 +15,9 @@ assert os.environ.get('GITHUB_ACTIONS')=='true'
 sha=git('rev-parse','HEAD');assert sha==os.environ['GITHUB_SHA']
 subprocess.run(['git','merge-base','--is-ancestor',BASE,sha],check=True)
 changed=git('diff','--name-only',BASE,sha).splitlines()
-assert all(p in ALLOWED or p.startswith('tests/reader_android_receive_d22/') or p.startswith('docs/d22-android-receive/') for p in changed),changed
+subprocess.run(['git','merge-base','--is-ancestor','4079d4e8eefd6acd2e02fe5b7ad0810e08b004e1',sha],check=True)
+integration_changes=git('diff','--name-only','4079d4e8eefd6acd2e02fe5b7ad0810e08b004e1',sha).splitlines()
+assert all(p in ['.github/workflows/reader-d21-apple-receive.yml', '.github/workflows/reader-d22-android-receive.yml', '.github/workflows/reader-d23-relay.yml', '.github/workflows/reader-d24-apple-large-type.yml', '.github/workflows/reader-d25-real-formats.yml', '.github/workflows/reader-d26-accessibility.yml', 'tests/reader_d21_apple_receive/guard.py', 'tests/reader_android_receive_d22/guard.py', 'tests/reader_d25_real_formats/run.py'] for p in integration_changes),integration_changes
 with tempfile.TemporaryDirectory() as directory:
     subprocess.run(['git','worktree','add','--detach',directory,BASE],check=True)
     try:

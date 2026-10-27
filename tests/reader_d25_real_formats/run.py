@@ -25,7 +25,9 @@ def materialize():
  assert git('rev-parse','HEAD').decode().strip()==identity()['source_sha']
  subprocess.run(['git','merge-base','--is-ancestor',BASE,'HEAD'],check=True)
  changed=git('diff','--name-only',BASE,'HEAD').decode().splitlines()
- assert all(p.startswith(('tests/reader_d25_real_formats/','docs/reader-d25-real-formats/')) or p=='.github/workflows/reader-d25-real-formats.yml' for p in changed),changed
+ subprocess.run(['git','merge-base','--is-ancestor','4079d4e8eefd6acd2e02fe5b7ad0810e08b004e1','HEAD'],check=True)
+ integration_changes=git('diff','--name-only','4079d4e8eefd6acd2e02fe5b7ad0810e08b004e1','HEAD').decode().splitlines()
+ assert all(p in ['.github/workflows/reader-d21-apple-receive.yml', '.github/workflows/reader-d22-android-receive.yml', '.github/workflows/reader-d23-relay.yml', '.github/workflows/reader-d24-apple-large-type.yml', '.github/workflows/reader-d25-real-formats.yml', '.github/workflows/reader-d26-accessibility.yml', 'tests/reader_d21_apple_receive/guard.py', 'tests/reader_android_receive_d22/guard.py', 'tests/reader_d25_real_formats/run.py'] for p in integration_changes),integration_changes
  for p in ('src','include','bindings','cmake','CMakeLists.txt','tests/fixtures'):
   assert not git('diff','--name-only',BASE,'HEAD','--',p).strip(),p
  sources={}

@@ -1,7 +1,7 @@
 name: D24 Apple maximum system type native UI
 on:
   push:
-    branches: [codex/dot-d24-apple-large-type]
+    branches: [codex/dot-d21-d26-integration, codex/dot-d24-apple-large-type]
     paths-ignore: ['docs/apple-d24/**']
   workflow_dispatch:
 permissions:

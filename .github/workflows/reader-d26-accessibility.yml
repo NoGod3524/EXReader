@@ -1,7 +1,7 @@
 name: D26 GTK retained accessibility and native regression
 on:
   push:
-    branches: [codex/dot-d26-gtk-accessibility]
+    branches: [codex/dot-d21-d26-integration, codex/dot-d26-gtk-accessibility]
   workflow_dispatch:
 permissions:
   contents: read
