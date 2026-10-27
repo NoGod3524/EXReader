@@ -273,6 +273,7 @@ static LRESULT CALLBACK winsearch_procedure(HWND window,UINT message,WPARAM wpar
   return DefWindowProcW(window,message,wparam,lparam);
 }
 static void winsearch_show(void) {
+  if(g.session.txt) { set_status(L"TXT 目前仅支持第一页；此功能尚未实现。");return; }
   if(inbook.dialog) { SetForegroundWindow(inbook.dialog);return; }
   if(g.job || g.pending || g.closing || !g.session.active) { set_status(L"打开书籍并等待当前任务完成后，可书内查找。");return; }
   WNDCLASSW type={0};type.lpfnWndProc=winsearch_procedure;type.hInstance=GetModuleHandleW(NULL);
