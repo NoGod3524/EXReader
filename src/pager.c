@@ -1491,9 +1491,9 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   if (!p->local && !p->borrowed)
     for (i = 0; i < p->assets->image_count; i++)
       p->assets->images[i].evictable = *p->assets->images[i].refs == 1;
-  /* An independent chapter reader budgets one public page operation. Local
-     speculative/float/table cursors share this budget and never reset it. */
-  if(p->owned_chapter) p->assets->work_glyphs=p->assets->shape_work=0;
+  /* Bounded readers budget one public page operation. Local speculative,
+     float and table cursors share that budget and never reset it. */
+  if(p->owned_chapter || p->owned_view) p->assets->work_glyphs=p->assets->shape_work=0;
   l = calloc(1, sizeof(*l));
   if (!l)
     return exr_fail(e, EXR_MEMORY, "Page allocation failed");
