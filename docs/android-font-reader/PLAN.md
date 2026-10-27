@@ -1,6 +1,6 @@
 # H.android.font_library — current common candidate
 
-Base: `1dfd2c3ba3184eb9a9df531d3858eafb95c2e80c`.
+Base: `c45ac1a7508842f071e3d892635fdd9af444ae90`.
 
 The product delta exposes the existing local-font panel from the reading More menu.
 No new font owner, protocol, or SDK change is introduced. Font choice retains the

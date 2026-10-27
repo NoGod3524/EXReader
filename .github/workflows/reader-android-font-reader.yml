@@ -2,7 +2,7 @@
 name: Android font reader preservation and retained C11
 on:
   push:
-    branches: [codex/dot-android-font-reader]
+    branches: [codex/reader-android-font-integration]
   workflow_dispatch:
 permissions:
   contents: read
@@ -65,7 +65,7 @@ jobs:
           "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" \
             "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}" "emulator" \
             "system-images;android-34;default;x86_64"
-      - name: Build and install the frozen 3.41 SDK for x86_64
+      - name: Build and install the integrated SDK candidate for x86_64
         run: |
           set -o pipefail
           ws="$PWD/build/wave3"
