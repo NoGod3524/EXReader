@@ -68,8 +68,8 @@ def main():
         automation = Uia()
         assert automation.available, automation.error
         page = automation.control(app.control('page'))
-        value, error = automation.value(page)
-        assert value and 'Perf Import 0000' in value and 'line 0000' in value, (value, error)
+        value = page.GetValuePattern().Value
+        assert value and 'Perf Import 0000' in value and 'line 0000' in value, value
         assert not ui.P.U.IsWindowEnabled(app.control('next'))
         ui.P.M.screenshot(app.window, out / 'txt-first-page.bmp')
         report['page_excerpt'] = value[:300]
