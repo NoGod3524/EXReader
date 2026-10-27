@@ -153,7 +153,7 @@ int main(int argc,char **argv) {
   CHECK(reader_catalog_close(&catalog,&error)==SQLITE_OK && catalog==NULL);
   CHECK(reader_catalog_open(main_path,&catalog,&error)==SQLITE_OK);
   sqlite3 *db=external(main_path);
-  CHECK(scalar(db,"PRAGMA application_id")==2163416144 && scalar(db,"PRAGMA user_version")==1);
+  CHECK(scalar(db,"PRAGMA application_id")==1163416144 && scalar(db,"PRAGMA user_version")==2);
   PASSED("migration_matches_source_and_reopens");
 
   reject_foreign(argv[1],1,"CREATE TABLE unrelated(value TEXT);INSERT INTO unrelated VALUES('keep');");
