@@ -127,6 +127,7 @@ public final class OriginalSaveUiTest extends Instrumentation {
 
     private static boolean docs(AccessibilityNodeInfo n){return "com.android.documentsui".contentEquals(n.getPackageName()==null?"":n.getPackageName());}
     private void systemTap(AccessibilityNodeInfo n){
+        if(n.isClickable() && n.performAction(AccessibilityNodeInfo.ACTION_CLICK))return;
         Rect r=new Rect();n.getBoundsInScreen(r);need(r.width()>0&&r.height()>0,"visible system picker target");
         try(java.io.FileInputStream in=new android.os.ParcelFileDescriptor.AutoCloseInputStream(
             getUiAutomation().executeShellCommand("input touchscreen tap "+r.centerX()+" "+r.centerY()));
