@@ -1,7 +1,7 @@
 name: Android composition current owner 3.40
 on:
   push:
-    branches: [codex/android-current-owner-regression, codex/android-combined-sdk-versions]
+    branches: [codex/android-current-owner-regression, codex/android-combined-sdk-versions, codex/android-merge-prep]
   workflow_dispatch:
     inputs:
       inspect_retained:
