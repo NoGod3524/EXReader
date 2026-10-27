@@ -247,6 +247,19 @@
         "tampered_file_rejected_before_any_write",
         "imported_bookmark_navigable_by_public_found"
       ]
+    },
+    "android_font_reader": {
+      "run": 40582860559,
+      "doc": "docs/reader-total-progress/android-font-reader.md",
+      "source_prefix": "41870a040bb6ff995a7adddc13756880ada8c731",
+      "artifact": 12772457377,
+      "sha256": "9a4a1120a3a20d6bab7b6d31febaa9a2ab4411e1ba10189ffed9380669880c45",
+      "bytes": 164193268,
+      "required_cases": [
+        "reader_valid_font_import_select_reopen_changes_pixels",
+        "reader_bad_font_preserves_noninitial_page_position_font_and_lease",
+        "reader_exit_releases_font_lease_and_reopen_keeps_position"
+      ]
     }
   },
   "requirements": [
@@ -914,9 +927,11 @@
       "group": "host",
       "platform": "android",
       "title": "Android：本地字体导入、选择/lease 与坏字体保留原页",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "android_font_reader"
+      ],
+      "note": "API34 emulator actual reader; framework picker results stubbed; evidence audited separately from unified-source delivery."
     },
     {
       "id": "H.android.annotation_exchange",
