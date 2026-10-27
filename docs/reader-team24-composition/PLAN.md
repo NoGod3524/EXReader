@@ -1071,5 +1071,26 @@ acceptance remain outside this evidence. The same-run summary artifact
 Windows and GTK program SHA-256 values were respectively
 `e9dbdddc72614469d93dcc485b4051e07d4a83adb0a4f0c77dba3602810d03e8` and
 `eb14023075c1def770a6dc7426a4f596363ab4c4f47c605475e6f9929c17a79e`.
-The later combination candidate `e61b5eda` is running its own unchanged-scope
-relay against the newer composition; the independent result is not transferred.
+The later combination candidate `e61b5eda` ran its own unchanged-scope relay
+against the newer composition in [40425627113/1](https://github.com/NoGod3524/EXReader/actions/runs/40425627113):
+Windows passed, but the GTK import chooser did not close, so the relay and
+same-run verifier failed or did not execute. The earlier independent pass is
+not transferred; the current-source failure remains under diagnosis.
+
+## Android 3.41 combined host evidence
+
+Candidate source `31d34f87b2013ef18201268b50db5b6b1ccafd71` passed
+[40422822774/1](https://github.com/NoGod3524/EXReader/actions/runs/40422822774).
+Independent cloud audit [40427114597/1](https://github.com/NoGod3524/EXReader/actions/runs/40427114597)
+authenticated original artifact `12699742758` (156,525,577 bytes, SHA-256
+`704fb5b0c696241589a8e4a3d78173a4352ba112154625bdbd985eeb3f07563f`),
+the source and run identity, and identical built and device-pulled host APKs
+(SHA-256 `3ad45f4408c7e733656796ca705971cf3d6339442e7f17d674edf74cdfeb1e32`).
+Original reports recorded 20 wave3, 18 navigation, 19 reading, 16 versioned
+host sync and 16 strict 3.41 adapter checks, all passing; the organization
+runner passed five checks. The same run also saved an exact original through
+the real Android system picker after killing and restarting the host process.
+The earlier `40420011803/1` reading-list failure remains preserved; the later
+pass does not identify its cause or prove every subsequent source. This is API
+34 x86_64 emulator evidence, not a physical-device or six-target grant. The
+independent reading-page-position candidate remains under separate regression.
