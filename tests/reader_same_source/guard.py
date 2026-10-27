@@ -39,7 +39,10 @@ def main():
     if git('ls-tree', args.source, '--', SELF).split()[0] != '100644':
         raise ValueError('integration guard mode changed')
     owners = [(WINDOWS_OWNER, ['tools/reader_composition/guard.py', '--source', git('rev-parse', WINDOWS_OWNER), '--report', 'build/owner-composition.json']),
-              (APPLE_OWNER, ['tests/reader_team24_apple/guard_owner.py'])]
+              (APPLE_OWNER, ['tests/reader_team24_apple/guard_owner.py']),
+              ('f92d1bb9a40dd05ec6b8603172091648e4575b98', ['tests/reader_wave3_c09/team24_guard.py']),
+              ('af87ba8db0c43f4fcf878983eaa2290e7889b0ee', ['tests/reader_gtk_raw_wave3/guard.py']),
+              ('28f49ee0399d48518cc2afb0048009b6c38edcfa', ['tests/reader_wave3_c11/guard.py'])]
     checked = []
     with tempfile.TemporaryDirectory() as temp:
         for index, (owner, command) in enumerate(owners):
