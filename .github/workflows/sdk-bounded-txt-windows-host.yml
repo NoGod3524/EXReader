@@ -1,7 +1,7 @@
 name: Bounded TXT candidate Windows host baseline
 on:
   push:
-    branches: [codex/sdk-bounded-txt-candidate]
+    branches: [codex/sdk-bounded-txt-candidate, codex/windows-bounded-txt-host]
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,6 +20,7 @@ jobs:
       - name: Build installed candidate and exercise existing Windows host checks
         env:
           GH_TOKEN: ${{ github.token }}
+          EXR_HOST_TXT_RECOVERY: ${{ github.ref_name == 'codex/windows-bounded-txt-host' && '1' || '0' }}
         run: python tests/reader_windows_raw3/host_build.py
       - uses: actions/upload-artifact@v4
         if: always()

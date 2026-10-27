@@ -1,6 +1,12 @@
 # Windows bounded TXT host integration: starting point
 
-This is a staged integration, not a host acceptance. The SDK scanner/pager and
+This is a staged integration, not a host acceptance. The opt-in Windows account
+host now runs product-original recovery on its catalog worker during startup
+repair. Failure leaves the product shelf unavailable for retry. The existing
+profile and library locks serialize host instances; the importer still needs a
+private-root ownership design before the host can expose originals. In this
+opt-in build, new TXT imports explicitly report that support is incomplete,
+while existing SDK books retain their current path. The SDK scanner/pager and
 product-original checks are component evidence only. The Windows host still
 uses the existing SDK library path for TXT; no product-owned TXT is exposed by
 this change.

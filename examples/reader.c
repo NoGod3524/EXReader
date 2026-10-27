@@ -30,6 +30,9 @@
 #ifdef EXR_READER_PRODUCT_CATALOG
 #include "catalog_sdk.h"
 #endif
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+#include <original_import.h>
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
 #include <reader_metadata.h>
 #endif
@@ -172,6 +175,9 @@ typedef struct {
   wchar_t library_path[HOST_PATH];
 #ifdef EXR_READER_PRODUCT_CATALOG
   wchar_t product_path[HOST_PATH];
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  wchar_t original_root[HOST_PATH];
+#endif
   HANDLE product_lock;
   HANDLE product_profile_lock;
   int product_pending;
@@ -2229,6 +2235,12 @@ static exr_status job_import(host_job *job) {
     copy_wstring(job->message, 512, L"不支持的扩展名；当前宿主接受 .epub .pdf .cbz .txt .html .fb2 .docx .rtf .mobi .azw3。");
     return EXR_UNSUPPORTED;
   }
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  if (format == EXR_TXT) {
+    copy_wstring(job->message, 512, L"TXT 原书阅读功能尚未完成；此版本暂不能导入 TXT。已有书籍仍可打开。");
+    return EXR_UNSUPPORTED;
+  }
+#endif
   status = format == EXR_EPUB ? EXR_OK : read_import_file(job, &data, &size, &error);
   if (status != EXR_OK) return status;
   path = host_utf8(job->path);
@@ -5424,6 +5436,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
       LocalFree(argv);return 2;
     }
     swprintf(g.product_path,HOST_PATH,L"%ls.product.sqlite",g.library_path);
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+    swprintf(g.original_root,HOST_PATH,L"%ls.originals",g.library_path);
+#endif
     swprintf(lock_path,HOST_PATH,L"%ls.product.lock",g.library_path);
     g.product_lock=CreateFileW(lock_path,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
     if(g.product_lock==INVALID_HANDLE_VALUE) {
