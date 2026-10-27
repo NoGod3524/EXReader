@@ -1,0 +1,5 @@
+# Private bounded TXT view candidate
+
+This experimental internal entry point borrows an immutable seekable source for the pager lifetime. It scans and validates the entire source before opening, retains at most 256 sparse paragraph checkpoints, and replays from the nearest checkpoint to recover stable paragraph nodes and normalized UTF-8 offsets. It retains one copied paragraph; text pointers are valid until the next paragraph is prepared or accessed. Cursor scratch and each decoded paragraph are limited by the existing 64 KiB scanner rule. Index compaction increases replay work as paragraph count grows. The pager's own continuation, visibility bitset, page caches, shaping and fonts are additional memory; this is not a total workspace budget guarantee.
+
+The candidate uses default computed styles only and rejects user CSS. It is private, has no installed API, and does not implement TXT chapter CFI or pager text-query APIs. Source reads must remain immutable and available until pager destruction. Failures are sticky in the view. This is not a replacement for the resident TXT API or a release commitment.

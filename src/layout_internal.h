@@ -58,4 +58,10 @@ exr_status exr_book_fonts(const exr_document *doc, exr_font *fallback,
 exr_status exr_layout_validate(const exr_layout_config *config, exr_error *error);
 exr_status exr_flow_create(const exr_document *doc, exr_font *font, const exr_layout_config *config,
                            exr_layout **out, exr_error *error);
+/* Experimental private TXT view. The source is borrowed and immutable until
+   the pager is freed. It intentionally does not extend the installed ABI. */
+exr_status exr_txt_pager_create_private(const exr_source *source, exr_font *font,
+  const exr_layout_config *config, exr_pager **out, exr_error *error);
+
+void exr_pager_adopt_view(exr_pager *pager,void *context,void (*release)(void *));
 #endif
