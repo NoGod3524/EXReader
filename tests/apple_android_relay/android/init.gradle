@@ -1,0 +1,7 @@
+gradle.beforeProject { project ->
+    if (project.path == ':app') {
+        project.pluginManager.withPlugin('com.android.application') {
+            project.android.sourceSets.androidTest.java.srcDir new File(project.rootProject.projectDir, '../../tests/apple_android_relay/android/java')
+        }
+    }
+}
