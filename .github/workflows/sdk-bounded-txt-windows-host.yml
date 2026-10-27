@@ -1,0 +1,27 @@
+name: Bounded TXT candidate Windows host baseline
+on:
+  push:
+    branches: [codex/sdk-bounded-txt-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  host-baseline:
+    runs-on: windows-2022
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build installed candidate and exercise existing Windows host checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_windows_raw3/host_build.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bounded-txt-windows-host-baseline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-raw3-host/
+          if-no-files-found: warn
