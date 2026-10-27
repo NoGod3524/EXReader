@@ -2792,7 +2792,11 @@ static exr_status job_import(host_job *job) {
   }
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
   if (format == EXR_TXT) {
-    return product_import_original(job);
+    WIN32_FILE_ATTRIBUTE_DATA attributes;
+    if (GetFileAttributesExW(job->path, GetFileExInfoStandard, &attributes)) {
+      uint64_t bytes = ((uint64_t)attributes.nFileSizeHigh << 32) | attributes.nFileSizeLow;
+      if (bytes > 16ULL * 1024 * 1024) return product_import_original(job);
+    }
   }
 #endif
   status = format == EXR_EPUB ? EXR_OK : read_import_file(job, &data, &size, &error);
