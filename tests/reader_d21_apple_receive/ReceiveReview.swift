@@ -3,7 +3,14 @@ import Foundation
 import CReaderProduct
 
 @main struct ReceiveReview {
-    static func main() throws {
+    static func main() {
+        do { try run() }
+        catch {
+            fputs("D21 native receive failed: \(error)\n", stderr)
+            exit(1)
+        }
+    }
+    static func run() throws {
         let mode = CommandLine.arguments[1], root = CommandLine.arguments[2]
         let base = URL(fileURLWithPath: CommandLine.arguments[3])
         let migration = URL(fileURLWithPath: CommandLine.arguments[4])
@@ -22,7 +29,17 @@ import CReaderProduct
             while Date() < deadline { if ready() { return true }; RunLoop.current.run(until: Date().addingTimeInterval(0.02)) }
             return ready()
         }
-        let profile = HostAccountProfile(id: UUID().uuidString.lowercased(), root: root)
+        // The public session deliberately binds a product store to one exact
+        // account UUID/root across processes. A test restart must honor it too.
+        let profileURL = base.appendingPathComponent("profile.json")
+        let profile: HostAccountProfile
+        if FileManager.default.fileExists(atPath: profileURL.path) {
+            profile = try JSONDecoder().decode(HostAccountProfile.self, from: Data(contentsOf: profileURL))
+            try check("same_account_restart_identity", profile.root == root)
+        } else {
+            profile = HostAccountProfile(id: UUID().uuidString.lowercased(), root: root)
+            try JSONEncoder().encode(profile).write(to: profileURL, options: .atomic)
+        }
         if mode == "seed" {
             try queue.sync {
                 let catalog = try HostCatalog(path: base.appendingPathComponent("reader-catalog.db"), migrationURL: migration, ownerQueue: queue)
@@ -79,7 +96,8 @@ import CReaderProduct
         }
         let session = HostAccountSession()
         try session.start(profile: profile, directory: base, authorization: authorization) {}
-        try check("actual_https_sweep", wait { !session.running } && session.state == "本轮扫描完成")
+        let finished = wait { !session.running }
+        try check("actual_https_sweep state=\(session.state) message=\(session.message)", finished && session.state == "本轮扫描完成")
         session.close(); try check("network_owner_closed", wait { session.state == "已关闭" })
         if mode == "conflict" {
             try queue.sync {
