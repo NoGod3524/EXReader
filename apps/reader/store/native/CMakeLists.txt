@@ -31,6 +31,12 @@ string(REPLACE "\"" "\\\"" catalog_sql "${catalog_sql}")
 string(REPLACE "\n" "\\n\"\n\"" catalog_sql "${catalog_sql}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/catalog_migration.h"
   "/* Generated from the unchanged product migration. */\nstatic const char catalog_migration[] = \"${catalog_sql}\";\n")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../002_originals.sql" originals_sql)
+string(REPLACE "\\" "\\\\" originals_sql "${originals_sql}")
+string(REPLACE "\"" "\\\"" originals_sql "${originals_sql}")
+string(REPLACE "\n" "\\n\"\n\"" originals_sql "${originals_sql}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/originals_migration.h"
+  "static const char originals_migration[] = \"${originals_sql}\";\n")
 add_library(reader_catalog STATIC catalog.c)
 target_include_directories(reader_catalog PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:include/exreader-product>
@@ -45,7 +51,7 @@ include(CMakePackageConfigHelpers)
 install(TARGETS reader_catalog reader_catalog_sqlite EXPORT EXReaderProductCatalogTargets ARCHIVE DESTINATION lib)
 install(FILES catalog.h "${reader_catalog_sqlite_source_SOURCE_DIR}/sqlite3.h"
   DESTINATION include/exreader-product)
-install(FILES ../001_catalog.sql ../../../../licenses/sqlite-public-domain.txt
+install(FILES ../001_catalog.sql ../002_originals.sql ../../../../licenses/sqlite-public-domain.txt
   DESTINATION share/exreader-product)
 install(EXPORT EXReaderProductCatalogTargets NAMESPACE EXReaderProductCatalog::
   DESTINATION lib/cmake/EXReaderProductCatalog)
@@ -59,6 +65,9 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderProductCatalogConfig.cmake"
   DESTINATION lib/cmake/EXReaderProductCatalog)
 if(PROJECT_IS_TOP_LEVEL)
   enable_testing()
+  add_executable(reader-originals-check ../../../../tests/reader_catalog/originals_check.c)
+  target_link_libraries(reader-originals-check PRIVATE reader_catalog reader_catalog_sqlite Threads::Threads)
+  add_test(NAME product-originals COMMAND reader-originals-check "${CMAKE_CURRENT_BINARY_DIR}/originals-check.db")
   add_executable(reader-catalog-check ../../../../tests/reader_catalog/native_catalog_check.c)
   target_link_libraries(reader-catalog-check PRIVATE reader_catalog reader_catalog_sqlite Threads::Threads)
   add_test(NAME native-product-catalog COMMAND reader-catalog-check

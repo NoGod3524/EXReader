@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "catalog.h"
 #include "catalog_migration.h"
+#include "originals_migration.h"
 #include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,7 +117,7 @@ int reader_catalog_open(const char *path,reader_catalog **out,reader_catalog_err
   if(status==SQLITE_OK) status=scalar(c,"PRAGMA application_id",&identity,e);
   if(status==SQLITE_OK) status=scalar(c,"PRAGMA user_version",&version,e);
   if(status!=SQLITE_OK) goto failed;
-  if(identity!=1163416144 || version!=1) {
+  if(identity!=1163416144 || (version!=1 && version!=2)) {
     status=scalar(c,"SELECT count(*) FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'",&count,e);
     if(status!=SQLITE_OK) goto failed;
     if(identity!=0 || version!=0 || count!=0) {
@@ -125,11 +126,13 @@ int reader_catalog_open(const char *path,reader_catalog **out,reader_catalog_err
     status=execute(c,catalog_migration,e);
     if(status!=SQLITE_OK) goto failed;
   }
-  status=scalar(c,"PRAGMA application_id",&identity,e);
+  status=scalar(c,"PRAGMA user_version",&version,e);
+  if(status==SQLITE_OK && version==1) status=execute(c,originals_migration,e);
+  if(status==SQLITE_OK) status=scalar(c,"PRAGMA application_id",&identity,e);
   if(status==SQLITE_OK) status=scalar(c,"PRAGMA user_version",&version,e);
   if(status==SQLITE_OK) status=scalar(c,"PRAGMA foreign_keys",&foreign_keys,e);
   if(status!=SQLITE_OK) goto failed;
-  if(identity!=1163416144 || version!=1 || foreign_keys!=1) {
+  if(identity!=1163416144 || version!=2 || foreign_keys!=1) {
     status=fail(e,SQLITE_NOTADB,"Product catalog contract was not established");goto failed;
   }
   *out=c;return SQLITE_OK;
@@ -570,4 +573,119 @@ int reader_catalog_local_lookup(reader_catalog *c,int64_t id,const char *title,
 int reader_catalog_metadata(reader_catalog *c,const char *key,
     reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
   return lookup(c,2,0,key,visit,context,found,e);
+}
+
+/* References use a deliberately portable subset; the host still must enforce
+ * containment against symlinks and use durable filesystem operations. */
+static int original_ref_valid(const char *p) {
+  size_t n; const char *part;
+  if(!p || !valid_text(p) || !(n=strlen(p)) || n>1024 || p[0]=='/' || p[n-1]=='/') return 0;
+  part=p;
+  for(const char *q=p;;q++) {
+    if(*q=='\\' || *q==':' || ((unsigned char)*q<32 && *q)) return 0;
+    if(*q=='/' || !*q) {
+      size_t len=(size_t)(q-part);
+      if(!len || (len==1 && part[0]=='.') || (len==2 && part[0]=='.' && part[1]=='.')) return 0;
+      if(!*q) break;
+      part=q+1;
+    }
+  }
+  return 1;
+}
+int reader_catalog_original_stage(reader_catalog *c,const reader_catalog_book *b,const char *ref,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL; char key[72]; int status=enter(c,e);
+  if(status!=SQLITE_OK) return status;
+  if(!b || !valid_format(b->format) || !hex(b->sha256,64) || !b->source_bytes || b->source_bytes>INT64_MAX ||
+     !valid_text(b->title) || !valid_text(b->author) || !valid_text(b->sort_title) ||
+     (b->favorite!=0 && b->favorite!=1) || !original_ref_valid(ref)) {
+    status=fail(e,SQLITE_MISUSE,"Invalid product original metadata or reference"); goto leave_original_stage;
+  }
+  snprintf(key,sizeof(key),"%s:%s",b->format,b->sha256);
+  status=execute(c,"BEGIN IMMEDIATE",e); if(status!=SQLITE_OK) goto leave_original_stage;
+  status=prepare(c,"SELECT source_bytes FROM reader_books WHERE book_key=?",&s,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,1,key,e);
+  if(status!=SQLITE_OK) goto rollback_original_stage;
+  status=sqlite3_step(s);
+  if(status==SQLITE_ROW) {
+    if(sqlite3_column_int64(s,0)!=(int64_t)b->source_bytes) { status=fail(e,SQLITE_CONSTRAINT,"Original identity has conflicting size"); goto rollback_original_stage; }
+    sqlite3_finalize(s); s=NULL;
+  } else if(status==SQLITE_DONE) {
+    sqlite3_finalize(s); s=NULL;
+    status=prepare(c,"INSERT INTO reader_books(book_key,format,source_sha256,source_bytes,title,author,sort_title,favorite) VALUES(?,?,?,?,?,?,?,?)",&s,e);
+    const char *values[]={key,b->format,b->sha256,b->title,b->author,b->sort_title};
+    const int indexes[]={1,2,3,5,6,7};
+    for(size_t i=0;status==SQLITE_OK && i<6;i++) status=bind_text(c,s,indexes[i],values[i],e);
+    if(status==SQLITE_OK) status=sqlite3_bind_int64(s,4,(int64_t)b->source_bytes);
+    if(status==SQLITE_OK) status=sqlite3_bind_int(s,8,b->favorite);
+    if(status==SQLITE_OK) status=done(c,s,e);
+    if(status!=SQLITE_OK) goto rollback_original_stage;
+    sqlite3_finalize(s); s=NULL;
+  } else { status=db_error(c,status,e); goto rollback_original_stage; }
+  /* An existing reservation is not overwritten, even by the same key. */
+  status=prepare(c,"INSERT INTO reader_originals(book_key,storage_ref,state) VALUES(?,?,'staged')",&s,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,1,key,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,2,ref,e);
+  if(status==SQLITE_OK) status=done(c,s,e);
+  if(status!=SQLITE_OK) goto rollback_original_stage;
+  sqlite3_finalize(s); s=NULL;
+  status=execute(c,"COMMIT",e); if(status==SQLITE_OK) goto leave_original_stage;
+rollback_original_stage:
+  sqlite3_finalize(s); s=NULL; sqlite3_exec(c->database,"ROLLBACK",NULL,NULL,NULL);
+leave_original_stage:
+  sqlite3_finalize(s); c->active=0; return status;
+}
+static int original_read(reader_catalog *c,const char *key,size_t limit,int find,reader_catalog_original_visit visit,void *ctx,int *found,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL; int status=enter(c,e);
+  if(status!=SQLITE_OK) return status;
+  if(!visit || (find && (!key || !found)) || (key && (!valid_text(key) || strlen(key)>71)) || !limit || limit>200) {
+    status=fail(e,SQLITE_MISUSE,"Invalid original query"); goto leave_original_read;
+  }
+  if(found) *found=0;
+  status=prepare(c,find ? "SELECT book_key,storage_ref,state FROM reader_originals WHERE book_key=?1" :
+    "SELECT book_key,storage_ref,state FROM reader_originals WHERE (?1 IS NULL OR book_key>?1) ORDER BY book_key LIMIT ?2",&s,e);
+  if(status==SQLITE_OK && key) status=bind_text(c,s,1,key,e);
+  if(status==SQLITE_OK && !find) status=sqlite3_bind_int(s,2,(int)limit);
+  if(status!=SQLITE_OK) goto leave_original_read;
+  while((status=sqlite3_step(s))==SQLITE_ROW) {
+    reader_catalog_original_row row={(const char *)sqlite3_column_text(s,0),(const char *)sqlite3_column_text(s,1),(const char *)sqlite3_column_text(s,2)};
+    if(found) *found=1;
+    if(visit(ctx,&row)) { status=SQLITE_DONE; break; }
+  }
+  status=status==SQLITE_DONE ? SQLITE_OK:db_error(c,status,e);
+leave_original_read:
+  sqlite3_finalize(s); c->active=0; return status;
+}
+int reader_catalog_original_find(reader_catalog *c,const char *key,reader_catalog_original_visit visit,void *ctx,int *found,reader_catalog_error *e) {
+  return original_read(c,key,1,1,visit,ctx,found,e);
+}
+int reader_catalog_original_page(reader_catalog *c,const char *key,size_t limit,reader_catalog_original_visit visit,void *ctx,reader_catalog_error *e) {
+  return original_read(c,key,limit,0,visit,ctx,NULL,e);
+}
+int reader_catalog_original_transition(reader_catalog *c,const char *key,const char *expected,const char *next,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL; int status=enter(c,e);
+  if(status!=SQLITE_OK) return status;
+  if(!key || !valid_text(key) || !expected || !next ||
+     !((!strcmp(expected,"staged") && (!strcmp(next,"ready") || !strcmp(next,"deleting"))) ||
+       (!strcmp(expected,"ready") && !strcmp(next,"deleting")))) {
+    status=fail(e,SQLITE_MISUSE,"Invalid original state transition"); goto leave_original_transition;
+  }
+  status=prepare(c,"UPDATE reader_originals SET state=? WHERE book_key=? AND state=?",&s,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,1,next,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,2,key,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,3,expected,e);
+  if(status==SQLITE_OK) status=done(c,s,e);
+  if(status==SQLITE_OK && !sqlite3_changes(c->database)) status=fail(e,SQLITE_NOTFOUND,"Original state changed or missing");
+leave_original_transition:
+  sqlite3_finalize(s); c->active=0; return status;
+}
+int reader_catalog_original_forget(reader_catalog *c,const char *key,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL; int status=enter(c,e);
+  if(status!=SQLITE_OK) return status;
+  if(!key || !valid_text(key)) { status=fail(e,SQLITE_MISUSE,"Invalid original key"); goto leave_original_forget; }
+  status=prepare(c,"DELETE FROM reader_originals WHERE book_key=? AND state='deleting'",&s,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,1,key,e);
+  if(status==SQLITE_OK) status=done(c,s,e);
+  if(status==SQLITE_OK && !sqlite3_changes(c->database)) status=fail(e,SQLITE_NOTFOUND,"Deleting original missing");
+leave_original_forget:
+  sqlite3_finalize(s); c->active=0; return status;
 }

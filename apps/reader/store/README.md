@@ -98,3 +98,11 @@ python tests/reader_catalog/check_schema.py --output build/reader-catalog/result
 It exercises database constraints, failure rollback, retained delete/conflict
 records and indexed keyset pages over thousands of metadata rows. It does not
 measure UI rendering or test a WebDAV server.
+
+The native product catalog upgrades version 1 to version 2 with
+`002_originals.sql`. It preserves SDK mappings and records a separate relative
+reference for product-owned content, with staged, ready and deleting states.
+The host is responsible for verifying the content hash, durable file publication,
+containment, and restart reconciliation. This is a storage prerequisite only:
+there is no bounded TXT import or reopen host path yet. Older v1-only adapters
+will reject a v2 catalog rather than migrate it backwards.

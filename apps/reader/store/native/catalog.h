@@ -124,6 +124,26 @@ int reader_catalog_local_lookup(reader_catalog *,int64_t sdk_id,const char *exac
  * Used only after the host has verified the public SDK retained original. */
 int reader_catalog_metadata(reader_catalog *,const char *book_key,
   reader_catalog_visit,void *,int *found,reader_catalog_error *);
+/* Product-owned originals are independent of SDK mappings. The host must hash
+ * and count the complete source before staging, and manage files beneath its
+ * own storage root. References are portable relative paths with no dot segments.
+ * A staged record reserves the final reference before publication. After a
+ * durable rename the host transitions staged->ready; to remove it transitions
+ * staged/ready->deleting, removes the file, then forgets the record. On restart,
+ * enumerate records and reconcile files before resuming either operation.
+ * Never expose staged/deleting records as readable. Existing book metadata and
+ * SDK mappings survive all these operations. No filesystem operation is implied. */
+typedef struct { const char *book_key, *storage_ref, *state; } reader_catalog_original_row;
+typedef int (*reader_catalog_original_visit)(void *, const reader_catalog_original_row *);
+int reader_catalog_original_stage(reader_catalog *, const reader_catalog_book *, const char *storage_ref, reader_catalog_error *);
+/* Lookup includes all states; page orders by book_key, exclusive cursor, 1..200. */
+int reader_catalog_original_find(reader_catalog *, const char *book_key, reader_catalog_original_visit, void *, int *found, reader_catalog_error *);
+int reader_catalog_original_page(reader_catalog *, const char *after_key, size_t limit, reader_catalog_original_visit, void *, reader_catalog_error *);
+/* Compare-and-set: staged->ready, staged->deleting, ready->deleting only.
+ * Returns SQLITE_NOTFOUND for a missing record or mismatched expected state. */
+int reader_catalog_original_transition(reader_catalog *, const char *book_key, const char *expected, const char *next, reader_catalog_error *);
+/* Only a deleting record can be forgotten, after host file removal. */
+int reader_catalog_original_forget(reader_catalog *, const char *book_key, reader_catalog_error *);
 const char *reader_catalog_migration(size_t *bytes);
 #ifdef __cplusplus
 }

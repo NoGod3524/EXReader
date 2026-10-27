@@ -1,0 +1,28 @@
+name: SDK candidate product originals
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  catalog:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set Windows compiler
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          cmd /c "`"$vs\VC\Auxiliary\Build\vcvars64.bat`" >nul && set" | ForEach-Object { if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 } }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Configure and build product catalog
+        run: cmake -S apps/reader/store/native -B build/catalog -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build build/catalog --parallel 4
+      - name: Run migration and compatibility checks
+        run: ctest --test-dir build/catalog --output-on-failure --no-tests=error
+      - name: Check original schema
+        if: runner.os == 'Linux'
+        run: python3 tests/reader_catalog/check_schema.py --output build/catalog/schema.json
