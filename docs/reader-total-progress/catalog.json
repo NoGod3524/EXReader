@@ -204,6 +204,12 @@
         "original_export_matches_source_bytes",
         "history_back_forward_after_real_landing"
       ]
+    },
+    "apple_d21_cloud_receive": {
+      "run": 40473702681,
+      "doc": "docs/handoffs/d21-final-results.md",
+      "source_doc_commit": "25bb4a3a7391ba55cd94ef2d4719328e16080544",
+      "source_prefix": "0b464821b864ef3c7e8f18ed4a8aecc31b00ee1e"
     }
   },
   "requirements": [
@@ -651,9 +657,11 @@
       "group": "host",
       "platform": "macos",
       "title": "macOS：宿主云端原件下载、校验、映射与可读接收",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_d21_cloud_receive"
+      ],
+      "note": "D21 independently verified native macOS and iOS simulator receive; final same-source and physical-device delivery remain separate."
     },
     {
       "id": "H.macos.bounded_shelf",
@@ -936,9 +944,11 @@
       "group": "host",
       "platform": "iphone",
       "title": "iPhone：宿主云端原件下载、校验、映射与可读接收",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_d21_cloud_receive"
+      ],
+      "note": "D21 independently verified native macOS and iOS simulator receive; final same-source and physical-device delivery remain separate."
     },
     {
       "id": "H.iphone.bounded_shelf",
@@ -1077,9 +1087,11 @@
       "group": "host",
       "platform": "ipad",
       "title": "iPad：宿主云端原件下载、校验、映射与可读接收",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_d21_cloud_receive"
+      ],
+      "note": "D21 independently verified native macOS and iOS simulator receive; final same-source and physical-device delivery remain separate."
     },
     {
       "id": "H.ipad.bounded_shelf",
