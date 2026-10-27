@@ -1,7 +1,7 @@
-name: Verify Android 3.40 current owner evidence
+name: Verify merged Android 3.40 current owner evidence
 on:
   push:
-    branches: [codex/android-340-current-proof]
+    branches: [codex/android-merge340-proof]
 permissions:
   contents: read
   actions: read
@@ -19,9 +19,9 @@ jobs:
           import hashlib, io, json, sys, zipfile
           sys.path.insert(0, 'tools')
           from check_parallel_integration import fetch, download_artifact_zip
-          source = '57585506a297921246a6e9476de49464caef4982'
-          run_id, artifact, size = 40423047854, 12698607070, 108013392
-          digest = '25ae0dc0ab99e111ad7a86f79f9bb756f7880f41bb21a412c0e043e2158dcbec'
+          source = '1c42ddf6fe7e57f6bd0ac45f1ed78717bd4f3092'
+          run_id, artifact, size = 40427833573, 12700119957, 108018935
+          digest = '70bbc832f34eba519c28eaf6e28ed917b4b54377613548cec068889a68646611'
           run = fetch(f'actions/runs/{run_id}')
           assert run['head_sha'] == source and run['run_attempt'] == 1
           assert run['status'] == 'completed' and run['conclusion'] == 'success'
