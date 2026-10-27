@@ -1,0 +1,31 @@
+name: D26 original focus evidence
+on:
+  push:
+    branches: [codex/d26-focus-diagnostic]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  evidence:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: reader-d26-current-40544043139-1
+          run-id: 40544043139
+          github-token: ${{ github.token }}
+          path: evidence
+      - name: Read original focused-dialog observation
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('evidence/d26-g13-current/result.json')
+          report = json.loads(p.read_text())
+          assert report['source_sha'] == 'cb7c50a6acdc871b58298320d019b9a27b2818f9'
+          assert report['run_id'] == '40544043139' and report['attempt'] == '1'
+          rows = [x for x in report['checks'] if x['name'] == 'import_dialog_identity_and_focus']
+          assert len(rows) == 1
+          print(json.dumps({'source_sha':report['source_sha'], 'sdk':report['sdk'], 'check':rows[0]},ensure_ascii=False))
+          PY
