@@ -55,6 +55,30 @@ def page_text(app, automation):
     return automation.control(app.control('page')).GetValuePattern().Value or ''
 
 
+def clipboard_text(app):
+    from ctypes import wintypes as W
+    user = C.WinDLL('user32', use_last_error=True)
+    kernel = C.WinDLL('kernel32', use_last_error=True)
+    user.OpenClipboard.argtypes = [W.HWND]
+    user.GetClipboardData.argtypes = [W.UINT]
+    user.GetClipboardData.restype = W.HANDLE
+    kernel.GlobalLock.argtypes = [W.HANDLE]
+    kernel.GlobalLock.restype = C.c_void_p
+    kernel.GlobalUnlock.argtypes = [W.HANDLE]
+    assert user.OpenClipboard(app.window)
+    try:
+        handle = user.GetClipboardData(13)
+        assert handle
+        pointer = kernel.GlobalLock(handle)
+        assert pointer
+        try:
+            return C.wstring_at(pointer)
+        finally:
+            kernel.GlobalUnlock(handle)
+    finally:
+        user.CloseClipboard()
+
+
 def first_line(text):
     lines = [line for line in text.splitlines() if line.strip()]
     return lines[0] if lines else ''
@@ -131,6 +155,11 @@ def main():
         assert 'Perf Import 0000' in page_text(app, automation), page_text(app, automation)[:200]
         record('shelf selection opens the 16792975-byte original at its first page')
         first_page = page_text(app, automation)
+        assert ui.U.IsWindowEnabled(app.control('select')) and ui.U.IsWindowEnabled(app.control('copy'))
+        ui.command(app, 107)
+        ui.command(app, 108)
+        assert ' '.join(clipboard_text(app).split()) == ' '.join(first_page.split())
+        record('select and copy the first TXT page through native commands')
         ui.command(app, 137)  # IDC_ACCOUNT_BUTTON, the native account command
         account_dialog = app.wait(lambda: ui.owned_dialog(app, 138), timeout=30)
         assert account_dialog, 'account dialog unavailable while reading TXT'
@@ -165,6 +194,10 @@ def main():
             assert position >= end, (position, end, current[:200])
             end = position + len(current)
         record('six forward page turns show consecutive source content', first_line(current))
+        ui.command(app, 107)
+        ui.command(app, 108)
+        assert ' '.join(clipboard_text(app).split()) == ' '.join(current.split())
+        record('select and copy a later TXT page using its nonzero source offset')
 
         before_font = page_text(app, automation)
         label_before_font = app.label()
