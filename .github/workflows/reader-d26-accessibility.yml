@@ -243,6 +243,16 @@ jobs:
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_d26_accessibility/g13_current.py audit --payload build/c10-package/EXReader-Linux --output build/d26-g13
           '
+      - name: Account status event and keyboard error recovery
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox >build/c10-logs/d26-account-openbox.log 2>&1 & wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_d26_accessibility/account_status.py --payload build/c10-package/EXReader-Linux --output build/d26-account
+          '
       - name: Require complete retained G13 accessibility acceptance
         if: always()
         run: |
@@ -256,10 +266,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reader-d26-${{ github.run_id }}-${{ github.run_attempt }}
+          name: reader-wave3-c10-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/c10-logs/
             build/d26-g13/
+            build/d26-account/
             build/c10-package/
             build/c10-compact-package/
             build/c10-desktop/gtk-host/exreader-linux
@@ -301,7 +312,7 @@ jobs:
         run: |
           mkdir -p build/c10-artifact
           artifact_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
-            --jq ".artifacts[] | select(.name == \"reader-d26-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT\") | .id")
+            --jq ".artifacts[] | select(.name == \"reader-wave3-c10-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT\") | .id")
           test -n "$artifact_id"
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > build/c10-original.zip
           unzip -q build/c10-original.zip -d build/c10-artifact
@@ -318,4 +329,27 @@ jobs:
         with:
           name: reader-d26-original-zip-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/c10-original.zip
+          if-no-files-found: error
+
+  retained-account:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install original GTK account suite dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Unchanged raw legacy owner account HTTPS and reading recovery
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_gtk_raw3/run.py --mode full
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-d26-account-retained-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/gtk-raw3/
+          include-hidden-files: true
           if-no-files-found: error
