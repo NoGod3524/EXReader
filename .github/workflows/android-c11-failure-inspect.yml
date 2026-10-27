@@ -33,6 +33,9 @@ jobs:
           raw = download_artifact_zip(artifact)
           assert len(raw) == item['size_in_bytes'] and hashlib.sha256(raw).hexdigest() == digest
           with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              report = json.loads(archive.read('wave3/evidence/reading/first-report.json'))
+              print('READING_FAILURE', json.dumps({key: report.get(key) for key in
+                    ('passed', 'count', 'failed_check', 'failure_class', 'failure', 'failure_trace')}))
               for name in ('wave3/evidence/reading/result.json',
                            'wave3/evidence/reading/first-instrumentation.txt'):
                   print('FOCUSED', name)
