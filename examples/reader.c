@@ -4682,6 +4682,9 @@ static void host_command(int id) {
 #ifdef EXR_READER_WINDOWS_ACCOUNT
       && id != IDC_ACCOUNT_BUTTON
 #endif
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+      && id != IDC_CLOUD_IMPORT && id != IDC_BULK_ORGANIZE
+#endif
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
       && id != IDC_FONT_DEC && id != IDC_FONT_INC
 #endif

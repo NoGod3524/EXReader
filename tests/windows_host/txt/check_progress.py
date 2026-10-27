@@ -139,6 +139,15 @@ def main():
         app.wait_idle()
         assert page_text(app, automation) == first_page
         record('account dialog opens and closes while preserving the TXT page')
+        for command_id, name in ((240, 'cloud import'), (241, 'bulk organization')):
+            ui.command(app, command_id)
+            dialog = app.wait(lambda: ui.owned_dialog(app, 242), timeout=30)
+            assert dialog, name + ' dialog unavailable while reading TXT'
+            ui.send(dialog, 0x10)  # WM_CLOSE cancels an active inspection if necessary
+            app.wait(lambda: not ui.U.IsWindow(dialog), timeout=60)
+            app.wait_idle()
+            assert page_text(app, automation) == first_page
+            record(name + ' dialog opens and closes while preserving the TXT page')
         heads, count = progress_heads('txt:' + expected)
         assert count >= 1 and heads, (count, heads)
         record('first open saves a new reading position', 'revisions=%d heads=%d' % (count, len(heads)))
