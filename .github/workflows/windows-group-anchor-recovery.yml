@@ -1,0 +1,112 @@
+name: Windows group anchor recovery
+on:
+  push:
+    branches: [codex/windows-anchor-composition-prep]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+      EXR_COMPOSITION_CONTENT_BOUND: '1'
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Verify exact base and permitted source scope
+        shell: pwsh
+        run: |
+          python tools/reader_composition/guard.py --source "$env:GITHUB_SHA" --report build/composition-source-windows.json
+          if ($LASTEXITCODE) { throw 'Composition source admission failed' }
+          python -m py_compile tests/windows_organization_projection/check_ui.py tests/windows_organization_projection/cloud_ui.py tests/windows_organization_projection/verify.py
+          if ($LASTEXITCODE) { throw 'Driver syntax failed' }
+      - name: Build and run retained composed Windows checks
+        shell: pwsh
+        run: |
+          python tests/reader_wave3_c09/build.py
+          if ($LASTEXITCODE) { throw 'Composed host build or retained checks failed' }
+      - name: Build installed raw command consumer
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/c09/raw-stage;$pwd/build/c09/product-stage;$pwd/build/c09/sdk-stage"
+          cmake -S tests/reader_windows_raw3/metadata-consumer -B build/organization-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DRAW_METADATA=ON "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'Consumer configuration failed' }
+          cmake --build build/organization-consumer --parallel 4
+          if ($LASTEXITCODE) { throw 'Consumer build failed' }
+          cmake -S tests/windows_organization_projection/cloud -B build/cloud-readback -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'Cloud readback configuration failed' }
+          cmake --build build/cloud-readback --parallel 4
+          if ($LASTEXITCODE) { throw 'Cloud readback build failed' }
+      - name: Retain independent native cloud import regression
+        id: cloud
+        run: python tests/windows_organization_projection/cloud_ui.py
+      - name: Two Windows hosts synchronize organization through HTTPS
+        if: ${{ always() && steps.cloud.outcome != 'skipped' }}
+        run: python tests/windows_organization_projection/check_ui.py
+      - name: Browse 170 seeded members in each group on the real host
+        if: ${{ always() && steps.cloud.outcome != 'skipped' }}
+        run: python tests/windows_organization_projection/paged_ui.py
+      - name: Preserve evidence and failures
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-organization-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/composition-source-windows.json
+            build/c09/report.json
+            build/c09/logs/
+            build/c09/package/
+            build/c09/wave3-host/windows-host.map
+            build/c09/raw-stage/lib/*.lib
+            build/c09/product-stage/lib/*.lib
+            build/c09/sdk-stage/lib/**/*.lib
+            build/c09/sdk-stage/lib/*.lib
+            build/c09/compact22/
+            build/c09/extracted-ui/
+            build/organization-consumer/command-consumer.exe
+            build/organization-consumer/metadata-consumer.exe
+            build/organization-ui/
+            build/cloud-readback/cloud-probe.exe
+            build/cloud-readback/group-page-seed.exe
+            build/cloud-ui/
+            build/group-page-ui/result.json
+            build/group-page-ui/seed.log
+            build/group-page-ui/failure.bmp
+            build/group-page-ui/removed-anchor.bmp
+            build/group-page-ui/removed-tail.bmp
+            build/group-page-ui/removed-all.bmp
+            build/group-page-ui/profile/application.log
+            build/group-page-ui/profile/library.sqlite.product.sqlite
+            !build/**/*.key
+          if-no-files-found: warn
+  verify:
+    if: always()
+    needs: windows
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact composition source
+        run: python3 tools/reader_composition/guard.py --source "$GITHUB_SHA" --report build/composition-source-verify.json
+      - name: Verify same-run host, reports and artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WINDOWS_RESULT: ${{ needs.windows.result }}
+          ARTIFACT_ID: ${{ needs.windows.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.windows.outputs.digest }}
+        run: python tests/windows_organization_projection/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-organization-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/organization-summary/
+          if-no-files-found: warn
+
+
