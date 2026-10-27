@@ -78,7 +78,9 @@ def main():
         check('account_status_exposes_changed_name_event', same_notice,
               dict(before=before, after=after, events=events, path=bus.path_of(notice),
                    peer_path=bus.path_of(peer), notice_extents=bus.extents(notice),
-                   peer_extents=bus.extents(peer)))
+                   peer_extents=bus.extents(peer), notice_description=notice.get_description(),
+                   described_nodes=[dict(path=bus.path_of(n), description=n.get_description())
+                                    for n in bus.walk(app) if n.get_description()]))
         check('progress_has_stable_semantic_description', progress.get_description() == 'Account sync progress',
               dict(name=bus.name(progress), path=bus.path_of(progress)))
         (folder / 'tree.json').write_text(json.dumps(bus.dump(app), indent=2))
