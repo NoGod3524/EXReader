@@ -126,3 +126,12 @@ selection-change timeout for SELECT_FOLDER, explaining disabled Recent response.
 The current driver first uses documented Alt+Home to enter a real folder before
 Ctrl+L. This is actual user navigation, not a programmatic chooser selection.
 Source: https://raw.githubusercontent.com/GNOME/gtk/gtk-3-24/gtk/gtkfilechooserwidget.c
+
+Split-job run40464084185 exposed artifact-upload symlink dereferencing, not a
+product import change: original batch saw38 instead of37 and drop imported11
+instead of10. Retained job now runs unchanged make_inputs.py in fresh independent
+directories on Actions so actual symlink refusal cases remain symlinks. No existing
+paths are replaced and no historical fixture generator or assertion is modified.
+Its original G13 gate also rejected an unevaluated status check combined with
+audit_completed (exit1 INVALID REPORT); this exact historical validator rejection
+is recorded as historical_report_valid=false, not promoted to acceptance.

@@ -120,12 +120,19 @@ def main():
             execution = json.loads(execution_path.read_text())
             assert execution['source_sha'] == source and str(execution['run_id']) == run and str(execution['attempt']) == attempt
             assert execution['kind'] == ('g13' if key == 'full_g13' else 'tools')
-            assert execution['exit_code'] == (0 if report[field] else (2 if key == 'full_g13' else 1))
+            if execution.get('historical_report_valid') is False:
+                assert key == 'full_g13' and not report[field] and execution['exit_code'] == 1
+                assert any(line.startswith('INVALID REPORT: unevaluated checks ')
+                           and 'cannot coexist with audit_completed' in line
+                           for line in execution['validator_output'].splitlines())
+            else:
+                assert execution['exit_code'] == (0 if report[field] else (2 if key == 'full_g13' else 1))
             assert execution['report_sha256'] == sha(path)
             assert execution['historical_accepted'] == report[field]
             if key == 'full_g13':
                 assert report['audit_completed'] is True and len(report['checks']) == 32
             historical[key] = dict(accepted=report[field], exit_code=execution['exit_code'],
+                report_valid=execution.get('historical_report_valid'), validator_output=execution.get('validator_output'),
                 checks=len(report['checks']), failed=[row['name'] for row in report['checks']
                                                      if not row.get('pass', row.get('passed'))],
                 failure=report.get('failure'), report_sha256=sha(path),
@@ -180,6 +187,15 @@ def main():
             (('source_sha', source), ('run_id', run), ('attempt', attempt)))
         for program in programs.values():
             assert proof['files'][program['path']]['sha256'] == program['sha256'], program['path']
+        fixture_proof = json.loads((root / 'd26-fixture-provenance.json').read_text())
+        assert all(str(fixture_proof[key]) == str(value) for key, value in
+            (('source_sha', source), ('run_id', run), ('attempt', attempt)))
+        assert len(fixture_proof['generators']) == 2
+        for generator in fixture_proof['generators']:
+            assert generator['verified'] and generator['script_sha256'] == sha(Path(generator['script']))
+            expected_blob = subprocess.check_output(['git', 'rev-parse', 'HEAD:' + generator['script']], text=True).strip()
+            assert generator['git_blob'] == expected_blob
+        identity['fixture_provenance'] = fixture_proof
         identity['build_handoff'] = handoff
         identity['current_verified'] = True
     except BaseException as error:
