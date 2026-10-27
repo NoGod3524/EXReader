@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: MIT
  * UI-thread bounded shelf. Catalog queries run only on the existing worker. */
 static ULONGLONG product_shelf_due;
+static int product_shelf_reveal;
 static void product_shelf_remember(void) {
-  if(!g.books || !g.shelf_cursors || g.shelf_applying || g.shelf_filter_pending) return;
+  if(!g.books || !g.shelf_cursors || g.shelf_applying || g.shelf_filter_pending || product_shelf_reveal) return;
   LRESULT top=SendMessageW(g.books,LB_GETTOPINDEX,0,0),selected=SendMessageW(g.books,LB_GETCURSEL,0,0);
   if(top>=0 && (size_t)top<g.shelf_count) snprintf(g.shelf_top_key,sizeof(g.shelf_top_key),"%s",g.shelf_cursors[top].key);
   if(selected!=LB_ERR && selected>=0 && (size_t)selected<g.shelf_count)
@@ -10,7 +11,7 @@ static void product_shelf_remember(void) {
 }
 static void product_shelf_schedule(int direction,int reset) {
   if(g.closing) return;
-  if(reset) { g.shelf_top_key[0]=0;g.shelf_selected_key[0]=0;g.shelf_filter_pending=1; }
+  if(reset) { product_shelf_reveal=0;g.shelf_top_key[0]=0;g.shelf_selected_key[0]=0;g.shelf_filter_pending=1; }
   else product_shelf_remember();
   g.shelf_generation++;g.shelf_requested_direction=direction;g.shelf_need_refresh=1;
   product_shelf_due=GetTickCount64()+(reset ? 200:30);
@@ -126,7 +127,7 @@ static void product_shelf_accept(host_job *job) {
   SendMessageW(g.books,LB_SETCURSEL,(WPARAM)selected,0);SendMessageW(g.books,LB_SETTOPINDEX,(WPARAM)top,0);
   SendMessageW(g.books,WM_SETREDRAW,TRUE,0);InvalidateRect(g.books,NULL,TRUE);g.shelf_applying=0;
   product_shelf_snapshot_changed();
-  product_shelf_remember();SetTimer(g.window,4,300,NULL);PostMessageW(g.window,WM_APP+31,0,0);
+  product_shelf_reveal=0;product_shelf_remember();SetTimer(g.window,4,300,NULL);PostMessageW(g.window,WM_APP+31,0,0);
 }
 static LRESULT CALLBACK product_shelf_procedure(HWND window,UINT message,WPARAM wparam,LPARAM lparam) {
   if(message==WM_NCDESTROY) RemovePropW(window,L"EXReaderShelfSnapshot");

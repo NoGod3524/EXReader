@@ -417,8 +417,9 @@ static reader_revision_status reader_revisions_open_impl(bool raw_api,const char
     try{
       check(sqlite3_extended_result_codes(store->db,1));check(sqlite3_busy_timeout(store->db,5000));execute(store->db,"PRAGMA foreign_keys=ON; PRAGMA trusted_schema=OFF; PRAGMA synchronous=FULL;");
       int64_t identity=scalar(store->db,"PRAGMA application_id"),version=scalar(store->db,"PRAGMA user_version");
-      if(identity!=1163416144||version!=1){if(identity||version||scalar(store->db,"SELECT count(*) FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'"))reject(READER_REV_DATABASE,"Foreign product catalog identity/version");execute(store->db,reader_catalog_migration(nullptr));}
-      if(scalar(store->db,"PRAGMA application_id")!=1163416144||scalar(store->db,"PRAGMA user_version")!=1||scalar(store->db,"PRAGMA foreign_keys")!=1)reject(READER_REV_DATABASE,"Product catalog contract was not established");
+      if(identity!=1163416144||(version!=1&&version!=2&&version!=3)){if(identity||version||scalar(store->db,"SELECT count(*) FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'"))reject(READER_REV_DATABASE,"Foreign product catalog identity/version");execute(store->db,reader_catalog_migration(nullptr));}
+      version=scalar(store->db,"PRAGMA user_version");
+      if(scalar(store->db,"PRAGMA application_id")!=1163416144||(version!=1&&version!=2&&version!=3)||scalar(store->db,"PRAGMA foreign_keys")!=1)reject(READER_REV_DATABASE,"Product catalog contract was not established");
       if(scalar(store->db,"SELECT json_valid('{\"version\":1}',1)")!=1||scalar(store->db,"SELECT count(*) FROM json_tree('[1]')")!=2)reject(READER_REV_DATABASE,"Installed product SQLite lacks required strict JSON support");
       statement schema(store->db,"SELECT revision_id,body_json,body_sha256 FROM reader_revisions LIMIT 0");schema.next();
     }catch(...){sqlite3_exec(store->db,"ROLLBACK",nullptr,nullptr,nullptr);sqlite3_close_v2(store->db);store->db=nullptr;throw;}

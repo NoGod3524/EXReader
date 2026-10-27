@@ -5,6 +5,51 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/* Scan an immutable source without retaining it. Callbacks receive nonempty,
+   trimmed paragraphs and their whole-document normalized UTF-8 byte offset;
+   consecutive paragraphs are separated by one LF. Views last only for the call.
+   This primitive does not create a document, pager, identity, or durable anchor.
+   A decoded paragraph including whitespace must fit within 64 KiB. Reads retry
+   short results; cancellation is checked during reads and before success. A
+   callback error stops the scan. On failure extent is zero; callbacks already
+   delivered cannot be rolled back. Source context remains owned by the caller. */
+typedef exr_status (*exr_txt_paragraph_fn)(void *context,uint64_t offset,
+  const char *text,size_t size,exr_error *error);
+EXR_API exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragraph_fn paragraph,
+  void *context,uint64_t *extent,exr_error *error);
+
+/* Resumable projection cursor for continuous readers. The source and callback
+   context must outlive the cursor and remain immutable. Paragraph views remain
+   valid until the next cursor operation. Checkpoints are valid only for the
+   same source and originate at a returned paragraph boundary. */
+typedef struct exr_txt_cursor exr_txt_cursor;
+typedef struct {
+  uint64_t source_offset, projection_offset;
+  unsigned encoding, pending_cr;
+} exr_txt_checkpoint;
+EXR_API exr_status exr_txt_cursor_create(const exr_source *source,exr_txt_cursor **out,exr_error *error);
+EXR_API exr_status exr_txt_cursor_next(exr_txt_cursor *cursor,uint64_t *offset,
+  const char **text,size_t *size,exr_error *error);
+EXR_API exr_status exr_txt_cursor_checkpoint(const exr_txt_cursor *cursor,exr_txt_checkpoint *checkpoint,exr_error *error);
+EXR_API exr_status exr_txt_cursor_restore(exr_txt_cursor *cursor,const exr_txt_checkpoint *checkpoint,exr_error *error);
+EXR_API void exr_txt_cursor_free(exr_txt_cursor *cursor);
+
+/* Exact UTF-8 byte search across the whole projected text, including paragraph
+   separators. The complete source is validated even after a match. A missing
+   match returns EXR_OK and UINT64_MAX in both outputs. `from` is a normalized
+   byte offset and may not exceed the extent. Query scratch is bounded to 4 MiB;
+   the paragraph budget and cancellation rules of the scanner also apply. */
+EXR_API exr_status exr_txt_find_source(const exr_source *source,const char *query,uint64_t from,
+  uint64_t *start,uint64_t *end,exr_error *error);
+
+/* Create the same quote and 32-scalar context selector as exr_anchor_create
+   for normalized whole-source byte offsets. The complete immutable source is
+   validated; the host must associate the selector with the original source's
+   identity. Uses at most a 64 KiB quote plus context and scanner scratch.
+   The caller frees the result with exr_anchor_free. */
+EXR_API exr_status exr_txt_anchor_create_source(const exr_source *source,size_t start,size_t end,
+  exr_anchor *anchor,exr_error *error);
+
 /* Read document-subject XMP simple literals, Seq/Bag values and preferred Alt. */
 EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control,
   exr_metadata_entry **entries,size_t *count,exr_error *error);

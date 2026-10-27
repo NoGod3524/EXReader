@@ -79,6 +79,23 @@ static int instrument(sqlite3 *db,char **message,const sqlite3_api_routines *api
   (void)message;(void)api;return sqlite3_trace_v2(db,SQLITE_TRACE_STMT,trace,NULL);
 }
 static int cancel(void *context) { int *remaining=context;return --*remaining<=0; }
+static size_t short_source_read(void *context,uint64_t offset,void *buffer,size_t size) {
+  const char *text=context;
+  if(offset>=3 || !size) return 0;
+  *(char *)buffer=text[(size_t)offset];return 1;
+}
+static void source_identity_check(void) {
+  exr_source source={0};char digest[65];uint64_t size=0;int remaining=1;
+  source.context=(void *)"abc";source.size=3;source.read_at=short_source_read;
+  OK(reader_catalog_source_identity(&source,NULL,digest,&size,&error));
+  CHECK(size==3 && !strcmp(digest,"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"));
+  exr_control control={cancel,NULL,&remaining};
+  CHECK(reader_catalog_source_identity(&source,&control,digest,&size,&error)==EXR_CANCELLED);
+  CHECK(!digest[0] && !size);
+  source.size=4;
+  CHECK(reader_catalog_source_identity(&source,NULL,digest,&size,&error)==EXR_IO);
+  CHECK(!digest[0] && !size);
+}
 static int after_commit(void *context) { (void)context;return commit_cancel; }
 static unsigned char *load(const char *path,size_t *size) {
   FILE *f=fopen(path,"rb");CHECK(f);CHECK(fseek(f,0,SEEK_END)==0);
@@ -113,6 +130,7 @@ int main(int argc,char **argv) {
     CHECK(scalar(db,"SELECT count(*) FROM reader_local_books")==1);
     CHECK(sqlite3_close(db)==SQLITE_OK);original(1,"abc",3);close_both();puts("RECOVERED");return 0;
   }
+  source_identity_check();
   CHECK(!strcmp(sqlite3_libversion(),"3.54.0"));
   const char *options[]={"THREADSAFE=1","DQS=0","DEFAULT_FOREIGN_KEYS","OMIT_LOAD_EXTENSION","MAX_LENGTH=2147483647"};
   for(size_t i=0;i<sizeof(options)/sizeof(options[0]);i++) CHECK(sqlite3_compileoption_used(options[i]));

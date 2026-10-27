@@ -1,0 +1,57 @@
+name: Windows bulk v1 baseline and v3 parity
+on:
+  push:
+    branches: [codex/sdk-bounded-txt-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fixed-v1:
+    runs-on: windows-2022
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check original test and v3 suite parity
+        run: |
+          git diff --exit-code 757249aaed9a1dc6be981354f6af97e813233f04 HEAD -- tests/reader_bulk_organization
+          python tests/sdk_bulk_v3/verify_parity.py
+      - uses: actions/checkout@v4
+        with:
+          ref: 757249aaed9a1dc6be981354f6af97e813233f04
+          path: baseline
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build fixed SDK and installed v1 product chain and run unchanged bulk acceptance
+        working-directory: baseline
+        run: |
+          set -o pipefail
+          mkdir -p build/logs
+          git rev-parse HEAD | tee build/logs/baseline-source.txt
+          echo "$GITHUB_SHA" | tee build/logs/candidate-source.txt
+          P="$(cygpath -m "$PWD")/build/prefix"
+          cmake --preset reading-library -B build/sdk -DCMAKE_INSTALL_PREFIX="$P" 2>&1 | tee build/logs/sdk-configure.log
+          cmake --build build/sdk --parallel 4 2>&1 | tee build/logs/sdk-build.log
+          cmake --install build/sdk 2>&1 | tee build/logs/sdk-install.log
+          for module in store/native revisions commands desktop-metadata bulk-organization; do
+            name=${module//\//-}
+            cmake -S "apps/reader/$module" -B "build/$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$P" -DREADER_PRODUCT_PREFIX="$P" -DCMAKE_INSTALL_PREFIX="$P" 2>&1 | tee "build/logs/$name-configure.log"
+            cmake --build "build/$name" --parallel 4 2>&1 | tee "build/logs/$name-build.log"
+            cmake --install "build/$name" 2>&1 | tee "build/logs/$name-install.log"
+          done
+          cmake -S tests/reader_bulk_organization/consumer -B build/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$P" 2>&1 | tee build/logs/consumer-configure.log
+          cmake --build build/consumer --parallel 4 2>&1 | tee build/logs/consumer-build.log
+          GITHUB_SHA=757249aaed9a1dc6be981354f6af97e813233f04 python tests/reader_bulk_organization/check_bulk.py --probe build/consumer/bulk-probe.exe --c-consumer build/consumer/bulk-c-consumer.exe --link-map build/consumer/bulk-link.map --output build/evidence 2>&1 | tee build/logs/bulk.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bulk-fixed-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            baseline/build/logs/
+            baseline/build/evidence/
+            baseline/build/consumer/*.exe
+            baseline/build/consumer/bulk-link.map
+          if-no-files-found: warn

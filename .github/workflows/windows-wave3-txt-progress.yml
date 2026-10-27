@@ -1,0 +1,41 @@
+name: Windows composed host TXT progress
+on:
+  push:
+    branches: [codex/windows-wave3-txt-progress]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  composed:
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+      EXR_COMPOSITION_CONTENT_BOUND: '1'
+      EXR_COMPOSITION_TXT_PROGRESS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Verify source and parent
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor bc9008ab0f1be5aed3ca430535bd2bde6f73b12d HEAD
+      - name: Prepare native display
+        run: python tests/reader_native_owner_repairs/display.py
+      - name: Build and exercise the composed native Windows host
+        run: python tests/reader_wave3_c09/build.py
+      - name: Preserve reports and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-wave3-txt-progress-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c09/report.json
+            build/c09/txt-progress/report.json
+            build/c09/logs/
+            build/native-owner-preflight/display.json
+          if-no-files-found: warn
