@@ -248,6 +248,44 @@ def main():
         wave3.close_feature(app, dialog)
         app.wait_idle()
         record('mixed SDK and large TXT original export preserves exact bytes and reports duplicates')
+        original_page = page_text(app, automation)
+        before_font_image = wave3.page_hash(app, out, 'txt-font-before.bmp')
+        bad_font = out / 'bad-txt-font.ttf'
+        bad_font.write_bytes(b'not a valid font program' * 64)
+        dialog = wave3.open_feature(app, wave3.FONTS)
+        wave3.post_click(dialog, wave3.B1)
+        wave3.fill_system_dialog(app, bad_font)
+        wave3.wait_message(app, dialog, wave3.N.FONT_IMPORT_FAILED, 120)
+        wave3.close_feature(app, dialog)
+        assert page_text(app, automation) == original_page
+        assert wave3.page_hash(app, out, 'txt-font-bad.bmp') == before_font_image
+        record('invalid font keeps the large TXT page and its content')
+        dialog = wave3.open_feature(app, wave3.FONTS)
+        wave3.post_click(dialog, wave3.B1)
+        wave3.fill_system_dialog(app, ROOT / 'tests/fixtures/fonts/primary.ttf')
+        wave3.wait_message(app, dialog, wave3.N.FONT_IMPORTED, 120)
+        app.wait(lambda: len(wave3.rows(dialog)) == 2, timeout=30)
+        wave3.select_row(dialog, 1)
+        wave3.post_click(dialog, wave3.B2)
+        wave3.wait_message(app, dialog, wave3.N.FONT_SWITCHED, 240)
+        app.wait_idle()
+        assert wave3.N.IN_USE in wave3.rows(dialog)[1]
+        wave3.close_feature(app, dialog)
+        assert 'Perf Import 0000' in page_text(app, automation)
+        after_font_image = wave3.page_hash(app, out, 'txt-font-selected.bmp')
+        assert after_font_image != before_font_image
+        record('large TXT font switch reflows the original page using the selected font')
+        dialog = wave3.open_feature(app, wave3.FONTS)
+        wave3.post_click(dialog, wave3.B3)
+        wave3.wait_message(app, dialog, wave3.N.FONT_SWITCHED, 240)
+        app.wait_idle()
+        wave3.select_row(dialog, 1)
+        wave3.post_click(dialog, wave3.B4)
+        app.wait(lambda: len(wave3.rows(dialog)) == 1, timeout=60)
+        wave3.close_feature(app, dialog)
+        assert page_text(app, automation) == original_page
+        assert wave3.page_hash(app, out, 'txt-font-restored.bmp') == before_font_image
+        record('restoring the built-in font releases the TXT font lease and preserves position')
         first_page = page_text(app, automation)
         before_selection = out / 'txt-page-before-selection.bmp'
         after_selection = out / 'txt-page-selected.bmp'
