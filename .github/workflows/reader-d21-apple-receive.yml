@@ -26,8 +26,23 @@ jobs:
           fetch-depth: 0
       - name: D21 owner admission without frozen-tree or old-test edits
         run: python3 tests/reader_d21_apple_receive/guard.py
-      - name: Frozen SDK and exact installed five module family
+      - name: Install the same-source SDK candidate and modules
         run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+      - name: Record the candidate SDK identity in the generated package manifest
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('build/raw3-ios-sdk') / os.environ['TARGET'] / 'wave3-packages.json'
+          data = json.loads(path.read_text(encoding='utf-8'))
+          path.with_name('wave3-packages-original-metadata.json').write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          data['sdk_frozen_base'] = data.pop('sdk_frozen_source')
+          data['sdk_candidate_source'] = os.environ['GITHUB_SHA']
+          data['sdk_candidate_txt_files'] = '9727ca1624ee59e561fd6aad7a22bb85a0fd2632'
+          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          PY
       - name: Actual account session terminal callbacks
         if: ${{ matrix.target == 'macos' }}
         run: |

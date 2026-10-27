@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Retain frozen SDK, old tests and unrelated product owners
+      - name: Pin the SDK candidate and retain old tests and product owners
         run: |
           git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 -- src include bindings cmake CMakeLists.txt ':(exclude)src/formats.c' ':(exclude)include/exr/formats.h'
           git diff --exit-code 9727ca1624ee59e561fd6aad7a22bb85a0fd2632 HEAD -- src/formats.c include/exr/formats.h
@@ -52,6 +52,21 @@ jobs:
           python3 -m compileall -q tests/apple_d24
       - name: Same-source installed SDK and retained product modules
         run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+      - name: Record the candidate SDK identity in the generated package manifest
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('build/raw3-ios-sdk') / os.environ['TARGET'] / 'wave3-packages.json'
+          data = json.loads(path.read_text(encoding='utf-8'))
+          path.with_name('wave3-packages-original-metadata.json').write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          data['sdk_frozen_base'] = data.pop('sdk_frozen_source')
+          data['sdk_candidate_source'] = os.environ['GITHUB_SHA']
+          data['sdk_candidate_txt_files'] = '9727ca1624ee59e561fd6aad7a22bb85a0fd2632'
+          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
