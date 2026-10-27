@@ -1092,5 +1092,19 @@ runner passed five checks. The same run also saved an exact original through
 the real Android system picker after killing and restarting the host process.
 The earlier `40420011803/1` reading-list failure remains preserved; the later
 pass does not identify its cause or prove every subsequent source. This is API
-34 x86_64 emulator evidence, not a physical-device or six-target grant. The
-independent reading-page-position candidate remains under separate regression.
+34 x86_64 emulator evidence, not a physical-device or six-target grant.
+
+The reading-page-position candidate source
+`aa75071c626485f8b249d2f7deba09270f278e54` completed
+[40425282397/1](https://github.com/NoGod3524/EXReader/actions/runs/40425282397)
+successfully. Cloud audit [40428398755/1](https://github.com/NoGod3524/EXReader/actions/runs/40428398755)
+verified original artifact `12700567431` (156,501,578 bytes, SHA-256
+`abc9259567867ce05265f53bfbc64e344ed825a4ca18993ce0bba566f41437d1`),
+same-source reports and built/device-pulled host APK SHA-256
+`4844d916a6f9c5dc37c459e78cfc9da50d592513474a79c6fc8bfc24a265138c`.
+The 19 reading checks include scrolling the record list before pagination and
+requiring the new page to start at row zero; the named conflict-navigation
+check also passed. The same run retained 20 wave3, 18 navigation, both 16-check
+sync suites, five organization checks, and the real system picker kill/recovery.
+This verifies the scoped emulator candidate and does not establish the root
+cause of the earlier intermittent failure or grant final combined delivery.
