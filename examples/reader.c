@@ -4217,8 +4217,17 @@ static void host_update_controls(void) {
   EnableWindow(g.update_button, !busy && has);
   EnableWindow(g.remove_button, !busy && has);
   EnableWindow(g.jump_button, !busy && has);
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  /* A TXT session owns its type size; selection, notes and jumps stay disabled. */
+  {
+    int font_ok = !busy && !g.frame.fixed && g.has_current && g.frame.valid && (has || g.session.txt);
+    EnableWindow(g.font_dec, font_ok);
+    EnableWindow(g.font_inc, font_ok);
+  }
+#else
   EnableWindow(g.font_dec, !busy && has && !g.frame.fixed);
   EnableWindow(g.font_inc, !busy && has && !g.frame.fixed);
+#endif
   EnableWindow(g.zoom_dec, !busy && has && g.frame.fixed);
   EnableWindow(g.zoom_inc, !busy && has && g.frame.fixed);
   EnableWindow(g.cancel_button, busy || g.job != NULL);
