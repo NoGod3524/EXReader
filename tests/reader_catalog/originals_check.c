@@ -35,6 +35,11 @@ int main(int argc,char **argv) {
     CHECK(reader_catalog_metadata(c,key,book_seen,&books,&visible,&e)==SQLITE_OK && !visible && books==0);
   }
   CHECK(reader_catalog_original_stage(c,&b,"originals/book.txt",&e)!=SQLITE_OK);
+  { reader_catalog_book conflict={"txt","0000000000000000000000000000000000000000000000000000000000000004","Conflict","Author","Conflict",NULL,10,0,0};
+    int books=0, visible=0;
+    CHECK(reader_catalog_original_stage(c,&conflict,"originals/book.txt",&e)!=SQLITE_OK);
+    CHECK(reader_catalog_find(c,"txt:0000000000000000000000000000000000000000000000000000000000000004",NULL,book_seen,&books,&visible,&e)==SQLITE_OK && !visible && books==0);
+  }
   { reader_catalog_book old={"epub","0000000000000000000000000000000000000000000000000000000000000002","Ignored","Author","Ignored",NULL,100,0,0};
     int books=0, visible=0;
     CHECK(reader_catalog_original_stage(c,&old,"originals/old.epub",&e)==SQLITE_OK);
