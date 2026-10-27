@@ -20,7 +20,7 @@ s=rows[-1]['state'];data=s['data']
 required={
  'windows-first':{'windows_imports_original_in_native_host','windows_sync_publishes_real_book_and_original'},
  'gtk-first':{'gtk_imports_original_in_native_host','gtk_opens_windows_original_from_relay','gtk_native_ui_creates_tag_and_membership','gtk_publishes_real_organization_and_original','gtk_public_sdk_reads_exact_windows_original'},
- 'windows-return':{'windows_same_binary_as_first_phase','windows_public_sdk_reads_exact_gtk_original','windows_native_ui_removes_gtk_tag_membership','windows_publishes_membership_change_and_second_original'},
+ 'windows-return':{'windows_same_binary_as_first_phase','windows_public_sdk_reads_exact_gtk_original','windows_native_reader_opens_gtk_original_and_reopens_prior_local_book','windows_native_ui_removes_gtk_tag_membership','windows_publishes_membership_change_and_second_original'},
  'gtk-return':{'gtk_receives_windows_membership_tombstone','gtk_opens_windows_return_original','gtk_public_sdk_reads_exact_windows_original'},
 }
 for name,_ in phases:
@@ -47,6 +47,8 @@ assert hashlib.sha256((rows[1]['folder']/'readback.bin').read_bytes()).hexdigest
 assert hashlib.sha256((rows[3]['folder']/'readback.bin').read_bytes()).hexdigest()==data['return_original_sha256']
 assert (rows[1]['folder']/'gtk-membership.png').read_bytes().startswith(b'\x89PNG')
 assert (rows[2]['folder']/'windows-membership.bmp').read_bytes().startswith(b'BM')
+for name in ('windows-reads-gtk.bmp','windows-reopens-local.bmp'):
+    assert (rows[2]['folder']/name).read_bytes().startswith(b'BM')
 assert (rows[3]['folder']/'gtk-return-membership.png').read_bytes().startswith(b'\x89PNG')
 api=json.loads(subprocess.check_output(['gh','api','repos/%s/actions/runs/%s/artifacts'%(os.environ['GITHUB_REPOSITORY'],os.environ['GITHUB_RUN_ID'])],text=True))
 expected=['windows-gtk-package-','gtk-windows-package-','windows-gtk-first-','windows-gtk-gtk-first-','windows-gtk-return-','windows-gtk-final-']
