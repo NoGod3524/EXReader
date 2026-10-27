@@ -191,7 +191,11 @@ def main():
         assert all(str(fixture_proof[key]) == str(value) for key, value in
             (('source_sha', source), ('run_id', run), ('attempt', attempt)))
         assert len(fixture_proof['generators']) == 2
+        expected_generators = {'tests/reader_gtk_batch_import/make_inputs.py': 3,
+                               'tests/reader_gtk_drop_import/make_inputs.py': 1}
+        assert {item['script'] for item in fixture_proof['generators']} == set(expected_generators)
         for generator in fixture_proof['generators']:
+            assert len(generator['symlinks']) == expected_generators[generator['script']] and len(generator['fifos']) == 1
             assert generator['verified'] and generator['script_sha256'] == sha(Path(generator['script']))
             expected_blob = subprocess.check_output(['git', 'rev-parse', 'HEAD:' + generator['script']], text=True).strip()
             assert generator['git_blob'] == expected_blob
