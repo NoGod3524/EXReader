@@ -1944,6 +1944,16 @@ static exr_status job_txt_go(host_job *job) {
    product write and read runs on the serialized host worker; the UI only hands
    over copied values and never touches the revision store. */
 
+static void txt_trace_text(const char *event, const char *value) {
+  wchar_t path[HOST_PATH];
+  FILE *file;
+  if (!g.data_dir[0]) return;
+  swprintf(path, HOST_PATH, L"%ls\\txt-progress-trace.log", g.data_dir);
+  file = _wfopen(path, L"ab");
+  if (!file) return;
+  fprintf(file, "%s %s\n", event, value ? value : "");
+  fclose(file);
+}
 static int txt_store_open(reader_txt_progress **store, exr_error *error) {
   txt_trace("store_open", 1);
   char *path = host_utf8(g.product_path);
@@ -2480,8 +2490,12 @@ static exr_status job_layout(host_job *job) {
                          &copy, 0, FALSE, DUPLICATE_SAME_ACCESS)) return EXR_IO;
     source.context = copy;
     candidate.config = config;
+    txt_trace("layout_txt_size", (long long)(source.size >> 20));
+    txt_trace("layout_txt_context", source.context ? 1 : 0);
+    txt_trace("layout_txt_fontsize", (long long)config.page.font_size);
     status = exr_txt_pager_create(&source, g.font, &config, &pager, &error);
     txt_trace("layout_txt_pager", (long long)status);
+    if (status != EXR_OK) txt_trace_text("layout_txt_error", error.message);
     if (status != EXR_OK) { CloseHandle(copy); return status; }
     copy = NULL; /* the new pager owns this handle */
     if (status == EXR_OK) status = exr_pager_set_cache(pager, 2, 8 * 1024 * 1024, &error);
