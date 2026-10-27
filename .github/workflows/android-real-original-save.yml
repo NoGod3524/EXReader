@@ -1,0 +1,180 @@
+# SPDX-License-Identifier: MIT
+name: Android real original save
+on:
+  push:
+    branches: [codex/android-real-original-save]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  C11_SEED: d263ce5228838ac90c0a0dc13a5193d4a7739681
+  C11_SDK: edddc463c06ed5731195cdb8f06b2df6dff7699e
+  C11_NDK: 27.0.12077973
+jobs:
+  android:
+    name: build the complete wave3 host and execute it on a real API34 emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Bind unchanged product source and prepare existing test support
+        run: |
+          git diff --exit-code b0269fd2d2365ba20e54cda7e181493a39f75091 HEAD -- apps examples src include cmake CMakeLists.txt bindings ':(exclude)apps/reader/desktop/windows_txt_search.inc' ':(exclude)examples/reader.c' ':(exclude)src/chapter_reader.c'
+          git diff --exit-code 642bb8efe124fdd301410f0b3e8e17292d6a5069 HEAD -- apps/reader/desktop/windows_txt_search.inc examples/reader.c src/chapter_reader.c
+          python3 tests/reader_wave3_c11/candidate.py
+          python3 -m py_compile tests/android_real_original_save/run_ui.py
+          bash -n tests/android_real_original_save/device.sh
+      - name: Install the Android platform CMake NDK and API34 image
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" \
+            "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}" "emulator" \
+            "system-images;android-34;default;x86_64"
+      - name: Build and install the integrated SDK candidate for x86_64
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"
+          mkdir -p "$ws/logs"
+          toolchain="$ANDROID_HOME/ndk/${C11_NDK}/build/cmake/android.toolchain.cmake"
+          echo "C11_TOOLCHAIN=$toolchain" >> "$GITHUB_ENV"
+          echo "C11_STAGE=$ws/stage" >> "$GITHUB_ENV"
+          echo "C11_SDK_STAGE=$ws/sdk-stage" >> "$GITHUB_ENV"
+          cmake -S . -B "$ws/sdk" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DANDROID_ABI=x86_64 \
+            -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$ws/sdk-stage" -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF \
+            -DEXR_BUILD_JNI=ON -DEXR_ENABLE_LIBRARY=ON -DEXR_ENABLE_AUDIO=ON -DEXR_ENABLE_PDF=ON \
+            -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_PDF_CRYPTO=OFF -DEXR_ENABLE_AAC=OFF \
+            -DEXR_ENABLE_TEXT_INDEX=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF \
+            -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_BUILD_SHARED_COMPAT=ON \
+            2>&1 | tee "$ws/logs/sdk-configure.log"
+          cmake --build "$ws/sdk" --parallel 4 --target install 2>&1 | tee "$ws/logs/sdk-build.log"
+          test -f "$ws/sdk-stage/lib/libexreader_jni.so"
+      - name: Install the raw0.2 product and reviewed wave3 packages into one prefix
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"
+          stage="$ws/stage"
+          sdk="$ws/sdk-stage"
+          mkdir -p "$ws/logs"
+          build_module() {
+            name="$1"; source="$2"; shift 2
+            cmake -S "$source" -B "$ws/module-$name" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$C11_TOOLCHAIN" \
+              -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static \
+              -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+              -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$sdk" -DEXR_SDK_VERSION=3.41.0 \
+              -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_PRODUCT_PREFIX="$stage" \
+              -DCMAKE_PREFIX_PATH="$stage;$sdk" -DCMAKE_INSTALL_PREFIX="$stage" "$@" \
+              2>&1 | tee "$ws/logs/$name-configure.log"
+            cmake --build "$ws/module-$name" --parallel 4 --target install 2>&1 | tee "$ws/logs/$name-build.log"
+          }
+          build_module product apps/reader/store/native
+          build_module webdav extras/webdav
+          build_module sideload extras/sideload
+          build_module revisions apps/reader/revisions
+          build_module commands apps/reader/commands
+          build_module sync apps/reader/sync
+          build_module session apps/reader/session
+          build_module reading-state apps/reader/reading-state
+          build_module reading-commands apps/reader/reading-commands
+          build_module annotation-view apps/reader/annotation-view
+          build_module annotation-import apps/reader/annotation-import -DREADER_ANNOTATION_IMPORT_BUILD=ON
+          build_module annotation-export apps/reader/annotation-export
+          build_module jump-history apps/reader/jump-history
+          build_module sync-status-view apps/reader/sync-status-view
+          build_module font-library apps/reader/font-library -DREADER_FONT_LIBRARY_BUILD=ON
+          build_module original-export apps/reader/original-export
+          build_module search apps/reader/search
+          build_module navigation apps/reader/navigation
+          build_module preferences apps/reader/preferences
+      - name: Author the deterministic fixtures and the bundled font
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"
+          python3 tests/webdav_android/fixture.py prepare --output "$ws/network-fixture"
+          mkdir -p tests/reader_host_session_android/debug/res/raw
+          cp "$ws/network-fixture/public/ca.crt" tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
+          python3 tests/reader_wave3_c11/fixtures.py --output "$ws/fixtures"
+          python3 tests/reader_android_navigation/fixtures.py "$ws/navigation-fixtures"
+          python3 tests/reader_android_reading/fixtures.py "$ws/reading-fixtures"
+          python3 - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from build_android_host import write_fixtures
+          write_fixtures(Path('build/wave3/download'))
+          PY
+          python3 tools/reader_catalog_assets.py --output examples/android/app/src/main/assets/reader-catalog-v1.json
+          python3 - <<'PY'
+          import shutil, sys
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from host_font import fetch
+          folder = fetch(Path('build/wave3/font'))
+          assets = Path('examples/android/app/src/main/assets')
+          assets.mkdir(parents=True, exist_ok=True)
+          shutil.copyfile(folder / 'Reader.otf', assets / 'Reader.otf')
+          shutil.copyfile(folder / 'OFL.txt', assets / 'OFL.txt')
+          PY
+          mkdir -p examples/android/app/src/main/jniLibs/x86_64
+          cp "$ws/sdk-stage/lib/libexreader_jni.so" examples/android/app/src/main/jniLibs/x86_64/libexreader_jni.so
+      - name: Build actual host and system-save instrumentation
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"
+          stage="$ws/stage"
+          mkdir -p "$ws/artifacts"
+          gradle -p examples/android --no-daemon --stacktrace \
+            -I "$PWD/tests/reader_wave3_c11/candidate.init.gradle" \
+            -I "$PWD/tests/android_real_original_save/test.init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.OriginalSaveUiTest \
+            :app:assembleDebug :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/original-save-gradle.log"
+          cp examples/android/app/build/outputs/apk/debug/app-debug.apk "$ws/artifacts/app-debug.apk"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/original-save-debug-androidTest.apk"
+          sha256sum "$ws"/artifacts/*.apk > "$ws/artifacts/sha256.txt"
+      - name: Enable hosted emulator accelerator
+        run: sudo chmod 666 /dev/kvm
+      - name: Use actual Android document creator and verify saved original
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash tests/android_real_original_save/device.sh
+      - name: Preserve actual host APK and result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-real-original-save
+          path: |
+            build/wave3/artifacts/
+            build/wave3/evidence/
+            build/wave3/logs/
+          if-no-files-found: warn
