@@ -36,11 +36,9 @@ jobs:
               assert len(names) == 1, names
               lines = archive.read(names[0]).decode('utf-8', 'replace').splitlines()
               hits = [i for i, line in enumerate(lines) if
-                      'testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot' in line or
-                      'error:' in line.lower() or
-                      ('Test Case' in line and 'failed' in line.lower())]
+                      'features.share' in line or 'Type key' in line or 'escape' in line.lower()]
               for i in hits:
                   print('--- line', i + 1, '---')
-                  print('\n'.join(lines[max(0, i-45):i+200] if 'error:' in lines[i].lower() else lines[max(0, i-3):i+5]))
+                  print('\n'.join(lines[max(0, i-5):i+12]))
               print('diagnostic_hit_count', len(hits))
           PY
