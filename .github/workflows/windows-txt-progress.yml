@@ -85,6 +85,8 @@ jobs:
           path: |
             build/windows-raw3-host/legacy-txt-progress/
             build/windows-raw3-host/raw-txt-progress/
+            build/windows-raw3-host/legacy-txt-progress-ui/report.json
+            build/windows-raw3-host/raw-txt-progress-ui/report.json
             build/windows-raw3-host/logs/
             build/native-owner-preflight/display.json
           if-no-files-found: warn
