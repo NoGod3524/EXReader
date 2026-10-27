@@ -2485,6 +2485,13 @@ static exr_status job_layout(host_job *job) {
     exr_source source = g.session.txt_source;
     HANDLE copy = NULL;
     const exr_layout *laid = NULL;
+    exr_layout_config txt_config = g.session.config;
+    /* This branch runs before the shared config block, so it builds the size it
+       is about to apply instead of inheriting an uninitialised one. */
+    txt_config.page.font_size = 28.0f * (float)job->font_percent / 100.0f;
+    txt_config.control.cancelled = host_cancel_check;
+    txt_config.control.context = NULL;
+    config = txt_config;
     txt_trace("layout_txt_enter", (long long)job->txt_offset);
     if (!DuplicateHandle(GetCurrentProcess(), (HANDLE)source.context, GetCurrentProcess(),
                          &copy, 0, FALSE, DUPLICATE_SAME_ACCESS)) return EXR_IO;
