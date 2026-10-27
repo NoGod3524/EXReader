@@ -135,3 +135,9 @@ paths are replaced and no historical fixture generator or assertion is modified.
 Its original G13 gate also rejected an unevaluated status check combined with
 audit_completed (exit1 INVALID REPORT); this exact historical validator rejection
 is recorded as historical_report_valid=false, not promoted to acceptance.
+
+Alt+Home current five-tool passed all10 in run40467044912. Run40467454602
+failed before its first behavior check: Session.launch could not find a mapped
+PID-qualified host window. Workflow now requires actual Openbox readiness before
+launch; failures also retain root window tree/process list/application log inline.
+No host-launch timeout, original test expectation or total job budget was enlarged.

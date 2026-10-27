@@ -168,6 +168,11 @@ jobs:
             openbox >build/c10-logs/d26-tools-openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q 'Name: Openbox'; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q 'Name: Openbox'
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_d26_accessibility/tools_current.py --payload build/c10-compact-package/EXReader-Linux \
@@ -180,6 +185,11 @@ jobs:
           xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
             openbox >build/c10-logs/d26-g13-current-openbox.log 2>&1 & wm=$!
             trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q 'Name: Openbox'; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q 'Name: Openbox'
             unset NO_AT_BRIDGE || true
             export GTK_A11Y=atspi
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
@@ -196,6 +206,11 @@ jobs:
           xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
             openbox >build/c10-logs/d26-account-openbox.log 2>&1 & wm=$!
             trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q 'Name: Openbox'; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q 'Name: Openbox'
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_d26_accessibility/account_status.py --payload build/c10-package/EXReader-Linux --output build/d26-account
@@ -243,6 +258,11 @@ jobs:
             openbox >build/c10-logs/compact-openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q 'Name: Openbox'; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q 'Name: Openbox'
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_gtk_compact/check_ui.py --payload build/c10-compact-package/EXReader-Linux \
@@ -258,6 +278,11 @@ jobs:
             openbox >build/c10-logs/wave3-openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q 'Name: Openbox'; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q 'Name: Openbox'
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_d26_accessibility/retain_history.py --kind tools --report build/c10-wave3-ui/result.json -- /usr/bin/python3 tests/reader_wave3_c10/check_ui.py --payload build/c10-compact-package/EXReader-Linux \
@@ -273,6 +298,11 @@ jobs:
             openbox >build/c10-logs/atspi-openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q 'Name: Openbox'; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q 'Name: Openbox'
             export PYTHONPATH="$PWD/build/gtk-atspi-client"
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
@@ -292,6 +322,11 @@ jobs:
             openbox >build/c10-logs/suites-openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q 'Name: Openbox'; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q 'Name: Openbox'
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             failed=0
@@ -317,6 +352,11 @@ jobs:
           xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
             openbox >build/c10-logs/d26-g13-openbox.log 2>&1 & wm=$!
             trap "kill $wm || true" EXIT
+            for attempt in $(seq 1 100); do
+              if wmctrl -m 2>/dev/null | grep -q 'Name: Openbox'; then break; fi
+              sleep 0.1
+            done
+            wmctrl -m | grep -q 'Name: Openbox'
             unset NO_AT_BRIDGE || true
             export GTK_A11Y=atspi
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
