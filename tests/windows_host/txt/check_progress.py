@@ -60,6 +60,11 @@ def first_line(text):
     return lines[0] if lines else ''
 
 
+def close_cleanly(app):
+    app.close()
+    assert app.process.returncode == 0, f"Host did not exit cleanly: {app.process.returncode}"
+
+
 def main():
     assert os.name == 'nt' and os.environ.get('GITHUB_ACTIONS') == 'true'
     exe, font, out, pdf, injector = map(lambda value: Path(value).resolve(), sys.argv[1:6])
@@ -168,7 +173,7 @@ def main():
         record('product progress history exists for the content identity',
                'revisions=%d heads=%d' % (count, len(heads)))
 
-        app.close(); app = None
+        close_cleanly(app); app = None
         app = ui.P.App(exe, font, profile, existing=True)
         app.wait_idle()
         automation = Uia()
@@ -189,7 +194,7 @@ def main():
         assert '还没有保存过阅读位置' in app.status(), app.status()
         record('a different book identity starts at its own first page', app.status())
 
-        app.close(); app = None
+        close_cleanly(app); app = None
         app = ui.P.App(exe, font, profile, existing=True)
         app.wait_idle()
         automation = Uia()
@@ -219,7 +224,7 @@ def main():
         app.wait(lambda: '阅读位置未保存' in app.status(), timeout=120)
         refused = app.status()
         # A refused write must not trap the exit either: the window still closes.
-        app.close(); app = None
+        close_cleanly(app); app = None
         lock.execute('ROLLBACK')
         lock.close()
         heads_after, count_after = progress_heads('txt:' + expected)
@@ -241,7 +246,7 @@ def main():
         app.click('next')
         app.wait_idle()
         sdk_second = page_text(app, automation)
-        app.close(); app = None
+        close_cleanly(app); app = None
         app = ui.P.App(exe, font, profile, existing=True)
         app.wait_idle()
         automation = Uia()
@@ -258,7 +263,7 @@ def main():
 
         # A valid but mismatching capture must remain untouched through page
         # turns and relayout, using the installed module to create the fixture.
-        app.close(); app = None
+        close_cleanly(app); app = None
         subprocess.run([str(injector), product_db, family, 'txt:' + expected],
                        check=True, capture_output=True, timeout=60)
         mismatch_heads, mismatch_count = progress_heads('txt:' + expected)
@@ -272,7 +277,7 @@ def main():
         assert '不一致' in app.status(), app.status()
         app.click('next'); app.wait_idle()
         press_font_increase(); app.wait_idle()
-        app.close(); app = None
+        close_cleanly(app); app = None
         after_heads, after_count = progress_heads('txt:' + expected)
         assert (after_heads, after_count) == (mismatch_heads, mismatch_count)
         record('mismatched position remains intact across page turn and relayout')

@@ -5749,9 +5749,6 @@ static void finish_close(HWND window) {
   if (acct_exit_blocked()) return;
 #endif
   KillTimer(window, 2);
-#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
-  if (g.session.txt) g.txt_force_save = 1;
-#endif
   if (!save_progress()) {
     g.closing = 0;
     if (g.drive_mode) SetTimer(window, 1, 30, NULL);
@@ -5951,6 +5948,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       product_shelf_remember();KillTimer(window,3);KillTimer(window,4);
 #endif
       g.closing = 1;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      if (g.session.txt) g.txt_force_save = 1;
+#endif
       KillTimer(window, 1);
 #ifdef EXR_READER_WINDOWS_ACCOUNT
       acct_exit();
