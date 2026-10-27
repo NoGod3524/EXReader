@@ -649,21 +649,22 @@ struct ReaderScreen: View {
         // A keyboard in a native sheet does not resize/repaginate the reader
         // underneath it or overwrite a completed search navigation status.
         .ignoresSafeArea(.keyboard)
-        .sheet(isPresented: $showSelection) {
+        .sheet(isPresented: $showSelection, onDismiss: { if compactTools { toolsToggleFocused = true } }) {
             SelectionSheet(model: model)
         }
         .sheet(isPresented: $showNotes, onDismiss: { if compactTools { toolsToggleFocused = true } }) {
             NotesSheet(model: model)
         }
-        .sheet(isPresented: $showSearch) { HostSearchSheet(model: model) }
-        .sheet(isPresented: $showNavigation) { HostNavigationSheet(model: model) }
-        .sheet(isPresented: $showReadingRecords) { HostReadingRecordsSheet(model: model) }
+        .sheet(isPresented: $showSearch, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostSearchSheet(model: model) }
+        .sheet(isPresented: $showNavigation, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostNavigationSheet(model: model) }
+        .sheet(isPresented: $showReadingRecords, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostReadingRecordsSheet(model: model) }
 #if EXR_APPLE_WAVE3
-        .sheet(isPresented: $showWave3) { HostWave3Sheet(state: model.wave3, ownerBusy: model.busy, actions: model.wave3Actions) }
+        .sheet(isPresented: $showWave3, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostWave3Sheet(state: model.wave3, ownerBusy: model.busy, actions: model.wave3Actions) }
 #endif
 #if EXR_APPLE_PAGE_THEME
-        .sheet(isPresented: $showPageTheme) { HostPageThemeSheet(model: model) }
+        .sheet(isPresented: $showPageTheme, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostPageThemeSheet(model: model) }
 #endif
+        .onChange(of: toolsVisible) { _ in toolsToggleFocused = true }
         .onDisappear { model.detach() }
         .onChange(of: model.location) { value in hostAnnounce(value) }
         .onChange(of: model.statusText) { value in if !model.busy { hostAnnounce(value) } }
