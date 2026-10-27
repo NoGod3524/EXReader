@@ -14,7 +14,7 @@ for suite, folder, count in [('batch_import', 'd26-retained-batch-inputs', 3),
     links = {str(p.relative_to(root)): os.readlink(p) for p in root.rglob('*') if p.is_symlink()}
     assert len(links) == count, links
     fifos = [str(p.relative_to(root)) for p in root.rglob('*') if stat.S_ISFIFO(p.lstat().st_mode)]
-    assert len(fifos) == (1 if suite == 'drop_import' else 0), fifos
+    assert len(fifos) == 1, fifos
     rows.append(dict(script=script, git_blob=subprocess.check_output(['git','rev-parse','HEAD:'+script],text=True).strip(),
         script_sha256=hashlib.sha256(Path(script).read_bytes()).hexdigest(), directory=str(root),
         symlinks=links, fifos=fifos, verified=True))

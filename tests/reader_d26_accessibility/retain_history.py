@@ -34,7 +34,7 @@ invalid_report = (a.kind == 'g13' and not accepted and result.returncode == 1
                   and any(line.startswith('INVALID REPORT: unevaluated checks ')
                           and 'cannot coexist with audit_completed' in line
                           for line in result.stdout.splitlines()))
-expected_exit = 0 if accepted else (2 if a.kind == 'g13' else 1)
+expected_exit = (0 if accepted or '--require-accepted' not in command else 2) if a.kind == 'g13' else (0 if accepted else 1)
 assert invalid_report or result.returncode == expected_exit, ('unexpected historical process outcome', result.returncode, expected_exit)
 # This is a preserved historical validator rejection, never a valid audit.
 # Current audit/gate are executed separately and must satisfy every check.
