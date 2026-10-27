@@ -18,14 +18,27 @@ final class FeaturesUITests: XCTestCase {
         return check()
     }
     private func tap(_ id: String) {
-        for _ in 0..<5 {
-            if e(id).exists && e(id).isHittable { break }
-            if e("features.close").exists {
-                let scroll = e("features.scroll")
-                if e(id).exists && e(id).frame.midY < scroll.frame.midY { scroll.swipeDown() } else { scroll.swipeUp() }
+        let scroll = e("features.scroll")
+        let scrollTarget = id.hasPrefix("features.") && !["features.close", "features.refresh", "features.share"].contains(id)
+        for _ in 0..<24 {
+            let target = e(id)
+            let inViewport = !scrollTarget || !scroll.exists || (target.exists && scroll.frame.contains(CGPoint(x: target.frame.midX, y: target.frame.midY)))
+            if target.exists && inViewport && target.isHittable { break }
+            if scrollTarget && scroll.exists {
+                let above = target.exists && target.frame.midY < scroll.frame.midY
+#if os(macOS)
+                scroll.scroll(byDeltaX: 0, deltaY: above ? 140 : -140)
+#else
+                if above { scroll.swipeDown(velocity: .slow) }
+                else { scroll.swipeUp(velocity: .slow) }
+#endif
             }
         }
-        XCTAssertTrue(wait { self.e(id).exists && self.e(id).isEnabled && self.e(id).isHittable }, "Unavailable \(id) \(app.debugDescription)")
+        XCTAssertTrue(wait {
+            let target = self.e(id)
+            let inViewport = !scrollTarget || !scroll.exists || (target.exists && scroll.frame.contains(CGPoint(x: target.frame.midX, y: target.frame.midY)))
+            return target.exists && inViewport && target.isEnabled && target.isHittable
+        }, "Unavailable \(id) \(app.debugDescription)")
         e(id).tap()
     }
     private func mark(_ name: String) {
@@ -70,10 +83,23 @@ final class FeaturesUITests: XCTestCase {
         tap("features.share")
 #if os(iOS)
         XCTAssertTrue(wait { self.e("features.share.native").exists }); mark("native-share-presented")
-        let close = app.buttons["Close"].firstMatch, chineseClose = app.buttons["关闭"].firstMatch
-        if close.exists { close.tap() } else if chineseClose.exists { chineseClose.tap() }
-        else { e("features.share.native").swipeDown() }
-        XCTAssertTrue(wait { !self.e("features.share.native").exists })
+        let native = e("features.share.native")
+        let systemClose = app.buttons["header.closeButton"].firstMatch
+        let close = native.buttons["Close"].firstMatch, chineseClose = native.buttons["关闭"].firstMatch
+        if systemClose.waitForExistence(timeout: 15) {
+            XCTAssertTrue(wait { systemClose.isHittable })
+            systemClose.tap()
+        } else if close.exists && close.isHittable { close.tap() }
+        else if chineseClose.exists && chineseClose.isHittable { chineseClose.tap() }
+        else if native.exists {
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
+            start.press(forDuration: 0.1, thenDragTo: end)
+        }
+        if !e("features.close").isHittable {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.15)).tap()
+        }
+        XCTAssertTrue(wait { !self.e("features.share.native").exists && self.e("features.close").isHittable })
 #else
         XCTAssertTrue(wait { self.app.menus.count > 0 }); mark("native-sharing-picker-presented")
         app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
@@ -103,12 +129,16 @@ final class FeaturesUITests: XCTestCase {
     }
     func testNativeHistoryAfterFoundAndLargeRotationExit() {
         launch(large: true); let original = text("reader.location")
-        tap("reader.search"); tap("search.query"); e("search.query").typeText("C00P040W00"); tap("search.find")
+        // Chapter zero is intentionally repeated by the navigation fixture.
+        // Use the independently authored unique chapter for this FOUND jump.
+        tap("reader.search"); tap("search.query"); e("search.query").typeText("C01P040W00"); tap("search.find")
         let hits = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'search.hit.'"))
         XCTAssertTrue(wait { hits.count == 1 }); hits.firstMatch.tap(); ready()
         XCTAssertNotEqual(text("reader.location"), original); let destination = text("reader.location")
         features(); tap("features.history.back"); status("已精确定位历史位置"); XCTAssertTrue(e("features.history.forward").isEnabled); mark("native-history-back-after-found")
-        tap("features.history.forward"); status("已精确定位历史位置"); XCTAssertTrue(e("features.history.back").isEnabled); mark("native-history-forward-after-found")
+        tap("features.history.forward"); status("已精确定位历史位置")
+        XCTAssertTrue(wait { self.text("reader.location") == destination && self.e("features.history.back").isEnabled && !self.e("features.cancel").exists })
+        mark("native-history-forward-after-found")
 #if os(iOS)
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(wait { self.e("features.close").isHittable }); mark("large-font-landscape-close")

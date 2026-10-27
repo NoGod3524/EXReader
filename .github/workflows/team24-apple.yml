@@ -4,6 +4,15 @@ on:
     branches: [codex/team24-apple, codex/dsf-apple-ui-close]
     paths-ignore: ['docs/handoffs/team24-apple*']
   workflow_dispatch:
+    inputs:
+      inspect_iphone_tree:
+        description: Inspect the preserved 0d256c14 macOS failure attachments
+        type: boolean
+        default: false
+      inspect_macos_log:
+        description: Inspect the preserved 16398111 iPad action log
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -14,6 +23,7 @@ env:
 jobs:
   sdk:
     name: Team24 Apple installed ${{ matrix.target }}
+    if: ${{ !inputs.inspect_iphone_tree && !inputs.inspect_macos_log }}
     runs-on: macos-15
     timeout-minutes: 55
     strategy:
@@ -31,6 +41,25 @@ jobs:
           ruby -c tests/reader_team24_apple/make_project.rb
       - name: Frozen SDK and exact installed five module family
         run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+      - name: Actual account session terminal callbacks
+        if: ${{ matrix.target == 'macos' }}
+        run: |
+          mkdir -p build/account-terminal
+          sdk="$PWD/build/raw3-ios-sdk/macos/sdk"
+          product="$PWD/build/raw3-ios-sdk/macos/raw-products"
+          python3 - "$sdk" "$product" <<'PY'
+          import subprocess, sys
+          sys.path.insert(0, 'tools')
+          from apple_swift import flags
+          sdk, product = sys.argv[1:]
+          sources = ['examples/apple/HostSDK.swift', 'examples/apple/HostCatalog.swift',
+                     'examples/apple/HostAccount.swift', 'tests/reader_team24_apple/AccountTerminalReview.swift']
+          subprocess.run(['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library', '-O',
+                          '-I', sdk + '/include', '-L', sdk + '/lib', '-lexreader',
+                          '-Xlinker', '-rpath', '-Xlinker', sdk + '/lib', *sources,
+                          '-o', 'build/account-terminal/account-terminal', *flags(sdk, product, True)], check=True)
+          PY
+          python3 tests/reader_team24_apple/run_account_terminal.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -72,7 +101,7 @@ jobs:
   authenticate:
     name: Team24 Apple original ZIP authentication
     needs: [sdk, native]
-    if: always()
+    if: ${{ always() && !inputs.inspect_iphone_tree && !inputs.inspect_macos_log }}
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
@@ -88,3 +117,91 @@ jobs:
           path: build/team24-apple-summary/summary.json
           retention-days: 30
           if-no-files-found: error
+  inspect-iphone-tree:
+    if: ${{ inputs.inspect_iphone_tree }}
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Authenticate and inspect the original macOS result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          swift -e 'import Foundation; let parent = FileManager.default.temporaryDirectory.resolvingSymlinksInPath(); let child = parent.appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true); try FileManager.default.createDirectory(at: child, withIntermediateDirectories: true); print("temporary URL: \(child.absoluteString)"); print("temporary path: [\(child.path)]"); print("components: \(child.pathComponents)"); try child.path.write(toFile: "inspection-temp-path.txt", atomically: true, encoding: .utf8)'
+          swift -e 'import Foundation; import Darwin; let resolved = realpath(FileManager.default.temporaryDirectory.path, nil)!; let child = URL(fileURLWithPath: String(cString: resolved), isDirectory: true).appendingPathComponent("wave3-review-" + UUID().uuidString, isDirectory: true); free(resolved); try FileManager.default.createDirectory(at: child, withIntermediateDirectories: true); print("realpath child: [\(child.path)]"); try child.path.write(toFile: "inspection-temp-path.txt", atomically: true, encoding: .utf8)'
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, zipfile
+          path = pathlib.Path('inspection-temp-path.txt').read_text()
+          print('trailing slash:', path.endswith('/'))
+          fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+          try:
+              for part in path.split('/')[1:]:
+                  try:
+                      next_fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+                  except OSError as error:
+                      print('no-follow failure:', repr(part), error); break
+                  os.close(fd); fd = next_fd
+              else: print('no-follow path: accepted')
+          finally: os.close(fd)
+          root = pathlib.Path('inspection'); root.mkdir()
+          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12701173864"
+          item = json.loads(subprocess.check_output(['gh', 'api', api]))
+          assert item['workflow_run']['id'] == 40423806186
+          assert item['workflow_run']['head_sha'] == '8d5660d337b96d10f3d7daef836f16746c0073d7'
+          assert item['size_in_bytes'] == 462057514
+          digest = '6fdda08ab1269514b5530fd99117d500ba92d48c5fca40845fefcb4526f0711c'
+          assert item['digest'] == 'sha256:' + digest and not item['expired']
+          with (root / 'artifact.zip').open('wb') as out:
+              subprocess.run(['gh', 'api', api + '/zip'], stdout=out, check=True)
+          assert hashlib.file_digest((root / 'artifact.zip').open('rb'), 'sha256').hexdigest() == digest
+          with zipfile.ZipFile(root / 'artifact.zip') as archive:
+              names = [name for name in archive.namelist() if name.startswith('wave3.xcresult/')]
+              assert names
+              for name in names:
+                  assert '..' not in pathlib.PurePosixPath(name).parts
+                  archive.extract(name, root)
+              for name in archive.namelist():
+                  if name.endswith('wave3-native-ui.log'):
+                      lines = archive.read(name).decode('utf-8', 'replace').splitlines()
+                      for i, line in enumerate(lines):
+                          if 'error:' in line or 'Swipe' in line or 'Tap "features.' in line:
+                              print('\n'.join(lines[max(0, i-4):i+5]))
+          subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', str(root / 'wave3.xcresult'), '--output-path', str(root / 'attachments')], check=True)
+          manifest = json.loads((root / 'attachments/manifest.json').read_text())
+          for group in manifest:
+              if not any(name in str(group) for name in ('testNativeHistoryAfterFoundAndLargeRotationExit', 'testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot', 'testNativeAnnotationPreviewConfirmCancelAndDuplicate')): continue
+              for item in group['attachments']:
+                  if 'final-native-tree' in item['suggestedHumanReadableName']:
+                      print((root / 'attachments' / item['exportedFileName']).read_text())
+          PY
+  inspect-macos-log:
+    if: ${{ inputs.inspect_macos_log }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Authenticate and inspect the original iPad action log
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, subprocess, zipfile
+          api = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/12701173864"
+          item = json.loads(subprocess.check_output(['gh', 'api', api]))
+          assert item['workflow_run']['id'] == 40423806186
+          assert item['workflow_run']['head_sha'] == '8d5660d337b96d10f3d7daef836f16746c0073d7'
+          digest = '6fdda08ab1269514b5530fd99117d500ba92d48c5fca40845fefcb4526f0711c'
+          assert item['size_in_bytes'] == 462057514 and item['digest'] == 'sha256:' + digest and not item['expired']
+          with open('artifact.zip', 'wb') as out:
+              subprocess.run(['gh', 'api', api + '/zip'], stdout=out, check=True)
+          with open('artifact.zip', 'rb') as source:
+              h = hashlib.sha256()
+              for block in iter(lambda: source.read(1024 * 1024), b''): h.update(block)
+          assert h.hexdigest() == digest
+          with zipfile.ZipFile('artifact.zip') as archive:
+              names = [n for n in archive.namelist() if n.endswith('wave3-native-ui.log')]
+              assert len(names) == 1
+              lines = archive.read(names[0]).decode('utf-8', 'replace').splitlines()
+              for i, line in enumerate(lines):
+                  if 'error:' in line or ('Test Case' in line and 'failed' in line.lower()):
+                      print('\n'.join(lines[max(0, i-160):i+90]))
+                  if 'Swipe ' in line or 'Tap "features.' in line or 'Press ' in line or 'Drag ' in line:
+                      print('\n'.join(lines[max(0, i-3):i+5]))
+          PY
