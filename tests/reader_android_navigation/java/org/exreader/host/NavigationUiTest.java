@@ -62,7 +62,20 @@ public final class NavigationUiTest extends Instrumentation {
         long now=SystemClock.uptimeMillis();sendPointerSync(MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,rect.centerX(),rect.centerY(),0));sendPointerSync(MotionEvent.obtain(now,now+30,MotionEvent.ACTION_UP,rect.centerX(),rect.centerY(),0));
     }
     private void click(String label){until(node->node.isVisibleToUser()&&node.isEnabled()&&text(node).equalsIgnoreCase(label),this::tap,"click "+label,30000);}
-    private void result(String label,boolean select){long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){if(act(node->id(node,"text1")&&node.isVisibleToUser()&&node.isEnabled()&&text(node).contains(label),select?this::tap:null))return;act(node->description(node,"目录条目"),node->node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD));SystemClock.sleep(100);}throw new AssertionError("Actual visible directory row missing: "+label);}
+    private void result(String label,boolean select){
+        long end=SystemClock.elapsedRealtime()+30000;boolean backward=true;
+        while(SystemClock.elapsedRealtime()<end){
+            try {
+                if(act(node->id(node,"text1")&&node.isVisibleToUser()&&node.isEnabled()&&text(node).contains(label),select?this::tap:null))return;
+                boolean[] moved={false};
+                int direction=backward?AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD:AccessibilityNodeInfo.ACTION_SCROLL_FORWARD;
+                act(node->description(node,"目录条目"),node->moved[0]=node.performAction(direction));
+                if(backward&&!moved[0])backward=false;
+            } catch(IllegalStateException stale) {}
+            SystemClock.sleep(100);
+        }
+        throw new AssertionError("Actual visible directory row missing: "+label);
+    }
     private void contains(String label){result(label,true);}
     private String searchStatus(){String[] value={null};act(node->description(node,"目录状态"),node->value[0]=text(node));return value[0];}
     private void status(String value){until(node->description(node,"目录状态")&&text(node).contains(value),null,"search status "+value,120000);}
