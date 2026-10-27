@@ -217,7 +217,7 @@ jobs:
       - name: Install GTK runtime and UI automation
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-0 libsecret-1-0 libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 gnome-keyring libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
           chmod +x build/package/bin/exreader-linux build/package/received-sdk-inspect
       - name: GTK receives Windows membership change and new original
         run: |
