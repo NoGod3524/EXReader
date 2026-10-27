@@ -110,6 +110,9 @@ def main():
     def press_font_increase():
         ui.send(ui.U.GetDlgItem(app.window, FONT_INC), 0xF5)  # BM_CLICK
 
+    def press_font_decrease():
+        ui.send(ui.U.GetDlgItem(app.window, FONT_DEC), 0xF5)  # BM_CLICK
+
     try:
         profile = out / 'profile'
         app = ui.P.App(exe, font, profile)
@@ -149,7 +152,9 @@ def main():
         record('six forward page turns move to later numbered content', marker(seen[-1]))
 
         before_font = page_text(app, automation)
-        press_font_increase()
+        # A smaller type size always fits; the frozen pager refuses some oversized
+        # ones with EXR_ARGUMENT, which the host reports instead of relayouting.
+        press_font_decrease()
         app.wait_idle()
         after_font = page_text(app, automation)
         first_marker_text = first_line(before_font)
@@ -207,7 +212,7 @@ def main():
             except sqlite3.OperationalError:
                 time.sleep(0.2)
         assert locked, 'could not hold the product database write lock'
-        press_font_increase()
+        press_font_decrease()
         app.wait_idle()
         refused = ''
         try:
