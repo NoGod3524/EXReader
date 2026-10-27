@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 typedef struct { FILE *file; } file_source;
 static size_t read_at(void *ctx,uint64_t offset,void *buffer,size_t size) {
@@ -17,7 +18,15 @@ int main(int argc,char **argv) {
   file_source *in;exr_source source={0};exr_font *font=NULL;exr_pager *pager=NULL;
   exr_layout *page=NULL;exr_error error={0};size_t count=0,last=0;LARGE_INTEGER frequency,begin,end;
   PROCESS_MEMORY_COUNTERS_EX memory={0};
-  if(argc!=2) return 2;
+  int replay;size_t saved_page=0,saved_start=0,saved_end=0;FILE *position;
+  if(argc!=4) return 2;
+  replay=strcmp(argv[2],"replay")==0;
+  if(!replay && strcmp(argv[2],"record")!=0) return 2;
+  if(replay) {
+    position=fopen(argv[3],"r");if(!position) return 2;
+    if(fscanf(position,"%zu %zu %zu",&saved_page,&saved_start,&saved_end)!=3) return 2;
+    fclose(position);
+  }
   in=(file_source *)calloc(1,sizeof(*in));if(!in) return 2;
   in->file=fopen(argv[1],"rb");if(!in->file) return 2;
   if(_fseeki64(in->file,0,SEEK_END)) return 2;
@@ -31,7 +40,17 @@ int main(int argc,char **argv) {
     if(!page) break;
     p=exr_layout_pages(page,&n);
     if(n!=1 || p[0].end<=p[0].start || (count && p[0].start<last)) die("page sequence",&error);
+    if(count==100) {
+      if(replay) {
+        if(saved_page!=count || saved_start!=p[0].start || saved_end!=p[0].end) die("restart position mismatch",&error);
+        printf("restart replay page=%zu start=%zu end=%zu\n",count,p[0].start,p[0].end);
+      } else {
+        position=fopen(argv[3],"w");if(!position) return 2;
+        if(fprintf(position,"%zu %zu %zu\n",count,p[0].start,p[0].end)<0 || fclose(position)) return 2;
+      }
+    }
     last=p[0].end;count++;exr_layout_free(page);page=NULL;
+    if(replay && count>100) break;
     if(count%1000==0) { fprintf(stderr,"pages=%zu end=%zu\n",count,last);fflush(stderr); }
   }
   QueryPerformanceCounter(&end);memory.cb=sizeof(memory);
