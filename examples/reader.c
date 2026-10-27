@@ -2088,11 +2088,16 @@ static exr_status txt_restore(host_session *session, const char *key, size_t *pa
   }
   status = reader_txp_load(store, key, &saved, &meta, &detail);
   txt_trace("restore_load", (long long)status);
+  txt_trace("restore_close_enter", 0);
   reader_txp_close(&store);
+  txt_trace("restore_close_leave", 0);
   if (status != READER_TXP_OK) {
+    txt_trace("restore_note_enter", (long long)status);
     session->hold_progress = 1;
     copy_wstring(note, capacity, txt_status_note(status));
+    txt_trace("restore_note_copied", (long long)(capacity ? 1 : 0));
     if (error) memset(error, 0, sizeof(*error));
+    txt_trace("restore_note_return", 0);
     return EXR_OK;
   }
   if (saved.context_bytes) {
