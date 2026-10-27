@@ -1,8 +1,17 @@
 # D24 Apple large type
 
 Base: `2f215f5793a7344d22db350276ba9f8a07abe86f`.
-Owns only ReaderScreen in `examples/apple/HostViews.swift`; D21 owns other
-account/receive portions of that file. No SDK, historic tests or budgets changed.
+Owns ReaderScreen in `examples/apple/HostViews.swift`. After native AX evidence
+identified the redundant account banner during reading, D21 and the coordinator
+agreed to the minimal presentation-only extension: HostRootView publishes a
+read-only `HostReadingRouteKey`; `HostAccountRoot` in `HostAccountViews.swift`
+hides the separate banner only while reading and supplies an environment action
+to the existing chooser. The reading More menu keeps `account.choose` reachable;
+chooser dismissal restores the intended More accessibility focus target in code.
+D21 retains LibraryScreen receive UI and all account/sync owners. No HostAccount,
+HostModel, synchronization/session behavior, SDK, historical test or budget changed.
+See [RESULTS.md](RESULTS.md) for accepted same-source evidence and real-device /
+VoiceOver limitations.
 
 Current source already has a compact horizontal tool strip and 44pt back target.
 Preserved prior evidence: `docs/READER-APPLE-ACCOUNTS.md` records the actual
