@@ -433,6 +433,11 @@ def main():
         report['accepted'] = True
     except Exception as error:
         report['failure'] = type(error).__name__ + ': ' + str(error)
+        for diagnostic in (['xwininfo', '-root', '-tree'], ['wmctrl', '-lp']):
+            result = subprocess.run(diagnostic, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            print(json.dumps({'diagnostic': diagnostic, 'exit_code': result.returncode, 'output': result.stdout}), flush=True)
+        if (output / 'application.log').exists():
+            print((output / 'application.log').read_text(errors='replace'), flush=True)
         if app is not None:
             print(json.dumps({'failure': report['failure'], 'visible_controls': [
                 dict(name=bus.name(n), role=bus.role(n), states=bus.states(n),
