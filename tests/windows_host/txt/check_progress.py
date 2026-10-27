@@ -32,6 +32,10 @@ sys.path.insert(0, str(ROOT / 'tests/reader_perf_windows'))
 from perf_windows import make_txt_fixture
 sys.path.insert(0, str(ROOT / 'tests/reader_a11y_windows'))
 from uia_layer import Uia
+sys.path.insert(0, str(ROOT / 'tests/reader_wave3_c09'))
+wave3_spec = importlib.util.spec_from_file_location("wave3_ui", ROOT / "tests/reader_wave3_c09/check_ui.py")
+wave3 = importlib.util.module_from_spec(wave3_spec)
+wave3_spec.loader.exec_module(wave3)
 
 FONT_INC = 114
 FONT_DEC = 113
@@ -216,6 +220,34 @@ def main():
         open_row(fixture.name)
         assert 'Perf Import 0000' in page_text(app, automation), page_text(app, automation)[:200]
         record('shelf selection opens the 16792975-byte original at its first page')
+        export_dir = out / 'mixed-original-exports'
+        export_dir.mkdir()
+        dialog = wave3.open_feature(app, wave3.ORIGINALS)
+        export_rows = wave3.rows(dialog)
+        txt_matches = [i for i, row in enumerate(export_rows) if fixture.name in row]
+        pdf_matches = [i for i, row in enumerate(export_rows) if pdf.stem in row]
+        assert len(txt_matches) == len(pdf_matches) == 1, export_rows
+        for index in (txt_matches[0], pdf_matches[0]):
+            ui.send(ui.U.GetDlgItem(dialog, wave3.ROWS), 0x185, 1, index)
+        wave3.post_click(dialog, wave3.B1)
+        wave3.fill_system_dialog(app, export_dir)
+        wave3.wait_message(app, dialog, wave3.N.ORIGINALS_DONE, 240)
+        files = sorted(p.name for p in export_dir.iterdir())
+        expected_files = sorted([expected + '.txt', digest(pdf) + '.pdf'])
+        assert files == expected_files, (files, expected_files)
+        assert digest(export_dir / (expected + '.txt')) == expected
+        assert digest(export_dir / (digest(pdf) + '.pdf')) == digest(pdf)
+        assert len(wave3.rows(dialog)) == 2
+        for index in range(2):
+            ui.send(ui.U.GetDlgItem(dialog, wave3.ROWS), 0x185, 1, index)
+        wave3.post_click(dialog, wave3.B1)
+        wave3.fill_system_dialog(app, export_dir)
+        wave3.wait_message(app, dialog, wave3.N.ORIGINALS_DONE, 240)
+        assert all(wave3.N.EXISTING in row for row in wave3.rows(dialog)), wave3.rows(dialog)
+        assert sorted(p.name for p in export_dir.iterdir()) == expected_files
+        wave3.close_feature(app, dialog)
+        app.wait_idle()
+        record('mixed SDK and large TXT original export preserves exact bytes and reports duplicates')
         first_page = page_text(app, automation)
         before_selection = out / 'txt-page-before-selection.bmp'
         after_selection = out / 'txt-page-selected.bmp'

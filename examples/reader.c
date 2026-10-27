@@ -4699,6 +4699,9 @@ static void host_command(int id) {
 #if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_SEARCH)
       && id != IDC_INBOOK
 #endif
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_WAVE3)
+      && id != IDC_W3_ORIGINALS
+#endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
       && id != IDC_CLOUD_IMPORT && id != IDC_BULK_ORGANIZE
 #endif
