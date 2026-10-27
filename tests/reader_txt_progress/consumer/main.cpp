@@ -97,15 +97,25 @@ reader_revision_status history_local(reader_revisions *history, int raw, const s
 #endif
   return reader_revision_local(history, wire.data(), wire.size(), info, created, detail);
 }
-reader_revision_status history_receive(reader_revisions *history, int raw, const std::string &wire,
-                                       reader_revision_info *info, int *created,
-                                       reader_revision_error *detail) {
+reader_revision_status history_validate(reader_revisions *history, int raw, const std::string &wire,
+                                        reader_revision_info *info, reader_revision_error *detail) {
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
-  if (raw) return reader_revision_receive_raw_v3(history, wire.data(), wire.size(), NULL, info, created, detail);
+  if (raw) return reader_revision_validate_raw_v3(history, wire.data(), wire.size(), NULL, info, detail);
 #else
   (void)raw;
 #endif
-  return reader_revision_receive(history, wire.data(), wire.size(), NULL, info, created, detail);
+  return reader_revision_validate(history, wire.data(), wire.size(), NULL, info, detail);
+}
+/* receive requires the remote transport SHA-256 of the exact bytes. */
+reader_revision_status history_receive(reader_revisions *history, int raw, const std::string &wire,
+                                       const char *expected, reader_revision_info *info, int *created,
+                                       reader_revision_error *detail) {
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if (raw) return reader_revision_receive_raw_v3(history, wire.data(), wire.size(), expected, info, created, detail);
+#else
+  (void)raw;
+#endif
+  return reader_revision_receive(history, wire.data(), wire.size(), expected, info, created, detail);
 }
 reader_revision_status history_get(reader_revisions *history, int raw, const char *id, char **wire,
                                    size_t *bytes, reader_revision_info *info,
@@ -343,7 +353,12 @@ int main(int argc, char **argv) {
     reader_revision_info info{};
     int created = 0;
     reader_revision_error detail{};
-    const reader_revision_status received = history_receive(history, raw, wire, &info, &created, &detail);
+    reader_revision_info validated{};
+    reader_revision_error validate_detail{};
+    const reader_revision_status valid = history_validate(history, raw, wire, &validated, &validate_detail);
+    const reader_revision_status received = valid == READER_REV_OK
+      ? history_receive(history, raw, wire, validated.sha256, &info, &created, &detail)
+      : valid;
     reader_txp_position loaded{};
     reader_txp_result meta{};
     const reader_txp_status load = reader_txp_load(store, pending_key.c_str(), &loaded, &meta, &error);

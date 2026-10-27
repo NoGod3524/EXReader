@@ -48,10 +48,11 @@ def main():
     sdk_options = ['cmake', '--preset', 'reading-library', '-B', OUT / 'sdk-build',
                    '-DCMAKE_INSTALL_PREFIX=' + str(sdk)]
     if os.name != 'nt':
-        # The frozen SDK tree is unchanged and its GCC 11 build reports an existing
-        # misleading-indentation warning; only the warning-to-error promotion is off
-        # for this Linux component build, no product assertion changes.
-        sdk_options.append('-DCMAKE_C_FLAGS=-Wno-error')
+        # The frozen SDK tree is unchanged; GCC 11 promotes its existing
+        # misleading-indentation warning under the SDK's own -Werror. Building the
+        # same sources with clang keeps the unmodified SDK tree and every product
+        # assertion, instead of relaxing the project's warning policy.
+        sdk_options += ['-DCMAKE_C_COMPILER=clang', '-DCMAKE_CXX_COMPILER=clang++']
     run(sdk_options, 'sdk-configure')
     run(['cmake', '--build', OUT / 'sdk-build', '--parallel', '4'], 'sdk-build')
     run(['cmake', '--install', OUT / 'sdk-build'], 'sdk-install')
