@@ -11,12 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: e24527faed81110ea4626d56013469487c606cb4
+          ref: b9dca7c5b4b21b69aa6d63a5893a0141eaa814d5
           fetch-depth: 0
       - name: Execute actual D23 Windows source admission
         shell: pwsh
         run: |
-          $env:GITHUB_SHA = 'e24527faed81110ea4626d56013469487c606cb4'
+          $env:GITHUB_SHA = 'b9dca7c5b4b21b69aa6d63a5893a0141eaa814d5'
           if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw 'candidate mismatch' }
           $lines = Get-Content .github/workflows/reader-d23-relay.yml
           $start = [Array]::IndexOf($lines, '      - name: Confirm exact base and unchanged product paths')
@@ -36,12 +36,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: e24527faed81110ea4626d56013469487c606cb4
+          ref: b9dca7c5b4b21b69aa6d63a5893a0141eaa814d5
           fetch-depth: 0
       - name: Check exact common-source platform guards
         shell: bash
         run: |
-          candidate=e24527faed81110ea4626d56013469487c606cb4
+          candidate=b9dca7c5b4b21b69aa6d63a5893a0141eaa814d5
           test "$(git rev-parse HEAD)" = "$candidate"
           export GITHUB_SHA="$candidate"
           python3 tests/android_font_reader/guard.py
