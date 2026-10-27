@@ -89,35 +89,45 @@ static const char *format_name(exr_format format) {
     default:return NULL;
   }
 }
-exr_status reader_catalog_sdk_original_identity(exr_library *library,int64_t id,const exr_control *control,
-                                 char hex[65],uint64_t *bytes,exr_error *error) {
+exr_status reader_catalog_source_identity(const exr_source *source,const exr_control *control,
+                                          char hex[65],uint64_t *bytes,exr_error *error) {
   if(error) memset(error,0,sizeof(*error));
   if(hex) hex[0]=0;
   if(bytes) *bytes=0;
-  if(!library || id<=0 || !hex || !bytes) return fail(error,EXR_ARGUMENT,"Missing stored original identity output");
-  exr_source source={0};source_hash hash={0};unsigned char digest[32],*buffer=NULL;
-  exr_status status=exr_library_source(library,id,&source,error);uint64_t offset=0;
-  if(status!=EXR_OK) return status;
-  if(!source.read_at || source.size==0 || source.size>INT64_MAX) {
-    status=fail(error,EXR_LIMIT,"Invalid stored original size/provider");goto done;
-  }
-  buffer=malloc(65536);
-  if(!buffer) { status=fail(error,EXR_MEMORY,"Source hash buffer allocation failed");goto done; }
+  if(!source || !source->read_at || !hex || !bytes)
+    return fail(error,EXR_ARGUMENT,"Missing source identity input or output");
+  if(source->size==0 || source->size>INT64_MAX)
+    return fail(error,EXR_LIMIT,"Invalid original size/provider");
+  source_hash hash={0};unsigned char digest[32],*buffer=malloc(65536);
+  exr_status status=EXR_OK;uint64_t offset=0;
+  if(!buffer) return fail(error,EXR_MEMORY,"Source hash buffer allocation failed");
   if(!hash_begin(&hash)) { status=fail(error,EXR_IO,"Native SHA-256 initialization failed");goto done; }
-  while(offset<source.size) {
+  while(offset<source->size) {
     if(cancelled(control)) { status=fail(error,EXR_CANCELLED,"Source identity check cancelled");goto done; }
-    size_t request=(size_t)(source.size-offset<65536 ? source.size-offset:65536);
-    size_t received=source.read_at(source.context,offset,buffer,request);
-    if(received==0 || received>request) { status=fail(error,EXR_IO,"Stored original read failed");goto done; }
+    size_t request=(size_t)(source->size-offset<65536 ? source->size-offset:65536);
+    size_t received=source->read_at(source->context,offset,buffer,request);
+    if(received==0 || received>request) { status=fail(error,EXR_IO,"Original read failed");goto done; }
     if(!hash_update(&hash,buffer,received)) { status=fail(error,EXR_IO,"Native SHA-256 update failed");goto done; }
     offset+=(uint64_t)received;
   }
   if(cancelled(control)) { status=fail(error,EXR_CANCELLED,"Source identity check cancelled");goto done; }
   if(!hash_finish(&hash,digest)) { status=fail(error,EXR_IO,"Native SHA-256 finalization failed");goto done; }
   for(size_t i=0;i<32;i++) { static const char alphabet[]="0123456789abcdef";hex[i*2]=alphabet[digest[i]>>4];hex[i*2+1]=alphabet[digest[i]&15]; }
-  hex[64]=0;*bytes=source.size;
+  hex[64]=0;*bytes=source->size;
 done:
   free(buffer);hash_close(&hash);
+  return status;
+}
+exr_status reader_catalog_sdk_original_identity(exr_library *library,int64_t id,const exr_control *control,
+                                 char hex[65],uint64_t *bytes,exr_error *error) {
+  if(error) memset(error,0,sizeof(*error));
+  if(hex) hex[0]=0;
+  if(bytes) *bytes=0;
+  if(!library || id<=0 || !hex || !bytes) return fail(error,EXR_ARGUMENT,"Missing stored original identity output");
+  exr_source source={0};
+  exr_status status=exr_library_source(library,id,&source,error);
+  if(status!=EXR_OK) return status;
+  status=reader_catalog_source_identity(&source,control,hex,bytes,error);
   if(source.release) source.release(source.context);
   return status;
 }

@@ -29,6 +29,12 @@ jobs:
         run: |
           set -o pipefail
           python tests/bounded_txt_scan/large.py 2>&1 | tee build/bounded-txt-large.log
+      - name: Build and check the product catalog identity bridge
+        shell: bash
+        run: |
+          cmake -S apps/reader/desktop -B build/txt-product-check -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DEXR_SDK_VERSION=3.41.0 -DEXR_READER_FIXTURES="$PWD/tests/fixtures"
+          cmake --build build/txt-product-check --target reader-desktop-catalog-check
+          ctest --test-dir build/txt-product-check -R '^desktop-public-sdk-catalog$' --output-on-failure --no-tests=error
       - name: Inspect installed public candidate artifacts
         shell: bash
         run: |
