@@ -141,6 +141,8 @@ def main():
                  '-DEXR_READER_WINDOWS_RECORDS=ON','-DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON',
                  '-DEXR_READER_WINDOWS_PREFERENCES=ON','-DEXR_READER_WINDOWS_COMPACT=ON',
                  '-DEXR_READER_PREFS_COMMIT_REVIEW_BUILD=ON']
+        if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
+            options.append('-DEXR_READER_WINDOWS_TXT_RECOVERY=ON')
         configure(ROOT/'apps/reader/windows-account',host,options,name+'-actual-host')
         ui=OUT/(name+'-compact-ui')
         run([sys.executable,ROOT/'tests/reader_windows_compact/check_ui.py',

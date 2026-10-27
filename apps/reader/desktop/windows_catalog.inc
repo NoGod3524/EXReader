@@ -125,6 +125,23 @@ static exr_status product_job_run(host_job *job) {
     snprintf(job->error.message,sizeof(job->error.message),"%s",product_error.message);
     return EXR_DATABASE;
   }
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  if(job->kind==JOB_PRODUCT_REPAIR) {
+    char *root=NULL;
+    reader_original_status recovered=ROI_IO;
+    if(CreateDirectoryW(g.original_root,NULL) || GetLastError()==ERROR_ALREADY_EXISTS) {
+      root=host_utf8(g.original_root);
+      if(root) recovered=reader_original_recover(catalog,root);
+    }
+    free(root);
+    if(recovered!=ROI_OK) {
+      job->error.code=EXR_IO;
+      snprintf(job->error.message,sizeof(job->error.message),"Original recovery failed (%d)",(int)recovered);
+      reader_catalog_close(&catalog,&product_error);
+      return EXR_IO;
+    }
+  }
+#endif
   if(job->kind==JOB_PRODUCT_SHELF) status=product_page_query(job,catalog,&product_error);
   else if(job->kind==JOB_PRODUCT_DELETE) {
     /* A failed catalog write must not delete the original and leave a stale
