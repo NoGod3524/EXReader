@@ -741,6 +741,11 @@ def main():
         report['error'] = traceback.format_exc()
         if app:
             report['host_exit_code'] = app.process.poll()
+            try:
+                report['host_status'] = app.status()
+                report['visible_page'] = page_text(app, automation)[:1200]
+            except Exception as diagnostic_error:
+                report['diagnostic_error'] = repr(diagnostic_error)
             if not app.log.closed:
                 app.log.flush()
             log_path = app.profile / 'application.log'
