@@ -51,6 +51,15 @@ int main(int argc,char **argv) {
   in.data=utf8;in.size=sizeof(utf8);source.size=in.size;in.reads=0;in.cancel_after=4;extent=42;
   if(exr_txt_scan_source(&source,collect,&out,&extent,&error)!=EXR_CANCELLED || extent) return 3;
   free(out.data);
+  {
+    static const unsigned char text[]="first line\nsecond line\nthird";
+    input search_input={text,sizeof(text)-1,2,0,0};exr_source search_source={0};
+    uint64_t start,end;
+    search_source.size=search_input.size;search_source.read_at=read_at;search_source.context=&search_input;
+    if(exr_txt_find_source(&search_source,"line\nsecond",0,&start,&end,&error)!=EXR_OK || start!=6 || end!=17) return 6;
+    if(exr_txt_find_source(&search_source,"line",7,&start,&end,&error)!=EXR_OK || start!=18 || end!=22) return 7;
+    if(exr_txt_find_source(&search_source,"missing",0,&start,&end,&error)!=EXR_OK || start!=UINT64_MAX || end!=UINT64_MAX) return 8;
+  }
   if(argc>1) {
     FILE *file=fopen(argv[1],"rb");size_t count=0;exr_source large={0};
     if(!file) return 4;

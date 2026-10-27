@@ -1478,3 +1478,42 @@ exr_status exr_txt_scan_source(const exr_source *source,exr_txt_paragraph_fn emi
 done:
   free(line.data);return s;
 }
+
+typedef struct {
+  const char *query;size_t length, matched;const uint32_t *prefix;
+  uint64_t from,start,end;int found;
+} txt_search;
+static void txt_match_byte(txt_search *search,unsigned char byte,uint64_t offset) {
+  if(search->found || offset<search->from) return;
+  while(search->matched && byte!=(unsigned char)search->query[search->matched])
+    search->matched=search->prefix[search->matched-1];
+  if(byte==(unsigned char)search->query[search->matched]) search->matched++;
+  if(search->matched==search->length) {
+    search->end=offset+1;search->start=search->end-search->length;search->found=1;
+  }
+}
+static exr_status txt_search_paragraph(void *context,uint64_t offset,const char *text,size_t size,exr_error *e) {
+  txt_search *search=context;size_t i;(void)e;
+  if(offset) txt_match_byte(search,'\n',offset-1);
+  for(i=0;i<size;i++) txt_match_byte(search,(unsigned char)text[i],offset+i);
+  return EXR_OK;
+}
+exr_status exr_txt_find_source(const exr_source *source,const char *query,uint64_t from,
+                               uint64_t *start,uint64_t *end,exr_error *e) {
+  txt_search search={0};uint32_t *prefix=NULL,cp;size_t at=0,n;uint64_t extent=0;exr_status s;
+  if(start) *start=UINT64_MAX;if(end) *end=UINT64_MAX;
+  if(!source || !query || !start || !end || !(n=strlen(query))) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT search arguments");
+  if(n>1024*1024) return exr_fail(e,EXR_LIMIT,"Search query exceeds 1 MiB");
+  while(at<n) {
+    if(!(at&4095) && exr_control_cancel(&source->control,e)!=EXR_OK) return EXR_CANCELLED;
+    if(!exr_next(query,n,&at,&cp)) return exr_fail(e,EXR_ENCODING,"Invalid query UTF-8");
+  }
+  s=exr_kmp_prefix(query,n,&source->control,&prefix,e);if(s!=EXR_OK) return s;
+  search.query=query;search.length=n;search.prefix=prefix;search.from=from;
+  s=exr_txt_scan_source(source,txt_search_paragraph,&search,&extent,e);
+  free(prefix);
+  if(s!=EXR_OK) return s;
+  if(from>extent) return exr_fail(e,EXR_ARGUMENT,"TXT search offset beyond extent");
+  if(search.found) { *start=search.start;*end=search.end; }
+  return EXR_OK;
+}
