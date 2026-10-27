@@ -93,6 +93,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
       - name: Verify exact composition source
         run: python3 tools/reader_composition/guard.py --source "$GITHUB_SHA" --report build/composition-source-verify.json
       - name: Verify same-run host, reports and artifact

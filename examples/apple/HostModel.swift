@@ -1606,7 +1606,7 @@ final class HostReaderModel: ObservableObject {
 
     func selectWave3Font(_ hash: String?) {
         guard !busy, current != nil else { return }
-        let (epoch, cancel) = begin(); wave3.busy = true
+        let (epoch, cancel) = begin(); wave3.busy = true; wave3.message = "处理中…"
         queue.async {
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
@@ -1660,7 +1660,7 @@ final class HostReaderModel: ObservableObject {
 
     func jumpWave3History(back: Bool) {
         guard !busy, current != nil else { return }
-        let (epoch, cancel) = begin(); wave3.busy = true
+        let (epoch, cancel) = begin(); wave3.busy = true; wave3.message = "处理中…"
         queue.async {
             do {
                 guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库未就绪") }
@@ -1738,7 +1738,10 @@ final class HostReaderModel: ObservableObject {
                         self.syncPreparing = false; self.accountSession?.finishPreparation()
                         guard !cancel.isCancelled else { return }
                         do {
-                            try self.accountSession?.start(profile: profile, directory: directory, authorization: authorization) { [weak self] in
+                            try self.accountSession?.start(profile: profile, directory: directory, authorization: authorization, terminal: { [weak self] state in
+                                if state == READER_SESSION_CANCELLED { self?.statusText = "同步已取消" }
+                                else if state == READER_SESSION_FAILED { self?.statusText = "同步失败，请重试" }
+                            }) { [weak self] in
                                 self?.statusText = "本轮云盘扫描结束；阅读位置保持不变"
                             }
                         } catch { self.errorText = self.describe(error) }
