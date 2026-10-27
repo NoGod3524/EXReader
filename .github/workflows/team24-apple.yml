@@ -41,6 +41,6 @@ jobs:
                       ('Test Case' in line and 'failed' in line.lower())]
               for i in hits:
                   print('--- line', i + 1, '---')
-                  print('\n'.join(lines[max(0, i-3):i+5]))
+                  print('\n'.join(lines[max(0, i-45):i+200] if 'error:' in lines[i].lower() else lines[max(0, i-3):i+5]))
               print('diagnostic_hit_count', len(hits))
           PY
