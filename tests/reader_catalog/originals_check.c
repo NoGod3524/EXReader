@@ -7,6 +7,7 @@
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"FAIL %d: %s\n",__LINE__,#x); exit(1); } } while(0)
 static void sql(sqlite3 *db,const char *q) { char *error=NULL; int rc=sqlite3_exec(db,q,NULL,NULL,&error); if(rc!=SQLITE_OK) fprintf(stderr,"%s\n",error); CHECK(rc==SQLITE_OK); sqlite3_free(error); }
 static int seen(void *ctx,const reader_catalog_original_row *r) { int *count=ctx; CHECK(r->book_key && r->storage_ref && r->state); ++*count; return 0; }
+static int book_seen(void *ctx,const reader_catalog_row *r) { int *count=ctx; CHECK(r->book_key); ++*count; return 0; }
 int main(int argc,char **argv) {
   sqlite3 *db=NULL; reader_catalog *c=NULL; reader_catalog_error e; size_t n; int found=0,count=0,present=0;
   const char *hash="0000000000000000000000000000000000000000000000000000000000000001";
@@ -20,6 +21,14 @@ int main(int argc,char **argv) {
   CHECK(reader_catalog_has_local(c,42,&present,&e)==SQLITE_OK && present);
   CHECK(reader_catalog_original_stage(c,&b,"../escape",&e)==SQLITE_MISUSE);
   CHECK(reader_catalog_original_stage(c,&b,"originals/book.txt",&e)==SQLITE_OK);
+  /* A new original must not appear before its file is published. Existing
+     SDK mappings must remain visible throughout staging. */
+  { int books=0, visible=0;
+    CHECK(reader_catalog_find(c,key,NULL,book_seen,&books,&visible,&e)==SQLITE_OK);
+    CHECK(!visible && books==0);
+    CHECK(reader_catalog_find(c,"epub:0000000000000000000000000000000000000000000000000000000000000002",NULL,book_seen,&books,&visible,&e)==SQLITE_OK);
+    CHECK(visible && books==1);
+  }
   CHECK(reader_catalog_original_stage(c,&b,"originals/book.txt",&e)!=SQLITE_OK);
   CHECK(reader_catalog_close(&c,&e)==SQLITE_OK);
   CHECK(reader_catalog_open(argv[1],&c,&e)==SQLITE_OK);
