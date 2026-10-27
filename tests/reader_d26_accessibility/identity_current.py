@@ -170,6 +170,16 @@ def main():
         handoff = json.loads((root / 'd26-handoff-verified.json').read_text())
         assert handoff['verified'] and all(str(handoff[key]) == str(value) for key, value in
             (('source_sha', source), ('run_id', run), ('attempt', attempt)))
+        current_name = 'reader-d26-current-%s-%s' % (run, attempt)
+        current_rows = [row for row in listing['artifacts'] if row['name'] == current_name]
+        assert len(current_rows) == 1 and not current_rows[0]['expired']
+        assert handoff['artifact_id'] == current_rows[0]['id']
+        assert handoff['artifact_digest'] == current_rows[0]['digest']
+        proof = json.loads((root / 'd26-build-handoff.json').read_text())
+        assert all(str(proof[key]) == str(value) for key, value in
+            (('source_sha', source), ('run_id', run), ('attempt', attempt)))
+        for program in programs.values():
+            assert proof['files'][program['path']]['sha256'] == program['sha256'], program['path']
         identity['build_handoff'] = handoff
         identity['current_verified'] = True
     except BaseException as error:
