@@ -25,7 +25,8 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor 2f215f5793a7344d22db350276ba9f8a07abe86f HEAD
-          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 HEAD -- src include cmake CMakeLists.txt bindings
+          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 HEAD -- src include cmake CMakeLists.txt bindings ':(exclude)src/formats.c' ':(exclude)include/exr/formats.h'
+          git diff --exit-code 9727ca1624ee59e561fd6aad7a22bb85a0fd2632 HEAD -- src/formats.c include/exr/formats.h
           git diff --exit-code 2f215f5793a7344d22db350276ba9f8a07abe86f HEAD -- tests/fixtures tests/reader_a11y_gtk tests/linux_host tests/reader_wave3_c10 tests/reader_gtk_compact tests/reader_gtk_search tests/reader_gtk_navigation tests/reader_gtk_reading_records tests/reader_gtk_batch_import tests/reader_gtk_drop_import
       - name: Check independent current driver syntax on Actions
         run: python3 -m py_compile tests/reader_d26_accessibility/*.py
