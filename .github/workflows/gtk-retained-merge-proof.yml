@@ -19,9 +19,9 @@ jobs:
           import hashlib, io, json, sys, zipfile
           sys.path.insert(0, 'tools')
           from check_parallel_integration import fetch, download_artifact_zip
-          source = '1c42ddf6fe7e57f6bd0ac45f1ed78717bd4f3092'
-          run_id, artifact, size = 40427833492, 12701320987, 51813861
-          digest = '4e18abcf326f5be61db4a4cc7c638503b088405c8c97855b2c780ed1f524cf35'
+          source = 'd1b97161461f8fec6f6bdfebedd67a8ac9d0911e'
+          run_id, artifact, size = 40428878701, 12701582004, 51813937
+          digest = '7e006875e6f0f71664133fecc2aacea35227274ec912f1883d6c126197d62ce0'
           run = fetch(f'actions/runs/{run_id}')
           assert run['head_sha'] == source and run['run_attempt'] == 1
           assert run['status'] == 'completed' and run['conclusion'] == 'success'
