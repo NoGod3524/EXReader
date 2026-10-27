@@ -126,12 +126,12 @@ static exr_status wintxt_search_open(host_job *job) {
 #ifdef EXR_READER_WINDOWS_WAVE3
   /* Full-source validation stays on the serial worker, never the UI thread. */
   live.control=control;
-  status=exr_txt_anchor_create_source(&live,job->txt_history_origin,job->txt_history_origin_end,
+  status=exr_txt_anchor_create_source(&live,job->txt_history_origin,job->txt_history_origin,
                                       &job->txt_history_before,&job->error);
   if(status==EXR_OK)
-    /* Preserve the independently verified hit, which is often more distinctive
-       than a page-start point inside repeated boilerplate. */
-    status=exr_txt_anchor_create_source(&live,(size_t)start,(size_t)end,
+    /* A progress wire holds a point. Capture at the verified hit rather than
+       at the page start, keeping its actual surrounding text for resolution. */
+    status=exr_txt_anchor_create_source(&live,(size_t)start,(size_t)start,
                                         &job->txt_history_after,&job->error);
   if(status==EXR_CANCELLED || job_cancel_flag(job)) return EXR_CANCELLED;
   if(status==EXR_OK) job->txt_history_ready=1;

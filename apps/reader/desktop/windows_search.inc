@@ -210,16 +210,7 @@ static void winsearch_submit(int next,int open_hit) {
 #endif
   if(open_hit) {
 #if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_WAVE3)
-    if(g.session.txt) {
-      size_t quote=g.frame.text_bytes;
-      job->txt_history_origin=g.frame.range_start;
-      if(!g.frame.utf8) quote=0;
-      if(quote>512) {
-        quote=512;
-        while(quote && (((unsigned char)g.frame.utf8[quote]&0xc0)==0x80)) quote--;
-      }
-      job->txt_history_origin_end=g.frame.range_start+quote;
-    }
+    if(g.session.txt) job->txt_history_origin=g.frame.range_start;
 #endif
     LRESULT selected=SendMessageW(inbook.rows,LB_GETCURSEL,0,0);
     if(selected==LB_ERR || (size_t)selected>=inbook.batch.count ||
