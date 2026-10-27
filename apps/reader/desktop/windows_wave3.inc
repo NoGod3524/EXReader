@@ -685,9 +685,20 @@ static void w3_font_apply(const char *hash) {
     w3_fonts_fill(); w3_message(L"字体已选择；下次打开书籍时使用。");
     return;
   }
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  job = job_new(g.session.txt ? JOB_LAYOUT : JOB_OPEN);
+#else
   job = job_new(JOB_OPEN);
+#endif
   if (!job) { if (lease) rfl_lease_release(lease, &error); w3_message(L"内存不足，字体未切换。"); return; }
   job->book_id = g.current.id; job->font_percent = g.font_percent;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if(g.session.txt) {
+    job->txt_offset=(uint64_t)g.frame.range_start;
+    snprintf(job->txt_key,sizeof(job->txt_key),"%s",g.session.txt_key);
+    g.txt_force_save=1;
+  }
+#endif
   w3.old_font = g.font; w3.pending_lease = lease; w3.font_job = job;
   snprintf(w3.pending_hash, sizeof(w3.pending_hash), "%s", hash ? hash : "");
   g.font = font;
@@ -772,7 +783,13 @@ static void w3_fonts_command(int id) {
    and releases the candidate (pagers first) before the new lease. */
 static void w3_after_font_job(host_job *job) {
   rfl_error error;
-  int success = job->status == EXR_OK && !job_cancel_flag(job) && job->candidate.book_id == 0 && g.session.active &&
+  int accepted = job->kind==JOB_OPEN && job->candidate.book_id==0;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if(job->kind==JOB_LAYOUT)
+    accepted = g.session.txt && job->have_frame && !job->candidate_pager &&
+      job->txt_key[0] && !strcmp(job->txt_key,g.session.txt_key);
+#endif
+  int success = job->status == EXR_OK && !job_cancel_flag(job) && accepted && g.session.active &&
     g.current.id == job->book_id;
   memset(&error, 0, sizeof(error));
   w3.font_job = NULL;
