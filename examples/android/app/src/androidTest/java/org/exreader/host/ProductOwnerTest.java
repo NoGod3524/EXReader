@@ -28,7 +28,7 @@ public final class ProductOwnerTest extends Instrumentation {
             "shelfAndSeriesMembershipOrder", "missingAndDeletedDependenciesRefused",
             "mapFailureKeepsSdkAndCommittedBookCommand", "nativeRejectsWrongOwner",
             "nativeRejectsClosedHandle", "twoNativeOwnersCompeteOnOneObservedHead",
-            "sdkDatabaseRefusedWithoutModification", "opensClosedLegacySystemCatalog"};
+            "sdkDatabaseRefusedWithoutModification", "opensClosedLegacySystemCatalog", "finalizeImportAutomaticallyBootstrapsOnce"};
     private interface Check { void run() throws Exception; }
     private Context context;private Bundle arguments;private File directory;private CatalogStore catalog;
     private final JSONArray reports=new JSONArray();private String[] provider;
@@ -41,7 +41,7 @@ public final class ProductOwnerTest extends Instrumentation {
                 this::outboxFailureRollsBackAndRetries,this::membershipNeedsExplicitBookBootstrap,this::publicSdkBootstrapKeepsCurrentProductTitle,
                 this::shelfAndSeriesMembershipOrder,this::missingAndDeletedDependenciesRefused,this::mapFailureKeepsSdkAndCommittedBookCommand,
                 this::nativeRejectsWrongOwner,this::nativeRejectsClosedHandle,this::twoNativeOwnersCompeteOnOneObservedHead,
-                this::sdkDatabaseRefusedWithoutModification,this::opensClosedLegacySystemCatalog};
+                this::sdkDatabaseRefusedWithoutModification,this::opensClosedLegacySystemCatalog,this::finalizeImportAutomaticallyBootstrapsOnce};
         int failed=0;
         for(int i=0;i<checks.length;i++){
             sendStatus(1,status(NAMES[i],i+1));Bundle result=status(NAMES[i],i+1);Throwable failure=null;
@@ -117,8 +117,29 @@ public final class ProductOwnerTest extends Instrumentation {
         File original=new File(directory,"original.txt");Files.write(original.toPath(),"Public SDK original. Retain bytes and identity.\n".getBytes(StandardCharsets.UTF_8));
         try(BookStore sdk=new BookStore(context,new File(directory,"library.db"))){
             NativeLibrary.ImportResult imported=sdk.importFile(original.getPath(),NativeLibrary.FORMAT_TXT,"SDK original title");
-            BookStore.VerifiedSource source=sdk.verifySource(imported.id,null,0,new HostTask(()->false));sdk.finalizeImport(source);
+            BookStore.VerifiedSource source=sdk.verifySource(imported.id,null,0,new HostTask(()->false));catalog.attach(source);
             if(bootstrap)ok(sdk.bootstrapBook(imported.id,id(50),empty(),new HostTask(()->false)));return source;
+        }
+    }
+    private void finalizeImportAutomaticallyBootstrapsOnce()throws Exception{
+        File original=new File(directory,"auto-original.txt");
+        Files.write(original.toPath(),"Automatic verified original bootstrap.\n".getBytes(StandardCharsets.UTF_8));
+        BookStore.VerifiedSource source;
+        try(BookStore sdk=new BookStore(context,new File(directory,"library.db"))){
+            NativeLibrary.ImportResult imported=sdk.importFile(original.getPath(),NativeLibrary.FORMAT_TXT,"Auto title");
+            source=sdk.verifySource(imported.id,null,0,new HostTask(()->false));
+            sdk.finalizeImport(source);counts(1,1,0);
+            equal(1,scalar("SELECT count(*) FROM reader_local_books"));
+            JSONObject payload=new JSONObject(text("SELECT body_json FROM reader_revisions WHERE entity_kind='book'")).getJSONObject("payload");
+            equal(source.sha256,payload.getString("source_sha256"));equal(source.bytes,payload.getLong("source_bytes"));
+            require(!payload.has("sdk_book_id"),"automatic wire excludes local SDK identity");
+            String[] head=NativeCatalog.selection(owner(),"book",source.key);
+            require(head.length==4&&"4".equals(head[0]),"one verified book head");
+            sdk.finalizeImport(source);counts(1,1,0);
+        }
+        try(BookStore reopened=new BookStore(context,new File(directory,"library.db"))){
+            require(!reopened.metadataRepairPending(),"automatic bootstrap survives reopen");
+            equal(1,scalar("SELECT count(*) FROM reader_local_books"));counts(1,1,0);
         }
     }
     private void membershipNeedsExplicitBookBootstrap()throws Exception{
@@ -127,7 +148,7 @@ public final class ProductOwnerTest extends Instrumentation {
     }
     private void publicSdkBootstrapKeepsCurrentProductTitle()throws Exception{
         BookStore.VerifiedSource source=realBook(false);db().execSQL("UPDATE reader_books SET title=?,author=?,sort_title=?,favorite=1",new Object[]{"用户 edited 😀","Product author","用户 edited 😀"});
-        try(BookStore sdk=new BookStore(context,new File(directory,"library.db"))){ok(sdk.bootstrapBook(source.book.id,id(50),empty(),new HostTask(()->false)));}
+        try(BookStore sdk=new BookStore(context,new File(directory,"library.db"))){String[] head=NativeCatalog.selection(owner(),"book",source.key);require(head.length==4&&"4".equals(head[0]),"unique auto-created head");ok(sdk.bootstrapBook(source.book.id,id(50),new String[]{head[3]},new HostTask(()->false)));}
         String[] current=NativeCatalog.metadata(owner(),source.key);equal("用户 edited 😀",current[3]);equal("Product author",current[4]);equal("1",current[6]);
         JSONObject payload=new JSONObject(text("SELECT body_json FROM reader_revisions" )).getJSONObject("payload");equal("用户 edited 😀",payload.getString("title"));require(!payload.has("sdk_book_id"),"no device-local ID in wire");
         ok(tag(1,empty(),"Tag"));ok(NativeCatalog.applyMembership(owner(),id(2),empty(),0,1,id(100),source.key,0));equal(1,scalar("SELECT count(*) FROM reader_book_tags"));

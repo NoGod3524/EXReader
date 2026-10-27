@@ -282,6 +282,149 @@
         "tests/windows_organization_projection/check_ui.py",
         "tests/windows_organization_projection/verify.py"
       ]
+    },
+    {
+      "name": "android-organization-host-candidate",
+      "source": "bc7ae945da48629a2fcb940d1896a0263e4cb384",
+      "paths": [
+        ".github/workflows/android-organization-sync.yml",
+        ".github/workflows/reader-android-path-access.yml",
+        ".github/workflows/reader-wave3-c11-java.yml",
+        ".github/workflows/reader-wave3-c11.yml",
+        "HANDOFF-RESULT-C11.md",
+        "apps/reader/font-library/src/library.cpp",
+        "apps/reader/original-export/src/original_export.cpp",
+        "docs/reader-android-path-access/README.md",
+        "docs/reader-wave3-c11/HANDOFF-DSF-N01.md",
+        "docs/reader-wave3-c11/README.md",
+        "examples/android/app/src/main/cpp/bounded_epub_jni.inc",
+        "examples/android/app/src/main/cpp/catalog_jni.cpp",
+        "examples/android/app/src/main/cpp/exreader_host_jni.c",
+        "examples/android/app/src/main/cpp/reading_product_jni.inc",
+        "examples/android/app/src/main/cpp/sync_jni.cpp",
+        "examples/android/app/src/main/cpp/wave3_product_jni.inc",
+        "examples/android/app/src/main/cpp/wave3_sdk_jni.inc",
+        "examples/android/app/src/main/java/org/exreader/host/BookStore.java",
+        "examples/android/app/src/main/java/org/exreader/host/BoundedEpub.java",
+        "examples/android/app/src/main/java/org/exreader/host/FontPanel.java",
+        "examples/android/app/src/main/java/org/exreader/host/FontSelection.java",
+        "examples/android/app/src/main/java/org/exreader/host/JumpPanel.java",
+        "examples/android/app/src/main/java/org/exreader/host/NativeFonts.java",
+        "examples/android/app/src/main/java/org/exreader/host/NativeOriginalExport.java",
+        "examples/android/app/src/main/java/org/exreader/host/NativeReadingSdk.java",
+        "examples/android/app/src/main/java/org/exreader/host/NativeSync.java",
+        "examples/android/app/src/main/java/org/exreader/host/NativeWave3.java",
+        "examples/android/app/src/main/java/org/exreader/host/OrganizationPanel.java",
+        "examples/android/app/src/main/java/org/exreader/host/ReadingPanel.java",
+        "examples/android/app/src/main/java/org/exreader/host/SyncController.java",
+        "examples/android/app/src/main/java/org/exreader/host/SyncPanel.java",
+        "examples/android/app/src/main/java/org/exreader/host/Wave3Dialog.java",
+        "examples/android/app/src/main/java/org/exreader/host/Wave3Host.java",
+        "tests/reader_android_organization_sync/init.gradle",
+        "tests/reader_android_organization_sync/java/org/exreader/host/OrganizationSyncTest.java",
+        "tests/reader_android_organization_sync/run.py",
+        "tests/reader_android_path_access/guard.py",
+        "tests/reader_android_reading/java/org/exreader/host/ReadingUiTest.java",
+        "tests/reader_android_reading/run_ui.py",
+        "tests/reader_wave3_c11/candidate.init.gradle",
+        "tests/reader_wave3_c11/candidate.py",
+        "tests/reader_wave3_c11/device.sh",
+        "tests/reader_wave3_c11/evidence.py",
+        "tests/reader_wave3_c11/fixtures.py",
+        "tests/reader_wave3_c11/guard.py",
+        "tests/reader_wave3_c11/java-gate.init.gradle",
+        "tests/reader_wave3_c11/report.py",
+        "tests/reader_wave3_c11/run_ui.py",
+        "tests/reader_wave3_c11/walkthrough.py"
+      ]
+    },
+    {
+      "name": "android-export-saved-state-candidate",
+      "source": "404c48747355527aad824c48242c4c87ebb6e0df",
+      "paths": [
+        "examples/android/app/src/main/java/org/exreader/host/AnnotationPanel.java",
+        "examples/android/app/src/main/java/org/exreader/host/MainActivity.java",
+        "examples/android/app/src/main/java/org/exreader/host/OriginalExportPanel.java",
+        "examples/android/app/src/main/java/org/exreader/host/Wave3Files.java"
+      ]
+    },
+    {
+      "name": "android-export-rotation-regression",
+      "source": "90f49e60934518fc94cb3302368b64ced430f484",
+      "paths": [
+        "tests/reader_wave3_c11/java/org/exreader/host/Wave3UiTest.java",
+        "tests/reader_wave3_c11/picker_process_recovery.py"
+      ]
+    },
+    {
+      "name": "android-composition-workflow-candidate",
+      "source": "e82e5bdd39cb16771b986427ec97c815399e4382",
+      "paths": [
+        ".github/workflows/android-composition-candidate.yml"
+      ]
+    },
+    {
+      "name": "android-exact-sdk-version-sync-checks",
+      "source": "d105dde816e67408cac421a060a9f7e40d998a77",
+      "paths": [
+        "tests/reader_android_organization_sync/prepare_sync_341.py",
+        "tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java",
+        "tests/reader_host_session_android/run_ui.py"
+      ]
+    },
+    {
+      "name": "android-340-owner-and-sync-retained-checks",
+      "source": "a89fb87ff3898eb2ff46fbb66b367053c2607139",
+      "paths": [
+        "tests/reader_android_owner_current/init.gradle",
+        "tests/reader_android_owner_current/prepare.py"
+      ]
+    },
+    {
+      "name": "android-current-owner-combined-340",
+      "source": "e82e5bdd39cb16771b986427ec97c815399e4382",
+      "paths": [
+        ".github/workflows/android-current-owner-340.yml",
+        "examples/android/app/src/androidTest/java/org/exreader/host/ProductOwnerTest.java",
+        "tests/reader_session_android/run_roundtrip.py"
+      ]
+    },
+    {
+      "name": "android-legacy-340-host-regression-candidate",
+      "source": "ba381f09bcab6432f8544a7160aa257ec2b4ffdb",
+      "paths": [
+        ".github/workflows/android-composition-legacy-340.yml",
+        "examples/android/app/build.gradle",
+        "examples/android/app/src/main/cpp/CMakeLists.txt"
+      ]
+    },
+    {
+      "name": "windows-fixed-volume-wal-candidate",
+      "source": "e7a79ca79d5e89675e3ef3391abbfd95449a76bf",
+      "tested_source": "e7a79ca79d5e89675e3ef3391abbfd95449a76bf",
+      "tested_run": 40411215820,
+      "paths": [
+        "apps/reader/desktop/catalog_sdk.c",
+        "apps/reader/store/native/catalog.c",
+        "apps/reader/store/native/catalog.h",
+        "tests/reader_startup_profile/CMakeLists.txt",
+        "tests/reader_startup_profile/profile.c",
+        "tests/reader_startup_profile/wal_crash.c"
+      ]
+    },
+    {
+      "name": "windows-combined-wal-profile-candidate",
+      "source": "27e45b2f6e58d6d2b2aeae20f52d4097872a0d76",
+      "paths": [
+        ".github/workflows/combined-wal-profile.yml"
+      ]
+    },
+    {
+      "name": "windows-organization-wal-composition-regression",
+      "source": "129d558c0ec9647c858b3f8740f30f34c35b1c83",
+      "paths": [
+        ".github/workflows/windows-organization-wal-composition.yml"
+      ]
     }
   ]
 }

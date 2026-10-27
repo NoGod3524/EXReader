@@ -9,6 +9,15 @@
 namespace reading_product {
 using product_jni::pending;
 using product_jni::reject;
+/* Retained history and probe receive use the same store capability as writes;
+   keep this choice explicit instead of relying on the including host's aliases. */
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+constexpr auto revision_get=reader_revision_get_raw_v3;
+constexpr auto revision_receive=reader_revision_receive_raw_v3;
+#else
+constexpr auto revision_get=reader_revision_get;
+constexpr auto revision_receive=reader_revision_receive;
+#endif
 struct local_frame {
   JNIEnv *env;bool active=true;
   explicit local_frame(JNIEnv *e):env(e){if(env->PushLocalFrame(64)<0)pending(env);}
@@ -75,12 +84,12 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_exreader_host_NativeReadingProduct
   return product_jni::call(env,handle,[&](product_jni::owner &owner)->jobject{reading_product::control c(env,task);return reading_product::selected(env,owner.revisions,reading_product::text(env,book),reading_product::text(env,id,true),reading_product::text(env,expected,true),progress,c);});
 }
 extern "C" JNIEXPORT jbyteArray JNICALL Java_org_exreader_host_NativeReadingProduct_nativeRetained(JNIEnv *env,jclass,jlong handle,jstring book,jstring id,jstring revision,jboolean progress,jobject task){
-  return product_jni::call(env,handle,[&](product_jni::owner &owner)->jbyteArray{using namespace reading_product;control c(env,task);c.poll();std::string key=text(env,book),annotation=text(env,id,true),rid=text(env,revision);wire retained;reader_revision_error error{};if(reader_revision_get(owner.revisions,rid.c_str(),&retained.value,&retained.bytes,&retained.info,&error)!=READER_REV_OK)reject("java/lang/IllegalStateException","Retained reading version is unavailable");std::string entity=progress?key:key+":"+annotation;if(std::strcmp(retained.info.entity_kind,progress?"progress":"annotation")||retained.info.entity_key!=entity||retained.info.book_key!=key)reject("java/lang/IllegalStateException","Retained reading version belongs to another entity");c.poll();return bytes(env,retained.value,retained.bytes);});
+  return product_jni::call(env,handle,[&](product_jni::owner &owner)->jbyteArray{using namespace reading_product;control c(env,task);c.poll();std::string key=text(env,book),annotation=text(env,id,true),rid=text(env,revision);wire retained;reader_revision_error error{};if(reading_product::revision_get(owner.revisions,rid.c_str(),&retained.value,&retained.bytes,&retained.info,&error)!=READER_REV_OK)reject("java/lang/IllegalStateException","Retained reading version is unavailable");std::string entity=progress?key:key+":"+annotation;if(std::strcmp(retained.info.entity_kind,progress?"progress":"annotation")||retained.info.entity_key!=entity||retained.info.book_key!=key)reject("java/lang/IllegalStateException","Retained reading version belongs to another entity");c.poll();return bytes(env,retained.value,retained.bytes);});
 }
 extern "C" JNIEXPORT jobject JNICALL Java_org_exreader_host_NativeReadingProduct_nativeVersion(JNIEnv *env,jclass,jlong handle,jstring book,jstring id,jstring revision,jboolean progress,jobject task){
   return product_jni::call(env,handle,[&](product_jni::owner &owner)->jobject{
     using namespace reading_product;local_frame frame(env);control c(env,task);c.poll();std::string key=text(env,book),annotation=text(env,id,true),rid=text(env,revision),entity=progress?key:key+":"+annotation;wire retained;reader_revision_error error{};
-    if(reader_revision_get(owner.revisions,rid.c_str(),&retained.value,&retained.bytes,&retained.info,&error)!=READER_REV_OK)reject("java/lang/IllegalStateException","Retained reading version is unavailable");
+    if(reading_product::revision_get(owner.revisions,rid.c_str(),&retained.value,&retained.bytes,&retained.info,&error)!=READER_REV_OK)reject("java/lang/IllegalStateException","Retained reading version is unavailable");
     if(std::strcmp(retained.info.entity_kind,progress?"progress":"annotation")||retained.info.entity_key!=entity||retained.info.book_key!=key)reject("java/lang/IllegalStateException","Retained reading version belongs to another entity");
     decoded data;reader_rs_error decode{};if(reader_rs_decode(owner.revisions,retained.value,retained.bytes,&data.value,&decode)!=READER_RS_OK)reject("java/lang/IllegalStateException","Retained reading selector cannot be decoded");const auto &r=data.value;if(key!=r.book_key||std::strcmp(r.entity_kind,progress?"progress":"annotation")||(!progress&&annotation!=r.annotation_id))reject("java/lang/IllegalStateException","Retained selector identity differs");
     reader_av_item fields{};capture_fields(fields,r);jobject captured=capture(env,key,fields);jstring body=product_jni::string(env,r.note_text?r.note_text:""),version=product_jni::string(env,retained.info.revision_id),sha=product_jni::string(env,retained.info.sha256),operation=product_jni::string(env,retained.info.operation);jbyteArray original=bytes(env,retained.value,retained.bytes);jclass type=env->FindClass("org/exreader/host/ReadingVersion");pending(env);jmethodID constructor=env->GetMethodID(type,"<init>","(Lorg/exreader/host/ReadingCapture;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[B)V");pending(env);jobject result=env->NewObject(type,constructor,captured,body,version,sha,operation,original);pending(env);c.poll();return frame.keep(result);
@@ -124,6 +133,6 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeReadingPr
   return product_jni::strings(env,{commands.dli_fname,view.dli_fname,sqlite.dli_fname});
 }
 extern "C" JNIEXPORT jint JNICALL Java_org_exreader_host_NativeReadingProbe_nativeReceive(JNIEnv *env,jclass,jlong handle,jbyteArray bytes,jstring expected){
-  return product_jni::call(env,handle,[&](product_jni::owner &owner)->jint{std::string wire=reading_product::input_bytes(env,bytes,READER_REVISION_MAX_BYTES,false),sha=product_jni::utf8(env,expected);reader_revision_info info{};reader_revision_error error{};int created=0;auto status=reader_revision_receive(owner.revisions,wire.data(),wire.size(),sha.c_str(),&info,&created,&error);if(status!=READER_REV_OK){std::string message="Public revision fixture receive refused "+std::to_string(status)+": "+error.message;jclass type=env->FindClass("java/lang/IllegalStateException");product_jni::pending(env);env->ThrowNew(type,message.c_str());env->DeleteLocalRef(type);product_jni::pending(env);}return created;});
+  return product_jni::call(env,handle,[&](product_jni::owner &owner)->jint{std::string wire=reading_product::input_bytes(env,bytes,READER_REVISION_MAX_BYTES,false),sha=product_jni::utf8(env,expected);reader_revision_info info{};reader_revision_error error{};int created=0;auto status=reading_product::revision_receive(owner.revisions,wire.data(),wire.size(),sha.c_str(),&info,&created,&error);if(status!=READER_REV_OK){std::string message="Public revision fixture receive refused "+std::to_string(status)+": "+error.message;jclass type=env->FindClass("java/lang/IllegalStateException");product_jni::pending(env);env->ThrowNew(type,message.c_str());env->DeleteLocalRef(type);product_jni::pending(env);}return created;});
 }
 #endif
