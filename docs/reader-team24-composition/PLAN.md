@@ -1108,3 +1108,19 @@ check also passed. The same run retained 20 wave3, 18 navigation, both 16-check
 sync suites, five organization checks, and the real system picker kill/recovery.
 This verifies the scoped emulator candidate and does not establish the root
 cause of the earlier intermittent failure or grant final combined delivery.
+
+## Apple common-source preparation
+
+Apple candidate `937f61057b06c5c9de3b562046e52c91b5be62b9` is merged for
+source preparation, not accepted by this merge. Its original workflow and
+strict owner guard remain intact for the isolated candidate. The separate
+manual common-source Apple workflow runs that same guard against an exact
+isolated candidate checkout, then uses the existing composition source guard
+on the actual merged checkout and additionally requires the approved Apple
+shared checker blob. The composition guard checks registered input path
+identities and unregistered changes against the base; its explicit root-owned
+paths are not pinned by that guard. Thus the isolated frozen-tree/owner check
+does not certify the merged frozen tree, and common-source admission is not a
+substitute for it or for native acceptance. The copied build, native UI and
+ZIP authentication jobs must still run on the merged source. This preparation
+does not claim any run has passed or authorize a new run.

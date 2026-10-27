@@ -40,6 +40,16 @@ def main():
                 if artifact['name'].startswith('team24-apple-native-'):
                     result = json.loads(archive.read('result.json'))
                     assert (result['source_sha'], result['run_id'], result['attempt']) == (source, run, attempt)
+                    expected_phases = {'wave3': 5, 'base': 13, 'control': 13, 'search': 4, 'theme': 4}
+                    phases = result['phases']
+                    if result['accepted']:
+                        assert len(phases) == len(expected_phases)
+                        assert {phase['mode']: phase['expected_cases'] for phase in phases} == expected_phases
+                        for phase in phases:
+                            assert phase['accepted'] and len(phase['cases']) == expected_phases[phase['mode']]
+                            assert all(case['result'] == 'Passed' for case in phase['cases'])
+                            manifest = archive.read(phase['mode'] + '-resource-manifest.json')
+                            assert hashlib.sha256(manifest).hexdigest() == phase['resource_manifest_sha256']
                     for name, item in result['files'].items():
                         data = archive.read(name); assert len(data) == item['bytes'] and hashlib.sha256(data).hexdigest() == item['sha256']
                     entry['scoped_accepted'] = result['accepted']; entry['phases'] = result['phases']; entry['gaps'] = result['gaps']

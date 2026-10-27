@@ -218,6 +218,44 @@ struct LibraryScreen: View {
         }
     }
 
+    private var importControls: some View {
+        VStack(spacing: 8) {
+            if model.showsTestFixtures {
+                HStack {
+                    Button("导入 EPUB 示例") { model.importFixture("Sample", extension: "epub") }
+                        .accessibilityIdentifier("library.import.epub")
+                    Button("再次导入同一 EPUB") { model.importFixture("Sample", extension: "epub") }
+                        .accessibilityIdentifier("library.import.epub.duplicate")
+                }
+            }
+            HStack {
+                if model.showsTestFixtures {
+                    Button("导入 PDF 示例") { model.importFixture("Sample", extension: "pdf") }
+                        .accessibilityIdentifier("library.import.pdf")
+                }
+                if !compactLibrary {
+                    Button("打开文件…") { importing = true }
+                        .accessibilityIdentifier("library.import.picker")
+                }
+            }
+            if model.showsTestFixtures {
+                HStack {
+                    Button("导入损坏文件") { model.importFixture("Broken", extension: "epub") }
+                        .accessibilityIdentifier("library.import.broken")
+                    Button("导入大文件") { model.importFixture("Large", extension: "epub") }
+                        .accessibilityIdentifier("library.import.large")
+                }
+                Button("导入 Unicode 示例") { model.importFixture("Unicode", extension: "epub") }
+                    .accessibilityIdentifier("library.import.unicode")
+                Button("导入跨章示例") { model.importFixture("Bounded", extension: "epub") }
+                    .accessibilityIdentifier("library.import.bounded")
+            }
+        }
+        .buttonStyle(.bordered)
+        .disabled(model.busy)
+        .padding(.vertical, 8)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -344,41 +382,11 @@ struct LibraryScreen: View {
             }
 
             if model.showsTestFixtures || !compactLibrary {
-            VStack(spacing: 8) {
-                if model.showsTestFixtures {
-                    HStack {
-                        Button("导入 EPUB 示例") { model.importFixture("Sample", extension: "epub") }
-                            .accessibilityIdentifier("library.import.epub")
-                        Button("再次导入同一 EPUB") { model.importFixture("Sample", extension: "epub") }
-                            .accessibilityIdentifier("library.import.epub.duplicate")
-                    }
+                if compactLibrary {
+                    ScrollView { importControls }.frame(maxHeight: 160)
+                } else {
+                    importControls
                 }
-                HStack {
-                    if model.showsTestFixtures {
-                        Button("导入 PDF 示例") { model.importFixture("Sample", extension: "pdf") }
-                            .accessibilityIdentifier("library.import.pdf")
-                    }
-                    if !compactLibrary {
-                        Button("打开文件…") { importing = true }
-                            .accessibilityIdentifier("library.import.picker")
-                    }
-                }
-                if model.showsTestFixtures {
-                    HStack {
-                        Button("导入损坏文件") { model.importFixture("Broken", extension: "epub") }
-                            .accessibilityIdentifier("library.import.broken")
-                        Button("导入大文件") { model.importFixture("Large", extension: "epub") }
-                            .accessibilityIdentifier("library.import.large")
-                    }
-                    Button("导入 Unicode 示例") { model.importFixture("Unicode", extension: "epub") }
-                        .accessibilityIdentifier("library.import.unicode")
-                    Button("导入跨章示例") { model.importFixture("Bounded", extension: "epub") }
-                        .accessibilityIdentifier("library.import.bounded")
-                }
-            }
-            .buttonStyle(.bordered)
-            .disabled(model.busy)
-            .padding(.vertical, 8)
             }
 
             Text(model.statusText).font(.caption)
@@ -505,12 +513,12 @@ struct ReaderScreen: View {
 
     private var annotationTools: some View {
         HStack(spacing: 10) {
+            Button { model.prepareSearch(); showSearch = true } label: { hostActionLabel("查找") }
+                .accessibilityIdentifier("reader.search")
             Button { showSelection = true } label: { hostActionLabel("选文") }
                 .accessibilityIdentifier("reader.select")
             Button { showNotes = true } label: { hostActionLabel("标注 \(model.notes.count)") }
                 .accessibilityIdentifier("reader.notes")
-            Button { model.prepareSearch(); showSearch = true } label: { hostActionLabel("查找") }
-                .accessibilityIdentifier("reader.search")
             Button { model.prepareNavigation(); showNavigation = true } label: { hostActionLabel("目录") }
                 .accessibilityIdentifier("reader.navigation")
         }.buttonStyle(.bordered).disabled(model.busy)
@@ -599,7 +607,7 @@ struct ReaderScreen: View {
 
             if compactTools {
                 ScrollView(.horizontal) {
-                    HStack(spacing: 16) { pagingTools; fontTools; annotationTools }.padding(.horizontal, 8)
+                    HStack(spacing: 16) { annotationTools; pagingTools; fontTools }.padding(.horizontal, 8)
                 }.fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("reader.tools.scroll")
             } else {
@@ -628,7 +636,7 @@ struct ReaderScreen: View {
         .sheet(isPresented: $showNavigation) { HostNavigationSheet(model: model) }
         .sheet(isPresented: $showReadingRecords) { HostReadingRecordsSheet(model: model) }
 #if EXR_APPLE_WAVE3
-        .sheet(isPresented: $showWave3) { HostWave3Sheet(state: model.wave3, actions: model.wave3Actions) }
+        .sheet(isPresented: $showWave3) { HostWave3Sheet(state: model.wave3, ownerBusy: model.busy, actions: model.wave3Actions) }
 #endif
 #if EXR_APPLE_PAGE_THEME
         .sheet(isPresented: $showPageTheme) { HostPageThemeSheet(model: model) }
