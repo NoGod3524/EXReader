@@ -10,6 +10,7 @@ OWNED = ('tests/android_font_reader/', '.github/workflows/reader-android-font-re
          'docs/android-font-reader/', 'examples/android/app/src/main/java/org/exreader/host/MainActivity.java',
          'tests/reader_d21_apple_receive/guard.py', 'tests/reader_android_receive_d22/guard.py',
          'tests/reader_d25_real_formats/run.py', '.github/workflows/reader-d23-relay.yml',
+         '.github/workflows/reader-d26-accessibility.yml', 'apps/reader/desktop/gtk_feature_integration.cmake', 'examples/linux/reading.h', 'examples/linux/wave3_backend.inc', 'examples/linux/wave3_ui.inc', 'tests/reader_d26_accessibility/identity_current.py', 'tests/reader_d26_accessibility/tools_current.py',
          'examples/reader.c', 'apps/reader/desktop/windows_search.inc', 'apps/reader/desktop/windows_txt_search.inc', 'apps/reader/desktop/windows_wave3.inc', 'tests/windows_host/txt/check_progress.py', '.github/workflows/windows-wave3-txt-progress.yml')
 def git(*args):
     return subprocess.check_output(['git', *args], text=True).strip()
@@ -18,6 +19,7 @@ subprocess.check_call(['git', 'merge-base', '--is-ancestor', SEED, head])
 names = git('diff', '--name-only', SEED, head).splitlines()
 assert all(name.startswith(OWNED) for name in names), names
 subprocess.run(['git', 'diff', '--exit-code', '7ee9f9b93cbc1cb1dbf485bb138c2cf4e2de3691', 'HEAD', '--', *['examples/reader.c', 'apps/reader/desktop/windows_search.inc', 'apps/reader/desktop/windows_txt_search.inc', 'apps/reader/desktop/windows_wave3.inc', 'tests/windows_host/txt/check_progress.py', '.github/workflows/windows-wave3-txt-progress.yml']], check=True)
+subprocess.run(['git', 'diff', '--exit-code', 'cc75214cb5e6dce389625e33399e1b120aedf4c4', 'HEAD', '--', *['.github/workflows/reader-d26-accessibility.yml', 'apps/reader/desktop/gtk_feature_integration.cmake', 'examples/linux/reading.h', 'examples/linux/wave3_backend.inc', 'examples/linux/wave3_ui.inc', 'tests/reader_d26_accessibility/identity_current.py', 'tests/reader_d26_accessibility/tools_current.py']], check=True)
 # The whitelist freezes ALL other paths, including SDK, budgets and old suites.
 modules = {name: git('rev-parse', 'HEAD:apps/reader/' + name) for name in
            ('annotation-import', 'annotation-export', 'font-library', 'original-export', 'jump-history', 'sync-status-view', 'reading-state', 'revisions')}
