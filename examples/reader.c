@@ -2902,7 +2902,8 @@ static unsigned __stdcall job_thread(void *context) {
 
 static exr_status job_hit(host_job *job) {
   const exr_layout *layout = NULL; exr_status status;
-  if (!g.session.bounded || g.session.book_id != job->book_id || g.session.part != job->target_part ||
+  if ((!g.session.bounded && !g.session.txt) || (g.session.txt && g.session.txt_pager_invalid) ||
+      g.session.book_id != job->book_id || g.session.part != job->target_part ||
       g.frame.generation != job->generation || g.frame.page != job->target_page) return EXR_CANCELLED;
   status = exr_pager_get(g.session.pager, job->target_page, &layout, &job->error);
   if (status != EXR_OK) return status;
@@ -3419,14 +3420,14 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
     case WM_GETDLGCODE:
       return DLGC_WANTARROWS | DLGC_WANTCHARS;
     case WM_LBUTTONDOWN:
-      if (g.job || g.pending || !g.frame.valid || g.session.txt) return 0;
+      if (g.job || g.pending || !g.frame.valid) return 0;
       SetFocus(window);
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       prefs_press_active = 1;
       prefs_press_x = (short)LOWORD(lparam);
       prefs_press_y = (short)HIWORD(lparam);
 #endif
-      if (g.frame.bounded) { bounded_mouse((short)LOWORD(lparam), (short)HIWORD(lparam), 1, 0); return 0; }
+      if (g.frame.bounded || g.session.txt) { bounded_mouse((short)LOWORD(lparam), (short)HIWORD(lparam), 1, 0); return 0; }
       {
         size_t offset = point_offset((short)LOWORD(lparam), (short)HIWORD(lparam), 0);
         if (offset == SIZE_MAX) {
@@ -3443,7 +3444,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       }
       return 0;
     case WM_MOUSEMOVE:
-      if (g.frame.bounded && dragging) { bounded_mouse((short)LOWORD(lparam), (short)HIWORD(lparam), 0, 0); return 0; }
+      if ((g.frame.bounded || g.session.txt) && dragging) { bounded_mouse((short)LOWORD(lparam), (short)HIWORD(lparam), 0, 0); return 0; }
       if (g.job || g.pending) return 0;
       if (dragging) {
         size_t offset = point_offset((short)LOWORD(lparam), (short)HIWORD(lparam), 1);
@@ -3478,7 +3479,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
         }
       }
 #endif
-      if (g.frame.bounded && dragging) { bounded_mouse((short)LOWORD(lparam), (short)HIWORD(lparam), 0, 1); return 0; }
+      if ((g.frame.bounded || g.session.txt) && dragging) { bounded_mouse((short)LOWORD(lparam), (short)HIWORD(lparam), 0, 1); return 0; }
       if (g.job || g.pending) { dragging = 0; if (GetCapture() == window) ReleaseCapture(); return 0; }
       if (dragging) {
         size_t offset = point_offset((short)LOWORD(lparam), (short)HIWORD(lparam), 1);
