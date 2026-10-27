@@ -184,3 +184,16 @@ Audit artifact `12779195101`, 13087 bytes, SHA-256
 `326a2f200e904460ae0abc4d094541908e85f441694c4a7629e879db0ff7fdcc`,
 expires 2027-01-25T23:08:52Z. The evidence-only documentation commit is not
 the audited source.
+
+## 2026-10-27 Android system original save
+
+[Actions audit 40603619237/1](https://github.com/NoGod3524/EXReader/actions/runs/40603619237)
+at source `d65c8a810426beeb727dfdeff61b85e611997257` completed with
+`evidence_ok=true`: **74/108 (68.5%)**, foundation 12/12, host 62/84 and
+final delivery 0/12. The added Android outcome is documented in
+[android-original-save.md](android-original-save.md).
+
+Audit artifact `12780100757`, 13375 bytes, SHA-256
+`b02568010c5b36a1a8c387c6b874b2bb3ae8a23c85ff6bc4d869a8bcf2417fa0`,
+expires 2027-01-25T23:39:31Z. The evidence-only documentation commit is not
+the audited source.
