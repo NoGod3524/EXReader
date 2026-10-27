@@ -581,6 +581,7 @@ exr_status exr_txt_pager_create_private(const exr_source *source,exr_font *font,
   exr_txt_checkpoint before;exr_status status;uint64_t offset;const char *line;size_t length,i;
   if(out) *out=NULL;
   if(!out || !source || !source->read_at || !font) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT pager arguments");
+  if(!source->size) return exr_fail(e,EXR_ARGUMENT,"Invalid document bytes");
   if(!config) config=&defaults;
   /* Arbitrary selectors need per-node computed styles; this first adapter only
      supports the resident default stylesheet. */
@@ -608,6 +609,7 @@ exr_status exr_txt_pager_create_private(const exr_source *source,exr_font *font,
     }
     v->count++;v->document.size=(size_t)offset+length;
   }
+  if(!v->count) { status=exr_fail(e,EXR_FORMAT,"Document has no supported text content");goto fail; }
   if(v->count) {
     v->document.node_count=2+2*v->count;v->chapter=(exr_chapter){"","",1,SIZE_MAX,1,1};
     v->document.chapters=&v->chapter;v->document.chapter_count=1;
