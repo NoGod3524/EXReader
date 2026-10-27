@@ -212,6 +212,26 @@ extern "C" reader_original_status reader_original_verified_path(reader_catalog *
     std::string p=d.path+"/"+leaf(k); need(p.size()<capacity,ROI_ARGUMENT); std::memcpy(path,p.c_str(),p.size()+1); return ROI_OK;
   } catch(const failure &f){return f.status;} catch(...){return ROI_MEMORY;}
 }
+#ifdef _WIN32
+extern "C" reader_original_status reader_original_verified_handle(reader_catalog *c,const char *root,const char *key,const reader_original_callbacks *cb,void **out,uint64_t *size) {
+  if(!c||!root||!key||!out||!size)return ROI_ARGUMENT;
+  *out=nullptr; *size=0;
+  try {
+    directory d; d.open(root); std::string k=bounded(key,68);
+    need(valid_key(k),ROI_ARGUMENT); auto rows=find(c,k);
+    need(rows.size()==1&&rows[0].state=="ready"&&rows[0].ref==leaf(k),ROI_CORRUPT);
+    meta m; int found=0; reader_catalog_error e{};
+    check_catalog(reader_catalog_metadata(c,k.c_str(),capture_meta,&m,&found,&e));
+    need(found&&m.bytes,ROI_CORRUPT);
+    handle h; h.f=d.existing(rows[0].ref);
+    uint64_t n=0,after=0; char hash[65]; unsigned char buf[65536];
+    need(h.f!=invalid&&regular(h.f,&n)&&n==m.bytes,ROI_CORRUPT);
+    need(hashfile(h.f,n,hash,buf,cb)&&regular(h.f,&after)&&after==n&&k.substr(4)==hash,ROI_CORRUPT);
+    need(!cancelled(cb),ROI_CANCELLED);
+    *out=h.f; *size=n; h.f=invalid; return ROI_OK;
+  } catch(const failure &f){return f.status;} catch(...){return ROI_MEMORY;}
+}
+#endif
 extern "C" reader_original_status reader_original_import(reader_catalog *c,const char *root,const char *source_dir,const char *source_name,const char *title,const char *author,const char *sort_title,const reader_original_callbacks *cb,char key[69]) {
   if(!c||!root||!source_dir||!source_name||!title||!author||!sort_title||!key)return ROI_ARGUMENT;
   key[0]=0;
