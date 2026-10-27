@@ -986,7 +986,7 @@ struct host_job {
   host_search_batch search_batch;
   host_search_hit search_hit;
 #if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_WAVE3)
-  size_t txt_history_origin;
+  size_t txt_history_origin, txt_history_origin_end;
   exr_anchor txt_history_before, txt_history_after;
   int txt_history_ready, txt_history_failed;
 #endif
