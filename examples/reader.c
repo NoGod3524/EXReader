@@ -1639,6 +1639,32 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
   /* The bounded pager and the TXT pager both report normal EOF as a pager
      error and expose no page count; a resident document uses EXR_ARGUMENT. */
   const int pager_bounded = session->bounded || session->txt;
+  /* TXT get-mode retains only a few recent checkpoints. Doubling past a
+     distant offset then bisecting can repeatedly replay the entire prefix.
+     Walk forward once, preserving the same last-start-at-or-before rule. */
+  if (session->txt) {
+    size_t index, chosen = 0, chosen_start = 0, chosen_end = 0;
+    int have = 0;
+    for (index = 0; index <= 1000000; index++) {
+      if (control && control->cancelled && control->cancelled(control->context)) return EXR_CANCELLED;
+      status = OFFSET_GET(session->pager, index, &layout, error);
+      if (status != EXR_OK) {
+        if (!have || !pager_eof(status, error)) return status;
+        memset(error, 0, sizeof(*error));
+        break;
+      }
+      info = exr_layout_pages(layout, &count);
+      if (!info || count < 1) return EXR_FORMAT;
+      if (have && info->start > offset) break;
+      chosen = index; chosen_start = info->start; chosen_end = info->end; have = 1;
+      if (!index && offset < info->end) break;
+    }
+    if (!have) return EXR_FORMAT;
+    if (page) *page = chosen;
+    if (start) *start = chosen_start;
+    if (end) *end = chosen_end;
+    return EXR_OK;
+  }
   status = OFFSET_GET(session->pager, 0, &layout, error);
   if (status != EXR_OK) return status;
   info = exr_layout_pages(layout, &count);
