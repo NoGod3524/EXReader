@@ -31,7 +31,7 @@ def main():
             return hashlib.file_digest(f, 'sha256').hexdigest()
     assert fixture.stat().st_size == 16792975 and digest(fixture) == expected
     report = dict(source_sha=os.environ['GITHUB_SHA'], host_sha256=digest(exe), checks=[],
-                  scope='native shelf, verified TXT first page and SDK book; paging and restart position remain unimplemented', accepted=False)
+                  scope='native shelf, verified TXT page turns and SDK book; restart position remains unimplemented', accepted=False)
     app = None
     try:
         profile = out / 'profile'
@@ -64,13 +64,26 @@ def main():
         assert rows().count(original_line) == 1, rows()
         app.click('open'); app.wait_idle()
         app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=120)
-        assert '仅显示第一页' in app.status() and '保存阅读位置尚未实现' in app.status(), app.status()
+        assert '阅读位置保存尚未实现' in app.status(), app.status()
         automation = Uia()
         assert automation.available, automation.error
         page = automation.control(app.control('page'))
         value, error = automation.value(page)
         assert value and 'Perf Import 0000' in value and 'line 0000' in value, (value, error)
-        assert not ui.P.U.IsWindowEnabled(app.control('next'))
+        assert ui.P.U.IsWindowEnabled(app.control('next'))
+        first = value
+        app.click('next'); app.wait_idle()
+        second, error = automation.value(automation.control(app.control('page')))
+        assert second and second != first, (second, error)
+        # This fixture has unique consecutive line numbers in its first 512 lines.
+        source_text = fixture.read_text(encoding='utf-8')
+        assert first in source_text and second in source_text
+        assert source_text.index(second) >= source_text.index(first) + len(first)
+        ui.P.M.screenshot(app.window, out / 'txt-second-page.bmp')
+        app.click('prev'); app.wait_idle()
+        back, error = automation.value(automation.control(app.control('page')))
+        assert back == first, (back, error)
+        report['checks'].append('native next and previous show distinct consecutive source text and restore first page')
         ui.P.M.screenshot(app.window, out / 'txt-first-page.bmp')
         report['page_excerpt'] = value[:300]
         report['checks'].append('selected 16792975-byte original renders first page with expected UI Automation text and screenshot')
