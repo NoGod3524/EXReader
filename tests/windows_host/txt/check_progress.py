@@ -246,8 +246,14 @@ def main():
         assert automation.available, automation.error
         app.wait(lambda: len(rows(app)) == 3, timeout=180)
         open_row(fixture.name)
-        assert first_line(page_text(app, automation)) == position_line, page_text(app, automation)[:200]
-        record('restart after the refused write restores the durable position', position_line)
+        # The refused write kept the older offset while the type size did change,
+        # so the restored page starts at or before it: the saved text must still be
+        # the content on screen.
+        restored_after_refusal = page_text(app, automation)
+        wanted = marker(position_line)
+        visible = {int(value) for value in re.findall(r'line (\d{4})', restored_after_refusal)}
+        assert wanted in visible, (wanted, sorted(visible)[:5], restored_after_refusal[:200])
+        record('restart after the refused write restores the durable position', wanted)
 
         open_row(pdf.stem)
         sdk_first = page_text(app, automation)
