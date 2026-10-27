@@ -108,6 +108,10 @@ def main():
                 if mode == 'theme':
                     # The original theme driver services the real OS requests;
                     # running XCTest alone leaves its dark/light requests unanswered.
+                    # Release our SE simulator before the unchanged theme driver
+                    # boots its own chosen device; avoid two resident simulators.
+                    if args.platform != 'macos':
+                        run(['xcrun', 'simctl', 'shutdown', udid], 'release-d24-simulator')
                     (project / 'raw-products').symlink_to(products.resolve(), target_is_directory=True)
                     derived = ROOT / 'build/ThemeDerivedData'
                     bundle = evidence / 'theme-os/theme.xcresult'

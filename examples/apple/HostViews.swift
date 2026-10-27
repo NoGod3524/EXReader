@@ -539,6 +539,7 @@ struct ReaderScreen: View {
                 if compactTools {
                     Button { toolsVisible.toggle() } label: {
                         Image(systemName: toolsVisible ? "chevron.down" : "slider.horizontal.3")
+                            .font(.system(size: 20))
                             .frame(width: 44, height: 44).contentShape(Rectangle())
                     }
                     .accessibilityLabel(toolsVisible ? "隐藏阅读工具" : "显示阅读工具")
@@ -556,7 +557,7 @@ struct ReaderScreen: View {
                     Button("阅读主题") { showPageTheme = true }
                         .accessibilityIdentifier("reader.theme")
 #endif
-                } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }
+                } label: { Image(systemName: "ellipsis").font(.system(size: 20)).frame(width: 44, height: 44) }
                     .accessibilityLabel(Text("更多阅读操作"))
                     .accessibilityIdentifier("reader.more").disabled(model.busy)
                 if model.busy {
@@ -573,6 +574,9 @@ struct ReaderScreen: View {
                         .accessibilityIdentifier("reader.cancel")
                 }
             }
+            // Header icons retain 44-point targets without automatic button
+            // chrome expanding to the maximum body-text control height.
+            .buttonStyle(.plain)
             .padding(.horizontal).padding(.top, 8)
 
             GeometryReader { geometry in
