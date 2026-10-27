@@ -8,3 +8,8 @@ add_test(NAME bounded_txt_scan COMMAND bounded_txt_scan)
 add_executable(bounded_txt_view view.c)
 target_link_libraries(bounded_txt_view PRIVATE EXReader::exr_core)
 add_test(NAME bounded_txt_view COMMAND bounded_txt_view)
+
+if(WIN32)
+  add_executable(bounded_txt_large_pager large_pager.c)
+  target_link_libraries(bounded_txt_large_pager PRIVATE EXReader::exr_core psapi)
+endif()
