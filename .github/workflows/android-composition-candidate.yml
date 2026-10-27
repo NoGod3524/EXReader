@@ -1,7 +1,7 @@
 name: Android composition candidate
 on:
   push:
-    branches: [codex/android-composed-candidate, codex/android-reading-page-position, codex/android-combined-sdk-versions, codex/android-merge-prep, codex/windows-android-combined, codex/reader-all-combined, codex/android-navigation-scroll-recovery]
+    branches: [codex/android-composed-candidate, codex/android-reading-page-position, codex/android-combined-sdk-versions, codex/android-merge-prep, codex/windows-android-combined, codex/reader-all-combined]
   workflow_dispatch:
     inputs:
       diagnostic_only:
