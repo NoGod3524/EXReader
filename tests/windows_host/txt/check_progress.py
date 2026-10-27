@@ -161,6 +161,7 @@ def main():
         assert after_font != before_font, ('the type size did not change the layout', app.status(), before_font[:80], after_font[:80])
         assert first_marker_text and first_marker_text in after_font, (first_marker_text, after_font[:300])
         position_line = first_line(after_font)
+        saved_number = marker(after_font)
         record('font increase relayouts and keeps the content position', first_marker_text)
 
         heads, count = progress_heads('txt:' + expected)
@@ -250,10 +251,9 @@ def main():
         # so the restored page starts at or before it: the saved text must still be
         # the content on screen.
         restored_after_refusal = page_text(app, automation)
-        wanted = marker(position_line)
         visible = {int(value) for value in re.findall(r'line (\d{4})', restored_after_refusal)}
-        assert wanted in visible, (wanted, sorted(visible)[:5], restored_after_refusal[:200])
-        record('restart after the refused write restores the durable position', wanted)
+        assert saved_number in visible, (saved_number, sorted(visible)[:5], restored_after_refusal[:200])
+        record('restart after the refused write restores the durable position', saved_number)
 
         open_row(pdf.stem)
         sdk_first = page_text(app, automation)
