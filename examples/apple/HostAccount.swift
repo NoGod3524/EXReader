@@ -356,6 +356,21 @@ enum HostReceivedOriginal {
             try copy.close()
             throw HostError.invalidInput("云端原件 SHA-256 或长度不匹配；未导入，可重试")
         }
+        // Publication is on the account's serial owner while synchronization is
+        // stopped. Preserve a damaged cache as evidence, then publish only the
+        // independently verified bytes so the next sync can retry successfully.
+        try cancel.check()
+        if FileManager.default.fileExists(atPath: existing.path) {
+            let quarantine = directory.appendingPathComponent("receive-quarantine", isDirectory: true)
+            try FileManager.default.createDirectory(at: quarantine, withIntermediateDirectories: true,
+                                                   attributes: [.posixPermissions: 0o700])
+            try FileManager.default.moveItem(at: existing, to: quarantine.appendingPathComponent(UUID().uuidString + "." + book.format))
+        }
+        let publish = cache.appendingPathComponent(".receive-" + UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: publish) }
+        try FileManager.default.copyItem(at: copy.url, to: publish)
+        try cancel.check()
+        try FileManager.default.moveItem(at: publish, to: existing)
         return copy
     }
 }

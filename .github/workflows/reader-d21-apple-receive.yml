@@ -74,6 +74,11 @@ jobs:
         with:
           pattern: team24-apple-sdk-*
           path: sdk-input
+      - name: Same-run macOS owner consumer uses original installation layout
+        uses: actions/download-artifact@v4
+        with:
+          name: team24-apple-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/raw3-ios-sdk/macos
       - name: Original project generator dependency
         run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
       - name: Actual native receive with HTTPS and unchanged owner
@@ -82,9 +87,15 @@ jobs:
         if: always()
         with:
           name: d21-receive-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/d21-receive/${{ matrix.platform }}/
+          path: |
+            build/d21-receive/${{ matrix.platform }}/*.log
+            build/d21-receive/${{ matrix.platform }}/*.json
+            build/d21-receive/${{ matrix.platform }}/receive.xcresult/
+            build/d21-receive/${{ matrix.platform }}/seed/result.json
+            build/d21-receive/${{ matrix.platform }}/receiver/*result.json
           retention-days: 30
       - name: Actual native features and unchanged old reading navigation search theme suites
+        if: ${{ !cancelled() }}
         run: python3 tests/reader_team24_apple/run_ui.py --platform '${{ matrix.platform }}'
       - uses: actions/upload-artifact@v4
         if: always()
