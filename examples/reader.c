@@ -2456,6 +2456,18 @@ static exr_status job_layout(host_job *job) {
     themed = 1;
   }
 #endif
+  config = g.session.config;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  if (job->prefs_valid) {
+    config.page.margin = job->prefs.margin;
+    config.page.font_size = job->prefs.font_size;
+    config.page.line_height = job->prefs.line_spacing;
+    config.page.paragraph_spacing = job->prefs.paragraph_spacing;
+  } else
+#endif
+  config.page.font_size = 28.0f * (float)job->font_percent / 100.0f;
+  config.control.cancelled = host_cancel_check;
+  config.control.context = NULL;
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   if (g.session.txt) {
     host_session candidate = g.session;
@@ -2492,18 +2504,6 @@ static exr_status job_layout(host_job *job) {
 #endif
   if (!g.session.active || g.session.fixed || (!g.session.document && !g.session.bounded)) return EXR_ARGUMENT;
   if (job->book_id && job->book_id != g.session.book_id) return EXR_CANCELLED;
-  config = g.session.config;
-#ifdef EXR_READER_WINDOWS_PREFERENCES
-  if (job->prefs_valid) {
-    config.page.margin = job->prefs.margin;
-    config.page.font_size = job->prefs.font_size;
-    config.page.line_height = job->prefs.line_spacing;
-    config.page.paragraph_spacing = job->prefs.paragraph_spacing;
-  } else
-#endif
-  config.page.font_size = 28.0f * (float)job->font_percent / 100.0f;
-  config.control.cancelled = host_cancel_check;
-  config.control.context = NULL;
   if (g.session.bounded) {
     host_session candidate = g.session; exr_anchor point = {0}; exr_anchor_match match;
     status = exr_pager_anchor_create(g.session.pager, g.frame.range_start, g.frame.range_start, &control, &point, &error);
@@ -3519,7 +3519,7 @@ static void update_page_label(void) {
   } else {
     wchar_t text[256];
 #ifdef EXR_READER_WINDOWS_PREFERENCES
-    if (prefs.active) {
+    if (prefs.active && !g.session.txt) {
       swprintf(text, 256, L"第 %llu 页 · %ls · 字号 %.1f 磅",
                (unsigned long long)(g.frame.page + 1), format_name(g.current.format),
                (double)prefs.value.font_size);
@@ -4246,8 +4246,13 @@ static void host_update_controls(void) {
   EnableWindow(g.update_button, !busy && has);
   EnableWindow(g.remove_button, !busy && has);
   EnableWindow(g.jump_button, !busy && has);
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  EnableWindow(g.font_dec, !busy && can_page && !g.frame.fixed);
+  EnableWindow(g.font_inc, !busy && can_page && !g.frame.fixed);
+#else
   EnableWindow(g.font_dec, !busy && has && !g.frame.fixed);
   EnableWindow(g.font_inc, !busy && has && !g.frame.fixed);
+#endif
   EnableWindow(g.zoom_dec, !busy && has && g.frame.fixed);
   EnableWindow(g.zoom_inc, !busy && has && g.frame.fixed);
   EnableWindow(g.cancel_button, busy || g.job != NULL);
@@ -4625,7 +4630,11 @@ static void handle_job_complete(host_job *job) {
 }
 
 static void host_command(int id) {
-  if (g.session.txt && id != IDC_OPEN_BUTTON && id != IDC_IMPORT_BUTTON && id != IDC_CANCEL && id != IDC_DELETE_BUTTON && id != IDC_PREV && id != IDC_NEXT) {
+  if (g.session.txt && id != IDC_OPEN_BUTTON && id != IDC_IMPORT_BUTTON && id != IDC_CANCEL && id != IDC_DELETE_BUTTON && id != IDC_PREV && id != IDC_NEXT
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      && id != IDC_FONT_DEC && id != IDC_FONT_INC
+#endif
+  ) {
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
     set_status(L"TXT 的此功能尚未实现。"); return;
 #else
