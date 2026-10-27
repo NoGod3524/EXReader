@@ -135,6 +135,7 @@ typedef struct {
   int active;
   int fixed;
   int txt; /* Product original, with no SDK book identity. */
+  int txt_pager_invalid; /* Recreate after a failed or cancelled layout. */
   exr_source txt_source; /* Borrowed from the pager. */
   int64_t book_id;
   exr_document *document;
@@ -1722,7 +1723,7 @@ static size_t txt_read(void *context,uint64_t offset,void *buffer,size_t size) {
   return (size_t)got;
 }
 static void txt_release(void *context) { CloseHandle((HANDLE)context); }
-static exr_status txt_frame(host_session *session, const exr_source *source, exr_layout *layout,
+static exr_status txt_frame(host_session *session, const exr_source *source, const exr_layout *layout,
                             size_t page, host_frame *frame, exr_error *error) {
   exr_txt_cursor *cursor=NULL; const exr_page *info; size_t count=0;
   exr_status status=EXR_OK;
@@ -1781,7 +1782,7 @@ static exr_status job_open_txt(host_job *job) {
   reader_original_callbacks callbacks={job,job_cancel_check,NULL};
   reader_original_status rs; char *root=host_utf8(g.original_root),*path=host_utf8(g.product_path);
   void *handle=NULL; uint64_t bytes=0; exr_source source={0}; exr_error error={0};
-  host_session session={0}; exr_layout *layout=NULL;
+  host_session session={0}; const exr_layout *layout=NULL;
   exr_status status=EXR_IO; const exr_page *info; size_t count=0;
   if(!root || !path) { status=EXR_MEMORY; goto done; }
   if(reader_catalog_open(path,&catalog,&ce)) { status=EXR_DATABASE; goto done; }
@@ -1794,7 +1795,9 @@ static exr_status job_open_txt(host_job *job) {
   status=exr_txt_pager_create(&source,g.font,&session.config,&session.pager,&error);
   if(status!=EXR_OK) goto done;
   handle=NULL; /* pager now owns it */
-  status=exr_pager_next(session.pager,&layout,&error);
+  status=exr_pager_set_cache(session.pager,2,8*1024*1024,&error);
+  if(status==EXR_OK) status=exr_pager_set_checkpoints(session.pager,8,4*1024*1024,8,&error);
+  if(status==EXR_OK) status=exr_pager_get(session.pager,0,&layout,&error);
   if(status!=EXR_OK || !layout) { if(status==EXR_OK) status=EXR_FORMAT; goto done; }
   info=exr_layout_pages(layout,&count);
   if(!info || !count || info->start>info->end || info->end-info->start>HOST_PAGE_TEXT_LIMIT) { status=EXR_FORMAT;goto done; }
@@ -1807,7 +1810,6 @@ static exr_status job_open_txt(host_job *job) {
   job->session_swapped=job->have_frame=1;
   copy_wstring(job->message,512,L"阅读位置保存尚未实现。");
  done:
-  if(layout) exr_layout_free(layout);
   session_clear(&session);
   if(handle) CloseHandle((HANDLE)handle);
   if(catalog && reader_catalog_close(&catalog,&ce) && status==EXR_OK) status=EXR_DATABASE;
@@ -1816,34 +1818,35 @@ static exr_status job_open_txt(host_job *job) {
   return status;
 }
 static exr_status job_txt_go(host_job *job) {
-  host_session candidate=g.session; exr_source source=candidate.txt_source;
-  exr_pager *pager=NULL; exr_layout *layout=NULL; exr_error error={0};
-  exr_status status=EXR_IO; HANDLE copy=NULL; size_t i;
-  if (!DuplicateHandle(GetCurrentProcess(),(HANDLE)source.context,GetCurrentProcess(),
-                       &copy,0,FALSE,DUPLICATE_SAME_ACCESS)) goto done;
-  source.context=copy;
-  status=exr_txt_pager_create(&source,g.font,&candidate.config,&pager,&error);
-  if(status!=EXR_OK) goto done;
-  copy=NULL; candidate.pager=pager;
-  for(i=0;i<=job->target_page;i++) {
-    if(layout) { exr_layout_free(layout); layout=NULL; }
-    status=exr_pager_next(pager,&layout,&error);
-    if(status!=EXR_OK) goto done;
-    if(!layout) { status=EXR_ARGUMENT; job->at_end=1; goto done; }
+  host_session *session=&g.session;
+  exr_error error={0}; const exr_layout *layout=NULL;
+  exr_status status=EXR_IO;
+  if(session->txt_pager_invalid) {
+    exr_source source=session->txt_source; exr_pager *pager=NULL; HANDLE copy=NULL;
+    if(!DuplicateHandle(GetCurrentProcess(),(HANDLE)source.context,GetCurrentProcess(),
+                        &copy,0,FALSE,DUPLICATE_SAME_ACCESS)) goto done;
+    source.context=copy;
+    status=exr_txt_pager_create(&source,g.font,&session->config,&pager,&error);
+    if(status!=EXR_OK) { CloseHandle(copy); goto done; }
+    status=exr_pager_set_cache(pager,2,8*1024*1024,&error);
+    if(status==EXR_OK) status=exr_pager_set_checkpoints(pager,8,4*1024*1024,8,&error);
+    if(status!=EXR_OK) { exr_pager_free(pager); goto done; }
+    exr_pager_free(session->pager);
+    session->pager=pager; session->txt_source=source; session->txt_pager_invalid=0;
   }
-  status=txt_frame(&candidate,&source,layout,job->target_page,&job->frame,&error);
+  status=exr_pager_get(session->pager,job->target_page,&layout,&error);
+  if(pager_eof(status,&error)) { job->at_end=1; goto done; }
+  if(status!=EXR_OK) { session->txt_pager_invalid=1; goto done; }
+  status=txt_frame(session,&session->txt_source,layout,job->target_page,&job->frame,&error);
   if(status==EXR_OK) {
     copy_wstring(job->frame.title,256,g.frame.title);
-    job->candidate_pager=pager; pager=NULL;
-    job->candidate_config=candidate.config; job->candidate.txt_source=source; job->have_frame=1;
+    job->have_frame=1;
   }
  done:
-  if(layout) exr_layout_free(layout);
-  if(pager) exr_pager_free(pager);
-  if(copy) CloseHandle(copy);
   if(status!=EXR_OK) job->error=error;
   return status;
 }
+
 #endif
 static exr_status job_open(host_job *job) {
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
