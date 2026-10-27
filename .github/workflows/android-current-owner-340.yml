@@ -1,7 +1,7 @@
-name: Android composition original and adapted owner 3.40
+name: Android composition current owner 3.40
 on:
   push:
-    branches: [codex/android-current-owner-regression]
+    branches: [codex/android-current-owner-regression, codex/android-combined-sdk-versions]
   workflow_dispatch:
     inputs:
       inspect_retained:
@@ -33,7 +33,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Admit exact composition source and retain the original drivers
+      - name: Admit exact composition source and compile the current drivers
         run: |
           set -euo pipefail
           mkdir -p build/session-android/logs
@@ -128,16 +128,9 @@ jobs:
           cp build/host-session-android/test-apks/original-owner.apk examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           python tests/reader_session_android/audit.py --output build/session-android/native
           python tests/reader_host_session_android/audit.py --output build/host-session-android/native
-      - name: Build the separately identified adapted owner runner
-        id: current_owner
-        run: |
-          set -euo pipefail
-          python tests/reader_android_owner_current/prepare.py
-          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_android_owner_current/init.gradle" -PexrSdkVersion=3.40.0 -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.ProductOwnerCurrentTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/current-owner-build.log
-          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/host-session-android/test-apks/current-owner.apk
       - name: Enable hosted runner emulator acceleration
         run: sudo chmod 666 /dev/kvm
-      - name: Actual SDK owner import and public original export in Android private storage
+      - name: Current SDK owner import, original export and host sync on Android 3.40
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -156,25 +149,6 @@ jobs:
             python tests/webdav_android/run_backend.py --fixture build/webdav-android/fixture --output build/webdav-android/backend
             adb install -r -t build/host-session-android/test-apks/host-sync.apk
             python tests/reader_host_session_android/run_ui.py --fixture build/webdav-android/fixture --reading-fixtures build/session-android/reading-fixtures --output build/host-session-android/ui
-      - name: Run adapted owner and unchanged host sync after retaining original outcome
-        if: ${{ !cancelled() && steps.current_owner.outcome == 'success' }}
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          target: default
-          arch: x86_64
-          profile: pixel_6
-          ram-size: 4096M
-          disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: |
-            cp build/host-session-android/test-apks/current-owner.apk examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            python tests/reader_session_android/run_export.py --output build/session-android/export-current
-            python build/android-owner-current/run_roundtrip_current.py --fixture build/webdav-android/fixture --output build/session-android/roundtrip-current
-            python tests/webdav_android/run_platform.py --fixture build/webdav-android/fixture --output build/webdav-android/platform-current
-            python tests/webdav_android/run_backend.py --fixture build/webdav-android/fixture --output build/webdav-android/backend-current
-            adb install -r -t build/host-session-android/test-apks/host-sync.apk
-            python tests/reader_host_session_android/run_ui.py --fixture build/webdav-android/fixture --reading-fixtures build/session-android/reading-fixtures --output build/host-session-android/ui-current
       - name: Preserve SDK consumer identity native logs and every export result
         if: always()
         uses: actions/upload-artifact@v4
