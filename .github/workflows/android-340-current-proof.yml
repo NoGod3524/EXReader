@@ -1,0 +1,65 @@
+name: Verify Android 3.40 current owner evidence
+on:
+  push:
+    branches: [codex/android-340-current-proof]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate and verify original Android 3.40 reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, sys, zipfile
+          sys.path.insert(0, 'tools')
+          from check_parallel_integration import fetch, download_artifact_zip
+          source = '57585506a297921246a6e9476de49464caef4982'
+          run_id, artifact, size = 40423047854, 12698607070, 108013392
+          digest = '25ae0dc0ab99e111ad7a86f79f9bb756f7880f41bb21a412c0e043e2158dcbec'
+          run = fetch(f'actions/runs/{run_id}')
+          assert run['head_sha'] == source and run['run_attempt'] == 1
+          assert run['status'] == 'completed' and run['conclusion'] == 'success'
+          item = fetch(f'actions/artifacts/{artifact}')
+          assert item['workflow_run']['id'] == run_id and item['workflow_run']['head_sha'] == source
+          assert not item['expired'] and item['size_in_bytes'] == size
+          assert item['digest'] == 'sha256:' + digest
+          raw = download_artifact_zip(artifact)
+          assert len(raw) == size and hashlib.sha256(raw).hexdigest() == digest
+          with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              names = archive.namelist()
+              assert len(names) == len(set(names))
+              def read(suffix):
+                  found = [name for name in names if name.endswith(suffix)]
+                  assert len(found) == 1, (suffix, found)
+                  return json.loads(archive.read(found[0]))
+              def identity(report):
+                  assert report['source_sha'] == source and report['run_id'] == str(run_id) and report['attempt'] == '1'
+              export = read('/export/device-report.json')
+              identity(export)
+              assert export['ok'] is True and export['api'] == 34 and export['abi'] == 'x86_64'
+              roundtrip = read('/roundtrip/result.json')
+              identity(roundtrip)
+              assert roundtrip['accepted'] is True and not roundtrip['failure']
+              owner = read('/roundtrip/original-owner-device.json')
+              identity(owner)
+              assert owner['failed'] == 0 and owner['count'] == 18
+              checks = []
+              for phase in ('first', 'secure-reopen', 'session-reopen', 'semantics'):
+                  report = read('/ui/' + phase + '-report.json')
+                  identity(report)
+                  assert report['passed'] is True and report['phase'] == phase
+                  checks.extend(item['name'] for item in report['checks'] if item.get('pass') is True)
+                  assert len(report['checks']) == sum(item.get('pass') is True for item in report['checks'])
+              assert len(checks) == 16 and len(set(checks)) == 16
+              print(json.dumps({'source': source, 'run': run_id, 'artifact': artifact,
+                    'sha256': digest, 'android_api': 34, 'abi': 'x86_64',
+                    'owner_cases': owner['count'], 'host_checks': checks,
+                    'roundtrip_check_count': len(roundtrip['checks']),
+                    'physical_device': False, 'complete_product': False}, ensure_ascii=False))
+          PY
