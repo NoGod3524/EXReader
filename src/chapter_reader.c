@@ -539,7 +539,7 @@ static exr_status txt_node_span(txt_view *v,size_t paragraph,size_t *start,size_
   return EXR_OK;
 }
 static exr_node txt_node(void *context,size_t node) {
-  txt_view *v=context;exr_node n={0};size_t paragraph,start,length;exr_error e={0};
+  txt_view *v=context;exr_node n={0};size_t paragraph,start=0,length=0;exr_error e={0};
   n.parent=n.first_child=n.next_sibling=n.start=n.end=SIZE_MAX;n.chapter=SIZE_MAX;
   if(node>=v->document.node_count) { txt_failure(v,exr_fail(&e,EXR_FORMAT,"Invalid TXT node"),&e);return n; }
   if(node<2) {
