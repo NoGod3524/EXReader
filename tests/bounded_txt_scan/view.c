@@ -47,6 +47,8 @@ static void errors(exr_font *font) {
   source.size=in.size;source.context=&in;source.read_at=read_at;
   config.control.cancelled=cancelled;
   if(exr_txt_pager_create_private(&source,font,&config,&pager,&e)!=EXR_CANCELLED || pager) die("cancel",&e);
+  in.data="  ";in.size=2;source.size=in.size;
+  if(exr_txt_pager_create_private(&source,font,NULL,&pager,&e)!=EXR_FORMAT || pager) die("empty projection",&e);
   in.data=bad;in.size=sizeof(bad);source.size=in.size;
   if(exr_txt_pager_create_private(&source,font,NULL,&pager,&e)!=EXR_ENCODING || pager) die("encoding",&e);
   in.data=text;in.size=sizeof(text)-1;source.size=in.size;
@@ -60,7 +62,7 @@ int main(void) {
   static const char utf16[]={ (char)0xff,(char)0xfe,'A',0,'\r',0,'\n',0,0x3d,(char)0xd8,0,(char)0xde };
   char *large;size_t i,at=0;exr_font *font=NULL;exr_error e={0};
   if(exr_font_open("C:/Windows/Fonts/arial.ttf",&font,&e)!=EXR_OK) die("font",&e);
-  errors(font);compare(text,sizeof(text)-1,font);compare(utf16,sizeof(utf16),font);compare(" \n\t",3,font);
+  errors(font);compare(text,sizeof(text)-1,font);compare(utf16,sizeof(utf16),font);
   large=malloc(200000);if(!large) return 1;
   for(i=0;i<1800;i++) at+=(size_t)sprintf(large+at,"Paragraph %zu: stable positions and continuous pagination across the source.\n",i);
   compare(large,at,font);free(large);exr_font_free(font);return 0;
