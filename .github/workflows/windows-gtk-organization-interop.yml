@@ -1,7 +1,7 @@
 name: Windows GTK actual host DAV relay
 on:
   push:
-    branches: [codex/windows-gtk-organization-interop, codex/windows-gtk-composition-proof]
+    branches: [codex/windows-gtk-organization-interop, codex/windows-gtk-composition-proof, codex/windows-gtk-relay-selector]
   workflow_dispatch:
 permissions:
   contents: read
