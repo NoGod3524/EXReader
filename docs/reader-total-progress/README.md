@@ -119,3 +119,21 @@ Audit artifact `12751913273`, 11,787 bytes, SHA-256
 `44130afd04d613eb32159b04bafa2b9d25275ba7f83e99e0097363d05d055794`;
 expires 2027-01-25T16:54:01Z. This documentation commit is not the audited
 source and does not alter the 108-item denominator.
+
+## 2026-10-27 Android search jump history
+
+The fixed-catalog audit [40577799778/1](https://github.com/NoGod3524/EXReader/actions/runs/40577799778)
+at source `412419efbbadbec761bf6cded43d7ca36f4a6dac` completed with
+`evidence_ok=true` and **70/108 (64.8%)**: foundation 12/12, hosts 58/84,
+final delivery 0/12. The October 25 cutoff stays 58/108 (53.7%).
+
+The added outcome is Android actual-reader search jump back/forward on the
+API 34 emulator. Its exact-source D22 retained report and original artifact
+were verified in the audit; the scope and original run are described in
+[android-jump-d22.md](android-jump-d22.md). Physical-device and final unified
+product acceptance are separate.
+
+Audit artifact `12768660772`, 12,085 bytes, SHA-256
+`0f64f81a1bce34c7e850bac4033ab309a95ad3fff0cd2748dc789eb575ccfdd7`,
+expires 2027-01-25T20:24:44Z. This documentation commit is not the audited
+source and does not change the fixed 108-outcome denominator.
