@@ -64,9 +64,8 @@ def stable_without(value):
     return bool(values and value not in values and visible_top is not None and abs(visible_top-value)<=2)
 def stable_above(value,neighbor):
     values=stable_numbers()
-    visible_top=stable_top()
     return bool(values and all(n>value for n in values) and min(values)==neighbor
-                and visible_top is not None and neighbor<=visible_top<=neighbor+30)
+                and stable_edge(neighbor,True))
 def organizer():
     app.wait_idle();ui.U.SetForegroundWindow(app.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,ui.A.VK_SHIFT))
     def find():
@@ -205,7 +204,10 @@ except Exception as error:
     problems.append(phase+': '+type(error).__name__+': '+str(error));traceback.print_exc()
     if app and app.process.poll() is None:
         observed={}
-        try:observed.update(status=app.status(),titles=app.titles(),process_id=app.process.pid)
+        try:
+            box=app.control('books');area=W.RECT();ui.U.GetClientRect(box,C.byref(area))
+            observed.update(status=app.status(),titles=app.titles(),process_id=app.process.pid,
+                            top_index=ui.send(box,0x18E),item_height=ui.send(box,0x1A1,0),viewport_height=area.bottom)
         except Exception as diagnostic:observed['ui_error']=repr(diagnostic)
         try:
             catalog=Path(str(profile/'library.sqlite')+'.product.sqlite')
