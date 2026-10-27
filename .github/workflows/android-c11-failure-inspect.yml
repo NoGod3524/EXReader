@@ -36,6 +36,12 @@ jobs:
               report = json.loads(archive.read('wave3/evidence/reading/first-report.json'))
               print('READING_FAILURE', json.dumps({key: report.get(key) for key in
                     ('passed', 'count', 'failed_check', 'failure_class', 'failure', 'failure_trace')}))
+              def tree(node):
+                  print('NODE', json.dumps({key: node.get(key) for key in ('id', 'text', 'description', 'actions')}, ensure_ascii=False))
+                  for child in node.get('children', []):
+                      tree(child)
+              failure = next(x for x in report['observations'] if x['name'] == 'failure')
+              tree(failure['tree'])
               for name in ('wave3/evidence/reading/result.json',
                            'wave3/evidence/reading/first-instrumentation.txt'):
                   print('FOCUSED', name)
