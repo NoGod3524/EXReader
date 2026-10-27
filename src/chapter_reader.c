@@ -453,6 +453,7 @@ exr_status exr_publication_pager_create(exr_publication *publication,size_t part
 /* Sparse paragraph checkpoints bound retained indexing independently of input
    length. Checkpoints describe the position immediately before a paragraph. */
 #define TXT_POINTS 256
+#define TXT_SPANS 1024
 typedef struct { size_t paragraph; exr_txt_checkpoint cursor; } txt_point;
 typedef struct {
   exr_source source, wrapped;
@@ -461,6 +462,8 @@ typedef struct {
   txt_point points[TXT_POINTS];
   size_t point_count, stride, count, cached, cached_start, cached_size;
   char *cache;
+  size_t span_base, span_count;
+  struct { size_t start, length; } spans[TXT_SPANS];
   size_t cursor_paragraph, cursor_start, cursor_size;
   const char *cursor_text;
   void (*release_source)(void *);
@@ -516,6 +519,25 @@ static exr_status txt_find_paragraph(txt_view *v,size_t paragraph,size_t *start,
   *start=(size_t)offset;*length=size;if(text) *text=line;
   return EXR_OK;
 }
+/* A bounded block of spans prevents reverse tree walks from replaying each
+   paragraph from the sparse checkpoint independently. Text remains in the
+   cursor and is prepared separately. */
+static exr_status txt_node_span(txt_view *v,size_t paragraph,size_t *start,size_t *length,exr_error *e) {
+  size_t i,base=paragraph-(paragraph%TXT_SPANS),count=v->count-base;
+  exr_status status;
+  if(paragraph>=v->count) return txt_failure(v,exr_fail(e,EXR_FORMAT,"Invalid TXT paragraph"),e);
+  if(!v->span_count || paragraph<v->span_base || paragraph-v->span_base>=v->span_count) {
+    if(count>TXT_SPANS) count=TXT_SPANS;
+    v->span_count=0;
+    for(i=0;i<count;i++) {
+      status=txt_find_paragraph(v,base+i,&v->spans[i].start,&v->spans[i].length,NULL,e);
+      if(status!=EXR_OK) return status;
+    }
+    v->span_base=base;v->span_count=count;
+  }
+  i=paragraph-v->span_base;*start=v->spans[i].start;*length=v->spans[i].length;
+  return EXR_OK;
+}
 static exr_node txt_node(void *context,size_t node) {
   txt_view *v=context;exr_node n={0};size_t paragraph,start,length;exr_error e={0};
   n.parent=n.first_child=n.next_sibling=n.start=n.end=SIZE_MAX;n.chapter=SIZE_MAX;
@@ -526,7 +548,7 @@ static exr_node txt_node(void *context,size_t node) {
     n.first_child=node ? 2 : 1;n.start=0;n.end=v->document.size;return n;
   }
   paragraph=(node-2)/2;
-  if(txt_find_paragraph(v,paragraph,&start,&length,NULL,&e)!=EXR_OK) return n;
+  if(txt_node_span(v,paragraph,&start,&length,&e)!=EXR_OK) return n;
   n.chapter=0;n.start=start;n.end=start+length;
   if(!(node&1)) {
     n.kind=EXR_NODE_PARAGRAPH;n.name="p";n.parent=1;n.first_child=node+1;
