@@ -11,12 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 248e02e9b7205e4c793dbf4d372876023987776d
+          ref: d21978f401781b311ad6168d0eb474f1657c9fb2
           fetch-depth: 0
       - name: Check pinned candidate and all four admission guards
         shell: bash
         run: |
-          candidate=248e02e9b7205e4c793dbf4d372876023987776d
+          candidate=d21978f401781b311ad6168d0eb474f1657c9fb2
           test "$(git rev-parse HEAD)" = "$candidate"
           export GITHUB_SHA="$candidate"
           python3 tests/android_font_reader/guard.py
