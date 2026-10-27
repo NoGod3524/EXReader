@@ -221,6 +221,32 @@
       "required_cases": [
         "jump_history_back_forward_over_real_search_landing"
       ]
+    },
+    "android_d22_annotations_first": {
+      "run": 40460333186,
+      "doc": "docs/reader-total-progress/android-annotations-d22.md",
+      "source_prefix": "92d453e374725896a7d1666c313e5d369ff83b3c",
+      "artifact": 12715880811,
+      "bytes": 112475779,
+      "sha256": "369380a70797fd8bc1e5b3212720b716d3c010436c0a4cf1825b780bf79ded06",
+      "required_cases": [
+        "annotation_export_private_files_and_saf_save",
+        "annotation_import_wrong_book_rejected_without_write"
+      ]
+    },
+    "android_d22_annotations_restore": {
+      "run": 40460333186,
+      "doc": "docs/reader-total-progress/android-annotations-d22.md",
+      "source_prefix": "92d453e374725896a7d1666c313e5d369ff83b3c",
+      "artifact": 12715880811,
+      "bytes": 112475779,
+      "sha256": "369380a70797fd8bc1e5b3212720b716d3c010436c0a4cf1825b780bf79ded06",
+      "required_cases": [
+        "annotation_preview_confirm_import_creates_records",
+        "annotation_reimport_all_duplicates_no_new_rows",
+        "tampered_file_rejected_before_any_write",
+        "imported_bookmark_navigable_by_public_found"
+      ]
     }
   },
   "requirements": [
@@ -897,9 +923,12 @@
       "group": "host",
       "platform": "android",
       "title": "Android：宿主标注文件导入/导出、预览确认及错误拒绝",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "android_d22_annotations_first",
+        "android_d22_annotations_restore"
+      ],
+      "note": "API 34 emulator actual host export, preview, confirmation, duplicate and tamper refusal; system picker is stubbed and physical devices remain separate."
     },
     {
       "id": "H.android.original_export",
