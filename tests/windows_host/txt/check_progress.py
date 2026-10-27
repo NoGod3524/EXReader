@@ -682,6 +682,8 @@ def main():
         with history_file.open('w', encoding='utf-8', newline='\n') as target:
             for index in range(200000):
                 target.write('Unique history line %08d with distinct content and a readable paragraph for page navigation.\n' % index)
+            for _ in range(3000):
+                target.write('A repeated paragraph has the DUPLICATE-NEEDLE marker and identical text for ambiguity checks.\n')
         assert history_file.stat().st_size > 16 * 1024 * 1024
         app = ui.P.App(exe, font, out / 'history-profile')
         app.wait_idle()
@@ -711,6 +713,28 @@ def main():
         app.wait(lambda: page_text(app, automation) == landed, timeout=300)
         app.wait_idle()
         record('large TXT search history back and forward resolve the actual source')
+
+        # The repeated paragraph makes the selector genuinely ambiguous.
+        # It must not use the previous byte offset to pick a lookalike.
+        dialog = search_dialog()
+        search_query(dialog, 'DUPLICATE-NEEDLE')
+        assert len(search_rows(dialog)) == 32, search_rows(dialog)
+        ui.send(ui.U.GetDlgItem(dialog, 174), 0x186, 31)
+        ui.send(dialog, 0x111, 175)
+        app.wait(lambda: '\u5df2\u72ec\u7acb\u6838\u5bf9' in ui.P.text(ui.U.GetDlgItem(dialog, 178)), timeout=300)
+        app.wait_idle()
+        assert 'DUPLICATE-NEEDLE' in page_text(app, automation)
+        ui.send(dialog, 0x10)
+        app.wait(lambda: not ui.U.IsWindow(dialog), timeout=30)
+        app.wait_idle()
+        ui.command(app, wave3.BACK)
+        app.wait(lambda: page_text(app, automation) == landed, timeout=300)
+        app.wait_idle()
+        ui.command(app, wave3.FORWARD)
+        app.wait(lambda: '\u5386\u53f2\u6e38\u6807\u6ca1\u6709\u79fb\u52a8' in app.status(), timeout=300)
+        app.wait_idle()
+        assert page_text(app, automation) == landed
+        record('ambiguous TXT history keeps the prior page and cursor')
         close_cleanly(app); app = None
         report['accepted'] = True
     except Exception:
