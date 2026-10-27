@@ -18,5 +18,5 @@ if(WIN32)
 endif()
 
 add_executable(bounded_txt_library_boundary library_boundary.c)
-target_link_libraries(bounded_txt_library_boundary PRIVATE EXReader::exr_core)
+target_link_libraries(bounded_txt_library_boundary PRIVATE EXReader::exr_library)
 add_test(NAME bounded_txt_library_boundary COMMAND bounded_txt_library_boundary)
