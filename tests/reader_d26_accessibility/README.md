@@ -147,3 +147,7 @@ a pipe: GUI clipboard helpers may inherit stdout and outlive the original driver
 so PIPE communicate waits for a descendant EOF after the driver has exited.
 The original process exit and raw output remain unchanged; no test timeout/expectation
 is relaxed and current acceptance is still independent.
+
+The current report identifies the SDK by the actual Actions checkout SHA. The
+workflow pins the frozen SDK baseline separately and checks each approved SDK
+candidate file against its source commit; the historical reports stay unchanged.

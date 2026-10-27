@@ -8,8 +8,11 @@ is additionally required rather than leaving the new control untested.
 The original historical expectations.py remains byte-for-byte unchanged.
 """
 
+import os
+
 START_SHA = '2f215f5793a7344d22db350276ba9f8a07abe86f'
-SDK_SHA = 'a7020b07b8515e0d4b8e2693522920e2ec78eb35'
+# The SDK is built from this run's checkout; the workflow separately pins its baseline and modified files.
+SDK_SHA = os.environ['GITHUB_SHA']
 SDK_VERSION = '3.41.0'
 SDK_ABI = 1
 WINDOW_TITLE = 'EXReader Linux'
