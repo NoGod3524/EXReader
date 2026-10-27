@@ -3,13 +3,13 @@
 """Current D26 GTK contract, derived from the complete historical G13 contract.
 
 All original behavioral checks/roles are retained. Source/SDK binding and the
-current operation labels follow base 2f215f57 (SDK 3.41.0 ABI 1). Receive books
+current operation labels follow base 2f215f57; SDK source is the bounded TXT candidate. Receive books
 is additionally required rather than leaving the new control untested.
 The original historical expectations.py remains byte-for-byte unchanged.
 """
 
 START_SHA = '2f215f5793a7344d22db350276ba9f8a07abe86f'
-SDK_SHA = START_SHA
+SDK_SHA = 'a7020b07b8515e0d4b8e2693522920e2ec78eb35'
 SDK_VERSION = '3.41.0'
 SDK_ABI = 1
 WINDOW_TITLE = 'EXReader Linux'
