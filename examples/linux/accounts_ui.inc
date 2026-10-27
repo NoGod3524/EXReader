@@ -28,8 +28,17 @@ static void accounts_finish_close(void);
 static gboolean accounts_tick(gpointer);
 static gboolean accounts_opened(void) { return accounts.dialog!=NULL; }
 static void accounts_text(char **value,const char *text) { g_free(*value);*value=g_strdup(text ? text:""); }
+/* Keep dynamic status text observable as an AT-SPI name change, just like
+   the main reader status. Avoid re-emitting unchanged progress every timer tick. */
+static void accounts_status_text(GtkWidget *widget,const char *text) {
+  if(!widget) return;
+  const char *value=text ? text:"";
+  if(g_strcmp0(gtk_label_get_text(GTK_LABEL(widget)),value)==0) return;
+  atk_object_set_name(gtk_widget_get_accessible(widget),value);
+  gtk_label_set_text(GTK_LABEL(widget),value);
+}
 static void accounts_notice(const char *text) {
-  if(accounts.notice) gtk_label_set_text(GTK_LABEL(accounts.notice),text);
+  accounts_status_text(accounts.notice,text);
 }
 static void accounts_update_controls(void) {
   if(!accounts.dialog) return;
@@ -407,7 +416,7 @@ static gboolean accounts_tick(gpointer unused) {
       accounts.phase==ACCOUNT_IMPORT ? "Adding book…":accounts.phase==ACCOUNT_CONFLICTS ? "Checking book versions…":"Preparing books…");
     else if(accounts.session && accounts.view.state==READER_SESSION_RUNNING) text=g_strdup("Downloading and checking book files…");
     else text=g_strdup("Sync downloads and verifies book files");
-    gtk_label_set_text(GTK_LABEL(accounts.progress),text);g_free(text);
+    accounts_status_text(accounts.progress,text);g_free(text);
   }
   accounts_update_controls();accounts_finish_close();state();
   if(!accounts.dialog && !accounts.session && !accounts.owner_busy && !accounts.preparing) { accounts.timer=0;return G_SOURCE_REMOVE; }
@@ -467,6 +476,8 @@ static void accounts_open(GtkWidget *button,gpointer unused) {
   gtk_box_pack_start(GTK_BOX(area),operations,FALSE,FALSE,7);
   accounts.spinner=gtk_spinner_new();gtk_box_pack_start(GTK_BOX(area),accounts.spinner,FALSE,FALSE,4);
   accounts.notice=gtk_label_new("");accounts.progress=gtk_label_new("");
+  atk_object_set_description(gtk_widget_get_accessible(accounts.notice),"Account operation status");
+  atk_object_set_description(gtk_widget_get_accessible(accounts.progress),"Account sync progress");
   gtk_label_set_line_wrap(GTK_LABEL(accounts.notice),TRUE);gtk_label_set_line_wrap(GTK_LABEL(accounts.progress),TRUE);
   gtk_label_set_xalign(GTK_LABEL(accounts.notice),0);gtk_label_set_xalign(GTK_LABEL(accounts.progress),0);
   gtk_box_pack_start(GTK_BOX(area),accounts.notice,FALSE,FALSE,7);gtk_box_pack_start(GTK_BOX(area),accounts.progress,FALSE,FALSE,7);
