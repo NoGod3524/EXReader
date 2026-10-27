@@ -261,6 +261,12 @@ def main():
         report['accepted'] = True
     except Exception:
         report['error'] = traceback.format_exc()
+        if app:
+            report['host_exit_code'] = app.process.poll()
+            app.log.flush()
+            log_path = app.profile / 'application.log'
+            if log_path.exists():
+                report['host_log_tail'] = log_path.read_text(encoding='utf-8', errors='replace')[-8000:]
     finally:
         if app:
             try:
