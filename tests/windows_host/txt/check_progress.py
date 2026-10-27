@@ -125,24 +125,31 @@ def main():
         assert 'Perf Import 0000' in page_text(app, automation), page_text(app, automation)[:200]
         record('shelf selection opens the 16792975-byte original at its first page')
 
-        seen = [first_line(page_text(app, automation))]
+        # The fixture wraps every paragraph, so a page may start mid-sentence:
+        # compare the first numbered marker on each page instead of raw text.
+        def marker(text):
+            found = re.findall(r'Perf Import (\d{4})', text)
+            assert found, text[:200]
+            return int(found[0])
+
+        seen = [page_text(app, automation)]
         for _ in range(6):
             app.click('next')
             app.wait_idle()
-            current = first_line(page_text(app, automation))
-            assert current and current not in seen, (current, seen)
-            assert current > seen[-1], (current, seen[-1])
+            current = page_text(app, automation)
+            assert current != seen[-1], 'the page did not advance'
+            assert marker(current) > marker(seen[-1]), (marker(current), marker(seen[-1]))
             seen.append(current)
-        record('six forward page turns show consecutive source content', seen[-1])
+        record('six forward page turns move to later numbered content', marker(seen[-1]))
 
         before_font = page_text(app, automation)
         press_font_increase()
         app.wait_idle()
         after_font = page_text(app, automation)
-        marker = first_line(before_font)
-        assert marker and marker in after_font, (marker, after_font[:300])
+        first_marker_text = first_line(before_font)
+        assert first_marker_text and first_marker_text in after_font, (first_marker_text, after_font[:300])
         position_line = first_line(after_font)
-        record('font increase relayouts and keeps the content position', marker)
+        record('font increase relayouts and keeps the content position', first_marker_text)
 
         heads, count = progress_heads('txt:' + expected)
         assert count >= 1 and heads, (count, heads)

@@ -1766,6 +1766,13 @@ static size_t txt_read(void *context,uint64_t offset,void *buffer,size_t size) {
 }
 static void txt_release(void *context) { CloseHandle((HANDLE)context); }
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+/* Declared before their first use: an implicit int declaration would pass the
+   wide-count argument with the wrong width and corrupt the caller's frame. */
+static exr_status txt_restore(host_session *session, const char *key, size_t *page,
+                              wchar_t *note, size_t capacity, exr_error *error);
+static exr_status job_txt_progress(host_job *job);
+#endif
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
 /* Worker-side breadcrumb: one line per step so a fault leaves its exact position
    in the profile directory of the acceptance run. No product state is read. */
 static void txt_trace(const char *event, long long value) {
@@ -2096,11 +2103,7 @@ static exr_status txt_restore(host_session *session, const char *key, size_t *pa
     txt_trace("restore_note_capacity", (long long)capacity);
     session->hold_progress = 1;
     txt_trace("restore_note_flag", 1);
-    {
-      const wchar_t *text = txt_status_note(status);
-      txt_trace("restore_note_text", (long long)(text ? 1 : 0));
-      if (text && note && capacity) swprintf(note, capacity, L"%ls", text);
-    }
+    copy_wstring(note, capacity, txt_status_note(status));
     txt_trace("restore_note_copied", 1);
     if (error) memset(error, 0, sizeof(*error));
     txt_trace("restore_note_return", 0);
@@ -3557,8 +3560,10 @@ static int save_txt_progress(void) {
   size_t take = g.frame.text_bytes;
   const int force = g.txt_force_save;
   g.txt_force_save = 0;
+  txt_trace("save_enter", (long long)offset);
   if (!g.session.txt_key[0] || g.txt_save_abandoned) return 1;
   if (g.session.hold_progress || g.frame.hold_progress) return 1;
+  txt_trace("save_state", (long long)(g.txt_saved_valid ? 1 : 0));
   if (!force && g.txt_saved_valid && !strcmp(g.txt_saved_key, g.session.txt_key)) {
     const uint64_t moved = offset > g.txt_saved_offset ? offset - g.txt_saved_offset : g.txt_saved_offset - offset;
     if (moved < HOST_TXT_SAVE_BYTES) return 1;
