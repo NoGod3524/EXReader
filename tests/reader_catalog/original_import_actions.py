@@ -3,11 +3,18 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-sys.path.insert(0, str(Path('tests/reader_perf_windows').resolve()))
-from perf_windows import make_txt_fixture
 base = Path('build/original-import-fixture').resolve()
 base.mkdir(parents=True, exist_ok=True)
-source = make_txt_fixture(base, 0)
+# Byte-identical parameters of the original Windows performance fixture.
+source = base / 'Perf Import 0000.txt'
+unit = ('Perf Import 0000\n' + ''.join(
+    'Perf Import %04d line %04d keeps the import worker busy while input continues.\n' % (0, n)
+    for n in range(512))).encode()
+with source.open('wb') as f:
+    written = 0
+    while written < 16 << 20:
+        f.write(unit)
+        written += len(unit)
 expected = '4f45393b25817f506a51b56cc5d61599556e4dd5b0bd59aa00f7eb43cbfc0a86'
 def digest(p):
     with p.open('rb') as f:
