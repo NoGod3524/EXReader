@@ -219,3 +219,24 @@ failed its Linux retained pager check because the existing test names a Windows
 Arial path. The next run supplied the installed fixture font at that path on
 Linux and macOS; Windows used its system Arial. The retained checks were not
 changed. These are SDK candidate results; combined-source validation is separate.
+
+
+### Common-source candidate evidence (2026-10-27)
+
+The following Actions runs completed successfully on the same source
+`c45ac1a7508842f071e3d892635fdd9af444ae90`, attempt 1:
+
+- [40588875292](https://github.com/NoGod3524/EXReader/actions/runs/40588875292):
+  composed Windows host TXT progress and installed mixed-original export.
+- [40588875312](https://github.com/NoGod3524/EXReader/actions/runs/40588875312):
+  installed TXT anchor resolver consumers on Windows, Linux and macOS.
+- [40588875379](https://github.com/NoGod3524/EXReader/actions/runs/40588875379):
+  installed mixed-original export consumers on Linux and macOS.
+- [40588875281](https://github.com/NoGod3524/EXReader/actions/runs/40588875281):
+  D25 real-format corpus on Windows and Linux plus strict aggregation.
+- [40588875324](https://github.com/NoGod3524/EXReader/actions/runs/40588875324):
+  D23 native Windows-GTK bidirectional relay and verification.
+
+These are the scopes of those runs; other common-source runs have separate
+results. The later TXT search-history branch has its own source and pending
+acceptance; none of these earlier results is evidence for that later source.
