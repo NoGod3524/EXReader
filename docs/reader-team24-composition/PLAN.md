@@ -1049,3 +1049,27 @@ current runner includes the current automatic-import-bootstrap contract; it
 does not reclassify the earlier unchanged runner's four failures on earlier
 sources. This result is for the stated independent candidate and emulator,
 not the final composition source, a physical device, or six-platform delivery.
+
+## Windows and GTK host relay
+
+Independent source `62ea549b254c57403d6e218f8475d54985628540` passed all
+five jobs in [40423610797/1](https://github.com/NoGod3524/EXReader/actions/runs/40423610797),
+including the same-run verifier. The actual Windows host imported and uploaded
+an original; GTK read it, created a tag and membership, and uploaded another
+original; Windows read the GTK original, removed the membership in its UI,
+confirmed the receipt, and uploaded a new original; GTK then observed the
+removal and read back the new original through the public SDK. Retained GTK
+account checks and the Windows build checks also passed.
+
+The four phases use separate local TLS servers and transfer verified service
+state between runners; they do not establish behavior against one continuously
+running online service. The GTK host uses the legacy product family and Windows
+uses the raw family. Android, Apple, physical devices and final six-target
+acceptance remain outside this evidence. The same-run summary artifact
+`12698548702` has SHA-256
+`a7ba971a1cc509681ff3d0a7eef284ccfd77ccfeba723857f274a17d03687dd5`.
+Windows and GTK program SHA-256 values were respectively
+`e9dbdddc72614469d93dcc485b4051e07d4a83adb0a4f0c77dba3602810d03e8` and
+`eb14023075c1def770a6dc7426a4f596363ab4c4f47c605475e6f9929c17a79e`.
+The later combination candidate `e61b5eda` is running its own unchanged-scope
+relay against the newer composition; the independent result is not transferred.
