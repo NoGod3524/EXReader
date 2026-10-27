@@ -833,10 +833,10 @@ final class HostSession {
         book = nil
     }
 
-    func importBook(url: URL, cancel: HostCancelBox, catalog: HostCatalog? = nil) throws -> (Int64, Bool) {
+    func importBook(url: URL, cancel: HostCancelBox, catalog: HostCatalog? = nil, receivedTitle: String? = nil) throws -> (Int64, Bool) {
         try begin(cancel)
         if slowDelay > 0 { try waitCancellable(cancel, seconds: slowDelay) }
-        let title = url.lastPathComponent
+        let title = receivedTitle ?? url.lastPathComponent
         guard let catalog else { return try library.importUnique(file: url, title: title, cancel: cancel) }
         guard !title.utf8.contains(0), title.unicodeScalars.count <= 4096 else {
             throw HostError.invalidInput("书名包含空字符或超过长度上限")
@@ -1819,7 +1819,7 @@ final class HostReaderModel: ObservableObject {
                 }
                 // Use the existing import/mapping transaction and immutable-copy
                 // verification, not a second SDK bridge or sync protocol.
-                let (id, _) = try session.importBook(url: copy.url, cancel: cancel, catalog: catalog)
+                let (id, _) = try session.importBook(url: copy.url, cancel: cancel, catalog: catalog, receivedTitle: selected.title)
                 let current = try catalog.receivedBook(key: book.id)
                 guard current.revision == selected.revision else {
                     throw HostError.invalidInput("书籍已缓存，但版本出现冲突；未改变当前阅读位置")
