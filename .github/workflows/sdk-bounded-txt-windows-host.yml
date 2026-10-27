@@ -17,6 +17,12 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Prepare and verify the native display for the unchanged UI checks
         run: python tests/reader_native_owner_repairs/display.py
+      - name: Verify original handle lifetime on the large fixture
+        shell: bash
+        run: |
+          cmake -S apps/reader/store/native -B build/catalog -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/catalog --parallel 4
+          python tests/reader_catalog/original_import_actions.py
       - name: Build installed candidate and exercise existing Windows host checks
         env:
           GH_TOKEN: ${{ github.token }}

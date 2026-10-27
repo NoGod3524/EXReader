@@ -28,6 +28,13 @@ reader_original_status reader_original_recover(reader_catalog *, const char *roo
  * valid only while the host retains exclusive ownership of the private root. */
 reader_original_status reader_original_verified_path(reader_catalog *, const char *root,
   const char *key, char *path, size_t capacity);
+#ifdef _WIN32
+/* Returns the very handle that was hashed, opened without write or delete
+ * sharing. The caller owns it and must CloseHandle after its last read. The
+ * catalog owner must still serialize deletion and recovery with the reader. */
+reader_original_status reader_original_verified_handle(reader_catalog *, const char *root,
+  const char *key, const reader_original_callbacks *, void **handle, uint64_t *size);
+#endif
 #ifdef __cplusplus
 }
 #endif
