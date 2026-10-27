@@ -85,8 +85,10 @@ def main():
         report['checks'].append(dict(name=name, passed=True, detail=str(detail)))
         print('CHECK ' + name + ' :: ' + str(detail), flush=True)
 
+    product_db = []
+
     def progress_heads(key):
-        with sqlite3.connect(str(app.db) + '.product.sqlite', timeout=20) as db:
+        with sqlite3.connect(str(product_db[0]), timeout=20) as db:
             found = db.execute('SELECT revision_id, body_json, body_sha256 FROM reader_revisions '
                                "WHERE entity_kind='progress' AND entity_key=?", (key,)).fetchall()
         parents = {parent for _, body, _ in found for parent in json.loads(body)['parents']}
@@ -111,6 +113,7 @@ def main():
     try:
         profile = out / 'profile'
         app = ui.P.App(exe, font, profile)
+        product_db.append(str(app.db) + '.product.sqlite')
         app.wait_idle()
         automation = Uia()
         assert automation.available, automation.error
@@ -192,7 +195,7 @@ def main():
         record('restart keeps both content identities independent')
 
         heads_before, count_before = progress_heads('txt:' + expected)
-        lock = sqlite3.connect(str(app.db) + '.product.sqlite', isolation_level=None, timeout=0.2)
+        lock = sqlite3.connect(str(product_db[0]), isolation_level=None, timeout=0.2)
         lock.execute('PRAGMA busy_timeout=200')
         locked = False
         for _ in range(60):
