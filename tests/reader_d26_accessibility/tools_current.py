@@ -153,7 +153,15 @@ def main():
                                         and bus.states(node).get('focused')])
             host.key('ctrl+a')
             host.paste(str(path))
-            wait_nodes(lambda: [entry[0]] if (bus.accessible_text(entry[0]) or {}).get('text') == str(path) else [])
+            def location_text():
+                return (bus.accessible_text(entry[0]) or {}).get('text', '')
+            try:
+                # GtkFileChooser may complete an existing directory with a slash.
+                # Normalize only path separators/dot segments, not a fuzzy name.
+                wait_nodes(lambda: [entry[0]] if os.path.normpath(location_text()) == str(path) else [])
+            except TimeoutError:
+                raise AssertionError({'expected_location': str(path), 'actual_location': location_text(),
+                                      'focused': [dict(name=bus.name(n), role=bus.role(n)) for n in bus.focused_all(app)]})
             # SELECT_FOLDER can navigate on its first explicit response and
             # accept on the second. Use only visible native response controls;
             # final exported.parent and exact bytes prove the chosen directory.

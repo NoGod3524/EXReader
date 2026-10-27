@@ -164,9 +164,13 @@ def main():
             artifact_id=account_artifact['id'], digest=account_artifact['digest'],
             phases=len(raw['phases']), https_phases=len(raw['network']['phases']),
             scope=raw['scope'], historical_apple_packet_only=raw['network']['peer'])
-        job_results = {name: os.environ.get(name) for name in ('D26_GTK_RESULT', 'D26_ACCOUNT_RESULT')}
+        job_results = {name: os.environ.get(name) for name in ('D26_GTK_RESULT', 'D26_REGRESSION_RESULT', 'D26_ACCOUNT_RESULT')}
         identity['job_results'] = job_results
         assert all(value == 'success' for value in job_results.values()), job_results
+        handoff = json.loads((root / 'd26-handoff-verified.json').read_text())
+        assert handoff['verified'] and all(str(handoff[key]) == str(value) for key, value in
+            (('source_sha', source), ('run_id', run), ('attempt', attempt)))
+        identity['build_handoff'] = handoff
         identity['current_verified'] = True
     except BaseException as error:
         problems.append(repr(error))
