@@ -134,10 +134,18 @@ int collect_head(void *context, const reader_revision_head *head) {
   static_cast<head_list *>(context)->ids.push_back(head->revision_id);
   return 0;
 }
-head_list heads_of(reader_revisions *history, const std::string &key) {
+head_list heads_of(reader_revisions *history, int raw, const std::string &key) {
   head_list list;
   reader_revision_state graph{};
   reader_revision_error detail{};
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if (raw) {
+    reader_revision_heads_raw_v3(history, "progress", key.c_str(), collect_head, &list, &graph, &detail);
+    return list;
+  }
+#else
+  (void)raw;
+#endif
   reader_revision_heads(history, "progress", key.c_str(), collect_head, &list, &graph, &detail);
   return list;
 }
@@ -265,7 +273,7 @@ int main(int argc, char **argv) {
   }
   /* 5. concurrent heads: nothing is selected, written or dropped */
   {
-    head_list before = heads_of(history, key);
+    head_list before = heads_of(history, raw, key);
     const std::string parent = before.ids.empty() ? std::string() : before.ids[0];
     int written = 0;
     for (int i = 0; i < 2; ++i) {
@@ -278,13 +286,13 @@ int main(int argc, char **argv) {
       if (inserted == READER_REV_OK && created) ++written;
       else std::printf("sibling insert %d %s\n", (int)inserted, detail.message);
     }
-    head_list after = heads_of(history, key);
+    head_list after = heads_of(history, raw, key);
     reader_txp_result refused{};
     const reader_txp_status save = reader_txp_save(store, key.c_str(), "3.41.0", &saved, &refused, &error);
     reader_txp_position loaded{};
     reader_txp_result meta{};
     const reader_txp_status load = reader_txp_load(store, key.c_str(), &loaded, &meta, &error);
-    head_list stable = heads_of(history, key);
+    head_list stable = heads_of(history, raw, key);
     out.add("conflict_refused", written == 2 && after.ids.size() >= 2 && save == READER_TXP_CONFLICT &&
             load == READER_TXP_CONFLICT && stable.ids.size() == after.ids.size(),
             "written=" + std::to_string(written) + " heads=" + std::to_string(after.ids.size()) +
@@ -366,7 +374,7 @@ int main(int argc, char **argv) {
     reader_txp_capture(&point, 32, "pending write", 13, &error);
     reader_txp_result written{};
     const reader_txp_status save = reader_txp_save(store, pending_key.c_str(), "3.41.0", &point, &written, &error);
-    head_list heads = heads_of(history, pending_key);
+    head_list heads = heads_of(history, raw, pending_key);
     out.add("pending_refused", boot == READER_TXP_OK && received == READER_REV_OK && created == 1 &&
             load == READER_TXP_PENDING && save == READER_TXP_PENDING && heads.ids.size() == 1,
             "received=" + std::to_string((int)received) + " load=" + std::to_string((int)load) +
