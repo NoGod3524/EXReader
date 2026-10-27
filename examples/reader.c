@@ -4679,6 +4679,9 @@ static void handle_job_complete(host_job *job) {
 
 static void host_command(int id) {
   if (g.session.txt && id != IDC_OPEN_BUTTON && id != IDC_IMPORT_BUTTON && id != IDC_CANCEL && id != IDC_DELETE_BUTTON && id != IDC_PREV && id != IDC_NEXT
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+      && id != IDC_ACCOUNT_BUTTON
+#endif
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
       && id != IDC_FONT_DEC && id != IDC_FONT_INC
 #endif
