@@ -9,11 +9,11 @@ import time
 
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'build/windows-raw3-host'
-RAW_MODULES={'revisions','commands','desktop-metadata','sync','session','reading-state','reading-commands','annotation-view','bulk-organization'}
+RAW_MODULES={'revisions','commands','desktop-metadata','sync','session','reading-state','reading-commands','annotation-view','bulk-organization','txt-progress'}
 MODULES=('extras/webdav','extras/credentials','extras/sideload','apps/reader/revisions','apps/reader/commands',
          'apps/reader/desktop-metadata','apps/reader/sync','apps/reader/session','apps/reader/reading-state',
          'apps/reader/reading-commands','apps/reader/annotation-view','apps/reader/search','apps/reader/navigation',
-         'apps/reader/cloud-import','apps/reader/bulk-organization','apps/reader/preferences')
+         'apps/reader/cloud-import','apps/reader/bulk-organization','apps/reader/preferences','apps/reader/txt-progress')
 
 
 def run(argv,name,timeout=1800):
@@ -141,13 +141,20 @@ def main():
                  '-DEXR_READER_WINDOWS_RECORDS=ON','-DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON',
                  '-DEXR_READER_WINDOWS_PREFERENCES=ON','-DEXR_READER_WINDOWS_COMPACT=ON',
                  '-DEXR_READER_PREFS_COMMIT_REVIEW_BUILD=ON']
-        if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
+        progress=os.environ.get('EXR_HOST_TXT_PROGRESS') == '1'
+        if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1' or progress:
             options.append('-DEXR_READER_WINDOWS_TXT_RECOVERY=ON')
+        if progress:
+            options.append('-DEXR_READER_WINDOWS_TXT_PROGRESS=ON')
         configure(ROOT/'apps/reader/windows-account',host,options,name+'-actual-host')
         if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
             run([sys.executable,ROOT/'tests/windows_host/txt/check_import.py',host/'EXReaderProduct.exe',
                  ROOT/'build/host-font-cache/Reader.otf',OUT/(name+'-txt-import'),
                  fixtures/'Fixed page.pdf'],name+'-txt-native-import',600)
+        if progress:
+            run([sys.executable,ROOT/'tests/windows_host/txt/check_progress.py',host/'EXReaderProduct.exe',
+                 ROOT/'build/host-font-cache/Reader.otf',OUT/(name+'-txt-progress'),
+                 fixtures/'Fixed page.pdf'],name+'-txt-progress-host',2400)
         compact_host=host
         if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
             # Keep the original four-format SDK regression on a legacy host;

@@ -33,6 +33,9 @@
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
 #include <original_import.h>
 #endif
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+#include <reader_txt_progress.h>
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
 #include <reader_metadata.h>
 #endif
@@ -55,6 +58,11 @@
 #define HOST_TEXT_PREVIEW 160
 #define HOST_NOTE_PREVIEW 96
 #define HOST_PAGE_TEXT_LIMIT ((size_t)1024 * 1024)
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+/* Product revision history is append-only and bounded per entity, so an accepted
+   page is persisted once it moves a whole block or when the session leaves it. */
+#define HOST_TXT_SAVE_BYTES ((uint64_t)32768)
+#endif
 #define HOST_PAGE_GLYPH_LIMIT ((size_t)65536)
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
 #include "../apps/reader/desktop/windows_import_organize_types.h"
@@ -137,6 +145,9 @@ typedef struct {
   int txt; /* Product original, with no SDK book identity. */
   int txt_pager_invalid; /* Recreate after a failed or cancelled layout. */
   exr_source txt_source; /* Borrowed from the pager. */
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  char txt_key[73];      /* Product content identity of this session. */
+#endif
   int64_t book_id;
   exr_document *document;
   exr_publication *publication;
@@ -258,6 +269,15 @@ typedef struct {
   unsigned long gesture;
   int64_t pending_book;
   int progress_failed;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  /* Last durably committed TXT position. The UI never treats the in-memory page
+     as saved: only a completed product revision updates these values. */
+  char txt_saved_key[73];
+  uint64_t txt_saved_offset;
+  int txt_saved_valid;
+  int txt_force_save; /* one-shot: close, book switch or relayout must persist */
+  int txt_save_abandoned; /* a refused close-time write must not trap the exit */
+#endif
   unsigned long saved_generation;
   unsigned long frame_sequence;
 } host_state;
@@ -862,7 +882,11 @@ enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB
   JOB_METADATA_PREPARE, JOB_METADATA_SAVE, JOB_METADATA_RETRY, JOB_METADATA_DISCARD,
   JOB_ACCOUNT_LOAD, JOB_ACCOUNT_SET, JOB_ACCOUNT_FORGET, JOB_ACCOUNT_STAGE, JOB_ACCOUNT_RECEIVE,
   JOB_SEARCH_BATCH, JOB_SEARCH_OPEN, JOB_NAVIGATION_ROWS, JOB_NAVIGATION_OPEN, JOB_RECORDS, JOB_IMPORT_ORGANIZE,
-  JOB_PREFERENCES, JOB_WAVE3 };
+  JOB_PREFERENCES, JOB_WAVE3
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  , JOB_TXT_PROGRESS
+#endif
+  };
 #ifdef EXR_READER_WINDOWS_ACCOUNT
 static int account_job_kind(int kind) { return kind>=JOB_ACCOUNT_LOAD && kind<=JOB_ACCOUNT_RECEIVE; }
 #endif
@@ -951,14 +975,22 @@ struct host_job {
   int product_auto_open,product_deleted;
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
   int original_import,original_recovery_failed;
-#endif
-  int product_shelf_direction,product_shelf_before,product_shelf_after;
+#endif  int product_shelf_direction,product_shelf_before,product_shelf_after;
   char product_group_id[33];int product_group_kind;uint64_t product_cursor_ordinal;int product_anchor_predecessor;
   unsigned long product_shelf_generation;
   char *product_shelf_query,*product_cursor_title,*product_cursor_key,*product_anchor_key;
   exr_book *product_books;size_t product_book_count;
   char product_key[READER_BOOK_KEY_CAPACITY];
   host_shelf_cursor *product_cursors;
+#endif
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  /* Copied values for one TXT position write; the worker never reads UI state. */
+  char txt_key[73];
+  uint64_t txt_offset;
+  char txt_context[READER_TXP_CONTEXT_BYTES + 1];
+  size_t txt_context_bytes;
+  uint64_t txt_saved_offset;
+  int txt_saved_valid;
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
   reader_metadata_snapshot *metadata_snapshot;
@@ -983,6 +1015,9 @@ struct host_job {
 
 static int job_commit_barrier(int kind) {
   return kind==JOB_SAVE
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    || kind==JOB_TXT_PROGRESS
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
     || metadata_job_kind(kind)
 #endif
@@ -1569,6 +1604,9 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
   size_t count = 0, lo = 0, hi = 1, guard = 0;
   exr_status status;
   int bounded = 0;
+  /* The bounded pager and the TXT pager both report normal EOF as a pager
+     error and expose no page count; a resident document uses EXR_ARGUMENT. */
+  const int pager_bounded = session->bounded || session->txt;
   status = OFFSET_GET(session->pager, 0, &layout, error);
   if (status != EXR_OK) return status;
   info = exr_layout_pages(layout, &count);
@@ -1583,7 +1621,7 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
     size_t next = hi * 2;
     status = OFFSET_GET(session->pager, hi, &layout, error);
     if (status != EXR_OK) {
-      if (session->bounded ? !pager_eof(status, error) : status != EXR_ARGUMENT) return status;
+      if (pager_bounded ? !pager_eof(status, error) : status != EXR_ARGUMENT) return status;
       memset(error, 0, sizeof(*error));
       bounded = 1;
       break;
@@ -1602,7 +1640,7 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
   while (lo + 1 < hi) {
     size_t mid = lo + (hi - lo) / 2;
     status = OFFSET_GET(session->pager, mid, &layout, error);
-    if (status != EXR_OK && (session->bounded ? !pager_eof(status, error) : status != EXR_ARGUMENT)) return status;
+    if (status != EXR_OK && (pager_bounded ? !pager_eof(status, error) : status != EXR_ARGUMENT)) return status;
     if (status == EXR_OK && exr_layout_pages(layout, &count) != NULL && count > 0 &&
         exr_layout_pages(layout, &count)[0].start <= offset) {
       lo = mid;
@@ -1617,9 +1655,12 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
   if (!info || count < 1) return EXR_FORMAT;
   {
     size_t extent = 0;
+    /* The TXT pager does not expose its projected length; every saved TXT point
+       is a page start in the same projection, so the located page owns it. */
     if (session->bounded) extent = exr_pager_chapter_statistics(session->pager).projection_bytes;
-    else exr_document_text(session->document, &extent);
-    if (offset < info->start || (offset >= info->end && !(offset == extent && info->end == extent)))
+    else if (!session->txt) exr_document_text(session->document, &extent);
+    if (offset < info->start) return EXR_ARGUMENT;
+    if (!session->txt && offset >= info->end && !(offset == extent && info->end == extent))
       return EXR_ARGUMENT;
   }
   if (page) *page = lo;
@@ -1797,18 +1838,35 @@ static exr_status job_open_txt(host_job *job) {
   handle=NULL; /* pager now owns it */
   status=exr_pager_set_cache(session.pager,2,8*1024*1024,&error);
   if(status==EXR_OK) status=exr_pager_set_checkpoints(session.pager,8,4*1024*1024,8,&error);
+  session.txt_source=source;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  snprintf(session.txt_key,sizeof(session.txt_key),"%s",job->product_key);
+  /* Restore before the first page is accepted: the product content identity and
+     the captured projection window decide the page, never a stored page number. */
+  {
+    size_t target=0; wchar_t note[256]={0};
+    status=txt_restore(&session,job->product_key,&target,note,256,&error);
+    if(status==EXR_OK) status=exr_pager_get(session.pager,target,&layout,&error);
+    if(status!=EXR_OK || !layout) { if(status==EXR_OK) status=EXR_FORMAT; goto done; }
+    info=exr_layout_pages(layout,&count);
+    if(!info || !count || info->start>info->end || info->end-info->start>HOST_PAGE_TEXT_LIMIT) { status=EXR_FORMAT;goto done; }
+    status=txt_frame(&session,&source,layout,target,&job->frame,&error);
+    if(status!=EXR_OK) goto done;
+    copy_wstring(job->message,512,note[0]?note:L"从第一页开始。");
+  }
+#else
   if(status==EXR_OK) status=exr_pager_get(session.pager,0,&layout,&error);
   if(status!=EXR_OK || !layout) { if(status==EXR_OK) status=EXR_FORMAT; goto done; }
   info=exr_layout_pages(layout,&count);
   if(!info || !count || info->start>info->end || info->end-info->start>HOST_PAGE_TEXT_LIMIT) { status=EXR_FORMAT;goto done; }
-  session.txt_source=source;
   status=txt_frame(&session,&source,layout,0,&job->frame,&error);
   if(status!=EXR_OK) goto done;
+#endif
   { const char *title=job->opened_book.title?job->opened_book.title:"Untitled";
     wchar_t *wide=host_wide(title,strlen(title));copy_wstring(job->frame.title,256,wide?wide:L"Untitled");free(wide); }
   session.active=1;job->candidate=session;memset(&session,0,sizeof(session));
   job->session_swapped=job->have_frame=1;
-  copy_wstring(job->message,512,L"阅读位置保存尚未实现。");
+
  done:
   session_clear(&session);
   if(handle) CloseHandle((HANDLE)handle);
@@ -1846,6 +1904,250 @@ static exr_status job_txt_go(host_job *job) {
   if(status!=EXR_OK) job->error=error;
   return status;
 }
+
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+/* ---- TXT reading position: product content identity + canonical offset ----
+   A product TXT original has no SDK book identity, so the position is the
+   pager's own normalized projection offset for the top of the accepted page,
+   captured together with a bounded window of the real projected text. Every
+   product write and read runs on the serialized host worker; the UI only hands
+   over copied values and never touches the revision store. */
+static int txt_store_open(reader_txt_progress **store, exr_error *error) {
+  char *path = host_utf8(g.product_path);
+  reader_txp_error detail = {0};
+  reader_txp_status status;
+  int raw = 0;
+#ifdef EXR_READER_WINDOWS_RAW3
+  raw = 1;
+#endif
+  if (!path) { if (error) error->code = EXR_MEMORY; return 0; }
+  status = reader_txp_open(path, raw, store, &detail);
+  free(path);
+  if (status != READER_TXP_OK) {
+    if (error) {
+      error->code = status == READER_TXP_MEMORY ? EXR_MEMORY : EXR_DATABASE;
+      snprintf(error->message, sizeof(error->message), "%s", detail.message);
+    }
+    return 0;
+  }
+  return 1;
+}
+
+/* Reads [offset, offset+size) of the same normalized projection the page ranges
+   use. Paragraph separators are the single synthesized newline the page text
+   path uses, so a captured window compares byte for byte. */
+static exr_status txt_window(const exr_source *source, uint64_t offset, size_t size, char *buffer, size_t *written, exr_error *error) {
+  exr_txt_cursor *cursor = NULL;
+  exr_status status;
+  size_t filled = 0;
+  uint64_t at = 0;
+  const char *text = NULL;
+  size_t length = 0;
+  if (written) *written = 0;
+  status = exr_txt_cursor_create(source, &cursor, error);
+  if (status != EXR_OK) return status;
+  while (filled < size) {
+    status = exr_txt_cursor_next(cursor, &at, &text, &length, error);
+    if (status != EXR_OK || !text) { if (status == EXR_OK) status = EXR_FORMAT; break; }
+    if (at + (uint64_t)length < offset + (uint64_t)filled) continue;
+    if (at > offset + (uint64_t)filled) {
+      if (at != offset + (uint64_t)filled + 1) { status = EXR_FORMAT; break; }
+      buffer[filled++] = '\n';
+    }
+    if (at + (uint64_t)length > offset + (uint64_t)filled) {
+      const size_t skip = (size_t)(offset + (uint64_t)filled - at);
+      size_t take = length - skip;
+      if (take > size - filled) take = size - filled;
+      memcpy(buffer + filled, text + skip, take);
+      filled += take;
+    }
+  }
+  if (cursor) exr_txt_cursor_free(cursor);
+  if (written) *written = filled;
+  return status;
+}
+
+typedef struct {
+  char *title, *author, *sort;
+  uint64_t bytes;
+  int favorite, found;
+} txt_book_metadata;
+static int txt_metadata_row(void *context, const reader_catalog_row *row) {
+  txt_book_metadata *meta = context;
+  if (meta->found) return 1;
+  meta->title = host_strdup(row->title ? row->title : "");
+  meta->author = host_strdup(row->author ? row->author : "");
+  meta->sort = host_strdup(row->sort_title ? row->sort_title : "");
+  meta->bytes = row->source_bytes;
+  meta->favorite = row->favorite;
+  meta->found = meta->title && meta->author && meta->sort;
+  return 1;
+}
+static void txt_metadata_clear(txt_book_metadata *meta) {
+  free(meta->title); free(meta->author); free(meta->sort);
+  memset(meta, 0, sizeof(*meta));
+}
+/* The retained book revision is the product content identity. It is bootstrapped
+   from the verified catalog row exactly once and never rewritten afterwards. */
+static exr_status txt_bootstrap(reader_txt_progress *store, const char *key, exr_error *error) {
+  reader_catalog *catalog = NULL;
+  reader_catalog_error catalog_error = {0};
+  reader_txp_book book = {0};
+  reader_txp_result result = {0};
+  reader_txp_error detail = {0};
+  txt_book_metadata meta = {0};
+  char *path = host_utf8(g.product_path);
+  int found = 0, code = 0;
+  reader_txp_status status;
+  exr_status outcome = EXR_DATABASE;
+  if (!path) return EXR_MEMORY;
+  if (reader_catalog_open(path, &catalog, &catalog_error)) { free(path); return EXR_DATABASE; }
+  code = reader_catalog_metadata(catalog, key, txt_metadata_row, &meta, &found, &catalog_error);
+  reader_catalog_close(&catalog, &catalog_error);
+  free(path);
+  if (code || !found || !meta.found || !meta.bytes) { txt_metadata_clear(&meta); return EXR_FORMAT; }
+  book.book_key = key;
+  book.title = meta.title;
+  book.author = meta.author;
+  book.sort_title = meta.sort;
+  book.source_bytes = meta.bytes;
+  book.favorite = meta.favorite;
+  status = reader_txp_ensure_book(store, &book, &result, &detail);
+  if (status == READER_TXP_OK) outcome = EXR_OK;
+  else if (status == READER_TXP_IDENTITY) outcome = EXR_FORMAT;
+  else if (status == READER_TXP_ARGUMENT) outcome = EXR_ARGUMENT;
+  else if (status == READER_TXP_MEMORY) outcome = EXR_MEMORY;
+  else outcome = EXR_DATABASE;
+  if (outcome != EXR_OK && error) {
+    error->code = outcome;
+    snprintf(error->message, sizeof(error->message), "%s",
+             detail.message[0] ? detail.message : "Cannot retain the product book identity");
+  }
+  txt_metadata_clear(&meta);
+  return outcome;
+}
+
+static const wchar_t *txt_status_note(reader_txp_status status) {
+  switch (status) {
+    case READER_TXP_MISSING: return L"这本书还没有保存过阅读位置；从第一页开始。";
+    case READER_TXP_CONFLICT: return L"这本书存在多个并发阅读位置记录；未选择、未覆盖，从第一页开始。";
+    case READER_TXP_PENDING: return L"阅读位置记录缺少父记录；保留原记录，从第一页开始。";
+    case READER_TXP_BLOCKED: return L"阅读位置记录需要显式恢复；保留原记录，从第一页开始。";
+    case READER_TXP_LEGACY: return L"存在旧版阅读位置记录；本机不据此跳转，原记录保留。";
+    case READER_TXP_BOOTSTRAP: return L"这本书还没有产品内容身份记录；从第一页开始。";
+    case READER_TXP_UNSAFE: return L"阅读位置记录刚被其他写入改变；未覆盖，从第一页开始。";
+    default: return L"无法读取阅读位置记录；从第一页开始，原记录未被覆盖。";
+  }
+}
+
+/* Restore step for one opened product original. Only an exact anchor v2 point
+   whose captured text still matches the current projection is used; everything
+   else keeps the page at the beginning and blocks the automatic overwrite. */
+static exr_status txt_restore(host_session *session, const char *key, size_t *page,
+                              wchar_t *note, size_t capacity, exr_error *error) {
+  reader_txt_progress *store = NULL;
+  reader_txp_position saved = {0};
+  reader_txp_result meta = {0};
+  reader_txp_error detail = {0};
+  reader_txp_status status;
+  exr_control control = {host_cancel_check, NULL, NULL};
+  if (page) *page = 0;
+  if (note && capacity) note[0] = 0;
+  if (!key || !key[0]) { copy_wstring(note, capacity, L"缺少书籍身份；从第一页开始。"); return EXR_OK; }
+  if (!txt_store_open(&store, error)) {
+    session->hold_progress = 1;
+    copy_wstring(note, capacity, L"无法打开阅读位置记录；从第一页开始，原记录未被覆盖。");
+    if (error) memset(error, 0, sizeof(*error));
+    return EXR_OK;
+  }
+  status = reader_txp_load(store, key, &saved, &meta, &detail);
+  reader_txp_close(&store);
+  if (status != READER_TXP_OK) {
+    session->hold_progress = 1;
+    copy_wstring(note, capacity, txt_status_note(status));
+    if (error) memset(error, 0, sizeof(*error));
+    return EXR_OK;
+  }
+  if (saved.context_bytes) {
+    char window[READER_TXP_CONTEXT_BYTES];
+    size_t got = 0;
+    int matches = 0;
+    exr_status read = txt_window(&session->txt_source, saved.offset, saved.context_bytes,
+                                 window, &got, error);
+    if (read != EXR_OK) {
+      session->hold_progress = 1;
+      copy_wstring(note, capacity, L"无法核对已保存的文本位置；从第一页开始，原记录未被覆盖。");
+      if (error) memset(error, 0, sizeof(*error));
+      return EXR_OK;
+    }
+    if (reader_txp_match(&saved, window, saved.offset, got, &matches, &detail) != READER_TXP_OK || !matches) {
+      session->hold_progress = 1;
+      copy_wstring(note, capacity, L"保存的内容位置与当前文本投影不一致；未跳转，原记录保留。");
+      return EXR_OK;
+    }
+  }
+  {
+    exr_status located = EXR_OK;
+    size_t found = 0;
+    if (saved.offset > (uint64_t)SIZE_MAX) located = EXR_ARGUMENT;
+    else located = page_for_offset(session, (size_t)saved.offset, &control, &found, NULL, NULL, error);
+    if (located != EXR_OK) {
+      session->hold_progress = 1;
+      copy_wstring(note, capacity, L"保存的内容位置不在当前分页范围内；从第一页开始，原记录保留。");
+      if (error) memset(error, 0, sizeof(*error));
+      return EXR_OK;
+    }
+    if (page) *page = found;
+  }
+  copy_wstring(note, capacity, L"已按内容位置恢复到上次阅读位置。");
+  return EXR_OK;
+}
+
+/* One durable position write for the accepted page. Failure keeps the previous
+   record: the module refuses on stale, concurrent, pending or blocked history
+   and the catalog/revision transaction either commits or not. */
+static exr_status job_txt_progress(host_job *job) {
+  reader_txt_progress *store = NULL;
+  reader_txp_position position = {0};
+  reader_txp_result result = {0};
+  reader_txp_error detail = {0};
+  reader_txp_status status;
+  exr_status outcome;
+  if (!txt_store_open(&store, &job->error)) return EXR_DATABASE;
+  status = reader_txp_capture(&position, job->txt_offset, job->txt_context, job->txt_context_bytes, &detail);
+  if (status != READER_TXP_OK) {
+    reader_txp_close(&store);
+    job->error.code = EXR_ARGUMENT;
+    snprintf(job->error.message, sizeof(job->error.message), "%s", detail.message);
+    return EXR_ARGUMENT;
+  }
+  status = reader_txp_save(store, job->txt_key, exr_version(), &position, &result, &detail);
+  if (status == READER_TXP_BOOTSTRAP) {
+    /* First write for a book imported before this feature existed. */
+    outcome = txt_bootstrap(store, job->txt_key, &job->error);
+    if (outcome == EXR_OK)
+      status = reader_txp_save(store, job->txt_key, exr_version(), &position, &result, &detail);
+    else { reader_txp_close(&store); return outcome; }
+  }
+  reader_txp_close(&store);
+  if (status == READER_TXP_OK) {
+    job->txt_saved_offset = position.offset;
+    job->txt_saved_valid = 1;
+    return EXR_OK;
+  }
+  if (status == READER_TXP_UNSAFE || status == READER_TXP_CONFLICT || status == READER_TXP_PENDING ||
+      status == READER_TXP_BLOCKED || status == READER_TXP_LEGACY || status == READER_TXP_LIMIT) {
+    job->error.code = EXR_DATABASE;
+    snprintf(job->error.message, sizeof(job->error.message), "%s",
+             detail.message[0] ? detail.message : "The reading position was not written");
+    return EXR_DATABASE;
+  }
+  job->error.code = status == READER_TXP_MEMORY ? EXR_MEMORY : EXR_DATABASE;
+  snprintf(job->error.message, sizeof(job->error.message), "%s",
+           detail.message[0] ? detail.message : "The reading position was not written");
+  return job->error.code;
+}
+#endif
 
 #endif
 static exr_status job_open(host_job *job) {
@@ -2123,6 +2425,40 @@ static exr_status job_layout(host_job *job) {
     background = prefs_background_of(&job->prefs, job->system_theme);
     foreground = prefs_foreground_of(&job->prefs, job->system_theme);
     themed = 1;
+  }
+#endif
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if (g.session.txt) {
+    host_session candidate = g.session;
+    exr_source source = g.session.txt_source;
+    HANDLE copy = NULL;
+    const exr_layout *laid = NULL;
+    if (!DuplicateHandle(GetCurrentProcess(), (HANDLE)source.context, GetCurrentProcess(),
+                         &copy, 0, FALSE, DUPLICATE_SAME_ACCESS)) return EXR_IO;
+    source.context = copy;
+    candidate.config = config;
+    status = exr_txt_pager_create(&source, g.font, &config, &pager, &error);
+    if (status != EXR_OK) { CloseHandle(copy); return status; }
+    copy = NULL; /* the new pager owns this handle */
+    if (status == EXR_OK) status = exr_pager_set_cache(pager, 2, 8 * 1024 * 1024, &error);
+    if (status == EXR_OK) status = exr_pager_set_checkpoints(pager, 8, 4 * 1024 * 1024, 8, &error);
+    if (status == EXR_OK && job->txt_offset > (uint64_t)SIZE_MAX) status = EXR_ARGUMENT;
+    candidate.pager = pager;
+    candidate.txt_source = source;
+    if (status == EXR_OK)
+      status = page_for_offset(&candidate, (size_t)job->txt_offset, &control, &page, NULL, NULL, &error);
+    if (status == EXR_OK) status = exr_pager_get(pager, page, &laid, &error);
+    if (status == EXR_OK && !laid) status = EXR_FORMAT;
+    if (status == EXR_OK) status = txt_frame(&candidate, &source, laid, page, &job->frame, &error);
+    if (status == EXR_OK) {
+      job->candidate_pager = pager; pager = NULL;
+      job->candidate_config = config;
+      job->have_frame = 1; job->applied_page = page; job->session_swapped = 0;
+      copy_wstring(job->message, 512, L"已按内容位置重新排版。");
+    }
+    if (pager) exr_pager_free(pager);
+    job->error = error;
+    return status;
   }
 #endif
   if (!g.session.active || g.session.fixed || (!g.session.document && !g.session.bounded)) return EXR_ARGUMENT;
@@ -2523,6 +2859,9 @@ static exr_status job_run(host_job *job) {
     case JOB_ROLLBACK: return rollback_import(job);
     case JOB_HIT: return job_hit(job);
     case JOB_SAVE: return job_save(job);
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    case JOB_TXT_PROGRESS: return job_txt_progress(job);
+#endif
 #ifdef EXR_READER_WINDOWS_SEARCH
     case JOB_SEARCH_BATCH: case JOB_SEARCH_OPEN: return winsearch_job(job);
 #endif
@@ -3168,10 +3507,48 @@ static void update_page_label(void) {
   }
 }
 
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+/* A TXT position is a product revision, so the accepted page is written on the
+   serialized worker. The write is skipped while the in-memory page did not move
+   by a whole block; close, book switch and relayout force it. */
+static int save_txt_progress(void) {
+  host_job *job;
+  reader_txp_position captured = {0};
+  reader_txp_error detail = {0};
+  const uint64_t offset = (uint64_t)g.frame.range_start;
+  size_t take = g.frame.text_bytes;
+  const int force = g.txt_force_save;
+  g.txt_force_save = 0;
+  if (!g.session.txt_key[0] || g.txt_save_abandoned) return 1;
+  if (g.session.hold_progress || g.frame.hold_progress) return 1;
+  if (!force && g.txt_saved_valid && !strcmp(g.txt_saved_key, g.session.txt_key)) {
+    const uint64_t moved = offset > g.txt_saved_offset ? offset - g.txt_saved_offset : g.txt_saved_offset - offset;
+    if (moved < HOST_TXT_SAVE_BYTES) return 1;
+  }
+  if (reader_txp_capture(&captured, offset, g.frame.utf8, take, &detail) != READER_TXP_OK) {
+    set_status(L"无法记录阅读位置：文本位置不在可表示范围内；原记录保留。");
+    return 0;
+  }
+  job = job_new(JOB_TXT_PROGRESS);
+  if (!job) { set_status(L"内存不足，未保存阅读位置。"); return 0; }
+  snprintf(job->txt_key, sizeof(job->txt_key), "%s", g.session.txt_key);
+  job->txt_offset = captured.offset;
+  memcpy(job->txt_context, captured.context, captured.context_bytes);
+  job->txt_context[captured.context_bytes] = 0;
+  job->txt_context_bytes = captured.context_bytes;
+  job_start(job);
+  return 1;
+}
+#endif
+
 static int save_progress(void) {
   exr_error error = {0};
   exr_status status;
-  if (!g.has_current || !g.session.active || !g.frame.valid || g.job || g.pending || g.session.txt) return 1;
+  if (!g.has_current || !g.session.active || !g.frame.valid || g.job || g.pending) return 1;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if (g.session.txt) return save_txt_progress();
+#endif
+  if (g.session.txt) return 1;
   if (g.session.book_id != g.current.id || g.frame.book_id != g.current.id || g.frame.fixed != g.session.fixed) {
     g.progress_failed = 1; set_status(L"书籍状态不一致，未覆盖原进度。"); return 0;
   }
@@ -3291,7 +3668,26 @@ static void change_font(int delta) {
   exr_anchor anchor = {0};
   exr_error error = {0};
   if (!g.has_current || !g.frame.valid) { set_status(L"请先打开一本书。"); return; }
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  /* A TXT relayout keeps the product content position: the new pager is built
+     from the same immutable source and the page that owns the current offset is
+     accepted, so a different font size lands on the same text. */
+  if (g.session.txt) {
+    if (g.job || g.pending) return;
+    next = g.font_percent + delta;
+    if (next < HOST_FONT_MIN) { set_statusf(L"字号已到下限（%d%%）。", HOST_FONT_MIN); return; }
+    if (next > HOST_FONT_MAX) { set_statusf(L"字号已到上限（%d%%）。", HOST_FONT_MAX); return; }
+    job = job_new(JOB_LAYOUT);
+    if (!job) { set_status(L"内存不足，无法重排。"); return; }
+    job->font_percent = next;
+    job->txt_offset = (uint64_t)g.frame.range_start;
+    g.txt_force_save = 1;
+    job_submit(job);
+    return;
+  }
+#else
   if (g.session.txt) { set_status(L"TXT 字号调整尚未实现。"); return; }
+#endif
   if (g.frame.fixed) { set_status(L"当前是固定页书籍，请使用“缩放+”或“缩放-”。"); return; }
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   /* Once a reading preference is accepted it owns the point size. A request
@@ -3678,6 +4074,9 @@ static void open_selected_book(void) {
     set_status(L"此书尚未下载到本机。");return;
   }
 #endif
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if (g.session.txt) g.txt_force_save = 1;
+#endif
   if (!g.job && !g.pending && !save_progress()) return;
   job = job_new(JOB_OPEN);
   if (!job) { set_status(L"内存不足，无法打开书籍。"); return; }
@@ -3916,13 +4315,41 @@ static void handle_job_complete(host_job *job) {
     return;
   }
 #endif
-  if (job->kind == JOB_SAVE) {
+  if (job->kind == JOB_SAVE
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      || job->kind == JOB_TXT_PROGRESS
+#endif
+  ) {
     g.progress_failed = job->status != EXR_OK;
-    if (!g.progress_failed) g.saved_generation = job->generation;
-    else {
-      wchar_t message[512]; describe_error(message, 512, L"保存进度失败，请重试", job->status, &job->error); set_status(message);
+    if (!g.progress_failed) {
+      g.saved_generation = job->generation;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      if (job->kind == JOB_TXT_PROGRESS) {
+        snprintf(g.txt_saved_key, sizeof(g.txt_saved_key), "%s", job->txt_key);
+        g.txt_saved_offset = job->txt_saved_offset;
+        g.txt_saved_valid = job->txt_saved_valid;
+      }
+#endif
+    } else {
+      wchar_t message[512];
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      describe_error(message, 512, job->kind == JOB_TXT_PROGRESS ? L"阅读位置未保存，原记录保留" : L"保存进度失败，请重试",
+                     job->status, &job->error);
+#else
+      describe_error(message, 512, L"保存进度失败，请重试", job->status, &job->error);
+#endif
+      set_status(message);
       if (g.pending) { job_release(g.pending); g.pending = NULL; }
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      /* A refused product write must not trap the user in a window that cannot
+         close; the retained record is untouched and the notice stays on screen. */
+      if (job->kind == JOB_TXT_PROGRESS && g.closing) g.txt_save_abandoned = 1;
+#endif
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      if (g.closing && !g.txt_save_abandoned) { g.closing = 0; KillTimer(g.window, 2); if (g.drive_mode) SetTimer(g.window, 1, 30, NULL); }
+#else
       if (g.closing) { g.closing = 0; KillTimer(g.window, 2); if (g.drive_mode) SetTimer(g.window, 1, 30, NULL); }
+#endif
     }
     return;
   }
@@ -4085,7 +4512,11 @@ static void handle_job_complete(host_job *job) {
           snprintf(g.shelf_selected_key,sizeof(g.shelf_selected_key),"%s",job->product_key);
           snprintf(g.shelf_top_key,sizeof(g.shelf_top_key),"%s",job->product_key);
         }
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+        set_status(job->created ? L"TXT 原书已保存到书架。" : L"TXT 原书已存在。");
+#else
         set_status(job->created ? L"TXT 原书已保存到书架；阅读功能尚未完成。" : L"TXT 原书已存在；阅读功能尚未完成。");
+#endif
         return;
       }
 #endif
@@ -4160,7 +4591,11 @@ static void handle_job_complete(host_job *job) {
 
 static void host_command(int id) {
   if (g.session.txt && id != IDC_OPEN_BUTTON && id != IDC_IMPORT_BUTTON && id != IDC_CANCEL && id != IDC_DELETE_BUTTON && id != IDC_PREV && id != IDC_NEXT) {
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    set_status(L"TXT 的此功能尚未实现。"); return;
+#else
     set_status(L"TXT 的此功能及阅读位置保存尚未实现。"); return;
+#endif
   }
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   if(prefs_ui_open() && id!=IDC_PREFERENCES) return;
@@ -5222,6 +5657,9 @@ static void finish_close(HWND window) {
   if (acct_exit_blocked()) return;
 #endif
   KillTimer(window, 2);
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if (g.session.txt) g.txt_force_save = 1;
+#endif
   if (!save_progress()) {
     g.closing = 0;
     if (g.drive_mode) SetTimer(window, 1, 30, NULL);
