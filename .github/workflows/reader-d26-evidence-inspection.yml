@@ -1,0 +1,33 @@
+name: Inspect D26 retained failure evidence
+on:
+  push:
+    branches: [codex/reader-d26-evidence-inspection]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Inspect password accessibility observations from the existing run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/NoGod3524/EXReader/actions/artifacts/12757441838/zip > evidence.zip
+          python3 - <<'PY'
+          import json, zipfile
+          with zipfile.ZipFile('evidence.zip') as z:
+              matches = [n for n in z.namelist() if n.endswith('d26-g13-current/result.json')]
+              assert len(matches) == 1, matches
+              report = json.loads(z.read(matches[0]))
+          assert report['source_sha'] == '1d18dfa55f2b1fc712f14be8e0eb0644960ac0b1'
+          assert str(report['run_id']) == '40555058957'
+          check = next(c for c in report['checks'] if c['name'] == 'account_password_secret_not_reachable_through_atspi')
+          result = check['actual']
+          print(json.dumps({'source_sha': report['source_sha'], 'run_id': report['run_id'],
+              'passed': check['pass'], 'reached_by_tab': result['reached_by_tab'],
+              'entry_found': bool(result['entry'].get('path')), 'exported_text_is_secret': result['exported_text_is_secret'],
+              'exported_text_length': result['exported_text_length'],
+              'attributes_mark_secret': result['attributes_mark_secret']}, sort_keys=True))
+          PY
