@@ -30,6 +30,7 @@ final class SyncController {
     private static SyncController instance;
     static synchronized SyncController get(Context context){if(instance==null)instance=new SyncController(context.getApplicationContext());return instance;}
     private final ScheduledExecutorService worker=Executors.newSingleThreadScheduledExecutor(r->new Thread(r,"reader-sync-controls"));
+    private final java.util.concurrent.ExecutorService transfers=Executors.newSingleThreadExecutor(r->new Thread(r,"reader-sync-originals"));
     private final Handler ui=new Handler(Looper.getMainLooper());
     private final AccountStore account;
     private final File product,cache,originals;
@@ -41,7 +42,7 @@ final class SyncController {
     private static final String[] PROJECT_KINDS={"book","shelf","tag","series","membership"};
     private int projectKind,projectPages,projectUnresolved,shelfUnresolved,shelfPass;
     private String projectCursor="";
-    private HostTask sdkTask;
+    private volatile HostTask sdkTask;
     private volatile String[][] view;
     private String status="就绪",accountNotice="";
     private int state=NativeSync.CLOSED;
@@ -75,8 +76,8 @@ final class SyncController {
             }catch(Throwable failure){error(failure);}finally{Arrays.fill(secret,(byte)0);}
         }),failure->worker.execute(()->{Arrays.fill(secret,(byte)0);if(request==epoch){preparing=false;sdkTask=null;error(failure);}})));
     });}
-    void cancel(){worker.execute(()->{if(projecting){projectionResumable=true;++epoch;finishProjection("投影已暂停，可继续");return;}if(sdkTask!=null)sdkTask.cancel();if(session!=0){NativeSync.Snapshot view=new NativeSync.Snapshot(NativeSync.command(session,2));state=view.state;status=view.label();schedulePoll();}else status="已请求取消";publish();});}
-    void close(){worker.execute(this::closeOwned);}
+    void cancel(){HostTask active=sdkTask;if(active!=null)active.cancel();worker.execute(()->{if(receiving){status="正在取消接收";publish();return;}if(projecting){projectionResumable=true;++epoch;finishProjection("投影已暂停，可继续");return;}if(sdkTask!=null)sdkTask.cancel();if(session!=0){NativeSync.Snapshot view=new NativeSync.Snapshot(NativeSync.command(session,2));state=view.state;status=view.label();schedulePoll();}else status="已请求取消";publish();});}
+    void close(){HostTask active=sdkTask;if(active!=null)active.cancel();worker.execute(this::closeOwned);}
     private void closeOwned(){
         ++epoch;if(sdkTask!=null)sdkTask.cancel();sdkTask=null;preparing=receiving=projecting=projectionResumable=false;account.clearMemory();
         if(session!=0){NativeSync.Snapshot view=new NativeSync.Snapshot(NativeSync.command(session,3));state=view.state;status=view.label();schedulePoll();}else{state=NativeSync.CLOSED;status="已断开";}
@@ -127,10 +128,31 @@ final class SyncController {
     }
     private void finishProjection(String message){projecting=false;status=message;try{loadBooks("");}catch(Throwable failure){status="书架更新未完成，可继续重试";}publish();Listener target=listener;if(target!=null)ui.post(()->{if(listener==target)target.projected();});}
     private void loadBooks(String after){String[][] rows=NativeSync.books(product.getAbsolutePath(),after);books.clear();for(String[] row:rows)books.add(new NativeSync.RemoteBook(row));}
+    void receiveKey(Host host,String key){worker.execute(()->{
+        try{String after="";for(int page=0;page<200;page++){
+            String[][] rows=NativeSync.books(product.getAbsolutePath(),after);
+            for(String[] row:rows){NativeSync.RemoteBook book=new NativeSync.RemoteBook(row);after=book.key;if(book.key.equals(key)){receive(host,book);return;}}
+            if(rows.length<50)break;
+        }status="书目已改变，请刷新后重试";publish();}catch(Throwable failure){error(failure);}
+    });}
     void receive(Host host,NativeSync.RemoteBook book){worker.execute(()->{
         if(busy()||!book.receivable()){status="当前不能接收这本书";publish();return;}
-        File cached=new File(cache,book.sha+"."+book.format);if(!cached.isFile()){status="请先完成一轮同步";publish();return;}
-        long request=++epoch;receiving=true;sdkTask=new HostTask(()->false);HostTask task=sdkTask;status="接收书籍";publish();
-        ui.post(()->host.receive(book,cached,task,id->worker.execute(()->{if(request==epoch){receiving=false;sdkTask=null;status="书籍已接收";try{loadBooks("");}catch(Throwable failure){error(failure);}publish();}}),failure->worker.execute(()->{if(request==epoch){receiving=false;sdkTask=null;error(failure);}})));
+        long request=++epoch;receiving=true;sdkTask=new HostTask(()->false);HostTask task=sdkTask;
+        status="正在核对并接收原件";publish();
+        // Obtain a copy on the account owner. Cache-only receives also work without credentials.
+        byte[] credential=null;try{credential=account.authorization();}catch(Throwable missing){}
+        final byte[] secret=credential;final String root=account.root();
+        transfers.execute(()->{
+            try{
+                File cached=SyncOriginal.receive(book,cache,root,secret,task);task.check();
+                worker.execute(()->{
+                    if(request!=epoch)return;
+                    ui.post(()->{try{task.check();host.receive(book,cached,task,
+                        id->worker.execute(()->{if(request==epoch){receiving=false;sdkTask=null;status="书籍已接收";try{loadBooks("");}catch(Throwable failure){error(failure);}publish();}}),
+                        failure->worker.execute(()->{if(request==epoch){receiving=false;sdkTask=null;error(failure);}}));
+                    }catch(Throwable failure){worker.execute(()->{if(request==epoch){receiving=false;sdkTask=null;error(failure);}});}});
+                });
+            }catch(Throwable failure){worker.execute(()->{if(request==epoch){receiving=false;sdkTask=null;error(failure);}});}
+        });
     });}
 }

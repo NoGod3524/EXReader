@@ -132,3 +132,26 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeSync_view
   }catch(...){reader_sync_view_release(&snapshot);fail(env);return nullptr;}
 }
 #endif
+
+/* D22: reuse the existing bounded HTTPS transport on a separate transfer owner.
+ * No SDK pointer, catalog mutation, or second sync protocol enters this call. */
+extern "C" JNIEXPORT jint JNICALL Java_org_exreader_host_NativeSync_fetchOriginal(JNIEnv *env,jclass,jstring root,jbyteArray authorization,jstring resource,jstring directory,jstring name,jobject task) {
+  std::string secret;exr_webdav_client *client=nullptr;
+  struct cancellation {JNIEnv *env;jobject task;jmethodID check;bool stopped=false;};
+  try {
+    if(!authorization||!task)throw std::runtime_error("missing transfer authorization");
+    jsize length=env->GetArrayLength(authorization);if(length<1||length>2048)throw std::runtime_error("credential length");
+    secret.resize((size_t)length);env->GetByteArrayRegion(authorization,0,length,(jbyte *)secret.data());product_jni::pending(env);
+    if(secret.find_first_of(std::string("\0\r\n",3))!=std::string::npos)throw std::runtime_error("invalid authorization");
+    auto url=product_jni::utf8(env,root),path=product_jni::utf8(env,resource),folder=product_jni::utf8(env,directory),filename=product_jni::utf8(env,name);
+    jclass type=env->GetObjectClass(task);product_jni::pending(env);jmethodID check=env->GetMethodID(type,"check","()V");env->DeleteLocalRef(type);product_jni::pending(env);
+    // Never leave a pending Java cancellation exception inside native HTTPS cleanup.
+    // Java checks the same HostTask immediately after this call and reports cancellation.
+    cancellation owned{env,task,check};exr_webdav_control control{};control.context=&owned;
+    control.cancelled=[](void *opaque)->int {auto *c=static_cast<cancellation *>(opaque);if(c->stopped)return 1;if(c->env->ExceptionCheck())return 0;c->env->CallVoidMethod(c->task,c->check);if(c->env->ExceptionCheck()){c->env->ExceptionClear();c->stopped=true;return 1;}return 0;};
+    exr_webdav_config config{};config.root_url=url.c_str();config.authorization=secret.c_str();config.timeout_ms=15000;
+    exr_webdav_error error{};int code=exr_webdav_create(&config,&client,&error);wipe(secret);
+    if(code==EXR_DAV_OK){exr_webdav_download result{};code=exr_webdav_download_file(client,path.c_str(),folder.c_str(),filename.c_str(),&control,&result,&error);}
+    if(client)exr_webdav_free(client);return code;
+  }catch(...){wipe(secret);if(client)exr_webdav_free(client);fail(env);return -1;}
+}

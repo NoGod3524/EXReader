@@ -5,6 +5,7 @@ package org.exreader.host;
 final class NativeSync {
     static {System.loadLibrary("exreader_product");}
     static native int bind();
+    static native int fetchOriginal(String root,byte[] authorization,String resource,String directory,String name,HostTask task);
     static native boolean validRoot(String root);
     static native long create(String product,String cache,String originals,String account,String root,byte[] authorization);
     static native long[] command(long session,int action);
