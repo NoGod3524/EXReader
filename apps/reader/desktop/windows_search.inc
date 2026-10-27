@@ -20,7 +20,7 @@ static char *winsearch_bytes(const char *s,size_t n) {
   return p;
 }
 static int winsearch_hit_copy(host_search_hit *out,const host_search_hit *h) {
-  memset(out,0,sizeof(*out));out->mode=h->mode;out->unit=h->unit;
+  memset(out,0,sizeof(*out));out->mode=h->mode;out->txt=h->txt;out->unit=h->unit;
   if(h->part_path && !(out->part_path=host_strdup(h->part_path))) goto fail;
   if(h->page_id && !(out->page_id=host_strdup(h->page_id))) goto fail;
   if(h->mode!=READER_SEARCH_FIXED) {
@@ -51,6 +51,9 @@ static int winsearch_cancel_check(void *context) {
 #endif
   return job_cancel_check(context);
 }
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+#include "windows_txt_search.inc"
+#endif
 static exr_status winsearch_batch_run(host_job *job) {
   reader_search *search=NULL;reader_search_error error={0};reader_search_result result={0};
   reader_search_options options={0};reader_search_status code;
@@ -143,6 +146,13 @@ static exr_status winsearch_open_run(host_job *job) {
 }
 static exr_status winsearch_job(host_job *job) {
   if(!g.session.active || job->book_id!=g.session.book_id || job->book_id!=g.current.id) return EXR_CANCELLED;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if(g.session.txt) {
+    if(!job->txt_key[0] || strcmp(job->txt_key,g.session.txt_key)) return EXR_CANCELLED;
+    return job->kind==JOB_SEARCH_BATCH ? wintxt_search_batch(job):wintxt_search_open(job);
+  }
+  if(job->txt_key[0]) return EXR_CANCELLED;
+#endif
   exr_control control={job_cancel_check,NULL,job};char key[READER_SEARCH_SOURCE_KEY_MAX+1];
   exr_status status=winreader_identity(job->book_id,g.current.format,g.session.fixed,g.session.bounded,key,&control,&job->error);
   if(status!=EXR_OK) return status;
@@ -184,6 +194,9 @@ static void winsearch_close(void) {
   winsearch_batch_free(&inbook.batch);inbook.have_cursor=0;
   inbook.query=inbook.find=inbook.next=inbook.rows=inbook.open=inbook.cancel=inbook.message=NULL;
   inbook.book_id=0;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  inbook.txt_key[0]=0;
+#endif
   host_restore_content_focus();
 }
 static void winsearch_submit(int next,int open_hit) {
@@ -192,6 +205,9 @@ static void winsearch_submit(int next,int open_hit) {
   host_job *job=job_new(open_hit ? JOB_SEARCH_OPEN:JOB_SEARCH_BATCH);
   if(!job) { SetWindowTextW(inbook.message,L"内存不足，未启动查找。");return; }
   job->book_id=inbook.book_id;job->search_generation=inbook.generation;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if(g.session.txt) snprintf(job->txt_key,sizeof(job->txt_key),"%s",inbook.txt_key);
+#endif
   if(open_hit) {
     LRESULT selected=SendMessageW(inbook.rows,LB_GETCURSEL,0,0);
     if(selected==LB_ERR || (size_t)selected>=inbook.batch.count ||
@@ -204,7 +220,12 @@ static void winsearch_submit(int next,int open_hit) {
     }
     if(next) {
       if(!inbook.have_cursor || inbook.batch.complete) { job_release(job);return; }
-      job->search_resume=inbook.batch.next;job->search_has_resume=1;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+      if(g.session.txt) job->search_txt_resume=inbook.batch.txt_next;
+      else
+#endif
+      job->search_resume=inbook.batch.next;
+      job->search_has_resume=1;
     }
   }
   inbook.running=1;SetWindowTextW(inbook.message,open_hit ? L"正在独立核对原文…":L"正在查找，可随时取消…");
@@ -214,6 +235,10 @@ static void winsearch_submit(int next,int open_hit) {
 }
 static void winsearch_accept(host_job *job) {
   inbook.running=0;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  if((g.session.txt && (!job->txt_key[0] || strcmp(job->txt_key,g.session.txt_key))) ||
+     (!g.session.txt && job->txt_key[0])) { winsearch_controls();return; }
+#endif
   if(!inbook.dialog || job->search_generation!=inbook.generation || g.closing || g.pending ||
      job->book_id!=g.current.id || job->book_id!=inbook.book_id) { winsearch_controls();return; }
   if(job->status!=EXR_OK || job_cancel_flag(job)) {
@@ -246,6 +271,9 @@ static void winsearch_accept(host_job *job) {
     /* The public F1 contract requires a final empty batch for exactly 32 hits.
        Preserve the previous page; empty tail does not mean no matches. */
     inbook.batch.next=job->search_batch.next;inbook.batch.complete=job->search_batch.complete;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    inbook.batch.txt_next=job->search_batch.txt_next;
+#endif
   }
   inbook.have_cursor=1;
   SetWindowTextW(inbook.message,inbook.batch.complete ?
@@ -273,7 +301,9 @@ static LRESULT CALLBACK winsearch_procedure(HWND window,UINT message,WPARAM wpar
   return DefWindowProcW(window,message,wparam,lparam);
 }
 static void winsearch_show(void) {
+#ifndef EXR_READER_WINDOWS_TXT_PROGRESS
   if(g.session.txt) { set_status(L"TXT 目前仅支持第一页；此功能尚未实现。");return; }
+#endif
   if(inbook.dialog) { SetForegroundWindow(inbook.dialog);return; }
   if(g.job || g.pending || g.closing || !g.session.active) { set_status(L"打开书籍并等待当前任务完成后，可书内查找。");return; }
   WNDCLASSW type={0};type.lpfnWndProc=winsearch_procedure;type.hInstance=GetModuleHandleW(NULL);
@@ -284,6 +314,9 @@ static void winsearch_show(void) {
     g.window,NULL,type.hInstance,NULL);
   if(!inbook.dialog) return;
   HWND window=inbook.dialog;inbook.book_id=g.current.id;inbook.generation++;inbook.running=0;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  snprintf(inbook.txt_key,sizeof(inbook.txt_key),"%s",g.session.txt ? g.session.txt_key : "");
+#endif
   HWND label=make_static(window,0,L"查找文字(&Q)");MoveWindow(label,12,12,110,22,TRUE);
   inbook.query=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,
     124,10,404,26,window,(HMENU)(INT_PTR)IDC_INBOOK_QUERY,NULL,NULL);
