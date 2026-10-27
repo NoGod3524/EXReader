@@ -60,6 +60,14 @@ try:
     assert all(r['pass'] for r in report['checks'])
     accepted=True
 finally:
+    if not accepted:
+        try:
+            adb('shell','uiautomator','dump','/sdcard/exr-save-window.xml')
+            tree=adb('shell','cat','/sdcard/exr-save-window.xml')
+            (output/'failure-window.xml').write_bytes(tree)
+            print(tree.decode('utf-8','replace')[:30000],flush=True)
+        except Exception as error:
+            print('window dump unavailable:',error,flush=True)
     try:(output/'logcat.txt').write_bytes(adb('logcat','-d','-v','threadtime'))
     except Exception:pass
     try:(output/'screen.png').write_bytes(adb('exec-out','screencap','-p'))

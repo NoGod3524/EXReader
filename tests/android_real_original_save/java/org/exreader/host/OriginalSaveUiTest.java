@@ -163,7 +163,21 @@ public final class OriginalSaveUiTest extends Instrumentation {
             Bundle b=new Bundle();b.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,filename);
             need(n.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,b),"set filename");
         },"system filename",30000);
+        boolean keyboard=false;
+        List<AccessibilityWindowInfo> windows=getUiAutomation().getWindows();
+        try{for(AccessibilityWindowInfo window:windows)if(window.getType()==AccessibilityWindowInfo.TYPE_INPUT_METHOD)keyboard=true;}
+        finally{for(AccessibilityWindowInfo window:windows)window.recycle();}
+        if(keyboard){
+            need(getUiAutomation().performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK),"hide keyboard");
+            SystemClock.sleep(500);
+        }
         until(n->docs(n)&&n.isVisibleToUser()&&n.isEnabled()&&text(n).equalsIgnoreCase("Save"),this::systemTap,"system Save",30000);
+        long deadline=SystemClock.elapsedRealtime()+30000;boolean returned=false;
+        while(SystemClock.elapsedRealtime()<deadline){
+            if(!present(n->docs(n)&&n.isVisibleToUser())){returned=true;break;}
+            SystemClock.sleep(100);
+        }
+        need(returned,"DocumentsUI returned its selected destination");
         described("原件导出状态","已保存",120000);
         need(savedHash(filename,input.getJSONArray("books").getJSONObject(1).getLong("bytes")).equals(row.getString("sha256")),"export bytes match original");
         checks.put(new JSONObject().put("name","system_saved_original_matches_source").put("pass",true));
