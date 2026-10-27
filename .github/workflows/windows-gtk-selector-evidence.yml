@@ -1,0 +1,45 @@
+name: Inspect successful GTK selector event evidence
+on:
+  push:
+    branches: [codex/windows-gtk-selector-evidence]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-gtk-first-40427608248-1
+          run-id: 40427608248
+          github-token: ${{ github.token }}
+          path: build/retained
+      - name: Verify and display selector event timing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,subprocess
+          from pathlib import Path
+          meta=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GITHUB_REPOSITORY']+'/actions/artifacts/12700343910'],text=True))
+          assert meta['workflow_run']['id']==40427608248 and meta['workflow_run']['head_sha']=='f92e31c8f9db0cf71f098782223a0f9a54daf292' and not meta['expired']
+          assert meta['digest']=='sha256:ab8a4c747fc6e8cb629ad17246f8b02fc752249954c41c253d84739b373922e1'
+          root=Path('build/retained');events=json.loads((root/'gtk-first/selector-events.json').read_text())
+          assert events and events[0]['action']=='chooser-opened' and events[-1]['action']=='chooser-closed-and-book-imported'
+          assert not events[-1]['choosers'] and events[-1]['host']['book']>0 and events[-1]['host']['books']==1 and events[-1]['host']['error']==0 and events[-1]['host']['busy']==0
+          initial=events[0]['choosers'];assert len(initial)==1
+          assert all(not event['choosers'] or event['choosers']==initial for event in events)
+          state=json.loads((root/'gtk-first/state.json').read_text())
+          assert state['source_sha']=='f92e31c8f9db0cf71f098782223a0f9a54daf292' and state['run_id']=='40427608248' and state['attempt']=='1'
+          result={'artifact_id':12700343910,'artifact_digest':meta['digest'],'source':state['source_sha'],'run':state['run_id'],'attempt':state['attempt'],'events':events}
+          print(json.dumps(result,ensure_ascii=False),flush=True)
+          Path('build/selector-evidence.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-selector-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/selector-evidence.json
+          if-no-files-found: warn
