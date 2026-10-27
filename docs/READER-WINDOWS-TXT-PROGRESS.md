@@ -150,6 +150,14 @@ The Windows original-export dialog now prepares SDK-backed books and verified
 product TXT handles in the same selection. The exporter enforces the existing
 batch and per-book limits, verifies each product TXT hash again while copying,
 publishes without replacement, and reports each result in selection order.
-Unavailable remote entries stop the selection before choosing a destination.
+Unmapped entries are rejected; product handles are verified before copying.
 The native mixed-export and installed-package checks run in Actions; this
 candidate is pending that validation.
+
+First Windows candidate source `dad3c2bc642ab5b9b707cb1283901f2db3af0c59`
+passed [Actions 40580296081](https://github.com/NoGod3524/EXReader/actions/runs/40580296081):
+the actual host exported the mixed TXT/PDF selection, checked exact byte hashes
+and duplicate receipts; the installed C API also exercised mismatched identity,
+short reads, mixed SDK/product sources, duplicates and cancellation.
+Further conflict/cancellation and Linux/macOS installed-consumer checks are
+included in the next candidate and await their own Actions results.
