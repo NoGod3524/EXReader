@@ -108,4 +108,22 @@ pager and product-content position described above.
 - Source `41a7255f70bfd4eb486cb1ec8017ab01a767ad57`, [Actions 40563001637](https://github.com/NoGod3524/EXReader/actions/runs/40563001637), passed first-page and later-page select-all/copy checks and a before/after native page screenshot comparison.
 - Source `ca6521811487a6955210ba853949bf99d71dd7cb`, [Actions 40571968157](https://github.com/NoGod3524/EXReader/actions/runs/40571968157), passed real mouse drag and partial-copy checks. The action also preserved the page screenshots and full report as artifact `12766185628`.
 - Earlier run [40563987863](https://github.com/NoGod3524/EXReader/actions/runs/40563987863) failed its partial-copy assertion using fixed mouse coordinates; its result remains in Actions. The successful run chose coordinates from the actual rendered selection.
-- Unified source `172f740ff885c5cea6b0e5b20f909cd054488a14` contains the tested selection implementation and currently has its own same-source cloud checks in progress.
+- Unified source `172f740ff885c5cea6b0e5b20f909cd054488a14` contains the selection implementation. At attempt 1, its Windows TXT host run [40573040324](https://github.com/NoGod3524/EXReader/actions/runs/40573040324), existing-v2 nine-format run [40573040377](https://github.com/NoGod3524/EXReader/actions/runs/40573040377), and Windows/GTK four-stage relay [40573040295](https://github.com/NoGod3524/EXReader/actions/runs/40573040295) completed successfully. The other four unified-source workflows are still running; these three outcomes are recorded individually.
+
+## Standalone large-TXT search candidate
+
+The separate `codex/reader-windows-txt-search` candidate at
+`2e4b3900fb18b0203b7e4a82e3a77e84218b3936` passed
+[Actions 40576164210](https://github.com/NoGod3524/EXReader/actions/runs/40576164210)
+attempt 1, including the native TXT progress suite and retained host checks.
+This candidate supplies bounded search batches, independent original verification,
+navigation to a match and UTF-8 queries.
+
+The earlier [Actions 40575156438](https://github.com/NoGod3524/EXReader/actions/runs/40575156438)
+on `6ffffe4fa0c837c04092d1b730c26a6b5b5b3f28` passed the new search
+checks but failed a subsequent locked-write restore assertion after the search
+changed the reading position. The later successful run moved the search checks
+after the existing restore checks. A separate candidate and cloud diagnostic
+are needed to determine whether the earlier changed-font comparison exposed a
+product defect. The search candidate is not yet part of the unified source
+`172f740ff885c5cea6b0e5b20f909cd054488a14`.
