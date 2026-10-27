@@ -17,6 +17,9 @@ def verify():
 verify()
 subprocess.run(['build/bounded-txt-scan/bounded_txt_scan.exe', str(path)], check=True)
 verify()
-subprocess.run(['build/bounded-txt-scan/bounded_txt_large_pager.exe', str(path)], check=True)
+position = folder / 'pager-position.txt'
+subprocess.run(['build/bounded-txt-scan/bounded_txt_large_pager.exe', str(path), 'record', str(position)], check=True)
+verify()
+subprocess.run(['build/bounded-txt-scan/bounded_txt_large_pager.exe', str(path), 'replay', str(position)], check=True)
 verify()
 print('original fixture hash preserved:', expected)
