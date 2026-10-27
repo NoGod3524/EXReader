@@ -18,7 +18,7 @@ head = git('rev-parse', 'HEAD')
 subprocess.check_call(['git', 'merge-base', '--is-ancestor', SEED, head])
 names = git('diff', '--name-only', SEED, head).splitlines()
 assert all(name.startswith(OWNED) for name in names), names
-subprocess.run(['git', 'diff', '--exit-code', '7ee9f9b93cbc1cb1dbf485bb138c2cf4e2de3691', 'HEAD', '--', *['examples/reader.c', 'apps/reader/desktop/windows_search.inc', 'apps/reader/desktop/windows_txt_search.inc', 'apps/reader/desktop/windows_wave3.inc', 'tests/windows_host/txt/check_progress.py', '.github/workflows/windows-wave3-txt-progress.yml']], check=True)
+subprocess.run(['git', 'diff', '--exit-code', 'e21c0287defac1615230bc8bddfe57885f837efb', 'HEAD', '--', *['examples/reader.c', 'apps/reader/desktop/windows_search.inc', 'apps/reader/desktop/windows_txt_search.inc', 'apps/reader/desktop/windows_wave3.inc', 'tests/windows_host/txt/check_progress.py', '.github/workflows/windows-wave3-txt-progress.yml']], check=True)
 subprocess.run(['git', 'diff', '--exit-code', 'cc75214cb5e6dce389625e33399e1b120aedf4c4', 'HEAD', '--', *['.github/workflows/reader-d26-accessibility.yml', 'apps/reader/desktop/gtk_feature_integration.cmake', 'examples/linux/reading.h', 'examples/linux/wave3_backend.inc', 'examples/linux/wave3_ui.inc', 'tests/reader_d26_accessibility/identity_current.py', 'tests/reader_d26_accessibility/tools_current.py']], check=True)
 # The whitelist freezes ALL other paths, including SDK, budgets and old suites.
 modules = {name: git('rev-parse', 'HEAD:apps/reader/' + name) for name in
