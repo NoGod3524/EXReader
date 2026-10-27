@@ -130,6 +130,15 @@ def main():
         open_row(fixture.name)
         assert 'Perf Import 0000' in page_text(app, automation), page_text(app, automation)[:200]
         record('shelf selection opens the 16792975-byte original at its first page')
+        first_page = page_text(app, automation)
+        ui.command(app, 137)  # IDC_ACCOUNT_BUTTON, the native account command
+        account_dialog = app.wait(lambda: ui.owned_dialog(app, 138), timeout=30)
+        assert account_dialog, 'account dialog unavailable while reading TXT'
+        ui.send(account_dialog, 0x10)  # WM_CLOSE
+        app.wait(lambda: not ui.U.IsWindow(account_dialog), timeout=30)
+        app.wait_idle()
+        assert page_text(app, automation) == first_page
+        record('account dialog opens and closes while preserving the TXT page')
         heads, count = progress_heads('txt:' + expected)
         assert count >= 1 and heads, (count, heads)
         record('first open saves a new reading position', 'revisions=%d heads=%d' % (count, len(heads)))
