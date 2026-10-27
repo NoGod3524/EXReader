@@ -75,17 +75,19 @@ jobs:
       - name: Prepare the native display used by the unchanged UI checks
         run: python tests/reader_native_owner_repairs/display.py
       - name: Build the installed host and run the native TXT position acceptance
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python tests/reader_windows_raw3/host_build.py
+        run: python tests/windows_host/txt/build.py
+      - name: Repeat on the explicit raw-capability family
+        run: python tests/windows_host/txt/build.py --raw
       - name: Upload host evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: txt-progress-host-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            build/windows-raw3-host/legacy-txt-progress-acceptance/
-            build/windows-raw3-host/raw-txt-progress-acceptance/
-            build/windows-raw3-host/logs/
+            build/txt-progress-host/acceptance-legacy/
+            build/txt-progress-host/acceptance-raw/
+            build/txt-progress-host/evidence-legacy/
+            build/txt-progress-host/evidence-raw/
+            build/txt-progress-host/logs/
             build/native-owner-preflight/display.json
           if-no-files-found: warn
