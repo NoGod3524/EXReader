@@ -26,6 +26,19 @@ static void check(const unsigned char *data,size_t size,size_t chunk) {
   if(exr_txt_scan_source(&source,collect,&out,&extent,&error)!=EXR_OK || extent!=expected_size || out.size!=expected_size || (expected_size && memcmp(expected,out.data,expected_size))) {
     fprintf(stderr,"projection mismatch: %s\n",error.message);exit(1);
   }
+  {
+    size_t start,end;
+    for(start=0;start<=expected_size;start++) for(end=start;end<=expected_size;end++) {
+      exr_anchor a={0},b={0};exr_status x,y;
+      x=exr_anchor_create(doc,start,end,&a,&error);
+      y=exr_txt_anchor_create_source(&source,start,end,&b,&error);
+      if(x!=y || (x==EXR_OK && (a.start!=b.start || a.end!=b.end ||
+         strcmp(a.exact,b.exact) || strcmp(a.prefix,b.prefix) || strcmp(a.suffix,b.suffix)))) {
+        fprintf(stderr,"anchor mismatch at %zu..%zu: %d vs %d %s\n",start,end,x,y,error.message);exit(9);
+      }
+      exr_anchor_free(&a);exr_anchor_free(&b);
+    }
+  }
   free(out.data);exr_document_free(doc);
 }
 static size_t file_read(void *ctx,uint64_t at,void *buffer,size_t size) {
@@ -46,6 +59,21 @@ int main(int argc,char **argv) {
   static const unsigned char bad[]={0xff,0xfe,0x00};
   input in={bad,sizeof(bad),1,0,0};output out={0};exr_source source={0};exr_error error={0};uint64_t extent=42;size_t i;
   for(i=1;i<=5;i++) { check(utf8,sizeof(utf8),i);check(utf16,sizeof(utf16),i); }
+  {
+    unsigned char long_text[300];
+    for(i=0;i<sizeof(long_text);i+=4) { long_text[i]=0xf0;long_text[i+1]=0x9f;long_text[i+2]=0x98;long_text[i+3]=0x80; }
+    {
+      input v={long_text,sizeof(long_text),7,0,0};exr_source s={0};exr_document *d=NULL;
+      exr_anchor a={0},b={0};
+      s.size=v.size;s.read_at=read_at;s.context=&v;
+      if(exr_document_open_memory(EXR_TXT,long_text,sizeof(long_text),&d,&error)!=EXR_OK ||
+         exr_anchor_create(d,140,144,&a,&error)!=EXR_OK ||
+         exr_txt_anchor_create_source(&s,140,144,&b,&error)!=EXR_OK ||
+         strcmp(a.exact,b.exact) || strcmp(a.prefix,b.prefix) || strcmp(a.suffix,b.suffix) ||
+         strlen(b.prefix)!=128 || strlen(b.suffix)!=128) return 10;
+      exr_anchor_free(&a);exr_anchor_free(&b);exr_document_free(d);
+    }
+  }
   source.size=in.size;source.read_at=read_at;source.context=&in;source.control.cancelled=cancelled;source.control.context=&in;
   if(exr_txt_scan_source(&source,collect,&out,&extent,&error)!=EXR_ENCODING || extent) return 2;
   in.data=utf8;in.size=sizeof(utf8);source.size=in.size;in.reads=0;in.cancel_after=4;extent=42;

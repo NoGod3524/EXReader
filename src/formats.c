@@ -1517,3 +1517,48 @@ exr_status exr_txt_find_source(const exr_source *source,const char *query,uint64
   if(search.found) { *start=search.start;*end=search.end; }
   return EXR_OK;
 }
+
+typedef struct {
+  uint64_t first,last;
+  char *data;
+  size_t size;
+} txt_anchor_window;
+static void txt_anchor_copy(txt_anchor_window *w,uint64_t offset,const char *text,size_t size) {
+  uint64_t end=offset+size,lo=offset>w->first ? offset : w->first;
+  uint64_t hi=end<w->last ? end : w->last;
+  if(lo<hi) { memcpy(w->data+w->size,text+(size_t)(lo-offset),(size_t)(hi-lo));w->size+=(size_t)(hi-lo); }
+}
+static exr_status txt_anchor_paragraph(void *context,uint64_t offset,const char *text,size_t size,exr_error *e) {
+  txt_anchor_window *w=context;(void)e;
+  if(offset) txt_anchor_copy(w,offset-1,"\n",1);
+  txt_anchor_copy(w,offset,text,size);return EXR_OK;
+}
+exr_status exr_txt_anchor_create_source(const exr_source *source,size_t start,size_t end,
+                                         exr_anchor *anchor,exr_error *e) {
+  txt_anchor_window w={0};exr_document doc={0};uint64_t extent=0;size_t skip=0,base,finish;
+  exr_status status;
+  if(!anchor) return exr_fail(e,EXR_ARGUMENT,"Missing anchor output");
+  memset(anchor,0,sizeof(*anchor));
+  if(!source || start>end) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT anchor range");
+  if(end-start>65536) return exr_fail(e,EXR_LIMIT,"Anchor quote exceeds 64 KiB");
+  w.first=start>128 ? start-128 : 0;
+  w.last=(uint64_t)end>UINT64_MAX-128 ? UINT64_MAX : (uint64_t)end+128;
+  w.data=malloc((end-start)+257);
+  if(!w.data) return exr_fail(e,EXR_MEMORY,"TXT anchor allocation failed");
+  status=exr_txt_scan_source(source,txt_anchor_paragraph,&w,&extent,e);
+  if(status!=EXR_OK) goto done;
+  if((uint64_t)end>extent) { status=exr_fail(e,EXR_ARGUMENT,"TXT anchor range beyond extent");goto done; }
+  while(skip<w.size && ((unsigned char)w.data[skip]&0xc0)==0x80) skip++;
+  base=(size_t)w.first+skip;finish=w.size;
+  /* The bounded right edge may cut a scalar. Keep complete final scalars. */
+  if(w.last<extent) {
+    size_t at=skip,previous;uint32_t cp;
+    while(at<finish) { previous=at;if(!exr_next(w.data,finish,&at,&cp)) { finish=previous;break; } }
+  }
+  if(start<base || end<base || end-base>finish-skip) { status=exr_fail(e,EXR_ARGUMENT,"TXT anchor range is not on UTF-8 boundaries");goto done; }
+  doc.text=w.data+skip;doc.size=finish-skip;
+  status=exr_anchor_create(&doc,start-base,end-base,anchor,e);
+  if(status==EXR_OK) { anchor->start=start;anchor->end=end; }
+done:
+  free(w.data);return status;
+}
