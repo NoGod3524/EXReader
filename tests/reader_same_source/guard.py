@@ -15,7 +15,7 @@ EXPECTED = {
     '.github/workflows/reader-same-source-windows.yml': 'bfbb9d62497d23b0bec4d219201807eb64f4ad58',
     '.github/workflows/reader-same-source-android.yml': '0c0c540f784b0e10ae51dc217078cb734cd7e1c5',
     '.github/workflows/reader-same-source-gtk.yml': '8a830b80d46ee3e4cc00ebe08ec42c51583216d8',
-    '.github/workflows/reader-same-source-apple.yml': '21d5409dbb480d99e75c981ca76e5c1d546bcc2c',
+    '.github/workflows/reader-same-source-apple.yml': 'cfec31c07f4cc65567fe80cea04b0fc5477e0eea',
 }
 SELF = 'tests/reader_same_source/guard.py'
 
