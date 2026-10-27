@@ -21,10 +21,10 @@ int main(int argc,char **argv) {
   in=(file_source *)calloc(1,sizeof(*in));if(!in) return 2;
   in->file=fopen(argv[1],"rb");if(!in->file) return 2;
   if(_fseeki64(in->file,0,SEEK_END)) return 2;
-  source.size=(uint64_t)_ftelli64(in->file);source.context=in;source.read_at=read_at;
+  source.size=(uint64_t)_ftelli64(in->file);source.context=in;source.read_at=read_at;source.release=release_source;
   QueryPerformanceFrequency(&frequency);QueryPerformanceCounter(&begin);
   if(exr_font_open("C:/Windows/Fonts/arial.ttf",&font,&error)!=EXR_OK) die("font",&error);
-  if(exr_txt_pager_create(&source,font,NULL,release_source,&pager,&error)!=EXR_OK) { release_source(in);die("open",&error); }
+  if(exr_txt_pager_create(&source,font,NULL,&pager,&error)!=EXR_OK) { release_source(in);die("open",&error); }
   for(;;) {
     size_t n;const exr_page *p;
     if(exr_pager_next(pager,&page,&error)!=EXR_OK) die("next",&error);

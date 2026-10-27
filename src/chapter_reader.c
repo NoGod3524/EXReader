@@ -678,7 +678,7 @@ exr_status exr_txt_pager_create_private(const exr_source *source,exr_font *font,
   return txt_pager_create(source,font,config,NULL,out,e);
 }
 exr_status exr_txt_pager_create(const exr_source *source,exr_font *font,
-  const exr_layout_config *config,void (*release_source)(void *),exr_pager **out,exr_error *e) {
-  if(!release_source) { if(out) *out=NULL; return exr_fail(e,EXR_ARGUMENT,"TXT source release callback required"); }
-  return txt_pager_create(source,font,config,release_source,out,e);
+  const exr_layout_config *config,exr_pager **out,exr_error *e) {
+  if(!source || !source->release) { if(out) *out=NULL; return exr_fail(e,EXR_ARGUMENT,"TXT source release callback required"); }
+  return txt_pager_create(source,font,config,source->release,out,e);
 }
