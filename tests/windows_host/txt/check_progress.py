@@ -153,6 +153,7 @@ def main():
         app.wait_idle()
         after_font = page_text(app, automation)
         first_marker_text = first_line(before_font)
+        assert after_font != before_font, 'the type size did not change the layout'
         assert first_marker_text and first_marker_text in after_font, (first_marker_text, after_font[:300])
         position_line = first_line(after_font)
         record('font increase relayouts and keeps the content position', first_marker_text)
@@ -243,7 +244,7 @@ def main():
         assert first_line(page_text(app, automation)) == position_line, page_text(app, automation)[:200]
         record('restart after the refused write restores the durable position', position_line)
 
-        open_row(pdf.name)
+        open_row(pdf.stem)
         sdk_first = page_text(app, automation)
         app.click('next')
         app.wait_idle()
@@ -254,7 +255,7 @@ def main():
         automation = Uia()
         assert automation.available, automation.error
         app.wait(lambda: len(rows(app)) == 3, timeout=180)
-        open_row(pdf.name)
+        open_row(pdf.stem)
         sdk_restored = page_text(app, automation)
         if sdk_second and sdk_second != sdk_first:
             assert sdk_restored == sdk_second, (sdk_restored[:120], sdk_second[:120])
