@@ -1116,10 +1116,7 @@ static void selection_changed(GtkTextBuffer *buffer,GtkTextIter *iter,GtkTextMar
 static GtkWidget *scroll(GtkWidget *child) {
   GtkWidget *s=gtk_scrolled_window_new(NULL,NULL);gtk_container_add(GTK_CONTAINER(s),child);
   const char *name=atk_object_get_name(gtk_widget_get_accessible(child));
-  /* Distinguish the scrolling container from its named list or text child.
-     Assistive clients must not resolve a list name to a different-role parent. */
-  char *region=g_strdup_printf("%s scrolling region",name && name[0] ? name:"Reading content");
-  atk_object_set_name(gtk_widget_get_accessible(s),region);g_free(region);return s;
+  atk_object_set_name(gtk_widget_get_accessible(s),name && name[0] ? name:"Reading content");return s;
 }
 
 int main(int argc,char **argv) {
