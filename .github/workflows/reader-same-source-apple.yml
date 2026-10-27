@@ -68,6 +68,13 @@ jobs:
             build/raw3-ios-sdk/${{ matrix.target }}/sdk/
             build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
             build/raw3-ios-sdk/${{ matrix.target }}/*.json
+          retention-days: 30
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: same-source-apple-admission-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
             build/apple-source-admission.json
             apple-owner-candidate/build/team24-apple-guard.json
           retention-days: 30
