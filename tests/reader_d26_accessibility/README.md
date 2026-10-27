@@ -69,3 +69,33 @@ needed. Do not pick the reverted scrolling-name experiment. Account UI file
 ownership was coordinated with D23; no import/file-picker/sync implementation
 was changed. The final branch must not be called fully accepted while any
 original required gate remains red.
+
+## Continued repair: separate current drivers (user requested completion)
+
+The original historical files and failing runs above are still immutable.
+D26 now carries explicit current copies and emits exact unified diffs + SHA256
+manifests in Actions. Current acceptance is separate from historical outcomes:
+`identity_current.py` requires every check of every current report to pass and
+binds both GTK programs, all native regression reports and the separate raw3
+account artifact to the exact source/run/attempt. `historical_accepted` is
+reported independently and may remain false; it is never converted to true.
+
+Mapping of corrected observations, without reducing behavior requirements:
+- Current audit uses role-qualified, unique showing list/text lookup, preserving
+  the exact original names and row/focus/content assertions.
+- Status events use the real GI full event type AND event-source proxy identity;
+  the same original status widget must emit its changed name.
+- Tab must complete a genuine focus cycle with named controls inside the reader,
+  including both original text/comment targets; 128 is a safety bound, not a
+  smaller reachability requirement. Asynchronous focus/extents are waited for,
+  never synthesized by extra activation or navigation.
+- Current account labels are required and Receive books is additionally required.
+- Export retains the entire old five-tool script and byte/directory assertions;
+  its cell must be scrolled by native AT-SPI and have a valid on-screen center
+  before the original real pointer click. Unsupported scrolling fails explicitly.
+- Original audit/tool outcomes run separately and retain their raw exit status,
+  checks and error. The evidence collector validates source and report presence;
+  it does not assert they passed. Strict current gates cannot pass on their behalf.
+
+The earlier blocked assessment describes the frozen historical gates, not the
+outcome of these new current-driver runs. Consult the exact final same-SHA run.
