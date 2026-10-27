@@ -15,6 +15,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ilammy/msvc-dev-cmd@v1
+      - name: Prepare and verify the native display for the unchanged UI checks
+        run: python tests/reader_native_owner_repairs/display.py
       - name: Build installed candidate and exercise existing Windows host checks
         env:
           GH_TOKEN: ${{ github.token }}
@@ -23,5 +25,7 @@ jobs:
         if: always()
         with:
           name: bounded-txt-windows-host-baseline-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/windows-raw3-host/
+          path: |
+            build/windows-raw3-host/
+            build/native-owner-preflight/display.json
           if-no-files-found: warn
