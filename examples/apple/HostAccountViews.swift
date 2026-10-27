@@ -1,12 +1,34 @@
 // SPDX-License-Identifier: MIT
 import SwiftUI
 
+// Read-only presentation routing; account/session ownership is unchanged.
+struct HostReadingRouteKey: PreferenceKey {
+    static var defaultValue = false
+    static func reduce(value: inout Bool, nextValue: () -> Bool) { value = value || nextValue() }
+}
+private struct HostChooseAccountKey: EnvironmentKey {
+    static let defaultValue: (() -> Void)? = nil
+}
+private struct HostAccountChooserVisibleKey: EnvironmentKey { static let defaultValue = false }
+extension EnvironmentValues {
+    var hostChooseAccount: (() -> Void)? {
+        get { self[HostChooseAccountKey.self] }
+        set { self[HostChooseAccountKey.self] = newValue }
+    }
+    var hostAccountChooserVisible: Bool {
+        get { self[HostAccountChooserVisibleKey.self] }
+        set { self[HostAccountChooserVisibleKey.self] = newValue }
+    }
+}
+
 struct HostAccountRoot: View {
     @ObservedObject var accounts: HostAccounts
     @State private var choosing = false
+    @State private var reading = false
 
     var body: some View {
         VStack(spacing: 0) {
+            if !reading {
             HStack {
                 Button { choosing = true } label: {
                     Text(accounts.current == nil ? "本地书库" : "云盘书库").font(.caption)
@@ -18,8 +40,12 @@ struct HostAccountRoot: View {
                     .accessibilityLabel(Text(accounts.current.map { "云盘书库，" + $0.root } ?? "本地书库"))
                 Spacer()
             }.padding(.horizontal).padding(.top, 8)
+            }
             HostRootView(profile: accounts.current, accounts: accounts).id(accounts.current?.id ?? "local")
         }
+        .onPreferenceChange(HostReadingRouteKey.self) { reading = $0 }
+        .environment(\.hostChooseAccount, { choosing = true })
+        .environment(\.hostAccountChooserVisible, choosing)
         .sheet(isPresented: $choosing) { HostAccountChooser(accounts: accounts) }
     }
 }
