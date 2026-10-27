@@ -161,3 +161,12 @@ and duplicate receipts; the installed C API also exercised mismatched identity,
 short reads, mixed SDK/product sources, duplicates and cancellation.
 Further conflict/cancellation and Linux/macOS installed-consumer checks are
 included in the next candidate and await their own Actions results.
+
+## Large TXT font-library candidate
+
+While a product TXT is open, the native font-library dialog can import, select
+and restore a font. Switching creates a new pager at the current normalized
+content position, then releases the previous font lease only after accepting
+the new page; failure keeps the existing page and font. The Windows native
+UI checks cover invalid input, visible font change, restoration and lease
+release. This candidate awaits same-source Actions verification.
