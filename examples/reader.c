@@ -2481,16 +2481,21 @@ static exr_status job_layout(host_job *job) {
     source.context = copy;
     candidate.config = config;
     status = exr_txt_pager_create(&source, g.font, &config, &pager, &error);
+    txt_trace("layout_txt_pager", (long long)status);
     if (status != EXR_OK) { CloseHandle(copy); return status; }
     copy = NULL; /* the new pager owns this handle */
     if (status == EXR_OK) status = exr_pager_set_cache(pager, 2, 8 * 1024 * 1024, &error);
+    txt_trace("layout_txt_cache", (long long)status);
     if (status == EXR_OK) status = exr_pager_set_checkpoints(pager, 8, 4 * 1024 * 1024, 8, &error);
+    txt_trace("layout_txt_checkpoints", (long long)status);
     if (status == EXR_OK && job->txt_offset > (uint64_t)SIZE_MAX) status = EXR_ARGUMENT;
     candidate.pager = pager;
     candidate.txt_source = source;
     if (status == EXR_OK)
       status = page_for_offset(&candidate, (size_t)job->txt_offset, &control, &page, NULL, NULL, &error);
+    txt_trace("layout_txt_page", (long long)status);
     if (status == EXR_OK) status = exr_pager_get(pager, page, &laid, &error);
+    txt_trace("layout_txt_get", (long long)status);
     if (status == EXR_OK && !laid) status = EXR_FORMAT;
     if (status == EXR_OK) status = txt_frame(&candidate, &source, laid, page, &job->frame, &error);
     txt_trace("layout_txt_result", (long long)status);
