@@ -17,7 +17,8 @@ ALLOWED = {'.github/workflows/integrated-apple-receive.yml',
            '.github/workflows/integrated-apple-large-type.yml',
            'tests/reader_same_source/apple_candidate_guard.py',
            'tests/reader_same_source/bounded_txt_guard.py', 'src/formats.c', 'src/chapter_reader.c',
-           'apps/reader/desktop/windows_wave3_bridge.cpp'}
+           'apps/reader/desktop/windows_wave3_bridge.cpp',
+           'tests/reader_d21_apple_receive/ReceiveReview.swift'}
 
 def git(*args):
     return subprocess.check_output(['git', *args], text=True).strip()
@@ -37,6 +38,21 @@ def main():
             raise ValueError('bounded TXT fix differs: ' + path)
     if changed != ALLOWED:
         raise ValueError('unexpected candidate paths: ' + repr(sorted(changed)))
+    original_receive = subprocess.check_output(['git', 'show', MERGE + ':tests/reader_d21_apple_receive/ReceiveReview.swift'], text=True)
+    before = '        let profile = HostAccountProfile(id: UUID().uuidString.lowercased(), root: root)\n        if mode == "seed" {'
+    after = '''        let accountIDFile = base.appendingPathComponent("account-id.txt")
+        let accountID: String
+        if FileManager.default.fileExists(atPath: accountIDFile.path) {
+            accountID = try String(contentsOf: accountIDFile, encoding: .utf8)
+            guard UUID(uuidString: accountID) != nil else { throw HostError.invalidInput("invalid fixture account identity") }
+        } else {
+            accountID = UUID().uuidString.lowercased()
+            try accountID.write(to: accountIDFile, atomically: true, encoding: .utf8)
+        }
+        let profile = HostAccountProfile(id: accountID, root: root)
+        if mode == "seed" {'''
+    if original_receive.count(before) != 1 or Path('tests/reader_d21_apple_receive/ReceiveReview.swift').read_text() != original_receive.replace(before, after):
+        raise ValueError('unexpected receive fixture change')
     subprocess.run(['git', 'diff', '--exit-code', BASE, D24, '--', 'src', 'include', 'bindings', 'cmake', 'CMakeLists.txt',
                     'tests/apple_host', 'tests/reader_team24_apple', 'tests/reader_a11y_apple', 'tools'], check=True)
     with tempfile.TemporaryDirectory() as temp:

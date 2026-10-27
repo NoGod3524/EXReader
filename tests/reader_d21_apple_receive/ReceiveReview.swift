@@ -22,7 +22,16 @@ import CReaderProduct
             while Date() < deadline { if ready() { return true }; RunLoop.current.run(until: Date().addingTimeInterval(0.02)) }
             return ready()
         }
-        let profile = HostAccountProfile(id: UUID().uuidString.lowercased(), root: root)
+        let accountIDFile = base.appendingPathComponent("account-id.txt")
+        let accountID: String
+        if FileManager.default.fileExists(atPath: accountIDFile.path) {
+            accountID = try String(contentsOf: accountIDFile, encoding: .utf8)
+            guard UUID(uuidString: accountID) != nil else { throw HostError.invalidInput("invalid fixture account identity") }
+        } else {
+            accountID = UUID().uuidString.lowercased()
+            try accountID.write(to: accountIDFile, atomically: true, encoding: .utf8)
+        }
+        let profile = HostAccountProfile(id: accountID, root: root)
         if mode == "seed" {
             try queue.sync {
                 let catalog = try HostCatalog(path: base.appendingPathComponent("reader-catalog.db"), migrationURL: migration, ownerQueue: queue)
