@@ -1,7 +1,7 @@
 name: D22 Android receive and offline reading
 on:
   push:
-    branches: [codex/reader-dot-txt-validation, codex/dot-d22-android-receive]
+    branches: [codex/reader-integrated-progress, codex/dot-d22-android-receive]
 permissions:
   contents: read
 defaults:

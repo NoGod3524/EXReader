@@ -1,7 +1,7 @@
 name: Windows composed host TXT progress
 on:
   push:
-    branches: [codex/windows-wave3-txt-progress]
+    branches: [codex/reader-integrated-progress, codex/windows-wave3-txt-progress]
   workflow_dispatch:
 permissions:
   contents: read

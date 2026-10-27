@@ -1,7 +1,7 @@
 name: D23 current-source Windows GTK native relay
 on:
   push:
-    branches: [codex/reader-dot-txt-validation, codex/dot-d23-windows-gtk-relay]
+    branches: [codex/reader-integrated-progress, codex/dot-d23-windows-gtk-relay]
   workflow_dispatch:
 permissions:
   contents: read
