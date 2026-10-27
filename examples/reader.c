@@ -2475,6 +2475,7 @@ static exr_status job_layout(host_job *job) {
     exr_source source = g.session.txt_source;
     HANDLE copy = NULL;
     const exr_layout *laid = NULL;
+    txt_trace("layout_txt_enter", (long long)job->txt_offset);
     if (!DuplicateHandle(GetCurrentProcess(), (HANDLE)source.context, GetCurrentProcess(),
                          &copy, 0, FALSE, DUPLICATE_SAME_ACCESS)) return EXR_IO;
     source.context = copy;
@@ -2492,6 +2493,7 @@ static exr_status job_layout(host_job *job) {
     if (status == EXR_OK) status = exr_pager_get(pager, page, &laid, &error);
     if (status == EXR_OK && !laid) status = EXR_FORMAT;
     if (status == EXR_OK) status = txt_frame(&candidate, &source, laid, page, &job->frame, &error);
+    txt_trace("layout_txt_result", (long long)status);
     if (status == EXR_OK) {
       job->candidate_pager = pager; pager = NULL;
       job->candidate_config = config;
@@ -3717,7 +3719,8 @@ static void change_font(int delta) {
      from the same immutable source and the page that owns the current offset is
      accepted, so a different font size lands on the same text. */
   if (g.session.txt) {
-    if (g.job || g.pending) return;
+    txt_trace("font_enter", (long long)delta);
+    if (g.job || g.pending) { txt_trace("font_busy", 1); return; }
     next = g.font_percent + delta;
     if (next < HOST_FONT_MIN) { set_statusf(L"字号已到下限（%d%%）。", HOST_FONT_MIN); return; }
     if (next > HOST_FONT_MAX) { set_statusf(L"字号已到上限（%d%%）。", HOST_FONT_MAX); return; }
@@ -3726,6 +3729,7 @@ static void change_font(int delta) {
     job->font_percent = next;
     job->txt_offset = (uint64_t)g.frame.range_start;
     g.txt_force_save = 1;
+    txt_trace("font_job", (long long)next);
     job_submit(job);
     return;
   }

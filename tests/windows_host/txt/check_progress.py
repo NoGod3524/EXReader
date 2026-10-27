@@ -153,7 +153,7 @@ def main():
         app.wait_idle()
         after_font = page_text(app, automation)
         first_marker_text = first_line(before_font)
-        assert after_font != before_font, 'the type size did not change the layout'
+        assert after_font != before_font, ('the type size did not change the layout', app.status(), before_font[:80], after_font[:80])
         assert first_marker_text and first_marker_text in after_font, (first_marker_text, after_font[:300])
         position_line = first_line(after_font)
         record('font increase relayouts and keeps the content position', first_marker_text)
