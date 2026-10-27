@@ -25,7 +25,7 @@ jobs:
           python3 - <<'PY'
           import hashlib,json,os,sqlite3,subprocess
           from pathlib import Path
-          meta=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GITHUB_REPOSITORY']+'/actions/artifacts/12700290413'],text=True))
+          meta=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GITHUB_REPOSITORY']+'/actions/artifacts/12700256956'],text=True))
           assert meta['workflow_run']['id']==40425627113 and meta['workflow_run']['head_sha']=='e61b5edab505755edffaf1f6dc6cffe6f4297c26' and not meta['expired']
           assert meta['digest']=='sha256:46ac259ca8b36a8544cb74c674e802bddf8f6172c09fad593a5232674f881318'
           root=Path('build/prior');files=sorted(str(p.relative_to(root)) for p in root.rglob('*') if p.is_file())
@@ -42,3 +42,4 @@ jobs:
           for path in root.rglob('failed-requests.json'):
               print('REQUESTS',path.read_text(errors='replace'))
           PY
+
