@@ -68,21 +68,21 @@ def main():
         automation = Uia()
         assert automation.available, automation.error
         page = automation.control(app.control('page'))
-        value, error = automation.value(page)
-        assert value and 'Perf Import 0000' in value and 'line 0000' in value, (value, error)
+        value = page.GetValuePattern().Value
+        assert value and 'Perf Import 0000' in value and 'line 0000' in value, value
         assert ui.P.U.IsWindowEnabled(app.control('next'))
         first = value
         app.click('next'); app.wait_idle()
-        second, error = automation.value(automation.control(app.control('page')))
-        assert second and second != first, (second, error)
+        second = automation.control(app.control('page')).GetValuePattern().Value
+        assert second and second != first, second
         # This fixture has unique consecutive line numbers in its first 512 lines.
         source_text = fixture.read_text(encoding='utf-8')
         assert first in source_text and second in source_text
         assert source_text.index(second) >= source_text.index(first) + len(first)
         ui.P.M.screenshot(app.window, out / 'txt-second-page.bmp')
         app.click('prev'); app.wait_idle()
-        back, error = automation.value(automation.control(app.control('page')))
-        assert back == first, (back, error)
+        back = automation.control(app.control('page')).GetValuePattern().Value
+        assert back == first, back
         report['checks'].append('native next and previous show distinct consecutive source text and restore first page')
         ui.P.M.screenshot(app.window, out / 'txt-first-page.bmp')
         report['page_excerpt'] = value[:300]
