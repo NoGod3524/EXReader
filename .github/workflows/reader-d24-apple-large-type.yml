@@ -12,6 +12,27 @@ env:
   EXR_APPLE_PAGE_THEME: 'ON'
   EXR_APPLE_RAW3: 'OFF'
 jobs:
+  prior-failure-evidence:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-d24-native-iphone-40452725380-1
+          run-id: 40452725380
+          github-token: ${{ github.token }}
+          path: prior-evidence
+      - name: Preserve exact prior failure diagnostics (not current-source acceptance)
+        run: |
+          python3 - <<'PYLOG'
+          from pathlib import Path
+          for name in ('d24-native-ui.log', 'wave3-native-ui.log'):
+              print('PRIOR RUN 40452725380 SHA 71d7cb2a: ' + name)
+              lines = (Path('prior-evidence') / name).read_text(errors='replace').splitlines()
+              for i, line in enumerate(lines):
+                  if 'error:' in line or 'D24 page ' in line:
+                      print('\n'.join(lines[max(0, i-3):i+8]))
+          PYLOG
   sdk:
     runs-on: macos-15
     timeout-minutes: 55
