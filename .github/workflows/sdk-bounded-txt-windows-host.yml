@@ -17,6 +17,8 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Prepare and verify the native display for the unchanged UI checks
         run: python tests/reader_native_owner_repairs/display.py
+      - name: Verify candidate bulk suite retains all original checks
+        run: python tests/sdk_bulk_v3/verify_parity.py
       - name: Build installed candidate and exercise existing Windows host checks
         env:
           GH_TOKEN: ${{ github.token }}
