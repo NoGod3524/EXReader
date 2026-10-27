@@ -129,7 +129,9 @@ def main():
         # The fixture wraps every paragraph, so a page may start mid-sentence:
         # compare the first numbered marker on each page instead of raw text.
         def marker(text):
-            found = re.findall(r'Perf Import (\d{4})', text)
+            # Every fixture paragraph is "Perf Import 0000 line NNNN ...", so the
+            # constant book index is not the moving part; the line number is.
+            found = re.findall(r'line (\d{4})', text)
             assert found, text[:200]
             return int(found[0])
 
