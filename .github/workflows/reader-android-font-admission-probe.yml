@@ -1,0 +1,25 @@
+name: Android font common-source admission probe
+on:
+  push:
+    branches: [codex/reader-android-font-admission-probe]
+permissions:
+  contents: read
+jobs:
+  admission:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 248e02e9b7205e4c793dbf4d372876023987776d
+          fetch-depth: 0
+      - name: Check pinned candidate and all four admission guards
+        shell: bash
+        run: |
+          candidate=248e02e9b7205e4c793dbf4d372876023987776d
+          test "$(git rev-parse HEAD)" = "$candidate"
+          export GITHUB_SHA="$candidate"
+          python3 tests/android_font_reader/guard.py
+          python3 tests/reader_d21_apple_receive/guard.py
+          python3 tests/reader_android_receive_d22/guard.py
+          python3 -c "import runpy; runpy.run_path('tests/reader_d25_real_formats/run.py')['materialize']()"
