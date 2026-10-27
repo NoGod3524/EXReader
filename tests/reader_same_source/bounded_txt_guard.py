@@ -19,6 +19,7 @@ ALLOWED = {
     '.github/workflows/integrated-bounded-txt-windows.yml',
     'tests/reader_same_source/bounded_txt_guard.py',
     'src/formats.c',
+    'src/chapter_reader.c',
 }
 
 def git(*args):
@@ -45,6 +46,12 @@ def main():
         '  if(start) *start=UINT64_MAX;\n  if(end) *end=UINT64_MAX;')
     if Path('src/formats.c').read_text() != expected_formats or expected_formats == original_formats:
         raise ValueError('unexpected bounded TXT SDK change')
+    original_chapter = subprocess.check_output(['git', 'show', MERGE + ':src/chapter_reader.c'], text=True)
+    expected_chapter = original_chapter.replace(
+        '  txt_view *v=context;exr_node n={0};size_t paragraph,start,length;exr_error e={0};',
+        '  txt_view *v=context;exr_node n={0};size_t paragraph,start=0,length=0;exr_error e={0};')
+    if Path('src/chapter_reader.c').read_text() != expected_chapter or expected_chapter == original_chapter:
+        raise ValueError('unexpected bounded TXT chapter change')
     for platform in ('android', 'gtk', 'apple', 'windows'):
         original = subprocess.check_output(['git', 'show', MERGE + ':.github/workflows/reader-same-source-' + platform + '.yml'], text=True)
         expected = original.replace('branches: [codex/reader-same-source-integration]', 'branches: [codex/reader-integrated-bounded-txt]').replace('tests/reader_same_source/guard.py --source', 'tests/reader_same_source/bounded_txt_guard.py --source')
