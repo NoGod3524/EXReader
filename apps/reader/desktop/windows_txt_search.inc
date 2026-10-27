@@ -95,6 +95,14 @@ done:
   return status;
 }
 
+/* Optional diagnostics for the slow-path cloud acceptance run. */
+static void wintxt_search_trace(const char *stage) {
+  if(getenv("EXR_TRACE_TXT")) {
+    fprintf(stderr,"TXT_SEARCH %s tick=%llu\n",stage,(unsigned long long)GetTickCount64());
+    fflush(stderr);
+  }
+}
+
 /* A hit is accepted only after the immutable product original is opened and
  * verified again and both the fresh and live projections confirm the exact text. */
 static exr_status wintxt_search_open(host_job *job) {
@@ -103,19 +111,29 @@ static exr_status wintxt_search_open(host_job *job) {
   uint64_t start=UINT64_MAX,end=UINT64_MAX;size_t page=0,count=0;
   const exr_layout *layout=NULL;const exr_page *info;exr_status status;
   if(!hit->txt || !hit->anchor.exact || g.session.txt_pager_invalid) return EXR_ARGUMENT;
+  wintxt_search_trace("source-start");
   status=wintxt_search_source(job,&fresh,&handle);
+  wintxt_search_trace("source-end");
   if(status!=EXR_OK) return status;
+  wintxt_search_trace("fresh-find-start");
   status=exr_txt_find_source(&fresh,hit->anchor.exact,hit->anchor.start,&start,&end,&job->error);
+  wintxt_search_trace("fresh-find-end");
   if(status==EXR_OK && (start!=hit->anchor.start || end!=hit->anchor.end)) status=EXR_ARGUMENT;
   if(handle) CloseHandle(handle);
   if(status!=EXR_OK) return status;
   live.control=control;start=end=UINT64_MAX;
+  wintxt_search_trace("live-find-start");
   status=exr_txt_find_source(&live,hit->anchor.exact,hit->anchor.start,&start,&end,&job->error);
+  wintxt_search_trace("live-find-end");
   if(status!=EXR_OK || start!=hit->anchor.start || end!=hit->anchor.end) return status==EXR_OK ? EXR_ARGUMENT:status;
+  wintxt_search_trace("page-locate-start");
   status=page_for_offset(&g.session,(size_t)start,&control,&page,NULL,NULL,&job->error);
+  wintxt_search_trace("page-locate-end");
   if(status==EXR_OK) status=exr_pager_get(g.session.pager,page,&layout,&job->error);
   if(status!=EXR_OK) { g.session.txt_pager_invalid=1;return status; }
+  wintxt_search_trace("frame-start");
   status=txt_frame(&g.session,&g.session.txt_source,layout,page,&job->frame,&job->error);
+  wintxt_search_trace("frame-end");
   if(status!=EXR_OK) return status;
   info=exr_layout_pages(layout,&count);
   if(!info || !count || start<info->start || start>=info->end) { frame_clear(&job->frame);return EXR_FORMAT; }
@@ -126,6 +144,7 @@ static exr_status wintxt_search_open(host_job *job) {
 #ifdef EXR_READER_WINDOWS_WAVE3
   /* Full-source validation stays on the serial worker, never the UI thread. */
   live.control=control;
+  wintxt_search_trace("history-capture-start");
   status=exr_txt_anchor_create_source(&live,job->txt_history_origin,job->txt_history_origin,
                                       &job->txt_history_before,&job->error);
   if(status==EXR_OK)
@@ -133,6 +152,7 @@ static exr_status wintxt_search_open(host_job *job) {
        at the page start, keeping its actual surrounding text for resolution. */
     status=exr_txt_anchor_create_source(&live,(size_t)start,(size_t)start,
                                         &job->txt_history_after,&job->error);
+  wintxt_search_trace("history-capture-end");
   if(status==EXR_CANCELLED || job_cancel_flag(job)) return EXR_CANCELLED;
   if(status==EXR_OK) job->txt_history_ready=1;
   else {
