@@ -197,7 +197,7 @@ static jobject host_epub_frame(JNIEnv *env,jlong handle,jobject task,int advance
   exr_error error={0}; exr_status status; host_page_text text={0};
   host_control context; exr_control control=host_task_control(env,task,&context);
   const exr_page *page; const exr_glyph *glyphs; const exr_line *lines; size_t pages,gc=0,lc=0,i,start,end,n;
-  exr_chapter_stats stats; jlong meta[9],*spans=NULL; jfloat *geometry=NULL;
+  exr_chapter_stats stats; jlong meta[10],*spans=NULL; jfloat *geometry=NULL;
   jlongArray jm=NULL,js=NULL,jboxes=NULL; jfloatArray jg=NULL; jbyteArray jt=NULL,jp=NULL;
   jclass frame; jmethodID ctor; jobject result=NULL;
   if(!reader || (*env)->ExceptionCheck(env)) { if(!reader) throw_argument(env,"Bounded reader is closed"); return NULL; }
@@ -245,10 +245,21 @@ static jobject host_epub_frame(JNIEnv *env,jlong handle,jobject task,int advance
   }
   meta[0]=(jlong)start; meta[1]=(jlong)end; meta[2]=bitmap.width; meta[3]=bitmap.height; meta[4]=bitmap.stride;
   meta[5]=(jlong)gc; meta[6]=(jlong)lc; meta[7]=(jlong)stats.peak_parse_workspace_bytes; meta[8]=(jlong)stats.projection_bytes;
-  jm=(*env)->NewLongArray(env,9); js=(*env)->NewLongArray(env,(jsize)(n*2)); jg=(*env)->NewFloatArray(env,(jsize)(n*4));
+  {
+    size_t count=0;const exr_box *boxes=exr_layout_boxes(layout,&count);meta[9]=0;
+    if(count>200000){status=EXR_LIMIT;goto done;}
+    for(i=0;i<count;i++) {
+      const exr_box *box=boxes+i;const exr_bitmap *image=box->kind==EXR_BOX_IMAGE?exr_layout_image(layout,box->resource):NULL;
+      /* A default body/background rectangle is not book content. Admit only
+         a decoded image that the public renderer can actually paint. */
+      if(box->width>0 && box->height>0 && image && image->pixels &&
+         image->width && image->height && image->channels>=1 && image->channels<=4) meta[9]++;
+    }
+  }
+  jm=(*env)->NewLongArray(env,10); js=(*env)->NewLongArray(env,(jsize)(n*2)); jg=(*env)->NewFloatArray(env,(jsize)(n*4));
   jt=(*env)->NewByteArray(env,(jsize)text.size); jp=(*env)->NewByteArray(env,(jsize)((size_t)bitmap.stride*bitmap.height));
   if(!jm || !js || !jg || !jt || !jp) goto done;
-  (*env)->SetLongArrayRegion(env,jm,0,9,meta); (*env)->SetLongArrayRegion(env,js,0,(jsize)(n*2),spans);
+  (*env)->SetLongArrayRegion(env,jm,0,10,meta); (*env)->SetLongArrayRegion(env,js,0,(jsize)(n*2),spans);
   (*env)->SetFloatArrayRegion(env,jg,0,(jsize)(n*4),geometry);
   if(text.size) (*env)->SetByteArrayRegion(env,jt,0,(jsize)text.size,(const jbyte *)text.bytes);
   if(bitmap.pixels) (*env)->SetByteArrayRegion(env,jp,0,(jsize)((size_t)bitmap.stride*bitmap.height),(const jbyte *)bitmap.pixels);

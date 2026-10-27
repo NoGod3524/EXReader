@@ -149,7 +149,7 @@ public final class ReaderView extends View {
             if(page!=null&&BuildConfig.DEBUG&&BuildConfig.READER_PAGE_THEME)state.put("page_theme",new org.json.JSONObject().put("enabled",page.pageTheme.enabled).put("foreground_rgba",String.format(java.util.Locale.ROOT,"%08x",page.pageTheme.foreground)).put("background_rgba",String.format(java.util.Locale.ROOT,"%08x",page.pageTheme.background)).put("system",page.pageTheme.system).put("sdk",page.themeSdk));
             if(page!=null&&BuildConfig.DEBUG&&BuildConfig.READER_PAGE_THEME){org.json.JSONArray boxes=new org.json.JSONArray();for(long value:page.themeBoxes)boxes.put(value);state.put("theme_boxes",boxes);}
             if(page!=null) state.put("book",page.bookId).put("index",page.index).put("part",page.part)
-                .put("path",page.path==null?org.json.JSONObject.NULL:page.path).put("start",page.start).put("end",page.end)
+                .put("path",page.path==null?org.json.JSONObject.NULL:page.path).put("start",page.start).put("end",page.end).put("bounded_visual_boxes",page.boundedVisualBoxes)
                 .put("anchor_sha256",pointHash==null?org.json.JSONObject.NULL:pointHash)
                 .put("anchor_kind",page.bounded?"bounded_point":page.fixed?"fixed_page":"source_offset")
                 .put("font",page.fixed?org.json.JSONObject.NULL:page.layoutFont).put("zoom",page.layoutZoom)
