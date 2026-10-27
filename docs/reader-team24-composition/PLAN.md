@@ -1108,3 +1108,23 @@ check also passed. The same run retained 20 wave3, 18 navigation, both 16-check
 sync suites, five organization checks, and the real system picker kill/recovery.
 This verifies the scoped emulator candidate and does not establish the root
 cause of the earlier intermittent failure or grant final combined delivery.
+
+## Windows group-list anchor recovery
+
+Independent candidate `722ae03130b773dd9825dbc730352cb9e0eb2019` passed the
+Windows job and same-run verifier in
+[40427172664/1](https://github.com/NoGod3524/EXReader/actions/runs/40427172664).
+The verifier checked original artifact `12699964895` (59,461,984 bytes,
+SHA-256 `2633ed9d293691a71b6f272e86335db3ea7397a1521f30568c0b8630de6338fe`),
+run/source identity, program and seed identity, the original and added checks,
+screenshots, and the restored fixture database.
+
+The retained tail-removal observation deleted visible member 45 after member
+44 had already been removed. The independent SQL query selected 46 as the
+nearest remaining predecessor; the refreshed cache ended at 46, and the driver
+used the actual item and viewport dimensions to require 46 to be visible.
+Reverse pagination and the empty case also passed. Member changes were
+fixture-driven; the actual Windows UI performed the refresh. This does not
+prove a transactionally consistent snapshot during concurrent database queries.
+The current composition and the Android merge candidate need their own
+same-source Windows run before this result can be admitted there.
