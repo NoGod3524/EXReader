@@ -102,3 +102,11 @@ Mapping of corrected observations, without reducing behavior requirements:
 
 The earlier blocked assessment describes the frozen historical gates, not the
 outcome of these new current-driver runs. Consult the exact final same-SHA run.
+
+Current and retained jobs now share one hashed build handoff instead of rebuilding.
+The previous 110-minute GTK job allowance is split into 30 current + 80 retained
+minutes; account remains 90. Every delivered file and executable mode is verified
+in Actions before the retained suite, and aggregate requires all three jobs.
+Run40460915375 current G13 passed 32/32; its Export input exact-string check
+timed out, and frozen navigation (active-scan sampling) / batch chooser (missing
+EXReader cell) also failed. Those outcomes remain archived, not reclassified.
