@@ -57,7 +57,7 @@ wire 仍是既有阅读位置 v1 封装中的 **anchor_version 2 点选择器**
 - 强制写：关窗（`finish_close`）、切换书目、字号重排。写入被拒时关窗仍然完成，
   已保留记录不变（`txt_save_abandoned`），避免窗口关不掉。
 - 字号：TXT 走 `JOB_LAYOUT` 的新 pager（复制同一源句柄），按内容偏移重排并接受该页。
-- 有界大 TXT 的搜索、注记、选择、跳末页仍报告“尚未实现”。
+- Bounded large TXT supports whole-page selection, pointer-drag selection, visual highlighting, and copying selected text. Search, bookmarks, notes and jumping to the last page remain future work.
 
 原始位置模块的宿主接线包括：`page_for_offset` 允许 TXT 的 EOF/范围语义，
 `save_progress` 把 TXT 会话分流到产品写入器。翻页路径（`job_txt_go`、`txt_frame`）
@@ -81,7 +81,7 @@ commands → reading-state → reading-commands → txt-progress 全部安装后
   正常关窗、切换书目、字号变化都强制写入。
 - 恢复不确定（核对不一致/旧记录/并发头）时会话内不再自动写入，避免用第一页覆盖旧记录。
 - 页面文本上限、1 MiB 修订上限、4096 份实体历史沿用既有约束。
-- 有界大 TXT 的书签、注记、搜索、文字选择、末页跳转/页内链接等仍未实现。
+- Bookmarks, annotations, in-book search, last-page jumps and in-page links for bounded large TXT remain unimplemented.
 - 与主协调者翻页优化的合入：本包只改 `page_for_offset` 的两处判断和宿主会话字段，
   合入时需以对方 `job_txt_go`/`txt_frame` 为准，冲突点已隔离在
   `#ifdef EXR_READER_WINDOWS_TXT_PROGRESS` 内。
@@ -101,3 +101,11 @@ pager and product-content position described above.
 - These results describe the exact sources named above. The current combined
   source requires its own Actions acceptance. Physical devices, performance
   targets and unsupported bounded-TXT features are not granted by these runs.
+
+## Additional Windows host evidence
+
+- Source `b3716a2ba91942689c6b9c81743662b1fc05cb1c`, [Actions 40560936231](https://github.com/NoGod3524/EXReader/actions/runs/40560936231), passed the composed host checks. While a 16,792,975-byte TXT was open, the account, cloud-import and bulk-organization dialogs opened and closed while preserving the page.
+- Source `41a7255f70bfd4eb486cb1ec8017ab01a767ad57`, [Actions 40563001637](https://github.com/NoGod3524/EXReader/actions/runs/40563001637), passed first-page and later-page select-all/copy checks and a before/after native page screenshot comparison.
+- Source `ca6521811487a6955210ba853949bf99d71dd7cb`, [Actions 40571968157](https://github.com/NoGod3524/EXReader/actions/runs/40571968157), passed real mouse drag and partial-copy checks. The action also preserved the page screenshots and full report as artifact `12766185628`.
+- Earlier run [40563987863](https://github.com/NoGod3524/EXReader/actions/runs/40563987863) failed its partial-copy assertion using fixed mouse coordinates; its result remains in Actions. The successful run chose coordinates from the actual rendered selection.
+- Unified source `172f740ff885c5cea6b0e5b20f909cd054488a14` contains the tested selection implementation and currently has its own same-source cloud checks in progress.
