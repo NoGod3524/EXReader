@@ -1,6 +1,8 @@
 name: SDK candidate product originals
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/sdk-bounded-txt-candidate]
 permissions:
   contents: read
 jobs:
