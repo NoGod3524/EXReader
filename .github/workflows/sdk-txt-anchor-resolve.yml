@@ -32,5 +32,9 @@ jobs:
           for suite in txt_anchor_resolve bounded_txt_scan; do
             cmake -S "tests/$suite" -B "build/$suite" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
             cmake --build "build/$suite" --parallel 4
+            if [ "$suite" = bounded_txt_scan ] && [ "$RUNNER_OS" != Windows ]; then
+              mkdir -p "build/$suite/C:/Windows/Fonts"
+              cp build/reading-library/stage/examples/fonts/primary.ttf "build/$suite/C:/Windows/Fonts/arial.ttf"
+            fi
             ctest --test-dir "build/$suite" --output-on-failure --no-tests=error
           done
