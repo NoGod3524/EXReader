@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: txt-progress-host-40548185504-1
-          run-id: 40548185504
+          name: txt-progress-host-40548998389-1
+          run-id: 40548998389
           github-token: ${{ github.token }}
           path: evidence
       - name: Read exact original report and worker breadcrumbs
@@ -25,7 +25,7 @@ jobs:
           assert reports, 'no original report'
           for path in reports:
               r = json.loads(path.read_text(encoding='utf-8'))
-              if r.get('source_sha') == 'f4ff78423ecdf87a7a17efa71797892c0f2a79ca':
+              if r.get('source_sha') == '15336ed15250dceb67791b6ce0bf65d6940ac508':
                   print(json.dumps({'path': str(path), 'source_sha': r['source_sha'],
                         'accepted': r.get('accepted'), 'host_exit_code': r.get('host_exit_code'),
                         'error': r.get('error'), 'checks': r.get('checks')}, ensure_ascii=False))
