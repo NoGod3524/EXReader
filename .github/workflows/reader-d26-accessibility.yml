@@ -13,29 +13,6 @@ env:
   EXR_SDK_VERSION: '3.41.0'
   ATSPI_SOURCE: 67e2f8c4941205c5581e82fd5a1469d18f696019
 jobs:
-  previous-export-diagnostic:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 5
-    steps:
-      - name: Read preserved chooser evidence on Actions only
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/40465292740/artifacts" > listing.json
-          id=$(jq -r '.artifacts[] | select(.name == "reader-d26-current-40465292740-1") | .id' listing.json)
-          test -n "$id"
-          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > prior.zip
-          python3 - <<'INNER'
-          import json, zipfile
-          with zipfile.ZipFile('prior.zip') as z:
-              paths=[n for n in z.namelist() if n.endswith('atspi-tree.json') and 'd26-tools-current/' in n]
-              assert len(paths)==1, paths
-              def walk(n):
-                  if 'Export original' in n.get('path',''):
-                      print(json.dumps({k:v for k,v in n.items() if k!='children'}))
-                  for child in n.get('children',[]): walk(child)
-              walk(json.loads(z.read(paths[0])))
-          INNER
   gtk:
     name: Installed five modules and the real GTK host
     runs-on: ubuntu-22.04

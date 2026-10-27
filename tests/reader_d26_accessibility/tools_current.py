@@ -152,7 +152,7 @@ def main():
                                         and bus.states(node).get('sensitive')
                                         and bus.states(node).get('focused')])
             host.key('ctrl+a')
-            host.paste(str(path))
+            host.paste(str(path) + os.sep)
             def location_text():
                 return (bus.accessible_text(entry[0]) or {}).get('text', '')
             try:
@@ -162,6 +162,12 @@ def main():
             except TimeoutError:
                 raise AssertionError({'expected_location': str(path), 'actual_location': location_text(),
                                       'focused': [dict(name=bus.name(n), role=bus.role(n)) for n in bus.focused_all(app)]})
+            # GTK validates location entries asynchronously. The preserved tree
+            # showed an insensitive response and Recent still active when Return
+            # was sent immediately after paste; never activate that disabled UI.
+            wait_nodes(lambda: [node for node in nodes(accept, {'push button'})
+                                if bus.is_ancestor(dialog, node)
+                                and bus.states(node).get('sensitive')], seconds=30)
             # Enter resolves the typed folder through the chooser itself. If
             # SELECT_FOLDER navigates rather than closes, reach its real response
             # button with Tab and press Space; no stale pointer coordinates.
@@ -419,6 +425,12 @@ def main():
         report['accepted'] = True
     except Exception as error:
         report['failure'] = type(error).__name__ + ': ' + str(error)
+        if app is not None:
+            print(json.dumps({'failure': report['failure'], 'visible_controls': [
+                dict(name=bus.name(n), role=bus.role(n), states=bus.states(n),
+                     text=bus.accessible_text(n), box=bus.extents(n))
+                for n in bus.walk(app) if bus.states(n).get('showing')
+                and bus.role(n) in ('text', 'push button', 'file chooser')]}), flush=True)
         raise
     finally:
         if app is not None:

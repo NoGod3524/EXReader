@@ -114,3 +114,9 @@ EXReader cell) also failed. Those outcomes remain archived, not reclassified.
 Run40464084185 confirmed the normalized location entry, but pointer responses
 did not close SELECT_FOLDER. The next current driver uses the native keyboard
 response and retains detailed visible-control diagnostics on failure.
+
+Run40465292740 preserved tree, read only inside diagnostic Actions job122062168532,
+shows Export here insensitive while the Location entry is focused and Recent
+still displayed. Current driver now enters an explicit directory slash and waits
+for native asynchronous validation to enable the response before activation.
+No native control is programmatically enabled; exact final bytes/path stay strict.
