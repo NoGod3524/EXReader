@@ -55,21 +55,25 @@ def main():
     label = 'raw' if args.raw else 'legacy'
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / 'logs').mkdir(exist_ok=True)
-    sdk = OUT / 'sdk-stage'
-    product = OUT / 'product-stage'
+    # One tree per profile: reusing a configured build directory would make ctest
+    # run the previous profile's binaries.
+    sdk = OUT / ('sdk-stage-' + label)
+    product = OUT / ('product-stage-' + label)
     stage = OUT / ('module-stage-' + label)
-    run(['cmake', '--preset', 'reading-library', '-B', OUT / 'sdk-build',
+    sdk_build = OUT / ('sdk-build-' + label)
+    product_build = OUT / ('product-build-' + label)
+    run(['cmake', '--preset', 'reading-library', '-B', sdk_build,
          '-DCMAKE_INSTALL_PREFIX=' + str(sdk)], 'sdk-configure')
-    run(['cmake', '--build', OUT / 'sdk-build', '--parallel', '4'], 'sdk-build')
-    run(['cmake', '--install', OUT / 'sdk-build'], 'sdk-install')
-    configure(ROOT / 'apps/reader/store/native', OUT / 'product-build',
+    run(['cmake', '--build', sdk_build, '--parallel', '4'], 'sdk-build')
+    run(['cmake', '--install', sdk_build], 'sdk-install')
+    configure(ROOT / 'apps/reader/store/native', product_build,
               ['-DCMAKE_INSTALL_PREFIX=' + str(product)], 'product')
-    run(['ctest', '--test-dir', OUT / 'product-build', '--output-on-failure',
+    run(['ctest', '--test-dir', product_build, '--output-on-failure',
          '--no-tests=error', '--timeout', '180'], 'product-tests')
-    run(['cmake', '--install', OUT / 'product-build'], 'product-install')
+    run(['cmake', '--install', product_build], 'product-install')
     run([sys.executable, '-m', 'pip', 'install', 'uiautomation==2.0.29'], 'native-ui-dependency')
     run([sys.executable, '-c', "from tools.host_font import fetch; fetch('build/host-font-cache')"], 'native-ui-font')
-    fixtures = OUT / 'fixtures'
+    fixtures = OUT / ('fixtures-' + label)
     run([sys.executable, ROOT / 'tests/reader_windows_preferences/make_fixtures.py',
          '--output', fixtures], 'native-ui-fixtures')
     prefix = ';'.join(map(str, (stage, product, sdk)))
