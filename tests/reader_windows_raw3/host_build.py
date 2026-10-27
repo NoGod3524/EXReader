@@ -161,7 +161,7 @@ def main():
             # the TXT-enabled host is covered by the native original test above.
             compact_host=OUT/(name+'-legacy-compact-host')
             configure(ROOT/'apps/reader/windows-account',compact_host,
-                      [opt for opt in options if opt != '-DEXR_READER_WINDOWS_TXT_RECOVERY=ON'],
+                      [opt for opt in options if opt not in ('-DEXR_READER_WINDOWS_TXT_RECOVERY=ON', '-DEXR_READER_WINDOWS_TXT_PROGRESS=ON')],
                       name+'-legacy-compact-host')
         ui=OUT/(name+'-compact-ui')
         run([sys.executable,ROOT/'tests/reader_windows_compact/check_ui.py',
