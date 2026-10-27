@@ -8,6 +8,7 @@ on:
       - 'apps/reader/windows-account/**'
       - 'tests/reader_txt_progress/**'
       - 'tests/windows_host/txt/**'
+      - 'tests/reader_windows_raw3/**'
       - 'examples/reader.c'
       - '.github/workflows/windows-txt-progress.yml'
   workflow_dispatch:
