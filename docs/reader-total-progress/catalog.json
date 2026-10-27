@@ -260,6 +260,22 @@
         "reader_bad_font_preserves_noninitial_page_position_font_and_lease",
         "reader_exit_releases_font_lease_and_reopen_keeps_position"
       ]
+    },
+    "gtk_annotation_export": {
+      "run": 40595687505,
+      "doc": "docs/reader-total-progress/linux-annotation-export.md",
+      "source_prefix": "cc75214cb5e6dce389625e33399e1b120aedf4c4",
+      "artifact": 12775987422,
+      "sha256": "7ac0b36ce08af01967d73764a68009becb904fbb72f6546b400358de2e76cbc0",
+      "bytes": 323276161,
+      "required_cases": [
+        "annotation_preview_validates_without_writing",
+        "annotation_confirm_commits_records",
+        "annotation_export_cancel_keeps_page_and_creates_no_file",
+        "annotation_export_roundtrip_preserves_original_wires",
+        "annotation_export_import_is_exact_duplicate",
+        "annotation_broken_file_refused_without_writing"
+      ]
     }
   },
   "requirements": [
@@ -645,9 +661,11 @@
       "group": "host",
       "platform": "linux",
       "title": "Linux GTK：宿主标注文件导入/导出、预览确认及错误拒绝",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "gtk_annotation_export"
+      ],
+      "note": "Ubuntu native GTK host, accessible desktop driver and native chooser; evidence requires independent run and artifact audit."
     },
     {
       "id": "H.linux.original_export",

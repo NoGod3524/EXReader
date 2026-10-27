@@ -10,6 +10,7 @@ accessible desktop driver and the native file chooser on Ubuntu.
 
 The run's original current artifact is `12775987422`, 323276161 bytes,
 SHA-256 `7ac0b36ce08af01967d73764a68009becb904fbb72f6546b400358de2e76cbc0`.
-The complete workflow and independent archive/report identity verification
-remain pending. This note prepares the fixed-catalog audit; it does not mark
-the requirement verified or claim a same-source six-platform acceptance.
+The complete workflow and strict same-run archive/report identity verification
+finished successfully, including the retained native regression and account
+jobs. The fixed-catalog audit separately rereads the named actual checks from
+the authenticated original artifact. This is evidence for the Linux host scope.
