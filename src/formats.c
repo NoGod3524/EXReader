@@ -1603,3 +1603,125 @@ exr_status exr_txt_anchor_create_source(const exr_source *source,size_t start,si
 done:
   free(w.data);return status;
 }
+
+/* Bounded selector resolution: three KMP patterns visit the normalized
+   projection once. The source is still scanned to EOF after a match. */
+typedef struct {
+  char *text;
+  uint32_t *prefix;
+  size_t size, matched;
+} txt_resolve_pattern;
+typedef struct {
+  txt_resolve_pattern left,right,full;
+  size_t quote,prefix,suffix;
+  uint64_t best,left_last,right_last;
+  unsigned score;
+  int tied,has_left,has_right;
+} txt_resolve_state;
+
+static exr_status txt_resolve_prepare(txt_resolve_pattern *p,
+  const char *a,size_t na,const char *b,size_t nb,const char *c,size_t nc,
+  const exr_control *control,exr_error *e) {
+  exr_status status;
+  p->size=na+nb+nc;
+  if(!p->size) return EXR_OK;
+  p->text=malloc(p->size);
+  if(!p->text) return exr_fail(e,EXR_MEMORY,"TXT selector allocation failed");
+  if(na) memcpy(p->text,a,na);
+  if(nb) memcpy(p->text+na,b,nb);
+  if(nc) memcpy(p->text+na+nb,c,nc);
+  status=exr_kmp_prefix(p->text,p->size,control,&p->prefix,e);
+  return status;
+}
+static void txt_resolve_pattern_free(txt_resolve_pattern *p) {
+  free(p->text);free(p->prefix);
+}
+static int txt_resolve_feed_pattern(txt_resolve_pattern *p,unsigned char byte) {
+  if(!p->size) return 0;
+  while(p->matched && byte!=(unsigned char)p->text[p->matched])
+    p->matched=p->prefix[p->matched-1];
+  if(byte==(unsigned char)p->text[p->matched]) p->matched++;
+  if(p->matched==p->size) {
+    p->matched=p->prefix[p->matched-1];
+    return 1;
+  }
+  return 0;
+}
+static void txt_resolve_candidate(txt_resolve_state *s,uint64_t start,unsigned score) {
+  if(score>s->score) { s->score=score;s->best=start;s->tied=0; }
+  else if(score==s->score && start!=s->best) s->tied=1;
+}
+static void txt_resolve_byte(txt_resolve_state *s,unsigned char byte,uint64_t at) {
+  uint64_t end=at+1,start;
+  if(txt_resolve_feed_pattern(&s->left,byte)) {
+    start=end-s->quote;
+    s->left_last=start;s->has_left=1;
+    if(s->prefix || start==0) txt_resolve_candidate(s,start,1);
+  }
+  if(txt_resolve_feed_pattern(&s->right,byte)) {
+    start=end-s->quote-s->suffix;
+    if(s->suffix) txt_resolve_candidate(s,start,!s->prefix && start==0 ? 2:1);
+    else { s->right_last=start;s->has_right=1; }
+  }
+  if(txt_resolve_feed_pattern(&s->full,byte)) {
+    start=end-s->quote-s->suffix;
+    txt_resolve_candidate(s,start,2);
+  }
+}
+static exr_status txt_resolve_paragraph(void *context,uint64_t offset,const char *text,size_t size,exr_error *e) {
+  txt_resolve_state *s=context;(void)e;
+  if(offset) txt_resolve_byte(s,'\n',offset-1);
+  for(size_t i=0;i<size;i++) txt_resolve_byte(s,(unsigned char)text[i],offset+i);
+  return EXR_OK;
+}
+exr_status exr_txt_anchor_resolve_source(const exr_source *source,const exr_anchor *anchor,
+  exr_anchor_match *match,exr_error *e) {
+  txt_resolve_state s={0};uint64_t extent=0;exr_status status;
+  if(!match) return exr_fail(e,EXR_ARGUMENT,"Missing anchor match output");
+  match->state=EXR_ANCHOR_MISSING;match->start=match->end=SIZE_MAX;
+  if(!source || !anchor) return exr_fail(e,EXR_ARGUMENT,"Missing source or anchor");
+  status=exr_anchor_validate(anchor,e);if(status!=EXR_OK) return status;
+  status=exr_control_cancel(&source->control,e);if(status!=EXR_OK) return status;
+  if(!anchor->exact) { match->state=EXR_ANCHOR_LEGACY;return exr_fail(e,EXR_OK,""); }
+  if(anchor->chapter && anchor->chapter[0]) return exr_fail(e,EXR_OK,"");
+  s.quote=strlen(anchor->exact);
+  s.prefix=anchor->prefix?strlen(anchor->prefix):0;
+  s.suffix=anchor->suffix?strlen(anchor->suffix):0;
+  status=txt_resolve_prepare(&s.left,anchor->prefix,s.prefix,anchor->exact,s.quote,NULL,0,&source->control,e);
+  if(status!=EXR_OK) goto done;
+  status=txt_resolve_prepare(&s.right,anchor->exact,s.quote,anchor->suffix,s.suffix,NULL,0,&source->control,e);
+  if(status!=EXR_OK) goto done;
+  if(s.prefix && s.suffix) {
+    status=txt_resolve_prepare(&s.full,anchor->prefix,s.prefix,anchor->exact,s.quote,anchor->suffix,s.suffix,&source->control,e);
+    if(status!=EXR_OK) goto done;
+  }
+  if(!s.quote && !s.prefix && s.suffix) txt_resolve_candidate(&s,0,1);
+  status=exr_txt_scan_source(source,txt_resolve_paragraph,&s,&extent,e);
+  if(status!=EXR_OK) goto done;
+  if(!s.quote && !s.prefix && !s.suffix) {
+    if(!extent) txt_resolve_candidate(&s,0,2);
+  } else if(!s.suffix) {
+    uint64_t start=UINT64_MAX;
+    if(!s.quote) start=extent;
+    else if(s.has_right && s.right_last<=extent && s.quote==extent-s.right_last) start=s.right_last;
+    if(start!=UINT64_MAX) {
+      unsigned score=1;
+      if(s.prefix ? s.has_left && s.left_last==start : start==0) score=2;
+      txt_resolve_candidate(&s,start,score);
+    }
+  }
+  if(s.score) {
+    match->state=s.tied?EXR_ANCHOR_AMBIGUOUS:EXR_ANCHOR_FOUND;
+    if(!s.tied) {
+      if(s.best>SIZE_MAX || s.quote>SIZE_MAX-(size_t)s.best) {
+        match->state=EXR_ANCHOR_MISSING;
+        status=exr_fail(e,EXR_LIMIT,"TXT anchor offset exceeds platform range");goto done;
+      }
+      match->start=(size_t)s.best;match->end=(size_t)s.best+s.quote;
+    }
+  }
+  status=exr_fail(e,EXR_OK,"");
+done:
+  txt_resolve_pattern_free(&s.left);txt_resolve_pattern_free(&s.right);txt_resolve_pattern_free(&s.full);
+  return status;
+}
