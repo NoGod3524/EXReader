@@ -123,5 +123,17 @@ static exr_status wintxt_search_open(host_job *job) {
   job->have_frame=1;job->applied_page=page;job->target_page=page;
   job->note_start=(size_t)start;job->note_end=(size_t)(end<info->end ? end:info->end);
   job->resolved_selection=job->note_start<job->note_end;
+#ifdef EXR_READER_WINDOWS_WAVE3
+  /* Full-source validation stays on the serial worker, never the UI thread. */
+  live.control=control;
+  status=exr_txt_anchor_create_source(&live,job->txt_history_origin,job->txt_history_origin,
+                                      &job->txt_history_before,&job->error);
+  if(status==EXR_OK)
+    status=exr_txt_anchor_create_source(&live,job->frame.range_start,job->frame.range_start,
+                                        &job->txt_history_after,&job->error);
+  if(status==EXR_CANCELLED || job_cancel_flag(job)) return EXR_CANCELLED;
+  if(status==EXR_OK) job->txt_history_ready=1;
+  else job->txt_history_failed=1;
+#endif
   return job_cancel_flag(job) ? EXR_CANCELLED:EXR_OK;
 }
