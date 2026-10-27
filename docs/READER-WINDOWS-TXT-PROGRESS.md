@@ -86,10 +86,51 @@ commands → reading-state → reading-commands → txt-progress 全部安装后
   合入时需以对方 `job_txt_go`/`txt_frame` 为准，冲突点已隔离在
   `#ifdef EXR_READER_WINDOWS_TXT_PROGRESS` 内。
 
-## 状态
+## 云端结果
 
-源码、模块、宿主接线、组件探针、宿主验收驱动与工作流均已就绪。云端证据尚未产生：
-当前 GitHub 凭据缺少 `workflow` 权限，任何推送都被仓库的 workflow 权限检查拒绝
-（原文：`Unable to determine if workflow can be created or updated due to timeout;
-'workflows' scope may be required.`），因此 Actions run/attempt、工件与逐项结果
-需要在授权后补齐，本文件与验收 JSON 不得在此之前标记为通过。
+受测源码 **`42c090d58d85236575134ad7d73360d0db217b41`**（分支 `codex/windows-txt-progress`，
+基点 `a0c01289`），[run 40589410782](https://github.com/NoGod3524/EXReader/actions/runs/40589410782)
+attempt 1，**5/5 作业成功**：
+
+| 作业 | 结果 |
+| --- | --- |
+| TXT position module windows-2022 legacy | success（16 项探针 + 留存库核对） |
+| TXT position module windows-2022 raw | success |
+| TXT position module ubuntu-22.04 legacy | success |
+| TXT position module ubuntu-22.04 raw | success |
+| Real Windows host TXT position acceptance | success（legacy 与 raw 两套 profile 各 `accepted=true`、11/11） |
+
+宿主逐项（两 profile 相同）：
+
+```
+native TXT import adds one product original after the SDK book
+shelf selection opens the 16792975-byte original at its first page
+six forward page turns move to later numbered content
+font increase relayouts and keeps the content position
+product progress history exists for the content identity
+close and restart restore the same content position
+a different book identity starts at its own first page
+restart keeps both content identities independent
+a refused write keeps the retained record and still exits
+restart after the refused write restores the durable position
+existing SDK fixed-page book reopens with its single page
+```
+
+报告与宿主二进制身份：legacy `report d321531a…` / host `83531d9d…`，
+raw `report 7c36bbb2…` / host `208b241b…`；工件 digest 与逐项字段见
+[reader-windows-txt-progress.json](validation/reader-windows-txt-progress.json)。
+
+**继承回归的对照证据**：同一源码家族的
+[run 40586124176](https://github.com/NoGod3524/EXReader/actions/runs/40586124176)
+（官方 `sdk-bounded-txt-windows-host.yml`，不带 TXT 选项）attempt 1 **success**，
+覆盖安装宿主构建、四格式原紧凑 UI、owner 恢复与进程终止、bulk v3、账号窗口与对端 owner。
+本工作流的宿主作业只跑 TXT 位置验收，两者不再共用 runner。
+
+## 未完成
+
+未合主线、未建 tag/Release、未做性能预算验收。失败 run 全部原样保留在
+`retained_failures`（26 个），其失败原因分别是 `C4100`、Linux GCC `-Werror`、
+`receive` 缺传输 SHA、raw 族头读取、`#endif` 并行、证据目录撞名、cp1252 打印、
+隐式函数声明导致宽参数错位（`0xC0000409`）、关窗强制写自循环、字号配置未初始化、
+共享构建树串 profile、raw profile 缺 reading-record owner、以及继承紧凑 UI 在同机
+重负载下的超时——最后一项已用上述对照 run 排除为源码回归。
