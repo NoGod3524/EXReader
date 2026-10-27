@@ -11,12 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 700af40fed2eeb0492baf4d500e2063af9987cb7
+          ref: e24527faed81110ea4626d56013469487c606cb4
           fetch-depth: 0
       - name: Execute actual D23 Windows source admission
         shell: pwsh
         run: |
-          $env:GITHUB_SHA = '700af40fed2eeb0492baf4d500e2063af9987cb7'
+          $env:GITHUB_SHA = 'e24527faed81110ea4626d56013469487c606cb4'
           if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw 'candidate mismatch' }
           $lines = Get-Content .github/workflows/reader-d23-relay.yml
           $start = [Array]::IndexOf($lines, '      - name: Confirm exact base and unchanged product paths')
@@ -36,15 +36,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 700af40fed2eeb0492baf4d500e2063af9987cb7
+          ref: e24527faed81110ea4626d56013469487c606cb4
           fetch-depth: 0
       - name: Check exact common-source platform guards
         shell: bash
         run: |
-          candidate=700af40fed2eeb0492baf4d500e2063af9987cb7
+          candidate=e24527faed81110ea4626d56013469487c606cb4
           test "$(git rev-parse HEAD)" = "$candidate"
           export GITHUB_SHA="$candidate"
           python3 tests/android_font_reader/guard.py
           python3 tests/reader_d21_apple_receive/guard.py
           python3 tests/reader_android_receive_d22/guard.py
+          git diff --exit-code b0269fd2d2365ba20e54cda7e181493a39f75091 HEAD -- apps examples src include cmake CMakeLists.txt bindings ':(exclude)apps/reader/desktop/windows_txt_search.inc' ':(exclude)examples/reader.c' ':(exclude)src/chapter_reader.c'
+          git diff --exit-code 642bb8efe124fdd301410f0b3e8e17292d6a5069 HEAD -- apps/reader/desktop/windows_txt_search.inc examples/reader.c src/chapter_reader.c
+          git diff --exit-code 748e93713c643243a96bab54f5ca1464a2f39efd HEAD -- tests/android_real_original_save
           python3 -c "import runpy; runpy.run_path('tests/reader_d25_real_formats/run.py')['materialize']()"
