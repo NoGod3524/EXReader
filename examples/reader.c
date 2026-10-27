@@ -985,6 +985,11 @@ struct host_job {
   int search_has_resume;
   host_search_batch search_batch;
   host_search_hit search_hit;
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_WAVE3)
+  size_t txt_history_origin;
+  exr_anchor txt_history_before, txt_history_after;
+  int txt_history_ready, txt_history_failed;
+#endif
 #endif
 #ifdef EXR_READER_WINDOWS_NAVIGATION
   unsigned long navigation_generation;
@@ -1189,6 +1194,10 @@ static void job_free(host_job *job) {
   free(job->search_query);
   winsearch_hit_free(&job->search_hit);
   winsearch_batch_free(&job->search_batch);
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_WAVE3)
+  exr_anchor_free(&job->txt_history_before);
+  exr_anchor_free(&job->txt_history_after);
+#endif
 #endif
 #ifdef EXR_READER_WINDOWS_NAVIGATION
   winnav_result_free(&job->navigation);
@@ -4589,6 +4598,10 @@ static void handle_job_complete(host_job *job) {
         update_page_label();
 #ifdef EXR_READER_WINDOWS_WAVE3
         if (job->kind == JOB_GO && !job->w3 && !g.session.txt) w3_history_land(job);
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_SEARCH)
+        else if (job->kind == JOB_GO && !job->w3 && g.session.txt && job->txt_history_ready)
+          w3_txt_search_history_land(job);
+#endif
 #endif
         settings_save();
         if (!save_progress()) { g.pending_selection = 0; return; }
@@ -4701,6 +4714,9 @@ static void host_command(int id) {
 #endif
 #if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_WAVE3)
       && id != IDC_W3_ORIGINALS && id != IDC_W3_FONTS && id != IDC_W3_ANNOTATIONS
+#ifdef EXR_READER_WINDOWS_SEARCH
+      && id != IDC_W3_BACK && id != IDC_W3_FORWARD
+#endif
 #endif
 #if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_RECORDS)
       && id != IDC_RECORDS
