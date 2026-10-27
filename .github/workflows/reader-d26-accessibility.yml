@@ -186,6 +186,10 @@ jobs:
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_d26_accessibility/audit_current.py --payload build/c10-package/EXReader-Linux --output build/d26-g13-current
           '
+      - name: Require complete current accessibility acceptance and validator mutations
+        if: always()
+        run: |
+          /usr/bin/python3 tests/reader_d26_accessibility/gate_current.py --report build/d26-g13-current/result.json --self-test --require-accepted
       - name: Account status event and keyboard error recovery
         if: ${{ !cancelled() }}
         run: |
@@ -288,10 +292,6 @@ jobs:
         run: |
           /usr/bin/python3 tests/reader_d26_accessibility/g13_current.py gate --report build/d26-g13/result.json --self-test
           /usr/bin/python3 tests/reader_d26_accessibility/retain_history.py --kind g13 --report build/d26-g13/result.json -- /usr/bin/python3 tests/reader_d26_accessibility/g13_current.py gate --report build/d26-g13/result.json --require-accepted
-      - name: Require complete current accessibility acceptance and validator mutations
-        if: always()
-        run: |
-          /usr/bin/python3 tests/reader_d26_accessibility/gate_current.py --report build/d26-g13-current/result.json --self-test --require-accepted
       - name: Preserve exact original-to-current driver diffs
         if: always()
         run: python3 tests/reader_d26_accessibility/driver_provenance.py --output build/d26-driver-provenance
@@ -299,6 +299,8 @@ jobs:
         if: always()
         run: |
           cat build/d26-g13/result.json
+          cat build/d26-g13-current/result.json
+          cat build/d26-tools-current/result.json
       - name: Preserve source bound evidence and both packages
         if: always()
         uses: actions/upload-artifact@v4
