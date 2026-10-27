@@ -120,3 +120,9 @@ shows Export here insensitive while the Location entry is focused and Recent
 still displayed. Current driver now enters an explicit directory slash and waits
 for native asynchronous validation to enable the response before activation.
 No native control is programmatically enabled; exact final bytes/path stay strict.
+
+GTK upstream gtkfilechooserwidget.c location_entry_changed_cb explicitly skips
+selection-change timeout for SELECT_FOLDER, explaining disabled Recent response.
+The current driver first uses documented Alt+Home to enter a real folder before
+Ctrl+L. This is actual user navigation, not a programmatic chooser selection.
+Source: https://raw.githubusercontent.com/GNOME/gtk/gtk-3-24/gtk/gtkfilechooserwidget.c

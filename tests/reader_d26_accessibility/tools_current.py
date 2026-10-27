@@ -146,6 +146,14 @@ def main():
         if accept:
             # The previous run's GTK table cell refused AT-SPI scroll_to. Use the chooser's real keyboard location entry instead,
             # never offscreen cell coordinates or programmatic file selection.
+            # SELECT_FOLDER starts in Recent with no selected folder. GTK3
+            # intentionally does not update selection on location-entry changes
+            # in this mode, so Return cannot activate its disabled response.
+            # Navigate Home using GTK's documented real keybinding first.
+            host.key('alt+Home')
+            wait_nodes(lambda: [node for node in nodes(accept, {'push button'})
+                                if bus.is_ancestor(dialog, node)
+                                and bus.states(node).get('sensitive')], seconds=30)
             host.key('ctrl+l')
             entry = wait_nodes(lambda: [node for node in bus.walk(dialog)
                                         if bus.role(node) == 'text' and bus.states(node).get('showing')
