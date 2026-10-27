@@ -1168,3 +1168,16 @@ observations had medians of 1,399 ms in the default WAL candidate and 3,853 ms
 in the PERSIST comparison. These measurements cover the isolated mapping
 consumer, not full product startup or a product performance budget. Actual
 power-loss and remote-volume behavior remain separately unverified.
+
+## Android 3.40 on Windows/Android candidate
+
+The same Windows/Android source `d1b97161461f8fec6f6bdfebedd67a8ac9d0911e`
+passed its Android 3.40 job in
+[40428878676/1](https://github.com/NoGod3524/EXReader/actions/runs/40428878676).
+Cloud audit [40429752493/1](https://github.com/NoGod3524/EXReader/actions/runs/40429752493)
+authenticated original artifact `12701815512` (108,012,399 bytes, SHA-256
+`c7415f88fdd80481bf1cd24ceb544bad4a3d49f0c138a680babbeb4675c809c1`),
+source/run identity, SDK export, current owner 18/18, 12 roundtrip checks and
+16 host UI checks in four phases. This is API 34 x86_64 emulator evidence on
+the stated candidate; its 3.41, final combined source and physical-device
+results remain separate.
