@@ -37,6 +37,12 @@ string(REPLACE "\"" "\\\"" originals_sql "${originals_sql}")
 string(REPLACE "\n" "\\n\"\n\"" originals_sql "${originals_sql}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/originals_migration.h"
   "static const char originals_migration[] = \"${originals_sql}\";\n")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../003_original_staging.sql" staging_sql)
+string(REPLACE "\\" "\\\\" staging_sql "${staging_sql}")
+string(REPLACE "\"" "\\\"" staging_sql "${staging_sql}")
+string(REPLACE "\n" "\\n\"\n\"" staging_sql "${staging_sql}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/staging_migration.h"
+  "static const char staging_migration[] = \"${staging_sql}\";\n")
 add_library(reader_catalog STATIC catalog.c)
 target_include_directories(reader_catalog PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:include/exreader-product>
@@ -51,7 +57,7 @@ include(CMakePackageConfigHelpers)
 install(TARGETS reader_catalog reader_catalog_sqlite EXPORT EXReaderProductCatalogTargets ARCHIVE DESTINATION lib)
 install(FILES catalog.h "${reader_catalog_sqlite_source_SOURCE_DIR}/sqlite3.h"
   DESTINATION include/exreader-product)
-install(FILES ../001_catalog.sql ../002_originals.sql ../../../../licenses/sqlite-public-domain.txt
+install(FILES ../001_catalog.sql ../002_originals.sql ../003_original_staging.sql ../../../../licenses/sqlite-public-domain.txt
   DESTINATION share/exreader-product)
 install(EXPORT EXReaderProductCatalogTargets NAMESPACE EXReaderProductCatalog::
   DESTINATION lib/cmake/EXReaderProductCatalog)

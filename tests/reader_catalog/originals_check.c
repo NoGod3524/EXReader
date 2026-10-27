@@ -29,20 +29,52 @@ int main(int argc,char **argv) {
     CHECK(reader_catalog_find(c,"epub:0000000000000000000000000000000000000000000000000000000000000002",NULL,book_seen,&books,&visible,&e)==SQLITE_OK);
     CHECK(visible && books==1);
   }
+  { int books=0, visible=0;
+    CHECK(reader_catalog_page(c,NULL,NULL,1,book_seen,&books,&e)==SQLITE_OK && books==1);
+    books=0; CHECK(reader_catalog_query_page(c,NULL,NULL,"Title",1,1,book_seen,&books,&e)==SQLITE_OK && books==0);
+    CHECK(reader_catalog_metadata(c,key,book_seen,&books,&visible,&e)==SQLITE_OK && !visible && books==0);
+  }
   CHECK(reader_catalog_original_stage(c,&b,"originals/book.txt",&e)!=SQLITE_OK);
+  { reader_catalog_book old={"epub","0000000000000000000000000000000000000000000000000000000000000002","Ignored","Author","Ignored",NULL,100,0,0};
+    int books=0, visible=0;
+    CHECK(reader_catalog_original_stage(c,&old,"originals/old.epub",&e)==SQLITE_OK);
+    CHECK(reader_catalog_find(c,"epub:0000000000000000000000000000000000000000000000000000000000000002",NULL,book_seen,&books,&visible,&e)==SQLITE_OK && visible && books==1);
+    CHECK(reader_catalog_original_transition(c,"epub:0000000000000000000000000000000000000000000000000000000000000002","staged","deleting",&e)==SQLITE_OK);
+    CHECK(reader_catalog_original_forget(c,"epub:0000000000000000000000000000000000000000000000000000000000000002",&e)==SQLITE_OK);
+    CHECK(reader_catalog_has_local(c,42,&present,&e)==SQLITE_OK && present);
+  }
   CHECK(reader_catalog_close(&c,&e)==SQLITE_OK);
   CHECK(reader_catalog_open(argv[1],&c,&e)==SQLITE_OK);
   CHECK(reader_catalog_original_find(c,key,seen,&count,&found,&e)==SQLITE_OK && found && count==1);
   CHECK(reader_catalog_original_page(c,NULL,1,seen,&count,&e)==SQLITE_OK && count==2);
   CHECK(reader_catalog_original_forget(c,key,&e)==SQLITE_NOTFOUND);
   CHECK(reader_catalog_original_transition(c,key,"ready","deleting",&e)==SQLITE_NOTFOUND);
+  /* A failed publication rolls back both the state and book insertion. */
+  CHECK(sqlite3_open(argv[1],&db)==SQLITE_OK);
+  sql(db,"CREATE TRIGGER reject_publish BEFORE INSERT ON reader_books BEGIN SELECT RAISE(ABORT,'publication fault'); END");
+  CHECK(sqlite3_close(db)==SQLITE_OK);
+  CHECK(reader_catalog_original_transition(c,key,"staged","ready",&e)!=SQLITE_OK);
+  { int books=0, visible=0; CHECK(reader_catalog_find(c,key,NULL,book_seen,&books,&visible,&e)==SQLITE_OK && !visible && books==0); }
+  CHECK(sqlite3_open(argv[1],&db)==SQLITE_OK); sql(db,"DROP TRIGGER reject_publish"); CHECK(sqlite3_close(db)==SQLITE_OK);
   CHECK(reader_catalog_original_transition(c,key,"staged","ready",&e)==SQLITE_OK);
+  { int books=0, visible=0; CHECK(reader_catalog_find(c,key,"Title",book_seen,&books,&visible,&e)==SQLITE_OK && visible && books==1);
+    books=0; CHECK(reader_catalog_page(c,NULL,NULL,10,book_seen,&books,&e)==SQLITE_OK && books==2); }
   CHECK(reader_catalog_original_transition(c,key,"ready","deleting",&e)==SQLITE_OK);
   CHECK(reader_catalog_close(&c,&e)==SQLITE_OK);
   CHECK(reader_catalog_open(argv[1],&c,&e)==SQLITE_OK);
   CHECK(reader_catalog_original_find(c,key,seen,&count,&found,&e)==SQLITE_OK && found);
   CHECK(reader_catalog_original_forget(c,key,&e)==SQLITE_OK);
   CHECK(reader_catalog_has_local(c,42,&present,&e)==SQLITE_OK && present);
+  { int books=0, visible=0; CHECK(reader_catalog_find(c,key,NULL,book_seen,&books,&visible,&e)==SQLITE_OK && visible && books==1); }
+  { reader_catalog_book cancelled={"txt","0000000000000000000000000000000000000000000000000000000000000003","Cancelled","Author","Cancelled",NULL,12,0,0};
+    const char *cancel_key="txt:0000000000000000000000000000000000000000000000000000000000000003";
+    int books=0, visible=0;
+    CHECK(reader_catalog_original_stage(c,&cancelled,"originals/cancel.txt",&e)==SQLITE_OK);
+    CHECK(reader_catalog_original_transition(c,cancel_key,"staged","deleting",&e)==SQLITE_OK);
+    CHECK(reader_catalog_original_forget(c,cancel_key,&e)==SQLITE_OK);
+    CHECK(reader_catalog_find(c,cancel_key,NULL,book_seen,&books,&visible,&e)==SQLITE_OK && !visible && books==0);
+    CHECK(reader_catalog_original_stage(c,&cancelled,"originals/cancel.txt",&e)==SQLITE_OK);
+  }
   CHECK(reader_catalog_close(&c,&e)==SQLITE_OK);
   puts("v1 migration, mapping preservation, staging, restart, transitions and deletion passed"); return 0;
 }
