@@ -26,7 +26,9 @@ jobs:
           ctest --test-dir build/bounded-txt-scan --output-on-failure --no-tests=error
       - name: Scan and paginate the original failure fixture and verify its bytes
         shell: bash
-        run: python tests/bounded_txt_scan/large.py 2>&1 | tee build/bounded-txt-large.log
+        run: |
+          set -o pipefail
+          python tests/bounded_txt_scan/large.py 2>&1 | tee build/bounded-txt-large.log
       - name: Inspect installed public candidate artifacts
         shell: bash
         run: |
