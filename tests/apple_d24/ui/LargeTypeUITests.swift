@@ -57,8 +57,11 @@ final class LargeTypeUITests: XCTestCase {
         XCTAssertTrue(wait { self.app.windows.firstMatch.frame.width > self.app.windows.firstMatch.frame.height })
         area(0.35); record("maximum-type-landscape-tools-visible")
         let accountLocation = text("reader.location")
-        let more = e("reader.more").buttons.firstMatch
+        // Assert the identified native menu control, not its anonymous
+        // implementation child (which XCTest reports as non-hittable).
+        let more = e("reader.more")
         XCTAssertTrue(more.exists && more.isHittable)
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(more.frame))
         more.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(e("account.choose").waitForExistence(timeout: 30))
         e("account.choose").tap()
