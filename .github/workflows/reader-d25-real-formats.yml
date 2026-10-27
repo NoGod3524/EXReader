@@ -1,0 +1,52 @@
+name: D25 current SDK real formats
+on:
+  push:
+    branches: [codex/dot-d25-real-formats]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: d25-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  corpus:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 100
+    steps:
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Current installed SDK, retained native suite, original and existing corrected F5
+        run: python tests/reader_d25_real_formats/run.py producer
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d25-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/d25/
+          retention-days: 30
+          if-no-files-found: error
+  strict:
+    if: always()
+    needs: corpus
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: d25-*
+          path: build/results
+      - run: python tests/reader_d25_real_formats/run.py aggregate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d25-strict-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/aggregate.json
+          if-no-files-found: error
