@@ -240,3 +240,17 @@ The following Actions runs completed successfully on the same source
 These are the scopes of those runs; other common-source runs have separate
 results. The later TXT search-history branch has its own source and pending
 acceptance; none of these earlier results is evidence for that later source.
+
+
+The D22 Android receive and offline-reading run
+[40588875233/1](https://github.com/NoGod3524/EXReader/actions/runs/40588875233)
+also completed its Android and retained jobs successfully at the same
+`c45ac1a7508842f071e3d892635fdd9af444ae90` source.
+
+D26 [40588875254/1](https://github.com/NoGod3524/EXReader/actions/runs/40588875254)
+failed at that source. The current accessibility Python driver exited with a
+segmentation fault after collections-dialog, and its retained historical tool
+driver attempted to click an inaccessible chooser row at invalid coordinates.
+The strict evidence job could not authenticate the missing current report.
+The separate focused and full D26 diagnostic results are recorded on their own
+sources; neither changes the failed common-source outcome.
