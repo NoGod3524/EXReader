@@ -247,6 +247,35 @@
         "tampered_file_rejected_before_any_write",
         "imported_bookmark_navigable_by_public_found"
       ]
+    },
+    "android_font_reader": {
+      "run": 40582860559,
+      "doc": "docs/reader-total-progress/android-font-reader.md",
+      "source_prefix": "41870a040bb6ff995a7adddc13756880ada8c731",
+      "artifact": 12772457377,
+      "sha256": "9a4a1120a3a20d6bab7b6d31febaa9a2ab4411e1ba10189ffed9380669880c45",
+      "bytes": 164193268,
+      "required_cases": [
+        "reader_valid_font_import_select_reopen_changes_pixels",
+        "reader_bad_font_preserves_noninitial_page_position_font_and_lease",
+        "reader_exit_releases_font_lease_and_reopen_keeps_position"
+      ]
+    },
+    "gtk_annotation_export": {
+      "run": 40595687505,
+      "doc": "docs/reader-total-progress/linux-annotation-export.md",
+      "source_prefix": "cc75214cb5e6dce389625e33399e1b120aedf4c4",
+      "artifact": 12775987422,
+      "sha256": "7ac0b36ce08af01967d73764a68009becb904fbb72f6546b400358de2e76cbc0",
+      "bytes": 323276161,
+      "required_cases": [
+        "annotation_preview_validates_without_writing",
+        "annotation_confirm_commits_records",
+        "annotation_export_cancel_keeps_page_and_creates_no_file",
+        "annotation_export_roundtrip_preserves_original_wires",
+        "annotation_export_import_is_exact_duplicate",
+        "annotation_broken_file_refused_without_writing"
+      ]
     }
   },
   "requirements": [
@@ -632,9 +661,11 @@
       "group": "host",
       "platform": "linux",
       "title": "Linux GTK：宿主标注文件导入/导出、预览确认及错误拒绝",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "gtk_annotation_export"
+      ],
+      "note": "Ubuntu native GTK host, accessible desktop driver and native chooser; evidence requires independent run and artifact audit."
     },
     {
       "id": "H.linux.original_export",
@@ -914,9 +945,11 @@
       "group": "host",
       "platform": "android",
       "title": "Android：本地字体导入、选择/lease 与坏字体保留原页",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "android_font_reader"
+      ],
+      "note": "API34 emulator actual reader; framework picker results stubbed; evidence audited separately from unified-source delivery."
     },
     {
       "id": "H.android.annotation_exchange",
