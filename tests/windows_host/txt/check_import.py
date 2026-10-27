@@ -80,10 +80,18 @@ def main():
         assert first in source_text and second in source_text
         assert source_text.index(second) >= source_text.index(first) + len(first)
         ui.P.M.screenshot(app.window, out / 'txt-second-page.bmp')
-        app.click('prev'); app.wait_idle()
-        back = automation.control(app.control('page')).GetValuePattern().Value
-        assert back == first, back
-        report['checks'].append('native next and previous show distinct consecutive source text and restore first page')
+        pages = [first, second]
+        for _ in range(3):
+            app.click('next'); app.wait_idle()
+            current = automation.control(app.control('page')).GetValuePattern().Value
+            assert current and current != pages[-1] and current in source_text, current
+            assert source_text.index(current) >= source_text.index(pages[-1]) + len(pages[-1])
+            pages.append(current)
+        for expected_page in reversed(pages[:-1]):
+            app.click('previous'); app.wait_idle()
+            current = automation.control(app.control('page')).GetValuePattern().Value
+            assert current == expected_page, (current, expected_page)
+        report['checks'].append('native next and previous show five consecutive source pages and restore them in reverse')
         ui.P.M.screenshot(app.window, out / 'txt-first-page.bmp')
         report['page_excerpt'] = value[:300]
         report['checks'].append('selected 16792975-byte original renders first page with expected UI Automation text and screenshot')
