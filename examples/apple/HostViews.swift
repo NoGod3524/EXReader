@@ -466,6 +466,8 @@ struct LibraryScreen: View {
 struct ReaderScreen: View {
     @ObservedObject var model: HostReaderModel
     @State private var showSelection = false
+    @State private var toolsVisible = true
+    @AccessibilityFocusState private var toolsToggleFocused: Bool
     @State private var showNotes = false
     @State private var showSearch = false
     @State private var showNavigation = false
@@ -534,6 +536,15 @@ struct ReaderScreen: View {
                     .accessibilityIdentifier("reader.title")
                     .accessibilityAddTraits(.isHeader)
                 Spacer()
+                if compactTools {
+                    Button { toolsVisible.toggle() } label: {
+                        Image(systemName: toolsVisible ? "chevron.down" : "slider.horizontal.3")
+                            .frame(width: 44, height: 44).contentShape(Rectangle())
+                    }
+                    .accessibilityLabel(toolsVisible ? "隐藏阅读工具" : "显示阅读工具")
+                    .accessibilityIdentifier("reader.tools.toggle")
+                    .accessibilityFocused($toolsToggleFocused)
+                }
                 Menu {
 #if EXR_APPLE_WAVE3
                     Button("文件、字体与同步详情") { model.refreshWave3(); showWave3 = true }
@@ -545,7 +556,7 @@ struct ReaderScreen: View {
                     Button("阅读主题") { showPageTheme = true }
                         .accessibilityIdentifier("reader.theme")
 #endif
-                } label: { Image(systemName: "ellipsis").frame(width: 28, height: 28) }
+                } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }
                     .accessibilityLabel(Text("更多阅读操作"))
                     .accessibilityIdentifier("reader.more").disabled(model.busy)
                 if model.busy {
@@ -594,30 +605,42 @@ struct ReaderScreen: View {
 #endif
             .padding(.horizontal, 4)
 
-            HStack(spacing: 12) {
-                Text(model.location).font(.caption).lineLimit(1)
-                    .accessibilityIdentifier("reader.location")
-                Text(model.progress).font(.caption).lineLimit(1)
-                    .accessibilityIdentifier("reader.progress")
+            // One scrollable information row never competes vertically with
+            // the page at accessibility sizes. Full strings remain available
+            // to accessibility; text is not scaled down or truncated in state.
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    Text(model.location).font(.caption).lineLimit(1)
+                        .accessibilityIdentifier("reader.location")
+                    Text(model.progress).font(.caption).lineLimit(1)
+                        .accessibilityIdentifier("reader.progress")
 #if EXR_APPLE_HOST_REVIEW
-                Text("#\(model.stateHash)").font(.caption2).foregroundColor(.secondary)
-                    .accessibilityIdentifier("reader.state")
+                    Text("#\(model.stateHash)").font(.caption2).foregroundColor(.secondary)
+                        .accessibilityIdentifier("reader.state")
 #endif
-            }
+                    if compactTools {
+                        Text(model.statusText).font(.caption).lineLimit(1)
+                            .accessibilityIdentifier("reader.status")
+                    }
+                }.fixedSize(horizontal: true, vertical: false)
+            }.fixedSize(horizontal: false, vertical: true)
 
             if compactTools {
-                ScrollView(.horizontal) {
-                    HStack(spacing: 16) { annotationTools; pagingTools; fontTools }.padding(.horizontal, 8)
-                }.fixedSize(horizontal: false, vertical: true)
-                    .accessibilityIdentifier("reader.tools.scroll")
+                if toolsVisible {
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 16) { annotationTools; pagingTools; fontTools }
+                            .fixedSize(horizontal: true, vertical: false).padding(.horizontal, 8)
+                    }.fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("reader.tools.scroll")
+                }
             } else {
                 pagingTools
                 fontTools
                 annotationTools
+                Text(model.statusText).font(.caption).lineLimit(2)
+                    .accessibilityIdentifier("reader.status")
             }
 
-            Text(model.statusText).font(.caption).lineLimit(compactTools ? 1 : 2)
-                .accessibilityIdentifier("reader.status")
             if !model.errorText.isEmpty {
                 Text(model.errorText).font(.caption).foregroundColor(.red)
                     .accessibilityIdentifier("reader.error")
@@ -629,7 +652,7 @@ struct ReaderScreen: View {
         .sheet(isPresented: $showSelection) {
             SelectionSheet(model: model)
         }
-        .sheet(isPresented: $showNotes) {
+        .sheet(isPresented: $showNotes, onDismiss: { if compactTools { toolsToggleFocused = true } }) {
             NotesSheet(model: model)
         }
         .sheet(isPresented: $showSearch) { HostSearchSheet(model: model) }
