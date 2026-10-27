@@ -63,6 +63,8 @@ jobs:
     timeout-minutes: 180
     env:
       EXR_HOST_TXT_PROGRESS: '1'
+      PYTHONUTF8: '1'
+      EXR_TRACE_TXT: '1'
     steps:
       - uses: actions/checkout@v4
         with:
