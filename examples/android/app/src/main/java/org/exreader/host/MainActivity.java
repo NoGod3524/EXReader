@@ -352,7 +352,15 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         });
         bookList.setOnItemClickListener((parent, view, position, id) -> {
             if (operation != 0 || pageBusy) return;
-            if (position < 0 || position >= catalogShelf.getCount() || id<=0) return;
+            if (position < 0 || position >= catalogShelf.getCount()) return;
+            if(id<=0){
+                CatalogStore.ShelfBook remote=catalogShelf.getItem(position);
+                if(BuildConfig.READER_SYNC)new android.app.AlertDialog.Builder(this).setTitle(remote.title)
+                    .setMessage("下载并校验原件后加入本机书架，再次点按即可阅读")
+                    .setPositiveButton("接收",(dialog,which)->{syncPanel.show();SyncController.get(this).receiveKey(this,remote.key.bookKey);})
+                    .setNegativeButton("取消",null).show();
+                return;
+            }
             catalogShelf.save();
             shelfSearch.clearFocus();
             ((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE))
@@ -1781,13 +1789,17 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
     @Override public void receive(NativeSync.RemoteBook book,File cached,HostTask task,java.util.function.Consumer<Long> done,java.util.function.Consumer<Throwable> failed){
         ExecutorService owner=worker;if(owner==null||destroyed||operation!=0||pageBusy){failed.accept(new IllegalStateException("请先完成当前操作"));return;}
-        owner.execute(()->{synchronized(IMPORT_LOCK){try{
+        owner.execute(()->{synchronized(IMPORT_LOCK){synchronized(IntentJournal.LOCK){try{
             task.check();if(destroyed||store==null)throw new HostTask.Cancelled();
+            if(new IntentJournal(getSharedPreferences("organization",MODE_PRIVATE)).read()!=null)throw new IOException("请先恢复本地修改，再接收云端书籍");
             String sort=java.text.Normalizer.normalize(book.title,java.text.Normalizer.Form.NFC);String product=new File(getFilesDir(),"reader-catalog.db").getAbsolutePath();
             String[] selected=NativeSync.project(product,book.key,book.revision,sort);
             if(selected==null||selected.length!=7||!selected[1].equals(book.key)||!selected[0].equals(book.format)||Long.parseLong(selected[4])!=book.bytes)throw new IOException("书籍的同步记录已改变，请刷新后重试");
             if(cached.length()!=book.bytes||!BookStore.syncFileHash(cached,task).equals(book.sha))throw new IOException("接收的原件校验失败");
-            closeSessionsLocked();task.check();int format=0;for(int candidate=NativeLibrary.FORMAT_TXT;candidate<=NativeLibrary.FORMAT_CBZ;candidate++)if(formatName(candidate).equalsIgnoreCase(book.format))format=candidate;
+            // Duplicate receive must never close the active reader or rewrite its local path/progress.
+            long mapped=Long.parseLong(selected[6]);
+            if(mapped>0){store.verifySource(mapped,book.sha,book.bytes,task);task.check();postUi(()->loadShelf(false));done.accept(mapped);return;}
+            task.check();int format=0;for(int candidate=NativeLibrary.FORMAT_TXT;candidate<=NativeLibrary.FORMAT_CBZ;candidate++)if(formatName(candidate).equalsIgnoreCase(book.format))format=candidate;
             if(format==0)throw new IOException("暂不支持这种书籍格式");
             NativeLibrary.ImportResult imported=store.importFile(cached.getAbsolutePath(),format,book.title);
             BookStore.VerifiedSource verified=store.verifySource(imported.id,book.sha,book.bytes,task);
@@ -1797,7 +1809,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 store.finalizeImport(verified);
             });
             postUi(()->loadShelf(false));done.accept(imported.id);
-        }catch(Throwable error){failed.accept(error);}}});
+        }catch(Throwable error){failed.accept(error);}}}});
     }
 
     @Override public void projectionChanged(){if(!destroyed){if(organizationPanel!=null)organizationPanel.refreshProjected();loadShelf(false);}}
