@@ -1,7 +1,7 @@
-name: Verify Android 3.41 combined evidence
+name: Verify Android reading page-position evidence
 on:
   push:
-    branches: [codex/android-341-combined-proof]
+    branches: [codex/android-page-position-proof]
 permissions:
   contents: read
   actions: read
@@ -11,17 +11,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
       - name: Authenticate combined run and inspect original reports
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import hashlib, io, json, sys, zipfile
+          import hashlib, io, json, subprocess, sys, zipfile
           sys.path.insert(0, 'tools')
           from check_parallel_integration import fetch, download_artifact_zip
-          source = '31d34f87b2013ef18201268b50db5b6b1ccafd71'
-          run_id, artifact, size = 40422822774, 12699742758, 156525577
-          digest = '704fb5b0c696241589a8e4a3d78173a4352ba112154625bdbd985eeb3f07563f'
+          source = 'aa75071c626485f8b249d2f7deba09270f278e54'
+          run_id, artifact, size = 40425282397, 12700567431, 156501578
+          digest = 'abc9259567867ce05265f53bfbc64e344ed825a4ca18993ce0bba566f41437d1'
           run = fetch(f'actions/runs/{run_id}')
           assert run['head_sha'] == source and run['run_attempt'] == 1
           assert run['status'] == 'completed' and run['conclusion'] == 'success'
@@ -54,7 +55,12 @@ jobs:
                   assert value['accepted'] is True and value['checks'] >= minimum
                   assert sum(phase['count'] for phase in value['phases']) == value['checks']
                   assert all(phase['passed'] is True and all(check['pass'] is True for check in phase['checks']) for phase in value['phases'])
+                  if suite == 'reading':
+                      checks = [check['name'] for phase in value['phases'] for check in phase['checks']]
+                      assert checks.count('bounded_record_pagination_and_plain_text_labels') == 1
                   summary[suite] = value['checks']
+              driver = subprocess.check_output(['git', 'show', source + ':tests/reader_android_reading/java/org/exreader/host/ReadingUiTest.java'], text=True)
+              assert 'first page scrolled before pagination' in driver and 'new page starts at its first row' in driver
               walk = report('/evidence/walkthrough/execution.json')
               assert walk['completed'] and not walk['errors'] and walk['app_sha256'] == walk['installed_sha256'] == apk
               print(json.dumps({'source': source, 'run': run_id, 'artifact': artifact,
