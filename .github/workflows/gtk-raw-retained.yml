@@ -2,7 +2,7 @@ name: GTK raw retained navigation and folder import
 on:
   workflow_dispatch:
   push:
-    branches: [codex/gtk-raw-retained, codex/android-merge-prep]
+    branches: [codex/gtk-raw-retained, codex/android-merge-prep, codex/windows-android-combined]
 permissions:
   contents: read
 jobs:

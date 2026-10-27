@@ -1,7 +1,7 @@
 name: Windows group anchor recovery
 on:
   push:
-    branches: [codex/windows-anchor-composition-prep]
+    branches: [codex/windows-anchor-composition-prep, codex/windows-android-combined]
   workflow_dispatch:
 permissions:
   contents: read
