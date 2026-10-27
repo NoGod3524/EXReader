@@ -579,10 +579,21 @@ static const char *txt_text(void *context,size_t offset,size_t *available) {
   if(v->cached!=SIZE_MAX && offset>=v->cached_start && offset-v->cached_start<v->cached_size) {
     *available=v->cached_size-(offset-v->cached_start);return v->cache+(offset-v->cached_start);
   }
-  while(lo<hi) {
-    size_t mid=lo+(hi-lo)/2;
-    if(txt_find_paragraph(v,mid,&start,&length,NULL,&e)!=EXR_OK) return NULL;
-    if(start+length<=offset) lo=mid+1;else hi=mid;
+  /* The current 1024-paragraph span already has exact projected offsets.
+     Use it for local text lookups instead of replaying sparse checkpoints. */
+  if(v->span_count && offset>=v->spans[0].start &&
+     offset<v->spans[v->span_count-1].start+v->spans[v->span_count-1].length) {
+    lo=v->span_base;hi=v->span_base+v->span_count;
+    while(lo<hi) {
+      size_t mid=lo+(hi-lo)/2,i=mid-v->span_base;
+      if(v->spans[i].start+v->spans[i].length<=offset) lo=mid+1;else hi=mid;
+    }
+  } else {
+    while(lo<hi) {
+      size_t mid=lo+(hi-lo)/2;
+      if(txt_find_paragraph(v,mid,&start,&length,NULL,&e)!=EXR_OK) return NULL;
+      if(start+length<=offset) lo=mid+1;else hi=mid;
+    }
   }
   if(lo==v->count) { txt_failure(v,exr_fail(&e,EXR_FORMAT,"Missing TXT span"),&e);return NULL; }
   if(txt_find_paragraph(v,lo,&start,&length,NULL,&e)!=EXR_OK) return NULL;

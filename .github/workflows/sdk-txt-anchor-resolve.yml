@@ -1,7 +1,7 @@
 name: TXT anchor resolution candidate
 on:
   push:
-    branches: [codex/sdk-txt-anchor-resolve]
+    branches: [codex/sdk-txt-anchor-resolve, codex/sdk-txt-span-lookup]
   workflow_dispatch:
 permissions:
   contents: read
