@@ -638,7 +638,7 @@ static void shelf_display(const exr_book *book, wchar_t *out, size_t capacity) {
   wchar_t *author = book->author ? host_wide(book->author, strlen(book->author)) : NULL;
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(g.shelf_cursors) swprintf(out,capacity,L"《%ls》 — %ls · %ls%ls%ls",title ? title:L"Untitled",
-    author && author[0] ? author:L"未知作者",format_name(book->format),book->id ? L"":L" · 未下载",mark);
+    author && author[0] ? author:L"未知作者",format_name(book->format),book->id ? L"":L" · 阅读尚未支持",mark);
   else
 #endif
   if (is_fixed_format(book->format))
@@ -3524,6 +3524,11 @@ static void open_selected_book(void) {
     set_status(L"请先在书架中选择一本书。");
     return;
   }
+#ifdef EXR_READER_PRODUCT_CATALOG
+  if(g.shelf_cursors && g.shelf[index].id<=0) {
+    set_status(L"TXT 原书已保存在本机；阅读功能尚未完成。");return;
+  }
+#endif
   if (!g.job && !g.pending && !save_progress()) return;
   job = job_new(JOB_OPEN);
   if (!job) { set_status(L"内存不足，无法打开书籍。"); return; }
@@ -3916,7 +3921,14 @@ static void handle_job_complete(host_job *job) {
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
       if (job->original_import) {
         g.auto_open_imported=0;
-        set_status(job->created ? L"TXT 原书已保存，但阅读与书架显示尚未完成。" : L"TXT 原书已存在；阅读与书架显示尚未完成。");
+        if(job->product_key[0]) {
+          SendMessageW(g.books,LB_SETCURSEL,(WPARAM)-1,0);
+          product_shelf_schedule(0,0);
+          product_shelf_reveal=1;
+          snprintf(g.shelf_selected_key,sizeof(g.shelf_selected_key),"%s",job->product_key);
+          snprintf(g.shelf_top_key,sizeof(g.shelf_top_key),"%s",job->product_key);
+        }
+        set_status(job->created ? L"TXT 原书已保存到书架；阅读功能尚未完成。" : L"TXT 原书已存在；阅读功能尚未完成。");
         return;
       }
 #endif

@@ -146,16 +146,25 @@ def main():
         configure(ROOT/'apps/reader/windows-account',host,options,name+'-actual-host')
         if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
             run([sys.executable,ROOT/'tests/windows_host/txt/check_import.py',host/'EXReaderProduct.exe',
-                 ROOT/'build/host-font-cache/Reader.otf',OUT/(name+'-txt-import')],name+'-txt-native-import',600)
+                 ROOT/'build/host-font-cache/Reader.otf',OUT/(name+'-txt-import'),
+                 fixtures/'Fixed page.pdf'],name+'-txt-native-import',600)
+        compact_host=host
+        if os.environ.get('EXR_HOST_TXT_RECOVERY') == '1':
+            # Keep the original four-format SDK regression on a legacy host;
+            # the TXT-enabled host is covered by the native original test above.
+            compact_host=OUT/(name+'-legacy-compact-host')
+            configure(ROOT/'apps/reader/windows-account',compact_host,
+                      [opt for opt in options if opt != '-DEXR_READER_WINDOWS_TXT_RECOVERY=ON'],
+                      name+'-legacy-compact-host')
         ui=OUT/(name+'-compact-ui')
         run([sys.executable,ROOT/'tests/reader_windows_compact/check_ui.py',
-             '--candidate',host/'EXReaderProduct.exe','--font',ROOT/'build/host-font-cache/Reader.otf',
+             '--candidate',compact_host/'EXReaderProduct.exe','--font',ROOT/'build/host-font-cache/Reader.otf',
              '--fixtures',fixtures,'--output',ui],name+'-original-compact-ui',900)
         sys.path.insert(0,str(ROOT/'tests/reader_windows_compact'))
         from contract import validate
         compact=json.loads((ui/'report.json').read_text(encoding='utf-8'))
         validate(compact,os.environ['GITHUB_SHA'],os.environ['GITHUB_RUN_ID'],
-                 os.environ['GITHUB_RUN_ATTEMPT'],hashlib.sha256((host/'EXReaderProduct.exe').read_bytes()).hexdigest())
+                 os.environ['GITHUB_RUN_ATTEMPT'],hashlib.sha256((compact_host/'EXReaderProduct.exe').read_bytes()).hexdigest())
         owner=OUT/(name+'-owner-probe')
         configure(ROOT/'tests/reader_windows_raw3/owner-probe',owner,
                   ['-DCMAKE_PREFIX_PATH='+prefix,'-DEXR_SDK='+str(sdk),
