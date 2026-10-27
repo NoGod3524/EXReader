@@ -350,7 +350,7 @@
     },
     {
       "name": "android-composition-workflow-candidate",
-      "source": "b0e7b1da2c1ddf55cb3d01dc472b2be40fffc66f",
+      "source": "e82e5bdd39cb16771b986427ec97c815399e4382",
       "paths": [
         ".github/workflows/android-composition-candidate.yml"
       ]
@@ -368,9 +368,17 @@
       "name": "android-340-owner-and-sync-retained-checks",
       "source": "a89fb87ff3898eb2ff46fbb66b367053c2607139",
       "paths": [
-        ".github/workflows/android-current-owner-340.yml",
         "tests/reader_android_owner_current/init.gradle",
         "tests/reader_android_owner_current/prepare.py"
+      ]
+    },
+    {
+      "name": "android-current-owner-combined-340",
+      "source": "e82e5bdd39cb16771b986427ec97c815399e4382",
+      "paths": [
+        ".github/workflows/android-current-owner-340.yml",
+        "examples/android/app/src/androidTest/java/org/exreader/host/ProductOwnerTest.java",
+        "tests/reader_session_android/run_roundtrip.py"
       ]
     },
     {
