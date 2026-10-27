@@ -62,11 +62,11 @@ def stable_without(value):
     values=stable_numbers()
     visible_top=stable_top()
     return bool(values and value not in values and visible_top is not None and abs(visible_top-value)<=2)
-def stable_above(value):
+def stable_above(value,neighbor):
     values=stable_numbers()
     visible_top=stable_top()
-    return bool(values and all(n>value for n in values) and min(values)==value+1
-                and visible_top is not None and value+1<=visible_top<=value+30)
+    return bool(values and all(n>value for n in values) and min(values)==neighbor
+                and visible_top is not None and neighbor<=visible_top<=neighbor+30)
 def organizer():
     app.wait_idle();ui.U.SetForegroundWindow(app.window);ui.A.tap(ord('O'),(ui.A.VK_CONTROL,ui.A.VK_SHIFT))
     def find():
@@ -179,7 +179,12 @@ try:
             top=stable_top();assert top is not None and top<100
             with sqlite3.connect(database,timeout=30) as db:
                 db.executemany('DELETE FROM reader_book_shelves WHERE shelf_id=? AND book_key=?',[(ids['shelf'],rows[i][0]) for i in range(top+1)])
-            refresh();app.wait(lambda:stable_above(top),timeout=90)
+                expected_tail=db.execute('SELECT b.title FROM reader_book_shelves m JOIN reader_books b ON b.book_key=m.book_key WHERE m.shelf_id=? ORDER BY m.ordinal DESC,m.book_key DESC LIMIT 1',(ids['shelf'],)).fetchone()
+            assert expected_tail is not None
+            neighbor=int(re.search(r'Shelf (\d{4})',expected_tail[0])[1])
+            report['anchor_observations'].append({'stage':'tail-before-refresh','deleted_top':top,'previously_removed':removed,'expected_neighbor':neighbor})
+            refresh();app.wait(lambda:stable_above(top,neighbor),timeout=90)
+            report['anchor_observations'].append({'stage':'tail-after-refresh','visible_top':stable_top(),'cached':stable_numbers()})
             ui.M.screenshot(app.window,out/'removed-tail.bmp')
             checks.append('removed-tail-falls-back-to-predecessors')
             walk([n for n in range(169,top,-1) if n!=removed],-1)
