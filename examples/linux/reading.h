@@ -11,6 +11,7 @@
 #endif
 #ifdef EXR_READER_WAVE3
 #include <reader_annotation_import.h>
+#include <reader_annotation_export.h>
 #include <reader_font_library.h>
 #include <reader_jump_history.h>
 #include <reader_original_export.h>
@@ -36,7 +37,8 @@ typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_RECORDS_RETRY, READER_RECORDS_DISCARD, READER_RECORDS_HISTORY,
   READER_RECORDS_JUMP, READER_BATCH_BEGIN, READER_BATCH_NEXT,
   READER_BATCH_MAP, READER_BATCH_CLOSE,
-  READER_W3_ANNOTATION_PREVIEW, READER_W3_ANNOTATION_DISCARD, READER_W3_ANNOTATION_IMPORT, READER_W3_FONT_LIST,
+  READER_W3_ANNOTATION_PREVIEW, READER_W3_ANNOTATION_DISCARD, READER_W3_ANNOTATION_IMPORT,
+  READER_W3_ANNOTATION_EXPORT, READER_W3_FONT_LIST,
   READER_W3_FONT_IMPORT, READER_W3_FONT_USE, READER_W3_FONT_REMOVE, READER_W3_EXPORT,
   READER_W3_HISTORY, READER_W3_SYNC_STATUS } reader_action;
 #ifdef EXR_READER_BATCH_IMPORT
@@ -218,6 +220,8 @@ typedef struct {
   char **w3_font_hashes,**w3_font_names;
   char w3_font_active[RFL_HASH_BYTES];
   int w3_ann_validated,w3_ann_code;
+  int w3_ann_export_code,w3_ann_export_published;
+  uint64_t w3_ann_export_bytes,w3_ann_export_count;
   uint64_t w3_ann_bytes,w3_ann_annotations,w3_ann_heads,w3_ann_omitted,w3_ann_created,w3_ann_duplicates,w3_ann_committed;
   char w3_ann_title[256];
   int w3_export_code,w3_export_created,w3_export_durable,w3_export_sdk;

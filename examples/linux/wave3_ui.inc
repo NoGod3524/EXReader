@@ -9,6 +9,8 @@ static struct {
   GtkWidget *back_item,*forward_item;
   int can_back,can_forward,history_count,history_cursor,history_code,history_moves,history_refused;
   GtkWidget *ann_dialog;char *ann_path;int ann_phase,ann_code,ann_validated;
+  int ann_export_busy,ann_export_code,ann_export_published;
+  uint64_t ann_export_bytes,ann_export_count;
   uint64_t ann_annotations,ann_heads,ann_omitted,ann_created,ann_duplicates,ann_committed,ann_bytes;
   GtkWidget *font_dialog,*font_list,*font_status,*font_use,*font_remove,*font_add;
   int font_busy,font_count,font_failed,font_applied;char *font_active,*font_notice;
@@ -32,7 +34,8 @@ static gboolean w3_ready(void) {
     status(EXR_ARGUMENT,"Open a book to use the reading tools");return FALSE;
   }
   if(busy || saving || save_failed) { status(EXR_OK,"Reading operation in progress; try again when it finishes");return FALSE; }
-  if(w3.ann_phase==W3_CHECKING || w3.ann_phase==W3_IMPORTING || w3.font_busy || w3.export_phase==W3_CHECKING) {
+  if(w3.ann_phase==W3_CHECKING || w3.ann_phase==W3_IMPORTING || w3.ann_export_busy ||
+     w3.font_busy || w3.export_phase==W3_CHECKING) {
     status(EXR_OK,"Reading tool operation in progress; try again when it finishes");return FALSE;
   }
   if(w3_opened()) return FALSE;
@@ -126,6 +129,29 @@ static void w3_annotation_open(GtkWidget *item,gpointer unused) {
   g_free(w3.ann_path);w3.ann_path=path;w3.ann_phase=W3_CHECKING;
   host_job *job=w3_job(READER_W3_ANNOTATION_PREVIEW);job->command.w3_path=g_strdup(path);
   status(EXR_OK,"Checking the annotation file");w3_push(job);
+}
+
+/* JSONL can be imported by another host using the existing preview flow. */
+static void w3_annotation_export_open(GtkWidget *item,gpointer unused) {
+  (void)item;(void)unused;if(!w3_ready()) return;
+  GtkWidget *dialog=gtk_file_chooser_dialog_new("Export annotations",GTK_WINDOW(window),GTK_FILE_CHOOSER_ACTION_SAVE,
+    "Cancel",GTK_RESPONSE_CANCEL,"Export",GTK_RESPONSE_ACCEPT,NULL);
+  gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog),"annotations.jsonl");
+  gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog),TRUE);
+  choosing_file=TRUE;
+  int response=gtk_dialog_run(GTK_DIALOG(dialog));choosing_file=FALSE;
+  char *path=response==GTK_RESPONSE_ACCEPT ? gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog)):NULL;
+  gtk_widget_destroy(dialog);
+  if(!path) { w3_restore_focus();state();return; }
+  host_job *job=w3_job(READER_W3_ANNOTATION_EXPORT);job->command.w3_path=path;
+  w3.ann_export_busy=TRUE;w3.ann_export_published=0;
+  status(EXR_OK,"Exporting annotations");w3_push(job);
+}
+static void w3_annotation_exported(const reader_result *result) {
+  w3.ann_export_busy=FALSE;w3.ann_export_code=result->w3_ann_export_code;
+  w3.ann_export_published=result->w3_ann_export_published;
+  w3.ann_export_bytes=result->w3_ann_export_bytes;w3.ann_export_count=result->w3_ann_export_count;
+  status(result->status,result->message);
 }
 
 /* ---- reading font library ---- */
@@ -319,9 +345,9 @@ static void w3_tools_menu(GtkWidget *menu) {
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(heading),tools);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),heading);
   const char *titles[]={"Import annotations…","Reading font…","Export original…",
-    "Back to previous position","Forward to next position","Sync status…"};
+    "Back to previous position","Forward to next position","Sync status…","Export annotations…"};
   GCallback callbacks[]={G_CALLBACK(w3_annotation_open),G_CALLBACK(w3_fonts_open),G_CALLBACK(w3_export_open),
-    G_CALLBACK(w3_history_menu),G_CALLBACK(w3_history_menu),G_CALLBACK(w3_sync_open)};
+    G_CALLBACK(w3_history_menu),G_CALLBACK(w3_history_menu),G_CALLBACK(w3_sync_open),G_CALLBACK(w3_annotation_export_open)};
   for(size_t i=0;i<G_N_ELEMENTS(titles);i++) {
     GtkWidget *item=gtk_menu_item_new_with_label(titles[i]);
     gtk_menu_shell_append(GTK_MENU_SHELL(tools),item);
@@ -349,6 +375,7 @@ static gboolean w3_apply(host_result *done) {
     } else if(done->action==READER_W3_ANNOTATION_PREVIEW || done->action==READER_W3_ANNOTATION_IMPORT) {
       w3.ann_phase=W3_IDLE;
     } else if(done->action==READER_W3_EXPORT) w3.export_phase=W3_IDLE;
+    else if(done->action==READER_W3_ANNOTATION_EXPORT) w3.ann_export_busy=FALSE;
     state();return TRUE;
   }
   if(done->action==READER_W3_FONT_USE || done->action==READER_W3_HISTORY) return FALSE;
@@ -356,6 +383,7 @@ static gboolean w3_apply(host_result *done) {
     case READER_W3_ANNOTATION_PREVIEW: w3_annotation_previewed(result);break;
     case READER_W3_ANNOTATION_DISCARD: break;
     case READER_W3_ANNOTATION_IMPORT: w3_annotation_imported(result);break;
+    case READER_W3_ANNOTATION_EXPORT: w3_annotation_exported(result);break;
     case READER_W3_FONT_LIST: case READER_W3_FONT_IMPORT: case READER_W3_FONT_REMOVE: w3_fonts_applied(result,done->action);break;
     case READER_W3_EXPORT: w3_exported(result);break;
     default: w3_synced(result);break;
@@ -415,6 +443,11 @@ static char *w3_observation(void) {
   g_key_file_set_uint64(file,group,"ann_omitted",w3.ann_omitted);g_key_file_set_uint64(file,group,"ann_created",w3.ann_created);
   g_key_file_set_uint64(file,group,"ann_duplicates",w3.ann_duplicates);g_key_file_set_uint64(file,group,"ann_committed",w3.ann_committed);
   g_key_file_set_uint64(file,group,"ann_bytes",w3.ann_bytes);
+  g_key_file_set_integer(file,group,"ann_export_busy",w3.ann_export_busy);
+  g_key_file_set_integer(file,group,"ann_export_code",w3.ann_export_code);
+  g_key_file_set_integer(file,group,"ann_export_published",w3.ann_export_published);
+  g_key_file_set_uint64(file,group,"ann_export_bytes",w3.ann_export_bytes);
+  g_key_file_set_uint64(file,group,"ann_export_count",w3.ann_export_count);
   g_key_file_set_integer(file,group,"font_dialog",w3.font_dialog!=NULL);g_key_file_set_integer(file,group,"font_busy",w3.font_busy);
   g_key_file_set_integer(file,group,"font_count",w3.font_count);g_key_file_set_integer(file,group,"font_failed",w3.font_failed);
   g_key_file_set_integer(file,group,"font_applied",w3.font_applied);
