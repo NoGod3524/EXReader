@@ -1,7 +1,7 @@
 name: D24 Apple maximum system type native UI
 on:
   push:
-    branches: [codex/dot-d21-d26-integration, codex/dot-d24-apple-large-type]
+    branches: [codex/reader-dot-txt-validation, codex/dot-d24-apple-large-type]
     paths-ignore: ['docs/apple-d24/**']
   workflow_dispatch:
 permissions:
@@ -46,7 +46,8 @@ jobs:
           fetch-depth: 0
       - name: Retain frozen SDK, old tests and unrelated product owners
         run: |
-          git diff --exit-code 2f215f5793a7344d22db350276ba9f8a07abe86f -- src include bindings cmake CMakeLists.txt tests/apple_host tests/reader_team24_apple tests/reader_a11y_apple tools
+          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 -- src include bindings cmake CMakeLists.txt
+          git diff --exit-code 2f215f5793a7344d22db350276ba9f8a07abe86f -- tests/apple_host tests/reader_team24_apple tests/reader_a11y_apple tools
           python3 -m compileall -q tests/apple_d24
       - name: Same-source installed SDK and retained product modules
         run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
