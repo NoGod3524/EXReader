@@ -46,8 +46,10 @@ def main():
             return sqlite3.connect(str(app.db) + '.product.sqlite')
         ui.picker(app, pdf)
         app.wait(lambda: len(rows()) == 1, timeout=60)
-        with catalog() as db:
-            sdk_before = db.execute('SELECT book_key,sdk_book_id FROM reader_local_books').fetchall()
+        def sdk_rows():
+            with catalog() as db:
+                return db.execute('SELECT book_key,sdk_book_id FROM reader_local_books').fetchall()
+        sdk_before = app.wait(lambda: sdk_rows() or None, timeout=60)
         assert len(sdk_before) == 1 and sdk_before[0][1] > 0, sdk_before
         sdk_line = rows()[0]
         ui.picker(app, fixture)
