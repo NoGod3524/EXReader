@@ -1,0 +1,107 @@
+name: D24 Apple maximum system type native UI
+on:
+  push:
+    branches: [codex/dot-d24-apple-large-type]
+    paths-ignore: ['docs/apple-d24/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  prior-failure-evidence:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-d24-native-iphone-40452725380-1
+          run-id: 40452725380
+          github-token: ${{ github.token }}
+          path: prior-evidence
+      - name: Preserve exact prior failure diagnostics (not current-source acceptance)
+        run: |
+          python3 - <<'PYLOG'
+          from pathlib import Path
+          for name in ('d24-native-ui.log', 'wave3-native-ui.log'):
+              print('PRIOR RUN 40452725380 SHA 71d7cb2a: ' + name)
+              lines = (Path('prior-evidence') / name).read_text(errors='replace').splitlines()
+              for i, line in enumerate(lines):
+                  if 'error:' in line or 'D24 page ' in line:
+                      print('\n'.join(lines[max(0, i-3):i+8]))
+          PYLOG
+  sdk:
+    runs-on: macos-15
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Retain frozen SDK, old tests and unrelated product owners
+        run: |
+          git diff --exit-code 2f215f5793a7344d22db350276ba9f8a07abe86f -- src include bindings cmake CMakeLists.txt tests/apple_host tests/reader_team24_apple tests/reader_a11y_apple tools
+          python3 -m compileall -q tests/apple_d24
+      - name: Same-source installed SDK and retained product modules
+        run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-d24-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/raw3-ios-sdk/${{ matrix.target }}/sdk/
+            build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
+            build/raw3-ios-sdk/${{ matrix.target }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+  native:
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apple-d24-sdk-*
+          path: sdk-input
+      - name: Xcode project dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Maximum system type, native UI, unchanged reading navigation search theme suites
+        run: python3 tests/apple_d24/run_ui.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-d24-native-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-d24/${{ matrix.platform }}/evidence/
+          if-no-files-found: error
+          retention-days: 30
+  authenticate:
+    needs: [sdk, native]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate exact-source native programs and original artifact ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_d24/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-d24-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-d24-summary/summary.json
+          if-no-files-found: error
+          retention-days: 30

@@ -78,6 +78,7 @@ struct HostRootView: View {
                 ReaderScreen(model: model)
             }
         }
+        .preference(key: HostReadingRouteKey.self, value: !selfTesting && !model.showLibrary && model.current != nil)
 #if EXR_APPLE_HOST_REVIEW
         .overlay(alignment: .topTrailing) {
             if model.reviewInitializationHoldEnabled {
@@ -476,6 +477,11 @@ struct LibraryScreen: View {
 struct ReaderScreen: View {
     @ObservedObject var model: HostReaderModel
     @State private var showSelection = false
+    @State private var toolsVisible = true
+    @Environment(\.hostChooseAccount) private var chooseAccount
+    @Environment(\.hostAccountChooserVisible) private var accountChooserVisible
+    @AccessibilityFocusState private var moreFocused: Bool
+    @AccessibilityFocusState private var toolsToggleFocused: Bool
     @State private var showNotes = false
     @State private var showSearch = false
     @State private var showNavigation = false
@@ -544,7 +550,21 @@ struct ReaderScreen: View {
                     .accessibilityIdentifier("reader.title")
                     .accessibilityAddTraits(.isHeader)
                 Spacer()
+                if compactTools {
+                    Button { toolsVisible.toggle() } label: {
+                        Image(systemName: toolsVisible ? "chevron.down" : "slider.horizontal.3")
+                            .font(.system(size: 20))
+                            .frame(width: 44, height: 44).contentShape(Rectangle())
+                    }
+                    .accessibilityLabel(toolsVisible ? "隐藏阅读工具" : "显示阅读工具")
+                    .accessibilityIdentifier("reader.tools.toggle")
+                    .accessibilityFocused($toolsToggleFocused)
+                }
                 Menu {
+                    if let chooseAccount {
+                        Button("书库账号") { chooseAccount() }
+                            .accessibilityIdentifier("account.choose")
+                    }
 #if EXR_APPLE_WAVE3
                     Button("文件、字体与同步详情") { model.refreshWave3(); showWave3 = true }
                         .accessibilityIdentifier("reader.features")
@@ -555,9 +575,10 @@ struct ReaderScreen: View {
                     Button("阅读主题") { showPageTheme = true }
                         .accessibilityIdentifier("reader.theme")
 #endif
-                } label: { Image(systemName: "ellipsis").frame(width: 28, height: 28) }
+                } label: { Image(systemName: "ellipsis").font(.system(size: 20)).frame(width: 44, height: 44) }
                     .accessibilityLabel(Text("更多阅读操作"))
                     .accessibilityIdentifier("reader.more").disabled(model.busy)
+                    .accessibilityFocused($moreFocused)
                 if model.busy {
                     if compactTools {
                         Image(systemName: "hourglass").frame(width: 20, height: 20)
@@ -572,6 +593,9 @@ struct ReaderScreen: View {
                         .accessibilityIdentifier("reader.cancel")
                 }
             }
+            // Header icons retain 44-point targets without automatic button
+            // chrome expanding to the maximum body-text control height.
+            .buttonStyle(.plain)
             .padding(.horizontal).padding(.top, 8)
 
             GeometryReader { geometry in
@@ -604,30 +628,42 @@ struct ReaderScreen: View {
 #endif
             .padding(.horizontal, 4)
 
-            HStack(spacing: 12) {
-                Text(model.location).font(.caption).lineLimit(1)
-                    .accessibilityIdentifier("reader.location")
-                Text(model.progress).font(.caption).lineLimit(1)
-                    .accessibilityIdentifier("reader.progress")
+            // One scrollable information row never competes vertically with
+            // the page at accessibility sizes. Full strings remain available
+            // to accessibility; text is not scaled down or truncated in state.
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    Text(model.location).font(.caption).lineLimit(1)
+                        .accessibilityIdentifier("reader.location")
+                    Text(model.progress).font(.caption).lineLimit(1)
+                        .accessibilityIdentifier("reader.progress")
 #if EXR_APPLE_HOST_REVIEW
-                Text("#\(model.stateHash)").font(.caption2).foregroundColor(.secondary)
-                    .accessibilityIdentifier("reader.state")
+                    Text("#\(model.stateHash)").font(.caption2).foregroundColor(.secondary)
+                        .accessibilityIdentifier("reader.state")
 #endif
-            }
+                    if compactTools {
+                        Text(model.statusText).font(.caption).lineLimit(1)
+                            .accessibilityIdentifier("reader.status")
+                    }
+                }.fixedSize(horizontal: true, vertical: false)
+            }.fixedSize(horizontal: false, vertical: true)
 
             if compactTools {
-                ScrollView(.horizontal) {
-                    HStack(spacing: 16) { annotationTools; pagingTools; fontTools }.padding(.horizontal, 8)
-                }.fixedSize(horizontal: false, vertical: true)
-                    .accessibilityIdentifier("reader.tools.scroll")
+                if toolsVisible {
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 16) { annotationTools; pagingTools; fontTools }
+                            .fixedSize(horizontal: true, vertical: false).padding(.horizontal, 8)
+                    }.fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("reader.tools.scroll")
+                }
             } else {
                 pagingTools
                 fontTools
                 annotationTools
+                Text(model.statusText).font(.caption).lineLimit(2)
+                    .accessibilityIdentifier("reader.status")
             }
 
-            Text(model.statusText).font(.caption).lineLimit(compactTools ? 1 : 2)
-                .accessibilityIdentifier("reader.status")
             if !model.errorText.isEmpty {
                 Text(model.errorText).font(.caption).foregroundColor(.red)
                     .accessibilityIdentifier("reader.error")
@@ -636,21 +672,23 @@ struct ReaderScreen: View {
         // A keyboard in a native sheet does not resize/repaginate the reader
         // underneath it or overwrite a completed search navigation status.
         .ignoresSafeArea(.keyboard)
-        .sheet(isPresented: $showSelection) {
+        .sheet(isPresented: $showSelection, onDismiss: { if compactTools { toolsToggleFocused = true } }) {
             SelectionSheet(model: model)
         }
-        .sheet(isPresented: $showNotes) {
+        .sheet(isPresented: $showNotes, onDismiss: { if compactTools { toolsToggleFocused = true } }) {
             NotesSheet(model: model)
         }
-        .sheet(isPresented: $showSearch) { HostSearchSheet(model: model) }
-        .sheet(isPresented: $showNavigation) { HostNavigationSheet(model: model) }
-        .sheet(isPresented: $showReadingRecords) { HostReadingRecordsSheet(model: model) }
+        .sheet(isPresented: $showSearch, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostSearchSheet(model: model) }
+        .sheet(isPresented: $showNavigation, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostNavigationSheet(model: model) }
+        .sheet(isPresented: $showReadingRecords, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostReadingRecordsSheet(model: model) }
 #if EXR_APPLE_WAVE3
-        .sheet(isPresented: $showWave3) { HostWave3Sheet(state: model.wave3, ownerBusy: model.busy, actions: model.wave3Actions) }
+        .sheet(isPresented: $showWave3, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostWave3Sheet(state: model.wave3, ownerBusy: model.busy, actions: model.wave3Actions) }
 #endif
 #if EXR_APPLE_PAGE_THEME
-        .sheet(isPresented: $showPageTheme) { HostPageThemeSheet(model: model) }
+        .sheet(isPresented: $showPageTheme, onDismiss: { if compactTools { toolsToggleFocused = true } }) { HostPageThemeSheet(model: model) }
 #endif
+        .onChange(of: accountChooserVisible) { visible in if !visible { moreFocused = true } }
+        .onChange(of: toolsVisible) { _ in toolsToggleFocused = true }
         .onDisappear { model.detach() }
         .onChange(of: model.location) { value in hostAnnounce(value) }
         .onChange(of: model.statusText) { value in if !model.busy { hostAnnounce(value) } }
