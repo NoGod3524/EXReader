@@ -170,3 +170,17 @@ to the previous 71/108; its API34 emulator scope is documented in
 Audit artifact `12774156023`, 12729 bytes, SHA-256
 `212448a451b3d3693ba77c3d5d7039e658230fd1c774852fca9fe7856cadbe83`,
 expires 2027-01-25T21:53:52Z. Unified-source Android validation remains separate.
+
+## 2026-10-27 Linux GTK annotation exchange
+
+[Actions audit 40600064302/1](https://github.com/NoGod3524/EXReader/actions/runs/40600064302)
+at source `17b90f128bef72b44225f4acf5b1df81b04c8f19` completed with
+`evidence_ok=true` and **73/108 (67.6%)**: foundation 12/12, host 61/84,
+final delivery 0/12. The historical October 25 cutoff remains 58/108 (53.7%).
+The added Linux host outcome is backed by the original same-run GTK UI report
+and authenticated artifact recorded in [linux-annotation-export.md](linux-annotation-export.md).
+
+Audit artifact `12779195101`, 13087 bytes, SHA-256
+`326a2f200e904460ae0abc4d094541908e85f441694c4a7629e879db0ff7fdcc`,
+expires 2027-01-25T23:08:52Z. The evidence-only documentation commit is not
+the audited source.
