@@ -164,7 +164,8 @@ def main():
         automation = Uia()
         assert automation.available, automation.error
         app.wait(lambda: len(rows(app)) == 2, timeout=180)
-        open_row(fixture.name)
+        app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=240)
+        app.wait_idle()
         restored = page_text(app, automation)
         assert '已按内容位置恢复' in app.status(), app.status()
         assert first_line(restored) == position_line, (first_line(restored), position_line)
@@ -184,7 +185,8 @@ def main():
         automation = Uia()
         assert automation.available, automation.error
         app.wait(lambda: len(rows(app)) == 3, timeout=180)
-        open_row(isolated.name)
+        app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=240)
+        app.wait_idle()
         assert 'Isolated Book 0000' in page_text(app, automation), page_text(app, automation)[:200]
         open_row(fixture.name)
         assert first_line(page_text(app, automation)) == position_line, page_text(app, automation)[:200]
