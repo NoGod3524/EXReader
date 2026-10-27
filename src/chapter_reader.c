@@ -548,9 +548,11 @@ static const char *txt_text(void *context,size_t offset,size_t *available) {
     if(txt_find_paragraph(v,mid,&start,&length,NULL,&e)!=EXR_OK) return NULL;
     if(start+length<=offset) lo=mid+1;else hi=mid;
   }
-  if(lo==v->count || txt_find_paragraph(v,lo,&start,&length,NULL,&e)!=EXR_OK) return NULL;
+  if(lo==v->count) { txt_failure(v,exr_fail(&e,EXR_FORMAT,"Missing TXT span"),&e);return NULL; }
+  if(txt_find_paragraph(v,lo,&start,&length,NULL,&e)!=EXR_OK) return NULL;
   if(offset<start && start-offset==1) { *available=1;return "\n"; }
-  if(offset<start || txt_prepare(v,2+2*lo,NULL,&e)!=EXR_OK) return NULL;
+  if(offset<start) { txt_failure(v,exr_fail(&e,EXR_FORMAT,"Invalid TXT gap"),&e);return NULL; }
+  if(txt_prepare(v,2+2*lo,NULL,&e)!=EXR_OK) return NULL;
   *available=length-(offset-start);return v->cache+(offset-start);
 }
 static const void *txt_style(void *context,size_t node) {
