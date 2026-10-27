@@ -1,15 +1,15 @@
 # Windows TXT 阅读位置：产品内容身份与规范化文本位置
 
-分支 `codex/windows-txt-progress`，起点 `a0c01289bdc230773bc12b06118f3bb0d3fe084c`
-（主协调者的有界 TXT 翻页复用提交）。本包只做“保存真实阅读位置并在重启后恢复”，
-不修改翻页实现，不改冻结 SDK、ABI、schema1 与既有证据。
+原始位置模块从有界 TXT 阅读路径出发；当前组合候选同时包含字号重排、
+小 TXT 兼容路径和经授权的新 SDK 候选。冻结版本和历史证据保持独立。
 
 ## 为什么不能用 SDK 书籍身份
 
-产品 TXT 原件没有 SDK 本机书号：`exr_library_import_unique` 明确拒绝 TXT，
-宿主走 `reader_original_import` 把不可变原件存入产品目录，书架行以
-`format:sha256` 为身份、`sdk_book_id` 为 0。因此进度不能用 `exr_library_progress`
-（需要 SDK 书号），也不能伪造一个。本包用：
+本包的大 TXT 路径使用产品原件，而非 SDK 本机书号：宿主走
+`reader_original_import` 把不可变原件存入产品目录，书架行以
+`format:sha256` 为身份、`sdk_book_id` 为 0。旧 SDK 的内存导入接口支持 TXT，
+但需要完整解析并受既有资源上限约束；本路径为大文件使用有界 pager。
+该路径的进度使用：
 
 - **产品内容身份** `txt:<原文字节 SHA-256>`（与产品目录同一身份，跨设备稳定，不含本机行号）；
 - **规范化文本位置**：TXT pager 自己给出的整篇投影 UTF-8 字节偏移（页首偏移），
@@ -57,11 +57,11 @@ wire 仍是既有阅读位置 v1 封装中的 **anchor_version 2 点选择器**
 - 强制写：关窗（`finish_close`）、切换书目、字号重排。写入被拒时关窗仍然完成，
   已保留记录不变（`txt_save_abandoned`），避免窗口关不掉。
 - 字号：TXT 走 `JOB_LAYOUT` 的新 pager（复制同一源句柄），按内容偏移重排并接受该页。
-- 只做位置：TXT 的搜索、注记、选择、跳末页仍按原样报告“尚未实现”。
+- 有界大 TXT 的搜索、注记、选择、跳末页仍报告“尚未实现”。
 
-其他宿主文件只加了两处最小改动：`page_for_offset` 允许 TXT 的 EOF/范围语义，
+原始位置模块的宿主接线包括：`page_for_offset` 允许 TXT 的 EOF/范围语义，
 `save_progress` 把 TXT 会话分流到产品写入器。翻页路径（`job_txt_go`、`txt_frame`）
-未改动。
+在原始位置模块中未改动；当前组合另包含翻页和重排修复。
 
 ## 验收（Actions，真实 Windows 宿主）
 
@@ -80,16 +80,24 @@ commands → reading-state → reading-commands → txt-progress 全部安装后
 - 位置写入按 32 KiB 内容位移节流，未到阈值且未触发强制写时崩溃会丢失该区间内的移动；
   正常关窗、切换书目、字号变化都强制写入。
 - 恢复不确定（核对不一致/旧记录/并发头）时会话内不再自动写入，避免用第一页覆盖旧记录。
-- 页面文本上限、1 MiB 修订上限、4096 份实体历史、96 MiB 导入上限沿用既有约束。
-- TXT 的书签、注记、搜索、文字选择、末页跳转/页内链接等仍未实现。
+- 页面文本上限、1 MiB 修订上限、4096 份实体历史沿用既有约束。
+- 有界大 TXT 的书签、注记、搜索、文字选择、末页跳转/页内链接等仍未实现。
 - 与主协调者翻页优化的合入：本包只改 `page_for_offset` 的两处判断和宿主会话字段，
   合入时需以对方 `job_txt_go`/`txt_frame` 为准，冲突点已隔离在
   `#ifdef EXR_READER_WINDOWS_TXT_PROGRESS` 内。
 
 ## 状态
 
-源码、模块、宿主接线、组件探针、宿主验收驱动与工作流均已就绪。云端证据尚未产生：
-当前 GitHub 凭据缺少 `workflow` 权限，任何推送都被仓库的 workflow 权限检查拒绝
-（原文：`Unable to determine if workflow can be created or updated due to timeout;
-'workflows' scope may be required.`），因此 Actions run/attempt、工件与逐项结果
-需要在授权后补齐，本文件与验收 JSON 不得在此之前标记为通过。
+Windows uses the existing SDK import and reading path for TXT files up to 16 MiB,
+preserving notes and reading records. Larger TXT originals use the bounded
+pager and product-content position described above.
+
+- Standalone source `f9c0270941f5bc26f16bfa26281f50cc2a6a29cb`:
+  [Actions 40539084634](https://github.com/NoGod3524/EXReader/actions/runs/40539084634)
+  passed its native Windows position checks and all four Windows/Linux module jobs.
+- Composed source `a7020b07b8515e0d4b8e2693522920e2ec78eb35`:
+  [Actions 40541383239](https://github.com/NoGod3524/EXReader/actions/runs/40541383239)
+  passed native TXT progress, retained compact UI and extracted native UI.
+- These results describe the exact sources named above. The current combined
+  source requires its own Actions acceptance. Physical devices, performance
+  targets and unsupported bounded-TXT features are not granted by these runs.

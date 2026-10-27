@@ -17,7 +17,7 @@ subprocess.run(['git','merge-base','--is-ancestor',BASE,sha],check=True)
 changed=git('diff','--name-only',BASE,sha).splitlines()
 subprocess.run(['git','merge-base','--is-ancestor','a7020b07b8515e0d4b8e2693522920e2ec78eb35',sha],check=True)
 integration_changes=git('diff','--name-only','a7020b07b8515e0d4b8e2693522920e2ec78eb35',sha).splitlines()
-assert all(p in ['.github/workflows/reader-d21-apple-receive.yml', '.github/workflows/reader-d22-android-receive.yml', '.github/workflows/reader-d23-relay.yml', '.github/workflows/reader-d24-apple-large-type.yml', '.github/workflows/reader-d25-real-formats.yml', '.github/workflows/reader-d26-accessibility.yml', 'tests/reader_d21_apple_receive/guard.py', 'tests/reader_android_receive_d22/guard.py', 'tests/reader_d25_real_formats/run.py', 'tests/reader_d26_accessibility/current_expectations.py', 'tests/reader_d26_accessibility/g13_current.py'] for p in integration_changes),integration_changes
+assert all(p in ['.github/workflows/reader-d21-apple-receive.yml', '.github/workflows/reader-d22-android-receive.yml', '.github/workflows/reader-d23-relay.yml', '.github/workflows/reader-d24-apple-large-type.yml', '.github/workflows/reader-d25-real-formats.yml', '.github/workflows/reader-d26-accessibility.yml', 'tests/reader_d21_apple_receive/guard.py', 'tests/reader_android_receive_d22/guard.py', 'tests/reader_d25_real_formats/run.py', 'tests/reader_d26_accessibility/current_expectations.py', 'tests/reader_d26_accessibility/g13_current.py', 'docs/READER-WINDOWS-TXT-PROGRESS.md'] for p in integration_changes),integration_changes
 with tempfile.TemporaryDirectory() as directory:
     subprocess.run(['git','worktree','add','--detach',directory,BASE],check=True)
     try:
