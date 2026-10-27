@@ -1,0 +1,72 @@
+name: Candidate v2 revision compatibility
+on:
+  push:
+    branches: [codex/sdk-bounded-txt-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  revisions:
+    name: product revisions (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the existing one-provider native product catalog
+        run: |
+          mkdir -p build/revision-logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "REV_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/revision-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/revision-product-stage" 2>&1 | tee build/revision-logs/product-configure.log
+          cmake --build build/revision-product --verbose 2>&1 | tee build/revision-logs/product-build.log
+          ctest --test-dir build/revision-product --output-on-failure --no-tests=error --timeout 180 --output-junit "$ws/build/revision-logs/product-tests.xml"
+          cmake --install build/revision-product 2>&1 | tee build/revision-logs/product-install.log
+      - name: Build and install revision module against the installed product package
+        run: |
+          cmake -S apps/reader/revisions -B build/revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$REV_WORKSPACE/build/revision-product-stage" -DCMAKE_INSTALL_PREFIX="$REV_WORKSPACE/build/revision-stage" 2>&1 | tee build/revision-logs/configure.log
+          cmake --build build/revisions --verbose 2>&1 | tee build/revision-logs/build.log
+          cmake --install build/revisions 2>&1 | tee build/revision-logs/install.log
+      - name: Compile independent C and C++ consumers from installed packages only
+        run: |
+          cmake -S tests/reader_revisions/consumer -B build/revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$REV_WORKSPACE/build/revision-stage;$REV_WORKSPACE/build/revision-product-stage" 2>&1 | tee build/revision-logs/consumer-configure.log
+          cmake --build build/revision-consumer --verbose 2>&1 | tee build/revision-logs/consumer-build.log
+      - name: Actual protocol, two-process exchange, crash recovery and refusal acceptance
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_revisions/check_protocol.py --consumer "build/revision-consumer/revision-consumer$exe" --c-consumer "build/revision-consumer/revision-c-consumer$exe" --product-prefix build/revision-product-stage --revision-prefix build/revision-stage --build-log build/revision-logs/consumer-build.log --link-map build/revision-consumer/revision-link.map --output build/revision-evidence
+      - name: Preserve source-bound installed packages and all original failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-revisions-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/revision-logs/
+            build/revision-product-stage/
+            build/revision-stage/
+            build/revision-consumer/revision-consumer*
+            build/revision-consumer/revision-c-consumer*
+            build/revision-consumer/revision-link.map
+            build/revision-evidence/
+            build/revision-product/CMakeCache.txt
+            build/revisions/CMakeCache.txt
+          if-no-files-found: error

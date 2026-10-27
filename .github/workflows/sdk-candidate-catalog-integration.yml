@@ -1,0 +1,36 @@
+name: Candidate catalog query integration
+on:
+  push:
+    branches: [codex/sdk-bounded-txt-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  shelf:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve candidate SDK and original catalog schema
+        shell: bash
+        run: |
+          git diff --exit-code e39bc1142bedda35bff6270464ed9ebcee8c31bb HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Set Windows compiler
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          cmd /c "`"$vs\VC\Auxiliary\Build\vcvars64.bat`" >nul && set" | ForEach-Object { if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 } }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and run existing catalog, shelf and organization tests
+        run: |
+          cmake -S tests/reader_catalog/shelf -B build/shelf-query -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/shelf-query --parallel 4
+          ctest --test-dir build/shelf-query --output-on-failure --no-tests=error --timeout 180

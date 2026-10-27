@@ -1,0 +1,40 @@
+name: Bounded TXT candidate Windows host baseline
+on:
+  push:
+    branches: [codex/sdk-bounded-txt-candidate, codex/windows-bounded-txt-host, codex/windows-bounded-txt-page-turn, codex/windows-txt-pager-reuse, codex/reader-integrated-bounded-txt]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  host-baseline:
+    runs-on: windows-2022
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Prepare and verify the native display for the unchanged UI checks
+        run: python tests/reader_native_owner_repairs/display.py
+      - name: Verify original handle lifetime on the large fixture
+        shell: bash
+        run: |
+          cmake -S apps/reader/store/native -B build/catalog -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/catalog --parallel 4
+          python tests/reader_catalog/original_import_actions.py
+      - name: Verify candidate bulk suite retains all original checks
+        run: python tests/sdk_bulk_v3/verify_parity.py
+      - name: Build installed candidate and exercise existing Windows host checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXR_HOST_TXT_RECOVERY: ${{ (github.ref_name == 'codex/windows-bounded-txt-host' || github.ref_name == 'codex/windows-bounded-txt-page-turn' || github.ref_name == 'codex/windows-txt-pager-reuse' || github.ref_name == 'codex/reader-integrated-bounded-txt') && '1' || '0' }}
+        run: python tests/reader_windows_raw3/host_build.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bounded-txt-windows-host-baseline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-raw3-host/
+            build/native-owner-preflight/display.json
+          if-no-files-found: warn

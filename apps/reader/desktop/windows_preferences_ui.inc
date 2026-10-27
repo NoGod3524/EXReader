@@ -400,6 +400,7 @@ static INT_PTR CALLBACK prefs_dialog_procedure(HWND dialog, UINT message, WPARAM
 }
 
 static void prefs_show(void) {
+  if(g.session.txt) { set_status(L"TXT 阅读设置尚未实现。");return; }
   union { DWORD alignment; unsigned char bytes[sizeof(DLGTEMPLATE) + 6]; } data;
   DLGTEMPLATE *template;
   HWND window;

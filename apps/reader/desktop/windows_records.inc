@@ -269,6 +269,7 @@ static LRESULT CALLBACK winrecords_procedure(HWND window,UINT message,WPARAM wpa
   return DefWindowProcW(window,message,wparam,lparam);
 }
 static void winrecords_show(void) {
+  if(g.session.txt) { set_status(L"TXT 目前仅支持第一页；此功能尚未实现。");return; }
   if(records.dialog) {SetForegroundWindow(records.dialog);return;}
   if(g.job||g.pending||g.closing||!g.session.active) return;
   WNDCLASSW type={0};type.lpfnWndProc=winrecords_procedure;type.hInstance=GetModuleHandleW(NULL);type.hCursor=LoadCursor(NULL,IDC_ARROW);

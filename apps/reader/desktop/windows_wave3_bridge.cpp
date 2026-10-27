@@ -40,7 +40,7 @@ extern "C" reader_sync_view_status w3_sync_capture(reader_session *session,const
   };
   if (!ReadFile(existing,header,sizeof(header),&bytes,nullptr) || bytes != sizeof(header) ||
       std::memcmp(header,"SQLite format 3",16) || big_endian(header + 68) != 1163416144u ||
-      big_endian(header + 60) != 1u) {
+      (big_endian(header + 60) < 1u || big_endian(header + 60) > 3u)) {
     CloseHandle(existing);
     if (error) {
       error->status = READER_SYNC_VIEW_REVISIONS;

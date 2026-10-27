@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(EXReader @EXR_SDK_VERSION@ EXACT CONFIG COMPONENTS core)
+find_dependency(EXReaderRevisions @EXR_REVISIONS_VERSION@ EXACT CONFIG)
+find_dependency(EXReaderReadingState @EXR_READER_FAMILY_VERSION@ EXACT CONFIG)
+find_dependency(EXReaderReadingCommands @EXR_READER_FAMILY_VERSION@ EXACT CONFIG)
+find_dependency(EXReaderCommands @EXR_READER_FAMILY_VERSION@ EXACT CONFIG)
+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderTxtProgressTargets.cmake")
