@@ -31,6 +31,9 @@ static void compare(const char *data,size_t size,exr_font *font) {
   }
   if(pages>3) {
     const exr_layout *x,*y;size_t na,nb;const exr_page *xa,*xb;
+    exr_pager_free(a);exr_pager_free(b);a=b=NULL;
+    if(exr_pager_create(doc,font,NULL,&a,&e)!=EXR_OK || exr_txt_pager_create_private(&source,font,NULL,&b,&e)!=EXR_OK) die("replay setup",&e);
+    if(exr_pager_get(a,pages-1,&x,&e)!=EXR_OK || exr_pager_get(b,pages-1,&y,&e)!=EXR_OK) die("replay forward",&e);
     if(exr_pager_get(a,1,&x,&e)!=EXR_OK || exr_pager_get(b,1,&y,&e)!=EXR_OK) die("replay",&e);
     xa=exr_layout_pages(x,&na);xb=exr_layout_pages(y,&nb);
     if(na!=nb || !na || xa[0].start!=xb[0].start || xa[0].end!=xb[0].end) die("replay mismatch",&e);
