@@ -50,6 +50,14 @@ EXR_API exr_status exr_txt_find_source(const exr_source *source,const char *quer
 EXR_API exr_status exr_txt_anchor_create_source(const exr_source *source,size_t start,size_t end,
   exr_anchor *anchor,exr_error *error);
 
+/* Resolve a captured selector against normalized TXT without constructing a
+   whole-document buffer. Ranking, ambiguity and empty-context boundary rules
+   follow exr_anchor_resolve_ex. Source bytes are fully validated even after a
+   match. The caller retains the immutable source and associates it with its
+   original identity. Scratch is bounded by the public selector limits. */
+EXR_API exr_status exr_txt_anchor_resolve_source(const exr_source *source,const exr_anchor *anchor,
+  exr_anchor_match *match,exr_error *error);
+
 /* Read document-subject XMP simple literals, Seq/Bag values and preferred Alt. */
 EXR_API exr_status exr_metadata_read_xmp(const void *data,size_t size,const exr_control *control,
   exr_metadata_entry **entries,size_t *count,exr_error *error);
