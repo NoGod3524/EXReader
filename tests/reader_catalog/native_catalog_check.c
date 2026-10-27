@@ -153,12 +153,12 @@ int main(int argc,char **argv) {
   CHECK(reader_catalog_close(&catalog,&error)==SQLITE_OK && catalog==NULL);
   CHECK(reader_catalog_open(main_path,&catalog,&error)==SQLITE_OK);
   sqlite3 *db=external(main_path);
-  CHECK(scalar(db,"PRAGMA application_id")==1163416144 && scalar(db,"PRAGMA user_version")==1);
+  CHECK(scalar(db,"PRAGMA application_id")==1163416144 && scalar(db,"PRAGMA user_version")==3);
   PASSED("migration_matches_source_and_reopens");
 
   reject_foreign(argv[1],1,"CREATE TABLE unrelated(value TEXT);INSERT INTO unrelated VALUES('keep');");
   reject_foreign(argv[1],2,"PRAGMA application_id=1163416131;PRAGMA user_version=7;CREATE TABLE books(source BLOB);");
-  reject_foreign(argv[1],3,"PRAGMA application_id=1163416144;PRAGMA user_version=2;");
+  reject_foreign(argv[1],3,"PRAGMA application_id=1163416144;PRAGMA user_version=4;");
   reject_foreign(argv[1],4,"CREATE TABLE sqliteXbooks(value TEXT);INSERT INTO sqliteXbooks VALUES('keep');");
   PASSED("foreign_identity_preserved");
 

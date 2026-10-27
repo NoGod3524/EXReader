@@ -1,0 +1,62 @@
+name: Bounded TXT projection candidate
+on:
+  push:
+    branches: [codex/sdk-bounded-txt-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  projection:
+    runs-on: windows-2022
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build and install SDK candidate
+        shell: bash
+        run: |
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+      - name: Run installed public API projection checks
+        shell: bash
+        run: |
+          cmake -S tests/bounded_txt_scan -B build/bounded-txt-scan -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/bounded-txt-scan
+          ctest --test-dir build/bounded-txt-scan --output-on-failure --no-tests=error
+      - name: Scan and paginate the original failure fixture and verify its bytes
+        shell: bash
+        run: |
+          set -o pipefail
+          python tests/bounded_txt_scan/large.py 2>&1 | tee build/bounded-txt-large.log
+      - name: Import and reopen the product-owned original with the bounded reader
+        shell: bash
+        run: |
+          cmake -S apps/reader/store/native -B build/catalog -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/catalog --parallel 4
+          python tests/reader_catalog/original_import_actions.py
+          original="build/original-import-fixture/crash3/4f45393b25817f506a51b56cc5d61599556e4dd5b0bd59aa00f7eb43cbfc0a86.txt"
+          build/bounded-txt-scan/bounded_txt_scan.exe "$original"
+          build/bounded-txt-scan/bounded_txt_large_pager.exe "$original" record build/imported-position.txt
+          build/bounded-txt-scan/bounded_txt_large_pager.exe "$original" replay build/imported-position.txt
+      - name: Build and check the product catalog identity bridge
+        shell: bash
+        run: |
+          cmake -S apps/reader/desktop -B build/txt-product-check -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DEXR_SDK_VERSION=3.41.0 -DEXR_READER_FIXTURES="$PWD/tests/fixtures"
+          cmake --build build/txt-product-check --target reader-desktop-catalog-check
+          ctest --test-dir build/txt-product-check -R '^desktop-public-sdk-catalog$' --output-on-failure --no-tests=error
+      - name: Inspect installed public candidate artifacts
+        shell: bash
+        run: |
+          test -f build/reading-library/stage/include/exr/formats.h
+          grep -q exr_txt_anchor_create_source build/reading-library/stage/include/exr/formats.h
+          find build/reading-library/stage -type f | sort > build/bounded-txt-installed-files.txt
+          cat build/bounded-txt-installed-files.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bounded-txt-installed-inventory
+          path: |
+            build/bounded-txt-installed-files.txt
+            build/bounded-txt-large.log
+          if-no-files-found: warn

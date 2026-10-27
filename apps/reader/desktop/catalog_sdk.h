@@ -8,6 +8,10 @@ extern "C" {
 #endif
 
 #define READER_BOOK_KEY_CAPACITY 72
+/* Hash a borrowed immutable source in 64 KiB blocks. Short reads are accepted;
+ * cancellation and read failure clear both outputs. Does not release source. */
+exr_status reader_catalog_source_identity(const exr_source *, const exr_control *,
+  char sha256[65], uint64_t *bytes, exr_error *);
 /* Verify source identity again before bootstrapping a legacy product revision.
  * Read-only, public SDK source only, 64 KiB blocks. Outputs clear on failure. */
 exr_status reader_catalog_sdk_original_identity(exr_library *, int64_t id,

@@ -449,3 +449,236 @@ exr_status exr_publication_pager_create(exr_publication *publication,size_t part
   r->pager=*out;peak(r);
   return EXR_OK;
 }
+
+/* Sparse paragraph checkpoints bound retained indexing independently of input
+   length. Checkpoints describe the position immediately before a paragraph. */
+#define TXT_POINTS 256
+#define TXT_SPANS 1024
+typedef struct { size_t paragraph; exr_txt_checkpoint cursor; } txt_point;
+typedef struct {
+  exr_source source, wrapped;
+  exr_control control;
+  exr_txt_cursor *cursor;
+  txt_point points[TXT_POINTS];
+  size_t point_count, stride, count, cached, cached_start, cached_size;
+  char *cache;
+  size_t span_base, span_count;
+  struct { size_t start, length; } spans[TXT_SPANS];
+  size_t cursor_paragraph, cursor_start, cursor_size;
+  const char *cursor_text;
+  void (*release_source)(void *);
+  exr_document document;
+  exr_document_view view;
+  exr_chapter chapter;
+  exr_style *styles;
+  exr_font_rule *fonts;
+  size_t font_count;
+  exr_error failure;
+} txt_view;
+static size_t txt_read(void *context,uint64_t offset,void *data,size_t size) {
+  txt_view *v=context;
+  return v->source.read_at(v->source.context,offset,data,size);
+}
+static int txt_cancel(void *context) {
+  txt_view *v=context;
+  return (v->source.control.cancelled && v->source.control.cancelled(v->source.control.context)) ||
+    (v->control.cancelled && v->control.cancelled(v->control.context));
+}
+static exr_status txt_failure(txt_view *v,exr_status status,const exr_error *error) {
+  if(status!=EXR_OK && !v->failure.code) {
+    if(error) v->failure=*error;
+    if(!v->failure.code) v->failure.code=status;
+  }
+  return status;
+}
+static exr_status txt_find_paragraph(txt_view *v,size_t paragraph,size_t *start,size_t *length,
+                                     const char **text,exr_error *e) {
+  size_t i,point=0;uint64_t offset;exr_status status;const char *line;size_t size;
+  if(v->failure.code) return exr_fail(e,v->failure.code,v->failure.message);
+  if(paragraph>=v->count) return txt_failure(v,exr_fail(e,EXR_FORMAT,"Invalid TXT paragraph"),e);
+  if(v->cursor_paragraph==paragraph) {
+    *start=v->cursor_start;*length=v->cursor_size;if(text) *text=v->cursor_text;
+    return EXR_OK;
+  }
+  for(i=1;i<v->point_count && v->points[i].paragraph<=paragraph;i++) point=i;
+  if(v->cursor_paragraph!=SIZE_MAX && v->cursor_paragraph<paragraph &&
+     v->cursor_paragraph+1>=v->points[point].paragraph) i=v->cursor_paragraph+1;
+  else {
+    status=exr_txt_cursor_restore(v->cursor,&v->points[point].cursor,e);
+    v->cursor_paragraph=SIZE_MAX;v->cursor_text=NULL;
+    if(status!=EXR_OK) return txt_failure(v,status,e);
+    i=v->points[point].paragraph;
+  }
+  for(;i<=paragraph;i++) {
+    status=exr_control_cancel(&v->wrapped.control,e);
+    if(status==EXR_OK) status=exr_txt_cursor_next(v->cursor,&offset,&line,&size,e);
+    if(status!=EXR_OK) return txt_failure(v,status,e);
+    if(!line || offset>SIZE_MAX) return txt_failure(v,exr_fail(e,EXR_FORMAT,"TXT source changed"),e);
+  }
+  v->cursor_paragraph=paragraph;v->cursor_start=(size_t)offset;v->cursor_size=size;v->cursor_text=line;
+  *start=(size_t)offset;*length=size;if(text) *text=line;
+  return EXR_OK;
+}
+/* A bounded block of spans prevents reverse tree walks from replaying each
+   paragraph from the sparse checkpoint independently. Text remains in the
+   cursor and is prepared separately. */
+static exr_status txt_node_span(txt_view *v,size_t paragraph,size_t *start,size_t *length,exr_error *e) {
+  size_t i,base=paragraph-(paragraph%TXT_SPANS),count=v->count-base;
+  exr_status status;
+  if(paragraph>=v->count) return txt_failure(v,exr_fail(e,EXR_FORMAT,"Invalid TXT paragraph"),e);
+  if(!v->span_count || paragraph<v->span_base || paragraph-v->span_base>=v->span_count) {
+    if(count>TXT_SPANS) count=TXT_SPANS;
+    v->span_count=0;
+    for(i=0;i<count;i++) {
+      status=txt_find_paragraph(v,base+i,&v->spans[i].start,&v->spans[i].length,NULL,e);
+      if(status!=EXR_OK) return status;
+    }
+    v->span_base=base;v->span_count=count;
+  }
+  i=paragraph-v->span_base;*start=v->spans[i].start;*length=v->spans[i].length;
+  return EXR_OK;
+}
+static exr_node txt_node(void *context,size_t node) {
+  txt_view *v=context;exr_node n={0};size_t paragraph,start,length;exr_error e={0};
+  n.parent=n.first_child=n.next_sibling=n.start=n.end=SIZE_MAX;n.chapter=SIZE_MAX;
+  if(node>=v->document.node_count) { txt_failure(v,exr_fail(&e,EXR_FORMAT,"Invalid TXT node"),&e);return n; }
+  if(node<2) {
+    n.kind=node ? EXR_NODE_CHAPTER : EXR_NODE_DOCUMENT;
+    n.parent=node ? 0 : SIZE_MAX;n.chapter=node ? 0 : SIZE_MAX;
+    n.first_child=node ? 2 : 1;n.start=0;n.end=v->document.size;return n;
+  }
+  paragraph=(node-2)/2;
+  if(txt_node_span(v,paragraph,&start,&length,&e)!=EXR_OK) return n;
+  n.chapter=0;n.start=start;n.end=start+length;
+  if(!(node&1)) {
+    n.kind=EXR_NODE_PARAGRAPH;n.name="p";n.parent=1;n.first_child=node+1;
+    if(paragraph+1<v->count) n.next_sibling=node+2;
+  } else {
+    n.kind=EXR_NODE_TEXT;n.parent=node-1;
+    if(v->cached==paragraph) n.text=v->cache;
+  }
+  return n;
+}
+static exr_status txt_prepare(void *context,size_t node,const exr_control *control,exr_error *e) {
+  txt_view *v=context;size_t paragraph,start,length;const char *line;char *copy;exr_status status;
+  if(control) v->control=*control;
+  if(v->failure.code) return exr_fail(e,v->failure.code,v->failure.message);
+  status=exr_control_cancel(&v->wrapped.control,e);if(status!=EXR_OK) return txt_failure(v,status,e);
+  if(node>=v->document.node_count) return txt_failure(v,exr_fail(e,EXR_FORMAT,"Invalid TXT node"),e);
+  if(node<2) return EXR_OK;
+  paragraph=(node-2)/2;if(v->cached==paragraph) return EXR_OK;
+  status=txt_find_paragraph(v,paragraph,&start,&length,&line,e);if(status!=EXR_OK) return status;
+  copy=exr_copy(line,length);if(!copy) return txt_failure(v,exr_fail(e,EXR_MEMORY,"TXT window allocation failed"),e);
+  free(v->cache);v->cache=copy;v->cached=paragraph;v->cached_start=start;v->cached_size=length;
+  return EXR_OK;
+}
+static const char *txt_text(void *context,size_t offset,size_t *available) {
+  txt_view *v=context;size_t lo=0,hi=v->count,start,length;exr_error e={0};
+  *available=0;if(offset==v->document.size) return "";
+  if(offset>v->document.size) { txt_failure(v,exr_fail(&e,EXR_FORMAT,"Invalid TXT offset"),&e);return NULL; }
+  if(v->cached!=SIZE_MAX && offset>=v->cached_start && offset-v->cached_start<v->cached_size) {
+    *available=v->cached_size-(offset-v->cached_start);return v->cache+(offset-v->cached_start);
+  }
+  while(lo<hi) {
+    size_t mid=lo+(hi-lo)/2;
+    if(txt_find_paragraph(v,mid,&start,&length,NULL,&e)!=EXR_OK) return NULL;
+    if(start+length<=offset) lo=mid+1;else hi=mid;
+  }
+  if(lo==v->count) { txt_failure(v,exr_fail(&e,EXR_FORMAT,"Missing TXT span"),&e);return NULL; }
+  if(txt_find_paragraph(v,lo,&start,&length,NULL,&e)!=EXR_OK) return NULL;
+  if(offset<start && start-offset==1) { *available=1;return "\n"; }
+  if(offset<start) { txt_failure(v,exr_fail(&e,EXR_FORMAT,"Invalid TXT gap"),&e);return NULL; }
+  if(txt_prepare(v,2+2*lo,NULL,&e)!=EXR_OK) return NULL;
+  *available=length-(offset-start);return v->cache+(offset-start);
+}
+static const void *txt_style(void *context,size_t node) {
+  txt_view *v=context;
+  return &v->styles[node<2 ? node : (node&1 ? 3 : 2)];
+}
+static exr_status txt_writing(void *context,size_t node,int mode,exr_error *e) {
+  txt_view *v=context;
+  if(node>=v->document.node_count) return exr_fail(e,EXR_FORMAT,"Invalid TXT style node");
+  /* The pager changes only the anonymous wrapper chain. A lone paragraph can
+     occur in that chain, so its shared style is safe only when count is one. */
+  if(node>=2 && v->count!=1) return exr_fail(e,EXR_UNSUPPORTED,"TXT writing mode requires a unique node");
+  v->styles[node<2 ? node : (node&1 ? 3 : 2)].writing_mode=(exr_writing_mode)mode;
+  return EXR_OK;
+}
+static exr_status txt_status(void *context,exr_error *e) {
+  txt_view *v=context;return v->failure.code ? exr_fail(e,v->failure.code,v->failure.message) : EXR_OK;
+}
+static void txt_free(void *context) {
+  txt_view *v=context;if(!v) return;
+  exr_txt_cursor_free(v->cursor);free(v->cache);exr_styles_free(v->styles,4);free(v->fonts);
+  if(v->release_source) v->release_source(v->source.context);
+  free(v);
+}
+static exr_status txt_pager_create(const exr_source *source,exr_font *font,
+  const exr_layout_config *config,void (*release_source)(void *),exr_pager **out,exr_error *e) {
+  txt_view *v;exr_document sample={0};exr_layout_config defaults=exr_layout_config_defaults();
+  exr_txt_checkpoint before;exr_status status;uint64_t offset;const char *line;size_t length,i;
+  if(out) *out=NULL;
+  if(!out || !source || !source->read_at || !font) return exr_fail(e,EXR_ARGUMENT,"Invalid TXT pager arguments");
+  if(!source->size) return exr_fail(e,EXR_ARGUMENT,"Invalid document bytes");
+  if(!config) config=&defaults;
+  /* Arbitrary selectors need per-node computed styles; this first adapter only
+     supports the resident default stylesheet. */
+  if(config->user_css && *config->user_css) return exr_fail(e,EXR_UNSUPPORTED,"TXT view does not support user CSS");
+  v=calloc(1,sizeof(*v));if(!v) return exr_fail(e,EXR_MEMORY,"TXT view allocation failed");
+  v->source=*source;v->wrapped=*source;v->wrapped.read_at=txt_read;v->wrapped.context=v;
+  v->wrapped.control=(exr_control){txt_cancel,NULL,v};v->control=config->control;v->stride=1;v->cached=SIZE_MAX;v->cursor_paragraph=SIZE_MAX;
+  status=exr_txt_cursor_create(&v->wrapped,&v->cursor,e);
+  if(status!=EXR_OK) goto fail;
+  for(;;) {
+    status=exr_txt_cursor_checkpoint(v->cursor,&before,e);if(status!=EXR_OK) goto fail;
+    status=exr_txt_cursor_next(v->cursor,&offset,&line,&length,e);if(status!=EXR_OK) goto fail;
+    if(!line) break;
+    if(offset>SIZE_MAX || length>SIZE_MAX-(size_t)offset || v->count>(SIZE_MAX-4)/2) {
+      status=exr_fail(e,EXR_LIMIT,"TXT view extent exceeds platform limits");goto fail;
+    }
+    if(v->count%v->stride==0) {
+      if(v->point_count==TXT_POINTS) {
+        for(i=0;i<TXT_POINTS/2;i++) v->points[i]=v->points[i*2];
+        v->point_count=TXT_POINTS/2;
+        if(v->stride>SIZE_MAX/2) { status=exr_fail(e,EXR_LIMIT,"TXT checkpoint stride overflow");goto fail; }
+        v->stride*=2;
+      }
+      if(v->count%v->stride==0) v->points[v->point_count++]=(txt_point){v->count,before};
+    }
+    v->count++;v->document.size=(size_t)offset+length;
+  }
+  if(!v->count) { status=exr_fail(e,EXR_FORMAT,"Document has no supported text content");goto fail; }
+  if(v->count) {
+    v->document.node_count=2+2*v->count;v->chapter=(exr_chapter){"","",1,SIZE_MAX,1,1};
+    v->document.chapters=&v->chapter;v->document.chapter_count=1;
+  }
+  v->document.format=EXR_TXT;
+  sample.format=EXR_TXT;
+  if(!exr_add_block(&sample,"sample",6,0) || exr_model_finish(&sample,e)!=EXR_OK) {
+    status=exr_fail(e,EXR_MEMORY,"TXT style sample allocation failed");goto sample_fail;
+  }
+  status=exr_compute_styles(&sample,config,&v->styles,&v->fonts,&v->font_count,e);
+sample_fail:
+  free(sample.text);free(sample.blocks);exr_model_free(&sample);
+  if(status!=EXR_OK) goto fail;
+  v->view=(exr_document_view){v,txt_node,txt_text,txt_style,txt_writing,v->fonts,v->font_count,txt_prepare,txt_status};
+  v->document.view=&v->view;
+  status=exr_pager_create(&v->document,font,config,out,e);
+  if(status!=EXR_OK) goto fail;
+  status=txt_status(v,e);
+  if(status!=EXR_OK) { exr_pager_free(*out);*out=NULL;goto fail; }
+  v->release_source=release_source;
+  exr_pager_adopt_view(*out,v,txt_free);return EXR_OK;
+fail:
+  txt_free(v);return status;
+}
+
+exr_status exr_txt_pager_create_private(const exr_source *source,exr_font *font,
+  const exr_layout_config *config,exr_pager **out,exr_error *e) {
+  return txt_pager_create(source,font,config,NULL,out,e);
+}
+exr_status exr_txt_pager_create(const exr_source *source,exr_font *font,
+  const exr_layout_config *config,exr_pager **out,exr_error *e) {
+  if(!source || !source->release) { if(out) *out=NULL; return exr_fail(e,EXR_ARGUMENT,"TXT source release callback required"); }
+  return txt_pager_create(source,font,config,source->release,out,e);
+}

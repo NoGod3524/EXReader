@@ -10,7 +10,6 @@ static exr_format product_format(const char *name) {
 }
 static int product_page_row(void *context,const reader_catalog_row *row) {
   product_page_copy *copy=context;host_job *job=copy->job;
-  if(!row->sdk_book_id) return 0;
   if(job_cancel_flag(job)) return 1;
   if(job->product_book_count>=50) { copy->failed=1;return 1; }
   size_t i=job->product_book_count++;
@@ -47,7 +46,7 @@ static exr_status product_group_page(host_job *job,reader_catalog *catalog,reade
     code=reader_catalog_membership_find(catalog,kind,job->product_group_id,job->product_anchor_key,
       product_group_anchor_copy,&anchor,&found,error);
     if(!code && found && anchor.active) {
-      found=0;code=reader_catalog_find(catalog,job->product_anchor_key,job->product_shelf_query,product_page_row,&copy,&found,error);
+      found=0;code=reader_catalog_local_find(catalog,job->product_anchor_key,job->product_shelf_query,product_page_row,&copy,&found,error);
       if(found && job->product_book_count && !copy.failed) {
         job->product_cursors[0].ordinal=anchor.ordinal;cursor.ordinal=anchor.ordinal;
         cursor.book_key=job->product_cursors[0].key;after=&cursor;
@@ -88,7 +87,7 @@ static exr_status product_page_query(host_job *job,reader_catalog *catalog,reade
   product_page_copy copy={job,0};int found=0,code=0,direction=job->product_shelf_direction<0 ? -1:1;
   const char *title=job->product_cursor_title,*key=job->product_cursor_key;
   if(job->product_anchor_key && job->product_anchor_key[0]) {
-    code=reader_catalog_find(catalog,job->product_anchor_key,job->product_shelf_query,product_page_row,&copy,&found,error);
+    code=reader_catalog_local_find(catalog,job->product_anchor_key,job->product_shelf_query,product_page_row,&copy,&found,error);
     if(found && job->product_book_count && !copy.failed) { title=job->product_cursors[0].sort_title;key=job->product_cursors[0].key; }
     else title=key=NULL;
     direction=1;job->product_shelf_direction=0;
@@ -125,6 +124,23 @@ static exr_status product_job_run(host_job *job) {
     snprintf(job->error.message,sizeof(job->error.message),"%s",product_error.message);
     return EXR_DATABASE;
   }
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+  if(job->kind==JOB_PRODUCT_REPAIR) {
+    char *root=NULL;
+    reader_original_status recovered=ROI_IO;
+    if(CreateDirectoryW(g.original_root,NULL) || GetLastError()==ERROR_ALREADY_EXISTS) {
+      root=host_utf8(g.original_root);
+      if(root) recovered=reader_original_recover(catalog,root);
+    }
+    free(root);
+    if(recovered!=ROI_OK) {
+      job->error.code=EXR_IO;
+      snprintf(job->error.message,sizeof(job->error.message),"Original recovery failed (%d)",(int)recovered);
+      reader_catalog_close(&catalog,&product_error);
+      return EXR_IO;
+    }
+  }
+#endif
   if(job->kind==JOB_PRODUCT_SHELF) status=product_page_query(job,catalog,&product_error);
   else if(job->kind==JOB_PRODUCT_DELETE) {
     /* A failed catalog write must not delete the original and leave a stale
@@ -162,4 +178,60 @@ static exr_status product_job_run(host_job *job) {
   }
   return status;
 }
+#ifdef EXR_READER_WINDOWS_TXT_RECOVERY
+/* Runs on the same serialized host worker as catalog repair. Hold the picked
+   file against writes and replacement while the original importer hashes and
+   copies it; the importer independently rejects links and reparse points. */
+static exr_status product_import_original(host_job *job) {
+  wchar_t directory[HOST_PATH], *base, *slash;
+  HANDLE source=INVALID_HANDLE_VALUE;
+  LARGE_INTEGER length;
+  char *root=NULL,*dir=NULL,*name=NULL,*catalog_path=NULL;
+  reader_catalog *catalog=NULL;
+  reader_catalog_error error={0};
+  reader_original_status result=ROI_IO, recovered=ROI_OK;
+  reader_original_callbacks callbacks={job,job_cancel_check,NULL};
+  exr_status status=EXR_IO;
+  job->original_import=1;
+  if(!g.product_ready || g.product_pending) {
+    copy_wstring(job->message,512,L"书目恢复尚未完成，暂不能导入 TXT。");
+    return EXR_IO;
+  }
+  copy_wstring(directory,HOST_PATH,job->path);
+  slash=wcsrchr(directory,L'\\');
+  if(!slash) slash=wcsrchr(directory,L'/');
+  if(!slash || slash<=directory+2 || !slash[1]) return EXR_ARGUMENT;
+  base=slash+1;
+  name=host_utf8(base);
+  *slash=0;
+  dir=host_utf8(directory);root=host_utf8(g.original_root);catalog_path=host_utf8(g.product_path);
+  if(!name || !dir || !root || !catalog_path) { status=EXR_MEMORY;goto done; }
+  source=CreateFileW(job->path,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+  if(source==INVALID_HANDLE_VALUE || !GetFileSizeEx(source,&length)) goto done;
+  if(length.QuadPart<=0) { status=EXR_FORMAT;goto done; }
+  if((uint64_t)length.QuadPart>HOST_IMPORT_LIMIT) { status=EXR_LIMIT;goto done; }
+  if(reader_catalog_open(catalog_path,&catalog,&error)) { status=EXR_DATABASE;goto done; }
+  result=reader_original_import(catalog,root,dir,name,name,"",name,&callbacks,job->product_key);
+  if(result!=ROI_OK && result!=ROI_DUPLICATE) {
+    /* The importer intentionally leaves staged work for owner recovery. */
+    recovered=reader_original_recover(catalog,root);
+    if(recovered!=ROI_OK) { job->original_recovery_failed=1;status=EXR_IO; }
+    else if(result==ROI_CANCELLED) status=EXR_CANCELLED;
+    else if(result==ROI_MEMORY) status=EXR_MEMORY;
+    else if(result==ROI_ARGUMENT) status=EXR_ARGUMENT;
+    else if(result==ROI_CATALOG) status=EXR_DATABASE;
+    else status=EXR_IO;
+  } else {
+    job->created=result==ROI_OK;
+    status=EXR_OK;
+  }
+done:
+  if(catalog && reader_catalog_close(&catalog,&error) && status==EXR_OK) {
+    job->original_recovery_failed=1;status=EXR_DATABASE;
+  }
+  if(source!=INVALID_HANDLE_VALUE) CloseHandle(source);
+  free(root);free(dir);free(name);free(catalog_path);
+  return status;
+}
+#endif
 #include "windows_shelf.inc"

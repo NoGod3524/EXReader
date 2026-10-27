@@ -41,6 +41,8 @@ typedef struct {
   int bidi_active;
 } checkpoint;
 struct exr_pager {
+  void *owned_view;
+  void (*view_release)(void *);
   void *owned_chapter;
   void (*chapter_release)(void *);
   exr_chapter_stats (*chapter_statistics)(const void *);
@@ -1489,9 +1491,9 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
   if (!p->local && !p->borrowed)
     for (i = 0; i < p->assets->image_count; i++)
       p->assets->images[i].evictable = *p->assets->images[i].refs == 1;
-  /* An independent chapter reader budgets one public page operation. Local
-     speculative/float/table cursors share this budget and never reset it. */
-  if(p->owned_chapter) p->assets->work_glyphs=p->assets->shape_work=0;
+  /* Bounded readers budget one public page operation. Local speculative,
+     float and table cursors share that budget and never reset it. */
+  if(p->owned_chapter || p->owned_view) p->assets->work_glyphs=p->assets->shape_work=0;
   l = calloc(1, sizeof(*l));
   if (!l)
     return exr_fail(e, EXR_MEMORY, "Page allocation failed");
@@ -1724,6 +1726,9 @@ exr_pager_stats exr_pager_statistics(const exr_pager *p) {
 }
 size_t exr_pager_position(const exr_pager *p) { return p ? p->position : 0; }
 size_t exr_pager_continuation_bytes(const exr_pager *p) { return context_memory_size(p); }
+void exr_pager_adopt_view(exr_pager *p,void *context,void (*release)(void *)) {
+  p->owned_view=context;p->view_release=release;
+}
 void exr_pager_adopt_chapter(exr_pager *p,void *chapter,void (*release)(void *),
                             exr_chapter_stats (*statistics)(const void *)) {
   p->owned_chapter=chapter;p->chapter_release=release;p->chapter_statistics=statistics;
@@ -1841,6 +1846,7 @@ void exr_pager_free(exr_pager *p) {
   }
   free((void *)p->config.user_css);
   if(p->chapter_release) p->chapter_release(p->owned_chapter);
+  if(p->view_release) p->view_release(p->owned_view);
   free(p);
 }
 static exr_status append_page(exr_layout *all, exr_layout *page, exr_error *e) {
