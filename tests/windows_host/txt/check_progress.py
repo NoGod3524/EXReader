@@ -154,6 +154,13 @@ def main():
         position_marker = '\n'.join([line for line in after_font.splitlines() if line.strip()][:2])
         assert position_marker
         record('font increase relayouts and keeps the content position', marker)
+        app.click('next'); app.wait_idle()
+        after_relayout_next = page_text(app, automation)
+        assert after_relayout_next and after_relayout_next != after_font
+        assert after_relayout_next in source_text
+        app.click('previous'); app.wait_idle()
+        assert page_text(app, automation) == after_font
+        record('page turns continue after TXT relayout')
 
         heads, count = progress_heads('txt:' + expected)
         assert count >= 1 and heads, (count, heads)

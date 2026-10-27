@@ -2531,6 +2531,7 @@ static exr_status job_layout(host_job *job) {
     if (status == EXR_OK) {
       job->candidate_pager = pager; pager = NULL;
       job->candidate_config = config;
+      job->candidate.txt_source = source;
       job->have_frame = 1; job->applied_page = page; job->session_swapped = 0;
       copy_wstring(job->message, 512, L"已按内容位置重新排版。");
     }
