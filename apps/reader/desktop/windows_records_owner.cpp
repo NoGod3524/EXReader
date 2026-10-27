@@ -83,7 +83,7 @@ int collect_book(void *opaque,const reader_catalog_row *row) {
  }catch(...){b.failed=1;}return 0;
 }
 book verified_book(store &s,const winrecords_request &r) {
- book b;int found=0;need(book_key(z(r.book_key))&&r.sdk_book>0,"Invalid verified original identity");
+ book b;int found=0;need(book_key(z(r.book_key))&&r.sdk_book>=0&&(r.sdk_book>0||!std::strncmp(r.book_key,"txt:",4)),"Invalid verified original identity");
  need(reader_catalog_metadata(s.catalog,r.book_key,collect_book,&b,&found,nullptr)==0&&found&&!b.failed&&
   !b.deleted&&b.key==r.book_key&&b.sdk==r.sdk_book&&b.bytes==r.source_bytes&&
   b.key==b.format+":"+b.key.substr(b.key.find(':')+1),"Original differs from current product mapping",EXR_DATABASE);
@@ -106,7 +106,7 @@ void shape(const fields &p) {
  need(book_key(p[KEY])&&hex(p[REVISION],32)&&hex(p[BOOTSTRAP],32),"Invalid original reading request");
  auto kind=number(p[KIND]),op=number(p[OPERATION]);
  need(kind>=READER_RC_PROGRESS&&kind<=READER_RC_NOTE_TEXT&&op<=READER_RC_RESTORE&&
-  number(p[SDK_BOOK])>0&&number(p[SOURCE_BYTES])>0&&number(p[FAVORITE])<=1,"Invalid request values");
+  (number(p[SDK_BOOK])>0||p[FORMAT]=="txt")&&number(p[SOURCE_BYTES])>0&&number(p[FAVORITE])<=1,"Invalid request values");
  need(kind==READER_RC_PROGRESS?p[ANNOTATION].empty():hex(p[ANNOTATION],32),"Invalid annotation identity");
  need(p[HEADS].size()<=32*32&&p[HEADS].size()%32==0&&p[BODY].size()<=65536&&
   !p[PARSER].empty()&&p[PARSER].size()<=64&&p[KEY].substr(0,p[KEY].find(':'))==p[FORMAT]&&
