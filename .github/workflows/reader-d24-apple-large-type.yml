@@ -46,8 +46,9 @@ jobs:
           fetch-depth: 0
       - name: Pin the SDK candidate and retain old tests and product owners
         run: |
-          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 -- src include bindings cmake CMakeLists.txt ':(exclude)src/formats.c' ':(exclude)include/exr/formats.h'
+          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 -- src include bindings cmake CMakeLists.txt ':(exclude)src/formats.c' ':(exclude)src/chapter_reader.c' ':(exclude)include/exr/formats.h'
           git diff --exit-code 9727ca1624ee59e561fd6aad7a22bb85a0fd2632 HEAD -- src/formats.c include/exr/formats.h
+          git diff --exit-code 642bb8efe124fdd301410f0b3e8e17292d6a5069 HEAD -- src/chapter_reader.c
           git diff --exit-code 2f215f5793a7344d22db350276ba9f8a07abe86f -- tests/apple_host tests/reader_team24_apple tests/reader_a11y_apple tools
           python3 -m compileall -q tests/apple_d24
       - name: Same-source installed SDK and retained product modules
