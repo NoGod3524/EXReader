@@ -76,6 +76,20 @@ public final class NavigationUiTest extends Instrumentation {
         }
         throw new AssertionError("Actual visible directory row missing: "+label);
     }
+    private void scrollDirectoryToBottom(){
+        long end=SystemClock.elapsedRealtime()+30000;boolean movedAtLeastOnce=false;
+        while(SystemClock.elapsedRealtime()<end){
+            try {
+                boolean[] moved={false};
+                if(act(node->description(node,"目录条目"),node->moved[0]=node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD))) {
+                    if(!moved[0]) { need(movedAtLeastOnce,"directory scroll reached a later viewport"); return; }
+                    movedAtLeastOnce=true;
+                }
+            } catch(IllegalStateException stale) {}
+            SystemClock.sleep(100);
+        }
+        throw new AssertionError("Directory did not reach its last visible rows");
+    }
     private void contains(String label){result(label,true);}
     private String searchStatus(){String[] value={null};act(node->description(node,"目录状态"),node->value[0]=text(node));return value[0];}
     private void status(String value){until(node->description(node,"目录状态")&&text(node).contains(value),null,"search status "+value,120000);}
@@ -196,7 +210,7 @@ public final class NavigationUiTest extends Instrumentation {
                 check("jni_boundaries_thread_and_verified_identity_are_enforced",()->{String state=snapshot(),before=stableFrame();boundaryChecks();unchanged(state,before);});
                 check("cancel_real_resolve_then_close_and_retry_is_clean",()->{open("nav");String state=snapshot(),before=stableFrame();directory();gate();firstTarget();arrived();long began=SystemClock.elapsedRealtime();click("取消读取");need(SystemClock.elapsedRealtime()-began<2000,"cancel action does not wait for SDK worker");status("已取消");unchanged(state,before);closePanel();directory();status("45 项");unchanged(state,before);closePanel();});
                 check("close_and_actual_rotation_cancel_stale_results",()->{String state=snapshot(),before=stableFrame();directory();gate();firstTarget();arrived();closePanel();unchanged(state,before);directory();gate();firstTarget();arrived();long oldView=frame().getLong("view");need(getUiAutomation().setRotation(android.app.UiAutomation.ROTATION_FREEZE_90),"actual device rotation requested");zero();long end=SystemClock.elapsedRealtime()+120000;while(SystemClock.elapsedRealtime()<end){try{JSONObject actual=frame();if(actual.optLong("book",-1)==book("nav")&&actual.optLong("view",oldView)!=oldView&&actual.has("bitmap_identity")&&act(node->id(node,"reader_view")&&node.isVisibleToUser(),null))break;}catch(AssertionError ignored){}SystemClock.sleep(80);}need(frame().getLong("view")!=oldView,"rotation created a fresh actual reader view");need(snapshot().equals(state),"rotation cancelled target without changing originals notes progress or product queues");capture("rotated-reader");long rotatedView=frame().getLong("view");getUiAutomation().setRotation(android.app.UiAutomation.ROTATION_FREEZE_0);long resetEnd=SystemClock.elapsedRealtime()+120000;while(SystemClock.elapsedRealtime()<resetEnd){try{JSONObject restored=frame();if(restored.optLong("book",-1)==book("nav")&&restored.optLong("view",rotatedView)!=rotatedView&&restored.has("bitmap_identity")&&act(node->id(node,"reader_view")&&node.isVisibleToUser(),null))break;}catch(AssertionError ignored){}SystemClock.sleep(80);}need(frame().getLong("view")!=rotatedView,"reset rotation restored a fresh actual reader");});
-                check("background_releases_snapshot_and_manual_reopen_starts_at_root",()->{String state=snapshot();directory();gate();firstTarget();arrived();getUiAutomation().executeShellCommand("input keyevent KEYCODE_HOME").close();zero();need(snapshot().equals(state),"background rejects stale result without stores changes");launch();waitFrame(book("nav"));directory();status("45 项 · 本批 32 项");closePanel();Files.write(new File(context.getFilesDir(),"navigation-reopen-baseline.json").toPath(),snapshot().getBytes(StandardCharsets.UTF_8));});
+                check("background_releases_snapshot_and_manual_reopen_starts_at_root",()->{String state=snapshot();directory();scrollDirectoryToBottom();gate();firstTarget();arrived();getUiAutomation().executeShellCommand("input keyevent KEYCODE_HOME").close();zero();need(snapshot().equals(state),"background rejects stale result without stores changes");launch();waitFrame(book("nav"));directory();status("45 项 · 本批 32 项");closePanel();Files.write(new File(context.getFilesDir(),"navigation-reopen-baseline.json").toPath(),snapshot().getBytes(StandardCharsets.UTF_8));});
             }else if(phase.equals("reopen")){
                 books=new JSONObject(new String(Files.readAllBytes(new File(context.getFilesDir(),"navigation-books.json").toPath()),StandardCharsets.UTF_8));
                 check("process_reopen_has_no_snapshot_or_stale_destination",()->{need(NativeNavigationProbe.live()==0,"no native navigation snapshot restored");String baseline=new String(Files.readAllBytes(new File(context.getFilesDir(),"navigation-reopen-baseline.json").toPath()),StandardCharsets.UTF_8);need(snapshot().equals(baseline),"all stores retained across actual process restart");launch();waitFrame(book("nav"));directory();status("45 项 · 本批 32 项");closePanel();});
