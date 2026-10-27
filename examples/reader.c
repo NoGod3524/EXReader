@@ -1774,18 +1774,6 @@ static exr_status txt_restore(host_session *session, const char *key, size_t *pa
 static exr_status job_txt_progress(host_job *job);
 #endif
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
-/* Worker-side breadcrumb: one line per step so a fault leaves its exact position
-   in the profile directory of the acceptance run. No product state is read. */
-static void txt_trace(const char *event, long long value) {
-  wchar_t path[HOST_PATH];
-  FILE *file;
-  if (!g.data_dir[0]) return;
-  swprintf(path, HOST_PATH, L"%ls\\txt-progress-trace.log", g.data_dir);
-  file = _wfopen(path, L"ab");
-  if (!file) return;
-  fprintf(file, "%s %lld\n", event, value);
-  fclose(file);
-}
 #endif
 static exr_status txt_frame(host_session *session, const exr_source *source, const exr_layout *layout,
                             size_t page, host_frame *frame, exr_error *error) {
@@ -1868,19 +1856,14 @@ static exr_status job_open_txt(host_job *job) {
      the captured projection window decide the page, never a stored page number. */
   {
     size_t target=0; wchar_t note[256]={0};
-    txt_trace("open_txt_before_restore", 0);
     status=txt_restore(&session,job->product_key,&target,note,256,&error);
-    txt_trace("open_txt_after_restore", (long long)status);
     if(status==EXR_OK) status=exr_pager_get(session.pager,target,&layout,&error);
-    txt_trace("open_txt_pager_get", (long long)status);
     if(status!=EXR_OK || !layout) { if(status==EXR_OK) status=EXR_FORMAT; goto done; }
     info=exr_layout_pages(layout,&count);
     if(!info || !count || info->start>info->end || info->end-info->start>HOST_PAGE_TEXT_LIMIT) { status=EXR_FORMAT;goto done; }
     status=txt_frame(&session,&source,layout,target,&job->frame,&error);
-    txt_trace("open_txt_frame", (long long)status);
     if(status!=EXR_OK) goto done;
     copy_wstring(job->message,512,note[0]?note:L"从第一页开始。");
-    txt_trace("open_txt_ready", (long long)target);
   }
 #else
   if(status==EXR_OK) status=exr_pager_get(session.pager,0,&layout,&error);
@@ -1897,7 +1880,6 @@ static exr_status job_open_txt(host_job *job) {
 
  done:
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
-  txt_trace("open_txt_done", (long long)status);
 #endif
   session_clear(&session);
   if(handle) CloseHandle((HANDLE)handle);
@@ -1944,18 +1926,7 @@ static exr_status job_txt_go(host_job *job) {
    product write and read runs on the serialized host worker; the UI only hands
    over copied values and never touches the revision store. */
 
-static void txt_trace_text(const char *event, const char *value) {
-  wchar_t path[HOST_PATH];
-  FILE *file;
-  if (!g.data_dir[0]) return;
-  swprintf(path, HOST_PATH, L"%ls\\txt-progress-trace.log", g.data_dir);
-  file = _wfopen(path, L"ab");
-  if (!file) return;
-  fprintf(file, "%s %s\n", event, value ? value : "");
-  fclose(file);
-}
 static int txt_store_open(reader_txt_progress **store, exr_error *error) {
-  txt_trace("store_open", 1);
   char *path = host_utf8(g.product_path);
   reader_txp_error detail = {0};
   reader_txp_status status;
@@ -1966,7 +1937,6 @@ static int txt_store_open(reader_txt_progress **store, exr_error *error) {
   if (!path) { if (error) error->code = EXR_MEMORY; return 0; }
   status = reader_txp_open(path, raw, store, &detail);
   free(path);
-  txt_trace("store_opened", (long long)status);
   if (status != READER_TXP_OK) {
     if (error) {
       error->code = status == READER_TXP_MEMORY ? EXR_MEMORY : EXR_DATABASE;
@@ -2105,19 +2075,11 @@ static exr_status txt_restore(host_session *session, const char *key, size_t *pa
     return EXR_OK;
   }
   status = reader_txp_load(store, key, &saved, &meta, &detail);
-  txt_trace("restore_load", (long long)status);
-  txt_trace("restore_close_enter", 0);
   reader_txp_close(&store);
-  txt_trace("restore_close_leave", 0);
   if (status != READER_TXP_OK) {
-    txt_trace("restore_note_enter", (long long)status);
-    txt_trace("restore_note_capacity", (long long)capacity);
     session->hold_progress = 1;
-    txt_trace("restore_note_flag", 1);
     copy_wstring(note, capacity, txt_status_note(status));
-    txt_trace("restore_note_copied", 1);
     if (error) memset(error, 0, sizeof(*error));
-    txt_trace("restore_note_return", 0);
     return EXR_OK;
   }
   if (saved.context_bytes) {
@@ -2492,34 +2454,23 @@ static exr_status job_layout(host_job *job) {
     txt_config.control.cancelled = host_cancel_check;
     txt_config.control.context = NULL;
     config = txt_config;
-    txt_trace("layout_txt_enter", (long long)job->txt_offset);
     if (!DuplicateHandle(GetCurrentProcess(), (HANDLE)source.context, GetCurrentProcess(),
                          &copy, 0, FALSE, DUPLICATE_SAME_ACCESS)) return EXR_IO;
     source.context = copy;
     candidate.config = config;
-    txt_trace("layout_txt_size", (long long)(source.size >> 20));
-    txt_trace("layout_txt_context", source.context ? 1 : 0);
-    txt_trace("layout_txt_fontsize", (long long)config.page.font_size);
     status = exr_txt_pager_create(&source, g.font, &config, &pager, &error);
-    txt_trace("layout_txt_pager", (long long)status);
-    if (status != EXR_OK) txt_trace_text("layout_txt_error", error.message);
     if (status != EXR_OK) { CloseHandle(copy); return status; }
     copy = NULL; /* the new pager owns this handle */
     if (status == EXR_OK) status = exr_pager_set_cache(pager, 2, 8 * 1024 * 1024, &error);
-    txt_trace("layout_txt_cache", (long long)status);
     if (status == EXR_OK) status = exr_pager_set_checkpoints(pager, 8, 4 * 1024 * 1024, 8, &error);
-    txt_trace("layout_txt_checkpoints", (long long)status);
     if (status == EXR_OK && job->txt_offset > (uint64_t)SIZE_MAX) status = EXR_ARGUMENT;
     candidate.pager = pager;
     candidate.txt_source = source;
     if (status == EXR_OK)
       status = page_for_offset(&candidate, (size_t)job->txt_offset, &control, &page, NULL, NULL, &error);
-    txt_trace("layout_txt_page", (long long)status);
     if (status == EXR_OK) status = exr_pager_get(pager, page, &laid, &error);
-    txt_trace("layout_txt_get", (long long)status);
     if (status == EXR_OK && !laid) status = EXR_FORMAT;
     if (status == EXR_OK) status = txt_frame(&candidate, &source, laid, page, &job->frame, &error);
-    txt_trace("layout_txt_result", (long long)status);
     if (status == EXR_OK) {
       job->candidate_pager = pager; pager = NULL;
       job->candidate_config = config;
@@ -3589,10 +3540,8 @@ static int save_txt_progress(void) {
   size_t take = g.frame.text_bytes;
   const int force = g.txt_force_save;
   g.txt_force_save = 0;
-  txt_trace("save_enter", (long long)offset);
   if (!g.session.txt_key[0] || g.txt_save_abandoned) return 1;
   if (g.session.hold_progress || g.frame.hold_progress) return 1;
-  txt_trace("save_state", (long long)(g.txt_saved_valid ? 1 : 0));
   if (!force && g.txt_saved_valid && !strcmp(g.txt_saved_key, g.session.txt_key)) {
     const uint64_t moved = offset > g.txt_saved_offset ? offset - g.txt_saved_offset : g.txt_saved_offset - offset;
     if (moved < HOST_TXT_SAVE_BYTES) return 1;
@@ -3745,8 +3694,6 @@ static void change_font(int delta) {
      from the same immutable source and the page that owns the current offset is
      accepted, so a different font size lands on the same text. */
   if (g.session.txt) {
-    txt_trace("font_enter", (long long)delta);
-    if (g.job || g.pending) { txt_trace("font_busy", 1); return; }
     next = g.font_percent + delta;
     if (next < HOST_FONT_MIN) { set_statusf(L"字号已到下限（%d%%）。", HOST_FONT_MIN); return; }
     if (next > HOST_FONT_MAX) { set_statusf(L"字号已到上限（%d%%）。", HOST_FONT_MAX); return; }
@@ -3755,7 +3702,6 @@ static void change_font(int delta) {
     job->font_percent = next;
     job->txt_offset = (uint64_t)g.frame.range_start;
     g.txt_force_save = 1;
-    txt_trace("font_job", (long long)next);
     job_submit(job);
     return;
   }
