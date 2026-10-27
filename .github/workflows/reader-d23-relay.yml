@@ -26,7 +26,7 @@ jobs:
           if ($LASTEXITCODE) { throw 'product paths changed' }
           git diff --exit-code 2e4b3900fb18b0203b7e4a82e3a77e84218b3936 "$env:GITHUB_SHA" -- apps/reader/desktop/windows_search.inc apps/reader/desktop/windows_search_types.h apps/reader/desktop/windows_txt_search.inc
           if ($LASTEXITCODE) { throw 'Windows TXT search differs from the reviewed source' }
-          git diff --exit-code 408a620823ba2890ca3699991e9ac4f3016cc4e2 "$env:GITHUB_SHA" -- examples/reader.c apps/reader/desktop/windows_wave3.inc apps/reader/original-export/include/reader_original_export.h apps/reader/original-export/src/original_export.cpp
+          git diff --exit-code 7088178710a4b9449366373f61d591e35d71dae7 "$env:GITHUB_SHA" -- examples/reader.c apps/reader/desktop/windows_wave3.inc apps/reader/original-export/include/reader_original_export.h apps/reader/original-export/src/original_export.cpp
           if ($LASTEXITCODE) { throw 'Windows mixed original export differs from the reviewed source' }
           python -m py_compile tests/reader_d23_relay/relay.py tests/reader_d23_relay/windows.py tests/reader_d23_relay/gtk.py
           if ($LASTEXITCODE) { throw 'test syntax failed' }
