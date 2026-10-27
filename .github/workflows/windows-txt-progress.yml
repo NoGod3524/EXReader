@@ -1,0 +1,90 @@
+name: Windows TXT reading position
+
+on:
+  push:
+    branches: [codex/windows-txt-progress]
+    paths:
+      - 'apps/reader/txt-progress/**'
+      - 'apps/reader/windows-account/**'
+      - 'tests/reader_txt_progress/**'
+      - 'tests/windows_host/txt/**'
+      - 'examples/reader.c'
+      - '.github/workflows/windows-txt-progress.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-txt-progress-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  component:
+    name: TXT position module ${{ matrix.os }} ${{ matrix.family }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04]
+        family: [legacy, raw]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Require this exact source
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Build, install and probe the module
+        shell: bash
+        run: |
+          if [ "${{ matrix.family }}" = "raw" ]; then
+            python tests/reader_txt_progress/build.py --raw
+          else
+            python tests/reader_txt_progress/build.py
+          fi
+      - name: Upload module evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: txt-progress-${{ matrix.os }}-${{ matrix.family }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/txt-progress/evidence-${{ matrix.family }}/
+            build/txt-progress/probe-report-${{ matrix.family }}.json
+            build/txt-progress/logs/
+          if-no-files-found: warn
+
+  host:
+    name: Real Windows host TXT position acceptance
+    runs-on: windows-2022
+    timeout-minutes: 180
+    env:
+      EXR_HOST_TXT_PROGRESS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Require this exact source
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Prepare the native display used by the unchanged UI checks
+        run: python tests/reader_native_owner_repairs/display.py
+      - name: Build the installed host and run the native TXT position acceptance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_windows_raw3/host_build.py
+      - name: Upload host evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: txt-progress-host-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-raw3-host/legacy-txt-progress/
+            build/windows-raw3-host/raw-txt-progress/
+            build/windows-raw3-host/logs/
+            build/native-owner-preflight/display.json
+          if-no-files-found: warn
