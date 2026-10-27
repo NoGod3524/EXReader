@@ -101,21 +101,27 @@ final class FeaturesUITests: XCTestCase {
         }
         XCTAssertTrue(wait { !self.e("features.share.native").exists && self.e("features.close").isHittable })
 #else
-        // Menu-bar menus remain in the accessibility tree even when closed.
-        // Require an on-screen, hittable menu before trying to dismiss the picker.
+        // NSSharingServicePicker is exposed as a popover, not an AX menu.
+        // Match the exported file preview so unrelated popovers cannot satisfy this check.
+        let filePrefix = String(file.prefix(16))
         let pickerVisible = {
-            self.app.menus.allElementsBoundByIndex.contains { menu in
-                menu.frame.width > 0 && menu.frame.height > 0 && menu.isHittable
+            self.app.popovers.allElementsBoundByIndex.contains { popover in
+                guard popover.frame.width > 0 && popover.frame.height > 0 else { return false }
+                return popover.staticTexts.allElementsBoundByIndex.contains { item in
+                    guard let snapshot = try? item.snapshot() else { return false }
+                    return snapshot.label.hasPrefix(filePrefix) ||
+                        ((snapshot.value as? String) ?? "").hasPrefix(filePrefix)
+                } && popover.buttons.count > 0
             }
         }
         XCTAssertTrue(wait { pickerVisible() },
-                      "Native sharing menu did not appear: \(app.debugDescription)")
+                      "Native sharing picker did not appear: \(app.debugDescription)")
         mark("native-sharing-picker-presented")
         app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
         XCTAssertTrue(wait {
             !pickerVisible() &&
             self.e("features.close").isEnabled && self.e("features.close").isHittable
-        }, "Native sharing menu did not close or the feature panel remained unavailable: \(app.debugDescription)")
+        }, "Native sharing picker did not close or the feature panel remained unavailable: \(app.debugDescription)")
         mark("native-sharing-picker-dismissed")
 #endif
         tap("features.original.locked"); status("原件导出未完成")

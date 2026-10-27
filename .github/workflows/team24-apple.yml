@@ -1,7 +1,7 @@
 name: Scoped macOS native sharing probe
 on:
   push:
-    branches: [codex/macos-sharing-probe]
+    branches: [codex/macos-sharing-404352-investigate]
 permissions:
   contents: read
   actions: read
