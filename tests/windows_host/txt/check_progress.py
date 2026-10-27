@@ -144,6 +144,26 @@ def main():
         parents = {parent for _, body, _ in found for parent in json.loads(body)['parents']}
         return {row[0]: row[2] for row in found if row[0] not in parents}, len(found)
 
+    def observe_search_restore(stage, include_progress=True):
+        # Evidence only: keep the existing driver order and assertions intact.
+        text = page_text(app, automation)
+        read_font = C.WinDLL('kernel32', use_last_error=True).GetPrivateProfileIntW
+        read_font.argtypes = [C.c_wchar_p, C.c_wchar_p, C.c_int, C.c_wchar_p]
+        read_font.restype = C.c_uint
+        item = dict(stage=stage, page_label=ui.P.text(ui.U.GetDlgItem(app.window, 124)),
+                    font_percent=read_font('Host', 'FontPercent', 0, str(app.profile / 'host.ini')),
+                    page_text_sha256=hashlib.sha256(text.encode('utf-8')).hexdigest(),
+                    page_text_chars=len(text), page_start=text[:300])
+        if include_progress:
+            with sqlite3.connect(product_db, timeout=20) as db:
+                found = db.execute('SELECT revision_id, body_json, body_sha256 FROM reader_revisions '
+                                   "WHERE entity_kind='progress' AND entity_key=?", ('txt:' + expected,)).fetchall()
+            parents = {parent for _, body, _ in found for parent in json.loads(body)['parents']}
+            item['revision_count'] = len(found)
+            item['heads'] = [dict(revision_id=rid, body=json.loads(body), body_sha256=sha)
+                             for rid, body, sha in found if rid not in parents]
+        report.setdefault('search_restore_observations', []).append(item)
+
     def select_row(fragment):
         found = rows(app)
         index = [n for n, line in enumerate(found) if fragment in line]
@@ -399,6 +419,7 @@ def main():
         app.wait_idle()
         assert 'line 0100' in page_text(app, automation), page_text(app, automation)[:200]
         search_heads, search_count = progress_heads('txt:' + expected)
+        observe_search_restore('before_locked_relayout')
         lock = sqlite3.connect(str(app.db) + '.product.sqlite', isolation_level=None, timeout=0.2)
         lock.execute('PRAGMA busy_timeout=200')
         locked = False
@@ -414,10 +435,15 @@ def main():
         app.wait_idle()
         app.wait(lambda: '\u9605\u8bfb\u4f4d\u7f6e\u672a\u4fdd\u5b58' in app.status(), timeout=120)
         after_locked_relayout = page_text(app, automation)
+        observe_search_restore('after_locked_relayout', include_progress=False)
         close_cleanly(app); app = None
         lock.execute('ROLLBACK')
         lock.close()
         assert progress_heads('txt:' + expected) == (search_heads, search_count)
+        report['search_refused_write_progress'] = dict(
+            before_heads=search_heads, before_count=search_count,
+            after_heads=progress_heads('txt:' + expected)[0],
+            after_count=progress_heads('txt:' + expected)[1])
         app = ui.P.App(exe, font, profile, existing=True)
         app.wait_idle()
         automation = Uia()
@@ -425,6 +451,7 @@ def main():
         app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=240)
         app.wait_idle()
         restored_after_search = page_text(app, automation)
+        observe_search_restore('after_same_font_restart')
         assert restored_after_search == after_locked_relayout, (after_locked_relayout, restored_after_search)
         record('search position survives relayout and a refused save at the same font')
 
