@@ -60,7 +60,8 @@ int main(void) {
   static const char utf16[]={ (char)0xff,(char)0xfe,'A',0,'\r',0,'\n',0,0x3d,(char)0xd8,0,(char)0xde };
   char *large;size_t i,at=0;exr_font *font=NULL;exr_error e={0};
   if(exr_font_open("C:/Windows/Fonts/arial.ttf",&font,&e)!=EXR_OK) die("font",&e);
-  errors(font);compare(text,sizeof(text)-1,font);compare(utf16,sizeof(utf16),font);compare("",0,font);
+  errors(font);compare(text,sizeof(text)-1,font);compare(utf16,sizeof(utf16),font);compare(" 
+	",3,font);
   large=malloc(200000);if(!large) return 1;
   for(i=0;i<1800;i++) at+=(size_t)sprintf(large+at,"Paragraph %zu: stable positions and continuous pagination across the source.\n",i);
   compare(large,at,font);free(large);exr_font_free(font);return 0;
