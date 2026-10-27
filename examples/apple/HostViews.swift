@@ -322,7 +322,7 @@ struct LibraryScreen: View {
                         ForEach(shelf.rows) { book in
                             Button {
                                 shelf.choose(book)
-                                model.openBook(id: book.sdkID)
+                                model.openShelfBook(book)
                             } label: {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 3) {
@@ -331,7 +331,7 @@ struct LibraryScreen: View {
                                             .font(.caption).foregroundColor(.secondary)
                                     }
                                     Spacer()
-                                    Image(systemName: "chevron.right").foregroundColor(.secondary)
+                                    Image(systemName: book.sdkID > 0 ? "chevron.right" : "icloud.and.arrow.down").foregroundColor(.secondary)
                                 }
                                 .padding(12)
                                 .background(Color.secondary.opacity(shelf.selected == book.id ? 0.18 : 0.08))
@@ -339,7 +339,7 @@ struct LibraryScreen: View {
                             }
                             .buttonStyle(.plain)
                             .disabled(model.busy)
-                            .accessibilityIdentifier("library.book.\(book.sdkID - 1)")
+                            .accessibilityIdentifier(book.sdkID > 0 ? "library.book.\(book.sdkID - 1)" : "library.cloud.\(book.id)")
                             .accessibilityLabel(Text("\(book.title)，\(book.author)，\(book.format.uppercased())"))
                             .id(book.id)
                             .padding(.horizontal, 8)
@@ -379,6 +379,15 @@ struct LibraryScreen: View {
             }
             if let account = model.accountSession, !compactLibrary {
                 HostSyncControls(session: account, preparing: model.syncPreparing) { model.synchronizeAccount() }
+            }
+
+            if model.accountSession != nil {
+                if !model.receiveMessage.isEmpty {
+                    Text(model.receiveMessage).font(.caption).accessibilityIdentifier("account.receive.state")
+                }
+                if model.syncPreparing {
+                    Button("取消接收准备") { model.cancelReceive() }.accessibilityIdentifier("account.receive.cancel")
+                }
             }
 
             if model.showsTestFixtures || !compactLibrary {
@@ -443,6 +452,7 @@ struct LibraryScreen: View {
         // Book publication is a commit signal even when a fast busy cycle is
         // coalesced into one SwiftUI frame.
         .onReceive(model.$books) { _ in shelf.refresh() }
+        .onReceive(model.$receivedShelfRevision) { _ in shelf.refresh() }
         .onChange(of: model.busy) { value in
 #if EXR_APPLE_HOST_REVIEW
             model.observeReviewLibraryBusy(value)
