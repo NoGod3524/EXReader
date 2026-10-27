@@ -1,0 +1,61 @@
+name: Verify merged GTK retained evidence
+on:
+  push:
+    branches: [codex/gtk-merge-proof]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate and inspect original GTK reports and program
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, sys, zipfile
+          sys.path.insert(0, 'tools')
+          from check_parallel_integration import fetch, download_artifact_zip
+          source = '1c42ddf6fe7e57f6bd0ac45f1ed78717bd4f3092'
+          run_id, artifact, size = 40427833492, 12701320987, 51813861
+          digest = '4e18abcf326f5be61db4a4cc7c638503b088405c8c97855b2c780ed1f524cf35'
+          run = fetch(f'actions/runs/{run_id}')
+          assert run['head_sha'] == source and run['run_attempt'] == 1
+          assert run['status'] == 'completed' and run['conclusion'] == 'success'
+          item = fetch(f'actions/artifacts/{artifact}')
+          assert item['workflow_run']['id'] == run_id and item['workflow_run']['head_sha'] == source
+          assert not item['expired'] and item['size_in_bytes'] == size and item['digest'] == 'sha256:' + digest
+          raw = download_artifact_zip(artifact)
+          assert len(raw) == size and hashlib.sha256(raw).hexdigest() == digest
+          with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              names = archive.namelist()
+              assert len(names) == len(set(names))
+              def data(suffix):
+                  found = [name for name in names if name.endswith(suffix.lstrip('/'))]
+                  assert len(found) == 1, (suffix, found)
+                  return archive.read(found[0])
+              identity = json.loads(data('/gtk-raw-wave3/retained-identity.json'))
+              binary = hashlib.sha256(data('/retained-host/gtk-host/exreader-linux')).hexdigest()
+              packaged = hashlib.sha256(data('/retained-package/EXReader-Linux/bin/exreader-linux')).hexdigest()
+              assert identity['source'] == source and identity['binary_sha256'] == binary == packaged == identity['package_sha256']
+              nav = json.loads(data('/gtk-navigation-ui/result.json'))
+              batch = json.loads(data('/gtk-batch-ui/report.json'))
+              for report in (nav, batch):
+                  assert report['source_sha'] == source and report['run_id'] == str(run_id) and report['attempt'] == '1'
+                  assert report['program_sha256'] == binary
+              assert nav['navigation_scope_passed'] and nav['count'] == nav['passed'] == 29 and nav['failed'] == 0
+              assert len(nav['checks']) == 29 and all(row['pass'] is True for row in nav['checks'])
+              assert batch['batch_import_scope_passed'] and batch['checks_total'] == 27 and batch['checks_failed'] == 0
+              assert len(batch['checks']) == 27 and all(row['passed'] is True for row in batch['checks'])
+              nav_backend = json.loads(data('/gtk-navigation-backend/checks.log'))
+              assert nav_backend['accepted'] is True and nav_backend['checks'] == 58
+              assert b'GTK_BATCH_BACKEND checks=684 all passed' in data('/gtk-batch-backend/checks.log')
+              assert data('/gtk-batch-owner-faults/checks.log')
+              print(json.dumps({'source': source, 'run': run_id, 'artifact': artifact,
+                    'artifact_sha256': digest, 'program_sha256': binary,
+                    'navigation_ui': 29, 'batch_ui': 27, 'navigation_backend': 58,
+                    'batch_backend': 684, 'complete_product': False}))
+          PY
