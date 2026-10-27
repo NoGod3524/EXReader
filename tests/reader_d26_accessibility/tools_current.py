@@ -162,13 +162,22 @@ def main():
             except TimeoutError:
                 raise AssertionError({'expected_location': str(path), 'actual_location': location_text(),
                                       'focused': [dict(name=bus.name(n), role=bus.role(n)) for n in bus.focused_all(app)]})
-            # SELECT_FOLDER can navigate on its first explicit response and
-            # accept on the second. Use only visible native response controls;
-            # final exported.parent and exact bytes prove the chosen directory.
+            # Enter resolves the typed folder through the chooser itself. If
+            # SELECT_FOLDER navigates rather than closes, reach its real response
+            # button with Tab and press Space; no stale pointer coordinates.
+            host.key('Return')
             for response in range(2):
-                if not nodes(name, {'file chooser'}):
-                    return
-                click(accept, {'push button'})
+                for _ in range(64):
+                    if not nodes(name, {'file chooser'}):
+                        return
+                    buttons = [node for node in nodes(accept, {'push button'})
+                               if bus.is_ancestor(dialog, node)]
+                    if len(buttons) == 1 and any(node == buttons[0] for node in bus.focused_all(app)):
+                        break
+                    host.key('Tab')
+                else:
+                    raise AssertionError('native Export here button is not keyboard reachable')
+                host.key('space')
                 deadline = time.monotonic() + 5
                 while time.monotonic() < deadline:
                     if not nodes(name, {'file chooser'}):
@@ -193,6 +202,11 @@ def main():
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 1:
                 return
             time.sleep(.1)
+        print(json.dumps({'chooser_failure': name, 'requested_path': str(path),
+              'controls': [dict(role=bus.role(n), name=bus.name(n), states=bus.states(n),
+                                text=bus.accessible_text(n), box=bus.extents(n))
+                           for n in bus.walk(dialog) if bus.states(n).get('showing')
+                           and bus.role(n) in ('text', 'label', 'push button')]}), flush=True)
         raise TimeoutError('native file chooser did not close')
 
     def import_book():

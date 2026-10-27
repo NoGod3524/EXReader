@@ -92,8 +92,8 @@ Mapping of corrected observations, without reducing behavior requirements:
 - Current account labels are required and Receive books is additionally required.
 - Export retains the entire old five-tool script and byte/directory assertions;
   its full target path is entered through the real focused Ctrl+L field,
-  followed by the explicit visible Export here response (twice only if GTK
-  navigates on the first response rather than accepting). The output must still match the exact chosen directory and bytes.
+  followed by Return, then Tab to the actual Export here button and Space if
+  GTK navigates rather than accepts; no stale pointer coordinate is used. The output must still match the exact chosen directory and bytes.
   The attempted AT-SPI scroll_to route failed explicitly in run40457260445
   (native scroll refused: work) and is preserved, not silently swallowed.
 - Original audit/tool outcomes run separately and retain their raw exit status,
@@ -110,3 +110,7 @@ in Actions before the retained suite, and aggregate requires all three jobs.
 Run40460915375 current G13 passed 32/32; its Export input exact-string check
 timed out, and frozen navigation (active-scan sampling) / batch chooser (missing
 EXReader cell) also failed. Those outcomes remain archived, not reclassified.
+
+Run40464084185 confirmed the normalized location entry, but pointer responses
+did not close SELECT_FOLDER. The next current driver uses the native keyboard
+response and retains detailed visible-control diagnostics on failure.
