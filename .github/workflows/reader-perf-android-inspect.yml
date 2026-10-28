@@ -1,4 +1,5 @@
 name: Inspect retained Android performance failure
+# This diagnostic reads the fixed failed run without executing the host.
 on:
   push:
     branches: [codex/terra-wave-product-performance]
