@@ -63,6 +63,34 @@ final class FeaturesUITests: XCTestCase {
     }
     private func features() { menu("reader.features", title: "文件、字体与同步详情"); XCTAssertTrue(wait { self.e("features.close").exists }) }
     private func status(_ contains: String) { XCTAssertTrue(wait { self.text("features.status").contains(contains) && !self.e("features.cancel").exists }, "Expected \(contains): \(app.debugDescription)") }
+    private func chooseAnnotationFile(_ name: String, path: String) {
+        tap("features.annotations.import")
+#if os(macOS)
+        app.typeKey("g", modifierFlags: [.command, .shift])
+        app.typeText(path + "\n")
+        let open = app.buttons["Open"].firstMatch
+        let chinese = app.buttons["打开"].firstMatch
+        if open.waitForExistence(timeout: 5) || chinese.waitForExistence(timeout: 2) {
+            if open.exists && open.isEnabled { open.tap() } else { chinese.tap() }
+        }
+#else
+        let files = XCUIApplication(bundleIdentifier: "com.apple.DocumentsApp")
+        func item(_ label: String) -> XCUIElement {
+            let inApp = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+            return inApp.exists ? inApp : files.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+        }
+        if !item(name).exists {
+            for label in ["Browse", "浏览", "On My iPhone", "On My iPad", "我的 iPhone", "我的 iPad", "EXReader"] {
+                let target = item(label)
+                if target.exists && target.isHittable { target.tap() }
+                if item(name).waitForExistence(timeout: 3) { break }
+            }
+        }
+        let target = item(name)
+        XCTAssertTrue(wait { target.exists && target.isHittable }, "Picker cannot find \(name): \(app.debugDescription) \(files.debugDescription)")
+        target.tap()
+#endif
+    }
     func testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot() {
         launch(); features()
         tap("features.font.fixture"); status("字体已导入")
@@ -140,16 +168,35 @@ final class FeaturesUITests: XCTestCase {
         launch(); menu("reader.records", title: "阅读记录")
         XCTAssertTrue(wait { self.text("reading.status") == "本书的书签与标注" })
         tap("reading.add-bookmark"); XCTAssertTrue(wait { self.text("reading.status") == "已添加书签" })
-        tap("reading.close"); ready(); features()
+        tap("reading.close"); ready(); let originalPosition = text("reader.location"); features()
         tap("features.annotations.roundtrip"); status("预览完成，请确认后导入"); XCTAssertTrue(e("features.preview.summary").exists); mark("native-preview-no-revisions-write")
+        tap("features.annotations.prepare-picker")
+        XCTAssertTrue(wait { !self.text("features.annotations.picker-path").isEmpty })
+        let validPath = text("features.annotations.picker-path")
+        let invalidPath = (validPath as NSString).deletingLastPathComponent + "/EXReader-invalid.jsonl"
+        tap("features.annotations.snapshot"); status("修订快照已读取")
+        let before = text("features.annotations.identity")
+        XCTAssertEqual(before.count, 64)
         tap("features.annotations.invalid")
         XCTAssertTrue(wait { !self.e("features.cancel").exists && !self.text("features.status").isEmpty && self.text("features.status") != "处理中…" && self.text("features.status") != "预览完成，请确认后导入" })
         XCTAssertFalse(e("features.preview.confirm").isEnabled); mark("invalid-annotation-rejected")
+        tap("features.annotations.snapshot"); status("修订快照已读取")
+        XCTAssertEqual(text("features.annotations.identity"), before)
+        chooseAnnotationFile("EXReader-invalid.jsonl", path: invalidPath)
+        XCTAssertTrue(wait { !self.e("features.cancel").exists && !self.text("features.status").isEmpty && self.text("features.status") != "处理中…" && self.text("features.status") != "修订快照已读取" })
+        XCTAssertFalse(e("features.preview.confirm").isEnabled); mark("native-picker-invalid-rejected")
+        tap("features.annotations.snapshot"); status("修订快照已读取")
+        XCTAssertEqual(text("features.annotations.identity"), before); mark("invalid-import-revision-identity-unchanged")
+        chooseAnnotationFile("EXReader-annotations.jsonl", path: validPath)
+        status("预览完成，请确认后导入"); XCTAssertTrue(e("features.preview.confirm").isEnabled); mark("native-picker-valid-preview")
+        tap("features.annotations.markdown-fixture"); status("标注已导出")
+        tap("features.annotations.check-exports")
+        XCTAssertEqual(text("features.annotations.export-check"), "导出内容一致"); mark("jsonl-markdown-content-verified")
         tap("features.annotations.roundtrip"); status("预览完成，请确认后导入")
         tap("features.preview.discard"); XCTAssertFalse(e("features.preview.summary").exists); mark("preview-cancel")
         tap("features.annotations.roundtrip"); status("预览完成，请确认后导入")
         tap("features.preview.confirm"); status("标注已导入：1"); XCTAssertFalse(e("features.preview.confirm").isEnabled); mark("confirmed-exact-duplicate")
-        tap("features.close"); ready()
+        tap("features.close"); ready(); XCTAssertEqual(text("reader.location"), originalPosition)
     }
     func testNativeHistoryAfterFoundAndLargeRotationExit() {
         launch(large: true); let original = text("reader.location")
