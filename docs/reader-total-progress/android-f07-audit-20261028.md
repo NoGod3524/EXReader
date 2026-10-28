@@ -105,3 +105,31 @@ and `extern "C"` public wrappers remain supported. Balanced function/aggregate
 bodies and non-linkage quoted content are excluded, so a function-local extern
 declaration or text example cannot become a public import authority.
 All tests and artifact/native processing remain Actions-only and have not run.
+
+## First actual audit and bounded retained-failure diagnosis
+
+Following renewed exact publication approval, reviewed source
+`9ee16b298f89e2a1aff613df7b7076bcbd28250f` ran
+[40780887828/1](https://github.com/NoGod3524/EXReader/actions/runs/40780887828).
+All 20 protocol tests passed. Exact original upload/F06/APK and raw ELF replay
+completed (`original_capture_replayed=true`). Native audit stopped at the pinned
+NDK `system-008` inspection before any installed-module verdict. Original failed
+artifact `12856916312`, 207019263 bytes, SHA256
+`e78cc22ad3f6b810c038fb22877e880090deb5ca128d37c20b140303f3628325`
+is preserved. Its exact command/stdout/stderr must be recovered in Actions before
+an evidence-based parser repair; no cause is assumed from the label alone.
+
+The `[android-f07-diagnostic]` commit marker skips NDK installation and full
+native audit. After source guard and all protocol tests, a bounded helper
+authenticates that original failed upload and reads only the failed system-tool
+record/output; it neither executes retained commands nor reexports the old ZIP.
+The old failure remains a failure, not a new semantic acceptance.
+
+Known include-coverage limitation: the original collector retained Ninja commands
+and compdb but not compiler depfiles, `.ninja_deps`, or `ninja -t deps`. A module
+root glob is not actual compiled source/dependency completeness. In particular,
+ProductCatalog compiles out-of-root `apps/reader/original-import/original_import.cpp`,
+which includes OriginalExport's private `src/sha256.inc` inside an anonymous
+namespace. This source-backed cross-package implementation lead is not an
+artifact-proven import. Exact compiled-input/include-owner coverage and missing
+compiler dependency evidence remain explicit separate blockers to full F07.

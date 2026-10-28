@@ -145,6 +145,23 @@ class AuditContract(unittest.TestCase):
             with self.subTest(installed=installed, owners=owners), self.assertRaises(ValueError):
                 C.require_header_coverage(C.header_coverage(installed, owners))
 
+    def test_diagnostic_requires_exact_failure_identity_and_output_hash(self):
+        import af07_diagnostic as D
+        summary = dict(audit_sha=D.PRIOR_SHA, audit_run=str(D.PRIOR_RUN), audit_attempt='1',
+                       original_capture_replayed=True, android_static_closure_accepted=False,
+                       full_six_platform_f07_accepted=False)
+        prefix = '/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/'
+        row = dict(label='system-008', exit=1,
+                   argv=[prefix + 'bin/llvm-nm', '-D', '-g', '--defined-only', prefix + 'sysroot/usr/lib/x86_64-linux-android/26/libtest.so'],
+                   stdout_sha256=C.sha(b''), stderr_sha256=C.sha(b'not ELF'))
+        report = D.selected_failure(summary, [row], b'', b'not ELF')
+        self.assertTrue(report['diagnostic_only'])
+        self.assertFalse(report['include_dependency_coverage_complete'])
+        with self.assertRaises(ValueError): D.selected_failure(summary, [row], b'', b'changed')
+        with self.assertRaises(ValueError): D.selected_failure(dict(summary, audit_sha='wrong'), [row], b'', b'not ELF')
+        row['argv'][-1] = '/captured/product.so'
+        with self.assertRaises(ValueError): D.selected_failure(summary, [row], b'', b'not ELF')
+
 
 if __name__ == '__main__':
     C.actions_only()
