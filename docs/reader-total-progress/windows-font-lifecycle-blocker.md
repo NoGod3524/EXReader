@@ -28,3 +28,9 @@ Run 40627703951 failed before the host launched because of a Python module
 name collision; its failure is preserved. Runs 40628069828 and 40628517983
 passed earlier iterations. The existing 32-lease and 128 MiB budgets and frozen
 assertions are unchanged. The blocked D13 experiment was not run.
+
+The fixed-catalog Actions audit [40629504633, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40629504633)
+at source `ebc227ef3a44111f1bf6b971e513417acaaed0ac` authenticated the original
+artifact and all eight named cases. It completed with no evidence problems and
+counts this host outcome as verified. The full same-source delivery remains
+separately unaccepted.
