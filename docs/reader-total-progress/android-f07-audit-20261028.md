@@ -133,3 +133,20 @@ which includes OriginalExport's private `src/sha256.inc` inside an anonymous
 namespace. This source-backed cross-package implementation lead is not an
 artifact-proven import. Exact compiled-input/include-owner coverage and missing
 compiler dependency evidence remain explicit separate blockers to full F07.
+# Exact NDK-input follow-up (diagnostic only)
+
+The preserved audit failed on API26 `libc++.so`, not a project archive.
+Diagnostic run [40782004065](https://github.com/NoGod3524/EXReader/actions/runs/40782004065)
+authenticated the prior failure and its input SHA256
+`f5e33f488b74ee4efb1b398bbb72e0c14b9006f9c0e6db62c5c967e1e9336955`.
+The [official NDK generator](https://android.googlesource.com/platform/ndk/+/d7c0ef0df49e73d47dcbc62ee6b0081cd2e7efb1/ndk/checkbuild.py)
+creates API-specific `libc++.so` as `INPUT(-lc++_shared)`, rather than an ELF.
+This source-backed hypothesis is not yet an observation of the pinned input.
+The `[android-f07-ndk-probe]` push therefore installs only pinned NDK 27,
+requires the exact previously observed failed-input digest, retains its bytes
+and the fixed candidate target's identity/magic, and runs no native tool,
+SDK build or original artifact replay. It cannot grant acceptance. A later
+reviewed parser must resolve supported script inputs exactly and fail on
+unknown, escaping or cyclic inputs, without granting a script filename
+dynamic-provider status or allowing unrelated NDK symbols.
+
