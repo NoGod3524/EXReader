@@ -32,13 +32,17 @@ extra_paths = [
     'docs/reader-total-progress/android-font-reader.md',
     'docs/reader-total-progress/linux-annotation-export.md',
     'docs/reader-total-progress/android-original-save.md',
+    'docs/reader-total-progress/apple-history.md',
+    'tools/reader_composition/total_progress.py',
 ]
 assert all(name.startswith(OWNED) or name in extra_paths for name in names), names
 for reference, paths in [
     ('ecde156819591fee9c8c5ecd48b489f65245e4f0', extra_paths[:1]),
     ('e24527faed81110ea4626d56013469487c606cb4', extra_paths[1:5]),
     ('ac8d65c02c0e4d2ae2b8e76ac7797d634dce9267', extra_paths[5:8]),
-    ('3b66f138a383662477433b42fece97b9582b4219', extra_paths[8:]),
+    ('f976ec796861d909325df1492e62a00da69113bc', extra_paths[8:10]),
+    ('3b66f138a383662477433b42fece97b9582b4219', extra_paths[10:13]),
+    ('f976ec796861d909325df1492e62a00da69113bc', extra_paths[13:]),
 ]:
     subprocess.run(['git', 'diff', '--exit-code', reference, 'HEAD', '--', *paths], check=True)
 subprocess.run(['git', 'diff', '--exit-code', '642bb8efe124fdd301410f0b3e8e17292d6a5069', 'HEAD', '--', *['examples/reader.c', 'apps/reader/desktop/windows_search.inc', 'apps/reader/desktop/windows_txt_search.inc', 'apps/reader/desktop/windows_wave3.inc', 'tests/windows_host/txt/check_progress.py', '.github/workflows/windows-wave3-txt-progress.yml']], check=True)
