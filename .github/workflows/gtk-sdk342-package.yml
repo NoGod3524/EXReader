@@ -84,6 +84,12 @@ jobs:
             build/gtk-batch-backend-fixtures/manifest.json
             build/gtk-batch-ui-fixtures/manifest.json
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ success() && github.event_name == 'workflow_dispatch' }}
+        with:
+          name: f06-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f06/linux/
+          if-no-files-found: error
   authenticate:
     needs: retained
     if: always()

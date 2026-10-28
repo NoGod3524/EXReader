@@ -16,7 +16,7 @@ ALLOWED = {'apps/reader/desktop/CMakeLists.txt', 'apps/reader/desktop/gtk_featur
            'tools/build_linux_host.py', '.github/workflows/gtk-sdk342-package.yml',
            '.github/workflows/f06-windows-sdk342.yml', 'tests/reader_f06_packages/identity.py',
            'tests/android_sdk342_package/run.py', 'tests/apple_sdk342_package/authenticate.py',
-           'tests/sdk342_aggregate/authenticate.py', '.github/workflows/sdk342-aggregate.yml',
+           'tests/sdk342_aggregate/authenticate.py', 'tests/sdk342_aggregate/apple_f06.py', '.github/workflows/sdk342-aggregate.yml',
            '.github/workflows/android-sdk342-package.yml', '.github/workflows/android-sdk342-record-probe.yml',
            '.github/workflows/apple-sdk342-package.yml'}
 

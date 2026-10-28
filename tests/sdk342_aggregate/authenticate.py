@@ -60,12 +60,25 @@ try:
     report['checks']['five_gates_authenticated'] = True
     # This is the original six-target F06 authenticator's output. The Apple
     # simulator archive alone is not an iPhone or iPad installation result.
+    assert os.environ['RESULT_F06'] == 'success', 'original six-target F06 authentication did not pass'
+    assert os.environ['RESULT_APPLE_F06'] == 'success', 'Apple F06 producer/launch did not pass'
     six = read_artifact(artifacts, f'f06-authenticated-{run}-{attempt}', 'summary.json')
     same(six)
     assert six['accepted'] is True and set(six['targets']) == {'windows','linux','macos','android','iphone','ipad'}
     for name, value in six['targets'].items():
         target = value['result']; same(target)
         assert target['target'] == name and target['passed'] is True
+        artifact_name = f'f06-{name}-{run}-{attempt}'
+        manifest = read_artifact(artifacts, artifact_name, 'manifest.json')
+        assert manifest['source_sha'] == source and manifest['target'] == name
+        assert manifest['sdk_version'] == '3.42.0' and manifest['producer']['sdk_version'] == '3.42.0'
+        assert manifest['producer']['source_sha'] == source
+        assert str(manifest['provenance']['run_id']) == run and str(manifest['provenance']['attempt']) == attempt
+        assert value['github_artifact_id'] == report['artifacts'][artifact_name]['id']
+        assert value['github_artifact_digest'] == 'sha256:' + report['artifacts'][artifact_name]['sha256']
+    mac_launch = read_artifact(artifacts, f'f06-macos-{run}-{attempt}', 'launch.json')
+    same(mac_launch)
+    assert mac_launch['passed'] is True and mac_launch['executable_sha256'] == six['targets']['macos']['result']['program_sha256']
     report['checks']['original_six_target_f06'] = True
     report['accepted'] = True
 except Exception as error:
