@@ -1,5 +1,8 @@
 name: Apple large-type reading and organization drivers
 on:
+  push:
+    branches: [codex/dot-apple-large-type-drivers]
+    paths-ignore: ['docs/apple-large-type-drivers/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -38,7 +41,7 @@ jobs:
           path.with_name('wave3-packages-original-metadata.json').write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
           data['sdk_frozen_base'] = data.pop('sdk_frozen_source')
           data['sdk_candidate_source'] = os.environ['GITHUB_SHA']
-          data['sdk_candidate_txt_files'] = '9727ca1624ee59e561fd6aad7a22bb85a0fd2632'
+          data['sdk_candidate_base'] = '716c1409168960a276e282ce694d32ed82497bc9'
           path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
           PY
       - uses: actions/upload-artifact@v4

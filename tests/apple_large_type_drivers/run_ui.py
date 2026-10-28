@@ -93,20 +93,26 @@ def main():
             run(['xcrun', 'simctl', 'bootstatus', udid, '-b'], 'boot-ready')
             destination = 'platform=iOS Simulator,id=' + udid; result['destination'] = {'runtime': runtime, 'device': name, 'udid': udid}
         sdk = sdks[target] / 'sdk'; products = sdks[target] / 'raw-products'
-        for mode, tests, expected in [('d24', ROOT / 'tests/apple_d24/ui', 1), ('organization-large', ROOT / 'tests/apple_large_type_drivers/ui', 2), ('wave3', ROOT / 'tests/reader_team24_apple/ui', 5), ('base', base_tests, 13),
+        for mode, tests, expected in [('d24', ROOT / 'tests/apple_d24/ui', 1), ('organization-setup', ROOT / 'tests/apple_large_type_drivers/ui', 1), ('organization-large', ROOT / 'tests/apple_large_type_drivers/ui', 2), ('wave3', ROOT / 'tests/reader_team24_apple/ui', 5), ('base', base_tests, 13),
                                      ('control', control_tests, 13), ('search', search_tests, 4), ('theme', theme_tests, 4)]:
-            project = out / ('project-' + mode); derived = out / ('derived-' + mode)
+            project_mode = 'organization' if mode in ('organization-setup', 'organization-large') else mode
+            project = out / ('project-' + project_mode); derived = out / ('derived-' + project_mode)
             phase_resources = search_resources if mode == 'search' else resources
-            generator_mode = 'base' if mode in ('d24', 'organization-large') else 'control' if mode in ('search', 'theme') else mode
+            generator_mode = 'base' if mode in ('d24', 'organization-setup', 'organization-large') else 'control' if mode in ('search', 'theme') else mode
             run(['ruby', 'tests/reader_team24_apple/make_project.rb', project, phase_resources, tests, generator_mode], mode + '-project')
-            if args.platform != 'macos': subprocess.run(['xcrun', 'simctl', 'uninstall', udid, 'org.exreader.host'], capture_output=True)
+            if args.platform != 'macos' and mode != 'organization-large': subprocess.run(['xcrun', 'simctl', 'uninstall', udid, 'org.exreader.host'], capture_output=True)
             bundle = evidence / (mode + '.xcresult')
             phase = {'mode': mode, 'expected_cases': expected, 'accepted': False}; phases.append(phase)
             phase['resource_manifest_sha256'] = digest(phase_resources / 'manifest.json')
             shutil.copyfile(phase_resources / 'manifest.json', evidence / (mode + '-resource-manifest.json'))
             if args.platform != 'macos':
-                run(['xcrun', 'simctl', 'ui', udid, 'content_size',
-                    'accessibility-extra-extra-extra-large' if mode in ('d24', 'organization-large') else 'large'], mode + '-actual-system-text-size')
+                requested_size = 'accessibility-extra-extra-extra-large' if mode in ('d24', 'organization-large') else 'large'
+                run(['xcrun', 'simctl', 'ui', udid, 'content_size', requested_size], mode + '-actual-system-text-size')
+                actual_size = subprocess.check_output(['xcrun', 'simctl', 'ui', udid, 'content_size'], text=True).strip()
+                (evidence / (mode + '-system-size.txt')).write_text(actual_size + '\n')
+                assert actual_size == requested_size, (mode, actual_size, requested_size)
+                phase['system_size'] = actual_size
+                phase['setup_only'] = mode == 'organization-setup'
             failed = None
             try:
                 if mode == 'theme':
@@ -123,11 +129,15 @@ def main():
                          '--project', project / 'EXReaderHost.xcodeproj', '--sdk', sdk,
                          '--output', evidence / 'theme-os'], mode + '-native-ui')
                 else:
+                    selection = []
+                    if mode in ('organization-setup', 'organization-large'):
+                        selector = '-only-testing:' if mode == 'organization-setup' else '-skip-testing:'
+                        selection = [selector + 'EXReaderHostUITests-iOS/OrganizationLargeTypeUITests/testPrepareOriginalThroughApp']
                     run(['xcodebuild', 'test', '-project', project / 'EXReaderHost.xcodeproj', '-scheme', scheme,
                     '-destination', destination, '-derivedDataPath', derived, '-resultBundlePath', bundle,
                     '-parallel-testing-enabled', 'NO', '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '240',
                     '-maximum-test-execution-time-allowance', '360', 'EXR_SDK_DIR=' + str(sdk), 'EXR_PRODUCTS_DIR=' + str(products),
-                        'CODE_SIGNING_ALLOWED=' + signing], mode + '-native-ui')
+                        'CODE_SIGNING_ALLOWED=' + signing, *selection], mode + '-native-ui')
             except Exception as error: failed = error
             app = derived / 'Build/Products' / suffix / 'EXReaderHost.app'
             binary = app / ('Contents/MacOS/EXReaderHost' if args.platform == 'macos' else 'EXReaderHost')
@@ -168,7 +178,7 @@ def main():
             else:
                 assert len(phase.get('cases', [])) == expected and all(x['result'] == 'Passed' for x in phase['cases'])
                 phase['accepted'] = True
-        result['accepted'] = len(phases) == 7 and all(x['accepted'] for x in phases)
+        result['accepted'] = len(phases) == 8 and all(x['accepted'] for x in phases)
     except Exception as error:
         result['failure'] = str(error); print('Team24 Apple FAILURE ' + str(error), flush=True)
     finally:

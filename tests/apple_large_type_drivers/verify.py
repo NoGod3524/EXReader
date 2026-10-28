@@ -40,7 +40,7 @@ def main():
                 if artifact['name'].startswith('apple-large-type-drivers-native-'):
                     result = json.loads(archive.read('result.json'))
                     assert (result['source_sha'], result['run_id'], result['attempt']) == (source, run, attempt)
-                    expected_phases = {'organization-large': 2, 'd24': 1, 'wave3': 5, 'base': 13, 'control': 13, 'search': 4, 'theme': 4}
+                    expected_phases = {'organization-setup': 1, 'organization-large': 2, 'd24': 1, 'wave3': 5, 'base': 13, 'control': 13, 'search': 4, 'theme': 4}
                     phases = result['phases']
                     if result['accepted']:
                         assert len(phases) == len(expected_phases)

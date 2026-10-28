@@ -1,7 +1,5 @@
 name: Apple maximum-type organizer focused diagnostic
 on:
-  push:
-    branches: [codex/dot-apple-large-type-drivers]
   workflow_dispatch:
 permissions:
   contents: read
