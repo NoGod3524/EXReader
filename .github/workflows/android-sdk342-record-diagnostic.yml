@@ -1,0 +1,21 @@
+name: Android SDK 3.42 record probe failure inspection
+on:
+  push:
+    branches: [codex/android-sdk342-record-evidence-20261028]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-sdk342-record-probe-40657204122-1
+          path: evidence
+          run-id: 40657204122
+          github-token: ${{ github.token }}
+      - name: Print original probe report and instrumentation
+        run: |
+          find evidence -name report.json -path '*/android-sdk342-record/evidence/*' -exec cat '{}' \;
+          find evidence -name instrumentation.txt -exec cat '{}' \;
