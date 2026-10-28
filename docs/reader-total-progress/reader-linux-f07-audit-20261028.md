@@ -1,4 +1,4 @@
-# Linux F07 exact installed ownership audit (source-only preparation)
+# Linux F07 exact installed ownership audit (retrospective evidence)
 
 This is a new retrospective auditor, not a changed producer or a rebuilt program.
 The package source is `ffea3f173415a7c46afd6d69d09539e71b0648a1`, original run
@@ -19,7 +19,7 @@ is explicitly bound to the historical package. No original source, flag, budget,
 assertion, installed SDK, product target or test is changed.
 
 The new workflow is confined to `codex/reader-linux-f07-audit-20261028`. It first
-runs syntax and 17 synthetic protocol cases in Actions. A separate 45-minute
+runs syntax and 22 synthetic protocol cases in Actions. A separate 45-minute
 job authenticates the original run/jobs/artifact ID/name/size/digest/source/attempt,
 safely extracts the original ZIPs, checks every inventory hash, and reexecutes the
 frozen original GTK semantic/identity and complete raw tar/F06 ZIP/unpack/entry
@@ -73,7 +73,7 @@ a claim that unretained external source headers were read.
 All reports and raw native stdout/stderr are uploaded on failure. Findings make
 the audit job fail; a negative substantive result is not converted to a green
 acceptance run. No six-platform convergence, physical device, release readiness or
-108-item progress is granted. At this source-only checkpoint, none of the new
+108-item progress is granted. At the initial source-only preparation checkpoint, none of the new
 syntax checks, fixtures, artifact extraction or native inspection has run locally
 or remotely. Independent source review precedes any publication.
 
@@ -90,3 +90,45 @@ Exact missing/extra archives and parsed exports now persist before that assertio
 The first failed artifact is `12855457377`, 397127156 bytes, SHA-256
 `f5849afe3251eb320bbf4b67b5088c48b65937fbc784acd5fd838058e17621fd`.
 This is a retained failed parser run, not a substantive module acceptance result.
+
+## Completed substantive run, retained rejection
+
+Source `a2068979bebe385a5ac620b33548249ede2993df`, run
+[40778096542/1](https://github.com/NoGod3524/EXReader/actions/runs/40778096542):
+17/17 then-authored protocol cases passed. Actual original capture authentication
+and native analysis completed. `provider_findings=[]` bound observed SDK public
+entries and the unique product SQLite marker to exact installed final-map owners.
+The substantive gate correctly failed: ReadingCommands imports the nonpublic C++
+`reader_rs_encode_retained_raw_v3` from ReadingState, and ReadingState,
+AnnotationImport and AnnotationExport use Revisions' explicitly private selector
+implementation header. Source and installed-owner evidence agree.
+
+Artifact `12855847033`, 401084466 bytes, SHA-256
+`1cddc870560cb90d062c86cd6ba2ace27f1609897f9b65d634ba81abbc24483a` retains all
+findings. Raw 47 import findings are **not** 47 proven product violations: they
+also include installed-but-unselected SDK vendor SQLite candidates and linker/CRT
+names. Three final weak names remain unproven: `_ITM_deregisterTMCloneTable`,
+`_ITM_registerTMCloneTable`, `__gmon_start__`. They are not silently waived.
+
+The next audit-only correction requires per-symbol actual final address/map
+selection of the ProductCatalog SQLite archive before resolving candidate owner
+ambiguity. It still requires that exact owner's installed public declaration and
+consumer dependency. `_GLOBAL_OFFSET_TABLE_` requires an actual final data symbol
+inside an allocated ELF GOT section; `__dso_handle` requires an actual final data
+symbol whose map range belongs to an exact system LOAD `crtbegin.o/crtbeginS.o`.
+Absent/wrong evidence leaves the findings unresolved. No name-prefix exemption
+is added. Private calls and private-header edges remain rejected.
+
+Public-declaration parsing is also hardened: balanced non-linkage bodies and
+quoted text are masked, comments are quote-aware, local extern declarations and
+inline body calls cannot manufacture public APIs, and malformed scopes fail
+closed. New negative fixtures cover these edges and the exact linkage proofs;
+none of this successor source has been executed locally. SDK/product/old tests
+remain untouched.
+
+Independent source review of this classifier correction additionally required
+that linker/CRT proof never hide a conflicting project definition, and that each
+selected SQLite map member actually defines that same symbol in the same retained
+installed archive's native table. Both now have negative fixtures. Installed
+include-file ownership covers every file, not only `.h/.hpp` suffixes. These
+refinements do not change the four proven private boundaries or waive weak names.

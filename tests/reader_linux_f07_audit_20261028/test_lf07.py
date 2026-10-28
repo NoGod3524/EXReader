@@ -90,6 +90,48 @@ class Contract(unittest.TestCase):
         self.assertEqual([(target, body.strip()) for target, body in C.target_properties(text)], [('Owner::lib', 'IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libowner.a"')])
         self.assertEqual(C.target_properties('set_target_properties(Owner::lib PROPERTIES incomplete'), [])
 
+    def test_inline_body_calls_are_not_public_declarations(self):
+        text = ('static inline int wrapper(void) { return exr_private(); }\n'
+                'extern "C" { int valid_public(void); }\n'
+                'static inline int nested(void) { if (1) { return helper_private(); } return other_private(); }\n'
+                'static inline int local(void) { extern int local_private(void); return local_private(); }\n'
+                'const char *example = "/* not a comment */ int quoted_private(void);";')
+        self.assertEqual(C.public_entries(text), {'valid_public'})
+        with self.assertRaises(ValueError): C.public_entries('extern "C" { int broken(void);')
+
+    def test_selected_sqlite_owner_still_requires_public_and_dependency(self):
+        tables = {'a': C.symbols('001 T own\n U sqlite3_api'), 'b': C.symbols('002 T sqlite3_api')}
+        owners = {'a': 'A', 'b': 'Product'}
+        public, dependencies = {'Product': {'sqlite3_api'}}, {'A': {'Product'}}
+        selected = {'sqlite3_api': 'Product'}
+        self.assertFalse(any(C.module_findings(tables, owners, public, dependencies, {'sqlite3_api'}, set(), selected).values()))
+        self.assertTrue(C.module_findings(tables, owners, {}, dependencies, {'sqlite3_api'}, set(), selected)['a'])
+        self.assertTrue(C.module_findings(tables, owners, public, {}, {'sqlite3_api'}, set(), selected)['a'])
+        self.assertTrue(C.module_findings(tables, owners, public, dependencies, {'sqlite3_api'}, set(), {'sqlite3_api': 'EXReader'})['a'])
+
+    def test_linker_names_require_final_got_and_crt_proofs(self):
+        full = C.symbols('0100 d _GLOBAL_OFFSET_TABLE_\n0200 D __dso_handle')
+        ranges = [dict(start=0x200, size=8, object='/usr/lib/gcc/crtbeginS.o')]
+        sections = C.elf_got_sections('  [25] .got.plt PROGBITS 00000100 000100 000008 08 WA 0 0 8\n')
+        proofs = C.linker_resolutions(full, ranges, sections, ['/usr/lib/gcc/crtbeginS.o'])
+        self.assertEqual(set(proofs), {'_GLOBAL_OFFSET_TABLE_', '__dso_handle'})
+        self.assertEqual(C.linker_resolutions(full, ranges, [], []), {})
+        other = [dict(start=0x200, size=8, object='/private/other.o')]
+        self.assertNotIn('__dso_handle', C.linker_resolutions(full, other, sections, ['/private/other.o']))
+
+    def test_linker_proof_cannot_hide_conflicting_project_definition(self):
+        tables = {'a': C.symbols('001 T own\n U __dso_handle'), 'b': C.symbols('002 D __dso_handle')}
+        got = C.module_findings(tables, {'a': 'A', 'b': 'B'}, {}, {}, set(), set(), linker_resolved={'__dso_handle': {}})
+        self.assertEqual(got['a'][0]['providers'], ['B'])
+
+    def test_selected_archive_member_must_define_exact_symbol(self):
+        table = C.symbols('sqlite3.c.o:\n001 T sqlite3_api\n')
+        self.assertTrue(C.archive_member_defines('sqlite3_api', '/prefix/libsqlite.a(sqlite3.c.o)', table))
+        self.assertFalse(C.archive_member_defines('sqlite3_api', '/prefix/libsqlite.a(wrong.o)', table))
+        self.assertFalse(C.archive_member_defines('sqlite3_missing', '/prefix/libsqlite.a(sqlite3.c.o)', table))
+        duplicate = C.symbols('sqlite3.c.o:\n001 T sqlite3_api\nother.o:\n002 T sqlite3_api')
+        self.assertFalse(C.archive_member_defines('sqlite3_api', '/prefix/libsqlite.a(sqlite3.c.o)', duplicate))
+
     def test_original_contract_isolated_and_pinned(self):
         import sys
         before = sys.modules.get('contract')
