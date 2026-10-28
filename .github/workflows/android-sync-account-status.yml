@@ -284,7 +284,7 @@ jobs:
           script: |
             adb install -r -t build/wave3/artifacts/app-debug.apk
             adb install -r -t build/wave3/artifacts/original-sync-debug-androidTest.apk
-            python3 tests/reader_host_session_android/run_ui.py --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/original-sync
+            python3 tests/reader_host_session_android/run_ui.py --sdk-version 3.41.0 --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/original-sync
       - name: Execute strict 3.41 sync UI adapter
         if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || !inputs.diagnostic_only) }}
         uses: reactivecircus/android-emulator-runner@v2
@@ -299,7 +299,7 @@ jobs:
           script: |
             adb install -r -t build/wave3/artifacts/app-debug.apk
             adb install -r -t build/wave3/artifacts/sync-341-debug-androidTest.apk
-            python3 tests/reader_android_organization_sync/host_sync_341.py --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/sync-341
+            python3 tests/reader_android_organization_sync/host_sync_341.py --sdk-version 3.41.0 --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/sync-341
       - name: Preserve build and source evidence
         if: always()
         uses: actions/upload-artifact@v4
