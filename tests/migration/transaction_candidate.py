@@ -144,8 +144,41 @@ def main():
             db.commit();db.close()
             checks.append({'schema':schema,'journal':mode,'passed':True})
             print('PASS', checks[-1], flush=True)
+    folder = a.work/'full-ledger'
+    folder.mkdir()
+    target = folder/'library.sqlite'
+    pack = folder/'full.exrpack'
+    books, notes = L.dataset()
+    pack.write_bytes(L.build_pack(books, notes))
+    rc, out, err = call(a.tool, 'migrate', '--pack', pack, '--target', target, '--allow-partial')
+    assert rc == 0, (out, err)
+    report = json.loads(out)
+    ambiguous = next(n for n in report['notes'] if n['legacy_id'] == 'n-txt-ambiguous')
+    assert ambiguous['status'] == 'unlocated' and ambiguous['reason'] == 'quote-ambiguous'
+    first = folder/'first-ledger.json'
+    rc, out, err = call(a.tool, 'export-ledger', '--target', target, '--output', first)
+    assert rc == 0, (out, err)
+    ledger = json.loads(first.read_text(encoding='utf-8'))
+    ambiguous = next(n for n in ledger['notes'] if n['legacy_id'] == 'n-txt-ambiguous')
+    assert ambiguous['located'] is False and ambiguous['retained']['note'] == 'appears twice'
+    assert ambiguous['retained']['quote'] == 'Repeat this phrase twice.'
+    fixed = next(n for n in ledger['notes'] if n['legacy_id'] == 'n-pdf-quote')
+    assert fixed['retained']['rects'][0]['w'] == 0.4
+    orphan = next(n for n in ledger['notes'] if n['legacy_id'] == 'n-orphan')
+    assert orphan['retained']['note'] == 'orphan'
+    rc, out, err = call(a.tool, 'migrate', '--pack', pack, '--target', target, '--allow-partial')
+    assert rc == 0, (out, err)
+    counts = json.loads(out)['counts']
+    assert counts['books_created'] == 0 and counts['notes_created'] == 0
+    second = folder/'second-ledger.json'
+    rc, out, err = call(a.tool, 'export-ledger', '--target', target, '--output', second)
+    assert rc == 0 and first.read_bytes() == second.read_bytes(), (out, err)
+    rc, out, err = call(a.tool, 'verify', '--pack', pack, '--target', target)
+    assert rc == 0, (out, err)
+    checks.append({'case':'full-ledger-export-and-idempotence','passed':True})
+    print('PASS', checks[-1], flush=True)
     report = {'source_sha':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
-              'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checks':checks,'passed':len(checks)==4}
+              'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checks':checks,'passed':len(checks)==5}
     (a.work/'transaction-result.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(report))
 
