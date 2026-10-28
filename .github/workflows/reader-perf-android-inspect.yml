@@ -1,0 +1,62 @@
+name: Inspect retained Android performance failure
+on:
+  push:
+    branches: [codex/terra-wave-product-performance]
+    paths: ['.github/workflows/reader-perf-android-inspect.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Authenticate and inspect failed UI evidence on Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, urllib.request, urllib.error, zipfile
+          from pathlib import Path, PurePosixPath
+          api = os.environ['GITHUB_API_URL'] + '/repos/' + os.environ['GITHUB_REPOSITORY']
+          run, artifact, source = 40628057571, 12789724765, '9f0783ae449ad73cc803d7019892ee8f3c417a64'
+          size, digest = 93258529, 'sha256:13e0ef76d656bf4c43b659e4f720149983d52d51d23595b51822eccf2328a1c6'
+          headers = {'Authorization':'Bearer '+os.environ['GH_TOKEN'], 'Accept':'application/vnd.github+json', 'User-Agent':'EXReader-perf-inspection'}
+          def get(path):
+              with urllib.request.urlopen(urllib.request.Request(api+path,headers=headers),timeout=60) as r: return json.load(r)
+          info, meta = get('/actions/runs/'+str(run)), get('/actions/artifacts/'+str(artifact))
+          assert info['head_sha'] == source and info['status'] == 'completed' and info['conclusion'] == 'failure'
+          assert meta['workflow_run']['id'] == run and meta['workflow_run']['head_sha'] == source and meta['size_in_bytes'] == size and meta['digest'] == digest and not meta['expired']
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, request, stream, code, message, headers, url): return None
+          try: stream = urllib.request.build_opener(NoRedirect).open(urllib.request.Request(api+'/actions/artifacts/'+str(artifact)+'/zip',headers=headers),timeout=60)
+          except urllib.error.HTTPError as error:
+              assert error.code == 302 and error.headers['Location'].startswith('https://')
+              stream = urllib.request.urlopen(error.headers['Location'],timeout=60)
+          with stream: raw = stream.read(size+1)
+          assert len(raw) == size and 'sha256:'+hashlib.sha256(raw).hexdigest() == digest
+          archive = zipfile.ZipFile(io.BytesIO(raw)); names = archive.namelist()
+          assert len(names) == len(set(names)) and sum(x.file_size for x in archive.infolist()) < 1024**3
+          assert all(not PurePosixPath(x).is_absolute() and '..' not in PurePosixPath(x).parts and '\\' not in x for x in names)
+          def read(suffix):
+              matches=[x for x in names if x.endswith(suffix)]
+              assert len(matches)==1, suffix
+              return archive.read(matches[0])
+          ui=json.loads(read('/ui-execution/ui/validation.json'))
+          assert ui['source_sha']==source and ui['run_id']==str(run) and ui['attempt']=='1'
+          report={'diagnostic_only':True,'performance_accepted':False,'source_sha':source,'run_id':run,'artifact_id':artifact,'digest':digest,
+                  'passed':ui['passed'],'failed':ui['failed'],'skipped':ui['skipped'],
+                  'cases':[{'id':case['id'],'status':case['status'],'error':case.get('error'),'detail':case.get('detail') if case['status']!='pass' else None} for case in ui['cases']],
+                  'collector':json.loads(read('/ui-execution/result.json')),
+                  'verifier':json.loads(read('/observation-verification.json'))}
+          output=Path('build/perf-inspection');output.mkdir(parents=True)
+          (output/'inspection.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-perf-android-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/perf-inspection/
+          if-no-files-found: warn

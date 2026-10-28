@@ -63,12 +63,7 @@ jobs:
           cores: 4
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: |
-            observation=0
-            python tools/run_reader_shelf_ui.py --output build/perf-android/ui-execution || observation=$?
-            verification=0
-            python tests/reader_perf_android/verify_observation.py || verification=$?
-            test "$observation" -eq 0 && test "$verification" -eq 0
+          script: bash tests/reader_perf_android/run_observation.sh
       - name: Preserve raw observations and build identities, including failures
         if: always()
         uses: actions/upload-artifact@v4

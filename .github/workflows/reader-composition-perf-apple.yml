@@ -4,6 +4,7 @@ on:
     branches: [codex/terra-wave-product-performance]
     paths-ignore:
       - '.github/workflows/reader-composition-perf-android.yml'
+      - '.github/workflows/reader-perf-android-inspect.yml'
       - 'tests/reader_perf_android/**'
       - 'docs/**'
   workflow_dispatch:
