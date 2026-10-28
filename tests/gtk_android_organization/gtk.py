@@ -22,9 +22,15 @@ def main():
         source=a.origin/'profile';assert source.is_dir()
         before={str(p.relative_to(source)):hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*') if p.is_file()}
         shutil.copytree(source,a.out/'profile')
+        # Actions ZIP download normalizes mode bits. Reinstate the native
+        # account contract (private dirs/files) without changing any bytes.
+        (a.out/'profile').chmod(0o700)
+        for entry in (a.out/'profile').rglob('*'):
+            assert not entry.is_symlink()
+            entry.chmod(0o700 if entry.is_dir() else 0o600)
         after={str(p.relative_to(a.out/'profile')):hashlib.sha256(p.read_bytes()).hexdigest() for p in (a.out/'profile').rglob('*') if p.is_file()}
         assert before==after
-        (a.out/'resumed-native-profile.json').write_text(json.dumps({'origin_state_sha256':hashlib.sha256((a.origin/'state.json').read_bytes()).hexdigest(),'files':before,'copied_unchanged':True,'no_app_database_injection':True},indent=2))
+        (a.out/'resumed-native-profile.json').write_text(json.dumps({'origin_state_sha256':hashlib.sha256((a.origin/'state.json').read_bytes()).hexdigest(),'files':before,'copied_unchanged':True,'private_modes_restored':{'directories':'0700','files':'0600'},'no_app_database_injection':True},indent=2))
     dav,user,password=relay.start(a.out,a.previous,reuse_base=origin['server']['base'] if origin else None);host=None;checks=[]
     def sql(q,values=()):
         with sqlite3.connect(a.out/'profile/library.sqlite.product.sqlite') as db:return db.execute(q,values).fetchall()
