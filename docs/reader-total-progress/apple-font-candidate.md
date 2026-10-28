@@ -35,3 +35,15 @@ offscreen tap or owner-busy timing are plausible but not proven causes. On
 iPhone and iPad the existing case proceeded through its font steps and failed
 later at the share control. These findings preserve the original failures and
 do not establish the missing font acceptance outcomes.
+
+## Independent candidate coverage
+
+Source `d23fc1de44d94a80ea8cfc5aa8d74fb24d63400a` adds a separate native
+suite for all three targets. It uses the repository's MIT-licensed original
+`primary.ttf`, records the accepted renderer bitmap and successful lease
+operations, and checks a noninitial logical offset across font selection,
+invalid import, shelf exit, reopen and restart. The prior suite and its
+assertions are retained. This is test code, not a passing result. Its
+[push-triggered run 40627627614](https://github.com/NoGod3524/EXReader/actions/runs/40627627614)
+and the earlier candidate run 40627106478 are waiting for macOS runners; no
+Apple build or native test result is available at this point.
