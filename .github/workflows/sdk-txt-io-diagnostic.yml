@@ -1,0 +1,29 @@
+name: TXT bounded pager IO diagnostic
+on:
+  push:
+    branches: [codex/sdk-txt-io-diagnostic]
+permissions:
+  contents: read
+jobs:
+  profile:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
+    env:
+      EXR_TXT_PROFILE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - run: python -m pip install ninja
+      - name: Install candidate SDK
+        run: |
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+      - name: Record exact page parity and bounded cursor IO
+        run: |
+          cmake -S tests/bounded_txt_scan -B build/txt-profile -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/txt-profile --parallel 4
+          ctest --test-dir build/txt-profile -V -R '^bounded_txt_view$' --no-tests=error

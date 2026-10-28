@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "chapter_internal.h"
 #include "layout_internal.h"
+#include <stdio.h>
 
 typedef struct { exr_style value; uint64_t hash; } retained_style;
 typedef struct {
@@ -459,6 +460,7 @@ typedef struct {
   exr_source source, wrapped;
   exr_control control;
   exr_txt_cursor *cursor;
+  int profile; uint64_t reads, read_bytes, finds, steps, restores, span_builds, text_calls;
   txt_point points[TXT_POINTS];
   size_t point_count, stride, count, cached, cached_start, cached_size;
   char *cache;
@@ -477,7 +479,9 @@ typedef struct {
 } txt_view;
 static size_t txt_read(void *context,uint64_t offset,void *data,size_t size) {
   txt_view *v=context;
-  return v->source.read_at(v->source.context,offset,data,size);
+  size_t got=v->source.read_at(v->source.context,offset,data,size);
+  if(v->profile) { v->reads++; v->read_bytes+=got; }
+  return got;
 }
 static int txt_cancel(void *context) {
   txt_view *v=context;
@@ -494,6 +498,7 @@ static exr_status txt_failure(txt_view *v,exr_status status,const exr_error *err
 static exr_status txt_find_paragraph(txt_view *v,size_t paragraph,size_t *start,size_t *length,
                                      const char **text,exr_error *e) {
   size_t i,point=0;uint64_t offset;exr_status status;const char *line;size_t size;
+  if(v->profile) v->finds++;
   if(v->failure.code) return exr_fail(e,v->failure.code,v->failure.message);
   if(paragraph>=v->count) return txt_failure(v,exr_fail(e,EXR_FORMAT,"Invalid TXT paragraph"),e);
   if(v->cursor_paragraph==paragraph) {
@@ -508,6 +513,7 @@ static exr_status txt_find_paragraph(txt_view *v,size_t paragraph,size_t *start,
     /* A completed span records each paragraph boundary. Replaying a nearby
        paragraph from its predecessor avoids repeatedly scanning the sparse
        index when layout revisits text in the current window. */
+    if(v->profile) v->restores++;
     status=exr_txt_cursor_restore(v->cursor,
       &v->spans[paragraph-v->span_base-1].after,e);
     v->cursor_paragraph=SIZE_MAX;v->cursor_text=NULL;
@@ -517,12 +523,14 @@ static exr_status txt_find_paragraph(txt_view *v,size_t paragraph,size_t *start,
             v->cursor_paragraph+1>=v->points[point].paragraph) {
     i=v->cursor_paragraph+1;
   } else {
+    if(v->profile) v->restores++;
     status=exr_txt_cursor_restore(v->cursor,&v->points[point].cursor,e);
     v->cursor_paragraph=SIZE_MAX;v->cursor_text=NULL;
     if(status!=EXR_OK) return txt_failure(v,status,e);
     i=v->points[point].paragraph;
   }
   for(;i<=paragraph;i++) {
+    if(v->profile) v->steps++;
     status=exr_control_cancel(&v->wrapped.control,e);
     if(status==EXR_OK) status=exr_txt_cursor_next(v->cursor,&offset,&line,&size,e);
     if(status!=EXR_OK) return txt_failure(v,status,e);
@@ -541,6 +549,7 @@ static exr_status txt_node_span(txt_view *v,size_t paragraph,size_t *start,size_
   if(paragraph>=v->count) return txt_failure(v,exr_fail(e,EXR_FORMAT,"Invalid TXT paragraph"),e);
   if(!v->span_count || paragraph<v->span_base || paragraph-v->span_base>=v->span_count) {
     if(count>TXT_SPANS) count=TXT_SPANS;
+    if(v->profile) v->span_builds++;
     v->span_count=0;
     for(i=0;i<count;i++) {
       status=txt_find_paragraph(v,base+i,&v->spans[i].start,&v->spans[i].length,NULL,e);
@@ -588,6 +597,7 @@ static exr_status txt_prepare(void *context,size_t node,const exr_control *contr
 }
 static const char *txt_text(void *context,size_t offset,size_t *available) {
   txt_view *v=context;size_t lo=0,hi=v->count,start,length;exr_error e={0};
+  if(v->profile) v->text_calls++;
   *available=0;if(offset==v->document.size) return "";
   if(offset>v->document.size) { txt_failure(v,exr_fail(&e,EXR_FORMAT,"Invalid TXT offset"),&e);return NULL; }
   if(v->cached!=SIZE_MAX && offset>=v->cached_start && offset-v->cached_start<v->cached_size) {
@@ -634,6 +644,11 @@ static exr_status txt_status(void *context,exr_error *e) {
 }
 static void txt_free(void *context) {
   txt_view *v=context;if(!v) return;
+  if(v->profile) fprintf(stderr,
+    "TXT_PROFILE paragraphs=%llu reads=%llu bytes=%llu finds=%llu decoded=%llu restores=%llu blocks=%llu text_calls=%llu\n",
+    (unsigned long long)v->count,(unsigned long long)v->reads,(unsigned long long)v->read_bytes,
+    (unsigned long long)v->finds,(unsigned long long)v->steps,(unsigned long long)v->restores,
+    (unsigned long long)v->span_builds,(unsigned long long)v->text_calls);
   exr_txt_cursor_free(v->cursor);free(v->cache);exr_styles_free(v->styles,4);free(v->fonts);
   if(v->release_source) v->release_source(v->source.context);
   free(v);
@@ -650,6 +665,7 @@ static exr_status txt_pager_create(const exr_source *source,exr_font *font,
      supports the resident default stylesheet. */
   if(config->user_css && *config->user_css) return exr_fail(e,EXR_UNSUPPORTED,"TXT view does not support user CSS");
   v=calloc(1,sizeof(*v));if(!v) return exr_fail(e,EXR_MEMORY,"TXT view allocation failed");
+  v->profile=getenv("EXR_TXT_PROFILE")!=NULL;
   v->source=*source;v->wrapped=*source;v->wrapped.read_at=txt_read;v->wrapped.context=v;
   v->wrapped.control=(exr_control){txt_cancel,NULL,v};v->control=config->control;v->stride=1;v->cached=SIZE_MAX;v->cursor_paragraph=SIZE_MAX;
   status=exr_txt_cursor_create(&v->wrapped,&v->cursor,e);
