@@ -36,7 +36,7 @@ jobs:
           if ($LASTEXITCODE) { throw 'Windows mixed original export differs from the reviewed source' }
           git diff --exit-code 9727ca1624ee59e561fd6aad7a22bb85a0fd2632 "$env:GITHUB_SHA" -- src/formats.c include/exr/formats.h
           if ($LASTEXITCODE) { throw 'TXT SDK candidate differs from the exercised source' }
-          git diff --exit-code 642bb8efe124fdd301410f0b3e8e17292d6a5069 "$env:GITHUB_SHA" -- src/chapter_reader.c
+          git diff --exit-code 25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab "$env:GITHUB_SHA" -- src/chapter_reader.c
           if ($LASTEXITCODE) { throw 'TXT span SDK differs from the candidate source' }
           git diff --exit-code e09b25aa02b03297dc8a7f1f6eb32c092e11d410 "$env:GITHUB_SHA" -- apps/reader/desktop/windows_records.inc apps/reader/desktop/windows_records_owner.cpp
           if ($LASTEXITCODE) { throw 'TXT records differ from the exercised source' }
