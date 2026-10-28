@@ -63,7 +63,11 @@ def main():
         gen=int(state('account').get('session_generation','0'));host.key('alt+s')
         wait(lambda:ready() and int(state('account').get('session_generation','0'))>gen and state('account').get('session_state') in ('4','5'))
         assert state('account')['session_state']=='4',state('account')
-        host.key('alt+r');wait(lambda:ready() and state('account').get('phase')=='0' and 'Sync finished.' in state('account').get('notice',''))
+        # Transport completion also begins with 'Sync finished.' but is not
+        # receive/projection completion. Wait for the latter exact UI outcome.
+        host.key('alt+r');wait(lambda:ready() and state('account').get('phase')=='0' and state('account').get('notice','') in (
+            "Sync finished. Some books have version conflicts; open the others to add them to this device",
+            "Sync finished. Open a book to add it to this device's reading library"))
         if conflict:
             assert int(state('account')['conflicted'])>=1,state('account')
             command('import','-window',window('Account and Sync'),out/'gtk-conflict-account.png')
