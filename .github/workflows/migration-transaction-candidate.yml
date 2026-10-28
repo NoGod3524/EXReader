@@ -150,8 +150,22 @@ jobs:
         run: |
           set -o pipefail
           ${{ matrix.py }} tests/migration/run_cases.py --tool "${{ matrix.txexe }}" --out build/evidence/transaction-original-${{ matrix.label }}.json --workdir build/transaction-original-work --label ${{ matrix.label }} 2>&1 | tee build/logs/transaction-original-${{ matrix.label }}.txt
+      - name: Run unchanged migration review against transaction candidate
+        id: tx_review
+        if: always()
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/review_cases.py --tool "${{ matrix.txexe }}" --editor "${{ matrix.editor }}" --output build/transaction-review 2>&1 | tee build/logs/transaction-review-${{ matrix.label }}.txt
+      - name: Run unchanged browser chain against transaction candidate
+        id: tx_browser
+        if: always()
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/e2e/check_e2e.py --tool "${{ matrix.txexe }}" --export-dir build/e2e-out --spec build/e2e-data/spec.json --work build/transaction-e2e --out build/evidence/transaction-e2e-${{ matrix.label }}.json 2>&1 | tee build/logs/transaction-e2e-${{ matrix.label }}.txt
       - name: Fail if unchanged candidate scenarios fail
-        if: steps.tx_original.outcome != 'success'
+        if: steps.tx_original.outcome != 'success' || steps.tx_review.outcome != 'success' || steps.tx_browser.outcome != 'success'
         run: exit 1
       - name: Preserve evidence and raw logs
         if: always()
@@ -165,6 +179,8 @@ jobs:
             build/old-compat/
             build/transaction-candidate/
             build/transaction-host-lifecycle/
+            build/transaction-review/
+            build/transaction-e2e/
           if-no-files-found: warn
 
   record:
