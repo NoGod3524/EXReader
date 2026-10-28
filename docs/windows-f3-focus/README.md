@@ -20,3 +20,28 @@ same original sample and real HWND focus/UI-cue changes; it does not edit the
 old F3 judge, sample coordinates, checks or thresholds. Hypothesis: unconditional
 DrawFocusRect ignores the Windows UI cue state; actual contrast is required
 before selecting a host correction. This is not yet acceptance.
+
+## Real Windows contrast and selected minimal fix
+
+Run 40653667318/1, job 122699474014, source
+`210a482f16c380afacd57ff43a13037eb2e072ec` rebuilt unchanged production.
+Artifact 12800723856: 39,251,362 bytes, SHA-256
+`9d37009872f302283b43930d1dc9db607f8ef3d851d88efb6f4ff1d1cc00b7a0`.
+After the original light-settings interaction the native UI state was **0**,
+not hidden; sample (210,1) was black and 397 top-edge pixels were dark.
+Explicit UISF_HIDEFOCUS changed the native state to **1** but all 397 pixels
+remained. Thus the original failure is a focus-overlay/sample collision, not
+incorrect SDK theme ink, and ignoring native cue state is a separately proven
+host defect. The initial WM_NEXTDLGCTL focus-away labels were ineffective on
+the ordinary window; they do not prove focus transitions. The final independent
+harness uses UI Automation with GetGUIThreadInfo verification and real Tab.
+
+The isolated host fix respects WM_QUERYUISTATE, repaints after WM_UPDATEUISTATE,
+and confines the visible document focus outline to its rendered canvas rather
+than drawing over the unrelated letterbox gutter. Empty views retain their
+whole-control focus outline. The outline is inset one pixel inside the clipped
+canvas, outside text; new live comparisons check light/dark interior hashes,
+visible keyboard cues and unchanged white gutter. The original 25 F3 checks,
+coordinates and thresholds are unchanged. This is not a theme-renderer or layout
+redesign. High-contrast settings/screen-reader acceptance remain separate unless
+explicitly tested and reported.
