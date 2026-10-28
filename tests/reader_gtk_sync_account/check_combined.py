@@ -257,12 +257,13 @@ def main():
             time.sleep(.1)
         else:
             raise TimeoutError('status capture did not finish: ' + repr(wave()))
-        text = value['sync_text']
+        text = value['sync_text'].replace('\\n', '\n')
         assert value['sync_code'] == '0' and value['sync_view_visible'] == '1', value
         assert 'Phase: ' + expected_phase + '\n' in text, text
         if expected_reason is not None:
             assert 'Reason: ' + expected_reason + '\n' in text, text
-        assert 'Resumable: ' in text and 'Pending records: ' in text and 'Whole library synchronized: no' in text
+        assert ('Resumable: yes' if expected_phase in ('cancelled', 'failed') else 'Resumable: no') in text
+        assert 'Pending records: ' in text and 'Whole library synchronized: no' in text
         assert len(requests) == before_requests and sql('SELECT * FROM reader_outbox ORDER BY rowid') == before_rows
         assert account()['attempt'] == current['attempt'] and account()['session_state'] == current['session_state']
         assert user not in text and password not in text and root not in text
@@ -358,6 +359,7 @@ def main():
         directories.add('/dav/exreader-sync-v1/revisions/00/');entries[path] = payload
         entries['/dav/exreader-sync-v1/objects/' + digest[:2] + '/' + digest + '.txt'] = remote_body
         pause_next();scan();assert blocked.wait(40)
+        capture_status('syncing', 'none')
         ticks = int(account()['ticks']);time.sleep(.7)
         assert int(account()['ticks']) > ticks and account()['cancel_enabled'] == '1'
         window();host.key('alt+c');ready(lambda s: s['cancel_requested'] == '1', seconds=5);release.set()
@@ -485,7 +487,7 @@ def main():
                 data = path.read_bytes();assert not any(form in data for form in forms), 'credential leak in ' + str(path.relative_to(folder))
         assert not any(form in body for form in forms for body in entries.values())
         record('credentials_and_authorization_are_absent_from_profiles_product_databases_wire_and_all_evidence')
-        expected_checks = 51 if args.receive_fixtures else 26
+        expected_checks = 52 if args.receive_fixtures else 27
         assert len(checks) == expected_checks, len(checks)
         report.update(accepted=True, count=len(checks), local_originals=52, credential_leak_hits=0,
                       actual_secret_service='temporary unlocked then locked GNOME collection', native_https=True)
