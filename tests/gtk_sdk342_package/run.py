@@ -87,7 +87,7 @@ def build():
         lines = path.read_text().splitlines()
         selected = [x for x in lines if x.startswith(('EXR_SDK_VERSION:', 'EXR_SDK:', 'CMAKE_HOME_DIRECTORY:', 'CMAKE_PREFIX_PATH:', 'EXReader_DIR:'))]
         if any(x.startswith('EXR_SDK_VERSION:') for x in selected):
-            assert 'EXR_SDK_VERSION:STRING=' + VERSION in selected, (str(path), selected)
+            assert all(x.partition('=')[2] == VERSION for x in selected if x.startswith('EXR_SDK_VERSION:')), (str(path), selected)
         caches[str(path.relative_to(ROOT))] = selected
     installed = {}
     for prefix in (raw.SDK, raw.PREFIX, raw.LEGACY):

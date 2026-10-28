@@ -21,3 +21,14 @@ For six-platform composition, cherry-pick the host/packager changes; explicitly
 supply SDK 3.42.0 to the Linux producer and S20 assemble/verify commands. Preserve
 the original F06 defaults for other platforms. Run the resulting common source;
 this branch's evidence is not reusable for a changed SHA.
+
+## Preserved initial failure
+
+Run 40649465218, SHA 85972e38165749768d8064a85ff46e6ba8cf16bf:
+SDK/GTK build, raw 20-check backend, legacy link, real SDK3.42 identity and
+archive/unpack passed before the new cache audit incorrectly demanded CMake
+STRING type for otherwise valid UNINITIALIZED version variables in SDK-free
+modules. Corrected to compare exact version value, not incidental cache type.
+Authentication's urllib redirect also forwarded GitHub Authorization to blob
+storage; use the established gh API download path. Neither fix changes product
+assertions. Original failure artifact 12799650451 remains retained.

@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
 import urllib.request
 import zipfile
@@ -17,7 +18,8 @@ artifacts = json.loads(get(api + '/actions/runs/' + run + '/artifacts'))['artifa
 selected = [a for a in artifacts if a['name'] == 'gtk-sdk342-package-' + run + '-' + attempt]
 assert len(selected) == 1
 artifact = selected[0]
-archive = get(artifact['archive_download_url']); (out / 'original.zip').write_bytes(archive)
+archive = subprocess.check_output(['gh', 'api', 'repos/' + repo + '/actions/artifacts/' + str(artifact['id']) + '/zip'])
+(out / 'original.zip').write_bytes(archive)
 root = out / 'original'
 with zipfile.ZipFile(out / 'original.zip') as zipped: zipped.extractall(root)
 def read(path): return json.loads((root / path).read_text())
