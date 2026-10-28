@@ -37,6 +37,18 @@ def main():
             with zipfile.ZipFile(io.BytesIO(raw)) as archive:
                 assert len(archive.namelist()) == len(set(archive.namelist()))
                 assert all(not PurePosixPath(n).is_absolute() and '..' not in PurePosixPath(n).parts and '\\' not in n for n in archive.namelist())
+                if artifact['name'].startswith('team24-apple-sdk-'):
+                    target = next((t for t in ('macos', 'iphonesimulator') if artifact['name'] == f'team24-apple-sdk-{t}-{run}-{attempt}'), None)
+                    assert target is not None
+                    identity = json.loads(archive.read('wave3-packages.json'))
+                    assert (identity['source_sha'], identity['run_id'], identity['attempt'], identity['target']) == (source, run, attempt, target)
+                    assert identity['sdk_frozen_source'] == 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
+                    assert identity['modules'] == ['annotation-export', 'annotation-import', 'font-library', 'original-export', 'jump-history', 'sync-status-view']
+                    guard = json.loads(archive.read('team24-apple-guard.json'))
+                    assert (guard['source_sha'], guard['run_id'], guard['attempt'], guard['accepted']) == ('937f61057b06c5c9de3b562046e52c91b5be62b9', run, attempt, True)
+                    assert any(n.startswith('sdk/') and not n.endswith('/') for n in archive.namelist())
+                    assert any(n.startswith('raw-products/') and not n.endswith('/') for n in archive.namelist())
+                    entry['package_identity'] = identity
                 if artifact['name'].startswith('team24-apple-native-'):
                     result = json.loads(archive.read('result.json'))
                     assert (result['source_sha'], result['run_id'], result['attempt']) == (source, run, attempt)
