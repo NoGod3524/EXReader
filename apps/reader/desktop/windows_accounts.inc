@@ -21,7 +21,7 @@ typedef struct {
   int rkind;
   char after[260];
   uint64_t projected, concurrent, pending_parents, blocked, tombstones, project_failed;
-  uint64_t imported, import_waiting, import_failed;
+  uint64_t imported, import_waiting, import_failed, fetch_failed;
   uint64_t dependency, head_changed, shelf_pending, shelf_previous, shelf_conflicts, shelf_parents, shelf_blocked, shelf_tombstones;
   unsigned receive_pages, shelf_pass;
   int receive_resumable, receive_incomplete;
@@ -584,6 +584,49 @@ static int acct_cloud_visit(void *context, const reader_catalog_row *row) {
   book->title = host_strdup(row->title); book->bytes = row->source_bytes;
   return !book->key || !book->sort || !book->title;
 }
+/* Recover an original for already-retained metadata. Download to a unique
+   private name, verify identity, then publish without replacing the cache. */
+static exr_status acct_fetch_missing(host_job *job, const acct_book *book, const wchar_t *destination) {
+  acct_owner *o = &acct.owner; exr_webdav_client *dav = NULL;
+  exr_webdav_config config = {0}; exr_webdav_error error = {0}; exr_webdav_download result = {0};
+  exr_webdav_control control = {acct_cancel_check, NULL, job};
+  char uuid[37], name[64], resource[160], *directory = NULL;
+  char *pair = NULL, *encoded = NULL, *authorization = NULL;
+  wchar_t temporary[HOST_PATH]; exr_status status = EXR_IO;
+  size_t user_bytes = o->secret ? strlen((const char *)o->secret) : 0;
+  const char *colon = strchr(book->key, ':');
+  if (!colon || !user_bytes || user_bytes + 1 >= o->secret_size || !book->bytes ||
+      book->bytes > EXR_SIDELOAD_STREAM_LIMIT) return EXR_IO;
+  directory = host_utf8(acct.work);
+  pair = malloc(o->secret_size + 1); encoded = calloc((o->secret_size + 2) / 3 * 4 + 8, 1);
+  authorization = calloc((o->secret_size + 2) / 3 * 4 + 16, 1);
+  if (!directory || !pair || !encoded || !authorization) goto done;
+  memcpy(pair, o->secret, o->secret_size); pair[user_bytes] = ':';
+  acct_base64((const unsigned char *)pair, o->secret_size, encoded);
+  snprintf(authorization, (o->secret_size + 2) / 3 * 4 + 16, "Basic %s", encoded);
+  config.root_url = o->root; config.authorization = authorization; config.timeout_ms = 15000;
+  if (exr_webdav_create(&config, &dav, &error) != EXR_DAV_OK) goto done;
+  acct_new_uuid(uuid); snprintf(name, sizeof(name), "account-%s.tmp", uuid);
+  swprintf(temporary, HOST_PATH, L"%ls\\%hs", acct.work, name);
+  snprintf(resource, sizeof(resource), "exreader-sync-v1/objects/%.2s/%s.%.*s",
+    colon + 1, colon + 1, (int)(colon - book->key), book->key);
+  exr_webdav_status code = exr_webdav_download_file(dav, resource, directory, name, &control, &result, &error);
+  if (code == EXR_DAV_CANCELLED) { status = EXR_CANCELLED; goto done; }
+  if (code == EXR_DAV_HTTP && error.http_status == 404) { status = EXR_ARGUMENT; goto done; }
+  if (code != EXR_DAV_OK || !result.published) goto done;
+  status = acct_file_matches(temporary, colon + 1, book->bytes, job);
+  if (status == EXR_OK && !MoveFileW(temporary, destination)) {
+    status = GetLastError() == ERROR_ALREADY_EXISTS || GetLastError() == ERROR_FILE_EXISTS
+      ? acct_file_matches(destination, colon + 1, book->bytes, job) : EXR_IO;
+  }
+  DeleteFileW(temporary);
+done:
+  exr_webdav_free(dav); free(directory);
+  if (pair) { exr_credentials_wipe(pair, o->secret_size); free(pair); }
+  if (encoded) { exr_credentials_wipe(encoded, strlen(encoded)); free(encoded); }
+  if (authorization) { exr_credentials_wipe(authorization, strlen(authorization)); free(authorization); }
+  return status;
+}
 static exr_status acct_import_one(host_job *job, const acct_book *book) {
   acct_owner *o = &acct.owner;
   const char *colon = strchr(book->key, ':');
@@ -591,7 +634,12 @@ static exr_status acct_import_one(host_job *job, const acct_book *book) {
   char hash[65]; snprintf(hash, sizeof(hash), "%s", colon + 1);
   wchar_t path[HOST_PATH];
   swprintf(path, HOST_PATH, L"%ls\\%hs.%.*hs", acct.work, hash, (int)(colon - book->key), book->key);
-  if (GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES) { o->import_waiting++; return EXR_OK; }
+  if (GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES) {
+    exr_status fetched = acct_fetch_missing(job, book, path);
+    if (fetched == EXR_CANCELLED) return fetched;
+    if (fetched == EXR_ARGUMENT) { o->import_waiting++; return EXR_OK; }
+    if (fetched != EXR_OK) { o->fetch_failed++; acct_text(job, L"无法取得或校验云端原书；可重试。"); return EXR_OK; }
+  }
   exr_status status = acct_file_matches(path, hash, book->bytes, job);
   if (status == EXR_CANCELLED) return status;
   if (status != EXR_OK) { o->import_failed++; acct_text(job, L"云端原书校验失败，未导入。"); return EXR_OK; }
@@ -667,7 +715,7 @@ static exr_status acct_receive_job(host_job *job) {
     acct_page_clear(o); free(o->cursor_title); free(o->cursor_key); o->cursor_title = o->cursor_key = NULL;
     o->rkind = 0; o->after[0] = 0; o->rseen = 0;
     o->projected = o->concurrent = o->pending_parents = o->blocked = o->tombstones = o->project_failed = 0;
-    o->imported = o->import_waiting = o->import_failed = 0;
+    o->imported = o->import_waiting = o->import_failed = o->fetch_failed = 0;
     o->dependency=o->head_changed=o->shelf_pending=o->shelf_previous=0;
     o->shelf_conflicts=o->shelf_parents=o->shelf_blocked=o->shelf_tombstones=0;
     o->shelf_pass=0; o->receive_pages=0; o->receive_resumable=1; o->receive_incomplete=0;
