@@ -4,7 +4,12 @@ from pathlib import Path
 assert os.environ.get('GITHUB_ACTIONS')=='true'
 out=Path('build/diagnostic');apk=Path('build/wave3/artifacts/app-debug.apk');original=out/'producer-original.apk';shutil.copyfile(apk,original)
 tool=Path(os.environ['ANDROID_HOME'])/'build-tools/35.0.0/apksigner'
-subprocess.run([str(tool),'sign','--ks',str(Path.home()/'.android/debug.keystore'),'--ks-key-alias','androiddebugkey','--ks-pass','pass:android','--key-pass','pass:android',str(apk)],check=True)
+key=Path('build/organization-diagnostic-ephemeral.jks')
+subprocess.run(['keytool','-genkeypair','-keystore',str(key),'-storepass','android','-keypass','android','-alias','androiddebugkey','-dname','CN=Ephemeral Organization Diagnostic','-keyalg','RSA','-validity','2'],check=True)
+try:
+ for target in (apk,Path('build/wave3/artifacts/relay-debug-androidTest.apk')):
+  subprocess.run([str(tool),'sign','--ks',str(key),'--ks-key-alias','androiddebugkey','--ks-pass','pass:android','--key-pass','pass:android',str(target)],check=True)
+finally:key.unlink(missing_ok=True)
 subprocess.run([str(tool),'verify','--verbose',str(apk)],check=True)
 def entries(path):
  with zipfile.ZipFile(path) as z:
