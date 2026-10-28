@@ -12,3 +12,5 @@ The dedicated report's unrelated provider-identity booleans are not used here.
 Physical devices, real cloud providers, complete cross-platform convergence and
 the final shared-source release remain separate requirements. Failed run
 40627098367 remains preserved.
+
+The fixed catalog audit [40633905669 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40633905669), source 836089efaabf92b6acae71db0649d33087996f42, passed with evidence_ok=true and no problems: 80/108 (74.1%); foundation 12/12, host 68/84, final delivery 0/12.
