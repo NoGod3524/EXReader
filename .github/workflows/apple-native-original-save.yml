@@ -49,15 +49,23 @@ jobs:
   inspect-prior-failure:
     if: ${{ contains(github.event.head_commit.message, '[original diagnostic]') }}
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        platform: [macos, ipad]
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: apple-native-original-macos-40627102091-1
+          name: apple-native-original-${{ matrix.platform }}-40627102091-1
           run-id: 40627102091
           github-token: ${{ github.token }}
           path: evidence
-      - name: Report retained macOS failure
+      - name: Report retained failure
         run: |
           cat evidence/result.json
-          grep -n -E 'OriginalSaveUITests.swift:|error:|XCTAssert|Missing |Test Case| t = ' evidence/native.log | tail -100 || true
-          tail -180 evidence/native.log
+          python3 - <<'PY'
+          from pathlib import Path
+          lines = Path('evidence/native.log').read_text(errors='replace').splitlines()
+          for i, line in enumerate(lines):
+              if 'OriginalSaveUITests.swift:' in line and 'error:' in line:
+                  print('\n'.join(lines[max(0, i-12):i+100]))
+          PY
