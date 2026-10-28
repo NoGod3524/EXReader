@@ -11,6 +11,7 @@ import legacy_data as L
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--tool', required=True)
+    p.add_argument('--old-tool', required=True)
     p.add_argument('--host', required=True)
     p.add_argument('--font', required=True)
     p.add_argument('--work', type=Path, required=True)
@@ -26,6 +27,7 @@ def main():
         p = subprocess.run(list(map(str,args)), capture_output=True, text=True)
         print(p.stdout, p.stderr, flush=True)
         assert p.returncode == 0, (args, p.returncode)
+    run(a.old_tool, 'migrate', '--pack', first, '--target', target)
     run(a.tool, 'migrate', '--pack', first, '--target', target)
     run(a.host, target, a.font, '1')
     run(a.tool, 'migrate', '--pack', second, '--target', target)

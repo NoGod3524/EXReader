@@ -48,3 +48,31 @@ real WAL, ordinary concurrent writers, crash recovery, ledger export/import,
 rollback, retries, and actual host lifecycle before it can be accepted. macOS and
 real user libraries must not be inferred from Linux or Windows. No result from
 this candidate supersedes the retained earlier failure.
+
+## Evidence and unresolved gate
+
+Push run [40634335005](https://github.com/NoGod3524/EXReader/actions/runs/40634335005),
+attempt 1, tests `be684cde87f0d00d0d5116c9f413f8bfa33a3011`. The Linux job
+passed the transaction checks for schema 6 and 7 in rollback-journal and real
+WAL mode, including blocked ordinary writes, later committed writes, failure,
+process death before and after commit, retry, and refusal of a damaged internal
+ledger. It also passed new-target crash/retry and full JSON ledger export and
+idempotence checks, and the actual GTK reader backend open/close/reopen probe
+with page background enabled. The original executable separately passed its
+65 scenarios/135 checks, 31 review checks and 17 browser checks. The unchanged
+65 scenarios run against the transaction executable passed only 52 and failed
+13; the Linux job is therefore red. Windows passed its transaction step and
+original executable scenarios and review checks; its browser and unchanged
+candidate scenarios were still running when this record was written. macOS
+was queued.
+
+Some failed assertions require an automatically maintained external JSON
+sidecar, a replaced stage, or an explicit retained pre-image after simulated
+file rollback. The candidate instead has an authoritative SQLite ledger, an
+explicit JSON export, and no replacement or file pre-image for an existing
+target. Other failing checks include legacy migrator lock and fault-reporting
+expectations. The unchanged assertions have not been altered or granted by
+the newer transaction tests. In particular, the separate GTK probe is not an
+integrated host entry point, and Apple/Android/Windows host lifecycles remain
+unverified. A reviewable compatibility and acceptance mapping, remaining
+candidate behavior, and actual host orchestration are still required.
