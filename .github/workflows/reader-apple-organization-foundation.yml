@@ -1,7 +1,5 @@
 name: Apple organization foundation
 on:
-  push:
-    branches: [codex/terra-wave-apple-organization]
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,0 +1,113 @@
+name: Apple native organization
+on:
+  push:
+    branches: [codex/terra-wave-apple-organization]
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+jobs:
+  organization:
+    name: Organization ${{ matrix.platform }}
+    runs-on: macos-15
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify frozen SDK and schema
+        run: |
+          git diff --exit-code f34a4f27 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code a6d7dd81 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Build public SDK and installed product provider
+        run: |
+          set -o pipefail
+          target=iphonesimulator
+          options=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          if test '${{ matrix.platform }}' = macos; then target=macos; options=(); fi
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${options[@]}"
+          cmake --build build/sdk --parallel 4
+          cmake --install build/sdk --prefix "$PWD/stage/$target"
+          python3 tools/build_apple_product.py --sdk "stage/$target" --target "$target" --build build/apple-product
+      - name: Build production host and organization UI tests
+        run: |
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/organization-project build/apple-resources tests/apple_host/organization/ui
+      - name: Select destination
+        run: |
+          mkdir -p build/organization-evidence
+          python3 - '${{ matrix.platform }}' > build/organization-evidence/destination.txt <<'PY'
+          import json, subprocess, sys
+          platform = sys.argv[1]
+          if platform == 'macos':
+              print('platform=macOS\nmacos\nmacOS host\nmacOS')
+          else:
+              prefix = 'iPhone' if platform == 'iphone' else 'iPad'
+              data = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))
+              choices = [(runtime, device['name'], device['udid']) for runtime, devices in data['devices'].items()
+                         for device in devices if device.get('isAvailable') and device['name'].startswith(prefix)]
+              runtime, name, udid = max(choices)
+              subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False, capture_output=True)
+              subprocess.run(['xcrun', 'simctl', 'erase', udid], check=True)
+              print('platform=iOS Simulator,id=' + udid + '\n' + udid + '\n' + name + '\n' + runtime)
+          PY
+      - name: Exercise native organization and process restart
+        run: |
+          set -o pipefail
+          scheme=EXReaderHost-iOS
+          target=iphonesimulator
+          signing=NO
+          if test '${{ matrix.platform }}' = macos; then scheme=EXReaderHost-macOS; target=macos; signing=YES; fi
+          destination=$(sed -n '1p' build/organization-evidence/destination.txt)
+          xcodebuild test -project build/organization-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+            -destination "$destination" -derivedDataPath build/OrganizationDerivedData \
+            -resultBundlePath build/organization-evidence/organization.xcresult -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 300 -maximum-test-execution-time-allowance 600 \
+            EXR_SDK_DIR="$PWD/stage/$target" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee build/organization-evidence/xcodebuild.log
+      - name: Verify native test results and retain evidence
+        run: |
+          app=build/OrganizationDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          if test '${{ matrix.platform }}' = macos; then app=build/OrganizationDerivedData/Build/Products/Debug/EXReaderHost.app; fi
+          python3 tests/apple_host/organization/collect.py --platform '${{ matrix.platform }}' \
+            --result build/organization-evidence/organization.xcresult --app "$app" --output build/organization-evidence/validated
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-organization-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/organization-evidence/
+          if-no-files-found: error
+  summary:
+    needs: organization
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apple-organization-*
+          path: evidence
+      - name: Require all three same-source UI results
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          reports = [json.loads(path.read_text()) for path in Path('evidence').rglob('organization-ui.json')]
+          assert len(reports) == 3 and {r['platform'] for r in reports} == {'macos', 'iphone', 'ipad'}
+          for report in reports:
+              assert report['accepted'] is True and report['problems'] == []
+              assert report['source_sha'] == os.environ['GITHUB_SHA']
+              assert str(report['run_id']) == os.environ['GITHUB_RUN_ID']
+              assert str(report['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
+              assert len(report['cases']) == 5 and report['physical_device_execution'] is False
+          Path('organization-summary.json').write_text(json.dumps({'accepted': True, 'scope': 'native organization UI cases and process restart only', 'complete_product_accepted': False, 'reports': reports}, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apple-organization-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: organization-summary.json
+          if-no-files-found: error

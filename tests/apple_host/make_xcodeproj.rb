@@ -63,7 +63,7 @@ def app_settings(target, platform, deployment, info_plist)
     settings['ENABLE_DEBUG_DYLIB'] = 'NO'
     settings['CLANG_ENABLE_MODULES'] = 'YES'
     settings['EXR_SDK_DIR'] = '$(SRCROOT)/sdk'
-    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lreader_reading_commands', '-lreader_annotation_view', '-lreader_navigation', '-lreader_search', '-lreader_session', '-lreader_sync',
+    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lreader_desktop_metadata', '-lreader_reading_commands', '-lreader_annotation_view', '-lreader_navigation', '-lreader_search', '-lreader_session', '-lreader_sync',
       '-lexr_webdav', '-lreader_commands', '-lreader_reading_state_codec', '-lreader_revisions',
       '-lreader_revision_hash', '-lreader_catalog', '-lreader_catalog_sqlite', '-lexr_credentials', '-lexreader',
       '-lc++', '-lxml2', '-framework', 'Foundation', '-framework', 'CoreFoundation', '-framework', 'Security']
