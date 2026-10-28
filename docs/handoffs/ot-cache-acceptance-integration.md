@@ -22,3 +22,17 @@ is integrated here without changing the product. Its guard additionally pins
 the already-published SDK evidence document; the new integration commit is not
 the original tested test source. Future SDK or test changes require a new
 three-platform run and authentication.
+
+## Integrated test package verification
+
+[Run 40624960071, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40624960071)
+passed Windows, Linux and macOS correctness jobs and same-run authentication.
+The test source was 9ba27dc4b6f6d1105bac872c378ac36a1a1ad2da; the fixed SDK
+candidate and control remain the exact sources above. This verifies the added
+source admission after integration.
+
+Artifacts:
+- Windows 12789047676, SHA-256 6db47b367e5aa8ea7d4ad0b0ee67cca58347ccce0a73583e71d80babe76681ee.
+- Linux 12788508952, SHA-256 3a421bbc895aa82b419a97bcb030102ce7ae84e39b773ad4f3ee9b5a3feedaf8.
+- macOS 12788434372, SHA-256 86881855cef8be21491cadd37088e6e5ea6413d6c3a4230f65132973e08ab546.
+- Authentication 12788793604, SHA-256 21eb603dd5adafb7547884e161d8d683474f8d356516e2c659f8cbae66ae2dc0.
