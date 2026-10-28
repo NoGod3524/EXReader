@@ -63,6 +63,8 @@ The new same-source capture contains:
   build argument journal, unchanged F06 build logs and producer console.
 - Raw `dumpbin /symbols` for the captured installed archives and host objects/
   libraries; `/headers`, `/imports`, `/exports`, `/dependents` for the actual EXE.
+  The authenticator derives the exact required diagnostic set from the captured
+  archive/object inventory; omitted rows or outputs cannot count as complete.
 - Original new-run F06 archive, manifest, configuration, result, unpacked entry,
   payload, page image and application log, all bound to the same full source SHA,
   Actions run and attempt. Host, payload, nested archive and relocated EXE hashes
@@ -97,7 +99,18 @@ No existing test, product owner, migration implementation, SDK or formal total-
 progress catalog is edited. No main push, PR, tag, release, Codex launch, user-PC
 execution or remote repository write is part of this source-only handoff.
 
-## First authorized Actions evidence
+## Authorized Actions evidence
+
+The first [push run 40772840276](https://github.com/NoGod3524/EXReader/actions/runs/40772840276)
+at `37a2d73c294f3eeca0115f9971a94acd30f1201a` passed the source guard,
+Python syntax checks and all 10 new protocol tests, then failed before the
+native build: the new generic `contract.py` module shadowed unchanged C09's
+compact validator import. [Partial upload 12853815927](https://github.com/NoGod3524/EXReader/actions/runs/40772840276/artifacts/12853815927)
+is retained (3,629 bytes, SHA-256
+`d430819821f9915bcd7f292b6028771b3a28ed9115f96de2a2d5dfbbf65f0af7`).
+The scoped correction renames only the new module to `capture_contract.py` and
+adds an Actions-only import smoke test for the unchanged original producer.
+No native result is credited for the failed run, and no old source is changed.
 
 After approval, publish only the reviewed owned additions on the dedicated
 branch. Preserve any failed attempt. Inspect the three new job results, upload

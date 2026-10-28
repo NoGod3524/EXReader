@@ -205,6 +205,31 @@ def final_link(archive, members, workspace):
         response_file_status='retained' if responses else 'not_used_by_final_link')
 
 
+def required_diagnostics(names, workspace, inventory):
+    """Derive completeness from captured raw inputs, not claimed diagnostic rows."""
+    root = PureWindowsPath(workspace)
+    expected = {}
+    for label in BUILDS:
+        expected['ninja/' + label + '.commands.txt'] = dict(
+            argv=['ninja', '-C', str(root / BUILD / label), '-t', 'commands'])
+    for tool in ('cmake', 'ninja'):
+        expected['versions/' + tool + '.txt'] = dict(argv=[tool, '--version'])
+    stages = tuple(BUILD + stage + '/' for stage in STAGES)
+    inputs = sorted(name for name in names if
+        (name.startswith(stages) and name.lower().endswith('.lib')) or
+        (name.startswith(BUILD + 'host/') and name.lower().endswith(('.lib', '.obj'))))
+    require(inputs, 'missing native diagnostic subjects')
+    for name in inputs:
+        output = 'symbols/' + name.removeprefix(BUILD) + '.txt'
+        expected[output] = dict(argv=['dumpbin', '/nologo', '/symbols', str(root / name)],
+            subject=name, subject_identity=inventory[name])
+    for mode in ('headers', 'imports', 'exports', 'dependents'):
+        expected['image/' + mode + '.txt'] = dict(
+            argv=['dumpbin', '/nologo', '/' + mode, str(root / PROGRAM)],
+            subject=PROGRAM, subject_identity=inventory[PROGRAM])
+    return expected
+
+
 def validate_capture(archive, inventory, expected):
     """Recompute raw byte bindings; deliberately does not judge F07 symbols."""
     members = verify_files(archive, inventory)
@@ -318,12 +343,20 @@ def validate_capture(archive, inventory, expected):
     require(original['passed'] is True and original['checks'] >= 26, 'original F06 package checks failed')
     diagnostics = read_json('capture/diagnostics.json')
     same(diagnostics, expected)
-    require(diagnostics['commands'] and all(r['exit_code'] == 0 for r in diagnostics['commands']),
-            'raw native diagnostics failed')
+    required = required_diagnostics(members, source['workspace'], inventory)
+    rows = diagnostics['commands']
+    require(len(rows) == len(required) and {row['output'] for row in rows} == set(required),
+            'missing/duplicate/unexpected raw diagnostic')
     for row in diagnostics['commands']:
-        require('capture/' + row['output'] in members, 'raw native diagnostic output missing')
-        if 'subject' in row:
-            require(inventory[row['subject']] == row['subject_identity'], 'diagnostic subject identity mismatch')
+        output = 'capture/' + row['output']
+        require(row['exit_code'] == 0 and output in members and inventory[output]['bytes'] > 0,
+                'raw native diagnostic failed/missing/empty')
+        target = required[row['output']]
+        require([arg.replace('\\', '/') for arg in row['argv']] ==
+                [arg.replace('\\', '/') for arg in target['argv']], 'diagnostic command differs')
+        require(row.get('subject') == target.get('subject') and
+                row.get('subject_identity') == target.get('subject_identity'),
+                'diagnostic subject identity mismatch')
     return dict(link, program_sha256=inventory[PROGRAM]['sha256'], map_sha256=inventory[MAP]['sha256'],
         package=inventory[package_path], installed_prefixes=list(STAGES),
         response_files=[n for n in members if n.endswith('.rsp')],

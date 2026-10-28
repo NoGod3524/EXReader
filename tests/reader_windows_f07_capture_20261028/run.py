@@ -2,13 +2,12 @@
 import importlib.util
 import json
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import traceback
 import zipfile
 
-from contract import (ROOT, OUT, F06, BUILD, STAGES, BUILDS, PROGRAM, MAP, RECIPE,
+from capture_contract import (ROOT, OUT, F06, BUILD, STAGES, BUILDS, PROGRAM, MAP, RECIPE,
     MODULES, actions_only, identity, guard, save, require, diagnostic_argv,
     file_digest, validate_capture)
 

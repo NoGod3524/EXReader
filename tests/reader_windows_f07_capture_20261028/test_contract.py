@@ -3,11 +3,13 @@ import hashlib
 import io
 import json
 import stat
+import sys
 import unittest
 import zipfile
 
-from contract import (BASE, F06, BUILD, BUILDS, PROGRAM, MAP, PACKAGED, RELOCATED,
-    RECIPE, actions_only, diagnostic_argv, safe_members, validate_capture, verify_files)
+from capture_contract import (BASE, F06, BUILD, BUILDS, PROGRAM, MAP, PACKAGED, RELOCATED,
+    RECIPE, actions_only, diagnostic_argv, safe_members, validate_capture, verify_files,
+    required_diagnostics)
 
 actions_only()
 
@@ -66,9 +68,11 @@ def fixture():
         '/out:EXReaderWave3.exe /MAP:windows-host.map ' +
         ' '.join(root + '/' + BUILD + stage + '/module.lib'
             for stage in ('sdk-stage', 'product-stage', 'raw-stage'))).encode()
+    required = required_diagnostics(files, root, {name: info(value) for name, value in files.items()})
+    for output in required:
+        files.setdefault('capture/' + output, b'synthetic diagnostic output')
     files['capture/diagnostics.json'] = raw_json(dict(expected,
-        commands=[dict(output='image/imports.txt', exit_code=0)]))
-    files['capture/image/imports.txt'] = b'synthetic imports output'
+        commands=[dict(value, output=output, exit_code=0) for output, value in required.items()]))
     files[PACKAGED] = files[RELOCATED] = files[PROGRAM]
     producer = dict(source_sha=expected['source_sha'], sdk_version='3.42.0',
         files={'EXReader.exe': info(files[PROGRAM])['sha256']})
@@ -121,6 +125,13 @@ class CaptureContract(unittest.TestCase):
         self.assertEqual(diagnostic_argv(old), old + ['--', '-d', 'keeprsp'])
         with self.assertRaises(ValueError):
             diagnostic_argv(old + ['--', '-j', '99'])
+
+    def test_unchanged_producer_import_namespace(self):
+        from run import load
+        original = load('tests/reader_wave3_c09/build.py', 'capture_import_smoke')
+        self.assertTrue(callable(original.compact_validate))
+        self.assertTrue(sys.modules['contract'].__file__.replace('\\', '/').endswith(
+            '/tests/reader_windows_compact/contract.py'))
 
     def test_zip_aliases_and_special_files_refused(self):
         for names in (['../x'], ['/x'], ['a\\b'], ['C:/x'], ['a//b'], ['a/./b'],
@@ -206,6 +217,16 @@ class CaptureContract(unittest.TestCase):
     def test_unpacked_nonprogram_file_is_authenticated(self):
         expected, files = fixture()
         files[F06 + 'unpacked-windows/build.json'] = b'changed metadata'
+        with self.assertRaises(ValueError):
+            self.validate(files, expected)
+
+    def test_dropped_native_diagnostic_is_not_complete_capture(self):
+        expected, files = fixture()
+        diagnostics = json.loads(files['capture/diagnostics.json'])
+        dropped = next(row for row in diagnostics['commands'] if row['output'].startswith('symbols/'))
+        diagnostics['commands'].remove(dropped)
+        del files['capture/' + dropped['output']]
+        files['capture/diagnostics.json'] = raw_json(diagnostics)
         with self.assertRaises(ValueError):
             self.validate(files, expected)
 

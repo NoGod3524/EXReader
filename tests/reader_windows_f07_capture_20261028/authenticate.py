@@ -6,7 +6,7 @@ import shutil
 import sys
 import zipfile
 
-from contract import (ROOT, OUT, REPO, WORKFLOW, BRANCH, actions_only, guard, identity,
+from capture_contract import (ROOT, OUT, REPO, WORKFLOW, BRANCH, actions_only, guard, identity,
     same, require, save, file_digest, safe_members, validate_capture)
 sys.path.insert(0, str(ROOT / 'tools'))
 from check_parallel_integration import fetch, pages, download_artifact_zip
