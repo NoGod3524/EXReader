@@ -133,15 +133,17 @@ struct HostSyncControls: View {
         HStack {
             if !compact {
             VStack(alignment: .leading) {
-                Text(preparing || session.preparing ? "正在准备原书" : session.state).font(.caption)
+                Text(session.preparing ? session.state : preparing ? "正在接收书架" : session.state).font(.caption)
                     .accessibilityIdentifier("account.sync.state")
                 if !session.message.isEmpty { Text(session.message).font(.caption2).foregroundColor(.secondary) }
             }
             Spacer()
             } else {
-                Text(preparing || session.preparing ? "准备中" : session.state).font(.caption2).lineLimit(1)
+                Text(session.preparing ? session.state : preparing ? "正在接收书架" : session.state).font(.caption2).lineLimit(1)
+                    .accessibilityIdentifier("account.sync.state")
+                    .accessibilityValue(Text(session.message))
             }
-            if session.running {
+            if session.running || session.preparing {
                 Button { session.cancel() } label: {
                     if compact { Image(systemName: "stop.circle").font(.system(size: 20)).frame(width: 44, height: 44).contentShape(Rectangle()) }
                     else { Text("取消同步") }

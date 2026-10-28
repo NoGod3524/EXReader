@@ -1716,7 +1716,7 @@ final class HostReaderModel: ObservableObject {
             try accountSession.beginPreparation { cancel.cancel() }
             syncCancel = cancel; syncPreparing = true
             prepareSyncPage(after: nil, profile: profile, authorization: authorization, cancel: cancel)
-        } catch { errorText = describe(error) }
+        } catch { accountSession.startFailed(describe(error)); errorText = describe(error) }
     }
 
     private func prepareSyncPage(after: String?, profile: HostAccountProfile, authorization: Data, cancel: HostCancelBox) {
@@ -1739,8 +1739,10 @@ final class HostReaderModel: ObservableObject {
                     self.prepareSyncPage(after: page.last?.key, profile: profile, authorization: authorization, cancel: cancel)
                 } else {
                     DispatchQueue.main.async {
-                        self.syncPreparing = false; self.accountSession?.finishPreparation()
-                        guard !cancel.isCancelled else { return }
+                        self.syncPreparing = false
+                        if self.syncCancel === cancel { self.syncCancel = nil }
+                        guard !cancel.isCancelled else { self.accountSession?.preparationStopped(cancelled: true); return }
+                        self.accountSession?.finishPreparation()
                         do {
                             try self.accountSession?.start(profile: profile, directory: directory, authorization: authorization, terminal: { [weak self] state in
                                 if state == READER_SESSION_CANCELLED { self?.statusText = "同步已取消" }
@@ -1748,12 +1750,14 @@ final class HostReaderModel: ObservableObject {
                             }) { [weak self] in
                                 self?.receiveAccountBooks()
                             }
-                        } catch { self.errorText = self.describe(error) }
+                        } catch { self.accountSession?.startFailed(self.describe(error)); self.errorText = self.describe(error) }
                     }
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.syncPreparing = false; self.accountSession?.finishPreparation()
+                    self.syncPreparing = false
+                    if self.syncCancel === cancel { self.syncCancel = nil }
+                    self.accountSession?.preparationStopped(cancelled: cancel.isCancelled, detail: self.describe(error))
                     if !cancel.isCancelled { self.errorText = self.describe(error) }
                 }
             }

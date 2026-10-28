@@ -382,11 +382,11 @@ struct LibraryScreen: View {
                 HostSyncControls(session: account, preparing: model.syncPreparing) { model.synchronizeAccount() }
             }
 
-            if model.accountSession != nil {
+            if let account = model.accountSession {
                 if !model.receiveMessage.isEmpty {
                     Text(model.receiveMessage).font(.caption).accessibilityIdentifier("account.receive.state")
                 }
-                if model.syncPreparing {
+                if model.syncPreparing && !account.preparing {
                     Button("取消接收准备") { model.cancelReceive() }.accessibilityIdentifier("account.receive.cancel")
                 }
             }
