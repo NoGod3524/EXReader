@@ -1,0 +1,92 @@
+name: Windows F3 real focus and theme acceptance
+on:
+  push:
+    branches: [codex/dot-windows-f3-focus-fix]
+permissions: {contents: read, actions: read}
+defaults:
+  run: {shell: bash}
+jobs:
+  native:
+    runs-on: windows-2022
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Guard scope and prepare actual Windows display
+        run: python3 tests/windows_f3_focus/guard.py
+      - name: Enter the Windows native compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Check source syntax in Actions
+        run: python3 -m py_compile tests/reader_windows_search/guard.py tests/reader_windows_search/check_ui.py tests/reader_windows_search/check_formats.py tests/reader_windows_search/check_keyboard.py tests/reader_windows_search/verify.py
+      - name: Check preferences syntax and strict protocol in Actions
+        run: |
+          python3 tests/reader_windows_341/catalog.py --self-test
+          python3 -m py_compile tests/reader_windows_preferences/guard.py tests/reader_windows_preferences/make_fixtures.py tests/reader_windows_preferences/check_ui.py tests/reader_windows_preferences/verify.py
+          python3 tests/reader_windows_preferences/verify.py --protocol-selftest
+      - name: Check records syntax and strict protocol in Actions
+        run: |
+          python3 -m py_compile tests/reader_windows_records/guard.py tests/reader_windows_records/check_ui.py tests/reader_windows_records/verify.py
+          python3 tests/reader_windows_records/verify.py --protocol-selftest
+      - name: Reject malformed current and legacy report contracts before building
+        run: python3 tests/reader_windows_navigation/verify.py --protocol-selftest
+      - name: Build and install common SDK3.41 and one product provider
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          prefix="$ws/build/winsearch-stage"
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "WS_PREFIX=$prefix" >> "$GITHUB_ENV"
+          mkdir -p build/winsearch-logs
+          cmake --preset reading-library -B build/reading-library -DCMAKE_INSTALL_PREFIX="$ws/build/reading-library/stage" 2>&1 | tee build/winsearch-logs/sdk-configure.log
+          cmake --build build/reading-library --parallel 4 2>&1 | tee build/winsearch-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/winsearch-logs/sdk-install.log
+          cmake -S apps/reader/store/native -B build/ws-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/ws-product --parallel 4
+          ctest --test-dir build/ws-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/ws-product
+      - name: Install unchanged public dependencies into one prefix
+        run: |
+          set -o pipefail
+          prefix="$WS_PREFIX"
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation apps/reader/cloud-import apps/reader/bulk-organization apps/reader/preferences; do
+            name=$(basename "$module")
+            cmake -S "$module" -B "build/ws-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/winsearch-logs/$name-configure.log"
+            cmake --build "build/ws-$name" --parallel 4 --verbose 2>&1 | tee "build/winsearch-logs/$name-build.log"
+            cmake --install "build/ws-$name"
+          done
+      - name: Build actual account host with the optional native search UI
+        env:
+          MSYS_NO_PATHCONV: '1'
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON -DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON -DEXR_READER_WINDOWS_PREFERENCES=ON -DEXR_READER_PREFS_COMMIT_REVIEW_BUILD=ON -DCMAKE_EXE_LINKER_FLAGS=/MAP 2>&1 | tee build/winsearch-logs/host-configure.log
+          cmake --build build/ws-host --parallel 4 --verbose 2>&1 | tee build/winsearch-logs/host-build.log
+          cmake -S tests/reader_search/consumer -B build/ws-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/ws-search-consumer --parallel 4 --verbose
+      - name: Package native host and create original F3 fixtures
+        run: |
+          python3 -m pip install uiautomation==2.0.29
+          python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/ws-host/EXReaderProduct.exe --output build/ws-package --static-reading
+          python3 tests/reader_windows_preferences/make_fixtures.py --output build/wprefs-fixtures
+      - name: Observe real focus and UI cue contrast without changing original judge
+        run: python3 tests/windows_f3_focus/contrast.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --fixtures build/wprefs-fixtures --output build/f3-focus-contrast
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-f3-focus-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/f3-focus-*/
+            build/ws-host/*.map
+            build/ws-host/CMakeCache.txt
+            build/ws-package/
+            build/winsearch-logs/
+          if-no-files-found: error
