@@ -1049,6 +1049,24 @@ static int write_file(const char *path, const char *data, size_t n) {
   if (!ok) lm_remove(path);
   return ok;
 }
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+static int export_new_file(const char *path,const void *data,size_t size) {
+  char *temporary=lm_xalloc(strlen(path)+64);FILE *file;int ok;
+  sprintf(temporary,"%s.tmp-%u",path,(unsigned)
+#ifdef _WIN32
+    _getpid()
+#else
+    getpid()
+#endif
+  );
+  file=lm_fopen(temporary,"wbx");
+  if(!file) { free(temporary);return 0; }
+  ok=fwrite(data,1,size,file)==size && lm_sync(file);
+  if(fclose(file)) ok=0;
+  if(ok) ok=lm_publish_new(temporary,path);
+  lm_remove(temporary);free(temporary);return ok;
+}
+#endif
 
 /* ---------- verification and dump ---------- */
 static int check_target_header(ctx *c);
@@ -1831,7 +1849,7 @@ static int real_main(int argc, char **argv) {
     if(!c->target || !export_path || lm_exists(export_path)) { fputs("export-ledger requires --target and a new --output file\n",stderr);return 1; }
     if(check_target_header(c) && exr_library_open(c->target,&c->lib,&c->err)==EXR_OK &&
        exr_library_migration_ledger_get(c->lib,&data,&size,&found,&c->err)==EXR_OK && found &&
-       write_file(export_path,data,size)) {
+       export_new_file(export_path,data,size)) {
       exr_free(data);exr_library_close(c->lib);puts("ledger exported");return 0;
     }
     exr_free(data);if(c->lib) exr_library_close(c->lib);

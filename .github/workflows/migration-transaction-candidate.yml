@@ -131,6 +131,16 @@ jobs:
           ${{ matrix.py }} tools/check_legacy_migration.py identity --out build/evidence/identity-${{ matrix.label }}.json --label ${{ matrix.label }} \
             --tool "${{ matrix.exe }}" --sdk stage --exporter migration-stage/share/exreader-legacy-migration/exporter/exr-legacy-export.js \
             --inputs build/e2e-out/legacy.exrpack build/legacy-src/store.js build/legacy-src/library.js build/legacy-src/registry.js tests/migration/legacy_data.py
+      - name: Run unchanged original scenarios against transaction candidate
+        id: tx_original
+        if: always()
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/run_cases.py --tool "${{ matrix.txexe }}" --out build/evidence/transaction-original-${{ matrix.label }}.json --workdir build/transaction-original-work --label ${{ matrix.label }} 2>&1 | tee build/logs/transaction-original-${{ matrix.label }}.txt
+      - name: Fail if unchanged candidate scenarios fail
+        if: steps.tx_original.outcome != 'success'
+        run: exit 1
       - name: Preserve evidence and raw logs
         if: always()
         uses: actions/upload-artifact@v4
