@@ -1,0 +1,5 @@
+gradle.projectsEvaluated {
+    def app = gradle.rootProject.findProject(':app')
+    app.android.sourceSets.androidTest.java.srcDir(
+        new File(gradle.rootProject.projectDir, '../../build/android340-sender/java'))
+}
