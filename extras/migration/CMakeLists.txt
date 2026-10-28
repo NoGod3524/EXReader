@@ -47,6 +47,13 @@ install(FILES ../../docs/WP12-LEGACY-MIGRATION.md ../../docs/WP12-MIGRATION-REVI
 
 option(EXR_MIGRATION_REVIEW_TESTS "Build public API state-editing review consumer" OFF)
 if(EXR_MIGRATION_REVIEW_TESTS)
+  add_executable(migration-path-state ../../tests/migration/path_state_probe.c src/lm_util.c)
+  target_include_directories(migration-path-state PRIVATE src)
+  if(WIN32)
+    target_link_libraries(migration-path-state PRIVATE psapi)
+  else()
+    target_link_libraries(migration-path-state PRIVATE m)
+  endif()
   add_executable(migration-review-edit ../../tests/migration/review_edit.c)
   target_link_libraries(migration-review-edit PRIVATE EXReader::exr_library)
   add_executable(migration-source-close ../../tests/migration/transaction_source_close.c)

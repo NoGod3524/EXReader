@@ -6,6 +6,8 @@ on:
       - extras/migration/**
       - tests/migration/sequential_ledger_guard.py
       - tests/migration/sidecar_change_guard.py
+      - tests/migration/path_state_checks.py
+      - tests/migration/path_state_probe.c
       - .github/workflows/migration-ledger-guard.yml
 permissions:
   contents: read
@@ -29,13 +31,17 @@ jobs:
           cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
           cmake --build build/sdk --config Release --parallel 4
           cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage"
-          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DEXR_MIGRATION_REVIEW_TESTS=ON -DCMAKE_BUILD_TYPE=Release
           cmake --build build/migration --config Release --parallel 4
       - name: Verify ordered migrator use and unchanged old behavior
         run: |
           mkdir -p build/evidence
           set -o pipefail
           ${{ matrix.py }} tests/migration/sequential_ledger_guard.py --old '${{ matrix.bin }}/exreader-legacy-migrate${{ matrix.label == 'windows' && '.exe' || '' }}' --tx '${{ matrix.bin }}/exreader-legacy-migrate-tx${{ matrix.label == 'windows' && '.exe' || '' }}' --work build/guard 2>&1 | tee build/evidence/guard-${{ matrix.label }}.txt
+      - name: Verify absent and inaccessible path distinctions
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/path_state_checks.py --probe '${{ matrix.bin }}/migration-path-state${{ matrix.label == 'windows' && '.exe' || '' }}' --work build/path-state 2>&1 | tee build/evidence/path-state-${{ matrix.label }}.txt
       - name: Verify concurrent sidecar changes abort transaction
         run: |
           set -o pipefail
