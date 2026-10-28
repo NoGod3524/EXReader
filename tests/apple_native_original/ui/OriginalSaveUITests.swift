@@ -66,12 +66,20 @@ final class OriginalSaveUITests: XCTestCase {
         }
         XCTAssertTrue(wait { newFolder.exists && newFolder.isHittable }, app.debugDescription)
         newFolder.tap()
-        let name = app.textFields.firstMatch
-        XCTAssertTrue(wait { name.exists && name.isHittable }, app.debugDescription)
-        name.tap(); name.typeText("EXReaderOriginalSave")
-        let done = app.buttons["Done"].firstMatch
-        XCTAssertTrue(wait { done.exists && done.isHittable }, app.debugDescription)
-        done.tap()
+        let inline = app.textViews["DOC.inlineRenameField"].firstMatch
+        if inline.waitForExistence(timeout: 10) {
+            XCTAssertTrue(wait { inline.isHittable }, app.debugDescription)
+            let old = (inline.value as? String) ?? ""
+            inline.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count))
+            inline.typeText("EXReaderOriginalSave\n")
+        } else {
+            let name = app.textFields.firstMatch
+            XCTAssertTrue(wait { name.exists && name.isHittable }, app.debugDescription)
+            name.tap(); name.typeText("EXReaderOriginalSave")
+            let done = app.buttons["Done"].firstMatch
+            XCTAssertTrue(wait { done.exists && done.isHittable }, app.debugDescription)
+            done.tap()
+        }
         let folder = app.staticTexts["EXReaderOriginalSave"].firstMatch
         if folder.waitForExistence(timeout: 10) && folder.isHittable { folder.tap() }
         let open = app.buttons["Open"].firstMatch
