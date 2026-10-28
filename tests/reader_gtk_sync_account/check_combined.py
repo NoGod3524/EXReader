@@ -52,10 +52,10 @@ def main():
     secret_home, runtime = private / 'home', private / 'run'
     secret_home.mkdir(mode=0o700);runtime.mkdir(mode=0o700)
     original_env = dict(os.environ)
-    credential_env = {k: v for k, v in os.environ.items() if not k.startswith(('DBUS_', 'GNOME_KEYRING', 'XDG_'))}
+    credential_env = {k: v for k, v in os.environ.items() if not k.startswith(('DBUS_', 'GNOME_KEYRING', 'XDG_')) and k != 'NO_AT_BRIDGE'}
     credential_env.update(HOME=str(secret_home), XDG_RUNTIME_DIR=str(runtime), XDG_DATA_HOME=str(secret_home / '.local/share'),
                           XDG_CONFIG_HOME=str(secret_home / '.config'), XDG_CACHE_HOME=str(secret_home / '.cache'),
-                          NO_AT_BRIDGE='1')
+                          GTK_A11Y='atspi', GTK_MODULES='gail:atk-bridge')
     bus = subprocess.run(['dbus-daemon', '--session', '--fork', '--print-address=1', '--print-pid=1',
                           '--address=unix:path=' + str(runtime / 'bus')], capture_output=True, text=True,
                          env=credential_env, check=True, timeout=30)
@@ -94,6 +94,9 @@ def main():
     assert collection, 'no temporary default secret collection'
     # Give only actual application processes this isolated platform store.
     os.environ.update(credential_env)
+    gate = private / 'capture-gate'; gate.mkdir()
+    os.environ['EXR_GTK_SYNC_CAPTURE_GATE'] = str(gate)
+    extra_checks = []
     certs = folder / 'certificates';certs.mkdir()
     key, certificate = certs / 'server.key', certs / 'server.crt'
     subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1', '-keyout', str(key),
@@ -268,6 +271,15 @@ def main():
         assert account()['attempt'] == current['attempt'] and account()['session_state'] == current['session_state']
         assert user not in text and password not in text and root not in text
         record('status_' + expected_phase + '_capture_is_read_only')
+        if expected_phase == 'syncing':
+            observed = subprocess.run(['/usr/bin/python3', str(Path(__file__).with_name('inspect_widget.py')),
+                                       str(host.process.pid), text], capture_output=True, text=True, timeout=45)
+            assert observed.returncode == 0, observed.stderr
+            widget = json.loads(observed.stdout.strip().splitlines()[-1])
+            assert widget['pid'] == host.process.pid and widget['editable'] is False and widget['text'] == text
+            extra_checks.append('live_status_widget_is_noneditable_and_matches_capture')
+            report['live_widget'] = widget
+
 
     def disconnect():
         window()
@@ -381,6 +393,39 @@ def main():
         flags['http'] = 0;recovered = retry_scan();assert recovered['session_state'] == '4', recovered
         record('server_failure_is_visible_and_only_explicit_retry_resumes_the_scan')
         capture_status('sweep-complete', 'none')
+        # Hold the actual owner job before it uses the borrowed session. Close
+        # the dialog and wait for the session to reach CLOSED while the job is
+        # held, then release and require safe destruction and normal reopen.
+        (gate / 'arm').write_text('armed')
+        generation = int(account()['session_generation'])
+        host.key('alt+v')
+        deadline = time.monotonic() + 10
+        while not (gate / 'arrived').exists():
+            assert host.process.poll() is None and time.monotonic() < deadline, 'capture gate not reached'
+            time.sleep(.02)
+        host.key('alt+F4')
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            current = account()
+            state = configparser.ConfigParser(interpolation=None); state.read(host.observe)
+            if current.get('session_state') == '7' and state['wave3']['sync_busy'] == '1':
+                break
+            assert host.process.poll() is None
+            time.sleep(.05)
+        else:
+            raise AssertionError('closed session not retained during pending capture: ' + repr(account()))
+        assert current['session_present'] == '1' and int(current['closed_generation']) < generation
+        (gate / 'release').write_text('release')
+        window(False);ready(lambda s: s['session_present'] == '0' and int(s['closed_generation']) == generation)
+        assert host.process.poll() is None
+        (gate / 'arm').unlink(); (gate / 'release').unlink(); (gate / 'arrived').unlink()
+        open_account(); assert ready()['has_password'] == '1'
+        extra_checks.append('closed_session_retained_until_pending_capture_releases')
+        report['pending_capture'] = {'generation': generation, 'closed_while_pending': True,
+                                     'retained_until_release': True, 'reopened': True}
+        # Re-establish the session expected by the original next disconnect.
+        scan(); ready(lambda s: s['session_state'] == '4', seconds=180)
+
         disconnect()
         parent = sql("SELECT revision_id FROM reader_revisions WHERE entity_kind='book' AND entity_key=?", (first,))[0][0]
         first_digest = first.split(':', 1)[1]
@@ -490,6 +535,8 @@ def main():
         record('credentials_and_authorization_are_absent_from_profiles_product_databases_wire_and_all_evidence')
         expected_checks = 52 if args.receive_fixtures else 27
         assert len(checks) == expected_checks, len(checks)
+        assert len(extra_checks) == 2, extra_checks
+        report['extra_checks'] = extra_checks
         report.update(accepted=True, count=len(checks), local_originals=52, credential_leak_hits=0,
                       actual_secret_service='temporary unlocked then locked GNOME collection', native_https=True)
     finally:

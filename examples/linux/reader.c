@@ -769,6 +769,24 @@ static gpointer work(gpointer font_path) {
     host_result *result=g_new0(host_result,1);result->generation=job->generation;result->action=job->command.action;
     result->shelf_generation=job->shelf_generation;
     result->profile_writable=opened==EXR_OK;
+#if defined(EXR_GTK_SYNC_CAPTURE_TEST_GATE) && defined(EXR_READER_WAVE3_UI)
+    /* Dedicated Actions builds can hold a borrowed session before capture.
+       Production builds do not contain this test-only synchronization point. */
+    if(job->command.action==READER_W3_SYNC_STATUS && job->command.w3_session) {
+      const char *directory=g_getenv("EXR_GTK_SYNC_CAPTURE_GATE");
+      if(directory && *directory) {
+        char *arm=g_build_filename(directory,"arm",NULL);
+        char *arrived=g_build_filename(directory,"arrived",NULL);
+        char *release=g_build_filename(directory,"release",NULL);
+        if(g_file_test(arm,G_FILE_TEST_EXISTS)) {
+          g_file_set_contents(arrived,"pending",-1,NULL);
+          gint64 deadline=g_get_monotonic_time()+20*G_TIME_SPAN_SECOND;
+          while(!g_file_test(release,G_FILE_TEST_EXISTS) && g_get_monotonic_time()<deadline) g_usleep(10000);
+        }
+        g_free(arm);g_free(arrived);g_free(release);
+      }
+    }
+#endif
     if(opened==EXR_OK) linux_reader_execute(reader,&job->command,&result->value);
     else { result->value.status=opened;strcpy(result->value.message,"Could not open library or font"); }
     g_idle_add(apply_result,result);job_free(job);

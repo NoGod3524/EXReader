@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 defaults:
   run:
     shell: bash
@@ -80,6 +81,7 @@ jobs:
           prefix="$C10_PREFIX"; sdk="$C10_SDK"
           cmake -S apps/reader/desktop -B build/c10-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DEXR_SDK_VERSION="$EXR_SDK_VERSION" -DEXR_SDK="$sdk" \
+            -DCMAKE_C_FLAGS=-DEXR_GTK_SYNC_CAPTURE_TEST_GATE=1 \
             -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" \
             -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" \
             -DREADER_BATCH_IMPORT_PREFIX="$prefix" -DREADER_PREFERENCES_PREFIX="$prefix" \
@@ -112,7 +114,7 @@ jobs:
             openbox >build/c10-logs/account-openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
-            python3 tests/reader_gtk_sync_account/run.py --payload build/c10-package/EXReader-Linux --metadata-consumer build/combined-metadata/metadata-consumer --revision-consumer build/combined-revisions/revision-consumer --output build/combined-account
+            /usr/bin/python3 tests/reader_gtk_sync_account/run.py --payload build/c10-package/EXReader-Linux --metadata-consumer build/combined-metadata/metadata-consumer --revision-consumer build/combined-revisions/revision-consumer --output build/combined-account
           '
       - name: Preserve logs and evidence including failures
         if: always()
@@ -123,5 +125,33 @@ jobs:
             build/c10-logs/
             build/combined-account/
             build/c10-package/build.json
+            build/c10-package/EXReader-Linux/bin/exreader-linux
             !build/**/*.key
+          if-no-files-found: warn
+
+  authenticate:
+    name: Independently authenticate this run's focused evidence
+    needs: combined
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download and verify original artifact and exact host identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/auth-artifact
+          artifact_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq ".artifacts[] | select(.name == \"gtk-sync-account-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT\") | .id")
+          test -n "$artifact_id"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > build/original.zip
+          unzip -q build/original.zip -d build/auth-artifact
+          python3 tests/reader_gtk_sync_account/authenticate.py --artifact build/auth-artifact --archive build/original.zip --output build/auth/identity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-sync-account-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/auth/identity.json
           if-no-files-found: warn
