@@ -271,6 +271,8 @@ exreader-lazy-example font.ttf epub-part.png book.epub 0
 
 当前开发线使用 C 工程，阅读路径不依赖 WebView 或浏览器运行时。此前基于 JavaScript/WebView 的方案仅作历史保留，不再作为当前架构或发布目标： [JavaScript 框架](https://github.com/NoGod3524/EXReader/commit/4533185)、[带 UI 的阅读器](https://github.com/NoGod3524/EXReader/tree/codex/reader-app) 和 [MIT 版 0.1.1](https://github.com/NoGod3524/EXReader/tree/codex/reader-0.1.1) 保留为历史版本。旧 IndexedDB/备份到原生书库已有 [独立迁移工具](docs/WP12-MIGRATION-REVIEW.md)，新宿主的一键迁移入口仍待接入。历史发行附件不代表当前原生 SDK 的发布状态。
 
+安装、旧数据迁移、导入与同步的现有边界和交付缺口见[升级与交付说明](docs/READER-UPGRADE-DELIVERY.md)。
+
 Copyright (c) 2026 EXReader contributors. 自有代码和原创测试资源使用 [MIT 协议](LICENSE)，允许商用、修改和再分发；第三方组件保留原许可。默认构建与 CI 关闭 GPL 依赖 FAAD2；手动启用 `EXR_ENABLE_AAC=ON` 的链接产物需遵守 GPL。
 
 
