@@ -65,8 +65,17 @@ def main():
             app.click('select');app.wait_idle();d=show();ui.M.set_text(ui.U.GetDlgItem(d,BODY),'Windows note');press(d,HIGHLIGHT);assert any('Windows note' in x for x in labels(d)),labels(d);close(d)
             records=annotations();assert len(records)==2,records;assert records[0]['payload']['location']['selector']['exact']=='';assert records[1]['payload']['location']['selector']['exact']
             report['raw_records']=records;check('windows_native_ui_creates_bookmark_and_annotation')
-            for _ in range(12):app.click('next');app.wait_idle()
+            for page in range(60):
+                app.click('next');app.wait_idle();app.click('select');app.click('copy');visible=ui.ACCOUNT.clipboard_text(app)
+                if 'Ambiguous context repeats' in visible and 'Distinct reading evidence' not in visible:
+                    # Move two further real pages so both contexts lie inside the repeated block.
+                    for _ in range(2):app.click('next');app.wait_idle()
+                    break
+            else:raise AssertionError('Actual host never reached predetermined repeated section')
+            app.click('select');app.click('copy');report['ambiguous_source_page']=ui.ACCOUNT.clipboard_text(app)
+            print('AMBIGUOUS_SOURCE_PAGE '+report['ambiguous_source_page'],flush=True)
             d=show();ui.M.set_text(ui.U.GetDlgItem(d,BODY),'Ambiguous bookmark');press(d,BOOKMARK);assert any('Ambiguous bookmark' in x for x in labels(d)),labels(d)
+            report['raw_records']=annotations();print('AUTHORED_RECORDS '+json.dumps(report['raw_records']),flush=True)
             choose(d,'Ambiguous bookmark');message=press(d,OPEN);report['ambiguous_message']=message
             assert '歧义' in message or 'ambiguous' in message.lower(),message
             ui.M.screenshot(d,a.out/'ambiguous-record.bmp');close(d);check('ambiguous_actual_record_refuses_navigation_explicitly')

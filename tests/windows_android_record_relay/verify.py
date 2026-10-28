@@ -1,13 +1,20 @@
 """Actions-only authenticate same-round ZIPs and actual app record relay, never borrowed green."""
-import base64,hashlib,io,json,os,urllib.request,zipfile
+import base64,hashlib,io,json,os,urllib.request,urllib.parse,zipfile
 from pathlib import Path
 import relay
 identity=relay.identity();root='https://api.github.com/repos/NoGod3524/EXReader/actions/runs/'+identity['run_id']
 out=Path('build/records-authentication');out.mkdir(parents=True,exist_ok=True)
 report={**identity,'passed':False,'artifacts':[],'checks':[]}
+class ArtifactRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self,req,fp,code,msg,headers,newurl):
+        redirected=super().redirect_request(req,fp,code,msg,headers,newurl)
+        if redirected and urllib.parse.urlparse(req.full_url).netloc!=urllib.parse.urlparse(newurl).netloc:
+            redirected.remove_header('Authorization')
+        return redirected
+opener=urllib.request.build_opener(ArtifactRedirect())
 def fetch(url):
     req=urllib.request.Request(url,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'})
-    with urllib.request.urlopen(req,timeout=90) as response:return response.read()
+    with opener.open(req,timeout=90) as response:return response.read()
 def api(url):return json.loads(fetch(url))
 try:
     run=api(root);assert run['head_sha']==identity['source_sha'] and str(run['run_attempt'])==identity['attempt']
