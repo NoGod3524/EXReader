@@ -1,6 +1,9 @@
 # Frozen-v2 safety matrix and unchanged full-gate companion plan
 
-Status: first Actions run retained as failed; narrow CI repair prepared below.
+Status: tested source `9e6f9a9d6dd46f1ac087d52bf04d832751dc765f` passes the
+focused 15-case matrix on all three OS; the unchanged full companion remains
+red at 61/65 candidate scenarios per OS. Exact terminal evidence and the unresolved
+acceptance-contract decision are below. Full P0 / original 65/65 is not accepted.
 No local build/test/fixture/artifact parsing. Initial product code was copied from
 the reviewed pre-COMMIT v2 package; the successor transparently fixes its owned
 mirror helper's OS-specific owner/ACL behavior. Matrix additions are:
@@ -192,9 +195,10 @@ bytes for these full-companion inputs (SHA-256, not runtime results):
 The original workflow also retains its unchanged aggregate gate, performance
 budgets, raw logs/artifact identities and final failure propagation. Preserve its
 failed outcome and exact failing case names; do not summarize only a pass count.
-The existing established result is still 53/65 from run 40667133471. The source
-expectation of seven mirror fixes plus one precommit rollback fix is not a measured
-61/65 result, and no old case has been reclassified or waived.
+At the pre-run checkpoint the established result was 53/65 from run 40667133471.
+The then-source expectation of seven mirror fixes plus one precommit rollback fix
+was not a measured 61/65 result. The terminal successor result is now recorded
+below; no old case has been reclassified or waived.
 The four currently identified unresolved original semantic assertions remain:
 `ledger_loss_does_not_duplicate`, `existing_target_content_is_preserved`,
 `write_failure_after_partial_writes_keeps_target`, and
@@ -280,8 +284,9 @@ tree bytes. No old feature ref, main, tag or PR was changed.
 No original assertion or failed evidence is rewritten. The original full gate
 did not run at this initial SHA. The additive companion avoids unauthorized
 dispatch capability changes and existing-ref moves; both suites must run against
-the successor SHA. Current source repairs have no runtime result until Actions
-build and exercise them. Full 65/31/17 acceptance remains unestablished.
+the successor SHA. At that repair-review checkpoint the source had no runtime
+result until Actions built and exercised it. Full 65/31/17 acceptance remains
+unestablished after the successor results below.
 
 Independent source review cleared the complete successor helper and Windows
 fixture cleanup on 2026-10-28 at 21:44 UTC. Reviewed probe SHA-256:
@@ -293,3 +298,111 @@ The initial Linux artifact is `12853436430`, ZIP digest
 the initial macOS artifact ZIP digest is
 `a98df1e29580f5b42806b6aee82690ab2ffcc32463d032399e343d6e7c709e30`.
 These identities were read from Actions metadata; no artifact was parsed locally.
+
+## Terminal same-SHA Actions evidence
+
+Tested commit: `9e6f9a9d6dd46f1ac087d52bf04d832751dc765f`; tree:
+`fc5267b11f4f360d97d6d43cf51e890c0fc812dc`. Both runs are attempt 1 and
+completed; neither the failed first run nor these runs were cancelled or rerun.
+This evidence seal changes this document only, not the tested product, SDK,
+fixtures, tests, workflows or budgets. Both workflow path filters exclude a
+docs-only change, so the seal does not request another validation run. Claims
+refer to the tested commit above, not to a later documentation commit.
+
+| Actions run | Linux | macOS | Windows | Overall |
+|---|---|---|---|---|
+| [Focused matrix 40774524902](https://github.com/NoGod3524/EXReader/actions/runs/40774524902) | 15/15 | 15/15 | 15/15 | success |
+| [Unchanged full companion 40774524965](https://github.com/NoGod3524/EXReader/actions/runs/40774524965) | candidate 61/65, review 31/31, E2E 17/17 | candidate 61/65, review 31/31, E2E 17/17 | candidate 61/65, review 31/31, E2E 17/17 | failure |
+
+The full companion's noncandidate executable separately passed 65/65 scenarios
+(135/135 assertions), review 31/31 and E2E 17/17 on each OS. The transaction
+candidate recorded 130/135 assertions on each OS, not 135/135. Its same four
+failed scenarios and five failed assertions are listed below. The aggregate
+`record` job also failed with `required migration jobs did not all succeed`;
+its incomplete/mismatched-evidence review step was skipped because the gate was
+already failed. That skipped step is not claimed as passed.
+
+Actions job logs, not local artifact parsing, establish these results:
+focused [Linux](https://github.com/NoGod3524/EXReader/actions/runs/40774524902/job/123120193549),
+[macOS](https://github.com/NoGod3524/EXReader/actions/runs/40774524902/job/123120193096),
+[Windows](https://github.com/NoGod3524/EXReader/actions/runs/40774524902/job/123120193975);
+full [Linux](https://github.com/NoGod3524/EXReader/actions/runs/40774524965/job/123120197615),
+[macOS](https://github.com/NoGod3524/EXReader/actions/runs/40774524965/job/123120197902),
+[Windows](https://github.com/NoGod3524/EXReader/actions/runs/40774524965/job/123120198171),
+[aggregate](https://github.com/NoGod3524/EXReader/actions/runs/40774524965/job/123123785185).
+All 15 named focused cases explicitly logged `passed: true` per OS. In particular,
+Windows now records the calibrated read ACL, directory junction and no-delete-share
+cleanup fixtures, with a successfully uploaded artifact. This does not erase the
+first Windows upload failure or claim untested file-symlink/power-loss behavior.
+
+### Four retained failures: exact contract mapping
+
+Source references in this section are frozen at the tested commit. No old tests
+or expected outcomes were changed. Independent source review agrees that merely
+relabeling the new implementation cannot truthfully satisfy these old mechanisms.
+
+1. **`ledger_loss_does_not_duplicate`: 2/3.**
+   [`run_cases.py:428-436`](https://github.com/NoGod3524/EXReader/blob/9e6f9a9d6dd46f1ac087d52bf04d832751dc765f/tests/migration/run_cases.py#L428-L436)
+   deletes the external mirror, not the authoritative internal ledger, and requires
+   an `adopted-existing` entry. `lm_main.c:1988-1998` reloads the surviving internal
+   lineage; `:727` and `:821` therefore emit `already-migrated`. The no-new-books/notes
+   and unchanged logical-content checks passed. Rewriting known lineage as a new
+   adoption solely to satisfy this assertion would misdescribe the operation.
+2. **`existing_target_content_is_preserved`: 1/2.**
+   [`run_cases.py:478-487`](https://github.com/NoGod3524/EXReader/blob/9e6f9a9d6dd46f1ac087d52bf04d832751dc765f/tests/migration/run_cases.py#L478-L487)
+   passes the existing book/notes/IDs preservation check, but demands
+   `atomicity.stage=published` as evidence of backup/replacement.
+   `lm_main.c:1982` opens the existing target for an in-place transaction; only a
+   new target publishes a private DB stage at `:2218-2224`. No existing-target DB
+   stage was published, so that report must not be fabricated.
+3. **`write_failure_after_partial_writes_keeps_target`: 3/4.**
+   [`run_cases.py:673-679`](https://github.com/NoGod3524/EXReader/blob/9e6f9a9d6dd46f1ac087d52bf04d832751dc765f/tests/migration/run_cases.py#L673-L679)
+   combines exit/code with a DB-stage value of `removed` or `built-from-backup`.
+   The source injects the write error at `lm_main.c:805`, but an existing-target
+   transaction creates no DB stage. Actions records that combined assertion failed;
+   it does not independently expose the truth of each short-circuited predicate.
+   The subsequent byte-equality, no-residue and logical-content checks did run
+   and pass: [`Ctx.check:68-70`](https://github.com/NoGod3524/EXReader/blob/9e6f9a9d6dd46f1ac087d52bf04d832751dc765f/tests/migration/run_cases.py#L68-L70)
+   appends/returns a boolean, does not raise, and its caller does not return early.
+   [`unchanged:577-580`](https://github.com/NoGod3524/EXReader/blob/9e6f9a9d6dd46f1ac087d52bf04d832751dc765f/tests/migration/run_cases.py#L577-L580)
+   supplies two checks, followed by the logical-content check. Each OS log explicitly
+   reports 3/4 with only the first composite assertion failed. A review suggestion
+   that these later checks were skipped was checked against source and corrected.
+4. **`failed_rollback_is_reported_and_pre_image_kept`: 0/2.**
+   [`run_cases.py:711-717`](https://github.com/NoGod3524/EXReader/blob/9e6f9a9d6dd46f1ac087d52bf04d832751dc765f/tests/migration/run_cases.py#L711-L717)
+   requires `inconsistent / exit 6` and a retained raw database `.pre-*` file.
+   The v2 alias at `lm_main.c:1632` instead refuses mirror publication before
+   COMMIT and `:1651-1663` attempts SDK rollback/restores external mirror bytes.
+   Successful rollback cannot truthfully be called failed; a mirror preimage is
+   not a raw database preimage. The genuine SDK rollback-error branch at `:1651-1653`
+   exists but is **not exercised by this historical alias**. A calibrated real
+   rollback-error/retained-evidence test is still a coverage gap; the 45/45 focused
+   result does not grant that missing coverage.
+
+### 最小验收决策（尚未解决）
+
+需要决定：**P0 是否允许现有目标采用“原位事务 + 内部权威账本”，并以新增、
+架构一致的验收测试证明同等安全性，同时永久保留旧完整门禁的四项失败？**
+若允许，下一步只新增验收覆盖，分别证明账本镜像丢失后的真实来源/无重复、
+现有内容保护、部分写入失败的独立退出码与回滚证据，以及真正的回滚错误/
+证据保留；不修改旧 65 项断言、不把 61/65 改称 65/65。
+若仍要求旧的备份数据库替换、`adopted-existing` 事件、数据库 stage 和 `.pre-*`
+语义全部成立，则需要重新设计迁移实现；不能靠改报告标签完成。这是验收契约/
+架构选择，不是再批准一次相同 CI。当前完整 P0 仍未通过。
+
+### Retained artifact identities
+
+These are GitHub Actions metadata/ZIP digests, not a claim that artifacts were
+downloaded or parsed locally. The full companion's aggregate parsed its inputs
+inside Actions and preserved its failed summary. All artifacts below belong to
+the tested full SHA and attempt 1.
+
+| Scope / OS | Artifact ID | Bytes | ZIP SHA-256 |
+|---|---|---:|---|
+| focused / Linux | `12854710822` | 182325 | `10c2f5e9713caae7c88534b99e2a45ab644129a774caca6d763723d318918959` |
+| focused / macOS | `12853778797` | 182537 | `f2f3b1c1cc3080f3577bb1cbe704b6e27910fc1e8973f1dcf3a9015fa9b71c3c` |
+| focused / Windows | `12853872312` | 184219 | `9690a5ed92676c05bab770b9bbaacdf9cb7c64a8b8e33a96b830286fe47a6757` |
+| full / Linux | `12854820663` | 310255 | `c2cba4d46c79328701e8d0bdfd96ca9867d4d2f9f10192516cdd820325adb90c` |
+| full / macOS | `12854586419` | 303554 | `e04569f12bd0ff9971168b2efaa65e76539b6076d8213d82b9c5e8640b26351d` |
+| full / Windows | `12854881283` | 304882 | `3644193a2c5bb6a51ac734322b3dbebdd09af96a4a48416db5bcfcbc995e8de0` |
+| full / failed aggregate | `12853364688` | 1156 | `11edd78114815d9c813880142a48d9ecf8cd45bf8196eaed992aa545c77e8bbe` |
