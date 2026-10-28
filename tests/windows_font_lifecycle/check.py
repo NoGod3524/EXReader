@@ -34,7 +34,7 @@ def events():
     return [line.split() for line in p.read_text(encoding='ascii').splitlines()] if p.exists() else []
 
 def record(name):
-    report['checks'].append({'name': name, 'location': loc(), 'events': events()})
+    report['checks'].append({'name': name, 'passed': True, 'location': loc(), 'events': events()})
 
 try:
     app = P.App(exe, font, profile)
@@ -113,7 +113,7 @@ try:
     assert events()[-1] == ['open', '0', '1']
     app.close(); assert app.process.returncode == 0
     assert events()[-2:] == [['release', '0', '0'], ['close', '0', '0']], events()
-    report['checks'].append({'name': 'shutdown-releases-lease-and-closes-library', 'events': events()})
+    report['checks'].append({'name': 'shutdown-releases-lease-and-closes-library', 'passed': True, 'events': events()})
 
     profile = out / 'ordinary-profile'
     app = P.App(exe, font, profile)
