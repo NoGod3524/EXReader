@@ -8,7 +8,8 @@ import subprocess
 import sys
 sys.path.insert(0,'tests/reader_hosts_341')
 import android_candidate
-runpy.run_path('tests/reader_android_history_compat/guard.py',run_name='__main__')
+guard = 'common_guard.py' if os.environ.get('GITHUB_REF_NAME') == 'codex/reader-android-history-common-prep-20261028' else 'guard.py'
+runpy.run_path('tests/reader_android_history_compat/' + guard, run_name='__main__')
 WORKFLOW='.github/workflows/reader-android-history-compat.yml' 
 repo='repos/'+os.environ['GITHUB_REPOSITORY']+'/'
 record=json.loads(subprocess.check_output(['gh','api',repo+'actions/runs/'+os.environ['GITHUB_RUN_ID']]))
