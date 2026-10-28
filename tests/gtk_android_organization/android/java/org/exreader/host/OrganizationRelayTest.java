@@ -56,8 +56,8 @@ public final class OrganizationRelayTest extends Instrumentation {
     private void organize(){click("More");click("Organize");target="organize New action";waitFor(n->n.isEnabled()&&"New".contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),null,30000);}
     private void kind(int n){click("Kind");click(new String[]{"Shelves","Tags","Series"}[n]);}
     private void create(String name){click("New");field("Name",name);click("Save");visible(name);}
-    private void member(String name)throws Exception{row(name);click("Books");visible("Relay GTK");}
-    private void add(String name){row(name);click("Books");click("Add book");row("Relay GTK");click("Add");visible("Relay GTK");}
+    private void member(String name)throws Exception{row(name);click("Books");visible("Relay GTK.txt");}
+    private void add(String name){row(name);click("Books");click("Add book");row("Relay GTK.txt");click("Add");visible("Relay GTK.txt");}
     private String findId(int kind,String name)throws Exception{return findId(kind,name,"");}
     private String findId(int kind,String name,String parent)throws Exception{
         long owner=NativeCatalog.open(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath());
@@ -73,7 +73,7 @@ public final class OrganizationRelayTest extends Instrumentation {
         }}finally{NativeCatalog.close(owner);}return result;
     }
     private void verifyVisible(boolean finalStage)throws Exception{
-        organize();kind(0);member("GTK parent");click("Children");row("GTK child");click("Books");visible("Relay GTK");shot("child");
+        organize();kind(0);member("GTK parent");click("Children");row("GTK child");click("Books");visible("Relay GTK.txt");shot("child");
         kind(1);member(finalStage?"Android edited tag":"GTK tag");shot("tag");kind(2);member("GTK series");shot("series");
         if(finalStage){for(int n=0;n<3;n++){kind(n);member(new String[]{"Android shelf","Android tag","Android series"}[n]);shot("android-"+n);}
             kind(0);row("Android shelf");click("Children");member("Android child");shot("android-child");}
@@ -90,7 +90,7 @@ public final class OrganizationRelayTest extends Instrumentation {
                 JSONObject before=snapshot();configure();sync();need(before.toString().equals(snapshot().toString()),"duplicate sync changed exact organization rows");check("duplicate_sync_has_no_duplicate_rows",()->{});
                 if(!last){
                     organize();kind(1);row("GTK tag");click("Edit");field("Name","Android edited tag");click("Save");visible("Android edited tag");
-                    member("Android edited tag");row("Relay GTK");click("Remove");
+                    member("Android edited tag");row("Relay GTK.txt");click("Remove");
                     kind(2);row("GTK series");click("Delete");click("Delete");click("Removed");visible("GTK series");shot("deleted-series");click("Active");
                     for(int n=0;n<3;n++){kind(n);String name=new String[]{"Android shelf","Android tag","Android series"}[n];create(name);data.put("android_"+n,findId(n,name));add(name);shot("created-"+n);}
                     kind(0);row("Android shelf");click("Children");create("Android child");data.put("android_child",findId(0,"Android child",data.getString("android_0")));add("Android child");shot("created-child");
