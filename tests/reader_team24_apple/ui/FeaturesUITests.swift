@@ -92,16 +92,26 @@ final class FeaturesUITests: XCTestCase {
 #endif
     }
     func testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot() {
-        launch(); features()
+        launch(); let firstPage = text("reader.page")
+        tap("reader.next"); XCTAssertTrue(wait { !self.e("reader.busy").exists && self.text("reader.page") != firstPage })
+        features()
         tap("features.font.fixture"); status("字体已导入")
         let rows = app.buttons.matching(NSPredicate(format: "identifier MATCHES %@", "features\\.font\\.[0-9a-f]{64}"))
         XCTAssertTrue(wait { rows.count == 1 }); let fontID = rows.firstMatch.identifier
         tap(fontID); status("字体已应用")
         XCTAssertEqual(text("features.font.selected"), "当前：已选导入字体"); mark("borrowed-lease-applied")
+        tap("features.close"); ready()
+        let pageBeforeInvalid = text("reader.page"), positionBeforeInvalid = text("reader.location")
+        XCTAssertFalse(pageBeforeInvalid.isEmpty); XCTAssertFalse(positionBeforeInvalid.isEmpty)
+        features()
         tap("features.font.invalid")
         XCTAssertTrue(wait { !self.e("features.cancel").exists && !self.text("features.status").isEmpty && self.text("features.status") != "处理中…" && self.text("features.status") != "字体已应用" })
         XCTAssertEqual(text("features.font.selected"), "当前：已选导入字体")
         XCTAssertEqual(rows.count, 1); mark("invalid-font-old-lease-retained")
+        tap("features.close"); ready()
+        XCTAssertEqual(text("reader.page"), pageBeforeInvalid)
+        XCTAssertEqual(text("reader.location"), positionBeforeInvalid)
+        features()
         tap("features.font.fixture"); status("字体已导入"); XCTAssertEqual(rows.count, 1)
         tap("features.font.default"); status("字体已应用")
         XCTAssertEqual(text("features.font.selected"), "当前：内置字体")
