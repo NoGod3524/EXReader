@@ -24,6 +24,19 @@ cannot reopen an upgraded schema-7 library. The host must not automatically
 restart an incompatible old binary. This is a host requirement, not an advisory
 lock that prevents unrelated file replacement.
 
+The existing GTK owner calls `exr_library_open` from `linux_reader_open` in
+`examples/linux/reading.c`; it drains reader-owned sessions, closes the SDK
+library and releases its product lock in `linux_reader_close`. Apple opens its
+owner in `examples/apple/HostSDK.swift`; Android opens it in
+`examples/android/app/src/main/cpp/exreader_host_jni.c`. None currently invokes
+the transaction migrator or waits for it before opening. A product integration
+must stop new work, drain and close the actual owner and its readers, run and
+observe the migration result, then reopen and refresh the owner before admitting
+work. Account/sync and other processes which replace library files must also be
+stopped. The product locks currently in hosts are not a substitute for this
+lifecycle integration and do not bind arbitrary SQLite clients. This lifecycle
+is not implemented or accepted by the candidate workflow yet.
+
 The candidate needs cloud results for the original checks, both schema versions,
 real WAL, ordinary concurrent writers, crash recovery, ledger export/import,
 rollback, retries, and actual host lifecycle before it can be accepted. macOS and
