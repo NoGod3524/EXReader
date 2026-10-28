@@ -5,11 +5,27 @@ Proposed branch: `codex/apple-password-privacy-20261028`.
 Owned additions: `tests/apple_password_privacy_20261028/**`, this document,
 `.github/workflows/apple-password-privacy-20261028.yml` only.
 
-**Source preparation only. No remote commit/ref, Actions run or native pass.**
-F10 publication has not been attempted or denied. Bounded publication and
-Actions validation were authorized on 2026-10-28; publication is **pending final
-amended-byte source review**. Denials from other work packages do not belong to
-F10. No local build, syntax check, fixture generation, test or artifact parsing
+**Native acceptance remains ungranted.** The first published source
+`7dc199ce383877aee1f45a44be8453b7d4268219` ran in Actions
+[40773724953](https://github.com/NoGod3524/EXReader/actions/runs/40773724953):
+all 18 scanner/archive controls and both SDK builds passed, while all three
+native jobs failed during setup and authentication correctly refused.
+The original failure artifacts are retained unchanged.
+
+A diagnostic-only publication was denied at 21:52 UTC, then the exact reviewed
+two-file payload was retried once after the user's named-package authorization
+at 21:59:11 UTC. Source `8845cf2886f50a69d56c577e34f317d449f2f103`, Actions
+[40776849750](https://github.com/NoGod3524/EXReader/actions/runs/40776849750),
+authenticated the pinned prior macOS ZIP and printed its sanitized project log:
+`make_project.rb:31` raised `TypeError: no implicit conversion of Array into String`.
+This diagnostic skipped SDK/native/authentication rather than repeating
+successful builds solely to retrieve a log; it is not privacy acceptance.
+
+The new adapter repair normalizes xcodeproj's String/Array flag representation,
+preserves every existing token, and adds only the required raw metadata flags.
+New Actions-only controls cover both forms, quoted paths, malformed/invalid
+values, and actual xcodeproj save/reopen. Full native revalidation is pending.
+No local build, syntax check, fixture generation, test or artifact parsing
 was performed. Source reading/writing and source-file hashing are not execution
 evidence. No Codex task, user computer, main push, PR, tag or release is used.
 
@@ -132,6 +148,6 @@ limits are untouched. All builds/tests/fixtures/artifact work is Actions-only.
 * Simulator TLS trust, macOS Keychain prompts, native field values, real sweep
   completion and emitted log coverage remain runtime questions. A failure must
   stay failed/blocked; do not loosen assertions, skip bytes or change an owner.
-* No native case, scanner control, source syntax or original-artifact validator
-  has run. Final source review, publication and Actions execution remain pending; there is no remote
-  SHA/run URL to report and no product acceptance to grant.
+* Scanner/archive controls and the diagnostic-only pinned setup-artifact check
+  passed in Actions. No real credential UI case or full original-native-artifact
+  authentication has passed; there is no product acceptance to grant.

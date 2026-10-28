@@ -4,6 +4,7 @@ require 'fileutils'
 require 'json'
 require 'digest'
 require 'rbconfig'
+require_relative 'project_flags'
 raise 'Actions only' unless ENV['GITHUB_ACTIONS'] == 'true'
 output, resources, proof = ARGV.first(3).map { |path| File.expand_path(path) }
 platform = ARGV[3]
@@ -28,7 +29,7 @@ project.targets.each do |target|
     settings = config.build_settings
     if target.product_type == 'com.apple.product-type.application'
       settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'org.exreader.password-privacy-20261028'
-      settings['OTHER_SWIFT_FLAGS'] += ['-Xcc', '-DEXR_READER_METADATA_RAW3=1']
+      settings['OTHER_SWIFT_FLAGS'] = PrivacyProjectFlags.with_raw_metadata(settings['OTHER_SWIFT_FLAGS'])
     else
       settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'org.exreader.password-privacy-20261028.tests'
       settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = platform == 'ipad' ? '$(inherited) EXR_PRIVACY_IPAD' : '$(inherited)'
