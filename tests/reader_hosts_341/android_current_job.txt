@@ -1,0 +1,87 @@
+  current:
+    name: Android current 19 reading, 16 sync and 18 owner checks
+    needs: android
+    if: github.ref_name == 'codex/reader-android130-candidate-admission'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - uses: actions/download-artifact@v4
+        with:
+          name: reader-android-page-theme-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .
+      - name: Authenticate current test source and inherited producer
+        run: |
+          test "$(cat build/session-android/logs/source.txt)" = "$GITHUB_SHA"
+          python -m pip install PyYAML==6.0.3
+          python tests/reader_hosts_341/guard_android.py
+      - name: Prepare compiler fixture and current test sources
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.31.1" "cmake;3.22.1" "ndk;27.2.12479018" "ndk;27.0.12077973" "emulator" "system-images;android-34;default;x86_64"
+          python tests/webdav_android/fixture.py prepare --output build/current-android/fixture
+          mkdir -p tests/reader_host_session_android/debug/res/raw
+          cp build/current-android/fixture/public/ca.crt tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
+          mkdir -p examples/android/app/src/main/jniLibs/x86_64
+          cp build/session-android/sdk-stage/lib/libexreader_jni.so examples/android/app/src/main/jniLibs/x86_64/
+          python tools/reader_catalog_assets.py --output examples/android/app/src/main/assets/reader-catalog-v1.json
+          python -c "import sys; sys.path.insert(0,'tools'); from host_font import fetch; fetch('examples/android/app/src/main/assets')"
+          cp tests/reader_host_session_android/java/org/exreader/host/HostSyncTest.java build/android-page-theme/candidate/host-session/java/org/exreader/host/HostSyncTest.java
+          toolchain="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"
+          cmake -S extras/webdav -B build/current-android/dav-build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/current-android/dav-stage"
+          cmake --build build/current-android/dav-build --parallel 4 --target install
+      - name: Build current reading and SDK-version-aware sync instrumentation
+        run: |
+          set -o pipefail
+          mkdir -p build/current-android/apks
+          common=(-PexrPageTheme=true -PexrHostImport=true -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/current-android/dav-stage" -PexrSideload="$PWD/build/session-android/sideload-stage")
+          gradle -p examples/android --no-daemon --stacktrace "${common[@]}" -PexrTestRunner=org.exreader.host.ReadingUiTest :app:assembleDebugAndroidTest
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/current-android/apks/reading.apk
+          gradle -p examples/android --no-daemon --stacktrace "${common[@]}" -PexrTestRunner=org.exreader.host.HostSyncTest :app:assembleDebugAndroidTest
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/current-android/apks/sync.apk
+      - run: sudo chmod 666 /dev/kvm
+      - name: Execute current reading sync and product-owner cases
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t examples/android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -t build/current-android/apks/reading.apk
+            python tests/reader_android_reading/run_ui.py --fixtures build/android-reading/fixtures --output build/current-android/reading
+            adb install -r -t build/current-android/apks/sync.apk
+            python tests/reader_host_session_android/run_ui.py --sdk-version 3.41.0 --fixture build/current-android/fixture --reading-fixtures build/session-android/reading-fixtures --output build/current-android/sync
+            adb install -r -t build/host-session-android/test-apks/original-owner.apk
+            python tests/reader_hosts_341/android_current.py owner
+      - name: Preserve independent current-source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-current-130-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/current-android/apks/
+            build/current-android/reading/
+            build/current-android/sync/
+            build/current-android/owner/
+          if-no-files-found: error

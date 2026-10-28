@@ -223,6 +223,10 @@ def basic_summary(key,value,source,ref):
             require(identity.get('source_sha')==source and identity.get('sdk_checkout_source')==source and
                     identity.get('sdk_source')==windows_candidate.SDK and identity.get('raw3_revision') is False and
                     identity.get('raw3_host') is False, 'Android candidate build/source/raw-v3 evidence absent')
+            current=identity.get('current_checks',{})
+            require(current.get('reading')==19 and current.get('sync')==16 and current.get('owner')==18 and
+                    current.get('process_phases')==2 and positive(current.get('job')),
+                    'independent current Android checks absent')
     elif key in ('apple_shelf','apple_wp13'):
         require(set(value.get('platforms',{}))==set(original_apple.PLATFORMS),'whole Apple platform set missing')
         if key=='apple_shelf':
@@ -317,7 +321,11 @@ def load_summary(key,contract,ref,run,jobs,selected,summary_job,source):
     try:value=bundle.report(contract['report'])
     finally:bundle.close()
     basic_summary(key,value,source,ref);upstream={name:row for name,row in selected.items() if row['id']!=meta['id']}
-    if key in ('gtk41','android130') or key.startswith('windows_'):bind_declared([value['artifact']],upstream)
+    if key=='android130' and windows_candidate.active() and os.environ.get('GITHUB_REF_NAME')==windows_candidate.ANDROID_BRANCH and source==os.environ.get('GITHUB_SHA'):
+        current=value['candidate_build_identity']['current_checks']
+        bind_declared([value['artifact'],current['artifact']],upstream)
+        require(current['job']==next(row['id'] for row in jobs if row['name']=='Android current 19 reading, 16 sync and 18 owner checks'), 'current Android producer differs')
+    elif key in ('gtk41','android130') or key.startswith('windows_'):bind_declared([value['artifact']],upstream)
     elif key!='apple_wp13':bind_declared(value['artifacts'],upstream)
     # WP13's actual schema has no copied API manifest. Keep that limitation:
     # authenticate its original strict result and the complete live metadata,
@@ -368,6 +376,10 @@ def collect(manifest,source):
     for key in REQUIRED:
         ref=manifest['runs'][key]
         contract=WINDOWS_CONTRACTS.get(key) if key in WINDOWS_CONTRACTS else SPECS[key]
+        if key=='android130' and windows_candidate.active() and os.environ.get('GITHUB_REF_NAME')==windows_candidate.ANDROID_BRANCH and source==os.environ.get('GITHUB_SHA'):
+            contract=dict(contract);contract['jobs']=3
+            contract['upstream']=contract['upstream']+('android-current-130-{run}-{attempt}',)
+
         if contract is None:
             result['leaves'][key].update(reason='required Windows contract is not yet pinned; root review required',provided_run=ref);continue
         if ref is None:continue

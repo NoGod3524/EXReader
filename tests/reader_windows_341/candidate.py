@@ -13,6 +13,8 @@ ANDROID_ALLOWED = {
     'tests/reader_hosts_341/aggregate_native.py',
     'tests/reader_windows_341/candidate.py',
     'tests/reader_hosts_341/android_candidate.py',
+    'tests/reader_hosts_341/android_current.py',
+    'tests/reader_hosts_341/android_current_job.txt',
 }
 ALLOWED = {
     '.github/workflows/reader-windows-341-common.yml',
