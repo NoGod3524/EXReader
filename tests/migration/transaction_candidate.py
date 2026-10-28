@@ -45,12 +45,31 @@ def main():
             assert db.execute('PRAGMA user_version').fetchone()[0] == schema
             assert db.execute('PRAGMA journal_mode=' + mode).fetchone()[0].lower() == mode
             old = db.execute('SELECT title FROM books WHERE id=1').fetchone()[0]
+            old_ledger = db.execute("SELECT count(*) FROM sqlite_master WHERE name='exr_migration_ledger'").fetchone()[0]
             rc, out, err = call(a.tool, 'migrate', '--pack', pack, '--target', target, fault='publish-fail')
             assert rc != 0, (out, err)
             assert db.execute('PRAGMA user_version').fetchone()[0] == schema
             assert db.execute('SELECT title FROM books WHERE id=1').fetchone()[0] == old
             ready, resume = Path(str(target)+'.writer-ready'), Path(str(target)+'.writer-resume')
             env = dict(os.environ, EXR_MIGRATE_TEST_FAULTS='1')
+            crash_pack = folder/'crash.exrpack'
+            extra = L.entry(L.book_record('extra', 'extra.txt'), L.TXT_OTHER)
+            crash_pack.write_bytes(L.build_pack([book, extra], [note]))
+            with (folder/'crash.log').open('w', encoding='utf-8') as log:
+                killed = subprocess.Popen([a.tool, 'migrate', '--pack', str(crash_pack), '--target', str(target), '--inject', 'writer-pause'], stdout=log, stderr=subprocess.STDOUT, env=env)
+                try:
+                    end = time.monotonic()+30
+                    while not ready.exists() and killed.poll() is None and time.monotonic()<end:
+                        time.sleep(.02)
+                    assert ready.exists(), 'crash rendezvous missing'
+                    killed.kill();killed.wait(timeout=30)
+                finally:
+                    if killed.poll() is None:
+                        killed.kill();killed.wait()
+            ready.unlink(missing_ok=True)
+            assert db.execute('PRAGMA user_version').fetchone()[0] == schema
+            assert db.execute('SELECT count(*) FROM books').fetchone()[0] == 1
+            assert db.execute("SELECT count(*) FROM sqlite_master WHERE name='exr_migration_ledger'").fetchone()[0] == old_ledger
             with (folder/'migration.log').open('w', encoding='utf-8') as log:
                 process = subprocess.Popen([a.tool, 'migrate', '--pack', str(pack), '--target', str(target), '--inject', 'writer-pause'], stdout=log, stderr=subprocess.STDOUT, env=env)
                 try:
