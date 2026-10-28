@@ -6,7 +6,11 @@
 #include <stdio.h>
 #include <stddef.h>
 
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+#define LM_TOOL_VERSION "0.2.0-tx-candidate"
+#else
 #define LM_TOOL_VERSION "0.1.0"
+#endif
 #define LM_PACK_FORMAT "exreader-legacy-pack"
 #define LM_MAP_FORMAT "exreader-legacy-map"
 #define LM_MANIFEST_MAX ((uint64_t)64 * 1024 * 1024)

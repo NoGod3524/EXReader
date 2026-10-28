@@ -57,6 +57,17 @@ EXR_API void exr_audio_bookmarks_free(exr_audio_bookmark *bookmarks,size_t count
 EXR_API exr_status exr_library_remove_audio_bookmark(exr_library *library,int64_t id,exr_error *error);
 EXR_API exr_status exr_library_clear_audio(exr_library *library,const char *audio_id,exr_error *error);
 EXR_API exr_status exr_library_open(const char *path, exr_library **out, exr_error *error);
+/* Candidate 3.42: acquire a SQLite write transaction before schema upgrade.
+   Calls on this handle must be serialized by its owner. Close without finish
+   rolls back. No external process may replace the database pathname while it
+   is open. These APIs do not coordinate old file-replacement migrators. */
+EXR_API exr_status exr_library_migration_open(const char *path,exr_library **out,exr_error *error);
+EXR_API exr_status exr_library_migration_finish(exr_library *library,int commit,exr_error *error);
+/* Opaque UTF-8 ledger bytes, owned and validated by the migration tool. Set
+   requires the migration transaction; get returns malloc-owned bytes released
+   with exr_free. A missing ledger returns found=0. */
+EXR_API exr_status exr_library_migration_ledger_set(exr_library *library,const void *data,size_t size,exr_error *error);
+EXR_API exr_status exr_library_migration_ledger_get(exr_library *library,void **data,size_t *size,int *found,exr_error *error);
 EXR_API void exr_library_close(exr_library *library);
 /* Seekable original bytes, without parsing or a whole-book heap copy. On success
    the caller owns source.context: call source.release(source.context), or pass
