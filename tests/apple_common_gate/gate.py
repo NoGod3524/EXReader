@@ -7,7 +7,7 @@ import hashlib
 import io
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import subprocess
 import sys
 import zipfile
@@ -105,12 +105,14 @@ def verify():
             report['artifacts'].append({'id': artifact['id'], 'name': artifact['name'], 'bytes': len(raw), 'sha256': sha})
             with zipfile.ZipFile(io.BytesIO(raw)) as z:
                 assert len(z.namelist()) == len(set(z.namelist()))
+                assert all(not PurePosixPath(n).is_absolute() and '..' not in PurePosixPath(n).parts and chr(92) not in n for n in z.namelist())
                 if artifact in sdks:
                     data = json.loads(z.read('common-sdk-identity.json'))
                     target = data['target']
                     assert artifact['name'] == 'team24-apple-sdk-' + target + suffix
                     assert data['opentype_blob'] == OT and data['sdk_tree'] == PINNED['src']
                     assert data['sdk_source_sha'] == ident['source_sha']
+                    assert data['common_base'] == BASE
                     for key, value in ident.items(): assert data[key] == value
                     assert data['files']
                     for path, expected in data['files'].items():
