@@ -59,6 +59,11 @@ final class OriginalSaveUITests: XCTestCase {
         XCTAssertTrue(wait { local.exists && local.isHittable }, app.debugDescription)
         local.tap()
         let newFolder = app.buttons["New Folder"].firstMatch
+        if !newFolder.exists {
+            let overflow = app.buttons["OverflowBarButtonItem"].firstMatch
+            XCTAssertTrue(wait { overflow.exists && overflow.isHittable }, app.debugDescription)
+            overflow.tap()
+        }
         XCTAssertTrue(wait { newFolder.exists && newFolder.isHittable }, app.debugDescription)
         newFolder.tap()
         let name = app.textFields.firstMatch
