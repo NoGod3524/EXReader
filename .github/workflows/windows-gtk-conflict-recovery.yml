@@ -132,7 +132,7 @@ jobs:
           set -euo pipefail
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
             openbox >build/regression-openbox.log 2>&1 & trap "kill $! || true" EXIT
-            python3 tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/current-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
+            python3 tests/windows_gtk_conflict_recovery/retained_gtk.py tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/current-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
           '
       - name: Preserve original GTK receive regression independently
         id: original_regression
@@ -144,7 +144,7 @@ jobs:
           git show fba9a21f25e6669614eae76ef22a3f81b3995886:tests/linux_host/receive_checks.py > tests/linux_host/receive_checks.py
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
             openbox >build/original-regression-openbox.log 2>&1 & trap "kill $! || true" EXIT
-            python3 tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/original-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
+            python3 tests/windows_gtk_conflict_recovery/retained_gtk.py tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/original-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
           '
       - name: GTK receives Windows original and authors organization
         id: interop

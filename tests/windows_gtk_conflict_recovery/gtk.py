@@ -52,12 +52,13 @@ def main():
         raise TimeoutError(title)
     def field(k,v):host.key('alt+'+k,'ctrl+a');host.paste(v)
     def search(title):
-        command('xdotool','windowactivate','--sync',host.window);host.key('F2','ctrl+f','ctrl+a');host.paste(title)
-        host.wait(lambda s:not s['shelf_loading'] and not s['shelf_restoring'] and s['books']==1,timeout=60)
+        command('xdotool','windowactivate','--sync',host.window);queries=host.read()['shelf_queries'];host.key('F2','ctrl+f','ctrl+a');host.paste(title)
+        host.wait(lambda s:s['shelf_queries']>queries and not s['shelf_loading'] and not s['shelf_restoring'] and s['books']==1,timeout=60)
         host.key('F2','Home')
     def ready():return state('account').get('owner_busy')=='0' and state('account').get('preparing')=='0'
     def sync(conflict=False):
         command('xdotool','windowactivate','--sync',host.window);host.key('F2','ctrl+shift+a');window('Account and Sync')
+        wait(ready)
         field('w',dav.base+'/dav/');field('u',user);field('p',password);host.key('alt+h','alt+a');wait(lambda:ready() and state('account').get('bound')=='1')
         gen=int(state('account').get('session_generation','0'));host.key('alt+s')
         wait(lambda:ready() and int(state('account').get('session_generation','0'))>gen and state('account').get('session_state') in ('4','5'))
