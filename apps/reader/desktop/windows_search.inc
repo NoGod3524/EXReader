@@ -210,7 +210,21 @@ static void winsearch_submit(int next,int open_hit) {
 #endif
   if(open_hit) {
 #if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_WAVE3)
-    if(g.session.txt) job->txt_history_origin=g.frame.range_start;
+    if(g.session.txt) {
+      /* Preserve the selected position when it belongs to the displayed page.
+         A search hit may identify the page more reliably than its first byte. */
+      job->txt_history_origin=g.frame.range_start;
+      if(g.selection.active && !g.selection.fixed && g.selection.page==g.frame.page &&
+         g.selection.start>=g.frame.range_start && g.selection.start<g.frame.range_end)
+        job->txt_history_origin=g.selection.start;
+      if(getenv("EXR_TRACE_TXT")) {
+        fprintf(stderr,"TXT_HISTORY origin=%llu page=%llu..%llu selected=%d selected_page=%llu selected_start=%llu\n",
+          (unsigned long long)job->txt_history_origin,(unsigned long long)g.frame.range_start,
+          (unsigned long long)g.frame.range_end,g.selection.active,
+          (unsigned long long)g.selection.page,(unsigned long long)g.selection.start);
+        fflush(stderr);
+      }
+    }
 #endif
     LRESULT selected=SendMessageW(inbook.rows,LB_GETCURSEL,0,0);
     if(selected==LB_ERR || (size_t)selected>=inbook.batch.count ||

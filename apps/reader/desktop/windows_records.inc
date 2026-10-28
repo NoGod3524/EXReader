@@ -34,6 +34,13 @@ static exr_status winrecords_txt_match(host_job *job,exr_source *source,
   anchor.exact=record->exact;anchor.prefix=record->prefix;anchor.suffix=record->suffix;anchor.chapter=record->chapter;
   controlled.control=(exr_control){job_cancel_check,NULL,job};
   exr_status status=exr_txt_anchor_resolve_source(&controlled,&anchor,match,&job->error);
+  if(getenv("EXR_TRACE_TXT")) {
+    fprintf(stderr,"TXT_HISTORY resolve status=%d state=%d saved=%llu..%llu matched=%llu..%llu context=%llu/%llu\n",
+      (int)status,(int)match->state,(unsigned long long)record->start,(unsigned long long)record->end,
+      (unsigned long long)match->start,(unsigned long long)match->end,
+      (unsigned long long)record->prefix_size,(unsigned long long)record->suffix_size);
+    fflush(stderr);
+  }
   if(status!=EXR_OK) return status;
   return match->state==EXR_ANCHOR_FOUND?EXR_OK:EXR_ARGUMENT;
 }
