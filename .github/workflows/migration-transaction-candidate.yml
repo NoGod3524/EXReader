@@ -15,7 +15,7 @@ on:
       - '.github/workflows/migration-transaction-candidate.yml'
   workflow_dispatch:
 concurrency:
-  group: migration-tx-candidate-${{ github.ref }}
+  group: migration-tx-candidate-${{ github.sha }}
   cancel-in-progress: false
 permissions:
   contents: read
