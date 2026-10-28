@@ -10,7 +10,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/f06'
-BASE = 'd81e0d6f8bc944baf5d7e1b5c47eb9acde3e980c'
+BASE = '503c36e8073c12cd8837184b142b7704da51c961'
 VERSION = '3.42.0'
 
 def command(*args):
@@ -20,8 +20,15 @@ def guard():
     assert command('git', 'rev-parse', 'HEAD') == os.environ['GITHUB_SHA']
     command('git', 'merge-base', '--is-ancestor', BASE, 'HEAD')
     changed = command('git', 'diff', '--name-only', BASE, 'HEAD').splitlines()
-    assert all(p in ('examples/android/app/src/main/cpp/CMakeLists.txt', '.github/workflows/android-sdk342-package.yml') or
-               p.startswith('tests/android_sdk342_package/') for p in changed), changed
+    allowed = {'tests/reader_f06_packages/identity.py', 'tests/gtk_sdk342_package/run.py',
+               'tests/android_sdk342_package/run.py', 'tests/apple_sdk342_package/authenticate.py',
+               'tests/sdk342_aggregate/authenticate.py', '.github/workflows/sdk342-aggregate.yml',
+               '.github/workflows/gtk-sdk342-package.yml', '.github/workflows/f06-windows-sdk342.yml',
+               '.github/workflows/android-sdk342-package.yml', '.github/workflows/android-sdk342-record-probe.yml',
+               '.github/workflows/apple-sdk342-package.yml'}
+    assert all(p in allowed for p in changed), changed
+    command('git', 'diff', '--exit-code', '8357eafa28423a7ab93ba08b823af80f01ad1505', 'HEAD', '--',
+            'src', 'include', 'cmake', 'CMakeLists.txt', 'bindings')
     frozen = {}
     for path in ('src', 'include', 'CMakeLists.txt', 'tests/reader_f06_packages',
                  '.github/workflows/android-composition-candidate.yml', 'examples/android/app/src/main/java'):

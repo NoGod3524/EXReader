@@ -1,5 +1,6 @@
 name: Apple SDK 3.42 exact installation and package
 on:
+  workflow_call:
   push:
     branches: [codex/apple-sdk342-optin-20261028]
 permissions:
