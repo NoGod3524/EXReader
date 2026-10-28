@@ -48,7 +48,7 @@ jobs:
           assert ui['source_sha']==source and ui['run_id']==str(run) and ui['attempt']=='1'
           report={'diagnostic_only':True,'performance_accepted':False,'source_sha':source,'run_id':run,'artifact_id':artifact,'digest':digest,
                   'passed':ui['passed'],'failed':ui['failed'],'skipped':ui['skipped'],
-                  'cases':[{'id':case['id'],'status':case['status'],'error':case.get('error'),'detail':case.get('detail') if case['status']!='pass' else None} for case in ui['cases']],
+                  'cases':[{'id':case['id'],'status':case['status'],'error':case.get('error'),'test_source_line':case.get('test_source_line'),'detail':case.get('detail') if case['status']!='pass' else None} for case in ui['cases']],
                   'collector':json.loads(read('/ui-execution/result.json')),
                   'verifier':json.loads(read('/observation-verification.json'))}
           output=Path('build/perf-inspection');output.mkdir(parents=True)
