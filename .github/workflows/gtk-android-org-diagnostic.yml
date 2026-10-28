@@ -23,6 +23,7 @@ jobs:
           set -o pipefail
           mkdir -p build/diagnostic
           python3 tests/gtk_android_organization/diagnostic/prepare.py 2>&1 | tee build/diagnostic/prepare.log
+          cp -a build/org-gtk-first/profile build/diagnostic-input/profile
       - name: Install only Java build and native GTK runtime dependencies
         run: |
           sudo apt-get update
@@ -56,7 +57,7 @@ jobs:
             adb install -r -t build/wave3/artifacts/app-debug.apk
             adb install -r -t build/wave3/artifacts/relay-debug-androidTest.apk
             python3 tests/gtk_android_organization/android/run.py --phase android --previous build/diagnostic-input/state.json --output build/org-android --fixture build/wave3/network-fixture
-            xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc 'openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT; python3 tests/gtk_android_organization/gtk.py --phase gtk-return --previous build/org-android/state.json --out build/org-gtk-return --package build/package --inspect build/package/received-sdk-inspect'
+            xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc 'openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT; python3 tests/gtk_android_organization/gtk.py --phase gtk-return --previous build/org-android/state.json --origin build/diagnostic-input --out build/org-gtk-return --package build/package --inspect build/package/received-sdk-inspect'
             python3 tests/gtk_android_organization/android/run.py --phase android-final --previous build/org-gtk-return/state.json --output build/org-android-final --fixture build/wave3/network-fixture
       - uses: actions/upload-artifact@v4
         if: always()
@@ -65,7 +66,7 @@ jobs:
           path: |
             build/diagnostic/*.json
             build/diagnostic/*.log
-            build/producer-gtk-first/
+            build/org-gtk-first/
             build/diagnostic-input/
             build/org-android/
             build/org-gtk-return/

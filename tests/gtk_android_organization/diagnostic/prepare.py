@@ -21,7 +21,7 @@ paths=['src','include','apps','examples','extras','tools','CMakeLists.txt','CMak
 subprocess.run(['git','diff','--exit-code',PRODUCER,'HEAD','--',*paths],check=True)
 artifacts=json.loads(gh(f'repos/{repo}/actions/runs/{RUN}/artifacts'))['artifacts']
 proof={'diagnostic_only':True,'producer_source_sha':PRODUCER,'producer_run':RUN,'diagnostic_test_sha':os.environ['GITHUB_SHA'],'diagnostic_run':os.environ['GITHUB_RUN_ID'],'product_paths_equal':paths,'artifacts':[]}
-for prefix,target in [('org-android-runtime','build/wave3'),('org-gtk-first','build/producer-gtk-first'),('org-gtk-package','build/package')]:
+for prefix,target in [('org-android-runtime','build/wave3'),('org-gtk-first','build/org-gtk-first'),('org-gtk-package','build/package')]:
  matches=[x for x in artifacts if x['name']==f'{prefix}-{RUN}-1'];assert len(matches)==1
  a=matches[0];assert not a['expired']
  raw=gh(f'repos/{repo}/actions/artifacts/{a["id"]}/zip');digest=hashlib.sha256(raw).hexdigest();assert a['digest']=='sha256:'+digest
@@ -35,7 +35,7 @@ assert Path('build/wave3/artifacts/runtime-identity.txt').read_text()==identity
 assert Path('build/package/relay-identity.txt').read_text()==identity
 subprocess.run(['sha256sum','-c','runtime-apks.sha256'],cwd='build/wave3/artifacts',check=True)
 subprocess.run(['sha256sum','-c','relay-sha256.txt'],cwd='build/package',check=True)
-raw=Path('build/producer-gtk-first/state.json').read_bytes();state=json.loads(raw)
+raw=Path('build/org-gtk-first/state.json').read_bytes();state=json.loads(raw)
 assert state['source_sha']==PRODUCER and state['run_id']==RUN and state['attempt']=='1' and state['phase']=='gtk-first' and state['data']['passed'] is True
 for e in state['entries'].values():assert hashlib.sha256(base64.b64decode(e['body'],validate=True)).hexdigest()==e['sha256']
 # Adapt ONLY artifact envelope, never any original or application revision bytes.

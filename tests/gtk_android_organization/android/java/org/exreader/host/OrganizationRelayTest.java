@@ -67,6 +67,46 @@ public final class OrganizationRelayTest extends Instrumentation {
         }
         check("explicit_native_receive_and_public_original_hash",()->{});click("关闭");
     }
+    private void syncExpectedDeletedDependency()throws Exception{
+        click("立即同步");status("书架有冲突或缺少依赖，可继续重试");
+        SyncController controller=SyncController.get(context);
+        java.lang.reflect.Field unresolved=SyncController.class.getDeclaredField("projectUnresolved"),worker=SyncController.class.getDeclaredField("worker");unresolved.setAccessible(true);worker.setAccessible(true);
+        int pending=((java.util.concurrent.ExecutorService)worker.get(controller)).submit(()->unresolved.getInt(controller)).get(30,java.util.concurrent.TimeUnit.SECONDS);
+        need(pending==1,"exactly one expected deferred membership, no other unresolved projection");
+        String memberKey="series:"+data.getString("series")+":"+data.getString("book_key");
+        JSONObject evidence=new JSONObject().put("expected_member_key",memberKey);JSONArray heads=new JSONArray();int dependencies=0;
+        String path=new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath();long owner=NativeCatalog.open(path);
+        try(android.database.sqlite.SQLiteDatabase db=android.database.sqlite.SQLiteDatabase.openDatabase(path,null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY)){
+            try(android.database.Cursor c=db.rawQuery("SELECT count(*) FROM reader_outbox",null)){need(c.moveToFirst()&&c.getLong(0)==0,"no pending or retried outbox rows");}
+            try(android.database.Cursor c=db.rawQuery("SELECT DISTINCT entity_kind,entity_key FROM reader_revisions ORDER BY entity_kind,entity_key",null)){
+                while(c.moveToNext()){
+                    String kind=c.getString(0),key=c.getString(1);String[] selected=NativeCatalog.selection(owner,kind,key);
+                    need(selected.length==4&&selected[0].equals("4"),"every retained entity has one safe complete head: "+kind+" "+key);
+                    JSONObject head=new JSONObject().put("kind",kind).put("key",key).put("revision",selected[3]).put("deleted",selected[1]);
+                    try(android.database.Cursor r=db.rawQuery("SELECT body_json,body_sha256 FROM reader_revisions WHERE revision_id=?",new String[]{selected[3]})){
+                        need(r.moveToFirst(),"retained head bytes");head.put("body",new JSONObject(r.getString(0))).put("body_sha256",r.getString(1));
+                    }
+                    heads.put(head);
+                    if(kind.equals("series")&&key.equals(data.getString("series"))){need(selected[1].equals("1"),"exact series tombstone selected");evidence.put("deleted_group",head);}
+                    if(kind.equals("membership")&&selected[1].equals("0")){
+                        String[] parts=key.split(":",3);need(parts.length==3,"membership key");
+                        String table=parts[0].equals("shelf")?"reader_shelves":parts[0].equals("tag")?"reader_tags":parts[0].equals("series")?"reader_series":"";
+                        need(!table.isEmpty(),"known member kind");
+                        try(android.database.Cursor b=db.rawQuery("SELECT deleted FROM reader_books WHERE book_key=?",new String[]{parts[2]})){need(b.moveToFirst()&&b.getInt(0)==0,"no missing/deleted book dependency");}
+                        try(android.database.Cursor g=db.rawQuery("SELECT deleted FROM "+table+" WHERE "+parts[0]+"_id=?",new String[]{parts[1]})){
+                            need(g.moveToFirst(),"no missing group dependency");if(g.getInt(0)!=0){need(key.equals(memberKey),"no other deleted-group dependency");dependencies++;evidence.put("surviving_membership",head);}
+                        }
+                    }
+                    if(kind.equals("shelf")&&selected[1].equals("0")){
+                        try(android.database.Cursor g=db.rawQuery("SELECT parent_id FROM reader_shelves WHERE shelf_id=?",new String[]{key})){need(g.moveToFirst(),"projected shelf");if(!g.isNull(0)){try(android.database.Cursor parent=db.rawQuery("SELECT deleted FROM reader_shelves WHERE shelf_id=?",new String[]{g.getString(0)})){need(parent.moveToFirst()&&parent.getInt(0)==0,"all active shelf parents present");}}}
+                    }
+                }
+            }
+        }finally{NativeCatalog.close(owner);}
+        need(dependencies==1&&evidence.has("deleted_group")&&evidence.has("surviving_membership"),"only expected dependency retained");
+        evidence.put("all_safe_heads",heads).put("pending_count",pending).put("outbox_count",0);data.put("deleted_dependency_evidence",evidence);
+        shot("expected-deleted-group-dependency");check("one_exact_deleted_group_dependency_no_other_unsafe_or_outbox",()->{});click("关闭");
+    }
     private void organize(){click("More");click("Organize");target="organize New action";waitFor(n->n.isEnabled()&&"New".contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),null,30000);}
     private void kind(int n){click("Kind");click(new String[]{"Shelves","Tags","Series"}[n]);}
     private void create(String name){click("New");field("Name",name);click("Save");visible(name);}
@@ -114,7 +154,7 @@ public final class OrganizationRelayTest extends Instrumentation {
                     kind(2);groupAction("GTK series","Delete");click("Delete");click("Removed");visible("GTK series");shot("deleted-series");click("Active");
                     for(int n=0;n<3;n++){kind(n);String name=new String[]{"Android shelf","Android tag","Android series"}[n];create(name);data.put("android_"+n,findId(n,name));add(name);shot("created-"+n);}
                     kind(0);groupAction("Android shelf","Children");create("Android child");data.put("android_child",findId(0,"Android child",data.getString("android_0")));add("Android child");shot("created-child");
-                    click("Close");check("android_native_ui_edits_removes_creates_and_classifies",()->{});configure();sync();check("android_application_publishes_actual_revisions",()->{});
+                    click("Close");check("android_native_ui_edits_removes_creates_and_classifies",()->{});configure();syncExpectedDeletedDependency();check("android_application_publishes_actual_revisions",()->{});
                 }
                 rows=snapshot();
             }
