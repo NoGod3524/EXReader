@@ -15,12 +15,16 @@ The native product catalog adapter upgrades EXRP versions 1 and 2 to version 3
 when opened. That operation alone does not establish that an old app library,
 all reading records, or a downgrade works on a particular device. The old
 IndexedDB/backup migration is a separate command-line tool, not a native app
-upgrade button. Its [instructions](WP12-LEGACY-MIGRATION.md) explain how to
+upgrade button. **Do not use the migrator built from this candidate for a real
+upgrade:** the current SDK creates schema 7, but the tool rejects schema 7 on
+reopen. The recorded Linux and Windows tests published a new target and then
+failed to inspect it. The compatibility repair and full migration regression
+are still required. Its historical [instructions](WP12-LEGACY-MIGRATION.md) explain how to
 export from the old application's own origin, inspect the pack, run a dry run,
 migrate and verify. Close the target app first and retain the source export,
-target backup, report and `<library>.legacy-map.json` together. The tool
-accepts a new target or an existing SDK schema 6 target; it does not upgrade an
-older target schema. Review the report before using partial migration: unresolved
+target backup, report and `<library>.legacy-map.json` together. The historical
+tool contract accepts a new target or an existing SDK schema 6 target; it does
+not upgrade an older target schema. Review the report before using partial migration: unresolved
 annotations remain in the ledger, audio originals are not imported, and files
 above 128 MiB are rejected. Real user libraries, macOS and a real Tauri window
 were not covered by the recorded tool acceptance; see the
@@ -62,3 +66,12 @@ dependency licenses. Final delivery still needs same-source installed artifact
 inventories and license/notice review, path remediation, platform upgrade and
 old-library checks, and user instructions checked against the actual packages.
 F12 remains pending until those results are available.
+
+The current candidate's push run [40627111572](https://github.com/NoGod3524/EXReader/actions/runs/40627111572),
+attempt 1, at `622c9edb13fd3f1b9466be1cbd9d9f6d5c737093` failed on both Linux
+and Windows and failed the combined gate. Installed payload verification passed
+on both platforms. On Linux, 27 of 65 named scenarios passed; `dump` rejected
+the SDK 3.41-created schema 7 target with `target-schema`, and the browser
+chain failed after publication when checking reopened originals. Preserve this
+run and its uploaded failure evidence. The older standalone acceptance does not
+establish compatibility with this candidate.
