@@ -125,6 +125,8 @@ typedef struct {
   size_t txt_history_point;
   int txt_has_history_point;
 #endif
+  size_t txt_verified_point;
+  int txt_verified_point_valid;
   size_t page_count;
   int valid;
   int fixed;
