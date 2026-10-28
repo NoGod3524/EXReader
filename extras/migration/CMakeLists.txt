@@ -49,6 +49,7 @@ option(EXR_MIGRATION_REVIEW_TESTS "Build public API state-editing review consume
 if(EXR_MIGRATION_REVIEW_TESTS)
   add_executable(migration-path-state ../../tests/migration/path_state_probe.c src/lm_util.c)
   target_include_directories(migration-path-state PRIVATE src)
+  target_link_libraries(migration-path-state PRIVATE EXReader::exr_library)
   if(WIN32)
     target_link_libraries(migration-path-state PRIVATE psapi)
   else()
