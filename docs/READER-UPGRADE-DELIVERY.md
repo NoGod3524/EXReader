@@ -11,6 +11,20 @@ run does not test or establish ordinary-writer exclusion. Until an enforceable
 host-wide quiescence or a different publication design is implemented and
 validated, in-place migration is not release-ready.
 
+The post-check ordinary SQLite writer regression at source
+`11f10ffa7ae583dc5b6119d3c122d0450169fa38`,
+[run 40629804211](https://github.com/NoGod3524/EXReader/actions/runs/40629804211),
+attempt 1, failed on Linux and Windows: each writer committed a title update,
+the migrator reported success, and the published database contained the old
+title. Each platform had passed the original 65 scenarios/135 checks, 31 review
+checks and 17 browser checks before this new check failed. Failure logs and
+database evidence are retained by that run. The combined gate failed because
+the producer jobs failed. A SQLite lock held over a rename is insufficient to
+prove portable exclusion for already-open or waiting writers, and the SDK and
+ordinary SQLite clients do not participate in the migrator lock. A fix requires
+an enforceable protocol adopted by every writer or a publication design that
+does not replace a writable database; neither is established by this candidate.
+
 There is not yet a validated, installable final native product for all six
 targets. The [build instructions](../README.md#构建) produce the SDK and tools;
 they are not a mobile app installer. Obtain a platform package only when its
