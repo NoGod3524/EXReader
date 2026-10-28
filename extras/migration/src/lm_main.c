@@ -907,14 +907,12 @@ static int read_whole(const char *path, char **out, size_t *size, size_t max) {
   *size = (size_t)n;
   return 1;
 }
-static int sidecar_load(ctx *c, const char *path) {
-  char *data = NULL, error[160];
-  size_t n, i;
+static int sidecar_parse(ctx *c, const char *data, size_t n) {
+  char error[160];
+  size_t i;
   jv *root;
   const jv *books, *notes, *packs;
-  if (!read_whole(path, &data, &n, 256u * 1024 * 1024)) { fail(c, O_REJECTED, "ledger-unreadable", "cannot read the existing migration ledger %s", path); return 0; }
   root = lm_json_parse(data, n, error, sizeof(error));
-  free(data);
   if (!root || root->t != J_OBJ) { fail(c, O_REJECTED, "ledger-invalid", "existing ledger is not valid JSON: %s", root ? "not an object" : error); lm_json_free(root); return 0; }
   if (!lm_get_str(root, "format") || strcmp(lm_get_str(root, "format"), LM_MAP_FORMAT)) { fail(c, O_REJECTED, "ledger-invalid", "existing sidecar is not an %s file", LM_MAP_FORMAT); lm_json_free(root); return 0; }
   if (!lm_get(root, "version") || lm_get(root, "version")->num != 1.0) { fail(c, O_REJECTED, "ledger-unknown-version", "existing ledger has an unsupported version; refusing to overwrite it"); lm_json_free(root); return 0; }
@@ -986,6 +984,11 @@ static int sidecar_load(ctx *c, const char *path) {
       }
   lm_json_free(root);
   return 1;
+}
+static int sidecar_load(ctx *c, const char *path) {
+  char *data=NULL;size_t n;int ok;
+  if (!read_whole(path,&data,&n,256u*1024*1024)) { fail(c,O_REJECTED,"ledger-unreadable","cannot read the existing migration ledger %s",path);return 0; }
+  ok=sidecar_parse(c,data,n);free(data);return ok;
 }
 static void sidecar_text(ctx *c, lm_sb *b) {
   size_t i;
@@ -1470,6 +1473,24 @@ static int run_migrate(ctx *c) {
   if (!c->target) return 1; /* inspect */
 
   c->sidecar = path_join(c->target, ".legacy-map.json");
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  {
+    void *data=NULL;size_t size=0;int found=0;
+    c->target_existed=lm_exists(c->target);
+    c->sidecar_existed=lm_exists(c->sidecar);
+    if(exr_library_migration_open(c->target,&c->lib,&c->err)!=EXR_OK) {
+      fail(c,O_BUSY,"target-busy","cannot acquire the library write transaction: %s",c->err.message);return 0;
+    }
+    if(exr_library_migration_ledger_get(c->lib,&data,&size,&found,&c->err)!=EXR_OK) {
+      sdk_fail(c,"reading transactional ledger");return 0;
+    }
+    if(found) {
+      int ok=sidecar_parse(c,(const char *)data,size);exr_free(data);
+      if(!ok) return 0;
+    } else if(c->sidecar_existed && !sidecar_load(c,c->sidecar)) return 0;
+  }
+  goto process_pack;
+#endif
   c->lock = path_join(c->target, ".migrate-lock");
   c->stage = lm_xalloc(strlen(c->target) + 64);
   sprintf(c->stage, "%s.migrating-%s", c->target, c->run);
@@ -1514,6 +1535,9 @@ static int run_migrate(ctx *c) {
   if (exr_library_open(c->stage, &c->lib, &c->err) != EXR_OK) { sdk_fail(c, "opening the stage library"); return 0; }
   if (!c->stage_state) c->stage_state = "created";
 
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+process_pack:
+#endif
   /* Group annotations by book without copying them. */
   note_book = lm_xalloc((c->pack.notes->n + 1) * sizeof(size_t));
   first_of = lm_xalloc((c->pack.books->n + 2) * sizeof(size_t));
@@ -1582,19 +1606,54 @@ static int run_migrate(ctx *c) {
     return 0;
   }
   if (c->out == O_NONE) {
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+    lm_sb text;
+    if(!verify_library(c,c->lib,1)) return 0;
+    lm_sb_init(&text);sidecar_text(c,&text);
+    if(text.oom || exr_library_migration_ledger_set(c->lib,text.p,text.n,&c->err)!=EXR_OK) {
+      lm_sb_free(&text);sdk_fail(c,"writing transactional ledger");return 0;
+    }
+    lm_sb_free(&text);
+    if(injected(c,"writer-pause",0)) {
+      char *ready=path_join(c->target,".writer-ready"),*resume=path_join(c->target,".writer-resume");
+      unsigned wait;int resumed=0;
+      if(!write_file(ready,"ready",5)) { free(ready);free(resume);fail(c,O_FAILED,"review-hook-failed","cannot create writer marker");return 0; }
+      for(wait=0;wait<400 && !cancel_cb(c);wait++) {
+        if(lm_exists(resume)) { resumed=1;break; }
+#ifdef _WIN32
+        Sleep(50);
+#else
+        struct timespec delay={0,50000000};nanosleep(&delay,NULL);
+#endif
+      }
+      lm_remove(ready);lm_remove(resume);free(ready);free(resume);
+      if(!resumed && !cancel_cb(c)) { fail(c,O_FAILED,"review-hook-timeout","writer synchronization timed out");return 0; }
+    }
+    if(c->dry_run || cancel_cb(c) || injected(c,"publish-fail",0)) {
+      if(exr_library_migration_finish(c->lib,0,&c->err)!=EXR_OK) { sdk_fail(c,"rolling back migration");return 0; }
+      if(c->dry_run) { c->out=O_DRYRUN;snprintf(c->code,sizeof(c->code),"dry-run");snprintf(c->message,sizeof(c->message),"transaction rolled back; nothing was published");return 1; }
+      fail(c,cancel_cb(c)?O_CANCELLED:O_FAILED,cancel_cb(c)?"cancelled":"injected-publish-fail","transaction rolled back");return 0;
+    }
+    if(exr_library_migration_finish(c->lib,1,&c->err)!=EXR_OK) { sdk_fail(c,"committing migration");return 0; }
+    c->out=O_SUCCESS;snprintf(c->code,sizeof(c->code),"ok");snprintf(c->message,sizeof(c->message),"transaction committed");return 1;
+#else
     exr_library_close(c->lib);
     c->lib = NULL;
     if (exr_library_open(c->stage, &c->lib, &c->err) != EXR_OK) { sdk_fail(c, "reopening the stage library"); return 0; }
     if (!verify_library(c, c->lib, 1)) return 0;
     exr_library_close(c->lib);
     c->lib = NULL;
+#endif
   }
+#ifndef EXR_MIGRATION_TX_CANDIDATE
   if (c->dry_run) { c->out = O_DRYRUN; snprintf(c->code, sizeof(c->code), "dry-run"); snprintf(c->message, sizeof(c->message), "stage built and verified; nothing was published"); return 1; }
   if (!publish(c)) return 0;
   c->out = O_SUCCESS;
   snprintf(c->code, sizeof(c->code), "ok");
   snprintf(c->message, sizeof(c->message), "published and verified");
   return 1;
+#endif
+  return 0;
 }
 
 /* ---------- report ---------- */
@@ -1672,10 +1731,22 @@ static void run_inspect(ctx *c) {
 static void run_verify(ctx *c) {
   size_t i, at;
   c->sidecar = path_join(c->target, ".legacy-map.json");
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  {
+    void *data=NULL;size_t size=0;int found=0;
+    if (!check_target_header(c)) return;
+    if(exr_library_open(c->target,&c->lib,&c->err)!=EXR_OK) { sdk_fail(c,"opening library");return; }
+    if(exr_library_migration_ledger_get(c->lib,&data,&size,&found,&c->err)!=EXR_OK) { sdk_fail(c,"reading transactional ledger");return; }
+    if(!found) { fail(c,O_REJECTED,"ledger-missing","no transactional ledger in library");return; }
+    if(!sidecar_parse(c,(const char *)data,size)) { exr_free(data);return; }
+    exr_free(data);
+  }
+#else
   if (!lm_exists(c->sidecar)) { fail(c, O_REJECTED, "ledger-missing", "no migration ledger next to %s", c->target); return; }
   if (!sidecar_load(c, c->sidecar)) return;
   if (!check_target_header(c)) return;
   if (exr_library_open(c->target, &c->lib, &c->err) != EXR_OK) { fail(c, O_FAILED, "open-failed", "cannot open %s: %s", c->target, c->err.message); return; }
+#endif
   for (i = 0; i < c->pack.books->n; i++) {
     const char *id = lm_get_str(c->pack.books->items[i], "legacy_id");
     const jv *file = lm_get(c->pack.books->items[i], "file");
@@ -1721,6 +1792,9 @@ static void usage(void) {
 static int real_main(int argc, char **argv) {
   ctx *c = lm_xalloc(sizeof(*c));
   int i;
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  const char *export_path=NULL;
+#endif
   c->cancel_at = -1;
   c->inject_at = -1;
   if (argc >= 2 && !strcmp(argv[1], "--version")) { printf("exreader-legacy-migrate %s (EXReader SDK %s)\n", LM_TOOL_VERSION, exr_version()); return 0; }
@@ -1731,6 +1805,9 @@ static int real_main(int argc, char **argv) {
     if (!strcmp(a, "--pack") && i + 1 < argc) c->pack_path = argv[++i];
     else if (!strcmp(a, "--target") && i + 1 < argc) c->target = argv[++i];
     else if (!strcmp(a, "--report") && i + 1 < argc) c->report_path = argv[++i];
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+    else if (!strcmp(a, "--output") && i + 1 < argc) export_path = argv[++i];
+#endif
     else if (!strcmp(a, "--allow-partial")) c->allow_partial = 1;
     else if (!strcmp(a, "--dry-run")) c->dry_run = 1;
     else if (!strcmp(a, "--break-lock")) c->break_lock = 1;
@@ -1748,6 +1825,19 @@ static int real_main(int argc, char **argv) {
   lm_binary_stdout();
   signal(SIGINT, on_signal);
   signal(SIGTERM, on_signal);
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  if(!strcmp(c->cmd,"export-ledger")) {
+    void *data=NULL;size_t size=0;int found=0;
+    if(!c->target || !export_path || lm_exists(export_path)) { fputs("export-ledger requires --target and a new --output file\n",stderr);return 1; }
+    if(check_target_header(c) && exr_library_open(c->target,&c->lib,&c->err)==EXR_OK &&
+       exr_library_migration_ledger_get(c->lib,&data,&size,&found,&c->err)==EXR_OK && found &&
+       write_file(export_path,data,size)) {
+      exr_free(data);exr_library_close(c->lib);puts("ledger exported");return 0;
+    }
+    exr_free(data);if(c->lib) exr_library_close(c->lib);
+    fputs("cannot export ledger\n",stderr);return 3;
+  }
+#endif
   if (!strcmp(c->cmd, "dump")) {
     if (!c->target) { usage(); return 1; }
     c->sidecar = path_join(c->target, ".legacy-map.json");
