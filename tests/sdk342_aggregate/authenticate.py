@@ -49,6 +49,7 @@ try:
         'android': (f'android-sdk342-package-{run}-{attempt}', 'f06/android/result.json'),
         'records': (f'android-sdk342-record-probe-{run}-{attempt}', 'build/android-sdk342-record/evidence/report.json'),
         'apple': (f'apple-sdk342-authentication-{run}-{attempt}', 'summary.json'),
+        'apple_theme': (f'apple-sdk342-theme-authentication-{run}-{attempt}', 'summary.json'),
     }
     records = {key: read_artifact(artifacts, *value) for key,value in specs.items()}
     for record in records.values(): same(record)
@@ -57,6 +58,7 @@ try:
     assert records['android']['passed'] is True and records['android']['target'] == 'android'
     assert records['records']['passed'] is True and records['records']['host_compatibility_accepted'] is True
     assert records['apple']['accepted'] is True
+    assert records['apple_theme']['accepted'] is True
     report['checks']['five_gates_authenticated'] = True
     # This is the original six-target F06 authenticator's output. The Apple
     # simulator archive alone is not an iPhone or iPad installation result.

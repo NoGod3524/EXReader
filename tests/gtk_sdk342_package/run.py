@@ -9,7 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/gtk-sdk342'
-BASE = '503c36e8073c12cd8837184b142b7704da51c961'
+BASE = '6e93411a07cacc3bddabd8d93aa4b763a565b5d2'
 SDK_SOURCE = '7271829a829bfa6aaa47b73077c493f71af27ad3'
 VERSION = '3.42.0'
 ALLOWED = {'apps/reader/desktop/CMakeLists.txt', 'apps/reader/desktop/gtk_feature_integration.cmake',

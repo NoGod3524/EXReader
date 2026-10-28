@@ -29,9 +29,8 @@ def main():
             if args[i-1] == '--sdk-version' and args[i] == '3.41.0': args[i] = '3.42.0'
         return original_run(*args)
     builder.run = explicit_sdk
-    # The original adapter's --page-theme, wave3 and raw selector flags are
-    # retained. Current 4971 correctly refuses this until Apple 3.42 theme is
-    # independently supported; never silently omit the flag.
+    # Retain the original adapter's --page-theme, wave3 and raw selector flags;
+    # the separately validated Apple 3.42 theme profile admits this combination.
     payload = builder.apple(target)
     identity = load('tests/reader_f06_packages/identity.py', 'f06_original_identity')
     original_identity_run = identity.run

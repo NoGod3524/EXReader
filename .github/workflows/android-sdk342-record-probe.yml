@@ -35,10 +35,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          git merge-base --is-ancestor 503c36e8073c12cd8837184b142b7704da51c961 HEAD
+          git merge-base --is-ancestor 6e93411a07cacc3bddabd8d93aa4b763a565b5d2 HEAD
           test "$(git rev-parse HEAD:examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java)" = "$(git rev-parse bdca8c4bfbcae5566cebd569be1d4e56d1cc2872:examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java)"
           git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt bindings
-          git diff --name-only 503c36e8073c12cd8837184b142b7704da51c961 HEAD | while IFS= read -r path; do
+          git diff --name-only 6e93411a07cacc3bddabd8d93aa4b763a565b5d2 HEAD | while IFS= read -r path; do
             case "$path" in tests/reader_f06_packages/identity.py|tests/gtk_sdk342_package/run.py|tests/android_sdk342_package/run.py|tests/apple_sdk342_package/authenticate.py|tests/sdk342_aggregate/*|.github/workflows/f06-windows-sdk342.yml|.github/workflows/gtk-sdk342-package.yml|.github/workflows/android-sdk342-package.yml|.github/workflows/android-sdk342-record-probe.yml|.github/workflows/apple-sdk342-package.yml|.github/workflows/sdk342-aggregate.yml) ;; *) exit 1 ;; esac
           done
           mkdir -p build/android-sdk342-record/evidence

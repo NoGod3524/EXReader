@@ -9,7 +9,7 @@ jobs:
   package:
     name: Apple SDK 3.42 ${{ matrix.target }} package
     runs-on: macos-15
-    timeout-minutes: 75
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -20,6 +20,9 @@ jobs:
           fetch-depth: 0
       - name: Build exact SDK, installed products and native bundle; unpack and authenticate
         run: python3 tests/apple_sdk342_package/run.py --target '${{ matrix.target }}'
+      - name: Original OFF and ON native theme assertions with version identity adaptation
+        if: ${{ matrix.target == 'macos' }}
+        run: python3 tests/apple_sdk342_theme/run_native.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -30,6 +33,13 @@ jobs:
             build/apple-sdk342/${{ matrix.target }}/host/build.json
             build/apple-sdk342/${{ matrix.target }}/host/product-link.json
             build/apple-sdk342/${{ matrix.target }}/products/share/exreader-apple/product.json
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && matrix.target == 'macos' }}
+        with:
+          name: apple-sdk342-theme-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-sdk342-theme/
           if-no-files-found: error
           retention-days: 30
   authenticate:
@@ -45,10 +55,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tests/apple_sdk342_package/authenticate.py
+      - name: Authenticate original theme native ZIP
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_sdk342_theme/authenticate.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: apple-sdk342-authentication-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/apple-sdk342-summary/summary.json
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-sdk342-theme-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-sdk342-theme-summary/summary.json
           if-no-files-found: error
           retention-days: 30
