@@ -367,6 +367,16 @@
       "bytes": 137243021,
       "sha256": "4361cd2866edc0a4faf970c761842d987d4acba4d23bc71e605741b62db95e47",
       "adapter": "android_sync_account_40630302205"
+    },
+    "windows_sync_combined_40642072411": {
+      "run": 40642072411,
+      "doc": "docs/reader-total-progress/windows-sync-account.md",
+      "source_prefix": "42445abd6dfeb312c8803d0a000a32f2a0459a15"
+    },
+    "windows_sync_auth_40643169696": {
+      "run": 40643169696,
+      "doc": "docs/reader-total-progress/windows-sync-account.md",
+      "source_prefix": "87a039e0c4e3f3ae0f7fe4995f1dcfb20617ea5c"
     }
   },
   "requirements": [
@@ -632,11 +642,12 @@
       "group": "host",
       "platform": "windows",
       "title": "Windows：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
-      "state": "partial",
+      "state": "verified",
       "evidence": [
-        "windows_wave3_complete"
+        "windows_sync_combined_40642072411",
+        "windows_sync_auth_40643169696"
       ],
-      "note": "真实失败会话及只读详情/秘密扫描通过；本轮未回放完整账号取消/重试矩阵，保持partial计零。"
+      "note": "Windows runner-local HTTPS: same-run Wave3 read-only status and secret checks plus account failure, cancellation/retry and native organization; original account report independently authenticated."
     },
     {
       "id": "H.linux.startup",
