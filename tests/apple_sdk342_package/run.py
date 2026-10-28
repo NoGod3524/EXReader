@@ -40,13 +40,14 @@ def main():
     run('cmake', '--install', out / 'sdk-build', '--prefix', sdk)
     run(sys.executable, 'tools/build_apple_product.py', '--sdk', sdk, '--sdk-version', '3.42.0', '--target', target, '--product-prefix', products, '--selector-bytes-candidate', '--wave3', '--build', out / 'products-build')
     platform = 'macos' if target == 'macos' else 'simulator'
-    run(sys.executable, 'tools/build_apple_host.py', '--sdk', sdk, '--sdk-version', '3.42.0', '--platform', platform, '--product-prefix', products, '--selector-bytes-candidate', '--wave3', '--output', out / 'host')
+    run(sys.executable, 'tools/build_apple_host.py', '--sdk', sdk, '--sdk-version', '3.42.0', '--platform', platform, '--product-prefix', products, '--selector-bytes-candidate', '--wave3', '--page-theme', '--output', out / 'host')
     app = out / 'host/EXReader.app'
     executable = app / ('Contents/MacOS/EXReader' if target == 'macos' else 'EXReader')
     plist = app / ('Contents/Info.plist' if target == 'macos' else 'Info.plist')
     info = plistlib.loads(plist.read_bytes())
     assert info['EXRSourceSHA'] == source and info['CFBundleShortVersionString'] == '3.42.0'
     assert info['EXRWave3Enabled'] and info['EXRRawSelectorEnabled']
+    assert json.loads((out / 'host/build.json').read_text())['page_theme_enabled'] is True
     run('codesign', '--verify', '--deep', '--strict', app)
     archive = out / 'EXReader.zip'
     run('ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', app, archive)
@@ -60,7 +61,7 @@ def main():
     identity = {'source_sha': source, 'sdk_content_candidate': CANDIDATE, 'sdk_content_paths': PATHS,
                 'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'target': target,
                 'product': product, 'archive_sha256': sha(archive), 'executable_sha256': sha(executable),
-                'physical_device': False, 'signed_distribution': False}
+                'page_theme_enabled': True, 'physical_device': False, 'signed_distribution': False}
     (out / 'identity.json').write_text(json.dumps(identity, indent=2) + '\n')
     print(json.dumps(identity), flush=True)
 
