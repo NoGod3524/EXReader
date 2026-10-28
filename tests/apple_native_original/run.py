@@ -30,6 +30,10 @@ def run(role, *args):
         result = subprocess.run(args, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, timeout=4800)
     report['commands'].append({'role': role, 'argv': args, 'exit': result.returncode})
     if result.returncode:
+        lines = (out / (role + '.log')).read_text(errors='replace').splitlines()
+        for i, line in enumerate(lines):
+            if 'OriginalSaveUITests.swift:' in line and 'error:' in line:
+                print('\n'.join(lines[max(0, i - 8):i + 250]), flush=True)
         raise RuntimeError(role + ' failed: ' + str(result.returncode))
 def sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 try:
@@ -71,7 +75,10 @@ try:
     report['program'] = {'sha256': sha(binary), 'bundle_id': info['CFBundleIdentifier'], 'source_sha': info['EXRSourceSHA']}
     if a.platform != 'macos':
         container = subprocess.check_output(['xcrun', 'simctl', 'get_app_container', udid, 'org.exreader.host', 'data'], text=True).strip()
-        saved = Path(container) / 'Documents'
+        device_data = Path(container).parents[3]
+        destinations = [p for p in (device_data / 'Containers').rglob('EXReaderOriginalSave') if p.is_dir()]
+        assert len(destinations) == 1, [str(p) for p in destinations]
+        saved = destinations[0]
     source = resources / 'Sample.epub'
     bundled = app / ('Contents/Resources/Sample.epub' if a.platform == 'macos' else 'Sample.epub')
     assert bundled.read_bytes() == source.read_bytes(), 'bundled import fixture differs from source'
