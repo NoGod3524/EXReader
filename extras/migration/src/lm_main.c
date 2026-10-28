@@ -1493,13 +1493,25 @@ static int run_migrate(ctx *c) {
   c->sidecar = path_join(c->target, ".legacy-map.json");
 #ifdef EXR_MIGRATION_TX_CANDIDATE
   {
-    void *data=NULL;size_t size=0;int found=0;
+    void *data=NULL;size_t size=0;int found=0;const char *open_path;
     c->target_existed=lm_exists(c->target);
     c->sidecar_existed=lm_exists(c->sidecar);
     if(!c->target_existed && c->sidecar_existed) {
       fail(c,O_REJECTED,"orphan-ledger","a legacy ledger exists without its library");return 0;
     }
-    if(exr_library_migration_open(c->target,&c->lib,&c->err)!=EXR_OK) {
+    open_path=c->target;
+    if(!c->target_existed) {
+      FILE *reserved;
+      c->stage=lm_xalloc(strlen(c->target)+64);
+      sprintf(c->stage,"%s.migrating-%s",c->target,c->run);
+      reserved=lm_fopen(c->stage,"wbx");
+      if(!reserved) { free(c->stage);c->stage=NULL;fail(c,O_FAILED,"stage-failed","cannot reserve private new-library stage");return 0; }
+      if(fclose(reserved)) { fail(c,O_FAILED,"stage-failed","cannot close private new-library stage");return 0; }
+      open_path=c->stage;c->stage_state="created";
+    }
+    if(exr_library_migration_open(open_path,&c->lib,&c->err)!=EXR_OK) {
+      if(strstr(c->err.message,"Migration requires schema")) { fail(c,O_REJECTED,"target-schema","%s",c->err.message);return 0; }
+      if(strstr(c->err.message,"not a database")) { fail(c,O_REJECTED,"target-not-library","%s",c->err.message);return 0; }
       fail(c,O_BUSY,"target-busy","cannot acquire the library write transaction: %s",c->err.message);return 0;
     }
     if(exr_library_migration_ledger_get(c->lib,&data,&size,&found,&c->err)!=EXR_OK) {
@@ -1656,6 +1668,11 @@ process_pack:
       fail(c,cancel_cb(c)?O_CANCELLED:O_FAILED,cancel_cb(c)?"cancelled":"injected-publish-fail","transaction rolled back");return 0;
     }
     if(exr_library_migration_finish(c->lib,1,&c->err)!=EXR_OK) { sdk_fail(c,"committing migration");return 0; }
+    if(!c->target_existed) {
+      exr_library_close(c->lib);c->lib=NULL;
+      if(!lm_publish_new(c->stage,c->target)) { fail(c,O_FAILED,"publish-failed","cannot publish the new library without replacing an existing path");return 0; }
+      c->stage_state="published";
+    }
     if(injected(c,"commit-pause",0)) {
       char *ready=path_join(c->target,".commit-ready"),*resume=path_join(c->target,".commit-resume");
       unsigned wait;int resumed=0;
