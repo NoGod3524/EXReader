@@ -37,7 +37,7 @@ final class SyncController {
     private final List<NativeSync.RemoteBook> books=new ArrayList<>();
     private volatile Listener listener;
     private long session,epoch;
-    private boolean preparing,receiving,pollQueued,projecting,projectionResumable;
+    private boolean preparing,receiving,pollQueued,projecting,projectionResumable,closingOwned;
     private final IntentJournal journal;
     private static final String[] PROJECT_KINDS={"book","shelf","tag","series","membership"};
     private int projectKind,projectPages,projectUnresolved,shelfUnresolved,shelfPass;
@@ -52,7 +52,7 @@ final class SyncController {
     }
     void attach(Listener value){worker.execute(()->{listener=value;publish();});}
     void detach(Listener value){worker.execute(()->{if(listener==value){listener=null;closeOwned();}});}
-    private boolean busy(){return preparing||receiving||projecting||state==NativeSync.RUNNING||state==NativeSync.CANCELLING||state==NativeSync.CLOSING;}
+    private boolean busy(){return closingOwned||preparing||receiving||projecting||state==NativeSync.RUNNING||state==NativeSync.CANCELLING||state==NativeSync.CLOSING;}
     private void captureView(){if(!BuildConfig.READER_WAVE3){return;}if(session==0){view=null;return;}try{view=NativeSync.view(session,product.getAbsolutePath());}catch(Throwable failure){view=new String[0][];}}
     private void publish(){Listener target=listener;if(target==null)return;captureView();final String[][] shown=view;String message=accountNotice.isEmpty()?status:accountNotice,root=account.root();boolean active=busy();List<NativeSync.RemoteBook> rows=Collections.unmodifiableList(new ArrayList<>(books));ui.post(()->{if(listener==target){target.update(message,root,rows,active);target.view(shown);}});}
     private void error(Throwable error){status=error instanceof HostTask.Cancelled?"已取消，可重试":error.getMessage()==null?"操作未完成，可重试":error.getMessage();publish();}
@@ -69,7 +69,7 @@ final class SyncController {
         long request=++epoch;preparing=true;sdkTask=new HostTask(()->false);HostTask task=sdkTask;status="准备原件";publish();
         ui.post(()->host.prepareOriginals(task,()->worker.execute(()->{
             try{
-                if(request!=epoch)return;preparing=false;sdkTask=null;
+                if(request!=epoch)return;preparing=false;sdkTask=null;task.check();
                 if(!cache.isDirectory()&&!cache.mkdirs())throw new IllegalStateException("同步目录创建失败");
                 if(session==0){session=NativeSync.create(product.getAbsolutePath(),cache.getAbsolutePath(),originals.getAbsolutePath(),account.id(),account.root(),secret);if(session==0)throw new IllegalStateException("同步会话创建失败");}
                 NativeSync.Snapshot snapshot=new NativeSync.Snapshot(NativeSync.command(session,1));if(snapshot.code!=0)throw new IllegalStateException("同步尚不能开始");state=snapshot.state;status=snapshot.label();publish();schedulePoll();
@@ -80,7 +80,7 @@ final class SyncController {
     void close(){HostTask active=sdkTask;if(active!=null)active.cancel();worker.execute(this::closeOwned);}
     private void closeOwned(){
         ++epoch;if(sdkTask!=null)sdkTask.cancel();sdkTask=null;preparing=receiving=projecting=projectionResumable=false;account.clearMemory();
-        if(session!=0){NativeSync.Snapshot view=new NativeSync.Snapshot(NativeSync.command(session,3));state=view.state;status=view.label();schedulePoll();}else{state=NativeSync.CLOSED;status="已断开";}
+        if(session!=0){closingOwned=true;NativeSync.Snapshot view=new NativeSync.Snapshot(NativeSync.command(session,3));state=view.state;status=view.label();schedulePoll();}else{state=NativeSync.CLOSED;status="已断开";}
         publish();
     }
     private void schedulePoll(){if(!pollQueued){pollQueued=true;worker.schedule(this::poll,200,TimeUnit.MILLISECONDS);}}
@@ -88,7 +88,7 @@ final class SyncController {
         pollQueued=false;if(session==0)return;
         try{
             NativeSync.Snapshot view=new NativeSync.Snapshot(NativeSync.command(session,0));int before=state;state=view.state;status=view.label();
-            if(state==NativeSync.CLOSED){NativeSync.Snapshot destroyed=new NativeSync.Snapshot(NativeSync.command(session,4));if(destroyed.code!=0)throw new IllegalStateException("同步会话仍在关闭");session=0;}
+            if(state==NativeSync.CLOSED){NativeSync.Snapshot destroyed=new NativeSync.Snapshot(NativeSync.command(session,4));if(destroyed.code!=0)throw new IllegalStateException("同步会话仍在关闭");session=0;closingOwned=false;}
             if(state==NativeSync.FINISHED&&before!=NativeSync.FINISHED){loadBooks("");beginProjection();}publish();
             if(state==NativeSync.RUNNING||state==NativeSync.CANCELLING||state==NativeSync.CLOSING)schedulePoll();
         }catch(Throwable failure){error(failure);}
