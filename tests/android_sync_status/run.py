@@ -151,7 +151,7 @@ def main():
     finally:
         server.release.set();listing_release.set();server.server.shutdown();server.server.server_close()
         report={**identity,'accepted':accepted,'phases':phases,'checks':sum(phase['count'] for phase in phases),'boundaries':boundaries,'storage_scan':scans,
-                'requests':server.requests,'captures':captures,'same_shared_sdk_runtime_asserted':accepted,'product_provider_isolated':accepted,'host_account_receive_ui_accepted':False,'targeted_semantics_accepted':False,'accessibility_accepted':False,
+                'requests':server.requests,'captures':captures,'same_shared_sdk_runtime_asserted':False,'product_provider_isolated':False,'host_account_receive_ui_accepted':False,'targeted_semantics_accepted':False,'accessibility_accepted':False,
                 'reading_state_ui_accepted':False,'physical_device':False,'api':34,'abi':'x86_64'}
         save('result.json',(json.dumps(report,ensure_ascii=False,indent=2)+'\n').encode());print(json.dumps({**identity,'accepted':accepted,'checks':report['checks'],'phases':len(phases)}),flush=True)
 
