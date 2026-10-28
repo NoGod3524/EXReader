@@ -35,6 +35,10 @@ dx, dy = int((width - 720 * scale) / 2), int((height - 1040 * scale) / 2)
 page_w, page_h = int(720 * scale), int(1040 * scale)
 corner = at(dx + 6, dy + 6)
 surround = at(max(dx - 4, 1), max(dy - 4, 1))
+inner_surround_xy = (max(dx - 2, 2), min(dy + 6, height - 2))
+inner_surround = at(*inner_surround_xy)
+top_focus_samples = [at(x, 1) for x in range(max(dx - 8, 2), max(dx - 2, 3))]
+
 pixels = [at(x, y) for x in range(dx + 40, dx + page_w - 40, 7)
           for y in range(dy + 40, dy + min(page_h, 500) - 10, 5)]
 ink = [p for p in pixels if not near(p, corner, 16)]
@@ -42,7 +46,8 @@ result = {
     "original_run": 40638398225, "attempt": 1, "original_source": "e330a415b733db18dea5aa6010d13cf3063587fd",
     "artifact_id": 12795210910, "artifact_sha256": expected, "screenshot_sha256": hashlib.sha256(image).hexdigest(),
     "screenshot": matches[0], "client": [width, height], "page_layout": [dx, dy, page_w, page_h],
-    "corner": corner, "surround": surround, "ink_samples": len(ink),
+    "corner": corner, "surround": surround, "inner_surround_xy": inner_surround_xy,
+    "inner_surround": inner_surround, "top_focus_samples": top_focus_samples, "ink_samples": len(ink),
     "minimum_ink_rgb_sum": min(map(sum, ink)) if ink else None,
     "conditions": {"corner_white": near(corner, (255, 255, 255), 2),
                    "surround_white": near(surround, (255, 255, 255), 2),
