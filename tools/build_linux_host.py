@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sdk', type=Path, required=True)
-    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'), default='3.40.0',
+    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0', '3.42.0'), default='3.40.0',
                         help='Exact SDK version; the frozen default remains 3.40.0')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--binary', type=Path, help='Package this already-built native consumer instead of rebuilding the reference host')
