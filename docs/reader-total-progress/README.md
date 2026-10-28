@@ -227,3 +227,17 @@ Audit artifact `12781232403`, 13824 bytes, SHA-256
 `f9c4e16feda52bb33d3929c2691a90bf08b57dab9e50db3006329a9c2aff2ba8`,
 expires 2027-01-26T00:22:50Z. This evidence-only documentation commit is not
 the audited source.
+
+## 2026-10-28 Windows account and sync
+
+[Actions audit 40645543804/1](https://github.com/NoGod3524/EXReader/actions/runs/40645543804)
+at source `1adeabf2a672ddc0c200631e29897cfe76106afd` completed with
+`evidence_ok=true`: **81/108 (75.0%)**, foundation 12/12, host 69/84,
+final delivery 0/12. The historical October 25 cutoff remains 58/108 (53.7%).
+The added Windows account/sync outcome and its scoped real-host evidence are
+recorded in [windows-sync-account.md](windows-sync-account.md).
+
+Audit artifact 12796749815, 16,175 bytes, SHA-256
+`3a20669cd8886dd430777b47dc96547cd535360cfcdaf505c84c544552aba54c`,
+expires 2027-01-26T06:43:01Z. This documentation-only commit is not the
+audited source.
