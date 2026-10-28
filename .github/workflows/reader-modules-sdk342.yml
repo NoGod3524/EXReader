@@ -1,0 +1,84 @@
+name: Reader modules installed against transaction SDK candidate
+on:
+  push:
+    branches: [codex/reader-modules-sdk342-candidate]
+permissions:
+  contents: read
+jobs:
+  modules:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Install Linux build prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libcurl4-openssl-dev libxml2-dev pkg-config
+      - name: Verify candidate SDK source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt
+      - name: Build and install the 3.42 candidate SDK
+        run: |
+          set -euo pipefail
+          if test "$RUNNER_OS" = Windows; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "EXR_WS=$ws" >> "$GITHUB_ENV"
+          cmake --preset reading-library -B build/sdk-build -DCMAKE_INSTALL_PREFIX="$ws/build/sdk"
+          cmake --build build/sdk-build --parallel 4
+          cmake --install build/sdk-build
+      - name: Build installed prerequisites and reader modules
+        env:
+          MSYS_NO_PATHCONV: '1'
+        run: |
+          set -euo pipefail
+          prefix="$EXR_WS/build/prefix"
+          sdk="$EXR_WS/build/sdk"
+          for module in apps/reader/store/native extras/sideload extras/webdav apps/reader/revisions apps/reader/commands apps/reader/reading-state apps/reader/reading-commands apps/reader/batch-import apps/reader/book-information apps/reader/cloud-import apps/reader/font-library apps/reader/local-downloads apps/reader/navigation apps/reader/original-export apps/reader/search apps/reader/thumbnails apps/reader/txt-progress; do
+            name=$(basename "$module")
+            cmake -S "$module" -B "build/module-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DEXR_SDK="$sdk" -DEXR_SDK_VERSION=3.42.0 -DREADER_PRODUCT_PREFIX="$prefix" -DREADER_FONT_LIBRARY_BUILD=ON
+            cmake --build "build/module-$name" --parallel 4
+            cmake --install "build/module-$name"
+          done
+      - name: Build and run installed SDK search and navigation C consumers
+        env:
+          MSYS_NO_PATHCONV: '1'
+        run: |
+          set -euo pipefail
+          prefix="$EXR_WS/build/prefix"
+          sdk="$EXR_WS/build/sdk"
+          for module in search navigation; do
+            cmake -S "tests/reader_$module/consumer" -B "build/consumer-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DEXR_SDK_VERSION=3.42.0
+            cmake --build "build/consumer-$module" --parallel 4
+            "./build/consumer-$module/$module-c-consumer"
+          done
+      - name: Reject unsupported exact SDK version
+        env:
+          MSYS_NO_PATHCONV: '1'
+        run: |
+          set -euo pipefail
+          if cmake -S apps/reader/search -B build/rejected-sdk -G Ninja -DEXR_SDK_VERSION=3.43.0 -DEXR_SDK="$EXR_WS/build/sdk" > build/rejected-sdk.log 2>&1; then
+            echo 'Unexpected SDK version admitted' >&2
+            exit 1
+          fi
+          grep -F 'Unsupported exact reader SDK version' build/rejected-sdk.log
+      - name: Preserve source, package and refusal evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-modules-sdk342-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/rejected-sdk.log
+            build/prefix/lib/cmake/
+            build/sdk/include/exr/base.h
+          if-no-files-found: warn
