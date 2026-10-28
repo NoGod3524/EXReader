@@ -24,7 +24,32 @@ successful builds solely to retrieve a log; it is not privacy acceptance.
 The new adapter repair normalizes xcodeproj's String/Array flag representation,
 preserves every existing token, and adds only the required raw metadata flags.
 New Actions-only controls cover both forms, quoted paths, malformed/invalid
-values, and actual xcodeproj save/reopen. Full native revalidation is pending.
+values, and actual xcodeproj save/reopen. Repaired full run
+[40777254345](https://github.com/NoGod3524/EXReader/actions/runs/40777254345),
+source `b45971a955446310d2e4fc85a94690aa5a6703dd`, passed these controls and both
+SDKs but all three native jobs refused the first post-termination observation.
+Safe retained-artifact diagnostics
+[40780733484](https://github.com/NoGod3524/EXReader/actions/runs/40780733484) and
+[40781522760](https://github.com/NoGod3524/EXReader/actions/runs/40781522760)
+authenticated every retained member without rebuilding SDK/native products.
+Profile/container files were clean; each process unified log matched only
+`user:raw`, `user:json`, `user:url`, `user:url-lower-escape`. For the synthetic
+ASCII username those four labels represent identical bytes, not four distinct
+leaks. No password, user:password or Authorization variant was detected in that
+first-checkpoint scan. This is not owner-callsite attribution or full-F10 proof.
+
+The failed scan manifest retained its digest/size/hits, but the original harness
+refused before archiving the raw unified log. The evidence-retention repair now
+writes complete captured stdout/stderr with private runner file modes and a
+safe hash manifest before the unchanged privacy verdict. Synthetic-sensitive
+raw bytes stay in retained Actions artifacts, never console/chat; access follows
+repository/Actions artifact access controls, not an independently configured
+private store. Original failed runs remain unchanged. New fixed-enum event
+attribution reports only sender-image category, credential role and counts;
+JSON decoding may normalize encodings, so the original streaming byte scan
+remains authoritative. An image category is not a proven production callsite.
+All existing privacy predicates and budgets are unchanged. Purposeful native
+reproduction with complete failed evidence is pending.
 No local build, syntax check, fixture generation, test or artifact parsing
 was performed. Source reading/writing and source-file hashing are not execution
 evidence. No Codex task, user computer, main push, PR, tag or release is used.

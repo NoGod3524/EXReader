@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 from contract import BASE, BUNDLE, CASE, ROOT, STAGES, attachments, case_name, guard, require, sha
 from fixture import fixture
 from privacy_scan import needles, scan_file, scan_roots, optional_entries, verify_optional_entries
+from log_evidence import attribute_unified_log, retain_product_log
 sys.path[:0] = [str(ROOT / 'tests/apple_host'), str(ROOT / 'tools')]
 from collect_evidence import load_results
 from check_apple_product import inspect
@@ -38,7 +39,7 @@ def main():
               'full_f10_accepted': False, 'dedicated_forget_tested': False, 'synthetic_canaries_only': True,
               'secure_field_display_is_secret_absence_proof': False,
               'log_scope': 'captured EXReaderHost unified logs including info/debug; not arbitrary OS logs or XCTest input activities',
-              'commands': [], 'checkpoints': {}, 'failure': None}
+              'commands': [], 'checkpoints': {}, 'log_attribution': {}, 'failure': None}
     udid = None
     def run(role, *argv, env=None, capture=False):
         # Never echo argv/env: credentials enter only the XCTest runner environment.
@@ -143,15 +144,21 @@ def main():
                         roots[label] = destination
                     else: require(False, 'linked or special private macOS root')
             else: absence = []
-            log_root = staging / 'product-log'; log_root.mkdir()
             command = ['xcrun', 'simctl', 'spawn', udid] if udid else []
             done = subprocess.run(command + ['log', 'show', '--style', 'json', '--info', '--debug', '--last', '30m', '--predicate', 'process == "EXReaderHost"'], capture_output=True, timeout=60)
+            # Retain complete captured bytes before scan/capture refusal. These
+            # sensitive synthetic-only artifacts are never printed to console.
+            log_root = retain_product_log(evidence, stage, platform, result['source_sha'], result['run_id'],
+                                          result['attempt'], done.stdout, done.stderr, done.returncode)
             require(done.returncode == 0, 'actual product log capture failed')
             require(bool(done.stdout.strip()), 'actual product log capture was empty')
-            (log_root / 'host-unified.json').write_bytes(done.stdout)
             roots['product-log'] = log_root
             scans = scan_roots(roots, variants)
             (evidence / (stage + '-privacy-scan.json')).write_text(json.dumps(scans, indent=2) + '\n')
+            # Primary byte evidence must survive any ancillary attribution issue.
+            attribution = attribute_unified_log(done.stdout, variants)
+            result['log_attribution'][stage] = attribution
+            (evidence / (stage + '-safe-log-attribution.json')).write_text(json.dumps(attribution, indent=2) + '\n')
             require(all(scan['accepted'] for scan in scans.values()), 'canary found in actual product files or logs')
             destination = evidence / (stage + '-product.zip')
             with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED) as archive:
@@ -230,7 +237,7 @@ def main():
         result['files'] = {str(path.relative_to(evidence)): {'bytes': path.stat().st_size, 'sha256': sha(path)}
                            for path in evidence.rglob('*') if path.is_file() and path != evidence / 'result.json'}
         (evidence / 'result.json').write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
-        print(json.dumps({key: result[key] for key in ('accepted', 'source_sha', 'platform', 'failure', 'full_f10_accepted')}), flush=True)
+        print(json.dumps({key: result[key] for key in ('accepted', 'source_sha', 'platform', 'failure', 'full_f10_accepted', 'log_attribution')}), flush=True)
     require(result['accepted'], 'password privacy slice incomplete; do not grant F10')
 
 if __name__ == '__main__': main()

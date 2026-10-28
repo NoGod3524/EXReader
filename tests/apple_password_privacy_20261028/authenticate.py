@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 from contract import BASE, BUNDLE, CASE, ROOT, STAGES, attachments, case_name, guard, require, sha
 from privacy_scan import needles, scan_roots
 from archive_contract import safe_extract
+from log_evidence import attribute_unified_log, verify_product_log
 sys.path[:0] = [str(ROOT / 'tests/apple_host'), str(ROOT / 'tools')]
 from collect_evidence import load_results
 from check_apple_product import inspect
@@ -90,6 +91,12 @@ def validate(directory, source, run, attempt, platform):
     original = (directory / 'source.epub').read_bytes()
     for stage in STAGES:
         checkpoint = checkpoints[stage]
+        retained_log = verify_product_log(directory, stage, platform, source, run, attempt)
+        attribution = attribute_unified_log((directory / 'sensitive-synthetic-product-logs' / stage / 'host-unified.json').read_bytes(), variants)
+        require(attribution == result['log_attribution'][stage] ==
+                json.loads((directory / (stage + '-safe-log-attribution.json')).read_text()), 'safe event attribution differs')
+        require(retained_log['files'] == {item['path']: {'bytes': item['bytes'], 'sha256': item['sha256']}
+                for item in checkpoint['scans']['product-log']['files']}, 'raw retained log differs from scan evidence')
         require(checkpoint['profile_id'] == stages['profile'], 'UI/profile identity differs')
         require(checkpoint['original_bytes'] == len(original) and checkpoint['sdk_original_sha256'] == hashlib.sha256(original).hexdigest(), 'original identity differs')
         archive = directory / (stage + '-product.zip')
