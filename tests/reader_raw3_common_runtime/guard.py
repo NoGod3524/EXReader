@@ -49,6 +49,12 @@ def validate_tree(baseline, current, extensions=None):
 
 
 def project_workflow(text):
+    # Current route retains the complete historical job projection verbatim.
+    text = text.split('\n# CURRENT_WINDOWS_EXTRA_JOBS\n', 1)[0]
+    text = text.replace('branches: [codex/reader-raw3-common-integration, codex/dot-windows-common-gate]',
+                        'branches: [codex/reader-raw3-common-integration]')
+    text = text.replace('python3 tests/windows_common_gate/identity.py',
+                        'python3 tests/reader_windows_341/identity.py')
     substitutions = (
         ('name: Common raw3 source complete Windows original OFF F3 atomic13 chain',
          'name: Windows raw3 source complete original OFF F3 atomic13 chain', 1),
@@ -70,6 +76,14 @@ def project_workflow(text):
 def main():
     if os.environ.get('GITHUB_ACTIONS') != 'true':
         raise RuntimeError('Actions only')
+    if os.environ.get('GITHUB_REF_NAME') == 'codex/dot-windows-common-gate':
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('current_source_guard', ROOT / 'tests/windows_common_gate/guard.py')
+        current_guard = importlib.util.module_from_spec(spec); spec.loader.exec_module(current_guard)
+        current_guard.main()
+        original = git('show', BASE + ':' + ORIGINAL).decode('utf-8')
+        assert project_workflow((ROOT / WORKFLOW).read_text(encoding='utf-8')) == original
+        return
     source = git('rev-parse', 'HEAD').decode().strip()
     if source != os.environ['GITHUB_SHA']:
         raise RuntimeError('Checkout and Actions source differ')

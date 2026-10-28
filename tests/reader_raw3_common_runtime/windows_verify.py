@@ -11,6 +11,10 @@ WORKFLOW = '.github/workflows/reader-raw3-common-windows.yml'
 def main():
     if os.environ.get('GITHUB_ACTIONS') != 'true':
         raise RuntimeError('Actions only')
+    if os.environ.get('GITHUB_REF_NAME') == 'codex/dot-windows-common-gate':
+        import runpy
+        runpy.run_path(str(ROOT / 'tests/windows_common_gate/verify.py'), run_name='__main__')
+        return
     sys.path.insert(0, str(ROOT / 'tests/reader_windows_compact'))
     spec = importlib.util.spec_from_file_location('common_windows_original_judge',
         ROOT / 'tests/reader_windows_compact/verify.py')

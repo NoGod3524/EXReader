@@ -1,7 +1,7 @@
 name: Common raw3 source complete Windows original OFF F3 atomic13 chain
 on:
   push:
-    branches: [codex/reader-raw3-common-integration]
+    branches: [codex/reader-raw3-common-integration, codex/dot-windows-common-gate]
   workflow_dispatch:
     inputs:
       mode:
@@ -241,7 +241,7 @@ jobs:
         run: |
           python3 tests/reader_windows_preferences/check_commit.py --candidate build/ws-host/EXReaderPreferencesCommitReview.exe --control build/ws-host/EXReaderPreferencesCancelControl.exe --font build/ws-package/EXReader/Reader.otf --fixtures build/wprefs-fixtures --output build/wprefs-commit-ui
       - name: Record exact SDK program control provider maps and enabled options
-        run: python3 tests/reader_windows_341/identity.py
+        run: python3 tests/windows_common_gate/identity.py
       - name: Preserve source-bound initial evidence without granting broader scope
         id: upload
         if: always()
@@ -346,3 +346,147 @@ jobs:
             build/compact-summary/result.json
           if-no-files-found: error
 
+
+# CURRENT_WINDOWS_EXTRA_JOBS
+  current_native:
+    needs: preflight
+    if: github.ref_name == 'codex/dot-windows-common-gate'
+    defaults: {run: {shell: pwsh}}
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+      EXR_COMPOSITION_CONTENT_BOUND: '1'
+      EXR_COMPOSITION_TXT_PROGRESS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Verify source and exact authorized SDK exception
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor 5447b05a6b942d6ad568f65179c43a946c2890e3 HEAD
+          test -z "$(git diff 5447b05a6b942d6ad568f65179c43a946c2890e3 HEAD -- src include ':!src/opentype.c')"
+          test "$(git rev-parse HEAD:src/opentype.c)" = 8cab9b949b29c73ff54c6f9e5385edd351edf460
+          test "$(git rev-parse 5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9:src/opentype.c)" = 8cab9b949b29c73ff54c6f9e5385edd351edf460
+          echo "Authorized exact OpenType source: 5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9; combined source: $GITHUB_SHA"
+      - name: Prepare native Windows display
+        run: python tests/reader_native_owner_repairs/display.py
+      - name: Build and run unchanged composed-host regression gates
+        id: retained
+        run: python tests/reader_wave3_c09/build.py
+      - name: Build same-source from-first reference host
+        if: always() && steps.retained.outcome != 'skipped'
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/c09/raw-stage;$pwd/build/c09/product-stage;$pwd/build/c09/sdk-stage"
+          cmake -S apps/reader/desktop -B build/txt-scan-reference -G Ninja "-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_PREFIX_PATH=$prefix" "-DEXR_SDK=$pwd/build/c09/sdk-stage" "-DEXR_SDK_VERSION=3.41.0" "-DREADER_METADATA_PREFIX=$pwd/build/c09/raw-stage" "-DREADER_ACCOUNT_PREFIX=$pwd/build/c09/raw-stage" "-DEXR_READER_WINDOWS_WAVE3=ON" "-DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=ON" "-DEXR_READER_WINDOWS_TXT_PROGRESS=ON" "-DCMAKE_C_FLAGS=/DEXR_TXT_SCAN_FROM_FIRST=1"
+          if ($LASTEXITCODE) { throw 'reference configure failed' }
+          cmake --build build/txt-scan-reference --target EXReaderWave3 --parallel 4 --verbose
+          if ($LASTEXITCODE) { throw 'reference build failed' }
+      - name: Real native search equivalence and scan measurements
+        if: always() && steps.retained.outcome != 'skipped'
+        run: python tests/windows_txt_forward_scan/check_ui.py --candidate build/c09/package/EXReader/EXReader.exe --reference build/txt-scan-reference/EXReaderWave3.exe --font build/host-font-cache/Reader.otf --output build/txt-forward-scan
+      - name: Same-source installed SDK public regression tests
+        if: always() && steps.retained.outcome != 'skipped'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S tests/windows_txt_forward_scan/sdk -B build/txt-scan-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/c09/sdk-stage"
+          cmake --build build/txt-scan-sdk --parallel 4
+          ctest --test-dir build/txt-scan-sdk --output-on-failure --no-tests=error
+      - name: Preserve same-round reports and failures
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-txt-forward-scan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/txt-forward-scan/
+            build/c09/report.json
+            build/c09/txt-progress/report.json
+            build/c09/logs/
+            build/c09/compact22/report.json
+            build/c09/raw-owner-suite/report-*.json
+            build/c09/extracted-ui/
+            build/c09/package/build.json
+            build/native-owner-preflight/display.json
+            build/txt-scan-sdk/Testing/
+            build/c09/package/EXReader/EXReader.exe
+            build/txt-scan-reference/EXReaderWave3.exe
+          if-no-files-found: error
+  current_fonts:
+    needs: preflight
+    if: github.ref_name == 'codex/dot-windows-common-gate'
+    defaults: {run: {shell: pwsh}}
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    runs-on: windows-2022
+    timeout-minutes: 180
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build isolated native acceptance host
+        run: python tests/windows_font_lifecycle/build.py
+      - name: Prepare native UI dependencies and fixtures
+        shell: pwsh
+        run: |
+          python -m pip install uiautomation==2.0.29
+          if ($LASTEXITCODE) { throw 'UI dependency failed' }
+          python -c "from tools.host_font import fetch; fetch('build/host-font-cache')"
+          if ($LASTEXITCODE) { throw 'Font acquisition failed' }
+          python tests/reader_windows_preferences/make_fixtures.py --output build/windows-font/fixtures
+          if ($LASTEXITCODE) { throw 'Fixture generation failed' }
+      - name: Verify native font lifecycle and live position
+        run: python tests/windows_font_lifecycle/check.py
+      - name: Verify long TXT font position and rollback
+        run: python tests/windows_font_lifecycle/check_txt.py
+      - name: Bind both suites to the same native host and source
+        run: python tests/windows_font_lifecycle/bind_reports.py
+      - name: Preserve results and failures
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-font-lifecycle-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-font/logs/
+            build/windows-font/evidence/
+            build/windows-font/host/EXReaderWave3.exe
+          if-no-files-found: warn
+  current_authenticate:
+    needs: [search, summary, current_native, current_fonts]
+    if: always() && github.ref_name == 'codex/dot-windows-common-gate'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions: {contents: read, actions: read}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Authenticate same-round original and current host evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NATIVE_ID: ${{ needs.current_native.outputs.artifact_id }}
+          NATIVE_DIGEST: ${{ needs.current_native.outputs.artifact_digest }}
+          FONTS_ID: ${{ needs.current_fonts.outputs.artifact_id }}
+          FONTS_DIGEST: ${{ needs.current_fonts.outputs.artifact_digest }}
+          ORIGINAL_ID: ${{ needs.search.outputs.artifact_id }}
+          ORIGINAL_DIGEST: ${{ needs.search.outputs.artifact_digest }}
+          JOB_RESULTS: ${{ toJSON(needs) }}
+        run: python3 tests/windows_common_gate/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-current-common-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-current-common-summary/
+          if-no-files-found: error
