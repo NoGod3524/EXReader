@@ -8,10 +8,12 @@ ANDROID_BRANCH = 'codex/reader-android130-candidate-admission'
 WINDOWS_ADMITTED = 'aec1a685c40a2afd86467840eeec208a470609e2'
 ANDROID_ALLOWED = {
     '.github/workflows/reader-android-page-theme.yml',
+    '.github/workflows/reader-native-341-summary.yml',
     'tests/reader_hosts_341/guard_android.py',
     'tests/reader_hosts_341/aggregate_android.py',
     'tests/reader_hosts_341/aggregate_native.py',
     'tests/reader_windows_341/candidate.py',
+    'tests/reader_windows_341/guard.py',
     'tests/reader_hosts_341/android_candidate.py',
     'tests/reader_hosts_341/android_current.py',
     'tests/reader_hosts_341/android_current_job.txt',
@@ -37,7 +39,7 @@ def admit(source):
         delta=set(git('diff','--name-only',WINDOWS_ADMITTED,source).splitlines())
         assert delta == ANDROID_ALLOWED, sorted(delta)
         assert changed == ALLOWED | ANDROID_ALLOWED, sorted(changed)
-        for path in ALLOWED - {'tests/reader_windows_341/candidate.py','tests/reader_hosts_341/aggregate_native.py'}:
+        for path in ALLOWED - {'tests/reader_windows_341/candidate.py','tests/reader_windows_341/guard.py','tests/reader_hosts_341/aggregate_native.py'}:
             assert git('rev-parse',source+':'+path)==git('rev-parse',WINDOWS_ADMITTED+':'+path),path
     else:
         assert changed == ALLOWED, sorted(changed)

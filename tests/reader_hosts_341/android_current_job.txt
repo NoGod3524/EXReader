@@ -36,6 +36,7 @@
           yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.31.1" "cmake;3.22.1" "ndk;27.2.12479018" "ndk;27.0.12077973" "emulator" "system-images;android-34;default;x86_64"
           python tests/webdav_android/fixture.py prepare --output build/current-android/fixture
+          python tests/reader_reading_state/make_fixtures.py build/session-android/reading-fixtures
           mkdir -p tests/reader_host_session_android/debug/res/raw
           cp build/current-android/fixture/public/ca.crt tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
           mkdir -p examples/android/app/src/main/jniLibs/x86_64
