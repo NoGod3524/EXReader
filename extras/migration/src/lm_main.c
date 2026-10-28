@@ -1509,6 +1509,18 @@ static int run_migrate(ctx *c) {
   if (!c->target) return 1; /* inspect */
 
   c->sidecar = path_join(c->target, ".legacy-map.json");
+  /* Both migration executables must hold the same lock while touching a target. */
+  c->lock = path_join(c->target, ".migrate-lock");
+  if (c->break_lock) lm_remove(c->lock);
+  lock = lm_fopen(c->lock, "wx");
+  if (!lock) {
+    if (lm_exists(c->lock)) fail(c, O_BUSY, "target-busy", "another migration holds %s (use --break-lock only if no migration is running)", c->lock);
+    else fail(c, O_FAILED, "lock-failed", "cannot create the lock file %s", c->lock);
+    return 0;
+  }
+  fprintf(lock, "%s\n", c->run);
+  fclose(lock);
+  c->lock_held = 1;
 #ifdef EXR_MIGRATION_TX_CANDIDATE
   {
     void *data=NULL;size_t size=0;int found=0;const char *open_path;
@@ -1542,24 +1554,12 @@ static int run_migrate(ctx *c) {
   }
   goto process_pack;
 #endif
-  c->lock = path_join(c->target, ".migrate-lock");
   c->stage = lm_xalloc(strlen(c->target) + 64);
   sprintf(c->stage, "%s.migrating-%s", c->target, c->run);
   c->pre = lm_xalloc(strlen(c->target) + 64);
   sprintf(c->pre, "%s.pre-%s", c->target, c->run);
   c->sidecar_tmp = lm_xalloc(strlen(c->sidecar) + 64);
   sprintf(c->sidecar_tmp, "%s.tmp-%s", c->sidecar, c->run);
-
-  if (c->break_lock) lm_remove(c->lock);
-  lock = lm_fopen(c->lock, "wx");
-  if (!lock) {
-    if (lm_exists(c->lock)) fail(c, O_BUSY, "target-busy", "another migration holds %s (use --break-lock only if no migration is running)", c->lock);
-    else fail(c, O_FAILED, "lock-failed", "cannot create the lock file %s", c->lock);
-    return 0;
-  }
-  fprintf(lock, "%s\n", c->run);
-  fclose(lock);
-  c->lock_held = 1;
 
   c->target_existed = lm_exists(c->target);
   c->sidecar_existed = lm_exists(c->sidecar);

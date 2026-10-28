@@ -71,8 +71,10 @@ def main():
             assert db.execute('PRAGMA user_version').fetchone()[0] == schema
             assert db.execute('SELECT count(*) FROM books').fetchone()[0] == 1
             assert db.execute("SELECT count(*) FROM sqlite_master WHERE name='exr_migration_ledger'").fetchone()[0] == old_ledger
+            rc, out, err = call(a.tool, 'migrate', '--pack', pack, '--target', target)
+            assert rc == 5 and json.loads(out)['code'] == 'target-busy', (out, err)
             with (folder/'migration.log').open('w', encoding='utf-8') as log:
-                process = subprocess.Popen([a.tool, 'migrate', '--pack', str(pack), '--target', str(target), '--inject', 'writer-pause'], stdout=log, stderr=subprocess.STDOUT, env=env)
+                process = subprocess.Popen([a.tool, 'migrate', '--pack', str(pack), '--target', str(target), '--break-lock', '--inject', 'writer-pause'], stdout=log, stderr=subprocess.STDOUT, env=env)
                 try:
                     end = time.monotonic()+30
                     while not ready.exists() and process.poll() is None and time.monotonic()<end:
@@ -131,6 +133,8 @@ def main():
             rc, out, err = call(a.tool, 'verify', '--pack', crash_pack, '--target', target)
             assert rc == 0, (out, err)
             rc, out, err = call(a.tool, 'migrate', '--pack', crash_pack, '--target', target)
+            assert rc == 5 and json.loads(out)['code'] == 'target-busy', (out, err)
+            rc, out, err = call(a.tool, 'migrate', '--pack', crash_pack, '--target', target, '--break-lock')
             assert rc == 0, (out, err)
             db = sqlite3.connect(target)
             ledger = db.execute('SELECT data FROM exr_migration_ledger WHERE id=1').fetchone()[0]
@@ -175,6 +179,8 @@ def main():
     abandoned = list(folder.glob('library.sqlite.migrating-*'))
     assert abandoned, 'crashed stage should be retained for inspection'
     rc, out, err = call(a.tool,'migrate','--pack',pack,'--target',target)
+    assert rc == 5 and json.loads(out)['code'] == 'target-busy', (out,err)
+    rc, out, err = call(a.tool,'migrate','--pack',pack,'--target',target,'--break-lock')
     assert rc == 0 and target.exists() and all(path.exists() for path in abandoned), (out,err)
     rc, out, err = call(a.tool,'verify','--pack',pack,'--target',target)
     assert rc == 0, (out,err)
@@ -227,8 +233,42 @@ def main():
     assert next(b for b in merged['books'] if b['legacy_id'] == 'duplicate')['book_id'] == original['book_id']
     checks.append({'case':'full-ledger-export-and-idempotence','passed':True})
     print('PASS', checks[-1], flush=True)
+    for holder in ('old', 'transaction'):
+        folder = a.work / ('shared-lock-' + holder)
+        folder.mkdir()
+        target, pack = folder / 'library.sqlite', folder / 'pack.exrpack'
+        pack.write_bytes(L.build_pack([L.entry(L.book_record('seed','seed.txt'), L.TXT)], []))
+        rc, out, err = call(a.old_tool, 'migrate', '--pack', pack, '--target', target)
+        assert rc == 0, (out, err)
+        process_tool = a.old_tool if holder == 'old' else a.tool
+        contender = a.tool if holder == 'old' else a.old_tool
+        hook = 'publish-pause' if holder == 'old' else 'writer-pause'
+        suffix = '.review-' if holder == 'old' else '.writer-'
+        ready, resume = Path(str(target) + suffix + 'ready'), Path(str(target) + suffix + 'resume')
+        env = dict(os.environ, EXR_MIGRATE_TEST_FAULTS='1')
+        with (folder / 'holder.log').open('w', encoding='utf-8') as log:
+            process = subprocess.Popen([process_tool, 'migrate', '--pack', str(pack), '--target', str(target), '--inject', hook], stdout=log, stderr=subprocess.STDOUT, env=env)
+            try:
+                end = time.monotonic() + 30
+                while not ready.exists() and process.poll() is None and time.monotonic() < end:
+                    time.sleep(.02)
+                assert ready.exists(), 'migration lock rendezvous missing'
+                lock = Path(str(target) + '.migrate-lock')
+                before = lock.read_bytes()
+                rc, out, err = call(contender, 'migrate', '--pack', pack, '--target', target)
+                assert rc == 5 and json.loads(out)['code'] == 'target-busy', (out, err)
+                assert lock.read_bytes() == before
+                resume.write_text('resume', encoding='utf-8')
+                process.wait(timeout=30)
+                assert process.returncode == 0, (folder / 'holder.log').read_text(encoding='utf-8')
+                assert not lock.exists()
+            finally:
+                if process.poll() is None:
+                    process.kill(); process.wait()
+        checks.append({'case':'shared-lock-' + holder, 'passed':True})
+        print('PASS', checks[-1], flush=True)
     report = {'source_sha':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
-              'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checks':checks,'passed':len(checks)==6}
+              'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checks':checks,'passed':len(checks)==8}
     (a.work/'transaction-result.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(report))
 

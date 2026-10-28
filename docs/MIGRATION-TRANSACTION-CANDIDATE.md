@@ -6,6 +6,14 @@ acceptance. Frozen SDK commits and the earlier failure run
 remain unchanged. The original migrator remains present and retains its known
 file-replacement race; do not use it concurrently with a writer.
 
+The transaction candidate now acquires the same exclusive `.migrate-lock` as
+the original migration executable before opening the target and holds it until
+the library is closed. A process killed during migration leaves the lock behind;
+after confirming all migration processes for that target have stopped, a retry
+may use `--break-lock`. This coordinates these two migration entry points, not
+unrelated processes that replace database files. The new cross-process checks
+are pending the cloud run; the previous evidence below remains unchanged.
+
 The separate `exreader-legacy-migrate-tx` executable uses candidate SDK 3.42,
 ABI 1. Its migration owner takes a SQLite write transaction before opening and
 upgrading schema 6, uses savepoints for SDK operations, and stores the migration
