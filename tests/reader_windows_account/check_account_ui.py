@@ -11,6 +11,7 @@ import ctypes as C
 from ctypes import wintypes as W
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -183,6 +184,13 @@ def clipboard_text(app):
 
 class Device(M.MetadataApp):
     """One real product process on its own profile (its own SDK library and product catalog)."""
+
+    def focus(self):
+        def ready():
+            U.BringWindowToTop(self.window)
+            U.SetForegroundWindow(self.window)
+            return U.GetForegroundWindow() == self.window
+        self.wait(ready, timeout=10)
 
     def find_dialog(self):
         found = []
@@ -456,9 +464,18 @@ def main():
 
     def import_paths(device, paths):
         for path in paths:
-            set_text(device.control('path'), str(path))
             seen = [device.status()]
-            send(device.control('import'), BM_CLICK, timeout=5000)
+            if os.environ.get('EXR_ACCOUNT_COMPACT_PICKER') == '1':
+                # Wave3 uses the native picker in place of the legacy path entry.
+                sys.path.insert(0, str(HERE.parents[1] / 'tests/reader_windows_compact'))
+                spec = importlib.util.spec_from_file_location('compact_account_picker',
+                    HERE.parents[1] / 'tests/reader_windows_compact/check_ui.py')
+                compact_ui = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(compact_ui)
+                compact_ui.picker(device, path)
+            else:
+                set_text(device.control('path'), str(path))
+                send(device.control('import'), BM_CLICK, timeout=5000)
             end = time.monotonic() + 180
             while time.monotonic() < end:
                 status = device.status()
@@ -522,6 +539,14 @@ def main():
         A.apply(dialog, '系统安全存储')
 
         # ===== first full scan: stage originals, then network, then receive =====
+        if os.environ.get('EXR_ACCOUNT_COMPACT_PICKER') == '1':
+            A.press(dialog, SYNC)
+            assert A.enabled(dialog, CANCEL), A.note(dialog)
+            A.press(dialog, CANCEL)
+            A.wait(lambda: '准备已取消' in A.note(dialog) and A.enabled(dialog, RETRY), timeout=120)
+            A.press(dialog, RETRY)
+            A.wait_note(dialog, '同步完成', 240)
+            print(json.dumps({'extra_check': 'stage_cancel_retry_completes'}), flush=True)
         A.run_sync(dialog)
         shot('02-device-a-finished.bmp', dialog)
         detail = A.detail(dialog)
@@ -869,15 +894,45 @@ def main():
         record('reopened_receiver_repeats_the_same_eighteen_resolutions_and_wire_hashes')
 
         # ===== planted CONCURRENT, PENDING-parent and tombstone heads in the receiver's own product store =====
-        planted_key = 'txt:' + 'e' * 64
+        planted_original = b'Cloud only book retained through original retry.\n' * 100
+        planted_hash = hashlib.sha256(planted_original).hexdigest()
+        planted_key = 'txt:' + planted_hash
         planted = {'version': 1, 'id': '%02x%030x' % (0x50, 1), 'entity_kind': 'book', 'entity_key': planted_key,
                    'operation': 'put', 'location_kind': 'none', 'parents': [],
-                   'payload': {'format': 'txt', 'source_sha256': 'e' * 64, 'source_bytes': 4096,
+                   'payload': {'format': 'txt', 'source_sha256': planted_hash, 'source_bytes': len(planted_original),
                                'title': 'Cloud Only Conflict', 'author': 'planted', 'favorite': False}}
         receive_record('device-reading-b', planted)
         RB = new_device('device-reading-b', existing=True)
         dialog = RB.open_account()
         RB.fill(dialog, reading_root, user, password, False);RB.apply(dialog, '仅本次会话')
+        RB.press(dialog, SYNC)
+        RB.wait(lambda: '云端原书尚不可用' in RB.note(dialog) and RB.enabled(dialog, RETRY), timeout=240)
+        assert '等待原件 1' in RB.detail(dialog)
+        if os.environ.get('EXR_ACCOUNT_COMPACT_PICKER') == '1':
+            RB.close_account(dialog)
+            sys.path.insert(0, str(HERE.parents[1] / 'tests/reader_wave3_c09'))
+            spec = importlib.util.spec_from_file_location('account_status_view',
+                HERE.parents[1] / 'tests/reader_wave3_c09/check_ui.py')
+            status_ui = importlib.util.module_from_spec(spec); spec.loader.exec_module(status_ui)
+            before = status_ui.database_state(RB.profile)
+            status_dialog = status_ui.open_feature(RB, status_ui.SYNC)
+            assert any('本机接收：尚未完成' in row and '等待原件 1' in row
+                       for row in status_ui.rows(status_dialog))
+            send(U.GetDlgItem(status_dialog, status_ui.B1), BM_CLICK)
+            assert status_ui.database_state(RB.profile) == before
+            status_ui.close_feature(RB, status_dialog)
+            assert status_ui.database_state(RB.profile) == before
+            dialog = RB.open_account()
+        prefix = '/reading/' + OBJECTS + planted_hash[:2] + '/'
+        with dav.lock:
+            dav.directories.add('/reading/' + OBJECTS)
+            dav.directories.add(prefix)
+            dav.entries[prefix + planted_hash + '.txt'] = planted_original
+        RB.press(dialog, RETRY)
+        RB.wait_note(dialog, '同步完成', 240)
+        assert sql('device-reading-b', 'SELECT count(*) FROM reader_local_books WHERE book_key=?', (planted_key,)) == [(1,)]
+        planted_mapping = sql('device-reading-b', 'SELECT sdk_book_id FROM reader_local_books WHERE book_key=?', (planted_key,))
+        assert len(planted_mapping) == 1 and planted_mapping[0][0] is not None
         RB.run_sync(dialog);RB.close_account(dialog)
         RB.wait(lambda: sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (planted_key,)),
                 timeout=120)
@@ -920,20 +975,32 @@ def main():
         page_label = U.GetDlgItem(RB.window, 124)
         page_before = M.text(page_label)
         dialog = RB.open_account()
-        RB.run_sync(dialog)
+        # The transport can finish while intentionally planted conflicts remain.
+        # Wait for the host's truthful receive result rather than a clean-sync
+        # message, then retain the original data and conflict assertions below.
+        RB.press(dialog, SYNC)
+        RB.wait(lambda: '接收尚未完成' in RB.note(dialog)
+                and RB.enabled(dialog, RETRY) and '状态 FINISHED' in RB.detail(dialog), timeout=240)
         detail = RB.detail(dialog)
-        print(json.dumps({'planted_receive': detail}, ensure_ascii=False), flush=True)
+        print(json.dumps({'planted_receive': detail, 'note': RB.note(dialog)}, ensure_ascii=False), flush=True)
 
         def counter(label):
             found = re.search(label + r' (\d+)', detail)
             assert found, (label, detail)
             return int(found.group(1))
-        assert counter('并发版本') == 1 and counter('待依赖') == 1 and counter('墓碑') == 1, detail
+        assert counter('并发版本') == 1 and counter('缺祖先') == 1 and counter('待依赖') == 0 and counter('墓碑') == 1, detail
         assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (txt_key,)) == \
             [(txt_title, 0)], 'a concurrent metadata head must not be projected'
         assert sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (epub_key,)) == [(epub_title,)]
+        # A safe book tombstone hides the product row while retaining its
+        # original and mapping until an explicit restore. The other suite
+        # independently checks actual SDK readback and restore over HTTPS.
         assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (planted_key,)) == \
-            [('Cloud Only Conflict', 0)], 'a tombstone must keep the local copy and never resurrect it'
+            [('Cloud Only Conflict', 1)], 'the tombstone must stay deleted until explicit restore'
+        assert sql('device-reading-b', 'SELECT sdk_book_id FROM reader_local_books WHERE book_key=?', (planted_key,)) == planted_mapping
+        with sqlite3.connect(rfiles['sdk'], timeout=10) as sdk:
+            retained = sdk.execute('SELECT source FROM books WHERE id=?', (planted_mapping[0][0],)).fetchone()
+        assert retained and retained[0] == planted_original, 'tombstone must retain the exact local original'
         assert sql('device-reading-b', 'SELECT count(*) FROM reader_books WHERE book_key=?', ('txt:' + 'd' * 64,))[0][0] == 0
         heads_after = revision_heads('device-reading-b', 'book', txt_key)
         # Both competitors name the previous head as their parent, so exactly those two
