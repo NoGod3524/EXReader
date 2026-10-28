@@ -86,3 +86,13 @@ SDK 3.40 schema 6 library; it also passed the legacy executable's 65/135,
 scenarios at 52/65 (111/128 recorded assertions). The Windows job was still
 running and macOS queued when this was recorded. These results do not grant
 final acceptance or product UI integration.
+
+The follow-up [run 40635704725](https://github.com/NoGod3524/EXReader/actions/runs/40635704725),
+attempt 1, tests `1d7f76f17529653277d70f81c6b42fcf1a7e05b0`. Its Linux job
+also verified that closing a migration owner rolls back and releases its write
+transaction while a source object remains live. The schema 6/7 writer and WAL,
+crash/retry, ledger export, real old-library GTK backend and original legacy
+checks passed; the unchanged transaction-executable scenarios again failed
+13 of 65. Windows passed its transaction, original 65/135 and 31 review steps;
+its browser step was still running and macOS queued when recorded. These
+statuses are not a same-source three-platform acceptance.
