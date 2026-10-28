@@ -2635,7 +2635,8 @@ static exr_status job_layout(host_job *job) {
     if (status == EXR_OK) status = render_reflow(&candidate, page, &job->frame, &control, &error);
     if (status == EXR_OK && job->font_relayout &&
         (job->frame.part != g.frame.part || job->frame.range_start > point.start ||
-         job->frame.range_end <= point.start)) status = EXR_FORMAT;
+         job->frame.range_end < point.start ||
+         (job->frame.range_end == point.start && g.frame.range_end != point.start))) status = EXR_FORMAT;
     exr_anchor_free(&point);
     if (status == EXR_OK) {
       job->candidate_pager = pager; job->candidate_config = config; job->have_frame = 1; job->applied_page = page;
@@ -2691,7 +2692,8 @@ static exr_status job_layout(host_job *job) {
       status = render_reflow(&candidate, page, &job->frame, &control, &error);
 #ifdef EXR_READER_WINDOWS_WAVE3
     if (status == EXR_OK && job->font_relayout &&
-        (job->frame.range_start > offset || job->frame.range_end <= offset)) status = EXR_FORMAT;
+        (job->frame.range_start > offset || job->frame.range_end < offset ||
+         (job->frame.range_end == offset && g.frame.range_end != offset))) status = EXR_FORMAT;
 #endif
     if (status == EXR_OK) {
       job->candidate_pager = pager; pager = NULL;
@@ -5873,6 +5875,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     if (wparam == 3) return (LRESULT)g.frame.range_end;
     if (wparam == 4) return (LRESULT)g.frame.valid;
     if (wparam == 5) { font_review_fail_layout = 1; return 1; }
+    if (wparam == 6) { g.session.hold_progress = 1; return 1; }
+    if (wparam == 7) return (LRESULT)g.session.hold_progress;
+    if (wparam == 8) return (LRESULT)g.session.bounded;
     return 0;
   }
 #endif
