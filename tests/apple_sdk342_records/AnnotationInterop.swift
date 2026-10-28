@@ -61,8 +61,9 @@ import CReaderProduct
                 try need(SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined() == saved["export_sha256"], "Export bytes changed")
                 // Bootstrap the same source identity with a local progress record;
                 // it does not insert the exported annotation revision.
+                let point = try session.readingCapture(cancel: cancel)
                 let seed = try HostReadingWorker.request(session: session, catalog: catalog, kind: 1,
-                    operation: 0, mode: capture.mode, capture: capture, body: "", cancel: cancel)
+                    operation: 0, mode: point.mode, capture: point, body: "", cancel: cancel)
                 _ = try HostReadingWorker.submit(seed, session: session, catalog: catalog, root: root, cancel: cancel)
                 let resolver = try HostWave3AnnotationResolver(library: library, font: font, bookID: id, key: book.key, cancel: cancel)
                 func apply(_ confirmation: String?) throws -> HostWave3AnnotationPreview {
