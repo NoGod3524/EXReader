@@ -11,7 +11,14 @@
 #define OT_TABLE_LIMIT ((size_t)64 * 1024 * 1024)
 typedef struct { unsigned char *data; size_t size; } ot_table;
 struct indic_config;
-struct exr_ot_state { ot_table gsub, gpos, gdef; unsigned variations; };
+/* A cached miss applies only when every subtable has independently rejected
+   the current glyph before reading any surrounding text. */
+typedef struct { const unsigned char *lookup; unsigned glyph; } ot_miss;
+struct exr_ot_state {
+  ot_table gsub, gpos, gdef;
+  unsigned variations;
+  ot_miss misses[256];
+};
 typedef struct {
   exr_shaped_glyph out;
   uint32_t cp;
@@ -249,8 +256,9 @@ static int lookup(ot_work *, unsigned, size_t, unsigned, unsigned, unsigned);
 
 /* Context and chaining formats share the same nested lookup action records. */
 static int context(ot_work *w, ot_view sub, unsigned type, size_t at,
-                     unsigned flags, unsigned filtering, unsigned value, unsigned depth) {
-  unsigned format = u16(sub, 0), input_count = 0, actions = 0, i, chain;
+                     unsigned flags, unsigned filtering, unsigned value, unsigned depth,
+                     int *first_miss) {
+  unsigned format = u16(sub, 0), input_count = 0, actions = 0, i, chain, no_back = 0;
   size_t positions[OT_CONTEXT], action_at = 0, consumed_end;
   ot_view rule = sub;
   chain = type == (w->positioning ? 8u : 6u);
@@ -258,6 +266,7 @@ static int context(ot_work *w, ot_view sub, unsigned type, size_t at,
     size_t field = 2, cursor = at;
     if (chain) {
       unsigned count = u16(sub, field); field += 2;
+      no_back = count == 0;
       if (!bounds(sub, field, count, 2)) return 0;
       for (i = 0; i < count; i++) {
         cursor = next_match(w, cursor, 1, flags, filtering, required16(sub, field+(size_t)i*2), -1);
@@ -272,8 +281,13 @@ static int context(ot_work *w, ot_view sub, unsigned type, size_t at,
     cursor = at;
     for (i = 0; i < input_count; i++) {
       if (i) cursor = next_match(w, cursor, 0, flags, filtering, required16(sub, field+(size_t)i*2), -1);
-      if (cursor == SIZE_MAX || coverage(required16(sub, field+(size_t)i*2),
-                                          w->items[cursor].out.glyph) < 0) return 0;
+      int covered;
+      if (cursor == SIZE_MAX) return 0;
+      covered = coverage(required16(sub, field+(size_t)i*2), w->items[cursor].out.glyph);
+      if (covered < 0) {
+        if (first_miss && !i && chain && no_back && w->status == EXR_OK) *first_miss = 1;
+        return 0;
+      }
       positions[i] = cursor;
     }
     field += (size_t)input_count*2;
@@ -373,16 +387,17 @@ static int context(ot_work *w, ot_view sub, unsigned type, size_t at,
 }
 
 static int substitute(ot_work *w, ot_view sub, unsigned type, size_t at,
-                        unsigned flags, unsigned filtering, unsigned value, unsigned depth) {
+                        unsigned flags, unsigned filtering, unsigned value, unsigned depth,
+                        int *first_miss) {
   unsigned format = u16(sub, 0), glyph = w->items[at].out.glyph, i;
   int covered;
-  if (type == 5 || type == 6) return context(w, sub, type, at, flags, filtering, value, depth);
+  if (type == 5 || type == 6) return context(w, sub, type, at, flags, filtering, value, depth, first_miss);
   if (type == 7) {
     unsigned inner = u16(sub, 2);
     if (format != 1 || !inner || inner > 8 || inner == 7 || depth >= OT_DEPTH) {
       w->status = EXR_FONT; return 0;
     }
-    return substitute(w, relative(sub, u32(sub, 4)), inner, at, flags, filtering, value, depth+1);
+    return substitute(w, relative(sub, u32(sub, 4)), inner, at, flags, filtering, value, depth+1, first_miss);
   }
   covered = coverage(required16(sub, 2), glyph);
   if (covered < 0) return 0;
@@ -645,7 +660,7 @@ static int position(ot_work *w, ot_view sub, unsigned type, size_t at,
                       unsigned flags, unsigned filtering, unsigned value, unsigned depth) {
   unsigned format = u16(sub, 0), glyph = w->items[at].out.glyph;
   int covered;
-  if (type == 7 || type == 8) return context(w, sub, type, at, flags, filtering, value, depth);
+  if (type == 7 || type == 8) return context(w, sub, type, at, flags, filtering, value, depth, NULL);
   if (type == 9) {
     unsigned inner = u16(sub, 2);
     if (format != 1 || !inner || inner > 8 || depth >= OT_DEPTH) { w->status = EXR_FONT; return 0; }
@@ -766,6 +781,8 @@ static int position(ot_work *w, ot_view sub, unsigned type, size_t at,
 static int lookup(ot_work *w, unsigned index, size_t at, unsigned mask, unsigned value, unsigned depth) {
   unsigned count = u16(w->lookups, 0), type, flags, filtering = 0, subtables, i;
   ot_view table;
+  ot_miss *miss = NULL;
+  int all_first_miss = 1;
   if (!work(w, 1) || depth >= OT_DEPTH) { if (w->status == EXR_OK) w->status = EXR_LIMIT; return 0; }
   if (index >= count || !bounds(w->lookups, 2, count, 2)) { w->status = EXR_FONT; return 0; }
   if (at >= w->count || (mask && !(w->items[at].form & mask)) ||
@@ -777,11 +794,28 @@ static int lookup(ot_work *w, unsigned index, size_t at, unsigned mask, unsigned
       !bounds(table, 6, subtables, 2)) { w->status = EXR_FONT; return 0; }
   if (flags & 16) filtering = u16(table, 6+(size_t)subtables*2);
   if(ignored_properties(w,at,flags,filtering)) return 0;
+  if (!w->positioning && type == 6 && subtables && w->status == EXR_OK) {
+    unsigned glyph = w->items[at].out.glyph;
+    size_t slot = (((uintptr_t)table.p >> 4) ^ glyph) & 255u;
+    miss = &w->face->ot->misses[slot];
+    if (miss->lookup == table.p && miss->glyph == glyph) {
+      /* The original path charges one coverage operation per subtable.
+         Preserve each charge and cancellation poll, including the limit edge. */
+      for (i = 0; i < subtables && work(w, 1); i++) {}
+      return 0;
+    }
+  }
   for (i = 0; i < subtables && w->status == EXR_OK; i++) {
     ot_view sub = required16(table, 6+(size_t)i*2);
+    int first_miss = 0;
     int applied = w->positioning ? position(w, sub, type, at, flags, filtering, value, depth)
-                                : substitute(w, sub, type, at, flags, filtering, value, depth);
+                                : substitute(w, sub, type, at, flags, filtering, value, depth, &first_miss);
     if (applied) return 1;
+    if (!first_miss) all_first_miss = 0;
+  }
+  if (miss && all_first_miss && w->status == EXR_OK) {
+    miss->lookup = table.p;
+    miss->glyph = w->items[at].out.glyph;
   }
   return 0;
 }
