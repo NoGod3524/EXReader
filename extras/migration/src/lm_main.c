@@ -1656,6 +1656,21 @@ process_pack:
       fail(c,cancel_cb(c)?O_CANCELLED:O_FAILED,cancel_cb(c)?"cancelled":"injected-publish-fail","transaction rolled back");return 0;
     }
     if(exr_library_migration_finish(c->lib,1,&c->err)!=EXR_OK) { sdk_fail(c,"committing migration");return 0; }
+    if(injected(c,"commit-pause",0)) {
+      char *ready=path_join(c->target,".commit-ready"),*resume=path_join(c->target,".commit-resume");
+      unsigned wait;int resumed=0;
+      if(!write_file(ready,"ready",5)) { free(ready);free(resume);fail(c,O_FAILED,"review-hook-failed","cannot create commit marker");return 0; }
+      for(wait=0;wait<400 && !cancel_cb(c);wait++) {
+        if(lm_exists(resume)) { resumed=1;break; }
+#ifdef _WIN32
+        Sleep(50);
+#else
+        struct timespec delay={0,50000000};nanosleep(&delay,NULL);
+#endif
+      }
+      lm_remove(ready);lm_remove(resume);free(ready);free(resume);
+      if(!resumed) { fail(c,O_FAILED,"review-hook-timeout","commit synchronization timed out");return 0; }
+    }
     c->out=O_SUCCESS;snprintf(c->code,sizeof(c->code),"ok");snprintf(c->message,sizeof(c->message),"transaction committed");return 1;
 #else
     exr_library_close(c->lib);
@@ -1862,7 +1877,20 @@ static int real_main(int argc, char **argv) {
   if (!strcmp(c->cmd, "dump")) {
     if (!c->target) { usage(); return 1; }
     c->sidecar = path_join(c->target, ".legacy-map.json");
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+    if(check_target_header(c)) {
+      exr_library *reader=NULL;void *data=NULL;size_t size=0;int found=0;
+      if(exr_library_open(c->target,&reader,&c->err)!=EXR_OK) sdk_fail(c,"opening library");
+      else {
+        if(exr_library_migration_ledger_get(reader,&data,&size,&found,&c->err)!=EXR_OK) sdk_fail(c,"reading transactional ledger");
+        else if(found) sidecar_parse(c,(const char *)data,size);
+        else if(lm_exists(c->sidecar)) sidecar_load(c,c->sidecar);
+        exr_free(data);exr_library_close(reader);
+      }
+    }
+#else
     if (lm_exists(c->sidecar)) sidecar_load(c, c->sidecar);
+#endif
     if (c->out == O_NONE) dump_library(c);
     if (c->out != O_NONE) { emit(c); }
     if (c->lib) exr_library_close(c->lib);

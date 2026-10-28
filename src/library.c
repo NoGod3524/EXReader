@@ -253,7 +253,7 @@ exr_status exr_library_migration_finish(exr_library *l,int commit,exr_error *e) 
 }
 exr_status exr_library_migration_ledger_set(exr_library *l,const void *data,size_t size,exr_error *e) {
   sqlite3_stmt *s=NULL;exr_status status;
-  if(!l || !l->migration_transaction || !data || !size || size>64u*1024u*1024u)
+  if(!l || !l->migration_transaction || !data || !size || size>256u*1024u*1024u)
     return exr_fail(e,EXR_ARGUMENT,"Invalid migration ledger or transaction");
   if(sqlite3_exec(l->db,"CREATE TABLE IF NOT EXISTS exr_migration_ledger(id INTEGER PRIMARY KEY CHECK(id=1),data BLOB NOT NULL)",NULL,NULL,NULL)!=SQLITE_OK)
     return database_error(l,e);
@@ -272,7 +272,7 @@ exr_status exr_library_migration_ledger_get(exr_library *l,void **data,size_t *s
   if(!prepare(l,"SELECT data FROM exr_migration_ledger WHERE id=1",&s)) return database_error(l,e);
   step=sqlite3_step(s);
   if(step==SQLITE_DONE) { sqlite3_finalize(s);return exr_fail(e,EXR_OK,""); }
-  if(step!=SQLITE_ROW || sqlite3_column_type(s,0)!=SQLITE_BLOB || (n=sqlite3_column_bytes(s,0))<=0 || n>64*1024*1024) {
+  if(step!=SQLITE_ROW || sqlite3_column_type(s,0)!=SQLITE_BLOB || (n=sqlite3_column_bytes(s,0))<=0 || n>256*1024*1024) {
     sqlite3_finalize(s);return exr_fail(e,EXR_DATABASE,"Invalid migration ledger");
   }
   copy=malloc((size_t)n);if(!copy) { sqlite3_finalize(s);return exr_fail(e,EXR_MEMORY,"Ledger allocation failed"); }
