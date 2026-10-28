@@ -8,6 +8,7 @@ ANDROID_BRANCH = 'codex/reader-android130-candidate-admission'
 WINDOWS_ADMITTED = 'aec1a685c40a2afd86467840eeec208a470609e2'
 ANDROID_ALLOWED = {
     '.github/workflows/reader-android-page-theme.yml',
+    'examples/android/app/src/main/java/org/exreader/host/MainActivity.java',
     '.github/workflows/reader-native-341-summary.yml',
     'tests/reader_hosts_341/guard_android.py',
     'tests/reader_hosts_341/aggregate_android.py',
@@ -43,8 +44,17 @@ def admit(source):
             assert git('rev-parse',source+':'+path)==git('rev-parse',WINDOWS_ADMITTED+':'+path),path
     else:
         assert changed == ALLOWED, sorted(changed)
-    subprocess.run(['git','diff','--exit-code',BASE,source,'--','apps','examples','extras','tools',
-                    'src','include','cmake','CMakeLists.txt','bindings','tests/fixtures','licenses'],check=True)
+    protected=['apps','examples','extras','tools','src','include','cmake','CMakeLists.txt','bindings','tests/fixtures','licenses']
+    if os.environ.get('GITHUB_REF_NAME') == ANDROID_BRANCH:
+        path='examples/android/app/src/main/java/org/exreader/host/MainActivity.java'
+        prior=subprocess.check_output(['git','show',BASE+':'+path],text=True)
+        before='Selected book exceeds 32 MiB, the current reader limit; the 128 MiB staging ceiling does not make larger books readable'
+        after='Current reader has a 32 MiB reading limit; the 128 MiB staging ceiling does not make larger books readable'
+        assert prior.count(before)==1
+        from pathlib import Path
+        assert Path(path).read_text(encoding='utf-8')==prior.replace(before,after)
+        protected.append(':(exclude)'+path)
+    subprocess.run(['git','diff','--exit-code',BASE,source,'--',*protected],check=True)
     subprocess.run(['git','diff','--exit-code',SDK,source,'--','src','include','cmake','CMakeLists.txt',
                     'bindings','tests/fixtures'],check=True)
     workflow='.github/workflows/reader-windows-341-common.yml'

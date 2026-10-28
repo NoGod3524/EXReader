@@ -42,7 +42,8 @@ def main():
         production_unchanged=True, original_judges_unchanged=True, sdk_version='3.41.0',
         complete_product=False)
     if os.environ.get('GITHUB_REF_NAME') == candidate.ANDROID_BRANCH:
-        report.update(judges_reference_source=candidate.BASE,
+        report.update(production_unchanged=False, production_delta='Android 32 MiB refusal wording only',
+                      judges_reference_source=candidate.BASE,
                       judges_scope='F3/atomic caller and judges pinned to c63 candidate; not a claim about a331',
                       txt_progress_judges_in_scope=False)
     (out / 'source.json').write_text(json.dumps(report, indent=2) + '\n')
