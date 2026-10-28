@@ -44,7 +44,17 @@ def press(app,d,id):ui.send(ui.U.GetDlgItem(d,id),0xF5);settle(app,d)
 def close(app,d):
  ui.send(ui.U.GetDlgItem(d,227),0xF5);app.wait(lambda:not ui.U.IsWindow(d));app.wait_idle()
 def copy(app):
- app.click('select');app.click('copy');return ui.ACCOUNT.clipboard_text(app)
+ app.click('select');app.click('copy')
+ # Account helper intentionally collapses whitespace for its own UI tests.
+ # Preserve raw Unicode clipboard here so exact public selector checks stay exact.
+ ui.U.OpenClipboard.argtypes=[ui.W.HWND];ui.U.GetClipboardData.argtypes=[ui.W.UINT];ui.U.GetClipboardData.restype=ui.W.HANDLE
+ kernel=C.WinDLL('kernel32');kernel.GlobalLock.argtypes=[ui.W.HANDLE];kernel.GlobalLock.restype=C.c_void_p;kernel.GlobalUnlock.argtypes=[ui.W.HANDLE]
+ assert ui.U.OpenClipboard(app.window)
+ try:
+  handle=ui.U.GetClipboardData(13);pointer=kernel.GlobalLock(handle);assert pointer
+  try:return C.wstring_at(pointer)
+  finally:kernel.GlobalUnlock(handle)
+ finally:ui.U.CloseClipboard()
 def main():
  p=argparse.ArgumentParser();p.add_argument('--phase',choices=['windows-first','windows-return'],required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--previous',type=Path);p.add_argument('--package',type=Path,required=True);p.add_argument('--original',type=Path);a=p.parse_args()
  assert os.name=='nt';identity=relay.identity();a.out.mkdir(parents=True,exist_ok=False)
