@@ -103,7 +103,7 @@ jobs:
         run: |
           set -o pipefail
           sudo apt-get update && sudo apt-get install -y libgtk-3-dev pkg-config
-          cmake -S examples/linux -B build/transaction-host -DEXR_SDK="$PWD/stage" -DEXR_SDK_VERSION=3.42.0 -DEXR_MIGRATION_HOST_TEST=ON -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/logs/transaction-host-configure.txt
+          cmake -S examples/linux -B build/transaction-host -DEXR_SDK="$PWD/stage" -DEXR_SDK_VERSION=3.42.0 -DEXR_MIGRATION_HOST_TEST=ON -DEXR_READER_PAGE_BACKGROUND=ON -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/logs/transaction-host-configure.txt
           cmake --build build/transaction-host --target exreader-linux-migration-lifecycle --parallel 4 2>&1 | tee build/logs/transaction-host-build.txt
           python3 tests/migration/linux_host_lifecycle.py --tool "${{ matrix.txexe }}" --host build/transaction-host/exreader-linux-migration-lifecycle --font tests/fixtures/fonts/primary.ttf --work build/transaction-host-lifecycle 2>&1 | tee build/logs/transaction-host-lifecycle.txt
       - name: Fetch the pinned legacy reader sources (test input only; not committed or redistributed)
