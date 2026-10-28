@@ -1,7 +1,7 @@
 name: Apple Android real native original and location relay
 on:
   push:
-    branches: [codex/dot-apple-android-relay, codex/reader-apple-android-composition]
+    branches: [codex/dot-apple-android-relay, codex/reader-apple-android-composition, codex/reader-ot-relay-composition]
   workflow_dispatch:
 permissions:
   contents: read
@@ -433,6 +433,21 @@ jobs:
         with: {fetch-depth: 0}
       - run: python3 tests/apple_android_relay/guard.py
       - run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+      - name: Record actual candidate SDK identity
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('build/raw3-ios-sdk') / os.environ['TARGET'] / 'wave3-packages.json'
+          data = json.loads(path.read_text(encoding='utf-8'))
+          path.with_name('wave3-packages-original-metadata.json').write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          data['sdk_frozen_base'] = data.pop('sdk_frozen_source')
+          data['sdk_candidate_source'] = os.environ['GITHUB_SHA']
+          data['sdk_opentype_candidate'] = '92a28aa349d511df1bc096d37897839578612a74'
+          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          PY
       - uses: actions/upload-artifact@v4
         if: success()
         with:

@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
-BASE = '5447b05a6b942d6ad568f65179c43a946c2890e3'
+BASE = '346bab9ad7b0c16086fbae70059c7b4590e1119e'
 def git(*args):
     return subprocess.check_output(['git', *args], text=True).strip()
 assert git('rev-parse', 'HEAD') == os.environ['GITHUB_SHA']
