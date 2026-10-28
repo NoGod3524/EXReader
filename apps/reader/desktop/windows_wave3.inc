@@ -706,6 +706,15 @@ static void w3_font_apply(const char *hash) {
   } else font = w3.original_font;
   if (hash && !strcmp(hash, w3.selected_hash)) { if (lease) rfl_lease_release(lease, &error); w3_message(L"已经在使用这个字体。"); return; }
   if (font == g.font) { if (lease) rfl_lease_release(lease, &error); w3_message(L"已经在使用这个字体。"); return; }
+  /* JOB_OPEN restores durable progress. Do not replace a live frame with an
+     older record when its save failed or was deliberately held for recovery. */
+  if (g.has_current && g.session.active && !g.session.txt &&
+      (!g.frame.valid || g.progress_failed || g.session.hold_progress ||
+       (g.session.bounded && g.saved_generation != g.frame.generation))) {
+    if (lease) rfl_lease_release(lease, &error);
+    w3_message(L"当前阅读位置尚未安全保存；字体与画面保持不变。请先恢复或保存阅读位置。");
+    return;
+  }
   if (!g.has_current || !g.session.active) {
     rfl_lease *old = w3.lease;
     g.font = font; w3.lease = lease;
