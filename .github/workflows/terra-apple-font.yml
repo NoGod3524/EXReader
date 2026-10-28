@@ -2,6 +2,7 @@ name: Apple font candidate three-target native integration
 on:
   push:
     branches: [codex/terra-wave-apple-font]
+    paths-ignore: [.github/workflows/apple-font-failure-inspection.yml, 'docs/**']
 permissions:
   contents: read
   actions: read
