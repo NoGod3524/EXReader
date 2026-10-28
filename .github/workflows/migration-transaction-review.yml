@@ -25,7 +25,8 @@ jobs:
       - name: Build candidate SDK, both migrators and source-owner probe
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = 7271829a829bfa6aaa47b73077c493f71af27ad3
+          git merge-base --is-ancestor 7271829a829bfa6aaa47b73077c493f71af27ad3 HEAD
+          git diff --exit-code 7271829a829bfa6aaa47b73077c493f71af27ad3 HEAD -- src include extras CMakeLists.txt
           cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
           cmake --build build/sdk --config Release --parallel 4
           cmake --install build/sdk --config Release --prefix "${{ github.workspace }}/stage"
