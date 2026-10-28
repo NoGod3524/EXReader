@@ -445,6 +445,7 @@ struct HostSnapshot {
     let pageAccessibilityLabel: String
     var part: Int = -1
     var path: String = ""
+    var logicalOffset: Int = 0
 }
 
 private func makeCGImage(_ bitmap: HostBitmap) -> CGImage? {
@@ -1082,7 +1083,7 @@ final class HostSession {
                             progress: publication == nil ? "\(percent)%" : (preserveUnresolvedProgress ? "保存位置未精确匹配；从章首浏览" : "本章 \(percent)% · 有界 EPUB"),
                             pageText: text, pageIndex: page, pageRange: range, pageCount: nil,
                             fontSize: Int(fontSize),
-                            pageAccessibilityLabel: pageLabel(text: text, page: page + 1), part: part, path: currentPath)
+                            pageAccessibilityLabel: pageLabel(text: text, page: page + 1), part: part, path: currentPath, logicalOffset: readingOffset)
     }
 
     private func pageLabel(text: String, page: Int) -> String {
@@ -1283,6 +1284,14 @@ final class HostReaderModel: ObservableObject {
     @Published var progress = "0%"
     @Published var pageText = ""
     @Published var pageBaseOffset = 0
+#if EXR_APPLE_HOST_REVIEW
+    @Published var fontReviewOffset = 0
+    @Published var fontReviewRange = "0:0"
+    var fontReviewBitmap: String {
+        guard let image, let data = image.dataProvider?.data else { return "unrendered" }
+        return SHA256.hash(data: data as Data).map { String(format: "%02x", $0) }.joined()
+    }
+#endif
     @Published var pageAccessibilityLabel = ""
     @Published var fontSize = 28
 #if EXR_APPLE_PAGE_THEME
@@ -1520,6 +1529,9 @@ final class HostReaderModel: ObservableObject {
                         self.wave3.canConfirmAnnotations = false
                     }
                     self.wave3.busy = false; self.wave3.message = self.describe(error)
+#if EXR_APPLE_HOST_REVIEW
+                    self.updateFontReviewObservation()
+#endif
                     if let partial = error as? HostWave3ImportFailure, partial.cancelled {
                         self.statusText = "已取消"; self.finish()
                     } else { self.fail(error) }
@@ -1527,6 +1539,13 @@ final class HostReaderModel: ObservableObject {
             }
         }
     }
+
+#if EXR_APPLE_HOST_REVIEW
+    private func updateFontReviewObservation() {
+        wave3.fontObservation = HostWave3FontLease.observation(offset: fontReviewOffset) +
+            ";part=\(pagePart);range=\(fontReviewRange);selected=\(wave3.selectedFont ?? "default");bitmap=\(fontReviewBitmap)"
+    }
+#endif
 
     func refreshWave3() {
         performWave3 { _, catalog, root, cancel in
@@ -1539,6 +1558,9 @@ final class HostReaderModel: ObservableObject {
             return {
                 self.wave3.fonts = fonts; self.wave3.canBack = history.0; self.wave3.canForward = history.1
                 self.wave3.sync = sync; self.wave3.message = "详情已刷新"
+#if EXR_APPLE_HOST_REVIEW
+                self.updateFontReviewObservation()
+#endif
             }
         }
     }
@@ -1615,7 +1637,12 @@ final class HostReaderModel: ObservableObject {
             let scoped = file.startAccessingSecurityScopedResource()
             defer { if scoped { file.stopAccessingSecurityScopedResource() } }
             let rows = try HostWave3Fonts.records(root: root.appendingPathComponent("fonts"), importing: file, cancel: cancel)
-            return { self.wave3.fonts = rows; self.wave3.message = "字体已导入，相同内容自动去重" }
+            return {
+                self.wave3.fonts = rows; self.wave3.message = "字体已导入，相同内容自动去重"
+#if EXR_APPLE_HOST_REVIEW
+                self.updateFontReviewObservation()
+#endif
+            }
         }
     }
 
@@ -1644,11 +1671,17 @@ final class HostReaderModel: ObservableObject {
                         self.wave3.selectedFont = hash; self.wave3.message = "字体已应用"
                     }) {
                     self.session = candidate
+#if EXR_APPLE_HOST_REVIEW
+                    self.queue.async { DispatchQueue.main.async { self.updateFontReviewObservation() } }
+#endif
                 } else { self.fontSHA = previousSHA }
             } catch {
                 DispatchQueue.main.async {
                     guard epoch == self.token else { return }
                     self.wave3.busy = false; self.wave3.message = self.describe(error); self.fail(error)
+#if EXR_APPLE_HOST_REVIEW
+                    self.updateFontReviewObservation()
+#endif
                 }
             }
         }
@@ -2230,6 +2263,10 @@ final class HostReaderModel: ObservableObject {
         progress = snapshot.progress
         pageText = snapshot.pageText
         pageBaseOffset = snapshot.pageRange.lowerBound
+#if EXR_APPLE_HOST_REVIEW
+        fontReviewOffset = snapshot.logicalOffset
+        fontReviewRange = "\(snapshot.pageRange.lowerBound):\(snapshot.pageRange.upperBound)"
+#endif
         pagePart = snapshot.part
         pagePath = snapshot.path
         pageAccessibilityLabel = snapshot.pageAccessibilityLabel
@@ -3025,20 +3062,26 @@ final class HostReaderModel: ObservableObject {
                 let rows = try self.session?.listBooks() ?? []
                 try self.writeState(session: self.session)
 #if EXR_APPLE_WAVE3
-                guard let currentSession = self.session,
-                      let file = Bundle.main.url(forResource: "Reader", withExtension: "otf") else {
-                    throw HostError.invalidInput("缺少默认字体")
+                do {
+                    guard let file = Bundle.main.url(forResource: "Reader", withExtension: "otf") else {
+                        throw HostError.invalidInput("缺少默认字体")
+                    }
+                    let data = try Data(contentsOf: file)
+                    guard let shelfSession = self.session?.candidate(font: try HostFont(data: data)) else {
+                        throw HostError.invalidInput("书库未就绪")
+                    }
+                    self.session?.close()
+                    self.session = shelfSession
+                    self.fontSHA = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
                 }
-                let data = try Data(contentsOf: file)
-                let shelfSession = currentSession.candidate(font: try HostFont(data: data))
-#endif
+#else
                 self.session?.close()
-#if EXR_APPLE_WAVE3
-                self.session = shelfSession
-                self.fontSHA = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
 #endif
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
+#if EXR_APPLE_WAVE3 && EXR_APPLE_HOST_REVIEW
+                    self.updateFontReviewObservation()
+#endif
                     self.books = rows
                     self.showLibrary = true
                     self.current = nil

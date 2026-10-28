@@ -374,6 +374,12 @@ struct LibraryScreen: View {
 #if EXR_APPLE_SHELF_REVIEW
             ShelfObservationView(value: shelf.observation, searchFocused: searchFocused)
 #endif
+#if EXR_APPLE_WAVE3 && EXR_APPLE_HOST_REVIEW
+            if model.showsTestFixtures {
+                Text(model.wave3.fontObservation).font(.system(size: 5)).lineLimit(1)
+                    .accessibilityIdentifier("library.font.observation")
+            }
+#endif
             if model.productIndexPending {
                 Text("产品索引待修复；暂时最多显示最近 50 本本地书籍，重启后重试。")
                     .font(.caption).foregroundColor(.secondary)
@@ -827,6 +833,10 @@ struct ReaderScreen: View {
 #if EXR_APPLE_HOST_REVIEW
                     Text("#\(model.stateHash)").font(.caption2).foregroundColor(.secondary)
                         .accessibilityIdentifier("reader.state")
+                    if model.showsTestFixtures {
+                        Text("\(model.fontReviewOffset)").font(.system(size: 5)).lineLimit(1)
+                            .accessibilityIdentifier("reader.font.offset")
+                    }
 #endif
                     if compactTools {
                         Text(model.statusText).font(.caption).lineLimit(1)
