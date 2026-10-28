@@ -68,7 +68,9 @@ try:
     app.click('next'); app.wait_idle(); second = loc()
     app.click('next'); app.wait_idle(); third = loc()
     assert 0 < third[1] and first[1] < second[1] < third[1], (first, second, third)
-    assert second[2] == third[1], (second, third)
+    # The normalized TXT projection leaves the paragraph separator between
+    # these pages; the next page's exact start is the live boundary point.
+    assert third[1] - second[2] == 1, (second, third)
     target = third[1]
     base = W.page_hash(app, out, 'before.bmp')
     d = W.open_feature(app, W.FONTS)
