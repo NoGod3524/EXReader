@@ -186,8 +186,10 @@ jobs:
           python3 tests/windows_host/check_shelf_worker.py --candidate build/ws-host/EXReaderShelfReview.exe --package build/ws-package/EXReader --output build/account-worker5
           python3 tests/reader_windows_account/run_retained_shelf.py --candidate build/ws-package/EXReader/EXReader.exe --seed build/ws-host/reader-windows-shelf-seed.exe --package build/ws-package/EXReader --output build/account-shelf-ui
           python3 tests/windows_host/check_metadata_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --command-consumer build/account-commands-consumer/command-consumer.exe --output build/account-metadata-ui
-          python3 tests/reader_windows_account/check_account_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revisions-consumer/revision-consumer.exe --capture-probe build/account-capture/reading-capture-probe.exe --reading-fixtures build/account-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/ws-host/windows-host.map --output build/account-ui
+          if python3 tests/reader_windows_account/check_account_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revisions-consumer/revision-consumer.exe --capture-probe build/account-capture/reading-capture-probe.exe --reading-fixtures build/account-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/ws-host/windows-host.map --output build/account-ui; then account_status=0; else account_status=$?; fi
+          python3 tests/reader_windows_341/account_adapter.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revisions-consumer/revision-consumer.exe --capture-probe build/account-capture/reading-capture-probe.exe --reading-fixtures build/account-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/ws-host/windows-host.map --output build/account-ui-adapted
           python3 tests/reader_windows_account/check_a11y_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --fixtures build/account-reading-fixtures --output build/account-a11y
+          exit "$account_status"
       - name: Independently compile the frozen 3.40 option-off pixel baseline
         run: |
           set -euo pipefail
@@ -282,6 +284,8 @@ jobs:
             build/account-shelf-ui/
             build/account-metadata-ui/
             build/account-ui/
+            build/account-ui-adapted/
+            build/account-adapter/
             build/account-a11y/
             build/ws-host/windows-host.map
             build/ws-host/CMakeCache.txt
