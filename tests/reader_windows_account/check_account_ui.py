@@ -11,6 +11,7 @@ import ctypes as C
 from ctypes import wintypes as W
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -460,7 +461,10 @@ def main():
             if os.environ.get('EXR_ACCOUNT_COMPACT_PICKER') == '1':
                 # Wave3 uses the native picker in place of the legacy path entry.
                 sys.path.insert(0, str(HERE.parents[1] / 'tests/reader_windows_compact'))
-                import check_ui as compact_ui
+                spec = importlib.util.spec_from_file_location('compact_account_picker',
+                    HERE.parents[1] / 'tests/reader_windows_compact/check_ui.py')
+                compact_ui = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(compact_ui)
                 compact_ui.picker(device, path)
             else:
                 set_text(device.control('path'), str(path))
