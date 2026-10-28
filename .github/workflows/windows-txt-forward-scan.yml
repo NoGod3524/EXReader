@@ -1,7 +1,7 @@
 name: Windows TXT current-page forward scan
 on:
   push:
-    branches: [codex/dot-windows-txt-forward-scan]
+    branches: [codex/dot-windows-txt-forward-ot, codex/reader-font-forward-composition-20261028]
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,12 +19,15 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ilammy/msvc-dev-cmd@v1
-      - name: Verify source and frozen SDK
+      - name: Verify source and exact authorized SDK exception
         shell: bash
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor 5447b05a6b942d6ad568f65179c43a946c2890e3 HEAD
-          test -z "$(git diff 5447b05a6b942d6ad568f65179c43a946c2890e3 HEAD -- src include)"
+          test -z "$(git diff 5447b05a6b942d6ad568f65179c43a946c2890e3 HEAD -- src include ':!src/opentype.c')"
+          test "$(git rev-parse HEAD:src/opentype.c)" = 8cab9b949b29c73ff54c6f9e5385edd351edf460
+          test "$(git rev-parse 5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9:src/opentype.c)" = 8cab9b949b29c73ff54c6f9e5385edd351edf460
+          echo "Authorized exact OpenType source: 5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9; combined source: $GITHUB_SHA"
       - name: Prepare native Windows display
         run: python tests/reader_native_owner_repairs/display.py
       - name: Build and run unchanged composed-host regression gates
@@ -42,6 +45,14 @@ jobs:
       - name: Real native search equivalence and scan measurements
         if: always() && steps.retained.outcome != 'skipped'
         run: python tests/windows_txt_forward_scan/check_ui.py --candidate build/c09/package/EXReader/EXReader.exe --reference build/txt-scan-reference/EXReaderWave3.exe --font build/host-font-cache/Reader.otf --output build/txt-forward-scan
+      - name: Same-source installed SDK public regression tests
+        if: always() && steps.retained.outcome != 'skipped'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S tests/windows_txt_forward_scan/sdk -B build/txt-scan-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/c09/sdk-stage"
+          cmake --build build/txt-scan-sdk --parallel 4
+          ctest --test-dir build/txt-scan-sdk --output-on-failure --no-tests=error
       - name: Preserve same-round reports and failures
         if: always()
         uses: actions/upload-artifact@v4
@@ -57,4 +68,5 @@ jobs:
             build/c09/extracted-ui/
             build/c09/package/build.json
             build/native-owner-preflight/display.json
+            build/txt-scan-sdk/Testing/
           if-no-files-found: error
