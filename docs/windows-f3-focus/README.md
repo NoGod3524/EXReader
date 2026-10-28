@@ -45,3 +45,35 @@ visible keyboard cues and unchanged white gutter. The original 25 F3 checks,
 coordinates and thresholds are unchanged. This is not a theme-renderer or layout
 redesign. High-contrast settings/screen-reader acceptance remain separate unless
 explicitly tested and reported.
+
+
+## Rejected canvas-bound cue and corrective run
+
+Source `8a5763c7c8f2f5ae4e605f5b143861f088f572e8`, run 40654686736/1:
+original F3 **25/25 passed**, focused cue/Tab/light/dark and independent native
+a11y passed; current C09/TXT/SDK and fonts8+5 passed. However atomic13 failed at
+TXT before-save cancellation: font_size remained 24 as expected, but focus
+transition changed **895 interior RGB pixels**, bounds [215,5,580,535]. This
+candidate is rejected, not integration-ready. Unrelated original schema1-vs3
+bulk/catalog failures also remain; no old assertions were edited.
+
+Original artifact 12800919496, 165,475,953 bytes, SHA-256
+`edb94bd0e7e0c7ea2477f85178b83972958778fc5b1240e33e10a0d551dc7d10`.
+Refusing summary artifact 12801283651, SHA-256
+`c4698d25e5e1e842b24e5c963eecbfc536e05b9b5d2671e838261cd77b5aec90`.
+Broad current-native artifact 12802056691, SHA-256
+`4c35e89ee1e4fa51d3c43e4ce64b405ebc6cc3ef8368cefb7db2f3200e6d2a97`;
+font artifact 12800773815, SHA-256
+`598b996940db591d8e4ae32adf05afa1f67512d39e7bea05cfb07d0ed49e2259`.
+
+The correction restores whole-control focus semantics and uses the native
+client boundary directly (DrawFocusRect on GetClientRect), without the old
+arbitrary one-pixel inset and without entering document pixels. Native cue
+state and WM_UPDATEUISTATE repaint handling remain. This preserves visible
+keyboard focus while excluding focus decoration from accepted page content.
+
+Per the new P0 priority, one focused corrective run is authorized: unchanged
+full F3, atomic13, keyboard/a11y and focused cue tests on its exact new source.
+Broader C09/TXT/SDK/font evidence remains bound to the **prior rejected SHA**;
+it is not acceptance for the corrected source. Complete same-source regression
+belongs to the later P0 common integration. No SDK/migration implementation changed.

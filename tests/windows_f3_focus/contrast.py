@@ -22,7 +22,7 @@ try:
         time.sleep(.3)
         image=app.page_shot(label+'.bmp',out)
         dx,dy,w,h=F.layout(F.page_client(app),(720,1040))
-        row=dict(label=label,client=F.page_client(app),layout=[dx,dy,w,h],ui_state=F.send(page,0x129),focused=F.A.focus_of(app.process.pid)==page,surround=F.at(image,max(dx-4,1),max(dy-4,1)),corner=F.at(image,dx+6,dy+6),edge_dark=sum(sum(F.at(image,x,1))<260 for x in range(2,image[0]-2)),canvas_edge=[F.at(image,x,dy+1) for x in range(dx+2,dx+w-2)],interior_sha256=hashlib.sha256(bytes(c for y in range(dy+3,dy+h-3) for x in range(dx+3,dx+w-3) for c in F.at(image,x,y))).hexdigest())
+        row=dict(label=label,client=F.page_client(app),layout=[dx,dy,w,h],ui_state=F.send(page,0x129),focused=F.A.focus_of(app.process.pid)==page,surround=F.at(image,max(dx-4,1),max(dy-4,1)),corner=F.at(image,dx+6,dy+6),edge_dark=sum(sum(F.at(image,x,1))<260 for x in range(2,image[0]-2)),boundary_edge=[F.at(image,x,0) for x in range(2,image[0]-2)],interior_sha256=hashlib.sha256(bytes(c for y in range(dy+3,dy+h-3) for x in range(dx+3,dx+w-3) for c in F.at(image,x,y))).hexdigest())
         observations.append(row);print(json.dumps(row),flush=True)
     capture('light-dialog-closed')
     # UI Automation moves real focus; independently verify the owning thread.
@@ -44,7 +44,7 @@ try:
         if F.A.focus_of(app.process.pid)==page: break
     assert F.A.focus_of(app.process.pid)==page, 'keyboard could not reach page'
     capture('keyboard-tab-page')
-    # Dark canvas: native inversion must remain visible and never touch text.
+    # Dark canvas: the control-boundary cue remains visible without touching text.
     app.open_dialog();app.choose(F.THEME,1);app.apply();app.close_dialog()
     auto.ControlFromHandle(page).SetFocus()
     F.send(app.window,0x127,1|(1<<16),0);capture('dark-hide-focus-cue')

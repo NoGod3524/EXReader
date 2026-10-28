@@ -57,37 +57,23 @@ def main():
         focus=load('f3-focus-contrast/observations.json');identity(focus)
         obs={r['label']:r for r in focus['observations']}
         require(obs['focus-away']['focused'] is False and obs['focus-away']['edge_dark']==0,'focus-away pixels')
-        require(obs['hide-focus-cue']['focused'] is True and obs['hide-focus-cue']['ui_state']&1 and obs['hide-focus-cue']['edge_dark']==0,'hidden native cue not respected')
+        require(obs['hide-focus-cue']['focused'] is True and obs['hide-focus-cue']['ui_state']&1 and obs['hide-focus-cue']['edge_dark']==0 and all(sum(p)>740 for p in obs['hide-focus-cue']['boundary_edge']),'hidden native cue not respected')
         for label in ('show-focus-cue','keyboard-tab-page'):
-            r=obs[label];require(r['focused'] is True and not r['ui_state']&1 and r['edge_dark']==0 and sum(sum(p)<260 for p in r['canvas_edge'])>100,'visible keyboard cue missing: '+label)
+            r=obs[label];require(r['focused'] is True and not r['ui_state']&1 and r['edge_dark']==0 and sum(sum(p)<260 for p in r['boundary_edge'])>100,'visible keyboard cue missing: '+label)
             require(r['surround']==[255,255,255],'focus cue painted into the surrounding gutter')
         require(obs['hide-focus-cue']['interior_sha256']==obs['show-focus-cue']['interior_sha256'],'focus obscured light content')
         dark_off,dark_on=obs['dark-hide-focus-cue'],obs['dark-show-focus-cue']
         require(dark_off['focused'] and dark_on['focused'] and dark_off['ui_state']&1 and not dark_on['ui_state']&1,'dark focus state')
         require(dark_off['interior_sha256']==dark_on['interior_sha256'],'focus obscured dark content')
-        require(sum(abs(sum(a)-sum(b))>300 for a,b in zip(dark_off['canvas_edge'],dark_on['canvas_edge']))>100,'dark focus cue insufficient contrast')
+        require(sum(abs(sum(a)-sum(b))>300 for a,b in zip(dark_off['boundary_edge'],dark_on['boundary_edge']))>100,'dark focus cue insufficient contrast')
         a11y=load('f3-focus-a11y/a11y-ui.json');identity(a11y)
         require(a11y['accepted'] is True and not a11y['failures'] and a11y['count']==len(a11y['checks']) and a11y['count']>10,'original a11y failed')
         keyboard=load('ws-search-keyboard/keyboard-uia.json')
         f3.search.bound(keyboard,f3.search.names_from_source(ROOT/'tests/reader_windows_search/check_keyboard.py','REQUIRED'),source,run,attempt)
         require(keyboard['consumer_sha256']==sha('ws-package/EXReader/EXReader.exe'),'keyboard used different host')
         result.update(original_f3_checks=count,atomic_checks=13,keyboard_checks=keyboard['count'],a11y_checks=a11y['count'],focus=focus,consumer_sha256=sha('ws-package/EXReader/EXReader.exe'))
-        for jobname in ('current_native','current_fonts'):
-            j,=[j for j in jobs if j['name']==jobname]
-            require(j['head_sha']==source and j['run_attempt']==attempt and j['conclusion']=='success','affected current job failed: '+jobname)
-        native=archive('NATIVE','windows-txt-forward-scan')
-        c09=json.loads(native.read('c09/report.json'));identity(c09)
-        require(c09['accepted'] is True and not c09['failures'] and all(s['passed'] for s in c09['steps']),'C09 failed')
-        forward=json.loads(native.read('txt-forward-scan/report.json'));identity(forward)
-        require(forward['accepted'] is True and not forward['failures'],'forward failed')
-        require(hashlib.sha256(native.read('c09/package/EXReader/EXReader.exe')).hexdigest()==forward['candidate_sha256'],'forward binary mismatch')
-        fonts=archive('FONTS','windows-font-lifecycle')
-        binding=json.loads(fonts.read('evidence/same-source.json'));identity(binding)
-        require(binding['accepted'] is True and binding['case_counts']==[8,5] and binding['program_sha256']==hashlib.sha256(fonts.read('host/EXReaderWave3.exe')).hexdigest(),'font binding')
-        for path,count in [('report.json',8),('txt/report.json',5)]:
-            r=json.loads(fonts.read('evidence/'+path));identity(r)
-            require(r['accepted'] is True and not r['problems'] and len(r['checks'])==count and all(c['passed'] for c in r['checks']),'font report')
-        result.update(accepted=True,scope='F3 original 25, atomic 13, focus cues and keyboard accessibility, current C09/TXT/SDK/font regressions; unrelated legacy failures retained',full_legacy_suite_accepted=not result['unrelated_failed_steps'],font_checks=[8,5])
+        require(producer['conclusion']=='success','focused producer failed')
+        result.update(accepted=True,scope='Corrected-source original F3 25, atomic 13, native focus/Tab/light/dark and original keyboard/a11y only',full_legacy_suite_accepted=False,full_legacy_suite_rerun=False,prior_broad_source='8a5763c7c8f2f5ae4e605f5b143861f088f572e8',prior_broad_run=40654686736,prior_broad_source_integration_ready=False)
     except Exception as e:
         result['problems'].append(type(e).__name__+': '+str(e))
     finally:
