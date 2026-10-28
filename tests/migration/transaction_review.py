@@ -132,7 +132,13 @@ def legacy_conflict():
     with sqlite3.connect(db) as conn:
         before = conn.execute('SELECT data FROM exr_migration_ledger WHERE id=1').fetchone()[0]
     rc, out, err = run(a.legacy, 'migrate', '--pack', pack, '--target', db)
-    assert rc != 0, ('legacy accepted internal-ledger library', out, err)
+    try:
+        result = json.loads(out)
+    except ValueError:
+        raise AssertionError(('legacy did not return a structured ledger conflict', rc, out, err))
+    code = result.get('code', '')
+    assert rc != 0 and 'ledger' in code and ('conflict' in code or 'transactional' in code), (rc, result, err)
+    assert not Path(str(db)+'.legacy-map.json').exists(), 'legacy created conflicting external ledger'
     with sqlite3.connect(db) as conn:
         assert conn.execute('SELECT data FROM exr_migration_ledger WHERE id=1').fetchone()[0] == before
 check('legacy-tool-refuses-authoritative-internal-ledger', legacy_conflict)
