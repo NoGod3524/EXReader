@@ -271,7 +271,10 @@ def installed_exports(configurations, libraries):
     for target, name in locations.items():
         require(target in targets and targets[target]['kind'] == 'STATIC' and name not in owners, 'ambiguous/missing static library owner')
         owners[name], archive_targets[name] = targets[target]['owner'], target.split('::', 1)[1]
-    require(set(owners) == set(libraries) and owners, 'installed library/export coverage differs')
+    require(set(owners) == set(libraries) and owners, 'installed library/export coverage differs: ' + json.dumps(dict(
+        unowned_libraries=sorted(set(libraries) - set(owners)), exports_without_files=sorted(set(owners) - set(libraries)),
+        static_targets_without_locations=sorted(target for target, info in targets.items()
+            if info['kind'] == 'STATIC' and target not in locations)), sort_keys=True))
     return owners, archive_targets, dependencies
 
 
