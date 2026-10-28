@@ -36,7 +36,8 @@ final class OrganizationLargeTypeUITests: XCTestCase {
                 let fromY: CGFloat = down ? 0.35 : 0.65
                 let toY = down ? fromY + fraction : fromY - fraction
                 scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: fromY))
-                    .press(forDuration: 0.05, thenDragTo: scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: toY)))
+                    .press(forDuration: 0.05, thenDragTo: scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: toY)),
+                           withVelocity: .slow, thenHoldForDuration: 0.4)
                 RunLoop.current.run(until: Date().addingTimeInterval(0.2))
             }
             if scroll.exists { XCTAssertTrue(scroll.frame.contains(target.frame), "Clipped in organizer viewport: \(id)") }
