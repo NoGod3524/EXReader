@@ -82,6 +82,36 @@ static struct {
   int has_pending_item;
 } w3;
 
+#ifdef EXR_WINDOWS_FONT_REVIEW
+/* Review build only: observe results returned by the real library calls. */
+static unsigned w3_review_leases;
+static void w3_review_event(const char *operation, rfl_status status) {
+  wchar_t path[HOST_PATH]; FILE *file;
+  if (swprintf(path, HOST_PATH, L"%ls\\font-lease-review.log", g.data_dir) < 0) return;
+  file = _wfopen(path, L"ab");
+  if (!file) return;
+  fprintf(file, "%s %d %u\n", operation, (int)status, w3_review_leases);
+  fclose(file);
+}
+static rfl_status w3_review_open(rfl_library *library, const char *hash, unsigned face, rfl_lease **lease, rfl_error *error) {
+  rfl_status result = rfl_font_open(library, hash, face, lease, error);
+  if (result == RFL_OK) ++w3_review_leases;
+  w3_review_event("open", result); return result;
+}
+static rfl_status w3_review_release(rfl_lease *lease, rfl_error *error) {
+  rfl_status result = rfl_lease_release(lease, error);
+  if (result == RFL_OK && w3_review_leases) --w3_review_leases;
+  w3_review_event("release", result); return result;
+}
+static rfl_status w3_review_close(rfl_library *library, rfl_error *error) {
+  rfl_status result = rfl_close(library, error);
+  w3_review_event("close", result); return result;
+}
+#define rfl_font_open w3_review_open
+#define rfl_lease_release w3_review_release
+#define rfl_close w3_review_close
+#endif
+
 /* ---------------------------------------------------------------- helpers */
 
 static const wchar_t *w3_format_name(exr_format format) {
@@ -695,6 +725,8 @@ static void w3_font_apply(const char *hash) {
   exr_font *font = NULL;
   rfl_error error;
   host_job *job;
+  exr_anchor anchor = {0};
+  exr_error anchor_error = {0};
   memset(&error, 0, sizeof(error));
   if (g.job || g.pending || g.closing) { w3_message(L"当前有后台任务，完成后再切换字体。"); return; }
   if (hash) {
@@ -706,31 +738,29 @@ static void w3_font_apply(const char *hash) {
   } else font = w3.original_font;
   if (hash && !strcmp(hash, w3.selected_hash)) { if (lease) rfl_lease_release(lease, &error); w3_message(L"已经在使用这个字体。"); return; }
   if (font == g.font) { if (lease) rfl_lease_release(lease, &error); w3_message(L"已经在使用这个字体。"); return; }
-  /* JOB_OPEN restores durable progress. Do not replace a live frame with an
-     older record when its save failed or was deliberately held for recovery. */
-  if (g.has_current && g.session.active && !g.session.txt &&
-      (!g.frame.valid || g.progress_failed || g.session.hold_progress ||
-       (g.session.bounded && g.saved_generation != g.frame.generation))) {
-    if (lease) rfl_lease_release(lease, &error);
-    w3_message(L"当前阅读位置尚未安全保存；字体与画面保持不变。请先恢复或保存阅读位置。");
-    return;
-  }
-  if (!g.has_current || !g.session.active) {
+  if (!g.has_current || !g.session.active || g.session.fixed) {
     rfl_lease *old = w3.lease;
     g.font = font; w3.lease = lease;
     if (old) rfl_lease_release(old, &error);
     snprintf(w3.selected_hash, sizeof(w3.selected_hash), "%s", hash ? hash : "");
     w3_font_save_choice(hash);
-    w3_fonts_fill(); w3_message(L"字体已选择；下次打开书籍时使用。");
+    w3_fonts_fill(); w3_message(g.session.fixed ? L"字体已选择；当前固定页面保持不变。" : L"字体已选择；下次打开书籍时使用。");
     return;
   }
-#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
-  job = job_new(g.session.txt ? JOB_LAYOUT : JOB_OPEN);
-#else
-  job = job_new(JOB_OPEN);
-#endif
-  if (!job) { if (lease) rfl_lease_release(lease, &error); w3_message(L"内存不足，字体未切换。"); return; }
-  job->book_id = g.current.id; job->font_percent = g.font_percent;
+  if (!g.frame.valid || g.frame.book_id != g.current.id || g.session.book_id != g.current.id) {
+    if (lease) rfl_lease_release(lease, &error);
+    w3_message(L"当前阅读位置不可用；字体与画面保持不变。"); return;
+  }
+  if (!g.session.txt && !g.session.bounded &&
+      exr_anchor_create(g.session.document, g.frame.range_start, g.frame.range_start,
+                        &anchor, &anchor_error) != EXR_OK) {
+    if (lease) rfl_lease_release(lease, &error);
+    w3_message(L"无法建立当前位置的锚点；字体与画面保持不变。"); return;
+  }
+  job = job_new(JOB_LAYOUT);
+  if (!job) { exr_anchor_free(&anchor); if (lease) rfl_lease_release(lease, &error); w3_message(L"内存不足，字体未切换。"); return; }
+  job->book_id = g.current.id; job->font_percent = g.font_percent; job->font_relayout = 1;
+  job->anchor = anchor; job->has_anchor = !g.session.txt && !g.session.bounded;
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   if(g.session.txt) {
     job->txt_offset=(uint64_t)g.frame.range_start;
@@ -822,11 +852,10 @@ static void w3_fonts_command(int id) {
    and releases the candidate (pagers first) before the new lease. */
 static void w3_after_font_job(host_job *job) {
   rfl_error error;
-  int accepted = job->kind==JOB_OPEN && job->candidate.book_id==0;
+  int accepted = job->kind == JOB_LAYOUT && job->have_frame && !job->candidate_pager;
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
-  if(job->kind==JOB_LAYOUT)
-    accepted = g.session.txt && job->have_frame && !job->candidate_pager &&
-      job->txt_key[0] && !strcmp(job->txt_key,g.session.txt_key);
+  if (g.session.txt)
+    accepted = accepted && job->txt_key[0] && !strcmp(job->txt_key,g.session.txt_key);
 #endif
   int success = job->status == EXR_OK && !job_cancel_flag(job) && accepted && g.session.active &&
     g.current.id == job->book_id;
