@@ -1,0 +1,53 @@
+name: Windows F3 focus sample candidate validation
+on:
+  push:
+    branches: [codex/windows-f3-focus-sample-20261028]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  f3:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify candidate and product source identity
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor e330a415b733db18dea5aa6010d13cf3063587fd HEAD
+          git diff --exit-code 95d2a791 -- tests/reader_windows_preferences/check_ui.py
+          git diff --exit-code e330a415b733db18dea5aa6010d13cf3063587fd HEAD -- src include cmake CMakeLists.txt apps examples extras bindings tests/fixtures
+      - name: Download the original common-gate binaries and fixtures
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12795210910
+          run-id: 40638398225
+          github-token: ${{ github.token }}
+          path: preserved
+      - name: Authenticate original executables
+        shell: pwsh
+        run: |
+          $candidate = 'preserved/wprefs-package/EXReader/EXReader.exe'
+          $baseline = 'preserved/baseline-package/EXReader/EXReader.exe'
+          if ((Get-FileHash $candidate -Algorithm SHA256).Hash.ToLowerInvariant() -ne '4f2a4a5595d7acd7652e6e144f7a6f32f6d10b44cd1931f68897d16e9a616ad7') { throw 'Candidate binary identity differs' }
+          if ((Get-FileHash $baseline -Algorithm SHA256).Hash.ToLowerInvariant() -ne '5c4c77b7f205e0cb7ca3fa6046bdc285b73b0af90980c7c631b30bf6487967e9') { throw 'Baseline binary identity differs' }
+      - name: Prepare display and UI driver
+        run: |
+          python tests/reader_native_owner_repairs/display.py
+          python -m pip install uiautomation==2.0.29
+      - name: Rerun native F3 suite with corrected sample
+        run: python tests/reader_windows_preferences/check_ui.py --candidate preserved/wprefs-package/EXReader/EXReader.exe --baseline preserved/baseline-package/EXReader/EXReader.exe --font preserved/wprefs-package/EXReader/Reader.otf --fixtures preserved/wprefs-fixtures --output result/f3-ui
+      - name: Preserve results and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-f3-focus-sample-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            result/
+            build/native-owner-preflight/display.json
+          if-no-files-found: warn
