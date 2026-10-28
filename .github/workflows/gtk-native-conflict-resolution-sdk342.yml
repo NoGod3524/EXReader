@@ -38,7 +38,8 @@ jobs:
           path: build/closure-diagnostic/summary.json
           if-no-files-found: warn
   scan-driver-diagnostic:
-    if: ${{ startsWith(github.event.head_commit.message, 'diagnostic: validate') }}
+    if: >-
+      ${{ startsWith(github.event.head_commit.message, 'diagnostic: validate') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
