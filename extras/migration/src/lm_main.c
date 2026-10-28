@@ -1487,6 +1487,31 @@ static int publish(ctx *c) {
   return 1;
 }
 
+#ifndef EXR_MIGRATION_TX_CANDIDATE
+/* Do not let the separately built legacy entry create a second authority. */
+static int legacy_ledger_compatible(ctx *c) {
+  sqlite3 *db=NULL;
+  sqlite3_stmt *stmt=NULL;
+  int rc=sqlite3_open_v2(c->target,&db,SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX,NULL);
+  if(rc==SQLITE_OK) {
+    sqlite3_busy_timeout(db,3000);
+    rc=sqlite3_prepare_v2(db,"SELECT 1 FROM sqlite_master WHERE type='table' AND name='exr_migration_ledger'",-1,&stmt,NULL);
+    if(rc==SQLITE_OK) rc=sqlite3_step(stmt);
+  }
+  sqlite3_finalize(stmt);
+  if(db) sqlite3_close(db);
+  if(rc==SQLITE_ROW) {
+    fail(c,O_REJECTED,"transactional-ledger-conflict","this library has an internal migration ledger; use the transactional migrator");
+    return 0;
+  }
+  if(rc!=SQLITE_DONE) {
+    fail(c,O_FAILED,"ledger-check-failed","cannot inspect the library migration ledger");
+    return 0;
+  }
+  return 1;
+}
+#endif
+
 static int run_migrate(ctx *c) {
   lm_err e;
   size_t i, *order = NULL, *first_of, *count_of, *note_book;
@@ -1566,6 +1591,9 @@ static int run_migrate(ctx *c) {
   if (c->target_existed) {
     exr_library *source = NULL;
     if (!check_target_header(c)) return 0;
+#ifndef EXR_MIGRATION_TX_CANDIDATE
+    if (!legacy_ledger_compatible(c)) return 0;
+#endif
     if (!lm_sha_file(c->target, c->target_sha, NULL)) { fail(c, O_FAILED, "target-unreadable", "cannot hash the target"); return 0; }
     if (c->target_version == 6) {
       if (!snapshot_old_target(c)) return 0;
