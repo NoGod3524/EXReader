@@ -7,6 +7,7 @@ BRANCH = 'codex/windows-j10-triage'
 ALLOWED = {
     '.github/workflows/reader-windows-341-common.yml',
     'tests/reader_windows_341/candidate.py',
+    'tests/reader_windows_341/catalog.py',
     'tests/reader_windows_341/guard.py',
     'tests/reader_windows_341/identity.py',
     'tests/reader_windows_341/verify.py',

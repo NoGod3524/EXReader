@@ -134,12 +134,16 @@ def main():
             catalog = module('common_catalog_adapter', ROOT / 'tests/reader_windows_341/catalog.py')
             catalog_proof = load('windows-341-catalog-adapter.json')
             catalog_source = catalog.PATH.read_text(encoding='utf-8')
+            expected_catalog = catalog_source.replace(catalog.OLD, catalog.NEW)
+            if candidate.active():
+                require(catalog_source.count(catalog.SCHEMA_OLD) == 1 and catalog_proof['schema_literal_count'] == 1 and catalog_proof['expected_schema'] == 3, 'catalog schema adaptation differs')
+                expected_catalog = expected_catalog.replace(catalog.SCHEMA_OLD, catalog.SCHEMA_NEW)
             require(catalog_source.count(catalog.OLD) == 1 and
                     catalog_proof['source_sha'] == source and str(catalog_proof['run_id']) == str(run) and
                     str(catalog_proof['attempt']) == str(attempt) and catalog_proof['changed_literal_count'] == 1 and
                     catalog_proof['expected_runtime'] == '3.41.0' and catalog_proof['original_assertions_retained'] is True and
                     catalog_proof['original_source_sha256'] == hashlib.sha256(catalog_source.encode()).hexdigest() and
-                    catalog_proof['adapted_source_sha256'] == hashlib.sha256(catalog_source.replace(catalog.OLD, catalog.NEW).encode()).hexdigest(),
+                    catalog_proof['adapted_source_sha256'] == hashlib.sha256(expected_catalog.encode()).hexdigest(),
                     'original catalog identity adaptation differs')
             for name, record in value['files'].items():
                 require(record['path'] == FILES[name], 'substituted actual file path')

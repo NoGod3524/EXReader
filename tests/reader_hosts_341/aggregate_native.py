@@ -285,6 +285,8 @@ def windows_summary(key,value,source,ref):
             proof['changed_literal_count']==1 and proof['expected_runtime']=='3.41.0' and proof['original_assertions_retained'] is True and
             all(re.fullmatch('[0-9a-f]{64}',proof[field]) for field in ('original_source_sha256','adapted_source_sha256')) and
             proof['original_source_sha256']!=proof['adapted_source_sha256'],'original catalog identity adaptation absent')
+    if windows_candidate.active() and source==os.environ.get('GITHUB_SHA'):
+        require(proof.get('schema_literal_count')==1 and proof.get('expected_schema')==3, 'candidate product schema adaptation absent')
     if key=='windows_full_f3':
         counts={'f3_checks':25,'original_f1_checks':264,'original_f2_checks':130,'navigation_checks':31,
                 'records_checks':32,'original_ui158':158,'original_j01_checks':47,'original_j10_checks':21}
