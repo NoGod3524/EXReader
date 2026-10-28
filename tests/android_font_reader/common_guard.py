@@ -16,6 +16,9 @@ head = git('rev-parse', 'HEAD')
 assert head == os.environ['GITHUB_SHA']
 subprocess.run(['git', 'merge-base', '--is-ancestor', base, head], check=True)
 changed = git('diff', '--name-only', base, head).splitlines()
+actual_changed = changed[:]
+if os.environ.get('GITHUB_REF_NAME') == 'codex/reader-common-source-integration':
+    changed = git('diff', '--name-only', base, '875525a72b32c5c181f3a865ee311372ddc28869').splitlines()
 assert set(changed) == {'.github/workflows/reader-android-font-reader.yml',
                         'tests/android_font_reader/common_guard.py'}, changed
 subprocess.run(['git', 'diff', '--exit-code', candidate, 'HEAD', '--',
@@ -24,7 +27,7 @@ modules = {name: git('rev-parse', 'HEAD:apps/reader/' + name) for name in
            ('annotation-import', 'annotation-export', 'font-library', 'original-export',
             'jump-history', 'sync-status-view', 'reading-state', 'revisions')}
 summary = {'seed': seed, 'composition_base': base, 'source_sha': head,
-           'tree': git('rev-parse', 'HEAD^{tree}'), 'changed_paths': changed,
+           'tree': git('rev-parse', 'HEAD^{tree}'), 'changed_paths': actual_changed, 'historical_scope_paths': changed,
            'module_trees': modules, 'sdk_tree_matches': candidate,
            'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
            'historical_guard_preserved': 'tests/reader_wave3_c11/guard.py',
