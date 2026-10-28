@@ -34,3 +34,17 @@ IPAs or App Store submissions. No tag, release, mainline merge or publication.
 Integration: transplant only this directory and its workflow, then intentionally
 update the recorded common base and allowlist if integrating other packages; run
 all six on the resulting exact SHA. Do not call this run evidence for a later SHA.
+
+## SDK 3.42 composition preparation
+
+The F06 tools were transplanted from source
+`0b16cf4cabcb573ade064114f5db76e91fa1a620` onto common candidate
+`b61cd85fb19c9347b020d9b66b53a7d474c57f5d`. The source guard now pins that
+base and the Windows packaging adapter explicitly selects SDK 3.42.
+
+This preparation is untested. The Linux, Apple and Android packaging recipes
+still require review and adaptation to SDK 3.42 and their host version gates;
+do not treat the earlier six-package run as evidence for this source. The
+workflow is deliberately not triggered by this preparation branch. After those
+dependencies and the Windows host follow-up are integrated, pin the resulting
+common base and run all six producers and the authenticator on one exact SHA.

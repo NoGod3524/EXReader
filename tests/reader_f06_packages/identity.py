@@ -12,7 +12,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/f06'
-BASE = 'aefe6107f8f073847f0ed590f0ad9602fa720f3d'
+BASE = 'b61cd85fb19c9347b020d9b66b53a7d474c57f5d'
 TARGETS = ('windows', 'linux', 'macos', 'android', 'iphone', 'ipad')
 sys.path.insert(0, str(ROOT / 'tools/reader_wave3_package'))
 import delivery
