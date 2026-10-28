@@ -38,6 +38,17 @@ def verify_evidence(pair):
                  'conclusion': run['conclusion'], 'completed_at': finished.isoformat(),
                  'scope_review_document': doc_ref, 'document_sha256': hashlib.sha256(document).hexdigest(),
                  'scope_basis': 'root-reviewed named scope in referenced source document'}
+        if key == 'gtk_sync_account':
+            # This one historical report records successful check names as
+            # strings. Authenticate the exact original report and same-run
+            # identity rather than interpreting arbitrary string lists.
+            assert spec.get('adapter') == 'gtk_sync_account_40629444286'
+            from gtk_sync_evidence import verify, RUN, SOURCE, ARCHIVE
+            assert spec['run'] == RUN and spec['source_prefix'] == SOURCE
+            assert spec['artifact'] == ARCHIVE[0] and spec['bytes'] == ARCHIVE[1] and spec['sha256'] == ARCHIVE[2]
+            proof.update(verify())
+        else:
+            assert 'adapter' not in spec, 'unknown evidence adapter'
         if spec.get('required_cases'):
             item = fetch('actions/artifacts/' + str(spec['artifact']))
             assert not item['expired'] and item['workflow_run']['id'] == spec['run']

@@ -25,8 +25,7 @@ The identity report is retained in the same run. The earlier failed runs
 40627094024 and 40627689240, and their evidence, remain intact.
 
 This is acceptance of the focused Linux host scope on the stated source, not
-acceptance of a composed six-platform product or of D26 on this source. The
-shared total-progress catalog has not been changed: its separate catalog audit
-expects named check objects, whereas this focused report preserves the original
-27 string-valued check names. Catalog admission requires a compatible evidence
-adapter and a separate catalog audit.
+acceptance of a composed six-platform product or of D26 on this source. The fixed catalog uses an Actions-only adapter for this pinned report, preserving
+the original string-valued checks. It independently verifies the original ZIP,
+all 29 named checks and the same-run authentication artifact. The catalog
+admission remains subject to the existing fixed-catalog audit.

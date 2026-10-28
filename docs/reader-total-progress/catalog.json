@@ -261,6 +261,15 @@
         "reader_exit_releases_font_lease_and_reopen_keeps_position"
       ]
     },
+    "gtk_sync_account": {
+      "run": 40629444286,
+      "doc": "docs/reader-total-progress/linux-sync-account.md",
+      "source_prefix": "6b2e3a2d44e085c40fa20e07bbceef93706e8ff0",
+      "artifact": 12790797986,
+      "sha256": "aea21c97eaa96a5aad9656b6419196e7581d18b098a1100ca2f3ea04de43c6fc",
+      "bytes": 5185218,
+      "adapter": "gtk_sync_account_40629444286"
+    },
     "gtk_annotation_export": {
       "run": 40595687505,
       "doc": "docs/reader-total-progress/linux-annotation-export.md",
@@ -748,9 +757,11 @@
       "group": "host",
       "platform": "linux",
       "title": "Linux GTK：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "gtk_sync_account"
+      ],
+      "note": "独立 GTK 宿主范围；不授予组合源码或六平台产品验收。"
     },
     {
       "id": "H.macos.startup",
