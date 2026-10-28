@@ -1,7 +1,7 @@
 name: Android account and sync status
 on:
   push:
-    branches: [codex/terra-wave-android-sync]
+    branches: [codex/terra-wave-android-sync, codex/reader-android-sync-common-20261028]
   workflow_dispatch:
     inputs:
       diagnostic_only:
