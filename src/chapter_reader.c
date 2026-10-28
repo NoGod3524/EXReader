@@ -463,7 +463,7 @@ typedef struct {
   size_t point_count, stride, count, cached, cached_start, cached_size;
   char *cache;
   size_t span_base, span_count;
-  struct { size_t start, length; } spans[TXT_SPANS];
+  struct { size_t start, length; exr_txt_checkpoint after; } spans[TXT_SPANS];
   size_t cursor_paragraph, cursor_start, cursor_size;
   const char *cursor_text;
   void (*release_source)(void *);
@@ -501,9 +501,22 @@ static exr_status txt_find_paragraph(txt_view *v,size_t paragraph,size_t *start,
     return EXR_OK;
   }
   for(i=1;i<v->point_count && v->points[i].paragraph<=paragraph;i++) point=i;
-  if(v->cursor_paragraph!=SIZE_MAX && v->cursor_paragraph<paragraph &&
-     v->cursor_paragraph+1>=v->points[point].paragraph) i=v->cursor_paragraph+1;
-  else {
+  if(v->cursor_paragraph!=SIZE_MAX && v->cursor_paragraph+1==paragraph) {
+    i=paragraph;
+  } else if(v->span_count && paragraph>v->span_base &&
+            paragraph-v->span_base<=v->span_count) {
+    /* A completed span records each paragraph boundary. Replaying a nearby
+       paragraph from its predecessor avoids repeatedly scanning the sparse
+       index when layout revisits text in the current window. */
+    status=exr_txt_cursor_restore(v->cursor,
+      &v->spans[paragraph-v->span_base-1].after,e);
+    v->cursor_paragraph=SIZE_MAX;v->cursor_text=NULL;
+    if(status!=EXR_OK) return txt_failure(v,status,e);
+    i=paragraph;
+  } else if(v->cursor_paragraph!=SIZE_MAX && v->cursor_paragraph<paragraph &&
+            v->cursor_paragraph+1>=v->points[point].paragraph) {
+    i=v->cursor_paragraph+1;
+  } else {
     status=exr_txt_cursor_restore(v->cursor,&v->points[point].cursor,e);
     v->cursor_paragraph=SIZE_MAX;v->cursor_text=NULL;
     if(status!=EXR_OK) return txt_failure(v,status,e);
@@ -531,7 +544,8 @@ static exr_status txt_node_span(txt_view *v,size_t paragraph,size_t *start,size_
     v->span_count=0;
     for(i=0;i<count;i++) {
       status=txt_find_paragraph(v,base+i,&v->spans[i].start,&v->spans[i].length,NULL,e);
-      if(status!=EXR_OK) return status;
+      if(status==EXR_OK) status=exr_txt_cursor_checkpoint(v->cursor,&v->spans[i].after,e);
+      if(status!=EXR_OK) return txt_failure(v,status,e);
     }
     v->span_base=base;v->span_count=count;
   }

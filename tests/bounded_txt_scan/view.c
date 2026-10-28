@@ -75,5 +75,14 @@ int main(void) {
   large=malloc(400000);if(!large) return 1;at=0;
   for(i=0;i<2600;i++)
     at+=(size_t)sprintf(large+at,"  Span %zu: \xe4\xb8\xad \xf0\x9f\x98\x80 mixed text and navigation.  \r\n%s",i,(i%17)?"":"\r\n");
+  compare(large,at,font);free(large);
+  /* Cross cached span boundaries with UTF-16 and empty CRLF paragraphs. */
+  large=malloc(400000);if(!large) return 1;at=0;
+  large[at++]=(char)0xff;large[at++]=(char)0xfe;
+  for(i=0;i<1800;i++) {
+    const char *line=(i%17) ? "Unicode text for bounded page lookup.\r\n" :
+                             "Unicode text for bounded page lookup.\r\n\r\n";
+    while(*line) { large[at++]=*line++;large[at++]=0; }
+  }
   compare(large,at,font);free(large);exr_font_free(font);return 0;
 }
