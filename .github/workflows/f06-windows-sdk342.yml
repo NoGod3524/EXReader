@@ -1,7 +1,7 @@
 name: F06 Windows SDK 3.42 package identity
 on:
   push:
-    branches: [codex/f06-windows-sdk342-20261028]
+    branches: [codex/f06-windows-sdk342-20261028, codex/f06-windows-identity-fix-20261028]
   workflow_dispatch:
 permissions:
   contents: read
