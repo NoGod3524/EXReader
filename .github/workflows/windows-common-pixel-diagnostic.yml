@@ -1,0 +1,22 @@
+name: Diagnose retained Windows F3 pixels without rebuilding
+on:
+  push:
+    branches: [codex/dot-windows-common-pixel-diagnostic]
+permissions: {contents: read, actions: read}
+jobs:
+  diagnose:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Authenticate original artifact and evaluate original F3 pixel predicates
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/windows_common_pixel_diagnostic/pixels.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-f3-pixel-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-f3-pixel-diagnostic/
+          if-no-files-found: error
