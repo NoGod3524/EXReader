@@ -35,5 +35,5 @@ H.run(['cmake', '-S', ROOT / 'apps/reader/desktop', '-B', out / 'host', '-G', 'N
        '-DCMAKE_PREFIX_PATH=' + prefix, '-DEXR_SDK=' + str(sdk), '-DEXR_SDK_VERSION=3.41.0',
        '-DREADER_METADATA_PREFIX=' + str(stage), '-DREADER_ACCOUNT_PREFIX=' + str(stage),
        '-DEXR_READER_WINDOWS_WAVE3=ON', '-DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=ON',
-       '-DEXR_WINDOWS_FONT_REVIEW=ON'], 'host-configure')
+       '-DEXR_WINDOWS_FONT_REVIEW=ON', '-DEXR_READER_WINDOWS_TXT_PROGRESS=ON'], 'host-configure')
 H.run(['cmake', '--build', out / 'host', '--target', 'EXReaderWave3', '--parallel', '4'], 'host-build')
