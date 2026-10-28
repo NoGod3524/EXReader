@@ -1,0 +1,57 @@
+name: Windows host SDK 3.42 candidate
+on:
+  push:
+    branches: [codex/windows-host-sdk342-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 180
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Verify SDK candidate identity
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt
+      - name: Prepare native display
+        run: python tests/reader_native_owner_repairs/display.py
+      - name: Install UI automation
+        run: python -m pip install uiautomation==2.0.29
+      - name: Build and package the 3.42 native host
+        id: build
+        run: python tests/windows_sdk342/build.py
+      - name: Original compact native UI
+        if: always() && steps.build.outcome == 'success'
+        run: python tests/reader_windows_compact/check_ui.py --candidate build/windows-sdk342/package/EXReader/EXReader.exe --font build/host-font-cache/Reader.otf --fixtures build/windows-sdk342/fixtures --output build/windows-sdk342/compact
+      - name: Wave3 native UI
+        if: always() && steps.build.outcome == 'success'
+        run: python tests/reader_wave3_c09/check_ui.py --candidate build/windows-sdk342/package/EXReader/EXReader.exe --font build/host-font-cache/Reader.otf --fixtures build/windows-sdk342/fixtures --output build/windows-sdk342/wave3-ui
+      - name: Native TXT progress
+        if: always() && steps.build.outcome == 'success'
+        run: python tests/windows_host/txt/check_progress.py build/windows-sdk342/package/EXReader/EXReader.exe build/host-font-cache/Reader.otf build/windows-sdk342/txt-progress "build/windows-sdk342/fixtures/Fixed page.pdf" build/windows-sdk342/txt-consumer/txtp-inject.exe raw
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-host-sdk342-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-sdk342/logs/
+            build/windows-sdk342/host/CMakeCache.txt
+            build/windows-sdk342/host/windows-host.map
+            build/windows-sdk342/package/report.json
+            build/windows-sdk342/package/build.json
+            build/windows-sdk342/package/application.log
+            build/windows-sdk342/package/EXReader/EXReader.exe
+            build/windows-sdk342/compact/report.json
+            build/windows-sdk342/wave3-ui/report.json
+            build/windows-sdk342/txt-progress/report.json
+            build/native-owner-preflight/display.json
+          if-no-files-found: warn
