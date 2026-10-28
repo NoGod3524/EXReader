@@ -1198,6 +1198,17 @@ static void w3_history_accept(host_job *job) {
     job->kind = JOB_GO;
     handle_job_complete(job);
     moved = g.has_current && g.frame.valid && job->frame.valid == 0;
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_SEARCH)
+    if (moved && g.session.txt && job->note_start >= g.frame.range_start &&
+        job->note_start < g.frame.range_end) {
+      g.frame.txt_history_point = job->note_start;
+      g.frame.txt_has_history_point = 1;
+      if (getenv("EXR_TRACE_TXT")) {
+        fprintf(stderr,"TXT_HISTORY restored_point=%llu\n",(unsigned long long)job->note_start);
+        fflush(stderr);
+      }
+    }
+#endif
   } else {
     wchar_t message[600];
     describe_error(message, 600, job->status == EXR_CANCELLED ? L"已取消，历史游标没有移动" : L"未能在当前原书中找到该历史位置，历史游标没有移动", job->status, &job->error);

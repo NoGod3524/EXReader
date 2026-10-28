@@ -120,6 +120,11 @@ typedef struct {
   exr_anchor point;
   exr_chapter_stats chapter_stats;
   size_t page, range_start, range_end;
+#if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_SEARCH) && defined(EXR_READER_WINDOWS_WAVE3)
+  /* A history-resolved point belongs to this frame only. */
+  size_t txt_history_point;
+  int txt_has_history_point;
+#endif
   size_t page_count;
   int valid;
   int fixed;

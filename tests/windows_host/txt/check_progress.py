@@ -713,6 +713,13 @@ def main():
         ui.command(app, wave3.FORWARD)
         app.wait(lambda: page_text(app, automation) == landed, timeout=300)
         app.wait_idle()
+        trace = (app.profile / 'application.log').read_text(encoding='utf-8', errors='replace')
+        points = [int(line.split('=', 1)[1]) for line in trace.splitlines()
+                  if line.startswith('TXT_HISTORY restored_point=')]
+        line = 'Unique history line %08d with distinct content and a readable paragraph for page navigation.\n' % 0
+        expected_point = len(line.encode('utf-8')) * 10000
+        assert points and points[-1] == expected_point, (points, expected_point)
+        report['history_restored_point'] = dict(expected=expected_point, actual=points[-1])
         record('large TXT search history back and forward resolve the actual source')
 
         # The repeated paragraph makes the selector genuinely ambiguous.
