@@ -48,3 +48,12 @@ report=dict(source_sha=head,candidate_product_base=candidate,run_id=os.environ['
     run_records_are_not_test_evidence=True,native_leaf_acceptance=False,product_acceptance=False)
 (out/'inventory.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
 print('Pinned source only:',len(products),'product paths,',len(sdks),'SDK paths;',len(runs),'historical commits')
+
+for category, rows in (('product',products),('sdk',sdks)):
+    for row in rows:
+        sha=row['last_touch_commit']
+        found=runs.get(sha,{})
+        candidates=[str(item['id'])+':'+str(item['name']) for item in found.get('runs',[])
+                    if item.get('status')=='completed' and item.get('conclusion')=='success']
+        print(category, row['path'], sha, 'candidate historical successes:', ', '.join(candidates) or 'none found',
+              'LOOKUP_ERROR' if found.get('error') else '', flush=True)
