@@ -1,5 +1,16 @@
 # Upgrade, import and delivery status
 
+**Do not run this migrator against a library that any other process could
+open or write.** Independent review identified a publication race after the
+final hash and sidecar checks. The migrator's lock only coordinates other
+migrators; ordinary SQLite and SDK writers do not acquire it. A writer can
+commit before replacement and have its data hidden, or leave a WAL associated
+with the replaced pathname. A replacement followed by ledger failure and
+rollback has the same coordination problem. The prior successful migration
+run does not test or establish ordinary-writer exclusion. Until an enforceable
+host-wide quiescence or a different publication design is implemented and
+validated, in-place migration is not release-ready.
+
 There is not yet a validated, installable final native product for all six
 targets. The [build instructions](../README.md#构建) produce the SDK and tools;
 they are not a mobile app installer. Obtain a platform package only when its

@@ -1416,6 +1416,24 @@ static int publish(ctx *c) {
     if (!lm_copy(c->target, c->pre)) { fail(c, O_FAILED, "pre-image-failed", "cannot keep a pre-image of the target for rollback"); return 0; }
     c->pre_state = "kept-until-commit";
   }
+  /* Test-only ordinary-writer rendezvous after the last identity checks. */
+  if (injected(c, "writer-pause", 0)) {
+    char *ready = path_join(c->target, ".writer-ready"), *resume = path_join(c->target, ".writer-resume");
+    unsigned wait;
+    int resumed = 0;
+    if (!write_file(ready, "ready", 5)) { free(ready); free(resume); fail(c, O_FAILED, "review-hook-failed", "cannot create writer synchronization marker"); return 0; }
+    for (wait = 0; wait < 400 && !cancel_cb(c); wait++) {
+      if (lm_exists(resume)) { resumed = 1; break; }
+#ifdef _WIN32
+      Sleep(50);
+#else
+      struct timespec delay = {0, 50000000};
+      nanosleep(&delay, NULL);
+#endif
+    }
+    lm_remove(ready); lm_remove(resume); free(ready); free(resume);
+    if (!resumed && !cancel_cb(c)) { fail(c, O_FAILED, "review-hook-timeout", "writer synchronization timed out"); return 0; }
+  }
   if (cancel_cb(c)) { fail(c, O_CANCELLED, "cancelled", "cancelled before publication"); return 0; }
   if (!(c->target_existed ? lm_replace(c->stage, c->target) : lm_publish_new(c->stage, c->target))) { fail(c, O_FAILED, "publish-failed", "cannot publish the target library; the original is unchanged"); return 0; }
   c->stage_state = "published";
