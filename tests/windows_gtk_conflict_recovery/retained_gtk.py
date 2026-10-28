@@ -45,6 +45,7 @@ def dialog(self,path=None):
         with (self.folder/'owned-chooser-driver.jsonl').open('a',encoding='utf-8') as output:output.write(json.dumps(events)+'\n')
 Session.dialog=dialog
 script=Path(sys.argv[1]);sys.argv=sys.argv[1:]
+sys.path.insert(0,str(script.resolve().parent))
 identity={'adapter_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
           'original_driver_sha256':hashlib.sha256((ROOT/'tools/check_linux_host.py').read_bytes()).hexdigest(),
           'unchanged_test':str(script),'unchanged_test_sha256':hashlib.sha256(script.read_bytes()).hexdigest(),

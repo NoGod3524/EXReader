@@ -279,7 +279,8 @@ jobs:
           path: build/summary/
           if-no-files-found: warn
   conflict-windows-offline:
-    needs: verify
+    needs: gtk-return
+    if: ${{ !cancelled() && needs.gtk-return.result == 'success' }}
     runs-on: windows-2022
     timeout-minutes: 45
     env: {PYTHONUTF8: '1'}
@@ -433,7 +434,7 @@ jobs:
             build/windows-final/
             !build/**/key.pem
   conflict-audit:
-    needs: conflict-windows-final
+    needs: [verify, conflict-windows-final]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
