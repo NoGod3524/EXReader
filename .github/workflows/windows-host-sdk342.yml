@@ -73,7 +73,7 @@ jobs:
           if ($LASTEXITCODE) { throw 'metadata configure failed' }
           cmake --build build/organization-consumer --parallel 4
           if ($LASTEXITCODE) { throw 'metadata build failed' }
-          cmake -S tests/windows_organization_projection/cloud -B build/cloud-readback -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 "-DCMAKE_PREFIX_PATH=$prefix"
+          cmake -S tests/windows_organization_projection/cloud -B build/cloud-readback -G Ninja -DCMAKE_BUILD_TYPE=Release "-DEXR_SDK_VERSION=3.42.0" "-DCMAKE_PREFIX_PATH=$prefix"
           if ($LASTEXITCODE) { throw 'readback configure failed' }
           cmake --build build/cloud-readback --parallel 4
           if ($LASTEXITCODE) { throw 'readback build failed' }
