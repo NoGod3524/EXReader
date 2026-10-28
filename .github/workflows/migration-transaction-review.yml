@@ -1,0 +1,73 @@
+name: Independent migration transaction review
+on:
+  push:
+    branches: [codex/migration-transaction-review-tests]
+    paths: ['tests/migration/**', '.github/workflows/migration-transaction-review.yml']
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  review:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, label: linux, py: python3, tx: build/migration/exreader-legacy-migrate-tx, legacy: build/migration/exreader-legacy-migrate, old: build/old-migration/exreader-legacy-migrate, helper: build/helper/review-close-source}
+          - {os: windows-latest, label: windows, py: python, tx: build/migration/Release/exreader-legacy-migrate-tx.exe, legacy: build/migration/Release/exreader-legacy-migrate.exe, old: build/old-migration/Release/exreader-legacy-migrate.exe, helper: build/helper/Release/review-close-source.exe}
+          - {os: macos-15, label: macos, py: python3, tx: build/migration/exreader-legacy-migrate-tx, legacy: build/migration/exreader-legacy-migrate, old: build/old-migration/exreader-legacy-migrate, helper: build/helper/review-close-source}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Build candidate SDK, both migrators and source-owner probe
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 7271829a829bfa6aaa47b73077c493f71af27ad3
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
+          cmake --build build/sdk --config Release --parallel 4
+          cmake --install build/sdk --config Release --prefix "${{ github.workspace }}/stage"
+          cmake -S extras/migration -B build/migration -DEXR_SDK="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/migration --config Release --parallel 4
+          cmake -S tests/migration/review-close -B build/helper -DCMAKE_PREFIX_PATH="${{ github.workspace }}/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/helper --config Release --parallel 4
+      - name: Build actual SDK 3.40 and old migrator
+        run: |
+          set -euo pipefail
+          mkdir -p build/old-source
+          git fetch --no-tags --depth=1 origin c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
+          test "$(git rev-parse FETCH_HEAD)" = c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
+          git archive FETCH_HEAD | tar -xf - -C build/old-source
+          cmake -S build/old-source -B build/old-sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
+          cmake --build build/old-sdk --config Release --parallel 4
+          cmake --install build/old-sdk --config Release --prefix "${{ github.workspace }}/old-stage"
+          cmake -S build/old-source/extras/migration -B build/old-migration -DEXR_SDK="${{ github.workspace }}/old-stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/old-migration --config Release --parallel 4
+      - name: Original 65 scenarios on transaction executable
+        id: scenarios
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          mkdir -p build/review-evidence
+          ${{ matrix.py }} tests/migration/run_cases.py --tool "${{ matrix.tx }}" --out build/review-evidence/scenarios-${{ matrix.label }}.json --workdir build/tx-original-cases --label ${{ matrix.label }} 2>&1 | tee build/review-evidence/scenarios-${{ matrix.label }}.log
+      - name: Independent transactional safety checks
+        id: safety
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/transaction_review.py --tx "${{ matrix.tx }}" --legacy "${{ matrix.legacy }}" --old "${{ matrix.old }}" --close-helper "${{ matrix.helper }}" --work build/review-safety 2>&1 | tee build/review-evidence/safety-${{ matrix.label }}.log
+      - name: Preserve full review results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-transaction-review-${{ matrix.label }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/review-evidence/
+            build/review-safety/
+            build/tx-original-cases/
+          if-no-files-found: warn
+      - name: Reject failing review assertions
+        if: always() && (steps.scenarios.outcome != 'success' || steps.safety.outcome != 'success')
+        run: exit 1
