@@ -39,7 +39,7 @@ public final class OrganizationRelayTest extends Instrumentation {
     }
     private static String text(AccessibilityNodeInfo n){return n.getText()==null?"":n.getText().toString();}
     private void click(String label){target="click "+label;waitFor(n->n.isEnabled()&&text(n).equalsIgnoreCase(label),n->{AccessibilityNodeInfo at=n;while(!at.isClickable()&&at.getParent()!=null)at=at.getParent();need(at.performAction(AccessibilityNodeInfo.ACTION_CLICK),"click "+label);},30000);}
-    private void field(String label,String value){target="field "+label;waitFor(n->label.contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),n->{Bundle b=new Bundle();b.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);need(n.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,b),"field");},30000);}
+    private void field(String label,String value){target="field "+label;waitFor(n->label.contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),n->{if(!n.isEnabled()){need(label.equals("云盘地址")&&text(n).equals(value),"bound account root must remain identical");return;}Bundle b=new Bundle();b.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);need(n.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,b),"field "+label);},30000);}
     private void status(String value){target="status "+value;waitFor(n->"同步状态".contentEquals(n.getContentDescription()==null?"":n.getContentDescription())&&text(n).contains(value),null,180000);}
     private void launch(){target="launch More shelf actions";context.startActivity(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));waitFor(n->"More shelf actions".contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),null,30000);}
     private void configure()throws Exception{click("More");click("同步");click("云盘账号");field("云盘地址",input.getString("root"));field("云盘用户名",input.getString("user"));field("云盘密码",input.getString("password"));click("仅本次使用");status("仅本次使用凭据");}
@@ -53,11 +53,71 @@ public final class OrganizationRelayTest extends Instrumentation {
         Files.write(new File(context.getFilesDir(),"org-"+name+".txt").toPath(),tree.toString().getBytes(StandardCharsets.UTF_8));
     }
     private void sync(){click("立即同步");status("本轮同步结束，书架已更新");click("关闭");}
+    private void syncReceive()throws Exception{
+        click("立即同步");status("本轮同步结束，书架已更新");row("Relay GTK.txt");click("接收");status("书籍已接收");
+        try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getPath())){
+            NativeLibrary.Book[] books=library.books();need(books.length==1,"one explicitly app-received original");
+            java.security.MessageDigest digest=java.security.MessageDigest.getInstance("SHA-256");
+            try(NativeLibrary.Source source=library.source(books[0].id)){
+                need(source.size>0,"received source bytes");byte[] chunk=new byte[65536];
+                for(long offset=0;offset<source.size;){int count=source.read(offset,chunk,(int)Math.min(chunk.length,source.size-offset));need(count>0,"SDK source readable");digest.update(chunk,0,count);offset+=count;}
+            }
+            StringBuilder hash=new StringBuilder();for(byte value:digest.digest())hash.append(String.format(java.util.Locale.ROOT,"%02x",value&255));
+            need(hash.toString().equals(data.getString("original_sha256")),"received public SDK source equals GTK original");
+        }
+        check("explicit_native_receive_and_public_original_hash",()->{});click("关闭");
+    }
+    private void syncExpectedDeletedDependency()throws Exception{
+        click("立即同步");status("书架有冲突或缺少依赖，可继续重试");
+        SyncController controller=SyncController.get(context);
+        java.lang.reflect.Field unresolved=SyncController.class.getDeclaredField("projectUnresolved"),worker=SyncController.class.getDeclaredField("worker");unresolved.setAccessible(true);worker.setAccessible(true);
+        int pending=((java.util.concurrent.ExecutorService)worker.get(controller)).submit(()->unresolved.getInt(controller)).get(30,java.util.concurrent.TimeUnit.SECONDS);
+        need(pending==1,"exactly one expected deferred membership, no other unresolved projection");
+        String memberKey="series:"+data.getString("series")+":"+data.getString("book_key");
+        JSONObject evidence=new JSONObject().put("expected_member_key",memberKey);JSONArray heads=new JSONArray();int dependencies=0;
+        String path=new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath();long owner=NativeCatalog.open(path);
+        try(android.database.sqlite.SQLiteDatabase db=android.database.sqlite.SQLiteDatabase.openDatabase(path,null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY)){
+            try(android.database.Cursor c=db.rawQuery("SELECT count(*) FROM reader_outbox",null)){need(c.moveToFirst()&&c.getLong(0)==0,"no pending or retried outbox rows");}
+            try(android.database.Cursor c=db.rawQuery("SELECT DISTINCT entity_kind,entity_key FROM reader_revisions ORDER BY entity_kind,entity_key",null)){
+                while(c.moveToNext()){
+                    String kind=c.getString(0),key=c.getString(1);String[] selected=NativeCatalog.selection(owner,kind,key);
+                    need(selected.length==4&&selected[0].equals("4"),"every retained entity has one safe complete head: "+kind+" "+key);
+                    JSONObject head=new JSONObject().put("kind",kind).put("key",key).put("revision",selected[3]).put("deleted",selected[1]);
+                    try(android.database.Cursor r=db.rawQuery("SELECT body_json,body_sha256 FROM reader_revisions WHERE revision_id=?",new String[]{selected[3]})){
+                        need(r.moveToFirst(),"retained head bytes");head.put("body",new JSONObject(r.getString(0))).put("body_sha256",r.getString(1));
+                    }
+                    heads.put(head);
+                    if(kind.equals("series")&&key.equals(data.getString("series"))){need(selected[1].equals("1"),"exact series tombstone selected");evidence.put("deleted_group",head);}
+                    if(kind.equals("membership")&&selected[1].equals("0")){
+                        String[] parts=key.split(":",3);need(parts.length==3,"membership key");
+                        String table=parts[0].equals("shelf")?"reader_shelves":parts[0].equals("tag")?"reader_tags":parts[0].equals("series")?"reader_series":"";
+                        need(!table.isEmpty(),"known member kind");
+                        try(android.database.Cursor b=db.rawQuery("SELECT deleted FROM reader_books WHERE book_key=?",new String[]{parts[2]})){need(b.moveToFirst()&&b.getInt(0)==0,"no missing/deleted book dependency");}
+                        try(android.database.Cursor g=db.rawQuery("SELECT deleted FROM "+table+" WHERE "+parts[0]+"_id=?",new String[]{parts[1]})){
+                            need(g.moveToFirst(),"no missing group dependency");if(g.getInt(0)!=0){need(key.equals(memberKey),"no other deleted-group dependency");dependencies++;evidence.put("surviving_membership",head);}
+                        }
+                    }
+                    if(kind.equals("shelf")&&selected[1].equals("0")){
+                        try(android.database.Cursor g=db.rawQuery("SELECT parent_id FROM reader_shelves WHERE shelf_id=?",new String[]{key})){need(g.moveToFirst(),"projected shelf");if(!g.isNull(0)){try(android.database.Cursor parent=db.rawQuery("SELECT deleted FROM reader_shelves WHERE shelf_id=?",new String[]{g.getString(0)})){need(parent.moveToFirst()&&parent.getInt(0)==0,"all active shelf parents present");}}}
+                    }
+                }
+            }
+        }finally{NativeCatalog.close(owner);}
+        need(dependencies==1&&evidence.has("deleted_group")&&evidence.has("surviving_membership"),"only expected dependency retained");
+        evidence.put("all_safe_heads",heads).put("pending_count",pending).put("outbox_count",0);data.put("deleted_dependency_evidence",evidence);
+        shot("expected-deleted-group-dependency");check("one_exact_deleted_group_dependency_no_other_unsafe_or_outbox",()->{});click("关闭");
+    }
     private void organize(){click("More");click("Organize");target="organize New action";waitFor(n->n.isEnabled()&&"New".contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),null,30000);}
     private void kind(int n){click("Kind");click(new String[]{"Shelves","Tags","Series"}[n]);}
     private void create(String name){click("New");field("Name",name);click("Save");visible(name);}
-    private void member(String name)throws Exception{row(name);click("Books");visible("Relay GTK.txt");}
-    private void add(String name){row(name);click("Books");click("Add book");row("Relay GTK.txt");click("Add");visible("Relay GTK.txt");}
+    private void groupAction(String name,String action){
+        row(name);target="group menu "+name+" / "+action;
+        // The background toolbar also has Books/Children buttons. Wait for the
+        // asynchronous group menu's TextView item, never click that toolbar.
+        waitFor(n->n.isEnabled()&&"android.widget.TextView".contentEquals(n.getClassName())&&text(n).equals(action),n->{AccessibilityNodeInfo at=n;while(!at.isClickable()&&at.getParent()!=null)at=at.getParent();need(at.performAction(AccessibilityNodeInfo.ACTION_CLICK),"group action "+action);},30000);
+    }
+    private void member(String name)throws Exception{groupAction(name,"Books");visible("Relay GTK.txt");}
+    private void add(String name){groupAction(name,"Books");click("Add book");row("Relay GTK.txt");click("Add");visible("Relay GTK.txt");}
     private String findId(int kind,String name)throws Exception{return findId(kind,name,"");}
     private String findId(int kind,String name,String parent)throws Exception{
         long owner=NativeCatalog.open(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath());
@@ -73,10 +133,10 @@ public final class OrganizationRelayTest extends Instrumentation {
         }}finally{NativeCatalog.close(owner);}return result;
     }
     private void verifyVisible(boolean finalStage)throws Exception{
-        organize();kind(0);member("GTK parent");click("Children");row("GTK child");click("Books");visible("Relay GTK.txt");shot("child");
+        organize();kind(0);member("GTK parent");click("Children");groupAction("GTK child","Books");visible("Relay GTK.txt");shot("child");
         kind(1);member(finalStage?"Android edited tag":"GTK tag");shot("tag");kind(2);member("GTK series");shot("series");
         if(finalStage){for(int n=0;n<3;n++){kind(n);member(new String[]{"Android shelf","Android tag","Android series"}[n]);shot("android-"+n);}
-            kind(0);row("Android shelf");click("Children");member("Android child");shot("android-child");}
+            kind(0);groupAction("Android shelf","Children");member("Android child");shot("android-child");}
         click("Close");
     }
     @Override public void onStart(){context=getTargetContext();Throwable failure=null;JSONObject rows=null;
@@ -86,15 +146,15 @@ public final class OrganizationRelayTest extends Instrumentation {
             launch();
             if(restart){verifyVisible(true);rows=snapshot();check("process_restart_real_ui_retains_groups_members",()->{});}
             else{
-                configure();sync();verifyVisible(last);check("receive_other_host_native_organization_ui",()->{});
+                configure();syncReceive();verifyVisible(last);check("receive_other_host_native_organization_ui",()->{});
                 JSONObject before=snapshot();configure();sync();need(before.toString().equals(snapshot().toString()),"duplicate sync changed exact organization rows");check("duplicate_sync_has_no_duplicate_rows",()->{});
                 if(!last){
-                    organize();kind(1);row("GTK tag");click("Edit");field("Name","Android edited tag");click("Save");visible("Android edited tag");
+                    organize();kind(1);groupAction("GTK tag","Edit");field("Name","Android edited tag");click("Save");visible("Android edited tag");
                     member("Android edited tag");row("Relay GTK.txt");click("Remove");
-                    kind(2);row("GTK series");click("Delete");click("Delete");click("Removed");visible("GTK series");shot("deleted-series");click("Active");
+                    kind(2);groupAction("GTK series","Delete");click("Delete");click("Removed");visible("GTK series");shot("deleted-series");click("Active");
                     for(int n=0;n<3;n++){kind(n);String name=new String[]{"Android shelf","Android tag","Android series"}[n];create(name);data.put("android_"+n,findId(n,name));add(name);shot("created-"+n);}
-                    kind(0);row("Android shelf");click("Children");create("Android child");data.put("android_child",findId(0,"Android child",data.getString("android_0")));add("Android child");shot("created-child");
-                    click("Close");check("android_native_ui_edits_removes_creates_and_classifies",()->{});configure();sync();check("android_application_publishes_actual_revisions",()->{});
+                    kind(0);groupAction("Android shelf","Children");create("Android child");data.put("android_child",findId(0,"Android child",data.getString("android_0")));add("Android child");shot("created-child");
+                    click("Close");check("android_native_ui_edits_removes_creates_and_classifies",()->{});configure();syncExpectedDeletedDependency();check("android_application_publishes_actual_revisions",()->{});
                 }
                 rows=snapshot();
             }

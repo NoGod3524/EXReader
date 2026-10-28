@@ -43,7 +43,7 @@ def load(path, phase=None):
     return state, hashlib.sha256(raw).hexdigest()
 
 
-def start(folder, previous=None, certificate=None, key=None):
+def start(folder, previous=None, certificate=None, key=None, reuse_base=None):
     identity()
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
@@ -67,7 +67,22 @@ def start(folder, previous=None, certificate=None, key=None):
         trust_fixture_certificates((cert,), 'apple-android-relay-')
     user, password = 'relay-fixture', secrets.token_hex(32)
     authorization = 'Basic ' + base64.b64encode((user + ':' + password).encode()).decode()
-    dav = Dav(cert, private, authorization)
+    if reuse_base is None:
+        dav = Dav(cert, private, authorization)
+    else:
+        from urllib.parse import urlparse
+        base=urlparse(reuse_base)
+        assert base.scheme=='https' and base.hostname=='127.0.0.1' and base.port and not base.path
+        # A resumed native profile retains its immutable exact account root.
+        # Rebind the same loopback endpoint, not the app's account/database.
+        original_server=_service.ThreadingHTTPServer
+        def resumed_server(address,handler):
+            assert address==('127.0.0.1',0)
+            return original_server(('127.0.0.1',base.port),handler)
+        _service.ThreadingHTTPServer=resumed_server
+        try:dav=Dav(cert,private,authorization)
+        finally:_service.ThreadingHTTPServer=original_server
+        assert dav.base==reuse_base
     dav.certificate_sha256 = hashlib.sha256(cert.read_bytes()).hexdigest()
     dav.prior_entries, dav.prior_directories, dav.previous_sha256 = {}, set(), None
     dav.previous = None

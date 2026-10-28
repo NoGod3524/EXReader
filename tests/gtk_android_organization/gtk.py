@@ -1,5 +1,5 @@
 """Actions-only GTK host phases over relayed authentic DAV bytes."""
-import argparse, configparser, hashlib, json, os, re, sqlite3, subprocess, sys, time
+import argparse, configparser, hashlib, json, os, re, sqlite3, subprocess, sys, time, shutil
 from pathlib import Path
 import relay
 ROOT=Path(__file__).resolve().parents[2]
@@ -7,14 +7,31 @@ sys.path.insert(0,str(ROOT/'tools'))
 from check_linux_host import Session, command
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--phase',choices=['gtk-first','gtk-return'],required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--previous',type=Path);p.add_argument('--package',type=Path,required=True);p.add_argument('--inspect',type=Path,required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--phase',choices=['gtk-first','gtk-return'],required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--previous',type=Path);p.add_argument('--origin',type=Path);p.add_argument('--package',type=Path,required=True);p.add_argument('--inspect',type=Path,required=True);a=p.parse_args()
     assert os.environ.get('GITHUB_ACTIONS')=='true' and sys.platform.startswith('linux')
     a.out.mkdir(parents=True,exist_ok=False);data={}
     if a.previous:
         prior,_=relay.load(a.previous,'android');data=prior['data']['relay_data']
     program=a.package/'bin/exreader-linux';identity=hashlib.sha256(program.read_bytes()).hexdigest()
     if a.phase=='gtk-return':assert data['gtk_program_sha256']==identity
-    dav,user,password=relay.start(a.out,a.previous);host=None;checks=[]
+    origin=None
+    if a.phase=='gtk-return':
+        assert a.origin is not None
+        origin,_=relay.load(a.origin/'state.json','gtk-first')
+        assert origin['data']['program_sha256']==identity
+        source=a.origin/'profile';assert source.is_dir()
+        before={str(p.relative_to(source)):hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*') if p.is_file()}
+        shutil.copytree(source,a.out/'profile')
+        # Actions ZIP download normalizes mode bits. Reinstate the native
+        # account contract (private dirs/files) without changing any bytes.
+        (a.out/'profile').chmod(0o700)
+        for entry in (a.out/'profile').rglob('*'):
+            assert not entry.is_symlink()
+            entry.chmod(0o700 if entry.is_dir() else 0o600)
+        after={str(p.relative_to(a.out/'profile')):hashlib.sha256(p.read_bytes()).hexdigest() for p in (a.out/'profile').rglob('*') if p.is_file()}
+        assert before==after
+        (a.out/'resumed-native-profile.json').write_text(json.dumps({'origin_state_sha256':hashlib.sha256((a.origin/'state.json').read_bytes()).hexdigest(),'files':before,'copied_unchanged':True,'private_modes_restored':{'directories':'0700','files':'0600'},'no_app_database_injection':True},indent=2))
+    dav,user,password=relay.start(a.out,a.previous,reuse_base=origin['server']['base'] if origin else None);host=None;checks=[]
     def sql(q,values=()):
         with sqlite3.connect(a.out/'profile/library.sqlite.product.sqlite') as db:return db.execute(q,values).fetchall()
     def state(section):
@@ -41,11 +58,24 @@ def main():
         command('xdotool','windowactivate','--sync',host.window);host.key('F2','ctrl+shift+a');window('Account and Sync')
     def setfield(key,value):host.key('alt+'+key,'ctrl+a');host.paste(value)
     def ready():return state('account').get('owner_busy')=='0' and state('account').get('preparing')=='0'
-    def sync():
+    def sync(expected_dependency=False):
         window('Account and Sync');generation=int(state('account').get('session_generation','0'));host.key('alt+s');wait(lambda:ready() and int(state('account').get('session_generation','0'))>generation and state('account').get('session_state') in ('4','5'))
         assert state('account')['session_state']=='4',state('account')
-        host.key('alt+r');wait(lambda:ready() and state('account').get('phase')=='0' and 'Sync finished. Open a book' in state('account').get('notice',''))
-        assert state('account')['projection_status']=='0',state('account')
+        host.key('alt+r')
+        if expected_dependency:
+            expected='Shelf organization: 0 conflicting or incomplete versions; 1 waiting for related items. Sync or resolve them, then retry'
+            wait(lambda:ready() and state('account').get('phase')=='0' and state('account').get('notice')==expected)
+            evidence=data['deleted_dependency_evidence']
+            assert evidence['pending_count']==1 and evidence['outbox_count']==0
+            assert sql('SELECT count(*) FROM reader_outbox')==[(0,)]
+            for head in evidence['all_safe_heads']:
+                assert sql('SELECT body_sha256 FROM reader_revisions WHERE revision_id=?',(head['revision'],))==[(head['body_sha256'],)]
+            assert sql('SELECT deleted FROM reader_series WHERE series_id=?',(data['series'],))==[(1,)]
+            assert evidence['surviving_membership']['key']=='series:'+data['series']+':'+data['book_key']
+            (a.out/'expected-dependency.json').write_text(json.dumps({'account_ui':state('account'),'incoming_exact_heads':evidence},indent=2))
+        else:
+            wait(lambda:ready() and state('account').get('phase')=='0' and 'Sync finished. Open a book' in state('account').get('notice',''))
+            assert state('account')['projection_status']=='0',state('account')
     def close_account():
         window('Account and Sync');host.key('alt+F4');window('Account and Sync',False)
         wait(lambda:state('account').get('session_present')=='0')
@@ -117,13 +147,13 @@ def main():
         host.key('alt+a');window('Book classification');host.key('Return');window('Book classification',False)
         wait(lambda:state('collections').get('member_keys')==data['book_key'])
     def close_collections():host.key('alt+F4');window('Library collections',False)
-    def connected_sync():
+    def connected_sync(expected_dependency=False):
         account();setfield('w',dav.base+'/dav/');setfield('u',user);setfield('p',password);host.key('alt+h','alt+a')
-        wait(lambda:ready() and state('account').get('bound')=='1');sync();close_account()
+        wait(lambda:ready() and state('account').get('bound')=='1');sync(expected_dependency);close_account()
     def capture_rows():
         return {table:sql('SELECT * FROM '+table) for table in ('reader_shelves','reader_tags','reader_series','reader_book_shelves','reader_book_tags','reader_book_series')}
     try:
-        host=Session(program.resolve(),(a.package/'Reader.otf').resolve(),a.out);(a.out/'profile').mkdir(mode=0o700);host.launch()
+        host=Session(program.resolve(),(a.package/'Reader.otf').resolve(),a.out);(a.out/'profile').mkdir(mode=0o700,exist_ok=True);host.launch()
         if a.phase=='gtk-first':
             book=a.out/'Relay GTK.txt';book.write_bytes(('GTK organization relay original.\n'*80).encode());digest=hashlib.sha256(book.read_bytes()).hexdigest()
             import_local(book);data.update(book_key='txt:'+digest,original_sha256=digest,gtk_program_sha256=identity)
@@ -136,7 +166,7 @@ def main():
             close_collections();checks.append('gtk_ui_authors_parent_child_tag_series_and_memberships')
             connected_sync();checks.append('gtk_application_publishes_authenticated_revisions_and_original')
         else:
-            connected_sync();collections()
+            connected_sync(expected_dependency=True);checks.append("exact_deleted_group_dependency_visible_no_other_pending");collections()
             select(data['shelf']);assert state('collections')['selected_name']=='GTK parent'
             host.key('alt+e');wait(lambda:state('collections').get('parent_id')==data['shelf']);select(data['child']);screenshot('gtk-child-return')
             assert state('collections')['member_keys']==data['book_key']

@@ -539,6 +539,10 @@ jobs:
         with:
           name: org-android-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/org-input
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/org-gtk-first
       - name: Verify same-round package and install GTK runtime
         run: |
           cd build/package
@@ -552,7 +556,7 @@ jobs:
         run: |
           xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
             openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT
-            python3 tests/gtk_android_organization/gtk.py --phase gtk-return --previous build/org-input/state.json --out build/org-gtk-return --package build/package --inspect build/package/received-sdk-inspect
+            python3 tests/gtk_android_organization/gtk.py --phase gtk-return --previous build/org-input/state.json --origin build/org-gtk-first --out build/org-gtk-return --package build/package --inspect build/package/received-sdk-inspect
           '
       - uses: actions/upload-artifact@v4
         if: always()
