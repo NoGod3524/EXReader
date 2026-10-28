@@ -84,6 +84,12 @@ class Contract(unittest.TestCase):
         self.assertEqual(C.archive_compile_sources(graph, ['libowner.a']), ['/src/a.cpp'])
         with self.assertRaises(ValueError): C.archive_compile_sources(graph, ['missing.a'])
 
+    def test_generated_config_indented_closing_parenthesis(self):
+        text = ('set_target_properties(Owner::lib PROPERTIES\n'
+                '  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libowner.a"\n  )\n')
+        self.assertEqual([(target, body.strip()) for target, body in C.target_properties(text)], [('Owner::lib', 'IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libowner.a"')])
+        self.assertEqual(C.target_properties('set_target_properties(Owner::lib PROPERTIES incomplete'), [])
+
     def test_original_contract_isolated_and_pinned(self):
         import sys
         before = sys.modules.get('contract')
