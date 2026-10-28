@@ -359,6 +359,7 @@ def main():
         directories.add('/dav/exreader-sync-v1/revisions/00/');entries[path] = payload
         entries['/dav/exreader-sync-v1/objects/' + digest[:2] + '/' + digest + '.txt'] = remote_body
         pause_next();scan();assert blocked.wait(40)
+        ready(lambda s: s['session_state'] == '1' and int(s['attempt']) > 0)
         capture_status('syncing', 'none')
         ticks = int(account()['ticks']);time.sleep(.7)
         assert int(account()['ticks']) > ticks and account()['cancel_enabled'] == '1'
