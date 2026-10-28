@@ -2,6 +2,10 @@ name: Apple composition shelf performance observation
 on:
   push:
     branches: [codex/terra-wave-product-performance]
+    paths-ignore:
+      - '.github/workflows/reader-composition-perf-android.yml'
+      - 'tests/reader_perf_android/**'
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       scope:
