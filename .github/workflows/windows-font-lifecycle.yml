@@ -1,0 +1,38 @@
+name: Windows font candidate retained checks
+on:
+  push:
+    branches: [codex/terra-wave-windows-font]
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+      EXR_COMPOSITION_CONTENT_BOUND: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build and run retained native Windows checks
+        shell: pwsh
+        run: |
+          python tests/reader_wave3_c09/build.py
+          if ($LASTEXITCODE) { throw 'Windows retained checks failed' }
+      - name: Preserve results and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-font-retained-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c09/report.json
+            build/c09/desktop.json
+            build/c09/logs/
+            build/c09/compact22/
+            build/c09/extracted-ui/
+            build/c09/package/build.json
+            build/c09/package/report.json
+            build/c09/raw-owner-suite/
+          if-no-files-found: warn
