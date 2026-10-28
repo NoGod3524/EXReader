@@ -129,6 +129,19 @@ def main():
             assert rc == 0, (out, err)
             rc, out, err = call(a.tool, 'migrate', '--pack', crash_pack, '--target', target)
             assert rc == 0, (out, err)
+            db = sqlite3.connect(target)
+            ledger = db.execute('SELECT data FROM exr_migration_ledger WHERE id=1').fetchone()[0]
+            damaged = b'{"format":"exreader-legacy-map","version":99,"books":[],"notes":[]}'
+            db.execute('UPDATE exr_migration_ledger SET data=? WHERE id=1', (damaged,))
+            db.commit()
+            db.close()
+            rc, out, err = call(a.tool, 'migrate', '--pack', crash_pack, '--target', target)
+            assert rc == 2 and json.loads(out)['code'] == 'ledger-unknown-version', (out, err)
+            db = sqlite3.connect(target)
+            assert db.execute('SELECT count(*) FROM books').fetchone()[0] == 2
+            assert db.execute('SELECT data FROM exr_migration_ledger WHERE id=1').fetchone()[0] == damaged
+            db.execute('UPDATE exr_migration_ledger SET data=? WHERE id=1', (ledger,))
+            db.commit();db.close()
             checks.append({'schema':schema,'journal':mode,'passed':True})
             print('PASS', checks[-1], flush=True)
     report = {'source_sha':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
