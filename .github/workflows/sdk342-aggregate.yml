@@ -1,5 +1,7 @@
 name: SDK 3.42 same-run aggregate admission
 on:
+  push:
+    branches: [codex/sdk342-six-source-20261028]
   workflow_dispatch:
 permissions:
   contents: read
