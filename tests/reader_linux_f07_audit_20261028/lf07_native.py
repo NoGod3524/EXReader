@@ -43,6 +43,8 @@ def audit(folder, inventory, F):
     final_dynamic = C.symbols(inspect('final-dynsym', program, flags=('-D', '--no-demangle')))
     loader = dynamic('final', program)
     inspect('final-elf-header', program, 'readelf', ('-h',))
+    section_text = inspect('final-elf-sections', program, 'readelf', ('-W', '-S'))
+    ranges = C.map_ranges((folder / F.MAP).read_text())
     inspect('final-elf-symbols', program, 'readelf', ('-Ws',))
     inspect('final-elf-versions', program, 'readelf', ('-V',))
 
@@ -140,7 +142,7 @@ def audit(folder, inventory, F):
         manifests[package] = dict(path=path.relative_to(folder).as_posix(), files=names,
             source_root=home, compile_sources=source_paths, generated_or_vendor_sources=external_sources, raw_candidate='EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=ON' in cache)
         for name in names:
-            if '/include/' not in name or not name.endswith(('.h', '.hpp')): continue
+            if '/include/' not in name: continue
             C.require(name not in header_owners, 'installed public header has multiple package owners')
             header_owners[name] = package
             text = (folder / name).read_text()
@@ -149,8 +151,7 @@ def audit(folder, inventory, F):
             else:
                 public.setdefault(package, set()).update(C.public_entries(text))
     C.require(set(manifests) == set(owners.values()), 'exported package missing exact installed header manifest')
-    installed_headers = {p.relative_to(folder).as_posix() for p in (folder / F.RAW / 'include').rglob('*')
-                         if p.is_file() and p.suffix in ('.h', '.hpp')}
+    installed_headers = {p.relative_to(folder).as_posix() for p in (folder / F.RAW / 'include').rglob('*') if p.is_file()}
     C.require(installed_headers == set(header_owners), 'unowned installed header')
     header_uses, visited = [], set()
     # Recursively follow source-local/installed includes from the exact archive
@@ -198,17 +199,41 @@ def audit(folder, inventory, F):
     for i, name in enumerate(host_inputs):
         tables[name] = C.symbols(inspect('host-input-%03d' % i, folder / name)); owners[name] = 'GTKHost'
     dependencies['GTKHost'] = {'EXReader'} | {owners[p] for p in loads if p in owners and owners[p] != 'GTKHost'}
-    private = C.module_findings(tables, owners, public, dependencies, sdk_definitions, system)
+    linker_proofs = C.linker_resolutions(full, ranges, C.elf_got_sections(section_text),
+        inventory['final_map_inputs']['system'])
+    # Installed SDK private SQLite is a possible archive provider, not the
+    # selected final owner. Disambiguate each public SQLite call independently
+    # using its actual final address and exact archive/member map, not a prefix.
+    sqlite_selected, sqlite_proofs = {}, {}
+    needed = set().union(*(set(t['undefined']) for t in tables.values()))
+    for name in sorted(needed & public.get('EXReaderProductCatalog', set())):
+        if not name.startswith('sqlite3_'): continue
+        rows = [r for r in full['rows'] if r['name'] == name and not r['undefined']]
+        if len(rows) != 1: continue
+        try: origin = C.symbol_owner(rows[0], ranges)
+        except ValueError: continue
+        archive = origin.split('(', 1)[0]
+        path = os.path.normpath(archive if Path(archive).is_absolute() else workspace + '/' + F.HOST + '/' + archive)
+        expected = F.RAW + '/lib/libreader_catalog_sqlite.a'
+        if path != workspace + '/' + expected or expected not in loads or module_owners.get(expected) != 'EXReaderProductCatalog': continue
+        if not C.archive_member_defines(name, origin, tables[expected]): continue
+        sqlite_selected[name] = 'EXReaderProductCatalog'
+        sqlite_proofs[name] = dict(object=origin, address=rows[0]['address'], archive=expected,
+            sha256=C.digest(folder / expected), owner='EXReaderProductCatalog', exact_archive_member_definition=True)
+    private = C.module_findings(tables, owners, public, dependencies, sdk_definitions, system,
+        selected_providers=sqlite_selected, linker_resolved=linker_proofs)
+    C.save(C.OUT / 'explicit-linkage-resolutions.json', dict(linker=linker_proofs, public_sqlite=sqlite_proofs))
+    print(json.dumps(dict(explicit_linkage_resolutions=dict(linker=linker_proofs, public_sqlite=sqlite_proofs)), sort_keys=True), flush=True)
     boundaries = dict(C.identity(), owners=owners, installed_targets=targets, export_configs=configs,
         dependencies={k: sorted(v) for k, v in dependencies.items()}, public={k: sorted(v) for k, v in public.items()},
         manifests=manifests, header_owners=header_owners, explicitly_private_headers=private_headers,
-        private_imports=private, private_header_dependencies=header_uses)
+        private_imports=private, private_header_dependencies=header_uses,
+        explicit_linker_resolutions=linker_proofs, selected_public_sqlite_providers=sqlite_proofs)
     C.save(C.OUT / 'module-boundaries.json', boundaries)
     print(json.dumps(dict(private_imports={k: v for k, v in private.items() if v}, private_header_dependencies=header_uses), sort_keys=True), flush=True)
 
     # Full nm (not only dynamic/-g) and allocated GNU section extents attribute
     # the actual final definitions to exact retained archive/member bytes.
-    ranges = C.map_ranges((folder / F.MAP).read_text())
     project_definitions = {p: set(t['global_defined']) for p, t in {**sdk_tables, **tables}.items()}
     final_undefined = C.final_undefined_findings(full, final_dynamic, project_definitions, system_rows)
     provider_findings, symbol_owners = [], {}

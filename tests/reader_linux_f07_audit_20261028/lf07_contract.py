@@ -89,11 +89,11 @@ def symbols(text):
             require(line.endswith(':') and not re.search(r'\s', line.strip()), 'unrecognized nm row: ' + line)
             member = line[:-1]; continue
         address, kind, versioned = match.groups()
-        require(kind in 'ABCDGIRSTUVWabcdgirstuvwNn', 'unsupported nm symbol kind: ' + kind)
+        require(kind in 'ABCDGRSTUVWabcdgirstuvwNn', 'unsupported nm symbol kind: ' + kind)
         name = versioned.split('@', 1)[0]
         missing = kind in ('U', 'w', 'v')
         rows.append(dict(name=name, versioned=versioned, kind=kind, undefined=missing,
-            global_definition=not missing and (kind.isupper() or kind in ('u', 'i')),
+            global_definition=not missing and kind in 'ABCDGRSTVWui',
             address=int(address, 16) if address else None, member=member))
     require(rows, 'empty/unrecognized native table')
     return dict(rows=rows, defined=sorted({r['name'] for r in rows if not r['undefined']}),
@@ -103,12 +103,16 @@ def symbols(text):
 
 def public_entries(text, sdk=False):
     # Conservative C ABI declarations only. No prefix-wide or C++-helper waiver.
-    text = re.sub(r'/\*.*?\*/|//[^\n]*', '', text, flags=re.S)
+    text = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|/\*.*?\*/|//[^\n]*',
+        lambda m: m.group() if m.group()[0] in ('"', "'") else '\n' * m.group().count('\n') + ' ', text, flags=re.S)
     text = re.sub(r'^\s*#(?:[^\n]*\\\n)*[^\n]*', '', text, flags=re.M)
+    text = declaration_surface(text)
     names = set()
     for match in re.finditer(r'(?:(?<=;)|(?<={)|(?<=})|\A)\s*([^;{}()]+?)\b([A-Za-z_]\w*)\s*\(([^;{}]*)\)\s*;', text, re.S):
         prefix, name, _ = match.groups()
-        if re.search(r'\b(?:typedef|static|inline|namespace|template|class)\b|=', prefix): continue
+        if re.search(r'\b(?:typedef|static|inline|namespace|template|class|return|throw|co_return|goto|case|if|else|for|while|do|switch|break|continue|try|catch|new|delete|sizeof|alignof|decltype|static_assert|_Static_assert)\b|=', prefix): continue
+        type_prefix = re.sub(r'\bextern\s+"C"\s*', '', prefix).strip()
+        if not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9\s*]*', type_prefix): continue
         if sdk and not (re.search(r'\bEXR_API\b', prefix) and name.startswith('exr_')): continue
         names.add(name)
     # Public SQLite version data is declared, not a sqlite3_* blanket allowance.
@@ -116,7 +120,8 @@ def public_entries(text, sdk=False):
     return names
 
 
-def module_findings(tables, owners, public, dependencies, sdk_definitions, system):
+def module_findings(tables, owners, public, dependencies, sdk_definitions, system, selected_providers=None, linker_resolved=()):
+    selected_providers = selected_providers or {}
     definitions = {'EXReader': set(sdk_definitions)}
     for path, table in tables.items(): definitions.setdefault(owners[path], set()).update(table['global_defined'])
     result = {}
@@ -130,10 +135,14 @@ def module_findings(tables, owners, public, dependencies, sdk_definitions, syste
         findings = []
         for name in sorted(set(table['undefined']) - own):
             providers = {p for p, names in definitions.items() if name in names}
+            if name in linker_resolved and not providers: continue
             public_providers = {p for p in providers if p in reachable and name in public.get(p, set())}
             # A different package's private symbol cannot be laundered through a
             # same-spelled public declaration or another provider's system symbol.
             if len(providers) == 1 and public_providers == providers: continue
+            # Selection must be established by the actual final symbol/map, not
+            # whichever installed candidate happens to offer the same name.
+            if selected_providers.get(name) in public_providers: continue
             if not providers and name in system: continue
             # Standard ABI names still need an actually observed platform export.
             # This never exempts an arbitrary private/nonprefixed C++ helper.
@@ -217,3 +226,61 @@ def target_properties(text):
     # Generated *Targets-release.cmake indents its closing parenthesis, unlike
     # the principal *Targets.cmake. Whitespace changes no owner/location rule.
     return re.findall(r'set_target_properties\(([A-Za-z0-9_:]+)\s+PROPERTIES\s+(.*?)\n\s*\)', text, re.S)
+
+
+def declaration_surface(text):
+    """Remove opaque brace bodies; retain extern-C declaration scopes only."""
+    tokens = re.findall(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[{}]|[^{}"\']+', text)
+    output, scopes = [], []
+    for token in tokens:
+        visible = all(scopes)
+        if token == '{':
+            is_linkage = visible and re.search(r'extern\s+"C"\s*$', ''.join(output)) is not None
+            scopes.append(is_linkage)
+            if visible: output.append('{')
+        elif token == '}':
+            require(scopes, 'unbalanced installed header braces')
+            scopes.pop()
+            if all(scopes): output.append('}')
+        elif visible:
+            if token.startswith(('"', "'")) and not (token == '"C"' and re.search(r'\bextern\s*$', ''.join(output))):
+                output.append(' ')
+            else:
+                output.append(token)
+    require(not scopes, 'unclosed installed header body')
+    return ''.join(output)
+
+
+def elf_got_sections(text):
+    sections = []
+    for name, address, size, flags in re.findall(
+            r'^\s*\[\s*\d+\]\s+(\.got(?:\.plt)?)\s+\S+\s+([0-9a-fA-F]+)\s+[0-9a-fA-F]+\s+([0-9a-fA-F]+)\s+[0-9a-fA-F]+\s+([A-Z]+)\s+', text, re.M):
+        require('A' in flags, 'GOT section must be allocated')
+        sections.append(dict(name=name, start=int(address, 16), size=int(size, 16)))
+    return sections
+
+
+def linker_resolutions(full, ranges, sections, system_loads):
+    """Two exact ABI symbols need actual final definitions, never name-only waiver."""
+    proofs = {}
+    for name in ('_GLOBAL_OFFSET_TABLE_', '__dso_handle'):
+        rows = [r for r in full['rows'] if r['name'] == name and not r['undefined']]
+        if len(rows) != 1 or rows[0]['kind'] not in ('d', 'D'): continue
+        row = rows[0]
+        if name == '_GLOBAL_OFFSET_TABLE_':
+            containing = [s for s in sections if s['start'] <= row['address'] < s['start'] + s['size']]
+            if len(containing) == 1: proofs[name] = dict(address=row['address'], got_section=containing[0])
+        else:
+            try: owner = symbol_owner(row, ranges)
+            except ValueError: continue
+            if owner in system_loads and Path(owner).name in ('crtbegin.o', 'crtbeginS.o'):
+                proofs[name] = dict(address=row['address'], exact_map_crt_object=owner)
+    return proofs
+
+
+def archive_member_defines(name, origin, table):
+    """Map-selected archive(member) must contain this exact global definition."""
+    match = re.fullmatch(r'(.+\.a)\(([^()\n]+)\)', origin)
+    if match is None: return False
+    rows = [r for r in table['rows'] if r['name'] == name and r['global_definition']]
+    return len(rows) == 1 and rows[0]['member'] == match[2]
