@@ -42,19 +42,14 @@ def audit(raw, inventory, source):
     build_packages = {}
     for label in module_builds:
         path = C.BUILD + label + '/install_manifest.txt'
-        names = [C.exact_path(line, source['workspace']) for line in (raw / path).read_text(encoding='utf-8-sig').splitlines()]
-        C.require(len(set(names)) == len(names) and set(names) <= set(inventory),
-                  'manifest duplicate/unretained input: ' + json.dumps(dict(
-                      manifest=path, operation_rows=len(names), distinct_files=len(set(names)),
-                      repeated_exact_paths={name: names.count(name) for name in sorted(set(names)) if names.count(name) > 1},
-                      unretained=sorted(set(names) - set(inventory)),
-                      spelling_aliases={key: sorted({name for name in names if name.casefold() == key})
-                                        for key in sorted({name.casefold() for name in names})
-                                        if len({name for name in names if name.casefold() == key}) > 1}), sort_keys=True))
+        operations = (raw / path).read_text(encoding='utf-8-sig').splitlines()
+        names, repeated = C.install_entries(operations, source['workspace'], inventory)
         packages = {owners[name] for name in names if name in owners}
         C.require(packages, 'install manifest lacks exported package owner')
         build_packages[label] = packages
-        manifests[label] = dict(path=path, packages=sorted(packages), files=names)
+        manifests[label] = dict(path=path, packages=sorted(packages), files=names,
+                               operation_rows=len(operations), repeated_exact_paths=repeated)
+        if repeated: print(json.dumps(dict(install_manifest=path, repeated_exact_paths=repeated), sort_keys=True), flush=True)
         for name in names:
             if '/include/' not in name: continue
             C.require(name not in header_owners, 'header has multiple install-manifest owners')

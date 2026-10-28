@@ -279,6 +279,22 @@ def installed_exports(configurations, libraries):
     return owners, archive_targets, dependencies
 
 
+def install_entries(lines, workspace, inventory):
+    # Actual CMake SDK manifest repeats identical WebP installation operations.
+    # Preserve their counts; assign each retained final file once in this manifest.
+    # Different spellings and ownership from another manifest remain forbidden.
+    names = [exact_path(line, workspace) for line in lines]
+    require(names and set(names) <= set(inventory),
+            'unretained installed file: ' + str(sorted(set(names) - set(inventory))))
+    aliases, spellings, counts = {}, {}, {}
+    for line, name in zip(lines, names):
+        key = name.casefold()
+        require(key not in aliases or aliases[key] == name, 'installed path spelling alias')
+        require(name not in spellings or spellings[name] == line, 'installed operation spelling alias')
+        aliases[key] = name; spellings[name] = line; counts[name] = counts.get(name, 0) + 1
+    return list(dict.fromkeys(names)), {name: count for name, count in counts.items() if count > 1}
+
+
 def private_imports(tables, owners, public, dependencies, image_imports):
     definitions = {}
     for name, table in tables.items(): definitions.setdefault(owners[name], set()).update(table['defined'])

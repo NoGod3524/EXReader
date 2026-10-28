@@ -41,6 +41,15 @@ class Contract(unittest.TestCase):
             C.installed_exports({path: configs[path].replace('WebP::', 'Other::')}, {prefix + '/lib/libwebp.lib'})
         with self.assertRaises(ValueError): C.installed_exports(configs, {prefix + '/lib/libwebp.lib', prefix + '/lib/hidden.lib'})
 
+    def test_repeat_install_operation_not_an_extra_file_or_owner(self):
+        names, repeats = C.install_entries(['D:/repo/include/a.h'] * 2, 'D:/repo', {'include/a.h'})
+        self.assertEqual(names, ['include/a.h']); self.assertEqual(repeats, {'include/a.h': 2})
+        with self.assertRaises(ValueError): C.install_entries(['D:/repo/include/missing.h'], 'D:/repo', {'include/a.h'})
+        with self.assertRaises(ValueError):
+            C.install_entries(['D:/repo/include/a.h', 'D:/repo/include/A.h'], 'D:/repo', {'include/a.h', 'include/A.h'})
+        with self.assertRaises(ValueError):
+            C.install_entries(['D:/repo/include/a.h', 'D:\\repo\\include\\a.h'], 'D:/repo', {'include/a.h'})
+
     def test_owner_declaration_dependency_all_required(self):
         tables = {'a': dict(defined=['own'], undefined=['reader_public', '?helper@@', 'weak_helper']),
                   'b': dict(defined=['reader_public', '?helper@@', 'weak_helper'], undefined=[])}
