@@ -42,3 +42,12 @@ failed on the runner display. Raw artifact 12792987862 is retained. The current
 route now invokes the existing supported-mode display preparation before the
 legacy Windows build and preserves actual mode/work-area readback. No threshold
 or old test was changed; the next round must independently prove the correction.
+
+Second round 40636352386 at ff819bb3368f3be814ee044f514515e700718ab4
+passed original compact22 and J01 cloud47, then J10 stopped at its unchanged
+schema-v1 assertion (check_bulk.py:135). Current catalog.c explicitly establishes
+schema v3. The next round retains that failure and independently runs downstream
+checks when their already-built dependencies exist. A read-only Actions diagnostic
+records actual SQLite identity/version; it does not alter the fixture or grant J10.
+The overall gate stays red until the old/new schema acceptance contract is resolved
+by the responsible coordinator. No schema or original judge change is made here.

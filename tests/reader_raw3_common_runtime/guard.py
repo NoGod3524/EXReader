@@ -50,6 +50,9 @@ def validate_tree(baseline, current, extensions=None):
 
 def project_workflow(text):
     # Current route retains the complete historical job projection verbatim.
+    text = text.replace("      - name: Preserve actual legacy bulk schema disagreement\n        if: ${{always() && steps.current_dependencies.outcome == 'success'}}\n        run: python3 tests/windows_common_gate/diagnose.py\n", '')
+    text = text.replace("        id: current_dependencies\n", '')
+    text = text.replace("        if: ${{always() && steps.current_dependencies.outcome == 'success'}}\n", '')
     text = text.split('\n# CURRENT_WINDOWS_EXTRA_JOBS\n', 1)[0]
     text = text.replace('branches: [codex/reader-raw3-common-integration, codex/dot-windows-common-gate]',
                         'branches: [codex/reader-raw3-common-integration]')

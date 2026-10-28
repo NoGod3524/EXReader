@@ -38,15 +38,18 @@ def main():
         return archive
     try:
         needs = json.loads(os.environ['JOB_RESULTS'])
-        require(set(needs) == {'search','summary','current_native','current_fonts'} and all(v['result'] == 'success' for v in needs.values()), 'A required original/current job failed or was skipped')
+        require(set(needs) == {'search','summary','current_native','current_fonts'}, 'Required job set changed')
+        result['job_results'] = {name: row['result'] for name, row in needs.items()}
+        all_success = all(v['result'] == 'success' for v in needs.values())
         workflow = fetch('actions/runs/' + str(run))
         require(workflow['head_sha'] == source and workflow['path'] == '.github/workflows/reader-raw3-common-windows.yml' and workflow['head_branch'] == 'codex/dot-windows-common-gate', 'Foreign workflow/source/branch')
         jobs = fetch('actions/runs/%d/attempts/%d/jobs?per_page=100' % (run, attempt))['jobs']
         expected = {'installed F1 and native Windows search controls and lifecycle', 'same-source native Windows search artifact authentication', 'current_native', 'current_fonts'}
         for name in expected:
             producer, = [job for job in jobs if job['name'] == name]
-            require(producer['head_sha'] == source and producer['run_attempt'] == attempt and producer['conclusion'] == 'success', 'Incomplete producer: ' + name)
-            require(all(step['conclusion'] in ('success','skipped') for step in producer['steps']), 'Hidden step failure')
+            require(producer['head_sha'] == source and producer['run_attempt'] == attempt and producer['status'] == 'completed', 'Foreign or incomplete producer: ' + name)
+            if name in ('current_native', 'current_fonts'):
+                require(producer['conclusion'] == 'success' and all(step['conclusion'] in ('success','skipped') for step in producer['steps']), 'Current producer failed: ' + name)
         original = artifact('ORIGINAL', 'reader-windows-search-initial-%d-%d' % (run, attempt))
         origin = json.loads(original.read('windows-341-guard/current-source.json'))
         require(origin['source_sha'] == source and origin['authorized_common_base'] == 'aefe6107f8f073847f0ed590f0ad9602fa720f3d' and origin['authorized_sdk_source'] == '5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9' and str(origin['run_id']) == str(run) and str(origin['attempt']) == str(attempt), 'Current source grant missing')
@@ -65,8 +68,10 @@ def main():
         for name, count in [('report.json',8),('txt/report.json',5)]:
             report = json.loads(fonts.read('evidence/' + name)); identity(report)
             require(not report['problems'] and len(report['checks']) == count and all(c['passed'] is True for c in report['checks']) and report['program_sha256'] == digest, 'Font report mismatch')
-        result.update(accepted=True, original_OFF_F3_atomic13=True, c09=c09, forward=forward, font_binding=binding,
+        result.update(accepted=all_success, original_OFF_F3_atomic13=needs['summary']['result'] == 'success', c09=c09, forward=forward, font_binding=binding,
                       scope='Current common source: original OFF/F1/F2/records/import/account/compact/F3/atomic13, C09/TXT/from-first/SDK7, fonts8+5; separate real Windows configurations, not one substituted executable')
+        if not all_success:
+            result['problems'].append('Original required gates failed; current independent evidence authenticated, no overall grant')
     except Exception as error:
         result['problems'].append(type(error).__name__ + ': ' + str(error))
     finally:

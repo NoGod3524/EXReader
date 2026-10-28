@@ -13,7 +13,7 @@ WORKFLOW = '.github/workflows/reader-raw3-common-windows.yml'
 MODIFIED = {WORKFLOW, 'tests/reader_raw3_common_runtime/guard.py',
             'tests/reader_raw3_common_runtime/windows_verify.py'}
 ADDED = {'tests/windows_common_gate/' + name for name in
-         ('guard.py', 'identity.py', 'verify_341.py', 'verify.py', 'authenticate.py')}
+         ('guard.py', 'identity.py', 'verify_341.py', 'verify.py', 'authenticate.py', 'diagnose.py')}
 ADDED.add('docs/windows-common-gate/README.md')
 
 

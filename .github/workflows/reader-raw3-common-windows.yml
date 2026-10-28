@@ -123,6 +123,7 @@ jobs:
           python3 tests/reader_windows_preferences/make_fixtures.py --output build/compact-fixtures
           python3 tests/reader_windows_compact/check_ui.py --candidate build/compact-host/EXReaderProduct.exe --font build/host-font-cache/Reader.otf --fixtures build/compact-fixtures --output build/compact-ui
       - name: Build installed cloud import and bulk independent consumers
+        id: current_dependencies
         run: |
           for module in reader_webdav_import reader_bulk_organization; do
             consumer="tests/$module/consumer"
@@ -135,16 +136,22 @@ jobs:
           set -o pipefail
           python3 tests/reader_webdav_import/check_cloud_import.py --probe build/wio-reader_webdav_import/cloud-probe.exe --cxx build/wio-reader_webdav_import/cloud-cpp-consumer.exe --review-probe build/wio-reader_webdav_import/cloud-review-probe.exe --fixtures tests/fixtures --module-prefix build/winsearch-stage --output build/wio-cloud-module
           python3 tests/reader_bulk_organization/check_bulk.py --probe build/wio-reader_bulk_organization/bulk-probe.exe --c-consumer build/wio-reader_bulk_organization/bulk-c-consumer.exe --link-map build/wio-reader_bulk_organization/bulk-link.map --output build/wio-bulk-module
+      - name: Preserve actual legacy bulk schema disagreement
+        if: ${{always() && steps.current_dependencies.outcome == 'success'}}
+        run: python3 tests/windows_common_gate/diagnose.py
       - name: Execute installed original F1 C and C++ consumers
+        if: ${{always() && steps.current_dependencies.outcome == 'success'}}
         run: |
           python3 tests/reader_search/make_search_fixtures.py build/ws-search-fixtures
           python3 tests/reader_search/check_search.py --probe build/ws-search-consumer/search-probe.exe --c-consumer build/ws-search-consumer/search-c-consumer.exe --fixtures build/ws-search-fixtures --font tests/fixtures/fonts/primary.ttf --installed build/winsearch-stage --output build/ws-search-module-evidence
       - name: Package and execute initial real Win32 TXT controls
+        if: ${{always() && steps.current_dependencies.outcome == 'success'}}
         id: initial
         run: |
           python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/ws-host/EXReaderProduct.exe --output build/ws-package --static-reading
           python3 tests/reader_windows_search/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-ui
       - name: Execute EPUB, PDF, provider refusal and live cancellation on the shared native host
+        if: ${{always() && steps.current_dependencies.outcome == 'success'}}
         id: formats
         run: |
           python3 tests/reader_windows_search/check_formats.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --fixtures build/ws-search-fixtures --output build/ws-search-formats
@@ -155,11 +162,13 @@ jobs:
           python3 -m pip install "uiautomation==2.0.29"
           python3 tests/reader_windows_search/check_keyboard.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-keyboard
       - name: Compile navigation without optional search
+        if: ${{always() && steps.current_dependencies.outcome == 'success'}}
         run: |
           set -o pipefail
           cmake -S apps/reader/windows-account -B build/ws-navigation-only -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=OFF -DEXR_READER_WINDOWS_NAVIGATION=ON
           cmake --build build/ws-navigation-only --parallel 4 --verbose
       - name: Execute installed F2 and real native directory controls
+        if: ${{always() && steps.current_dependencies.outcome == 'success'}}
         run: |
           set -o pipefail
           python3 -m py_compile tests/reader_windows_navigation/guard.py tests/reader_windows_navigation/check_ui.py tests/reader_windows_navigation/verify.py
@@ -206,6 +215,7 @@ jobs:
           python3 tests/reader_windows_account/check_account_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revisions-consumer/revision-consumer.exe --capture-probe build/account-capture/reading-capture-probe.exe --reading-fixtures build/account-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/ws-host/windows-host.map --output build/account-ui
           python3 tests/reader_windows_account/check_a11y_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --fixtures build/account-reading-fixtures --output build/account-a11y
       - name: Independently compile the frozen 3.40 option-off pixel baseline
+        if: ${{always() && steps.current_dependencies.outcome == 'success'}}
         run: |
           set -euo pipefail
           mkdir -p build/frozen-sdk
@@ -232,15 +242,18 @@ jobs:
           cp build/ws-host/windows-host.map build/wprefs-host/windows-host.map
           cp build/ws-host/CMakeCache.txt build/wprefs-host/CMakeCache.txt
       - name: Execute real native F3 settings, page theme and persistence
+        if: ${{always() && steps.current_dependencies.outcome == 'success'}}
         id: preferences
         run: |
           python3 -m pip install "uiautomation==2.0.29"
           python3 tests/reader_windows_preferences/make_fixtures.py --output build/wprefs-fixtures
           python3 tests/reader_windows_preferences/check_ui.py --candidate build/wprefs-package/EXReader/EXReader.exe --baseline build/baseline-package/EXReader/EXReader.exe --font build/wprefs-package/EXReader/Reader.otf --fixtures build/wprefs-fixtures --output build/wprefs-ui
       - name: All thirteen actual atomic commit checks and old-veto negative control on SDK3.41
+        if: ${{always() && steps.current_dependencies.outcome == 'success'}}
         run: |
           python3 tests/reader_windows_preferences/check_commit.py --candidate build/ws-host/EXReaderPreferencesCommitReview.exe --control build/ws-host/EXReaderPreferencesCancelControl.exe --font build/ws-package/EXReader/Reader.otf --fixtures build/wprefs-fixtures --output build/wprefs-commit-ui
       - name: Record exact SDK program control provider maps and enabled options
+        if: ${{always() && steps.current_dependencies.outcome == 'success'}}
         run: python3 tests/windows_common_gate/identity.py
       - name: Preserve source-bound initial evidence without granting broader scope
         id: upload
