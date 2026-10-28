@@ -1,7 +1,7 @@
 name: Apple annotation exchange native acceptance
 on:
   push:
-    branches: [codex/terra-wave-apple-annotations]
+    branches: [codex/apple-annotation-artifact-wiring-20261028]
   workflow_dispatch:
 permissions:
   contents: read
@@ -40,6 +40,8 @@ jobs:
           ruby -c tests/reader_team24_apple/make_project.rb
       - name: Frozen SDK and exact installed five module family
         run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+      - name: Retain isolated owner guard beside the installed products
+        run: cp apple-owner-candidate/build/team24-apple-guard.json build/raw3-ios-sdk/${{ matrix.target }}/team24-apple-guard.json
       - name: Actual account session terminal callbacks
         if: ${{ matrix.target == 'macos' }}
         run: |
@@ -67,7 +69,6 @@ jobs:
             build/raw3-ios-sdk/${{ matrix.target }}/sdk/
             build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
             build/raw3-ios-sdk/${{ matrix.target }}/*.json
-            apple-owner-candidate/build/team24-apple-guard.json
           retention-days: 30
           if-no-files-found: error
   native:
