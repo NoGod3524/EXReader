@@ -71,6 +71,7 @@ enum HostCatalogError: Error, LocalizedError {
 final class HostCatalog {
     static let applicationID: Int64 = 1163416144 // EXRP; the SDK uses EXRC.
     static let schemaVersion: Int64 = 1
+    static let latestSchemaVersion: Int64 = 3
     static let resourceName = "reader-catalog-v1"
     private let ownerQueue: DispatchQueue
     private let path: URL
@@ -111,7 +112,14 @@ final class HostCatalog {
             try execute("PRAGMA foreign_keys=ON; PRAGMA trusted_schema=OFF;")
             let identity = try scalar("PRAGMA application_id")
             let version = try scalar("PRAGMA user_version")
-            if identity != Self.applicationID || version != Self.schemaVersion {
+            var supported = version == Self.schemaVersion
+            if identity == Self.applicationID && (version == 2 || version == Self.latestSchemaVersion) {
+                let baseTables = try scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN ('reader_books','reader_local_books','reader_shelves','reader_book_shelves','reader_tags','reader_book_tags','reader_series','reader_book_series','reader_revisions','reader_outbox')")
+                let originals = try scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='reader_originals'")
+                let pending = try scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='reader_original_pending'")
+                supported = baseTables == 10 && originals == 1 && (version != 3 || pending == 1)
+            }
+            if identity != Self.applicationID || !supported {
                 guard identity == 0, version == 0,
                       try scalar("SELECT count(*) FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'") == 0 else {
                     throw HostCatalogError.invalid("拒绝其他应用、非空或不受支持的产品书库")
@@ -120,8 +128,9 @@ final class HostCatalog {
                 // trigger bodies together. Never split the SQL on semicolons.
                 try execute(sql)
             }
+            let establishedVersion = try scalar("PRAGMA user_version")
             guard try scalar("PRAGMA application_id") == Self.applicationID,
-                  try scalar("PRAGMA user_version") == Self.schemaVersion,
+                  (Self.schemaVersion...Self.latestSchemaVersion).contains(establishedVersion),
                   try scalar("PRAGMA foreign_keys") == 1 else {
                 throw HostCatalogError.invalid("产品书库迁移未建立完整身份")
             }
