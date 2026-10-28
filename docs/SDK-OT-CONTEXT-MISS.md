@@ -25,6 +25,13 @@ were identical.
   for the candidate. This is one controlled observation, not a product-wide
   performance acceptance.
 
+The same-run comparison artifact is
+[12788186208](https://github.com/NoGod3524/EXReader/actions/runs/40621870809/artifacts/12788186208),
+90,460 bytes, SHA-256
+2e29576dec4e4af8839e08f9cc11f30950b82797054e7da8e0503c2aefadc4c3.
+It expires on 2027-01-26 at 02:35:52 UTC. The artifact identity was obtained
+from the run's GitHub metadata; artifact contents are processed in Actions.
+
 The [composed Windows native host run](https://github.com/NoGod3524/EXReader/actions/runs/40622141313)
 is separately exercising the original large-TXT scenario. Further independently
 constructed contextual-font cases and other platform validations are pending.
