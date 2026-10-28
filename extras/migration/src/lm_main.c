@@ -6,6 +6,7 @@
 #define _DARWIN_C_SOURCE
 #endif
 #include "lm_ledger.h"
+#include <sqlite3.h>
 #include <ctype.h>
 #include <errno.h>
 #include <math.h>
@@ -49,7 +50,7 @@ typedef struct {
   unsigned imports, reads;
   uint64_t units, max_book_bytes, bytes_imported;
   char target_sha[65], sidecar_sha[65];
-  int target_existed, sidecar_existed, rolled_back, lock_held;
+  int target_existed, sidecar_existed, rolled_back, lock_held, target_version;
   const char *pre_state, *stage_state;
   lm_hm pack_books;
   size_t *seen_a, *seen_b;
@@ -1315,8 +1316,48 @@ static int check_target_header(ctx *c) {
   fclose(f);
   user_version = (uint32_t)h[60] << 24 | (uint32_t)h[61] << 16 | (uint32_t)h[62] << 8 | h[63];
   app_id = (uint32_t)h[68] << 24 | (uint32_t)h[69] << 16 | (uint32_t)h[70] << 8 | h[71];
-  if (app_id != 1163416131u || user_version != 6u) {
-    fail(c, O_REJECTED, "target-schema", "target library is schema %u (application id %u); migration targets schema 6 only and will not upgrade it in place", user_version, app_id);
+  if (app_id != 1163416131u || (user_version != 6u && user_version != 7u)) {
+    fail(c, O_REJECTED, "target-schema", "target library is schema %u (application id %u); supported target schemas are 6 and 7", user_version, app_id);
+    return 0;
+  }
+  c->target_version = (int)user_version;
+  if (user_version == 6u && strcmp(c->cmd, "migrate")) {
+    fail(c, O_REJECTED, "target-schema", "schema 6 requires migration before this command; the original is not upgraded in place");
+    return 0;
+  }
+  return 1;
+}
+
+/* A raw-file preimage is only valid if no SQLite sidecar holds committed data.
+   Require a closed, checkpointed old library and recheck before publication. */
+static int old_target_quiescent(ctx *c) {
+  static const char *suffixes[] = {"-wal", "-shm", "-journal"};
+  size_t i;
+  for (i = 0; i < sizeof(suffixes)/sizeof(suffixes[0]); i++) {
+    char *name = path_join(c->target, suffixes[i]);
+    int exists = lm_exists(name);
+    free(name);
+    if (exists) { fail(c, O_BUSY, "target-busy", "close and checkpoint the old library before migration"); return 0; }
+  }
+  return 1;
+}
+
+static int snapshot_old_target(ctx *c) {
+  sqlite3 *source = NULL, *dest = NULL;
+  sqlite3_backup *backup = NULL;
+  int rc, finished = SQLITE_ERROR;
+  if (!old_target_quiescent(c)) return 0;
+  rc = sqlite3_open_v2(c->target, &source, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX, NULL);
+  if (rc == SQLITE_OK) rc = sqlite3_open_v2(c->stage, &dest, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
+  if (rc == SQLITE_OK) {
+    backup = sqlite3_backup_init(dest, "main", source, "main");
+    if (backup) { rc = sqlite3_backup_step(backup, -1); finished = sqlite3_backup_finish(backup); }
+    else rc = sqlite3_errcode(dest);
+  }
+  if (dest) sqlite3_close(dest);
+  if (source) sqlite3_close(source);
+  if (rc != SQLITE_DONE || finished != SQLITE_OK) {
+    fail(c, O_BUSY, "target-busy", "cannot snapshot the old library (SQLite %d); close all handles and retry", rc);
     return 0;
   }
   return 1;
@@ -1370,6 +1411,7 @@ static int publish(ctx *c) {
     fail(c, O_FAILED, "ledger-changed", "the migration ledger changed; nothing was published"); return 0;
   }
   if (c->target_existed) {
+    if (c->target_version == 6 && !old_target_quiescent(c)) return 0;
     if (!lm_sha_file(c->target, digest, &size) || strcmp(digest, c->target_sha)) { fail(c, O_FAILED, "target-changed", "the target changed while it was being migrated; nothing was published"); return 0; }
     if (!lm_copy(c->target, c->pre)) { fail(c, O_FAILED, "pre-image-failed", "cannot keep a pre-image of the target for rollback"); return 0; }
     c->pre_state = "kept-until-commit";
@@ -1435,9 +1477,13 @@ static int run_migrate(ctx *c) {
     exr_library *source = NULL;
     if (!check_target_header(c)) return 0;
     if (!lm_sha_file(c->target, c->target_sha, NULL)) { fail(c, O_FAILED, "target-unreadable", "cannot hash the target"); return 0; }
-    if (exr_library_open(c->target, &source, &c->err) != EXR_OK) { fail(c, O_BUSY, "target-busy", "cannot open the target (%s); close every other handle and retry", c->err.message); return 0; }
-    if (exr_library_backup(source, c->stage, &c->err) != EXR_OK) { exr_library_close(source); fail(c, O_FAILED, "stage-failed", "cannot build the stage with the backup API: %s", c->err.message); return 0; }
-    exr_library_close(source);
+    if (c->target_version == 6) {
+      if (!snapshot_old_target(c)) return 0;
+    } else {
+      if (exr_library_open(c->target, &source, &c->err) != EXR_OK) { fail(c, O_BUSY, "target-busy", "cannot open the target (%s); close every other handle and retry", c->err.message); return 0; }
+      if (exr_library_backup(source, c->stage, &c->err) != EXR_OK) { exr_library_close(source); fail(c, O_FAILED, "stage-failed", "cannot build the stage with the backup API: %s", c->err.message); return 0; }
+      exr_library_close(source);
+    }
     c->stage_state = "built-from-backup";
   } else if (c->sidecar_existed) {
     fail(c, O_REJECTED, "orphan-ledger", "a ledger exists without its library (%s); remove or restore one of them first", c->sidecar);
