@@ -76,3 +76,13 @@ the newer transaction tests. In particular, the separate GTK probe is not an
 integrated host entry point, and Apple/Android/Windows host lifecycles remain
 unverified. A reviewable compatibility and acceptance mapping, remaining
 candidate behavior, and actual host orchestration are still required.
+
+The follow-up [run 40635037173](https://github.com/NoGod3524/EXReader/actions/runs/40635037173),
+attempt 1, tests `270468c283f615d644312734185af58d4baa6f32`. Its Linux job
+passed the four schema/journal transaction cases, new-target crash/retry, full
+ledger export/idempotence, and the GTK backend lifecycle beginning with a real
+SDK 3.40 schema 6 library; it also passed the legacy executable's 65/135,
+31 review and 17 browser checks. The same job failed the unchanged candidate
+scenarios at 52/65 (111/128 recorded assertions). The Windows job was still
+running and macOS queued when this was recorded. These results do not grant
+final acceptance or product UI integration.
