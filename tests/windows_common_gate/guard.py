@@ -75,6 +75,13 @@ def main():
     out = ROOT / 'build/windows-341-guard'; out.mkdir(parents=True, exist_ok=True)
     (out / 'current-source.json').write_text(json.dumps(proof, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(proof), flush=True)
+    if os.name == 'nt':
+        # Historical compact judge requires a real >=1060x660 work area.
+        # Use the existing supported-mode setup; never alter its UI assertion.
+        import sys
+        subprocess.run([sys.executable, str(ROOT / 'tests/reader_native_owner_repairs/display.py')], cwd=ROOT, check=True)
+        display = ROOT / 'build/native-owner-preflight/display.json'
+        (out / 'display.json').write_bytes(display.read_bytes())
 
 
 if __name__ == '__main__': main()

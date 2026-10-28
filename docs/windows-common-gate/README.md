@@ -32,3 +32,13 @@ Push triggers one full run; inspect auto-trigger status before considering any
 manual dispatch. Integrators must deliberately extend the exact source grant
 for a new merged candidate; this branch does not grant unreviewed descendants.
 No merge, tag, release, signing or physical-device scope is granted.
+
+## Retained first-run failure
+
+Run 40634724976 attempt 1, source 7fe22fafb67845732ee5729a1fd19fa72573a059:
+source/refusal preflight passed and font 8+5 passed. Historical compact UI
+reached 16 checks, then its unchanged >=1060x660 expanded-note-editor assertion
+failed on the runner display. Raw artifact 12792987862 is retained. The current
+route now invokes the existing supported-mode display preparation before the
+legacy Windows build and preserves actual mode/work-area readback. No threshold
+or old test was changed; the next round must independently prove the correction.
