@@ -45,6 +45,9 @@ def main():
                 assert identity['sdk_content_candidate'] == '8357eafa28423a7ab93ba08b823af80f01ad1505'
                 assert identity['sdk_content_paths'] == ['src', 'include', 'cmake', 'CMakeLists.txt', 'bindings']
                 assert identity['product']['sdk_version'] == '3.42.0'
+                assert identity['page_theme_enabled'] is True
+                build = json.loads(archive.read('host/build.json'))
+                assert build['page_theme_enabled'] is True and build['sdk_version'] == '3.42.0' and build['source_sha'] == source
                 package = archive.read('EXReader.zip')
                 assert hashlib.sha256(package).hexdigest() == identity['archive_sha256']
                 with zipfile.ZipFile(io.BytesIO(package)) as bundle:
