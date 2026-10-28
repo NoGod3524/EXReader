@@ -36,7 +36,7 @@ CHECKS = [
 ]
 
 
-def with_fixture(folder, authorization, consume, shard_delay=0.25):
+def with_fixture(folder, authorization, consume, shard_delay=0.25, on_unauthorized=None):
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
     folder.mkdir(parents=True)
     cert, key = folder / 'server.crt', folder / 'server.key'
@@ -66,6 +66,8 @@ def with_fixture(folder, authorization, consume, shard_delay=0.25):
             with lock:
                 requests.append({'method': self.command, 'path': self.path, 'authenticated': valid})
             if not valid:
+                if on_unauthorized is not None:
+                    on_unauthorized()
                 self.send(401)
             return valid
 
