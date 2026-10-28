@@ -41,6 +41,7 @@ jobs:
               extras/migration/CMakeLists.txt|extras/migration/src/lm_mirror.c|extras/migration/src/lm_mirror.h|tests/migration/mirror_recovery.py|.github/workflows/migration-mirror-recovery.yml|docs/MIGRATION-MIRROR-RECOVERY.md) ;;
               tests/migration/precommit_mirror.py|.github/workflows/migration-precommit-mirror.yml|docs/MIGRATION-PRECOMMIT-MIRROR.md) ;;
               tests/migration/mirror_safety_matrix_20261028.py|.github/workflows/migration-mirror-safety-matrix-20261028.yml|docs/MIGRATION-MIRROR-SAFETY-MATRIX-20261028.md) ;;
+              .github/workflows/migration-matrix-full-companion-20261028.yml) ;;
               *) echo "Out-of-scope source change: $path" >&2; exit 1 ;;
             esac
           done
@@ -54,6 +55,7 @@ jobs:
             '.github/workflows/migration-mirror-recovery.yml',
             '.github/workflows/migration-precommit-mirror.yml',
             '.github/workflows/migration-mirror-safety-matrix-20261028.yml',
+            '.github/workflows/migration-matrix-full-companion-20261028.yml',
             'docs/MIGRATION-COMMIT-OUTCOME-EVIDENCE.md',
             'docs/MIGRATION-MIRROR-RECOVERY.md',
             'docs/MIGRATION-PRECOMMIT-MIRROR.md',
@@ -72,7 +74,7 @@ jobs:
           expected = {
             'extras/migration/CMakeLists.txt': 'b3ce74a1ad235859cf2656ea99c09a2d8447fc365484a20bedd77eeba5df4ab9',
             'extras/migration/src/lm_main.c': '2c36cb0d8c4102b35e11f45419820de5154ec98f5819694567ca3e239814b5ff',
-            'extras/migration/src/lm_mirror.c': 'efa530a6303c6c55d4c6237d6589e645f98347dfb65787dec6167bb7d4216316',
+            'extras/migration/src/lm_mirror.c': '3275bafb28e3767921ca1756f612abbd2192ac80651a887952767791db5d976a',
             'extras/migration/src/lm_mirror.h': 'dccc5374b27f6614a7872cc584a952c11acf767200a8aa68ae1cc24f5c7b6be3',
           }
           for path, digest in expected.items():

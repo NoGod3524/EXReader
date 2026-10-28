@@ -19,7 +19,7 @@ OLD_SDK_REF = 'c2d23c29a3b2096c2236fdb414dcd1e66d3243b4'
 SOURCES = {
     'extras/migration/CMakeLists.txt': 'b3ce74a1ad235859cf2656ea99c09a2d8447fc365484a20bedd77eeba5df4ab9',
     'extras/migration/src/lm_main.c': '2c36cb0d8c4102b35e11f45419820de5154ec98f5819694567ca3e239814b5ff',
-    'extras/migration/src/lm_mirror.c': 'efa530a6303c6c55d4c6237d6589e645f98347dfb65787dec6167bb7d4216316',
+    'extras/migration/src/lm_mirror.c': '3275bafb28e3767921ca1756f612abbd2192ac80651a887952767791db5d976a',
     'extras/migration/src/lm_mirror.h': 'dccc5374b27f6614a7872cc584a952c11acf767200a8aa68ae1cc24f5c7b6be3',
 }
 
@@ -132,6 +132,31 @@ def main():
         assert report['atomicity']['transaction']['target_commit'] == 'not-attempted' and not report['atomicity']['rolled_back'], report
         assert not pending(target).exists(), report
         return report
+
+    def windows_hold_against_delete(path):
+        import ctypes
+        from ctypes import wintypes
+        api = ctypes.WinDLL('kernel32', use_last_error=True)
+        api.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                   wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+        api.CreateFileW.restype = wintypes.HANDLE
+        api.CloseHandle.argtypes = [wintypes.HANDLE]
+        api.CloseHandle.restype = wintypes.BOOL
+        # Permit reads/writes but no DELETE opens. This is a real OS sharing
+        # refusal, independent of a runner administrator's backup privileges.
+        handle = api.CreateFileW(str(path), 0x80000000, 0x1 | 0x2, None, 3, 0x80, None)
+        invalid = ctypes.c_void_p(-1).value
+        assert handle != invalid, ctypes.get_last_error()
+        try:
+            deletion = api.CreateFileW(str(path), 0x00010000, 0x1 | 0x2 | 0x4, None, 3, 0x80, None)
+            error = ctypes.get_last_error()
+            if deletion != invalid:
+                api.CloseHandle(deletion)
+            assert deletion == invalid and error == 32, ('delete-sharing control', error)
+        except Exception:
+            api.CloseHandle(handle)
+            raise
+        return api, handle
 
     def execute(name, function):
         folder = a.work / name
@@ -394,6 +419,14 @@ def main():
             acl = subprocess.run(['icacls', str(preimage), '/deny', account + ':(R)'], check=True, capture_output=True, text=True)
             (folder / 'acl-deny.txt').write_text(acl.stdout + acl.stderr, encoding='utf-8')
         try:
+            if account:
+                try:
+                    with preimage.open('rb') as file:
+                        file.read(1)
+                except PermissionError:
+                    pass
+                else:
+                    raise AssertionError('read ACL did not deny an ordinary file open')
             rc, report = run(folder, 'preimage-read-refused', 'recover-mirror', target, extra=('--break-lock',))
             assert rc != 0 and pending(target).read_bytes() == pending_bytes and mirror(target).read_bytes() == planned, report
             assert read_state(target) == before
@@ -401,8 +434,25 @@ def main():
                 assert preimage.is_symlink() and victim.read_bytes() == b'foreign content must remain'
         finally:
             if account:
-                acl = subprocess.run(['icacls', str(preimage), '/remove:d', account], check=True, capture_output=True, text=True)
-                (folder / 'acl-restore.txt').write_text(acl.stdout + acl.stderr, encoding='utf-8')
+                restored = []
+                # A failing product may already have renamed the denied owned
+                # preimage into the mirror. Restore access there too so failure
+                # artifacts remain readable; never erase the failed assertion.
+                for path in (preimage, mirror(target)):
+                    # Do not gate restoration on an access-sensitive exists()
+                    # query. Attempt both owned names before checking either.
+                    acl = subprocess.run(['icacls', str(path), '/remove:d', account], capture_output=True, text=True)
+                    restored.append((path, acl))
+                (folder / 'acl-restore.txt').write_text('\n'.join(
+                    str(path) + '\n' + acl.stdout + acl.stderr for path, acl in restored), encoding='utf-8')
+                for path, acl in restored:
+                    try:
+                        path.lstat()
+                    except FileNotFoundError:
+                        continue
+                    assert acl.returncode == 0, (path, acl.stdout, acl.stderr)
+                    with path.open('rb') as file:
+                        file.read(1)
             else:
                 preimage.unlink()
                 retained.rename(preimage)
@@ -447,7 +497,7 @@ def main():
         crash(folder, 'committed-crash', target, delta, 'commit-pause', '.commit-ready')
         committed = read_state(target)
         p = start(target, None, 'mirror-retire-pause', command='recover-mirror', extra=('--break-lock',))
-        old_mode, account, restricted, out, err = stat.S_IMODE(folder.stat().st_mode), None, [], '', ''
+        old_mode, blocker, out, err = stat.S_IMODE(folder.stat().st_mode), None, '', ''
         try:
             wait_marker(p, sibling(target, '.mirror-retire-ready'))
             assert not list(folder.glob('library.sqlite.legacy-map.json.before-*'))
@@ -459,13 +509,7 @@ def main():
             finally:
                 writer.close()
             if os.name == 'nt':
-                who = subprocess.run(['whoami', '/user', '/fo', 'csv', '/nh'], check=True, capture_output=True, text=True)
-                sid = next(csv.reader([who.stdout.strip()]))[-1]
-                assert sid.startswith('S-1-')
-                account = '*' + sid
-                for path, rights in ((folder, 'DC'), (pending(target), 'D')):
-                    subprocess.run(['icacls', str(path), '/deny', account + ':(' + rights + ')'], check=True, capture_output=True, text=True)
-                    restricted.append(path)
+                blocker = windows_hold_against_delete(pending(target))
                 sibling(target, '.mirror-retire-ready.resume').touch()
             else:
                 p.send_signal(signal.SIGSTOP)
@@ -476,11 +520,10 @@ def main():
                 p.send_signal(signal.SIGCONT)
             out, err = p.communicate(timeout=15)
         finally:
-            if account:
-                for path in reversed(restricted):
-                    if path.exists():
-                        subprocess.run(['icacls', str(path), '/remove:d', account], check=True, capture_output=True, text=True)
-            else:
+            if blocker:
+                api, handle = blocker
+                assert api.CloseHandle(handle), 'cannot release delete-sharing fixture'
+            elif os.name != 'nt':
                 folder.chmod(old_mode)
             if p.poll() is None:
                 p.kill(); out, err = p.communicate(timeout=10)
@@ -491,6 +534,7 @@ def main():
         recover(folder, 'real-cleanup-retry', target)
         assert read_state(target) == committed
         return {'real_intent_unlink_failure': True, 'database_owner_released_before_permission_fault': True,
+                'fixture': 'Windows no-delete-share handle' if os.name == 'nt' else 'POSIX directory write denial',
                 'ordinary_write_after_owner_release_preserved': True}
 
     try:
