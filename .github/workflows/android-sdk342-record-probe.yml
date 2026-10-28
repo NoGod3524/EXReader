@@ -1,5 +1,7 @@
 name: Android 3.42 actual 3.41 wire semantic probe
 on:
+  push:
+    branches: [codex/android-sdk342-record-evidence-20261028]
   workflow_dispatch:
 permissions:
   contents: read

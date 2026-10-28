@@ -27,6 +27,10 @@ replace('NativeReadingSdk.Match found=resolve(store,book(role),actual.capture);'
 replace('found.recaptured.parser.equals("exreader-sdk-3.41.0")', 'found.recaptured.parser.equals("exreader-sdk-3.42.0")')
 replace('NativeReadingProbe.receive(store.productOwner(),wire);need(Arrays.equals(wire,RecordWireProbe.retained(store.productOwner(),row.getString("id")))',
         'NativeReadingProbe.receive(store.productOwner(),wire);need(NativeReadingProbe.receive(store.productOwner(),wire)==0,"duplicate original wire is idempotent");need(Arrays.equals(wire,RecordWireProbe.retained(store.productOwner(),row.getString("id")))')
+replace('input=new JSONObject().put("books",sourceRows);seed();java.util.Set<String> ids=',
+        'input=new JSONObject().put("books",sourceRows);seed();byte[][] outboxBefore=owner(store->RecordWireProbe.outbox(store.productOwner()));java.util.Set<String> ids=')
+replace('need(RecordWireProbe.outbox(store.productOwner()).length==0,"remote receive creates no product outbox")',
+        'need(Arrays.deepEquals(outboxBefore,RecordWireProbe.outbox(store.productOwner())),"remote receive changes no preexisting outbox bytes")')
 start = text.index('    @Override public void onStart(){')
 text = text[:start] + '''    private NativeReadingSdk.Match probeLegacy(BookStore store,long book,ReadingCapture capture)throws Exception {
         BookStore.VerifiedSource source=store.verifySource(book,null,0,task());
