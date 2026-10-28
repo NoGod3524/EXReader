@@ -44,6 +44,8 @@ jobs:
           python tests/reader_reading_state/make_fixtures.py build/sync-reading-fixtures
           if ($LASTEXITCODE) { throw 'reading fixture generation failed' }
       - name: Run the retained 32 account checks on the Wave3 executable
+        env:
+          EXR_ACCOUNT_COMPACT_PICKER: '1'
         run: python tests/reader_windows_account/check_account_ui.py --candidate build/c09/package/EXReader/EXReader.exe --package build/c09/package/EXReader --fixtures build/sync-fixtures --revision-consumer build/sync-revisions/revision-consumer.exe --capture-probe build/sync-capture/reading-capture-probe.exe --reading-fixtures build/sync-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/c09/wave3-host/windows-host.map --output build/sync-account-ui
       - name: Preserve reports and failure evidence
         if: always()

@@ -456,9 +456,15 @@ def main():
 
     def import_paths(device, paths):
         for path in paths:
-            set_text(device.control('path'), str(path))
             seen = [device.status()]
-            send(device.control('import'), BM_CLICK, timeout=5000)
+            if os.environ.get('EXR_ACCOUNT_COMPACT_PICKER') == '1':
+                # Wave3 uses the native picker in place of the legacy path entry.
+                sys.path.insert(0, str(HERE.parents[1] / 'tests/reader_windows_compact'))
+                import check_ui as compact_ui
+                compact_ui.picker(device, path)
+            else:
+                set_text(device.control('path'), str(path))
+                send(device.control('import'), BM_CLICK, timeout=5000)
             end = time.monotonic() + 180
             while time.monotonic() < end:
                 status = device.status()
