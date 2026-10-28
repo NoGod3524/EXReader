@@ -7,7 +7,38 @@ permissions:
   contents: read
   actions: read
 jobs:
+  closure-diagnostic:
+    if: ${{ startsWith(github.event.head_commit.message, 'diagnostic:') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: python3 tests/gtk_native_conflict_resolution_sdk342/identity.py guard
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-gtk-first-40730797378-1
+          run-id: 40730797378
+          github-token: ${{ github.token }}
+          path: build/closure-diagnostic/evidence
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdk342-gtk-identity-40730797378-1
+          run-id: 40730797378
+          github-token: ${{ github.token }}
+          path: build/closure-diagnostic/identity
+      - name: Inspect pinned original failure and passing current observer state without rerun
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/gtk_native_conflict_resolution_sdk342/diagnose_closure.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-native-closure-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/closure-diagnostic/summary.json
+          if-no-files-found: warn
   smoke:
+    if: ${{ !startsWith(github.event.head_commit.message, 'diagnostic:') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
