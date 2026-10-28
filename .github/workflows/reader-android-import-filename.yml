@@ -1,7 +1,7 @@
 name: Android display filename current-source acceptance
 on:
   push:
-    branches: [codex/dot-android-import-filename]
+    branches: [codex/dot-android-import-filename, codex/reader-android-import-common-prep-20261028]
   workflow_dispatch:
 permissions:
   contents: read
