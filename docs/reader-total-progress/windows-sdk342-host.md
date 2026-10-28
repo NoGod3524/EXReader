@@ -24,3 +24,23 @@ cross-version reading-record compatibility, or six-platform acceptance.
 The subsequent workflow extension adds same-source account/sync, organization,
 receive cancellation and large TXT forward-scan comparison; its result is
 reported separately once complete. Documentation commits are not tested source.
+
+## Extended same-source run
+
+[Actions 40645027546, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40645027546)
+tested `f6597abbfd2ffc65db9b3741ea06a320340b9283`. The complete run failed:
+the organization readback probe requested exactly SDK 3.41 while the runner
+had installed 3.42; organization and receive cancellation were skipped.
+
+The same run passed the original host, compact UI, Wave3 UI, TXT progress and
+32 account checks. The real native forward-scan comparison passed 24 cases in
+each of two profiles with equal page results, including current-page EOF
+positioning: zero newly generated pages versus 61,456 for the from-first
+reference. The seven installed SDK scan checks also passed. This is a scoped
+Windows runner observation, not acceptance of the failed whole run.
+
+[Original artifact 12798106979](https://github.com/NoGod3524/EXReader/actions/runs/40645027546/artifacts/12798106979)
+is 10,685,778 bytes, SHA-256
+`cab27ee93354190d93a0f7643cd9ac16642d71ddfb2f316b7f12dcc1824b9e46`.
+The follow-up explicitly selects the installed SDK version for that probe;
+its acceptance is determined by the follow-up run, not this failure.
