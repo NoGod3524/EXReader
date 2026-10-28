@@ -18,7 +18,11 @@ sys.path.insert(0, str(ROOT / 'tools/reader_wave3_package'))
 import delivery
 
 def run(*args):
-    return subprocess.check_output([str(a) for a in args], cwd=ROOT, text=True, stderr=subprocess.STDOUT)
+    try:
+        return subprocess.check_output([str(a) for a in args], cwd=ROOT, text=True, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as error:
+        print(error.output, flush=True)
+        raise
 
 def save(path, data):
     path = Path(path)
@@ -46,7 +50,8 @@ def package(target, payload):
     if target == 'linux':
         print(run(sys.executable, 'tools/reader_wave3_package/desktop.py', 'prepare', '--target', target, '--root', payload))
     args = [sys.executable, 'tools/reader_wave3_package/assemble.py', '--target', target, '--payload', payload,
-            '--output', destination, '--source-sha', os.environ['GITHUB_SHA'], '--require-build-identity']
+            '--output', destination, '--source-sha', os.environ['GITHUB_SHA'], '--require-build-identity',
+            '--sdk-version', '3.42.0' if target == 'windows' else '3.41.0']
     for exclude in ('EXReader-Windows.zip', 'EXReader-Linux.tar.gz'):
         args += ['--exclude', exclude]
     print(run(*args))
