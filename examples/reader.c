@@ -297,6 +297,7 @@ static host_state g;
 static int dragging;
 #ifdef EXR_WINDOWS_FONT_REVIEW
 static int font_review_fail_layout;
+static int font_review_bad_txt_page;
 #endif
 #ifdef EXR_HOST_WORKER_REVIEW
 static int review_query_failure(int kind);
@@ -2594,6 +2595,18 @@ static exr_status job_layout(host_job *job) {
     if (status == EXR_OK) status = exr_pager_get(pager, page, &laid, &error);
     if (status == EXR_OK && !laid) status = EXR_FORMAT;
     if (status == EXR_OK) status = txt_frame(&candidate, &source, laid, page, &job->frame, &error);
+#ifdef EXR_WINDOWS_FONT_REVIEW
+    if (status == EXR_OK && job->font_relayout && font_review_bad_txt_page) {
+      font_review_bad_txt_page = 0;
+      job->frame.range_end = (size_t)job->txt_offset;
+    }
+#endif
+    if (status == EXR_OK && job->font_relayout &&
+        (job->frame.range_start > (size_t)job->txt_offset ||
+         job->frame.range_end < (size_t)job->txt_offset ||
+         (job->frame.range_end == (size_t)job->txt_offset && g.frame.range_end != (size_t)job->txt_offset))) {
+      status = EXR_FORMAT;
+    }
     if (status == EXR_OK) {
       job->candidate_pager = pager; pager = NULL;
       job->candidate_config = config;
@@ -3669,17 +3682,26 @@ static int save_txt_progress(void) {
   host_job *job;
   reader_txp_position captured = {0};
   reader_txp_error detail = {0};
-  const uint64_t offset = (uint64_t)g.frame.range_start;
+  uint64_t offset = (uint64_t)g.frame.range_start;
   size_t take = g.frame.text_bytes;
+  const char *text = g.frame.utf8;
   const int force = g.txt_force_save;
   g.txt_force_save = 0;
   if (!g.session.txt_key[0] || g.txt_save_abandoned) return 1;
   if (g.session.hold_progress || g.frame.hold_progress) return 1;
+#ifdef EXR_READER_WINDOWS_WAVE3
+  if (w3_txt_font_point_current()) {
+    size_t skip = (size_t)(w3.txt_font_point - (uint64_t)g.frame.range_start);
+    if (skip > take) return 0;
+    offset = w3.txt_font_point;
+    text += skip; take -= skip;
+  }
+#endif
   if (!force && g.txt_saved_valid && !strcmp(g.txt_saved_key, g.session.txt_key)) {
     const uint64_t moved = offset > g.txt_saved_offset ? offset - g.txt_saved_offset : g.txt_saved_offset - offset;
     if (moved < HOST_TXT_SAVE_BYTES) return 1;
   }
-  if (reader_txp_capture(&captured, offset, g.frame.utf8, take, &detail) != READER_TXP_OK) {
+  if (reader_txp_capture(&captured, offset, text, take, &detail) != READER_TXP_OK) {
     set_status(L"无法记录阅读位置：文本位置不在可表示范围内；原记录保留。");
     return 0;
   }
@@ -5878,6 +5900,11 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     if (wparam == 6) { g.session.hold_progress = 1; return 1; }
     if (wparam == 7) return (LRESULT)g.session.hold_progress;
     if (wparam == 8) return (LRESULT)g.session.bounded;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    if (wparam == 9) return w3_txt_font_point_current() ? (LRESULT)w3.txt_font_point : (LRESULT)-1;
+    if (wparam == 10) return (LRESULT)g.session.txt;
+    if (wparam == 11) { font_review_bad_txt_page = 1; return 1; }
+#endif
     return 0;
   }
 #endif

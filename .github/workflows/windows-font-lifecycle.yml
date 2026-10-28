@@ -28,6 +28,8 @@ jobs:
           if ($LASTEXITCODE) { throw 'Fixture generation failed' }
       - name: Verify native font lifecycle and live position
         run: python tests/windows_font_lifecycle/check.py
+      - name: Verify long TXT font position and rollback
+        run: python tests/windows_font_lifecycle/check_txt.py
       - name: Preserve results and failures
         if: always()
         uses: actions/upload-artifact@v4

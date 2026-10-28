@@ -76,11 +76,28 @@ static struct {
   rfl_record *records;
   size_t record_count;
   int fonts_uncertain;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+  uint64_t txt_font_point;
+  unsigned long txt_font_generation;
+  char txt_font_key[73];
+  int txt_font_point_valid;
+#endif
   /* history */
   reader_jh *jh;
   reader_jh_item pending_item;
   int has_pending_item;
 } w3;
+
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+static int w3_txt_font_point_current(void) {
+  return w3.txt_font_point_valid && g.session.txt && g.frame.valid &&
+    w3.txt_font_generation == g.frame.generation &&
+    !strcmp(w3.txt_font_key, g.session.txt_key) &&
+    w3.txt_font_point >= (uint64_t)g.frame.range_start &&
+    (w3.txt_font_point < (uint64_t)g.frame.range_end ||
+     (g.frame.range_start == g.frame.range_end && w3.txt_font_point == (uint64_t)g.frame.range_end));
+}
+#endif
 
 #ifdef EXR_WINDOWS_FONT_REVIEW
 /* Review build only: observe results returned by the real library calls. */
@@ -763,7 +780,7 @@ static void w3_font_apply(const char *hash) {
   job->anchor = anchor; job->has_anchor = !g.session.txt && !g.session.bounded;
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   if(g.session.txt) {
-    job->txt_offset=(uint64_t)g.frame.range_start;
+    job->txt_offset=w3_txt_font_point_current() ? w3.txt_font_point : (uint64_t)g.frame.range_start;
     snprintf(job->txt_key,sizeof(job->txt_key),"%s",g.session.txt_key);
     g.txt_force_save=1;
   }
@@ -863,6 +880,14 @@ static void w3_after_font_job(host_job *job) {
   w3.font_job = NULL;
   if (success) {
     rfl_lease *old = w3.lease;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    if (g.session.txt) {
+      w3.txt_font_point = job->txt_offset;
+      w3.txt_font_generation = g.frame.generation;
+      snprintf(w3.txt_font_key, sizeof(w3.txt_font_key), "%s", g.session.txt_key);
+      w3.txt_font_point_valid = 1;
+    }
+#endif
     w3.lease = w3.pending_lease; w3.pending_lease = NULL;
     if (old) rfl_lease_release(old, &error);
     snprintf(w3.selected_hash, sizeof(w3.selected_hash), "%s", w3.pending_hash);
