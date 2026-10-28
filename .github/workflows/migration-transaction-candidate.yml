@@ -31,9 +31,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-22.04, label: linux, py: python3, exe: build/migration/exreader-legacy-migrate, txexe: build/migration/exreader-legacy-migrate-tx, editor: build/migration/migration-review-edit, oldexe: build/old-migration/exreader-legacy-migrate }
-          - { os: windows-latest, label: windows, py: python, exe: build/migration/Release/exreader-legacy-migrate.exe, txexe: build/migration/Release/exreader-legacy-migrate-tx.exe, editor: build/migration/Release/migration-review-edit.exe, oldexe: build/old-migration/Release/exreader-legacy-migrate.exe }
-          - { os: macos-15, label: macos, py: python3, exe: build/migration/exreader-legacy-migrate, txexe: build/migration/exreader-legacy-migrate-tx, editor: build/migration/migration-review-edit, oldexe: build/old-migration/exreader-legacy-migrate }
+          - { os: ubuntu-22.04, label: linux, py: python3, exe: build/migration/exreader-legacy-migrate, txexe: build/migration/exreader-legacy-migrate-tx, closeprobe: build/migration/migration-source-close, editor: build/migration/migration-review-edit, oldexe: build/old-migration/exreader-legacy-migrate }
+          - { os: windows-latest, label: windows, py: python, exe: build/migration/Release/exreader-legacy-migrate.exe, txexe: build/migration/Release/exreader-legacy-migrate-tx.exe, closeprobe: build/migration/Release/migration-source-close.exe, editor: build/migration/Release/migration-review-edit.exe, oldexe: build/old-migration/Release/exreader-legacy-migrate.exe }
+          - { os: macos-15, label: macos, py: python3, exe: build/migration/exreader-legacy-migrate, txexe: build/migration/exreader-legacy-migrate-tx, closeprobe: build/migration/migration-source-close, editor: build/migration/migration-review-edit, oldexe: build/old-migration/exreader-legacy-migrate }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -97,7 +97,7 @@ jobs:
       - name: Test transaction candidate against ordinary writers and real WAL
         run: |
           set -o pipefail
-          ${{ matrix.py }} tests/migration/transaction_candidate.py --tool "${{ matrix.txexe }}" --old-tool "${{ matrix.oldexe }}" --work build/transaction-candidate 2>&1 | tee build/logs/transaction-candidate-${{ matrix.label }}.txt
+          ${{ matrix.py }} tests/migration/transaction_candidate.py --tool "${{ matrix.txexe }}" --old-tool "${{ matrix.oldexe }}" --source-close "${{ matrix.closeprobe }}" --work build/transaction-candidate 2>&1 | tee build/logs/transaction-candidate-${{ matrix.label }}.txt
       - name: Test real GTK reader owner close, migration and reopen
         if: runner.os == 'Linux'
         run: |

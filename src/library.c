@@ -279,7 +279,7 @@ exr_status exr_library_migration_ledger_get(exr_library *l,void **data,size_t *s
   memcpy(copy,sqlite3_column_blob(s,0),(size_t)n);sqlite3_finalize(s);
   *data=copy;*size=(size_t)n;*found=1;return exr_fail(e,EXR_OK,"");
 }
-void exr_library_close(exr_library *l) {
+static void library_release(exr_library *l) {
   if (l) {
     sqlite3 *db=l->db;
     sqlite3_mutex *mutex=db ? sqlite3_db_mutex(db) : NULL;
@@ -289,6 +289,15 @@ void exr_library_close(exr_library *l) {
     sqlite3_mutex_leave(mutex);
     if(last) { if(db) sqlite3_close_v2(db);free(l); }
   }
+}
+void exr_library_close(exr_library *l) {
+  if(l && l->migration_transaction) {
+    sqlite3_mutex *mutex=sqlite3_db_mutex(l->db);
+    sqlite3_mutex_enter(mutex);
+    if(sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL)==SQLITE_OK) l->migration_transaction=0;
+    sqlite3_mutex_leave(mutex);
+  }
+  library_release(l);
 }
 
 /* Originals are immutable through this API. Each read holds the owner's mutex
@@ -329,7 +338,7 @@ static void library_source_release(void *context) {
   owner=source->owner;mutex=sqlite3_db_mutex(owner->db);sqlite3_mutex_enter(mutex);
   for(at=&owner->sources;*at && *at!=source;at=&(*at)->next) {}
   if(*at) *at=source->next;
-  sqlite3_mutex_leave(mutex);free(source);exr_library_close(owner);
+  sqlite3_mutex_leave(mutex);free(source);library_release(owner);
 }
 exr_status exr_library_source(exr_library *l,int64_t id,exr_source *out,exr_error *e) {
   sqlite3_stmt *statement=NULL;library_source *source=NULL;sqlite3_mutex *mutex;
