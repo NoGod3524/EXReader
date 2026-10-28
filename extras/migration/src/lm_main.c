@@ -1329,6 +1329,23 @@ static void dump_library(ctx *c) {
 
 /* ---------- target lifecycle ---------- */
 static int check_target_header(ctx *c) {
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  sqlite3 *db=NULL;sqlite3_stmt *stmt=NULL;int rc,app=-1,version=-1;
+  rc=sqlite3_open_v2(c->target,&db,SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX,NULL);
+  if(rc==SQLITE_OK) rc=sqlite3_prepare_v2(db,"PRAGMA application_id",-1,&stmt,NULL);
+  if(rc==SQLITE_OK && sqlite3_step(stmt)==SQLITE_ROW) app=sqlite3_column_int(stmt,0);
+  else if(rc==SQLITE_OK) rc=sqlite3_errcode(db);
+  sqlite3_finalize(stmt);stmt=NULL;
+  if(rc==SQLITE_OK) rc=sqlite3_prepare_v2(db,"PRAGMA user_version",-1,&stmt,NULL);
+  if(rc==SQLITE_OK && sqlite3_step(stmt)==SQLITE_ROW) version=sqlite3_column_int(stmt,0);
+  else if(rc==SQLITE_OK) rc=sqlite3_errcode(db);
+  sqlite3_finalize(stmt);if(db) sqlite3_close(db);
+  if(rc!=SQLITE_OK) { fail(c,O_REJECTED,"target-not-library","cannot read the target SQLite library");return 0; }
+  if(app!=1163416131 || version!=7) {
+    fail(c,O_REJECTED,"target-schema","read commands require a schema 7 EXReader library");return 0;
+  }
+  c->target_version=version;return 1;
+#else
   unsigned char h[100];
   FILE *f = lm_fopen(c->target, "rb");
   uint32_t user_version, app_id;
@@ -1347,6 +1364,7 @@ static int check_target_header(ctx *c) {
     return 0;
   }
   return 1;
+#endif
 }
 
 /* A raw-file preimage is only valid if no SQLite sidecar holds committed data.
