@@ -9,6 +9,19 @@ def bound(report):identity.retained.bound(report)
 suffix=os.environ['GITHUB_RUN_ID']+'-'+os.environ['GITHUB_RUN_ATTEMPT']
 base=read(root/'conflict-summary'/ 'sdk342-result.json');bound(base)
 assert base['baseline_checks']==15 and base['conflict_checks']==15 and base['retained_gtk_checks']=={'current':48,'original':46}
+for case in ('current-account','original-account'):
+    folder=root/'gtk-regressions'/case;adapter=read(folder/'scan-barrier-identity.json')
+    assert all(str(adapter[k])==v for k,v in identity.retained.identity().items())
+    assert adapter['adapter_sha256']==sha(Path(__file__).parent/'retained_gtk.py')
+    assert adapter['barrier_sha256']==sha(Path(__file__).parent/'scan_barrier.py')
+    assert adapter['accepted_chooser_sha256']==sha(identity.ROOT/'tests/windows_gtk_conflict_recovery/retained_gtk.py')
+    events=[json.loads(line) for p in folder.rglob('native-scan-barrier.jsonl') for line in p.read_text().splitlines()]
+    assert events
+    for event in events:
+        assert all(str(event[k])==v for k,v in identity.retained.identity().items())
+        assert event['program_sha256']==base['gtk_program_sha256'] and event['budget_seconds']==30 and event['elapsed']<30
+        assert event['before']['stage_status']=='0' and event['after']['owner_busy']=='0' and event['after']['preparing']=='0'
+        assert (event['real_native_start'] and int(event['after']['session_generation'])>int(event['before']['session_generation'])) or (event['real_native_refusal'] and event['after']['stage_status']!='0')
 writer=read(root/'gtk-package/writer-identity.json');bound(writer)
 assert writer['program_sha256']==sha(root/'gtk-package/gtk-preview-writer')
 assert writer['source_sha256']==sha(Path(__file__).parent/'writer/main.cpp')

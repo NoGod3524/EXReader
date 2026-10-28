@@ -37,3 +37,25 @@ native UI automation on cloud runners, not physical-device or screen-reader QA.
 The prior 30-second native dialog budgets and all accepted semantic checks remain.
 Failure runs and artifacts are retained; any later handoff is separate from the
 tested source to keep final remote HEAD equal to the accepted SHA.
+
+## Retained failure and driver-only correction
+
+Run `40730797378/1` at `a121564303cb2844b60487b719e34742645f5cd4`
+passed the bounded writer smoke, builds, measured SDK/module identity, current
+48-check GTK regression and native relay phases. The original suite stopped at
+44/46 on its final close-generation assertion; failure evidence is retained.
+Pinned artifact diagnostic `40738442255/1` independently showed that both suite
+processes actually ended at generation 1, closed generation 1, no session and
+CLOSED state. The failed process exited 0. The test's earlier generation capture
+raced the TLS worker's request event against GTK's post-start state observation;
+this is not evidence of a session leak or lost final-close state.
+
+An additive driver barrier makes each clean-stage native Scan key wait for its actual new
+session generation or native stage refusal, with owner preparation finished,
+within 30 seconds including the original key action. It does not write or
+reinterpret observations or accept a preexisting refusal. Already-refused Scan
+paths are left unchanged. The original source, assertions and budgets remain;
+the raw-key preparation-cancel path is untouched. Adapter and event identities
+are bound in the final audit. A diagnostic-only three-close check uses the exact
+failed-run native binary before a later full exact-SHA run; no partial result is
+substituted for full acceptance.

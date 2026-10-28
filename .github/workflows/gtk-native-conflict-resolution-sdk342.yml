@@ -37,6 +37,55 @@ jobs:
           name: gtk-native-closure-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/closure-diagnostic/summary.json
           if-no-files-found: warn
+  scan-driver-diagnostic:
+    if: ${{ startsWith(github.event.head_commit.message, 'diagnostic: validate') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: python3 tests/gtk_native_conflict_resolution_sdk342/identity.py guard
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-gtk-first-40730797378-1
+          run-id: 40730797378
+          github-token: ${{ github.token }}
+          path: build/driver-diagnostic/evidence
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdk342-gtk-identity-40730797378-1
+          run-id: 40730797378
+          github-token: ${{ github.token }}
+          path: build/driver-diagnostic/identity
+      - uses: actions/download-artifact@v4
+        with:
+          name: gtk-windows-package-40730797378-1
+          run-id: 40730797378
+          github-token: ${{ github.token }}
+          path: build/driver-diagnostic/package
+      - name: Install only runtime dependencies for the exact pinned GTK executable
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 gnome-keyring libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+          chmod +x build/driver-diagnostic/package/bin/exreader-linux
+      - name: Observe three real paused-scan closes with the bounded native-action barrier
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/driver-diagnostic/openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/gtk_native_conflict_resolution_sdk342/validate_scan_barrier.py
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-native-scan-driver-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/driver-diagnostic/result.json
+            build/driver-diagnostic/case-*/
+            build/driver-diagnostic/openbox.log
+            !build/**/key.pem
+          if-no-files-found: warn
   smoke:
     if: ${{ !startsWith(github.event.head_commit.message, 'diagnostic:') }}
     runs-on: ubuntu-22.04
@@ -234,7 +283,7 @@ jobs:
           set -euo pipefail
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
             openbox >build/regression-openbox.log 2>&1 & trap "kill $! || true" EXIT
-            python3 tests/windows_gtk_conflict_recovery/retained_gtk.py tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/current-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
+            python3 tests/gtk_native_conflict_resolution_sdk342/retained_gtk.py tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/current-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
           '
       - name: Preserve original GTK receive regression independently
         id: original_regression
@@ -246,7 +295,7 @@ jobs:
           git show fba9a21f25e6669614eae76ef22a3f81b3995886:tests/linux_host/receive_checks.py > tests/linux_host/receive_checks.py
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
             openbox >build/original-regression-openbox.log 2>&1 & trap "kill $! || true" EXIT
-            python3 tests/windows_gtk_conflict_recovery/retained_gtk.py tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/original-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
+            python3 tests/gtk_native_conflict_resolution_sdk342/retained_gtk.py tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/original-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
           '
       - name: GTK receives Windows original and authors organization
         id: interop
@@ -676,6 +725,10 @@ jobs:
         with:
           name: conflict-summary-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/native-audit/conflict-summary
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/native-audit/gtk-regressions
       - uses: actions/download-artifact@v4
         with:
           name: gtk-windows-package-${{ github.run_id }}-${{ github.run_attempt }}
