@@ -66,17 +66,36 @@ def verify_evidence(pair):
                         value = json.loads(archive.read(member))
                     except (UnicodeError, ValueError):
                         continue
-                    rows = value.get('checks', []) if isinstance(value, dict) else []
-                    if not isinstance(rows, list):
+                    if not isinstance(value, dict):
                         continue
-                    checks = {row.get('name'): row.get(spec.get('case_result_field', 'pass'))
-                              for row in rows if isinstance(row, dict)}
+                    if spec.get('case_phase'):
+                        if (value.get('source_sha') != run['head_sha'] or
+                            str(value.get('run_id')) != str(spec['run']) or
+                            str(value.get('attempt')) != '1' or
+                            value.get('platform') != spec.get('platform') or
+                            value.get('accepted') is not True):
+                            continue
+                        phases = [phase for phase in value.get('phases', [])
+                                  if phase.get('mode') == spec['case_phase'] and phase.get('accepted') is True]
+                        if len(phases) != 1:
+                            continue
+                        rows = phases[0].get('cases', [])
+                        if not isinstance(rows, list) or len(rows) != spec['phase_case_count']:
+                            continue
+                        checks = {row.get('name'): row.get('result') == 'Passed'
+                                  for row in rows if isinstance(row, dict)}
+                    else:
+                        rows = value.get('checks', [])
+                        if not isinstance(rows, list):
+                            continue
+                        checks = {row.get('name'): row.get(spec.get('case_result_field', 'pass'))
+                                  for row in rows if isinstance(row, dict)}
                     if all(checks.get(name) is True for name in spec['required_cases']):
                         matching.append(member)
             assert matching, 'required actual passing cases absent in authenticated original ZIP'
             proof.update(artifact=spec['artifact'], zip_sha256=spec['sha256'],
                          passing_cases=spec['required_cases'], report_members=matching,
-                         scope_basis='named passing cases reread from authenticated original failed-run ZIP')
+                         scope_basis='named passing cases reread from authenticated original run ZIP')
         return key, {'ok': True, **proof}
     except Exception as error:
         return key, {'ok': False, 'run': spec['run'], 'error': repr(error)}

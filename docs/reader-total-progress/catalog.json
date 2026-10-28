@@ -288,6 +288,48 @@
         "real_documentsui_opened",
         "system_saved_original_matches_source"
       ]
+    },
+    "apple_history_macos": {
+      "run": 40588875213,
+      "doc": "docs/reader-total-progress/apple-history.md",
+      "source_prefix": "c45ac1a7508842f071e3d892635fdd9af444ae90",
+      "artifact": 12779481699,
+      "sha256": "570d2bddc2394d48dd3f289802340cf7fb0ad68102de0803c70afabf28ef0361",
+      "bytes": 311529495,
+      "platform": "macos",
+      "case_phase": "wave3",
+      "phase_case_count": 5,
+      "required_cases": [
+        "testNativeHistoryAfterFoundAndLargeRotationExit()"
+      ]
+    },
+    "apple_history_iphone": {
+      "run": 40588875213,
+      "doc": "docs/reader-total-progress/apple-history.md",
+      "source_prefix": "c45ac1a7508842f071e3d892635fdd9af444ae90",
+      "artifact": 12781581720,
+      "sha256": "a17b92bd9fe3bf795f785ba957f0491fdae415b98817fe66cabde4c62b02aba1",
+      "bytes": 324744097,
+      "platform": "iphone",
+      "case_phase": "wave3",
+      "phase_case_count": 5,
+      "required_cases": [
+        "testNativeHistoryAfterFoundAndLargeRotationExit()"
+      ]
+    },
+    "apple_history_ipad": {
+      "run": 40588875213,
+      "doc": "docs/reader-total-progress/apple-history.md",
+      "source_prefix": "c45ac1a7508842f071e3d892635fdd9af444ae90",
+      "artifact": 12780898112,
+      "sha256": "42aa38480ea86c2e1ef9526ca2f64555be920ee85c793db1aa2c2db83789e851",
+      "bytes": 355362061,
+      "platform": "ipad",
+      "case_phase": "wave3",
+      "phase_case_count": 5,
+      "required_cases": [
+        "testNativeHistoryAfterFoundAndLargeRotationExit()"
+      ]
     }
   },
   "requirements": [
@@ -840,9 +882,11 @@
       "group": "host",
       "platform": "macos",
       "title": "macOS：真实页面/搜索定位后的历史后退/前进",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_history_macos"
+      ],
+      "note": "Actual native host search FOUND jump followed by history back/forward; same-run source-bound UI evidence."
     },
     {
       "id": "H.macos.sync_account_status",
@@ -1136,9 +1180,11 @@
       "group": "host",
       "platform": "iphone",
       "title": "iPhone：真实页面/搜索定位后的历史后退/前进",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_history_iphone"
+      ],
+      "note": "Actual native host search FOUND jump followed by history back/forward; same-run source-bound UI evidence."
     },
     {
       "id": "H.iphone.sync_account_status",
@@ -1279,9 +1325,11 @@
       "group": "host",
       "platform": "ipad",
       "title": "iPad：真实页面/搜索定位后的历史后退/前进",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_history_ipad"
+      ],
+      "note": "Actual native host search FOUND jump followed by history back/forward; same-run source-bound UI evidence."
     },
     {
       "id": "H.ipad.sync_account_status",
