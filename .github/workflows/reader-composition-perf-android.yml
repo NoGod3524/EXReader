@@ -44,8 +44,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git rev-parse HEAD HEAD:src HEAD:include HEAD:apps/reader HEAD:examples/android | tee build/perf-android/source-identities.txt
           printf 'run=%s attempt=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" | tee -a build/perf-android/source-identities.txt
-          python -m py_compile tools/run_reader_shelf_ui.py tests/reader_perf_android/verify_observation.py
-          python tools/build_android_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/perf-android/build.log
+          python -m py_compile tools/run_reader_shelf_ui.py tests/reader_perf_android/build_host.py tests/reader_perf_android/verify_observation.py
+          python tests/reader_perf_android/build_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/perf-android/build.log
           mkdir -p examples/android/app/src/androidTest/assets/mapping
           cp build/android-host/fixtures/Sample.epub examples/android/app/src/androidTest/assets/mapping/
           gradle -p examples/android --no-daemon --stacktrace :app:assembleDebugAndroidTest -PexrSdk="$GITHUB_WORKSPACE/stage/android-x86_64" -PexrTestRunner=org.exreader.host.ShelfCatalogTest 2>&1 | tee build/perf-android/test-apk-build.log
