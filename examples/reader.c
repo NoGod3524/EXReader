@@ -1627,6 +1627,93 @@ static exr_status render_fixed(host_session *session, size_t page, int zoom_perc
   return EXR_OK;
 }
 
+/* TXT has a small rolling cache, not a complete page index. Reuse only the
+   accepted live page of this exact pager, never a copied relayout candidate.
+   The displayed range is checked against the pager before it becomes a hint.
+   A failed/cancelled lookup never publishes a new frame or position. */
+static exr_status txt_page_for_offset(host_session *session, size_t offset,
+                                     const exr_control *control, size_t *page,
+                                     size_t *start, size_t *end, exr_error *error) {
+  const exr_layout *layout = NULL;
+  const exr_page *info;
+  size_t count = 0, index, first = 0, calls = 0;
+  size_t chosen = 0, chosen_start = 0, chosen_end = 0;
+  int have = 0, prefetched = 0, hint = 0, finished = 0;
+  exr_status status = EXR_OK;
+  ULONGLONG began = GetTickCount64();
+  exr_pager_stats stats_before = exr_pager_statistics(session->pager);
+#define TXT_SEEK_CANCEL() do { \
+    if (control && control->cancelled && control->cancelled(control->context)) { \
+      status = EXR_CANCELLED; goto done; \
+    } \
+  } while (0)
+  TXT_SEEK_CANCEL();
+#ifndef EXR_TXT_SCAN_FROM_FIRST
+  if (session == &g.session && session->active && !session->txt_pager_invalid &&
+      session->pager && g.frame.valid && !g.frame.fixed &&
+      g.frame.page == session->page && g.frame.book_id == session->book_id &&
+      session->page <= 1000000 && g.frame.range_start <= offset) {
+    calls++;
+    status = OFFSET_GET(session->pager, session->page, &layout, error);
+    TXT_SEEK_CANCEL();
+    if (status != EXR_OK) goto done;
+    info = exr_layout_pages(layout, &count);
+    if (!info || count < 1 || info->start > info->end) { status = EXR_FORMAT; goto done; }
+    if (info->start == g.frame.range_start && info->end == g.frame.range_end &&
+        info->start <= offset) {
+      first = session->page; hint = 1; prefetched = 1;
+    }
+  }
+#endif
+  for (index = first; index <= 1000000; index++) {
+    TXT_SEEK_CANCEL();
+    if (!prefetched) {
+      calls++;
+      status = OFFSET_GET(session->pager, index, &layout, error);
+    }
+    prefetched = 0;
+    TXT_SEEK_CANCEL();
+    if (status != EXR_OK) {
+      if (!have || !pager_eof(status, error)) goto done;
+      memset(error, 0, sizeof(*error)); status = EXR_OK; finished = 1; break;
+    }
+    info = exr_layout_pages(layout, &count);
+    if (!info || count < 1 || info->start > info->end) { status = EXR_FORMAT; goto done; }
+    if (have && info->start > offset) { finished = 1; break; }
+    chosen = index; chosen_start = info->start; chosen_end = info->end; have = 1;
+    /* Preserve the established last-start-at-or-before rule, including its
+       first-page shortcut and exact-boundary ownership. */
+    if (!index && offset < info->end) { finished = 1; break; }
+  }
+  if (!have) { status = EXR_FORMAT; goto done; }
+  if (!finished) {
+    status = EXR_LIMIT;
+    if (error) { error->code = status; snprintf(error->message, sizeof(error->message), "TXT page lookup exceeded the page limit"); }
+    goto done;
+  }
+  TXT_SEEK_CANCEL();
+  if (page) *page = chosen;
+  if (start) *start = chosen_start;
+  if (end) *end = chosen_end;
+done:
+  if (getenv("EXR_TRACE_TXT")) {
+    exr_pager_stats stats_after = exr_pager_statistics(session->pager);
+    fprintf(stderr, "TXT_SCAN {\"offset\":%llu,\"page\":%llu,\"start\":%llu,\"end\":%llu,\"first\":%llu,\"calls\":%llu,\"generated_pages\":%llu,\"restored_checkpoints\":%llu,\"elapsed_ms\":%llu,\"status\":%d,\"hint\":%d,\"active_page\":%llu,\"frame_generation\":%lu,\"font_size\":%.3f,\"width\":%.3f,\"height\":%.3f}\n",
+      (unsigned long long)offset, (unsigned long long)chosen,
+      (unsigned long long)chosen_start, (unsigned long long)chosen_end,
+      (unsigned long long)first, (unsigned long long)calls,
+      (unsigned long long)(stats_after.generated_pages-stats_before.generated_pages),
+      (unsigned long long)(stats_after.restored_checkpoints-stats_before.restored_checkpoints),
+      (unsigned long long)(GetTickCount64()-began), (int)status, hint,
+      (unsigned long long)session->page, g.frame.generation,
+      (double)session->config.page.font_size, (double)session->config.page.width,
+      (double)session->config.page.height);
+    fflush(stderr);
+  }
+#undef TXT_SEEK_CANCEL
+  return status;
+}
+
 /* Locate the page that owns a reflow text offset. The pager has no page count,
    so the search doubles and then bisects; each get() is checkpoint-resumable. */
 static exr_status page_for_offset(host_session *session, size_t offset, const exr_control *control,
@@ -1643,27 +1730,7 @@ static exr_status page_for_offset(host_session *session, size_t offset, const ex
      distant offset then bisecting can repeatedly replay the entire prefix.
      Walk forward once, preserving the same last-start-at-or-before rule. */
   if (session->txt) {
-    size_t index, chosen = 0, chosen_start = 0, chosen_end = 0;
-    int have = 0;
-    for (index = 0; index <= 1000000; index++) {
-      if (control && control->cancelled && control->cancelled(control->context)) return EXR_CANCELLED;
-      status = OFFSET_GET(session->pager, index, &layout, error);
-      if (status != EXR_OK) {
-        if (!have || !pager_eof(status, error)) return status;
-        memset(error, 0, sizeof(*error));
-        break;
-      }
-      info = exr_layout_pages(layout, &count);
-      if (!info || count < 1) return EXR_FORMAT;
-      if (have && info->start > offset) break;
-      chosen = index; chosen_start = info->start; chosen_end = info->end; have = 1;
-      if (!index && offset < info->end) break;
-    }
-    if (!have) return EXR_FORMAT;
-    if (page) *page = chosen;
-    if (start) *start = chosen_start;
-    if (end) *end = chosen_end;
-    return EXR_OK;
+    return txt_page_for_offset(session, offset, control, page, start, end, error);
   }
   status = OFFSET_GET(session->pager, 0, &layout, error);
   if (status != EXR_OK) return status;
@@ -1982,23 +2049,31 @@ static exr_status job_open_txt(host_job *job) {
   if(status!=EXR_OK) { frame_clear(&job->frame);job->error=error; }
   return status;
 }
-static exr_status job_txt_go(host_job *job) {
-  host_session *session=&g.session;
-  exr_error error={0}; const exr_layout *layout=NULL;
-  exr_status status=EXR_IO;
+/* A cancelled TXT view retains its failure. Rebuild it on the next explicit
+   navigation, with the same original and layout, without publishing a frame. */
+static exr_status txt_pager_recover(host_session *session, exr_error *error) {
+  exr_status status;
+  if (host_cancel_check(NULL)) return EXR_CANCELLED;
   if(session->txt_pager_invalid) {
     exr_source source=session->txt_source; exr_pager *pager=NULL; HANDLE copy=NULL;
     if(!DuplicateHandle(GetCurrentProcess(),(HANDLE)source.context,GetCurrentProcess(),
-                        &copy,0,FALSE,DUPLICATE_SAME_ACCESS)) goto done;
+                        &copy,0,FALSE,DUPLICATE_SAME_ACCESS)) return EXR_IO;
     source.context=copy;
-    status=exr_txt_pager_create(&source,g.font,&session->config,&pager,&error);
-    if(status!=EXR_OK) { CloseHandle(copy); goto done; }
-    status=exr_pager_set_cache(pager,2,8*1024*1024,&error);
-    if(status==EXR_OK) status=exr_pager_set_checkpoints(pager,8,4*1024*1024,8,&error);
-    if(status!=EXR_OK) { exr_pager_free(pager); goto done; }
+    status=exr_txt_pager_create(&source,g.font,&session->config,&pager,error);
+    if(status!=EXR_OK) { CloseHandle(copy); return status; }
+    status=exr_pager_set_cache(pager,2,8*1024*1024,error);
+    if(status==EXR_OK) status=exr_pager_set_checkpoints(pager,8,4*1024*1024,8,error);
+    if(status!=EXR_OK) { exr_pager_free(pager); return status; }
     exr_pager_free(session->pager);
     session->pager=pager; session->txt_source=source; session->txt_pager_invalid=0;
   }
+  return EXR_OK;
+}
+static exr_status job_txt_go(host_job *job) {
+  host_session *session=&g.session;
+  exr_error error={0}; const exr_layout *layout=NULL;
+  exr_status status=txt_pager_recover(session,&error);
+  if(status!=EXR_OK) goto done;
   status=exr_pager_get(session->pager,job->target_page,&layout,&error);
   if(pager_eof(status,&error)) { job->at_end=1; goto done; }
   if(status!=EXR_OK) { session->txt_pager_invalid=1; goto done; }
