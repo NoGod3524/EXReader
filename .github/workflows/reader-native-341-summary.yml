@@ -48,6 +48,9 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install PyYAML==6.0.3
+      - name: Parse Android candidate checks on Actions
+        if: github.ref_name == 'codex/reader-android130-candidate-admission'
+        run: python -m py_compile tests/reader_hosts_341/android_candidate.py tests/reader_hosts_341/android_current.py tests/reader_hosts_341/aggregate_android.py
       - name: Authenticate complete composition caller without building
         run: python tests/reader_hosts_341/guard_composition.py
       - name: Authenticate complete GTK caller without building

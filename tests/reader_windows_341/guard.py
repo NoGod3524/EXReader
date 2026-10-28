@@ -36,11 +36,16 @@ def main():
                      'check_commit.py', 'check_ui.py', FROZEN):
         assert required in workflow, required
     out = ROOT / 'build/windows-341-guard'; out.mkdir(parents=True, exist_ok=True)
-    (out / 'source.json').write_text(json.dumps(dict(source_sha=source, run_id=os.environ['GITHUB_RUN_ID'],
+    report = dict(source_sha=source, run_id=os.environ['GITHUB_RUN_ID'],
         attempt=os.environ['GITHUB_RUN_ATTEMPT'], base=candidate.BASE if candidate.active() else BASE,
         sdk_source=candidate.SDK if candidate.active() else SDK, sdk_checkout_source=source, frozen_source=FROZEN,
         production_unchanged=True, original_judges_unchanged=True, sdk_version='3.41.0',
-        complete_product=False), indent=2) + '\n')
+        complete_product=False)
+    if os.environ.get('GITHUB_REF_NAME') == candidate.ANDROID_BRANCH:
+        report.update(judges_reference_source=candidate.BASE,
+                      judges_scope='F3/atomic caller and judges pinned to c63 candidate; not a claim about a331',
+                      txt_progress_judges_in_scope=False)
+    (out / 'source.json').write_text(json.dumps(report, indent=2) + '\n')
 
 
 if __name__ == '__main__':
