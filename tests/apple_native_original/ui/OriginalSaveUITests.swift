@@ -52,20 +52,31 @@ final class OriginalSaveUITests: XCTestCase {
         XCTAssertTrue(wait { open.exists && open.isHittable }, app.debugDescription)
         open.tap()
 #else
-        // The app exposes Documents to Files. Select its folder in the real document picker.
+        // Create a destination in the Files local provider through the real picker.
         let browse = app.buttons["Browse"].firstMatch
         if browse.waitForExistence(timeout: 10) && browse.isHittable { browse.tap() }
         let local = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "On My ")).firstMatch
         XCTAssertTrue(wait { local.exists && local.isHittable }, app.debugDescription)
         local.tap()
-        let folder = app.staticTexts["EXReaderHost"].firstMatch
-        XCTAssertTrue(wait { folder.exists && folder.isHittable }, app.debugDescription)
-        folder.tap()
+        let newFolder = app.buttons["New Folder"].firstMatch
+        XCTAssertTrue(wait { newFolder.exists && newFolder.isHittable }, app.debugDescription)
+        newFolder.tap()
+        let name = app.textFields.firstMatch
+        XCTAssertTrue(wait { name.exists && name.isHittable }, app.debugDescription)
+        name.tap(); name.typeText("EXReaderOriginalSave")
+        let done = app.buttons["Done"].firstMatch
+        XCTAssertTrue(wait { done.exists && done.isHittable }, app.debugDescription)
+        done.tap()
+        let folder = app.staticTexts["EXReaderOriginalSave"].firstMatch
+        if folder.waitForExistence(timeout: 10) && folder.isHittable { folder.tap() }
         let open = app.buttons["Open"].firstMatch
         XCTAssertTrue(wait { open.exists && open.isHittable }, app.debugDescription)
         open.tap()
 #endif
-        XCTAssertTrue(wait { self.e("features.status").label.contains("原件已导出") && !self.e("features.cancel").exists }, app.debugDescription)
+        XCTAssertTrue(wait {
+            let status = self.e("features.status")
+            return (status.label.contains("原件已导出") || ((status.value as? String) ?? "").contains("原件已导出")) && !self.e("features.cancel").exists
+        }, app.debugDescription)
         XCTAssertTrue(e("features.export.filename").exists)
     }
 }
