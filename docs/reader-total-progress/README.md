@@ -241,3 +241,31 @@ Audit artifact 12796749815, 16,175 bytes, SHA-256
 `3a20669cd8886dd430777b47dc96547cd535360cfcdaf505c84c544552aba54c`,
 expires 2027-01-26T06:43:01Z. This documentation-only commit is not the
 audited source.
+
+## 2026-10-28 F06 packages and macOS organization
+
+[Fixed audit 40754387048/1](https://github.com/NoGod3524/EXReader/actions/runs/40754387048)
+at source `428749f50111bcf4677e95d51b00d17932a70449` completed successfully.
+Its 2026-10-28 19:28:02 UTC summary reports `evidence_ok=true`, no problems,
+and **83/108 (76.9%)**: foundation 12/12, host 70/84, final 1/12.
+The October 25 historical cutoff remains 58/108 (53.7%).
+
+This adds exactly two fixed outcomes to the previous 81/108 snapshot:
+- **F06**: [six same-source SDK 3.42 development packages](f06-sdk342-six-packages.md),
+  their original archives, actual program hashes and installation/entry reports.
+- **H.macos.organization**: [six original successful macOS organization cases](macos-organization-original.md)
+  from run 40635727935; its original iPhone/iPad failures and skipped summary
+  remain unchanged. No mobile organization credit is granted.
+
+The increase is two outcomes, 1.9 percentage points; 25 fixed outcomes remain
+unaccepted. F06 is package identity, not complete six-platform behavioral,
+provider, physical-device, screen-reader or release acceptance. Independent
+relay and large-type packages are not added as duplicate host points.
+
+The original audit artifact is
+[12845317312](https://github.com/NoGod3524/EXReader/actions/runs/40754387048/artifacts/12845317312),
+17,995 bytes, SHA-256
+`09e70169541c78ebc545a633acb10610d6cfbb104688ae28c1a65831c0fdebd8`,
+expires 2027-01-26T19:26:56Z. Its API identity and digest match the original
+upload log. This receipt-only commit is not the audited source and does not
+start another audit.
