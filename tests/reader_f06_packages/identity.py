@@ -47,11 +47,12 @@ def guard():
 def package(target, payload):
     payload = Path(payload)
     destination = OUT / target
+    sdk_version = '3.42.0' if target == 'windows' else '3.41.0'
     if target == 'linux':
         print(run(sys.executable, 'tools/reader_wave3_package/desktop.py', 'prepare', '--target', target, '--root', payload))
     args = [sys.executable, 'tools/reader_wave3_package/assemble.py', '--target', target, '--payload', payload,
             '--output', destination, '--source-sha', os.environ['GITHUB_SHA'], '--require-build-identity',
-            '--sdk-version', '3.42.0' if target == 'windows' else '3.41.0']
+            '--sdk-version', sdk_version]
     for exclude in ('EXReader-Windows.zip', 'EXReader-Linux.tar.gz'):
         args += ['--exclude', exclude]
     print(run(*args))
@@ -61,7 +62,8 @@ def package(target, payload):
               '--manifest', destination / 'manifest.json', '--into', fresh, '--report', destination / 'unpack.json'))
     if target in ('windows', 'linux', 'macos'):
         print(run(sys.executable, 'tools/reader_wave3_package/desktop.py', 'verify', '--target', target, '--root', fresh,
-                  '--source-sha', os.environ['GITHUB_SHA'], '--report', destination / 'entry.json'))
+                  '--source-sha', os.environ['GITHUB_SHA'], '--sdk-version', sdk_version,
+                  '--report', destination / 'entry.json'))
     configs = {}
     for cache in (ROOT / 'build').rglob('CMakeCache.txt'):
         # Preserve actual build configuration, not just intended options.
