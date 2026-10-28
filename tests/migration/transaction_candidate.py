@@ -51,6 +51,11 @@ def main():
             assert rc != 0, (out, err)
             assert db.execute('PRAGMA user_version').fetchone()[0] == schema
             assert db.execute('SELECT title FROM books WHERE id=1').fetchone()[0] == old
+            rc, out, err = call(a.tool, 'migrate', '--pack', pack, '--target', target, fault='publish-cancel')
+            assert rc == 4 and json.loads(out)['code'] == 'cancelled', (rc, out, err)
+            assert db.execute('PRAGMA user_version').fetchone()[0] == schema
+            assert db.execute('SELECT title FROM books WHERE id=1').fetchone()[0] == old
+            assert db.execute("SELECT count(*) FROM sqlite_master WHERE name='exr_migration_ledger'").fetchone()[0] == old_ledger
             ready, resume = Path(str(target)+'.writer-ready'), Path(str(target)+'.writer-resume')
             env = dict(os.environ, EXR_MIGRATE_TEST_FAULTS='1')
             crash_pack = folder/'crash.exrpack'
