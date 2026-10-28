@@ -110,7 +110,10 @@ static exr_status wintxt_search_open(host_job *job) {
   const host_search_hit *hit=&job->search_hit;exr_control control={job_cancel_check,NULL,job};
   uint64_t start=UINT64_MAX,end=UINT64_MAX;size_t page=0,count=0;
   const exr_layout *layout=NULL;const exr_page *info;exr_status status;
-  if(!hit->txt || !hit->anchor.exact || g.session.txt_pager_invalid) return EXR_ARGUMENT;
+  if(!hit->txt || !hit->anchor.exact) return EXR_ARGUMENT;
+  status=txt_pager_recover(&g.session,&job->error);
+  if(status!=EXR_OK) return status;
+  live=g.session.txt_source;
   wintxt_search_trace("source-start");
   status=wintxt_search_source(job,&fresh,&handle);
   wintxt_search_trace("source-end");
