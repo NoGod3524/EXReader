@@ -193,10 +193,21 @@ final class HostAccountSession: ObservableObject {
 
     func beginPreparation(cancel: @escaping () -> Void) throws {
         guard !running, !preparing, !closeRequested else { throw HostError.invalidInput("此账号已在准备、同步或关闭") }
-        preparing = true; cancelPreparation = cancel
+        preparing = true; cancelPreparation = cancel; state = "正在准备原书"; message = ""
     }
 
     func finishPreparation() { preparing = false; cancelPreparation = nil }
+
+    func preparationStopped(cancelled: Bool, detail: String = "") {
+        finishPreparation()
+        guard !closeRequested, state != "已关闭" else { return }
+        state = cancelled ? "已取消" : "同步失败"
+        message = cancelled ? "已提交的历史会保留，可手动重试" : detail + "；已提交的历史会保留，可手动重试"
+    }
+
+    func startFailed(_ detail: String) {
+        state = "同步失败"; message = detail + "；已提交的历史会保留，可手动重试"
+    }
 
     deinit {
         timer?.invalidate()
@@ -252,7 +263,10 @@ final class HostAccountSession: ObservableObject {
         }
     }
 
-    func cancel() { if let handle { _ = reader_session_cancel(handle) } }
+    func cancel() {
+        if preparing { cancelPreparation?(); state = "正在取消" }
+        else if let handle { _ = reader_session_cancel(handle) }
+    }
 
     func close() {
         cancelPreparation?()
