@@ -190,6 +190,7 @@ private struct ShelfObservationView: View {
 struct LibraryScreen: View {
     @ObservedObject var model: HostReaderModel
     @State private var importing = false
+    @State private var organizing = false
     @StateObject private var shelf: HostShelf
     @FocusState private var searchFocused: Bool
     @Environment(\.scenePhase) private var phase
@@ -301,6 +302,9 @@ struct LibraryScreen: View {
                 Button("刷新") { shelf.refresh() }
                     .disabled(model.busy || model.productIndexPending)
                     .accessibilityIdentifier("library.refresh")
+                Button("整理") { organizing = true }
+                    .disabled(model.busy || model.productIndexPending || model.organizationURL == nil)
+                    .accessibilityIdentifier("library.organization")
             }.padding(.horizontal).padding(.vertical, 6)
 
             if (model.productIndexPending || (shelf.rows.isEmpty && !model.errorText.isEmpty)) && !model.books.isEmpty {
@@ -463,6 +467,11 @@ struct LibraryScreen: View {
         .onChange(of: phase) { value in
             if value == .active { shelf.restoreViewport() } else { shelf.save() }
         }
+        .sheet(isPresented: $organizing) {
+            if let url = model.organizationURL {
+                HostOrganizationPanel(model: model, productURL: url, books: shelf.rows)
+            }
+        }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.data], allowsMultipleSelection: false) { result in
             switch result {
             case .success(let urls):
@@ -471,6 +480,178 @@ struct LibraryScreen: View {
             case .failure(let error): model.reportImportFailure(error)
             }
         }
+    }
+}
+
+private struct HostOrganizationPanel: View {
+    @ObservedObject var model: HostReaderModel
+    @StateObject private var organization: HostOrganization
+    let books: [HostShelfBook]
+    @Environment(\.dismiss) private var dismiss
+    @State private var kind = 0
+    @State private var parent: String?
+    @State private var parentStack: [String] = []
+    @State private var removed = false
+    @State private var selectedGroup: HostOrganizationGroup?
+    @State private var selectedBook: HostShelfBook?
+    @State private var name = ""
+    @State private var ordinal = "0"
+    // Identifies the snapshot currently displayed for review.
+    @State private var edit = ""
+
+    init(model: HostReaderModel, productURL: URL, books: [HostShelfBook]) {
+        self.model = model
+        self.books = books
+        _organization = StateObject(wrappedValue: HostOrganization(productURL: productURL))
+    }
+
+    private func refresh() {
+        organization.refresh(kind: kind, parent: parent, deleted: removed)
+    }
+
+    private func changeKind(_ value: Int) {
+        kind = value; parent = nil; parentStack = []; selectedGroup = nil; selectedBook = nil; edit = ""
+        refresh()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("书架整理").font(.headline).accessibilityAddTraits(.isHeader)
+                Spacer()
+                Button("完成") { dismiss() }.accessibilityIdentifier("organization.close")
+            }
+            HStack {
+                Button("书架") { changeKind(0) }.accessibilityIdentifier("organization.kind.shelf")
+                Button("分类") { changeKind(1) }.accessibilityIdentifier("organization.kind.tag")
+                Button("系列") { changeKind(2) }.accessibilityIdentifier("organization.kind.series")
+            }.buttonStyle(.bordered)
+            Toggle("显示已移除", isOn: $removed)
+                .accessibilityIdentifier("organization.removed")
+                .onChange(of: removed) { _ in selectedGroup = nil; edit = ""; refresh() }
+            HStack {
+                TextField("名称", text: $name).textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("organization.name")
+                TextField("顺序", text: $ordinal).textFieldStyle(.roundedBorder).frame(width: 70)
+                    .accessibilityIdentifier("organization.ordinal")
+            }
+            HStack {
+                Button("新建") {
+                    selectedGroup = nil; selectedBook = nil; edit = "new"
+                    organization.prepareGroup(kind: kind, id: "")
+                }.accessibilityIdentifier("organization.create")
+                Button("保存新建") {
+                    organization.commitGroup(operation: 0, kind: kind, id: "", name: name,
+                                             parent: kind == 0 ? parent : nil, ordinal: kind == 0 ? (UInt64(ordinal) ?? 0) : 0)
+                }.disabled(edit != "new" || !organization.prepared || name.isEmpty)
+                    .accessibilityIdentifier("organization.save")
+                Button("刷新") { refresh() }.accessibilityIdentifier("organization.refresh")
+                if kind == 0 && parent != nil {
+                    Button("返回上层") { _ = parentStack.popLast(); parent = parentStack.last; selectedGroup = nil; edit = ""; refresh() }
+                        .accessibilityIdentifier("organization.parent")
+                }
+            }.buttonStyle(.bordered)
+            Text(selectedGroup?.name ?? "未选择分组")
+                .accessibilityIdentifier("organization.selected")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(organization.groups) { group in
+                        Button(group.name) {
+                            selectedGroup = group; selectedBook = nil; name = group.name
+                            ordinal = String(group.ordinal); edit = "group"
+                            organization.prepareGroup(kind: kind, id: group.id)
+                            if !group.deleted { organization.refreshMembers(kind: kind, groupID: group.id) }
+                        }.accessibilityIdentifier("organization.group.\(group.id)")
+                    }
+                    if organization.groupsMore {
+                        Button("更多分组") { organization.nextGroups(kind: kind, parent: parent, deleted: removed) }
+                            .accessibilityIdentifier("organization.more-groups")
+                    }
+                    if let group = selectedGroup {
+                        HStack {
+                            Button("重命名/排序") {
+                                organization.commitGroup(operation: 0, kind: kind, id: group.id, name: name,
+                                    parent: group.parent, ordinal: kind == 0 ? (UInt64(ordinal) ?? 0) : 0)
+                            }.disabled(edit != "group" || !organization.prepared || group.deleted || name.isEmpty)
+                                .accessibilityIdentifier("organization.rename")
+                            Button("移除") {
+                                organization.commitGroup(operation: 1, kind: kind, id: group.id, name: name,
+                                    parent: group.parent, ordinal: group.ordinal)
+                            }.disabled(edit != "group" || !organization.prepared || group.deleted)
+                                .accessibilityIdentifier("organization.delete")
+                            Button("恢复") {
+                                organization.commitGroup(operation: 2, kind: kind, id: group.id, name: name,
+                                    parent: group.parent, ordinal: group.ordinal)
+                            }.disabled(edit != "group" || !organization.prepared || !group.deleted)
+                                .accessibilityIdentifier("organization.restore")
+                            if kind == 0 && !group.deleted {
+                                Button("子书架") { parentStack.append(group.id); parent = group.id; selectedGroup = nil; edit = ""; refresh() }
+                                    .accessibilityIdentifier("organization.children")
+                            }
+                        }.buttonStyle(.bordered)
+                        if !group.deleted {
+                            Text("分组中的书籍").font(.headline)
+                            ForEach(organization.members) { member in
+                                Button("\(member.title) · \(member.ordinal)") {
+                                    dismiss()
+                                    model.openShelfBook(member.book)
+                                }
+                                    .accessibilityIdentifier("organization.member.\(member.bookKey)")
+                            }
+                            if organization.membersMore {
+                                Button("更多成员") { organization.nextMembers(kind: kind, groupID: group.id) }
+                                    .accessibilityIdentifier("organization.more-members")
+                            }
+                            Text("书籍").font(.headline)
+                            ForEach(books) { book in
+                                Button(book.title) {
+                                    selectedBook = book; edit = "member"
+                                    organization.prepareMembership(kind: kind, groupID: group.id, bookKey: book.id)
+                                }.accessibilityIdentifier("organization.book.\(book.id)")
+                            }
+                            if let book = selectedBook {
+                                Text(organization.membershipPresent ? "member" : "not member")
+                                    .accessibilityIdentifier("organization.membership")
+                                HStack {
+                                    Button("验证原件") { model.verifyOrganizationOriginal(book, organization: organization) }
+                                        .accessibilityIdentifier("organization.verify-original")
+                                    Button("添加") {
+                                        organization.commitMembership(operation: 0, kind: kind, groupID: group.id,
+                                            bookKey: book.id, ordinal: kind == 1 ? 0 : (UInt64(ordinal) ?? 0))
+                                    }.disabled(edit != "member" || !organization.prepared)
+                                        .accessibilityIdentifier("organization.add")
+                                    Button("移除书籍") {
+                                        organization.commitMembership(operation: 1, kind: kind, groupID: group.id,
+                                            bookKey: book.id, ordinal: kind == 1 ? 0 : (UInt64(ordinal) ?? 0))
+                                    }.disabled(edit != "member" || !organization.prepared)
+                                        .accessibilityIdentifier("organization.remove")
+                                    Button("恢复书籍") {
+                                        organization.commitMembership(operation: 2, kind: kind, groupID: group.id,
+                                            bookKey: book.id, ordinal: kind == 1 ? 0 : (UInt64(ordinal) ?? 0))
+                                    }.disabled(edit != "member" || !organization.prepared)
+                                        .accessibilityIdentifier("organization.restore-member")
+                                }.buttonStyle(.bordered)
+                            }
+                        }
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }
+            if organization.pending {
+                Button("重试保留的操作") { organization.recoverEdit() }
+                    .accessibilityIdentifier("organization.retry")
+                Button("放弃未提交的操作") { organization.abandonPending() }
+                    .accessibilityIdentifier("organization.abandon")
+            }
+#if EXR_APPLE_HOST_REVIEW
+            if organization.stagedForReview {
+                Text("已暂存").accessibilityIdentifier("organization.staged")
+            }
+#endif
+            Text(organization.message).font(.caption).accessibilityIdentifier("organization.message")
+        }
+        .padding().frame(minWidth: 320, minHeight: 400)
+        .disabled(organization.busy || model.organizationVerificationBusy)
+        .onAppear { refresh() }
     }
 }
 
