@@ -30,12 +30,20 @@ def guard():
     command('git', 'diff', '--exit-code', '8357eafa28423a7ab93ba08b823af80f01ad1505', 'HEAD', '--',
             'src', 'include', 'cmake', 'CMakeLists.txt', 'bindings')
     frozen = {}
-    for path in ('src', 'include', 'CMakeLists.txt', 'tests/reader_f06_packages',
+    for path in ('src', 'include', 'CMakeLists.txt', 'tests/reader_f06_packages/build.py',
+                 'tests/reader_f06_packages/README.md',
                  '.github/workflows/android-composition-candidate.yml', 'examples/android/app/src/main/java'):
         old = command('git', 'rev-parse', BASE + ':' + path)
         current = command('git', 'rev-parse', 'HEAD:' + path)
         assert old == current, path
         frozen[path] = current
+    f06_path = 'tests/reader_f06_packages/identity.py'
+    old_identity = subprocess.check_output(['git', 'show', BASE + ':' + f06_path], cwd=ROOT, text=True)
+    old_base = "BASE = '503c36e8073c12cd8837184b142b7704da51c961'"
+    new_base = "BASE = '6e93411a07cacc3bddabd8d93aa4b763a565b5d2'"
+    assert old_identity.count(old_base) == 1
+    assert (ROOT / f06_path).read_text() == old_identity.replace(old_base, new_base, 1)
+    frozen[f06_path] = command('git', 'rev-parse', 'HEAD:' + f06_path)
     cmake = (ROOT / 'examples/android/app/src/main/cpp/CMakeLists.txt').read_text()
     assert 'set(EXR_HOST_SDK_VERSION "3.41.0" CACHE STRING' in cmake
     assert 'find_package(EXReader ${EXR_HOST_SDK_VERSION} EXACT CONFIG REQUIRED)' in cmake
