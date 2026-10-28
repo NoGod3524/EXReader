@@ -1,0 +1,101 @@
+name: Apple large-type reading and organization drivers
+on:
+  push:
+    branches: [codex/dot-apple-large-type-drivers]
+    paths-ignore: ['docs/apple-large-type-drivers/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  sdk:
+    runs-on: macos-15
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin the SDK candidate and retain old tests and product owners
+        run: |
+          git diff --exit-code 716c1409168960a276e282ce694d32ed82497bc9 HEAD -- src include bindings cmake CMakeLists.txt apps/reader tests/apple_host tests/apple_d24 tests/reader_team24_apple tests/reader_a11y_apple tools
+          python3 -m compileall -q tests/apple_large_type_drivers
+      - name: Same-source installed SDK and retained product modules
+        run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+      - name: Record the candidate SDK identity in the generated package manifest
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('build/raw3-ios-sdk') / os.environ['TARGET'] / 'wave3-packages.json'
+          data = json.loads(path.read_text(encoding='utf-8'))
+          path.with_name('wave3-packages-original-metadata.json').write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          data['sdk_frozen_base'] = data.pop('sdk_frozen_source')
+          data['sdk_candidate_source'] = os.environ['GITHUB_SHA']
+          data['sdk_candidate_txt_files'] = '9727ca1624ee59e561fd6aad7a22bb85a0fd2632'
+          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-large-type-drivers-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/raw3-ios-sdk/${{ matrix.target }}/sdk/
+            build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
+            build/raw3-ios-sdk/${{ matrix.target }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+  native:
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apple-large-type-drivers-sdk-*
+          path: sdk-input
+      - name: Xcode project dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Maximum system type, native UI, unchanged reading navigation search theme suites
+        run: python3 tests/apple_large_type_drivers/run_ui.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-large-type-drivers-native-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-large-type-drivers/${{ matrix.platform }}/evidence/
+          if-no-files-found: error
+          retention-days: 30
+  authenticate:
+    needs: [sdk, native]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate exact-source native programs and original artifact ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_large_type_drivers/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-large-type-drivers-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-large-type-drivers-summary/summary.json
+          if-no-files-found: error
+          retention-days: 30

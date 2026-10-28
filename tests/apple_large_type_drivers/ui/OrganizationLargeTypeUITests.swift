@@ -1,0 +1,63 @@
+// SPDX-License-Identifier: MIT
+import XCTest
+import UIKit
+
+final class OrganizationLargeTypeUITests: XCTestCase {
+    private let app = XCUIApplication()
+    private func element(_ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
+    private func wait(_ check: () -> Bool) -> Bool {
+        let end = Date().addingTimeInterval(60)
+        while Date() < end { if check() { return true }; RunLoop.current.run(until: Date().addingTimeInterval(0.15)) }
+        return check()
+    }
+    override func setUpWithError() throws { continueAfterFailure = false }
+    override func tearDownWithError() throws { record("terminal"); app.terminate() }
+    private func record(_ name: String) {
+        let screen = XCTAttachment(screenshot: app.screenshot()); screen.name = "organization-large-" + name; screen.lifetime = .keepAlways; add(screen)
+        let tree = XCTAttachment(string: app.debugDescription); tree.name = "organization-large-" + name + "-tree"; tree.lifetime = .keepAlways; add(tree)
+        print("ORGANIZATION LARGE \(name): \(app.debugDescription)")
+    }
+    private func tap(_ id: String) {
+        let target = element(id)
+        XCTAssertTrue(target.waitForExistence(timeout: 60), id)
+        XCTAssertTrue(wait { target.isEnabled && target.isHittable }, "Unreachable \(id): \(app.debugDescription)")
+        XCTAssertTrue(app.windows.firstMatch.frame.insetBy(dx: -2, dy: -2).contains(target.frame), "Offscreen \(id): \(target.frame)")
+        target.tap()
+    }
+    private func start(_ orientation: UIDeviceOrientation) {
+        XCTAssertGreaterThan(UIFont.preferredFont(forTextStyle: .caption1).pointSize, 20)
+        XCUIDevice.shared.orientation = orientation
+        app.launchArguments = ["-EXRUITestFixtures", "1", "-EXRFreshState", "1"]
+        app.launch()
+        XCTAssertTrue(wait { self.element("library.import.epub").exists && !self.element("library.busy").exists })
+        tap("library.import.epub")
+        XCTAssertTrue(wait { self.element("library.book.0").exists && !self.element("library.busy").exists })
+        tap("library.book.0")
+        XCTAssertTrue(wait { self.element("reader.page").exists && !self.element("reader.busy").exists })
+        record("reading")
+        tap("reader.back")
+        XCTAssertTrue(element("library.title").waitForExistence(timeout: 60))
+        tap("library.organization")
+        XCTAssertTrue(element("organization.close").waitForExistence(timeout: 60))
+        record("opened")
+    }
+    private func checkKindsAndReturn() {
+        for kind in ["shelf", "tag", "series"] { tap("organization.kind." + kind) }
+        tap("organization.refresh")
+        tap("organization.close")
+        XCTAssertTrue(element("library.title").waitForExistence(timeout: 60))
+        tap("library.book.0")
+        XCTAssertTrue(wait { self.element("reader.page").exists && !self.element("reader.busy").exists })
+        tap("reader.back")
+        record("returned")
+    }
+    func testMaximumTypePortraitOrganizationAndReturn() {
+        start(.portrait)
+        checkKindsAndReturn()
+    }
+    func testMaximumTypeLandscapeOrganizationAndReturn() {
+        start(.landscapeLeft)
+        checkKindsAndReturn()
+        XCUIDevice.shared.orientation = .portrait
+    }
+}
