@@ -10,8 +10,9 @@ BUTTON,ROWS,MESSAGE,BODY,PROGRESS,BOOKMARK,HIGHLIGHT,EDIT,DELETE,RESTORE,OPEN,PR
 
 def original(path):
     # A real EPUB original generated only on Actions; no application data is seeded.
-    sys.path.insert(0,str(ROOT/'tests/reader_reading_state'))
-    from make_fixtures import epub,entry,xhtml
+    fixture_spec=importlib.util.spec_from_file_location('record_relay_fixture',ROOT/'tests/reader_reading_state/make_fixtures.py')
+    fixture=importlib.util.module_from_spec(fixture_spec);fixture_spec.loader.exec_module(fixture)
+    epub,entry,xhtml=fixture.epub,fixture.entry,fixture.xhtml
     epub(path)
     with zipfile.ZipFile(path) as z:parts={n:z.read(n) for n in z.namelist()}
     parts['book.opf']=parts['book.opf'].replace(b'Reading state fixture',b'Record relay').replace(b'<itemref idref="b"/><itemref idref="a"/>',b'')
@@ -57,7 +58,9 @@ def main():
         if a.phase=='windows-first':
             book=a.out/'Record relay.epub';original(book);raw=book.read_bytes();digest=hashlib.sha256(raw).hexdigest()
             report.update(windows_program_sha256=report['program_sha256'],original_sha256=digest,original_bytes=len(raw),book_identity='epub:'+digest,remote_title='Record relay')
-            app.import_file(book.resolve());app.wait(lambda:app.has_row('Record relay'));app.open('Record relay');app.wait_idle()
+            picker_spec=importlib.util.spec_from_file_location('record_native_picker',ROOT/'tests/reader_d23_relay/windows.py')
+            picker=importlib.util.module_from_spec(picker_spec);picker_spec.loader.exec_module(picker)
+            picker.import_book(app,book.resolve());app.wait(lambda:app.has_row('Record relay'));app.open('Record relay');app.wait_idle()
             d=show();ui.M.set_text(ui.U.GetDlgItem(d,BODY),'Windows bookmark');press(d,BOOKMARK);assert any('Windows bookmark' in x for x in labels(d)),labels(d);close(d)
             app.click('select');app.wait_idle();d=show();ui.M.set_text(ui.U.GetDlgItem(d,BODY),'Windows note');press(d,HIGHLIGHT);assert any('Windows note' in x for x in labels(d)),labels(d);close(d)
             records=annotations();assert len(records)==2,records;assert records[0]['payload']['location']['selector']['exact']=='';assert records[1]['payload']['location']['selector']['exact']
