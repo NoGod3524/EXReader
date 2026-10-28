@@ -34,6 +34,9 @@ final class HostWave3State: ObservableObject {
     @Published var fonts: [HostWave3FontRow] = []
     @Published var selectedFont: String?
     @Published var exportURL: URL?
+#if EXR_APPLE_HOST_REVIEW
+    @Published var reviewRevisionIdentity = ""
+#endif
     @Published var canBack = false
     @Published var canForward = false
     @Published var sync: HostWave3SyncSnapshot?

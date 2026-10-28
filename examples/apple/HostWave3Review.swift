@@ -10,6 +10,78 @@ import CReaderSQLite
 // It uses a separate product snapshot; production import still consumes the
 // resulting portable file with the same preview/confirm and FOUND policy.
 enum HostWave3Review {
+    // Hash every retained revision and outbox value in deterministic order.
+    // Read on the host owner queue so the two observations surround import.
+    static func revisionIdentity(root: URL) throws -> String {
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(root.appendingPathComponent("reader-catalog.db").path, &db,
+                              SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX, nil) == SQLITE_OK, let db else {
+            if let db { sqlite3_close_v2(db) }
+            throw HostError.invalidResult("无法读取修订快照")
+        }
+        defer { sqlite3_close_v2(db) }
+        var digest = SHA256()
+        for sql in ["SELECT revision_id,entity_kind,entity_key,operation,body_json,body_sha256 FROM reader_revisions ORDER BY revision_id",
+                    "SELECT queue_id,revision_id,attempts,last_error FROM reader_outbox ORDER BY queue_id"] {
+            var statement: OpaquePointer?
+            guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK, let statement else {
+                throw HostError.invalidResult("无法准备修订快照")
+            }
+            defer { sqlite3_finalize(statement) }
+            digest.update(data: Data(sql.utf8))
+            var result = sqlite3_step(statement)
+            while result == SQLITE_ROW {
+                for column in 0..<sqlite3_column_count(statement) {
+                    let count = Int(sqlite3_column_bytes(statement, column))
+                    digest.update(data: Data("\(sqlite3_column_type(statement, column)):\(count):".utf8))
+                    if count > 0, let bytes = sqlite3_column_blob(statement, column) {
+                        digest.update(data: Data(bytes: bytes, count: count))
+                    }
+                }
+                result = sqlite3_step(statement)
+            }
+            guard result == SQLITE_DONE else { throw HostError.invalidResult("无法完成修订快照") }
+        }
+        return digest.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+
+    static func checkExports(jsonl: URL, markdown: URL) throws {
+        let data = try Data(contentsOf: jsonl)
+        guard let text = String(data: data, encoding: .utf8), text.hasSuffix("\n") else {
+            throw HostError.invalidResult("JSONL 不是完整 UTF-8")
+        }
+        let lines = text.split(separator: "\n").map(String.init)
+        let objects = try lines.map { line -> [String: Any] in
+            guard let object = try JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any] else {
+                throw HostError.invalidResult("JSONL 行不是对象")
+            }
+            return object
+        }
+        guard objects.count == 3, objects[0]["type"] as? String == "header",
+              objects[0]["format"] as? String == "exreader-annotation-export-raw3",
+              objects[0]["format_version"] as? Int == 1,
+              let sourceBytes = objects[0]["source_bytes"] as? Int, sourceBytes > 0,
+              let key = objects[0]["book_key"] as? String, !key.isEmpty,
+              objects[1]["type"] as? String == "annotation",
+              let annotation = objects[1]["annotation_id"] as? String, !annotation.isEmpty,
+              let heads = objects[1]["heads"] as? [[String: Any]], heads.count == 1,
+              let revision = heads[0]["revision_id"] as? String,
+              let wire = heads[0]["wire"] as? String,
+              let sha = heads[0]["sha256"] as? String,
+              let bytes = heads[0]["bytes"] as? Int,
+              bytes == wire.utf8.count,
+              SHA256.hash(data: Data(wire.utf8)).map({ String(format: "%02x", $0) }).joined() == sha,
+              objects[2]["type"] as? String == "footer", objects[2]["complete"] as? Bool == true,
+              objects[2]["annotations"] as? Int == 1, objects[2]["head_wires"] as? Int == 1 else {
+            throw HostError.invalidResult("JSONL 内容或修订摘要不匹配")
+        }
+        let markdownText = try String(contentsOf: markdown, encoding: .utf8)
+        guard markdownText.contains("书籍标识：`\(key)`"), markdownText.contains("标注标识：`\(annotation)`"),
+              markdownText.contains("修订 `\(revision)`"), markdownText.contains("共 1 条标注实体") else {
+            throw HostError.invalidResult("Markdown 与 JSONL 修订不一致")
+        }
+    }
+
     static func portableFixture(session: HostSession, catalog: HostCatalog, root: URL,
                                 nullSelector: Bool, cancel: HostCancelBox) throws -> URL {
         guard let book = session.book, book.isFixed else { throw HostError.invalidInput("请先打开 Sample.pdf 再准备固定页 NULL／冲突文件") }
