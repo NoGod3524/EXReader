@@ -1,7 +1,7 @@
 name: Windows font lifecycle acceptance
 on:
   push:
-    branches: [codex/terra-wave-windows-font, codex/reader-font-common-20261028]
+    branches: [codex/terra-wave-windows-font, codex/reader-font-common-20261028, codex/reader-font-forward-composition-20261028]
 permissions:
   contents: read
 jobs:
