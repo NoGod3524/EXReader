@@ -48,7 +48,18 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install PyYAML==6.0.3
+      - name: Inventory pinned candidate sources and discover prior runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_hosts_341/candidate_source_audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-source-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/native-source-audit/
+          if-no-files-found: error
       - name: Authenticate complete composition caller without building
+        if: always()
         run: python tests/reader_hosts_341/guard_composition.py
       - name: Authenticate complete GTK caller without building
         if: always()
