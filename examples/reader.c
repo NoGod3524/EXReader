@@ -120,6 +120,10 @@ typedef struct {
   exr_anchor point;
   exr_chapter_stats chapter_stats;
   size_t page, range_start, range_end;
+  /* A semantic TXT point verified in this frame, not a positional resolver
+     fallback. It survives point-only history landings without a selection. */
+  size_t txt_verified_point;
+  int txt_verified_point_valid;
   size_t page_count;
   int valid;
   int fixed;

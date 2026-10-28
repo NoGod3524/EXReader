@@ -141,6 +141,8 @@ static exr_status wintxt_search_open(host_job *job) {
   info=exr_layout_pages(layout,&count);
   if(!info || !count || start<info->start || start>=info->end) { frame_clear(&job->frame);return EXR_FORMAT; }
   copy_wstring(job->frame.title,256,g.frame.title);
+  job->frame.txt_verified_point=(size_t)start;
+  job->frame.txt_verified_point_valid=1;
   job->have_frame=1;job->applied_page=page;job->target_page=page;
   job->note_start=(size_t)start;job->note_end=(size_t)(end<info->end ? end:info->end);
   job->resolved_selection=job->note_start<job->note_end;

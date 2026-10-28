@@ -210,7 +210,17 @@ static void winsearch_submit(int next,int open_hit) {
 #endif
   if(open_hit) {
 #if defined(EXR_READER_WINDOWS_TXT_PROGRESS) && defined(EXR_READER_WINDOWS_WAVE3)
-    if(g.session.txt) job->txt_history_origin=g.frame.range_start;
+    if(g.session.txt) {
+      job->txt_history_origin=g.frame.range_start;
+      /* A previous history landing may be a point and have no selection.
+         Keep its independently resolved semantic point instead of replacing
+         it with generic repeated words at the beginning of the same page. */
+      if(g.frame.valid && g.frame.book_id==g.session.book_id &&
+         g.frame.page==g.session.page && g.frame.txt_verified_point_valid &&
+         g.frame.txt_verified_point>=g.frame.range_start &&
+         g.frame.txt_verified_point<g.frame.range_end)
+        job->txt_history_origin=g.frame.txt_verified_point;
+    }
 #endif
     LRESULT selected=SendMessageW(inbook.rows,LB_GETCURSEL,0,0);
     if(selected==LB_ERR || (size_t)selected>=inbook.batch.count ||

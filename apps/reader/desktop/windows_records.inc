@@ -122,6 +122,10 @@ static exr_status winrecords_route(host_job *job) {
       job->target_page=page;status=job_txt_go(job);
       if(status==EXR_OK) {
         job->applied_page=page;job->note_start=anchor.start;
+        if(anchor.start>=job->frame.range_start && anchor.start<job->frame.range_end) {
+          job->frame.txt_verified_point=anchor.start;
+          job->frame.txt_verified_point_valid=1;
+        }
         job->note_end=anchor.end<job->frame.range_end?anchor.end:job->frame.range_end;
         job->resolved_selection=job->note_start<job->note_end;
       }
