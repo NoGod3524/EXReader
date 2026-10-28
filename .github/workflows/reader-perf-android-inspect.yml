@@ -53,6 +53,21 @@ jobs:
                   'cases':[{'id':case['id'],'status':case['status'],'error':case.get('error'),'test_source_line':case.get('test_source_line'),'detail':case.get('detail') if case['status']!='pass' else None} for case in ui['cases']],
                   'collector':json.loads(read('/ui-execution/result.json')),
                   'verifier':json.loads(read('/observation-verification.json'))}
+          build=json.loads(read('/android-host/build.json'))
+          assert build['source_sha']==source and build['run_id']==str(run) and build['attempt']=='1'
+          assert build['ownership']['candidate_only'] and build['ownership']['tested_source']==source
+          packages={}
+          for filename in ('app-debug.apk','uitest-debug.apk','uitest-debug-androidTest.apk','app-debug-androidTest.apk'):
+              installed=read('/perf-android/installed/'+filename)
+              original=read(('/androidTest/debug/' if filename=='app-debug-androidTest.apk' else '/android-host/artifacts/')+filename)
+              sha=hashlib.sha256(installed).hexdigest()
+              assert installed==original
+              if filename in build['artifacts']: assert build['artifacts'][filename]['sha256']==sha
+              packages[filename]={'sha256':sha,'bytes':len(installed)}
+          report['program_identity']={'installed_apks':packages,'sdk_version':build['sdk_version'],
+              'sdk_file_count':len(build['sdk_files_sha256']),'native':build['native'],
+              'source_tree_ids':read('/perf-android/source-identities.txt').decode(),
+              'note':'Build verifier checked SDK inventory, native build IDs and fixtures before refusing failed UI.'}
           frames=[]; pids=set(); drops=0; windows=[]
           for name in sorted(x for x in names if '/ui-execution/windows/' in x and x.endswith('.jsonl')):
               data=archive.read(name); assert data and data.endswith(b'\n')
