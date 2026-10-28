@@ -197,3 +197,17 @@ Audit artifact `12780100757`, 13375 bytes, SHA-256
 `b02568010c5b36a1a8c387c6b874b2bb3ae8a23c85ff6bc4d869a8bcf2417fa0`,
 expires 2027-01-25T23:39:31Z. The evidence-only documentation commit is not
 the audited source.
+
+## 2026-10-28 Apple native jump history
+
+[Actions audit 40608384508/1](https://github.com/NoGod3524/EXReader/actions/runs/40608384508)
+at source `94624bdc9535a5d5860150a4e1fae4e73740e0c7` completed with
+`evidence_ok=true`: **77/108 (71.3%)**, foundation 12/12, host 65/84 and
+final delivery 0/12. The three added outcomes are the independently audited
+macOS, iPhone simulator and iPad simulator history flows documented in
+[apple-history.md](apple-history.md).
+
+Audit artifact `12781232403`, 13824 bytes, SHA-256
+`f9c4e16feda52bb33d3929c2691a90bf08b57dab9e50db3006329a9c2aff2ba8`,
+expires 2027-01-26T00:22:50Z. This evidence-only documentation commit is not
+the audited source.
