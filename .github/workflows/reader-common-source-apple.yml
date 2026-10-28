@@ -1,6 +1,7 @@
 name: Common source Apple three-target native feature integration
 on:
-  workflow_dispatch:
+  push:
+    branches: [codex/dot-apple-common-gate]
 permissions:
   contents: read
   actions: read
@@ -23,7 +24,7 @@ jobs:
           fetch-depth: 0
       - name: Admit common source and exact Apple shared checker
         run: |
-          python3 tools/reader_composition/guard.py --source "$GITHUB_SHA" --report build/apple-source-admission.json
+          python3 tests/apple_common_gate/gate.py admit
           test "$(git rev-parse HEAD:tools/check_apple_product.py)" = ed7f62597e01d4e045f679369805d27abc20b7bc
       - name: Checkout isolated Apple owner candidate with full history
         uses: actions/checkout@v4
@@ -33,15 +34,15 @@ jobs:
           fetch-depth: 0
       - name: Original strict Apple owner guard on isolated candidate
         working-directory: apple-owner-candidate
-        env:
-          GITHUB_SHA: 937f61057b06c5c9de3b562046e52c91b5be62b9
-        run: python3 tests/reader_team24_apple/guard_owner.py
+        run: GITHUB_SHA=937f61057b06c5c9de3b562046e52c91b5be62b9 python3 tests/reader_team24_apple/guard_owner.py
       - name: Original Apple syntax checks on common source
         run: |
           python3 -m compileall -q tests/reader_team24_apple tests/reader_team24_apple/build.py
           ruby -c tests/reader_team24_apple/make_project.rb
       - name: Frozen SDK and exact installed five module family
-        run: python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+        run: |
+          python3 tests/reader_team24_apple/build.py --target '${{ matrix.target }}'
+          python3 tests/apple_common_gate/gate.py stamp --target '${{ matrix.target }}'
       - name: Actual account session terminal callbacks
         if: ${{ matrix.target == 'macos' }}
         run: |
@@ -69,7 +70,15 @@ jobs:
             build/raw3-ios-sdk/${{ matrix.target }}/sdk/
             build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
             build/raw3-ios-sdk/${{ matrix.target }}/*.json
+          retention-days: 30
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: same-source-apple-admission-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
             build/apple-source-admission.json
+            build/apple-source-admission/
             apple-owner-candidate/build/team24-apple-guard.json
           retention-days: 30
           if-no-files-found: error
@@ -112,11 +121,11 @@ jobs:
       - name: Exact run attempt source jobs ZIP and actual programs
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tests/reader_team24_apple/verify.py
+        run: python3 tests/apple_common_gate/gate.py verify
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: team24-apple-authentication-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/team24-apple-summary/summary.json
+          path: build/team24-apple-summary/
           retention-days: 30
           if-no-files-found: error
