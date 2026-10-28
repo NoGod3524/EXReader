@@ -54,7 +54,8 @@ final class OrganizationLargeTypeUITests: XCTestCase {
         tap("organization.create")
         tap("organization.name")
         let groupName = "Maximum Type Group"
-        element("organization.name").typeText(groupName)
+        element("organization.name").typeText(groupName + "\n")
+        XCTAssertTrue(wait { self.app.keyboards.count == 0 }, "Done must dismiss the keyboard before continuing")
         tap("organization.save")
         let group = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@", "organization.group.", groupName)).firstMatch
         XCTAssertTrue(group.waitForExistence(timeout: 60), "Created group did not appear")

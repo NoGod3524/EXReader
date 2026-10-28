@@ -496,6 +496,11 @@ private struct HostOrganizationPanel: View {
     @State private var selectedBook: HostShelfBook?
     @State private var name = ""
     @State private var ordinal = "0"
+    private enum InputField: Hashable { case name, ordinal }
+    @FocusState private var focusedInput: InputField?
+#if os(iOS)
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+#endif
     // Identifies the snapshot currently displayed for review.
     @State private var edit = ""
 
@@ -612,23 +617,8 @@ private struct HostOrganizationPanel: View {
                 }.frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var controls: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Button("书架") { changeKind(0) }.accessibilityIdentifier("organization.kind.shelf")
-                Button("分类") { changeKind(1) }.accessibilityIdentifier("organization.kind.tag")
-                Button("系列") { changeKind(2) }.accessibilityIdentifier("organization.kind.series")
-            }.buttonStyle(.bordered)
-            Toggle("显示已移除", isOn: $removed)
-                .accessibilityIdentifier("organization.removed")
-                .onChange(of: removed) { _ in selectedGroup = nil; edit = ""; refresh() }
-            HStack {
-                TextField("名称", text: $name).textFieldStyle(.roundedBorder)
-                    .accessibilityIdentifier("organization.name")
-                TextField("顺序", text: $ordinal).textFieldStyle(.roundedBorder).frame(width: 70)
-                    .accessibilityIdentifier("organization.ordinal")
-            }
-            HStack {
+    private var primaryActions: some View {
+        Group {
                 Button("新建") {
                     selectedGroup = nil; selectedBook = nil; edit = "new"
                     organization.prepareGroup(kind: kind, id: "")
@@ -643,7 +633,38 @@ private struct HostOrganizationPanel: View {
                     Button("返回上层") { _ = parentStack.popLast(); parent = parentStack.last; selectedGroup = nil; edit = ""; refresh() }
                         .accessibilityIdentifier("organization.parent")
                 }
+        }
+    }
+
+    private var controls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Button("书架") { changeKind(0) }.accessibilityIdentifier("organization.kind.shelf")
+                Button("分类") { changeKind(1) }.accessibilityIdentifier("organization.kind.tag")
+                Button("系列") { changeKind(2) }.accessibilityIdentifier("organization.kind.series")
             }.buttonStyle(.bordered)
+            Toggle("显示已移除", isOn: $removed)
+                .accessibilityIdentifier("organization.removed")
+                .onChange(of: removed) { _ in selectedGroup = nil; edit = ""; refresh() }
+            HStack {
+                TextField("名称", text: $name).textFieldStyle(.roundedBorder)
+                    .focused($focusedInput, equals: .name).submitLabel(.done)
+                    .onSubmit { focusedInput = nil }
+                    .accessibilityIdentifier("organization.name")
+                TextField("顺序", text: $ordinal).textFieldStyle(.roundedBorder).frame(width: 70)
+                    .focused($focusedInput, equals: .ordinal).submitLabel(.done)
+                    .onSubmit { focusedInput = nil }
+                    .accessibilityIdentifier("organization.ordinal")
+            }
+#if os(iOS)
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 8) { primaryActions }.buttonStyle(.bordered)
+            } else {
+                HStack { primaryActions }.buttonStyle(.bordered)
+            }
+#else
+            HStack { primaryActions }.buttonStyle(.bordered)
+#endif
             Text(selectedGroup?.name ?? "未选择分组")
                 .accessibilityIdentifier("organization.selected")
 #if os(iOS)

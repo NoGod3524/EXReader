@@ -19,3 +19,9 @@ The minimum diagnostic imports the actual EPUB through the application at ordina
 Focused run 40673513910 / fbd16c509a8b818dd88c914b5d465a70f52bc32b passed real import setup and maximum-type portrait on iPhone, plus both iPad orientations. Its iPhone landscape failed on the actual organizer Done button. Ubuntu-only inspection 40677656931 authenticated/downloaded the prior artifact in Actions and retained its exact landscape log: in a 667x375 window Done is at (550.5,-56.5,100.5,63.5), and the group ScrollView is at y410 with height0. This establishes off-window UI, not a guessed XCTest locator issue.
 
 The narrow product fix gives iOS a pinned organizer header and one scrollable form/group body, without the desktop-only 400pt minimum height. Model/storage/lifecycle/toggle behavior is unchanged. The focused tests retain strict hittability and full-window containment after genuine scroll gestures, and now also create a group through the maximum-type form before returning to reading. No coordinate bypass is used.
+
+## Focused form follow-up
+
+Run 40678267136 / 39740c65f261ddc0c760757e3469f6fc8a5d778e retained failure while the newly added creation flow exercised the keyboard. Raw iPhone portrait AX shows Done now inside the window at (258.5,56,100.5,63.5); the organizer viewport is 343x263.5, while the horizontal Save control wraps to 94.5x263.5 and the name remains keyboard-focused. iPad portrait completes creation/return; landscape and iPhone save visibility remain failed.
+
+The next narrow change makes primary actions vertical only at accessibility type sizes and supplies the ordinary Done submission path for name/ordinal focus. The test submits with the actual Return key, asserts keyboard dismissal, then performs the same real scrolling, full-frame and hittability checks. No maximum type reduction, coordinate bypass or budget change is used.
