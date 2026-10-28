@@ -4,6 +4,10 @@ on:
   push:
     branches: ['codex/migration-transaction-candidate']
     paths:
+      - 'src/**'
+      - 'include/**'
+      - 'cmake/**'
+      - 'CMakeLists.txt'
       - 'extras/migration/**'
       - 'tests/migration/**'
       - 'tools/check_legacy_migration.py'

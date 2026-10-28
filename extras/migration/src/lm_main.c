@@ -1496,6 +1496,9 @@ static int run_migrate(ctx *c) {
     void *data=NULL;size_t size=0;int found=0;
     c->target_existed=lm_exists(c->target);
     c->sidecar_existed=lm_exists(c->sidecar);
+    if(!c->target_existed && c->sidecar_existed) {
+      fail(c,O_REJECTED,"orphan-ledger","a legacy ledger exists without its library");return 0;
+    }
     if(exr_library_migration_open(c->target,&c->lib,&c->err)!=EXR_OK) {
       fail(c,O_BUSY,"target-busy","cannot acquire the library write transaction: %s",c->err.message);return 0;
     }
