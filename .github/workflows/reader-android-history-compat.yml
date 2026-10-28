@@ -33,9 +33,9 @@ jobs:
           git rev-parse HEAD > build/session-android/logs/source.txt
           python -m pip install PyYAML==6.0.3
           python -m py_compile tests/reader_hosts_341/guard_android.py tests/reader_hosts_341/aggregate_android.py
-          python tests/reader_android_history_compat/guard.py
+          python tests/reader_android_history_compat/${{ github.ref_name == 'codex/reader-android-history-common-prep-20261028' && 'common_guard.py' || 'guard.py' }}
           python -m py_compile tests/reader_android_page_theme/*.py
-          python tests/reader_android_history_compat/guard.py prepare
+          python tests/reader_android_history_compat/${{ github.ref_name == 'codex/reader-android-history-common-prep-20261028' && 'common_guard.py' || 'guard.py' }} prepare
           python tests/reader_android_page_theme/candidate.py
           python -m py_compile build/android-page-theme/candidate/preferences_run_ui.py
           python -m py_compile tests/reader_android_host_import/run_ui.py tests/reader_android_host_import/check_evidence.py
@@ -249,7 +249,7 @@ jobs:
         run: |
           test "$(cat build/session-android/logs/source.txt)" = "$GITHUB_SHA"
           python -m pip install PyYAML==6.0.3
-          python tests/reader_android_history_compat/guard.py
+          python tests/reader_android_history_compat/${{ github.ref_name == 'codex/reader-android-history-common-prep-20261028' && 'common_guard.py' || 'guard.py' }}
       - name: Prepare compiler fixture and current test sources
         run: |
           sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
