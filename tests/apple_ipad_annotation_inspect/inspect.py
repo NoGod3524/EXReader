@@ -44,10 +44,11 @@ def main():
                 snippets.append({'line': i + 1, 'context': [line[:4000] for line in lines[max(0, i-3):min(len(lines), i+4)]]})
             picker = next((i for i, line in enumerate(lines) if 'Picker cannot find EXReader-invalid.jsonl' in line), None)
             assert picker is not None, 'Expected original picker failure not present'
-            hierarchy = lines[picker:min(len(lines), picker + 240)]
+            hierarchy = lines[picker:min(len(lines), picker + 1000)]
             (out / 'picker-hierarchy.txt').write_text('\n'.join(hierarchy) + '\n')
+            picker_elements = [line[:3000] for line in hierarchy if re.search(r'DOC\.|EXReader|jsonl|NavigationBar|CollectionView|No Items|empty|No Content|Browse View', line, re.I)]
             report.update(original_zip_sha256=digest, log_sha256=hashlib.sha256(log).hexdigest(),
-                          match_count=len(matches), matches=snippets, picker_hierarchy=hierarchy,
+                          match_count=len(matches), matches=snippets, picker_elements=picker_elements,
                           xcresult_present=any(n.startswith('wave3.xcresult/') for n in names), accepted=True)
     except Exception as error:
         report['failure'] = str(error)
