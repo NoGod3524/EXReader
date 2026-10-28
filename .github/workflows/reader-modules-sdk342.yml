@@ -62,6 +62,23 @@ jobs:
             cmake --build "build/consumer-$module" --parallel 4
             "./build/consumer-$module/$module-c-consumer"
           done
+      - name: Build and exercise raw selector TXT progress against SDK 3.42
+        env:
+          MSYS_NO_PATHCONV: '1'
+        run: |
+          set -euo pipefail
+          raw="$EXR_WS/build/raw-prefix"
+          sdk="$EXR_WS/build/sdk"
+          cmake --install build/module-native --prefix "$raw"
+          for module in revisions commands reading-state reading-commands txt-progress; do
+            cmake -S "apps/reader/$module" -B "build/raw-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$raw" -DCMAKE_PREFIX_PATH="$raw;$sdk" -DREADER_PRODUCT_PREFIX="$raw" -DEXR_SDK="$sdk" -DEXR_SDK_VERSION=3.42.0 -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON
+            cmake --build "build/raw-$module" --parallel 4
+            cmake --install "build/raw-$module"
+          done
+          cmake -S tests/reader_txt_progress/consumer -B build/raw-txt-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$raw;$sdk"
+          cmake --build build/raw-txt-consumer --parallel 4
+          mkdir -p build/raw-txt-work
+          ./build/raw-txt-consumer/txtp-probe "$EXR_WS/build/raw-txt-work" "$EXR_WS/build/raw-txt-report.json" raw
       - name: Reject unsupported exact SDK version
         env:
           MSYS_NO_PATHCONV: '1'
@@ -79,6 +96,8 @@ jobs:
           name: reader-modules-sdk342-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/rejected-sdk.log
+            build/raw-txt-report.json
+            build/raw-prefix/lib/cmake/
             build/prefix/lib/cmake/
             build/sdk/include/exr/base.h
           if-no-files-found: warn
