@@ -40,6 +40,16 @@ if True:
         for report in (reading,sync,owner,compat):
             assert all(report.get(k)==v for k,v in identity.items()) and report['accepted'] is True
         assert compat['checks']==8 and compat['report']['passed'] is True
+        raw_name,=[name for name in names if name.endswith('history-compat/raw-report.json')]
+        raw=archive.read(raw_name)
+        assert hashlib.sha256(raw).hexdigest()==compat['report_sha256'] and json.loads(raw)==compat['report']
+        assert len(compat['report']['observations'])==8 and all(row['pass'] is True for row in compat['report']['observations'])
+        apk_identity=read('apks/identity.json')
+        assert all(apk_identity[k]==v for k,v in identity.items())
+        assert len(apk_identity['apks'])==5 and len({row['signer_sha256'] for row in apk_identity['apks']})==1
+        for row in apk_identity['apks']:
+            entry,=[name for name in names if name.endswith('apks/'+row['name'])]
+            assert hashlib.sha256(archive.read(entry)).hexdigest()==row['sha256']
         assert reading['checks']==19 and sync['checks']==16 and owner['checks']==18 and owner['process_phases']==2
         added={'saved_bookmark_survives_cancelled_refresh','saved_bookmark_survives_failed_refresh','conflict_remains_reachable_with_saved_bookmarks'}
         observed={row['name'] for phase in reading['phases'] for row in phase['checks'] if row['pass'] is True}
