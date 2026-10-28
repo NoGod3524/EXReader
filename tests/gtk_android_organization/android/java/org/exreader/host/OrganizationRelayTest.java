@@ -53,6 +53,20 @@ public final class OrganizationRelayTest extends Instrumentation {
         Files.write(new File(context.getFilesDir(),"org-"+name+".txt").toPath(),tree.toString().getBytes(StandardCharsets.UTF_8));
     }
     private void sync(){click("立即同步");status("本轮同步结束，书架已更新");click("关闭");}
+    private void syncReceive()throws Exception{
+        click("立即同步");status("本轮同步结束，书架已更新");row("Relay GTK.txt");click("接收");status("书籍已接收");
+        try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getPath())){
+            NativeLibrary.Book[] books=library.books();need(books.length==1,"one explicitly app-received original");
+            java.security.MessageDigest digest=java.security.MessageDigest.getInstance("SHA-256");
+            try(NativeLibrary.Source source=library.source(books[0].id)){
+                need(source.size>0,"received source bytes");byte[] chunk=new byte[65536];
+                for(long offset=0;offset<source.size;){int count=source.read(offset,chunk,(int)Math.min(chunk.length,source.size-offset));need(count>0,"SDK source readable");digest.update(chunk,0,count);offset+=count;}
+            }
+            StringBuilder hash=new StringBuilder();for(byte value:digest.digest())hash.append(String.format(java.util.Locale.ROOT,"%02x",value&255));
+            need(hash.toString().equals(data.getString("original_sha256")),"received public SDK source equals GTK original");
+        }
+        check("explicit_native_receive_and_public_original_hash",()->{});click("关闭");
+    }
     private void organize(){click("More");click("Organize");target="organize New action";waitFor(n->n.isEnabled()&&"New".contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),null,30000);}
     private void kind(int n){click("Kind");click(new String[]{"Shelves","Tags","Series"}[n]);}
     private void create(String name){click("New");field("Name",name);click("Save");visible(name);}
@@ -86,7 +100,7 @@ public final class OrganizationRelayTest extends Instrumentation {
             launch();
             if(restart){verifyVisible(true);rows=snapshot();check("process_restart_real_ui_retains_groups_members",()->{});}
             else{
-                configure();sync();verifyVisible(last);check("receive_other_host_native_organization_ui",()->{});
+                configure();syncReceive();verifyVisible(last);check("receive_other_host_native_organization_ui",()->{});
                 JSONObject before=snapshot();configure();sync();need(before.toString().equals(snapshot().toString()),"duplicate sync changed exact organization rows");check("duplicate_sync_has_no_duplicate_rows",()->{});
                 if(!last){
                     organize();kind(1);row("GTK tag");click("Edit");field("Name","Android edited tag");click("Save");visible("Android edited tag");
