@@ -20,7 +20,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import hashlib, io, json, os, subprocess, urllib.request, urllib.error, zipfile
+          import hashlib, io, json, math, os, re, statistics, subprocess, urllib.request, urllib.error, zipfile
           from pathlib import Path, PurePosixPath
           api = os.environ['GITHUB_API_URL'] + '/repos/' + os.environ['GITHUB_REPOSITORY']
           run, artifact, source = 40628057571, 12789724765, '9f0783ae449ad73cc803d7019892ee8f3c417a64'
@@ -53,6 +53,43 @@ jobs:
                   'cases':[{'id':case['id'],'status':case['status'],'error':case.get('error'),'test_source_line':case.get('test_source_line'),'detail':case.get('detail') if case['status']!='pass' else None} for case in ui['cases']],
                   'collector':json.loads(read('/ui-execution/result.json')),
                   'verifier':json.loads(read('/observation-verification.json'))}
+          frames=[]; pids=set(); drops=0; windows=[]
+          for name in sorted(x for x in names if '/ui-execution/windows/' in x and x.endswith('.jsonl')):
+              data=archive.read(name); assert data and data.endswith(b'\n')
+              rows=[json.loads(line) for line in data.splitlines()]; header=rows[0]
+              assert header['kind']=='start' and header['schema']==1
+              pid, window, seq=header['pid'],header['window_id'],0; pids.add(pid)
+              for row in rows[1:]:
+                  assert row['kind'] in ('frame','stop')
+                  if row['kind']=='stop':
+                      assert row['frames']==seq
+                      continue
+                  seq+=1
+                  assert row['pid']==pid and row['window_id']==window and row['sequence']==seq
+                  assert type(row['total_ns']) is int and row['total_ns']>=0 and row['first_draw'] in (0,1) and row['drop_count']>=0
+                  drops+=row['drop_count']
+                  if row['first_draw']==0: frames.append(row['total_ns']/1e6)
+              assert seq>0
+              windows.append({'pid':pid,'callbacks':seq,'sha256':hashlib.sha256(data).hexdigest(),'closed_cleanly':rows[-1]['kind']=='stop'})
+          memory=json.loads(read('/ui-execution/pss-sampling.json')); samples=[]
+          assert not memory['errors'] and [x['slot'] for x in memory['samples']]==list(range(len(memory['samples'])))
+          for item in memory['samples']:
+              if item.get('total_pss_kib') is None: continue
+              rawpss=read('/ui-execution/pss/'+str(item['slot'])+'.txt').decode(errors='replace')
+              match=re.search(r'\*\* MEMINFO in pid (\d+) \[org\.exreader\.host\] \*\*',rawpss)
+              total=re.search(r'TOTAL PSS:\s*(\d+)',rawpss) or re.search(r'^\s*TOTAL\s+(\d+)\s',rawpss,re.M)
+              assert match and total and int(match.group(1))==item['pid'] and int(total.group(1))==item['total_pss_kib']
+              assert item['pid'] in pids and not item.get('process_changed_during_sample') and item['total_pss_kib']>0
+              samples.append(item['total_pss_kib'])
+          assert frames and samples
+          ordered=sorted(frames)
+          report['partial_observations']={'complete':False, 'reason':'one required UI case failed',
+              'first_interactive_ms':ui['cases'][0]['detail']['observation']['first_interactive_ms'],
+              'ordinary_completed_window_frames':{'count':len(frames),'p50_ms':ordered[math.ceil(.5*len(ordered))-1],
+                  'p95_ms':ordered[math.ceil(.95*len(ordered))-1],'p99_ms':ordered[math.ceil(.99*len(ordered))-1],
+                  'max_ms':max(frames),'callback_drops':drops,'windows':windows},
+              'stable_process_pss_kib':{'samples':len(samples),'median':statistics.median(samples),'sampled_peak':max(samples)},
+              'limits':'Failed ten-case run; debug emulator; completed callback durations are not presentation timing; PSS peak is sampled.'}
           output=Path('build/perf-inspection');output.mkdir(parents=True)
           (output/'failed-case.png').write_bytes(read('/ui-execution/ui/shots/system_picker_import_appears_in_product_search.png'))
           report['screenshot_text'] = subprocess.check_output(['tesseract',str(output/'failed-case.png'),'stdout'],stderr=subprocess.DEVNULL,text=True)
