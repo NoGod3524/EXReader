@@ -1680,6 +1680,8 @@ process_pack:
       lm_remove(ready);lm_remove(resume);free(ready);free(resume);
       if(!resumed && !cancel_cb(c)) { fail(c,O_FAILED,"review-hook-timeout","writer synchronization timed out");return 0; }
     }
+    /* Preserve the legacy late-cancellation hook at the transaction boundary. */
+    if(injected(c,"publish-cancel",0)) g_cancel=1;
     if(c->dry_run || cancel_cb(c) || injected(c,"publish-fail",0)) {
       if(exr_library_migration_finish(c->lib,0,&c->err)!=EXR_OK) { sdk_fail(c,"rolling back migration");return 0; }
       if(c->dry_run) { c->out=O_DRYRUN;snprintf(c->code,sizeof(c->code),"dry-run");snprintf(c->message,sizeof(c->message),"transaction rolled back; nothing was published");return 1; }
