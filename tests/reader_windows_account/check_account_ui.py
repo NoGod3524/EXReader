@@ -931,6 +931,8 @@ def main():
         RB.press(dialog, RETRY)
         RB.wait_note(dialog, '同步完成', 240)
         assert sql('device-reading-b', 'SELECT count(*) FROM reader_local_books WHERE book_key=?', (planted_key,)) == [(1,)]
+        planted_mapping = sql('device-reading-b', 'SELECT sdk_book_id FROM reader_local_books WHERE book_key=?', (planted_key,))
+        assert len(planted_mapping) == 1 and planted_mapping[0][0] is not None
         RB.run_sync(dialog);RB.close_account(dialog)
         RB.wait(lambda: sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (planted_key,)),
                 timeout=120)
@@ -990,8 +992,15 @@ def main():
         assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (txt_key,)) == \
             [(txt_title, 0)], 'a concurrent metadata head must not be projected'
         assert sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (epub_key,)) == [(epub_title,)]
+        # A safe book tombstone hides the product row while retaining its
+        # original and mapping until an explicit restore. The other suite
+        # independently checks actual SDK readback and restore over HTTPS.
         assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (planted_key,)) == \
-            [('Cloud Only Conflict', 0)], 'a tombstone must keep the local copy and never resurrect it'
+            [('Cloud Only Conflict', 1)], 'the tombstone must stay deleted until explicit restore'
+        assert sql('device-reading-b', 'SELECT sdk_book_id FROM reader_local_books WHERE book_key=?', (planted_key,)) == planted_mapping
+        with sqlite3.connect(rfiles['sdk'], timeout=10) as sdk:
+            retained = sdk.execute('SELECT source FROM books WHERE id=?', (planted_mapping[0][0],)).fetchone()
+        assert retained and retained[0] == planted_original, 'tombstone must retain the exact local original'
         assert sql('device-reading-b', 'SELECT count(*) FROM reader_books WHERE book_key=?', ('txt:' + 'd' * 64,))[0][0] == 0
         heads_after = revision_heads('device-reading-b', 'book', txt_key)
         # Both competitors name the previous head as their parent, so exactly those two
