@@ -16,6 +16,7 @@ def main():
     parser.add_argument('--build', type=Path, required=True)
     parser.add_argument('--product-prefix', type=Path)
     parser.add_argument('--wave3', action='store_true', help='Install the explicit raw five-feature host profile')
+    parser.add_argument('--organization', action='store_true', help='Install the revision-aware organization metadata owner')
     parser.add_argument('--selector-bytes-candidate', action='store_true',
                         default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
     parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'),
@@ -62,6 +63,8 @@ def main():
                ('credentials', 'extras/credentials'), ('reading-state', 'apps/reader/reading-state'),
                ('search', 'apps/reader/search'), ('navigation', 'apps/reader/navigation'),
                ('reading-commands', 'apps/reader/reading-commands'), ('annotation-view', 'apps/reader/annotation-view')]
+    if args.organization:
+        modules.append(('desktop-metadata', 'apps/reader/desktop-metadata'))
     if args.wave3:
         modules += [(name, 'apps/reader/' + name) for name, _, _ in WAVE3_MODULES]
     wave3_options = {name: list(options) for name, _, options in WAVE3_MODULES}
@@ -96,7 +99,7 @@ def main():
                 'installed_modules': [x[0] for x in modules],
                 'sqlite_provider': 'libreader_catalog_sqlite.a', 'system_sqlite_fallback': False,
                 'reading_resolver_linked': False, 'webdav_transport': 'Foundation URLSession',
-                'wave3_enabled': args.wave3}
+                'wave3_enabled': args.wave3, 'organization_enabled': args.organization}
     manifest.update(selector_bytes_candidate=args.selector_bytes_candidate,
                     product_prefix=str(stage), sdk_prefix=str(sdk),
                     exact_candidate_family=family if args.selector_bytes_candidate else {})
