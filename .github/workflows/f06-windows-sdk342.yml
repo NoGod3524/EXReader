@@ -1,0 +1,35 @@
+name: F06 Windows SDK 3.42 package identity
+on:
+  push:
+    branches: [codex/windows-gtk-sdk342-common-20261028]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Check source identity and scoped changes
+        run: python tests/reader_f06_packages/identity.py guard
+      - name: Build, package and verify relocated Windows application
+        run: python tests/reader_f06_packages/build.py windows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f06-windows-sdk342-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f06/source.json
+            build/f06/windows/
+            build/f06/windows-build/logs/
+            build/f06/windows-payload/report.json
+            build/f06/windows-payload/page.png
+            build/f06/windows-payload/application.log
+          if-no-files-found: error

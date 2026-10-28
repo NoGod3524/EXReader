@@ -9,11 +9,12 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/gtk-sdk342'
-BASE = 'd1e6bd072a904150bb292994d0cf7d95ccde5c19'
+BASE = 'ef3356c30046d0646cf1cc6d37b53fe942121e38'
 SDK_SOURCE = '7271829a829bfa6aaa47b73077c493f71af27ad3'
 VERSION = '3.42.0'
 ALLOWED = {'apps/reader/desktop/CMakeLists.txt', 'apps/reader/desktop/gtk_feature_integration.cmake',
-           'tools/build_linux_host.py', '.github/workflows/gtk-sdk342-package.yml'}
+           'tools/build_linux_host.py', '.github/workflows/gtk-sdk342-package.yml',
+           '.github/workflows/f06-windows-sdk342.yml', 'tests/reader_f06_packages/identity.py'}
 
 def command(*args):
     return subprocess.check_output(list(map(str, args)), cwd=ROOT, text=True)
@@ -37,7 +38,8 @@ def guard():
     assert all(p in ALLOWED or p.startswith('tests/gtk_sdk342_package/') for p in changed), changed
     frozen = {}
     for path in ('src', 'include', 'CMakeLists.txt', 'tests/reader_gtk_raw_wave3', 'tests/reader_gtk_navigation',
-                 'tests/reader_gtk_batch_import', 'tests/reader_f06_packages'):
+                 'tests/reader_gtk_batch_import', 'tests/reader_f06_packages/build.py',
+                 'tests/reader_f06_packages/README.md'):
         old = command('git', 'rev-parse', BASE + ':' + path).strip()
         current = command('git', 'rev-parse', 'HEAD:' + path).strip()
         assert old == current, path

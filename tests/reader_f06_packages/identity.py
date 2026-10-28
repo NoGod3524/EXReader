@@ -12,13 +12,17 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/f06'
-BASE = 'b61cd85fb19c9347b020d9b66b53a7d474c57f5d'
+BASE = 'ef3356c30046d0646cf1cc6d37b53fe942121e38'
 TARGETS = ('windows', 'linux', 'macos', 'android', 'iphone', 'ipad')
 sys.path.insert(0, str(ROOT / 'tools/reader_wave3_package'))
 import delivery
 
 def run(*args):
-    return subprocess.check_output([str(a) for a in args], cwd=ROOT, text=True, stderr=subprocess.STDOUT)
+    try:
+        return subprocess.check_output([str(a) for a in args], cwd=ROOT, text=True, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as error:
+        print(error.output, flush=True)
+        raise
 
 def save(path, data):
     path = Path(path)
@@ -32,7 +36,9 @@ def guard():
     assert run('git', 'rev-parse', 'HEAD').strip() == os.environ['GITHUB_SHA']
     run('git', 'merge-base', '--is-ancestor', BASE, 'HEAD')
     changed = run('git', 'diff', '--name-only', BASE, 'HEAD').splitlines()
-    assert all(p.startswith('tests/reader_f06_packages/') or p == '.github/workflows/reader-f06-packages.yml' for p in changed), changed
+    assert all(p in ('tests/reader_f06_packages/identity.py', 'tests/gtk_sdk342_package/run.py',
+                     'tests/gtk_sdk342_package/COMMON_CANDIDATE.md',
+                     '.github/workflows/gtk-sdk342-package.yml', '.github/workflows/f06-windows-sdk342.yml') for p in changed), changed
     data = dict(common(), base_sha=BASE, changed_paths=changed,
                 sdk_tree=run('git', 'rev-parse', 'HEAD:src').strip(), include_tree=run('git', 'rev-parse', 'HEAD:include').strip(),
                 product_tree=run('git', 'rev-parse', 'HEAD:apps').strip(), examples_tree=run('git', 'rev-parse', 'HEAD:examples').strip(),
@@ -43,10 +49,12 @@ def guard():
 def package(target, payload):
     payload = Path(payload)
     destination = OUT / target
+    sdk_version = '3.42.0' if target == 'windows' else '3.41.0'
     if target == 'linux':
         print(run(sys.executable, 'tools/reader_wave3_package/desktop.py', 'prepare', '--target', target, '--root', payload))
     args = [sys.executable, 'tools/reader_wave3_package/assemble.py', '--target', target, '--payload', payload,
-            '--output', destination, '--source-sha', os.environ['GITHUB_SHA'], '--require-build-identity']
+            '--output', destination, '--source-sha', os.environ['GITHUB_SHA'], '--require-build-identity',
+            '--sdk-version', sdk_version]
     for exclude in ('EXReader-Windows.zip', 'EXReader-Linux.tar.gz'):
         args += ['--exclude', exclude]
     print(run(*args))
@@ -56,7 +64,8 @@ def package(target, payload):
               '--manifest', destination / 'manifest.json', '--into', fresh, '--report', destination / 'unpack.json'))
     if target in ('windows', 'linux', 'macos'):
         print(run(sys.executable, 'tools/reader_wave3_package/desktop.py', 'verify', '--target', target, '--root', fresh,
-                  '--source-sha', os.environ['GITHUB_SHA'], '--report', destination / 'entry.json'))
+                  '--source-sha', os.environ['GITHUB_SHA'], '--sdk-version', sdk_version,
+                  '--report', destination / 'entry.json'))
     configs = {}
     for cache in (ROOT / 'build').rglob('CMakeCache.txt'):
         # Preserve actual build configuration, not just intended options.
