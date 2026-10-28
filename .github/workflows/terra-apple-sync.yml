@@ -1,7 +1,7 @@
 name: Apple account sync focused validation
 on:
   push:
-    branches: [codex/terra-wave-apple-sync]
+    branches: [codex/terra-wave-apple-sync, codex/reader-apple-sync-common-20261028]
 permissions:
   contents: read
 env:
