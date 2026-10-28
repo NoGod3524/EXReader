@@ -100,11 +100,35 @@ def main():
             output = folder/'ledger.json'
             rc, out, err = call(a.tool, 'export-ledger', '--target', target, '--output', output)
             assert rc == 0 and json.loads(output.read_text(encoding='utf-8'))['format'] == 'exreader-legacy-map', (out, err)
+            exported = output.read_bytes()
+            rc, out, err = call(a.tool, 'export-ledger', '--target', target, '--output', output)
+            assert rc != 0 and output.read_bytes() == exported, (out, err)
             rc, out, err = call(a.tool, 'migrate', '--pack', pack, '--target', target)
             assert rc == 0, (out, err)
             db = sqlite3.connect(target)
             assert db.execute('SELECT title FROM books WHERE id=1').fetchone()[0] == 'concurrent committed writer'
             db.close()
+            committed_ready = Path(str(target)+'.commit-ready')
+            with (folder/'committed-crash.log').open('w', encoding='utf-8') as log:
+                killed = subprocess.Popen([a.tool, 'migrate', '--pack', str(crash_pack), '--target', str(target), '--inject', 'commit-pause'], stdout=log, stderr=subprocess.STDOUT, env=env)
+                try:
+                    end = time.monotonic()+30
+                    while not committed_ready.exists() and killed.poll() is None and time.monotonic()<end:
+                        time.sleep(.02)
+                    assert committed_ready.exists(), 'post-commit crash rendezvous missing'
+                    killed.kill();killed.wait(timeout=30)
+                finally:
+                    if killed.poll() is None:
+                        killed.kill();killed.wait()
+            committed_ready.unlink(missing_ok=True)
+            db = sqlite3.connect(target)
+            assert db.execute('SELECT count(*) FROM books').fetchone()[0] == 2
+            assert db.execute('SELECT title FROM books WHERE id=1').fetchone()[0] == 'concurrent committed writer'
+            db.close()
+            rc, out, err = call(a.tool, 'verify', '--pack', crash_pack, '--target', target)
+            assert rc == 0, (out, err)
+            rc, out, err = call(a.tool, 'migrate', '--pack', crash_pack, '--target', target)
+            assert rc == 0, (out, err)
             checks.append({'schema':schema,'journal':mode,'passed':True})
             print('PASS', checks[-1], flush=True)
     report = {'source_sha':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
