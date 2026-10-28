@@ -1,0 +1,66 @@
+name: OpenType contextual miss candidate
+on:
+  push:
+    branches: [codex/sdk-ot-context-miss-cache]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab
+          path: baseline
+      - uses: ilammy/msvc-dev-cmd@v1
+      - run: python -m pip install ninja
+      - name: Build and install candidate SDK
+        run: |
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+      - name: Build fixed baseline
+        working-directory: baseline
+        run: |
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+      - name: Build installed SDK consumers
+        run: |
+          cmake -S tests/bounded_txt_scan -B build/compare-candidate -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/compare-candidate
+          ctest --test-dir build/compare-candidate --output-on-failure --no-tests=error
+          cmake -S tests/bounded_txt_scan -B build/compare-baseline -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/baseline/build/reading-library/stage"
+          cmake --build build/compare-baseline
+      - name: Compare glyphs cancellation and all 3000 page boundaries
+        run: |
+          set -o pipefail
+          python -c "from pathlib import Path; p=Path('build/input.txt'); f=p.open('w',encoding='utf-8',newline='\n'); [f.write('Unique history line %08d with distinct content and a readable paragraph for page navigation.\n' % i) for i in range(200000)]; [f.write('A repeated paragraph has the DUPLICATE-NEEDLE marker and identical text for ambiguity checks.\n') for i in range(3000)]; f.close()"
+          python -c "from tools.host_font import fetch; fetch('build/host-font-cache')"
+          font=build/host-font-cache/Reader.otf
+          build/compare-baseline/bounded_txt_ot_compare.exe "$font" > build/baseline-glyphs.txt
+          build/compare-candidate/bounded_txt_ot_compare.exe "$font" > build/candidate-glyphs.txt
+          diff -u build/baseline-glyphs.txt build/candidate-glyphs.txt
+          build/compare-baseline/bounded_txt_large_pager.exe build/input.txt record build/baseline-position.txt "$font" > build/baseline-pages.txt
+          build/compare-candidate/bounded_txt_large_pager.exe build/input.txt record build/candidate-position.txt "$font" > build/candidate-pages.txt
+          grep '^PAGE ' build/baseline-pages.txt > build/baseline-boundaries.txt
+          grep '^PAGE ' build/candidate-pages.txt > build/candidate-boundaries.txt
+          test "$(wc -l < build/baseline-boundaries.txt)" -eq 3000
+          diff -u build/baseline-boundaries.txt build/candidate-boundaries.txt
+          tail -1 build/baseline-pages.txt
+          tail -1 build/candidate-pages.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ot-miss-parity
+          path: |
+            build/*glyphs.txt
+            build/*pages.txt
+            build/*boundaries.txt
+          if-no-files-found: warn
