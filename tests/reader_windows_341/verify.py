@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
 from check_parallel_integration import download_artifact_zip, fetch, require
 from identity import FILES, FLAGS
+import candidate
 
 WORKFLOW = '.github/workflows/reader-windows-341-common.yml'
 JOB = 'installed F1 and native Windows search controls and lifecycle'
@@ -40,12 +41,16 @@ def original_f3():
     return value
 
 
-def validate_identity(value, source, run, attempt):
+def validate_identity(value, source, run, attempt, sdk_source='edddc463c06ed5731195cdb8f06b2df6dff7699e'):
     require(value.get('source_sha') == source and str(value.get('run_id')) == str(run) and str(value.get('attempt')) == str(attempt), 'identity source/run/attempt')
     require(value.get('sdk_version') == '3.41.0' and value.get('sdk_abi') == 1 and
-            value.get('sdk_source') == 'edddc463c06ed5731195cdb8f06b2df6dff7699e' and
+            value.get('sdk_source') == sdk_source and
             value.get('baseline_sdk_version') == '3.40.0' and
             value.get('baseline_source') == '9854061be331fe603a1822d9b2b36ee357154927', 'actual SDK/baseline scope')
+    if sdk_source == candidate.SDK:
+        require(value.get('sdk_checkout_source') == source and value.get('raw3') ==
+                dict(host=False, baseline_host=False, revisions=False, baseline_revisions=False),
+                'actual same-source raw-v3 option-off identity absent')
     require(value.get('full_host_options') == {flag: True for flag in FLAGS} and set(value.get('files', {})) == set(FILES), 'complete enabled host/file set')
     files = value['files']
     require(files['production']['sha256'] == files['packaged_production']['sha256'] == files['f3_production']['sha256'], 'F3 and retained suites did not use one production')
@@ -76,6 +81,14 @@ def selftest():
         except (ValueError, KeyError): rejected += 1; continue
         raise ValueError('common Windows binary substitution admitted')
     require(rejected == 13, 'common Windows protocol control omitted')
+    candidate_good = copy.deepcopy(good)
+    candidate_good.update(sdk_source=candidate.SDK, sdk_checkout_source='source',
+                          raw3=dict(host=False, baseline_host=False, revisions=False, baseline_revisions=False))
+    validate_identity(candidate_good, 'source', 1, 2, candidate.SDK)
+    candidate_bad = copy.deepcopy(candidate_good); candidate_bad['raw3']['revisions'] = True
+    try: validate_identity(candidate_bad, 'source', 1, 2, candidate.SDK)
+    except ValueError: pass
+    else: raise ValueError('raw-v3 candidate accepted with option enabled')
     return rejected
 
 
@@ -117,7 +130,7 @@ def main():
         with zipfile.ZipFile(io.BytesIO(raw)) as archive:
             require(len(archive.namelist()) == len(set(archive.namelist())), 'duplicate ZIP member')
             load = lambda path: json.loads(archive.read(path))
-            value = load('windows-341-identity.json'); validate_identity(value, source, run, attempt)
+            value = load('windows-341-identity.json'); validate_identity(value, source, run, attempt, candidate.SDK if candidate.active() else 'edddc463c06ed5731195cdb8f06b2df6dff7699e')
             catalog = module('common_catalog_adapter', ROOT / 'tests/reader_windows_341/catalog.py')
             catalog_proof = load('windows-341-catalog-adapter.json')
             catalog_source = catalog.PATH.read_text(encoding='utf-8')
@@ -145,6 +158,11 @@ def main():
             require('#define EXR_VERSION "3.41.0"' in archive.read(FILES['sdk_header']).decode('utf-8') and
                     'set(PACKAGE_VERSION "3.41.0")' in archive.read(FILES['sdk_version']).decode('utf-8') and
                     '#define EXR_VERSION "3.40.0"' in archive.read(FILES['baseline_header']).decode('utf-8'), 'actual SDK install identities differ')
+            if candidate.active():
+                for name in ('host_cache', 'baseline_cache'):
+                    require('EXR_READER_WINDOWS_RAW3:BOOL=OFF' in archive.read(FILES[name]).decode('utf-8'), 'raw Windows host enabled')
+                for name in ('revisions_cache', 'baseline_revisions_cache'):
+                    require('EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=OFF' in archive.read(FILES[name]).decode('utf-8'), 'raw revision family enabled')
             report = load('wprefs-commit-ui/report.json')
             atomic.validate(report, source, run, attempt, review, control)
             f3_report = load('wprefs-ui/preferences-ui.json')
