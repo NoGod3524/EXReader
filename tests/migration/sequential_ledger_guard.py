@@ -29,22 +29,29 @@ def main():
     args.work.mkdir(parents=True, exist_ok=False)
     pack = args.work / 'pack.exrpack'
     pack.write_bytes(L.build_pack([L.entry(L.book_record('one', 'one.txt'), L.TXT)], []))
+    next_pack = args.work / 'next.exrpack'
+    next_pack.write_bytes(L.build_pack([L.entry(L.book_record('two', 'two.txt'), L.TXT_OTHER)], []))
     old_target = args.work / 'old.sqlite'
     rc, report, err = invoke(args.old, pack, old_target)
     assert rc == 0, (rc, report, err)
     rc, report, err = invoke(args.old, pack, old_target)
     assert rc == 0, (rc, report, err)
-    target = args.work / 'transaction.sqlite'
-    rc, report, err = invoke(args.tx, pack, target)
-    assert rc == 0, (rc, report, err)
-    ledger = Path(str(target) + '.legacy-map.json')
-    before = digest(target), digest(ledger)
-    rc, report, err = invoke(args.old, pack, target)
-    assert rc == 2 and report['code'] == 'transactional-ledger', (rc, report, err)
-    assert before == (digest(target), digest(ledger))
-    assert not Path(str(target) + '.migrate-lock').exists()
-    verify = subprocess.run([args.tx, 'verify', '--pack', str(pack), '--target', str(target)], capture_output=True, text=True)
-    assert verify.returncode == 0, (verify.stdout, verify.stderr)
+    for seeded in (False, True):
+        target = args.work / ('upgraded.sqlite' if seeded else 'transaction.sqlite')
+        if seeded:
+            rc, report, err = invoke(args.old, pack, target)
+            assert rc == 0, (rc, report, err)
+        tx_pack = next_pack if seeded else pack
+        rc, report, err = invoke(args.tx, tx_pack, target)
+        assert rc == 0, (rc, report, err)
+        ledger = Path(str(target) + '.legacy-map.json')
+        before = digest(target), digest(ledger)
+        rc, report, err = invoke(args.old, pack, target)
+        assert rc == 2 and report['code'] == 'transactional-ledger', (rc, report, err)
+        assert before == (digest(target), digest(ledger))
+        assert not Path(str(target) + '.migrate-lock').exists()
+        verify = subprocess.run([args.tx, 'verify', '--pack', str(tx_pack), '--target', str(target)], capture_output=True, text=True)
+        assert verify.returncode == 0, (verify.stdout, verify.stderr)
     print(json.dumps({'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                       'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checks': ['legacy-rerun', 'transaction-then-legacy-rejected', 'files-unchanged', 'transaction-verify']}))
 
