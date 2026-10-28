@@ -37,3 +37,12 @@ is separately exercising the original large-TXT scenario. Further independently
 constructed contextual-font cases and other platform validations are pending.
 The diagnostic implementation and instrumentation are not shipped with this
 candidate.
+
+## Three-platform installed consumers
+
+[Run 40622762259, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40622762259)
+completed successfully at source 5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9.
+The difference from the Windows A/B source above is this evidence document only.
+Linux, Windows and macOS each passed the installed TXT anchor consumer (1/1)
+and the bounded TXT and native shaping consumers (7/7). This is SDK validation;
+the native host and dedicated contextual-font regression remain separate.
