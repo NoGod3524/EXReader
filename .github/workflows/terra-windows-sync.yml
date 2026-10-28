@@ -26,6 +26,7 @@ jobs:
       - name: Prepare native display
         run: python tests/reader_native_owner_repairs/display.py
       - name: Build and validate the composed Wave3 host
+        id: host
         run: python tests/reader_wave3_c09/build.py
       - name: Build account consumers and fixtures
         shell: pwsh
@@ -47,6 +48,22 @@ jobs:
         env:
           EXR_ACCOUNT_COMPACT_PICKER: '1'
         run: python tests/reader_windows_account/check_account_ui.py --candidate build/c09/package/EXReader/EXReader.exe --package build/c09/package/EXReader --fixtures build/sync-fixtures --revision-consumer build/sync-revisions/revision-consumer.exe --capture-probe build/sync-capture/reading-capture-probe.exe --reading-fixtures build/sync-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/c09/wave3-host/windows-host.map --output build/sync-account-ui
+      - name: Build organization and import cancellation consumers
+        if: ${{ always() && steps.host.outcome == 'success' }}
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/c09/raw-stage;$pwd/build/c09/product-stage;$pwd/build/c09/sdk-stage"
+          cmake -S tests/reader_windows_raw3/metadata-consumer -B build/organization-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DRAW_METADATA=ON "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'metadata consumer configuration failed' }
+          cmake --build build/organization-consumer --parallel 4
+          if ($LASTEXITCODE) { throw 'metadata consumer build failed' }
+          cmake -S tests/windows_organization_projection/cloud -B build/cloud-readback -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'readback configuration failed' }
+          cmake --build build/cloud-readback --parallel 4
+          if ($LASTEXITCODE) { throw 'readback build failed' }
+      - name: Exercise receive cancellation and retry in the native host
+        if: ${{ always() && steps.host.outcome == 'success' }}
+        run: python tests/windows_organization_projection/check_ui.py
       - name: Preserve reports and failure evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -60,6 +77,7 @@ jobs:
             build/c09/package/build.json
             build/c09/wave3-host/windows-host.map
             build/sync-account-ui/
+            build/organization-ui/
             build/native-owner-preflight/display.json
             !build/**/*.key
             !build/**/profile/**/*.sqlite
