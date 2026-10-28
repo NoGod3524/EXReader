@@ -27,6 +27,21 @@ MESSAGES = ('Native toggle value must be observable', 'Actual Remember control d
 CONTROLS = ('account.form', 'account.root', 'account.username', 'account.password', 'account.remember',
             'account.connect', 'account.choose', 'account.done', 'account.sync.start', 'account.sync.state',
             'library.import.epub', 'library.book.0', 'library.busy')
+VARIANT_LABELS = frozenset(role + ':' + form
+    for role in ('user', 'remembered', 'remembered-pair', 'remembered-authorization',
+                 'session', 'session-pair', 'session-authorization')
+    for form in ('raw', 'hex', 'HEX', 'base64', 'base64url', 'url', 'base64-no-padding',
+                 'base64url-no-padding', 'url-lower-escape', 'url-all', 'url-all-lower',
+                 'utf16le', 'utf16be', 'utf32le', 'utf32be', 'json', 'json-unicode'))
+
+
+def variant_labels(proof):
+    labels = []
+    for item in proof['files']:
+        labels.extend(item['hits']); labels.extend(item['path_hits'])
+    for item in proof['directories']: labels.extend(item['path_hits'])
+    require(all(type(label) is str and label in VARIANT_LABELS for label in labels), 'unexpected variant label')
+    return sorted(set(labels))
 
 
 def log_locations(path):
@@ -96,10 +111,12 @@ def main():
                 require(all(type(proof['accepted']) is bool and type(proof['file_count']) is int and
                             type(proof['bytes']) is int for proof in scans.values()), 'unexpected scan summary types')
                 report.setdefault('scan_summary', {})[stage] = {label: {'accepted': proof['accepted'],
-                    'files': proof['file_count'], 'bytes': proof['bytes'],
+                    'files': proof['file_count'], 'bytes': proof['bytes'], 'hit_variant_labels': variant_labels(proof),
                     'hit_count': sum(len(item['hits']) + len(item['path_hits']) for item in proof['files']) +
                                  sum(len(item['path_hits']) for item in proof['directories'])}
                     for label, proof in scans.items()}
+                report['log_scope'] = 'EXReaderHost process unified log including framework events; not owner-callsite attribution'
+                report['failed_raw_log_retained'] = False
         if 'fixture-failures.json' in files:
             failures = json.loads((folder / 'fixture-failures.json').read_text())
             require(all(item in ('RuntimeError', 'AssertionError', 'FileNotFoundError', 'OperationalError',

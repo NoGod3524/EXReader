@@ -5,11 +5,18 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
-from inspect_native import SOURCE_PATH, log_locations
+from inspect_native import SOURCE_PATH, log_locations, variant_labels
 from privacy_scan import needles
 
 
 class DiagnosticControls(unittest.TestCase):
+    def test_variant_labels_only_not_operands(self):
+        proof = {'files': [{'hits': ['user:raw', 'remembered:json', 'user:raw'], 'path_hits': []}], 'directories': []}
+        self.assertEqual(variant_labels(proof), ['remembered:json', 'user:raw'])
+        for value in ('user:raw arbitrary operand', 'Privacy-aaaa...', 'unknown:raw', 1):
+            proof['files'][0]['hits'] = [value]
+            with self.assertRaises(RuntimeError): variant_labels(proof)
+
     def test_all_encoded_operands_removed(self):
         secret = b'Privacy-' + b'a' * 64 + b'!%:+'
         expected = [{'file': 'PasswordPrivacyUITests.swift', 'line': 103, 'assertion': 'XCTAssertEqual',
