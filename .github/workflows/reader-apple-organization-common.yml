@@ -1,7 +1,7 @@
 name: Apple common-source organization
 on:
   push:
-    branches: [codex/reader-apple-organization-common-20261028]
+    branches: [codex/reader-apple-organization-common-20261028, codex/apple-organization-toggle-20261028]
   workflow_dispatch:
   workflow_call:
 permissions:

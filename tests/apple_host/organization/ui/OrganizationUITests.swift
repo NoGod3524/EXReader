@@ -104,6 +104,17 @@ final class OrganizationUITests: XCTestCase {
         XCTAssertTrue(row(name).waitForExistence(timeout: 60), app.debugDescription)
     }
     private func kind(_ value: String) { tap("organization.kind.\(value)") }
+    private func setRemoved(_ expected: Bool) {
+#if os(macOS)
+        tap("organization.removed")
+#else
+        let toggle = element("organization.removed")
+        let control = toggle.switches.firstMatch
+        tapElement(control, name: "organization removed switch")
+        XCTAssertTrue(wait { (toggle.value as? String) == (expected ? "1" : "0") },
+                      "Removed switch did not change: \(app.debugDescription)")
+#endif
+    }
     private func book() -> XCUIElement {
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "organization.book.")).firstMatch
     }
@@ -124,10 +135,10 @@ final class OrganizationUITests: XCTestCase {
         tap("organization.delete")
         XCTAssertTrue(wait { !self.row("Renamed Shelf").exists })
         steps.append("deleted")
-        tap("organization.removed")
+        setRemoved(true)
         select("Renamed Shelf")
         tap("organization.restore")
-        tap("organization.removed")
+        setRemoved(false)
         XCTAssertTrue(row("Renamed Shelf").waitForExistence(timeout: 60))
         steps.append("restored")
         restart()
