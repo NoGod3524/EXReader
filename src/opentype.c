@@ -936,6 +936,26 @@ static ot_view varied_feature(ot_work *w, ot_view original, unsigned index) {
   }
   return original;
 }
+#ifdef _WIN32
+#include <windows.h>
+#include <stdio.h>
+static unsigned long long ot_ticks[6], ot_calls, ot_frequency, ot_feature_ticks[11], ot_feature_calls[11];
+static int ot_profile, ot_ccmp;
+static unsigned long long ot_lookup_ticks[4096], ot_lookup_calls[4096];
+static unsigned ot_lookup_type[4096], ot_lookup_subtables[4096];
+static unsigned long long ot_clock(void) {
+  LARGE_INTEGER t; QueryPerformanceCounter(&t); return (unsigned long long)t.QuadPart;
+}
+static void ot_profile_dump(void) {
+  fprintf(stderr,"OT_PROFILE calls=%llu freq=%llu setup=%llu mapping=%llu gsub=%llu metrics=%llu gpos=%llu tail=%llu\n",
+    ot_calls,ot_frequency,ot_ticks[0],ot_ticks[1],ot_ticks[2],ot_ticks[3],ot_ticks[4],ot_ticks[5]);
+  { unsigned i;for(i=0;i<11;i++) fprintf(stderr,"OT_FEATURE index=%u calls=%llu ticks=%llu\n",i,ot_feature_calls[i],ot_feature_ticks[i]); }
+  { unsigned i;for(i=0;i<4096;i++) if(ot_lookup_calls[i]) fprintf(stderr,"OT_CCMP_LOOKUP index=%u type=%u subtables=%u calls=%llu ticks=%llu\n",i,ot_lookup_type[i],ot_lookup_subtables[i],ot_lookup_calls[i],ot_lookup_ticks[i]); }
+}
+#define OT_MARK(slot) do { if(ot_profile) { unsigned long long n=ot_clock(); ot_ticks[slot]+=n-ot_last; ot_last=n; } } while(0)
+#else
+#define OT_MARK(slot) ((void)0)
+#endif
 static void feature_index(ot_work *w, ot_view features, unsigned index, unsigned mask, unsigned value) {
   unsigned count = u16(features, 0), n, i;
   ot_view feature;
@@ -956,6 +976,9 @@ static void feature_index(ot_work *w, ot_view features, unsigned index, unsigned
       ot_view extension = required16(table, 6);
       reverse = u16(extension, 2) == 8;
     }
+#ifdef _WIN32
+    unsigned long long lookup_start = (!w->positioning && ot_profile && ot_ccmp && lookup_index < 4096) ? ot_clock() : 0;
+#endif
     if (reverse) {
       for (at = w->count; at && w->status == EXR_OK;) lookup(w, lookup_index, --at, mask, value, 0);
     } else {
@@ -965,6 +988,14 @@ static void feature_index(ot_work *w, ot_view features, unsigned index, unsigned
         at = w->next_scan;
       }
     }
+#ifdef _WIN32
+    if (lookup_start) {
+      ot_lookup_ticks[lookup_index] += ot_clock()-lookup_start;
+      ot_lookup_calls[lookup_index]++;
+      ot_lookup_type[lookup_index] = type;
+      ot_lookup_subtables[lookup_index] = u16(table, 4);
+    }
+#endif
   }
 }
 static int feature_tag(ot_work *w, ot_view features, ot_view lang, uint32_t tag,
@@ -1833,23 +1864,6 @@ static void myanmar_substitution(ot_work *w, ot_view features, ot_view lang) {
   for (i = 0; i < sizeof(other)/sizeof(*other) && w->status == EXR_OK; i++)
     feature_tag(w, features, lang, other[i], 0, feature_value(w->options, other[i], 1));
 }
-#ifdef _WIN32
-#include <windows.h>
-#include <stdio.h>
-static unsigned long long ot_ticks[6], ot_calls, ot_frequency, ot_feature_ticks[11], ot_feature_calls[11];
-static int ot_profile;
-static unsigned long long ot_clock(void) {
-  LARGE_INTEGER t; QueryPerformanceCounter(&t); return (unsigned long long)t.QuadPart;
-}
-static void ot_profile_dump(void) {
-  fprintf(stderr,"OT_PROFILE calls=%llu freq=%llu setup=%llu mapping=%llu gsub=%llu metrics=%llu gpos=%llu tail=%llu\n",
-    ot_calls,ot_frequency,ot_ticks[0],ot_ticks[1],ot_ticks[2],ot_ticks[3],ot_ticks[4],ot_ticks[5]);
-  { unsigned i;for(i=0;i<11;i++) fprintf(stderr,"OT_FEATURE index=%u calls=%llu ticks=%llu\n",i,ot_feature_calls[i],ot_feature_ticks[i]); }
-}
-#define OT_MARK(slot) do { if(ot_profile) { unsigned long long n=ot_clock(); ot_ticks[slot]+=n-ot_last; ot_last=n; } } while(0)
-#else
-#define OT_MARK(slot) ((void)0)
-#endif
 static void apply_table(ot_work *w, ot_table *source, uint32_t script, int positioning, int *has_kern) {
   static const uint32_t substitution_tags[] = {
     EXR_TAG('c','c','m','p'), EXR_TAG('l','o','c','l'), EXR_TAG('i','s','o','l'),
@@ -1899,8 +1913,12 @@ static void apply_table(ot_work *w, ot_table *source, uint32_t script, int posit
 #ifdef _WIN32
       unsigned long long feature_start=(!positioning && ot_profile) ? ot_clock() : 0;
 #endif
+#ifdef _WIN32
+      ot_ccmp = !positioning && tags[i] == EXR_TAG('c','c','m','p');
+#endif
       found=feature_tag(w, features, lang, tags[i], mask, enabled);
 #ifdef _WIN32
+      ot_ccmp = 0;
       if(!positioning && ot_profile) { ot_feature_ticks[i]+=ot_clock()-feature_start; ot_feature_calls[i]++; }
 #endif
       if(found && tags[i] == EXR_TAG('k','e','r','n')) *has_kern = 1;
