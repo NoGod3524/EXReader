@@ -940,7 +940,7 @@ static ot_view varied_feature(ot_work *w, ot_view original, unsigned index) {
 #include <windows.h>
 #include <stdio.h>
 static unsigned long long ot_ticks[6], ot_calls, ot_frequency, ot_feature_ticks[11], ot_feature_calls[11];
-static int ot_profile, ot_ccmp;
+static int ot_profile, ot_ccmp, ot_described;
 static unsigned long long ot_lookup_ticks[4096], ot_lookup_calls[4096];
 static unsigned ot_lookup_type[4096], ot_lookup_subtables[4096];
 static unsigned long long ot_clock(void) {
@@ -978,6 +978,18 @@ static void feature_index(ot_work *w, ot_view features, unsigned index, unsigned
     }
 #ifdef _WIN32
     unsigned long long lookup_start = (!w->positioning && ot_profile && ot_ccmp && lookup_index < 4096) ? ot_clock() : 0;
+    if (lookup_start && lookup_index == 5 && type == 6 && !ot_described) {
+      unsigned k, count = u16(table,4), formats[4]={0,0,0,0}, back_zero=0, back_nonzero=0;
+      ot_described=1;
+      for(k=0;k<count;k++) {
+        ot_view sub=required16(table,6+(size_t)k*2);
+        unsigned f=u16(sub,0); if(f<4) formats[f]++;
+        if(f==3) { if(u16(sub,2)) back_nonzero++; else back_zero++; }
+        if(k<12) fprintf(stderr,"OT_CCMP_SUBTABLE i=%u format=%u field2=%u field4=%u\n",k,f,u16(sub,2),u16(sub,4));
+      }
+      fprintf(stderr,"OT_CCMP_SUBTABLES count=%u format1=%u format2=%u format3=%u back_zero=%u back_nonzero=%u\n",
+        count,formats[1],formats[2],formats[3],back_zero,back_nonzero);
+    }
 #endif
     if (reverse) {
       for (at = w->count; at && w->status == EXR_OK;) lookup(w, lookup_index, --at, mask, value, 0);
