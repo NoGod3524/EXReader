@@ -98,16 +98,21 @@ public final class RelayAndroidTest extends Instrumentation {
                 click("关闭");until(n->n.isEnabled()&&id(n,"text1")&&text(n).startsWith(input.optString("remote_title")+"\n"),this::tap,"received shelf row",30000);evidence.put("initial_frame",settled());
             });
             check("windows_records_real_public_resolution",()->{
-                JSONArray incoming=annotations();need(incoming.length()==2,"exactly Windows bookmark and annotation");evidence.put("incoming_records",incoming);JSONArray frames=new JSONArray();
-                for(int i=0;i<incoming.length();i++){JSONObject record=incoming.getJSONObject(i);records();row(record);click("跳转到此处");until(n->id(n,"reader_status")&&text(n).contains("已跳转到阅读记录"),null,"public record resolver",30000);JSONObject f=settled();onTarget(f,record);frames.put(f);}
+                JSONArray incoming=annotations();need(incoming.length()==3,"exactly Windows bookmark annotation and ambiguous bookmark");evidence.put("incoming_records",incoming);JSONArray frames=new JSONArray();
+                for(int i=0;i<incoming.length();i++){JSONObject record=incoming.getJSONObject(i);if(record.getString("body").equals("Ambiguous bookmark"))continue;records();row(record);click("跳转到此处");until(n->id(n,"reader_status")&&text(n).contains("已跳转到阅读记录"),null,"public record resolver",30000);JSONObject f=settled();onTarget(f,record);frames.put(f);}
                 evidence.put("resolved_frames",frames);
+            });
+            check("ambiguous_record_is_explicit_and_does_not_move_page",()->{
+                JSONObject before=settled(),ambiguous=byBody(annotations(),"Ambiguous bookmark");records();row(ambiguous);click("跳转到此处");
+                until(n->desc(n,"阅读记录状态")&&text(n).contains("位置有歧义，未跳转"),null,"explicit ambiguous no navigation",30000);click("关闭");JSONObject after=settled();
+                need(before.getLong("part")==after.getLong("part")&&before.getLong("start")==after.getLong("start")&&before.getLong("end")==after.getLong("end"),"ambiguous record leaves real page intact");evidence.put("ambiguous_before",before).put("ambiguous_after",after);
             });
             check("android_edits_received_note_and_adds_bookmark",()->{
                 JSONArray incoming=evidence.getJSONArray("incoming_records");JSONObject note=byBody(incoming,"Windows note");records();row(note);click("编辑文字");field("阅读记录文字","Android edited note");click("保存");until(n->desc(n,"阅读记录状态")&&text(n).contains("已保存"),null,"edit committed",30000);
                 JSONObject edited=byBody(annotations(),"Android edited note");need(edited.getString("id").equals(note.getString("id"))&&!edited.getString("head").equals(note.getString("head")),"same annotation new revision");click("关闭");
                 JSONObject before=settled();until(n->id(n,"reader_view"),n->need(n.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD),"actual next page"),"next page",30000);
                 long end=SystemClock.elapsedRealtime()+30000;while(settled().getLong("start")==before.getLong("start")&&SystemClock.elapsedRealtime()<end)SystemClock.sleep(100);JSONObject next=settled();need(next.getLong("start")!=before.getLong("start"),"page actually moved");
-                records();click("添加书签");field("阅读记录文字","Android new bookmark");click("保存");until(n->desc(n,"阅读记录状态")&&text(n).contains("已保存"),null,"new bookmark committed",30000);JSONArray outgoing=annotations();need(outgoing.length()==3,"no duplicate incoming records");onTarget(next,byBody(outgoing,"Android new bookmark"));evidence.put("outgoing_records",outgoing).put("new_bookmark_frame",next);click("关闭");
+                records();click("添加书签");field("阅读记录文字","Android new bookmark");click("保存");until(n->desc(n,"阅读记录状态")&&text(n).contains("已保存"),null,"new bookmark committed",30000);JSONArray outgoing=annotations();need(outgoing.length()==4,"no duplicate incoming records");onTarget(next,byBody(outgoing,"Android new bookmark"));evidence.put("outgoing_records",outgoing).put("new_bookmark_frame",next);click("关闭");
             });
             check("application_sync_and_duplicate_idempotence",()->{
                 click("Shelf");panel();click("立即同步");status("本轮同步结束");JSONArray before=annotations();click("立即同步");status("本轮同步结束");JSONArray after=annotations();need(before.toString().equals(after.toString()),"repeat sync preserves exact record heads and count");evidence.put("records_after_repeat",after);click("断开");
@@ -115,7 +120,7 @@ public final class RelayAndroidTest extends Instrumentation {
         }catch(Throwable error){failure=error;AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();try{evidence.put("failure_ui",tree(root));}catch(Exception capture){error.addSuppressed(capture);}finally{if(root!=null)root.recycle();}}
         try{
             evidence.put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("passed",failure==null).put("checks",checks).put("phase","android").put("api",android.os.Build.VERSION.SDK_INT).put("abi",android.os.Build.SUPPORTED_ABIS[0]).put("physical_device",false).put("picker_used",false).put("pid",android.os.Process.myPid());
-            if(input!=null)for(String key:new String[]{"original_sha256","original_bytes","book_identity","remote_title"})evidence.put(key,input.get(key));
+            if(input!=null)for(String key:new String[]{"original_sha256","original_bytes","book_identity","remote_title","windows_program_sha256"})evidence.put(key,input.get(key));
             if(failure!=null){java.io.StringWriter trace=new java.io.StringWriter();failure.printStackTrace(new java.io.PrintWriter(trace));evidence.put("failed_check",active).put("failure",failure.toString()).put("failure_stack",trace.toString());}
             Files.write(new File(context.getFilesDir(),"relay-android-report.json").toPath(),evidence.toString(2).getBytes(StandardCharsets.UTF_8));result.putString("stream",failure==null?"RELAY_ANDROID_PASS":"RELAY_ANDROID_FAIL "+active);finish(failure==null?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);
         }catch(Throwable error){result.putString("shortMsg","relay evidence unavailable");finish(Activity.RESULT_CANCELED,result);}

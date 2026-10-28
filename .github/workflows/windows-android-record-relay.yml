@@ -421,6 +421,7 @@ jobs:
       - name: Original C09 real Windows build and retained gates
         run: python tests/reader_wave3_c09/build.py
       - name: Windows actual UI authors and uploads records
+        timeout-minutes: 15
         run: python tests/windows_android_record_relay/windows.py --phase windows-first --out build/windows-android-records/windows-first --package build/c09/package/EXReader
       - uses: actions/upload-artifact@v4
         if: success()
@@ -511,6 +512,7 @@ jobs:
           path: build/input
       - run: python -m pip install uiautomation==2.0.29
       - name: Windows actual receive and resolve Android records
+        timeout-minutes: 15
         run: python tests/windows_android_record_relay/windows.py --phase windows-return --previous build/input/state.json --out build/windows-android-records/windows-return --package build/program
       - uses: actions/upload-artifact@v4
         if: always()
@@ -519,4 +521,21 @@ jobs:
           path: |
             build/windows-android-records/windows-return/
             !build/windows-android-records/windows-return/key.pem
+          if-no-files-found: error
+  authenticate:
+    needs: [android, retained, windows-first, android-relay, windows-return]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate raw ZIPs source run and record chain
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/windows_android_record_relay/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: records-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/records-authentication/
           if-no-files-found: error

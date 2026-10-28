@@ -59,7 +59,7 @@ def start(folder, previous=None, certificate=None, key=None):
             '-subj', '/CN=127.0.0.1', '-addext',
             'subjectAltName=IP:127.0.0.1'], check=True, capture_output=True)
     if sys.platform == 'win32':
-        subprocess.run(['certutil', '-user', '-addstore', 'Root', str(cert)], check=True, capture_output=True)
+        subprocess.run(['certutil', '-addstore', '-f', 'Root', str(cert)], check=True, capture_output=True, timeout=30)
     if sys.platform == 'darwin':
         sys.path.insert(0, str(ROOT / 'tests/webdav'))
         from cloud_native import trust_fixture_certificates

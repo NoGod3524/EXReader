@@ -42,7 +42,7 @@ def main():
         port = urlparse(dav.base).port
         adb('reverse', f'tcp:{port}', f'tcp:{port}')
         payload = {key: previous['data'][key] for key in
-            ('original_sha256', 'original_bytes', 'book_identity', 'remote_title')}
+            ('original_sha256', 'original_bytes', 'book_identity', 'remote_title', 'windows_program_sha256')}
         payload.update(root=dav.base + '/dav/', user=user, password=password)
         adb('shell', f"run-as {package} sh -c 'cat > files/relay-input.json'",
             data=json.dumps(payload, ensure_ascii=False).encode())
@@ -68,7 +68,7 @@ def main():
         assert report['passed'] is True, report
         assert b'RELAY_ANDROID_PASS' in raw and b'INSTRUMENTATION_CODE: -1' in raw
         expected = ['empty_library_real_account_and_sync', 'explicit_application_receive_original',
-            'windows_records_real_public_resolution', 'android_edits_received_note_and_adds_bookmark',
+            'windows_records_real_public_resolution', 'ambiguous_record_is_explicit_and_does_not_move_page', 'android_edits_received_note_and_adds_bookmark',
             'application_sync_and_duplicate_idempotence']
         assert [row['name'] for row in report['checks']] == expected
         assert all(row['pass'] is True for row in report['checks'])

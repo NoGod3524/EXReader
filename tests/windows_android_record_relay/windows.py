@@ -15,7 +15,7 @@ def original(path):
     epub(path)
     with zipfile.ZipFile(path) as z:parts={n:z.read(n) for n in z.namelist()}
     parts['book.opf']=parts['book.opf'].replace(b'Reading state fixture',b'Record relay').replace(b'<itemref idref="b"/><itemref idref="a"/>',b'')
-    parts['a.xhtml']=xhtml(''.join('<p>Relay unique paragraph %03d. '%i+('Distinct reading evidence for record %03d. '%i)*30+'</p>' for i in range(60)))
+    parts['a.xhtml']=xhtml(''.join('<p>Relay unique paragraph %03d. '%i+''.join('Distinct reading evidence token %03d-%03d. '%(i,j) for j in range(10))+'</p>' for i in range(20))+'<p>'+('Ambiguous context repeats without a unique discriminator. '*4000)+'</p>')
     with zipfile.ZipFile(path,'w') as z:
         for n,b in parts.items():entry(z,n,b)
 
@@ -50,30 +50,43 @@ def main():
         d=app.open_account();app.fill(d,root=dav.base+'/dav/',user=user,password=password,remember=False);app.apply(d,'仅本次会话');app.run_sync(d);app.close_account(d)
     def check(value):report['checks'].append(value);print('PASS '+value,flush=True)
     try:
+        print('START authenticated HTTPS runner fixture',flush=True)
         dav,user,password=relay.start(a.out,a.previous)
+        print('HTTPS ready; launching actual native host',flush=True)
         app=ui.App(exe,font,a.out/'profile');app.wait_initial_shelf();app.wait_idle()
         if a.phase=='windows-first':
             book=a.out/'Record relay.epub';original(book);raw=book.read_bytes();digest=hashlib.sha256(raw).hexdigest()
-            report.update(original_sha256=digest,original_bytes=len(raw),book_identity='epub:'+digest,remote_title='Record relay')
+            report.update(windows_program_sha256=report['program_sha256'],original_sha256=digest,original_bytes=len(raw),book_identity='epub:'+digest,remote_title='Record relay')
             app.import_file(book.resolve());app.wait(lambda:app.has_row('Record relay'));app.open('Record relay');app.wait_idle()
             d=show();ui.M.set_text(ui.U.GetDlgItem(d,BODY),'Windows bookmark');press(d,BOOKMARK);assert any('Windows bookmark' in x for x in labels(d)),labels(d);close(d)
             app.click('select');app.wait_idle();d=show();ui.M.set_text(ui.U.GetDlgItem(d,BODY),'Windows note');press(d,HIGHLIGHT);assert any('Windows note' in x for x in labels(d)),labels(d);close(d)
             records=annotations();assert len(records)==2,records;assert records[0]['payload']['location']['selector']['exact']=='';assert records[1]['payload']['location']['selector']['exact']
             report['raw_records']=records;check('windows_native_ui_creates_bookmark_and_annotation')
+            for _ in range(12):app.click('next');app.wait_idle()
+            d=show();ui.M.set_text(ui.U.GetDlgItem(d,BODY),'Ambiguous bookmark');press(d,BOOKMARK);assert any('Ambiguous bookmark' in x for x in labels(d)),labels(d)
+            choose(d,'Ambiguous bookmark');message=press(d,OPEN);report['ambiguous_message']=message
+            assert '歧义' in message or 'ambiguous' in message.lower(),message
+            ui.M.screenshot(d,a.out/'ambiguous-record.bmp');close(d);check('ambiguous_actual_record_refuses_navigation_explicitly')
             sync();check('windows_actual_authenticated_upload')
         else:
             previous,_=relay.load(a.previous,'android')
-            for k in ('original_sha256','original_bytes','book_identity','remote_title'):report[k]=previous['data'][k]
+            for k in ('original_sha256','original_bytes','book_identity','remote_title','windows_program_sha256'):report[k]=previous['data'][k]
+            assert report['program_sha256']==report['windows_program_sha256'],'Windows binary changed between phases'
             sync();app.wait(lambda:app.has_row(report['remote_title']),timeout=120);app.open(report['remote_title']);app.wait_idle()
             records=annotations();report['raw_records']=records
             for target in ('Windows bookmark','Android edited note','Android new bookmark'):
                 d=show();choose(d,target);message=press(d,OPEN)
                 assert '独立原书与当前绘图文档' in message,message
                 close(d);app.click('select');app.click('copy');text=ui.ACCOUNT.clipboard_text(app)
+                expected=next(r for r in previous['data']['outgoing_records'] if r['body']==target)
+                selector=expected['exact'] or expected['suffix'];assert selector,expected
+                assert selector[:24] in text,(target,selector,text)
                 assert 'Relay unique paragraph' in text or 'Distinct reading evidence' in text,text
                 ui.M.screenshot(app.window,a.out/(target.replace(' ','-')+'.bmp'))
                 report['actual_pages'].append({'record':target,'public_resolver_status':message,'actual_copied_page':text})
             check('windows_receives_android_edit_and_new_bookmark_real_resolution')
+            d=show();choose(d,'Ambiguous bookmark');message=press(d,OPEN);assert '歧义' in message or 'ambiguous' in message.lower(),message
+            report['ambiguous_message']=message;close(d);check('received_ambiguous_record_refuses_navigation_explicitly')
         before=annotations();sync();after=annotations();assert before==after,'repeat sync appended records';check('repeated_sync_preserves_records_exactly')
         report['raw_records']=after;report['passed']=True;report['transport']='authenticated staged HTTPS; not concurrent online service'
         relay.save(dav,a.out,a.phase,report);dav=None
