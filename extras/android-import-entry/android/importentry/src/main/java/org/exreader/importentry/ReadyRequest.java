@@ -33,7 +33,7 @@ public final class ReadyRequest {
 
     public long size() { return size; }
 
-    /** Sanitized display-name hint (UTF-8, at most 256 bytes, no path separators); may be empty. */
+    /** Sanitized display-name hint (UTF-8, at most 256 bytes, no path separators); may be empty. The default entry removes the extension; createWithDisplayFilename preserves it. */
     public String title() { return title; }
 
     /** True when an identical request was already staged and unreleased; no second file exists. */
