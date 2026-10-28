@@ -192,6 +192,25 @@
       "source_doc_commit": "0d2903e62fdb0f1979f50722c3c972bf586ae085",
       "source_prefix": "f92d1bb9"
     },
+    "windows_font_lifecycle": {
+      "run": 40629003915,
+      "doc": "docs/reader-total-progress/windows-font-lifecycle-blocker.md",
+      "source_prefix": "6a3c5ccc63f9b98ca0f948122f2a0c338097a1da",
+      "artifact": 12791071176,
+      "bytes": 214037,
+      "sha256": "fe656c5300504ac50e823ab9a73be982381c53fb07f61edc2332623183fd2c65",
+      "case_result_field": "passed",
+      "required_cases": [
+        "noninitial-valid-font-keeps-live-point-and-acquires-lease",
+        "same-font-releases-temporary-lease",
+        "bad-font-preserves-selected-frame-and-lease",
+        "layout-failure-releases-candidate-and-preserves-frame-and-active-lease",
+        "replacement-keeps-live-point-and-held-progress-and-releases-old-lease",
+        "builtin-restore-releases-lease-and-keeps-live-point",
+        "shutdown-releases-lease-and-closes-library",
+        "ordinary-document-font-switch-keeps-noninitial-point"
+      ]
+    },
     "gtk_wave3_export_history": {
       "run": 40385948659,
       "doc": "docs/reader_gtk_raw_wave3/HANDOFF.md",
@@ -260,6 +279,15 @@
         "reader_bad_font_preserves_noninitial_page_position_font_and_lease",
         "reader_exit_releases_font_lease_and_reopen_keeps_position"
       ]
+    },
+    "gtk_sync_account": {
+      "run": 40629444286,
+      "doc": "docs/reader-total-progress/linux-sync-account.md",
+      "source_prefix": "6b2e3a2d44e085c40fa20e07bbceef93706e8ff0",
+      "artifact": 12790797986,
+      "sha256": "aea21c97eaa96a5aad9656b6419196e7581d18b098a1100ca2f3ea04de43c6fc",
+      "bytes": 5185218,
+      "adapter": "gtk_sync_account_40629444286"
     },
     "gtk_annotation_export": {
       "run": 40595687505,
@@ -550,11 +578,12 @@
       "group": "host",
       "platform": "windows",
       "title": "Windows：本地字体导入、选择/lease 与坏字体保留原页",
-      "state": "partial",
+      "state": "verified",
       "evidence": [
-        "windows_wave3_complete"
+        "windows_wave3_complete",
+        "windows_font_lifecycle"
       ],
-      "note": "字体导入/坏字体回滚/真实排版切换/进程重开通过；未直接测量宿主lease计数生命周期，保持partial计零。"
+      "note": "原生UI通过导入、坏字体回滚和重开；独立Actions检查宿主lease调用及非首页位置、失败回滚和重排。最终同源码产品交付另行验收。"
     },
     {
       "id": "H.windows.annotation_exchange",
@@ -748,9 +777,11 @@
       "group": "host",
       "platform": "linux",
       "title": "Linux GTK：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "gtk_sync_account"
+      ],
+      "note": "独立 GTK 宿主范围；不授予组合源码或六平台产品验收。"
     },
     {
       "id": "H.macos.startup",
