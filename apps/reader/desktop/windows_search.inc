@@ -214,6 +214,11 @@ static void winsearch_submit(int next,int open_hit) {
       /* Preserve the selected position when it belongs to the displayed page.
          A search hit may identify the page more reliably than its first byte. */
       job->txt_history_origin=g.frame.range_start;
+      if(g.frame.valid && g.frame.book_id==g.session.book_id &&
+         g.frame.page==g.session.page && g.frame.txt_verified_point_valid &&
+         g.frame.txt_verified_point>=g.frame.range_start &&
+         g.frame.txt_verified_point<g.frame.range_end)
+        job->txt_history_origin=g.frame.txt_verified_point;
       if(g.frame.txt_has_history_point &&
          g.frame.txt_history_point>=g.frame.range_start && g.frame.txt_history_point<g.frame.range_end)
         job->txt_history_origin=g.frame.txt_history_point;
