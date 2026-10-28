@@ -2,6 +2,9 @@
 #ifndef _WIN32
 #define _POSIX_C_SOURCE 200809L
 #endif
+#ifdef __APPLE__
+#define _DARWIN_C_SOURCE
+#endif
 #include "lm_mirror.h"
 #include <errno.h>
 #include <stdlib.h>
@@ -76,8 +79,10 @@ int lm_mirror_snapshot(const char *path, int hash_content, uint64_t max_bytes,
   lm_sb_init(&bytes);
 #ifdef _WIN32
   if (!w) return mirror_error(e, "mirror-path", "invalid UTF-8 path");
+  /* Do not request backup semantics: privileged runner/host tokens must not
+     bypass a mirror or preimage's read ACL. Directories fail closed at open. */
   h = CreateFileW(w, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                  NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL);
+                  NULL, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, NULL);
   error = h == INVALID_HANDLE_VALUE ? GetLastError() : ERROR_SUCCESS;
   free(w);
   if (h == INVALID_HANDLE_VALUE) {
@@ -98,6 +103,24 @@ int lm_mirror_snapshot(const char *path, int hash_content, uint64_t max_bytes,
   f = _fdopen(fd, "rb");
   if (!f) { _close(fd); return mirror_error(e, "mirror-unreadable", "cannot read regular file"); }
 #else
+  if (!hash_content) {
+    /* SQLite's POSIX locks belong to the process, not one descriptor. Opening
+       and then closing the target here would silently drop its active SQLite
+       owner locks. Identity-only inspection must not open the database at all.
+       lstat preserves final-component no-symlink validation; SDK open still
+       enforces access rights under the existing stable-namespace contract. */
+    if (lstat(path, &first)) {
+      if (errno == ENOENT) return 1;
+      return mirror_error(e, "mirror-unreadable", "cannot inspect path; it is not known absent");
+    }
+    if (!S_ISREG(first.st_mode) || first.st_size < 0)
+      return mirror_error(e, "mirror-special", "path is not a regular non-symlink file");
+    snprintf(out->identity, sizeof(out->identity), "%016llx%016llx",
+             (unsigned long long)first.st_dev, (unsigned long long)first.st_ino);
+    out->size = (uint64_t)first.st_size;
+    out->present = 1;
+    return 1;
+  }
   fd = open(path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK);
   if (fd < 0) {
     if (errno == ENOENT) return 1;
@@ -109,7 +132,6 @@ int lm_mirror_snapshot(const char *path, int hash_content, uint64_t max_bytes,
   snprintf(out->identity, sizeof(out->identity), "%016llx%016llx",
            (unsigned long long)first.st_dev, (unsigned long long)first.st_ino);
   out->size = (uint64_t)first.st_size;
-  if (!hash_content) { out->present = 1; close(fd); return 1; }
   f = fdopen(fd, "rb");
   if (!f) { close(fd); return mirror_error(e, "mirror-unreadable", "cannot read regular file"); }
 #endif

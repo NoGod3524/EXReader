@@ -1,11 +1,13 @@
 # Frozen-v2 safety matrix and unchanged full-gate companion plan
 
-Status: source-only preparation. No local build/test/fixture/artifact parsing and
-no remote commit/push/Actions execution. Product code is copied unchanged from the
-independently reviewed pre-COMMIT v2 package. This package owns only:
+Status: first Actions run retained as failed; narrow CI repair prepared below.
+No local build/test/fixture/artifact parsing. Initial product code was copied from
+the reviewed pre-COMMIT v2 package; the successor transparently fixes its owned
+mirror helper's OS-specific owner/ACL behavior. Matrix additions are:
 
 - `tests/migration/mirror_safety_matrix_20261028.py`
 - `.github/workflows/migration-mirror-safety-matrix-20261028.yml`
+- `.github/workflows/migration-matrix-full-companion-20261028.yml`
 - this document
 
 Workspace: `/workspace/shared/exreader-mirror-safety-matrix-20261028`.
@@ -13,7 +15,8 @@ Branch: `codex/migration-mirror-safety-matrix-20261028`.
 Independent resumed review/fix copy:
 `/workspace/shared/exreader-matrix-review-resume-20261028`.
 Local base is `2249fa4a06370153423d27acb5fc3ea4f01a24ea` plus the ten inherited
-precommit-package paths; no inherited source is edited by this matrix package.
+precommit-package paths. The initial matrix review edited no inherited source;
+the observed CI failures now justify only the `lm_mirror.c` changes below.
 
 ## Same-source identity
 
@@ -23,7 +26,7 @@ Both workflow preflight and probe require the reviewed product SHA-256 values:
 |---|---|
 | migration CMake | `b3ce74a1ad235859cf2656ea99c09a2d8447fc365484a20bedd77eeba5df4ab9` |
 | `lm_main.c` | `2c36cb0d8c4102b35e11f45419820de5154ec98f5819694567ca3e239814b5ff` |
-| `lm_mirror.c` | `efa530a6303c6c55d4c6237d6589e645f98347dfb65787dec6167bb7d4216316` |
+| `lm_mirror.c` | `3275bafb28e3767921ca1756f612abbd2192ac80651a887952767791db5d976a` |
 | `lm_mirror.h` | `dccc5374b27f6614a7872cc584a952c11acf767200a8aa68ae1cc24f5c7b6be3` |
 
 The exact changed-path allowlist against `e771f3c5d1567412f26184ad304730b7c640235d`
@@ -57,7 +60,7 @@ one case failure does not erase later case evidence:
    migrate/verify/dump commands must refuse without blocking or touching the target.
 6. Real intent-unlink failure after the recovery owner has finished(0) and owned
    preimage artifacts are already retired. POSIX directory permission refusal or
-   Windows deny-delete ACL must report bytes-converged/cleanup-pending, not a DB
+   Windows no-delete-share handle must report bytes-converged/cleanup-pending, not a DB
    rollback or failed historical COMMIT. An ordinary row write after owner
    release must survive both that failure and the retry after restoring access.
 7. New-target v1 and existing-target v2 interrupted post-COMMIT acknowledgements:
@@ -94,7 +97,10 @@ marker cannot falsely prove a new process reached COMMIT.
 The host coordination/stable namespace/process-crash-only boundary of v2 remains
 unchanged. This is not power-loss atomicity, arbitrary noncooperating pathname CAS,
 or proof of untested Windows file-symlink variants. The Windows special-path case
-is explicitly a directory junction; the ACL cases are real permissions fixtures.
+is explicitly a directory junction. Windows preimage read denial is a real ACL
+fixture calibrated with an ordinary denied file read. Windows cleanup refusal is
+a real kernel sharing fixture calibrated by a denied DELETE-access open before
+resuming the tool; it is not mislabeled as the ineffective prior delete-ACL test.
 
 ## Historical probes remain retained, not silently passed
 
@@ -115,7 +121,7 @@ failure artifacts remain untouched. The new matrix's commit/cancellation cases
 provide explicit same-SHA coverage; merely retaining historical source files
 does not count as executing those probes.
 
-## Consolidated publication scope (16 unique paths)
+## Consolidated publication scope (17 unique paths in CI successor)
 
 The publication baseline is the published full SHA
 `e771f3c5d1567412f26184ad304730b7c640235d`, not local unpublished commit
@@ -123,7 +129,7 @@ The publication baseline is the published full SHA
 below. Commit-outcome has four paths against the published baseline; mirror,
 precommit and matrix have respectively 7, 10 and 13 paths against local
 `2249fa4`. They overlap at `lm_main.c`; the consolidated diff is exactly these
-16 unique paths:
+16 initially published paths plus one additive companion workflow:
 
 | Path | Change against published baseline | Origin |
 |---|---|---|
@@ -132,7 +138,7 @@ precommit and matrix have respectively 7, 10 and 13 paths against local
 | `tests/migration/commit_outcome_evidence.py` | add | unpublished commit-outcome |
 | `extras/migration/src/lm_main.c` | modify | commit-outcome + mirror + precommit; frozen in matrix |
 | `extras/migration/CMakeLists.txt` | modify | inherited mirror; frozen in matrix |
-| `extras/migration/src/lm_mirror.c` | add | mirror + precommit; frozen in matrix |
+| `extras/migration/src/lm_mirror.c` | add | mirror + precommit; narrow OS owner/ACL CI repair |
 | `extras/migration/src/lm_mirror.h` | add | mirror + precommit; frozen in matrix |
 | `.github/workflows/migration-mirror-recovery.yml` | add | inherited mirror |
 | `docs/MIGRATION-MIRROR-RECOVERY.md` | add | inherited mirror |
@@ -143,21 +149,26 @@ precommit and matrix have respectively 7, 10 and 13 paths against local
 | `.github/workflows/migration-mirror-safety-matrix-20261028.yml` | add | new matrix, reviewed here |
 | `docs/MIGRATION-MIRROR-SAFETY-MATRIX-20261028.md` | add | new matrix, reviewed here |
 | `tests/migration/mirror_safety_matrix_20261028.py` | add | new matrix, reviewed here |
+| `.github/workflows/migration-matrix-full-companion-20261028.yml` | add | CI successor, original jobs unchanged |
 
 Actions preflight requires exact set equality, not merely an allowed subset,
-records all 16 source SHA-256 digests and rejects any SDK/old-test/old-workflow
+records all 17 source SHA-256 digests and rejects any SDK/old-test/old-workflow
 drift outside that set. The four product hashes above remain mandatory.
-This review changes only the final three matrix-owned paths. No local build/test,
-fixture creation, artifact parsing, commit, push or Actions run was performed.
+The first review changed only its three matrix-owned paths; the CI successor also
+adds the companion and repairs the existing owned mirror helper. No local
+build/test, fixture creation or artifact parsing is permitted or performed.
 
-## Required unchanged full companion run after approval
+## Required unchanged full companion run on the same SHA
 
-A focused matrix pass is **not** 65/31/17 acceptance. After specific publication
-and run approval, use the inherited, unchanged
-`.github/workflows/migration-transaction-candidate.yml` via its existing
-`workflow_dispatch` using the frozen feature-branch ref: resolve its approved full
-SHA first, then verify the resulting run's `head_sha` equals the new matrix SHA.
-Do not invent a tag or assume that passing a raw SHA is a supported dispatch ref.
+A focused matrix pass is **not** 65/31/17 acceptance. Original dispatch was blocked
+by absent authenticated CLI/browser dispatch capability; neither original feature
+ref was moved. The additive `migration-matrix-full-companion-20261028.yml` copies
+the original `migration-transaction-candidate.yml` unchanged from `concurrency:`
+through the end, including every job/step/assertion/budget. Only workflow name and
+`on` trigger differ: push on the matrix feature branch, with original path filters
+plus the two owned workflow paths; no manual dispatch. A successor push launches
+the focused and full companions together. Verify exactly one run per workflow
+and that both `head_sha` values equal the new approved full source SHA.
 Do not edit the original workflow or any test to accommodate the remaining four
 old semantic failures. Its original source contains all three transaction-candidate
 companions:
@@ -210,7 +221,7 @@ missing path from the consolidated sixteen-path bundle. A second independent
 source review found no further concrete assertion/control-flow issue in those
 edits. This is not compilation, OS-fixture or runtime clearance.
 
-Product sources and all ten inherited precommit-package paths compare exactly
+At the initial source-only checkpoint, product sources and all ten inherited precommit-package paths compared exactly
 with `/workspace/shared/exreader-migration-precommit-mirror-20261028`; the only
 differences from the starting matrix copy are this document, its new probe and
 its new workflow. Pinned old SDK source was read through the read-only GitHub
@@ -226,4 +237,59 @@ dispatch on that frozen feature-branch SHA. Before publication, the branch/ref
 and automatic runs are checked for absent or uncertain previous effects; never
 start duplicate same-source runs. This is not an older four/seven/ten-path approval
 or a saved permanent permission rule. No PR, main update, tag or release is in
-scope. At this source checkpoint no new runtime evidence or CI pass exists.
+scope. That initial publication is now retained as failed, not retrospectively
+changed into a pass.
+
+## First Actions run and justified CI successor
+
+Published source `62b93cadc04483ea5d4917a090c94f815bf769bd`, tree
+`f1d85e23dde71cd5540967ab97151bd5ff4f1f78`, ran focused matrix
+[40772784064](https://github.com/NoGod3524/EXReader/actions/runs/40772784064), attempt 1.
+The remote tree exactly matched local reviewed commit `a389a7c`; Git push lacked
+shell credentials, so the authorized connected GitHub API published identical
+tree bytes. No old feature ref, main, tag or PR was changed.
+
+- macOS failed tool compilation: `O_NOFOLLOW` was undeclared in `lm_mirror.c`.
+  The narrow fix defines `_DARWIN_C_SOURCE` before includes, as existing tool
+  files already do; it does not remove `O_NOFOLLOW`. Artifact `12852812875`
+  preserves that failure.
+- Linux completed 13/15 focused cases. `schema6-delete` and `schema7-delete`
+  failed because an ordinary writer committed while the migration owner should
+  have excluded it. POSIX identity-only snapshots opened and closed the target
+  DB, releasing the process's SQLite advisory locks. The repair uses `lstat`
+  for non-content identity snapshots, rejects symlink/special files, and never
+  opens/closes the DB merely to identify it. SDK open still checks access rights;
+  stable namespace coordination remains required. Byte reads retain guarded
+  `O_NOFOLLOW` opens. This mechanism is documented by
+  [SQLite's advisory-lock guidance](https://www.sqlite.org/howtocorrupt.html#posix_advisory_locks_canceled_by_a_separate_thread_doing_close_).
+- Windows completed 13/15 focused cases. `preimage-access-refusal` unexpectedly
+  succeeded; the renamed preimage retained its deny-read ACL, fixture cleanup
+  looked only at the old pathname, and artifact ZIP upload failed with EPERM.
+  Raw Actions logs retain this failure; do not claim a complete Windows artifact.
+  The helper removes unnecessary `FILE_FLAG_BACKUP_SEMANTICS`, which can enable
+  privileged ACL bypass, while retaining `FILE_FLAG_OPEN_REPARSE_POINT` and
+  directory/reparse rejection. The ACL probe now calibrates actual read denial
+  and restores either preimage or renamed mirror access even when its assertion
+  fails, preserving the failure rather than suppressing it.
+- Windows `real-intent-cleanup-failure` also failed: its delete ACL did not force
+  the intended unlink error. The successor transparently uses a no-delete-share
+  handle with an independently observed sharing violation (Win32 error 32), not
+  a claimed ACL refusal. It still requires the same cleanup-pending report,
+  released DB owner, preserved ordinary write, and successful retry after release.
+
+No original assertion or failed evidence is rewritten. The original full gate
+did not run at this initial SHA. The additive companion avoids unauthorized
+dispatch capability changes and existing-ref moves; both suites must run against
+the successor SHA. Current source repairs have no runtime result until Actions
+build and exercise them. Full 65/31/17 acceptance remains unestablished.
+
+Independent source review cleared the complete successor helper and Windows
+fixture cleanup on 2026-10-28 at 21:44 UTC. Reviewed probe SHA-256:
+`a4b87be2ea851cd9fe419eca7abdd0f7f12a9d969b32dc62dd606c5c08093fb0`;
+additive companion SHA-256:
+`e3bb07eadd436f1d0ceaa53bad754f8e8e6abba6f80bdb8ac46868cae40813d3`.
+The initial Linux artifact is `12853436430`, ZIP digest
+`6b45fd4dbc62218d9ae72d674aa9e6f743d3ea2bf04f9a1501d2acfaf0676466`;
+the initial macOS artifact ZIP digest is
+`a98df1e29580f5b42806b6aee82690ab2ffcc32463d032399e343d6e7c709e30`.
+These identities were read from Actions metadata; no artifact was parsed locally.
