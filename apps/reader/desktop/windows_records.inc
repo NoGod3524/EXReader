@@ -9,6 +9,16 @@ static void winrecords_phase(void *context,int phase) {
   review_pause(7+phase,phase==1 ? job:NULL);
 #endif
 }
+/* Preserve the public resolver outcome for an explicit no-jump UI message.
+ * This changes no matching policy: historical offsets never break ties. */
+static exr_status winrecords_unresolved(host_job *job,int state) {
+  if(job_cancel_flag(job)) return EXR_CANCELLED;
+  job->error.code=EXR_ARGUMENT;
+  snprintf(job->error.message,sizeof(job->error.message),"%s",
+    state==EXR_ANCHOR_AMBIGUOUS?"位置有歧义，未跳转。":
+    state==EXR_ANCHOR_LEGACY?"旧位置没有可确认选择，未跳转。":"位置无法匹配，未跳转。");
+  return EXR_ARGUMENT;
+}
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
 /* Reopen the product original by its content identity before using a selector. */
 static exr_status winrecords_txt_source(host_job *job,exr_source *source,HANDLE *handle) {
@@ -42,7 +52,7 @@ static exr_status winrecords_txt_match(host_job *job,exr_source *source,
     fflush(stderr);
   }
   if(status!=EXR_OK) return status;
-  return match->state==EXR_ANCHOR_FOUND?EXR_OK:EXR_ARGUMENT;
+  return match->state==EXR_ANCHOR_FOUND?EXR_OK:winrecords_unresolved(job,match->state);
 }
 #endif
 static exr_status winrecords_resolve(host_job *job,host_session *input,const reader_rs_record *record,
@@ -65,6 +75,9 @@ static exr_status winrecords_resolve(host_job *job,host_session *input,const rea
     *unit=0;code=reader_rs_resolve_reflow(input->document,record,&control,match,&error);
   }
   if(code==READER_RS_OK && match->state==EXR_ANCHOR_FOUND) return EXR_OK;
+  if(code==READER_RS_UNRESOLVED) return winrecords_unresolved(job,match->state);
+  if(!job->error.message[0] && error.message[0])
+    snprintf(job->error.message,sizeof(job->error.message),"%s",error.message);
   return job_cancel_flag(job) ? EXR_CANCELLED:EXR_ARGUMENT;
 }
 /* Resolve independently and in the live renderer before returning its actual
@@ -311,7 +324,7 @@ static void winrecords_accept(host_job *job) {
   if(job->status!=EXR_OK) {
     records.result.pending=job->records.pending;records.result.pending_corrupt=job->records.pending_corrupt;
     snprintf(records.result.pending_revision,33,"%s",job->records.pending_revision);
-    wchar_t message[512];describe_error(message,512,job->status==EXR_CANCELLED?L"已取消，阅读记录保留":L"操作未确认，请刷新或重试原请求",job->status,&job->error);
+    wchar_t message[512];describe_error(message,512,job->status==EXR_CANCELLED?L"已取消，阅读记录保留":job->records_action==WINRECORDS_READ?L"阅读记录未跳转":L"操作未确认，请刷新或重试原请求",job->status,&job->error);
     SetWindowTextW(records.message,message);winrecords_controls();return;
   }
   if(job->records_action==WINRECORDS_READ) {
