@@ -1,0 +1,64 @@
+name: Windows account and read-only sync acceptance
+on:
+  push:
+    branches: [codex/terra-wave-windows-sync]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-sync:
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+      EXR_COMPOSITION_CONTENT_BOUND: '1'
+      EXR_COMPOSITION_TXT_PROGRESS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Verify source
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor f34a4f27 HEAD
+      - name: Prepare native display
+        run: python tests/reader_native_owner_repairs/display.py
+      - name: Build and validate the composed Wave3 host
+        run: python tests/reader_wave3_c09/build.py
+      - name: Build account consumers and fixtures
+        shell: pwsh
+        run: |
+          $prefix = "$pwd/build/c09/raw-stage;$pwd/build/c09/product-stage;$pwd/build/c09/sdk-stage"
+          cmake -S tests/reader_revisions/consumer -B build/sync-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'revision configure failed' }
+          cmake --build build/sync-revisions --parallel 4
+          if ($LASTEXITCODE) { throw 'revision build failed' }
+          cmake -S tests/reader_windows_account/consumer -B build/sync-capture -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'capture configure failed' }
+          cmake --build build/sync-capture --parallel 4
+          if ($LASTEXITCODE) { throw 'capture build failed' }
+          python tests/windows_host/make_fixtures.py --output build/sync-fixtures
+          if ($LASTEXITCODE) { throw 'account fixture generation failed' }
+          python tests/reader_reading_state/make_fixtures.py build/sync-reading-fixtures
+          if ($LASTEXITCODE) { throw 'reading fixture generation failed' }
+      - name: Run the retained 32 account checks on the Wave3 executable
+        run: python tests/reader_windows_account/check_account_ui.py --candidate build/c09/package/EXReader/EXReader.exe --package build/c09/package/EXReader --fixtures build/sync-fixtures --revision-consumer build/sync-revisions/revision-consumer.exe --capture-probe build/sync-capture/reading-capture-probe.exe --reading-fixtures build/sync-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/c09/wave3-host/windows-host.map --output build/sync-account-ui
+      - name: Preserve reports and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terra-windows-sync-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c09/report.json
+            build/c09/logs/
+            build/c09/extracted-ui/native/
+            build/c09/compact22/
+            build/c09/package/build.json
+            build/c09/wave3-host/windows-host.map
+            build/sync-account-ui/
+            build/native-owner-preflight/display.json
+            !build/**/*.key
+            !build/**/profile/**/*.sqlite
+          if-no-files-found: warn
