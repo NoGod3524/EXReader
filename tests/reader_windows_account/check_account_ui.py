@@ -185,6 +185,13 @@ def clipboard_text(app):
 class Device(M.MetadataApp):
     """One real product process on its own profile (its own SDK library and product catalog)."""
 
+    def focus(self):
+        def ready():
+            U.BringWindowToTop(self.window)
+            U.SetForegroundWindow(self.window)
+            return U.GetForegroundWindow() == self.window
+        self.wait(ready, timeout=10)
+
     def find_dialog(self):
         found = []
 
