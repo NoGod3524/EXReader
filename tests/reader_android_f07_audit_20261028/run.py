@@ -19,6 +19,9 @@ def main():
         report['original_capture_replayed'] = True
         result = audit(raw, capture, inventory, images, bindings)
         report['android_static_closure_accepted'] = result['android_static_closure_accepted']
+        report['android_native_symbol_boundary_accepted'] = result['android_native_symbol_boundary_accepted']
+        report['include_dependency_coverage_complete'] = result['include_dependency_coverage_complete']
+        report['include_dependency_gap'] = result['include_dependency_gap']
         report['private_imports'] = {name: values for name, values in result['private_imports'].items() if values}
         report['private_header_dependencies'] = result['private_header_dependencies']
         report['image_private_imports'] = result['image_private_imports']

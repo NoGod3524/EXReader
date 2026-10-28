@@ -145,6 +145,49 @@ class AuditContract(unittest.TestCase):
             with self.subTest(installed=installed, owners=owners), self.assertRaises(ValueError):
                 C.require_header_coverage(C.header_coverage(installed, owners))
 
+    def test_ndk_script_rejects_unhandled_directives_and_paths(self):
+        import af07_ndk_inputs as N
+        self.assertEqual(N.input_tokens(b'INPUT(-lc++_shared)'), ['-lc++_shared'])
+        for payload in (b'GROUP(-lc)', b'INPUT(/outside/lib.so)', b'INPUT(../lib.so)',
+                        b'INPUT(-l../escape)', b'INPUT(-lc) SEARCH_DIR(/outside)', b'INPUT()', b'INPUT(-l:libc.so)'):
+            with self.assertRaises(ValueError): N.input_tokens(payload)
+
+    def test_ndk_script_resolution_exact_search_and_no_runtime_grant(self):
+        import af07_ndk_inputs as N
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); api = root / '26'; api.mkdir()
+            script = api / 'libc++.so'; script.write_bytes(b'INPUT(-lc++_shared)')
+            target = root / 'libc++_shared.so'; target.write_bytes(b'\x7fELFfixture')
+            report = N.resolve(script, root, (api, root))
+            self.assertEqual(report['kind'], 'INPUT-script')
+            self.assertEqual(report['children'][0]['path'], 'libc++_shared.so')
+            self.assertEqual(N.system_names({'libc.so': 1, 'libfuture.so': 35}, 26), {'libc.so'})
+            self.assertNotIn('libc++.so', N.system_names({'libc.so': 1}, 26))
+            target.unlink()
+            with self.assertRaises(ValueError): N.resolve(script, root, (api, root))
+
+    def test_ndk_script_cycles_and_link_aliases_fail(self):
+        import af07_ndk_inputs as N
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); script = root / 'libcycle.so'
+            script.write_bytes(b'INPUT(-lcycle)')
+            with self.assertRaises(ValueError): N.resolve(script, root, (root,))
+            target = root / 'libtarget.so'; target.write_bytes(b'\x7fELFfixture')
+            alias = root / 'libalias.so'; alias.symlink_to(target)
+            with self.assertRaises(ValueError): N.resolve(alias, root, (root,))
+            with self.assertRaises(ValueError): N.resolve(target, root, (root.parent,))
+
+    def test_ndk_manifest_not_extension_grants_runtime_name(self):
+        import af07_ndk_inputs as N
+        for metadata in ({}, {'libc.so': True}, {'../libc.so': 1}, {'libc.so': '1'}):
+            with self.assertRaises(ValueError): N.system_names(metadata, 26)
+        records = {'host': dict(needed=['libc++.so'], full=dict(defined=[]), dynamic=dict(defined=[]))}
+        with self.assertRaises(ValueError): C.system_scope('host', records, {}, {'libc.so': set()}, set())
+
     def test_ndk_script_probe_requires_exact_observed_bytes(self):
         from af07_ndk_probe import verify_script
         self.assertEqual(verify_script(b'INPUT(-lc++_shared)'), ['-lc++_shared'])
