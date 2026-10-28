@@ -218,6 +218,11 @@ def basic_summary(key,value,source,ref):
                   'android-cbz-reading':10,'android-fixed-pan':8,'android-host-import':20,'android-page-theme':10}
         require(value.get('checks')==130 and len(value.get('reports',[]))==9 and
                 {row['suite']:row['checks'] for row in value['reports']}==expected,'Android original120+theme10 incomplete')
+        if windows_candidate.active() and os.environ.get('GITHUB_REF_NAME') == windows_candidate.ANDROID_BRANCH and source==os.environ.get('GITHUB_SHA'):
+            identity=value.get('candidate_build_identity',{})
+            require(identity.get('source_sha')==source and identity.get('sdk_checkout_source')==source and
+                    identity.get('sdk_source')==windows_candidate.SDK and identity.get('raw3_revision') is False and
+                    identity.get('raw3_host') is False, 'Android candidate build/source/raw-v3 evidence absent')
     elif key in ('apple_shelf','apple_wp13'):
         require(set(value.get('platforms',{}))==set(original_apple.PLATFORMS),'whole Apple platform set missing')
         if key=='apple_shelf':

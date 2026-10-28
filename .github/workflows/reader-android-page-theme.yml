@@ -35,6 +35,7 @@ jobs:
           python -m py_compile tests/reader_hosts_341/guard_android.py tests/reader_hosts_341/aggregate_android.py
           python tests/reader_hosts_341/guard_android.py
           python -m py_compile tests/reader_android_page_theme/*.py
+          if [ "$GITHUB_REF_NAME" = codex/reader-android130-candidate-admission ]; then python tests/reader_hosts_341/android_candidate.py prepare; fi
           python tests/reader_android_page_theme/candidate.py
           python -m py_compile build/android-page-theme/candidate/preferences_run_ui.py
           python -m py_compile tests/reader_android_host_import/run_ui.py tests/reader_android_host_import/check_evidence.py
@@ -147,6 +148,9 @@ jobs:
           python tests/reader_android_preferences/audit.py --output build/android-preferences/native
           python tests/reader_android_cbz_reading/audit.py --output build/android-cbz-reading/native
           python tests/reader_android_page_theme/audit.py
+      - name: Capture actual raw selector options and SDK identity
+        if: github.ref_name == 'codex/reader-android130-candidate-admission'
+        run: python tests/reader_hosts_341/android_candidate.py record
       - name: Enable hosted runner emulator acceleration
         run: sudo chmod 666 /dev/kvm
       - name: Actual SDK owner import and public original export in Android private storage
