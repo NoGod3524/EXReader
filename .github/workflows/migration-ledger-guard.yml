@@ -5,6 +5,7 @@ on:
     paths:
       - extras/migration/**
       - tests/migration/sequential_ledger_guard.py
+      - tests/migration/sidecar_change_guard.py
       - .github/workflows/migration-ledger-guard.yml
 permissions:
   contents: read
@@ -35,6 +36,10 @@ jobs:
           mkdir -p build/evidence
           set -o pipefail
           ${{ matrix.py }} tests/migration/sequential_ledger_guard.py --old '${{ matrix.bin }}/exreader-legacy-migrate${{ matrix.label == 'windows' && '.exe' || '' }}' --tx '${{ matrix.bin }}/exreader-legacy-migrate-tx${{ matrix.label == 'windows' && '.exe' || '' }}' --work build/guard 2>&1 | tee build/evidence/guard-${{ matrix.label }}.txt
+      - name: Verify concurrent sidecar changes abort transaction
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/sidecar_change_guard.py --old '${{ matrix.bin }}/exreader-legacy-migrate${{ matrix.label == 'windows' && '.exe' || '' }}' --tx '${{ matrix.bin }}/exreader-legacy-migrate-tx${{ matrix.label == 'windows' && '.exe' || '' }}' --work build/sidecar-guard 2>&1 | tee build/evidence/sidecar-${{ matrix.label }}.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:

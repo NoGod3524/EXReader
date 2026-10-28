@@ -1550,6 +1550,9 @@ static int run_migrate(ctx *c) {
     void *data=NULL;size_t size=0;int found=0;const char *open_path;
     c->target_existed=lm_exists(c->target);
     c->sidecar_existed=lm_exists(c->sidecar);
+    if(c->sidecar_existed && !lm_sha_file(c->sidecar,c->sidecar_sha,NULL)) {
+      fail(c,O_FAILED,"ledger-unreadable","cannot hash the existing ledger");return 0;
+    }
     if(!c->target_existed && c->sidecar_existed) {
       fail(c,O_REJECTED,"orphan-ledger","a legacy ledger exists without its library");return 0;
     }
@@ -1706,6 +1709,29 @@ process_pack:
       }
       lm_remove(ready);lm_remove(resume);free(ready);free(resume);
       if(!resumed && !cancel_cb(c)) { fail(c,O_FAILED,"review-hook-timeout","writer synchronization timed out");return 0; }
+    }
+    /* Preserve the legacy publication rendezvous for external-ledger checks. */
+    if(injected(c,"publish-pause",0)) {
+      char *ready=path_join(c->target,".review-ready"),*resume=path_join(c->target,".review-resume");
+      unsigned wait;int resumed=0;
+      if(!write_file(ready,"ready",5)) { free(ready);free(resume);fail(c,O_FAILED,"review-hook-failed","cannot create review marker");return 0; }
+      for(wait=0;wait<400 && !cancel_cb(c);wait++) {
+        if(lm_exists(resume)) { resumed=1;break; }
+#ifdef _WIN32
+        Sleep(50);
+#else
+        struct timespec delay={0,50000000};nanosleep(&delay,NULL);
+#endif
+      }
+      lm_remove(ready);lm_remove(resume);free(ready);free(resume);
+      if(!resumed && !cancel_cb(c)) { fail(c,O_FAILED,"review-hook-timeout","review synchronization timed out");return 0; }
+    }
+    {
+      char digest[65];
+      if(lm_exists(c->sidecar)!=c->sidecar_existed ||
+         (c->sidecar_existed && (!lm_sha_file(c->sidecar,digest,NULL) || strcmp(digest,c->sidecar_sha)))) {
+        fail(c,O_FAILED,"ledger-changed","the migration ledger changed; transaction rolled back");return 0;
+      }
     }
     /* Preserve the legacy late-cancellation hook at the transaction boundary. */
     if(injected(c,"publish-cancel",0)) g_cancel=1;
