@@ -40,6 +40,7 @@ try:
     app = P.App(exe, font, profile)
     app.wait_idle()
     W.import_and_open(app, ROOT / 'build/windows-font/fixtures/Picture book.epub')
+    assert send(app.window, 0x8000 + 32, 8) == 1
     for _ in range(2):
         app.click('next'); app.wait_idle()
     initial = loc()
@@ -91,13 +92,15 @@ try:
 
     d = W.open_feature(app, W.FONTS)
     fallback = next(i for i, row in enumerate(W.rows(d)) if 'fallback' in row)
+    assert send(app.window, 0x8000 + 32, 6) == 1
     W.select_row(d, fallback); W.post_click(d, W.B2)
     W.wait_message(app, d, N.FONT_SWITCHED, 240); app.wait_idle()
     contains(switched, loc())
+    assert send(app.window, 0x8000 + 32, 7) == 1
     assert events()[-2:] == [['open', '0', '2'], ['release', '0', '1']], events()
     W.close_feature(app, d)
     switched = loc()
-    record('replacement-releases-old-lease-and-keeps-live-point')
+    record('replacement-keeps-live-point-and-held-progress-and-releases-old-lease')
 
     d = W.open_feature(app, W.FONTS); W.post_click(d, W.B3)
     W.wait_message(app, d, N.FONT_SWITCHED, 240); app.wait_idle()
@@ -111,6 +114,28 @@ try:
     app.close(); assert app.process.returncode == 0
     assert events()[-2:] == [['release', '0', '0'], ['close', '0', '0']], events()
     report['checks'].append({'name': 'shutdown-releases-lease-and-closes-library', 'events': events()})
+
+    profile = out / 'ordinary-profile'
+    app = P.App(exe, font, profile)
+    app.wait_idle()
+    html = out / 'ordinary.html'
+    html.write_text('<html><body>' + ''.join('<p>Position %04d ordinary document text remains here.</p>' % i
+                                            for i in range(300)) + '</body></html>', encoding='utf-8')
+    W.import_and_open(app, html)
+    assert send(app.window, 0x8000 + 32, 8) == 0
+    for _ in range(2):
+        app.click('next'); app.wait_idle()
+    ordinary = loc(); assert ordinary[1] > 0 and ordinary[3]
+    d = W.open_feature(app, W.FONTS)
+    W.post_click(d, W.B1); W.fill_system_dialog(app, ROOT / 'tests/fixtures/fonts/primary.ttf')
+    W.wait_message(app, d, N.FONT_IMPORTED, 120)
+    app.wait(lambda: len(W.rows(d)) == 2, timeout=30)
+    W.select_row(d, 1); W.post_click(d, W.B2)
+    W.wait_message(app, d, N.FONT_SWITCHED, 240); app.wait_idle()
+    contains(ordinary, loc()); assert events() == [['open', '0', '1']]
+    W.close_feature(app, d); record('ordinary-document-font-switch-keeps-noninitial-point')
+    app.close(); assert app.process.returncode == 0
+    assert events()[-2:] == [['release', '0', '0'], ['close', '0', '0']]
     report['accepted'] = True
 except BaseException as error:
     traceback.print_exc()
