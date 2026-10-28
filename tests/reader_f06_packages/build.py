@@ -38,7 +38,7 @@ def windows():
     for source in tuple(H.MODULES) + C.NEW_MODULES:
         label = Path(source).name
         options = ['-DCMAKE_INSTALL_PREFIX=' + str(stage), '-DCMAKE_PREFIX_PATH=' + prefix,
-                   '-DEXR_SDK=' + str(sdk), '-DEXR_SDK_VERSION=3.41.0', '-DREADER_PRODUCT_PREFIX=' + str(product)] + C.EXTRA_FLAGS.get(label, [])
+                   '-DEXR_SDK=' + str(sdk), '-DEXR_SDK_VERSION=3.42.0', '-DREADER_PRODUCT_PREFIX=' + str(product)] + C.EXTRA_FLAGS.get(label, [])
         if label in set(H.RAW_MODULES) | C.RAW_NEW:
             options += ['-DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON']
         if label == 'cloud-import': options += ['-DREADER_CLOUD_BUILD_CONTENT_BOUND=ON']
@@ -47,7 +47,7 @@ def windows():
         H.run(['cmake', '--install', binary], 'install-' + label)
     host = H.OUT / 'host'
     H.run(['cmake', '-S', ROOT / 'apps/reader/desktop', '-B', host, '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
-           '-DCMAKE_PREFIX_PATH=' + prefix, '-DEXR_SDK=' + str(sdk), '-DEXR_SDK_VERSION=3.41.0',
+           '-DCMAKE_PREFIX_PATH=' + prefix, '-DEXR_SDK=' + str(sdk), '-DEXR_SDK_VERSION=3.42.0',
            '-DREADER_METADATA_PREFIX=' + str(stage), '-DREADER_ACCOUNT_PREFIX=' + str(stage),
            '-DEXR_READER_WINDOWS_WAVE3=ON', '-DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=ON',
            '-DEXR_READER_WINDOWS_TXT_PROGRESS=ON'], 'host-configure')
