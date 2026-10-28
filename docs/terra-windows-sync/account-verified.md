@@ -3,7 +3,7 @@
 [Actions 40642072411/1](https://github.com/NoGod3524/EXReader/actions/runs/40642072411)
 tested `42445abd6dfeb312c8803d0a000a32f2a0459a15`. Its 32 account
 checks passed and the account evidence was uploaded before downstream tests.
-The complete workflow remained in progress when this was recorded.
+The complete workflow subsequently finished successfully; see the final result below.
 
 The account test now waits for the truthful incomplete receive state when it
 deliberately plants concurrent and missing-parent records. It requires one
@@ -29,7 +29,19 @@ independently authenticated the early artifact, exact run/source/attempt,
 - Authentication artifact 12796456767, 463 bytes, SHA-256
   `bed831639efe1219bd90082b9cfac5d5f99d65beff952cf053406ac0ae59282f`.
 
-This is a scoped native Windows account result on a runner-local HTTPS test
-server, not final same-source full workflow acceptance or six-platform sync.
-The retained organization/cancellation step must still finish in the same run.
-The documentation-only commit is not the tested source.
+## Same-run final result
+
+The full workflow completed successfully on the same tested source and attempt.
+The retained native organization and receive cancellation/retry step also
+succeeded after the 32 account checks. Its logged checks include cancellation
+of an active original read, retry without duplicate import, original hashes,
+mapping recovery, and shelf, series, and tag synchronization between two
+Windows hosts using a runner-local HTTPS service.
+
+- Final artifact 12796877182, 7,671,168 bytes, SHA-256
+  `9f6f2f2347b87670904b9a3ee6a3cbdffa9e89cd89fb0d86175ae4bef19b5a39`.
+- [Final artifact](https://github.com/NoGod3524/EXReader/actions/runs/40642072411/artifacts/12796877182).
+- The retained workflow ran against SDK 3.41. This does not establish
+  acceptance of the separate SDK 3.42 composition or six-platform sync.
+- The documentation-only commits are not the tested source.
+
