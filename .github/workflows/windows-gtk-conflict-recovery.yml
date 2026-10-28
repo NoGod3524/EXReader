@@ -1,0 +1,398 @@
+name: Windows GTK conflict recovery same-source gates
+on:
+  push:
+    branches: [codex/dot-win-gtk-conflict-recovery]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  windows-first:
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+      EXR_COMPOSITION_CONTENT_BOUND: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Confirm exact base and unchanged product paths
+        shell: pwsh
+        run: |
+          git merge-base --is-ancestor 36fb8db3c088d665f87aac407f8e3739fa73e0f0 "$env:GITHUB_SHA"
+          if ($LASTEXITCODE) { throw 'common base mismatch' }
+          git diff --exit-code 36fb8db3c088d665f87aac407f8e3739fa73e0f0 "$env:GITHUB_SHA" -- src include
+          if ($LASTEXITCODE) { throw 'frozen SDK changed' }
+          python -m py_compile tests/reader_d23_relay/relay.py tests/reader_d23_relay/windows.py tests/reader_d23_relay/gtk.py
+          if ($LASTEXITCODE) { throw 'test syntax failed' }
+      - name: Build real Windows package and retain existing checks
+        shell: pwsh
+        run: |
+          python tests/reader_wave3_c09/build.py
+          if ($LASTEXITCODE) { throw 'Windows build or retained checks failed' }
+          $prefix = "$pwd/build/c09/raw-stage;$pwd/build/c09/product-stage;$pwd/build/c09/sdk-stage"
+          cmake -S tests/windows_organization_projection/cloud -B build/cloud-readback -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          if ($LASTEXITCODE) { throw 'readback configure failed' }
+          cmake --build build/cloud-readback --parallel 4
+          if ($LASTEXITCODE) { throw 'readback build failed' }
+          Copy-Item build/cloud-readback/cloud-probe.exe build/c09/package/EXReader/cloud-probe.exe
+      - name: Windows imports and publishes an actual original
+        shell: pwsh
+        run: |
+          python tests/reader_d23_relay/windows.py --phase windows-first --out build/windows-first --package build/c09/package/EXReader --probe build/c09/package/EXReader/cloud-probe.exe
+          if ($LASTEXITCODE) { throw 'Windows initial phase failed' }
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: windows-gtk-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c09/package/EXReader/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-first/
+            build/c09/report.json
+            build/c09/logs/
+            !build/**/key.pem
+          if-no-files-found: warn
+  gtk-first:
+    needs: windows-first
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    outputs:
+      interop: ${{ steps.interop.outcome }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/input
+      - name: Install GTK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+      - name: Build installed SDK, catalog, account modules and real GTK host
+        id: gtk_build
+        run: |
+          set -euxo pipefail
+          prefix="$PWD/build/stage"
+          cmake -S apps/reader/store/native -B build/product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/product --parallel 4
+          ctest --test-dir build/product --output-on-failure --no-tests=error
+          cmake --install build/product
+          cmake -S extras/webdav -B build/dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/dav --parallel 4
+          cmake --install build/dav
+          cmake -S apps/reader/revisions -B build/revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/revisions --parallel 4
+          cmake --install build/revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/$module" --parallel 4
+            cmake --install "build/$module"
+          done
+          cmake -S extras/credentials -B build/credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/credentials --parallel 4
+          cmake --install build/credentials
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+          cmake -S extras/sideload -B build/sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/sideload --parallel 4
+          cmake --install build/sideload
+          cmake -S apps/reader/reading-state -B build/reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/reading-state --parallel 4
+          cmake --install build/reading-state
+          cmake -S tests/reader_commands/consumer -B build/command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/command-consumer --parallel 4
+          cmake -S tests/reader_metadata/consumer -B build/metadata-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/metadata-consumer --parallel 4
+          cmake -S tests/reader_revisions/consumer -B build/revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/revision-consumer --parallel 4
+          cmake -S tests/reader_reading_v2/consumer -B build/reading-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$prefix;$PWD/build/reading-library/stage"
+          cmake --build build/reading-probe --parallel 4
+          python3 tests/reader_reading_state/make_fixtures.py build/receive-fixtures
+          cmake -S tests/reader_gtk_receive -B build/inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/inspect --parallel 4
+          cmake -S apps/reader/desktop -B build/desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_BUILD_GTK=ON -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON
+          cmake --build build/desktop --parallel 4
+          ctest --test-dir build/desktop --output-on-failure --no-tests=error
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.41.0 --binary build/desktop/gtk-host/exreader-linux --output build/package
+          cp build/inspect/received-sdk-inspect build/package/EXReader-Linux/received-sdk-inspect
+      - name: Preserve current GTK receive regression
+        id: current_regression
+        run: |
+          set -euo pipefail
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/regression-openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/current-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
+          '
+      - name: Preserve original GTK receive regression independently
+        id: original_regression
+        if: ${{ !cancelled() && steps.gtk_build.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          trap 'git show "$GITHUB_SHA":tests/linux_host/check_account_ui.py > tests/linux_host/check_account_ui.py; git show "$GITHUB_SHA":tests/linux_host/receive_checks.py > tests/linux_host/receive_checks.py' EXIT
+          git show fba9a21f25e6669614eae76ef22a3f81b3995886:tests/linux_host/check_account_ui.py > tests/linux_host/check_account_ui.py
+          git show fba9a21f25e6669614eae76ef22a3f81b3995886:tests/linux_host/receive_checks.py > tests/linux_host/receive_checks.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/original-regression-openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/original-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
+          '
+      - name: GTK receives Windows original and authors organization
+        id: interop
+        if: ${{ !cancelled() && steps.gtk_build.outcome == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/reader_d23_relay/gtk.py --phase gtk-first --previous build/input/windows-first/state.json --out build/gtk-first --package build/package/EXReader-Linux --inspect build/package/EXReader-Linux/received-sdk-inspect
+          '
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && steps.interop.outcome == 'success' }}
+        with:
+          name: gtk-windows-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/package/EXReader-Linux/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-gtk-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-first/
+            build/current-account/
+            build/original-account/
+            build/regression-openbox.log
+            build/original-regression-openbox.log
+            build/openbox.log
+            !build/**/key.pem
+          if-no-files-found: warn
+  windows-return:
+    needs: gtk-first
+    if: ${{ !cancelled() && needs.gtk-first.outputs.interop == 'success' }}
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env: {PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/package
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/input
+      - run: python -m pip install uiautomation==2.0.29
+      - name: Windows receives GTK organization and updates membership
+        shell: pwsh
+        run: |
+          python tests/reader_d23_relay/windows.py --phase windows-return --previous build/input/gtk-first/state.json --out build/windows-return --package build/package --probe build/package/cloud-probe.exe
+          if ($LASTEXITCODE) { throw 'Windows return phase failed' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-gtk-return-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-return/
+            !build/**/key.pem
+          if-no-files-found: warn
+  gtk-return:
+    needs: windows-return
+    if: ${{ !cancelled() && needs.windows-return.result == 'success' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: gtk-windows-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/package
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-return-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/input
+      - name: Install GTK runtime and UI automation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 gnome-keyring libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+          chmod +x build/package/bin/exreader-linux build/package/received-sdk-inspect
+      - name: GTK receives Windows membership change and new original
+        run: |
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/reader_d23_relay/gtk.py --phase gtk-return --previous build/input/state.json --out build/gtk-return --package build/package --inspect build/package/received-sdk-inspect
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-gtk-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-return/
+            build/openbox.log
+            !build/**/key.pem
+          if-no-files-found: warn
+  verify:
+    needs: [windows-first, gtk-first, windows-return, gtk-return]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/audit/win1
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/audit/gtk1
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-return-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/audit/win2
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/audit/gtk2
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/audit/windows-package
+      - uses: actions/download-artifact@v4
+        with:
+          name: gtk-windows-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/audit/gtk-package
+      - name: Verify exact relayed bytes, real host operations and identities
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_d23_relay/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-gtk-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/summary/
+          if-no-files-found: warn
+  conflict-windows-offline:
+    needs: verify
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env: {PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/package
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/seed
+      - run: python -m pip install uiautomation==2.0.29
+      - run: python tests/windows_gtk_conflict_recovery/windows.py --phase windows-offline --previous build/seed/windows-first/state.json --profile build/seed/windows-first/profile --package build/package --out build/windows-offline
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conflict-windows-offline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-offline/
+            !build/**/key.pem
+  conflict-gtk-offline:
+    needs: conflict-windows-offline
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: gtk-windows-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/package
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/seed
+      - uses: actions/download-artifact@v4
+        with:
+          name: conflict-windows-offline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/previous
+      - name: Runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 gnome-keyring libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+          chmod +x build/package/bin/exreader-linux build/package/received-sdk-inspect
+      - run: |
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/windows_gtk_conflict_recovery/gtk.py --phase gtk-offline --previous build/previous/state.json --profile build/seed/gtk-first/profile --package build/package --out build/gtk-offline
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conflict-gtk-offline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-offline/
+            !build/**/key.pem
+  conflict-windows-resolve:
+    needs: conflict-gtk-offline
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env: {PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/package
+      - uses: actions/download-artifact@v4
+        with:
+          name: conflict-windows-offline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/seed
+      - uses: actions/download-artifact@v4
+        with:
+          name: conflict-gtk-offline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/previous
+      - run: python -m pip install uiautomation==2.0.29
+      - run: python tests/windows_gtk_conflict_recovery/windows.py --phase windows-resolve --previous build/previous/state.json --profile build/seed/profile --package build/package --out build/windows-resolve
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conflict-windows-resolve-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-resolve/
+            !build/**/key.pem
+  conflict-gtk-final:
+    needs: conflict-windows-resolve
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: gtk-windows-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/package
+      - uses: actions/download-artifact@v4
+        with:
+          name: conflict-gtk-offline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/seed
+      - uses: actions/download-artifact@v4
+        with:
+          name: conflict-windows-resolve-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/previous
+      - name: Runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 gnome-keyring libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+          chmod +x build/package/bin/exreader-linux build/package/received-sdk-inspect
+      - run: |
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/windows_gtk_conflict_recovery/gtk.py --phase gtk-final --previous build/previous/state.json --profile build/seed/profile --package build/package --out build/gtk-final
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conflict-gtk-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-final/
+            !build/**/key.pem

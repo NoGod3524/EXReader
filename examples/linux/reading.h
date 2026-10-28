@@ -87,7 +87,7 @@ typedef struct {
 #endif
   const char *metadata_key,*metadata_title,*metadata_author;
   uint64_t metadata_token;
-  int metadata_favorite;
+  int metadata_favorite,metadata_resolution;
   int collection_kind,collection_removed,collection_operation;
   int collection_group_direction,collection_member_direction;
   uint64_t collection_token,collection_group_cursor_ordinal,collection_member_cursor_ordinal;
