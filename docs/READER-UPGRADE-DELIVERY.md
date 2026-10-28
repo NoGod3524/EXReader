@@ -15,16 +15,15 @@ The native product catalog adapter upgrades EXRP versions 1 and 2 to version 3
 when opened. That operation alone does not establish that an old app library,
 all reading records, or a downgrade works on a particular device. The old
 IndexedDB/backup migration is a separate command-line tool, not a native app
-upgrade button. **Do not use the migrator built from this candidate for a real
-upgrade:** the current SDK creates schema 7, but the tool rejects schema 7 on
-reopen. The recorded Linux and Windows tests published a new target and then
-failed to inspect it. The compatibility repair and full migration regression
-are still required. Its historical [instructions](WP12-LEGACY-MIGRATION.md) explain how to
+upgrade button. Its historical [instructions](WP12-LEGACY-MIGRATION.md) explain how to
 export from the old application's own origin, inspect the pack, run a dry run,
 migrate and verify. Close the target app first and retain the source export,
-target backup, report and `<library>.legacy-map.json` together. The historical
-tool contract accepts a new target or an existing SDK schema 6 target; it does
-not upgrade an older target schema. Review the report before using partial migration: unresolved
+target backup, report and `<library>.legacy-map.json` together. On SDK 3.41 the
+tool accepts a new target or an existing SDK schema 6 or 7 target. Schema 6 is
+snapshotted before the SDK upgrades the stage to schema 7; `dump` and `verify`
+refuse schema 6 until migration, so they cannot silently upgrade the original.
+Close and checkpoint the old library first; a WAL, SHM or rollback journal
+sidecar causes a refusal. Other target versions are refused. Review the report before using partial migration: unresolved
 annotations remain in the ledger, audio originals are not imported, and files
 above 128 MiB are rejected. Real user libraries, macOS and a real Tauri window
 were not covered by the recorded tool acceptance; see the
@@ -67,11 +66,33 @@ inventories and license/notice review, path remediation, platform upgrade and
 old-library checks, and user instructions checked against the actual packages.
 F12 remains pending until those results are available.
 
-The current candidate's push run [40627111572](https://github.com/NoGod3524/EXReader/actions/runs/40627111572),
+The earlier candidate's push run [40627111572](https://github.com/NoGod3524/EXReader/actions/runs/40627111572),
 attempt 1, at `622c9edb13fd3f1b9466be1cbd9d9f6d5c737093` failed on both Linux
 and Windows and failed the combined gate. Installed payload verification passed
 on both platforms. On Linux, 27 of 65 named scenarios passed; `dump` rejected
 the SDK 3.41-created schema 7 target with `target-schema`, and the browser
 chain failed after publication when checking reopened originals. Preserve this
-run and its uploaded failure evidence. The older standalone acceptance does not
-establish compatibility with this candidate.
+run and its uploaded failure evidence. The follow-up run
+[40627983295](https://github.com/NoGod3524/EXReader/actions/runs/40627983295)
+failed its new Windows old-library check because the Python test held an open
+SQLite connection; the original named scenarios passed on both platforms.
+
+The repaired candidate `d86cae5411cd8f5806db7eb4ab38bb60b4d04bfc`, run
+[40628744097](https://github.com/NoGod3524/EXReader/actions/runs/40628744097)
+attempt 1, passed all three jobs. Linux and Windows each passed the original
+65 scenarios/135 checks, 31 review checks and 17 browser-chain checks; the
+combined gate and its 29 rejection/positive checks passed. Both platforms also
+created a schema 6 library using the original SDK and migrator from
+`c2d23c29a3b2096c2236fdb414dcd1e66d3243b4` and verified refusal, dry-run and
+failed-publication preservation, successful upgrade of its book and annotation,
+verification and retry. This synthetic fixture is not a real user library or a
+six-platform host upgrade acceptance.
+
+The same run verified the five installed migrator materials and checked the
+two installed documents whose examples previously exposed a user-specific path
+on Linux and Windows. The SDK and ABI source tree was guarded against the
+`f34a4f27` base. The historical G09 inventory has not been rerun against this
+candidate: its package-only scope guard does not admit the integrated branch.
+Upstream pkg-config prefixes and archive-member paths still require remediation
+and a new same-source distribution audit; the documented historical 60-file
+finding is not a count of the current candidate.
