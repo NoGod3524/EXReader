@@ -190,6 +190,12 @@ struct HostWave3Sheet: View {
                     }
                     .accessibilityValue(font.id == state.selectedFont ? "已选" : "")
                 }
+#if EXR_APPLE_HOST_REVIEW
+                if UserDefaults.standard.bool(forKey: "EXRUITestFixtures") {
+                    Text(state.fontObservation).font(.system(size: 5)).lineLimit(1)
+                        .accessibilityIdentifier("features.font.observation")
+                }
+#endif
                 Text("字体在当前书籍重新排版成功后切换。固定版式保留原书字体。")
                     .font(.caption).foregroundColor(.secondary)
             }.frame(maxWidth: .infinity, alignment: .leading)
@@ -251,6 +257,9 @@ struct HostWave3Sheet: View {
             VStack(alignment: .leading, spacing: 8) {
                 action("导入随包字体", id: "features.font.fixture") {
                     if let url = Bundle.main.url(forResource: "Reader", withExtension: "otf") { actions.importFont(url) }
+                }
+                action("导入测试字体", id: "features.font.distinct") {
+                    if let url = Bundle.main.url(forResource: "FontReview", withExtension: "ttf") { actions.importFont(url) }
                 }
                 action("尝试将书籍导入为字体", id: "features.font.invalid") {
                     if let url = Bundle.main.url(forResource: "Sample", withExtension: "epub") { actions.importFont(url) }
@@ -374,7 +383,6 @@ private struct HostWave3SharingPicker: NSViewRepresentable {
 }
 #endif
 #endif
-
 
 
 
