@@ -18,6 +18,16 @@ the distinctive point of a previous search without accepting ambiguous results.
 The candidate adds controlled diagnostics for selector resolution state and
 offsets, without logging book text. It has not yet been accepted.
 
-[Run 40623920454](https://github.com/NoGod3524/EXReader/actions/runs/40623920454)
-executes the unchanged host assertions on the candidate. Its result, including
-the ambiguity refusal and history cursor behavior, must be reviewed separately.
+[Run 40623920454, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40623920454)
+failed at the same history-back assertion. Its trace established that after
+back and forward the selection had been cleared, the old candidate used page
+start 969,960, and the selector was ambiguous. The history cursor did not move.
+
+[Run 40624221957, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40624221957)
+on source c5688c4adf0506d44e097b076be30e1985341012 passed the complete
+Windows host workflow. A later candidate keeps the previously resolved point
+with the displayed frame, and the run asserted that the expected and actual
+restored source offsets were both 970,000. The end-of-file search, history
+back and ambiguity refusal all passed under the unchanged 300-second limits.
+The same-run artifact is 12788901967, 612,796 bytes, SHA-256
+f53cba3197f9ce31fbf1bd1454fcfa27e814bea08d6d34ea7d1d35ddde17897a.
