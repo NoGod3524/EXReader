@@ -21,12 +21,12 @@ jobs:
           cmake --build build/sdk --config Release --parallel 4
           cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage"
           cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DEXR_MIGRATION_REVIEW_TESTS=ON -DCMAKE_BUILD_TYPE=Release
-          cmake --build build/migration --config Release --target migration-path-state --parallel 4
+          cmake --build build/migration --config Release --target migration-path-state exreader-legacy-migrate exreader-legacy-migrate-tx --parallel 4
       - name: Exercise and restore temporary ACL
         run: |
           mkdir -p build/evidence
           set -o pipefail
-          python tests/migration/windows_acl_path_checks.py --probe build/migration/Release/migration-path-state.exe --work build/acl-test 2>&1 | tee build/evidence/windows-acl.txt
+          python tests/migration/windows_acl_path_checks.py --probe build/migration/Release/migration-path-state.exe --old build/migration/Release/exreader-legacy-migrate.exe --tx build/migration/Release/exreader-legacy-migrate-tx.exe --work build/acl-test 2>&1 | tee build/evidence/windows-acl.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
