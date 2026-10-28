@@ -1,7 +1,7 @@
 name: Apple native organization
 on:
   push:
-    branches: [codex/terra-wave-apple-organization]
+    branches: [codex/terra-wave-apple-organization, codex/apple-organization-reopen-20261028]
   workflow_dispatch:
   workflow_call:
 permissions:
@@ -35,6 +35,18 @@ jobs:
           cmake --build build/sdk --parallel 4
           cmake --install build/sdk --prefix "$PWD/stage/$target"
           python3 tools/build_apple_product.py --sdk "stage/$target" --target "$target" --build build/apple-product
+      - name: Retain catalog contract and verify schema 2 and 3 reopen
+        if: matrix.platform == 'macos'
+        run: |
+          mkdir -p build/organization-evidence
+          python3 tools/apple_swift.py --sdk stage/macos -- -swift-version 5 -parse-as-library \
+            -L stage/macos/lib -lexreader -Xlinker -rpath -Xlinker "$PWD/stage/macos/lib" \
+            examples/apple/HostCatalog.swift tests/reader_catalog/apple_catalog_check.swift -o build/organization-evidence/catalog-original
+          build/organization-evidence/catalog-original apps/reader/store/001_catalog.sql build/organization-evidence/catalog-original.json
+          python3 tools/apple_swift.py --sdk stage/macos -- -swift-version 5 -parse-as-library \
+            -L stage/macos/lib -lexreader -Xlinker -rpath -Xlinker "$PWD/stage/macos/lib" \
+            examples/apple/HostCatalog.swift tests/apple_host/organization/catalog_reopen_check.swift -o build/organization-evidence/catalog-reopen
+          build/organization-evidence/catalog-reopen
       - name: Build production host and organization UI tests
         run: |
           python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
