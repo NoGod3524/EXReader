@@ -2,7 +2,7 @@ name: Migration transaction candidate 3.42
 # Dedicated cloud validation for extras/migration. Not scheduled; does not touch native.yml/reliability.yml.
 on:
   push:
-    branches: ['codex/migration-transaction-candidate', 'codex/migration-shared-lock-20261028']
+    branches: ['codex/migration-transaction-candidate', 'codex/migration-shared-lock-20261028', 'codex/migration-compat-20261028']
     paths:
       - 'src/**'
       - 'include/**'

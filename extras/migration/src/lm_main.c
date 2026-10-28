@@ -990,6 +990,28 @@ static int sidecar_load(ctx *c, const char *path) {
   if (!read_whole(path,&data,&n,256u*1024*1024)) { fail(c,O_REJECTED,"ledger-unreadable","cannot read the existing migration ledger %s",path);return 0; }
   ok=sidecar_parse(c,data,n);free(data);return ok;
 }
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+/* A stale legacy sidecar can coexist with the transactional ledger, but an
+   unreadable or unsupported sidecar must not be silently disregarded. */
+static int sidecar_check_envelope(ctx *c, const char *path) {
+  char *data=NULL, error[160];size_t size=0;const jv *version; jv *root;
+  if(!read_whole(path,&data,&size,256u*1024*1024)) {
+    fail(c,O_REJECTED,"ledger-unreadable","cannot read the existing migration ledger %s",path);return 0;
+  }
+  root=lm_json_parse(data,size,error,sizeof(error));free(data);
+  if(!root || root->t!=J_OBJ || !lm_get_str(root,"format") || strcmp(lm_get_str(root,"format"),LM_MAP_FORMAT)) {
+    lm_json_free(root);fail(c,O_REJECTED,"ledger-invalid","existing sidecar is not a valid migration ledger");return 0;
+  }
+  version=lm_get(root,"version");
+  if(!version || version->t!=J_NUM || version->num!=1.0) {
+    lm_json_free(root);fail(c,O_REJECTED,"ledger-unknown-version","existing ledger has an unsupported version; refusing to proceed");return 0;
+  }
+  if(!lm_get(root,"books") || lm_get(root,"books")->t!=J_ARR || !lm_get(root,"notes") || lm_get(root,"notes")->t!=J_ARR) {
+    lm_json_free(root);fail(c,O_REJECTED,"ledger-invalid","existing ledger lacks books/notes");return 0;
+  }
+  lm_json_free(root);return 1;
+}
+#endif
 static void sidecar_text(ctx *c, lm_sb *b) {
   size_t i;
   int known = 0;
@@ -1575,6 +1597,7 @@ static int run_migrate(ctx *c) {
       sdk_fail(c,"reading transactional ledger");return 0;
     }
     if(found) {
+      if(c->sidecar_existed && !sidecar_check_envelope(c,c->sidecar)) { exr_free(data);return 0; }
       int ok=sidecar_parse(c,(const char *)data,size);exr_free(data);
       if(!ok) return 0;
     } else if(c->sidecar_existed && !sidecar_load(c,c->sidecar)) return 0;
@@ -1864,6 +1887,7 @@ static void run_verify(ctx *c) {
     if(exr_library_open(c->target,&c->lib,&c->err)!=EXR_OK) { sdk_fail(c,"opening library");return; }
     if(exr_library_migration_ledger_get(c->lib,&data,&size,&found,&c->err)!=EXR_OK) { sdk_fail(c,"reading transactional ledger");return; }
     if(!found) { fail(c,O_REJECTED,"ledger-missing","no transactional ledger in library");return; }
+    if(lm_exists(c->sidecar) && !sidecar_check_envelope(c,c->sidecar)) { exr_free(data);return; }
     if(!sidecar_parse(c,(const char *)data,size)) { exr_free(data);return; }
     exr_free(data);
   }
@@ -1973,7 +1997,9 @@ static int real_main(int argc, char **argv) {
       if(exr_library_open(c->target,&reader,&c->err)!=EXR_OK) sdk_fail(c,"opening library");
       else {
         if(exr_library_migration_ledger_get(reader,&data,&size,&found,&c->err)!=EXR_OK) sdk_fail(c,"reading transactional ledger");
-        else if(found) sidecar_parse(c,(const char *)data,size);
+        else if(found) {
+          if(!lm_exists(c->sidecar) || sidecar_check_envelope(c,c->sidecar)) sidecar_parse(c,(const char *)data,size);
+        }
         else if(lm_exists(c->sidecar)) sidecar_load(c,c->sidecar);
         exr_free(data);exr_library_close(reader);
       }
