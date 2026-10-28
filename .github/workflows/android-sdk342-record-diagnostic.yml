@@ -1,7 +1,6 @@
 name: Android SDK 3.42 record probe failure inspection
 on:
-  push:
-    branches: [codex/android-sdk342-record-evidence-20261028]
+  workflow_dispatch:
 permissions:
   contents: read
   actions: read
