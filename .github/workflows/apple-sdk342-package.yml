@@ -1,0 +1,53 @@
+name: Apple SDK 3.42 exact installation and package
+on:
+  push:
+    branches: [codex/apple-sdk342-optin-20261028]
+permissions:
+  contents: read
+jobs:
+  package:
+    name: Apple SDK 3.42 ${{ matrix.target }} package
+    runs-on: macos-15
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build exact SDK, installed products and native bundle; unpack and authenticate
+        run: python3 tests/apple_sdk342_package/run.py --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-sdk342-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/apple-sdk342/${{ matrix.target }}/identity.json
+            build/apple-sdk342/${{ matrix.target }}/EXReader.zip
+            build/apple-sdk342/${{ matrix.target }}/host/build.json
+            build/apple-sdk342/${{ matrix.target }}/host/product-link.json
+            build/apple-sdk342/${{ matrix.target }}/products/share/exreader-apple/product.json
+          if-no-files-found: error
+          retention-days: 30
+  authenticate:
+    needs: package
+    if: always()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original same-run archives and packaged executables
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_sdk342_package/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-sdk342-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-sdk342-summary/summary.json
+          if-no-files-found: error
+          retention-days: 30

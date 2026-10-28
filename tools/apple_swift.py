@@ -40,7 +40,7 @@ def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False)
         if wave3 and manifest.get('wave3_enabled') is not True:
             raise RuntimeError('Installed products do not declare the wave3 profile')
         version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk / 'include/exr/base.h').read_text())
-        if version is None or version[1] != '3.41.0' or Path(manifest['sdk_prefix']).resolve() != sdk.resolve():
+        if version is None or version[1] not in ('3.41.0', '3.42.0') or manifest.get('sdk_version') != version[1] or Path(manifest['sdk_prefix']).resolve() != sdk.resolve():
             raise RuntimeError('Raw products are bound to another actual SDK')
         for name, version in expected.items():
             text = (product / 'lib/cmake' / name / (name + 'ConfigVersion.cmake')).read_text()

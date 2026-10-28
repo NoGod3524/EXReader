@@ -32,12 +32,12 @@ def main():
     parser.add_argument('--wave3', action='store_true', help='Enable the installed five-feature product without review entry points')
     parser.add_argument('--selector-bytes-candidate', action='store_true',
                         default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
-    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'),
+    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0', '3.42.0'),
                         default=os.environ.get('EXR_APPLE_SDK_VERSION', '3.40.0'))
     parser.add_argument('--page-theme', action='store_true', default=os.environ.get('EXR_APPLE_PAGE_THEME', 'OFF') == 'ON',
                         help='Explicit SDK3.41 page-theme candidate')
     args = parser.parse_args()
-    if args.sdk_version not in ('3.40.0', '3.41.0'):
+    if args.sdk_version not in ('3.40.0', '3.41.0', '3.42.0'):
         parser.error('Unsupported explicit Apple SDK version')
     if os.environ.get('EXR_APPLE_PAGE_THEME', 'OFF') not in ('OFF', 'ON'):
         parser.error('EXR_APPLE_PAGE_THEME must be explicitly OFF or ON')
