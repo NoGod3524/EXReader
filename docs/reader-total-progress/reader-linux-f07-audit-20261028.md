@@ -19,7 +19,7 @@ is explicitly bound to the historical package. No original source, flag, budget,
 assertion, installed SDK, product target or test is changed.
 
 The new workflow is confined to `codex/reader-linux-f07-audit-20261028`. It first
-runs syntax and 16 synthetic protocol cases in Actions. A separate 45-minute
+runs syntax and 17 synthetic protocol cases in Actions. A separate 45-minute
 job authenticates the original run/jobs/artifact ID/name/size/digest/source/attempt,
 safely extracts the original ZIPs, checks every inventory hash, and reexecutes the
 frozen original GTK semantic/identity and complete raw tar/F06 ZIP/unpack/entry
@@ -76,3 +76,17 @@ acceptance run. No six-platform convergence, physical device, release readiness 
 108-item progress is granted. At this source-only checkpoint, none of the new
 syntax checks, fixtures, artifact extraction or native inspection has run locally
 or remotely. Independent source review precedes any publication.
+
+## First Actions result and narrow parser repair
+
+Audit source `0a41db9aa18beba8784a8b04bc95a2ba7d2c6585`, run
+[40777704309/1](https://github.com/NoGod3524/EXReader/actions/runs/40777704309):
+protocol passed all 16 then-authored cases; original capture authentication
+completed. Native audit failed closed at installed archive/export set equality.
+The source parser required a column-zero closing parenthesis, unlike indented
+configuration-specific generated CMake exports. A new fixture and whitespace-only
+property-block parser repair are prepared; no ownership/set assertion is removed.
+Exact missing/extra archives and parsed exports now persist before that assertion.
+The first failed artifact is `12855457377`, 397127156 bytes, SHA-256
+`f5849afe3251eb320bbf4b67b5088c48b65937fbc784acd5fd838058e17621fd`.
+This is a retained failed parser run, not a substantive module acceptance result.

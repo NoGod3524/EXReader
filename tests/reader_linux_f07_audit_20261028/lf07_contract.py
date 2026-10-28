@@ -211,3 +211,9 @@ def final_undefined_findings(full, dynamic, project_definitions, system_rows):
         findings.append(dict(symbol=symbol, kind=row['kind'], project_providers=providers,
             reason='project-definition-not-in-actual-final-image' if providers else 'unresolved-final-image-import-or-version'))
     return findings
+
+
+def target_properties(text):
+    # Generated *Targets-release.cmake indents its closing parenthesis, unlike
+    # the principal *Targets.cmake. Whitespace changes no owner/location rule.
+    return re.findall(r'set_target_properties\(([A-Za-z0-9_:]+)\s+PROPERTIES\s+(.*?)\n\s*\)', text, re.S)

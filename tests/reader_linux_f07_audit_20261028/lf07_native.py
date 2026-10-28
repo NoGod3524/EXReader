@@ -83,7 +83,7 @@ def audit(folder, inventory, F):
         for target, kind in re.findall(r'add_library\(([A-Za-z0-9_:]+)\s+(STATIC|SHARED|INTERFACE)\s+IMPORTED\)', text):
             C.require(target.startswith(package + '::') and target not in targets, 'duplicate/foreign CMake exported owner')
             targets[target] = dict(owner=package, kind=kind)
-        for target, body in re.findall(r'set_target_properties\(([A-Za-z0-9_:]+)\s+PROPERTIES\s+(.*?)\n\)', text, re.S):
+        for target, body in C.target_properties(text):
             owner = target.split('::', 1)[0]
             dependencies.setdefault(owner, set()).update(re.findall(r'([A-Za-z0-9_]+)::[A-Za-z0-9_]+', body))
             for location in re.findall(r'IMPORTED_LOCATION(?:_[A-Z]+)?\s+"([^"]+)"', body):
@@ -98,7 +98,12 @@ def audit(folder, inventory, F):
         C.require(target in targets and targets[target]['kind'] == 'STATIC' and path not in owners, 'missing/ambiguous archive target owner')
         owners[path] = targets[target]['owner']
     actual_archives = {p.relative_to(folder).as_posix() for p in (folder / F.RAW).rglob('*.a')}
-    C.require(actual_archives and set(owners) == actual_archives, 'installed archive/export sets differ')
+    ownership = dict(targets=targets, locations=locations, owners=owners, installed_archives=sorted(actual_archives),
+        missing_export=sorted(actual_archives - set(owners)), absent_archive=sorted(set(owners) - actual_archives))
+    C.save(C.OUT / 'installed-ownership.json', ownership)
+    print(json.dumps(dict(installed_ownership=ownership), sort_keys=True), flush=True)
+    C.require(actual_archives and set(owners) == actual_archives, 'installed archive/export sets differ: ' +
+        json.dumps(dict(missing_export=ownership['missing_export'], absent_archive=ownership['absent_archive'])))
 
     manifests, header_owners, private_headers, compiled_sources = {}, {}, {}, {}
     workspace = inventory['producer_workspace']
