@@ -149,7 +149,6 @@ jobs:
           python tests/reader_android_cbz_reading/audit.py --output build/android-cbz-reading/native
           python tests/reader_android_page_theme/audit.py
       - name: Capture actual raw selector options and SDK identity
-        if: github.ref_name == 'codex/dot-android-history-compat'
         run: python tests/reader_hosts_341/android_candidate.py record
       - name: Enable hosted runner emulator acceleration
         run: sudo chmod 666 /dev/kvm
@@ -224,7 +223,7 @@ jobs:
   current:
     name: Android current 19 reading, 16 sync and 18 owner checks
     needs: android
-    if: always() && (needs.android.result == 'success' || needs.android.result == 'failure') && github.ref_name == 'codex/dot-android-history-compat'
+    if: always() && (needs.android.result == 'success' || needs.android.result == 'failure')
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -320,7 +319,7 @@ jobs:
           if-no-files-found: error
   summary:
     needs: [android, current]
-    if: ${{ always() && needs.android.result == 'success' && (needs.current.result == 'success' || needs.current.result == 'skipped') }}
+    if: ${{ always() && needs.android.result == 'success' && needs.current.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
