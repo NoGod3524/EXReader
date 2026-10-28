@@ -124,7 +124,7 @@ public final class RelayAndroidTest extends Instrumentation {
     @Override public void onStart(){context=getTargetContext();Throwable failure=null;Bundle result=new Bundle();
         try{
             AccessibilityServiceInfo service=getUiAutomation().getServiceInfo();service.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;getUiAutomation().setServiceInfo(service);
-            File incoming=new File(context.getFilesDir(),"relay-input.json");input=new JSONObject(new String(Files.readAllBytes(incoming.toPath()),StandardCharsets.UTF_8));Files.delete(incoming.toPath());
+            File inputFile=new File(context.getFilesDir(),"relay-input.json");input=new JSONObject(new String(Files.readAllBytes(inputFile.toPath()),StandardCharsets.UTF_8));Files.delete(inputFile.toPath());
             need(BuildConfig.READER_SYNC&&BuildConfig.READER_READING&&BuildConfig.READER_SELECTOR_BYTES_CANDIDATE,"real candidate product features");
             check("empty_library_real_account_and_sync",()->{
                 context.startActivity(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP));panel();click("云盘账号");
