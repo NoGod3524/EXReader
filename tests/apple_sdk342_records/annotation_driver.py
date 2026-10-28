@@ -71,7 +71,7 @@ def main():
         sources = [p for p in sorted((ROOT / 'examples/apple').glob('*.swift')) if p.name not in ('ReaderApp.swift', 'HostReadingRecords.swift')]
         sources.append(probe_app)
         sources.append(owner)
-        command = ['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library', '-O', '-D', 'EXR_APPLE_HOST_REVIEW', '-I', sdk / 'include', '-L', sdk / 'lib', '-lexreader', '-Xlinker', '-rpath', '-Xlinker', sdk / 'lib', *flags(sdk, products, True, True), *sources, ROOT / 'tests/apple_sdk342_records/AnnotationInterop.swift', '-o', executable]
+        command = ['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library', '-O', '-D', 'EXR_APPLE_HOST_REVIEW', '-I', sdk / 'include', '-L', sdk / 'lib', '-lexreader', '-Xlinker', '-rpath', '-Xlinker', sdk / 'lib', *flags(sdk, products, True, True), ROOT / 'bindings/swift/EXReader.swift', *sources, ROOT / 'tests/apple_sdk342_records/AnnotationInterop.swift', '-o', executable]
         run(command, label + '-compile')
         matrix = evidence / ('matrix-' + label)
         matrix_command = [*command[:-3], ROOT / 'tests/apple_sdk342_records/ParserMatrix.swift', '-o', matrix]
