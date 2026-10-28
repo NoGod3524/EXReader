@@ -1,12 +1,20 @@
 """Actions-only real Windows author/conflict/explicit-resolution phases."""
 import argparse, ctypes as C, hashlib, importlib.util, json, os, shutil, sqlite3, sys, traceback
+from ctypes import wintypes as W
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'tests/reader_d23_relay'))
 import relay
+import service
 spec=importlib.util.spec_from_file_location('retained_windows_relay',ROOT/'tests/reader_d23_relay/windows.py')
 old=importlib.util.module_from_spec(spec);spec.loader.exec_module(old)
 u=old.ui
+u.U.PostMessageW.argtypes=[W.HWND,W.UINT,W.WPARAM,W.LPARAM]
+u.U.PostMessageW.restype=W.BOOL
+class ConflictApp(u.App):
+    # SearchApp.dialog identifies search controls; this package opens metadata.
+    # Keep the retained metadata dialog selector rather than accepting any popup.
+    def dialog(self):return u.M.MetadataApp.dialog(self)
 
 def main():
     p=argparse.ArgumentParser()
@@ -16,7 +24,7 @@ def main():
     data=json.loads(Path(a.previous).read_text())['data'];key=data['windows_book'];checks=[]
     shutil.copytree(a.profile,out/'profile');package=Path(a.package)
     identity=hashlib.sha256((package/'EXReader.exe').read_bytes()).hexdigest();assert identity==data['windows_program_sha256']
-    dav,user,password=relay.start(out,a.previous);app=None
+    dav,user,password=service.start(out,a.previous);app=None
     def sql(q,args=()):return old.sql(app,q,args)
     def wires():return dict(sql('SELECT revision_id,body_json FROM reader_revisions'))
     def record(n):checks.append(n);print(json.dumps({'check':n,'pass':True}),flush=True)
@@ -26,7 +34,7 @@ def main():
     def bind():
         d=app.open_account();app.fill(d,root=dav.base+'/dav/',user=user,password=password,remember=False);app.apply(d,'仅本次会话');return d
     try:
-        app=u.App((package/'EXReader.exe').resolve(),(package/'Reader.otf').resolve(),out/'profile',existing=True)
+        app=ConflictApp((package/'EXReader.exe').resolve(),(package/'Reader.otf').resolve(),out/'profile',existing=True)
         app.wait_initial_shelf();app.wait_idle();before=wires()
         if a.phase=='windows-offline':
             title=sql('SELECT title FROM reader_books WHERE book_key=?',(key,))[0][0]
@@ -36,14 +44,25 @@ def main():
             rev=json.loads(wires()[added.pop()]);data['win_offline_revision']=rev
             record('windows_real_ui_offline_edit_retains_original_parent')
             d=bind();app.run_sync(d);app.close_account(d)
+        elif a.phase=='windows-final':
+            d=bind();app.run_sync(d);app.close_account(d)
+            tag=data['gtk_tag'];assert sql('SELECT deleted FROM reader_tags WHERE tag_id=?',(tag,))==[(0,)]
+            current=[json.loads(v) for v in wires().values()]
+            assert all(r in current for r in data['tag_final_revisions'])
+            assert data['resolution_revision'] in current
+            assert all(wires().get(k)==v for k,v in before.items())
+            app.open('Explicit merged version');app.wait_idle();app.click('select');app.click('copy')
+            assert 'Windows authored original.' in u.ACCOUNT.clipboard_text(app)
+            u.M.screenshot(app.window,out/'windows-final-original.bmp')
+            record('windows_receives_tag_delete_restore_history_and_reopens_same_original')
         else:
             # Native owner cancellation during a paused authenticated listing.
             d=bind();dav.pause=True;app.press(d,u.ACCOUNT.SYNC)
             app.wait(lambda:dav.blocked.is_set(),timeout=40);app.press(d,u.ACCOUNT.CANCEL);dav.release.set()
-            app.wait_note(d,'取消');app.wait(lambda:app.enabled(d,u.ACCOUNT.SYNC))
+            app.wait_note(d,'CANCELLED');app.wait(lambda:app.enabled(d,u.ACCOUNT.RETRY))
             assert all(wires().get(k)==v for k,v in before.items())
             record('windows_cancel_retains_local_revisions_and_allows_retry')
-            app.press(d,u.ACCOUNT.SYNC);app.wait_note(d,'并发 1',timeout=240)
+            app.press(d,u.ACCOUNT.RETRY);app.wait_note(d,'并发 1',timeout=240)
             u.M.screenshot(d,out/'windows-conflict-status.bmp');app.close_account(d)
             rows=sql("SELECT body_json FROM reader_revisions WHERE entity_kind='book' AND entity_key=?",(key,))
             current=[json.loads(v[0]) for v in rows]

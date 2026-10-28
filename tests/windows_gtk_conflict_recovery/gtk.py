@@ -5,6 +5,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'tools'));sys.path.insert(0,str(ROOT/'tests/reader_d23_relay'))
 from check_linux_host import Session,command
 import relay
+import service
 
 def main():
     p=argparse.ArgumentParser()
@@ -14,7 +15,7 @@ def main():
     data=json.loads(Path(a.previous).read_text())['data'];key=data['windows_book'];checks=[]
     shutil.copytree(a.profile,out/'profile');(out/'profile').chmod(0o700)
     package=Path(a.package);identity=hashlib.sha256((package/'bin/exreader-linux').read_bytes()).hexdigest();assert identity==data['gtk_program_sha256']
-    dav,user,password=relay.start(out,a.previous);host=Session((package/'bin/exreader-linux').resolve(),(package/'Reader.otf').resolve(),out)
+    dav,user,password=service.start(out,a.previous);host=Session((package/'bin/exreader-linux').resolve(),(package/'Reader.otf').resolve(),out)
     def sql(q,args=()):
         with sqlite3.connect(out/'profile/library.sqlite.product.sqlite') as db:return db.execute(q,args).fetchall()
     def wires():return dict(sql('SELECT revision_id,body_json FROM reader_revisions'))
@@ -82,6 +83,34 @@ def main():
             # A second sync is idempotent, including retained conflict revisions.
             saved=wires();sync();assert wires()==saved
             record('repeat_sync_does_not_duplicate_or_drop_any_revision')
+            # Existing native collection deletion/restoration: never mutate the
+            # SQLite projection or manufacture a revision in this driver.
+            search('Explicit merged version');host.key('ctrl+shift+c');window('Library collections')
+            host.key('alt+t','Home','Down');wait(lambda:state('collections').get('kind')=='1')
+            tag=data['gtk_tag']
+            def choose_tag():
+                wait(lambda:tag in state('collections').get('group_ids','').split(','))
+                ids=state('collections')['group_ids'].split(',');host.key('alt+g','Home')
+                for _ in range(ids.index(tag)):host.key('Down')
+                wait(lambda:state('collections').get('selected_id')==tag)
+            choose_tag();host.key('alt+d');window('Collection details');host.key('Return');window('Collection details',False)
+            wait(lambda:sql('SELECT deleted FROM reader_tags WHERE tag_id=?',(tag,))==[(1,)])
+            command('import','-window',window('Library collections'),out/'gtk-tag-deleted.png')
+            host.key('alt+F4');window('Library collections',False);sync()
+            data['tag_delete_revisions']=[json.loads(v) for v in wires().values() if json.loads(v)['entity_kind']=='tag' and json.loads(v)['entity_key']==tag]
+            record('native_tag_delete_is_synced_without_losing_original_or_conflict_history')
+            search('Explicit merged version');host.key('ctrl+shift+c');window('Library collections')
+            host.key('alt+t','Home','Down');wait(lambda:state('collections').get('kind')=='1')
+            if state('collections').get('removed')!='1':host.key('alt+m')
+            wait(lambda:state('collections').get('removed')=='1');choose_tag()
+            host.key('alt+s');window('Collection details');host.key('Return');window('Collection details',False)
+            wait(lambda:sql('SELECT deleted FROM reader_tags WHERE tag_id=?',(tag,))==[(0,)])
+            command('import','-window',window('Library collections'),out/'gtk-tag-restored.png')
+            host.key('alt+F4');window('Library collections',False);sync()
+            data['tag_final_revisions']=[json.loads(v) for v in wires().values() if json.loads(v)['entity_kind']=='tag' and json.loads(v)['entity_key']==tag]
+            assert {r['operation'] for r in data['tag_final_revisions']}>={'put','delete','restore'}
+            assert all(wires().get(k)==v for k,v in saved.items())
+            record('native_explicit_tag_restore_sync_retains_delete_and_unresolved_ancestors')
             host.close();host.launch();search('Explicit merged version');host.key('Return');host.wait(lambda s:s['reader_visible']==1 and s['book']==sdkid)
             record('new_process_reopens_resolved_original')
             host.close()
@@ -89,6 +118,11 @@ def main():
             assert hashlib.sha256((out/'original.bin').read_bytes()).hexdigest()==data['windows_original_sha256']
             record('public_sdk_reads_identical_original_after_offline_conflict_recovery')
         if host.process and host.process.poll() is None:host.close()
+        if a.phase=='gtk-offline':
+            result=subprocess.run([str((package/'conflict-safety').resolve()),str(out/'profile/library.sqlite.product.sqlite'),key,str(out/'api-safety-copy')],capture_output=True,text=True,timeout=120)
+            (out/'api-safety.log').write_text(result.stdout+'\n'+result.stderr)
+            assert result.returncode==0,result.stderr
+            record('separate_native_api_copy_rejects_ordinary_identity_and_stale_resolution_and_proves_exact_retry')
         data['checks_'+a.phase]=checks;data['program_'+a.phase]=identity
         (out/'retained-revisions.json').write_text(json.dumps(wires(),ensure_ascii=False,indent=2),encoding='utf-8')
         relay.save(dav,out,a.phase,data);dav=None

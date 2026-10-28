@@ -123,6 +123,9 @@ jobs:
           ctest --test-dir build/desktop --output-on-failure --no-tests=error
           python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.41.0 --binary build/desktop/gtk-host/exreader-linux --output build/package
           cp build/inspect/received-sdk-inspect build/package/EXReader-Linux/received-sdk-inspect
+          cmake -S tests/windows_gtk_conflict_recovery/safety -B build/conflict-safety -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/conflict-safety --parallel 4
+          cp build/conflict-safety/conflict-safety build/package/EXReader-Linux/conflict-safety
       - name: Preserve current GTK receive regression
         id: current_regression
         run: |
@@ -219,7 +222,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libsecret-1-0 gnome-keyring libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
-          chmod +x build/package/bin/exreader-linux build/package/received-sdk-inspect
+          chmod +x build/package/bin/exreader-linux build/package/received-sdk-inspect build/package/conflict-safety
+          chmod +x build/package/conflict-safety
       - name: GTK receives Windows membership change and new original
         run: |
           xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
@@ -289,8 +293,12 @@ jobs:
         with:
           name: windows-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/seed
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/baseline-final
       - run: python -m pip install uiautomation==2.0.29
-      - run: python tests/windows_gtk_conflict_recovery/windows.py --phase windows-offline --previous build/seed/windows-first/state.json --profile build/seed/windows-first/profile --package build/package --out build/windows-offline
+      - run: python tests/windows_gtk_conflict_recovery/windows.py --phase windows-offline --previous build/baseline-final/gtk-return/state.json --profile build/seed/windows-first/profile --package build/package --out build/windows-offline
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -320,7 +328,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libsecret-1-0 gnome-keyring libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
-          chmod +x build/package/bin/exreader-linux build/package/received-sdk-inspect
+          chmod +x build/package/bin/exreader-linux build/package/received-sdk-inspect build/package/conflict-safety
       - run: |
           xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
             openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT
@@ -383,7 +391,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libsecret-1-0 gnome-keyring libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
-          chmod +x build/package/bin/exreader-linux build/package/received-sdk-inspect
+          chmod +x build/package/bin/exreader-linux build/package/received-sdk-inspect build/package/conflict-safety
       - run: |
           xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
             openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT
@@ -396,3 +404,53 @@ jobs:
           path: |
             build/gtk-final/
             !build/**/key.pem
+  conflict-windows-final:
+    needs: conflict-gtk-final
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env: {PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/package
+      - uses: actions/download-artifact@v4
+        with:
+          name: conflict-windows-resolve-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/seed
+      - uses: actions/download-artifact@v4
+        with:
+          name: conflict-gtk-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/previous
+      - run: python -m pip install uiautomation==2.0.29
+      - run: python tests/windows_gtk_conflict_recovery/windows.py --phase windows-final --previous build/previous/state.json --profile build/seed/profile --package build/package --out build/windows-final
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conflict-windows-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-final/
+            !build/**/key.pem
+  conflict-audit:
+    needs: conflict-windows-final
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: conflict-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/conflict-audit
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/baseline-final
+      - name: Authenticate state chain and exact retained revisions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/windows_gtk_conflict_recovery/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conflict-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/conflict-summary

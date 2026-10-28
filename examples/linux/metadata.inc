@@ -78,6 +78,8 @@ static exr_status metadata_prepare(linux_reader *reader,const reader_command *co
   result->has_metadata=1;
   snprintf(result->message,sizeof(result->message),"%s",result->metadata_conflict ?
     "Conflicting or removed book versions are retained; editing is disabled":"Book details ready");
+  if(result->metadata_conflict && view->head_count>1)
+    snprintf(result->message,sizeof(result->message),"Conflicting book versions are retained; editing is disabled. %zu heads: %.32s, %.32s",view->head_count,view->heads[0],view->heads[1]);
   return EXR_OK;
 }
 static exr_status metadata_save(linux_reader *reader,const reader_command *command,reader_result *result) {

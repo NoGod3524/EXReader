@@ -99,7 +99,11 @@ static INT_PTR CALLBACK metadata_dialog_procedure(HWND dialog,UINT message,WPARA
       if(g.metadata_running) return TRUE;
       if(id==IDCANCEL || id==IDC_METADATA_CANCEL) metadata_dialog_close();
       else if(id==18999) {
-        if(MessageBoxW(dialog,L"将以你接下来填写的书名、作者和收藏状态合并全部已观察版本。旧修订和原书不会删除。确认后仍需点击保存。",L"明确处理版本冲突",MB_YESNO|MB_ICONQUESTION)==IDYES) {
+        const reader_metadata_view *view=reader_metadata_snapshot_view(g.metadata_snapshot);
+        wchar_t prompt[1024];
+        if(!view || view->head_count<2 || view->graph.missing_parents || view->graph.foreign_parents || view->graph.requires_restore) return TRUE;
+        swprintf(prompt,1024,L"已保留 %llu 个冲突版本。将以你接下来填写的书名、作者和收藏状态合并全部已观察版本。旧修订和原书不会删除。确认后仍需点击保存。\n\n版本 1: %hs\n版本 2: %hs",(unsigned long long)view->head_count,view->heads[0],view->heads[1]);
+        if(MessageBoxW(dialog,prompt,L"明确处理版本冲突",MB_YESNO|MB_ICONQUESTION)==IDYES) {
           g.metadata_editable=2;metadata_dialog_controls();
           SetWindowTextW(g.metadata_message,L"填写合并后的信息并保存；若版本已再次变化，将拒绝覆盖。");
           EnableWindow(GetDlgItem(dialog,18999),FALSE);
