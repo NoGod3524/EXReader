@@ -1,5 +1,6 @@
 """Native Win32 font acceptance; observations and fault injection are review-build only."""
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -7,8 +8,9 @@ import sys
 import traceback
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / 'tests/reader_wave3_c09'))
-import check_ui as W
+spec = importlib.util.spec_from_file_location('wave3_font_driver', ROOT / 'tests/reader_wave3_c09/check_ui.py')
+W = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(W)
 P, U, send, N = W.P, W.U, W.send, W.N
 assert os.environ.get('GITHUB_ACTIONS') == 'true' and os.name == 'nt'
 out = ROOT / 'build/windows-font/evidence'
@@ -67,18 +69,35 @@ try:
     W.post_click(d, W.B1); W.fill_system_dialog(app, bad)
     W.wait_message(app, d, N.FONT_IMPORT_FAILED, 60)
     assert len(W.rows(d)) == 2 and N.IN_USE in W.rows(d)[1] and loc() == switched
+    assert events()[-1] == ['release', '0', '1']
     W.close_feature(app, d)
     assert selected_image == W.page_hash(app, out, 'bad-rollback.bmp')
     record('bad-font-preserves-selected-frame-and-lease')
 
     d = W.open_feature(app, W.FONTS)
+    W.post_click(d, W.B1); W.fill_system_dialog(app, ROOT / 'tests/fixtures/fonts/fallback.ttf')
+    W.wait_message(app, d, N.FONT_IMPORTED, 120)
+    app.wait(lambda: len(W.rows(d)) == 3, timeout=30)
+    fallback = next(i for i, row in enumerate(W.rows(d)) if 'fallback' in row)
+    W.select_row(d, fallback)
     assert send(app.window, 0x8000 + 32, 5) == 1
-    W.post_click(d, W.B3)
+    W.post_click(d, W.B2)
     W.wait_message(app, d, '字体切换失败', 240); app.wait_idle()
-    assert loc() == switched and N.IN_USE in W.rows(d)[1] and events()[-1] == ['release', '0', '1']
+    assert loc() == switched and any('primary' in row and N.IN_USE in row for row in W.rows(d))
+    assert events()[-2:] == [['open', '0', '2'], ['release', '0', '1']], events()
     W.close_feature(app, d)
     assert W.page_hash(app, out, 'layout-failure.bmp') == selected_image
-    record('layout-failure-preserves-frame-and-active-lease')
+    record('layout-failure-releases-candidate-and-preserves-frame-and-active-lease')
+
+    d = W.open_feature(app, W.FONTS)
+    fallback = next(i for i, row in enumerate(W.rows(d)) if 'fallback' in row)
+    W.select_row(d, fallback); W.post_click(d, W.B2)
+    W.wait_message(app, d, N.FONT_SWITCHED, 240); app.wait_idle()
+    contains(switched, loc())
+    assert events()[-2:] == [['open', '0', '2'], ['release', '0', '1']], events()
+    W.close_feature(app, d)
+    switched = loc()
+    record('replacement-releases-old-lease-and-keeps-live-point')
 
     d = W.open_feature(app, W.FONTS); W.post_click(d, W.B3)
     W.wait_message(app, d, N.FONT_SWITCHED, 240); app.wait_idle()
