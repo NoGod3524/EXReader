@@ -12,6 +12,23 @@
 - Each native host: D24 1, unchanged wave3 5, base 13, reading/navigation 13, search 4, theme 4: **40/40**. These are the same source and same run/attempt, not borrowed greens.
 - This report-only commit is not a new tested source. Workflow ignores `docs/apple-d24/**`.
 
+## Later combined candidate
+
+[Actions 40588875308, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40588875308)
+passed on source `c45ac1a7508842f071e3d892635fdd9af444ae90`.
+The iPhone and iPad simulator each completed all 40 required cases across
+maximum type, wave3, base, reading/navigation, search and theme phases. Both
+SDK jobs and the final same-run artifact authentication passed; prior failure
+evidence was also retained. The authenticated original native artifacts are
+`12779766962` (iPhone, SHA-256
+`cbe338e22f2bd1ca253f935d6c0f5c209df88434b71385ae7f12f457411efd4c`)
+and `12780681302` (iPad, SHA-256
+`94c69e668e3a37d90e098fe7bf90d08eac61d330ea3bac93f8a19377bde5a70e`).
+Authentication artifact `12780382676` has SHA-256
+`fb10b71ef07a1560d1e6f7ccc22c358ce6d80cd0b2d2f55b597cd891fef8b34e`.
+These artifacts expire 2026-11-26. This scope is simulator UI, not physical
+hardware, screen-reader speech, signing, or final six-platform delivery.
+
 ## Product work and discovered baseline
 
 The candidate already had compact reading controls, a horizontal tools scroller, 44-point back control, and fixed-size busy feedback. These were reused. Historical Apple reports and failure evidence were not rewritten.
