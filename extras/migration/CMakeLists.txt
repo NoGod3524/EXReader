@@ -49,4 +49,7 @@ option(EXR_MIGRATION_REVIEW_TESTS "Build public API state-editing review consume
 if(EXR_MIGRATION_REVIEW_TESTS)
   add_executable(migration-review-edit ../../tests/migration/review_edit.c)
   target_link_libraries(migration-review-edit PRIVATE EXReader::exr_library)
+  add_executable(migration-source-close ../../tests/migration/transaction_source_close.c)
+  target_include_directories(migration-source-close PRIVATE "${migration_sqlite_header_SOURCE_DIR}")
+  target_link_libraries(migration-source-close PRIVATE EXReader::exr_library)
 endif()

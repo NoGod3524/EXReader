@@ -24,6 +24,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--tool', required=True)
     ap.add_argument('--old-tool', required=True)
+    ap.add_argument('--source-close', required=True)
     ap.add_argument('--work', type=Path, required=True)
     a = ap.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
@@ -133,6 +134,11 @@ def main():
             assert rc == 0, (out, err)
             db = sqlite3.connect(target)
             ledger = db.execute('SELECT data FROM exr_migration_ledger WHERE id=1').fetchone()[0]
+            db.close()
+            probe = subprocess.run([a.source_close, str(target)], capture_output=True, text=True)
+            assert probe.returncode == 0, (probe.stdout, probe.stderr)
+            db = sqlite3.connect(target)
+            assert db.execute('SELECT data FROM exr_migration_ledger WHERE id=1').fetchone()[0] == ledger
             damaged = b'{"format":"exreader-legacy-map","version":99,"books":[],"notes":[]}'
             db.execute('UPDATE exr_migration_ledger SET data=? WHERE id=1', (damaged,))
             db.commit()
