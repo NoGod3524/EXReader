@@ -1,7 +1,7 @@
 name: D26 GTK retained accessibility and native regression
 on:
   push:
-    branches: [codex/reader-integrated-progress, codex/dot-d26-gtk-accessibility, codex/gtk-annotation-export]
+    branches: [codex/reader-history-gtk-composition, codex/reader-integrated-progress, codex/dot-d26-gtk-accessibility, codex/gtk-annotation-export]
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,9 +26,13 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor 2f215f5793a7344d22db350276ba9f8a07abe86f HEAD
-          git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 HEAD -- src include cmake CMakeLists.txt bindings ':(exclude)src/formats.c' ':(exclude)src/chapter_reader.c' ':(exclude)include/exr/formats.h'
-          git diff --exit-code 9727ca1624ee59e561fd6aad7a22bb85a0fd2632 HEAD -- src/formats.c include/exr/formats.h
-          git diff --exit-code 25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab HEAD -- src/chapter_reader.c
+          if [[ "$GITHUB_REF_NAME" == "codex/reader-history-gtk-composition" ]]; then
+            git diff --exit-code 5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9 HEAD -- src include cmake CMakeLists.txt bindings
+          else
+            git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 HEAD -- src include cmake CMakeLists.txt bindings ':(exclude)src/formats.c' ':(exclude)src/chapter_reader.c' ':(exclude)include/exr/formats.h'
+            git diff --exit-code 9727ca1624ee59e561fd6aad7a22bb85a0fd2632 HEAD -- src/formats.c include/exr/formats.h
+            git diff --exit-code 25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab HEAD -- src/chapter_reader.c
+          fi
           git diff --exit-code 2f215f5793a7344d22db350276ba9f8a07abe86f HEAD -- tests/fixtures tests/reader_a11y_gtk tests/linux_host tests/reader_wave3_c10 tests/reader_gtk_compact tests/reader_gtk_search tests/reader_gtk_navigation tests/reader_gtk_reading_records tests/reader_gtk_batch_import tests/reader_gtk_drop_import
       - name: Check independent current driver syntax on Actions
         run: python3 -m py_compile tests/reader_d26_accessibility/*.py
