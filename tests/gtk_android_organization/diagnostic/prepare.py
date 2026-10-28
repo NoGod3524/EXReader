@@ -1,13 +1,21 @@
 """Actions-only authenticated producer reuse. This is NOT final acceptance."""
 import base64,hashlib,json,os,subprocess,urllib.request,zipfile
 from pathlib import Path
+from urllib.parse import urlparse
+class SafeRedirect(urllib.request.HTTPRedirectHandler):
+ def redirect_request(self,req,fp,code,msg,headers,newurl):
+  redirected=super().redirect_request(req,fp,code,msg,headers,newurl)
+  if redirected is not None and urlparse(req.full_url).netloc!=urlparse(newurl).netloc:
+   redirected.remove_header("Authorization")
+  return redirected
+opener=urllib.request.build_opener(SafeRedirect())
 assert os.environ.get('GITHUB_ACTIONS')=='true'
 PRODUCER='7408da16333cd64a4e604275565fee4f3459a179'
 RUN='40657839896'
 repo='NoGod3524/EXReader';out=Path('build/diagnostic');out.mkdir(parents=True,exist_ok=True)
 def gh(path):
  req=urllib.request.Request('https://api.github.com/'+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
- return urllib.request.urlopen(req).read()
+ return opener.open(req).read()
 run=json.loads(gh(f'repos/{repo}/actions/runs/{RUN}'));assert run['head_sha']==PRODUCER and run['run_attempt']==1
 paths=['src','include','apps','examples','extras','tools','CMakeLists.txt','CMakePresets.json','cmake']
 subprocess.run(['git','diff','--exit-code',PRODUCER,'HEAD','--',*paths],check=True)
