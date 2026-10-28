@@ -1,0 +1,7 @@
+# Apple–Android bookmark relay candidate
+
+F04 remains pending. Independent run 40610075586/1 at `65daff8875ca74394997ea097bf55400743f8f9f` proved an EPUB progress relay between an iPhone simulator and Android emulator, not bookmark or annotation exchange. Composition run 40620445332 failed its retained iPhone suite and authentication; its failure is not replaced by that independent result.
+
+This additive candidate keeps the original relay and failure evidence intact. It uses the same authenticated staged HTTPS snapshots and real app controls: Apple creates a point bookmark; Android receives and jumps to it, edits its text, and syncs; a fresh Apple simulator displays the edited note and jumps to its anchor. The audit binds the two revisions to the same annotation identity and original selector, requires the Android revision to descend from the Apple revision, and checks the native displayed positions. The prior progress assertions remain in the copied scenario. The services are sequential snapshots, not simultaneous online clients. Physical devices, range highlights, other host pairs and six-target interoperability remain unproved.
+
+All builds, tests, fixture work and artifact analysis run in Actions. A successful complete same-run authentication is required before this candidate is accepted; source changes alone do not establish a pass.
