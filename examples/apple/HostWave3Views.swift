@@ -286,6 +286,16 @@ struct HostWave3Sheet: View {
                     selectedInput = "并发标注文件"
                     actions.reviewAnnotations?(false)
                 }
+                action("预览无效标注文件", id: "features.annotations.invalid") {
+                    if let directory = reviewDirectory() {
+                        let file = directory.appendingPathComponent("invalid.jsonl")
+                        do {
+                            try Data("{invalid json\n".utf8).write(to: file)
+                            selectedInput = file.lastPathComponent
+                            actions.previewAnnotations(file)
+                        } catch { pickerError = error.localizedDescription }
+                    }
+                }
                 action("导出后预览同一标注文件", id: "features.annotations.roundtrip") {
                     if let directory = reviewDirectory() {
                         previousExportURL = state.exportURL
@@ -374,7 +384,6 @@ private struct HostWave3SharingPicker: NSViewRepresentable {
 }
 #endif
 #endif
-
 
 
 
