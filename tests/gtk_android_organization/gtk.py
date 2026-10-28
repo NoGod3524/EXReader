@@ -150,6 +150,7 @@ def main():
             for k,name in ((0,'Android shelf'),(1,'Android tag'),(2,'Android series')):
                 kind(k);select(data['android_'+str(k)]);assert state('collections')['selected_name']==name
                 assert state('collections')['member_keys']==data['book_key'];screenshot('gtk-android-'+str(k))
+            kind(0);select(data['android_0']);host.key('alt+e');wait(lambda:state('collections').get('parent_id')==data['android_0']);select(data['android_child']);assert state('collections')['member_keys']==data['book_key'];screenshot('gtk-android-child')
             checks.append('gtk_ui_displays_android_authored_groups_and_memberships');close_collections();connected_sync()
         before=capture_rows();connected_sync();assert capture_rows()==before;checks.append('gtk_duplicate_sync_preserves_exact_organization_rows')
         host.close();host.launch();collections();kind(1);select(data['tag']);assert state('collections')['member_keys']==data['book_key'];screenshot('gtk-restart')

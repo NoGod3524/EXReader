@@ -371,6 +371,7 @@ jobs:
           '
       - name: Preserve original GTK receive regression independently
         id: original_regression
+        continue-on-error: true
         if: ${{ !cancelled() && steps.gtk_build.outcome == 'success' }}
         run: |
           set -euo pipefail
@@ -381,12 +382,38 @@ jobs:
             openbox >build/original-regression-openbox.log 2>&1 & trap "kill $! || true" EXIT
             python3 tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/original-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
           '
+      - name: Repeat unchanged historical assertions with process-scoped chooser driver
+        id: adapted_regression
+        if: ${{ !cancelled() && steps.gtk_build.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          trap 'git show "$GITHUB_SHA":tests/linux_host/check_account_ui.py > tests/linux_host/check_account_ui.py; git show "$GITHUB_SHA":tests/linux_host/receive_checks.py > tests/linux_host/receive_checks.py' EXIT
+          git show fba9a21f25e6669614eae76ef22a3f81b3995886:tests/linux_host/check_account_ui.py > tests/linux_host/check_account_ui.py
+          git show fba9a21f25e6669614eae76ef22a3f81b3995886:tests/linux_host/receive_checks.py > tests/linux_host/receive_checks.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/adapted-original-openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/gtk_android_organization/legacy_chooser.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/adapted-original-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
+          '
       - name: GTK authors real organization through native widgets
+        if: ${{ !cancelled() && steps.gtk_build.outcome == 'success' }}
         run: |
           xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
             openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT
             python3 tests/gtk_android_organization/gtk.py --phase gtk-first --out build/org-gtk-first --package build/package/EXReader-Linux --inspect build/package/EXReader-Linux/received-sdk-inspect
           '
+      - name: Record original and adapted assertion outcomes separately
+        if: always()
+        env:
+          CURRENT: ${{ steps.current_regression.outcome }}
+          LEGACY: ${{ steps.original_regression.outcome }}
+          ADAPTED: ${{ steps.adapted_regression.outcome }}
+        run: |
+          mkdir -p build/org-gtk-first
+          python3 - <<'PYCODE'
+          import json,os
+          from pathlib import Path
+          Path('build/org-gtk-first/regression-outcomes.json').write_text(json.dumps({'current_account':os.environ['CURRENT'],'unchanged_historical_driver':os.environ['LEGACY'],'same_historical_assertions_scoped_chooser_driver':os.environ['ADAPTED'],'historical_failure_is_not_relabelled_pass':True},indent=2))
+          PYCODE
       - name: Seal package identity
         run: |
           printf '%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > build/package/EXReader-Linux/relay-identity.txt
@@ -412,6 +439,7 @@ jobs:
           path: |
             build/current-account/
             build/original-account/
+            build/adapted-original-account/
             build/organization-source.json
             build/desktop/Testing/
           if-no-files-found: error

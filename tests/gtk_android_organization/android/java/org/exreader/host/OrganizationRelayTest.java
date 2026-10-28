@@ -58,14 +58,15 @@ public final class OrganizationRelayTest extends Instrumentation {
     private void create(String name){click("New");field("Name",name);click("Save");visible(name);}
     private void member(String name)throws Exception{row(name);click("Books");visible("Relay GTK");}
     private void add(String name){row(name);click("Books");click("Add book");row("Relay GTK");click("Add");visible("Relay GTK");}
-    private String findId(int kind,String name)throws Exception{
+    private String findId(int kind,String name)throws Exception{return findId(kind,name,"");}
+    private String findId(int kind,String name,String parent)throws Exception{
         long owner=NativeCatalog.open(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath());
-        try{for(String[] r:NativeCatalog.groups(owner,kind,"",null,0,false,false))if(r[1].equals(name))return r[0];throw new AssertionError("group absent "+name);}finally{NativeCatalog.close(owner);}
+        try{for(String[] r:NativeCatalog.groups(owner,kind,parent,null,0,false,false))if(r[1].equals(name))return r[0];throw new AssertionError("group absent "+name);}finally{NativeCatalog.close(owner);}
     }
     private JSONObject snapshot()throws Exception{
         JSONObject result=new JSONObject();long owner=NativeCatalog.open(new File(context.getFilesDir(),"reader-catalog.db").getAbsolutePath());
-        try{for(String key:new String[]{"shelf","child","tag","series","android_0","android_1","android_2"})if(data.has(key)){
-            int k=key.equals("tag")?1:key.equals("series")?2:key.startsWith("android_")?Integer.parseInt(key.substring(8)):0;
+        try{for(String key:new String[]{"shelf","child","tag","series","android_0","android_1","android_2","android_child"})if(data.has(key)){
+            int k=key.equals("tag")?1:key.equals("series")?2:key.startsWith("android_")&&!key.equals("android_child")?Integer.parseInt(key.substring(8)):0;
             JSONArray groups=new JSONArray(),members=new JSONArray();for(String[] row:NativeCatalog.groupFind(owner,k,data.getString(key)))groups.put(new JSONArray(java.util.Arrays.asList(row)));
             for(String[] row:NativeCatalog.memberFind(owner,k,data.getString(key),data.getString("book_key")))members.put(new JSONArray(java.util.Arrays.asList(row)));
             result.put(key,new JSONObject().put("groups",groups).put("members",members));
@@ -74,7 +75,8 @@ public final class OrganizationRelayTest extends Instrumentation {
     private void verifyVisible(boolean finalStage)throws Exception{
         organize();kind(0);member("GTK parent");click("Children");row("GTK child");click("Books");visible("Relay GTK");shot("child");
         kind(1);member(finalStage?"Android edited tag":"GTK tag");shot("tag");kind(2);member("GTK series");shot("series");
-        if(finalStage)for(int n=0;n<3;n++){kind(n);member(new String[]{"Android shelf","Android tag","Android series"}[n]);shot("android-"+n);}
+        if(finalStage){for(int n=0;n<3;n++){kind(n);member(new String[]{"Android shelf","Android tag","Android series"}[n]);shot("android-"+n);}
+            kind(0);row("Android shelf");click("Children");member("Android child");shot("android-child");}
         click("Close");
     }
     @Override public void onStart(){context=getTargetContext();Throwable failure=null;JSONObject rows=null;
@@ -91,6 +93,7 @@ public final class OrganizationRelayTest extends Instrumentation {
                     member("Android edited tag");row("Relay GTK");click("Remove");
                     kind(2);row("GTK series");click("Delete");click("Delete");click("Removed");visible("GTK series");shot("deleted-series");click("Active");
                     for(int n=0;n<3;n++){kind(n);String name=new String[]{"Android shelf","Android tag","Android series"}[n];create(name);data.put("android_"+n,findId(n,name));add(name);shot("created-"+n);}
+                    kind(0);row("Android shelf");click("Children");create("Android child");data.put("android_child",findId(0,"Android child",data.getString("android_0")));add("Android child");shot("created-child");
                     click("Close");check("android_native_ui_edits_removes_creates_and_classifies",()->{});configure();sync();check("android_application_publishes_actual_revisions",()->{});
                 }
                 rows=snapshot();
