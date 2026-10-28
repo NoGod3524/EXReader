@@ -5,12 +5,14 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 env:
   EXR_APPLE_SDK_VERSION: '3.41.0'
   EXR_APPLE_PAGE_THEME: 'ON'
   EXR_APPLE_RAW3: 'OFF'
 jobs:
   native:
+    if: ${{ !contains(github.event.head_commit.message, '[original diagnostic]') }}
     name: Native original save (${{ matrix.platform }})
     runs-on: macos-15
     timeout-minutes: 110
@@ -44,3 +46,17 @@ jobs:
             build/apple-native-original/${{ matrix.platform }}/saved.epub
           retention-days: 30
           if-no-files-found: warn
+  inspect-prior-failure:
+    if: ${{ contains(github.event.head_commit.message, '[original diagnostic]') }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-native-original-macos-40627102091-1
+          run-id: 40627102091
+          github-token: ${{ github.token }}
+          path: evidence
+      - name: Report retained macOS failure
+        run: |
+          cat evidence/result.json
+          tail -180 evidence/native.log
