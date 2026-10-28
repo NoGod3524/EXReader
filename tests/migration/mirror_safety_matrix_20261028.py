@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import signal
 import sqlite3
@@ -31,6 +32,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--tool', required=True)
     ap.add_argument('--old-tool', required=True)
+    ap.add_argument('--observer', required=True)
     ap.add_argument('--work', required=True, type=Path)
     a = ap.parse_args()
     a.work.mkdir(parents=True, exist_ok=False)
@@ -40,6 +42,14 @@ def main():
                 'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': os.environ.get('RUNNER_OS'),
                 'old_sdk_ref': OLD_SDK_REF, 'product_sources': SOURCES, 'cases': results, 'passed': False,
                 'contract': 'process-crash/current-state safety; ledger hash is never historical COMMIT proof'}
+    evidence['rollback_observation_contract'] = {
+        'sdk_only_error_observability': 'not available: full ROLLBACK drops lower-layer I/O status',
+        'diagnostic_boundary': 'unchanged installed SDK plus public SQLite error logging; no substituted returns',
+        'wal_io_fault_platforms': ['Windows'],
+        'wal_io_fault_gap': 'Linux/macOS ordinary permission controls do not calibrate existing-handle WAL reads',
+        'full_candidate_acceptance': False,
+        'pending_product_risk': 'SDK OK alone currently permits mirror evidence retirement; mitigation not implemented',
+    }
 
     def sha(path):
         return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -170,7 +180,12 @@ def main():
             entry['passed'] = True
         except Exception:
             entry['error'] = traceback.format_exc()
-            (folder / 'exception.txt').write_text(entry['error'], encoding='utf-8')
+            try:
+                (folder / 'exception.txt').write_text(entry['error'], encoding='utf-8')
+            except OSError:
+                # A failed permission-restoration fixture must not erase its
+                # original failure or prevent subsequent independent cases.
+                (a.work / (name + '.exception.txt')).write_text(entry['error'], encoding='utf-8')
         print(json.dumps(entry), flush=True)
 
     def matrix_case(folder, schema, mode):
@@ -537,10 +552,607 @@ def main():
                 'fixture': 'Windows no-delete-share handle' if os.name == 'nt' else 'POSIX directory write denial',
                 'ordinary_write_after_owner_release_preserved': True}
 
+    # Additive transaction-candidate acceptance. The original fifteen cases and
+    # unchanged 65-scenario companion remain intact, including its four failures.
+    def candidate_anchor(target, mode):
+        db = connection(target)
+        try:
+            assert db.execute('PRAGMA journal_mode=' + mode).fetchone()[0].lower() == mode
+            db.execute('PRAGMA wal_autocheckpoint=0')
+            if mode == 'wal':
+                # Keep a real WAL connection alive for every WAL variant.
+                db.execute("UPDATE books SET title=title || ' [WAL control]' WHERE id=1")
+                db.commit()
+                assert sibling(target, '-wal').is_file() and sibling(target, '-wal').stat().st_size > 0
+            return db
+        except Exception:
+            db.close()
+            raise
+
+    def file_identity(path):
+        info = path.stat()
+        assert stat.S_ISREG(info.st_mode)
+        return info.st_dev, info.st_ino
+
+    def content_rows(db):
+        # Retain every original column/byte value, not only a count or title.
+        # Schema 6 -> 7 may add columns; existing columns must remain equal.
+        result = {}
+        for table in ('books', 'notes'):
+            cursor = db.execute('SELECT * FROM ' + table + ' ORDER BY id')
+            names = [column[0] for column in cursor.description]
+            result[table] = [dict(zip(names, row)) for row in cursor.fetchall()]
+        return result
+
+    def original_rows_preserved(before, after):
+        for table, rows in before.items():
+            current = {row['id']: row for row in after[table]}
+            for row in rows:
+                assert row['id'] in current, ('missing original row', table, row['id'])
+                for column, value in row.items():
+                    assert current[row['id']].get(column) == value, ('changed original value', table, row['id'], column)
+
+    def no_owned_residue(folder, target):
+        assert not pending(target).exists()
+        assert not sibling(target, '.migrate-lock').exists()
+        for suffix in ('.migrating-*', '.pre-*', '.legacy-map.json.before-*', '.legacy-map.json.staged-*'):
+            assert not list(folder.glob(target.name + suffix)), suffix
+
+    def candidate_lineage(folder, schema, mode):
+        target, first, _ = seed(folder, schema)
+        anchor = candidate_anchor(target, mode)
+        try:
+            before, rows, identity = state(anchor), content_rows(anchor), file_identity(target)
+            has_internal_lineage = before[3] is not None
+            assert has_internal_lineage == (schema == 7)
+            # schema 6 was made by the actual old SDK: removing its external
+            # ledger truly removes lineage. schema 7 retains internal lineage.
+            mirror(target).unlink()
+            rc, report = run(folder, 'rebuild-missing-mirror', 'migrate', target, first)
+            assert rc == 0, report
+            assert report['counts']['books_created'] == 0, report
+            assert report['counts']['notes_created'] == 0, report
+            expected = 'already-migrated' if has_internal_lineage else 'adopted-existing'
+            wrong = 'adopted-existing' if has_internal_lineage else 'already-migrated'
+            seed_entries = [entry['code'] for entry in report['entries'] if entry.get('legacy_id') == 'seed']
+            assert expected in seed_entries and wrong not in seed_entries, report
+            after = state(anchor)
+            assert after[0] == 7 and len(after[1]) == len(before[1]) and len(after[2]) == len(before[2])
+            original_rows_preserved(rows, content_rows(anchor))
+            assert file_identity(target) == identity
+            assert mirror(target).read_bytes() == after[3]
+            if has_internal_lineage:
+                assert after[3] == before[3], 'retained internal lineage must not be relabeled'
+            no_owned_residue(folder, target)
+            return {'actual_initial_schema': schema, 'journal_mode': mode,
+                    'internal_lineage_survived_external_loss': has_internal_lineage,
+                    'truthful_event': expected, 'no_duplicate_books_or_notes': True,
+                    'all_original_book_and_note_columns_preserved': True}
+        finally:
+            anchor.close()
+
+    def candidate_existing_content(folder, schema, mode):
+        target, _, delta = seed(folder, schema)
+        anchor = candidate_anchor(target, mode)
+        try:
+            rows, identity = content_rows(anchor), file_identity(target)
+            p = start(target, delta, 'intent-pause')
+            try:
+                wait_marker(p, sibling(target, '.intent-ready'))
+                try:
+                    anchor.execute("UPDATE books SET title='must-not-win-against-owner' WHERE id=1")
+                    anchor.commit()
+                    raise AssertionError('ordinary write bypassed the transaction owner')
+                except sqlite3.OperationalError as error:
+                    assert 'locked' in str(error).lower() or 'busy' in str(error).lower(), error
+                    anchor.rollback()
+                sibling(target, '.intent-ready.resume').touch()
+                rc, report = finish(folder, 'existing-in-place-commit', p)
+            finally:
+                if p.poll() is None:
+                    p.kill(); p.communicate(timeout=10)
+            assert rc == 0, report
+            assert report['atomicity']['stage'] == 'none', report
+            assert report['atomicity']['transaction'] == {
+                'target_commit': 'committed', 'private_stage_commit': 'not-attempted'}, report
+            assert file_identity(target) == identity
+            original_rows_preserved(rows, content_rows(anchor))
+            assert len(state(anchor)[1]) == len(rows['books']) + 1
+            anchor.execute("UPDATE books SET title='ordinary-after-successful-migration' WHERE id=1")
+            anchor.commit()
+            latest = state(anchor)
+            recover(folder, 'idempotent-recovery-preserves-later-write', target)
+            assert state(anchor) == latest and file_identity(target) == identity
+            no_owned_residue(folder, target)
+            return {'actual_initial_schema': schema, 'journal_mode': mode,
+                    'existing_file_identity_preserved': True, 'database_stage': 'none',
+                    'all_original_book_and_note_columns_preserved': True,
+                    'live_owner_exclusion_and_later_ordinary_write_preserved': True}
+        finally:
+            anchor.close()
+
+    def candidate_partial_write(folder, schema, mode):
+        target, _, _ = seed(folder, schema)
+        partial = folder / 'two-imports.exrpack'
+        partial.write_bytes(L.build_pack([
+            L.entry(L.book_record('first-new', 'first-new.txt'), L.TXT_OTHER),
+            L.entry(L.book_record('second-new', 'second-new.txt'), L.TXT_OTHER + b'\nA distinct second original.\n'),
+        ], []))
+        anchor = candidate_anchor(target, mode)
+        try:
+            before, rows, identity = state(anchor), content_rows(anchor), file_identity(target)
+            mirror_before = mirror(target).read_bytes()
+            db_before = target.read_bytes() if mode == 'delete' else None
+            rc, report = run(folder, 'second-import-write-failure', 'migrate', target, partial,
+                             ('--inject', 'write-fail@1'))
+            # Separate assertions expose each old composite predicate directly.
+            assert rc == 3, ('exit code', rc, report)
+            assert report['result'] == 'failed', ('result', report)
+            assert report['code'] == 'injected-write-fail', ('error code', report)
+            assert report['counts']['books_created'] == 1, 'first import must really have succeeded before fault'
+            assert report['atomicity']['stage'] == 'none', report
+            assert report['atomicity']['transaction'] == {
+                'target_commit': 'not-attempted', 'private_stage_commit': 'not-attempted'}, report
+            # Close-triggered cleanup is not a process-local explicit-rollback
+            # acknowledgement. Independently observe current state instead.
+            assert not report['atomicity']['rolled_back'], report
+            assert state(anchor) == before and content_rows(anchor) == rows
+            assert mirror(target).read_bytes() == mirror_before and file_identity(target) == identity
+            if mode == 'delete':
+                assert target.read_bytes() == db_before
+            no_owned_residue(folder, target)
+            return {'actual_initial_schema': schema, 'journal_mode': mode,
+                    'exit_code': rc, 'error_code': report['code'], 'uncommitted_import_count': 1,
+                    'database_stage': 'none', 'target_commit': 'not-attempted',
+                    'independent_current_state_rollback_observed': True,
+                    'original_mirror_and_all_rows_preserved': True}
+        finally:
+            anchor.close()
+
+    def candidate_product_rollback_observation(folder, schema):
+        target, _, delta = seed(folder, schema)
+        anchor = candidate_anchor(target, 'delete')
+        before, rows = state(anchor), content_rows(anchor)
+        anchor.close()
+        original_mirror, identity = mirror(target).read_bytes(), file_identity(target)
+        journal = sibling(target, '-journal')
+        calibration = folder / 'owned-delete-calibration.txt'
+        calibration.write_text('owned disposable deletion calibration', encoding='utf-8')
+        p = start(target, delta, 'precommit-mirror-pause')
+        blocker, old_mode, out, err = None, stat.S_IMODE(folder.stat().st_mode), '', ''
+        fault = {'mode': 'delete', 'actual_initial_schema': schema, 'calibrated': False}
+        def journal_observation():
+            try:
+                with journal.open('rb') as file:
+                    header = file.read(32)
+                return {'present': True, 'size': journal.stat().st_size, 'first_32_bytes_hex': header.hex()}
+            except FileNotFoundError:
+                return {'present': False}
+        try:
+            wait_marker(p, sibling(target, '.precommit-mirror-ready'))
+            assert journal.is_file() and journal.stat().st_size > 0, 'real SQLite rollback journal required'
+            fault['journal_before_refusal'] = journal_observation()
+            intent_bytes, published_mirror = pending(target).read_bytes(), mirror(target).read_bytes()
+            intent = json.loads(intent_bytes)
+            preimage = sibling(mirror(target), '.before-' + intent['artifact_token'])
+            preimage_bytes = preimage.read_bytes()
+            assert intent['version'] == 2 and preimage_bytes == original_mirror
+            assert published_mirror != original_mirror
+            if os.name == 'nt':
+                blocker = windows_hold_against_delete(journal)
+                fault.update({'calibrated': True, 'mechanism': 'journal no-delete-share handle',
+                              'control_error': 32, 'termination': 'real acknowledgement timeout'})
+                # Do not resume: the existing hook times out and invokes the
+                # real SDK rollback. No injected rollback return is substituted.
+            else:
+                p.send_signal(signal.SIGSTOP)
+                _, stopped = os.waitpid(p.pid, os.WUNTRACED)
+                assert os.WIFSTOPPED(stopped)
+                folder.chmod(old_mode & ~0o222)
+                try:
+                    calibration.unlink()
+                    raise AssertionError('directory deletion refusal did not calibrate')
+                except PermissionError as error:
+                    fault.update({'calibrated': True, 'mechanism': 'journal parent-directory write denial',
+                                  'control_errno': error.errno, 'termination': 'cooperative SIGTERM'})
+                p.send_signal(signal.SIGTERM)
+                p.send_signal(signal.SIGCONT)
+            out, err = p.communicate(timeout=40)
+        finally:
+            cleanup_errors = []
+            if blocker:
+                api, handle = blocker
+                try:
+                    if not api.CloseHandle(handle):
+                        cleanup_errors.append('cannot release journal refusal fixture')
+                except Exception as error:
+                    cleanup_errors.append('journal handle release: ' + repr(error))
+            elif os.name != 'nt':
+                try:
+                    folder.chmod(old_mode)
+                except Exception as error:
+                    cleanup_errors.append('directory permission restore: ' + repr(error))
+            if p.poll() is None:
+                try:
+                    p.kill()
+                except Exception as error:
+                    cleanup_errors.append('child kill: ' + repr(error))
+                try:
+                    out, err = p.communicate(timeout=10)
+                except Exception as error:
+                    cleanup_errors.append('child wait: ' + repr(error))
+            for name, content in (('product-rollback-observation.stdout.txt', out),
+                                  ('product-rollback-observation.stderr.txt', err)):
+                try:
+                    (folder / name).write_text(content, encoding='utf-8')
+                except Exception as error:
+                    cleanup_errors.append(name + ': ' + repr(error))
+                    try:
+                        (a.work / (folder.name + '-' + name)).write_text(content, encoding='utf-8')
+                    except Exception as fallback_error:
+                        cleanup_errors.append('fallback ' + name + ': ' + repr(fallback_error))
+            try:
+                fault['journal_after_process_exit'] = journal_observation()
+            except Exception as error:
+                cleanup_errors.append('journal observation: ' + repr(error))
+                fault['journal_after_process_exit'] = {'observation_error': repr(error)}
+            fault['cleanup_errors'] = cleanup_errors
+            try:
+                (folder / 'rollback-fault-calibration.json').write_text(json.dumps(fault, indent=2) + '\n', encoding='utf-8')
+            except Exception as error:
+                cleanup_errors.append('calibration evidence: ' + repr(error))
+                (a.work / (folder.name + '-rollback-fault-calibration.json')).write_text(
+                    json.dumps(fault, indent=2) + '\n', encoding='utf-8')
+            assert not cleanup_errors, cleanup_errors
+        rc, report = record(folder, 'product-rollback-observation', subprocess.CompletedProcess(p.args, p.returncode, out, err))
+        # A real OS refusal is not automatically a non-OK SDK result. Record
+        # the uninstrumented product's actual disposition without upgrading it
+        # into retained-evidence or failed-rollback coverage.
+        assert fault['calibrated'], fault
+        assert rc != 0 and report['result'] != 'success', report
+        assert report['atomicity']['transaction']['target_commit'] in ('not-attempted', 'not-committed'), report
+        assert report['atomicity']['transaction']['private_stage_commit'] == 'not-attempted', report
+        disposition = {
+            'exit_code': rc, 'result': report['result'], 'code': report['code'],
+            'reported_rolled_back': report['atomicity']['rolled_back'],
+            'exact_intent_retained': pending(target).exists() and pending(target).read_bytes() == intent_bytes,
+            'exact_published_mirror_retained': mirror(target).read_bytes() == published_mirror,
+            'exact_preimage_path_retained': preimage.exists() and preimage.read_bytes() == preimage_bytes,
+            'mirror_is_original': mirror(target).read_bytes() == original_mirror,
+        }
+        if report['code'] == 'rollback-failed':
+            assert rc == 6 and report['result'] == 'inconsistent' and not disposition['reported_rolled_back'], report
+            assert disposition['exact_intent_retained'] and disposition['exact_published_mirror_retained'] and disposition['exact_preimage_path_retained'], disposition
+        (folder / 'product-evidence-disposition.json').write_text(json.dumps(disposition, indent=2) + '\n')
+        assert file_identity(target) == identity
+        assert not list(folder.glob(target.name + '.pre-*')), 'external mirror evidence is not a DB preimage'
+        # Restore only the OS fault. Let a fresh product owner perform SQLite
+        # recovery; never hand-delete/patch the database or its journal.
+        recover(folder, 'fresh-owner-after-rollback-observation', target)
+        after = connection(target, readonly=True)
+        try:
+            assert state(after) == before and content_rows(after) == rows
+            assert after.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
+        finally:
+            after.close()
+        assert mirror(target).read_bytes() == original_mirror and file_identity(target) == identity
+        writer = connection(target)
+        try:
+            writer.execute("UPDATE books SET title='ordinary-after-error-recovery' WHERE id=1")
+            writer.commit()
+            latest = state(writer)
+        finally:
+            writer.close()
+        recover(folder, 'repeat-recovery-preserves-later-write', target)
+        assert read_state(target) == latest
+        no_owned_residue(folder, target)
+        return dict(fault, product_disposition=disposition,
+                    sdk_finish_error_inferred=False, internal_io_attribution='separate diagnostic consumer only',
+                    fresh_owner_recovered_original_rows=True, later_ordinary_write_preserved=True,
+                    historical_commit_claim=False)
+
+    def full_fixture_rows(db):
+        result = {'schema_objects': db.execute('SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name').fetchall(),
+                  'tables': {}}
+        for (name,) in db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"):
+            quoted = '"' + name.replace('"', '""') + '"'
+            columns = tuple(row[1] for row in db.execute('PRAGMA table_info(' + quoted + ')'))
+            # Fixture records are small; repr sorting is solely canonical test
+            # comparison, never a production receipt or historical COMMIT proof.
+            result['tables'][name] = (columns, sorted(db.execute('SELECT * FROM ' + quoted).fetchall(), key=repr))
+        return result
+
+    def sqlite_os_log_path(message):
+        # Exact pinned os_win.c/os_unix.c logger format, not path substrings.
+        # Synthetic parser controls below are not actual fault calibration.
+        match = re.fullmatch(r'os_(win|unix)\.c:\d+: \((\d+)\) ([A-Za-z0-9_]+)\((.*?)\) - [^\r\n]*', message)
+        if not match:
+            return None
+        platform, native_error, operation, path = match.groups()
+        path = path.replace('\\', '/') if platform == 'win' else path
+        if platform == 'win':
+            path = path.casefold()
+        return platform, int(native_error), operation, path
+
+    def sqlite_log_path_controls():
+        checked = 0
+        for platform, path, operation in (('win', 'C:/owned/library.sqlite', 'winRead'),
+                                          ('unix', '/owned/library.sqlite-journal', 'unlink')):
+            expected = path.casefold() if platform == 'win' else path
+            def message(candidate):
+                return 'os_%s.c:123: (33) %s(%s) - control only' % (platform, operation, candidate)
+            assert sqlite_os_log_path(message(path))[3] == expected
+            checked += 1
+            for suffix in ('-wal', '-journal', '-other', '.before-token'):
+                assert sqlite_os_log_path(message(path + suffix))[3] != expected
+                checked += 1
+            assert sqlite_os_log_path('unstructured unrelated ' + path) is None
+            checked += 1
+        return {'synthetic_parser_controls': checked, 'exact_filename_equality': True,
+                'actual_fault_calibration': False}
+
+    def windows_hold_read_range(path, size):
+        import ctypes
+        from ctypes import wintypes
+        api = ctypes.WinDLL('kernel32', use_last_error=True)
+        class Overlapped(ctypes.Structure):
+            _fields_ = [('Internal', ctypes.c_size_t), ('InternalHigh', ctypes.c_size_t),
+                        ('Offset', wintypes.DWORD), ('OffsetHigh', wintypes.DWORD), ('hEvent', wintypes.HANDLE)]
+        api.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                   wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+        api.CreateFileW.restype = wintypes.HANDLE
+        api.LockFileEx.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.DWORD,
+                                  wintypes.DWORD, wintypes.DWORD, ctypes.POINTER(Overlapped)]
+        api.LockFileEx.restype = wintypes.BOOL
+        api.UnlockFileEx.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.DWORD,
+                                    wintypes.DWORD, ctypes.POINTER(Overlapped)]
+        api.UnlockFileEx.restype = wintypes.BOOL
+        api.ReadFile.argtypes = [wintypes.HANDLE, wintypes.LPVOID, wintypes.DWORD,
+                                ctypes.POINTER(wintypes.DWORD), wintypes.LPVOID]
+        api.ReadFile.restype = wintypes.BOOL
+        api.CloseHandle.argtypes, api.CloseHandle.restype = [wintypes.HANDLE], wintypes.BOOL
+        invalid, handle, control = ctypes.c_void_p(-1).value, None, None
+        overlap, locked = Overlapped(), False
+        try:
+            handle = api.CreateFileW(str(path), 0x80000000, 7, None, 3, 0x80, None)
+            assert handle != invalid, ctypes.get_last_error()
+            assert api.LockFileEx(handle, 3, 0, size, 0, ctypes.byref(overlap)), ctypes.get_last_error()
+            locked = True
+            control = api.CreateFileW(str(path), 0x80000000, 7, None, 3, 0x80, None)
+            assert control != invalid, ctypes.get_last_error()
+            buffer, count = ctypes.create_string_buffer(size), wintypes.DWORD()
+            ok = api.ReadFile(control, buffer, size, ctypes.byref(count), None)
+            error = ctypes.get_last_error()
+            assert not ok and error == 33, ('exact page-1 ReadFile control', bool(ok), error)
+        except Exception:
+            if locked:
+                api.UnlockFileEx(handle, 0, size, 0, ctypes.byref(overlap))
+            if handle not in (None, invalid):
+                api.CloseHandle(handle)
+            raise
+        finally:
+            if control not in (None, invalid):
+                api.CloseHandle(control)
+        def release():
+            unlocked = api.UnlockFileEx(handle, 0, size, 0, ctypes.byref(overlap))
+            error = ctypes.get_last_error()
+            closed = api.CloseHandle(handle)
+            assert unlocked and closed, ('release page-1 refusal', bool(unlocked), bool(closed), error)
+        return release
+
+    def diagnostic_rollback(folder, schema, mode, refuse):
+        target = folder / 'library.sqlite'
+        if schema == 6:
+            target, _, _ = seed(folder, 6)
+        else:
+            seed_result = subprocess.run([a.observer, 'seed', str(target)], capture_output=True, text=True, env=env, timeout=30)
+            (folder / 'diagnostic-seed.stdout.txt').write_text(seed_result.stdout)
+            (folder / 'diagnostic-seed.stderr.txt').write_text(seed_result.stderr)
+            assert seed_result.returncode == 0, seed_result.stderr
+        anchor = connection(target)
+        try:
+            assert anchor.execute('PRAGMA journal_mode=' + mode).fetchone()[0].lower() == mode
+            assert anchor.execute('PRAGMA user_version').fetchone()[0] == schema
+            assert not anchor.execute("SELECT 1 FROM sqlite_master WHERE name='exr_migration_ledger'").fetchone()
+            anchor.execute('PRAGMA wal_autocheckpoint=0')
+            if mode == 'wal':
+                anchor.execute("UPDATE books SET title=title || ' [WAL diagnostic baseline]' WHERE id=1")
+                anchor.commit()
+                assert anchor.execute('PRAGMA wal_checkpoint(TRUNCATE)').fetchone()[0] == 0
+                assert sibling(target, '-wal').stat().st_size == 0
+            baseline, baseline_rows, identity = state(anchor), full_fixture_rows(anchor), file_identity(target)
+            page_size = anchor.execute('PRAGMA page_size').fetchone()[0]
+            old_mode = stat.S_IMODE(folder.stat().st_mode)
+            control = folder / 'owned-unlink-control'
+            control.write_text('owned disposable unlink control')
+        except Exception:
+            anchor.close()
+            raise
+        # Marker/report live OUTSIDE the directory made non-writable by the
+        # DELETE control; no publication permission is confused with SDK I/O.
+        ready = a.work / (folder.name + '.observer-ready')
+        report_path = a.work / (folder.name + '.observer-result.json')
+        try:
+            p = subprocess.Popen([a.observer, 'observe', str(target), str(ready), str(report_path)],
+                                 env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        except Exception:
+            anchor.close()
+            raise
+        release, out, err, report = None, '', '', None
+        calibration = {'mode': mode, 'refusal_requested': refuse, 'calibrated': False,
+                       'actual_initial_schema': schema, 'page_size': page_size,
+                       'page1_committed_location': 'main database; WAL checkpointed before SDK open'}
+        def journal_state():
+            path = sibling(target, '-journal')
+            try:
+                with path.open('rb') as f:
+                    prefix = f.read(32)
+                return {'present': True, 'size': path.stat().st_size, 'prefix_hex': prefix.hex()}
+            except FileNotFoundError:
+                return {'present': False}
+        try:
+            wait_marker(p, ready)
+            if mode == 'delete':
+                calibration['journal_before'] = journal_state()
+                assert calibration['journal_before']['present'] and calibration['journal_before']['size'] > 0
+            if refuse and mode == 'wal':
+                assert os.name == 'nt', 'WAL physical read-error fixture is Windows only'
+                release = windows_hold_read_range(target, page_size)
+                calibration.update(calibrated=True, native_error=33, mechanism='exact main DB page-1 mandatory read refusal')
+            elif refuse and os.name == 'nt':
+                api, handle = windows_hold_against_delete(sibling(target, '-journal'))
+                def release_delete():
+                    assert api.CloseHandle(handle), 'release journal refusal handle'
+                release = release_delete
+                calibration.update(calibrated=True, native_error=32, mechanism='exact journal no-delete-share handle')
+            elif refuse:
+                folder.chmod(old_mode & ~0o222)
+                release = lambda: folder.chmod(old_mode)
+                try:
+                    control.unlink()
+                    raise AssertionError('owned deletion refusal did not calibrate')
+                except PermissionError as error:
+                    calibration.update(calibrated=True, native_error=error.errno, mechanism='journal parent directory deletion refusal')
+            else:
+                calibration.update(calibrated=True, mechanism='no-fault negative control')
+            p.stdin.write('R'); p.stdin.flush()
+            wait_marker(p, report_path)
+            report = json.loads(report_path.read_text())
+            calibration['sdk_finish_observation'] = report
+        finally:
+            cleanup_errors = []
+            if release:
+                try:
+                    release()
+                except Exception as error:
+                    cleanup_errors.append('fault release: ' + repr(error))
+            try:
+                if p.poll() is None:
+                    p.stdin.write('C'); p.stdin.flush()
+                out, err = p.communicate(timeout=20)
+            except Exception as error:
+                cleanup_errors.append('observer close/wait: ' + repr(error))
+                try:
+                    p.kill()
+                except Exception as error:
+                    cleanup_errors.append('observer kill: ' + repr(error))
+                try:
+                    out, err = p.communicate(timeout=10)
+                except Exception as error:
+                    cleanup_errors.append('observer final wait: ' + repr(error))
+            try:
+                anchor.close()
+            except Exception as error:
+                cleanup_errors.append('anchor close: ' + repr(error))
+            for name, value in (('observer.stdout.txt', out), ('observer.stderr.txt', err)):
+                try:
+                    (folder / name).write_text(value, encoding='utf-8')
+                except Exception as error:
+                    cleanup_errors.append(name + ': ' + repr(error))
+                    try:
+                        (a.work / (folder.name + '-' + name)).write_text(value, encoding='utf-8')
+                    except Exception as fallback_error:
+                        cleanup_errors.append('fallback ' + name + ': ' + repr(fallback_error))
+            calibration['cleanup_errors'] = cleanup_errors
+            try:
+                calibration['journal_after'] = journal_state()
+            except Exception as error:
+                calibration['journal_after'] = {'observation_error': repr(error)}
+            try:
+                (a.work / (folder.name + '-calibration.json')).write_text(json.dumps(calibration, indent=2) + '\n')
+            except Exception as error:
+                cleanup_errors.append('calibration write: ' + repr(error))
+            assert not cleanup_errors, cleanup_errors
+        assert p.returncode == 0 and report is not None, (p.returncode, out, err)
+        assert report['sqlite_version'] == '3.54.0' and report['diagnostic_mmap_disabled'], report
+        if refuse:
+            key = 'finish_read_events' if mode == 'wal' else 'finish_delete_events'
+            assert report[key] > 0 and report['finish_io_events'] > 0, report
+            code = report['read_error_code' if mode == 'wal' else 'delete_error_code']
+            expected_path = str((target if mode == 'wal' else sibling(target, '-journal')).resolve())
+            if os.name == 'nt':
+                expected_path = expected_path.replace('\\', '/').casefold()
+            expected_operation = 'winRead' if mode == 'wal' else ('winDelete' if os.name == 'nt' else 'unlink')
+            events = [json.loads(line) for line in err.splitlines() if line.startswith('{')]
+            matched = []
+            for event in events:
+                location = sqlite_os_log_path(event['message'])
+                if (event['phase'] == 'sdk-finish' and event['sqlite_code'] == code and location
+                        and location[2] == expected_operation and location[3] == expected_path):
+                    matched.append(event)
+            assert matched, ('no actual SDK finish I/O event for exact owned path', expected_path, events)
+            calibration['matched_finish_io_events'] = matched
+        else:
+            assert report['sdk_ok'] and report['finish_io_events'] == 0, report
+        # Actual status is evidence, not predetermined. A swallowed I/O error
+        # with SDK OK is an observability limitation, never "SDK rollback failed".
+        calibration['classification'] = ('internal-io-error-sdk-ok' if report['sdk_ok'] else 'internal-io-error-sdk-non-ok') if refuse else 'clean-rollback-control'
+        # A fresh actual SDK migration owner is the first connection after the
+        # old owner/anchor close. Its schema-6 upgrade is inside a transaction
+        # ended by real rollback, not an ordinary open that commits an upgrade.
+        recovery = subprocess.run([a.observer, 'recover', str(target)], capture_output=True, text=True, env=env, timeout=30)
+        (folder / 'fresh-sdk-recovery.stdout.txt').write_text(recovery.stdout)
+        (folder / 'fresh-sdk-recovery.stderr.txt').write_text(recovery.stderr)
+        assert recovery.returncode == 0, (recovery.returncode, recovery.stdout, recovery.stderr)
+        recovery_events = [json.loads(line) for line in recovery.stderr.splitlines() if line.startswith('{')]
+        assert not [event for event in recovery_events if (event['sqlite_code'] & 255) == 10], recovery_events
+        # Independent fixture SQL verifies the persisted schema and every row;
+        # this does not pretend the frozen SDK exposes an integrity-check API.
+        fresh = connection(target)
+        try:
+            assert fresh.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
+            assert state(fresh) == baseline and full_fixture_rows(fresh) == baseline_rows
+            fresh.execute("UPDATE books SET title='ordinary-after-diagnostic-recovery' WHERE id=1")
+            fresh.commit()
+            latest = full_fixture_rows(fresh)
+        finally:
+            fresh.close()
+        fresh = connection(target, readonly=True)
+        try:
+            assert full_fixture_rows(fresh) == latest
+        finally:
+            fresh.close()
+        assert file_identity(target) == identity
+        calibration.update(fresh_recovery_exact=True, later_ordinary_write_preserved=True,
+                           fresh_sdk_recovery_succeeded=True, verification_sqlite_version=sqlite3.sqlite_version,
+                           real_sdk_return_error=not report['sdk_ok'], product_mirror_lifecycle_proved=False)
+        (a.work / (folder.name + '-calibration.json')).write_text(json.dumps(calibration, indent=2) + '\n')
+        return calibration
+
+    def candidate_rollback_observation(folder, schema):
+        result = {'observations': [], 'full_candidate_acceptance': False}
+        def observe(name, function):
+            child = folder / name
+            child.mkdir()
+            item = {'name': name, 'passed': False}
+            result['observations'].append(item)
+            try:
+                item['details'] = function(child)
+                item['passed'] = True
+            except Exception:
+                item['error'] = traceback.format_exc()
+                # Save outside a potentially inaccessible fault directory.
+                (a.work / (name + '-observation-error.txt')).write_text(item['error'])
+        observe('product-schema%d-delete' % schema,
+                lambda child: candidate_product_rollback_observation(child, schema))
+        for mode in (('delete', 'wal') if os.name == 'nt' else ('delete',)):
+            for refuse in (False, True):
+                observe('diagnostic-schema%d-%s-%s' % (schema, mode, 'fault' if refuse else 'control'),
+                        lambda child, m=mode, f=refuse: diagnostic_rollback(child, schema, m, f))
+        result['wal_fault_scope'] = 'Windows; see individually recorded observation outcomes' if os.name == 'nt' else 'not covered on this platform'
+        (folder / 'observations.json').write_text(json.dumps(result, indent=2) + '\n')
+        assert all(item['passed'] for item in result['observations']), result
+        return result
+
     try:
+        evidence['sqlite_log_attribution_controls'] = sqlite_log_path_controls()
         for path, digest in SOURCES.items():
             assert sha(path) == digest, 'reviewed product source drift: ' + path
         evidence['tool_sha256'], evidence['old_tool_sha256'] = sha(a.tool), sha(a.old_tool)
+        evidence['observer_sha256'] = sha(a.observer)
+        evidence['observer_sources_sha256'] = {path: sha(path) for path in (
+            'tests/migration/rollback_observe_20261028/CMakeLists.txt',
+            'tests/migration/rollback_observe_20261028/observe.c')}
         old_version = subprocess.run([a.old_tool, '--version'], check=True, capture_output=True, text=True).stdout
         (a.work / 'old-sdk-version.txt').write_text(old_version, encoding='utf-8')
         assert '3.40' in old_version, old_version
@@ -559,7 +1171,18 @@ def main():
         execute('preimage-access-refusal', preimage_read_refusal)
         execute('special-mirror-path', special_mirror)
         execute('real-intent-cleanup-failure', real_cleanup_failure)
-        evidence['passed'] = len(results) == 15 and all(case['passed'] for case in results)
+        for schema in (6, 7):
+            for mode in ('delete', 'wal'):
+                for group, function in (
+                    ('candidate-lineage', candidate_lineage),
+                    ('candidate-existing-content', candidate_existing_content),
+                    ('candidate-partial-write', candidate_partial_write),
+                ):
+                    execute('%s-schema%d-%s' % (group, schema, mode),
+                            lambda folder, f=function, s=schema, m=mode: f(folder, s, m))
+            execute('candidate-rollback-observation-schema%d' % schema,
+                    lambda folder, s=schema: candidate_rollback_observation(folder, s))
+        evidence['passed'] = len(results) == 29 and all(case['passed'] for case in results)
     finally:
         (a.work / 'summary.json').write_text(json.dumps(evidence, indent=2) + '\n', encoding='utf-8')
         print(json.dumps(evidence))
