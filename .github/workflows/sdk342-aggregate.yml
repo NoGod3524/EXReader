@@ -1,0 +1,38 @@
+name: SDK 3.42 same-run aggregate admission
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  windows:
+    uses: ./.github/workflows/f06-windows-sdk342.yml
+  gtk:
+    uses: ./.github/workflows/gtk-sdk342-package.yml
+  android:
+    uses: ./.github/workflows/android-sdk342-package.yml
+  records:
+    uses: ./.github/workflows/android-sdk342-record-probe.yml
+  apple:
+    uses: ./.github/workflows/apple-sdk342-package.yml
+  authenticate:
+    if: always()
+    needs: [windows, gtk, android, records, apple]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate current-run evidence and original six-target F06
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT_WINDOWS: ${{ needs.windows.result }}
+          RESULT_GTK: ${{ needs.gtk.result }}
+          RESULT_ANDROID: ${{ needs.android.result }}
+          RESULT_RECORDS: ${{ needs.records.result }}
+          RESULT_APPLE: ${{ needs.apple.result }}
+        run: python3 tests/sdk342_aggregate/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sdk342-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/sdk342-aggregate/summary.json
+          if-no-files-found: error

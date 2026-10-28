@@ -9,12 +9,16 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/gtk-sdk342'
-BASE = 'ef3356c30046d0646cf1cc6d37b53fe942121e38'
+BASE = '503c36e8073c12cd8837184b142b7704da51c961'
 SDK_SOURCE = '7271829a829bfa6aaa47b73077c493f71af27ad3'
 VERSION = '3.42.0'
 ALLOWED = {'apps/reader/desktop/CMakeLists.txt', 'apps/reader/desktop/gtk_feature_integration.cmake',
            'tools/build_linux_host.py', '.github/workflows/gtk-sdk342-package.yml',
-           '.github/workflows/f06-windows-sdk342.yml', 'tests/reader_f06_packages/identity.py'}
+           '.github/workflows/f06-windows-sdk342.yml', 'tests/reader_f06_packages/identity.py',
+           'tests/android_sdk342_package/run.py', 'tests/apple_sdk342_package/authenticate.py',
+           'tests/sdk342_aggregate/authenticate.py', '.github/workflows/sdk342-aggregate.yml',
+           '.github/workflows/android-sdk342-package.yml', '.github/workflows/android-sdk342-record-probe.yml',
+           '.github/workflows/apple-sdk342-package.yml'}
 
 def command(*args):
     return subprocess.check_output(list(map(str, args)), cwd=ROOT, text=True)
@@ -35,7 +39,9 @@ def guard():
     assert command('git', 'rev-parse', 'HEAD').strip() == os.environ['GITHUB_SHA']
     command('git', 'merge-base', '--is-ancestor', BASE, 'HEAD')
     changed = command('git', 'diff', '--name-only', BASE, 'HEAD').splitlines()
-    assert all(p in ALLOWED or p.startswith('tests/gtk_sdk342_package/') for p in changed), changed
+    assert all(p in ALLOWED or p == 'tests/gtk_sdk342_package/run.py' for p in changed), changed
+    command('git', 'diff', '--exit-code', '8357eafa28423a7ab93ba08b823af80f01ad1505', 'HEAD', '--',
+            'src', 'include', 'cmake', 'CMakeLists.txt', 'bindings')
     frozen = {}
     for path in ('src', 'include', 'CMakeLists.txt', 'tests/reader_gtk_raw_wave3', 'tests/reader_gtk_navigation',
                  'tests/reader_gtk_batch_import', 'tests/reader_f06_packages/build.py',

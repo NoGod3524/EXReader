@@ -1,5 +1,6 @@
 name: Android SDK 3.42 exact package identity
 on:
+  workflow_call:
   push:
     branches: [codex/android-sdk342-package-20261028]
   workflow_dispatch:

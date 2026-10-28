@@ -21,8 +21,10 @@ def main():
     try:
         jobs = fetch(f'actions/runs/{run}/attempts/{attempt}/jobs?per_page=100')['jobs']
         expected = {'Apple SDK 3.42 macos package', 'Apple SDK 3.42 iphonesimulator package'}
-        producers = [j for j in jobs if j['name'] in expected]
-        assert len(producers) == 2 and {j['name'] for j in producers} == expected
+        def producer_name(name):
+            return name.removeprefix('apple / ')
+        producers = [j for j in jobs if producer_name(j['name']) in expected]
+        assert len(producers) == 2 and {producer_name(j['name']) for j in producers} == expected
         assert all(j['head_sha'] == source and j['conclusion'] == 'success' for j in producers)
         artifacts = fetch(f'actions/runs/{run}/artifacts?per_page=100')['artifacts']
         for target in ('macos', 'iphonesimulator'):

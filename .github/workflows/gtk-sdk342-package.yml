@@ -1,5 +1,6 @@
 name: GTK SDK 3.42 explicit integration and same-source Linux package
 on:
+  workflow_call:
   push:
     branches: [codex/dot-gtk-sdk342-package, codex/windows-gtk-sdk342-common-20261028]
   workflow_dispatch:
