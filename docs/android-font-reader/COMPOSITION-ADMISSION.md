@@ -36,3 +36,10 @@ passed the same platform and D23 source admissions for candidate
 pinned to `25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab`.
 Probe source `06e9ccfac8a47f79caf8b438b19970335d188ce4` ran both jobs.
 This is source admission; the candidate still needs same-source product tests.
+
+[Actions 40614955797/1](https://github.com/NoGod3524/EXReader/actions/runs/40614955797)
+passed the platform and D23 source admissions on candidate
+`5447b05a6b942d6ad568f65179c43a946c2890e3`, including the independently
+audited Apple history progress evidence. This only checks source ownership;
+the TXT performance result and final same-source product acceptance remain
+separate.
