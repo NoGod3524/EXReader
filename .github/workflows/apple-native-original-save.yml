@@ -1,7 +1,7 @@
 name: Apple native original save and readback
 on:
   push:
-    branches: [codex/terra-wave-apple-export]
+    branches: [codex/terra-wave-apple-export, codex/apple-original-iphone-picker-20261028]
   workflow_dispatch:
 permissions:
   contents: read
