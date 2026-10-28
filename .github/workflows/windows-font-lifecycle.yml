@@ -1,4 +1,4 @@
-name: Windows font candidate retained checks
+name: Windows font lifecycle acceptance
 on:
   push:
     branches: [codex/terra-wave-windows-font]
@@ -7,32 +7,33 @@ permissions:
 jobs:
   windows:
     runs-on: windows-2022
-    timeout-minutes: 240
+    timeout-minutes: 180
     env:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: utf-8
-      EXR_COMPOSITION_CONTENT_BOUND: '1'
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
       - uses: ilammy/msvc-dev-cmd@v1
-      - name: Build and run retained native Windows checks
+      - name: Build isolated native acceptance host
+        run: python tests/windows_font_lifecycle/build.py
+      - name: Prepare native UI dependencies and fixtures
         shell: pwsh
         run: |
-          python tests/reader_wave3_c09/build.py
-          if ($LASTEXITCODE) { throw 'Windows retained checks failed' }
+          python -m pip install uiautomation==2.0.29
+          if ($LASTEXITCODE) { throw 'UI dependency failed' }
+          python -c "from tools.host_font import fetch; fetch('build/host-font-cache')"
+          if ($LASTEXITCODE) { throw 'Font acquisition failed' }
+          python tests/reader_windows_preferences/make_fixtures.py --output build/windows-font/fixtures
+          if ($LASTEXITCODE) { throw 'Fixture generation failed' }
+      - name: Verify native font lifecycle and live position
+        run: python tests/windows_font_lifecycle/check.py
       - name: Preserve results and failures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: windows-font-retained-${{ github.run_id }}-${{ github.run_attempt }}
+          name: windows-font-lifecycle-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            build/c09/report.json
-            build/c09/desktop.json
-            build/c09/logs/
-            build/c09/compact22/
-            build/c09/extracted-ui/
-            build/c09/package/build.json
-            build/c09/package/report.json
-            build/c09/raw-owner-suite/
+            build/windows-font/logs/
+            build/windows-font/evidence/
           if-no-files-found: warn
