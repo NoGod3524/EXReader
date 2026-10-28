@@ -22,11 +22,19 @@ Artifacts, run 40641881557 attempt 1:
 - Windows: 12795368523, 80,962 bytes, SHA-256
   `8bad90d3b9faddef4afe1a41cbf0a7a943bfd662551857d64e41ce1025d127a2`.
 
-This result uses the default legacy selector family. Raw-selector TXT
-progress is separately being exercised in
-[Actions 40642363736](https://github.com/NoGod3524/EXReader/actions/runs/40642363736)
-on `4dd7f76142915d6ae27fe956f71e7f50b5235666`, pending its result.
+The follow-up [Actions 40642363736/1](https://github.com/NoGod3524/EXReader/actions/runs/40642363736)
+tested `4dd7f76142915d6ae27fe956f71e7f50b5235666`. Both platforms repeated
+the installed-module checks and built an independently installed raw-selector
+family. Its installed TXT progress consumer passed all 16 checks on each
+platform, including capture, persistence, conflict and pending cases.
+The 3.43 refusal remained in effect.
+
+- Linux: 12795923936, 108,837 bytes, SHA-256
+  `68e2367fa77d278b2fe577e1e532ed9488549fdd6a3eabd6a2beac308cabf53d`.
+- Windows: 12795319332, 109,887 bytes, SHA-256
+  `24b2da72ba9568db4d15de3e16858c2a458f4add7506217e03d5b047ff3c4848`.
+
 Neither run validates an integrated host, migration compatibility, or the
 whole reader. The original migration candidate gate remains failed on Linux
-and Windows, with macOS queued. This evidence-only commit is not the tested
-source.
+and Windows, with macOS queued. This evidence-only commit is not either
+tested source.
