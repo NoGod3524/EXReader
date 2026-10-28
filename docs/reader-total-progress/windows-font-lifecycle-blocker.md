@@ -63,3 +63,8 @@ page ranges had no separator; the observed end was 727 and the next start was
 in [run 40630623987](https://github.com/NoGod3524/EXReader/actions/runs/40630623987)
 and again in the final same-source run. Original assertions and frozen budgets
 remain unchanged.
+
+The updated fixed-catalog audit [40631611219, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40631611219)
+at `60f3dbc2d58e0a1d8287fcc605c3be042ac5b0e0` authenticated the eight prior
+cases, five TXT cases and same-source binding from the original artifact, with
+no evidence problems. This result does not extend the tested format scope.
