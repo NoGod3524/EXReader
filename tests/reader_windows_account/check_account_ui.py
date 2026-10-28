@@ -539,6 +539,14 @@ def main():
         A.apply(dialog, '系统安全存储')
 
         # ===== first full scan: stage originals, then network, then receive =====
+        if os.environ.get('EXR_ACCOUNT_COMPACT_PICKER') == '1':
+            A.press(dialog, SYNC)
+            assert A.enabled(dialog, CANCEL), A.note(dialog)
+            A.press(dialog, CANCEL)
+            A.wait(lambda: '准备已取消' in A.note(dialog) and A.enabled(dialog, RETRY), timeout=120)
+            A.press(dialog, RETRY)
+            A.wait_note(dialog, '同步完成', 240)
+            print(json.dumps({'extra_check': 'stage_cancel_retry_completes'}), flush=True)
         A.run_sync(dialog)
         shot('02-device-a-finished.bmp', dialog)
         detail = A.detail(dialog)
@@ -886,15 +894,43 @@ def main():
         record('reopened_receiver_repeats_the_same_eighteen_resolutions_and_wire_hashes')
 
         # ===== planted CONCURRENT, PENDING-parent and tombstone heads in the receiver's own product store =====
-        planted_key = 'txt:' + 'e' * 64
+        planted_original = b'Cloud only book retained through original retry.\n' * 100
+        planted_hash = hashlib.sha256(planted_original).hexdigest()
+        planted_key = 'txt:' + planted_hash
         planted = {'version': 1, 'id': '%02x%030x' % (0x50, 1), 'entity_kind': 'book', 'entity_key': planted_key,
                    'operation': 'put', 'location_kind': 'none', 'parents': [],
-                   'payload': {'format': 'txt', 'source_sha256': 'e' * 64, 'source_bytes': 4096,
+                   'payload': {'format': 'txt', 'source_sha256': planted_hash, 'source_bytes': len(planted_original),
                                'title': 'Cloud Only Conflict', 'author': 'planted', 'favorite': False}}
         receive_record('device-reading-b', planted)
         RB = new_device('device-reading-b', existing=True)
         dialog = RB.open_account()
         RB.fill(dialog, reading_root, user, password, False);RB.apply(dialog, '仅本次会话')
+        RB.press(dialog, SYNC)
+        RB.wait(lambda: '云端原书尚不可用' in RB.note(dialog) and RB.enabled(dialog, RETRY), timeout=240)
+        assert '等待原件 1' in RB.detail(dialog)
+        if os.environ.get('EXR_ACCOUNT_COMPACT_PICKER') == '1':
+            RB.close_account(dialog)
+            sys.path.insert(0, str(HERE.parents[1] / 'tests/reader_wave3_c09'))
+            spec = importlib.util.spec_from_file_location('account_status_view',
+                HERE.parents[1] / 'tests/reader_wave3_c09/check_ui.py')
+            status_ui = importlib.util.module_from_spec(spec); spec.loader.exec_module(status_ui)
+            before = status_ui.database_state(RB.profile)
+            status_dialog = status_ui.open_feature(RB, status_ui.SYNC)
+            assert any('本机接收：尚未完成' in row and '等待原件 1' in row
+                       for row in status_ui.rows(status_dialog))
+            send(U.GetDlgItem(status_dialog, status_ui.B1), BM_CLICK)
+            assert status_ui.database_state(RB.profile) == before
+            status_ui.close_feature(RB, status_dialog)
+            assert status_ui.database_state(RB.profile) == before
+            dialog = RB.open_account()
+        prefix = '/reading/' + OBJECTS + planted_hash[:2] + '/'
+        with dav.lock:
+            dav.directories.add('/reading/' + OBJECTS)
+            dav.directories.add(prefix)
+            dav.entries[prefix + planted_hash + '.txt'] = planted_original
+        RB.press(dialog, RETRY)
+        RB.wait_note(dialog, '同步完成', 240)
+        assert sql('device-reading-b', 'SELECT count(*) FROM reader_local_books WHERE book_key=?', (planted_key,)) == [(1,)]
         RB.run_sync(dialog);RB.close_account(dialog)
         RB.wait(lambda: sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (planted_key,)),
                 timeout=120)

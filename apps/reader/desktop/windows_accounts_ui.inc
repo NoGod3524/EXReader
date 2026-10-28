@@ -59,10 +59,10 @@ static void acct_detail_refresh(void) {
   }
   if (!acct_job_running())
     swprintf(at, left, L"接收：投影检查 %llu，并发版本 %llu（不自动选择），缺祖先 %llu，受限 %llu，墓碑 %llu，待依赖 %llu，版本已变化 %llu，"
-      L"已导入 %llu，等待原件 %llu，导入失败 %llu，应用失败 %llu",
+      L"已导入 %llu，等待原件 %llu，取得失败 %llu，导入失败 %llu，应用失败 %llu",
       (unsigned long long)o->projected, (unsigned long long)o->concurrent, (unsigned long long)o->pending_parents,
       (unsigned long long)o->blocked, (unsigned long long)o->tombstones, (unsigned long long)o->dependency, (unsigned long long)o->head_changed, (unsigned long long)o->imported,
-      (unsigned long long)o->import_waiting, (unsigned long long)o->import_failed, (unsigned long long)o->project_failed);
+      (unsigned long long)o->import_waiting, (unsigned long long)o->fetch_failed, (unsigned long long)o->import_failed, (unsigned long long)o->project_failed);
   if (acct.detail) SetWindowTextW(acct.detail, acct.detail_text);
 }
 static void acct_controls(void) {
@@ -341,11 +341,17 @@ static void acct_job_accept(host_job *job) {
       product_shelf_schedule(0, 0);
     } else if (ok) {
       wchar_t text[256];
-      int unresolved=o->concurrent || o->pending_parents || o->blocked || o->dependency || o->head_changed || o->project_failed || o->import_failed || o->import_waiting;
+      int unresolved=o->concurrent || o->pending_parents || o->blocked || o->dependency || o->head_changed || o->project_failed || o->import_failed || o->import_waiting || o->fetch_failed;
       acct.recv_done = !unresolved; acct.recv_failed = unresolved;
       if (o->import_failed)
         swprintf(text, 256, L"接收尚未完成：%llu 本原书的书目映射待恢复；正在自动修复，也可重试。",
           (unsigned long long)o->import_failed);
+      else if (o->fetch_failed)
+        swprintf(text, 256, L"接收尚未完成：%llu 本云端原书取得或校验失败；可重试。",
+          (unsigned long long)o->fetch_failed);
+      else if (o->import_waiting)
+        swprintf(text, 256, L"接收尚未完成：%llu 本云端原书尚不可用；原书上传后可重试。",
+          (unsigned long long)o->import_waiting);
       else if (unresolved)
         swprintf(text, 256, L"接收尚未完成：并发 %llu，缺祖先 %llu，待依赖 %llu，版本变化 %llu；详见状态，可重试。",
           (unsigned long long)o->concurrent, (unsigned long long)o->pending_parents,
