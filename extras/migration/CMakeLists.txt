@@ -25,6 +25,10 @@ else()
   target_link_libraries(exreader-legacy-migrate PRIVATE m)
 endif()
 install(TARGETS exreader-legacy-migrate RUNTIME DESTINATION bin)
+install(FILES exporter/exr-legacy-export.js exporter/backup_to_pack.py
+  DESTINATION share/exreader-legacy-migration/exporter)
+install(FILES ../../docs/WP12-LEGACY-MIGRATION.md ../../docs/WP12-MIGRATION-REVIEW.md ../../LICENSE
+  DESTINATION share/exreader-legacy-migration)
 
 option(EXR_MIGRATION_REVIEW_TESTS "Build public API state-editing review consumer" OFF)
 if(EXR_MIGRATION_REVIEW_TESTS)

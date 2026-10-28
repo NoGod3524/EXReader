@@ -2,7 +2,7 @@ name: WP12 legacy migration
 # Dedicated cloud validation for extras/migration. Not scheduled; does not touch native.yml/reliability.yml.
 on:
   push:
-    branches: ['codex/wp12-migration-review']
+    branches: ['codex/wp12-migration-review', 'codex/terra-wave-upgrade-delivery']
     paths:
       - 'extras/migration/**'
       - 'tests/migration/**'
@@ -46,6 +46,12 @@ jobs:
           cmake --build build/migration --config Release --parallel 4 2>&1 | tee build/logs/tool-build-${{ matrix.label }}.txt
           test -f "${{ matrix.exe }}"
           "${{ matrix.exe }}" --version
+      - name: Install and verify the migration payload
+        run: |
+          set -o pipefail
+          cmake --install build/migration --config Release --prefix "${{ github.workspace }}/migration-stage" 2>&1 | tee build/logs/tool-install-${{ matrix.label }}.txt
+          ${{ matrix.py }} tests/migration/check_install.py migration-stage | tee build/logs/tool-payload-${{ matrix.label }}.txt
+          "migration-stage/bin/exreader-legacy-migrate${{ matrix.label == 'windows' && '.exe' || '' }}" --version
       - name: Named migration scenarios
         run: |
           set -o pipefail
@@ -73,7 +79,7 @@ jobs:
           npm init -y > /dev/null
           npm install playwright@1.49.1 2>&1 | tail -3
           npx playwright install --with-deps chromium 2>&1 | tail -3
-          node ../../tests/migration/e2e/export_e2e.mjs ../e2e-data/spec.json ../legacy-src ../../extras/migration/exporter/exr-legacy-export.js ../e2e-out 2>&1 | tee ../logs/e2e-export-${{ matrix.label }}.txt
+          node ../../tests/migration/e2e/export_e2e.mjs ../e2e-data/spec.json ../legacy-src ../../migration-stage/share/exreader-legacy-migration/exporter/exr-legacy-export.js ../e2e-out 2>&1 | tee ../logs/e2e-export-${{ matrix.label }}.txt
       - name: Migrate the exported pack and reopen in new processes
         if: always()
         run: |
@@ -86,7 +92,7 @@ jobs:
           cp build/e2e-out/e2e-export.json build/evidence/e2e-export-${{ matrix.label }}.json || true
           cp build/e2e-out/legacy.exrpack build/evidence/legacy-${{ matrix.label }}.exrpack || true
           ${{ matrix.py }} tools/check_legacy_migration.py identity --out build/evidence/identity-${{ matrix.label }}.json --label ${{ matrix.label }} \
-            --tool "${{ matrix.exe }}" --sdk stage --exporter extras/migration/exporter/exr-legacy-export.js \
+            --tool "${{ matrix.exe }}" --sdk stage --exporter migration-stage/share/exreader-legacy-migration/exporter/exr-legacy-export.js \
             --inputs build/e2e-out/legacy.exrpack build/legacy-src/store.js build/legacy-src/library.js build/legacy-src/registry.js tests/migration/legacy_data.py
       - name: Preserve evidence and raw logs
         if: always()
