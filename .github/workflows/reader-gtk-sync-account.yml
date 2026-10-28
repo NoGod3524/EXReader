@@ -2,6 +2,7 @@ name: GTK sync account combined evidence
 on:
   push:
     branches: [codex/terra-wave-linux-sync]
+    paths: ['examples/linux/**', 'tests/reader_gtk_sync_account/check_combined.py', 'tests/reader_gtk_sync_account/inspect_widget.py', 'tests/reader_gtk_sync_account/run.py']
   workflow_dispatch:
 permissions:
   contents: read
