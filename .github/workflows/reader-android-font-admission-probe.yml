@@ -11,12 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: b9dca7c5b4b21b69aa6d63a5893a0141eaa814d5
+          ref: 6a113c16e06cce1add3934f996929db1f19978fa
           fetch-depth: 0
       - name: Execute actual D23 Windows source admission
         shell: pwsh
         run: |
-          $env:GITHUB_SHA = 'b9dca7c5b4b21b69aa6d63a5893a0141eaa814d5'
+          $env:GITHUB_SHA = '6a113c16e06cce1add3934f996929db1f19978fa'
           if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw 'candidate mismatch' }
           $lines = Get-Content .github/workflows/reader-d23-relay.yml
           $start = [Array]::IndexOf($lines, '      - name: Confirm exact base and unchanged product paths')
@@ -36,18 +36,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: b9dca7c5b4b21b69aa6d63a5893a0141eaa814d5
+          ref: 6a113c16e06cce1add3934f996929db1f19978fa
           fetch-depth: 0
       - name: Check exact common-source platform guards
         shell: bash
         run: |
-          candidate=b9dca7c5b4b21b69aa6d63a5893a0141eaa814d5
+          candidate=6a113c16e06cce1add3934f996929db1f19978fa
           test "$(git rev-parse HEAD)" = "$candidate"
           export GITHUB_SHA="$candidate"
           python3 tests/android_font_reader/guard.py
           python3 tests/reader_d21_apple_receive/guard.py
           python3 tests/reader_android_receive_d22/guard.py
           git diff --exit-code b0269fd2d2365ba20e54cda7e181493a39f75091 HEAD -- apps examples src include cmake CMakeLists.txt bindings ':(exclude)apps/reader/desktop/windows_txt_search.inc' ':(exclude)examples/reader.c' ':(exclude)src/chapter_reader.c'
-          git diff --exit-code 642bb8efe124fdd301410f0b3e8e17292d6a5069 HEAD -- apps/reader/desktop/windows_txt_search.inc examples/reader.c src/chapter_reader.c
+          git diff --exit-code 642bb8efe124fdd301410f0b3e8e17292d6a5069 HEAD -- apps/reader/desktop/windows_txt_search.inc examples/reader.c
+          git diff --exit-code 25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab HEAD -- src/chapter_reader.c tests/bounded_txt_scan/view.c
           git diff --exit-code 748e93713c643243a96bab54f5ca1464a2f39efd HEAD -- tests/android_real_original_save
           python3 -c "import runpy; runpy.run_path('tests/reader_d25_real_formats/run.py')['materialize']()"
