@@ -1,7 +1,7 @@
 name: Independent migration transaction review
 on:
   push:
-    branches: [codex/migration-transaction-review-tests]
+    branches: [codex/migration-transaction-review-tests, codex/migration-review-latest-20261028]
     paths: ['tests/migration/**', '.github/workflows/migration-transaction-review.yml']
 permissions:
   contents: read
@@ -25,8 +25,8 @@ jobs:
       - name: Build candidate SDK, both migrators and source-owner probe
         run: |
           set -euo pipefail
-          git merge-base --is-ancestor 7271829a829bfa6aaa47b73077c493f71af27ad3 HEAD
-          git diff --exit-code 7271829a829bfa6aaa47b73077c493f71af27ad3 HEAD -- src include extras CMakeLists.txt
+          git merge-base --is-ancestor 520a917125b6c5889dc816ae6bbf8f574bcb98a9 HEAD
+          git diff --exit-code 520a917125b6c5889dc816ae6bbf8f574bcb98a9 HEAD -- src include extras CMakeLists.txt
           cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
           cmake --build build/sdk --config Release --parallel 4
           cmake --install build/sdk --config Release --prefix "${{ github.workspace }}/stage"
