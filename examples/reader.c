@@ -1649,6 +1649,7 @@ static exr_status txt_page_for_offset(host_session *session, size_t offset,
   size_t count = 0, index, first = 0, calls = 0;
   size_t chosen = 0, chosen_start = 0, chosen_end = 0;
   int have = 0, prefetched = 0, hint = 0, finished = 0;
+  int trace_progress = getenv("EXR_TRACE_TXT") != NULL;
   exr_status status = EXR_OK;
   ULONGLONG began = GetTickCount64();
   exr_pager_stats stats_before = exr_pager_statistics(session->pager);
@@ -1682,6 +1683,11 @@ static exr_status txt_page_for_offset(host_session *session, size_t offset,
       status = OFFSET_GET(session->pager, index, &layout, error);
     }
     prefetched = 0;
+    if (trace_progress && exr_pager_statistics(session->pager).generated_pages > stats_before.generated_pages) {
+      fprintf(stderr, "TXT_SCAN_PROGRESS offset=%llu generated=1\n", (unsigned long long)offset);
+      fflush(stderr);
+      trace_progress = 0;
+    }
     TXT_SEEK_CANCEL();
     if (status != EXR_OK) {
       if (!have || !pager_eof(status, error)) goto done;
