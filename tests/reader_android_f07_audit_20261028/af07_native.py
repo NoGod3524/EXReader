@@ -6,6 +6,8 @@ import re
 import subprocess
 
 import af07_contract as C
+import af07_ndk_inputs as N
+from af07_ndk_probe import FAILED_INPUT_SHA, verify_script
 
 
 def audit(raw, capture, inventory, images, bindings):
@@ -36,12 +38,38 @@ def audit(raw, capture, inventory, images, bindings):
         C.require(done.returncode == 0, 'native inspection failed: ' + label)
         return done.stdout
 
-    # Exact public NDK shared stubs at the producer's android-26 API, plus actual
-    # explicitly named external link inputs authenticated by recorded byte hash.
+    # .so is not sufficient to identify a runtime stub: the API26 libc++.so
+    # observed in failed run 40780887828 is an implicit linker script. Only the
+    # pinned NDK's explicit OS manifest may grant a system runtime provider name.
     system, stub_definitions = set(), {}
-    stubs = sorted((toolroot / 'sysroot/usr/lib/x86_64-linux-android/26').glob('*.so'))
-    C.require(stubs, 'pinned API26 public system stubs absent')
+    sysroot = toolroot / 'sysroot'
+    triple = sysroot / 'usr/lib/x86_64-linux-android'
+    api_directory = triple / '26'
+    metadata_path = ndk / 'meta/system_libs.json'
+    metadata = json.loads(metadata_path.read_text())
+    required_stubs = N.system_names(metadata, 26)
+    stubs = sorted(api_directory.glob('*.so'))
+    input_report = dict(api=26, metadata_sha256=C.digest(metadata_path), metadata=metadata,
+                        runtime_stubs={}, link_only_scripts={})
+    C.require({path.name for path in stubs if path.name in required_stubs} == required_stubs,
+              'pinned API26 system manifest/stub inventory differs')
     for index, path in enumerate(stubs):
+        resolved = N.resolve(path, sysroot, (api_directory, triple))
+        if path.name not in required_stubs:
+            C.require(path.name == 'libc++.so' and C.digest(path) == FAILED_INPUT_SHA,
+                      'unrecognized non-system API26 shared input')
+            verify_script(path.read_bytes())
+            C.require(resolved['kind'] == 'INPUT-script' and len(resolved['children']) == 1 and
+                      resolved['children'][0]['kind'] == 'ELF' and
+                      resolved['children'][0]['path'] == 'usr/lib/x86_64-linux-android/libc++_shared.so' and
+                      resolved['children'][0]['sha256'] == '936e1150309bdae86216f14e493f478d39e588095f1577105856da6d0f24f149',
+                      'exact observed NDK script target differs')
+            input_report['link_only_scripts'][path.name] = resolved
+            C.save(out / 'system-inputs.json', input_report)
+            continue  # A validated link script is not a DT_NEEDED provider.
+        C.require(resolved['kind'] == 'ELF', 'NDK system runtime stub is not ELF')
+        input_report['runtime_stubs'][path.name] = resolved
+        C.save(out / 'system-inputs.json', input_report)
         text = inspect('system-%03d' % index, path, 'llvm-nm', ['-D', '-g', '--defined-only'])
         stub_definitions[path.name] = set(C.symbols(text)['defined'])
         system.update(stub_definitions[path.name])
@@ -253,7 +281,10 @@ def audit(raw, capture, inventory, images, bindings):
         explicitly_private_installed_headers=private_headers, image_reports=image_reports,
         loader_edges=edges, sdk_providers=sdk_providers, provider_failures=provider_failures,
         maps=map_reports, module_final_consumers=consumers, unlinked_installed_modules=[name for name, values in consumers.items() if not values],
-        system_symbol_count=len(system), full_six_platform_f07_accepted=False)
-    report['android_static_closure_accepted'] = not (any(private.values()) or any(image_private.values()) or header_uses or provider_failures)
+        system_symbol_count=len(system), full_six_platform_f07_accepted=False,
+        include_dependency_coverage_complete=False,
+        include_dependency_gap='Original capture omitted actual compiler dependency records; module-root source scans cannot prove out-of-root/header-only include completeness.')
+    report['android_native_symbol_boundary_accepted'] = not (any(private.values()) or any(image_private.values()) or header_uses or provider_failures)
+    report['android_static_closure_accepted'] = False  # missing actual compiler-dependency coverage
     C.save(C.OUT / 'android-native-audit.json', report)
     return report

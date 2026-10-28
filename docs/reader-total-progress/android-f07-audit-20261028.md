@@ -135,6 +135,30 @@ artifact-proven import. Exact compiled-input/include-owner coverage and missing
 compiler dependency evidence remain explicit separate blockers to full F07.
 # Exact NDK-input follow-up (diagnostic only)
 
+Pinned-input probe [40782970059](https://github.com/NoGod3524/EXReader/actions/runs/40782970059)
+passed all 22 controls and confirmed the exact 19 script bytes with the prior
+failed-input digest. Its selected `libc++_shared.so` candidate was ELF, 1617608
+bytes, SHA256 `936e1150309bdae86216f14e493f478d39e588095f1577105856da6d0f24f149`.
+This is current pinned-toolchain evidence, not an original application provider.
+
+The subsequent narrow parser uses `meta/system_libs.json`, as documented by
+the [official r27 guide](https://android.googlesource.com/platform/ndk/+/ndk-r27-release/docs/BuildSystemMaintainers.md),
+to identify real OS stubs. Supported `INPUT(-lname...)` scripts resolve only
+through exact API26 then target-triple directories; unsupported directives,
+paths, symlinks, cycles and missing targets fail closed. The one observed
+`libc++.so` and its target must match their pinned hashes. Its filename and
+resolved target are not added to runtime providers or system symbol allowances.
+Actual APK DT_NEEDED closure and original inspector hashes remain unchanged.
+Four additional Actions-only controls cover script syntax, path/cycle/alias
+refusal, exact target search and non-promotion of linker scripts to providers.
+
+The incomplete compiler-dependency capture now explicitly prevents even the
+Android static-closure flag from becoming true; native symbol findings are
+reported separately. Module-root source scans still miss out-of-root compiled
+inputs such as ProductCatalog's original-import source and its source-declared
+OriginalExport `sha256.inc` dependency. Complete compiler dependency evidence
+requires a purposeful additive producer capture, not a source-scan waiver.
+
 The preserved audit failed on API26 `libc++.so`, not a project archive.
 Diagnostic run [40782004065](https://github.com/NoGod3524/EXReader/actions/runs/40782004065)
 authenticated the prior failure and its input SHA256
