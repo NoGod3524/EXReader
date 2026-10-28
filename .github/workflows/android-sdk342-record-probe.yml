@@ -68,6 +68,7 @@ jobs:
           github-token: ${{ github.token }}
       - name: Build SDK 3.42 and test-only receiver
         run: |
+          mkdir -p build/f06
           python3 tests/android_sdk342_package/run.py build
           python3 tests/android_sdk342_record/prepare.py
           ws="$PWD/build/wave3"; stage="$ws/stage"
