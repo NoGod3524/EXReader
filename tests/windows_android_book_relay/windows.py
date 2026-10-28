@@ -26,8 +26,14 @@ class App(ui.App):
  def label(self):return ui.text(ui.U.GetDlgItem(self.window,124))
 def sql(app,q,args=()):
  with sqlite3.connect('file:'+str(app.db)+'.product.sqlite?mode=ro',uri=True) as db:return db.execute(q,args).fetchall()
-def progress(app):
- row=sql(app,"SELECT body_json FROM reader_revisions WHERE entity_kind='progress' ORDER BY rowid DESC LIMIT 1")[0][0]
+def progress(app,revision=None):
+ # Remote arrival order is not graph order. Observe the exact sender revision;
+ # the real records UI below independently selects/resolves the safe graph head.
+ found=sql(app,"SELECT body_json FROM reader_revisions WHERE entity_kind='progress'")
+ values=[json.loads(row[0]) for row in found]
+ selected=[v for v in values if v['id']==revision] if revision else values
+ assert len(selected)==1,(revision,values)
+ row=json.dumps(selected[0])
  v=json.loads(row);l=v['payload']['location'];s=l['selector']
  def txt(v):return base64.b64decode(v['base64']).decode('utf-8') if isinstance(v,dict) else v
  return v,dict(part=l['part'],path=l['part_path'],start=s['start'],end=s['end'],exact=txt(s['exact']),prefix=txt(s['prefix']),suffix=txt(s['suffix']),parser=l['parser_version'],head=v['id'])
@@ -65,11 +71,11 @@ def main():
   if previous:
    assert any(r['method']=='GET' and '/objects/' in r['path'] for r in dav.requests)
    app.wait(lambda:ui.send(app.control('books'),0x18B)==1,timeout=60);ui.send(app.control('books'),0x186,0);app.click('open');app.wait_idle()
-   wire,loc=progress(app);expected=previous['data']['location'];assert all(loc[k]==expected[k] for k in ('part','path','start','end','exact','prefix','suffix')),(loc,expected)
+   expected=previous['data']['location'];wire,loc=progress(app,expected['head']);assert all(loc[k]==expected[k] for k in ('part','path','start','end','exact','prefix','suffix')),(loc,expected)
    d=records(app);labels=rows(d);index=next(i for i,v in enumerate(labels) if '阅读位置' in v);ui.send(ui.U.GetDlgItem(d,211),0x186,index);ui.send(d,0x111,(1<<16)|211,ui.U.GetDlgItem(d,211));press(app,d,220)
    message=ui.text(ui.U.GetDlgItem(d,212));assert 'FOUND' in message or '找到并定位' in message or '已跳转' in message,message
    close(app,d);text=copy(app);assert loc['suffix'] and loc['suffix'] in text,(loc,text)
-   data.update(location=loc,expected_location=expected,page_text=text,restore_message=message,progress_wire=wire)
+   data.update(location=loc,expected_location=expected,page_text=text,restore_message=message,progress_wire=wire,received_progress_wires=[json.loads(r[0]) for r in sql(app,"SELECT body_json FROM reader_revisions WHERE entity_kind='progress'")])
    checks.append('fresh_windows_receives_original_and_exact_android_progress_native_jump_displays_anchor')
   original_path='/dav/exreader-sync-v1/objects/'+data['original_sha256'][:2]+'/'+data['original_sha256']+'.epub'
   assert hashlib.sha256(dav.entries[original_path]).hexdigest()==data['original_sha256']
@@ -80,5 +86,5 @@ def main():
   if app and app.process.poll() is None:app.process.kill();app.process.wait(timeout=20);app.log.close()
   if dav:
    (a.out/'requests.json').write_text(json.dumps(dav.requests));dav.server.shutdown();dav.server.server_close();(a.out/'key.pem').unlink(missing_ok=True)
-  (a.out/'report.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
+  (a.out/'report.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8');print(json.dumps(data,ensure_ascii=False),flush=True)
 if __name__=='__main__':main()
