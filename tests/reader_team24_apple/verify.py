@@ -42,7 +42,9 @@ def main():
                     assert target is not None
                     identity = json.loads(archive.read('wave3-packages.json'))
                     assert (identity['source_sha'], identity['run_id'], identity['attempt'], identity['target']) == (source, run, attempt, target)
-                    assert identity['sdk_frozen_source'] == 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
+                    assert identity['sdk_build_source'] == source
+                    assert identity['sdk_content_candidate'] == '5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9'
+                    assert identity['sdk_content_paths'] == ['src', 'include', 'cmake', 'CMakeLists.txt', 'bindings']
                     assert identity['modules'] == ['annotation-export', 'annotation-import', 'font-library', 'original-export', 'jump-history', 'sync-status-view']
                     guard = json.loads(archive.read('team24-apple-guard.json'))
                     assert (guard['source_sha'], guard['run_id'], guard['attempt'], guard['accepted']) == ('937f61057b06c5c9de3b562046e52c91b5be62b9', run, attempt, True)
