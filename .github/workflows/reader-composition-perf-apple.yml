@@ -6,6 +6,8 @@ on:
       - '.github/workflows/reader-composition-perf-android.yml'
       - '.github/workflows/reader-perf-android-inspect.yml'
       - 'tests/reader_perf_android/**'
+      - 'examples/android/**'
+      - 'extras/android-import-entry/**'
       - 'docs/**'
   workflow_dispatch:
     inputs:
