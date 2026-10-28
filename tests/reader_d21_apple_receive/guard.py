@@ -11,15 +11,15 @@ paths = subprocess.check_output(['git','diff','--name-only',base,'HEAD'], text=T
 subprocess.run(['git','merge-base','--is-ancestor','a7020b07b8515e0d4b8e2693522920e2ec78eb35','HEAD'],check=True)
 integration_changes = subprocess.check_output(['git','diff','--name-only','a7020b07b8515e0d4b8e2693522920e2ec78eb35','HEAD'],text=True).splitlines()
 font_paths = ['examples/android/app/src/main/java/org/exreader/host/MainActivity.java', '.github/workflows/reader-android-font-reader.yml', 'docs/android-font-reader/PLAN.md', 'tests/android_font_reader/README.md', 'tests/android_font_reader/device.sh', 'tests/android_font_reader/guard.py', 'tests/android_font_reader/java/org/exreader/host/FontReaderUiTest.java', 'tests/android_font_reader/retained_report.py', 'tests/android_font_reader/run_ui.py', 'tests/android_font_reader/test.init.gradle']
-subprocess.run(['git','diff','--exit-code','6541add7c6d7645a2ef98ed99bbf2712241936f2','HEAD','--',*font_paths],check=True)
+subprocess.run(['git','diff','--exit-code','66d73288b1b564e5b8ecc82ff2990ecaa6b42275','HEAD','--',*font_paths],check=True)
 txt_paths = ['examples/reader.c', 'apps/reader/desktop/windows_search.inc', 'apps/reader/desktop/windows_txt_search.inc', 'apps/reader/desktop/windows_wave3.inc', 'tests/windows_host/txt/check_progress.py', '.github/workflows/windows-wave3-txt-progress.yml']
 subprocess.run(['git','diff','--exit-code','642bb8efe124fdd301410f0b3e8e17292d6a5069','HEAD','--',*txt_paths],check=True)
 gtk_paths = ['apps/reader/desktop/gtk_feature_integration.cmake', 'examples/linux/reading.h', 'examples/linux/wave3_backend.inc', 'examples/linux/wave3_ui.inc', 'tests/reader_d26_accessibility/identity_current.py', 'tests/reader_d26_accessibility/tools_current.py']
 subprocess.run(['git','diff','--exit-code','cc75214cb5e6dce389625e33399e1b120aedf4c4','HEAD','--',*gtk_paths],check=True)
 sdk_paths = ['src/chapter_reader.c', 'tests/bounded_txt_scan/view.c']
-subprocess.run(['git','diff','--exit-code','642bb8efe124fdd301410f0b3e8e17292d6a5069','HEAD','--',*sdk_paths],check=True)
+subprocess.run(['git','diff','--exit-code','25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab','HEAD','--',*sdk_paths],check=True)
 gate_paths = ['.github/workflows/reader-d24-apple-large-type.yml', '.github/workflows/reader-d26-accessibility.yml', '.github/workflows/sdk-txt-anchor-resolve.yml']
-subprocess.run(['git','diff','--exit-code','9715391a129b343f343810243080c2cc6ecdfdf0','HEAD','--',*gate_paths],check=True)
+subprocess.run(['git','diff','--exit-code','ecde156819591fee9c8c5ecd48b489f65245e4f0','HEAD','--',*gate_paths],check=True)
 extra_paths = [
     '.github/workflows/android-real-original-save.yml',
     'tests/android_real_original_save/device.sh',
@@ -36,7 +36,8 @@ extra_paths = [
     'docs/reader-total-progress/android-original-save.md',
 ]
 for ref, extra in [
-    ('e24527faed81110ea4626d56013469487c606cb4', extra_paths[:5]),
+    ('ecde156819591fee9c8c5ecd48b489f65245e4f0', extra_paths[:1]),
+    ('e24527faed81110ea4626d56013469487c606cb4', extra_paths[1:5]),
     ('ac8d65c02c0e4d2ae2b8e76ac7797d634dce9267', extra_paths[5:8]),
     ('3b66f138a383662477433b42fece97b9582b4219', extra_paths[8:]),
 ]:
