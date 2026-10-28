@@ -45,6 +45,23 @@ def main():
         rc, report, err = invoke(args.tx, tx_pack, target)
         assert rc == 0, (rc, report, err)
         ledger = Path(str(target) + '.legacy-map.json')
+        if seeded:
+            original = ledger.read_bytes()
+            unsupported = json.loads(original)
+            unsupported['version'] = 2
+            for damaged, code in ((json.dumps(unsupported).encode('utf-8'), 'ledger-unknown-version'),
+                                  (b'{broken', 'ledger-invalid')):
+                ledger.write_bytes(damaged)
+                before = digest(target), digest(ledger)
+                rc, report, err = invoke(args.tx, tx_pack, target)
+                assert rc == 2 and report['code'] == code, (rc, report, err)
+                assert before == (digest(target), digest(ledger))
+                verify = subprocess.run([args.tx, 'verify', '--pack', str(tx_pack), '--target', str(target)], capture_output=True, text=True)
+                assert verify.returncode == 2 and json.loads(verify.stdout)['code'] == code, (verify.stdout, verify.stderr)
+                dump = subprocess.run([args.tx, 'dump', '--target', str(target)], capture_output=True, text=True)
+                assert dump.returncode == 2 and json.loads(dump.stdout)['code'] == code, (dump.stdout, dump.stderr)
+                assert before == (digest(target), digest(ledger))
+            ledger.write_bytes(original)
         before = digest(target), digest(ledger)
         rc, report, err = invoke(args.old, pack, target)
         assert rc == 2 and report['code'] == 'transactional-ledger', (rc, report, err)
