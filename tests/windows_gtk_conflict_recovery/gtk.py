@@ -14,6 +14,17 @@ def main():
     assert os.environ.get('GITHUB_ACTIONS')=='true' and sys.platform.startswith('linux')
     data=json.loads(Path(a.previous).read_text())['data'];key=data['windows_book'];checks=[]
     shutil.copytree(a.profile,out/'profile');(out/'profile').chmod(0o700)
+    # upload/download-artifact flattens POSIX modes. Restore the private-mode
+    # contract on the copied real profile, without changing a single byte.
+    restored=[]
+    for path in (out/'profile').rglob('*'):
+        assert not path.is_symlink(), 'Unexpected symlink in runner-owned profile artifact'
+        if path.is_dir():path.chmod(0o700)
+        else:
+            digest=hashlib.sha256(path.read_bytes()).hexdigest();path.chmod(0o600)
+            assert hashlib.sha256(path.read_bytes()).hexdigest()==digest
+            restored.append({'path':str(path.relative_to(out/'profile')),'sha256':digest,'mode':'0600'})
+    (out/'profile-permissions.json').write_text(json.dumps(restored,indent=2))
     package=Path(a.package);identity=hashlib.sha256((package/'bin/exreader-linux').read_bytes()).hexdigest();assert identity==data['gtk_program_sha256']
     dav,user,password=service.start(out,a.previous);host=Session((package/'bin/exreader-linux').resolve(),(package/'Reader.otf').resolve(),out)
     def sql(q,args=()):
