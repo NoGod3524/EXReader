@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
-BASE = '1dfd2c3ba3184eb9a9df531d3858eafb95c2e80c'
+BASE = '5447b05a6b942d6ad568f65179c43a946c2890e3'
 def git(*args):
     return subprocess.check_output(['git', *args], text=True).strip()
 assert git('rev-parse', 'HEAD') == os.environ['GITHUB_SHA']
@@ -35,4 +35,4 @@ out = Path('build/apple-android/admission.json')
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(json.dumps({'base': BASE, 'source_sha': os.environ['GITHUB_SHA'],
     'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
-    'changes': paths, 'frozen_sdk_and_old_suites_unchanged': True}, indent=2))
+    'changes': paths, 'candidate_sdk_and_old_suites_unchanged_from_base': True}, indent=2))
