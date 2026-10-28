@@ -251,13 +251,13 @@ def main():
                 'license':'MIT; original rectangular outlines; no downloaded font data',
                 'generator_dependency':'fontTools==4.61.1', 'generator_dependency_actual':fontTools.version,
                 'acceptance_source_sha':os.environ.get('GITHUB_SHA'),
-                'generator_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                'generator_normalized_lf_sha256':hashlib.sha256(Path(__file__).read_text(encoding='utf8').replace('\r\n','\n').encode('utf8')).hexdigest(),
                 'fonts':provenance,
                 'expected_method':'Handwritten glyph IDs and geometry, never derived from baseline/candidate SDK output',
                 'cache_collision_proof':{'glyph_ids':[2,258,514], 'formula':'(((uintptr_t)lookup >> 4) ^ glyph) & 255',
                     'same_slot_for_all_lookup_addresses':True},
                 'cases':cases, 'scenarios':scenarios}
-    (root/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf8')
+    (root/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf8',newline='\n')
     print(json.dumps({'generated':str(root), 'case_count':len(cases), 'fonts':list(provenance)},sort_keys=True))
 
 if __name__ == '__main__':

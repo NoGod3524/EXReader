@@ -22,7 +22,7 @@ new test package, its workflow and its handoff documentation.
 The Windows, Linux and macOS jobs each generate dedicated deterministic fonts,
 run handwritten expected substitutions and fieldwise control/candidate
 comparisons, preserve raw requests and responses, and execute all unchanged
-registered `tests/bounded_txt_scan` CTest checks against both installed SDKs.
+platform-applicable `tests/bounded_txt_scan` CTest checks against both installed SDKs (seven on Windows, six on Unix).
 The unregistered Noto/3,000-page performance experiment is not rerun here.
 
 All command logs and return codes, elapsed wall times, fixture hashes, installed
@@ -45,3 +45,26 @@ SDK SHA. If the coordinator changes the candidate, update both explicit pins
 in the workflow and `run.py`, retain the previous evidence, and rerun all three
 platforms. Do not combine passing artifacts from different sources or attempts.
 No main-branch merge, pull request, tag or release is performed by this package.
+
+## Preserved initial failure and platform admission correction
+
+Run [40622921759, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40622921759)
+used test source `c6199ffc60f1737e7164ce92e3d3d02f4c00c058`. Dedicated
+OpenType comparisons passed on all three platforms. The initial aggregate was
+correctly rejected because the unmodified `bounded_txt_view` test hardcodes
+`C:/Windows/Fonts/arial.ttf`; both control and candidate therefore returned
+`font: 3 Cannot open file` on Linux and macOS. This is not a cache regression.
+The existing source, assertions and budgets remain unchanged. The final scope
+requires that test on Windows only; the other six portable original checks
+remain mandatory on all platforms. Unix `bounded_txt_view` is not claimed passed
+or fixed. No font-path substitution, symlink or D13 experiment is performed.
+
+The first authentication also revealed Windows backslash evidence keys being
+interpreted as literal names on Linux. The new evidence writer uses POSIX
+relative keys. This changes artifact serialization, not product behavior.
+
+Preserved initial artifacts:
+- Windows `12788530856`, SHA256 `d9a2ae215148da0b4c0063eeed8dff59f9c9d57d550f231e5a891ce229af03d2`.
+- Linux `12787843796`, SHA256 `9dadc22933aeec0e47c2a24a8db1e2608abf01a573ab8abf7b7ae4a4c5045b24`.
+- macOS `12787684758`, SHA256 `e955d75d05f454ddbb399140073adf4bcc2cae5be68d052842ca318f6aae8e6b`.
+- Rejected authentication `12788880217`, SHA256 `f397db10c64db3ee9099cc690c5f4c1abc2bd611f99dd1ac118f9dd4af129157`.

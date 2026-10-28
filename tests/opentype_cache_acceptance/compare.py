@@ -21,6 +21,7 @@ A.output.mkdir(parents=True, exist_ok=True)
 manifest = json.loads((A.fixtures / "manifest.json").read_text())
 cases = {c["id"]: c for c in manifest["cases"]}
 failures, observations, operations = [], [], []
+all_records = []
 
 
 def fail(where, message):
@@ -72,6 +73,7 @@ def run(label, exe, name, font, rows):
         fail(name + "." + label, f"Consumer exit {rc}; got {len(records)} / {len(rows)} records")
     for r, got in zip(rows, records):
         where = name + "." + label + "." + r["id"]
+        all_records.append({"operation": name, "sdk": label, **got})
         if got["id"] != r["id"]:
             fail(where, "Record identity mismatch")
         if not got["cleared"] or not got["finite"]:
@@ -216,7 +218,24 @@ if normal:
             if r["status"] != 6:
                 fail("public-limits." + label + "." + r["id"], "Expected EXR_LIMIT (6)")
 
+status_counts = {}
+for record in all_records:
+    key = record["sdk"] + ":" + str(record["status"])
+    status_counts[key] = status_counts.get(key, 0) + 1
+summary = {
+    "record_count": len(all_records), "total_sdk_operations": len(operations),
+    "status_counts": status_counts,
+    "cancelled_records": sum(r["status"] == 9 for r in all_records),
+    "cancel_callbacks": sum(r["cancel_calls"] for r in all_records),
+    "cancel_true_callbacks": sum(r["cancel_true"] for r in all_records),
+    "progress_callbacks": sum(r["progress_calls"] for r in all_records),
+    "work_limit_results": [{k: r[k] for k in ["sdk", "id", "status", "error_code", "count", "cleared", "cancel_calls", "progress_calls"]}
+                           for r in all_records if r["operation"] == "case-work_limit"],
+    "cancellation_results": [{k: r[k] for k in ["operation", "sdk", "id", "status", "cancel_calls", "cancel_true", "progress_calls", "progress_completed"]}
+                             for r in all_records if r["operation"].startswith("cancel-")],
+}
 report = {"accepted": not failures, "failures": failures, "observations": observations,
+          "summary": summary,
           "operations": operations, "case_count": len(cases),
           "scenario_count": len(manifest.get("scenarios", [])),
           "method": "Public installed SDK; one face per scenario; exact field hashes within each platform; no private cache instrumentation",
