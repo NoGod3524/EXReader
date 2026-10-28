@@ -72,7 +72,8 @@ static void acct_controls(void) {
   EnableWindow(acct.dialog, TRUE);
   EnableWindow(GetDlgItem(acct.dialog, IDC_ACCOUNT_APPLY), !busy && !g.closing);
   EnableWindow(GetDlgItem(acct.dialog, IDC_ACCOUNT_SYNC), !busy && !g.closing && acct.have_secret && g.product_ready && !g.product_pending);
-  EnableWindow(GetDlgItem(acct.dialog, IDC_ACCOUNT_CANCEL), busy && !acct.closing_session);
+  EnableWindow(GetDlgItem(acct.dialog, IDC_ACCOUNT_CANCEL),
+    !acct.closing_session && (acct_job_running() || acct_session_live()));
   EnableWindow(GetDlgItem(acct.dialog, IDC_ACCOUNT_RETRY), !busy && !g.closing && (retry_session || acct.stage_failed || acct.recv_failed));
   EnableWindow(GetDlgItem(acct.dialog, IDC_ACCOUNT_FORGET), !busy && !g.closing);
   EnableWindow(acct.root, !busy); EnableWindow(acct.user, !busy); EnableWindow(acct.password, !busy);
@@ -309,6 +310,8 @@ static void acct_job_accept(host_job *job) {
     if (job->kind == JOB_ACCOUNT_FORGET && acct.dialog) SetWindowTextW(acct.password, L"");
     acct_notice(job->message[0] ? job->message : ok ? L"账号设置已更新。" : L"账号操作未完成。");
   } else if (job->kind == JOB_ACCOUNT_STAGE) {
+    /* A cancellation can arrive after the worker finishes but before this callback. */
+    if (ok && InterlockedCompareExchange(&acct.cancelled, 0, 0)) { ok = 0; cancelled = 1; }
     if (g.closing || acct.exit_wanted) { o->staging = 0; }
     else if (ok && o->staging && !g.pending) {
       next = acct_job(JOB_ACCOUNT_STAGE, ACCT_STAGE_NEXT);
@@ -320,7 +323,7 @@ static void acct_job_accept(host_job *job) {
       } else { o->staging = 0; acct.stage_failed = 1; acct_notice(L"无法继续准备本机原书。"); }
     } else if (ok && !o->staging) acct_start_network();
     else {
-      o->staging = 0; acct.stage_failed = !cancelled;
+      o->staging = 0; acct.stage_failed = 1;
       acct_notice(cancelled ? L"准备已取消；已保存的书籍信息和已暂存的原书会保留。可重试。" :
         job->message[0] ? job->message : L"本机原书准备失败；书库未改变，可重试。");
     }
