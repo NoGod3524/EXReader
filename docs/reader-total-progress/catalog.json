@@ -193,12 +193,12 @@
       "source_prefix": "f92d1bb9"
     },
     "windows_font_lifecycle": {
-      "run": 40629003915,
+      "run": 40631109809,
       "doc": "docs/reader-total-progress/windows-font-lifecycle-blocker.md",
-      "source_prefix": "6a3c5ccc63f9b98ca0f948122f2a0c338097a1da",
-      "artifact": 12791071176,
-      "bytes": 214037,
-      "sha256": "fe656c5300504ac50e823ab9a73be982381c53fb07f61edc2332623183fd2c65",
+      "source_prefix": "c7a1ccdcac6a6f56b0ccf92da9d9a6fb08435719",
+      "artifact": 12791274325,
+      "bytes": 1474708,
+      "sha256": "397f0921d2877483260ff92466c91315b669eede160983d3dd78d36acc218afb",
       "case_result_field": "passed",
       "required_cases": [
         "noninitial-valid-font-keeps-live-point-and-acquires-lease",
@@ -210,6 +210,32 @@
         "shutdown-releases-lease-and-closes-library",
         "ordinary-document-font-switch-keeps-noninitial-point"
       ]
+    },
+    "windows_font_txt": {
+      "run": 40631109809,
+      "doc": "docs/reader-total-progress/windows-font-lifecycle-blocker.md",
+      "source_prefix": "c7a1ccdcac6a6f56b0ccf92da9d9a6fb08435719",
+      "artifact": 12791274325,
+      "bytes": 1474708,
+      "sha256": "397f0921d2877483260ff92466c91315b669eede160983d3dd78d36acc218afb",
+      "case_result_field": "passed",
+      "required_cases": [
+        "txt-boundary-noninitial-select-retains-exact-point",
+        "txt-bad-font-keeps-frame-point-and-lease",
+        "txt-rejects-outside-page-and-releases-candidate",
+        "txt-repeated-switches-keep-same-point-and-durable-position",
+        "txt-navigation-establishes-new-point"
+      ]
+    },
+    "windows_font_same_source": {
+      "run": 40631109809,
+      "doc": "docs/reader-total-progress/windows-font-lifecycle-blocker.md",
+      "source_prefix": "c7a1ccdcac6a6f56b0ccf92da9d9a6fb08435719",
+      "artifact": 12791274325,
+      "bytes": 1474708,
+      "sha256": "397f0921d2877483260ff92466c91315b669eede160983d3dd78d36acc218afb",
+      "case_result_field": "passed",
+      "required_cases": ["one-source-one-native-host-both-font-suites"]
     },
     "gtk_wave3_export_history": {
       "run": 40385948659,
@@ -572,9 +598,11 @@
       "state": "verified",
       "evidence": [
         "windows_wave3_complete",
-        "windows_font_lifecycle"
+        "windows_font_lifecycle",
+        "windows_font_txt",
+        "windows_font_same_source"
       ],
-      "note": "原生UI通过导入、坏字体回滚和重开；独立Actions检查宿主lease调用及非首页位置、失败回滚和重排。最终同源码产品交付另行验收。"
+      "note": "原生UI通过导入、坏字体回滚和重开；同一Windows宿主的Actions检查EPUB、HTML及长TXT位置与lease生命周期。其他格式和最终同源码产品交付另行验收。"
     },
     {
       "id": "H.windows.annotation_exchange",

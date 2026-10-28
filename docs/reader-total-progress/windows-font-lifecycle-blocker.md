@@ -34,3 +34,32 @@ at source `ebc227ef3a44111f1bf6b971e513417acaaed0ac` authenticated the original
 artifact and all eight named cases. It completed with no evidence problems and
 counts this host outcome as verified. The full same-source delivery remains
 separately unaccepted.
+
+## Same-source TXT follow-up
+
+The earlier review did not exercise the TXT-enabled host. Source
+`c7a1ccdcac6a6f56b0ccf92da9d9a6fb08435719` passed [run 40631109809,
+attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40631109809).
+One TXT-enabled native review executable, SHA-256
+`5593b25334b7cdab1ed205210863ca520847753bcf1a0fbd05d13ee7a08d17ba`,
+passed the unchanged eight EPUB/HTML lifecycle checks and five additional long
+TXT checks. An Actions-side binding compares both reports' source, run,
+attempt and executable hash. The original artifact is `12791274325`, 1474708
+bytes, SHA-256 `397f0921d2877483260ff92466c91315b669eede160983d3dd78d36acc218afb`.
+
+The native TXT test imports the frozen 16,792,975-byte original and starts at a
+noninitial page boundary. It verifies the same normalized byte point in each
+accepted page and durable progress across repeated font changes, checks that
+navigation establishes a new point, and checks bad-font and injected invalid
+candidate rollback with the old frame and lease preserved. The invalid page is
+injected only in the review build. The point is retained across successive
+font-only relayouts and invalidated when the frame changes through navigation.
+No all-format acceptance is claimed; the new run tests EPUB, HTML and TXT.
+
+[Run 40630252484](https://github.com/NoGod3524/EXReader/actions/runs/40630252484)
+failed before switching fonts: its new test incorrectly assumed adjacent TXT
+page ranges had no separator; the observed end was 727 and the next start was
+728. The failure artifact remains intact. The corrected boundary test passed
+in [run 40630623987](https://github.com/NoGod3524/EXReader/actions/runs/40630623987)
+and again in the final same-source run. Original assertions and frozen budgets
+remain unchanged.
