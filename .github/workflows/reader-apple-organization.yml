@@ -103,7 +103,7 @@ jobs:
               assert report['source_sha'] == os.environ['GITHUB_SHA']
               assert str(report['run_id']) == os.environ['GITHUB_RUN_ID']
               assert str(report['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
-              assert len(report['cases']) == 5 and report['physical_device_execution'] is False
+              assert len(report['cases']) == 6 and report['physical_device_execution'] is False
           Path('organization-summary.json').write_text(json.dumps({'accepted': True, 'scope': 'native organization UI cases and process restart only', 'complete_product_accepted': False, 'reports': reports}, indent=2) + '\n')
           PY
       - uses: actions/upload-artifact@v4

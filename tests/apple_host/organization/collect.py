@@ -19,6 +19,7 @@ CASES = {
     'testTagAndSeriesPersist': ['tag', 'series', 'restart'],
     'testStagedIntentSurvivesTerminationAndRetry': ['staged', 'reopened', 'retried', 'persisted'],
     'testNestedShelfSurvivesRestart': ['created', 'restart'],
+    'testStaleEditDoesNotOverwriteCompetingRevision': ['competing', 'refused', 'preserved'],
 }
 
 

@@ -17,9 +17,9 @@ permissions:
   contents: read
   actions: read
 env:
-  EXR_APPLE_SDK_VERSION: ${{ github.ref_name == 'codex/reader-hosts-341-final' && '3.41.0' || '3.40.0' }}
+  EXR_APPLE_SDK_VERSION: ${{ (github.ref_name == 'codex/reader-hosts-341-final' || github.ref_name == 'codex/terra-wave-apple-organization') && '3.41.0' || '3.40.0' }}
   EXR_APPLE_PAGE_THEME: ${{ github.ref_name == 'codex/reader-hosts-341-final' && 'ON' || 'OFF' }}
-  SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+  SDK_BASELINE: ${{ github.ref_name == 'codex/terra-wave-apple-organization' && 'f34a4f27161061d08ecc40f5cebfb6f5018aa77f' || '9854061be331fe603a1822d9b2b36ee357154927' }}
 jobs:
   sdk:
     name: SDK ${{ matrix.target }}

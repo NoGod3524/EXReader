@@ -266,6 +266,31 @@ final class HostOrganization: ObservableObject {
         } }, publish: { self.prepared = false; self.pending = $0.0; self.message = $0.1; if !$0.0 { self.membershipPresent = operation != 1; self.membershipDeleted = operation == 1; if let query = self.lastMembers { self.refreshMembers(kind: query.0, groupID: query.1) } } })
     }
     func reportError(_ text: String) { message = text }
+#if EXR_APPLE_HOST_REVIEW
+    // Exercise a real independent writer while the user's earlier snapshot
+    // remains held. This entry point is only present in review builds.
+    func reviewCompetingRename(kind: Int, groupID: String) {
+        run({ try self.withOwner { owner in
+            var error = reader_metadata_error(), snap: OpaquePointer?, result = reader_metadata_result()
+            let code = try groupID.withCString { reader_metadata_prepare_group(owner, try self.checkedKind(kind), $0, &snap, &error) }
+            guard code == READER_METADATA_OK, let snap else {
+                if let snap { reader_metadata_snapshot_free(snap) }
+                throw self.failure(code, &error)
+            }
+            defer { reader_metadata_snapshot_free(snap) }
+            guard let view = reader_metadata_snapshot_view(snap) else { throw HostError.invalidInput("无法读取竞争版本") }
+            var command = view.pointee.group
+            let status = "Concurrent Shelf".withCString { name in
+                command.operation = READER_COMMAND_PUT; command.name = name
+                return reader_metadata_stage_group(owner, snap, &command, &result, &error)
+            }
+            guard status == READER_METADATA_OK else { throw self.failure(status, &error) }
+            let finished = reader_metadata_finish_pending(owner, &result, &error)
+            guard finished == READER_METADATA_OK else { throw self.failure(finished, &error) }
+            return true
+        } }, publish: { _ in self.message = "竞争版本已提交。" })
+    }
+#endif
     func recoverEdit() {
         run({ try self.withOwner { owner in
             var result = reader_metadata_result(), error = reader_metadata_error()
