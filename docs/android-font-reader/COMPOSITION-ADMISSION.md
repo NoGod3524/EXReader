@@ -29,3 +29,10 @@ not yet been registered. The corrected candidate pins these files to their
 recorded source commits; all existing source guards remain active. This run
 checks source admission only. The product and same-source platform runs remain
 separate.
+
+[Actions 40606993495/1](https://github.com/NoGod3524/EXReader/actions/runs/40606993495)
+passed the same platform and D23 source admissions for candidate
+`6a113c16e06cce1add3934f996929db1f19978fa` with the paragraph-checkpoint SDK
+pinned to `25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab`.
+Probe source `06e9ccfac8a47f79caf8b438b19970335d188ce4` ran both jobs.
+This is source admission; the candidate still needs same-source product tests.
