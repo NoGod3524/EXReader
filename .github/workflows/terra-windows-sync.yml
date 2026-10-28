@@ -35,7 +35,7 @@ jobs:
           if ($LASTEXITCODE) { throw 'revision configure failed' }
           cmake --build build/sync-revisions --parallel 4
           if ($LASTEXITCODE) { throw 'revision build failed' }
-          cmake -S tests/reader_windows_account/consumer -B build/sync-capture -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
+          cmake -S tests/terra_windows_sync/consumer -B build/sync-capture -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$prefix"
           if ($LASTEXITCODE) { throw 'capture configure failed' }
           cmake --build build/sync-capture --parallel 4
           if ($LASTEXITCODE) { throw 'capture build failed' }
