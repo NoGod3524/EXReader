@@ -1078,6 +1078,14 @@ static void w3_sync_refresh(void) {
     swprintf(line, 400, L"冲突记录：%llu 条", (unsigned long long)summary.conflict_records);
   else wcscpy(line, L"冲突记录：未知（未检查）");
   w3_row_add(line);
+  if (acct_job_running()) w3_row_add(L"本机接收：正在处理，结果尚未确定。");
+  else if (acct.recv_failed || acct.recv_done) {
+    swprintf(line, 400, L"本机接收：%ls · 等待原件 %llu · 取得失败 %llu · 导入失败 %llu",
+      acct.recv_failed ? L"尚未完成，可在账号窗口重试" : L"已完成",
+      (unsigned long long)acct.owner.import_waiting, (unsigned long long)acct.owner.fetch_failed,
+      (unsigned long long)acct.owner.import_failed);
+    w3_row_add(line);
+  } else w3_row_add(L"本机接收：未知或尚未开始。");
   {
     reader_sync_view_row rows[READER_SYNC_VIEW_MAX_ROWS];
     size_t copied = 0, i;
