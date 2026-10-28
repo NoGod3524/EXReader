@@ -16,7 +16,8 @@ static void release_source(void *ctx) { file_source *s=(file_source *)ctx; fclos
 static void die(const char *where,exr_error *e) { fprintf(stderr,"%s: %d %s\n",where,e->code,e->message);exit(1); }
 int main(int argc,char **argv) {
   file_source *in;exr_source source={0};exr_font *font=NULL;exr_pager *pager=NULL;
-  exr_layout *page=NULL;exr_error error={0};size_t count=0,last=0;LARGE_INTEGER frequency,begin,end;
+  const exr_layout *page=NULL;exr_error error={0};size_t count=0,last=0;LARGE_INTEGER frequency,begin,end;
+  exr_layout_config config=exr_layout_config_defaults();
   PROCESS_MEMORY_COUNTERS_EX memory={0};
   int replay;size_t saved_page=0,saved_start=0,saved_end=0;FILE *position;
   if(argc!=4) return 2;
@@ -33,10 +34,14 @@ int main(int argc,char **argv) {
   source.size=(uint64_t)_ftelli64(in->file);source.context=in;source.read_at=read_at;source.release=release_source;
   QueryPerformanceFrequency(&frequency);QueryPerformanceCounter(&begin);
   if(exr_font_open("C:/Windows/Fonts/arial.ttf",&font,&error)!=EXR_OK) die("font",&error);
-  if(exr_txt_pager_create(&source,font,NULL,&pager,&error)!=EXR_OK) { release_source(in);die("open",&error); }
+  config.page.width=720;config.page.height=1040;config.page.margin=36;
+  config.page.font_size=47.6f;config.page.line_height=1.5f;config.page.paragraph_spacing=10;
+  if(exr_txt_pager_create(&source,font,&config,&pager,&error)!=EXR_OK) { release_source(in);die("open",&error); }
+  if(exr_pager_set_cache(pager,2,8*1024*1024,&error)!=EXR_OK ||
+     exr_pager_set_checkpoints(pager,8,4*1024*1024,8,&error)!=EXR_OK) die("cache",&error);
   for(;;) {
     size_t n;const exr_page *p;
-    if(exr_pager_next(pager,&page,&error)!=EXR_OK) die("next",&error);
+    if(exr_pager_get(pager,count,&page,&error)!=EXR_OK) die("get",&error);
     if(!page) break;
     p=exr_layout_pages(page,&n);
     if(n!=1 || p[0].end<=p[0].start || (count && p[0].start<last)) die("page sequence",&error);
@@ -49,8 +54,8 @@ int main(int argc,char **argv) {
         if(fprintf(position,"%zu %zu %zu\n",count,p[0].start,p[0].end)<0 || fclose(position)) return 2;
       }
     }
-    last=p[0].end;count++;exr_layout_free(page);page=NULL;
-    if(replay && count>100) break;
+    last=p[0].end;count++;page=NULL;
+    if(count>=3000 || (replay && count>100)) break;
     if(count%1000==0) { fprintf(stderr,"pages=%zu end=%zu\n",count,last);fflush(stderr); }
   }
   QueryPerformanceCounter(&end);memory.cb=sizeof(memory);

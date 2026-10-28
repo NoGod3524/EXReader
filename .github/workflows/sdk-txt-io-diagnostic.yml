@@ -27,3 +27,5 @@ jobs:
           cmake -S tests/bounded_txt_scan -B build/txt-profile -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
           cmake --build build/txt-profile --parallel 4
           ctest --test-dir build/txt-profile -V -R '^bounded_txt_view$' --no-tests=error
+          python -c "from pathlib import Path; p=Path('build/txt-profile/input.txt'); f=p.open('w',encoding='utf-8',newline='\n'); [f.write('Unique history line %08d with distinct content and a readable paragraph for page navigation.\n' % i) for i in range(200000)]; [f.write('A repeated paragraph has the DUPLICATE-NEEDLE marker and identical text for ambiguity checks.\n') for i in range(3000)]; f.close()"
+          build/txt-profile/bounded_txt_large_pager.exe build/txt-profile/input.txt record build/txt-profile/position.txt
