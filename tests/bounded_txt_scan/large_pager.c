@@ -6,13 +6,15 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef struct { FILE *file; } file_source;
+typedef struct { HANDLE file; } file_source;
 static size_t read_at(void *ctx,uint64_t offset,void *buffer,size_t size) {
-  file_source *s=(file_source *)ctx;
-  if(offset>INT64_MAX || _fseeki64(s->file,(__int64)offset,SEEK_SET)) return 0;
-  return fread(buffer,1,size,s->file);
+  file_source *s=(file_source *)ctx; LARGE_INTEGER at; DWORD got=0;
+  if(offset>INT64_MAX || size>UINT32_MAX) return 0;
+  at.QuadPart=(LONGLONG)offset;
+  if(!SetFilePointerEx(s->file,at,NULL,FILE_BEGIN) || !ReadFile(s->file,buffer,(DWORD)size,&got,NULL)) return 0;
+  return (size_t)got;
 }
-static void release_source(void *ctx) { file_source *s=(file_source *)ctx; fclose(s->file);free(s); }
+static void release_source(void *ctx) { file_source *s=(file_source *)ctx; CloseHandle(s->file);free(s); }
 static void die(const char *where,exr_error *e) { fprintf(stderr,"%s: %d %s\n",where,e->code,e->message);exit(1); }
 int main(int argc,char **argv) {
   file_source *in;exr_source source={0};exr_font *font=NULL;exr_pager *pager=NULL;
@@ -29,9 +31,11 @@ int main(int argc,char **argv) {
     fclose(position);
   }
   in=(file_source *)calloc(1,sizeof(*in));if(!in) return 2;
-  in->file=fopen(argv[1],"rb");if(!in->file) return 2;
-  if(_fseeki64(in->file,0,SEEK_END)) return 2;
-  source.size=(uint64_t)_ftelli64(in->file);source.context=in;source.read_at=read_at;source.release=release_source;
+  in->file=CreateFileA(argv[1],GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+  if(in->file==INVALID_HANDLE_VALUE) return 2;
+  { LARGE_INTEGER length;if(!GetFileSizeEx(in->file,&length) || length.QuadPart<0) return 2;
+    source.size=(uint64_t)length.QuadPart; }
+  source.context=in;source.read_at=read_at;source.release=release_source;
   QueryPerformanceFrequency(&frequency);QueryPerformanceCounter(&begin);
   if(exr_font_open("C:/Windows/Fonts/arial.ttf",&font,&error)!=EXR_OK) die("font",&error);
   config.page.width=720;config.page.height=1040;config.page.margin=36;
