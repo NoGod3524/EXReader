@@ -29,6 +29,7 @@ static void metadata_submit(reader_action action) {
     job->command.metadata_title=g_strdup(gtk_entry_get_text(GTK_ENTRY(metadata_title)));
     job->command.metadata_author=g_strdup(gtk_entry_get_text(GTK_ENTRY(metadata_author)));
     job->command.metadata_favorite=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(metadata_favorite));
+    job->command.metadata_resolution=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(metadata_dialog),"explicit-resolution"));
   }
   busy=metadata_running=TRUE;shelf_loading=FALSE;
   if(metadata_dialog) gtk_widget_set_sensitive(metadata_dialog,FALSE);
@@ -37,7 +38,17 @@ static void metadata_submit(reader_action action) {
 static void metadata_response(GtkDialog *dialog,int response,gpointer recovery) {
   (void)dialog;
   if(metadata_running) return;
-  if(response==GTK_RESPONSE_ACCEPT) metadata_submit(recovery ? READER_METADATA_RETRY:READER_METADATA_SAVE);
+  if(response==3 && !recovery) {
+    GtkWidget *confirm=gtk_message_dialog_new(GTK_WINDOW(dialog),GTK_DIALOG_MODAL,GTK_MESSAGE_QUESTION,GTK_BUTTONS_YES_NO,
+      "%s","Merge every observed version using the details you enter next? Old revisions and original bytes will be retained. Save is still required.");
+    int answer=gtk_dialog_run(GTK_DIALOG(confirm));gtk_widget_destroy(confirm);
+    if(answer==GTK_RESPONSE_YES) {
+      g_object_set_data(G_OBJECT(dialog),"explicit-resolution",GINT_TO_POINTER(1));
+      gtk_widget_set_sensitive(metadata_title,TRUE);gtk_widget_set_sensitive(metadata_author,TRUE);gtk_widget_set_sensitive(metadata_favorite,TRUE);
+      gtk_dialog_set_response_sensitive(dialog,GTK_RESPONSE_ACCEPT,TRUE);gtk_dialog_set_response_sensitive(dialog,3,FALSE);
+      gtk_label_set_text(GTK_LABEL(metadata_message),"Enter merged details and Save. A changed head set will be rejected; old revisions remain retained.");
+    }
+  } else if(response==GTK_RESPONSE_ACCEPT) metadata_submit(recovery ? READER_METADATA_RETRY:READER_METADATA_SAVE);
   else if(recovery && response==2) metadata_submit(READER_METADATA_DISCARD);
   else metadata_dialog_close();
 }
@@ -85,6 +96,7 @@ static void metadata_present(const reader_result *result) {
     gtk_widget_set_sensitive(metadata_title,FALSE);gtk_widget_set_sensitive(metadata_author,FALSE);
     gtk_widget_set_sensitive(metadata_favorite,FALSE);
     gtk_dialog_set_response_sensitive(GTK_DIALOG(metadata_dialog),GTK_RESPONSE_ACCEPT,FALSE);
+    gtk_dialog_add_button(GTK_DIALOG(metadata_dialog),"_Resolve versions",3);
   }
   g_signal_connect(metadata_dialog,"response",G_CALLBACK(metadata_response),NULL);
   gtk_widget_show_all(metadata_dialog);gtk_widget_grab_focus(metadata_title);

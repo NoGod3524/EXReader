@@ -77,6 +77,11 @@ void reader_metadata_snapshot_free(reader_metadata_snapshot *);
  * An existing verified book history is required for ordinary book edits. */
 reader_metadata_status reader_metadata_stage_book(reader_metadata_owner *,const reader_metadata_snapshot *,
   const reader_book_command *,reader_metadata_result *,reader_metadata_error *);
+/* Explicit user resolution only: all complete concurrent heads are retained as
+ * parents of a new typed book revision. Ordinary staging remains conflict-safe.
+ * A later changed head set is still rejected atomically by finish_pending. */
+reader_metadata_status reader_metadata_stage_book_resolution(reader_metadata_owner *,const reader_metadata_snapshot *,
+  const reader_book_command *,reader_metadata_result *,reader_metadata_error *);
 reader_metadata_status reader_metadata_stage_group(reader_metadata_owner *,const reader_metadata_snapshot *,
   const reader_group_command *,reader_metadata_result *,reader_metadata_error *);
 reader_metadata_status reader_metadata_stage_membership(reader_metadata_owner *,const reader_metadata_snapshot *,

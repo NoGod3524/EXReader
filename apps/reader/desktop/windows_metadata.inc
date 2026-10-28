@@ -86,7 +86,7 @@ static exr_status metadata_prepare_job(reader_metadata_owner *owner,host_job *jo
 }
 static exr_status metadata_save_job(reader_metadata_owner *owner,host_job *job) {
   const reader_metadata_view *view=reader_metadata_snapshot_view(job->metadata_snapshot);
-  if(!view || strcmp(view->book.book_key,job->metadata_key) || view->deleted || view->needs_bootstrap || !view->graph.projection_safe ||
+  if(!view || strcmp(view->book.book_key,job->metadata_key) || view->deleted || view->needs_bootstrap || (!view->graph.projection_safe && !job->metadata_conflict) ||
      !job->metadata_input_title || !job->metadata_input_author || (job->metadata_favorite!=0 && job->metadata_favorite!=1)) return EXR_ARGUMENT;
   reader_metadata_error error={0};reader_metadata_result result={0};
   char *title=metadata_strict_text(job->metadata_input_title,&error),*author=metadata_strict_text(job->metadata_input_author,&error);
@@ -94,7 +94,9 @@ static exr_status metadata_save_job(reader_metadata_owner *owner,host_job *job) 
   if(!title || !author || !sort) { free(title);free(author);free(sort);return metadata_job_failure(job,READER_METADATA_ARGUMENT,&error); }
   reader_book_command edit=view->book;edit.operation=READER_COMMAND_PUT;
   edit.title=title;edit.author=author;edit.sort_title=sort;edit.favorite=job->metadata_favorite;
-  reader_metadata_status code=reader_metadata_stage_book(owner,job->metadata_snapshot,&edit,&result,&error);
+  reader_metadata_status code=job->metadata_conflict ?
+    reader_metadata_stage_book_resolution(owner,job->metadata_snapshot,&edit,&result,&error):
+    reader_metadata_stage_book(owner,job->metadata_snapshot,&edit,&result,&error);
   free(title);free(author);free(sort);
   if(code==READER_METADATA_OK) code=reader_metadata_finish_pending(owner,&result,&error);
   job->metadata_committed=result.committed;job->metadata_has_pending=result.pending;

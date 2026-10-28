@@ -41,6 +41,7 @@ static void metadata_submit_job(int kind) {
     job->metadata_input_author=metadata_read_entry(g.metadata_author);
     if(!job->metadata_input_title || !job->metadata_input_author) { job_release(job);set_status(L"无法读取书名或作者，请检查输入。");return; }
     job->metadata_favorite=SendMessageW(g.metadata_favorite,BM_GETCHECK,0,0)==BST_CHECKED;
+    job->metadata_conflict=g.metadata_editable==2;
     job->metadata_snapshot=g.metadata_snapshot;g.metadata_snapshot=NULL;
   }
   g.metadata_running=1;
@@ -86,12 +87,28 @@ static INT_PTR CALLBACK metadata_dialog_procedure(HWND dialog,UINT message,WPARA
       MoveWindow(g.metadata_message,18,132,576,48,TRUE);
       MoveWindow(make_button(dialog,IDC_METADATA_SAVE,L"保存(&S)"),364,196,110,30,TRUE);
       MoveWindow(make_button(dialog,IDC_METADATA_CANCEL,L"取消(&C)"),484,196,110,30,TRUE);
+      if(!g.metadata_editable && g.metadata_snapshot) {
+        const reader_metadata_view *view=reader_metadata_snapshot_view(g.metadata_snapshot);
+        if(view && view->head_count>1 && !view->graph.missing_parents && !view->graph.foreign_parents && !view->graph.requires_restore)
+          MoveWindow(make_button(dialog,18999,L"明确合并版本"),18,196,150,30,TRUE);
+      }
       SendMessageW(dialog,DM_SETDEFID,IDC_METADATA_SAVE,0);metadata_dialog_controls();
       SetFocus(g.metadata_title);return FALSE;
     case WM_COMMAND: {
       int id=LOWORD(wparam);
       if(g.metadata_running) return TRUE;
       if(id==IDCANCEL || id==IDC_METADATA_CANCEL) metadata_dialog_close();
+      else if(id==18999) {
+        const reader_metadata_view *view=reader_metadata_snapshot_view(g.metadata_snapshot);
+        wchar_t prompt[1024];
+        if(!view || view->head_count<2 || view->graph.missing_parents || view->graph.foreign_parents || view->graph.requires_restore) return TRUE;
+        swprintf(prompt,1024,L"已保留 %llu 个冲突版本。将以你接下来填写的书名、作者和收藏状态合并全部已观察版本。旧修订和原书不会删除。确认后仍需点击保存。\n\n版本 1: %hs\n版本 2: %hs",(unsigned long long)view->head_count,view->heads[0],view->heads[1]);
+        if(MessageBoxW(dialog,prompt,L"明确处理版本冲突",MB_YESNO|MB_ICONQUESTION)==IDYES) {
+          g.metadata_editable=2;metadata_dialog_controls();
+          SetWindowTextW(g.metadata_message,L"填写合并后的信息并保存；若版本已再次变化，将拒绝覆盖。");
+          EnableWindow(GetDlgItem(dialog,18999),FALSE);
+        }
+      }
       else if(id==IDOK) metadata_submit_job(g.metadata_recovery ? JOB_METADATA_RETRY:JOB_METADATA_SAVE);
       else if(id==IDC_METADATA_SAVE) metadata_submit_job(JOB_METADATA_SAVE);
       else if(id==IDC_METADATA_RETRY) metadata_submit_job(JOB_METADATA_RETRY);

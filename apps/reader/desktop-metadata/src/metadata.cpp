@@ -399,6 +399,20 @@ extern "C" const reader_metadata_view *reader_metadata_snapshot_view(reader_meta
   }catch(...){return nullptr;}
 }
 extern "C" void reader_metadata_snapshot_free(reader_metadata_snapshot *value){delete value;}
+extern "C" reader_metadata_status reader_metadata_stage_book_resolution(reader_metadata_owner *owner,const reader_metadata_snapshot *snapshot,const reader_book_command *input,reader_metadata_result *out,reader_metadata_error *error){
+  if(out)std::memset(out,0,sizeof(*out));
+  return call(error,[&]{guard lock(owner);
+    if(!snapshot||snapshot->database!=owner->database||snapshot->entity!=READER_METADATA_BOOK||!input||!out)
+      reject(READER_METADATA_ARGUMENT,"Resolution requires its prepared book snapshot");
+    if(!snapshot->present||snapshot->needs_bootstrap||snapshot->heads.size()<2||
+       snapshot->graph.missing_parents||snapshot->graph.foreign_parents||snapshot->dependency_deleted)
+      reject(READER_METADATA_CONFLICT,"Only complete concurrent book versions can be resolved");
+    if(snapshot->graph.requires_restore && input->operation!=READER_COMMAND_RESTORE)
+      reject(READER_METADATA_CONFLICT,"Deleted history requires explicit restore");
+    reader_metadata_snapshot value=*snapshot;book_input(value,*input);assign_revision(value);
+    persist(*owner,value,out);return READER_METADATA_OK;
+  });
+}
 extern "C" reader_metadata_status reader_metadata_stage_book(reader_metadata_owner *owner,const reader_metadata_snapshot *snapshot,const reader_book_command *input,reader_metadata_result *out,reader_metadata_error *error){
   if(out)std::memset(out,0,sizeof(*out));
   return call(error,[&]{guard lock(owner);validate_snapshot(*owner,snapshot,READER_METADATA_BOOK);

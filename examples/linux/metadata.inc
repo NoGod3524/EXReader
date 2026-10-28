@@ -78,6 +78,8 @@ static exr_status metadata_prepare(linux_reader *reader,const reader_command *co
   result->has_metadata=1;
   snprintf(result->message,sizeof(result->message),"%s",result->metadata_conflict ?
     "Conflicting or removed book versions are retained; editing is disabled":"Book details ready");
+  if(result->metadata_conflict && view->head_count>1)
+    snprintf(result->message,sizeof(result->message),"Conflicting book versions are retained; editing is disabled. %zu heads: %.32s, %.32s",view->head_count,view->heads[0],view->heads[1]);
   return EXR_OK;
 }
 static exr_status metadata_save(linux_reader *reader,const reader_command *command,reader_result *result) {
@@ -85,7 +87,7 @@ static exr_status metadata_save(linux_reader *reader,const reader_command *comma
   if(!view || !command->metadata_token || command->metadata_token!=reader->metadata_token ||
      !command->metadata_key || strcmp(command->metadata_key,view->book.book_key) ||
      !command->metadata_title || !command->metadata_author || view->deleted ||
-     view->needs_bootstrap || (view->graph.revisions && !view->graph.projection_safe) ||
+     view->needs_bootstrap || (view->graph.revisions && !view->graph.projection_safe && !command->metadata_resolution) ||
      (command->metadata_favorite!=0 && command->metadata_favorite!=1)) return EXR_ARGUMENT;
   reader_metadata_error error={0};reader_metadata_result submitted={0};reader_metadata_status code;
   gchar *sort=g_utf8_normalize(command->metadata_title,-1,G_NORMALIZE_DEFAULT_COMPOSE);
@@ -93,7 +95,8 @@ static exr_status metadata_save(linux_reader *reader,const reader_command *comma
   reader_book_command edit=view->book;edit.operation=READER_COMMAND_PUT;
   edit.title=command->metadata_title;edit.author=command->metadata_author;edit.sort_title=sort;
   edit.favorite=command->metadata_favorite;
-  code=reader_metadata_stage_book(reader->metadata,reader->metadata_snapshot,&edit,&submitted,&error);g_free(sort);
+  code=command->metadata_resolution ? reader_metadata_stage_book_resolution(reader->metadata,reader->metadata_snapshot,&edit,&submitted,&error):
+    reader_metadata_stage_book(reader->metadata,reader->metadata_snapshot,&edit,&submitted,&error);g_free(sort);
   if(code!=READER_METADATA_OK) return metadata_pending_failure(reader,result,code,&error);
   code=reader_metadata_finish_pending(reader->metadata,&submitted,&error);
   result->metadata_committed=submitted.committed;result->metadata_pending=submitted.pending;
