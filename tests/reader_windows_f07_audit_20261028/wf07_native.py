@@ -43,7 +43,14 @@ def audit(raw, inventory, source):
     for label in module_builds:
         path = C.BUILD + label + '/install_manifest.txt'
         names = [C.exact_path(line, source['workspace']) for line in (raw / path).read_text(encoding='utf-8-sig').splitlines()]
-        C.require(len(set(names)) == len(names) and set(names) <= set(inventory), 'manifest duplicate/unretained input')
+        C.require(len(set(names)) == len(names) and set(names) <= set(inventory),
+                  'manifest duplicate/unretained input: ' + json.dumps(dict(
+                      manifest=path, operation_rows=len(names), distinct_files=len(set(names)),
+                      repeated_exact_paths={name: names.count(name) for name in sorted(set(names)) if names.count(name) > 1},
+                      unretained=sorted(set(names) - set(inventory)),
+                      spelling_aliases={key: sorted({name for name in names if name.casefold() == key})
+                                        for key in sorted({name.casefold() for name in names})
+                                        if len({name for name in names if name.casefold() == key}) > 1}), sort_keys=True))
         packages = {owners[name] for name in names if name in owners}
         C.require(packages, 'install manifest lacks exported package owner')
         build_packages[label] = packages
