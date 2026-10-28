@@ -1,7 +1,7 @@
 name: Windows account and read-only sync acceptance
 on:
   push:
-    branches: [codex/terra-wave-windows-sync]
+    branches: [codex/terra-wave-windows-sync, codex/windows-sync-conflict-semantics-20261028]
   workflow_dispatch:
 permissions:
   contents: read

@@ -973,15 +973,20 @@ def main():
         page_label = U.GetDlgItem(RB.window, 124)
         page_before = M.text(page_label)
         dialog = RB.open_account()
-        RB.run_sync(dialog)
+        # The transport can finish while intentionally planted conflicts remain.
+        # Wait for the host's truthful receive result rather than a clean-sync
+        # message, then retain the original data and conflict assertions below.
+        RB.press(dialog, SYNC)
+        RB.wait(lambda: '接收尚未完成' in RB.note(dialog)
+                and RB.enabled(dialog, RETRY) and '状态 FINISHED' in RB.detail(dialog), timeout=240)
         detail = RB.detail(dialog)
-        print(json.dumps({'planted_receive': detail}, ensure_ascii=False), flush=True)
+        print(json.dumps({'planted_receive': detail, 'note': RB.note(dialog)}, ensure_ascii=False), flush=True)
 
         def counter(label):
             found = re.search(label + r' (\d+)', detail)
             assert found, (label, detail)
             return int(found.group(1))
-        assert counter('并发版本') == 1 and counter('待依赖') == 1 and counter('墓碑') == 1, detail
+        assert counter('并发版本') == 1 and counter('缺祖先') == 1 and counter('待依赖') == 0 and counter('墓碑') == 1, detail
         assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (txt_key,)) == \
             [(txt_title, 0)], 'a concurrent metadata head must not be projected'
         assert sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (epub_key,)) == [(epub_title,)]
