@@ -3482,10 +3482,18 @@ static void paint_page_view(HWND window) {
     SetTextColor(dc, RGB(90, 90, 90));
     DrawTextW(dc, hint, -1, &text, DT_CENTER | DT_VCENTER | DT_WORDBREAK);
   }
-  if (GetFocus() == window) {
+  if (GetFocus() == window && !(SendMessageW(window, WM_QUERYUISTATE, 0, 0) & UISF_HIDEFOCUS)) {
     RECT focus = area;
-    focus.left += 1; focus.top += 1; focus.right -= 1; focus.bottom -= 1;
-    DrawFocusRect(dc, &focus);
+    /* The document owns keyboard input, not its surrounding letterbox. Keep
+       the cue on the rendered canvas; an empty view uses the whole control. */
+    if (g.frame.valid && g.view.valid) {
+      focus.left = g.view.dx; focus.top = g.view.dy;
+      focus.right = focus.left + (int)(g.frame.bitmap.width * g.view.scale);
+      focus.bottom = focus.top + (int)(g.frame.bitmap.height * g.view.scale);
+      IntersectRect(&focus, &focus, &area);
+    }
+    InflateRect(&focus, -1, -1);
+    if (!IsRectEmpty(&focus)) DrawFocusRect(dc, &focus);
   }
   EndPaint(window, &paint);
 }
@@ -3573,6 +3581,12 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
     case WM_KILLFOCUS:
       InvalidateRect(window, NULL, TRUE);
       return 0;
+    case WM_UPDATEUISTATE: {
+      /* DefWindowProc updates native cue state; repaint custom content after it. */
+      LRESULT result = DefWindowProcW(window, message, wparam, lparam);
+      InvalidateRect(window, NULL, TRUE);
+      return result;
+    }
     case WM_GETOBJECT:
       return host_a11y_page_object(window, wparam, lparam);
     case WM_NCDESTROY:
