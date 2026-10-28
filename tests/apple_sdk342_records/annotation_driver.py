@@ -63,7 +63,13 @@ def main():
              '--resources', out / ('retained-resources-' + label), '--output', evidence / ('original19-' + label)], label + '-original19')
         run([sys.executable, 'tools/build_apple_product.py', '--sdk', sdk, '--sdk-version', version, '--target', 'macos', '--product-prefix', products, '--selector-bytes-candidate', '--wave3', '--build', out / ('product-build-' + label)], label + '-products')
         executable = evidence / ('annotation-' + label)
+        # Preserve all app sources while letting this probe own the entry point.
+        app_source = (ROOT / 'examples/apple/ReaderApp.swift').read_text()
+        assert app_source.count('@main\n') == 1
+        probe_app = out / 'probe-app/ReaderApp.swift'; probe_app.parent.mkdir(exist_ok=True)
+        probe_app.write_text(app_source.replace('@main\n', '', 1))
         sources = [p for p in sorted((ROOT / 'examples/apple').glob('*.swift')) if p.name not in ('ReaderApp.swift', 'HostReadingRecords.swift')]
+        sources.append(probe_app)
         sources.append(owner)
         command = ['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library', '-O', '-D', 'EXR_APPLE_HOST_REVIEW', '-I', sdk / 'include', '-L', sdk / 'lib', '-lexreader', '-Xlinker', '-rpath', '-Xlinker', sdk / 'lib', *flags(sdk, products, True, True), *sources, ROOT / 'tests/apple_sdk342_records/AnnotationInterop.swift', '-o', executable]
         run(command, label + '-compile')
@@ -89,6 +95,8 @@ def main():
     import shutil
     (evidence / 'sources').mkdir()
     shutil.copyfile(ROOT / 'examples/apple/HostReadingRecords.swift', evidence / 'sources/actual-owner.swift')
+    shutil.copyfile(ROOT / 'examples/apple/ReaderApp.swift', evidence / 'sources/original-ReaderApp.swift')
+    shutil.copyfile(probe_app, evidence / 'sources/probe-ReaderApp.swift')
     if args.test_only_policy:
         shutil.copyfile(owner, evidence / 'sources/test-only-owner.swift')
     for name in ('AnchorSource.pdf', 'AnchorMissing.pdf', 'AnchorAmbiguous.pdf'):
