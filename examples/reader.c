@@ -295,6 +295,10 @@ typedef struct {
 
 static host_state g;
 static int dragging;
+#ifdef EXR_WINDOWS_FONT_REVIEW
+static int font_review_fail_layout;
+static int font_review_bad_txt_page;
+#endif
 #ifdef EXR_HOST_WORKER_REVIEW
 static int review_query_failure(int kind);
 #endif
@@ -944,6 +948,7 @@ struct host_job {
   int use_offset;
   int direction;
   int font_percent;
+  int font_relayout;
   int zoom_percent;
   exr_anchor anchor;
   int has_anchor;
@@ -2537,6 +2542,12 @@ static exr_status job_layout(host_job *job) {
   exr_control control = {job_cancel_check, NULL, job};
   size_t page = 0;
   size_t offset = job->has_anchor ? job->anchor.start : 0;
+#ifdef EXR_WINDOWS_FONT_REVIEW
+  if (job->font_relayout && font_review_fail_layout) {
+    font_review_fail_layout = 0;
+    return EXR_IO;
+  }
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   uint32_t background = g.session.background, foreground = g.session.foreground;
   int themed = g.session.themed;
@@ -2555,7 +2566,10 @@ static exr_status job_layout(host_job *job) {
     config.page.paragraph_spacing = job->prefs.paragraph_spacing;
   } else
 #endif
-  config.page.font_size = 28.0f * (float)job->font_percent / 100.0f;
+#ifdef EXR_READER_WINDOWS_WAVE3
+  if (!job->font_relayout)
+#endif
+    config.page.font_size = 28.0f * (float)job->font_percent / 100.0f;
   config.control.cancelled = host_cancel_check;
   config.control.context = NULL;
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
@@ -2581,6 +2595,18 @@ static exr_status job_layout(host_job *job) {
     if (status == EXR_OK) status = exr_pager_get(pager, page, &laid, &error);
     if (status == EXR_OK && !laid) status = EXR_FORMAT;
     if (status == EXR_OK) status = txt_frame(&candidate, &source, laid, page, &job->frame, &error);
+#ifdef EXR_WINDOWS_FONT_REVIEW
+    if (status == EXR_OK && job->font_relayout && font_review_bad_txt_page) {
+      font_review_bad_txt_page = 0;
+      job->frame.range_end = (size_t)job->txt_offset;
+    }
+#endif
+    if (status == EXR_OK && job->font_relayout &&
+        (job->frame.range_start > (size_t)job->txt_offset ||
+         job->frame.range_end < (size_t)job->txt_offset ||
+         (job->frame.range_end == (size_t)job->txt_offset && g.frame.range_end != (size_t)job->txt_offset))) {
+      status = EXR_FORMAT;
+    }
     if (status == EXR_OK) {
       job->candidate_pager = pager; pager = NULL;
       job->candidate_config = config;
@@ -2606,18 +2632,24 @@ static exr_status job_layout(host_job *job) {
 #endif
     if (status == EXR_OK) status = bounded_pager(&candidate, candidate.part, &pager, &error);
     candidate.pager = pager;
-    if (status == EXR_OK) status = exr_pager_anchor_resolve(pager, &point, &control, &match, &error);
+    if (status == EXR_OK && !job->font_relayout) status = exr_pager_anchor_resolve(pager, &point, &control, &match, &error);
     if (status == EXR_OK) {
-      size_t target = match.state == EXR_ANCHOR_FOUND ? match.start : point.start;
-      if (match.state != EXR_ANCHOR_FOUND) {
+      size_t target = job->font_relayout ? point.start : (match.state == EXR_ANCHOR_FOUND ? match.start : point.start);
+      if (job->font_relayout || match.state != EXR_ANCHOR_FOUND) {
         host_text_sink sink = {NULL, 0, 0};
         status = exr_pager_read_text(pager, target, target, page_text_sink, &sink, &control, &error);
-        candidate.hold_progress = 1;
-        copy_wstring(job->message, 512, L"字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。");
+        if (!job->font_relayout) {
+          candidate.hold_progress = 1;
+          copy_wstring(job->message, 512, L"字号变化时锚点未唯一匹配，按原章内偏移重排（未精确锚定）；保留原进度记录。");
+        }
       }
       if (status == EXR_OK) status = page_for_offset(&candidate, target, &control, &page, NULL, NULL, &error);
     }
     if (status == EXR_OK) status = render_reflow(&candidate, page, &job->frame, &control, &error);
+    if (status == EXR_OK && job->font_relayout &&
+        (job->frame.part != g.frame.part || job->frame.range_start > point.start ||
+         job->frame.range_end < point.start ||
+         (job->frame.range_end == point.start && g.frame.range_end != point.start))) status = EXR_FORMAT;
     exr_anchor_free(&point);
     if (status == EXR_OK) {
       job->candidate_pager = pager; job->candidate_config = config; job->have_frame = 1; job->applied_page = page;
@@ -2636,7 +2668,11 @@ static exr_status job_layout(host_job *job) {
 #endif
   if (status == EXR_OK) status = exr_pager_set_cache(pager, 2, 0, &error);
   if (status == EXR_OK) status = exr_pager_set_checkpoints(pager, 8, 4 * 1024 * 1024, 8, &error);
-  if (status == EXR_OK && job->has_anchor) {
+  if (status == EXR_OK && job->has_anchor
+#ifdef EXR_READER_WINDOWS_WAVE3
+      && !job->font_relayout
+#endif
+  ) {
     exr_anchor_match match;
     exr_status resolved = exr_anchor_resolve_ex(g.session.document, &job->anchor, &control, &match, &error);
     if (resolved != EXR_OK) {
@@ -2667,6 +2703,11 @@ static exr_status job_layout(host_job *job) {
     status = page_for_offset(&candidate, offset, &control, &page, NULL, NULL, &error);
     if (status == EXR_OK)
       status = render_reflow(&candidate, page, &job->frame, &control, &error);
+#ifdef EXR_READER_WINDOWS_WAVE3
+    if (status == EXR_OK && job->font_relayout &&
+        (job->frame.range_start > offset || job->frame.range_end < offset ||
+         (job->frame.range_end == offset && g.frame.range_end != offset))) status = EXR_FORMAT;
+#endif
     if (status == EXR_OK) {
       job->candidate_pager = pager; pager = NULL;
       job->candidate_config = config;
@@ -3641,17 +3682,26 @@ static int save_txt_progress(void) {
   host_job *job;
   reader_txp_position captured = {0};
   reader_txp_error detail = {0};
-  const uint64_t offset = (uint64_t)g.frame.range_start;
+  uint64_t offset = (uint64_t)g.frame.range_start;
   size_t take = g.frame.text_bytes;
+  const char *text = g.frame.utf8;
   const int force = g.txt_force_save;
   g.txt_force_save = 0;
   if (!g.session.txt_key[0] || g.txt_save_abandoned) return 1;
   if (g.session.hold_progress || g.frame.hold_progress) return 1;
+#ifdef EXR_READER_WINDOWS_WAVE3
+  if (w3_txt_font_point_current()) {
+    size_t skip = (size_t)(w3.txt_font_point - (uint64_t)g.frame.range_start);
+    if (skip > take) return 0;
+    offset = w3.txt_font_point;
+    text += skip; take -= skip;
+  }
+#endif
   if (!force && g.txt_saved_valid && !strcmp(g.txt_saved_key, g.session.txt_key)) {
     const uint64_t moved = offset > g.txt_saved_offset ? offset - g.txt_saved_offset : g.txt_saved_offset - offset;
     if (moved < HOST_TXT_SAVE_BYTES) return 1;
   }
-  if (reader_txp_capture(&captured, offset, g.frame.utf8, take, &detail) != READER_TXP_OK) {
+  if (reader_txp_capture(&captured, offset, text, take, &detail) != READER_TXP_OK) {
     set_status(L"无法记录阅读位置：文本位置不在可表示范围内；原记录保留。");
     return 0;
   }
@@ -4624,6 +4674,9 @@ static void handle_job_complete(host_job *job) {
         g.session.hold_progress = g.frame.hold_progress;
         memset(&g.selection, 0, sizeof(g.selection));
         g.session.page = g.frame.page;
+#ifdef EXR_READER_WINDOWS_WAVE3
+        if (job == w3.font_job) w3_after_font_job(job);
+#endif
         if (job->kind == JOB_LAYOUT && job->font_percent > 0) g.font_percent = job->font_percent;
         if (job->zoom_percent > 0) g.zoom_percent = job->zoom_percent;
         update_page_label();
@@ -5837,6 +5890,24 @@ static void finish_close(HWND window) {
 }
 
 static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+#ifdef EXR_WINDOWS_FONT_REVIEW
+  if (message == WM_APP + 32) {
+    if (wparam == 1) return (LRESULT)g.frame.part;
+    if (wparam == 2) return (LRESULT)g.frame.range_start;
+    if (wparam == 3) return (LRESULT)g.frame.range_end;
+    if (wparam == 4) return (LRESULT)g.frame.valid;
+    if (wparam == 5) { font_review_fail_layout = 1; return 1; }
+    if (wparam == 6) { g.session.hold_progress = 1; return 1; }
+    if (wparam == 7) return (LRESULT)g.session.hold_progress;
+    if (wparam == 8) return (LRESULT)g.session.bounded;
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+    if (wparam == 9) return w3_txt_font_point_current() ? (LRESULT)w3.txt_font_point : (LRESULT)-1;
+    if (wparam == 10) return (LRESULT)g.session.txt;
+    if (wparam == 11) { font_review_bad_txt_page = 1; return 1; }
+#endif
+    return 0;
+  }
+#endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
   if(message==WM_CONTEXTMENU && winio_context((HWND)wparam,lparam)) return 0;
 #endif
