@@ -1381,6 +1381,30 @@ static int old_target_quiescent(ctx *c) {
   return 1;
 }
 
+#ifndef EXR_MIGRATION_TX_CANDIDATE
+/* A transactional ledger cannot safely be maintained by the file-replacement
+   migrator, which only reads and writes the external legacy sidecar. */
+static int reject_transactional_ledger(ctx *c) {
+  sqlite3 *db = NULL;
+  sqlite3_stmt *stmt = NULL;
+  int rc = sqlite3_open_v2(c->target, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX, NULL);
+  if (rc == SQLITE_OK)
+    rc = sqlite3_prepare_v2(db, "SELECT 1 FROM sqlite_master WHERE type='table' AND name='exr_migration_ledger'", -1, &stmt, NULL);
+  if (rc == SQLITE_OK) rc = sqlite3_step(stmt);
+  sqlite3_finalize(stmt);
+  if (db) sqlite3_close(db);
+  if (rc == SQLITE_ROW) {
+    fail(c, O_REJECTED, "transactional-ledger", "this library has a transactional migration ledger; use the transaction migrator");
+    return 0;
+  }
+  if (rc != SQLITE_DONE) {
+    fail(c, O_BUSY, "target-busy", "cannot inspect the target ledger safely; close other handles and retry");
+    return 0;
+  }
+  return 1;
+}
+#endif
+
 static int snapshot_old_target(ctx *c) {
   sqlite3 *source = NULL, *dest = NULL;
   sqlite3_backup *backup = NULL;
@@ -1566,6 +1590,9 @@ static int run_migrate(ctx *c) {
   if (c->target_existed) {
     exr_library *source = NULL;
     if (!check_target_header(c)) return 0;
+#ifndef EXR_MIGRATION_TX_CANDIDATE
+    if (!reject_transactional_ledger(c)) return 0;
+#endif
     if (!lm_sha_file(c->target, c->target_sha, NULL)) { fail(c, O_FAILED, "target-unreadable", "cannot hash the target"); return 0; }
     if (c->target_version == 6) {
       if (!snapshot_old_target(c)) return 0;
