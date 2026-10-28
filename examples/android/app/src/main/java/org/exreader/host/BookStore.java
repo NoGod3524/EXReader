@@ -124,7 +124,20 @@ final class BookStore implements AutoCloseable {
     }
 
     NativeCatalog.Result bootstrapBook(long id,String revision,String[] expected,HostTask task) throws IOException {
-        return catalog.bootstrap(verifySource(id,null,0,task),revision,expected);
+        if(revision==null||!revision.matches("[0-9a-f]{32}"))
+            throw new IllegalArgumentException("Persist a stable native revision ID before submission");
+        VerifiedSource source=verifySource(id,null,0,task);
+        if(expected!=null&&expected.length==0){
+            // Older callers explicitly bootstrap after import. Import now already commits
+            // a stable original fact. Replay only that exact native command: never adopt
+            // arbitrary current heads or turn a stale request into a new edit.
+            String automatic=bookRequests.getString("book-"+source.key+".revision",null);
+            String[] selection=NativeCatalog.selection(catalog.nativeOwner(),"book",source.key);
+            if(automatic!=null&&selection.length==4&&"4".equals(selection[0])
+                    &&"0".equals(selection[1])&&automatic.equals(selection[3]))
+                return catalog.bootstrap(source,automatic,expected);
+        }
+        return catalog.bootstrap(source,revision,expected);
     }
 
     /** Finish every SDK source borrow before the network session can start. */
