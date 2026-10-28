@@ -1950,6 +1950,22 @@ static exr_status normalized_coordinates(ot_work *w, FT_Library library) {
     if (w->coordinates[i] < -65536 || w->coordinates[i] > 65536) return EXR_FONT;
   return EXR_OK;
 }
+#ifdef _WIN32
+#include <windows.h>
+#include <stdio.h>
+static unsigned long long ot_ticks[6], ot_calls, ot_frequency;
+static int ot_profile;
+static unsigned long long ot_clock(void) {
+  LARGE_INTEGER t; QueryPerformanceCounter(&t); return (unsigned long long)t.QuadPart;
+}
+static void ot_profile_dump(void) {
+  fprintf(stderr,"OT_PROFILE calls=%llu freq=%llu setup=%llu mapping=%llu gsub=%llu metrics=%llu gpos=%llu tail=%llu\n",
+    ot_calls,ot_frequency,ot_ticks[0],ot_ticks[1],ot_ticks[2],ot_ticks[3],ot_ticks[4],ot_ticks[5]);
+}
+#define OT_MARK(slot) do { if(ot_profile) { unsigned long long n=ot_clock(); ot_ticks[slot]+=n-ot_last; ot_last=n; } } while(0)
+#else
+#define OT_MARK(slot) ((void)0)
+#endif
 static exr_status shape(exr_font *font, size_t face_index, const char *text, size_t size,
                        const exr_shape_options *options, exr_shaped_glyph **out,
                        size_t *out_count, int vertical, exr_error *error) {
@@ -1962,6 +1978,13 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
   uint32_t cp, script,previous_scalar=0;
   int has_kern = 0;
   exr_shaped_glyph *result = NULL;
+#ifdef _WIN32
+  unsigned long long ot_last=0;
+  if(getenv("EXR_TXT_PROFILE")) {
+    if(!ot_profile) { LARGE_INTEGER f; QueryPerformanceFrequency(&f); ot_frequency=(unsigned long long)f.QuadPart; ot_profile=1; atexit(ot_profile_dump); }
+    ot_calls++; ot_last=ot_clock();
+  }
+#endif
   if (out) *out = NULL;
   if (out_count) *out_count = 0;
   if (!options) options = &defaults;
@@ -1997,6 +2020,7 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
   if (w.status != EXR_OK) goto done;
   w.gdef = (ot_view){w.face->ot->gdef.data,w.face->ot->gdef.size,&w};
   if (w.gdef.p && (u16(w.gdef, 0) != 1 || u16(w.gdef, 2) > 3)) { w.status = EXR_FONT; goto done; }
+  OT_MARK(0);
   script = options->script;
   while (at < size) {
     size_t start = at;
@@ -2076,7 +2100,9 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
           (options->direction == EXR_DIRECTION_AUTO &&
            (script == EXR_TAG('a','r','a','b') || script == EXR_TAG('h','e','b','r')));
   joining_forms(&w);
+  OT_MARK(1);
   apply_table(&w, &w.face->ot->gsub, script, 0, &has_kern);
+  OT_MARK(2);
   if (w.status != EXR_OK) goto done;
   if (exr_font_size(w.face, options->font_size)) { w.status = EXR_FONT; goto done; }
   for (i = 0; i < w.count; i++) {
@@ -2104,7 +2130,9 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
       if (cls != 3) previous_base = i;
     }
   }
+  OT_MARK(3);
   apply_table(&w, &w.face->ot->gpos, script, 1, &has_kern);
+  OT_MARK(4);
   if (!has_kern && feature_value(options, EXR_TAG('k','e','r','n'), (unsigned)!vertical)) {
     size_t previous = SIZE_MAX;
     for (i = 0; i < w.count; i++) {
@@ -2132,6 +2160,7 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
     w.status = exr_control_poll(&options->control, EXR_STAGE_SHAPE, size, size, error);
   if (w.status == EXR_OK) { *out = result; *out_count = w.count; result = NULL; }
 done:
+  OT_MARK(5);
   free(boundaries); free(pens); free(w.items); free(result);
   if (w.status == EXR_OK) return exr_fail(error, EXR_OK, "");
   return exr_fail(error, w.status, w.status == EXR_FONT ? "Invalid or unsupported OpenType data" :
