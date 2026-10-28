@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 from source_paths import COMMON_BASE as BASE, CALLER_PIN_PATHS
+import android_candidate
 
 ROOT=Path(__file__).resolve().parents[2]
 COMMON_PRODUCTION='49b2a7c86173181f8f79a760315ddb8ca2312bd1'
@@ -21,6 +22,8 @@ git=lambda *args:subprocess.check_output(['git',*args],text=True).strip()
 
 
 def validate_source(write=False):
+    if android_candidate.active():
+        return android_candidate.validate(write)
     assert os.environ.get('GITHUB_ACTIONS')=='true'
     source=os.environ['GITHUB_SHA'];assert git('rev-parse','HEAD')==source
     for parent in (BASE,COMMON_PRODUCTION,ORIGINAL,THEME,TESTED_THEME,PARSER,SDK):
