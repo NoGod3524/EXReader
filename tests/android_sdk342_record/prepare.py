@@ -79,4 +79,4 @@ out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(text)
 (out.parents[4] / 'generation.json').write_text(json.dumps({'base_sha256':hashlib.sha256(original.encode()).hexdigest(),
     'probe_sha256':hashlib.sha256(text.encode()).hexdigest(), 'source':'tests/reader_android_record_interop/candidate.py',
-    'scope':'semantic probe; production parser policy remains unchanged'}, indent=2)+'\n')
+    'scope':'actual host resolution and navigation of authenticated Android 3.41 wires'}, indent=2)+'\n')
