@@ -1,7 +1,7 @@
 name: Apple annotation exchange native acceptance
 on:
   push:
-    branches: [codex/terra-wave-apple-annotations]
+    branches: [codex/terra-wave-apple-annotations, codex/reader-apple-feature-common-prep-20261028]
   workflow_dispatch:
 permissions:
   contents: read
