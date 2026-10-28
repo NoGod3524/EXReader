@@ -235,6 +235,58 @@ jobs:
             adb install -r -t build/wave3/artifacts/app-debug.apk
             adb install -r -t build/wave3/artifacts/organization-debug-androidTest.apk
             python3 tests/reader_android_organization_sync/run.py --fixture build/wave3/network-fixture --output build/wave3/evidence/organization-sync
+      - name: Seal native APK identity
+        if: ${{ !cancelled() }}
+        run: |
+          cd build/wave3/artifacts
+          sha256sum *.apk > runtime-apks.sha256
+          printf '%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > runtime-identity.txt
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: org-android-runtime-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/wave3/artifacts/
+            build/wave3/network-fixture/
+            build/wave3/fixtures/
+            build/wave3/download/
+            build/wave3/navigation-fixtures/
+            build/wave3/reading-fixtures/
+            build/wave3/sync-reading-fixtures/
+            build/wave3/candidate/provenance.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: org-android-regression-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/wave3/logs/
+            build/wave3/evidence/
+            build/organization-source.json
+          if-no-files-found: error
+  android-retained:
+    needs: android-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-android-runtime-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/wave3
+      - name: Verify same-round APK identity and prepare unchanged sync runner
+        run: |
+          cd build/wave3/artifacts
+          printf '%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > expected-identity.txt
+          cmp runtime-identity.txt expected-identity.txt
+          sha256sum -c runtime-apks.sha256
+          cd ../../..
+          python3 tests/reader_android_organization_sync/prepare_sync_341.py
+          sudo chmod 666 /dev/kvm
       - name: Execute original C11 navigation and reading suites
         if: ${{ !cancelled() }}
         uses: reactivecircus/android-emulator-runner@v2
@@ -263,7 +315,7 @@ jobs:
           script: |
             adb install -r -t build/wave3/artifacts/app-debug.apk
             adb install -r -t build/wave3/artifacts/original-sync-debug-androidTest.apk
-            python3 tests/reader_host_session_android/run_ui.py --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/original-sync
+            python3 tests/reader_host_session_android/run_ui.py --sdk-version 3.41.0 --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/original-sync
       - name: Execute strict 3.41 sync UI adapter
         if: ${{ !cancelled() }}
         uses: reactivecircus/android-emulator-runner@v2
@@ -278,29 +330,15 @@ jobs:
           script: |
             adb install -r -t build/wave3/artifacts/app-debug.apk
             adb install -r -t build/wave3/artifacts/sync-341-debug-androidTest.apk
-            python3 tests/reader_android_organization_sync/host_sync_341.py --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/sync-341
-      - name: Seal native APK identity
-        if: ${{ !cancelled() }}
-        run: |
-          cd build/wave3/artifacts
-          sha256sum *.apk > runtime-apks.sha256
-          printf '%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > runtime-identity.txt
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: org-android-runtime-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            build/wave3/artifacts/
-            build/wave3/network-fixture/
-          if-no-files-found: error
+            python3 tests/reader_android_organization_sync/host_sync_341.py --sdk-version 3.41.0 --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/sync-341
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: org-android-regression-${{ github.run_id }}-${{ github.run_attempt }}
+          name: org-android-retained-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            build/wave3/logs/
             build/wave3/evidence/
-            build/organization-source.json
+            build/wave3/artifacts/runtime-identity.txt
+            build/wave3/artifacts/runtime-apks.sha256
           if-no-files-found: error
   gtk-first:
     runs-on: ubuntu-22.04
@@ -569,7 +607,7 @@ jobs:
             !build/**/key.pem
           if-no-files-found: error
   verify:
-    needs: [android-build, gtk-first, android, gtk-return, android-final]
+    needs: [android-build, android-retained, gtk-first, android, gtk-return, android-final]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
