@@ -1,0 +1,24 @@
+name: Inspect retained Apple annotation iPad failure
+on:
+  push:
+    branches: [codex/apple-annotation-ipad-log-inspection-20261028]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate existing ZIP and inspect retained XCTest log
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_ipad_annotation_inspect/inspect.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-ipad-annotation-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-ipad-annotation-inspection/
+          if-no-files-found: error
+          retention-days: 30
