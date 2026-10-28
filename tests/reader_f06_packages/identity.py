@@ -12,7 +12,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/f06'
-BASE = 'b61cd85fb19c9347b020d9b66b53a7d474c57f5d'
+BASE = 'e97b197fa62f3602f0179804b45f7546af2f155e'
 TARGETS = ('windows', 'linux', 'macos', 'android', 'iphone', 'ipad')
 sys.path.insert(0, str(ROOT / 'tools/reader_wave3_package'))
 import delivery
@@ -32,7 +32,7 @@ def guard():
     assert run('git', 'rev-parse', 'HEAD').strip() == os.environ['GITHUB_SHA']
     run('git', 'merge-base', '--is-ancestor', BASE, 'HEAD')
     changed = run('git', 'diff', '--name-only', BASE, 'HEAD').splitlines()
-    assert all(p.startswith('tests/reader_f06_packages/') or p == '.github/workflows/reader-f06-packages.yml' for p in changed), changed
+    assert all(p.startswith('tests/reader_f06_packages/') or p in ('.github/workflows/reader-f06-packages.yml', '.github/workflows/f06-windows-sdk342.yml') for p in changed), changed
     data = dict(common(), base_sha=BASE, changed_paths=changed,
                 sdk_tree=run('git', 'rev-parse', 'HEAD:src').strip(), include_tree=run('git', 'rev-parse', 'HEAD:include').strip(),
                 product_tree=run('git', 'rev-parse', 'HEAD:apps').strip(), examples_tree=run('git', 'rev-parse', 'HEAD:examples').strip(),
