@@ -284,6 +284,8 @@ jobs:
             build/account-a11y/
             build/ws-host/windows-host.map
             build/ws-host/CMakeCache.txt
+            build/ws-revisions/CMakeCache.txt
+            build/baseline-revisions/CMakeCache.txt
             build/ws-package/
             build/wprefs-ui/
             build/wprefs-package/

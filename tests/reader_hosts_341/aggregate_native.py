@@ -11,6 +11,8 @@ import sys
 
 ROOT=Path(__file__).resolve().parents[2]
 from source_paths import COMMON_BASE as BASE
+sys.path.insert(0, str(ROOT/'tests/reader_windows_341'))
+import candidate as windows_candidate
 SDK='edddc463c06ed5731195cdb8f06b2df6dff7699e'
 SCHEMA_OWNER='07ebe8786434ef384c97ccdb451242d3c6aee6cb'
 sys.path.insert(0,str(ROOT/'tests/reader_hosts_integration'))
@@ -257,14 +259,20 @@ def windows_summary(key,value,source,ref):
     identity=value['identity'];files=identity['files']
     require(identity['source_sha']==source and str(identity['run_id'])==str(ref['run_id']) and
             str(identity['attempt'])==str(ref['attempt']) and identity['sdk_version']=='3.41.0' and
-            identity['sdk_abi']==1 and identity['sdk_source']==SDK and identity['baseline_sdk_version']=='3.40.0' and
+            identity['sdk_abi']==1 and identity['sdk_source']==(windows_candidate.SDK if windows_candidate.active() and source==os.environ.get('GITHUB_SHA') else SDK) and identity['baseline_sdk_version']=='3.40.0' and
             identity['baseline_source']=='9854061be331fe603a1822d9b2b36ee357154927' and
             identity['complete_product'] is False and identity['full_host_options']==
             {name:True for name in ('SEARCH','NAVIGATION','RECORDS','IMPORT_ORGANIZE','PREFERENCES')},
             'one full native Windows host and independent old SDK baseline absent')
+    if windows_candidate.active() and source==os.environ.get('GITHUB_SHA'):
+        require(identity.get('sdk_checkout_source')==source and identity.get('raw3')==
+                dict(host=False,baseline_host=False,revisions=False,baseline_revisions=False),
+                'candidate source or actual raw-v3 options differ')
     expected={'production','packaged_production','f3_production','shelf_review','atomic_review','old_veto_control',
               'baseline','production_map','atomic_map','control_map','baseline_map','host_cache','baseline_cache',
               'sdk_header','sdk_config','sdk_version','baseline_header','baseline_config','baseline_version'}
+    if windows_candidate.active() and source==os.environ.get('GITHUB_SHA'):
+        expected |= {'revisions_cache','baseline_revisions_cache'}
     require(set(files)==expected and all(positive(row['bytes']) and isinstance(row['path'],str) and
             re.fullmatch('[0-9a-f]{64}',row['sha256']) for row in files.values()),'actual Windows file identity inventory incomplete')
     product=files['production']['sha256'];review=files['atomic_review']['sha256'];control=files['old_veto_control']['sha256']
@@ -379,9 +387,12 @@ def collect(manifest,source):
 
 def source_guard(source):
     require(source==os.environ['GITHUB_SHA'],'collector checkout must be the exact fixed leaf source')
-    subprocess.run(['git','merge-base','--is-ancestor',BASE,source],check=True)
-    subprocess.run(['git','diff','--exit-code',BASE,source,'--','apps','examples','extras','tools'],check=True)
-    subprocess.run(['git','diff','--exit-code',SDK,source,'--','src','include','cmake','CMakeLists.txt','bindings','tests/fixtures','licenses'],check=True)
+    if windows_candidate.active():
+        windows_candidate.admit(source)
+    else:
+        subprocess.run(['git','merge-base','--is-ancestor',BASE,source],check=True)
+        subprocess.run(['git','diff','--exit-code',BASE,source,'--','apps','examples','extras','tools'],check=True)
+        subprocess.run(['git','diff','--exit-code',SDK,source,'--','src','include','cmake','CMakeLists.txt','bindings','tests/fixtures','licenses'],check=True)
     subprocess.run(['git','diff','--exit-code',SCHEMA_OWNER,source,'--','apps/reader/store/001_catalog.sql'],check=True)
     header=subprocess.check_output(['git','show',source+':apps/reader/revisions/include/reader_revisions.h'],text=True)
     require('#define READER_REVISION_ANCHOR_MAX_VERSION 2u' in header,'this collector has not adopted raw selector v3')

@@ -8,6 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tests/reader_hosts_341'))
 from source_paths import COMMON_BASE as BASE, CALLER_PIN_PATHS
+import candidate
 SDK = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 FROZEN = '9854061be331fe603a1822d9b2b36ee357154927'
 WORKFLOW = '.github/workflows/reader-windows-341-common.yml'
@@ -17,13 +18,16 @@ def main():
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
     source = os.environ['GITHUB_SHA']
     assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == source
-    subprocess.run(['git', 'merge-base', '--is-ancestor', BASE, source], check=True)
-    subprocess.run(['git', 'diff', '--exit-code', BASE, source, '--', 'apps', 'examples', 'extras', 'tools'], check=True)
-    subprocess.run(['git', 'diff', '--exit-code', SDK, source, '--', 'src', 'include', 'cmake', 'CMakeLists.txt', 'bindings', 'tests/fixtures'], check=True)
-    # Keep every original assertion and fixture byte: only new caller paths move.
-    for path in subprocess.check_output(['git', 'diff', '--name-only', BASE, source], text=True).splitlines():
-        assert path in CALLER_PIN_PATHS or path.startswith(('tests/reader_windows_341/', 'docs/READER-WINDOWS-341-COMMON',
-                                'docs/validation/reader-windows-341-common')) or path == WORKFLOW, path
+    if candidate.active():
+        candidate.admit(source)
+    else:
+        subprocess.run(['git', 'merge-base', '--is-ancestor', BASE, source], check=True)
+        subprocess.run(['git', 'diff', '--exit-code', BASE, source, '--', 'apps', 'examples', 'extras', 'tools'], check=True)
+        subprocess.run(['git', 'diff', '--exit-code', SDK, source, '--', 'src', 'include', 'cmake', 'CMakeLists.txt', 'bindings', 'tests/fixtures'], check=True)
+        # Keep every original assertion and fixture byte: only new caller paths move.
+        for path in subprocess.check_output(['git', 'diff', '--name-only', BASE, source], text=True).splitlines():
+            assert path in CALLER_PIN_PATHS or path.startswith(('tests/reader_windows_341/', 'docs/READER-WINDOWS-341-COMMON',
+                                    'docs/validation/reader-windows-341-common')) or path == WORKFLOW, path
     header = (ROOT / 'apps/reader/revisions/include/reader_revisions.h').read_text(encoding='utf-8')
     assert '#define READER_REVISION_ANCHOR_MAX_VERSION 2u' in header
     workflow = (ROOT / WORKFLOW).read_text(encoding='utf-8')
@@ -33,7 +37,8 @@ def main():
         assert required in workflow, required
     out = ROOT / 'build/windows-341-guard'; out.mkdir(parents=True, exist_ok=True)
     (out / 'source.json').write_text(json.dumps(dict(source_sha=source, run_id=os.environ['GITHUB_RUN_ID'],
-        attempt=os.environ['GITHUB_RUN_ATTEMPT'], base=BASE, sdk_source=SDK, frozen_source=FROZEN,
+        attempt=os.environ['GITHUB_RUN_ATTEMPT'], base=candidate.BASE if candidate.active() else BASE,
+        sdk_source=candidate.SDK if candidate.active() else SDK, sdk_checkout_source=source, frozen_source=FROZEN,
         production_unchanged=True, original_judges_unchanged=True, sdk_version='3.41.0',
         complete_product=False), indent=2) + '\n')
 
