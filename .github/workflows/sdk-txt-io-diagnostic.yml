@@ -28,4 +28,8 @@ jobs:
           cmake --build build/txt-profile --parallel 4
           ctest --test-dir build/txt-profile -V -R '^bounded_txt_view$' --no-tests=error
           python -c "from pathlib import Path; p=Path('build/txt-profile/input.txt'); f=p.open('w',encoding='utf-8',newline='\n'); [f.write('Unique history line %08d with distinct content and a readable paragraph for page navigation.\n' % i) for i in range(200000)]; [f.write('A repeated paragraph has the DUPLICATE-NEEDLE marker and identical text for ambiguity checks.\n') for i in range(3000)]; f.close()"
+          python -c "from tools.host_font import fetch; fetch('build/host-font-cache')"
+          echo Arial
           build/txt-profile/bounded_txt_large_pager.exe build/txt-profile/input.txt record build/txt-profile/position.txt
+          echo NotoSansCJK
+          build/txt-profile/bounded_txt_large_pager.exe build/txt-profile/input.txt record build/txt-profile/position.txt build/host-font-cache/Reader.otf

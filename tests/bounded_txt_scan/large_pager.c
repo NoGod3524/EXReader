@@ -22,7 +22,7 @@ int main(int argc,char **argv) {
   exr_layout_config config=exr_layout_config_defaults();
   PROCESS_MEMORY_COUNTERS_EX memory={0};
   int replay;size_t saved_page=0,saved_start=0,saved_end=0;FILE *position;
-  if(argc!=4) return 2;
+  if(argc!=4 && argc!=5) return 2;
   replay=strcmp(argv[2],"replay")==0;
   if(!replay && strcmp(argv[2],"record")!=0) return 2;
   if(replay) {
@@ -37,9 +37,9 @@ int main(int argc,char **argv) {
     source.size=(uint64_t)length.QuadPart; }
   source.context=in;source.read_at=read_at;source.release=release_source;
   QueryPerformanceFrequency(&frequency);QueryPerformanceCounter(&begin);
-  if(exr_font_open("C:/Windows/Fonts/arial.ttf",&font,&error)!=EXR_OK) die("font",&error);
+  if(exr_font_open(argc==5?argv[4]:"C:/Windows/Fonts/arial.ttf",&font,&error)!=EXR_OK) die("font",&error);
   config.page.width=720;config.page.height=1040;config.page.margin=36;
-  config.page.font_size=47.6f;config.page.line_height=1.5f;config.page.paragraph_spacing=10;
+  config.page.font_size=42.0f;config.page.line_height=1.5f;config.page.paragraph_spacing=10;
   if(exr_txt_pager_create(&source,font,&config,&pager,&error)!=EXR_OK) { release_source(in);die("open",&error); }
   if(exr_pager_set_cache(pager,2,8*1024*1024,&error)!=EXR_OK ||
      exr_pager_set_checkpoints(pager,8,4*1024*1024,8,&error)!=EXR_OK) die("cache",&error);
