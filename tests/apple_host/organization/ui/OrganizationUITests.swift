@@ -60,9 +60,10 @@ final class OrganizationUITests: XCTestCase {
         guard let node = try? element(id).snapshot() else { return "" }
         return node.label.isEmpty ? (node.value as? String ?? "") : node.label
     }
-    private func launch(fresh: Bool, pauseAfterStage: Bool = false) {
+    private func launch(fresh: Bool, pauseAfterStage: Bool = false, conflictReview: Bool = false) {
         app.launchEnvironment = pauseAfterStage ? ["EXR_ORGANIZATION_PAUSE_AFTER_STAGE": "1"] : [:]
         app.launchArguments = ["-EXRUITestFixtures", "1"] + (fresh ? ["-EXRFreshState", "1"] : [])
+            + (conflictReview ? ["-EXROrganizationConflictReview"] : [])
         app.launch()
         XCTAssertTrue(element("library.organization").waitForExistence(timeout: 90), app.debugDescription)
         XCTAssertTrue(wait { !self.element("library.busy").exists })
@@ -222,6 +223,26 @@ final class OrganizationUITests: XCTestCase {
         tap("organization.children")
         select("Child Shelf")
         steps.append("restart")
+    }
+
+    func testStaleEditDoesNotOverwriteCompetingRevision() {
+        launch(fresh: true, conflictReview: true)
+        tap("library.organization")
+        kind("shelf")
+        create("Original Shelf")
+        select("Original Shelf")
+        tap("organization.review-compete")
+        XCTAssertTrue(wait { self.text("organization.message").contains("竞争版本已提交") }, app.debugDescription)
+        steps.append("competing")
+        enterName("Stale Edit")
+        tap("organization.rename")
+        XCTAssertTrue(element("organization.retry").waitForExistence(timeout: 60), app.debugDescription)
+        steps.append("refused")
+        tap("organization.abandon")
+        tap("organization.refresh")
+        XCTAssertTrue(row("Concurrent Shelf").waitForExistence(timeout: 60), app.debugDescription)
+        XCTAssertFalse(row("Stale Edit").exists)
+        steps.append("preserved")
     }
 
 }
