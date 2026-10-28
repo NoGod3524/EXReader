@@ -31,7 +31,8 @@ def main():
             proof = json.loads(z.read('provenance.json'))
             for entry in (value, proof):
                 assert (entry['source_sha'], entry['run_id'], entry['attempt']) == (source, run, attempt)
-            assert value['accepted'] and value['sdk_version'] == '3.42.0' and value['sdk_source'] == '8357eafa28423a7ab93ba08b823af80f01ad1505'
+            assert value['accepted'] and value['sdk_version'] == '3.42.0' and value['sdk_source'] == source
+            assert proof['sdk_content_candidate'] == '8357eafa28423a7ab93ba08b823af80f01ad1505'
             assert value['original_on_off_exact'] and len(value['reports']['off']['checks']) == 10 and len(value['reports']['on']['checks']) == 37
             assert not proof['page_theme_ui_accepted'] and not proof['physical_device']
             assert hashlib.sha256(z.read('original-run-native.py')).hexdigest() == proof['original_sha256']
