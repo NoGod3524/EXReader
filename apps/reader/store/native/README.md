@@ -1,7 +1,10 @@
 # Native product catalog adapter
 
-This C11 product module opens the existing `001_catalog.sql` in an independent
-EXRP/schema-1 database. It does not change the SDK or open the SDK's private
+This C11 product module opens an independent EXRP product catalog. A new
+catalog applies `001_catalog.sql`, `002_originals.sql` and
+`003_original_staging.sql` in order; existing versions 1 and 2 are upgraded
+to version 3 on open. Unsupported identities and versions are refused.
+It does not change the SDK or open the SDK's private
 tables. Windows and GTK hosts will call it on their existing worker after
 verifying source bytes through public SDK APIs.
 
