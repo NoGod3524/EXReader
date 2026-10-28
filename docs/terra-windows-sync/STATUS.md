@@ -44,3 +44,43 @@ unavailability and physical remote HTTPS remain outside the historical suite's
 scope. No shared sync module was changed; coordinate integration with the other
 platform branches before changing shared files. The blocked D13 experiment was
 not run or altered.
+
+## Continuation: missing originals and exact-source replay
+
+On `bf6d3765b36688b00235f9edfaa1d78b03d0c69e`, the Windows account
+receiver can fetch a missing original for already-retained metadata on retry.
+It downloads to a unique private name, verifies the expected byte count and hash,
+and publishes without replacing an existing cached original. A 404 remains
+waiting; transfer/verification failures are reported separately. The account
+message and read-only status now expose incomplete local receive. The fixture
+uses actual bytes and their real hash instead of the impossible all-`e` digest;
+it first observes the absent original, checks the read-only status without
+changing either database, publishes those bytes, retries, and verifies the mapped
+original. The original 32 named checks and 240-second completion wait remain.
+
+[Actions run 40630766485/1](https://github.com/NoGod3524/EXReader/actions/runs/40630766485)
+passed the composed Wave3 host and consumer builds. The account test observed
+staging cancellation followed by retry and progressed through the new absent
+original/status/retry assertions and 29 original named checks. The separate
+organization suite passed, including cancellation during original import,
+retry without a duplicate, and exact original readback hashes. These observations
+are on the same source and executable; the overall run **failed** and the full
+32-case account suite is **not accepted**.
+
+The retained suite subsequently plants a concurrent book head, a book with a
+missing parent, and a tombstone. Its `RB.run_sync` still requires the literal
+completion message before inspecting those deliberately unresolved heads. The
+host instead reports receive incomplete, with one concurrent version and one
+missing parent; after the unchanged 240-second wait, the test fails. The next
+retained assertion also expects the missing book parent under `待依赖`, whereas
+the current host classifies it as `缺祖先`. Neither assertion was changed or
+satisfied through a false completion message. The product/test contract for
+this conflict fixture must be reconciled before granting acceptance; replaying
+the same test without that reconciliation will repeat the mismatch. Status
+across every cancellation and retry transition remains incomplete; the retained
+Wave3 checks cover unknown and failed sessions, and this continuation covers the
+missing-original receive state.
+
+No shared sync module or parallel worktree was edited. Android, Apple, and Linux
+sync branches progressed independently from the original base and must be
+integrated by their owners; this branch has not merged their changes.
