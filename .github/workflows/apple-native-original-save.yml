@@ -59,4 +59,5 @@ jobs:
       - name: Report retained macOS failure
         run: |
           cat evidence/result.json
+          grep -n -E 'OriginalSaveUITests.swift:|error:|XCTAssert|Missing |Test Case| t = ' evidence/native.log | tail -100 || true
           tail -180 evidence/native.log
