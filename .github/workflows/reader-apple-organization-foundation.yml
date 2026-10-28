@@ -1,0 +1,56 @@
+name: Apple organization foundation
+on:
+  push:
+    branches: [codex/terra-wave-apple-organization]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+jobs:
+  metadata:
+    runs-on: macos-15
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve frozen SDK and catalog schema
+        run: |
+          git diff --exit-code f34a4f27161061d08ecc40f5cebfb6f5018aa77f HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code a6d7dd81eef36e83e004fdc381a565a2ffee5462 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Install SDK and organization owner for target
+        run: |
+          set -o pipefail
+          options=()
+          if test '${{ matrix.target }}' = iphonesimulator; then
+            options=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          fi
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${options[@]}"
+          cmake --build build/sdk --parallel 4
+          cmake --install build/sdk --prefix "$PWD/stage"
+          python3 tools/build_apple_product.py --sdk stage --target '${{ matrix.target }}' --build build/product --organization
+      - name: Exercise installed owner and process-death recovery on macOS
+        if: matrix.target == 'macos'
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_commands/consumer -B build/commands-consumer -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/stage"
+          cmake --build build/commands-consumer --verbose
+          cmake -S tests/reader_metadata/consumer -B build/metadata-consumer -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/stage"
+          cmake --build build/metadata-consumer --verbose 2>&1 | tee build/metadata-consumer-build.log
+          python3 tests/reader_metadata/check_metadata.py --consumer build/metadata-consumer/metadata-consumer --c-consumer build/metadata-consumer/metadata-c-consumer --command-consumer build/commands-consumer/command-consumer --product-prefix stage --link-map build/metadata-consumer/metadata-link.map --build-log build/metadata-consumer-build.log --output build/metadata-evidence
+      - name: Preserve logs and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-organization-foundation-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/metadata-evidence/
+            build/metadata-consumer-build.log
+            build/metadata-consumer/metadata-link.map
+            stage/share/exreader-apple/product.json
+          if-no-files-found: warn
