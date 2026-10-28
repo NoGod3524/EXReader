@@ -1,8 +1,5 @@
 name: Apple large-type reading and organization drivers
 on:
-  push:
-    branches: [codex/dot-apple-large-type-drivers]
-    paths-ignore: ['docs/apple-large-type-drivers/**']
   workflow_dispatch:
 permissions:
   contents: read

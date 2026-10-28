@@ -27,10 +27,9 @@ final class OrganizationLargeTypeUITests: XCTestCase {
     private func start(_ orientation: UIDeviceOrientation) {
         XCTAssertGreaterThan(UIFont.preferredFont(forTextStyle: .caption1).pointSize, 20)
         XCUIDevice.shared.orientation = orientation
-        app.launchArguments = ["-EXRUITestFixtures", "1", "-EXRFreshState", "1"]
+        app.launchArguments = ["-EXRUITestFixtures", "1"]
         app.launch()
-        XCTAssertTrue(wait { self.element("library.import.epub").exists && !self.element("library.busy").exists })
-        tap("library.import.epub")
+        if element("reader.back").exists { tap("reader.back") }
         XCTAssertTrue(wait { self.element("library.book.0").exists && !self.element("library.busy").exists })
         tap("library.book.0")
         XCTAssertTrue(wait { self.element("reader.page").exists && !self.element("reader.busy").exists })
@@ -50,6 +49,18 @@ final class OrganizationLargeTypeUITests: XCTestCase {
         XCTAssertTrue(wait { self.element("reader.page").exists && !self.element("reader.busy").exists })
         tap("reader.back")
         record("returned")
+    }
+    // Setup-only: the test-only fixture control is taller than its scroll viewport
+    // at maximum type. Import via the actual app at default size, then the runner
+    // independently sets and records the real OS maximum size for both tests.
+    func testPrepareOriginalThroughApp() {
+        XCUIDevice.shared.orientation = .portrait
+        app.launchArguments = ["-EXRUITestFixtures", "1", "-EXRFreshState", "1"]
+        app.launch()
+        XCTAssertTrue(wait { self.element("library.import.epub").exists && !self.element("library.busy").exists })
+        tap("library.import.epub")
+        XCTAssertTrue(wait { self.element("library.book.0").exists && !self.element("library.busy").exists })
+        record("default-size-setup-only")
     }
     func testMaximumTypePortraitOrganizationAndReturn() {
         start(.portrait)
