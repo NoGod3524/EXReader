@@ -25,6 +25,7 @@ sys.path.insert(0, str(ROOT / 'tests/reader_a11y_windows'))
 from uia_layer import Uia
 
 TIMEOUT = 240  # Original Windows TXT search timeout, not expanded for this suite.
+EXR_CANCELLED = 9  # Public include/exr/base.h status enum.
 
 
 def digest(path):
@@ -127,135 +128,176 @@ def main():
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     original = out / 'Forward scan original.txt'
-    source = fixture(original)
     report = dict(accepted=False, source_sha=os.environ['GITHUB_SHA'],
                   run_id=os.environ['GITHUB_RUN_ID'], attempt=os.environ['GITHUB_RUN_ATTEMPT'],
-                  original=dict(bytes=len(source), sha256=digest(original)),
-                  candidate_sha256=digest(args.candidate), reference_sha256=digest(args.reference),
+                  original=None, candidate_sha256=None, reference_sha256=None,
                   timeout_seconds=TIMEOUT, runs={}, comparisons=[], failures=[],
                   scope='Actual Windows application, native picker and search controls; two fresh profiles; same-source from-first reference; no database preload')
     os.environ['EXR_TRACE_TXT'] = '1'
     app = None
     boundary_cases = []
     try:
+        source = fixture(original)
+        report['original'] = dict(bytes=len(source), sha256=digest(original))
         for mode, exe in (('reuse', args.candidate), ('from_first', args.reference)):
-            checks = report['runs'][mode] = []
-            profile = out / ('profile-' + mode)
-            app = ui.P.App(exe.resolve(), args.font.resolve(), profile)
-            automation = Uia()
-            assert automation.available, automation.error
-            app.wait_idle()
-            ui.picker(app, original)
-            app.wait(lambda: ui.send(app.control('books'), 0x18B) == 1, timeout=300)
-            ui.send(app.control('books'), 0x186, 0)
-            app.click('open')
-            app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=TIMEOUT)
-            app.wait_idle()
-            assert 'ROW0000000' in page(app, automation)
+            report['runs'][mode] = []
+            report['active_case'] = dict(mode=mode, case='launch', started_unix=time.time())
+            try:
+                report['candidate_sha256' if mode == 'reuse' else 'reference_sha256'] = digest(exe)
+                checks = report['runs'][mode] = []
+                profile = out / ('profile-' + mode)
+                app = ui.P.App(exe.resolve(), args.font.resolve(), profile)
+                automation = Uia()
+                assert automation.available, automation.error
+                app.wait_idle()
+                ui.picker(app, original)
+                app.wait(lambda: ui.send(app.control('books'), 0x18B) == 1, timeout=300)
+                ui.send(app.control('books'), 0x186, 0)
+                app.click('open')
+                app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=TIMEOUT)
+                app.wait_idle()
+                assert 'ROW0000000' in page(app, automation)
 
-            def run_case(name, query, offset=None):
-                if offset is None:
-                    offset = source.index(query.encode())
-                result = seek(app, automation, source, name, query, offset)
-                checks.append(result)
-                print('FORWARD_SCAN_CASE ' + json.dumps(dict(mode=mode, **result)), flush=True)
-                return result
+                def run_case(name, query, offset=None):
+                    if offset is None:
+                        offset = source.index(query.encode())
+                    report['active_case'] = dict(mode=mode, case=name, query=query, offset=offset,
+                                                 started_unix=time.time())
+                    result = seek(app, automation, source, name, query, offset)
+                    checks.append(result)
+                    print('FORWARD_SCAN_CASE ' + json.dumps(dict(mode=mode, **result)), flush=True)
+                    return result
 
-            run_case('first-page', 'ROW0000000')
-            run_case('forward-prefix', 'ROW0000100')
-            # A second target on the current page, then one beyond it.
-            warm = run_case('forward-nearby', 'ROW0000120')
-            if mode == 'reuse':
-                start, end = warm['scan']['start'], warm['scan']['end']
-                # Exact displayed start and the byte on each side of its next boundary.
-                # Single-line queries preserve byte offsets in the real edit control.
-                for name, at in (('exact-page-start', start), ('last-byte-of-page', end - 1), ('next-page-boundary', end)):
-                    if source[at:at + 1] == b'\n':
-                        # A newline cannot be entered in the one-line search box;
-                        # separately retain the exact range boundary and use adjacent byte.
-                        boundary_cases.append((name + '-newline-adjacent', at + 1, source[at + 1:at + 13].split(b'\n')[0].decode()))
-                    else:
-                        query = source[at:at + 24].split(b'\n')[0].decode()
-                        boundary_cases.append((name, at, query))
-                report['boundary_requests'] = boundary_cases
-            for name, at, query in boundary_cases:
-                run_case(name, query, at)
-            run_case('backward-before-current', 'ROW0000003')
-            # Same exact phrase at two different original offsets, not substring-only evidence.
-            offsets = [match.start() for match in re.finditer(b'repeated needle', source[:40000])]
-            run_case('repeated-content-forward', 'repeated needle', offsets[25])
-            run_case('repeated-content-backward', 'repeated needle', offsets[5])
-            for number in (140, 10, 155, 8, 170):
-                run_case('alternating-%d' % number, 'ROW%07d' % number)
+                run_case('first-page', 'ROW0000000')
+                run_case('forward-prefix', 'ROW0000100')
+                # A second target on the current page, then one beyond it.
+                warm = run_case('forward-nearby', 'ROW0000120')
+                if mode == 'reuse':
+                    start, end = warm['scan']['start'], warm['scan']['end']
+                    # Exact displayed start and the byte on each side of its next boundary.
+                    # Single-line queries preserve byte offsets in the real edit control.
+                    for name, at in (('exact-page-start', start), ('last-byte-of-page', end - 1), ('next-page-boundary', end)):
+                        if source[at:at + 1] == b'\n':
+                            # A newline cannot be entered in the one-line search box;
+                            # separately retain the exact range boundary and use adjacent byte.
+                            boundary_cases.append((name + '-newline-adjacent', at + 1, source[at + 1:at + 13].split(b'\n')[0].decode()))
+                        else:
+                            query = source[at:at + 24].split(b'\n')[0].decode()
+                            boundary_cases.append((name, at, query))
+                    report['boundary_requests'] = boundary_cases
+                for name, at, query in boundary_cases:
+                    run_case(name, query, at)
+                run_case('backward-before-current', 'ROW0000003')
+                # Same exact phrase at two different original offsets, not substring-only evidence.
+                offsets = [match.start() for match in re.finditer(b'repeated needle', source[:40000])]
+                run_case('repeated-content-forward', 'repeated needle', offsets[25])
+                run_case('repeated-content-backward', 'repeated needle', offsets[5])
+                for number in (140, 10, 155, 8, 170):
+                    run_case('alternating-%d' % number, 'ROW%07d' % number)
 
-            before_font = checks[-1]
-            ui.send(ui.U.GetDlgItem(app.window, 114), 0xF5)
-            app.wait_idle()
-            after_font = run_case('font-reflow-forward', 'ROW0000180')
-            assert after_font['scan']['font_size'] != before_font['scan']['font_size']
-            run_case('font-reflow-backward', 'ROW0000010')
-            app.settle((700, 480))
-            app.wait_idle()
-            resized = run_case('viewport-resize-forward', 'ROW0000190')
-            resized['viewport_note'] = 'Native window resized to 700x480; pager dimensions are reported, not presumed to reflow.'
-            app.settle((1100, 720))
-            app.wait_idle()
-            run_case('viewport-restored-backward', 'ROW0000020')
+                before_font = checks[-1]
+                ui.send(ui.U.GetDlgItem(app.window, 114), 0xF5)
+                app.wait_idle()
+                reflowed = run_case('font-reflow-same-target', 'ROW0000170')
+                assert (reflowed['scan']['start'], reflowed['scan']['end'], reflowed['page_sha256']) != (
+                    before_font['scan']['start'], before_font['scan']['end'], before_font['page_sha256']), 'Font change did not exercise a changed page boundary'
+                after_font = run_case('font-reflow-forward', 'ROW0000180')
+                assert after_font['scan']['font_size'] != before_font['scan']['font_size']
+                run_case('font-reflow-backward', 'ROW0000010')
+                app.settle((700, 480))
+                app.wait_idle()
+                resized = run_case('viewport-resize-forward', 'ROW0000190')
+                resized['viewport_note'] = 'Native window resized to 700x480; pager dimensions are reported, not presumed to reflow.'
+                app.settle((1100, 720))
+                app.wait_idle()
+                run_case('viewport-restored-backward', 'ROW0000020')
 
-            saved = checks[-1]
-            app.close()
-            assert app.process.returncode == 0
-            app = ui.P.App(exe.resolve(), args.font.resolve(), profile, existing=True)
-            automation = Uia()
-            app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=TIMEOUT)
-            app.wait_idle()
-            restored = page(app, automation)
-            assert hashlib.sha256(restored.encode()).hexdigest() == saved['page_sha256']
-            run_case('reopen-forward', 'ROW0000200')
+                saved = checks[-1]
+                app.close()
+                assert app.process.returncode == 0
+                app = ui.P.App(exe.resolve(), args.font.resolve(), profile, existing=True)
+                automation = Uia()
+                app.wait(lambda: ui.visible(app, 123) and not ui.visible(app, 119), timeout=TIMEOUT)
+                app.wait_idle()
+                restored = page(app, automation)
+                assert hashlib.sha256(restored.encode()).hexdigest() == saved['page_sha256']
+                run_case('reopen-forward', 'ROW0000200')
 
-            # Cancel a genuine distant seek only once its pagination has started.
-            # Never replace the product worker with a fabricated successful result.
-            query = 'EOF_UNIQUE_TARGET'
-            eof = source.index(query.encode())
-            dialog = find(app, query, eof)
-            previous = page(app, automation)
-            log_before = (app.profile / 'application.log').stat().st_size
-            count = len(trace(app))
-            ui.send(dialog, 0x111, 175)
-            app.wait(lambda: 'page-locate-start' in (app.profile / 'application.log').read_bytes()[log_before:].decode('utf-8', errors='replace'), timeout=TIMEOUT)
-            ui.send(dialog, 0x111, 176)
-            app.wait(lambda: ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog, 172)), timeout=TIMEOUT)
-            assert '取消' in ui.P.text(ui.U.GetDlgItem(dialog, 178))
-            assert page(app, automation) == previous
-            cancelled = trace(app)[count:]
-            assert cancelled and any(item['status'] != 0 for item in cancelled), cancelled
-            report.setdefault('cancellations', {})[mode] = cancelled
-            # Directly retry the SAME result, without a page turn or reopen.
-            before_retry = len(trace(app))
-            began = time.perf_counter()
-            ui.send(dialog, 0x111, 175)
-            app.wait(lambda: '已独立核对' in ui.P.text(ui.U.GetDlgItem(dialog, 178)), timeout=TIMEOUT)
-            app.wait_idle()
-            retry = [item for item in trace(app)[before_retry:] if item['offset'] == eof and item['status'] == 0]
-            assert retry, trace(app)[before_retry:]
-            chosen = retry[-1]
-            text = page(app, automation)
-            assert chosen['start'] <= eof < chosen['end']
-            assert text == source[chosen['start']:chosen['end']].decode()
-            assert query in text
-            checks.append(dict(case='cancel-direct-retry-at-eof', offset=eof, scan=chosen,
-                               page_sha256=hashlib.sha256(text.encode()).hexdigest(),
-                               ui_elapsed_ms=(time.perf_counter() - began) * 1000))
-            close_dialog(app, dialog)
-            run_case('eof-current-page', query)
-            run_case('eof-backward', 'ROW0000001')
-            ui.P.M.screenshot(app.window, out / (mode + '-final.bmp'))
-            app.close()
-            assert app.process.returncode == 0
-            app = None
+                # Cancel a genuine distant seek only once its pagination has started.
+                # Never replace the product worker with a fabricated successful result.
+                query = 'ROW0001000'
+                retry_offset = source.index(query.encode())
+                report['active_case'] = dict(mode=mode, case='cancel-and-direct-retry', offset=retry_offset,
+                                             started_unix=time.time())
+                dialog = find(app, query, retry_offset)
+                previous = page(app, automation)
+                log_before = (app.profile / 'application.log').stat().st_size
+                count = len(trace(app))
+                ui.send(dialog, 0x111, 175)
+                marker = 'TXT_SCAN_PROGRESS offset=%d generated=1' % retry_offset
+                app.wait(lambda: marker in (app.profile / 'application.log').read_bytes()[log_before:].decode('utf-8', errors='replace'), timeout=TIMEOUT)
+                ui.send(dialog, 0x111, 176)
+                app.wait(lambda: ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog, 172)), timeout=TIMEOUT)
+                assert '取消' in ui.P.text(ui.U.GetDlgItem(dialog, 178))
+                assert page(app, automation) == previous
+                cancelled = trace(app)[count:]
+                assert cancelled and any(item['status'] == EXR_CANCELLED for item in cancelled), cancelled
+                assert any(item['status'] == EXR_CANCELLED and item['calls'] > 0 and item['generated_pages'] > 0
+                           for item in cancelled), 'Cancellation did not interrupt actual page generation'
+                report.setdefault('cancellations', {})[mode] = cancelled
+                # Directly retry the SAME result, without a page turn or reopen.
+                before_retry = len(trace(app))
+                began = time.perf_counter()
+                ui.send(dialog, 0x111, 175)
+                app.wait(lambda: '已独立核对' in ui.P.text(ui.U.GetDlgItem(dialog, 178)), timeout=TIMEOUT)
+                app.wait_idle()
+                retry = [item for item in trace(app)[before_retry:] if item['offset'] == retry_offset and item['status'] == 0]
+                assert retry, trace(app)[before_retry:]
+                chosen = retry[-1]
+                text = page(app, automation)
+                assert chosen['start'] <= retry_offset < chosen['end']
+                assert text == source[chosen['start']:chosen['end']].decode()
+                assert query in text
+                checks.append(dict(case='cancel-direct-retry', offset=retry_offset, scan=chosen,
+                                   page_sha256=hashlib.sha256(text.encode()).hexdigest(),
+                                   ui_elapsed_ms=(time.perf_counter() - began) * 1000))
+                close_dialog(app, dialog)
+                # Keep the genuine full-original EOF gate separate from lifecycle
+                # recovery. It still uses exactly the same 240-second limit.
+                run_case('full-original-eof', 'EOF_UNIQUE_TARGET')
+                run_case('eof-current-page', 'EOF_UNIQUE_TARGET')
+                run_case('eof-backward', 'ROW0000001')
+                ui.P.M.screenshot(app.window, out / (mode + '-final.bmp'))
+                app.close()
+                assert app.process.returncode == 0
+                app = None
+
+            except Exception:
+                report['failures'].append(dict(mode=mode, traceback=traceback.format_exc()))
+                if app:
+                    try:
+                        dialog = ui.owned_dialog(app, 171)
+                        report.setdefault('failed_case_observations', {})[mode] = dict(
+                            active_case=report.get('active_case'), status=app.status(),
+                            search_status=ui.P.text(ui.U.GetDlgItem(dialog, 178)) if dialog else None,
+                            scan_records=trace(app), observed_unix=time.time())
+                        ui.P.M.screenshot(app.window, out / (mode + '-failure.bmp'))
+                        if dialog:
+                            ui.send(dialog, 0x111, 176)
+                            app.wait(lambda: ui.U.IsWindowEnabled(ui.U.GetDlgItem(dialog, 172)), timeout=30)
+                    except Exception:
+                        report['failures'].append(dict(mode=mode, observation_error=traceback.format_exc()))
+            finally:
+                if app:
+                    try:
+                        app.close()
+                        report.setdefault('failed_case_observations', {}).setdefault(mode, {})['final_scan_records'] = trace(app)
+                    except Exception:
+                        report['failures'].append(dict(mode=mode, close_error=traceback.format_exc()))
+                    app = None
 
         left, right = report['runs']['reuse'], report['runs']['from_first']
-        assert len(left) == len(right)
+        report['completed_cases'] = dict(reuse=len(left), from_first=len(right))
         savings = []
         for a, b in zip(left, right):
             assert a['case'] == b['case'] and a['offset'] == b['offset']
@@ -273,11 +315,17 @@ def main():
                 assert a['scan']['calls'] < b['scan']['calls'], record
                 savings.append(record)
         assert savings, 'No measured forward scan reduction was demonstrated'
+        assert any(item['optimized_generated_pages'] < item['baseline_generated_pages'] for item in savings), 'Only lookup-call savings, not actual generated-page savings, were demonstrated'
         report['measured_forward_savings'] = len(savings)
         assert digest(original) == report['original']['sha256'], 'Original fixture bytes changed'
+        assert len(left) == len(right), 'Independent native runs completed different case counts'
+        assert not report['failures'], 'One or more independent native runs failed; both results and common prefix retained'
         report['accepted'] = True
     except Exception:
         report['failures'].append(traceback.format_exc())
+        if app:
+            report['failed_case_observations'] = dict(status=app.status(), scan_records=trace(app),
+                                                     observed_unix=time.time())
     finally:
         if app:
             try:
