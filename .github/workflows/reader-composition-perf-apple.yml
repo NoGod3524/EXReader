@@ -1,0 +1,395 @@
+name: Apple composition shelf performance observation
+on:
+  push:
+    branches: [codex/terra-wave-product-performance]
+  workflow_dispatch:
+    inputs:
+      scope:
+        type: choice
+        options: [full, recovery, production]
+        default: full
+  workflow_call:
+    inputs:
+      scope:
+        type: string
+        default: full
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+jobs:
+  sdk:
+    name: SDK ${{ matrix.target }}
+    runs-on: macos-15
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record exact source and component trees
+        run: |
+          mkdir -p build
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git rev-parse HEAD HEAD:src HEAD:include HEAD:apps/reader HEAD:examples/apple | tee build/source-identities.txt
+          printf 'run=%s attempt=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" | tee -a build/source-identities.txt
+      - name: Build public SDK
+        run: |
+          target='${{ matrix.target }}'
+          options=()
+          if test "$target" = iphonesimulator; then
+            options=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          fi
+          cmake -S . -B "build/sdk-$target" -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${options[@]}"
+          cmake --build "build/sdk-$target" --parallel 4
+          cmake --install "build/sdk-$target" --prefix "stage/$target"
+          python3 tools/build_apple_product.py --sdk "stage/$target" --target "$target" --build "build/apple-product-$target"
+          python3 tests/apple_host/evidence_contract.py sdk --root "stage/$target" --platform "$target" --output build/sdk-identity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-shelf-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            stage/${{ matrix.target }}/
+            build/sdk-identity.json
+            build/source-identities.txt
+          include-hidden-files: true
+          if-no-files-found: error
+
+  ui:
+    name: Shelf UI ${{ matrix.platform }}
+    needs: [sdk, native]
+    runs-on: macos-15
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apple-shelf-sdk-*
+          path: sdk-artifacts
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-shelf-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: native-artifact
+      - name: Build separate native shelf UI project with real SDK originals
+        run: |
+          mkdir -p stage build/apple-shelf-ui
+          cp -R sdk-artifacts/*/stage/* stage/
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          cp native-artifact/seed/ShelfSeed-* native-artifact/seed/shelf-seed.json build/apple-resources/
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-shelf-project build/apple-resources tests/apple_host/shelf/ui
+      - name: Select actual destination
+        run: |
+          python3 - '${{ matrix.platform }}' > build/apple-shelf-ui/destination.txt <<'PY'
+          import json, subprocess, sys
+          platform = sys.argv[1]
+          if platform == 'macos':
+              print('platform=macOS\nmacos\nmacOS host\nmacOS')
+          else:
+              prefix = 'iPhone' if platform == 'iphone' else 'iPad'
+              data = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))
+              choices = [(runtime, device['name'], device['udid']) for runtime, devices in data['devices'].items()
+                         for device in devices if device.get('isAvailable') and device['name'].startswith(prefix)]
+              runtime, name, udid = max(choices)
+              subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False, capture_output=True)
+              subprocess.run(['xcrun', 'simctl', 'erase', udid], check=True)
+              print('platform=iOS Simulator,id=' + udid + '\n' + udid + '\n' + name + '\n' + runtime)
+          PY
+      - name: Exercise actual SwiftUI scrolling search and process restoration
+        if: inputs.scope != 'production'
+        id: ui
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          platform='${{ matrix.platform }}'
+          scheme=EXReaderHost-iOS
+          sdk="$PWD/stage/iphonesimulator"
+          signing=NO
+          if test "$platform" = macos; then scheme=EXReaderHost-macOS; sdk="$PWD/stage/macos"; signing=YES; fi
+          destination=$(sed -n '1p' build/apple-shelf-ui/destination.txt)
+          cases=()
+          if test '${{ inputs.scope }}' = recovery; then
+            if test "$platform" = macos; then
+              cases=(-only-testing:EXReaderHostUITests-macOS/ShelfUITests/test04TitleAuthorAndLiteralSearch -only-testing:EXReaderHostUITests-macOS/ShelfUITests/test05RapidSearchRefreshAndNativeViewport -only-testing:EXReaderHostUITests-macOS/ShelfUITests/test07StoredOriginalReadingAndFilteredReturn)
+            else
+              cases=(-only-testing:EXReaderHostUITests-iOS/ShelfUITests/test05RapidSearchRefreshAndNativeViewport -only-testing:EXReaderHostUITests-iOS/ShelfUITests/test06RotationBackgroundAndProcessRestore -only-testing:EXReaderHostUITests-iOS/ShelfUITests/test07StoredOriginalReadingAndFilteredReturn)
+            fi
+          fi
+          xcodebuild test -project build/apple-shelf-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+            -destination "$destination" -derivedDataPath build/ShelfDerivedData \
+            -resultBundlePath "build/apple-shelf-ui/$platform.xcresult" -parallel-testing-enabled NO "${cases[@]}" \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 2700 -maximum-test-execution-time-allowance 2700 \
+            EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/apple-shelf-ui/$platform-xcodebuild.log"
+      - name: Strict native evidence and original-byte identity
+        if: always() && inputs.scope != 'recovery' && inputs.scope != 'production'
+        id: evidence
+        continue-on-error: true
+        run: |
+          platform='${{ matrix.platform }}'
+          if test "$platform" = macos; then
+            container="$HOME/Library/Application Support/EXReader"
+            target=macos
+            app=build/ShelfDerivedData/Build/Products/Debug/EXReaderHost.app
+          else
+            udid=$(sed -n '2p' build/apple-shelf-ui/destination.txt)
+            container=$(python3 tests/apple_host/resolve_container.py --udid "$udid" --output build/apple-shelf-ui/container-collector.json)
+            target=iphonesimulator
+            app=build/ShelfDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          fi
+          python3 tests/apple_host/shelf/collect_shelf_evidence.py --platform "$platform" \
+            --xcresult "build/apple-shelf-ui/$platform.xcresult" --output build/apple-shelf-ui/evidence \
+            --container "$container" --app "$app" --seed native-artifact/seed/shelf-seed.json \
+            --sdk-root "stage/$target" --sdk-identity "sdk-artifacts/apple-shelf-sdk-$target-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/build/sdk-identity.json" \
+            --destination build/apple-shelf-ui/destination.txt
+      - name: Exercise production account chooser and account-isolated libraries
+        if: inputs.scope != 'recovery' && steps.evidence.outcome == 'success'
+        id: account_ui
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          platform='${{ matrix.platform }}'
+          scheme=EXReaderHost-iOS
+          sdk="$PWD/stage/iphonesimulator"
+          signing=NO
+          if test "$platform" = macos; then scheme=EXReaderHost-macOS; sdk="$PWD/stage/macos"; signing=YES; fi
+          destination=$(sed -n '1p' build/apple-shelf-ui/destination.txt)
+          mkdir -p build/apple-shelf-ui/account
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-account-project build/apple-resources tests/apple_host/account/ui
+          python3 tests/apple_host/account/run_account_ui.py --platform "$platform" \
+            --udid "$(sed -n '2p' build/apple-shelf-ui/destination.txt)" --resources build/apple-resources \
+            --output build/apple-shelf-ui/account -- \
+            xcodebuild test -project build/apple-account-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+            -destination "$destination" -derivedDataPath build/AccountDerivedData \
+            -resultBundlePath "build/apple-shelf-ui/account/$platform.xcresult" -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 \
+            EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing"
+          if test "$platform" = macos; then
+            container="$HOME/Library/Application Support/EXReader"
+            app=build/AccountDerivedData/Build/Products/Debug/EXReaderHost.app
+          else
+            udid=$(sed -n '2p' build/apple-shelf-ui/destination.txt)
+            container=$(python3 tests/apple_host/resolve_container.py --udid "$udid" --output build/apple-shelf-ui/account/container.json)
+            app=build/AccountDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          fi
+          python3 tests/apple_host/account/collect_account_ui.py --platform "$platform" \
+            --xcresult "build/apple-shelf-ui/account/$platform.xcresult" --app "$app" --container "$container" \
+            --output build/apple-shelf-ui/account/evidence
+      - name: Verify production reader semantics and real compact-layout actions
+        if: inputs.scope == 'production' || (inputs.scope != 'recovery' && steps.account_ui.outcome == 'success')
+        id: production_access
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          platform='${{ matrix.platform }}'
+          scheme=EXReaderHost-iOS
+          suite=EXReaderHostUITests-iOS
+          sdk="$PWD/stage/iphonesimulator"
+          signing=NO
+          if test "$platform" = macos; then scheme=EXReaderHost-macOS; suite=EXReaderHostUITests-macOS; sdk="$PWD/stage/macos"; signing=YES; fi
+          destination=$(sed -n '1p' build/apple-shelf-ui/destination.txt)
+          udid=$(sed -n '2p' build/apple-shelf-ui/destination.txt)
+          mkdir -p build/apple-shelf-ui/accessibility
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-access-project build/apple-resources tests/apple_host/accessibility/ui
+          if test "$platform" != macos; then
+            if test '${{ inputs.scope }}' = production; then
+              xcrun simctl boot "$udid"
+              xcrun simctl bootstatus "$udid" -b
+            fi
+            xcrun simctl ui "$udid" content_size large
+            trap 'xcrun simctl ui "$udid" content_size large >/dev/null 2>&1 || true' EXIT
+          fi
+          for part in semantics layout; do
+            testcase=test01ProductionBodyNamesAndActualEdgeTap
+            if test "$part" = layout; then
+              testcase=test02CompactReaderActualTurnFontAndNotes
+              if test "$platform" != macos; then xcrun simctl ui "$udid" content_size accessibility-extra-extra-extra-large; fi
+            fi
+            xcodebuild test -project build/apple-access-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+              -destination "$destination" -derivedDataPath build/AccessDerivedData \
+              -resultBundlePath "build/apple-shelf-ui/accessibility/$part.xcresult" -parallel-testing-enabled NO \
+              "-only-testing:$suite/ReaderAccessUITests/$testcase" \
+              -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 \
+              EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/apple-shelf-ui/accessibility/$part-xcodebuild.log"
+          done
+          app=build/AccessDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          if test "$platform" = macos; then app=build/AccessDerivedData/Build/Products/Debug/EXReaderHost.app; fi
+          python3 tests/apple_host/accessibility/collect_access_ui.py --platform "$platform" \
+            --root build/apple-shelf-ui/accessibility --app "$app" --output build/apple-shelf-ui/accessibility/evidence
+      - name: Preserve raw native layout observations
+        if: always() && inputs.scope != 'production'
+        id: layout_trace
+        continue-on-error: true
+        run: |
+          platform='${{ matrix.platform }}'
+          folder="$HOME/Library/Application Support/EXReader"
+          if test "$platform" != macos; then
+            udid=$(sed -n '2p' build/apple-shelf-ui/destination.txt)
+            container=$(python3 tests/apple_host/resolve_container.py --udid "$udid" --output build/apple-shelf-ui/container-always-trace.json)
+            folder="$container/Library/Application Support/EXReader"
+          fi
+          cp "$folder/shelf-layout-trace.jsonl" build/apple-shelf-ui/layout-trace.jsonl
+          test -s build/apple-shelf-ui/layout-trace.jsonl
+          tail -n 80 build/apple-shelf-ui/layout-trace.jsonl
+      - name: Mark focused execution as diagnostic only
+        if: always() && (inputs.scope == 'recovery' || inputs.scope == 'production')
+        env:
+          UI_OUTCOME: ${{ steps.ui.outcome }}
+          PRODUCTION_OUTCOME: ${{ steps.production_access.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          value = {'diagnostic_only': True, 'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+                   'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                   'platform': '${{ matrix.platform }}', 'scope': '${{ inputs.scope }}',
+                   'ui_outcome': os.environ['UI_OUTCOME'], 'production_outcome': os.environ['PRODUCTION_OUTCOME']}
+          Path('build/apple-shelf-ui/scope.json').write_text(json.dumps(value, indent=2) + '\n')
+          print(json.dumps(value))
+          PY
+      - name: Retain actual executable provider symbols and link maps
+        if: always()
+        run: |
+          for target in ShelfDerivedData AccountDerivedData AccessDerivedData; do
+            mkdir -p "build/apple-shelf-ui/product-provider/$target"
+            if test -d "build/$target/Build/Products"; then
+              find "build/$target/Build/Products" -type f \( -name '*.link.map*' -o -name product-link.json \) -exec cp '{}' "build/apple-shelf-ui/product-provider/$target/" \;
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-shelf-ui-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-shelf-ui/
+          if-no-files-found: error
+      - if: always() && ((inputs.scope == 'production' && steps.production_access.outcome != 'success') || (inputs.scope != 'production' && (steps.ui.outcome != 'success' || (inputs.scope == 'recovery' && steps.layout_trace.outcome != 'success') || (inputs.scope != 'recovery' && (steps.evidence.outcome != 'success' || steps.account_ui.outcome != 'success' || steps.production_access.outcome != 'success')))))
+        run: exit 1
+
+  summary:
+    if: inputs.scope != 'recovery' && inputs.scope != 'production'
+    needs: [sdk, native, ui]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apple-shelf-*
+          path: evidence
+      - name: Require all three same-source native UI reports and real seed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, urllib.request
+          from pathlib import Path
+          source, run, attempt = (os.environ[name] for name in ('GITHUB_SHA','GITHUB_RUN_ID','GITHUB_RUN_ATTEMPT'))
+          reports = [json.loads(path.read_text()) for path in Path('evidence').rglob('shelf-ui.json')]
+          assert len(reports) == 3 and {row['platform'] for row in reports} == {'macos','iphone','ipad'}
+          for row in reports:
+              assert row['accepted'] is True and row['problems'] == []
+              assert row['source_sha'] == source and str(row['run_id']) == run and str(row['attempt']) == attempt
+              assert (row['ui_cases'],row['named_observations'],row['attachments'],row['originals']) == (7,11,14,2202)
+              assert row['page_limit'] == 50 and row['retained_ui_cache_limit'] == 150
+              assert row['sdk_startup_bounded'] is False and row['hard_performance_budget_accepted'] is False
+          seeds = list(Path('evidence').glob('apple-shelf-native-*/seed/shelf-seed.json'))
+          assert len(seeds) == 1
+          seed = json.loads(seeds[0].read_text())
+          assert seed['accepted'] is True and len(seed['checks']) == 16 and len(set(seed['source_keys'])) == 2202
+          accounts = list(Path('evidence').glob('apple-shelf-native-*/account/account-native.json'))
+          assert len(accounts) == 1
+          account = json.loads(accounts[0].read_text())
+          assert account['accepted'] is True and account['source_sha'] == source
+          assert str(account['run_id']) == run and str(account['attempt']) == attempt
+          assert len(account['checks']) == len(set(account['checks'])) == 22
+          assert account['sweeps'] == 1 and account['actual_shards'] == 256 and account['secret_scan_passed'] is True
+          assert account['host_account_ui_accepted'] is False
+          account_ui = [json.loads(path.read_text()) for path in Path('evidence').rglob('account-ui.json')]
+          assert len(account_ui) == 3 and {row['platform'] for row in account_ui} == {'macos','iphone','ipad'}
+          for row in account_ui:
+              assert row['accepted'] is True and row['source_sha'] == source
+              assert str(row['run_id']) == run and str(row['attempt']) == attempt
+              assert (row['cases'], row['named_steps'], row['attachments'], row['profiles']) == (3,14,6,4)
+              assert row['password_ui_accepted'] is False and row['network_sync_ui_accepted'] is True
+          access_ui = [json.loads(path.read_text()) for path in Path('evidence').rglob('production-access-ui.json')]
+          assert len(access_ui) == 3 and {row['platform'] for row in access_ui} == {'macos','iphone','ipad'}
+          for row in access_ui:
+              assert row['accepted'] is True and row['source_sha'] == source
+              assert str(row['run_id']) == run and str(row['attempt']) == attempt
+              assert (row['cases'], row['named_observations'], row['attachments']) == (2,9,4)
+              assert row['voiceover_accepted'] is False and row['full_accessibility_accepted'] is False
+          request = urllib.request.Request(f'https://api.github.com/repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}/artifacts?per_page=100',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+          data = json.load(urllib.request.urlopen(request))
+          assert data['total_count'] == len(data['artifacts']) == 6
+          for artifact in data['artifacts']:
+              assert artifact['workflow_run']['id'] == int(run) and artifact['workflow_run']['head_sha'] == source
+              assert artifact['expired'] is False and artifact['size_in_bytes'] > 0 and re.fullmatch(r'sha256:[0-9a-f]{64}',artifact['digest'])
+          result = {'accepted':True,'source_sha':source,'run_id':run,'attempt':attempt,'platforms':{row['platform']:{key:row[key] for key in ('ui_cases','named_observations','attachments','originals','measurements')} for row in reports},'artifacts':data['artifacts'],'sdk_startup_bounded':False,'hard_performance_budget_accepted':False,'problems':[]}
+          result['account_ui'] = {row['platform']: row for row in account_ui}
+          result['production_access_ui'] = {row['platform']: row for row in access_ui}
+          Path('shelf-summary.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps(result))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apple-shelf-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: shelf-summary.json
+          if-no-files-found: error
+  native:
+    runs-on: macos-15
+    needs: sdk
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-shelf-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: sdk-artifact
+      - name: Original exact catalog checks and real SDK shelf corpus
+        run: |
+          set -o pipefail
+          mkdir -p build/apple-shelf-native
+          python3 -m py_compile tests/apple_host/shelf/collect_shelf_evidence.py
+          sdk="$PWD/sdk-artifact/stage/macos"
+          python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library examples/apple/HostCatalog.swift tests/reader_catalog/apple_catalog_check.swift -o build/apple-shelf-native/catalog-check
+          build/apple-shelf-native/catalog-check apps/reader/store/001_catalog.sql build/apple-shelf-native/catalog.json
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          sdk="$PWD/sdk-artifact/stage/macos"
+          python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library -O -I "$sdk/include" -L "$sdk/lib" -lexreader \
+            -Xlinker -rpath -Xlinker "$sdk/lib" examples/apple/HostSDK.swift examples/apple/HostModel.swift \
+            examples/apple/HostCatalog.swift examples/apple/SelectableText.swift tests/apple_host/shelf/ShelfReview.swift \
+            -o build/apple-shelf-native/shelf-review 2>&1 | tee build/apple-shelf-native/build.log
+          build/apple-shelf-native/shelf-review build/apple-resources build/apple-shelf-native/seed 2>&1 | tee build/apple-shelf-native/review.log
+          python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library -O \
+            -I "$sdk/include" -L "$sdk/lib" -lexreader -Xlinker -rpath -Xlinker "$sdk/lib" \
+            examples/apple/HostSDK.swift examples/apple/HostCatalog.swift examples/apple/HostAccount.swift \
+            tests/apple_host/account/AccountReview.swift -o build/apple-shelf-native/account-review
+          python3 tests/apple_host/account/check_account.py --consumer build/apple-shelf-native/account-review --output build/apple-shelf-native/account
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path('build/apple-shelf-native')
+          catalog = json.loads((root / 'catalog.json').read_text())
+          seed = json.loads((root / 'seed/shelf-seed.json').read_text())
+          for value, count in [(catalog, 8), (seed, 16)]:
+              assert value['accepted'] is True and value['failed'] == value['skipped'] == 0
+              assert value['source_sha'] == os.environ['GITHUB_SHA']
+              assert str(value['run_id']) == os.environ['GITHUB_RUN_ID'] and str(value['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
+              assert len(value['checks']) == count
+          assert seed['books'] == len(set(seed['source_keys'])) == 2202
+          print('Exact catalog 8 and shelf 16 passed; 2202 real originals')
+          PY
+          python3 tools/build_apple_host.py --sdk "$sdk" --platform macos --output build/apple-shelf-native/standalone
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-shelf-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-shelf-native/
+          if-no-files-found: error
