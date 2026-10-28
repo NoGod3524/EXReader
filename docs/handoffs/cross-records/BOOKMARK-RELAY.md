@@ -7,3 +7,5 @@ This additive candidate keeps the original relay and failure evidence intact. It
 All builds, tests, fixture work and artifact analysis run in Actions. A successful complete same-run authentication is required before this candidate is accepted; source changes alone do not establish a pass.
 
 Push run 40627142540/1 at `1db34c00c83d9e121e7146fe334bd14cf16a9e51` failed Android admission before build: the inherited guard rejected `.github/workflows/reader-android-font-reader.yml`. No build artifacts existed to upload. The original failure-evidence job passed. The follow-up admission pins the three pre-existing composition files to `f34a4f27` and retains the historical SDK and test pins.
+
+Push run 40627308600/1 at `b42041ff18c569fd748349d4c02e2a3911467bbc` passed admission and compiled the new Android relay instrumentation. At handoff the Android retained receive checks were running and both Apple SDK jobs were queued, so neither the two-host scenario nor its authentication had completed. Continue by inspecting that run and its preserved job evidence; do not treat the candidate as accepted or start a duplicate run while it is pending.
