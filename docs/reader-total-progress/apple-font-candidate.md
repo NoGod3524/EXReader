@@ -23,3 +23,15 @@ font, logical anchor checks across reflow, direct lease lifecycle evidence and
 restoration after reopening are still required on all three targets. Simulator
 results would not establish physical-device behavior. Do not mark the catalog
 items accepted on the strength of this candidate or the existing test alone.
+
+## Retained failure inspection
+
+[Actions run 40627448108](https://github.com/NoGod3524/EXReader/actions/runs/40627448108)
+authenticated the three original ZIPs from run 40350153254 and inspected the
+combined case logs. On macOS the first font import timed out. The retained
+accessibility tree showed the fixture button outside the visible scroll
+viewport, with the status still at “详情已刷新” and no imported row; an
+offscreen tap or owner-busy timing are plausible but not proven causes. On
+iPhone and iPad the existing case proceeded through its font steps and failed
+later at the share control. These findings preserve the original failures and
+do not establish the missing font acceptance outcomes.

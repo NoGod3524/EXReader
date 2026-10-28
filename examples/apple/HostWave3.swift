@@ -33,6 +33,9 @@ final class HostWave3State: ObservableObject {
     @Published var canConfirmAnnotations = false
     @Published var fonts: [HostWave3FontRow] = []
     @Published var selectedFont: String?
+#if EXR_APPLE_HOST_REVIEW
+    @Published var fontObservation = "offset=0;live=0;acquired=0;released=0"
+#endif
     @Published var exportURL: URL?
 #if EXR_APPLE_HOST_REVIEW
     @Published var reviewRevisionIdentity = ""
@@ -286,13 +289,31 @@ private final class HostWave3FontOwner {
     }
 }
 final class HostWave3FontLease {
+#if EXR_APPLE_HOST_REVIEW
+    private static let observationLock = NSLock()
+    private static var acquired = 0, released = 0
+    static func observation(offset: Int) -> String {
+        observationLock.lock(); defer { observationLock.unlock() }
+        return "offset=\(offset);live=\(acquired - released);acquired=\(acquired);released=\(released)"
+    }
+#endif
     let font: OpaquePointer
     private let owner: HostWave3FontOwner
     private let lease: OpaquePointer
     private init(font: OpaquePointer, lease: OpaquePointer, owner: HostWave3FontOwner) {
         self.font = font; self.lease = lease; self.owner = owner
     }
-    deinit { let lease = lease; _ = try? owner.run { _ in rfl_lease_release(lease, nil) } }
+    deinit {
+        let lease = lease
+        let status = try? owner.run { _ in rfl_lease_release(lease, nil) }
+#if EXR_APPLE_HOST_REVIEW
+        if status == RFL_OK {
+            Self.observationLock.lock(); Self.released += 1; Self.observationLock.unlock()
+        }
+#else
+        _ = status
+#endif
+    }
     static func acquire(root: URL, hash: String) throws -> HostWave3FontLease {
         let owner = try HostWave3FontOwner.shared(root)
         let opened: (OpaquePointer, OpaquePointer) = try owner.run { library in
@@ -305,6 +326,9 @@ final class HostWave3FontLease {
             }
             return (font, lease)
         }
+#if EXR_APPLE_HOST_REVIEW
+        observationLock.lock(); acquired += 1; observationLock.unlock()
+#endif
         return HostWave3FontLease(font: opened.0, lease: opened.1, owner: owner)
     }
 }
