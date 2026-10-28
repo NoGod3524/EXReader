@@ -615,8 +615,8 @@ final class HostSession {
         currentCancel = cancel
     }
 
-    func candidate() -> HostSession {
-        let result = HostSession(library: library, font: font, slowDelay: slowDelay,
+    func candidate(font replacement: HostFont? = nil) -> HostSession {
+        let result = HostSession(library: library, font: replacement ?? font, slowDelay: slowDelay,
                                  viewport: viewport, fontSize: fontSize)
 #if EXR_APPLE_PAGE_THEME
         result.pagePalette = pagePalette
@@ -1947,20 +1947,10 @@ final class HostReaderModel: ObservableObject {
                 let fontURL = Bundle.main.url(forResource: "Reader", withExtension: "otf")
                 guard let fontURL else { throw HostError.invalidInput("缺少 Reader.otf") }
                 let fontData = try Data(contentsOf: fontURL)
-                var font = try HostFont(data: fontData)
+                let font = try HostFont(data: fontData)
                 self.fontSHA = SHA256.hash(data: fontData).map { String(format: "%02x", $0) }.joined()
-#if EXR_APPLE_WAVE3
-                if let selected = self.defaults.string(forKey: "EXRImportedFont") {
-                    do {
-                        let lease = try HostWave3FontLease.acquire(root: folder.appendingPathComponent("fonts"), hash: selected)
-                        font = HostFont(borrowed: lease.font, lifetime: lease)
-                        self.fontSHA = selected
-                        DispatchQueue.main.async { self.wave3.selectedFont = selected }
-                    } catch {
-                        DispatchQueue.main.async { self.wave3.message = "导入字体不可用，已使用内置字体：\(self.describe(error))" }
-                    }
-                }
-#endif
+                // A saved choice is opened when a book is opened, so the shelf
+                // does not hold a borrowed font or its library lock.
                 let savedWidth = self.defaults.double(forKey: "EXRViewportWidth")
                 let savedHeight = self.defaults.double(forKey: "EXRViewportHeight")
                 let viewport = savedWidth > 200 && savedHeight > 200
@@ -2621,7 +2611,19 @@ final class HostReaderModel: ObservableObject {
         queue.async {
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
-                let candidate = session.candidate()
+                var candidate = session.candidate()
+#if EXR_APPLE_WAVE3
+                var selectedSHA: String?
+                if session.book == nil, let selected = self.defaults.string(forKey: "EXRImportedFont") {
+                    do {
+                        let lease = try HostWave3FontLease.acquire(root: self.storageFolder().appendingPathComponent("fonts"), hash: selected)
+                        candidate = session.candidate(font: HostFont(borrowed: lease.font, lifetime: lease))
+                        selectedSHA = selected
+                    } catch {
+                        DispatchQueue.main.async { self.wave3.message = "导入字体不可用，已使用内置字体：\(self.describe(error))" }
+                    }
+                }
+#endif
 #if EXR_APPLE_PAGE_THEME
                 candidate.configurePagePalette(palette)
 #endif
@@ -2640,10 +2642,19 @@ final class HostReaderModel: ObservableObject {
                     }
                 }
 #endif
-                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "就绪", opening: true) {
+                let previousSHA = self.fontSHA
+#if EXR_APPLE_WAVE3
+                if let selectedSHA { self.fontSHA = selectedSHA }
+#endif
+                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "就绪", opening: true,
+                    publishAccepted: {
+#if EXR_APPLE_WAVE3
+                        if session.book == nil { self.wave3.selectedFont = selectedSHA }
+#endif
+                    }) {
                     // Only the accepted candidate replaces SDK handles, on their serial owner queue.
                     self.session = candidate
-                }
+                } else { self.fontSHA = previousSHA }
             } catch {
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
@@ -2955,7 +2966,19 @@ final class HostReaderModel: ObservableObject {
                 try self.session?.persistCurrent()
                 let rows = try self.session?.listBooks() ?? []
                 try self.writeState(session: self.session)
+#if EXR_APPLE_WAVE3
+                guard let currentSession = self.session,
+                      let file = Bundle.main.url(forResource: "Reader", withExtension: "otf") else {
+                    throw HostError.invalidInput("缺少默认字体")
+                }
+                let data = try Data(contentsOf: file)
+                let shelfSession = currentSession.candidate(font: try HostFont(data: data))
+#endif
                 self.session?.close()
+#if EXR_APPLE_WAVE3
+                self.session = shelfSession
+                self.fontSHA = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+#endif
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
                     self.books = rows
