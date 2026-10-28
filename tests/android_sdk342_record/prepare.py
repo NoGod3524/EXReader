@@ -37,10 +37,24 @@ text = text[:start] + '''    private NativeReadingSdk.Match probeLegacy(BookStor
         need(source.key.equals(capture.bookKey),"old capture belongs to independently verified original");
         int mode=source.book.fixed()?ReadingCapture.FIXED:source.location.equals("epub_chapter")?ReadingCapture.EPUB:ReadingCapture.REFLOW;
         need(capture.mode==mode,"old capture mode matches real current original");
-        need(!NativeReadingSdk.acceptsParser(capture.parser),"unchanged production policy still refuses 3.41");
-        boolean refused=false;try{NativeReadingSdk.resolve(store,book,capture,fontBytesForInterop(),24,task(),control());}catch(IllegalStateException expected){refused=true;}
-        need(refused,"production host rejects the old parser before the semantic probe");
-        return NativeReadingSdk.resolveForCallback(store,book,capture,fontBytesForInterop(),24,task(),control());
+        need(NativeReadingSdk.acceptsParser(capture.parser),"actual host admits the proven 3.41 Android tag");
+        return resolve(store,book,capture);
+    }
+    private void navigateOldBookmarks()throws Exception {
+        JSONObject bundle=new JSONObject(new String(Files.readAllBytes(incomingFile("manifest.json").toPath()),StandardCharsets.UTF_8));
+        JSONArray records=bundle.getJSONArray("reading_records");
+        for(String role:new String[]{"txt","epub","pdf","cbz"}){
+            JSONObject bookmark=null;for(int i=0;i<records.length();i++){JSONObject row=records.getJSONObject(i);if(row.getString("role").equals(role)&&row.getString("kind").equals("bookmark"))bookmark=row;}
+            need(bookmark!=null,"actual sender bookmark present");ReadingCapture expected=captureFrom(bookmark.getJSONObject("capture"));
+            open(role);idle();long token=frame().getLong("accepted_token");String before=snapshot();
+            panel();contains("Android actual sender point");click("跳转到此处");
+            long end=SystemClock.elapsedRealtime()+120000;JSONObject landed=null;
+            while(SystemClock.elapsedRealtime()<end){JSONObject view=frame();if(view.optLong("accepted_token",0)>token){landed=view;break;}SystemClock.sleep(60);}
+            need(landed!=null&&landed.getLong("book")==book(role),"actual host publishes navigated original");
+            if(expected.mode==ReadingCapture.FIXED)need(landed.getLong("index")==expected.unit,"actual fixed renderer publishes the sender page");
+            else {if(expected.mode==ReadingCapture.EPUB)need(landed.getLong("part")==expected.unit&&landed.getString("path").equals(expected.partPath),"actual EPUB spine/path");need(landed.getLong("start")<=expected.start&&landed.getLong("end")>=expected.end,"actual rendered page contains sender location");}
+            need(snapshot().equals(before),"actual navigation leaves SDK and outbox unchanged");
+        }
     }
     @Override public void onStart(){
         context=getTargetContext();phase="sdk342-legacy-semantic-probe";Throwable failure=null;Bundle result=new Bundle();JSONObject observation=null;
@@ -48,10 +62,11 @@ text = text[:start] + '''    private NativeReadingSdk.Match probeLegacy(BookStor
             readerMonitor=addMonitor(MainActivity.class.getName(),null,false);AccessibilityServiceInfo service=getUiAutomation().getServiceInfo();service.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS|AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;getUiAutomation().setServiceInfo(service);
             launch();until(node->id(node,"sdk_label")&&text(node).contains("3.42.0"),null,"actual SDK 3.42 owner",120000);
             sender=programIdentity();
-            final JSONObject[] observed=new JSONObject[1];check("actual_341_wire_sdk342_semantics",()->observed[0]=receiveActualApple());observation=observed[0];
+            final JSONObject[] observed=new JSONObject[1];check("actual_341_wire_sdk342_host_resolve",()->observed[0]=receiveActualApple());observation=observed[0];
+            check("actual_341_bookmarks_navigate_on_four_real_hosts",this::navigateOldBookmarks);
         }catch(Throwable error){failure=error;try{capture("sdk342-wire-failure");}catch(Throwable diagnostic){error.addSuppressed(diagnostic);}}
         try {
-            JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("passed",failure==null).put("checks",checks).put("resolutions",resolutionRows).put("receiver",sender).put("observation",observation).put("host_compatibility_accepted",false);
+            JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("passed",failure==null).put("checks",checks).put("resolutions",resolutionRows).put("receiver",sender).put("observation",observation).put("host_compatibility_accepted",failure==null);
             if(failure!=null)report.put("failure",failure.getMessage()).put("failure_trace",android.util.Log.getStackTraceString(failure));
             durable(new File(context.getFilesDir(),"sdk342-wire-report.json"),report.toString(2).getBytes(StandardCharsets.UTF_8));result.putString("stream",failure==null?"SDK342_WIRE_PROBE_PASS":"SDK342_WIRE_PROBE_FAIL");finish(failure==null?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);
         }catch(Exception error){result.putString("shortMsg","SDK342 wire evidence unavailable");finish(Activity.RESULT_CANCELED,result);}

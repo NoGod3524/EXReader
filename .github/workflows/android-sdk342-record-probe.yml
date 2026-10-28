@@ -36,7 +36,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor 9cdc1817a53f1de271e35d3e8b6cde875c04f3d4 HEAD
           git diff --name-only 9cdc1817a53f1de271e35d3e8b6cde875c04f3d4 HEAD | while IFS= read -r path; do
-            case "$path" in tests/android_sdk342_record/*|.github/workflows/android-sdk342-record-probe.yml|.github/workflows/android-sdk342-record-diagnostic.yml) ;; *) exit 1 ;; esac
+            case "$path" in tests/android_sdk342_record/*|examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java|.github/workflows/android-sdk342-record-probe.yml|.github/workflows/android-sdk342-record-diagnostic.yml) ;; *) exit 1 ;; esac
           done
           mkdir -p build/android-sdk342-record/evidence
           gh api repos/${GITHUB_REPOSITORY}/actions/runs/40181402323 > build/android-sdk342-record/evidence/sender-run.json
@@ -69,6 +69,9 @@ jobs:
       - name: Build SDK 3.42 and test-only receiver
         run: |
           mkdir -p build/f06
+          javac -d build/android-sdk342-record/policy-classes examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java tests/apple_host/record_compatibility/ParserPolicyCheck.java tests/android_sdk342_record/Policy342Check.java
+          java -cp build/android-sdk342-record/policy-classes org.exreader.host.ParserPolicyCheck
+          java -cp build/android-sdk342-record/policy-classes org.exreader.host.Policy342Check
           python3 tests/android_sdk342_package/run.py build
           python3 tests/android_sdk342_record/prepare.py
           ws="$PWD/build/wave3"; stage="$ws/stage"

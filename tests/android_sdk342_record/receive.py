@@ -55,12 +55,15 @@ process=subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, t
 raw=adb('exec-out','run-as',package,'cat','files/sdk342-wire-report.json')
 (out/'report.json').write_bytes(raw)
 report=json.loads(raw)
+print(raw.decode('utf-8'), flush=True)
+print(process.stdout.decode('utf-8', errors='replace'), flush=True)
 assert process.returncode==0 and b'SDK342_WIRE_PROBE_PASS' in process.stdout and b'INSTRUMENTATION_CODE: -1' in process.stdout
-assert report['passed'] is True and report['host_compatibility_accepted'] is False
+assert report['passed'] is True and report['host_compatibility_accepted'] is True
 assert all(report[k]==v for k,v in identity.items())
 assert report['receiver']['exr_version']=='3.42.0' and report['receiver']['parser_version']=='exreader-sdk-3.42.0'
 assert report['receiver']['apk_sha256']==installed_sha
 assert len(report['resolutions']) >= 11
 assert {r['role'] for r in report['resolutions']} == {'txt','epub','pdf','cbz'}
-print(json.dumps(dict(identity, semantic_probe_passed=True, host_compatibility_accepted=False,
+assert [row['name'] for row in report['checks']] == ['actual_341_wire_sdk342_host_resolve', 'actual_341_bookmarks_navigate_on_four_real_hosts']
+print(json.dumps(dict(identity, semantic_probe_passed=True, host_compatibility_accepted=True,
                       count=len(report['resolutions']), sender=attestation), indent=2))
