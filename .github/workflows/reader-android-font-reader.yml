@@ -2,7 +2,7 @@
 name: Android font reader preservation and retained C11
 on:
   push:
-    branches: [codex/reader-android-font-integration, codex/reader-integrated-progress]
+    branches: [codex/reader-android-font-integration, codex/reader-integrated-progress, codex/reader-history-font-composition]
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,9 +33,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Preserve ownership seed and the frozen SDK before any build
+      - name: Preserve ownership seed and bind the SDK source before any build
         run: |
-          python3 tests/android_font_reader/guard.py
+          if [ "$GITHUB_REF_NAME" = codex/reader-history-font-composition ]; then
+            python3 tests/android_font_reader/common_guard.py
+          else
+            python3 tests/android_font_reader/guard.py
+          fi
           python3 tests/reader_wave3_c11/candidate.py
       - name: Parse every C11 script and this workflow in Actions
         run: |
