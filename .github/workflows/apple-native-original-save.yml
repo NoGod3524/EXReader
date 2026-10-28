@@ -67,5 +67,5 @@ jobs:
           lines = Path('evidence/native.log').read_text(errors='replace').splitlines()
           for i, line in enumerate(lines):
               if 'OriginalSaveUITests.swift:' in line and 'error:' in line:
-                  print('\n'.join(lines[max(0, i-12):i+100]))
+                  print('\n'.join(lines[max(0, i-12):i+400]))
           PY
