@@ -514,46 +514,15 @@ private struct HostOrganizationPanel: View {
         refresh()
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+    private var header: some View {
             HStack {
                 Text("书架整理").font(.headline).accessibilityAddTraits(.isHeader)
                 Spacer()
                 Button("完成") { dismiss() }.accessibilityIdentifier("organization.close")
             }
-            HStack {
-                Button("书架") { changeKind(0) }.accessibilityIdentifier("organization.kind.shelf")
-                Button("分类") { changeKind(1) }.accessibilityIdentifier("organization.kind.tag")
-                Button("系列") { changeKind(2) }.accessibilityIdentifier("organization.kind.series")
-            }.buttonStyle(.bordered)
-            Toggle("显示已移除", isOn: $removed)
-                .accessibilityIdentifier("organization.removed")
-                .onChange(of: removed) { _ in selectedGroup = nil; edit = ""; refresh() }
-            HStack {
-                TextField("名称", text: $name).textFieldStyle(.roundedBorder)
-                    .accessibilityIdentifier("organization.name")
-                TextField("顺序", text: $ordinal).textFieldStyle(.roundedBorder).frame(width: 70)
-                    .accessibilityIdentifier("organization.ordinal")
-            }
-            HStack {
-                Button("新建") {
-                    selectedGroup = nil; selectedBook = nil; edit = "new"
-                    organization.prepareGroup(kind: kind, id: "")
-                }.accessibilityIdentifier("organization.create")
-                Button("保存新建") {
-                    organization.commitGroup(operation: 0, kind: kind, id: "", name: name,
-                                             parent: kind == 0 ? parent : nil, ordinal: kind == 0 ? (UInt64(ordinal) ?? 0) : 0)
-                }.disabled(edit != "new" || !organization.prepared || name.isEmpty)
-                    .accessibilityIdentifier("organization.save")
-                Button("刷新") { refresh() }.accessibilityIdentifier("organization.refresh")
-                if kind == 0 && parent != nil {
-                    Button("返回上层") { _ = parentStack.popLast(); parent = parentStack.last; selectedGroup = nil; edit = ""; refresh() }
-                        .accessibilityIdentifier("organization.parent")
-                }
-            }.buttonStyle(.bordered)
-            Text(selectedGroup?.name ?? "未选择分组")
-                .accessibilityIdentifier("organization.selected")
-            ScrollView {
+    }
+
+    private var groupContent: some View {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(organization.groups) { group in
                         Button(group.name) {
@@ -641,7 +610,47 @@ private struct HostOrganizationPanel: View {
                         }
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var controls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Button("书架") { changeKind(0) }.accessibilityIdentifier("organization.kind.shelf")
+                Button("分类") { changeKind(1) }.accessibilityIdentifier("organization.kind.tag")
+                Button("系列") { changeKind(2) }.accessibilityIdentifier("organization.kind.series")
+            }.buttonStyle(.bordered)
+            Toggle("显示已移除", isOn: $removed)
+                .accessibilityIdentifier("organization.removed")
+                .onChange(of: removed) { _ in selectedGroup = nil; edit = ""; refresh() }
+            HStack {
+                TextField("名称", text: $name).textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("organization.name")
+                TextField("顺序", text: $ordinal).textFieldStyle(.roundedBorder).frame(width: 70)
+                    .accessibilityIdentifier("organization.ordinal")
             }
+            HStack {
+                Button("新建") {
+                    selectedGroup = nil; selectedBook = nil; edit = "new"
+                    organization.prepareGroup(kind: kind, id: "")
+                }.accessibilityIdentifier("organization.create")
+                Button("保存新建") {
+                    organization.commitGroup(operation: 0, kind: kind, id: "", name: name,
+                                             parent: kind == 0 ? parent : nil, ordinal: kind == 0 ? (UInt64(ordinal) ?? 0) : 0)
+                }.disabled(edit != "new" || !organization.prepared || name.isEmpty)
+                    .accessibilityIdentifier("organization.save")
+                Button("刷新") { refresh() }.accessibilityIdentifier("organization.refresh")
+                if kind == 0 && parent != nil {
+                    Button("返回上层") { _ = parentStack.popLast(); parent = parentStack.last; selectedGroup = nil; edit = ""; refresh() }
+                        .accessibilityIdentifier("organization.parent")
+                }
+            }.buttonStyle(.bordered)
+            Text(selectedGroup?.name ?? "未选择分组")
+                .accessibilityIdentifier("organization.selected")
+#if os(iOS)
+            groupContent
+#else
+            ScrollView { groupContent }
+#endif
             if organization.pending {
                 Button("重试保留的操作") { organization.recoverEdit() }
                     .accessibilityIdentifier("organization.retry")
@@ -655,7 +664,27 @@ private struct HostOrganizationPanel: View {
 #endif
             Text(organization.message).font(.caption).accessibilityIdentifier("organization.message")
         }
-        .padding().frame(minWidth: 320, minHeight: 400)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            header
+#if os(iOS)
+            // Keep Done visible even when large type or the keyboard consumes
+            // most of a small landscape viewport. Scroll the full form rather
+            // than compressing only the group list to zero height.
+            ScrollView { controls }
+                .accessibilityIdentifier("organization.scroll")
+#else
+            controls
+#endif
+        }
+        .padding()
+#if os(iOS)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+#else
+        .frame(minWidth: 320, minHeight: 400)
+#endif
         .disabled(organization.busy || model.organizationVerificationBusy)
         .onAppear { refresh() }
     }

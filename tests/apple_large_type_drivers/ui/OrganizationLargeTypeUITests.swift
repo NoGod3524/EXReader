@@ -20,6 +20,14 @@ final class OrganizationLargeTypeUITests: XCTestCase {
     private func tap(_ id: String) {
         let target = element(id)
         XCTAssertTrue(target.waitForExistence(timeout: 60), id)
+        if id.hasPrefix("organization.") && id != "organization.close" {
+            let scroll = element("organization.scroll")
+            for _ in 0..<8 {
+                if !scroll.exists || scroll.frame.contains(target.frame) { break }
+                if target.frame.midY < scroll.frame.midY { scroll.swipeDown() } else { scroll.swipeUp() }
+            }
+            if scroll.exists { XCTAssertTrue(scroll.frame.contains(target.frame), "Clipped in organizer viewport: \(id)") }
+        }
         XCTAssertTrue(wait { target.isEnabled && target.isHittable }, "Unreachable \(id): \(app.debugDescription)")
         XCTAssertTrue(app.windows.firstMatch.frame.insetBy(dx: -2, dy: -2).contains(target.frame), "Offscreen \(id): \(target.frame)")
         target.tap()
@@ -43,6 +51,14 @@ final class OrganizationLargeTypeUITests: XCTestCase {
     private func checkKindsAndReturn() {
         for kind in ["shelf", "tag", "series"] { tap("organization.kind." + kind) }
         tap("organization.refresh")
+        tap("organization.create")
+        tap("organization.name")
+        let groupName = "Maximum Type Group"
+        element("organization.name").typeText(groupName)
+        tap("organization.save")
+        let group = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label == %@", "organization.group.", groupName)).firstMatch
+        XCTAssertTrue(group.waitForExistence(timeout: 60), "Created group did not appear")
+        record("created-at-maximum-type")
         tap("organization.close")
         XCTAssertTrue(element("library.title").waitForExistence(timeout: 60))
         tap("library.book.0")
