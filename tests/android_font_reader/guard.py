@@ -35,15 +35,16 @@ extra_paths = [
 ]
 assert all(name.startswith(OWNED) or name in extra_paths for name in names), names
 for reference, paths in [
-    ('e24527faed81110ea4626d56013469487c606cb4', extra_paths[:5]),
+    ('ecde156819591fee9c8c5ecd48b489f65245e4f0', extra_paths[:1]),
+    ('e24527faed81110ea4626d56013469487c606cb4', extra_paths[1:5]),
     ('ac8d65c02c0e4d2ae2b8e76ac7797d634dce9267', extra_paths[5:8]),
     ('3b66f138a383662477433b42fece97b9582b4219', extra_paths[8:]),
 ]:
     subprocess.run(['git', 'diff', '--exit-code', reference, 'HEAD', '--', *paths], check=True)
 subprocess.run(['git', 'diff', '--exit-code', '642bb8efe124fdd301410f0b3e8e17292d6a5069', 'HEAD', '--', *['examples/reader.c', 'apps/reader/desktop/windows_search.inc', 'apps/reader/desktop/windows_txt_search.inc', 'apps/reader/desktop/windows_wave3.inc', 'tests/windows_host/txt/check_progress.py', '.github/workflows/windows-wave3-txt-progress.yml']], check=True)
 subprocess.run(['git', 'diff', '--exit-code', 'cc75214cb5e6dce389625e33399e1b120aedf4c4', 'HEAD', '--', *['apps/reader/desktop/gtk_feature_integration.cmake', 'examples/linux/reading.h', 'examples/linux/wave3_backend.inc', 'examples/linux/wave3_ui.inc', 'tests/reader_d26_accessibility/identity_current.py', 'tests/reader_d26_accessibility/tools_current.py']], check=True)
-subprocess.run(['git', 'diff', '--exit-code', '642bb8efe124fdd301410f0b3e8e17292d6a5069', 'HEAD', '--', 'src/chapter_reader.c', 'tests/bounded_txt_scan/view.c'], check=True)
-subprocess.run(['git', 'diff', '--exit-code', '9715391a129b343f343810243080c2cc6ecdfdf0', 'HEAD', '--', '.github/workflows/reader-d24-apple-large-type.yml', '.github/workflows/reader-d26-accessibility.yml', '.github/workflows/sdk-txt-anchor-resolve.yml'], check=True)
+subprocess.run(['git', 'diff', '--exit-code', '25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab', 'HEAD', '--', 'src/chapter_reader.c', 'tests/bounded_txt_scan/view.c'], check=True)
+subprocess.run(['git', 'diff', '--exit-code', 'ecde156819591fee9c8c5ecd48b489f65245e4f0', 'HEAD', '--', '.github/workflows/reader-d24-apple-large-type.yml', '.github/workflows/reader-d26-accessibility.yml', '.github/workflows/sdk-txt-anchor-resolve.yml'], check=True)
 # The whitelist freezes ALL other paths, including SDK, budgets and old suites.
 modules = {name: git('rev-parse', 'HEAD:apps/reader/' + name) for name in
            ('annotation-import', 'annotation-export', 'font-library', 'original-export', 'jump-history', 'sync-status-view', 'reading-state', 'revisions')}
