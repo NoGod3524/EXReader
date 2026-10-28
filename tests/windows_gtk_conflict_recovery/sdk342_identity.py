@@ -215,7 +215,7 @@ def collect(platform):
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, destination)
         for name in ('build.ninja', 'compile_commands.json', 'windows-host.map', 'windows-owner-probe.map',
-                     'sdk342-identity.map', 'gtk-account-host.map', 'sdk-link.map', 'linked-sdk.txt'):
+                     'sdk342-identity.map', 'gtk-account-host.map', 'sdk-link.map', 'linked-sdk.txt', 'target-properties.txt'):
             candidate = path.parent / name
             if candidate.is_file():
                 shutil.copy2(candidate, destination.parent / name)
@@ -261,7 +261,8 @@ def collect(platform):
                   installed_packages=installed_packages,
                   product_family='raw0.2/revisions0.4' if windows else 'legacy0.1/revisions0.3',
                   package_programs=binaries, program_sha256=sha(program),
-                  public_probe=dict(sha256=sha(probe), linked_sdk=linked, cache=actual_cache),
+                  public_probe=dict(sha256=sha(probe), linked_sdk=linked, cache=actual_cache,
+                                    target_properties=(build / 'target-properties.txt').read_text()),
                   caches=caches, native=native, originals=admitted['originals'])
     result['evidence_files'] = file_manifest(out)
     write(out / 'report.json', result)
