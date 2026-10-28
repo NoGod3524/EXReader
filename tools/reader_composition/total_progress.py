@@ -47,6 +47,12 @@ def verify_evidence(pair):
             assert spec['run'] == RUN and spec['source_prefix'] == SOURCE
             assert spec['artifact'] == ARCHIVE[0] and spec['bytes'] == ARCHIVE[1] and spec['sha256'] == ARCHIVE[2]
             proof.update(verify())
+        elif key == 'android_sync_account':
+            assert spec.get('adapter') == 'android_sync_account_40630302205'
+            from android_sync_evidence import verify, RUN, SOURCE, ARTIFACT, SIZE, SHA
+            assert spec['run'] == RUN and spec['source_prefix'] == SOURCE
+            assert spec['artifact'] == ARTIFACT and spec['bytes'] == SIZE and spec['sha256'] == SHA
+            proof.update(verify())
         else:
             assert 'adapter' not in spec, 'unknown evidence adapter'
         if spec.get('required_cases'):

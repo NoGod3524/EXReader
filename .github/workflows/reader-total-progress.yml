@@ -1,7 +1,7 @@
 name: Fixed complete-reader progress audit
 on:
   push:
-    branches: [codex/team24-composition, codex/reader-progress-combined-20261028]
+    branches: [codex/team24-composition, codex/reader-progress-combined-20261028, codex/progress-android-sync-20261028]
     paths: ['docs/reader-total-progress/**', 'tools/reader_composition/total_progress.py', '.github/workflows/reader-total-progress.yml']
   workflow_dispatch:
 permissions:
