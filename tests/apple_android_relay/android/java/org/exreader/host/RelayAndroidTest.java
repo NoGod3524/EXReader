@@ -55,8 +55,15 @@ public final class RelayAndroidTest extends Instrumentation {
     private void chapterBoundaries(File original)throws Exception {
         // Independent public-owner boundary fixture, never the application's
         // library.db. The actual relay still receives/reads/saves solely by UI.
+        active="independent_boundary_prepare";
         need(!FontSelection.active()&&NativeFonts.live()==0,"no app font lease before boundary fixture");
-        File folder=new File(context.getFilesDir(),"relay-boundary");need(folder.mkdirs()||folder.isDirectory(),"isolated boundary folder");
+        // Match MainActivity.wave3Directory: resolve only Android's app-root
+        // alias, never a supplied child path. NativeFonts still opens every
+        // component with O_NOFOLLOW; no link is created or replaced here.
+        File rawRoot=context.getFilesDir(),appRoot=rawRoot.getCanonicalFile();
+        JSONObject bounds=new JSONObject().put("app_files_path",rawRoot.getPath()).put("canonical_app_files_path",appRoot.getPath()).put("passed",false).put("app_database_seeded",false);
+        evidence.put("independent_boundary_tests",bounds);
+        File folder=new File(appRoot,"relay-boundary");need(folder.mkdirs()||folder.isDirectory(),"isolated boundary folder");
         File fontFile=new File(folder,"Reader.otf");byte[] font;
         try(java.io.InputStream stream=context.getAssets().open("Reader.otf")){font=stream.readAllBytes();}Files.write(fontFile.toPath(),font);
         File empty=new File(folder,"all-empty.epub");
@@ -72,12 +79,16 @@ public final class RelayAndroidTest extends Instrumentation {
         }
         long priorFontLibrary=FontSelection.library();String priorFontHash=FontSelection.hash();
         File fontDirectory=new File(folder,"fonts");need(fontDirectory.mkdirs()||fontDirectory.isDirectory(),"isolated font library directory");
-        NativeFonts fonts=NativeFonts.open(fontDirectory.getPath());JSONObject bounds=new JSONObject();
+        active="independent_boundary_font_open";
+        NativeFonts fonts=NativeFonts.open(fontDirectory.getPath());
         try(NativeLibrary library=new NativeLibrary(new File(folder,"library.db").getPath())){
+            active="independent_boundary_font_import";
             HostTask task=new HostTask(()->false);NativeFonts.Imported imported=fonts.importFile(fontFile.getPath(),"Boundary font",task);need(imported.ok(),"boundary local font imported by production module");FontSelection.attach(fonts.handle,imported.hash);
+            active="independent_boundary_all_empty";
             long emptyBook=library.importFile(empty.getPath(),NativeLibrary.FORMAT_EPUB,"All empty").id;long began=SystemClock.elapsedRealtime();boolean rejected=false;
             try(BoundedEpub pager=new BoundedEpub(library,emptyBook,font,20)){try(PageLoad page=pager.restore(0,task)){throw new AssertionError("all-empty chapter unexpectedly rendered");}catch(IllegalArgumentException error){need(error.getMessage().equals("Empty reading chapter is not supported"),"retained precise empty error");rejected=true;}}
             need(rejected&&SystemClock.elapsedRealtime()-began<20000,"all-empty bounded failure without skipping or loop");need(NativeFonts.live()==0,"failed native candidate freed its actual font lease");bounds.put("all_empty_failed_ms",SystemClock.elapsedRealtime()-began).put("leases_after_empty_failure",NativeFonts.live());
+            active="independent_boundary_real_image_cover";
             long imageBook=library.importFile(original.getPath(),NativeLibrary.FORMAT_EPUB,"Real Alice cover").id;
             try(BoundedEpub pager=new BoundedEpub(library,imageBook,font,20);PageLoad page=pager.restore(0,task)){
                 int first=0;while(first<pager.parts.length&&!"1".equals(pager.parts[first][1]))first++;
@@ -86,6 +97,7 @@ public final class RelayAndroidTest extends Instrumentation {
             need(NativeFonts.live()==0,"discarded real image candidate releases native lease");bounds.put("leases_after_image_discard",NativeFonts.live());
         } finally {FontSelection.attach(priorFontLibrary,priorFontHash);need(fonts.close()==NativeFonts.OK,"isolated font library closes without BUSY leases");}
         evidence.put("independent_boundary_tests",bounds.put("passed",true).put("app_database_seeded",false));
+        active="explicit_application_receive_original";
     }
     private JSONObject location()throws Exception{
         // Read-only evidence from the existing product owner; never seed or apply a record here.
@@ -140,7 +152,7 @@ public final class RelayAndroidTest extends Instrumentation {
         try{
             evidence.put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("passed",failure==null).put("checks",checks).put("phase","android").put("api",android.os.Build.VERSION.SDK_INT).put("abi",android.os.Build.SUPPORTED_ABIS[0]).put("physical_device",false).put("picker_used",false).put("pid",android.os.Process.myPid());
             if(input!=null)for(String key:new String[]{"original_sha256","original_bytes","book_identity","remote_title"})evidence.put(key,input.get(key));
-            if(failure!=null)evidence.put("failed_check",active).put("failure",failure.toString());
+            if(failure!=null){java.io.StringWriter trace=new java.io.StringWriter();failure.printStackTrace(new java.io.PrintWriter(trace));evidence.put("failed_check",active).put("failure",failure.toString()).put("failure_stack",trace.toString());}
             Files.write(new File(context.getFilesDir(),"relay-android-report.json").toPath(),evidence.toString(2).getBytes(StandardCharsets.UTF_8));result.putString("stream",failure==null?"RELAY_ANDROID_PASS":"RELAY_ANDROID_FAIL "+active);finish(failure==null?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);
         }catch(Throwable error){result.putString("shortMsg","relay evidence unavailable");finish(Activity.RESULT_CANCELED,result);}
     }
