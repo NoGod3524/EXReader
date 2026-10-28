@@ -14,10 +14,11 @@ import CEXReader
                        "exreader-sdk-3.43.0", "exreader-sdk-exreader-sdk-3.41.0", "exreader-3.41.0",
                        "3.42", "3.42.0 ", " 3.42.0", "3.42.0\u{0}", "v3.42.0"]
         for value in old {
-            guard HostReadingWorker.acceptsParser(value) else { throw HostError.invalidResult("Known prior tag rejected: \(value)") }
+            let expected = actual == "3.41.0" || !value.hasPrefix("exreader-sdk-")
+            guard HostReadingWorker.acceptsParser(value) == expected else { throw HostError.invalidResult("Prior tag policy differs: \(value)") }
         }
         for value in current {
-            guard HostReadingWorker.acceptsParser(value) == (actual == "3.42.0") else {
+            guard HostReadingWorker.acceptsParser(value) == (actual == "3.42.0" && value == "3.42.0") else {
                 throw HostError.invalidResult("Current/future tag policy differs: \(value)")
             }
         }
