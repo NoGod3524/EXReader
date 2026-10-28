@@ -94,6 +94,8 @@ def main():
             db.commit()
             assert db.execute('SELECT title FROM books WHERE id=1').fetchone()[0] == 'concurrent committed writer'
             assert db.execute('PRAGMA user_version').fetchone()[0] == 7
+            rc, out, err = call(a.tool, 'verify', '--pack', pack, '--target', target)
+            assert rc == 0, (out, err)
             db.close()
             rc, out, err = call(a.tool, 'verify', '--pack', pack, '--target', target)
             assert rc == 0, (out, err)
