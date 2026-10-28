@@ -1549,8 +1549,10 @@ final class HostReaderModel: ObservableObject {
 
     func previewWave3Annotations(_ file: URL) { importWave3Annotations(file, confirmation: nil) }
     func confirmWave3Annotations() {
-        guard let file = wave3PreviewFile, wave3PreviewBook == current?.id,
+        guard !busy, wave3.canConfirmAnnotations, let file = wave3PreviewFile, wave3PreviewBook == current?.id,
               let fingerprint = wave3PreviewFingerprint else { return }
+        // A failed setup or commit must require a fresh preview before retrying.
+        wave3.canConfirmAnnotations = false
         importWave3Annotations(file, confirmation: fingerprint)
     }
     private func importWave3Annotations(_ file: URL, confirmation: String?) {
