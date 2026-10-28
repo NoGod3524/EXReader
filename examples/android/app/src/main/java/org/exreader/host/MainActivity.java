@@ -1212,7 +1212,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             boolean published = false;
             boolean metadataFinalized = false;
             try {
-                if(ready.size()>MAX_INPUT_BYTES)throw new IOException("Selected book exceeds 32 MiB, the current reader limit; the 128 MiB staging ceiling does not make larger books readable");
+                if(ready.size()>MAX_INPUT_BYTES)throw new IOException("Current reader has a 32 MiB reading limit; the 128 MiB staging ceiling does not make larger books readable");
                 copied = copyUri(Uri.fromFile(ready.file()), ready.id(), task);
                 if(copied.bytes!=ready.size()||!ready.id().startsWith(copied.sha256+"."))throw new IOException("Staged original identity changed");
                 reviewGate("import-copied", task);
