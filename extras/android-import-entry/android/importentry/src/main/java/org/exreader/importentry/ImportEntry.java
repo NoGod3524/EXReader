@@ -82,6 +82,7 @@ public final class ImportEntry {
         t.setDaemon(true);
         return t;
     });
+    private final boolean retainDisplayFilename;
     private final Object lock = new Object();
     private final Map<ImportTicket, Boolean> tickets = new LinkedHashMap<>();
     private final Map<String, ReadyRequest> ready = new LinkedHashMap<>();
@@ -106,6 +107,17 @@ public final class ImportEntry {
 
     public static ImportEntry create(Context context, File stagingParent, Executor ownerExecutor,
             ImportOwner owner, long stallTimeoutMillis) throws IOException {
+        return create(context, stagingParent, ownerExecutor, owner, stallTimeoutMillis, false);
+    }
+
+    /** Retain the sanitized provider display filename, including its extension, as the title hint. */
+    public static ImportEntry createWithDisplayFilename(Context context, File stagingParent,
+            Executor ownerExecutor, ImportOwner owner) throws IOException {
+        return create(context, stagingParent, ownerExecutor, owner, DEFAULT_STALL_TIMEOUT_MILLIS, true);
+    }
+
+    private static ImportEntry create(Context context, File stagingParent, Executor ownerExecutor,
+            ImportOwner owner, long stallTimeoutMillis, boolean retainDisplayFilename) throws IOException {
         if (context == null || stagingParent == null || owner == null || stallTimeoutMillis < 1)
             throw new IllegalArgumentException("context, stagingParent, owner and a positive timeout are required");
         Executor executor = ownerExecutor;
@@ -114,11 +126,12 @@ public final class ImportEntry {
             executor = handler::post;
         }
         return new ImportEntry(context.getApplicationContext().getContentResolver(),
-                new File(stagingParent, "exr-import"), executor, owner, stallTimeoutMillis);
+                new File(stagingParent, "exr-import"), executor, owner, stallTimeoutMillis, retainDisplayFilename);
     }
 
     private ImportEntry(ContentResolver resolver, File root, Executor executor, ImportOwner owner,
-            long stallTimeoutMillis) throws IOException {
+            long stallTimeoutMillis, boolean retainDisplayFilename) throws IOException {
+        this.retainDisplayFilename = retainDisplayFilename;
         this.resolver = resolver;
         this.ownerExecutor = executor;
         this.owner = owner;
@@ -317,7 +330,7 @@ public final class ImportEntry {
         checkDeclared(declared, hint);
         if (ticket.cancelRequested()) throw new Failure(ImportError.Code.CANCELLED, "Cancelled");
 
-        String title = titleFrom(displayName);
+        String title = retainDisplayFilename ? filenameFrom(displayName) : titleFrom(displayName);
         File part = new File(tmpDir, (++sequence) + ".part");
         boolean published = false;
         MessageDigest digest;
@@ -537,6 +550,12 @@ public final class ImportEntry {
         if (displayName == null) return "";
         int dot = displayName.lastIndexOf('.');
         String base = dot > 0 ? displayName.substring(0, dot) : displayName;
+        return filenameFrom(base);
+    }
+
+    /** Sanitized provider display filename, bounded independently of private staging paths. */
+    static String filenameFrom(String base) {
+        if (base == null) return "";
         StringBuilder sb = new StringBuilder();
         int bytes = 0;
         for (int i = 0; i < base.length(); ) {
