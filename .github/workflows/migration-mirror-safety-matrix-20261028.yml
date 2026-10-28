@@ -4,6 +4,7 @@ on:
     branches: [codex/migration-mirror-safety-matrix-20261028]
     paths:
       - tests/migration/mirror_safety_matrix_20261028.py
+      - tests/migration/rollback_observe_20261028/**
       - .github/workflows/migration-mirror-safety-matrix-20261028.yml
 permissions:
   contents: read
@@ -22,9 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: ubuntu-22.04, label: linux, py: python3, tool: build/migration/exreader-legacy-migrate-tx, old: build/old-migration/exreader-legacy-migrate}
-          - {os: windows-latest, label: windows, py: python, tool: build/migration/Release/exreader-legacy-migrate-tx.exe, old: build/old-migration/Release/exreader-legacy-migrate.exe}
-          - {os: macos-15, label: macos, py: python3, tool: build/migration/exreader-legacy-migrate-tx, old: build/old-migration/exreader-legacy-migrate}
+          - {os: ubuntu-22.04, label: linux, py: python3, tool: build/migration/exreader-legacy-migrate-tx, old: build/old-migration/exreader-legacy-migrate, observer: build/rollback-observe/migration-rollback-observe}
+          - {os: windows-latest, label: windows, py: python, tool: build/migration/Release/exreader-legacy-migrate-tx.exe, old: build/old-migration/Release/exreader-legacy-migrate.exe, observer: build/rollback-observe/Release/migration-rollback-observe.exe}
+          - {os: macos-15, label: macos, py: python3, tool: build/migration/exreader-legacy-migrate-tx, old: build/old-migration/exreader-legacy-migrate, observer: build/rollback-observe/migration-rollback-observe}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -42,6 +43,7 @@ jobs:
               tests/migration/precommit_mirror.py|.github/workflows/migration-precommit-mirror.yml|docs/MIGRATION-PRECOMMIT-MIRROR.md) ;;
               tests/migration/mirror_safety_matrix_20261028.py|.github/workflows/migration-mirror-safety-matrix-20261028.yml|docs/MIGRATION-MIRROR-SAFETY-MATRIX-20261028.md) ;;
               .github/workflows/migration-matrix-full-companion-20261028.yml) ;;
+              tests/migration/rollback_observe_20261028/CMakeLists.txt|tests/migration/rollback_observe_20261028/observe.c) ;;
               *) echo "Out-of-scope source change: $path" >&2; exit 1 ;;
             esac
           done
@@ -68,6 +70,8 @@ jobs:
             'tests/migration/mirror_recovery.py',
             'tests/migration/precommit_mirror.py',
             'tests/migration/mirror_safety_matrix_20261028.py',
+            'tests/migration/rollback_observe_20261028/CMakeLists.txt',
+            'tests/migration/rollback_observe_20261028/observe.c',
           }
           changed = set(subprocess.check_output(['git', 'diff', '--name-only', published_base, 'HEAD'], text=True).splitlines())
           assert changed == publication_paths, {'missing': sorted(publication_paths - changed), 'unexpected': sorted(changed - publication_paths)}
@@ -111,7 +115,9 @@ jobs:
       - name: Real legacy schema, WAL, cancellation, commit knowledge, ownership and cleanup evidence
         run: |
           set -euo pipefail
-          ${{ matrix.py }} tests/migration/mirror_safety_matrix_20261028.py --tool "${{ matrix.tool }}" --old-tool "${{ matrix.old }}" --work build/mirror-safety-matrix 2>&1 | tee build/evidence/mirror-safety-matrix.txt
+          cmake -S tests/migration/rollback_observe_20261028 -B build/rollback-observe -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DSQLITE_HEADER_DIR="$GITHUB_WORKSPACE/build/migration/_deps/migration_sqlite_header-src" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/rollback-observe-configure.txt
+          cmake --build build/rollback-observe --config Release --parallel 4 2>&1 | tee build/evidence/rollback-observe-build.txt
+          ${{ matrix.py }} tests/migration/mirror_safety_matrix_20261028.py --tool "${{ matrix.tool }}" --old-tool "${{ matrix.old }}" --observer "${{ matrix.observer }}" --work build/mirror-safety-matrix 2>&1 | tee build/evidence/mirror-safety-matrix.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:

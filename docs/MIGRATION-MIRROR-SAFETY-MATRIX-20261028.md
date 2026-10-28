@@ -3,7 +3,8 @@
 Status: tested source `9e6f9a9d6dd46f1ac087d52bf04d832751dc765f` passes the
 focused 15-case matrix on all three OS; the unchanged full companion remains
 red at 61/65 candidate scenarios per OS. Exact terminal evidence and the unresolved
-acceptance-contract decision are below. Full P0 / original 65/65 is not accepted.
+historical acceptance-contract decision are below. The newly authorized additive
+candidate tests are prepared, not yet executed. Full P0 / original 65/65 is not accepted.
 No local build/test/fixture/artifact parsing. Initial product code was copied from
 the reviewed pre-COMMIT v2 package; the successor transparently fixes its owned
 mirror helper's OS-specific owner/ACL behavior. Matrix additions are:
@@ -44,7 +45,7 @@ the schema header to fake a legacy fixture. Schema-7 seeds use the reviewed tool
 
 ## New focused coverage
 
-The Linux/Windows/macOS matrix source contains fifteen independently recorded cases;
+The first Linux/Windows/macOS matrix contained fifteen independently recorded cases;
 one case failure does not erase later case evidence:
 
 1. Four combinations of actual schema 6/7 and DELETE/WAL journals: explicit
@@ -379,7 +380,7 @@ relabeling the new implementation cannot truthfully satisfy these old mechanisms
    rollback-error/retained-evidence test is still a coverage gap; the 45/45 focused
    result does not grant that missing coverage.
 
-### 最小验收决策（尚未解决）
+### 封存时的最小验收决策（后续授权见下一节）
 
 需要决定：**P0 是否允许现有目标采用“原位事务 + 内部权威账本”，并以新增、
 架构一致的验收测试证明同等安全性，同时永久保留旧完整门禁的四项失败？**
@@ -406,3 +407,199 @@ the tested full SHA and attempt 1.
 | full / macOS | `12854586419` | 303554 | `e04569f12bd0ff9971168b2efaa65e76539b6076d8213d82b9c5e8640b26351d` |
 | full / Windows | `12854881283` | 304882 | `3644193a2c5bb6a51ac734322b3dbebdd09af96a4a48416db5bcfcbc995e8de0` |
 | full / failed aggregate | `12853364688` | 1156 | `11edd78114815d9c813880142a48d9ecf8cd45bf8196eaed992aa545c77e8bbe` |
+
+## Authorized additive transaction-candidate acceptance (source prepared)
+
+At 21:59:11 UTC the user reaffirmed delegated approval in response to the exact
+recommendation to continue the transaction candidate, add the four safety groups,
+retain the original failures, and publish the feature-branch evidence. The
+previously denied docs-only seal was retried once with that new evidence and
+published as `e3597313e250d627920224a16e1224271fb6efad`; its tree exactly matches
+`8ecb736d8e6cd55d84262d0dbb6788480bd068e1`. Ref readback succeeded and no Actions
+run was created for that docs-only SHA. This does not retrospectively approve an
+untested behavior or grant original 65/65 acceptance.
+
+The following paragraph records the **frozen 22:10 proposal**, not the corrected
+current test design. Its rollback-return assumption is superseded by the
+source finding and explicit five-path successor below. The exact original
+two-file payload remains preserved at `02e26205024c24f49c2140354a08100b7397ac45`.
+
+That proposed delta adds tests in the existing owned matrix probe and updates this
+document only. Product sources, SDK, inherited probes, all original 65/31/17
+checks, original full jobs, thresholds and publication-path set are unchanged.
+The original 15 matrix cases remain intact. Four additive groups contribute
+14 independently recorded cases, making a required 29 per OS:
+
+1. **Truthful lineage after mirror loss (4).** Real old SDK schema-6 seeds have
+   no internal ledger; after removing their external ledger, content matching
+   must report `adopted-existing`. Candidate schema-7 seeds retain their internal
+   ledger; removing only the external mirror must report `already-migrated`,
+   not invent adoption. Both variants run under DELETE and live WAL, preserve
+   every original book/note column and file identity, create no duplicate books
+   or notes, and rebuild the exact current mirror.
+2. **Existing-library in-place preservation (4).** Actual schema 6/7 × DELETE/WAL
+   preserve every original book/note column and file identity, independently
+   verify writer exclusion, report a real committed transaction with no DB
+   stage, and preserve a later ordinary write through idempotent recovery.
+3. **Partial-write failure (4).** Two distinct new originals ensure one actual
+   import succeeds before `write-fail@1` refuses the second. Each schema/journal
+   combination separately checks exit 3, `failed`, `injected-write-fail`, and
+   the correct absence of a DB stage. Fresh current-state observations establish
+   preserved schema/rows/internal ledger, exact external mirror, same file
+   identity and no owned residue. DELETE additionally checks raw DB bytes; WAL
+   does not pretend a main-file hash captures live committed state. Close-time
+   rollback is not relabeled as explicit process-local rollback acknowledgement.
+4. **Real SDK rollback error (2, DELETE only).** At the existing post-mirror,
+   pre-COMMIT rendezvous, require a real nonempty SQLite journal and calibrate
+   actual OS deletion refusal before letting the SDK call `ROLLBACK`: POSIX
+   removes parent-directory write permission and confirms a disposable owned
+   file cannot be unlinked; Windows holds the exact journal without delete
+   sharing and confirms Win32 error 32. POSIX uses cooperative SIGTERM; Windows
+   lets the existing acknowledgement hook time out. No fake SDK return or old
+   `rollback-fail` alias supplies the result. A case passes only for actual
+   `inconsistent / rollback-failed / exit 6`, no claimed confirmed rollback,
+   and exact retained intent, published mirror and mirror-preimage bytes.
+   Journal size/header observations are recorded but never used to infer the
+   rollback outcome. After releasing the OS fault, a fresh product recovery
+   owner must restore original logical state/mirror, pass SQLite integrity
+   checking and preserve a subsequent ordinary write on a repeated recovery.
+
+The deletion fixture is deliberately **not** called WAL rollback-error coverage:
+WAL rollback does not finalize a DELETE journal. WAL rollback-error behavior,
+power-loss guarantees and unrestricted pathname replacement remain unproved.
+This scoped fault tests an actual error return and retained recovery evidence,
+not a claim that all row bytes remained changed after a failed acknowledgement.
+SQLite may have restored data before journal finalization fails. The fixture
+requires both the error report and independent successful later recovery.
+The mechanism follows SQLite's documented
+[journal lifecycle](https://www.sqlite.org/tempfiles.html) and
+[SQLite 3.54.0 pager rollback/finalization implementation](https://github.com/sqlite/sqlite/blob/version-3.54.0/src/pager.c)
+and [Windows journal deletion implementation](https://github.com/sqlite/sqlite/blob/version-3.54.0/src/os_win.c);
+those references inform source review, not proof of the installed SDK's runtime
+behavior. Only the next Actions result can establish these new cases.
+
+The original written contract in `docs/WP12-LEGACY-MIGRATION.md:113-126` expressly
+requires backup stages, database replacement and retained raw DB preimages; these
+are not merely incidental test labels. The candidate contract intentionally
+differs: keep internal lineage and database writes in one transaction, never
+replace an existing DB, and retain accurately named mirror/recovery evidence.
+This avoids restoring stale whole-DB bytes over later ordinary writes under the
+documented stable-path/host-coordination contract. It does not prove integrated
+host lifecycle or make the four original failures disappear. Candidate safety
+acceptance and legacy full-gate compatibility must remain separate conclusions.
+
+Independent source review cleared this additive 29-case design at 22:10 UTC,
+after requiring cleanup operations and evidence writes to be attempted even
+when permission/handle restoration fails. Probe SHA-256:
+`119bfc40357f2f5f8a77d12f5496c00c41a9c62c616a8432faf8ee75e1f76c67`.
+This is clearance to validate in Actions, not a measured rollback-error outcome.
+
+## 22:41 correction: real I/O error observation is not SDK error-return proof
+
+**Source-review clearance of the preceding mandatory exit-6 assumption is
+superseded.** `src/library.c:247-252` returns the result of SQL `ROLLBACK` and
+clears its transaction flag on OK. Pinned SQLite 3.54.0's
+[`OP_AutoCommit`](https://github.com/sqlite/sqlite/blob/version-3.54.0/src/vdbe.c#L3997-L4045)
+calls the void
+[`sqlite3RollbackAll`](https://github.com/sqlite/sqlite/blob/version-3.54.0/src/main.c#L1437-L1477),
+which discards the Btree rollback return. The Btree can return a pager I/O error
+while ending/downgrading its transaction; later cleanup does not automatically
+surface that dropped error. This is a confirmed source-level observability
+limitation, not a measured corruption or data-loss event.
+
+Consequently, neither actual journal-deletion refusal nor a real WAL read error
+guarantees `exr_library_migration_finish(...,0,...) != EXR_OK`. The former test
+was strict rather than fabricated, but its desired exit-6 outcome was not
+justified by the complete call chain. The original payload and its source-review
+history remain preserved, not silently rewritten into successful evidence.
+
+The corrected package has five explicit paths relative to the held proposal:
+
+1. `tests/migration/mirror_safety_matrix_20261028.py`
+2. `docs/MIGRATION-MIRROR-SAFETY-MATRIX-20261028.md`
+3. new `tests/migration/rollback_observe_20261028/CMakeLists.txt`
+4. new `tests/migration/rollback_observe_20261028/observe.c`
+5. `.github/workflows/migration-mirror-safety-matrix-20261028.yml`
+
+The consolidated source manifest is now 19 paths relative to `e771f3c5`, with
+the two new consumer files explicitly admitted by the existing source guard.
+No helper source is hidden inside a generated Python string. The workflow builds
+the consumer in Actions and passes its executable to the probe. Product sources,
+the frozen SDK/SQLite implementation, the original 15 cases and other 12
+candidate cases, all old 65/31/17 assertions/budgets, and the unchanged companion
+jobs remain untouched. The test/doc/workflow delta triggers both existing
+workflows on one successor SHA; no redundant dispatch is planned.
+
+### Corrected group four: two independently recorded observation groups
+
+The matrix still requires 29 top-level cases per OS. Each new schema-6/schema-7
+observation group records its sub-observations independently; one failure does
+not silently prevent the remaining observations from running:
+
+- **Uninstrumented product DELETE refusal:** preserve the real journal and OS
+  refusal controls, capture actual exit/result/rollback reporting, and record
+  exact intent, mirror and preimage disposition. If the product reports
+  `rollback-failed`, its strict retained-evidence assertions still apply. Other
+  actual results are not relabeled as SDK errors or retained evidence. Fresh
+  recovery must preserve original rows/identity and a later ordinary write.
+- **Diagnostic DELETE negative control and actual refusal on all three OSes:**
+  a separate consumer links the unchanged installed SDK and its matching public
+  SQLite header. SQLite's public startup error callback observes the actual
+  SDK process, without a replacement VFS, fake return, private-structure access
+  or second SQLite implementation. Require a real `SQLITE_IOERR_DELETE` event
+  for the exact owned journal during the actual SDK finish window. Record the
+  literal SDK status/message, including OK if returned; SDK OK plus an internal
+  I/O event is an observability limitation, **not** a passed failed-rollback
+  branch. [SQLite's public error logger](https://www.sqlite.org/errlog.html).
+- **Exact attribution control:** parse the pinned OS logger's filename field,
+  require normalized filename equality and the expected OS operation, and run
+  positive plus sibling-prefix negative parser controls in Actions. A log for
+  `library.sqlite-wal` or `library.sqlite-other` must not count as a main-DB read
+  fault merely because its message contains `library.sqlite`. These synthetic
+  parser checks are labeled separately from actual fault calibration.
+- **Windows-only WAL negative control and read refusal:** a checkpointed live
+  WAL baseline locates committed page 1 in the main DB. Real schema-6 upgrade or
+  schema-7 creation of the previously absent internal ledger dirties page 1.
+  An exclusive native byte-range lock is calibrated by a separate `ReadFile`
+  returning error 33, then held through SDK finish. A genuine SQLite read-error
+  log for that exact path during finish is mandatory; a successful control lock
+  alone is insufficient. The consumer explicitly disables SQLite mmap through
+  its public configuration API, because native byte locks do not constrain
+  mapped reads. This is a disclosed diagnostic configuration, not every host
+  application's configuration. [Microsoft's byte-lock contract](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-lockfileex).
+
+The diagnostic consumer registers logging before SDK initialization, checks the
+linked SQLite version and source ID against the pinned header, and writes its
+actual finish result before a separate fault-release/close phase. No-fault
+controls require SDK OK with no finish I/O event. Fault cases require actual
+I/O attribution but do not prejudge the SDK result. A fresh actual SDK migration
+owner first recovers/reopens, reads the expected absent ledger and explicitly
+rolls back its transaction (including any temporary schema-6 upgrade).
+Independent fixture SQL then checks integrity, every table/column/row, persisted
+schema and ledger; a later ordinary write must remain readable. Its SQLite
+version is recorded separately. These are fixture observations, not a production
+SDK integrity API.
+
+### Remaining acceptance and coverage gaps
+
+The SDK-only API lacks this internal error logger and a whole-library integrity
+operation. Diagnostic SQLite instrumentation must not be described as SDK-only
+coverage. Linux/macOS WAL physical-I/O error coverage remains absent; their
+ordinary permissions do not calibrate refusal on already-open WAL/DB handles.
+Actual calibration of all new cases is still unmeasured until Actions executes
+this successor. No runtime pass is claimed here.
+
+`lm_main.c:1655-1665` currently treats SDK OK as sufficient to report rollback
+and retire mirror evidence. `mirror_reconcile:1702-1707,1744-1749` checks only a
+fresh ledger and then trusts another rollback result; it is not independent
+whole-library proof. A conservative future tool-only mitigation could retain
+evidence and report recovery-unverified until adequate verification, but must
+persist that state and not silently auto-clear it through ledger equality.
+No such product mitigation is included in this test package. Its impact on
+normal rollback, schema-6 upgrade, later writers and restart needs independent
+review and scope approval before implementation.
+
+Thus an observation matrix pass would establish measured mechanisms and fixture
+recovery, **not full candidate/P0 acceptance**. The original 61/65 candidate
+results, four historical contract conflicts, original failure records and the
+real error-return branch gap remain visible. No original 65/65 claim is made.
