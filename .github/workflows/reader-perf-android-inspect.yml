@@ -13,12 +13,14 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
+      - name: Install screenshot text reader
+        run: sudo apt-get update -qq && sudo apt-get install -y tesseract-ocr
       - name: Authenticate and inspect failed UI evidence on Actions
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import hashlib, io, json, os, urllib.request, urllib.error, zipfile
+          import hashlib, io, json, os, subprocess, urllib.request, urllib.error, zipfile
           from pathlib import Path, PurePosixPath
           api = os.environ['GITHUB_API_URL'] + '/repos/' + os.environ['GITHUB_REPOSITORY']
           run, artifact, source = 40628057571, 12789724765, '9f0783ae449ad73cc803d7019892ee8f3c417a64'
@@ -52,6 +54,8 @@ jobs:
                   'collector':json.loads(read('/ui-execution/result.json')),
                   'verifier':json.loads(read('/observation-verification.json'))}
           output=Path('build/perf-inspection');output.mkdir(parents=True)
+          (output/'failed-case.png').write_bytes(read('/ui-execution/ui/shots/system_picker_import_appears_in_product_search.png'))
+          report['screenshot_text'] = subprocess.check_output(['tesseract',str(output/'failed-case.png'),'stdout'],stderr=subprocess.DEVNULL,text=True)
           (output/'inspection.json').write_text(json.dumps(report,indent=2)+'\n')
           print(json.dumps(report),flush=True)
           PY
