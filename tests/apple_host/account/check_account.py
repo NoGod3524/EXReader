@@ -36,7 +36,7 @@ CHECKS = [
 ]
 
 
-def with_fixture(folder, authorization, consume, shard_delay=0.25, on_unauthorized=None):
+def with_fixture(folder, authorization, consume, shard_delay=0.25, on_unauthorized=None, on_failure_observed=None):
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
     folder.mkdir(parents=True)
     cert, key = folder / 'server.crt', folder / 'server.key'
@@ -87,6 +87,11 @@ def with_fixture(folder, authorization, consume, shard_delay=0.25, on_unauthoriz
             self.send(412 if exists else 201)
 
         def do_GET(self):
+            if on_failure_observed is not None and self.path == '/dav/__exreader_test_failure_observed__':
+                with lock:
+                    requests.append({'method': 'OBSERVE', 'path': self.path, 'authenticated': False})
+                self.send(204 if on_failure_observed() else 500)
+                return
             if not self.authenticated(): return
             with lock: body = entries.get(self.path)
             self.send(404 if body is None else 200, body or b'')
