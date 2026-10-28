@@ -24,7 +24,20 @@ final class OrganizationLargeTypeUITests: XCTestCase {
             let scroll = element("organization.scroll")
             for _ in 0..<8 {
                 if !scroll.exists || scroll.frame.contains(target.frame) { break }
-                if target.frame.midY < scroll.frame.midY { scroll.swipeDown() } else { scroll.swipeUp() }
+                // A full-page swipe oscillates past short controls in landscape.
+                // Use a real, bounded scroll gesture sized to the clipped edge;
+                // never tap a coordinate to bypass the reachability assertions.
+                let viewport = scroll.frame
+                let frame = target.frame
+                print("ORGANIZER reveal \(id) target=\(frame) viewport=\(viewport)")
+                let down = frame.minY < viewport.minY
+                let distance = down ? viewport.minY - frame.minY + 8 : frame.maxY - viewport.maxY + 8
+                let fraction = min(0.35, max(0.08, distance / max(1, viewport.height)))
+                let fromY: CGFloat = down ? 0.35 : 0.65
+                let toY = down ? fromY + fraction : fromY - fraction
+                scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: fromY))
+                    .press(forDuration: 0.05, thenDragTo: scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: toY)))
+                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
             }
             if scroll.exists { XCTAssertTrue(scroll.frame.contains(target.frame), "Clipped in organizer viewport: \(id)") }
         }

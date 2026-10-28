@@ -22,7 +22,7 @@ def main():
         with (evidence / (name+'.log')).open('w') as log:
             result = subprocess.run(list(map(str,command)), stdout=log, stderr=subprocess.STDOUT, timeout=timeout)
         lines = (evidence / (name+'.log')).read_text(errors='replace').splitlines()
-        print('\n'.join(line for line in lines if 'error:' in line or 'Test Case ' in line or "identifier: 'organization." in line or 'Window (Main)' in line), flush=True)
+        print('\n'.join(line for line in lines if 'error:' in line or 'Test Case ' in line or "identifier: 'organization." in line or 'Window (Main)' in line or 'ORGANIZER reveal' in line), flush=True)
         if result.returncode: print('\n'.join(lines[-180:]), flush=True)
         return result.returncode
     udid = None
