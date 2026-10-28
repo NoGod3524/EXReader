@@ -1368,6 +1368,8 @@ final class HostReaderModel: ObservableObject {
     @Published var stateHash = "—"
     @Published var busy = false
     @Published private(set) var libraryReady = false
+    @Published private(set) var organizationURL: URL?
+    @Published private(set) var organizationVerificationBusy = false
     @Published private(set) var syncPreparing = false
     @Published private(set) var receivedShelfRevision = 0
     @Published private(set) var receiveMessage = ""
@@ -1911,6 +1913,15 @@ final class HostReaderModel: ObservableObject {
                 let folder = try self.storageFolder()
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                 if fresh {
+#if EXR_APPLE_HOST_REVIEW
+                    // Fresh review fixtures must not silently discard a prior
+                    // interrupted organization request and its failure evidence.
+                    let pending = folder.appendingPathComponent("organization.pending")
+                    if FileManager.default.fileExists(atPath: pending.path) {
+                        try FileManager.default.moveItem(at: pending, to: folder.appendingPathComponent(
+                            "organization-preserved-\(UUID().uuidString).pending"))
+                    }
+#endif
                     for name in ["library.sqlite", "library.sqlite-wal", "library.sqlite-shm",
                                  "reader-catalog.db", "reader-catalog.db-wal", "reader-catalog.db-shm",
                                  "reader-catalog.db-journal"] {
@@ -1984,6 +1995,7 @@ final class HostReaderModel: ObservableObject {
                 let lastPresent = lastID.map { id in storedBooks.contains(where: { $0.id == id }) } ?? false
                 DispatchQueue.main.async {
                     self.traceUITest("startup-publish rows=\(rows.count)")
+                    self.organizationURL = folder.appendingPathComponent("reader-catalog.db")
                     self.books = rows
                     self.productIndexPending = !repairProblems.isEmpty
                     // Both owner dependencies and the initial SDK read exist
@@ -2605,6 +2617,38 @@ final class HostReaderModel: ObservableObject {
                 return try catalog.shelf(query: query, anchor: anchor, before: before, inclusive: inclusive)
             }
             DispatchQueue.main.async { completion(result) }
+        }
+    }
+
+    // Verify the actual public SDK original before the metadata owner is
+    // allowed to establish history for an older catalog-only book.
+    func verifyOrganizationOriginal(_ book: HostShelfBook, organization: HostOrganization) {
+        guard !organizationVerificationBusy else { return }
+        organizationVerificationBusy = true
+        queue.async {
+            do {
+                guard book.sdkID > 0, let catalog = self.catalog, let session = self.session else {
+                    throw HostError.invalidInput("请先下载原件")
+                }
+                let product = try catalog.readingBook(sdkID: book.sdkID)
+                guard product.key == book.id, product.bytes == book.bytes else {
+                    throw HostError.invalidInput("书籍身份已变化，请刷新")
+                }
+                let expected = HostSourceFingerprint(format: product.format, sha256: product.sha256, bytes: product.bytes)
+                try session.library.exportSyncOriginal(bookID: product.sdkID, expected: expected,
+                    directory: self.storageFolder().appendingPathComponent("sync-originals", isDirectory: true),
+                    cancel: HostCancelBox())
+                DispatchQueue.main.async {
+                    self.organizationVerificationBusy = false
+                    organization.bootstrap(bookKey: product.key, format: product.format,
+                                           sha256: product.sha256, bytes: UInt64(product.bytes))
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.organizationVerificationBusy = false
+                    organization.reportError(self.describe(error))
+                }
+            }
         }
     }
 

@@ -9,7 +9,7 @@ import os
 import re
 
 
-LIBRARIES = ('reader_reading_commands', 'reader_annotation_view', 'reader_navigation', 'reader_search', 'reader_session', 'reader_sync', 'exr_webdav', 'reader_commands',
+LIBRARIES = ('reader_desktop_metadata', 'reader_reading_commands', 'reader_annotation_view', 'reader_navigation', 'reader_search', 'reader_session', 'reader_sync', 'exr_webdav', 'reader_commands',
              'reader_reading_state_codec', 'reader_revisions', 'reader_revision_hash',
              'reader_catalog', 'reader_catalog_sqlite', 'exr_credentials')
 
@@ -71,7 +71,7 @@ def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False)
     result += ['-lc++', '-lxml2', '-framework', 'Foundation', '-framework', 'CoreFoundation',
                '-framework', 'Security']
     if selector_bytes_candidate:
-        result += ['-Xcc', '-DEXR_READER_SELECTOR_BYTES_CANDIDATE=1', '-D', 'EXR_APPLE_RAW3']
+        result += ['-Xcc', '-DEXR_READER_SELECTOR_BYTES_CANDIDATE=1', '-Xcc', '-DEXR_READER_METADATA_RAW3=1', '-D', 'EXR_APPLE_RAW3']
     if wave3:
         result += ['-Xcc', '-DEXR_APPLE_WAVE3=1', '-D', 'EXR_APPLE_WAVE3']
     return result
@@ -89,7 +89,7 @@ def main():
         parser.error('EXR_APPLE_RAW3 must be explicitly OFF or ON')
     arguments = args.arguments[1:] if args.arguments[:1] == ['--'] else args.arguments
     if any(Path(value).name == 'HostModel.swift' for value in arguments):
-        for filename in ('HostAccount.swift', 'HostSearch.swift', 'HostNavigation.swift', 'HostReadingRecords.swift'):
+        for filename in ('HostAccount.swift', 'HostSearch.swift', 'HostNavigation.swift', 'HostReadingRecords.swift', 'HostOrganization.swift'):
             source = Path(__file__).absolute().parents[1] / 'examples/apple' / filename
             if not any(Path(value).name == source.name for value in arguments):
                 arguments.append(str(source))
