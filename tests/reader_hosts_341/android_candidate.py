@@ -36,6 +36,10 @@ def validate(write=False):
         if: github.ref_name == 'codex/reader-android130-candidate-admission'
         run: python tests/reader_hosts_341/android_candidate.py record
 '''+marker2)
+    job=Path('tests/reader_hosts_341/android_current_job.txt').read_text(encoding='utf-8')
+    expected=expected.replace('  summary:\n',job+'  summary:\n',1)
+    expected=expected.replace('    needs: android\n    runs-on: ubuntu-latest\n    timeout-minutes: 15',
+        "    needs: [android, current]\n    if: ${{ always() && needs.android.result == 'success' && (needs.current.result == 'success' || needs.current.result == 'skipped') }}\n    runs-on: ubuntu-latest\n    timeout-minutes: 15",1)
     assert Path(ORIGINAL_WORKFLOW).read_text(encoding='utf-8')==expected
     assert '#define READER_REVISION_ANCHOR_MAX_VERSION 2u' in Path('apps/reader/revisions/include/reader_revisions.h').read_text()
     out=Path('build/android-page-theme');out.mkdir(parents=True,exist_ok=True)
