@@ -185,6 +185,8 @@ def main():
     target = folder/'library.sqlite'
     pack = folder/'full.exrpack'
     books, notes = L.dataset()
+    books[0]['record']['highlightColor'] = 'red'
+    notes[0]['flair'] = 3
     pack.write_bytes(L.build_pack(books, notes))
     rc, out, err = call(a.tool, 'migrate', '--pack', pack, '--target', target, '--allow-partial')
     assert rc == 0, (out, err)
@@ -195,6 +197,9 @@ def main():
     rc, out, err = call(a.tool, 'export-ledger', '--target', target, '--output', first)
     assert rc == 0, (out, err)
     ledger = json.loads(first.read_text(encoding='utf-8'))
+    original = next(b for b in ledger['books'] if b['legacy_id'] == 'b-txt')
+    assert original['retained']['highlightColor'] == 'red'
+    assert next(n for n in ledger['notes'] if n['legacy_id'] == 'n-txt-unique')['retained']['flair'] == 3
     ambiguous = next(n for n in ledger['notes'] if n['legacy_id'] == 'n-txt-ambiguous')
     assert ambiguous['located'] is False and ambiguous['retained']['note'] == 'appears twice'
     assert ambiguous['retained']['quote'] == 'Repeat this phrase twice.'
@@ -211,6 +216,15 @@ def main():
     assert rc == 0 and first.read_bytes() == second.read_bytes(), (out, err)
     rc, out, err = call(a.tool, 'verify', '--pack', pack, '--target', target)
     assert rc == 0, (out, err)
+    duplicate = folder/'duplicate.exrpack'
+    duplicate.write_bytes(L.build_pack([L.entry(L.book_record('duplicate','duplicate.txt'), L.TXT)], []))
+    rc, out, err = call(a.tool, 'migrate', '--pack', duplicate, '--target', target)
+    assert rc == 0 and json.loads(out)['counts']['books_created'] == 0, (out, err)
+    third = folder/'duplicate-ledger.json'
+    rc, out, err = call(a.tool, 'export-ledger', '--target', target, '--output', third)
+    assert rc == 0, (out, err)
+    merged = json.loads(third.read_text(encoding='utf-8'))
+    assert next(b for b in merged['books'] if b['legacy_id'] == 'duplicate')['book_id'] == original['book_id']
     checks.append({'case':'full-ledger-export-and-idempotence','passed':True})
     print('PASS', checks[-1], flush=True)
     report = {'source_sha':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
