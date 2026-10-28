@@ -1,0 +1,106 @@
+name: GTK SDK 3.42 explicit integration and same-source Linux package
+on:
+  push:
+    branches: [codex/dot-gtk-sdk342-package]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  retained:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Admit exact integration source
+        run: python3 tests/gtk_sdk342_package/run.py guard
+      - name: Install GTK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Install both families and build same-source 3.42 host and package
+        run: |
+          python3 -m py_compile tests/gtk_sdk342_package/*.py
+          python3 tests/gtk_sdk342_package/run.py build
+      - name: Prepare original fixtures
+        run: |
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures
+          python3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures
+          python3 tests/linux_host/generate_fixed.py build/gtk-fixed-inputs
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-backend-fixtures
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures
+          mkdir -p build/gtk-navigation-backend build/gtk-batch-backend/profile build/gtk-batch-owner-faults build/gtk-atspi-client
+          chmod 700 build/gtk-navigation-backend build/gtk-batch-backend/profile
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+      - name: Original navigation backend
+        run: |
+          set -o pipefail
+          build/gtk-raw-wave3/retained-host/reader-gtk-navigation-backend "$PWD/build/gtk-navigation-backend/library.sqlite" "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-navigation-fixtures" "$PWD/build/gtk-fixed-inputs" 2>&1 | tee build/gtk-navigation-backend/checks.log
+      - name: Original folder backend and owner faults
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend "$PWD/build/gtk-batch-backend/profile/library.sqlite" "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-backend-fixtures" "$PWD/build/gtk-batch-backend/originals.tsv" exercise 2>&1 | tee build/gtk-batch-backend/checks.log
+          build/gtk-raw-wave3/retained-host/reader-gtk-batch-owner-faults "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-owner-faults" 2>&1 | tee build/gtk-batch-owner-faults/checks.log
+      - name: Original navigation and folder GUI suites
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/gtk-raw-wave3/retained-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            failed=0
+            /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-navigation-fixtures --fixed-inputs build/gtk-fixed-inputs --output build/gtk-navigation-ui || failed=1
+            /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend || failed=1
+            exit "$failed"
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-sdk342-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-sdk342/
+            build/f06/linux/
+            build/gtk-raw-wave3/raw-host/
+            build/gtk-raw-wave3/legacy-host/
+            build/gtk-raw-wave3/*.log
+            build/gtk-raw-wave3/*.json
+            build/gtk-raw-wave3/retained-host/CMakeCache.txt
+            build/gtk-raw-wave3/retained-host/gtk-host/exreader-linux
+            build/gtk-raw-wave3/retained-host/reader-gtk-navigation-backend
+            build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend
+            build/gtk-raw-wave3/retained-package/
+            build/gtk-navigation-backend/
+            build/gtk-navigation-ui/
+            build/gtk-batch-backend/
+            build/gtk-batch-owner-faults/
+            build/gtk-batch-ui/
+            build/gtk-navigation-fixtures/manifest.json
+            build/gtk-batch-backend-fixtures/manifest.json
+            build/gtk-batch-ui-fixtures/manifest.json
+          if-no-files-found: error
+  authenticate:
+    needs: retained
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate same-run original archive and native program
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRODUCER_RESULT: ${{ needs.retained.result }}
+        run: python3 tests/gtk_sdk342_package/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-sdk342-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/gtk-sdk342-auth/
+          if-no-files-found: error
