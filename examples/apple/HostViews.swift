@@ -569,6 +569,12 @@ private struct HostOrganizationPanel: View {
                     }
                     if let group = selectedGroup {
                         HStack {
+#if EXR_APPLE_HOST_REVIEW
+                            if ProcessInfo.processInfo.arguments.contains("-EXROrganizationConflictReview") {
+                                Button("提交竞争版本") { organization.reviewCompetingRename(kind: kind, groupID: group.id) }
+                                    .accessibilityIdentifier("organization.review-compete")
+                            }
+#endif
                             Button("重命名/排序") {
                                 organization.commitGroup(operation: 0, kind: kind, id: group.id, name: name,
                                     parent: group.parent, ordinal: kind == 0 ? (UInt64(ordinal) ?? 0) : 0)

@@ -21,6 +21,8 @@ a fixed native thread across tasks; native handles do not cross work items.
 
 Acceptance remains open until the actual host and UI pass on macOS, iPhone and
 iPad in Actions, together with the existing bounded shelf and restoration
-contracts. The initial UI suite covers process termination and visible recovery;
-it does not independently prove stale-write refusal or compare retained intent
-IDs and heads. Physical-device acceptance is also outside that suite.
+contracts. The UI suite exercises process termination and visible recovery, and
+uses a real competing revision to check stale-edit refusal; its recovery case
+does not independently compare retained intent IDs and heads. Physical-device
+acceptance is also outside that suite. These cases confer no acceptance until
+their same-source Actions run succeeds.
