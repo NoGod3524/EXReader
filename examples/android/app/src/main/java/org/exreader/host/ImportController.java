@@ -40,7 +40,7 @@ final class ImportController implements ImportOwner {
     private ImportController(Context context) {
         files.execute(() -> {
             try {
-                ImportEntry opened = ImportEntry.create(context, new File(context.getFilesDir(),"incoming"), main::post, this);
+                ImportEntry opened = ImportEntry.createWithDisplayFilename(context, new File(context.getFilesDir(),"incoming"), main::post, this);
                 List<ReadyRequest> recovered = opened.pendingReady();
                 main.post(() -> {
                     entry = opened; pending.addAll(recovered);
