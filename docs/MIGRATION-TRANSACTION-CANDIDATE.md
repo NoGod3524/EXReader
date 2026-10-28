@@ -96,3 +96,16 @@ checks passed; the unchanged transaction-executable scenarios again failed
 13 of 65. Windows passed its transaction, original 65/135 and 31 review steps;
 its browser step was still running and macOS queued when recorded. These
 statuses are not a same-source three-platform acceptance.
+
+The newest tested source `8357eafa28423a7ab93ba08b823af80f01ad1505` is in
+[run 40636401201](https://github.com/NoGod3524/EXReader/actions/runs/40636401201),
+attempt 1. Linux and Windows each passed all six transaction-specific groups,
+including retained unknown fields and cross-identity deduplication, as well as
+the legacy executable's 65/135 scenarios, 31 review checks and 17 browser
+checks. Linux also passed the real old-library GTK owner lifecycle. Against the
+transaction executable, each platform passed 52/65 unchanged scenarios
+(111/128 recorded assertions); the unchanged review and browser tests stopped
+when the expected external sidecar was absent. Both producer jobs failed their
+candidate gate. macOS remained queued at this recording; an earlier narrower
+candidate run [40631062113](https://github.com/NoGod3524/EXReader/actions/runs/40631062113)
+completed successfully on macOS but does not establish these newer checks.
