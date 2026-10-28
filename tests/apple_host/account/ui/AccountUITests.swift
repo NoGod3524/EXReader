@@ -177,6 +177,13 @@ final class AccountUITests: XCTestCase {
         steps.append("actual_ui_upload_and_256_shard_https_sweep")
         tap("account.sync.start")
         XCTAssertTrue(node("account.sync.cancel").waitForExistence(timeout: 30))
+        tap("account.sync.cancel")
+        XCTAssertTrue(wait(180) { self.text("account.sync.state") == "已取消" })
+        tap("account.sync.start")
+        XCTAssertTrue(wait(180) { self.text("account.sync.state") == "本轮扫描完成" })
+        XCTAssertTrue(book.exists)
+        tap("account.sync.start")
+        XCTAssertTrue(node("account.sync.cancel").waitForExistence(timeout: 30))
 #if os(iOS)
         XCUIDevice.shared.press(.home)
 #else

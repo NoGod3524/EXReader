@@ -44,11 +44,30 @@ import CReaderProduct
             try check(!session.message.isEmpty, name + " terminal message")
             try check(called == callbacks, name + " completion callback")
             try check(terminals == [expectedState], name + " actual terminal callback")
+            if cancel {
+                try session.start(profile: profile, directory: directory, authorization: authorization,
+                                  terminal: { terminals.append($0) }) { called += 1 }
+                try check(wait { !session.running && session.state == "本轮扫描完成" }, "cancelled session retries")
+                try check(terminals == [READER_SESSION_CANCELLED, READER_SESSION_FINISHED] && called == 1,
+                          "retry delivers exactly one successful completion")
+            }
             session.close()
             try check(wait(30) { session.state == "已关闭" }, name + " closes")
         }
         try run("finished", authorization: valid, cancel: false, expected: "本轮扫描完成", expectedState: READER_SESSION_FINISHED, callbacks: 1)
         try run("cancelled", authorization: valid, cancel: true, expected: "已取消", expectedState: READER_SESSION_CANCELLED, callbacks: 0)
         try run("failed", authorization: invalid, cancel: false, expected: "同步失败", expectedState: READER_SESSION_FAILED, callbacks: 0)
+        let preparation = HostAccountSession()
+        var cancelled = false
+        try preparation.beginPreparation { cancelled = true }
+        preparation.cancel()
+        try check(cancelled && preparation.state == "正在取消", "preparation cancellation requested")
+        preparation.preparationStopped(cancelled: true)
+        try check(!preparation.preparing && preparation.state == "已取消" && !preparation.message.isEmpty,
+                  "preparation cancellation settles")
+        try preparation.beginPreparation { }
+        preparation.preparationStopped(cancelled: false, detail: "fixture failure")
+        try check(preparation.state == "同步失败" && preparation.message.contains("fixture failure"),
+                  "preparation failure is visible")
     }
 }
