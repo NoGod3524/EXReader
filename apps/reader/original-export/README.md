@@ -19,11 +19,12 @@ cmake --build build/original-export
 cmake --install build/original-export
 ```
 
-`EXR_SDK_VERSION` is an exact pin and accepts only `3.40.0` or `3.41.0`:
+`EXR_SDK_VERSION` is an exact pin and accepts only `3.40.0`, `3.41.0` or the experimental `3.42.0`:
 
 * The default is `3.40.0` (the frozen SDK), so existing hosts keep their
   behavior and a 3.41-only install is refused by default.
 * `3.41.0` is the approved candidate and must be requested explicitly.
+* `3.42.0` is an experimental migration candidate and must be requested explicitly; it is still undergoing acceptance.
 * Any other value fails during configure with
   `Unsupported exact reader SDK version: <value>`.
 
@@ -52,7 +53,7 @@ reads back the staged file, and publishes it without replacing any target.
 Temporary paths, cleanup receipts and per-item status are reported to the host.
 
 The source and header of this package are byte-identical to the module's fixed
-commit; only the install configuration carries the explicit 3.41.0 opt-in.
+commit; only the install configuration carries the explicit candidate opt-in.
 
 ## License
 

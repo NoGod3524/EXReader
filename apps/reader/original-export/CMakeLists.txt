@@ -11,10 +11,10 @@ if(EXR_SDK)
   list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
 endif()
 # Exact installed SDK graph. The default stays the frozen 3.40.0 so existing
-# hosts keep their behavior; the approved 3.41.0 candidate must be requested
+# hosts keep their behavior; a 3.41.0 or 3.42.0 candidate must be requested
 # explicitly. Any other pin is refused before a target or header is used.
-set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed reader SDK: frozen 3.40.0 (default) or approved 3.41.0")
-if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed reader SDK: frozen 3.40.0 (default) or explicit 3.41.0/3.42.0 candidate")
+if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41|42)\\.0$")
   message(FATAL_ERROR "Unsupported exact reader SDK version: ${EXR_SDK_VERSION}")
 endif()
 find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS library)
