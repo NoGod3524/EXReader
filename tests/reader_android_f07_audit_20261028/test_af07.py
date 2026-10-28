@@ -145,6 +145,12 @@ class AuditContract(unittest.TestCase):
             with self.subTest(installed=installed, owners=owners), self.assertRaises(ValueError):
                 C.require_header_coverage(C.header_coverage(installed, owners))
 
+    def test_ndk_script_probe_requires_exact_observed_bytes(self):
+        from af07_ndk_probe import verify_script
+        self.assertEqual(verify_script(b'INPUT(-lc++_shared)'), ['-lc++_shared'])
+        for payload in (b'INPUT(-lc++_shared)\n', b'INPUT(-lother)', b'GROUP(-lc++_shared)', b'\x7fELF'):
+            with self.assertRaises(ValueError): verify_script(payload)
+
     def test_diagnostic_requires_exact_failure_identity_and_output_hash(self):
         import af07_diagnostic as D
         summary = dict(audit_sha=D.PRIOR_SHA, audit_run=str(D.PRIOR_RUN), audit_attempt='1',

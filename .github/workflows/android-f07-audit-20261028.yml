@@ -35,7 +35,7 @@ jobs:
           yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.0.12077973"
       - name: Authenticate original upload bytes and audit actual native ownership
-        if: "!contains(github.event.head_commit.message, '[android-f07-diagnostic]')"
+        if: "!contains(github.event.head_commit.message, '[android-f07-diagnostic]') && !contains(github.event.head_commit.message, '[android-f07-ndk-probe]')"
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tests/reader_android_f07_audit_20261028/run.py
@@ -44,6 +44,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tests/reader_android_f07_audit_20261028/af07_diagnostic.py
+      - name: Inspect exact failed NDK linker input without executing native tools
+        if: contains(github.event.head_commit.message, '[android-f07-ndk-probe]')
+        run: python3 tests/reader_android_f07_audit_20261028/af07_ndk_probe.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
