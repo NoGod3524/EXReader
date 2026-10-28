@@ -1495,6 +1495,7 @@ final class HostReaderModel: ObservableObject {
             cancel: cancelWork)
 #if EXR_APPLE_HOST_REVIEW
         actions.reviewAnnotations = prepareWave3Fixture
+        actions.reviewSnapshot = snapshotWave3Revisions
 #endif
         return actions
     }
@@ -1586,6 +1587,13 @@ final class HostReaderModel: ObservableObject {
     }
 
 #if EXR_APPLE_HOST_REVIEW
+    func snapshotWave3Revisions() {
+        performWave3 { _, _, root, _ in
+            let identity = try HostWave3Review.revisionIdentity(root: root)
+            return { self.wave3.reviewRevisionIdentity = identity; self.wave3.message = "修订快照已读取" }
+        }
+    }
+
     func prepareWave3Fixture(_ nullSelector: Bool) {
         guard testFixtures else { return }
         performWave3 { session, catalog, root, cancel in

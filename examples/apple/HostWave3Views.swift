@@ -25,6 +25,7 @@ struct HostWave3Actions {
     let cancel: () -> Void
 #if EXR_APPLE_HOST_REVIEW
     var reviewAnnotations: ((Bool) -> Void)? = nil
+    var reviewSnapshot: (() -> Void)? = nil
 #endif
 }
 
@@ -42,6 +43,8 @@ struct HostWave3Sheet: View {
     @State private var previousExportURL: URL?
     @State private var reviewOriginalDirectory: URL?
     @State private var lockedReviewDirectory: URL?
+    @State private var reviewPickerFile: URL?
+    @State private var reviewExportCheck = ""
 #endif
 
     private enum Choice {
@@ -296,6 +299,31 @@ struct HostWave3Sheet: View {
                         } catch { pickerError = error.localizedDescription }
                     }
                 }
+                action("读取修订快照", id: "features.annotations.snapshot") { actions.reviewSnapshot?() }
+                Text(state.reviewRevisionIdentity).accessibilityIdentifier("features.annotations.identity")
+                action("准备系统选择器文件", id: "features.annotations.prepare-picker") {
+                    guard let source = state.exportURL else { return }
+                    do {
+                        let documents = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+                        let file = documents.appendingPathComponent("EXReader-annotations.jsonl")
+                        let invalid = documents.appendingPathComponent("EXReader-invalid.jsonl")
+                        try Data(contentsOf: source).write(to: file, options: .atomic)
+                        try Data("{invalid json\n".utf8).write(to: invalid, options: .atomic)
+                        reviewPickerFile = file
+                    } catch { pickerError = error.localizedDescription }
+                }
+                if let file = reviewPickerFile {
+                    Text(file.path).accessibilityIdentifier("features.annotations.picker-path")
+                }
+                action("导出 Markdown 到临时文件夹", id: "features.annotations.markdown-fixture") {
+                    if let directory = reviewDirectory() { actions.exportAnnotations(directory, true) }
+                }
+                action("核对导出文件", id: "features.annotations.check-exports") {
+                    guard let jsonl = reviewPickerFile, let markdown = state.exportURL else { return }
+                    do { try HostWave3Review.checkExports(jsonl: jsonl, markdown: markdown); reviewExportCheck = "导出内容一致" }
+                    catch { reviewExportCheck = "导出内容错误：\(error.localizedDescription)" }
+                }
+                Text(reviewExportCheck).accessibilityIdentifier("features.annotations.export-check")
                 action("导出后预览同一标注文件", id: "features.annotations.roundtrip") {
                     if let directory = reviewDirectory() {
                         previousExportURL = state.exportURL
@@ -384,6 +412,5 @@ private struct HostWave3SharingPicker: NSViewRepresentable {
 }
 #endif
 #endif
-
 
 
