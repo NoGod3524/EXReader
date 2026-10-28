@@ -358,6 +358,15 @@
       "required_cases": [
         "testNativeHistoryAfterFoundAndLargeRotationExit()"
       ]
+    },
+    "android_sync_account": {
+      "run": 40630302205,
+      "doc": "docs/reader-total-progress/android-sync-account.md",
+      "source_prefix": "c33455a957b02c4e64bf1d5a466b633f51b71ba7",
+      "artifact": 12792577560,
+      "bytes": 137243021,
+      "sha256": "4361cd2866edc0a4faf970c761842d987d4acba4d23bc71e605741b62db95e47",
+      "adapter": "android_sync_account_40630302205"
     }
   },
   "requirements": [
@@ -1077,9 +1086,11 @@
       "group": "host",
       "platform": "android",
       "title": "Android：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "android_sync_account"
+      ],
+      "note": "API 34 emulator: actual host account failure, read-only status, cancellation and retry; physical devices and unified source assessed separately."
     },
     {
       "id": "H.iphone.startup",
