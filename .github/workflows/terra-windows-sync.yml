@@ -47,7 +47,21 @@ jobs:
       - name: Run the retained 32 account checks on the Wave3 executable
         env:
           EXR_ACCOUNT_COMPACT_PICKER: '1'
-        run: python tests/reader_windows_account/check_account_ui.py --candidate build/c09/package/EXReader/EXReader.exe --package build/c09/package/EXReader --fixtures build/sync-fixtures --revision-consumer build/sync-revisions/revision-consumer.exe --capture-probe build/sync-capture/reading-capture-probe.exe --reading-fixtures build/sync-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/c09/wave3-host/windows-host.map --output build/sync-account-ui
+        shell: bash
+        run: |
+          set -o pipefail
+          python -u tests/reader_windows_account/check_account_ui.py --candidate build/c09/package/EXReader/EXReader.exe --package build/c09/package/EXReader --fixtures build/sync-fixtures --revision-consumer build/sync-revisions/revision-consumer.exe --capture-probe build/sync-capture/reading-capture-probe.exe --reading-fixtures build/sync-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/c09/wave3-host/windows-host.map --output build/sync-account-ui 2>&1 | tee build/sync-account.log
+      - name: Preserve account evidence before downstream UI checks
+        if: ${{ always() && steps.host.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-sync-account-early-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/sync-account.log
+            build/sync-account-ui/
+            !build/**/*.key
+            !build/**/profile/**/*.sqlite
+          if-no-files-found: warn
       - name: Build organization and import cancellation consumers
         if: ${{ always() && steps.host.outcome == 'success' }}
         shell: pwsh
