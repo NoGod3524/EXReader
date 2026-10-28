@@ -377,6 +377,19 @@
       "run": 40643169696,
       "doc": "docs/reader-total-progress/windows-sync-account.md",
       "source_prefix": "87a039e0c4e3f3ae0f7fe4995f1dcfb20617ea5c"
+    },
+    "f06_sdk342_six_packages": {
+      "run": 40678657371,
+      "doc": "docs/reader-total-progress/f06-sdk342-six-packages.md",
+      "source_prefix": "8f8acf3234cba747165f001c0c96efe1b911e6ad",
+      "adapter": "f06_sdk342_40678657371"
+    },
+    "macos_organization_original": {
+      "run": 40635727935,
+      "doc": "docs/reader-total-progress/macos-organization-original.md",
+      "source_prefix": "716c1409168960a276e282ce694d32ed82497bc9",
+      "expected_conclusion": "failure",
+      "adapter": "macos_organization_40635727935"
     }
   },
   "requirements": [
@@ -852,9 +865,11 @@
       "group": "host",
       "platform": "macos",
       "title": "macOS：宿主子书架/分类、标签、系列与显式整理",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "macos_organization_original"
+      ],
+      "note": "只接受原失败运行中macOS的六个成功原生组织用例及其原始步骤/截图附件：子书架、成员增删、标签/系列、删除恢复、重开和显式重试；iPhone/iPad原失败保留，六端互通另列F03。"
     },
     {
       "id": "H.macos.reading",
@@ -1437,9 +1452,11 @@
       "id": "F06",
       "group": "final",
       "title": "最终六份程序/包从同一源码产出，解压/安装及实际程序身份绑定",
-      "state": "pending",
-      "evidence": [],
-      "note": "全目标范围未获共同源码验收，不由模块或单向/模拟器结果转授。"
+      "state": "verified",
+      "evidence": [
+        "f06_sdk342_six_packages"
+      ],
+      "note": "六目标同一SDK 3.42源码的开发包、解包及实际入口身份由原F06和aggregate及本审计重读六份原ZIP验证。Android/iPhone/iPad为模拟器；不授予F01完整行为、F07提供者、F11真机或正式发布。"
     },
     {
       "id": "F07",
