@@ -53,7 +53,7 @@ public final class OrganizationRelayTest extends Instrumentation {
         Files.write(new File(context.getFilesDir(),"org-"+name+".txt").toPath(),tree.toString().getBytes(StandardCharsets.UTF_8));
     }
     private void sync(){click("立即同步");status("本轮同步结束，书架已更新");click("关闭");}
-    private void organize(){click("More");click("Organize");visible("New");}
+    private void organize(){click("More");click("Organize");target="organize New action";waitFor(n->n.isEnabled()&&"New".contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),null,30000);}
     private void kind(int n){click("Kind");click(new String[]{"Shelves","Tags","Series"}[n]);}
     private void create(String name){click("New");field("Name",name);click("Save");visible(name);}
     private void member(String name)throws Exception{row(name);click("Books");visible("Relay GTK");}
