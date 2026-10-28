@@ -1,7 +1,7 @@
 name: Apple Android bookmark and annotation relay
 on:
   push:
-    branches: [codex/terra-wave-cross-records]
+    branches: [codex/terra-wave-cross-records, codex/reader-relay-common-prep-20261028]
   workflow_dispatch:
 permissions:
   contents: read
