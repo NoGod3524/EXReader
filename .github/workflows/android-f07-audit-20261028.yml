@@ -1,0 +1,48 @@
+name: Retrospective Android F07 exact capture native audit
+on:
+  push:
+    branches: [codex/android-f07-audit-20261028]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: New audit source syntax and negative protocol tests
+        run: |
+          python3 tests/reader_android_f07_audit_20261028/run.py guard
+          python3 -m py_compile tests/reader_android_f07_audit_20261028/*.py
+          python3 -m unittest discover -s tests/reader_android_f07_audit_20261028 -p 'test_*.py'
+      - name: Install only the original pinned native inspection toolchain
+        shell: bash
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.0.12077973"
+      - name: Authenticate original upload bytes and audit actual native ownership
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_android_f07_audit_20261028/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-f07-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/android-f07-audit/*.json
+            build/android-f07-audit/native/
+            build/android-f07-audit/*-original-upload.zip
+          if-no-files-found: error
