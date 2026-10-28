@@ -29,3 +29,13 @@ acceptance of a composed six-platform product or of D26 on this source. The fixe
 the original string-valued checks. It independently verifies the original ZIP,
 all 29 named checks and the same-run authentication artifact. The catalog
 admission remains subject to the existing fixed-catalog audit.
+
+The pinned evidence adapter passed separately in Actions
+[40630466182, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40630466182).
+After catalog admission, the existing fixed-catalog audit passed in
+[40630541825, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40630541825)
+on catalog source `7216eca2db2a2cce810c556a4d30ab6225ea3df9`, with
+`evidence_ok=true`, no problems, and 78/108 current outcomes (66/84 host,
+12/12 foundation, 0/12 final). The audit and adapter are Actions-only; the
+product test run was not repeated. This documentation-only commit is not the
+audited catalog source.
