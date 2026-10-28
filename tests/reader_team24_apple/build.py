@@ -30,6 +30,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--target', choices=('macos', 'iphonesimulator'), required=True)
     args = parser.parse_args()
+    source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    assert source == os.environ['GITHUB_SHA'], 'SDK checkout differs from workflow source'
+    candidate = '5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9'
+    paths = ['src', 'include', 'cmake', 'CMakeLists.txt', 'bindings']
+    if subprocess.run(['git', 'cat-file', '-e', candidate + '^{commit}'], cwd=ROOT).returncode:
+        run('git', 'fetch', '--no-tags', 'origin', candidate)
+    run('git', 'diff', '--exit-code', candidate, source, '--', *paths)
+    assert not subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=all', '--', *paths], cwd=ROOT, text=True), 'SDK checkout has uncommitted changes'
     run(sys.executable, 'tests/apple_host/raw3/ios/reading/build_sdk.py', '--target', args.target)
     out = ROOT / 'build/raw3-ios-sdk' / args.target
     sdk, stage = out / 'sdk', out / 'raw-products'
@@ -57,5 +65,6 @@ def main():
         raise RuntimeError('Required installed Apple module output missing: ' + ', '.join(missing))
     (out / 'wave3-packages.json').write_text(json.dumps({'source_sha': os.environ['GITHUB_SHA'],
         'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'target': args.target,
-        'modules': MODULES, 'sdk_frozen_source': 'edddc463c06ed5731195cdb8f06b2df6dff7699e'}, indent=2) + '\n')
+        'modules': MODULES, 'sdk_build_source': source,
+        'sdk_content_candidate': candidate, 'sdk_content_paths': paths}, indent=2) + '\n')
 if __name__ == '__main__': main()
