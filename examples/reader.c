@@ -3484,15 +3484,8 @@ static void paint_page_view(HWND window) {
   }
   if (GetFocus() == window && !(SendMessageW(window, WM_QUERYUISTATE, 0, 0) & UISF_HIDEFOCUS)) {
     RECT focus = area;
-    /* The document owns keyboard input, not its surrounding letterbox. Keep
-       the cue on the rendered canvas; an empty view uses the whole control. */
-    if (g.frame.valid && g.view.valid) {
-      focus.left = g.view.dx; focus.top = g.view.dy;
-      focus.right = focus.left + (int)(g.frame.bitmap.width * g.view.scale);
-      focus.bottom = focus.top + (int)(g.frame.bitmap.height * g.view.scale);
-      IntersectRect(&focus, &focus, &area);
-    }
-    InflateRect(&focus, -1, -1);
+    /* Keep the native focus cue on the control boundary, outside the page
+       interior, so focus transitions never alter accepted document pixels. */
     if (!IsRectEmpty(&focus)) DrawFocusRect(dc, &focus);
   }
   EndPaint(window, &paint);
