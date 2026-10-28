@@ -1,0 +1,35 @@
+name: Migration ledger identity evidence
+on:
+  push:
+    branches: [codex/migration-compat-20261028]
+    paths:
+      - tests/migration/ledger_identity_evidence.py
+      - .github/workflows/migration-ledger-identity-evidence.yml
+permissions:
+  contents: read
+jobs:
+  evidence:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build installed SDK and transaction migrator
+        run: |
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
+          cmake --build build/sdk --config Release --parallel 4
+          cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage"
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/migration --config Release --target exreader-legacy-migrate-tx --parallel 4
+      - name: Compare ledger and database after restoring a deleted note
+        run: |
+          mkdir -p build/evidence
+          set -o pipefail
+          python3 tests/migration/ledger_identity_evidence.py --tool build/migration/exreader-legacy-migrate-tx --work build/ledger-identity 2>&1 | tee build/evidence/ledger-identity.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-ledger-identity
+          path: build/evidence/
+          if-no-files-found: warn
