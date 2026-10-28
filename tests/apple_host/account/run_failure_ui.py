@@ -12,6 +12,7 @@ import re
 import sqlite3
 import subprocess
 import sys
+import threading
 
 from check_account import with_fixture
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -34,7 +35,9 @@ def main():
     original = (args.resources / 'Sample.epub').read_bytes()
     authorization = 'Basic ' + base64.b64encode(b'reader:failure-fixture-password').decode()
     boundary = []
+    failed_state = []
     active_root = [None]
+    snapshot_lock = threading.Lock()
 
     def account_folder():
         if args.platform == 'macos':
@@ -42,21 +45,33 @@ def main():
         return Path(subprocess.check_output(['xcrun', 'simctl', 'get_app_container', args.udid,
                                              'org.exreader.host', 'data'], text=True).strip()) / 'Library/Application Support/EXReader'
 
+    def snapshot(destination, name):
+        with snapshot_lock:
+            try:
+                folder = account_folder()
+                profiles = [p for p in json.loads((folder / 'accounts.json').read_bytes()) if p['root'] == active_root[0]]
+                assert len(profiles) == 1
+                dbpath = folder / 'accounts' / profiles[0]['id'] / 'reader-catalog.db'
+                with sqlite3.connect(dbpath.resolve().as_uri() + '?mode=ro', uri=True) as db:
+                    rows = db.execute('SELECT o.revision_id, r.body_sha256 FROM reader_outbox o JOIN reader_revisions r ON r.revision_id = o.revision_id').fetchall()
+                    books = db.execute('SELECT count(*) FROM reader_local_books').fetchone()[0]
+                destination.append({'pending_revisions': rows, 'local_books': books})
+            except Exception as error:
+                destination.append({'error': repr(error)})
+            (output / name).write_text(json.dumps(destination, indent=2) + '\n')
+
     def on_unauthorized():
-        # Snapshot the actual owner database before the fixture sends its 401.
-        # Keep the record even if inspection fails; the HTTP response still reaches the UI.
-        try:
-            folder = account_folder()
-            profiles = [p for p in json.loads((folder / 'accounts.json').read_bytes()) if p['root'] == active_root[0]]
-            assert len(profiles) == 1
-            dbpath = folder / 'accounts' / profiles[0]['id'] / 'reader-catalog.db'
-            with sqlite3.connect(dbpath.resolve().as_uri() + '?mode=ro', uri=True) as db:
-                rows = db.execute('SELECT o.revision_id, r.body_sha256 FROM reader_outbox o JOIN reader_revisions r ON r.revision_id = o.revision_id').fetchall()
-                books = db.execute('SELECT count(*) FROM reader_local_books').fetchone()[0]
-            boundary.append({'pending_revisions': rows, 'local_books': books})
-        except Exception as error:
-            boundary.append({'error': repr(error)})
-        (output / 'failure-boundary.json').write_text(json.dumps(boundary, indent=2) + '\n')
+        # Preserve the pre-401 observation even when inspection fails.
+        snapshot(boundary, 'failure-boundary.json')
+
+    def on_failure_observed():
+        # The UI waits for this response before changing credentials or retrying.
+        snapshot(failed_state, 'failed-state-outbox.json')
+        return (len(failed_state) == 1 and 'error' not in failed_state[0] and
+                bool(boundary) and 'error' not in boundary[0] and
+                failed_state[0]['local_books'] == 1 and
+                failed_state[0]['pending_revisions'] == boundary[0]['pending_revisions'] and
+                len(failed_state[0]['pending_revisions']) == 1)
 
     def consume(root, entries, requests, certificate):
         active_root[0] = root
@@ -81,6 +96,9 @@ def main():
         assert requests and any(not row['authenticated'] for row in requests), 'real authorization failure missing'
         first_good = next(i for i, row in enumerate(requests) if row['authenticated'])
         assert any(not row['authenticated'] for row in requests[:first_good]), 'failure must precede recovery'
+        observations = [i for i, row in enumerate(requests) if row['method'] == 'OBSERVE']
+        assert len(observations) == 1 and 0 < observations[0] < first_good, 'failed-state observation must precede retry'
+        assert any(not row['authenticated'] and row['method'] != 'OBSERVE' for row in requests[:observations[0]])
         shards = {row['path'] for row in requests[first_good:] if row['authenticated'] and row['method'] == 'PROPFIND' and
                   re.fullmatch(r'/dav/exreader-sync-v1/revisions/[0-9a-f]{2}/', row['path'])}
         assert shards == {'/dav/exreader-sync-v1/revisions/%02x/' % n for n in range(256)}, 'recovery sweep incomplete'
@@ -99,17 +117,20 @@ def main():
             assert db.execute('SELECT count(*) FROM reader_outbox').fetchone()[0] == 0
             assert boundary and all('error' not in item for item in boundary), boundary
             assert boundary[0]['local_books'] == 1 and len(boundary[0]['pending_revisions']) == 1, boundary
+            assert len(failed_state) == 1 and failed_state[0] == boundary[0], failed_state
             for revision, digest in boundary[0]['pending_revisions']:
                 assert db.execute('SELECT body_sha256 FROM reader_revisions WHERE revision_id = ?', (revision,)).fetchone() == (digest,)
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': args.platform, 'case': cases[0],
-                  'failure_requests': sum(not row['authenticated'] for row in requests), 'recovery_shards': len(shards),
+                  'failure_requests': sum(not row['authenticated'] and row['method'] != 'OBSERVE' for row in requests),
+                  'failed_state_pending_revisions': len(failed_state[0]['pending_revisions']), 'recovery_shards': len(shards),
                   'original_sha256': hashlib.sha256(original).hexdigest(), 'outbox_after_retry': 0,
                   'scope': 'actual account UI authorization failure, credential update and HTTPS retry'}
         (output / 'failure-evidence.json').write_text(json.dumps(report, indent=2) + '\n')
         print(json.dumps(report))
 
-    with_fixture(output / 'fixture', authorization, consume, shard_delay=0.25, on_unauthorized=on_unauthorized)
+    with_fixture(output / 'fixture', authorization, consume, shard_delay=0.25,
+                 on_unauthorized=on_unauthorized, on_failure_observed=on_failure_observed)
 
 
 if __name__ == '__main__':

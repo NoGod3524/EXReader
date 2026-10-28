@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import Foundation
 import XCTest
 
 final class AccountFailureUITests: XCTestCase {
@@ -64,6 +65,17 @@ final class AccountFailureUITests: XCTestCase {
         XCTAssertTrue(wait(180) { self.value("account.sync.state") == "同步失败" })
         XCTAssertTrue(book.exists, "the local original must remain available after failure")
         XCTAssertTrue(node("account.sync.start").isEnabled, "failure must allow a retry")
+
+        // The fixture reads the real catalog after the displayed terminal state,
+        // and responds only after the outbox observation has been persisted.
+        let observed = expectation(description: "capture failed-state outbox before retry")
+        let url = try XCTUnwrap(URL(string: root + "__exreader_test_failure_observed__"))
+        URLSession.shared.dataTask(with: url) { _, response, error in
+            XCTAssertNil(error)
+            XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 204)
+            observed.fulfill()
+        }.resume()
+        wait(for: [observed], timeout: 60)
 
         tap("account.choose")
         let row = app.buttons.matching(NSPredicate(format: "label == %@", root)).firstMatch
