@@ -8,6 +8,18 @@ spec=importlib.util.spec_from_file_location('record_relay_ui',ROOT/'tests/reader
 ui=importlib.util.module_from_spec(spec);spec.loader.exec_module(ui)
 BUTTON,ROWS,MESSAGE,BODY,PROGRESS,BOOKMARK,HIGHLIGHT,EDIT,DELETE,RESTORE,OPEN,PREVIOUS,NEXT,REFRESH,RETRY,DISCARD,CANCEL,CLOSE=range(210,228)
 
+def clipboard_raw(app):
+    # Source: book-relay ae9ca1c0d1eb73801652792ef11abf9b43aad153.
+    # No whitespace normalization: compare the actual Unicode selected page.
+    ui.U.OpenClipboard.argtypes=[W.HWND];ui.U.GetClipboardData.argtypes=[W.UINT];ui.U.GetClipboardData.restype=W.HANDLE
+    kernel=C.WinDLL('kernel32');kernel.GlobalLock.argtypes=[W.HANDLE];kernel.GlobalLock.restype=C.c_void_p;kernel.GlobalUnlock.argtypes=[W.HANDLE]
+    assert ui.U.OpenClipboard(app.window)
+    try:
+        handle=ui.U.GetClipboardData(13);pointer=kernel.GlobalLock(handle);assert pointer
+        try:return C.wstring_at(pointer)
+        finally:kernel.GlobalUnlock(handle)
+    finally:ui.U.CloseClipboard()
+
 def original(path):
     # A real EPUB original generated only on Actions; no application data is seeded.
     fixture_spec=importlib.util.spec_from_file_location('record_relay_fixture',ROOT/'tests/reader_reading_state/make_fixtures.py')
@@ -66,19 +78,21 @@ def main():
             records=annotations();assert len(records)==2,records;assert records[0]['payload']['location']['selector']['exact']=='';assert records[1]['payload']['location']['selector']['exact']
             report['raw_records']=records;check('windows_native_ui_creates_bookmark_and_annotation')
             for page in range(60):
-                app.click('next');app.wait_idle();app.click('select');app.click('copy');visible=ui.ACCOUNT.clipboard_text(app)
+                app.click('next');app.wait_idle();app.click('select');app.click('copy');visible=clipboard_raw(app)
                 if 'Ambiguous context repeats' in visible and 'Distinct reading evidence' not in visible:
                     # Move two further real pages so both contexts lie inside the repeated block.
                     for _ in range(2):app.click('next');app.wait_idle()
                     break
             else:raise AssertionError('Actual host never reached predetermined repeated section')
-            app.click('select');app.click('copy');report['ambiguous_source_page']=ui.ACCOUNT.clipboard_text(app)
+            app.click('select');app.click('copy');report['ambiguous_source_page']=clipboard_raw(app)
             print('AMBIGUOUS_SOURCE_PAGE '+report['ambiguous_source_page'],flush=True)
             d=show();ui.M.set_text(ui.U.GetDlgItem(d,BODY),'Ambiguous bookmark');press(d,BOOKMARK);assert any('Ambiguous bookmark' in x for x in labels(d)),labels(d)
             report['raw_records']=annotations();print('AUTHORED_RECORDS '+json.dumps(report['raw_records']),flush=True)
             choose(d,'Ambiguous bookmark');message=press(d,OPEN);report['ambiguous_message']=message
             assert '歧义' in message or 'ambiguous' in message.lower(),message
-            ui.M.screenshot(d,a.out/'ambiguous-record.bmp');close(d);check('ambiguous_actual_record_refuses_navigation_explicitly')
+            ui.M.screenshot(d,a.out/'ambiguous-record.bmp');close(d);app.click('select');app.click('copy')
+            assert clipboard_raw(app)==report['ambiguous_source_page'],'ambiguous attempt moved actual page'
+            check('ambiguous_actual_record_refuses_navigation_explicitly')
             sync();check('windows_actual_authenticated_upload')
         else:
             previous,_=relay.load(a.previous,'android')
@@ -89,7 +103,7 @@ def main():
             for target in ('Windows bookmark','Android edited note','Android new bookmark'):
                 d=show();choose(d,target);message=press(d,OPEN)
                 assert '独立原书与当前绘图文档' in message,message
-                close(d);app.click('select');app.click('copy');text=ui.ACCOUNT.clipboard_text(app)
+                close(d);app.click('select');app.click('copy');text=clipboard_raw(app)
                 expected=next(r for r in previous['data']['outgoing_records'] if r['body']==target)
                 selector=expected['exact'] or expected['suffix'];assert selector,expected
                 assert selector[:24] in text,(target,selector,text)
@@ -97,8 +111,11 @@ def main():
                 ui.M.screenshot(app.window,a.out/(target.replace(' ','-')+'.bmp'))
                 report['actual_pages'].append({'record':target,'public_resolver_status':message,'actual_copied_page':text})
             check('windows_receives_android_edit_and_new_bookmark_real_resolution')
+            app.click('select');app.click('copy');before_ambiguous=clipboard_raw(app)
             d=show();choose(d,'Ambiguous bookmark');message=press(d,OPEN);assert '歧义' in message or 'ambiguous' in message.lower(),message
-            report['ambiguous_message']=message;close(d);check('received_ambiguous_record_refuses_navigation_explicitly')
+            report['ambiguous_message']=message;close(d);app.click('select');app.click('copy')
+            assert clipboard_raw(app)==before_ambiguous,'received ambiguous record moved actual page'
+            check('received_ambiguous_record_refuses_navigation_explicitly')
         before=annotations();sync();after=annotations();assert before==after,'repeat sync appended records';check('repeated_sync_preserves_records_exactly')
         report['raw_records']=after;report['passed']=True;report['transport']='authenticated staged HTTPS; not concurrent online service'
         relay.save(dav,a.out,a.phase,report);dav=None
