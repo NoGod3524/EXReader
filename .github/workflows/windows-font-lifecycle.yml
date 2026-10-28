@@ -1,0 +1,43 @@
+name: Windows font lifecycle acceptance
+on:
+  push:
+    branches: [codex/terra-wave-windows-font, codex/reader-font-common-20261028]
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 180
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build isolated native acceptance host
+        run: python tests/windows_font_lifecycle/build.py
+      - name: Prepare native UI dependencies and fixtures
+        shell: pwsh
+        run: |
+          python -m pip install uiautomation==2.0.29
+          if ($LASTEXITCODE) { throw 'UI dependency failed' }
+          python -c "from tools.host_font import fetch; fetch('build/host-font-cache')"
+          if ($LASTEXITCODE) { throw 'Font acquisition failed' }
+          python tests/reader_windows_preferences/make_fixtures.py --output build/windows-font/fixtures
+          if ($LASTEXITCODE) { throw 'Fixture generation failed' }
+      - name: Verify native font lifecycle and live position
+        run: python tests/windows_font_lifecycle/check.py
+      - name: Verify long TXT font position and rollback
+        run: python tests/windows_font_lifecycle/check_txt.py
+      - name: Bind both suites to the same native host and source
+        run: python tests/windows_font_lifecycle/bind_reports.py
+      - name: Preserve results and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-font-lifecycle-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-font/logs/
+            build/windows-font/evidence/
+          if-no-files-found: warn

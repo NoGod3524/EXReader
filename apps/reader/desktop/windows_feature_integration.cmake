@@ -69,6 +69,10 @@ target_link_libraries(reader_windows_records_w3 PRIVATE EXReaderSession::reader_
   EXReaderDesktopMetadata::reader_desktop_metadata)
 
 add_executable(EXReaderWave3 WIN32 "${EXR_W3_DESKTOP}/../../../examples/reader.c" "${EXR_W3_DESKTOP}/windows_wave3_bridge.cpp")
+option(EXR_WINDOWS_FONT_REVIEW "Enable isolated Windows font acceptance observations" OFF)
+if(EXR_WINDOWS_FONT_REVIEW)
+  target_compile_definitions(EXReaderWave3 PRIVATE EXR_WINDOWS_FONT_REVIEW=1)
+endif()
 target_compile_definitions(EXReaderWave3 PRIVATE EXR_READER_PRODUCT_CATALOG=1 EXR_READER_DESKTOP_METADATA=1
   EXR_READER_WINDOWS_ACCOUNT=1 EXR_READER_WINDOWS_RAW3=1 EXR_READER_WINDOWS_SEARCH=1 EXR_READER_WINDOWS_NAVIGATION=1
   EXR_READER_WINDOWS_RECORDS=1 EXR_READER_WINDOWS_IMPORT_ORGANIZE=1 EXR_READER_WINDOWS_PREFERENCES=1
