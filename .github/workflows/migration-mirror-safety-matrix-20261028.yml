@@ -1,0 +1,120 @@
+name: Migration mirror safety matrix 20261028
+on:
+  push:
+    branches: [codex/migration-mirror-safety-matrix-20261028]
+    paths:
+      - tests/migration/mirror_safety_matrix_20261028.py
+      - .github/workflows/migration-mirror-safety-matrix-20261028.yml
+permissions:
+  contents: read
+concurrency:
+  group: migration-mirror-safety-matrix-${{ github.sha }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+env:
+  OLD_SDK_REF: c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
+jobs:
+  matrix:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, label: linux, py: python3, tool: build/migration/exreader-legacy-migrate-tx, old: build/old-migration/exreader-legacy-migrate}
+          - {os: windows-latest, label: windows, py: python, tool: build/migration/Release/exreader-legacy-migrate-tx.exe, old: build/old-migration/Release/exreader-legacy-migrate.exe}
+          - {os: macos-15, label: macos, py: python3, tool: build/migration/exreader-legacy-migrate-tx, old: build/old-migration/exreader-legacy-migrate}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Freeze SDK and original tests, link the exact reviewed product source
+        run: |
+          set -euo pipefail
+          mkdir -p build/evidence
+          git fetch --no-tags --depth=1 origin e771f3c5d1567412f26184ad304730b7c640235d
+          test "$(git rev-parse FETCH_HEAD)" = e771f3c5d1567412f26184ad304730b7c640235d
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --name-only FETCH_HEAD HEAD | while IFS= read -r path; do
+            case "$path" in
+              extras/migration/src/lm_main.c|tests/migration/commit_outcome_evidence.py|.github/workflows/migration-commit-outcome-evidence.yml|docs/MIGRATION-COMMIT-OUTCOME-EVIDENCE.md) ;;
+              extras/migration/CMakeLists.txt|extras/migration/src/lm_mirror.c|extras/migration/src/lm_mirror.h|tests/migration/mirror_recovery.py|.github/workflows/migration-mirror-recovery.yml|docs/MIGRATION-MIRROR-RECOVERY.md) ;;
+              tests/migration/precommit_mirror.py|.github/workflows/migration-precommit-mirror.yml|docs/MIGRATION-PRECOMMIT-MIRROR.md) ;;
+              tests/migration/mirror_safety_matrix_20261028.py|.github/workflows/migration-mirror-safety-matrix-20261028.yml|docs/MIGRATION-MIRROR-SAFETY-MATRIX-20261028.md) ;;
+              *) echo "Out-of-scope source change: $path" >&2; exit 1 ;;
+            esac
+          done
+          git diff --name-status FETCH_HEAD HEAD > build/evidence/source-scope.txt
+          ${{ matrix.py }} - <<'PY'
+          import hashlib, json, os, subprocess
+          from pathlib import Path
+          published_base = 'e771f3c5d1567412f26184ad304730b7c640235d'
+          publication_paths = {
+            '.github/workflows/migration-commit-outcome-evidence.yml',
+            '.github/workflows/migration-mirror-recovery.yml',
+            '.github/workflows/migration-precommit-mirror.yml',
+            '.github/workflows/migration-mirror-safety-matrix-20261028.yml',
+            'docs/MIGRATION-COMMIT-OUTCOME-EVIDENCE.md',
+            'docs/MIGRATION-MIRROR-RECOVERY.md',
+            'docs/MIGRATION-PRECOMMIT-MIRROR.md',
+            'docs/MIGRATION-MIRROR-SAFETY-MATRIX-20261028.md',
+            'extras/migration/CMakeLists.txt',
+            'extras/migration/src/lm_main.c',
+            'extras/migration/src/lm_mirror.c',
+            'extras/migration/src/lm_mirror.h',
+            'tests/migration/commit_outcome_evidence.py',
+            'tests/migration/mirror_recovery.py',
+            'tests/migration/precommit_mirror.py',
+            'tests/migration/mirror_safety_matrix_20261028.py',
+          }
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only', published_base, 'HEAD'], text=True).splitlines())
+          assert changed == publication_paths, {'missing': sorted(publication_paths - changed), 'unexpected': sorted(changed - publication_paths)}
+          expected = {
+            'extras/migration/CMakeLists.txt': 'b3ce74a1ad235859cf2656ea99c09a2d8447fc365484a20bedd77eeba5df4ab9',
+            'extras/migration/src/lm_main.c': '2c36cb0d8c4102b35e11f45419820de5154ec98f5819694567ca3e239814b5ff',
+            'extras/migration/src/lm_mirror.c': 'efa530a6303c6c55d4c6237d6589e645f98347dfb65787dec6167bb7d4216316',
+            'extras/migration/src/lm_mirror.h': 'dccc5374b27f6614a7872cc584a952c11acf767200a8aa68ae1cc24f5c7b6be3',
+          }
+          for path, digest in expected.items():
+              assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == digest, path
+          manifest = {path: hashlib.sha256(Path(path).read_bytes()).hexdigest() for path in sorted(publication_paths)}
+          Path('build/evidence/source-identity.json').write_text(json.dumps({
+            'source_sha': os.environ['GITHUB_SHA'], 'published_base': published_base,
+            'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+            'reviewed_product_sources': expected, 'publication_paths_sha256': manifest,
+            'old_sdk_ref': os.environ['OLD_SDK_REF'],
+          }, indent=2) + '\n')
+          PY
+      - name: Build unchanged installed SDK and reviewed transaction tools
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/sdk-configure.txt
+          cmake --build build/sdk --config Release --parallel 4 2>&1 | tee build/evidence/sdk-build.txt
+          cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage" 2>&1 | tee build/evidence/sdk-install.txt
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/tool-configure.txt
+          cmake --build build/migration --config Release --target exreader-legacy-migrate-tx --parallel 4 2>&1 | tee build/evidence/tool-build.txt
+      - name: Build actual pinned SDK 3.40 and its original migrator for schema 6 fixtures
+        run: |
+          set -euo pipefail
+          mkdir -p build/old-source build/old-migration-source
+          git fetch --no-tags --depth=1 origin "$OLD_SDK_REF"
+          test "$(git rev-parse FETCH_HEAD)" = "$OLD_SDK_REF"
+          git archive FETCH_HEAD | tar -xf - -C build/old-source
+          git archive FETCH_HEAD -- extras/migration | tar -xf - -C build/old-migration-source
+          cmake -S build/old-source -B build/old-sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/old-sdk-configure.txt
+          cmake --build build/old-sdk --config Release --parallel 4 2>&1 | tee build/evidence/old-sdk-build.txt
+          cmake --install build/old-sdk --config Release --prefix "$GITHUB_WORKSPACE/old-stage" 2>&1 | tee build/evidence/old-sdk-install.txt
+          cmake -S build/old-migration-source/extras/migration -B build/old-migration -DEXR_SDK="$GITHUB_WORKSPACE/old-stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/old-tool-configure.txt
+          cmake --build build/old-migration --config Release --target exreader-legacy-migrate --parallel 4 2>&1 | tee build/evidence/old-tool-build.txt
+      - name: Real legacy schema, WAL, cancellation, commit knowledge, ownership and cleanup evidence
+        run: |
+          set -euo pipefail
+          ${{ matrix.py }} tests/migration/mirror_safety_matrix_20261028.py --tool "${{ matrix.tool }}" --old-tool "${{ matrix.old }}" --work build/mirror-safety-matrix 2>&1 | tee build/evidence/mirror-safety-matrix.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-mirror-safety-matrix-${{ matrix.label }}
+          path: |
+            build/evidence/
+            build/mirror-safety-matrix/
+          if-no-files-found: error

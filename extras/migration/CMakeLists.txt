@@ -26,7 +26,7 @@ add_executable(exreader-legacy-migrate src/lm_main.c src/lm_pack.c src/lm_util.c
 target_include_directories(exreader-legacy-migrate PRIVATE "${migration_sqlite_header_SOURCE_DIR}")
 target_link_libraries(exreader-legacy-migrate PRIVATE EXReader::exr_library)
 set_target_properties(exreader-legacy-migrate PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
-add_executable(exreader-legacy-migrate-tx src/lm_main.c src/lm_pack.c src/lm_util.c)
+add_executable(exreader-legacy-migrate-tx src/lm_main.c src/lm_pack.c src/lm_util.c src/lm_mirror.c)
 target_compile_definitions(exreader-legacy-migrate-tx PRIVATE EXR_MIGRATION_TX_CANDIDATE=1)
 target_include_directories(exreader-legacy-migrate-tx PRIVATE "${migration_sqlite_header_SOURCE_DIR}")
 target_link_libraries(exreader-legacy-migrate-tx PRIVATE EXReader::exr_library)

@@ -6,6 +6,9 @@
 #define _DARWIN_C_SOURCE
 #endif
 #include "lm_ledger.h"
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+#include "lm_mirror.h"
+#endif
 #include <sqlite3.h>
 #include <ctype.h>
 #include <errno.h>
@@ -25,6 +28,11 @@ static const char *const OUTCOME[] = {"unfinished", "success", "rejected", "fail
 static const int EXIT_CODE[] = {3, 0, 2, 3, 4, 5, 6, 0};
 enum { S_INFO, S_WARNING, S_APPROX, S_UNLOCATED, S_DROPPED, S_UNSUPPORTED, S_CONFLICT, S_COUNT };
 static const char *const SEVERITY[S_COUNT] = {"info", "warning", "approximate", "unlocated", "dropped", "unsupported", "conflict"};
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+/* Process-local knowledge only: these values are not durable commit receipts. */
+typedef enum { C_NOT_ATTEMPTED = 0, C_NOT_COMMITTED, C_COMMITTED, C_UNKNOWN } commit_knowledge;
+static const char *const COMMIT_KNOWLEDGE[] = {"not-attempted", "not-committed", "committed", "unknown"};
+#endif
 
 static volatile sig_atomic_t g_cancel = 0;
 static void on_signal(int sig) { (void)sig; g_cancel = 1; }
@@ -51,6 +59,15 @@ typedef struct {
   uint64_t units, max_book_bytes, bytes_imported;
   char target_sha[65], sidecar_sha[65];
   int target_existed, sidecar_existed, rolled_back, lock_held, target_version;
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  commit_knowledge target_commit, private_stage_commit;
+  lm_mirror_intent mirror_intent;
+  lm_mirror_file mirror_before, owner_before, pending_snapshot, sidecar_tmp_file;
+  char *pending;
+  char *mirror_preimage;
+  const char *mirror_state;
+  int pending_retained, sidecar_tmp_owned, mirror_preimage_owned;
+#endif
   const char *pre_state, *stage_state;
   lm_hm pack_books;
   size_t *seen_a, *seen_b;
@@ -1353,6 +1370,10 @@ static void dump_library(ctx *c) {
 static int check_target_header(ctx *c) {
 #ifdef EXR_MIGRATION_TX_CANDIDATE
   sqlite3 *db=NULL;sqlite3_stmt *stmt=NULL;int rc,app=-1,version=-1;
+  lm_mirror_file target;lm_err path_error={{0},{0}};
+  if(!lm_mirror_snapshot(c->target,0,0,&target,NULL,NULL,&path_error) || !target.present) {
+    fail(c,O_REJECTED,"target-not-library","target must be a readable regular existing library");return 0;
+  }
   rc=sqlite3_open_v2(c->target,&db,SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX,NULL);
   if(rc==SQLITE_OK) rc=sqlite3_prepare_v2(db,"PRAGMA application_id",-1,&stmt,NULL);
   if(rc==SQLITE_OK && sqlite3_step(stmt)==SQLITE_ROW) app=sqlite3_column_int(stmt,0);
@@ -1447,15 +1468,371 @@ static int snapshot_old_target(ctx *c) {
   }
   return 1;
 }
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+static int mirror_fail(ctx *c, const lm_err *e) {
+  fail(c, O_FAILED, e->code, "%s", e->message);
+  return 0;
+}
+static int mirror_sidecar_snapshot(ctx *c, lm_mirror_file *out) {
+  lm_err e = {{0}, {0}};
+  if (lm_mirror_snapshot(c->sidecar, 1, LM_MIRROR_LEDGER_MAX, out, NULL, NULL, &e)) return 1;
+  fail(c, (!strcmp(c->cmd, "verify") || !strcmp(c->cmd, "dump")) ? O_REJECTED : O_FAILED,
+       "ledger-unreadable", "%s", e.message);
+  return 0;
+}
+static void mirror_run_id(ctx *c) {
+  snprintf(c->run, sizeof(c->run), "%llx-%x", (unsigned long long)time(NULL), (unsigned)
+#ifdef _WIN32
+    _getpid()
+#else
+    getpid()
+#endif
+  );
+}
+static int mirror_owner_unchanged(ctx *c, const char *path, const lm_mirror_file *expected) {
+  lm_mirror_file now;
+  lm_err e = {{0}, {0}};
+  if (!lm_mirror_snapshot(path, 0, 0, &now, NULL, NULL, &e)) return mirror_fail(c, &e);
+  if (!now.present || !lm_mirror_same_file(expected, &now)) {
+    fail(c, O_FAILED, "target-changed", "library owner pathname changed; pending evidence is retained"); return 0;
+  }
+  return 1;
+}
+static int mirror_write_stage(ctx *c, const char *path, const void *data, size_t size, int *owned) {
+  FILE *f = lm_fopen(path, "wbx");
+  int ok;
+  *owned = 0;
+  if (!f) { fail(c, O_FAILED, "mirror-stage", "cannot exclusively create the mirror export stage"); return 0; }
+  *owned = 1;
+  ok = fwrite(data, 1, size, f) == size && lm_sync(f);
+  if (fclose(f)) ok = 0;
+  if (!ok) { fail(c, O_FAILED, "mirror-stage", "mirror export stage write failed"); return 0; }
+  return 1;
+}
+static int mirror_pause(ctx *c, const char *hook, const char *suffix) {
+  char *ready, *resume;
+  unsigned wait;int resumed=0;
+  if(!injected(c,hook,0)) return 1;
+  ready=path_join(c->target,suffix);
+  resume=path_join(ready,".resume");
+  if(!write_file(ready,"ready",5)) { free(ready);free(resume);fail(c,O_FAILED,"review-hook-failed","cannot create mirror synchronization marker");return 0; }
+  for(wait=0;wait<400 && !cancel_cb(c);wait++) {
+    if(lm_exists(resume)) { resumed=1;break; }
+#ifdef _WIN32
+    Sleep(50);
+#else
+    struct timespec delay={0,50000000};nanosleep(&delay,NULL);
+#endif
+  }
+  lm_remove(ready);lm_remove(resume);free(ready);free(resume);
+  if(!resumed) { fail(c,cancel_cb(c)?O_CANCELLED:O_FAILED,cancel_cb(c)?"cancelled":"review-hook-timeout","mirror synchronization interrupted; pending retained");return 0; }
+  return 1;
+}
+static char *mirror_artifact_path(ctx *c, const char *kind, const char *token) {
+  char *path=lm_xalloc(strlen(c->sidecar)+strlen(kind)+strlen(token)+2);
+  sprintf(path,"%s%s%s",c->sidecar,kind,token);return path;
+}
+/* The caller has already verified mirror disposition and released its recovery
+   owner. Missing retired artifacts are idempotent; foreign artifacts are not. */
+static int mirror_remove_artifact(const char *path,const lm_mirror_file *expected,lm_err *e) {
+  lm_mirror_file now;
+  if(!lm_mirror_snapshot(path,1,LM_MIRROR_LEDGER_MAX,&now,NULL,NULL,e)) return 0;
+  if(!now.present) return 1;
+  if(!expected->present || !lm_mirror_same_file(expected,&now) || !lm_mirror_same_bytes(expected,&now)) {
+    lm_err_set(e,"mirror-artifact-changed","refusing to delete an artifact not owned by the pending intent");return 0;
+  }
+  if(!lm_remove(path)) { lm_err_set(e,"mirror-cleanup-pending","cannot remove an owned mirror artifact");return 0; }
+  return 1;
+}
+static int mirror_retire_artifacts(ctx *c,const lm_mirror_intent *intent,lm_err *e) {
+  char *before,*planned;int ok;
+  if(intent->version!=2) return 1;
+  before=mirror_artifact_path(c,".before-",intent->artifact_token);
+  planned=mirror_artifact_path(c,".staged-",intent->artifact_token);
+  ok=mirror_remove_artifact(before,&intent->mirror_preimage,e) &&
+     mirror_remove_artifact(planned,&intent->mirror_after,e);
+  free(before);free(planned);return ok;
+}
+/* Restore external bytes/absence only. No database file is ever restored here.
+   A copied preimage may become the mirror by rename; v2 recognizes that file ID
+   on retry even if the old preimage pathname no longer exists. */
+static int mirror_restore_original(ctx *c,const lm_mirror_intent *intent) {
+  lm_mirror_file now,preimage,after;lm_err e={{0},{0}};
+  char *path=NULL;int ok=0;
+  if(intent->version!=2 || !intent->target_was_present) {
+    fail(c,O_FAILED,"mirror-restore-contract","only an existing-target v2 intent can restore an external mirror baseline");return 0;
+  }
+  if(!mirror_sidecar_snapshot(c,&now)) return 0;
+  if(lm_mirror_same_bytes(&now,&intent->mirror_before)) return 1; /* no overwrite */
+  if(now.present && !lm_mirror_planned_file(intent,&now)) {
+    fail(c,O_FAILED,"mirror-recovery-conflict","external mirror is neither baseline bytes nor the owned planned file");return 0;
+  }
+  if(intent->mirror_before.present) {
+    path=mirror_artifact_path(c,".before-",intent->artifact_token);
+    if(!lm_mirror_snapshot(path,1,LM_MIRROR_LEDGER_MAX,&preimage,NULL,NULL,&e)) { mirror_fail(c,&e);goto done; }
+    if(!preimage.present || !lm_mirror_same_file(&preimage,&intent->mirror_preimage) ||
+       !lm_mirror_same_bytes(&preimage,&intent->mirror_before)) {
+      fail(c,O_FAILED,"mirror-preimage-unavailable","exact owned external mirror preimage is unavailable; intent retained");goto done;
+    }
+    if(!(now.present?lm_replace(path,c->sidecar):lm_publish_new(path,c->sidecar))) {
+      fail(c,O_FAILED,"mirror-restore-failed","cannot publish the exact external mirror preimage; intent retained");goto done;
+    }
+  } else if(now.present && !lm_remove(c->sidecar)) {
+    fail(c,O_FAILED,"mirror-restore-failed","cannot remove the owned planned mirror to restore original absence");goto done;
+  }
+  if(!mirror_sidecar_snapshot(c,&after)) goto done;
+  if(!lm_mirror_same_bytes(&after,&intent->mirror_before)) {
+    fail(c,O_FAILED,"mirror-restore-failed","external mirror baseline was not restored exactly");goto done;
+  }
+  ok=1;
+done:
+  free(path);return ok;
+}
+static int mirror_prepare_existing(ctx *c) {
+  lm_err e={{0},{0}};lm_mirror_intent *intent=&c->mirror_intent;
+  if(!c->target_existed) return 1;
+  if(!lm_mirror_snapshot(c->sidecar_tmp,1,LM_MIRROR_LEDGER_MAX,&intent->mirror_after,NULL,NULL,&e)) return mirror_fail(c,&e);
+  if(!intent->mirror_after.present || strcmp(intent->mirror_after.sha,intent->after_sha) ||
+     !lm_mirror_same_file(&intent->mirror_after,&c->sidecar_tmp_file)) {
+    fail(c,O_FAILED,"mirror-stage-changed","planned mirror stage differs from transactional ledger bytes");return 0;
+  }
+  if(c->mirror_before.present) {
+    c->mirror_preimage=mirror_artifact_path(c,".before-",c->run);
+    if(!lm_mirror_copy_new(c->sidecar,&c->mirror_before,c->mirror_preimage,&intent->mirror_preimage,&c->mirror_preimage_owned,&e)) return mirror_fail(c,&e);
+  }
+  strcpy(intent->artifact_token,c->run);intent->version=2;return 1;
+}
+static int mirror_publish_precommit(ctx *c) {
+  lm_mirror_file now,planned,after;lm_err e={{0},{0}};
+  if(!mirror_sidecar_snapshot(c,&now)) return 0;
+  if(!lm_mirror_same_file(&now,&c->mirror_before) || !lm_mirror_same_bytes(&now,&c->mirror_before)) {
+    fail(c,O_FAILED,"ledger-changed","external mirror changed before pre-COMMIT publication");return 0;
+  }
+  if(!lm_mirror_snapshot(c->sidecar_tmp,1,LM_MIRROR_LEDGER_MAX,&planned,NULL,NULL,&e)) return mirror_fail(c,&e);
+  if(!lm_mirror_planned_file(&c->mirror_intent,&planned)) {
+    fail(c,O_FAILED,"mirror-stage-changed","planned mirror stage identity or bytes changed");return 0;
+  }
+  if(!mirror_pause(c,"precommit-publish-pause",".precommit-publish-ready") || cancel_cb(c)) {
+    fail(c,O_CANCELLED,"cancelled","cancelled before pre-COMMIT mirror publication");return 0;
+  }
+  /* Recheck after the explicit rendezvous, not just before it. This closes the
+     deterministic hook window; it is still not a filesystem compare-and-swap. */
+  if(!mirror_owner_unchanged(c,c->target,&c->owner_before) || !mirror_sidecar_snapshot(c,&now)) return 0;
+  if(!lm_mirror_same_file(&now,&c->mirror_before) || !lm_mirror_same_bytes(&now,&c->mirror_before)) {
+    fail(c,O_FAILED,"ledger-changed","external mirror changed at the pre-COMMIT publication boundary");return 0;
+  }
+  if(!lm_mirror_snapshot(c->sidecar_tmp,1,LM_MIRROR_LEDGER_MAX,&planned,NULL,NULL,&e)) return mirror_fail(c,&e);
+  if(!lm_mirror_planned_file(&c->mirror_intent,&planned)) {
+    fail(c,O_FAILED,"mirror-stage-changed","planned mirror stage changed at the publication boundary");return 0;
+  }
+  if(cancel_cb(c)) { fail(c,O_CANCELLED,"cancelled","cancelled immediately before external mirror publication");return 0; }
+  if(!lm_mirror_same_bytes(&now,&planned)) {
+    /* Real publication site. Failure precedes SDK COMMIT; rollback is attempted
+       by the caller, never inferred from unchanged ledger hashes. */
+    if(injected(c,"sidecar-fail",0) || injected(c,"rollback-fail",0) ||
+       !(now.present?lm_replace(c->sidecar_tmp,c->sidecar):lm_publish_new(c->sidecar_tmp,c->sidecar))) {
+      fail(c,O_FAILED,"ledger-publish-failed","external mirror publication failed before database COMMIT");return 0;
+    }
+    if(!mirror_sidecar_snapshot(c,&after)) return 0;
+    if(!lm_mirror_planned_file(&c->mirror_intent,&after)) {
+      fail(c,O_FAILED,"mirror-publication-unknown","published mirror identity or bytes are not confirmed; intent retained");return 0;
+    }
+  }
+  c->mirror_state="published-before-commit";
+  if(injected(c,"precommit-cancel",0)) g_cancel=1;
+  if(!mirror_pause(c,"precommit-mirror-pause",".precommit-mirror-ready") || cancel_cb(c)) {
+    fail(c,O_CANCELLED,"cancelled","cancelled after mirror publication but before database COMMIT");return 0;
+  }
+  return 1;
+}
+static int mirror_abort_precommit(ctx *c) {
+  lm_err e={{0},{0}};
+  /* This function is only reached before any COMMIT attempt in this process. */
+  if(exr_library_migration_finish(c->lib,0,&c->err)!=EXR_OK) {
+    c->out=O_NONE;
+    fail(c,O_INCONSISTENT,"rollback-failed","pre-COMMIT rollback was not confirmed: %s; mirror intent and byte preimage retained",c->err.message);return 0;
+  }
+  c->target_commit=C_NOT_COMMITTED;c->rolled_back=1;
+  if(!mirror_restore_original(c,&c->mirror_intent)) {
+    c->out=O_NONE;
+    fail(c,O_INCONSISTENT,"mirror-restore-failed","database transaction rolled back, but external mirror baseline could not be restored; intent and evidence retained");return 0;
+  }
+  c->mirror_state="baseline-restored";
+  if(!mirror_retire_artifacts(c,&c->mirror_intent,&e) ||
+     !lm_mirror_intent_remove(c->pending,&c->pending_snapshot,&e)) {
+    c->mirror_state="cleanup-pending";
+    entry(c,S_WARNING,"mirror-cleanup-pending","mirror",NULL,"%s",e.message);return 0;
+  }
+  c->pending_retained=0;
+  return 0; /* the requested operation still failed/cancelled, despite cleanup */
+}
+
+/* Returns 1 when no pending remains; 2 for bytes-converged/cleanup-pending;
+   0 for a conflict/error. Never opens a missing target through the CREATE API. */
+static int mirror_reconcile(ctx *c) {
+  lm_mirror_intent intent;
+  lm_mirror_file pending, target, mirror, stage, after;
+  lm_err e = {{0}, {0}};
+  exr_library *owner = NULL;
+  void *data = NULL;
+  size_t size = 0;
+  int found = 0, result = 0, owner_finished = 0, temp_owned = 0;
+  char *temp = NULL, *stage_path = NULL, digest[65];
+  lm_mirror_action action;
+  memset(&stage, 0, sizeof(stage));
+  if (!lm_mirror_intent_read(c->pending, &intent, &pending, &e)) { c->pending_retained = 1; return mirror_fail(c, &e); }
+  if (!pending.present) return 1;
+  c->pending_retained = 1;
+  c->mirror_state = "pending";
+  if (!lm_mirror_snapshot(c->target, 0, 0, &target, NULL, NULL, &e)) {
+    mirror_fail(c, &e); goto done;
+  }
+  if (!strcmp(c->cmd,"recover-mirror")) c->target_existed = target.present;
+  if (!mirror_sidecar_snapshot(c, &mirror)) goto done;
+  if (!target.present) {
+    if (!intent.target_was_present) {
+      stage_path = lm_xalloc(strlen(c->target) + 64);
+      sprintf(stage_path, "%s.migrating-%s", c->target, intent.stage_token);
+      if (!lm_mirror_snapshot(stage_path, 0, 0, &stage, NULL, NULL, &e)) { mirror_fail(c, &e); goto done; }
+    }
+  } else {
+    if (strcmp(target.identity, intent.target_identity)) {
+      fail(c, O_FAILED, "mirror-recovery-conflict", "pending intent belongs to a different target file"); goto done;
+    }
+    if (exr_library_migration_open(c->target, &owner, &c->err) != EXR_OK) {
+      fail(c, O_BUSY, "target-busy", "cannot acquire a fresh recovery owner: %s", c->err.message); goto done;
+    }
+    if (!mirror_owner_unchanged(c, c->target, &target)) goto done;
+    if (exr_library_migration_ledger_get(owner, &data, &size, &found, &c->err) != EXR_OK) {
+      sdk_fail(c, "reading current ledger for mirror recovery"); goto done;
+    }
+  }
+  action = lm_mirror_plan(&intent, &target, &stage, found, data, size, &mirror, &e);
+  if (action == LM_MIRROR_CONFLICT) { mirror_fail(c, &e); goto done; }
+  if (cancel_cb(c)) { fail(c, O_CANCELLED, "cancelled", "mirror recovery cancelled; pending intent retained"); goto done; }
+  if(action==LM_MIRROR_RESTORE_BEFORE && !mirror_restore_original(c,&intent)) goto done;
+  if (action == LM_MIRROR_EXPORT_CURRENT) {
+    temp = lm_xalloc(strlen(c->sidecar) + 64);
+    sprintf(temp, "%s.recover-%s", c->sidecar, c->run);
+    if (!mirror_write_stage(c, temp, data, size, &temp_owned)) goto done;
+    if (!mirror_owner_unchanged(c, c->target, &target)) goto done;
+    if (!mirror_sidecar_snapshot(c, &after)) goto done;
+    if (!lm_mirror_same_file(&mirror, &after) || !lm_mirror_same_bytes(&mirror, &after)) {
+      fail(c, O_FAILED, "ledger-changed", "external mirror changed before publication; intent retained"); goto done;
+    }
+    if(!mirror_pause(c,"mirror-prepublish-pause",".mirror-prepublish-ready") || cancel_cb(c)) {
+      fail(c,O_CANCELLED,"cancelled","mirror publication cancelled; pending intent retained; no database restoration attempted");goto done;
+    }
+    /* This hook now exercises the real mirror-publication site. It cannot
+       truthfully promise that the already committed database was rolled back. */
+    if (injected(c, "sidecar-fail", 0) || injected(c, "rollback-fail", 0) ||
+        !(mirror.present ? lm_replace(temp, c->sidecar) : lm_publish_new(temp, c->sidecar))) {
+      fail(c, O_FAILED, "ledger-publish-failed", "database outcome is separate; external mirror publication failed and recovery is pending"); goto done;
+    }
+  }
+  if (found) {
+    if (!mirror_sidecar_snapshot(c, &after)) goto done;
+    lm_sha_bytes(data, size, digest);
+    if (!after.present || after.size != size || strcmp(after.sha, digest)) {
+      fail(c, O_FAILED, "mirror-not-converged", "external mirror does not match the current internal ledger; intent retained"); goto done;
+    }
+    c->mirror_state = "bytes-converged";
+  } else c->mirror_state = action == LM_MIRROR_ABANDONED_NEW ? "no-authoritative-target" : "no-internal-ledger";
+  if(cancel_cb(c)) { fail(c,O_CANCELLED,"cancelled","mirror disposition observed; cancellation leaves pending intent retained");goto done; }
+  if(!mirror_pause(c,"mirror-pause",".mirror-ready")) goto done;
+  if (owner) {
+    if (exr_library_migration_finish(owner, 0, &c->err) != EXR_OK) { sdk_fail(c, "releasing recovery owner"); goto done; }
+    owner_finished = 1;
+  }
+  if(cancel_cb(c)) { fail(c,O_CANCELLED,"cancelled","recovery owner released; cancellation leaves pending intent retained");goto done; }
+  /* Only after explicit recovery ROLLBACK succeeds may the intent be retired. */
+  if (!mirror_retire_artifacts(c,&intent,&e)) {
+    c->mirror_state = "cleanup-pending";
+    entry(c, S_WARNING, "mirror-cleanup-pending", "mirror", NULL, "%s", e.message);
+    result = 2; goto done;
+  }
+  if(!mirror_pause(c,"mirror-retire-pause",".mirror-retire-ready")) goto done;
+  if (!lm_mirror_intent_remove(c->pending, &pending, &e)) {
+    c->mirror_state = "cleanup-pending";
+    entry(c, S_WARNING, "mirror-cleanup-pending", "mirror", NULL, "%s", e.message);
+    result = 2; goto done;
+  }
+  c->pending_retained = 0;
+  result = 1;
+done:
+  if (owner && !owner_finished) {
+    exr_error release_error;
+    /* A failed cleanup cannot erase the earlier failure or upgrade knowledge. */
+    (void)exr_library_migration_finish(owner, 0, &release_error);
+  }
+  if (owner) exr_library_close(owner);
+  exr_free(data);
+  if (result && temp_owned) lm_remove(temp); /* this invocation's owned temp only */
+  free(temp); free(stage_path);
+  return result;
+}
+/* Read-only commands remain usable with a valid pending intent and stale lock.
+   This checks mirror provenance only; normal pack/touched verification follows. */
+static int mirror_check_read(ctx *c, const void *data, size_t size) {
+  lm_mirror_file target, mirror, pending;
+  lm_mirror_intent intent;
+  lm_err e = {{0}, {0}};
+  char digest[65];
+  int explained;
+  if (!c->pending) c->pending = path_join(c->target, ".migration-pending.json");
+  if (!mirror_sidecar_snapshot(c, &mirror)) return 0;
+  if (!lm_mirror_snapshot(c->target, 0, 0, &target, NULL, NULL, &e) ||
+      !lm_mirror_intent_read(c->pending, &intent, &pending, &e)) return mirror_fail(c, &e);
+  lm_sha_bytes(data, size, digest);
+  if (pending.present) {
+    c->pending_retained = 1;
+    c->mirror_state = "pending";
+    if (!target.present || strcmp(target.identity, intent.target_identity) ||
+        (strcmp(digest, intent.after_sha) && (!intent.before_found || strcmp(digest, intent.before_sha)))) {
+      fail(c, O_FAILED, "mirror-recovery-conflict", "pending intent does not explain the current target/ledger"); return 0;
+    }
+  }
+  if (mirror.present && mirror.size == size && !strcmp(mirror.sha, digest)) {
+    if (!pending.present) c->mirror_state = "bytes-equal";
+    return 1;
+  }
+  if (!mirror.present) { if (!pending.present) c->mirror_state = "missing"; return 1; }
+  explained = pending.present && (lm_mirror_original_file(&intent,&mirror) || !strcmp(mirror.sha, intent.after_sha));
+  if (explained) return 1;
+  entry(c, S_CONFLICT, "mirror-diverged", "mirror", NULL, "external mirror differs from the current ledger without a valid explanation");
+  fail(c, O_FAILED, !strcmp(c->cmd,"verify")?"verify-failed":"mirror-diverged",
+       "external mirror is not explained by the current ledger or pending intent"); return 0;
+}
+#endif
+
 static void cleanup(ctx *c) {
   char journal[4096];
   if (c->lib) { exr_library_close(c->lib); c->lib = NULL; }
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  if (c->pending_retained) {
+    /* A valid or partial intent may still refer to this stage. Never delete
+       crash/recovery evidence or call it a database pre-image. */
+    if (c->stage && lm_path_state(c->stage) != 0) c->stage_state = "retained-pending";
+    if (c->lock_held && c->lock) { lm_remove(c->lock); c->lock_held = 0; }
+    return;
+  }
+#endif
   if (c->stage) {
     if (lm_exists(c->stage)) { lm_remove(c->stage); c->stage_state = "removed"; } else if (!c->stage_state) c->stage_state = "not-created";
     snprintf(journal, sizeof(journal), "%s-journal", c->stage);
     lm_remove(journal);
   }
-  if (c->sidecar_tmp) lm_remove(c->sidecar_tmp);
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  {
+    lm_err cleanup_error={{0},{0}};
+    if(c->sidecar_tmp && c->sidecar_tmp_owned)
+      (void)mirror_remove_artifact(c->sidecar_tmp,&c->sidecar_tmp_file,&cleanup_error);
+    if(c->mirror_preimage && c->mirror_preimage_owned)
+      (void)mirror_remove_artifact(c->mirror_preimage,&c->mirror_intent.mirror_preimage,&cleanup_error);
+  }
+#else
+  if(c->sidecar_tmp) lm_remove(c->sidecar_tmp);
+#endif
   if (c->pre && c->out != O_INCONSISTENT) {
     if (lm_exists(c->pre)) { lm_remove(c->pre); c->pre_state = "removed"; } else if (!c->pre_state) c->pre_state = "not-created";
   } else if (c->pre) c->pre_state = "retained";
@@ -1570,14 +1947,24 @@ static int run_migrate(ctx *c) {
 #ifdef EXR_MIGRATION_TX_CANDIDATE
   {
     void *data=NULL;size_t size=0;int found=0;const char *open_path;
-    c->target_existed=lm_exists(c->target);
-    c->sidecar_existed=lm_path_state(c->sidecar);
-    if(c->sidecar_existed<0) {
-      fail(c,O_FAILED,"ledger-unreadable","cannot inspect the migration ledger path");return 0;
-    }
-    if(c->sidecar_existed && !lm_sha_file(c->sidecar,c->sidecar_sha,NULL)) {
-      fail(c,O_FAILED,"ledger-unreadable","cannot hash the existing ledger");return 0;
-    }
+    int recovered;
+    c->pending=path_join(c->target,".migration-pending.json");
+    if(c->dry_run) {
+      lm_mirror_intent prior;lm_mirror_file prior_file;
+      if(!lm_mirror_intent_read(c->pending,&prior,&prior_file,&e)) { c->pending_retained=1;return mirror_fail(c,&e); }
+      if(prior_file.present) {
+        c->pending_retained=1;c->mirror_state="pending";
+        fail(c,O_BUSY,"mirror-recovery-required","dry-run cannot publish or retire a pending mirror intent; recover separately");return 0;
+      }
+      recovered=1;
+    } else recovered=mirror_reconcile(c);
+    if(!recovered) return 0;
+    if(recovered==2) { fail(c,O_BUSY,"mirror-cleanup-pending","prior mirror converged but pending cleanup must finish before another migration");return 0; }
+    if(!lm_mirror_snapshot(c->target,0,0,&c->owner_before,NULL,NULL,&e)) return mirror_fail(c,&e);
+    c->target_existed=c->owner_before.present;
+    if(!mirror_sidecar_snapshot(c,&c->mirror_before)) return 0;
+    c->sidecar_existed=c->mirror_before.present;
+    strcpy(c->sidecar_sha,c->mirror_before.sha);
     if(!c->target_existed && c->sidecar_existed) {
       fail(c,O_REJECTED,"orphan-ledger","a legacy ledger exists without its library");return 0;
     }
@@ -1590,20 +1977,24 @@ static int run_migrate(ctx *c) {
       if(!reserved) { free(c->stage);c->stage=NULL;fail(c,O_FAILED,"stage-failed","cannot reserve private new-library stage");return 0; }
       if(fclose(reserved)) { fail(c,O_FAILED,"stage-failed","cannot close private new-library stage");return 0; }
       open_path=c->stage;c->stage_state="created";
+      if(!lm_mirror_snapshot(open_path,0,0,&c->owner_before,NULL,NULL,&e)) return mirror_fail(c,&e);
     }
     if(exr_library_migration_open(open_path,&c->lib,&c->err)!=EXR_OK) {
       if(strstr(c->err.message,"Migration requires schema")) { fail(c,O_REJECTED,"target-schema","%s",c->err.message);return 0; }
       if(strstr(c->err.message,"not a database")) { fail(c,O_REJECTED,"target-not-library","%s",c->err.message);return 0; }
       fail(c,O_BUSY,"target-busy","cannot acquire the library write transaction: %s",c->err.message);return 0;
     }
+    if(!mirror_owner_unchanged(c,open_path,&c->owner_before)) return 0;
     if(exr_library_migration_ledger_get(c->lib,&data,&size,&found,&c->err)!=EXR_OK) {
       sdk_fail(c,"reading transactional ledger");return 0;
     }
     if(found) {
       if(c->sidecar_existed && !sidecar_check_envelope(c,c->sidecar)) { exr_free(data);return 0; }
-      int ok=sidecar_parse(c,(const char *)data,size);exr_free(data);
-      if(!ok) return 0;
-    } else if(c->sidecar_existed && !sidecar_load(c,c->sidecar)) return 0;
+      if(!sidecar_parse(c,(const char *)data,size)) { exr_free(data);return 0; }
+    } else if(c->sidecar_existed && !sidecar_load(c,c->sidecar)) { exr_free(data);return 0; }
+    if(!lm_mirror_begin(&c->mirror_intent,c->target_existed,c->run,&c->owner_before,
+                        found,data,size,&c->mirror_before,&e)) { exr_free(data);return mirror_fail(c,&e); }
+    exr_free(data);
   }
   goto process_pack;
 #endif
@@ -1712,7 +2103,11 @@ process_pack:
   if (c->out != O_NONE) return 0;
   /* Books processed through the ledger count as expected-accounted. */
   if (!c->allow_partial && (c->sev[S_UNSUPPORTED] || c->sev[S_CONFLICT])) {
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+    fail(c, O_REJECTED, "policy-strict", "%u unsupported and %u conflicting items; requested migration changes were not committed (rerun with --allow-partial to commit the convertible part)", c->sev[S_UNSUPPORTED], c->sev[S_CONFLICT]);
+#else
     fail(c, O_REJECTED, "policy-strict", "%u unsupported and %u conflicting items; nothing was published (rerun with --allow-partial to publish the convertible part)", c->sev[S_UNSUPPORTED], c->sev[S_CONFLICT]);
+#endif
     return 0;
   }
   if (c->out == O_NONE) {
@@ -1723,6 +2118,14 @@ process_pack:
     if(text.oom || exr_library_migration_ledger_set(c->lib,text.p,text.n,&c->err)!=EXR_OK) {
       lm_sb_free(&text);sdk_fail(c,"writing transactional ledger");return 0;
     }
+    lm_mirror_set_after(&c->mirror_intent,text.p,text.n);
+    c->sidecar_tmp=lm_xalloc(strlen(c->sidecar)+64);
+    sprintf(c->sidecar_tmp,"%s.staged-%s",c->sidecar,c->run);
+    if(!mirror_write_stage(c,c->sidecar_tmp,text.p,text.n,&c->sidecar_tmp_owned)) { lm_sb_free(&text);return 0; }
+    if(!lm_mirror_snapshot(c->sidecar_tmp,1,LM_MIRROR_LEDGER_MAX,&c->sidecar_tmp_file,NULL,NULL,&e)) {
+      lm_sb_free(&text);return mirror_fail(c,&e);
+    }
+    c->mirror_state="staged";
     lm_sb_free(&text);
     if(injected(c,"writer-pause",0)) {
       char *ready=path_join(c->target,".writer-ready"),*resume=path_join(c->target,".writer-resume");
@@ -1756,24 +2159,68 @@ process_pack:
       if(!resumed && !cancel_cb(c)) { fail(c,O_FAILED,"review-hook-timeout","review synchronization timed out");return 0; }
     }
     {
-      char digest[65];int sidecar_state=lm_path_state(c->sidecar);
-      if(sidecar_state<0) { fail(c,O_FAILED,"ledger-unreadable","cannot inspect the migration ledger path");return 0; }
-      if(sidecar_state!=c->sidecar_existed ||
-         (c->sidecar_existed && (!lm_sha_file(c->sidecar,digest,NULL) || strcmp(digest,c->sidecar_sha)))) {
-        fail(c,O_FAILED,"ledger-changed","the migration ledger changed; transaction rolled back");return 0;
+      lm_mirror_file now;
+      if(!mirror_sidecar_snapshot(c,&now)) return 0;
+      if(!lm_mirror_same_file(&now,&c->mirror_before) || !lm_mirror_same_bytes(&now,&c->mirror_before)) {
+        fail(c,O_FAILED,"ledger-changed","the migration ledger changed before COMMIT");return 0;
       }
     }
     /* Preserve the legacy late-cancellation hook at the transaction boundary. */
     if(injected(c,"publish-cancel",0)) g_cancel=1;
     if(c->dry_run || cancel_cb(c) || injected(c,"publish-fail",0)) {
       if(exr_library_migration_finish(c->lib,0,&c->err)!=EXR_OK) { sdk_fail(c,"rolling back migration");return 0; }
+      if(c->target_existed) c->target_commit=C_NOT_COMMITTED;
+      else c->private_stage_commit=C_NOT_COMMITTED;
       if(c->dry_run) { c->out=O_DRYRUN;snprintf(c->code,sizeof(c->code),"dry-run");snprintf(c->message,sizeof(c->message),"transaction rolled back; nothing was published");return 1; }
       fail(c,cancel_cb(c)?O_CANCELLED:O_FAILED,cancel_cb(c)?"cancelled":"injected-publish-fail","transaction rolled back");return 0;
     }
+    if(!mirror_owner_unchanged(c,c->target_existed?c->target:c->stage,&c->owner_before)) return 0;
+    if(!c->target_existed) {
+      lm_mirror_file destination;
+      if(!lm_mirror_snapshot(c->target,0,0,&destination,NULL,NULL,&e)) return mirror_fail(c,&e);
+      if(destination.present) {
+        fail(c,O_FAILED,"target-changed","a target appeared before COMMIT; the uncommitted private stage will be removed");return 0;
+      }
+    }
+    if(!mirror_prepare_existing(c)) return 0;
+    if(!lm_mirror_intent_write(c->pending,&c->mirror_intent,&c->pending_snapshot,&e)) {
+      c->pending_retained=lm_path_state(c->pending)!=0;
+      return mirror_fail(c,&e);
+    }
+    c->pending_retained=1;c->mirror_state="pending";
+    {
+      int resumed=mirror_pause(c,"intent-pause",".intent-ready");
+      /* Intent I/O may block. Cancellation received during its write/fsync must
+         be observed before entering COMMIT, not turned into a committed cancel. */
+      if(!resumed || cancel_cb(c)) {
+        if(c->mirror_intent.version==2) {
+          fail(c,O_CANCELLED,"cancelled","prepared migration cancelled before COMMIT");return mirror_abort_precommit(c);
+        }
+        if(exr_library_migration_finish(c->lib,0,&c->err)!=EXR_OK) { sdk_fail(c,"rolling back prepared migration");return 0; }
+        if(c->target_existed) c->target_commit=C_NOT_COMMITTED;
+        else c->private_stage_commit=C_NOT_COMMITTED;
+        fail(c,O_CANCELLED,"cancelled","prepared migration rolled back; mirror intent retained for reconciliation");return 0;
+      }
+    }
+    if(c->mirror_intent.version==2 && !mirror_publish_precommit(c)) return mirror_abort_precommit(c);
+    if(cancel_cb(c)) {
+      fail(c,O_CANCELLED,"cancelled","cancelled immediately before COMMIT");
+      if(c->mirror_intent.version==2) return mirror_abort_precommit(c);
+      return 0;
+    }
+    /* A commit error is not proof of rollback. Closing the owner below must not
+       turn an unconfirmed commit into a claimed cancellation or rollback. */
+    if(c->target_existed) c->target_commit=C_UNKNOWN;
+    else c->private_stage_commit=C_UNKNOWN;
     if(exr_library_migration_finish(c->lib,1,&c->err)!=EXR_OK) { sdk_fail(c,"committing migration");return 0; }
+    if(c->target_existed) c->target_commit=C_COMMITTED;
+    else c->private_stage_commit=C_COMMITTED;
     if(!c->target_existed) {
       exr_library_close(c->lib);c->lib=NULL;
+      /* A committed private stage is not yet a committed target. */
+      c->target_commit=C_UNKNOWN;
       if(!lm_publish_new(c->stage,c->target)) { fail(c,O_FAILED,"publish-failed","cannot publish the new library without replacing an existing path");return 0; }
+      c->target_commit=C_COMMITTED;
       c->stage_state="published";
     }
     if(injected(c,"commit-pause",0)) {
@@ -1791,7 +2238,17 @@ process_pack:
       lm_remove(ready);lm_remove(resume);free(ready);free(resume);
       if(!resumed) { fail(c,O_FAILED,"review-hook-timeout","commit synchronization timed out");return 0; }
     }
-    c->out=O_SUCCESS;snprintf(c->code,sizeof(c->code),"ok");snprintf(c->message,sizeof(c->message),"transaction committed");return 1;
+    if(c->lib) { exr_library_close(c->lib);c->lib=NULL; }
+    {
+      int mirrored=mirror_reconcile(c);
+      if(!mirrored) return 0;
+      c->out=O_SUCCESS;
+      snprintf(c->code,sizeof(c->code),"%s",mirrored==2?"mirror-cleanup-pending":"ok");
+      snprintf(c->message,sizeof(c->message),"%s",mirrored==2?
+        "transaction committed; mirror bytes converged; intent cleanup pending":
+        "transaction committed; mirror bytes converged");
+      return 1;
+    }
 #else
     exr_library_close(c->lib);
     c->lib = NULL;
@@ -1838,6 +2295,12 @@ static void emit(ctx *c) {
   lm_sb_fmt(&b, ",\"memory\":{\"peak_rss_bytes\":%llu,\"max_original_bytes\":%llu,\"imported_bytes\":%llu,\"manifest_bytes\":%llu},", peak, (unsigned long long)c->max_book_bytes, (unsigned long long)c->bytes_imported, (unsigned long long)c->pack.manifest_len);
   lm_sb_fmt(&b, "\"atomicity\":{\"rolled_back\":%s,\"stage\":\"%s\",\"pre_image\":\"%s\",\"inject\":", c->rolled_back ? "true" : "false", c->stage_state ? c->stage_state : "none", c->pre_state ? c->pre_state : "none");
   if (c->inject[0]) lm_sb_json(&b, c->inject, strlen(c->inject)); else lm_sb_str(&b, "null");
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  lm_sb_fmt(&b, ",\"transaction\":{\"target_commit\":\"%s\",\"private_stage_commit\":\"%s\"}",
+    COMMIT_KNOWLEDGE[c->target_commit], COMMIT_KNOWLEDGE[c->private_stage_commit]);
+  lm_sb_fmt(&b, ",\"mirror\":{\"state\":\"%s\",\"pending\":%s}",
+    c->mirror_state?c->mirror_state:"not-inspected",c->pending_retained?"true":"false");
+#endif
   lm_sb_fmt(&b, ",\"lock\":\"%s\"},", c->lock_held ? "held" : "released");
   lm_sb_str(&b, "\"items\":[");
   if (c->items.p) lm_sb_str(&b, c->items.p);
@@ -1895,10 +2358,11 @@ static void run_verify(ctx *c) {
     if(exr_library_migration_ledger_get(c->lib,&data,&size,&found,&c->err)!=EXR_OK) { sdk_fail(c,"reading transactional ledger");return; }
     if(!found) { fail(c,O_REJECTED,"ledger-missing","no transactional ledger in library");return; }
     {
-      int sidecar_state=lm_path_state(c->sidecar);
-      if(sidecar_state<0) { exr_free(data);fail(c,O_REJECTED,"ledger-unreadable","cannot inspect the migration ledger path");return; }
-      if(sidecar_state && !sidecar_check_envelope(c,c->sidecar)) { exr_free(data);return; }
+      lm_mirror_file mirror;
+      if(!mirror_sidecar_snapshot(c,&mirror)) { exr_free(data);return; }
+      if(mirror.present && !sidecar_check_envelope(c,c->sidecar)) { exr_free(data);return; }
     }
+    if(!mirror_check_read(c,data,size)) { exr_free(data);return; }
     if(!sidecar_parse(c,(const char *)data,size)) { exr_free(data);return; }
     exr_free(data);
   }
@@ -1947,6 +2411,9 @@ static void usage(void) {
         "  migrate --pack PACK --target LIBRARY [--report FILE] [--allow-partial] [--dry-run] [--break-lock]\n"
         "  verify  --pack PACK --target LIBRARY\n"
         "  dump    --target LIBRARY\n"
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+        "  recover-mirror --target LIBRARY [--break-lock] [--report FILE]\n"
+#endif
         "  --version\n"
         "Exit: 0 success/dry-run, 1 usage, 2 rejected, 3 failed, 4 cancelled, 5 busy, 6 inconsistent\n", stderr);
 }
@@ -1987,6 +2454,27 @@ static int real_main(int argc, char **argv) {
   signal(SIGINT, on_signal);
   signal(SIGTERM, on_signal);
 #ifdef EXR_MIGRATION_TX_CANDIDATE
+  if(!strcmp(c->cmd,"recover-mirror")) {
+    FILE *lock;int reconciled=0;
+    if(!c->target || c->pack_path || c->dry_run) { usage();return 1; }
+    mirror_run_id(c);
+    c->sidecar=path_join(c->target,".legacy-map.json");
+    c->pending=path_join(c->target,".migration-pending.json");
+    c->lock=path_join(c->target,".migrate-lock");
+    if(c->break_lock) lm_remove(c->lock);
+    lock=lm_fopen(c->lock,"wx");
+    if(!lock) fail(c,lm_exists(c->lock)?O_BUSY:O_FAILED,"target-busy","cannot acquire migration lock; --break-lock requires every old owner to be stopped");
+    else {
+      fprintf(lock,"%s\n",c->run);fclose(lock);c->lock_held=1;
+      reconciled=mirror_reconcile(c);
+      if(reconciled) {
+        c->out=O_SUCCESS;
+        snprintf(c->code,sizeof(c->code),"%s",reconciled==2?"mirror-cleanup-pending":"ok");
+        snprintf(c->message,sizeof(c->message),"%s",c->mirror_state?c->mirror_state:"no pending intent; no database or mirror changed");
+      }
+    }
+    cleanup(c);emit(c);return EXIT_CODE[c->out];
+  }
   if(!strcmp(c->cmd,"export-ledger")) {
     void *data=NULL;size_t size=0;int found=0;
     if(!c->target || !export_path || lm_exists(export_path)) { fputs("export-ledger requires --target and a new --output file\n",stderr);return 1; }
@@ -2009,16 +2497,36 @@ static int real_main(int argc, char **argv) {
       else {
         if(exr_library_migration_ledger_get(reader,&data,&size,&found,&c->err)!=EXR_OK) sdk_fail(c,"reading transactional ledger");
         else if(found) {
-          int sidecar_state=lm_path_state(c->sidecar);
-          if(sidecar_state<0) fail(c,O_REJECTED,"ledger-unreadable","cannot inspect the migration ledger path");
-          else if(!sidecar_state || sidecar_check_envelope(c,c->sidecar)) sidecar_parse(c,(const char *)data,size);
+          lm_mirror_file mirror;
+          if(mirror_sidecar_snapshot(c,&mirror) && (!mirror.present || sidecar_check_envelope(c,c->sidecar)) &&
+             mirror_check_read(c,data,size)) sidecar_parse(c,(const char *)data,size);
         }
-        else if(lm_exists(c->sidecar)) sidecar_load(c,c->sidecar);
+        else {
+          lm_mirror_file mirror, target, pending;lm_mirror_intent intent;
+          lm_err e={{0},{0}};
+          c->pending=path_join(c->target,".migration-pending.json");
+          if(mirror_sidecar_snapshot(c,&mirror)) {
+            if(!lm_mirror_snapshot(c->target,0,0,&target,NULL,NULL,&e) ||
+               !lm_mirror_intent_read(c->pending,&intent,&pending,&e)) mirror_fail(c,&e);
+            else if(pending.present) {
+              c->pending_retained=1;c->mirror_state="pending";
+              if(!target.present || !intent.target_was_present || intent.before_found ||
+                 strcmp(target.identity,intent.target_identity) ||
+                 !lm_mirror_original_file(&intent,&mirror))
+                fail(c,O_FAILED,"mirror-recovery-conflict","pending intent does not explain a target without an internal ledger");
+            }
+            if(c->out==O_NONE && mirror.present) sidecar_load(c,c->sidecar);
+          }
+        }
         exr_free(data);exr_library_close(reader);
       }
     }
 #else
     if (lm_exists(c->sidecar)) sidecar_load(c, c->sidecar);
+#endif
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+    if (c->out == O_NONE && c->pending_retained)
+      fputs("mirror pending: dump uses the current library and validated ledger provenance; no historical commit claim\n",stderr);
 #endif
     if (c->out == O_NONE) dump_library(c);
     if (c->out != O_NONE) { emit(c); }

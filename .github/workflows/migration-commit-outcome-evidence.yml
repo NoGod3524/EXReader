@@ -1,0 +1,66 @@
+name: Migration commit outcome evidence
+on:
+  push:
+    branches: [codex/migration-commit-outcome-20261028]
+    paths:
+      - extras/migration/src/lm_main.c
+      - tests/migration/commit_outcome_evidence.py
+      - .github/workflows/migration-commit-outcome-evidence.yml
+permissions:
+  contents: read
+concurrency:
+  group: migration-commit-outcome-${{ github.sha }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  evidence:
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, label: linux, py: python3, tool: build/migration/exreader-legacy-migrate-tx, baseline: build/baseline-migration/exreader-legacy-migrate-tx}
+          - {os: windows-latest, label: windows, py: python, tool: build/migration/Release/exreader-legacy-migrate-tx.exe, baseline: build/baseline-migration/Release/exreader-legacy-migrate-tx.exe}
+          - {os: macos-15, label: macos, py: python3, tool: build/migration/exreader-legacy-migrate-tx, baseline: build/baseline-migration/exreader-legacy-migrate-tx}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pin baseline and preserve frozen code and original tests
+        run: |
+          set -euo pipefail
+          mkdir -p build/evidence build/baseline-source
+          git fetch --no-tags --depth=1 origin e771f3c5d1567412f26184ad304730b7c640235d
+          test "$(git rev-parse FETCH_HEAD)" = e771f3c5d1567412f26184ad304730b7c640235d
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --name-only FETCH_HEAD HEAD | while IFS= read -r path; do
+            case "$path" in
+              extras/migration/src/lm_main.c|tests/migration/commit_outcome_evidence.py|.github/workflows/migration-commit-outcome-evidence.yml|docs/MIGRATION-COMMIT-OUTCOME-EVIDENCE.md) ;;
+              *) echo "Out-of-scope source change: $path" >&2; exit 1 ;;
+            esac
+          done
+          git archive FETCH_HEAD extras/migration | tar -xf - -C build/baseline-source
+      - name: Build unchanged installed SDK and both tool revisions
+        run: |
+          set -o pipefail
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/sdk-configure.txt
+          cmake --build build/sdk --config Release --parallel 4 2>&1 | tee build/evidence/sdk-build.txt
+          cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage" 2>&1 | tee build/evidence/sdk-install.txt
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/tool-configure.txt
+          cmake --build build/migration --config Release --target exreader-legacy-migrate-tx --parallel 4 2>&1 | tee build/evidence/tool-build.txt
+          cmake -S build/baseline-source/extras/migration -B build/baseline-migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/baseline-configure.txt
+          cmake --build build/baseline-migration --config Release --target exreader-legacy-migrate-tx --parallel 4 2>&1 | tee build/evidence/baseline-build.txt
+      - name: Observe post-commit failure and verify conservative reporting
+        run: |
+          set -o pipefail
+          "${{ matrix.tool }}" --version | tee build/evidence/tool-version.txt
+          ${{ matrix.py }} tests/migration/commit_outcome_evidence.py --tool "${{ matrix.tool }}" --baseline "${{ matrix.baseline }}" --work build/commit-outcome 2>&1 | tee build/evidence/commit-outcome.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-commit-outcome-${{ matrix.label }}
+          path: |
+            build/evidence/
+            build/commit-outcome/
+          if-no-files-found: error
