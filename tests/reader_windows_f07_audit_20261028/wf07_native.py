@@ -29,7 +29,8 @@ def audit(raw, inventory, source):
              ninja=dict(path=str(ninja), sha256=C.digest(ninja)), original_tool_identity_proven=False))
 
     configs = {name: (raw / name).read_text(encoding='utf-8-sig') for name in inventory
-               if any(name.startswith(C.BUILD + stage + '/lib/cmake/') for stage in C.STAGES) and name.endswith('.cmake')}
+               if any(name.startswith(C.BUILD + stage + '/') for stage in C.STAGES) and
+               re.search(r'/(?:lib/cmake/[^/]+|share/[^/]+/cmake)/[^/]+\.cmake$', name)}
     libraries = {name for name in inventory if any(name.startswith(C.BUILD + stage + '/') for stage in C.STAGES)
                  and name.lower().endswith('.lib')}
     owners, targets, dependencies = C.installed_exports(configs, libraries)
@@ -50,15 +51,23 @@ def audit(raw, inventory, source):
         for name in names:
             if '/include/' not in name: continue
             C.require(name not in header_owners, 'header has multiple install-manifest owners')
-            header_owners[name] = sorted(packages)
+            header_packages = packages
+            if label == 'sdk-build':
+                relative = name.split('/include/', 1)[1]
+                frozen = C.ROOT / 'include' / relative
+                if frozen.is_file():
+                    C.require('EXReader' in packages and frozen.read_bytes() == (raw / name).read_bytes(),
+                              'actual installed frozen SDK header identity differs')
+                    header_packages = {'EXReader'}
+            header_owners[name] = sorted(header_packages)
             text = (raw / name).read_text(encoding='utf-8-sig')
             if re.search(r'private\s+C\+\+\s+implementation', text, re.I):
-                private_headers[name] = sorted(packages); continue
-            if len(packages) != 1:
-                ambiguous_headers.append(dict(header=name, packages=sorted(packages),
+                private_headers[name] = sorted(header_packages); continue
+            if len(header_packages) != 1:
+                ambiguous_headers.append(dict(header=name, packages=sorted(header_packages),
                     reason='one build installs multiple exported packages; no broad header ownership union'))
                 continue
-            package = next(iter(packages))
+            package = next(iter(header_packages))
             if package == 'EXReader':
                 # Vendor APIs remain private even if a dependency installed an extra header.
                 if not name.startswith(C.BUILD + 'sdk-stage/include/exr/'): continue
@@ -67,6 +76,10 @@ def audit(raw, inventory, source):
             public.setdefault(package, set()).update(C.public_entries(text, sdk=package == 'EXReader'))
     actual_headers = {name for name in inventory if any(name.startswith(C.BUILD + s + '/include/') for s in C.STAGES)}
     C.require(set(header_owners) == actual_headers, 'installed header/manifest coverage differs')
+    sdk_prefix = C.BUILD + 'sdk-stage/include/exr/'
+    C.require({name.removeprefix(sdk_prefix) for name in header_owners if name.startswith(sdk_prefix)} ==
+              {p.relative_to(C.ROOT / 'include/exr').as_posix() for p in (C.ROOT / 'include/exr').rglob('*') if p.is_file()},
+              'installed frozen SDK public header inventory differs')
     C.require('exr_version' in public.get('EXReader', ()), 'SDK public declaration parser incomplete')
 
     # Recover actual final response closure independently from retained capture

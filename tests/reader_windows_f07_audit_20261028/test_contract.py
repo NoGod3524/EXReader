@@ -31,6 +31,16 @@ class Contract(unittest.TestCase):
     def test_unowned_installed_library_refused(self):
         with self.assertRaises(ValueError): C.installed_exports({}, {'stage/lib/hidden.lib'})
 
+    def test_exact_vendor_share_export_layout_not_filename_exemption(self):
+        prefix = 'build/f06/windows-build/sdk-stage'
+        path = prefix + '/share/WebP/cmake/WebPTargets.cmake'
+        configs = {path: 'add_library(WebP::webp STATIC IMPORTED)\nset_target_properties(WebP::webp PROPERTIES IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libwebp.lib")'}
+        owners, _, _ = C.installed_exports(configs, {prefix + '/lib/libwebp.lib'})
+        self.assertEqual(owners[prefix + '/lib/libwebp.lib'], 'WebP')
+        with self.assertRaises(ValueError):
+            C.installed_exports({path: configs[path].replace('WebP::', 'Other::')}, {prefix + '/lib/libwebp.lib'})
+        with self.assertRaises(ValueError): C.installed_exports(configs, {prefix + '/lib/libwebp.lib', prefix + '/lib/hidden.lib'})
+
     def test_owner_declaration_dependency_all_required(self):
         tables = {'a': dict(defined=['own'], undefined=['reader_public', '?helper@@', 'weak_helper']),
                   'b': dict(defined=['reader_public', '?helper@@', 'weak_helper'], undefined=[])}

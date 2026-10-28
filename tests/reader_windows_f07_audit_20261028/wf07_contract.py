@@ -252,8 +252,9 @@ def source_include_boundaries(records, source_roots, installed_files):
 def installed_exports(configurations, libraries):
     targets, locations, dependencies = {}, {}, {}
     for path, text in configurations.items():
-        package = Path(path).parent.name
-        stage = path.split('/lib/cmake/', 1)[0]
+        layout = re.fullmatch(r'(.+)/(?:lib/cmake/([^/]+)|share/([^/]+)/cmake)/[^/]+\.cmake', path)
+        require(layout is not None, 'unsupported installed export layout: ' + path)
+        stage, package = layout[1], layout[2] or layout[3]
         for target, kind in re.findall(r'add_library\(([\w:]+)\s+(STATIC|INTERFACE|SHARED)\s+IMPORTED\)', text):
             require(target.startswith(package + '::') and target not in targets, 'duplicate/wrong export namespace')
             targets[target] = dict(owner=package, kind=kind)
