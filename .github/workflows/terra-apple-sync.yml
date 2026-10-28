@@ -21,6 +21,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Build frozen SDK and product modules
+        id: build
         run: |
           target=iphonesimulator
           if test '${{ matrix.platform }}' = macos; then target=macos; fi
@@ -76,12 +77,60 @@ jobs:
             -resultBundlePath "build/account-ui/$platform.xcresult" -parallel-testing-enabled NO \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 \
             EXR_SDK_DIR="$sdk" EXR_PRODUCTS_DIR="$products" CODE_SIGNING_ALLOWED="$signing"
+          if test "$platform" = macos; then
+            container="$HOME/Library/Application Support/EXReader"
+            app=build/AccountDerivedData/Build/Products/Debug/EXReaderHost.app
+          else
+            container=$(python3 tests/apple_host/resolve_container.py --udid "$udid" --output build/account-ui/container.json)
+            app=build/AccountDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          fi
+          python3 tests/apple_host/account/collect_account_ui.py --platform "$platform" \
+            --xcresult "build/account-ui/$platform.xcresult" --app "$app" --container "$container" \
+            --output build/account-ui/evidence
+      - name: Exercise authorization failure and credential recovery in the actual UI
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          platform='${{ matrix.platform }}'
+          target=iphonesimulator; scheme=EXReaderHost-iOS; signing=NO
+          destination=platform=macOS; udid=unused; suffix=Debug
+          if test "$platform" = macos; then
+            target=macos; scheme=EXReaderHost-macOS; signing=YES
+          else
+            suffix=Debug-iphonesimulator
+            udid=$(python3 - "$platform" <<'PY'
+          import json, subprocess, sys
+          data = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))
+          prefix = 'iPhone' if sys.argv[1] == 'iphone' else 'iPad'
+          print(max((runtime, d['name'], d['udid']) for runtime, devices in data['devices'].items()
+                    for d in devices if d.get('isAvailable') and d['name'].startswith(prefix))[2])
+          PY
+            )
+            xcrun simctl boot "$udid" || true
+            xcrun simctl bootstatus "$udid" -b
+            destination="platform=iOS Simulator,id=$udid"
+          fi
+          test -f build/account-resources/Sample.epub || python3 tests/apple_host/prepare_fixtures.py --resources build/account-resources
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document
+          ruby tests/reader_team24_apple/make_project.rb build/failure-project build/account-resources tests/apple_host/account/failure_ui base
+          sdk="$PWD/build/raw3-ios-sdk/$target/sdk"
+          products="$PWD/build/raw3-ios-sdk/$target/raw-products"
+          python3 tests/apple_host/account/run_failure_ui.py --platform "$platform" --udid "$udid" \
+            --resources build/account-resources --app "build/FailureDerivedData/Build/Products/$suffix/EXReaderHost.app" \
+            --output build/account-failure -- \
+            xcodebuild test -project build/failure-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+            -destination "$destination" -derivedDataPath build/FailureDerivedData \
+            -resultBundlePath build/account-failure/failure.xcresult -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 \
+            EXR_SDK_DIR="$sdk" EXR_PRODUCTS_DIR="$products" CODE_SIGNING_ALLOWED="$signing"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: apple-sync-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/account-ui/
+            build/account-failure/
             build/account-terminal/
             build/raw3-ios-sdk/*/wave3-packages.json
+            !build/**/*.key
           retention-days: 30
