@@ -186,7 +186,7 @@ PDF/音频/书库可选组件。安装后的工具与 `exreader` 运行库需成
 ## 11. 验证入口
 
 ```
-python -X utf8 tools/generate_conversion_corpus.py --out C:/Users/Oscar/exr-wp12-lite-corpus
+python -X utf8 tools/generate_conversion_corpus.py --out build/wp12-lite-corpus
 ctest --test-dir build/native -R 'native-convert' --output-on-failure
 python -X utf8 tests/check_convert_cli.py <tool> <corpus> <work> <json>
 python -X utf8 tests/check_convert_benchmark.py <tool> <corpus> <work> <json>

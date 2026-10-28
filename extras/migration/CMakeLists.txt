@@ -16,7 +16,14 @@ find_package(EXReader CONFIG REQUIRED COMPONENTS core library)
 if(NOT TARGET EXReader::exr_library)
   message(FATAL_ERROR "The installed SDK lacks the library component (build it with EXR_ENABLE_LIBRARY=ON); the migration tool cannot run without the SQLite library API.")
 endif()
+# SQLite's public backup API snapshots an old library without opening it through
+# the newer SDK (which would upgrade the original in place). The installed SDK
+# supplies the linked SQLite implementation; use the matching pinned header.
+include(FetchContent)
+FetchContent_Declare(migration_sqlite_header URL "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip" URL_HASH SHA256=68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d)
+FetchContent_MakeAvailable(migration_sqlite_header)
 add_executable(exreader-legacy-migrate src/lm_main.c src/lm_pack.c src/lm_util.c)
+target_include_directories(exreader-legacy-migrate PRIVATE "${migration_sqlite_header_SOURCE_DIR}")
 target_link_libraries(exreader-legacy-migrate PRIVATE EXReader::exr_library)
 set_target_properties(exreader-legacy-migrate PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
 if(WIN32)
