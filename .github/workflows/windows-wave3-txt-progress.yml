@@ -24,6 +24,7 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor bc9008ab0f1be5aed3ca430535bd2bde6f73b12d HEAD
+          if [ "$GITHUB_REF_NAME" = codex/reader-common-source-integration ]; then python tests/common_source_integration/guard.py; fi
       - name: Prepare native display
         run: python tests/reader_native_owner_repairs/display.py
       - name: Build and exercise the composed native Windows host

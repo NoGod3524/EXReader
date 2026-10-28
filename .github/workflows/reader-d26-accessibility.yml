@@ -26,7 +26,8 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor 2f215f5793a7344d22db350276ba9f8a07abe86f HEAD
-          if [[ "$GITHUB_REF_NAME" == "codex/reader-history-gtk-composition" ]]; then
+          if [ "$GITHUB_REF_NAME" = codex/reader-common-source-integration ]; then python3 tests/common_source_integration/guard.py; fi
+          if [[ "$GITHUB_REF_NAME" == "codex/reader-history-gtk-composition" || "$GITHUB_REF_NAME" == "codex/reader-common-source-integration" ]]; then
             git diff --exit-code 5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9 HEAD -- src include cmake CMakeLists.txt bindings
           else
             git diff --exit-code a7020b07b8515e0d4b8e2693522920e2ec78eb35 HEAD -- src include cmake CMakeLists.txt bindings ':(exclude)src/formats.c' ':(exclude)src/chapter_reader.c' ':(exclude)include/exr/formats.h'

@@ -35,8 +35,9 @@ jobs:
           gradle-version: '8.9'
       - name: Preserve ownership seed and bind the SDK source before any build
         run: |
-          if [ "$GITHUB_REF_NAME" = codex/reader-history-font-composition ]; then
+          if [ "$GITHUB_REF_NAME" = codex/reader-history-font-composition ] || [ "$GITHUB_REF_NAME" = codex/reader-common-source-integration ]; then
             python3 tests/android_font_reader/common_guard.py
+            if [ "$GITHUB_REF_NAME" = codex/reader-common-source-integration ]; then python3 tests/common_source_integration/guard.py; fi
           else
             python3 tests/android_font_reader/guard.py
           fi

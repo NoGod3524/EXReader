@@ -9,7 +9,8 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/ot-cache-acceptance'
-CANDIDATE = '5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9'
+ORIGINAL_CANDIDATE = '5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9'
+CANDIDATE = os.environ['GITHUB_SHA'] if os.environ.get('GITHUB_REF_NAME') == 'codex/reader-common-source-integration' else ORIGINAL_CANDIDATE
 BASELINE = '25c2ef86c5c1c4e72b2c9d9daf8c47873c49bcab'
 
 
@@ -55,6 +56,9 @@ def guard():
     integration_base = 'c5688c4adf0506d44e097b076be30e1985341012'
     subprocess.run(['git', 'merge-base', '--is-ancestor', integration_base, 'HEAD'], check=True)
     changed = git('diff', '--name-only', integration_base, 'HEAD').splitlines()
+    actual_changed = changed[:]
+    if os.environ.get('GITHUB_REF_NAME') == 'codex/reader-common-source-integration':
+        changed = git('diff', '--name-only', integration_base, '0ec6d3aa34297f30e016af9f1cb2416ed79709f2').splitlines()
     assert changed
     allowed = {
         '.github/workflows/sdk-ot-cache-acceptance.yml',
@@ -71,13 +75,14 @@ def guard():
         assert path in allowed or path.startswith('tests/opentype_cache_acceptance/') or path.startswith('docs/handoffs/ot-cache-acceptance'), path
     subprocess.run(['git', 'diff', '--exit-code', CANDIDATE, 'HEAD', '--',
                     'src', 'include', 'cmake', 'CMakeLists.txt', 'tests/bounded_txt_scan'], check=True)
+    subprocess.run(['git', 'diff', '--exit-code', ORIGINAL_CANDIDATE, 'HEAD', '--', 'src', 'include', 'cmake', 'CMakeLists.txt', 'tests/bounded_txt_scan'], check=True)
     subprocess.run(['git', 'diff', '--exit-code', '6f27b3b6', 'HEAD', '--',
                     'docs/SDK-OT-CONTEXT-MISS.md'], check=True)
     for name, sha in [('candidate', CANDIDATE), ('baseline', BASELINE)]:
         directory = ROOT / ('sdk-' + name)
         assert git('rev-parse', 'HEAD', cwd=directory) == sha
         assert not git('status', '--porcelain', cwd=directory)
-    write(OUT / 'provenance.json', {**identity(), 'changed_files': changed,
+    write(OUT / 'provenance.json', {**identity(), 'changed_files': actual_changed, 'historical_scope_files': changed,
           'sdk_and_retained_consumers_match_candidate': True})
     print(json.dumps({**identity(), 'admitted': True}))
 

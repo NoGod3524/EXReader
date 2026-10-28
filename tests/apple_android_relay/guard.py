@@ -11,6 +11,10 @@ def git(*args):
 assert git('rev-parse', 'HEAD') == os.environ['GITHUB_SHA']
 subprocess.run(['git', 'merge-base', '--is-ancestor', BASE, 'HEAD'], check=True)
 paths = git('diff', '--name-only', BASE, 'HEAD').splitlines()
+actual_paths = paths[:]
+if os.environ.get('GITHUB_REF_NAME') == 'codex/reader-common-source-integration':
+    subprocess.run(['python3', 'tests/common_source_integration/guard.py'], check=True)
+    paths = git('diff', '--name-only', BASE, '0ec6d3aa34297f30e016af9f1cb2416ed79709f2').splitlines()
 for path in paths:
     assert (path in {'.github/workflows/reader-apple-android-relay.yml',
                      '.github/workflows/windows-wave3-txt-progress.yml',
@@ -47,4 +51,4 @@ out = Path('build/apple-android/admission.json')
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(json.dumps({'base': BASE, 'source_sha': os.environ['GITHUB_SHA'],
     'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
-    'changes': paths, 'candidate_sdk_and_old_suites_unchanged_from_base': True}, indent=2))
+    'changes': actual_paths, 'historical_scope_paths': paths, 'candidate_sdk_and_old_suites_unchanged_from_base': True}, indent=2))

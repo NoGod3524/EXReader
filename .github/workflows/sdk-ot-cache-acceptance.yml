@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/checkout@v4
         with:
-          ref: 5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9
+          ref: ${{ github.ref_name == 'codex/reader-common-source-integration' && github.sha || '5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9' }}
           path: sdk-candidate
       - uses: actions/checkout@v4
         with:
@@ -36,7 +36,9 @@ jobs:
       - name: Install fixture authoring tools
         run: python -m pip install fonttools==4.61.1 ninja==1.13.0
       - name: Enforce immutable SDK and source provenance
-        run: python tests/opentype_cache_acceptance/run.py guard
+        run: |
+          if [ "$GITHUB_REF_NAME" = codex/reader-common-source-integration ]; then python tests/common_source_integration/guard.py; fi
+          python tests/opentype_cache_acceptance/run.py guard
       - name: Build both installed SDKs and unchanged retained consumers
         run: python tests/opentype_cache_acceptance/run.py build
       - name: Generate dedicated fonts and run public API correctness comparison
