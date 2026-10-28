@@ -1617,6 +1617,9 @@ static int run_migrate(ctx *c) {
     exr_library *source = NULL;
     if (!check_target_header(c)) return 0;
 #ifndef EXR_MIGRATION_TX_CANDIDATE
+    /* Do not open SQLite before rejecting a schema-6 WAL/journal: opening an
+       occupied database can itself create a shared-memory sidecar. */
+    if (c->target_version == 6 && !old_target_quiescent(c)) return 0;
     if (!reject_transactional_ledger(c)) return 0;
 #endif
     if (!lm_sha_file(c->target, c->target_sha, NULL)) { fail(c, O_FAILED, "target-unreadable", "cannot hash the target"); return 0; }
