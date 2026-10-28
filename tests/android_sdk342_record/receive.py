@@ -34,6 +34,12 @@ def push(path, relative):
 
 adb('install','-r','-t',root/'examples/android/app/build/outputs/apk/debug/app-debug.apk')
 adb('install','-r','-t',root/'examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk')
+installed=adb('shell','pm','path',package).decode().strip()
+assert installed.startswith('package:') and '\n' not in installed
+pulled=out/'installed.apk'
+adb('pull',installed[len('package:'):],pulled)
+installed_sha=hashlib.sha256(pulled.read_bytes()).hexdigest()
+assert installed_sha==hashlib.sha256((root/'examples/android/app/build/outputs/apk/debug/app-debug.apk').read_bytes()).hexdigest()
 assert adb('shell','pm','clear',package).strip() == b'Success'
 adb('shell','am','start','-W','-n',package+'/.MainActivity')
 adb('shell','am','force-stop',package)
@@ -53,6 +59,7 @@ assert process.returncode==0 and b'SDK342_WIRE_PROBE_PASS' in process.stdout and
 assert report['passed'] is True and report['host_compatibility_accepted'] is False
 assert all(report[k]==v for k,v in identity.items())
 assert report['receiver']['exr_version']=='3.42.0' and report['receiver']['parser_version']=='exreader-sdk-3.42.0'
+assert report['receiver']['apk_sha256']==installed_sha
 assert len(report['resolutions']) >= 11
 assert {r['role'] for r in report['resolutions']} == {'txt','epub','pdf','cbz'}
 print(json.dumps(dict(identity, semantic_probe_passed=True, host_compatibility_accepted=False,
