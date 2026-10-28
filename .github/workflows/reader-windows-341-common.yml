@@ -116,7 +116,8 @@ jobs:
         run: |
           set -o pipefail
           python3 tests/reader_webdav_import/check_cloud_import.py --probe build/wio-reader_webdav_import/cloud-probe.exe --cxx build/wio-reader_webdav_import/cloud-cpp-consumer.exe --review-probe build/wio-reader_webdav_import/cloud-review-probe.exe --fixtures tests/fixtures --module-prefix build/winsearch-stage --output build/wio-cloud-module
-          python3 tests/reader_bulk_organization/check_bulk.py --probe build/wio-reader_bulk_organization/bulk-probe.exe --c-consumer build/wio-reader_bulk_organization/bulk-c-consumer.exe --link-map build/wio-reader_bulk_organization/bulk-link.map --output build/wio-bulk-module
+          python3 tests/sdk_bulk_v3/verify_parity.py
+          python3 tests/sdk_bulk_v3/check_bulk_v3.py --probe build/wio-reader_bulk_organization/bulk-probe.exe --c-consumer build/wio-reader_bulk_organization/bulk-c-consumer.exe --link-map build/wio-reader_bulk_organization/bulk-link.map --output build/wio-bulk-module
       - name: Execute installed original F1 C and C++ consumers
         run: |
           python3 tests/reader_search/make_search_fixtures.py build/ws-search-fixtures
