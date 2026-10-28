@@ -1,0 +1,570 @@
+name: GTK Android real native organization relay
+on:
+  push:
+    branches: [codex/dot-gtk-android-organization-relay]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  C11_NDK: '27.0.12077973'
+jobs:
+  android-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - run: python3 tests/gtk_android_organization/guard.py
+      - name: Prepare existing C11 candidate test sources
+        run: python3 tests/reader_wave3_c11/candidate.py
+      - name: Install the Android platform CMake NDK and API34 image
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" \
+            "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}" "emulator" \
+            "system-images;android-34;default;x86_64"
+      - name: Build and install the frozen 3.41 SDK for x86_64
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"
+          mkdir -p "$ws/logs"
+          toolchain="$ANDROID_HOME/ndk/${C11_NDK}/build/cmake/android.toolchain.cmake"
+          echo "C11_TOOLCHAIN=$toolchain" >> "$GITHUB_ENV"
+          echo "C11_STAGE=$ws/stage" >> "$GITHUB_ENV"
+          echo "C11_SDK_STAGE=$ws/sdk-stage" >> "$GITHUB_ENV"
+          cmake -S . -B "$ws/sdk" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DANDROID_ABI=x86_64 \
+            -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$ws/sdk-stage" -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF \
+            -DEXR_BUILD_JNI=ON -DEXR_ENABLE_LIBRARY=ON -DEXR_ENABLE_AUDIO=ON -DEXR_ENABLE_PDF=ON \
+            -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_PDF_CRYPTO=OFF -DEXR_ENABLE_AAC=OFF \
+            -DEXR_ENABLE_TEXT_INDEX=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF \
+            -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_BUILD_SHARED_COMPAT=ON \
+            2>&1 | tee "$ws/logs/sdk-configure.log"
+          cmake --build "$ws/sdk" --parallel 4 --target install 2>&1 | tee "$ws/logs/sdk-build.log"
+          test -f "$ws/sdk-stage/lib/libexreader_jni.so"
+      - name: Install the raw0.2 product and reviewed wave3 packages into one prefix
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"
+          stage="$ws/stage"
+          sdk="$ws/sdk-stage"
+          mkdir -p "$ws/logs"
+          build_module() {
+            name="$1"; source="$2"; shift 2
+            cmake -S "$source" -B "$ws/module-$name" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$C11_TOOLCHAIN" \
+              -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static \
+              -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+              -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$sdk" -DEXR_SDK_VERSION=3.41.0 \
+              -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_PRODUCT_PREFIX="$stage" \
+              -DCMAKE_PREFIX_PATH="$stage;$sdk" -DCMAKE_INSTALL_PREFIX="$stage" "$@" \
+              2>&1 | tee "$ws/logs/$name-configure.log"
+            cmake --build "$ws/module-$name" --parallel 4 --target install 2>&1 | tee "$ws/logs/$name-build.log"
+          }
+          build_module product apps/reader/store/native
+          build_module webdav extras/webdav
+          build_module sideload extras/sideload
+          build_module revisions apps/reader/revisions
+          build_module commands apps/reader/commands
+          build_module sync apps/reader/sync
+          build_module session apps/reader/session
+          build_module reading-state apps/reader/reading-state
+          build_module reading-commands apps/reader/reading-commands
+          build_module annotation-view apps/reader/annotation-view
+          build_module annotation-import apps/reader/annotation-import -DREADER_ANNOTATION_IMPORT_BUILD=ON
+          build_module annotation-export apps/reader/annotation-export
+          build_module jump-history apps/reader/jump-history
+          build_module sync-status-view apps/reader/sync-status-view
+          build_module font-library apps/reader/font-library -DREADER_FONT_LIBRARY_BUILD=ON
+          build_module original-export apps/reader/original-export
+          build_module search apps/reader/search
+          build_module navigation apps/reader/navigation
+          build_module preferences apps/reader/preferences
+      - name: Author the deterministic fixtures and the bundled font
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"
+          python3 tests/webdav_android/fixture.py prepare --output "$ws/network-fixture"
+          mkdir -p tests/reader_host_session_android/debug/res/raw
+          cp "$ws/network-fixture/public/ca.crt" tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
+          python3 tests/reader_wave3_c11/fixtures.py --output "$ws/fixtures"
+          python3 tests/reader_android_navigation/fixtures.py "$ws/navigation-fixtures"
+          python3 tests/reader_android_reading/fixtures.py "$ws/reading-fixtures"
+          python3 - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from build_android_host import write_fixtures
+          write_fixtures(Path('build/wave3/download'))
+          PY
+          python3 tools/reader_catalog_assets.py --output examples/android/app/src/main/assets/reader-catalog-v1.json
+          python3 - <<'PY'
+          import shutil, sys
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from host_font import fetch
+          folder = fetch(Path('build/wave3/font'))
+          assets = Path('examples/android/app/src/main/assets')
+          assets.mkdir(parents=True, exist_ok=True)
+          shutil.copyfile(folder / 'Reader.otf', assets / 'Reader.otf')
+          shutil.copyfile(folder / 'OFL.txt', assets / 'OFL.txt')
+          PY
+          mkdir -p examples/android/app/src/main/jniLibs/x86_64
+          cp "$ws/sdk-stage/lib/libexreader_jni.so" examples/android/app/src/main/jniLibs/x86_64/libexreader_jni.so
+      - name: Build the real wave3 host with search directory reading settings and sync
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"
+          stage="$ws/stage"
+          mkdir -p "$ws/artifacts"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_wave3_c11/candidate.init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.Wave3UiTest \
+            :app:assembleDebug :app:assembleDebugAndroidTest :uitest:assembleDebug :uitest:assembleDebugAndroidTest \
+            2>&1 | tee "$ws/logs/gradle.log"
+          cp examples/android/app/build/outputs/apk/debug/app-debug.apk "$ws/artifacts/app-debug.apk"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/app-debug-androidTest.apk"
+          cp examples/android/uitest/build/outputs/apk/debug/uitest-debug.apk "$ws/artifacts/uitest-debug.apk"
+          cp examples/android/uitest/build/outputs/apk/androidTest/debug/uitest-debug-androidTest.apk "$ws/artifacts/uitest-debug-androidTest.apk"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_wave3_c11/candidate.init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.NavigationUiTest \
+            :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/navigation-runner-gradle.log"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/navigation-debug-androidTest.apk"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_wave3_c11/candidate.init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.ReadingUiTest \
+            :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/reading-runner-gradle.log"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/reading-debug-androidTest.apk"
+          sha256sum "$ws"/artifacts/*.apk | tee "$ws/artifacts/sha256.txt"
+      - name: Build independent organization sync instrumentation
+        run: |
+          set -o pipefail
+          python3 -m py_compile tests/reader_android_organization_sync/run.py tests/reader_android_organization_sync/prepare_sync_341.py
+          python3 tests/reader_android_organization_sync/prepare_sync_341.py
+          python3 -m py_compile tests/reader_android_organization_sync/host_sync_341.py
+          ws="$PWD/build/wave3"; stage="$ws/stage"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_android_organization_sync/init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.OrganizationSyncTest \
+            :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/organization-runner-gradle.log"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/organization-debug-androidTest.apk"
+          git rev-parse HEAD > "$ws/artifacts/source.txt"
+          sha256sum "$ws/artifacts/app-debug.apk" "$ws/artifacts/organization-debug-androidTest.apk" > "$ws/artifacts/organization-sha256.txt"
+      - name: Build unchanged original sync UI runner
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"; stage="$ws/stage"
+          python3 tests/reader_reading_state/make_fixtures.py "$ws/sync-reading-fixtures"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_android_organization_sync/init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.HostSyncTest \
+            :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/original-sync-runner-gradle.log"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/original-sync-debug-androidTest.apk"
+      - name: Build strict 3.41 sync UI adapter
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"; stage="$ws/stage"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/reader_android_organization_sync/init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.HostSync341Test \
+            :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/sync-341-runner-gradle.log"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/sync-341-debug-androidTest.apk"
+          sha256sum "$ws/artifacts/sync-341-debug-androidTest.apk" > "$ws/artifacts/sync-341-sha256.txt"
+      - name: Build real cross-platform relay instrumentation
+        run: |
+          set -o pipefail
+          ws="$PWD/build/wave3"; stage="$ws/stage"
+          gradle -p examples/android --no-daemon --stacktrace -I "$PWD/tests/gtk_android_organization/android/init.gradle" \
+            -PexrSdk="$ws/sdk-stage" -PexrProduct="$stage" -PexrSync=true -PexrSearch=true \
+            -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrSelectorBytes=true \
+            -PexrWave3=true -PexrWave3Prefix="$stage" -PexrSearchPrefix="$stage" \
+            -PexrNavigationPrefix="$stage" -PexrPreferencesPrefix="$stage" -PexrDav="$stage" \
+            -PexrSideload="$stage" -PexrTestRunner=org.exreader.host.OrganizationRelayTest \
+            :app:assembleDebugAndroidTest 2>&1 | tee "$ws/logs/relay-runner-gradle.log"
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk "$ws/artifacts/relay-debug-androidTest.apk"
+      - name: Enable emulator accelerator
+        run: sudo chmod 666 /dev/kvm
+      - name: Execute organization sync on the actual host
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t build/wave3/artifacts/app-debug.apk
+            adb install -r -t build/wave3/artifacts/organization-debug-androidTest.apk
+            python3 tests/reader_android_organization_sync/run.py --fixture build/wave3/network-fixture --output build/wave3/evidence/organization-sync
+      - name: Execute original C11 navigation and reading suites
+        if: ${{ !cancelled() }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb shell pm clear org.exreader.host || true
+            bash tests/reader_wave3_c11/device.sh "$PWD/build/wave3"
+      - name: Execute unchanged original sync UI and session regression
+        if: ${{ !cancelled() }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t build/wave3/artifacts/app-debug.apk
+            adb install -r -t build/wave3/artifacts/original-sync-debug-androidTest.apk
+            python3 tests/reader_host_session_android/run_ui.py --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/original-sync
+      - name: Execute strict 3.41 sync UI adapter
+        if: ${{ !cancelled() }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t build/wave3/artifacts/app-debug.apk
+            adb install -r -t build/wave3/artifacts/sync-341-debug-androidTest.apk
+            python3 tests/reader_android_organization_sync/host_sync_341.py --fixture build/wave3/network-fixture --reading-fixtures build/wave3/sync-reading-fixtures --output build/wave3/evidence/sync-341
+      - name: Seal native APK identity
+        if: ${{ !cancelled() }}
+        run: |
+          cd build/wave3/artifacts
+          sha256sum *.apk > runtime-apks.sha256
+          printf '%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > runtime-identity.txt
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: org-android-runtime-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/wave3/artifacts/
+            build/wave3/network-fixture/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: org-android-regression-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/wave3/logs/
+            build/wave3/evidence/
+            build/organization-source.json
+          if-no-files-found: error
+  gtk-first:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: python3 tests/gtk_android_organization/guard.py
+      - name: Install GTK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+      - name: Build installed SDK, catalog, account modules and real GTK host
+        id: gtk_build
+        run: |
+          set -euxo pipefail
+          prefix="$PWD/build/stage"
+          cmake -S apps/reader/store/native -B build/product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/product --parallel 4
+          ctest --test-dir build/product --output-on-failure --no-tests=error
+          cmake --install build/product
+          cmake -S extras/webdav -B build/dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/dav --parallel 4
+          cmake --install build/dav
+          cmake -S apps/reader/revisions -B build/revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/revisions --parallel 4
+          cmake --install build/revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/$module" --parallel 4
+            cmake --install "build/$module"
+          done
+          cmake -S extras/credentials -B build/credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/credentials --parallel 4
+          cmake --install build/credentials
+          cmake --preset reading-library
+          cmake --build --preset reading-library
+          cmake --install build/reading-library
+          cmake -S extras/sideload -B build/sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/sideload --parallel 4
+          cmake --install build/sideload
+          cmake -S apps/reader/reading-state -B build/reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/reading-state --parallel 4
+          cmake --install build/reading-state
+          cmake -S tests/reader_commands/consumer -B build/command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/command-consumer --parallel 4
+          cmake -S tests/reader_metadata/consumer -B build/metadata-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/metadata-consumer --parallel 4
+          cmake -S tests/reader_revisions/consumer -B build/revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/revision-consumer --parallel 4
+          cmake -S tests/reader_reading_v2/consumer -B build/reading-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$prefix;$PWD/build/reading-library/stage"
+          cmake --build build/reading-probe --parallel 4
+          python3 tests/reader_reading_state/make_fixtures.py build/receive-fixtures
+          cmake -S tests/reader_gtk_receive -B build/inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/inspect --parallel 4
+          cmake -S apps/reader/desktop -B build/desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_BUILD_GTK=ON -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON
+          cmake --build build/desktop --parallel 4
+          ctest --test-dir build/desktop --output-on-failure --no-tests=error
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.41.0 --binary build/desktop/gtk-host/exreader-linux --output build/package
+          cp build/inspect/received-sdk-inspect build/package/EXReader-Linux/received-sdk-inspect
+      - name: Preserve current GTK receive regression
+        id: current_regression
+        run: |
+          set -euo pipefail
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/regression-openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/current-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
+          '
+      - name: Preserve original GTK receive regression independently
+        id: original_regression
+        if: ${{ !cancelled() && steps.gtk_build.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          trap 'git show "$GITHUB_SHA":tests/linux_host/check_account_ui.py > tests/linux_host/check_account_ui.py; git show "$GITHUB_SHA":tests/linux_host/receive_checks.py > tests/linux_host/receive_checks.py' EXIT
+          git show fba9a21f25e6669614eae76ef22a3f81b3995886:tests/linux_host/check_account_ui.py > tests/linux_host/check_account_ui.py
+          git show fba9a21f25e6669614eae76ef22a3f81b3995886:tests/linux_host/receive_checks.py > tests/linux_host/receive_checks.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/original-regression-openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/linux_host/check_account_ui.py --payload build/package/EXReader-Linux --metadata-consumer build/metadata-consumer/metadata-consumer --revision-consumer build/revision-consumer/revision-consumer --output build/original-account --receive-fixtures build/receive-fixtures --reading-probe build/reading-probe/reading-v2-probe --inspect-consumer build/inspect/received-sdk-inspect
+          '
+      - name: GTK authors real organization through native widgets
+        run: |
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/gtk_android_organization/gtk.py --phase gtk-first --out build/org-gtk-first --package build/package/EXReader-Linux --inspect build/package/EXReader-Linux/received-sdk-inspect
+          '
+      - name: Seal package identity
+        run: |
+          printf '%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > build/package/EXReader-Linux/relay-identity.txt
+          cd build/package/EXReader-Linux
+          sha256sum bin/exreader-linux > relay-sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: org-gtk-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/package/EXReader-Linux/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: org-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/org-gtk-first/
+            !build/**/key.pem
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: org-gtk-regression-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/current-account/
+            build/original-account/
+            build/organization-source.json
+            build/desktop/Testing/
+          if-no-files-found: error
+  android:
+    needs: [android-build, gtk-first]
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-android-runtime-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/wave3
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/org-input
+      - name: Verify same-round installed runtime identity
+        run: |
+          cd build/wave3/artifacts
+          printf '%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > expected-identity.txt
+          cmp runtime-identity.txt expected-identity.txt
+          sha256sum -c runtime-apks.sha256
+      - run: sudo chmod 666 /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t build/wave3/artifacts/app-debug.apk
+            adb install -r -t build/wave3/artifacts/relay-debug-androidTest.apk
+            python3 tests/gtk_android_organization/android/run.py --phase android --previous build/org-input/state.json --output build/org-android --fixture build/wave3/network-fixture
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: org-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/org-android/
+            !build/**/key.pem
+          if-no-files-found: error
+  gtk-return:
+    needs: android
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-gtk-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/package
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/org-input
+      - name: Verify same-round package and install GTK runtime
+        run: |
+          cd build/package
+          printf '%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > expected-identity.txt
+          cmp relay-identity.txt expected-identity.txt
+          sha256sum -c relay-sha256.txt
+          chmod +x bin/exreader-linux received-sdk-inspect
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 gnome-keyring libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+      - name: GTK displays Android organization and restores removals
+        run: |
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/openbox.log 2>&1 & trap "kill $! || true" EXIT
+            python3 tests/gtk_android_organization/gtk.py --phase gtk-return --previous build/org-input/state.json --out build/org-gtk-return --package build/package --inspect build/package/received-sdk-inspect
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: org-gtk-return-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/org-gtk-return/
+            !build/**/key.pem
+          if-no-files-found: error
+  android-final:
+    needs: [gtk-return]
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-android-runtime-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/wave3
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-gtk-return-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/org-input
+      - name: Verify same-round installed runtime identity
+        run: |
+          cd build/wave3/artifacts
+          printf '%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > expected-identity.txt
+          cmp runtime-identity.txt expected-identity.txt
+          sha256sum -c runtime-apks.sha256
+      - run: sudo chmod 666 /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t build/wave3/artifacts/app-debug.apk
+            adb install -r -t build/wave3/artifacts/relay-debug-androidTest.apk
+            python3 tests/gtk_android_organization/android/run.py --phase android-final --previous build/org-input/state.json --output build/org-android-final --fixture build/wave3/network-fixture
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: org-android-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/org-android-final/
+            !build/**/key.pem
+          if-no-files-found: error
+  verify:
+    needs: [android-build, gtk-first, android, gtk-return, android-final]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-gtk-first-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/organization-audit/gtk-first
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/organization-audit/android
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-gtk-return-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/organization-audit/gtk-return
+      - uses: actions/download-artifact@v4
+        with:
+          name: org-android-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/organization-audit/android-final
+      - run: python3 tests/gtk_android_organization/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: org-relay-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/organization-audit/summary.json
+          if-no-files-found: error
