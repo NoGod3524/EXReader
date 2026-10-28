@@ -15,9 +15,60 @@ jobs:
     uses: ./.github/workflows/android-sdk342-record-probe.yml
   apple:
     uses: ./.github/workflows/apple-sdk342-package.yml
+  apple_f06:
+    runs-on: macos-15
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphone]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build original F06 profile and verify actual relocated entries
+        run: python3 tests/sdk342_aggregate/apple_f06.py '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f06-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f06/${{ matrix.target }}/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && matrix.target == 'iphone' }}
+        with:
+          name: f06-ipad-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f06/ipad/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-f06-raw-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f06/
+          if-no-files-found: warn
+  f06:
+    if: always()
+    needs: [windows, gtk, android, apple, apple_f06]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: f06-*
+          path: f06-input
+      - name: Run unchanged original six-target F06 authentication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f06_packages/identity.py summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f06-authenticated-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f06/summary.json
+          if-no-files-found: error
   authenticate:
     if: always()
-    needs: [windows, gtk, android, records, apple]
+    needs: [windows, gtk, android, records, apple, apple_f06, f06]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +80,8 @@ jobs:
           RESULT_ANDROID: ${{ needs.android.result }}
           RESULT_RECORDS: ${{ needs.records.result }}
           RESULT_APPLE: ${{ needs.apple.result }}
+          RESULT_APPLE_F06: ${{ needs.apple_f06.result }}
+          RESULT_F06: ${{ needs.f06.result }}
         run: python3 tests/sdk342_aggregate/authenticate.py
       - uses: actions/upload-artifact@v4
         if: always()
