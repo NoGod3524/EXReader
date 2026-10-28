@@ -54,6 +54,20 @@ def main():
             if process.poll() is None:
                 process.kill()
                 process.communicate()
+    if os.name != 'nt':
+        ledger.unlink()
+        ledger.symlink_to('missing-sidecar-target')
+        before = sha(target)
+        p = subprocess.run([args.tx, 'migrate', '--pack', str(pack), '--target', str(target)], capture_output=True, text=True)
+        assert p.returncode == 3 and json.loads(p.stdout)['code'] == 'ledger-unreadable', (p.stdout, p.stderr)
+        assert ledger.is_symlink() and sha(target) == before
+        for command in ('verify', 'dump'):
+            cmd = [args.tx, command, '--target', str(target)]
+            if command == 'verify':
+                cmd += ['--pack', str(pack)]
+            p = subprocess.run(cmd, capture_output=True, text=True)
+            assert p.returncode == 2 and json.loads(p.stdout)['code'] == 'ledger-unreadable', (p.stdout, p.stderr)
+            assert ledger.is_symlink() and sha(target) == before
     print(json.dumps({'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checks': ['ledger-created', 'ledger-content-changed', 'rollback-preserves-external-change']}))
 
 

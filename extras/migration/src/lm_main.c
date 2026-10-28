@@ -1571,7 +1571,10 @@ static int run_migrate(ctx *c) {
   {
     void *data=NULL;size_t size=0;int found=0;const char *open_path;
     c->target_existed=lm_exists(c->target);
-    c->sidecar_existed=lm_exists(c->sidecar);
+    c->sidecar_existed=lm_path_state(c->sidecar);
+    if(c->sidecar_existed<0) {
+      fail(c,O_FAILED,"ledger-unreadable","cannot inspect the migration ledger path");return 0;
+    }
     if(c->sidecar_existed && !lm_sha_file(c->sidecar,c->sidecar_sha,NULL)) {
       fail(c,O_FAILED,"ledger-unreadable","cannot hash the existing ledger");return 0;
     }
@@ -1753,8 +1756,9 @@ process_pack:
       if(!resumed && !cancel_cb(c)) { fail(c,O_FAILED,"review-hook-timeout","review synchronization timed out");return 0; }
     }
     {
-      char digest[65];
-      if(lm_exists(c->sidecar)!=c->sidecar_existed ||
+      char digest[65];int sidecar_state=lm_path_state(c->sidecar);
+      if(sidecar_state<0) { fail(c,O_FAILED,"ledger-unreadable","cannot inspect the migration ledger path");return 0; }
+      if(sidecar_state!=c->sidecar_existed ||
          (c->sidecar_existed && (!lm_sha_file(c->sidecar,digest,NULL) || strcmp(digest,c->sidecar_sha)))) {
         fail(c,O_FAILED,"ledger-changed","the migration ledger changed; transaction rolled back");return 0;
       }
@@ -1890,7 +1894,11 @@ static void run_verify(ctx *c) {
     if(exr_library_open(c->target,&c->lib,&c->err)!=EXR_OK) { sdk_fail(c,"opening library");return; }
     if(exr_library_migration_ledger_get(c->lib,&data,&size,&found,&c->err)!=EXR_OK) { sdk_fail(c,"reading transactional ledger");return; }
     if(!found) { fail(c,O_REJECTED,"ledger-missing","no transactional ledger in library");return; }
-    if(lm_exists(c->sidecar) && !sidecar_check_envelope(c,c->sidecar)) { exr_free(data);return; }
+    {
+      int sidecar_state=lm_path_state(c->sidecar);
+      if(sidecar_state<0) { exr_free(data);fail(c,O_REJECTED,"ledger-unreadable","cannot inspect the migration ledger path");return; }
+      if(sidecar_state && !sidecar_check_envelope(c,c->sidecar)) { exr_free(data);return; }
+    }
     if(!sidecar_parse(c,(const char *)data,size)) { exr_free(data);return; }
     exr_free(data);
   }
@@ -2001,7 +2009,9 @@ static int real_main(int argc, char **argv) {
       else {
         if(exr_library_migration_ledger_get(reader,&data,&size,&found,&c->err)!=EXR_OK) sdk_fail(c,"reading transactional ledger");
         else if(found) {
-          if(!lm_exists(c->sidecar) || sidecar_check_envelope(c,c->sidecar)) sidecar_parse(c,(const char *)data,size);
+          int sidecar_state=lm_path_state(c->sidecar);
+          if(sidecar_state<0) fail(c,O_REJECTED,"ledger-unreadable","cannot inspect the migration ledger path");
+          else if(!sidecar_state || sidecar_check_envelope(c,c->sidecar)) sidecar_parse(c,(const char *)data,size);
         }
         else if(lm_exists(c->sidecar)) sidecar_load(c,c->sidecar);
         exr_free(data);exr_library_close(reader);
