@@ -1,7 +1,7 @@
   current:
     name: Android current 19 reading, 16 sync and 18 owner checks
     needs: android
-    if: github.ref_name == 'codex/reader-android130-candidate-admission'
+    if: always() && (needs.android.result == 'success' || needs.android.result == 'failure') && github.ref_name == 'codex/reader-android130-candidate-admission'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
