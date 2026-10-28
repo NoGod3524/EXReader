@@ -1,7 +1,7 @@
 name: Android original130 history compatibility
 on:
   push:
-    branches: [codex/dot-android-history-compat]
+    branches: [codex/dot-android-history-compat, codex/reader-android-history-common-prep-20261028]
   workflow_dispatch:
 permissions:
   contents: read
