@@ -428,14 +428,17 @@ def main():
         image = app.page_shot('light.bmp', probes)
         dx, dy, width, height = layout(page_client(app), (720, 1040))
         corner = at(image, dx + 6, dy + 6)
-        surround = at(image, max(dx - 4, 1), max(dy - 4, 1))
+        # The window draws a dotted focus rectangle at y=1 and x=1.
+        # Sample the margin beside the page, inside that focus rectangle.
+        surround = at(image, max(dx - 2, 2), min(dy + 6, image[1] - 2))
         ink = [at(image, x, y) for x in range(dx + 40, dx + width - 40, 7)
                for y in range(dy + 40, dy + min(height, 500) - 10, 5)]
         ink = [pixel for pixel in ink if not near(pixel, corner, 16)]
         record('light-theme-page-corner-and-ink',
                near(corner, (255, 255, 255), 2) and near(surround, (255, 255, 255), 2) and
                bool(ink) and min(sum(pixel) for pixel in ink) < 260,
-               dict(corner=corner, ink=len(ink)))
+               dict(corner=corner, surround=surround, ink=len(ink),
+                    minimum_ink_sum=min(map(sum, ink)) if ink else None))
 
         # ---- the actual SDK canvas really is the page background -------------
         dialog = app.open_dialog()
