@@ -14,6 +14,9 @@ paths = git('diff', '--name-only', BASE, 'HEAD').splitlines()
 for path in paths:
     assert (path in {'.github/workflows/reader-apple-android-relay.yml',
                      '.github/workflows/reader-apple-android-bookmark-relay.yml',
+                     '.github/workflows/reader-android-font-reader.yml',
+                     '.github/workflows/reader-d26-accessibility.yml',
+                     'tests/android_font_reader/common_guard.py',
                      '.github/workflows/windows-wave3-txt-progress.yml',
                      '.github/workflows/sdk-ot-cache-acceptance.yml',
                      'tests/bounded_txt_scan/CMakeLists.txt',
@@ -39,6 +42,12 @@ for path in paths:
             'examples/android/app/src/main/java/org/exreader/host/ReaderView.java',
             'examples/android/app/src/main/cpp/bounded_epub_jni.inc',
             'examples/android/app/src/main/cpp/sync_jni.cpp'}), path
+# Admit only the exact three pre-existing integration files from this worktree's
+# provided base; retain all of the original SDK and historical-suite pins.
+subprocess.run(['git', 'diff', '--exit-code', 'f34a4f27', 'HEAD', '--',
+                '.github/workflows/reader-android-font-reader.yml',
+                '.github/workflows/reader-d26-accessibility.yml',
+                'tests/android_font_reader/common_guard.py'], check=True)
 subprocess.run(['git', 'diff', '--exit-code', '5b7a34ee4f1ce38cf3bcd7cf0220575f4ecf7da9',
                 'HEAD', '--', 'src', 'include', 'cmake', 'CMakeLists.txt',
                 'tests/bounded_txt_scan'], check=True)
