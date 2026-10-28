@@ -14,6 +14,12 @@ prior `.legacy-map.json` when no internal ledger exists. Afterwards the database
 ledger is authoritative; `export-ledger --target LIB --output NEW_FILE` exports
 compatible JSON for review. Do not treat an old sidecar as current after that
 point. This interface and its handling of failures are under validation.
+For a new target, the candidate creates a private stage and publishes it only
+after commit using a no-overwrite operation. An abruptly terminated process can
+leave a `.migrating-*` stage; the tool does not automatically delete an
+unowned stage. Retain it for diagnosis and remove it only after confirming that
+no migration process owns it. An existing target is never replaced by this
+candidate.
 
 Normal SQLite writers on the same database must honor SQLite locking, including
 WAL mode. This does not constrain code which replaces, deletes or copies the

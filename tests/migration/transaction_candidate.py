@@ -146,6 +146,34 @@ def main():
             db.commit();db.close()
             checks.append({'schema':schema,'journal':mode,'passed':True})
             print('PASS', checks[-1], flush=True)
+    folder = a.work/'new-target-crash'
+    folder.mkdir()
+    target = folder/'library.sqlite'
+    pack = folder/'pack.exrpack'
+    pack.write_bytes(L.build_pack([L.entry(L.book_record('new','new.txt'), L.TXT)], []))
+    ready = Path(str(target)+'.writer-ready')
+    env = dict(os.environ, EXR_MIGRATE_TEST_FAULTS='1')
+    with (folder/'crash.log').open('w', encoding='utf-8') as log:
+        killed = subprocess.Popen([a.tool,'migrate','--pack',str(pack),'--target',str(target),'--inject','writer-pause'],stdout=log,stderr=subprocess.STDOUT,env=env)
+        try:
+            end=time.monotonic()+30
+            while not ready.exists() and killed.poll() is None and time.monotonic()<end:
+                time.sleep(.02)
+            assert ready.exists(), 'new target crash rendezvous missing'
+            killed.kill();killed.wait(timeout=30)
+        finally:
+            if killed.poll() is None:
+                killed.kill();killed.wait()
+    ready.unlink(missing_ok=True)
+    assert not target.exists()
+    abandoned = list(folder.glob('library.sqlite.migrating-*'))
+    assert abandoned, 'crashed stage should be retained for inspection'
+    rc, out, err = call(a.tool,'migrate','--pack',pack,'--target',target)
+    assert rc == 0 and target.exists() and all(path.exists() for path in abandoned), (out,err)
+    rc, out, err = call(a.tool,'verify','--pack',pack,'--target',target)
+    assert rc == 0, (out,err)
+    checks.append({'case':'new-target-crash-and-retry','passed':True})
+    print('PASS',checks[-1],flush=True)
     folder = a.work/'full-ledger'
     folder.mkdir()
     target = folder/'library.sqlite'
@@ -180,7 +208,7 @@ def main():
     checks.append({'case':'full-ledger-export-and-idempotence','passed':True})
     print('PASS', checks[-1], flush=True)
     report = {'source_sha':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
-              'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checks':checks,'passed':len(checks)==5}
+              'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'checks':checks,'passed':len(checks)==6}
     (a.work/'transaction-result.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(report))
 
