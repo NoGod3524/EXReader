@@ -9,6 +9,18 @@ def bound(report):identity.retained.bound(report)
 suffix=os.environ['GITHUB_RUN_ID']+'-'+os.environ['GITHUB_RUN_ATTEMPT']
 base=read(root/'conflict-summary'/ 'sdk342-result.json');bound(base)
 assert base['baseline_checks']==15 and base['conflict_checks']==15 and base['retained_gtk_checks']=={'current':48,'original':46}
+observer=read(root/'gtk-regressions/current-account/collections-observer-identity.json')
+assert all(str(observer[k])==v for k,v in identity.retained.identity().items())
+assert observer['observer_only'] and observer['current_suite_only'] and observer['complete'] and not observer['errors']
+assert observer['module_sha256']==sha(Path(__file__).parent/'collections_observer.py')
+assert observer['original_driver_sha256']==sha(identity.ROOT/'tools/check_linux_host.py')
+collection_events=[json.loads(line) for p in (root/'gtk-regressions/current-account').rglob('native-collections-keys.jsonl') for line in p.read_text().splitlines()]
+assert len(collection_events)==observer['event_count'] and collection_events
+assert not list((root/'gtk-regressions/original-account').rglob('native-collections-keys.jsonl'))
+for event in collection_events:
+    assert all(str(event[k])==v for k,v in identity.retained.identity().items())
+    assert event['phase'] in ('before','after') and event['state']['collections']['visible']=='1'
+    assert event['x11_focus']['observed_at']>=event['focus_query_started']>=event['observed_at']
 for case in ('current-account','original-account'):
     folder=root/'gtk-regressions'/case;adapter=read(folder/'scan-barrier-identity.json')
     assert all(str(adapter[k])==v for k,v in identity.retained.identity().items())
