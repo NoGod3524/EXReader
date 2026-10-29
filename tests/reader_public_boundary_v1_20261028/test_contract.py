@@ -192,27 +192,48 @@ class BoundaryContract(unittest.TestCase):
     def test_compiler_query_truncation_rejected(self):
         with self.assertRaises(AssertionError):C.ninja_explicit_inputs('object.obj:\n  input: CXX_COMPILER__reader_Release\n    reading_state.cpp\n','object.obj','CXX_COMPILER')
 
+    def lld(self,value,kind='input',address=0x100,size=0x20):
+        return f'{address:x} {address:x} {size:x} 1 '+{'output':'','input':' '*8,'symbol':' '*16}[kind]+value+'\n'
+
     def test_lld_exact_named_provider(self):
-        text='100 100 20 4 /stage/lib/libreader_reading_state_codec.a(reading_state.cpp.o):(.text.reader_rs_encode_retained_raw_v1)\n100 100 20 1 reader_rs_encode_retained_raw_v1\n'
+        text=self.lld('/stage/lib/libreader_reading_state_codec.a(reading_state.cpp.o):(.text.reader_rs_encode_retained_raw_v1)')+self.lld('reader_rs_encode_retained_raw_v1','symbol')
         self.assertEqual(C.lld_symbol_origin(text,'reader_rs_encode_retained_raw_v1'),('/stage/lib/libreader_reading_state_codec.a(reading_state.cpp.o)',0x100))
 
     def test_lld_standalone_contribution_never_borrows_archive(self):
-        text='100 100 20 4 /stage/lib/owner.a(member.o):(.text.public)\n100 100 20 4 caller.o:(.text.public)\n100 100 20 1 public\n'
+        text=self.lld('/stage/lib/owner.a(member.o):(.text.public)')+self.lld('caller.o:(.text.public)')+self.lld('public','symbol')
         self.assertEqual(C.lld_symbol_origin(text,'public')[0],'caller.o')
 
     def test_lld_new_section_without_provider_rejected(self):
-        with self.assertRaises(AssertionError):C.lld_symbol_origin('100 100 20 4 owner.a(member.o):(.text.public)\n100 100 20 4 .other\n100 100 20 1 public\n','public')
+        with self.assertRaises(AssertionError):C.lld_symbol_origin(self.lld('owner.a(member.o):(.text.public)')+self.lld('.other','output')+self.lld('public','symbol'),'public')
 
     def test_lld_missing_duplicate_or_prefix_symbol_rejected(self):
-        for text in ('100 100 20 4 owner.a(member.o):(.text.public)\n100 100 20 1 public_extra\n',
-                     '100 100 20 4 owner.a(member.o):(.text.public)\n100 100 20 1 public\n104 104 20 1 public\n'):
+        for text in (self.lld('owner.a(member.o):(.text.public)')+self.lld('public_extra','symbol'),
+                     self.lld('owner.a(member.o):(.text.public)')+self.lld('public','symbol')+self.lld('public','symbol',0x104)):
             with self.assertRaises(AssertionError):C.lld_symbol_origin(text,'public')
 
     def test_lld_malformed_intervening_origin_rejected(self):
-        with self.assertRaises(AssertionError):C.lld_symbol_origin('100 100 20 4 owner.a(member.o):(.text.public)\nBAD_ROW other.o:(.text.public)\n100 100 20 1 public\n','public')
+        with self.assertRaises(AssertionError):C.lld_symbol_origin(self.lld('owner.a(member.o):(.text.public)')+'BAD_ROW other.o:(.text.public)\n'+self.lld('public','symbol'),'public')
 
     def test_lld_out_of_range_symbol_rejected(self):
-        with self.assertRaises(AssertionError):C.lld_symbol_origin('100 100 20 4 owner.a(member.o):(.text.public)\n120 120 20 1 public\n','public')
+        with self.assertRaises(AssertionError):C.lld_symbol_origin(self.lld('owner.a(member.o):(.text.public)')+self.lld('public','symbol',0x120),'public')
+
+    def test_lld_demangled_anonymous_namespace_is_symbol_not_input(self):
+        observed='long std::__ndk1::(anonymous namespace)::as_integer_helper<long, std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>>, long (*)(char const*, char**, int)>(std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>> const&, std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>> const&, unsigned long*, int, long (*)(char const*, char**, int))'
+        text=self.lld('/ndk/libc++_static.a(string.cpp.o):(.text.helper)')+self.lld(observed,'symbol')
+        self.assertEqual([row[3] for row in C.lld_rows(text)],['input','symbol'])
+        self.assertEqual(C.lld_symbol_origin(text,observed),('/ndk/libc++_static.a(string.cpp.o)',0x100))
+
+    def test_lld_unknown_hierarchy_rejected(self):
+        for indent in (1,7,9,15,17):
+            with self.assertRaises(AssertionError):C.lld_rows('100 100 20 1 '+' '*indent+'owner.a(member.o):(.text.public)\n')
+        with self.assertRaises(AssertionError):C.lld_rows('100 100 20 1 \towner.a(member.o):(.text.public)\n')
+
+    def test_lld_unknown_input_cannot_borrow_prior_owner(self):
+        text=self.lld('owner.a(member.o):(.text.public)')+self.lld('unknown-input-form')+self.lld('public','symbol')
+        with self.assertRaises(AssertionError):C.lld_symbol_origin(text,'public')
+
+    def test_lld_wanted_symbol_requires_actual_input_row(self):
+        with self.assertRaises(AssertionError):C.lld_symbol_origin(self.lld('owner.a(member.o):(.text.public)','symbol')+self.lld('public','symbol'),'public')
 
     def test_android_actual_link_map_binding(self):
         root=Path('/workspace');image=root/'libproduct.so'

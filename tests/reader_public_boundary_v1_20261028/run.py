@@ -566,23 +566,29 @@ def owned_dependency_proof(source,graph_objects,groups,folder,required_headers,g
 
 
 def lld_rows(text):
+    # LLVM18 ELF MapFile.cpp prints one separator after Align, then 0/8/16
+    # spaces for Out/In/Symbol. Preserve that hierarchy: a demangled symbol
+    # may itself contain '::(anonymous namespace)' and is not an input file.
     rows=[]
     for line in text.splitlines():
         if not line.strip():continue
         if line.split()==['VMA','LMA','Size','Align','Out','In','Symbol']:continue
-        columns=line.split(None,4)
-        need(len(columns)==5 and all(re.fullmatch(r'[0-9a-fA-F]+',c) for c in columns[:4]),'unparsed LLD map row')
-        rows.append((int(columns[0],16),int(columns[2],16),columns[4].strip()))
+        match=re.fullmatch(r' *([0-9a-fA-F]+) +([0-9a-fA-F]+) +([0-9a-fA-F]+) +([0-9]+) (.*\S)',line)
+        need(match is not None,('unparsed LLD map row',line))
+        body=match[5];indent=len(body)-len(body.lstrip(' '))
+        need(indent in (0,8,16) and '\t' not in body,('unsupported LLD row hierarchy',line))
+        kind={0:'output',8:'input',16:'symbol'}[indent]
+        rows.append((int(match[1],16),int(match[3],16),body[indent:],kind))
     need(rows,'empty LLD map');return rows
 
 
 def lld_symbol_origin(text,symbol):
     current=None;found=[]
-    for address,size,value in lld_rows(text):
-        if ':(' in value:
+    for address,size,value,kind in lld_rows(text):
+        if kind=='input':
             origin=re.fullmatch(r'(.+):\([^\n]*\)',value)
             need(origin is not None,'unrecognized LLD input contribution');current=(origin[1],address,address+size)
-        elif value.startswith('.'):current=None
+        elif kind=='output':current=None
         elif value==symbol:
             need(current is not None,'named symbol has no actual LLD contribution')
             need(current[1]<=address<current[2],'named symbol outside selected LLD contribution')
@@ -796,8 +802,8 @@ def ndk_capture(destination,files,copy):
                 image_record=dict(image=str(image.relative_to(ROOT)),image_sha256=digest(image),map=str(mapfile.relative_to(ROOT)),map_sha256=digest(mapfile),command=actual,driver_binding=driver_binding,contributors=[])
                 result['images'].append(image_record)
                 selected={};workspace_inputs={}
-                for address,size,value in lld_rows(mapfile.read_text()):
-                    if ':(' not in value:continue
+                for address,size,value,kind in lld_rows(mapfile.read_text()):
+                    if kind!='input':continue
                     origin=re.fullmatch(r'(.+):\([^\n]*\)',value);need(origin is not None,'unparsed map contribution')
                     name=origin[1]
                     if name=='<internal>':continue
