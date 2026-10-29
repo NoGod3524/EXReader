@@ -1,0 +1,58 @@
+name: iPhone Verify phase diagnosis 20261029
+on:
+  push:
+    branches: [codex/apple-ios-organization-verify-phase-probe-20261029]
+permissions:
+  contents: read
+jobs:
+  probe:
+    name: Isolated transport preflight and three Verify prefixes
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      EXR_APPLE_SDK_VERSION: '3.42.0'
+      EXR_APPLE_PAGE_THEME: 'ON'
+      EXR_APPLE_RAW3: 'ON'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Admit one attempt and generator dependency
+        run: |
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document
+      - name: Generate reversible diagnostic copies and unchanged SDK
+        run: python3 tests/apple_ios_organization_verify_phase_probe_20261029/prepare.py
+      - name: Run receiver controls, one preflight, and three fresh prefixes only
+        run: python3 tests/apple_ios_organization_verify_phase_probe_20261029/collect.py run
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-verify-phase-probe-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ios-verify-phase-probe/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+  audit:
+    name: Independently audit phase capture without acceptance credit
+    needs: probe
+    if: always()
+    runs-on: macos-15
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Replay original native results and loss-detecting event evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_ios_organization_verify_phase_probe_20261029/collect.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-verify-phase-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ios-verify-phase-audit/
+          include-hidden-files: true
+          if-no-files-found: error
