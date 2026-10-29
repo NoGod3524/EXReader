@@ -1,0 +1,24 @@
+name: Apple four original evidence audit 20261029
+on:
+  push:
+    branches: [codex/apple-four-evidence-audit-20261029]
+    paths: ['tools/reader_composition/apple_four_evidence_audit.py', '.github/workflows/apple-four-evidence-audit-20261029.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original archives, native XCTest and retained outputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/apple_four_evidence_audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-four-evidence-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-four-evidence-audit/results.json
+          if-no-files-found: error
