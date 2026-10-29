@@ -59,3 +59,17 @@ the raw-key preparation-cancel path is untouched. Adapter and event identities
 are bound in the final audit. A diagnostic-only three-close check uses the exact
 failed-run native binary before a later full exact-SHA run; no partial result is
 substituted for full acceptance.
+
+Diagnostic `40753529676/1` at `e86131ee04789077f56d05be74b37c46532a3d4e`
+passed all three real paused-scan/main-close probes using the archived native
+binary SHA256 `a871a81e22cd32fb2bda041783183998499312979ad9ac63c562f31f05763a0a`
+from failed-run source `a121564303cb2844b60487b719e34742645f5cd4`.
+Every probe captured generation 1, exited 0, and ended with closed generation 1
+and no session. The 5-second close-observation and 35-second exit budgets stayed
+unchanged. Artifact `12844707622` (`gtk-native-scan-driver-40753529676-1`),
+SHA256 `6fe1ddf14af31456e59ba26af2b6e3be8f2f4a7a3cfa0a7de10542068c0425cc`,
+retains the three profiles, observations and adapter events. This is diagnostic
+evidence only; the following ordinary commit must pass the complete fresh-source
+chain. Zero-job workflow syntax failure `40744181032/1` is also retained; its
+only correction was expressing the colon-containing job condition as a YAML
+folded scalar.
