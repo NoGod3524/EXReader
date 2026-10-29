@@ -16,6 +16,133 @@ import package_contract as C
 
 def encoded(value):return (json.dumps(value,indent=2,sort_keys=True)+'\n').encode()
 
+SELECTOR_BASE='979df6d62500781b4e813a7761a0cc6742d7b053'
+SELECTOR_TREE='f47fe21eb92ea3357993a4cefd468b2cb489e162'
+SELECTOR_PATH='tests/reader_sync_public_hash_20261029/test_contract.py'
+
+def selector_scope(delta,base_tree):
+    C.require(base_tree==SELECTOR_TREE,'published selector base tree differs')
+    C.require(delta=={SELECTOR_PATH:'M'},'exact one-test-path selector delta versus published979 required')
+
+def selector_checkout_guard():
+    """Actual checkout scope, independent of the disclosed historical replay identity."""
+    C.actions()
+    def git(*args):return C.subprocess.check_output(['git',*args],cwd=C.ROOT,text=True).strip()
+    C.require(os.environ['GITHUB_REF_NAME']==C.BRANCH and os.environ['GITHUB_RUN_ATTEMPT']=='1',
+        'selector requires exact feature and attempt1')
+    base_tree=git('rev-parse',SELECTOR_BASE+'^{tree}')
+    C.subprocess.run(['git','merge-base','--is-ancestor',SELECTOR_BASE,'HEAD'],cwd=C.ROOT,check=True)
+    delta={p:s for s,p in (line.split('\t') for line in git('diff','--name-status',SELECTOR_BASE,'HEAD').splitlines())}
+    selector_scope(delta,base_tree)
+    C.require(not git('status','--porcelain','--untracked-files=no'),'selector tracked checkout dirty')
+    return dict(checkout_sha=git('rev-parse','HEAD'),checkout_tree=git('rev-parse','HEAD^{tree}'),
+        base_sha=SELECTOR_BASE,base_tree=base_tree,paths=delta)
+
+def mutation_dependency_group(text,obj,platform):
+    """Select the exact baseline-bound group; never filter unfamiliar dependency rows."""
+    groups,bindings=C.H.object_dependency_groups(text,[obj],platform)
+    C.require(set(bindings)=={obj} and bindings[obj]['status']=='VALID','mutation baseline binding differs')
+    observed=bindings[obj]['observed'];lines=text.splitlines()
+    pattern=re.compile(re.escape(observed)+r': #deps (\d+), deps mtime \d+ \((VALID|STALE)\)')
+    matches=[(i,pattern.fullmatch(line)) for i,line in enumerate(lines) if pattern.fullmatch(line)]
+    C.require(len(matches)==1,'mutation exact dependency key absent')
+    start,header=matches[0];end=start+1
+    while end<len(lines) and lines[end].startswith('    '):end+=1
+    rows=[line[4:] for line in lines[start+1:end]]
+    C.require(header.group(2)=='VALID' and int(header.group(1))==len(rows) and rows==groups[obj],
+        'mutation selected dependency body differs from baseline')
+    C.require(rows,'mutation dependency subject is empty')
+    return dict(lines=lines,start=start,end=end,observed=observed,count=len(rows),
+        selected_text_sha256=hashlib.sha256(('\n'.join(lines[start:end])+'\n').encode()).hexdigest())
+
+class DependencySelectorControls(unittest.TestCase):
+    obj='CMakeFiles/reader_original_import.dir/home/runner/original_import.cpp.o'
+
+    @staticmethod
+    def group(obj,rows=('source.cpp','public.h'),status='VALID',count=None):
+        return obj+': #deps '+str(len(rows) if count is None else count)+', deps mtime 42 ('+status+')\n'+''.join('    '+p+'\n' for p in rows)+'\n'
+
+    def test_exact_nonwindows_binding_with_unrelated_groups(self):
+        before=self.group('generated/parser.table',('generated.input',))
+        selected=self.group(self.obj);after=self.group('other build/generated.target',('other.input',))
+        for platform in ('android','linux','macos','ios-simulator'):
+            with self.subTest(platform=platform):
+                text=before+selected+after;result=mutation_dependency_group(text,self.obj,platform)
+                self.assertEqual(result['observed'],self.obj);self.assertEqual(result['count'],2)
+                self.assertEqual(result['start'],len(before.splitlines()))
+                self.assertEqual(result['lines'][result['start']:result['end']],selected.splitlines()[:-1])
+                self.assertEqual(result['selected_text_sha256'],hashlib.sha256(selected.rstrip('\n').encode()+b'\n').hexdigest())
+                with self.assertRaisesRegex(ValueError,'unsupported dependency object key'):
+                    C.H.dependency_object_key('generated/parser.table',platform)
+
+    def test_unrelated_malformed_groups_remain_rejected(self):
+        valid=self.group(self.obj)
+        cases=(('not a Ninja header\n','unknown Ninja dependency header'),
+            (self.group('generated/input',status='UNKNOWN'),'unknown Ninja dependency header'),
+            (self.group('generated/input',count=3),'truncated dependency coverage'),
+            (self.group('generated/input')*2,'duplicate dependency object'))
+        for suffix,reason in cases:
+            with self.subTest(reason=reason),self.assertRaisesRegex(ValueError,reason):
+                mutation_dependency_group(valid+suffix,self.obj,'android')
+
+    def test_expected_group_refusals(self):
+        cases=((self.group(self.obj.replace('original_import.cpp','Original_import.cpp')),'missing actual object dependencies'),
+            (self.group('other/'+self.obj),'missing actual object dependencies'),
+            (self.group(self.obj)*2,'duplicate dependency object'),
+            (self.group(self.obj,status='STALE'),'fresh relevant object dependency record is stale'),
+            (self.group(self.obj,count=3),'truncated dependency coverage'),
+            (self.group(self.obj,rows=()),'mutation dependency subject is empty'))
+        for text,reason in cases:
+            with self.subTest(reason=reason),self.assertRaisesRegex(ValueError,reason):
+                mutation_dependency_group(text,self.obj,'android')
+
+    def test_windows_exact_observed_separator_binding(self):
+        expected='CMakeFiles/importer.dir/source.cpp.obj';observed=expected.replace('/','\\')
+        text=self.group('CMakeFiles/other.dir/unrelated.cpp.obj')+self.group(observed)
+        result=mutation_dependency_group(text,expected,'windows')
+        self.assertEqual(result['observed'],observed);self.assertEqual(result['count'],2)
+        self.assertTrue(result['lines'][result['start']].startswith(observed+': #deps '))
+
+    def test_windows_ambiguity_and_unsafe_keys_remain_rejected(self):
+        obj='CMakeFiles/importer.dir/source.cpp.obj';valid=self.group(obj)
+        cases=((valid+self.group(obj.replace('/','\\')),'colliding dependency object spellings'),
+            (valid+self.group(obj.replace('importer.dir','Importer.dir')),'case-ambiguous dependency object spellings'),
+            (valid+self.group('../'+obj),'unsafe relative object spelling'),
+            (valid+self.group('/'+obj),'unsafe relative object spelling'),
+            (valid+self.group('C:/'+obj),'unsafe relative object spelling'),
+            (valid+self.group('generated/input'),'unsupported dependency object key'))
+        for text,reason in cases:
+            with self.subTest(reason=reason),self.assertRaisesRegex(ValueError,reason):
+                mutation_dependency_group(text,obj,'windows')
+
+    def test_selected_mutation_does_not_modify_other_groups(self):
+        before=self.group('generated/before',('before.input',));after=self.group('generated/after',('after.input',))
+        text=before+self.group(self.obj)+after;selected=mutation_dependency_group(text,self.obj,'android')
+        lines=selected['lines'];start,end=selected['start'],selected['end']
+        changed=list(lines);changed[start]=changed[start].replace('#deps 2,','#deps 3,')
+        changed.insert(end,'    /repo/apps/reader/original-export/src/sha256.inc')
+        groups,_=C.H.object_dependency_groups('\n'.join(changed)+'\n',[self.obj],'android')
+        self.assertEqual(groups['generated/before'],['before.input']);self.assertEqual(groups['generated/after'],['after.input'])
+        self.assertEqual(groups[self.obj],['source.cpp','public.h','/repo/apps/reader/original-export/src/sha256.inc'])
+        self.assertEqual(changed[:start],lines[:start]);self.assertEqual(changed[end+1:],lines[end:])
+        with self.assertRaisesRegex(ValueError,'missing actual object dependencies'):
+            mutation_dependency_group('\n'.join(lines[:start]+lines[end:])+'\n',self.obj,'android')
+
+    def test_exact_selector_scope_controls(self):
+        good={SELECTOR_PATH:'M'};selector_scope(good,SELECTOR_TREE)
+        for path in (*C.JOIN_PATHS[:1],C.JOIN_PATHS[2],C.WORKFLOW,C.PUBLIC_OVERRIDE,
+            'tests/reader_sync_public_hash_20261029/run.py','tests/reader_sync_public_hash_20261029/source_lock.json',
+            'apps/reader/sync/src/sync.cpp','extras/opds/src/opds_core.c'):
+            with self.subTest(path=path),self.assertRaisesRegex(ValueError,'exact one-test-path'):
+                selector_scope(dict(good,**{path:'M'}),SELECTOR_TREE)
+        for delta in ({},{SELECTOR_PATH:'A'},{SELECTOR_PATH:'D'},{SELECTOR_PATH:'R100'}):
+            with self.assertRaisesRegex(ValueError,'exact one-test-path'):selector_scope(delta,SELECTOR_TREE)
+        with self.assertRaisesRegex(ValueError,'published selector base tree differs'):selector_scope(good,'0'*40)
+
+    def test_exact_current_checkout_scope(self):
+        checked=selector_checkout_guard()
+        self.assertEqual(checked['paths'],{SELECTOR_PATH:'M'})
+
 class ExportJoinControls(unittest.TestCase):
     def test_installed_nested_export_join(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -539,7 +666,7 @@ def isolation_mutations(extracted,inventory,ident):
     return result
 
 def evidence_mutations(folder,source=None):
-    C.actions();folder=Path(folder);original_manifest=(folder/'manifest.json').read_bytes()
+    C.actions();selector_checkout_guard();folder=Path(folder);original_manifest=(folder/'manifest.json').read_bytes()
     manifest=json.loads(original_manifest);report=json.loads((folder/'report.json').read_text());source=source or report['source']
     target=report['target'];platform='ios-simulator' if target=='iphone' else target;results={}
     C.validate(folder,source)
@@ -570,10 +697,8 @@ def evidence_mutations(folder,source=None):
     reject('mixed-source',{'report.json':encoded(bad)},'proof target/source identity')
     item=report['owners']['importer'];obj=item['object_spelling'];path=item['deps'];text=(folder/path).read_text()
     if item['generator']=='Ninja':
-        lines=text.splitlines();matches=[i for i,line in enumerate(lines) if ': #deps ' in line and
-            C.H.dependency_object_key(line.split(': #deps ',1)[0],platform)==C.H.dependency_object_key(obj,platform)]
-        C.require(len(matches)==1,'mutation exact dependency key absent');start=matches[0];end=start+1
-        while end<len(lines) and lines[end].startswith('    '):end+=1
+        selected=mutation_dependency_group(text,obj,platform)
+        lines=selected['lines'];start=selected['start'];end=selected['end']
         private=list(lines);count=end-start-1
         private[start]=private[start].replace('#deps '+str(count)+',','#deps '+str(count+1)+',')
         private.insert(end,'    '+report['original_workspace']+'/apps/reader/original-export/src/sha256.inc')
