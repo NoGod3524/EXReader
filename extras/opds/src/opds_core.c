@@ -2,6 +2,7 @@
 #include "opds_internal.h"
 #include <ctype.h>
 
+#ifndef EXREADER_OPDS_HASH_ONLY
 /* ---- arena ---- */
 struct opds_arena *arena_new(void) {
   return (struct opds_arena *)calloc(1, sizeof(struct opds_arena));
@@ -401,6 +402,7 @@ void opds_redact_url(const char *url, char *out, size_t cap) {
   out[o] = 0;
 }
 
+#endif /* !EXREADER_OPDS_HASH_ONLY */
 /* ---- SHA-256 ---- */
 typedef opds_sha sha_ctx;
 static const uint32_t K256[64] = {
@@ -459,7 +461,9 @@ void opds_sha_final_hex(opds_sha *c, char out[65]) {
     }
   out[64] = 0;
 }
+#ifndef EXREADER_OPDS_HASH_ONLY
 void opds_sha256_hex(const void *data, size_t size, char out[65]) {
   sha_ctx c;
   opds_sha_init(&c); opds_sha_update(&c, data, size); opds_sha_final_hex(&c, out);
 }
+#endif

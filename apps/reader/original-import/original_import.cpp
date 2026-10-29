@@ -3,6 +3,7 @@
 #define _FILE_OFFSET_BITS 64
 #endif
 #include "original_import.h"
+#include <opds_sha256_stream.h>
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
@@ -24,8 +25,33 @@
 namespace {
 struct failure { reader_original_status status; };
 void need(bool ok, reader_original_status s) { if(!ok) throw failure{s}; }
-#include "../original-export/src/sha256.inc"
-void digest(Sha256 &s,char out[65]) { static const char h[]="0123456789abcdef"; unsigned char b[32]; s.finish(b); for(size_t i=0;i<32;i++){out[i*2]=h[b[i]>>4];out[i*2+1]=h[b[i]&15];}out[64]=0; }
+void check_hash(opds_sha256_stream_status status) {
+  if(status==OPDS_SHA256_STREAM_OK)return;
+  if(status==OPDS_SHA256_STREAM_MEMORY)throw failure{ROI_MEMORY};
+  if(status==OPDS_SHA256_STREAM_ARGUMENT)throw failure{ROI_ARGUMENT};
+  throw failure{ROI_IO};
+}
+class hash_context {
+  opds_sha256_stream *context=nullptr;
+public:
+  hash_context() {
+    auto status=opds_sha256_stream_create(&context);
+    if(status!=OPDS_SHA256_STREAM_OK) { opds_sha256_stream_destroy(&context); check_hash(status); }
+    need(context!=nullptr,ROI_IO);
+  }
+  ~hash_context(){opds_sha256_stream_destroy(&context);}
+  hash_context(const hash_context &)=delete;
+  hash_context &operator=(const hash_context &)=delete;
+  hash_context(hash_context &&)=delete;
+  hash_context &operator=(hash_context &&)=delete;
+  void update(const void *bytes,size_t size){check_hash(opds_sha256_stream_update(context,bytes,size));}
+  void finish(char out[65]) {
+    check_hash(opds_sha256_stream_finish_hex(context,out));
+    for(size_t i=0;i<64;i++)need((out[i]>='0'&&out[i]<='9')||(out[i]>='a'&&out[i]<='f'),ROI_IO);
+    need(out[64]==0,ROI_IO);
+  }
+};
+void digest(hash_context &s,char out[65]) { s.finish(out); }
 std::string bounded(const char *p,size_t max) { need(p!=nullptr,ROI_ARGUMENT); size_t n=0; while(n<=max&&p[n])++n; need(n&&n<=max,ROI_ARGUMENT); return std::string(p,n); }
 bool reserved(std::string s) {
   for(char &c:s)if(c>='a'&&c<='z')c=static_cast<char>(c-'a'+'A');
@@ -141,7 +167,7 @@ struct directory {
   }
 };
 bool hashfile(file f,uint64_t size,char out[65],unsigned char (&buf)[65536],const reader_original_callbacks *cb=nullptr) {
-  Sha256 s;s.init();if(!rewindfile(f))return false;
+  hash_context s;if(!rewindfile(f))return false;
   uint64_t pos=0;while(pos<size){if(cb&&cb->cancelled&&cb->cancelled(cb->context)) throw failure{ROI_CANCELLED};size_t n=readfile(f,buf,static_cast<size_t>(std::min<uint64_t>(sizeof(buf),size-pos)));if(!n)return false;s.update(buf,n);pos+=n;}
   if(readfile(f,buf,1)!=0)return false;
   digest(s,out);return true;
@@ -239,7 +265,7 @@ extern "C" reader_original_status reader_original_import(reader_catalog *c,const
     need(name!="."&&name!=".."&&name.find_first_of("/\\:*?\"<>|")==std::string::npos,ROI_ARGUMENT);
     handle input; input.f=src.existing(name); uint64_t size=0,after=0; need(input.f!=invalid&&regular(input.f,&size)&&size>0&&size<=INT64_MAX,ROI_IO);
     need(!cancelled(cb),ROI_CANCELLED); unsigned char buf[65536]; char hash[65];
-    Sha256 source_hash; source_hash.init(); need(rewindfile(input.f),ROI_IO);
+    hash_context source_hash; need(rewindfile(input.f),ROI_IO);
     uint64_t hashed=0; while(hashed<size) { need(!cancelled(cb),ROI_CANCELLED); size_t n=readfile(input.f,buf,static_cast<size_t>(std::min<uint64_t>(sizeof(buf),size-hashed))); need(n>0,ROI_IO); source_hash.update(buf,n); hashed+=n; }
     digest(source_hash,hash); need(regular(input.f,&after)&&after==size,ROI_IO);
     std::string k=std::string("txt:")+hash; std::memcpy(key,k.c_str(),69);

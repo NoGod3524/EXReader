@@ -19,9 +19,7 @@
 #elif defined(__APPLE__)
 #include <CommonCrypto/CommonDigest.h>
 #elif defined(__ANDROID__)
-extern "C" {
-#include <opds_internal.h>
-}
+#include <opds_sha256_stream.h>
 #else
 #include <openssl/evp.h>
 #endif
@@ -45,11 +43,17 @@ class digest {
 #elif defined(__APPLE__)
   CC_SHA256_CTX hash{};
 #elif defined(__ANDROID__)
-  opds_sha hash{};
+  opds_sha256_stream *hash=nullptr;
 #else
   EVP_MD_CTX *hash=nullptr;
 #endif
 public:
+#ifdef __ANDROID__
+  digest(const digest &)=delete;
+  digest &operator=(const digest &)=delete;
+  digest(digest &&)=delete;
+  digest &operator=(digest &&)=delete;
+#endif
   digest(){
 #ifdef _WIN32
     if(BCryptOpenAlgorithmProvider(&algorithm,BCRYPT_SHA256_ALGORITHM,nullptr,0)<0)reject(READER_SYNC_IO,"Cannot create native SHA-256 provider");
@@ -58,7 +62,10 @@ public:
 #elif defined(__APPLE__)
     if(CC_SHA256_Init(&hash)!=1)reject(READER_SYNC_IO,"Cannot create native SHA-256 state");
 #elif defined(__ANDROID__)
-    opds_sha_init(&hash);
+    if(opds_sha256_stream_create(&hash)!=OPDS_SHA256_STREAM_OK){
+      opds_sha256_stream_destroy(&hash);
+      reject(READER_SYNC_IO,"Cannot create public SHA-256 state");
+    }
 #else
     hash=EVP_MD_CTX_new();if(!hash||EVP_DigestInit_ex(hash,EVP_sha256(),nullptr)!=1){if(hash)EVP_MD_CTX_free(hash);hash=nullptr;reject(READER_SYNC_IO,"Cannot create native SHA-256 state");}
 #endif
@@ -66,6 +73,8 @@ public:
   ~digest(){
 #ifdef _WIN32
     if(hash)BCryptDestroyHash(hash);if(algorithm)BCryptCloseAlgorithmProvider(algorithm,0);
+#elif defined(__ANDROID__)
+    opds_sha256_stream_destroy(&hash);
 #elif !defined(__APPLE__) && !defined(__ANDROID__)
     if(hash)EVP_MD_CTX_free(hash);
 #endif
@@ -77,14 +86,21 @@ public:
     /* The caller supplies one 64 KiB original-file chunk at a time. */
     if(bytes>UINT32_MAX||CC_SHA256_Update(&hash,data,(CC_LONG)bytes)!=1)reject(READER_SYNC_IO,"Native SHA-256 update failed");
 #elif defined(__ANDROID__)
-    opds_sha_update(&hash,data,bytes);
+    if(opds_sha256_stream_update(hash,data,bytes)!=OPDS_SHA256_STREAM_OK)
+      reject(READER_SYNC_IO,"Public SHA-256 update failed");
 #else
     if(EVP_DigestUpdate(hash,data,bytes)!=1)reject(READER_SYNC_IO,"Native SHA-256 update failed");
 #endif
   }
   std::string finish(){
 #ifdef __ANDROID__
-    char out[65];opds_sha_final_hex(&hash,out);return out;
+    char out[65]{};
+    if(opds_sha256_stream_finish_hex(hash,out)!=OPDS_SHA256_STREAM_OK||out[64]!='\0')
+      reject(READER_SYNC_IO,"Public SHA-256 finalization failed");
+    for(size_t i=0;i<64;++i)
+      if(!((out[i]>='0'&&out[i]<='9')||(out[i]>='a'&&out[i]<='f')))
+        reject(READER_SYNC_IO,"Public SHA-256 finalization failed");
+    return std::string(out,64);
 #else
     unsigned char out[32];
 #ifdef _WIN32

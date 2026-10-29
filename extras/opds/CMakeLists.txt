@@ -11,6 +11,33 @@ endif()
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+option(EXREADER_OPDS_HASH_ONLY "Build only the independent installed streaming hash owner" OFF)
+if(EXREADER_OPDS_HASH_ONLY)
+  include(CMakePackageConfigHelpers)
+  add_library(opds_sha256_stream STATIC src/opds_sha256_stream.c)
+  target_include_directories(opds_sha256_stream PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include/exreader-opds-hash> PRIVATE src)
+  if(MSVC)
+    target_compile_options(opds_sha256_stream PRIVATE /W4 /WX)
+  else()
+    target_compile_options(opds_sha256_stream PRIVATE -Wall -Wextra -Werror)
+  endif()
+  install(TARGETS opds_sha256_stream EXPORT EXReaderOPDSHashTargets ARCHIVE DESTINATION lib)
+  install(FILES include/opds_sha256_stream.h DESTINATION include/exreader-opds-hash)
+  install(EXPORT EXReaderOPDSHashTargets NAMESPACE EXReaderOPDSHash::
+    DESTINATION lib/cmake/EXReaderOPDSHash)
+  configure_package_config_file(EXReaderOPDSHashConfig.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/EXReaderOPDSHashConfig.cmake"
+    INSTALL_DESTINATION lib/cmake/EXReaderOPDSHash)
+  write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderOPDSHashConfigVersion.cmake"
+    VERSION 0.1.0 COMPATIBILITY ExactVersion)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderOPDSHashConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/EXReaderOPDSHashConfigVersion.cmake"
+    DESTINATION lib/cmake/EXReaderOPDSHash)
+  return()
+endif()
+
 add_library(opds STATIC src/opds_core.c src/opds_xml.c src/opds_feed.c src/opds_net.c src/opds_fs.c src/opds_client.c)
 target_include_directories(opds PUBLIC include PRIVATE src)
 if(WIN32)
