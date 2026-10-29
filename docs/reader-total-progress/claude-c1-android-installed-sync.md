@@ -48,3 +48,18 @@ full product, accessibility, or any 108-item credit.
 - Next source: the live-process gate accepts either an extracted-library mapping equal to the packaged hash or
   mappings of the installed `base.apk` (hash equal to the installed APK) whose file offsets fall inside the stored
   `libexreader_product.so` entry, and prints the evidence to the job log.
+- Runs 40950434398 (`114e9700`) and 40951088843 (`edd56e1f`) used the intermediate APK-offset rule (any mapping).
+  Their results are retained as superseded.
+- Read-only Actions diagnosis of the original ZIP, run 40951208170 (source `8fffbfb5`): artifact id 12930612243
+  (`claude-c1-android-installed-sync-40949194972-1`), 31129693 bytes, sha256
+  `36d125d839ff77ad93240084bf2d16d900a79c3cf92e4def3293be74f03580bd` (equals the API digest), run head
+  `4d20006637e3fb0e7c9a79437fa554e5d3810837`, 80 members; nothing from it was executed. Original failed gates:
+  `live_process_upload`, `live_process_listing` only; all other gates (including UI16 and upload sha256) passed.
+  The original snapshots hold `maps_libs: []`, `lib_sha256: {}`: the original capture only kept `.so` paths and did
+  not retain raw maps, so the old failure is explained by the libraries being mapped out of `base.apk`, not
+  extracted files (confirmed by the 114e run's logged maps: executable `r-xp` mappings of the host `base.apk`
+  at offset 7929856 = the product entry data start; the entry is stored, page aligned). The ELF's executable
+  PT_LOAD is p_offset 0, p_filesz 2947104; the logged mapping is 0x2d0000 = 2949120 bytes, i.e. the page-rounded size.
+- Next source tightens the gate: an executable (`x`) mapping of the host APK (hash equal to the installed APK, not the
+  test APK) must start at entry data start + page-aligned PT_LOAD offset and cover its page-rounded file size.
+  The extracted-library hash chain is kept; both chains are recorded.
