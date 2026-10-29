@@ -172,7 +172,7 @@ def replay_retained_isolation(extracted,inventory,ident):
         original_producer_isolation_record_present=False,original_capture_accepted=False,
         metadata_origin='new diagnostic materialization only; original modes/empty directories not credited')
 
-def retained():
+def original_retained_prerequisites():
     C.actions();source=C.guard();ident=C.identity();C.require(C.current_lane()=='retained','retained lane marker required')
     out=C.OUT/'retained-authentication';out.mkdir(parents=True,exist_ok=False)
     result=dict(ident,source=source,retained_prerequisites_passed=False,original_run_accepted=False,native_rebuilt=False,
@@ -258,6 +258,272 @@ def retained():
     except Exception as error:result['failures'].append(str(error));raise
     finally:
         C.save(C.OUT/'authenticated.json',result);print(json.dumps(result,sort_keys=True),flush=True)
+
+DIAG_SOURCE='4c3efa0089de92e5e0c24e152b780fd78a4767ff'
+DIAG_TREE='16cda7dde499a62918d50297b4f3e5820a164317'
+DIAG_RUN=40849061712
+DIAG_JOB=123363769500
+DIAG_PATH='tests/reader_sync_public_hash_20261029/authenticate.py'
+DIAG_ROOT='/home/runner/work/EXReader/EXReader'
+DIAG_BUILD=DIAG_ROOT+'/examples/android/app/.cxx/Debug/4qm105d1/x86_64'
+DIAG_ARTIFACT=dict(id=12887310165,name='sync-public-hash-android-40849061712-1',size_in_bytes=184029237,
+    digest='sha256:1a387884f43f674a6cc90b3dcc064c2403d6e27d78470e818af80cc2d50d2d25')
+DIAG_QUERY=['ninja','-C',DIAG_BUILD,'-t','query','exreader_product']
+DIAG_PREFIX='build/public-boundary-v1/logs/'
+DIAG_PROOF='build/sync-public-hash/proof/'
+DIAG_LIMITS=dict(zip_entries=30000,zip_total_bytes=8*1024**3,zip_member_bytes=2*1024**3,
+    inventory_bytes=16*1024**2,commands_bytes=16*1024**2,cache_bytes=2*1024**2,ninja_bytes=8*1024**2,
+    stream_bytes=65536,stream_lines=256,line_bytes=4096,build_statements=32,statement_bytes=65536,json_bytes=1024**2)
+
+def diag_git(path):
+    C.checked_relative(path)
+    return subprocess.check_output(['git','show',DIAG_SOURCE+':'+path],cwd=C.ROOT)
+
+def diag_scope():
+    C.require(subprocess.check_output(['git','rev-parse',DIAG_SOURCE+'^{tree}'],cwd=C.ROOT,text=True).strip()==DIAG_TREE,
+        'diagnostic pinned original tree differs')
+    subprocess.run(['git','merge-base','--is-ancestor',DIAG_SOURCE,'HEAD'],cwd=C.ROOT,check=True)
+    delta=subprocess.check_output(['git','diff','--name-status',DIAG_SOURCE,'HEAD'],cwd=C.ROOT,text=True).splitlines()
+    C.require(delta==['M\t'+DIAG_PATH],'diagnostic exact one-auth-file delta required')
+    lock=unique_json(diag_git('tests/reader_sync_public_hash_20261029/source_lock.json'))
+    paths=set(lock['adopted'])|set(lock['public_packet'])|set(lock['owner'])|set(lock['added'])
+    C.require(len(paths)==53,'diagnostic original source53 cardinality differs')
+    expected={p:hashlib.sha256(diag_git(p)).hexdigest() for p in sorted(paths)}
+    C.require(expected[C.PUBLIC_OVERRIDE]==C.digest(C.ROOT/C.PUBLIC_OVERRIDE),
+        'diagnostic parser bytes differ from original Git source')
+    return expected
+
+def diag_metadata(run,job,artifact):
+    C.require(run['id']==DIAG_RUN and run['run_attempt']==1 and run['head_sha']==DIAG_SOURCE and
+        run['head_branch']==C.BRANCH and run['path']==C.WORKFLOW and run['workflow_id']==400305015 and
+        run['event']=='push' and run['status']=='completed' and run['conclusion']=='failure','diagnostic original run identity differs')
+    C.require(job['id']==DIAG_JOB and job['run_id']==DIAG_RUN and job['head_sha']==DIAG_SOURCE and
+        job['name']=='boundary-android' and job['status']=='completed' and job['conclusion']=='failure',
+        'diagnostic original producer identity differs')
+    for name,conclusion in PINS['android']['steps'].items():
+        rows=[s for s in job['steps'] if s['name']==name]
+        C.require(len(rows)==1 and rows[0]['conclusion']==conclusion,'diagnostic original step identity differs')
+    stamp=lambda s:datetime.fromisoformat(s.replace('Z','+00:00'))
+    C.require(all(artifact.get(k)==v for k,v in DIAG_ARTIFACT.items()) and artifact['expired'] is False and
+        artifact['workflow_run']['id']==DIAG_RUN and artifact['workflow_run']['head_sha']==DIAG_SOURCE and
+        artifact['workflow_run']['head_branch']==C.BRANCH and
+        stamp(job['started_at'])<=stamp(artifact['created_at'])<=stamp(job['completed_at']) and
+        stamp(artifact['expires_at'])>datetime.now(timezone.utc),'diagnostic original artifact identity differs')
+
+def diag_zip_bounds(names):
+    C.require(len(names)<=DIAG_LIMITS['zip_entries'] and
+        all(0<=i.file_size<=DIAG_LIMITS['zip_member_bytes'] for i in names.values()) and
+        sum(i.file_size for i in names.values())<=DIAG_LIMITS['zip_total_bytes'],'diagnostic ZIP resource bound')
+
+def diag_stream(raw,label):
+    C.require(len(raw)<=DIAG_LIMITS['stream_bytes'],'diagnostic stream byte bound: '+label)
+    rows=raw.splitlines(keepends=True)
+    C.require(len(rows)<=DIAG_LIMITS['stream_lines'] and all(len(r)<=DIAG_LIMITS['line_bytes'] for r in rows),
+        'diagnostic stream line bound: '+label)
+    text=raw.decode('utf-8',errors='strict')
+    return dict(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest(),text=text,hex=raw.hex(),
+        lines=[dict(number=i+1,bytes=len(r),hex=r.hex(),text=r.decode('utf-8',errors='strict')) for i,r in enumerate(rows)])
+
+def diag_json(value):
+    encoded=(json.dumps(value,sort_keys=True,ensure_ascii=True)+'\n').encode('utf-8')
+    C.require(len(encoded)<=DIAG_LIMITS['json_bytes'],'diagnostic JSON output bound')
+    return encoded
+
+def diag_bound_command(commands,raw,argv=DIAG_QUERY,output='links/android-host-alias.log'):
+    C.require(isinstance(commands,list) and len(commands)<=10000,'diagnostic command count bound')
+    rows=[r for r in commands if r.get('output')==output]
+    C.require(len(rows)==1,'diagnostic unique original command required')
+    row=rows[0]
+    C.require(set(row)=={'argv','cwd','output','output_record','returncode','expected_returncode','subjects'} and
+        row['argv']==argv and row['cwd']==DIAG_ROOT and row['returncode']==row['expected_returncode']==0 and
+        row['subjects']=={},'diagnostic exact original command binding')
+    C.require(row['output_record']==dict(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),
+        'diagnostic original command output hash differs')
+    return row
+
+def diag_public_command(row,argv):
+    C.require(set(row)=={'argv','cwd','exit_code'} and row['argv']==argv and row['cwd']==DIAG_ROOT and row['exit_code']==0,
+        'diagnostic later exact command binding')
+    return row
+
+def diag_ninja_statements(raw,nodes):
+    C.require(len(raw)<=DIAG_LIMITS['ninja_bytes'],'diagnostic Ninja file byte bound')
+    text=raw.decode('utf-8',errors='strict');lines=text.splitlines(keepends=True);selected=[]
+    for index,line in enumerate(lines):
+        matched=[n for n in nodes if line.startswith('build '+n+':')]
+        if not matched:continue
+        C.require(len(matched)==1,'diagnostic Ninja target ambiguity')
+        chunk=[line];position=index+1
+        while position<len(lines) and (chunk[-1].rstrip('\r\n').endswith('$') or lines[position].startswith((' ','\t'))):
+            chunk.append(lines[position]);position+=1
+        joined=''.join(chunk).encode('utf-8')
+        C.require(len(joined)<=DIAG_LIMITS['statement_bytes'],'diagnostic Ninja statement byte bound')
+        selected.append(dict(node=matched[0],first_line=index+1,last_line=position,text=''.join(chunk),
+            bytes=len(joined),sha256=hashlib.sha256(joined).hexdigest()))
+        C.require(len(selected)<=DIAG_LIMITS['build_statements'],'diagnostic Ninja statement count bound')
+    C.require(len(selected)==len(nodes) and {r['node'] for r in selected}==set(nodes),
+        'diagnostic exact retained Ninja target statements missing/duplicate')
+    return dict(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest(),selected=selected,
+        scope='literal retained statements only; not an executed or substitute Ninja graph')
+
+def diag_controls(run,job,artifact):
+    # In-memory refusal controls run only in this Actions entrypoint.
+    clone=lambda value:json.loads(json.dumps(value));results={}
+    def reject(name,call):
+        try:call()
+        except (ValueError,AssertionError) as error:results[name]=dict(rejected=True,error=str(error))
+        else:raise ValueError('diagnostic control unexpectedly admitted: '+name)
+    for field in ('source','job','artifact'):
+        a,b,c=clone(run),clone(job),clone(artifact)
+        if field=='source':a['head_sha']='0'*40
+        elif field=='job':b['id']=0
+        else:c['digest']='sha256:'+'0'*64
+        reject('metadata-'+field,lambda a=a,b=b,c=c:diag_metadata(a,b,c))
+    raw=b'exreader_product:\n  input: phony\n    /original/libexreader_product.so\n  outputs:\n'
+    row=dict(argv=DIAG_QUERY,cwd=DIAG_ROOT,output='links/android-host-alias.log',returncode=0,expected_returncode=0,
+        subjects={},output_record=dict(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()))
+    diag_bound_command([row],raw);diag_stream(raw,'valid-control')
+    for field in ('argv','cwd','hash','duplicate'):
+        rows=[clone(row)]
+        if field=='argv':rows[0]['argv'][-1]='foreign_node'
+        elif field=='cwd':rows[0]['cwd']='/foreign'
+        elif field=='hash':rows[0]['output_record']['sha256']='0'*64
+        else:rows.append(clone(row))
+        reject('command-'+field,lambda rows=rows:diag_bound_command(rows,raw))
+    reject('stream-byte-limit',lambda:diag_stream(b'x'*(DIAG_LIMITS['stream_bytes']+1),'control'))
+    reject('stream-line-limit',lambda:diag_stream(b'x\n'*(DIAG_LIMITS['stream_lines']+1),'control'))
+    reject('stream-line-byte-limit',lambda:diag_stream(b'x'*(DIAG_LIMITS['line_bytes']+1),'control'))
+    reject('truncated-command-output',lambda:diag_bound_command([row],raw[:-1]))
+    class Entry:
+        def __init__(self,size):self.file_size=size
+    reject('zip-member-limit',lambda:diag_zip_bounds({'x':Entry(DIAG_LIMITS['zip_member_bytes']+1)}))
+    reject('zip-total-limit',lambda:diag_zip_bounds({str(i):Entry(DIAG_LIMITS['zip_member_bytes']) for i in range(5)}))
+    reject('zip-entry-limit',lambda:diag_zip_bounds({str(i):Entry(0) for i in range(DIAG_LIMITS['zip_entries']+1)}))
+    reject('json-output-limit',lambda:diag_json({'text':'x'*DIAG_LIMITS['json_bytes']}))
+    ninja=b'build alias: phony /image\n\nbuild /image: CXX_SHARED_LIBRARY_LINKER obj.o\n'
+    diag_ninja_statements(ninja,['alias','/image'])
+    reject('ninja-missing-target',lambda:diag_ninja_statements(ninja,['foreign']))
+    reject('ninja-duplicate-target',lambda:diag_ninja_statements(ninja+ninja,['alias','/image']))
+    return results
+
+def retained():
+    """One pinned4c query observation; never native or prerequisite admission."""
+    C.actions();source=C.guard();ident=C.identity()
+    C.require(C.current_lane()=='retained','diagnostic requires existing retained-only marker')
+    result=dict(ident,source=source,diagnostic_complete=False,retained_prerequisites_passed=False,native_rebuilt=False,
+        original_run_accepted=False,combined_named_boundaries=False,installed_android_sync_runtime=False,f07_accepted=False,
+        configured_runner_minutes=45,limits=DIAG_LIMITS,stage='source_scope',failures=[],observations={})
+    out=C.OUT/'host-query-diagnostic';out.mkdir(parents=True,exist_ok=False)
+    try:
+        expected=diag_scope();result['stage']='current_protocol'
+        current=fetch(f'actions/runs/{ident["run_id"]}/attempts/1')
+        C.require(current['id']==int(ident['run_id']) and current['workflow_id']==400305015 and
+            current['head_sha']==ident['source_sha'] and current['head_branch']==C.BRANCH and current['path']==C.WORKFLOW and
+            current['run_attempt']==1 and current['event']=='push','diagnostic current run identity differs')
+        current_jobs=pages(f'actions/runs/{ident["run_id"]}/attempts/1/jobs','jobs')
+        protocol=[j for j in current_jobs if j['name']=='protocol']
+        C.require(len(protocol)==1 and protocol[0]['head_sha']==ident['source_sha'] and protocol[0]['conclusion']=='success',
+            'diagnostic protocol did not pass')
+        others=[j for j in current_jobs if j['name'] not in ('protocol','authenticate')]
+        C.require(4<=len(others)<=5 and all(j['name'].startswith('boundary-') and j['conclusion']=='skipped' for j in others),
+            'diagnostic native jobs not all skipped')
+        result['protocol_job_id']=protocol[0]['id'];result['stage']='original_provider_identity'
+        run=fetch(f'actions/runs/{DIAG_RUN}/attempts/1');jobs=pages(f'actions/runs/{DIAG_RUN}/attempts/1/jobs','jobs')
+        matched=[j for j in jobs if j['id']==DIAG_JOB];C.require(len(matched)==1,'diagnostic original job missing');job=matched[0]
+        artifacts=pages(f'actions/runs/{DIAG_RUN}/artifacts','artifacts')
+        matched=[a for a in artifacts if a['id']==DIAG_ARTIFACT['id'] or a['name']==DIAG_ARTIFACT['name']]
+        C.require(len(matched)==1,'diagnostic original artifact ambiguous');artifact=matched[0]
+        diag_metadata(run,job,artifact);result['original_artifact']=DIAG_ARTIFACT;result['original_job_id']=DIAG_JOB
+        result['controls']=diag_controls(run,job,artifact);result['stage']='original_upload'
+        upload=out/'original-android.zip'
+        with upload.open('w+b') as stream:download_artifact_zip(DIAG_ARTIFACT['id'],output=stream)
+        C.require(upload.stat().st_size==DIAG_ARTIFACT['size_in_bytes'] and 'sha256:'+C.digest(upload)==DIAG_ARTIFACT['digest'],
+            'diagnostic original upload bytes differ')
+        with zipfile.ZipFile(upload) as archive:
+            names=C.H.safe_members(archive);diag_zip_bounds(names)
+            def read(path,limit):
+                if path in inventory['files']:
+                    result['observations'].setdefault('selected_files',{})[path]=inventory['files'][path]
+                C.require(path in names and not names[path].is_dir() and names[path].file_size<=limit,
+                    'diagnostic selected file missing/oversized: '+path)
+                C.require(inventory['files'][path]['symlink_target'] is None,'diagnostic selected original file was aliased: '+path)
+                return archive.read(path)
+            C.require('inventory.json' in names and names['inventory.json'].file_size<=DIAG_LIMITS['inventory_bytes'],
+                'diagnostic outer inventory missing/oversized')
+            inventory=unique_json(archive.read('inventory.json'));oldident=dict(source_sha=DIAG_SOURCE,run_id=str(DIAG_RUN),attempt='1')
+            C.require(all(inventory[k]==v for k,v in oldident.items()) and
+                {n for n,i in names.items() if not i.is_dir()}==set(inventory['files'])|{'inventory.json'},'diagnostic complete original inventory differs')
+            result['stage']='all_original_files'
+            for path,meta in inventory['files'].items():
+                digest=hashlib.sha256();size=0
+                with archive.open(path) as stream:
+                    for block in iter(lambda:stream.read(1024*1024),b''):digest.update(block);size+=len(block)
+                C.require(size==meta['bytes'] and digest.hexdigest()==meta['sha256'],'diagnostic retained bytes differ: '+path)
+            result['all_original_files_verified']=len(inventory['files']);result['stage']='original_source53'
+            oldsource=unique_json(read('build/sync-public-hash/source.json',DIAG_LIMITS['inventory_bytes']))
+            C.require(all(oldsource[k]==v for k,v in oldident.items()) and oldsource['authorized_paths_sha256']==expected and
+                oldsource['source_scope_passed'] is True and oldsource['lane']=='native' and oldsource['configured_runner_minutes']==725 and
+                oldsource['f07_accepted'] is False,'diagnostic original source53 differs')
+            build=unique_json(read('build/sync-public-hash/build.json',DIAG_LIMITS['inventory_bytes']))
+            C.require(all(build[k]==v for k,v in oldident.items()) and build['source']==oldsource and build['target']=='android' and
+                build['hash_prefix']==DIAG_ROOT+'/build/sync-public-hash/hash-stage','diagnostic original build/workspace differs')
+            report=inventory['report']
+            C.require(all(report[k]==v for k,v in oldident.items()) and report['target']=='android' and report['source']==oldsource and
+                report['capture_complete'] is True and report['named_boundary_accepted'] is True and report['f07_accepted'] is False and
+                DIAG_PROOF+'manifest.json' not in names,'diagnostic public/union failure boundary differs')
+            result['original_source_paths_verified']=len(expected);result['public_capture_complete_union_manifest_absent']=True
+            result['stage']='bound_query_streams'
+            commands=unique_json(read(DIAG_PROOF+'commands.json',DIAG_LIMITS['commands_bytes']))
+            early=read(DIAG_PROOF+'links/android-host-alias.log',DIAG_LIMITS['stream_bytes'])
+            result['observations']['earlier']=dict(command=diag_bound_command(commands,early),stream=diag_stream(early,'earlier-merged'),
+                origin='raw merged subprocess stdout/stderr bytes; original decoding was strict UTF-8')
+            later={}
+            for key,suffix in (('stdout','stdout.txt'),('stderr','stderr.txt')):
+                raw=read(DIAG_PREFIX+'android-product-alias.'+suffix,DIAG_LIMITS['stream_bytes'])
+                later[key]=diag_stream(raw,'later-'+key)
+            later['command']=diag_public_command(unique_json(read(DIAG_PREFIX+'android-product-alias.command.json',65536)),DIAG_QUERY)
+            later['origin']='producer text-mode decoded/re-encoded files, not original process raw-byte streams'
+            result['observations']['later']=later
+            try:C.P.ninja_explicit_inputs(early.decode('utf-8'),'exreader_product','phony')
+            except AssertionError as error:result['earlier_refusal']=str(error)
+            else:raise ValueError('diagnostic original earlier refusal not reproduced')
+            C.require(result['earlier_refusal']=='exact Ninja node/rule binding','diagnostic earlier refusal changed')
+            inputs,outputs=C.P.ninja_explicit_inputs(later['stdout']['text'],'exreader_product','phony')
+            C.require(len(inputs)==1 and inputs[0].startswith(DIAG_ROOT+'/examples/android/app/build/intermediates/cxx/') and
+                inputs[0].endswith('/obj/x86_64/libexreader_product.so'),'diagnostic later exact image input differs')
+            C.checked_relative(inputs[0][len(DIAG_ROOT)+1:]);image=inputs[0]
+            link={key:diag_stream(read(DIAG_PREFIX+'android-product-link-input.'+suffix,DIAG_LIMITS['stream_bytes']),'link-'+key)
+                for key,suffix in (('stdout','stdout.txt'),('stderr','stderr.txt'))}
+            link['command']=diag_public_command(unique_json(read(DIAG_PREFIX+'android-product-link-input.command.json',65536)),
+                ['ninja','-C',DIAG_BUILD,'-t','query',image])
+            link_inputs,link_outputs=C.P.ninja_explicit_inputs(link['stdout']['text'],image,'CXX_SHARED_LIBRARY_LINKER')
+            result['observations']['later_link']=link
+            result['later_strict_replay']=dict(alias_inputs=inputs,alias_outputs=outputs,link_inputs=link_inputs,link_outputs=link_outputs)
+            result['stream_comparisons']=dict(early_equals_later_stdout=early==later['stdout']['text'].encode('utf-8'),
+                early_equals_later_stdout_then_stderr=early==(later['stdout']['text']+later['stderr']['text']).encode('utf-8'),
+                early_equals_later_stderr_then_stdout=early==(later['stderr']['text']+later['stdout']['text']).encode('utf-8'),
+                interleaving_or_cause_inferred=False)
+            result['stage']='retained_cache_and_ninja'
+            cache_path=DIAG_BUILD[len(DIAG_ROOT)+1:]+'/CMakeCache.txt'
+            cache=read(cache_path,DIAG_LIMITS['cache_bytes'])
+            result['cache']=dict(path=cache_path,bytes=len(cache),sha256=hashlib.sha256(cache).hexdigest(),
+                identity=C.android_cache_identity(cache.decode('utf-8'),DIAG_ROOT+'/examples/android/app/src/main/cpp',DIAG_BUILD))
+            ninja_path=DIAG_BUILD[len(DIAG_ROOT)+1:]+'/build.ninja'
+            result['ninja']=dict(path=ninja_path,**diag_ninja_statements(read(ninja_path,DIAG_LIMITS['ninja_bytes']),['exreader_product',image]))
+        C.require('sha256:'+C.digest(upload)==DIAG_ARTIFACT['digest'],'diagnostic original ZIP changed')
+        result.update(diagnostic_complete=True,stage='complete',scope='Pinned earlier/later query observations only; no parser repair or native eligibility')
+    except Exception as error:result['failures'].append(str(error)[:4096]);raise
+    finally:
+        encoded=(json.dumps(result,sort_keys=True,ensure_ascii=True)+'\n').encode('utf-8')
+        if len(encoded)>DIAG_LIMITS['json_bytes']:
+            bounded=dict(ident,diagnostic_complete=False,retained_prerequisites_passed=False,native_rebuilt=False,
+                original_run_accepted=False,combined_named_boundaries=False,installed_android_sync_runtime=False,f07_accepted=False,
+                stage='json_output_bound',failures=['diagnostic output exceeded1MiB'],
+                attempted_json_bytes=len(encoded),attempted_json_sha256=hashlib.sha256(encoded).hexdigest(),
+                original_artifact=result.get('original_artifact'),prior_stage=result.get('stage'),prior_failures=result['failures'])
+            encoded=diag_json(bounded);(C.OUT/'authenticated.json').write_bytes(encoded);print(encoded.decode('utf-8'),end='',flush=True)
+            raise ValueError('diagnostic JSON output bound')
+        encoded=diag_json(result);(C.OUT/'authenticated.json').write_bytes(encoded);print(encoded.decode('utf-8'),end='',flush=True)
 
 def main():
     C.actions();source=C.guard();C.require(C.current_lane()=='native','normal authentication requires native lane')
