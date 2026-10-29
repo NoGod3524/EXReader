@@ -1,0 +1,87 @@
+# Original import public streaming-hash boundary (2026-10-29)
+
+## Scope
+
+Owner-approved isolated sixteen-path implementation: eight production files in
+OPDSHash/ProductCatalog and eight additive acceptance files. Base
+`8f8acf3234cba747165f001c0c96efe1b911e6ad`; feature branch
+`codex/reader-original-hash-boundary-20261029`.
+
+The original importer is cross-platform. This removes its unconditional private
+OriginalExport `sha256.inc` include on every platform. The installed independent
+`EXReaderOPDSHash` 0.1.0 package reuses the existing OPDS SHA algorithm, with no
+second constants/implementation, network/SDK dependency, or generic OPDS helper
+exports. Four public stream functions wrap bounded opaque context state; three
+owner-unique implementation functions cannot resolve to the Revisions helper.
+Normal OPDS compilation remains unchanged. Revisions/ReadingState are not edited.
+
+Importer read loops remain 65,536 bytes, retain positive <=INT64_MAX input size,
+callbacks, handle checks, copy verification, no-replace publication, staged
+recovery, and verified Windows handle sharing. Provider MEMORY/ARGUMENT/STATE map
+to ROI_MEMORY/ROI_ARGUMENT/ROI_IO through a noncopyable RAII adapter, including
+boolean verification paths. Message length overflow is rejected before mutation;
+final bit length preserves the prior unsigned modulo-2^64 encoding. No huge-file
+runtime correctness claim is made.
+
+## Explicit dependency prerequisite
+
+Build/install `extras/opds` with `EXREADER_OPDS_HASH_ONLY=ON` into a fresh prefix,
+then provide canonical `READER_ORIGINAL_HASH_PREFIX` or process-scoped
+`EXREADER_ORIGINAL_HASH_PREFIX` to ProductCatalog and installed consumers. Both
+selectors, if present, must agree. Existing builders can inherit the process hook
+even when they overwrite CMAKE_PREFIX_PATH. No original build script is changed;
+unprepared old configurations now honestly lack a required dependency.
+
+Exact-version package discovery is restricted to the chosen config directory.
+The imported target's origin, static type, canonical archive/include paths and
+usage requirements are checked on initial and repeated discovery. Relocation
+selects the relocated hash prefix, not a recorded producer path.
+
+## Acceptance and limits
+
+All execution is GitHub Actions-only. The new workflow runs scope/parser controls
+and six separate target producers (Windows, Linux, macOS, Android x86_64 API26,
+iOS arm64 device and simulator), each capped at35 minutes with4 build workers.
+Authentication is20 minutes; protocol10. This does not change old workflow
+budgets or rerun the old successful F07 capture. No SDK build is required.
+
+Desktop jobs execute unchanged catalog tests and `original_import_actions.py`:
+16,792,975 bytes, SHA256
+`4f45393b25817f506a51b56cc5d61599556e4dd5b0bd59aa00f7eb43cbfc0a86`,
+duplicate/cancel/crash/recovery/corruption and Windows same-handle checks. New
+stream controls compare fragmented known vectors against normal OPDS and Python
+hashlib, allocation/lifecycle/overflow controls, and real-importer fake-provider
+fault mappings. Test-only fake provider/internal source inclusion is isolated
+from installed production probes and never accepted as production provider proof.
+
+All targets require installed-only final consumer links plus relocated links,
+both archive orders with normal OPDS and the unchanged actual Revisions helper,
+actual archive/member bytes and native symbol outputs, original Ninja commands,
+response files, maps, imported target paths, install manifests and exact relevant
+object dependency records. Missing relevant dependencies fail. Unrelated zero-
+dependency groups are not credited as source coverage. Mobile evidence is
+compile/final-link only: no emulator/device runtime is claimed.
+
+Package controls reject missing/wrong/conflicting prefixes, foreign pre-created
+targets, changed target usage requirements and incompatible-machine archives.
+Independent authentication downloads original same-run artifact ZIPs in Actions,
+checks API digest/size/source/attempt and all nested file hashes, and replays the
+semantic contract. Safe extraction rejects aliases, links, traversal and
+file/directory collisions (2GiB/member,8GiB total fail-closed limits).
+
+This narrow boundary does not establish full F07, fix SQLite final-provider
+ownership, clear other private dependencies, prove original system toolchain/DLL
+bytes, or establish mobile behavior. `f07_accepted` and `full_six_accepted` remain
+false. Historical authenticated Windows failures remain immutable.
+
+## State
+
+Authored source pending independent whole-packet review and first Actions run.
+No local builds, syntax checks, tests, fixtures or native/artifact parsing run.
+
+The Android binary discriminator also reads the actual ELF Android ABI note
+(API26), in addition to target driver/sysroot/cache flags. It follows the
+[platform CRT note layout](https://android.1.googlesource.com/platform/bionic/+/6aa3bdfb161af9c190df44efa1c3160fc6b71314/libc/arch-common/bionic/crtbrand.S).
+A small host-Linux ELF negative is compiled only in the Android producer and
+coherently substituted into a copy of evidence; matching x86_64 ELF headers alone
+must not pass. This is not system-toolchain provenance or Android runtime proof.
