@@ -1,0 +1,1289 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+"""One Actions-only retained-SDK build pair. Never launches an app or UI test."""
+import copy
+import contextlib
+import ctypes
+import hashlib
+import importlib.util
+import io
+import json
+import math
+import os
+from pathlib import Path
+import plistlib
+import re
+import resource
+import shutil
+import signal
+import stat
+import subprocess
+import sys
+import time
+import unicodedata
+import xml.etree.ElementTree as ET
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[2]
+SELF = Path(__file__).resolve()
+REPO = 'NoGod3524/EXReader'
+PARENT = 'db27e55a807f23c91b9d1968edc56645bb963595'
+BRANCH = 'codex/apple-ios-verify-build-comparison-20261029'
+PATHS = ['.github/workflows/apple-ios-verify-build-comparison-20261029.yml',
+         'tests/apple_ios_verify_build_comparison_20261029/run.py']
+PACKAGE = 'tests/apple_ios_organization_verify_phase_probe_20261029'
+BASE = ROOT / 'build/ios-verify-build-comparison'
+E, PRIVATE, REFUSAL = (BASE / n for n in ('evidence', 'private', 'refusal'))
+EMERGENCY = BASE / 'emergency'
+SDK_ROOT = ROOT / 'build/apple-sdk342/iphonesimulator'
+PHASE = ROOT / 'build/ios-verify-phase-probe'
+CONTROL = ROOT / 'build/ios-verify-build-control'
+RESOURCES = BASE / 'resources'
+DEVELOPER = '/Applications/Xcode_16.4.app/Contents/Developer'
+RUNTIME = 'com.apple.CoreSimulator.SimRuntime.iOS-26-2'
+DEVICE = 'com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation'
+OLD_SHA = '6803602e5791eafa69a6e61bc5499d36cd31d92e'
+OLD_RUN, OLD_JOB, ARTIFACT = 40858915090, 123397011277, 12891365411
+ARTIFACT_NAME = 'password-sdk-iphonesimulator-40858915090-1'
+ARTIFACT_BYTES = 20965175
+ARTIFACT_SHA = '73df36a535d21520fec28cc08006701fc8131daf35e2be613e15a6c9bc46d46a'
+CANDIDATE = '8357eafa28423a7ab93ba08b823af80f01ad1505'
+TREES = {'src': '01dbab7c7c28aff175b5a953fea307e21d84eee2',
+    'include': 'ef1bbaafc4a250053e5b0f88d329d1a25b22794b',
+    'cmake': '505c604a2b30b72b3a251cd3f0bb7628e6d58fc1',
+    'CMakeLists.txt': 'a5ed27fcca1d709c2217c585da47dc55dc23c1d0',
+    'bindings': '54c12f70a1a63cae6574984a388b66bf6248c38e',
+    'apps': '83b70fb9448239e6ad5cee11d4e3f24150191db3',
+    'examples': '2346b8dc7f13113e616d663642a55981c58c3fc1',
+    'tools': '7c98293965d81117376dab1aeafae12bc0c444b7',
+    'extras': '6aea70df724fcf339d636fdf00707c6685cc50a6'}
+FROZEN = {PACKAGE + '/prepare.py': '6db4739d6f3dd57fe4a8e6e18c949ce88d8d5fd95b7eb5ca4c8dd0c4bc2cca06',
+    PACKAGE + '/collect.py': '8da9894c26ca3dba7d3ffa9832abcc1bf177bd98eb53c0bc5abf41945d0a8616',
+    PACKAGE + '/AppPhaseRecorder.swift': '163107819572b40b40a41e5a661f62e30c7e2362be704a0413a7c60799d494bb',
+    PACKAGE + '/VerifyPhaseTests.swift': '006e98de1b87bf50987a9070b16cb8edd71773d6376a0c8c744248bea05b013d',
+    'tests/apple_host/make_xcodeproj.rb': '47ed88d6b06cd9ce5bfd1ffc146c3c7f3115b5322f4b3899d4c1294f9e10e823',
+    'tests/reader_team24_apple/make_project.rb': 'a62e6321c04241a30e9046e87dec37e9cd4bb87a2f750547bf61ff9547acf831',
+    'tests/apple_ios_organization_20261028/ui/IOSOrganizationAcceptanceTests.swift': 'deeed62b7083fb4a3e85ccd866a9a9eb4fdbca8e0c86bb88136b0fca400161ff',
+    'tests/apple_sdk342_package/run.py': '6519047961a37c4fc1bd913edf12c0606a8695d8b964a8b8ed5961008c0271c6',
+    'tests/apple_host/prepare_fixtures.py': '8a52d054ec05539ddacaaf1c117672b1d70632e2ab1d0d7e70a6fc4f75e88275'}
+MODULES = ['catalog', 'revisions', 'commands', 'webdav', 'sync', 'session', 'credentials',
+    'reading-state', 'search', 'navigation', 'reading-commands', 'annotation-view',
+    'desktop-metadata', 'annotation-export', 'annotation-import', 'font-library',
+    'original-export', 'jump-history', 'sync-status-view']
+FAMILY = {'EXReaderRevisions': '0.4.0', 'EXReaderReadingState': '0.2.0',
+    'EXReaderReadingCommands': '0.2.0', 'EXReaderAnnotationView': '0.2.0',
+    'EXReaderCommands': '0.2.0', 'EXReaderSync': '0.2.0', 'EXReaderSession': '0.2.0'}
+IDENTITY = {k: os.environ.get(v, '') for k, v in [('source_sha', 'GITHUB_SHA'),
+    ('run_id', 'GITHUB_RUN_ID'), ('attempt', 'GITHUB_RUN_ATTEMPT'), ('branch', 'GITHUB_REF_NAME')]}
+DEADLINE = float(os.environ.get('EXR_BUILD_PAIR_DEADLINE', 'inf'))
+COMMANDS, PRINTED = [], 0
+ACTIVE = None
+PINNED_GROUPS = set()
+OWNED_PROCESSES = {}
+
+
+class StopGroup(RuntimeError): pass
+
+
+def require(value, message):
+    if not value: raise ValueError(message)
+
+
+def check():
+    if time.monotonic() >= DEADLINE: raise StopGroup('global worker deadline')
+
+
+def encoded(value):
+    return (json.dumps(value, sort_keys=True, ensure_ascii=False, allow_nan=False) + '\n').encode()
+
+
+def strict_json(data, cap=2 * 1024 ** 2):
+    require(len(data) <= cap, 'JSON byte ceiling')
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            require(key not in result, 'duplicate JSON key'); result[key] = value
+        return result
+    def bad(value): raise ValueError('nonfinite JSON number')
+    value = json.loads(data.decode('utf-8'), object_pairs_hook=pairs, parse_constant=bad)
+    todo = [(value, 0)]; count = 0
+    while todo:
+        item, depth = todo.pop(); count += 1
+        require(count <= 100000 and depth <= 40, 'JSON structure ceiling')
+        if isinstance(item, float): require(math.isfinite(item), 'nonfinite JSON value')
+        if isinstance(item, dict): todo.extend((x, depth + 1) for x in item.values())
+        if isinstance(item, list): todo.extend((x, depth + 1) for x in item)
+    return value
+
+
+def save(path, value):
+    data = encoded(value); require(len(data) <= 4 * 1024 ** 2, 'receipt ceiling')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + '.tmp')
+    with temporary.open('wb') as stream:
+        stream.write(data); stream.flush(); os.fsync(stream.fileno())
+    os.replace(temporary, path)
+
+
+def inode(s): return (s.st_dev, s.st_ino, stat.S_IFMT(s.st_mode))
+def snapshot(s): return inode(s) + (s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+
+
+@contextlib.contextmanager
+def directory(path):
+    """Hold every parent descriptor; never resolve a live symlink by pathname."""
+    path = Path(path).absolute(); require(len(path.parts) <= 64, 'path depth ceiling')
+    opened = []; current = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    opened.append(current); bindings = []
+    try:
+        for name in path.parts[1:]:
+            expected = os.stat(name, dir_fd=current, follow_symlinks=False)
+            child = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=current)
+            opened.append(child); require(inode(os.fstat(child)) == inode(expected), 'directory replaced before open')
+            bindings.append((current, name, child, inode(expected))); current = child
+        yield current
+        for parent, name, child, expected in reversed(bindings):
+            require(inode(os.fstat(child)) == expected and
+                    inode(os.stat(name, dir_fd=parent, follow_symlinks=False)) == expected, 'directory pathname replaced')
+    finally:
+        for fd in reversed(opened): os.close(fd)
+
+
+def file_at(folder, name, cap, retain=False, expected=None, hook=None, hashes=True):
+    scanned = expected or os.stat(name, dir_fd=folder, follow_symlinks=False)
+    require(stat.S_ISREG(scanned.st_mode) and 0 <= scanned.st_size <= cap, 'bounded regular input')
+    if hook: hook('file_scanned')
+    fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=folder)
+    try:
+        before = os.fstat(fd)
+        require(inode(before) == inode(scanned) and stat.S_ISREG(before.st_mode) and before.st_size <= cap,
+                'file replaced/type/size before open')
+        if hashes: require(snapshot(before) == snapshot(scanned), 'file changed before read')
+        h = hashlib.sha256(); chunks = []; remaining = before.st_size
+        if hook: hook('file_opened')
+        if hashes:
+            while remaining:
+                check(); block = os.read(fd, min(1024 ** 2, remaining))
+                require(block, 'file shrank during read'); remaining -= len(block); h.update(block)
+                if retain: chunks.append(block)
+            require(snapshot(os.fstat(fd)) == snapshot(before), 'file grew/changed during bounded read')
+        after_path = os.stat(name, dir_fd=folder, follow_symlinks=False)
+        require((snapshot(after_path) == snapshot(before)) if hashes else (inode(after_path) == inode(before)),
+                'file pathname changed')
+        return before.st_size, h.hexdigest() if hashes else None, b''.join(chunks)
+    finally: os.close(fd)
+
+
+def sha_file(path, cap=512 * 1024 ** 2):
+    with directory(path.parent) as fd: return file_at(fd, path.name, cap)[1]
+
+
+def read_bounded(path, cap, hook=None):
+    with directory(path.parent) as fd: return file_at(fd, path.name, cap, True, hook=hook)[2]
+
+
+def inventory(root, cap=512 * 1024 ** 2, entries=20000, hashes=True, allow_links=False, exclude=(), hook=None):
+    result = {}; total = count = 0
+    def descend(folder, prefix, depth):
+        nonlocal total, count
+        require(depth <= 64, 'directory depth ceiling')
+        with os.scandir(folder) as listing:
+            for item in listing:
+                check(); count += 1; require(count <= entries, 'entry ceiling')
+                name = item.name; key = prefix + name
+                s = os.stat(name, dir_fd=folder, follow_symlinks=False)
+                if key in exclude: continue
+                if stat.S_ISDIR(s.st_mode):
+                    if hook: hook('directory_scanned', key)
+                    child = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=folder)
+                    try:
+                        require(inode(os.fstat(child)) == inode(s), 'scanned directory replaced')
+                        descend(child, key + '/', depth + 1)
+                        require(inode(os.stat(name, dir_fd=folder, follow_symlinks=False)) == inode(s), 'walk directory replaced')
+                    finally: os.close(child)
+                elif stat.S_ISREG(s.st_mode):
+                    size, digest, _ = file_at(folder, name, cap - total, expected=s, hashes=hashes)
+                    total += size; result[key] = {'bytes': size, 'sha256': digest}
+                elif stat.S_ISLNK(s.st_mode) and allow_links:
+                    target = os.readlink(name, dir_fd=folder)
+                    require(inode(os.stat(name, dir_fd=folder, follow_symlinks=False)) == inode(s), 'link replaced')
+                    result[key] = {'link': target}  # Never descend/follow it.
+                else: raise ValueError('special/link output refused')
+    with directory(root) as fd: descend(fd, '', 0)
+    return {'entries': count, 'bytes': total, 'files': result}
+
+
+def seal_evidence(root):
+    final = inventory(root, 63 * 1024 ** 2, 1980, exclude=('inventory.json',))
+    save(root / 'inventory.json', dict(final, excludes_self='inventory.json'))
+    inventory(root, 64 * 1024 ** 2, 2000, False)
+
+
+def retain_partial(root, refusal):
+    """Worker-owned bounded copy; always explicitly unaccepted until supervisor closes."""
+    source = inventory(root, 63 * 1024 ** 2, 1980, exclude=('inventory.json',))
+    refusal.mkdir(); target = refusal / 'partial'; target.mkdir()
+    for name, row in source['files'].items():
+        data = read_bounded(root / name, row['bytes'])
+        require(hashlib.sha256(data).hexdigest() == row['sha256'], 'partial source changed')
+        dest = target / name; dest.parent.mkdir(parents=True, exist_ok=True); dest.write_bytes(data)
+    summary = strict_json(read_bounded(target / 'summary.json', 65536))
+    summary.update(comparison_complete=False, partial_only=True, supervisor_closed_identity_unconfirmed=True)
+    save(target / 'summary.json', summary); seal_evidence(target)
+    inventory(refusal, 64 * 1024 ** 2, 2000, False)
+
+
+def live_bounds():
+    total = count = 0
+    for root in (BASE, SDK_ROOT, PHASE, CONTROL):
+        if root.exists():
+            row = inventory(root, 4 * 1024 ** 3, 60000, False, True)
+            total += row['bytes']; count += row['entries']
+    require(total <= 4 * 1024 ** 3 and count <= 60000, 'aggregate working ceiling')
+
+
+def shaped(value, limit):
+    raw = encoded(value)
+    if len(raw) <= limit: return raw, True
+    digest = hashlib.sha256(raw).hexdigest()
+    for width in (4096, 2048, 1024, 512, 256, 128, 64, 16):
+        def clip(x, depth=0):
+            if depth > 8: return '[depth clipped]'
+            if isinstance(x, str): return x.encode()[:width].decode('utf-8', 'ignore')
+            if isinstance(x, list): return [clip(v, depth + 1) for v in x[:24]]
+            if isinstance(x, dict): return {k: clip(v, depth + 1) for k, v in list(x.items())[:24]}
+            return x
+        candidate = encoded({'payload': clip(value), 'payload_clipped': True, 'full_sha256': digest})
+        if len(candidate) <= limit: return candidate, False
+    return encoded({'complete': False, 'problem': 'bounded output fallback', 'full_sha256': digest}), False
+
+
+def emit(value):
+    global PRINTED
+    data, _ = shaped(value, 48 * 1024)
+    require(PRINTED + len(data) <= 496 * 1024, 'ordinary stdout ceiling')
+    PRINTED += len(data); sys.stdout.buffer.write(data); sys.stdout.buffer.flush()
+
+
+def build_argv(profile, uid):
+    require(profile in ('control', 'phase') and re.fullmatch(r'[0-9A-Fa-f-]{36}', uid), 'build identity')
+    root = CONTROL if profile == 'control' else PHASE
+    return ['xcodebuild', 'build-for-testing', '-project', str(root / 'generated/project/EXReaderHost.xcodeproj'),
+        '-scheme', 'EXReaderHost-iOS', '-derivedDataPath', str(root / 'DerivedData'),
+        'EXR_SDK_DIR=' + str(SDK_ROOT / 'sdk'), 'EXR_PRODUCTS_DIR=' + str(SDK_ROOT / 'products'),
+        'CODE_SIGNING_ALLOWED=NO', '-destination', 'platform=iOS Simulator,id=' + uid]
+
+
+def validate_build(argv, profile, uid):
+    require(argv == build_argv(profile, uid), 'exact build-only command differs')
+
+
+def command_allowed(argv, name, build):
+    if build is not None:
+        validate_build(argv, *build)
+        require(name == build[0] + '-build', 'build name differs'); return
+    fixed = {'head': ['git', 'rev-parse', 'HEAD'], 'parent': ['git', 'rev-parse', 'HEAD^'],
+        'delta': ['git', 'diff', '--name-status', PARENT, 'HEAD'],
+        'clean': ['git', 'status', '--porcelain', '--untracked-files=all'],
+        'version': ['xcodebuild', '-version'], 'sdk-version': ['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-version'],
+        'os-version': ['sw_vers', '-productVersion'], 'arch': ['uname', '-m'],
+        'xcodeproj-version': ['ruby', '-e', "require 'xcodeproj'; puts Xcodeproj::VERSION"],
+        'fixtures': [sys.executable, 'tests/apple_host/prepare_fixtures.py', '--resources', str(RESOURCES)],
+        'runtimes': ['xcrun', 'simctl', 'list', 'runtimes', '-j'],
+        'create': ['xcrun', 'simctl', 'create', 'EXR-build-pair-' + IDENTITY['run_id'], DEVICE, RUNTIME]}
+    for source in (PARENT, OLD_SHA, IDENTITY['source_sha']):
+        fixed['trees-' + source[:8]] = ['git', 'rev-parse', *[source + ':' + p for p in TREES]]
+    for label, endpoint in [('original-run', 'runs/' + str(OLD_RUN)), ('original-job', 'jobs/' + str(OLD_JOB)),
+        ('original-artifact', 'artifacts/' + str(ARTIFACT)), ('original-upload-log', 'jobs/' + str(OLD_JOB) + '/logs'),
+        ('original-sdk', 'artifacts/' + str(ARTIFACT) + '/zip')]:
+        fixed[label] = ['gh', 'api', 'repos/' + REPO + '/actions/' + endpoint]
+    for label, root in (('control', CONTROL), ('phase', PHASE)):
+        fixed[label + '-generate'] = ['ruby', str(root / 'generated' / ('make_project_' + label + '.rb')),
+            str(root / 'generated/project'), str(RESOURCES), str(root / 'generated/ui'), 'base']
+        fixed[label + '-pbx-convert'] = ['plutil', '-convert', 'json', '-o', str(PRIVATE / (label + '-pbx.json')),
+            str(root / 'generated/project/EXReaderHost.xcodeproj/project.pbxproj')]
+    if name == 'delete-owned-device':
+        require(len(argv) == 4 and argv[:3] == ['xcrun', 'simctl', 'delete']
+                and argv[3] == CREATED_UUID and re.fullmatch(r'[0-9A-Fa-f-]{36}', argv[3]), 'owned cleanup identity')
+    else: require(name in fixed and argv == fixed[name], 'fixed command allowlist')
+
+
+CREATED_UUID = None
+
+
+def command(argv, name, timeout=60, cap=16 * 1024 ** 2, allowed_exit=False, build=None):
+    global ACTIVE
+    check(); argv = list(map(str, argv))
+    command_allowed(argv, name, build)
+    require(len(COMMANDS) < 48 and name not in [r['output'] for r in COMMANDS], 'duplicate/excess command')
+    if build is not None: require(timeout == 120 and cap == 16 * 1024 ** 2 and allowed_exit is True, 'fixed build limits')
+    output = PRIVATE / (name + '.stdout'); error = PRIVATE / (name + '.stderr')
+    record = {'argv': argv, 'started': time.monotonic(), 'output': name, 'timeout': timeout,
+              'fsize_limit': 256 * 1024 ** 2, 'shared_owned_group': os.getpgrp()}
+    COMMANDS.append(record); process = None
+    try:
+        launcher = [sys.executable, '-c', 'import os,resource,sys; n=int(sys.argv[1]); '
+            'resource.setrlimit(resource.RLIMIT_FSIZE,(n,n)); os.execvp(sys.argv[2],sys.argv[2:])',
+            str(256 * 1024 ** 2), *argv]
+        record['launcher_argv'] = launcher
+        with output.open('xb') as out, error.open('xb') as err:
+            process = subprocess.Popen(launcher, cwd=ROOT, stdout=out, stderr=err)
+            record['pid'] = process.pid
+            ACTIVE = process
+            next_scan = 0
+            while True:
+                check(); now = time.monotonic()
+                if now - record['started'] >= timeout: raise StopGroup('command deadline: ' + name)
+                if output.stat().st_size > cap or error.stat().st_size > cap: raise StopGroup('command output ceiling: ' + name)
+                if now >= next_scan: live_bounds(); next_scan = time.monotonic() + 1
+                code = process.poll()
+                if code is not None:
+                    record['exit_code'] = code; record['reaped'] = True; ACTIVE = None
+                    require(code == 0 or allowed_exit, 'command failed: ' + name + ' exit=' + str(code))
+                    return code, output, error
+                time.sleep(.1)
+    except BaseException as failure:
+        record['problem'] = type(failure).__name__ + ': ' + str(failure)[:600]
+        raise
+    finally:
+        record['finished'] = time.monotonic()
+        save(E / 'commands.json', COMMANDS)
+        # A live child is not abandoned: the outer supervisor owns/stops this
+        # entire group. Worker catches StopGroup only to emit a bounded refusal.
+
+
+def text_command(argv, name, **kwargs):
+    _, out, _ = command(argv, name, **kwargs)
+    return read_bounded(out, kwargs.get('cap', 16 * 1024 ** 2)).decode('utf-8').strip()
+
+
+def api(endpoint, name):
+    _, out, _ = command(['gh', 'api', 'repos/' + REPO + '/' + endpoint], name, cap=2 * 1024 ** 2)
+    return strict_json(read_bounded(out, 2 * 1024 ** 2))
+
+
+def validate_metadata(run, job, artifact):
+    require(all(type(v) is int for v in (run['id'], run['run_attempt'], job['id'], job['run_id'],
+        artifact['id'], artifact['size_in_bytes'], artifact['workflow_run']['id'])), 'metadata integer domain')
+    require(run['id'] == OLD_RUN and run['run_attempt'] == 1 and run['head_sha'] == OLD_SHA
+            and run['status'] == 'completed', 'original run differs')
+    require(job['id'] == OLD_JOB and job['run_id'] == OLD_RUN and job['name'] == 'Privacy SDK iphonesimulator'
+            and job['status'] == 'completed' and job['conclusion'] == 'success', 'SDK producer job differs')
+    require(artifact['id'] == ARTIFACT and artifact['name'] == ARTIFACT_NAME
+            and artifact['size_in_bytes'] == ARTIFACT_BYTES and artifact['expired'] is False
+            and artifact['digest'] == 'sha256:' + ARTIFACT_SHA
+            and artifact['workflow_run']['id'] == OLD_RUN
+            and artifact['workflow_run']['head_sha'] == OLD_SHA, 'original SDK artifact differs')
+
+
+def archive_hash(path, size=ARTIFACT_BYTES, digest=ARTIFACT_SHA):
+    require(path.is_file() and not path.is_symlink() and path.stat().st_size == size, 'original ZIP size')
+    require(sha_file(path) == digest, 'original ZIP digest')
+
+
+def zip_names(infos):
+    require(len(infos) <= 20000 and sum(i.file_size for i in infos) <= 512 * 1024 ** 2, 'ZIP size/count ceiling')
+    explicit = set(); nodes = {}
+    for item in infos:
+        name = item.filename; directory = item.is_dir()
+        require(name == item.orig_filename and name and '\\' not in name
+                and not any(ord(c) < 32 or ord(c) == 127 for c in name), 'ZIP unsafe name')
+        parts = (name[:-1] if directory else name).split('/')
+        require(all(p not in ('', '.', '..') and ':' not in p for p in parts), 'ZIP unsafe path')
+        require(parts[0] in ('identity.json', 'sdk', 'products'), 'ZIP unexpected root')
+        require(parts[0] != 'identity.json' or (len(parts) == 1 and not directory), 'ZIP identity shape')
+        key = unicodedata.normalize('NFC', '/'.join(parts)).casefold()
+        require(key not in explicit, 'ZIP duplicate/alias explicit entry'); explicit.add(key)
+        require(not item.flag_bits & 1 and item.compress_type in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED), 'ZIP unsupported encoding')
+        require(stat.S_IFMT(item.external_attr >> 16) in (0, stat.S_IFDIR if directory else stat.S_IFREG), 'ZIP link/type')
+        for n in range(1, len(parts) + 1):
+            raw = '/'.join(parts[:n]); canonical = unicodedata.normalize('NFC', raw).casefold()
+            kind = 'dir' if n < len(parts) or directory else 'file'
+            require(canonical not in nodes or nodes[canonical] == (raw, kind), 'ZIP implicit alias/type')
+            nodes[canonical] = (raw, kind)
+        if directory: require(item.file_size == 0 and item.CRC == 0, 'ZIP directory data/CRC')
+
+
+def unpack(path, destination):
+    require(not destination.exists(), 'extraction destination exists')
+    rows = []
+    with zipfile.ZipFile(path) as archive:
+        infos = archive.infolist(); zip_names(infos)
+        destination.mkdir(parents=True, mode=0o700)
+        for item in infos:
+            check(); target = destination / item.filename
+            target.parent.mkdir(parents=True, exist_ok=True)
+            size = 0; h = hashlib.sha256()
+            with archive.open(item) as source:
+                if item.is_dir():
+                    require(source.read(1) == b'', 'ZIP directory payload'); target.mkdir(exist_ok=True)
+                else:
+                    with target.open('xb') as output:
+                        while True:
+                            check(); block = source.read(1024 ** 2)
+                            if not block: break
+                            size += len(block); require(size <= item.file_size, 'ZIP streamed size')
+                            output.write(block); h.update(block)
+            require(size == item.file_size, 'ZIP exact expanded size')
+            rows.append({'name': item.filename, 'kind': 'directory' if item.is_dir() else 'file',
+                         'bytes': size, 'sha256': h.hexdigest()})
+    return rows
+
+
+def installed_schema(identity, product):
+    require(identity['source_sha'] == OLD_SHA and identity['run_id'] == str(OLD_RUN) and identity['attempt'] == '1'
+            and identity['target'] == 'iphonesimulator' and identity['sdk_content_candidate'] == CANDIDATE
+            and identity['sdk_content_paths'] == ['src', 'include', 'cmake', 'CMakeLists.txt', 'bindings']
+            and identity['page_theme_enabled'] is True and identity['product'] == product, 'SDK identity schema')
+    require(product['source_sha'] == OLD_SHA and product['target'] == 'iphonesimulator' and product['sdk_version'] == '3.42.0'
+            and product['installed_modules'] == MODULES and product['exact_candidate_family'] == FAMILY
+            and product['sqlite_provider'] == 'libreader_catalog_sqlite.a' and product['system_sqlite_fallback'] is False
+            and product['reading_resolver_linked'] is False and product['webdav_transport'] == 'Foundation URLSession'
+            and all(product[k] is True for k in ('wave3_enabled', 'organization_enabled', 'selector_bytes_candidate')),
+            'installed product schema')
+    require(product['sdk_prefix'] == str(SDK_ROOT / 'sdk') and product['product_prefix'] == str(SDK_ROOT / 'products'),
+            'original installed path differs; no rewrite')
+
+
+def source_guard():
+    require(IDENTITY['branch'] == BRANCH and IDENTITY['attempt'] == '1', 'branch/attempt')
+    head = text_command(['git', 'rev-parse', 'HEAD'], 'head')
+    parent = text_command(['git', 'rev-parse', 'HEAD^'], 'parent')
+    delta = text_command(['git', 'diff', '--name-status', PARENT, 'HEAD'], 'delta').splitlines()
+    validate_source(head, parent, delta)
+    require(not text_command(['git', 'status', '--porcelain', '--untracked-files=all'], 'clean'), 'dirty source')
+    for path, digest in FROZEN.items(): require(sha_file(ROOT / path) == digest, 'frozen source differs: ' + path)
+    for source in (PARENT, OLD_SHA, IDENTITY['source_sha']):
+        values = text_command(['git', 'rev-parse', *[source + ':' + p for p in TREES]], 'trees-' + source[:8]).splitlines()
+        require(values == list(TREES.values()), 'source-family tree mismatch')
+    require(os.environ.get('DEVELOPER_DIR') == DEVELOPER, 'developer directory')
+    version = text_command(['xcodebuild', '-version'], 'version')
+    require(version == 'Xcode 16.4\nBuild version 16F6', 'Xcode version')
+    require(text_command(['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-version'], 'sdk-version') == '18.5', 'SDK version')
+    require(text_command(['sw_vers', '-productVersion'], 'os-version').startswith('15.'), 'macOS version')
+    require(text_command(['uname', '-m'], 'arch') == 'arm64', 'architecture')
+    text_command(['ruby', '-e', "require 'xcodeproj'; puts Xcodeproj::VERSION"], 'xcodeproj-version')
+    save(E / 'source-guard.json', dict(IDENTITY, parent=PARENT, frozen=FROZEN, trees=TREES,
+        sdk_producer_source=OLD_SHA, xcode=version, developer_dir=DEVELOPER,
+        image=os.environ.get('ImageVersion'), native_cases_run=0, formal_credit=0))
+
+
+def validate_source(head, parent, delta):
+    require(head == IDENTITY['source_sha'] and re.fullmatch('[a-f0-9]{40}', head), 'source SHA')
+    require(parent == PARENT, 'exact parent')
+    require(sorted(delta) == sorted('A\t' + p for p in PATHS), 'exact two additions')
+
+
+def installed_files(root):
+    required = ['sdk/include/exreader.h', 'sdk/include/exr/base.h', 'sdk/lib/libexreader.dylib',
+                'products/lib/libreader_original_export.a', 'products/include/reader_original_export.h']
+    for name in required:
+        with directory((root / name).parent) as fd: file_at(fd, Path(name).name, 512 * 1024 ** 2, hashes=False)
+    require(re.search(r'#define EXR_VERSION "3\.42\.0"', read_bounded(root / 'sdk/include/exr/base.h', 65536).decode('utf-8')),
+            'installed header version')
+
+
+def retained_sdk():
+    run = api('actions/runs/' + str(OLD_RUN), 'original-run')
+    job = api('actions/jobs/' + str(OLD_JOB), 'original-job')
+    artifact = api('actions/artifacts/' + str(ARTIFACT), 'original-artifact')
+    validate_metadata(run, job, artifact)
+    _, upload, _ = command(['gh', 'api', 'repos/' + REPO + '/actions/jobs/' + str(OLD_JOB) + '/logs'], 'original-upload-log')
+    text = read_bounded(upload, 16 * 1024 ** 2).decode('utf-8')
+    require('SHA256 digest of uploaded artifact zip is ' + ARTIFACT_SHA in text
+            and 'Final size is ' + str(ARTIFACT_BYTES) + ' bytes. Artifact ID is ' + str(ARTIFACT) in text,
+            'original upload log identity')
+    _, archive, _ = command(['gh', 'api', 'repos/' + REPO + '/actions/artifacts/' + str(ARTIFACT) + '/zip'],
+                           'original-sdk', cap=ARTIFACT_BYTES)
+    archive_hash(archive); archive.chmod(0o400)
+    rows = unpack(archive, SDK_ROOT)
+    identity = strict_json(read_bounded(SDK_ROOT / 'identity.json', 65536))
+    product = strict_json(read_bounded(SDK_ROOT / 'products/share/exreader-apple/product.json', 65536))
+    installed_schema(identity, product)
+    installed_files(SDK_ROOT)
+    manifest = inventory(SDK_ROOT)
+    save(E / 'retained-sdk.json', {'source': OLD_SHA, 'run': OLD_RUN, 'job': OLD_JOB, 'artifact': artifact,
+        'identity': identity, 'members': rows, 'manifest': manifest, 'new_source_build': False})
+    emit({'retained_sdk_admitted': True, 'original_source': OLD_SHA, 'artifact_id': ARTIFACT,
+          'sha256': ARTIFACT_SHA, 'source_trees_equal': True, 'new_source_build': False})
+    return archive, manifest
+
+
+def once(text, old, new):
+    require(text.count(old) == 1, 'source anchor differs')
+    result = text.replace(old, new)
+    require(result.count(new) == 1 and result.replace(new, old) == text, 'source roundtrip differs')
+    return result
+
+
+def generate():
+    spec = importlib.util.spec_from_file_location('paired_phase_prepare', ROOT / PACKAGE / 'prepare.py')
+    phase = importlib.util.module_from_spec(spec); spec.loader.exec_module(phase)
+    def reject(*args, **kwargs): raise ValueError('command during pure generation')
+    phase.run = phase.command = reject
+    original_popen, original_run, original_system = subprocess.Popen, subprocess.run, os.system
+    try:
+        subprocess.Popen = subprocess.run = os.system = reject
+        content = phase.generated(ROOT)
+        require(content == phase.generated(ROOT), 'second generation differs')
+    finally:
+        subprocess.Popen, subprocess.run, os.system = original_popen, original_run, original_system
+    expected = {'host/' + n for n in phase.HOSTS} | {'host/AppPhaseRecorder.swift', 'ui/VerifyPhaseTests.swift',
+        'make_xcodeproj_phase.rb', 'make_project_phase.rb'}
+    require(set(content) == expected, 'seven phase outputs')
+    for name, value in content.items():
+        path = PHASE / 'generated' / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_text(value)
+    original = (ROOT / 'tests/apple_host/make_xcodeproj.rb').read_text()
+    baseline = once(original, "['3.40.0', '3.41.0'].include?(sdk_version)", "['3.40.0', '3.41.0', '3.42.0'].include?(sdk_version)")
+    baseline = once(baseline, "page_theme == 'ON' && sdk_version != '3.41.0'", "page_theme == 'ON' && !['3.41.0', '3.42.0'].include?(sdk_version)")
+    gen = CONTROL / 'generated'; (gen / 'ui').mkdir(parents=True)
+    (gen / 'make_xcodeproj_control.rb').write_text(baseline)
+    team = once((ROOT / 'tests/reader_team24_apple/make_project.rb').read_text(), "'tests/apple_host/make_xcodeproj.rb'",
+                repr(str(gen / 'make_xcodeproj_control.rb')))
+    (gen / 'make_project_control.rb').write_text(team)
+    shutil.copyfile(ROOT / phase.FORMAL, gen / 'ui/IOSOrganizationAcceptanceTests.swift')
+    command([sys.executable, 'tests/apple_host/prepare_fixtures.py', '--resources', RESOURCES], 'fixtures')
+    require(sha_file(RESOURCES / 'Sample.epub') == phase.BOOK_SHA, 'fixture identity')
+    for name, root in (('control', CONTROL), ('phase', PHASE)):
+        project = root / 'generated/project'; project.mkdir()
+        if name == 'phase': (project / 'PhaseTests-Info.plist').write_bytes(plistlib.dumps({'NSAppTransportSecurity': phase.ATS}))
+        command(['ruby', root / 'generated' / ('make_project_' + name + '.rb'), project, RESOURCES,
+                 root / 'generated/ui', 'base'], name + '-generate')
+        for platform in ('iOS', 'macOS'):
+            path = project / ('Info-' + platform + '.plist'); value = plistlib.loads(path.read_bytes())
+            require(value == {'EXRSourceSHA': IDENTITY['source_sha'], 'EXRSDKVersion': '3.42.0', 'EXRPageThemeEnabled': True}, 'app Info baseline')
+            if name == 'phase': value['NSAppTransportSecurity'] = phase.ATS; path.write_bytes(plistlib.dumps(value))
+        command(['plutil', '-convert', 'json', '-o', PRIVATE / (name + '-pbx.json'),
+                 project / 'EXReaderHost.xcodeproj/project.pbxproj'], name + '-pbx-convert')
+    manifests = {name: project_manifest(name, phase.ATS) for name in ('control', 'phase')}
+    compare_projects(manifests)
+    project_controls(phase.ATS)
+    save(E / 'project-equality.json', {'equal_except_declared_profile': True, 'normalized': manifests['control'],
+        'delta': ['three host replacements', 'recorder addition', 'generated UI', 'test/app scoped ATS Info']})
+    for name, root in (('control', CONTROL), ('phase', PHASE)):
+        shutil.copytree(root / 'generated', E / 'generated' / name)
+    return inventory(RESOURCES), {name: inventory(root / 'generated') for name, root in (('control', CONTROL), ('phase', PHASE))}
+
+
+def compare_projects(manifests):
+    require(set(manifests) == {'control', 'phase'} and manifests['control'] == manifests['phase'],
+            'unexpected normalized project difference')
+
+
+def source_topology(data, profile, project):
+    objects = data['objects']; require(0 < len(objects) <= 4000, 'PBX object ceiling')
+    targets = {uid: obj for uid, obj in objects.items() if obj.get('isa') == 'PBXNativeTarget'}
+    require(sorted(o['name'] for o in targets.values()) == ['EXReaderHost-iOS', 'EXReaderHost-macOS',
+            'EXReaderHostUITests-iOS', 'EXReaderHostUITests-macOS'], 'exact targets')
+    seen = set()
+    def reachable(value):
+        if isinstance(value, str) and value in objects and value not in seen:
+            seen.add(value); reachable(objects[value])
+        elif isinstance(value, dict):
+            for child in value.values(): reachable(child)
+        elif isinstance(value, list):
+            for child in value: reachable(child)
+    reachable(data['rootObject']); require(seen == set(objects), 'unreachable PBX object')
+    root = CONTROL if profile == 'control' else PHASE
+    baseline = sorted((ROOT / 'examples/apple').glob('*.swift')) + [ROOT / 'bindings/swift/EXReader.swift']
+    hosts = {str((PHASE / 'generated/host' / p.name) if profile == 'phase' and
+            p.name in ('HostViews.swift', 'HostModel.swift', 'HostOrganization.swift') else p) for p in baseline}
+    recorder = str(PHASE / 'generated/host/AppPhaseRecorder.swift')
+    if profile == 'phase': hosts.add(recorder)
+    ui = {str(root / 'generated/ui' / ('VerifyPhaseTests.swift' if profile == 'phase' else 'IOSOrganizationAcceptanceTests.swift'))}
+    recorder_refs = []; recorder_builds = []; source_phases = set()
+    for target in targets.values():
+        sources = [uid for uid in target['buildPhases'] if objects[uid]['isa'] == 'PBXSourcesBuildPhase']
+        require(len(sources) == 1 and sources[0] not in source_phases, 'unique target sources phase')
+        source_phases.add(sources[0]); paths = []
+        for build_id in objects[sources[0]]['files']:
+            build = objects[build_id]; require(build['isa'] == 'PBXBuildFile', 'source build object type')
+            ref_id = build['fileRef']; ref = objects[ref_id]
+            require(ref['isa'] == 'PBXFileReference' and ref['sourceTree'] == '<group>', 'source file binding')
+            path = os.path.normpath(str(project / ref['path'])); paths.append(path)
+            if path == recorder:
+                recorder_refs.append(ref_id); recorder_builds.append((build_id, sources[0]))
+        expected = ui if target['productType'] == 'com.apple.product-type.bundle.ui-testing' else hosts
+        require(len(paths) == len(expected) and set(paths) == expected, 'exact target source membership')
+    if profile == 'control': require(not recorder_refs, 'control recorder membership'); return
+    require(len(recorder_refs) == 2 and len(set(recorder_refs)) == 1 and len(set(recorder_builds)) == 2,
+            'exact two host recorder memberships')
+    ref = recorder_refs[0]; builds = {b: phase for b, phase in recorder_builds}
+    record = objects[ref]
+    require(set(record) >= {'isa', 'lastKnownFileType', 'path', 'sourceTree'} and
+            set(record) <= {'isa', 'lastKnownFileType', 'path', 'sourceTree', 'name', 'includeInIndex'} and
+            record['lastKnownFileType'] == 'sourcecode.swift' and
+            record['path'] == os.path.relpath(recorder, project), 'recorder reference exact shape/type/path')
+    if 'name' in record: require(record['name'] == 'AppPhaseRecorder.swift', 'recorder name')
+    if 'includeInIndex' in record:
+        require(type(record['includeInIndex']) in (int, str) and record['includeInIndex'] in (1, '1'), 'recorder index flag')
+    for build in builds:
+        require(objects[build] == {'isa': 'PBXBuildFile', 'fileRef': ref}, 'recorder per-file settings/keys')
+    main_group = objects[data['rootObject']]['mainGroup']
+    host_groups = [uid for uid, obj in objects.items() if obj.get('isa') == 'PBXGroup' and obj.get('name') == 'Host']
+    require(len(host_groups) == 1, 'exact Host group')
+    edges = []
+    def references(value, parent, key):
+        if isinstance(value, str) and (value == ref or value in builds): edges.append((parent, key, value))
+        elif isinstance(value, list):
+            for v in value: references(v, parent, key)
+        elif isinstance(value, dict):
+            for k, v in value.items(): references(v, parent, k)
+    for uid, obj in objects.items(): references(obj, uid, '')
+    expected_edges = [(b, 'fileRef', ref) for b in builds] + [(phase, 'files', b) for b, phase in builds.items()]
+    expected_edges += [(g, 'children', ref) for g in (main_group, host_groups[0])]
+    require(sorted(edges) == sorted(expected_edges), 'recorder edge escapes declared topology')
+
+
+def project_manifest(profile, ats, supplied=None):
+    root = CONTROL if profile == 'control' else PHASE
+    project = root / 'generated/project'
+    data = supplied if supplied is not None else strict_json(read_bounded(PRIVATE / (profile + '-pbx.json'), 2 * 1024 ** 2))
+    source_topology(data, profile, project)
+    objects = copy.deepcopy(data['objects']); removed = set(); actual_files = {}
+    for uid, obj in objects.items():
+        if obj['isa'] != 'PBXFileReference' or 'path' not in obj: continue
+        if obj.get('sourceTree') == 'BUILT_PRODUCTS_DIR': continue
+        if obj.get('sourceTree') in ('SDKROOT', 'DEVELOPER_DIR'):
+            require(not obj['path'].startswith('/') and '..' not in Path(obj['path']).parts, 'system reference path')
+            continue  # Compared unchanged in the full normalized graph.
+        require(obj.get('sourceTree') == '<group>', 'unexpected sourceTree')
+        path = str((project / obj['path']).resolve()); actual_files[uid] = path
+        if path == str(PHASE / 'generated/host/AppPhaseRecorder.swift'):
+            require(profile == 'phase', 'recorder in control'); removed.add(uid); continue
+        host = next((n for n in ('HostViews.swift', 'HostModel.swift', 'HostOrganization.swift')
+            if path == str((ROOT / 'examples/apple' / n) if profile == 'control' else (PHASE / 'generated/host' / n))), None)
+        if host: obj['path'] = '<PROFILE_HOST>/' + host
+        elif path == str(root / 'generated/ui' / ('IOSOrganizationAcceptanceTests.swift' if profile == 'control' else 'VerifyPhaseTests.swift')):
+            obj['path'] = '<PROFILE_UI>/Tests.swift'
+            if 'name' in obj:
+                require(obj['name'] == Path(path).name, 'UI reference display name')
+                obj['name'] = 'Tests.swift'
+        else: obj['path'] = path
+    require(len(removed) == (1 if profile == 'phase' else 0), 'exact recorder reference count')
+    removed |= {uid for uid, obj in objects.items() if obj['isa'] == 'PBXBuildFile' and obj.get('fileRef') in removed}
+    targets = {uid: obj for uid, obj in objects.items() if obj['isa'] == 'PBXNativeTarget'}
+    require(sorted(o['name'] for o in targets.values()) == ['EXReaderHost-iOS', 'EXReaderHost-macOS', 'EXReaderHostUITests-iOS', 'EXReaderHostUITests-macOS'], 'exact targets')
+    for target in targets.values():
+        test = target['productType'] == 'com.apple.product-type.bundle.ui-testing'
+        configs = objects[target['buildConfigurationList']]['buildConfigurations']
+        for config in configs:
+            settings = objects[config]['buildSettings']
+            if test:
+                if profile == 'phase':
+                    require(settings.pop('INFOPLIST_FILE') == str(project / 'PhaseTests-Info.plist'), 'exact test Info setting')
+                else: require('INFOPLIST_FILE' not in settings, 'baseline test Info setting')
+            elif 'INFOPLIST_FILE' in settings:
+                require(settings['INFOPLIST_FILE'] in [str(project / ('Info-' + p + '.plist')) for p in ('iOS', 'macOS')], 'app Info path')
+    for uid in removed: del objects[uid]
+    def clean(value):
+        if isinstance(value, list): return [clean(v) for v in value if not (isinstance(v, str) and v in removed)]
+        if isinstance(value, dict): return {k: clean(v) for k, v in value.items()}
+        if isinstance(value, str):
+            require(value not in removed, 'removed recorder referenced unexpectedly')
+            return value.replace(str(root / 'generated'), '<PROFILE_GENERATED>')
+        return value
+    objects = {uid: clean(obj) for uid, obj in objects.items()}
+    expanded_count = [0]
+    def expand(value, active=()):
+        expanded_count[0] += 1; require(expanded_count[0] <= 200000 and len(active) <= 32, 'project graph bound')
+        if isinstance(value, str) and value in objects:
+            if value in active:
+                obj = objects[value]; return {'cycle': obj['isa'], 'name': obj.get('name')}
+            return expand(objects[value], active + (value,))
+        if isinstance(value, dict): return {k: expand(v, active) for k, v in value.items()}
+        if isinstance(value, list): return [expand(v, active) for v in value]
+        return value
+    graph = {k: expand(v) for k, v in data.items() if k != 'objects'}
+    schemes = {}
+    for platform in ('iOS', 'macOS'):
+        file = project / 'EXReaderHost.xcodeproj/xcshareddata/xcschemes' / ('EXReaderHost-' + platform + '.xcscheme')
+        tree = ET.fromstring(file.read_bytes())
+        for node in tree.iter():
+            if 'BlueprintIdentifier' in node.attrib:
+                uid = node.attrib['BlueprintIdentifier']; require(uid in targets, 'scheme unknown target')
+                node.attrib['BlueprintIdentifier'] = targets[uid]['name']
+        schemes[platform] = ET.tostring(tree, encoding='unicode')
+        info = plistlib.loads((project / ('Info-' + platform + '.plist')).read_bytes())
+        if profile == 'phase': require(info.pop('NSAppTransportSecurity') == ats, 'exact app ATS')
+        require(info == {'EXRSourceSHA': IDENTITY['source_sha'], 'EXRSDKVersion': '3.42.0', 'EXRPageThemeEnabled': True}, 'app Info identity')
+    if profile == 'phase': require(plistlib.loads((project / 'PhaseTests-Info.plist').read_bytes()) == {'NSAppTransportSecurity': ats}, 'test ATS Info')
+    return {'graph': graph, 'schemes': schemes}
+
+
+def project_controls(ats):
+    """Mutate the actual generated graph through the actual admission helper."""
+    baseline = strict_json(read_bounded(PRIVATE / 'phase-pbx.json', 2 * 1024 ** 2)); results = {}
+    objects = baseline['objects']
+    recorder = next(uid for uid, obj in objects.items() if obj.get('isa') == 'PBXFileReference'
+        and obj.get('path', '').endswith('/AppPhaseRecorder.swift'))
+    build = next(uid for uid, obj in objects.items() if obj.get('fileRef') == recorder)
+    phase = next(uid for uid, obj in objects.items() if obj.get('isa') == 'PBXSourcesBuildPhase' and build in obj['files'])
+    other = next(uid for uid, obj in objects.items() if obj.get('isa') == 'PBXResourcesBuildPhase')
+    def negative(name, mutate):
+        altered = copy.deepcopy(baseline); mutate(altered['objects'])
+        try: project_manifest('phase', ats, altered)
+        except ValueError: results[name] = True
+        else: raise ValueError('actual project mutation admitted: ' + name)
+    negative('missing_recorder_membership', lambda o: o[phase]['files'].remove(build))
+    negative('duplicate_recorder_membership', lambda o: o[phase]['files'].append(build))
+    negative('recorder_extra_resource_edge', lambda o: o[other]['files'].append(build))
+    negative('recorder_wrong_source_tree', lambda o: o[recorder].update(sourceTree='SOURCE_ROOT'))
+    negative('recorder_compiler_flags', lambda o: o[build].update(settings={'COMPILER_FLAGS': '-DOTHER'}))
+    negative('recorder_wrong_file_type', lambda o: o[recorder].update(lastKnownFileType='sourcecode.c.c'))
+    negative('recorder_unknown_attribute', lambda o: o[recorder].update(unexpected='value'))
+    negative('unreachable_object', lambda o: o.update({'UNREACHABLE': {'isa': 'PBXGroup', 'children': []}}))
+    negative('recorder_missing_build_file', lambda o: o[phase].update(files=[x for x in o[phase]['files'] if x != build]))
+    save(E / 'project-controls.json', results); emit({'actual_project_controls': results})
+
+
+def runtime_create():
+    global CREATED_UUID
+    _, path, _ = command(['xcrun', 'simctl', 'list', 'runtimes', '-j'], 'runtimes', timeout=180, cap=256 * 1024)
+    data = strict_json(read_bounded(path, 256 * 1024), 256 * 1024)
+    choices = [r for r in data['runtimes'] if r.get('identifier') == RUNTIME]
+    require(len(choices) == 1 and choices[0].get('isAvailable') is True
+            and DEVICE in [d.get('identifier') for d in choices[0]['supportedDeviceTypes']], 'pinned runtime/device')
+    uid = text_command(['xcrun', 'simctl', 'create', 'EXR-build-pair-' + IDENTITY['run_id'], DEVICE, RUNTIME],
+                       'create', timeout=180, cap=4096)
+    require(re.fullmatch(r'[0-9A-Fa-f-]{36}', uid), 'created UUID')
+    CREATED_UUID = uid
+    save(E / 'destination.json', {'uuid': uid, 'runtime': choices[0], 'fresh_created': True, 'booted': False})
+    return uid
+
+
+def observe_build(profile, uid):
+    code, out, err = command(build_argv(profile, uid), profile + '-build', timeout=120, allowed_exit=True, build=(profile, uid))
+    # Fixed numeric-only own-group API; no metadata child or global process scan.
+    members = group_members(os.getpgrp())
+    require(members == {os.getpid()}, 'unclosed owned descendants after build')
+    texts = []; logs = []
+    for path in (out, err):
+        data = read_bounded(path, 16 * 1024 ** 2); text = data.decode('utf-8'); texts.append(text)
+        target = E / 'logs' / path.name; target.parent.mkdir(exist_ok=True); target.write_bytes(data)
+        preview = {'path': target.relative_to(E).as_posix(), 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest(),
+                   'prefix': text[:18000], 'suffix': text[-6000:] if len(text) > 18000 else '', 'preview_truncated': len(text) > 24000}
+        emit({'build_log': preview}); logs.append({k: v for k, v in preview.items() if k not in ('prefix', 'suffix')})
+    full = '\n'.join(texts)
+    root = CONTROL if profile == 'control' else PHASE
+    runs = []
+    folder = root / 'DerivedData/Build/Products'
+    if folder.exists():
+        for path in folder.glob('*.xctestrun'):
+            require(len(runs) < 8 and path.is_file() and not path.is_symlink() and path.stat().st_size <= 1024 ** 2, 'xctestrun bound')
+            runs.append({'name': path.name, 'bytes': path.stat().st_size, 'sha256': sha_file(path)})
+    row = {'profile': profile, 'exit_code': code, 'reaped': True, 'owned_descendants_closed': True,
+        'owned_group_snapshot': sorted(members), 'logs': logs,
+        'description_stage': 'CreateBuildDescription' in full,
+        'description_signatures': re.findall(r'Build description signature: ([0-9a-f]{32})', full),
+        'service_crash': 'The Xcode build system has crashed.' in full,
+        'xctestrun': runs, 'build_succeeded': code == 0 and bool(runs),
+        'native_cases_run': 0, 'root_cause_proved': False}
+    save(E / (profile + '-result.json'), row); emit({'build_outcome': row})
+    return row
+
+
+def pair(run_arm, unchanged, remaining):
+    require(remaining() >= 270, 'insufficient reserved pair/finalization budget')
+    result = []
+    for index, profile in enumerate(('control', 'phase')):
+        require(remaining() >= (2 - index) * 120 + 30, 'pair budget no longer intact')
+        require(unchanged(), 'shared/project input mutation')
+        row = run_arm(profile); result.append(row)
+        require(row.get('profile') == profile and row.get('reaped') is True
+                and row.get('owned_descendants_closed') is True and type(row.get('exit_code')) is int,
+                'arm lifecycle identity')
+        require(unchanged(), 'post-arm input mutation')
+    return result
+
+
+def completed_pair(run_arm, unchanged, remaining):
+    rows = pair(run_arm, unchanged, remaining)
+    require(unchanged() is True, 'final shared/project input revalidation failed')
+    return rows
+
+
+def interpretation(rows):
+    require([r['profile'] for r in rows] == ['control', 'phase'], 'pair order')
+    a, b = rows
+    if not all(r['description_stage'] and r['description_signatures'] for r in rows): return 'inconclusive_before_shared_description_boundary'
+    if a['build_succeeded'] and b['service_crash']: return 'phase_profile_discriminates_in_this_single_ordered_pair'
+    if a['service_crash'] and b['service_crash']: return 'shared_crash_not_unique_to_phase_profile'
+    if a['build_succeeded'] and b['build_succeeded']: return 'non_reproduction_not_a_fix'
+    return 'inconclusive_other_or_order_sensitive_outcome'
+
+
+def controls():
+    result = {}
+    def reject(name, action):
+        try: action()
+        except (ValueError, OSError, zipfile.BadZipFile, UnicodeError): result[name] = True
+        else: raise ValueError('negative control admitted: ' + name)
+    uid = '11111111-1111-1111-1111-111111111111'
+    for name, position, value in [('test_action', 1, 'test'), ('wrong_destination', -1, 'platform=macOS'),
+                                  ('wrong_scheme', 5, 'Other'), ('wrong_sdk', 8, 'EXR_SDK_DIR=/tmp')]:
+        argv = build_argv('control', uid); argv[position] = value
+        reject(name, lambda argv=argv: validate_build(argv, 'control', uid))
+    reject('duplicate_build_arg', lambda: validate_build(build_argv('control', uid) + ['-quiet'], 'control', uid))
+    reject('sdk_rebuild_command', lambda: command_allowed([sys.executable, 'tests/apple_sdk342_package/run.py'], 'fixtures', None))
+    reject('unexpected_command', lambda: command_allowed(['sh', '-c', 'true'], 'version', None))
+    reject('nonfinite_json', lambda: strict_json(b'{"x":NaN}'))
+    reject('duplicate_json', lambda: strict_json(b'{"x":1,"x":2}'))
+    reject('oversized_json', lambda: strict_json(b' ' * 20, 10))
+    reject('unexpected_project_delta', lambda: compare_projects({'control': {'graph': 1}, 'phase': {'graph': 2}}))
+    reject('missing_project_arm', lambda: compare_projects({'control': {}}))
+    valid_delta = ['A\t' + p for p in PATHS]
+    validate_source(IDENTITY['source_sha'], PARENT, valid_delta)
+    reject('source_wrong_head', lambda: validate_source('0' * 40, PARENT, valid_delta))
+    reject('source_wrong_parent', lambda: validate_source(IDENTITY['source_sha'], '0' * 40, valid_delta))
+    reject('source_missing_path', lambda: validate_source(IDENTITY['source_sha'], PARENT, valid_delta[:1]))
+    reject('source_modified_old_path', lambda: validate_source(IDENTITY['source_sha'], PARENT, valid_delta + ['M\texamples/apple/HostModel.swift']))
+    def infos(names): return [zipfile.ZipInfo(n) for n in names]
+    for name, names in [('traversal', ['sdk/../x']), ('case_alias', ['sdk/X', 'sdk/x']),
+        ('unicode_alias', ['sdk/é', 'sdk/é']), ('file_directory', ['sdk/a', 'sdk/a/b']),
+        ('backslash', ['sdk/a\\b']), ('control_character', ['sdk/\x01']), ('extra_root', ['tools/a'])]:
+        reject('zip_' + name, lambda names=names: zip_names(infos(names)))
+    z = zipfile.ZipInfo('sdk/a'); z.external_attr = (stat.S_IFLNK | 0o777) << 16
+    reject('zip_link', lambda: zip_names([z]))
+    z = zipfile.ZipInfo('sdk/a/'); z.file_size = 1
+    reject('zip_directory_data', lambda: zip_names([z]))
+    z = zipfile.ZipInfo('sdk/a'); z.file_size = 512 * 1024 ** 2 + 1
+    reject('zip_expanded_limit', lambda: zip_names([z]))
+    reject('zip_count', lambda: zip_names(infos(['sdk/a'] * 20001)))
+    good_zip = PRIVATE / 'zip-control.zip'
+    with zipfile.ZipFile(good_zip, 'w', compression=zipfile.ZIP_STORED) as fixture_zip:
+        fixture_zip.writestr('sdk/', b''); fixture_zip.writestr('identity.json', b'fixture-marker')
+    rows = unpack(good_zip, PRIVATE / 'zip-control-good')
+    require(len(rows) == 2 and rows[0]['kind'] == 'directory', 'actual ZIP positive')
+    result['zip_actual_directory_and_file'] = True
+    data = bytearray(good_zip.read_bytes()); data[30] = ord('x')
+    bad_zip = PRIVATE / 'zip-control-bad-header.zip'; bad_zip.write_bytes(data)
+    reject('zip_directory_header', lambda: unpack(bad_zip, PRIVATE / 'zip-control-header-out'))
+    data = bytearray(good_zip.read_bytes()); position = data.index(b'fixture-marker'); data[position] ^= 1
+    bad_crc = PRIVATE / 'zip-control-bad-crc.zip'; bad_crc.write_bytes(data)
+    reject('zip_actual_crc', lambda: unpack(bad_crc, PRIVATE / 'zip-control-crc-out'))
+    run = {'id': OLD_RUN, 'run_attempt': 1, 'head_sha': OLD_SHA, 'status': 'completed'}
+    job = {'id': OLD_JOB, 'run_id': OLD_RUN, 'name': 'Privacy SDK iphonesimulator', 'status': 'completed', 'conclusion': 'success'}
+    art = {'id': ARTIFACT, 'name': ARTIFACT_NAME, 'size_in_bytes': ARTIFACT_BYTES, 'expired': False,
+        'digest': 'sha256:' + ARTIFACT_SHA, 'workflow_run': {'id': OLD_RUN, 'head_sha': OLD_SHA}}
+    validate_metadata(run, job, art); result['metadata_positive'] = True
+    for name, field, value in [('artifact_id', 'id', ARTIFACT + 1), ('artifact_size', 'size_in_bytes', 1),
+        ('artifact_expired', 'expired', True), ('artifact_digest', 'digest', 'sha256:wrong')]:
+        altered = dict(art, **{field: value}); reject(name, lambda altered=altered: validate_metadata(run, job, altered))
+    reject('wrong_run', lambda: validate_metadata(dict(run, head_sha='0' * 40), job, art))
+    reject('bool_attempt', lambda: validate_metadata(dict(run, run_attempt=True), job, art))
+    reject('failed_job', lambda: validate_metadata(run, dict(job, conclusion='failure'), art))
+    fixture = PRIVATE / 'hash-control'; fixture.write_bytes(b'abcd')
+    reject('same_size_wrong_digest', lambda: archive_hash(fixture, 4, hashlib.sha256(b'abce').hexdigest()))
+    reject('wrong_zip_length', lambda: archive_hash(fixture, 3, hashlib.sha256(b'abcd').hexdigest()))
+    # Replacement/growth are exercised at the shared FD helper boundaries.
+    probe = PRIVATE / 'fd-controls'; probe.mkdir(); (probe / 'child').mkdir(); (probe / 'child/data').write_bytes(b'owned')
+    def replace_directory(event, name):
+        if event == 'directory_scanned' and name == 'child':
+            (probe / 'child').rename(probe / 'old'); (probe / 'child').symlink_to(probe / 'old', target_is_directory=True)
+    reject('fd_directory_replacement', lambda: inventory(probe, hook=replace_directory))
+    f = PRIVATE / 'fd-file'; f.write_bytes(b'four')
+    def replace_file(event):
+        if event == 'file_scanned': f.rename(PRIVATE / 'old-fd-file'); f.write_bytes(b'new!')
+    reject('fd_file_replacement', lambda: read_bounded(f, 4, replace_file))
+    def grow_file(event):
+        if event == 'file_opened':
+            with f.open('ab') as out: out.write(b'growth')
+    reject('fd_growth_after_open', lambda: read_bounded(f, 4, grow_file))
+    installed = PRIVATE / 'installed-controls'
+    for name in ['sdk/include/exreader.h', 'sdk/include/exr/base.h', 'sdk/lib/libexreader.dylib',
+                 'products/lib/libreader_original_export.a', 'products/include/reader_original_export.h']:
+        p = installed / name; p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(b'fixture')
+    header = installed / 'sdk/include/exr/base.h'; header.write_text('#define EXR_VERSION "3.42.0"\n')
+    installed_files(installed); result['installed_files_positive'] = True
+    header.write_text('#define EXR_VERSION "3.41.0"\n')
+    reject('installed_header_wrong_version', lambda: installed_files(installed))
+    header.write_text('#define EXR_VERSION "3.42.0"\n'); (installed / 'sdk/lib/libexreader.dylib').unlink()
+    reject('installed_required_library_missing', lambda: installed_files(installed))
+    product = {'source_sha': OLD_SHA, 'target': 'iphonesimulator', 'sdk_version': '3.42.0',
+        'installed_modules': MODULES, 'exact_candidate_family': FAMILY, 'sqlite_provider': 'libreader_catalog_sqlite.a',
+        'system_sqlite_fallback': False, 'reading_resolver_linked': False, 'webdav_transport': 'Foundation URLSession',
+        'wave3_enabled': True, 'organization_enabled': True, 'selector_bytes_candidate': True,
+        'sdk_prefix': str(SDK_ROOT / 'sdk'), 'product_prefix': str(SDK_ROOT / 'products')}
+    identity = {'source_sha': OLD_SHA, 'run_id': str(OLD_RUN), 'attempt': '1', 'target': 'iphonesimulator',
+        'sdk_content_candidate': CANDIDATE, 'sdk_content_paths': ['src', 'include', 'cmake', 'CMakeLists.txt', 'bindings'],
+        'page_theme_enabled': True, 'product': product}
+    installed_schema(identity, product); result['installed_schema_positive'] = True
+    for field, wrong in [('source_sha', '0' * 40), ('sdk_version', '3.41.0'), ('wave3_enabled', 1),
+                          ('installed_modules', []), ('system_sqlite_fallback', True), ('sdk_prefix', '/tmp')]:
+        altered = dict(product, **{field: wrong})
+        reject('installed_' + field, lambda altered=altered: installed_schema(dict(identity, product=altered), altered))
+    calls = []
+    def arm(name): calls.append(name); return {'profile': name, 'reaped': True, 'owned_descendants_closed': True, 'exit_code': 70 if name == 'control' else 0}
+    pair(arm, lambda: True, lambda: 300)
+    require(calls == ['control', 'phase'], 'first70 suppressed second'); result['first70_then_second'] = True
+    checks = iter([True, True, True, True, False]); calls.clear()
+    reject('final_fifth_input_check_false', lambda: completed_pair(arm, lambda: next(checks), lambda: 300))
+    require(calls == ['control', 'phase'], 'final-false control did not run both arms')
+    reject('unreaped_arm', lambda: pair(lambda n: {'profile': n, 'reaped': False, 'exit_code': 70}, lambda: True, lambda: 300))
+    reject('mutated_input', lambda: pair(arm, lambda: False, lambda: 300))
+    reject('insufficient_pair_budget', lambda: pair(arm, lambda: True, lambda: 269))
+    reject('wrong_arm_order', lambda: pair(lambda n: {'profile': 'phase', 'reaped': True, 'owned_descendants_closed': True, 'exit_code': 0}, lambda: True, lambda: 300))
+    reject('unclosed_descendants', lambda: pair(lambda n: {'profile': n, 'reaped': True, 'owned_descendants_closed': False, 'exit_code': 70}, lambda: True, lambda: 300))
+    output, complete = shaped({'x': '\x00é😀' * 100000}, 16384)
+    require(len(output) <= 16384 and not complete, 'escaped output bound'); result['encoded_output_bound'] = True
+    output, complete = shaped({str(n): {str(m): ['x' * 1000] * 24 for m in range(24)} for n in range(24)}, 16384)
+    require(len(output) <= 16384 and not complete, 'minimal output fallback'); result['minimal_output_fallback'] = True
+    finalization_controls(result)
+    save(E / 'controls.json', result); emit({'controls': result})
+
+
+def worker():
+    E.mkdir(parents=True, exist_ok=True); PRIVATE.mkdir(mode=0o700, parents=True, exist_ok=True)
+    summary = dict(IDENTITY, comparison_complete=False, interpretation='incomplete', outcomes=[], problems=[],
+        native_cases_run=0, product_accepted=False, formal_credit=0, root_cause_proved=False,
+        sdk_rebuilt=False, ui_run=False, source_profile_factor='baseline versus PhaseB',
+        order_caveat='single ordered pair; shared daemon state is not controlled')
+    uid = None; unsafe = False
+    try:
+        controls(); source_guard(); archive, sdk_before = retained_sdk()
+        fixture_before, generated_before = generate(); uid = runtime_create()
+        def unchanged():
+            archive_hash(archive)
+            return inventory(SDK_ROOT) == sdk_before and inventory(RESOURCES) == fixture_before and all(
+                inventory(root / 'generated') == generated_before[name] for name, root in (('control', CONTROL), ('phase', PHASE)))
+        rows = completed_pair(lambda name: observe_build(name, uid), unchanged, lambda: DEADLINE - time.monotonic())
+        summary.update(outcomes=rows, interpretation=interpretation(rows), comparison_complete=True,
+                       shared_inputs_revalidated=True, sdk_original_source=OLD_SHA,
+                       reached_shared_description_boundary=all(r['description_stage'] and r['description_signatures'] for r in rows),
+                       comparison_complete_scope='two authenticated observed build outcomes, not cause or acceptance')
+    except StopGroup as error:
+        unsafe = True; summary['problems'].append(str(error))
+    except BaseException as error:
+        summary['problems'].append(type(error).__name__ + ': ' + str(error)[:1800])
+        unsafe = ACTIVE is not None and ACTIVE.poll() is None
+    finally:
+        if uid is not None and not unsafe:
+            try: command(['xcrun', 'simctl', 'delete', uid], 'delete-owned-device', timeout=10, cap=8192)
+            except BaseException as error:
+                summary['problems'].append('owned-device cleanup: ' + str(error)[:600]); summary['comparison_complete'] = False
+                unsafe = ACTIVE is not None and ACTIVE.poll() is None
+        if summary['problems']: summary['comparison_complete'] = False
+        summary['unsafe_live_child'] = unsafe
+        try:
+            save(E / 'summary.json', summary)
+            emit({'worker_outcome': summary})
+            if not unsafe:
+                seal_evidence(E)
+                retain_partial(E, PRIVATE / 'partial-refusal')
+                save(PRIVATE / 'worker-ready.json', {'sealed': True, 'comparison_complete': summary['comparison_complete'],
+                    'problems': summary['problems'], 'evidence_path': str(E.relative_to(ROOT)), 'identity': IDENTITY})
+        except BaseException as error:
+            summary['comparison_complete'] = False
+            emit({'worker_finalization_failure': type(error).__name__ + ': ' + str(error)[:1000]})
+    if unsafe: return 2  # Supervisor sees/reaps the remaining owned group now.
+    return 0 if summary['comparison_complete'] else 1
+
+
+# Darwin ABI: apple-oss-distributions/xnu @ f6217f891ac0bb64f3d375211650a4c1ff8ca1ea
+# bsd/sys/signal.h (__siginfo), bsd/sys/wait.h (P_PID/WEXITED/WNOHANG/WNOWAIT),
+# bsd/sys/proc_info.h (PROC_PGRP_ONLY), libsyscall/wrappers/libproc/libproc.h.
+# CPython exposed os.waitid on macOS only in3.13; use the existing OS ABI,
+# not a Python/toolchain upgrade. No process names, argv or other groups read.
+class DarwinSigval(ctypes.Union):
+    _fields_ = [('integer', ctypes.c_int), ('pointer', ctypes.c_void_p)]
+
+
+class DarwinSiginfo(ctypes.Structure):
+    _fields_ = [('signo', ctypes.c_int), ('error', ctypes.c_int), ('code', ctypes.c_int),
+        ('pid', ctypes.c_int), ('uid', ctypes.c_uint), ('status', ctypes.c_int),
+        ('address', ctypes.c_void_p), ('value', DarwinSigval), ('band', ctypes.c_long),
+        ('padding', ctypes.c_ulong * 7)]
+
+
+DARWIN = None
+def darwin():
+    global DARWIN
+    if DARWIN is None:
+        require(sys.platform == 'darwin' and ctypes.sizeof(ctypes.c_void_p) == 8 and
+                ctypes.sizeof(DarwinSiginfo) == 104 and ctypes.alignment(DarwinSiginfo) == 8 and
+                [getattr(DarwinSiginfo, k).offset for k in ('pid', 'status', 'address', 'value', 'padding')]
+                == [12, 20, 24, 32, 48], 'Darwin64 waitid ABI')
+        libc = ctypes.CDLL('/usr/lib/libSystem.B.dylib', use_errno=True)
+        libc.waitid.argtypes = [ctypes.c_int, ctypes.c_uint, ctypes.POINTER(DarwinSiginfo), ctypes.c_int]
+        libc.waitid.restype = ctypes.c_int
+        proc = ctypes.CDLL('/usr/lib/libproc.dylib', use_errno=True)
+        proc.proc_listpids.argtypes = [ctypes.c_uint, ctypes.c_uint, ctypes.c_void_p, ctypes.c_int]
+        proc.proc_listpids.restype = ctypes.c_int
+        DARWIN = (libc, proc)
+    return DARWIN
+
+
+def exited_unreaped(pid):
+    require(pid in PINNED_GROUPS, 'waitid requires retained child ownership')
+    info = DarwinSiginfo(); status = darwin()[0].waitid(1, pid, ctypes.byref(info), 0x04 | 0x01 | 0x20)
+    if status != 0: raise OSError(ctypes.get_errno(), 'owned-child waitid')
+    require(info.pid in (0, pid), 'waitid child identity')
+    if info.pid:
+        require(info.signo == signal.SIGCHLD and info.code in (1, 2, 3), 'waitid exit status domain')
+        return True
+    return False
+
+
+def group_members(pgid):
+    require(pgid in PINNED_GROUPS or pgid == os.getpgrp(), 'numeric owned-group query scope')
+    values = (ctypes.c_int * 1024)()
+    ctypes.set_errno(0)
+    size = darwin()[1].proc_listpids(2, pgid, values, ctypes.sizeof(values))
+    require(ctypes.get_errno() == 0 and 0 <= size < ctypes.sizeof(values) and size % ctypes.sizeof(ctypes.c_int) == 0,
+            'owned-group query failure/ceiling')
+    result = list(values[:size // 4])
+    require(all(0 < pid < 2 ** 31 for pid in result) and len(set(result)) == len(result), 'owned-group PID domain')
+    return set(result)
+
+
+def signal_owned(pid, sig, signals):
+    require(pid in PINNED_GROUPS, 'signal after final reap refused')
+    try: os.killpg(pid, sig)
+    except ProcessLookupError: pass
+    signals.append(int(sig))
+
+
+def hard_deadline(seconds):
+    # Native default action is not delayed until Python regains control from C.
+    # Earlier supervised cleanup remains separate; native termination promises
+    # only the durable emergency receipt, never successful stdout/closure.
+    signal.signal(signal.SIGALRM, signal.SIG_DFL)
+    signal.setitimer(signal.ITIMER_REAL, max(.001, seconds))
+
+
+def supervise(argv, deadline, grace=5, control=False):
+    started = time.monotonic()
+    process = subprocess.Popen(argv, cwd=ROOT, start_new_session=True,
+        stdout=subprocess.DEVNULL if control else None, stderr=subprocess.DEVNULL if control else None)
+    PINNED_GROUPS.add(process.pid)
+    OWNED_PROCESSES[process.pid] = process  # Prevent Popen.__del__ from reaping an unconfirmed leader.
+    result = {'pid': process.pid, 'pgid': process.pid, 'started': started, 'deadline': deadline,
+              'forced': False, 'reaped': False, 'group_closed': False, 'signals_before_reap': []}
+    while time.monotonic() < deadline - grace:
+        if exited_unreaped(process.pid): break
+        time.sleep(.05)
+    dead = exited_unreaped(process.pid); others = group_members(process.pid) - {process.pid}
+    if not dead or others:
+        result['forced'] = True
+        signal_owned(process.pid, signal.SIGTERM, result['signals_before_reap'])
+        end = min(deadline, time.monotonic() + .5)
+        while time.monotonic() < end:
+            if exited_unreaped(process.pid) and not group_members(process.pid) - {process.pid}: break
+            time.sleep(.02)
+        if not exited_unreaped(process.pid) or group_members(process.pid) - {process.pid}:
+            signal_owned(process.pid, signal.SIGKILL, result['signals_before_reap'])
+    while time.monotonic() < deadline:
+        if exited_unreaped(process.pid) and not group_members(process.pid) - {process.pid}:
+            # Pin is removed immediately before the one final reap. No probes or
+            # signals for this numeric ID occur after this ownership boundary.
+            PINNED_GROUPS.remove(process.pid)
+            code = process.wait()
+            del OWNED_PROCESSES[process.pid]
+            result.update(exit_code=code, reaped=True, group_closed=True)
+            break
+        time.sleep(.02)
+    if not result['reaped']:
+        signal_owned(process.pid, signal.SIGKILL, result['signals_before_reap'])
+        result['problem'] = 'group closure unconfirmed; leader remains pinned until hard parent cutoff'
+    result['finished'] = time.monotonic()
+    return result
+
+
+def may_select(lifecycle):
+    return lifecycle.get('reaped') is True and lifecycle.get('group_closed') is True and lifecycle.get('forced') is False
+
+
+def supervisor_controls():
+    require(os.getpid() in group_members(os.getpgrp()), 'actual own-group positive control')
+    natural = supervise([sys.executable, '-B', str(SELF), '--control-exit'], time.monotonic() + 3, 1, True)
+    stalled = supervise([sys.executable, '-B', str(SELF), '--control-stall'], time.monotonic() + 2, 1, True)
+    held = supervise([sys.executable, '-B', str(SELF), '--control-child-held'], time.monotonic() + 3, 2, True)
+    timer = supervise([sys.executable, '-B', str(SELF), '--control-parent-stall'], time.monotonic() + 3, 1, True)
+    require(may_select(natural) and not may_select(stalled) and stalled['forced'] is True
+            and stalled['reaped'] is True and stalled['group_closed'] is True, 'real supervisor controls')
+    require(natural['signals_before_reap'] == [] and held['forced'] is True and held['group_closed'] is True
+            and held['reaped'] is True and timer['exit_code'] == -signal.SIGALRM and may_select(timer), 'actual child-group/parent timer controls')
+    try: signal_owned(natural['pid'], 0, [])
+    except ValueError: pass
+    else: raise ValueError('stale reaped group signal admitted')
+    require(not may_select(dict(natural, group_closed=False)), 'unconfirmed group admitted')
+    return {'natural': natural, 'real_stalled_worker': stalled, 'child_held_group': held,
+            'actual_parent_hard_timer': timer, 'stale_reaped_signal_refused': True, 'unconfirmed_group_refused': True}
+
+
+def terminal_data(value):
+    data = encoded(value)
+    # 15KiB ordinary final +1KiB emergency hard-timer record share16KiB.
+    if len(data) <= 15 * 1024: return data
+    value['comparison_complete'] = False
+    digest = hashlib.sha256(data).hexdigest()
+    compact = {'identity': IDENTITY, 'comparison_complete': False, 'problem': 'terminal details exceeded reservation',
+               'details_sha256': digest, 'native_cases_run': 0, 'formal_credit': 0}
+    result = encoded(compact); require(len(result) <= 15 * 1024, 'finite terminal fallback')
+    return result
+
+
+def downgrade(root, result):
+    summary = strict_json(read_bounded(root / 'summary.json', 65536))
+    summary.update(comparison_complete=False, supervisor_final_failure=result['problems'])
+    # The group is already closed. Only this known receipt changes now; do not
+    # repeat bulk source hashing/inventory in the small outer supervisor.
+    old = strict_json(read_bounded(root / 'inventory.json', 4 * 1024 ** 2), 4 * 1024 ** 2)
+    require(old.get('excludes_self') == 'inventory.json' and 'summary.json' in old['files'], 'sealed inventory shape')
+    data = encoded(summary); previous = old['files']['summary.json']['bytes']
+    old['files']['summary.json'] = {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+    old['bytes'] += len(data) - previous
+    inventory_bytes = encoded(old)
+    require(old['entries'] + 1 <= 2000 and old['bytes'] + len(inventory_bytes) <= 64 * 1024 ** 2, 'final updated evidence ceiling')
+    save(root / 'summary.json', summary); save(root / 'inventory.json', old)
+
+
+def final_receipt(path, value):
+    require(len(encoded(value)) <= 65536, 'final receipt encoded ceiling')
+    save(path, value)
+
+
+def final_bound(root): return inventory(root, 64 * 1024 ** 2, 2000, False)
+
+
+def finalize(result, selected, refusal, publish, sink, down=downgrade, receipt=final_receipt, bound=final_bound, emergency=EMERGENCY):
+    """One <=15KiB terminal emission, leaving1KiB for the hard-timer failure."""
+    def failure(stage, error):
+        result['comparison_complete'] = False
+        result['output_sealed'] = False
+        result['problems'].append(stage + ': ' + type(error).__name__ + ': ' + str(error)[:600])
+    def attempt_downgrade():
+        if selected != refusal:
+            try: down(selected, result)
+            except BaseException as error: failure('retained receipt downgrade', error)
+    result['output_sealed'] = False
+    data = terminal_data(result); errors_before = len(result['problems'])
+    if not result['comparison_complete']: attempt_downgrade()
+    try:
+        require(len(result['problems']) == errors_before, 'downgrade failed; only emergency upload eligible')
+        if selected == refusal or not result['comparison_complete']:
+            receipt(refusal / 'refusal.json', result); candidate = refusal
+        else: candidate = selected
+        bound(candidate)  # After the last retained receipt, before path publication.
+        result['output_sealed'] = True
+        publish(candidate)
+    except BaseException as error:
+        failure('output finalization', error); attempt_downgrade()
+        try: receipt(emergency / 'path-failure.json', result)
+        except BaseException as refused: failure('refusal receipt', refused)
+        # A failed driver selects only fixed tiny emergency, even if a path was
+        # partially published. It never selects E or an unsealed refusal tree.
+    data = terminal_data(result)
+    try:
+        sink(data)
+    except BaseException as error:
+        failure('terminal output', error); attempt_downgrade()
+        try: receipt(emergency / 'terminal-failure.json', result)
+        except BaseException: pass
+        raise
+    return result['comparison_complete']
+
+
+def finalization_controls(result):
+    def fixture(name):
+        root = PRIVATE / ('final-' + name); refusal = PRIVATE / ('refuse-' + name)
+        root.mkdir(); refusal.mkdir(); save(root / 'summary.json', {'comparison_complete': True}); seal_evidence(root)
+        return root, refusal, {'comparison_complete': True, 'problems': []}
+    root, refusal, value = fixture('path')
+    output = []
+    def fail_path(path): raise OSError('synthetic late path failure')
+    require(not finalize(value, root, refusal, fail_path, output.append, emergency=refusal / 'emergency'), 'path failure complete')
+    require(strict_json(read_bounded(root / 'summary.json', 65536))['comparison_complete'] is False
+            and len(output) == 1 and len(output[0]) <= 16384, 'path failure false receipt/output')
+    result['actual_late_path_failure_false'] = True
+    root, refusal, value = fixture('sink')
+    def fail_sink(data): raise OSError('synthetic sink failure')
+    try: finalize(value, root, refusal, lambda p: None, fail_sink, emergency=refusal / 'emergency')
+    except OSError: pass
+    else: raise ValueError('sink failure not propagated')
+    require(strict_json(read_bounded(root / 'summary.json', 65536))['comparison_complete'] is False, 'sink stale success')
+    result['actual_sink_failure_false'] = True
+    root, refusal, value = fixture('shape'); value['large'] = '\x00é😀' * 20000; output = []
+    require(not finalize(value, root, refusal, lambda p: None, output.append, emergency=refusal / 'emergency'), 'formatter fallback complete')
+    require(strict_json(read_bounded(root / 'summary.json', 65536))['comparison_complete'] is False
+            and strict_json(output[0])['comparison_complete'] is False and len(output[0]) <= 16384, 'formatter stale result')
+    result['actual_terminal_fallback_false'] = True
+    root, refusal, value = fixture('double-failure'); value['comparison_complete'] = False; output = []
+    def fail_receipt(*args): raise OSError('synthetic receipt/fsync failure')
+    require(not finalize(value, root, refusal, fail_path, output.append, fail_receipt, fail_receipt,
+                         emergency=refusal / 'emergency'), 'double failure complete')
+    require(len(output) == 1 and strict_json(output[0])['comparison_complete'] is False
+            and any('downgrade' in p for p in strict_json(output[0])['problems']), 'failed receipts hid terminal reason')
+    result['actual_downgrade_and_receipt_failure_visible'] = True
+    root, refusal, value = fixture('bound'); output = []
+    def fail_bound(path): raise ValueError('synthetic final entry ceiling')
+    require(not finalize(value, root, refusal, lambda p: None, output.append, bound=fail_bound, emergency=refusal / 'emergency')
+            and value['output_sealed'] is False and strict_json(output[0])['comparison_complete'] is False,
+            'final inventory failure upload admitted')
+    result['actual_final_inventory_failure_refused'] = True
+
+
+def main():
+    global DEADLINE
+    require(os.environ.get('GITHUB_ACTIONS') == 'true' and sys.platform == 'darwin', 'macOS Actions only')
+    if len(sys.argv) == 2 and sys.argv[1] == '--control-exit': return 0
+    if len(sys.argv) == 2 and sys.argv[1] == '--control-stall': time.sleep(60); return 0
+    if len(sys.argv) == 2 and sys.argv[1] == '--control-child-held':
+        subprocess.Popen([sys.executable, '-B', str(SELF), '--control-stall'])
+        os._exit(0)
+    if len(sys.argv) == 2 and sys.argv[1] == '--control-parent-stall':
+        hard_deadline(.3); time.sleep(60); return 1
+    if len(sys.argv) == 2 and sys.argv[1] == '--worker':
+        hard_deadline(DEADLINE - time.monotonic()); return worker()
+    require(len(sys.argv) == 1, 'explicit supported mode')
+    started = time.monotonic(); deadline = started + 540
+    hard_deadline(540)
+    DEADLINE = deadline
+    EMERGENCY.mkdir(parents=True, exist_ok=True)
+    final_receipt(EMERGENCY / 'bootstrap.json', dict(IDENTITY, comparison_complete=False, output_sealed=False,
+        native_cases_run=0, formal_credit=0, hard_parent_seconds=540,
+        problem='No final sealed driver receipt: native hard termination/runner/sink failure remains possible; cause unresolved'))
+    REFUSAL.mkdir(parents=True, exist_ok=True)
+    save(REFUSAL / 'bootstrap.json', dict(IDENTITY, comparison_complete=False, native_cases_run=0, formal_credit=0))
+    result = dict(IDENTITY, comparison_complete=False, problems=[], native_cases_run=0,
+                  formal_credit=0, product_accepted=False, sdk_rebuilt=False, ui_run=False)
+    selected = REFUSAL
+    try:
+        result['supervisor_controls'] = supervisor_controls()
+        # Ten seconds of the same540 budget remain for finite outer receipts;
+        # the worker itself has five earlier seconds to seal/exit normally.
+        os.environ['EXR_BUILD_PAIR_DEADLINE'] = str(deadline - 20)
+        lifecycle = supervise([sys.executable, '-B', str(SELF), '--worker'], deadline - 10)
+        result['lifecycle'] = lifecycle
+        require(may_select(lifecycle), 'worker/group closure incomplete or forced; live evidence refused')
+        ready_path = PRIVATE / 'worker-ready.json'
+        require(ready_path.is_file() and not ready_path.is_symlink() and ready_path.stat().st_size <= 16384, 'worker final seal absent')
+        ready = strict_json(read_bounded(ready_path, 16384), 16384)
+        require(ready['sealed'] is True and ready['identity'] == IDENTITY and ready['evidence_path'] == str(E.relative_to(ROOT)), 'worker seal identity')
+        # The partial tree stayed private while any worker/group could write it.
+        # Only confirmed closure permits this constant-time publication.
+        os.replace(PRIVATE / 'partial-refusal/partial', REFUSAL / 'partial')
+        final_receipt(REFUSAL / 'closure.json', {'lifecycle': lifecycle, 'identity': IDENTITY, 'comparison_complete': False})
+        selected = E; result['comparison_complete'] = ready['comparison_complete'] is True
+        result['problems'] = ready['problems']
+    except BaseException as error:
+        result['problems'].append(type(error).__name__ + ': ' + str(error)[:1200])
+        # Unknown cleanup can never expose E/private partial data. IDs remain
+        # pinned here, so the last bounded stop cannot target a recycled group.
+        for pid in tuple(PINNED_GROUPS): signal_owned(pid, signal.SIGKILL, [])
+    # Only closed evidence reaches this helper. A partially published path must
+    # never point at a still-true summary after a handled finalization failure.
+    def publish(path):
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+            stream.write('evidence_path=' + str(path.relative_to(ROOT)) + '\ncomparison_complete=' +
+                         str(result['comparison_complete']).lower() + '\n'); stream.flush()
+    def sink(data): sys.stdout.buffer.write(data); sys.stdout.buffer.flush()
+    finalize(result, selected, REFUSAL, publish, sink)
+    # Transport/closure success is distinct from the diagnostic result. The next
+    # workflow status step still fails every incomplete comparison.
+    return 0 if result.get('output_sealed') is True else 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

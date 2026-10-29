@@ -1,0 +1,41 @@
+name: iOS retained SDK paired build diagnosis 20261029
+on:
+  push:
+    branches: [codex/apple-ios-verify-build-comparison-20261029]
+permissions:
+  contents: read
+  actions: read
+env:
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+  EXR_APPLE_SDK_VERSION: '3.42.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'ON'
+jobs:
+  pair:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate retained SDK and compare two actual builds without UI
+        id: comparison
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -B tests/apple_ios_verify_build_comparison_20261029/run.py
+      - name: Preserve incomplete comparison as a failed diagnostic
+        if: always()
+        env:
+          COMPLETE: ${{ steps.comparison.outputs.comparison_complete }}
+        run: test "$COMPLETE" = true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-build-comparison-${{ github.run_id }}-${{ github.run_attempt }}
+          # A hard timer, sink or partial GITHUB_OUTPUT failure can never select
+          # a stale success tree. A handled failure can publish only a sealed
+          # false partial tree; unsealed failures select fixed tiny emergency.
+          path: ${{ steps.comparison.outcome == 'success' && steps.comparison.outputs.evidence_path || 'build/ios-verify-build-comparison/emergency' }}
+          if-no-files-found: error
+          retention-days: 30
