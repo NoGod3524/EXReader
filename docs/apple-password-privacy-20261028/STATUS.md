@@ -307,3 +307,61 @@ the base host generator disables iOS signing, whereas the standalone credentials
 probe declares keychain entitlements. No signing, product owner or SDK change is
 made in this repair; no claim that missing entitlement is the observed cause.
 This source proposal does not authorize publication or a further native run.
+
+## Observed save failures and retained-member refusal (2026-10-29)
+
+Run40813760224/1 at a16304c989aa9c1b94ce6e9bb6644a075b3e326b passed49
+controls and both SDK builds. macOS reported initial saved and completed real
+remembered and session syncs (73.891s/144.054s), reaching three checkpoints;
+the later fourth stage failed. iPhone/iPad reported initial save-incomplete,
+then after restart the fixed missing-credential text existed. Exact Keychain
+OSStatus remains unknown; no simulator signing or product patch was made.
+Strict username/framework findings remain failures and fullF10 stays false.
+
+Retained macOS diagnostic runs40816526995,40817724459,40818904202 did not
+rebuild SDK/native jobs. Their controls passed51/54/57 respectively, but original
+member authentication refused. The final diagnostic checked1761 members:
+only checkpoints.json mismatched, with unequal size AND SHA256; all1760 other
+members matched. Original artifact12871319916 (169232203B,
+sha25619cc7e4b40b3ba01a6c10bf0c143bc911e2772927d6e9742a1d973dbc5e7f3c9)
+is preserved, not relabelled valid. No native failure text is parsed past this
+gate. Safe classification artifact12873791914 (485B,
+sha25615cd21f013e5d4e4aeecdfb61efc5439839b36c433fb273063224169d0b4b9ee)
+records the bounded result without arbitrary member names or bytes.
+
+## Continuation-only drain and evidence-seal repair
+
+Source tracing found daemon fixture handlers could outlive server shutdown and
+write checkpoints during final manifest construction. This is an actual source
+ownership gap consistent with the observed mismatch, not a proven event trace.
+The independently reviewed six-path design was expressly approved for
+implementation/review/publication/verification on2026-10-29 at04:53:43UTC.
+
+Only continuation opts into whole-request-thread admission/counting, bounded
+TLS handshakes and a stopped-serving plus zero-active drain. Closing admission
+rejects late queued handlers. All producer operations and teardown/cleanup
+share a4800-second monotonic ceiling beginning before native build/launch;
+drain also has a90-second cap. This tightens the shared outer bound, never
+increases existing240/360 XCTest,180-second sync or90-second checkpoint budgets.
+Certificate and simulator cleanup are bounded and cannot claim success when
+timed out or skipped. Strict callers retain the original fixture defaults.
+
+After successful drain/cleanup, requests/failures/checkpoints are snapshotted
+without callback writers. Complete regular-file inventories and streamed hashes
+are rechecked twice, including large files, earlier prefixes and directory
+identity. A normal result is published atomically only after sealing; independent
+authentication still rereads every artifact member and requires the exact
+lifecycle receipt. Any later external change continues to fail that hash gate.
+
+On failed drain/cleanup/seal there is no normal result/files manifest: only a
+fixed unsealed refusal is written, and process exit terminates daemon writers
+before Actions uploads raw failure evidence. No timeout becomes success, no old
+manifest is regenerated and no known-mutable-file exclusion is introduced.
+Eleven additive Actions-only controls (proposed total68) cover delayed/disconnected
+callbacks, timeout subprocess exit, late admission/underflow, blocked TLS and
+cleanup, lingering descendant output, FIFO substitution, large-file/namespace
+mutation, atomic failure and forged receipts. Native/log captures remain complete
+(no16MiB truncation); frozen inspectors execute in bounded owned helper processes,
+without changing the strict helpers or printing arbitrary errors.
+This implementation is unrun until Actions and still needs final source review.
+The separate iOS-entitlement plan remains unimplemented and outside this packet.

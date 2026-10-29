@@ -19,6 +19,7 @@ from privacy_scan import needles, scan_roots
 from archive_contract import safe_extract
 from log_evidence import attribute_unified_log, verify_product_log
 from ui_observations import parse_ui_observations
+from continuation_lifecycle import verify_lifecycle
 sys.path[:0] = [str(ROOT / 'tests/apple_host'), str(ROOT / 'tools')]
 from collect_evidence import load_results
 from check_apple_product import inspect
@@ -51,6 +52,9 @@ def validate(directory, source, run, attempt, platform):
     for flag in ('full_f10_accepted', 'dedicated_forget_tested', 'physical_device', 'secure_field_display_is_secret_absence_proof'):
         require(result[flag] is False, 'overclaimed privacy scope')
     require(result['synthetic_canaries_only'] is True, 'non-synthetic privacy input')
+    require(result['evidence_sealed'] is True, 'continuation evidence unsealed')
+    verify_lifecycle(result['lifecycle'], platform)
+    require(result['lifecycle']['admitted_handlers'] >= len(STAGES), 'native checkpoint admissions absent')
     files = {path.relative_to(directory).as_posix() for path in directory.rglob('*') if path.is_file()}
     require(files == set(result['files']) | {'result.json'}, 'unmanifested native file')
     for name, record in result['files'].items():

@@ -22,9 +22,8 @@ from fixture import fixture
 from privacy_scan import needles, scan_file, scan_roots, optional_entries, verify_optional_entries
 from log_evidence import attribute_unified_log, retain_product_log
 from ui_observations import parse_ui_observations
+from continuation_lifecycle import ContinuationLifecycle, atomic_result, seal_files, verify_lifecycle, write_unsealed
 sys.path[:0] = [str(ROOT / 'tests/apple_host'), str(ROOT / 'tools')]
-from collect_evidence import load_results
-from check_apple_product import inspect
 
 
 def main():
@@ -43,13 +42,21 @@ def main():
               'log_scope': 'captured EXReaderHost unified logs including info/debug; not arbitrary OS logs or XCTest input activities',
               'commands': [], 'checkpoints': {}, 'log_attribution': {}, 'failure': None}
     udid = None
+    lifecycle = ContinuationLifecycle(platform)
+    fixture_records = None
     def run(role, *argv, env=None, capture=False):
         # Never echo argv/env: credentials enter only the XCTest runner environment.
-        done = subprocess.run(list(map(str, argv)), cwd=ROOT, env=env, capture_output=True, timeout=4800)
+        done = lifecycle.command(argv, cap=4800, check=False, cwd=ROOT, env=env, max_capture=None)
         (evidence / (role + '.log')).write_bytes(done.stdout + done.stderr)
         result['commands'].append({'role': role, 'exit': done.returncode})
         require(done.returncode == 0, role + ' failed')
         return done.stdout.decode().strip() if capture else None
+    def helper(role, *paths):
+        done = lifecycle.command([sys.executable, ROOT / 'tests/apple_password_privacy_20261028/continuation_lifecycle.py',
+            role, *paths], cap=4800, check=False, cwd=ROOT, max_capture=None)
+        (evidence / (role + '-helper.log')).write_bytes(done.stdout + done.stderr)
+        require(done.returncode == 0, 'bounded frozen helper failed')
+        return json.loads(done.stdout)
     try:
         target = 'macos' if platform == 'macos' else 'iphonesimulator'
         install = ROOT / 'build/password-sdk-input' / ('password-sdk-' + target + '-' + result['run_id'] + '-' + result['attempt'])
@@ -74,7 +81,7 @@ def main():
             runtime, name, udid = max((runtime, device['name'], device['udid']) for runtime, items in devices['devices'].items()
                 for device in items if device.get('isAvailable') and device['name'].startswith(prefix))
             result['simulator'] = {'runtime': runtime, 'name': name, 'udid': udid}
-            subprocess.run(['xcrun', 'simctl', 'shutdown', udid], capture_output=True)
+            lifecycle.command(['xcrun', 'simctl', 'shutdown', udid], check=False)
             run('erase', 'xcrun', 'simctl', 'erase', udid); run('boot', 'xcrun', 'simctl', 'boot', udid)
             run('boot-ready', 'xcrun', 'simctl', 'bootstatus', udid, '-b')
             destination, scheme, suffix, signing = 'platform=iOS Simulator,id=' + udid, 'EXReaderHost-iOS', 'Debug-iphonesimulator', 'NO'
@@ -87,7 +94,7 @@ def main():
         binary = app / (prefix + ('MacOS/EXReaderHost' if platform == 'macos' else 'EXReaderHost'))
         info = plistlib.loads((app / (prefix + 'Info.plist')).read_bytes())
         require(info['CFBundleIdentifier'] == BUNDLE and info['EXRSourceSHA'] == result['source_sha'] and info['EXRSDKVersion'] == '3.42.0' and info['EXRPageThemeEnabled'] is True, 'actual app identity differs')
-        result['provider_check'] = inspect(binary, built / 'EXReaderHost.link.map', True)
+        result['provider_check'] = helper('inspect', binary, built / 'EXReaderHost.link.map')
         shutil.copyfile(built / 'EXReaderHost.link.map', evidence / 'EXReaderHost.link.map')
         runtime_library = app / (prefix + 'Frameworks/libexreader.3.42.0.dylib')
         require(runtime_library.is_file(), 'packaged runtime absent')
@@ -106,7 +113,7 @@ def main():
         active_root = [None]
         def locations():
             if udid:
-                container = Path(subprocess.check_output(['xcrun', 'simctl', 'get_app_container', udid, BUNDLE, 'data'], text=True).strip())
+                container = Path(lifecycle.command(['xcrun', 'simctl', 'get_app_container', udid, BUNDLE, 'data']).stdout.decode().strip())
                 return container / 'Library/Application Support/EXReader', {'container': container}
             profile = Path.home() / 'Library/Application Support/EXReader'
             roots = {'profile': profile}
@@ -147,7 +154,8 @@ def main():
                     else: require(False, 'linked or special private macOS root')
             else: absence = []
             command = ['xcrun', 'simctl', 'spawn', udid] if udid else []
-            done = subprocess.run(command + ['log', 'show', '--style', 'json', '--info', '--debug', '--last', '30m', '--predicate', 'process == "EXReaderHost"'], capture_output=True, timeout=60)
+            done = lifecycle.command(command + ['log', 'show', '--style', 'json', '--info', '--debug', '--last', '30m',
+                '--predicate', 'process == "EXReaderHost"'], cap=60, check=False, max_capture=None)
             # Retain complete captured bytes before scan/capture refusal. These
             # sensitive synthetic-only artifacts are never printed to console.
             log_root = retain_product_log(evidence, stage, platform, result['source_sha'], result['run_id'],
@@ -206,23 +214,22 @@ def main():
                 'sdk_original_sha256': hashlib.sha256(original).hexdigest(), 'original_bytes': len(original)}
             (evidence / 'checkpoints.json').write_text(json.dumps(result['checkpoints'], indent=2) + '\n')
         endpoint = '/privacy-' + secrets.token_hex(12) + '/'
-        with fixture(out / 'fixture-private', authorizations, checkpoint, endpoint) as (root, entries, requests, failures, certificate):
+        with fixture(out / 'fixture-private', authorizations, checkpoint, endpoint, lifecycle=lifecycle) as (root, entries, requests, failures, certificate):
             active_root[0] = root
+            fixture_records = (requests, failures)
+            result['root'] = root
             if udid: run('trust-simulator', 'xcrun', 'simctl', 'keychain', udid, 'add-root-cert', certificate)
             xcresult = evidence / 'privacy.xcresult'
-            try:
-                run('native', 'xcodebuild', 'test-without-building', *common, '-resultBundlePath', xcresult,
+            run('native', 'xcodebuild', 'test-without-building', *common, '-resultBundlePath', xcresult,
                     '-parallel-testing-enabled', 'NO', '-test-timeouts-enabled', 'YES',
                     '-default-test-execution-time-allowance', '240', '-maximum-test-execution-time-allowance', '360',
                     env=dict(os.environ, TEST_RUNNER_EXR_PRIVACY_ROOT=root, TEST_RUNNER_EXR_PRIVACY_USER=user,
                              TEST_RUNNER_EXR_PRIVACY_REMEMBERED=passwords['remembered'], TEST_RUNNER_EXR_PRIVACY_SESSION=passwords['session']))
-            finally:
-                result['root'] = root
-                (evidence / 'requests.json').write_text(json.dumps(requests, indent=2) + '\n')
-                (evidence / 'fixture-failures.json').write_text(json.dumps(failures) + '\n')
-            require(not failures and list(result['checkpoints']) == STAGES, 'privacy observation incomplete')
-            require(len([body for body in entries.values() if body == original]) == 1, 'actual remote original differs')
-        result['cases'] = load_results(xcresult)
+        # Fixture exit now owns the complete request-thread drain. These reads
+        # cannot race an admitted handler, including after a client timeout.
+        require(not failures and list(result['checkpoints']) == STAGES, 'privacy observation incomplete')
+        require(len([body for body in entries.values() if body == original]) == 1, 'actual remote original differs')
+        result['cases'] = helper('cases', xcresult)
         require(len(result['cases']) == 1 and case_name(result['cases'][0]['name']) == CASE and result['cases'][0]['result'] == 'Passed', 'native case failed')
         run('attachments', 'xcrun', 'xcresulttool', 'export', 'attachments', '--path', xcresult, '--output-path', evidence / 'attachments')
         result['native_stages'], result['screenshots'] = attachments(evidence / 'attachments')
@@ -237,23 +244,47 @@ def main():
         result['failure'] = type(error).__name__
     finally:
         if udid:
-            subprocess.run(['xcrun', 'simctl', 'shutdown', udid], capture_output=True)
-            cleaned = subprocess.run(['xcrun', 'simctl', 'erase', udid], capture_output=True)
-            result['simulator_removed_fixture_state'] = cleaned.returncode == 0
-            if cleaned.returncode: result['sequence_complete'] = False
+            stopped = lifecycle.cleanup_command('simulator-shutdown', ['xcrun', 'simctl', 'shutdown', udid])
+            cleaned = lifecycle.cleanup_command('simulator-erase', ['xcrun', 'simctl', 'erase', udid])
+            # Do not read a mutable callback-owned dictionary on failed drain.
+            if lifecycle.drained:
+                result['simulator_removed_fixture_state'] = stopped and cleaned
+                if not (stopped and cleaned): result['sequence_complete'] = False
+        if lifecycle.certificate_delete is not None and lifecycle.cleanup['certificate'] == 'pending':
+            lifecycle.cleanup_command('certificate', lifecycle.certificate_delete)
         try:
-            result['ui_state_observations'] = parse_ui_observations(evidence / 'native.log')
+            receipt = lifecycle.receipt()
+            verify_lifecycle(receipt, platform)
+            lifecycle.remaining()
+            require(fixture_records is not None, 'drained fixture records absent')
+            requests, failures = fixture_records
+            (evidence / 'requests.json').write_text(json.dumps(requests, indent=2) + '\n')
+            (evidence / 'fixture-failures.json').write_text(json.dumps(failures) + '\n')
+            if result['checkpoints']:
+                require((evidence / 'checkpoints.json').read_text() == json.dumps(result['checkpoints'], indent=2) + '\n',
+                        'stable checkpoint metadata differs')
+            try:
+                result['ui_state_observations'] = parse_ui_observations(evidence / 'native.log')
+            except Exception:
+                result['ui_state_observations'] = {'valid': False, 'observed': False,
+                    'records': [], 'failure': 'unavailable-or-invalid', 'raw_ui_text_printed': False,
+                    'privacy_acceptance': False}
+            result['lifecycle'] = receipt
+            result['evidence_sealed'] = True
+            result['files'] = seal_files(evidence, deadline=lifecycle.deadline)
+            lifecycle.remaining()
+            atomic_result(evidence, result, deadline=lifecycle.deadline)
+            print(json.dumps({key: result[key] for key in ('accepted', 'diagnostic_only', 'sequence_complete', 'strict_privacy_checks',
+                  'source_sha', 'platform', 'failure', 'full_f10_accepted', 'log_attribution', 'ui_state_observations',
+                  'lifecycle', 'evidence_sealed')}), flush=True)
         except Exception:
-            # Preserve original failure/evidence even if ancillary observation
-            # parsing is absent/invalid; no arbitrary native text is echoed.
-            result['ui_state_observations'] = {'valid': False, 'observed': False,
-                'records': [], 'failure': 'unavailable-or-invalid', 'raw_ui_text_printed': False,
-                'privacy_acceptance': False}
-        result['files'] = {str(path.relative_to(evidence)): {'bytes': path.stat().st_size, 'sha256': sha(path)}
-                           for path in evidence.rglob('*') if path.is_file() and path != evidence / 'result.json'}
-        (evidence / 'result.json').write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
-        print(json.dumps({key: result[key] for key in ('accepted', 'diagnostic_only', 'sequence_complete', 'strict_privacy_checks',
-              'source_sha', 'platform', 'failure', 'full_f10_accepted', 'log_attribution', 'ui_state_observations')}), flush=True)
+            # A live daemon callback cannot be safely cancelled in Python.
+            # Publish no normal result/files manifest and inspect no mutable
+            # callback-owned dictionaries. Process exit terminates its writers
+            # before Actions can upload the raw, explicitly unsealed evidence.
+            refusal = write_unsealed(evidence, os.environ['GITHUB_SHA'], platform, lifecycle)
+            print(json.dumps(refusal, sort_keys=True), flush=True)
+            raise RuntimeError('continuation evidence unsealed; acceptance remains false') from None
     require(result['sequence_complete'], 'diagnostic sequence incomplete; strict/native/F10 acceptance remains false')
 
 if __name__ == '__main__': main()

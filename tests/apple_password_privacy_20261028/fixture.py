@@ -11,17 +11,28 @@ from xml.sax.saxutils import escape
 
 
 @contextmanager
-def fixture(folder, authorizations, checkpoint, prefix):
+def fixture(folder, authorizations, checkpoint, prefix, lifecycle=None):
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
     assert prefix.startswith('/privacy-') and prefix.endswith('/')
     folder.mkdir(parents=True, exist_ok=False)
     cert, key = folder / 'server.crt', folder / 'server.key'
-    subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
+    certificate_command = ['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
                     '-keyout', str(key), '-out', str(cert), '-subj', '/CN=localhost',
-                    '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], check=True, capture_output=True)
-    fingerprint = subprocess.check_output(['openssl', 'x509', '-in', str(cert), '-noout', '-fingerprint', '-sha1'], text=True).strip().split('=', 1)[1].replace(':', '')
-    subprocess.run(['sudo', 'security', 'add-trusted-cert', '-d', '-r', 'trustRoot',
-                    '-k', '/Library/Keychains/System.keychain', str(cert)], check=True, capture_output=True)
+                    '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1']
+    fingerprint_command = ['openssl', 'x509', '-in', str(cert), '-noout', '-fingerprint', '-sha1']
+    trust_command = ['sudo', 'security', 'add-trusted-cert', '-d', '-r', 'trustRoot',
+                    '-k', '/Library/Keychains/System.keychain', str(cert)]
+    if lifecycle is None:
+        subprocess.run(certificate_command, check=True, capture_output=True)
+        fingerprint = subprocess.check_output(fingerprint_command, text=True).strip().split('=', 1)[1].replace(':', '')
+        subprocess.run(trust_command, check=True, capture_output=True)
+    else:
+        lifecycle.command(certificate_command)
+        fingerprint = lifecycle.command(fingerprint_command).stdout.decode().strip().split('=', 1)[1].replace(':', '')
+        lifecycle.certificate_delete = ['sudo', 'security', 'delete-certificate', '-Z', fingerprint,
+                                       '/Library/Keychains/System.keychain']
+        lifecycle.cleanup['certificate'] = 'pending'
+        lifecycle.command(trust_command)
     entries, directories, requests, failures = {}, {prefix}, [], []
     lock = threading.RLock()
     class Handler(BaseHTTPRequestHandler):
@@ -80,15 +91,27 @@ def fixture(folder, authorizations, checkpoint, prefix):
                     '</d:getcontentlength></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>'
                     for path, collection, size in children]
             self.send(207, ('<d:multistatus xmlns:d="DAV:">' + ''.join(rows) + '</d:multistatus>').encode())
-    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler); server.daemon_threads = True
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER); context.load_cert_chain(cert, key)
-    server.socket = context.wrap_socket(server.socket, server_side=True)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    if lifecycle is None:
+        server = ThreadingHTTPServer(('127.0.0.1', 0), Handler); server.daemon_threads = True
+        server.socket = context.wrap_socket(server.socket, server_side=True)
+    else:
+        from continuation_lifecycle import LifecycleHTTPServer
+        server = LifecycleHTTPServer(('127.0.0.1', 0), Handler, lifecycle, context, failures)
+    serving = threading.Thread(target=server.serve_forever, daemon=True)
+    serving.start()
     root = 'https://127.0.0.1:' + str(server.server_port) + prefix
     try:
         yield root, entries, requests, failures, cert
     finally:
-        server.shutdown(); server.server_close()
-        key.unlink(missing_ok=True)
-        subprocess.run(['sudo', 'security', 'delete-certificate', '-Z', fingerprint,
-                        '/Library/Keychains/System.keychain'], check=True, capture_output=True)
+        if lifecycle is None:
+            server.shutdown(); server.server_close()
+            key.unlink(missing_ok=True)
+            subprocess.run(['sudo', 'security', 'delete-certificate', '-Z', fingerprint,
+                            '/Library/Keychains/System.keychain'], check=True, capture_output=True)
+        else:
+            try:
+                lifecycle.stop(server, serving)
+            finally:
+                key.unlink(missing_ok=True)
+                lifecycle.cleanup_command('certificate', lifecycle.certificate_delete)
