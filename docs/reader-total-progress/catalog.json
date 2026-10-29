@@ -390,6 +390,62 @@
       "source_prefix": "716c1409168960a276e282ce694d32ed82497bc9",
       "expected_conclusion": "failure",
       "adapter": "macos_organization_40635727935"
+    },
+    "apple_font_macos": {
+      "run": 40904394809,
+      "doc": "docs/reader-total-progress/apple-four-audited-20261029.md",
+      "source_prefix": "1def6623e5d0aa2d7562940de96970b893c04909",
+      "adapter": "apple_four_40904394809",
+      "kind": "font",
+      "platform": "macos",
+      "original_run": 40627627614,
+      "original_source": "d23fc1de44d94a80ea8cfc5aa8d74fb24d63400a",
+      "original_job": 122631975989,
+      "original_artifact": 12797582999,
+      "original_archive_sha256": "1336682b0517ae8c09a6bf1b15794c49d6fc146313318d64802222defb137954",
+      "test": "testDistinctFontInvalidRollbackLeaseAndReopen()"
+    },
+    "apple_font_iphone": {
+      "run": 40904394809,
+      "doc": "docs/reader-total-progress/apple-four-audited-20261029.md",
+      "source_prefix": "1def6623e5d0aa2d7562940de96970b893c04909",
+      "adapter": "apple_four_40904394809",
+      "kind": "font",
+      "platform": "iphone",
+      "original_run": 40627627614,
+      "original_source": "d23fc1de44d94a80ea8cfc5aa8d74fb24d63400a",
+      "original_job": 122631976053,
+      "original_artifact": 12796153132,
+      "original_archive_sha256": "408efe954e765d8f81dca04d1b81fc54ad73090c856cf4c165d7e6722e797ae7",
+      "test": "testDistinctFontInvalidRollbackLeaseAndReopen()"
+    },
+    "apple_font_ipad": {
+      "run": 40904394809,
+      "doc": "docs/reader-total-progress/apple-four-audited-20261029.md",
+      "source_prefix": "1def6623e5d0aa2d7562940de96970b893c04909",
+      "adapter": "apple_four_40904394809",
+      "kind": "font",
+      "platform": "ipad",
+      "original_run": 40627627614,
+      "original_source": "d23fc1de44d94a80ea8cfc5aa8d74fb24d63400a",
+      "original_job": 122631976036,
+      "original_artifact": 12798444673,
+      "original_archive_sha256": "2e6a7aea86efde4862f1f2b2c9315b5860c01068b9874cdda4dace504fc33eb1",
+      "test": "testDistinctFontInvalidRollbackLeaseAndReopen()"
+    },
+    "apple_original_macos": {
+      "run": 40904394809,
+      "doc": "docs/reader-total-progress/apple-four-audited-20261029.md",
+      "source_prefix": "1def6623e5d0aa2d7562940de96970b893c04909",
+      "adapter": "apple_four_40904394809",
+      "kind": "original",
+      "platform": "macos",
+      "original_run": 40647623322,
+      "original_source": "e0926aee809ac94ccad46ee57bda6ca52a5f5656",
+      "original_job": 122680014094,
+      "original_artifact": 12799106807,
+      "original_archive_sha256": "4a54c9f945a3ddbec14b71fa9640163098908400bf2e6f43c3635a95929940ab",
+      "test": "testSystemFolderSave()"
     }
   },
   "requirements": [
@@ -921,9 +977,11 @@
       "group": "host",
       "platform": "macos",
       "title": "macOS：本地字体导入、选择/lease 与坏字体保留原页",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_font_macos"
+      ],
+      "note": "原始专项 XCTest、字体及受测程序经独立 Actions 复核；iPhone/iPad 为模拟器，完整同源交付另验。"
     },
     {
       "id": "H.macos.annotation_exchange",
@@ -939,9 +997,11 @@
       "group": "host",
       "platform": "macos",
       "title": "macOS：宿主原件导出、系统保存及逐字节回读",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_original_macos"
+      ],
+      "note": "原始 macOS 系统目录选择、导出及 EPUB 字节回读经独立 Actions 复核；原运行未保留程序二进制，程序哈希仅为原记录。完整同源交付另验。"
     },
     {
       "id": "H.macos.jump_history",
@@ -1221,9 +1281,11 @@
       "group": "host",
       "platform": "iphone",
       "title": "iPhone：本地字体导入、选择/lease 与坏字体保留原页",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_font_iphone"
+      ],
+      "note": "原始专项 XCTest、字体及受测程序经独立 Actions 复核；iPhone/iPad 为模拟器，完整同源交付另验。"
     },
     {
       "id": "H.iphone.annotation_exchange",
@@ -1366,9 +1428,11 @@
       "group": "host",
       "platform": "ipad",
       "title": "iPad：本地字体导入、选择/lease 与坏字体保留原页",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_font_ipad"
+      ],
+      "note": "原始专项 XCTest、字体及受测程序经独立 Actions 复核；iPhone/iPad 为模拟器，完整同源交付另验。"
     },
     {
       "id": "H.ipad.annotation_exchange",
