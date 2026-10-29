@@ -41,6 +41,9 @@ def main():
     snippets = [dict(line=i+1, context=lines[max(0,i-4):min(len(lines),i+12)]) for i in indexes]
     picker = [i for i, line in enumerate(lines) if re.search(r'Picker cannot|XCTAssert|error:', line)]
     blocks = ['\n'.join(lines[max(0,i-10):min(len(lines),i+700)]) for i in picker]
+    start = next(i for i, line in enumerate(lines) if 'testNativeAnnotationPreviewConfirmCancelAndDuplicate' in line and 'started.' in line)
+    end = next(i for i in range(start + 1, len(lines)) if "testNativeHistoryAfterFoundAndLargeRotationExit" in lines[i] and 'started.' in lines[i])
+    blocks.append('\n'.join(lines[start:end]))
     (out / 'failure-context.txt').write_text('\n\n'.join(blocks))
     print('FAILURE CONTEXT\n' + '\n\n'.join(blocks)[-150000:], flush=True)
     xcresult = bundle / 'wave3.xcresult'
@@ -49,6 +52,10 @@ def main():
     print('RAW XCRESULT TESTS\n' + tests, flush=True)
     attachments = out / 'attachments'
     subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', str(xcresult), '--output-path', str(attachments)], check=True)
+    for item in sorted(attachments.rglob('*.txt')):
+        content = item.read_text(errors='replace')
+        if 'EXReaderAnnotations' in content or 'jsonl' in content:
+            print('RETAINED PICKER TEXT ' + item.name + '\n' + content[:50000], flush=True)
     report = dict(artifact_id=aid, artifact_bytes=size, artifact_sha256=sha, source=result['source_sha'], platform=args.platform,
                   inspection_source=os.environ['GITHUB_SHA'], phases=result['phases'], matches=snippets, inspected=True, accepted=False)
     (out / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
