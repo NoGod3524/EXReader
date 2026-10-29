@@ -4,6 +4,8 @@
 import os
 import json
 import copy
+import base64
+import hashlib
 from pathlib import Path
 import tempfile
 import subprocess
@@ -31,6 +33,67 @@ def diagnostic_control_macho(section):
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_original_source_bytes_are_bound_to_pin_not_current_checkout(self):
+        data = b'fixed source\nsecond line\n'
+        record = {'type': 'file', 'path': SOURCE_FILE, 'encoding': 'base64',
+                  'size': len(data), 'content': base64.b64encode(data).decode()}
+        digest = hashlib.sha256(data).hexdigest()
+        proof = inspector.verify_frozen_ui_source(record, digest, 2)
+        self.assertTrue(proof['immutable_source_bytes_verified'])
+        for changed in (dict(record, path='foreign.swift'), dict(record, size=True),
+                dict(record, size=len(data) + 1), dict(record, encoding='other'),
+                dict(record, content=base64.b64encode(b'changed source').decode())):
+            with self.assertRaises(RuntimeError): inspector.verify_frozen_ui_source(changed, digest, 2)
+        with self.assertRaises(RuntimeError): inspector.verify_frozen_ui_source(record, 'f' * 64, 2)
+        with self.assertRaises(RuntimeError): inspector.verify_frozen_ui_source(record, digest, 3)
+
+    def test_namespace_categories_observe_but_never_waive_extra_roots(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); folder = root / 'ios-admission'; folder.mkdir()
+            manifest = {}
+            for phase in ('pre-sign', 'post-sign', 'installed'):
+                archive = folder / (phase + '.zip')
+                with zipfile.ZipFile(archive, 'w') as zipped:
+                    zipped.writestr('EXReaderHost.app/Info.plist', b'fixed fixture')
+                    zipped.writestr('__MACOSX/._EXReaderHost.app', b'fixed metadata fixture')
+                    zipped.writestr('private-operand/root', b'fixed unknown fixture')
+                manifest[phase] = {'archive_bytes': archive.stat().st_size, 'archive_sha256': sha(archive)}
+            (folder / 'manifest.json').write_text(json.dumps(manifest))
+            rows = inspector.admission_namespaces(root)
+            self.assertEqual([row['phase'] for row in rows], ['pre-sign', 'post-sign', 'installed'])
+            for row in rows:
+                self.assertEqual(row['root_categories'], {role: {'directories': 1, 'files': 0}
+                    for role in ('host-app', 'metadata-named', 'other')})
+                self.assertEqual(row['all_member_count'], 3); self.assertFalse(row['namespace_accepted'])
+            self.assertNotIn('private-operand', json.dumps(rows))
+            with self.assertRaisesRegex(RuntimeError, '^admission archive namespace differs$'):
+                authenticator.verify_ios_admission(root, 'a' * 40, {}, require_program=False)
+
+    def test_each_platform_is_attempted_and_each_refusal_stays_fatal(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.object(inspector, 'COMPLETED_REPORTS', []), \
+                patch.object(inspector, 'CURRENT_PLATFORM', None), patch.object(inspector, 'CURRENT_MEMBER_INTEGRITY', None), \
+                patch.object(inspector, 'CURRENT_SAFE_REPORT', None), patch('builtins.print'):
+            attempted = []
+            def diagnostic(out, platform, identifier, size, digest):
+                attempted.append(platform)
+                partial = {'accepted': False, 'platform': platform, 'full_f10_accepted': False}
+                if platform == 'iphone':
+                    inspector.CURRENT_SAFE_REPORT = partial
+                    inspector.diagnostic_stage('admission-replay')
+                    raise RuntimeError('admission archive namespace differs')
+                return partial
+            self.assertFalse(inspector.run_platforms(Path(temporary), diagnostic))
+            self.assertEqual(attempted, ['macos', 'iphone', 'ipad'])
+            reports = json.loads((Path(temporary) / 'diagnostic.json').read_text())
+            self.assertEqual(len(reports), 3)
+            self.assertTrue(reports[1]['diagnostic_refused'])
+            self.assertEqual(reports[1]['refusal_code'], 'admission-namespace')
+            self.assertIsNone(reports[1]['member_integrity'])
+            self.assertFalse(reports[1]['validated_partial_report']['accepted'])
+            self.assertEqual(reports[2]['platform'], 'ipad')
+            self.assertTrue(all(row['accepted'] is False for row in reports))
+        inspector.diagnostic_stage('entry')
+
     def test_failed_native_admission_replay_cannot_disable_default_program_binding(self):
         # Synthetic protocol app, not a runnable binary/native signature proof.
         with tempfile.TemporaryDirectory() as temporary:
@@ -196,9 +259,8 @@ class ContinuationDiagnosticControls(unittest.TestCase):
             'macos': (12877853284, 174106763, '422e440cd4f2f611c7aa0090192a732444f3ceb883441455ab7e06b44ddc83d4'),
             'iphone': (12877814969, 183086735, 'c481ce8c63bbed8755484905b462c829b4f309709f3a7e62181973262bd2898c'),
             'ipad': (12878446195, 235684416, '2859f0d1d0f6c01e1aac6328f4f6582a937a97dbf0d34bfc56f04efd8bb2c3d9')})
-        self.assertEqual(sha(ROOT / SOURCE_FILE), SOURCE_SHA)
+        self.assertEqual(SOURCE_SHA, '6555ab86d6a1f517a496a5ce777dfe67ff70a30c89c4cea5a6c7a4a5459fb079')
         self.assertEqual(SOURCE_LAST_LINE, 267)
-        self.assertEqual(len((ROOT / SOURCE_FILE).read_text().splitlines()), SOURCE_LAST_LINE)
 
     def test_current_source_last_line_is_bounded_in_both_extractors(self):
         with tempfile.TemporaryDirectory() as folder:

@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 """Pinned failed continuation evidence; fixed-output diagnosis, never acceptance."""
 import json
+import base64
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -49,6 +51,7 @@ DIAGNOSTIC_STAGES = ('entry', 'scope-and-source', 'artifact-metadata', 'artifact
 CURRENT_DIAGNOSTIC_STAGE = 'entry'
 CURRENT_MEMBER_INTEGRITY = None
 CURRENT_PLATFORM = None
+CURRENT_SAFE_REPORT = None
 COMPLETED_REPORTS = []
 ADMISSION_COMMAND_ROLES = {'admission-pre-sign-archive', 'admission-host-sign',
     'admission-post-sign-display', 'admission-post-sign-verify', 'admission-post-sign-archive',
@@ -94,6 +97,9 @@ REFUSAL_CODES = {
     'entitlement section absent or duplicate': 'admission-entitlement-section',
     'unsupported simulator executable': 'admission-executable-format',
     'simulator platform identity differs': 'admission-executable-platform',
+    'pinned source metadata differs': 'source-metadata',
+    'pinned source bytes differ': 'source-bytes',
+    'pinned source line extent differs': 'source-extent',
     'prior continuation verdict differs': 'prior-verdict',
     'unexpected strict checks': 'strict-check-shape',
     'unexpected checkpoint': 'checkpoint-shape',
@@ -192,6 +198,41 @@ def sealed_lifecycle(result, platform):
     # verify_lifecycle permits only fixed keys, booleans, bounded counts and
     # fixed cleanup states. This receipt is not an authenticated event trace.
     return receipt
+
+
+def verify_frozen_ui_source(record, expected_sha=SOURCE_SHA, expected_lines=SOURCE_LAST_LINE):
+    """Bind old line positions to the immutable original source, not new UI edits."""
+    require(type(record) is dict and record.get('type') == 'file' and record.get('path') == SOURCE_FILE and
+            record.get('encoding') == 'base64' and type(record.get('size')) is int and
+            0 < record['size'] <= 256 * 1024 and type(record.get('content')) is str and
+            len(record['content']) <= 512 * 1024, 'pinned source metadata differs')
+    data = base64.b64decode(record['content'].replace('\n', ''), validate=True)
+    require(len(data) == record['size'] and hashlib.sha256(data).hexdigest() == expected_sha, 'pinned source bytes differ')
+    require(len(data.decode('utf-8', errors='strict').splitlines()) == expected_lines, 'pinned source line extent differs')
+    return {'immutable_source_bytes_verified': True, 'source_positions_not_authenticated_callsites': True}
+
+
+def admission_namespaces(directory):
+    """Observe finite root categories only; this never admits an extra namespace."""
+    manifest = json.loads((directory / 'ios-admission/manifest.json').read_text())
+    require(type(manifest) is dict and set(manifest) == {'pre-sign', 'post-sign', 'installed'}, 'admission phase evidence incomplete')
+    reports = []
+    for phase in ('pre-sign', 'post-sign', 'installed'):
+        archive = directory / 'ios-admission' / (phase + '.zip'); record = manifest[phase]
+        require(type(record['archive_bytes']) is int and archive.stat().st_size == record['archive_bytes'] and
+                sha(archive) == record['archive_sha256'], 'admission original archive differs')
+        with tempfile.TemporaryDirectory(prefix='privacy-namespace-diagnostic-') as temporary:
+            root = Path(temporary); safe_extract(archive, root)
+            entries = list(root.iterdir())
+            counts = {'host-app': {'directories': 0, 'files': 0},
+                      'metadata-named': {'directories': 0, 'files': 0}, 'other': {'directories': 0, 'files': 0}}
+            for path in entries:
+                role = 'host-app' if path.name == 'EXReaderHost.app' else 'metadata-named' if path.name == '__MACOSX' else 'other'
+                counts[role]['directories' if path.is_dir() else 'files'] += 1
+            reports.append({'phase': phase, 'root_entry_count': len(entries), 'root_categories': counts,
+                'all_member_count': sum(1 for path in root.rglob('*') if path.is_file()),
+                'namespace_accepted': False, 'arbitrary_names_or_bytes_printed': False})
+    return reports
 
 
 def locations(path):
@@ -364,110 +405,136 @@ def attachment_summary(directory):
             'token_presence_is_actual_ui_state_proof': False, 'images_not_ocr_interpreted': True}
 
 
-def main():
-    global CURRENT_MEMBER_INTEGRITY, CURRENT_PLATFORM
-    require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
-    diagnostic_stage('scope-and-source')
-    guard()
-    require(sha(ROOT / SOURCE_FILE) == SOURCE_SHA, 'frozen diagnostic source positions changed')
-    require(len((ROOT / SOURCE_FILE).read_text().splitlines()) == SOURCE_LAST_LINE,
-            'frozen diagnostic source extent changed')
-    require(set(ARTIFACTS) == {'macos', 'iphone', 'ipad'}, 'exact three-platform diagnostic artifact pins required')
-    out = ROOT / 'build/apple-password-continuation-diagnostic'; out.mkdir(parents=True, exist_ok=False)
+def diagnose_platform(out, platform, identifier, size, digest):
+    global CURRENT_MEMBER_INTEGRITY, CURRENT_PLATFORM, CURRENT_SAFE_REPORT
+    CURRENT_PLATFORM = platform
+    CURRENT_MEMBER_INTEGRITY = None
+    diagnostic_stage('artifact-metadata')
+    endpoint = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/artifacts/' + str(identifier)
+    record = json.loads(subprocess.check_output(['gh', 'api', endpoint]))
+    require(record['id'] == identifier and record['name'] == 'password-continuation-native-' + platform + '-' + RUN + '-1' and
+            str(record['workflow_run']['id']) == RUN and record['workflow_run']['head_sha'] == SOURCE and
+            record['digest'] == 'sha256:' + digest and record['size_in_bytes'] == size and
+            record['expired'] is False, 'prior continuation artifact identity differs')
+    original = out / (platform + '-original.zip')
+    diagnostic_stage('artifact-download')
+    with original.open('wb') as file: subprocess.run(['gh', 'api', endpoint + '/zip'], stdout=file, check=True)
+    diagnostic_stage('archive-bytes')
+    require(original.stat().st_size == size and sha(original) == digest, 'prior original ZIP differs')
+    diagnostic_stage('archive-extract')
+    folder = out / platform; safe_extract(original, folder)
+    diagnostic_stage('result-identity')
+    result = json.loads((folder / 'result.json').read_text())
+    require((result['source_sha'], result['run_id'], result['attempt'], result['platform']) ==
+            (SOURCE, RUN, '1', platform), 'prior continuation identity differs')
+    diagnostic_stage('member-inventory')
+    files = {path.relative_to(folder).as_posix() for path in folder.rglob('*') if path.is_file()}
+    require(files == set(result['files']) | {'result.json'}, 'prior continuation inventory differs')
+    diagnostic_stage('member-bytes')
+    CURRENT_MEMBER_INTEGRITY = member_integrity(folder, result['files'])
+    require(CURRENT_MEMBER_INTEGRITY['mismatch_count'] == 0, 'prior continuation member differs')
+    diagnostic_stage('lifecycle-receipt')
+    lifecycle = sealed_lifecycle(result, platform)
+    diagnostic_stage('progress-and-native-log')
+    report = safe_progress(result, files)
+    CURRENT_SAFE_REPORT = report
+    report.update(old_source_sha=SOURCE, old_run_id=RUN, old_attempt=1, platform=platform,
+                  artifact_id=identifier, original_bytes=size, original_sha256=digest,
+                  verified_member_count=len(files), arbitrary_log_text_printed=False,
+                  source_positions_not_authenticated_callsites=True,
+                  native_failure_locations=locations(folder / 'native.log') if 'native.log' in files else [])
+    report['member_integrity'] = CURRENT_MEMBER_INTEGRITY
+    report['producer_lifecycle_receipt'] = lifecycle
+    report['producer_receipt_is_event_trace_proof'] = False
+    report['activity_timing'] = activity_timing(folder / 'native.log')
+    diagnostic_stage('scan-summaries')
+    for stage in STAGES:
+        name = stage + '-privacy-scan.json'
+        if name not in files: continue
+        scans = json.loads((folder / name).read_text())
+        require(set(scans) <= {'profile', 'product-log', 'preferences', 'cache', 'saved-state', 'container'}, 'unexpected scan root')
+        require(all(type(proof['accepted']) is bool for proof in scans.values()), 'unexpected scan verdict')
+        report.setdefault('scan_summary', {})[stage] = {label: {'accepted': proof['accepted'],
+            'hit_variant_labels': variant_labels(proof)} for label, proof in scans.items()}
+    diagnostic_stage('fixture-failures')
+    if 'fixture-failures.json' in files:
+        failures = json.loads((folder / 'fixture-failures.json').read_text())
+        require(type(failures) is list and all(item in FAILURES for item in failures), 'unexpected fixture failure type')
+        report['fixture_failure_classes'] = failures
+    diagnostic_stage('network-summary')
+    require('requests.json' in files and any(name.startswith('privacy.xcresult/') for name in files),
+            'original request or native-result evidence absent')
+    report['network'] = network_summary(result, json.loads((folder / 'requests.json').read_text()))
+    # xcresulttool may update metadata. Parse only a disposable copy after
+    # every retained original member was authenticated above.
+    with tempfile.TemporaryDirectory(prefix='privacy-xcresult-diagnostic-') as temporary:
+        diagnostic_stage('xcresult-copy')
+        copied = shutil.copytree(folder / 'privacy.xcresult', os.path.join(temporary, 'privacy.xcresult'))
+        diagnostic_stage('xcresult-parser')
+        done = subprocess.run(['xcrun', 'xcresulttool', 'get', 'object', '--legacy', '--path', copied,
+                               '--format', 'json'], capture_output=True, timeout=120)
+        require(done.returncode == 0, 'native result parser refused')
+        diagnostic_stage('xcresult-issues')
+        report['xcresult'] = xcresult_issues(json.loads(done.stdout))
+        exported = Path(temporary) / 'attachments'
+        diagnostic_stage('attachment-export')
+        done = subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', copied,
+                               '--output-path', str(exported)], capture_output=True, timeout=120)
+        require(done.returncode == 0, 'native attachment exporter refused')
+        diagnostic_stage('attachment-summary')
+        report['exported_attachments'] = attachment_summary(exported)
+    diagnostic_stage('admission-replay')
+    report['independent_ios_admission_replay'] = None
+    if platform != 'macos':
+        report['admission_namespace_observations'] = admission_namespaces(folder)
+        report['independent_ios_admission_replay'] = verify_ios_admission(folder, SOURCE, result, require_program=False)
+    diagnostic_stage('safe-report')
+    return report
+
+
+def current_refusal(error):
+    report = refusal_report(error, CURRENT_DIAGNOSTIC_STAGE)
+    report['member_integrity'] = CURRENT_MEMBER_INTEGRITY
+    report['platform'] = CURRENT_PLATFORM if CURRENT_PLATFORM in ('macos', 'iphone', 'ipad') else None
+    report['validated_partial_report'] = CURRENT_SAFE_REPORT
+    return report
+
+
+def run_platforms(out, diagnoser=diagnose_platform):
+    global CURRENT_MEMBER_INTEGRITY, CURRENT_PLATFORM, CURRENT_SAFE_REPORT
+    failed = False
     for platform, (identifier, size, digest) in ARTIFACTS.items():
-        CURRENT_PLATFORM = platform
-        CURRENT_MEMBER_INTEGRITY = None
-        diagnostic_stage('artifact-metadata')
-        endpoint = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/artifacts/' + str(identifier)
-        record = json.loads(subprocess.check_output(['gh', 'api', endpoint]))
-        require(record['id'] == identifier and record['name'] == 'password-continuation-native-' + platform + '-' + RUN + '-1' and
-                str(record['workflow_run']['id']) == RUN and record['workflow_run']['head_sha'] == SOURCE and
-                record['digest'] == 'sha256:' + digest and record['size_in_bytes'] == size and
-                record['expired'] is False, 'prior continuation artifact identity differs')
-        original = out / (platform + '-original.zip')
-        diagnostic_stage('artifact-download')
-        with original.open('wb') as file: subprocess.run(['gh', 'api', endpoint + '/zip'], stdout=file, check=True)
-        diagnostic_stage('archive-bytes')
-        require(original.stat().st_size == size and sha(original) == digest, 'prior original ZIP differs')
-        diagnostic_stage('archive-extract')
-        folder = out / platform; safe_extract(original, folder)
-        diagnostic_stage('result-identity')
-        result = json.loads((folder / 'result.json').read_text())
-        require((result['source_sha'], result['run_id'], result['attempt'], result['platform']) ==
-                (SOURCE, RUN, '1', platform), 'prior continuation identity differs')
-        diagnostic_stage('member-inventory')
-        files = {path.relative_to(folder).as_posix() for path in folder.rglob('*') if path.is_file()}
-        require(files == set(result['files']) | {'result.json'}, 'prior continuation inventory differs')
-        diagnostic_stage('member-bytes')
-        CURRENT_MEMBER_INTEGRITY = member_integrity(folder, result['files'])
-        require(CURRENT_MEMBER_INTEGRITY['mismatch_count'] == 0, 'prior continuation member differs')
-        diagnostic_stage('lifecycle-receipt')
-        lifecycle = sealed_lifecycle(result, platform)
-        diagnostic_stage('admission-replay')
-        admission = verify_ios_admission(folder, SOURCE, result, require_program=False) if platform != 'macos' else None
-        diagnostic_stage('progress-and-native-log')
-        report = safe_progress(result, files)
-        report.update(old_source_sha=SOURCE, old_run_id=RUN, old_attempt=1, platform=platform,
-                      artifact_id=identifier, original_bytes=size, original_sha256=digest,
-                      verified_member_count=len(files), arbitrary_log_text_printed=False,
-                      source_positions_not_authenticated_callsites=True,
-                      native_failure_locations=locations(folder / 'native.log') if 'native.log' in files else [])
-        report['member_integrity'] = CURRENT_MEMBER_INTEGRITY
-        report['producer_lifecycle_receipt'] = lifecycle
-        report['producer_receipt_is_event_trace_proof'] = False
-        report['independent_ios_admission_replay'] = admission
-        report['activity_timing'] = activity_timing(folder / 'native.log')
-        diagnostic_stage('scan-summaries')
-        for stage in STAGES:
-            name = stage + '-privacy-scan.json'
-            if name not in files: continue
-            scans = json.loads((folder / name).read_text())
-            require(set(scans) <= {'profile', 'product-log', 'preferences', 'cache', 'saved-state', 'container'}, 'unexpected scan root')
-            require(all(type(proof['accepted']) is bool for proof in scans.values()), 'unexpected scan verdict')
-            report.setdefault('scan_summary', {})[stage] = {label: {'accepted': proof['accepted'],
-                'hit_variant_labels': variant_labels(proof)} for label, proof in scans.items()}
-        diagnostic_stage('fixture-failures')
-        if 'fixture-failures.json' in files:
-            failures = json.loads((folder / 'fixture-failures.json').read_text())
-            require(type(failures) is list and all(item in FAILURES for item in failures), 'unexpected fixture failure type')
-            report['fixture_failure_classes'] = failures
-        diagnostic_stage('network-summary')
-        require('requests.json' in files and any(name.startswith('privacy.xcresult/') for name in files),
-                'original request or native-result evidence absent')
-        report['network'] = network_summary(result, json.loads((folder / 'requests.json').read_text()))
-        # xcresulttool may update metadata. Parse only a disposable copy after
-        # every retained original member was authenticated above.
-        with tempfile.TemporaryDirectory(prefix='privacy-xcresult-diagnostic-') as temporary:
-            diagnostic_stage('xcresult-copy')
-            copied = shutil.copytree(folder / 'privacy.xcresult', os.path.join(temporary, 'privacy.xcresult'))
-            diagnostic_stage('xcresult-parser')
-            done = subprocess.run(['xcrun', 'xcresulttool', 'get', 'object', '--legacy', '--path', copied,
-                                   '--format', 'json'], capture_output=True, timeout=120)
-            require(done.returncode == 0, 'native result parser refused')
-            diagnostic_stage('xcresult-issues')
-            report['xcresult'] = xcresult_issues(json.loads(done.stdout))
-            exported = Path(temporary) / 'attachments'
-            diagnostic_stage('attachment-export')
-            done = subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', copied,
-                                   '--output-path', str(exported)], capture_output=True, timeout=120)
-            require(done.returncode == 0, 'native attachment exporter refused')
-            diagnostic_stage('attachment-summary')
-            report['exported_attachments'] = attachment_summary(exported)
-        diagnostic_stage('safe-report')
+        CURRENT_PLATFORM, CURRENT_MEMBER_INTEGRITY, CURRENT_SAFE_REPORT = platform, None, None
+        try:
+            report = diagnoser(out, platform, identifier, size, digest)
+        except Exception as error:
+            report = current_refusal(error)
+            failed = True
         COMPLETED_REPORTS.append(report)
         print(json.dumps(report, sort_keys=True), flush=True)
         (out / 'diagnostic.json').write_text(json.dumps(COMPLETED_REPORTS, indent=2) + '\n')
+    return not failed
+
+
+def main():
+    require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
+    diagnostic_stage('scope-and-source')
+    guard()
+    endpoint = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/contents/' + SOURCE_FILE + '?ref=' + SOURCE
+    source_record = json.loads(subprocess.check_output(['gh', 'api', endpoint], timeout=30))
+    verify_frozen_ui_source(source_record)
+    require(set(ARTIFACTS) == {'macos', 'iphone', 'ipad'}, 'exact three-platform diagnostic artifact pins required')
+    out = ROOT / 'build/apple-password-continuation-diagnostic'; out.mkdir(parents=True, exist_ok=False)
+    return run_platforms(out)
 
 
 if __name__ == '__main__':
     try:
-        main()
+        if not main(): raise SystemExit(1)
     except Exception as error:
         # An OS/parser exception may embed a synthetic value in its operands.
         # Refuse without relaying that exception text or chained traceback.
-        report = refusal_report(error, CURRENT_DIAGNOSTIC_STAGE)
-        report['member_integrity'] = CURRENT_MEMBER_INTEGRITY
-        report['platform'] = CURRENT_PLATFORM if CURRENT_PLATFORM in ('macos', 'iphone', 'ipad') else None
+        report = current_refusal(error)
         print(json.dumps(report, sort_keys=True), flush=True)
         if os.environ.get('GITHUB_ACTIONS') == 'true':
             try:
