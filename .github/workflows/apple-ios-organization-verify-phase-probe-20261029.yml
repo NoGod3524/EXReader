@@ -4,6 +4,8 @@ on:
     branches: [codex/apple-ios-organization-verify-phase-probe-20261029]
 permissions:
   contents: read
+env:
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
 jobs:
   probe:
     name: Isolated transport preflight and three Verify prefixes
@@ -17,6 +19,658 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Admit the same toolchain and prepare bounded build-service observation
+        run: |
+          mkdir -p build/ios-verify-build-service-diag/{evidence,private,refusal}
+          printf 'source=%s\nrun=%s\nattempt=%s\nbranch=%s\nnative_cases_added=0\nformal_credit=0\n' \
+            "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_REF_NAME" \
+            > build/ios-verify-build-service-diag/evidence/bootstrap.txt
+          cp build/ios-verify-build-service-diag/evidence/bootstrap.txt build/ios-verify-build-service-diag/refusal/bootstrap.txt
+          cat > build/ios-verify-build-service-diag/private/observer.py <<'PY'
+          import codecs
+          import fcntl
+          import hashlib
+          import json
+          import math
+          import os
+          from pathlib import Path
+          import re
+          import signal
+          import stat
+          import subprocess
+          import sys
+          import time
+          import traceback
+
+          ROOT = Path.cwd()
+          BASE = ROOT / 'build/ios-verify-build-service-diag'
+          E, P, REFUSAL = BASE / 'evidence', BASE / 'private', BASE / 'refusal'
+          NATIVE = ROOT / 'build/ios-verify-phase-probe'
+          REPORTS = Path.home() / 'Library/Logs/DiagnosticReports'
+          PACKAGE = 'tests/apple_ios_organization_verify_phase_probe_20261029/'
+          WORKFLOW = '.github/workflows/apple-ios-organization-verify-phase-probe-20261029.yml'
+          PARENT = '577a96334ccc2b3015e86b2580674bcbcab5dc1f'
+          BRANCH = 'codex/apple-ios-organization-verify-phase-probe-20261029'
+          DEVELOPER = '/Applications/Xcode_16.4.app/Contents/Developer'
+          RUNTIME = 'com.apple.CoreSimulator.SimRuntime.iOS-26-2'
+          DEVICE = 'com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation'
+          FROZEN = {'prepare.py': '6db4739d6f3dd57fe4a8e6e18c949ce88d8d5fd95b7eb5ca4c8dd0c4bc2cca06',
+              'collect.py': '8da9894c26ca3dba7d3ffa9832abcc1bf177bd98eb53c0bc5abf41945d0a8616',
+              'AppPhaseRecorder.swift': '163107819572b40b40a41e5a661f62e30c7e2362be704a0413a7c60799d494bb',
+              'VerifyPhaseTests.swift': '006e98de1b87bf50987a9070b16cb8edd71773d6376a0c8c744248bea05b013d'}
+          IDENTITY = {'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
+              'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'branch': os.environ['GITHUB_REF_NAME']}
+          MODE = sys.argv[1]
+          DEADLINE = time.monotonic() + 100
+          COMMANDS, PRINTED = [], 0
+          STOP_REQUESTED = False
+
+          class Unsafe(ValueError): pass
+          class Unstable(ValueError): pass
+          class ObserverStop(Exception): pass
+
+          def require(value, message):
+              if not value: raise ValueError(message)
+
+          def check():
+              require(time.monotonic() < DEADLINE, 'diagnostic deadline exhausted')
+
+          def sha(data): return hashlib.sha256(data).hexdigest()
+
+          def encoded(value):
+              return (json.dumps(value, ensure_ascii=False, sort_keys=True, allow_nan=False) + '\n').encode()
+
+          def save(path, value):
+              data = encoded(value); require(len(data) <= 2 * 1024 ** 2, 'receipt size ceiling')
+              temporary = path.with_name(path.name + '.tmp')
+              with temporary.open('wb') as stream:
+                  stream.write(data); stream.flush(); os.fsync(stream.fileno())
+              os.replace(temporary, path)
+
+          def reserve_stdout(used, size):
+              require(type(used) is int and 0 <= used <= 512 * 1024, 'stdout budget invalid')
+              require(type(size) is int and 0 <= size and used + size <= 512 * 1024, 'serialized stdout ceiling')
+              return used + size
+
+          def emit(value):
+              global PRINTED
+              data = encoded(value)
+              # Shared across admit/observe/finish; never wait on product work.
+              with (P / 'stdout-budget.json').open('a+b') as budget:
+                  fcntl.flock(budget.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                  budget.seek(0); raw = budget.read(1024)
+                  used = json.loads(raw) if raw else 0
+                  used = reserve_stdout(used, len(data))
+                  budget.seek(0); budget.truncate(); budget.write(str(used).encode())
+                  budget.flush(); os.fsync(budget.fileno())
+                  sys.stdout.buffer.write(data); sys.stdout.buffer.flush(); PRINTED += len(data)
+
+          def finite(value):
+              return type(value) in (int, float) and math.isfinite(value)
+
+          def bounded(value, limit, message):
+              require(type(value) is int and 0 <= value <= limit, message)
+
+          def covered(baseline, started):
+              require(finite(baseline) and finite(started) and 0 <= baseline <= started, 'late/invalid baseline')
+
+          def source_matches(value):
+              require(all(value.get(k) == v for k, v in IDENTITY.items()), 'source identity differs')
+
+          def strict_json(raw, limit=256 * 1024):
+              require(len(raw) <= limit, 'JSON input ceiling')
+              def pairs(items):
+                  result = {}
+                  for key, value in items:
+                      require(key not in result, 'duplicate JSON key'); result[key] = value
+                  return result
+              def invalid(value): raise ValueError('nonfinite JSON')
+              value = json.loads(raw.decode('utf-8'), object_pairs_hook=pairs, parse_constant=invalid)
+              todo = [(value, 0)]; count = 0
+              while todo:
+                  item, depth = todo.pop(); count += 1
+                  require(count <= 30000 and depth <= 32, 'JSON structural ceiling')
+                  if type(item) is float: require(math.isfinite(item), 'nonfinite JSON float')
+                  if isinstance(item, dict): todo.extend((v, depth + 1) for v in item.values())
+                  elif isinstance(item, list): todo.extend((v, depth + 1) for v in item)
+              return value
+
+          def inventory():
+              count = total = 0
+              with os.scandir(E) as entries:
+                  for entry in entries:
+                      count += 1; info = entry.stat(follow_symlinks=False)
+                      bounded(count, 128, 'evidence count ceiling')
+                      require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, 'evidence type/link ceiling')
+                      total += info.st_size
+                      bounded(total, 8 * 1024 ** 2, 'evidence byte ceiling')
+              return {'entries': count, 'bytes': total}
+
+          def command(argv, name, seconds=10, limit=64 * 1024, private_output=False):
+              check(); inventory()
+              out, err = (P if private_output else E) / (name + '.stdout'), E / (name + '.stderr')
+              record = {'argv': argv, 'timeout_seconds': seconds, 'started': time.monotonic()}
+              COMMANDS.append(record); process = None
+              end = min(DEADLINE, record['started'] + seconds)
+              try:
+                  with out.open('wb') as stdout, err.open('wb') as stderr:
+                      process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr, start_new_session=True)
+                      while process.poll() is None:
+                          require(time.monotonic() < end, 'metadata command deadline')
+                          require(out.stat().st_size <= limit and err.stat().st_size <= 64 * 1024, 'metadata output ceiling')
+                          inventory(); time.sleep(0.05)
+                      record['exit_code'] = process.returncode
+                      require(out.stat().st_size <= limit and err.stat().st_size <= 64 * 1024, 'completed metadata ceiling')
+                      require(process.returncode == 0, 'metadata command failed')
+              finally:
+                  if process is not None and process.poll() is None:
+                      os.killpg(process.pid, signal.SIGKILL); process.wait(timeout=2)
+                  for path, cap in ((out, limit), (err, 64 * 1024)):
+                      if path.exists() and path.stat().st_size > cap:
+                          with path.open('r+b') as stream: stream.truncate(cap)
+                          record['truncated'] = True
+                  record['finished'] = time.monotonic()
+                  record['stdout_sha256'] = sha(out.read_bytes()) if out.exists() else None
+                  save(E / ('metadata-' + MODE + '.json'), COMMANDS)
+              return out.read_bytes()
+
+          def root_identity(info): return (info.st_dev, info.st_ino)
+
+          def root_unchanged(fd, path, expected=None):
+              info, current = os.fstat(fd), os.lstat(path)
+              require(stat.S_ISDIR(info.st_mode) and stat.S_ISDIR(current.st_mode)
+                  and info.st_uid == os.getuid() and root_identity(info) == root_identity(current)
+                  and (expected is None or root_identity(info) == tuple(expected)), 'directory owner/type/identity differs')
+              return root_identity(info)
+
+          def root_fd(path, expected=None):
+              try: fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_NONBLOCK)
+              except FileNotFoundError: return None
+              try: root_unchanged(fd, path, expected)
+              except BaseException: os.close(fd); raise
+              return fd
+
+          def identity(info):
+              return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+          def stable_snapshot(before, after, path_after, size):
+              return before == after == path_after and size == after[2]
+
+          def read_file(directory, name, limit, capture=False, expected_root=None, expected_file=None, window=None):
+              check(); fd = root_fd(directory, expected_root)
+              if fd is None: raise FileNotFoundError(str(directory))
+              child = None
+              try:
+                  child = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
+                  before = os.fstat(child); path_before = os.stat(name, dir_fd=fd, follow_symlinks=False)
+                  if not (stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and before.st_uid == os.getuid()
+                          and identity(before) == identity(path_before) and before.st_size <= limit):
+                      raise Unsafe('file type/owner/link/identity/size differs')
+                  require(expected_file is None or identity(before) == tuple(expected_file), 'scanned candidate identity changed')
+                  require(window is None or window[0] <= before.st_mtime_ns / 1e9 <= window[1], 'opened report outside wall window')
+                  digest = hashlib.sha256(); first = tail = b''; blocks = []; size = 0
+                  decoder = codecs.getincrementaldecoder('utf-8')('strict'); valid_utf8 = True
+                  while True:
+                      check(); block = os.read(child, 65536)
+                      if not block: break
+                      size += len(block)
+                      if size > limit: raise Unsafe('stream size ceiling')
+                      digest.update(block)
+                      if len(first) < 65536: first += block[:65536 - len(first)]
+                      tail = (tail + block)[-32768:]
+                      if capture: blocks.append(block)
+                      if valid_utf8:
+                          try: decoder.decode(block)
+                          except UnicodeDecodeError: valid_utf8 = False
+                  if valid_utf8:
+                      try: decoder.decode(b'', final=True)
+                      except UnicodeDecodeError: valid_utf8 = False
+                  after = os.fstat(child); path_after = os.stat(name, dir_fd=fd, follow_symlinks=False)
+                  root_unchanged(fd, directory, expected_root)
+                  stable = stable_snapshot(identity(before), identity(after), identity(path_after), size)
+                  return {'bytes': size, 'sha256': digest.hexdigest(), 'stable': stable, 'utf8_valid': valid_utf8,
+                      'before': identity(before), 'after': identity(after), '_first': first, '_last': tail,
+                      '_raw': b''.join(blocks) if capture else None}
+              finally:
+                  if child is not None: os.close(child)
+                  os.close(fd)
+
+          def public(row): return {k: v for k, v in row.items() if not k.startswith('_')}
+
+          def preview(name, row):
+              result = dict(public(row), path=name)
+              if not row['utf8_valid']:
+                  result.update(text_omitted='invalid UTF-8', truncated=True); return result
+              width = 32768
+              while True:
+                  if row['bytes'] <= width * 2: prefix, suffix = row['_first'].decode('utf-8'), ''
+                  else:
+                      prefix = row['_first'][:width].decode('utf-8', 'ignore')
+                      suffix = row['_last'][-width:].decode('utf-8', 'ignore')
+                  result.update(prefix=prefix, suffix=suffix,
+                      truncated=len(prefix.encode()) + len(suffix.encode()) < row['bytes'])
+                  if len(encoded(result)) <= 48 * 1024: return result
+                  width //= 2; require(width > 0, 'encoded preview cannot fit')
+
+          def report_name(name):
+              return len(name) <= 255 and re.fullmatch(r'(?:XCBBuildService|XCBuildService|xcodebuild)[-_][A-Za-z0-9_.-]+\.(?:ips|crash)', name) is not None
+
+          def report_scan():
+              fd = root_fd(REPORTS)
+              if fd is None: return None, {}
+              rows = {}; count = 0
+              try:
+                  with os.scandir(fd) as entries:
+                      for entry in entries:
+                          check(); count += 1
+                          bounded(count, 256, 'report directory entry ceiling')
+                          if report_name(entry.name):
+                              info = entry.stat(follow_symlinks=False)
+                              if not stat.S_ISREG(info.st_mode): raise Unsafe('eligible report type refused')
+                              rows[entry.name] = {'mtime_ns': info.st_mtime_ns, 'size': info.st_size,
+                                  'dev': info.st_dev, 'ino': info.st_ino, 'identity': identity(info)}
+                  return root_unchanged(fd, REPORTS), rows
+              finally: os.close(fd)
+
+          def eligible(name, metadata, baseline, wall_start, wall_end):
+              return report_name(name) and name not in baseline and wall_start <= metadata['mtime_ns'] / 1e9 <= wall_end
+
+          def drift(mono_start, wall_start, mono_now, wall_now):
+              return abs((wall_now - wall_start) - (mono_now - mono_start))
+
+          def controls():
+              out = {}; scratch = P / 'controls'; scratch.mkdir(exist_ok=False)
+              def reject(name, action):
+                  try: action()
+                  except (ValueError, OSError): out[name] = True
+                  else: raise ValueError('negative control admitted: ' + name)
+              (scratch / 'plain').write_bytes(('汉字\n' * 20000).encode())
+              row = read_file(scratch, 'plain', 1024 ** 2, True)
+              require(row['stable'] and row['utf8_valid'] and len(encoded(preview('plain', row))) <= 48 * 1024, 'valid snapshot/preview failed')
+              out['stable_utf8_encoded_preview'] = True
+              (scratch / 'link').symlink_to(scratch / 'plain'); os.mkfifo(scratch / 'fifo')
+              reject('symlink', lambda: read_file(scratch, 'link', 1024 ** 2))
+              reject('special_file_nonblocking', lambda: read_file(scratch, 'fifo', 1024 ** 2))
+              reject('file_limit', lambda: read_file(scratch, 'plain', 1))
+              root = scratch / 'root'; root.mkdir(); old_root = root_identity(root.stat())
+              (root / 'candidate').write_bytes(b'fixture')
+              old_file = identity((root / 'candidate').stat())
+              root.rename(scratch / 'old-root'); root.mkdir(); (root / 'candidate').write_bytes(b'new fixture')
+              reject('root_replaced_before_open', lambda: read_file(root, 'candidate', 1024, expected_root=old_root))
+              held = root_fd(root)
+              try:
+                  root.rename(scratch / 'second-root'); root.mkdir()
+                  reject('root_replaced_after_open', lambda: root_unchanged(held, root))
+              finally: os.close(held)
+              (root / 'candidate').write_bytes(b'original')
+              candidate = identity((root / 'candidate').stat())
+              (root / 'replacement').write_bytes(b'replaced'); os.replace(root / 'replacement', root / 'candidate')
+              reject('candidate_replaced', lambda: read_file(root, 'candidate', 1024, expected_file=candidate))
+              reject('opened_candidate_wall_window', lambda: read_file(root, 'candidate', 1024, window=(0, 1)))
+              name = 'XCBBuildService-fixture.ips'; meta = {'mtime_ns': 15 * 10 ** 9}
+              require(eligible(name, meta, {}, 10, 20), 'eligible report control failed')
+              require(not eligible(name, meta, {name: meta}, 10, 20), 'preexisting report admitted')
+              require(not eligible(name, meta, {}, 16, 20) and not eligible(name, meta, {}, 10, 14), 'outside report admitted')
+              require(not eligible('Other-fixture.ips', meta, {}, 10, 20), 'wrong prefix admitted')
+              out.update(preexisting_rejected=True, outside_window_rejected=True, wrong_prefix_rejected=True)
+              require(drift(10, 100, 15, 105) == 0 and drift(10, 100, 15, 108) > 2, 'clock control failed')
+              out['clock_domain_discontinuity'] = True
+              reject('duplicate_json', lambda: strict_json(b'{"a":1,"a":2}'))
+              reject('partial_json', lambda: strict_json(b'[{"argv":'))
+              reject('nonfinite_json', lambda: strict_json(b'NaN'))
+              reject('snapshot_count', lambda: bounded(9, 8, 'report count ceiling'))
+              reject('directory_count', lambda: bounded(257, 256, 'directory count ceiling'))
+              reject('cumulative_both_snapshots', lambda: bounded(5 * 1024 ** 2, 4 * 1024 ** 2, 'copy byte ceiling'))
+              changed = list(row['after']); changed[2] += 1
+              require(not stable_snapshot(row['before'], tuple(changed), tuple(changed), row['bytes']), 'unstable snapshot promoted')
+              out['unstable_stays_partial'] = True
+              reject('source_identity', lambda: source_matches(dict(IDENTITY, source_sha='f' * 40)))
+              reject('late_baseline', lambda: covered(11, 10))
+              reject('refusal_output', lambda: bounded(129, 128, 'refusal ceiling'))
+              uid = '01234567-0123-0123-0123-0123456789AB'
+              build = {'argv': build_argv(uid), 'output': str(NATIVE / 'evidence/build.log'),
+                  'started': 20, 'finished': 30, 'exit_code': 70}
+              before = {'argv': ['xcodebuild', '-version'], 'started': 10, 'finished': 11}
+              completed = [before, build]
+              def gate(rows, previous=completed, baseline=12):
+                  return command_gate({'stable': True, '_raw': encoded(rows)}, previous, uid, 40, baseline)
+              require(gate(completed)[1] == build, 'completed build gate failed')
+              out['valid_completed_build'] = True
+              reject('completed_then_changed_prefix', lambda: gate([dict(before, finished=12), build]))
+              reject('completed_then_changed_argv', lambda: gate([before, dict(build, argv=build_argv(uid) + ['-quiet'])]))
+              reject('wrong_argv_first_completion', lambda: gate([before, dict(build, argv=build_argv(uid) + ['-quiet'])], previous=[]))
+              reject('duplicate_build_completion', lambda: gate(completed + [build]))
+              reject('completion_late_baseline', lambda: gate(completed, baseline=21))
+              reject('completion_invalid_clock', lambda: gate([before, dict(build, finished=True)], previous=[]))
+              reject('completion_wrong_uuid', lambda: validate_build(completed, [], '11111111-1111-1111-1111-111111111111', 40, 12))
+              reject('completion_partial_json', lambda: command_gate({'stable': True, '_raw': b'[{"argv":'}, [], uid, 40, 12))
+              reject('completion_unstable_json', lambda: command_gate({'stable': False, '_raw': encoded(completed)}, [], uid, 40, 12))
+              # Deterministic lifecycle branch controls, not a real signal timing test.
+              class FakeProcess:
+                  def __init__(self, timeouts): self.timeouts, self.returncode, self.waits, self.signals = timeouts, None, [], 0
+                  def wait(self, timeout):
+                      self.waits.append(timeout)
+                      if self.timeouts:
+                          self.timeouts -= 1; raise subprocess.TimeoutExpired('owned fake observer', timeout)
+                      self.returncode = 1 if self.signals else 0; return self.returncode
+                  def terminate(self): self.signals += 1
+              for name, timeouts, expected_sealed in [('natural', 0, True), ('forced', 1, True), ('unreaped', 2, False)]:
+                  process = FakeProcess(timeouts); life = reap_observer(process, 8, clock=lambda: 0)
+                  require(sealed_lifecycle(life) is expected_sealed and sum(process.waits) <= 8
+                      and process.signals == (0 if name == 'natural' else 1), 'lifecycle branch differs')
+                  require(upload_candidate(life, True) == (E if expected_sealed else REFUSAL), 'unreaped upload admitted')
+                  out['lifecycle_branch_' + name] = True
+              failed = {'diagnostic_complete': True, 'problems': []}
+              def exhausted_emit(value): reserve_stdout(512 * 1024, len(encoded(value)))
+              ok = final_emission(failed, {'fixture': True}, exhausted_emit)
+              require(ok is False and failed['diagnostic_complete'] is False and failed['problems']
+                  and upload_candidate({'observer_reaped': True, 'partial_tree_sealed': True, 'observer_exit': 0}, ok) == REFUSAL,
+                  'final output failure did not select refusal')
+              out['final_emission_budget_refusal'] = True
+              observed = {'complete': True, 'output_failed': False}
+              reject('observer_emission_budget_refusal', lambda: emit_observation(observed, {'fixture': True}, exhausted_emit))
+              require(observed['complete'] is False and observed['output_failed'] is True, 'observer output failure not latched')
+              save(E / 'controls.json', out)
+              require(all(v is True for v in out.values()), 'controls incomplete')
+
+          def admit():
+              require(os.environ.get('GITHUB_ACTIONS') == 'true' and sys.platform == 'darwin', 'macOS Actions only')
+              require(IDENTITY['attempt'] == '1' and IDENTITY['branch'] == BRANCH, 'wrong source attempt/branch')
+              require(os.environ.get('DEVELOPER_DIR') == DEVELOPER, 'toolchain selection differs')
+              heads = command(['git', 'rev-parse', 'HEAD', 'HEAD^'], 'source-heads').decode().splitlines()
+              require(heads == [IDENTITY['source_sha'], PARENT], 'source/parent differs')
+              require(command(['git', 'diff', '--name-status', PARENT, 'HEAD'], 'source-delta').decode().splitlines()
+                  == ['M\t' + WORKFLOW], 'exact workflow-only delta required')
+              require(not command(['git', 'status', '--porcelain', '--untracked-files=all'], 'source-status').strip(), 'dirty source')
+              require(all(sha((ROOT / PACKAGE / name).read_bytes()) == value for name, value in FROZEN.items()), 'frozen diagnostic source differs')
+              version = command(['xcodebuild', '-version'], 'xcode-version').decode().strip()
+              sdk = command(['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-version'], 'sdk-version').decode().strip()
+              system = command(['sw_vers', '-productVersion'], 'macos-version').decode().strip()
+              arch = command(['uname', '-m'], 'architecture').decode().strip()
+              runtimes = strict_json(command(['xcrun', 'simctl', 'list', 'runtimes', '-j'], 'runtimes', limit=256 * 1024))
+              require(version == 'Xcode 16.4\nBuild version 16F6' and sdk == '18.5' and system.startswith('15.') and arch == 'arm64', 'observed environment differs')
+              selected = [r for r in runtimes['runtimes'] if r.get('identifier') == RUNTIME]
+              require(len(selected) == 1 and selected[0]['isAvailable'] is True and any(
+                  d.get('identifier') == DEVICE for d in selected[0]['supportedDeviceTypes']), 'fixed runtime/device unavailable')
+              controls()
+              save(E / 'admission.json', dict(IDENTITY, admitted=True, frozen=FROZEN,
+                  workflow_sha256=sha((ROOT / WORKFLOW).read_bytes()), developer_dir=DEVELOPER,
+                  xcode_version=version, sdk=sdk, macos=system, arch=arch,
+                  image_version=os.environ.get('ImageVersion'), image_os=os.environ.get('ImageOS'),
+                  selected_runtime={'identifier': RUNTIME, 'version': selected[0]['version'], 'build': selected[0].get('buildversion')}))
+              emit({'build_observer_admitted': True, **IDENTITY, 'xcode': version, 'sdk': sdk})
+
+          def build_argv(uid):
+              require(type(uid) is str and re.fullmatch(r'[0-9A-Fa-f-]{36}', uid), 'created UUID differs')
+              return ['xcodebuild', 'build-for-testing', '-project', str(NATIVE / 'generated/project/EXReaderHost.xcodeproj'),
+                  '-scheme', 'EXReaderHost-iOS', '-derivedDataPath', str(NATIVE / 'DerivedData'),
+                  'EXR_SDK_DIR=' + str(ROOT / 'build/apple-sdk342/iphonesimulator/sdk'),
+                  'EXR_PRODUCTS_DIR=' + str(ROOT / 'build/apple-sdk342/iphonesimulator/products'), 'CODE_SIGNING_ALLOWED=NO',
+                  '-destination', 'platform=iOS Simulator,id=' + uid]
+
+          def validate_build(rows, previous, uid, now, baseline):
+              require(type(rows) is list and len(rows) <= 128 and rows[:len(previous)] == previous, 'completed command prefix differs')
+              require(all(type(r) is dict and type(r.get('argv')) is list and all(type(a) is str for a in r['argv'])
+                  for r in rows), 'completed command structure differs')
+              matches = [r for r in rows if r['argv'][:2] == ['xcodebuild', 'build-for-testing']]
+              require(len(matches) <= 1, 'duplicate build record')
+              if not matches: return None
+              row = matches[0]
+              require(finite(now) and finite(row.get('started')) and finite(row.get('finished'))
+                  and 0 <= row['started'] <= row['finished'] <= now, 'build clock/completion differs')
+              require(row['argv'] == build_argv(uid) and row['output'] == str(NATIVE / 'evidence/build.log'), 'native build source/argv differs')
+              require(('exit_code' in row and type(row['exit_code']) is int) or type(row.get('problem')) is str, 'build result missing')
+              covered(baseline, row['started'])
+              return row
+
+          def command_gate(snapshot, previous, uid, now, baseline):
+              if not snapshot['stable']: raise Unstable('commands snapshot changed during read')
+              rows = strict_json(snapshot['_raw'])
+              return rows, validate_build(rows, previous, uid, now, baseline)
+
+          def stop_observer(signum, frame):
+              global STOP_REQUESTED
+              STOP_REQUESTED = True
+              raise ObserverStop('owned observer termination requested')
+
+          def reap_observer(process, deadline, clock=time.monotonic):
+              # No children exist in observe mode. This controls only its own PID.
+              final = min(deadline, clock() + 8); forced = False; confirmed = False
+              try:
+                  process.wait(timeout=max(0, min(5, final - clock())))
+                  confirmed = True
+              except subprocess.TimeoutExpired:
+                  forced = True
+                  try: process.terminate()
+                  except ProcessLookupError: pass
+                  try:
+                      process.wait(timeout=max(0, min(3, final - clock())))
+                      confirmed = True
+                  except subprocess.TimeoutExpired: pass
+              return {'observer_exit': process.returncode, 'observer_forced_stop': forced,
+                  'observer_reaped': confirmed, 'partial_tree_sealed': confirmed}
+
+          def sealed_lifecycle(native):
+              return (native.get('observer_reaped') is True and native.get('partial_tree_sealed') is True
+                  and type(native.get('observer_exit')) is int)
+
+          def upload_candidate(native, output_ok):
+              return E if sealed_lifecycle(native) and output_ok is True else REFUSAL
+
+          def final_emission(result, value, emitter=emit):
+              try: emitter(value); return True
+              except BaseException as error:
+                  result['diagnostic_complete'] = False
+                  result['problems'].append('final output: ' + str(error)[:300])
+                  return False
+
+          def emit_observation(state, value, emitter=emit):
+              try: emitter(value)
+              except BaseException:
+                  state['output_failed'] = True; state['complete'] = False
+                  raise
+
+          def observe():
+              global DEADLINE
+              signal.signal(signal.SIGTERM, stop_observer)
+              control = strict_json((P / 'control.json').read_bytes()); DEADLINE = control['deadline'] - 3
+              state = dict(IDENTITY, complete=False, output_failed=False, problems=[], reports={}, polls=0, copied_bytes=0,
+                  command_read_errors=0, command_error_samples=[], coverage='bounded interval only; not causal attribution',
+                  process_snapshots_attempted=0, process_observation='optional ps snapshots omitted; no process absence inference',
+                  report_absence_proves_no_crash=False, report_capture_exhaustive=False, root_transitions=[])
+              previous = []; built = None; latest = {}; raw_previews = {}
+              try:
+                  require(control['identity'] == IDENTITY and finite(DEADLINE), 'observer control identity differs')
+                  scanned_root, baseline = report_scan()
+                  mono0, wall0 = time.monotonic(), time.time()
+                  state.update(baseline=baseline, baseline_completed=mono0, baseline_wall=wall0, report_root=str(REPORTS),
+                      baseline_status=('absent' if scanned_root is None else 'present_candidates' if baseline else 'present_empty'),
+                      baseline_root_identity=scanned_root, report_surface_available=scanned_root is not None)
+                  save(E / 'observer-state.json', state)
+                  with (E / 'clock-samples.jsonl').open('xb') as clocks:
+                      while True:
+                          check(); now, wall = time.monotonic(), time.time()
+                          state['polls'] += 1; require(state['polls'] <= 3300, 'poll ceiling')
+                          clocks.write(encoded({'monotonic': now, 'wall': wall})); clocks.flush()
+                          require(drift(mono0, wall0, now, wall) <= 2, 'wall clock discontinuity')
+                          end = control['deadline'] - 10
+                          if built is not None: end = min(end, built['finished'] + 5)
+                          if (P / 'native-exit.json').exists():
+                              exited = strict_json((P / 'native-exit.json').read_bytes())
+                              require(exited['identity'] == IDENTITY and finite(exited['finished']), 'native exit identity differs')
+                              end = min(end, exited['finished'] + 5)
+                          if now >= end: break
+                          current_root, candidates = report_scan()
+                          if scanned_root is None and current_root is not None:
+                              scanned_root = current_root
+                              state['root_transitions'].append({'from': 'absent', 'to': 'present',
+                                  'root_identity': current_root, 'monotonic': time.monotonic(), 'wall': time.time()})
+                              state['report_surface_available'] = True
+                          require(current_root == scanned_root, 'report root disappeared/replaced')
+                          for name, metadata in candidates.items():
+                              if not eligible(name, metadata, baseline, wall0, wall): continue
+                              if name not in state['reports']:
+                                  bounded(len(state['reports']) + 1, 8, 'report count ceiling')
+                                  state['reports'][name] = []
+                              records = state['reports'][name]
+                              if records and (records[-1]['stable'] or len(records) >= 2): continue
+                              row = read_file(REPORTS, name, 1024 ** 2, True,
+                                  expected_root=current_root, expected_file=metadata['identity'], window=(wall0, wall))
+                              bounded(state['copied_bytes'] + row['bytes'], 4 * 1024 ** 2, 'cumulative snapshot ceiling')
+                              state['copied_bytes'] += row['bytes']
+                              stored = 'crash-%02d-%d.txt' % (list(state['reports']).index(name) + 1, len(records) + 1)
+                              (E / stored).write_bytes(row['_raw'])
+                              records.append(dict(public(row), stored_as=stored, observed_monotonic=now, observed_wall=wall))
+                              latest[name] = row; raw_previews[name] = stored
+                              save(E / 'observer-state.json', state)
+                          snapshot = None
+                          try:
+                              snapshot = read_file(NATIVE / 'evidence', 'commands.json', 256 * 1024, True)
+                              if not snapshot['stable']: raise Unstable('commands snapshot changed during read')
+                              rows = strict_json(snapshot['_raw'])
+                          except (FileNotFoundError, Unstable, json.JSONDecodeError, UnicodeDecodeError) as error:
+                              # Only missing/partial/unstable reads are transient. Valid JSON
+                              # with changed identity/prefix/argv/clock is fatal, even after success.
+                              state['command_read_errors'] += 1
+                              if len(state['command_error_samples']) < 32:
+                                  state['command_error_samples'].append({'monotonic': now, 'problem': str(error)[:300],
+                                      'snapshot_sha256': snapshot['sha256'] if snapshot else None,
+                                      'snapshot_bytes': snapshot['bytes'] if snapshot else None})
+                          else:
+                              uid = None
+                              if type(rows) is list and any(type(r) is dict and r.get('argv', [])[:2]
+                                      == ['xcodebuild', 'build-for-testing'] for r in rows):
+                                  created = read_file(NATIVE / 'evidence', 'create-preflight.stdout', 1024, True)
+                                  require(created['stable'] and created['utf8_valid'], 'created UUID snapshot incomplete')
+                                  uid = created['_raw'].decode().strip()
+                              rows, candidate = command_gate(snapshot, previous, uid, time.monotonic(), mono0)
+                              previous = rows
+                              if candidate is not None: built = candidate; state['build'] = candidate
+                          save(E / 'observer-state.json', state); inventory()
+                          time.sleep(min(1, max(0, end - time.monotonic())))
+                  require(built is not None, 'build completion not established')
+                  covered(mono0, built['started'])
+                  require(all(rows and rows[-1]['stable'] and rows[-1]['utf8_valid'] for rows in state['reports'].values()), 'unstable/invalid report capture')
+                  state['complete'] = True
+              except BaseException as error:
+                  state['problems'].append(type(error).__name__ + ': ' + str(error)[:1000])
+              finally:
+                  if STOP_REQUESTED:
+                      state['complete'] = False; state['problems'].append('observer termination latched')
+                  state['observation_cutoff_monotonic'] = time.monotonic()
+                  state['observation_cutoff_wall'] = time.time()
+                  # Available snapshots survive an earlier collection refusal. Metadata
+                  # always says whether they were stable and time-window-correlated only.
+                  for name, row in latest.items():
+                      try: emit_observation(state, {'build_service_report': preview(name, row), 'stored_as': raw_previews[name], 'causal_attribution_verified': False})
+                      except Exception as error:
+                          state['complete'] = False; state['problems'].append('report preview: ' + str(error)[:300])
+                  if built is not None and (built.get('exit_code') != 0 or 'problem' in built):
+                      for name in ('build.log', 'build.log.stderr'):
+                          try:
+                              row = read_file(NATIVE / 'evidence', name, 256 * 1024 ** 2)
+                              observation = preview(name, row); save(E / (name + '-preview.json'), observation)
+                              emit_observation(state, {'original_build_observation': observation})
+                              require(row['stable'] and row['utf8_valid'], 'build log observation incomplete')
+                          except Exception as error:
+                              state['complete'] = False; state['problems'].append('build log: ' + str(error)[:300])
+                  state['closed_monotonic'] = time.monotonic(); state['closed_wall'] = time.time()
+                  state['scripted_stdout_bytes'] = PRINTED
+                  if STOP_REQUESTED: state['complete'] = False
+                  save(E / 'observer-state.json', state)
+              return 0 if state['complete'] else 1
+
+          def run_native():
+              admission = strict_json((E / 'admission.json').read_bytes())
+              require(admission['admitted'] is True and all(admission[k] == v for k, v in IDENTITY.items()), 'admission missing')
+              deadline = time.monotonic() + 3300
+              save(P / 'control.json', {'identity': IDENTITY, 'deadline': deadline})
+              observer = subprocess.Popen(['python3', str(P / 'observer.py'), 'observe'])
+              native_code = None
+              try:
+                  # Original native command/argv/stdout/stderr are unchanged. No readiness wait.
+                  native_code = subprocess.call(['python3', PACKAGE + 'collect.py', 'run'])
+              finally:
+                  notice_problem = None
+                  try: save(P / 'native-exit.json', {'identity': IDENTITY, 'finished': time.monotonic(), 'exit_code': native_code})
+                  except BaseException as error: notice_problem = str(error)[:300]
+                  lifecycle = reap_observer(observer, deadline)
+                  # This private receipt is the only authority to read/seal/upload E.
+                  # An unreaped observer may still be writing there; never inspect it.
+                  save(P / 'lifecycle.json', dict(IDENTITY, native_exit=native_code,
+                      notice_problem=notice_problem, **lifecycle))
+              if native_code != 0: return native_code if isinstance(native_code, int) and native_code > 0 else 1
+              return 0 if sealed_lifecycle(lifecycle) and observer.returncode == 0 and not lifecycle['observer_forced_stop'] and notice_problem is None else 1
+
+          def finish():
+              result = dict(IDENTITY, diagnostic_complete=False, native_cases_added=0, formal_credit=0,
+                  product_accepted=False, root_cause_proved=False, problems=[])
+              chosen = REFUSAL; sealed = False
+              try:
+                  native = strict_json((P / 'lifecycle.json').read_bytes())
+                  source_matches(native)
+                  require(sealed_lifecycle(native), 'observer shutdown/reap unconfirmed; partial tree unsealed')
+                  sealed = True
+                  save(E / 'native-exit.json', native)
+                  state = strict_json((E / 'observer-state.json').read_bytes(), 2 * 1024 ** 2)
+                  require(all(state[k] == v and native[k] == v for k, v in IDENTITY.items()), 'diagnostic result source differs')
+                  result.update(native_exit=native['native_exit'], observer=state)
+                  require(state['complete'] is True and native['observer_exit'] == 0
+                      and native['observer_forced_stop'] is False and native['notice_problem'] is None, 'observer incomplete')
+                  result['diagnostic_complete'] = True
+              except BaseException as error: result['problems'].append(str(error)[:1000])
+              compact = {k: v for k, v in result.items() if k != 'observer'}
+              if 'observer' in result:
+                  compact['observer_summary'] = {k: result['observer'].get(k) for k in
+                      ('complete', 'output_failed', 'polls', 'copied_bytes', 'command_read_errors', 'baseline_completed',
+                       'baseline_status', 'baseline_root_identity', 'report_surface_available', 'root_transitions',
+                       'process_snapshots_attempted', 'report_absence_proves_no_crash', 'report_capture_exhaustive',
+                       'observation_cutoff_monotonic', 'closed_monotonic', 'problems')}
+                  compact['observer_summary']['report_count'] = len(result['observer']['reports'])
+                  compact['observer_summary']['build_exit'] = result['observer'].get('build', {}).get('exit_code')
+              if sealed:
+                  try:
+                      require(result.get('observer', {}).get('output_failed') is False, 'observer output missing/failed; refusal required')
+                      save(E / 'diagnostic-summary.json', result)
+                      result['inventory_before_final_summary'] = inventory()
+                      save(E / 'diagnostic-summary.json', result); inventory()
+                      require(final_emission(result, {'build_service_diagnostic': compact}), 'final emission refused')
+                      # Final inventory is after every retained receipt; no E writes follow.
+                      inventory(); chosen = upload_candidate(native, True)
+                  except BaseException as error:
+                      result['diagnostic_complete'] = False; result['problems'].append(str(error)[:1000])
+                      try:
+                          save(E / 'diagnostic-summary.json', result)
+                          save(E / 'failure-finish.json', {'problems': result['problems'], 'diagnostic_complete': False})
+                          inventory()
+                      except BaseException: pass  # Unsealed/unsafe tree is excluded below.
+              if chosen == REFUSAL:
+                  result['diagnostic_complete'] = False
+                  save(REFUSAL / 'refusal.json', dict(IDENTITY, diagnostic_complete=False,
+                      problems=result['problems'], native_cases_added=0, formal_credit=0,
+                      partial_tree_sealed=sealed, partial_tree_uploaded=False))
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as stream: stream.write('evidence_path=' + str(chosen.relative_to(ROOT)) + '\n')
+              return 0 if result['diagnostic_complete'] else 1
+
+          try:
+              if MODE == 'admit': admit(); code = 0
+              elif MODE == 'observe': code = observe()
+              elif MODE == 'run': code = run_native()
+              elif MODE == 'finish': code = finish()
+              else: raise ValueError('explicit diagnostic mode required')
+          except BaseException as error:
+              # run may still have an unreaped observer; finish must not mutate a sealed
+              # upload tree. Failures in either mode therefore go only to fixed refusal.
+              failure_root = REFUSAL if MODE in ('run', 'finish') else E
+              failure = dict(IDENTITY, diagnostic_complete=False,
+                  problem=str(error)[:1000], traceback=traceback.format_exc()[-12000:])
+              save(failure_root / ('failure-' + MODE + '.json'), failure)
+              if MODE == 'admit': save(REFUSAL / 'failure-admit.json', failure)
+              code = 1
+          raise SystemExit(code)
+          PY
+          cp build/ios-verify-build-service-diag/private/observer.py build/ios-verify-build-service-diag/evidence/observer-source.py
+          python3 build/ios-verify-build-service-diag/private/observer.py admit
       - name: Admit one attempt and generator dependency
         run: |
           test "$GITHUB_RUN_ATTEMPT" = 1
@@ -24,12 +678,23 @@ jobs:
       - name: Generate reversible diagnostic copies and unchanged SDK
         run: python3 tests/apple_ios_organization_verify_phase_probe_20261029/prepare.py
       - name: Run receiver controls, one preflight, and three fresh prefixes only
-        run: python3 tests/apple_ios_organization_verify_phase_probe_20261029/collect.py run
+        run: python3 build/ios-verify-build-service-diag/private/observer.py run
+      - name: Preserve bounded build-service diagnostics without changing native results
+        id: build_diagnostics
+        if: always()
+        run: python3 build/ios-verify-build-service-diag/private/observer.py finish
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ios-verify-phase-probe-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/ios-verify-phase-probe/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-verify-build-service-diag-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.build_diagnostics.outputs.evidence_path || 'build/ios-verify-build-service-diag/refusal/' }}
           include-hidden-files: true
           if-no-files-found: error
   audit:
@@ -45,6 +710,20 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Verify the same explicit audit toolchain
+        run: |
+          python3 - <<'PY'
+          import os, resource, subprocess, tempfile
+          assert os.environ['DEVELOPER_DIR'] == '/Applications/Xcode_16.4.app/Contents/Developer'
+          resource.setrlimit(resource.RLIMIT_FSIZE, (65536, 65536))
+          with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
+              subprocess.run(['xcodebuild', '-version'], stdout=out, stderr=err, timeout=10, check=True)
+              out.seek(0); err.seek(0)
+              value, error = out.read(65537), err.read(65537)
+              assert len(value) <= 65536 and len(error) <= 65536
+              assert value.strip() == b'Xcode 16.4\nBuild version 16F6'
+              print(value.decode())
+          PY
       - name: Replay original native results and loss-detecting event evidence
         env:
           GH_TOKEN: ${{ github.token }}
