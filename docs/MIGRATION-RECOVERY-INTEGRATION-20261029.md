@@ -2,8 +2,9 @@
 
 ## Status
 
-Source implementation and independent review are in progress. **No native build,
-fixture, test, artifact parse or runtime pass has been performed locally.** This
+The first source-reviewed candidate was published and built in Actions; its
+new worker/fixture failed at link admission, before any new recovery case ran.
+**No native build, fixture, test, artifact parse or runtime pass has been performed locally.** This
 is not full P0 acceptance and is not a change to the installed SDK or old test
 contracts. The first and at most one independently reviewed repair round are
 bounded to 610 configured runner-minutes across the two same-SHA workflows.
@@ -217,4 +218,51 @@ repair is610. No duplicate run follows repeated approval. A third round requires
 an explicit new checkpoint. Link maps corroborate expected archive/symbol presence alongside the exact
 imported-target graph and runtime header/source-ID check; these substring checks
 are not a claim of independent symbol-to-member unique-provider attribution.
-No runtime result is claimed in this source draft.
+No recovery runtime pass is claimed for the first candidate or the source-only
+repair below.
+
+
+## First Actions failure and one bounded repair
+
+Published source `a4ad810d79c3b74d84112b5cc03cb2c6eafe2344` (tree
+`988fb19d21470327c07935826bf3bc43e6e98940`), integration run
+`40834122503` attempt 1, failed on all three platforms at the native-build step.
+Linux job `123314807987` and macOS job `123314807981` could not link the new
+recovery worker; Windows job `123314807631` could not link the new fixture.
+Undefined public symbols include publication open/free/parts, bounded pager
+create/free/anchor resolution and layout/chapter defaults. **Zero of the 72
+new integration groups executed**, and the 126 unchanged prerequisite groups
+were skipped in this workflow; they did not pass on this SHA.
+
+The worker and fixture linked only `EXReader::exr_library`. The unchanged SDK
+layer manifest makes library depend on formats/PDF, not layout; its installed
+`EXReader::exr_core` supplies render→layout→formats, including these bounded
+publication/pager APIs. The minimal repair adds that existing public core
+target to those two new consumers only. It does not add a second SQLite
+provider, alter the installed SDK, replace real public calls, or change case
+bodies/assertions. The ordinary and transaction targets keep their link lines.
+No SDK options, old tests, workflow commands or runner budgets change.
+
+The unchanged full companion run `40834122480` on this same SHA also encountered
+the worker link failure on both POSIX jobs before its historical test gates.
+Its later browser/artifact commands consequently reported missing generated
+inputs; those downstream failures are retained, not relabelled as old scenario
+passes. The full companion finished `failure` at 07:20:50 UTC. Windows job
+`123314808162` actually ran the ordinary original 65/65 (135/135 checks), actual
+schema6 upgrade check, and ordinary browser 17/17. Its transaction candidate
+reported 60/65 (129/135 checks), review 31/31 and browser 17/17. The five retained
+scenario failures are adoption labeling, DB backup-stage expectation, the
+partial-write composite stage predicate (the other three preservation checks
+passed), no leftover evidence after ledger-publish refusal, and exit6/raw-DB
+preimage expectations. The fourth now conflicts with inherited v3 pending
+retention; it must not be described as the earlier 61/65 result. The separate
+transaction/writer/WAL script stopped at its actual `recovery-unverified`
+assertion, not a full pass. The aggregate job `123317021653` failed with missing
+POSIX evidence. None of those old-candidate results validates the new recovery
+candidate, whose new tests did not execute.
+
+Only the two package-owned CMake files and this document change in the repair.
+Independent source review must precede its publication, after both first-round
+runs finish. The repaired SHA gets at most one automatic integration/companion
+pair under the existing two-round/610 configured-minute cap. A source-level
+link dependency correction is not a native linkage or recovery pass.
