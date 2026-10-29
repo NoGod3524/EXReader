@@ -1,12 +1,11 @@
-name: Migration real existing-target recovery integration 20261029
+name: Migration recovery immutable evidence and calibrated harness 20261029
 on:
   push:
-    branches: [codex/migration-recovery-integration-20261029]
+    branches: [codex/migration-recovery-integration-harness-20261029]
     paths:
-      - extras/migration/**
+      - extras/migration/src/lm_recovery.c
       - tests/migration/recovery_integration_20261029/**
       - .github/workflows/migration-recovery-integration-20261029.yml
-      - .github/workflows/migration-recovery-integration-companion-20261029.yml
 permissions:
   contents: read
 concurrency:
@@ -16,7 +15,7 @@ defaults:
   run:
     shell: bash
 env:
-  TESTED_BASE: 14e3d0c60428a9baf33f2982d70689c0d654d3e0
+  TESTED_BASE: 65dd64a5cd7b616aa15a262f635ea01870ba1e13
   OLD_SDK_REF: c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
 jobs:
   integration:
@@ -31,27 +30,31 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Admit exactly two modified owners and nine new paths
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Admit exact one-owner and three-harness delta; old SDK and tests frozen
         run: |
           set -euo pipefail
           mkdir -p build/evidence
           git fetch --no-tags --depth=1 origin "$TESTED_BASE"
           test "$(git rev-parse FETCH_HEAD)" = "$TESTED_BASE"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          ${{ matrix.py }} - <<'PY'
+          ${{ matrix.py }} - <<'PYGUARD'
           import hashlib,json,os,subprocess
           from pathlib import Path
-          modified=['extras/migration/CMakeLists.txt','extras/migration/src/lm_main.c']
-          added=['extras/migration/src/lm_recovery.h','extras/migration/src/lm_recovery.c',
-            'extras/migration/src/lm_recovery_worker.c',
-            'tests/migration/recovery_integration_20261029/CMakeLists.txt',
-            'tests/migration/recovery_integration_20261029/fixture_probe.c',
-            'tests/migration/recovery_integration_20261029/run.py',
+          paths=['extras/migration/src/lm_recovery.c','tests/migration/recovery_integration_20261029/run.py',
             '.github/workflows/migration-recovery-integration-20261029.yml',
-            '.github/workflows/migration-recovery-integration-companion-20261029.yml',
             'docs/MIGRATION-RECOVERY-INTEGRATION-20261029.md']
           delta=subprocess.check_output(['git','diff','--no-renames','--name-status',os.environ['TESTED_BASE'],'HEAD'],text=True).splitlines()
-          assert set(delta)=={'M\t'+p for p in modified}|{'A\t'+p for p in added},delta
+          assert set(delta)=={'M\t'+p for p in paths},delta
+          frozen={'extras/migration/CMakeLists.txt':'c649e6961fcf4bb3210573bd9f640467d46293293c5eb700c132cef423cf8061',
+            'extras/migration/src/lm_main.c':'a9b395e466a651e67b961d461eca0b5c01956557052709882d4531817bfc402c',
+            'extras/migration/src/lm_recovery.h':'2c931845258277946f1c36eb912cd5ee63c807dfde7cf45ab0defdcf549be629',
+            'extras/migration/src/lm_recovery_worker.c':'4a2063927a7b78194cb2877e8a8188197d0399d45c132482d84e1bdae11b0eb2',
+            'tests/migration/recovery_integration_20261029/CMakeLists.txt':'005110842e2d3e711b870129c9f698d498b4275aed214cc3b2e3f2d530dd3744',
+            'tests/migration/recovery_integration_20261029/fixture_probe.c':'2908b4203f8daa9a3546b504237a1baf75a3c7e23b237cbfc14b46a2b59a476c'}
+          for p,h in frozen.items():assert hashlib.sha256(Path(p).read_bytes()).hexdigest()==h,p
           original=Path('.github/workflows/migration-matrix-full-companion-20261028.yml').read_bytes()
           companion=Path('.github/workflows/migration-recovery-integration-companion-20261029.yml').read_bytes()
           assert original[original.index(b'concurrency:'):]==companion[companion.index(b'concurrency:'):]
@@ -59,15 +62,23 @@ jobs:
             'sha':os.environ['GITHUB_SHA'],'base':os.environ['TESTED_BASE'],
             'run_id':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],
             'exact_delta':delta,'old_sdk':os.environ['OLD_SDK_REF'],
-            'hashes':{p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in modified+added},
-            'all_unlisted_predecessor_bytes_unchanged':True,
-            'full_companion_settings_jobs_assertions_budgets_byte_identical':True,
+            'hashes':{p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in paths},
+            'all_unlisted_predecessor_bytes_unchanged':True,'frozen_unmodified_build_and_product':frozen,
+            'only_changed_product_owner':'extras/migration/src/lm_recovery.c',
+            'product_byte_identity_to_historical_companion_claimed':False,
+            'old_prerequisite_source_unchanged_but_python_runtime_changed_to_3_12':True,
             'new_posix_cases_per_os':32,'new_windows_refusal_cases':8,
             'unchanged_preflight_per_posix':41,'unchanged_handoff_per_posix':22,
-            'round_minutes':305,'authorized_rounds_max':2,'configured_total_minutes_max':610,
-            'full_p0_acceptance':False,'windows_recovery_accepted':False,'new_target_accepted':False,
+            'round_minutes':110,'authorized_rounds_max':1,'repair_rerun_authorized':False,
+            'historical_companion_run':40835216722,'historical_companion_source':os.environ['TESTED_BASE'],
+            'same_sha_companion_run_claimed':False,'full_p0_acceptance':False,
+            'windows_recovery_accepted':False,'new_target_accepted':False,
           },indent=2)+'\n')
-          PY
+          PYGUARD
+      - name: Calibrate selected Python numeric BUSY and complete private token publication
+        run: |
+          set -euo pipefail
+          ${{ matrix.py }} tests/migration/recovery_integration_20261029/run.py --harness-preflight build/harness-admission 2>&1 | tee build/evidence/harness-admission.txt
       - name: Build and install unchanged SDK and separate candidate targets
         id: native
         run: |
@@ -133,7 +144,7 @@ jobs:
           set -euo pipefail
           OLD=build/old-migration/exreader-legacy-migrate
           if [ '${{ matrix.label }}' = windows ]; then OLD=build/migration/Release/exreader-legacy-migrate.exe; fi
-          ${{ matrix.py }} tests/migration/recovery_integration_20261029/run.py --candidate "migration-stage/bin/exreader-legacy-migrate-recovery${{ matrix.suffix }}" --tool "build/migration/${{ matrix.dir }}exreader-legacy-migrate-tx${{ matrix.suffix }}" --old-tool "$OLD" --fixture "build/integration/${{ matrix.dir }}migration-recovery-fixture${{ matrix.suffix }}" --font tests/fixtures/fonts/primary.ttf --fixtures tests/fixtures --work build/recovery-integration 2>&1 | tee build/evidence/integration.txt
+          ${{ matrix.py }} tests/migration/recovery_integration_20261029/run.py --candidate "migration-stage/bin/exreader-legacy-migrate-recovery${{ matrix.suffix }}" --tool "build/migration/${{ matrix.dir }}exreader-legacy-migrate-tx${{ matrix.suffix }}" --old-tool "$OLD" --fixture "build/integration/${{ matrix.dir }}migration-recovery-fixture${{ matrix.suffix }}" --font tests/fixtures/fonts/primary.ttf --fixtures tests/fixtures --harness-admission build/harness-admission/admission.json --work build/recovery-integration 2>&1 | tee build/evidence/integration.txt
       - name: Require exact counts without converting skipped/failed cases into passes
         if: ${{ !cancelled() && steps.native.outcome == 'success' }}
         run: |
@@ -154,6 +165,7 @@ jobs:
           name: migration-recovery-integration-${{ matrix.label }}
           path: |
             build/evidence/
+            build/harness-admission/
             build/migration/recovery-worker-provider.map
             build/recovery-integration/
             build/recovery-preflight/
