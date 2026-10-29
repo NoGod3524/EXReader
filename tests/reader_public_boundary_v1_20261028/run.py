@@ -1,0 +1,733 @@
+"""Explicit 17-owner + 7-validation integration; all execution is Actions-only.
+
+Preserves original builders/behavior assertions. Old source allowlists are NOT
+reported passed: the named new exact-scope guard replaces those entrypoints.
+This proves four named boundary repairs, never full F07/P0 or physical devices.
+"""
+import argparse
+import hashlib
+import importlib.util
+import io
+import json
+import os
+from pathlib import Path, PurePosixPath
+import plistlib
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[2]
+HERE = Path(__file__).resolve().parent
+OUT = ROOT / 'build/public-boundary-v1'
+BASE = 'f331d5da3ac491143d8f525089140f5d2365fa97'
+BRANCH = 'codex/reader-public-boundary-v1-20261028'
+OWNERS = tuple('apps/reader/' + path for path in (
+    'revisions/CMakeLists.txt', 'revisions/EXReaderRevisionsConfig.cmake.in',
+    'revisions/include/reader_selector_bytes_v1.h', 'revisions/src/selector_bytes_v1.cpp',
+    'reading-state/CMakeLists.txt', 'reading-state/EXReaderReadingStateConfig.cmake.in',
+    'reading-state/include/reader_reading_state_retained_raw_v1.h', 'reading-state/src/reading_state.cpp',
+    'reading-commands/CMakeLists.txt', 'reading-commands/EXReaderReadingCommandsConfig.cmake.in',
+    'reading-commands/src/reading_commands.cpp', 'annotation-import/CMakeLists.txt',
+    'annotation-import/EXReaderAnnotationImportConfig.cmake.in', 'annotation-import/src/annotation_import.cpp',
+    'annotation-export/CMakeLists.txt', 'annotation-export/EXReaderAnnotationExportConfig.cmake.in',
+    'annotation-export/src/annotation_export.cpp'))
+ADDED = tuple('tests/reader_public_boundary_v1_20261028/' + p for p in
+              ('CMakeLists.txt', 'codec_v1.c', 'retained_v1.cpp', 'run.py', 'test_contract.py')) + (
+    '.github/workflows/reader-public-boundary-v1-20261028.yml',
+    'docs/reader-total-progress/reader-public-boundary-v1-20261028.md')
+NEW_OWNER = {OWNERS[2], OWNERS[3], OWNERS[6]}
+TARGETS = ('linux', 'windows', 'android', 'macos', 'iphone', 'ipad')
+EXPECTED_WIRES = {'wire-v1.json','wire-v2.json','wire-v3.json','wire-epub-0.json','wire-epub-1.json','wire-epub-2.json'}
+EXCLUSIONS = ['tests/gtk_sdk342_package/run.py::guard', 'tests/android_sdk342_package/run.py::guard',
+              'tests/reader_f06_packages/identity.py::guard', 'tests/reader_selector_bytes/run.py::main source/build orchestration',
+              'tests/reader_next_c06/run.py::guards/main baseline build and historical Mac-record orchestration']
+
+
+def need(value, message):
+    if not value:
+        raise AssertionError(message)
+
+
+def actions():
+    need(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only: no local execution')
+    need(os.environ.get('GITHUB_REPOSITORY') == 'NoGod3524/EXReader', 'repository identity')
+
+
+def identity():
+    return dict(source_sha=os.environ['GITHUB_SHA'], run_id=os.environ['GITHUB_RUN_ID'], attempt=os.environ['GITHUB_RUN_ATTEMPT'])
+
+
+def digest(path):
+    h = hashlib.sha256()
+    with Path(path).open('rb') as f:
+        for block in iter(lambda: f.read(1024*1024), b''):
+            h.update(block)
+    return h.hexdigest()
+
+
+def save(path, data):
+    path = Path(path); path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+
+
+def command(args, label=None, timeout=1800, expected=0, env=None, cwd=ROOT):
+    args = list(map(str, args))
+    print('RUN', shlex.join(args), flush=True)
+    p = subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=timeout)
+    if label:
+        folder = OUT / 'logs'; folder.mkdir(parents=True, exist_ok=True)
+        (folder / (label+'.stdout.txt')).write_text(p.stdout, encoding='utf-8')
+        (folder / (label+'.stderr.txt')).write_text(p.stderr, encoding='utf-8')
+        save(folder / (label+'.command.json'), dict(argv=args, cwd=str(cwd), exit_code=p.returncode))
+    print((p.stdout+p.stderr)[-8000:], flush=True)
+    if expected is not None:
+        need(p.returncode == expected, (label, args, p.returncode, expected))
+    return p
+
+
+def load(relative, name):
+    spec = importlib.util.spec_from_file_location(name, ROOT / relative)
+    obj = importlib.util.module_from_spec(spec); spec.loader.exec_module(obj)
+    return obj
+
+
+def guard():
+    actions()
+    need(os.environ['GITHUB_REF'] == 'refs/heads/'+BRANCH, 'feature branch only')
+    need(command(['git','rev-parse','HEAD']).stdout.strip() == os.environ['GITHUB_SHA'], 'source SHA')
+    command(['git','merge-base','--is-ancestor',BASE,'HEAD'])
+    changes = command(['git','diff','--name-status',BASE,'HEAD']).stdout.splitlines()
+    actual = {line.split('\t')[1]:line.split('\t')[0] for line in changes}
+    expected = {path:('A' if path in NEW_OWNER or path in ADDED else 'M') for path in (*OWNERS,*ADDED)}
+    need(actual == expected, ('exact authorized 24 paths', actual, expected))
+    need(not command(['git','status','--porcelain','--untracked-files=no']).stdout.strip(), 'tracked source dirty')
+    # Exact full old test/SDK source freeze follows from the 24-path equality;
+    # explicit tree hashes remain easy to audit without trusting this statement.
+    frozen = {}
+    for path in ('src','include','cmake','CMakeLists.txt','bindings','tools','tests/fixtures',
+                 'tests/reader_f06_packages','tests/reader_selector_bytes','tests/reader_gtk_raw_wave3',
+                 'tests/gtk_sdk342_package','tests/android_sdk342_package','tests/sdk342_aggregate',
+                 'tests/reader_wave3_c09','tests/reader_next_c06','tests/reader_reading_commands','tests/reader_annotation_export'):
+        old = command(['git','rev-parse',BASE+':'+path]).stdout.strip()
+        current = command(['git','rev-parse','HEAD:'+path]).stdout.strip()
+        need(old == current, 'frozen path '+path); frozen[path] = current
+    data = dict(identity(), base_sha=BASE, source_scope_passed=True, original_source_guards_excluded=EXCLUSIONS,
+                frozen=frozen, authorized_paths_sha256={p:digest(ROOT/p) for p in (*OWNERS,*ADDED)},
+                f07_accepted=False, physical_device=False)
+    save(OUT/'source.json', data); return data
+
+
+def layout(target):
+    if target == 'linux':
+        return ROOT/'build/reading-library/stage', ROOT/'build/gtk-raw-wave3/raw-stage', ROOT/'build/gtk-raw-wave3/raw-stage', ROOT/'build/gtk-raw-wave3'
+    if target == 'windows':
+        base = ROOT/'build/f06/windows-build'
+        return base/'sdk-stage', base/'raw-stage', base/'product-stage', base
+    if target == 'android':
+        base = ROOT/'build/wave3'
+        return base/'sdk-stage', base/'stage', base/'stage', base
+    base = ROOT/'build/f06'/('macos-build' if target == 'macos' else 'iphonesimulator-build')
+    return base/'sdk', base/'product', base/'product', base
+
+
+def build(target):
+    guard()
+    sdk, stage, product, base = layout(target)
+    need(all(not prefix.exists() for prefix in set((sdk,stage,product))), 'fresh empty SDK/module/product producer prefixes required')
+    (ROOT/'build/f06').mkdir(parents=True, exist_ok=True)
+    if target == 'linux':
+        load('tests/gtk_sdk342_package/run.py','boundary_gtk342').build()
+    elif target == 'windows':
+        builder = load('tests/reader_f06_packages/build.py','boundary_f06_build')
+        original_module = builder.module
+        def module(path, name):
+            obj = original_module(path, name)
+            if path == 'tests/reader_wave3_c09/build.py':
+                original_run = obj.H.run
+                def keep_rsp(args, label, *pos, **kw):
+                    args = list(args)
+                    if len(args)>1 and str(args[0])=='cmake' and str(args[1])=='--build':
+                        args += ['--verbose','--','-d','keeprsp']
+                    return original_run(args,label,*pos,**kw)
+                obj.H.run = keep_rsp
+            return obj
+        builder.module = module
+        payload = builder.windows()
+        load('tests/reader_f06_packages/identity.py','boundary_f06_id').package('windows',payload)
+    elif target == 'android':
+        load('tests/android_sdk342_package/run.py','boundary_android342').build()
+    else:
+        command([sys.executable,'tests/sdk342_aggregate/apple_f06.py',target], 'original-apple-f06', timeout=6000)
+    need(not (stage/'include/reader_selector_bytes_detail.h').exists(), 'private header still installed')
+    save(OUT/'build.json',dict(identity(),target=target, original_builder_passed=True, fresh_prefixes=True))
+
+
+def cross_options(target, sdk, stage, product):
+    options = ['-DCMAKE_BUILD_TYPE=Release','-DCMAKE_PREFIX_PATH='+ ';'.join(map(str,dict.fromkeys((stage,product,sdk)))),
+               '-DEXR_SDK='+str(sdk),'-DEXR_SDK_VERSION=3.42.0']
+    if target == 'android':
+        options += ['-DCMAKE_TOOLCHAIN_FILE='+os.environ['C11_TOOLCHAIN'],'-DANDROID_ABI=x86_64',
+                    '-DANDROID_PLATFORM=android-26','-DANDROID_STL=c++_static','-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
+                    '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH']
+    if target in ('iphone','ipad'):
+        options += ['-DCMAKE_SYSTEM_NAME=iOS','-DCMAKE_OSX_SYSROOT=iphonesimulator','-DCMAKE_OSX_ARCHITECTURES=arm64',
+                    '-DCMAKE_OSX_DEPLOYMENT_TARGET=15.0','-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO']
+    elif target == 'macos':
+        options += ['-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0']
+    selected_packages=set()
+    for prefix in dict.fromkeys((stage,product,sdk)):
+        for folder in sorted((prefix/'lib/cmake').glob('*')):
+            if folder.is_dir() and folder.name not in selected_packages:
+                options += ['-D'+folder.name+'_DIR='+str(folder)];selected_packages.add(folder.name)
+    return options
+
+
+def configure_negatives(target, sdk, stage, product):
+    results=[]
+    source=OUT/'negative-source'; source.mkdir(parents=True,exist_ok=True)
+    (source/'CMakeLists.txt').write_text('cmake_minimum_required(VERSION 3.24)\nproject(PublicGuard LANGUAGES C CXX)\nfind_package(EXReaderRevisions 0.4.0 EXACT CONFIG REQUIRED)\n')
+    for case in ('valid','missing-header','wrong-version','comment-spoof','missing-capability','conflicting-capability','mixed-archive','stale-private','legacy-prefix','retained-header','retained-version','retained-capability','same-prefix-wrong-archive'):
+        prefix=OUT/'negative-prefix'; shutil.rmtree(prefix,ignore_errors=True); shutil.copytree(stage,prefix)
+        header=prefix/'include/reader_selector_bytes_v1.h'; config=prefix/'lib/cmake/EXReaderRevisions'
+        targets=config/'EXReaderRevisionsTargets.cmake'
+        if case=='missing-header': header.unlink()
+        if case in ('wrong-version','comment-spoof'):
+            header.write_text(header.read_text().replace('#define READER_REV_SELECTOR_BYTES_API_VERSION "1.0.0"','#define READER_REV_SELECTOR_BYTES_API_VERSION "9.0.0"') + ('\n/*\n#define READER_REV_SELECTOR_BYTES_API_VERSION "1.0.0"\n*/\n' if case=='comment-spoof' else ''))
+        if case=='missing-capability': targets.write_text(targets.read_text().replace('EXR_READER_PUBLIC_SELECTOR_BYTES_V1=1',''))
+        if case=='conflicting-capability': targets.write_text(targets.read_text().replace('EXR_READER_PUBLIC_SELECTOR_BYTES_V1=1','EXR_READER_PUBLIC_SELECTOR_BYTES_V1=1;EXR_READER_PUBLIC_SELECTOR_BYTES_V1=0'))
+        if case=='same-prefix-wrong-archive':
+            for path in config.glob('EXReaderRevisionsTargets-*.cmake'):
+                path.write_text(path.read_text().replace('/libreader_revisions.a','/libreader_revision_hash.a').replace('/reader_revisions.lib','/reader_revision_hash.lib'))
+        if case=='mixed-archive':
+            locations=list(config.glob('EXReaderRevisionsTargets-*.cmake')); need(locations,'archive exports')
+            for path in locations: path.write_text(path.read_text().replace('${_IMPORT_PREFIX}/lib/',str(stage/'lib')+'/'))
+        if case=='stale-private': shutil.copyfile(ROOT/'apps/reader/revisions/include/reader_selector_bytes_detail.h',prefix/'include/reader_selector_bytes_detail.h')
+        if case.startswith('retained-'):
+            header=prefix/'include/reader_reading_state_retained_raw_v1.h'
+            if case=='retained-header':header.unlink()
+            elif case=='retained-version':header.write_text(header.read_text().replace('#define READER_RS_RETAINED_RAW_API_VERSION "1.0.0"','#define READER_RS_RETAINED_RAW_API_VERSION "9.0.0"'))
+            else:
+                state_targets=prefix/'lib/cmake/EXReaderReadingState/EXReaderReadingStateTargets.cmake'
+                state_targets.write_text(state_targets.read_text().replace('EXR_READER_PUBLIC_RETAINED_RAW_V1=1','EXR_READER_PUBLIC_RETAINED_RAW_V1=0'))
+        package='EXReaderReadingCommands 0.2.0' if case.startswith('retained-') else 'EXReaderRevisions 0.4.0'
+        (source/'CMakeLists.txt').write_text('cmake_minimum_required(VERSION 3.24)\nproject(PublicGuard LANGUAGES C CXX)\nfind_package('+package+' EXACT CONFIG REQUIRED)\n')
+        selected=OUT/'legacy-stage' if case=='legacy-prefix' else prefix
+        options=cross_options(target,sdk,selected,prefix if product==stage else product)
+        p=command(['cmake','-S',source,'-B',OUT/('negative-'+case),'-G','Ninja',*options], 'negative-'+case, expected=None)
+        need((p.returncode==0)==(case=='valid'), ('guard outcome',case,p.returncode))
+        results.append(dict(case=case,expected_success=case=='valid',exit_code=p.returncode,passed=True))
+    shutil.rmtree(OUT/'negative-prefix')
+    return results
+
+
+def snapshot(folder):
+    folder=Path(folder);need(folder.is_dir(),'snapshot root missing')
+    files={};directories=[]
+    for path in sorted(folder.rglob('*')):
+        need(not path.is_symlink(),'native snapshot may not contain aliases')
+        relative=path.relative_to(folder).as_posix();need(safe_member(relative),'unsafe native snapshot name')
+        if path.is_file():files[relative]=digest(path)
+        elif path.is_dir():directories.append(relative)
+        else:need(False,'special native snapshot entry')
+    return dict(files=files,directories=sorted(directories))
+
+
+def exact_copy(source,destination):
+    """Own test trees only. Replacement includes absence/deletions, never merge."""
+    source,destination=Path(source),Path(destination)
+    before=snapshot(source)
+    temporary=destination.with_name(destination.name+'.incoming')
+    need(not temporary.exists(),'stale snapshot staging directory')
+    temporary.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copytree(source,temporary)
+    need(snapshot(temporary)==before and snapshot(source)==before,'copy snapshot changed')
+    if destination.exists():shutil.rmtree(destination)
+    temporary.rename(destination)
+    need(snapshot(destination)==before,'installed snapshot mismatch')
+    return before
+
+
+class Native:
+    def __init__(self,target,programs,data):
+        self.target,self.programs,self.data=target,programs,data
+        self.udid=None;self.devices={};self.remote='/data/local/tmp/exr-public-boundary-v1-'+os.environ['GITHUB_RUN_ID']+'-'+os.environ['GITHUB_RUN_ATTEMPT']
+        self.env=dict(os.environ,SELECTOR_TXT_SHA=hashlib.sha256(b'A real public SDK text capture has enough context for stable matching.').hexdigest(),
+                      C06_TXT_SHA=hashlib.sha256(b'A real public SDK text capture has enough context for stable matching.').hexdigest(),
+                      BOUNDARY_TXT_SHA=digest(data/'fixtures/book.txt'),BOUNDARY_EPUB_SHA=digest(data/'fixtures/book.epub'),BOUNDARY_PDF_SHA=digest(data/'pdf.pdf'))
+        if target=='android':
+            command(['adb','shell','mkdir','-p',self.remote])
+            for name,path in programs.items(): command(['adb','push',path,self.remote+'/'+name])
+            command(['adb','shell','chmod','755',*[self.remote+'/'+n for n in programs]])
+        elif target in ('iphone','ipad'):
+            inventory=json.loads(command(['xcrun','simctl','list','runtimes','available','--json']).stdout)
+            runtimes=sorted((r for r in inventory['runtimes'] if r.get('platform')=='iOS'),key=lambda r:tuple(map(int,r['version'].split('.'))))
+            need(runtimes,'iOS runtime unavailable');runtime=runtimes[-1]
+            family='iPhone' if target=='iphone' else 'iPad'
+            device_type=next(d['identifier'] for d in runtime['supportedDeviceTypes'] if d.get('productFamily')==family)
+            self.udid=command(['xcrun','simctl','create','exr-boundary-'+os.environ['GITHUB_RUN_ID']+'-'+target,device_type,runtime['identifier']]).stdout.strip()
+            self.devices=dict(udid=self.udid,runtime=runtime['identifier'],device_type=device_type,fresh=True)
+            command(['xcrun','simctl','bootstatus',self.udid,'-b'],timeout=600)
+            for name,path in programs.items():
+                bundle=OUT/(name+'.app');bundle.mkdir(exist_ok=True)
+                shutil.copyfile(path,bundle/name);(bundle/name).chmod(0o755)
+                bundleid='org.exreader.publicboundary.'+name
+                (bundle/'Info.plist').write_bytes(plistlib.dumps(dict(CFBundleIdentifier=bundleid,CFBundleExecutable=name,CFBundlePackageType='APPL',CFBundleVersion='1',CFBundleShortVersionString='1.0',MinimumOSVersion='15.0',UIDeviceFamily=[1,2])))
+                command(['codesign','--force','--sign','-',bundle],name+'-sign')
+                command(['xcrun','simctl','install',self.udid,bundle],name+'-install')
+                installed=command(['xcrun','simctl','get_app_container',self.udid,bundleid,'app']).stdout.strip()
+                container=command(['xcrun','simctl','get_app_container',self.udid,bundleid,'data']).stdout.strip()
+                self.programs[name]=(Path(installed)/name,Path(container)/'Documents/boundary-data')
+    def android_snapshot(self,folder):
+        def shell(script):return command(['adb','shell',script],timeout=180).stdout
+        base='cd '+shlex.quote(folder)+' && '
+        need(not shell(base+'find . ! -type f ! -type d').strip(),'Android snapshot special entry or symlink')
+        files={}
+        for line in shell(base+'find . -type f -exec sha256sum {} \\;').splitlines():
+            match=re.fullmatch(r'([0-9a-f]{64})  \./(.+)',line)
+            need(match is not None,'Android hash inventory format')
+            sha,name=match.groups();need(safe_member(name) and name not in files,'Android duplicate/unsafe file')
+            files[name]=sha
+        directories=[]
+        for line in shell(base+'find . -type d').splitlines():
+            if line=='.':continue
+            need(line.startswith('./') and safe_member(line[2:]),'Android directory inventory')
+            directories.append(line[2:])
+        return dict(files=files,directories=sorted(directories))
+    def run(self,name,args=(),label=None,timeout=180):
+        args=list(map(str,args));label=(self.target+'-'+(label or name))
+        keys=('SELECTOR_TXT_SHA','C06_TXT_SHA','BOUNDARY_TXT_SHA','BOUNDARY_EPUB_SHA','BOUNDARY_PDF_SHA')
+        if self.target=='android':
+            remote_data=self.remote+'/'+self.data.name
+            command(['adb','shell','rm','-rf',remote_data],label+'-clear-owned-snapshot')
+            before=snapshot(self.data)
+            command(['adb','push',str(self.data),self.remote+'/'],label+'-push',timeout=180)
+            need(self.android_snapshot(remote_data)==before,'Android input snapshot differs')
+            translated=[a.replace(str(self.data),remote_data) for a in args]
+            variables=[key+'='+self.env[key] for key in keys]
+            p=command(['adb','shell',shlex.join(['env',*variables,self.remote+'/'+name,*translated])],label,timeout,expected=None)
+            after=self.android_snapshot(remote_data)
+            incoming=self.data.with_name(self.data.name+'.pulled');need(not incoming.exists(),'stale Android receive')
+            incoming.mkdir()
+            command(['adb','pull',remote_data+'/.',incoming],label+'-pull',timeout=180)
+            need(snapshot(incoming)==after and self.android_snapshot(remote_data)==after,'Android output snapshot differs/changed')
+            exact_copy(incoming,self.data);shutil.rmtree(incoming)
+        elif self.udid:
+            program,destination=self.programs[name]
+            exact_copy(self.data,destination)
+            translated=[a.replace(str(self.data),str(destination)) for a in args]
+            variables=['SIMCTL_CHILD_'+key+'='+self.env[key] for key in keys]
+            p=command(['env',*variables,'xcrun','simctl','spawn',self.udid,program,*translated],label,timeout,expected=None)
+            exact_copy(destination,self.data)
+        else:
+            p=command([self.programs[name],*args],label,timeout,expected=None,env=self.env)
+        need(p.returncode==0,(label,p.returncode));return p.stdout
+    def close(self):
+        if self.udid:
+            command(['xcrun','simctl','shutdown',self.udid],expected=None)
+            command(['xcrun','simctl','delete',self.udid],expected=None)
+
+
+def native(target):
+    actions();sdk,stage,product,base=layout(target)
+    builddir=OUT/'native-build';options=cross_options(target,sdk,stage,product)
+    command(['cmake','-S',HERE,'-B',builddir,'-G','Ninja',*options],target+'-native-configure')
+    command(['cmake','--build',builddir,'--parallel','4','--verbose','--','-d','keeprsp'],target+'-native-build')
+    names=('public-codec-v1','public-retained-v1','original-selector-bytes','original-c06')
+    programs={name:builddir/(name+('.exe' if os.name=='nt' else '')) for name in names}
+    legacy=OUT/'legacy-stage'
+    need(not legacy.exists(),'fresh empty legacy-OFF prefix required')
+    for module in ('revisions','reading-state','annotation-import','annotation-export'):
+        folder=OUT/('legacy-'+module)
+        legacy_options=cross_options(target,sdk,legacy,product)
+        legacy_options+=['-DCMAKE_INSTALL_PREFIX='+str(legacy),'-DREADER_PRODUCT_PREFIX='+str(product),'-DEXR_READER_SELECTOR_BYTES_CANDIDATE=OFF']
+        if module=='annotation-import':legacy_options+=['-DREADER_ANNOTATION_IMPORT_BUILD=ON']
+        command(['cmake','-S',ROOT/'apps/reader'/module,'-B',folder,'-G','Ninja',*legacy_options],target+'-legacy-'+module+'-configure')
+        command(['cmake','--build',folder,'--parallel','4'],target+'-legacy-'+module+'-build')
+        command(['cmake','--install',folder],target+'-legacy-'+module+'-install')
+    legacy_build=OUT/'legacy-c06'
+    command(['cmake','-S',ROOT/'tests/reader_next_c06/consumer','-B',legacy_build,'-G','Ninja','-DC06_RAW=OFF',*cross_options(target,sdk,legacy,product)],target+'-legacy-c06-configure')
+    command(['cmake','--build',legacy_build,'--parallel','4'],target+'-legacy-c06-build')
+    programs['original-c06-legacy']=legacy_build/('c06-probe'+('.exe' if os.name=='nt' else ''))
+    need(not (legacy/'include/reader_selector_bytes_v1.h').exists() and not (legacy/'include/reader_reading_state_retained_raw_v1.h').exists(),'raw API leaked into OFF install')
+    data=OUT/'native-data';data.mkdir(exist_ok=True)
+    command([sys.executable,'tests/reader_reading_state/make_fixtures.py',data/'fixtures'],target+'-fixtures')
+    shutil.copyfile(ROOT/'tests/fixtures/pdf-public-text.pdf',data/'pdf.pdf')
+    shutil.copyfile(ROOT/'tests/fixtures/fonts/primary.ttf',data/'font.ttf')
+    targets=('iphone','ipad') if target=='iphone' else (target,)
+    reports=[]
+    for entry in targets:
+        runner=Native(entry,dict(programs),data)
+        report=dict(identity(),target=entry,passed=False,f07_accepted=False,physical_device=False)
+        try:
+            codec=runner.run('public-codec-v1')
+            retained=runner.run('public-retained-v1',[data/'fixtures',data/'pdf.pdf',data/'font.ttf',data/(entry+'-retained')])
+            need('passed=true' in codec and 'passed=true' in retained,'native success markers')
+            work=data/(entry+'-original');probe=programs['original-selector-bytes']
+            for phase in ('legacy','seed','receive','reopen','nullable','versions'):
+                runner.run('original-selector-bytes',[phase,data/'pdf.pdf',work],phase,timeout=180)
+            original=load('tests/reader_selector_bytes/run.py','boundary_original_selector')
+            def invoke(args,name=None,timeout=180):
+                need(str(args[0])==str(probe),'only original consumer invocation')
+                return runner.run('original-selector-bytes',args[1:],name,timeout)
+            original.run=invoke
+            report['original_protocol']=original.protocol(probe,work)
+            report['original_graph']=original.graph_cases(probe,work)
+            portable=load('tests/reader_next_c06/run.py','boundary_original_c06')
+            c06=data/(entry+'-c06');c06.mkdir()
+            def original_probe(exe,*args,label=None):
+                which='original-c06' if str(exe)==str(programs['original-c06']) else 'original-c06-legacy'
+                need(str(exe) in (str(programs['original-c06']),str(programs['original-c06-legacy'])),'original C06 executable')
+                output=runner.run(which,args,'c06-'+(label or which),900)
+                return portable.Result(subprocess.CompletedProcess([str(exe),*map(str,args)],0,output))
+            portable.probe=original_probe
+            off=portable.legacy_phase('off',programs['original-c06-legacy'],c06/'legacy-off')
+            raw=portable.legacy_phase('raw',programs['original-c06'],c06/'legacy-raw')
+            need(off==raw,'unchanged C06 legacy wire output parity')
+            portable.raw_phase(programs['original-c06'],programs['original-c06-legacy'],data/'pdf.pdf',c06/'raw')
+            need(not portable.FAILED,'original C06 assertions failed')
+            report['original_c06_checks']=portable.CHECKS
+            retained_wires={p.name:digest(p) for p in (data/(entry+'-retained')).glob('wire-*.json')}
+            need(set(retained_wires)==EXPECTED_WIRES,'exact nonempty retained wire inventory')
+            report.update(passed=True,native_device=runner.devices,program_sha256={n:digest(p) for n,p in programs.items()},
+                          retained_wires=retained_wires,
+                          pure_capture_selected=(stage/'include/reader_reading_state_capture_raw_candidate.h').exists())
+        finally:
+            runner.close();save(OUT/('native-'+entry+'.json'),report)
+        reports.append(report)
+    # All negative config fixtures use copied prefixes, never modify producer bytes.
+    negatives=configure_negatives(target,sdk,stage,product)
+    save(OUT/'native.json',dict(identity(),target=target,passed=True,entries=reports,configuration_controls=negatives))
+
+
+def symbol_present(text, symbol, defined, windows=False):
+    """Only the named public C function, not prefixes or arbitrary weak imports."""
+    for line in text.splitlines():
+        if windows:
+            match=re.fullmatch(r'\s*[0-9A-Fa-f]+\s+([0-9A-Fa-f]{8,16})\s+(UNDEF|SECT[0-9A-Fa-f]+)\s+notype\s+\(\)\s+External\s+\|\s+'+re.escape(symbol)+r'\s*',line)
+            if match:
+                value,section=match.groups()
+                if defined and section.startswith('SECT'):return True
+                if not defined and section=='UNDEF' and int(value,16)==0:return True
+        elif re.search(r'\s'+('T' if defined else 'U')+r'\s+_?'+re.escape(symbol)+r'$',line):
+            return True
+    return False
+
+
+def ninja_dependency_groups(text):
+    groups={};current=None
+    for line in text.splitlines():
+        if not line or line.startswith("ninja: Entering directory "):continue
+        match=re.fullmatch(r'(.+): #deps (\d+), deps mtime \d+ \((VALID|STALE)\)',line)
+        if match:
+            name,count,status=match.groups();need(name not in groups,'duplicate dependency object')
+            current=dict(declared_count=int(count),status=status,paths=[]);groups[name]=current
+        else:
+            need(current is not None and line.startswith('    ') and line[4:],'malformed/truncated Ninja dependency group')
+            current['paths'].append(line[4:])
+    need(groups,'no actual Ninja dependency groups')
+    for name,group in groups.items():
+        need(len(group['paths'])==group['declared_count']>0,('Ninja dependency count mismatch',name))
+    return groups
+
+
+def make_dependency_group(text):
+    need(text.endswith('\n') and not text.endswith('\\\n'),'unterminated Make depfile')
+    joined=text.replace('\\\n',' ')
+    match=re.fullmatch(r'([^\n]+?\.(?:o|obj)):[ \t]*(.+)\n',joined,re.S)
+    need(match is not None,'one complete object depfile rule required')
+    name,body=match.groups();need('\n' not in body,'unexpected second Make rule')
+    tokens=re.findall(r'(?:\\.|[^\\ \t\r\n])+',body)
+    paths=[re.sub(r'\\(.)',r'\1',token) for token in tokens]
+    need(paths,'empty Make dependency list')
+    return {name:dict(paths=paths,status='VALID',declared_count=len(paths))}
+
+
+def owned_dependency_proof(source,graph_objects,groups,folder,required_headers):
+    def normal(path):return os.path.normcase(str((folder/Path(path)).resolve()))
+    expected=normal(source);linked={normal(p) for p in graph_objects}
+    matches=[]
+    for obj,group in groups.items():
+        paths=[normal(p) for p in group['paths']]
+        if expected in paths and normal(obj) in linked:
+            matches.append((obj,group,paths))
+    need(len(matches)==1,'exact source/linked archive object dependency binding missing or ambiguous')
+    obj,group,paths=matches[0]
+    need(group['status']=='VALID' and paths.count(expected)==1,'stale or ambiguous source dependency')
+    need(not any(Path(p).name=='reader_selector_bytes_detail.h' for p in paths),'private selector implementation dependency remains')
+    for header in required_headers:need(normal(header) in paths,'installed public dependency missing: '+str(header))
+    return dict(source=source,archive_object=obj,actual_compiler_dependency_seen=True,
+                dependency_count=len(paths),required_public_headers=list(map(str,required_headers)),
+                private_selector_header_absent=True)
+
+
+def package_identity(target):
+    folder=ROOT/'build/f06'/target
+    result=json.loads((folder/'result.json').read_text())
+    for key,value in identity().items():need(result[key]==value,(target,key))
+    need(result['passed'] is True and result['target']==target,'original F06 result')
+    manifest=json.loads((folder/'manifest.json').read_text())
+    need(manifest['source_sha']==os.environ['GITHUB_SHA'],'package source')
+    need(manifest['provenance']['run_id']==os.environ['GITHUB_RUN_ID'] and manifest['provenance']['attempt']==os.environ['GITHUB_RUN_ATTEMPT'],'package run/attempt')
+    archive=folder/manifest['archive']['name']
+    need(digest(archive)==manifest['archive']['sha256']==result['archive']['sha256'],'actual package bytes')
+    # Original F06 package/unpack/entry assertions already ran unchanged. Retain
+    # every byte and their identity reports, not only the passed boolean.
+    return dict(result=result,manifest=manifest,archive_sha256=digest(archive),
+                reports_sha256={p.name:digest(p) for p in folder.glob('*.json')})
+
+
+def capture(target):
+    actions();sdk,stage,product,base=layout(target)
+    report=dict(identity(),target=target,capture_complete=False,named_boundary_accepted=False,f07_accepted=False,
+                full_six_f07_accepted=False,unresolved=['Android-specific private OPDS/hash edge (not asserted for Windows)','source-copy sha256.inc ownership lead','final platform weak/import-provider gaps'])
+    destination=OUT/'evidence';destination.mkdir(parents=True,exist_ok=False)
+    files={};root=ROOT.resolve()
+    def copy(path):
+        path=Path(path);need(path.is_file(),'capture file missing '+str(path))
+        relative=path.relative_to(ROOT).as_posix()
+        if relative in files:return
+        resolved=path.resolve();need(resolved.is_relative_to(root),'capture symlink escapes source workspace')
+        into=destination/relative;into.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,into)
+        files[relative]=dict(sha256=digest(into),bytes=into.stat().st_size,mode=path.stat().st_mode&0o777,
+                             symlink_target=os.readlink(path) if path.is_symlink() else None)
+    def tree(folder):
+        need(folder.is_dir(),'required evidence tree '+str(folder))
+        for path in sorted(folder.rglob('*')):
+            need(not(path.is_symlink() and path.is_dir()),'directory alias requires explicit closure')
+            if path.is_file():copy(path)
+    try:
+        source=json.loads((OUT/'source.json').read_text());need(source['source_sha']==os.environ['GITHUB_SHA'],'source identity')
+        for prefix in dict.fromkeys((sdk,stage,product)):tree(prefix)
+        need(not list(stage.glob('include/**/reader_selector_bytes_detail.h')),'private header installed')
+        cache_records={};dependencies={};manifests={};proofs={}
+        source_names={'reading-state':'reading_state.cpp','reading-commands':'reading_commands.cpp','annotation-import':'annotation_import.cpp','annotation-export':'annotation_export.cpp'}
+        archive_names={'revisions':'reader_revisions','reading-state':'reader_reading_state_codec','reading-commands':'reader_reading_commands','annotation-import':'reader_annotation_import','annotation-export':'reader_annotation_export'}
+        folders=list((ROOT/'build').rglob('CMakeCache.txt'))
+        if (ROOT/'examples/android/app/.cxx').is_dir():folders+=list((ROOT/'examples/android/app/.cxx').rglob('CMakeCache.txt'))
+        for cache in folders:
+            if OUT in cache.parents:continue
+            text=cache.read_text(errors='replace')
+            homes=re.findall(r'^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$',text,re.M)
+            if not homes:continue
+            folder=cache.parent;home=Path(homes[0]).resolve();relative=folder.relative_to(ROOT).as_posix()
+            raw='EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=ON' in text
+            owner=home.name if home.parent==ROOT/'apps/reader' and home.name in ('revisions','reading-state','reading-commands','annotation-import','annotation-export') else None
+            copy(cache);cache_records[relative]=dict(home=str(home),raw=raw,owner=owner)
+            if (folder/'install_manifest.txt').is_file():
+                copy(folder/'install_manifest.txt');manifests[relative]=(folder/'install_manifest.txt').read_text().splitlines()
+            metadata={'build.ninja','rules.ninja','.ninja_deps','.ninja_log','link.txt','DependInfo.cmake','compiler_depend.make','compiler_depend.internal','depend.make','flags.make','cmake_install.cmake'}
+            dependency='';ninja_deps=None
+            for path in folder.rglob('*'):
+                if path.is_file() and (path.name in metadata or path.suffix in ('.d','.rsp','.map') or (owner and path.suffix in ('.o','.obj'))):
+                    copy(path)
+                    if path.name in ('compiler_depend.make','compiler_depend.internal','depend.make') or path.suffix=='.d':dependency+=path.read_text(errors='replace')+'\n'
+            if (folder/'build.ninja').is_file():
+                label='graph-'+relative.replace('/','_')
+                for tool in ('commands','deps'):
+                    p=command(['ninja','-C',folder,'-t',tool],label+'-'+tool)
+                    if tool=='deps':ninja_deps=p.stdout
+            if owner and raw and owner in source_names:
+                need(owner not in proofs,'ambiguous raw build owner '+owner)
+                name=archive_names[owner];archive_name=name+'.lib' if os.name=='nt' else 'lib'+name+'.a'
+                built=folder/archive_name;installed=stage/'lib'/archive_name
+                need(built.is_file() and installed.is_file() and digest(built)==digest(installed),'actual built archive differs from installed owner')
+                copy(built)
+                if ninja_deps is not None:
+                    groups=ninja_dependency_groups(ninja_deps)
+                    query=command(['ninja','-C',folder,'-t','query',archive_name],'archive-input-'+owner).stdout
+                    input_section=query.split('  input:',1)
+                    need(len(input_section)==2 and '  outputs:' in input_section[1],'archive query structure')
+                    graph_objects=[line.strip() for line in input_section[1].split('  outputs:',1)[0].splitlines()[1:]
+                                   if re.fullmatch(r'    [^|].*\.(o|obj)',line)]
+                else:
+                    depfiles=list((folder/'CMakeFiles'/(name+'.dir')).rglob(source_names[owner]+'.o.d'))
+                    need(len(depfiles)==1,'exact Make object depfile missing or ambiguous')
+                    groups=make_dependency_group(depfiles[0].read_text())
+                    link=folder/'CMakeFiles'/(name+'.dir')/'link.txt'
+                    need(link.is_file(),'actual Make archive link command missing')
+                    graph_objects=[token for token in shlex.split(link.read_text()) if token.endswith(('.o','.obj'))]
+                required=[stage/'include'/('reader_reading_state_retained_raw_v1.h' if owner=='reading-commands' else 'reader_selector_bytes_v1.h')]
+                proof=owned_dependency_proof(str(home/'src'/source_names[owner]),graph_objects,groups,folder,required)
+                need((folder/proof['archive_object']).is_file(),'linked object bytes absent')
+                proof.update(built_archive_sha256=digest(built),installed_archive_sha256=digest(installed))
+                proofs[owner]=proof
+        need(set(proofs)==set(source_names),'all four exact producer TU dependencies required')
+        for owner,header in (('revisions','reader_selector_bytes_v1.h'),('reading-state','reader_reading_state_retained_raw_v1.h')):
+            expected=(stage/'include'/header).resolve()
+            owners=[cache_records[name]['owner'] for name,paths in manifests.items() if cache_records[name]['raw'] and expected in [Path(p).resolve() for p in paths]]
+            need(owners==[owner],('public header exact install owner',header,owners))
+        names={'revisions':'reader_revisions','reading-state':'reader_reading_state_codec','reading-commands':'reader_reading_commands','annotation-import':'reader_annotation_import','annotation-export':'reader_annotation_export'}
+        target_names={'revisions':'EXReaderRevisions::reader_revisions','reading-state':'EXReaderReadingState::reader_reading_state_codec','reading-commands':'EXReaderReadingCommands::reader_reading_commands','annotation-import':'EXReaderAnnotationImport::reader_annotation_import','annotation-export':'EXReaderAnnotationExport::reader_annotation_export'}
+        target_files=list((OUT/'native-build').glob('bound-targets-*.txt'));need(len(target_files)==1,'actual target location record')
+        target_rows=[line.split('\t') for line in target_files[0].read_text().splitlines()]
+        need(len(target_rows)==5 and all(len(row)==2 for row in target_rows),'target location structure')
+        target_locations=dict(target_rows);need(set(target_locations)==set(target_names.values()),'exact imported target inventory')
+        symbol_tables={};archive_identity={}
+        for owner,name in names.items():
+            archive=stage/'lib'/((name+'.lib') if os.name=='nt' else ('lib'+name+'.a'))
+            need(archive.is_file(),'installed owner archive '+str(archive))
+            need(Path(target_locations[target_names[owner]]).resolve()==archive.resolve(),'actual exported target redirected to another archive')
+            owners=[cache_records[key]['owner'] for key,paths in manifests.items() if cache_records[key]['raw'] and archive.resolve() in [Path(p).resolve() for p in paths]]
+            need(owners==[owner],('exact archive install owner',owner,owners))
+            if os.name=='nt':argv=['dumpbin','/symbols',archive]
+            elif target=='android':argv=[str(Path(os.environ['ANDROID_HOME'])/'ndk'/os.environ['C11_NDK']/'toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm'),'-A',archive]
+            elif sys.platform=='darwin':argv=['xcrun','nm','-A',archive]
+            else:argv=['nm','-A',archive]
+            text=command(argv,'native-owner-'+owner).stdout
+            need('reader_rs_encode_retained_raw_v3' not in text,'private C++ entry remains in '+owner)
+            symbol_tables[owner]=text;archive_identity[owner]=dict(path=str(archive.relative_to(ROOT)),sha256=digest(archive),exported_target=target_names[owner],configured_target_file=target_locations[target_names[owner]])
+        encode='reader_revision_selector_encode_v1';decode='reader_revision_selector_decode_v1';retained='reader_rs_encode_retained_raw_v1'
+        for owner,symbol in (('revisions',encode),('revisions',decode),('reading-state',retained)):
+            need(symbol_present(symbol_tables[owner],symbol,True,os.name=='nt'),('actual public definition',owner,symbol))
+            need(sum(symbol_present(t,symbol,True,os.name=='nt') for t in symbol_tables.values())==1,'ambiguous project public definition')
+        for owner,symbol in (('reading-state',encode),('reading-state',decode),('annotation-import',encode),('annotation-export',encode),('reading-commands',retained)):
+            need(symbol_present(symbol_tables[owner],symbol,False,os.name=='nt'),('actual installed consumer import',owner,symbol))
+        entries=('iphone','ipad') if target=='iphone' else (target,)
+        packages={}
+        for entry in entries:
+            packages[entry]=package_identity(entry)
+            for folder in (ROOT/'build/f06'/entry,ROOT/'build/f06'/('unpacked-'+entry)):
+                tree(folder)
+        # Original final producer binaries/maps and package envelopes, not probe
+        # binaries mislabeled as a host. Some final functions may be dead-stripped;
+        # this gate asserts installed owner boundaries, not whole-image F07.
+        if target=='linux':
+            tree(base/'retained-host');tree(base/'retained-package');tree(ROOT/'build/gtk-sdk342')
+            for p in base.glob('*.json'):copy(p)
+            for folder in ('gtk-navigation-ui','gtk-batch-ui','gtk-navigation-backend','gtk-batch-backend','gtk-batch-owner-faults'):
+                if (ROOT/'build'/folder).exists():tree(ROOT/'build'/folder)
+        elif target=='windows':tree(base/'host');tree(ROOT/'build/f06/windows-payload')
+        elif target=='android':
+            tree(ROOT/'build/f06/android-payload');tree(base/'artifacts')
+            for path in (ROOT/'examples/android/app/.cxx').rglob('*'):
+                if path.is_file() and path.suffix in ('.so','.map','.rsp','.o'):copy(path)
+        else:
+            tree(ROOT/'build/f06'/('macos-payload' if target=='macos' else 'iphone-payload'))
+        native=json.loads((OUT/'native.json').read_text());need(native['passed'] is True,'native gate not passed')
+        for entry in entries:
+            local=json.loads((OUT/('native-'+entry+'.json')).read_text());need(local['passed'] is True,'native entry failed '+entry)
+        tree(OUT/'native-build');tree(OUT/'native-data');tree(OUT/'legacy-stage');tree(OUT/'legacy-c06')
+        for path in OUT.glob('*.json'):copy(path)
+        tree(OUT/'logs')
+        report.update(capture_complete=True,named_boundary_accepted=True,source=source,installed_archives=archive_identity,
+                      actual_compiler_dependencies=proofs,public_headers_unique_install_owner=True,
+                      private_header_absent=True,private_cpp_entry_absent=True,packages=packages,native=native,
+                      final_whole_image_f07_audit=False,original_source_guards_excluded=EXCLUSIONS)
+    except Exception as error:
+        report['error']=repr(error)
+        raise
+    finally:
+        if (OUT/'logs').is_dir():
+            tree(OUT/'logs')
+        save(OUT/'capture.json',report)
+        save(destination/'inventory.json',dict(identity(),files=files,report=report))
+
+
+def safe_member(name):
+    path=PurePosixPath(name)
+    return bool(name) and not path.is_absolute() and '\\' not in name and ':' not in name and all(p not in ('','.','..') for p in name.split('/'))
+
+
+def verify_delivered_entry(bundle,target,record):
+    prefix='build/f06/'+target+'/'
+    def read(name):return json.loads(bundle.read(prefix+name))
+    manifest,result=read('manifest.json'),read('result.json')
+    config,entry,unpack=read('configuration.json'),read('entry.json'),read('unpack.json')
+    for item in (result,config):
+        for key,value in identity().items():need(item[key]==value,('F06 identity',target,key))
+    need(result==record['result'] and manifest==record['manifest'],'recorded F06 result drift')
+    need(result['passed'] and result['target']==manifest['target']==target,'F06 target/pass')
+    need(manifest['source_sha']==os.environ['GITHUB_SHA'] and manifest['sdk_version']=='3.42.0','F06 source/version')
+    need(manifest['provenance']['run_id']==os.environ['GITHUB_RUN_ID'] and manifest['provenance']['attempt']==os.environ['GITHUB_RUN_ATTEMPT'],'F06 provenance')
+    need(config['build_recipe_sha256']==digest(ROOT/'tests/reader_f06_packages/build.py'),'original F06 build recipe')
+    need(hashlib.sha256(bundle.read(prefix+'configuration.json')).hexdigest()==result['configuration_sha256'],'configuration digest')
+    need(hashlib.sha256(bundle.read(prefix+'entry.json')).hexdigest()==result['entry_report_sha256'],'entry report digest')
+    block=manifest['archive'];need(safe_member(block['name']) and '/' not in block['name'],'nested archive name')
+    raw=bundle.read(prefix+block['name'])
+    need(len(raw)==block['bytes'] and hashlib.sha256(raw).hexdigest()==block['sha256'] and result['archive']==block,'nested raw archive identity')
+    with zipfile.ZipFile(io.BytesIO(raw)) as inner:
+        names=inner.namelist();need(len(names)==len(set(names)) and all(safe_member(n) for n in names),'nested ZIP path inventory')
+        need(set(names)==set(manifest['files'])|set(manifest['metadata_files']),'complete nested ZIP inventory')
+        need(json.loads(inner.read('manifest.json'))=={k:v for k,v in manifest.items() if k!='archive'},'inner/outer manifest equality')
+        sums=''.join(row['sha256']+'  '+name+'\n' for name,row in sorted(manifest['files'].items())).encode()
+        need(inner.read('SHA256SUMS')==sums and hashlib.sha256(sums).hexdigest()==block['checksums_sha256'],'exact complete checksum list')
+        for name in names:
+            data=inner.read(name)
+            need(bundle.read('build/f06/unpacked-'+target+'/'+name)==data,'actual unpacked bytes '+name)
+            if name in manifest['files']:
+                meta=manifest['files'][name];need(len(data)==meta['bytes'] and hashlib.sha256(data).hexdigest()==meta['sha256'],'delivered file digest '+name)
+        executable=hashlib.sha256(inner.read(manifest['entry'])).hexdigest()
+        need(executable==result['program_sha256']==manifest['files'][manifest['entry']]['sha256']==unpack['entry_sha256'],'actual delivered native entry')
+    need(unpack['inner_matches_outer'] and unpack['checksums_checked']==len(manifest['files']),'original unpack assertions')
+    if target in ('linux','windows','macos'):need(entry['passed'] and entry['source_sha']==os.environ['GITHUB_SHA'] and entry['sdk_version']=='3.42.0','original desktop entry')
+    elif target=='android':need(entry['launch_passed'] and entry['installed_apk_sha256']==executable,'actual Android installed launch')
+    else:need(entry['launch_exit']==0 and entry['installed_executable_sha256']==executable,'actual simulator installed launch')
+    return dict(target=target,entry_sha256=executable,files=len(manifest['files']),archive_sha256=block['sha256'])
+
+
+def authenticate():
+    actions();report=dict(identity(),named_six_boundary_accepted=False,f07_accepted=False,full_six_f07_accepted=False,artifacts=[])
+    def api(path):return json.loads(command(['gh','api','repos/NoGod3524/EXReader/'+path]).stdout)
+    run_id=os.environ['GITHUB_RUN_ID'];attempt=os.environ['GITHUB_RUN_ATTEMPT']
+    try:
+        record=api('actions/runs/'+run_id+'/attempts/'+attempt)
+        need(record['head_sha']==os.environ['GITHUB_SHA'] and record['head_branch']==BRANCH and str(record['run_attempt'])==attempt,'immutable run identity')
+        need(record['path']=='.github/workflows/reader-public-boundary-v1-20261028.yml','workflow path')
+        jobs=api('actions/runs/'+run_id+'/attempts/'+attempt+'/jobs?per_page=100')['jobs']
+        artifacts=api('actions/runs/'+run_id+'/artifacts?per_page=100')['artifacts']
+        transport=load('tools/check_parallel_integration.py','boundary_artifact_transport')
+        wires=[];covered=[]
+        for target in ('linux','windows','android','macos','iphone'):
+            matching=[j for j in jobs if j['name']=='boundary-'+target]
+            need(len(matching)==1 and matching[0]['conclusion']=='success','producer not successful '+target)
+            name='public-boundary-'+target+'-'+run_id+'-'+attempt
+            matches=[a for a in artifacts if a['name']==name and not a['expired']]
+            need(len(matches)==1,'missing/ambiguous artifact '+name);a=matches[0]
+            need(a['workflow_run']['head_sha']==os.environ['GITHUB_SHA'] and str(a['workflow_run']['id'])==run_id,'artifact source/run')
+            archive=OUT/(target+'-artifact.zip');archive.parent.mkdir(parents=True,exist_ok=True)
+            with archive.open('w+b') as output:transport.download_artifact_zip(a['id'],output)
+            need(archive.stat().st_size==a['size_in_bytes'] and 'sha256:'+digest(archive)==a['digest'],'upload ZIP identity')
+            with zipfile.ZipFile(archive) as bundle:
+                all_names=bundle.namelist()
+                need(len(all_names)==len(set(all_names)) and all(safe_member(n[:-1] if n.endswith('/') else n) for n in all_names),'unsafe ZIP inventory')
+                names=[info.filename for info in bundle.infolist() if not info.is_dir()]
+                inventory=json.loads(bundle.read('inventory.json'))
+                for key,value in identity().items():need(inventory[key]==value,(target,key))
+                need(set(names)==set(inventory['files'])|{'inventory.json'},'complete file inventory')
+                for path,meta in inventory['files'].items():
+                    data=bundle.read(path);need(len(data)==meta['bytes'] and hashlib.sha256(data).hexdigest()==meta['sha256'],'file digest '+path)
+                measured=inventory['report'];need(measured['target']==target and measured['capture_complete'] and measured['named_boundary_accepted'],'incomplete owner proof')
+                need(measured['source']['authorized_paths_sha256']=={path:digest(ROOT/path) for path in (*OWNERS,*ADDED)},'reviewed source manifest drift')
+                expected_entries={'iphone','ipad'} if target=='iphone' else {target}
+                need({entry['target'] for entry in measured['native']['entries']}==expected_entries,'artifact native target inventory')
+                need(measured['f07_accepted'] is False and measured['final_whole_image_f07_audit'] is False,'scope inflation')
+                for packaged in expected_entries:verify_delivered_entry(bundle,packaged,measured['packages'][packaged])
+                for entry in measured['native']['entries']:
+                    for key,value in identity().items():need(entry[key]==value,('native entry identity',target,key))
+                    need(entry['passed'] and set(entry['retained_wires'])==EXPECTED_WIRES,'native entry/wire inventory')
+                    for name,sha in entry['retained_wires'].items():
+                        need(hashlib.sha256(bundle.read('build/public-boundary-v1/native-data/'+entry['target']+'-retained/'+name)).hexdigest()==sha,'actual retained wire bytes')
+                    covered.append(entry['target']);wires.append(entry['retained_wires'])
+                report['artifacts'].append({k:a[k] for k in ('id','name','size_in_bytes','digest')})
+            archive.unlink()
+        need(sorted(covered)==sorted(TARGETS),'six actual entries not covered')
+        need(all(wire==wires[0] for wire in wires),'cross-platform retained wire mismatch')
+        report.update(named_six_boundary_accepted=True,entries=covered,cross_platform_retained_wires_equal=True,
+                      limitations=['whole-image F07 provider/runtime gates separate','unrelated private/source-copy edges remain','no physical iOS/Android device proof'])
+    finally:
+        save(OUT/'authenticated.json',report);print(json.dumps(report),flush=True)
+
+
+def main():
+    actions();p=argparse.ArgumentParser();p.add_argument('phase',choices=('guard','build','native','capture','authenticate'));p.add_argument('--target',choices=TARGETS);args=p.parse_args()
+    OUT.mkdir(parents=True,exist_ok=True)
+    if args.phase=='guard':guard()
+    elif args.phase=='authenticate':authenticate()
+    else:
+        need(args.target,'target required');globals()[args.phase](args.target)
+
+
+if __name__=='__main__':main()

@@ -207,7 +207,7 @@ extern "C" reader_annotation_import_status reader_annotation_import_run(const re
 /* ---- Explicit raw3 portable import (C06). The legacy code above is unchanged;
    this section reuses its private strict parser, spool and source opener. ---- */
 #include "reader_annotation_import_raw3.h"
-#include <reader_selector_bytes_detail.h>
+#include <reader_selector_bytes_v1.h>
 #include <vector>
 #include "portable_sha256.h"
 namespace {
@@ -233,7 +233,16 @@ const char *mode_text(reader_rs_mode m){return m==READER_RS_REFLOW_GLOBAL?"reflo
 void optional_text(std::string &out,const char *v){if(v)jstr(out,v,std::strlen(v));else out+="null";}
 void selector_text(std::string &out,const char *v,size_t n){
   out+="{\"size\":"+std::to_string((unsigned long long)n)+",\"base64\":";
-  if(v){std::string b=reader_selector_bytes_detail::encode(v,n);jstr(out,b.data(),b.size());}else out+="null";
+  if(v){
+    size_t size=0;auto status=reader_revision_selector_encode_v1(v,n,nullptr,0,&size);
+    if(status==READER_SELECTOR_V1_MEMORY)throw std::bad_alloc();
+    if(status!=READER_SELECTOR_V1_OK)fail3(READER_AI3_REVISION,"Invalid retained selector bytes");
+    std::string b(size,'\0');
+    status=reader_revision_selector_encode_v1(v,n,b.data(),b.size(),&size);
+    if(status==READER_SELECTOR_V1_MEMORY)throw std::bad_alloc();
+    if(status!=READER_SELECTOR_V1_OK)fail3(READER_AI3_REVISION,"Cannot encode retained selector bytes");
+    jstr(out,b.data(),b.size());
+  }else out+="null";
   out+="}";
 }
 /* Must stay byte-identical to the exporter's canonical location text. */

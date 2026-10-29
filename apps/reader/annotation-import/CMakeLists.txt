@@ -46,3 +46,10 @@ install(EXPORT EXReaderAnnotationImportTargets NAMESPACE EXReaderAnnotationImpor
 configure_package_config_file(EXReaderAnnotationImportConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/EXReaderAnnotationImportConfig.cmake" INSTALL_DESTINATION lib/cmake/EXReaderAnnotationImport)
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderAnnotationImportConfigVersion.cmake" VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderAnnotationImportConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/EXReaderAnnotationImportConfigVersion.cmake" DESTINATION lib/cmake/EXReaderAnnotationImport)
+
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  _exr_public_boundary_guard(EXReaderRevisions::reader_revisions "${EXReaderRevisions_DIR}"
+    reader_selector_bytes_v1.h READER_REV_SELECTOR_BYTES_API_VERSION EXR_READER_PUBLIC_SELECTOR_BYTES_V1)
+  _exr_public_boundary_guard(EXReaderReadingState::reader_reading_state_codec "${EXReaderReadingState_DIR}"
+    reader_reading_state_retained_raw_v1.h READER_RS_RETAINED_RAW_API_VERSION EXR_READER_PUBLIC_RETAINED_RAW_V1)
+endif()

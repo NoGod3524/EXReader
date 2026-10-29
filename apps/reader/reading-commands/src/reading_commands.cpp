@@ -8,7 +8,7 @@
 #include <vector>
 
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
-reader_rs_status reader_rs_encode_retained_raw_v3(reader_revisions *,const reader_rs_envelope *,const reader_rs_capture *,unsigned,size_t,char **,size_t *,reader_rs_error *);
+#include <reader_reading_state_retained_raw_v1.h>
 #endif
 
 static reader_revision_status reader_candidate_reader_revision_get(bool raw,reader_revisions *s,const char *id,char **w,size_t *n,reader_revision_info *i,reader_revision_error *e){
@@ -172,7 +172,7 @@ struct request {
     produced out;size_t bytes=0;reader_rs_error e{};
         reader_rs_status st;
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
-    if(raw_api)st=reader_rs_encode_retained_raw_v3(context.store,&env,&capture,version,part,&out.wire,&bytes,&e);else
+    if(raw_api)st=reader_rs_encode_retained_raw_v1(context.store,&env,&capture,version,part,&out.wire,&bytes,&e);else
 #endif
     st=version==1?reader_rs_encode(context.store,&env,&capture,&out.wire,&bytes,&e):
       reader_rs_encode_v2(context.store,&env,&capture,part,&out.wire,&bytes,&e);

@@ -1,0 +1,266 @@
+name: Public module boundary v1 six-entry integration
+on:
+  push:
+    branches: [codex/reader-public-boundary-v1-20261028]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-public-boundary-${{ github.sha }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+  C11_NDK: '27.0.12077973'
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact 17 owner plus 7 new files, SDK and old tests frozen
+        run: python3 tests/reader_public_boundary_v1_20261028/run.py guard
+      - name: New syntax and synthetic negative controls (not native acceptance)
+        run: |
+          python3 -m py_compile tests/reader_public_boundary_v1_20261028/*.py
+          python3 tests/reader_public_boundary_v1_20261028/test_contract.py -v
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-protocol-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/public-boundary-v1/source.json
+          if-no-files-found: error
+  linux:
+    name: boundary-linux
+    needs: protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Admit exact integration source
+        run: python3 tests/reader_public_boundary_v1_20261028/run.py guard
+      - name: Install GTK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Install both families and build same-source 3.42 host and package
+        id: build
+        run: |
+          python3 -m py_compile tests/gtk_sdk342_package/*.py
+          python3 tests/reader_public_boundary_v1_20261028/run.py build --target linux
+      - name: Prepare original fixtures
+        run: |
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures
+          python3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures
+          python3 tests/linux_host/generate_fixed.py build/gtk-fixed-inputs
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-backend-fixtures
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures
+          mkdir -p build/gtk-navigation-backend build/gtk-batch-backend/profile build/gtk-batch-owner-faults build/gtk-atspi-client
+          chmod 700 build/gtk-navigation-backend build/gtk-batch-backend/profile
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+      - name: Original navigation backend
+        run: |
+          set -o pipefail
+          build/gtk-raw-wave3/retained-host/reader-gtk-navigation-backend "$PWD/build/gtk-navigation-backend/library.sqlite" "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-navigation-fixtures" "$PWD/build/gtk-fixed-inputs" 2>&1 | tee build/gtk-navigation-backend/checks.log
+      - name: Original folder backend and owner faults
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend "$PWD/build/gtk-batch-backend/profile/library.sqlite" "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-backend-fixtures" "$PWD/build/gtk-batch-backend/originals.tsv" exercise 2>&1 | tee build/gtk-batch-backend/checks.log
+          build/gtk-raw-wave3/retained-host/reader-gtk-batch-owner-faults "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-owner-faults" 2>&1 | tee build/gtk-batch-owner-faults/checks.log
+      - name: Original navigation and folder GUI suites
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/gtk-raw-wave3/retained-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            failed=0
+            /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-navigation-fixtures --fixed-inputs build/gtk-fixed-inputs --output build/gtk-navigation-ui || failed=1
+            /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend || failed=1
+            exit "$failed"
+          '
+      - name: Public C/C++ and original selector/C06 assertions
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: python3 tests/reader_public_boundary_v1_20261028/run.py native --target linux
+      - name: Capture exact installed ownership and compiler dependencies
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: python3 tests/reader_public_boundary_v1_20261028/run.py capture --target linux
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/public-boundary-v1/evidence/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-linux-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/public-boundary-v1/*.json
+            build/public-boundary-v1/logs/
+          if-no-files-found: error
+  windows:
+    name: boundary-windows
+    needs: protocol
+    runs-on: windows-2022
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Original SDK342 F06 producer, flags and 26 checks
+        id: build
+        run: python tests/reader_public_boundary_v1_20261028/run.py build --target windows
+      - name: Public C/C++ and original selector/C06 assertions
+        run: python tests/reader_public_boundary_v1_20261028/run.py native --target windows
+      - name: Capture final EXE, map, response files and exact installed ownership
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: python tests/reader_public_boundary_v1_20261028/run.py capture --target windows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/public-boundary-v1/evidence/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-windows-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/public-boundary-v1/*.json
+            build/public-boundary-v1/logs/
+            build/f06/windows-build/logs/
+          if-no-files-found: error
+  android:
+    name: boundary-android
+    needs: protocol
+    runs-on: ubuntu-latest
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Guard exact source and prepare Android tools
+        run: |
+          python3 tests/reader_public_boundary_v1_20261028/run.py guard
+          python3 -m pip install 'PyYAML==6.0.3'
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}" "emulator" "system-images;android-34;default;x86_64"
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build exact installed SDK and package
+        id: build
+        run: python3 tests/reader_public_boundary_v1_20261028/run.py build --target android
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          heap-size: 512M
+          cores: 4
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -camera-back none
+          disable-animations: true
+          script: |
+            python3 tests/reader_f06_packages/identity.py android
+            python3 tests/reader_public_boundary_v1_20261028/run.py native --target android
+      - name: Capture APK, installed archives and actual compiler dependency graph
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: python3 tests/reader_public_boundary_v1_20261028/run.py capture --target android
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/public-boundary-v1/evidence/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-android-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/public-boundary-v1/*.json
+            build/public-boundary-v1/logs/
+            build/wave3/logs/
+          if-no-files-found: error
+  apple:
+    name: boundary-${{ matrix.target }}
+    needs: protocol
+    runs-on: macos-15
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphone]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Original F06 SDK342 profile and actual relocated entries, PURE remains OFF
+        id: build
+        run: python3 tests/reader_public_boundary_v1_20261028/run.py build --target '${{ matrix.target }}'
+      - name: Public C/C++ and unchanged selector/C06 assertions on actual native targets
+        run: python3 tests/reader_public_boundary_v1_20261028/run.py native --target '${{ matrix.target }}'
+      - name: Capture installed archives, make dependency files, native maps and entries
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: python3 tests/reader_public_boundary_v1_20261028/run.py capture --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/public-boundary-v1/evidence/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-${{ matrix.target }}-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/public-boundary-v1/*.json
+            build/public-boundary-v1/logs/
+          if-no-files-found: error
+  authenticate:
+    if: always()
+    needs: [protocol, linux, windows, android, apple]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate exact same-run uploads and all six native entries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_public_boundary_v1_20261028/run.py authenticate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/public-boundary-v1/authenticated.json
+          if-no-files-found: error
