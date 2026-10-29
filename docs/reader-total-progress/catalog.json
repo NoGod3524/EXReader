@@ -518,6 +518,36 @@
       "artifact": 12914004364,
       "bytes": 12066275,
       "sha256": "a830bf9bda37268f679f8beb21f51ef272e5ec1d79c146036ecc7bd30d211451"
+    },
+    "apple_sync_details_macos": {
+      "run": 40920468235,
+      "source_prefix": "8404d9ab22ca9f0ef1e12fb0192f958bc030cd8d",
+      "doc": "docs/reader-total-progress/apple-sync-details-audited.md",
+      "adapter": "apple_sync_details_40920468235",
+      "platform": "macos",
+      "original_job": 123590727527,
+      "original_artifact": 12915384667,
+      "original_archive_sha256": "682d504f81e975691ea487c2177d7171a68c9045d3b843064442388db1f32bed"
+    },
+    "apple_sync_details_iphone": {
+      "run": 40920468235,
+      "source_prefix": "8404d9ab22ca9f0ef1e12fb0192f958bc030cd8d",
+      "doc": "docs/reader-total-progress/apple-sync-details-audited.md",
+      "adapter": "apple_sync_details_40920468235",
+      "platform": "iphone",
+      "original_job": 123590727120,
+      "original_artifact": 12917695277,
+      "original_archive_sha256": "6696ca4d14529f6a61bd56079c691bc07da08a4a07c1ea1a441ee4efcb5d981d"
+    },
+    "apple_sync_details_ipad": {
+      "run": 40920468235,
+      "source_prefix": "8404d9ab22ca9f0ef1e12fb0192f958bc030cd8d",
+      "doc": "docs/reader-total-progress/apple-sync-details-audited.md",
+      "adapter": "apple_sync_details_40920468235",
+      "platform": "ipad",
+      "original_job": 123590727740,
+      "original_artifact": 12917747817,
+      "original_archive_sha256": "e12488b06a3ab8fcc296799936818063055fae00ae185fbc979a54408ada54cd"
     }
   },
   "requirements": [
@@ -1091,9 +1121,11 @@
       "group": "host",
       "platform": "macos",
       "title": "macOS：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_sync_details_macos"
+      ],
+      "note": "同一 SDK 3.41 源码的真实 HTTPS 取消/重试、401 详情、授权更新恢复及原书保留经独立 XCTest/原始请求/outbox 证据审计；程序哈希引用原收集器记录，真机、系统钥匙串全面隐私审计和最终同源交付不由此授予。"
     },
     {
       "id": "H.android.startup",
@@ -1397,9 +1429,11 @@
       "group": "host",
       "platform": "iphone",
       "title": "iPhone：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_sync_details_iphone"
+      ],
+      "note": "同一 SDK 3.41 源码的真实 HTTPS 取消/重试、401 详情、授权更新恢复及原书保留经独立 XCTest/原始请求/outbox 证据审计；程序哈希引用原收集器记录，真机、系统钥匙串全面隐私审计和最终同源交付不由此授予。"
     },
     {
       "id": "H.ipad.startup",
@@ -1548,9 +1582,11 @@
       "group": "host",
       "platform": "ipad",
       "title": "iPad：安全账号同步及只读同步状态、失败/取消/重试的完整宿主接线",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_sync_details_ipad"
+      ],
+      "note": "同一 SDK 3.41 源码的真实 HTTPS 取消/重试、401 详情、授权更新恢复及原书保留经独立 XCTest/原始请求/outbox 证据审计；程序哈希引用原收集器记录，真机、系统钥匙串全面隐私审计和最终同源交付不由此授予。"
     },
     {
       "id": "F01",
