@@ -1,7 +1,7 @@
 任务标题：EXReader C2 真实产品性能与交互预算验收
-专用分支 claude/handoff-c2-product-performance-20261029（已从共同基线创建）。
-你是用户明确授权的 Claude Sonnet 5.5 Medium 云端后台代理，负责 EXReader 的一个独立主线包。仓库 NoGod3524/EXReader，共同基线 bd28d4946f17a184dd3cd47a584cf49fce34e973（codex/apple-sdk342-full-handoff-20261029）。先核对远端及源码身份；只更新指定的预创建专用分支，不能更新基线分支、默认分支或他人的分支。当前固定108项已验收95，不能自行加分。
-执行约束：云工作区仅源码/Git/文档/轻量状态；构建、语法检查、夹具生成、测试、benchmark、工件解析一律只在 GitHub Actions。独立分支提交/push及必要Actions已授权；先查已有运行，不能重复启动同一源。保留旧失败，不放宽原断言、时间/内存预算，不拼不同源码证据。禁止PR、默认分支merge/push、tag、Release、修改108清单、接触真实凭据/用户资料、重试D13未知被阻断实验。Apple源文件/驱动和Windows迁移由另外三个代理独占，请勿改动。不要创建额外子代理。
+专用分支 claude/local-c2-product-performance-20261029（已从共同基线创建）。
+你是用户明确授权的 Claude Sonnet 5.5 Medium 本机后台代理（使用已登录Claude账号的订阅usage，禁止创建云任务或使用API key），负责 EXReader 的一个独立主线包。仓库 NoGod3524/EXReader，共同基线 bd28d4946f17a184dd3cd47a584cf49fce34e973（codex/apple-sdk342-full-handoff-20261029）。先核对远端及源码身份；只更新指定的预创建专用分支，不能更新基线分支、默认分支或他人的分支。当前固定108项已验收95，不能自行加分。
+执行约束：本机工作区仅源码/Git/文档/轻量状态；构建、语法检查、夹具生成、测试、benchmark、工件解析一律只在 GitHub Actions。独立分支提交/push及必要Actions已授权；先查已有运行，不能重复启动同一源。保留旧失败，不放宽原断言、时间/内存预算，不拼不同源码证据。禁止PR、默认分支merge/push、tag、Release、修改108清单、接触真实凭据/用户资料、重试D13未知被阻断实验。Apple源文件/驱动和Windows迁移由另外三个代理独占，请勿改动。不要创建额外子代理。
 请持续工作到有可审查补丁和实际Actions结果；失败要定位修复，不止给计划。交回分支、精确受测SHA、run/attempt/job/artifact和摘要、通过范围及剩余阻塞。局部通过不能自动视为F01/F07/F08/F12或完整产品通过。
 
 请独立推进固定清单F08。先定点读取docs/READER-PRODUCT-PLAN.md、docs/reader-total-progress/catalog.json及已有R6/产品帧时间/大TXT/书库性能证据，确认已有冻结数据集、采样方法和预算，复用而不扩大/放宽。实现一套可复验的实际宿主性能门禁，优先Windows与Linux实际产品的固定书库导入后首屏/滚动/定位/切字体/连续翻页的响应、帧时间和峰值/稳定内存；基于真实SDK3.42共同源记录程序和工件身份。不要用仅模块microbenchmark或mock UI代替实际应用。若既有平台驱动已经能测，接线与修缺口即可。不要为一次性性能任务改SDK算法或Apple/Windows迁移生产文件；确有生产瓶颈先交回可复验定位。

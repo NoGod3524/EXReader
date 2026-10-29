@@ -1,7 +1,7 @@
 任务标题：EXReader C1 Android 已安装 Sync/WebDAV 运行闭环
-专用分支 claude/handoff-c1-android-sync-20261029（已从共同基线创建）。
-你是用户明确授权的 Claude Sonnet 5.5 Medium 云端后台代理，负责 EXReader 的一个独立主线包。仓库 NoGod3524/EXReader，共同基线 bd28d4946f17a184dd3cd47a584cf49fce34e973（codex/apple-sdk342-full-handoff-20261029）。先核对远端及源码身份；只更新指定的预创建专用分支，不能更新基线分支、默认分支或他人的分支。当前固定108项已验收95，不能自行加分。
-执行约束：云工作区仅源码/Git/文档/轻量状态；构建、语法检查、夹具生成、测试、benchmark、工件解析一律只在 GitHub Actions。独立分支提交/push及必要Actions已授权；先查已有运行，不能重复启动同一源。保留旧失败，不放宽原断言、时间/内存预算，不拼不同源码证据。禁止PR、默认分支merge/push、tag、Release、修改108清单、接触真实凭据/用户资料、重试D13未知被阻断实验。Apple源文件/驱动和Windows迁移由另外三个代理独占，请勿改动。不要创建额外子代理。
+专用分支 claude/local-c1-android-sync-20261029（已从共同基线创建）。
+你是用户明确授权的 Claude Sonnet 5.5 Medium 本机后台代理（使用已登录Claude账号的订阅usage，禁止创建云任务或使用API key），负责 EXReader 的一个独立主线包。仓库 NoGod3524/EXReader，共同基线 bd28d4946f17a184dd3cd47a584cf49fce34e973（codex/apple-sdk342-full-handoff-20261029）。先核对远端及源码身份；只更新指定的预创建专用分支，不能更新基线分支、默认分支或他人的分支。当前固定108项已验收95，不能自行加分。
+执行约束：本机工作区仅源码/Git/文档/轻量状态；构建、语法检查、夹具生成、测试、benchmark、工件解析一律只在 GitHub Actions。独立分支提交/push及必要Actions已授权；先查已有运行，不能重复启动同一源。保留旧失败，不放宽原断言、时间/内存预算，不拼不同源码证据。禁止PR、默认分支merge/push、tag、Release、修改108清单、接触真实凭据/用户资料、重试D13未知被阻断实验。Apple源文件/驱动和Windows迁移由另外三个代理独占，请勿改动。不要创建额外子代理。
 请持续工作到有可审查补丁和实际Actions结果；失败要定位修复，不止给计划。交回分支、精确受测SHA、run/attempt/job/artifact和摘要、通过范围及剩余阻塞。局部通过不能自动视为F01/F07/F08/F12或完整产品通过。
 
 具体缺口：公共边界运行 https://github.com/NoGod3524/EXReader/actions/runs/40871185232 （e6b899284744b95dc832db92ed16324711ff5362）明确 installed_android_sync_runtime=false，只有 Android hash adapter 的源码运行，而非安装的 Sync/WebDAV 摘要路径运行。请读 tests/reader_sync_public_hash_20261029/{run.py,sync_probe.cpp,sync_fault_probe.cpp,authenticate.py}、tests/android_sdk342_package 和 Android 实际产品接线，实现并验证实际安装的 Sync/WebDAV 模块在 API34 模拟器的哈希/上传/失败恢复闭环，记录安装模块及实际程序身份与源SHA。不要用独立adapter probe冒充。优先复用原真实网络/故障套件、provider检查和冻结断言。

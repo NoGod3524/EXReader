@@ -1,7 +1,7 @@
 任务标题：EXReader C3 六端交付说明与许可依赖核对
-专用分支 claude/handoff-c3-delivery-licenses-20261029（已从共同基线创建）。
-你是用户明确授权的 Claude Sonnet 5.5 Medium 云端后台代理，负责 EXReader 的一个独立主线包。仓库 NoGod3524/EXReader，共同基线 bd28d4946f17a184dd3cd47a584cf49fce34e973（codex/apple-sdk342-full-handoff-20261029）。先核对远端及源码身份；只更新指定的预创建专用分支，不能更新基线分支、默认分支或他人的分支。当前固定108项已验收95，不能自行加分。
-执行约束：云工作区仅源码/Git/文档/轻量状态；构建、语法检查、夹具生成、测试、benchmark、工件解析一律只在 GitHub Actions。独立分支提交/push及必要Actions已授权；先查已有运行，不能重复启动同一源。保留旧失败，不放宽原断言、时间/内存预算，不拼不同源码证据。禁止PR、默认分支merge/push、tag、Release、修改108清单、接触真实凭据/用户资料、重试D13未知被阻断实验。Apple源文件/驱动和Windows迁移由另外三个代理独占，请勿改动。不要创建额外子代理。
+专用分支 claude/local-c3-delivery-licenses-20261029（已从共同基线创建）。
+你是用户明确授权的 Claude Sonnet 5.5 Medium 本机后台代理（使用已登录Claude账号的订阅usage，禁止创建云任务或使用API key），负责 EXReader 的一个独立主线包。仓库 NoGod3524/EXReader，共同基线 bd28d4946f17a184dd3cd47a584cf49fce34e973（codex/apple-sdk342-full-handoff-20261029）。先核对远端及源码身份；只更新指定的预创建专用分支，不能更新基线分支、默认分支或他人的分支。当前固定108项已验收95，不能自行加分。
+执行约束：本机工作区仅源码/Git/文档/轻量状态；构建、语法检查、夹具生成、测试、benchmark、工件解析一律只在 GitHub Actions。独立分支提交/push及必要Actions已授权；先查已有运行，不能重复启动同一源。保留旧失败，不放宽原断言、时间/内存预算，不拼不同源码证据。禁止PR、默认分支merge/push、tag、Release、修改108清单、接触真实凭据/用户资料、重试D13未知被阻断实验。Apple源文件/驱动和Windows迁移由另外三个代理独占，请勿改动。不要创建额外子代理。
 请持续工作到有可审查补丁和实际Actions结果；失败要定位修复，不止给计划。交回分支、精确受测SHA、run/attempt/job/artifact和摘要、通过范围及剩余阻塞。局部通过不能自动视为F01/F07/F08/F12或完整产品通过。
 
 独立推进F12里不与迁移代码冲突的交付部分：六端用户安装/启动/导入/同步/原件与标注导出/备份与恢复说明，打包内容与可选依赖许可清单的真实核对。读取现有README、THIRD_PARTY_NOTICES.md、LICENSE、licenses/、实际六端packaging脚本/manifest及F06同源SDK3.42成功证据 https://github.com/NoGod3524/EXReader/actions/runs/40678657371 。不要把旧包当新的bd28版本已通过，也不能写尚未实现的恢复为可用；从真实入口和CLI参数/GUI实现编写用户能照做的说明。检查默认/可选FAAD2 AAC等依赖的发行条件，保留项目现有许可，不做法律结论推断。利用Actions只读检查工件与源码清单，发现漏许可文件可在你自己的包级检查与说明中修复；真实tag/Release仍禁止。
