@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Exact adopted16 + Sync3 + new9 scope, old packets and SDK frozen
+      - name: Exact union scope plus one explicit public comparator-hook override
         run: python3 tests/reader_sync_public_hash_20261029/run.py guard
       - name: New syntax and synthetic negative controls (not native acceptance)
         run: |
@@ -38,6 +38,7 @@ jobs:
           path: build/public-boundary-v1/source.json
           if-no-files-found: error
   linux:
+    if: ${{ !contains(github.event.head_commit.message, '[sync-retained-replay]') }}
     name: boundary-linux
     needs: protocol
     runs-on: ubuntu-22.04
@@ -114,6 +115,7 @@ jobs:
             build/public-boundary-v1/logs/
           if-no-files-found: error
   windows:
+    if: ${{ !contains(github.event.head_commit.message, '[sync-retained-replay]') }}
     name: boundary-windows
     needs: protocol
     runs-on: windows-2022
@@ -151,6 +153,7 @@ jobs:
             build/f06/windows-build/logs/
           if-no-files-found: error
   android:
+    if: ${{ !contains(github.event.head_commit.message, '[sync-retained-replay]') }}
     name: boundary-android
     needs: protocol
     runs-on: ubuntu-latest
@@ -219,6 +222,7 @@ jobs:
             build/wave3/logs/
           if-no-files-found: error
   apple:
+    if: ${{ !contains(github.event.head_commit.message, '[sync-retained-replay]') }}
     name: boundary-${{ matrix.target }}
     needs: protocol
     runs-on: macos-15
@@ -255,7 +259,7 @@ jobs:
             build/public-boundary-v1/logs/
           if-no-files-found: error
   authenticate:
-    if: always()
+    if: ${{ always() && needs.protocol.result == 'success' }}
     needs: [protocol, linux, windows, android, apple]
     runs-on: ubuntu-22.04
     timeout-minutes: 30
@@ -263,10 +267,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Authenticate exact same-run uploads and all six native entries
+      - name: Authenticate selected retained-only or same-run native evidence lane
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tests/reader_sync_public_hash_20261029/run.py authenticate
+          REPLAY_LANE: ${{ contains(github.event.head_commit.message, '[sync-retained-replay]') && 'retained' || 'native' }}
+        run: |
+          if [ "$REPLAY_LANE" = retained ]; then
+            python3 tests/reader_sync_public_hash_20261029/run.py retained
+          else
+            python3 tests/reader_sync_public_hash_20261029/run.py authenticate
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

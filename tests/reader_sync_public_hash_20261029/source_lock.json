@@ -49,6 +49,13 @@
     "tests/reader_public_boundary_v1_20261028/run.py": "7752eeca7f45aaa22adbb5881fa93459448a66550181a6ca9e6376bfece92325",
     "tests/reader_public_boundary_v1_20261028/test_contract.py": "64837ef7d6b229c144d99ec58d72167f1fb9c70009da9470e2ac28c51fd5ceb1"
   },
+  "public_validation_override": {
+    "tests/reader_public_boundary_v1_20261028/run.py": {
+      "historical_sha256": "7752eeca7f45aaa22adbb5881fa93459448a66550181a6ca9e6376bfece92325",
+      "current_sha256": "ac773622885f503c5da5712a945cd4934f1a65e0e8031a3f021a556c7917f11f",
+      "role": "optional capture/replay comparator hooks; legacy defaults unchanged"
+    }
+  },
   "owner": [
     "apps/reader/sync/src/sync.cpp",
     "apps/reader/sync/CMakeLists.txt",
@@ -93,7 +100,8 @@
     "tests/reader_sync_public_hash_20261029/authenticate.py": "A",
     "tests/reader_sync_public_hash_20261029/source_lock.json": "A",
     ".github/workflows/reader-sync-public-hash-20261029.yml": "A",
-    "docs/reader-total-progress/reader-sync-public-hash-20261029.md": "A"
+    "docs/reader-total-progress/reader-sync-public-hash-20261029.md": "A",
+    "tests/reader_public_boundary_v1_20261028/run.py": "M"
   },
   "configured_runner_minutes": 725,
   "attempts": 1

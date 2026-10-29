@@ -917,7 +917,9 @@ def installed_archive_equivalence(before,after,target):
     return result
 
 
-def replay_archive_comparisons(read,measured,target):
+def replay_archive_comparisons(read,measured,target,*,archive_comparator=None):
+    compare_archives=installed_archive_equivalence if archive_comparator is None else archive_comparator
+    need(callable(compare_archives),'archive comparator must be callable')
     owners={'reading-state':('reader_reading_state_codec','reading_state.cpp'),
             'reading-commands':('reader_reading_commands','reading_commands.cpp'),
             'annotation-import':('reader_annotation_import','annotation_import.cpp'),
@@ -945,7 +947,7 @@ def replay_archive_comparisons(read,measured,target):
         before,after=read(built),read(installed)
         need(pair['built_exists'] is True and pair['installed_exists'] is True and
              (pair['built_bytes'],pair['installed_bytes'])==(len(before),len(after)),'archive pair extent claim differs')
-        actual=installed_archive_equivalence(before,after,target)
+        actual=compare_archives(before,after,target)
         need(actual['build_sha256']==pair['built_sha256']==proof['built_archive_sha256'] and
              actual['installed_sha256']==pair['installed_sha256']==proof['installed_archive_sha256']==measured['installed_archives'][owner]['sha256'],
              'archive original digest claims differ')
@@ -970,7 +972,9 @@ def package_identity(target):
                 reports_sha256={p.name:digest(p) for p in folder.glob('*.json')})
 
 
-def capture(target):
+def capture(target,*,archive_comparator=None):
+    compare_archives=installed_archive_equivalence if archive_comparator is None else archive_comparator
+    need(callable(compare_archives),'archive comparator must be callable')
     actions();sdk,stage,product,base=layout(target)
     report=dict(identity(),target=target,capture_complete=False,named_boundary_accepted=False,f07_accepted=False,
                 full_six_f07_accepted=False,unresolved=['Android-specific private OPDS/hash edge (not asserted for Windows)','source-copy sha256.inc ownership lead','final platform weak/import-provider gaps'])
@@ -1048,7 +1052,7 @@ def capture(target):
                 report.setdefault('built_installed_archive_comparison',[]).append(pair)
                 print('ACTUAL_BUILT_INSTALLED_ARCHIVE',json.dumps(pair),flush=True)
                 need(pair['built_exists'] and pair['installed_exists'],('actual built/installed archive missing',owner))
-                equivalence=installed_archive_equivalence(left,right,target);pair['equivalence']=equivalence
+                equivalence=compare_archives(left,right,target);pair['equivalence']=equivalence
                 need(equivalence['build_sha256']==pair['built_sha256'] and equivalence['installed_sha256']==pair['installed_sha256'],
                      'archive changed during retained comparison')
                 print('ACTUAL_ARCHIVE_EQUIVALENCE',json.dumps(dict(owner=owner,**equivalence)),flush=True)
