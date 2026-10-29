@@ -271,7 +271,7 @@ def symbols(text, target, object_bytes=None):
             require(index not in strong_rows,'duplicate COFF external row index')
             strong_rows[index]=(name,section,int(value,16),'()' in kind)
             if section=='UNDEF':
-                require(int(value,16)==0,'COFF common symbol is not a function import');undefined.add(name)
+                require(int(value,16)==0,'COFF common symbol is not a function import: row='+line[:1024]+(' [truncated]' if len(line)>1024 else ''));undefined.add(name)
             else:
                 # Only function definitions can grant the public ABI.
                 if '()' in kind:definitions.add(name)

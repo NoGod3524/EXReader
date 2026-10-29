@@ -202,7 +202,8 @@ def inspect_retained():
                 C.require(len(rows)==1 and rows[0]['output_record']==C.record(folder/path) and rows[0]['returncode']==0,'diagnostic output not bound to original command')
                 return rows[0]
             if target=='windows':
-                details=[]
+                details=[];parser_failures=[]
+                result['failed_producer_details'][target]=dict(weak_externals=details,parser_failures=parser_failures,admitted=False)
                 for owner,entry in native.items():
                     members=C.archive_members((folder/entry['archive']).read_bytes())
                     C.require([n for n,_ in members]==[m['name'] for m in entry['members']],'original COFF member set differs')
@@ -212,7 +213,15 @@ def inspect_retained():
                         C.require(row['subjects']=={member['object']:C.record(folder/member['object'])} and len(row['argv'])==3 and
                             row['argv'][:2]==['dumpbin','/symbols'] and row['argv'][2].replace('\\','/').endswith('/evidence/'+member['object']),'original dumpbin invocation differs')
                         symbol_text=(folder/member['symbols']).read_text()
-                        C.symbols(symbol_text,'windows',payload)
+                        try:C.symbols(symbol_text,'windows',payload)
+                        except ValueError as error:
+                            # Diagnostic continuation only: every rejection remains
+                            # an aggregate failure, never an accepted native member.
+                            C.require(len(parser_failures)<64,'Windows parser diagnostic limit')
+                            failure=dict(owner=owner,member=name,object=C.record(folder/member['object']),
+                                symbols=C.record(folder/member['symbols']),error=str(error)[:2048])
+                            parser_failures.append(failure)
+                            result['failures'].append('Windows retained member rejected: '+owner+'/'+name+': '+failure['error'])
                         binary_fallbacks=C.coff_weak_fallbacks(payload)
                         lines=symbol_text.splitlines();weak=[i for i,l in enumerate(lines) if 'WeakExternal' in l]
                         if weak:
@@ -243,7 +252,6 @@ def inspect_retained():
                                 symbols=C.record(folder/member['symbols']),weak_groups=groups,original_failure=original_failure,
                                 current_binary_bound_fallbacks=binary_fallbacks,actual_negative_controls=negative_controls,final_provider_claim=False))
                 C.require(details,'original weak COFF failure not reproduced in retained diagnostics')
-                result['failed_producer_details'][target]=dict(weak_externals=details,admitted=False)
             elif target=='android':
                 links=json.loads((folder/'links.json').read_text());details={}
                 C.require(set(links)=={'installed','relocated','normal-first','hash-first','revision-first','hash-revision'},'Android link inventory differs')
@@ -295,6 +303,7 @@ def inspect_retained():
                     criterion='original 1198 requires exact bytes; new bounded simulator predicate is separate, not native acceptance')
         C.require(set(result['failed_producer_details'])=={'windows','android','ios-simulator'} and
             set(result['independently_replayed_original_green'])=={'linux','macos','ios-device'},'partial diagnostic coverage incomplete')
+        C.require(not result['failures'],'retained parser rejections remain unresolved')
         result['diagnostic_complete']=True
     except Exception as error:result['failures'].append(str(error))
     finally:C.save(out/'diagnostic.json',result)
