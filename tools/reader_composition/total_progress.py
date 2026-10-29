@@ -452,6 +452,51 @@ def verify_apple_sync_details(spec, jobs):
             'original_source':row['source'], 'platform':row['platform'],
             'scope_basis':'original XCTest and real HTTPS cancellation, 401 detail, failed-state outbox and explicit recovery; SDK 3.41 host only'}
 
+
+def verify_apple_annotation_macos(spec, jobs):
+    assert spec['adapter'] == 'apple_annotation_macos_40928332937'
+    assert spec['run'] == 40928332937 and spec['source_prefix'] == 'a24e24fa1577c6dd685b304c2506e3db90346eb8'
+    assert len(jobs) == 1 and jobs[0]['id'] == 123639751398 and jobs[0]['conclusion'] == 'success'
+    pin = {'id':12920419850, 'bytes':1607,
+           'sha256':'4da7db9ca2cea780f00992f412b43fdc4253ede85aae4689d82265510f92d44a'}
+    with evidence_zip(pin, spec['run'], spec['source_prefix'],
+                      'apple-annotation-independent-macos-40928332937-1') as archive:
+        value = json.loads(archive.read('result.json'))
+    assert value['platform'] == 'macos' and value['accepted'] is True and value['catalog_changed'] is False
+    assert value['run'] == 40923468266 and value['source'] == '622b9558f79eda07211e15c51bffcd728da6c553'
+    assert value['job'] == 123625260629 and value['artifact'] == 12920073975 and value['archive_bytes'] == 316382076
+    assert value['archive_sha256'] == '11792b2252650bf055fe035b92a4f7e83b0d7bf248fb404a432d4a651d16e4ac'
+    assert value['physical_device'] is False and value['sdk_version'] == '3.41.0'
+    assert value['whole_run_accepted'] is False, 'completed macOS host is not the whole three-host run'
+    assert value['original_run_status'] == 'in_progress' and value['original_run_conclusion'] is None
+    cases = value['native_cases']
+    assert set(cases) == {'wave3', 'base', 'control', 'search', 'theme'}
+    assert {key:len(rows) for key, rows in cases.items()} == {'wave3':5, 'base':13, 'control':13, 'search':4, 'theme':4}
+    assert set(cases['wave3']) == {
+        'testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot()',
+        'testDirectoryPickerCancellationPreservesReader()',
+        'testNativeAnnotationPreviewConfirmCancelAndDuplicate()',
+        'testNativeHistoryAfterFoundAndLargeRotationExit()',
+        'testTypedNullAndConcurrentHeadsRequirePreviewConfirmation()'}
+    assert value['screenshot_checks'] == 14
+    assert value['program_sha256'] == {
+        'wave3':'1014a409d972a11201613a9010c0edbb39e0d25bb8ebf6f0741dc7b19684ebb8',
+        'base':'3309586f4fcb1c0dcbc587df6c9c35723cf4846d8cb6a3186dcedf0a80b522f2',
+        'control':'ff542e1ce7dc1b22d752ef1b7f3b1ed077a7640649eac3d47545aaaa5ca54edc',
+        'search':'662987b12396ead95a4a5a7158ee83a477a1d5b9776f56aaf8d7f8d716aa0079',
+        'theme':'d69c6894b80470431384b497b1ac9e5be4aba46a30570b8d6209fe8ed6a5d40e'}
+    original = fetch('actions/runs/40923468266/attempts/1')
+    assert original['head_sha'] == value['source'] and original['run_attempt'] == 1
+    assert original['status'] in ('in_progress', 'completed') and original['conclusion'] in (None, 'success', 'failure')
+    host = fetch('actions/jobs/123625260629')
+    assert host['run_id'] == 40923468266 and host['head_sha'] == value['source']
+    assert host['status'] == 'completed' and host['conclusion'] == 'success'
+    return {'artifact':pin['id'], 'zip_sha256':pin['sha256'], 'original_artifact':value['artifact'],
+            'original_source':value['source'], 'platform':'macos', 'native_case_count':39,
+            'program_sha256':value['program_sha256'], 'whole_original_run_conclusion':original['conclusion'],
+            'scope_basis':'completed native macOS host: all 39 cases, native selected-folder JSONL/Markdown content checks, 14 attachments and actual binaries; no iOS or whole-run credit'}
+
+
 def verify_evidence(pair):
     key, spec = pair
     try:
@@ -487,6 +532,8 @@ def verify_evidence(pair):
             proof.update(verify())
         elif key == 'f06_sdk342_six_packages':
             proof.update(verify_f06(spec, jobs))
+        elif spec.get('adapter') == 'apple_annotation_macos_40928332937':
+            proof.update(verify_apple_annotation_macos(spec, jobs))
         elif spec.get('adapter') == 'apple_sync_details_40920468235':
             proof.update(verify_apple_sync_details(spec, jobs))
         elif key == 'macos_organization_original':
