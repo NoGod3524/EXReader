@@ -19,6 +19,7 @@ import inspect_continuation_failure as inspector
 from inspect_continuation_failure import ARTIFACTS, BUNDLE, CASE, DIAGNOSTIC_STAGES, REFUSAL_CODES, RUN, SOURCE, SOURCE_FILE, SOURCE_LAST_LINE, SOURCE_PATH, SOURCE_SHA, activity_timing, attachment_summary, diagnostic_stage, locations, member_integrity, member_role, network_summary, refusal_report, safe_progress, sealed_lifecycle, xcresult_issues
 from privacy_scan import needles
 import authenticate_continuation as authenticator
+import continuation_contract as current_contract
 from continuation_contract import ENTITLEMENT_FILE, admission_app_identity, signature_summary, verify_admission_transition, appledouble_content
 from continuation_lifecycle import seal_files
 
@@ -162,6 +163,193 @@ def native_order_control(test, root, *, changed_member=False, sealed=True, bad_s
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_current_shared_helper_accepts_original_bytes_and_matches_counterfactual(self):
+        for name in ('privacy-stages.json', 'privacy-stages_0_12345678-1234-1234-1234-123456789ABC.json'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = candidate_bundle(root, name); report, compared = {}, {}
+                directory = root / 'attachments'; before = seal_files(directory); manifest = (directory / 'manifest.json').read_bytes()
+                inspector.replay_original_attachments(root, result, report)
+                self.assertTrue(inspector.attachment_identity_trial(root, result, report, compared))
+                self.assertTrue(inspector.replay_current_attachments(root, result, report, compared))
+                proof = report['current_attachment_helper']
+                self.assertTrue(proof['current_helper_verified']); self.assertEqual(proof['helper_outcome'], 'passed')
+                self.assertIs(proof['next_profile_predicate'], True)
+                self.assertTrue(all(proof[field] for field in ('matches_original_payload', 'matches_pinned_counterfactual',
+                    'matches_original_screenshots', 'original_bytes_preserved', 'original_namespace_preserved', 'source_rechecked')))
+                self.assertEqual(seal_files(directory), before); self.assertEqual((directory / 'manifest.json').read_bytes(), manifest)
+                self.assertFalse(proof['accepted']); self.assertFalse(proof['native_acceptance']); self.assertFalse(proof['full_f10_accepted'])
+                self.assertNotIn('private-unknown-operand', json.dumps(report))
+
+    def test_current_helper_old_caller_bytes_and_external_profile_gates_unchanged(self):
+        package = ROOT / 'tests/apple_password_privacy_20261028'
+        self.assertEqual(sha(package / 'continuation_run.py'), '430cc3ea71ca7982982026305a8bdc8067a47d11eb4118e69db3820770da10b2')
+        self.assertEqual(sha(package / 'authenticate_continuation.py'), '4e0127c553d22a765cfcbf9274aa6f476b55afaed5f25f6eda22ded5209ac54b')
+        self.assertEqual(sha(package / 'continuation_contract.py'), inspector.CURRENT_ATTACHMENT_SOURCE_SHA)
+        self.assertNotEqual(inspector.CURRENT_ATTACHMENT_SOURCE_SHA, inspector.ATTACHMENT_SOURCE_HASHES['continuation_contract.py'])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); result = candidate_bundle(root)
+            stages, unused = current_contract.attachments(root / 'attachments')
+            runner = (package / 'continuation_run.py').read_text()
+            expression = "all(value['profile_id'] == result['native_stages']['profile'] for value in result['checkpoints'].values())"
+            self.assertIn('require(' + expression + ", 'UI/storage profile mismatch')", runner)
+            result['native_stages'] = stages
+            self.assertTrue(eval(expression, {'result': result}))
+            result['checkpoints'][inspector.STAGES[0]]['profile_id'] = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+            self.assertFalse(eval(expression, {'result': result}))
+            auth = (package / 'authenticate_continuation.py').read_text()
+            self.assertIn("require(checkpoint['profile_id'] == stages['profile'], 'UI/profile identity differs')", auth)
+            for checkpoint in result['checkpoints'].values():
+                self.assertEqual(eval("checkpoint['profile_id'] == stages['profile']", {'checkpoint': checkpoint, 'stages': stages}),
+                                 checkpoint['profile_id'] == stages['profile'])
+
+    def test_current_helper_exact_document_names_refuse_extension_or_prefix_shortcuts(self):
+        uuid = '12345678-1234-1234-1234-123456789ABC'
+        for name in ('privacy-stages.json.extra', 'privacy-stages.json/private-operand', 'private-operand.json',
+                'privacy-stages_00_' + uuid + '.json', 'privacy-stages_1000000_' + uuid + '.json',
+                'privacy-stages_0_12345678-1234-1234-1234-123456789AbC.json',
+                'privacy-stages_0_' + uuid + '.JSON', 'privacy-stages_１_' + uuid + '.json',
+                'privacy-stages_0_UHJpdmFjeS0=.json', 'privacy-stages_0_Privacy-aaaa...json'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); candidate_bundle(root, name); directory = root / 'attachments'; before = seal_files(directory)
+                with self.assertRaises(RuntimeError): current_contract.attachments(directory)
+                self.assertEqual(seal_files(directory), before)
+
+    def test_current_helper_manifest_identity_uniqueness_and_complete_inventory(self):
+        for change in ('case', 'conflict', 'bool', 'list', 'empty', 'duplicate-document', 'duplicate-file', 'alias', 'extra', 'missing', 'unsafe', 'duplicate-json', 'numeric-loss'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); candidate_bundle(root); directory = root / 'attachments'
+                groups = json.loads((directory / 'manifest.json').read_text())
+                if change == 'case': groups[0]['testIdentifier'] = 'testForeign'
+                elif change == 'conflict': groups[0]['testName'] = 'testForeign'
+                elif change in ('bool', 'list', 'empty'):
+                    groups[0]['testIdentifier'] = {'bool': False, 'list': [], 'empty': ''}[change]; groups[0]['testName'] = CASE
+                elif change == 'duplicate-document':
+                    (directory / 'second.json').write_bytes((directory / 'metadata.json').read_bytes())
+                    groups[0]['attachments'].append(dict(groups[0]['attachments'][0], exportedFileName='second.json'))
+                elif change == 'duplicate-file': groups[0]['attachments'].append(dict(groups[0]['attachments'][0]))
+                elif change == 'alias':
+                    (directory / 'METADATA.json').write_bytes((directory / 'metadata.json').read_bytes())
+                    groups[0]['attachments'].append(dict(groups[0]['attachments'][0], exportedFileName='METADATA.json'))
+                elif change == 'extra': (directory / 'extra').write_bytes(b'extra')
+                elif change == 'missing': groups[0]['attachments'][0]['exportedFileName'] = 'missing.json'
+                elif change == 'unsafe': groups[0]['attachments'][0]['exportedFileName'] = '../private-operand'
+                text = json.dumps(groups)
+                if change == 'duplicate-json': text = text.replace('"testIdentifier":', '"testIdentifier":"testForeign","testIdentifier":', 1)
+                elif change == 'numeric-loss': text = text.replace('"unknownMetadata":', '"precision":1.00000000000000001,"unknownMetadata":', 1)
+                (directory / 'manifest.json').write_text(text); before = seal_files(directory)
+                with self.assertRaises(RuntimeError): current_contract.attachments(directory)
+                self.assertEqual(seal_files(directory), before)
+
+    def test_current_helper_canonical_payload_and_screenshots_do_not_relax(self):
+        for change in ('extra', 'missing', 'order', 'incomplete', 'operation', 'flag', 'uuid', 'duplicate-key',
+                       'invalid-json', 'invalid-utf8', 'oversize', 'image-duplicate', 'image-missing', 'image-magic', 'image-bare'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); candidate_bundle(root); directory = root / 'attachments'
+                groups = json.loads((directory / 'manifest.json').read_text()); document = json.loads((directory / 'metadata.json').read_text())
+                if change == 'extra': document['extra'] = 'private-operand'
+                elif change == 'missing': del document['operation']
+                elif change == 'order': document['stages'].reverse()
+                elif change == 'incomplete': document['stages'].pop()
+                elif change == 'operation': document['operation'] = 'private-operand'
+                elif change == 'flag': document['diagnostic_continuation'] = 1
+                elif change == 'uuid': document['profile'] = 'Privacy-aaaa...'
+                elif change == 'image-duplicate': groups[0]['attachments'].append(dict(groups[0]['attachments'][1]))
+                elif change == 'image-missing': groups[0]['attachments'][1]['suggestedHumanReadableName'] = 'not-a-screenshot'
+                elif change == 'image-magic': (directory / 'image0.bin').write_bytes(b'not-png')
+                elif change == 'image-bare': groups[0]['attachments'][1]['suggestedHumanReadableName'] = 'privacy-' + inspector.STAGES[0]
+                data = json.dumps(document).encode()
+                if change == 'duplicate-key': data = data[:-1] + b',"profile":"private-operand"}'
+                elif change == 'invalid-json': data = b'private-operand not-json'
+                elif change == 'invalid-utf8': data = b'\xffprivate-operand'
+                elif change == 'oversize': data += b' ' * (1024 * 1024)
+                (directory / 'metadata.json').write_bytes(data); (directory / 'manifest.json').write_text(json.dumps(groups))
+                before = seal_files(directory)
+                with self.assertRaises((RuntimeError, UnicodeDecodeError, json.JSONDecodeError)): current_contract.attachments(directory)
+                self.assertEqual(seal_files(directory), before)
+
+    def test_current_helper_mutation_empty_directory_and_special_entries_refuse(self):
+        actual = current_contract._attachment_json
+        for change in ('earlier-file', 'empty-directory'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); candidate_bundle(root); directory = root / 'attachments'; calls = []
+                def mutate(data):
+                    value = actual(data); calls.append(True)
+                    if len(calls) == 2:
+                        if change == 'earlier-file': (directory / 'image0.bin').write_bytes(b'changed')
+                        else: (directory / 'empty-late').mkdir()
+                    return value
+                with patch.object(current_contract, '_attachment_json', side_effect=mutate), self.assertRaises(RuntimeError):
+                    current_contract.attachments(directory)
+        actual_read = current_contract._attachment_read
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); candidate_bundle(root); directory = root / 'attachments'; read_names = []
+            def mutate_after_later_read(path, *args, **kwargs):
+                data = actual_read(path, *args, **kwargs); read_names.append(path.name)
+                if path.name == 'image3.bin':
+                    self.assertIn('image0.bin', read_names)
+                    with (directory / 'image0.bin').open('r+b') as file: file.write(b'changed!')
+                return data
+            with patch.object(current_contract, '_attachment_read', side_effect=mutate_after_later_read), self.assertRaises(RuntimeError):
+                current_contract.attachments(directory)
+        for change in ('symlink', 'fifo', 'hardlink'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); candidate_bundle(root); directory = root / 'attachments'
+                if change == 'symlink': (directory / 'linked').symlink_to(directory / 'image0.bin')
+                elif change == 'fifo': os.mkfifo(directory / 'pipe')
+                else: os.link(directory / 'image0.bin', directory / 'hardlinked')
+                with self.assertRaises(RuntimeError): current_contract.attachments(directory)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); candidate_bundle(root); directory = root / 'attachments'
+            (directory / 'Empty').mkdir(); (directory / 'empty').mkdir()
+            with self.assertRaisesRegex(RuntimeError, '^current attachment namespace changed$'): current_contract.attachments(directory)
+
+    def test_current_helper_fd_swap_refuses_nonblocking(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); candidate_bundle(root); directory = root / 'attachments'; records = seal_files(directory)
+            actual_open = os.open
+            def swapped(path, flags, *args, **kwargs):
+                self.assertTrue(flags & os.O_NONBLOCK)
+                Path(path).unlink(); os.mkfifo(path)
+                return actual_open(path, flags, *args, **kwargs)
+            with patch.object(current_contract.os, 'open', side_effect=swapped), self.assertRaises(RuntimeError):
+                current_contract._attachment_read(directory / 'metadata.json', records['metadata.json'], maximum=1024 * 1024)
+
+    def test_current_replay_latches_actual_result_before_later_refusal(self):
+        for final in (False, True):
+            with tempfile.TemporaryDirectory() as temporary:
+                refusal, calls, stages, unused = native_order_control(self, Path(temporary),
+                    retained_candidate_export=True, valid_later_evidence=final)
+                self.assertEqual(refusal['refusal_code'], 'attachment-contract-refused' if final else 'fixture-failure-shape')
+                report = refusal['validated_partial_report']; proof = report['current_attachment_helper']
+                self.assertTrue(proof['current_helper_verified']); self.assertFalse(proof['accepted'])
+                self.assertTrue(report['original_attachment_contract']['fatal_refusal']); self.assertFalse(report['accepted'])
+                self.assertLess(stages.index('attachment-current-replay'), stages.index('xcresult-copy'))
+                self.assertEqual(calls, ['get', 'export']); self.assertNotIn('private-unknown-operand', json.dumps(refusal))
+
+    def test_current_replay_binds_actual_source_and_full_counterfactual_values(self):
+        for change in ('source', 'document', 'image'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = candidate_bundle(root); report, compared = {}, {}
+                inspector.replay_original_attachments(root, result, report)
+                self.assertTrue(inspector.attachment_identity_trial(root, result, report, compared))
+                if change == 'document': compared['stages']['operation'] = 'private-operand'
+                elif change == 'image': compared['images'][inspector.STAGES[0]]['sha256'] = '0' * 64
+                with patch.object(inspector, 'CURRENT_ATTACHMENT_SOURCE_SHA', '0' * 64 if change == 'source' else inspector.CURRENT_ATTACHMENT_SOURCE_SHA):
+                    self.assertFalse(inspector.replay_current_attachments(root, result, report, compared))
+                proof = report['current_attachment_helper']; self.assertFalse(proof['current_helper_verified'])
+                self.assertEqual(proof['helper_outcome'], 'unavailable' if change == 'source' else 'passed')
+                self.assertNotIn('private-operand', json.dumps(proof))
+
+    def test_current_helper_unavailable_not_inferred_from_regenerated_export(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.object(current_contract, 'attachments') as current:
+            root = Path(temporary); regenerated = root / 'regenerated'; regenerated.mkdir(); candidate_bundle(regenerated)
+            report = {}; result = {'files': {}, 'commands': []}
+            inspector.replay_original_attachments(root, result, report)
+            self.assertTrue(inspector.attachment_identity_trial(root, result, report))
+            self.assertTrue(inspector.replay_current_attachments(root, result, report, {}))
+            self.assertEqual(report['current_attachment_helper']['status'], 'unavailable')
+            self.assertFalse(report['current_attachment_helper']['current_helper_verified']); current.assert_not_called()
+
     def test_candidate_exact_names_call_original_helper_on_only_metadata_copy(self):
         for name, changed in [('privacy-stages.json', 0),
                 ('privacy-stages_0_12345678-1234-1234-1234-123456789ABC.json', 1),

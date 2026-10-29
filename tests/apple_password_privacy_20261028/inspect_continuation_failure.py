@@ -54,6 +54,7 @@ ATTACHMENT_SOURCE_HASHES = {
     'continuation_contract.py': '03a72ae6666b59f829ddd3427067dd2963a3664235f1e5d168041b28cee4e7d1',
     'contract.py': '3bbc7fca067c77b91ad5d4e3fa96a4e98e1d7ade6bfc5c90dd329b56f7eae3af',
 }
+CURRENT_ATTACHMENT_SOURCE_SHA = '5353da16bd5f8c9bc06b4168ef930840d92dce88060551a713bcec6b2bef8ce3'
 FAILURES = ('RuntimeError', 'AssertionError', 'CalledProcessError', 'TimeoutExpired',
             'FileNotFoundError', 'OperationalError', 'PermissionError', 'KeyError', 'OSError')
 STATIC_MESSAGES = MESSAGES + ('Complete evidence and strict verdict must be recorded before diagnostic continuation',
@@ -71,7 +72,7 @@ DIAGNOSTIC_STAGES = ('entry', 'scope-and-source', 'artifact-metadata', 'artifact
     'lifecycle-receipt', 'admission-replay', 'progress-and-native-log', 'scan-summaries', 'fixture-failures', 'network-summary',
     'xcresult-copy', 'xcresult-parser', 'xcresult-issues', 'attachment-export',
     'attachment-summary', 'attachment-contract-reference', 'attachment-contract-replay',
-    'attachment-contract-predicates', 'attachment-identity-candidate', 'attachment-contract-final', 'safe-report')
+    'attachment-contract-predicates', 'attachment-identity-candidate', 'attachment-current-replay', 'attachment-contract-final', 'safe-report')
 CURRENT_DIAGNOSTIC_STAGE = 'entry'
 CURRENT_MEMBER_INTEGRITY = None
 CURRENT_PLATFORM = None
@@ -94,6 +95,22 @@ REFUSAL_CODES = {
     'candidate attachment result differs': 'attachment-candidate-result',
     'candidate attachment original changed': 'attachment-candidate-original-changed',
     'candidate attachment replay refused': 'attachment-candidate-refused',
+    'current attachment JSON duplicate key': 'attachment-current-json-duplicate',
+    'current attachment JSON nonfinite': 'attachment-current-json-nonfinite',
+    'current attachment JSON numeric loss': 'attachment-current-json-number',
+    'current attachment name unsupported': 'attachment-current-name',
+    'current attachment manifest invalid': 'attachment-current-manifest',
+    'current attachment case differs': 'attachment-current-case',
+    'current attachment member differs': 'attachment-current-member',
+    'current attachment file invalid': 'attachment-current-file',
+    'current attachment file changed': 'attachment-current-file-changed',
+    'current attachment namespace changed': 'attachment-current-namespace',
+    'current attachment payload invalid': 'attachment-current-payload',
+    'current attachment source differs': 'attachment-current-source',
+    'current attachment candidate unqualified': 'attachment-current-candidate',
+    'current attachment result differs': 'attachment-current-result',
+    'current attachment profile differs': 'attachment-current-profile',
+    'current attachment replay refused': 'attachment-current-refused',
     'checkout differs': 'checkout-identity',
     'old or foreign path changed': 'source-scope',
     'dirty source': 'dirty-source',
@@ -818,7 +835,7 @@ def attachment_copy_proof(original, copied, expected, groups, position):
     return int(groups[group_index]['attachments'][entry_index]['suggestedHumanReadableName'] != 'privacy-stages.json')
 
 
-def attachment_identity_trial(folder, result, report):
+def attachment_identity_trial(folder, result, report, compared=None):
     """Candidate only; the unchanged original outcome remains independently fatal."""
     proof = {'status': 'unavailable', 'name_categories': None, 'selected_name_category': None,
         'payload_predicates': None, 'original_document_matches_checkpoints': False,
@@ -881,9 +898,71 @@ def attachment_identity_trial(folder, result, report):
                     sha(Path(contract.__file__)) == ATTACHMENT_SOURCE_HASHES['contract.py'], 'original attachment source differs')
         proof.update(status='qualified', candidate_qualified=True, original_bytes_preserved=True,
             copy_nonmanifest_bytes_preserved=True, copy_namespace_preserved=True, source_and_import_rechecked=True)
+        if compared is not None:
+            compared.update(stages=copy.deepcopy(native_stages), images=copy.deepcopy(images))
         return True
     except Exception as error:
         refusal = refusal_report(error, 'attachment-identity-candidate')
+        proof.update(status='refused', fatal_refusal=True,
+            refusal={key: refusal[key] for key in ('exception_class', 'refusal_code')})
+        return False
+
+
+def replay_current_attachments(folder, result, report, compared):
+    """Actual corrected shared helper on originals; never historical acceptance."""
+    import continuation_contract as current
+    proof = {'status': 'unavailable', 'helper_outcome': 'unavailable', 'next_profile_predicate': None,
+        'matches_original_payload': False, 'matches_pinned_counterfactual': False,
+        'matches_original_screenshots': False, 'original_bytes_preserved': False,
+        'original_namespace_preserved': False, 'source_rechecked': False,
+        'current_helper_verified': False, 'fatal_refusal': False, 'refusal': None,
+        'accepted': False, 'native_acceptance': False, 'full_f10_accepted': False,
+        'arbitrary_names_profiles_or_values_printed': False}
+    report['current_attachment_helper'] = proof
+    if report['original_attachment_contract']['original_export_status'] == 'absent': return True
+    diagnostic_stage('attachment-current-replay')
+    try:
+        proof['status'] = 'checking'
+        require(report['attachment_identity_candidate']['candidate_qualified'] is True and
+                type(compared) is dict and set(compared) == {'stages', 'images'}, 'current attachment candidate unqualified')
+        source = ROOT / 'tests/apple_password_privacy_20261028/continuation_contract.py'
+        require(Path(current.__file__).resolve() == source.resolve() and sha(source) == CURRENT_ATTACHMENT_SOURCE_SHA,
+                'current attachment source differs')
+        original = folder / 'attachments'; before = inventory(original)
+        expected = {name[len('attachments/'):]: item for name, item in result['files'].items() if name.startswith('attachments/')}
+        require(seal_files(original) == expected, 'current attachment file changed')
+        selection = {}
+        groups, position, document, unused = attachment_identity_selection(original, expected, result['checkpoints'], selection)
+        try: stages, images = current.attachments(original)
+        except Exception:
+            proof['helper_outcome'] = 'refused'
+            raise
+        proof['helper_outcome'] = 'passed'
+        proof['next_profile_predicate'] = all(value['profile_id'] == stages['profile'] for value in result['checkpoints'].values())
+        require(proof['next_profile_predicate'], 'current attachment profile differs')
+        proof['matches_original_payload'] = attachment_same_value(stages, document)
+        proof['matches_pinned_counterfactual'] = attachment_same_value(stages, compared['stages']) and attachment_same_value(images, compared['images'])
+        require(proof['matches_original_payload'] and proof['matches_pinned_counterfactual'] and
+                set(images) == set(STAGES), 'current attachment result differs')
+        original_images = {}
+        for group in groups:
+            for entry in group['attachments']:
+                for stage in STAGES:
+                    role, name = 'privacy-' + stage, entry['suggestedHumanReadableName']
+                    if name == role + '.png' or name.startswith(role + '_'):
+                        require(stage not in original_images, 'current attachment result differs')
+                        filename = entry['exportedFileName']
+                        original_images[stage] = {'file': 'attachments/' + filename, 'sha256': expected[filename]['sha256']}
+        proof['matches_original_screenshots'] = attachment_same_value(images, original_images)
+        require(proof['matches_original_screenshots'], 'current attachment result differs')
+        require(inventory(original) == before and seal_files(original) == expected and inventory(original) == before,
+                'current attachment namespace changed')
+        require(sha(source) == CURRENT_ATTACHMENT_SOURCE_SHA, 'current attachment source differs')
+        proof.update(status='verified', current_helper_verified=True, original_bytes_preserved=True,
+            original_namespace_preserved=True, source_rechecked=True)
+        return True
+    except Exception as error:
+        refusal = refusal_report(error, 'attachment-current-replay')
         proof.update(status='refused', fatal_refusal=True,
             refusal={key: refusal[key] for key in ('exception_class', 'refusal_code')})
         return False
@@ -960,7 +1039,9 @@ def diagnose_platform(out, platform, identifier, size, digest):
     report['producer_receipt_is_event_trace_proof'] = False
     report['activity_timing'] = activity_timing(folder / 'native.log')
     attachment_contract_ok = replay_original_attachments(folder, result, report)
-    attachment_candidate_ok = attachment_identity_trial(folder, result, report)
+    compared = {}
+    attachment_candidate_ok = attachment_identity_trial(folder, result, report, compared)
+    attachment_current_ok = replay_current_attachments(folder, result, report, compared)
     inspect_native_result(folder, files, report)
     diagnostic_stage('scan-summaries')
     for stage in STAGES:
@@ -989,6 +1070,7 @@ def diagnose_platform(out, platform, identifier, size, digest):
     diagnostic_stage('attachment-contract-final')
     require(attachment_contract_ok, 'original attachment contract refused')
     require(attachment_candidate_ok, 'candidate attachment replay refused')
+    require(attachment_current_ok, 'current attachment replay refused')
     diagnostic_stage('safe-report')
     return report
 

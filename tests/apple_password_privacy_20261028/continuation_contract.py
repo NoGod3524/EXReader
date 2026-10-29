@@ -2,13 +2,18 @@
 """Distinct diagnostic protocol; never substitutes for strict native acceptance."""
 import json
 import copy
+from decimal import Decimal
 import hashlib
+import math
+import os
 from pathlib import Path
 import plistlib
 import re
+import stat
 import struct
 import threading
 import time
+import unicodedata
 import xml.etree.ElementTree as ET
 from contract import BASE, BUNDLE, ROOT, STAGES, guard, require, sha
 
@@ -429,25 +434,107 @@ def verdict(checks):
             'failed_strict_checkpoints': [stage for stage in STAGES if not checks[stage]]}
 
 
+def _attachment_json(data):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            require(key not in result, 'current attachment JSON duplicate key')
+            result[key] = value
+        return result
+    def constant(unused): raise RuntimeError('current attachment JSON nonfinite')
+    def number(text):
+        value = float(text)
+        require(math.isfinite(value), 'current attachment JSON nonfinite')
+        exact, emitted = Decimal(text), Decimal(json.dumps(value, allow_nan=False))
+        require(exact == emitted and (not exact.is_zero() or exact.is_signed() == emitted.is_signed()),
+                'current attachment JSON numeric loss')
+        return value
+    return json.loads(data.decode('utf-8'), object_pairs_hook=pairs, parse_constant=constant, parse_float=number)
+
+
+def _attachment_document_name(name):
+    if name == 'privacy-stages.json': return True
+    lower = r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}'
+    upper = r'[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}'
+    eligible = re.fullmatch(r'privacy-stages_(?:0|[1-9][0-9]{0,5})_(?:' + lower + '|' + upper + r')\.json', name) is not None
+    require(eligible or not name.startswith('privacy-stages'), 'current attachment name unsupported')
+    return eligible
+
+
+def _attachment_read(path, expected, maximum=None, prefix=None):
+    """Read only the actual regular single-link fd; a FIFO swap cannot block."""
+    def identity(value):
+        return (value.st_dev, value.st_ino, value.st_mode, value.st_size,
+                value.st_mtime_ns, value.st_ctime_ns, value.st_nlink)
+    before = path.lstat()
+    require(stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and before.st_size == expected['bytes'] and
+            (maximum is None or before.st_size <= maximum), 'current attachment file invalid')
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0))
+    with os.fdopen(descriptor, 'rb') as file:
+        opened = os.fstat(file.fileno())
+        require(stat.S_ISREG(opened.st_mode) and identity(opened) == identity(before), 'current attachment file changed')
+        data = file.read(prefix if prefix is not None else before.st_size + 1)
+        require(identity(os.fstat(file.fileno())) == identity(before), 'current attachment file changed')
+    require(identity(path.lstat()) == identity(before), 'current attachment file changed')
+    if prefix is None:
+        require(len(data) == before.st_size and hashlib.sha256(data).hexdigest() == expected['sha256'],
+                'current attachment file changed')
+    return data
+
+
 def attachments(directory):
-    stages, images = None, {}
-    for group in json.loads((directory / 'manifest.json').read_text()):
-        case_name(group.get('testIdentifier') or group.get('testName'))
-        for item in group['attachments']:
-            filename = item['exportedFileName']
-            require(Path(filename).name == filename, 'unsafe attachment')
-            path = directory / filename
-            name = item['suggestedHumanReadableName']
-            if name.startswith('privacy-stages.json'):
-                require(stages is None, 'duplicate native stages')
-                stages = json.loads(path.read_text())
-            for stage in STAGES:
-                role = 'privacy-' + stage
-                if name.startswith(role + '_') or name == role + '.png':
-                    require(stage not in images and path.read_bytes().startswith(b'\x89PNG\r\n\x1a\n'), 'invalid native screenshot')
-                    images[stage] = {'file': str(path.relative_to(directory.parent)), 'sha256': sha(path)}
-    require(stages is not None and stages['stages'] == STAGES and set(images) == set(STAGES), 'native stages/screenshots incomplete')
-    require(re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', stages['profile']) is not None, 'invalid actual profile')
-    require(stages['diagnostic_continuation'] is True and
-            stages['operation'] == 'real Remember off and Update; not a dedicated Forget action', 'diagnostic operation mislabeled')
-    return stages, images
+    """Read-only continuation selector; external checkpoint binding stays in callers.
+
+    Explicit criterion change: only literal or canonical ordinal/UUID JSON names.
+    Historical helpers remain independently loaded from their immutable source.
+    """
+    from continuation_lifecycle import seal_files
+    from privacy_scan import inventory
+    directory = Path(directory)
+    before = inventory(directory); files = seal_files(directory)
+    require(inventory(directory) == before and 'manifest.json' in files, 'current attachment namespace changed')
+    aliases = [unicodedata.normalize('NFC', name).casefold() for name in before if name != '.']
+    require(len(aliases) == len(set(aliases)), 'current attachment namespace changed')
+    for name in files:
+        require((directory / name).lstat().st_nlink == 1, 'current attachment file invalid')
+    try:
+        groups = _attachment_json(_attachment_read(directory / 'manifest.json', files['manifest.json']))
+        require(type(groups) is list and 0 < len(groups) <= 100000, 'current attachment manifest invalid')
+        seen, aliases, documents, images = set(), set(), [], {}
+        for group in groups:
+            require(type(group) is dict and type(group.get('attachments')) is list, 'current attachment manifest invalid')
+            identities = [group[key] for key in ('testIdentifier', 'testName') if key in group]
+            require(identities and all(type(value) is str and value and
+                    re.findall(r'\btest[A-Za-z0-9_]+\b', value) == [CASE] for value in identities),
+                    'current attachment case differs')
+            for item in group['attachments']:
+                require(type(item) is dict and type(item.get('exportedFileName')) is str and
+                        type(item.get('suggestedHumanReadableName')) is str, 'current attachment manifest invalid')
+                filename, name = item['exportedFileName'], item['suggestedHumanReadableName']
+                alias = unicodedata.normalize('NFC', filename).casefold()
+                require(filename not in ('', '.', '..', 'manifest.json') and Path(filename).name == filename and
+                        '\\' not in filename and filename in files and filename not in seen and alias not in aliases and
+                        len(seen) < 100000, 'current attachment member differs')
+                seen.add(filename); aliases.add(alias); path = directory / filename
+                if _attachment_document_name(name):
+                    documents.append(_attachment_json(_attachment_read(path, files[filename], maximum=1024 * 1024)))
+                for stage in STAGES:
+                    role = 'privacy-' + stage
+                    if name.startswith(role + '_') or name == role + '.png':
+                        require(stage not in images and _attachment_read(path, files[filename], prefix=8) == b'\x89PNG\r\n\x1a\n',
+                                'invalid native screenshot')
+                        images[stage] = {'file': str(path.relative_to(directory.parent)), 'sha256': files[filename]['sha256']}
+        require(seen == set(files) - {'manifest.json'}, 'current attachment member differs')
+        require(len(documents) == 1 and set(images) == set(STAGES), 'native stages/screenshots incomplete')
+        stages = documents[0]
+        require(type(stages) is dict and set(stages) == {'stages', 'profile', 'operation', 'diagnostic_continuation'} and
+                type(stages['stages']) is list and all(type(value) is str for value in stages['stages']) and
+                stages['stages'] == STAGES, 'current attachment payload invalid')
+        require(type(stages['profile']) is str and re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', stages['profile']) is not None,
+                'invalid actual profile')
+        require(stages['diagnostic_continuation'] is True and
+                stages['operation'] == 'real Remember off and Update; not a dedicated Forget action', 'diagnostic operation mislabeled')
+        return stages, images
+    finally:
+        require(inventory(directory) == before and seal_files(directory) == files and inventory(directory) == before,
+                'current attachment namespace changed')
