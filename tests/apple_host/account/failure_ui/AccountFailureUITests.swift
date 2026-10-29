@@ -66,6 +66,15 @@ final class AccountFailureUITests: XCTestCase {
         XCTAssertTrue(book.exists, "the local original must remain available after failure")
         XCTAssertTrue(node("account.sync.start").isEnabled, "failure must allow a retry")
 
+        XCTAssertEqual(node("account.sync.start").label, "重试同步")
+        tap("account.sync.details")
+        XCTAssertTrue(wait { self.value("account.sync.details.state") == "同步失败" })
+        XCTAssertEqual(value("account.sync.details.http"), "HTTP 401")
+        XCTAssertFalse(value("account.sync.details.reason").isEmpty)
+        let failureScreen = XCTAttachment(screenshot: app.screenshot())
+        failureScreen.name = "actual-401-sync-details"; failureScreen.lifetime = .keepAlways; add(failureScreen)
+        tap("account.sync.details.done")
+
         // The fixture reads the real catalog after the displayed terminal state,
         // and responds only after the outbox observation has been persisted.
         let observed = expectation(description: "capture failed-state outbox before retry")
