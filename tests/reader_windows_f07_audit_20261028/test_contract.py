@@ -134,6 +134,31 @@ class Contract(unittest.TestCase):
         self.assertEqual(findings[0]['path'], 'apps/export/src/sha256.inc')
         self.assertTrue(unknown[0]['unclassified'])
 
+    def test_relative_dependency_uses_only_bound_original_build_directory(self):
+        directory = 'D:/repo/' + C.BUILD + 'product-build'
+        cache = 'CMAKE_CACHEFILE_DIR:INTERNAL=' + directory + '\n'
+        bound = C.original_build_directory(cache, 'D:/repo', 'product-build')
+        with self.assertRaises(ValueError):
+            C.original_build_directory(cache.replace('product-build', 'wrong-build'), 'D:/repo', 'product-build')
+        with self.assertRaises(ValueError): C.original_build_directory(cache + cache, 'D:/repo', 'product-build')
+        spelling = '../../../../apps/export/src/private.inc'
+        with self.assertRaises(ValueError): C.dependency_path(spelling, 'D:/repo')
+        self.assertEqual(C.dependency_path(spelling, 'D:/repo', bound), 'apps/export/src/private.inc')
+        self.assertEqual(C.dependency_path('../raw-stage/include/private.h', 'D:/repo', bound),
+                         C.BUILD + 'raw-stage/include/private.h')
+        self.assertEqual(C.dependency_path('generated.h', 'D:/repo', bound), C.BUILD + 'product-build/generated.h')
+        for bad in ('D:relative.h', '\\root-relative.h', '../../../../../outside.h'):
+            with self.assertRaises(ValueError): C.dependency_path(bad, 'D:/repo', bound)
+        obj = 'CMakeFiles/catalog.dir/import.cpp.obj'
+        text = obj + ': #deps 1, deps mtime 123 (STALE)\n    ' + spelling + '\n'
+        records = []
+        _, covered = C.private_header_dependencies(text, {obj: 'Catalog'}, {}, 'D:/repo', 'product-build',
+            records, original_directory=bound)
+        self.assertEqual(covered, {obj}); self.assertEqual(records[0]['original_spelling'], spelling)
+        self.assertEqual(records[0]['original_build_directory'], bound)
+        findings, unknown = C.source_include_boundaries(records, {'apps/export': {'Export'}}, set())
+        self.assertFalse(unknown); self.assertEqual(findings[0]['owners'], ['Export'])
+
     def test_map_ownership_needs_exact_final_input(self):
         rows = C.map_rows('Preferred load address is 140000000\n Address Publics by Value Rva+Base Lib:Object\n 0001:00000000 exr_version 0000000140001000 f exr_core:version.c.obj\n entry point at 0001:00000000\n')
         self.assertEqual(rows[0]['symbol'], 'exr_version')

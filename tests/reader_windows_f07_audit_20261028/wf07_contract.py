@@ -170,9 +170,23 @@ def archive_objects(graph, target):
     return set(objects)
 
 
-def dependency_path(value, workspace):
+def original_build_directory(cache, workspace, label):
+    directories = re.findall(r'^CMAKE_CACHEFILE_DIR:INTERNAL=(.+)$', cache, re.M)
+    require(len(directories) == 1 and exact_path(directories[0], workspace) == BUILD + label,
+            'original dependency build directory differs from retained CMake cache')
+    return str(PureWindowsPath(workspace) / BUILD / label)
+
+
+def dependency_path(value, workspace, original_directory=None):
     """Resolve lexical include parents, never silently drop project aliases."""
     path, root = PureWindowsPath(value), PureWindowsPath(workspace)
+    if not path.is_absolute():
+        require(original_directory is not None and not path.drive and not path.root,
+                'relative dependency lacks unambiguous original build directory')
+        # Context comes from the original retained CMake cache, not extraction
+        # cwd or a basename search. Drive-relative/root-relative aliases reject.
+        exact_path(original_directory, workspace)
+        path = PureWindowsPath(original_directory) / path
     require(path.is_absolute(), 'relative/ambiguous original include dependency')
     normalized = []
     for part in path.parts[1:]:
@@ -193,7 +207,7 @@ def dependency_path(value, workspace):
 
 
 def private_header_dependencies(text, expected_objects, private_headers, workspace, label, repository_dependencies=None,
-                                empty_dependency_groups=None):
+                                empty_dependency_groups=None, original_directory=None):
     active, covered, seen, uses = None, set(), set(), []
     advertised, observed = 0, 0
     for line in text.splitlines():
@@ -222,15 +236,16 @@ def private_header_dependencies(text, expected_objects, private_headers, workspa
         if active and line.startswith('    '):
             observed += 1
             require(line.strip() and observed <= advertised, 'extra/empty object dependency row')
-            try: name = dependency_path(line.strip(), workspace)
+            try: name = dependency_path(line.strip(), workspace, original_directory)
             except ValueError:
                 if repository_dependencies is not None:
                     repository_dependencies.append(dict(consumer=active[0], object=active[1], path=line.strip(),
-                                                        build=label, unclassified=True))
+                        build=label, unclassified=True, original_build_directory=original_directory))
                 continue
             if name is None: continue
             if repository_dependencies is not None:
-                repository_dependencies.append(dict(consumer=active[0], object=active[1], path=name, build=label))
+                repository_dependencies.append(dict(consumer=active[0], object=active[1], path=name, build=label,
+                    original_spelling=line.strip(), original_build_directory=original_directory))
             if name in private_headers and active[0] not in private_headers[name]:
                 uses.append(dict(consumer=active[0], object=active[1], header=name,
                      owners=private_headers[name], build=label, evidence='actual retained Ninja dependency database'))

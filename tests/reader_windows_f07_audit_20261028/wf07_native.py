@@ -152,6 +152,7 @@ def audit(raw, inventory, source):
     for label, packages in dict(build_packages, host={'WindowsHost'}).items():
         if label == 'sdk-build': continue
         cache = (raw / (C.BUILD + label + '/CMakeCache.txt')).read_text(encoding='utf-8-sig')
+        original_directory = C.original_build_directory(cache, source['workspace'], label)
         homes = re.findall(r'^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$', cache, re.M)
         C.require(len(homes) == 1, 'actual module configure source root missing')
         source_root = C.exact_path(homes[0], source['workspace'])
@@ -177,9 +178,10 @@ def audit(raw, inventory, source):
         text = inspect('deps-' + label, [ninja, '-C', raw / (C.BUILD + label), '-t', 'deps'], deps)
         empty_groups = []
         uses, covered = C.private_header_dependencies(text, expected_objects, private_headers, source['workspace'], label,
-                                                     repository_dependencies, empty_dependency_groups=empty_groups)
+            repository_dependencies, empty_dependency_groups=empty_groups, original_directory=original_directory)
         header_uses.extend(uses)
         dependency_coverage[label] = dict(expected_objects=expected_objects, observed=sorted(covered),
+            original_build_directory=original_directory,
             empty_dependency_groups=empty_groups,
             extraction_mtime_not_original_validity_proof=True)
         if empty_groups:
@@ -240,6 +242,8 @@ def audit(raw, inventory, source):
         unknown_source_dependency_examples=unknown_source[:16],
         import_reason_counts={reason: sum(row['reason'] == reason for rows in private.values() for row in rows)
             for reason in sorted({row['reason'] for rows in private.values() for row in rows})},
+        cross_package_import_candidates=[dict(archive=archive, **row) for archive, rows in private.items()
+            for row in rows if row['providers']],
         empty_dependency_groups=[row for coverage in dependency_coverage.values() for row in coverage['empty_dependency_groups']],
         ambiguous_header_ownership=ambiguous_headers, provider_findings=provider_findings,
         private_or_unknown_import_count=sum(map(len, private.values())), public_definition_conflict_count=len(public_conflicts),
