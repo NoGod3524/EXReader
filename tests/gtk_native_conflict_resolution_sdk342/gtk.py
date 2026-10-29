@@ -91,7 +91,10 @@ def main():
     def details():search();host.key('ctrl+e');window('Book details')
     def explicit(title):
         assert not enabled('Save') and enabled('Resolve versions')
-        click('Resolve versions');click('Yes');wait(lambda:enabled('Save'))
+        # Native mnemonic avoids entering GTK's nested confirmation loop from
+        # an AT-SPI action callback; the real Yes confirmation remains required.
+        target=window('Book details');assert command('xdotool','getactivewindow')==target
+        host.key('alt+r');click('Yes');wait(lambda:enabled('Save'))
         assert find('Book title').queryEditableText().setTextContents(title)
         assert find('Book title').queryText().getText(0,-1)==title
     def ready():return state('account').get('owner_busy')=='0' and state('account').get('preparing')=='0'
