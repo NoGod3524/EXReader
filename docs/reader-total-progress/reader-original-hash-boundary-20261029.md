@@ -85,3 +85,32 @@ The Android binary discriminator also reads the actual ELF Android ABI note
 A small host-Linux ELF negative is compiled only in the Android producer and
 coherently substituted into a copy of evidence; matching x86_64 ELF headers alone
 must not pass. This is not system-toolchain provenance or Android runtime proof.
+
+## First actual run and bounded validation follow-up
+
+Original source `3597b549340450929c693c31fd3d2f7bf254bbf6`, run
+[40813101185](https://github.com/NoGod3524/EXReader/actions/runs/40813101185),
+attempt1: protocol passed; Linux producer passed the narrow boundary and desktop
+behavior with559 retained files. Its raw upload12870588607 is15,257,921 bytes,
+SHA256 `dcf81f2f1fe4dda46cdd90cb3782d62850f306bb86f23ae73e6288580d8ba063`.
+The aggregate failed and did not independently authenticate all targets.
+
+Windows completed its build/runtime/control stages then failed on DUMPBIN's
+parenthesized display annotation after a decorated C++ linkage name. Android and
+both iOS targets built and installed the two new owners but failed the unchanged
+Revisions helper's cross-root ProductCatalog package lookup. The bounded runner
+repair selects the exact same-target installed ProductCatalog config directory;
+no old owner is changed. The COFF parser keeps the actual decorated linkage name
+and permits only a bounded parenthesized display suffix on C++-decorated names.
+
+macOS failed the strict exact built-vs-installed archive byte comparison. No
+cause or allowance is inferred. Commit marker `[hash-archive-diagnostic]` runs
+protocol plus a pinned-original diagnostic only; all six producers and normal
+authentication are skipped. The diagnostic authenticates original macOS upload
+12871351856 (15,151,587 bytes, SHA256
+`ff875ece2f5d27128a83798f0309f237a72daeb5997ab5118fe8f0794fe03b16`), original
+source/run/failed job and unchanged owner bytes before extracting in Actions.
+It reports complete archive member payload identities and raw header/index
+records, total byte difference count and explicitly bounded offset preview.
+Only its JSON report is uploaded. The original equality guard and all admission
+requirements remain unchanged. No native build is repeated by this diagnostic.

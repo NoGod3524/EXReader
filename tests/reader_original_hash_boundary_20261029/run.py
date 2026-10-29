@@ -266,7 +266,10 @@ def main():
         run([sys.executable,ROOT/'tests/reader_catalog/original_import_actions.py'],output='runtime/original.log',
             subjects={'trees/catalog/'+executable('reader-original-import-check'):C.record(product_build/executable('reader-original-import-check'))})
     normal=B/'normal-build';configure(ROOT/'extras/opds',normal);build(normal,'opds')
-    revisions=B/'revision-build';configure(ROOT/'apps/reader/revisions',revisions,'-DREADER_PRODUCT_PREFIX='+product_prefix.as_posix());build(revisions,'reader_revision_hash')
+    revisions=B/'revision-build';configure(ROOT/'apps/reader/revisions',revisions,
+        '-DREADER_PRODUCT_PREFIX='+product_prefix.as_posix(),
+        '-DEXReaderProductCatalog_DIR='+(product_prefix/'lib/cmake/EXReaderProductCatalog').as_posix())
+    build(revisions,'reader_revision_hash')
     links={};links['installed']=make_probe('installed',hash_prefix,product_prefix,'installed')
     relocated=B/'relocated';copytree(hash_prefix,relocated/'hash');copytree(product_prefix,relocated/'product')
     ENV['EXREADER_ORIGINAL_HASH_PREFIX']=(relocated/'hash').as_posix()

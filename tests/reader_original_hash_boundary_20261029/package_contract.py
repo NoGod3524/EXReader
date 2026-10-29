@@ -134,9 +134,12 @@ def symbols(text, target):
         if target=='windows':
             if '|' not in line or 'External' not in line:continue
             require('WeakExternal' not in line,'weak COFF external is unsupported')
-            m=re.match(r'^\s*[0-9A-Fa-f]+\s+([0-9A-Fa-f]+)\s+(UNDEF|SECT[0-9A-Fa-f]+)\b(.*?)\bExternal\s+\|\s+(\S+)\s*$',line)
+            m=re.match(r'^\s*[0-9A-Fa-f]+\s+([0-9A-Fa-f]+)\s+(UNDEF|SECT[0-9A-Fa-f]+)\b(.*?)\bExternal\s+\|\s+(\S+)(?:\s+(\(.+\)))?\s*$',line)
             require(m is not None,'unknown COFF external row: '+line)
-            value,section,kind,name=m.groups()
+            value,section,kind,name,annotation=m.groups()
+            if annotation:
+                require(name.startswith('?') and annotation.count('(')==annotation.count(')') and '|' not in annotation,
+                    'unsupported COFF display annotation')
             if section=='UNDEF':
                 require(int(value,16)==0,'COFF common symbol is not a function import');undefined.add(name)
             else:

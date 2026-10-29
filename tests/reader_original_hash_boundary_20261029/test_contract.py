@@ -33,6 +33,11 @@ class ContractTests(unittest.TestCase):
         for text in (' 00B 00000004 UNDEF notype External | opds_sha256_stream_update',
                      ' 00B 00000000 UNDEF notype WeakExternal | opds_sha256_stream_update'):
             with self.assertRaises(ValueError):C.symbols(text,'windows')
+    def test_coff_actual_cpp_display_annotation(self):
+        row='35A 00000000 UNDEF  notype ()    External     | ??2@YAPEAX_K@Z (void * __cdecl operator new(unsigned __int64))'
+        self.assertEqual(C.symbols(row,'windows'),(set(),{'??2@YAPEAX_K@Z'}))
+        for bad in (row+' trailing',row[:-1],row.replace('??2@YAPEAX_K@Z','opds_sha256_stream_create')):
+            with self.assertRaises(ValueError):C.symbols(bad,'windows')
     def test_native_weak_not_api(self):
         with self.assertRaises(ValueError):C.symbols('00000000 W opds_sha256_stream_create','linux')
         with self.assertRaises(ValueError):C.symbols('unsupported native record','linux')

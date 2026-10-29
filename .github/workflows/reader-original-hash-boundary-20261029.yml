@@ -22,6 +22,7 @@ jobs:
   produce:
     name: produce (${{ matrix.target }})
     needs: protocol
+    if: ${{ !contains(github.event.head_commit.message, '[hash-archive-diagnostic]') }}
     strategy:
       fail-fast: false
       matrix:
@@ -74,7 +75,7 @@ jobs:
           retention-days: 90
   authenticate:
     needs: [protocol, produce]
-    if: always()
+    if: ${{ always() && !contains(github.event.head_commit.message, '[hash-archive-diagnostic]') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
@@ -94,5 +95,25 @@ jobs:
           path: |
             build/hash-authentication/authentication.json
             build/hash-authentication/github.json
+          if-no-files-found: error
+          retention-days: 90
+  archive-diagnostic:
+    needs: protocol
+    if: ${{ contains(github.event.head_commit.message, '[hash-archive-diagnostic]') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate and compare original failed macOS archive bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_original_hash_boundary_20261029/authenticate.py --archive-diagnostic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-hash-archive-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/hash-archive-diagnostic/diagnostic.json
           if-no-files-found: error
           retention-days: 90
