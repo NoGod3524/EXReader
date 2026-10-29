@@ -548,6 +548,12 @@
       "original_job": 123590727740,
       "original_artifact": 12917747817,
       "original_archive_sha256": "e12488b06a3ab8fcc296799936818063055fae00ae185fbc979a54408ada54cd"
+    },
+    "apple_annotation_macos": {
+      "run": 40928332937,
+      "source_prefix": "a24e24fa1577c6dd685b304c2506e3db90346eb8",
+      "doc": "docs/reader-total-progress/apple-annotation-macos-audited.md",
+      "adapter": "apple_annotation_macos_40928332937"
     }
   },
   "requirements": [
@@ -1090,9 +1096,11 @@
       "group": "host",
       "platform": "macos",
       "title": "macOS：宿主标注文件导入/导出、预览确认及错误拒绝",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_annotation_macos"
+      ],
+      "note": "SDK 3.41 原生 macOS 的实际 JSONL/Markdown 目录保存、系统文件导入、预览/确认/取消及无效文件拒绝通过；独立审计重验全部 39 项、14 个截图及五个程序二进制。导出内容由原生 XCTest 实际读取，原始导出载荷未另存；不授予 iOS、真机、SDK 3.42 或整个三端运行通过。"
     },
     {
       "id": "H.macos.original_export",
