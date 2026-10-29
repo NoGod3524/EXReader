@@ -19,7 +19,7 @@ import traceback
 OLD_SDK_REF = 'c2d23c29a3b2096c2236fdb414dcd1e66d3243b4'
 SOURCES = {
     'extras/migration/CMakeLists.txt': 'b3ce74a1ad235859cf2656ea99c09a2d8447fc365484a20bedd77eeba5df4ab9',
-    'extras/migration/src/lm_main.c': 'dc8136ab8127033d24f8843109423d5d262b1bfe742134b078cd43f82ddb523e',
+    'extras/migration/src/lm_main.c': 'eaceeacace163c4fb00d21e1977d356466a44d36850e681e8ddb12cc70a76ea6',
     'extras/migration/src/lm_mirror.c': '9e11dab71c01c7539af4fa711badc3e0c0ed728d97444a296270fd354bc6f9cc',
     'extras/migration/src/lm_mirror.h': 'e913b5e9b776c2563d2c77558845c6f63882845961624fde090df59ea64da6c9',
 }

@@ -1,5 +1,40 @@
 # Limited v3 post-intent recovery barrier
 
+## First Actions outcome and narrow Windows repair — 2026-10-29
+
+Published source `a804feaa95033fe64b62728b932e5eef342c7ebd` has the exact reviewed
+tree `e032383656394a646ed320ff3a0b0aa938e730c5` (local review commit `690079d7`).
+The [focused run](https://github.com/NoGod3524/EXReader/actions/runs/40794046444)
+preserves all first-run evidence: Linux and macOS each passed the new 25/25;
+Windows passed 1/25, with most cases failing before the intended operation.
+
+The Windows source defect is nonce creation with `"wx"` text mode followed by
+raw-byte equality: the CRT translates the written LF into CRLF. The narrow
+repair uses `"wbx"`, retaining exclusive creation, sync/close, raw nonce equality
+and exact identity checks. It does not trim/normalize bytes or forgive mismatches.
+This follows the documented [Microsoft CRT translation modes](https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/fopen-wfopen?view=msvc-170).
+Only `lm_main.c`, its declared hash in the unchanged old29 probe/workflow, and
+this evidence note change relative to the first published candidate. This repair
+has no runtime pass yet; the existing 25 cases already expose the regression.
+
+The unmodified old29 retained 17/29 on Linux/macOS and 1/29 on Windows. POSIX's
+12 failures retain the version-2/automatic restoration or retirement expectations;
+the Windows lock defect prevents most behavioral coverage. Do not count composite
+assertion subparts or later short-circuited assertions as passed. The same-SHA
+[full companion](https://github.com/NoGod3524/EXReader/actions/runs/40794046422)
+has Linux/macOS candidate 60/65 (129/135), retaining the prior four failures plus
+the old requirement that ledger publication failure leave no pending artifacts.
+Its old automatic crash-retry scenario also rejects the deliberate v3 pending
+policy. Candidate review 31/31 and browser 17/17 passed on those two platforms;
+Windows companion remained running when this repair was prepared.
+
+No test/SDK/budget or companion change is made to turn these contract failures
+green. Full P0 remains incomplete. The original source-only plan below remains
+historical context; its unexecuted wording is superseded only by explicit results
+above, not by a claimed three-platform acceptance.
+
+## Original reviewed source plan — 2026-10-28
+
 Source implementation only, 2026-10-28. No local execution. This is an explicitly
 limited fail-closed intermediate candidate, **not full migration P0 acceptance**.
 Automatic full recovery is not implemented. The previous exact tested source
