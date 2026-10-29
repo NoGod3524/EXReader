@@ -21,8 +21,10 @@ typedef struct {
   int before_found;
   char before_sha[65], after_sha[65]; /* equal hashes do not identify COMMIT */
   lm_mirror_file mirror_before;
-  char artifact_token[24];           /* v2 existing-target precommit artifacts */
+  char artifact_token[24];           /* v2/v3 existing-target precommit artifacts */
   lm_mirror_file mirror_after, mirror_preimage;
+  /* v3 is a fail-closed retirement policy, not a COMMIT receipt. An abort or
+     restart cannot retire these artifacts merely from ledger/SDK equality. */
 } lm_mirror_intent;
 
 typedef enum {

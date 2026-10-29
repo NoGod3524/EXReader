@@ -4,6 +4,7 @@ on:
     branches: [codex/migration-mirror-safety-matrix-20261028]
     paths:
       - tests/migration/mirror_safety_matrix_20261028.py
+      - tests/migration/post_intent_pending_20261028.py
       - tests/migration/rollback_observe_20261028/**
       - .github/workflows/migration-mirror-safety-matrix-20261028.yml
 permissions:
@@ -44,14 +45,30 @@ jobs:
               tests/migration/mirror_safety_matrix_20261028.py|.github/workflows/migration-mirror-safety-matrix-20261028.yml|docs/MIGRATION-MIRROR-SAFETY-MATRIX-20261028.md) ;;
               .github/workflows/migration-matrix-full-companion-20261028.yml) ;;
               tests/migration/rollback_observe_20261028/CMakeLists.txt|tests/migration/rollback_observe_20261028/observe.c) ;;
+              tests/migration/post_intent_pending_20261028.py|docs/MIGRATION-POST-INTENT-PENDING-20261028.md) ;;
               *) echo "Out-of-scope source change: $path" >&2; exit 1 ;;
             esac
           done
           git diff --name-status FETCH_HEAD HEAD > build/evidence/source-scope.txt
+          git fetch --no-tags --depth=1 origin d7529944ac88ab576d1519db45efa9aa165e929d
+          test "$(git rev-parse FETCH_HEAD)" = d7529944ac88ab576d1519db45efa9aa165e929d
+          git diff --no-renames --name-status FETCH_HEAD HEAD > build/evidence/successor-scope.txt
           ${{ matrix.py }} - <<'PY'
           import hashlib, json, os, subprocess
           from pathlib import Path
           published_base = 'e771f3c5d1567412f26184ad304730b7c640235d'
+          tested_predecessor = 'd7529944ac88ab576d1519db45efa9aa165e929d'
+          successor_paths = {
+            'M\textras/migration/src/lm_main.c',
+            'M\textras/migration/src/lm_mirror.c',
+            'M\textras/migration/src/lm_mirror.h',
+            'M\ttests/migration/mirror_safety_matrix_20261028.py',
+            'M\t.github/workflows/migration-mirror-safety-matrix-20261028.yml',
+            'A\ttests/migration/post_intent_pending_20261028.py',
+            'A\tdocs/MIGRATION-POST-INTENT-PENDING-20261028.md',
+          }
+          actual_delta = set(subprocess.check_output(['git', 'diff', '--no-renames', '--name-status', tested_predecessor, 'HEAD'], text=True).splitlines())
+          assert actual_delta == successor_paths, {'expected': sorted(successor_paths), 'actual': sorted(actual_delta)}
           publication_paths = {
             '.github/workflows/migration-commit-outcome-evidence.yml',
             '.github/workflows/migration-mirror-recovery.yml',
@@ -72,20 +89,35 @@ jobs:
             'tests/migration/mirror_safety_matrix_20261028.py',
             'tests/migration/rollback_observe_20261028/CMakeLists.txt',
             'tests/migration/rollback_observe_20261028/observe.c',
+            'tests/migration/post_intent_pending_20261028.py',
+            'docs/MIGRATION-POST-INTENT-PENDING-20261028.md',
           }
           changed = set(subprocess.check_output(['git', 'diff', '--name-only', published_base, 'HEAD'], text=True).splitlines())
           assert changed == publication_paths, {'missing': sorted(publication_paths - changed), 'unexpected': sorted(changed - publication_paths)}
           expected = {
             'extras/migration/CMakeLists.txt': 'b3ce74a1ad235859cf2656ea99c09a2d8447fc365484a20bedd77eeba5df4ab9',
+            'extras/migration/src/lm_main.c': 'dc8136ab8127033d24f8843109423d5d262b1bfe742134b078cd43f82ddb523e',
+            'extras/migration/src/lm_mirror.c': '9e11dab71c01c7539af4fa711badc3e0c0ed728d97444a296270fd354bc6f9cc',
+            'extras/migration/src/lm_mirror.h': 'e913b5e9b776c2563d2c77558845c6f63882845961624fde090df59ea64da6c9',
+          }
+          for path, digest in expected.items():
+              assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == digest, path
+          probe = 'tests/migration/mirror_safety_matrix_20261028.py'
+          frozen_probe = subprocess.check_output(['git', 'show', tested_predecessor + ':' + probe], text=True)
+          prior_hashes = {
             'extras/migration/src/lm_main.c': '2c36cb0d8c4102b35e11f45419820de5154ec98f5819694567ca3e239814b5ff',
             'extras/migration/src/lm_mirror.c': '3275bafb28e3767921ca1756f612abbd2192ac80651a887952767791db5d976a',
             'extras/migration/src/lm_mirror.h': 'dccc5374b27f6614a7872cc584a952c11acf767200a8aa68ae1cc24f5c7b6be3',
           }
-          for path, digest in expected.items():
-              assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == digest, path
+          for path, old_hash in prior_hashes.items():
+              assert frozen_probe.count(old_hash) == 1, path
+              frozen_probe = frozen_probe.replace(old_hash, expected[path])
+          assert Path(probe).read_text() == frozen_probe, 'old 29-case probe changed beyond three product hashes'
           manifest = {path: hashlib.sha256(Path(path).read_bytes()).hexdigest() for path in sorted(publication_paths)}
           Path('build/evidence/source-identity.json').write_text(json.dumps({
             'source_sha': os.environ['GITHUB_SHA'], 'published_base': published_base,
+            'tested_predecessor': tested_predecessor, 'exact_successor_delta': sorted(actual_delta),
+            'old_29_assertions_unchanged': True,
             'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
             'reviewed_product_sources': expected, 'publication_paths_sha256': manifest,
             'old_sdk_ref': os.environ['OLD_SDK_REF'],
@@ -112,7 +144,19 @@ jobs:
           cmake --install build/old-sdk --config Release --prefix "$GITHUB_WORKSPACE/old-stage" 2>&1 | tee build/evidence/old-sdk-install.txt
           cmake -S build/old-migration-source/extras/migration -B build/old-migration -DEXR_SDK="$GITHUB_WORKSPACE/old-stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/old-tool-configure.txt
           cmake --build build/old-migration --config Release --target exreader-legacy-migrate --parallel 4 2>&1 | tee build/evidence/old-tool-build.txt
-      - name: Real legacy schema, WAL, cancellation, commit knowledge, ownership and cleanup evidence
+      - name: Additive v3 pending policy and actual old-binary compatibility
+        id: pending
+        run: |
+          set -euo pipefail
+          mkdir -p build/v2-source
+          git fetch --no-tags --depth=1 origin d7529944ac88ab576d1519db45efa9aa165e929d
+          test "$(git rev-parse FETCH_HEAD)" = d7529944ac88ab576d1519db45efa9aa165e929d
+          git archive FETCH_HEAD | tar -xf - -C build/v2-source
+          cmake -S build/v2-source/extras/migration -B build/v2-migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/v2-tool-configure.txt
+          cmake --build build/v2-migration --config Release --target exreader-legacy-migrate-tx --parallel 4 2>&1 | tee build/evidence/v2-tool-build.txt
+          ${{ matrix.py }} tests/migration/post_intent_pending_20261028.py --tool "${{ matrix.tool }}" --old-tool "${{ matrix.old }}" --v2-tool "build/v2-migration/${{ matrix.label == 'windows' && 'Release/exreader-legacy-migrate-tx.exe' || 'exreader-legacy-migrate-tx' }}" --work build/post-intent-pending 2>&1 | tee build/evidence/post-intent-pending.txt
+      - name: Retained original 29 observations without weakened assertions
+        if: ${{ !cancelled() && (success() || steps.pending.outcome == 'failure') }}
         run: |
           set -euo pipefail
           cmake -S tests/migration/rollback_observe_20261028 -B build/rollback-observe -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DSQLITE_HEADER_DIR="$GITHUB_WORKSPACE/build/migration/_deps/migration_sqlite_header-src" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/rollback-observe-configure.txt
@@ -125,4 +169,5 @@ jobs:
           path: |
             build/evidence/
             build/mirror-safety-matrix/
+            build/post-intent-pending/
           if-no-files-found: error

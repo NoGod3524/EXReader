@@ -229,11 +229,11 @@ int lm_mirror_copy_new(const char *source, const lm_mirror_file *expected,
   return 1;
 }
 int lm_mirror_planned_file(const lm_mirror_intent *p, const lm_mirror_file *file) {
-  return p->version==2 && same_baseline(file,&p->mirror_after);
+  return (p->version==2 || p->version==3) && same_baseline(file,&p->mirror_after);
 }
 int lm_mirror_original_file(const lm_mirror_intent *p, const lm_mirror_file *file) {
   return same_baseline(file,&p->mirror_before) ||
-         (p->version==2 && p->mirror_preimage.present && same_baseline(file,&p->mirror_preimage));
+         ((p->version==2 || p->version==3) && p->mirror_preimage.present && same_baseline(file,&p->mirror_preimage));
 }
 int lm_mirror_begin(lm_mirror_intent *intent, int target_was_present,
                     const char *stage_token,
@@ -271,7 +271,7 @@ static int intent_valid(const lm_mirror_intent *p) {
           (!p->mirror_before.identity[0] && !p->mirror_before.sha[0] && !p->mirror_before.size));
   if(!common) return 0;
   if(p->version==1) return !p->artifact_token[0] && !p->mirror_after.present && !p->mirror_preimage.present;
-  return p->version==2 && p->target_was_present && valid_stage_token(p->artifact_token) &&
+  return (p->version==2 || p->version==3) && p->target_was_present && valid_stage_token(p->artifact_token) &&
          p->mirror_after.present && hex_string(p->mirror_after.identity,32) &&
          !strcmp(p->mirror_after.sha,p->after_sha) && p->mirror_after.size<=LM_MIRROR_LEDGER_MAX &&
          p->mirror_preimage.present==p->mirror_before.present &&
@@ -294,7 +294,7 @@ int lm_mirror_intent_write(const char *path, const lm_mirror_intent *p,
             p->before_found ? "true" : "false", p->before_sha, p->after_sha,
             p->mirror_before.present ? "true" : "false", p->mirror_before.identity,
             p->mirror_before.sha, (unsigned long long)p->mirror_before.size);
-  if(p->version==2) lm_sb_fmt(&b,",\"artifact_token\":\"%s\",\"published_identity\":\"%s\",\"published_size\":%llu,\"preimage_identity\":\"%s\"",
+  if(p->version==2 || p->version==3) lm_sb_fmt(&b,",\"artifact_token\":\"%s\",\"published_identity\":\"%s\",\"published_size\":%llu,\"preimage_identity\":\"%s\"",
       p->artifact_token,p->mirror_after.identity,(unsigned long long)p->mirror_after.size,p->mirror_preimage.identity);
   lm_sb_str(&b,"}\n");
   if (b.oom || b.n > INTENT_MAX) { lm_sb_free(&b); return mirror_error(e, "mirror-intent", "cannot encode bounded mirror intent"); }
@@ -342,7 +342,7 @@ int lm_mirror_intent_read(const char *path, lm_mirror_intent *p,
   ok = root && root->t == J_OBJ && format && format->t == J_STR &&
        stage && stage->t == J_STR && stage->n < sizeof(p->stage_token) && stage->n == strlen(stage->s) &&
        format->n == strlen(INTENT_FORMAT) && !memcmp(format->s, INTENT_FORMAT, format->n) &&
-       lm_json_uint(lm_get(root, "version"), &version) && (version == 1 || version == 2) &&
+       lm_json_uint(lm_get(root, "version"), &version) && (version == 1 || version == 2 || version == 3) &&
        root->n==(version==1?12u:16u) &&
        get_bool(root, "target_was_present", &p->target_was_present) &&
        get_hex(root, "target_identity", p->target_identity, 32, 0) &&
@@ -355,7 +355,7 @@ int lm_mirror_intent_read(const char *path, lm_mirror_intent *p,
        lm_json_uint(lm_get(root, "mirror_size"), &p->mirror_before.size);
   if(ok) {
     p->version=(int)version;
-    if(version==2) {
+    if(version==2 || version==3) {
       const jv *token=lm_get(root,"artifact_token");
       ok=token && token->t==J_STR && token->n<sizeof(p->artifact_token) && token->n==strlen(token->s) && valid_stage_token(token->s) &&
          get_hex(root,"published_identity",p->mirror_after.identity,32,0) &&
@@ -387,7 +387,9 @@ lm_mirror_action lm_mirror_plan(const lm_mirror_intent *p,
                                 int current_found, const void *current, size_t current_size,
                                 const lm_mirror_file *mirror, lm_err *e) {
   char digest[65];
-  if (!intent_valid(p)) goto conflict;
+  /* v3 restart recovery has no complete baseline verifier. Never let the
+     legacy ledger-only classifier accidentally authorize its retirement. */
+  if (!intent_valid(p) || p->version==3) goto conflict;
   if (!target->present) {
     if (!p->target_was_present && !current_found && unpublished_stage && unpublished_stage->present &&
         !strcmp(unpublished_stage->identity, p->target_identity) && same_baseline(mirror, &p->mirror_before))
