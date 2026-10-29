@@ -42,9 +42,13 @@ final class FeaturesUITests: XCTestCase {
                 let frame = targetFrame
                 let distance = min(viewport.height * 0.75,
                                    max(viewport.height * 0.25, abs(frame.midY - center.y)))
-                let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: above ? 0.2 : 0.8))
-                let end = start.withOffset(CGVector(dx: 0, dy: above ? distance : -distance))
-                start.press(forDuration: 0.05, thenDragTo: end)
+                let appFrame = app.frame
+                let origin = app.coordinate(withNormalizedOffset: .zero)
+                let x = viewport.midX - appFrame.minX
+                let y = viewport.minY + viewport.height * (above ? 0.2 : 0.8) - appFrame.minY
+                let start = origin.withOffset(CGVector(dx: x, dy: y))
+                let end = origin.withOffset(CGVector(dx: x, dy: y + (above ? distance : -distance)))
+                start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .fast, thenHoldForDuration: 0)
 #endif
             }
         }
