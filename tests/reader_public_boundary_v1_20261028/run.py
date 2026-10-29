@@ -351,6 +351,13 @@ def built_program(folder,name,target):
     return path
 
 
+def selector_phase_layout(data,entry):
+    # Unchanged versions() reads work.parent_path()/"candidate-legacy".
+    # Each native entry owns a distinct parent, including iPhone versus iPad.
+    parent=Path(data)/(entry+'-original')
+    return parent/'candidate-legacy',parent/'actual'
+
+
 def native(target):
     actions();sdk,stage,product,base=layout(target)
     builddir=OUT/'native-build';options=cross_options(target,sdk,stage,product)
@@ -386,8 +393,11 @@ def native(target):
             codec=runner.run('public-codec-v1')
             retained=runner.run('public-retained-v1',[data/'fixtures',data/'pdf.pdf',data/'font.ttf',data/(entry+'-retained')])
             need('passed=true' in codec and 'passed=true' in retained,'native success markers')
-            work=data/(entry+'-original');probe=programs['original-selector-bytes']
-            for phase in ('legacy','seed','receive','reopen','nullable','versions'):
+            legacy_work,work=selector_phase_layout(data,entry);probe=programs['original-selector-bytes']
+            need(not legacy_work.exists() and not work.exists(),'fresh per-entry original selector fixtures required')
+            runner.run('original-selector-bytes',['legacy',data/'pdf.pdf',legacy_work],'legacy',timeout=180)
+            need(all((legacy_work/name).is_file() and (legacy_work/name).stat().st_size>0 for name in ('v1-wire.json','v2-wire.json')),'actual legacy producer wire files missing')
+            for phase in ('seed','receive','reopen','nullable','versions'):
                 runner.run('original-selector-bytes',[phase,data/'pdf.pdf',work],phase,timeout=180)
             original=load('tests/reader_selector_bytes/run.py','boundary_original_selector')
             def invoke(args,name=None,timeout=180):
@@ -669,6 +679,17 @@ def require_prebuild_identity(before):
     need(before['complete'] and all(before.get(k)==v for k,v in identity().items()),'NDK pre-build source/run/attempt mismatch')
 
 
+def configured_ninja(cache_text,before):
+    lines=[line for line in cache_text.splitlines() if line.startswith('CMAKE_MAKE_PROGRAM:')]
+    print('ACTUAL_CMAKE_MAKE_PROGRAM',json.dumps(lines),flush=True)
+    need(len(lines)==1,'one actual Ninja cache assignment required')
+    match=re.fullmatch(r'CMAKE_MAKE_PROGRAM:(FILEPATH|STRING|UNINITIALIZED)=(.+)',lines[0])
+    need(match is not None,'unsupported/empty actual Ninja cache assignment')
+    ninja=Path(match[2]);need(ninja.is_absolute() and ninja.is_file(),'actual Ninja absolute executable missing')
+    need(before['ninja_tools'].get(str(ninja))==dict(sha256=digest(ninja),resolved=str(ninja.resolve())),'actual Ninja not pinned before producer')
+    return ninja
+
+
 def ndk_capture(destination,files,copy):
     result=dict(identity(),complete=False,external_map_inputs=[],images=[],gaps=[],f07_accepted=False,
                 scope='map-selected inputs of the actual mapped .cxx images listed here, requiring host and product',
@@ -689,8 +710,7 @@ def ndk_capture(destination,files,copy):
             folder=cache.parent;text=cache.read_text();copy(cache)
             home=re.findall(r'^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$',text,re.M)
             if home!=[str(ROOT/'examples/android/app/src/main/cpp')]:continue
-            ninja_paths=re.findall(r'^CMAKE_MAKE_PROGRAM:FILEPATH=(.+)$',text,re.M);need(len(ninja_paths)==1,'actual Ninja path missing')
-            ninja=Path(ninja_paths[0]);need(before['ninja_tools'].get(str(ninja))==dict(sha256=digest(ninja),resolved=str(ninja.resolve())),'actual Ninja not pinned before producer')
+            ninja=configured_ninja(text,before)
             label='ndk-'+folder.relative_to(ROOT).as_posix().replace('/','_')
             commands=command([ninja,'-C',folder,'-t','commands'],label+'-commands').stdout
             command([ninja,'-C',folder,'-t','deps'],label+'-deps')

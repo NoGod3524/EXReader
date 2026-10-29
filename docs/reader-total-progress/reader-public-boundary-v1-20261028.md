@@ -36,6 +36,38 @@ requires a separately recorded exact scope extension. The failed first run remai
 evidence, not six-entry acceptance. Partial capture after failed native validation
 cannot authenticate as passed.
 
+### Second measured run and validation-only follow-up
+
+Source `0a670a6511568df14e7aab8413af1339f0dfc338`, run `40805150287/1`,
+passed the exact 25-path source guard and all 55 synthetic controls. Android now
+built and completed the original F06 emulator install/launch operation. The public
+codec passed 40 checks on Android, macOS and Windows; the retained probe passed
+88 on Android/Windows and 76 on macOS (the unchanged Apple PURE-OFF profile omits
+the optional pure-entry comparisons). These are partial native results, not
+complete integration acceptance.
+
+Terminal readback: Linux also passed 40/88 and the fresh iPhone simulator 40/76,
+then both reached the same legacy-sibling failure. The original Linux backend/GUI
+steps and Apple F06 iPhone/iPad producer passed. New iPad probes were not reached
+after the iPhone phase failed. Authentication correctly refused failed producer
+jobs; the aggregate remains failed and no six-entry boundary claim is made.
+
+The unchanged selector `versions()` then correctly refused a missing legacy wire:
+the new adapter had generated it into the actual work directory rather than the
+required sibling `candidate-legacy`. The follow-up gives each entry a fresh parent
+containing separate `candidate-legacy` and `actual` directories, invokes the same
+unchanged legacy producer and requires its nonempty v1/v2 outputs before proceeding.
+All original phase, protocol, graph and C06 assertions remain unchanged.
+
+Android's early NDK capture independently stopped at a FILEPATH-only cache parser.
+The exact cache type causing that failure has not yet been observed in Actions.
+The follow-up logs the actual assignment and supports the explicit CMake
+FILEPATH/STRING/UNINITIALIZED representations, requiring one nonempty absolute
+existing path and its exact pre-build hash/resolved identity. Missing, duplicate,
+unsupported, relative or changed tools still fail; no PATH fallback is allowed.
+The failed capture and its partial evidence remain preserved. This follow-up
+source is unrun until a later same-source Actions result is recorded.
+
 ### Authorized Android caller extension, 2026-10-29 01:35 UTC
 
 The user confirmed “那我确认” (Sentinel_6c49c0656690819180749be6664bd059,
