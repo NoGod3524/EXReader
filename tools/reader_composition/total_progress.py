@@ -238,6 +238,37 @@ def verify_macos_organization(spec, jobs):
             'scope_basis': 'original Mac ZIP, exact six passing XCTest cases and original step/screenshot attachments; no iOS credit'}
 
 
+def verify_apple_four_audit(spec, jobs):
+    assert spec['adapter'] == 'apple_four_40904394809'
+    assert spec['run'] == 40904394809
+    assert spec['source_prefix'] == '1def6623e5d0aa2d7562940de96970b893c04909'
+    assert len(jobs) == 1 and jobs[0]['id'] == 123555071017 and jobs[0]['conclusion'] == 'success'
+    pin = {'id': 12909709799, 'bytes': 960,
+           'sha256': 'ef3b60898ea4b373920184f8b7a09e3288153a67e31eac081b4a7e7c79d8af02'}
+    with evidence_zip(pin, spec['run'], spec['source_prefix'],
+                      'apple-four-evidence-audit-40904394809-1') as archive:
+        value = json.loads(archive.read('results.json'))
+    assert value['catalog_changed'] is False and len(value['results']) == 4
+    rows = [row for row in value['results']
+            if row.get('kind') == spec['kind'] and row.get('platform') == spec['platform']]
+    assert len(rows) == 1
+    row = rows[0]
+    assert row['scoped_evidence_passed'] is True and row['physical_device'] is False
+    assert row['original_run_conclusion'] == 'failure'
+    assert row['run'] == spec['original_run'] and row['source'] == spec['original_source']
+    assert row['job'] == spec['original_job'] and row['artifact'] == spec['original_artifact']
+    assert row['archive_sha256'] == spec['original_archive_sha256']
+    assert row['test'] == spec['test']
+    if spec['kind'] == 'original':
+        assert row['bytes'] == 7724 and row['source_saved_sha256'] == '0c54c6c969cb720875557d8f877d0733cc65dd1e80d74d098fb18ba65bf42bdb'
+        assert row['program_binary_retained'] is False
+    return {'artifact': pin['id'], 'zip_sha256': pin['sha256'],
+            'original_run': row['run'], 'original_source': row['source'],
+            'original_job': row['job'], 'original_artifact': row['artifact'],
+            'passing_case': row['test'], 'platform': row['platform'],
+            'scope_basis': 'independent original archive and XCTest audit; no physical-device or common-source credit'}
+
+
 def verify_evidence(pair):
     key, spec = pair
     try:
@@ -275,6 +306,8 @@ def verify_evidence(pair):
             proof.update(verify_f06(spec, jobs))
         elif key == 'macos_organization_original':
             proof.update(verify_macos_organization(spec, jobs))
+        elif spec.get('adapter') == 'apple_four_40904394809':
+            proof.update(verify_apple_four_audit(spec, jobs))
         else:
             assert 'adapter' not in spec, 'unknown evidence adapter'
         if spec.get('required_cases'):
