@@ -126,10 +126,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Authenticate original Windows dependencies and replay five original green producers
+      - name: Authenticate original Android control failure and replay five original green producers
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python tests/reader_original_hash_boundary_20261029/authenticate.py --dependency-diagnostic
+        run: python tests/reader_original_hash_boundary_20261029/authenticate.py --mutation-diagnostic
       - uses: actions/upload-artifact@v4
         if: always()
         with:

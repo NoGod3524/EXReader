@@ -43,7 +43,33 @@ def coff_common_fixture(name=C.COFF_STDIO_COMMON,duplicate=False):
     raw=bytes(header+section)+b'\xc3'+records+u(len(strings)+4,4)+strings
     return raw,'000 00000008 UNDEF notype External | '+name+'\n'
 
+def mutation_dependency_start(lines,obj,target):
+    if target=='windows':
+        matches=[i for i,line in enumerate(lines) if ': #deps ' in line and
+            C.dependency_object_key(line.split(': #deps ',1)[0],target)==C.dependency_object_key(obj,target)]
+    else:
+        # Preserve original non-Windows selection: unrelated Ninja keys may be
+        # generated outputs, not compilation objects. Never grant them coverage.
+        matches=[i for i,line in enumerate(lines) if line.startswith(obj+': #deps ')]
+    C.require(len(matches)==1,'mutation dependency object identity ambiguous')
+    return matches[0]
+
 class ContractTests(unittest.TestCase):
+    def test_mutation_selector_platform_scope(self):
+        obj='CMakeFiles/owner.dir/src/owner.c.o'
+        lines=['generated-link-output: #deps 0, deps mtime 1 (VALID)',
+            obj+': #deps 1, deps mtime 1 (VALID)','    public.h']
+        for target in ('linux','macos','android','ios-device','ios-simulator'):
+            self.assertEqual(mutation_dependency_start(lines,obj,target),1)
+            with self.assertRaisesRegex(ValueError,'identity ambiguous'):
+                mutation_dependency_start(lines,obj.replace('owner.dir','OWNER.dir'),target)
+            with self.assertRaisesRegex(ValueError,'identity ambiguous'):
+                mutation_dependency_start(lines+lines[1:],obj,target)
+        with self.assertRaisesRegex(ValueError,'unsupported dependency object key'):
+            mutation_dependency_start(lines,obj,'windows')
+        windows_obj=obj.replace('/','\\')
+        self.assertEqual(mutation_dependency_start(lines[1:],windows_obj,'windows'),0)
+
     def test_windows_dependency_separator_only(self):
         expected='CMakeFiles\\owner.dir\\src\\owner.c.obj';observed=expected.replace('\\','/')
         text=observed+': #deps 1, deps mtime 1 (VALID)\n    public.h\n'
@@ -331,9 +357,7 @@ def evidence_mutations(folder,manifest):
     dependency=json.loads((folder/'dependency.json').read_text());item=dependency['importer'];obj=item['objects'][0]
     lines=(folder/item['deps']).read_text().splitlines()
     target=json.loads((folder/'report.json').read_text())['target']
-    matches=[i for i,line in enumerate(lines) if ': #deps ' in line and
-        C.dependency_object_key(line.split(': #deps ',1)[0],target)==C.dependency_object_key(obj,target)]
-    C.require(len(matches)==1,'mutation dependency object identity ambiguous');start=matches[0];end=start+1
+    start=mutation_dependency_start(lines,obj,target);end=start+1
     while end<len(lines) and lines[end].startswith('    '):end+=1
     private=list(lines);count=end-start-1
     private[start]=private[start].replace('#deps '+str(count)+',','#deps '+str(count+1)+',')

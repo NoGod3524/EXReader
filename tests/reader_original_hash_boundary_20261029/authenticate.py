@@ -122,7 +122,7 @@ def inspect_prior_archive():
     C.save(out/'diagnostic.json',report)
     print(json.dumps(report,sort_keys=True),flush=True)
 
-def inspect_retained(dependency_profile=False):
+def inspect_retained(dependency_profile=False,mutation_profile=False):
     """No native build: exact original failures plus explicitly partial green replay."""
     C.actions_only();C.guard();out=C.ROOT/'build/hash-retained-diagnostic';out.mkdir(parents=True)
     prior='1198abce384aabe78bc23450db0c38be487706e1';run_id=40816180401
@@ -145,6 +145,16 @@ def inspect_retained(dependency_profile=False):
             'android':(123275789348,'success',12874567875,34491610,'fbff0d41cb37aa74a16231309bc7d1fbb51b121bdc6e28aae864ac48e32eb236'),
             'ios-device':(123275789231,'success',12875445075,14591047,'543a4b3e22259c4e66ed547265c012df0c3b09cebeb5d983c83b6ee89dbbf3de'),
             'ios-simulator':(123275789242,'success',12873984761,14778425,'13a4d8213482393f8cb1af1ed217a04dfca091197844ce62c3a678fb83791a8f')}
+    if mutation_profile:
+        prior='c84893379e1ccbad45ab3df9437e7edcd7455dfd';run_id=40825325047
+        ident=dict(source_sha=prior,run_id=str(run_id),attempt='1');protocol_id=123286924098
+        pins={
+            'windows':(123286981351,'success',12876905027,20081004,'4ad4571920240e9625b8682745d7668f542f667f5e0d2ce3d17134c806582a81'),
+            'linux':(123286981320,'success',12876396853,15258177,'6bb920a01278c9b4eeb8a4f984c9895a387212a812d4587eede76217087e01ba'),
+            'macos':(123286981400,'success',12876531376,14783790,'c394cf006f335ea85707ef4e75b99db95f7e854c0bd26563d46f68c48da35dfe'),
+            'android':(123286981316,'failure',12876665880,34983116,'e86fe75004ad0a0687ae6c437179b5fe8c8470e4216d7f290c5f5a4b0b8f9d22'),
+            'ios-device':(123286981398,'success',12876515705,14589274,'3c8736bd45d33ae74cc12d614b41b66b267b92d8ec55ff47d05b50d17e339c7b'),
+            'ios-simulator':(123286981384,'success',12876800060,14775972,'76779c5cade9baa6ede7c9969ec600ed7e702b4b33c28a7ca3a7e7cce5c3476a')}
     result=dict(C.identity(),original_identity=ident,diagnostic_only=True,accepted=False,f07_accepted=False,
         full_six_accepted=False,diagnostic_complete=False,failures=[],original_artifacts={},failed_producer_details={},
         independently_replayed_original_green={},scope='original-source partial replay; no current-source native acceptance')
@@ -213,6 +223,36 @@ def inspect_retained(dependency_profile=False):
                 rows=[r for r in commands if r['output']==path]
                 C.require(len(rows)==1 and rows[0]['output_record']==C.record(folder/path) and rows[0]['returncode']==0,'diagnostic output not bound to original command')
                 return rows[0]
+            if mutation_profile:
+                C.require(target=='android','unexpected failed mutation producer')
+                derived=dict(ident,target=target,files={p.relative_to(folder).as_posix():C.record(p) for p in sorted(folder.rglob('*')) if p.is_file()})
+                original_checked=old.validate(folder,derived,require_mutations=False)
+                try:controls.evidence_mutations(folder,derived);original_failure=None
+                except ValueError as error:original_failure=str(error)
+                C.require(original_failure=='unsupported dependency object key','original mutation selector failure differs')
+                dependency=json.loads((folder/'dependency.json').read_text());item=dependency['importer']
+                command=command_record(item['deps'])
+                C.require(command['argv']==['ninja','-C',item['original_build'],'-t','deps'],'Android original dependency command differs')
+                groups=C.deps_groups((folder/item['deps']).read_text())
+                C.require(len(groups)<=4096 and all(len(k)<=1024 for k in groups),'Android diagnostic group limit')
+                details=dict(original_contract_checked=original_checked,original_mutation_failure=original_failure,
+                    expected_objects=item['objects'],actual_dependency_keys=list(groups),deps_command=command,admitted=False)
+                result['failed_producer_details'][target]=details
+                # Counterfactual validator/control replay, never new native acceptance.
+                spec=importlib.util.spec_from_file_location('repaired_android_contract',C.ROOT/'tests/reader_original_hash_boundary_20261029/package_contract.py')
+                repaired=importlib.util.module_from_spec(spec);spec.loader.exec_module(repaired)
+                repaired.ROOT=C.ROOT;repaired.identity=lambda:dict(ident);repaired.guard=lambda:original_source
+                replay=dict(manifest_origin='diagnostic inventory reconstructed from authenticated original failed ZIP; not an original producer manifest',
+                    verifier_source_sha=C.identity()['source_sha'],evidence_source_sha=prior,native_acceptance=False,f07_accepted=False)
+                details['repaired_contract_replay']=replay
+                replay['checked']=repaired.validate(folder,derived,require_mutations=False)
+                saved=sys.modules['package_contract'];sys.modules['package_contract']=repaired
+                try:
+                    spec=importlib.util.spec_from_file_location('repaired_android_controls',C.ROOT/'tests/reader_original_hash_boundary_20261029/test_contract.py')
+                    repaired_controls=importlib.util.module_from_spec(spec);spec.loader.exec_module(repaired_controls)
+                finally:sys.modules['package_contract']=saved
+                replay['actual_mutation_controls']=repaired_controls.evidence_mutations(folder,derived)
+                continue
             if dependency_profile:
                 C.require(target=='windows','unexpected failed dependency producer')
                 dependency=json.loads((folder/'dependency.json').read_text());details={}
@@ -421,5 +461,6 @@ if __name__=='__main__':
     if sys.argv[1:]==['--archive-diagnostic']:inspect_prior_archive()
     elif sys.argv[1:]==['--retained-diagnostic']:inspect_retained()
     elif sys.argv[1:]==['--dependency-diagnostic']:inspect_retained(dependency_profile=True)
+    elif sys.argv[1:]==['--mutation-diagnostic']:inspect_retained(mutation_profile=True)
     else:
         C.require(not sys.argv[1:],'unsupported authentication mode');main()

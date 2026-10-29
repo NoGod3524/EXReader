@@ -347,3 +347,29 @@ not admit Windows, current-source native evidence, six targets or F07. The five
 green uploads still use the unchanged historical verifier. All original failures,
 raw ZIP hashes and object spellings remain retained. Owners, workflow, old tests,
 SDK, build flags and budgets are unchanged by this repair.
+
+## Non-Windows mutation-selector regression (original-artifact replay first)
+
+Full run `40825325047/1`, source `c84893379e1ccbad45ab3df9437e7edcd7455dfd`,
+passed Windows native boundary and all its actual mutation controls, plus Linux,
+macOS and both iOS producers. Android's baseline contract passed, but test setup
+then applied the new Windows compilation-key grammar to every Android Ninja
+dependency header and refused an unrelated non-compilation key. The aggregate
+failed upstream; this was a validation-control regression, not an owner repair.
+
+The new selector keeps normalized Windows matching and restores exact original
+non-Windows `object + ': #deps '` matching. It requires one match and never grants
+dependency coverage to unrelated rows. Platform controls include unrelated
+generated-output headers, case mismatch and duplicate expected headers; Windows
+still rejects unsupported compilation keys. No contract predicate is changed.
+
+The existing retained-only workflow now selects `--mutation-diagnostic`, pinned
+to all six uploads/jobs and protocol from `c8489337`. Five green uploads replay
+their exact historical verifier and mutation controls first. Failed Android must
+pass the historical baseline contract and reproduce the exact original selector
+error, then pass the repaired full contract and all current actual mutation
+controls. The failed-ZIP inventory remains explicitly reconstructed diagnostic
+evidence, not an original completed producer manifest or current native admission.
+Earlier original/dependency profiles remain callable; all failed runs/raw hashes
+are preserved. Four files change: new test helper, authenticator, workflow lane
+and this document. Production owners, SDK, budgets and old suites stay unchanged.
