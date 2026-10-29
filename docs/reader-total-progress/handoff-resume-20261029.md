@@ -2,6 +2,22 @@
 
 This checkpoint continues the complete handoff. The fixed catalog remains **95/108**; no catalog row or denominator has changed. All build, syntax, test, fixture, benchmark and artifact inspection work runs in GitHub Actions. The original dirty checkout is preserved. No PR, default-branch update, tag or Release is authorized.
 
+## User correction: local background subscription usage
+
+The user explicitly corrected the dispatch mode: **not Claude cloud tasks; use local background Claude with the user's own usage**. Stop-work messages were delivered through the official CLI to all three mistakenly created cloud sessions (`ok:true` delivery receipts); cloud termination itself is not exposed by the available CLI attachment capability. Do not create further cloud tasks.
+
+Three replacement local `--bg` sessions are actually working, in separate source worktrees under `C:/Users/Oscar/exreader-local-usage-20261029/`:
+
+| Task | Local background ID | Dedicated branch |
+| --- | --- | --- |
+| C1 Android installed Sync | `73f87c47` | `claude/local-c1-android-sync-20261029` |
+| C2 product performance | `4e0c44a1` | `claude/local-c2-product-performance-20261029` |
+| C3 delivery/licenses | `c0da3128` | `claude/local-c3-delivery-licenses-20261029` |
+
+`claude agents --json` reports all three as `kind=background`, `state=working` with local process IDs and their expected working directories. Each actual startup log displays **Sonnet 5.5 with medium effort · Claude Pro**. Normal CLI auth is `claude.ai` / firstParty / Pro; API-key, auth-token and custom-base-URL environment overrides are absent. No credential file was read or exported. These local processes receive the original Actions-only constraints and cannot grant catalog acceptance.
+
+This correction supersedes the cloud-dispatch section below, which is retained as historical evidence of what was mistakenly created.
+
 ## Refreshed historical state
 
 - `40935165396` / `55ec49020383ef5073f47502b300ab0b5d0a7cae`: completed failure. Both mobile hosts failed; macOS passed. The dependent independent audit `40937262016` completed failure and grants no mobile credit.
