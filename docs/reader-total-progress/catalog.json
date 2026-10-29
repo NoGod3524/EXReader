@@ -446,6 +446,28 @@
       "original_artifact": 12799106807,
       "original_archive_sha256": "4a54c9f945a3ddbec14b71fa9640163098908400bf2e6f43c3635a95929940ab",
       "test": "testSystemFolderSave()"
+    },
+    "apple_organization_iphone_original": {
+      "run": 40645923724,
+      "doc": "docs/reader-total-progress/apple-ios-organization-original-20261029.md",
+      "source_prefix": "3e998ec31cce1fe3d720885f675937dafa358fef",
+      "adapter": "apple_ios_organization_40645923724",
+      "platform": "iphone",
+      "job": 122674592275,
+      "artifact": 12801787152,
+      "bytes": 5889982,
+      "sha256": "59aadc940e2440c0a99d9f6c02d5799111dfd3dd81ae9c57c1b05825c7b0f91a"
+    },
+    "apple_organization_ipad_original": {
+      "run": 40645923724,
+      "doc": "docs/reader-total-progress/apple-ios-organization-original-20261029.md",
+      "source_prefix": "3e998ec31cce1fe3d720885f675937dafa358fef",
+      "adapter": "apple_ios_organization_40645923724",
+      "platform": "ipad",
+      "job": 122674592222,
+      "artifact": 12800691525,
+      "bytes": 8880082,
+      "sha256": "b4729b41faedc8de484a1dfef8f312840ac0522c66acaffba22b9a30d7933a3e"
     }
   },
   "requirements": [
@@ -1227,9 +1249,11 @@
       "group": "host",
       "platform": "iphone",
       "title": "iPhone：宿主子书架/分类、标签、系列与显式整理",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_organization_iphone_original"
+      ],
+      "note": "仅授予 SDK 3.41 原六项模拟器 UI、整理和重启范围；标签/系列证据为创建与重开，SDK 3.42 候选失败及完整同源产品另验。"
     },
     {
       "id": "H.iphone.reading",
@@ -1374,9 +1398,11 @@
       "group": "host",
       "platform": "ipad",
       "title": "iPad：宿主子书架/分类、标签、系列与显式整理",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_organization_ipad_original"
+      ],
+      "note": "仅授予 SDK 3.41 原六项模拟器 UI、整理和重启范围；标签/系列证据为创建与重开，SDK 3.42 候选失败及完整同源产品另验。"
     },
     {
       "id": "H.ipad.reading",

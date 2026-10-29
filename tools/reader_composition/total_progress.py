@@ -269,6 +269,64 @@ def verify_apple_four_audit(spec, jobs):
             'scope_basis': 'independent original archive and XCTest audit; no physical-device or common-source credit'}
 
 
+def verify_apple_ios_organization(spec, jobs):
+    assert spec['adapter'] == 'apple_ios_organization_40645923724'
+    assert spec['run'] == 40645923724
+    assert spec['source_prefix'] == '3e998ec31cce1fe3d720885f675937dafa358fef'
+    assert spec['platform'] in ('iphone', 'ipad')
+    matches = [job for job in jobs if job['id'] == spec['job']
+               and job['name'] == 'Organization ' + spec['platform']]
+    assert len(matches) == 1 and matches[0]['conclusion'] == 'success'
+    job = matches[0]
+    assert job['head_sha'] == spec['source_prefix']
+    for step_name in ('Exercise native organization and process restart',
+                      'Verify native test results and retain evidence'):
+        found = [step for step in job['steps'] if step['name'] == step_name]
+        assert len(found) == 1 and found[0]['conclusion'] == 'success'
+    pin = {'id': spec['artifact'], 'bytes': spec['bytes'], 'sha256': spec['sha256']}
+    name = 'apple-organization-' + spec['platform'] + '-40645923724-1'
+    with evidence_zip(pin, spec['run'], spec['source_prefix'], name) as archive:
+        report = json.loads(archive.read('validated/organization-ui.json'))
+        same_origin(report, spec['source_prefix'], spec['run'])
+        assert report['platform'] == spec['platform'] and report['accepted'] is True
+        assert report['problems'] == [] and report['cases'] == list(MAC_ORG_CASES)
+        assert report['executable_sha256'] == 'e2ffa9f005125293122ddfed87cb70b3709195d61179be978ff863c128c96178'
+        assert report['complete_product_accepted'] is False and report['physical_device_execution'] is False
+        log = archive.read('xcodebuild.log').decode('utf-8')
+        for case in MAC_ORG_CASES:
+            assert re.search(r'\b' + re.escape(case) + r"\]' passed \(", log), case
+        manifest = json.loads(archive.read('validated/attachments/manifest.json'))
+        seen = set()
+        def case_owner(name):
+            found = re.findall(r'\btest[A-Za-z0-9_]+\b', name or '')
+            assert len(found) == 1 and found[0] in MAC_ORG_CASES
+            return found[0]
+        for group in manifest:
+            case = case_owner(group.get('testIdentifier') or group.get('testName'))
+            for item in group['attachments']:
+                title, filename = item['suggestedHumanReadableName'], item['exportedFileName']
+                assert PurePosixPath(filename).name == filename and '\\' not in filename
+                info = archive.getinfo('validated/attachments/' + filename)
+                assert 0 < info.file_size <= 16 * 1024 * 1024
+                data = archive.read(info)
+                if title.startswith('organization-steps-'):
+                    role = 'steps'
+                    payload = json.loads(data)
+                    assert case_owner(payload['test']) == case and payload['steps'] == MAC_ORG_CASES[case]
+                elif title.startswith('organization-screen-'):
+                    role = 'screen'
+                    assert data.startswith(b'\x89PNG\r\n\x1a\n')
+                else:
+                    continue
+                assert (case, role) not in seen
+                seen.add((case, role))
+        assert seen == {(case, role) for case in MAC_ORG_CASES for role in ('steps', 'screen')}
+    return {'artifact': pin['id'], 'zip_sha256': pin['sha256'],
+            'passing_cases': list(MAC_ORG_CASES), 'authenticated_case_attachments': len(seen),
+            'platform': spec['platform'], 'sdk_version': '3.41.0',
+            'scope_basis': 'original six native simulator UI cases and process restart, not SDK 3.42 or complete product'}
+
+
 def verify_evidence(pair):
     key, spec = pair
     try:
@@ -308,6 +366,8 @@ def verify_evidence(pair):
             proof.update(verify_macos_organization(spec, jobs))
         elif spec.get('adapter') == 'apple_four_40904394809':
             proof.update(verify_apple_four_audit(spec, jobs))
+        elif spec.get('adapter') == 'apple_ios_organization_40645923724':
+            proof.update(verify_apple_ios_organization(spec, jobs))
         else:
             assert 'adapter' not in spec, 'unknown evidence adapter'
         if spec.get('required_cases'):
