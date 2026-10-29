@@ -105,22 +105,41 @@ def main():
         begin = info.header_offset + 30 + n + e
         return begin, begin + info.compress_size
 
+    elf = (DEVICE / 'apk-libs/libexreader_product.so').read_bytes()
+    exec_loads = []
+    if elf[:4] == b'ELF' and elf[4] == 2:
+        phoff, phentsize, phnum = (int.from_bytes(elf[0x20:0x28], 'little'), int.from_bytes(elf[0x36:0x38], 'little'),
+                                   int.from_bytes(elf[0x38:0x3a], 'little'))
+        for i in range(phnum):
+            o = phoff + i * phentsize
+            if int.from_bytes(elf[o:o + 4], 'little') == 1 and int.from_bytes(elf[o + 4:o + 8], 'little') & 1:
+                exec_loads.append(dict(p_offset=int.from_bytes(elf[o + 8:o + 16], 'little'),
+                                       p_filesz=int.from_bytes(elf[o + 32:o + 40], 'little')))
+    product = entries.get(product_name)
+    entry_start = data_range(product)[0] if product is not None and product.compress_type == 0 else None
+    gate('product_elf_matches_packaged_entry', sha(elf) == pkg_sha and bool(exec_loads) and entry_start is not None,
+         dict(exec_pt_load=exec_loads, apk_entry_data_start=entry_start))
+
     for kind in ('upload', 'listing'):
         s = by_kind.get(kind, {})
         files = s.get('lib_sha256', {})
-        extracted = {Path(p).name: h for p, h in files.items() if p.endswith('.so')}
-        apk_maps = [m for m in s.get('mappings', []) if m['path'].endswith('.apk')]
-        apk_ok = bool(apk_maps) and all(files[m['path']] == install['installed_sha256'] for m in apk_maps)
-        product = entries.get(product_name)
-        in_apk = False
-        if apk_ok and product is not None and product.compress_type == 0:
-            lo, hi = data_range(product)
-            in_apk = any(lo <= m['offset'] < hi for m in apk_maps)
-        by_path = extracted.get('libexreader_product.so') == pkg_sha
-        print(json.dumps(dict(kind=kind, pids=s.get('pids'), files=files, mappings=s.get('mappings', [])[:12], by_path=by_path, in_apk=in_apk))[:3000], flush=True)
-        gate('live_process_' + kind, len(s.get('pids', [])) == 1 and (by_path or in_apk),
-             dict(mapped_from='extracted library file' if by_path else 'installed APK bytes at the product entry' if in_apk else None,
-                  files=files, mappings=s.get('mappings', [])[:12]))
+        maps = s.get('mappings', [])
+        # Chain 1: a mapped extracted library file equal to the packaged image.
+        chain_file = any(m['path'].endswith('/libexreader_product.so') and files.get(m['path']) == pkg_sha for m in maps)
+        # Chain 2: an EXECUTABLE mapping of the installed host APK (not the test APK, bytes equal to the installed APK)
+        # that starts at the product entry's executable PT_LOAD file offset and covers its whole file size.
+        chain_apk = []
+        for m in maps:
+            if not (m['path'].endswith('.apk') and files.get(m['path']) == install['installed_sha256'] and 'x' in m['perms']):
+                continue
+            lo, hi = (int(v, 16) for v in m['range'].split('-'))
+            for load in exec_loads:
+                if entry_start is not None and m['offset'] == entry_start + (load['p_offset'] & ~4095) and                         hi - lo >= ((load['p_offset'] & 4095) + load['p_filesz'] + 4095) & ~4095:
+                    chain_apk.append(dict(mapping=m, pt_load=load))
+        print(json.dumps(dict(kind=kind, pids=s.get('pids'), chain_extracted_file=chain_file, chain_apk_exec=chain_apk,
+                              files=files, mappings=maps[:16]))[:4000], flush=True)
+        gate('live_process_' + kind, len(s.get('pids', [])) == 1 and (chain_file or bool(chain_apk)),
+             dict(chain_extracted_file=chain_file, chain_apk_exec_mapping=chain_apk, files=files, mappings=maps))
 
     # Frozen UI suite result on the real Activity.
     ui = json.loads((DEVICE / 'ui/result.json').read_text())
