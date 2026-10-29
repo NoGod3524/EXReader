@@ -533,6 +533,7 @@ private struct HostOrganizationPanel: View {
                 Button("系列") { changeKind(2) }.accessibilityIdentifier("organization.kind.series")
             }.buttonStyle(.bordered)
             Toggle("显示已移除", isOn: $removed)
+                .fixedSize(horizontal: true, vertical: false)
                 .accessibilityIdentifier("organization.removed")
                 .onChange(of: removed) { _ in selectedGroup = nil; edit = ""; refresh() }
             HStack {
