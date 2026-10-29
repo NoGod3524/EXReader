@@ -1,0 +1,22 @@
+name: Inspect retained iPhone annotation and theme failures
+on:
+  push:
+    branches: [codex/apple-four-evidence-audit-20261029]
+    paths: ['.github/workflows/annotation-iphone-failure-409114.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read exact retained original failure context
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/annotation_iphone_failure_409114.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: annotation-iphone-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/annotation-iphone-failure/context.json
+          if-no-files-found: warn
