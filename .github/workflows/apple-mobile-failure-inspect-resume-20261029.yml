@@ -1,0 +1,32 @@
+name: Inspect new retained mobile annotation failures
+on:
+  push:
+    branches: [codex/apple-mobile-failure-inspect-resume-20261029]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original ZIP and parse original XCTest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_mobile_failure_inspect/inspect.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-failure-inspection-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/mobile-failure-inspection/${{ matrix.platform }}/summary.json
+            build/mobile-failure-inspection/${{ matrix.platform }}/failure-context.txt
+            build/mobile-failure-inspection/${{ matrix.platform }}/tests.json
+            build/mobile-failure-inspection/${{ matrix.platform }}/attachments/
+          if-no-files-found: error
+          retention-days: 30
