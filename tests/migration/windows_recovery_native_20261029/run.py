@@ -59,6 +59,92 @@ def projection_equal(observed,expected):
 def statfile(path):return P.identity(path),hashlib.sha256(bounded_read(path,64*1024**2)).hexdigest(),path.stat().st_size
 
 
+def rename_sibling(source,destination):
+    """Test-only no-replace stimulus inside one already owned fixture root.
+
+    Absolute-path MoveFileEx did not establish these original test states under
+    retained ancestor pins. This is a measured same-directory candidate, not
+    proof that a specific internal target-parent open caused its refusal.
+    This uses the same-source-directory native leaf form. It never releases a
+    pin, widens sharing on an existing handle, replaces an entry or falls back.
+    """
+    source=Path(source);destination=Path(destination);parent=source.parent
+    assert parent==destination.parent and parent.name=='私有-library'
+    assert re.fullmatch('[0-9a-f]{32}',parent.parent.name)
+    for leaf in (source.name,destination.name):
+        assert leaf not in ('.','..') and 0<len(leaf)<=240
+        assert not any(ord(c)<32 or c in '\\/:*?"<>|' for c in leaf)
+        assert not leaf.endswith((' ','.'))
+    class ID(ctypes.Structure):
+        _fields_=[('volume',ctypes.c_ulonglong),('file',ctypes.c_ubyte*16)]
+    class TAG(ctypes.Structure):
+        _fields_=[('attributes',W.DWORD),('tag',W.DWORD)]
+    class STANDARD(ctypes.Structure):
+        _fields_=[('allocation',ctypes.c_longlong),('size',ctypes.c_longlong),
+                  ('links',W.DWORD),('delete_pending',ctypes.c_ubyte),('directory',ctypes.c_ubyte)]
+    class STATUS(ctypes.Union):
+        _fields_=[('status',W.LONG),('pointer',LPVOID)]
+    class IOSB(ctypes.Structure):
+        _fields_=[('value',STATUS),('information',SIZE)]
+    class RENAME(ctypes.Structure):
+        _fields_=[('replace',ctypes.c_ubyte),('root',W.HANDLE),
+                  ('length',W.DWORD),('name',W.WCHAR*1)]
+    assert RENAME.root.offset==ctypes.sizeof(W.HANDLE)
+    assert RENAME.name.offset==2*ctypes.sizeof(W.HANDLE)+ctypes.sizeof(W.DWORD)
+    getinfo=api('GetFileInformationByHandleEx',W.BOOL,[W.HANDLE,ctypes.c_int,LPVOID,W.DWORD])
+    finalpath=api('GetFinalPathNameByHandleW',W.DWORD,[W.HANDLE,W.LPWSTR,W.DWORD,W.DWORD])
+    native=ctypes.WinDLL('ntdll')
+    setinfo=native.NtSetInformationFile
+    setinfo.restype=W.LONG
+    setinfo.argtypes=[W.HANDLE,ctypes.POINTER(IOSB),LPVOID,W.ULONG,ctypes.c_int]
+    def identity(handle,directory=None):
+        tag=TAG();check(getinfo(handle,9,ctypes.byref(tag),ctypes.sizeof(tag)),'rename type')
+        assert not tag.attributes&0x400,'rename source is reparse'
+        if directory is not None:assert bool(tag.attributes&0x10)==directory
+        standard=STANDARD();check(getinfo(handle,1,ctypes.byref(standard),ctypes.sizeof(standard)),'rename standard info')
+        assert not standard.delete_pending and standard.size>=0
+        assert bool(standard.directory)==bool(tag.attributes&0x10)
+        if not standard.directory:assert standard.links==1,'rename hardlink refused'
+        value=ID();check(getinfo(handle,18,ctypes.byref(value),ctypes.sizeof(value)),'rename FileID')
+        return bytes(value)
+    def name(handle):
+        buffer=ctypes.create_unicode_buffer(4096)
+        count=finalpath(handle,buffer,len(buffer),1)
+        assert 0<count<len(buffer) and len(buffer.value)==count,'rename path bound'
+        return buffer.value
+    flags=0x02000000|0x00200000
+    root=openfile(str(parent),0x200a0,1,None,3,flags,None)
+    check(root!=BAD,'rename root pin')
+    held=BAD;entry=BAD
+    try:
+        root_id=identity(root,True);root_name=name(root)
+        assert root_name.startswith('\\\\?\\Volume{'),'rename local volume GUID'
+        held=openfile(str(source),0x30080,1|2|4,None,3,flags,None)
+        check(held!=BAD,'rename source DELETE open')
+        source_id=identity(held)
+        assert name(held)==root_name+'\\'+source.name,'rename direct parent'
+        entry=openfile(str(source),0x20080,1|2|4,None,3,flags,None)
+        check(entry!=BAD,'rename source metadata reopen')
+        assert identity(entry)==source_id and identity(root,True)==root_id
+        check(close(entry),'rename source metadata close');entry=BAD
+        leaf=destination.name.encode('utf-16-le')
+        raw=ctypes.create_string_buffer(RENAME.name.offset+len(leaf))
+        request=RENAME.from_buffer(raw);request.replace=0;request.root=None;request.length=len(leaf)
+        ctypes.memmove(ctypes.addressof(raw)+RENAME.name.offset,leaf,len(leaf))
+        status=IOSB()
+        result=setinfo(held,ctypes.byref(status),raw,len(raw),10)
+        assert result==0 and status.value.status==0,('native sibling no-replace refusal',result,status.value.status,status.information)
+        assert identity(root,True)==root_id and name(root)==root_name
+        assert identity(held)==source_id and name(held)==root_name+'\\'+destination.name
+        entry=openfile(str(destination),0x20080,1|2|4,None,3,flags,None)
+        check(entry!=BAD,'rename destination metadata reopen')
+        assert identity(entry)==source_id,'rename published FileID'
+    finally:
+        if entry!=BAD:check(close(entry),'rename entry close')
+        if held!=BAD:check(close(held),'rename held source close')
+        check(close(root),'rename root close')
+
+
 def model(path):
     with contextlib.closing(P.connect(path)) as db:
         db.execute('BEGIN');assert db.execute('PRAGMA integrity_check').fetchall()==[('ok',)];assert not db.execute('PRAGMA foreign_key_check').fetchall()
@@ -325,7 +411,7 @@ def main():
     def scan_gate(root,expected):
         c=d.native('owner',root,'handoff');c.phase(root,'before-sdk');d.go(root,'before-sdk');c.phase(root,'owner-held');d.writer(root,True);d.go(root,'owner-held');c.phase(root,'child-spawned');d.go(root,'child-spawned');c.phase(root,'child-live');d.writer(root,True);d.go(root,'child-live');c.phase(root,'child-waited');d.projection(root,expected);d.writer(root,True);d.go(root,'child-waited');return c
     def replace_file(root,name):
-        old=root/name;data=old.read_bytes();before=P.identity(old);old.rename(root/(name+'.original'));d.put(root,name,data);assert P.identity(old)!=before and old.read_bytes()==data;return before,data
+        old=root/name;data=old.read_bytes();before=P.identity(old);rename_sibling(old,root/(name+'.original'));d.put(root,name,data);assert P.identity(old)!=before and old.read_bytes()==data;return before,data
     def native_share(path,access,share):
         h=openfile(str(path),access,share,None,3,0x00200000,None);check(h!=BAD,'native calibrated handle');return h
     def g01():
@@ -386,10 +472,27 @@ def main():
             root,before=fixture('10-'+which);c=d.native('launch',root,'normal');c.phase(root,'child-spawned')
             if which=='request':replace_file(root,'use-0.json')
             else:
-                (root/'worker-output').rename(root/'original-output');d.call('mkdir',root,'worker-output')
+                rename_sibling(root/'worker-output',root/'original-output');d.call('mkdir',root,'worker-output')
             d.go(root,'child-spawned');assert c.finish()!=0 and c.report()['reason']=='child-nonzero';child=read_child_report(root);assert not child['target_sdk_open_attempted'] and child['reason'] in ('anchored-use-replaced','child-output-replaced');stable(before,root)
         root,before=fixture('10-target-request');c=d.native('launch',root,'request-pause');c.phase(root,'request-published');replace_file(root,'library.sqlite');foreign=statfile(root/'library.sqlite');d.go(root,'request-published');c.phase(root,'child-spawned');d.go(root,'child-spawned');assert c.finish()!=0;child=read_child_report(root);assert child['reason']=='child-target-request' and not child['target_sdk_open_attempted'];assert statfile(root/'library.sqlite')==foreign;stable(before,root)
     def g11():
+        # Independently admit the harness's mutation primitive before its
+        # negative stimuli are credited. No existing adapter control is removed.
+        root=d.fresh('11-stimulus');d.call('write',root,'source.bin')
+        source_before=statfile(root/'source.bin')
+        rename_sibling(root/'source.bin',root/'published.bin')
+        assert not (root/'source.bin').exists() and statfile(root/'published.bin')==source_before
+        d.call('write',root,'source.bin');second=statfile(root/'source.bin')
+        try:rename_sibling(root/'source.bin',root/'published.bin')
+        except AssertionError as error:
+            assert 'native sibling no-replace refusal' in str(error)
+        else:raise AssertionError('stimulus replaced occupied destination')
+        assert statfile(root/'published.bin')==source_before and statfile(root/'source.bin')==second
+        for other in (root/'nested'/'outside.bin',root.parent/'outside.bin'):
+            try:rename_sibling(root/'source.bin',other)
+            except AssertionError:pass
+            else:raise AssertionError('stimulus admitted another parent')
+        assert statfile(root/'published.bin')==source_before and statfile(root/'source.bin')==second
         root=d.fresh('11-rename');c=d.native('rename',root);c.phase(root,'renamed');assert not (root/'source.bin').exists();old=statfile(root/'published.bin');d.go(root,'renamed');assert c.finish()==0;r=c.report();assert r['rename_attempted'] and r['rename_ntstatus']==0 and r['rename_io_status']==0
         r=d.call('rename',root,success=False,reason='rename-no-replace');assert r['native_error'] in (80,183,5) and r['rename_attempted'] and r['rename_ntstatus']<0 and statfile(root/'published.bin')==old and (root/'source.bin').read_bytes()==b'canonical-native-record\n'
         root=d.fresh('11-cwd');outside=root.parent/'different-cwd';outside.mkdir();canary=outside/'published.bin';canary.write_bytes(b'outside-cwd-canary');original=statfile(canary)
@@ -435,7 +538,7 @@ def main():
         # An earlier genuinely live child holds the anchored slot but has not
         # pinned output or opened SDK yet: whole-output disappearance is real.
         root,before=fixture('15-before-output-pin');c=d.native('launch',root,'prepin');c.phase(root,'child-spawned');marker=c.phase(root,'child-before-pin');assert not marker['sdk_open_attempted'];assert c.finish(terminate=True)==125
-        (root/'worker-output').rename(root/'retained-output');r=d.call('slots',root,success=False,reason='regular-open');assert r['native_error']==32 and not r['target_sdk_open_attempted'];d.writer(root,False)
+        rename_sibling(root/'worker-output',root/'retained-output');r=d.call('slots',root,success=False,reason='regular-open');assert r['native_error']==32 and not r['target_sdk_open_attempted'];d.writer(root,False)
         d.job.finish();d.job=Job();d.call('slots',root,success=False,reason='retained-output-missing');stable(before,root)
     def g16():
         for variant in ('spawn-gap','assign-fail'):
@@ -449,7 +552,7 @@ def main():
         for kind in ('missing','partial'):
             root,before=fixture('17-result-'+kind)
             def edit(root):
-                (root/'child-result.json').rename(root/'retained-child-result.json')
+                rename_sibling(root/'child-result.json',root/'retained-child-result.json')
                 if kind=='partial':d.put(root,'child-result.json',b'{"format":')
             r=d.launch(root,success=False,result_edit=edit);assert r['worker_waited'] and r['reason'] in ('regular-open','child-result-binding');stable(before,root)
     def g18():
