@@ -28,7 +28,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[2]
 SELF = Path(__file__).resolve()
 REPO = 'NoGod3524/EXReader'
-PARENT = '197954e7606a32565205881488e71c81a441c6cc'
+PARENT = 'e91e751701c89801b2a92d282697b386efa006bd'
 BRANCH = 'codex/apple-ios-verify-build-comparison-20261029'
 PATHS = ['tests/apple_ios_verify_build_comparison_20261029/run.py']
 PACKAGE = 'tests/apple_ios_organization_verify_phase_probe_20261029'
@@ -86,6 +86,47 @@ GUARD_REFUSAL = (b'the response contains terminal escape sequences; '
                  b'pass --allow-escape-sequences to output it anyway\n')
 UPLOAD_STEP = 5
 UPLOAD_STEP_NAME = 'Run actions/upload-artifact@v4'
+HISTORICAL_RECEIPT_SHA = 'dbb44a273da93dd98f73c617186834de07eb78cd5ffea914edcc4f4afd5ec909'
+# Exact independently reviewed connector receipt, not fetched by this runner.
+# Design review60d12620; owner approved changed criterion2026-10-29T13:43:50Z.
+HISTORICAL_RECEIPT_BYTES = b'''{
+  "kind": "source_reviewed_connector_observation_not_current_runner_log_replay",
+  "repository": "NoGod3524/EXReader",
+  "producer_source": "6803602e5791eafa69a6e61bc5499d36cd31d92e",
+  "run_id": 40858915090,
+  "run_attempt": 1,
+  "job_id": 123397011277,
+  "job_name": "Privacy SDK iphonesimulator",
+  "job_head_sha": "6803602e5791eafa69a6e61bc5499d36cd31d92e",
+  "job_status": "completed",
+  "job_conclusion": "success",
+  "upload_step": {
+    "name": "Run actions/upload-artifact@v4",
+    "status": "completed",
+    "conclusion": "success",
+    "number": 5,
+    "started_at": "2026-10-29T10:41:12Z",
+    "completed_at": "2026-10-29T10:41:17Z"
+  },
+  "artifact_id": 12891365411,
+  "artifact_name": "password-sdk-iphonesimulator-40858915090-1",
+  "artifact_bytes": 20965175,
+  "artifact_sha256": "73df36a535d21520fec28cc08006701fc8131daf35e2be613e15a6c9bc46d46a",
+  "decoded_log_selected_lines": [
+    "2026-10-29T10:41:16.8698720Z SHA256 digest of uploaded artifact zip is 73df36a535d21520fec28cc08006701fc8131daf35e2be613e15a6c9bc46d46a",
+    "2026-10-29T10:41:17.3205190Z Artifact password-sdk-iphonesimulator-40858915090-1.zip successfully finalized. Artifact ID 12891365411",
+    "2026-10-29T10:41:17.3207120Z Artifact password-sdk-iphonesimulator-40858915090-1 has been successfully uploaded! Final size is 20965175 bytes. Artifact ID is 12891365411",
+    "2026-10-29T10:41:17.3214800Z Artifact download URL: https://github.com/NoGod3524/EXReader/actions/runs/40858915090/artifacts/12891365411"
+  ],
+  "source_tools": [
+    "GitHub fetch_workflow_job_logs",
+    "GitHub REST run jobs metadata"
+  ],
+  "full_decoded_log_characters": 361326,
+  "artifact_bytes_read_locally": false,
+  "log_retrieval_is_not_binary_authentication": true
+}
+'''
 
 
 class StopGroup(RuntimeError): pass
@@ -448,7 +489,6 @@ def command_allowed(argv, name, build):
         'clean': ['git', 'status', '--porcelain', '--untracked-files=all'],
         'version': ['xcodebuild', '-version'], 'sdk-version': ['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-version'],
         'os-version': ['sw_vers', '-productVersion'], 'arch': ['uname', '-m'],
-        'gh-version': ['gh', '--version'],
         'xcodeproj-version': ['ruby', '-e', "require 'xcodeproj'; puts Xcodeproj::VERSION"],
         'fixtures': [sys.executable, 'tests/apple_host/prepare_fixtures.py', '--resources', str(RESOURCES)],
         'runtimes': ['xcrun', 'simctl', 'list', 'runtimes', '-j'],
@@ -459,8 +499,6 @@ def command_allowed(argv, name, build):
         ('original-artifact', 'artifacts/' + str(ARTIFACT)),
         ('original-sdk', 'artifacts/' + str(ARTIFACT) + '/zip')]:
         fixed[label] = ['gh', 'api', 'repos/' + REPO + '/actions/' + endpoint]
-    for label, suffix in [('original-upload-log', '/logs'), ('original-upload-step', '/steps/5/logs')]:
-        fixed[label] = ['gh', 'api', '--include', 'repos/' + REPO + '/actions/jobs/' + str(OLD_JOB) + suffix]
     for label, root in (('control', CONTROL), ('phase', PHASE)):
         fixed[label + '-generate'] = ['ruby', str(root / 'generated' / ('make_project_' + label + '.rb')),
             str(root / 'generated/project'), str(RESOURCES), str(root / 'generated/ui'), 'base']
@@ -651,32 +689,60 @@ def installed_files(root):
             'installed header version')
 
 
-def retained_sdk():
-    run = api('actions/runs/' + str(OLD_RUN), 'original-run')
-    job = api('actions/jobs/' + str(OLD_JOB), 'original-job')
-    artifact = api('actions/artifacts/' + str(ARTIFACT), 'original-artifact')
+def historical_receipt(data=HISTORICAL_RECEIPT_BYTES):
+    require(type(data) is bytes and len(data) <= 8192 and hashlib.sha256(data).hexdigest() == HISTORICAL_RECEIPT_SHA,
+            'historical connector receipt bytes/hash differ')
+    value = strict_json(data, 8192)
+    require(value['kind'] == 'source_reviewed_connector_observation_not_current_runner_log_replay'
+        and value['repository'] == REPO and value['producer_source'] == OLD_SHA
+        and value['run_id'] == OLD_RUN and value['run_attempt'] == 1
+        and value['job_id'] == OLD_JOB and value['job_head_sha'] == OLD_SHA
+        and value['job_name'] == 'Privacy SDK iphonesimulator' and value['job_status'] == 'completed'
+        and value['job_conclusion'] == 'success' and value['artifact_id'] == ARTIFACT
+        and value['artifact_name'] == ARTIFACT_NAME and value['artifact_bytes'] == ARTIFACT_BYTES
+        and value['artifact_sha256'] == ARTIFACT_SHA and value['artifact_bytes_read_locally'] is False
+        and value['log_retrieval_is_not_binary_authentication'] is True, 'historical receipt identity')
+    require(value['upload_step'] == {'name': UPLOAD_STEP_NAME, 'status': 'completed', 'conclusion': 'success',
+        'number': UPLOAD_STEP, 'started_at': '2026-10-29T10:41:12Z', 'completed_at': '2026-10-29T10:41:17Z'},
+        'historical upload step/time')
+    require(len(value['decoded_log_selected_lines']) == 4, 'historical four-line receipt')
+    upload_identity(('\n'.join(value['decoded_log_selected_lines']) + '\n').encode())
+    return value
+
+
+def pinned_artifact_admission(lookup, download, checkpoint, verify=archive_hash, receipt_bytes=HISTORICAL_RECEIPT_BYTES):
+    """The sole new mode: historical upload observation + fresh API + actual ZIP."""
+    receipt = historical_receipt(receipt_bytes)
+    checkpoint({'historical_upload_receipt_verified': True, 'historical_upload_receipt_used': True})
+    run = lookup('actions/runs/' + str(OLD_RUN), 'original-run')
+    job = lookup('actions/jobs/' + str(OLD_JOB), 'original-job')
+    artifact = lookup('actions/artifacts/' + str(ARTIFACT), 'original-artifact')
     validate_metadata(run, job, artifact)
-    _, version_out, version_err = command(['gh', '--version'], 'gh-version', timeout=5, cap=8192)
-    raw, _ = command_capture(COMMANDS[-1], version_out, version_err, 8192,
-        group_members(os.getpgrp()) == {os.getpid()})
-    version_text = raw['stdout'].decode('utf-8')
-    version_match = re.fullmatch(r'gh version ([0-9]+\.[0-9]+\.[0-9]+) \([^\r\n]{1,100}\)\n'
-        r'https://github.com/cli/cli/releases/tag/v\1\n', version_text)
-    require(version_match is not None and raw['stderr'] == b'', 'unrecognized actual CLI version output')
-    version = version_match.group(1)
-    def request(step):
-        label = 'original-upload-step' if step else 'original-upload-log'
-        suffix = '/steps/5/logs' if step else '/logs'
-        code, out, err = command(['gh', 'api', '--include', 'repos/' + REPO + '/actions/jobs/' + str(OLD_JOB) + suffix],
-                                  label, allowed_exit=True)
-        raw, _ = command_capture(COMMANDS[-1], out, err, 16 * 1024 ** 2,
-            group_members(os.getpgrp()) == {os.getpid()})
-        return code, raw
-    provenance = authenticated_upload(job, version, request)
-    save(E / 'upload-log-admission.json', provenance); emit({'upload_log_admission': provenance})
-    _, archive, _ = command(['gh', 'api', 'repos/' + REPO + '/actions/artifacts/' + str(ARTIFACT) + '/zip'],
-                           'original-sdk', cap=ARTIFACT_BYTES)
-    archive_hash(archive); archive.chmod(0o400)
+    require(type(job.get('run_attempt')) is int and job['run_attempt'] == 1 and job.get('head_sha') == OLD_SHA,
+            'fresh SDK job attempt/source differs')
+    require(upload_step(job) == receipt['upload_step'], 'fresh upload-step metadata/time differs')
+    checkpoint({'fresh_artifact_metadata_verified': True})
+    archive = download(['gh', 'api', 'repos/' + REPO + '/actions/artifacts/' + str(ARTIFACT) + '/zip'],
+                       'original-sdk', ARTIFACT_BYTES)
+    verify(archive)  # Production uses exact original size/hash, not metadata alone.
+    checkpoint({'downloaded_archive_verified': True})
+    return archive, artifact, receipt
+
+
+def retained_sdk(summary):
+    progress = {'mode': 'source_pinned_historical_upload_plus_fresh_artifact', 'historical_upload_receipt_used': False,
+        'historical_upload_receipt_verified': False, 'fresh_artifact_metadata_verified': False,
+        'downloaded_archive_verified': False, 'fresh_upload_log_replayed': False,
+        'historical_receipt_sha256': HISTORICAL_RECEIPT_SHA, 'original_source': OLD_SHA,
+        'original_run': OLD_RUN, 'original_job': OLD_JOB, 'original_artifact': ARTIFACT}
+    def checkpoint(fields):
+        progress.update(fields); summary.update(progress)
+        save(E / 'pinned-artifact-admission.json', progress); emit({'pinned_artifact_admission': progress})
+    checkpoint({})
+    def download(argv, name, cap): return command(argv, name, cap=cap)[1]
+    archive, artifact, receipt = pinned_artifact_admission(api, download, checkpoint)
+    save(E / 'historical-upload-receipt.json', receipt)
+    archive.chmod(0o400)
     rows = unpack(archive, SDK_ROOT)
     identity = strict_json(read_bounded(SDK_ROOT / 'identity.json', 65536))
     product = strict_json(read_bounded(SDK_ROOT / 'products/share/exreader-apple/product.json', 65536))
@@ -684,9 +750,11 @@ def retained_sdk():
     installed_files(SDK_ROOT)
     manifest = inventory(SDK_ROOT)
     save(E / 'retained-sdk.json', {'source': OLD_SHA, 'run': OLD_RUN, 'job': OLD_JOB, 'artifact': artifact,
-        'identity': identity, 'members': rows, 'manifest': manifest, 'new_source_build': False})
+        'identity': identity, 'members': rows, 'manifest': manifest, 'new_source_build': False,
+        'input_admission': progress, 'historical_upload_receipt': receipt})
     emit({'retained_sdk_admitted': True, 'original_source': OLD_SHA, 'artifact_id': ARTIFACT,
-          'sha256': ARTIFACT_SHA, 'source_trees_equal': True, 'new_source_build': False})
+          'sha256': ARTIFACT_SHA, 'source_trees_equal': True, 'new_source_build': False,
+          'fresh_upload_log_replayed': False, 'historical_upload_receipt_used': True})
     return archive, manifest
 
 
@@ -1125,6 +1193,83 @@ def log_controls(result, reject):
     result['old_controls_retained_no_new_native_budget'] = True
 
 
+def pinned_artifact_controls(result, reject):
+    original = historical_receipt(); result['historical_receipt_exact_bytes'] = True
+    for field, wrong in [('producer_source', '0' * 40), ('run_id', OLD_RUN + 1), ('run_attempt', 2),
+        ('job_id', OLD_JOB + 1), ('artifact_id', ARTIFACT + 1), ('artifact_name', 'different'),
+        ('artifact_bytes', ARTIFACT_BYTES + 1), ('artifact_sha256', '0' * 64)]:
+        changed = dict(original, **{field: wrong})
+        reject('historical_' + field, lambda changed=changed: historical_receipt(encoded(changed)))
+    changed = copy.deepcopy(original); changed['upload_step']['number'] = 6
+    reject('historical_step', lambda: historical_receipt(encoded(changed)))
+    for label, lines in [('missing_line', original['decoded_log_selected_lines'][:-1]),
+                         ('duplicate_line', original['decoded_log_selected_lines'] * 2)]:
+        changed = dict(original, decoded_log_selected_lines=lines)
+        reject('historical_' + label, lambda changed=changed: historical_receipt(encoded(changed)))
+    reject('historical_reformatted_bytes', lambda: historical_receipt(encoded(original)))
+    run = {'id': OLD_RUN, 'run_attempt': 1, 'head_sha': OLD_SHA, 'status': 'completed'}
+    job = {'id': OLD_JOB, 'run_id': OLD_RUN, 'head_sha': OLD_SHA, 'run_attempt': 1,
+        'name': 'Privacy SDK iphonesimulator', 'status': 'completed', 'conclusion': 'success',
+        'steps': [copy.deepcopy(original['upload_step'])]}
+    art = {'id': ARTIFACT, 'name': ARTIFACT_NAME, 'size_in_bytes': ARTIFACT_BYTES, 'expired': False,
+        'digest': 'sha256:' + ARTIFACT_SHA, 'workflow_run': {'id': OLD_RUN, 'head_sha': OLD_SHA}}
+    expected = [('actions/runs/' + str(OLD_RUN), 'original-run'),
+        ('actions/jobs/' + str(OLD_JOB), 'original-job'), ('actions/artifacts/' + str(ARTIFACT), 'original-artifact')]
+    archive_argv = ['gh', 'api', 'repos/' + REPO + '/actions/artifacts/' + str(ARTIFACT) + '/zip']
+    fixture = PRIVATE / 'pinned-admission-fixture'; fixture.write_bytes(b'four')
+    def exercise(artifact=art, producer=job, original_run=run, verify=None, missing=False, receipt=HISTORICAL_RECEIPT_BYTES):
+        calls, checkpoints = [], []
+        values = {'original-run': original_run, 'original-job': producer, 'original-artifact': artifact}
+        def lookup(endpoint, name):
+            calls.append((endpoint, name)); require(calls == expected[:len(calls)], 'unexpected live metadata sequence')
+            if missing and name == 'original-artifact': raise OSError('synthetic original artifact404')
+            return values[name]
+        def download(argv, name, cap):
+            require(calls == expected and argv == archive_argv and name == 'original-sdk' and cap == ARTIFACT_BYTES,
+                    'unexpected archive request or duplicate')
+            calls.append(('archive', name)); return fixture
+        # The synthetic positive uses the actual hashing helper with a tiny
+        # declared fixture. Production has no override and verifies20965175B.
+        check_archive = verify or (lambda p: archive_hash(p, 4, hashlib.sha256(b'four').hexdigest()))
+        return calls, checkpoints, lambda: pinned_artifact_admission(lookup, download, checkpoints.append,
+                                                                     check_archive, receipt)
+    calls, checkpoints, action = exercise(); action()
+    require(calls == expected + [('archive', 'original-sdk')] and checkpoints == [
+        {'historical_upload_receipt_verified': True, 'historical_upload_receipt_used': True},
+        {'fresh_artifact_metadata_verified': True}, {'downloaded_archive_verified': True}],
+        'actual pinned-admission request sequence/checkpoints')
+    result['pinned_mode_exact_requests_no_log_route'] = True
+    for field, wrong in [('digest', 'sha256:' + '0' * 64), ('expired', True), ('id', ARTIFACT + 1),
+                         ('size_in_bytes', ARTIFACT_BYTES + 1), ('name', 'other')]:
+        calls, checkpoints, action = exercise(artifact=dict(art, **{field: wrong}))
+        reject('pinned_api_' + field, action)
+        require(calls == expected and not any('downloaded_archive_verified' in x for x in checkpoints), 'bad API downloaded')
+    calls, checkpoints, action = exercise(missing=True); reject('pinned_artifact_missing_no_fallback', action)
+    require(calls == expected, 'missing artifact extra route')
+    for field, wrong in [('head_sha', '0' * 40), ('run_attempt', 2), ('run_attempt', True)]:
+        calls, checkpoints, action = exercise(producer=dict(job, **{field: wrong}))
+        reject('pinned_job_' + field + '_' + str(wrong), action); require(calls == expected, 'bad job downloaded')
+    altered = copy.deepcopy(job); altered['steps'][0]['completed_at'] = '2026-10-29T10:41:18Z'
+    calls, checkpoints, action = exercise(producer=altered); reject('pinned_step_time_changed', action)
+    require(calls == expected, 'bad step downloaded')
+    calls, checkpoints, action = exercise(original_run=dict(run, run_attempt=2))
+    reject('pinned_run_attempt', action); require(calls == expected, 'bad attempt downloaded')
+    calls, checkpoints, action = exercise(verify=archive_hash)
+    reject('pinned_actual_original_size_gate', action)
+    require(calls == expected + [('archive', 'original-sdk')] and not any('downloaded_archive_verified' in x for x in checkpoints),
+            'wrong actual archive marked verified')
+    calls, checkpoints, action = exercise(verify=lambda p: archive_hash(p, 4, hashlib.sha256(b'foor').hexdigest()))
+    reject('pinned_same_size_wrong_download_hash', action)
+    require(not any('downloaded_archive_verified' in x for x in checkpoints), 'bad hash marked verified')
+    calls, checkpoints, action = exercise(receipt=HISTORICAL_RECEIPT_BYTES + b' ')
+    reject('pinned_receipt_invalid_before_requests', action); require(calls == [] and checkpoints == [], 'bad receipt made request')
+    for name, argv in [('original-upload-log', ['gh', 'api', '--include', 'repos/' + REPO + '/actions/jobs/' + str(OLD_JOB) + '/logs']),
+        ('original-upload-step', ['gh', 'api', '--include', 'repos/' + REPO + '/actions/jobs/' + str(OLD_JOB) + '/steps/5/logs']),
+        ('original-run-logs', ['gh', 'api', 'repos/' + REPO + '/actions/runs/' + str(OLD_RUN) + '/logs']),
+        ('gh-version', ['gh', '--version'])]:
+        reject('removed_live_' + name, lambda argv=argv, name=name: command_allowed(argv, name, None))
+
+
 def controls():
     result = {}
     def reject(name, action):
@@ -1243,6 +1388,7 @@ def controls():
     require(len(output) <= 16384 and not complete, 'minimal output fallback'); result['minimal_output_fallback'] = True
     finalization_controls(result)
     log_controls(result, reject)
+    pinned_artifact_controls(result, reject)
     save(E / 'controls.json', result); emit({'controls': result})
 
 
@@ -1250,11 +1396,13 @@ def worker():
     E.mkdir(parents=True, exist_ok=True); PRIVATE.mkdir(mode=0o700, parents=True, exist_ok=True)
     summary = dict(IDENTITY, comparison_complete=False, interpretation='incomplete', outcomes=[], problems=[],
         native_cases_run=0, product_accepted=False, formal_credit=0, root_cause_proved=False,
+        historical_upload_receipt_used=False, historical_upload_receipt_verified=False,
+        fresh_artifact_metadata_verified=False, downloaded_archive_verified=False, fresh_upload_log_replayed=False,
         sdk_rebuilt=False, ui_run=False, source_profile_factor='baseline versus PhaseB',
         order_caveat='single ordered pair; shared daemon state is not controlled')
     uid = None; unsafe = False
     try:
-        controls(); source_guard(); archive, sdk_before = retained_sdk()
+        controls(); source_guard(); archive, sdk_before = retained_sdk(summary)
         fixture_before, generated_before = generate(); uid = runtime_create()
         def unchanged():
             archive_hash(archive)
