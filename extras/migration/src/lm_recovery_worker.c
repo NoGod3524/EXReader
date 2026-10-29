@@ -7,6 +7,7 @@
 #endif
 #include "lm.h"
 #include "lm_mirror.h"
+#include "lm_new_target.h"
 #include <exreader.h>
 #include <sqlite3.h>
 #include <errno.h>
@@ -465,29 +466,47 @@ static int ledger_output(sqlite3 *db,int *found){sqlite3_stmt *s=NULL;int presen
 int main(int argc,char **argv){
   sqlite3 *db=NULL,*clone=NULL;lm_sb bytes,copy;int ok=0,found=0;lm_mirror_file after;struct rlimit cap;char expected_sha[65]={0},actual_sha[65]={0};
   if(argc!=7)return 2;mode=argv[1];target=argv[2];root=argv[3];nonce=argv[4];font_path=argv[5];fault=argv[6];
-  if(strcmp(mode,"capture")&&strcmp(mode,"scan"))return 2;
+  if(strcmp(mode,"capture")&&strcmp(mode,"scan")&&strcmp(mode,"seal")&&strcmp(mode,"observe")&&strcmp(mode,"create-capture")&&strcmp(mode,"create-scan"))return 2;
   if(strlen(nonce)!=32||strspn(nonce,"0123456789abcdef")!=32)return 2;
   if(strcmp(fault,"none")&&(!getenv("EXR_MIGRATE_TEST_FAULTS")||strcmp(getenv("EXR_MIGRATE_TEST_FAULTS"),"1")))return 2;
   if(SQLITE_VERSION_NUMBER!=3054000||sqlite3_libversion_number()!=3054000||strcmp(SQLITE_SOURCE_ID,sqlite3_sourceid())||strcmp(exr_version(),"3.42.0")||exr_abi_version()!=1)return 2;
   umask(077);cap.rlim_cur=cap.rlim_max=LIMIT;if(setrlimit(RLIMIT_FSIZE,&cap))return 2;cap.rlim_cur=cap.rlim_max=30;if(setrlimit(RLIMIT_CPU,&cap))return 2;
   started=now_seconds();lm_sb_init(&bytes);lm_sb_init(&copy);lm_sb_init(&expected_projection);lm_sb_init(&expected_rows);lm_binary_stdout();
   snprintf(baseline,sizeof(baseline),"%s/baseline.bin",root);snprintf(clonepath,sizeof(clonepath),"%s/clone.sqlite",root);snprintf(profilepath,sizeof(profilepath),"%s/profile.sqlite",root);snprintf(custody,sizeof(custody),"%s/request.json",root);
-  if(!namespace_check()||!snapshot(target,0,&original)||!profile_make()||!open_db(target,0,&db))goto done;
+  if(!strcmp(mode,"seal")||!strcmp(mode,"observe")||!strcmp(mode,"create-capture")||!strcmp(mode,"create-scan")){
+    lm_err e={{0},{0}};char p[4096];const char *ends[]={"-wal","-shm","-journal"};unsigned i;
+    if(!ln_child_worker_enter(custody,target,font_path,mode,&e)||!ln_child_nonce_matches(nonce)){reject("seal-child-liveness-or-control");goto done;}
+    for(i=0;!strcmp(mode,"seal")&&i<3;i++){struct stat st;snprintf(p,sizeof(p),"%s%s",target,ends[i]);if(!lstat(p,&st)||errno!=ENOENT){reject("seal-sidecar-present");goto done;}}
+    if(!ln_child_pause(!strcmp(mode,"seal")?"seal-worker-alive":!strcmp(mode,"observe")?"observe-worker-alive":"suffix-worker-alive",&e)){reject("seal-child-liveness-or-control");goto done;}
+  }
+  if(!namespace_check()||!snapshot(target,0,&original)||!profile_make()||!open_db(target,!strcmp(mode,"seal"),&db))goto done;
+  if(!strcmp(mode,"seal")){
+    sqlite3_stmt *s=NULL;int rc;
+    if(!sqlok(db,sqlite3_prepare_v2(db,"PRAGMA journal_mode",-1,&s,NULL),"seal-mode-prepare"))goto done;
+    rc=sqlite3_step(s);if(rc!=SQLITE_ROW||sqlite3_column_type(s,0)!=SQLITE_TEXT||strcmp((const char*)sqlite3_column_text(s,0),"delete"))reject("seal-private-delete-required");
+    if(!failed&&sqlite3_step(s)!=SQLITE_DONE)reject("seal-mode-tail");sqlok(db,sqlite3_finalize(s),"seal-mode-finalize");if(failed)goto done;
+  }
   sqlite3_progress_handler(db,1000,worker_progress,NULL);
-  if(!execsql(db,"BEGIN")||!canonical(db,&bytes,1)||!tx(db,0)||!ledger_output(db,&found))goto done;
-  if(!strcmp(mode,"capture")){
+  if(!execsql(db,!strcmp(mode,"seal")?"PRAGMA locking_mode=EXCLUSIVE;BEGIN EXCLUSIVE;COMMIT;BEGIN":"BEGIN")||!canonical(db,&bytes,1)||!tx(db,0)||!ledger_output(db,&found))goto done;
+  if(!strcmp(mode,"seal")){
+    const char *queries[]={"PRAGMA journal_mode","PRAGMA locking_mode"};const char *want[]={"delete","exclusive"};unsigned i;
+    for(i=0;i<2&&!failed;i++){sqlite3_stmt *q=NULL;int rc;if(!sqlok(db,sqlite3_prepare_v2(db,queries[i],-1,&q,NULL),"seal-locked-mode-prepare"))break;rc=sqlite3_step(q);if(rc!=SQLITE_ROW||sqlite3_column_type(q,0)!=SQLITE_TEXT||strcmp((const char*)sqlite3_column_text(q,0),want[i]))reject("seal-locked-mode-readback");if(!failed&&sqlite3_step(q)!=SQLITE_DONE)reject("seal-locked-mode-tail");sqlok(db,sqlite3_finalize(q),"seal-locked-mode-finalize");}
+    {lm_err e={{0},{0}};if(!failed&&!ln_child_pause("seal-read-fence",&e))reject("seal-read-fence-control");}if(failed)goto done;
+  }
+  if(!strcmp(mode,"capture")||!strcmp(mode,"seal")||!strcmp(mode,"observe")||!strcmp(mode,"create-capture")){
     if(!scalar(db,"PRAGMA user_version",&initial_version)||!data_rows(db,&expected_rows,initial_version)||!sql_projection(db)||!backup_clone(db)||!tx(db,0))goto done;
     if(!open_db(clonepath,0,&clone)||!execsql(clone,"BEGIN")||!canonical(clone,&copy,1)||!tx(clone,0)||bytes.n!=copy.n||memcmp(bytes.p,copy.p,bytes.n)){reject("clone-full-parity");goto done;}
     close_db(&clone);if(failed)goto done;
   }
   if(!close_db(&db)||!snapshot(target,0,&after)||!lm_mirror_same_file(&original,&after))goto done;
-  if(!strcmp(mode,"capture")){
+  if(!strcmp(mode,"capture")||!strcmp(mode,"seal")||!strcmp(mode,"observe")||!strcmp(mode,"create-capture")){
     lm_sb rows;lm_sb_init(&rows);
     if(!sdk_clone_check()||!open_db(clonepath,0,&clone)||!execsql(clone,"BEGIN")||!check_catalog(clone)||!health(clone)||!data_rows(clone,&rows,initial_version)||!tx(clone,0)||rows.n!=expected_rows.n||memcmp(rows.p,expected_rows.p,rows.n))reject("clone-sdk-preservation");
     lm_sb_free(&rows);close_db(&clone);if(failed)goto done;
   }
+  if(!strcmp(mode,"seal")){char p[4096];const char *ends[]={"-wal","-shm","-journal"};unsigned i;for(i=0;i<3;i++){struct stat st;snprintf(p,sizeof(p),"%s%s",target,ends[i]);if(!lstat(p,&st)||errno!=ENOENT){reject("seal-sidecar-after-close");goto done;}}}
   if(!write_new(baseline,bytes.p,bytes.n))goto done;
-  lm_sha_bytes(bytes.p,bytes.n,actual_sha);if(!strcmp(mode,"capture")){lm_sha_bytes(expected_projection.p,expected_projection.n,expected_sha);}
+  lm_sha_bytes(bytes.p,bytes.n,actual_sha);if(!strcmp(mode,"capture")||!strcmp(mode,"seal")||!strcmp(mode,"observe")||!strcmp(mode,"create-capture")){lm_sha_bytes(expected_projection.p,expected_projection.n,expected_sha);}
   ok=1;
  done:
   close_db(&clone);close_db(&db);lm_sb_free(&bytes);lm_sb_free(&copy);lm_sb_free(&expected_projection);lm_sb_free(&expected_rows);
