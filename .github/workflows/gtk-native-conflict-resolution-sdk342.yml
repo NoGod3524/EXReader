@@ -9,7 +9,7 @@ permissions:
 jobs:
   closure-diagnostic:
     if: >-
-      ${{ startsWith(github.event.head_commit.message, 'diagnostic:') && !startsWith(github.event.head_commit.message, 'diagnostic: collections') }}
+      ${{ startsWith(github.event.head_commit.message, 'diagnostic:') && !startsWith(github.event.head_commit.message, 'diagnostic: collections') && !startsWith(github.event.head_commit.message, 'diagnostic: confirmation') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
@@ -141,6 +141,60 @@ jobs:
             build/collections-diagnostic/summary.json
             build/collections-diagnostic/trial-*/
             build/collections-diagnostic/openbox.log
+          if-no-files-found: warn
+  confirmation-diagnostic:
+    if: >-
+      ${{ startsWith(github.event.head_commit.message, 'diagnostic: confirmation') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: python3 tests/gtk_native_conflict_resolution_sdk342/identity.py guard
+      - name: Actions-only syntax validation
+        run: |
+          python3 -m py_compile tests/gtk_native_conflict_resolution_sdk342/diagnose_confirmation.py
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/gtk-native-conflict-resolution-sdk342.yml')"
+      - uses: actions/download-artifact@v4
+        with:
+          name: gtk-native-gtk-40802418300-1
+          run-id: 40802418300
+          github-token: ${{ github.token }}
+          path: build/confirmation-diagnostic/evidence
+      - uses: actions/download-artifact@v4
+        with:
+          name: conflict-gtk-offline-40802418300-1
+          run-id: 40802418300
+          github-token: ${{ github.token }}
+          path: build/confirmation-diagnostic/offline
+      - uses: actions/download-artifact@v4
+        with:
+          name: gtk-windows-package-40802418300-1
+          run-id: 40802418300
+          github-token: ${{ github.token }}
+          path: build/confirmation-diagnostic/package
+      - name: Install runtime and inspection dependencies for the exact pinned executable
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil python3-pyatspi at-spi2-core
+          chmod +x build/confirmation-diagnostic/package/bin/exreader-linux
+      - name: Inspect native confirmation identities then explicitly cancel without graph mutation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NO_AT_BRIDGE: '0'
+        run: |
+          xvfb-run -a -s '-screen 0 1440x2000x24' dbus-run-session -- bash -euc '
+            openbox >build/confirmation-diagnostic/openbox.log 2>&1 & trap "kill $! || true" EXIT
+            /usr/bin/python3 tests/gtk_native_conflict_resolution_sdk342/diagnose_confirmation.py
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-native-confirmation-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/confirmation-diagnostic/summary.json
+            build/confirmation-diagnostic/trial-*/
+            build/confirmation-diagnostic/openbox.log
           if-no-files-found: warn
   smoke:
     if: ${{ !startsWith(github.event.head_commit.message, 'diagnostic:') }}
