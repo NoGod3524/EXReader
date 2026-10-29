@@ -76,3 +76,23 @@ all original reason assertions, pin/sharing protections and 120/115-second
 bounds remain. The qualification source guard allows precisely this new
 probe addition and the source-only product-next document; every other old
 source byte is still frozen. No product feature is enabled by the marker.
+
+## Accepted qualification result
+
+[40938221167 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40938221167)
+passed on exact source 7c769dc1b80cd70cbddd0240dcb5de57729104d0, job
+123674334804. The source/delta/original-assertion guard, actual SDK 3.42 and
+pinned SDK 3.40 builds, exact installed provider/map checks, frozen **43/43**
+and new native **24/24** all passed. The aggregate records **67/67**,
+product_admission=false and full_p0_acceptance=false. The g10, g15 and g17
+original predicates are now reached and pass; all original pin/alias/shared
+source/child-liveness controls remain.
+
+Artifact 12925153535 is 3,799,299 bytes, SHA-256
+7d2706741ffacbb0d0c7b62954ca4d2d28ded029d49a6b89d900fcb5eb514b32.
+The original 40888673546 (64/67), setup-only 40936057156 (0 groups run)
+and 40936421939 (66/67) failures remain. This documentation update is not the
+tested source and triggers no new qualification run. See
+MIGRATION-WINDOWS-PRODUCT-NEXT-20261029.md for the unimplemented production
+protocol and real host lifecycle; a separate actual host startup gate is being
+validated, not silently credited here.
