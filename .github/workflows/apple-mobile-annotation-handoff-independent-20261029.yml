@@ -1,0 +1,87 @@
+name: Independent mobile annotation handoff acceptance
+on:
+  push:
+    branches: [codex/handoff-independent-acceptance-20261029]
+    paths: ['.github/workflows/apple-mobile-annotation-handoff-independent-20261029.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  producer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    steps:
+      - name: Wait for the existing exact producer, never dispatch a duplicate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, time
+          path = "repos/NoGod3524/EXReader/actions/runs/40935165396"
+          deadline = time.monotonic() + 50 * 60
+          previous = None
+          while True:
+              run = json.loads(subprocess.check_output(["gh", "api", path]))
+              assert run["head_sha"] == "55ec49020383ef5073f47502b300ab0b5d0a7cae"
+              assert run["run_attempt"] == 1
+              assert run["head_branch"] == "codex/apple-mobile-annotations-handoff-20261029"
+              status = (run["status"], run["conclusion"])
+              if status != previous:
+                  print(json.dumps({"existing_producer": run["id"], "status": status}), flush=True)
+                  previous = status
+              if run["status"] == "completed":
+                  assert run["conclusion"] in ("success", "failure")
+                  break
+              assert time.monotonic() < deadline, "existing producer did not finish; no acceptance"
+              time.sleep(60)
+          PY
+  audit:
+    needs: producer
+    runs-on: macos-15
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: iphone
+            job: 123666094860
+          - platform: ipad
+            job: 123666094857
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile the independent audit and verify the exact original host
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLATFORM: ${{ matrix.platform }}
+          PRODUCER_JOB: ${{ matrix.job }}
+        run: |
+          python3 -m py_compile tools/reader_composition/apple_annotation_handoff_independent.py
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          platform = os.environ["PLATFORM"]
+          source = "55ec49020383ef5073f47502b300ab0b5d0a7cae"
+          run = 40935165396
+          repo = "repos/NoGod3524/EXReader/"
+          data = json.loads(subprocess.check_output(["gh", "api", repo + "actions/runs/" + str(run) + "/artifacts?per_page=100"]))
+          name = "team24-apple-native-%s-%d-1" % (platform, run)
+          matches = [a for a in data["artifacts"] if a["name"] == name]
+          assert len(matches) == 1
+          item = matches[0]
+          assert not item["expired"] and item["workflow_run"]["head_sha"] == source
+          assert item["workflow_run"]["id"] == run and item["digest"].startswith("sha256:")
+          out = Path("build/apple-annotation-handoff-independent") / platform
+          out.mkdir(parents=True, exist_ok=True)
+          inputs = {"source": source, "run": run, "job": int(os.environ["PRODUCER_JOB"]),
+                    "platform": platform, "artifact": item}
+          (out / "inputs.json").write_text(json.dumps(inputs, indent=2) + "\n")
+          subprocess.run(["python3", "tools/reader_composition/apple_annotation_handoff_independent.py",
+                          "--platform", platform, "--producer-run", str(run),
+                          "--producer-source", source, "--producer-job", os.environ["PRODUCER_JOB"],
+                          "--artifact-id", str(item["id"]), "--artifact-bytes", str(item["size_in_bytes"]),
+                          "--artifact-sha256", item["digest"].removeprefix("sha256:")], check=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-mobile-handoff-independent-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-annotation-handoff-independent/${{ matrix.platform }}/
+          if-no-files-found: error
