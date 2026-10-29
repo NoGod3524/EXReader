@@ -60,6 +60,7 @@ jobs:
           cmake -S extras/opds -B build/perf-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/perf-hash" 2>&1 | tee build/perf-gate/hash-configure.log
           cmake --build build/perf-hash-build --parallel 4 2>&1 | tee build/perf-gate/hash-build.log
           cmake --install build/perf-hash-build 2>&1 | tee build/perf-gate/hash-install.log
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$(cygpath -m "$PWD/build/perf-hash")" >> "$GITHUB_ENV"
       - name: Build the installed reading SDK and the product catalog stack
         run: |
           ws=$(cygpath -m "$PWD")
@@ -186,6 +187,7 @@ jobs:
           cmake -S extras/opds -B build/perf-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/perf-hash" 2>&1 | tee build/perf-logs/hash-configure.log
           cmake --build build/perf-hash-build --parallel 4 2>&1 | tee build/perf-logs/hash-build.log
           cmake --install build/perf-hash-build 2>&1 | tee build/perf-logs/hash-install.log
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$(realpath "$PWD/build/perf-hash")" >> "$GITHUB_ENV"
       - name: Build the frozen SDK, the GTK product host, the payload and the corpus probe
         run: |
           set -o pipefail
@@ -234,6 +236,7 @@ jobs:
               --seed build/perf-probe/seed_library \
               --output build/perf-evidence \
               --launches 32 2>&1 | tee build/perf-logs/sampler.log
+            python3 tests/reader_product_performance_handoff/sample_gtk_interactions.py               --payload build/perf-package/EXReader-Linux               --tarball "$PWD/build/perf-package/EXReader-Linux.tar.gz"               --seed build/perf-probe/seed_library               --output build/perf-interactions               --launches 12 2>&1 | tee build/perf-logs/interactions.log
             pkill -x xclip 2>/dev/null || true
           '
       - name: Preserve the raw logs next to the raw samples
@@ -256,6 +259,13 @@ jobs:
           name: reader-product-perf-gtk-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/perf-evidence/
           if-no-files-found: error
+      - name: Preserve the interaction samples of this attempt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-product-perf-gtk-interactions-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/perf-interactions/
+          if-no-files-found: warn
   verify:
     name: artifact identity verification
     needs: perf

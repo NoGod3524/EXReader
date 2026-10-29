@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 SDK = '3.42.0'
-NOT_MEASURED = ['scroll', 'locate/jump', 'font switch', 'frame time / dropped frames',
+NOT_MEASURED = ['Windows scroll/font switch', 'locate/jump', 'frame time / dropped frames',
                 'physical-device fluency', 'Apple', 'Android']
 WIN = (('cold_shelf', 'first_screen_interactive_ms'), ('warm_shelf', 'first_screen_interactive_ms'),
        ('warm_shelf', 'shelf_next_page_ms'), ('warm_shelf', 'search_result_ms'),
@@ -34,6 +34,7 @@ def main():
     p.add_argument('--windows-summary', required=True)
     p.add_argument('--windows-build', required=True)
     p.add_argument('--gtk-summary', required=True)
+    p.add_argument('--gtk-interactions')
     p.add_argument('--output', required=True)
     a = p.parse_args()
     source = os.environ.get('GITHUB_SHA', '')
@@ -61,6 +62,19 @@ def main():
     for name, m in sorted(gs['metrics'].items()):
         rows.append({'platform': 'linux', 'metric': name, 'unit': 'ms', 'n': m['count'], 'p50': m['p50_ms'],
                      'p95': m['p95_ms'], 'max': m['max_ms'], 'ratified_threshold': None})
+    if a.gtk_interactions and Path(a.gtk_interactions).exists():
+        gi = load(a.gtk_interactions)
+        if gi.get('source_sha') != source or gi.get('problems'):
+            problems.append('Linux interaction evidence has a different source or failed samples')
+        for name, m in sorted(gi['metrics'].items()):
+            rows.append({'platform': 'linux', 'metric': name, 'unit': 'ms', 'n': m['n'], 'p50': m['p50'],
+                         'p95': m['p95'], 'max': m['max'], 'ratified_threshold': None})
+        ip = gi.get('inter_paint_interval_ms')
+        if ip:
+            rows.append({'platform': 'linux', 'metric': 'inter_paint_interval_proxy_not_frame_time', 'unit': 'ms',
+                         'n': ip['n'], 'p50': ip['p50'], 'p95': ip['p95'], 'max': ip['max'], 'ratified_threshold': None})
+    else:
+        problems.append('Linux interaction summary is missing')
     rss = gs['rss']
     rows.append({'platform': 'linux', 'metric': 'rss_high_water_kb', 'unit': 'KiB',
                  'n': len(rss['per_launch_kb']), 'p50': rss['p50_kb'], 'max': rss['max_kb'], 'ratified_threshold': None})
