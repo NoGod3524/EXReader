@@ -237,6 +237,9 @@ def audit(raw, inventory, source):
     print(json.dumps(dict(inspection_completed=True, windows_f07_accepted=False,
         project_boundary_clean=report['project_boundary_clean'], private_header_dependencies=header_uses,
         source_include_dependencies=source_uses, unknown_source_dependency_count=len(unknown_source),
+        unknown_source_dependency_examples=unknown_source[:16],
+        import_reason_counts={reason: sum(row['reason'] == reason for rows in private.values() for row in rows)
+            for reason in sorted({row['reason'] for rows in private.values() for row in rows})},
         empty_dependency_groups=[row for coverage in dependency_coverage.values() for row in coverage['empty_dependency_groups']],
         ambiguous_header_ownership=ambiguous_headers, provider_findings=provider_findings,
         private_or_unknown_import_count=sum(map(len, private.values())), public_definition_conflict_count=len(public_conflicts),
