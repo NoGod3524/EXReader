@@ -109,6 +109,22 @@ class Contract(unittest.TestCase):
         self.assertEqual(findings[0]['owners'], ['Export'])
         self.assertEqual(unknown[0]['path'], 'extras/unowned/helper.inc')
 
+    def test_empty_dependency_group_is_a_gap_not_coverage(self):
+        obj = 'CMakeFiles/catalog.dir/sqlite3.c.obj'
+        text = obj + ': #deps 0, deps mtime 123 (STALE)\n\n'
+        args = ({obj: 'Catalog'}, {}, 'D:/repo', 'product')
+        with self.assertRaises(ValueError): C.private_header_dependencies(text, *args)
+        gaps = []
+        uses, covered = C.private_header_dependencies(text, *args, empty_dependency_groups=gaps)
+        self.assertFalse(uses); self.assertFalse(covered)
+        self.assertEqual(gaps, [dict(build='product', owner='Catalog', object=obj, advertised=0,
+                                    original_group_header=text.splitlines()[0])])
+        self.assertNotEqual(set(args[0]), covered)
+        with self.assertRaises(ValueError):
+            C.private_header_dependencies(text + text, *args, empty_dependency_groups=[])
+        with self.assertRaises(ValueError):
+            C.private_header_dependencies(text.rstrip() + '\n    D:/repo/private.h\n', *args, empty_dependency_groups=[])
+
     def test_parent_include_alias_is_bound_or_explicitly_unknown(self):
         obj = 'CMakeFiles/catalog.dir/a.cpp.obj'
         text = obj + ': #deps 2, deps mtime 0 (STALE)\n    D:/repo/apps/catalog/../export/src/sha256.inc\n    D:/repo/../../escape/private.h\n'

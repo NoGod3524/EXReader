@@ -175,11 +175,15 @@ def audit(raw, inventory, source):
         if not deps.is_file():
             project_gaps.append('Missing actual Ninja header dependency database: ' + label); continue
         text = inspect('deps-' + label, [ninja, '-C', raw / (C.BUILD + label), '-t', 'deps'], deps)
+        empty_groups = []
         uses, covered = C.private_header_dependencies(text, expected_objects, private_headers, source['workspace'], label,
-                                                     repository_dependencies)
+                                                     repository_dependencies, empty_dependency_groups=empty_groups)
         header_uses.extend(uses)
         dependency_coverage[label] = dict(expected_objects=expected_objects, observed=sorted(covered),
+            empty_dependency_groups=empty_groups,
             extraction_mtime_not_original_validity_proof=True)
+        if empty_groups:
+            project_gaps.append('Unresolved empty original dependency groups (not covered): ' + label)
         if set(expected_objects) != covered: project_gaps.append('Incomplete actual archive/host object header dependency coverage: ' + label)
     source_uses, unknown_source = C.source_include_boundaries(repository_dependencies, source_roots, set(header_owners))
     if unknown_source:
@@ -233,6 +237,7 @@ def audit(raw, inventory, source):
     print(json.dumps(dict(inspection_completed=True, windows_f07_accepted=False,
         project_boundary_clean=report['project_boundary_clean'], private_header_dependencies=header_uses,
         source_include_dependencies=source_uses, unknown_source_dependency_count=len(unknown_source),
+        empty_dependency_groups=[row for coverage in dependency_coverage.values() for row in coverage['empty_dependency_groups']],
         ambiguous_header_ownership=ambiguous_headers, provider_findings=provider_findings,
         private_or_unknown_import_count=sum(map(len, private.values())), public_definition_conflict_count=len(public_conflicts),
         gaps=gaps, project_coverage_gaps=project_gaps), indent=2), flush=True)

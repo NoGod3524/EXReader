@@ -56,6 +56,13 @@ raw ZIP size/digest are pinned, not just artifact names or producer booleans.
   (including noninstalled `.inc` files). Repository/generated dependency paths
   lacking a unique source/public owner remain explicit coverage gaps; this initial
   audit does not grant complete source-boundary clearance for those paths.
+  Actual run 40801970782 observed a zero-dependency SQLite object group in the
+  product build. Partial reports retain every such group as an unresolved gap,
+  exclude it from covered objects, and force project-boundary clearance false.
+  Zero rows are not inferred to mean no includes; extraction-time STALE/VALID is
+  not original validity evidence. Strict parser calls, duplicate groups, extra
+  rows and truncated groups still reject. This permits other findings to be
+  authenticated without admitting incomplete dependency coverage.
 * Original MSVC/Windows SDK external static library bytes, original dumpbin
   hashes and original platform DLL bytes were **not retained**. Current-run dumpbin/Ninja
   are inspectors only. Exact observed PE imports describe dynamic edges but

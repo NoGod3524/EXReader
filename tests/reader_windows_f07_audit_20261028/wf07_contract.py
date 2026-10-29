@@ -192,8 +192,9 @@ def dependency_path(value, workspace):
         raise ValueError('original project include escapes workspace')
 
 
-def private_header_dependencies(text, expected_objects, private_headers, workspace, label, repository_dependencies=None):
-    active, covered, uses = None, set(), []
+def private_header_dependencies(text, expected_objects, private_headers, workspace, label, repository_dependencies=None,
+                                empty_dependency_groups=None):
+    active, covered, seen, uses = None, set(), set(), []
     advertised, observed = 0, 0
     for line in text.splitlines():
         match = re.match(r'([^\s].+?\.obj):\s+#deps\s+(\d+)', line)
@@ -203,11 +204,17 @@ def private_header_dependencies(text, expected_objects, private_headers, workspa
             active = (expected_objects[obj], obj) if obj in expected_objects else None
             advertised, observed = int(match[2]), 0
             if active:
-                require(advertised > 0, 'empty exported-target dependency record: ' + json.dumps(dict(
+                empty_record = dict(
                     build=label, owner=active[0], object=obj, advertised=advertised,
-                    original_group_header=line), sort_keys=True))
-                require(obj not in covered, 'duplicate object dependency group')
-                covered.add(obj)
+                    original_group_header=line)
+                # Strict callers still reject. The native partial-report path
+                # may retain this unresolved group, but never count it covered.
+                if empty_dependency_groups is None:
+                    require(advertised > 0, 'empty exported-target dependency record: ' + json.dumps(empty_record, sort_keys=True))
+                require(obj not in seen, 'duplicate object dependency group')
+                seen.add(obj)
+                if advertised > 0: covered.add(obj)
+                else: empty_dependency_groups.append(empty_record)
             continue
         if not line.startswith('    '):
             require(active is None or observed == advertised, 'unparsed/truncated object dependency group')
