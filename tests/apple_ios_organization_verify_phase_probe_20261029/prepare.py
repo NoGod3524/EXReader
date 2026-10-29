@@ -79,8 +79,15 @@ def host_sources():
 
     model.once('        self.accountProfile = profile\n', '        OrgPhase.boot()\n        self.accountProfile = profile\n')
     model.once('                if fresh {\n', '                if fresh {\n                    OrgPhase.files(folder, after: false)\n')
-    model.once('                    self.defaults.removeObject(forKey: "EXRLastBook")\n',
-        '                    OrgPhase.files(folder, after: true)\n                    self.defaults.removeObject(forKey: "EXRLastBook")\n')
+    fresh_cleanup = (
+        '                    for name in ["library.sqlite", "library.sqlite-wal", "library.sqlite-shm",\n'
+        '                                 "reader-catalog.db", "reader-catalog.db-wal", "reader-catalog.db-shm",\n'
+        '                                 "reader-catalog.db-journal"] {\n'
+        '                        try? FileManager.default.removeItem(at: folder.appendingPathComponent(name))\n'
+        '                    }\n')
+    last_book_reset = '                    self.defaults.removeObject(forKey: "EXRLastBook")\n'
+    model.once(fresh_cleanup + last_book_reset,
+        fresh_cleanup + '                    OrgPhase.files(folder, after: true)\n' + last_book_reset)
     model.once('                    self.traceUITest("startup-publish rows=\\(rows.count)")\n',
         '                    OrgPhase.event(4, self, a: Int64(rows.count))\n                    self.traceUITest("startup-publish rows=\\(rows.count)")\n')
     start = model.text.index('    func verifyOrganizationOriginal(')
