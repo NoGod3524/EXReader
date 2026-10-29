@@ -22,16 +22,25 @@ from continuation_contract import APPLEDOUBLE_LIMIT, appledouble_content
 from privacy_scan import inventory, scan_file, needles, identity
 from authenticate_continuation import verify_ios_admission
 
-RUN = '40839064448'
-SOURCE = 'abd16571fda41b5bc936fcbcfb9a125554992c2e'
+RUN = '40858915090'
+SOURCE = '6803602e5791eafa69a6e61bc5499d36cd31d92e'
 SOURCE_FILE = 'tests/apple_password_privacy_20261028/continuation_ui/PasswordPrivacyContinuationUITests.swift'
 SOURCE_SHA = '92629443887d6218722d65b9c4a545f90341fa65167ff8cdd73bde52921cca5f'
 SOURCE_LAST_LINE = 301
 SOURCE_PATH = '/Users/runner/work/EXReader/EXReader/' + SOURCE_FILE
 # Exact terminal three-platform attempt-1 uploads; all originals stay retained.
-# Timing is already independently replayed in this original run. This localizes
-# its native failures, including an iPad with no first callback, not acceptance.
+# Timing/member integrity already replayed; exact failed native operations remain
+# unknown. Four/three/three checkpoints are progress, never sequence acceptance.
 ARTIFACTS = {
+    'macos': (12890808734, 73495841, 'dbe04fd8546e3f287e7255e7cee01532479a0c24ca3c55ac5ddbb1d49fa984f2'),
+    'iphone': (12891029288, 201548440, '737c604cde22560e045c5b5edebc6ed5a7a8cbfea9423b1b991550eb2161a60c'),
+    'ipad': (12892140802, 204032016, '792bc99aeda70476c54e040dce57c326f8833edb1ad99c01eb723253c5c9053d'),
+}
+# The completed profile remains bound to its historical inputs, not the newly
+# repinned default diagnosis. This does not authorize another profile run.
+PROFILE_RUN = '40839064448'
+PROFILE_SOURCE = 'abd16571fda41b5bc936fcbcfb9a125554992c2e'
+PROFILE_ARTIFACTS = {
     'macos': (12882218229, 165944812, '8e57858429168377b890a533de823b66dd215fe5279a402c4fd103fbda196987'),
     'iphone': (12882548477, 215120884, '3375a7fbbd91697532c6447b3f336715a8512039c6f89efad736342a60a3133b'),
     'ipad': (12883131501, 160391222, '001a9b42d19044057fcc5ecf580cffa60050a837b1d9a6a38f46d49277365dda'),
@@ -527,6 +536,34 @@ def attachment_summary(directory):
             'token_presence_is_actual_ui_state_proof': False, 'images_not_ocr_interpreted': True}
 
 
+def inspect_native_result(folder, files, report):
+    """Independent native extraction AFTER byte/lifecycle admission only.
+
+    Later scan/fixture/network/admission refusals remain fatal and retain this
+    validated partial report. No raw output or exception operand is returned.
+    """
+    diagnostic_stage('xcresult-copy')
+    require(any(name.startswith('privacy.xcresult/') for name in files),
+            'original request or native-result evidence absent')
+    # xcresulttool may update metadata. Parse only a disposable copy after
+    # every retained original member was authenticated above.
+    with tempfile.TemporaryDirectory(prefix='privacy-xcresult-diagnostic-') as temporary:
+        copied = shutil.copytree(folder / 'privacy.xcresult', os.path.join(temporary, 'privacy.xcresult'))
+        diagnostic_stage('xcresult-parser')
+        done = subprocess.run(['xcrun', 'xcresulttool', 'get', 'object', '--legacy', '--path', copied,
+                               '--format', 'json'], capture_output=True, timeout=120)
+        require(done.returncode == 0, 'native result parser refused')
+        diagnostic_stage('xcresult-issues')
+        report['xcresult'] = xcresult_issues(json.loads(done.stdout))
+        exported = Path(temporary) / 'attachments'
+        diagnostic_stage('attachment-export')
+        done = subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', copied,
+                               '--output-path', str(exported)], capture_output=True, timeout=120)
+        require(done.returncode == 0, 'native attachment exporter refused')
+        diagnostic_stage('attachment-summary')
+        report['exported_attachments'] = attachment_summary(exported)
+
+
 def diagnose_platform(out, platform, identifier, size, digest):
     global CURRENT_MEMBER_INTEGRITY, CURRENT_PLATFORM, CURRENT_SAFE_REPORT
     CURRENT_PLATFORM = platform
@@ -569,6 +606,7 @@ def diagnose_platform(out, platform, identifier, size, digest):
     report['producer_lifecycle_receipt'] = lifecycle
     report['producer_receipt_is_event_trace_proof'] = False
     report['activity_timing'] = activity_timing(folder / 'native.log')
+    inspect_native_result(folder, files, report)
     diagnostic_stage('scan-summaries')
     for stage in STAGES:
         name = stage + '-privacy-scan.json'
@@ -587,24 +625,6 @@ def diagnose_platform(out, platform, identifier, size, digest):
     require('requests.json' in files and any(name.startswith('privacy.xcresult/') for name in files),
             'original request or native-result evidence absent')
     report['network'] = network_summary(result, json.loads((folder / 'requests.json').read_text()))
-    # xcresulttool may update metadata. Parse only a disposable copy after
-    # every retained original member was authenticated above.
-    with tempfile.TemporaryDirectory(prefix='privacy-xcresult-diagnostic-') as temporary:
-        diagnostic_stage('xcresult-copy')
-        copied = shutil.copytree(folder / 'privacy.xcresult', os.path.join(temporary, 'privacy.xcresult'))
-        diagnostic_stage('xcresult-parser')
-        done = subprocess.run(['xcrun', 'xcresulttool', 'get', 'object', '--legacy', '--path', copied,
-                               '--format', 'json'], capture_output=True, timeout=120)
-        require(done.returncode == 0, 'native result parser refused')
-        diagnostic_stage('xcresult-issues')
-        report['xcresult'] = xcresult_issues(json.loads(done.stdout))
-        exported = Path(temporary) / 'attachments'
-        diagnostic_stage('attachment-export')
-        done = subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', copied,
-                               '--output-path', str(exported)], capture_output=True, timeout=120)
-        require(done.returncode == 0, 'native attachment exporter refused')
-        diagnostic_stage('attachment-summary')
-        report['exported_attachments'] = attachment_summary(exported)
     diagnostic_stage('admission-replay')
     report['independent_ios_admission_replay'] = None
     if platform != 'macos':
@@ -653,7 +673,7 @@ def main():
 
 def capture_profile_main():
     from continuation_log_capture import retained_profile
-    report = retained_profile(ROOT / 'build/apple-password-capture-profile', ARTIFACTS, SOURCE, RUN)
+    report = retained_profile(ROOT / 'build/apple-password-capture-profile', PROFILE_ARTIFACTS, PROFILE_SOURCE, PROFILE_RUN)
     print(json.dumps(report, sort_keys=True), flush=True)
     return report['profile_complete'] and report['performance_gate'] and not report['profile_refused']
 

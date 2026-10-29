@@ -49,7 +49,120 @@ def diagnostic_appledouble(attributes=None, resource=b''):
             struct.pack('>6I', 9, 50, len(finder), 2, 50 + len(finder), len(resource)) + finder + resource)
 
 
+def native_order_control(test, root, *, changed_member=False, sealed=True, bad_scan=False,
+                         native_present=True, parser_failure=None):
+    """Actions-only synthetic archive through the REAL admission/native helper."""
+    receipt = {'admission_closed': True, 'active_handlers': 0, 'admitted_handlers': 533,
+        'rejected_handlers': 0, 'serving_stopped': True, 'drained': True, 'failed': False,
+        'cleanup': {'certificate': 'completed', 'simulator-shutdown': 'not-required', 'simulator-erase': 'not-required'},
+        'outer_limit_seconds': 4800, 'drain_limit_seconds': 90}
+    members = {'native.log': (SOURCE_PATH + ':245: error: XCTAssertNil failed private-operand\n').encode(),
+               'fixture-failures.json': b'["private-unknown-fixture-operand"]'}
+    if native_present: members['privacy.xcresult/Info.plist'] = b'synthetic protocol fixture, not actual xcresult'
+    if bad_scan: members['remember_closed-privacy-scan.json'] = b'{"private-unknown-root":{"accepted":false}}'
+    result = {'source_sha': SOURCE, 'run_id': RUN, 'attempt': '1', 'platform': 'macos',
+        'accepted': False, 'diagnostic_only': True, 'full_f10_accepted': False, 'sequence_complete': False,
+        'evidence_sealed': sealed, 'lifecycle': receipt, 'failure': 'RuntimeError',
+        'commands': [{'role': 'native', 'exit': 65}],
+        'strict_privacy_checks': dict.fromkeys(inspector.STAGES, False),
+        'checkpoints': dict.fromkeys(inspector.STAGES, {}),
+        'files': {name: {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()} for name, data in members.items()}}
+    archive = root / 'control.zip'
+    with zipfile.ZipFile(archive, 'w') as zipped:
+        for name, data in members.items():
+            zipped.writestr(name, data + b'changed' if changed_member and name == 'native.log' else data)
+        zipped.writestr('result.json', json.dumps(result))
+    payload = archive.read_bytes(); digest = hashlib.sha256(payload).hexdigest()
+    metadata = {'id': 123, 'name': 'password-continuation-native-macos-' + RUN + '-1',
+        'workflow_run': {'id': int(RUN), 'head_sha': SOURCE}, 'size_in_bytes': len(payload),
+        'digest': 'sha256:' + digest, 'expired': False}
+    issue = {'_type': {'_name': 'TestFailureIssueSummary'},
+        'message': {'_value': 'XCTAssertNil failed private-operand'}, 'testCaseName': {'_value': CASE},
+        'documentLocationInCreatingWorkspace': {'url': {'_value': 'file://' + SOURCE_PATH + '#StartingLineNumber=245'}}}
+    calls, stages = [], []
+    real_stage = inspector.diagnostic_stage
+    def stage(name): stages.append(name); real_stage(name)
+    def command(argv, **kwargs):
+        if argv[:2] == ['gh', 'api']:
+            test.assertTrue(argv[2].endswith('/actions/artifacts/123/zip'))
+            kwargs['stdout'].write(payload)
+            return subprocess.CompletedProcess(argv, 0)
+        test.assertEqual(argv[:2], ['xcrun', 'xcresulttool'])
+        test.assertTrue(kwargs['capture_output']); test.assertEqual(kwargs['timeout'], 120)
+        calls.append(argv[2])
+        if argv[2] == 'get':
+            return subprocess.CompletedProcess(argv, 1 if parser_failure == 'exit' else 0,
+                b'not-json private-operand' if parser_failure == 'json' else json.dumps([issue]).encode(), b'private-stderr-operand')
+        test.assertEqual(argv[2:4], ['export', 'attachments'])
+        exported = Path(argv[-1]); exported.mkdir(); (exported / 'manifest.json').write_text('[]')
+        return subprocess.CompletedProcess(argv, 0, b'private-stdout-operand', b'private-stderr-operand')
+    out = root / 'out'; out.mkdir()
+    with patch.dict(os.environ, {'GITHUB_REPOSITORY': 'NoGod3524/EXReader'}), \
+            patch.object(inspector.subprocess, 'check_output', return_value=json.dumps(metadata).encode()), \
+            patch.object(inspector.subprocess, 'run', side_effect=command), \
+            patch.object(inspector, 'diagnostic_stage', side_effect=stage), \
+            patch.object(inspector, 'CURRENT_SAFE_REPORT', None), patch.object(inspector, 'CURRENT_MEMBER_INTEGRITY', None), \
+            patch.object(inspector, 'CURRENT_PLATFORM', None), \
+            patch.object(inspector, 'inspect_native_result', wraps=inspector.inspect_native_result) as native:
+        try: inspector.diagnose_platform(out, 'macos', 123, len(payload), digest)
+        except Exception as error: refusal = inspector.current_refusal(error)
+        else: test.fail('later refusal unexpectedly accepted')
+        entered = native.call_count
+    inspector.diagnostic_stage('entry')
+    return refusal, calls, stages, entered
+
+
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_current_failure_pins_and_actual_profile_dispatch_are_separate(self):
+        self.assertEqual(RUN, '40858915090')
+        self.assertEqual(SOURCE, '6803602e5791eafa69a6e61bc5499d36cd31d92e')
+        self.assertEqual(ARTIFACTS, {
+            'macos': (12890808734, 73495841, 'dbe04fd8546e3f287e7255e7cee01532479a0c24ca3c55ac5ddbb1d49fa984f2'),
+            'iphone': (12891029288, 201548440, '737c604cde22560e045c5b5edebc6ed5a7a8cbfea9423b1b991550eb2161a60c'),
+            'ipad': (12892140802, 204032016, '792bc99aeda70476c54e040dce57c326f8833edb1ad99c01eb723253c5c9053d')})
+        self.assertIsNot(ARTIFACTS, inspector.PROFILE_ARTIFACTS)
+        with patch('continuation_log_capture.retained_profile', return_value={
+                'profile_complete': True, 'performance_gate': True, 'profile_refused': False}) as profile, patch('builtins.print'):
+            self.assertTrue(inspector.capture_profile_main())
+            profile.assert_called_once_with(ROOT / 'build/apple-password-capture-profile',
+                inspector.PROFILE_ARTIFACTS, inspector.PROFILE_SOURCE, inspector.PROFILE_RUN)
+
+    def test_actual_native_helper_requires_member_and_lifecycle_admission(self):
+        for options, code in [({'changed_member': True}, 'member-bytes'), ({'sealed': False}, 'unsealed-evidence')]:
+            with tempfile.TemporaryDirectory() as temporary:
+                refusal, calls, stages, entered = native_order_control(self, Path(temporary), **options)
+                self.assertEqual(refusal['refusal_code'], code); self.assertEqual(calls, []); self.assertEqual(entered, 0)
+                self.assertNotIn('xcresult-parser', stages); self.assertTrue(refusal['diagnostic_refused'])
+        with tempfile.TemporaryDirectory() as temporary:
+            refusal, calls, stages, entered = native_order_control(self, Path(temporary), native_present=False)
+            self.assertEqual(refusal['refusal_code'], 'required-evidence-absent')
+            self.assertEqual(refusal['stage'], 'xcresult-copy'); self.assertEqual(calls, []); self.assertEqual(entered, 1)
+
+    def test_native_partial_evidence_survives_fatal_scan_or_fixture_refusal(self):
+        for bad_scan, code, stage in [(False, 'fixture-failure-shape', 'fixture-failures'), (True, 'scan-root', 'scan-summaries')]:
+            with tempfile.TemporaryDirectory() as temporary:
+                refusal, calls, stages, entered = native_order_control(self, Path(temporary), bad_scan=bad_scan)
+                self.assertEqual(calls, ['get', 'export']); self.assertEqual(entered, 1)
+                self.assertLess(stages.index('lifecycle-receipt'), stages.index('xcresult-copy'))
+                self.assertLess(stages.index('attachment-summary'), stages.index('scan-summaries'))
+                self.assertEqual((refusal['stage'], refusal['refusal_code']), (stage, code))
+                self.assertTrue(refusal['diagnostic_refused']); self.assertFalse(refusal['accepted'])
+                report = refusal['validated_partial_report']
+                self.assertEqual(report['xcresult']['issues'][0]['source_line'], 245)
+                self.assertEqual(report['completed_checkpoints'], inspector.STAGES)
+                self.assertEqual(report['strict_privacy_checks'], dict.fromkeys(inspector.STAGES, False))
+                self.assertFalse(report['full_f10_accepted']); self.assertFalse(report['sequence_complete'])
+                self.assertNotIn('private-', json.dumps(refusal))
+
+    def test_actual_native_parser_failure_is_finite_not_an_empty_issue_result(self):
+        for failure, stage, code in [('exit', 'xcresult-parser', 'xcresult-tool'), ('json', 'xcresult-issues', 'unclassified')]:
+            with tempfile.TemporaryDirectory() as temporary:
+                refusal, calls, stages, entered = native_order_control(self, Path(temporary), parser_failure=failure)
+                self.assertEqual((refusal['stage'], refusal['refusal_code']), (stage, code))
+                self.assertEqual(calls, ['get']); self.assertEqual(entered, 1)
+                self.assertNotIn('xcresult', refusal['validated_partial_report'])
+                self.assertTrue(refusal['diagnostic_refused']); self.assertNotIn('private-', json.dumps(refusal))
+
     def test_appledouble_structure_is_not_content_or_namespace_acceptance(self):
         plain = appledouble_content(diagnostic_appledouble(resource=b'opaque executable payload'))
         self.assertEqual(plain['attribute_layout'], 'absent')
@@ -411,10 +524,10 @@ class ContinuationDiagnosticControls(unittest.TestCase):
         finally:
             diagnostic_stage('entry')
 
-    def test_current_three_artifacts_and_source_extent_are_exact(self):
-        self.assertEqual(RUN, '40839064448')
-        self.assertEqual(SOURCE, 'abd16571fda41b5bc936fcbcfb9a125554992c2e')
-        self.assertEqual(ARTIFACTS, {
+    def test_historical_profile_artifacts_and_source_extent_remain_exact(self):
+        self.assertEqual(inspector.PROFILE_RUN, '40839064448')
+        self.assertEqual(inspector.PROFILE_SOURCE, 'abd16571fda41b5bc936fcbcfb9a125554992c2e')
+        self.assertEqual(inspector.PROFILE_ARTIFACTS, {
             'macos': (12882218229, 165944812, '8e57858429168377b890a533de823b66dd215fe5279a402c4fd103fbda196987'),
             'iphone': (12882548477, 215120884, '3375a7fbbd91697532c6447b3f336715a8512039c6f89efad736342a60a3133b'),
             'ipad': (12883131501, 160391222, '001a9b42d19044057fcc5ecf580cffa60050a837b1d9a6a38f46d49277365dda')})
