@@ -143,6 +143,37 @@ pending Actions evidence. Synthetic controls reject omitted dependency files and
 unexpected hidden entries. The terminal aggregate remains failed, all prior runs
 are preserved, and there is no six-entry or full F07 claim.
 
+### Fifth measured run: demangled LLD symbol misclassified as a file
+
+Source `e7ee15292b559bcd772ce2745cb24c514c75deda`, run `40813714379/1`,
+completed macOS native/capture with the strict archive equality gate unchanged.
+All four diagnostic archive pairs had identical hashes, sizes and zero differing
+bytes. The fourth-run mismatch did not recur; its cause remains unclassified.
+Linux, Windows and the complete iPhone/iPad job also completed native/capture;
+both fresh simulators again passed codec40/retained76. The protocol job passed63
+synthetic controls. All six native/configuration steps passed. Authentication
+verified complete Linux and Windows uploads, their exact per-file inventories and
+nested F06/native-entry evidence, then correctly refused the failed Android
+producer. Hidden-file transport is therefore measured working for those two
+current artifacts, not retrospectively proved for the old missing set. macOS/iOS
+independent authentication and cross-six wire equality were not reached. The
+terminal aggregate and all six-entry/F07 acceptance flags remain failed/false.
+
+Android again completed the native/configuration step. Its new exact diagnostic
+proved that the validator mistook the demangled symbol
+`long std::__ndk1::(anonymous namespace)::as_integer_helper<...>` for a map input
+because it contained `:(`. That generated the nonexistent path `long std::__ndk1:`;
+it was not evidence of an absent compiler object. The source-only follow-up
+preserves LLD's row hierarchy after the numeric fields instead of detecting input
+rows by a symbol substring. The [LLVM 18.1.8 map writer](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.8/lld/ELF/MapFile.cpp)
+prints distinct output/input/symbol indentation. The parser requires exactly those
+0/8/16-space levels, rejects unsupported rows and input syntax, and retains all
+actual input path/member/extent checks. A demangled symbol is never itself a
+provider contribution. Controls include the observed symbol, bad indentation,
+unknown intervening input, wrong provider, missing contribution and out-of-range
+address. No NDK filename or private-symbol exemption is added. Actual revised
+parser compatibility and later closure stages still require Actions measurement.
+
 ### Authorized Android caller extension, 2026-10-29 01:35 UTC
 
 The user confirmed “那我确认” (Sentinel_6c49c0656690819180749be6664bd059,
