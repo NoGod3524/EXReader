@@ -1945,7 +1945,9 @@ static int mirror_lock_acquire(ctx *c) {
        reaches this path, and normal cleanup only removes its exact own lock. */
     lm_remove(c->lock);
   }
-  lock=lm_fopen(c->lock,"wx");
+  /* The nonce is verified as raw bytes. Avoid CRT LF-to-CRLF translation while
+     retaining exclusive creation and the exact identity/content checks below. */
+  lock=lm_fopen(c->lock,"wbx");
   if(!lock) {
     fail(c,lm_exists(c->lock)?O_BUSY:O_FAILED,"target-busy","cannot acquire the shared migration lock");return 0;
   }
