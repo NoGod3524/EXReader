@@ -14,13 +14,13 @@ with zipfile.ZipFile(io.BytesIO(raw)) as z:
     assert len(starts)>=1
     traces=[]
     for start in starts:
-        end=next((i for i in range(start+1,len(lines)) if lines[i].startswith("Test Case ")),len(lines))
+        end=next((i for i in range(start+1,len(lines)) if lines[i].startswith("Test Case ") and any(w in lines[i] for w in (" started.", " failed (", " passed ("))),len(lines))
         case=lines[start:end]
         actions=[l for l in case if any(x in l for x in ("Tap ","Click ","Type ","Scroll ","Swipe ","Added attachment named"))]
         errors=[]
         for i,line in enumerate(case):
             if (".swift:" in line and "error:" in line) or ("execution time" in line.lower() and ("exceed" in line.lower() or "allowance" in line.lower())):
-                errors.append({"line":start+i+1,"context":case[max(0,i-20):i+170]})
+                errors.append({"line":start+i+1,"context":case[max(0,i-20):i+300]})
         traces.append({"test_start":lines[start],"actions":actions,"errors":errors,"last_lines":case[-15:]})
     result={"original_run":40923468266,"source":"622b9558f79eda07211e15c51bffcd728da6c553","artifact":12922397214,"inspection_only":True,"traces":traces}
 out=Path("build/annotation-mobile-timing");out.mkdir(parents=True,exist_ok=True)
