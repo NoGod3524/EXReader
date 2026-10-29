@@ -1,0 +1,220 @@
+# Real existing-target recovery candidate — 2026-10-29
+
+## Status
+
+Source implementation and independent review are in progress. **No native build,
+fixture, test, artifact parse or runtime pass has been performed locally.** This
+is not full P0 acceptance and is not a change to the installed SDK or old test
+contracts. The first and at most one independently reviewed repair round are
+bounded to 610 configured runner-minutes across the two same-SHA workflows.
+
+The previous isolated qualification, source
+`14e3d0c60428a9baf33f2982d70689c0d654d3e0`, run `40820464299`, passed 126/126:
+41 unchanged preflight plus 22 isolated handoff groups on each POSIX platform.
+That result did **not** qualify this real importer, Windows handoff, new-target
+publication, complete entity traversal or production P0. It is a prerequisite,
+not an acceptance result for these changed owners.
+
+## Exact scope and user-visible availability
+
+Two modified owners:
+
+- `extras/migration/CMakeLists.txt`
+- `extras/migration/src/lm_main.c`
+
+Nine additions:
+
+- `extras/migration/src/lm_recovery.h`
+- `extras/migration/src/lm_recovery.c`
+- `extras/migration/src/lm_recovery_worker.c`
+- `tests/migration/recovery_integration_20261029/CMakeLists.txt`
+- `tests/migration/recovery_integration_20261029/fixture_probe.c`
+- `tests/migration/recovery_integration_20261029/run.py`
+- `.github/workflows/migration-recovery-integration-20261029.yml`
+- `.github/workflows/migration-recovery-integration-companion-20261029.yml`
+- this document
+
+The separate executable is `exreader-legacy-migrate-recovery`; its installed
+sibling is `exreader-migration-recovery-worker`. The two original executables
+retain their prior compile branches and behavior. The new macro alone selects
+the recovery protocol and still calls the real original `process_book`,
+`process_note`, ledger and full importer validation routines.
+
+This candidate supports **existing regular singly linked targets on native
+Linux ext filesystems or macOS APFS only**, with a private, cooperatively stable
+parent namespace. Windows and a missing target return a precise unsupported
+result before target SDK open, target creation, recovery root, output or stage.
+They never fall back to either old migration implementation. Network filesystems,
+symlink/reparse/hardlink namespaces and unknown catalog shapes are unqualified. Embedded NUL/invalid UTF-8 or non-TEXT
+public string fields refuse instead of allowing two C string projections to
+truncate or coerce them identically.
+
+After the real target SDK opening marker, cancellation or `--dry-run` can leave
+persistent evidence requiring the explicit
+`recover-migration --pack ORIGINAL --target LIBRARY` command. A successful
+preview is **not** reported as recovery-ready: `dry-run-recovery-required` is a
+nonzero pending result. Actual rollback request and literal SDK status are
+reported separately; SDK OK does not prove physical cleanup or no internal I/O.
+
+An existing bounded-storage EPUB requires `--recovery-font FONT` for actual
+public bounded-pager validation. This optional dependency is read-only,
+identity/hash-bound and limited to 64 MiB. No font or SDK source is modified.
+Without it, a bounded EPUB baseline refuses before target SDK open. Actual
+part/path, note/progress selectors and public FOUND/MISSING/AMBIGUOUS resolution
+are observed without manufacturing a global anchor or forcing FOUND. Memory
+snapshot EPUB and bounded EPUB retain their distinct storage contracts.
+
+The bounded profile can reject legitimate large libraries, many bounded EPUBs,
+large packs or exhausted evidence chains. Unlimited repeated migration,
+evidence compaction, font substitution, worker replacement, Windows and
+new-target support are not silently supplied. Old targets/readers and ordinary
+writers remain usable after the process exits; default old migrators remain
+blocked by the owned shared barrier. Old `--break-lock`, manually deleting the
+anchor or selecting an old binary are unsupported downgrade paths, not a
+universal protection claim.
+
+## Persistent protocol and real owner lifetime
+
+`T.migration-recovery/anchor.json` and `T.migrate-lock` are never removed by this
+candidate. A separate exact-identity `flock` lease remains alive through SDK
+close, final reporting and process exit. It is not a classic process-wide
+`fcntl` mutex. No record after a released SQLite writer is permission to mutate
+without reacquiring the real SDK owner and comparing a fresh full snapshot.
+
+Records are canonical explicitly encoded JSON, not native ABI structs. Every
+record binds its own inode, ordinal, previous record digest, exact target/root/
+parent, generation, run nonce, original pack digest and retained copy, baseline,
+original mirror preimage, planned mirror, lease, shared barrier, worker and font.
+Unknown keys/order/types, missing/gapped/replaced records, aliases, changed
+identities and incomplete objects refuse; they are not adopted by byte equality.
+This is trusted private-directory provenance, not cryptographic authentication
+against a hostile same-UID actor.
+
+| Boundary | Next permissible action | Failure/restart disposition |
+|---|---|---|
+| No reservation | Metadata/capability and validated pack | Unsupported target/platform creates no target state |
+| Partial root/anchor/barrier | No target SDK | Recognizable incomplete state remains refused, never deleted |
+| Complete durable anchor, no BASE | Read-only capture and public clone validation | Explicit retry only; no whole-state rollback claim |
+| BASE/FRESH durable | Reserve capacity, append/sync SDK_OPENING | No target SDK before complete marker and exact checks |
+| SDK_OPENING durable | Recheck after rendezvous, actual migration_open | Failed/unknown opening remains R-required |
+| Same real SDK writer alive | Isolated full committed-snapshot comparison | Changed baseline/unknown output refuses without releasing fence for admission |
+| R parity established | Restore only exact owned mirror via retained preimage copies | Prepared/restored edges and originals survive uncertainty |
+| Importer completed uncommitted | Exact plan + separate work file; PREP | No sole evidence consumed |
+| Planned mirror published | Sync source/destination parents, MIRROR record | Failure retains permanent anchor and originals |
+| Before COMMIT | Recheck entire chain/target/owned mirror after last pause | Foreign equal-byte inode still refuses before COMMIT request |
+| Literal successful COMMIT | ACK written, then synchronized | Missing/partial/foreign ACK never creates success or automatic R |
+| Valid acknowledged generation | Explicit fresh C baseline, then new SDK owner/full recompare | Later ordinary writes preserved; old pack is not replayed over unknown COMMIT |
+| SDK owner closed | Exact final chain/mirror check, retained lease | No raw target restoration, journal deletion or evidence retirement |
+
+R compares current full supported content with the original baseline; changed
+later state refuses rather than overwrites. No-op/ABA commits may have equal
+current state: equality is **current parity**, not proof that a historic COMMIT
+never occurred. C requires actual ACK lineage and exact internal ledger bytes,
+but ledger equality alone is not recovery proof: every C generation captures a
+fresh full baseline and repeats the comparison under its new live owner.
+
+`migrate` (including dry-run/break-lock), explicit recovery, recover-mirror,
+dump, verify, export-ledger and inspect-with-target all enter the pre-SDK gate.
+Pending policy is not implicitly recovered by a read command. Admitted reads
+operate on a coherent private clone, never a schema-upgrading SDK open of the
+actual target. Existing-root reads hold the protocol lease. Initially rootless
+reads recheck that no permanent root/shared barrier/legacy intent appeared during
+capture; an earlier coherent SQLite snapshot is not current policy permission.
+Rootless reads also bind the actual original mirror to the same snapshot ledger,
+retain its exact identity through return, and copy only those validated bytes
+to the private clone sidecar; artificial clone-side absence does not hide
+original divergence.
+
+The worker is an independent `posix_spawn`/exec, with inherited descriptors closed,
+no inherited SDK/SQLite handles or lease FD. Its launch envelope binds actual
+executable digest, request nonce, target and output-root identity, waited PID/
+status, exact result and independently reread output. Worker claims are not
+accepted from timeout, partial result, missing output or another nonce directory.
+
+Under a live parent writer, raw same-parent reads use open/fstat identity checks.
+An actual target-alias or unknown descriptor is quarantined until process exit,
+not closed and thereby allowed to drop SQLite's classic POSIX locks. Special
+files use nonblocking/no-follow opens; directory sync opens O_DIRECTORY. Exact
+checks at controlled boundaries are not an atomic compare-and-swap filesystem
+API: stable/cooperative namespace custody remains required.
+
+## Content and resource admission
+
+The target is read through the pinned SDK public SQLite implementation selected by the imported target graph in a
+private-cache READ snapshot with read_uncommitted OFF. Canonical framing includes
+schema objects, table columns, index definitions, foreign keys, hidden rowids,
+all supported typed values, application/user versions and integrity/FK checks.
+The accepted catalog derives from a separate SDK-created private profile, with
+only exact known schema6-to-7 additions and ledger DDL admitted.
+
+A private backup must match the entire original canonical baseline. SDK opens
+only that clone for pre-open public validation: all original rows remain exact,
+only the explicit schema6 upgrade is permitted, and independent public getter
+projections are compared with the original pinned snapshot. Source extents and
+bytes, covers, metadata, reflow/fixed notes, all supported format values,
+progress, bounded EPUB and audio are included. The Actions oracle separately
+checks expected typed values and fixture records; two matching native serializers
+alone do not qualify correctness.
+
+Resource formulas (new owned evidence/worker profile, **not a whole SDK disk cap**):
+
+- Each canonical/projection/file/clone stream: at most 64 MiB. Worker explicit
+  outputs have an aggregate 192 MiB and 24-file cap, including per-book bounded
+  EPUB diagnostics. Native clone main/WAL/journal each have RLIMIT_FSIZE 64 MiB;
+  the fixed private SDK profile and small sidecars have separate reserved slack.
+- A capture reserves `6*64 MiB + 4 MiB` before launch; scan reserves
+  `3*64 MiB + 4 MiB`. Parent inventory includes actual allocated blocks and every
+  private run/scanner log, with 512 MiB total and 128 names. It refuses if the
+  next complete reservation cannot fit; it does not reclaim earlier evidence.
+- Backup: 64 pages/step, at most 4096 calls and 16384 conservatively reserved page
+  copies. Pinned source transaction and nonincreasing remaining pages reject
+  restart. Worker CPU/wall supervision is 30 seconds; killed children are waited.
+- Before target SDK open, conservative planned logical size is
+  `baseline + 2*pack bytes + 8*manifest bytes + 8 MiB*book count +
+  128 KiB*note count + 16 MiB`, required to fit 64 MiB. This includes cover and
+  representation slack; real larger inputs refuse rather than become a C result
+  that the next generation cannot scan.
+- Planned mirror side effects reserve three projected streams plus 12*8 KiB
+  records and 1 MiB stream slack. Record capacity is 32, with at least 12 slots
+  reserved before a target SDK opening. A successful fresh attempt uses BASE/
+  OPENING/PREP/MIRROR/ACK; R can add restore-prepared/restored. Error paths append
+  no invented disposition, and partial records consume capacity.
+- The test driver reserves one GiB plus logs/report headroom per case before new
+  fixture creation against a four-GiB workspace envelope. Native children have a
+  120-second process deadline and bounded drained output, not unbounded files.
+
+SQLite target/main/journal/WAL growth and opaque SDK allocation still obey the
+unchanged SDK/importer constraints, not the worker's clone cap. Native ENOSPC,
+EIO and power-loss outcomes cannot be inferred from an actual EBADF sync control.
+Physical journal deletion is never a recovery acceptance criterion here.
+
+## Validation, unchanged red evidence and budgets
+
+Authored new top-level groups: 32 Linux +32 macOS +8 Windows unsupported controls.
+Expected refusals are explicitly labeled, not successful recovery operations.
+The POSIX groups include all four schema6/7 x DELETE/live-WAL combinations, eight
+crash boundaries, full five-book/sixteen-note legacy fixture with exact known
+partials, nine formats/bounded EPUB, actual R/C and three generations, later
+writers, all actual command entries, native fault observation, foreign artifacts,
+actual-FD alias controls, resource and transport failure boundaries.
+
+Each POSIX job separately reruns the unchanged 41 preflight +22 handoff groups.
+Thus the new workflow has 198 top-level groups, while the companion retains every
+original job, assertion and budget unchanged after its name/trigger. Source
+admission enforces exactly these 11 A/M paths against tested14e3d0c6; all other
+SDK, test, owner and workflow bytes remain unchanged.
+
+The original companion accepts its real ancestor/ABI guard and invokes the
+usual original executables. Its old candidate results previously included61/65
+and genuine transaction-architecture mismatches. They remain failures unless
+this run actually proves otherwise; no altered test or status label hides them.
+The old29 mirror matrix has a fixed main.c hash and is not invoked by this
+companion: it must not be represented as29 fresh passes for changed main.c.
+
+New workflow:45 Linux +45 macOS +20 Windows =110 configured minutes. Unchanged
+companion:3*60 +15 =195. One same-SHA round is305, first plus at most one reviewed
+repair is610. No duplicate run follows repeated approval. A third round requires
+an explicit new checkpoint. Link maps corroborate expected archive/symbol presence alongside the exact
+imported-target graph and runtime header/source-ID check; these substring checks
+are not a claim of independent symbol-to-member unique-provider attribution.
+No runtime result is claimed in this source draft.

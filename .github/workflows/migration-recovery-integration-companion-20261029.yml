@@ -1,0 +1,218 @@
+name: Migration recovery integration unchanged full companion 20261029
+on:
+  push:
+    branches: [codex/migration-recovery-integration-20261029]
+    paths:
+      - extras/migration/**
+      - tests/migration/recovery_integration_20261029/**
+      - .github/workflows/migration-recovery-integration-20261029.yml
+      - .github/workflows/migration-recovery-integration-companion-20261029.yml
+concurrency:
+  group: migration-tx-candidate-${{ github.sha }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+env:
+  LEGACY_REF: 24a3e04b6fc456fa3fa68fa7bd6d9cc3b5c4e383
+defaults:
+  run:
+    shell: bash
+jobs:
+  migration:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-22.04, label: linux, py: python3, exe: build/migration/exreader-legacy-migrate, txexe: build/migration/exreader-legacy-migrate-tx, closeprobe: build/migration/migration-source-close, editor: build/migration/migration-review-edit, oldexe: build/old-migration/exreader-legacy-migrate }
+          - { os: windows-latest, label: windows, py: python, exe: build/migration/Release/exreader-legacy-migrate.exe, txexe: build/migration/Release/exreader-legacy-migrate-tx.exe, closeprobe: build/migration/Release/migration-source-close.exe, editor: build/migration/Release/migration-review-edit.exe, oldexe: build/old-migration/Release/exreader-legacy-migrate.exe }
+          - { os: macos-15, label: macos, py: python3, exe: build/migration/exreader-legacy-migrate, txexe: build/migration/exreader-legacy-migrate-tx, closeprobe: build/migration/migration-source-close, editor: build/migration/migration-review-edit, oldexe: build/old-migration/exreader-legacy-migrate }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare evidence directory
+        run: mkdir -p build/evidence build/logs
+      - name: Require the candidate source and unchanged ABI
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor d46241cc9b4dbb57e46753fd67980d0bd73182e8 HEAD
+          grep -q "set(EXR_ABI_VERSION 1)" CMakeLists.txt
+      - name: Build and install a trimmed SDK (core + PDF + library)
+        run: |
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF \
+            -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF \
+            -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/logs/sdk-configure-${{ matrix.label }}.txt
+          cmake --build build/sdk --config Release --parallel 4 2>&1 | tee build/logs/sdk-build-${{ matrix.label }}.txt
+          cmake --install build/sdk --config Release --prefix "${{ github.workspace }}/stage" 2>&1 | tee build/logs/sdk-install-${{ matrix.label }}.txt
+      - name: Check installed documentation for the reported machine paths
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/check_installed_docs.py stage | tee build/logs/installed-doc-paths-${{ matrix.label }}.txt
+      - name: Build the migration tool against the installed SDK
+        run: |
+          cmake -S extras/migration -B build/migration -DEXR_SDK="${{ github.workspace }}/stage" -DEXR_MIGRATION_REVIEW_TESTS=ON -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/logs/tool-configure-${{ matrix.label }}.txt
+          cmake --build build/migration --config Release --parallel 4 2>&1 | tee build/logs/tool-build-${{ matrix.label }}.txt
+          test -f "${{ matrix.exe }}"
+          "${{ matrix.exe }}" --version
+      - name: Install and verify the migration payload
+        run: |
+          set -o pipefail
+          cmake --install build/migration --config Release --prefix "${{ github.workspace }}/migration-stage" 2>&1 | tee build/logs/tool-install-${{ matrix.label }}.txt
+          ${{ matrix.py }} tests/migration/check_install.py migration-stage | tee build/logs/tool-payload-${{ matrix.label }}.txt
+          "migration-stage/bin/exreader-legacy-migrate${{ matrix.label == 'windows' && '.exe' || '' }}" --version
+      - name: Named migration scenarios
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/run_cases.py --tool "${{ matrix.exe }}" --out build/evidence/scenarios-${{ matrix.label }}.json \
+            --workdir build/scenario-work --label ${{ matrix.label }} 2>&1 | tee build/logs/scenarios-${{ matrix.label }}.txt
+      - name: Build the actual SDK 3.40 and original migrator
+        run: |
+          set -o pipefail
+          mkdir -p build/old-source build/old-migration-source
+          git fetch --no-tags --depth=1 origin c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
+          test "$(git rev-parse FETCH_HEAD)" = c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
+          git archive FETCH_HEAD | tar -xf - -C build/old-source
+          git archive FETCH_HEAD -- extras/migration | tar -xf - -C build/old-migration-source
+          cmake -S build/old-source -B build/old-sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF \
+            -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF \
+            -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/logs/old-sdk-configure-${{ matrix.label }}.txt
+          cmake --build build/old-sdk --config Release --parallel 4 2>&1 | tee build/logs/old-sdk-build-${{ matrix.label }}.txt
+          cmake --install build/old-sdk --config Release --prefix "${{ github.workspace }}/old-stage" 2>&1 | tee build/logs/old-sdk-install-${{ matrix.label }}.txt
+          cmake -S build/old-migration-source/extras/migration -B build/old-migration -DEXR_SDK="${{ github.workspace }}/old-stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/logs/old-tool-configure-${{ matrix.label }}.txt
+          cmake --build build/old-migration --config Release --parallel 4 2>&1 | tee build/logs/old-tool-build-${{ matrix.label }}.txt
+      - name: Verify actual schema 6 upgrade and failure preservation
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/old_sdk_compat.py --old-tool "${{ matrix.oldexe }}" --tool "${{ matrix.exe }}" --work build/old-compat 2>&1 | tee build/logs/old-compat-${{ matrix.label }}.txt
+          cp build/old-compat/old-sdk-compat.json build/evidence/old-sdk-compat-${{ matrix.label }}.json
+      - name: Test transaction candidate against ordinary writers and real WAL
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/transaction_candidate.py --tool "${{ matrix.txexe }}" --old-tool "${{ matrix.oldexe }}" --source-close "${{ matrix.closeprobe }}" --work build/transaction-candidate 2>&1 | tee build/logs/transaction-candidate-${{ matrix.label }}.txt
+      - name: Test real GTK reader owner close, migration and reopen
+        if: runner.os == 'Linux'
+        run: |
+          set -o pipefail
+          sudo apt-get update && sudo apt-get install -y libgtk-3-dev pkg-config
+          cmake -S examples/linux -B build/transaction-host -DEXR_SDK="$PWD/stage" -DEXR_SDK_VERSION=3.42.0 -DEXR_MIGRATION_HOST_TEST=ON -DEXR_READER_PAGE_BACKGROUND=ON -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/logs/transaction-host-configure.txt
+          cmake --build build/transaction-host --target exreader-linux-migration-lifecycle --parallel 4 2>&1 | tee build/logs/transaction-host-build.txt
+          python3 tests/migration/linux_host_lifecycle.py --tool "${{ matrix.txexe }}" --old-tool "${{ matrix.oldexe }}" --host build/transaction-host/exreader-linux-migration-lifecycle --font tests/fixtures/fonts/primary.ttf --work build/transaction-host-lifecycle 2>&1 | tee build/logs/transaction-host-lifecycle.txt
+      - name: Fetch the pinned legacy reader sources (test input only; not committed or redistributed)
+        if: always()
+        run: |
+          git fetch --no-tags --depth=1 origin "$LEGACY_REF"
+          test "$(git rev-parse FETCH_HEAD)" = "$LEGACY_REF"
+          mkdir -p build/legacy-src
+          for f in store library registry; do git show "FETCH_HEAD:src/$f.js" > "build/legacy-src/$f.js"; done
+          git show "FETCH_HEAD:package.json" | ${{ matrix.py }} -c "import json,sys; print('legacy package', json.load(sys.stdin)['version'])"
+      - name: Public API edits, late cancellation and concurrent publication regressions
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/review_cases.py --tool "${{ matrix.exe }}" --editor "${{ matrix.editor }}" --output build/migration-review 2>&1 | tee build/logs/review-${{ matrix.label }}.txt
+          cp build/migration-review/review.json build/evidence/review-${{ matrix.label }}.json
+      - name: 'Real browser - create IndexedDB v1 and export with the shipped exporter'
+        if: always()
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/e2e/make_dataset.py build/e2e-data
+          mkdir -p build/e2e-run && cd build/e2e-run
+          npm init -y > /dev/null
+          npm install playwright@1.49.1 2>&1 | tail -3
+          npx playwright install --with-deps chromium 2>&1 | tail -3
+          node ../../tests/migration/e2e/export_e2e.mjs ../e2e-data/spec.json ../legacy-src ../../migration-stage/share/exreader-legacy-migration/exporter/exr-legacy-export.js ../e2e-out 2>&1 | tee ../logs/e2e-export-${{ matrix.label }}.txt
+      - name: Migrate the exported pack and reopen in new processes
+        if: always()
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/e2e/check_e2e.py --tool "${{ matrix.exe }}" --export-dir build/e2e-out --spec build/e2e-data/spec.json --work build/e2e-work \
+            --out build/evidence/e2e-${{ matrix.label }}.json 2>&1 | tee build/logs/e2e-check-${{ matrix.label }}.txt
+      - name: Record artifact identities
+        if: always()
+        run: |
+          cp build/e2e-out/e2e-export.json build/evidence/e2e-export-${{ matrix.label }}.json || true
+          cp build/e2e-out/legacy.exrpack build/evidence/legacy-${{ matrix.label }}.exrpack || true
+          ${{ matrix.py }} tools/check_legacy_migration.py identity --out build/evidence/identity-${{ matrix.label }}.json --label ${{ matrix.label }} \
+            --tool "${{ matrix.exe }}" --sdk stage --exporter migration-stage/share/exreader-legacy-migration/exporter/exr-legacy-export.js \
+            --inputs build/e2e-out/legacy.exrpack build/legacy-src/store.js build/legacy-src/library.js build/legacy-src/registry.js tests/migration/legacy_data.py
+      - name: Run unchanged original scenarios against transaction candidate
+        id: tx_original
+        if: always()
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/run_cases.py --tool "${{ matrix.txexe }}" --out build/evidence/transaction-original-${{ matrix.label }}.json --workdir build/transaction-original-work --label ${{ matrix.label }} 2>&1 | tee build/logs/transaction-original-${{ matrix.label }}.txt
+      - name: Run unchanged migration review against transaction candidate
+        id: tx_review
+        if: always()
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/review_cases.py --tool "${{ matrix.txexe }}" --editor "${{ matrix.editor }}" --output build/transaction-review 2>&1 | tee build/logs/transaction-review-${{ matrix.label }}.txt
+      - name: Run unchanged browser chain against transaction candidate
+        id: tx_browser
+        if: always()
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ${{ matrix.py }} tests/migration/e2e/check_e2e.py --tool "${{ matrix.txexe }}" --export-dir build/e2e-out --spec build/e2e-data/spec.json --work build/transaction-e2e --out build/evidence/transaction-e2e-${{ matrix.label }}.json 2>&1 | tee build/logs/transaction-e2e-${{ matrix.label }}.txt
+      - name: Fail if unchanged candidate scenarios fail
+        if: steps.tx_original.outcome != 'success' || steps.tx_review.outcome != 'success' || steps.tx_browser.outcome != 'success'
+        run: exit 1
+      - name: Preserve evidence and raw logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp12-evidence-${{ matrix.label }}
+          path: |
+            build/evidence/
+            build/logs/
+            build/migration-review/
+            build/old-compat/
+            build/transaction-candidate/
+            build/transaction-host-lifecycle/
+            build/transaction-review/
+            build/transaction-e2e/
+          if-no-files-found: warn
+
+  record:
+    needs: migration
+    if: always()
+    env:
+      MIGRATION_UPSTREAM_RESULT: ${{ needs.migration.result }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wp12-evidence-*
+          path: build/artifacts
+          merge-multiple: true
+      - name: Gate the combined evidence
+        id: gate
+        continue-on-error: true
+        run: |
+          ev="$(find build/artifacts -type d -name evidence | head -1)"
+          echo "evidence directory: $ev"
+          python3 tools/check_legacy_migration.py gate --evidence "$ev" --require linux windows --out build/summary.json
+      - name: Reject incomplete and mismatched gate evidence
+        if: steps.gate.outcome == 'success'
+        run: |
+          ev="$(find build/artifacts -type d -name evidence | head -1)"
+          python3 tests/migration/review_gate.py --evidence "$ev" --output build/gate-review.json
+      - name: Preserve combined evidence without changing the tested source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp12-migration-review-summary
+          path: |
+            build/summary.json
+            build/gate-review.json
+          if-no-files-found: error
+      - name: Fail when the gate failed
+        if: steps.gate.outcome != 'success'
+        run: exit 1

@@ -9,6 +9,11 @@
 #ifdef EXR_MIGRATION_TX_CANDIDATE
 #include "lm_mirror.h"
 #endif
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+#include "lm_recovery.h"
+static lm_recovery *g_recovery;
+#define LM_RECOVERY_VERSION "recovery-existing-v1"
+#endif
 #include <sqlite3.h>
 #include <ctype.h>
 #include <errno.h>
@@ -39,6 +44,12 @@ static void on_signal(int sig) { (void)sig; g_cancel = 1; }
 
 typedef struct {
   const char *cmd, *pack_path, *target, *report_path;
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  lm_recovery *recovery;
+  const char *recovery_font;
+  char *read_view;
+  int recovery_retry, recovery_gate_ok;
+#endif
   int allow_partial, dry_run, break_lock, cancel_at, inject_at;
   char inject[32];
   char run[24];
@@ -111,6 +122,11 @@ static int tick(ctx *c) {
   return 1;
 }
 static int injected(ctx *c, const char *name, unsigned count) {
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  /* Recovery owns private, bounded rendezvous; old external marker hooks are
+     unreachable, while actual importer data faults remain available. */
+  if(strstr(name,"pause")) return 0;
+#endif
   return c->inject[0] && !strcmp(c->inject, name) && (c->inject_at < 0 || (unsigned)c->inject_at == count);
 }
 static void sdk_fail(ctx *c, const char *what) {
@@ -915,6 +931,9 @@ static void assign_ids(ctx *c, bctx *b, lm_book *mb, const jv *jb, const jv *not
 
 /* ---------- ledger file ---------- */
 static int read_whole(const char *path, char **out, size_t *size, size_t max) {
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  lm_err e={{0},{0}};return lr_read(g_recovery,path,out,size,max<LM_RECOVERY_LIMIT?max:LM_RECOVERY_LIMIT,&e);
+#else
   FILE *f = lm_fopen(path, "rb");
   uint64_t n;
   char *p;
@@ -926,6 +945,7 @@ static int read_whole(const char *path, char **out, size_t *size, size_t max) {
   *out = p;
   *size = (size_t)n;
   return 1;
+#endif
 }
 static int sidecar_parse(ctx *c, const char *data, size_t n) {
   char error[160];
@@ -1083,6 +1103,9 @@ static void sidecar_text(ctx *c, lm_sb *b) {
   lm_sb_str(b, "]}\n");
 }
 static int write_file(const char *path, const char *data, size_t n) {
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  lm_err e={{0},{0}};return lr_write_new(g_recovery,path,data,n,&e);
+#else
   FILE *f = lm_fopen(path, "wb");
   int ok;
   if (!f) return 0;
@@ -1090,9 +1113,13 @@ static int write_file(const char *path, const char *data, size_t n) {
   if (fclose(f)) ok = 0;
   if (!ok) lm_remove(path);
   return ok;
+#endif
 }
 #ifdef EXR_MIGRATION_TX_CANDIDATE
 static int export_new_file(const char *path,const void *data,size_t size) {
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  lm_err e={{0},{0}};return lr_write_new(g_recovery,path,data,size,&e);
+#else
   char *temporary=lm_xalloc(strlen(path)+64);FILE *file;int ok;
   sprintf(temporary,"%s.tmp-%u",path,(unsigned)
 #ifdef _WIN32
@@ -1107,6 +1134,7 @@ static int export_new_file(const char *path,const void *data,size_t size) {
   if(fclose(file)) ok=0;
   if(ok) ok=lm_publish_new(temporary,path);
   lm_remove(temporary);free(temporary);return ok;
+#endif
 }
 #endif
 
@@ -1491,7 +1519,11 @@ static int mirror_fail(ctx *c, const lm_err *e) {
 }
 static int mirror_sidecar_snapshot(ctx *c, lm_mirror_file *out) {
   lm_err e = {{0}, {0}};
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  if(lr_snapshot(c->recovery,c->sidecar,1,LM_RECOVERY_LIMIT,out,NULL,NULL,&e)) return 1;
+#else
   if (lm_mirror_snapshot(c->sidecar, 1, LM_MIRROR_LEDGER_MAX, out, NULL, NULL, &e)) return 1;
+#endif
   fail(c, (!strcmp(c->cmd, "verify") || !strcmp(c->cmd, "dump")) ? O_REJECTED : O_FAILED,
        "ledger-unreadable", "%s", e.message);
   return 0;
@@ -1967,6 +1999,19 @@ static int mirror_lock_acquire(ctx *c) {
 #endif
 
 static void cleanup(ctx *c) {
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  if(c->lib) {
+    if(c->target_commit!=C_COMMITTED && lr_open_attempted(c->recovery)) {
+      exr_status status=exr_library_migration_finish(c->lib,0,&c->err);
+      lr_rollback(c->recovery,status);
+      if(status!=EXR_OK) entry(c,S_WARNING,"rollback-sdk-error","recovery",NULL,"rollback request returned status %d; evidence retained",(int)status);
+    }
+    exr_library_close(c->lib);c->lib=NULL;lr_owner_closed(c->recovery);
+  }
+  /* No mirror/database/intent/lease deletion. A literal finish(0) result is
+     not whole-state proof; retries require an explicit guarded R operation. */
+  return;
+#else
   char journal[4096];
   if (c->lib) { exr_library_close(c->lib); c->lib = NULL; }
 #ifdef EXR_MIGRATION_TX_CANDIDATE
@@ -2008,6 +2053,7 @@ static void cleanup(ctx *c) {
   (void)mirror_lock_release(c);
 #else
   if (c->lock_held && c->lock) { lm_remove(c->lock); c->lock_held = 0; }
+#endif
 #endif
 }
 
@@ -2106,6 +2152,29 @@ static int run_migrate(ctx *c) {
   if (!c->target) return 1; /* inspect */
 
   c->sidecar = path_join(c->target, ".legacy-map.json");
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  {
+    void *data=NULL;size_t size=0;int found=0;
+    if(!lr_prepare(c->recovery,&c->pack,c->recovery_retry,&e)||!lr_opening(c->recovery,&e)) {
+      fail(c,!strcmp(e.code,"cancelled")?O_CANCELLED:O_BUSY,e.code,"%s; recovery evidence retained",e.message);return 0;
+    }
+    lr_owner_attempted(c->recovery);
+    if(exr_library_migration_open(c->target,&c->lib,&c->err)!=EXR_OK) {
+      fail(c,O_BUSY,"recovery-sdk-open-failed","%s; explicit recovery remains required",c->err.message);return 0;
+    }
+    lr_owner_started(c->recovery);c->target_existed=1;
+    if(!lr_compare_restore(c->recovery,c->lib,&e)||!lr_snapshot(c->recovery,c->target,0,0,&c->owner_before,NULL,NULL,&e)||!mirror_sidecar_snapshot(c,&c->mirror_before)) {
+      fail(c,!strcmp(e.code,"cancelled")?O_CANCELLED:O_BUSY,e.code,"%s; evidence retained",e.message);return 0;
+    }
+    c->sidecar_existed=c->mirror_before.present;
+    if(exr_library_migration_ledger_get(c->lib,&data,&size,&found,&c->err)!=EXR_OK){sdk_fail(c,"reading transactional ledger");return 0;}
+    if(found){
+      if((c->sidecar_existed&&!sidecar_check_envelope(c,c->sidecar))||!sidecar_parse(c,(const char*)data,size)){exr_free(data);return 0;}
+    } else if(c->sidecar_existed&&!sidecar_load(c,c->sidecar)){exr_free(data);return 0;}
+    exr_free(data);
+  }
+  goto process_pack;
+#endif
   /* Both migration executables must hold the same lock while touching a target. */
   c->lock = path_join(c->target, ".migrate-lock");
 #ifdef EXR_MIGRATION_TX_CANDIDATE
@@ -2289,7 +2358,23 @@ process_pack:
     return 0;
   }
   if (c->out == O_NONE) {
-#ifdef EXR_MIGRATION_TX_CANDIDATE
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+    lm_sb text;exr_status status;
+    if(!verify_library(c,c->lib,1))return 0;
+    if(c->dry_run){fail(c,O_BUSY,"dry-run-recovery-required","preview completed under the real owner; rollback will be requested, then explicit recover-migration is required");return 0;}
+    if(cancel_cb(c)||injected(c,"publish-fail",0)){fail(c,cancel_cb(c)?O_CANCELLED:O_FAILED,cancel_cb(c)?"cancelled":"injected-publish-fail","no COMMIT requested; retained evidence requires explicit recovery");return 0;}
+    lm_sb_init(&text);sidecar_text(c,&text);
+    if(text.oom||text.n>LM_RECOVERY_LIMIT){lm_sb_free(&text);fail(c,O_FAILED,"recovery-ledger-bound","bounded ledger serialization refused");return 0;}
+    if(exr_library_migration_ledger_set(c->lib,text.p,text.n,&c->err)!=EXR_OK){lm_sb_free(&text);sdk_fail(c,"writing transactional ledger");return 0;}
+    if(!lr_publish(c->recovery,text.p,text.n,&e)){lm_sb_free(&text);fail(c,!strcmp(e.code,"cancelled")?O_CANCELLED:O_BUSY,e.code,"%s; evidence retained",e.message);return 0;}lm_sb_free(&text);
+    if(cancel_cb(c)){fail(c,O_CANCELLED,"cancelled","cancelled before COMMIT; explicit recovery required");return 0;}
+    c->target_commit=C_UNKNOWN;status=exr_library_migration_finish(c->lib,1,&c->err);
+    if(status==EXR_OK)c->target_commit=C_COMMITTED;
+    if(!lr_ack(c->recovery,status,&e)){fail(c,O_BUSY,e.code,"%s; COMMIT observation and evidence retained without whole-state recovery claim",e.message);return 0;}
+    exr_library_close(c->lib);c->lib=NULL;lr_owner_closed(c->recovery);
+    if(!lr_complete(c->recovery,&e)){fail(c,O_BUSY,e.code,"%s; committed evidence remains retained",e.message);return 0;}
+    c->out=O_SUCCESS;snprintf(c->code,sizeof(c->code),"ok");snprintf(c->message,sizeof(c->message),"real importer COMMIT acknowledged; exact mirror and permanent recovery evidence retained");return 1;
+#elif defined(EXR_MIGRATION_TX_CANDIDATE)
     lm_sb text;
     if(!verify_library(c,c->lib,1)) return 0;
     lm_sb_init(&text);sidecar_text(c,&text);
@@ -2455,7 +2540,13 @@ static void emit(ctx *c) {
   unsigned long long peak = lm_peak_rss();
   size_t i;
   lm_sb_init(&b);
-  lm_sb_fmt(&b, "{\"tool\":\"exreader-legacy-migrate\",\"tool_version\":\"%s\",\"sdk_version\":\"%s\",\"abi\":%u,\"command\":\"%s\",\"result\":\"%s\",\"code\":", LM_TOOL_VERSION, exr_version(), exr_abi_version(), c->cmd, OUTCOME[c->out]);
+  lm_sb_fmt(&b, "{\"tool\":\"exreader-legacy-migrate\",\"tool_version\":\"%s\",\"sdk_version\":\"%s\",\"abi\":%u,\"command\":\"%s\",\"result\":\"%s\",\"code\":", 
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+    LM_RECOVERY_VERSION,
+#else
+    LM_TOOL_VERSION,
+#endif
+    exr_version(), exr_abi_version(), c->cmd, OUTCOME[c->out]);
   lm_sb_json(&b, c->code, strlen(c->code));
   lm_sb_str(&b, ",\"message\":");
   lm_sb_json(&b, c->message, strlen(c->message));
@@ -2463,7 +2554,11 @@ static void emit(ctx *c) {
   lm_sb_json(&b, c->pack_path ? c->pack_path : "", c->pack_path ? strlen(c->pack_path) : 0);
   lm_sb_fmt(&b, ",\"sha256\":\"%s\",\"bytes\":%llu}", c->pack.sha, (unsigned long long)c->pack.size);
   lm_sb_str(&b, ",\"target\":{\"path\":");
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  {const char *original=lr_original_target(c->recovery);if(!original||!*original)original=c->target;lm_sb_json(&b,original?original:"",original?strlen(original):0);}
+#else
   lm_sb_json(&b, c->target ? c->target : "", c->target ? strlen(c->target) : 0);
+#endif
   lm_sb_fmt(&b, ",\"existed\":%s,\"sha256_before\":%s%s%s,\"ledger\":", c->target_existed ? "true" : "false", c->target_sha[0] ? "\"" : "", c->target_sha[0] ? c->target_sha : "null", c->target_sha[0] ? "\"" : "");
   if (c->sidecar) lm_sb_json(&b, c->sidecar, strlen(c->sidecar)); else lm_sb_str(&b, "null");
   lm_sb_str(&b, "}");
@@ -2473,21 +2568,39 @@ static void emit(ctx *c) {
   for (i = 0; i < S_COUNT; i++) lm_sb_fmt(&b, "%s\"%s\":%u", i ? "," : "", SEVERITY[i], c->sev[i]);
   lm_sb_str(&b, "}}");
   lm_sb_fmt(&b, ",\"memory\":{\"peak_rss_bytes\":%llu,\"max_original_bytes\":%llu,\"imported_bytes\":%llu,\"manifest_bytes\":%llu},", peak, (unsigned long long)c->max_book_bytes, (unsigned long long)c->bytes_imported, (unsigned long long)c->pack.manifest_len);
-  lm_sb_fmt(&b, "\"atomicity\":{\"rolled_back\":%s,\"stage\":\"%s\",\"pre_image\":\"%s\",\"inject\":", c->rolled_back ? "true" : "false", c->stage_state ? c->stage_state : "none", c->pre_state ? c->pre_state : "none");
+  lm_sb_fmt(&b, "\"atomicity\":{\"rolled_back\":%s,\"stage\":\"%s\",\"pre_image\":\"%s\",\"inject\":", 
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+    "null",
+#else
+    c->rolled_back ? "true" : "false",
+#endif
+    c->stage_state ? c->stage_state : "none", c->pre_state ? c->pre_state : "none");
   if (c->inject[0]) lm_sb_json(&b, c->inject, strlen(c->inject)); else lm_sb_str(&b, "null");
 #ifdef EXR_MIGRATION_TX_CANDIDATE
   lm_sb_fmt(&b, ",\"transaction\":{\"target_commit\":\"%s\",\"private_stage_commit\":\"%s\"}",
     COMMIT_KNOWLEDGE[c->target_commit], COMMIT_KNOWLEDGE[c->private_stage_commit]);
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  lm_sb_str(&b,",\"mirror\":{\"state\":\"see-recovery-protocol\",\"pending\":null}");
+#else
   lm_sb_fmt(&b, ",\"mirror\":{\"state\":\"%s\",\"pending\":%s}",
     c->mirror_state?c->mirror_state:"not-inspected",c->pending_retained?"true":"false");
+#endif
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  lm_sb_str(&b,",\"recovery\":");lr_report(c->recovery,&b);
+#else
   lm_sb_fmt(&b, ",\"recovery\":{\"scope\":\"existing-target-post-intent-v3\",\"rollback_requested\":%s,\"sdk_status\":",
     c->rollback_requested?"true":"null");
   if(c->rollback_status_valid) lm_sb_fmt(&b,"%d",(int)c->rollback_status);else lm_sb_str(&b,"null");
   lm_sb_fmt(&b,",\"logical_state\":\"%s\",\"io_observation\":\"not-installed\",\"physical_cleanup\":\"not-independently-verified\",\"automatic_retirement_blocked\":%s,\"full_recovery_accepted\":false}",
     c->recovery_barrier?"unverified":"not-assessed",c->recovery_barrier?"true":"false");
 #endif
+#endif
 #ifdef EXR_MIGRATION_TX_CANDIDATE
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  lm_sb_str(&b,",\"lock\":\"protocol-owned-retained-or-not-acquired\"},");
+#else
   lm_sb_fmt(&b, ",\"lock\":\"%s\"},",c->lock_retained?"retained-pending":(c->lock_held?"held":"released-or-not-acquired"));
+#endif
 #else
   lm_sb_fmt(&b, ",\"lock\":\"%s\"},", c->lock_held ? "held" : "released");
 #endif
@@ -2500,7 +2613,11 @@ static void emit(ctx *c) {
   lm_sb_str(&b, "]}\n");
   fwrite(b.p, 1, b.n, stdout);
   fflush(stdout);
-  if (c->report_path && !write_file(c->report_path, b.p, b.n)) fprintf(stderr, "warning: cannot write the report file %s\n", c->report_path);
+  if (c->report_path
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+      && c->recovery_gate_ok
+#endif
+      && !write_file(c->report_path, b.p, b.n)) fprintf(stderr, "warning: cannot write the report file %s\n", c->report_path);
   lm_sb_free(&b);
 }
 
@@ -2603,6 +2720,10 @@ static void usage(void) {
 #ifdef EXR_MIGRATION_TX_CANDIDATE
         "  recover-mirror --target LIBRARY [--break-lock] [--report FILE]\n"
 #endif
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+        "  recover-migration --pack PACK --target LIBRARY [--recovery-font FONT]\n"
+        "  Existing native POSIX targets only. Dry-run/cancel after opening requires explicit recovery.\n"
+#endif
         "  --version\n"
         "Exit: 0 success/dry-run, 1 usage, 2 rejected, 3 failed, 4 cancelled, 5 busy, 6 inconsistent\n", stderr);
 }
@@ -2614,7 +2735,13 @@ static int real_main(int argc, char **argv) {
 #endif
   c->cancel_at = -1;
   c->inject_at = -1;
-  if (argc >= 2 && !strcmp(argv[1], "--version")) { printf("exreader-legacy-migrate %s (EXReader SDK %s)\n", LM_TOOL_VERSION, exr_version()); return 0; }
+  if (argc >= 2 && !strcmp(argv[1], "--version")) { printf("exreader-legacy-migrate %s (EXReader SDK %s)\n", 
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+    LM_RECOVERY_VERSION,
+#else
+    LM_TOOL_VERSION,
+#endif
+    exr_version()); return 0; }
   if (argc < 2) { usage(); return 1; }
   c->cmd = argv[1];
   for (i = 2; i < argc; i++) {
@@ -2624,6 +2751,9 @@ static int real_main(int argc, char **argv) {
     else if (!strcmp(a, "--report") && i + 1 < argc) c->report_path = argv[++i];
 #ifdef EXR_MIGRATION_TX_CANDIDATE
     else if (!strcmp(a, "--output") && i + 1 < argc) export_path = argv[++i];
+#endif
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+    else if (!strcmp(a,"--recovery-font") && i+1<argc) c->recovery_font=argv[++i];
 #endif
     else if (!strcmp(a, "--allow-partial")) c->allow_partial = 1;
     else if (!strcmp(a, "--dry-run")) c->dry_run = 1;
@@ -2642,6 +2772,21 @@ static int real_main(int argc, char **argv) {
   lm_binary_stdout();
   signal(SIGINT, on_signal);
   signal(SIGTERM, on_signal);
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+  if(strcmp(c->cmd,"inspect")||c->target) {
+    lm_err gate_error={{0},{0}};
+    if(!lr_gate(&c->recovery,argv[0],c->cmd,c->target,c->pack_path,c->recovery_font,c->break_lock,cancel_cb,c,&gate_error)) {
+      g_recovery=c->recovery;fail(c,O_REJECTED,gate_error.code,"%s; no target SDK open",gate_error.message);emit(c);return EXIT_CODE[c->out];
+    }
+    g_recovery=c->recovery;c->recovery_gate_ok=1;c->target=lr_original_target(c->recovery);
+    if(!strcmp(c->cmd,"recover-migration"))c->recovery_retry=1;
+    if(!strcmp(c->cmd,"dump")||!strcmp(c->cmd,"verify")||!strcmp(c->cmd,"export-ledger")) {
+      if(!lr_read_view(c->recovery,&c->read_view,&gate_error)){fail(c,O_BUSY,gate_error.code,"%s; no target SDK open",gate_error.message);emit(c);return EXIT_CODE[c->out];}
+      c->target=c->read_view;
+    }
+  }
+#endif
+
 #ifdef EXR_MIGRATION_TX_CANDIDATE
   if(!strcmp(c->cmd,"recover-mirror")) {
     int reconciled=0;
@@ -2727,7 +2872,11 @@ static int real_main(int argc, char **argv) {
     if (!lm_pack_open(c->pack_path, &c->pack, &e)) fail(c, O_REJECTED, e.code, "%s", e.message);
     else if (!lm_pack_verify(&c->pack, cancel_cb, c, &e)) fail(c, O_REJECTED, e.code, "%s", e.message);
     else { c->books_expected = (unsigned)c->pack.books->n; c->notes_expected = (unsigned)c->pack.notes->n; run_inspect(c); }
-  } else if (!strcmp(c->cmd, "migrate")) {
+  } else if (!strcmp(c->cmd, "migrate")
+#ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
+             || !strcmp(c->cmd,"recover-migration")
+#endif
+             ) {
     if (!c->target) { usage(); return 1; }
     run_migrate(c);
     if (c->out == O_NONE) fail(c, O_FAILED, "internal", "migration ended without an outcome");

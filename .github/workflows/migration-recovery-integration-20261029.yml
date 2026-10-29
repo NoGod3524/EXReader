@@ -1,0 +1,164 @@
+name: Migration real existing-target recovery integration 20261029
+on:
+  push:
+    branches: [codex/migration-recovery-integration-20261029]
+    paths:
+      - extras/migration/**
+      - tests/migration/recovery_integration_20261029/**
+      - .github/workflows/migration-recovery-integration-20261029.yml
+      - .github/workflows/migration-recovery-integration-companion-20261029.yml
+permissions:
+  contents: read
+concurrency:
+  group: migration-recovery-integration-${{ github.sha }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+env:
+  TESTED_BASE: 14e3d0c60428a9baf33f2982d70689c0d654d3e0
+  OLD_SDK_REF: c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
+jobs:
+  integration:
+    timeout-minutes: ${{ matrix.minutes }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, label: linux, minutes: 45, py: python3, dir: '', suffix: ''}
+          - {os: macos-15, label: macos, minutes: 45, py: python3, dir: '', suffix: ''}
+          - {os: windows-latest, label: windows, minutes: 20, py: python, dir: 'Release/', suffix: '.exe'}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Admit exactly two modified owners and nine new paths
+        run: |
+          set -euo pipefail
+          mkdir -p build/evidence
+          git fetch --no-tags --depth=1 origin "$TESTED_BASE"
+          test "$(git rev-parse FETCH_HEAD)" = "$TESTED_BASE"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          ${{ matrix.py }} - <<'PY'
+          import hashlib,json,os,subprocess
+          from pathlib import Path
+          modified=['extras/migration/CMakeLists.txt','extras/migration/src/lm_main.c']
+          added=['extras/migration/src/lm_recovery.h','extras/migration/src/lm_recovery.c',
+            'extras/migration/src/lm_recovery_worker.c',
+            'tests/migration/recovery_integration_20261029/CMakeLists.txt',
+            'tests/migration/recovery_integration_20261029/fixture_probe.c',
+            'tests/migration/recovery_integration_20261029/run.py',
+            '.github/workflows/migration-recovery-integration-20261029.yml',
+            '.github/workflows/migration-recovery-integration-companion-20261029.yml',
+            'docs/MIGRATION-RECOVERY-INTEGRATION-20261029.md']
+          delta=subprocess.check_output(['git','diff','--no-renames','--name-status',os.environ['TESTED_BASE'],'HEAD'],text=True).splitlines()
+          assert set(delta)=={'M\t'+p for p in modified}|{'A\t'+p for p in added},delta
+          original=Path('.github/workflows/migration-matrix-full-companion-20261028.yml').read_bytes()
+          companion=Path('.github/workflows/migration-recovery-integration-companion-20261029.yml').read_bytes()
+          assert original[original.index(b'concurrency:'):]==companion[companion.index(b'concurrency:'):]
+          Path('build/evidence/source-identity.json').write_text(json.dumps({
+            'sha':os.environ['GITHUB_SHA'],'base':os.environ['TESTED_BASE'],
+            'run_id':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+            'exact_delta':delta,'old_sdk':os.environ['OLD_SDK_REF'],
+            'hashes':{p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in modified+added},
+            'all_unlisted_predecessor_bytes_unchanged':True,
+            'full_companion_settings_jobs_assertions_budgets_byte_identical':True,
+            'new_posix_cases_per_os':32,'new_windows_refusal_cases':8,
+            'unchanged_preflight_per_posix':41,'unchanged_handoff_per_posix':22,
+            'round_minutes':305,'authorized_rounds_max':2,'configured_total_minutes_max':610,
+            'full_p0_acceptance':False,'windows_recovery_accepted':False,'new_target_accepted':False,
+          },indent=2)+'\n')
+          PY
+      - name: Build and install unchanged SDK and separate candidate targets
+        id: native
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/sdk-configure.txt
+          cmake --build build/sdk --config Release --parallel 4 2>&1 | tee build/evidence/sdk-build.txt
+          cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage" 2>&1 | tee build/evidence/sdk-install.txt
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/migration-configure.txt
+          cmake --build build/migration --config Release --parallel 4 2>&1 | tee build/evidence/migration-build.txt
+          cmake --install build/migration --config Release --prefix "$GITHUB_WORKSPACE/migration-stage" 2>&1 | tee build/evidence/migration-install.txt
+          cmake -S tests/migration/recovery_integration_20261029 -B build/integration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DSQLITE_HEADER_DIR="$GITHUB_WORKSPACE/build/migration/_deps/migration_sqlite_header-src" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/consumer-configure.txt
+          cmake --build build/integration --config Release --parallel 4 2>&1 | tee build/evidence/consumer-build.txt
+      - name: Build actual frozen SDK3.40 and original schema6 producer
+        if: ${{ !cancelled() && steps.native.outcome == 'success' && matrix.label != 'windows' }}
+        id: old
+        run: |
+          set -euo pipefail
+          mkdir -p build/old-source build/old-migration-source
+          git fetch --no-tags --depth=1 origin "$OLD_SDK_REF"
+          test "$(git rev-parse FETCH_HEAD)" = "$OLD_SDK_REF"
+          git archive FETCH_HEAD | tar -xf - -C build/old-source
+          git archive FETCH_HEAD -- extras/migration | tar -xf - -C build/old-migration-source
+          cmake -S build/old-source -B build/old-sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/old-configure.txt
+          cmake --build build/old-sdk --config Release --parallel 4 2>&1 | tee build/evidence/old-build.txt
+          cmake --install build/old-sdk --config Release --prefix "$GITHUB_WORKSPACE/old-stage" 2>&1 | tee build/evidence/old-install.txt
+          cmake -S build/old-migration-source/extras/migration -B build/old-migration -DEXR_SDK="$GITHUB_WORKSPACE/old-stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/old-tool-configure.txt
+          cmake --build build/old-migration --config Release --parallel 4 2>&1 | tee build/evidence/old-tool-build.txt
+      - name: Exact installed binaries and expected provider graph corroboration
+        if: ${{ !cancelled() && steps.native.outcome == 'success' }}
+        run: |
+          ${{ matrix.py }} - <<'PY'
+          import hashlib,json,os,re
+          from pathlib import Path
+          suffix='.exe' if os.name=='nt' else ''
+          items={}
+          for name in ['exreader-legacy-migrate','exreader-legacy-migrate-tx','exreader-legacy-migrate-recovery']+([] if os.name=='nt' else ['exreader-migration-recovery-worker']):
+            p=Path('migration-stage/bin')/(name+suffix)
+            q=Path('build/migration')/('Release' if os.name=='nt' else '')/(name+suffix)
+            assert p.read_bytes()==q.read_bytes(),name
+            items[name]=hashlib.sha256(p.read_bytes()).hexdigest()
+          if os.name!='nt':
+            closure=Path('build/integration/frozen-handoff/frozen-preflight/link-closure.txt').read_text()
+            providers=sorted(set(re.findall(r'^(\S*sqlite\S*) TYPE=(\S+)$',closure,re.M|re.I)))
+            assert providers==[('EXReader::vendor_exr_sqlite','INTERFACE_LIBRARY'),('EXReader::vendor_file_exr_sqlite','STATIC_LIBRARY')],providers
+            for p in [Path('build/migration/recovery-worker-provider.map'),Path('build/integration/frozen-handoff/provider.map'),Path('build/integration/frozen-handoff/frozen-preflight/provider.map')]:
+              text=p.read_text(errors='replace')
+              assert all(s in text for s in ['sqlite3_open_v2','sqlite3_backup_init','sqlite3.c']) and re.search(r'(?:lib)?exr_vendor_exr_sqlite\.a',text,re.I)
+          Path('build/evidence/installed-provider.json').write_text(json.dumps({'installed_hashes':items,'frozen_provider_inventory_preserved':True,'map_check_is_expected_input_corroboration_not_symbol_member_uniqueness':True,'worker_checks_exact_header_runtime_source_id':os.name!='nt'},indent=2)+'\n')
+          PY
+      - name: Unchanged 41-case POSIX preflight prerequisite
+        if: ${{ !cancelled() && steps.old.outcome == 'success' && matrix.label != 'windows' }}
+        run: |
+          set -euo pipefail
+          python3 tests/migration/recovery_preflight_20261029/run.py --probe build/integration/frozen-handoff/frozen-preflight/migration-recovery-preflight --tool build/migration/exreader-legacy-migrate-tx --old-tool build/old-migration/exreader-legacy-migrate --work build/recovery-preflight 2>&1 | tee build/evidence/preflight.txt
+      - name: Unchanged 22-case POSIX handoff prerequisite
+        if: ${{ !cancelled() && steps.old.outcome == 'success' && matrix.label != 'windows' }}
+        run: |
+          set -euo pipefail
+          python3 tests/migration/recovery_handoff_20261029/run.py --handoff build/integration/frozen-handoff/migration-recovery-handoff --probe build/integration/frozen-handoff/frozen-preflight/migration-recovery-preflight --tool build/migration/exreader-legacy-migrate-tx --old-tool build/old-migration/exreader-legacy-migrate --work build/recovery-handoff 2>&1 | tee build/evidence/handoff.txt
+      - name: Actual installed recovery importer or Windows unsupported boundary
+        if: ${{ !cancelled() && steps.native.outcome == 'success' && (matrix.label == 'windows' || steps.old.outcome == 'success') }}
+        run: |
+          set -euo pipefail
+          OLD=build/old-migration/exreader-legacy-migrate
+          if [ '${{ matrix.label }}' = windows ]; then OLD=build/migration/Release/exreader-legacy-migrate.exe; fi
+          ${{ matrix.py }} tests/migration/recovery_integration_20261029/run.py --candidate "migration-stage/bin/exreader-legacy-migrate-recovery${{ matrix.suffix }}" --tool "build/migration/${{ matrix.dir }}exreader-legacy-migrate-tx${{ matrix.suffix }}" --old-tool "$OLD" --fixture "build/integration/${{ matrix.dir }}migration-recovery-fixture${{ matrix.suffix }}" --font tests/fixtures/fonts/primary.ttf --fixtures tests/fixtures --work build/recovery-integration 2>&1 | tee build/evidence/integration.txt
+      - name: Require exact counts without converting skipped/failed cases into passes
+        if: ${{ !cancelled() && steps.native.outcome == 'success' }}
+        run: |
+          ${{ matrix.py }} - <<'PY'
+          import json,os
+          from pathlib import Path
+          checks=[('build/recovery-integration/evidence.json',8 if os.name=='nt' else 32)]
+          if os.name!='nt':checks+=[('build/recovery-preflight/result.json',41),('build/recovery-handoff/evidence.json',22)]
+          for path,count in checks:
+            data=json.loads(Path(path).read_text())
+            assert len(data['cases'])==count and data['passed'] and all(c['passed'] for c in data['cases']),(path,sum(c['passed'] for c in data['cases']))
+            assert data['full_p0_acceptance'] is False
+            print(path,str(count)+'/'+str(count),'full_p0_acceptance=false',flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-recovery-integration-${{ matrix.label }}
+          path: |
+            build/evidence/
+            build/migration/recovery-worker-provider.map
+            build/recovery-integration/
+            build/recovery-preflight/
+            build/recovery-handoff/
+            build/integration/frozen-handoff/provider.map
+            build/integration/frozen-handoff/frozen-preflight/provider.map
+            build/integration/frozen-handoff/frozen-preflight/link-closure.txt
+          if-no-files-found: error
