@@ -25,6 +25,31 @@ class BoundaryContract(unittest.TestCase):
         for p in (*C.OWNERS,*C.HOSTS,*C.ADDED):
             self.assertFalse(p.startswith(('src/','include/','cmake/','tests/reader_selector_bytes/','tests/reader_f06_packages/')))
 
+    def test_original_selector_versions_uses_actual_legacy_sibling(self):
+        data=Path('/owned/native-data')
+        for entry in ('linux','windows','macos','iphone','ipad','android'):
+            legacy,work=C.selector_phase_layout(data,entry)
+            self.assertEqual(legacy,work.parent/'candidate-legacy')
+            self.assertNotEqual(legacy,work)
+            self.assertEqual(work,data/(entry+'-original')/'actual')
+        self.assertNotEqual(C.selector_phase_layout(data,'iphone')[0],C.selector_phase_layout(data,'ipad')[0])
+
+    def test_actual_ninja_supported_cache_types_and_exact_identity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ninja=Path(tmp)/'ninja';ninja.write_bytes(b'synthetic tool, never executed')
+            before={'ninja_tools':{str(ninja):{'sha256':C.digest(ninja),'resolved':str(ninja.resolve())}}}
+            for kind in ('FILEPATH','STRING','UNINITIALIZED'):
+                line='CMAKE_MAKE_PROGRAM:'+kind+'='+str(ninja)
+                self.assertEqual(C.configured_ninja('// comment\n'+line+'\n',before),ninja)
+            for text in ('','// CMAKE_MAKE_PROGRAM:FILEPATH='+str(ninja),
+                         'CMAKE_MAKE_PROGRAM:FILEPATH='+str(ninja)+'\nCMAKE_MAKE_PROGRAM:STRING='+str(ninja),
+                         'CMAKE_MAKE_PROGRAM:BOOL='+str(ninja),'CMAKE_MAKE_PROGRAM:STRING=',
+                         'CMAKE_MAKE_PROGRAM:FILEPATH=ninja','CMAKE_MAKE_PROGRAM:FILEPATH='+str(ninja)+'-missing'):
+                with self.assertRaises(AssertionError):C.configured_ninja(text,before)
+            with self.assertRaises(AssertionError):C.configured_ninja(line,{'ninja_tools':{}})
+            ninja.write_bytes(b'changed after producer')
+            with self.assertRaises(AssertionError):C.configured_ninja(line,before)
+
     def test_old_private_call_absent(self):
         for p in ('apps/reader/reading-commands/src/reading_commands.cpp','apps/reader/reading-state/src/reading_state.cpp',*C.HOSTS):
             self.assertNotIn('reader_rs_encode_retained_raw_v3',(C.ROOT/p).read_text())
