@@ -53,13 +53,20 @@ jobs:
           python -m py_compile tests/reader_perf_windows/perf_windows.py tests/reader_perf_windows/diagnose_txt_import.py tests/reader_perf_windows/verify_composition.py tests/reader_perf_windows/record_artifact.py
           python tests/reader_perf_windows/perf_windows.py --self-check | tee build/perf-gate/self-check.log
 
+      - name: Build and install the independent public OPDSHash owner
+        run: |
+          set -euo pipefail
+          mkdir -p build/perf-gate
+          cmake -S extras/opds -B build/perf-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/perf-hash" 2>&1 | tee build/perf-gate/hash-configure.log
+          cmake --build build/perf-hash-build --parallel 4 2>&1 | tee build/perf-gate/hash-build.log
+          cmake --install build/perf-hash-build 2>&1 | tee build/perf-gate/hash-install.log
       - name: Build the installed reading SDK and the product catalog stack
         run: |
           ws=$(cygpath -m "$PWD")
           echo "PERF_WORKSPACE=$ws" >> "$GITHUB_ENV"
           prefix="$ws/build/desktop-product-stage"
           echo "DESKTOP_PRODUCT_PREFIX=$prefix" >> "$GITHUB_ENV"
-          cmake -S apps/reader/store/native -B build/desktop-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/perf-gate/store-configure.log
+          cmake -S apps/reader/store/native -B build/desktop-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" -DREADER_ORIGINAL_HASH_PREFIX:PATH="$(cygpath -m "$PWD/build/perf-hash")" 2>&1 | tee build/perf-gate/store-configure.log
           cmake --build build/desktop-product --parallel 4 2>&1 | tee build/perf-gate/store-build.log
           cmake --install build/desktop-product 2>&1 | tee build/perf-gate/store-install.log
           cmake -S apps/reader/revisions -B build/desktop-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/perf-gate/revisions.log
@@ -172,6 +179,13 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y libgtk-3-dev libglib2.0-dev pkg-config ninja-build xvfb openbox \
             xdotool xclip x11-utils dbus dbus-x11 at-spi2-core
+      - name: Build and install the independent public OPDSHash owner
+        run: |
+          set -euo pipefail
+          mkdir -p build/perf-logs
+          cmake -S extras/opds -B build/perf-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/perf-hash" 2>&1 | tee build/perf-logs/hash-configure.log
+          cmake --build build/perf-hash-build --parallel 4 2>&1 | tee build/perf-logs/hash-build.log
+          cmake --install build/perf-hash-build 2>&1 | tee build/perf-logs/hash-install.log
       - name: Build the frozen SDK, the GTK product host, the payload and the corpus probe
         run: |
           set -o pipefail
@@ -180,6 +194,7 @@ jobs:
           cmake --install build/reading-library 2>&1 | tee build/perf-logs/sdk-install.log
           cmake -S apps/reader/desktop -B build/perf-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DEXR_READER_BUILD_GTK=ON \
+            -DREADER_ORIGINAL_HASH_PREFIX:PATH="$(realpath "$PWD/build/perf-hash")" \
             -DEXR_READER_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/perf-logs/host-configure.log
           cmake --build build/perf-desktop --parallel 4 2>&1 | tee build/perf-logs/host-build.log
           cmake -S tests/reader_product_performance_handoff/gtk_probe -B build/perf-probe -G Ninja -DCMAKE_BUILD_TYPE=Release \
