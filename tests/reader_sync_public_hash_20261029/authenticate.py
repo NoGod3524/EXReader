@@ -9,7 +9,7 @@ import subprocess
 import sys
 import zipfile
 import package_contract as C
-from test_contract import evidence_mutations,isolation_mutations,archive_pair_mutations
+from test_contract import evidence_mutations,isolation_mutations,archive_pair_mutations,stream_prerequisite_controls,stream_fixture
 sys.path.insert(0,str(C.ROOT/'tools'))
 from check_parallel_integration import fetch,pages,download_artifact_zip
 
@@ -283,8 +283,11 @@ def diag_scope():
     C.require(subprocess.check_output(['git','rev-parse',DIAG_SOURCE+'^{tree}'],cwd=C.ROOT,text=True).strip()==DIAG_TREE,
         'diagnostic pinned original tree differs')
     subprocess.run(['git','merge-base','--is-ancestor',DIAG_SOURCE,'HEAD'],cwd=C.ROOT,check=True)
-    delta=subprocess.check_output(['git','diff','--name-status',DIAG_SOURCE,'HEAD'],cwd=C.ROOT,text=True).splitlines()
-    C.require(delta==['M\t'+DIAG_PATH],'diagnostic exact one-auth-file delta required')
+    C.require(subprocess.check_output(['git','rev-parse',C.STREAM_BASE+'^{tree}'],cwd=C.ROOT,text=True).strip()==C.STREAM_TREE,
+        'stream repair pinned base tree differs')
+    subprocess.run(['git','merge-base','--is-ancestor',C.STREAM_BASE,'HEAD'],cwd=C.ROOT,check=True)
+    delta=subprocess.check_output(['git','diff','--name-status',C.STREAM_BASE,'HEAD'],cwd=C.ROOT,text=True).splitlines()
+    C.stream_scope({p:s for s,p in (line.split('\t') for line in delta)})
     lock=unique_json(diag_git('tests/reader_sync_public_hash_20261029/source_lock.json'))
     paths=set(lock['adopted'])|set(lock['public_packet'])|set(lock['owner'])|set(lock['added'])
     C.require(len(paths)==53,'diagnostic original source53 cardinality differs')
@@ -407,10 +410,11 @@ def diag_controls(run,job,artifact):
     return results
 
 def retained():
-    """One pinned4c query observation; never native or prerequisite admission."""
+    """Pinned4c refusal plus new channel controls; never original/native admission."""
     C.actions();source=C.guard();ident=C.identity()
     C.require(C.current_lane()=='retained','diagnostic requires existing retained-only marker')
-    result=dict(ident,source=source,diagnostic_complete=False,retained_prerequisites_passed=False,native_rebuilt=False,
+    result=dict(ident,source=source,diagnostic_complete=False,stream_capture_prerequisites_passed=False,
+        retained_prerequisites_passed=False,native_rebuilt=False,
         original_run_accepted=False,combined_named_boundaries=False,installed_android_sync_runtime=False,f07_accepted=False,
         configured_runner_minutes=45,limits=DIAG_LIMITS,stage='source_scope',failures=[],observations={})
     out=C.OUT/'host-query-diagnostic';out.mkdir(parents=True,exist_ok=False)
@@ -511,12 +515,28 @@ def retained():
             ninja_path=DIAG_BUILD[len(DIAG_ROOT)+1:]+'/build.ninja'
             result['ninja']=dict(path=ninja_path,**diag_ninja_statements(read(ninja_path,DIAG_LIMITS['ninja_bytes']),['exreader_product',image]))
         C.require('sha256:'+C.digest(upload)==DIAG_ARTIFACT['digest'],'diagnostic original ZIP changed')
-        result.update(diagnostic_complete=True,stage='complete',scope='Pinned earlier/later query observations only; no parser repair or native eligibility')
+        result['stage']='new_channel_transport_controls'
+        result['stream_controls']=stream_prerequisite_controls()
+        # These are explicitly synthetic pairings. The earlier merged stream is
+        # still unsplit/refused; neither pairing claims its historical channels.
+        paired=[]
+        for stderr in (b'',C.HOST_QUERY_WARNING):
+            row,files=stream_fixture(stdout=later['stdout']['text'].encode('utf-8'),stderr=stderr)
+            row['argv']=DIAG_QUERY;row['cwd']=DIAG_ROOT
+            _,nodes,_=C.host_query_streams([row],files.__getitem__,DIAG_BUILD,DIAG_ROOT)
+            C.require(nodes==inputs,'synthetic transport pairing altered exact alias')
+            paired.append(dict(stderr_bytes=len(stderr),stdout_sha256=row['output_record']['sha256'],
+                stderr_sha256=row['stderr_record']['sha256'],synthetic=True,historical_split_reconstructed=False))
+        result['synthetic_retained_pairings']=paired
+        C.require('sha256:'+C.digest(upload)==DIAG_ARTIFACT['digest'],'original ZIP changed after controls')
+        result.update(diagnostic_complete=True,stream_capture_prerequisites_passed=True,stage='complete',
+            scope='New raw-channel transport/contract readiness only; original merged capture remains refused and no native host acceptance')
     except Exception as error:result['failures'].append(str(error)[:4096]);raise
     finally:
         encoded=(json.dumps(result,sort_keys=True,ensure_ascii=True)+'\n').encode('utf-8')
         if len(encoded)>DIAG_LIMITS['json_bytes']:
-            bounded=dict(ident,diagnostic_complete=False,retained_prerequisites_passed=False,native_rebuilt=False,
+            bounded=dict(ident,diagnostic_complete=False,stream_capture_prerequisites_passed=False,
+                retained_prerequisites_passed=False,native_rebuilt=False,
                 original_run_accepted=False,combined_named_boundaries=False,installed_android_sync_runtime=False,f07_accepted=False,
                 stage='json_output_bound',failures=['diagnostic output exceeded1MiB'],
                 attempted_json_bytes=len(encoded),attempted_json_sha256=hashlib.sha256(encoded).hexdigest(),

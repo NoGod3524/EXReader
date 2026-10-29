@@ -68,6 +68,17 @@ REPAIR_BASE='f25ce471ce057c3181eb81853e6912350a1b5fed'
 REPAIR_TREE='303060019705b60728bb45467c1c6f93c13a6c0f'
 REPAIR_PATHS=(PUBLIC_OVERRIDE,WORKFLOW,*('tests/reader_sync_public_hash_20261029/'+name for name in
     ('run.py','package_contract.py','test_contract.py','authenticate.py','source_lock.json')))
+STREAM_BASE='626cf3439ef081e7a4993cdd9634334d82933e9f'
+STREAM_TREE='e1d0934cf69d6eed0e31eb851bb841645f225018'
+STREAM_PATHS=tuple('tests/reader_sync_public_hash_20261029/'+name for name in
+    ('run.py','package_contract.py','test_contract.py','authenticate.py'))
+HOST_QUERY_STDOUT='links/android-host-alias.log'
+HOST_QUERY_STDERR='links/android-host-alias.stderr.log'
+HOST_QUERY_WARNING=b'ninja: warning: build log version is too old; starting over\n'
+HOST_QUERY_LIMIT=1024*1024
+
+def stream_scope(delta):
+    require(delta=={p:'M' for p in STREAM_PATHS},'exact four-path stream repair delta versus published626 required')
 
 def repair_scope(delta):
     require(delta=={p:'M' for p in REPAIR_PATHS},'exact seven-path repair delta versus published f25 required')
@@ -204,6 +215,9 @@ def guard():
     require(git('rev-parse',REPAIR_BASE+'^{tree}')==REPAIR_TREE,'published repair base tree differs')
     subprocess.run(['git','merge-base','--is-ancestor',REPAIR_BASE,'HEAD'],cwd=ROOT,check=True)
     repair_scope({p:s for s,p in (line.split('\t') for line in git('diff','--name-status',REPAIR_BASE,'HEAD').splitlines())})
+    require(git('rev-parse',STREAM_BASE+'^{tree}')==STREAM_TREE,'published stream base tree differs')
+    subprocess.run(['git','merge-base','--is-ancestor',STREAM_BASE,'HEAD'],cwd=ROOT,check=True)
+    stream_scope({p:s for s,p in (line.split('\t') for line in git('diff','--name-status',STREAM_BASE,'HEAD').splitlines())})
     delta={p:s for s,p in (line.split('\t') for line in git('diff','--name-status',BASE,'HEAD').splitlines())}
     require(delta==lock['expected_delta'] and len(delta)==29 and delta.get(PUBLIC_OVERRIDE)=='M',
         'exact adopted16+Sync3+new9+one validation override delta required')
@@ -218,6 +232,7 @@ def guard():
         adopted_hash_source=lock['adopted_sha'],public_boundary_source=BASE,
         public_validation_override=override,legacy_public_default_criterion_unchanged=True,
         repair_base_sha=REPAIR_BASE,repair_paths=list(REPAIR_PATHS),
+        stream_repair_base_sha=STREAM_BASE,stream_repair_paths=list(STREAM_PATHS),
         lane=current_lane(),archive_criterion=BSD_CRITERION,
         original_source_guards_excluded=list(EXCLUSIONS)+P.EXCLUSIONS,
         configured_runner_minutes=budget((ROOT/WORKFLOW).read_text()),f07_accepted=False,physical_device=False)
@@ -456,6 +471,34 @@ def configured_paths(folder,link,target):
         expected=[link['hash_prefix']+'/lib/'+archive('opds_sha256_stream')]+[link['product_prefix']+'/lib/'+archive(n)
             for n in ('reader_original_import','reader_catalog','reader_catalog_sqlite')]
     require(actual==expected,'configured imported target owner differs')
+
+def host_query_streams(commands,read_bytes,build,workspace):
+    """Authenticate one new raw capture; never split historical merged output."""
+    rows=[row for row in commands if row.get('output')==HOST_QUERY_STDOUT]
+    require(len(rows)==1,'one exact host query capture required')
+    row=rows[0]
+    require(set(row)=={'argv','cwd','output','output_record','returncode','expected_returncode','subjects',
+        'capture_kind','stderr','stderr_record','capture_complete','capture_failure'},'exact host query capture schema required')
+    require(row['argv']==['ninja','-C',build,'-t','query','exreader_product'] and row['cwd']==workspace and
+        row['subjects']=={} and row['returncode']==row['expected_returncode']==0,'host query command identity/exit differs')
+    require(row['capture_kind']=='separate-raw-v1' and row['capture_complete'] is True and
+        row['capture_failure'] is None,'host query capture incomplete or unsupported')
+    require(row['stderr']==HOST_QUERY_STDERR and row['stderr'] not in [r.get('output') for r in commands],
+        'host query stderr path collision/identity differs')
+    data={}
+    for field,path in (('output',HOST_QUERY_STDOUT),('stderr',HOST_QUERY_STDERR)):
+        try:raw=read_bytes(path)
+        except (OSError,KeyError) as error:raise ValueError('missing complete host query stream') from error
+        require(isinstance(raw,bytes) and len(raw)<=HOST_QUERY_LIMIT,'host query channel byte bound')
+        require(row[field+'_record']==dict(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),
+            'host query channel bytes differ')
+        data[field]=raw
+    require(data['stderr'] in (b'',HOST_QUERY_WARNING),'unrecognized host query stderr')
+    text=data['output'].decode('utf-8',errors='strict')
+    # No trimming, prefix removal, newline normalization or warning exception.
+    try:nodes,outputs=P.ninja_explicit_inputs(text,'exreader_product','phony')
+    except AssertionError as error:raise ValueError(str(error)) from error
+    return text,nodes,outputs
 
 def validate(folder,expected_source=None):
     """Replay this named-boundary evidence, not historical admission wrappers."""
@@ -705,8 +748,8 @@ def validate(folder,expected_source=None):
         require(host['image']=='original/'+image.removeprefix(report['original_workspace']+'/') and
             record(folder/host['image'])==host['image_record'],'actual host image identity differs')
         H.image_target((folder/host['image']).read_bytes(),'android')
-        cmd(host['alias'],['ninja','-C',build,'-t','query','exreader_product'])
-        nodes,_=P.ninja_explicit_inputs((folder/host['alias']).read_text(),'exreader_product','phony')
+        require(host['alias']==HOST_QUERY_STDOUT and host['alias_stderr']==HOST_QUERY_STDERR,'host query report paths differ')
+        _,nodes,_=host_query_streams(commands,lambda p:(folder/p).read_bytes(),build,report['original_workspace'])
         require(nodes==[host['image_node']] and path_key(nodes[0],build)==path_key(image,build),'actual host alias differs')
         cmd(host['commands'],['ninja','-C',build,'-t','commands',host['image_node']])
         mapfile,line=P.android_link_binding((folder/host['commands']).read_text(),Path(image),Path(build))
