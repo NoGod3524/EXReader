@@ -1,0 +1,139 @@
+name: Migration isolated durable handoff qualification 20261029
+on:
+  push:
+    branches: [codex/migration-recovery-handoff-qualification-20261029]
+    paths:
+      - tests/migration/recovery_handoff_20261029/**
+      - .github/workflows/migration-recovery-handoff-20261029.yml
+permissions:
+  contents: read
+concurrency:
+  group: migration-recovery-handoff-${{ github.sha }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+env:
+  TESTED_BASE: c16c44dc5a9c8ea31460fddc5741ac332ec28e74
+  OLD_SDK_REF: c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
+jobs:
+  qualification:
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, label: linux}
+          - {os: macos-15, label: macos}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Admit exactly five new paths and unchanged predecessor bytes
+        run: |
+          set -euo pipefail
+          mkdir -p build/evidence
+          git fetch --no-tags --depth=1 origin "$TESTED_BASE"
+          test "$(git rev-parse FETCH_HEAD)" = "$TESTED_BASE"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 - <<'PY'
+          import hashlib,json,os,subprocess
+          from pathlib import Path
+          owned=[
+            'tests/migration/recovery_handoff_20261029/CMakeLists.txt',
+            'tests/migration/recovery_handoff_20261029/handoff.c',
+            'tests/migration/recovery_handoff_20261029/run.py',
+            '.github/workflows/migration-recovery-handoff-20261029.yml',
+            'docs/MIGRATION-RECOVERY-HANDOFF-20261029.md',
+          ]
+          delta=subprocess.check_output(['git','diff','--no-renames','--name-status',os.environ['TESTED_BASE'],'HEAD'],text=True).splitlines()
+          assert set(delta)=={'A\t'+p for p in owned},delta
+          Path('build/evidence/source-identity.json').write_text(json.dumps({
+            'sha':os.environ['GITHUB_SHA'],'tested_base':os.environ['TESTED_BASE'],
+            'run_id':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+            'old_sdk':os.environ['OLD_SDK_REF'],'exact_delta':delta,
+            'hashes':{p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in owned},
+            'all_other_predecessor_bytes_unchanged':True,'product_admission':False,
+            'new_cases_per_os':22,'unchanged_preflight_cases_per_os':41,
+            'configured_job_minutes':30,'authorized_rounds_max':2,
+          },indent=2)+'\n')
+          PY
+      - name: Build unchanged SDK and real candidate producer
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/sdk-configure.txt
+          cmake --build build/sdk --config Release --parallel 4 2>&1 | tee build/evidence/sdk-build.txt
+          cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage" 2>&1 | tee build/evidence/sdk-install.txt
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/tool-configure.txt
+          cmake --build build/migration --config Release --target exreader-legacy-migrate-tx --parallel 4 2>&1 | tee build/evidence/tool-build.txt
+      - name: Build pinned genuine SDK3.40 schema6 producer
+        run: |
+          set -euo pipefail
+          mkdir -p build/old-source build/old-migration-source
+          git fetch --no-tags --depth=1 origin "$OLD_SDK_REF"
+          test "$(git rev-parse FETCH_HEAD)" = "$OLD_SDK_REF"
+          git archive FETCH_HEAD | tar -xf - -C build/old-source
+          git archive FETCH_HEAD -- extras/migration | tar -xf - -C build/old-migration-source
+          cmake -S build/old-source -B build/old-sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/old-configure.txt
+          cmake --build build/old-sdk --config Release --parallel 4 2>&1 | tee build/evidence/old-build.txt
+          cmake --install build/old-sdk --config Release --prefix "$GITHUB_WORKSPACE/old-stage" 2>&1 | tee build/evidence/old-install.txt
+          cmake -S build/old-migration-source/extras/migration -B build/old-migration -DEXR_SDK="$GITHUB_WORKSPACE/old-stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/old-tool-configure.txt
+          cmake --build build/old-migration --config Release --target exreader-legacy-migrate --parallel 4 2>&1 | tee build/evidence/old-tool-build.txt
+      - name: Build five-path consumer and frozen scanner; verify one provider
+        id: consumers
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/recovery_handoff_20261029 -B build/handoff -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DSQLITE_HEADER_DIR="$GITHUB_WORKSPACE/build/migration/_deps/migration_sqlite_header-src" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/handoff-configure.txt
+          cmake --build build/handoff --config Release --parallel 4 2>&1 | tee build/evidence/handoff-build.txt
+          python3 - <<'PY'
+          import hashlib,json,re,subprocess
+          from pathlib import Path
+          closure=Path('build/handoff/frozen-preflight/link-closure.txt').read_text()
+          providers=sorted(set(re.findall(r'^(\S*sqlite\S*) TYPE=(\S+)$',closure,re.M|re.I)))
+          assert providers==[('EXReader::vendor_exr_sqlite','INTERFACE_LIBRARY'),('EXReader::vendor_file_exr_sqlite','STATIC_LIBRARY')],providers
+          maps={}
+          for path in ('build/handoff/provider.map','build/handoff/frozen-preflight/provider.map'):
+            data=Path(path).read_bytes();text=data.decode(errors='replace')
+            assert all(symbol in text for symbol in ('sqlite3_open_v2','sqlite3_backup_init','sqlite3.c'))
+            assert re.search(r'(?:lib)?exr_vendor_exr_sqlite\.a',text,re.I)
+            maps[path]=hashlib.sha256(data).hexdigest()
+          Path('build/evidence/provider.json').write_text(json.dumps({'closure':providers,'maps':maps,
+            'header_sha256':hashlib.sha256(Path('build/migration/_deps/migration_sqlite_header-src/sqlite3.h').read_bytes()).hexdigest(),
+            'header_runtime_source_id_checked_by_every_native_invocation':True},indent=2)+'\n')
+          print(closure,flush=True)
+          print('native_filesystem=' + subprocess.check_output(['df','-P','.'],text=True),flush=True)
+          PY
+      - name: Rerun unchanged 41-case POSIX prerequisite
+        if: ${{ !cancelled() && steps.consumers.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          python3 tests/migration/recovery_preflight_20261029/run.py --probe build/handoff/frozen-preflight/migration-recovery-preflight --tool build/migration/exreader-legacy-migrate-tx --old-tool build/old-migration/exreader-legacy-migrate --work build/recovery-preflight 2>&1 | tee build/evidence/preflight.txt
+      - name: Calibrate 22 new handoff cases including every crash subcheck
+        if: ${{ !cancelled() && steps.consumers.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          python3 tests/migration/recovery_handoff_20261029/run.py --handoff build/handoff/migration-recovery-handoff --probe build/handoff/frozen-preflight/migration-recovery-preflight --tool build/migration/exreader-legacy-migrate-tx --old-tool build/old-migration/exreader-legacy-migrate --work build/recovery-handoff 2>&1 | tee build/evidence/handoff.txt
+      - name: Require both exact native case counts, retaining failures
+        if: ${{ !cancelled() && steps.consumers.outcome == 'success' }}
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for path,count in [('build/recovery-preflight/result.json',41),('build/recovery-handoff/evidence.json',22)]:
+            data=json.loads(Path(path).read_text())
+            assert len(data['cases'])==count,(path,len(data['cases']))
+            assert data['passed'] and all(c['passed'] for c in data['cases']),(path,sum(c['passed'] for c in data['cases']))
+            assert data['product_admission'] is False and data['full_p0_acceptance'] is False
+            print(path, str(count)+'/'+str(count), 'product_admission=false',flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-recovery-handoff-${{ matrix.label }}
+          path: |
+            build/evidence/
+            build/recovery-preflight/
+            build/recovery-handoff/
+            build/handoff/provider.map
+            build/handoff/frozen-preflight/provider.map
+            build/handoff/frozen-preflight/link-closure.txt
+          if-no-files-found: error
