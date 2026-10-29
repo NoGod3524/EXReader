@@ -43,6 +43,7 @@ DIAGNOSTIC_STAGES = ('entry', 'scope-and-source', 'artifact-metadata', 'artifact
     'xcresult-copy', 'xcresult-parser', 'xcresult-issues', 'attachment-export',
     'attachment-summary', 'safe-report')
 CURRENT_DIAGNOSTIC_STAGE = 'entry'
+CURRENT_MEMBER_INTEGRITY = None
 REFUSAL_CODES = {
     'checkout differs': 'checkout-identity',
     'old or foreign path changed': 'source-scope',
@@ -60,6 +61,7 @@ REFUSAL_CODES = {
     'prior continuation identity differs': 'result-identity',
     'prior continuation inventory differs': 'member-inventory',
     'prior continuation member differs': 'member-bytes',
+    'unexpected member metadata': 'member-metadata',
     'prior continuation verdict differs': 'prior-verdict',
     'unexpected strict checks': 'strict-check-shape',
     'unexpected checkpoint': 'checkpoint-shape',
@@ -106,6 +108,49 @@ def refusal_report(error, stage):
         'diagnostic_refused': True, 'stage': stage if type(stage) is str and stage in DIAGNOSTIC_STAGES else 'unknown',
         'exception_class': classes.get(type(error), 'other'), 'refusal_code': code,
         'arbitrary_error_details_printed': False}
+
+
+def member_role(name):
+    """Finite location category only; no arbitrary member name leaves Actions."""
+    fixed = {'native.log': 'native-log', 'requests.json': 'network-requests',
+        'fixture-failures.json': 'fixture-failures', 'checkpoints.json': 'checkpoints',
+        'synthetic-oracle-input.json': 'synthetic-input', 'source.epub': 'original-source',
+        'resource-manifest.json': 'resource-manifest', 'sdk-identity.json': 'sdk-identity',
+        'EXReaderHost.link.map': 'provider-map', 'privacy.xcresult/Info.plist': 'xcresult-info'}
+    if name in fixed: return fixed[name]
+    if name.startswith('privacy.xcresult/Data/'): return 'xcresult-data'
+    if name.startswith('privacy.xcresult/'): return 'xcresult-other'
+    if name.startswith('adapter/'): return 'adapter'
+    for stage in STAGES:
+        if name == stage + '-product.zip': return 'product-snapshot'
+        if name == stage + '-privacy-scan.json': return 'privacy-scan'
+        if name == stage + '-product-log-manifest.json': return 'product-log-manifest'
+        if name == stage + '-safe-log-attribution.json': return 'log-attribution'
+        prefix = 'sensitive-synthetic-product-logs/' + stage + '/'
+        if name == prefix + 'host-unified.json': return 'product-log'
+        if name == prefix + 'capture-stderr.txt': return 'product-log-stderr'
+    return 'other'
+
+
+def member_integrity(directory, manifest):
+    """Check every member, report only grouped size/hash equality booleans."""
+    require(type(manifest) is dict and len(manifest) <= 100000, 'unexpected member metadata')
+    groups, mismatches = {}, 0
+    for name, item in manifest.items():
+        require(type(name) is str and type(item) is dict and set(item) == {'bytes', 'sha256'} and
+                type(item['bytes']) is int and 0 <= item['bytes'] <= 8 * 1024 ** 3 and
+                type(item['sha256']) is str and re.fullmatch(r'[0-9a-f]{64}', item['sha256']) is not None,
+                'unexpected member metadata')
+        path = directory / name
+        size_matches, hash_matches = path.stat().st_size == item['bytes'], sha(path) == item['sha256']
+        if not (size_matches and hash_matches):
+            mismatches += 1
+            key = (member_role(name), size_matches, hash_matches)
+            groups[key] = groups.get(key, 0) + 1
+    return {'complete': True, 'member_count': len(manifest), 'mismatch_count': mismatches,
+        'mismatch_groups': [{'role': role, 'size_matches': size, 'hash_matches': digest, 'count': count}
+            for (role, size, digest), count in sorted(groups.items())],
+        'arbitrary_member_names_or_bytes_printed': False, 'acceptance': False}
 
 
 def locations(path):
@@ -279,6 +324,7 @@ def attachment_summary(directory):
 
 
 def main():
+    global CURRENT_MEMBER_INTEGRITY
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
     diagnostic_stage('scope-and-source')
     guard()
@@ -311,9 +357,8 @@ def main():
         files = {path.relative_to(folder).as_posix() for path in folder.rglob('*') if path.is_file()}
         require(files == set(result['files']) | {'result.json'}, 'prior continuation inventory differs')
         diagnostic_stage('member-bytes')
-        for name, item in result['files'].items():
-            path = folder / name
-            require(path.stat().st_size == item['bytes'] and sha(path) == item['sha256'], 'prior continuation member differs')
+        CURRENT_MEMBER_INTEGRITY = member_integrity(folder, result['files'])
+        require(CURRENT_MEMBER_INTEGRITY['mismatch_count'] == 0, 'prior continuation member differs')
         diagnostic_stage('progress-and-native-log')
         report = safe_progress(result, files)
         report.update(old_source_sha=SOURCE, old_run_id=RUN, old_attempt=1, platform=platform,
@@ -321,6 +366,7 @@ def main():
                       verified_member_count=len(files), arbitrary_log_text_printed=False,
                       source_positions_not_authenticated_callsites=True,
                       native_failure_locations=locations(folder / 'native.log') if 'native.log' in files else [])
+        report['member_integrity'] = CURRENT_MEMBER_INTEGRITY
         report['activity_timing'] = activity_timing(folder / 'native.log')
         diagnostic_stage('scan-summaries')
         for stage in STAGES:
@@ -371,6 +417,7 @@ if __name__ == '__main__':
         # An OS/parser exception may embed a synthetic value in its operands.
         # Refuse without relaying that exception text or chained traceback.
         report = refusal_report(error, CURRENT_DIAGNOSTIC_STAGE)
+        report['member_integrity'] = CURRENT_MEMBER_INTEGRITY
         print(json.dumps(report, sort_keys=True), flush=True)
         if os.environ.get('GITHUB_ACTIONS') == 'true':
             try:

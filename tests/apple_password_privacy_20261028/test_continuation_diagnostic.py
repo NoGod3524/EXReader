@@ -9,11 +9,53 @@ import subprocess
 import unittest
 from contract import ROOT, sha
 import inspect_continuation_failure as inspector
-from inspect_continuation_failure import ARTIFACTS, BUNDLE, CASE, DIAGNOSTIC_STAGES, REFUSAL_CODES, RUN, SOURCE, SOURCE_FILE, SOURCE_LAST_LINE, SOURCE_PATH, SOURCE_SHA, activity_timing, attachment_summary, diagnostic_stage, locations, network_summary, refusal_report, safe_progress, xcresult_issues
+from inspect_continuation_failure import ARTIFACTS, BUNDLE, CASE, DIAGNOSTIC_STAGES, REFUSAL_CODES, RUN, SOURCE, SOURCE_FILE, SOURCE_LAST_LINE, SOURCE_PATH, SOURCE_SHA, activity_timing, attachment_summary, diagnostic_stage, locations, member_integrity, member_role, network_summary, refusal_report, safe_progress, xcresult_issues
 from privacy_scan import needles
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_member_integrity_checks_all_and_keeps_size_and_hash_distinct(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            payloads = {'native.log': b'old', 'privacy.xcresult/Info.plist': b'plist',
+                        'privacy.xcresult/Data/data.private-operand': b'data', 'private-operand.txt': b'other'}
+            manifest = {}
+            for name, data in payloads.items():
+                path = root / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(data)
+                manifest[name] = {'bytes': len(data), 'sha256': sha(path)}
+            self.assertEqual(member_integrity(root, manifest)['mismatch_count'], 0)
+            (root / 'native.log').write_bytes(b'longer')
+            (root / 'privacy.xcresult/Info.plist').write_bytes(b'PLIST')
+            manifest['private-operand.txt']['bytes'] += 1
+            report = member_integrity(root, manifest)
+            self.assertTrue(report['complete']); self.assertEqual(report['member_count'], 4)
+            self.assertEqual(report['mismatch_count'], 3)
+            self.assertEqual(report['mismatch_groups'], [
+                {'role': 'native-log', 'size_matches': False, 'hash_matches': False, 'count': 1},
+                {'role': 'other', 'size_matches': False, 'hash_matches': True, 'count': 1},
+                {'role': 'xcresult-info', 'size_matches': True, 'hash_matches': False, 'count': 1}])
+            self.assertFalse(report['acceptance'])
+            self.assertNotIn('private-operand', str(report))
+
+    def test_member_role_never_echoes_encoded_truncated_or_spoofed_names(self):
+        self.assertEqual(member_role('native.log'), 'native-log')
+        self.assertEqual(member_role('sensitive-synthetic-product-logs/remember_closed/host-unified.json'), 'product-log')
+        for raw in list(needles({'secret': b'Privacy-' + b'e' * 64 + b'!%:+'}).values()) + [b'Privacy-eee...']:
+            operand = raw.decode('utf-8', errors='replace')
+            for name, expected in ((operand, 'other'), ('native.log' + operand, 'other'),
+                    ('privacy.xcresult/Data/' + operand, 'xcresult-data'), ('adapter/' + operand, 'adapter')):
+                self.assertEqual(member_role(name), expected)
+                self.assertNotIn(operand, member_role(name))
+
+    def test_member_metadata_refuses_unknown_types_without_operand_text(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); path = root / 'native.log'; path.write_bytes(b'known')
+            valid = {'bytes': path.stat().st_size, 'sha256': sha(path)}
+            for item in ({'bytes': True, 'sha256': valid['sha256']}, {'bytes': -1, 'sha256': valid['sha256']},
+                    dict(valid, sha256='private-operand'), dict(valid, extra='private-operand'), 'private-operand'):
+                with self.assertRaisesRegex(RuntimeError, '^unexpected member metadata$'):
+                    member_integrity(root, {'native.log': item})
+
     def test_refusal_codes_require_exact_owned_message_and_keep_false_verdict(self):
         for message, code in REFUSAL_CODES.items():
             report = refusal_report(RuntimeError(message), 'archive-extract')
