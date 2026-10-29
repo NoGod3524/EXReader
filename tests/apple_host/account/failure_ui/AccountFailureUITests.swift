@@ -61,6 +61,8 @@ final class AccountFailureUITests: XCTestCase {
         let book = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library.book.'")).firstMatch
         XCTAssertTrue(book.waitForExistence(timeout: 90))
         XCTAssertTrue(wait { !self.node("library.busy").exists })
+        let importedBookID = book.identifier
+        XCTAssertFalse(importedBookID.isEmpty)
         tap("account.sync.start")
         XCTAssertTrue(wait(180) { self.value("account.sync.state") == "同步失败" })
         XCTAssertTrue(book.exists, "the local original must remain available after failure")
@@ -99,6 +101,9 @@ final class AccountFailureUITests: XCTestCase {
         XCTAssertTrue(wait(60) { self.value("account.sync.state") == "已关闭" })
         tap("account.sync.start")
         XCTAssertTrue(wait(180) { self.value("account.sync.state") == "本轮扫描完成" })
-        XCTAssertTrue(book.exists, "successful retry must preserve the original")
+        // FINISHED is observed before the host asynchronously republishes the shelf.
+        // Check the same imported row after that publication, not a transient empty list.
+        XCTAssertTrue(wait { !self.node("library.busy").exists && self.node(importedBookID).exists },
+                      "successful retry must preserve the original")
     }
 }
