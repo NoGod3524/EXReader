@@ -190,11 +190,37 @@ def cross_options(target, sdk, stage, product):
     return options
 
 
+def guard_fixture_source(package,selected,compile_source=None,compile_only=False):
+    package_name=package.split()[0]
+    config=(Path(selected)/'lib/cmake'/package_name).as_posix()
+    source=('cmake_minimum_required(VERSION 3.24)\nproject(PublicGuard LANGUAGES C CXX)\n'
+            'set(CMAKE_C_STANDARD 11)\nset(CMAKE_CXX_STANDARD 17)\n'
+            'if(MSVC)\nset(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")\nendif()\n'
+            'find_package('+package+' EXACT CONFIG REQUIRED PATHS "'+config+'" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)\n'
+            'file(REAL_PATH "'+config+'" _expected_config)\n'
+            'file(REAL_PATH "${'+package_name+'_DIR}" _actual_config)\n'
+            'if(NOT _actual_config STREQUAL _expected_config)\nmessage(FATAL_ERROR "Fixture package resolved outside selected prefix")\nendif()\n')
+    if compile_source:
+        declaration='add_library(guard-compile OBJECT ' if compile_only else 'add_executable(guard-compile '
+        source+=(declaration+'"'+Path(compile_source).as_posix()+'")\n'
+                 'set_target_properties(guard-compile PROPERTIES LINKER_LANGUAGE CXX)\n'
+                 'target_link_libraries(guard-compile PRIVATE EXReaderRevisions::reader_revisions)\n')
+    return source
+
+
+def missing_public_header_diagnostic(output):
+    header=re.escape('reader_selector_bytes_v1.h')
+    return bool(re.search(r'fatal error C1083: Cannot open include file: [\'\"]'+header+r'[\'\"]: No such file or directory',output)
+                or re.search(r'fatal error: [\'\"]'+header+r'[\'\"] file not found',output)
+                or re.search(r'fatal error: '+header+r': No such file or directory',output))
+
+
 def configure_negatives(target, sdk, stage, product):
     results=[]
     source=OUT/'negative-source'; source.mkdir(parents=True,exist_ok=True)
-    (source/'CMakeLists.txt').write_text('cmake_minimum_required(VERSION 3.24)\nproject(PublicGuard LANGUAGES C CXX)\nfind_package(EXReaderRevisions 0.4.0 EXACT CONFIG REQUIRED)\n')
-    for case in ('valid','missing-header','wrong-version','comment-spoof','missing-capability','conflicting-capability','mixed-archive','stale-private','legacy-prefix','retained-header','retained-version','retained-capability','same-prefix-wrong-archive'):
+    legacy_c=source/'legacy-api.c'
+    legacy_c.write_text('#include <reader_revisions.h>\nint main(void){reader_revisions *s=0;reader_revision_error e={0};return (int)reader_revisions_close(&s,&e);}\n')
+    for case in ('valid','missing-header','wrong-version','comment-spoof','missing-capability','conflicting-capability','mixed-archive','stale-private','legacy-prefix','legacy-discovery','legacy-public-compile','retained-header','retained-version','retained-capability','same-prefix-wrong-archive'):
         prefix=OUT/'negative-prefix'; shutil.rmtree(prefix,ignore_errors=True); shutil.copytree(stage,prefix)
         header=prefix/'include/reader_selector_bytes_v1.h'; config=prefix/'lib/cmake/EXReaderRevisions'
         targets=config/'EXReaderRevisionsTargets.cmake'
@@ -217,13 +243,23 @@ def configure_negatives(target, sdk, stage, product):
             else:
                 state_targets=prefix/'lib/cmake/EXReaderReadingState/EXReaderReadingStateTargets.cmake'
                 state_targets.write_text(state_targets.read_text().replace('EXR_READER_PUBLIC_RETAINED_RAW_V1=1','EXR_READER_PUBLIC_RETAINED_RAW_V1=0'))
-        package='EXReaderReadingCommands 0.2.0' if case.startswith('retained-') else 'EXReaderRevisions 0.4.0'
-        (source/'CMakeLists.txt').write_text('cmake_minimum_required(VERSION 3.24)\nproject(PublicGuard LANGUAGES C CXX)\nfind_package('+package+' EXACT CONFIG REQUIRED)\n')
-        selected=OUT/'legacy-stage' if case=='legacy-prefix' else prefix
+        selected=OUT/'legacy-stage' if case.startswith('legacy-') else prefix
+        package='EXReaderReadingCommands 0.2.0' if case.startswith('retained-') else 'EXReaderRevisions '+('0.3.0' if case in ('legacy-discovery','legacy-public-compile') else '0.4.0')
+        compile_source=legacy_c if case=='legacy-discovery' else HERE/'codec_v1.c' if case=='legacy-public-compile' else None
+        if case=='legacy-public-compile':need(not (selected/'include/reader_selector_bytes_v1.h').exists(),'OFF public header unexpectedly installed')
+        (source/'CMakeLists.txt').write_text(guard_fixture_source(package,selected,compile_source,case=='legacy-public-compile'))
         options=cross_options(target,sdk,selected,prefix if product==stage else product)
         p=command(['cmake','-S',source,'-B',OUT/('negative-'+case),'-G','Ninja',*options], 'negative-'+case, expected=None)
-        need((p.returncode==0)==(case=='valid'), ('guard outcome',case,p.returncode))
-        results.append(dict(case=case,expected_success=case=='valid',exit_code=p.returncode,passed=True))
+        expected=case in ('valid','legacy-discovery','legacy-public-compile')
+        need((p.returncode==0)==expected, ('guard outcome',case,p.returncode))
+        result=dict(case=case,expected_success=expected,exit_code=p.returncode,passed=True)
+        if compile_source:
+            built=command(['cmake','--build',OUT/('negative-'+case),'--parallel','4','--verbose'],'negative-'+case+'-build',expected=None)
+            build_expected=case=='legacy-discovery'
+            need((built.returncode==0)==build_expected,('legacy API compile outcome',case,built.returncode))
+            if not build_expected:need(missing_public_header_diagnostic(built.stdout),'genuine missing public-header compiler diagnostic required')
+            result.update(expected_build_success=build_expected,build_exit_code=built.returncode)
+        results.append(result)
     shutil.rmtree(OUT/'negative-prefix')
     return results
 
@@ -253,6 +289,19 @@ def exact_copy(source,destination):
     temporary.rename(destination)
     need(snapshot(destination)==before,'installed snapshot mismatch')
     return before
+
+
+def snapshot_directories(inventory):
+    directories=inventory['directories']
+    need(directories==sorted(set(directories)) and all(safe_member(p) for p in directories),'unsafe/duplicate snapshot directory')
+    need(not set(directories)&set(inventory['files']),'snapshot file/directory collision')
+    return directories
+
+
+def restore_snapshot_directories(folder,inventory):
+    # adb transfer may omit empty directories; only the source inventory grants
+    # creation. File presence, deletions, extras and all hashes are still checked.
+    for name in snapshot_directories(inventory):(Path(folder)/name).mkdir(parents=True,exist_ok=True)
 
 
 class Native:
@@ -315,6 +364,8 @@ class Native:
             remote_data=self.remote+'/'+self.data.name
             command(['adb','shell','rm','-rf',remote_data],label+'-clear-owned-snapshot')
             before=snapshot(self.data)
+            directories=[remote_data,*[remote_data+'/'+p for p in snapshot_directories(before)]]
+            command(['adb','shell',shlex.join(['mkdir','-p',*directories])],label+'-push-directories')
             command(['adb','push',str(self.data),self.remote+'/'],label+'-push',timeout=180)
             need(self.android_snapshot(remote_data)==before,'Android input snapshot differs')
             translated=[a.replace(str(self.data),remote_data) for a in args]
@@ -324,6 +375,7 @@ class Native:
             incoming=self.data.with_name(self.data.name+'.pulled');need(not incoming.exists(),'stale Android receive')
             incoming.mkdir()
             command(['adb','pull',remote_data+'/.',incoming],label+'-pull',timeout=180)
+            restore_snapshot_directories(incoming,after)
             need(snapshot(incoming)==after and self.android_snapshot(remote_data)==after,'Android output snapshot differs/changed')
             exact_copy(incoming,self.data);shutil.rmtree(incoming)
         elif self.udid:
@@ -649,15 +701,24 @@ def llvm_runtime_notice_coverage(record,notices):
     return bool(known and notices.get('NOTICE','') and ' '.join(LLVM_LICENSE_BLOCK.split()) in ' '.join(text.split()))
 
 
-def ndk_driver_binding(command_text,cache_text,before):
+def ndk_driver_binding(command_text,cache_text,before,compiler_records):
     args=shlex.split(command_text)
     if args[:2]==[':','&&']:args=args[2:]
     need(args and args[0] not in ('env','cd'),'unsupported driver command form')
     root=Path(before['root']);driver=Path(args[0]);name=driver.name
     need(name in ('clang','clang++') and driver==root/'toolchains/llvm/prebuilt/linux-x86_64/bin'/name,'selected linker driver is not recorded NDK clang')
     key='CMAKE_CXX_COMPILER' if name=='clang++' else 'CMAKE_C_COMPILER'
-    configured=re.findall(r'^'+key+r':[A-Z_]+=(.+)$',cache_text,re.M)
-    need(configured==[str(driver)],'selected driver differs from actual configured compiler')
+    language='CXX' if name=='clang++' else 'C'
+    cached=[line for line in cache_text.splitlines() if line.startswith(key+':')]
+    generated=[line for line in compiler_records.get(language,'').splitlines() if re.match(r'\s*set\('+key+r'\s',line)]
+    print('ACTUAL_CMAKE_COMPILER',json.dumps(dict(key=key,cache=cached,generated=generated)),flush=True)
+    need(len(generated)==1,'one generated CMake compiler assignment required')
+    match=re.fullmatch(r'\s*set\('+key+r' "([^"\r\n]+)"\)\s*',generated[0])
+    need(match is not None and match[1]==str(driver),'selected driver differs from generated CMake compiler')
+    need(len(cached)<=1,'duplicate compiler cache assignment')
+    if cached:
+        match=re.fullmatch(key+r':(?:FILEPATH|STRING|UNINITIALIZED)=(.+)',cached[0])
+        need(match is not None and match[1]==str(driver),'selected driver differs from compiler cache assignment')
     need(ndk_file_record(root,driver)==before['tools'][name],'selected driver differs from pre-build bytes')
     need(not any(a in ('-target','--target','--sysroot','-isysroot','-Xclang','--') or a.startswith(('-target=','-isysroot=')) for a in args),
          'unsupported driver target/sysroot override form')
@@ -711,6 +772,13 @@ def ndk_capture(destination,files,copy):
             home=re.findall(r'^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$',text,re.M)
             if home!=[str(ROOT/'examples/android/app/src/main/cpp')]:continue
             ninja=configured_ninja(text,before)
+            compiler_records={};recorded=[]
+            for language in ('C','CXX'):
+                candidates=list(folder.glob('CMakeFiles/*/CMake'+language+'Compiler.cmake'))
+                need(len(candidates)==1,('unique actual CMake compiler record required',language,[str(p) for p in candidates]))
+                path=candidates[0];copy(path);compiler_records[language]=path.read_text()
+                recorded.append(dict(language=language,path=str(path.relative_to(ROOT)),sha256=digest(path)))
+            result.setdefault('configured_compilers',[]).append(dict(cache=str(cache.relative_to(ROOT)),records=recorded))
             label='ndk-'+folder.relative_to(ROOT).as_posix().replace('/','_')
             commands=command([ninja,'-C',folder,'-t','commands'],label+'-commands').stdout
             command([ninja,'-C',folder,'-t','deps'],label+'-deps')
@@ -722,7 +790,7 @@ def ndk_capture(destination,files,copy):
                 if '-shared' not in args or not any(a.startswith('-Wl,-Map,') for a in args):continue
                 outputs=[args[i+1] for i,a in enumerate(args[:-1]) if a=='-o'];need(len(outputs)==1,'mapped shared link output ambiguous')
                 image=(folder/outputs[0]).resolve();mapfile,actual=android_link_binding(commands,image,folder)
-                driver_binding=ndk_driver_binding(actual,text,before)
+                driver_binding=ndk_driver_binding(actual,text,before,compiler_records)
                 need(image.is_relative_to(ROOT) and mapfile.is_relative_to(ROOT),'linked image/map escapes workspace')
                 need(image.name not in images,'duplicate mapped Android image');images[image.name]=True;copy(image);copy(mapfile)
                 image_record=dict(image=str(image.relative_to(ROOT)),image_sha256=digest(image),map=str(mapfile.relative_to(ROOT)),map_sha256=digest(mapfile),command=actual,driver_binding=driver_binding,contributors=[])
