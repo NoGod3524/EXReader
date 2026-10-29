@@ -11,3 +11,11 @@ Mobile repair candidate: `55ec49020383ef5073f47502b300ab0b5d0a7cae`, branch `cod
 Parallel mainline work is isolated: the Apple SDK 3.42 host driver must use actual 3.42 inputs and preserve existing product changes; Windows migration qualification must resolve three remaining file-handle lifecycle failures without weakening original checks. Their source changes receive their own source-bound validation.
 
 No default-branch merge, PR, tag or Release is part of this handoff. Builds, syntax checks, fixture generation, benchmarks and artifact parsing remain Actions-only.
+
+## Active source-bound runs
+
+- Mobile annotation producer [40935165396](https://github.com/NoGod3524/EXReader/actions/runs/40935165396), source `55ec49020383ef5073f47502b300ab0b5d0a7cae`: both SDK builds passed; three native hosts started. Source review separately confirmed all five feature test bodies are identical to `622b9558`.
+- Real Apple 3.42 producer [40935524467](https://github.com/NoGod3524/EXReader/actions/runs/40935524467), source `148a5b11f9e65e87520eddff98e5365e83e98c30`: SDK builds passed, native admission failed before any case. Independent retained-ZIP inspection [40936609291](https://github.com/NoGod3524/EXReader/actions/runs/40936609291) found exactly one omitted SDK file, `examples/android/.gitignore`, with every transmitted file digest matching. Repair `6be10b3de1e7f9e98bab72db586a66e571199034` keeps complete file-set checks, transports hidden SDK files, retains early failure receipts, and includes the mobile picker helper. New-source SDKs must be rebuilt; old artifacts are not relabeled.
+- Windows migration [40936421939](https://github.com/NoGod3524/EXReader/actions/runs/40936421939), source `ed734a879c933b78006ce9e78e89921d3c44fe69`: new same-directory fixture rename stimulus and original 67-group/30-minute gate. Earlier guard failure [40936057156](https://github.com/NoGod3524/EXReader/actions/runs/40936057156) executed no qualification groups and remains retained. Even a passing qualification does not enable Windows production recovery or grant F12.
+
+The independent mobile workflow waits on the already-running exact producer on Ubuntu, then audits each completed host on macOS. It does not dispatch production tests. Its reports receive no catalog credit until explicitly pinned and reread by the fixed progress audit.
