@@ -6,7 +6,11 @@
 #include <stdio.h>
 static wr_error error={0,"none"};
 static unsigned checks;
-#define CHECK(x) do { if(!(x)){fprintf(stderr,"check %u line %d: %s (%s, native=%lu)\n",checks+1,__LINE__,#x,error.reason?error.reason:"none",error.native);return 2;}checks++; } while(0)
+static int check_value(int value,int line,const char *expression) {
+  if(!value){fprintf(stderr,"check %u line %d: %s (%s, native=%lu)\n",checks+1,line,expression,error.reason?error.reason:"none",error.native);return 0;}
+  checks++;return 1;
+}
+#define CHECK(x) do { if(!check_value(!!(x),__LINE__,#x))return 2; } while(0)
 int wmain(int argc,wchar_t **argv) {
   wr_context *c;wr_identity target_id,record_id,read_id,changed;lm_wr_record r={0},decoded,bad,next;
   HANDLE target=INVALID_HANDLE_VALUE,record=INVALID_HANDLE_VALUE,read=INVALID_HANDLE_VALUE,temp=INVALID_HANDLE_VALUE;
