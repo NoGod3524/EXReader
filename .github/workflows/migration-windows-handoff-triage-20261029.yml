@@ -36,6 +36,14 @@ jobs:
                   assert z.getinfo(name).file_size<=64*1024**2
                   report=json.loads(z.read(name))
                   failures.extend(c for c in report.get('cases',[]) if not c.get('passed'))
+              child_reports={}
+              for label in ('10-baseline','10-request','10-output','10-target-request'):
+                  folder=hashlib.sha256(label.encode()).hexdigest()[:32]
+                  hits=[n for n in names if folder in n and n.endswith('worker-log.txt')]
+                  for n in hits:
+                      assert z.getinfo(n).file_size<=2*1024**2
+                      child_reports[label]=z.read(n).decode('utf-8','strict').splitlines()[-1]
+              print('G10_CHILD_REPORTS',json.dumps(child_reports))
               out={'producer_run':40936421939,'producer_source':'ed734a879c933b78006ce9e78e89921d3c44fe69','inspection_only':True,'failures':failures}
               Path('build').mkdir(exist_ok=True)
               Path('build/windows-native-retained-failures.json').write_text(json.dumps(out,indent=2)+'\n')
