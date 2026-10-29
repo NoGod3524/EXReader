@@ -63,3 +63,21 @@ full product, accessibility, or any 108-item credit.
 - Next source tightens the gate: an executable (`x`) mapping of the host APK (hash equal to the installed APK, not the
   test APK) must start at entry data start + page-aligned PT_LOAD offset and cover its page-rounded file size.
   The extracted-library hash chain is kept; both chains are recorded.
+
+## Result
+Run 40951458995 / attempt 1, source `7dce4bd6090cb8e1c1fa54b2329583bc55c3e138`: protocol job 123720363567 and android job
+123720438740 both succeeded; `verify.py` reported `passed: true, failures: []` over all 14+ gates. Artifact 12931807958
+`claude-c1-android-installed-sync-40951458995-1`, 32387963 bytes, sha256
+`9f2b5786ec6e93bc37fdb7f5ca7a12dc31d55921c6d876f65b50a3c97cc98838`.
+
+Evidence in that run: the installed `org.exreader.host` APK bytes equal the built APK; the frozen HostSync suite passed
+16/16 on the real Activity at SDK 3.42.0; the seeded local original reached the TLS WebDAV fixture with object path ==
+body SHA-256 == SHA-256 of the original (201, stored), after a UI-cancelled in-flight upload and a retry; no object with a
+mismatched identity; the live process, while a real native upload and a real listing were blocked in flight, had an
+executable (`r-xp`) mapping of the host `base.apk` at offset 7929856 (entry data start) of 0x2d0000 bytes covering the
+executable PT_LOAD (p_offset 0, p_filesz 2947104). The extracted-`.so` chain was not applicable (libraries are mapped from
+the APK; `chain_extracted_file=false`) and is retained as a gate alternative. The product image's complete exact hash and Sync
+symbols were checked on a single candidate byte-bound to the packaged image.
+
+Not covered: the tamper/hash-mismatch failure on a local original through the installed path (only interruption/cancel and
+retry are exercised); physical device; F01/F07/F08/F12; full product; 108-item credit.
