@@ -49,7 +49,7 @@ jobs:
           REPORTS = Path.home() / 'Library/Logs/DiagnosticReports'
           PACKAGE = 'tests/apple_ios_organization_verify_phase_probe_20261029/'
           WORKFLOW = '.github/workflows/apple-ios-organization-verify-phase-probe-20261029.yml'
-          PARENT = '577a96334ccc2b3015e86b2580674bcbcab5dc1f'
+          PARENT = '808e183adb52c2f7e0fbaaf638fd321ac74399b8'
           BRANCH = 'codex/apple-ios-organization-verify-phase-probe-20261029'
           DEVELOPER = '/Applications/Xcode_16.4.app/Contents/Developer'
           RUNTIME = 'com.apple.CoreSimulator.SimRuntime.iOS-26-2'
@@ -87,23 +87,96 @@ jobs:
                   stream.write(data); stream.flush(); os.fsync(stream.fileno())
               os.replace(temporary, path)
 
-          def reserve_stdout(used, size):
-              require(type(used) is int and 0 <= used <= 512 * 1024, 'stdout budget invalid')
-              require(type(size) is int and 0 <= size and used + size <= 512 * 1024, 'serialized stdout ceiling')
+          def reserve_stdout(used, size, limit=512 * 1024):
+              require(type(used) is int and 0 <= used <= limit, 'stdout budget invalid')
+              require(type(size) is int and 0 <= size and used + size <= limit, 'serialized stdout ceiling')
               return used + size
 
-          def emit(value):
+          def initialize_stdout(directory=P):
+              root = root_fd(directory); fd = None
+              try:
+                  require(root is not None, 'stdout private root missing')
+                  fd = os.open('stdout-budget.json', os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600, dir_fd=root)
+                  record = {'identity': IDENTITY, 'root': root_identity(os.fstat(root)), 'inode': root_identity(os.fstat(fd)),
+                      'ordinary': 0, 'terminal_bytes': 0, 'terminal_records': 0, 'total': 0}
+                  data = encoded(record); require(os.write(fd, data) == len(data), 'initial ledger short write')
+                  os.fsync(fd); root_unchanged(root, directory)
+              finally:
+                  if fd is not None: os.close(fd)
+                  if root is not None: os.close(root)
+
+          def ledger_checked(record):
+              require(type(record) is dict and set(record) == {'identity', 'root', 'inode', 'ordinary',
+                  'terminal_bytes', 'terminal_records', 'total'} and record['identity'] == IDENTITY, 'stdout ledger identity/schema differs')
+              for key, cap in [('ordinary', 496 * 1024), ('terminal_bytes', 16 * 1024), ('terminal_records', 2), ('total', 512 * 1024)]:
+                  bounded(record[key], cap, 'stdout ledger counter differs')
+              require(all(type(record[k]) in (list, tuple) and len(record[k]) == 2
+                  and all(type(v) is int and v >= 0 for v in record[k]) for k in ('root', 'inode')), 'stdout ledger inode shape differs')
+              require(record['total'] == record['ordinary'] + record['terminal_bytes']
+                  and (record['terminal_records'] != 0 or record['terminal_bytes'] == 0), 'stdout ledger totals differ')
+
+          def reserve_ledger(record, size, terminal):
+              ledger_checked(record)
+              updated = dict(record)
+              if terminal:
+                  require(record['terminal_records'] < 2 and size <= 8 * 1024, 'two terminal records/eight KiB ceiling')
+                  updated['terminal_records'] += 1
+                  updated['terminal_bytes'] = reserve_stdout(record['terminal_bytes'], size, 16 * 1024)
+              else: updated['ordinary'] = reserve_stdout(record['ordinary'], size, 496 * 1024)
+              updated['total'] = reserve_stdout(record['total'], size)
+              return updated
+
+          def terminal_value(value, ordinal):
+              digest = sha(encoded(value))
+              def shaped(item, width, depth=0):
+                  if depth > 8: return '<depth clipped>'
+                  if type(item) is str: return item.encode('utf-8', 'replace')[:width].decode('utf-8', 'ignore')
+                  if type(item) is dict:
+                      return {str(k)[:128]: shaped(v, width, depth + 1) for k, v in list(item.items())[:32]}
+                  if type(item) in (list, tuple): return [shaped(v, width, depth + 1) for v in item[:32]]
+                  return item
+              for width in (1024, 512, 256, 128, 64, 32, 16):
+                  payload = shaped(value, width)
+                  wrapped = dict(IDENTITY, mode=MODE, terminal_record_ordinal=ordinal, terminal_record_limit=2,
+                      supersedes_previous_terminal_record=ordinal == 2, payload_sha256=digest,
+                      payload_clipped=encoded(payload) != encoded(value), build_service_diagnostic=payload)
+                  if len(encoded(wrapped)) <= 8 * 1024: return wrapped, True
+              return dict(IDENTITY, mode=MODE, terminal_record_ordinal=ordinal,
+                  supersedes_previous_terminal_record=ordinal == 2, diagnostic_complete=False,
+                  problem='terminal payload exceeded encoded bound', payload_sha256=digest), False
+
+          def emit(value, terminal=False, directory=P, sink=None):
               global PRINTED
-              data = encoded(value)
-              # Shared across admit/observe/finish; never wait on product work.
-              with (P / 'stdout-budget.json').open('a+b') as budget:
-                  fcntl.flock(budget.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                  budget.seek(0); raw = budget.read(1024)
-                  used = json.loads(raw) if raw else 0
-                  used = reserve_stdout(used, len(data))
-                  budget.seek(0); budget.truncate(); budget.write(str(used).encode())
-                  budget.flush(); os.fsync(budget.fileno())
-                  sys.stdout.buffer.write(data); sys.stdout.buffer.flush(); PRINTED += len(data)
+              root = root_fd(directory); fd = None; payload_complete = True
+              try:
+                  require(root is not None, 'stdout ledger root missing')
+                  fd = os.open('stdout-budget.json', os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=root)
+                  fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)  # No retry, reset or wait.
+                  info = os.fstat(fd); current = os.stat('stdout-budget.json', dir_fd=root, follow_symlinks=False)
+                  require(stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1
+                      and stat.S_IMODE(info.st_mode) == 0o600 and identity(info) == identity(current)
+                      and info.st_size <= 4096, 'stdout ledger FD differs')
+                  record = strict_json(os.read(fd, 4097), 4096); ledger_checked(record)
+                  require(tuple(record['inode']) == root_identity(info) and tuple(record['root']) == root_identity(os.fstat(root)),
+                      'stdout ledger replaced')
+                  if terminal: value, payload_complete = terminal_value(value, record['terminal_records'] + 1)
+                  data = encoded(value); updated = reserve_ledger(record, len(data), terminal)
+                  reservation = encoded(updated)
+                  os.lseek(fd, 0, os.SEEK_SET); os.ftruncate(fd, 0)
+                  require(os.write(fd, reservation) == len(reservation), 'stdout ledger short write')
+                  os.fsync(fd)
+                  root_unchanged(root, directory, record['root'])
+                  after = os.fstat(fd); path_after = os.stat('stdout-budget.json', dir_fd=root, follow_symlinks=False)
+                  require(identity(after) == identity(path_after) and root_identity(after) == tuple(record['inode'])
+                      and stat.S_ISREG(after.st_mode) and after.st_uid == os.getuid() and after.st_nlink == 1
+                      and stat.S_IMODE(after.st_mode) == 0o600 and after.st_size == len(reservation), 'stdout ledger path/attributes changed')
+                  if sink is None: sys.stdout.buffer.write(data); sys.stdout.buffer.flush()
+                  else: sink(data)  # Owned synthetic controls only; production calls omit.
+                  PRINTED += len(data)
+                  return payload_complete
+              finally:
+                  if fd is not None: os.close(fd)
+                  if root is not None: os.close(root)
 
           def finite(value):
               return type(value) in (int, float) and math.isfinite(value)
@@ -229,7 +302,7 @@ jobs:
                   root_unchanged(fd, directory, expected_root)
                   stable = stable_snapshot(identity(before), identity(after), identity(path_after), size)
                   return {'bytes': size, 'sha256': digest.hexdigest(), 'stable': stable, 'utf8_valid': valid_utf8,
-                      'before': identity(before), 'after': identity(after), '_first': first, '_last': tail,
+                      'root': root_identity(os.fstat(fd)), 'before': identity(before), 'after': identity(after), '_first': first, '_last': tail,
                       '_raw': b''.join(blocks) if capture else None}
               finally:
                   if child is not None: os.close(child)
@@ -361,7 +434,7 @@ jobs:
                   require(upload_candidate(life, True) == (E if expected_sealed else REFUSAL), 'unreaped upload admitted')
                   out['lifecycle_branch_' + name] = True
               failed = {'diagnostic_complete': True, 'problems': []}
-              def exhausted_emit(value): reserve_stdout(512 * 1024, len(encoded(value)))
+              def exhausted_emit(value, terminal=False): reserve_stdout(512 * 1024, len(encoded(value)))
               ok = final_emission(failed, {'fixture': True}, exhausted_emit)
               require(ok is False and failed['diagnostic_complete'] is False and failed['problems']
                   and upload_candidate({'observer_reaped': True, 'partial_tree_sealed': True, 'observer_exit': 0}, ok) == REFUSAL,
@@ -387,18 +460,206 @@ jobs:
               sdk = command(['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-version'], 'sdk-version').decode().strip()
               system = command(['sw_vers', '-productVersion'], 'macos-version').decode().strip()
               arch = command(['uname', '-m'], 'architecture').decode().strip()
-              runtimes = strict_json(command(['xcrun', 'simctl', 'list', 'runtimes', '-j'], 'runtimes', limit=256 * 1024))
               require(version == 'Xcode 16.4\nBuild version 16F6' and sdk == '18.5' and system.startswith('15.') and arch == 'arm64', 'observed environment differs')
-              selected = [r for r in runtimes['runtimes'] if r.get('identifier') == RUNTIME]
-              require(len(selected) == 1 and selected[0]['isAvailable'] is True and any(
-                  d.get('identifier') == DEVICE for d in selected[0]['supportedDeviceTypes']), 'fixed runtime/device unavailable')
-              controls()
+              controls(); passive_controls()
               save(E / 'admission.json', dict(IDENTITY, admitted=True, frozen=FROZEN,
                   workflow_sha256=sha((ROOT / WORKFLOW).read_bytes()), developer_dir=DEVELOPER,
                   xcode_version=version, sdk=sdk, macos=system, arch=arch,
                   image_version=os.environ.get('ImageVersion'), image_os=os.environ.get('ImageOS'),
-                  selected_runtime={'identifier': RUNTIME, 'version': selected[0]['version'], 'build': selected[0].get('buildversion')}))
-              emit({'build_observer_admitted': True, **IDENTITY, 'xcode': version, 'sdk': sdk})
+                  runtime_status='pending_original_collector', duplicate_runtime_query_removed=True))
+              emit({'source_toolchain_admitted': True, **IDENTITY, 'xcode': version, 'sdk': sdk,
+                  'runtime_status': 'pending_original_collector', 'duplicate_runtime_query_removed': True})
+
+          def runtime_specs():
+              return [(['xcodebuild', '-version'], 'xcode-version.stdout', 1024),
+                  (['xcrun', 'simctl', 'list', 'runtimes', '-j'], 'runtimes.stdout', 256 * 1024),
+                  (['xcrun', 'simctl', 'create', 'EXR-phase-' + IDENTITY['run_id'] + '-preflight', DEVICE, RUNTIME],
+                   'create-preflight.stdout', 1024)]
+
+          def runtime_records(rows, previous, now):
+              require(type(rows) is list and len(rows) <= 128 and rows[:len(previous)] == previous,
+                  'runtime completed prefix changed')
+              require(all(type(r) is dict and type(r.get('argv')) is list for r in rows), 'runtime command structure differs')
+              last = 0
+              for index, (argv, name, _) in enumerate(runtime_specs()):
+                  require(sum(r['argv'] == argv for r in rows) <= 1, 'duplicate original environment command')
+                  if index >= len(rows): return {'status': 'pending_original_collector'}
+                  row = rows[index]
+                  require(row['argv'] == argv and row.get('output') == str(NATIVE / 'evidence' / name), 'original environment order/argv/path differs')
+                  require(finite(now) and finite(row.get('started')) and finite(row.get('finished'))
+                      and last <= row['started'] <= row['finished'] <= now, 'original environment clock differs')
+                  last = row['finished']
+                  require('exit_code' not in row or row['exit_code'] is None or type(row['exit_code']) is int, 'original exit type differs')
+                  require('problem' not in row or row['problem'] is None or type(row['problem']) is str, 'original problem type differs')
+                  if row.get('exit_code') != 0 or row.get('problem') is not None:
+                      return {'status': 'original_command_failed_or_incomplete', 'record': {
+                          'argv': argv, 'output': row['output'], 'started': row['started'], 'finished': row['finished'],
+                          'exit_code_present': 'exit_code' in row, 'exit_code': row.get('exit_code'),
+                          'problem_present': 'problem' in row,
+                          'problem': row['problem'][:1000] if type(row.get('problem')) is str else row.get('problem')}}
+              return {'status': 'original_environment_commands_succeeded'}
+
+          def environment_values(version, runtimes_raw, created):
+              require(version.decode('utf-8').strip() == 'Xcode 16.4\nBuild version 16F6', 'original Xcode version differs')
+              runtimes = strict_json(runtimes_raw)
+              require(type(runtimes) is dict and type(runtimes.get('runtimes')) is list, 'runtime list structure differs')
+              selected = [r for r in runtimes['runtimes'] if type(r) is dict and r.get('identifier') == RUNTIME]
+              require(len(selected) == 1 and selected[0].get('isAvailable') is True
+                  and type(selected[0].get('supportedDeviceTypes')) is list
+                  and any(type(d) is dict and d.get('identifier') == DEVICE for d in selected[0]['supportedDeviceTypes']),
+                  'original fixed runtime/device unavailable')
+              uid = created.decode('utf-8').strip(); require(re.fullmatch(r'[0-9A-Fa-f-]{36}', uid), 'original created UUID differs')
+              require(type(selected[0].get('version')) is str and len(selected[0]['version']) <= 64
+                  and (selected[0].get('buildversion') is None or type(selected[0]['buildversion']) is str
+                       and len(selected[0]['buildversion']) <= 64), 'runtime version/build fields differ')
+              return {'uid': uid, 'identifier': RUNTIME, 'device': DEVICE, 'version': selected[0]['version'],
+                  'build': selected[0].get('buildversion')}
+
+          def cache_environment(directory=None):
+              directory = NATIVE / 'evidence' if directory is None else directory
+              files, raw = {}, {}
+              for _, name, limit in runtime_specs():
+                  row = read_file(directory, name, limit, True)
+                  require(row['stable'] and row['utf8_valid'], 'original environment file incomplete')
+                  files[name] = public(row); raw[name] = row['_raw']
+              return {'files': files, **environment_values(raw['xcode-version.stdout'], raw['runtimes.stdout'], raw['create-preflight.stdout'])}
+
+          def revalidate_environment(cache, directory=None):
+              directory = NATIVE / 'evidence' if directory is None else directory
+              require(type(cache) is dict and type(cache.get('files')) is dict
+                  and set(cache['files']) == {name for _, name, _ in runtime_specs()}, 'environment cache incomplete')
+              raw = {}
+              for _, name, limit in runtime_specs():
+                  saved = cache['files'][name]
+                  row = read_file(directory, name, limit, True,
+                      expected_root=saved['root'], expected_file=saved['before'])
+                  require(row['stable'] and row['utf8_valid'] and row['sha256'] == saved['sha256']
+                      and row['bytes'] == saved['bytes'], 'cached environment file changed')
+                  raw[name] = row['_raw']
+              facts = environment_values(raw['xcode-version.stdout'], raw['runtimes.stdout'], raw['create-preflight.stdout'])
+              require(all(cache.get(k) == v for k, v in facts.items()), 'cached environment facts changed')
+              return True
+
+          def passive_controls():
+              out = {}; scratch = P / 'passive-controls'; scratch.mkdir(exist_ok=False)
+              def reject(name, action):
+                  try: action()
+                  except (ValueError, OSError, KeyError): out[name] = True
+                  else: raise ValueError('passive negative control admitted: ' + name)
+              rows = [{'argv': argv, 'output': str(NATIVE / 'evidence' / name), 'exit_code': 0,
+                  'started': index * 2 + 1, 'finished': index * 2 + 2}
+                  for index, (argv, name, _) in enumerate(runtime_specs())]
+              require(runtime_records(rows[:1], [], 10)['status'] == 'pending_original_collector', 'pending runtime became verified')
+              require(runtime_records(rows, [], 10)['status'] == 'original_environment_commands_succeeded', 'valid original chain rejected')
+              out.update(pending_runtime_distinct=True, valid_original_chain=True)
+              failed = [rows[0], dict(rows[1], exit_code=None, problem=None)]
+              observed = runtime_records(failed, [], 10)['record']
+              require(observed['exit_code_present'] is True and observed['exit_code'] is None
+                  and observed['problem_present'] is True and observed['problem'] is None, 'null failure details invented')
+              absent = dict(rows[1]); absent.pop('exit_code')
+              observed = runtime_records([rows[0], absent], [], 10)['record']
+              require(observed['exit_code_present'] is False and observed['exit_code'] is None
+                  and observed['problem_present'] is False, 'absent failure fields invented')
+              out['absent_null_failure_preserved'] = True
+              reject('duplicate_runtime_command', lambda: runtime_records(rows + [rows[1]], [], 10))
+              reject('reordered_original_commands', lambda: runtime_records([rows[1], rows[0], rows[2]], [], 10))
+              reject('mutated_completed_runtime_prefix', lambda: runtime_records([dict(rows[0], finished=1.5), *rows[1:]], rows, 10))
+              reject('wrong_original_create', lambda: runtime_records([*rows[:2], dict(rows[2], argv=rows[2]['argv'][:-1] + ['other'])], [], 10))
+              reject('nonfinite_original_clock', lambda: runtime_records([dict(rows[0], finished=True)], [], 10))
+              uid = '01234567-0123-0123-0123-0123456789AB'
+              version = b'Xcode 16.4\nBuild version 16F6\n'
+              runtime = {'identifier': RUNTIME, 'isAvailable': True, 'version': '26.2',
+                  'buildversion': 'fixture', 'supportedDeviceTypes': [{'identifier': DEVICE}]}
+              raw = encoded({'runtimes': [runtime]})
+              require(environment_values(version, raw, uid.encode())['uid'] == uid, 'valid original environment rejected')
+              out['valid_original_environment'] = True
+              reject('wrong_original_version', lambda: environment_values(b'other', raw, uid.encode()))
+              reject('wrong_runtime_identifier', lambda: environment_values(version,
+                  encoded({'runtimes': [dict(runtime, identifier='other')]}), uid.encode()))
+              reject('duplicate_runtime_identifier', lambda: environment_values(version,
+                  encoded({'runtimes': [runtime, runtime]}), uid.encode()))
+              reject('truthy_available_flag', lambda: environment_values(version,
+                  encoded({'runtimes': [dict(runtime, isAvailable=1)]}), uid.encode()))
+              reject('wrong_supported_device', lambda: environment_values(version,
+                  encoded({'runtimes': [dict(runtime, supportedDeviceTypes=[{'identifier': 'other'}])]}), uid.encode()))
+              reject('wrong_original_uuid', lambda: environment_values(version, raw, b'bad'))
+              reject('duplicate_runtime_json_key', lambda: environment_values(version, b'{"runtimes":[],"runtimes":[]}', uid.encode()))
+              reject('nonfinite_runtime_json', lambda: environment_values(version, b'{"runtimes":NaN}', uid.encode()))
+              reject('oversized_runtime_json', lambda: environment_values(version, b' ' * (256 * 1024 + 1), uid.encode()))
+              environment_dir = scratch / 'environment'; environment_dir.mkdir()
+              for name, data in [('xcode-version.stdout', version), ('runtimes.stdout', raw), ('create-preflight.stdout', uid.encode())]:
+                  (environment_dir / name).write_bytes(data)
+              cached = cache_environment(environment_dir)
+              require(revalidate_environment(cached, environment_dir) is True, 'valid final cache refused')
+              out['final_cached_identity_hash_checked'] = True
+              (environment_dir / 'replacement').write_bytes(raw)
+              os.replace(environment_dir / 'replacement', environment_dir / 'runtimes.stdout')
+              reject('cached_runtime_replaced_same_bytes', lambda: revalidate_environment(cached, environment_dir))
+              changed = dict(cached, uid='11111111-1111-1111-1111-111111111111')
+              # A fresh valid inode cache isolates the facts/destination mismatch.
+              changed = dict(cache_environment(environment_dir), uid=changed['uid'])
+              reject('cached_uuid_facts_changed', lambda: revalidate_environment(changed, environment_dir))
+              reject('wrong_build_destination_for_cached_uuid', lambda: validate_build(
+                  [{'argv': build_argv('11111111-1111-1111-1111-111111111111'), 'output': str(NATIVE / 'evidence/build.log'),
+                    'started': 7, 'finished': 8, 'exit_code': 0}], [], uid, 10, 0))
+              ledger_dir = scratch / 'ledger'; ledger_dir.mkdir(); initialize_stdout(ledger_dir)
+              ledger_path = ledger_dir / 'stdout-budget.json'
+              require(ledger_path.stat().st_size <= 4096, 'fixture ledger size')
+              reject('existing_ledger_never_reset', lambda: initialize_stdout(ledger_dir))
+              record = strict_json(ledger_path.read_bytes())
+              reject('ledger_wrong_identity', lambda: reserve_ledger(dict(record, identity={}), 1, False))
+              reject('ledger_bool_counter', lambda: reserve_ledger(dict(record, total=False), 1, False))
+              reject('ledger_counter_mismatch', lambda: reserve_ledger(dict(record, total=1), 1, False))
+              full = dict(record, ordinary=496 * 1024, total=496 * 1024)
+              reject('ordinary_reserves_terminal', lambda: reserve_ledger(full, 1, False))
+              full = reserve_ledger(reserve_ledger(full, 8 * 1024, True), 8 * 1024, True)
+              require(full['total'] == 512 * 1024 and full['terminal_records'] == 2, 'terminal reserve math differs')
+              reject('third_terminal_record', lambda: reserve_ledger(full, 1, True))
+              emitted = []
+              require(emit({'handled_failure': {'problem': '\x00汉字😀' * 2000, 'traceback': '\x00\r\n' * 4000}},
+                  terminal=True, directory=ledger_dir, sink=emitted.append) is True, 'bounded admission failure emission failed')
+              require(emit({'diagnostic_complete': False, 'problem': 'secondary lifecycle absent'},
+                  terminal=True, directory=ledger_dir, sink=emitted.append) is True, 'bounded refusal emission failed')
+              decoded = [strict_json(b) for b in emitted]
+              require(len(emitted) == 2 and all(len(b) <= 8 * 1024 for b in emitted)
+                  and decoded[1]['terminal_record_ordinal'] == 2 and decoded[1]['supersedes_previous_terminal_record'] is True,
+                  'encoded two-record output differs')
+              out['encoded_unicode_two_terminal_records'] = True
+              reject('actual_third_terminal_refused', lambda: emit({}, terminal=True, directory=ledger_dir, sink=emitted.append))
+              before = ledger_path.read_bytes(); held = os.open(ledger_path, os.O_RDWR | os.O_NOFOLLOW)
+              try:
+                  fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                  reject('actual_nonblocking_lock_contention', lambda: emit({}, directory=ledger_dir, sink=emitted.append))
+              finally: os.close(held)
+              require(ledger_path.read_bytes() == before, 'contended ledger mutated')
+              replacement = ledger_dir / 'replacement'; replacement.write_bytes(before); replacement.chmod(0o600)
+              os.replace(replacement, ledger_path)
+              reject('actual_replaced_ledger_refused', lambda: emit({}, directory=ledger_dir, sink=emitted.append))
+              ledger_path.write_bytes(b'{"partial":')
+              reject('actual_partial_ledger_never_reset', lambda: emit({}, directory=ledger_dir, sink=emitted.append))
+              require(ledger_path.read_bytes() == b'{"partial":', 'corrupt budget reset')
+              failure_dir = scratch / 'sink-failure'; failure_dir.mkdir(); initialize_stdout(failure_dir)
+              def failed_sink(data): raise OSError('synthetic stdout failure')
+              reject('output_failure_after_durable_reservation', lambda: emit({'fixture': True}, directory=failure_dir, sink=failed_sink))
+              persisted = strict_json((failure_dir / 'stdout-budget.json').read_bytes())
+              require(persisted['ordinary'] > 0 and persisted['total'] == persisted['ordinary'], 'failed output reservation rolled back')
+              out['failed_output_keeps_reservation'] = True
+              fallback_dir = scratch / 'formatter-fallback'; fallback_dir.mkdir(); initialize_stdout(fallback_dir)
+              fallback_result = {'diagnostic_complete': True, 'problems': []}; fallback_output = []
+              def fallback_emitter(value, terminal=False):
+                  return emit(value, terminal=terminal, directory=fallback_dir, sink=fallback_output.append)
+              oversized_shape = {'matrix': [['x' * 32 for _ in range(32)] for _ in range(32)]}
+              require(final_emission(fallback_result, oversized_shape, fallback_emitter) is False
+                  and fallback_result['diagnostic_complete'] is False and fallback_result['problems'], 'formatter fallback did not downgrade')
+              persisted = strict_json((fallback_dir / 'stdout-budget.json').read_bytes())
+              require(len(fallback_output) == 1 and len(fallback_output[0]) <= 8 * 1024
+                  and strict_json(fallback_output[0])['diagnostic_complete'] is False
+                  and persisted['terminal_records'] == 1 and persisted['terminal_bytes'] == len(fallback_output[0]),
+                  'formatter fallback reservation not retained')
+              out['actual_formatter_fallback_false_and_reserved'] = True
+              save(E / 'passive-controls.json', out)
+              require(all(v is True for v in out.values()), 'passive controls incomplete')
+              emit({'passive_controls': out})
 
           def build_argv(uid):
               require(type(uid) is str and re.fullmatch(r'[0-9A-Fa-f-]{36}', uid), 'created UUID differs')
@@ -458,7 +719,9 @@ jobs:
               return E if sealed_lifecycle(native) and output_ok is True else REFUSAL
 
           def final_emission(result, value, emitter=emit):
-              try: emitter(value); return True
+              try:
+                  require(emitter(value, terminal=True) is not False, 'terminal formatter fallback')
+                  return True
               except BaseException as error:
                   result['diagnostic_complete'] = False
                   result['problems'].append('final output: ' + str(error)[:300])
@@ -475,10 +738,11 @@ jobs:
               signal.signal(signal.SIGTERM, stop_observer)
               control = strict_json((P / 'control.json').read_bytes()); DEADLINE = control['deadline'] - 3
               state = dict(IDENTITY, complete=False, output_failed=False, problems=[], reports={}, polls=0, copied_bytes=0,
+                  runtime_verified=False, runtime_status='pending_original_collector',
                   command_read_errors=0, command_error_samples=[], coverage='bounded interval only; not causal attribution',
                   process_snapshots_attempted=0, process_observation='optional ps snapshots omitted; no process absence inference',
                   report_absence_proves_no_crash=False, report_capture_exhaustive=False, root_transitions=[])
-              previous = []; built = None; latest = {}; raw_previews = {}
+              previous = []; built = None; latest = {}; raw_previews = {}; environment = None; failed_record_emitted = False
               try:
                   require(control['identity'] == IDENTITY and finite(DEADLINE), 'observer control identity differs')
                   scanned_root, baseline = report_scan()
@@ -537,18 +801,26 @@ jobs:
                                       'snapshot_sha256': snapshot['sha256'] if snapshot else None,
                                       'snapshot_bytes': snapshot['bytes'] if snapshot else None})
                           else:
-                              uid = None
-                              if type(rows) is list and any(type(r) is dict and r.get('argv', [])[:2]
-                                      == ['xcodebuild', 'build-for-testing'] for r in rows):
-                                  created = read_file(NATIVE / 'evidence', 'create-preflight.stdout', 1024, True)
-                                  require(created['stable'] and created['utf8_valid'], 'created UUID snapshot incomplete')
-                                  uid = created['_raw'].decode().strip()
+                              facts = runtime_records(rows, previous, time.monotonic())
+                              state['runtime_status'] = facts['status']
+                              if 'record' in facts:
+                                  state['original_environment_failure'] = facts['record']
+                                  if not failed_record_emitted:
+                                      emit_observation(state, {'original_environment_failure': facts['record']})
+                                      failed_record_emitted = True
+                              if facts['status'] == 'original_environment_commands_succeeded' and environment is None:
+                                  environment = cache_environment(); state['environment_cache'] = environment
+                              uid = environment['uid'] if environment is not None else None
                               rows, candidate = command_gate(snapshot, previous, uid, time.monotonic(), mono0)
                               previous = rows
-                              if candidate is not None: built = candidate; state['build'] = candidate
+                              if candidate is not None:
+                                  built = candidate; state['build'] = candidate
+                                  require(environment is not None, 'build lacks original runtime evidence')
+                                  state['runtime_verified'] = True; state['runtime_status'] = 'original_runtime_create_destination_verified'
                           save(E / 'observer-state.json', state); inventory()
                           time.sleep(min(1, max(0, end - time.monotonic())))
                   require(built is not None, 'build completion not established')
+                  require(state['runtime_verified'] is True, 'original runtime evidence incomplete')
                   covered(mono0, built['started'])
                   require(all(rows and rows[-1]['stable'] and rows[-1]['utf8_valid'] for rows in state['reports'].values()), 'unstable/invalid report capture')
                   state['complete'] = True
@@ -604,7 +876,8 @@ jobs:
 
           def finish():
               result = dict(IDENTITY, diagnostic_complete=False, native_cases_added=0, formal_credit=0,
-                  product_accepted=False, root_cause_proved=False, problems=[])
+                  product_accepted=False, root_cause_proved=False, runtime_verified=False,
+                  environment_revalidated=False, problems=[])
               chosen = REFUSAL; sealed = False
               try:
                   native = strict_json((P / 'lifecycle.json').read_bytes())
@@ -615,28 +888,44 @@ jobs:
                   state = strict_json((E / 'observer-state.json').read_bytes(), 2 * 1024 ** 2)
                   require(all(state[k] == v and native[k] == v for k, v in IDENTITY.items()), 'diagnostic result source differs')
                   result.update(native_exit=native['native_exit'], observer=state)
+                  if 'environment_cache' in state:
+                      result['environment_revalidated'] = revalidate_environment(state['environment_cache'])
                   require(state['complete'] is True and native['observer_exit'] == 0
-                      and native['observer_forced_stop'] is False and native['notice_problem'] is None, 'observer incomplete')
+                      and native['observer_forced_stop'] is False and native['notice_problem'] is None
+                      and state['runtime_verified'] is True and result['environment_revalidated'] is True, 'observer/runtime incomplete')
+                  result['runtime_verified'] = True
                   result['diagnostic_complete'] = True
               except BaseException as error: result['problems'].append(str(error)[:1000])
+              try:
+                  primary = read_file(REFUSAL, 'failure-admit.json', 32 * 1024, True)
+                  require(primary['stable'] and primary['utf8_valid'], 'primary failure receipt incomplete')
+                  primary = strict_json(primary['_raw']); source_matches(primary)
+                  result['primary_admission_failure'] = {'problem': primary['problem'],
+                      'traceback_sha256': sha(primary['traceback'].encode())}
+              except FileNotFoundError: pass
+              except BaseException as error:
+                  result['diagnostic_complete'] = False; result['problems'].append('primary failure read: ' + str(error)[:300])
               compact = {k: v for k, v in result.items() if k != 'observer'}
               if 'observer' in result:
                   compact['observer_summary'] = {k: result['observer'].get(k) for k in
                       ('complete', 'output_failed', 'polls', 'copied_bytes', 'command_read_errors', 'baseline_completed',
                        'baseline_status', 'baseline_root_identity', 'report_surface_available', 'root_transitions',
                        'process_snapshots_attempted', 'report_absence_proves_no_crash', 'report_capture_exhaustive',
+                       'runtime_status', 'runtime_verified', 'original_environment_failure',
                        'observation_cutoff_monotonic', 'closed_monotonic', 'problems')}
                   compact['observer_summary']['report_count'] = len(result['observer']['reports'])
                   compact['observer_summary']['build_exit'] = result['observer'].get('build', {}).get('exit_code')
               if sealed:
                   try:
                       require(result.get('observer', {}).get('output_failed') is False, 'observer output missing/failed; refusal required')
-                      save(E / 'diagnostic-summary.json', result)
+                      save(E / 'diagnostic-summary.json', dict(result, diagnostic_complete=False, finalization_pending=True))
                       result['inventory_before_final_summary'] = inventory()
+                      # Candidate path must succeed while its retained receipt is false.
+                      with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+                          stream.write('evidence_path=' + str(E.relative_to(ROOT)) + '\n')
                       save(E / 'diagnostic-summary.json', result); inventory()
                       require(final_emission(result, {'build_service_diagnostic': compact}), 'final emission refused')
-                      # Final inventory is after every retained receipt; no E writes follow.
-                      inventory(); chosen = upload_candidate(native, True)
+                      chosen = upload_candidate(native, True)  # No E writes follow success.
                   except BaseException as error:
                       result['diagnostic_complete'] = False; result['problems'].append(str(error)[:1000])
                       try:
@@ -648,12 +937,16 @@ jobs:
                   result['diagnostic_complete'] = False
                   save(REFUSAL / 'refusal.json', dict(IDENTITY, diagnostic_complete=False,
                       problems=result['problems'], native_cases_added=0, formal_credit=0,
+                      primary_admission_failure=result.get('primary_admission_failure'),
                       partial_tree_sealed=sealed, partial_tree_uploaded=False))
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as stream: stream.write('evidence_path=' + str(chosen.relative_to(ROOT)) + '\n')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+                      stream.write('evidence_path=' + str(REFUSAL.relative_to(ROOT)) + '\n')
+                  compact.update(diagnostic_complete=False, problems=result['problems'])
+                  final_emission(result, {'build_service_diagnostic': compact})
               return 0 if result['diagnostic_complete'] else 1
 
           try:
-              if MODE == 'admit': admit(); code = 0
+              if MODE == 'admit': initialize_stdout(); admit(); code = 0
               elif MODE == 'observe': code = observe()
               elif MODE == 'run': code = run_native()
               elif MODE == 'finish': code = finish()
@@ -664,8 +957,19 @@ jobs:
               failure_root = REFUSAL if MODE in ('run', 'finish') else E
               failure = dict(IDENTITY, diagnostic_complete=False,
                   problem=str(error)[:1000], traceback=traceback.format_exc()[-12000:])
-              save(failure_root / ('failure-' + MODE + '.json'), failure)
-              if MODE == 'admit': save(REFUSAL / 'failure-admit.json', failure)
+              if MODE == 'admit':
+                  failure['last_fixed_metadata_command'] = COMMANDS[-1].get('argv') if COMMANDS else None
+              try:
+                  save(failure_root / ('failure-' + MODE + '.json'), failure)
+                  if MODE == 'admit': save(REFUSAL / 'failure-admit.json', failure)
+              except BaseException as receipt_error:
+                  failure['receipt_problem'] = type(receipt_error).__name__ + ': ' + str(receipt_error)[:300]
+              if MODE in ('admit', 'finish'):
+                  # Independent of lifecycle/evidence selection. A corrupt/unavailable
+                  # ledger never resets: its terminal-output exception stays visible.
+                  try: emit({'handled_failure': failure}, terminal=True)
+                  except BaseException as output_error:
+                      raise RuntimeError('bounded terminal output refused; original failure retained') from output_error
               code = 1
           raise SystemExit(code)
           PY
