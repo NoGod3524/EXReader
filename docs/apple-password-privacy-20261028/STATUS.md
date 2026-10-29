@@ -49,7 +49,52 @@ attribution reports only sender-image category, credential role and counts;
 JSON decoding may normalize encodings, so the original streaming byte scan
 remains authoritative. An image category is not a proven production callsite.
 All existing privacy predicates and budgets are unchanged. Purposeful native
-reproduction with complete failed evidence is pending.
+reproduction now retains complete failed evidence; its result is recorded below.
+
+## Additive diagnostic continuation — never a replacement green
+
+Reproduction [40782857602](https://github.com/NoGod3524/EXReader/actions/runs/40782857602),
+source `af51c760bec76454b0db6547cf592ddb7338de0b`, passed all 28 controls and both
+SDK builds, but all three strict native jobs still failed at the first scan.
+Complete raw synthetic logs are now retained. Safe event analysis found only
+username matching roles, all in the `test-framework-image` category: macOS 28,
+iPhone 50, iPad 50 events. This supports instrumentation noise, not a proven
+production password leak; sender-image categories are not source callsites.
+Original strict failure artifacts and verdicts remain unchanged.
+
+An additive, explicitly marked `[privacy-continuation]` probe uses a distinct
+test class/case, generated test-file reference, native job/artifact names and
+independent diagnostic verifier. It performs the same actual account controls,
+termination/restart, authenticated sweeps and missing-credential check. A 204
+callback means all observation evidence and its strict verdict were recorded,
+**not** that privacy passed. Every strict scan result is retained, independently
+rescanned and reported per stage. Recording a failed privacy observation allows
+this new diagnostic case to attempt later operations; it does not alter or
+rerun the original strict case with filtered logs or relaxed assertions.
+
+The probe always reports `accepted: false`, `diagnostic_only: true` and
+`full_f10_accepted: false`, even if every scan were clean. Its only possible
+success is `sequence_complete`/`probe_integrity_verified`; privacy failures
+remain explicit in `failed_strict_checkpoints` and per-root encoded match
+labels. Safe image-category attribution and any password findings remain
+narrow observations, not unrestricted absence or production-callsite proof.
+The ordinary strict run remains the only route to strict slice acceptance.
+Existing hard stops are retained: for example, a direct macOS preferences hit
+still refuses before checkpoint completion, as do incomplete capture,
+unreadable/linked/special entries, mutations and failed structural/network/UI
+checks. Thus this probe can advance after a completely captured whole-root
+privacy failure, not every conceivable privacy or evidence failure.
+
+The marker selects separate jobs within the one owned workflow; unmarked runs
+retain original strict native/authentication behavior. No old test file,
+production owner, SDK, timeout or budget changes. Five Actions-only controls
+reject incomplete/nonboolean stage reports and strict-case replay, and prove
+that continuation cannot award strict acceptance. The independent verifier
+also checks generated project structures differ only in the new test reference,
+all original bytes, current-run SDK/program identity, actual case/screenshots,
+network roles, originals, snapshots and raw-log manifests. Summary upload is
+safe JSON only; original synthetic-sensitive artifacts stay on their producers.
+Continuation source review and Actions execution remain pending.
 No local build, syntax check, fixture generation, test or artifact parsing
 was performed. Source reading/writing and source-file hashing are not execution
 evidence. No Codex task, user computer, main push, PR, tag or release is used.
