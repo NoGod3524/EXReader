@@ -1,0 +1,225 @@
+# One-file, original-artifact diagnosis only. No builder, native payload execution,
+# main matrix trigger, new archive criterion, or public-boundary/F07 admission.
+name: Public boundary pinned cache and simulator archive diagnosis
+on:
+  push:
+    branches: [codex/reader-public-boundary-cache-diagnostic-20261029]
+    paths: [.github/workflows/reader-public-boundary-cache-diagnostic-20261029.yml]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: public-boundary-cache-diagnostic-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  diagnose:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Authenticate original failed run and inspect bounded retained records
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, importlib.util, json, os, re, subprocess, zipfile
+          from pathlib import Path, PurePosixPath, PureWindowsPath
+          ROOT=Path.cwd()
+          OUT=ROOT/'build/public-boundary-cache-diagnostic'
+          OUT.mkdir(parents=True,exist_ok=False)
+          BASE='b39954f355654324dd58fac06de89356861d0c09'
+          BASE_TREE='fc2051e879f99e87f71ed021513bf047b7067414'
+          PATH='.github/workflows/reader-public-boundary-cache-diagnostic-20261029.yml'
+          BRANCH='codex/reader-public-boundary-cache-diagnostic-20261029'
+          ORIGINAL_BRANCH='codex/reader-public-boundary-v1-20261028'
+          WORKFLOW='.github/workflows/reader-public-boundary-v1-20261028.yml'
+          RUN=40819569787
+          ATTEMPT=1
+          PINS={
+              'windows':dict(id=12873499988,size_in_bytes=108487621,digest='sha256:da78a66ddf8ba2a788234ad536de1b2df2254e2e8cff22d4a9c14ea4ecd6dc6f',job=123268662750,conclusion='success'),
+              'iphone':dict(id=12874892506,size_in_bytes=22819031,digest='sha256:97b117d8879b79ab2a19a2897ced60428fa2f609d9b85a53638d5dda7ae6526d',job=123268662787,conclusion='failure')}
+          result=dict(diagnostic_complete=False,named_six_boundary_accepted=False,f07_accepted=False,full_six_f07_accepted=False,
+              diagnostic_source_sha=os.environ.get('GITHUB_SHA'),diagnostic_run_id=os.environ.get('GITHUB_RUN_ID'),
+              diagnostic_attempt=os.environ.get('GITHUB_RUN_ATTEMPT'),original_source_sha=BASE,original_run_id=RUN,
+              original_attempt=ATTEMPT,artifacts={},diagnostics={},errors=[],
+              scope='Original Windows cache-owner representation and iOS two retained archive pairs only; no native execution or admission')
+          def need(value,message):
+              if not value:raise AssertionError(message)
+          def sha(raw):return hashlib.sha256(raw).hexdigest()
+          def cmd(args):
+              return subprocess.run(args,check=True,capture_output=True,text=True,encoding='utf-8',timeout=120).stdout
+          def api(path):return json.loads(cmd(['gh','api','repos/NoGod3524/EXReader/'+path]))
+          def load(path,name):
+              spec=importlib.util.spec_from_file_location(name,ROOT/path)
+              module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module);return module
+          def brief(error):return (type(error).__name__+': '+str(error))[:2048]
+          def original_identity(record):
+              need(record['source_sha']==BASE and record['run_id']==str(RUN) and record['attempt']==str(ATTEMPT),'original source/run/attempt differs')
+          def verify_artifact(target,meta,transport):
+              pin=PINS[target]
+              for key in ('id','size_in_bytes','digest'):need(meta[key]==pin[key],'pinned artifact '+key+' differs')
+              need(meta['name']=='public-boundary-'+target+'-'+str(RUN)+'-'+str(ATTEMPT) and meta['expired'] is False,'artifact name/expiry differs')
+              need(meta['workflow_run']['id']==RUN and meta['workflow_run']['head_sha']==BASE and meta['workflow_run']['head_branch']==ORIGINAL_BRANCH,'artifact run identity differs')
+              archive=OUT/(target+'.zip')
+              with archive.open('w+b') as output:transport.download_artifact_zip(meta['id'],output)
+              need(archive.stat().st_size==pin['size_in_bytes'],'download ZIP extent differs')
+              digest=hashlib.sha256()
+              with archive.open('rb') as stream:
+                  for block in iter(lambda:stream.read(1024*1024),b''):digest.update(block)
+              need('sha256:'+digest.hexdigest()==pin['digest'],'download ZIP digest differs')
+              bundle=zipfile.ZipFile(archive)
+              try:
+                  infos=bundle.infolist();names=[x.filename for x in infos]
+                  need(len(names)==len(set(names)) and len(names)<50000,'duplicate/oversized ZIP inventory')
+                  need(all(frozen.safe_member(n[:-1] if n.endswith('/') else n) for n in names),'unsafe ZIP inventory')
+                  need(all(not(x.flag_bits&1) and ((x.external_attr>>16)&0o170000)!=0o120000 for x in infos),'encrypted/symlink ZIP entry')
+                  need(sum(x.file_size for x in infos)<1024*1024*1024 and all(x.file_size<256*1024*1024 for x in infos),'ZIP extent bound')
+                  inventory=json.loads(bundle.read('inventory.json'));original_identity(inventory)
+                  files=inventory['files'];actual={x.filename for x in infos if not x.is_dir()}
+                  need(actual==set(files)|{'inventory.json'},'complete retained file inventory differs')
+                  for name,entry in files.items():
+                      digest=hashlib.sha256();count=0
+                      with bundle.open(name) as stream:
+                          for block in iter(lambda:stream.read(1024*1024),b''):count+=len(block);digest.update(block)
+                      need(count==entry['bytes'] and digest.hexdigest()==entry['sha256'],'retained digest differs: '+name)
+                  measured=inventory['report'];original_identity(measured)
+                  need(measured['target']==target and measured['f07_accepted'] is False and measured['full_six_f07_accepted'] is False,'capture target/scope differs')
+                  if target=='windows':
+                      need(measured['capture_complete'] is True and measured['named_boundary_accepted'] is True,'Windows original producer incomplete')
+                      expected={p:frozen.digest(ROOT/p) for p in (*frozen.OWNERS,*frozen.HOSTS,*frozen.ADDED)}
+                      need(measured['source']['authorized_paths_sha256']==expected,'Windows original source manifest differs')
+                  else:
+                      need(measured['capture_complete'] is False and measured['named_boundary_accepted'] is False,'iOS partial producer unexpectedly accepted')
+                      need(measured['error']=="AssertionError('unequal archives require measured macOS first-index timestamp mode')",'iOS original failure differs')
+                  result['artifacts'][target]=dict(id=pin['id'],size_in_bytes=pin['size_in_bytes'],digest=pin['digest'],files=len(files),
+                      complete_inventory_and_digests_verified=True,original_capture_complete=measured['capture_complete'])
+                  return archive,bundle,measured
+              except BaseException:
+                  bundle.close();raise
+          def cache_diagnostic(bundle,measured):
+              owners={'reading-state':'reading_state.cpp','reading-commands':'reading_commands.cpp','annotation-import':'annotation_import.cpp','annotation-export':'annotation_export.cpp'}
+              pairs=measured['built_installed_archive_comparison']
+              need(len(pairs)==4 and {p['owner'] for p in pairs}==set(owners),'four unique Windows owner pairs required')
+              need(set(measured['actual_compiler_dependencies'])==set(owners),'four Windows compiler proofs required')
+              rows=[];result['diagnostics']['windows_cache_owners']=rows
+              for pair in pairs:
+                  owner=pair['owner'];proof=measured['actual_compiler_dependencies'][owner]
+                  need(frozen.safe_member(pair['built']),'unsafe retained build path')
+                  cache_path=str(PurePosixPath(pair['built']).parent/'CMakeCache.txt')
+                  raw=bundle.read(cache_path);text=raw.decode('utf-8')
+                  lines=[line for line in text.splitlines(keepends=True) if line.startswith(('CMAKE_HOME_DIRECTORY:INTERNAL=','EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL='))]
+                  need(len(lines)==2 and all(len(line)<=2048 for line in lines),'missing/duplicate/unbounded selected cache lines')
+                  homes=re.findall(r'^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$',text,re.M)
+                  raw_flags=re.findall(r'^EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=(.+)$',text,re.M)
+                  # This is only an observation. It does not alter or replace any production guard.
+                  universal=text.replace('\r\n','\n').replace('\r','\n')
+                  uhomes=re.findall(r'^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$',universal,re.M)
+                  uflags=re.findall(r'^EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=(.+)$',universal,re.M)
+                  need(len(uhomes)==1 and len(uflags)==1 and len(proof['source'])<=2048,'selected owner representations ambiguous')
+                  home=PureWindowsPath(uhomes[0]);source=PureWindowsPath(proof['source'])
+                  semantic=home.is_absolute() and source.is_absolute() and home.parts[-3:]==('apps','reader',owner) and source==home/'src'/owners[owner]
+                  rows.append(dict(owner=owner,cache_path=cache_path,cache_sha256=sha(raw),cache_bytes=len(raw),
+                      selected_lines_repr=[repr(line) for line in lines],home_regex_values_repr=[repr(v) for v in homes],
+                      raw_flag_regex_values_repr=[repr(v) for v in raw_flags],proof_source_repr=repr(proof['source']),
+                      current_owner_predicate=len(homes)==1 and homes[0].replace('\\','/').endswith('/apps/reader/'+owner),
+                      current_raw_predicate=raw_flags==['ON'],
+                      universal_newline_owner_predicate=uhomes[0].replace('\\','/').endswith('/apps/reader/'+owner),
+                      universal_newline_raw_predicate=uflags==['ON'],
+                      windows_lexical_owner_and_source_equal=semantic,
+                      universal_newline_source_equal=proof['source'].replace('\\','/')==uhomes[0].replace('\\','/')+'/src/'+owners[owner],
+                      admission_changed=False))
+              try:frozen.replay_archive_comparisons(bundle.read,measured,'windows')
+              except AssertionError as error:
+                  result['diagnostics']['windows_original_replay_error']=brief(error)
+                  need(str(error)=='retained raw build owner differs','original Windows failure not reproduced')
+              else:raise AssertionError('original Windows replay unexpectedly accepted')
+          def ios_diagnostic(bundle,measured):
+              expected={
+                  'reading-state':('reader_reading_state_codec','8ef45e13e5cbc3d7579ef2abd45ac1a287e218f21e4ebc4620c94676953fda0e','8ef45e13e5cbc3d7579ef2abd45ac1a287e218f21e4ebc4620c94676953fda0e',33608),
+                  'reading-commands':('reader_reading_commands','823683977ccf36430e15bcda1a2e0545d9bcb04fe62d8deefa27a0fc433c5e2b','68112bbf51ff84ea276c1f2f26e4b08f50d5cb8d0f1366dd3f8a6b9afb62ec64',40720)}
+              pairs=measured['built_installed_archive_comparison']
+              need(len(pairs)==2 and {p['owner'] for p in pairs}==set(expected),'exact two partial iOS owner pairs required')
+              rows=[];result['diagnostics']['ios_archive_pairs']=rows
+              for pair in pairs:
+                  owner=pair['owner'];name,before_sha,after_sha,size=expected[owner]
+                  built='build/f06/iphonesimulator-build/product-build/'+owner+'/lib'+name+'.a'
+                  installed='build/f06/iphonesimulator-build/product/lib/lib'+name+'.a'
+                  need(pair['built']==built and pair['installed']==installed,'iOS retained pair path differs')
+                  before,after=bundle.read(built),bundle.read(installed)
+                  need(sha(before)==before_sha==pair['built_sha256'] and sha(after)==after_sha==pair['installed_sha256'],'iOS pinned original archive digest differs')
+                  need(len(before)==len(after)==size==pair['built_bytes']==pair['installed_bytes'],'iOS pinned archive extent differs')
+                  row=dict(owner=owner,built_path=built,installed_path=installed,built_sha256=before_sha,installed_sha256=after_sha,bytes=size,admission_changed=False)
+                  rows.append(row)
+                  bi,bm=frozen.bsd_index_archive(before);ai,am=frozen.bsd_index_archive(after)
+                  changed=[];count=0
+                  for index,(a,b) in enumerate(zip(before,after)):
+                      if a!=b:
+                          count+=1
+                          if len(changed)<32:changed.append(index)
+                  row.update(built_index=bi,installed_index=ai,built_ordered_objects=bm,installed_ordered_objects=am,
+                      canonical_bsd_grammar=True,ordered_object_payloads_equal=bm==am,index_payload_equal=bi['payload_sha256']==ai['payload_sha256'],
+                      different_common_bytes=count,first_different_offsets=changed,
+                      all_bytes_outside_first_index_timestamp_equal=before[:24]==after[:24] and before[36:]==after[36:])
+                  try:observed=frozen.installed_archive_equivalence(before,after,'iphone')
+                  except AssertionError as error:
+                      row['original_iphone_criterion_error']=brief(error)
+                      need(owner=='reading-commands' and str(error)=='unequal archives require measured macOS first-index timestamp mode','unexpected iOS refusal')
+                  else:
+                      row['original_iphone_criterion_result']=observed
+                      need(owner=='reading-state' and observed['exact_archive_equal'] is True,'unequal iOS pair unexpectedly admitted')
+          try:
+              need(os.environ.get('GITHUB_ACTIONS')=='true' and os.environ.get('GITHUB_REPOSITORY')=='NoGod3524/EXReader','Actions/repository identity')
+              need(os.environ.get('GITHUB_REF')=='refs/heads/'+BRANCH and os.environ.get('GITHUB_EVENT_NAME')=='push','diagnostic branch/event')
+              need(cmd(['git','rev-parse','HEAD']).strip()==os.environ['GITHUB_SHA'],'diagnostic source identity')
+              need(cmd(['git','rev-parse',BASE+'^{tree}']).strip()==BASE_TREE,'frozen base tree differs')
+              cmd(['git','merge-base','--is-ancestor',BASE,'HEAD'])
+              need(cmd(['git','diff','--name-status',BASE,'HEAD']).splitlines()==['A\t'+PATH],'exact one additive diagnostic workflow required')
+              need(not cmd(['git','status','--porcelain','--untracked-files=no']).strip(),'tracked source modified')
+              need(sha((ROOT/'tests/reader_public_boundary_v1_20261028/run.py').read_bytes())=='0b8a5b06b3761f0d145c7943ccdb2d566b1648b5be7a85970fda327a36dd74a3','frozen parser source drift')
+              frozen=load('tests/reader_public_boundary_v1_20261028/run.py','pinned_boundary_diagnostic_frozen')
+              transport=load('tools/check_parallel_integration.py','pinned_boundary_diagnostic_transport')
+              original=api('actions/runs/'+str(RUN)+'/attempts/'+str(ATTEMPT))
+              need(original['id']==RUN and original['run_attempt']==ATTEMPT and original['head_sha']==BASE and original['head_branch']==ORIGINAL_BRANCH,'immutable original run identity')
+              need(original['path']==WORKFLOW and original['workflow_id']==400048429 and original['event']=='push' and original['status']=='completed' and original['conclusion']=='failure','original workflow/result differs')
+              response=api('actions/runs/'+str(RUN)+'/attempts/'+str(ATTEMPT)+'/jobs?per_page=100')
+              jobs=response['jobs'];need(response['total_count']==len(jobs),'complete original job page required')
+              for target,pin in PINS.items():
+                  matches=[job for job in jobs if job['name']=='boundary-'+target]
+                  need(len(matches)==1 and matches[0]['id']==pin['job'] and matches[0]['run_id']==RUN and matches[0]['head_sha']==BASE and matches[0]['status']=='completed' and matches[0]['conclusion']==pin['conclusion'],'pinned producer job differs')
+              auth=[job for job in jobs if job['id']==123276468664]
+              need(len(auth)==1 and auth[0]['conclusion']=='failure','original authentication failure absent')
+              result['original_run_verified']=True
+              response=api('actions/runs/'+str(RUN)+'/artifacts?per_page=100')
+              artifacts=response['artifacts'];need(response['total_count']==len(artifacts),'complete original artifact page required')
+              for target,pin in PINS.items():
+                  bundle=None;archive=OUT/(target+'.zip')
+                  try:
+                      matches=[a for a in artifacts if a['id']==pin['id'] or a['name']=='public-boundary-'+target+'-'+str(RUN)+'-'+str(ATTEMPT)]
+                      need(len(matches)==1,'missing/ambiguous pinned artifact')
+                      archive,bundle,measured=verify_artifact(target,matches[0],transport)
+                      (cache_diagnostic if target=='windows' else ios_diagnostic)(bundle,measured)
+                  except Exception as error:result['errors'].append(dict(target=target,error=brief(error)))
+                  finally:
+                      if bundle is not None:bundle.close()
+                      if archive.exists():archive.unlink()
+              need(not result['errors'],'bounded diagnostic failed; retained errors in report')
+              result['diagnostic_complete']=True
+          except Exception as error:
+              result['errors'].append(dict(stage='overall',error=brief(error)));raise
+          finally:
+              # Only this bounded JSON is uploaded. Never upload downloaded archives,
+              # checkout/home, credentials, arbitrary cache contents, or environment.
+              (OUT/'diagnostic.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+              print(json.dumps(result,sort_keys=True),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-boundary-cache-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/public-boundary-cache-diagnostic/diagnostic.json
+          if-no-files-found: error
