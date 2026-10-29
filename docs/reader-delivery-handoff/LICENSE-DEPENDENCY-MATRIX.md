@@ -84,12 +84,12 @@ Android 取自 `.github/workflows/android-composition-candidate.yml` 的 SDK con
 | Linux | 是 | 是 | 是 | `tools/build_linux_host.py` |
 | macOS | 是（`EXReader-LICENSE.txt`，在 `Resources`） | 是 | 是 | `tools/build_apple_host.py` |
 | iPhone / iPad | 同 macOS（iPad 由 iPhone 载荷重新打包） | 是 | 是 | `tools/build_apple_host.py`、`identity.py package ipad` |
-| Android | 是（压缩包根，APK 外） | 是（同） | **否** | `tests/android_sdk342_package/run.py`、`tests/reader_f06_packages/build.py` |
+| Android | 是（压缩包根，APK 外） | 是（同） | **本分支前：否；本分支补丁：是（未在真实流水线验证）** | `tests/android_sdk342_package/run.py`（见 [PACKAGING-PATCH.md](PACKAGING-PATCH.md)） |
 
-Android 脚本只复制两个根文件，没有复制 SDK 安装出的 `licenses/` 目录；其 SDK 构建启用了 FreeType、Expat、miniz、stb、
+打补丁前，Android 脚本只复制两个根文件，没有复制 SDK 安装出的 `licenses/` 目录；其 SDK 构建启用了 FreeType、Expat、miniz、stb、
 SQLite、OpenJPEG、LittleCMS、minimp3 等组件，这些组件的许可文本因此**不在** Android 压缩包里
 （APK 内另有 `assets/OFL.txt`）。这是静态读取结论，Actions 对已发布压缩包的实测见 [EVIDENCE.md](EVIDENCE.md)。
-是否补丁、补了什么，见 README 的“包级处理”一节。
+补丁内容与未验证边界见 [PACKAGING-PATCH.md](PACKAGING-PATCH.md)。
 
 ## 5. 未核对 / 未验证
 

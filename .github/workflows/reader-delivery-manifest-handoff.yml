@@ -4,6 +4,7 @@ on:
     branches: [claude/local-c3-delivery-licenses-20261029]
     paths:
       - 'tests/reader_delivery_manifest_handoff/**'
+      - 'tests/android_sdk342_package/run.py'
       - 'docs/reader-delivery-handoff/**'
       - '.github/workflows/reader-delivery-manifest-handoff.yml'
   workflow_dispatch:
@@ -38,7 +39,7 @@ jobs:
           fetch-depth: 0
       - name: Syntax and source identity guard
         run: |
-          python3 -m py_compile tests/reader_delivery_manifest_handoff/check.py
+          python3 -m py_compile tests/reader_delivery_manifest_handoff/check.py tests/android_sdk342_package/run.py
           python3 tests/reader_delivery_manifest_handoff/check.py guard
       - name: Source-declared licence expectations, packaging copies and document links
         run: python3 tests/reader_delivery_manifest_handoff/check.py source
