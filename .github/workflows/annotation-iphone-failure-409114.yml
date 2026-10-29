@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Read exact retained original failure context
+      - name: Read original system commands and full theme case context
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tools/reader_composition/annotation_iphone_failure_409114.py
