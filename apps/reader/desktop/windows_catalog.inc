@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT
  * Host-only glue, included after host_job and the existing import worker.
  * Each temporary host worker owns its own catalog connection. */
+#include "windows_migration_gate.h"
+
 typedef struct { host_job *job;int failed; } product_page_copy;
 static exr_format product_format(const char *name) {
   static const char *names[]={"epub","pdf","cbz","txt","html","fb2","docx","rtf","mobi"};
