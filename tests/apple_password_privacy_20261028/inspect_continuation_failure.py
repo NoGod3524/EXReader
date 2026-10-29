@@ -26,6 +26,16 @@ from continuation_lifecycle import verify_lifecycle, seal_files
 from continuation_contract import APPLEDOUBLE_LIMIT, appledouble_content
 from privacy_scan import inventory, scan_file, needles, identity
 from authenticate_continuation import verify_ios_admission
+from ui_observations import parse_ui_observations
+
+# New current case: never substitute these pins into historical helper replay.
+CURRENT_CASE_SOURCE = '2e8ef281dc1c790427ee4a5c60cae3d880750d3a'
+CURRENT_CASE_RUN = '40877286914'
+CURRENT_CASE_ARTIFACTS = {
+    'macos': (12898598312, 104208231, 'a42f6c78ea576042c54eb12951c4e608aa641f2a1fc5c6148ac8eabc5be96ae8'),
+    'iphone': (12899507875, 176407990, '5232cee7ddf98f6bc1cba6d16dec705956cb666e898af516e7ecd832518f277f'),
+    'ipad': (12900935511, 187645675, 'b043a78b1adee48a1b1b92fa8f5956898c6fdc1dabbf0d9ce519dea25229af37'),
+}
 
 RUN = '40858915090'
 SOURCE = '6803602e5791eafa69a6e61bc5499d36cd31d92e'
@@ -71,7 +81,7 @@ DIAGNOSTIC_STAGES = ('entry', 'scope-and-source', 'artifact-metadata', 'artifact
     'archive-bytes', 'archive-extract', 'result-identity', 'member-inventory', 'member-bytes',
     'lifecycle-receipt', 'admission-replay', 'progress-and-native-log', 'scan-summaries', 'fixture-failures', 'network-summary',
     'xcresult-copy', 'xcresult-parser', 'xcresult-issues', 'attachment-export',
-    'attachment-summary', 'attachment-contract-reference', 'attachment-contract-replay',
+    'attachment-summary', 'current-ui-replay', 'current-original-recheck', 'attachment-contract-reference', 'attachment-contract-replay',
     'attachment-contract-predicates', 'attachment-identity-candidate', 'attachment-current-replay', 'attachment-contract-final', 'safe-report')
 CURRENT_DIAGNOSTIC_STAGE = 'entry'
 CURRENT_MEMBER_INTEGRITY = None
@@ -82,6 +92,14 @@ ADMISSION_COMMAND_ROLES = {'admission-pre-sign-archive', 'admission-host-sign',
     'admission-post-sign-display', 'admission-post-sign-verify', 'admission-post-sign-archive',
     'admission-installed-path', 'admission-installed-display', 'admission-installed-verify', 'admission-installed-archive'}
 REFUSAL_CODES = {
+    'current diagnostic verdict differs': 'current-verdict',
+    'current diagnostic command differs': 'current-command',
+    'current diagnostic checkpoint differs': 'current-checkpoint',
+    'current diagnostic identity differs': 'current-identity',
+    'current macOS producer completion differs': 'current-macos-completion',
+    'current iOS failed progress differs': 'current-ios-failure',
+    'current UI replay differs': 'current-ui-replay',
+    'current original evidence changed': 'current-original-changed',
     'candidate attachment original proof absent': 'attachment-candidate-original-proof',
     'candidate attachment JSON duplicate key': 'attachment-candidate-json-duplicate',
     'candidate attachment JSON nonfinite': 'attachment-candidate-json-nonfinite',
@@ -305,10 +323,10 @@ def admission_namespaces(directory):
     return reports
 
 
-def metadata_variants(directory):
+def metadata_variants(directory, *, source=SOURCE, run=RUN):
     oracle = json.loads((directory / 'synthetic-oracle-input.json').read_text())
     require(type(oracle) is dict and oracle.get('synthetic_only') is True and
-            (oracle.get('source_sha'), oracle.get('run_id'), oracle.get('attempt')) == (SOURCE, RUN, '1'),
+            (oracle.get('source_sha'), oracle.get('run_id'), oracle.get('attempt')) == (source, run, '1'),
             'metadata oracle identity differs')
     user, passwords = oracle.get('user'), oracle.get('passwords')
     require(type(user) is str and re.fullmatch(r'privacy-user-[0-9a-f]{32}', user) is not None and
@@ -399,11 +417,11 @@ def classify_metadata_tree(root, variants):
         'signature_replay_credited': False, 'full_f10_accepted': False}
 
 
-def admission_metadata(directory):
+def admission_metadata(directory, *, source=SOURCE, run=RUN):
     manifest = json.loads((directory / 'ios-admission/manifest.json').read_text())
     require(type(manifest) is dict and set(manifest) == {'pre-sign', 'post-sign', 'installed'},
             'admission phase evidence incomplete')
-    variants = metadata_variants(directory); reports = []
+    variants = metadata_variants(directory, source=source, run=run); reports = []
     for phase in ('pre-sign', 'post-sign', 'installed'):
         archive = directory / 'ios-admission' / (phase + '.zip'); record = manifest[phase]
         require(type(record['archive_bytes']) is int and archive.stat().st_size == record['archive_bytes'] and
@@ -1111,6 +1129,184 @@ def main():
     return run_platforms(out)
 
 
+def current_progress(result, files, platform):
+    """Current-only producer scope; historical failed-progress defaults stay exact."""
+    require(platform in CURRENT_CASE_ARTIFACTS and
+            (result['source_sha'], result['run_id'], result['attempt'], result['platform']) ==
+            (CURRENT_CASE_SOURCE, CURRENT_CASE_RUN, '1', platform), 'current diagnostic identity differs')
+    require(result['accepted'] is False and result['diagnostic_only'] is True and
+            result['full_f10_accepted'] is False, 'current diagnostic verdict differs')
+    checks, checkpoints = result['strict_privacy_checks'], result['checkpoints']
+    require(type(checkpoints) is dict and list(checkpoints) == STAGES[:len(checkpoints)] and
+            type(checks) is dict and list(checks) == STAGES[:len(checks)] and set(checkpoints) <= set(checks) and
+            all(type(value) is bool for value in checks.values()), 'current diagnostic checkpoint differs')
+    checkpoint_keys = {'profile_id', 'network_requests', 'scans', 'strict_privacy_passed',
+        'absent_mac_roots', 'archive', 'archive_sha256', 'sdk_original_sha256', 'original_bytes'}
+    for stage, row in checkpoints.items():
+        require(type(row) is dict and set(row) == checkpoint_keys and
+                type(row['profile_id']) is str and re.fullmatch(r'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}', row['profile_id']) and
+                type(row['network_requests']) is int and 0 <= row['network_requests'] <= 100000 and
+                type(row['scans']) is dict and type(row['absent_mac_roots']) is list and
+                all(type(value) is str for value in row['absent_mac_roots']) and
+                type(row['strict_privacy_passed']) is bool and row['strict_privacy_passed'] is checks[stage] and
+                row['archive'] == stage + '-product.zip' and row['archive'] in files and
+                all(type(row[key]) is str and re.fullmatch(r'[0-9a-f]{64}', row[key]) for key in ('archive_sha256', 'sdk_original_sha256')) and
+                type(row['original_bytes']) is int and 0 < row['original_bytes'] <= 8 * 1024 ** 3,
+                'current diagnostic checkpoint differs')
+    commands = result['commands']
+    require(type(commands) is list and len(commands) <= len(ROLES | ADMISSION_COMMAND_ROLES) and
+            all(type(row) is dict and set(row) == {'role', 'exit'} and type(row['role']) is str and
+                row['role'] in ROLES | ADMISSION_COMMAND_ROLES and type(row['exit']) is int and
+                -128 <= row['exit'] <= 255 for row in commands) and
+            len({row['role'] for row in commands}) == len(commands), 'current diagnostic command differs')
+    by_role = {row['role']: row['exit'] for row in commands}
+    if platform == 'macos':
+        required = {'fixtures', 'project', 'build-for-testing', 'native', 'attachments', 'program-archive'}
+        require(result['sequence_complete'] is True and result['failure'] is None and
+                list(checkpoints) == STAGES and set(by_role) == required and all(value == 0 for value in by_role.values()) and
+                'program.zip' in files, 'current macOS producer completion differs')
+    else:
+        require(result['sequence_complete'] is False and type(result['failure']) is str and
+                result['failure'] in FAILURES, 'current iOS failed progress differs')
+    return {'accepted': False, 'diagnostic_only': True, 'full_f10_accepted': False,
+        'sequence_complete': result['sequence_complete'], 'failure_class': result['failure'],
+        'strict_privacy_checks': dict(checks),
+        'completed_checkpoints': list(checkpoints),
+        'snapshot_archives_present': {stage: stage + '-product.zip' in files for stage in STAGES},
+        'commands': commands, 'native_command_observed': 'native' in by_role,
+        'native_command_exit': by_role.get('native'),
+        'nonzero_command_exits': [row for row in commands if row['exit'] != 0],
+        'scope': 'producer-completion-only' if platform == 'macos' else 'failed-producer-progress-only',
+        'program_archive_present': 'program.zip' in files,
+        'provider_map_present': 'EXReaderHost.link.map' in files,
+        'sdk_identity_present': 'sdk-identity.json' in files,
+        'full_validate_executed': False, 'full_program_signature_credit': False,
+        'native_acceptance': False}
+
+
+def replay_current_ui(folder, result, report):
+    diagnostic_stage('current-ui-replay')
+    replayed = parse_ui_observations(folder / 'native.log')
+    require(attachment_same_value(replayed, result['ui_state_observations']), 'current UI replay differs')
+    report['independent_ui_observations'] = replayed
+    report['ui_observations_match_producer'] = True
+
+
+def current_ancillary(folder, files, result, report, platform):
+    """Same later predicates as historical diagnosis; none is an acceptance waiver."""
+    diagnostic_stage('scan-summaries')
+    for stage in STAGES:
+        name = stage + '-privacy-scan.json'
+        if name not in files: continue
+        scans = json.loads((folder / name).read_text())
+        require(set(scans) <= {'profile', 'product-log', 'preferences', 'cache', 'saved-state', 'container'}, 'unexpected scan root')
+        require(all(type(proof['accepted']) is bool for proof in scans.values()), 'unexpected scan verdict')
+        report.setdefault('scan_summary', {})[stage] = {label: {'accepted': proof['accepted'],
+            'hit_variant_labels': variant_labels(proof)} for label, proof in scans.items()}
+    diagnostic_stage('fixture-failures')
+    if 'fixture-failures.json' in files:
+        failures = json.loads((folder / 'fixture-failures.json').read_text())
+        require(type(failures) is list and all(item in FAILURES for item in failures), 'unexpected fixture failure type')
+        report['fixture_failure_classes'] = failures
+    diagnostic_stage('network-summary')
+    require('requests.json' in files and any(name.startswith('privacy.xcresult/') for name in files),
+            'original request or native-result evidence absent')
+    report['network'] = network_summary(result, json.loads((folder / 'requests.json').read_text()))
+    diagnostic_stage('admission-replay')
+    report['independent_ios_admission_replay'] = None
+    if platform != 'macos':
+        report['admission_namespace_observations'] = admission_namespaces(folder)
+        report['retained_metadata_classification'] = admission_metadata(folder, source=CURRENT_CASE_SOURCE, run=CURRENT_CASE_RUN)
+        report['independent_ios_admission_replay'] = verify_ios_admission(folder, CURRENT_CASE_SOURCE, result, require_program=False)
+
+
+def diagnose_current_platform(out, platform, identifier, size, digest):
+    global CURRENT_MEMBER_INTEGRITY, CURRENT_PLATFORM, CURRENT_SAFE_REPORT
+    CURRENT_PLATFORM, CURRENT_MEMBER_INTEGRITY, CURRENT_SAFE_REPORT = platform, None, None
+    diagnostic_stage('artifact-metadata')
+    endpoint = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/artifacts/' + str(identifier)
+    record = json.loads(subprocess.check_output(['gh', 'api', endpoint], timeout=30))
+    require(record['id'] == identifier and record['name'] == 'password-continuation-native-' + platform + '-' + CURRENT_CASE_RUN + '-1' and
+            str(record['workflow_run']['id']) == CURRENT_CASE_RUN and record['workflow_run']['head_sha'] == CURRENT_CASE_SOURCE and
+            record['digest'] == 'sha256:' + digest and record['size_in_bytes'] == size and
+            record['expired'] is False, 'prior continuation artifact identity differs')
+    original = out / (platform + '-original.zip')
+    diagnostic_stage('artifact-download')
+    with original.open('wb') as file: subprocess.run(['gh', 'api', endpoint + '/zip'], stdout=file, check=True, timeout=120)
+    diagnostic_stage('archive-bytes')
+    require(original.stat().st_size == size and sha(original) == digest, 'prior original ZIP differs')
+    diagnostic_stage('archive-extract')
+    folder = out / platform; safe_extract(original, folder)
+    diagnostic_stage('result-identity')
+    result = json.loads((folder / 'result.json').read_text())
+    require((result['source_sha'], result['run_id'], result['attempt'], result['platform']) ==
+            (CURRENT_CASE_SOURCE, CURRENT_CASE_RUN, '1', platform), 'current diagnostic identity differs')
+    diagnostic_stage('member-inventory')
+    namespace = attachment_namespace(folder)
+    files = {name for name, kind in namespace.items() if kind == 'file'}
+    require(files == set(result['files']) | {'result.json'}, 'prior continuation inventory differs')
+    diagnostic_stage('member-bytes')
+    CURRENT_MEMBER_INTEGRITY = member_integrity(folder, result['files'])
+    require(CURRENT_MEMBER_INTEGRITY['mismatch_count'] == 0, 'prior continuation member differs')
+    original_files = dict(result['files'], **{'result.json': {'bytes': (folder / 'result.json').stat().st_size,
+                                                           'sha256': sha(folder / 'result.json')}})
+    diagnostic_stage('lifecycle-receipt')
+    lifecycle = sealed_lifecycle(result, platform)
+    diagnostic_stage('progress-and-native-log')
+    report = current_progress(result, files, platform)
+    CURRENT_SAFE_REPORT = report
+    report.update(old_source_sha=CURRENT_CASE_SOURCE, old_run_id=CURRENT_CASE_RUN, old_attempt=1,
+        platform=platform, artifact_id=identifier, original_bytes=size, original_sha256=digest,
+        verified_member_count=len(files), arbitrary_log_text_printed=False,
+        source_positions_not_authenticated_callsites=True, member_integrity=CURRENT_MEMBER_INTEGRITY,
+        producer_lifecycle_receipt=lifecycle, producer_receipt_is_event_trace_proof=False,
+        original_namespace_and_bytes_preserved=False)
+    try:
+        report['native_failure_locations'] = locations(folder / 'native.log') if 'native.log' in files else []
+        report['activity_timing'] = activity_timing(folder / 'native.log')
+        replay_current_ui(folder, result, report)
+        inspect_native_result(folder, files, report)
+        current_ancillary(folder, files, result, report, platform)
+    finally:
+        # Also recheck on refusal, without erasing the earlier finite outcome.
+        earlier_stage = CURRENT_DIAGNOSTIC_STAGE
+        diagnostic_stage('current-original-recheck')
+        require(attachment_namespace(folder) == namespace and seal_files(folder) == original_files and
+                original.stat().st_size == size and sha(original) == digest, 'current original evidence changed')
+        report['original_namespace_and_bytes_preserved'] = True
+        diagnostic_stage(earlier_stage)
+    diagnostic_stage('safe-report')
+    return report
+
+
+def run_current_platforms(out, diagnoser=diagnose_current_platform):
+    global CURRENT_MEMBER_INTEGRITY, CURRENT_PLATFORM, CURRENT_SAFE_REPORT
+    failed = False
+    for platform, (identifier, size, digest) in CURRENT_CASE_ARTIFACTS.items():
+        CURRENT_PLATFORM, CURRENT_MEMBER_INTEGRITY, CURRENT_SAFE_REPORT = platform, None, None
+        try:
+            report = diagnoser(out, platform, identifier, size, digest)
+        except Exception as error:
+            report = current_refusal(error)
+            failed = True
+        COMPLETED_REPORTS.append(report)
+        print(json.dumps(report, sort_keys=True), flush=True)
+        (out / 'diagnostic.json').write_text(json.dumps(COMPLETED_REPORTS, indent=2) + '\n')
+    return not failed
+
+
+def current_main():
+    require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
+    diagnostic_stage('scope-and-source')
+    guard()
+    endpoint = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/contents/' + SOURCE_FILE + '?ref=' + CURRENT_CASE_SOURCE
+    source_record = json.loads(subprocess.check_output(['gh', 'api', endpoint], timeout=30))
+    verify_frozen_ui_source(source_record)
+    require(set(CURRENT_CASE_ARTIFACTS) == {'macos', 'iphone', 'ipad'}, 'exact three-platform diagnostic artifact pins required')
+    out = ROOT / 'build/apple-password-continuation-diagnostic'; out.mkdir(parents=True, exist_ok=False)
+    return run_current_platforms(out)
+
+
 def capture_profile_main():
     from continuation_log_capture import retained_profile
     report = retained_profile(ROOT / 'build/apple-password-capture-profile', PROFILE_ARTIFACTS, PROFILE_SOURCE, PROFILE_RUN)
@@ -1130,7 +1326,7 @@ if __name__ == '__main__' and sys.argv[1:] == ['--capture-profile']:
 
 if __name__ == '__main__':
     try:
-        if not main(): raise SystemExit(1)
+        if not current_main(): raise SystemExit(1)
     except Exception as error:
         # An OS/parser exception may embed a synthetic value in its operands.
         # Refuse without relaying that exception text or chained traceback.

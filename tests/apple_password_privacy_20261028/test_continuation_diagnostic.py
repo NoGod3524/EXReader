@@ -162,7 +162,257 @@ def native_order_control(test, root, *, changed_member=False, sealed=True, bad_s
     return refusal, calls, stages, entered
 
 
+def current_result(platform='iphone'):
+    stages = inspector.STAGES if platform == 'macos' else inspector.STAGES[:2]
+    checkpoints = {stage: {'profile_id': '12345678-1234-1234-1234-123456789abc',
+        'network_requests': 0, 'scans': {}, 'strict_privacy_passed': False, 'absent_mac_roots': [],
+        'archive': stage + '-product.zip', 'archive_sha256': 'a' * 64,
+        'sdk_original_sha256': 'b' * 64, 'original_bytes': 1} for stage in stages}
+    commands = [{'role': role, 'exit': 0} for role in
+        ('fixtures', 'project', 'build-for-testing', 'native', 'attachments', 'program-archive')]
+    if platform != 'macos': commands = [{'role': 'native', 'exit': 65}, {'role': 'admission-installed-archive', 'exit': 0}]
+    return {'source_sha': inspector.CURRENT_CASE_SOURCE, 'run_id': inspector.CURRENT_CASE_RUN,
+        'attempt': '1', 'platform': platform, 'accepted': False, 'diagnostic_only': True,
+        'full_f10_accepted': False, 'sequence_complete': platform == 'macos',
+        'failure': None if platform == 'macos' else 'RuntimeError', 'commands': commands,
+        'strict_privacy_checks': dict.fromkeys(stages, False), 'checkpoints': checkpoints,
+        'root': 'https://127.0.0.1:443/privacy-' + 'a' * 24 + '/'}
+
+
+def current_order_control(test, root, *, platform='iphone', changed_member=False,
+                          sealed=True, bad_scan=False, wrong_api=False, wrong_identity=False,
+                          mutate_after_native=None, admission_refusal=False):
+    """REAL current entry, admission, finite UI replay and disposable native helper."""
+    result = current_result(platform)
+    receipt = {'admission_closed': True, 'active_handlers': 0, 'admitted_handlers': 533,
+        'rejected_handlers': 0, 'serving_stopped': True, 'drained': True, 'failed': False,
+        'cleanup': {'certificate': 'completed', 'simulator-shutdown': 'not-required' if platform == 'macos' else 'completed',
+                    'simulator-erase': 'not-required' if platform == 'macos' else 'completed'},
+        'outer_limit_seconds': 4800, 'drain_limit_seconds': 90}
+    ui = ('EXR_PRIVACY_UI_SAVE elapsed_ms=10 status=saved\n'
+        'EXR_PRIVACY_UI_STATE seq=1 elapsed_ms=20 phase=remembered snapshot=1 '
+        'label=finished value=empty value_kind=none missing_label=0 missing_value=0\n')
+    source_log = root / 'source-native.log'; source_log.write_text(ui)
+    result['ui_state_observations'] = inspector.parse_ui_observations(source_log)
+    members = {'native.log': ui.encode(), 'fixture-failures.json': b'[]', 'requests.json': b'[]',
+        'privacy.xcresult/Info.plist': b'synthetic-not-xcresult'}
+    for stage in result['checkpoints']: members[stage + '-product.zip'] = b'synthetic-not-product-zip'
+    if platform == 'macos': members['program.zip'] = b'synthetic-not-program-zip'
+    if bad_scan: members['remember_closed-privacy-scan.json'] = b'{"private-operand":{"accepted":false}}'
+    result.update(evidence_sealed=sealed, lifecycle=receipt,
+        files={name: {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()} for name, data in members.items()})
+    if wrong_identity: result['source_sha'] = SOURCE
+    archive = root / 'input.zip'
+    with zipfile.ZipFile(archive, 'w') as zipped:
+        for name, data in members.items():
+            zipped.writestr(name, data + b'changed' if changed_member and name == 'native.log' else data)
+        zipped.writestr('result.json', json.dumps(result))
+    payload = archive.read_bytes(); digest = hashlib.sha256(payload).hexdigest()
+    metadata = {'id': 456, 'name': 'password-continuation-native-' + platform + '-' + inspector.CURRENT_CASE_RUN + '-1',
+        'workflow_run': {'id': int(inspector.CURRENT_CASE_RUN), 'head_sha': SOURCE if wrong_api else inspector.CURRENT_CASE_SOURCE},
+        'size_in_bytes': len(payload), 'digest': 'sha256:' + digest, 'expired': False}
+    issue = {'_type': {'_name': 'TestFailureIssueSummary'},
+        'message': {'_value': 'Test exceeded execution time allowance of 240 seconds private-operand'},
+        'testCaseName': {'_value': CASE}}
+    calls, stages = [], []
+    out = root / 'out'; out.mkdir()
+    real_stage = inspector.diagnostic_stage
+    def stage(name): stages.append(name); real_stage(name)
+    def command(argv, **kwargs):
+        if argv[:2] == ['gh', 'api']:
+            test.assertTrue(argv[2].endswith('/actions/artifacts/456/zip'))
+            kwargs['stdout'].write(payload); return subprocess.CompletedProcess(argv, 0)
+        test.assertEqual(argv[:2], ['xcrun', 'xcresulttool']); calls.append(argv[2])
+        test.assertTrue(kwargs['capture_output']); test.assertEqual(kwargs['timeout'], 120)
+        test.assertNotEqual(Path(argv[argv.index('--path') + 1]), out / platform / 'privacy.xcresult')
+        if argv[2] == 'get': return subprocess.CompletedProcess(argv, 0, json.dumps([issue]).encode(), b'private-stderr')
+        exported = Path(argv[-1]); exported.mkdir(); (exported / 'manifest.json').write_text('[]')
+        if mutate_after_native == 'file': (out / platform / 'native.log').write_text('mutation')
+        if mutate_after_native == 'directory': (out / platform / 'unexpected-empty').mkdir()
+        return subprocess.CompletedProcess(argv, 0, b'private-stdout', b'private-stderr')
+    def admission(folder, source, record, *, require_program):
+        test.assertEqual(source, inspector.CURRENT_CASE_SOURCE); test.assertFalse(require_program)
+        if admission_refusal: raise RuntimeError('unexpected admission archive namespace')
+        return {'diagnostic_control_only': True}
+    with patch.dict(os.environ, {'GITHUB_REPOSITORY': 'NoGod3524/EXReader'}), \
+            patch.object(inspector.subprocess, 'check_output', return_value=json.dumps(metadata).encode()), \
+            patch.object(inspector.subprocess, 'run', side_effect=command), \
+            patch.object(inspector, 'diagnostic_stage', side_effect=stage), \
+            patch.object(inspector, 'admission_namespaces', return_value={}), \
+            patch.object(inspector, 'admission_metadata', return_value={}), \
+            patch.object(inspector, 'verify_ios_admission', side_effect=admission), \
+            patch.object(inspector, 'CURRENT_SAFE_REPORT', None), patch.object(inspector, 'CURRENT_MEMBER_INTEGRITY', None), \
+            patch.object(inspector, 'CURRENT_PLATFORM', None), \
+            patch.object(inspector, 'inspect_native_result', wraps=inspector.inspect_native_result) as native, \
+            patch.object(inspector, 'replay_original_attachments') as historical:
+        try: report = inspector.diagnose_current_platform(out, platform, 456, len(payload), digest)
+        except Exception as error: report = inspector.current_refusal(error)
+        entered = native.call_count; historical.assert_not_called()
+    inspector.diagnostic_stage('entry')
+    return report, calls, stages, entered
+
+
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_current_oracle_parameters_preserve_historical_default_and_shape(self):
+        oracle = {'synthetic_only': True, 'source_sha': inspector.CURRENT_CASE_SOURCE,
+            'run_id': inspector.CURRENT_CASE_RUN, 'attempt': '1', 'user': 'privacy-user-' + 'a' * 32,
+            'passwords': {'remembered': 'Privacy-' + 'b' * 64 + '!%:+', 'session': 'Privacy-' + 'c' * 64 + '!%:+'}}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); path = root / 'synthetic-oracle-input.json'; path.write_text(json.dumps(oracle))
+            proof = inspector.metadata_variants(root, source=inspector.CURRENT_CASE_SOURCE, run=inspector.CURRENT_CASE_RUN)
+            self.assertTrue(proof)
+            with self.assertRaises(RuntimeError): inspector.metadata_variants(root)
+            for key, value in (('attempt', True), ('synthetic_only', 1), ('user', 'private-operand'), ('run_id', RUN)):
+                path.write_text(json.dumps(dict(oracle, **{key: value})))
+                with self.assertRaises(RuntimeError): inspector.metadata_variants(root,
+                    source=inspector.CURRENT_CASE_SOURCE, run=inspector.CURRENT_CASE_RUN)
+            path.write_text(json.dumps(dict(oracle, source_sha=SOURCE, run_id=RUN)))
+            self.assertEqual(inspector.metadata_variants(root), proof)
+            folder = root / 'ios-admission'; folder.mkdir()
+            (folder / 'manifest.json').write_text(json.dumps(dict.fromkeys(('pre-sign', 'post-sign', 'installed'), {})))
+            with patch.object(inspector, 'metadata_variants', side_effect=RuntimeError('control-stop')) as variants:
+                with self.assertRaisesRegex(RuntimeError, '^control-stop$'):
+                    inspector.admission_metadata(root, source=inspector.CURRENT_CASE_SOURCE, run=inspector.CURRENT_CASE_RUN)
+                variants.assert_called_once_with(root, source=inspector.CURRENT_CASE_SOURCE, run=inspector.CURRENT_CASE_RUN)
+
+    def test_current_case_pins_and_historical_profile_are_separate(self):
+        self.assertEqual(inspector.CURRENT_CASE_SOURCE, '2e8ef281dc1c790427ee4a5c60cae3d880750d3a')
+        self.assertEqual(inspector.CURRENT_CASE_RUN, '40877286914')
+        self.assertEqual(inspector.CURRENT_CASE_ARTIFACTS, {
+            'macos': (12898598312, 104208231, 'a42f6c78ea576042c54eb12951c4e608aa641f2a1fc5c6148ac8eabc5be96ae8'),
+            'iphone': (12899507875, 176407990, '5232cee7ddf98f6bc1cba6d16dec705956cb666e898af516e7ecd832518f277f'),
+            'ipad': (12900935511, 187645675, 'b043a78b1adee48a1b1b92fa8f5956898c6fdc1dabbf0d9ce519dea25229af37')})
+        self.assertEqual((SOURCE, RUN), ('6803602e5791eafa69a6e61bc5499d36cd31d92e', '40858915090'))
+        self.assertEqual(inspector.ATTACHMENT_SOURCE_HASHES['continuation_contract.py'],
+                         '03a72ae6666b59f829ddd3427067dd2963a3664235f1e5d168041b28cee4e7d1')
+        self.assertEqual(inspector.PROFILE_RUN, '40839064448')
+        source = Path(inspector.__file__).read_text()
+        self.assertIn('if not current_main(): raise SystemExit(1)', source)
+        self.assertIn("sys.argv[1:] == ['--capture-profile']", source)
+
+    def test_current_main_actual_routing_and_immutable_ui_source(self):
+        ui = (ROOT / SOURCE_FILE).read_bytes()
+        record = {'type': 'file', 'path': SOURCE_FILE, 'encoding': 'base64', 'size': len(ui), 'content': base64.b64encode(ui).decode()}
+        with tempfile.TemporaryDirectory() as temporary, patch.object(inspector, 'ROOT', Path(temporary)), \
+                patch.dict(os.environ, {'GITHUB_ACTIONS': 'true', 'GITHUB_REPOSITORY': 'NoGod3524/EXReader'}), \
+                patch.object(inspector, 'guard'), patch.object(inspector.subprocess, 'check_output', return_value=json.dumps(record).encode()) as fetch, \
+                patch.object(inspector, 'run_current_platforms', return_value=False) as current, \
+                patch.object(inspector, 'run_platforms') as historical, patch.object(inspector, 'capture_profile_main') as profile:
+            self.assertFalse(inspector.current_main())
+            self.assertTrue(fetch.call_args.args[0][-1].endswith('?ref=' + inspector.CURRENT_CASE_SOURCE))
+            current.assert_called_once(); historical.assert_not_called(); profile.assert_not_called()
+
+    def test_current_progress_distinguishes_success_scope_and_native_failure(self):
+        for platform in ('macos', 'iphone', 'ipad'):
+            value = current_result(platform)
+            files = {stage + '-product.zip' for stage in value['checkpoints']} | {'program.zip'}
+            proof = inspector.current_progress(value, files, platform)
+            self.assertEqual(proof['native_command_exit'], 0 if platform == 'macos' else 65)
+            self.assertFalse(proof['full_validate_executed']); self.assertFalse(proof['full_program_signature_credit'])
+            self.assertFalse(proof['accepted']); self.assertFalse(proof['full_f10_accepted'])
+            if platform == 'macos':
+                self.assertEqual(proof['scope'], 'producer-completion-only')
+                with self.assertRaises(RuntimeError): safe_progress(value, files)
+            else:
+                self.assertEqual(proof['nonzero_command_exits'], [{'role': 'native', 'exit': 65}])
+                value['commands'] = [{'role': 'admission-installed-archive', 'exit': 0}]
+                absent = inspector.current_progress(value, files, platform)
+                self.assertIsNone(absent['native_command_exit']); self.assertFalse(absent['native_command_observed'])
+
+    def test_current_progress_rejects_overclaims_identity_and_checkpoint_shapes(self):
+        changes = [('accepted', True), ('full_f10_accepted', True), ('sequence_complete', True),
+            ('source_sha', SOURCE), ('run_id', RUN), ('attempt', True), ('failure', 'private-operand'),
+            ('strict_privacy_checks', {'remember_closed': 0}), ('checkpoints', {'private-operand': {}})]
+        for key, change in changes:
+            value = current_result(); value[key] = change
+            with self.assertRaises(RuntimeError): inspector.current_progress(value,
+                {stage + '-product.zip' for stage in inspector.STAGES}, 'iphone')
+        for key, change in (('network_requests', True), ('original_bytes', -1), ('strict_privacy_passed', 0),
+                            ('archive', 'private-operand'), ('profile_id', 'private-operand'), ('unexpected', True)):
+            value = current_result(); value['checkpoints']['remember_closed'][key] = change
+            with self.assertRaises(RuntimeError): inspector.current_progress(value,
+                {stage + '-product.zip' for stage in inspector.STAGES}, 'iphone')
+        for change in (False, None, 'private-operand'):
+            value = current_result('macos'); value['sequence_complete'] = change
+            with self.assertRaises(RuntimeError): inspector.current_progress(value,
+                {stage + '-product.zip' for stage in inspector.STAGES} | {'program.zip'}, 'macos')
+
+    def test_current_progress_rejects_duplicate_and_illtyped_commands(self):
+        for commands in ([{'role': 'native', 'exit': True}], [{'role': 'native', 'exit': '65'}],
+            [{'role': 'native', 'exit': 65}, {'role': 'native', 'exit': 0}],
+            [{'role': 'private-operand', 'exit': 1}], [{'role': [], 'exit': 1}]):
+            value = current_result(); value['commands'] = commands
+            with self.assertRaises(RuntimeError): inspector.current_progress(value,
+                {stage + '-product.zip' for stage in inspector.STAGES}, 'iphone')
+        for role in ('native', 'attachments', 'program-archive'):
+            value = current_result('macos'); value['commands'] = [row for row in value['commands'] if row['role'] != role]
+            with self.assertRaises(RuntimeError): inspector.current_progress(value,
+                {stage + '-product.zip' for stage in inspector.STAGES} | {'program.zip'}, 'macos')
+
+    def test_current_ui_replay_rejects_mismatch_and_encoded_operands(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); path = root / 'native.log'
+            path.write_text('EXR_PRIVACY_UI_SAVE elapsed_ms=10 status=saved\n')
+            result = {'ui_state_observations': inspector.parse_ui_observations(path)}
+            report = {}; inspector.replay_current_ui(root, result, report)
+            self.assertTrue(report['ui_observations_match_producer'])
+            changed = copy.deepcopy(result); changed['ui_state_observations']['initial_save'][0]['elapsed_ms'] = 10.0
+            with self.assertRaises(RuntimeError): inspector.replay_current_ui(root, changed, {})
+            for operand in list(needles({'secret': b'Privacy-' + b'a' * 40}).values()) + [b'Privacy-aaa...']:
+                path.write_bytes(b'EXR_PRIVACY_UI_SAVE elapsed_ms=10 status=' + operand + b'\n')
+                with self.assertRaises(RuntimeError): inspector.replay_current_ui(root, result, {})
+
+    def test_current_actual_native_precedes_scan_refusal_and_partial_survives(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            proof, calls, stages, count = current_order_control(self, Path(temporary), bad_scan=True)
+        self.assertEqual(calls, ['get', 'export']); self.assertEqual(count, 1)
+        self.assertLess(stages.index('xcresult-issues'), stages.index('scan-summaries'))
+        partial = proof['validated_partial_report']
+        self.assertTrue(partial['original_namespace_and_bytes_preserved'])
+        self.assertTrue(partial['ui_observations_match_producer']); self.assertEqual(partial['native_command_exit'], 65)
+        self.assertEqual(partial['xcresult']['issues'][0]['known_time_allowance'], [240])
+        self.assertTrue(proof['diagnostic_refused']); self.assertNotIn('private-operand', json.dumps(proof))
+
+    def test_current_bad_api_identity_member_or_lifecycle_blocks_native(self):
+        for option in ('wrong_api', 'wrong_identity', 'changed_member', 'sealed'):
+            with tempfile.TemporaryDirectory() as temporary:
+                proof, calls, stages, count = current_order_control(self, Path(temporary), **{option: option != 'sealed'})
+            self.assertTrue(proof['diagnostic_refused']); self.assertEqual(count, 0); self.assertEqual(calls, [])
+            self.assertIsNone(proof['validated_partial_report'])
+
+    def test_current_macos_map_and_ios_fatal_namespace_keep_distinct_credit(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            proof, calls, stages, count = current_order_control(self, Path(temporary), platform='macos')
+        self.assertTrue(proof['sequence_complete']); self.assertEqual(proof['scope'], 'producer-completion-only')
+        self.assertTrue(proof['program_archive_present']); self.assertFalse(proof['full_validate_executed'])
+        self.assertFalse(proof['full_program_signature_credit']); self.assertTrue(proof['original_namespace_and_bytes_preserved'])
+        with tempfile.TemporaryDirectory() as temporary:
+            proof, calls, stages, count = current_order_control(self, Path(temporary), admission_refusal=True)
+        self.assertEqual(proof['stage'], 'admission-replay'); self.assertTrue(proof['diagnostic_refused'])
+        self.assertEqual(proof['validated_partial_report']['native_command_exit'], 65)
+        self.assertIn('xcresult', proof['validated_partial_report'])
+
+    def test_current_original_file_or_empty_directory_mutation_refuses(self):
+        for mutation in ('file', 'directory'):
+            with tempfile.TemporaryDirectory() as temporary:
+                proof, calls, stages, count = current_order_control(self, Path(temporary), mutate_after_native=mutation)
+            self.assertEqual(proof['refusal_code'], 'current-original-changed')
+            self.assertFalse(proof['validated_partial_report']['original_namespace_and_bytes_preserved'])
+            self.assertIn('xcresult', proof['validated_partial_report'])
+
+    def test_current_all_platforms_attempted_without_changing_historical_pins(self):
+        seen = []
+        def diagnose(out, platform, identifier, size, digest):
+            seen.append((platform, identifier, size, digest))
+            if platform == 'iphone': raise RuntimeError('current UI replay differs')
+            return {'platform': platform, 'accepted': False}
+        with tempfile.TemporaryDirectory() as temporary, patch.object(inspector, 'COMPLETED_REPORTS', []):
+            self.assertFalse(inspector.run_current_platforms(Path(temporary), diagnoser=diagnose))
+            self.assertEqual(len(inspector.COMPLETED_REPORTS), 3)
+            self.assertTrue(inspector.COMPLETED_REPORTS[1]['diagnostic_refused'])
+        self.assertEqual(seen, [(platform, *row) for platform, row in inspector.CURRENT_CASE_ARTIFACTS.items()])
+        self.assertEqual(ARTIFACTS['macos'][0], 12890808734)
+
     def test_current_shared_helper_accepts_original_bytes_and_matches_counterfactual(self):
         for name in ('privacy-stages.json', 'privacy-stages_0_12345678-1234-1234-1234-123456789ABC.json'):
             with tempfile.TemporaryDirectory() as temporary:
