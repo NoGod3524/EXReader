@@ -48,3 +48,8 @@ if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
   _exr_raw_guard_target(EXReaderReadingState::reader_reading_state "${EXReaderReadingState_DIR}"
     reader_reading_state.h READER_READING_STATE_VERSION 0.2.0 FALSE)
 endif()
+
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  _exr_public_boundary_guard(EXReaderReadingState::reader_reading_state_codec "${EXReaderReadingState_DIR}"
+    reader_reading_state_retained_raw_v1.h READER_RS_RETAINED_RAW_API_VERSION EXR_READER_PUBLIC_RETAINED_RAW_V1)
+endif()

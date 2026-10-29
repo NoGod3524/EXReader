@@ -2,7 +2,7 @@
 #include "reader_annotation_export.h"
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
 #include "reader_annotation_export_raw3.h"
-#include <reader_selector_bytes_detail.h>
+#include <reader_selector_bytes_v1.h>
 #endif
 #include <reader_projection.h>
 #include <algorithm>
@@ -480,7 +480,16 @@ reader_rs_status api_decode(bool raw,reader_revisions *r,const void *wire,size_t
 /* Canonical, independently decoded location of one head (null for a delete). */
 void selector_json(std::string &out,const char *value,size_t size){
   out+="{\"size\":"+std::to_string((unsigned long long)size)+",\"base64\":";
-  if(value)json_string(out,reader_selector_bytes_detail::encode(value,size));else out+="null";
+  if(value){
+    size_t count=0;auto status=reader_revision_selector_encode_v1(value,size,nullptr,0,&count);
+    if(status==READER_SELECTOR_V1_MEMORY)throw std::bad_alloc();
+    if(status!=READER_SELECTOR_V1_OK)fail(READER_ANNOTATION_EXPORT_DECODE,"Invalid retained selector bytes");
+    std::string encoded(count,'\0');
+    status=reader_revision_selector_encode_v1(value,size,encoded.data(),encoded.size(),&count);
+    if(status==READER_SELECTOR_V1_MEMORY)throw std::bad_alloc();
+    if(status!=READER_SELECTOR_V1_OK)fail(READER_ANNOTATION_EXPORT_DECODE,"Cannot encode retained selector bytes");
+    json_string(out,encoded);
+  }else out+="null";
   out+="}";
 }
 void optional_string(std::string &out,const char *value){if(value)json_string(out,value,std::strlen(value));else out+="null";}

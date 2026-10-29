@@ -2,7 +2,8 @@
 #include "reading_internal.h"
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
 #include <reader_projection.h>
-#include <reader_selector_bytes_detail.h>
+#include <reader_selector_bytes_v1.h>
+#include "reader_reading_state_retained_raw_v1.h"
 #endif
 #include <sqlite3.h>
 #include <cstdio>
@@ -76,7 +77,17 @@ std::string location(const reader_rs_capture *c,const char *parser,unsigned vers
   if(version==3){
     auto raw=[&](const char *value,size_t count){
       if(count>65536)reject(READER_RS_NOT_REPRESENTABLE,"Raw selector exceeds its byte bound",READER_RS_GAP_LIMIT);
-      out+="{\"base64\":";if(value)quote(out,reader_selector_bytes_detail::encode(value,count).c_str());else out+="null";
+      out+="{\"base64\":";
+      if(value){
+        size_t size=0;auto status=reader_revision_selector_encode_v1(value,count,nullptr,0,&size);
+        if(status==READER_SELECTOR_V1_MEMORY)throw std::bad_alloc();
+        if(status!=READER_SELECTOR_V1_OK)reject(READER_RS_NOT_REPRESENTABLE,"Invalid raw selector bytes",READER_RS_GAP_LIMIT);
+        std::string encoded(size,'\0');
+        status=reader_revision_selector_encode_v1(value,count,encoded.data(),encoded.size(),&size);
+        if(status==READER_SELECTOR_V1_MEMORY)throw std::bad_alloc();
+        if(status!=READER_SELECTOR_V1_OK)reject(READER_RS_NOT_REPRESENTABLE,"Cannot encode raw selector bytes",READER_RS_GAP_LIMIT);
+        quote(out,encoded.data(),encoded.size());
+      }else out+="null";
       out+=",\"size\":"+std::to_string(count)+"}";
     };
     out+=",\"selector\":{\"exact\":";raw(exact,exact_size);out+=",\"prefix\":";raw(prefix,prefix_size);out+=",\"suffix\":";raw(suffix,suffix_size);
@@ -217,7 +228,13 @@ static reader_rs_status decode(bool raw_api,reader_revisions *store,const void *
       auto take=[&](int col,size_t limit,size_t scalars,size_t &count)->char *{
         count=(size_t)sqlite3_column_int64(raw.s,col+1);if(!present(raw.s,col))return nullptr;
         const char *p=(const char *)sqlite3_column_text(raw.s,col);size_t n=(size_t)sqlite3_column_bytes(raw.s,col);std::string decoded;
-        if(reader_selector_bytes_detail::decode(std::string(p,n),count,limit,scalars,decoded)!=reader_selector_bytes_detail::result::ok)reject(READER_RS_REVISION,"Invalid validated raw selector");
+        size_t size=0;auto status=reader_revision_selector_decode_v1(p,n,count,limit,scalars,nullptr,0,&size);
+        if(status==READER_SELECTOR_V1_MEMORY)throw std::bad_alloc();
+        if(status!=READER_SELECTOR_V1_OK)reject(READER_RS_REVISION,"Invalid validated raw selector");
+        decoded.resize(size);
+        status=reader_revision_selector_decode_v1(p,n,count,limit,scalars,decoded.data(),decoded.size(),&size);
+        if(status==READER_SELECTOR_V1_MEMORY)throw std::bad_alloc();
+        if(status!=READER_SELECTOR_V1_OK)reject(READER_RS_REVISION,"Invalid validated raw selector");
         return copy(decoded);
       };
       out->exact=take(0,65536,SIZE_MAX,out->exact_size);out->prefix=take(2,128,32,out->prefix_size);out->suffix=take(4,128,32,out->suffix_size);
@@ -242,9 +259,12 @@ extern "C" reader_rs_status reader_rs_encode_fixed_v3(reader_revisions *s,const 
   if(!c||c->mode!=READER_RS_FIXED_PAGE)return call(error,[&]{reject(READER_RS_ARGUMENT,"Anchor3 is fixed_page only");});
   return encode(s,e,c,3,0,w,n,error,true);
 }
-/* Internal command-only preservation of an already-retained legacy selector.
-   The old public encoders still require a legacy store and never write v3. */
-reader_rs_status reader_rs_encode_retained_raw_v3(reader_revisions *s,const reader_rs_envelope *e,const reader_rs_capture *c,unsigned version,size_t part,char **w,size_t *n,reader_rs_error *error){
+/* Public API revision v1 over the existing raw-v3 store encoder. */
+extern "C" reader_rs_status reader_rs_encode_retained_raw_v1(reader_revisions *s,const reader_rs_envelope *e,const reader_rs_capture *c,unsigned version,size_t part,char **w,size_t *n,reader_rs_error *error){
+  if(w)*w=nullptr;
+  if(n)*n=0;
+  if(version<1 || version>3 || (version==3 && (!c || c->mode!=READER_RS_FIXED_PAGE)))
+    return call(error,[&]{reject(READER_RS_ARGUMENT,"Retained raw encode requires anchor 1/2, or fixed_page anchor3");});
   return encode(s,e,c,version,part,w,n,error,true);
 }
 #endif

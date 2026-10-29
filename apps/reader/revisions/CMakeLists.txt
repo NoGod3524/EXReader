@@ -46,10 +46,11 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderRevisionsConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/EXReaderRevisionsConfigVersion.cmake" DESTINATION lib/cmake/EXReaderRevisions)
 
 if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
-  target_compile_definitions(reader_revisions PUBLIC EXR_READER_SELECTOR_BYTES_CANDIDATE=1)
+  target_compile_definitions(reader_revisions PUBLIC EXR_READER_SELECTOR_BYTES_CANDIDATE=1 EXR_READER_PUBLIC_SELECTOR_BYTES_V1=1)
+  target_sources(reader_revisions PRIVATE src/selector_bytes_v1.cpp)
 endif()
 if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
-  install(FILES include/reader_selector_bytes_detail.h DESTINATION include)
+  install(FILES include/reader_selector_bytes_v1.h DESTINATION include)
 endif()
 
 # RAW-CANDIDATE ORIGIN GUARD: append-only; never changes imported targets.
