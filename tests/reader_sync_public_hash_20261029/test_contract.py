@@ -100,7 +100,8 @@ class ContractTests(unittest.TestCase):
             raw,_=profile_fixture(padding_delta=delta)
             with self.assertRaisesRegex(ValueError,'geometry'):C.bsd_profiles(raw)
         raw,positions=profile_fixture();row=positions[1]
-        for offset in (row['name']+row['name_bytes'],row['header'],row['header']+48):
+        # Keep the first NUL: replacing it alone creates a valid longer name.
+        for offset in (row['name']+row['name_bytes']+1,row['header'],row['header']+48):
             bad=bytearray(raw);bad[offset]=ord('?')
             with self.assertRaises(ValueError):C.bsd_profiles(bytes(bad))
         for bad in (raw[:-1],raw+b'?',b'!<thin>\n'+raw[8:]):
