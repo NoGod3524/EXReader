@@ -18,7 +18,7 @@ jobs:
       - name: Authenticate original ZIP and parse original XCTest
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tests/apple_mobile_failure_inspect/inspect.py --platform '${{ matrix.platform }}'
+        run: python3 tests/apple_mobile_failure_inspect/read_failure.py --platform '${{ matrix.platform }}'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
