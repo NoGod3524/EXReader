@@ -1,5 +1,6 @@
 """Independent original-upload and semantic replay for the new union only."""
 from datetime import datetime, timezone
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -7,9 +8,10 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import traceback
 import zipfile
 import package_contract as C
-from test_contract import evidence_mutations,isolation_mutations,archive_pair_mutations,stream_prerequisite_controls,stream_fixture
+from test_contract import evidence_mutations,isolation_mutations,archive_pair_mutations,stream_prerequisite_controls,stream_fixture,export_join_controls
 sys.path.insert(0,str(C.ROOT/'tools'))
 from check_parallel_integration import fetch,pages,download_artifact_zip
 
@@ -409,7 +411,7 @@ def diag_controls(run,job,artifact):
     reject('ninja-duplicate-target',lambda:diag_ninja_statements(ninja+ninja,['alias','/image']))
     return results
 
-def retained():
+def stream_retained_prerequisites():
     """Pinned4c refusal plus new channel controls; never original/native admission."""
     C.actions();source=C.guard();ident=C.identity()
     C.require(C.current_lane()=='retained','diagnostic requires existing retained-only marker')
@@ -544,6 +546,288 @@ def retained():
             encoded=diag_json(bounded);(C.OUT/'authenticated.json').write_bytes(encoded);print(encoded.decode('utf-8'),end='',flush=True)
             raise ValueError('diagnostic JSON output bound')
         encoded=diag_json(result);(C.OUT/'authenticated.json').write_bytes(encoded);print(encoded.decode('utf-8'),end='',flush=True)
+
+JOIN_RUN=40858678695
+JOIN_IDENTITY=dict(source_sha=C.JOIN_BASE,run_id=str(JOIN_RUN),attempt='1')
+JOIN_PINS={
+    'linux':dict(job=123396167312,id=12891337178,size_in_bytes=136953098,digest='sha256:f8b995769c94a70e4c85c09b50d9e88788f3e781542d14fd655b948cab385f20'),
+    'windows':dict(job=123396167086,id=12890119619,size_in_bytes=128718179,digest='sha256:219f443155902e4560b1f8218dbbf915bc46ce10febb55bf1659c6fa8ae92ea2'),
+    'macos':dict(job=123396167226,id=12890348373,size_in_bytes=134963495,digest='sha256:d0a9b1f2399c1f1332850ab125acdcdbac38e9dac85ce46bd73f27141c07e038'),
+    'iphone':dict(job=123396167054,id=12892386099,size_in_bytes=188697990,digest='sha256:8722c45dd4eb61e739dca3737352098c8916b2dc17e5feae5ec0595732f38de9'),
+    'android':dict(job=123396166992,id=12890838113,size_in_bytes=217440041,digest='sha256:1252b4b1b6978c79dd0ed668a4e1379f9ffd25e248fe26e74801df645a9e03f6')}
+JOIN_STEPS={
+    'linux':('Install both families and build same-source 3.42 host and package','Original navigation backend',
+        'Original folder backend and owner faults','Original navigation and folder GUI suites',
+        'Public C/C++ and original selector/C06 assertions','Capture exact installed ownership and compiler dependencies'),
+    'windows':('Original SDK342 F06 producer, flags and 26 checks','Public C/C++ and original selector/C06 assertions',
+        'Capture final EXE, map, response files and exact installed ownership'),
+    'macos':('Original F06 SDK342 profile and actual relocated entries, PURE remains OFF',
+        'Public C/C++ and unchanged selector/C06 assertions on actual native targets','Capture installed archives, make dependency files, native maps and entries'),
+    'iphone':('Original F06 SDK342 profile and actual relocated entries, PURE remains OFF',
+        'Public C/C++ and unchanged selector/C06 assertions on actual native targets','Capture installed archives, make dependency files, native maps and entries'),
+    'android':('Build exact installed SDK and package','Run reactivecircus/android-emulator-runner@v2',
+        'Capture APK, installed archives and actual compiler dependency graph')}
+
+def join_git(path):
+    C.checked_relative(path)
+    return subprocess.check_output(['git','show',C.JOIN_BASE+':'+path],cwd=C.ROOT)
+
+def join_historical_modules():
+    lock=unique_json(join_git('tests/reader_sync_public_hash_20261029/source_lock.json'))
+    paths=set(lock['adopted'])|set(lock['public_packet'])|set(lock['owner'])|set(lock['added'])
+    C.require(len(paths)==53,'join original source53 inventory differs')
+    hashes={p:hashlib.sha256(join_git(p)).hexdigest() for p in sorted(paths)}
+    # The exact3-path guard already proves every other tracked dependency equals
+    # bba. Verify this named projection before loading any original pure module.
+    C.require(all(C.digest(C.ROOT/p)==value for p,value in hashes.items() if p not in C.JOIN_PATHS),
+        'join historical dependency bytes changed')
+    folder=C.ROOT/'build/join-original';folder.mkdir(parents=True,exist_ok=False)
+    for name in ('package_contract.py','test_contract.py'):
+        path='tests/reader_sync_public_hash_20261029/'+name;raw=join_git(path)
+        C.require(hashlib.sha256(raw).hexdigest()==hashes[path],'historical module Git hash differs')
+        (folder/name).write_bytes(raw)
+    old=C.load('build/join-original/package_contract.py','join_original_contract')
+    tests=C.load('build/join-original/test_contract.py','join_original_controls',old)
+    C.require(old.ROOT==C.ROOT,'historical pure module root differs')
+    bad_line="exports='\\n'.join((folder[v['path']]).read_text() for p,v in installed.items() if p.endswith('.cmake'))"
+    lines=(folder/'package_contract.py').read_text().splitlines()
+    matches=[i+1 for i,line in enumerate(lines) if line.strip()==bad_line]
+    C.require(matches==[624],'pinned original failing expression/line differs')
+    return old,tests,hashes,folder/'package_contract.py'
+
+@contextmanager
+def join_historical_identity():
+    keys={'GITHUB_SHA':C.JOIN_BASE,'GITHUB_RUN_ID':str(JOIN_RUN),'GITHUB_RUN_ATTEMPT':'1'}
+    before={k:os.environ.get(k) for k in keys}
+    try:
+        os.environ.update(keys);yield
+    finally:
+        for k,value in before.items():
+            if value is None:os.environ.pop(k,None)
+            else:os.environ[k]=value
+
+def join_original_metadata(run,jobs,artifacts):
+    C.require(run['id']==JOIN_RUN and run['head_sha']==C.JOIN_BASE and run['run_attempt']==1 and
+        run['head_branch']==C.BRANCH and run['path']==C.WORKFLOW and run['workflow_id']==400305015 and
+        run['event']=='push' and run['status']=='completed' and run['conclusion']=='failure','join original run differs')
+    expected={'protocol':(123396041261,'success'),'authenticate':(123408381802,'failure')}
+    expected.update({'boundary-'+t:(p['job'],'failure' if t=='android' else 'success') for t,p in JOIN_PINS.items()})
+    C.require(len(jobs)==len(expected) and {j['name'] for j in jobs}==set(expected),'join original job inventory differs')
+    by_name={j['name']:j for j in jobs};selected={}
+    for name,(job_id,conclusion) in expected.items():
+        j=by_name[name]
+        C.require(j['id']==job_id and j['head_sha']==C.JOIN_BASE and j['run_id']==JOIN_RUN and
+            j['status']=='completed' and j['conclusion']==conclusion,'join original job differs: '+name)
+    stamp=lambda s:datetime.fromisoformat(s.replace('Z','+00:00'))
+    for target,pin in JOIN_PINS.items():
+        job=by_name['boundary-'+target]
+        for step in JOIN_STEPS[target]:
+            rows=[s for s in job['steps'] if s['name']==step]
+            conclusion='failure' if target=='android' and step=='Run reactivecircus/android-emulator-runner@v2' else 'success'
+            C.require(len(rows)==1 and rows[0]['conclusion']==conclusion,'join original step differs: '+step)
+        name=f'sync-public-hash-{target}-{JOIN_RUN}-1'
+        matches=[a for a in artifacts if a['id']==pin['id'] or a['name']==name]
+        C.require(len(matches)==1,'join original artifact missing/ambiguous: '+target);artifact=matches[0]
+        C.require(artifact['name']==name and all(artifact[k]==pin[k] for k in ('id','size_in_bytes','digest')) and
+            artifact['expired'] is False and artifact['workflow_run']['id']==JOIN_RUN and
+            artifact['workflow_run']['head_sha']==C.JOIN_BASE and artifact['workflow_run']['head_branch']==C.BRANCH and
+            stamp(job['started_at'])<=stamp(artifact['created_at'])<=stamp(job['completed_at']) and
+            stamp(artifact['expires_at'])>datetime.now(timezone.utc),'join original artifact identity differs: '+target)
+        selected[target]=artifact
+    return selected
+
+def join_json_bounds(names):
+    C.require(all(i.file_size<=16*1024**2 for name,i in names.items() if name.endswith('.json')),
+        'join JSON member byte bound')
+
+def join_verify_files(archive,names):
+    diag_zip_bounds(names)
+    join_json_bounds(names)
+    C.require('inventory.json' in names and names['inventory.json'].file_size<=16*1024**2,'join inventory missing/oversized')
+    raw=archive.read('inventory.json');inventory=unique_json(raw)
+    C.require(all(inventory[k]==v for k,v in JOIN_IDENTITY.items()) and
+        {n for n,i in names.items() if not i.is_dir()}==set(inventory['files'])|{'inventory.json'},'join complete outer inventory differs')
+    for path,meta in inventory['files'].items():
+        digest=hashlib.sha256();size=0
+        with archive.open(path) as stream:
+            for block in iter(lambda:stream.read(1024*1024),b''):digest.update(block);size+=len(block)
+        C.require(size==meta['bytes'] and digest.hexdigest()==meta['sha256'],'join original retained bytes differ: '+path)
+    return inventory,dict(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+def join_metadata_controls(run,jobs,artifacts):
+    clone=lambda value:json.loads(json.dumps(value));result={}
+    for name in ('source','run','job','duplicate-job','artifact','duplicate-artifact','native-status'):
+        a,b,c=clone(run),clone(jobs),clone(artifacts)
+        if name=='source':a['head_sha']='0'*40
+        elif name=='run':a['run_attempt']=2
+        elif name=='job':next(j for j in b if j['name']=='boundary-android')['id']=0
+        elif name=='duplicate-job':b.append(clone(b[0]))
+        elif name=='artifact':next(x for x in c if x['id']==JOIN_PINS['android']['id'])['digest']='sha256:'+'0'*64
+        elif name=='duplicate-artifact':c.append(clone(next(x for x in c if x['id']==JOIN_PINS['android']['id'])))
+        else:next(j for j in b if j['name']=='boundary-android')['conclusion']='success'
+        try:join_original_metadata(a,b,c)
+        except ValueError as error:result[name]=dict(rejected=True,error=str(error))
+        else:raise ValueError('join metadata control admitted: '+name)
+    before=dict(os.environ)
+    try:
+        with join_historical_identity():
+            C.require(C.identity()==JOIN_IDENTITY,'historical control identity differs')
+            raise RuntimeError('fixed historical restoration control')
+    except RuntimeError as error:C.require(str(error)=='fixed historical restoration control','unrelated restoration control failure')
+    C.require(dict(os.environ)==before,'historical context modified/restored unrelated environment')
+    result['historical-environment-restoration']=dict(passed=True,only_three_keys_changed=True)
+    class Entry:file_size=16*1024**2+1
+    try:join_json_bounds({'proof/report.json':Entry()})
+    except ValueError as error:result['selected-json-size']=dict(rejected=True,error=str(error))
+    else:raise ValueError('oversized historical JSON admitted')
+    import tempfile
+    with tempfile.TemporaryDirectory() as temp:
+        root=Path(temp);(root/'data.bin').write_bytes(b'original');(root/'inventory.json').write_bytes(b'{}')
+        inventory={'files':{'data.bin':C.record(root/'data.bin')}};record=C.record(root/'inventory.json')
+        join_restored(root,inventory,record)
+        (root/'inventory.json').write_bytes(b'[]')
+        try:join_restored(root,inventory,record)
+        except ValueError as error:
+            C.require(str(error)=='original inventory.json bytes not restored','inventory mutation hit unrelated guard')
+            result['same-size-inventory-mutation']=dict(rejected=True,error=str(error))
+        else:raise ValueError('mutated original inventory admitted')
+    return result
+
+def join_read_json(archive,names,path):
+    C.require(path in names and not names[path].is_dir() and names[path].file_size<=16*1024**2,'join selected JSON missing/oversized: '+path)
+    return unique_json(archive.read(path))
+
+def join_restored(extracted,inventory,inventory_record):
+    actual={p.relative_to(extracted).as_posix() for p in extracted.rglob('*') if p.is_file()}
+    C.require(actual==set(inventory['files'])|{'inventory.json'},'join disposable inventory changed')
+    C.require(C.record(extracted/'inventory.json')==inventory_record,'original inventory.json bytes not restored')
+    for path,meta in inventory['files'].items():
+        C.require(C.record(extracted/path)=={k:meta[k] for k in ('bytes','sha256')},'join original file not restored: '+path)
+
+def join_public_replay(archive,measured,target,old,source):
+    C.require(all(measured[k]==v for k,v in JOIN_IDENTITY.items()) and measured['source']==source and
+        measured['target']==target and measured['capture_complete'] is True and measured['named_boundary_accepted'] is True and
+        measured['f07_accepted'] is False and measured['final_whole_image_f07_audit'] is False,'join original public gate incomplete')
+    compared=old.P.replay_archive_comparisons(archive.read,measured,target,archive_comparator=old.union_archive_equivalence)
+    entries={'iphone','ipad'} if target=='iphone' else {target}
+    C.require({e['target'] for e in measured['native']['entries']}==entries,'join original public entry inventory differs')
+    for entry in entries:old.P.verify_delivered_entry(archive,entry,measured['packages'][entry])
+    wires=[]
+    for entry in measured['native']['entries']:
+        C.require(all(entry[k]==v for k,v in JOIN_IDENTITY.items()) and entry['passed'] is True and
+            set(entry['retained_wires'])==old.P.EXPECTED_WIRES,'join original native wire identity differs')
+        for path,sha in entry['retained_wires'].items():
+            C.require(hashlib.sha256(archive.read('build/public-boundary-v1/native-data/'+entry['target']+'-retained/'+path)).hexdigest()==sha,
+                'join retained wire bytes differ')
+        wires.append(entry['retained_wires'])
+    return dict(entries=sorted(entries),archive_comparisons=compared,wires=wires)
+
+def retained():
+    """Pinned bba complete proofs; new validation does not repair old run status."""
+    C.actions();source=C.guard();ident=C.identity();C.require(C.current_lane()=='retained','join replay requires retained marker')
+    out=C.OUT/'join-replay';out.mkdir(parents=True,exist_ok=False)
+    result=dict(ident,source=source,configured_runner_minutes=45,export_join_prerequisites_passed=False,
+        diagnostic_complete=False,native_rebuilt=False,original_run_accepted=False,combined_named_boundaries=False,
+        installed_android_sync_runtime=False,f07_accepted=False,targets={},stage='current_identity',failures=[])
+    extracted=None;inventory=None;inventory_record=None
+    try:
+        current=fetch(f'actions/runs/{ident["run_id"]}/attempts/1')
+        C.require(current['id']==int(ident['run_id']) and current['head_sha']==ident['source_sha'] and current['run_attempt']==1 and
+            current['path']==C.WORKFLOW and current['workflow_id']==400305015 and current['head_branch']==C.BRANCH and current['event']=='push',
+            'join current run differs')
+        jobs=pages(f'actions/runs/{ident["run_id"]}/attempts/1/jobs','jobs');protocol=[j for j in jobs if j['name']=='protocol']
+        C.require(len(protocol)==1 and protocol[0]['head_sha']==ident['source_sha'] and protocol[0]['conclusion']=='success','join protocol failed')
+        native=[j for j in jobs if j['name'] not in ('protocol','authenticate')]
+        C.require(4<=len(native)<=5 and all(j['name'].startswith('boundary-') and j['conclusion']=='skipped' for j in native),
+            'join replay native jobs not all skipped')
+        result['protocol_job_id']=protocol[0]['id'];result['regression_controls']=export_join_controls()
+        result['stage']='original_metadata'
+        original=fetch(f'actions/runs/{JOIN_RUN}/attempts/1')
+        jobs=pages(f'actions/runs/{JOIN_RUN}/attempts/1/jobs','jobs');artifacts=pages(f'actions/runs/{JOIN_RUN}/artifacts','artifacts')
+        selected=join_original_metadata(original,jobs,artifacts)
+        result['metadata_controls']=join_metadata_controls(original,jobs,artifacts)
+        old,old_tests,hashes,old_path=join_historical_modules()
+        result['historical_identity']=JOIN_IDENTITY;result['historical_module_sha256']={p:hashes[p] for p in C.JOIN_PATHS if p.endswith(('package_contract.py','test_contract.py'))}
+        covered=[];all_wires=[];expanded=0
+        for target,pin in JOIN_PINS.items():
+            result['stage']=target+':original_upload';artifact=selected[target]
+            upload=out/(target+'-original.zip')
+            with upload.open('w+b') as stream:download_artifact_zip(artifact['id'],output=stream)
+            C.require(upload.stat().st_size==pin['size_in_bytes'] and 'sha256:'+C.digest(upload)==pin['digest'],'join original ZIP differs')
+            with zipfile.ZipFile(upload) as archive:
+                names=C.H.safe_members(archive);diag_zip_bounds(names)
+                expanded+=sum(i.file_size for i in names.values());C.require(expanded<=40*1024**3,'join total expanded byte bound')
+                inventory,inventory_record=join_verify_files(archive,names)
+                oldsource=join_read_json(archive,names,'build/sync-public-hash/source.json')
+                C.require(all(oldsource[k]==v for k,v in JOIN_IDENTITY.items()) and oldsource['authorized_paths_sha256']==hashes and
+                    oldsource['source_scope_passed'] is True and oldsource['lane']=='native' and oldsource['configured_runner_minutes']==725 and
+                    oldsource['f07_accepted'] is False,'join original source53 differs')
+                result['stage']=target+':original_public_replay'
+                with join_historical_identity():public=join_public_replay(archive,inventory['report'],target,old,oldsource)
+                covered+=public['entries'];all_wires+=public.pop('wires')
+                extracted=out/(target+'-evidence');C.H.extract(archive,extracted)
+            proof=extracted/'build/sync-public-hash/proof'
+            result['targets'][target]=dict(artifact={k:artifact[k] for k in ('id','name','size_in_bytes','digest')},
+                files_verified=len(inventory['files']),source_paths_verified=len(hashes),public=public,
+                producer_job_id=pin['job'],producer_originally_passed=target!='android')
+            item=result['targets'][target];result['stage']=target+':original_union_replay'
+            with join_historical_identity():
+                item['capture_isolation']=old.validate_capture_isolation(extracted,inventory,JOIN_IDENTITY)
+                item['isolation_controls']=old_tests.isolation_mutations(extracted,inventory,JOIN_IDENTITY)
+                if target!='android':
+                    checked=old.validate(proof,oldsource)
+                    C.require(C.validate(proof,oldsource)==checked,'corrected validator changed a green-platform result')
+                    mutations=old_tests.evidence_mutations(proof,oldsource)
+                    expected=unique_json((extracted/'build/sync-public-hash/mutation-controls.json').read_bytes())
+                    C.require(mutations==expected,'join original green mutation result differs')
+                    item.update(historical_contract=checked,historical_mutations=mutations)
+                else:
+                    C.require(not (extracted/'build/sync-public-hash/mutation-controls.json').exists(),'original Android mutation report unexpectedly present')
+                    try:old.validate(proof,oldsource)
+                    except TypeError as error:
+                        frames=traceback.extract_tb(error.__traceback__)
+                        C.require(str(error)=="'PosixPath' object is not subscriptable" and
+                            any(Path(f.filename)==old_path and f.name=='<genexpr>' and f.lineno==624 for f in frames),
+                            'original Android TypeError boundary differs')
+                        item['historical_refusal']=dict(type=type(error).__name__,message=str(error),line=624,
+                            module_sha256=hashes['tests/reader_sync_public_hash_20261029/package_contract.py'])
+                    else:raise ValueError('original Android TypeError did not reproduce')
+                    result['stage']='android:corrected_complete_contract'
+                    item['corrected_contract']=C.validate(proof,oldsource)
+                    C.require(item['corrected_contract']['target']=='android','corrected target differs')
+                    result['stage']='android:corrected_all_mutations'
+                    item['corrected_mutations']=evidence_mutations(proof,oldsource)
+                    C.require({'private-installed-export-sync-raw','private-installed-export-sync-off'}<=set(item['corrected_mutations']),
+                        'both corrected export controls missing')
+                    item['newly_executed_diagnostic_controls']=True
+                join_restored(extracted,inventory,inventory_record)
+            C.require(C.identity()==ident,'historical identity not restored')
+            C.require('sha256:'+C.digest(upload)==pin['digest'],'original ZIP changed during replay')
+            item['all_original_bytes_restored']=True
+            shutil.rmtree(extracted);extracted=None;inventory=None;inventory_record=None
+        C.require(sorted(covered)==sorted(C.ENTRIES) and all(w==all_wires[0] for w in all_wires),'original six public wire parity differs')
+        C.require(set(result['targets'])==set(JOIN_PINS),'complete five-upload replay required')
+        result.update(export_join_prerequisites_passed=True,diagnostic_complete=True,stage='complete',
+            five_green_union_entries=['linux','windows','macos','iphone','ipad'],original_six_public_wire_parity=True,
+            scope='Historical original proofs plus corrected Android diagnostic validation; no original failed-run or new native acceptance')
+    except Exception as error:result['failures'].append(type(error).__name__+': '+str(error)[:4096]);raise
+    finally:
+        if extracted is not None and extracted.exists():
+            try:
+                if inventory is not None:join_restored(extracted,inventory,inventory_record)
+                shutil.rmtree(extracted)
+            except Exception as error:
+                result['export_join_prerequisites_passed']=False;result['diagnostic_complete']=False
+                result['failures'].append('cleanup/restoration: '+str(error)[:4096])
+        encoded=(json.dumps(result,sort_keys=True,ensure_ascii=True)+'\n').encode()
+        if len(encoded)>2*1024**2:
+            result=dict(ident,export_join_prerequisites_passed=False,diagnostic_complete=False,native_rebuilt=False,
+                original_run_accepted=False,combined_named_boundaries=False,installed_android_sync_runtime=False,f07_accepted=False,
+                stage='json_bound',failures=['join JSON output exceeded2MiB'],prior_stage=result['stage'],bytes=len(encoded),sha256=hashlib.sha256(encoded).hexdigest())
+            encoded=(json.dumps(result,sort_keys=True)+'\n').encode();(C.OUT/'authenticated.json').write_bytes(encoded)
+            print(encoded.decode(),end='',flush=True);raise ValueError('join JSON output bound')
+        (C.OUT/'authenticated.json').write_bytes(encoded);print(encoded.decode(),end='',flush=True)
+        C.require(not result['failures'],'join replay failed or restoration incomplete')
 
 def main():
     C.actions();source=C.guard();C.require(C.current_lane()=='native','normal authentication requires native lane')
