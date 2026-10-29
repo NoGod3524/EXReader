@@ -44,8 +44,9 @@ def verify_requests(requests, checkpoints, root):
     require(previous == len(requests), 'requests after final observation')
 
 
-def verify_ios_admission(directory, source, result):
+def verify_ios_admission(directory, source, result, require_program=True):
     """Re-read original app archives, Mach-O section and actual signatures."""
+    require(type(require_program) is bool, 'admission program binding mode differs')
     exact_entitlements(ENTITLEMENT_FILE.read_bytes())
     folder = directory / 'ios-admission'
     manifest = json.loads((folder / 'manifest.json').read_text())
@@ -79,9 +80,13 @@ def verify_ios_admission(directory, source, result):
     expected = dict(verify_admission_transition(observed['pre-sign'], observed['post-sign'], observed['installed']),
                     status='verified-comparison')
     require(result['ios_admission_summary'] == expected, 'admission comparison claim differs')
-    require(observed['post-sign']['binary']['sha256'] == result['program']['sha256'] and
-            observed['installed']['libraries']['Frameworks/libexreader.3.42.0.dylib']['sha256'] == result['program']['runtime_sha256'],
-            'admission program binding differs')
+    # Strict/default authentication still requires the completed program proof.
+    # A pinned failure diagnostic can replay the three actual app archives
+    # without fabricating a program.zip that a failed native run never wrote.
+    if require_program:
+        require(observed['post-sign']['binary']['sha256'] == result['program']['sha256'] and
+                observed['installed']['libraries']['Frameworks/libexreader.3.42.0.dylib']['sha256'] == result['program']['runtime_sha256'],
+                'admission program binding differs')
     roles = [step['role'] for step in result['commands']]
     expected_order = ['build-for-testing', 'admission-pre-sign-archive', 'admission-host-sign',
         'admission-post-sign-display', 'admission-post-sign-verify', 'admission-post-sign-archive',
@@ -89,7 +94,8 @@ def verify_ios_admission(directory, source, result):
         'admission-installed-archive']
     require([role for role in roles if role in expected_order] == expected_order,
             'admission build sign native installed order differs')
-    return expected
+    return dict(expected, complete_program_binding_checked=require_program,
+                native_sequence_acceptance=False, historical_osstatus_proven=False)
 
 
 def validate(directory, source, run, attempt, platform):

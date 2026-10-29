@@ -14,17 +14,20 @@ from contract import ROOT, STAGES, guard, require, sha
 from archive_contract import safe_extract
 from inspect_native import CONTROLS, MESSAGES, ROLES, variant_labels
 from continuation_lifecycle import verify_lifecycle
+from authenticate_continuation import verify_ios_admission
 
-RUN = '40822937279'
-SOURCE = '256ec70d1d30d80d1e2069959d5c6409bcc76779'
+RUN = '40828331893'
+SOURCE = '45a8f94b29e4e36467ffc4b8004f32c6d7fa2d63'
 SOURCE_FILE = 'tests/apple_password_privacy_20261028/continuation_ui/PasswordPrivacyContinuationUITests.swift'
 SOURCE_SHA = '6555ab86d6a1f517a496a5ce777dfe67ff70a30c89c4cea5a6c7a4a5459fb079'
 SOURCE_LAST_LINE = 267
 SOURCE_PATH = '/Users/runner/work/EXReader/EXReader/' + SOURCE_FILE
-# Exact terminal macOS attempt-1 upload; original three-platform runs stay retained.
-# This diagnostic localizes the remaining fourth-stage failure, not acceptance.
+# Exact terminal three-platform attempt-1 uploads; all originals stay retained.
+# This replays comparative admission and localizes native failures, not acceptance.
 ARTIFACTS = {
-    'macos': (12875323064, 169233545, '2538597b4265578a70f3bc2353d13a289848d49e6036c3e1e4b8338294e60ede'),
+    'macos': (12877853284, 174106763, '422e440cd4f2f611c7aa0090192a732444f3ceb883441455ab7e06b44ddc83d4'),
+    'iphone': (12877814969, 183086735, 'c481ce8c63bbed8755484905b462c829b4f309709f3a7e62181973262bd2898c'),
+    'ipad': (12878446195, 235684416, '2859f0d1d0f6c01e1aac6328f4f6582a937a97dbf0d34bfc56f04efd8bb2c3d9'),
 }
 FAILURES = ('RuntimeError', 'AssertionError', 'CalledProcessError', 'TimeoutExpired',
             'FileNotFoundError', 'OperationalError', 'PermissionError', 'KeyError', 'OSError')
@@ -40,11 +43,16 @@ STATUS_TOKENS = {'finished': '本轮扫描完成', 'failed': '同步失败',
                  'closed': '已关闭', 'preparing-original': '正在准备原书', 'receiving-shelf': '正在接收书架'}
 DIAGNOSTIC_STAGES = ('entry', 'scope-and-source', 'artifact-metadata', 'artifact-download',
     'archive-bytes', 'archive-extract', 'result-identity', 'member-inventory', 'member-bytes',
-    'lifecycle-receipt', 'progress-and-native-log', 'scan-summaries', 'fixture-failures', 'network-summary',
+    'lifecycle-receipt', 'admission-replay', 'progress-and-native-log', 'scan-summaries', 'fixture-failures', 'network-summary',
     'xcresult-copy', 'xcresult-parser', 'xcresult-issues', 'attachment-export',
     'attachment-summary', 'safe-report')
 CURRENT_DIAGNOSTIC_STAGE = 'entry'
 CURRENT_MEMBER_INTEGRITY = None
+CURRENT_PLATFORM = None
+COMPLETED_REPORTS = []
+ADMISSION_COMMAND_ROLES = {'admission-pre-sign-archive', 'admission-host-sign',
+    'admission-post-sign-display', 'admission-post-sign-verify', 'admission-post-sign-archive',
+    'admission-installed-path', 'admission-installed-display', 'admission-installed-verify', 'admission-installed-archive'}
 REFUSAL_CODES = {
     'checkout differs': 'checkout-identity',
     'old or foreign path changed': 'source-scope',
@@ -67,6 +75,25 @@ REFUSAL_CODES = {
     'lifecycle receipt shape differs': 'lifecycle-shape',
     'lifecycle ownership incomplete': 'lifecycle-ownership',
     'lifecycle cleanup incomplete': 'lifecycle-cleanup',
+    'admission phase evidence incomplete': 'admission-phases',
+    'admission original archive differs': 'admission-archive',
+    'admission archive namespace differs': 'admission-namespace',
+    'admission archive members differ': 'admission-members',
+    'admission identity replay differs': 'admission-identity-replay',
+    'retained signature summary differs': 'admission-signature-summary',
+    'actual signature replay differs': 'admission-signature-replay',
+    'expected ad-hoc host signature absent': 'admission-signature-invalid',
+    'admission verifier changed original extracted app': 'admission-verifier-mutation',
+    'admission comparison claim differs': 'admission-comparison',
+    'admission build sign native installed order differs': 'admission-command-order',
+    'admission app resource substitution': 'admission-resource-substitution',
+    'built or installed admission bytes differ': 'admission-byte-substitution',
+    'signed or installed admission unverified': 'admission-unverified',
+    'admission app identity differs': 'admission-app-identity',
+    'linked entitlement source differs': 'admission-entitlement-source',
+    'entitlement section absent or duplicate': 'admission-entitlement-section',
+    'unsupported simulator executable': 'admission-executable-format',
+    'simulator platform identity differs': 'admission-executable-platform',
     'prior continuation verdict differs': 'prior-verdict',
     'unexpected strict checks': 'strict-check-shape',
     'unexpected checkpoint': 'checkpoint-shape',
@@ -216,7 +243,7 @@ def safe_progress(result, files):
     require(type(result['checkpoints']) is dict and set(result['checkpoints']) <= set(STAGES), 'unexpected checkpoint')
     commands = result['commands']
     require(type(commands) is list and all(type(row) is dict and set(row) == {'role', 'exit'} and
-            row['role'] in ROLES and type(row['exit']) is int and -128 <= row['exit'] <= 255 for row in commands),
+            row['role'] in ROLES | ADMISSION_COMMAND_ROLES and type(row['exit']) is int and -128 <= row['exit'] <= 255 for row in commands),
             'unexpected command shape')
     require(result['failure'] in FAILURES, 'unexpected failure class')
     return {'accepted': False, 'diagnostic_only': True, 'full_f10_accepted': False,
@@ -338,17 +365,18 @@ def attachment_summary(directory):
 
 
 def main():
-    global CURRENT_MEMBER_INTEGRITY
+    global CURRENT_MEMBER_INTEGRITY, CURRENT_PLATFORM
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
     diagnostic_stage('scope-and-source')
     guard()
     require(sha(ROOT / SOURCE_FILE) == SOURCE_SHA, 'frozen diagnostic source positions changed')
     require(len((ROOT / SOURCE_FILE).read_text().splitlines()) == SOURCE_LAST_LINE,
             'frozen diagnostic source extent changed')
-    require(set(ARTIFACTS) == {'macos'}, 'exact macOS diagnostic artifact pin required')
+    require(set(ARTIFACTS) == {'macos', 'iphone', 'ipad'}, 'exact three-platform diagnostic artifact pins required')
     out = ROOT / 'build/apple-password-continuation-diagnostic'; out.mkdir(parents=True, exist_ok=False)
-    reports = []
     for platform, (identifier, size, digest) in ARTIFACTS.items():
+        CURRENT_PLATFORM = platform
+        CURRENT_MEMBER_INTEGRITY = None
         diagnostic_stage('artifact-metadata')
         endpoint = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/artifacts/' + str(identifier)
         record = json.loads(subprocess.check_output(['gh', 'api', endpoint]))
@@ -375,6 +403,8 @@ def main():
         require(CURRENT_MEMBER_INTEGRITY['mismatch_count'] == 0, 'prior continuation member differs')
         diagnostic_stage('lifecycle-receipt')
         lifecycle = sealed_lifecycle(result, platform)
+        diagnostic_stage('admission-replay')
+        admission = verify_ios_admission(folder, SOURCE, result, require_program=False) if platform != 'macos' else None
         diagnostic_stage('progress-and-native-log')
         report = safe_progress(result, files)
         report.update(old_source_sha=SOURCE, old_run_id=RUN, old_attempt=1, platform=platform,
@@ -385,6 +415,7 @@ def main():
         report['member_integrity'] = CURRENT_MEMBER_INTEGRITY
         report['producer_lifecycle_receipt'] = lifecycle
         report['producer_receipt_is_event_trace_proof'] = False
+        report['independent_ios_admission_replay'] = admission
         report['activity_timing'] = activity_timing(folder / 'native.log')
         diagnostic_stage('scan-summaries')
         for stage in STAGES:
@@ -423,9 +454,9 @@ def main():
             diagnostic_stage('attachment-summary')
             report['exported_attachments'] = attachment_summary(exported)
         diagnostic_stage('safe-report')
-        reports.append(report)
+        COMPLETED_REPORTS.append(report)
         print(json.dumps(report, sort_keys=True), flush=True)
-    (out / 'diagnostic.json').write_text(json.dumps(reports, indent=2) + '\n')
+        (out / 'diagnostic.json').write_text(json.dumps(COMPLETED_REPORTS, indent=2) + '\n')
 
 
 if __name__ == '__main__':
@@ -436,12 +467,13 @@ if __name__ == '__main__':
         # Refuse without relaying that exception text or chained traceback.
         report = refusal_report(error, CURRENT_DIAGNOSTIC_STAGE)
         report['member_integrity'] = CURRENT_MEMBER_INTEGRITY
+        report['platform'] = CURRENT_PLATFORM if CURRENT_PLATFORM in ('macos', 'iphone', 'ipad') else None
         print(json.dumps(report, sort_keys=True), flush=True)
         if os.environ.get('GITHUB_ACTIONS') == 'true':
             try:
                 out = ROOT / 'build/apple-password-continuation-diagnostic'
                 out.mkdir(parents=True, exist_ok=True)
-                (out / 'diagnostic.json').write_text(json.dumps([report], indent=2) + '\n')
+                (out / 'diagnostic.json').write_text(json.dumps(COMPLETED_REPORTS + [report], indent=2) + '\n')
             except OSError:
                 pass  # Console still contains the fixed refusal; never echo I/O operands.
         raise RuntimeError('pinned continuation diagnosis refused; arbitrary error details withheld') from None

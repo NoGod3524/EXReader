@@ -3,17 +3,90 @@
 """Actions-only boundary controls for pinned continuation failure diagnosis."""
 import os
 import json
+import copy
 from pathlib import Path
 import tempfile
 import subprocess
+import struct
 import unittest
+import plistlib
+import zipfile
+from unittest.mock import patch
 from contract import ROOT, sha
 import inspect_continuation_failure as inspector
 from inspect_continuation_failure import ARTIFACTS, BUNDLE, CASE, DIAGNOSTIC_STAGES, REFUSAL_CODES, RUN, SOURCE, SOURCE_FILE, SOURCE_LAST_LINE, SOURCE_PATH, SOURCE_SHA, activity_timing, attachment_summary, diagnostic_stage, locations, member_integrity, member_role, network_summary, refusal_report, safe_progress, sealed_lifecycle, xcresult_issues
 from privacy_scan import needles
+import authenticate_continuation as authenticator
+from continuation_contract import ENTITLEMENT_FILE, admission_app_identity, signature_summary, verify_admission_transition
+from continuation_lifecycle import seal_files
+
+
+def diagnostic_control_macho(section):
+    """Bounded protocol fixture, not executable/signature acceptance evidence."""
+    size, offset = len(section), 208
+    return (struct.pack('<IiiIIIII', 0xfeedfacf, 0x0100000c, 0, 2, 2, 176, 0, 0) +
+        struct.pack('<IIIIII', 0x32, 24, 7, 0, 0, 0) +
+        struct.pack('<II16sQQQQiiII', 0x19, 152, b'__TEXT', 0, offset + size, 0, offset + size, 5, 5, 1, 0) +
+        struct.pack('<16s16sQQIIIIIIII', b'__entitlements', b'__TEXT', offset, size, offset, 0, 0, 0, 0, 0, 0, 0) + section)
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_failed_native_admission_replay_cannot_disable_default_program_binding(self):
+        # Synthetic protocol app, not a runnable binary/native signature proof.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); folder = root / 'ios-admission'; folder.mkdir()
+            app = root / 'EXReaderHost.app'; app.mkdir(); (app / 'Frameworks').mkdir()
+            (app / 'EXReaderHost').write_bytes(diagnostic_control_macho(ENTITLEMENT_FILE.read_bytes()))
+            (app / 'Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier': BUNDLE,
+                'CFBundleExecutable': 'EXReaderHost', 'EXRSourceSHA': 'a' * 40,
+                'EXRSDKVersion': '3.42.0', 'EXRPageThemeEnabled': True}))
+            (app / 'Frameworks/libexreader.3.42.0.dylib').write_bytes(b'protocol-only SDK')
+            files = seal_files(app); identity = admission_app_identity(app, 'a' * 40, files)
+            display = ('Identifier=' + BUNDLE + '\nSignature=adhoc\nTeamIdentifier=not set\n').encode()
+            identity['signature'] = signature_summary(display, 0)
+            manifest = {}
+            for phase in ('pre-sign', 'post-sign', 'installed'):
+                archive = folder / (phase + '.zip')
+                with zipfile.ZipFile(archive, 'w') as zipped:
+                    for name in files: zipped.write(app / name, 'EXReaderHost.app/' + name)
+                manifest[phase] = dict(copy.deepcopy(identity), archive_sha256=sha(archive),
+                    archive_bytes=archive.stat().st_size, signature_display_exit=0, signature_verify_exit=0)
+                (folder / (phase + '-display.stdout')).write_bytes(b'')
+                (folder / (phase + '-display.stderr')).write_bytes(display)
+            (folder / 'manifest.json').write_text(json.dumps(manifest))
+            result = {'ios_admission_summary': dict(verify_admission_transition(identity, identity, identity), status='verified-comparison'),
+                'commands': [{'role': role, 'exit': 65 if role == 'native' else 0} for role in [
+                    'build-for-testing', 'admission-pre-sign-archive', 'admission-host-sign',
+                    'admission-post-sign-display', 'admission-post-sign-verify', 'admission-post-sign-archive',
+                    'native', 'admission-installed-path', 'admission-installed-display', 'admission-installed-verify',
+                    'admission-installed-archive']]}
+            with patch.object(authenticator.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'', display)):
+                report = authenticator.verify_ios_admission(root, 'a' * 40, result, require_program=False)
+                self.assertTrue(report['built_and_installed_verified'])
+                self.assertFalse(report['complete_program_binding_checked'])
+                self.assertFalse(report['native_sequence_acceptance']); self.assertFalse(report['full_f10_accepted'])
+                with self.assertRaises(KeyError): authenticator.verify_ios_admission(root, 'a' * 40, result)
+                result['program'] = {'sha256': identity['binary']['sha256'],
+                    'runtime_sha256': identity['libraries']['Frameworks/libexreader.3.42.0.dylib']['sha256']}
+                self.assertTrue(authenticator.verify_ios_admission(root, 'a' * 40, result)['complete_program_binding_checked'])
+                result['program']['sha256'] = 'f' * 64
+                with self.assertRaisesRegex(RuntimeError, '^admission program binding differs$'):
+                    authenticator.verify_ios_admission(root, 'a' * 40, result)
+                with self.assertRaises(RuntimeError): authenticator.verify_ios_admission(root, 'a' * 40, result, require_program=0)
+                (folder / 'installed.zip').write_bytes(b'altered archive')
+                with self.assertRaisesRegex(RuntimeError, '^admission original archive differs$'):
+                    authenticator.verify_ios_admission(root, 'a' * 40, result, require_program=False)
+
+    def test_admission_command_roles_are_exact_finite_tokens(self):
+        base = {'accepted': False, 'diagnostic_only': True, 'full_f10_accepted': False,
+                'sequence_complete': False, 'strict_privacy_checks': {}, 'checkpoints': {}, 'failure': 'RuntimeError'}
+        for role in inspector.ADMISSION_COMMAND_ROLES:
+            result = dict(base, commands=[{'role': role, 'exit': 0}])
+            self.assertEqual(safe_progress(result, set())['commands'], result['commands'])
+            for operand in ('private-operand', 'Privacy-aaa...', 'UHJpdmFjeS0='):
+                altered = dict(base, commands=[{'role': role + operand, 'exit': 0}])
+                with self.assertRaisesRegex(RuntimeError, '^unexpected command shape$'): safe_progress(altered, set())
+
     def test_sealed_lifecycle_receipt_refuses_missing_false_or_arbitrary_fields(self):
         receipt = {'admission_closed': True, 'active_handlers': 0, 'admitted_handlers': 532,
             'rejected_handlers': 0, 'serving_stopped': True, 'drained': True, 'failed': False,
@@ -116,11 +189,13 @@ class ContinuationDiagnosticControls(unittest.TestCase):
         finally:
             diagnostic_stage('entry')
 
-    def test_current_macos_artifact_and_source_extent_are_exact(self):
-        self.assertEqual(RUN, '40822937279')
-        self.assertEqual(SOURCE, '256ec70d1d30d80d1e2069959d5c6409bcc76779')
-        self.assertEqual(ARTIFACTS, {'macos': (12875323064, 169233545,
-            '2538597b4265578a70f3bc2353d13a289848d49e6036c3e1e4b8338294e60ede')})
+    def test_current_three_artifacts_and_source_extent_are_exact(self):
+        self.assertEqual(RUN, '40828331893')
+        self.assertEqual(SOURCE, '45a8f94b29e4e36467ffc4b8004f32c6d7fa2d63')
+        self.assertEqual(ARTIFACTS, {
+            'macos': (12877853284, 174106763, '422e440cd4f2f611c7aa0090192a732444f3ceb883441455ab7e06b44ddc83d4'),
+            'iphone': (12877814969, 183086735, 'c481ce8c63bbed8755484905b462c829b4f309709f3a7e62181973262bd2898c'),
+            'ipad': (12878446195, 235684416, '2859f0d1d0f6c01e1aac6328f4f6582a937a97dbf0d34bfc56f04efd8bb2c3d9')})
         self.assertEqual(sha(ROOT / SOURCE_FILE), SOURCE_SHA)
         self.assertEqual(SOURCE_LAST_LINE, 267)
         self.assertEqual(len((ROOT / SOURCE_FILE).read_text().splitlines()), SOURCE_LAST_LINE)
