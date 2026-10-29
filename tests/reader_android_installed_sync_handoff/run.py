@@ -30,12 +30,15 @@ def snapshot(kind):
     if len(pid) != 1:
         return row
     maps = run_as('cat /proc/%s/maps' % pid[0])
-    libs = sorted({l.split()[-1] for l in maps.splitlines() if l.split() and l.split()[-1].endswith('.so') and 'exreader' in l.split()[-1]})
+    rows = [l.split() for l in maps.splitlines() if l.split()]
+    libs = sorted({r[-1] for r in rows if r[-1].startswith('/') and (r[-1].endswith('.so') and 'exreader' in r[-1] or r[-1].endswith('.apk') and PACKAGE in r[-1])})
     hashes = {}
     for path in libs:
         out = run_as('sha256sum ' + path).split()
         hashes[path] = out[0] if out else None
-    row.update(maps_libs=libs, lib_sha256=hashes, cmdline=run_as('cat /proc/%s/cmdline' % pid[0]).replace('\0', ' ').strip(),
+    # offsets of each mapping of those files: needed when libraries are mapped straight from the APK
+    mappings = [dict(range=r[0], perms=r[1], offset=int(r[2], 16), path=r[-1]) for r in rows if len(r) >= 6 and r[-1] in libs]
+    row.update(mappings=mappings, maps_libs=libs, lib_sha256=hashes, cmdline=run_as('cat /proc/%s/cmdline' % pid[0]).replace('\0', ' ').strip(),
                net_tcp=run_as('cat /proc/%s/net/tcp' % pid[0])[:4000])
     return row
 

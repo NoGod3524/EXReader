@@ -92,11 +92,35 @@ def main():
     # Live process: the mapped libraries while a native request was blocked in flight.
     snaps = json.loads((DEVICE / 'process-snapshots.json').read_text())
     by_kind = {s['kind']: s for s in snaps['snapshots']}
+    with zipfile.ZipFile(apk) as z:
+        entries = {}
+        for info in z.infolist():
+            if info.filename.startswith('lib/x86_64/') and info.filename.endswith('.so'):
+                entries[info.filename] = info
+    raw = apk.read_bytes()
+
+    def data_range(info):
+        # local file header: name and extra lengths at offsets 26 and 28
+        n, e = int.from_bytes(raw[info.header_offset + 26:info.header_offset + 28], 'little'), int.from_bytes(raw[info.header_offset + 28:info.header_offset + 30], 'little')
+        begin = info.header_offset + 30 + n + e
+        return begin, begin + info.compress_size
+
     for kind in ('upload', 'listing'):
         s = by_kind.get(kind, {})
-        mapped = {Path(p).name: h for p, h in s.get('lib_sha256', {}).items()}
-        gate('live_process_' + kind, len(s.get('pids', [])) == 1 and mapped.get('libexreader_product.so') == pkg_sha and
-             all(h == packaged.get('lib/x86_64/' + n) for n, h in mapped.items() if 'lib/x86_64/' + n in packaged), s.get('lib_sha256'))
+        files = s.get('lib_sha256', {})
+        extracted = {Path(p).name: h for p, h in files.items() if p.endswith('.so')}
+        apk_maps = [m for m in s.get('mappings', []) if m['path'].endswith('.apk')]
+        apk_ok = bool(apk_maps) and all(files[m['path']] == install['installed_sha256'] for m in apk_maps)
+        product = entries.get(product_name)
+        in_apk = False
+        if apk_ok and product is not None and product.compress_type == 0:
+            lo, hi = data_range(product)
+            in_apk = any(lo <= m['offset'] < hi for m in apk_maps)
+        by_path = extracted.get('libexreader_product.so') == pkg_sha
+        print(json.dumps(dict(kind=kind, pids=s.get('pids'), files=files, mappings=s.get('mappings', [])[:12], by_path=by_path, in_apk=in_apk))[:3000], flush=True)
+        gate('live_process_' + kind, len(s.get('pids', [])) == 1 and (by_path or in_apk),
+             dict(mapped_from='extracted library file' if by_path else 'installed APK bytes at the product entry' if in_apk else None,
+                  files=files, mappings=s.get('mappings', [])[:12]))
 
     # Frozen UI suite result on the real Activity.
     ui = json.loads((DEVICE / 'ui/result.json').read_text())
