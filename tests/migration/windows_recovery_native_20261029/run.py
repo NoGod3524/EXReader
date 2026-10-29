@@ -392,6 +392,32 @@ def main():
     def g11():
         root=d.fresh('11-rename');c=d.native('rename',root);c.phase(root,'renamed');assert not (root/'source.bin').exists();old=statfile(root/'published.bin');d.go(root,'renamed');assert c.finish()==0;r=c.report();assert r['rename_attempted'] and r['rename_ntstatus']==0 and r['rename_io_status']==0
         r=d.call('rename',root,success=False,reason='rename-no-replace');assert r['native_error'] in (80,183,5) and r['rename_attempted'] and r['rename_ntstatus']<0 and statfile(root/'published.bin')==old and (root/'source.bin').read_bytes()==b'canonical-native-record\n'
+        root=d.fresh('11-cwd');outside=root.parent/'different-cwd';outside.mkdir();canary=outside/'published.bin';canary.write_bytes(b'outside-cwd-canary');original=statfile(canary)
+        c=d.native('rename-cwd',root,str(outside));c.phase(root,'renamed');assert not (root/'source.bin').exists();published=statfile(root/'published.bin');d.go(root,'renamed');assert c.finish()==0,c.read();r=c.report()
+        assert r['different_cwd_observed'] and r['rename_attempted'] and r['rename_ntstatus']==0 and r['rename_io_status']==0 and r['rename_source_id']==r['rename_destination_id'] and len(r['root_id'])==48
+        assert statfile(root/'published.bin')==published and statfile(canary)==original and list(outside.iterdir())==[canary]
+        for style in ('foreign','sibling-prefix','nested'):
+            root=d.fresh('11-membership-'+style)
+            if style=='foreign':other=d.fresh('11-other-root');other_nonce=other.parent.name
+            else:
+                other=root.with_name(root.name+'-sibling') if style=='sibling-prefix' else root/'nested';other_nonce=root.parent.name
+                c=d.child([a.probe,'init',str(other),other_nonce,'none',str(d.job.h)]);assert c.finish()==0,c.read()
+            c=d.child([a.probe,'write',str(other),other_nonce,'source.bin',str(d.job.h)]);assert c.finish()==0,c.read()
+            def snapshot(folder):
+                result={};pending=[folder]
+                while pending:
+                    parent=pending.pop()
+                    with os.scandir(parent) as entries:
+                        for entry in entries:
+                            assert len(result)<128
+                            path=Path(entry.path);st=entry.stat(follow_symlinks=False);assert not getattr(st,'st_file_attributes',0)&0x400
+                            assert stat.S_ISDIR(st.st_mode) or stat.S_ISREG(st.st_mode)
+                            result[str(path.relative_to(folder))]=(st.st_mode,P.identity(path),bounded_read(path,1024**2) if stat.S_ISREG(st.st_mode) else None)
+                            if stat.S_ISDIR(st.st_mode):pending.append(path)
+                return (P.identity(folder),result)
+            before_root=snapshot(root);before_other=snapshot(other)
+            r=d.call('rename-foreign',root,str(other),success=False,reason='rename-source-parent')
+            assert not r['rename_attempted'] and not r['target_sdk_open_attempted'] and snapshot(root)==before_root and snapshot(other)==before_other and not (root/'published.bin').exists() and not (other/'published.bin').exists()
     def g12():
         root=d.fresh('12-share-refusal');c=d.native('rename-paused',root);c.phase(root,'before-rename');old=statfile(root/'source.bin');h=native_share(root/'source.bin',0x80000000,1|2)
         try:d.go(root,'before-rename');assert c.finish()!=0;assert c.report()['reason']=='regular-open' and c.report()['native_error']==32

@@ -116,21 +116,37 @@ int wr_read(HANDLE h,void **bytes,size_t *size,size_t max,wr_error *e){wr_identi
 typedef struct {BOOLEAN ReplaceIfExists;HANDLE RootDirectory;ULONG FileNameLength;WCHAR FileName[1];} wr_native_rename_info;
 typedef char wr_rename_handle_offset[(offsetof(wr_native_rename_info,RootDirectory)==sizeof(HANDLE))?1:-1];
 typedef char wr_rename_name_offset[(offsetof(wr_native_rename_info,FileName)==2*sizeof(HANDLE)+sizeof(ULONG))?1:-1];
+/* Trusted caller: adapter-created synchronous GR|GW|DELETE, SHARE_READ-only
+ * source handles retained through this call. Names/IDs do not infer shares. */
+static int wr_same_parent(wr_context *c,HANDLE source,wr_identity *id,wr_error *e){
+ WCHAR parent[WR_PATH],name[WR_PATH];DWORD pn,sn;HANDLE check;wr_identity root_now,entry;
+ if(!wr_recheck(c,e)||!wr_identity_get(c->directory,1,&root_now,e)||!wr_identity_equal(&root_now,&c->root)||!wr_identity_get(source,0,id,e)||id->volume!=c->root.volume||!wr_private_acl(source,0,c,e))return wr_refuse(e,"rename-source-binding");
+ parent[0]=name[0]=0;pn=GetFinalPathNameByHandleW(c->directory,parent,WR_PATH,FILE_NAME_NORMALIZED|VOLUME_NAME_GUID);
+ if(!pn||pn>=WR_PATH||parent[pn]!=0||wcslen(parent)!=pn)return wr_refuse(e,"rename-parent-name");
+ sn=GetFinalPathNameByHandleW(source,name,WR_PATH,FILE_NAME_NORMALIZED|VOLUME_NAME_GUID);
+ if(!sn||sn>=WR_PATH||name[sn]!=0||wcslen(name)!=sn)return wr_refuse(e,"rename-source-name");
+ if(wcsncmp(parent,L"\\\\?\\Volume{",11)||sn<=pn+1||wcsncmp(parent,name,pn)||name[pn]!=L'\\'||!wr_leaf(name+pn+1))return wr_refuse(e,"rename-source-parent");
+ check=wr_open(c,name+pn+1,0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,0,e);if(check==INVALID_HANDLE_VALUE)return 0;
+ if(!wr_identity_get(check,0,&entry,e)||!wr_identity_equal(id,&entry)){CloseHandle(check);return wr_refuse(e,"rename-source-entry");}
+ if(!CloseHandle(check))return wr_fail(e,"rename-source-check-close");return wr_recheck(c,e);
+}
 int wr_rename_new(wr_context *c,HANDLE h,const WCHAR *leaf,wr_error *e){
  typedef NTSTATUS (NTAPI *set_fn)(HANDLE,PIO_STATUS_BLOCK,PVOID,ULONG,FILE_INFORMATION_CLASS);
  typedef ULONG (WINAPI *error_fn)(NTSTATUS);
  HMODULE module=GetModuleHandleW(L"ntdll.dll");set_fn set=(set_fn)GetProcAddress(module,"NtSetInformationFile");error_fn translate=(error_fn)GetProcAddress(module,"RtlNtStatusToDosError");
  size_t n,total;wr_native_rename_info *info;IO_STATUS_BLOCK io;NTSTATUS status;DWORD native;wr_identity id,published;WCHAR p[WR_PATH];HANDLE check;
  if(!set||!translate)return wr_refuse(e,"native-rename-api");
- if(!wr_recheck(c,e)||!wr_join(c,leaf,p,e)||!wr_identity_get(h,0,&id,e)||id.volume!=c->root.volume)return wr_refuse(e,"rename-binding");
+ if(!wr_join(c,leaf,p,e)||!wr_same_parent(c,h,&id,e))return 0;
  n=wcslen(leaf)*sizeof(WCHAR);total=sizeof(*info)+n;info=calloc(1,total);if(!info)return wr_refuse(e,"allocation");memset(&io,0,sizeof(io));
- info->ReplaceIfExists=FALSE;info->RootDirectory=c->directory;info->FileNameLength=(ULONG)n;memcpy(info->FileName,leaf,n);
- /* Preserve the bound directory; never retry with an absolute path or copy. */
+ info->ReplaceIfExists=FALSE;info->RootDirectory=NULL;info->FileNameLength=(ULONG)n;memcpy(info->FileName,leaf,n);
+ /* Fixed same-directory native form, never an absolute/copy fallback.
+  * All custody pins remain held; actual source membership was checked. */
  status=set(h,&io,info,(ULONG)total,(FILE_INFORMATION_CLASS)10);
  native=(status==0&&io.Status==0)?ERROR_SUCCESS:translate(status?status:io.Status);
  if(e){e->rename_attempted=1;e->rename_ntstatus=status;e->rename_io_status=io.Status;e->rename_information=io.Information;}
  free(info);if(status!=0||io.Status!=0){SetLastError(native);return wr_fail(e,"rename-no-replace");}
- if(!wr_flush(h,e)||!wr_recheck(c,e))return 0;
+ if(!wr_flush(h,e)||!wr_same_parent(c,h,&published,e))return 0;
+ if(!wr_identity_equal(&id,&published))return wr_refuse(e,"renamed-source-binding");
  check=wr_open(c,leaf,0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,0,e);if(check==INVALID_HANDLE_VALUE)return 0;
  if(!wr_identity_get(check,0,&published,e)||!wr_identity_equal(&id,&published)){CloseHandle(check);return wr_refuse(e,"renamed-path-identity");}
  if(!CloseHandle(check))return wr_fail(e,"renamed-check-close");return 1;
