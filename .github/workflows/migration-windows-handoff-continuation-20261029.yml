@@ -36,7 +36,7 @@ jobs:
           from pathlib import Path
           import ast,collections
           changed=subprocess.check_output(['git','diff','--no-renames','--name-status',os.environ['TESTED_BASE'],'HEAD'],text=True,encoding='utf-8').splitlines()
-          expected={status+chr(9)+path for status,path in [('M','tests/migration/windows_recovery_native_20261029/run.py'),('A','.github/workflows/migration-windows-handoff-triage-20261029.yml'),('A','.github/workflows/migration-windows-handoff-continuation-20261029.yml'),('A','docs/MIGRATION-WINDOWS-HANDOFF-CONTINUATION-20261029.md')]}
+          expected={status+chr(9)+path for status,path in [('M','tests/migration/windows_recovery_native_20261029/run.py'),('M','tests/migration/windows_recovery_native_20261029/probe.c'),('A','docs/MIGRATION-WINDOWS-PRODUCT-NEXT-20261029.md'),('A','.github/workflows/migration-windows-handoff-triage-20261029.yml'),('A','.github/workflows/migration-windows-handoff-continuation-20261029.yml'),('A','docs/MIGRATION-WINDOWS-HANDOFF-CONTINUATION-20261029.md')]}
           assert set(changed)==expected,changed
           path='tests/migration/windows_recovery_native_20261029/run.py'
           previous=subprocess.check_output(['git','show',os.environ['TESTED_BASE']+':'+path],text=True,encoding='utf-8')
