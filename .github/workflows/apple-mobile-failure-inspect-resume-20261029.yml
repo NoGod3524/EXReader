@@ -7,7 +7,7 @@ permissions:
   actions: read
 jobs:
   inspect:
-    runs-on: macos-15
+    runs-on: ubuntu-22.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -15,7 +15,7 @@ jobs:
         platform: [ipad]
     steps:
       - uses: actions/checkout@v4
-      - name: Authenticate original ZIP and parse original XCTest
+      - name: Authenticate original ZIP and print exact timed out native case
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tests/apple_mobile_failure_inspect/read_failure.py --platform '${{ matrix.platform }}'

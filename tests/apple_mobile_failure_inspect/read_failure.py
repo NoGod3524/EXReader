@@ -8,7 +8,7 @@ from check_parallel_integration import fetch, download_artifact_zip
 PINS = {
     'ipad': (12934491128, 479945377, 'cc696e4d3060c7e2a2c6cf2f55e283bd5e7323ff082cfe949e39d1fb37e6d90a')}
 def main():
-    assert os.environ.get('GITHUB_ACTIONS') == 'true' and sys.platform == 'darwin'
+    assert os.environ.get('GITHUB_ACTIONS') == 'true'
     p = argparse.ArgumentParser(); p.add_argument('--platform', choices=PINS, required=True); args = p.parse_args()
     aid, size, sha = PINS[args.platform]
     out = ROOT / 'build/mobile-failure-inspection' / args.platform; out.mkdir(parents=True)
@@ -29,7 +29,7 @@ def main():
         assert len(log) == expected['bytes'] and hashlib.sha256(log).hexdigest() == expected['sha256']
         (out / 'wave3-native-ui.log').write_bytes(log)
         for n in names:
-            if n.startswith('wave3.xcresult/'):
+            if sys.platform == 'darwin' and n.startswith('wave3.xcresult/'):
                 data = archive.read(n)
                 expected = result['files'].get(n)
                 if not n.endswith('/'):
@@ -45,16 +45,6 @@ def main():
     blocks.append('\n'.join(lines[start:end]))
     (out / 'failure-context.txt').write_text('\n\n'.join(blocks))
     print('FAILURE CONTEXT\n' + '\n\n'.join(blocks)[-150000:], flush=True)
-    xcresult = bundle / 'wave3.xcresult'
-    tests = subprocess.check_output(['xcrun', 'xcresulttool', 'get', 'test-results', 'tests', '--path', str(xcresult), '--format', 'json'], text=True)
-    (out / 'tests.json').write_text(tests)
-    print('RAW XCRESULT TESTS\n' + tests, flush=True)
-    attachments = out / 'attachments'
-    subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', str(xcresult), '--output-path', str(attachments)], check=True)
-    for item in sorted(attachments.rglob('*.txt')):
-        content = item.read_text(errors='replace')
-        if 'EXReaderAnnotations' in content or 'jsonl' in content:
-            print('RETAINED PICKER TEXT ' + item.name + '\n' + content[:50000], flush=True)
     report = dict(artifact_id=aid, artifact_bytes=size, artifact_sha256=sha, source=result['source_sha'], platform=args.platform,
                   inspection_source=os.environ['GITHUB_SHA'], phases=result['phases'], matches=snippets, inspected=True, accepted=False)
     (out / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
