@@ -18,7 +18,10 @@ def object_symbols(data, member):
     end = pointer + count * width
     require(pointer > 0 and count > 0 and end + 4 <= len(data), 'missing/truncated COFF symbol table')
     strings_size = struct.unpack_from('<I', data, end)[0]
-    require(strings_size >= 4 and end + strings_size <= len(data), 'COFF string table bounds')
+    require(strings_size >= 4 and end + strings_size <= len(data),
+            'COFF string table bounds: ' + str(dict(member=member, bytes=len(data),
+                pointer=pointer, count=count, symbol_width=width, string_table_offset=end,
+                string_table_size=strings_size, final_16_bytes_hex=data[-16:].hex())))
     strings = data[end:end + strings_size]
     records, index = {}, 0
     while index < count:
