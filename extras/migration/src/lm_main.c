@@ -67,6 +67,9 @@ typedef struct {
   char *mirror_preimage;
   const char *mirror_state;
   int pending_retained, sidecar_tmp_owned, mirror_preimage_owned;
+  lm_mirror_file lock_snapshot;
+  int recovery_barrier, lock_retained, rollback_requested, rollback_status_valid;
+  exr_status rollback_status;
 #endif
   const char *pre_state, *stage_state;
   lm_hm pack_books;
@@ -1374,6 +1377,19 @@ static int check_target_header(ctx *c) {
   if(!lm_mirror_snapshot(c->target,0,0,&target,NULL,NULL,&path_error) || !target.present) {
     fail(c,O_REJECTED,"target-not-library","target must be a readable regular existing library");return 0;
   }
+  /* Read commands must not report a recognized v3 policy as lifted, including
+     schema-6 reads which will be refused below before any SDK upgrade. */
+  {
+    lm_mirror_intent policy;lm_mirror_file pending;
+    if(!c->pending) c->pending=path_join(c->target,".migration-pending.json");
+    if(!lm_mirror_intent_read(c->pending,&policy,&pending,&path_error)) {
+      c->pending_retained=1;c->recovery_barrier=1;
+      fail(c,O_FAILED,path_error.code,"%s",path_error.message);return 0;
+    }
+    if(pending.present && policy.version==3) {
+      c->pending_retained=1;c->recovery_barrier=1;c->mirror_state="recovery-unverified";
+    }
+  }
   rc=sqlite3_open_v2(c->target,&db,SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX,NULL);
   if(rc==SQLITE_OK) rc=sqlite3_prepare_v2(db,"PRAGMA application_id",-1,&stmt,NULL);
   if(rc==SQLITE_OK && sqlite3_step(stmt)==SQLITE_ROW) app=sqlite3_column_int(stmt,0);
@@ -1546,7 +1562,7 @@ static int mirror_remove_artifact(const char *path,const lm_mirror_file *expecte
 }
 static int mirror_retire_artifacts(ctx *c,const lm_mirror_intent *intent,lm_err *e) {
   char *before,*planned;int ok;
-  if(intent->version!=2) return 1;
+  if(intent->version!=2 && intent->version!=3) return 1;
   before=mirror_artifact_path(c,".before-",intent->artifact_token);
   planned=mirror_artifact_path(c,".staged-",intent->artifact_token);
   ok=mirror_remove_artifact(before,&intent->mirror_preimage,e) &&
@@ -1600,7 +1616,7 @@ static int mirror_prepare_existing(ctx *c) {
     c->mirror_preimage=mirror_artifact_path(c,".before-",c->run);
     if(!lm_mirror_copy_new(c->sidecar,&c->mirror_before,c->mirror_preimage,&intent->mirror_preimage,&c->mirror_preimage_owned,&e)) return mirror_fail(c,&e);
   }
-  strcpy(intent->artifact_token,c->run);intent->version=2;return 1;
+  strcpy(intent->artifact_token,c->run);intent->version=3;return 1;
 }
 static int mirror_publish_precommit(ctx *c) {
   lm_mirror_file now,planned,after;lm_err e={{0},{0}};
@@ -1647,12 +1663,25 @@ static int mirror_publish_precommit(ctx *c) {
 }
 static int mirror_abort_precommit(ctx *c) {
   lm_err e={{0},{0}};
+  exr_status status;
   /* This function is only reached before any COMMIT attempt in this process. */
-  if(exr_library_migration_finish(c->lib,0,&c->err)!=EXR_OK) {
+  c->rollback_requested=1;
+  status=exr_library_migration_finish(c->lib,0,&c->err);
+  c->rollback_status=status;c->rollback_status_valid=1;
+  if(status!=EXR_OK) {
     c->out=O_NONE;
     fail(c,O_INCONSISTENT,"rollback-failed","pre-COMMIT rollback was not confirmed: %s; mirror intent and byte preimage retained",c->err.message);return 0;
   }
   c->target_commit=C_NOT_COMMITTED;c->rolled_back=1;
+  if(c->mirror_intent.version==3) {
+    /* Literal SDK acknowledgement is not independent whole-library proof.
+       Keep the immutable, already durable policy and every owned mirror byte.
+       In particular do not consume the sole preimage by a restoring rename. */
+    c->recovery_barrier=1;c->mirror_state="recovery-unverified";
+    entry(c,S_WARNING,"recovery-unverified","mirror",NULL,
+          "SDK acknowledged rollback; full recovery is unverified; intent, mirror evidence and migration barrier retained");
+    return 0;
+  }
   if(!mirror_restore_original(c,&c->mirror_intent)) {
     c->out=O_NONE;
     fail(c,O_INCONSISTENT,"mirror-restore-failed","database transaction rolled back, but external mirror baseline could not be restored; intent and evidence retained");return 0;
@@ -1665,6 +1694,75 @@ static int mirror_abort_precommit(ctx *c) {
   }
   c->pending_retained=0;
   return 0; /* the requested operation still failed/cancelled, despite cleanup */
+}
+
+/* Only a COMMIT actually acknowledged in this invocation can use this path.
+   v3 already published the external mirror before COMMIT. Do not open another
+   SDK migration owner merely to roll it back and call that recovery proof. */
+static int mirror_complete_committed_v3(ctx *c) {
+  lm_mirror_intent intent,observed_intent;
+  lm_mirror_file pending,now,observed_pending;
+  lm_err e={{0},{0}};
+  if(c->target_commit!=C_COMMITTED || !c->target_existed || c->mirror_intent.version!=3 ||
+     !c->pending_snapshot.present || strcmp(c->mirror_intent.artifact_token,c->run)) {
+    fail(c,O_FAILED,"mirror-commit-context","same-process COMMIT context is unavailable; evidence retained");return 0;
+  }
+  if(!lm_mirror_intent_read(c->pending,&intent,&pending,&e)) return mirror_fail(c,&e);
+  if(intent.version!=3 || strcmp(intent.artifact_token,c->run) ||
+     !lm_mirror_same_file(&pending,&c->pending_snapshot) ||
+     !lm_mirror_same_bytes(&pending,&c->pending_snapshot)) {
+    fail(c,O_FAILED,"mirror-intent-changed","COMMIT intent identity or bytes changed; evidence retained");return 0;
+  }
+  if(!mirror_owner_unchanged(c,c->target,&c->owner_before) || !mirror_sidecar_snapshot(c,&now)) return 0;
+  if(!lm_mirror_same_bytes(&now,&intent.mirror_after) ||
+     !(lm_mirror_planned_file(&intent,&now) ||
+       (lm_mirror_same_file(&now,&c->mirror_before) && lm_mirror_same_bytes(&now,&c->mirror_before)))) {
+    fail(c,O_FAILED,"mirror-not-converged","committed mirror identity or bytes changed; evidence retained");return 0;
+  }
+  c->mirror_state="commit-planned-mirror-matched";
+  if(cancel_cb(c) || !mirror_pause(c,"mirror-pause",".mirror-ready")) {
+    fail(c,O_CANCELLED,"cancelled","COMMIT was acknowledged; interrupted cleanup retains evidence");return 0;
+  }
+  if(!lm_mirror_intent_read(c->pending,&observed_intent,&observed_pending,&e)) return mirror_fail(c,&e);
+  if(!lm_mirror_same_file(&observed_pending,&pending) || !lm_mirror_same_bytes(&observed_pending,&pending)) {
+    fail(c,O_FAILED,"mirror-intent-changed","intent changed before committed artifact cleanup; evidence retained");return 0;
+  }
+  if(!mirror_owner_unchanged(c,c->target,&c->owner_before) || !mirror_sidecar_snapshot(c,&now)) return 0;
+  if(!lm_mirror_same_bytes(&now,&intent.mirror_after) ||
+     !(lm_mirror_planned_file(&intent,&now) ||
+       (lm_mirror_same_file(&now,&c->mirror_before) && lm_mirror_same_bytes(&now,&c->mirror_before)))) {
+    fail(c,O_FAILED,"mirror-not-converged","mirror changed at committed cleanup boundary; evidence retained");return 0;
+  }
+  /* Original SDK owner is closed before entry: an ordinary writer may proceed.
+     No old DB bytes are restored, including after artifact-cleanup failures. */
+  if(!mirror_retire_artifacts(c,&intent,&e)) {
+    if(strcmp(e.code,"mirror-cleanup-pending")) return mirror_fail(c,&e);
+    c->mirror_state="cleanup-pending";
+    entry(c,S_WARNING,"mirror-cleanup-pending","mirror",NULL,"%s",e.message);return 2;
+  }
+  if(!mirror_pause(c,"mirror-retire-pause",".mirror-retire-ready") || cancel_cb(c)) {
+    fail(c,O_CANCELLED,"cancelled","COMMIT acknowledged; intent retirement interrupted");return 0;
+  }
+  if(!lm_mirror_intent_read(c->pending,&observed_intent,&observed_pending,&e)) return mirror_fail(c,&e);
+  if(!lm_mirror_same_file(&observed_pending,&pending) || !lm_mirror_same_bytes(&observed_pending,&pending)) {
+    fail(c,O_FAILED,"mirror-intent-changed","intent changed at final retirement; foreign intent retained");return 0;
+  }
+  if(!mirror_owner_unchanged(c,c->target,&c->owner_before) || !mirror_sidecar_snapshot(c,&now)) return 0;
+  if(!lm_mirror_same_bytes(&now,&intent.mirror_after) ||
+     !(lm_mirror_planned_file(&intent,&now) ||
+       (lm_mirror_same_file(&now,&c->mirror_before) && lm_mirror_same_bytes(&now,&c->mirror_before)))) {
+    fail(c,O_FAILED,"mirror-not-converged","mirror changed at final intent retirement; intent retained");return 0;
+  }
+  /* intent_remove independently checks the exact original file and bytes at
+     this final boundary; it never removes a replacement/foreign intent. */
+  if(!lm_mirror_intent_remove(c->pending,&pending,&e)) {
+    /* Only a real unlink refusal of our exact owned intent is benign pending
+       cleanup. A race-time identity/byte mismatch must remain a refusal. */
+    if(strcmp(e.code,"mirror-pending")) return mirror_fail(c,&e);
+    c->mirror_state="cleanup-pending";
+    entry(c,S_WARNING,"mirror-cleanup-pending","mirror",NULL,"%s",e.message);return 2;
+  }
+  c->pending_retained=0;c->recovery_barrier=0;return 1;
 }
 
 /* Returns 1 when no pending remains; 2 for bytes-converged/cleanup-pending;
@@ -1684,6 +1782,11 @@ static int mirror_reconcile(ctx *c) {
   if (!pending.present) return 1;
   c->pending_retained = 1;
   c->mirror_state = "pending";
+  if(intent.version==3) {
+    c->recovery_barrier=1;c->mirror_state="recovery-unverified";
+    fail(c,O_BUSY,"recovery-unverified","pending v3 requires independent full recovery verification; no database or mirror changed; evidence and migration barrier retained");
+    return 0;
+  }
   if (!lm_mirror_snapshot(c->target, 0, 0, &target, NULL, NULL, &e)) {
     mirror_fail(c, &e); goto done;
   }
@@ -1786,7 +1889,8 @@ static int mirror_check_read(ctx *c, const void *data, size_t size) {
   lm_sha_bytes(data, size, digest);
   if (pending.present) {
     c->pending_retained = 1;
-    c->mirror_state = "pending";
+    if(intent.version==3) c->recovery_barrier=1;
+    c->mirror_state = intent.version==3?"recovery-unverified":"pending";
     if (!target.present || strcmp(target.identity, intent.target_identity) ||
         (strcmp(digest, intent.after_sha) && (!intent.before_found || strcmp(digest, intent.before_sha)))) {
       fail(c, O_FAILED, "mirror-recovery-conflict", "pending intent does not explain the current target/ledger"); return 0;
@@ -1805,6 +1909,61 @@ static int mirror_check_read(ctx *c, const void *data, size_t size) {
 }
 #endif
 
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+/* The stable-path contract still applies: these are identity rechecks, not a
+   filesystem compare-and-swap. Never unlink a foreign/replaced lock in cleanup. */
+static int mirror_lock_release(ctx *c) {
+  lm_mirror_file now;lm_err e={{0},{0}};
+  if(!c->lock_held) return 1;
+  if(!c->lock_snapshot.present || !lm_mirror_snapshot(c->lock,1,128,&now,NULL,NULL,&e) ||
+     !lm_mirror_same_file(&now,&c->lock_snapshot) || !lm_mirror_same_bytes(&now,&c->lock_snapshot)) {
+    entry(c,S_WARNING,"migration-lock-changed","lock",NULL,"lock identity or nonce changed; not removed");
+    c->lock_held=0;return 0;
+  }
+  if(!lm_remove(c->lock)) {
+    entry(c,S_WARNING,"migration-lock-cleanup-pending","lock",NULL,"owned lock could not be removed");
+    c->lock_held=0;c->lock_retained=1;return 0;
+  }
+  c->lock_held=0;return 1;
+}
+static int mirror_lock_acquire(ctx *c) {
+  lm_mirror_intent prior;lm_mirror_file pending;lm_err e={{0},{0}};
+  FILE *lock;int ok;char expected[32];char *bytes=NULL;size_t size=0;
+  if(!lm_mirror_intent_read(c->pending,&prior,&pending,&e)) {
+    c->pending_retained=1;c->recovery_barrier=1;return mirror_fail(c,&e);
+  }
+  if(pending.present && prior.version==3) {
+    c->pending_retained=1;c->recovery_barrier=1;c->mirror_state="recovery-unverified";
+    /* --break-lock is not permission to erase this versioned recovery policy.
+       Leave an existing lock untouched; if absent, reserve the default old-tool
+       barrier below before reporting the retained recovery requirement. */
+    if(lm_path_state(c->lock)!=0) {
+      fail(c,O_BUSY,"recovery-unverified","v3 recovery remains unverified; existing migration barrier and evidence retained");return 0;
+    }
+  } else if(c->break_lock) {
+    /* Existing v1/v2 explicit stale-lock contract, unchanged. New v3 never
+       reaches this path, and normal cleanup only removes its exact own lock. */
+    lm_remove(c->lock);
+  }
+  lock=lm_fopen(c->lock,"wx");
+  if(!lock) {
+    fail(c,lm_exists(c->lock)?O_BUSY:O_FAILED,"target-busy","cannot acquire the shared migration lock");return 0;
+  }
+  snprintf(expected,sizeof(expected),"%s\n",c->run);
+  ok=fwrite(expected,1,strlen(expected),lock)==strlen(expected) && lm_sync(lock);
+  if(fclose(lock)) ok=0;
+  if(!ok || !lm_mirror_snapshot(c->lock,1,128,&c->lock_snapshot,&bytes,&size,&e) ||
+     size!=strlen(expected) || memcmp(bytes,expected,size)) {
+    free(bytes);fail(c,O_FAILED,"lock-failed","shared lock nonce could not be confirmed; lock left untouched");return 0;
+  }
+  free(bytes);c->lock_held=1;
+  if(c->recovery_barrier) {
+    fail(c,O_BUSY,"recovery-unverified","v3 recovery remains unverified; migration barrier reserved and evidence retained");return 0;
+  }
+  return 1;
+}
+#endif
+
 static void cleanup(ctx *c) {
   char journal[4096];
   if (c->lib) { exr_library_close(c->lib); c->lib = NULL; }
@@ -1813,7 +1972,14 @@ static void cleanup(ctx *c) {
     /* A valid or partial intent may still refer to this stage. Never delete
        crash/recovery evidence or call it a database pre-image. */
     if (c->stage && lm_path_state(c->stage) != 0) c->stage_state = "retained-pending";
-    if (c->lock_held && c->lock) { lm_remove(c->lock); c->lock_held = 0; }
+    if(c->recovery_barrier && c->lock_held) {
+      lm_mirror_file now;lm_err lock_error={{0},{0}};
+      if(lm_mirror_snapshot(c->lock,1,128,&now,NULL,NULL,&lock_error) &&
+         lm_mirror_same_file(&now,&c->lock_snapshot) && lm_mirror_same_bytes(&now,&c->lock_snapshot))
+        c->lock_retained=1;
+      else entry(c,S_WARNING,"migration-lock-changed","lock",NULL,"pending evidence retained but shared lock ownership is no longer confirmed; foreign lock not removed");
+      c->lock_held=0;
+    } else (void)mirror_lock_release(c);
     return;
   }
 #endif
@@ -1836,7 +2002,11 @@ static void cleanup(ctx *c) {
   if (c->pre && c->out != O_INCONSISTENT) {
     if (lm_exists(c->pre)) { lm_remove(c->pre); c->pre_state = "removed"; } else if (!c->pre_state) c->pre_state = "not-created";
   } else if (c->pre) c->pre_state = "retained";
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  (void)mirror_lock_release(c);
+#else
   if (c->lock_held && c->lock) { lm_remove(c->lock); c->lock_held = 0; }
+#endif
 }
 
 static int publish(ctx *c) {
@@ -1914,7 +2084,9 @@ static int run_migrate(ctx *c) {
   lm_err e;
   size_t i, *order = NULL, *first_of, *count_of, *note_book;
   unsigned long long stamp = (unsigned long long)time(NULL);
+#ifndef EXR_MIGRATION_TX_CANDIDATE
   FILE *lock;
+#endif
   memset(&e, 0, sizeof(e));
   snprintf(c->run, sizeof(c->run), "%llx-%x", stamp, (unsigned)
 #ifdef _WIN32
@@ -1934,6 +2106,10 @@ static int run_migrate(ctx *c) {
   c->sidecar = path_join(c->target, ".legacy-map.json");
   /* Both migration executables must hold the same lock while touching a target. */
   c->lock = path_join(c->target, ".migrate-lock");
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  c->pending=path_join(c->target,".migration-pending.json");
+  if(!mirror_lock_acquire(c)) return 0;
+#else
   if (c->break_lock) lm_remove(c->lock);
   lock = lm_fopen(c->lock, "wx");
   if (!lock) {
@@ -1944,11 +2120,11 @@ static int run_migrate(ctx *c) {
   fprintf(lock, "%s\n", c->run);
   fclose(lock);
   c->lock_held = 1;
+#endif
 #ifdef EXR_MIGRATION_TX_CANDIDATE
   {
     void *data=NULL;size_t size=0;int found=0;const char *open_path;
     int recovered;
-    c->pending=path_join(c->target,".migration-pending.json");
     if(c->dry_run) {
       lm_mirror_intent prior;lm_mirror_file prior_file;
       if(!lm_mirror_intent_read(c->pending,&prior,&prior_file,&e)) { c->pending_retained=1;return mirror_fail(c,&e); }
@@ -2185,15 +2361,17 @@ process_pack:
     if(!mirror_prepare_existing(c)) return 0;
     if(!lm_mirror_intent_write(c->pending,&c->mirror_intent,&c->pending_snapshot,&e)) {
       c->pending_retained=lm_path_state(c->pending)!=0;
+      c->recovery_barrier=c->pending_retained && c->mirror_intent.version==3;
       return mirror_fail(c,&e);
     }
     c->pending_retained=1;c->mirror_state="pending";
+    c->recovery_barrier=c->mirror_intent.version==3;
     {
       int resumed=mirror_pause(c,"intent-pause",".intent-ready");
       /* Intent I/O may block. Cancellation received during its write/fsync must
          be observed before entering COMMIT, not turned into a committed cancel. */
       if(!resumed || cancel_cb(c)) {
-        if(c->mirror_intent.version==2) {
+        if(c->mirror_intent.version==2 || c->mirror_intent.version==3) {
           fail(c,O_CANCELLED,"cancelled","prepared migration cancelled before COMMIT");return mirror_abort_precommit(c);
         }
         if(exr_library_migration_finish(c->lib,0,&c->err)!=EXR_OK) { sdk_fail(c,"rolling back prepared migration");return 0; }
@@ -2202,10 +2380,10 @@ process_pack:
         fail(c,O_CANCELLED,"cancelled","prepared migration rolled back; mirror intent retained for reconciliation");return 0;
       }
     }
-    if(c->mirror_intent.version==2 && !mirror_publish_precommit(c)) return mirror_abort_precommit(c);
+    if((c->mirror_intent.version==2 || c->mirror_intent.version==3) && !mirror_publish_precommit(c)) return mirror_abort_precommit(c);
     if(cancel_cb(c)) {
       fail(c,O_CANCELLED,"cancelled","cancelled immediately before COMMIT");
-      if(c->mirror_intent.version==2) return mirror_abort_precommit(c);
+      if(c->mirror_intent.version==2 || c->mirror_intent.version==3) return mirror_abort_precommit(c);
       return 0;
     }
     /* A commit error is not proof of rollback. Closing the owner below must not
@@ -2240,7 +2418,7 @@ process_pack:
     }
     if(c->lib) { exr_library_close(c->lib);c->lib=NULL; }
     {
-      int mirrored=mirror_reconcile(c);
+      int mirrored=c->mirror_intent.version==3?mirror_complete_committed_v3(c):mirror_reconcile(c);
       if(!mirrored) return 0;
       c->out=O_SUCCESS;
       snprintf(c->code,sizeof(c->code),"%s",mirrored==2?"mirror-cleanup-pending":"ok");
@@ -2300,8 +2478,17 @@ static void emit(ctx *c) {
     COMMIT_KNOWLEDGE[c->target_commit], COMMIT_KNOWLEDGE[c->private_stage_commit]);
   lm_sb_fmt(&b, ",\"mirror\":{\"state\":\"%s\",\"pending\":%s}",
     c->mirror_state?c->mirror_state:"not-inspected",c->pending_retained?"true":"false");
+  lm_sb_fmt(&b, ",\"recovery\":{\"scope\":\"existing-target-post-intent-v3\",\"rollback_requested\":%s,\"sdk_status\":",
+    c->rollback_requested?"true":"null");
+  if(c->rollback_status_valid) lm_sb_fmt(&b,"%d",(int)c->rollback_status);else lm_sb_str(&b,"null");
+  lm_sb_fmt(&b,",\"logical_state\":\"%s\",\"io_observation\":\"not-installed\",\"physical_cleanup\":\"not-independently-verified\",\"automatic_retirement_blocked\":%s,\"full_recovery_accepted\":false}",
+    c->recovery_barrier?"unverified":"not-assessed",c->recovery_barrier?"true":"false");
 #endif
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+  lm_sb_fmt(&b, ",\"lock\":\"%s\"},",c->lock_retained?"retained-pending":(c->lock_held?"held":"released-or-not-acquired"));
+#else
   lm_sb_fmt(&b, ",\"lock\":\"%s\"},", c->lock_held ? "held" : "released");
+#endif
   lm_sb_str(&b, "\"items\":[");
   if (c->items.p) lm_sb_str(&b, c->items.p);
   lm_sb_str(&b, "],\"notes\":[");
@@ -2455,17 +2642,13 @@ static int real_main(int argc, char **argv) {
   signal(SIGTERM, on_signal);
 #ifdef EXR_MIGRATION_TX_CANDIDATE
   if(!strcmp(c->cmd,"recover-mirror")) {
-    FILE *lock;int reconciled=0;
+    int reconciled=0;
     if(!c->target || c->pack_path || c->dry_run) { usage();return 1; }
     mirror_run_id(c);
     c->sidecar=path_join(c->target,".legacy-map.json");
     c->pending=path_join(c->target,".migration-pending.json");
     c->lock=path_join(c->target,".migrate-lock");
-    if(c->break_lock) lm_remove(c->lock);
-    lock=lm_fopen(c->lock,"wx");
-    if(!lock) fail(c,lm_exists(c->lock)?O_BUSY:O_FAILED,"target-busy","cannot acquire migration lock; --break-lock requires every old owner to be stopped");
-    else {
-      fprintf(lock,"%s\n",c->run);fclose(lock);c->lock_held=1;
+    if(mirror_lock_acquire(c)) {
       reconciled=mirror_reconcile(c);
       if(reconciled) {
         c->out=O_SUCCESS;
@@ -2509,7 +2692,9 @@ static int real_main(int argc, char **argv) {
             if(!lm_mirror_snapshot(c->target,0,0,&target,NULL,NULL,&e) ||
                !lm_mirror_intent_read(c->pending,&intent,&pending,&e)) mirror_fail(c,&e);
             else if(pending.present) {
-              c->pending_retained=1;c->mirror_state="pending";
+              c->pending_retained=1;
+              if(intent.version==3) c->recovery_barrier=1;
+              c->mirror_state=intent.version==3?"recovery-unverified":"pending";
               if(!target.present || !intent.target_was_present || intent.before_found ||
                  strcmp(target.identity,intent.target_identity) ||
                  !lm_mirror_original_file(&intent,&mirror))
