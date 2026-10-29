@@ -84,7 +84,7 @@ Android 取自 `.github/workflows/android-composition-candidate.yml` 的 SDK con
 | Linux | 是 | 是 | 是 | `tools/build_linux_host.py` |
 | macOS | 是（`EXReader-LICENSE.txt`，在 `Resources`） | 是 | 是 | `tools/build_apple_host.py` |
 | iPhone / iPad | 同 macOS（iPad 由 iPhone 载荷重新打包） | 是 | 是 | `tools/build_apple_host.py`、`identity.py package ipad` |
-| Android | 是（压缩包根，APK 外） | 是（同） | **本分支前：否；本分支补丁：是（未在真实流水线验证）** | `tests/android_sdk342_package/run.py`（见 [PACKAGING-PATCH.md](PACKAGING-PATCH.md)） |
+| Android | 是（压缩包根，APK 外） | 是（同） | **补丁前：否；补丁后：是（run 40950703390 实测，`licenses/` 15 个文件与 SDK 安装树逐字节相同，另有 `product-licenses/`）** | `tests/android_sdk342_package/run.py`（见 [PACKAGING-PATCH.md](PACKAGING-PATCH.md)） |
 
 打补丁前，Android 脚本只复制两个根文件，没有复制 SDK 安装出的 `licenses/` 目录；其 SDK 构建启用了 FreeType、Expat、miniz、stb、
 SQLite、OpenJPEG、LittleCMS、minimp3 等组件，这些组件的许可文本因此**不在** Android 压缩包里

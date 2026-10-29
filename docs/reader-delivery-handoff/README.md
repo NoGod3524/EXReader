@@ -34,7 +34,7 @@
 
 ## 包级处理
 
-Android 压缩包缺少 `licenses/`（Actions 实测）。本分支对 `tests/android_sdk342_package/run.py` 做了一行补丁，声明与未验证边界见 [PACKAGING-PATCH.md](PACKAGING-PATCH.md)。
+Android 旧压缩包缺少 `licenses/`（Actions 实测）。补丁已在 bd28 同源的真实 Android 流水线中验证（EVIDENCE 追加节，run 40950703390）；本分支对 `tests/android_sdk342_package/run.py` 做了一行补丁，声明与未验证边界见 [PACKAGING-PATCH.md](PACKAGING-PATCH.md)。
 
 ## 剩余阻塞与尚未验证
 

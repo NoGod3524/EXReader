@@ -27,7 +27,7 @@ Actions 对已发布压缩包的只读检查（run 40948655722 / 40949203489，�
 在 Actions 里真实运行：已安装的规范 OPDSHash 前缀（`EXREADER_ORIGINAL_HASH_PREFIX`，不使用私有回退，不删除 provider 检查）→
 原 `build()`（同一份 composition 配方）→ 原 `identity.py package` → `android_verify.py verify`（归档 `licenses/` 与 SDK 安装树逐字节、
 闭集比较；按 CMakeCache 的登记集合；安装的 vendor 归档；产品前缀许可与 SQLite 声明；APK 的原生库依赖）→ 原 `identity.py android`
-模拟器安装。结果见 [EVIDENCE.md](EVIDENCE.md)；结果缺失即表示尚未验证。
+模拟器安装。结果见 [EVIDENCE.md](EVIDENCE.md)“追加”一节（run 40950703390，success）。
 
 ## 仍然不覆盖
 
