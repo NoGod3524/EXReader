@@ -19,10 +19,10 @@ jobs:
           from pathlib import Path,PurePosixPath
           assert os.environ.get('GITHUB_ACTIONS')=='true'
           repo='repos/NoGod3524/EXReader/'
-          meta=json.loads(subprocess.check_output(['gh','api',repo+'actions/artifacts/12904771798']))
-          assert not meta['expired'] and meta['workflow_run']['id']==40888673546 and meta['workflow_run']['head_sha']=='5db9c2c0b574b0e63675a38b0653f3a9bdd2cb1c'
-          raw=subprocess.check_output(['gh','api',repo+'actions/artifacts/12904771798/zip'])
-          assert len(raw)==3639934 and hashlib.sha256(raw).hexdigest()=='3538655a45319332ef8f197deeaa25815737aed3feeeeab66c3b78bf240f3143'
+          meta=json.loads(subprocess.check_output(['gh','api',repo+'actions/artifacts/12925970613']))
+          assert not meta['expired'] and meta['workflow_run']['id']==40936421939 and meta['workflow_run']['head_sha']=='ed734a879c933b78006ce9e78e89921d3c44fe69'
+          raw=subprocess.check_output(['gh','api',repo+'actions/artifacts/12925970613/zip'])
+          assert len(raw)==3722969 and hashlib.sha256(raw).hexdigest()=='583d5c2b8c0d456243dabee5851bcc659a21a489dfdc678975ba10986a25468b'
           with zipfile.ZipFile(io.BytesIO(raw)) as z:
               names=z.namelist()
               assert len(names)==len(set(names)) and all(not PurePosixPath(n).is_absolute() and '..' not in PurePosixPath(n).parts for n in names)
@@ -36,7 +36,7 @@ jobs:
                   assert z.getinfo(name).file_size<=64*1024**2
                   report=json.loads(z.read(name))
                   failures.extend(c for c in report.get('cases',[]) if not c.get('passed'))
-              out={'producer_run':40888673546,'producer_source':'5db9c2c0b574b0e63675a38b0653f3a9bdd2cb1c','inspection_only':True,'failures':failures}
+              out={'producer_run':40936421939,'producer_source':'ed734a879c933b78006ce9e78e89921d3c44fe69','inspection_only':True,'failures':failures}
               Path('build').mkdir(exist_ok=True)
               Path('build/windows-native-retained-failures.json').write_text(json.dumps(out,indent=2)+'\n')
               print(json.dumps(out))
