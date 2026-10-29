@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import zipfile
 from urllib.parse import parse_qsl, urlsplit
 from contract import ROOT, STAGES, guard, require, sha
 from archive_contract import safe_extract
@@ -36,6 +37,75 @@ BUNDLE = 'org.exreader.password-privacy-20261028'
 STATUS_TOKENS = {'finished': '本轮扫描完成', 'failed': '同步失败',
                  'missing-credential': '请重新输入此账号的授权信息', 'idle': '未同步',
                  'closed': '已关闭', 'preparing-original': '正在准备原书', 'receiving-shelf': '正在接收书架'}
+DIAGNOSTIC_STAGES = ('entry', 'scope-and-source', 'artifact-metadata', 'artifact-download',
+    'archive-bytes', 'archive-extract', 'result-identity', 'member-inventory', 'member-bytes',
+    'progress-and-native-log', 'scan-summaries', 'fixture-failures', 'network-summary',
+    'xcresult-copy', 'xcresult-parser', 'xcresult-issues', 'attachment-export',
+    'attachment-summary', 'safe-report')
+CURRENT_DIAGNOSTIC_STAGE = 'entry'
+REFUSAL_CODES = {
+    'checkout differs': 'checkout-identity',
+    'old or foreign path changed': 'source-scope',
+    'dirty source': 'dirty-source',
+    'frozen diagnostic source positions changed': 'source-hash',
+    'frozen diagnostic source extent changed': 'source-extent',
+    'prior continuation artifact identity differs': 'artifact-metadata',
+    'prior original ZIP differs': 'archive-bytes',
+    'unsafe or duplicate ZIP entry': 'archive-path',
+    'ambiguous ZIP component': 'archive-component',
+    'linked or special ZIP entry': 'archive-entry-type',
+    'unsupported or oversized ZIP member': 'archive-member-resource',
+    'oversized ZIP total': 'archive-total-resource',
+    'ZIP case/Unicode alias or file-directory collision': 'archive-alias-collision',
+    'prior continuation identity differs': 'result-identity',
+    'prior continuation inventory differs': 'member-inventory',
+    'prior continuation member differs': 'member-bytes',
+    'prior continuation verdict differs': 'prior-verdict',
+    'unexpected strict checks': 'strict-check-shape',
+    'unexpected checkpoint': 'checkpoint-shape',
+    'unexpected command shape': 'command-shape',
+    'unexpected failure class': 'failure-class',
+    'unexpected activity marker count': 'activity-count',
+    'unexpected scan root': 'scan-root',
+    'unexpected scan verdict': 'scan-verdict',
+    'unexpected fixture failure type': 'fixture-failure-shape',
+    'original request or native-result evidence absent': 'required-evidence-absent',
+    'unexpected fixture root': 'fixture-root',
+    'unexpected request inventory': 'request-inventory',
+    'unexpected first request boundary': 'request-boundary',
+    'unexpected request row': 'request-row',
+    'native result parser refused': 'xcresult-tool',
+    'unexpected issue value': 'xcresult-issue-value',
+    'unexpected issue location': 'xcresult-issue-location',
+    'native attachment exporter refused': 'attachment-tool',
+    'unexpected attachment manifest': 'attachment-manifest',
+    'unexpected attachment case': 'attachment-case',
+    'unexpected attachment identity': 'attachment-identity',
+    'unexpected attachment entry': 'attachment-entry',
+    'unexpected attachment count': 'attachment-count',
+}
+
+
+def diagnostic_stage(value):
+    global CURRENT_DIAGNOSTIC_STAGE
+    require(value in DIAGNOSTIC_STAGES, 'invalid diagnostic stage')
+    CURRENT_DIAGNOSTIC_STAGE = value
+
+
+def refusal_report(error, stage):
+    """Exact finite labels only; never format exception text, args or traceback."""
+    classes = {RuntimeError: 'runtime', FileNotFoundError: 'file-not-found',
+        PermissionError: 'permission', OSError: 'os', KeyError: 'key',
+        ValueError: 'value', TypeError: 'type', json.JSONDecodeError: 'json',
+        zipfile.BadZipFile: 'zip', subprocess.CalledProcessError: 'command',
+        subprocess.TimeoutExpired: 'command-timeout'}
+    code = 'unclassified'
+    if type(error) is RuntimeError and len(error.args) == 1 and type(error.args[0]) is str:
+        code = REFUSAL_CODES.get(error.args[0], 'unclassified')
+    return {'accepted': False, 'diagnostic_only': True, 'full_f10_accepted': False,
+        'diagnostic_refused': True, 'stage': stage if type(stage) is str and stage in DIAGNOSTIC_STAGES else 'unknown',
+        'exception_class': classes.get(type(error), 'other'), 'refusal_code': code,
+        'arbitrary_error_details_printed': False}
 
 
 def locations(path):
@@ -210,6 +280,7 @@ def attachment_summary(directory):
 
 def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
+    diagnostic_stage('scope-and-source')
     guard()
     require(sha(ROOT / SOURCE_FILE) == SOURCE_SHA, 'frozen diagnostic source positions changed')
     require(len((ROOT / SOURCE_FILE).read_text().splitlines()) == SOURCE_LAST_LINE,
@@ -218,6 +289,7 @@ def main():
     out = ROOT / 'build/apple-password-continuation-diagnostic'; out.mkdir(parents=True, exist_ok=False)
     reports = []
     for platform, (identifier, size, digest) in ARTIFACTS.items():
+        diagnostic_stage('artifact-metadata')
         endpoint = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/artifacts/' + str(identifier)
         record = json.loads(subprocess.check_output(['gh', 'api', endpoint]))
         require(record['id'] == identifier and record['name'] == 'password-continuation-native-' + platform + '-' + RUN + '-1' and
@@ -225,17 +297,24 @@ def main():
                 record['digest'] == 'sha256:' + digest and record['size_in_bytes'] == size and
                 record['expired'] is False, 'prior continuation artifact identity differs')
         original = out / (platform + '-original.zip')
+        diagnostic_stage('artifact-download')
         with original.open('wb') as file: subprocess.run(['gh', 'api', endpoint + '/zip'], stdout=file, check=True)
+        diagnostic_stage('archive-bytes')
         require(original.stat().st_size == size and sha(original) == digest, 'prior original ZIP differs')
+        diagnostic_stage('archive-extract')
         folder = out / platform; safe_extract(original, folder)
+        diagnostic_stage('result-identity')
         result = json.loads((folder / 'result.json').read_text())
         require((result['source_sha'], result['run_id'], result['attempt'], result['platform']) ==
                 (SOURCE, RUN, '1', platform), 'prior continuation identity differs')
+        diagnostic_stage('member-inventory')
         files = {path.relative_to(folder).as_posix() for path in folder.rglob('*') if path.is_file()}
         require(files == set(result['files']) | {'result.json'}, 'prior continuation inventory differs')
+        diagnostic_stage('member-bytes')
         for name, item in result['files'].items():
             path = folder / name
             require(path.stat().st_size == item['bytes'] and sha(path) == item['sha256'], 'prior continuation member differs')
+        diagnostic_stage('progress-and-native-log')
         report = safe_progress(result, files)
         report.update(old_source_sha=SOURCE, old_run_id=RUN, old_attempt=1, platform=platform,
                       artifact_id=identifier, original_bytes=size, original_sha256=digest,
@@ -243,6 +322,7 @@ def main():
                       source_positions_not_authenticated_callsites=True,
                       native_failure_locations=locations(folder / 'native.log') if 'native.log' in files else [])
         report['activity_timing'] = activity_timing(folder / 'native.log')
+        diagnostic_stage('scan-summaries')
         for stage in STAGES:
             name = stage + '-privacy-scan.json'
             if name not in files: continue
@@ -251,26 +331,34 @@ def main():
             require(all(type(proof['accepted']) is bool for proof in scans.values()), 'unexpected scan verdict')
             report.setdefault('scan_summary', {})[stage] = {label: {'accepted': proof['accepted'],
                 'hit_variant_labels': variant_labels(proof)} for label, proof in scans.items()}
+        diagnostic_stage('fixture-failures')
         if 'fixture-failures.json' in files:
             failures = json.loads((folder / 'fixture-failures.json').read_text())
             require(type(failures) is list and all(item in FAILURES for item in failures), 'unexpected fixture failure type')
             report['fixture_failure_classes'] = failures
+        diagnostic_stage('network-summary')
         require('requests.json' in files and any(name.startswith('privacy.xcresult/') for name in files),
                 'original request or native-result evidence absent')
         report['network'] = network_summary(result, json.loads((folder / 'requests.json').read_text()))
         # xcresulttool may update metadata. Parse only a disposable copy after
         # every retained original member was authenticated above.
         with tempfile.TemporaryDirectory(prefix='privacy-xcresult-diagnostic-') as temporary:
+            diagnostic_stage('xcresult-copy')
             copied = shutil.copytree(folder / 'privacy.xcresult', os.path.join(temporary, 'privacy.xcresult'))
+            diagnostic_stage('xcresult-parser')
             done = subprocess.run(['xcrun', 'xcresulttool', 'get', 'object', '--legacy', '--path', copied,
                                    '--format', 'json'], capture_output=True, timeout=120)
             require(done.returncode == 0, 'native result parser refused')
+            diagnostic_stage('xcresult-issues')
             report['xcresult'] = xcresult_issues(json.loads(done.stdout))
             exported = Path(temporary) / 'attachments'
+            diagnostic_stage('attachment-export')
             done = subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', copied,
                                    '--output-path', str(exported)], capture_output=True, timeout=120)
             require(done.returncode == 0, 'native attachment exporter refused')
+            diagnostic_stage('attachment-summary')
             report['exported_attachments'] = attachment_summary(exported)
+        diagnostic_stage('safe-report')
         reports.append(report)
         print(json.dumps(report, sort_keys=True), flush=True)
     (out / 'diagnostic.json').write_text(json.dumps(reports, indent=2) + '\n')
@@ -279,7 +367,16 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except Exception:
+    except Exception as error:
         # An OS/parser exception may embed a synthetic value in its operands.
         # Refuse without relaying that exception text or chained traceback.
+        report = refusal_report(error, CURRENT_DIAGNOSTIC_STAGE)
+        print(json.dumps(report, sort_keys=True), flush=True)
+        if os.environ.get('GITHUB_ACTIONS') == 'true':
+            try:
+                out = ROOT / 'build/apple-password-continuation-diagnostic'
+                out.mkdir(parents=True, exist_ok=True)
+                (out / 'diagnostic.json').write_text(json.dumps([report], indent=2) + '\n')
+            except OSError:
+                pass  # Console still contains the fixed refusal; never echo I/O operands.
         raise RuntimeError('pinned continuation diagnosis refused; arbitrary error details withheld') from None

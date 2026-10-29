@@ -5,13 +5,58 @@ import os
 import json
 from pathlib import Path
 import tempfile
+import subprocess
 import unittest
 from contract import ROOT, sha
-from inspect_continuation_failure import ARTIFACTS, BUNDLE, CASE, RUN, SOURCE, SOURCE_FILE, SOURCE_LAST_LINE, SOURCE_PATH, SOURCE_SHA, activity_timing, attachment_summary, locations, network_summary, safe_progress, xcresult_issues
+import inspect_continuation_failure as inspector
+from inspect_continuation_failure import ARTIFACTS, BUNDLE, CASE, DIAGNOSTIC_STAGES, REFUSAL_CODES, RUN, SOURCE, SOURCE_FILE, SOURCE_LAST_LINE, SOURCE_PATH, SOURCE_SHA, activity_timing, attachment_summary, diagnostic_stage, locations, network_summary, refusal_report, safe_progress, xcresult_issues
 from privacy_scan import needles
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_refusal_codes_require_exact_owned_message_and_keep_false_verdict(self):
+        for message, code in REFUSAL_CODES.items():
+            report = refusal_report(RuntimeError(message), 'archive-extract')
+            self.assertEqual(report['refusal_code'], code)
+            self.assertEqual(report['exception_class'], 'runtime')
+            self.assertTrue(report['diagnostic_refused'])
+            self.assertFalse(report['accepted']); self.assertFalse(report['full_f10_accepted'])
+            self.assertFalse(report['arbitrary_error_details_printed'])
+            for value in ('operand ' + message, message + ' private-operand'):
+                self.assertEqual(refusal_report(RuntimeError(value), 'archive-extract')['refusal_code'], 'unclassified')
+        self.assertEqual(refusal_report(RuntimeError('prior continuation member differs', 'private-operand'),
+            'member-bytes')['refusal_code'], 'unclassified')
+
+    def test_refusal_never_formats_encoded_truncated_exception_operands(self):
+        class OperandError(RuntimeError):
+            def __str__(self):
+                raise AssertionError('exception text must never be formatted')
+        for raw in list(needles({'secret': b'Privacy-' + b'a' * 64 + b'!%:+'}).values()) + [b'Privacy-aaa...']:
+            operand = raw.decode('utf-8', errors='replace')
+            errors = [RuntimeError(operand), KeyError(operand), OSError(operand), OperandError(operand),
+                subprocess.CalledProcessError(1, [operand], output=raw, stderr=raw),
+                subprocess.TimeoutExpired([operand], 120, output=raw, stderr=raw)]
+            for error in errors:
+                report = refusal_report(error, operand)
+                self.assertEqual(report['stage'], 'unknown')
+                self.assertEqual(report['refusal_code'], 'unclassified')
+                self.assertNotIn(operand, json.dumps(report, ensure_ascii=False))
+                self.assertNotIn('OperandError', str(report))
+        self.assertEqual(refusal_report(OperandError('prior continuation member differs'), 'member-bytes')
+            ['exception_class'], 'other')
+
+    def test_stage_transition_is_finite_and_invalid_value_does_not_replace_it(self):
+        try:
+            for stage in DIAGNOSTIC_STAGES:
+                diagnostic_stage(stage)
+                self.assertEqual(inspector.CURRENT_DIAGNOSTIC_STAGE, stage)
+            for stage in ('archive-extract private-operand', 'unknown', ''):
+                with self.assertRaisesRegex(RuntimeError, '^invalid diagnostic stage$'):
+                    diagnostic_stage(stage)
+                self.assertEqual(inspector.CURRENT_DIAGNOSTIC_STAGE, 'safe-report')
+        finally:
+            diagnostic_stage('entry')
+
     def test_current_macos_artifact_and_source_extent_are_exact(self):
         self.assertEqual(RUN, '40813760224')
         self.assertEqual(SOURCE, 'a16304c989aa9c1b94ce6e9bb6644a075b3e326b')
