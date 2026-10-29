@@ -1,7 +1,7 @@
 name: Apple SDK 3.42 full same-source host gates
 on:
   push:
-    branches: [codex/apple-sdk342-full-handoff-20261029]
+    branches: [codex/apple-sdk342-full-handoff-20261029, codex/apple-opdshash-resume-20261029]
   workflow_dispatch:
 permissions:
   contents: read
