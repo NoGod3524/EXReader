@@ -1,0 +1,22 @@
+name: Independent Apple sync detail evidence
+on:
+  push:
+    branches: [codex/apple-four-evidence-audit-20261029]
+    paths: ['.github/workflows/apple-sync-details-independent.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  audit:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replay original XCTest and real failed-state recovery evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/apple_sync_details_independent.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-sync-details-independent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-sync-details-independent/result.json
+          if-no-files-found: warn
