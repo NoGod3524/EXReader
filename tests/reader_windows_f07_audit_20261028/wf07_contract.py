@@ -203,7 +203,9 @@ def private_header_dependencies(text, expected_objects, private_headers, workspa
             active = (expected_objects[obj], obj) if obj in expected_objects else None
             advertised, observed = int(match[2]), 0
             if active:
-                require(advertised > 0, 'empty exported-target dependency record')
+                require(advertised > 0, 'empty exported-target dependency record: ' + json.dumps(dict(
+                    build=label, owner=active[0], object=obj, advertised=advertised,
+                    original_group_header=line), sort_keys=True))
                 require(obj not in covered, 'duplicate object dependency group')
                 covered.add(obj)
             continue
