@@ -87,8 +87,7 @@ def main():
     gate('packaged_product_derives_from_build', any(c['binding'] for c in candidates))
     if proven:
         text = nm(ndk / 'llvm-nm', ROOT / proven[0]['source'] if not Path(proven[0]['source']).is_absolute() else proven[0]['source'])
-        (DEVICE / 'product-symbols.txt').write_text('
-'.join(l for l in text.splitlines() if re.search('opds_sha256|reader_sync|exr_webdav', l)))
+        (DEVICE / 'product-symbols.txt').write_text(chr(10).join(l for l in text.splitlines() if re.search('opds_sha256|reader_sync|exr_webdav', l)))
 
     # Live process: the mapped libraries while a native request was blocked in flight.
     snaps = json.loads((DEVICE / 'process-snapshots.json').read_text())

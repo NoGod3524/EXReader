@@ -37,3 +37,5 @@ full product, accessibility, or any 108-item credit.
 - Next source: absolute `sys.path` in the generated driver (recorded in provenance), and the verifier now checks the
   complete exact hash and Sync symbols on one single candidate that is byte-equal to the APK image or equal after
   the recorded `llvm-strip --strip-unneeded` transform; the selected candidate and mapping are recorded.
+- Run 40949086554, source `96d6e3cb`: protocol FAILED (SyntaxError in `verify.py`, a literal newline in a string); the
+  android job was skipped. Retained; fixed in the next source.
