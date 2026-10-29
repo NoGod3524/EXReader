@@ -28,3 +28,18 @@ retain their original formats; this stage neither truncates nor reinterprets
 them. Full-width Windows protocol, worker supervision, cross-directory mirror
 publication and the actual host suspend/migrate/reopen lifecycle remain the
 next production work. Full P0, F12 and physical power-loss safety remain open.
+
+The first common-source run, `40946864068` at
+`00e12b8b66ac2c66245e462ef4931a724671cd34`, retained a Linux 21/22
+handoff failure in `crash-S5`. Its original ZIP is artifact `12929848394`,
+19159055 bytes, SHA256
+`45cfbbfadc3d17eb6bfd773736a96472826e1cf0be908279fb1b9bce63f2ffe4`.
+Actions inspection `40948832372` rehashed that ZIP and showed a fresh R retry
+refused with `file-read` before its scanner completed; no COMMIT was reported.
+The original helper exposed each `.go` filename before completing its nine-byte
+write. The native reader checks the fstat/read byte count, so this publication
+window can cause the observed safe refusal. Both helper call sites now reuse
+the existing calibrated complete private no-replace token publication from the
+actual importer suite. All 22 case bodies, original assertions, native helper,
+budgets and failure evidence remain. Admission permits only these exact helper
+edits and independently checks that every original assertion is identical.

@@ -30,6 +30,9 @@ if os.name != 'posix':
 SPEC = importlib.util.spec_from_file_location('frozen_preflight', Path(__file__).parents[1] / 'recovery_preflight_20261029/run.py')
 P = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(P)
+TOKEN_SPEC = importlib.util.spec_from_file_location('complete_private_token', Path(__file__).parents[1] / 'recovery_integration_20261029/run.py')
+T = importlib.util.module_from_spec(TOKEN_SPEC)
+TOKEN_SPEC.loader.exec_module(T)
 
 MIB = 1024 * 1024
 PHASES = ('lease-snapshot', 'S1', 'S2', 'S3', 'snapshot-race', 'scanner-request', 'scanner-live', 'scanner-result',
@@ -89,7 +92,7 @@ class BoundedChild:
         while not (root/(phase+'.ready')).exists() and self.p.poll() is None and time.monotonic()<until:time.sleep(.01)
         assert (root/(phase+'.ready')).exists(),('missing native phase',phase,self.p.poll())
 
-    def go(self,root,phase):(root/(phase+'.go')).write_bytes(b'continue\n')
+    def go(self,root,phase):T.private_token(root/(phase+'.go'))
 
     def finish(self,kill=False):
         if not self.done:
@@ -225,7 +228,7 @@ class Driver:
                             self.lease(root, False)
                         return {'killed': phase, 'phases': sorted(handled), 'control': str(ctl)}
                     if c.p.poll() is None:
-                        (ctl / (phase + '.go')).write_bytes(b'continue\n')
+                        c.go(ctl,phase)
                 for log in (c.out_path, c.err_path):
                     self.check_log_size(log)
                 time.sleep(.01)

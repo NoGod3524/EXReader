@@ -1,4 +1,4 @@
-name: Migration public-source 270 recovery groups
+name: Migration public-source 270 recovery groups with complete private tokens
 on:
   push:
     branches: [codex/windows-recovery-public-stage-20261029]

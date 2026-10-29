@@ -26,7 +26,19 @@ hashes = {}
 for path in pinned:
     data = Path(path).read_bytes()
     blob = git('rev-parse', 'HEAD:' + path).decode().strip()
-    assert blob == git('rev-parse', RECOVERY + ':' + path).decode().strip(), path
+    if path == 'tests/migration/recovery_handoff_20261029/run.py':
+        previous = git('show', RECOVERY + ':' + path).decode('utf-8')
+        expected = previous.replace('SPEC.loader.exec_module(P)', "SPEC.loader.exec_module(P)\nTOKEN_SPEC = importlib.util.spec_from_file_location('complete_private_token', Path(__file__).parents[1] / 'recovery_integration_20261029/run.py')\nT = importlib.util.module_from_spec(TOKEN_SPEC)\nTOKEN_SPEC.loader.exec_module(T)")
+        expected = expected.replace("def go(self,root,phase):(root/(phase+'.go')).write_bytes(b'continue\\n')", "def go(self,root,phase):T.private_token(root/(phase+'.go'))")
+        expected = expected.replace("(ctl / (phase + '.go')).write_bytes(b'continue\\n')", 'c.go(ctl,phase)')
+        current = git('show', 'HEAD:' + path).decode('utf-8')
+        assert current.replace('\r\n','\n') == expected.replace('\r\n','\n'), path
+        import ast, collections
+        def assertions(source):
+            return collections.Counter(ast.dump(n, include_attributes=False) for n in ast.walk(ast.parse(source)) if isinstance(n, ast.Assert))
+        assert assertions(current) == assertions(previous), 'original handoff assertions changed'
+    else:
+        assert blob == git('rev-parse', RECOVERY + ':' + path).decode().strip(), path
     hashes[path] = dict(blob=blob, checkout_sha256=hashlib.sha256(data).hexdigest())
 gate = ['examples/reader.c', 'apps/reader/desktop/windows_catalog.inc',
         'apps/reader/desktop/windows_migration_gate.h',
