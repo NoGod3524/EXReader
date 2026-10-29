@@ -19,6 +19,7 @@ import zipfile
 from urllib.parse import urlsplit
 from continuation_contract import BASE, BUNDLE, CASE, ROOT, STAGES, attachments, case_name, guard, require, sha, verdict
 from continuation_contract import ENTITLEMENT_FILE, admission_app_identity, admission_tool, exact_entitlements, signature_summary, verify_admission_transition, verify_continuation_project
+from continuation_contract import CheckpointTiming
 from fixture import fixture
 from privacy_scan import needles, scan_file, scan_roots, optional_entries, verify_optional_entries
 from log_evidence import attribute_unified_log, retain_product_log
@@ -47,6 +48,7 @@ def main():
     udid = None
     admission, sdk_libraries = {}, {}
     lifecycle = ContinuationLifecycle(platform)
+    timing = CheckpointTiming(lifecycle.deadline - lifecycle.budget_seconds)
     fixture_records = None
     def run(role, *argv, env=None, capture=False):
         # Never echo argv/env: credentials enter only the XCTest runner environment.
@@ -178,6 +180,7 @@ def main():
                       'saved-state': Path.home() / ('Library/Saved Application State/' + BUNDLE + '.savedState')}
             return profile, (roots, extras)
         def checkpoint(stage, requests):
+            timing.phase(stage, 'original-account')
             require(stage in STAGES and stage == STAGES[len(result['checkpoints'])], 'out-of-order post-exit observation')
             profile, roots = locations()
             metadata = json.loads((profile / 'accounts.json').read_text())
@@ -187,6 +190,7 @@ def main():
             with sqlite3.connect((account / 'library.sqlite').resolve().as_uri() + '?mode=ro', uri=True) as database:
                 books = database.execute('SELECT source FROM books ORDER BY id').fetchall()
             require(len(books) == 1 and books[0][0] == original, 'credential operation changed original')
+            timing.phase(stage, 'optional-roots')
             staging = out / ('snapshot-' + stage); staging.mkdir()
             preferences = []
             if platform == 'macos':
@@ -208,6 +212,7 @@ def main():
                         roots[label] = destination
                     else: require(False, 'linked or special private macOS root')
             else: absence = []
+            timing.phase(stage, 'log-capture-retention')
             command = ['xcrun', 'simctl', 'spawn', udid] if udid else []
             done = lifecycle.command(command + ['log', 'show', '--style', 'json', '--info', '--debug', '--last', '30m',
                 '--predicate', 'process == "EXReaderHost"'], cap=60, check=False, max_capture=None)
@@ -218,8 +223,11 @@ def main():
             require(done.returncode == 0, 'actual product log capture failed')
             require(bool(done.stdout.strip()), 'actual product log capture was empty')
             roots['product-log'] = log_root
+            timing.phase(stage, 'first-scan-manifest')
             scans = scan_roots(roots, variants)
             (evidence / (stage + '-privacy-scan.json')).write_text(json.dumps(scans, indent=2) + '\n')
+            timing.counts(stage, scans)
+            timing.phase(stage, 'attribution-verdict')
             # Primary byte evidence must survive any ancillary attribution issue.
             attribution = attribute_unified_log(done.stdout, variants)
             result['log_attribution'][stage] = attribution
@@ -228,6 +236,7 @@ def main():
             # privacy. The original strict runner still refuses this condition.
             strict_privacy_passed = all(scan['accepted'] for scan in scans.values())
             result['strict_privacy_checks'][stage] = strict_privacy_passed
+            timing.phase(stage, 'snapshot-archive')
             destination = evidence / (stage + '-product.zip')
             with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED) as archive:
                 for label, proof in scans.items():
@@ -238,6 +247,7 @@ def main():
                         path = roots[label] / item['path']
                         require(sha(path) == item['sha256'] and path.stat().st_size == item['bytes'], 'product file changed before archive')
                         archive.write(path, label + '/' + item['path'])
+            timing.phase(stage, 'compressed-replay')
             # Re-read actual compressed members, not just source metadata. A
             # mutation of an already-read prefix or earlier root cannot certify
             # different bytes than the ones retained as evidence.
@@ -249,10 +259,13 @@ def main():
                             for data in iter(lambda: file.read(1024 * 1024), b''):
                                 checksum.update(data); total += len(data)
                         require((checksum.hexdigest(), total) == (item['sha256'], item['bytes']), 'archived bytes differ from privacy scan')
+            timing.phase(stage, 'second-scan')
             require(scan_roots(roots, variants) == scans, 'private files changed before snapshot publication')
+            timing.phase(stage, 'preferences-namespace')
             for path, actual in preferences:
                 require(scan_file(path, variants) == actual, 'actual preferences changed after copied scan')
             if platform == 'macos': verify_optional_entries(extras, extras_before)
+            timing.phase(stage, 'credential-network')
             previous_count = list(result['checkpoints'].values())[-1]['network_requests'] if result['checkpoints'] else 0
             fresh = requests[previous_count:]
             if stage == 'remember_closed': require(not requests, 'unexpected background sync')
@@ -263,13 +276,22 @@ def main():
                 shards = {value['path'].rsplit('/', 2)[-2] for value in fresh if value['method'] == 'PROPFIND' and
                           re.fullmatch(re.escape(urlsplit(active_root[0]).path) + r'exreader-sync-v1/revisions/[0-9a-f]{2}/', value['path'])}
                 require(shards == {format(index, '02x') for index in range(256)}, 'authenticated native sweep incomplete')
+            timing.phase(stage, 'checkpoint-publication')
             result['checkpoints'][stage] = {'profile_id': record['id'], 'network_requests': len(requests), 'scans': scans,
                 'strict_privacy_passed': strict_privacy_passed,
                 'absent_mac_roots': absence, 'archive': destination.name, 'archive_sha256': sha(destination),
                 'sdk_original_sha256': hashlib.sha256(original).hexdigest(), 'original_bytes': len(original)}
             (evidence / 'checkpoints.json').write_text(json.dumps(result['checkpoints'], indent=2) + '\n')
+        def timed_checkpoint(stage, requests):
+            timing.begin(stage)
+            completed = False
+            try:
+                checkpoint(stage, requests)
+                completed = True
+            finally:
+                timing.finish(stage, completed)
         endpoint = '/privacy-' + secrets.token_hex(12) + '/'
-        with fixture(out / 'fixture-private', authorizations, checkpoint, endpoint, lifecycle=lifecycle) as (root, entries, requests, failures, certificate):
+        with fixture(out / 'fixture-private', authorizations, timed_checkpoint, endpoint, lifecycle=lifecycle) as (root, entries, requests, failures, certificate):
             active_root[0] = root
             fixture_records = (requests, failures)
             result['root'] = root
@@ -343,13 +365,24 @@ def main():
                     'records': [], 'failure': 'unavailable-or-invalid', 'raw_ui_text_printed': False,
                     'privacy_acceptance': False}
             result['lifecycle'] = receipt
+            try:
+                document, timing_summary = timing.snapshot(result['checkpoints'], result['source_sha'],
+                    result['run_id'], result['attempt'], platform)
+                (evidence / 'checkpoint-timing.json').write_text(json.dumps(document, indent=2) + '\n')
+                result['checkpoint_timing'] = timing_summary
+            except Exception:
+                # Ancillary observation must not replace the original native/
+                # checkpoint failure, trigger a retry or discard raw evidence.
+                result['checkpoint_timing'] = {'valid': False, 'observed': False,
+                    'failure': 'unavailable-or-invalid', 'records': [],
+                    'native_acceptance': False, 'full_f10_accepted': False, 'arbitrary_values_printed': False}
             result['evidence_sealed'] = True
             result['files'] = seal_files(evidence, deadline=lifecycle.deadline)
             lifecycle.remaining()
             atomic_result(evidence, result, deadline=lifecycle.deadline)
             print(json.dumps({key: result[key] for key in ('accepted', 'diagnostic_only', 'sequence_complete', 'strict_privacy_checks',
                   'source_sha', 'platform', 'failure', 'full_f10_accepted', 'log_attribution', 'ui_state_observations',
-                  'lifecycle', 'evidence_sealed', 'ios_admission_summary')}), flush=True)
+                  'lifecycle', 'evidence_sealed', 'ios_admission_summary', 'checkpoint_timing')}), flush=True)
         except Exception:
             # A live daemon callback cannot be safely cancelled in Python.
             # Publish no normal result/files manifest and inspect no mutable

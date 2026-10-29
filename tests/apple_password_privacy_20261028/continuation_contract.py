@@ -7,6 +7,8 @@ from pathlib import Path
 import plistlib
 import re
 import struct
+import threading
+import time
 import xml.etree.ElementTree as ET
 from contract import BASE, BUNDLE, ROOT, STAGES, guard, require, sha
 
@@ -14,6 +16,167 @@ CASE = 'testDiagnosticContinuationRememberUpdateRestart'
 ENTITLEMENT_FILE = ROOT / 'tests/apple_password_privacy_20261028/ios_simulator.entitlements'
 ENTITLEMENTS = {'application-identifier': BUNDLE, 'keychain-access-groups': [BUNDLE], 'get-task-allow': True}
 APPLEDOUBLE_LIMIT = 16 * 1024 * 1024
+TIMING_PHASES = ('original-account', 'optional-roots', 'log-capture-retention',
+    'first-scan-manifest', 'attribution-verdict', 'snapshot-archive', 'compressed-replay',
+    'second-scan', 'preferences-namespace', 'credential-network', 'checkpoint-publication')
+TIMING_ROOTS = frozenset(('profile', 'product-log', 'preferences', 'cache', 'saved-state', 'container'))
+TIMING_TIMEBASE = 'process-monotonic-ms-from-lifecycle-origin'
+
+
+def checkpoint_identity(stage, checkpoint):
+    require(stage in STAGES and type(checkpoint) is dict and
+            type(checkpoint.get('profile_id')) is str and
+            re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', checkpoint['profile_id']) is not None and
+            type(checkpoint.get('archive_sha256')) is str and
+            re.fullmatch(r'[0-9a-f]{64}', checkpoint['archive_sha256']) is not None and
+            checkpoint.get('archive') == stage + '-product.zip' and
+            type(checkpoint.get('network_requests')) is int and 0 <= checkpoint['network_requests'] <= 1000000 and
+            type(checkpoint.get('strict_privacy_passed')) is bool, 'timing checkpoint identity differs')
+    fields = {key: checkpoint[key] for key in ('profile_id', 'archive', 'archive_sha256', 'network_requests', 'strict_privacy_passed')}
+    return hashlib.sha256(json.dumps(dict(fields, stage=stage), sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+
+def timing_scan_counts(scans):
+    require(type(scans) is dict and scans and set(scans) <= TIMING_ROOTS, 'timing scan roots differ')
+    counts = {}
+    for root, proof in scans.items():
+        require(type(proof) is dict and type(proof.get('bytes')) is int and proof['bytes'] >= 0 and
+                type(proof.get('file_count')) is int and proof['file_count'] >= 0, 'timing scan counts differ')
+        counts[root] = {key: proof[key] for key in ('bytes', 'file_count')}
+    return counts
+
+
+class CheckpointTiming:
+    """Ancillary observer: no observer error may replace a callback exception."""
+    def __init__(self, origin, clock=time.monotonic):
+        self.origin, self.clock = origin, clock
+        self.records, self.invalid = [], False
+        self.lock = threading.Lock()
+
+    def _observe(self, action):
+        try:
+            with self.lock:
+                if self.invalid: return
+                action()
+        except Exception:
+            self.invalid = True
+
+    def _stamp(self):
+        elapsed = int((self.clock() - self.origin) * 1000)
+        require(0 <= elapsed <= 4800000, 'timing horizon differs')
+        return elapsed
+
+    def begin(self, stage):
+        def action():
+            require(len(self.records) < len(STAGES) and stage == STAGES[len(self.records)] and
+                    (not self.records or self.records[-1]['state'] != 'open'), 'timing callback order differs')
+            self.records.append({'stage': stage, 'entered_ms': self._stamp(), 'exited_ms': None,
+                'state': 'open', 'phases': [], 'scan_counts': {}, 'checkpoint_identity': None})
+        self._observe(action)
+
+    def phase(self, stage, phase):
+        def action():
+            row = self.records[-1]
+            require(row['stage'] == stage and row['state'] == 'open' and
+                    len(row['phases']) < len(TIMING_PHASES) and phase == TIMING_PHASES[len(row['phases'])],
+                    'timing phase order differs')
+            stamp = self._stamp()
+            if row['phases']:
+                row['phases'][-1].update(ended_ms=stamp, state='completed')
+            row['phases'].append({'phase': phase, 'began_ms': stamp, 'ended_ms': None, 'state': 'open'})
+        self._observe(action)
+
+    def counts(self, stage, scans):
+        def action():
+            row = self.records[-1]
+            require(row['stage'] == stage and row['state'] == 'open' and not row['scan_counts'] and
+                    row['phases'][-1]['phase'] == 'first-scan-manifest', 'timing counts position differs')
+            row['scan_counts'] = timing_scan_counts(scans)
+        self._observe(action)
+
+    def finish(self, stage, completed):
+        def action():
+            row = self.records[-1]
+            require(row['stage'] == stage and row['state'] == 'open' and type(completed) is bool,
+                    'timing callback finish differs')
+            stamp = self._stamp(); state = 'completed' if completed else 'failed'
+            if row['phases']: row['phases'][-1].update(ended_ms=stamp, state=state)
+            row.update(exited_ms=stamp, state=state)
+        self._observe(action)
+
+    def snapshot(self, checkpoints, source, run, attempt, platform):
+        # Caller must already own the unchanged stopped-serving/zero-handler
+        # drain fence. No snapshot is taken in the unsealed branch.
+        with self.lock:
+            require(not self.invalid, 'timing observer unavailable')
+            records = copy.deepcopy(self.records)
+        require(all(row['state'] != 'open' for row in records), 'timing finalized callback remains open')
+        for row in records:
+            if row['stage'] in checkpoints:
+                row['checkpoint_identity'] = checkpoint_identity(row['stage'], checkpoints[row['stage']])
+        document = {'version': 1, 'source_sha': source, 'run_id': run, 'attempt': attempt, 'platform': platform,
+            'timebase': TIMING_TIMEBASE, 'records': records}
+        return document, validate_checkpoint_timing(document, checkpoints, source, run, attempt, platform)
+
+
+def validate_checkpoint_timing(document, checkpoints, source, run, attempt, platform):
+    require(type(document) is dict and set(document) == {'version', 'source_sha', 'run_id', 'attempt',
+            'platform', 'timebase', 'records'} and type(document['version']) is int and document['version'] == 1 and
+            (document['source_sha'], document['run_id'], document['attempt'], document['platform']) ==
+            (source, run, attempt, platform) and document['timebase'] == TIMING_TIMEBASE,
+            'timing document identity differs')
+    require(type(checkpoints) is dict and list(checkpoints) == STAGES[:len(checkpoints)], 'timing checkpoint order differs')
+    records = document['records']
+    require(type(records) is list and len(records) <= len(STAGES), 'timing callback inventory differs')
+    last, summary = 0, []
+    def stamp(value):
+        nonlocal last
+        require(type(value) is int and last <= value <= 4800000, 'timing timestamp differs')
+        last = value
+    for index, row in enumerate(records):
+        require(type(row) is dict and set(row) == {'stage', 'entered_ms', 'exited_ms', 'state', 'phases',
+                'scan_counts', 'checkpoint_identity'} and row['stage'] == STAGES[index] and
+                row['state'] in ('completed', 'failed', 'open'), 'timing callback shape differs')
+        stamp(row['entered_ms'])
+        phases = row['phases']
+        require(type(phases) is list and len(phases) <= len(TIMING_PHASES), 'timing phase inventory differs')
+        for position, phase in enumerate(phases):
+            require(type(phase) is dict and set(phase) == {'phase', 'began_ms', 'ended_ms', 'state'} and
+                    phase['phase'] == TIMING_PHASES[position] and phase['state'] in ('completed', 'failed', 'open'),
+                    'timing phase shape differs')
+            stamp(phase['began_ms'])
+            if phase['state'] == 'open':
+                require(phase['ended_ms'] is None and position == len(phases) - 1 and row['state'] == 'open',
+                        'timing open phase differs')
+            else:
+                stamp(phase['ended_ms'])
+                require(phase['state'] == 'completed' or position == len(phases) - 1 and row['state'] == 'failed',
+                        'timing failed phase differs')
+        if row['state'] == 'open':
+            require(row['exited_ms'] is None and index == len(records) - 1 and
+                    (not phases or phases[-1]['state'] == 'open'), 'timing open callback differs')
+        else:
+            stamp(row['exited_ms'])
+            require(not phases or phases[-1]['ended_ms'] == row['exited_ms'] and phases[-1]['state'] == row['state'],
+                    'timing callback phase exit differs')
+        if row['state'] == 'completed':
+            require(len(phases) == len(TIMING_PHASES) and row['stage'] in checkpoints, 'timing completed callback differs')
+        else: require(index == len(records) - 1, 'timing nonterminal failed callback')
+        expected = checkpoint_identity(row['stage'], checkpoints[row['stage']]) if row['stage'] in checkpoints else None
+        require(row['checkpoint_identity'] == expected, 'timing checkpoint binding differs')
+        counts = row['scan_counts']
+        require(type(counts) is dict and set(counts) <= TIMING_ROOTS and all(type(value) is dict and
+                set(value) == {'bytes', 'file_count'} and all(type(number) is int and 0 <= number <= 2**63 - 1
+                for number in value.values()) for value in counts.values()), 'timing retained counts differ')
+        if row['stage'] in checkpoints:
+            require(counts == timing_scan_counts(checkpoints[row['stage']]['scans']), 'timing checkpoint counts differ')
+        require(not counts or len(phases) >= 4, 'timing counts before scan')
+        require(len(phases) < 4 or phases[3]['state'] != 'completed' or bool(counts), 'timing completed scan counts absent')
+        summary.append(copy.deepcopy(row))
+    require(set(checkpoints) <= {row['stage'] for row in records}, 'timing missing checkpoint record')
+    return {'valid': True, 'observed': bool(records), 'timebase': TIMING_TIMEBASE, 'records': summary,
+        'external_clock_verified': False, 'http_response_delivery_proven': False,
+        'native_acceptance': False, 'full_f10_accepted': False, 'arbitrary_values_printed': False}
 
 
 def appledouble_content(data):

@@ -15,8 +15,9 @@ import tempfile
 from urllib.parse import urlsplit
 from continuation_contract import BASE, BUNDLE, CASE, ROOT, STAGES, attachments, case_name, guard, require, sha, verdict
 from continuation_contract import ENTITLEMENT_FILE, admission_app_identity, exact_entitlements, signature_summary, verify_admission_transition, verify_continuation_project
+from continuation_contract import validate_checkpoint_timing, timing_scan_counts
 from inspect_native import variant_labels
-from privacy_scan import needles, scan_roots
+from privacy_scan import needles, scan_roots, inventory
 from archive_contract import safe_extract
 from log_evidence import attribute_unified_log, verify_product_log
 from ui_observations import parse_ui_observations
@@ -118,6 +119,7 @@ def validate(directory, source, run, attempt, platform):
     observed = parse_ui_observations(directory / 'native.log')
     require(observed == result['ui_state_observations'] and observed['observed'],
             'actual finite UI observation evidence absent or differs')
+    timing = replay_checkpoint_timing(directory, source, run, attempt, platform)
     commands = result['commands']
     require(commands and all(step['exit'] == 0 for step in commands) and
             {'fixtures', 'project', 'build-for-testing', 'native', 'attachments', 'program-archive'} <=
@@ -265,10 +267,44 @@ def validate(directory, source, run, attempt, platform):
     return dict(diagnostic, platform=platform, source_sha=source, stages=STAGES, sequence_complete=True,
                 probe_integrity_verified=True, binary_sha256=result['program']['sha256'], dedicated_forget_tested=False,
                 ui_state_observations=observed,
+                checkpoint_timing=timing,
                 ios_admission_summary=result['ios_admission_summary'],
                 log_attribution=result['log_attribution'], attribution_limit='sender image categories, not production owner callsites',
                 privacy_roots={stage: {label: {'strict_passed': proof['accepted'], 'hit_variant_labels': variant_labels(proof)}
                     for label, proof in result['checkpoints'][stage]['scans'].items()} for stage in STAGES})
+
+
+def replay_checkpoint_timing(directory, source, run, attempt, platform):
+    """Independent retained-byte/schema replay only, not native/signature credit."""
+    before = inventory(directory)
+    result = json.loads((directory / 'result.json').read_text())
+    require((result['source_sha'], result['run_id'], result['attempt'], result['base_sha'], result['platform']) ==
+            (source, run, attempt, BASE, platform) and result['accepted'] is False and
+            result['diagnostic_only'] is True and result['full_f10_accepted'] is False and
+            result['evidence_sealed'] is True, 'timing retained identity differs')
+    verify_lifecycle(result['lifecycle'], platform)
+    files = result['files']
+    require(type(files) is dict and {path.relative_to(directory).as_posix() for path in directory.rglob('*')
+            if path.is_file()} == set(files) | {'result.json'}, 'timing retained inventory differs')
+    for name, record in files.items():
+        require(type(record) is dict and set(record) == {'bytes', 'sha256'} and type(record['bytes']) is int and
+                record['bytes'] >= 0 and type(record['sha256']) is str and re.fullmatch(r'[0-9a-f]{64}', record['sha256']) is not None and
+                (directory / name).stat().st_size == record['bytes'] and sha(directory / name) == record['sha256'],
+                'timing retained member differs')
+    document = json.loads((directory / 'checkpoint-timing.json').read_text())
+    proof = validate_checkpoint_timing(document, result['checkpoints'], source, run, attempt, platform)
+    require(all(row['state'] != 'open' for row in proof['records']), 'timing finalized callback remains open')
+    require(proof == result['checkpoint_timing'], 'timing producer summary differs')
+    if result['checkpoints']:
+        require(json.loads((directory / 'checkpoints.json').read_text()) == result['checkpoints'],
+                'timing retained checkpoints differ')
+    for row in proof['records']:
+        if row['scan_counts']:
+            scans = json.loads((directory / (row['stage'] + '-privacy-scan.json')).read_text())
+            require(timing_scan_counts(scans) == row['scan_counts'], 'timing original scan counts differ')
+    require(inventory(directory) == before, 'timing evidence changed during replay')
+    return dict(proof, original_member_count=len(files), original_member_replay=True,
+                producer_summary_matched=True, signature_replay_credited=False)
 
 
 def main():
@@ -278,7 +314,8 @@ def main():
     out = ROOT / 'build/apple-password-continuation-summary'; out.mkdir(parents=True, exist_ok=False)
     summary = {'source_sha': source, 'run_id': run, 'attempt': attempt, 'accepted': False, 'diagnostic_only': True,
                'probe_integrity_verified': False,
-               'full_f10_accepted': False, 'dedicated_forget_tested': False, 'platforms': {}, 'failure': None}
+               'full_f10_accepted': False, 'dedicated_forget_tested': False, 'platforms': {}, 'failure': None,
+               'timing_replays': {}, 'timing_replay_failures': {}, 'continuation_replay_failures': {}}
     def api(path):
         return json.loads(subprocess.check_output(['gh', 'api', 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/' + path]))
     try:
@@ -287,26 +324,51 @@ def main():
             'Privacy diagnostic continuation ' + platform for platform in ('macos', 'iphone', 'ipad')}
         producers = [job for job in jobs if job['name'] in expected]
         require(len(producers) == len(expected) and {job['name'] for job in producers} == expected and
-                all(job['head_sha'] == source and job['status'] == 'completed' and job['conclusion'] == 'success' for job in producers),
-                'current-attempt producer incomplete, failed or blocked')
+                all(job['head_sha'] == source and job['status'] == 'completed' for job in producers),
+                'timing current-attempt producer identity incomplete')
+        require(all(job['conclusion'] == 'success' for job in producers if job['name'] in {
+            'Privacy oracle rejection controls', 'Privacy SDK macos', 'Privacy SDK iphonesimulator'}),
+            'timing prerequisite controls or SDK failed')
+        all_producers_succeeded = all(job['conclusion'] == 'success' for job in producers)
         artifacts = api('actions/runs/' + run + '/artifacts?per_page=100')['artifacts']
         require(len(artifacts) < 100, 'artifact listing pagination required')
         for platform in ('macos', 'iphone', 'ipad'):
-            matches = [item for item in artifacts if item['name'] == 'password-continuation-native-' + platform + '-' + run + '-' + attempt]
-            require(len(matches) == 1, 'native artifact absent or duplicate')
-            artifact = matches[0]
-            require(not artifact['expired'] and artifact['workflow_run']['head_sha'] == source and
-                    str(artifact['workflow_run']['id']) == run, 'original artifact identity differs')
-            path = out / (platform + '-original.zip')
-            with path.open('wb') as file:
-                subprocess.run(['gh', 'api', 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/artifacts/' + str(artifact['id']) + '/zip'],
-                               stdout=file, check=True)
-            require(path.stat().st_size == artifact['size_in_bytes'] and 'sha256:' + sha(path) == artifact['digest'], 'original ZIP digest differs')
-            with tempfile.TemporaryDirectory(prefix='privacy-evidence-') as temporary:
-                directory = Path(temporary); safe_extract(path, directory)
-                proof = validate(directory, source, run, attempt, platform)
-            proof.update(artifact_id=artifact['id'], original_zip_sha256=sha(path), original_zip_bytes=path.stat().st_size)
-            summary['platforms'][platform] = proof
+            try:
+                matches = [item for item in artifacts if item['name'] == 'password-continuation-native-' + platform + '-' + run + '-' + attempt]
+                require(len(matches) == 1, 'native artifact absent or duplicate')
+                artifact = matches[0]
+                require(not artifact['expired'] and artifact['workflow_run']['head_sha'] == source and
+                        str(artifact['workflow_run']['id']) == run, 'original artifact identity differs')
+                # Do not re-export failed native logs in the safe timing summary
+                # artifact. Immutable producer uploads remain retained remotely.
+                with tempfile.TemporaryDirectory(prefix='privacy-current-original-') as temporary:
+                    path = Path(temporary) / 'original.zip'
+                    with path.open('wb') as file:
+                        subprocess.run(['gh', 'api', 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/artifacts/' + str(artifact['id']) + '/zip'],
+                                       stdout=file, stderr=subprocess.PIPE, check=True)
+                    require(path.stat().st_size == artifact['size_in_bytes'] and 'sha256:' + sha(path) == artifact['digest'], 'original ZIP digest differs')
+                    directory = Path(temporary) / 'extracted'; directory.mkdir()
+                    safe_extract(path, directory)
+                    timing = replay_checkpoint_timing(directory, source, run, attempt, platform)
+                    timing.update(artifact_id=artifact['id'], original_zip_sha256=sha(path), original_zip_bytes=path.stat().st_size)
+                    summary['timing_replays'][platform] = timing
+                    if all_producers_succeeded:
+                        try:
+                            proof = validate(directory, source, run, attempt, platform)
+                            proof.update(artifact_id=artifact['id'], original_zip_sha256=sha(path), original_zip_bytes=path.stat().st_size)
+                            summary['platforms'][platform] = proof
+                        except Exception:
+                            summary['continuation_replay_failures'][platform] = 'unavailable-or-invalid'
+            except Exception:
+                summary['timing_replay_failures'][platform] = 'unavailable-or-invalid'
+        # Diagnostic timing does not bypass the ORIGINAL producer gate or any
+        # successful-native/program/admission/privacy proof in validate().
+        require(len(producers) == len(expected) and {job['name'] for job in producers} == expected and
+                all(job['head_sha'] == source and job['status'] == 'completed' and job['conclusion'] == 'success' for job in producers),
+                'current-attempt producer incomplete, failed or blocked')
+        require(not summary['timing_replay_failures'] and not summary['continuation_replay_failures'] and
+                set(summary['timing_replays']) == {'macos', 'iphone', 'ipad'} and
+                set(summary['platforms']) == {'macos', 'iphone', 'ipad'}, 'complete continuation/timing replay absent')
         summary['probe_integrity_verified'] = True
     except Exception as error:
         # Never echo arbitrary parsed/framework text or synthetic oracle inputs.

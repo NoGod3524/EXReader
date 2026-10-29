@@ -95,6 +95,11 @@ class UIObservationControls(unittest.TestCase):
         accessor = 'if id == "account.sync.state" { return observedSyncState(item) }'
         self.assertEqual(stripped.count(accessor), 1)
         stripped = stripped.replace(accessor, 'if id == "account.sync.state" { return item.label }', 1)
+        detail = '        XCTAssertTrue(wait(30) { self.missingCredentialObserved() ||\n'
+        original_detail = ('        let missing = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "请重新输入此账号的授权信息")).firstMatch\n'
+                           '        XCTAssertTrue(wait(30) { missing.exists ||\n')
+        self.assertEqual(stripped.count(detail), 1)
+        stripped = stripped.replace(detail, original_detail, 1)
         for call in ('        observeInitialSaveStatus()\n', '        assertStateAccessorControls()\n'):
             self.assertEqual(stripped.count(call), 1)
             stripped = stripped.replace(call, '', 1)
@@ -105,6 +110,21 @@ class UIObservationControls(unittest.TestCase):
         self.assertIn('value: item.value, allowMacValue: false)', current)
         self.assertIn('XCTAssertEqual(exactSyncState(label: "正在同步", value: "本轮扫描完成", allowMacValue: true), "正在同步")', current)
         self.assertIn('XCTAssertEqual(exactSyncState(label: "同步失败", value: "本轮扫描完成", allowMacValue: true), "同步失败")', current)
+
+    def test_missing_detail_accessor_is_fixed_mac_value_fallback_not_arbitrary_success(self):
+        current = (ROOT / SWIFT).read_text()
+        self.assertIn('if !label.isEmpty { return label.contains(phrase) }', current)
+        self.assertIn('guard allowMacValue, let value = value as? String else { return false }', current)
+        self.assertIn('return exactMissingCredential(label: item.label, value: item.value, allowMacValue: true)', current)
+        self.assertIn('return app.staticTexts.matching(missingCredentialPredicate(allowMacValue: false)).firstMatch.exists', current)
+        self.assertIn('NSPredicate(format: "label CONTAINS %@ OR (label == %@ AND value CONTAINS %@)", phrase, "", phrase)', current)
+        self.assertIn('XCTAssertEqual([shadow, valid].first { query.evaluate(with: $0) }?["label"], phrase)', current)
+        for control in (
+            'XCTAssertFalse(exactMissingCredential(label: "网络错误", value: "请重新输入此账号的授权信息", allowMacValue: true))',
+            'XCTAssertFalse(exactMissingCredential(label: "", value: "请重新输入此账号的授权信息", allowMacValue: false))',
+            'XCTAssertFalse(exactMissingCredential(label: "", value: NSNumber(value: 1), allowMacValue: true))',
+            'XCTAssertFalse(exactMissingCredential(label: "", value: "not-the-fixed-detail", allowMacValue: true))'):
+            self.assertIn(control, current)
 
 
 if __name__ == '__main__':

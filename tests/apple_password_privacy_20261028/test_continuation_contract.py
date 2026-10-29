@@ -7,6 +7,7 @@ import http.client
 import inspect
 import json
 import plistlib
+import re
 from pathlib import Path
 import socket
 import ssl
@@ -22,6 +23,7 @@ from http.server import BaseHTTPRequestHandler
 from contract import ROOT, sha
 from continuation_contract import CASE, STAGES, case_name, verdict
 from continuation_contract import BUNDLE, ENTITLEMENT_FILE, ENTITLEMENTS, admission_app_identity, admission_tool, entitlement_linker_token, exact_entitlements, macho_entitlement_section, signature_summary, verify_admission_transition, verify_continuation_project
+from continuation_contract import BASE, CheckpointTiming, TIMING_PHASES, TIMING_TIMEBASE, validate_checkpoint_timing
 from continuation_lifecycle import ContinuationLifecycle, LifecycleHTTPServer, atomic_result, seal_files, verify_lifecycle, write_unsealed
 from fixture import fixture
 
@@ -40,6 +42,26 @@ def blocked_server(directory, lifecycle, release):
     client.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
     if not entered.wait(2): raise RuntimeError('control callback did not enter')
     return server, serving, client
+
+
+def timing_control(count=4, failed=False):
+    source, run, attempt, platform = 'a' * 40, '42', '1', 'macos'
+    ticks = iter(range(1000, 2000))
+    observer = CheckpointTiming(0, clock=lambda: next(ticks))
+    checkpoints = {}
+    for index, stage in enumerate(STAGES[:count]):
+        scans = {'profile': {'bytes': 10 + index, 'file_count': 1}}
+        observer.begin(stage)
+        for phase in TIMING_PHASES[:8] if failed else TIMING_PHASES:
+            observer.phase(stage, phase)
+            if phase == 'first-scan-manifest': observer.counts(stage, scans)
+        observer.finish(stage, not failed)
+        if not failed:
+            checkpoints[stage] = {'profile_id': '00000000-0000-0000-0000-000000000001',
+                'archive': stage + '-product.zip', 'archive_sha256': str(index + 1) * 64,
+                'network_requests': index * 256, 'strict_privacy_passed': False, 'scans': scans}
+    document, summary = observer.snapshot(checkpoints, source, run, attempt, platform)
+    return document, summary, checkpoints, (source, run, attempt, platform)
 
 
 def timeout_child(directory):
@@ -84,6 +106,182 @@ def control_project():
 
 
 class ContinuationControls(unittest.TestCase):
+    def test_timing_four_original_checkpoints_have_exact_order_and_identity(self):
+        document, summary, checkpoints, identity = timing_control()
+        self.assertTrue(summary['valid']); self.assertTrue(summary['observed'])
+        self.assertEqual([row['stage'] for row in summary['records']], STAGES)
+        self.assertEqual(summary['records'][0]['entered_ms'], 1000000)
+        self.assertEqual(summary['records'][0]['phases'][0]['began_ms'], 1001000)
+        self.assertEqual(len({row['checkpoint_identity'] for row in summary['records']}), 4)
+        self.assertTrue(all(row['scan_counts']['profile']['file_count'] == 1 for row in summary['records']))
+        self.assertEqual(summary, validate_checkpoint_timing(document, checkpoints, *identity))
+        for key in ('external_clock_verified', 'http_response_delivery_proven', 'native_acceptance', 'full_f10_accepted'):
+            self.assertFalse(summary[key])
+
+    def test_timing_partial_failed_phase_and_missing_is_not_zero(self):
+        document, summary, checkpoints, identity = timing_control(count=1, failed=True)
+        row = summary['records'][0]
+        self.assertEqual(row['state'], 'failed'); self.assertEqual(row['phases'][-1]['state'], 'failed')
+        self.assertEqual(row['phases'][-1]['phase'], 'second-scan'); self.assertIsNone(row['checkpoint_identity'])
+        self.assertEqual(len(row['phases']), 8); self.assertEqual(checkpoints, {})
+        empty, proof = CheckpointTiming(0, lambda: 1).snapshot({}, *identity)
+        self.assertTrue(proof['valid']); self.assertFalse(proof['observed']); self.assertEqual(proof['records'], [])
+        self.assertNotEqual(proof, summary)
+        observer = CheckpointTiming(0, lambda: 1); observer.begin(STAGES[0])
+        with self.assertRaisesRegex(RuntimeError, '^timing finalized callback remains open$'):
+            observer.snapshot({}, *identity)
+        changed = copy.deepcopy(document); changed['records'][0]['state'] = 'completed'
+        with self.assertRaises(RuntimeError): validate_checkpoint_timing(changed, checkpoints, *identity)
+
+    def test_timing_rejects_boolean_nonfinite_out_of_horizon_and_global_regression(self):
+        document, unused, checkpoints, identity = timing_control()
+        for bad in (True, False, -1, 4800001, 1.5, float('nan'), float('inf'), 'encoded-private-operand'):
+            changed = copy.deepcopy(document); changed['records'][0]['entered_ms'] = bad
+            with self.assertRaises(RuntimeError): validate_checkpoint_timing(changed, checkpoints, *identity)
+        for callback, phase, field, value in [(0, 0, 'began_ms', 999), (0, 1, 'ended_ms', 1000), (1, None, 'entered_ms', 1001)]:
+            changed = copy.deepcopy(document)
+            row = changed['records'][callback]
+            (row if phase is None else row['phases'][phase])[field] = value
+            with self.assertRaises(RuntimeError): validate_checkpoint_timing(changed, checkpoints, *identity)
+
+    def test_timing_rejects_duplicate_foreign_records_phases_roots_and_binding(self):
+        document, unused, checkpoints, identity = timing_control()
+        changes = []
+        value = copy.deepcopy(document); value['records'].append(copy.deepcopy(value['records'][-1])); changes.append(value)
+        value = copy.deepcopy(document); value['records'][1]['stage'] = STAGES[0]; changes.append(value)
+        value = copy.deepcopy(document); value['records'][0]['stage'] = 'private-operand'; changes.append(value)
+        value = copy.deepcopy(document); value['records'][0]['phases'][1]['phase'] = TIMING_PHASES[0]; changes.append(value)
+        value = copy.deepcopy(document); value['records'][0]['checkpoint_identity'] = value['records'][1]['checkpoint_identity']; changes.append(value)
+        value = copy.deepcopy(document); value['records'][0]['scan_counts'] = {'private-operand': {'bytes': 1, 'file_count': 1}}; changes.append(value)
+        value = copy.deepcopy(document); value['records'][0]['scan_counts']['profile']['bytes'] = True; changes.append(value)
+        value = copy.deepcopy(document); value['records'][0]['scan_counts'] = {}; changes.append(value)
+        value = copy.deepcopy(document); value['records'][0]['phases'][-1]['state'] = 'open'; changes.append(value)
+        value = copy.deepcopy(document); value['timebase'] = 'wall-clock'; changes.append(value)
+        for changed in changes:
+            with self.assertRaises(RuntimeError): validate_checkpoint_timing(changed, checkpoints, *identity)
+        for stages in ([STAGES[0], STAGES[0]], ['private-operand']):
+            observer = CheckpointTiming(0, lambda: 1)
+            for stage in stages: observer.begin(stage)
+            with self.assertRaises(RuntimeError): observer.snapshot({}, *identity)
+
+    def test_timing_observer_failure_never_replaces_original_callback_error(self):
+        class OriginalFailure(Exception): pass
+        def broken_clock(): raise ValueError('private clock operand')
+        observer = CheckpointTiming(0, broken_clock)
+        with self.assertRaises(OriginalFailure):
+            observer.begin(STAGES[0])
+            try:
+                observer.phase(STAGES[0], TIMING_PHASES[0])
+                observer.counts(STAGES[0], {'private-operand': {}})
+                raise OriginalFailure()
+            finally: observer.finish(STAGES[0], False)
+        with self.assertRaisesRegex(RuntimeError, '^timing observer unavailable$'):
+            observer.snapshot({}, 'a' * 40, '42', '1', 'macos')
+
+    def test_timing_independent_replay_binds_all_members_summary_and_original_scan(self):
+        from authenticate_continuation import replay_checkpoint_timing
+        document, summary, checkpoints, identity = timing_control(count=1)
+        lifecycle = ContinuationLifecycle('macos'); lifecycle.admission_open = False
+        lifecycle.serving_stopped = lifecycle.drained = True; lifecycle.cleanup['certificate'] = 'completed'
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            def write_evidence():
+                (root / 'result.json').unlink(missing_ok=True)
+                (root / 'checkpoint-timing.json').write_text(json.dumps(document))
+                (root / 'checkpoints.json').write_text(json.dumps(checkpoints))
+                (root / (STAGES[0] + '-privacy-scan.json')).write_text(json.dumps(checkpoints[STAGES[0]]['scans']))
+                result = {'source_sha': identity[0], 'run_id': identity[1], 'attempt': identity[2], 'platform': identity[3],
+                    'base_sha': BASE, 'accepted': False, 'diagnostic_only': True, 'full_f10_accepted': False,
+                    'evidence_sealed': True, 'lifecycle': lifecycle.receipt(), 'checkpoints': checkpoints,
+                    'checkpoint_timing': summary, 'files': seal_files(root)}
+                (root / 'result.json').write_text(json.dumps(result))
+                return result
+            result = write_evidence()
+            proof = replay_checkpoint_timing(root, *identity)
+            self.assertTrue(proof['original_member_replay']); self.assertFalse(proof['signature_replay_credited'])
+            (root / 'checkpoint-timing.json').write_text('{}')
+            with self.assertRaises(RuntimeError): replay_checkpoint_timing(root, *identity)
+            result = write_evidence(); result['checkpoint_timing']['observed'] = False
+            (root / 'result.json').write_text(json.dumps(result))
+            with self.assertRaises(RuntimeError): replay_checkpoint_timing(root, *identity)
+            summary['observed'] = True; write_evidence()
+            (root / (STAGES[0] + '-privacy-scan.json')).write_text(json.dumps({'profile': {'bytes': 999, 'file_count': 1}}))
+            (root / 'result.json').unlink(); result['checkpoint_timing'] = summary; result['files'] = seal_files(root)
+            (root / 'result.json').write_text(json.dumps(result))
+            with self.assertRaises(RuntimeError): replay_checkpoint_timing(root, *identity)
+            # Even a structurally coherent open record cannot be certified
+            # after the receipt proves every callback handler has ended.
+            document['records'][0].update(state='open', exited_ms=None)
+            document['records'][0]['phases'][-1].update(state='open', ended_ms=None)
+            summary = validate_checkpoint_timing(document, checkpoints, *identity)
+            write_evidence()
+            with self.assertRaisesRegex(RuntimeError, '^timing finalized callback remains open$'):
+                replay_checkpoint_timing(root, *identity)
+
+    def test_timing_aggregate_never_turns_failed_native_or_failed_controls_into_acceptance(self):
+        import authenticate_continuation as auth
+        source, run, attempt = 'a' * 40, '42', '1'
+        names = ['Privacy oracle rejection controls', 'Privacy SDK macos', 'Privacy SDK iphonesimulator'] + [
+            'Privacy diagnostic continuation ' + platform for platform in ('macos', 'iphone', 'ipad')]
+        archive = b'controlled-download-bytes'
+        artifacts = [{'id': index + 1, 'name': 'password-continuation-native-' + platform + '-42-1',
+            'expired': False, 'workflow_run': {'head_sha': source, 'id': 42},
+            'size_in_bytes': len(archive), 'digest': 'sha256:' + hashlib.sha256(archive).hexdigest()}
+            for index, platform in enumerate(('macos', 'iphone', 'ipad'))]
+        for mode in ('native-failed', 'full-validator-refused', 'controls-failed', 'sdk-failed'):
+            jobs = [{'name': name, 'head_sha': source, 'status': 'completed', 'conclusion': 'success'} for name in names]
+            if mode == 'native-failed': jobs[4]['conclusion'] = 'failure'
+            if mode == 'controls-failed': jobs[0]['conclusion'] = 'failure'
+            if mode == 'sdk-failed': jobs[1]['conclusion'] = 'failure'
+            def api(argv):
+                if '/jobs?' in argv[-1]: return json.dumps({'jobs': jobs}).encode()
+                if '/artifacts?' in argv[-1]: return json.dumps({'artifacts': artifacts}).encode()
+                raise AssertionError('unexpected control API')
+            def download(argv, **kwargs):
+                kwargs['stdout'].write(archive)
+                return subprocess.CompletedProcess(argv, 0)
+            def full_validate(directory, supplied_source, supplied_run, supplied_attempt, platform):
+                if mode == 'full-validator-refused' and platform == 'iphone': raise RuntimeError('private refusal operand')
+                return {'accepted': False, 'full_f10_accepted': False}
+            with tempfile.TemporaryDirectory() as temporary, patch.object(auth, 'ROOT', Path(temporary)), \
+                    patch.object(auth, 'guard'), patch.object(auth.sys, 'platform', 'darwin'), \
+                    patch.dict(os.environ, {'GITHUB_ACTIONS': 'true', 'GITHUB_SHA': source, 'GITHUB_RUN_ID': run,
+                        'GITHUB_RUN_ATTEMPT': attempt, 'GITHUB_REPOSITORY': 'fixture/owned'}), \
+                    patch.object(auth.subprocess, 'check_output', side_effect=api), \
+                    patch.object(auth.subprocess, 'run', side_effect=download) as downloaded, \
+                    patch.object(auth, 'safe_extract'), patch.object(auth, 'replay_checkpoint_timing',
+                        side_effect=lambda *args: {'valid': True, 'native_acceptance': False, 'full_f10_accepted': False}) as replay, \
+                    patch.object(auth, 'validate', side_effect=full_validate) as full, patch('builtins.print'):
+                with self.assertRaises(RuntimeError): auth.main()
+                summary = json.loads((Path(temporary) / 'build/apple-password-continuation-summary/summary.json').read_text())
+                self.assertFalse(summary['probe_integrity_verified']); self.assertFalse(summary['accepted'])
+                self.assertFalse(summary['full_f10_accepted'])
+                self.assertNotIn('private refusal operand', json.dumps(summary))
+                if mode in ('controls-failed', 'sdk-failed'):
+                    replay.assert_not_called(); full.assert_not_called(); downloaded.assert_not_called()
+                else:
+                    self.assertEqual(set(summary['timing_replays']), {'macos', 'iphone', 'ipad'})
+                    self.assertEqual(summary['timing_replay_failures'], {})
+                    if mode == 'native-failed':
+                        full.assert_not_called(); self.assertEqual(summary['continuation_replay_failures'], {})
+                    else:
+                        self.assertEqual(full.call_count, 3)
+                        self.assertEqual(summary['continuation_replay_failures'], {'iphone': 'unavailable-or-invalid'})
+    def test_timing_wrappers_reconstruct_original_checkpoint_and_full_validator(self):
+        runner = (ROOT / 'tests/apple_password_privacy_20261028/continuation_run.py').read_text()
+        body = runner[runner.index('        def checkpoint(stage, requests):'):runner.index('        def timed_checkpoint(stage, requests):')]
+        body = '\n'.join(line for line in body.splitlines() if not re.fullmatch(
+            r"            timing\.(?:phase\(stage, '[a-z-]+'\)|counts\(stage, scans\))", line)).rstrip() + '\n'
+        self.assertEqual(hashlib.sha256(body.encode()).hexdigest(), 'f9acb36b1c9209017c857b8ebb397a767c2ecc8a0f90262df4c379e0e97665a1')
+        self.assertEqual(runner.count('timing.phase(stage,'), len(TIMING_PHASES))
+        auth = (ROOT / 'tests/apple_password_privacy_20261028/authenticate_continuation.py').read_text()
+        body = auth[auth.index('def validate(directory, source, run, attempt, platform):'):auth.index('\ndef replay_checkpoint_timing(')]
+        body = body.replace('    timing = replay_checkpoint_timing(directory, source, run, attempt, platform)\n', '')
+        body = body.replace('                checkpoint_timing=timing,\n', '').rstrip() + '\n'
+        self.assertEqual(hashlib.sha256(body.encode()).hexdigest(), 'f658ac04578abfd98d57627058ec1bc8078b37a99605a1a03aaada727a10f868')
+        self.assertIn("all(job['head_sha'] == source and job['status'] == 'completed' and job['conclusion'] == 'success' for job in producers)", auth)
+        self.assertEqual(sha(ROOT / '.github/workflows/apple-password-privacy-20261028.yml'), '3eb24789a79b48d2a0af24c7b7c9cf2ed526afc3403e5c7e986840cd35adb673')
+
     def test_entitlements_are_exact_and_reject_duplicate_foreign_or_nonboolean(self):
         source = ENTITLEMENT_FILE.read_bytes()
         self.assertEqual(exact_entitlements(source), ENTITLEMENTS)

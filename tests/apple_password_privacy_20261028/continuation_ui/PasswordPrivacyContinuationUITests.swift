@@ -48,6 +48,41 @@ final class PasswordPrivacyContinuationUITests: XCTestCase {
         XCTAssertEqual(exactSyncState(label: "", value: "not-a-state", allowMacValue: true), "")
         XCTAssertEqual(exactSyncState(label: "", value: NSNumber(value: 1), allowMacValue: true), "")
         XCTAssertEqual(exactSyncState(label: "", value: "本轮扫描完成", allowMacValue: false), "")
+        XCTAssertTrue(exactMissingCredential(label: "请重新输入此账号的授权信息", value: nil, allowMacValue: true))
+        XCTAssertTrue(exactMissingCredential(label: "", value: "请重新输入此账号的授权信息", allowMacValue: true))
+        XCTAssertFalse(exactMissingCredential(label: "网络错误", value: "请重新输入此账号的授权信息", allowMacValue: true))
+        XCTAssertFalse(exactMissingCredential(label: "", value: "请重新输入此账号的授权信息", allowMacValue: false))
+        XCTAssertFalse(exactMissingCredential(label: "", value: NSNumber(value: 1), allowMacValue: true))
+        XCTAssertFalse(exactMissingCredential(label: "", value: "not-the-fixed-detail", allowMacValue: true))
+        let phrase = "请重新输入此账号的授权信息"
+        let shadow = ["label": "网络错误", "value": phrase]
+        let valid = ["label": phrase, "value": "not-the-fixed-detail"]
+        let query = missingCredentialPredicate(allowMacValue: true)
+        XCTAssertFalse(query.evaluate(with: shadow))
+        XCTAssertEqual([shadow, valid].first { query.evaluate(with: $0) }?["label"], phrase)
+        XCTAssertTrue(query.evaluate(with: ["label": "", "value": phrase]))
+        XCTAssertFalse(missingCredentialPredicate(allowMacValue: false).evaluate(with: ["label": "", "value": phrase]))
+    }
+    private func exactMissingCredential(label: String, value: Any?, allowMacValue: Bool) -> Bool {
+        let phrase = "请重新输入此账号的授权信息"
+        if !label.isEmpty { return label.contains(phrase) }
+        guard allowMacValue, let value = value as? String else { return false }
+        return value.contains(phrase)
+    }
+    private func missingCredentialObserved() -> Bool {
+#if os(macOS)
+        let candidate = app.staticTexts.matching(missingCredentialPredicate(allowMacValue: true)).firstMatch
+        guard let item = try? candidate.snapshot() else { return false }
+        return exactMissingCredential(label: item.label, value: item.value, allowMacValue: true)
+#else
+        // Preserve the original iOS label-only existence predicate.
+        return app.staticTexts.matching(missingCredentialPredicate(allowMacValue: false)).firstMatch.exists
+#endif
+    }
+    private func missingCredentialPredicate(allowMacValue: Bool) -> NSPredicate {
+        let phrase = "请重新输入此账号的授权信息"
+        return allowMacValue ? NSPredicate(format: "label CONTAINS %@ OR (label == %@ AND value CONTAINS %@)", phrase, "", phrase) :
+            NSPredicate(format: "label CONTAINS %@", phrase)
     }
     private func observeInitialSaveStatus() {
         guard stages.isEmpty else { return }
@@ -258,8 +293,7 @@ final class PasswordPrivacyContinuationUITests: XCTestCase {
         launch(); selected(); XCTAssertTrue(node("library.book.0").exists)
         tap("account.sync.start")
         XCTAssertTrue(wait { self.text("account.sync.state") == "同步失败" })
-        let missing = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "请重新输入此账号的授权信息")).firstMatch
-        XCTAssertTrue(wait(30) { missing.exists ||
+        XCTAssertTrue(wait(30) { self.missingCredentialObserved() ||
             ((self.node("account.sync.state").value as? String) ?? "").contains("请重新输入此账号的授权信息") },
             "Session-only restart must require credentials")
         try closeAndObserve("session_reopened_missing")

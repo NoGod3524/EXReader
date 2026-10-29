@@ -416,6 +416,95 @@ Six additional authored controls (proposed total75) cover duplicate/foreign
 entitlements, section/platform/bounds substitution, exact project deltas,
 zero-exit signature spoofing, built/installed byte substitution and actual
 blocked inspection with retained output/unsealed refusal. No local execution.
-This seven-file implementation still requires final independent source review
-and Actions. A changed save/restart outcome would be a bounded comparative
+At its first source freeze this seven-file implementation was unrun; final
+review and Actions results follow below. A changed save/restart outcome is a bounded comparative
 result, not proof of the old OSStatus or strict/full-F10 acceptance.
+
+## Current comparative results and bounded macOS detail accessor
+
+Final source review and exact owner publication approval completed. Run
+40828331893/1 at45a8f94b29e4e36467ffc4b8004f32c6d7fa2d63 passed75 controls
+and both SDKs; all three native jobs and aggregate remained failed. Both iOS
+hosts now reported saved and completed remembered sync after real process
+restart. Both producer built/installed comparison receipts and all three sealed
+lifecycle receipts passed. iPad retained all four checkpoints; iPhone two and
+macOS three. This changed comparative outcome does not prove the old OSStatus.
+
+Retained-only diagnostic40831408314/1 atc004d498fa5fb5523e0eca63b3877686510a93ba
+passed77 controls. MacOS1776 and iPhone1134 manifested files matched exactly.
+MacOS native failure was the fixed session-only credential-message assertion
+at Swift262, despite a separate finite query observing the fixed detail text.
+The actual state had already failed as expected after restart. The assertion
+queried static-text labels or the sync-state value, while the existing detail
+observation also queried the separate static-text value. This is a test lookup
+discrepancy, not evidence that credentials survived or a product patch request.
+iPhone independent admission refused an extra app-archive namespace; iPad was
+not reached. No namespace exception or independent signing credit is granted.
+
+This source-only three-path repair adds only a macOS empty-label fallback for
+the SAME fixed missing-credential phrase. Nonempty labels remain authoritative,
+contradictory values/unknown values/nonstrings refuse, and iOS retains its label-
+only predicate. The existing30-second assertion, expected phrase, state check,
+all UI actions/restarts and60/90/240/360/4800 budgets remain unchanged. The
+original strict UI is untouched. The macOS query excludes nonempty contradictory
+labels before firstMatch, so they cannot shadow a later original label match.
+Ten native positive/negative assertions (including that query-order control) and
+one additive Actions source-equivalence control cover this exact exception;
+reconstruction still byte-matches the frozen original outside the two bounded
+accessor corrections and finite observation wrapper.
+
+The separate retained-only successor40833424008/1 at7727657dcae63b036b58bac65d5b53a3391dd24e
+passed80 controls and diagnosed all three platforms. All original manifested
+members1776/1134/1156 matched. Both iOS xcresults report XCTest test timeout,
+both credential roles completed256-shard sweeps, and both installed archives
+contain one extra metadata-named file. No namespace waiver was granted.
+
+Classification-only run40836549748/1 at85893a685af48c233dbeea739858a50d874b7166
+passed88 controls. Both extras are232-byte AppleDouble-v2/copyfile-ATTR structures
+paired to the actual executable: zero32-byte FinderInfo, empty resource fork,
+two nonzero16-byte xattrs with opaque names/content (only hashes and finite
+categories output). All18/19/20 app+metadata files were completely scanned and
+replayed, no synthetic variant hits, and exact app manifests matched. This is
+not a semantic harmlessness/signature proof. The unchanged namespace guard
+still refuses both iOS archives; all native/strict failures remain preserved.
+
+## Authorized combined accessor and checkpoint timing experiment
+
+Owner approved the exact seven-path plan on2026-10-29 at07:39:14 UTC:
+the reviewed macOS accessor plus continuation runner/contract/contract tests,
+independent continuation authenticator and this status document. Implementation
+is source-only at this point, with final exact-byte review and Actions pending.
+No SDK/workflow/production/strict path changed. The AppleDouble classifier and
+fatal admission namespace predicate remain unchanged by this timing packet.
+
+At most four original ordered callback records measure fixed phase boundaries
+from the existing lifecycle's process-local monotonic origin. Entry/exit and
+completed/failed/open phases are distinct; unique checkpoint identities bind
+to the original profile/archive/network/strict-verdict fields without printing
+them. Counts come from already verified scan records, not additional walks.
+Measurement adds no early acknowledgement, asynchronous scanner, timeout,
+compression change, cached scan, shorter log window, or root/byte exclusion.
+Complete callback return does not prove HTTP204 was sent or received.
+
+Timing is exported only after the unchanged serving-stop/whole-handler drain
+fence; a timing failure records finite unavailable status without overwriting
+the original failure or discarding raw evidence. The aggregate independently
+replays each current-attempt original's exact inventory/hashes, sealed receipt,
+timing schema/checkpoint identities and original scan counts, including on a
+native timeout. That diagnostic pass grants no native/signature/F10 credit.
+The original all-producers-success gate and every complete native/program/
+admission/privacy predicate remain mandatory for full continuation integrity.
+Independent timing replay proves byte/structure consistency, not an external
+clock measurement. Original uploads remain retained; downloaded diagnostic
+copies are temporary, with only safe finite timing summaries re-exported.
+
+Eight new Actions timing controls and the one B source control bring the
+authored Python total to97; none is claimed passed before Actions. Finalized
+open callbacks refuse after drain; aggregate controls distinguish a failed
+native run, a later full-validator refusal and failed control/SDK prerequisites.
+The old
+checkpoint body/full validator are reconstructed and byte-hash checked by
+additive controls. One authorized automatic native run, zero automatic repair/
+rerun rounds. Configured ceiling10 Ubuntu+480 macOS runner-minutes (not wall
+time/billing), all original60/90/240/360/4800 budgets unchanged. Dedicated
+Forget UI and strict/full-F10 acceptance remain absent.
