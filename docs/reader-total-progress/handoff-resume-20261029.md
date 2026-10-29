@@ -4,6 +4,16 @@ This checkpoint continues the complete handoff. The fixed catalog remains **95/1
 
 ## User correction: local background subscription usage
 
+### Latest user instruction and review state
+
+The user now explicitly requires: after the three local Claude tasks finish, independently verify their results, merge only passing changes into `codex/public-product-resume-20261029`, and continue remaining mainline work. The default branch remains outside scope. Existing heartbeat `exreader-claude` has been updated with this instruction; no duplicate automation or task was created.
+
+C3 first returned at source `c1a36166c46a2e271fbb41e24832abe8b738669b` (code tested at `b0c6b4778dbca61b5ff41cbd5f04ca29f4b17d2f`, Actions `40949203489`, successful read-only old-package inspection). Root review found its two-line Android license copy was never exercised by the actual package pipeline; the Windows user guide also incorrectly said the host had no user CLI switches despite `examples/reader.c` accepting `--data` and `--library`. The artifact reader allowed a missing digest and lacked closed-member/safe-extraction checks. Root sent this task back to the same local background session for actual Android packaging/installed-license byte verification, the source-grounded documentation correction and strict archive identity/safety. These changes are **not merged or accepted** yet. C1/C2 are still running their own corrected candidates. An idle Claude turn or successful syntax/source-only job does not establish completion.
+
+Built-in Windows follow-up: `be3f9f5610125d1ff969add1169028111b398a22` / `40949223801` has passed the original Linux 22-case handoff suite after an Actions-audited test-only atomic go-token publication repair; remaining suites and macOS are pending. Separate Windows 49-byte record slice first source `613fbca5ef101880fbdd16faee4b3a0fcf321e6d` built/installed the production library, but its consumer failed MSVC C4127 before the 27 controls. Test-only warning repair is `6e661223550308bd84a0fbd9b9c660bc0c779d8e`, with product bytes and `/W4 /WX` unchanged; its results remain pending.
+
+Apple source `329d676880c9c5f653b48f2ed6179bd1d7f97b28` / `40946118946` has a new iPhone organization failure (5/6 passed); original artifact `12930980669`, 121,621,011 bytes, SHA256 `6270282a97f22a832e39813a041b931e3c08b8300ff3b77625b374ece35fd84a`. The Apple agent submitted retained-only Actions diagnosis `40949691344` / `8260439a74d88dd3c05619d1ba09d0d5fe2d0606`. Do not rerun this unexplained failure or broaden the original six-case assertions.
+
 The user explicitly corrected the dispatch mode: **not Claude cloud tasks; use local background Claude with the user's own usage**. Stop-work messages were delivered through the official CLI to all three mistakenly created cloud sessions (`ok:true` delivery receipts); cloud termination itself is not exposed by the available CLI attachment capability. Do not create further cloud tasks.
 
 Three replacement local `--bg` sessions are actually working, in separate source worktrees under `C:/Users/Oscar/exreader-local-usage-20261029/`:
