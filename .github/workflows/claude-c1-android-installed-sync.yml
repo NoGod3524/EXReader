@@ -2,6 +2,10 @@ name: Claude C1 Android installed Sync WebDAV
 on:
   push:
     branches: [claude/local-c1-android-sync-20261029]
+    paths-ignore:
+      - tests/reader_android_installed_sync_handoff/diagnose.py
+      - .github/workflows/claude-c1-installed-sync-diagnose.yml
+      - docs/**
 permissions:
   contents: read
 concurrency:
