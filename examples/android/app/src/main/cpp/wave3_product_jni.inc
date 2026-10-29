@@ -5,10 +5,8 @@
 #include <reader_annotation_import_raw3.h>
 #include <reader_annotation_export_raw3.h>
 #include <reader_jump_history.h>
+#include <reader_reading_state_retained_raw_v1.h>
 #include <memory>
-
-/* Internal reading-state entry that validates through the raw store (as reading-commands does). */
-reader_rs_status reader_rs_encode_retained_raw_v3(reader_revisions *,const reader_rs_envelope *,const reader_rs_capture *,unsigned,size_t,char **,size_t *,reader_rs_error *);
 
 namespace wave3 {
 using product_jni::pending;
@@ -149,7 +147,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeWave3_jum
     char id[33];reader_revision_error revision{};if(reader_revision_new_id(id,&revision)!=READER_REV_OK)reject("java/lang/IllegalStateException","Cannot allocate a transient position ID");
     reader_rs_envelope envelope{};envelope.revision_id=id;envelope.operation="put";envelope.entity_kind="progress";envelope.book_key=built.fields[0].c_str();envelope.parser_version=built.fields[1].c_str();
     char *wire=nullptr;size_t bytes=0;reader_rs_error encode{};
-    reader_rs_status encoded=reader_rs_encode_retained_raw_v3(owner.revisions,&envelope,&built.capture,static_cast<unsigned>(version),static_cast<size_t>(built.values[1]),&wire,&bytes,&encode);
+    reader_rs_status encoded=reader_rs_encode_retained_raw_v1(owner.revisions,&envelope,&built.capture,static_cast<unsigned>(version),static_cast<size_t>(built.values[1]),&wire,&bytes,&encode);
     if(encoded!=READER_RS_OK){
       return product_jni::strings(env,{"100","0","0","0","0","0","0",std::to_string(static_cast<int>(encoded)),std::to_string(static_cast<int>(encode.gap)),encode.message});
     }

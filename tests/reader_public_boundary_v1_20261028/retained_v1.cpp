@@ -28,7 +28,14 @@ static unsigned checks;
 static void check(bool ok,const char *what){++checks;if(!ok)throw std::runtime_error(what);std::cout<<"PASS "<<what<<'\n';}
 static std::string read(const fs::path &path){std::ifstream f(path,std::ios::binary);check(bool(f),"fixture open");return {std::istreambuf_iterator<char>(f),{}};}
 static void write(const fs::path &path,const std::string &value){std::ofstream f(path,std::ios::binary);f.write(value.data(),static_cast<std::streamsize>(value.size()));check(bool(f),"wire evidence saved");}
-static std::string book(const char *format,const char *key){const char *sha=std::getenv(key);check(sha&&std::strlen(sha)==64,"actual fixture SHA supplied");return std::string(format)+":"+sha;}
+static std::string book(const char *format,const char *key){
+#ifdef _WIN32
+  char sha[65]{};size_t count=0;check(getenv_s(&count,sha,sizeof(sha),key)==0&&count==65,"actual fixture SHA supplied");
+#else
+  const char *sha=std::getenv(key);check(sha&&std::strlen(sha)==64,"actual fixture SHA supplied");
+#endif
+  return std::string(format)+":"+sha;
+}
 static std::string encode(reader_revisions *store,const reader_rs_envelope &env,const reader_rs_capture &capture,unsigned version,size_t part){
   char *wire=nullptr;size_t count=0;reader_rs_error error{};
   check(reader_rs_encode_retained_raw_v1(store,&env,&capture,version,part,&wire,&count,&error)==READER_RS_OK,error.message);
@@ -69,6 +76,12 @@ int main(int argc,char **argv){
     check(exr_document_open_memory(EXR_TXT,text.data(),text.size(),&doc,&se)==EXR_OK,se.message);
     check(exr_anchor_create(doc,0,6,&anchor,&se)==EXR_OK,se.message);reader_rs_capture capture{};capture.mode=READER_RS_REFLOW_GLOBAL;capture.anchor=&anchor;
     for(unsigned version:{1u,2u}){
+      if(version==2){
+        char *rejected=reinterpret_cast<char *>(1);size_t rejected_size=9;reader_rs_error rejected_error{};
+        check(reader_rs_encode_retained_raw_v1(raw,&env,&capture,2,0,&rejected,&rejected_size,&rejected_error)==READER_RS_REVISION&&!rejected&&!rejected_size,
+              "v2 progress refuses a non-point selector without relaxing revision validation");
+        exr_anchor_free(&anchor);check(exr_anchor_create(doc,0,0,&anchor,&se)==EXR_OK,se.message);
+      }
       const auto value=encode(raw,env,capture,version,0);write(work/("wire-v"+std::to_string(version)+".json"),value);
       char *old=nullptr;size_t size=0;reader_rs_error error{};
       auto status=version==1?reader_rs_encode(legacy,&env,&capture,&old,&size,&error):reader_rs_encode_v2(legacy,&env,&capture,0,&old,&size,&error);
