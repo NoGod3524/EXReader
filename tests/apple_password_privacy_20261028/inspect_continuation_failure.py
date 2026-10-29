@@ -21,18 +21,19 @@ from continuation_contract import APPLEDOUBLE_LIMIT, appledouble_content
 from privacy_scan import inventory, scan_file, needles, identity
 from authenticate_continuation import verify_ios_admission
 
-RUN = '40828331893'
-SOURCE = '45a8f94b29e4e36467ffc4b8004f32c6d7fa2d63'
+RUN = '40839064448'
+SOURCE = 'abd16571fda41b5bc936fcbcfb9a125554992c2e'
 SOURCE_FILE = 'tests/apple_password_privacy_20261028/continuation_ui/PasswordPrivacyContinuationUITests.swift'
-SOURCE_SHA = '6555ab86d6a1f517a496a5ce777dfe67ff70a30c89c4cea5a6c7a4a5459fb079'
-SOURCE_LAST_LINE = 267
+SOURCE_SHA = '92629443887d6218722d65b9c4a545f90341fa65167ff8cdd73bde52921cca5f'
+SOURCE_LAST_LINE = 301
 SOURCE_PATH = '/Users/runner/work/EXReader/EXReader/' + SOURCE_FILE
 # Exact terminal three-platform attempt-1 uploads; all originals stay retained.
-# This replays comparative admission and localizes native failures, not acceptance.
+# Timing is already independently replayed in this original run. This localizes
+# its native failures, including an iPad with no first callback, not acceptance.
 ARTIFACTS = {
-    'macos': (12877853284, 174106763, '422e440cd4f2f611c7aa0090192a732444f3ceb883441455ab7e06b44ddc83d4'),
-    'iphone': (12877814969, 183086735, 'c481ce8c63bbed8755484905b462c829b4f309709f3a7e62181973262bd2898c'),
-    'ipad': (12878446195, 235684416, '2859f0d1d0f6c01e1aac6328f4f6582a937a97dbf0d34bfc56f04efd8bb2c3d9'),
+    'macos': (12882218229, 165944812, '8e57858429168377b890a533de823b66dd215fe5279a402c4fd103fbda196987'),
+    'iphone': (12882548477, 215120884, '3375a7fbbd91697532c6447b3f336715a8512039c6f89efad736342a60a3133b'),
+    'ipad': (12883131501, 160391222, '001a9b42d19044057fcc5ecf580cffa60050a837b1d9a6a38f46d49277365dda'),
 }
 FAILURES = ('RuntimeError', 'AssertionError', 'CalledProcessError', 'TimeoutExpired',
             'FileNotFoundError', 'OperationalError', 'PermissionError', 'KeyError', 'OSError')
@@ -417,8 +418,11 @@ def network_summary(result, requests):
             not root.query and not root.fragment and not root.username and not root.password and
             re.fullmatch(r'/privacy-[0-9a-f]{24}/', root.path), 'unexpected fixture root')
     require(type(requests) is list and len(requests) <= 100000, 'unexpected request inventory')
-    first = result['checkpoints']['remember_closed']['network_requests']
-    require(type(first) is int and 0 <= first <= len(requests), 'unexpected first request boundary')
+    checkpoints = result['checkpoints']
+    require(type(checkpoints) is dict and list(checkpoints) == STAGES[:len(checkpoints)], 'unexpected first request boundary')
+    first = checkpoints['remember_closed']['network_requests'] if checkpoints else None
+    require(first is None if not checkpoints else type(first) is int and 0 <= first <= len(requests),
+            'unexpected first request boundary')
     methods = ('GET', 'MKCOL', 'PUT', 'PROPFIND')
     counts = {role: {method: 0 for method in methods} for role in ('remembered', 'session', 'unrecognized')}
     shards = {role: set() for role in counts}
@@ -426,13 +430,14 @@ def network_summary(result, requests):
         require(type(row) is dict and set(row) == {'method', 'path', 'credential'} and
                 row['method'] in methods and row['credential'] in ('remembered', 'session', None) and
                 type(row['path']) is str and row['path'].startswith(root.path), 'unexpected request row')
-        if index < first: continue
+        if first is None or index < first: continue
         role = row['credential'] or 'unrecognized'; counts[role][row['method']] += 1
         match = re.fullmatch(re.escape(root.path) + r'exreader-sync-v1/revisions/([0-9a-f]{2})/', row['path'])
         if row['method'] == 'PROPFIND' and match: shards[role].add(match.group(1))
-    return {'total_requests': len(requests), 'before_first_checkpoint': first,
-            'after_first_checkpoint': len(requests) - first, 'credential_method_counts_after_first': counts,
-            'distinct_revision_shards_after_first': {role: len(value) for role, value in shards.items()},
+    return {'total_requests': len(requests), 'first_checkpoint_observed': first is not None, 'before_first_checkpoint': first,
+            'after_first_checkpoint': len(requests) - first if first is not None else None,
+            'credential_method_counts_after_first': counts if first is not None else None,
+            'distinct_revision_shards_after_first': {role: len(value) for role, value in shards.items()} if first is not None else None,
             'raw_paths_headers_values_printed': False}
 
 

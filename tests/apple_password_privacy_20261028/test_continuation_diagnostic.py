@@ -412,14 +412,14 @@ class ContinuationDiagnosticControls(unittest.TestCase):
             diagnostic_stage('entry')
 
     def test_current_three_artifacts_and_source_extent_are_exact(self):
-        self.assertEqual(RUN, '40828331893')
-        self.assertEqual(SOURCE, '45a8f94b29e4e36467ffc4b8004f32c6d7fa2d63')
+        self.assertEqual(RUN, '40839064448')
+        self.assertEqual(SOURCE, 'abd16571fda41b5bc936fcbcfb9a125554992c2e')
         self.assertEqual(ARTIFACTS, {
-            'macos': (12877853284, 174106763, '422e440cd4f2f611c7aa0090192a732444f3ceb883441455ab7e06b44ddc83d4'),
-            'iphone': (12877814969, 183086735, 'c481ce8c63bbed8755484905b462c829b4f309709f3a7e62181973262bd2898c'),
-            'ipad': (12878446195, 235684416, '2859f0d1d0f6c01e1aac6328f4f6582a937a97dbf0d34bfc56f04efd8bb2c3d9')})
-        self.assertEqual(SOURCE_SHA, '6555ab86d6a1f517a496a5ce777dfe67ff70a30c89c4cea5a6c7a4a5459fb079')
-        self.assertEqual(SOURCE_LAST_LINE, 267)
+            'macos': (12882218229, 165944812, '8e57858429168377b890a533de823b66dd215fe5279a402c4fd103fbda196987'),
+            'iphone': (12882548477, 215120884, '3375a7fbbd91697532c6447b3f336715a8512039c6f89efad736342a60a3133b'),
+            'ipad': (12883131501, 160391222, '001a9b42d19044057fcc5ecf580cffa60050a837b1d9a6a38f46d49277365dda')})
+        self.assertEqual(SOURCE_SHA, '92629443887d6218722d65b9c4a545f90341fa65167ff8cdd73bde52921cca5f')
+        self.assertEqual(SOURCE_LAST_LINE, 301)
 
     def test_current_source_last_line_is_bounded_in_both_extractors(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -499,6 +499,25 @@ class ContinuationDiagnosticControls(unittest.TestCase):
         for change in ({'credential': 'arbitrary private operand'}, {'method': 'arbitrary private operand'},
                        {'path': '/foreign/private-operand'}):
             with self.assertRaises(RuntimeError): network_summary(result, [dict(rows[0], **change)])
+
+    def test_absent_first_checkpoint_is_not_an_observed_zero_boundary(self):
+        root = 'https://127.0.0.1:12345/privacy-' + 'a' * 24 + '/'
+        absent = {'root': root, 'checkpoints': {}}
+        row = {'credential': 'remembered', 'method': 'GET', 'path': '/privacy-' + 'a' * 24 + '/fixed'}
+        for rows in ([], [row]):
+            proof = network_summary(absent, rows)
+            self.assertFalse(proof['first_checkpoint_observed']); self.assertEqual(proof['total_requests'], len(rows))
+            for key in ('before_first_checkpoint', 'after_first_checkpoint', 'credential_method_counts_after_first',
+                        'distinct_revision_shards_after_first'): self.assertIsNone(proof[key])
+        observed = network_summary({'root': root, 'checkpoints': {'remember_closed': {'network_requests': 0}}}, [])
+        self.assertTrue(observed['first_checkpoint_observed']); self.assertEqual(observed['after_first_checkpoint'], 0)
+        self.assertEqual(observed['distinct_revision_shards_after_first']['remembered'], 0)
+        for boundary in (True, -1, 1, None, 'private-operand'):
+            with self.assertRaises(RuntimeError): network_summary({'root': root,
+                'checkpoints': {'remember_closed': {'network_requests': boundary}}}, [])
+        with self.assertRaises(RuntimeError): network_summary({'root': root,
+            'checkpoints': {'remember_reopened': {'network_requests': 0}}}, [])
+        with self.assertRaises(RuntimeError): network_summary(absent, [dict(row, path='/private-operand')])
 
     def test_xcresult_encoded_operands_removed_and_position_bound(self):
         def issue(message, url):
