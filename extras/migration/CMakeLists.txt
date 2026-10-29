@@ -65,7 +65,7 @@ endif()
 # Separately named, bounded existing-target recovery candidate. The two original
 # executables above do not define this macro and retain their prior code paths.
 add_executable(exreader-legacy-migrate-recovery
-  src/lm_main.c src/lm_pack.c src/lm_util.c src/lm_mirror.c src/lm_recovery.c)
+  src/lm_main.c src/lm_pack.c src/lm_util.c src/lm_mirror.c src/lm_recovery.c src/lm_new_target.c)
 target_compile_definitions(exreader-legacy-migrate-recovery PRIVATE
   EXR_MIGRATION_TX_CANDIDATE=1 EXR_MIGRATION_RECOVERY_CANDIDATE=1)
 target_include_directories(exreader-legacy-migrate-recovery PRIVATE "${migration_sqlite_header_SOURCE_DIR}")
@@ -75,7 +75,8 @@ if(WIN32)
   target_link_libraries(exreader-legacy-migrate-recovery PRIVATE psapi)
 else()
   target_link_libraries(exreader-legacy-migrate-recovery PRIVATE m)
-  add_executable(exreader-migration-recovery-worker src/lm_recovery_worker.c src/lm_util.c src/lm_mirror.c)
+  add_executable(exreader-migration-recovery-worker src/lm_recovery_worker.c src/lm_util.c src/lm_mirror.c src/lm_new_target.c)
+  target_compile_definitions(exreader-migration-recovery-worker PRIVATE EXR_NEW_TARGET_WORKER_ONLY=1)
   target_include_directories(exreader-migration-recovery-worker PRIVATE "${migration_sqlite_header_SOURCE_DIR}")
   target_link_libraries(exreader-migration-recovery-worker PRIVATE EXReader::exr_library EXReader::exr_core m)
   set_target_properties(exreader-migration-recovery-worker PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)

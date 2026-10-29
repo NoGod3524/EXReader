@@ -2,11 +2,13 @@
 #ifndef LM_RECOVERY_H
 #define LM_RECOVERY_H
 #include "lm_mirror.h"
+#include "lm_new_target.h"
 typedef struct lm_recovery lm_recovery;
 #define LM_RECOVERY_LIMIT (64u*1024u*1024u)
 int lr_gate(lm_recovery **out,const char *executable,const char *command,
             const char *target,const char *pack,const char *font,int break_lock,
             lm_cancel_fn cancelled,void *context,lm_err *e);
+int lr_creation_attach(lm_recovery *r,lm_new_target *n,lm_err *e);
 int lr_prepare(lm_recovery *r,const lm_pack *pack,int recover,lm_err *e);
 int lr_opening(lm_recovery *r,lm_err *e);
 void lr_owner_attempted(lm_recovery *r);
