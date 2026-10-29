@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Actions-only finite output and unchanged native assertion/budget controls."""
+"""Actions-only finite output, bounded accessor correction and old-logic controls."""
 import hashlib
 import os
 from pathlib import Path
@@ -49,6 +49,38 @@ class UIObservationControls(unittest.TestCase):
                 path.write_text(text)
                 with self.assertRaises(RuntimeError): parse_ui_observations(path)
 
+    def test_initial_save_and_separate_failed_detail_are_finite_not_acceptance(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'native.log'
+            path.write_text('EXR_PRIVACY_UI_SAVE elapsed_ms=5 status=remember-update-incomplete\n' + line() +
+                            'EXR_PRIVACY_UI_DETAIL elapsed_ms=11 phase=remembered missing_credential=1\n')
+            report = parse_ui_observations(path)
+            self.assertEqual(report['initial_save'], [{'elapsed_ms': 5, 'status': 'remember-update-incomplete'}])
+            self.assertTrue(report['failed_details'][0]['missing_credential_text_exists'])
+            self.assertFalse(report['privacy_acceptance'])
+            path.write_text(line())
+            report = parse_ui_observations(path)
+            self.assertEqual(report['initial_save'], [])
+            self.assertEqual(report['failed_details'], [])
+
+    def test_separate_detail_operands_spoofed_order_and_duplicates_refused(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'native.log'
+            save = 'EXR_PRIVACY_UI_SAVE elapsed_ms=5 status=saved\n'
+            detail = 'EXR_PRIVACY_UI_DETAIL elapsed_ms=11 phase=remembered missing_credential=1\n'
+            invalid = [save + save, detail, line(label='running') + detail, line() + detail + detail,
+                       line() + detail.replace('elapsed_ms=11', 'elapsed_ms=9'), line() + save,
+                       save.replace('elapsed_ms=5', 'elapsed_ms=500') + line(),
+                       line() + detail.replace('elapsed_ms=11', 'elapsed_ms=100') + line(2, 20),
+                       line(label='running', value='failed') + detail]
+            for raw in list(needles({'secret': b'Privacy-' + b'f' * 64 + b'!%:+'}).values()) + [b'Privacy-fff...']:
+                operand = raw.decode('utf-8', errors='replace')
+                invalid.extend([save.replace('status=saved', 'status=' + operand),
+                                line() + detail.replace('missing_credential=1', 'missing_credential=' + operand)])
+            for value in invalid:
+                path.write_text(value)
+                with self.assertRaises(RuntimeError): parse_ui_observations(path)
+
     def test_native_assertions_keys_sequence_and_timeouts_byte_preserved(self):
         original = subprocess.check_output(['git', 'show', SOURCE + ':' + SWIFT], cwd=ROOT)
         self.assertEqual(hashlib.sha256(original).hexdigest(), FROZEN_SHA)
@@ -58,7 +90,21 @@ class UIObservationControls(unittest.TestCase):
         anchor = 'guard let item = observedSnapshot(id) else { return "" }'
         self.assertEqual(stripped.count(anchor), 1)
         stripped = stripped.replace(anchor, 'guard let item = try? node(id).snapshot() else { return "" }', 1)
-        self.assertTrue(stripped.encode() == original, 'native logic outside observation wrapper changed')
+        # Exactly one evidence-justified accessor change; no assertion, expected
+        # state, UI action, restart, key, wait or global budget is removed.
+        accessor = 'if id == "account.sync.state" { return observedSyncState(item) }'
+        self.assertEqual(stripped.count(accessor), 1)
+        stripped = stripped.replace(accessor, 'if id == "account.sync.state" { return item.label }', 1)
+        for call in ('        observeInitialSaveStatus()\n', '        assertStateAccessorControls()\n'):
+            self.assertEqual(stripped.count(call), 1)
+            stripped = stripped.replace(call, '', 1)
+        self.assertTrue(stripped.encode() == original, 'native logic outside bounded accessor/observations changed')
+        self.assertIn('if !label.isEmpty { return label }', current)
+        self.assertIn('guard allowMacValue, let value = value as? String else { return "" }', current)
+        self.assertIn('return states.contains(value) ? value : ""', current)
+        self.assertIn('value: item.value, allowMacValue: false)', current)
+        self.assertIn('XCTAssertEqual(exactSyncState(label: "正在同步", value: "本轮扫描完成", allowMacValue: true), "正在同步")', current)
+        self.assertIn('XCTAssertEqual(exactSyncState(label: "同步失败", value: "本轮扫描完成", allowMacValue: true), "同步失败")', current)
 
 
 if __name__ == '__main__':

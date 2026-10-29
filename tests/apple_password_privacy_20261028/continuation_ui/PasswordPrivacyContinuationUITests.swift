@@ -12,11 +12,61 @@ final class PasswordPrivacyContinuationUITests: XCTestCase {
     private var root = "", profile = ""
     private var stages: [String] = []
     // DIAGNOSTIC_UI_BEGIN
-    // Only finite codes from the already queried snapshot leave this method.
+    // Finite codes only. Separate detail queries run once per failed phase;
+    // initial save-status queries run only in the already-open Update sheet.
     // Unknown label/value/error text is never printed or interpolated.
     private let observationOrigin = ProcessInfo.processInfo.systemUptime
     private var observationSequence = 0, lastObservationMS = -5000
     private var lastObservationState = ""
+    private var observedFailedDetails: Set<String> = []
+    private func observationMS() -> Int {
+        Int(max(0, min(4800000, (ProcessInfo.processInfo.systemUptime - observationOrigin) * 1000)))
+    }
+    private func exactSyncState(label: String, value: Any?, allowMacValue: Bool) -> String {
+        // Actual macOS evidence: expanded Text has empty label and state in
+        // value. Never prefer a contradictory value over a nonempty label;
+        // iOS retains its original label-only interpretation.
+        if !label.isEmpty { return label }
+        guard allowMacValue, let value = value as? String else { return "" }
+        let states = ["未同步", "正在准备原书", "正在接收书架", "准备中", "正在同步",
+                      "正在取消", "正在关闭", "已关闭", "本轮扫描完成", "已取消", "同步失败"]
+        return states.contains(value) ? value : ""
+    }
+    private func observedSyncState(_ item: XCUIElementSnapshot) -> String {
+#if os(macOS)
+        return exactSyncState(label: item.label, value: item.value, allowMacValue: true)
+#else
+        return exactSyncState(label: item.label, value: item.value, allowMacValue: false)
+#endif
+    }
+    private func assertStateAccessorControls() {
+        XCTAssertEqual(exactSyncState(label: "", value: "本轮扫描完成", allowMacValue: true), "本轮扫描完成")
+        XCTAssertEqual(exactSyncState(label: "", value: "正在同步", allowMacValue: true), "正在同步")
+        XCTAssertEqual(exactSyncState(label: "正在同步", value: "本轮扫描完成", allowMacValue: true), "正在同步")
+        XCTAssertEqual(exactSyncState(label: "同步失败", value: "本轮扫描完成", allowMacValue: true), "同步失败")
+        XCTAssertEqual(exactSyncState(label: "", value: "可再次同步以接收后续变更", allowMacValue: true), "")
+        XCTAssertEqual(exactSyncState(label: "", value: "not-a-state", allowMacValue: true), "")
+        XCTAssertEqual(exactSyncState(label: "", value: NSNumber(value: 1), allowMacValue: true), "")
+        XCTAssertEqual(exactSyncState(label: "", value: "本轮扫描完成", allowMacValue: false), "")
+    }
+    private func observeInitialSaveStatus() {
+        guard stages.isEmpty else { return }
+        let candidates = [
+            ("saved", "授权信息已保存到钥匙串"),
+            ("remember-update-incomplete", "本次使用新的授权，钥匙串更新未完成"),
+            ("session-only", "授权信息仅保留在本次运行中"),
+            ("anonymous", "匿名连接，未保存授权信息"),
+            ("anonymous-remove-incomplete", "匿名连接；钥匙串中的旧授权未能移除"),
+            ("session-remove-incomplete", "本次使用临时授权；钥匙串中的旧授权未能移除")]
+        var matched: [String] = []
+        for (code, phrase) in candidates {
+            if app.staticTexts.matching(NSPredicate(format: "label == %@ OR value == %@", phrase, phrase)).firstMatch.exists {
+                matched.append(code)
+            }
+        }
+        let status = matched.count == 1 ? matched[0] : matched.isEmpty ? "absent" : "ambiguous"
+        print("EXR_PRIVACY_UI_SAVE elapsed_ms=\(observationMS()) status=\(status)")
+    }
     private func observationCode(_ value: String) -> String {
         switch value {
         case "": return "empty"
@@ -40,7 +90,7 @@ final class PasswordPrivacyContinuationUITests: XCTestCase {
         let item = try? node(id).snapshot()
         if id == "account.sync.state" {
             observationSequence += 1
-            let elapsed = Int(max(0, min(4800000, (ProcessInfo.processInfo.systemUptime - observationOrigin) * 1000)))
+            let elapsed = observationMS()
             let phase = stages.last == "remember_closed" ? "remembered" :
                 stages.last == "remember_reopened" ? "session" :
                 stages.last == "session_closed" ? "missing-restart" : "unknown"
@@ -57,6 +107,11 @@ final class PasswordPrivacyContinuationUITests: XCTestCase {
                 print("EXR_PRIVACY_UI_STATE seq=\(observationSequence) elapsed_ms=\(elapsed) " + state)
                 lastObservationState = state; lastObservationMS = elapsed
             }
+            if let item = item, observedSyncState(item) == "同步失败", observedFailedDetails.insert(phase).inserted {
+                let phrase = "请重新输入此账号的授权信息"
+                let exists = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", phrase, phrase)).firstMatch.exists
+                print("EXR_PRIVACY_UI_DETAIL elapsed_ms=\(observationMS()) phase=\(phase) missing_credential=\(exists ? 1 : 0)")
+            }
         }
         return item
     }
@@ -67,7 +122,7 @@ final class PasswordPrivacyContinuationUITests: XCTestCase {
     private func text(_ id: String) -> String {
         guard let item = observedSnapshot(id) else { return "" }
         // Compact sync controls expose the message in value, not the state.
-        if id == "account.sync.state" { return item.label }
+        if id == "account.sync.state" { return observedSyncState(item) }
         return (item.value as? String).flatMap { $0.isEmpty ? nil : $0 } ?? item.label
     }
     private func wait(_ seconds: TimeInterval = 90, _ condition: () -> Bool) -> Bool {
@@ -139,6 +194,7 @@ final class PasswordPrivacyContinuationUITests: XCTestCase {
         XCTAssertTrue(username.isEmpty || username == "用户名（匿名访问可留空）", "Username field was prefilled")
         XCTAssertTrue(password.isEmpty || password == "密码或应用专用密码", "Secure field did not present an empty display")
         XCTAssertFalse(node("account.root").isEnabled)
+        observeInitialSaveStatus()
     }
     private func sync() {
         tap("account.sync.start")
@@ -161,6 +217,7 @@ final class PasswordPrivacyContinuationUITests: XCTestCase {
     }
     func testDiagnosticContinuationRememberUpdateRestart() throws {
         continueAfterFailure = false
+        assertStateAccessorControls()
         let environment = ProcessInfo.processInfo.environment
         root = try XCTUnwrap(environment["EXR_PRIVACY_ROOT"])
         let user = try XCTUnwrap(environment["EXR_PRIVACY_USER"])

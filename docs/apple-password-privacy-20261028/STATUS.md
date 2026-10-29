@@ -260,3 +260,50 @@ native log. Four new controls precede any current-source SDK/native work.
 This instrumentation is diagnostic only. It cannot convert username log noise
 into strict acceptance, prove secret absence from a masked field, validate a
 production owner callsite, or grant full F10. No dedicated Forget UI exists.
+
+## Actual UI-state reproduction and bounded next repair (2026-10-29)
+
+Run [40810434512](https://github.com/NoGod3524/EXReader/actions/runs/40810434512),
+attempt1, source `a703af3e7b7394d337b522fbbf2fc0aafe1de0e5`: all47 controls and
+both SDK builds passed. All three native continuations and independent aggregate
+failed; strict remember_closed remained false, sequence/full-F10 remained false.
+Original username/test-framework-image observations remained28/50/50 groups.
+
+The same-snapshot finite observation now establishes a macOS harness mismatch:
+label was empty, value running57.637s then finished59.139s and through237.164s;
+the original label-only predicate missed the completed state. iPhone instead
+reported label failed121.596–300.770s; iPad failed143.179–287.595s, both with absent
+value. Their separate expanded-view detail text was not part of that snapshot.
+False missing-credential flags therefore do not classify the simulator failures.
+
+Retained native uploads, all tied to this exact source/run/attempt:
+
+| Platform | Artifact ID | ZIP bytes | SHA256 |
+|---|---:|---:|---|
+| macOS |12870153932|114145694|9e6a8f7150662bb1da325b32bf49dbbeaf7157b60a94555e5cfee72a67ff9eac|
+| iPhone |12870921660|94991384|64a8b9a791ba19c8f0804b9469bdbe43c98bd9120bfc922177aa4ebabea5db88|
+| iPad |12871070896|93351932|353b8cc257a5b40755d06f831a2d911cd952df990d80d39ae544035d5013efc5|
+
+Proposed source-only four-file repair changes the continuation accessor on macOS
+only: a nonempty label remains authoritative even against a contradictory value;
+an empty label permits only an exact whitelisted state string in value. iOS keeps
+label-only interpretation. Eight native control assertions cover exact states,
+contradictory label/value, message/unknown/nonstring refusals and unchanged iOS.
+The original strict UI source stays untouched. The byte-equivalence control
+allows exactly this accessor and two diagnostic calls; every original assertion,
+expected state, UI action/key, restart, wait and global budget remains identical.
+
+Finite additional observations query six fixed save-status strings only while
+the existing initial Update sheet is open, and query the fixed re-enter-credentials
+phrase once per failed sync phase. Output contains only status enums, booleans,
+phase and bounded elapsed time. These are accessibility existence observations,
+not raw strings, visible-pixel proof, secret absence, native OSStatus or acceptance.
+Missing observations remain distinct from an observed false/absent result. Two
+new Actions controls cover finite metadata, encoded/truncated operands, duplicate,
+misordered and unbound detail records (proposed total49 controls).
+
+Simulator signing/entitlement mismatch is only a source-derived hypothesis:
+the base host generator disables iOS signing, whereas the standalone credentials
+probe declares keychain entitlements. No signing, product owner or SDK change is
+made in this repair; no claim that missing entitlement is the observed cause.
+This source proposal does not authorize publication or a further native run.
