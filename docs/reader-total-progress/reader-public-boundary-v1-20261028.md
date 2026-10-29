@@ -5,6 +5,98 @@ build, test, syntax check, fixture creation or artifact replay. All execution is
 GitHub Actions only. Runtime outcomes must be added from actual Actions evidence,
 not inferred from this source description.
 
+### First measured run and narrow follow-up
+
+Source `875867c3503543b92b665b366d462a7f38ca392e`, run `40793943647/1`,
+passed all 31 synthetic protocol controls. The original macOS and Windows producers
+passed, including Windows' original 26 checks. New validation exposed two test
+defects: the v2 progress probe supplied a range although the unchanged revision
+contract requires a point; MSVC rejects unsafe `getenv` under the new probe's
+strict warnings. The follow-up uses an actual SDK point for v2, retains an explicit
+negative for the old range, and uses `getenv_s` only on Windows without suppressing
+warnings. Actual MSVC Ninja dependency rows contain included headers, not the main
+source: source binding now additionally follows the exact compiler-node input and
+archive-node edge, retaining full VALID dependency counts and public-header checks.
+Missing/wrong compiler bindings remain negative controls. These follow-up sources
+are unrun until a later Actions result is recorded.
+
+The same run's original Linux GUI/backend/fault suites and Apple F06 iPhone/iPad
+producer passed. The new iOS probe adapter then looked for an unbundled executable,
+although the unchanged iOS CMake defaults produced `name.app/name` (also true for
+the unchanged legacy C06 consumer). The follow-up selects that exact built path,
+rejects unbundled aliases, and attempts owned simulator cleanup even when setup
+fails. It does not change original Apple flags or bundle behavior. Probe digest
+fields still describe unsigned build output, not post-codesign installed bytes.
+
+Android's actual product link also exposed a missed private retained-encoder caller
+in `examples/android/app/src/main/cpp/wave3_product_jni.inc` (declaration line11,
+call line152). That path was absent from the original 17-owner inventory; no
+compatibility private-symbol waiver is substituted. Any change to that caller
+requires a separately recorded exact scope extension. The failed first run remains
+evidence, not six-entry acceptance. Partial capture after failed native validation
+cannot authenticate as passed.
+
+### Authorized Android caller extension, 2026-10-29 01:35 UTC
+
+The user confirmed “那我确认” (Sentinel_6c49c0656690819180749be6664bd059,
+01:35:44 UTC) in direct reply to the 01:25:37 proposal naming the Android
+`wave3_product_jni.inc` caller plus the four reviewed validation fixes and authorizing
+implementation, commits, feature-branch publication, Actions and scoped failure
+repairs. This adds exactly that one existing JNI owner path to the original scope;
+the other 17 owner files remain unchanged from the first run. No private compatibility
+symbol is restored. The caller now includes the installed public header and invokes
+`reader_rs_encode_retained_raw_v1` with the same arguments and original error flow.
+
+The revised new validator binds actual `catalog_jni.cpp` to its linked object and
+complete compiler dependencies, requiring both the authorized `.inc` and installed
+public header. It requires the object's public undefined symbol, no old private
+symbol, the exact installed ReadingState archive/member in the actual final LLD
+map, that same member's real definition and matching final raw ELF symbol address.
+The raw link output and separately authenticated F06 APK/install remain explicitly
+different evidence layers; this is not a full APK/ELF or whole-image provider audit.
+Unknown runtime/OPDS/source-copy boundaries remain outside named acceptance.
+
+### Same-job NDK provenance capture, separate from named acceptance
+
+The Android retrospective audit `40801625831/1` demonstrated missing original
+bytes for driver-selected NDK archives. The next already-required candidate build
+therefore adds capture only in the existing validation script: before the unchanged
+producer it fingerprints the exact NDK revision/tools and bounded x86_64 sysroot/
+Clang runtime candidates, not the entire NDK. After the producer, and before named
+boundary assertions, it binds each actual host/product link command's output and
+map option, preserves raw maps/ELFs/Ninja metadata/dependencies, and derives selected
+archive/object contributors anew. Selected NDK inputs must have identical pre/post
+records; retained copies must match again, and ordinary archive member identities
+are checked with the pinned same-job `llvm-ar`. Each selected link command's actual
+compiler must match both the CMake compiler path and pre-build NDK tool bytes, with
+exact x86_64 Android26 target and NDK sysroot. No retained command is executed.
+The completeness flag covers only map-selected inputs of listed mapped `.cxx`
+images (at minimum host/product), not other APK SDK/JNI images, every link operand,
+or dynamic/public-provider coverage.
+
+`external_map_inputs` is expressly different from explicit driver operands.
+An inventory entry alone is not evidence of selection. This capture cannot repair
+the historical artifact or replace its missing bytes with a current toolchain.
+Unknown external origins, unsupported/missing/changed inputs and ambiguous member
+identities remain failures or explicit incomplete records, never provider waivers.
+
+Only map-selected known LLVM runtime components are eligible for byte retention,
+with the actual distribution's complete `NOTICE` and `NOTICE.toolchain` carried
+in the artifact. Lexical/resolved archive identities must match without aliases.
+Coverage requires the entire whitespace-normalized Apache/LLVM-exception block
+from [LLVM 18.1.8 LICENSE.TXT](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.8/LICENSE.TXT)
+(official blob `fa6ac540007032cbd0ec772a1c72e6cb5527a4fe`), not a few marker words;
+pre/post and retained notice-copy hashes must agree before archive copying.
+The upstream [LLVM license](https://llvm.org/LICENSE.txt) permits redistribution
+subject to its license/notice conditions. This is a bounded evidence-copy policy,
+not a general license clearance for the NDK. Other inputs, including CRT objects
+whose notice coverage has not been established by this packet, remain metadata-only
+with an explicit licensing gap. Missing/unclear notices mean no binary copy and
+`ndk_provenance.complete=false`. A named public-boundary pass does not turn that
+field true and does not imply complete runtime input authentication or F07.
+The NDK's [r27 build-system guide](https://android.googlesource.com/platform/ndk/+/ndk-r27-release/docs/BuildSystemMaintainers.md)
+explains driver-supplied runtime inputs; it does not prove historical input bytes.
+
 ## Authority and immutable predecessor
 
 The user explicitly authorized the previously reviewed 17 owner + 7 new validation
@@ -33,13 +125,18 @@ Feature branch: `codex/reader-public-boundary-v1-20261028`.
 - `apps/reader/annotation-import/{CMakeLists.txt,EXReaderAnnotationImportConfig.cmake.in,src/annotation_import.cpp}`
 - `apps/reader/annotation-export/{CMakeLists.txt,EXReaderAnnotationExportConfig.cmake.in,src/annotation_export.cpp}`
 
+One explicitly extended existing host-owner path:
+
+- `examples/android/app/src/main/cpp/wave3_product_jni.inc`
+
 Seven added validation paths:
 
 - `tests/reader_public_boundary_v1_20261028/{CMakeLists.txt,codec_v1.c,retained_v1.cpp,run.py,test_contract.py}`
 - `.github/workflows/reader-public-boundary-v1-20261028.yml`
 - this document.
 
-The new guard requires this exact 24-path name/status set relative to the base,
+The new guard now requires this exact 25-path name/status set relative to the base
+(original 24 plus the explicitly extended JNI caller),
 freezes every other file and records source/run/attempt plus per-file SHA-256.
 No generated helper source hides a source-scope expansion.
 

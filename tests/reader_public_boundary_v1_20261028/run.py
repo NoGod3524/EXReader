@@ -1,8 +1,8 @@
-"""Explicit 17-owner + 7-validation integration; all execution is Actions-only.
+"""Explicit 17-module + 1 Android caller + 7-validation integration; Actions-only.
 
 Preserves original builders/behavior assertions. Old source allowlists are NOT
 reported passed: the named new exact-scope guard replaces those entrypoints.
-This proves four named boundary repairs, never full F07/P0 or physical devices.
+This proves named module/Android caller repairs, never full F07/P0 or physical devices.
 """
 import argparse
 import hashlib
@@ -24,6 +24,9 @@ HERE = Path(__file__).resolve().parent
 OUT = ROOT / 'build/public-boundary-v1'
 BASE = 'f331d5da3ac491143d8f525089140f5d2365fa97'
 BRANCH = 'codex/reader-public-boundary-v1-20261028'
+# Complete Apache-2.0 plus LLVM exception block, not marker-word qualification.
+# Official LLVM 18.1.8 LICENSE.TXT blob fa6ac540007032cbd0ec772a1c72e6cb5527a4fe.
+LLVM_LICENSE_BLOCK = "Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n    1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n    2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n    3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n    4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n    5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n    6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n    7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n    8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n    9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n    END OF TERMS AND CONDITIONS\n\n    APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n    Copyright [yyyy] [name of copyright owner]\n\n    Licensed under the Apache License, Version 2.0 (the \"License\");\n    you may not use this file except in compliance with the License.\n    You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n    Unless required by applicable law or agreed to in writing, software\n    distributed under the License is distributed on an \"AS IS\" BASIS,\n    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n    See the License for the specific language governing permissions and\n    limitations under the License.\n\n\n---- LLVM Exceptions to the Apache 2.0 License ----\n\nAs an exception, if, as a result of your compiling your source code, portions\nof this Software are embedded into an Object form of such source code, you\nmay redistribute such embedded portions in such Object form without complying\nwith the conditions of Sections 4(a), 4(b) and 4(d) of the License.\n\nIn addition, if you combine or link compiled forms of this Software with\nsoftware that is licensed under the GPLv2 (\"Combined Software\") and if a\ncourt of competent jurisdiction determines that the patent provision (Section\n3), the indemnity provision (Section 9) or other Section of the License\nconflicts with the conditions of the GPLv2, you may retroactively and\nprospectively choose to deem waived or otherwise exclude such Section(s) of\nthe License, but only in their entirety and only with respect to the Combined\nSoftware."
 OWNERS = tuple('apps/reader/' + path for path in (
     'revisions/CMakeLists.txt', 'revisions/EXReaderRevisionsConfig.cmake.in',
     'revisions/include/reader_selector_bytes_v1.h', 'revisions/src/selector_bytes_v1.cpp',
@@ -39,6 +42,7 @@ ADDED = tuple('tests/reader_public_boundary_v1_20261028/' + p for p in
     '.github/workflows/reader-public-boundary-v1-20261028.yml',
     'docs/reader-total-progress/reader-public-boundary-v1-20261028.md')
 NEW_OWNER = {OWNERS[2], OWNERS[3], OWNERS[6]}
+HOSTS = ('examples/android/app/src/main/cpp/wave3_product_jni.inc',)
 TARGETS = ('linux', 'windows', 'android', 'macos', 'iphone', 'ipad')
 EXPECTED_WIRES = {'wire-v1.json','wire-v2.json','wire-v3.json','wire-epub-0.json','wire-epub-1.json','wire-epub-2.json'}
 EXCLUSIONS = ['tests/gtk_sdk342_package/run.py::guard', 'tests/android_sdk342_package/run.py::guard',
@@ -101,10 +105,10 @@ def guard():
     command(['git','merge-base','--is-ancestor',BASE,'HEAD'])
     changes = command(['git','diff','--name-status',BASE,'HEAD']).stdout.splitlines()
     actual = {line.split('\t')[1]:line.split('\t')[0] for line in changes}
-    expected = {path:('A' if path in NEW_OWNER or path in ADDED else 'M') for path in (*OWNERS,*ADDED)}
-    need(actual == expected, ('exact authorized 24 paths', actual, expected))
+    expected = {path:('A' if path in NEW_OWNER or path in ADDED else 'M') for path in (*OWNERS,*HOSTS,*ADDED)}
+    need(actual == expected, ('exact authorized 25 paths', actual, expected))
     need(not command(['git','status','--porcelain','--untracked-files=no']).stdout.strip(), 'tracked source dirty')
-    # Exact full old test/SDK source freeze follows from the 24-path equality;
+    # Exact full old test/SDK source freeze follows from the 25-path equality;
     # explicit tree hashes remain easy to audit without trusting this statement.
     frozen = {}
     for path in ('src','include','cmake','CMakeLists.txt','bindings','tools','tests/fixtures',
@@ -115,7 +119,7 @@ def guard():
         current = command(['git','rev-parse','HEAD:'+path]).stdout.strip()
         need(old == current, 'frozen path '+path); frozen[path] = current
     data = dict(identity(), base_sha=BASE, source_scope_passed=True, original_source_guards_excluded=EXCLUSIONS,
-                frozen=frozen, authorized_paths_sha256={p:digest(ROOT/p) for p in (*OWNERS,*ADDED)},
+                frozen=frozen, authorized_paths_sha256={p:digest(ROOT/p) for p in (*OWNERS,*HOSTS,*ADDED)},
                 f07_accepted=False, physical_device=False)
     save(OUT/'source.json', data); return data
 
@@ -158,6 +162,7 @@ def build(target):
         payload = builder.windows()
         load('tests/reader_f06_packages/identity.py','boundary_f06_id').package('windows',payload)
     elif target == 'android':
+        ndk_prebuild()
         load('tests/android_sdk342_package/run.py','boundary_android342').build()
     else:
         command([sys.executable,'tests/sdk342_aggregate/apple_f06.py',target], 'original-apple-f06', timeout=6000)
@@ -257,6 +262,13 @@ class Native:
         self.env=dict(os.environ,SELECTOR_TXT_SHA=hashlib.sha256(b'A real public SDK text capture has enough context for stable matching.').hexdigest(),
                       C06_TXT_SHA=hashlib.sha256(b'A real public SDK text capture has enough context for stable matching.').hexdigest(),
                       BOUNDARY_TXT_SHA=digest(data/'fixtures/book.txt'),BOUNDARY_EPUB_SHA=digest(data/'fixtures/book.epub'),BOUNDARY_PDF_SHA=digest(data/'pdf.pdf'))
+        try:
+            self.prepare(target,programs)
+        except BaseException:
+            try:self.close()
+            except Exception as cleanup:print('Native setup cleanup failed:',repr(cleanup),flush=True)
+            raise
+    def prepare(self,target,programs):
         if target=='android':
             command(['adb','shell','mkdir','-p',self.remote])
             for name,path in programs.items(): command(['adb','push',path,self.remote+'/'+name])
@@ -326,8 +338,17 @@ class Native:
         need(p.returncode==0,(label,p.returncode));return p.stdout
     def close(self):
         if self.udid:
-            command(['xcrun','simctl','shutdown',self.udid],expected=None)
-            command(['xcrun','simctl','delete',self.udid],expected=None)
+            errors=[]
+            for action in ('shutdown','delete'):
+                try:command(['xcrun','simctl',action,self.udid],expected=None)
+                except Exception as error:errors.append(repr(error))
+            need(not errors,('owned simulator cleanup',errors))
+
+
+def built_program(folder,name,target):
+    path=Path(folder)/(name+'.app')/name if target in ('iphone','ipad') else Path(folder)/(name+('.exe' if target=='windows' else ''))
+    need(path.is_file(),'actual configured native program missing: '+str(path))
+    return path
 
 
 def native(target):
@@ -336,7 +357,7 @@ def native(target):
     command(['cmake','-S',HERE,'-B',builddir,'-G','Ninja',*options],target+'-native-configure')
     command(['cmake','--build',builddir,'--parallel','4','--verbose','--','-d','keeprsp'],target+'-native-build')
     names=('public-codec-v1','public-retained-v1','original-selector-bytes','original-c06')
-    programs={name:builddir/(name+('.exe' if os.name=='nt' else '')) for name in names}
+    programs={name:built_program(builddir,name,target) for name in names}
     legacy=OUT/'legacy-stage'
     need(not legacy.exists(),'fresh empty legacy-OFF prefix required')
     for module in ('revisions','reading-state','annotation-import','annotation-export'):
@@ -350,7 +371,7 @@ def native(target):
     legacy_build=OUT/'legacy-c06'
     command(['cmake','-S',ROOT/'tests/reader_next_c06/consumer','-B',legacy_build,'-G','Ninja','-DC06_RAW=OFF',*cross_options(target,sdk,legacy,product)],target+'-legacy-c06-configure')
     command(['cmake','--build',legacy_build,'--parallel','4'],target+'-legacy-c06-build')
-    programs['original-c06-legacy']=legacy_build/('c06-probe'+('.exe' if os.name=='nt' else ''))
+    programs['original-c06-legacy']=built_program(legacy_build,'c06-probe',target)
     need(not (legacy/'include/reader_selector_bytes_v1.h').exists() and not (legacy/'include/reader_reading_state_retained_raw_v1.h').exists(),'raw API leaked into OFF install')
     data=OUT/'native-data';data.mkdir(exist_ok=True)
     command([sys.executable,'tests/reader_reading_state/make_fixtures.py',data/'fixtures'],target+'-fixtures')
@@ -445,22 +466,290 @@ def make_dependency_group(text):
     return {name:dict(paths=paths,status='VALID',declared_count=len(paths))}
 
 
-def owned_dependency_proof(source,graph_objects,groups,folder,required_headers):
+def ninja_explicit_inputs(text,node,rule_prefix):
+    lines=text.splitlines()
+    if lines and lines[0].startswith("ninja: Entering directory "):lines=lines[1:]
+    need(len(lines)>=3 and lines[0]==node+':' and lines[1].startswith('  input: '+rule_prefix),'exact Ninja node/rule binding')
+    need(lines.count('  outputs:')==1,'complete Ninja query output section')
+    end=lines.index('  outputs:');inputs=[]
+    for line in lines[2:end]:
+        need(line.startswith('    ') and line[4:],'malformed Ninja query input')
+        if not line[4:].startswith('|'):inputs.append(line[4:])
+    outputs=lines[end+1:]
+    need(all(line.startswith('    ') and line[4:] for line in outputs),'malformed Ninja query output')
+    return inputs,[line[4:] for line in outputs]
+
+
+def owned_dependency_proof(source,graph_objects,groups,folder,required_headers,graph_sources=None):
     def normal(path):return os.path.normcase(str((folder/Path(path)).resolve()))
     expected=normal(source);linked={normal(p) for p in graph_objects}
     matches=[]
     for obj,group in groups.items():
         paths=[normal(p) for p in group['paths']]
-        if expected in paths and normal(obj) in linked:
+        graph_source=graph_sources.get(obj) if graph_sources is not None else None
+        source_bound=normal(graph_source)==expected if graph_source is not None else expected in paths
+        if graph_sources is not None:source_bound=graph_source is not None and source_bound
+        if source_bound and normal(obj) in linked:
             matches.append((obj,group,paths))
     need(len(matches)==1,'exact source/linked archive object dependency binding missing or ambiguous')
     obj,group,paths=matches[0]
-    need(group['status']=='VALID' and paths.count(expected)==1,'stale or ambiguous source dependency')
+    need(group['status']=='VALID' and paths.count(expected)<2,'stale or ambiguous source dependency')
+    need(graph_sources is not None or paths.count(expected)==1,'source dependency missing')
     need(not any(Path(p).name=='reader_selector_bytes_detail.h' for p in paths),'private selector implementation dependency remains')
     for header in required_headers:need(normal(header) in paths,'installed public dependency missing: '+str(header))
     return dict(source=source,archive_object=obj,actual_compiler_dependency_seen=True,
+                source_binding='exact Ninja compiler input and archive object' if graph_sources is not None else 'compiler depfile source and archive object',
                 dependency_count=len(paths),required_public_headers=list(map(str,required_headers)),
                 private_selector_header_absent=True)
+
+
+def lld_rows(text):
+    rows=[]
+    for line in text.splitlines():
+        if not line.strip():continue
+        if line.split()==['VMA','LMA','Size','Align','Out','In','Symbol']:continue
+        columns=line.split(None,4)
+        need(len(columns)==5 and all(re.fullmatch(r'[0-9a-fA-F]+',c) for c in columns[:4]),'unparsed LLD map row')
+        rows.append((int(columns[0],16),int(columns[2],16),columns[4].strip()))
+    need(rows,'empty LLD map');return rows
+
+
+def lld_symbol_origin(text,symbol):
+    current=None;found=[]
+    for address,size,value in lld_rows(text):
+        if ':(' in value:
+            origin=re.fullmatch(r'(.+):\([^\n]*\)',value)
+            need(origin is not None,'unrecognized LLD input contribution');current=(origin[1],address,address+size)
+        elif value.startswith('.'):current=None
+        elif value==symbol:
+            need(current is not None,'named symbol has no actual LLD contribution')
+            need(current[1]<=address<current[2],'named symbol outside selected LLD contribution')
+            found.append((current[0],address))
+    need(len(found)==1,'named LLD definition missing/duplicated')
+    return found[0]
+
+
+def android_link_binding(text,image,folder):
+    matches=[]
+    for line in text.splitlines():
+        args=shlex.split(line)
+        outputs=[args[i+1] for i,arg in enumerate(args[:-1]) if arg=='-o']
+        if any((folder/p).resolve()==image.resolve() for p in outputs):matches.append((line,args,outputs))
+    need(len(matches)==1,'unique actual product link command missing/ambiguous')
+    line,args,outputs=matches[0]
+    need(len(outputs)==1 and not any('@' in a for a in args),'unsupported product link output/response form')
+    maps=[a[len('-Wl,-Map,'):] for a in args if a.startswith('-Wl,-Map,')]
+    need(len(maps)==1 and maps[0] and ',' not in maps[0],'exact actual linker map option missing/ambiguous')
+    return (folder/maps[0]).resolve(),line
+
+
+def android_caller_proof(folder,home,stage,deps,copy):
+    symbol='reader_rs_encode_retained_raw_v1'
+    query=command(['ninja','-C',folder,'-t','query','exreader_product'],'android-product-alias').stdout
+    image_inputs,_=ninja_explicit_inputs(query,'exreader_product','phony')
+    need(len(image_inputs)==1,'unique product link output required');image_name=image_inputs[0]
+    image=(folder/image_name).resolve();need(image.is_file() and image.name=='libexreader_product.so','actual product ELF missing')
+    query=command(['ninja','-C',folder,'-t','query',image_name],'android-product-link-input').stdout
+    objects,_=ninja_explicit_inputs(query,image_name,'CXX_SHARED_LIBRARY_LINKER')
+    objects=[p for p in objects if p.endswith('.o')];need(objects,'actual product link objects missing')
+    sources={}
+    for index,obj in enumerate(objects):
+        query=command(['ninja','-C',folder,'-t','query',obj],'android-product-compiler-'+str(index)).stdout
+        inputs,outputs=ninja_explicit_inputs(query,obj,'CXX_COMPILER')
+        need(len(inputs)==1 and inputs[0].endswith('.cpp') and image_name in outputs,'exact Android compiler/link edge')
+        sources[obj]=inputs[0]
+    proof=owned_dependency_proof(str(home/'catalog_jni.cpp'),objects,ninja_dependency_groups(deps),folder,
+        [ROOT/HOSTS[0],stage/'include/reader_reading_state_retained_raw_v1.h'],sources)
+    obj=folder/proof['archive_object'];need(obj.is_file(),'actual Android caller object missing');copy(obj);copy(image)
+    nm=Path(os.environ['ANDROID_HOME'])/'ndk'/os.environ['C11_NDK']/'toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm'
+    object_symbols=command([nm,'-A',obj],'android-caller-symbols').stdout
+    need(symbol_present(object_symbols,symbol,False),'Android caller must import public retained entry')
+    need('reader_rs_encode_retained_raw_v3' not in object_symbols,'Android private retained import remains')
+    commands=command(['ninja','-C',folder,'-t','commands',image_name],'android-product-exact-link-command').stdout
+    mapfile,link_command=android_link_binding(commands,image,folder)
+    need(mapfile.is_file() and mapfile.is_relative_to(ROOT),'actual Android product link map missing/escaping');copy(mapfile)
+    provider,address=lld_symbol_origin(mapfile.read_text(),symbol)
+    archive=stage/'lib/libreader_reading_state_codec.a';member='reading_state.cpp.o'
+    need(provider==str(archive)+'('+member+')','named Android symbol mapped to wrong installed archive/member')
+    owner_symbols=command([nm,'-A',archive],'android-retained-provider-symbols').stdout
+    prefix=r'(?:'+re.escape(str(archive))+':'+re.escape(member)+r':|'+re.escape(str(archive)+'('+member+'):')+r')'
+    need(len(re.findall(r'^'+prefix+r'\s+[0-9a-fA-F]+\s+T\s+'+symbol+r'$',owner_symbols,re.M))==1,'exact mapped archive member must define retained symbol')
+    final_symbols=command([nm,'-A',image],'android-product-final-symbols').stdout
+    addresses=re.findall(r'^'+re.escape(str(image))+r':\s+([0-9a-fA-F]+)\s+[Tt]\s+'+symbol+r'$',final_symbols,re.M)
+    need(len(addresses)==1 and int(addresses[0],16)==address,'final ELF named symbol differs from map definition')
+    need('reader_rs_encode_retained_raw_v3' not in final_symbols,'final Android image retains private entry')
+    proof.update(caller_object_sha256=digest(obj),final_link_image=str(image.relative_to(ROOT)),final_link_image_sha256=digest(image),
+                 installed_provider=str(archive.relative_to(ROOT)),installed_provider_sha256=digest(archive),map_sha256=digest(mapfile),
+                 public_import=symbol,provider_member=member,final_symbol_address=address,actual_link_command=link_command)
+    return proof
+
+
+def ndk_file_record(root,path):
+    root,path=Path(root).absolute(),Path(path).absolute()
+    need(path.is_relative_to(root) and '..' not in path.parts,'external input outside exact NDK root')
+    resolved=path.resolve();need(resolved.is_relative_to(root.resolve()) and path.is_file(),'NDK input missing or escaping alias')
+    return dict(path=path.relative_to(root).as_posix(),resolved=resolved.relative_to(root.resolve()).as_posix(),
+                bytes=path.stat().st_size,sha256=digest(path),symlink=os.readlink(path) if path.is_symlink() else None)
+
+
+def ndk_prebuild():
+    root=Path(os.environ['ANDROID_HOME'])/'ndk'/os.environ['C11_NDK'];toolroot=root/'toolchains/llvm/prebuilt/linux-x86_64'
+    report=dict(identity(),root=str(root),revision=os.environ['C11_NDK'],api=26,abi='x86_64',complete=False,tools={},inputs={},notices={})
+    try:
+        properties=(root/'source.properties').read_text();need(re.search(r'^Pkg.Revision\s*=\s*27\.0\.12077973\s*$',properties,re.M),'actual NDK revision mismatch')
+        report['source_properties']=properties
+        for name in ('clang','clang++','ld.lld','llvm-ar','llvm-nm','llvm-readelf','llvm-strip'):
+            report['tools'][name]=ndk_file_record(root,toolroot/'bin'/name)
+        for name in ('meta/abis.json','meta/platforms.json','meta/system_libs.json'):
+            report[name]=dict(record=ndk_file_record(root,root/name),contents=(root/name).read_text())
+        for path in sorted(root.iterdir()):
+            if path.is_file() and (path.name.startswith('NOTICE') or path.name.startswith('LICENSE')):
+                report['notices'][path.name]=ndk_file_record(root,path)
+                into=OUT/'logs/ndk-notices'/path.name;into.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,into)
+                need(digest(into)==report['notices'][path.name]['sha256'],'pre-build retained notice bytes differ')
+        candidates=list((toolroot/'sysroot/usr/lib/x86_64-linux-android').rglob('*'))
+        for runtime in (toolroot/'lib/clang').glob('*/lib/linux'):
+            candidates+=list(runtime.glob('*x86_64*'));candidates+=list((runtime/'x86_64').rglob('*'))
+        for path in sorted(set(candidates)):
+            if path.is_file() and path.suffix in ('.a','.o','.so'):
+                record=ndk_file_record(root,path);report['inputs'][record['path']]=record
+        need(report['inputs'],'bounded NDK x86_64 input inventory empty')
+        ninjas={str(Path(p).absolute()) for p in [shutil.which('ninja'),*(str(p) for p in (Path(os.environ['ANDROID_HOME'])/'cmake').glob('*/bin/ninja'))] if p}
+        report['ninja_tools']={p:dict(sha256=digest(p),resolved=str(Path(p).resolve())) for p in sorted(ninjas)}
+        report['complete']=True
+    finally:save(OUT/'ndk-before.json',report)
+
+
+def selected_ndk_record(before,path):
+    root=Path(before['root']);post=ndk_file_record(root,path);pre=before['inputs'].get(post['path'])
+    need(pre is not None and pre==post,'selected NDK input missing before build or changed afterward')
+    return post
+
+
+def llvm_runtime_notice_coverage(record,notices):
+    # Redistribution gate only, NOT a provider/selection allowlist. Every actual
+    # map origin is inventoried; unknown license coverage remains an explicit gap.
+    relative=record['path']
+    if record['resolved']!=relative or record['symlink'] is not None:return False
+    known=(re.fullmatch(r'toolchains/llvm/prebuilt/linux-x86_64/lib/clang/[^/]+/lib/linux/libclang_rt\.builtins-x86_64-android\.a',relative)
+           or re.fullmatch(r'toolchains/llvm/prebuilt/linux-x86_64/lib/clang/[^/]+/lib/linux/x86_64/libunwind\.a',relative)
+           or relative in ('toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_static.a',
+                           'toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++abi.a'))
+    text=notices.get('NOTICE.toolchain','')
+    return bool(known and notices.get('NOTICE','') and ' '.join(LLVM_LICENSE_BLOCK.split()) in ' '.join(text.split()))
+
+
+def ndk_driver_binding(command_text,cache_text,before):
+    args=shlex.split(command_text)
+    if args[:2]==[':','&&']:args=args[2:]
+    need(args and args[0] not in ('env','cd'),'unsupported driver command form')
+    root=Path(before['root']);driver=Path(args[0]);name=driver.name
+    need(name in ('clang','clang++') and driver==root/'toolchains/llvm/prebuilt/linux-x86_64/bin'/name,'selected linker driver is not recorded NDK clang')
+    key='CMAKE_CXX_COMPILER' if name=='clang++' else 'CMAKE_C_COMPILER'
+    configured=re.findall(r'^'+key+r':[A-Z_]+=(.+)$',cache_text,re.M)
+    need(configured==[str(driver)],'selected driver differs from actual configured compiler')
+    need(ndk_file_record(root,driver)==before['tools'][name],'selected driver differs from pre-build bytes')
+    need(not any(a in ('-target','--target','--sysroot','-isysroot','-Xclang','--') or a.startswith(('-target=','-isysroot=')) for a in args),
+         'unsupported driver target/sysroot override form')
+    targets=[a[len('--target='):] for a in args if a.startswith('--target=')]
+    sysroots=[a[len('--sysroot='):] for a in args if a.startswith('--sysroot=')]
+    need(targets==['x86_64-none-linux-android26'],'actual driver target/API mismatch')
+    expected=root/'toolchains/llvm/prebuilt/linux-x86_64/sysroot'
+    need(sysroots==[str(expected)],'actual driver sysroot mismatch')
+    return dict(driver=before['tools'][name],target=targets[0],sysroot=sysroots[0])
+
+
+def validate_archive_members(magic,listing,selected):
+    need(magic==b'!<arch>\n','thin/unsupported selected archive')
+    need(listing and len(listing)==len(set(listing)) and all(safe_member(m) for m in listing),'empty/duplicate/unsafe archive members')
+    need(None not in selected and all(m in listing for m in selected),'map-selected archive member absent')
+
+
+def require_prebuild_identity(before):
+    need(before['complete'] and all(before.get(k)==v for k,v in identity().items()),'NDK pre-build source/run/attempt mismatch')
+
+
+def ndk_capture(destination,files,copy):
+    result=dict(identity(),complete=False,external_map_inputs=[],images=[],gaps=[],f07_accepted=False,
+                scope='map-selected inputs of the actual mapped .cxx images listed here, requiring host and product',
+                excluded_scope=['unlisted APK native SDK/JNI images','all link operands beyond mapped contributions','DT_NEEDED/public-provider audit'])
+    try:
+        before=json.loads((OUT/'ndk-before.json').read_text())
+        require_prebuild_identity(before)
+        root=Path(before['root']);toolroot=root/'toolchains/llvm/prebuilt/linux-x86_64'
+        for name,record in before['tools'].items():need(ndk_file_record(root,toolroot/'bin'/name)==record,'NDK tool changed across producer')
+        notices={}
+        for name,record in before['notices'].items():
+            need(ndk_file_record(root,root/name)==record,'NDK notice changed across producer')
+            retained=OUT/'logs/ndk-notices'/name;need(retained.is_file() and digest(retained)==record['sha256'],'retained notice copy missing/changed')
+            notices[name]=retained.read_text()
+        result['notice_records']=before['notices'];result['prebuild_sha256']=digest(OUT/'ndk-before.json')
+        member_cache={};copied=set();canonical={}
+        for cache in (ROOT/'examples/android/app/.cxx').rglob('CMakeCache.txt'):
+            folder=cache.parent;text=cache.read_text();copy(cache)
+            home=re.findall(r'^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$',text,re.M)
+            if home!=[str(ROOT/'examples/android/app/src/main/cpp')]:continue
+            ninja_paths=re.findall(r'^CMAKE_MAKE_PROGRAM:FILEPATH=(.+)$',text,re.M);need(len(ninja_paths)==1,'actual Ninja path missing')
+            ninja=Path(ninja_paths[0]);need(before['ninja_tools'].get(str(ninja))==dict(sha256=digest(ninja),resolved=str(ninja.resolve())),'actual Ninja not pinned before producer')
+            label='ndk-'+folder.relative_to(ROOT).as_posix().replace('/','_')
+            commands=command([ninja,'-C',folder,'-t','commands'],label+'-commands').stdout
+            command([ninja,'-C',folder,'-t','deps'],label+'-deps')
+            for path in folder.rglob('*'):
+                if path.is_file() and (path.name in ('build.ninja','rules.ninja','.ninja_deps','.ninja_log') or path.suffix=='.rsp'):copy(path)
+            images={}
+            for line in commands.splitlines():
+                args=shlex.split(line)
+                if '-shared' not in args or not any(a.startswith('-Wl,-Map,') for a in args):continue
+                outputs=[args[i+1] for i,a in enumerate(args[:-1]) if a=='-o'];need(len(outputs)==1,'mapped shared link output ambiguous')
+                image=(folder/outputs[0]).resolve();mapfile,actual=android_link_binding(commands,image,folder)
+                driver_binding=ndk_driver_binding(actual,text,before)
+                need(image.is_relative_to(ROOT) and mapfile.is_relative_to(ROOT),'linked image/map escapes workspace')
+                need(image.name not in images,'duplicate mapped Android image');images[image.name]=True;copy(image);copy(mapfile)
+                image_record=dict(image=str(image.relative_to(ROOT)),image_sha256=digest(image),map=str(mapfile.relative_to(ROOT)),map_sha256=digest(mapfile),command=actual,driver_binding=driver_binding,contributors=[])
+                result['images'].append(image_record)
+                selected={};workspace_inputs={}
+                for address,size,value in lld_rows(mapfile.read_text()):
+                    if ':(' not in value:continue
+                    origin=re.fullmatch(r'(.+):\([^\n]*\)',value);need(origin is not None,'unparsed map contribution')
+                    name=origin[1]
+                    if name=='<internal>':continue
+                    archive=re.fullmatch(r'(.+\.a)\(([^()]+)\)',name)
+                    path_name,member=(archive[1],archive[2]) if archive else (name,None)
+                    path=Path(path_name) if Path(path_name).is_absolute() else folder/path_name
+                    need('..' not in path.parts,'map input traversal requires explicit diagnosis')
+                    if path.is_relative_to(ROOT):
+                        need(path.is_file() and path.resolve().is_relative_to(ROOT),'workspace map input missing/escaping')
+                        workspace_inputs.setdefault(str(path),set()).add(member);continue
+                    if not path.is_relative_to(root):result['gaps'].append('unknown external origin '+name);continue
+                    selected.setdefault(str(path),set()).add(member)
+                for path_name,members in workspace_inputs.items():
+                    path=Path(path_name);copy(path)
+                    image_record['contributors'].append(dict(path=str(path.relative_to(ROOT)),members=sorted(m for m in members if m),sha256=digest(path)))
+                for path_name,members in selected.items():
+                    path=Path(path_name);record=selected_ndk_record(before,path);relative=record['path']
+                    previous=canonical.setdefault(record['resolved'],relative);need(previous==relative,'multiple selected aliases for same NDK input')
+                    row=dict(record,map=image_record['map'],image=image_record['image'],members=sorted(m for m in members if m),copied=False)
+                    result['external_map_inputs'].append(row)
+                    if not llvm_runtime_notice_coverage(record,notices):
+                        result['gaps'].append('selected input license coverage unclear; bytes withheld: '+relative);continue
+                    if relative not in member_cache:
+                        listing=command([toolroot/'bin/llvm-ar','t',path],label+'-members-'+str(len(member_cache))).stdout.splitlines()
+                        member_cache[relative]=listing
+                    with path.open('rb') as f:validate_archive_members(f.read(8),member_cache[relative],members)
+                    into=destination/'ndk-inputs'/relative;into.parent.mkdir(parents=True,exist_ok=True)
+                    if relative not in copied:
+                        shutil.copyfile(path,into);need(digest(into)==record['sha256'],'retained NDK bytes differ')
+                        files[into.relative_to(destination).as_posix()]=dict(sha256=digest(into),bytes=into.stat().st_size,mode=into.stat().st_mode&0o777,symlink_target=None);copied.add(relative)
+                    row.update(copied=True,retained='ndk-inputs/'+relative,copy_sha256=digest(into),archive_members=member_cache[relative])
+            need({'libexreader_host.so','libexreader_product.so'}<=set(images),'actual host/product mapped link outputs missing')
+        need(result['images'] and result['external_map_inputs'],'no original map-selected NDK inputs captured')
+        # Licensing/unknown-root gaps never authorize copying or F07. Keep this
+        # distinct from the narrowly measured repaired public-interface boundary.
+        result['complete']=not result['gaps']
+    except Exception as error:
+        result['error']=repr(error);raise
+    finally:save(OUT/'ndk-capture.json',result)
+    return result
 
 
 def package_identity(target):
@@ -499,10 +788,14 @@ def capture(target):
             need(not(path.is_symlink() and path.is_dir()),'directory alias requires explicit closure')
             if path.is_file():copy(path)
     try:
+        if target=='android':
+            copy(OUT/'ndk-before.json')
+            report['ndk_provenance']=ndk_capture(destination,files,copy)
+            report['ndk_provenance_complete']=report['ndk_provenance']['complete']
         source=json.loads((OUT/'source.json').read_text());need(source['source_sha']==os.environ['GITHUB_SHA'],'source identity')
         for prefix in dict.fromkeys((sdk,stage,product)):tree(prefix)
         need(not list(stage.glob('include/**/reader_selector_bytes_detail.h')),'private header installed')
-        cache_records={};dependencies={};manifests={};proofs={}
+        cache_records={};dependencies={};manifests={};proofs={};android_proof=None
         source_names={'reading-state':'reading_state.cpp','reading-commands':'reading_commands.cpp','annotation-import':'annotation_import.cpp','annotation-export':'annotation_export.cpp'}
         archive_names={'revisions':'reader_revisions','reading-state':'reader_reading_state_codec','reading-commands':'reader_reading_commands','annotation-import':'reader_annotation_import','annotation-export':'reader_annotation_export'}
         folders=list((ROOT/'build').rglob('CMakeCache.txt'))
@@ -529,6 +822,9 @@ def capture(target):
                 for tool in ('commands','deps'):
                     p=command(['ninja','-C',folder,'-t',tool],label+'-'+tool)
                     if tool=='deps':ninja_deps=p.stdout
+            if target=='android' and home==ROOT/'examples/android/app/src/main/cpp':
+                need(android_proof is None and raw and ninja_deps is not None,'unique actual raw Android host dependency graph required')
+                android_proof=android_caller_proof(folder,home,stage,ninja_deps,copy)
             if owner and raw and owner in source_names:
                 need(owner not in proofs,'ambiguous raw build owner '+owner)
                 name=archive_names[owner];archive_name=name+'.lib' if os.name=='nt' else 'lib'+name+'.a'
@@ -538,11 +834,17 @@ def capture(target):
                 if ninja_deps is not None:
                     groups=ninja_dependency_groups(ninja_deps)
                     query=command(['ninja','-C',folder,'-t','query',archive_name],'archive-input-'+owner).stdout
-                    input_section=query.split('  input:',1)
-                    need(len(input_section)==2 and '  outputs:' in input_section[1],'archive query structure')
-                    graph_objects=[line.strip() for line in input_section[1].split('  outputs:',1)[0].splitlines()[1:]
-                                   if re.fullmatch(r'    [^|].*\.(o|obj)',line)]
+                    archive_inputs,_=ninja_explicit_inputs(query,archive_name,'CXX_STATIC_LIBRARY_LINKER')
+                    graph_objects=[p for p in archive_inputs if p.endswith(('.o','.obj'))]
+                    need(graph_objects and len(graph_objects)==len(archive_inputs),'archive explicit inputs must all be objects')
+                    graph_sources={}
+                    for number,obj in enumerate(graph_objects):
+                        query=command(['ninja','-C',folder,'-t','query',obj],'compiler-input-'+owner+'-'+str(number)).stdout
+                        inputs,outputs=ninja_explicit_inputs(query,obj,'CXX_COMPILER')
+                        need(len(inputs)==1 and inputs[0].endswith('.cpp') and archive_name in outputs,'unique actual C++ source/archive edge required')
+                        graph_sources[obj]=inputs[0]
                 else:
+                    graph_sources=None
                     depfiles=list((folder/'CMakeFiles'/(name+'.dir')).rglob(source_names[owner]+'.o.d'))
                     need(len(depfiles)==1,'exact Make object depfile missing or ambiguous')
                     groups=make_dependency_group(depfiles[0].read_text())
@@ -550,11 +852,12 @@ def capture(target):
                     need(link.is_file(),'actual Make archive link command missing')
                     graph_objects=[token for token in shlex.split(link.read_text()) if token.endswith(('.o','.obj'))]
                 required=[stage/'include'/('reader_reading_state_retained_raw_v1.h' if owner=='reading-commands' else 'reader_selector_bytes_v1.h')]
-                proof=owned_dependency_proof(str(home/'src'/source_names[owner]),graph_objects,groups,folder,required)
+                proof=owned_dependency_proof(str(home/'src'/source_names[owner]),graph_objects,groups,folder,required,graph_sources)
                 need((folder/proof['archive_object']).is_file(),'linked object bytes absent')
                 proof.update(built_archive_sha256=digest(built),installed_archive_sha256=digest(installed))
                 proofs[owner]=proof
         need(set(proofs)==set(source_names),'all four exact producer TU dependencies required')
+        if target=='android':need(android_proof is not None,'actual Android retained caller proof missing')
         for owner,header in (('revisions','reader_selector_bytes_v1.h'),('reading-state','reader_reading_state_retained_raw_v1.h')):
             expected=(stage/'include'/header).resolve()
             owners=[cache_records[name]['owner'] for name,paths in manifests.items() if cache_records[name]['raw'] and expected in [Path(p).resolve() for p in paths]]
@@ -613,13 +916,14 @@ def capture(target):
         for path in OUT.glob('*.json'):copy(path)
         tree(OUT/'logs')
         report.update(capture_complete=True,named_boundary_accepted=True,source=source,installed_archives=archive_identity,
-                      actual_compiler_dependencies=proofs,public_headers_unique_install_owner=True,
+                      actual_compiler_dependencies=proofs,android_retained_caller=android_proof,public_headers_unique_install_owner=True,
                       private_header_absent=True,private_cpp_entry_absent=True,packages=packages,native=native,
                       final_whole_image_f07_audit=False,original_source_guards_excluded=EXCLUSIONS)
     except Exception as error:
         report['error']=repr(error)
         raise
     finally:
+        if target=='android' and (OUT/'ndk-capture.json').is_file():copy(OUT/'ndk-capture.json')
         if (OUT/'logs').is_dir():
             tree(OUT/'logs')
         save(OUT/'capture.json',report)
@@ -700,7 +1004,7 @@ def authenticate():
                 for path,meta in inventory['files'].items():
                     data=bundle.read(path);need(len(data)==meta['bytes'] and hashlib.sha256(data).hexdigest()==meta['sha256'],'file digest '+path)
                 measured=inventory['report'];need(measured['target']==target and measured['capture_complete'] and measured['named_boundary_accepted'],'incomplete owner proof')
-                need(measured['source']['authorized_paths_sha256']=={path:digest(ROOT/path) for path in (*OWNERS,*ADDED)},'reviewed source manifest drift')
+                need(measured['source']['authorized_paths_sha256']=={path:digest(ROOT/path) for path in (*OWNERS,*HOSTS,*ADDED)},'reviewed source manifest drift')
                 expected_entries={'iphone','ipad'} if target=='iphone' else {target}
                 need({entry['target'] for entry in measured['native']['entries']}==expected_entries,'artifact native target inventory')
                 need(measured['f07_accepted'] is False and measured['final_whole_image_f07_audit'] is False,'scope inflation')
