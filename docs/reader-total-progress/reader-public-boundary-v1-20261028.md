@@ -68,6 +68,44 @@ unsupported, relative or changed tools still fail; no PATH fallback is allowed.
 The failed capture and its partial evidence remain preserved. This follow-up
 source is unrun until a later same-source Actions result is recorded.
 
+### Third measured run: remaining validation transport and fixture bindings
+
+Source `4118c7b24a3e26b2fb139c100720229908b9fbd0`, run `40806869546/1`,
+passed 57 synthetic controls. Windows completed native and capture jobs. macOS
+completed selector protocol/graph and C06 behavioral assertions, then exposed a
+configuration fixture search leak: it requested raw Revisions 0.4 from an OFF
+prefix (version 0.3), but CMake could find 0.4 in a second combined raw/product
+prefix. Windows' distinct product prefix did not permit that fallback and its
+negative correctly failed. The repair pins each requested package with exact
+selected-prefix `PATHS ... NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH`, checks the
+canonical resolved package config directory, keeps the 0.4-on-OFF negative, and
+adds positive 0.3 discovery/legacy C compile-link plus an actual new public-header
+compile-only refusal against that same OFF imported target. The negative requires
+the actual header to be absent and a genuine GCC/Clang/MSVC missing-header
+diagnostic; a generic build or linker failure cannot pass. No product guard changes.
+
+Android progressed through selector phases and protocol/graph, then exact input
+snapshot comparison failed at the first C06 operation. The host had newly created
+empty C06 directories, absent from the logged post-push remote directory list.
+The repair explicitly transfers the directory inventory in both directions;
+complete file/directory/hash equality, deletion preservation and special-entry
+refusal remain unchanged. It does not synthesize missing expected files.
+
+NDK capture now logged and accepted the actual `CMAKE_MAKE_PROGRAM:UNINITIALIZED`
+assignment with its original pre-build Ninja hash. The next guard failed the
+compiler-cache-only comparison despite an actual NDK clang++ link command. The
+follow-up retains one generated CMake C/CXX compiler record per language, requires
+its exact literal driver path, and corroborates any cache assignment if present.
+Missing, duplicate, conflicting or changed identities still fail; actual compiler
+record format/cache presence will be diagnosed in Actions, not presumed proved
+by this repair. Target/sysroot, pre/post driver hashes and licensing gates remain.
+
+Terminal result: Windows and the complete iPhone/iPad native/capture job passed.
+Both fresh simulators executed codec 40/40 and retained 76/76 plus the original
+selector/C06 assertions. Linux reached the same configuration fixture leak after
+its behavior checks; macOS and Android failures above remained. Authentication
+correctly refused the failed Linux job. This is not aggregate or full F07 success.
+
 ### Authorized Android caller extension, 2026-10-29 01:35 UTC
 
 The user confirmed “那我确认” (Sentinel_6c49c0656690819180749be6664bd059,

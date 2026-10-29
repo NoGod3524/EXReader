@@ -50,6 +50,44 @@ class BoundaryContract(unittest.TestCase):
             ninja.write_bytes(b'changed after producer')
             with self.assertRaises(AssertionError):C.configured_ninja(line,before)
 
+    def test_guard_fixture_cannot_fall_back_to_second_raw_prefix(self):
+        selected=Path('/owned/legacy-stage')
+        raw=C.guard_fixture_source('EXReaderRevisions 0.4.0',selected)
+        self.assertIn('EXReaderRevisions 0.4.0 EXACT CONFIG REQUIRED PATHS "/owned/legacy-stage/lib/cmake/EXReaderRevisions" NO_DEFAULT_PATH',raw)
+        self.assertIn('NO_CMAKE_FIND_ROOT_PATH',raw)
+        self.assertIn('file(REAL_PATH "${EXReaderRevisions_DIR}" _actual_config)',raw)
+        self.assertIn('if(NOT _actual_config STREQUAL _expected_config)',raw)
+        old=C.guard_fixture_source('EXReaderRevisions 0.3.0',selected,Path('/owned/legacy-api.c'))
+        self.assertIn('EXReaderRevisions 0.3.0 EXACT CONFIG REQUIRED',old)
+        self.assertIn('target_link_libraries(guard-compile PRIVATE EXReaderRevisions::reader_revisions)',old)
+        public=C.guard_fixture_source('EXReaderRevisions 0.3.0',selected,C.HERE/'codec_v1.c',True)
+        self.assertIn('codec_v1.c',public)
+        self.assertIn('add_library(guard-compile OBJECT ',public)
+        self.assertNotIn('target_include_directories',public)
+
+    def test_public_header_compile_refusal_is_not_generic_link_or_build_failure(self):
+        for text in ("fatal error C1083: Cannot open include file: 'reader_selector_bytes_v1.h': No such file or directory",
+                     "fatal error: 'reader_selector_bytes_v1.h' file not found",
+                     'fatal error: reader_selector_bytes_v1.h: No such file or directory'):
+            self.assertTrue(C.missing_public_header_diagnostic(text))
+        for text in ('reader_selector_bytes_v1.h: unrelated error','undefined reference to reader_selector_encode_v1',
+                     "fatal error: 'other.h' file not found",'reader_selector_bytes_v1.h mentioned; linker failed'):
+            self.assertFalse(C.missing_public_header_diagnostic(text))
+
+    def test_snapshot_empty_directories_are_transferred_without_hiding_file_absence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source=Path(tmp)/'source';source.mkdir();(source/'empty/nested').mkdir(parents=True)
+            (source/'kept').write_bytes(b'actual file')
+            inventory=C.snapshot(source);incoming=Path(tmp)/'incoming';incoming.mkdir()
+            (incoming/'kept').write_bytes(b'actual file')
+            self.assertNotEqual(C.snapshot(incoming),inventory)
+            C.restore_snapshot_directories(incoming,inventory)
+            self.assertEqual(C.snapshot(incoming),inventory)
+            (incoming/'kept').unlink();C.restore_snapshot_directories(incoming,inventory)
+            self.assertNotEqual(C.snapshot(incoming),inventory)
+            for dirs in (['../escape'],['same','same'],['kept']):
+                with self.assertRaises(AssertionError):C.snapshot_directories({'files':inventory['files'],'directories':dirs})
+
     def test_old_private_call_absent(self):
         for p in ('apps/reader/reading-commands/src/reading_commands.cpp','apps/reader/reading-state/src/reading_state.cpp',*C.HOSTS):
             self.assertNotIn('reader_rs_encode_retained_raw_v3',(C.ROOT/p).read_text())
@@ -212,15 +250,20 @@ class BoundaryContract(unittest.TestCase):
             sysroot=root/'toolchains/llvm/prebuilt/linux-x86_64/sysroot';sysroot.mkdir()
             before={'root':str(root),'tools':{'clang++':C.ndk_file_record(root,driver)}}
             cache='CMAKE_CXX_COMPILER:FILEPATH='+str(driver)+'\n'
+            records={'CXX':'set(CMAKE_CXX_COMPILER "'+str(driver)+'")\n'}
             command=str(driver)+' --target=x86_64-none-linux-android26 --sysroot='+str(sysroot)+' -shared -o image.so'
-            self.assertEqual(C.ndk_driver_binding(command,cache,before)['target'],'x86_64-none-linux-android26')
+            self.assertEqual(C.ndk_driver_binding(command,cache,before,records)['target'],'x86_64-none-linux-android26')
+            self.assertEqual(C.ndk_driver_binding(command,'',before,records)['target'],'x86_64-none-linux-android26')
+            for wrong in ({},{'CXX':records['CXX']*2},{'CXX':records['CXX'].replace(str(driver),'/wrong/clang++')},{'CXX':'# '+records['CXX']}):
+                with self.assertRaises(AssertionError):C.ndk_driver_binding(command,cache,before,wrong)
             for bad in (command.replace('android26','android27'),command.replace(str(sysroot),'/other/sysroot'),command.replace(str(driver),'/other/clang++')):
-                with self.assertRaises(AssertionError):C.ndk_driver_binding(bad,cache,before)
+                with self.assertRaises(AssertionError):C.ndk_driver_binding(bad,cache,before,records)
             for override in (' -target arm64-linux-android26',' --target arm64-linux-android26',' --sysroot /other',' -isysroot /other',' -target=arm64-linux-android26',' -isysroot=/other',' -Xclang -triple'):
-                with self.assertRaises(AssertionError):C.ndk_driver_binding(command+override,cache,before)
-            with self.assertRaises(AssertionError):C.ndk_driver_binding(command,cache.replace(str(driver),'/other/clang++'),before)
+                with self.assertRaises(AssertionError):C.ndk_driver_binding(command+override,cache,before,records)
+            for wrong in (cache*2,cache.replace(str(driver),'/other/clang++'),cache.replace('FILEPATH','BOOL')):
+                with self.assertRaises(AssertionError):C.ndk_driver_binding(command,wrong,before,records)
             driver.write_bytes(b'changed driver')
-            with self.assertRaises(AssertionError):C.ndk_driver_binding(command,cache,before)
+            with self.assertRaises(AssertionError):C.ndk_driver_binding(command,cache,before,records)
 
     def test_ndk_prebuild_requires_same_source_run_attempt(self):
         before=dict(C.identity(),complete=True);C.require_prebuild_identity(before)
