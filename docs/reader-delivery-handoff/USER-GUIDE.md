@@ -30,14 +30,16 @@
 Linux 命令行（`examples/linux/reader.c` 的 `main`）：`exreader-linux --version` 打印 SDK 版本和 ABI；
 `exreader-linux FONT STATE_DIRECTORY [OBSERVATION_FILE]` 用指定字体和状态目录运行（观察文件用于自动化，普通用户不需要）；
 无参数时状态目录是 `$XDG_DATA_HOME/exreader`（通常 `~/.local/share/exreader`）。其它参数个数会打印用法并返回 2。
-Windows 与 Android 的宿主没有面向用户的命令行开关；`examples/windows/README.md` 提到旧宿主 `--data` 可改数据目录，
-未对 F06 的 Wave3 宿主核对。
+Windows 命令行（`examples/reader.c` 的 `WinMain`，约 6333–6363 行；F06 的 `EXReaderWave3` 宿主由 `apps/reader/desktop/windows_feature_integration.cmake` 用同一个 `reader.c` 编出）：
+`EXReader.exe [书籍路径] [--data 数据目录] [--library 书库文件] [--font 字体文件]`；书籍路径是不以 `-` 开头的参数，启动后打开该书。
+`--drive`、`--evidence`、`--phase` 是自动化验收用开关，普通用户不需要。未传 `--data` 时用 `%LOCALAPPDATA%\EXReaderHost`，
+取不到 `LOCALAPPDATA` 会弹窗报错并以 2 退出。Android 宿主没有面向用户的命令行开关。
 
 数据位置（升级前必须知道，见第 6 节）：
 
 | 端 | 数据位置 | 依据 |
 | --- | --- | --- |
-| Windows | `%LOCALAPPDATA%\EXReaderHost`（`library.sqlite`、`host.ini` 等）；账号/云导入在该宿主的 `account.ini`、`cloud-import`、`sync-originals` 子路径 | `examples/windows/README.md`；Wave3 宿主的子路径取自源码字符串，**目录根是否相同未逐项核对** |
+| Windows | `%LOCALAPPDATA%\EXReaderHost`（默认；`--data` 改目录，`--library` 单独指定书库文件）；有 `library.sqlite`、`host.ini`，账号/云导入子路径 `account.ini`、`cloud-import`、`sync-originals` 取自源码字符串 | `examples/reader.c` 6366–6371 行；`examples/windows/README.md` |
 | Linux | `~/.local/share/exreader`（或启动命令传入的 `STATE_DIRECTORY`），含 `reader.ini` | `examples/linux/reader.c` |
 | macOS / iOS / iPadOS | 应用的 Application Support 目录；iOS 的 `Info.plist` 打开了 `UIFileSharingEnabled` 与 `LSSupportsOpeningDocumentsInPlace` | `examples/apple/HostModel.swift`、`tools/build_apple_host.py` |
 | Android | 应用私有目录；清单中 `android:allowBackup="false"` | `examples/android/app/src/main/AndroidManifest.xml` |
