@@ -1,0 +1,22 @@
+name: Read original annotation macOS failure
+on:
+  push:
+    branches: [codex/apple-four-evidence-audit-20261029]
+    paths: ['tools/reader_composition/annotation_failure_409114.py', '.github/workflows/annotation-failure-409114.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original artifact and read exact native failure
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/annotation_failure_409114.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: annotation-failure-${{ github.run_id }}
+          path: build/annotation-failure/context.json
+          if-no-files-found: warn
