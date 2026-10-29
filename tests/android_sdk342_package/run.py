@@ -91,6 +91,8 @@ def build():
     (payload / 'artifacts').mkdir(parents=True)
     shutil.copyfile(ROOT / 'build/wave3/artifacts/app-debug.apk', payload / 'artifacts/app-debug.apk')
     for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md'): shutil.copyfile(ROOT / name, payload / name)
+    # F12 handoff patch (docs/reader-delivery-handoff/PACKAGING-PATCH.md): ship the SDK's installed licence texts.
+    shutil.copytree(ROOT / 'build/wave3/sdk-stage/share/exreader/licenses', payload / 'licenses')
     apk = payload / 'artifacts/app-debug.apk'
     producer = dict(source_sha=os.environ['GITHUB_SHA'], sdk_version=VERSION,
         platform='Android API34 x86_64 emulator', signing='debug; not store release',

@@ -34,7 +34,7 @@
 
 ## 包级处理
 
-见 [EVIDENCE.md](EVIDENCE.md) 末尾“缺口与处理”。
+Android 压缩包缺少 `licenses/`（Actions 实测）。本分支对 `tests/android_sdk342_package/run.py` 做了一行补丁，声明与未验证边界见 [PACKAGING-PATCH.md](PACKAGING-PATCH.md)。
 
 ## 剩余阻塞与尚未验证
 

@@ -172,7 +172,7 @@ def packaging_copies():
     files = {'windows': ['tools/build_windows_host.py'], 'linux': ['tools/build_linux_host.py'],
              'macos': ['tools/build_apple_host.py'], 'iphone': ['tools/build_apple_host.py'],
              'ipad': ['tools/build_apple_host.py'],
-             'android': ['tests/android_sdk342_package/run.py', 'tests/reader_f06_packages/build.py']}
+             'android': ['tests/android_sdk342_package/run.py']}
     out = {}
     for target, paths in files.items():
         entry = {}
@@ -226,6 +226,8 @@ def source():
                 scripts_enabling_aac=aac, doc_problems=link_problems(),
                 licence_sha256=sha256_file(ROOT / 'LICENSE'), notices_sha256=sha256_file(ROOT / 'THIRD_PARTY_NOTICES.md'))
     problems = list(data['doc_problems']) + ['empty licence file ' + n for n in data['empty_repository_licence_files']]
+    problems += ['%s: %s does not copy %s' % (t, p, k) for t, files in copies.items() for p, v in files.items()
+                 for k in ('license', 'notices', 'licenses_directory') if not v[k]]
     problems += ['notice marker absent for ' + c['id'] for c in components if c['notice_marker_present'] is False]
     data['problems'] = problems
     save('source.json', data)
@@ -303,7 +305,7 @@ def inspect_target(target, run_id, attempt, records, expected_head, module, decl
         match = DIR_RE.search(n)
         if match:
             found[match.group(1)] = n
-    root_material = sorted(n for n in members if n.rsplit('/', 1)[-1] in ROOT_MATERIAL)
+    root_material = sorted(n for n in members if n.rsplit('/', 1)[-1] in ROOT_MATERIAL and not DIR_RE.search(n))
     caches = cache_switches(configuration)
     union = {}
     for _, values in caches:
