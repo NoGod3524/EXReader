@@ -68,8 +68,26 @@ def attachment_bundle(root, form='png'):
     return result
 
 
+def candidate_bundle(root, name='privacy-stages_0_12345678-1234-1234-1234-123456789ABC.json'):
+    result = attachment_bundle(root, 'underscore'); directory = root / 'attachments'
+    groups = json.loads((directory / 'manifest.json').read_text())
+    groups[0]['unknownMetadata'] = {'nested': [True, 1, 1.0, -0.0, {'keep': 'private-unknown-operand'}]}
+    groups[0]['attachments'][0]['suggestedHumanReadableName'] = name
+    (directory / 'manifest.json').write_text(json.dumps(groups))
+    result['files'] = {'attachments/' + path: item for path, item in seal_files(directory).items()}
+    return result
+
+
+def run_candidate(root, result):
+    report = {}
+    inspector.replay_original_attachments(root, result, report)
+    outcome = inspector.attachment_identity_trial(root, result, report)
+    return outcome, report
+
+
 def native_order_control(test, root, *, changed_member=False, sealed=True, bad_scan=False,
-                         native_present=True, parser_failure=None, retained_bare_export=False):
+                         native_present=True, parser_failure=None, retained_bare_export=False,
+                         retained_candidate_export=False, valid_later_evidence=False):
     """Actions-only synthetic archive through the REAL admission/native helper."""
     receipt = {'admission_closed': True, 'active_handlers': 0, 'admitted_handlers': 533,
         'rejected_handlers': 0, 'serving_stopped': True, 'drained': True, 'failed': False,
@@ -79,8 +97,11 @@ def native_order_control(test, root, *, changed_member=False, sealed=True, bad_s
                'fixture-failures.json': b'["private-unknown-fixture-operand"]'}
     if native_present: members['privacy.xcresult/Info.plist'] = b'synthetic protocol fixture, not actual xcresult'
     if bad_scan: members['remember_closed-privacy-scan.json'] = b'{"private-unknown-root":{"accepted":false}}'
-    if retained_bare_export:
-        fixture = root / 'fixture-export'; fixture.mkdir(); attachment_bundle(fixture, 'bare')
+    if valid_later_evidence: members.update({'fixture-failures.json': b'[]', 'requests.json': b'[]'})
+    fixture_result = None
+    if retained_bare_export or retained_candidate_export:
+        fixture = root / 'fixture-export'; fixture.mkdir()
+        fixture_result = candidate_bundle(fixture) if retained_candidate_export else attachment_bundle(fixture, 'bare')
         for path in (fixture / 'attachments').iterdir(): members['attachments/' + path.name] = path.read_bytes()
     result = {'source_sha': SOURCE, 'run_id': RUN, 'attempt': '1', 'platform': 'macos',
         'accepted': False, 'diagnostic_only': True, 'full_f10_accepted': False, 'sequence_complete': False,
@@ -89,6 +110,10 @@ def native_order_control(test, root, *, changed_member=False, sealed=True, bad_s
         'strict_privacy_checks': dict.fromkeys(inspector.STAGES, False),
         'checkpoints': dict.fromkeys(inspector.STAGES, {}),
         'files': {name: {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()} for name, data in members.items()}}
+    if retained_candidate_export: result['checkpoints'] = fixture_result['checkpoints']
+    if valid_later_evidence:
+        result['root'] = 'https://127.0.0.1:443/privacy-' + 'a' * 24 + '/'
+        for checkpoint in result['checkpoints'].values(): checkpoint['network_requests'] = 0
     archive = root / 'control.zip'
     with zipfile.ZipFile(archive, 'w') as zipped:
         for name, data in members.items():
@@ -137,6 +162,242 @@ def native_order_control(test, root, *, changed_member=False, sealed=True, bad_s
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_candidate_exact_names_call_original_helper_on_only_metadata_copy(self):
+        for name, changed in [('privacy-stages.json', 0),
+                ('privacy-stages_0_12345678-1234-1234-1234-123456789ABC.json', 1),
+                ('privacy-stages_999999_12345678-1234-1234-1234-123456789abc.json', 1)]:
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = candidate_bundle(root, name); before = seal_files(root / 'attachments')
+                outcome, report = run_candidate(root, result); proof = report['attachment_identity_candidate']
+                self.assertTrue(outcome); self.assertTrue(proof['candidate_qualified'])
+                self.assertEqual(proof['candidate_helper_outcome'], 'passed'); self.assertIs(proof['next_profile_predicate'], True)
+                self.assertEqual(proof['allowed_changed_field_count'], changed)
+                self.assertTrue(proof['original_bytes_preserved']); self.assertTrue(proof['copy_nonmanifest_bytes_preserved'])
+                self.assertTrue(proof['copy_namespace_preserved'])
+                self.assertTrue(proof['source_and_import_rechecked']); self.assertEqual(seal_files(root / 'attachments'), before)
+                original = report['original_attachment_contract']
+                self.assertEqual(original['original_helper_outcome'], 'refused' if changed else 'passed')
+                self.assertIs(original['next_profile_predicate'], None if changed else True)
+                self.assertEqual(original['fatal_refusal'], bool(changed))
+                self.assertFalse(proof['accepted']); self.assertFalse(proof['native_acceptance']); self.assertFalse(proof['full_f10_accepted'])
+                self.assertNotIn('private-unknown-operand', json.dumps(report))
+
+    def test_candidate_name_grammar_refuses_unknown_and_extension_only_identity(self):
+        uuid = '12345678-1234-1234-1234-123456789ABC'
+        for name in ['private-operand.json', 'prefix-privacy-stages_0_' + uuid + '.json',
+                'privacy-stages_00_' + uuid + '.json', 'privacy-stages_1000000_' + uuid + '.json',
+                'privacy-stages_1_12345678-1234-1234-1234-123456789AbC.json',
+                'privacy-stages_1_private-operand.json', 'privacy-stages_1_' + uuid + '.json.extra',
+                'privacy-stages_1_' + uuid + '.JSON', 'privacy-stages.json/private-operand',
+                'privacy-stages_１_' + uuid + '.json', 'privacy-stages_%31_' + uuid + '.json',
+                'privacy-stages_1_UHJpdmFjeS0=.json', 'privacy-stages_1_Privacy-aaaa...json']:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = candidate_bundle(root, name)
+                outcome, report = run_candidate(root, result); proof = report['attachment_identity_candidate']
+                self.assertFalse(outcome); self.assertFalse(proof['candidate_qualified'])
+                self.assertEqual(proof['candidate_helper_outcome'], 'unavailable'); self.assertIsNone(proof['next_profile_predicate'])
+                for operand in ('private-operand', 'UHJpdmFjeS0=', 'Privacy-aaaa...'): self.assertNotIn(operand, json.dumps(proof))
+
+    def test_candidate_manifest_selection_is_unique_complete_and_case_bound(self):
+        for change in ('duplicate-candidate', 'duplicate-file', 'aliased-file', 'foreign-case',
+                'conflicting-name', 'bool-fallback', 'list-fallback', 'empty-fallback', 'invalid-name-type',
+                'extra-file', 'missing-reference', 'unsafe'):
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = candidate_bundle(root); directory = root / 'attachments'
+                groups = json.loads((directory / 'manifest.json').read_text())
+                if change == 'duplicate-candidate':
+                    (directory / 'other.json').write_bytes((directory / 'metadata.json').read_bytes())
+                    groups[0]['attachments'].append(dict(groups[0]['attachments'][0], exportedFileName='other.json'))
+                elif change == 'duplicate-file': groups[0]['attachments'].append(dict(groups[0]['attachments'][0]))
+                elif change == 'aliased-file':
+                    (directory / 'METADATA.json').write_bytes((directory / 'metadata.json').read_bytes())
+                    groups[0]['attachments'].append(dict(groups[0]['attachments'][0], exportedFileName='METADATA.json'))
+                elif change == 'foreign-case': groups[0]['testIdentifier'] = 'testForeignCase'
+                elif change == 'conflicting-name': groups[0]['testName'] = 'testForeignCase'
+                elif change in ('bool-fallback', 'list-fallback', 'empty-fallback'):
+                    groups[0]['testIdentifier'] = {'bool-fallback': False, 'list-fallback': [], 'empty-fallback': ''}[change]
+                    groups[0]['testName'] = CASE
+                elif change == 'invalid-name-type': groups[0]['testName'] = [CASE]
+                elif change == 'extra-file': (directory / 'extra.json').write_text('{}')
+                elif change == 'missing-reference': groups[0]['attachments'][0]['exportedFileName'] = 'missing.json'
+                else: groups[0]['attachments'][0]['exportedFileName'] = '../private-operand'
+                (directory / 'manifest.json').write_text(json.dumps(groups))
+                result['files'] = {'attachments/' + name: item for name, item in seal_files(directory).items()}
+                outcome, report = run_candidate(root, result)
+                self.assertFalse(outcome); self.assertFalse(report['attachment_identity_candidate']['candidate_qualified'])
+                self.assertIsNone(report['attachment_identity_candidate']['next_profile_predicate'])
+
+    def test_candidate_payload_exact_shape_and_checkpoint_identity(self):
+        for change in ('extra', 'missing', 'order', 'incomplete', 'operation', 'flag', 'uuid', 'profile', 'duplicate', 'invalid-json', 'invalid-utf8', 'oversize'):
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = candidate_bundle(root); directory = root / 'attachments'
+                document = json.loads((directory / 'metadata.json').read_text())
+                if change == 'extra': document['private-operand'] = 'private-operand'
+                elif change == 'missing': del document['operation']
+                elif change == 'order': document['stages'].reverse()
+                elif change == 'incomplete': document['stages'].pop()
+                elif change == 'operation': document['operation'] = 'UHJpdmFjeS0='
+                elif change == 'flag': document['diagnostic_continuation'] = 1
+                elif change == 'uuid': document['profile'] = 'Privacy-aaaa...'
+                elif change == 'profile': result['checkpoints'][inspector.STAGES[0]]['profile_id'] = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+                data = json.dumps(document).encode()
+                if change == 'duplicate': data = data[:-1] + b',"profile":"private-operand"}'
+                elif change == 'invalid-json': data = b'private-operand not-json'
+                elif change == 'invalid-utf8': data = b'\xffprivate-operand'
+                elif change == 'oversize': data += b' ' * (1024 * 1024)
+                (directory / 'metadata.json').write_bytes(data)
+                result['files'] = {'attachments/' + name: item for name, item in seal_files(directory).items()}
+                outcome, report = run_candidate(root, result); proof = report['attachment_identity_candidate']
+                self.assertFalse(outcome); self.assertFalse(proof['candidate_qualified'])
+                self.assertEqual(proof['candidate_helper_outcome'], 'unavailable'); self.assertIsNone(proof['next_profile_predicate'])
+                for operand in ('private-operand', 'UHJpdmFjeS0=', 'Privacy-aaaa...'): self.assertNotIn(operand, json.dumps(proof))
+
+    def test_candidate_duplicate_and_nonfinite_manifest_values_refuse(self):
+        for data in (b'{"a":1,"a":2}', b'{"a":NaN}', b'{"a":Infinity}', b'{"a":-Infinity}', b'{"a":1e999}'):
+            with self.assertRaises(RuntimeError): inspector.attachment_json(data)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); result = candidate_bundle(root); directory = root / 'attachments'
+            raw = (directory / 'manifest.json').read_bytes().replace(b'"testIdentifier":', b'"testIdentifier":"testForeign", "testIdentifier":', 1)
+            (directory / 'manifest.json').write_bytes(raw)
+            result['files'] = {'attachments/' + name: item for name, item in seal_files(directory).items()}
+            outcome, report = run_candidate(root, result)
+            self.assertFalse(outcome); self.assertEqual(report['attachment_identity_candidate']['refusal']['refusal_code'], 'attachment-candidate-json-duplicate')
+
+    def test_candidate_unknown_numeric_metadata_requires_exact_decimal_roundtrip(self):
+        for token in ('1.00000000000000001', '0.100000000000000001', '1e-999', '-1e-999'):
+            with self.subTest(token=token), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = candidate_bundle(root); directory = root / 'attachments'
+                raw = (directory / 'manifest.json').read_text().replace('"unknownMetadata":', '"exactNumber":' + token + ',"unknownMetadata":', 1)
+                (directory / 'manifest.json').write_text(raw)
+                result['files'] = {'attachments/' + name: item for name, item in seal_files(directory).items()}
+                outcome, report = run_candidate(root, result); proof = report['attachment_identity_candidate']
+                self.assertFalse(outcome); self.assertFalse(proof['candidate_qualified'])
+                self.assertEqual(proof['refusal']['refusal_code'], 'attachment-candidate-json-number')
+                self.assertEqual(proof['candidate_helper_outcome'], 'unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); result = candidate_bundle(root); directory = root / 'attachments'
+            raw = (directory / 'manifest.json').read_text().replace('"unknownMetadata":', '"exactNumbers":[0.1,1.0,-0.0,1e2],"unknownMetadata":', 1)
+            (directory / 'manifest.json').write_text(raw)
+            result['files'] = {'attachments/' + name: item for name, item in seal_files(directory).items()}
+            outcome, report = run_candidate(root, result)
+            self.assertTrue(outcome); self.assertTrue(report['attachment_identity_candidate']['candidate_qualified'])
+
+    def test_candidate_single_field_comparison_is_type_exact_for_unknown_metadata(self):
+        for left, right in [(True, 1), (1, 1.0), (0.0, -0.0), ({'a': [True]}, {'a': [1]}),
+                            ({'a': 1, 'b': 2}, {'b': 2, 'a': 1}), ([1, 2], [2, 1])]:
+            self.assertFalse(inspector.attachment_same_value(left, right))
+        actual = inspector.attachment_copy_proof
+        for change in ('bool-int', 'int-float', 'nested-value', 'drop', 'entry-order', 'extra-field',
+                       'document', 'screenshot', 'original-prefix', 'namespace', 'empty-directory'):
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = candidate_bundle(root)
+                def mutate(original, copied, expected, groups, position):
+                    model = json.loads((copied / 'manifest.json').read_text())
+                    if change == 'bool-int': model[0]['unknownMetadata']['nested'][0] = 1
+                    elif change == 'int-float': model[0]['unknownMetadata']['nested'][1] = 1.0
+                    elif change == 'nested-value': model[0]['unknownMetadata']['nested'][-1]['keep'] = 'replacement-private-operand'
+                    elif change == 'drop': del model[0]['unknownMetadata']
+                    elif change == 'entry-order': model[0]['attachments'].reverse()
+                    elif change == 'extra-field': model[0]['attachments'][0]['extra'] = 'private-operand'
+                    elif change == 'document': (copied / 'metadata.json').write_text('{}')
+                    elif change == 'screenshot': (copied / 'image0.bin').write_bytes(b'changed')
+                    elif change == 'original-prefix':
+                        with (original / 'image0.bin').open('r+b') as file: file.write(b'changed!')
+                    elif change == 'empty-directory': (copied / 'empty-extra').mkdir()
+                    else: (copied / 'late').write_bytes(b'private-operand')
+                    (copied / 'manifest.json').write_text(json.dumps(model))
+                    return actual(original, copied, expected, groups, position)
+                with patch.object(inspector, 'attachment_copy_proof', side_effect=mutate): outcome, report = run_candidate(root, result)
+                proof = report['attachment_identity_candidate']; self.assertFalse(outcome); self.assertFalse(proof['candidate_qualified'])
+                self.assertEqual(proof['candidate_helper_outcome'], 'unavailable'); self.assertIsNone(proof['next_profile_predicate'])
+                self.assertNotIn('replacement-private-operand', json.dumps(proof))
+
+    def test_candidate_post_helper_mutation_preserves_observed_but_not_qualified_outcome(self):
+        actual = inspector.attachment_copy_proof
+        for change in ('original', 'source'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = candidate_bundle(root); calls = []
+                def late(original, copied, expected, groups, position):
+                    calls.append(True)
+                    if len(calls) == 2:
+                        if change == 'original': (original / 'metadata.json').write_text('{}')
+                        else: (copied.parent / 'source' / 'continuation_contract.py').write_text('foreign source')
+                    return actual(original, copied, expected, groups, position)
+                with patch.object(inspector, 'attachment_copy_proof', side_effect=late): outcome, report = run_candidate(root, result)
+                proof = report['attachment_identity_candidate']; self.assertFalse(outcome)
+                self.assertEqual(proof['candidate_helper_outcome'], 'passed'); self.assertIs(proof['next_profile_predicate'], True)
+                self.assertFalse(proof['candidate_qualified']); self.assertFalse(proof['original_bytes_preserved'])
+
+    def test_candidate_actual_helper_failure_keeps_next_profile_unexecuted(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); result = candidate_bundle(root); directory = root / 'attachments'
+            groups = json.loads((directory / 'manifest.json').read_text())
+            for stage, entry in zip(inspector.STAGES, groups[0]['attachments'][1:]):
+                entry['suggestedHumanReadableName'] = 'privacy-' + stage
+            (directory / 'manifest.json').write_text(json.dumps(groups))
+            result['files'] = {'attachments/' + name: item for name, item in seal_files(directory).items()}
+            outcome, report = run_candidate(root, result); proof = report['attachment_identity_candidate']
+            self.assertFalse(outcome); self.assertEqual(proof['candidate_helper_outcome'], 'refused')
+            self.assertIsNone(proof['next_profile_predicate']); self.assertFalse(proof['candidate_qualified'])
+            self.assertEqual(proof['refusal']['refusal_code'], 'attachment-original-incomplete')
+
+    def test_candidate_source_substitution_and_absent_original_do_not_execute(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); result = candidate_bundle(root); report = {}
+            inspector.replay_original_attachments(root, result, report)
+            with patch.object(inspector.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'foreign source', b'private-operand')):
+                self.assertFalse(inspector.attachment_identity_trial(root, result, report))
+            self.assertEqual(report['attachment_identity_candidate']['candidate_helper_outcome'], 'unavailable')
+            self.assertEqual(report['attachment_identity_candidate']['refusal']['refusal_code'], 'attachment-source')
+        with tempfile.TemporaryDirectory() as temporary, patch.object(inspector, 'attachment_reference') as reference:
+            root = Path(temporary); regenerated = root / 'regenerated'; regenerated.mkdir(); candidate_bundle(regenerated)
+            report = {}; result = {'files': {}, 'commands': []}
+            inspector.replay_original_attachments(root, result, report)
+            self.assertTrue(inspector.attachment_identity_trial(root, result, report))
+            self.assertEqual(report['attachment_identity_candidate']['status'], 'unavailable')
+            self.assertFalse(report['attachment_identity_candidate']['candidate_qualified']); reference.assert_not_called()
+
+    def test_candidate_qualified_report_survives_later_fatal_without_replacing_original(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            refusal, calls, stages, unused = native_order_control(self, Path(temporary), retained_candidate_export=True)
+            self.assertEqual(refusal['refusal_code'], 'fixture-failure-shape')
+            report = refusal['validated_partial_report']; original = report['original_attachment_contract']
+            self.assertEqual(original['original_helper_outcome'], 'refused'); self.assertTrue(original['fatal_refusal'])
+            self.assertTrue(report['attachment_identity_candidate']['candidate_qualified'])
+            self.assertFalse(report['attachment_identity_candidate']['accepted']); self.assertFalse(report['accepted'])
+            self.assertEqual(calls, ['get', 'export'])
+            self.assertLess(stages.index('attachment-identity-candidate'), stages.index('xcresult-copy'))
+            self.assertNotIn('private-unknown-operand', json.dumps(refusal))
+
+    def test_candidate_success_does_not_bypass_actual_original_final_refusal(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            refusal, calls, stages, unused = native_order_control(self, Path(temporary),
+                retained_candidate_export=True, valid_later_evidence=True)
+            self.assertEqual(refusal['refusal_code'], 'attachment-contract-refused')
+            self.assertEqual(refusal['stage'], 'attachment-contract-final')
+            report = refusal['validated_partial_report']
+            self.assertTrue(report['attachment_identity_candidate']['candidate_qualified'])
+            self.assertTrue(report['original_attachment_contract']['fatal_refusal'])
+            self.assertFalse(report['accepted']); self.assertFalse(report['full_f10_accepted'])
+            self.assertEqual(calls, ['get', 'export'])
+
+    def test_candidate_cleanup_failure_never_reports_qualification(self):
+        actual = tempfile.TemporaryDirectory
+        class FailedCleanup:
+            def __init__(self, **kwargs): self.owned = actual(**kwargs)
+            def __enter__(self): return self.owned.__enter__()
+            def __exit__(self, *args):
+                self.owned.__exit__(*args)
+                raise RuntimeError('private-operand cleanup')
+        with actual() as temporary:
+            root = Path(temporary); result = candidate_bundle(root); report = {}
+            inspector.replay_original_attachments(root, result, report)
+            with patch.object(inspector.tempfile, 'TemporaryDirectory', FailedCleanup):
+                self.assertFalse(inspector.attachment_identity_trial(root, result, report))
+            proof = report['attachment_identity_candidate']
+            self.assertEqual(proof['candidate_helper_outcome'], 'passed'); self.assertFalse(proof['candidate_qualified'])
+            self.assertEqual(proof['status'], 'refused'); self.assertNotIn('private-operand', json.dumps(proof))
+
     def test_actual_original_attachment_helper_accepts_only_original_name_forms(self):
         for form in ('png', 'underscore', 'bare'):
             with tempfile.TemporaryDirectory() as temporary:

@@ -3,8 +3,11 @@
 """Pinned failed continuation evidence; fixed-output diagnosis, never acceptance."""
 import json
 import base64
+import copy
+from decimal import Decimal
 import hashlib
 import importlib.util
+import math
 import os
 from pathlib import Path
 import re
@@ -13,6 +16,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import unicodedata
 import zipfile
 from urllib.parse import parse_qsl, urlsplit
 from contract import ROOT, STAGES, guard, require, sha
@@ -67,7 +71,7 @@ DIAGNOSTIC_STAGES = ('entry', 'scope-and-source', 'artifact-metadata', 'artifact
     'lifecycle-receipt', 'admission-replay', 'progress-and-native-log', 'scan-summaries', 'fixture-failures', 'network-summary',
     'xcresult-copy', 'xcresult-parser', 'xcresult-issues', 'attachment-export',
     'attachment-summary', 'attachment-contract-reference', 'attachment-contract-replay',
-    'attachment-contract-predicates', 'attachment-contract-final', 'safe-report')
+    'attachment-contract-predicates', 'attachment-identity-candidate', 'attachment-contract-final', 'safe-report')
 CURRENT_DIAGNOSTIC_STAGE = 'entry'
 CURRENT_MEMBER_INTEGRITY = None
 CURRENT_PLATFORM = None
@@ -77,6 +81,19 @@ ADMISSION_COMMAND_ROLES = {'admission-pre-sign-archive', 'admission-host-sign',
     'admission-post-sign-display', 'admission-post-sign-verify', 'admission-post-sign-archive',
     'admission-installed-path', 'admission-installed-display', 'admission-installed-verify', 'admission-installed-archive'}
 REFUSAL_CODES = {
+    'candidate attachment original proof absent': 'attachment-candidate-original-proof',
+    'candidate attachment JSON duplicate key': 'attachment-candidate-json-duplicate',
+    'candidate attachment JSON nonfinite': 'attachment-candidate-json-nonfinite',
+    'candidate attachment JSON numeric loss': 'attachment-candidate-json-number',
+    'candidate attachment manifest invalid': 'attachment-candidate-manifest',
+    'candidate attachment name unsupported': 'attachment-candidate-name',
+    'candidate attachment selection ambiguous': 'attachment-candidate-ambiguous',
+    'candidate attachment payload invalid': 'attachment-candidate-payload',
+    'candidate attachment profile differs': 'attachment-candidate-profile',
+    'candidate attachment copy differs': 'attachment-candidate-copy',
+    'candidate attachment result differs': 'attachment-candidate-result',
+    'candidate attachment original changed': 'attachment-candidate-original-changed',
+    'candidate attachment replay refused': 'attachment-candidate-refused',
     'checkout differs': 'checkout-identity',
     'old or foreign path changed': 'source-scope',
     'dirty source': 'dirty-source',
@@ -682,6 +699,196 @@ def replay_original_attachments(folder, result, report):
     return not proof['fatal_refusal']
 
 
+def attachment_json(data):
+    """Reject coercive/ambiguous JSON before any disposable metadata rewrite."""
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            require(key not in result, 'candidate attachment JSON duplicate key')
+            result[key] = value
+        return result
+    def constant(unused):
+        raise RuntimeError('candidate attachment JSON nonfinite')
+    def number(text):
+        value = float(text)
+        require(math.isfinite(value), 'candidate attachment JSON nonfinite')
+        exact, emitted = Decimal(text), Decimal(json.dumps(value, allow_nan=False))
+        require(exact == emitted and (not exact.is_zero() or exact.is_signed() == emitted.is_signed()),
+                'candidate attachment JSON numeric loss')
+        return value
+    return json.loads(data.decode('utf-8'), object_pairs_hook=pairs, parse_constant=constant, parse_float=number)
+
+
+def attachment_same_value(left, right):
+    """Type-exact metadata equality, including signed zero and unknown fields."""
+    if type(left) is not type(right): return False
+    if type(left) is dict:
+        return list(left) == list(right) and all(attachment_same_value(left[key], right[key]) for key in left)
+    if type(left) is list:
+        return len(left) == len(right) and all(attachment_same_value(a, b) for a, b in zip(left, right))
+    if type(left) is float: return left.hex() == right.hex()
+    return left == right
+
+
+def attachment_name_category(name):
+    if type(name) is not str: return 'unsupported'
+    if name == 'privacy-stages.json': return 'literal'
+    lower = r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}'
+    upper = r'[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}'
+    if re.fullmatch(r'privacy-stages_(?:0|[1-9][0-9]{0,5})_(?:' + lower + '|' + upper + r')\.json', name):
+        return 'ordinal-uuid'
+    return 'unsupported' if name.startswith('privacy-stages') else 'other'
+
+
+def attachment_identity_selection(directory, expected, checkpoints, proof):
+    groups = attachment_json((directory / 'manifest.json').read_bytes())
+    require(type(groups) is list and 0 < len(groups) <= 100000, 'candidate attachment manifest invalid')
+    seen, aliases, candidates = set(), set(), []
+    counts = dict.fromkeys(('literal', 'ordinal-uuid', 'unsupported', 'other'), 0)
+    proof['name_categories'] = counts
+    for group_index, group in enumerate(groups):
+        require(type(group) is dict and type(group.get('attachments')) is list, 'candidate attachment manifest invalid')
+        cases = [group[key] for key in ('testIdentifier', 'testName') if key in group]
+        require(cases and all(type(case) is str and case and re.findall(r'\btest[A-Za-z0-9_]+\b', case) == [CASE]
+                              for case in cases), 'candidate attachment manifest invalid')
+        for entry_index, entry in enumerate(group['attachments']):
+            require(type(entry) is dict and type(entry.get('exportedFileName')) is str and
+                    type(entry.get('suggestedHumanReadableName')) is str, 'candidate attachment manifest invalid')
+            filename = entry['exportedFileName']
+            alias = unicodedata.normalize('NFC', filename).casefold()
+            require(filename not in ('', '.', '..', 'manifest.json') and Path(filename).name == filename and
+                    '\\' not in filename and filename not in seen and alias not in aliases and
+                    filename in expected and len(seen) < 100000, 'candidate attachment manifest invalid')
+            seen.add(filename); aliases.add(alias)
+            category = attachment_name_category(entry['suggestedHumanReadableName'])
+            counts[category] += 1
+            if category in ('literal', 'ordinal-uuid'): candidates.append((group_index, entry_index, filename, category))
+    require(seen == set(expected) - {'manifest.json'}, 'candidate attachment manifest invalid')
+    require(counts['unsupported'] == 0, 'candidate attachment name unsupported')
+    require(len(candidates) == 1, 'candidate attachment selection ambiguous')
+    group_index, entry_index, filename, category = candidates[0]
+    proof['selected_name_category'] = category
+    require(expected[filename]['bytes'] <= 1024 * 1024, 'candidate attachment payload invalid')
+    with (directory / filename).open('rb') as file: data = file.read(1024 * 1024 + 1)
+    require(len(data) <= 1024 * 1024, 'candidate attachment payload invalid')
+    document = attachment_json(data)
+    predicates = {'exact_keys': type(document) is dict and set(document) ==
+        {'stages', 'profile', 'operation', 'diagnostic_continuation'}, 'exact_stages': False,
+        'profile_uuid': False, 'exact_operation': False, 'boolean_flag': False}
+    proof['payload_predicates'] = predicates
+    if type(document) is dict:
+        predicates.update(exact_stages=attachment_same_value(document.get('stages'), STAGES),
+            profile_uuid=type(document.get('profile')) is str and
+                re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', document['profile']) is not None,
+            exact_operation=document.get('operation') == 'real Remember off and Update; not a dedicated Forget action',
+            boolean_flag=document.get('diagnostic_continuation') is True)
+    require(all(predicates.values()), 'candidate attachment payload invalid')
+    require(type(checkpoints) is dict and list(checkpoints) == STAGES and all(type(value) is dict and
+            type(value.get('profile_id')) is str and value['profile_id'] == document['profile']
+            for value in checkpoints.values()), 'candidate attachment profile differs')
+    proof['original_document_matches_checkpoints'] = True
+    return groups, (group_index, entry_index), document, category
+
+
+def attachment_namespace(directory):
+    before = inventory(directory)
+    namespace = {}
+    for name in before:
+        if name == '.': continue
+        mode = (directory / name).lstat().st_mode
+        require(stat.S_ISREG(mode) or stat.S_ISDIR(mode), 'candidate attachment copy differs')
+        namespace[name] = 'directory' if stat.S_ISDIR(mode) else 'file'
+    require(inventory(directory) == before, 'candidate attachment copy differs')
+    return namespace
+
+
+def attachment_copy_proof(original, copied, expected, groups, position):
+    """Exactly one selected semantic field; every other original byte retained."""
+    group_index, entry_index = position
+    transformed = copy.deepcopy(groups)
+    transformed[group_index]['attachments'][entry_index]['suggestedHumanReadableName'] = 'privacy-stages.json'
+    observed = attachment_json((copied / 'manifest.json').read_bytes())
+    require(attachment_same_value(observed, transformed), 'candidate attachment copy differs')
+    copied_files = seal_files(copied)
+    require(set(copied_files) == set(expected) and
+            all(copied_files[name] == item for name, item in expected.items() if name != 'manifest.json'),
+            'candidate attachment copy differs')
+    require(seal_files(original) == expected, 'candidate attachment original changed')
+    require(attachment_namespace(copied) == attachment_namespace(original), 'candidate attachment copy differs')
+    return int(groups[group_index]['attachments'][entry_index]['suggestedHumanReadableName'] != 'privacy-stages.json')
+
+
+def attachment_identity_trial(folder, result, report):
+    """Candidate only; the unchanged original outcome remains independently fatal."""
+    proof = {'status': 'unavailable', 'name_categories': None, 'selected_name_category': None,
+        'payload_predicates': None, 'original_document_matches_checkpoints': False,
+        'candidate_helper_outcome': 'unavailable', 'next_profile_predicate': None,
+        'allowed_changed_field_count': None, 'original_bytes_preserved': False,
+        'copy_nonmanifest_bytes_preserved': False, 'source_and_import_rechecked': False,
+        'copy_namespace_preserved': False,
+        'candidate_qualified': False, 'fatal_refusal': False, 'refusal': None,
+        'accepted': False, 'native_acceptance': False, 'full_f10_accepted': False,
+        'arbitrary_names_profiles_or_values_printed': False}
+    report['attachment_identity_candidate'] = proof
+    original_proof = report['original_attachment_contract']
+    if original_proof['original_export_status'] == 'absent': return True
+    diagnostic_stage('attachment-identity-candidate')
+    try:
+        proof['status'] = 'checking'
+        require(original_proof['original_export_replayed'] is True and
+                original_proof['source_and_import_rechecked'] is True, 'candidate attachment original proof absent')
+        original = folder / 'attachments'
+        expected = {name[len('attachments/'):]: item for name, item in result['files'].items() if name.startswith('attachments/')}
+        before = inventory(original)
+        require(seal_files(original) == expected, 'candidate attachment original changed')
+        groups, position, document, category = attachment_identity_selection(original, expected, result['checkpoints'], proof)
+        with tempfile.TemporaryDirectory(prefix='privacy-attachment-identity-') as temporary:
+            temporary = Path(temporary); source = temporary / 'source'; source.mkdir()
+            module = attachment_reference(source)
+            copied = temporary / 'attachments'; shutil.copytree(original, copied)
+            require(seal_files(copied) == expected, 'candidate attachment copy differs')
+            transformed = copy.deepcopy(groups)
+            transformed[position[0]]['attachments'][position[1]]['suggestedHumanReadableName'] = 'privacy-stages.json'
+            if category != 'literal': (copied / 'manifest.json').write_text(json.dumps(transformed, ensure_ascii=True, allow_nan=False))
+            proof['allowed_changed_field_count'] = attachment_copy_proof(original, copied, expected, groups, position)
+            try: native_stages, images = module.attachments(copied)
+            except Exception:
+                proof['candidate_helper_outcome'] = 'refused'
+                raise
+            proof['candidate_helper_outcome'] = 'passed'
+            proof['next_profile_predicate'] = all(value['profile_id'] == native_stages['profile'] for value in result['checkpoints'].values())
+            require(proof['next_profile_predicate'] and attachment_same_value(native_stages, document) and
+                    set(images) == set(STAGES), 'candidate attachment result differs')
+            original_images = {}
+            for group in groups:
+                for entry in group['attachments']:
+                    for stage in STAGES:
+                        role, name = 'privacy-' + stage, entry['suggestedHumanReadableName']
+                        if name == role + '.png' or name.startswith(role + '_'):
+                            require(stage not in original_images, 'candidate attachment result differs')
+                            original_images[stage] = entry['exportedFileName']
+            require(set(original_images) == set(STAGES), 'candidate attachment result differs')
+            for stage, image in images.items():
+                require(type(image) is dict and set(image) == {'file', 'sha256'} and type(image['file']) is str and
+                        image['file'] == 'attachments/' + original_images[stage] and
+                        image['sha256'] == expected[original_images[stage]]['sha256'], 'candidate attachment result differs')
+            require(attachment_copy_proof(original, copied, expected, groups, position) == proof['allowed_changed_field_count'],
+                    'candidate attachment copy differs')
+            require(inventory(original) == before and seal_files(original) == expected and inventory(original) == before,
+                    'candidate attachment original changed')
+            import contract
+            require(all(sha(source / name) == digest for name, digest in ATTACHMENT_SOURCE_HASHES.items()) and
+                    sha(Path(contract.__file__)) == ATTACHMENT_SOURCE_HASHES['contract.py'], 'original attachment source differs')
+        proof.update(status='qualified', candidate_qualified=True, original_bytes_preserved=True,
+            copy_nonmanifest_bytes_preserved=True, copy_namespace_preserved=True, source_and_import_rechecked=True)
+        return True
+    except Exception as error:
+        refusal = refusal_report(error, 'attachment-identity-candidate')
+        proof.update(status='refused', fatal_refusal=True,
+            refusal={key: refusal[key] for key in ('exception_class', 'refusal_code')})
+        return False
+
+
 def inspect_native_result(folder, files, report):
     """Independent native extraction AFTER byte/lifecycle admission only.
 
@@ -753,6 +960,7 @@ def diagnose_platform(out, platform, identifier, size, digest):
     report['producer_receipt_is_event_trace_proof'] = False
     report['activity_timing'] = activity_timing(folder / 'native.log')
     attachment_contract_ok = replay_original_attachments(folder, result, report)
+    attachment_candidate_ok = attachment_identity_trial(folder, result, report)
     inspect_native_result(folder, files, report)
     diagnostic_stage('scan-summaries')
     for stage in STAGES:
@@ -780,6 +988,7 @@ def diagnose_platform(out, platform, identifier, size, digest):
         report['independent_ios_admission_replay'] = verify_ios_admission(folder, SOURCE, result, require_program=False)
     diagnostic_stage('attachment-contract-final')
     require(attachment_contract_ok, 'original attachment contract refused')
+    require(attachment_candidate_ok, 'candidate attachment replay refused')
     diagnostic_stage('safe-report')
     return report
 
