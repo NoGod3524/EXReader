@@ -23,6 +23,7 @@ from contract import ROOT, STAGES, guard, require, sha
 from archive_contract import safe_extract
 from inspect_native import CONTROLS, MESSAGES, ROLES, variant_labels
 from continuation_lifecycle import verify_lifecycle, seal_files
+import continuation_lifecycle as lifecycle_reader
 from continuation_contract import APPLEDOUBLE_LIMIT, appledouble_content
 from privacy_scan import inventory, scan_file, needles, identity
 from authenticate_continuation import verify_ios_admission
@@ -1220,6 +1221,30 @@ def current_ancillary(folder, files, result, report, platform):
         report['independent_ios_admission_replay'] = verify_ios_admission(folder, CURRENT_CASE_SOURCE, result, require_program=False)
 
 
+def published_root_files(directory):
+    """Read-only two-pass replay of ALREADY published evidence, including result.
+
+    The producer's seal_files precondition intentionally forbids result.json.
+    Do not weaken it, delete that original, or mistake this reader for a sealer.
+    """
+    try:
+        def snapshot():
+            files, directories = lifecycle_reader._inventory(directory)
+            require('result.json' in files and '.result-pending' not in files and
+                    '.result-pending' not in directories and all(value[6] == 1 for value in files.values()),
+                    'current original evidence changed')
+            return files, directories
+        before = snapshot()
+        first = {name: lifecycle_reader._record(directory / name, value) for name, value in before[0].items()}
+        require(snapshot() == before, 'current original evidence changed')
+        second = {name: lifecycle_reader._record(directory / name, value) for name, value in before[0].items()}
+        require(first == second and snapshot() == before, 'current original evidence changed')
+        return second
+    except Exception:
+        # Do not expose path/OS operands; the caller retains prior finite data.
+        raise RuntimeError('current original evidence changed') from None
+
+
 def diagnose_current_platform(out, platform, identifier, size, digest):
     global CURRENT_MEMBER_INTEGRITY, CURRENT_PLATFORM, CURRENT_SAFE_REPORT
     CURRENT_PLATFORM, CURRENT_MEMBER_INTEGRITY, CURRENT_SAFE_REPORT = platform, None, None
@@ -1271,7 +1296,7 @@ def diagnose_current_platform(out, platform, identifier, size, digest):
         # Also recheck on refusal, without erasing the earlier finite outcome.
         earlier_stage = CURRENT_DIAGNOSTIC_STAGE
         diagnostic_stage('current-original-recheck')
-        require(attachment_namespace(folder) == namespace and seal_files(folder) == original_files and
+        require(attachment_namespace(folder) == namespace and published_root_files(folder) == original_files and
                 original.stat().st_size == size and sha(original) == digest, 'current original evidence changed')
         report['original_namespace_and_bytes_preserved'] = True
         diagnostic_stage(earlier_stage)

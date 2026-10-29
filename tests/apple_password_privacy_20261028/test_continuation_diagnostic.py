@@ -13,6 +13,7 @@ import struct
 import unittest
 import plistlib
 import zipfile
+import shutil
 from unittest.mock import patch
 from contract import ROOT, sha
 import inspect_continuation_failure as inspector
@@ -253,6 +254,92 @@ def current_order_control(test, root, *, platform='iphone', changed_member=False
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_published_root_actual_reader_includes_result_and_sealer_stays_strict(self):
+        self.assertEqual(sha(Path(inspector.lifecycle_reader.__file__)),
+            'bc3c9eca38a2061ec30f301ecab6421b156bd8799c3e1853874f593960b0165a')
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); (root / 'empty').mkdir()
+            contents = {'a.bin': b'complete-member', 'result.json': b'{"fixed":"published"}'}
+            for name, data in contents.items(): (root / name).write_bytes(data)
+            expected = {name: {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()} for name, data in contents.items()}
+            self.assertEqual(inspector.published_root_files(root), expected)
+            self.assertEqual({name: (root / name).read_bytes() for name in contents}, contents)
+            self.assertTrue((root / 'empty').is_dir())
+            with self.assertRaisesRegex(RuntimeError, '^evidence publication already exists$'): seal_files(root)
+
+    def test_published_root_actual_late_mutations_refuse(self):
+        for mutation in ('earlier-file', 'result', 'replace-file', 'add-directory', 'delete-directory', 'pending', 'replace-root'):
+            with tempfile.TemporaryDirectory() as temporary:
+                parent = Path(temporary); root = parent / 'published'; root.mkdir(); (root / 'empty').mkdir()
+                for name in ('a.bin', 'result.json', 'z.bin'): (root / name).write_bytes(b'original')
+                real_record = inspector.lifecycle_reader._record; injected = []
+                def read(path, expected):
+                    value = real_record(path, expected)
+                    if path.name == 'z.bin' and not injected:
+                        injected.append(mutation)
+                        if mutation == 'earlier-file': (root / 'a.bin').write_bytes(b'changed')
+                        elif mutation == 'result': (root / 'result.json').write_bytes(b'changed')
+                        elif mutation == 'replace-file':
+                            (parent / 'replacement').write_bytes(b'original'); os.replace(parent / 'replacement', root / 'a.bin')
+                        elif mutation == 'add-directory': (root / 'new-empty').mkdir()
+                        elif mutation == 'delete-directory': (root / 'empty').rmdir()
+                        elif mutation == 'pending': (root / '.result-pending').write_bytes(b'pending')
+                        elif mutation == 'replace-root':
+                            root.rename(parent / 'prior'); shutil.copytree(parent / 'prior', root)
+                    return value
+                with patch.object(inspector.lifecycle_reader, '_record', side_effect=read):
+                    with self.assertRaisesRegex(RuntimeError, '^current original evidence changed$'):
+                        inspector.published_root_files(root)
+                self.assertEqual(injected, [mutation])
+
+    def test_published_root_second_pass_and_empty_directory_identity_refuse(self):
+        for mutation in ('second-pass', 'directory-identity'):
+            with tempfile.TemporaryDirectory() as temporary:
+                parent = Path(temporary); root = parent / 'published'; root.mkdir(); (root / 'empty').mkdir()
+                for name in ('a.bin', 'result.json', 'z.bin'): (root / name).write_bytes(b'original')
+                real_record = inspector.lifecycle_reader._record; z_reads = []
+                def read(path, expected):
+                    value = real_record(path, expected)
+                    if path.name == 'z.bin':
+                        z_reads.append(True)
+                        if len(z_reads) == 2:
+                            if mutation == 'second-pass': (root / 'a.bin').write_bytes(b'changed')
+                            else:
+                                (root / 'empty').rename(parent / 'old-empty'); (root / 'empty').mkdir()
+                    return value
+                with patch.object(inspector.lifecycle_reader, '_record', side_effect=read):
+                    with self.assertRaisesRegex(RuntimeError, '^current original evidence changed$'):
+                        inspector.published_root_files(root)
+                self.assertEqual(len(z_reads), 2)
+
+    def test_published_root_refuses_every_regular_hardlink_and_special_entry(self):
+        for kind in ('member-hardlink', 'result-hardlink', 'symlink', 'fifo', 'pending-directory', 'absent-result'):
+            with tempfile.TemporaryDirectory() as temporary:
+                parent = Path(temporary); root = parent / 'published'; root.mkdir()
+                (root / 'result.json').write_bytes(b'original'); (root / 'member').write_bytes(b'original')
+                if kind == 'member-hardlink': os.link(root / 'member', parent / 'member-alias')
+                elif kind == 'result-hardlink': os.link(root / 'result.json', parent / 'result-alias')
+                elif kind == 'symlink': (root / 'link').symlink_to(parent / 'absent')
+                elif kind == 'fifo': os.mkfifo(root / 'fifo')
+                elif kind == 'pending-directory': (root / '.result-pending').mkdir()
+                else: (root / 'result.json').unlink()
+                with self.assertRaisesRegex(RuntimeError, '^current original evidence changed$'):
+                    inspector.published_root_files(root)
+
+    def test_published_root_fifo_swap_refuses_without_blocking_or_operands(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); (root / 'result.json').write_bytes(b'original')
+            real_open = os.open; injected = []
+            def swapped(path, flags, *args, **kwargs):
+                if Path(path) == root / 'result.json' and not injected:
+                    injected.append(True); (root / 'result.json').unlink(); os.mkfifo(root / 'result.json')
+                    self.assertTrue(flags & os.O_NONBLOCK); self.assertTrue(flags & os.O_NOFOLLOW)
+                return real_open(path, flags, *args, **kwargs)
+            with patch.object(inspector.lifecycle_reader.os, 'open', side_effect=swapped):
+                with self.assertRaisesRegex(RuntimeError, '^current original evidence changed$'):
+                    inspector.published_root_files(root)
+            self.assertEqual(injected, [True])
+
     def test_current_oracle_parameters_preserve_historical_default_and_shape(self):
         oracle = {'synthetic_only': True, 'source_sha': inspector.CURRENT_CASE_SOURCE,
             'run_id': inspector.CURRENT_CASE_RUN, 'attempt': '1', 'user': 'privacy-user-' + 'a' * 32,
