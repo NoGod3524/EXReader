@@ -2,7 +2,13 @@
 
 ## Current status
 
-Implementation/source-review packet; **no native run or 270/270 result yet**.
+First native run is **failure,262/270**, not270/270. The first source is
+`be328fc8eabeb7a5b3b6c4de22015f5dd7faee7b`, tree243916df42461c5199edf12fa21932dc06196a63,
+[40858429180/1](https://github.com/NoGod3524/EXReader/actions/runs/40858429180),
+10:32:58–10:48:27 UTC. The one remaining authorized repair is limited to this
+new driver, workflow and document; all production/old test/SDK bytes remain
+exactly unchanged from that first source. Repair source review/runtime are
+separate gates; no repaired result is claimed here.
 The predecessor e1cbfb31ac965fd34dd7d96356c157746a399418 passed run
 [40840574068/1](https://github.com/NoGod3524/EXReader/actions/runs/40840574068):
 198/198 focused groups, including Windows refusal-only. That result is not a
@@ -221,6 +227,84 @@ real importer C route, preservation on every calibrated refusal, every unchanged
 198 assertion passing, and exact native artifact/log identities. A missing native
 capability is failure, not skipped success. First run and at most one reviewed
 repair are authorized; any further round or extra path requires a new checkpoint.
+
+
+## First-run exact failures and bounded repair
+
+| OS | New creation | Existing importer | Preflight | Frozen handoff | Total |
+|---|---:|---:|---:|---:|---:|
+| Linux |34/36|32/32|41/41|20/22|127/131|
+| macOS |33/36|32/32|41/41|21/22|127/131|
+| Windows |not supported|8/8 refusal-only|not run|not run|8/8|
+
+All three builds passed. Both POSIX new groups05/22 failed; macOS additionally27.
+The exact observed issues are retained, not silently relabeled as passes:
+
+- Group05 reached the first actual C success and preservation checks, then its
+  blanket original-inventory equality incorrectly included preallocated empty
+  worker-use inodes that the defined protocol writes exactly once. Second C,
+  three-pack/capacity checks were **not reached**. The repair allows only exactly
+  two declared empty→complete use transitions, verifies same anchored inode,
+  canonical payload, exact phase/run/output/request/lease/predecessor hashes,
+  and keeps every other prior byte unchanged. It applies the same controls to
+  the second C and retains the final real capacity refusal.
+- Group22 got actual `create-artifact-changed` after parent replacement at
+  `sealed-before-publish`, before the later directory guard it expected. Source
+  traces this earlier refusal to exact retained liveness-path checks. Repair
+  requires a matched usable-token positive, exact moved parent/liveness identity,
+  preserved original tree/private image, absence of both public names, and only
+  deliberate control bytes in the replacement parent. It does not accept a
+  generic nonzero result or broaden the reason to arbitrary failures. Its later
+  post-ACK subcontrols were not reached in the first run and remain required.
+- macOS group27's test-created valid inherited-FD positive returned
+  `create-child-request-refused`, errno9, before SDK open. Same-source actual
+  product spawn/orphan groups passed. Same-FD `DUP2(3,3)`/CLOEXEC is a source
+  hypothesis, not a measured root cause. The repaired test duplicates the held
+  OFD to a distinct>=10 CLOEXEC source, closes only its old duplicate, then
+  explicitly maps to3. Positive actual SDK COMMIT plus every typed negative
+  remain mandatory. No product FD behavior is changed.
+
+Frozen prerequisite failures are independent and remain blocking:
+Linux `crash-S8`→`rendezvous-token`, `native-mirror-refusal`→
+`file-final-identity-or-bytes`; macOS `crash-S7`→
+`file-final-identity-or-bytes`. Frozen buffered `.go` publication remains a
+source-level race candidate, not a proven identity of every runtime failure.
+No old case, assertion or source is modified, wrapped, monkey-patched or waived.
+The repaired aggregate still requires all270 groups; later success cannot erase
+this first failed run or justify a third run under the exhausted two-round cap.
+
+Both first POSIX ZIP uploads finalized but warned `ENTRYNOTSUPPORTED`; the logs
+do not identify the omitted entry. Source deliberately retains a FIFO, so
+special-node omission is a source-grounded concern, not a locally parsed ZIP
+finding. Thus ZIP finalization is not a complete raw-tree proof.
+Repair adds a bounded Actions-only typed tar+manifest: FD-bound cwd/build/input/output roots and O_DIRECTORY|O_NOFOLLOW descent,
+regular files opened relative to bound parent FDs with before/after identity
+checks and declared-size streaming ceilings, explicit
+symlink/FIFO/hardlink metadata, no link following/FIFO reads, compressed-member
+hash/type replay without extraction, then complete source re-inventory. Limits:
+30000 names,1GiB/file,4GiB logical input,32MiB manifest,128MiB archive process file
+limit,120 CPU seconds and a hard300-second native-default SIGALRM timer
+(signal termination, usually shell status142, not a deferred Python handler). The durable immutable
+INCOMPLETE receipt precedes that timer; timeout/CPU/file-size failure leaves
+partial bytes unverified, and only a separately written completed receipt can
+claim replay success. Before the real archive, bounded Actions controls invoke
+the actual traversal/hash/timer helpers: replaced ancestor refusal, declared-size
+plus-one refusal, and a blocked forked child actually reaped as SIGALRM. Their
+results are retained and required by the completed receipt. Directory names are counted before materialization. These are strict
+failure bounds, not extra CI rounds or relaxed migration budgets. Raw files stay
+untouched; the new archive replaces only the new-evidence raw ZIP input.
+
+First artifacts (expiry2027-01-27T10:32:58Z):
+- Linux12890373942,20545201 bytes,
+  SHA256 `6ff5791f8d2958dfdb0ee4443ad710293346948999226738c4492809dc729a65`.
+- macOS12891271427,20232042 bytes,
+  SHA256 `08a111f4ff9e05671157234110e3e9a40804f0f826b0920abb8b7516bb855fb6`.
+- Windows12889613879,30467 bytes,
+  SHA256 `3ccd67d8f67781c8f418bfe808ffc5d644792232e2673f7fdadc09bd6e1b1d25`.
+
+Independent API/decoded-log receipt confirms these exact outcomes; no local ZIP
+parsing or local test execution occurred. The prior create_tree denial and new
+exact10:31:53 owner confirmation are preserved in the local publication handoff.
 
 ## Source references for implementation constraints
 

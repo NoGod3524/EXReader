@@ -16,6 +16,7 @@ defaults:
     shell: bash
 env:
   TESTED_BASE: e1cbfb31ac965fd34dd7d96356c157746a399418
+  REPAIR_BASE: be328fc8eabeb7a5b3b6c4de22015f5dd7faee7b
   OLD_SDK_REF: c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
 jobs:
   integration:
@@ -40,6 +41,8 @@ jobs:
           git fetch --no-tags --depth=1 origin "$TESTED_BASE"
           test "$(git rev-parse FETCH_HEAD)" = "$TESTED_BASE"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git fetch --no-tags --depth=1 origin "$REPAIR_BASE"
+          test "$(git rev-parse FETCH_HEAD)" = "$REPAIR_BASE"
           ${{ matrix.py }} - <<'PYGUARD'
           import hashlib,json,os,subprocess
           from pathlib import Path
@@ -52,10 +55,13 @@ jobs:
             'docs/MIGRATION-NEW-TARGET-RECOVERY-20261029.md']
           delta=subprocess.check_output(['git','diff','--no-renames','--name-status',os.environ['TESTED_BASE'],'HEAD'],text=True).splitlines()
           assert set(delta)=={'M\t'+p for p in modified}|{'A\t'+p for p in added},delta
+          repair=subprocess.check_output(['git','diff','--no-renames','--name-status',os.environ['REPAIR_BASE'],'HEAD'],text=True).splitlines()
+          assert set(repair)=={'M\t'+p for p in ['tests/migration/new_target_recovery_20261029/run.py','.github/workflows/migration-new-target-recovery-20261029.yml','docs/MIGRATION-NEW-TARGET-RECOVERY-20261029.md']},repair
           Path('build/evidence/source-identity.json').write_text(json.dumps({
             'sha':os.environ['GITHUB_SHA'],'base':os.environ['TESTED_BASE'],'run_id':os.environ['GITHUB_RUN_ID'],
             'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'exact_delta':delta,
             'hashes':{p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in modified+added},
+            'repair_base':os.environ['REPAIR_BASE'],'exact_repair_delta':repair,'production_source_unchanged_in_repair':True,
             'all_unlisted_predecessor_bytes_unchanged':True,'old_sdk':os.environ['OLD_SDK_REF'],
             'unchanged_existing_groups':198,'new_posix_groups_each':36,'total_groups':270,
             'round_minutes':110,'max_rounds':2,'configured_total_minutes':220,
@@ -153,6 +159,179 @@ jobs:
             assert data['full_p0_acceptance'] is False
             print(path,str(count)+'/'+str(count),'full_p0_acceptance=false',flush=True)
           PY
+      - name: Preserve special-node evidence in bounded typed archive and replay
+        if: ${{ !cancelled() && matrix.label != 'windows' && steps.native.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PYEVIDENCE'
+          import hashlib,io,json,os,resource,signal,stat,tarfile,time
+          assert os.environ.get('GITHUB_ACTIONS')=='true'
+          MAX=4*1024**3;FILE=1024**3;NAMES=30000;PREFIX='new-target-recovery'
+          D=os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC
+          R=os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK|os.O_CLOEXEC
+          cwd=os.open('.',D);build=os.open('build',D,dir_fd=cwd)
+          root=os.open(PREFIX,D,dir_fd=build);out=os.open('evidence',D,dir_fd=build)
+          def inode(s):return [s.st_dev,s.st_ino]
+          def ident(s):return [s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns]
+          roots=[inode(os.fstat(x)) for x in (cwd,build,root,out)]
+          def roots_exact():
+              assert inode(os.stat('.',follow_symlinks=False))==roots[0]
+              assert inode(os.stat('build',dir_fd=cwd,follow_symlinks=False))==roots[1]
+              assert inode(os.stat(PREFIX,dir_fd=build,follow_symlinks=False))==roots[2]
+              assert inode(os.stat('evidence',dir_fd=build,follow_symlinks=False))==roots[3]
+          def write_exclusive(name,data):
+              assert len(data)<=32*1024**2
+              fd=os.open(name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,0o600,dir_fd=out)
+              try:
+                  offset=0
+                  while offset<len(data):
+                      written=os.write(fd,data[offset:]);assert written>0;offset+=written
+                  os.fsync(fd)
+              finally:os.close(fd)
+              os.fsync(out)
+          roots_exact()
+          write_exclusive('new-target-archive-INCOMPLETE.json',json.dumps(dict(source_sha=os.environ['GITHUB_SHA'],status='incomplete unless matching verified receipt exists',hard_timeout_signal='SIGALRM',partial_archive_is_not_verified=True)).encode())
+          # A hard native timer also bounds blocking gzip/read/write calls. Its abrupt
+          # failure deliberately leaves the immutable INCOMPLETE receipt and partial data.
+          resource.setrlimit(resource.RLIMIT_CPU,(120,120))
+          resource.setrlimit(resource.RLIMIT_FSIZE,(128*1024**2,128*1024**2))
+          def arm_hard_timer(seconds):
+              signal.signal(signal.SIGALRM,signal.SIG_DFL);signal.setitimer(signal.ITIMER_REAL,seconds)
+          arm_hard_timer(300)
+          started=time.monotonic()
+          def tick():assert time.monotonic()-started<300,'archive wall deadline'
+          def open_dir(relative,dirs,root_fd=root):
+              fd=os.dup(root_fd);part=''
+              try:
+                  assert inode(os.fstat(fd))==dirs['']
+                  if relative:
+                      pieces=relative.split('/');assert len(pieces)<=64 and all(x not in ('','.','..') for x in pieces)
+                      for piece in pieces:
+                          tick();new=os.open(piece,D,dir_fd=fd);os.close(fd);fd=new;part=part+'/'+piece if part else piece
+                          assert inode(os.fstat(fd))==dirs[part]
+                  return fd
+              except BaseException:os.close(fd);raise
+          
+          def hash_fd(fd,size):
+              assert 0<=size<=FILE;h=hashlib.sha256();left=size
+              while left:
+                  tick();chunk=os.read(fd,min(65536,left));assert chunk,'short regular file';left-=len(chunk);h.update(chunk)
+              assert not os.read(fd,1),'regular file grew beyond declared reservation'
+              return h.hexdigest()
+          def walk():
+              entries={};total=0;dirs={'':inode(os.fstat(root))};pending=[''];count=1
+              st=os.fstat(root);entries[PREFIX]=dict(identity=ident(st),uid=st.st_uid,gid=st.st_gid,mode=stat.S_IMODE(st.st_mode),kind='dir')
+              while pending:
+                  relative=pending.pop();dfd=open_dir(relative,dirs)
+                  try:
+                      with os.scandir(dfd) as listing:
+                          for item in listing:
+                              tick();count+=1;assert count<=NAMES,'bounded before materialization'
+                              child=relative+'/'+item.name if relative else item.name;name=PREFIX+'/'+child
+                              st=os.stat(item.name,dir_fd=dfd,follow_symlinks=False)
+                              row=dict(identity=ident(st),uid=st.st_uid,gid=st.st_gid,mode=stat.S_IMODE(st.st_mode))
+                              if stat.S_ISDIR(st.st_mode):
+                                  row['kind']='dir';dirs[child]=inode(st);pending.append(child)
+                              elif stat.S_ISREG(st.st_mode):
+                                  assert 0<=st.st_size<=FILE;total+=st.st_size;assert total<=MAX
+                                  row['kind']='file';fd=os.open(item.name,R,dir_fd=dfd)
+                                  try:
+                                      assert ident(os.fstat(fd))==ident(st)
+                                      row['sha256']=hash_fd(fd,st.st_size)
+                                      assert ident(os.fstat(fd))==ident(st)
+                                  finally:os.close(fd)
+                              elif stat.S_ISLNK(st.st_mode):row.update(kind='symlink',link=os.readlink(item.name,dir_fd=dfd))
+                              elif stat.S_ISFIFO(st.st_mode):row['kind']='fifo'
+                              else:raise AssertionError(('unsupported retained node',name,st.st_mode))
+                              assert ident(os.stat(item.name,dir_fd=dfd,follow_symlinks=False))==ident(st)
+                              assert name not in entries;entries[name]=row
+                  finally:os.close(dfd)
+              roots_exact();return entries,total,dirs
+          # Exercise the exact helpers under the same global wall budget. This child
+          # has no SDK/SQLite handles and is used only to calibrate native termination.
+          controls={};os.mkdir('archive-controls',0o700,dir_fd=out)
+          control=os.open('archive-controls',D,dir_fd=out)
+          try:
+              os.mkdir('ancestor',0o700,dir_fd=control)
+              expected={'':inode(os.fstat(control)),'ancestor':inode(os.stat('ancestor',dir_fd=control,follow_symlinks=False))}
+              os.rename('ancestor','original-ancestor',src_dir_fd=control,dst_dir_fd=control);os.mkdir('ancestor',0o700,dir_fd=control)
+              try:
+                  unexpected=open_dir('ancestor',expected,control);os.close(unexpected)
+              except AssertionError:controls['replaced_ancestor_refused']=True
+              assert controls.get('replaced_ancestor_refused') is True
+              overflow=os.open('size-plus-one',os.O_RDWR|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,0o600,dir_fd=control)
+              try:
+                  assert os.write(overflow,b'abcd')==4;os.fsync(overflow);os.lseek(overflow,0,os.SEEK_SET)
+                  try:hash_fd(overflow,3)
+                  except AssertionError as error:controls['declared_size_plus_one_refused']=str(error)=='regular file grew beyond declared reservation'
+                  assert controls.get('declared_size_plus_one_refused') is True
+              finally:os.close(overflow)
+              pid=os.fork()
+              if pid==0:
+                  arm_hard_timer(0.05);signal.pause();os._exit(77)
+              waited,status=os.waitpid(pid,0)
+              controls['native_timer_SIGALRM']=waited==pid and os.WIFSIGNALED(status) and os.WTERMSIG(status)==signal.SIGALRM
+              assert controls['native_timer_SIGALRM'];os.fsync(control)
+          finally:os.close(control)
+          write_exclusive('new-target-archive-controls.json',(json.dumps(controls,sort_keys=True)+'\n').encode())
+          entries,total,dirs=walk()
+          manifest=json.dumps(dict(source_sha=os.environ['GITHUB_SHA'],entries=entries,logical_bytes=total,no_symlink_follow=True,no_FIFO_read=True,no_extraction=True),sort_keys=True,separators=(',',':')).encode()
+          write_exclusive('new-target-node-manifest.json',manifest)
+          archive_name='new-target-evidence.tar.gz';afd=os.open(archive_name,os.O_RDWR|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,0o600,dir_fd=out);archive_inode=inode(os.fstat(afd));seen={};types={};links={}
+          class CheckedReader:
+              def __init__(self,fd,size):self.fd=fd;self.left=size
+              def read(self,n):
+                  tick();assert 0<=n<=self.left;data=os.read(self.fd,n);self.left-=len(data);return data
+          try:
+              with os.fdopen(afd,'w+b',closefd=False) as raw:
+                  with tarfile.open(fileobj=raw,mode='w:gz',compresslevel=1,format=tarfile.PAX_FORMAT,dereference=False) as tar:
+                      for name,row in sorted(entries.items()):
+                          tick();relative=name[len(PREFIX):].lstrip('/');parent,_,leaf=relative.rpartition('/');dfd=open_dir(parent,dirs)
+                          try:
+                              st=os.stat(leaf,dir_fd=dfd,follow_symlinks=False) if relative else os.fstat(root);assert ident(st)==row['identity']
+                              info=tarfile.TarInfo(name);info.mode=row['mode'];info.uid=row['uid'];info.gid=row['gid'];info.mtime=0;kind=row['kind'];key=tuple(row['identity'][:2])
+                              if kind=='dir':info.type=tarfile.DIRTYPE
+                              elif kind=='fifo':info.type=tarfile.FIFOTYPE
+                              elif kind=='symlink':info.type=tarfile.SYMTYPE;info.linkname=row['link'];assert os.readlink(leaf,dir_fd=dfd)==row['link']
+                              elif key in seen:info.type=tarfile.LNKTYPE;info.linkname=seen[key]
+                              else:info.type=tarfile.REGTYPE;info.size=st.st_size;seen[key]=name
+                              types[name]=info.type;links[name]=info.linkname
+                              if info.isreg():
+                                  fd=os.open(leaf,R,dir_fd=dfd)
+                                  try:
+                                      assert ident(os.fstat(fd))==row['identity'];reader=CheckedReader(fd,st.st_size);tar.addfile(info,reader)
+                                      assert reader.left==0 and not os.read(fd,1) and ident(os.fstat(fd))==row['identity']
+                                  finally:os.close(fd)
+                              else:tar.addfile(info)
+                              assert ident(os.stat(leaf,dir_fd=dfd,follow_symlinks=False) if relative else os.fstat(root))==row['identity']
+                          finally:os.close(dfd)
+                      info=tarfile.TarInfo('node-manifest.json');info.size=len(manifest);info.mode=0o600;tar.addfile(info,io.BytesIO(manifest))
+                  raw.flush();os.fsync(afd)
+              os.fsync(out);assert inode(os.stat(archive_name,dir_fd=out,follow_symlinks=False))==archive_inode
+              # Read the exact retained fd; never extract members or follow archive links.
+              os.lseek(afd,0,os.SEEK_SET);actual=set()
+              with os.fdopen(os.dup(afd),'rb') as raw,tarfile.open(fileobj=raw,mode='r:gz') as tar:
+                  for member in tar:
+                      tick();name=member.name;assert name not in actual and len(actual)<=NAMES;actual.add(name)
+                      if name=='node-manifest.json':assert member.isfile() and member.size==len(manifest) and tar.extractfile(member).read()==manifest;continue
+                      assert name in entries;row=entries[name]
+                      assert member.type==types[name] and member.linkname==links[name] and member.mode==row['mode'] and member.uid==row['uid'] and member.gid==row['gid']
+                      if member.isreg():
+                          assert member.size==row['identity'][4];h=hashlib.sha256();stream=tar.extractfile(member);left=member.size
+                          while left:
+                              tick();chunk=stream.read(min(65536,left));assert chunk;left-=len(chunk);h.update(chunk)
+                          assert not stream.read(1) and h.hexdigest()==row['sha256']
+                      elif member.islnk():assert member.linkname in entries and entries[member.linkname]['sha256']==row['sha256']
+              assert actual==set(entries)|{'node-manifest.json'}
+              final,final_total,final_dirs=walk();assert (final,final_total,final_dirs)==(entries,total,dirs),'source mutated during sealing'
+              os.lseek(afd,0,os.SEEK_SET);size=os.fstat(afd).st_size;assert size<=128*1024**2;digest=hash_fd(afd,size)
+              assert inode(os.stat(archive_name,dir_fd=out,follow_symlinks=False))==archive_inode;roots_exact()
+              receipt=dict(source_sha=os.environ['GITHUB_SHA'],members=len(entries),logical_bytes=total,archive_bytes=size,archive_sha256=digest,typed_replay_passed=True,helper_controls=controls,FIFO_count=sum(v['kind']=='fifo' for v in entries.values()),old_round1_ZIP_special_node_completeness=False)
+              write_exclusive('new-target-archive-receipt.json',(json.dumps(receipt,indent=2)+'\n').encode());print(json.dumps(receipt),flush=True)
+          finally:os.close(afd)
+          signal.setitimer(signal.ITIMER_REAL,0)
+          for fd in (out,root,build,cwd):os.close(fd)
+          PYEVIDENCE
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -162,7 +341,6 @@ jobs:
             build/harness-admission/
             build/migration/recovery-worker-provider.map
             build/recovery-integration/
-            build/new-target-recovery/
             build/recovery-preflight/
             build/recovery-handoff/
             build/integration/frozen-handoff/provider.map

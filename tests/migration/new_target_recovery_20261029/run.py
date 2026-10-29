@@ -71,6 +71,27 @@ class Driver(I.Driver):
         for ending in ('-wal','-shm','-journal'):self.check('standalone publication lacks '+ending,not Path(str(f['target'])+ending).exists())
         self.check('not full P0 or physical power-loss proof',r['creation']['full_p0_acceptance'] is False and r['creation']['physical_power_loss_qualified'] is False)
         return before
+    def slot_transition(self,f,before):
+        # Only the two preallocated empty use inodes consumed by this actual
+        # capture+owner scan may change. All other retained evidence is exact.
+        root=f['root'];manifest=json.loads((root/'worker-slots.json').read_text());empty=hashlib.sha256(b'').hexdigest()
+        slots=[i for i in range(8) if before['worker-slot-%02d.use'%i][1]==empty][:2]
+        self.check('exact two previously unused slots available',len(slots)==2)
+        changed={name for name,old in before.items() if I.state(root/name)!=old}
+        expected={'worker-slot-%02d.use'%i for i in slots}
+        self.check('only exact two single-use records change',changed==expected,sorted(changed))
+        records=self.records(f);suffix=[x for x in records if x['magic']=='EXRCREATE1-C'];generation=max(x['generation'] for x in suffix)
+        base=next(x for x in suffix if x['generation']==generation and x['phase'] in (1,6));opening=next(x for x in suffix if x['generation']==generation and x['phase']==2)
+        nonce=base['run'];heads=[base['previous'],hashlib.sha256((root/('record-%02d.json'%opening['ordinal'])).read_bytes()).hexdigest()]
+        for serial,(i,kind,head) in enumerate(zip(slots,('create-capture','create-scan'),heads),1):
+            name='worker-slot-%02d.use'%i;p=root/name;raw=p.read_bytes();u=json.loads(raw);lock,initial=manifest['slots'][i]
+            token=('cap' if serial==1 else 'scan')+'-'+nonce+'-%02d'%serial;output=root/token;request_path=output/'request.json';request_raw=request_path.read_bytes();request=json.loads(request_raw)
+            descriptor=[1,'%016x%016x'%I.identity(request_path),hashlib.sha256(request_raw).hexdigest(),len(request_raw)]
+            expected_use=dict(magic='EXRCREATE1-WORKER',slot=i,nonce=nonce,token=token,output_identity='%016x%016x'%I.identity(output),predecessor=head,request=descriptor)
+            self.check('same anchored use inode empty to one canonical complete request',I.identity(p)==before[name][0] and initial==[1,'%016x%016x'%I.identity(p),empty,0] and raw==(json.dumps(expected_use,separators=(',',':'))+'\n').encode(),u)
+            self.check('request binds actual phase producer output target and lease',request['nonce']==nonce and request['kind']==kind and request['output']==str(output) and request['output_identity']==expected_use['output_identity'] and request['target']==str(f['target']) and request['live']==str(root/('worker-slot-%02d.lock'%i)) and request['live_file']==lock and request['image_file'][0:3]==[1,'%016x%016x'%I.identity(f['target']),'0'*64] and request['pack']=='-' and request['pack_file']==[0,'','',0] and request['font']==self.a.font and request['font_file']==json.loads((root/'anchor.json').read_text())['font'],request)
+            self.check('all required use file and lease ownership preserved',p.lstat().st_nlink==1 and stat.S_IMODE(p.lstat().st_mode)==0o600 and I.state(root/('worker-slot-%02d.lock'%i))==before['worker-slot-%02d.lock'%i])
+        self.check('all other prior immutable evidence preserved',all(I.state(root/name)==old for name,old in before.items() if name not in expected))
     def recover(self,f,extra=()):return self.call(*self.args(f,'recover-migration',extra=extra))
     def lock_busy(self,p,busy=True):
         fd=os.open(p,os.O_RDWR|os.O_NOFOLLOW)
@@ -122,9 +143,12 @@ def main():
         rc,r,_=d.call(*d.args(f,pack=pack,create=False));d.check('actual fresh C same-root handoff succeeds',rc==0 and r['atomicity']['recovery']['route']=='creation-C' and r['atomicity']['recovery']['same_owner_comparison'],r)
         now=I.model(f['target']);d.check('all later writer rows and target identity retained',I.identity(f['target'])==identity and all(all(row in now['rows'][t] for row in rows) for t,rows in prior['rows'].items() if t!='exr_migration_ledger'))
         records=d.records(f);d.check('one canonical ordered profile and suffix',all(r['ordinal']==i for i,r in enumerate(records)) and any(r['magic']=='EXRCREATE1-C' for r in records))
-        d.check('all creation evidence retained',all(I.state(f['root']/p)==v for p,v in original.items()))
-        I.writer(f['target'],False,True);prior2=I.model(f['target']);pack2=folder/'third.pack';pack2.write_bytes(L.build_pack([L.entry(L.book_record('third','third.txt'),L.TXT+b' third pack payload')],[]))
+        d.slot_transition(f,original)
+        before_second=I.inventory(f['root']);I.writer(f['target'],False)
+        with contextlib.closing(sqlite3.connect(f['target'],timeout=0)) as writer_db:writer_db.execute("UPDATE books SET title='second later writer retained' WHERE id=(SELECT min(id) FROM books)");writer_db.commit()
+        prior2=I.model(f['target']);pack2=folder/'third.pack';pack2.write_bytes(L.build_pack([L.entry(L.book_record('third','third.txt'),L.TXT+b' third pack payload')],[]))
         rc,r,_=d.call(*d.args(f,pack=pack2,create=False));d.check('second fresh C means three distinct real packs',rc==0 and r['atomicity']['recovery']['route']=='C',r)
+        d.slot_transition(f,before_second)
         now2=I.model(f['target']);d.check('second C preserves first C plus later writer state',all(all(row in now2['rows'][t] for row in rows) for t,rows in prior2['rows'].items() if t!='exr_migration_ledger'))
         ledger=json.loads(now2['rows']['exr_migration_ledger'][0][2]);d.check('exact three distinct pack hashes retained',all(hashlib.sha256(p.read_bytes()).hexdigest() in ledger['packs'] for p in (f['pack'],pack,pack2)))
         rc,_,_=d.call(*d.args(f,'verify',pack=pack2,create=False));d.check('guarded read after two actual C generations works',rc==0)
@@ -175,7 +199,24 @@ def main():
 
     def foreign_lock(folder):
         f=d.fixture(folder/'lock');lock=Path(str(f['target'])+'.migrate-lock');lock.write_bytes(b'foreign');before=I.state(lock);rc,r,_=d.call(*d.args(f));d.check('foreign shared lock exact',rc!=0 and I.state(lock)==before and not f['root'].exists(),r)
-        f=d.fixture(folder/'parent');c,ready=d.start(f,'sealed-before-publish');original=f['target'].parent;renamed=original.with_name(original.name+'-moved');relative=ready.relative_to(original);original.rename(renamed);original.mkdir(mode=0o700);replacement_ready=original/relative;replacement_ready.parent.mkdir(mode=0o700,parents=True);replacement_ready.write_bytes((renamed/relative).read_bytes());replacement_ready.chmod(0o600);c.go(replacement_ready);rc=c.finish();d.check('replaced parent exact gate refuses after usable rendezvous',rc!=0 and not f['target'].exists() and c.report()['code']=='create-directory-changed',c.report())
+        positive=d.fixture(folder/'parent-positive');c,ready=d.start(positive,'sealed-before-publish');c.go(ready);rc=c.finish();d.created(positive,rc,c.report())
+        f=d.fixture(folder/'parent');c,ready=d.start(f,'sealed-before-publish');original=f['target'].parent;original_id=I.identity(original);renamed=original.with_name(original.name+'-moved');relative=ready.relative_to(original)
+        retained=I.inventory(f['root']);image_relative=d.image(f).relative_to(original);image_before=I.state(d.image(f));first=d.records(f)[0];live_relative=f['root'].relative_to(original)/('live-'+first['run']+'.lock')
+        original.rename(renamed);original.mkdir(mode=0o700);replacement_ready=original/relative;replacement_ready.parent.mkdir(mode=0o700,parents=True);replacement_ready.write_bytes((renamed/relative).read_bytes());replacement_ready.chmod(0o600)
+        d.check('exact predecessor liveness path moved with original parent',not (original/live_relative).exists() and '%016x%016x'%I.identity(renamed/live_relative)==first['live'][1] and I.identity(renamed)==original_id and I.identity(original)!=original_id)
+        c.go(replacement_ready);rc=c.finish();r=c.report();d.check('exact retained parent-replacement refusal',rc!=0 and r['code']=='create-artifact-changed' and r['creation']['explicit_recovery_required'],r)
+        d.check('earlier exact liveness lookup refuses after matched usable token',r['creation']['phase']=='sealed-before-publish' and r['creation']['records']==4 and not r['creation']['creation_acknowledged'] and not r['creation']['public_name_observed'] and not f['target'].exists() and not f['mirror'].exists(),r)
+        d.check('entire moved original tree and private image preserved',all(I.state(renamed/f['root'].relative_to(original)/name)==old for name,old in retained.items()) and I.state(renamed/image_relative)==image_before and not (renamed/f['target'].name).exists())
+        expected_namespace={relative.as_posix():stat.S_IFREG,relative.with_suffix('.go').as_posix():stat.S_IFREG}
+        expected_namespace.update({p.as_posix():stat.S_IFDIR for p in relative.parents if p!=Path('.')})
+        actual_namespace={};pending=[original]
+        while pending:
+            with os.scandir(pending.pop()) as listing:
+                for entry in listing:
+                    p=Path(entry.path);kind=stat.S_IFMT(entry.stat(follow_symlinks=False).st_mode);actual_namespace[p.relative_to(original).as_posix()]=kind
+                    if kind==stat.S_IFDIR:pending.append(p)
+        d.check('replacement parent has exact no-follow control namespace only',actual_namespace==expected_namespace,actual_namespace)
+        d.check('replacement control bytes exact',replacement_ready.read_bytes()==(renamed/relative).read_bytes() and replacement_ready.with_suffix('.go').read_bytes()==b'continue\n')
         for kind in ('mirror','record','registry','suffix'):
             f=d.fixture(folder/('post-ack-'+kind));c,ready=d.start(f,'create-ack-durable');prior=I.model(f['target']);ident=I.identity(f['target'])
             p=f['mirror'] if kind=='mirror' else sorted(f['root'].glob('record-*.json'))[-1] if kind=='record' else f['root']/'worker-slots.json' if kind=='registry' else f['root']/('record-%02d.json'%len(d.records(f)))
@@ -231,7 +272,13 @@ def main():
                 f['target'].write_bytes(b'public foreign file not opened');target=f['target'];request['target']=str(target)
                 request['image_file']=[1,'%016x%016x'%I.identity(target),hashlib.sha256(target.read_bytes()).hexdigest(),target.stat().st_size]
             request_path.write_text(json.dumps(request));request_path.chmod(0o600)
-            before=I.state(target);live_fd=os.open(request['live'],os.O_RDWR|os.O_NOFOLLOW);fcntl.flock(live_fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            before=I.state(target);original_fd=os.open(request['live'],os.O_RDWR|os.O_NOFOLLOW);fcntl.flock(original_fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            # Never depend on platform DUP2(3,3) clearing close-on-exec.
+            # Keep only a distinct high CLOEXEC source; duplicate close is not unlock.
+            try:live_fd=fcntl.fcntl(original_fd,fcntl.F_DUPFD,10);os.set_inheritable(live_fd,False)
+            finally:os.close(original_fd)
+            d.check('test spawn uses distinct inherited OFD source',live_fd>=10 and not os.get_inheritable(live_fd) and (os.fstat(live_fd).st_dev,os.fstat(live_fd).st_ino)==I.identity(Path(request['live'])))
+            d.lock_busy(Path(request['live']))
             d.serial+=1;out=d.logs/('typed-%04d.stdout'%d.serial);err=d.logs/('typed-%04d.stderr'%d.serial);out_fd=os.open(out,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600);err_fd=os.open(err,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
             argv=[a.candidate,'migrate','--private-create-request',str(request_path),'--target',str(target),'--pack',request['pack'],'--recovery-font',a.font]
             pid=None;status=None;deadline=time.monotonic()+30
