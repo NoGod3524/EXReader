@@ -146,6 +146,19 @@ class Contract(unittest.TestCase):
         bad = bytearray(obj); struct.pack_into('<I', bad, 20 + 36, 99)
         with self.assertRaises(ValueError): read_symbols(bytes(bad), 'actual.obj')
 
+    def test_res_named_archive_member_still_requires_valid_x64_coff(self):
+        def archive(payload):
+            header = (b'ftver.rc.res/'.ljust(16) + b'0'.ljust(12) + b'0'.ljust(6) +
+                      b'0'.ljust(6) + b'0'.ljust(8) + str(len(payload)).encode().ljust(10) + b'`\n')
+            return b'!<arch>\n' + header + payload + (b'\n' if len(payload) % 2 else b'')
+        symbol = b'public\0\0' + struct.pack('<IhHBB', 0, 1, 0, 2, 0)
+        obj = struct.pack('<HHIIIHH', 0x8664, 1, 0, 20, 1, 0, 0) + symbol + struct.pack('<I', 4)
+        result = read_symbols(archive(obj), 'freetype.lib')
+        self.assertEqual(result['summary']['defined'], ['public'])
+        self.assertTrue(member_defines(result, 'ftver.rc.res', 'public'))
+        with self.assertRaises(ValueError): read_symbols(archive(b'\0' * 32), 'raw-resource.lib')
+        with self.assertRaises(ValueError): read_symbols(archive(obj[:-1]), 'truncated-coff.lib')
+
     def test_unknown_ordinal_pe_import_refused(self):
         with self.assertRaises(ValueError): C.pe_imports('  unknown.dll\n   80000001 Ordinal 1\n')
 
