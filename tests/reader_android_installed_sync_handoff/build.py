@@ -78,6 +78,9 @@ def host_sync_342():
                       'need(expectedSdk.equals("3.40.0")||expectedSdk.equals("3.41.0")||expectedSdk.equals("3.42.0"),"supported expected SDK version")')]:
         assert java.count(old) == 1, old
         java = java.replace(old, new)
+    root_line = "sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'reader_session_android'))"
+    assert driver.count(root_line) == 1
+    driver = driver.replace(root_line, "sys.path.insert(0,'" + (ROOT / 'tests/reader_session_android').as_posix() + "')")
     for old, new in [("choices=('3.40.0','3.41.0')", "choices=('3.40.0','3.41.0','3.42.0')"),
                      ("package+'.test/'+package+'.HostSyncTest'", "package+'.test/'+package+'.HostSync342Test'")]:
         assert driver.count(old) == 1, old
@@ -89,7 +92,7 @@ def host_sync_342():
     return dict(java_original_sha256=sha(JAVA), driver_original_sha256=sha(DRIVER),
         java_candidate_sha256=sha(folder / 'HostSync342Test.java'),
         driver_candidate_sha256=sha(OUT / 'candidate/run_ui_342.py'),
-        changes=['class and runner names', 'SDK admission list adds 3.42.0 (exact identity assertion unchanged)'])
+        changes=['class and runner names', 'absolute sys.path for relocated driver', 'SDK admission list adds 3.42.0 (exact identity assertion unchanged)'])
 
 
 def main():

@@ -10,7 +10,8 @@ BUILD = ROOT / 'build/c1-installed-sync'
 DEVICE = BUILD / 'device'
 HASH_SYMBOLS = ['opds_sha256_stream_create', 'opds_sha256_stream_update', 'opds_sha256_stream_finish_hex',
                 'opds_sha256_stream_destroy']
-SYNC_SYMBOLS = ['reader_sync_step', 'reader_sync_create']
+SYNC_SYMBOLS = ['reader_sync_create', 'reader_sync_step', 'reader_sync_free', 'reader_sync_create_raw_v3',
+                'reader_sync_step_raw_v3']
 LOCAL = 'abcdefghijk retained UI reading anchor.\n' + 'Safe original paragraph.\n' * 200
 
 
@@ -53,26 +54,41 @@ def main():
     ndk = Path(os.environ['ANDROID_HOME']) / 'ndk' / os.environ['C11_NDK'] / 'toolchains/llvm/prebuilt/linux-x86_64/bin'
     built = sorted(p for p in (ROOT / 'examples/android/app').rglob('libexreader_product.so') if p.is_file())
     built_records = {p.relative_to(ROOT).as_posix(): sha(p.read_bytes()) for p in built}
-    symbol_source, symbols = None, ''
-    for candidate in [DEVICE / 'apk-libs/libexreader_product.so', *built]:
-        text = nm(ndk / 'llvm-nm', candidate) if candidate.exists() else ''
-        if all(s in text for s in HASH_SYMBOLS) and any(s in text for s in SYNC_SYMBOLS):
-            symbol_source, symbols = str(candidate), text
-            break
     pkg_sha = packaged.get(product_name)
-    equal_built = [k for k, v in built_records.items() if v == pkg_sha]
-    gate('product_image_defines_installed_hash_and_sync', symbol_source is not None,
-         dict(symbol_source=symbol_source, packaged_sha256=pkg_sha, built=built_records, equal_to_packaged=equal_built))
-    lines = symbols.splitlines()
-    (DEVICE / 'product-symbols.txt').write_text('\n'.join(l for l in lines if re.search('opds_sha256|reader_sync|exr_webdav', l)))
-    # The packaged image must be that build output, byte-equal or its documented AGP strip.
-    stripped_equal = False
-    if not equal_built and built:
-        for p in built:
+
+    def defined(text):
+        names = set()
+        for line in text.splitlines():
+            parts = line.split()
+            if len(parts) >= 3 and parts[1] in 'TtWw':
+                names.add(parts[2])
+        return names
+
+    # One candidate must carry both the byte binding to the APK image and the complete symbols.
+    candidates = []
+    for path in [DEVICE / 'apk-libs/libexreader_product.so', *built]:
+        if not path.exists():
+            continue
+        row = dict(source=str(path.relative_to(ROOT)) if path.is_relative_to(ROOT) else str(path), sha256=sha(path.read_bytes()))
+        names = defined(nm(ndk / 'llvm-nm', path))
+        row['missing_hash_symbols'] = [x for x in HASH_SYMBOLS if x not in names]
+        row['missing_sync_symbols'] = [x for x in SYNC_SYMBOLS if x not in names]
+        if row['sha256'] == pkg_sha:
+            row['binding'] = 'identical'
+        else:
             out = DEVICE / 'strip-check.so'
-            subprocess.run([str(ndk / 'llvm-strip'), '--strip-unneeded', '-o', str(out), str(p)], check=True)
-            stripped_equal = stripped_equal or sha(out.read_bytes()) == pkg_sha
-    gate('packaged_product_derives_from_build', bool(equal_built) or stripped_equal)
+            subprocess.run([str(ndk / 'llvm-strip'), '--strip-unneeded', '-o', str(out), str(path)], check=True)
+            row['stripped_sha256'] = sha(out.read_bytes())
+            row['binding'] = 'llvm-strip --strip-unneeded' if row['stripped_sha256'] == pkg_sha else None
+        candidates.append(row)
+    proven = [c for c in candidates if c['binding'] and not c['missing_hash_symbols'] and not c['missing_sync_symbols']]
+    gate('product_image_defines_installed_hash_and_sync_same_candidate', len(proven) >= 1,
+         dict(packaged_sha256=pkg_sha, selected=proven[0] if proven else None, candidates=candidates))
+    gate('packaged_product_derives_from_build', any(c['binding'] for c in candidates))
+    if proven:
+        text = nm(ndk / 'llvm-nm', ROOT / proven[0]['source'] if not Path(proven[0]['source']).is_absolute() else proven[0]['source'])
+        (DEVICE / 'product-symbols.txt').write_text('
+'.join(l for l in text.splitlines() if re.search('opds_sha256|reader_sync|exr_webdav', l)))
 
     # Live process: the mapped libraries while a native request was blocked in flight.
     snaps = json.loads((DEVICE / 'process-snapshots.json').read_text())
