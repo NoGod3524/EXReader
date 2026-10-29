@@ -47,7 +47,7 @@ static int wr_leaf(const WCHAR *s){const WCHAR *p;size_t n=wcslen(s);WCHAR stem[
  while(k<n&&s[k]!=L'.'&&k<31){stem[k]=s[k];k++;}stem[k]=0;
  if(!_wcsicmp(stem,L"CON")||!_wcsicmp(stem,L"PRN")||!_wcsicmp(stem,L"AUX")||!_wcsicmp(stem,L"NUL")||(k==4&&(!_wcsnicmp(stem,L"COM",3)||!_wcsnicmp(stem,L"LPT",3))&&stem[3]>=L'1'&&stem[3]<=L'9'))return 0;return wcscmp(s,L".")&&wcscmp(s,L"..");}
 int wr_join(wr_context *c,const WCHAR *leaf,WCHAR out[WR_PATH],wr_error *e){if(!wr_leaf(leaf)||wcslen(c->path)+wcslen(leaf)+2>=WR_PATH)return wr_refuse(e,"leaf-path");swprintf(out,WR_PATH,L"%ls\\%ls",c->path,leaf);return 1;}
-static HANDLE wr_pin_one(const WCHAR *path,wr_identity *id,wr_error *e){HANDLE h=CreateFileW(path,FILE_READ_ATTRIBUTES|READ_CONTROL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);if(h==INVALID_HANDLE_VALUE){wr_fail(e,"ancestor-open");return h;}if(!wr_identity_get(h,1,id,e)){CloseHandle(h);return INVALID_HANDLE_VALUE;}return h;}
+static HANDLE wr_pin_one(const WCHAR *path,wr_identity *id,wr_error *e){HANDLE h=CreateFileW(path,FILE_TRAVERSE|FILE_READ_ATTRIBUTES|READ_CONTROL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);if(h==INVALID_HANDLE_VALUE){wr_fail(e,"ancestor-open");return h;}if(!wr_identity_get(h,1,id,e)){CloseHandle(h);return INVALID_HANDLE_VALUE;}return h;}
 static HANDLE wr_create_directory_bound(HANDLE parent,const WCHAR *leaf,wr_context *c,wr_identity *id,wr_error *e){
  typedef NTSTATUS (NTAPI *create_fn)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,PIO_STATUS_BLOCK,PLARGE_INTEGER,ULONG,ULONG,ULONG,ULONG,PVOID,ULONG);
  typedef ULONG (WINAPI *error_fn)(NTSTATUS);
@@ -110,7 +110,31 @@ int wr_read(HANDLE h,void **bytes,size_t *size,size_t max,wr_error *e){wr_identi
  while(off<(size_t)before.size){DWORD amount=(DWORD)(((size_t)before.size-off)>65536?65536:((size_t)before.size-off));if(!ReadFile(h,p+off,amount,&got,NULL)||!got){free(p);return wr_fail(e,"read-short");}off+=got;}
  {char extra;if(!ReadFile(h,&extra,1,&got,NULL)||got){free(p);return wr_refuse(e,"read-growth");}}
  if(!wr_identity_get(h,0,&after,e)||!wr_identity_equal(&before,&after)||before.size!=after.size){free(p);return wr_refuse(e,"read-identity");}p[off]=0;*bytes=p;*size=off;return 1;}
-int wr_rename_new(wr_context *c,HANDLE h,const WCHAR *leaf,wr_error *e){size_t n;FILE_RENAME_INFO *info;wr_identity id;WCHAR p[WR_PATH];int ok;if(!wr_recheck(c,e)||!wr_join(c,leaf,p,e)||!wr_identity_get(h,0,&id,e)||id.volume!=c->root.volume)return wr_refuse(e,"rename-binding");n=wcslen(leaf)*sizeof(WCHAR);info=calloc(1,sizeof(*info)+n);if(!info)return wr_refuse(e,"allocation");info->ReplaceIfExists=FALSE;info->RootDirectory=c->directory;info->FileNameLength=(DWORD)n;memcpy(info->FileName,leaf,n);ok=SetFileInformationByHandle(h,FileRenameInfo,info,(DWORD)(sizeof(*info)+n));free(info);if(!ok)return wr_fail(e,"rename-no-replace");if(!wr_flush(h,e)||!wr_recheck(c,e))return 0;return 1;}
+/* Native FileRenameInformation has a BOOLEAN, natural HANDLE alignment,
+ * ULONG byte length and UTF-16 name. It is not the Win32 information-class
+ * enum. Every admitted source handle is synchronous (no OVERLAPPED). */
+typedef struct {BOOLEAN ReplaceIfExists;HANDLE RootDirectory;ULONG FileNameLength;WCHAR FileName[1];} wr_native_rename_info;
+typedef char wr_rename_handle_offset[(offsetof(wr_native_rename_info,RootDirectory)==sizeof(HANDLE))?1:-1];
+typedef char wr_rename_name_offset[(offsetof(wr_native_rename_info,FileName)==2*sizeof(HANDLE)+sizeof(ULONG))?1:-1];
+int wr_rename_new(wr_context *c,HANDLE h,const WCHAR *leaf,wr_error *e){
+ typedef NTSTATUS (NTAPI *set_fn)(HANDLE,PIO_STATUS_BLOCK,PVOID,ULONG,FILE_INFORMATION_CLASS);
+ typedef ULONG (WINAPI *error_fn)(NTSTATUS);
+ HMODULE module=GetModuleHandleW(L"ntdll.dll");set_fn set=(set_fn)GetProcAddress(module,"NtSetInformationFile");error_fn translate=(error_fn)GetProcAddress(module,"RtlNtStatusToDosError");
+ size_t n,total;wr_native_rename_info *info;IO_STATUS_BLOCK io;NTSTATUS status;DWORD native;wr_identity id,published;WCHAR p[WR_PATH];HANDLE check;
+ if(!set||!translate)return wr_refuse(e,"native-rename-api");
+ if(!wr_recheck(c,e)||!wr_join(c,leaf,p,e)||!wr_identity_get(h,0,&id,e)||id.volume!=c->root.volume)return wr_refuse(e,"rename-binding");
+ n=wcslen(leaf)*sizeof(WCHAR);total=sizeof(*info)+n;info=calloc(1,total);if(!info)return wr_refuse(e,"allocation");memset(&io,0,sizeof(io));
+ info->ReplaceIfExists=FALSE;info->RootDirectory=c->directory;info->FileNameLength=(ULONG)n;memcpy(info->FileName,leaf,n);
+ /* Preserve the bound directory; never retry with an absolute path or copy. */
+ status=set(h,&io,info,(ULONG)total,(FILE_INFORMATION_CLASS)10);
+ native=(status==0&&io.Status==0)?ERROR_SUCCESS:translate(status?status:io.Status);
+ if(e){e->rename_attempted=1;e->rename_ntstatus=status;e->rename_io_status=io.Status;e->rename_information=io.Information;}
+ free(info);if(status!=0||io.Status!=0){SetLastError(native);return wr_fail(e,"rename-no-replace");}
+ if(!wr_flush(h,e)||!wr_recheck(c,e))return 0;
+ check=wr_open(c,leaf,0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,0,e);if(check==INVALID_HANDLE_VALUE)return 0;
+ if(!wr_identity_get(check,0,&published,e)||!wr_identity_equal(&id,&published)){CloseHandle(check);return wr_refuse(e,"renamed-path-identity");}
+ if(!CloseHandle(check))return wr_fail(e,"renamed-check-close");return 1;
+}
 HANDLE wr_job(wr_error *e){HANDLE h=CreateJobObjectW(NULL,NULL);JOBOBJECT_EXTENDED_LIMIT_INFORMATION x;JOBOBJECT_BASIC_UI_RESTRICTIONS ui;if(!h){wr_fail(e,"job-create");return NULL;}memset(&x,0,sizeof(x));x.BasicLimitInformation.LimitFlags=JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE|JOB_OBJECT_LIMIT_PROCESS_MEMORY|JOB_OBJECT_LIMIT_JOB_MEMORY|JOB_OBJECT_LIMIT_PROCESS_TIME;x.ProcessMemoryLimit=512ull*1024*1024;x.JobMemoryLimit=1024ull*1024*1024;x.BasicLimitInformation.PerProcessUserTimeLimit.QuadPart=60ll*10000000;
  if(!SetInformationJobObject(h,JobObjectExtendedLimitInformation,&x,sizeof(x))){CloseHandle(h);wr_fail(e,"job-limits");return NULL;}(void)ui;return h;}
 int wr_spawn(HANDLE job,const WCHAR *exe,WCHAR *command,HANDLE *handles,size_t count,HANDLE input,HANDLE output,int fault,wr_process *p,wr_error *e){STARTUPINFOEXW s;PROCESS_INFORMATION pi;SIZE_T size=0;BOOL member=FALSE;size_t i;int ok=0;DWORD saved=0;memset(p,0,sizeof(*p));memset(&s,0,sizeof(s));memset(&pi,0,sizeof(pi));s.StartupInfo.cb=sizeof(s);s.StartupInfo.dwFlags=STARTF_USESTDHANDLES;s.StartupInfo.hStdInput=input;s.StartupInfo.hStdOutput=output;s.StartupInfo.hStdError=output;

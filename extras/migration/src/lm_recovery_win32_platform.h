@@ -16,7 +16,7 @@
 #define WR_WRITE_TOTAL (64ull*1024*1024)
 #define WR_RECORD_MAX (1024u*1024u)
 typedef struct { ULONGLONG volume; unsigned char file[16]; DWORD attributes,links; ULONGLONG size; } wr_identity;
-typedef struct { DWORD native; const char *reason; DWORD cleanup_native,wait_result; LONG ntstatus; ULONG_PTR io_information; int cleanup_unconfirmed; } wr_error;
+typedef struct { DWORD native; const char *reason; DWORD cleanup_native,wait_result; LONG ntstatus; ULONG_PTR io_information; int cleanup_unconfirmed; int rename_attempted; LONG rename_ntstatus,rename_io_status; ULONG_PTR rename_information; } wr_error;
 typedef struct {
  HANDLE pins[WR_PINS];wr_identity identities[WR_PINS];unsigned count;
  WCHAR paths[WR_PINS][WR_PATH],path[WR_PATH];
