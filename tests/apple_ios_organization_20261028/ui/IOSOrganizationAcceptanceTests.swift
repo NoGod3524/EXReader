@@ -56,7 +56,10 @@ final class IOSOrganizationAcceptanceTests: XCTestCase {
         XCTAssertTrue(wait { element.isEnabled && element.isHittable }, app.debugDescription)
         element.tap()
     }
-    private func tap(_ id: String) { tap(node(id)) }
+    private func tap(_ id: String) {
+        // Every string-ID action in this suite targets a source-defined Button.
+        tap(app.buttons.matching(NSPredicate(format: "identifier == %@", id)).firstMatch)
+    }
     private func label(_ id: String) -> String { node(id).exists ? node(id).label : "" }
     private func enter(_ id: String, _ value: String) {
         let field = app.textFields.matching(identifier: id).firstMatch

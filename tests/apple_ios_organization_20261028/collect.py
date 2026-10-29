@@ -71,9 +71,25 @@ def main():
         # Export diagnostics before rejecting failures: no skipped collector.
         attachments = output / 'attachments'
         command('xcrun', 'xcresulttool', 'export', 'attachments', '--path', bundle, '--output-path', attachments)
+        manifest = json.loads((attachments / 'manifest.json').read_text())
+        failed = {owner(c['name']) for c in cases if c['result'] != 'Passed'}
+        # Fixture-only failure diagnostics are visible in decoded Actions logs.
+        # They do not substitute for passed cases or the original ZIP audit.
+        for group in manifest:
+            case = owner(group.get('testIdentifier') or group.get('testName'))
+            if case not in failed: continue
+            for item in group['attachments']:
+                name, filename = item['suggestedHumanReadableName'], item['exportedFileName']
+                if not name.startswith(('ios-organization-steps-', 'ios-organization-tree-')): continue
+                require(Path(filename).name == filename, 'unsafe diagnostic attachment')
+                path = attachments / filename
+                require(path.is_file() and 0 < path.stat().st_size <= 16 * 1024 * 1024, 'invalid diagnostic size')
+                with path.open('rb') as stream: prefix = stream.read(65537)
+                print(json.dumps({'diagnostic_only': True, 'case': case, 'attachment': filename,
+                    'sha256': digest(path), 'truncated': len(prefix) > 65536,
+                    'text': prefix[:65536].decode('utf-8', errors='replace')}), flush=True)
         require(len(cases) == len(CASES) and {owner(c['name']) for c in cases} == set(CASES)
                 and all(c['result'] == 'Passed' for c in cases), 'native cases missing, skipped or failed')
-        manifest = json.loads((attachments / 'manifest.json').read_text())
         seen = set()
         for group in manifest:
             case = owner(group.get('testIdentifier') or group.get('testName'))
