@@ -4,6 +4,7 @@
 #   cmake -S extras/migration -B build/migration -DEXR_SDK=<prefix> -DCMAKE_BUILD_TYPE=Release
 cmake_minimum_required(VERSION 3.24)
 project(EXReaderLegacyMigration LANGUAGES C)
+option(EXR_MIGRATION_WINDOWS_RECORD_CANDIDATE "Build the separate full-FileID Windows record format; no recovery admission" OFF)
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   add_compile_options(/utf-8)
@@ -88,3 +89,19 @@ else()
   install(TARGETS exreader-migration-recovery-worker RUNTIME DESTINATION bin)
 endif()
 install(TARGETS exreader-legacy-migrate-recovery RUNTIME DESTINATION bin)
+if(EXR_MIGRATION_WINDOWS_RECORD_CANDIDATE)
+  if(NOT WIN32)
+    message(FATAL_ERROR "Windows record candidate requires native Windows")
+  endif()
+  add_library(exreader-migration-windows-record STATIC src/lm_recovery_win32_record.c
+    src/lm_recovery_win32_platform.c src/lm_util.c)
+  target_compile_definitions(exreader-migration-windows-record PRIVATE _WIN32_WINNT=0x0A00)
+  target_include_directories(exreader-migration-windows-record PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:include/exreader-migration-candidate>)
+  target_link_libraries(exreader-migration-windows-record PUBLIC EXReader::exr_library advapi32 psapi)
+  set_target_properties(exreader-migration-windows-record PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+  install(TARGETS exreader-migration-windows-record ARCHIVE DESTINATION lib)
+  install(FILES src/lm_recovery_win32_record.h src/lm_recovery_win32_platform.h src/lm.h
+    DESTINATION include/exreader-migration-candidate)
+endif()
