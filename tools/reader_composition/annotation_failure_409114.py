@@ -13,7 +13,9 @@ with zipfile.ZipFile(io.BytesIO(raw)) as z:
     found=[]
     for i,line in enumerate(lines):
         if ".swift:" in line and "error:" in line:
-            found.append({"line":i+1,"context":lines[max(0,i-30):i+280]})
+            start=max((n for n in range(i) if lines[n].startswith("Test Case ")),default=0)
+            actions=[line for line in lines[start:i] if any(word in line for word in ("Click ", "Tap ", "Type ", "Scroll ", "Press ", "export-options", "export-jsonl"))]
+            found.append({"line":i+1,"context":lines[max(0,i-30):i+280],"action_trace":actions[:180]})
     assert found,"native failure absent"
     result={"original_run":40911433448,"source":"d5327faa540d2e19978e5b76e387f99457a60936","artifact":12916537324,"inspection_only":True,"failure_contexts":found}
 out=Path("build/annotation-failure");out.mkdir(parents=True,exist_ok=True)
