@@ -93,6 +93,12 @@ def build():
     for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md'): shutil.copyfile(ROOT / name, payload / name)
     # F12 handoff patch (docs/reader-delivery-handoff/PACKAGING-PATCH.md): ship the SDK's installed licence texts.
     shutil.copytree(ROOT / 'build/wave3/sdk-stage/share/exreader/licenses', payload / 'licenses')
+    product_share = ROOT / 'build/wave3/stage/share'
+    for item in sorted(product_share.rglob('*')):
+        if item.is_file() and any(k in item.name.lower() for k in ('licen', 'copying', 'notice', 'public-domain')):
+            destination = payload / 'product-licenses' / item.relative_to(product_share)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(item, destination)
     apk = payload / 'artifacts/app-debug.apk'
     producer = dict(source_sha=os.environ['GITHUB_SHA'], sdk_version=VERSION,
         platform='Android API34 x86_64 emulator', signing='debug; not store release',

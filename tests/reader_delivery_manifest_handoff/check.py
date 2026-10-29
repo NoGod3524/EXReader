@@ -21,12 +21,15 @@ import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import safezip  # noqa: E402
 OUT = ROOT / 'build/reader-delivery-handoff'
 BASE = 'bd28d4946f17a184dd3cd47a584cf49fce34e973'
 TARGETS = ('windows', 'linux', 'macos', 'android', 'iphone', 'ipad')
 REPO = os.environ.get('GITHUB_REPOSITORY', 'NoGod3524/EXReader')
 ALLOWED_PREFIXES = ('docs/reader-delivery-handoff/', 'tests/reader_delivery_manifest_handoff/')
-ALLOWED_FILES = {'.github/workflows/reader-delivery-manifest-handoff.yml'}
+ALLOWED_FILES = {'.github/workflows/reader-delivery-manifest-handoff.yml',
+                '.github/workflows/reader-delivery-android-sdk342-licenses.yml'}
 PROTECTED = ('src', 'include', 'cmake', 'CMakeLists.txt', 'CMakePresets.json', 'LICENSE',
              'THIRD_PARTY_NOTICES.md', 'licenses', 'apps', 'examples', 'bindings', 'tools')
 # Paths whose change makes an older package say nothing about the current source.
@@ -245,16 +248,17 @@ def api(path):
 
 
 def download(artifact, folder):
-    folder.mkdir(parents=True, exist_ok=False)
     archive = folder.with_suffix('.zip')
+    archive.parent.mkdir(parents=True, exist_ok=True)
     with archive.open('wb') as stream:
         subprocess.run(['gh', 'api', 'repos/' + REPO + '/actions/artifacts/' + str(artifact['id']) + '/zip'],
                        cwd=ROOT, stdout=stream, check=True)
     digest = sha256_file(archive)
-    assert artifact.get('digest') in (None, 'sha256:' + digest), (artifact['name'], artifact.get('digest'), digest)
-    with zipfile.ZipFile(archive) as bundle:
-        bundle.extractall(folder)
-    return digest
+    assert artifact.get('digest') == 'sha256:' + digest, ('digest absent or different', artifact['name'], artifact.get('digest'), digest)
+    assert artifact.get('size_in_bytes') == archive.stat().st_size, ('size differs', artifact['name'])
+    # Strict member validation (duplicates, absolute, parent, backslash, symlink); no extractall.
+    outer = safezip.extract(archive, folder, artifact['name'])
+    return digest, outer
 
 
 def cache_switches(configuration):
@@ -275,31 +279,42 @@ def inspect_target(target, run_id, attempt, records, expected_head, module, decl
     matches = [a for a in records if a['name'] == name and not a['expired']]
     assert len(matches) == 1, 'missing or duplicate artifact ' + name
     artifact = matches[0]
+    assert isinstance(artifact['id'], int) and artifact['workflow_run']['id'] == int(run_id), (name, artifact['workflow_run'])
     assert artifact['workflow_run']['head_sha'] == expected_head, (name, artifact['workflow_run']['head_sha'])
     folder = ROOT / 'inspect' / name
-    zip_digest = download(artifact, folder)
-    manifest = json.loads((folder / 'manifest.json').read_text(encoding='utf-8'))
-    result = json.loads((folder / 'result.json').read_text(encoding='utf-8'))
-    configuration = json.loads((folder / 'configuration.json').read_text(encoding='utf-8'))
-    assert manifest['source_sha'] == expected_head and result['passed'] is True
+    zip_digest, outer = download(artifact, folder)
+    for required in ('manifest.json', 'result.json', 'configuration.json', 'entry.json'):
+        assert required in outer, (name, 'missing ' + required)
+    manifest = json.loads(outer['manifest.json'].decode('utf-8'))
+    result = json.loads(outer['result.json'].decode('utf-8'))
+    configuration = json.loads(outer['configuration.json'].decode('utf-8'))
+    assert manifest['source_sha'] == expected_head and result['passed'] is True and manifest['target'] == target
     assert manifest['provenance']['run_id'] == run_id and manifest['provenance']['attempt'] == attempt
-    archive_path = folder / manifest['archive']['name']
-    assert sha256_file(archive_path) == manifest['archive']['sha256'], 'archive digest differs from manifest'
-    members = {}
-    with zipfile.ZipFile(archive_path) as bundle:
-        for info in bundle.infolist():
-            if info.is_dir():
-                continue
-            data = bundle.read(info)
-            members[info.filename] = dict(bytes=len(data), sha256=sha256(data))
-        mismatched = [n for n, r in manifest['files'].items() if members.get(n, {}).get('sha256') != r['sha256']]
-        apk = [n for n in members if n.endswith('.apk')]
-        apk_entries = []
-        for n in apk:
-            with zipfile.ZipFile(io.BytesIO(bundle.read(n))) as inner:
-                apk_entries += [n + '!' + e for e in inner.namelist()
-                                if re.search(r'licen[cs]e|notice|copying|OFL|patents', e, re.I) or e.startswith('assets/')]
+    for label, record in (('result', result), ('configuration', configuration)):
+        assert (record['source_sha'], record['run_id'], record['attempt']) == (expected_head, run_id, attempt), label
+    assert result['target'] == target and configuration['target'] == target
+    archive_name = manifest['archive']['name']
+    assert '/' not in archive_name and archive_name in outer, 'archive named by the manifest is not in the artifact'
+    archive_path = folder / archive_name
+    assert sha256_file(archive_path) == manifest['archive']['sha256'] == result['archive']['sha256'], 'archive digest differs'
+    assert archive_path.stat().st_size == manifest['archive']['bytes'], 'archive size differs from manifest'
+    contents = safezip.read_members(archive_path, archive_name)
+    members = {n: dict(bytes=len(d), sha256=sha256(d)) for n, d in contents.items()}
+    # Closed set: archive members == manifest files + the manifest's own metadata files, nothing else.
+    closed = set(manifest['files']) | set(manifest['metadata_files'])
+    assert set(members) == closed, ('member set differs from manifest', sorted(set(members) ^ closed))
+    mismatched = [n for n, r in manifest['files'].items()
+                  if members[n]['sha256'] != r['sha256'] or members[n]['bytes'] != r['bytes']]
     assert not mismatched, mismatched
+    inner = json.loads(contents['manifest.json'].decode('utf-8'))
+    assert inner == {k: v for k, v in manifest.items() if k != 'archive'}, 'inner manifest differs from artifact manifest'
+    expected_sums = ''.join(r['sha256'] + '  ' + n + '\n' for n, r in sorted(manifest['files'].items()))
+    assert contents['SHA256SUMS'].decode('utf-8') == expected_sums, 'SHA256SUMS differs from manifest'
+    apk_entries = []
+    for n in sorted(n for n in members if n.endswith('.apk')):
+        with zipfile.ZipFile(io.BytesIO(contents[n])) as apk:
+            apk_entries += [n + '!' + e for e in apk.namelist()
+                            if re.search(r'licen[cs]e|notice|copying|OFL|patents', e, re.I) or e.startswith('assets/')]
     found = {}
     for n in members:
         match = DIR_RE.search(n)
