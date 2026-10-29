@@ -2,14 +2,41 @@
 # SPDX-License-Identifier: MIT
 """Actions-only boundary controls for pinned continuation failure diagnosis."""
 import os
+import json
 from pathlib import Path
 import tempfile
 import unittest
-from inspect_continuation_failure import BUNDLE, CASE, SOURCE_PATH, activity_timing, locations, network_summary, safe_progress, xcresult_issues
+from inspect_continuation_failure import BUNDLE, CASE, SOURCE_PATH, activity_timing, attachment_summary, locations, network_summary, safe_progress, xcresult_issues
 from privacy_scan import needles
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_attachment_tokens_cross_chunk_without_raw_names(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / 'text.txt').write_bytes(b'x' * (1024 * 1024 - 3) + '同步失败 private-operand'.encode())
+            (root / 'manifest.json').write_text(json.dumps([{'testIdentifier': CASE, 'attachments': [
+                {'exportedFileName': 'text.txt', 'suggestedHumanReadableName': 'arbitrary-private-name'}]}]))
+            report = attachment_summary(root)
+            self.assertEqual(report['attachments'][0]['status_token_presence'], ['failed'])
+            self.assertEqual(report['attachments'][0]['kind'], 'other')
+            self.assertNotIn('private', str(report))
+            self.assertFalse(report['token_presence_is_actual_ui_state_proof'])
+            self.assertEqual(report['type_counts']['.txt'], 1)
+            self.assertFalse(report['text_status_tokens_absent'])
+            (root / 'manifest.json').write_text('[]')
+            empty = attachment_summary(root)
+            self.assertEqual(empty['text_attachment_count'], 0)
+            self.assertIsNone(empty['text_status_tokens_absent'])
+
+    def test_attachment_traversal_and_foreign_case_refuse(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for case, filename in ((CASE, '../private-operand'), ('testForeignCase', 'text.txt')):
+                (root / 'manifest.json').write_text(json.dumps([{'testIdentifier': case, 'attachments': [
+                    {'exportedFileName': filename, 'suggestedHumanReadableName': 'unknown'}]}]))
+                with self.assertRaises(RuntimeError): attachment_summary(root)
+
     def test_activity_timing_only_known_markers(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'native.log'

@@ -3,6 +3,7 @@
 """Pinned failed continuation evidence; fixed-output diagnosis, never acceptance."""
 import json
 import os
+from pathlib import Path
 import re
 import shutil
 import subprocess
@@ -32,6 +33,9 @@ SIGNATURES = {'url-request-timeout': 'NSURLErrorDomain Code=-1001',
               'xctest-test-timeout': 'Test exceeded execution time allowance'}
 CASE = 'testDiagnosticContinuationRememberUpdateRestart'
 BUNDLE = 'org.exreader.password-privacy-20261028'
+STATUS_TOKENS = {'finished': '本轮扫描完成', 'failed': '同步失败',
+                 'missing-credential': '请重新输入此账号的授权信息', 'idle': '未同步',
+                 'closed': '已关闭', 'preparing-original': '正在准备原书', 'receiving-shelf': '正在接收书架'}
 
 
 def locations(path):
@@ -160,6 +164,50 @@ def xcresult_issues(payload):
             'arbitrary_issue_operands_printed': False, 'source_positions_not_authenticated_callsites': True}
 
 
+def attachment_summary(directory):
+    """Stream exported text only for fixed status tokens; never infer actual UI state."""
+    groups = json.loads((directory / 'manifest.json').read_text())
+    require(type(groups) is list, 'unexpected attachment manifest')
+    rows, seen = [], set()
+    extensions = ('.png', '.jpg', '.jpeg', '.heic', '.txt', '.log', '.json', '.plist', '.html', 'other')
+    type_counts = {extension: 0 for extension in extensions}
+    for group in groups:
+        case = group.get('testIdentifier') or group.get('testName')
+        require(type(case) is str and re.findall(r'\btest[A-Za-z0-9_]+\b', case) == [CASE], 'unexpected attachment case')
+        for item in group['attachments']:
+            filename, name = item['exportedFileName'], item['suggestedHumanReadableName']
+            require(type(filename) is str and Path(filename).name == filename and filename not in seen and
+                    type(name) is str, 'unexpected attachment identity')
+            seen.add(filename); path = directory / filename
+            require(path.is_file() and not path.is_symlink(), 'unexpected attachment entry')
+            extension = path.suffix.lower()
+            extension = extension if extension in extensions else 'other'
+            type_counts[extension] += 1
+            kind = next((stage for stage in STAGES if name.startswith('privacy-' + stage)), None)
+            if kind is None:
+                kind = 'hierarchy-named' if any(token in name.lower() for token in ('hierarchy', 'debug description', 'debugdescription')) else 'other'
+            tokens = set()
+            text_scanned = extension in ('.txt', '.log', '.json', '.plist', '.html')
+            if text_scanned:
+                encoded = {label: value.encode() for label, value in STATUS_TOKENS.items()}
+                overlap = b''; width = max(map(len, encoded.values())) - 1
+                with path.open('rb') as file:
+                    for data in iter(lambda: file.read(1024 * 1024), b''):
+                        combined = overlap + data
+                        tokens.update(label for label, value in encoded.items() if value in combined)
+                        overlap = combined[-width:]
+            rows.append({'kind': kind, 'extension': extension, 'sha256': sha(path),
+                         'text_scanned': text_scanned, 'status_token_presence': sorted(tokens)})
+            require(len(rows) <= 5000, 'unexpected attachment count')
+    text_count = sum(row['text_scanned'] for row in rows)
+    return {'count': len(rows), 'type_counts': type_counts, 'text_attachment_count': text_count,
+            'hierarchy_named_count': sum(row['kind'] == 'hierarchy-named' for row in rows),
+            'text_status_tokens_absent': not any(row['status_token_presence'] for row in rows) if text_count else None,
+            'attachments': rows, 'arbitrary_names_or_text_printed': False,
+            'text_token_encoding': 'literal-utf8-only; UTF16 and XML escapes are not decoded',
+            'token_presence_is_actual_ui_state_proof': False, 'images_not_ocr_interpreted': True}
+
+
 def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
     guard()
@@ -216,6 +264,11 @@ def main():
                                    '--format', 'json'], capture_output=True, timeout=120)
             require(done.returncode == 0, 'native result parser refused')
             report['xcresult'] = xcresult_issues(json.loads(done.stdout))
+            exported = Path(temporary) / 'attachments'
+            done = subprocess.run(['xcrun', 'xcresulttool', 'export', 'attachments', '--path', copied,
+                                   '--output-path', str(exported)], capture_output=True, timeout=120)
+            require(done.returncode == 0, 'native attachment exporter refused')
+            report['exported_attachments'] = attachment_summary(exported)
         reports.append(report)
         print(json.dumps(report, sort_keys=True), flush=True)
     (out / 'diagnostic.json').write_text(json.dumps(reports, indent=2) + '\n')
