@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Read exact original case timing without rerunning the application
+      - name: Read full native picker tree after the original timeout
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tools/reader_composition/annotation_mobile_timing_409234.py
