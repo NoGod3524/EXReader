@@ -176,7 +176,7 @@ def archive_equivalence(before,after,target):
         exact_archive_equal=before==after,object_payloads_equal=bm==am,
         mode='exact',normalization=None)
     if before==after:return result
-    require(target=='macos','unequal archives require measured macOS index timestamp mode')
+    require(target in ('macos','ios-simulator'),'unequal archives require a measured Apple index timestamp target')
     require(len(before)==len(after),'archive total size differs')
     bi=bsd_index_record(before);ai=bsd_index_record(after)
     require(bm==am,'ordered archive object payloads differ')
@@ -184,7 +184,7 @@ def archive_equivalence(before,after,target):
     require(begin==24 and ai['timestamp_offset']==begin and before[:begin]==after[:begin] and before[end:]==after[end:],
         'archive non-timestamp bytes differ')
     normalized=before[:begin]+b'0           '+before[end:]
-    result.update(mode='macos-first-bsd-index-timestamp',normalization=dict(
+    result.update(mode=target+'-first-bsd-index-timestamp',normalization=dict(
         index_name=bi['name'],timestamp_offset=begin,timestamp_bytes=12,
         build_timestamp=bi['timestamp'],installed_timestamp=ai['timestamp'],
         differing_offsets=[i for i in range(begin,end) if before[i]!=after[i]],
@@ -192,18 +192,84 @@ def archive_equivalence(before,after,target):
         index_payload_sha256=bi['payload_sha256']))
     return result
 
-def symbols(text, target):
-    definitions=set();undefined=set()
-    for line in text.splitlines():
+COFF_FALLBACK_PAIRS={
+    '??_Eexception@std@@UEAAPEAXI@Z':'??_Gexception@std@@UEAAPEAXI@Z',
+    '??_Ebad_alloc@std@@UEAAPEAXI@Z':'??_Gbad_alloc@std@@UEAAPEAXI@Z',
+    '??_Ebad_array_new_length@std@@UEAAPEAXI@Z':'??_Gbad_array_new_length@std@@UEAAPEAXI@Z'}
+
+def coff_weak_fallbacks(raw):
+    """Only measured ordinary-x64 no-library-search same-object function fallbacks.
+
+    This proves a fallback is present, not that a final linker selected it over
+    another already-linked definition. It never grants a public hash entry.
+    """
+    require(len(raw)>=20 and raw[:2]==b'\x64\x86','unsupported weak COFF object format')
+    sections=int.from_bytes(raw[2:4],'little');table=int.from_bytes(raw[8:12],'little');count=int.from_bytes(raw[12:16],'little')
+    require(sections>0 and raw[16:18]==b'\0\0' and 20+sections*40<=table and count>0 and table+count*18+4<=len(raw),'COFF symbol/section table bounds')
+    strings=table+count*18;string_size=int.from_bytes(raw[strings:strings+4],'little')
+    require(string_size>=4 and strings+string_size==len(raw),'COFF string table bounds/trailing bytes')
+    def name(field):
+        if field[:4]==b'\0'*4:
+            offset=int.from_bytes(field[4:],'little');require(4<=offset<string_size,'COFF long-name bounds')
+            end=raw.find(b'\0',strings+offset,strings+string_size);require(end>=0,'COFF unterminated long name')
+            value=raw[strings+offset:end]
+        else:
+            value=field.split(b'\0',1)[0];require(field==value.ljust(8,b'\0'),'COFF inline-name padding')
+        require(value and all(32<=c<127 for c in value),'COFF symbol name encoding')
+        return value.decode('ascii')
+    rows={};index=0
+    while index<count:
+        start=table+index*18;record=raw[start:start+18];aux=record[17]
+        require(index+1+aux<=count,'COFF auxiliary record bounds')
+        rows[index]=dict(name=name(record[:8]),value=int.from_bytes(record[8:12],'little'),
+            section=int.from_bytes(record[12:14],'little',signed=True),type=int.from_bytes(record[14:16],'little'),
+            storage=record[16],aux=aux,aux_bytes=raw[start+18:start+18*(1+aux)])
+        index+=1+aux
+    result={}
+    for index,row in rows.items():
+        if row['storage']!=105:continue
+        require(row['name'] in COFF_FALLBACK_PAIRS and row['name'] not in PUBLIC|PRIVATE|FORBIDDEN,'unsupported weak COFF entry')
+        require(row['value']==0 and row['section']==0 and row['type']==0x20 and row['aux']==1,'weak COFF function/auxiliary shape differs')
+        aux=row['aux_bytes'];fallback_index=int.from_bytes(aux[:4],'little');kind=int.from_bytes(aux[4:8],'little')
+        require(kind==1 and aux[8:]==b'\0'*10,'weak COFF requires exact no-library-search auxiliary')
+        require(fallback_index in rows,'weak COFF fallback is absent or auxiliary')
+        fallback=rows[fallback_index]
+        require(fallback['name']==COFF_FALLBACK_PAIRS[row['name']] and fallback['storage']==2 and fallback['type']==0x20 and
+            0<fallback['section']<=sections and fallback['aux']==0,'weak COFF fallback is not the exact same-object strong function')
+        section=raw[20+(fallback['section']-1)*40:20+fallback['section']*40]
+        size=int.from_bytes(section[16:20],'little');data=int.from_bytes(section[20:24],'little');flags=int.from_bytes(section[36:40],'little')
+        require(flags&0x20 and flags&0x20000000 and size>fallback['value'] and data>=20+sections*40 and data+size<=table,
+            'weak COFF fallback code-section bytes are not retained')
+        require(row['name'] not in result and sum(r['name']==fallback['name'] and r['storage']==2 for r in rows.values())==1,
+            'duplicate weak COFF name/fallback definition')
+        result[row['name']]=dict(index=index,fallback=fallback['name'],fallback_index=fallback_index,characteristics=kind,
+            fallback_section=fallback['section'],fallback_value=fallback['value'],code_bytes=size,
+            code_sha256=hashlib.sha256(raw[data:data+size]).hexdigest(),final_provider_claim=False)
+    return result
+
+def symbols(text, target, object_bytes=None):
+    definitions=set();undefined=set();weak_rows={};strong_rows={}
+    fallbacks=coff_weak_fallbacks(object_bytes) if target=='windows' and object_bytes is not None else {}
+    lines=text.splitlines()
+    for position,line in enumerate(lines):
         if target=='windows':
             if '|' not in line or 'External' not in line:continue
-            require('WeakExternal' not in line,'weak COFF external is unsupported')
-            m=re.match(r'^\s*[0-9A-Fa-f]+\s+([0-9A-Fa-f]+)\s+(UNDEF|SECT[0-9A-Fa-f]+)\b(.*?)\bExternal\s+\|\s+(\S+)(?:\s+(\(.+\)))?\s*$',line)
+            m=re.match(r'^\s*([0-9A-Fa-f]+)\s+([0-9A-Fa-f]+)\s+(UNDEF|SECT[0-9A-Fa-f]+)\b(.*?)\b(WeakExternal|External)\s+\|\s+(\S+)(?:\s+(\(.+\)))?\s*$',line)
             require(m is not None,'unknown COFF external row: '+line)
-            value,section,kind,name,annotation=m.groups()
+            index,value,section,kind,storage,name,annotation=m.groups();index=int(index,16)
             if annotation:
                 require(name.startswith('?') and annotation.count('(')==annotation.count(')') and '|' not in annotation,
                     'unsupported COFF display annotation')
+            if storage=='WeakExternal':
+                require(object_bytes is not None and name in fallbacks,'weak COFF binary fallback evidence required')
+                fallback=fallbacks[name]
+                require(name not in weak_rows and index==fallback['index'] and int(value,16)==0 and section=='UNDEF' and '()' in kind,
+                    'weak COFF text/binary record differs')
+                aux=re.fullmatch(r'\s*Default index\s+([0-9A-Fa-f]+)\s+No library search\s*',lines[position+1] if position+1<len(lines) else '')
+                require(aux is not None and int(aux[1],16)==fallback['fallback_index'],'weak COFF text/binary auxiliary differs')
+                weak_rows[name]=fallback;undefined.add(name);continue
+            require(index not in strong_rows,'duplicate COFF external row index')
+            strong_rows[index]=(name,section,int(value,16),'()' in kind)
             if section=='UNDEF':
                 require(int(value,16)==0,'COFF common symbol is not a function import');undefined.add(name)
             else:
@@ -219,7 +285,17 @@ def symbols(text, target):
             if kind=='T':definitions.add(name)
             elif kind=='U':undefined.add(name)
             elif (name in PUBLIC|PRIVATE|FORBIDDEN):raise ValueError('non-function/weak hash entry')
+    if target=='windows':
+        require(set(weak_rows)==set(fallbacks),'weak COFF text/binary inventory differs')
+        for row in fallbacks.values():
+            require(strong_rows.get(row['fallback_index'])==(row['fallback'],'SECT'+format(row['fallback_section'],'X'),row['fallback_value'],True),
+                'weak COFF strong fallback text/binary definition differs')
     return definitions,undefined
+
+def require_member_definition(folder,member,target,symbol):
+    payload=(Path(folder)/member['object']).read_bytes()
+    defined,_=symbols((Path(folder)/member['symbols']).read_text(),target,payload if target=='windows' else None)
+    require(symbol in defined,'map symbol not defined by exact retained member')
 
 def deps_groups(text,required_valid=()):
     result={};lines=text.splitlines();i=0
@@ -419,12 +495,19 @@ def android_binding(cache,command,needs_cxx):
     require(len(segments)==1,'Android final driver command is ambiguous')
     argv=segments[0];driver=ndk+'/toolchains/llvm/prebuilt/linux-x86_64/bin/'+('clang++' if needs_cxx else 'clang')
     require(argv[0]==driver,'final driver is not declared Android NDK')
-    targets=[];sysroots=[];runtime=[]
+    targets=[];sysroots=[];runtime=[];depfiles=[]
     for i,arg in enumerate(argv[1:],1):
         require(not arg.startswith(('-Xclang','-Wl,--sysroot','-Wl,-sysroot')),'unclassified Android target/root escape')
+        require(not (arg.startswith('-Wl,') and any(x.startswith('--dependency-file') for x in arg[4:].split(','))),
+            'unsupported Android dependency-output spelling')
+        if arg.startswith('--dependency-file'):
+            require(arg=='--dependency-file=CMakeFiles/probe.dir/link.d' and argv[i-1]=='-Xlinker',
+                'unsupported Android dependency-output path/operand')
+            depfiles.append('CMakeFiles/probe.dir/link.d')
         if arg=='-Xlinker':
             require(i+1<len(argv) and (argv[i+1] in ('-Map','-map') or
-                (argv[i+1].endswith('.map') and i>=2 and argv[i-2:i]==['-Xlinker','-Map'])),
+                (argv[i+1].endswith('.map') and i>=2 and argv[i-2:i]==['-Xlinker','-Map']) or
+                argv[i+1]=='--dependency-file=CMakeFiles/probe.dir/link.d'),
                 'unclassified Android linker escape')
         if arg in ('--target','-target','--sysroot','-isysroot'):
             require(i+1<len(argv),'missing Android target/root operand')
@@ -434,9 +517,11 @@ def android_binding(cache,command,needs_cxx):
         if arg.startswith('-stdlib=') or arg in ('-static-libstdc++','-shared-libstdc++'):runtime.append(arg)
     require(len(targets)==1 and targets[0] in ('x86_64-none-linux-android26','x86_64-linux-android26'),'final Android target/API differs')
     require(sysroots==[ndk+'/toolchains/llvm/prebuilt/linux-x86_64/sysroot'],'final Android sysroot missing/conflicting')
+    require(len(depfiles)<=1,'duplicate Android dependency-output option')
     if needs_cxx:
         require(runtime.count('-static-libstdc++')==1 and not any(x in runtime for x in ('-shared-libstdc++','-stdlib=libstdc++')) and
             not any('libc++_shared' in arg for arg in argv),'final Android C++ runtime is not static')
+    return dict(driver=driver,target=targets[0],sysroot=sysroots[0],dependency_output=depfiles[0] if depfiles else None)
 
 def validate(folder, manifest, require_mutations=True):
     folder=Path(folder);expected=identity()
@@ -499,7 +584,7 @@ def validate(folder, manifest, require_mutations=True):
         if name=='product':
             require('$<LINK_ONLY:EXReaderOPDSHash::opds_sha256_stream>' in combined,'static public hash dependency not exported')
     require((folder/hash_owner['prefix']/'include/exreader-opds-hash/opds_sha256_stream.h').read_bytes()==(ROOT/OWNER_PATHS[0]).read_bytes(),'installed public header source')
-    native=json.loads((folder/'native.json').read_text());defs={};undef={}
+    native=json.loads((folder/'native.json').read_text());defs={};undef={};coff_fallbacks={}
     require(set(native)=={'hash','importer','normal','revision'},'native owner inventory')
     for owner,entry in native.items():
         actual=archive_members((folder/entry['archive']).read_bytes())
@@ -507,7 +592,10 @@ def validate(folder, manifest, require_mutations=True):
         defs[owner]=set();undef[owner]=set()
         for (name,payload),member in zip(actual,entry['members']):
             require((folder/member['object']).read_bytes()==payload,'member byte extraction')
-            d,u=symbols((folder/member['symbols']).read_text(errors='strict'),target)
+            d,u=symbols((folder/member['symbols']).read_text(errors='strict'),target,payload if target=='windows' else None)
+            if target=='windows':
+                fallback=coff_weak_fallbacks(payload)
+                if fallback:coff_fallbacks[member['object']]=fallback
             require(not(defs[owner]&d&PUBLIC),'duplicate stream definition')
             defs[owner]|=d;undef[owner]|=u
             matching=[row for row in commands if row['output']==member['symbols']]
@@ -603,8 +691,7 @@ def validate(folder, manifest, require_mutations=True):
             candidates=[row for row in native[owner]['members'] if row['name'].replace('\\','/')==member or
                 ('/' not in member and row['name'].replace('\\','/').rsplit('/',1)[-1]==member)]
             require(len(candidates)==1,'map member identity ambiguous/missing')
-            defined,_=symbols((folder/candidates[0]['symbols']).read_text(),target)
-            require(symbol in defined,'map symbol not defined by exact retained member')
+            require_member_definition(folder,candidates[0],target,symbol)
         maptext=maptext.replace('\\','/')
         require(link['image_name'] in command and '.map' in command,'actual final link command absent')
         require(link['hash_prefix'] in command or link['hash_prefix'] in maptext,'final link does not identify exact installed hash prefix')
@@ -666,10 +753,11 @@ def validate(folder, manifest, require_mutations=True):
             'relocated-archive','relocated-header','relocated-config'}
         if desktop:expected_mutations.add('fabricated-control-runtime')
         if target=='android':expected_mutations.update(('host-target-substitution','android-api-binding'))
-        if target=='macos':expected_mutations.update(('build-index-content','build-object-content'))
+        if target in ('macos','ios-simulator'):expected_mutations.update(('build-index-content','build-object-content'))
         require(set(mutations)==expected_mutations,
             'actual evidence mutation controls incomplete')
         require(all(row['rejected'] is True and row['expected_reason'] in row['actual_reason'] for row in mutations.values()),
             'mutation bypassed intended guard')
     return dict(boundary_link_passed=True,desktop_runtime_passed=desktop,mobile_runtime_passed=False,
-        f07_accepted=False,full_six_accepted=False,target=target,files=len(files),archive_comparisons=archive_comparisons)
+        f07_accepted=False,full_six_accepted=False,target=target,files=len(files),archive_comparisons=archive_comparisons,
+        coff_same_object_fallbacks=coff_fallbacks)

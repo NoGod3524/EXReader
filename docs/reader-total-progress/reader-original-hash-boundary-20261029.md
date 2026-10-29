@@ -202,3 +202,58 @@ API/parse/replay errors are retained as failures with any already established
 partial results; the job remains failed unless all planned diagnostic/replay
 parts finish. This run cannot relabel old artifacts as fresh-source native proof
 and performs no native build or test executable invocation.
+
+## Original replay established; bounded three-cause validation repair
+
+No-build diagnostic [40817738583/1](https://github.com/NoGod3524/EXReader/actions/runs/40817738583)
+at `d5849d5e0403bae53d4c12680fcd17041bd71ce3` authenticated and independently
+replayed the original Linux/macOS desktop-boundary and iOS-device link-only
+proofs with their unchanged historical verifier and actual-evidence controls.
+Its report upload12873605336 is4762 bytes, SHA256
+`9b27626f2c78c812da265d119f74418ae9cf8e41268b2beec133f29f840ecd55`.
+This is partial original-source acceptance, not current-source/full-six acceptance.
+
+Three actual retained facts now replace the generic failures:
+- Windows importer has exactly three observed `WeakExternal` vector-deleting
+  destructors for `std::exception`, `std::bad_alloc` and
+  `std::bad_array_new_length`, with printed `No library search` fallback indices
+  pointing to same-object scalar-deleting strong functions. Text alone is not
+  enough: the new predicate requires ordinary x64 COFF symbol/auxiliary bytes,
+  exact observed name pairs, zero/UNDEF function weak shape, characteristic1,
+  reserved-zero auxiliary bytes, a nonauxiliary target index, one exact strong
+  function definition in retained executable code-section bytes, and exact
+  DUMPBIN index/name/section/auxiliary agreement. Unknown pairs, public/hash weak
+  entries, missing/weak/data/out-of-object fallback, library search, aliases,
+  cycles, malformed bounds and missing text rows remain rejected. Weak names
+  remain classified as imports and cannot grant public function exports. The
+  result proves fallback availability only; an already-linked override/final
+  CRT provider is NOT established. Microsoft's
+  [PE/COFF auxiliary-format specification](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format)
+  supplies the structural basis. No runtime/library flags are changed.
+- Every Android final command contains exactly
+  `-Xlinker --dependency-file=CMakeFiles/probe.dir/link.d`. Only that literal
+  relative output pathname in that exact operand form is newly classified, at
+  most once. No parent/absolute path, alternative tokenization, duplicate,
+  appended library option, target/sysroot escape or other linker escape is
+  admitted. Driver/target/API/sysroot/runtime and exact input/map/image bindings
+  remain mandatory. [CMake documents linker-generated dependency outputs](https://cmake.org/cmake/help/v4.0/variable/CMAKE_LINK_DEPENDS_USE_LINKER.html);
+  no toolchain setting is disabled or changed to suppress the evidence.
+- Simulator importer31712-byte build/install archives differ at offset33 only:
+  first decoded `__.SYMDEF SORTED` timestamp1793247040→1793247041. The928-byte
+  index body and ordered object payloads are identical; its hash archive is exact.
+  The proposed explicit criterion extension is only to measured iOS-simulator,
+  with the identical strict first-index parser and all outside-field bytes exact.
+  iOS-device/Android/Linux/Windows remain full-byte-equality targets. Original
+  archive hashes are retained; no rearchive or source/budget change occurs.
+
+The next diagnostic reuses the same pinned originals and historical green replay.
+It must prove actual COFF binary/auxiliary/text binding, classify the exact six
+Android output operands, and validate the precise simulator equivalence. Original
+predicate failures and new bounded predicate results are separate fields. Pure
+COFF adversarial controls reject malformed/auxiliary/self/weak/data/private/hash
+fallbacks and library-search modes; original object memory mutations separately
+exercise library-search/self-fallback rejection. Actual Android command mutations
+inject foreign output/library spellings and must fail. Actual simulator index
+content mutation must fail outside the timestamp allowance. All originals remain
+unchanged, overall acceptance stays false, and the diagnostic performs no native
+build or executable invocation. A later full native run requires separate approval.

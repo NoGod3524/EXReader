@@ -20,6 +20,19 @@ def bsd_fixture(members=None,extra_name_padding=0):
         positions.append(dict(header=offset,name=offset+60,payload=offset+60+len(extended),end=offset+60+len(body)))
     return raw,positions
 
+def coff_fixture(weak='??_Eexception@std@@UEAAPEAXI@Z',fallback='??_Gexception@std@@UEAAPEAXI@Z',duplicate=False):
+    """Ordinary x64 COFF with one code byte and explicit weak auxiliary record."""
+    def u(value,width):return value.to_bytes(width,'little')
+    strings=fallback.encode()+b'\0'+weak.encode()+b'\0'
+    strong=b'\0'*4+u(4,4)+u(0,4)+u(1,2)+u(0x20,2)+bytes((2,0))
+    weak_record=b'\0'*4+u(5+len(fallback),4)+u(0,4)+u(0,2)+u(0x20,2)+bytes((105,1))
+    records=strong+weak_record+u(0,4)+u(1,4)+b'\0'*10+(strong if duplicate else b'')
+    header=bytearray(20);header[:2]=u(0x8664,2);header[2:4]=u(1,2);header[8:12]=u(61,4);header[12:16]=u(len(records)//18,4)
+    section=bytearray(40);section[:8]=b'.text\0\0\0';section[16:20]=u(1,4);section[20:24]=u(60,4);section[36:40]=u(0x60000020,4)
+    raw=bytes(header+section)+b'\xc3'+records+u(len(strings)+4,4)+strings
+    text='000 00000000 SECT1 notype () External | '+fallback+'\n001 00000000 UNDEF notype () WeakExternal | '+weak+'\n    Default index 000 No library search\n'
+    return raw,text
+
 class ContractTests(unittest.TestCase):
     def test_zip_alias(self):
         for names in (('a','A'),('e\u0301','é'),('a','a/b'),('../x','ordinary'),('root//','root/')):
@@ -52,6 +65,44 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(C.symbols(row,'windows'),(set(),{'??2@YAPEAX_K@Z'}))
         for bad in (row+' trailing',row[:-1],row.replace('??2@YAPEAX_K@Z','opds_sha256_stream_create')):
             with self.assertRaises(ValueError):C.symbols(bad,'windows')
+    def test_coff_binary_bound_fallback(self):
+        raw,text=coff_fixture();row=C.coff_weak_fallbacks(raw)['??_Eexception@std@@UEAAPEAXI@Z']
+        self.assertEqual(row['fallback_index'],0);self.assertEqual(row['characteristics'],1);self.assertFalse(row['final_provider_claim'])
+        definitions,undefined=C.symbols(text,'windows',raw)
+        self.assertEqual(definitions,{'??_Gexception@std@@UEAAPEAXI@Z'})
+        self.assertEqual(undefined,{'??_Eexception@std@@UEAAPEAXI@Z'})
+        self.assertFalse((definitions|undefined)&(C.PUBLIC|C.PRIVATE|C.FORBIDDEN))
+        for weak,fallback in C.COFF_FALLBACK_PAIRS.items():
+            data,output=coff_fixture(weak,fallback);C.symbols(output,'windows',data)
+        for bad in (text.replace('No library search','Library search'),text.replace('Default index 000','Default index 001'),
+                text.split('\n',1)[1],text.replace('SECT1','SECT2'),text.split('\n')[0]+'\n',text.replace('Default index 000 No library search','')):
+            with self.assertRaises(ValueError):C.symbols(bad,'windows',raw)
+        with self.assertRaisesRegex(ValueError,'binary fallback evidence'):C.symbols(text,'windows')
+    def test_coff_fallback_binary_adversaries(self):
+        raw,_=coff_fixture()
+        for offset,value in ((101,(2).to_bytes(4,'little')),(101,(3).to_bytes(4,'little')),
+                (97,(1).to_bytes(4,'little')),(97,(2).to_bytes(4,'little')),(97,(99).to_bytes(4,'little')),
+                (105,b'\x01'),(79+14,b'\0\0'),(61+12,b'\0\0'),(61+14,b'\0\0'),
+                (61+16,b'\x69'),(20+36,b'\0'*4),(20+20,(10000).to_bytes(4,'little')),
+                (79+17,b'\x02')):
+            data=raw[:offset]+value+raw[offset+len(value):]
+            with self.assertRaises(ValueError):C.coff_weak_fallbacks(data)
+        for data in (raw[:-1],raw[:100],raw[:8]+(999999).to_bytes(4,'little')+raw[12:],raw+b'unknown'):
+            with self.assertRaises(ValueError):C.coff_weak_fallbacks(data)
+        for weak,fallback in ((sorted(C.PUBLIC)[0],'??_Gexception@std@@UEAAPEAXI@Z'),
+                ('??_Eexception@std@@UEAAPEAXI@Z','foreign_private_helper'),('foreign_weak','foreign_strong')):
+            with self.assertRaisesRegex(ValueError,'unsupported weak|exact same-object'):C.coff_weak_fallbacks(coff_fixture(weak,fallback)[0])
+        with self.assertRaisesRegex(ValueError,'duplicate weak'):C.coff_weak_fallbacks(coff_fixture(duplicate=True)[0])
+    def test_provider_recheck_binds_coff_object_bytes(self):
+        raw,text=coff_fixture();member=dict(object='member.obj',symbols='member.txt')
+        with tempfile.TemporaryDirectory() as temporary:
+            folder=Path(temporary);(folder/'member.obj').write_bytes(raw);(folder/'member.txt').write_text(text)
+            C.require_member_definition(folder,member,'windows','??_Gexception@std@@UEAAPEAXI@Z')
+            with self.assertRaisesRegex(ValueError,'map symbol not defined'):
+                C.require_member_definition(folder,member,'windows','??_Eexception@std@@UEAAPEAXI@Z')
+            (folder/'member.obj').write_bytes(raw[:101]+(2).to_bytes(4,'little')+raw[105:])
+            with self.assertRaisesRegex(ValueError,'no-library-search'):
+                C.require_member_definition(folder,member,'windows','??_Gexception@std@@UEAAPEAXI@Z')
     def test_native_weak_not_api(self):
         with self.assertRaises(ValueError):C.symbols('00000000 W opds_sha256_stream_create','linux')
         with self.assertRaises(ValueError):C.symbols('unsupported native record','linux')
@@ -90,6 +141,15 @@ class ContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'driver'):C.android_binding(cache,'/usr/bin/c++ -o probe',True)
         command=': && /home/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=x86_64-none-linux-android26 --sysroot=/home/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/sysroot -static-libstdc++ -o probe && :'
         C.android_binding(cache,command,True)
+        dependency=' -Xlinker --dependency-file=CMakeFiles/probe.dir/link.d'
+        self.assertEqual(C.android_binding(cache,command.replace(' && :',dependency+' && :'),True)['dependency_output'],'CMakeFiles/probe.dir/link.d')
+        for invalid in (dependency+dependency,' --dependency-file=CMakeFiles/probe.dir/link.d',
+                ' -Wl,--dependency-file=CMakeFiles/probe.dir/link.d',
+                ' -Xlinker --dependency-file=../foreign.lib',' -Xlinker --dependency-file=/tmp/link.d',
+                ' -Xlinker --dependency-file=CMakeFiles/probe.dir/link.d,-lprivate',
+                dependency+' -Xlinker -lprivate',dependency+' -Xlinker --sysroot=/host',
+                ' -Xlinker --dependency-file -Xlinker CMakeFiles/probe.dir/link.d'):
+            with self.assertRaises(ValueError):C.android_binding(cache,command.replace(' && :',invalid+' && :'),True)
         for suffix in (' --target=x86_64-linux-gnu',' -target x86_64-linux-gnu',' --sysroot=/host',' -isysroot /host'):
             with self.assertRaises(ValueError):C.android_binding(cache,command.replace(' && :',suffix+' && :'),True)
         with self.assertRaisesRegex(ValueError,'driver'):
@@ -109,8 +169,9 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(result['normalization']['index_name'],'__.SYMDEF SORTED')
         self.assertEqual(result['normalization']['differing_offsets'],[24])
         self.assertEqual(result['normalization']['comparison_sha256'],C.archive_equivalence(after,before,'macos')['normalization']['comparison_sha256'])
-        for target in ('linux','windows','android','ios-device','ios-simulator'):
-            with self.assertRaisesRegex(ValueError,'measured macOS'):C.archive_equivalence(before,after,target)
+        self.assertEqual(C.archive_equivalence(before,after,'ios-simulator')['mode'],'ios-simulator-first-bsd-index-timestamp')
+        for target in ('linux','windows','android','ios-device'):
+            with self.assertRaisesRegex(ValueError,'measured Apple'):C.archive_equivalence(before,after,target)
     def test_bsd_non_timestamp_bytes_rejected(self):
         before,positions=bsd_fixture();after=bytearray(before);after[24]=ord('7')
         # Valid changes outside the first timestamp must not be erased.
@@ -220,7 +281,7 @@ def evidence_mutations(folder,manifest):
         path='prefix/relocated/hash/'+relative
         reject(name,{path:(folder/path).read_bytes()+b'\nMUTATION\n'},'relocated package bytes differ')
     target=json.loads((folder/'report.json').read_text())['target']
-    if target=='macos':
+    if target in ('macos','ios-simulator'):
         path=dependency['importer']['build_archive'];raw=(folder/path).read_bytes();index=C.bsd_index_record(raw)
         changed=bytearray(raw);changed[index['payload_offset']]^=1
         reject('build-index-content',{path:bytes(changed)},'archive non-timestamp bytes differ')

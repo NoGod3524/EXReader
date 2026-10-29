@@ -211,8 +211,26 @@ def inspect_retained():
                         row=command_record(member['symbols'])
                         C.require(row['subjects']=={member['object']:C.record(folder/member['object'])} and len(row['argv'])==3 and
                             row['argv'][:2]==['dumpbin','/symbols'] and row['argv'][2].replace('\\','/').endswith('/evidence/'+member['object']),'original dumpbin invocation differs')
-                        lines=(folder/member['symbols']).read_text().splitlines();weak=[i for i,l in enumerate(lines) if 'WeakExternal' in l]
+                        symbol_text=(folder/member['symbols']).read_text()
+                        C.symbols(symbol_text,'windows',payload)
+                        binary_fallbacks=C.coff_weak_fallbacks(payload)
+                        lines=symbol_text.splitlines();weak=[i for i,l in enumerate(lines) if 'WeakExternal' in l]
                         if weak:
+                            try:old.symbols(symbol_text,'windows');original_failure=None
+                            except ValueError as error:original_failure=str(error)
+                            C.require(original_failure=='weak COFF external is unsupported','original weak refusal differs')
+                            negative_controls=[]
+                            table=int.from_bytes(payload[8:12],'little')
+                            for weak_name,bound in binary_fallbacks.items():
+                                auxiliary=table+(bound['index']+1)*18
+                                for label,offset,value,reason in (
+                                    ('library-search',auxiliary+4,(2).to_bytes(4,'little'),'no-library-search'),
+                                    ('self-fallback',auxiliary,bound['index'].to_bytes(4,'little'),'same-object strong function')):
+                                    altered=payload[:offset]+value+payload[offset+4:]
+                                    try:C.coff_weak_fallbacks(altered)
+                                    except ValueError as error:C.require(reason in str(error),'COFF mutation hit unrelated guard')
+                                    else:raise ValueError('actual COFF mutation accepted')
+                                    negative_controls.append(weak_name+':'+label)
                             C.require(len(lines)<=100000 and len(weak)<=4096,'weak diagnostic resource bound')
                             groups=[]
                             for i in weak:
@@ -222,7 +240,8 @@ def inspect_retained():
                                     any(int(label[1],16)==int(index,16) for index in indices)]
                                 groups.append(dict(line=i+1,context=context,advertised_default_indices=indices,fallback_rows=fallbacks))
                             details.append(dict(owner=owner,member=name,archive=entry['archive'],object=C.record(folder/member['object']),
-                                symbols=C.record(folder/member['symbols']),weak_groups=groups))
+                                symbols=C.record(folder/member['symbols']),weak_groups=groups,original_failure=original_failure,
+                                current_binary_bound_fallbacks=binary_fallbacks,actual_negative_controls=negative_controls,final_provider_claim=False))
                 C.require(details,'original weak COFF failure not reproduced in retained diagnostics')
                 result['failed_producer_details'][target]=dict(weak_externals=details,admitted=False)
             elif target=='android':
@@ -231,10 +250,21 @@ def inspect_retained():
                 for name,link in links.items():
                     command_record(link['commands']);command,inputs,responses=C.link_closure(folder,link)
                     cache_path='trees/'+name+'-build/CMakeCache.txt';cache=(folder/cache_path).read_text()
-                    try:C.android_binding(cache,command,name in ('installed','relocated'));failure=None
+                    try:old.android_binding(cache,command,name in ('installed','relocated'));failure=None
                     except ValueError as error:failure=str(error)
+                    current=C.android_binding(cache,command,name in ('installed','relocated'))
+                    C.require(current['dependency_output']=='CMakeFiles/probe.dir/link.d','retained Android dependency output differs')
+                    negative_controls=[]
+                    for label,operand in (('escape','../foreign.lib'),('library-injection','CMakeFiles/probe.dir/link.d,-lprivate')):
+                        altered=command.replace('--dependency-file=CMakeFiles/probe.dir/link.d','--dependency-file='+operand)
+                        C.require(altered!=command,'actual Android mutation operand absent')
+                        try:C.android_binding(cache,altered,name in ('installed','relocated'))
+                        except ValueError as error:C.require('unclassified Android linker escape' in str(error),'Android mutation hit unrelated guard')
+                        else:raise ValueError('actual Android dependency-output mutation accepted')
+                        negative_controls.append(label)
                     details[name]=dict(final_command=command,inputs=inputs,responses=responses,cache=C.record(folder/cache_path),
-                        image=C.record(folder/link['image']),map=C.record(folder/link['map']),binding_failure=failure)
+                        image=C.record(folder/link['image']),map=C.record(folder/link['map']),binding_failure=failure,current_predicate=current,
+                        actual_negative_controls=negative_controls)
                 C.require(any(d['binding_failure']=='unclassified Android linker escape' for d in details.values()),'original Android escape failure not reproduced')
                 result['failed_producer_details'][target]=dict(links=details,admitted=False)
             else:
@@ -251,10 +281,18 @@ def inspect_retained():
                         build_index=C.bsd_index_record(before),installed_index=C.bsd_index_record(after),
                         exact_archive_equal=before==after,ordered_object_payloads_equal=C.archive_members(before)==C.archive_members(after),
                         differing_byte_count=count,first_64_differing_offsets=preview,preview_truncated=count>64,
-                        differing_bytes_outside_first_timestamp=outside)
+                        differing_bytes_outside_first_timestamp=outside,current_predicate=C.archive_equivalence(before,after,'ios-simulator'))
+                    changed=bytearray(before);changed[C.bsd_index_record(before)['payload_offset']]^=1
+                    try:C.archive_equivalence(bytes(changed),after,'ios-simulator')
+                    except ValueError as error:C.require('non-timestamp bytes differ' in str(error),'simulator index mutation hit unrelated guard')
+                    else:raise ValueError('actual simulator index-content mutation accepted')
+                    details[owner]['actual_index_content_negative_passed']=True
                 C.require(any(not d['exact_archive_equal'] for d in details.values()),'original simulator archive failure not reproduced')
+                C.require(details['hash']['current_predicate']['mode']=='exact' and
+                    details['importer']['current_predicate']['mode']=='ios-simulator-first-bsd-index-timestamp' and
+                    details['importer']['current_predicate']['normalization']['differing_offsets']==[33],'measured simulator predicate differs')
                 result['failed_producer_details'][target]=dict(archives=details,admitted=False,
-                    criterion='iOS-simulator still requires full archive byte equality; no macOS rule applied')
+                    criterion='original 1198 requires exact bytes; new bounded simulator predicate is separate, not native acceptance')
         C.require(set(result['failed_producer_details'])=={'windows','android','ios-simulator'} and
             set(result['independently_replayed_original_green'])=={'linux','macos','ios-device'},'partial diagnostic coverage incomplete')
         result['diagnostic_complete']=True
