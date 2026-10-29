@@ -496,6 +496,28 @@
       "original_artifact": 12912122792,
       "original_archive_sha256": "8352574f57110bfa9bbe031e88140f19bf1cbfdacb2deda85cdc999333255849",
       "test": "testSystemFolderSave()"
+    },
+    "apple_organization_iphone_members": {
+      "run": 40911140164,
+      "source_prefix": "b259db57103cd7661ed3f1c3fc6bd0c49c08981c",
+      "doc": "docs/reader-total-progress/apple-ios-members-audit.md",
+      "adapter": "apple_ios_members_40911140164",
+      "platform": "iphone",
+      "job": 123579118171,
+      "artifact": 12913864927,
+      "bytes": 8283119,
+      "sha256": "a95b2ffc317240d25b01c299fa42b0b7e148963e2f124554b57b8e6a5d9576ca"
+    },
+    "apple_organization_ipad_members": {
+      "run": 40911140164,
+      "source_prefix": "b259db57103cd7661ed3f1c3fc6bd0c49c08981c",
+      "doc": "docs/reader-total-progress/apple-ios-members-audit.md",
+      "adapter": "apple_ios_members_40911140164",
+      "platform": "ipad",
+      "job": 123579118889,
+      "artifact": 12914004364,
+      "bytes": 12066275,
+      "sha256": "a830bf9bda37268f679f8beb21f51ef272e5ec1d79c146036ecc7bd30d211451"
     }
   },
   "requirements": [
@@ -1277,11 +1299,11 @@
       "group": "host",
       "platform": "iphone",
       "title": "iPhone：宿主子书架/分类、标签、系列与显式整理",
-      "state": "partial",
+      "state": "verified",
       "evidence": [
-        "apple_organization_iphone_original"
+        "apple_organization_iphone_members"
       ],
-      "note": "原六项 SDK 3.41 模拟器 UI 和重启证据已独立核验，但标签及系列仅测试创建与重开，未证明其书籍成员整理；SDK 3.42 iPhone 标签用例失败，完整目标未关闭。"
+      "note": "SDK 3.41 原六项模拟器 UI 通过，并补齐真实 EPUB 的标签/系列成员增删、恢复及重启；独立检查原始测试日志、步骤和截图。SDK 3.42、真机及最终同源交付另验。"
     },
     {
       "id": "H.iphone.reading",
@@ -1428,11 +1450,11 @@
       "group": "host",
       "platform": "ipad",
       "title": "iPad：宿主子书架/分类、标签、系列与显式整理",
-      "state": "partial",
+      "state": "verified",
       "evidence": [
-        "apple_organization_ipad_original"
+        "apple_organization_ipad_members"
       ],
-      "note": "原六项 SDK 3.41 模拟器 UI 和重启证据已独立核验，但标签及系列仅测试创建与重开，未证明其书籍成员整理；SDK 3.42 iPhone 标签用例失败，完整目标未关闭。"
+      "note": "SDK 3.41 原六项模拟器 UI 通过，并补齐真实 EPUB 的标签/系列成员增删、恢复及重启；独立检查原始测试日志、步骤和截图。SDK 3.42、真机及最终同源交付另验。"
     },
     {
       "id": "H.ipad.reading",
