@@ -115,6 +115,10 @@ jobs:
         run: |
           python tests/reader_perf_windows/perf_windows.py --package build/desktop-windows-package/EXReader --seed build/desktop-sdk/reader-windows-shelf-seed.exe --output build/perf-windows --cohorts cold_shelf,warm_shelf,reading,import,import_epub --launches-per-cohort 12 --txt-diagnostic build/perf-txt-diagnosis/diagnosis.json 2>&1 | tee build/perf-gate/measurement.log
 
+      - name: Time native shelf scroll and font change on the actual product host
+        if: always()
+        run: |
+          python tests/reader_product_performance_handoff/sample_windows_interactions.py --package build/desktop-windows-package/EXReader --seed build/desktop-sdk/reader-windows-shelf-seed.exe --output build/perf-windows-interactions --cohorts warm_shelf,reading --launches-per-cohort 10 2>&1 | tee build/perf-gate/interactions.log
       - name: Require complete same-source performance evidence
         if: always()
         run: |
@@ -127,6 +131,7 @@ jobs:
           name: reader-product-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/perf-windows/
+            build/perf-windows-interactions/
             build/perf-txt-diagnosis/
             build/perf-gate/
             build/desktop-windows-package/build.json
@@ -302,7 +307,7 @@ jobs:
         run: |
           python3 -m py_compile tests/reader_product_performance_handoff/gate.py
           ls -R build/in | head -80
-          python3 tests/reader_product_performance_handoff/gate.py             --windows-summary build/in/reader-product-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}/perf-windows/summary.json             --windows-build build/in/reader-product-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}/desktop-windows-package/build.json             --gtk-summary build/in/reader-product-perf-gtk-${{ github.run_id }}-${{ github.run_attempt }}/summary.json             --output build/handoff
+          python3 tests/reader_product_performance_handoff/gate.py             --windows-summary build/in/reader-product-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}/perf-windows/summary.json             --windows-build build/in/reader-product-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}/desktop-windows-package/build.json             --windows-interactions build/in/reader-product-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}/perf-windows-interactions/interactions.json \n            --gtk-summary build/in/reader-product-perf-gtk-${{ github.run_id }}-${{ github.run_attempt }}/summary.json             --output build/handoff
       - uses: actions/upload-artifact@v4
         if: always()
         with:
