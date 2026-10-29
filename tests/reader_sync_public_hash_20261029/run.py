@@ -328,11 +328,14 @@ def android_host(h):
     home=ROOT/'examples/android/app/src/main/cpp'
     candidates=[]
     for cache in (ROOT/'examples/android/app/.cxx').rglob('CMakeCache.txt'):
-        text=cache.read_text();homes=re.findall(r'^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$',text,re.M)
-        if len(homes)==1 and Path(homes[0]).resolve()==home and 'ANDROID_ABI:STRING=x86_64' in text:
-            candidates.append(cache.parent)
+        text=cache.read_text()
+        selection=C.android_cache_identity(text,home.as_posix(),cache.parent.as_posix())
+        toolchain=(Path(h.ENV['ANDROID_HOME'])/'ndk'/h.ENV['C11_NDK']/'build/cmake/android.toolchain.cmake').as_posix()
+        C.require(selection['CMAKE_TOOLCHAIN_FILE']['value']==toolchain,'selected Android cache uses foreign configured NDK')
+        C.require(cache.parent.resolve()==cache.parent and home.resolve()==home,'actual Android cache/source path alias')
+        candidates.append((cache.parent,selection))
     C.require(len(candidates)==1,'unique actual Android product build required')
-    folder=candidates[0];alias='links/android-host-alias.log'
+    folder,selection=candidates[0];alias='links/android-host-alias.log'
     query=h.run(['ninja','-C',folder,'-t','query','exreader_product'],output=alias)
     inputs,_=P.ninja_explicit_inputs(query,'exreader_product','phony')
     C.require(len(inputs)==1,'unique actual Android product output')
@@ -346,7 +349,8 @@ def android_host(h):
     h.run([h.ENV['NM'],'-A',image],output=symbols,subjects={image_path:C.record(image)})
     return dict(original_build=folder.as_posix(),original_image=image.as_posix(),image_node=inputs[0],
         image=image_path,image_record=C.record(image),map=retain(mapfile),map_path=mapfile.as_posix(),
-        cache=retain(folder/'CMakeCache.txt'),alias=alias,commands=commands,symbols=symbols,actual_link_command=line,
+        cache=retain(folder/'CMakeCache.txt'),cache_selection=selection,
+        alias=alias,commands=commands,symbols=symbols,actual_link_command=line,
         final_image_runtime_claim=False)
 
 def snapshot_probes(h):
@@ -359,8 +363,13 @@ def snapshot_probes(h):
 
 def capture(target):
     C.guard()
-    try:P.capture(target)
+    try:C.isolated_capture(ROOT,C.identity(),lambda:P.capture(target,archive_comparator=C.union_archive_equivalence))
     finally:
+        isolation=ROOT/C.ISOLATION_REL
+        if isolation.is_file():
+            # The unchanged diagnostics upload already includes P.OUT/*.json.
+            # Preserve failure details even if preflight prevented outer capture.
+            shutil.copyfile(isolation,P.OUT/'union-capture-isolation.json')
         destination=P.OUT/'evidence';index=destination/'inventory.json'
         if index.exists():
             inventory=json.loads(index.read_text())
@@ -381,13 +390,16 @@ def capture(target):
     C.require((PROOF/'manifest.json').is_file(),'new common boundary proof did not complete')
 
 def main():
-    C.actions();p=argparse.ArgumentParser();p.add_argument('phase',choices=('guard','build','native','capture','authenticate'))
+    C.actions();p=argparse.ArgumentParser();p.add_argument('phase',choices=('guard','build','native','capture','authenticate','retained'))
     p.add_argument('--target',choices=C.TARGETS);a=p.parse_args()
     OUT.mkdir(parents=True,exist_ok=True);P.OUT.mkdir(parents=True,exist_ok=True)
     if a.phase=='guard':C.guard()
-    elif a.phase=='authenticate':
-        import authenticate;authenticate.main()
+    elif a.phase in ('authenticate','retained'):
+        import authenticate
+        if a.phase=='retained':authenticate.retained()
+        else:authenticate.main()
     else:
+        C.require(C.current_lane()=='native','retained lane cannot execute producer phases')
         C.require(a.target,'target required');globals()[a.phase](a.target)
 
 if __name__=='__main__':main()

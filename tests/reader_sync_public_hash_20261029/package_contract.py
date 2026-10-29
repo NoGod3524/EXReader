@@ -3,10 +3,12 @@ import hashlib
 import importlib.util
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
+import stat
 import subprocess
 import sys
+import unicodedata
 
 ROOT=Path(__file__).resolve().parents[2]
 HERE=Path(__file__).resolve().parent
@@ -58,12 +60,138 @@ def load(relative,name,alias=None):
 P=load('tests/reader_public_boundary_v1_20261028/run.py','union_frozen_public')
 H=load('tests/reader_original_hash_boundary_20261029/package_contract.py','union_frozen_hash_contract')
 
+BSD_CRITERION='sync-ios-bsd-two-profile-v1'
+PUBLIC_OVERRIDE='tests/reader_public_boundary_v1_20261028/run.py'
+PUBLIC_ORIGINAL_SHA='7752eeca7f45aaa22adbb5881fa93459448a66550181a6ca9e6376bfece92325'
+RETAINED_MARKER='[sync-retained-replay]'
+REPAIR_BASE='f25ce471ce057c3181eb81853e6912350a1b5fed'
+REPAIR_TREE='303060019705b60728bb45467c1c6f93c13a6c0f'
+REPAIR_PATHS=(PUBLIC_OVERRIDE,WORKFLOW,*('tests/reader_sync_public_hash_20261029/'+name for name in
+    ('run.py','package_contract.py','test_contract.py','authenticate.py','source_lock.json')))
+
+def repair_scope(delta):
+    require(delta=={p:'M' for p in REPAIR_PATHS},'exact seven-path repair delta versus published f25 required')
+
+def workflow_lane(message):
+    require(isinstance(message,str),'push message must be text')
+    return 'retained' if RETAINED_MARKER in message else 'native'
+
+def current_lane():
+    require(os.environ.get('GITHUB_EVENT_NAME')=='push','only reviewed push lanes allowed')
+    event=json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+    require(event['head_commit']['id']==identity()['source_sha'],'push event source differs')
+    return workflow_lane(event['head_commit']['message'])
+
+def frozen_source_projection(lock,current,historical):
+    override=lock.get('public_validation_override',{})
+    require(set(override)=={PUBLIC_OVERRIDE},'exact one public validation override required')
+    row=override[PUBLIC_OVERRIDE]
+    require(set(row)=={'historical_sha256','current_sha256','role'} and
+        row['role']=='optional capture/replay comparator hooks; legacy defaults unchanged' and
+        row['historical_sha256']==lock['public_packet'][PUBLIC_OVERRIDE]==PUBLIC_ORIGINAL_SHA and
+        historical==PUBLIC_ORIGINAL_SHA and re.fullmatch('[0-9a-f]{64}',row['current_sha256']) is not None,
+        'historical public validation override differs')
+    expected={**lock['adopted'],**lock['public_packet']};expected[PUBLIC_OVERRIDE]=row['current_sha256']
+    require(set(current)==set(expected),'frozen source projection incomplete')
+    for path,sha in expected.items():require(current[path]==sha,'reviewed predecessor bytes changed: '+path)
+    return override
+
+def bsd_profiles(raw):
+    """Two finite whole-archive geometries; never a per-member padding union."""
+    require(raw.startswith(b'!<arch>\n'),'unsupported BSD archive magic')
+    offset=8;names=set();frames=[];profiles={'M','A'}
+    def number(field,base,label):
+        pattern=rb'[0-7]+ *' if base==8 else rb'[0-9]+ *'
+        require(re.fullmatch(pattern,field) is not None,'noncanonical BSD '+label)
+        value=int(field,base);spelling=(format(value,'o') if base==8 else str(value)).encode()
+        require(field==spelling.ljust(len(field),b' '),'noncanonical BSD '+label)
+        return value
+    while offset<len(raw):
+        header=raw[offset:offset+60]
+        require(len(header)==60 and header[58:]==b'`\n','malformed BSD member header')
+        match=re.fullmatch(rb'#1/([1-9][0-9]*) *',header[:16])
+        require(match is not None,'unsupported BSD extended member name')
+        length=int(match[1])
+        require(header[:16]==('#1/'+str(length)).encode().ljust(16,b' '),'noncanonical BSD name length')
+        timestamp=number(header[16:28],10,'timestamp')
+        uid=number(header[28:34],10,'uid');gid=number(header[34:40],10,'gid');mode=number(header[40:48],8,'mode')
+        size=number(header[48:58],10,'size');start=offset+60;end=start+size
+        require(0<length<size and end<=len(raw),'BSD member name/payload bounds')
+        extended=raw[start:start+length];name=extended.split(b'\0',1)[0]
+        require(name and all(32<=c<127 for c in name),'invalid BSD member name')
+        require(extended==name+b'\0'*(length-len(name)),'non-NUL BSD name padding')
+        minimal=len(name)+(-(start+len(name)))%8
+        apple=((len(name)+7)//8)*8+4
+        compatible=set()
+        if length==minimal:compatible.add('M')
+        if length==apple and offset%8==0 and (start+length)%8==0 and end%8==0 and (size-length)%8==0:
+            compatible.add('A')
+        decoded=name.decode('ascii');require(decoded not in names,'duplicate BSD member name');names.add(decoded)
+        require(raw[end:end+size%2]==b'\n'*(size%2),'noncanonical BSD member padding')
+        payload=raw[start+length:end]
+        if not frames:
+            require(offset==8 and decoded in ('__.SYMDEF','__.SYMDEF SORTED'),'unsupported first BSD index name')
+            if decoded!='__.SYMDEF SORTED' or length!=20:compatible.discard('A')
+        else:
+            require(not decoded.startswith('__.SYMDEF'),'second or unknown BSD index member')
+            require(payload and not payload.startswith((b'BC\xc0\xde',b'\xde\xc0\x17\x0b')),'bitcode/empty BSD object unsupported')
+        require(compatible,'unsupported BSD name geometry')
+        profiles&=compatible
+        frames.append(dict(name=decoded,header_offset=offset,timestamp=timestamp,uid=uid,gid=gid,mode=mode,
+            extended_name_bytes=length,name_bytes=len(name),nul_padding_bytes=length-len(name),
+            payload_offset=start+length,payload_bytes=len(payload),payload_sha256=hashlib.sha256(payload).hexdigest(),
+            member_end=end,outer_padding_bytes=size%2,compatible_profiles=sorted(compatible)))
+        offset=end+size%2
+    require(offset==len(raw) and len(frames)>1,'BSD index/archive extent')
+    require(profiles,'mixed BSD whole-archive profiles')
+    return dict(profiles=sorted(profiles),frames=frames)
+
+def union_archive_equivalence(before,after,target):
+    """Opt-in simulator criterion; original default parser/comparator stay intact."""
+    if before==after or target not in ('iphone','ipad'):
+        result=P.installed_archive_equivalence(before,after,target)
+        result['union_criterion']=dict(version=BSD_CRITERION,profile_applied=False,profiles=[],
+            original_default_used=True,producer_binary_attributed=False)
+        return result
+    require(len(before)==len(after),'archive total size differs')
+    b=bsd_profiles(before);a=bsd_profiles(after)
+    require(b['profiles']==a['profiles'],'archive whole profiles differ')
+    def comparable(parsed):
+        rows=[dict(r) for r in parsed['frames']];rows[0].pop('timestamp');return rows
+    require(comparable(b)==comparable(a),'ordered BSD frame records differ')
+    require(before[:24]==after[:24] and before[36:]==after[36:],'archive non-timestamp bytes differ')
+    if 'M' in b['profiles']:
+        result=P.installed_archive_equivalence(before,after,target)
+    else:
+        require(b['profiles']==['A'],'unknown BSD whole-archive profile')
+        bi=b['frames'][0];ai=a['frames'][0]
+        result=dict(exact_archive_equal=False,mode='iphonesimulator-first-bsd-index-timestamp-apple-name-profile',
+            build_sha256=hashlib.sha256(before).hexdigest(),installed_sha256=hashlib.sha256(after).hexdigest(),
+            comparison=dict(index_name=bi['name'],timestamp_offset=24,timestamp_bytes=12,
+                build_timestamp=bi['timestamp'],installed_timestamp=ai['timestamp'],
+                differing_offsets=[i for i in range(24,36) if before[i]!=after[i]],
+                comparison_sha256=hashlib.sha256(before[:24]+b'0           '+before[36:]).hexdigest(),
+                index_payload_sha256=bi['payload_sha256'],
+                ordered_objects=[dict(name=f['name'],bytes=f['payload_bytes'],sha256=f['payload_sha256']) for f in b['frames'][1:]],
+                all_non_timestamp_bytes_equal=True))
+    result['union_criterion']=dict(version=BSD_CRITERION,profile_applied=True,profiles=b['profiles'],
+        original_default_used='M' in b['profiles'],producer_binary_attributed=False,
+        build_frames=b['frames'],installed_frames=a['frames'])
+    return result
+
 def budget(text):
     limits=list(map(int,re.findall(r'^    timeout-minutes: (\d+)$',text,re.M)))
     require(limits==[15,150,100,210,110,30],'original configured job limits changed')
     require('target: [macos, iphone]' in text,'Apple matrix cardinality changed')
     require(sum(limits)+110==725,'configured runner budget exceeds725')
     require('workflow_dispatch' not in text,'no second trigger route')
+    skip="    if: ${{ !contains(github.event.head_commit.message, '[sync-retained-replay]') }}"
+    require(text.count(skip)==4,'all four native job definitions must skip retained lane')
+    require("    if: ${{ always() && needs.protocol.result == 'success' }}" in text,
+        'authentication lane must require successful protocol')
+    require("run.py retained" in text and "run.py authenticate" in text and
+        "REPLAY_LANE: ${{ contains(github.event.head_commit.message, '[sync-retained-replay]') && 'retained' || 'native' }}" in text,
+        'explicit retained/native authentication routing required')
     return 725
 
 def guard():
@@ -73,21 +201,201 @@ def guard():
     require(git('rev-parse','HEAD')==identity()['source_sha'],'checkout differs from producer SHA')
     require(lock['base_sha']==BASE and git('rev-parse',BASE+'^{tree}')==lock['base_tree'],'base tree differs')
     subprocess.run(['git','merge-base','--is-ancestor',BASE,'HEAD'],cwd=ROOT,check=True)
+    require(git('rev-parse',REPAIR_BASE+'^{tree}')==REPAIR_TREE,'published repair base tree differs')
+    subprocess.run(['git','merge-base','--is-ancestor',REPAIR_BASE,'HEAD'],cwd=ROOT,check=True)
+    repair_scope({p:s for s,p in (line.split('\t') for line in git('diff','--name-status',REPAIR_BASE,'HEAD').splitlines())})
     delta={p:s for s,p in (line.split('\t') for line in git('diff','--name-status',BASE,'HEAD').splitlines())}
-    require(delta==lock['expected_delta'] and len(delta)==28,'exact adopted16+Sync3+new9 delta required')
+    require(delta==lock['expected_delta'] and len(delta)==29 and delta.get(PUBLIC_OVERRIDE)=='M',
+        'exact adopted16+Sync3+new9+one validation override delta required')
     require(not git('status','--porcelain','--untracked-files=no'),'tracked checkout dirty')
     require(len(lock['adopted'])==16 and len(lock['public_packet'])==25 and not(set(lock['adopted'])&set(lock['public_packet'])),'frozen source inventory')
-    for path,sha in {**lock['adopted'],**lock['public_packet']}.items():
-        require(digest(ROOT/path)==sha,'reviewed predecessor bytes changed: '+path)
+    historical=hashlib.sha256(subprocess.check_output(['git','show',BASE+':'+PUBLIC_OVERRIDE],cwd=ROOT)).hexdigest()
+    override=frozen_source_projection(lock,{p:digest(ROOT/p) for p in set(lock['adopted'])|set(lock['public_packet'])},historical)
     all_paths=sorted(set(lock['adopted'])|set(lock['public_packet'])|set(lock['owner'])|set(lock['added']))
     require(len(all_paths)==53,'complete common-source path inventory')
     result=dict(identity(),base_sha=BASE,source_scope_passed=True,
         authorized_paths_sha256={p:digest(ROOT/p) for p in all_paths},
         adopted_hash_source=lock['adopted_sha'],public_boundary_source=BASE,
+        public_validation_override=override,legacy_public_default_criterion_unchanged=True,
+        repair_base_sha=REPAIR_BASE,repair_paths=list(REPAIR_PATHS),
+        lane=current_lane(),archive_criterion=BSD_CRITERION,
         original_source_guards_excluded=list(EXCLUSIONS)+P.EXCLUSIONS,
         configured_runner_minutes=budget((ROOT/WORKFLOW).read_text()),f07_accepted=False,physical_device=False)
     save(OUT/'source.json',result);save(P.OUT/'source.json',result)
     return result
+
+def android_cache_identity(text,home,build):
+    """Only the two observed CMake CLI types; never substring/last-row selection."""
+    require(all(ord(c)>=32 or c in '\t\r\n' for c in text) and '\x7f' not in text,
+            'unsupported actual Android cache control character')
+    wanted={
+        'ANDROID_ABI':({'STRING','UNINITIALIZED'},'x86_64'),
+        'ANDROID_PLATFORM':({'STRING','UNINITIALIZED'},'android-26'),
+        'ANDROID_STL':({'STRING','UNINITIALIZED'},'c++_static'),
+        'CMAKE_HOME_DIRECTORY':({'INTERNAL'},home),
+        'CMAKE_CACHEFILE_DIR':({'INTERNAL'},build),
+        'CMAKE_TOOLCHAIN_FILE':({'FILEPATH'},None),
+        'EXR_HOST_SDK_VERSION':({'STRING'},'3.42.0'),
+        'EXR_READER_SELECTOR_BYTES_CANDIDATE':({'BOOL'},'ON')}
+    rows={key:[] for key in wanted}
+    for line in text.splitlines():
+        for key in wanted:
+            if not(line.startswith(key+':') or line.startswith(key+'=')):continue
+            match=re.fullmatch(re.escape(key)+r':([A-Z_]+)=(.*)',line)
+            require(match is not None,'malformed actual Android cache key: '+key)
+            rows[key].append({'type':match[1],'value':match[2]})
+    for key,(types,value) in wanted.items():
+        require(len(rows[key])==1,'duplicate/missing actual Android cache key: '+key)
+        row=rows[key][0]
+        require(row['type'] in types and (value is None or row['value']==value),
+                'actual Android cache identity differs: '+key)
+    toolchain=rows['CMAKE_TOOLCHAIN_FILE'][0]['value']
+    require(toolchain.startswith('/') and '\\' not in toolchain and ':' not in toolchain and
+            PurePosixPath(toolchain).as_posix()==toolchain and '..' not in PurePosixPath(toolchain).parts and
+            toolchain.endswith('/ndk/27.0.12077973/build/cmake/android.toolchain.cmake'),
+            'actual Android cache toolchain origin differs')
+    return {key:values[0] for key,values in rows.items()}
+
+PROOF_REL='build/sync-public-hash/proof'
+PARK_REL='build/public-boundary-v1/union-proof-park'
+ISOLATION_REL='build/sync-public-hash/capture-isolation.json'
+PUBLIC_REL='build/public-boundary-v1'
+
+def checked_relative(name):
+    p=PurePosixPath(name)
+    require(bool(name) and p.parts and not p.is_absolute() and p.as_posix()==name and
+            '..' not in p.parts and '\\' not in name and ':' not in name and
+            all(ord(c)>=32 and ord(c)!=127 for c in name),'unsafe isolation relative path')
+    return p
+
+def proof_inventory(folder):
+    """Physical producer measurement. Replayers must not credit transported modes."""
+    folder=Path(folder)
+    require(folder.is_dir() and not folder.is_symlink() and folder.is_absolute() and
+            folder.resolve()==folder,'proof root/ancestor missing/alias')
+    files={};directories={'.':folder.stat().st_mode&0o777};aliases={}
+    for path in sorted(folder.rglob('*')):
+        name=path.relative_to(folder).as_posix();checked_relative(name)
+        key=unicodedata.normalize('NFC',name).casefold()
+        require(key not in aliases,'proof case/Unicode alias');aliases[key]=name
+        mode=path.lstat().st_mode
+        require(not stat.S_ISLNK(mode) and (stat.S_ISREG(mode) or stat.S_ISDIR(mode)),
+                'proof link/special entry')
+        if stat.S_ISDIR(mode):directories[name]=mode&0o777
+        else:files[name]=dict(record(path),mode=mode&0o777)
+    require(files,'empty proof inventory')
+    return dict(files=files,directories=directories)
+
+def live_cache_inventory(root,exclude_proof):
+    root=Path(root);files={};aliases=set()
+    for start in (root/'build',root/'examples/android/app/.cxx'):
+        if not start.exists():continue
+        for path in sorted(start.rglob('CMakeCache.txt')):
+            if root/PUBLIC_REL in path.parents:continue
+            if exclude_proof and root/PROOF_REL in path.parents:continue
+            name=path.relative_to(root).as_posix();checked_relative(name)
+            key=unicodedata.normalize('NFC',name).casefold()
+            require(key not in aliases,'live cache alias');aliases.add(key)
+            require(path.is_file() and not path.is_symlink() and
+                    path.resolve().is_relative_to(root.resolve()),'live cache escaped/aliased')
+            require(all(not parent.is_symlink() for parent in path.parents if parent.is_relative_to(root)),
+                    'live cache ancestor alias')
+            files[name]=record(path)
+    require(files,'no real live build cache retained')
+    return files
+
+def isolated_capture(root,ident,callback):
+    """Move only our proof copy under the unchanged collector's existing exclusion."""
+    root=Path(root);proof=root/PROOF_REL;park=root/PARK_REL
+    # Reject aliases before creating any failure record beneath a potentially
+    # redirected proof parent, and before moving any directory at all.
+    require(root.is_absolute() and root.resolve()==root and proof.parent.resolve()==proof.parent and
+            park.parent.resolve()==park.parent,'capture root/proof/parking ancestor alias')
+    result=dict(ident,proof_path=PROOF_REL,parking_path=PARK_REL,capture_succeeded=False,
+        restored=False,isolation_passed=False,errors=[],
+        mode_directory_origin='producer-observed before/after, not transport filesystem metadata')
+    moved=False;phase='preflight';original_error=None
+    try:
+        require(not park.exists() and not park.is_symlink(),'proof parking destination occupied')
+        require(park.parent.is_dir() and not park.parent.is_symlink(),'public exclusion root missing/alias')
+        result['before']=proof_inventory(proof)
+        result['live_before']=live_cache_inventory(root,True)
+        proof.rename(park);moved=True
+        result['live_parked']=live_cache_inventory(root,False)
+        require(result['live_parked']==result['live_before'],'parking hid/changed a live build cache')
+        phase='capture';callback();result['capture_succeeded']=True
+    except Exception as error:
+        original_error=error;result['errors'].append(dict(phase=phase,type=type(error).__name__,message=str(error)))
+    finally:
+        if moved:
+            try:
+                require(not proof.exists() and not proof.is_symlink(),'proof restoration destination occupied')
+                park.rename(proof);result['restored']=True
+                result['after']=proof_inventory(proof)
+                result['live_after']=live_cache_inventory(root,True)
+                require(result['after']==result['before'],'restored proof files/directories/modes differ')
+                require(result['live_after']==result['live_before'],'capture changed/omitted a live build cache')
+                require(not park.exists() and not park.is_symlink(),'proof parking remained')
+            except Exception as error:
+                result['errors'].append(dict(phase='restoration',type=type(error).__name__,message=str(error)))
+                if original_error is None:original_error=error
+        result['isolation_passed']=bool(result['capture_succeeded'] and result['restored'] and not result['errors'])
+        save(root/ISOLATION_REL,result)
+    if result['errors']:
+        raise ValueError('capture isolation failed: '+'; '.join(e['phase']+': '+e['message'] for e in result['errors'])) from original_error
+    return result
+
+def validate_capture_isolation(extracted,inventory,ident):
+    """Rehash content; bind file-mode projection to authenticated outer metadata."""
+    extracted=Path(extracted);row=json.loads((extracted/ISOLATION_REL).read_text())
+    require(all(row.get(k)==v for k,v in ident.items()) and row['proof_path']==PROOF_REL and
+            row['parking_path']==PARK_REL,'capture isolation identity/path differs')
+    require(row['capture_succeeded'] is True and row['restored'] is True and
+            row['isolation_passed'] is True and row['errors']==[],'capture isolation failed/incomplete')
+    require(row['before']==row['after'],'producer restored proof projection differs')
+    require(row['live_before']==row['live_parked']==row['live_after'] and row['live_before'],
+            'producer live-cache projection differs')
+    require(row['mode_directory_origin']=='producer-observed before/after, not transport filesystem metadata',
+            'isolation metadata origin differs')
+    declared=row['after'];physical=proof_inventory(extracted/PROOF_REL)
+    require(set(declared)=={'files','directories'} and '.' in declared['directories'],'proof projection shape differs')
+    aliases={}
+    for kind,values in (('dir',declared['directories']),('file',declared['files'])):
+        for name,value in values.items():
+            if name=='.':require(kind=='dir','root file alias');continue
+            path=checked_relative(name);key=unicodedata.normalize('NFC',name).casefold()
+            require(key not in aliases,'declared proof alias/type collision');aliases[key]=name
+            mode=value if kind=='dir' else value['mode']
+            if kind=='file':require(set(value)=={'bytes','sha256','mode'},'producer file projection shape differs')
+            require(type(mode) is int and 0<=mode<=0o777,'invalid producer mode projection')
+            for parent in path.parents:
+                require(parent.as_posix() in declared['directories'],'incomplete producer directory ancestry')
+    require(type(declared['directories']['.']) is int and 0<=declared['directories']['.']<=0o777,
+            'invalid producer root mode')
+    strip=lambda records:{p:{k:v[k] for k in ('bytes','sha256')} for p,v in records.items()}
+    require(strip(physical['files'])==strip(declared['files']),'restored proof content differs')
+    require(set(physical['directories'])<=set(declared['directories']),'transported directory not declared')
+    expected={PROOF_REL+'/'+p for p in declared['files']}
+    require({p for p in inventory['files'] if p.startswith(PROOF_REL+'/')}==expected,
+            'outer proof inventory differs')
+    for name,meta in declared['files'].items():
+        actual=inventory['files'][PROOF_REL+'/'+name]
+        require(all(actual[k]==meta[k] for k in ('bytes','sha256','mode')) and actual['symlink_target'] is None,
+                'original outer file/mode projection differs')
+    retained_live={name for name in inventory['files'] if
+        (name.startswith('build/') or name.startswith('examples/android/app/.cxx/')) and
+        name.endswith('/CMakeCache.txt') and not name.startswith((PROOF_REL+'/',PUBLIC_REL+'/'))}
+    require(set(row['live_before'])==retained_live,'complete retained live-cache inventory differs')
+    for name,meta in row['live_before'].items():
+        checked_relative(name)
+        require((name.startswith('build/') or name.startswith('examples/android/app/.cxx/')) and
+                name.endswith('/CMakeCache.txt') and not name.startswith((PROOF_REL+'/',PUBLIC_REL+'/')),
+                'invalid live build cache projection')
+        require(name in inventory['files'] and all(inventory['files'][name][k]==meta[k] for k in ('bytes','sha256')) and
+                record(extracted/name)==meta,'retained live build cache differs')
+    return dict(restored_files_rehashed=len(declared['files']),live_caches_rehashed=len(row['live_before']),
+        producer_directory_modes_equal=True,original_file_modes_outer_bound=True,
+        transported_physical_modes_credited=False,transported_empty_directories_credited=False)
 
 def path_key(value,cwd):return H.canonical_dependency(value,cwd)
 
@@ -404,7 +712,12 @@ def validate(folder,expected_source=None):
         mapfile,line=P.android_link_binding((folder/host['commands']).read_text(),Path(image),Path(build))
         require(mapfile.as_posix()==host['map_path'] and host['map']=='original/'+host['map_path'].removeprefix(report['original_workspace']+'/') and
             line==host['actual_link_command'],'actual host link/map binding differs')
-        H.android_binding((folder/host['cache']).read_text(),line,True)
+        require(host['cache']=='original/'+build.removeprefix(report['original_workspace']+'/')+'/CMakeCache.txt',
+                'actual Android selected cache path differs')
+        cache=(folder/host['cache']).read_text()
+        selected=android_cache_identity(cache,report['original_workspace']+'/examples/android/app/src/main/cpp',build)
+        require(host['cache_selection']==selected,'actual Android selected typed cache differs')
+        H.android_binding(cache,line,True)
         import shlex
         inputs=[path_key(p,build) for p in shlex.split(line) if p.endswith(('.a','.o'))]
         symbols=cmd(host['symbols']);require(symbols['argv'][1:]==['-A',image] and

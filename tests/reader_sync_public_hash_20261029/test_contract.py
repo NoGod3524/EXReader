@@ -1,8 +1,10 @@
 """Actions-only synthetic controls and coherent original-evidence mutations."""
 import copy
+import ast
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import re
 import tempfile
@@ -12,10 +14,271 @@ import package_contract as C
 
 def encoded(value):return (json.dumps(value,indent=2,sort_keys=True)+'\n').encode()
 
+def cache_fixture(kind='UNINITIALIZED'):
+    return '\n'.join((
+        'ANDROID_ABI:'+kind+'=x86_64','ANDROID_PLATFORM:'+kind+'=android-26',
+        'ANDROID_STL:'+kind+'=c++_static','CMAKE_HOME_DIRECTORY:INTERNAL=/repo/examples/android/app/src/main/cpp',
+        'CMAKE_CACHEFILE_DIR:INTERNAL=/repo/examples/android/app/.cxx/Debug/id/x86_64',
+        'CMAKE_TOOLCHAIN_FILE:FILEPATH=/sdk/ndk/27.0.12077973/build/cmake/android.toolchain.cmake',
+        'EXR_HOST_SDK_VERSION:STRING=3.42.0','EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=ON'))+'\n'
+
+def isolation_fixture(root):
+    root=Path(root);proof=root/C.PROOF_REL
+    (proof/'original/build/real').mkdir(parents=True)
+    (proof/'original/build/real/CMakeCache.txt').write_text('copied evidence, not live Ninja root\n')
+    (proof/'identity.json').write_text('{}\n')
+    (proof/'empty').mkdir();(root/C.PUBLIC_REL).mkdir(parents=True)
+    for name in ('build/real/CMakeCache.txt','build/sync-public-hash/hash-build/CMakeCache.txt'):
+        path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('real build\n')
+    return proof
+
+def synthetic_outer(root):
+    return {'files':{p.relative_to(root).as_posix():dict(C.record(p),mode=p.stat().st_mode&0o777,symlink_target=None)
+        for p in root.rglob('*') if p.is_file()}}
+
+def profile_fixture(kinds=('A',),names=None,padding_delta=0,object_payload=b'OBJECT12'):
+    """Synthetic finite geometry controls, not original archive evidence."""
+    raw=b'!<arch>\n';positions=[]
+    names=names or ['reading_state.cpp.o' if i==0 else 'another_object.cpp.o' for i in range(len(kinds))]
+    members=[('__.SYMDEF SORTED','A',b'INDEX123')]+[(n,k,object_payload) for n,k in zip(names,kinds)]
+    for i,(name,kind,payload) in enumerate(members):
+        name=name.encode();offset=len(raw);start=offset+60
+        size=len(name)+(-(start+len(name)))%8 if kind=='M' else ((len(name)+7)//8)*8+4
+        if i==1:size+=padding_delta
+        extended=name+b'\0'*(size-len(name));body=extended+payload
+        header=('#1/'+str(len(extended))).encode().ljust(16)+b'1'.ljust(12)+b'0'.ljust(6)*2+b'100644'.ljust(8)+str(len(body)).encode().ljust(10)+b'`\n'
+        raw+=header+body+b'\n'*(len(body)%2)
+        positions.append(dict(header=offset,name=start,name_bytes=len(name),payload=start+len(extended),end=start+len(body)))
+    return raw,positions
+
+def archive_pair_mutations(before,after):
+    """Reject actual/synthetic non-timestamp edits even with new digest claims."""
+    parsed=C.bsd_profiles(after);result={}
+    positions={'index-payload':parsed['frames'][0]['payload_offset'],
+        'object-payload':parsed['frames'][1]['payload_offset'],'object-name':parsed['frames'][1]['header_offset']+60,
+        'name-padding':parsed['frames'][1]['header_offset']+60+parsed['frames'][1]['name_bytes'],
+        'object-timestamp':parsed['frames'][1]['header_offset']+16,'uid':8+28,'gid':8+34,'mode':8+40}
+    values={}
+    for name,position in positions.items():
+        altered=bytearray(after);altered[position]^=1;values[name]=bytes(altered)
+    values.update(truncated=after[:-1],suffix=after+b'?',malformed_timestamp=after[:24]+b'-1          '+after[36:])
+    first,second=parsed['frames'][:2]
+    values['member-order']=after[:8]+after[second['header_offset']:]+after[8:second['header_offset']]
+    for name,changed in values.items():
+        claims=dict(build_sha256=hashlib.sha256(before).hexdigest(),installed_sha256=hashlib.sha256(changed).hexdigest())
+        try:C.union_archive_equivalence(before,changed,'iphone')
+        except (ValueError,AssertionError) as error:result[name]=dict(rejected=True,coherent_hash_claims=claims,error=str(error))
+        else:raise ValueError('archive corruption admitted: '+name)
+    return result
+
 class ContractTests(unittest.TestCase):
+    def test_whole_archive_profiles_and_old_default(self):
+        for kind,profiles in (('M',['M']),('A',['A'])):
+            before,_=profile_fixture((kind,));after=before[:24]+b'7'+before[25:]
+            self.assertEqual(C.bsd_profiles(before)['profiles'],profiles)
+            row=C.union_archive_equivalence(before,after,'iphone')
+            self.assertEqual(row['union_criterion']['profiles'],profiles)
+            self.assertEqual(row['comparison']['differing_offsets'],[24])
+            self.assertEqual(C.union_archive_equivalence(before,before,'android')['mode'],'exact')
+            if kind=='A':
+                with self.assertRaisesRegex(AssertionError,'name alignment/padding'):
+                    C.P.installed_archive_equivalence(before,after,'iphone')
+                for target in ('macos','linux','windows','android','iphoneos'):
+                    with self.assertRaises(AssertionError):C.union_archive_equivalence(before,after,target)
+        dual,_=profile_fixture(('A',),names=['eight123'])
+        self.assertEqual(C.bsd_profiles(dual)['profiles'],['A','M'])
+    def test_mixed_whole_profiles_not_per_member_union(self):
+        # Both names have length19: M and A differ by exactly8, even with all headers aligned.
+        for kinds in (('M','A'),('A','M')):
+            raw,_=profile_fixture(kinds,names=['reading_state.cpp.o','reading_other.cpp.o'])
+            with self.assertRaisesRegex(ValueError,'mixed BSD whole-archive'):C.bsd_profiles(raw)
+    def test_apple_padding_never_arbitrary(self):
+        # Minus8 is the documented M profile, not A; larger arbitrary padding is refused.
+        raw,_=profile_fixture(padding_delta=-8)
+        self.assertEqual(C.bsd_profiles(raw)['profiles'],['M'])
+        for delta in (1,8,16):
+            raw,_=profile_fixture(padding_delta=delta)
+            with self.assertRaisesRegex(ValueError,'geometry'):C.bsd_profiles(raw)
+        raw,positions=profile_fixture();row=positions[1]
+        for offset in (row['name']+row['name_bytes'],row['header'],row['header']+48):
+            bad=bytearray(raw);bad[offset]=ord('?')
+            with self.assertRaises(ValueError):C.bsd_profiles(bytes(bad))
+        for bad in (raw[:-1],raw+b'?',b'!<thin>\n'+raw[8:]):
+            with self.assertRaises(ValueError):C.bsd_profiles(bad)
+        bad,_=profile_fixture(object_payload=b'SEVEN12')
+        with self.assertRaisesRegex(ValueError,'geometry'):C.bsd_profiles(bad)
+        for stamp in (b'-1          ',b'01          ',b'1\t          '):
+            with self.assertRaisesRegex(ValueError,'timestamp'):C.bsd_profiles(raw[:24]+stamp+raw[36:])
+        bad=bytearray(raw);bad[68]=ord('X')
+        with self.assertRaisesRegex(ValueError,'first BSD index'):C.bsd_profiles(bytes(bad))
+    def test_archive_index_member_payload_refusals(self):
+        for names in (['__.SYMDEF_64'],['__.SYMDEF'],['same.o','same.o']):
+            raw,_=profile_fixture(tuple('A' for _ in names),names=names)
+            with self.assertRaises(ValueError):C.bsd_profiles(raw)
+        raw,positions=profile_fixture();changed=bytearray(raw);start=positions[1]['payload']
+        changed[start:start+4]=b'BC\xc0\xde'
+        with self.assertRaisesRegex(ValueError,'bitcode'):C.bsd_profiles(bytes(changed))
+        after=raw[:24]+b'7'+raw[25:]
+        self.assertEqual(len(archive_pair_mutations(raw,after)),12)
+    def test_explicit_capture_and_independent_replay_hooks(self):
+        with self.assertRaisesRegex(AssertionError,'comparator must be callable'):
+            C.P.capture('iphone',archive_comparator=False)
+        source=ast.parse((C.ROOT/C.PUBLIC_OVERRIDE).read_text())
+        capture=next(n for n in source.body if isinstance(n,ast.FunctionDef) and n.name=='capture')
+        self.assertEqual(sum(isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=='compare_archives' for n in ast.walk(capture)),1)
+        legacy=C.load('tests/reader_public_boundary_v1_20261028/test_contract.py','union_legacy_fixture')
+        files,measured,_=legacy.BoundaryContract().archive_replay_fixture('iphone')
+        before,_=profile_fixture();after=before[:24]+b'7'+before[25:]
+        for pair in measured['built_installed_archive_comparison']:
+            owner=pair['owner'];files[pair['built']]=before;files[pair['installed']]=after
+            row=C.union_archive_equivalence(before,after,'iphone')
+            pair.update(built_bytes=len(before),installed_bytes=len(after),built_sha256=row['build_sha256'],installed_sha256=row['installed_sha256'],equivalence=row)
+            measured['actual_compiler_dependencies'][owner].update(built_archive_sha256=row['build_sha256'],installed_archive_sha256=row['installed_sha256'],archive_equivalence=row)
+            measured['installed_archives'][owner]['sha256']=row['installed_sha256']
+        replay=C.P.replay_archive_comparisons(files.__getitem__,measured,'iphone',archive_comparator=C.union_archive_equivalence)
+        self.assertEqual(len(replay),4)
+        with self.assertRaisesRegex(AssertionError,'name alignment/padding'):
+            C.P.replay_archive_comparisons(files.__getitem__,measured,'iphone')
+        for field,value in (('version','foreign-version'),('profiles',['M'])):
+            bad=copy.deepcopy(measured);pair=bad['built_installed_archive_comparison'][0]
+            pair['equivalence']['union_criterion'][field]=value
+            bad['actual_compiler_dependencies'][pair['owner']]['archive_equivalence']=copy.deepcopy(pair['equivalence'])
+            with self.assertRaisesRegex(AssertionError,'equivalence claim differs'):
+                C.P.replay_archive_comparisons(files.__getitem__,bad,'iphone',archive_comparator=C.union_archive_equivalence)
+    def test_source_override_exact_and_no_owner_waiver(self):
+        lock=json.loads((C.HERE/'source_lock.json').read_text());current={**lock['adopted'],**lock['public_packet']}
+        current[C.PUBLIC_OVERRIDE]=lock['public_validation_override'][C.PUBLIC_OVERRIDE]['current_sha256']
+        C.frozen_source_projection(lock,current,C.PUBLIC_ORIGINAL_SHA)
+        for kind in ('second','missing','history','owner','projection'):
+            bad=copy.deepcopy(lock);values=dict(current);history=C.PUBLIC_ORIGINAL_SHA
+            if kind=='second':bad['public_validation_override']['other.py']=dict(bad['public_validation_override'][C.PUBLIC_OVERRIDE])
+            elif kind=='missing':bad['public_validation_override']={}
+            elif kind=='history':history='0'*64
+            elif kind=='owner':values[next(iter(lock['adopted']))]='0'*64
+            else:values.pop(C.PUBLIC_OVERRIDE)
+            with self.assertRaises(ValueError):C.frozen_source_projection(bad,values,history)
+    def test_exact_seven_repair_paths_exclude_sync_owners_and_helpers(self):
+        good={p:'M' for p in C.REPAIR_PATHS};C.repair_scope(good)
+        for extra in ('apps/reader/sync/src/sync.cpp','tests/reader_sync_public_hash_20261029/sync_probe.cpp',
+            'docs/reader-total-progress/reader-sync-public-hash-20261029.md'):
+            with self.assertRaisesRegex(ValueError,'exact seven-path'):C.repair_scope(dict(good,**{extra:'M'}))
+        bad=dict(good);bad.pop(C.PUBLIC_OVERRIDE)
+        with self.assertRaisesRegex(ValueError,'exact seven-path'):C.repair_scope(bad)
+    def test_workflow_lanes_and_native_budget(self):
+        self.assertEqual(C.workflow_lane('approved [sync-retained-replay] original proof'),'retained')
+        self.assertEqual(C.workflow_lane('full same-tree validation'),'native')
+        self.assertEqual(C.workflow_lane('[sync-retained-replay-other]'),'native')
+        text=(C.ROOT/C.WORKFLOW).read_text();self.assertEqual(C.budget(text),725)
+        with self.assertRaisesRegex(ValueError,'native job definitions'):C.budget(text.replace("!contains(github.event.head_commit.message",'contains(github.event.head_commit.message',1))
+    def test_android_typed_cache_exact_positive(self):
+        for kind in ('STRING','UNINITIALIZED'):
+            row=C.android_cache_identity(cache_fixture(kind),'/repo/examples/android/app/src/main/cpp',
+                '/repo/examples/android/app/.cxx/Debug/id/x86_64')
+            self.assertEqual(row['ANDROID_ABI'],{'type':kind,'value':'x86_64'})
+    def test_android_typed_cache_duplicate_missing_conflict(self):
+        base=cache_fixture()
+        cases=[base+base.splitlines()[0]+'\n',base+'ANDROID_ABI:STRING=arm64-v8a\n',
+            base.replace('ANDROID_ABI:UNINITIALIZED=x86_64\n',''),base.replace('ANDROID_ABI:UNINITIALIZED','ANDROID_ABI:BOOL'),
+            base.replace('ANDROID_ABI:UNINITIALIZED=x86_64','ANDROID_ABI=x86_64')]
+        for text in cases:
+            with self.assertRaisesRegex(ValueError,'Android cache'):
+                C.android_cache_identity(text,'/repo/examples/android/app/src/main/cpp','/repo/examples/android/app/.cxx/Debug/id/x86_64')
+    def test_android_typed_cache_home_platform_stl_source(self):
+        for old,new in (('=x86_64','=arm64-v8a'),('=android-26','=android-25'),('=c++_static','=c++_shared'),
+            ('cpp\n','cpp/../cpp\n'),('Debug/id/x86_64','Debug/foreign/x86_64'),('=3.42.0','=3.41.0'),
+            (':BOOL=ON',':BOOL=OFF'),('/ndk/27.0.12077973/','/ndk/26.0.0/'),('/sdk/ndk/','/sdk/../sdk/ndk/')):
+            with self.assertRaisesRegex(ValueError,'Android cache'):
+                C.android_cache_identity(cache_fixture().replace(old,new),'/repo/examples/android/app/src/main/cpp',
+                    '/repo/examples/android/app/.cxx/Debug/id/x86_64')
+    def test_isolation_preserves_real_roots_and_restores(self):
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name);proof=isolation_fixture(root);before=C.proof_inventory(proof)
+            def callback():
+                self.assertFalse(proof.exists());self.assertTrue((root/C.PARK_REL).is_dir())
+                self.assertEqual(set(C.live_cache_inventory(root,False)),
+                    {'build/real/CMakeCache.txt','build/sync-public-hash/hash-build/CMakeCache.txt'})
+            result=C.isolated_capture(root,{'source_sha':'a'},callback)
+            self.assertTrue(result['isolation_passed']);self.assertFalse((root/C.PARK_REL).exists())
+            self.assertEqual(C.proof_inventory(proof),before)
+    def test_isolation_restores_callback_failure_and_keeps_both_errors(self):
+        for damage in (False,True):
+            with tempfile.TemporaryDirectory() as name:
+                root=Path(name);proof=isolation_fixture(root)
+                def callback():
+                    if damage:(root/C.PARK_REL/'new-file').write_text('damage')
+                    raise RuntimeError('original capture failure')
+                with self.assertRaisesRegex(ValueError,'original capture failure'):C.isolated_capture(root,{},callback)
+                result=json.loads((root/C.ISOLATION_REL).read_text())
+                self.assertTrue(proof.exists());self.assertTrue(result['restored']);self.assertFalse(result['isolation_passed'])
+                self.assertEqual([e['phase'] for e in result['errors']],['capture','restoration'] if damage else ['capture'])
+    def test_isolation_proof_mutations_and_mode_refused(self):
+        for change in ('content','add','delete','mode'):
+            with tempfile.TemporaryDirectory() as name:
+                root=Path(name);isolation_fixture(root)
+                def callback():
+                    path=root/C.PARK_REL/'original/build/real/CMakeCache.txt'
+                    if change=='content':path.write_text('changed')
+                    elif change=='add':(path.parent/'extra').write_text('extra')
+                    elif change=='delete':path.unlink()
+                    else:path.chmod((path.stat().st_mode&0o777)^0o100)
+                with self.assertRaisesRegex(ValueError,'restored proof'):C.isolated_capture(root,{},callback)
+    def test_isolation_occupied_destinations_not_overwritten(self):
+        for destination in ('parking','restoration'):
+            with tempfile.TemporaryDirectory() as name:
+                root=Path(name);proof=isolation_fixture(root)
+                if destination=='parking':(root/C.PARK_REL).mkdir()
+                def callback():
+                    if destination=='restoration':proof.mkdir();(proof/'foreign').write_text('keep')
+                with self.assertRaisesRegex(ValueError,'destination occupied'):C.isolated_capture(root,{},callback)
+                if destination=='restoration':
+                    self.assertEqual((proof/'foreign').read_text(),'keep');self.assertTrue((root/C.PARK_REL).exists())
+    def test_isolation_live_root_changes_refused(self):
+        for remove in (False,True):
+            with tempfile.TemporaryDirectory() as name:
+                root=Path(name);isolation_fixture(root)
+                def callback():
+                    path=root/'build/real/CMakeCache.txt'
+                    if remove:path.unlink()
+                    else:path.write_text('changed live cache')
+                with self.assertRaisesRegex(ValueError,'live build cache'):C.isolated_capture(root,{},callback)
+    def test_isolation_alias_special_and_case_refused(self):
+        for kind in ('symlink','case','fifo'):
+            with tempfile.TemporaryDirectory() as name:
+                root=Path(name);proof=isolation_fixture(root)
+                if kind=='symlink':(proof/'alias').symlink_to(proof/'original')
+                elif kind=='case':(proof/'Case').write_text('x');(proof/'case').write_text('y')
+                else:os.mkfifo(proof/'fifo')
+                with self.assertRaisesRegex(ValueError,'alias|special'):C.proof_inventory(proof)
+    def test_isolation_ancestor_alias_refused_before_move(self):
+        for selected in ('proof','parking'):
+            with tempfile.TemporaryDirectory() as name:
+                root=Path(name);proof=isolation_fixture(root)
+                parent=proof.parent if selected=='proof' else (root/C.PARK_REL).parent
+                moved=root/(selected+'-redirected');parent.rename(moved);parent.symlink_to(moved,target_is_directory=True)
+                called=[]
+                with self.assertRaisesRegex(ValueError,'ancestor alias'):
+                    C.isolated_capture(root,{},lambda:called.append(True))
+                self.assertEqual(called,[]);self.assertFalse((root/C.ISOLATION_REL).exists())
+                self.assertTrue((moved/'proof').exists() if selected=='proof' else proof.exists())
+    def test_isolation_transport_modes_empty_dirs_and_outer_binding(self):
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name);proof=isolation_fixture(root);ident={'source_sha':'a','run_id':'1','attempt':'1'}
+            C.isolated_capture(root,ident,lambda:None);outer=synthetic_outer(root)
+            path=proof/'original/build/real/CMakeCache.txt';path.chmod((path.stat().st_mode&0o777)^0o100)
+            (proof/'empty').rmdir()
+            result=C.validate_capture_isolation(root,outer,ident)
+            self.assertFalse(result['transported_physical_modes_credited']);self.assertFalse(result['transported_empty_directories_credited'])
+            bad=copy.deepcopy(outer);bad['files'][C.PROOF_REL+'/original/build/real/CMakeCache.txt']['mode']^=0o100
+            with self.assertRaisesRegex(ValueError,'outer file/mode'):C.validate_capture_isolation(root,bad,ident)
+    def test_isolation_coherent_replay_mutations(self):
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name);isolation_fixture(root);ident={'source_sha':'a','run_id':'1','attempt':'1'}
+            C.isolated_capture(root,ident,lambda:None);outer=synthetic_outer(root)
+            result=isolation_mutations(root,outer,ident)
+            self.assertEqual(set(result),{'proof-content','proof-omitted','mode-projection','live-cache-omitted','live-projection-omitted'})
     def test_exact_scope(self):
         lock=json.loads((C.HERE/'source_lock.json').read_text())
-        self.assertEqual(len(lock['expected_delta']),28)
+        self.assertEqual(len(lock['expected_delta']),29)
         self.assertEqual(len(lock['adopted']),16);self.assertEqual(len(lock['public_packet']),25)
         self.assertEqual(set(lock['owner']),{'apps/reader/sync/'+p for p in ('src/sync.cpp','CMakeLists.txt','EXReaderSyncConfig.cmake.in')})
         self.assertFalse(set(lock['adopted'])&set(lock['public_packet']))
@@ -69,6 +332,45 @@ class ContractTests(unittest.TestCase):
                 for name in names:z.writestr(name,b'x')
             with zipfile.ZipFile(io.BytesIO(stream.getvalue())) as z:
                 with self.assertRaises(ValueError):C.H.safe_members(z)
+
+def isolation_mutations(extracted,inventory,ident):
+    """Coherent outer hashes do not excuse wrong inner restoration/live-root proof."""
+    root=Path(extracted);result={};before=(root/C.ISOLATION_REL).read_bytes()
+    report=json.loads(before);path=next(iter(report['after']['files']))
+    relative=C.PROOF_REL+'/'+path;original=(root/relative).read_bytes()
+    parked=root/'isolation-mutation-park'
+    C.require(not parked.exists() and not parked.is_symlink(),'mutation parking occupied')
+    C.validate_capture_isolation(root,inventory,ident)
+    for name,reason in (('proof-content','restored proof content'),('proof-omitted','restored proof content'),
+                        ('mode-projection','outer file/mode'),('live-cache-omitted','complete retained live-cache inventory'),
+                        ('live-projection-omitted','complete retained live-cache inventory')):
+        outer=copy.deepcopy(inventory);altered=copy.deepcopy(report)
+        try:
+            if name=='proof-content':
+                (root/relative).write_bytes(original+b'\nchanged\n');outer['files'][relative].update(C.record(root/relative))
+            elif name=='proof-omitted':
+                (root/relative).rename(parked);outer['files'].pop(relative)
+            elif name=='mode-projection':
+                for phase in ('before','after'):altered[phase]['files'][path]['mode']^=0o100
+            elif name=='live-cache-omitted':outer['files'].pop(next(iter(report['live_before'])))
+            else:
+                live=next(iter(report['live_before']))
+                for phase in ('live_before','live_parked','live_after'):altered[phase].pop(live)
+            (root/C.ISOLATION_REL).write_bytes(encoded(altered))
+            outer['files'][C.ISOLATION_REL].update(C.record(root/C.ISOLATION_REL))
+            try:C.validate_capture_isolation(root,outer,ident)
+            except ValueError as error:
+                C.require(reason in str(error),'isolation mutation hit unrelated guard: '+str(error))
+                result[name]=dict(rejected=True,expected_reason=reason,actual_reason=str(error))
+            else:raise ValueError('coherent isolation mutation accepted: '+name)
+        finally:
+            if parked.exists():parked.rename(root/relative)
+            else:(root/relative).write_bytes(original)
+            (root/C.ISOLATION_REL).write_bytes(before)
+    C.require((root/relative).read_bytes()==original and (root/C.ISOLATION_REL).read_bytes()==before,
+              'isolation mutation restoration differs')
+    C.validate_capture_isolation(root,inventory,ident)
+    return result
 
 def evidence_mutations(folder,source=None):
     C.actions();folder=Path(folder);original_manifest=(folder/'manifest.json').read_bytes()
@@ -150,6 +452,16 @@ def evidence_mutations(folder,source=None):
         commands=json.loads((folder/'commands.json').read_text());next(r for r in commands if r['output']=='runtime/internal.log')['argv']=['fabricated-marker']
         reject('fabricated-runtime',{'commands.json':encoded(commands)},'control runtime command differs')
     if target=='android':
+        host=report['sync']['host'];path=host['cache'];text=(folder/path).read_text()
+        reject('host-duplicate-abi',{path:(text+'\nANDROID_ABI:STRING=x86_64\n').encode()},
+               'duplicate/missing actual Android cache key: ANDROID_ABI')
+        bad=copy.deepcopy(report)
+        changed=text.replace('CMAKE_HOME_DIRECTORY:INTERNAL='+report['original_workspace']+'/examples/android/app/src/main/cpp',
+            'CMAKE_HOME_DIRECTORY:INTERNAL='+report['original_workspace']+'/foreign-source')
+        C.require(changed!=text,'actual host home mutation absent')
+        bad['sync']['host']['cache_selection']['CMAKE_HOME_DIRECTORY']['value']=report['original_workspace']+'/foreign-source'
+        reject('host-wrong-home',{path:changed.encode(),'report.json':encoded(bad)},
+               'actual Android cache identity differs: CMAKE_HOME_DIRECTORY')
         path='trees/installed-build/CMakeCache.txt';text=(folder/path).read_text()
         reject('android-api',{path:text.replace('android-26','android-25').encode()},'actual Android cache target differs')
         host=report['sync']['host'];path=host['map'];text=(folder/path).read_text()
