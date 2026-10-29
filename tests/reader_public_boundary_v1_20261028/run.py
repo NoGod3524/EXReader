@@ -898,14 +898,16 @@ def installed_archive_equivalence(before,after,target):
     result=dict(exact_archive_equal=before==after,mode='exact',comparison=None,
                 build_sha256=hashlib.sha256(before).hexdigest(),installed_sha256=hashlib.sha256(after).hexdigest())
     if before==after:return result
-    need(target=='macos','unequal archives require measured macOS first-index timestamp mode')
+    # iphone/ipad name only the fixed iphonesimulator F06 producer/layout, not
+    # physical iOS. All other platforms still require exact archive bytes.
+    need(target in ('macos','iphone','ipad'),'unequal archives require measured macOS or iPhone/iPad simulator first-index timestamp mode')
     need(len(before)==len(after),'archive total size differs')
     bi,bm=bsd_index_archive(before);ai,am=bsd_index_archive(after)
     need(bm==am,'ordered BSD object payloads differ')
     begin=bi['timestamp_offset'];end=begin+12
     need(begin==24 and ai['timestamp_offset']==begin and before[:begin]==after[:begin] and before[end:]==after[end:],
          'archive non-timestamp bytes differ')
-    result.update(mode='macos-first-bsd-index-timestamp',comparison=dict(
+    result.update(mode=('macos-first-bsd-index-timestamp' if target=='macos' else 'iphonesimulator-first-bsd-index-timestamp'),comparison=dict(
         index_name=bi['name'],timestamp_offset=begin,timestamp_bytes=12,
         build_timestamp=bi['timestamp'],installed_timestamp=ai['timestamp'],
         differing_offsets=[i for i in range(begin,end) if before[i]!=after[i]],
@@ -931,6 +933,10 @@ def replay_archive_comparisons(read,measured,target):
         need(safe_member(built) and safe_member(installed) and PurePosixPath(built).name==filename,'unsafe/wrong built owner archive path')
         need(installed==expected==measured['installed_archives'][owner]['path'],'wrong installed owner archive path')
         folder=PurePosixPath(built).parent;cache=read(str(folder/'CMakeCache.txt')).decode()
+        # Original Windows cache bytes use CRLF. Normalize only that line ending,
+        # never whitespace/path content; bare or embedded CR remains unsupported.
+        need('\r' not in cache.replace('\r\n',''),'bare CR in retained owner cache')
+        cache=cache.replace('\r\n','\n')
         homes=re.findall(r'^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$',cache,re.M)
         need(len(homes)==1 and homes[0].replace('\\','/').endswith('/apps/reader/'+owner),'retained raw build owner differs')
         need(re.findall(r'^EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=(.+)$',cache,re.M)==['ON'],'retained owner not raw family')

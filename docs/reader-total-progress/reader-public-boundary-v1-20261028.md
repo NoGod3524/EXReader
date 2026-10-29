@@ -226,6 +226,65 @@ Actions run. New synthetic controls are authored, not locally executed; actual
 criterion compatibility and authenticated original-byte replay still require the
 next Actions run. No previous failure is relabeled passed.
 
+### Seventh run and pinned original-byte diagnostics: proposed simulator-only extension
+
+Source `b39954f355654324dd58fac06de89356861d0c09`, full run `40819569787/1`,
+remains failed. All six native/config entries passed: codec40 each, retained88 on
+Linux/Windows/Android and76 on macOS/iPhone/iPad (unchanged PURE-OFF), together with
+unchanged selector/C06 assertions. Linux/Windows/Android/macOS capture succeeded;
+iPhone capture stopped at a ReadingCommands archive timestamp difference. Independent
+authentication replayed Linux, then refused Windows `retained raw build owner differs`.
+It did not replay later platforms or cross-six wires. The macOS pairs were exact
+byte-equal this round, so that producer did not exercise its timestamp exception.
+
+Two separately authorized, no-build original-artifact diagnostics authenticated
+all 1,926 Windows and 2,461 partial iPhone retained files against exact original
+upload identities. Diagnostic `40823435903/1` at `cd325c02e0e1969b1a9bd8fdfff56b8e63de8a9f`
+proved all four Windows HOME/raw-family captures contain a trailing CR from CRLF.
+The unchanged old predicates failed; separately observed newline-normalized owner,
+raw flag and exact source-path comparisons passed. The proposed repair normalizes
+only CRLF to LF before the same exact predicates, rejects any remaining bare or
+embedded CR, and never strips whitespace or relaxes owner/raw/source identity.
+
+Diagnostic `40824066717/1` at `a67d7144d20707f96fad6492904d5fe49eb8be83`
+retained bounded raw member headers and attempted both iOS pairs even after a strict
+parser error. The ReadingCommands pair is 40,720 bytes; built SHA256
+`823683977ccf36430e15bcda1a2e0545d9bcb04fe62d8deefa27a0fc433c5e2b`, installed
+`68112bbf51ff84ea276c1f2f26e4b08f50d5cb8d0f1366dd3f8a6b9afb62ec64`.
+Its full first index name is `__.SYMDEF SORTED`; both archives pass the frozen strict
+grammar. Index payload SHA256 is
+`e0935d148e1b1d2b6972476c31052d348e3eb9e1b472eef5640bb04e6644b2fb`;
+the sole `reading_commands.cpp.o` payload is38,512 bytes, SHA256
+`ad288bf7e6dae2b19a6046da4fa311049d401716bd1da4f850db59395438902c` in both.
+Only offset33 differs, timestamp1793249344→1793249345. Every byte outside24..35 is
+identical. The existing iPhone criterion still refused, as required.
+
+The exact-equal ReadingState pair (33,608 bytes,
+`8ef45e13e5cbc3d7579ef2abd45ac1a287e218f21e4ebc4620c94676953fda0e`)
+uses nine NUL name-padding bytes where the strict parser requires the minimal one;
+both payload positions are8-byte aligned. Its strict parse error remains a diagnostic
+failure, not a corrupt-object claim. Existing exact-byte equality accepts that pair
+without a grammar exception. **The proposal does not relax any header or padding
+rule**: a future unequal pair with that additional padding still fails closed.
+Both diagnostic runs remain failed; output artifact of the second is12875048932,
+2,869 bytes, upload SHA256
+`0a9fc467f7ed19e52c547653be5e991e6a5999921c657d7b6ba7e39ff80ee3b9`.
+
+The exact three-file source proposal extends the existing first-index timestamp-only
+criterion to the fixed iPhone/iPad **iphonesimulator** producer/layout, not physical
+iOS or any other platform. It uses a distinct `iphonesimulator-first-bsd-index-timestamp`
+mode, preserves both original hashes/bytes and the exact-equality branch, and changes
+nothing outside the canonical first index's12-byte timestamp field. Windows/Linux/
+Android remain exact-byte only. The independent authenticator still requires exactly
+four unique owner pairs and replays the comparator on authenticated original bytes;
+it does not trust the producer mode or digest claims. New controls cover all four
+simulator pairs, coherent index-payload mutation, other header/object changes,
+malformed archives, nonminimal padding refusal, CRLF positives and bare/embedded CR,
+duplicate owners/raw assignments, wrong owner/source, raw-OFF and trailing-space
+negatives. These new tests are authored, not locally run. New criterion/publication
+requires explicit owner confirmation; no old failed run is reclassified and no six-entry
+or full F07 acceptance is claimed by this source proposal.
+
 ### Authorized Android caller extension, 2026-10-29 01:35 UTC
 
 The user confirmed “那我确认” (Sentinel_6c49c0656690819180749be6664bd059,
@@ -408,7 +467,7 @@ Ninja commands/dependency groups and response files, Make dependency/link files,
 maps, source/run identity, raw native symbol tables and logs. For each repaired
 consumer TU it binds the exact source dependency group to an object selected by
 the actual archive command, then requires built/installed equality (or, only under
-the separately proposed macOS criterion above, exact equality outside the canonical
+the separately proposed macOS/simulator criteria above, exact equality outside the canonical
 first index timestamp). Ninja declared dependency counts and complete Make rule structure
 are checked; missing, truncated, stale, ambiguous and wrong-source groups fail.
 Every inspected archive is bound to the actual configured imported target TARGET_FILE and its unique install manifest, not an unused same-prefix filename. The actual public include path must be installed under the expected prefix, and
