@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import tempfile
 import zipfile
@@ -15,7 +16,9 @@ from urllib.parse import parse_qsl, urlsplit
 from contract import ROOT, STAGES, guard, require, sha
 from archive_contract import safe_extract
 from inspect_native import CONTROLS, MESSAGES, ROLES, variant_labels
-from continuation_lifecycle import verify_lifecycle
+from continuation_lifecycle import verify_lifecycle, seal_files
+from continuation_contract import APPLEDOUBLE_LIMIT, appledouble_content
+from privacy_scan import inventory, scan_file, needles, identity
 from authenticate_continuation import verify_ios_admission
 
 RUN = '40828331893'
@@ -232,6 +235,119 @@ def admission_namespaces(directory):
             reports.append({'phase': phase, 'root_entry_count': len(entries), 'root_categories': counts,
                 'all_member_count': sum(1 for path in root.rglob('*') if path.is_file()),
                 'namespace_accepted': False, 'arbitrary_names_or_bytes_printed': False})
+    return reports
+
+
+def metadata_variants(directory):
+    oracle = json.loads((directory / 'synthetic-oracle-input.json').read_text())
+    require(type(oracle) is dict and oracle.get('synthetic_only') is True and
+            (oracle.get('source_sha'), oracle.get('run_id'), oracle.get('attempt')) == (SOURCE, RUN, '1'),
+            'metadata oracle identity differs')
+    user, passwords = oracle.get('user'), oracle.get('passwords')
+    require(type(user) is str and re.fullmatch(r'privacy-user-[0-9a-f]{32}', user) is not None and
+            type(passwords) is dict and set(passwords) == {'remembered', 'session'} and
+            all(type(value) is str and re.fullmatch(r'Privacy-[0-9a-f]{64}!%:\+', value) is not None
+                for value in passwords.values()) and passwords['remembered'] != passwords['session'],
+            'metadata synthetic inputs differ')
+    values = {'user': user.encode()}
+    for role, password in passwords.items():
+        pair = (user + ':' + password).encode()
+        values[role] = password.encode(); values[role + '-pair'] = pair
+        values[role + '-authorization'] = b'Basic ' + base64.b64encode(pair)
+    return needles(values)
+
+
+def classify_metadata_tree(root, variants):
+    """All bytes scanned, then exact pairing/content observed; no root is waived."""
+    before = inventory(root); records, all_hits, metadata = {}, set(), []
+    paths = sorted(path for path in before if path != '.')
+    files, directories = {}, set()
+    for name in paths:
+        path = root / name; mode = path.lstat().st_mode
+        path_hits = {label for label, value in variants.items() if value in name.encode('utf-8')}
+        all_hits.update(path_hits)
+        if stat.S_ISDIR(mode):
+            directories.add(name); continue
+        proof = scan_file(path, variants)
+        all_hits.update(proof['hits']); files[name] = proof
+        records[name] = {'bytes': proof['bytes'], 'sha256': proof['sha256']}
+    require(inventory(root) == before, 'metadata tree changed during scan')
+    paired = set()
+    for name, proof in files.items():
+        if not name.startswith('__MACOSX/'):
+            continue  # Still fully scanned/hashed and resealed above/below.
+        row = {'path_sha256': hashlib.sha256(name.encode()).hexdigest(),
+            'bytes': proof['bytes'], 'sha256': proof['sha256'],
+            'hit_variant_labels': sorted(set(proof['hits']) | {label for label, value in variants.items()
+                if value in name.encode('utf-8')}),
+            'paired_host': False, 'target_kind': 'unpaired', 'content': None,
+            'classification': 'unsupported-pair', 'namespace_accepted': False}
+        metadata.append(row)
+        relative = Path(name).relative_to('__MACOSX')
+        if not relative.name.startswith('._') or len(relative.name) <= 2: continue
+        target = relative.with_name(relative.name[2:]).as_posix()
+        if not (target == 'EXReaderHost.app' or target.startswith('EXReaderHost.app/')) or \
+                target not in files and target not in directories or target in paired: continue
+        paired.add(target); row['paired_host'] = True
+        row['target_kind'] = 'app-root' if target == 'EXReaderHost.app' else \
+            'directory' if target in directories else 'executable' if target == 'EXReaderHost.app/EXReaderHost' else \
+            'signature' if target.startswith('EXReaderHost.app/_CodeSignature/') else \
+            'framework' if target.startswith('EXReaderHost.app/Frameworks/') else 'app-file'
+        row['target_path_sha256'] = hashlib.sha256(target.encode()).hexdigest()
+        if proof['bytes'] > APPLEDOUBLE_LIMIT:
+            row['classification'] = 'unsupported-size-after-complete-scan'; continue
+        descriptor = os.open(root / name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(descriptor, 'rb') as stream:
+            require(stat.S_ISREG(os.fstat(stream.fileno()).st_mode) and
+                    identity(os.fstat(stream.fileno())) == before[name], 'metadata opened identity differs')
+            data = stream.read(APPLEDOUBLE_LIMIT + 1)
+            require(identity(os.fstat(stream.fileno())) == before[name], 'metadata read identity differs')
+        require(len(data) == proof['bytes'] and hashlib.sha256(data).hexdigest() == proof['sha256'],
+                'metadata parse bytes differ')
+        try:
+            row['content'] = appledouble_content(data)
+            row['classification'] = 'paired-supported-structure-content-opaque'
+        except RuntimeError as error:
+            allowed = {'metadata unsupported ' + suffix for suffix in ('size', 'header', 'entries',
+                'attribute header', 'attribute entry', 'attribute name', 'attribute range',
+                'attribute padding', 'attribute overlap')}
+            require(type(error) is RuntimeError and len(error.args) == 1 and
+                    type(error.args[0]) is str and error.args[0] in allowed, 'metadata classifier refused')
+            row['classification'] = error.args[0].replace('metadata ', '').replace(' ', '-')
+    # Complete double byte replay catches late mutation of a scanned prefix or
+    # earlier file. Unknown roots, app executable/data and metadata all remain.
+    require(inventory(root) == before and seal_files(root) == records and inventory(root) == before,
+            'metadata final replay differs')
+    from inspect_native import VARIANT_LABELS
+    require(all(type(label) is str and label in VARIANT_LABELS for label in all_hits), 'unexpected variant label')
+    metadata_dirs = {name for name in directories if name == '__MACOSX' or name.startswith('__MACOSX/')}
+    used_dirs = {parent.as_posix() for name in files if name.startswith('__MACOSX/')
+                 for parent in Path(name).parents if parent.as_posix() != '.'}
+    return {'all_file_count': len(files), 'all_bytes': sum(value['bytes'] for value in records.values()),
+        'all_files_fully_scanned_and_replayed': True, 'size_skips': 0,
+        'hit_variant_labels': sorted(all_hits), 'metadata_members': metadata,
+        'unpaired_metadata_directory_count': len(metadata_dirs - used_dirs),
+        'other_root_count': len({Path(name).parts[0] for name in paths} - {'EXReaderHost.app', '__MACOSX'}),
+        'namespace_accepted': False, 'content_semantics_verified': False,
+        'signature_replay_credited': False, 'full_f10_accepted': False}
+
+
+def admission_metadata(directory):
+    manifest = json.loads((directory / 'ios-admission/manifest.json').read_text())
+    require(type(manifest) is dict and set(manifest) == {'pre-sign', 'post-sign', 'installed'},
+            'admission phase evidence incomplete')
+    variants = metadata_variants(directory); reports = []
+    for phase in ('pre-sign', 'post-sign', 'installed'):
+        archive = directory / 'ios-admission' / (phase + '.zip'); record = manifest[phase]
+        require(type(record['archive_bytes']) is int and archive.stat().st_size == record['archive_bytes'] and
+                sha(archive) == record['archive_sha256'], 'admission original archive differs')
+        with tempfile.TemporaryDirectory(prefix='privacy-metadata-diagnostic-') as temporary:
+            root = Path(temporary); safe_extract(archive, root)
+            report = classify_metadata_tree(root, variants)
+            require(seal_files(root / 'EXReaderHost.app') == record['files'], 'admission archive members differ')
+            report['host_app_all_file_manifest_matches'] = True
+            report['phase'] = phase
+            reports.append(report)
     return reports
 
 
@@ -487,6 +603,7 @@ def diagnose_platform(out, platform, identifier, size, digest):
     report['independent_ios_admission_replay'] = None
     if platform != 'macos':
         report['admission_namespace_observations'] = admission_namespaces(folder)
+        report['retained_metadata_classification'] = admission_metadata(folder)
         report['independent_ios_admission_replay'] = verify_ios_admission(folder, SOURCE, result, require_program=False)
     diagnostic_stage('safe-report')
     return report

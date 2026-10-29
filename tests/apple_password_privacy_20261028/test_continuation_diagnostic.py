@@ -19,7 +19,7 @@ import inspect_continuation_failure as inspector
 from inspect_continuation_failure import ARTIFACTS, BUNDLE, CASE, DIAGNOSTIC_STAGES, REFUSAL_CODES, RUN, SOURCE, SOURCE_FILE, SOURCE_LAST_LINE, SOURCE_PATH, SOURCE_SHA, activity_timing, attachment_summary, diagnostic_stage, locations, member_integrity, member_role, network_summary, refusal_report, safe_progress, sealed_lifecycle, xcresult_issues
 from privacy_scan import needles
 import authenticate_continuation as authenticator
-from continuation_contract import ENTITLEMENT_FILE, admission_app_identity, signature_summary, verify_admission_transition
+from continuation_contract import ENTITLEMENT_FILE, admission_app_identity, signature_summary, verify_admission_transition, appledouble_content
 from continuation_lifecycle import seal_files
 
 
@@ -32,7 +32,166 @@ def diagnostic_control_macho(section):
         struct.pack('<16s16sQQIIIIIIII', b'__entitlements', b'__TEXT', offset, size, offset, 0, 0, 0, 0, 0, 0, 0) + section)
 
 
+def diagnostic_appledouble(attributes=None, resource=b''):
+    """Actions-only synthetic wire-format fixture, not actual metadata proof."""
+    finder = bytes(32)
+    if attributes is not None:
+        start = 120 + sum((12 + len(name) + 3) & ~3 for name, value in attributes)
+        entries, payload = bytearray(), bytearray()
+        for name, value in attributes:
+            name = name + b'\x00'
+            entry = struct.pack('>IIHB', start + len(payload), len(value), 0, len(name)) + name
+            entries.extend(entry + bytes((-len(entry)) % 4)); payload.extend(value)
+        total = start + len(payload)
+        finder += bytes(2) + struct.pack('>8I2H', 0x41545452, 0, total, start, len(payload), 0, 0, 0, 0, len(attributes))
+        finder += bytes(entries) + bytes(payload)
+    return (struct.pack('>II16sH', 0x00051607, 0x00020000, b'Mac OS X        ', 2) +
+            struct.pack('>6I', 9, 50, len(finder), 2, 50 + len(finder), len(resource)) + finder + resource)
+
+
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_appledouble_structure_is_not_content_or_namespace_acceptance(self):
+        plain = appledouble_content(diagnostic_appledouble(resource=b'opaque executable payload'))
+        self.assertEqual(plain['attribute_layout'], 'absent')
+        self.assertFalse(plain['namespace_accepted']); self.assertFalse(plain['content_semantics_verified'])
+        self.assertFalse(plain['resource_fork']['all_zero'])
+        attributes = [(b'com.apple.provenance', bytes(8)), (b'private-name-operand', b'private-value-operand')]
+        proof = appledouble_content(diagnostic_appledouble(attributes))
+        self.assertEqual([row['name_kind'] for row in proof['attributes']], ['provenance', 'other'])
+        self.assertEqual([row['all_zero'] for row in proof['attributes']], [True, False])
+        self.assertNotIn('private-name-operand', json.dumps(proof))
+        self.assertNotIn('private-value-operand', json.dumps(proof))
+
+    def test_appledouble_rejects_header_datafork_alias_trailer_and_truncation(self):
+        original = diagnostic_appledouble()
+        changes = [(0, '>I', 0x00051600), (4, '>I', 0x00010000), (24, '>H', 1),
+            (26, '>I', 1), (38, '>I', 9), (30, '>I', 49), (34, '>I', 33),
+            (42, '>I', 81), (46, '>I', 0xffffffff)]
+        for offset, encoding, value in changes:
+            changed = bytearray(original); struct.pack_into(encoding, changed, offset, value)
+            with self.assertRaises(RuntimeError): appledouble_content(bytes(changed))
+        for changed in (original[:81], original + b'undeclared bytes', b'not metadata' * 10):
+            with self.assertRaises(RuntimeError): appledouble_content(changed)
+
+    def test_appledouble_attribute_ranges_duplicates_names_and_padding_refuse(self):
+        original = diagnostic_appledouble([(b'a', b'one'), (b'b', b'two')])
+        # Entries start120 and136; data begins152.
+        for offset, encoding, value in [(84, '>I', 0), (92, '>I', 0xffffffff),
+                (96, '>I', 119), (100, '>I', 1), (104, '>I', 1), (116, '>H', 1),
+                (118, '>H', 4097), (120, '>I', 151), (124, '>I', 0xffffffff),
+                (128, '>H', 1), (130, '>B', 0), (136, '>I', 153), (144, '>H', 1),
+                (147, '>B', ord('a')), (131, '>B', 0xff), (132, '>B', 1), (133, '>B', 1)]:
+            changed = bytearray(original); struct.pack_into(encoding, changed, offset, value)
+            with self.assertRaises(RuntimeError): appledouble_content(bytes(changed))
+
+    def test_metadata_pairing_is_exact_and_all_unknown_roots_stay_unaccepted(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); (root / 'EXReaderHost.app').mkdir()
+            (root / 'EXReaderHost.app/EXReaderHost').write_bytes(b'actual executable fixture')
+            (root / '__MACOSX/EXReaderHost.app').mkdir(parents=True)
+            (root / '__MACOSX/empty').mkdir()
+            for name in ('._EXReaderHost.app', 'EXReaderHost.app/._EXReaderHost',
+                         'EXReaderHost.app/._missing', '._Foreign.app', 'arbitrary-file'):
+                (root / '__MACOSX' / name).write_bytes(diagnostic_appledouble())
+            (root / 'other-root').write_bytes(b'not ignored')
+            proof = inspector.classify_metadata_tree(root, needles({'user': b'only-test-canary-123456'}))
+            self.assertEqual(proof['all_file_count'], 7)
+            self.assertEqual(sum(row['paired_host'] for row in proof['metadata_members']), 2)
+            self.assertEqual({row['target_kind'] for row in proof['metadata_members']}, {'app-root', 'executable', 'unpaired'})
+            self.assertEqual(proof['unpaired_metadata_directory_count'], 1)
+            self.assertEqual(proof['other_root_count'], 1)
+            self.assertFalse(proof['namespace_accepted']); self.assertFalse(proof['signature_replay_credited'])
+            self.assertNotIn('arbitrary-file', json.dumps(proof))
+
+    def test_metadata_and_executable_and_unknown_data_all_scan_encoded_variants(self):
+        secret = b'only-test-canary-123456'; variants = needles({'user': secret})
+        payload = b'\x00'.join(variants.values())
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); (root / 'EXReaderHost.app').mkdir(); (root / '__MACOSX').mkdir()
+            (root / 'EXReaderHost.app/EXReaderHost').write_bytes(payload)
+            (root / 'unknown-data').write_bytes(payload)
+            (root / '__MACOSX/._EXReaderHost.app').write_bytes(
+                diagnostic_appledouble([(b'private-operand', payload)], resource=payload))
+            proof = inspector.classify_metadata_tree(root, variants)
+            self.assertEqual(proof['hit_variant_labels'], sorted(variants))
+            self.assertEqual(proof['metadata_members'][0]['hit_variant_labels'], sorted(variants))
+            self.assertEqual(proof['all_file_count'], 3); self.assertEqual(proof['size_skips'], 0)
+            self.assertFalse(proof['content_semantics_verified'])
+            for value in (secret.decode(), base64.b64encode(secret).decode(), secret.hex(), 'private-operand'):
+                self.assertNotIn(value, json.dumps(proof))
+
+    def test_metadata_over_64mib_scans_boundary_and_tail_before_parser_size_refusal(self):
+        secret = b'only-test-canary-123456'; variants = needles({'user': secret})
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); (root / 'EXReaderHost.app').mkdir(); (root / '__MACOSX').mkdir()
+            path = root / '__MACOSX/._EXReaderHost.app'
+            with path.open('wb') as file:
+                file.seek(65 * 1024 * 1024 - 7); file.write(secret)
+                file.seek(66 * 1024 * 1024); file.write(variants['user:utf16le'])
+            proof = inspector.classify_metadata_tree(root, variants)
+            row = proof['metadata_members'][0]
+            self.assertGreater(row['bytes'], 64 * 1024 * 1024)
+            self.assertIn('user:raw', row['hit_variant_labels']); self.assertIn('user:utf16le', row['hit_variant_labels'])
+            self.assertEqual(row['classification'], 'unsupported-size-after-complete-scan')
+            self.assertEqual(proof['all_bytes'], path.stat().st_size); self.assertEqual(proof['size_skips'], 0)
+
+    def test_metadata_replay_refuses_late_earlier_file_and_prefix_mutation(self):
+        variants = needles({'user': b'only-test-canary-123456'})
+        for mutation in ('earlier-file', 'prefix', 'after-parse'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); (root / 'EXReaderHost.app').mkdir(); (root / '__MACOSX').mkdir()
+                earlier = root / 'EXReaderHost.app/EXReaderHost'; earlier.write_bytes(b'original')
+                (root / '__MACOSX/._EXReaderHost.app').write_bytes(diagnostic_appledouble())
+                real_scan = inspector.scan_file
+                def changed(path, supplied):
+                    proof = real_scan(path, supplied)
+                    if path.name == '._EXReaderHost.app' and mutation != 'after-parse':
+                        if mutation == 'earlier-file': earlier.write_bytes(b'modified')
+                        else: (root / 'EXReaderHost.app/late-file').write_bytes(b'late')
+                    return proof
+                def parsed(data):
+                    proof = appledouble_content(data)
+                    if mutation == 'after-parse': earlier.write_bytes(b'modified')
+                    return proof
+                with patch.object(inspector, 'scan_file', changed), \
+                        patch.object(inspector, 'appledouble_content', parsed), self.assertRaises(RuntimeError):
+                    inspector.classify_metadata_tree(root, variants)
+
+    def test_metadata_oracle_identity_and_old_admission_guard_are_preserved(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); folder = root / 'ios-admission'; folder.mkdir()
+            oracle = {'synthetic_only': True, 'source_sha': SOURCE, 'run_id': RUN, 'attempt': '1',
+                'user': 'privacy-user-' + 'a' * 32,
+                'passwords': {'remembered': 'Privacy-' + 'b' * 64 + '!%:+', 'session': 'Privacy-' + 'c' * 64 + '!%:+'}}
+            (root / 'synthetic-oracle-input.json').write_text(json.dumps(oracle))
+            manifest = {}
+            for phase in ('pre-sign', 'post-sign', 'installed'):
+                archive = folder / (phase + '.zip')
+                with zipfile.ZipFile(archive, 'w') as zipped:
+                    zipped.writestr('EXReaderHost.app/EXReaderHost', b'fixed executable fixture')
+                    zipped.writestr('__MACOSX/._EXReaderHost.app', diagnostic_appledouble())
+                manifest[phase] = {'archive_bytes': archive.stat().st_size, 'archive_sha256': sha(archive),
+                    'files': {'EXReaderHost': {'bytes': len(b'fixed executable fixture'),
+                                             'sha256': hashlib.sha256(b'fixed executable fixture').hexdigest()}}}
+            (folder / 'manifest.json').write_text(json.dumps(manifest))
+            rows = inspector.admission_metadata(root)
+            self.assertEqual([row['phase'] for row in rows], ['pre-sign', 'post-sign', 'installed'])
+            self.assertTrue(all(row['all_file_count'] == 2 and not row['namespace_accepted'] for row in rows))
+            with self.assertRaisesRegex(RuntimeError, '^admission archive namespace differs$'):
+                authenticator.verify_ios_admission(root, SOURCE, {}, require_program=False)
+            for field in ('host-files', 'archive-hash'):
+                changed = copy.deepcopy(manifest)
+                if field == 'host-files': changed['installed']['files']['EXReaderHost']['sha256'] = 'f' * 64
+                else: changed['installed']['archive_sha256'] = 'f' * 64
+                (folder / 'manifest.json').write_text(json.dumps(changed))
+                with self.assertRaisesRegex(RuntimeError, '^admission (archive members|original archive) differ(?:s)?$'):
+                    inspector.admission_metadata(root)
+            (folder / 'manifest.json').write_text(json.dumps(manifest))
+            for changed in (dict(oracle, synthetic_only=1), dict(oracle, attempt=1), dict(oracle, source_sha='f' * 40),
+                    dict(oracle, user='private-operand'), dict(oracle, passwords={'remembered': 'private-operand'})):
+                (root / 'synthetic-oracle-input.json').write_text(json.dumps(changed))
+                with self.assertRaises(RuntimeError): inspector.metadata_variants(root)
+
     def test_original_source_bytes_are_bound_to_pin_not_current_checkout(self):
         data = b'fixed source\nsecond line\n'
         record = {'type': 'file', 'path': SOURCE_FILE, 'encoding': 'base64',

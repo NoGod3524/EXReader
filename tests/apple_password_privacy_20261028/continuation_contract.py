@@ -13,6 +13,70 @@ from contract import BASE, BUNDLE, ROOT, STAGES, guard, require, sha
 CASE = 'testDiagnosticContinuationRememberUpdateRestart'
 ENTITLEMENT_FILE = ROOT / 'tests/apple_password_privacy_20261028/ios_simulator.entitlements'
 ENTITLEMENTS = {'application-identifier': BUNDLE, 'keychain-access-groups': [BUNDLE], 'get-task-allow': True}
+APPLEDOUBLE_LIMIT = 16 * 1024 * 1024
+
+
+def appledouble_content(data):
+    """Bounded Apple copyfile layout classification, NEVER admission/exclusion.
+
+    Reference: Apple's copyfile.c AppleDouble/ATTR structures, pinned at
+    https://github.com/apple-oss-distributions/copyfile/blob/9f91eb6ced021952278816cdc76ad68da8631ccb/copyfile.c
+    and RFC1740. Only this exact two-entry layout is understood. A
+    resource fork or xattr may contain executable/private data: structural
+    validity does not establish harmlessness, provenance or semantic safety.
+    """
+    require(type(data) is bytes and 82 <= len(data) <= APPLEDOUBLE_LIMIT, 'metadata unsupported size')
+    magic, version, filler, count = struct.unpack_from('>II16sH', data)
+    require(magic == 0x00051607 and version == 0x00020000 and count == 2 and
+            filler in (b'Mac OS X        ', bytes(16)), 'metadata unsupported header')
+    finder, resource = [struct.unpack_from('>III', data, offset) for offset in (26, 38)]
+    require(finder[0:2] == (9, 50) and finder[2] >= 32 and resource[0] == 2 and
+            resource[1] == 50 + finder[2] and resource[1] + resource[2] == len(data),
+            'metadata unsupported entries')
+    def content(value):
+        return {'bytes': len(value), 'sha256': hashlib.sha256(value).hexdigest(), 'all_zero': not any(value)}
+    report = {'layout': 'appledouble-v2-copyfile', 'entry_kinds': ['finder-info', 'resource-fork'],
+        'finder_info': content(data[50:82]), 'resource_fork': content(data[resource[1]:]),
+        'attributes': [], 'content_semantics_verified': False, 'namespace_accepted': False}
+    if resource[1] == 82:
+        report['attribute_layout'] = 'absent'
+        return report
+    require(resource[1] >= 120 and data[82:84] == bytes(2), 'metadata unsupported attribute header')
+    fields = struct.unpack_from('>8I2H', data, 84)
+    attr_magic, debug, total, start, length, r1, r2, r3, flags, count = fields
+    require(attr_magic == 0x41545452 and total == resource[1] and 120 <= start <= min(total, 65554) and
+            length == total - start and (r1, r2, r3, flags) == (0, 0, 0, 0) and count <= 4096,
+            'metadata unsupported attribute header')
+    cursor, names, regions = 120, set(), []
+    known = {b'com.apple.quarantine': 'quarantine', b'com.apple.provenance': 'provenance',
+        b'com.apple.acl.text': 'acl-text', b'com.apple.decmpfs': 'compressed-data',
+        b'com.apple.FinderInfo': 'finder-info', b'com.apple.ResourceFork': 'resource-fork'}
+    for unused in range(count):
+        require(cursor + 11 <= start, 'metadata unsupported attribute entry')
+        offset, size, entry_flags, name_length = struct.unpack_from('>IIHB', data, cursor)
+        end = cursor + ((11 + name_length + 3) & ~3)
+        require(2 <= name_length <= 128 and end <= start and entry_flags == 0,
+                'metadata unsupported attribute entry')
+        name = data[cursor + 11:cursor + 11 + name_length]
+        require(name[-1:] == b'\x00' and b'\x00' not in name[:-1] and name[:-1] not in names and
+                not any(data[cursor + 11 + name_length:end]), 'metadata unsupported attribute name')
+        try: name[:-1].decode('utf-8', errors='strict')
+        except UnicodeDecodeError: raise RuntimeError('metadata unsupported attribute name') from None
+        names.add(name[:-1]); cursor = end
+        require((size == 0 and offset == 0) or (start <= offset <= total and size <= total - offset),
+                'metadata unsupported attribute range')
+        if size: regions.append((offset, offset + size))
+        report['attributes'].append(dict(content(data[offset:offset + size]),
+            name_kind=known.get(name[:-1], 'other'), name_sha256=hashlib.sha256(name[:-1]).hexdigest()))
+    require(not any(data[cursor:start]), 'metadata unsupported attribute padding')
+    end = start
+    for left, right in sorted(regions):
+        require(left >= end and not any(data[end:left]), 'metadata unsupported attribute overlap')
+        end = right
+    require(not any(data[end:total]), 'metadata unsupported attribute padding')
+    report['attribute_layout'] = 'copyfile-attr'
+    report['debug_tag_zero'] = debug == 0
+    return report
 
 
 def admission_tool(lifecycle, evidence, role, argv, commands):
