@@ -3,6 +3,8 @@
 import argparse
 import contextlib
 import copy
+import ctypes
+import errno
 import hashlib
 import importlib.util
 import json
@@ -17,6 +19,7 @@ import sys
 import threading
 import time
 import traceback
+import uuid
 
 if os.environ.get('GITHUB_ACTIONS') != 'true':
     raise SystemExit('All builds, tests, fixtures and artifact parsing are Actions-only')
@@ -33,6 +36,112 @@ UPGRADE={
  ('index','epub_notes_book','epub_notes','CREATE INDEX epub_notes_book ON epub_notes(book_id,part,start,id)'),
 }
 LEDGER=('table','exr_migration_ledger','exr_migration_ledger','CREATE TABLE exr_migration_ledger(id INTEGER PRIMARY KEY CHECK(id=1),data BLOB NOT NULL)')
+WRITER_OBSERVATIONS=[]
+
+def error_code(error):
+    code=getattr(error,'sqlite_errorcode',None)
+    assert isinstance(code,int),'numeric SQLite error codes are a required runtime capability'
+    return code
+
+def rename_exclusive(directory,source,destination):
+    # Public libc APIs only; never load or replace any SQLite implementation.
+    libc=ctypes.CDLL(None,use_errno=True)
+    name,flags=('renameatx_np',4) if sys.platform=='darwin' else ('renameat2',1)
+    assert sys.platform in ('darwin','linux'),'exclusive token rename is POSIX-profile only'
+    rename=getattr(libc,name)
+    rename.argtypes=[ctypes.c_int,ctypes.c_char_p,ctypes.c_int,ctypes.c_char_p,ctypes.c_uint]
+    rename.restype=ctypes.c_int;ctypes.set_errno(0)
+    if rename(directory,os.fsencode(source),directory,os.fsencode(destination),flags)!=0:
+        code=ctypes.get_errno();raise OSError(code,os.strerror(code),destination)
+    return name
+
+def private_token(path,on_partial=None,mode=0o600):
+    """Complete single-link token, atomically published without replacing a name.
+
+    The wrong-mode option is only an explicit negative calibration. Normal
+    callers always use0600. No sleep or hardlink publication window is involved.
+    """
+    path=Path(path);assert path.name.endswith('.go') and len(path.name)<128
+    assert mode in (0o600,0o644)
+    parent=path.parent.lstat();assert stat.S_ISDIR(parent.st_mode) and parent.st_uid==os.geteuid() and not parent.st_mode&0o077
+    directory=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC)
+    temporary='.continue-'+uuid.uuid4().hex+'.pending';fd=None;owned=None;published=False;errors=[];result=None
+    try:
+        actual=os.fstat(directory);assert (actual.st_dev,actual.st_ino)==(parent.st_dev,parent.st_ino)
+        fd=os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,0o600,dir_fd=directory)
+        original=os.fstat(fd);owned=(original.st_dev,original.st_ino)
+        assert original.st_nlink==1 and stat.S_IMODE(original.st_mode)==0o600
+        for part in (b'cont',b'inue\n'):
+            offset=0
+            while offset<len(part):
+                wrote=os.write(fd,part[offset:]);assert wrote>0;offset+=wrote
+            if part==b'cont' and on_partial:on_partial(path.parent/temporary,path)
+        if mode!=0o600:os.fchmod(fd,mode)
+        os.fsync(fd);finished=os.fstat(fd)
+        assert finished.st_size==9 and finished.st_nlink==1 and stat.S_IMODE(finished.st_mode)==mode
+        os.close(fd);fd=None
+        entry=os.stat(temporary,dir_fd=directory,follow_symlinks=False)
+        assert (entry.st_dev,entry.st_ino)==owned and entry.st_size==9 and entry.st_nlink==1
+        api=rename_exclusive(directory,temporary,path.name);published=True;os.fsync(directory)
+        entry=os.stat(path.name,dir_fd=directory,follow_symlinks=False)
+        assert (entry.st_dev,entry.st_ino)==owned and entry.st_size==9 and entry.st_nlink==1 and stat.S_IMODE(entry.st_mode)==mode
+        assert identity(path.parent)==(parent.st_dev,parent.st_ino)
+        result=dict(api=api,identity=owned,mode=oct(mode),bytes=9,nlink=1)
+    except Exception as error:errors.append(error)
+    finally:
+        if fd is not None:
+            try:os.close(fd)
+            except Exception as error:errors.append(error)
+        if owned is not None and not published:
+            try:
+                entry=os.stat(temporary,dir_fd=directory,follow_symlinks=False)
+                assert (entry.st_dev,entry.st_ino)==owned and stat.S_ISREG(entry.st_mode) and entry.st_nlink==1
+                os.unlink(temporary,dir_fd=directory);os.fsync(directory)
+            except Exception as error:errors.append(error)
+        try:os.close(directory)
+        except Exception as error:errors.append(error)
+    if len(errors)==1:raise errors[0]
+    if errors:raise ExceptionGroup('token operation and independent cleanup failures',errors)
+    return result
+
+def harness_admission(folder):
+    assert sys.version_info[:2]==(3,12),('explicit Python3.12 harness required',sys.version)
+    folder=Path(folder);folder.mkdir(mode=0o700,parents=True,exist_ok=False)
+    report=dict(source_sha=os.environ['GITHUB_SHA'],python=sys.version,executable=sys.executable,
+                sqlite=sqlite3.sqlite_version,passed=False,numeric_controls=[],token_controls=[])
+    dbpath=folder/'numeric.sqlite'
+    try:
+        with contextlib.closing(sqlite3.connect(dbpath,timeout=0)) as owner,contextlib.closing(sqlite3.connect(dbpath,timeout=0)) as contender:
+            owner.execute('CREATE TABLE calibration(x)');owner.commit();owner.execute('BEGIN IMMEDIATE')
+            try:contender.execute('BEGIN IMMEDIATE');raise AssertionError('calibration writer unexpectedly acquired')
+            except sqlite3.OperationalError as error:
+                code=error_code(error);assert code&255==sqlite3.SQLITE_BUSY
+                report['numeric_controls'].append(dict(control='real-held-writer',extended_code=code,base_code=code&255))
+            owner.rollback();contender.execute('BEGIN IMMEDIATE');contender.rollback()
+            report['numeric_controls'].append(dict(control='available-after-release',base_code=sqlite3.SQLITE_OK))
+            try:contender.execute('THIS IS NOT SQL');raise AssertionError('syntax control accepted')
+            except sqlite3.OperationalError as error:
+                code=error_code(error);assert code&255==sqlite3.SQLITE_ERROR
+                report['numeric_controls'].append(dict(control='syntax-not-BUSY',base_code=code&255))
+        with contextlib.closing(sqlite3.connect(dbpath.resolve().as_uri()+'?mode=ro',uri=True,timeout=0)) as readonly:
+            try:readonly.execute('INSERT INTO calibration VALUES(1)');raise AssertionError('read-only control accepted')
+            except sqlite3.OperationalError as error:
+                code=error_code(error);assert code&255==sqlite3.SQLITE_READONLY
+                report['numeric_controls'].append(dict(control='readonly-not-BUSY',base_code=code&255))
+        if os.name=='posix':
+            def partial(staging,destination):
+                assert staging.read_bytes()==b'cont' and not destination.exists()
+                report['token_controls'].append(dict(control='partial-staging-final-absent',passed=True))
+            token=folder/'calibration.go';report['token_controls'].append(private_token(token,partial));before=state(token)
+            try:private_token(token);raise AssertionError('preexisting final was overwritten')
+            except OSError as error:assert error.errno==errno.EEXIST
+            assert state(token)==before and token.read_bytes()==b'continue\n'
+            report['token_controls'].append(dict(control='existing-final-preserved',passed=True))
+        else:report['token_controls_scope']='not invoked by Windows unsupported-platform cases'
+        report['passed']=True
+    finally:
+        (folder/'admission.json').write_text(json.dumps(report,indent=2)+'\n')
+    print(json.dumps(report),flush=True);return report
 
 def identity(p):
     s=p.lstat();return (s.st_dev,s.st_ino)
@@ -65,10 +174,14 @@ def writer(target,busy,change=False):
     with contextlib.closing(P.connect(target,True)) as db:
         try:db.execute('BEGIN IMMEDIATE')
         except sqlite3.OperationalError as error:
-            assert busy and error.sqlite_errorcode&255==5,(busy,str(error));return
+            code=error_code(error);assert len(WRITER_OBSERVATIONS)<4096
+            WRITER_OBSERVATIONS.append(dict(target=str(target),statement='BEGIN IMMEDIATE',expected_busy=busy,extended_code=code,base_code=code&255))
+            assert busy and code&255==sqlite3.SQLITE_BUSY,(busy,code,str(error));return
         assert not busy,'independent ordinary writer unexpectedly acquired owner fence'
         if change:db.execute("UPDATE books SET title='ordinary writer retained' WHERE id=(SELECT min(id) FROM books)")
         db.commit()
+        assert len(WRITER_OBSERVATIONS)<4096
+        WRITER_OBSERVATIONS.append(dict(target=str(target),statement='BEGIN IMMEDIATE',expected_busy=busy,base_code=sqlite3.SQLITE_OK))
 
 class Child:
     def __init__(self,driver,argv,env=None):
@@ -132,14 +245,31 @@ class Child:
             if matches:return matches[-1]
             time.sleep(.01)
         raise AssertionError(('missing calibrated boundary',phase,self.p.poll(),self.out.read_text(errors='replace'),self.err.read_text(errors='replace')))
-    def go(self,ready):ready.with_suffix('.go').write_bytes(b'continue\n')
+    def go(self,ready,on_partial=None):
+        evidence=private_token(ready.with_suffix('.go'),on_partial)
+        self.d.check('complete private no-replace continue token',evidence['mode']=='0o600' and evidence['bytes']==9 and evidence['nlink']==1,evidence)
 
 class Driver:
     def __init__(self,a):
         self.a=a;self.serial=0;self.save_serial=0;self.report_exceeded=False;self.harness_failed=False;self.case=None;self.children=[];self.log_total=0;self.log_reserved=0;a.work.mkdir(parents=True,exist_ok=False)
         self.evidence=dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],platform=os.environ['RUNNER_OS'],cases=[],passed=False,product_admission=False,full_p0_acceptance=False,scope='real existing-target POSIX importer candidate; Windows capability refusal',physical_cleanup_verified=False,historical_rollback_proven=False)
+        admission=json.loads(Path(a.harness_admission).read_text())
+        assert admission['passed'] and admission['source_sha']==os.environ['GITHUB_SHA']
+        assert sys.version_info[:2]==(3,12) and admission['python']==sys.version and admission['executable']==sys.executable and admission['sqlite']==sqlite3.sqlite_version
+        self.evidence['harness_admission']=admission;self.evidence['writer_observations']=WRITER_OBSERVATIONS
     def check(self,label,value,detail=None):
         self.case['checks'].append(dict(label=label,passed=bool(value),detail=detail));assert value,(label,detail)
+    def refusal(self,label,rc,report,reasons,sdk=None):
+        recovery=report['atomicity']['recovery']
+        self.check(label+' exact original refusal cause',rc!=0 and recovery['reason'] in reasons and recovery['reason']!='recovery-private-artifact',report)
+        if sdk is not None:self.check(label+' actual SDK boundary',recovery['target_sdk_open_attempted'] is sdk,report)
+    def positive_phase(self,folder,phase,command='migrate'):
+        f=self.seed(folder);prior=model(f['target']);child,ready=self.start(f,phase,command=command)
+        child.go(ready);rc=child.finish();report=child.report()
+        self.check('matched valid-token positive at '+phase,rc==0,report)
+        if command=='migrate':self.committed(f,prior,report)
+        else:self.preserve(f,prior)
+        return f
     def run(self,name,fn):
         folder=self.a.work/name;folder.mkdir();self.logs=folder/'logs';self.logs.mkdir();self.children=[];self.log_total=0;self.log_reserved=0
         self.case=dict(name=name,passed=False,checks=[]);self.evidence['cases'].append(self.case)
@@ -305,6 +435,7 @@ def main():
     ap=argparse.ArgumentParser()
     for name in ('candidate','tool','old-tool','fixture','font'):ap.add_argument('--'+name,required=True)
     ap.add_argument('--work',type=Path,required=True);ap.add_argument('--fixtures',type=Path,required=True)
+    ap.add_argument('--harness-admission',type=Path,required=True)
     a=ap.parse_args()
     for name in ('candidate','tool','old_tool','fixture','font'):setattr(a,name,str(Path(getattr(a,name)).resolve()))
     a.fixtures=a.fixtures.resolve();a.work=a.work.resolve();d=Driver(a)
@@ -324,10 +455,12 @@ def main():
         rc,r,_=d.call(*d.args(f));d.check('missing-target refused before SDK',rc!=0 and not r['atomicity']['recovery']['target_sdk_open_attempted'],r)
         d.check('no target/anchor/stage/output',set(p.name for p in folder.iterdir())=={'logs','pack'})
     def replacement(folder):
+        d.positive_phase(folder/'valid-token','SDK-opening-durable')
         for change in ('replace','disappear'):
             f=d.seed(folder/change);c,ready=d.start(f,'SDK-opening-durable');saved=f['target'].with_suffix('.saved');f['target'].rename(saved)
             if change=='replace':f['target'].write_bytes(b'foreign target must not be upgraded');foreign=state(f['target'])
             c.go(ready);rc=c.finish();r=c.report();d.check('late target change before actual SDK attempt',rc!=0 and not r['atomicity']['recovery']['target_sdk_open_attempted'],r)
+            d.refusal('target '+change,rc,r,{'recovery-target-or-directory-changed'},False)
             if change=='replace':d.check('foreign target exact',state(f['target'])==foreign)
             else:d.check('disappeared target not recreated',not f['target'].exists())
             d.check('original inode saved untouched',identity(saved)==f['identity'])
@@ -394,7 +527,9 @@ def main():
         rc,r,_=d.call(a.fixture,'edit-all',f['target']);d.check('all independent ordinary public edits',rc==0,r);before=model(f['target'])
         p=folder/'later.pack';p.write_bytes(L.build_pack([L.entry(L.book_record('later','later.txt'),L.TXT+b'later new book')],[]));rc,r,_=d.call(*d.args(f,pack=p));d.check('C preserves later multi-entity state',rc==0,r);d.committed(f,before,r);d.projection(f)
     def preopen(folder):
+        d.positive_phase(folder/'matched-valid-token','SDK-opening-durable')
         f=d.seed(folder/'race');c,ready=d.start(f,'SDK-opening-durable');writer(f['target'],False,True);before=model(f['target']);c.go(ready);rc=c.finish();r=c.report();d.check('changed pre-owner snapshot refuses not relabeled',rc!=0 and r['atomicity']['recovery']['target_sdk_open_attempted'],r);d.preserve(f,before)
+        d.refusal('changed pre-owner full parity',rc,r,{'recovery-full-baseline-parity-mismatch'},True)
         f=d.seed(folder/'busy');c,ready=d.start(f,'SDK-opening-durable')
         with contextlib.closing(P.connect(f['target'],True)) as w:
             w.execute('BEGIN IMMEDIATE');c.go(ready);rc=c.finish();r=c.report();d.check('actual first SDK opening BUSY after durable baseline',rc!=0 and r['code']=='recovery-sdk-open-failed',r);w.rollback()
@@ -418,6 +553,35 @@ def main():
             if rc==0:d.check('current parity is not historical rollback proof',not r['atomicity']['recovery']['historical_rollback_proven'])
             else:d.preserve(f,current)
     def foreign(folder):
+        for phase in ('S1-anchor-before-sync','S4-prepared','S5-mirror-durable','S6-commit-before-ack','S7-ack-before-sync'):
+            d.positive_phase(folder/('matched-'+phase),phase)
+        # Bind actual immutable referenced files, not only their record fields.
+        # All variants preserve the original same-byte foreign-baseline refusal.
+        for phase in ('S4-prepared','S5-mirror-durable','S6-commit-before-ack','S7-ack-before-sync'):
+            for kind in ('baseline','pack','preimage','plan'):
+                f=d.seed(folder/(phase+'-'+kind));prior=model(f['target']);c,ready=d.start(f,phase)
+                records=[json.loads(p.read_text()) for p in sorted(f['root'].glob('record-*.json'))]
+                base=[x for x in records if x['phase'] in (1,6)][-1];prep=[x for x in records if x['phase']==3][-1]
+                paths={'baseline':f['root']/base['base_token']/'baseline.bin',
+                       'pack':f['root']/('pack-'+base['run']+'.bin'),
+                       'preimage':f['root']/('before-'+base['run']+'.bin'),
+                       'plan':f['root']/('plan-'+prep['run']+'.bin')}
+                path=paths[kind];old=state(path);saved=path.with_name(path.name+'.owned-save');path.rename(saved)
+                path.write_bytes(saved.read_bytes());path.chmod(0o600);foreign_before=state(path)
+                d.check('actual equal-byte foreign '+kind,foreign_before[0]!=old[0] and foreign_before[1]==old[1])
+                post_commit=phase.startswith(('S6','S7'));boundary=model(f['target']) if post_commit else prior
+                if not post_commit:writer(f['target'],True)
+                c.go(ready);rc=c.finish();report=c.report();d.refusal(phase+' foreign '+kind,rc,report,{'recovery-artifact-changed'},True)
+                d.check('foreign referenced evidence not overwritten',state(path)==foreign_before)
+                if post_commit:
+                    d.check('actual COMMIT retained, no false rollback or success receipt',report['atomicity']['transaction']['target_commit']=='committed' and not report['atomicity']['recovery']['commit_acknowledged'] and report['atomicity']['recovery']['explicit_recovery_required'],report)
+                    d.check('committed import is actually present',len(boundary['rows']['books'])>len(prior['rows']['books']) and all(all(row in boundary['rows'][table] for row in rows) for table,rows in prior['rows'].items() if table!='exr_migration_ledger'))
+                    d.preserve(f,boundary);writer(f['target'],False,True);later=model(f['target'])
+                    retry_rc,retry,_=d.call(*d.args(f,'recover-migration'));d.refusal('restart with foreign '+kind,retry_rc,retry,{'recovery-artifact-changed'},False)
+                    d.preserve(f,later);d.check('restart retains foreign evidence',state(path)==foreign_before)
+                else:
+                    d.check('foreign reference prevents actual COMMIT',report['atomicity']['transaction']['target_commit']=='not-attempted' and report['atomicity']['recovery']['rollback_requested'],report)
+                    d.preserve(f,prior)
         for name in ('anchor','mirror','baseline','alias'):
             f=d.seed(folder/name);c,ready=d.start(f,'S4-prepared');writer(f['target'],True)
             p=f['root']/'anchor.json' if name=='anchor' else f['mirror'] if name=='mirror' else next(f['root'].glob('cap-*/baseline.bin'))
@@ -425,8 +589,13 @@ def main():
             if name=='alias':os.link(f['target'],p)
             else:p.write_bytes(saved.read_bytes())
             os.chmod(p,0o600);foreign_before=state(p);c.go(ready);rc=c.finish();r=c.report();d.check('foreign '+name+' refuses',rc!=0,r);d.check('foreign entry not overwritten/deleted',state(p)==foreign_before)
+            causes={'anchor':{'recovery-record-format'},'mirror':{'recovery-artifact-changed'},
+                    'baseline':{'recovery-artifact-changed'},'alias':{'recovery-file-kind-or-alias'}}
+            d.refusal('foreign '+name,rc,r,causes[name],True)
         f=d.seed(folder/'pre-base-mirror');before=model(f['target']);c,ready=d.start(f,'S1-anchor-before-sync');saved=f['mirror'].with_suffix('.saved');f['mirror'].rename(saved);f['mirror'].write_bytes(saved.read_bytes());os.chmod(f['mirror'],0o600);foreign_before=state(f['mirror']);c.go(ready);rc=c.finish();r=c.report();d.check('first BASE does not adopt foreign original mirror',rc!=0 and not r['atomicity']['recovery']['target_sdk_open_attempted'],r);d.check('pre-BASE foreign mirror untouched',state(f['mirror'])==foreign_before);d.preserve(f,before)
+        d.refusal('pre-BASE foreign mirror',rc,r,{'recovery-anchor-mirror-changed'},False)
         f=d.seed(folder/'late-mirror');before=model(f['target']);c,ready=d.start(f,'S5-mirror-durable');owned=f['mirror'].with_suffix('.owned-save');f['mirror'].rename(owned);f['mirror'].write_bytes(owned.read_bytes());os.chmod(f['mirror'],0o600);foreign_before=state(f['mirror']);c.go(ready);rc=c.finish();r=c.report();d.check('late equal-byte foreign mirror prevents COMMIT',rc!=0 and r['atomicity']['transaction']['target_commit']=='not-attempted' and r['atomicity']['recovery']['rollback_requested'],r);d.check('foreign mirror retained exact',state(f['mirror'])==foreign_before);d.preserve(f,before)
+        d.refusal('late foreign mirror',rc,r,{'recovery-artifact-changed'},True)
         f=d.seed(folder/'race');c=Child(d,d.args(f),{'EXR_RECOVERY_FAULT':'snapshot-race','EXR_RECOVERY_PAUSE':'snapshot-race'});ready=c.wait(f['target'],'snapshot-race');anchor=f['root']/'anchor.json';anchor.rename(f['root']/'anchor-saved.json');os.link(f['target'],anchor);writer(f['target'],True);c.go(ready)
         until=min(c.deadline,time.monotonic()+30);stopped=None
         while time.monotonic()<until:
@@ -477,7 +646,9 @@ def main():
         for command in ('dump','verify','export-ledger'):
             f=d.seed(folder/('read-divergent-'+command));ledger=json.loads(f['mirror'].read_text());ledger['packs'].append('0'*64);f['mirror'].write_text(json.dumps(ledger));before=state(f['mirror']);extra=('--output',str(f['target'].parent/'out.json')) if command=='export-ledger' else ()
             rc,r,_=d.call(*d.args(f,command,extra=extra));d.check('actual rootless divergent mirror refuses '+command,rc!=0 and not r['atomicity']['recovery']['target_sdk_open_attempted'],r);d.check('divergent original mirror unchanged',state(f['mirror'])==before)
+        d.positive_phase(folder/'matched-read-policy','worker-result',command='dump')
         f=d.seed(folder/'read-policy-race');c,ready=d.start(f,'worker-result',command='dump');f['root'].mkdir(mode=0o700);(f['root']/'uncertain-anchor').write_bytes(b'real pending namespace appeared');Path(str(f['target'])+'.migrate-lock').write_bytes(b'foreign owned barrier');before=inventory(f['root']);c.go(ready);rc=c.finish();r=c.report();d.check('read snapshot does not waive newly appeared policy',rc!=0 and not r['atomicity']['recovery']['target_sdk_open_attempted'],r);d.check('new foreign policy retained',inventory(f['root'])==before)
+        d.refusal('new read policy',rc,r,{'recovery-policy-appeared-during-read'},False)
 
     def lifetime(folder):
         f=d.seed(folder);marker=folder/'source';source=Child(d,[a.fixture,'hold-source',f['target'],marker]);until=time.monotonic()+30
@@ -488,18 +659,32 @@ def main():
         p=folder/'lease.pack';p.write_bytes(L.build_pack([L.entry(L.book_record('lease','lease.txt'),L.TXT+b'lease')],[]));c,ready=d.start(f,'S8-owner-closed',pack=p);writer(f['target'],False)
         rc,r,_=d.call(*d.args(f,pack=p));d.check('migration lease survives original SDK close',rc!=0 and 'lease' in r['code'],r);c.go(ready);d.check('lease owner reports then exits',c.finish()==0)
     def transport(folder):
+        for phase in ('worker-result','owner-worker-result'):
+            d.positive_phase(folder/('matched-'+phase),phase)
+        # Real paused owner: a partial staging name must not resume the child.
+        f=d.seed(folder/'partial-token');prior=model(f['target']);c,ready=d.start(f,'S3-owner-open')
+        def partial(staging,destination):
+            d.check('native pause sees no incomplete final token',staging.read_bytes()==b'cont' and not destination.exists() and c.p.poll() is None)
+            writer(f['target'],True)
+        c.go(ready,partial);rc=c.finish();r=c.report();d.check('complete token resumes real owner',rc==0,r);d.committed(f,prior,r)
+        # Deliberately bad mode is a separate negative, never a valid resume.
+        f=d.seed(folder/'bad-mode-token');prior=model(f['target']);c,ready=d.start(f,'worker-result')
+        private_token(ready.with_suffix('.go'),mode=0o644);rc=c.finish();r=c.report()
+        d.check('wrong-mode token has its own exact refusal',rc!=0 and r['atomicity']['recovery']['reason']=='recovery-private-artifact' and not r['atomicity']['recovery']['target_sdk_open_attempted'],r);d.preserve(f,prior)
         for fault in ('wrong-nonce','kill-worker','stop-worker'):
             f=d.seed(folder/fault)
             if fault=='stop-worker':
                 c,ready=d.start(f,'worker-stopped',fault=fault);c.go(ready);rc=c.finish();r=c.report();d.check('actual stopped/resumed scanner calibrated',rc==0,r)
             else:
                 rc,r,_=d.call(*d.args(f),env={'EXR_RECOVERY_FAULT':fault});d.check(fault+' refuses actual transport',rc!=0 and not r['atomicity']['recovery']['target_sdk_open_attempted'],r)
+                d.refusal(fault,rc,r,{'recovery-worker-result-refused'},False)
         for fault in ('owner-wrong-nonce','owner-kill-worker','owner-timeout'):
             f=d.seed(folder/fault);before=model(f['target'])
             if fault=='owner-timeout':
                 c,ready=d.start(f,'worker-stopped',fault=fault);writer(f['target'],True);c.go(ready);rc=c.finish();r=c.report()
             else:rc,r,_=d.call(*d.args(f),env={'EXR_RECOVERY_FAULT':fault})
             d.check(fault+' measured under actual target owner',rc!=0 and r['atomicity']['recovery']['target_sdk_open_attempted'] and r['atomicity']['recovery']['rollback_requested'],r);d.preserve(f,before)
+            d.refusal(fault,rc,r,{'recovery-worker-deadline'} if fault=='owner-timeout' else {'recovery-worker-result-refused'},True)
         for change in ('missing','other-nonce','partial','foreign-stdout'):
 
             f=d.seed(folder/change);c,ready=d.start(f,'worker-result');p=next(f['root'].glob('cap-*/baseline.bin'))
@@ -508,7 +693,8 @@ def main():
             elif change=='partial':p.write_bytes(b'partial')
             else:
                 output=next(f['root'].glob('run-*/worker-01.stdout'));saved=output.with_suffix('.saved');output.rename(saved);output.write_bytes(saved.read_bytes());os.chmod(output,0o600)
-            c.go(ready);d.check(change+' scanner output cannot admit',c.finish()!=0,c.report())
+            c.go(ready);rc=c.finish();r=c.report();d.check(change+' scanner output cannot admit',rc!=0,r)
+            d.refusal(change+' output',rc,r,{'recovery-worker-stdout-changed'} if change=='foreign-stdout' else {'recovery-worker-output-binding'},False)
     def bounds(folder):
         f=d.seed(folder/'records')
         successes=0
@@ -566,4 +752,7 @@ def main():
     print(str(sum(c['passed'] for c in d.evidence['cases']))+'/'+str(expected),'full_p0_acceptance=false',flush=True)
     return 0 if d.evidence['passed'] else 1
 
-if __name__=='__main__':raise SystemExit(main())
+if __name__=='__main__':
+    if len(sys.argv)==3 and sys.argv[1]=='--harness-preflight':
+        harness_admission(Path(sys.argv[2]));raise SystemExit(0)
+    raise SystemExit(main())

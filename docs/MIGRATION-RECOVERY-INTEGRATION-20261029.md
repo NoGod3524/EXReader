@@ -266,3 +266,111 @@ Independent source review must precede its publication, after both first-round
 runs finish. The repaired SHA gets at most one automatic integration/companion
 pair under the existing two-round/610 configured-minute cap. A source-level
 link dependency correction is not a native linkage or recovery pass.
+
+## 07:47 authorized harness-only follow-up — source work, not a new pass
+
+The completed second round used `65dd64a5cd7b616aa15a262f635ea01870ba1e13`,
+integration `40835216735` and companion `40835216722`, both failure. New group
+counts were Linux21/32, macOS29/32 and Windows8/8 expected platform refusals;
+preflight41/41 each POSIX and isolated handoff20/22 Linux,22/22 macOS. All three
+ordinary companion suites passed65/65, while the old transaction candidate stayed
+60/65 (129/135), review31/31 and browser17/17, with its separate writer/WAL test
+stopping at inherited v3 recovery-unverified. These historical failures remain.
+No full P0, physical-cleanup or Windows recovery acceptance follows.
+
+On 2026-10-29 at07:47:39 UTC the owner confirmed a separate three-file test-only
+follow-up: new test driver, new integration workflow and this document, one
+isolated198-group round/110 configured runner-minutes, no repair rerun. Production
+and old test bytes were to remain unchanged. The proposed branch is
+`codex/migration-recovery-integration-harness-20261029`; the old companion trigger
+does not match it. Its prior65dd64a5 red results are historical, not a new-SHA
+companion pass.
+
+Source changes select official setup-python3.12 and calibrate real numeric
+SQLITE_BUSY against an independent held writer, then successful writer admission
+after release, plus numeric syntax/read-only non-BUSY controls. The old41/22
+prerequisite scripts also run under the selected PATH interpreter; their source
+and assertions stay unchanged. Exact Python executable/version and Python SQLite
+version are recorded separately from the frozen SDK/SQLite provider. No ctypes
+SQLite loader, numeric fabrication or message-string fallback is used.
+
+The new test continue-token publisher uses a complete private0600 temporary,
+file sync/close, native no-replace atomic rename and parent sync. It binds the
+actual directory and file identities, checks9 bytes and single link, never
+replaces a preexisting final name, and only cleans its exact temporary inode.
+Linux renameat2/RENAME_NOREPLACE and macOS renameatx_np/RENAME_EXCL are public
+libc APIs with explicit argument types; unavailable capability fails admission.
+There is no hardlink nlink2 window or visible incomplete final pathname. Positive
+and negative controls retain the actual numeric/permission/identity evidence.
+Matched valid-token positives and attack-specific original reasons distinguish
+intended negative outcomes from the former unrelated0644-token refusal.
+
+Primary API references used for source design:
+- [Python numeric error-code availability](https://docs.python.org/3.12/library/sqlite3.html#sqlite3.Error.sqlite_errorcode)
+- [Official setup-python](https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md)
+- [Linux exclusive rename](https://man7.org/linux/man-pages/man2/renameat2.2.html)
+- [Apple public exclusive-rename flags and prototypes](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/stdio.h)
+
+Source inspection during this repair found a real additional product gap:
+afterS4, the chain checks serialized baseline descriptors but does not recheck
+the actual active baseline inode. The existing same-byte foreign-baseline
+negative could have been masked by the malformed token. That assertion is
+preserved, not weakened. The currently granted three-path harness package does
+not authorize changing `lm_recovery.c`; publication and the sole110-minute run
+are held pending a separately reviewed/authorized fourth-owner repair decision.
+No product edit or new runtime success is claimed here.
+
+The frozen old handoff's direct final-path `.go` write is also a concrete race
+candidate against its strict double-read size/time checks. Its two generic
+Linux failures do not name the failing file/predicate, so this runtime cause
+remains unproven. No old handoff helper, harness, assertion or gate is modified.
+
+
+## 07:59 additional exact owner authorization — active evidence repair
+
+At07:59:58 UTC the owner explicitly added only
+`extras/migration/src/lm_recovery.c` to the above three paths (four total), keeping
+the same single110-minute198-group allowance, no repair rerun. This supersedes
+the preceding publication hold for that precise scope after actual source review;
+it does not extend SDK/old test/other owner permissions or establish a pass.
+
+Every successful chain admission now rechecks the active BASE/FRESH's actual
+baseline, retained pack and retained original-mirror preimage against their
+recorded presence/inode/size/SHA. Pack bytes also bind to the recorded pack SHA;
+preimage bytes bind to the original mirror bytes while retaining the private
+copy's own inode. Expected absence is checked rather than silently ignored.
+For each distinct PREP producer in the active generation, its immutable
+plan-<PREP.run>.bin must match recorded identity/content and planned-after bytes.
+A copied plan descriptor in a later OPENING/RESTORE record does not change that
+original producer filename. Old active ACK evidence is checked before a new
+FRESH generation; the existing owner/ledger comparison remains unchanged.
+
+Legitimately renamed work/restore paths are excluded from this immutable set;
+their current mirror/transition checks remain intact. Checks use the existing
+actual-fd target-alias quarantine path, never raw DB descriptor open/close.
+Each distinct file is bounded by its recorded size,64MiB per file and512MiB
+cumulative immutable bytes per chain check; streaming double reads add bounded
+I/O, not unbounded copies or a whole-disk guarantee. At most32 PREP references
+are considered, duplicate producer names cannot bind different plan identities.
+No persistent format, rollback/COMMIT state, namespace assumption or cleanup
+policy changes; no file is deleted or restored by these new checks.
+
+Before COMMIT, a changed referenced file causes refusal with rollback requested
+and evidence retained. After actual COMMIT, the same detection preserves literal
+committed status but prevents success/acknowledged completion; it does not claim
+rollback or rewrite the DB. New additive subcases substitute equal-byte foreign
+baseline/pack/preimage/plan atS4/S5 andS6/S7, preserving strict original negative
+predicates and checking exact causes, no pre-COMMIT request, post-COMMIT content,
+restart refusal and later ordinary writer retention. Existing absent-original-
+mirror and normal schema6/schema7 DELETE/WAL R/C cases remain required.
+
+The historical65dd64a5 companion result is now explicitly **not product-byte
+identical** to the new recovery executable: the one-file owner delta is declared.
+Old ordinary/transaction target source and all companion source/assertions remain
+unchanged. No new-SHA companion result is claimed or automatically run on the
+new branch. This focused110-minute validation remains the precise approved scope,
+not a concealed305-minute pair or an extra retry.
+
+Current status: implementation awaiting independent four-path source review;
+no local native execution, fixture generation, tests or artifact parsing, no
+new branch publication or run yet, and no runtime acceptance claim.

@@ -149,6 +149,43 @@ static int rguard(lm_recovery *r,lm_err *e){char id[33],p[4096];lm_mirror_file t
   if(r->font_id.present&&!rsame(r,r->font,&r->font_id,1,e))return 0;
   if(!rp(p,r->root,"lease",r,e)||!rsame(r,p,&r->lease_id,1,e)||fstat(r->lease,&s))return rr(r,e,"recovery-lease-changed");rid(&s,id);if(strcmp(id,r->lease_id.identity))return rr(r,e,"recovery-lease-fd-changed");return rinventory(r,0,e);
 }
+static int rimmutable(lm_recovery *r,const char *path,const lm_mirror_file *want,uint64_t *bytes,lm_err *e){
+  lm_mirror_file got;
+  if(want->size>R_LIMIT||want->size>R_TOTAL-*bytes)return rr(r,e,"recovery-immutable-read-bound");
+  *bytes+=want->size;
+  /* Reuse actual-fd target-alias quarantine. Do not introduce a raw descriptor
+   * close under the SDK writer. Bound both passes by the recorded byte size. */
+  if(!lr_snapshot(r,path,1,want->size,&got,NULL,NULL,e))return 0;
+  if(!rf_same(&got,want))return rr(r,e,"recovery-artifact-changed");
+  return 1;
+}
+static int ractive_evidence(lm_recovery *r,lm_err *e){
+  char directory[4096],path[4096],name[96];const RRecord *base=&r->base;
+  const RRecord *plans[R_RECORDS];unsigned i,j,plans_n=0;uint64_t bytes=0;
+  if(!r->count)return 1; /* An anchor before first BASE has no admitted files. */
+  if(!base->baseline.present||!base->pack_file.present||strcmp(base->pack_file.sha,base->pack)||
+     base->preimage.present!=base->before.present||
+     (base->preimage.present&&!lm_mirror_same_bytes(&base->preimage,&base->before)))return rr(r,e,"recovery-base-evidence-binding");
+  if(!rtoken(base->base_token)||!rp(directory,r->root,base->base_token,r,e)||!rp(path,directory,"baseline.bin",r,e)||
+     !rimmutable(r,path,&base->baseline,&bytes,e))return 0;
+  snprintf(name,sizeof(name),"pack-%s.bin",base->run);
+  if(!rp(path,r->root,name,r,e)||!rimmutable(r,path,&base->pack_file,&bytes,e))return 0;
+  snprintf(name,sizeof(name),"before-%s.bin",base->run);
+  if(!rp(path,r->root,name,r,e)||!rimmutable(r,path,&base->preimage,&bytes,e))return 0;
+  /* Plan filenames belong to their original PREP producer. Later OPENING or
+   * RESTORE records may carry that descriptor with a different invocation run.
+   * Work/restore files are intentionally excluded: publication consumes them. */
+  for(i=0;i<r->count;i++){
+    const RRecord *x=&r->records[i];
+    if(x->generation!=r->generation||x->phase!=RP_PREP)continue;
+    if(!x->plan.present||!x->after.present||!lm_mirror_same_bytes(&x->plan,&x->after))return rr(r,e,"recovery-plan-byte-binding");
+    for(j=0;j<plans_n;j++)if(!strcmp(plans[j]->run,x->run))break;
+    if(j<plans_n){if(!rf_same(&plans[j]->plan,&x->plan))return rr(r,e,"recovery-plan-run-rebound");continue;}
+    plans[plans_n++]=x;snprintf(name,sizeof(name),"plan-%s.bin",x->run);
+    if(!rp(path,r->root,name,r,e)||!rimmutable(r,path,&x->plan,&bytes,e))return 0;
+  }
+  return 1;
+}
 /* Canonical append graph. A record is never accepted merely because its hash is
  * present: every edge, generation and immutable baseline binding is checked. */
 static int rchain(lm_recovery *r,lm_err *e){
@@ -180,7 +217,7 @@ static int rchain(lm_recovery *r,lm_err *e){
   }
   if(seen<r->count)return rr(r,e,"recovery-record-removed");
   {DIR *d=opendir(r->root);struct dirent *v;if(!d)return rr(r,e,"recovery-root-read");while((v=readdir(d))){unsigned n;char tail;if(!strncmp(v->d_name,"record-",7)&&(sscanf(v->d_name,"record-%u.json%c",&n,&tail)!=1||n>=R_RECORDS||strlen(v->d_name)!=14)){closedir(d);return rr(r,e,"recovery-foreign-record");}}closedir(d);}
-  r->count=seen;r->base=base;r->generation=base.generation;return rguard(r,e);
+  r->count=seen;r->base=base;r->generation=base.generation;return rguard(r,e)&&ractive_evidence(r,e);
 }
 static int rappend(lm_recovery *r,RRecord *x,int sync,lm_err *e){char p[4096];lm_mirror_file id;if(r->count>=R_RECORDS||r->attempt_records>=R_RESERVE)return rr(r,e,"recovery-record-capacity");if(!rchain(r,e))return 0;x->ordinal=r->count;strcpy(x->run,r->nonce);strcpy(x->previous,r->count?r->record_ids[r->count-1].sha:r->anchor_id.sha);if(!rname(r,p,r->count,e)||!rrecord_write(r,p,x,&id,sync,e))return 0;r->records[r->count]=*x;r->record_ids[r->count++]=id;r->attempt_records++;return rchain(r,e);}
 static int rlease(lm_recovery *r,int create,lm_err *e){char p[4096],id[33];struct stat s;lm_mirror_file before;if(!rp(p,r->root,"lease",r,e))return 0;if(create&&!lr_write_new(r,p,r->nonce,32,e))return 0;if(!lr_snapshot(r,p,1,32,&before,NULL,NULL,e)||!before.present)return rr(r,e,"recovery-lease-missing");if(r->lease_id.present&&!rf_same(&before,&r->lease_id))return rr(r,e,"recovery-lease-replaced");r->lease=open(p,O_RDWR|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC);if(r->lease<0)return rr(r,e,"recovery-lease-open");if(fstat(r->lease,&s)){r->quarantined++;return rr(r,e,"recovery-lease-unknown-fd");}rid(&s,id);if(!strcmp(id,r->target_id)){r->quarantined++;return rr(r,e,"recovery-lease-target-fd");}if(strcmp(id,before.identity)||!S_ISREG(s.st_mode)||s.st_nlink!=1)return rr(r,e,"recovery-lease-fd-identity");if(flock(r->lease,LOCK_EX|LOCK_NB))return rr(r,e,"recovery-lease-busy");r->lease_id=before;return rsame(r,p,&before,1,e);/* lease intentionally retained through process exit */}
