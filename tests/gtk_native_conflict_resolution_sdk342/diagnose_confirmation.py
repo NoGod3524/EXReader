@@ -65,7 +65,18 @@ for trial in range(3):
         wait(lambda:buttons('Resolve versions',nodes()))
         tree=nodes();capture('01-conflict',tree);resolve=buttons('Resolve versions',tree);assert len(resolve)==1
         save=buttons('Save',tree);assert len(save)==1 and not save[0].getState().contains(pyatspi.STATE_SENSITIVE)
-        click(resolve[0]);wait(lambda:named('Yes',nodes()))
+        # The previous exact probe retained the AT-SPI doAction failure. Compare
+        # the real mnemonic here, without entering GTK's modal loop via AT-SPI.
+        dialogs=subprocess.check_output(['xdotool','search','--onlyvisible','--all','--pid',str(host.process.pid),'--name','^Book details$'],text=True).split()
+        assert len(dialogs)==1;command('xdotool','windowactivate','--sync',dialogs[0])
+        assert command('xdotool','getactivewindow')==dialogs[0]
+        report['resolve_activation']='Original native Alt+R mnemonic, not AT-SPI doAction'
+        host.key('alt+r')
+        visible=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(host.process.pid)],text=True).split()
+        report['windows_after_resolve']=[{'id':w,'title':command('xdotool','getwindowname',w)} for w in visible]
+        print('GTK_CONFIRMATION_NATIVE_ACTIVATION '+json.dumps(report['windows_after_resolve']),flush=True)
+        command('import','-window','root',out/'native-activation.png')
+        wait(lambda:named('Yes',nodes()))
         tree=nodes();capture('02-confirmation',tree)
         raw=named('Yes',tree);yes=buttons('Yes',tree)
         report['raw_yes_matches']=rows(raw);report['actionable_yes_matches']=rows(yes)
@@ -77,6 +88,8 @@ for trial in range(3):
         report.update(complete=True,graph_unchanged=True,program_sha256=sha(program));results.append(report)
     except Exception:
         report['error']=traceback.format_exc()
+        try:command('import','-window','root',out/'failure-screen.png')
+        except Exception:report['screen_capture_error']=traceback.format_exc()
         try:capture('failure',nodes())
         except Exception:report['capture_error']=traceback.format_exc()
         raise
