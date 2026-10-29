@@ -41,13 +41,19 @@ class Interactions(sample.Sampler):
             self.launch_once(index)
         self.write_evidence()
 
-    def effect_and_paint(self, watch, since, predicate, stamp, handle, what, timeout=180):
+    def effect_and_paint(self, watch, since, predicate, stamp, handle, what, timeout=180, need_paint=True):
         previous = self.current_paint(watch)
         index, event, _ = self.wait_after(
             watch, lambda s: predicate(s) and sample.settled(s), timeout, since, stamp)
         if index is None:
             self.record(handle, 'failed', note='%s: %s' % (what, event))
             return None
+        if not need_paint:
+            # The shelf list box is not the page widget whose draw advances painted_generation:
+            # this sample ends at the host observation showing the new top row, not at a repaint.
+            self.record(handle, 'ok', start=stamp, end=event['at'], event=event,
+                        note='state observation; no repaint evidence for the shelf widget')
+            return event
         paint_index, paint_event, detail = self.first_paint(watch, previous, since, index, timeout, stamp)
         if paint_index is None:
             self.record(handle, 'failed', start=stamp, end=event['at'],
@@ -80,7 +86,7 @@ class Interactions(sample.Sampler):
                 subprocess.run(['xdotool', 'click', '--repeat', '4', '--delay', '0', button],
                                check=True, timeout=30)
                 if self.effect_and_paint(watch, since, lambda s: s['host'].get('shelf_top_id') != top,
-                                         stamp, metric, 'shelf top row change') is None:
+                                         stamp, metric, 'shelf top row change', need_paint=False) is None:
                     return
 
     def scenario_reader(self, index, host, watch):

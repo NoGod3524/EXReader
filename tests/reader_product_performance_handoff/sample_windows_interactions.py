@@ -19,7 +19,7 @@ import perf_windows as P  # noqa: E402
 
 SCROLL_STEPS = 3
 FONT_STEPS = 2
-RESULT = {'shelf_scroll_down': [], 'shelf_scroll_up': [], 'font_bigger': [], 'font_smaller': [], 'faults': []}
+RESULT = {'shelf_scroll_down': [], 'shelf_scroll_up': [], 'font_bigger': [], 'font_smaller': [], 'font_order': [], 'faults': []}
 
 
 def timed(host, action, changed, timeout=60):
@@ -41,15 +41,22 @@ def scroll(host):
 
 
 def fonts(host):
-    for name, button in (('font_bigger', 'font_inc'), ('font_smaller', 'font_dec')):
-        for _ in range(FONT_STEPS):
-            label = host.label()
-            try:
-                RESULT[name].append(timed(host, lambda: host.click(button), lambda: host.label() != label, 90))
-            except Exception as error:
-                RESULT['faults'].append('%s: %s' % (name, error))
-                return
-        # keep the next launch's resume page as close to the original as possible
+    """Two bigger and two smaller clicks. The font size persists and is clamped, so a launch that
+    starts at the upper limit runs the smaller clicks first; the order used is recorded."""
+    steps = [('font_bigger', 'font_inc'), ('font_smaller', 'font_dec')]
+    for attempt, order in enumerate((steps, steps[::-1])):
+        mark = {name: len(RESULT[name]) for name, _ in steps}
+        try:
+            for name, button in order * FONT_STEPS:
+                label = host.label()
+                RESULT[name].append(timed(host, lambda: host.click(button), lambda: host.label() != label, 20))
+            RESULT['font_order'].append('bigger-first' if attempt == 0 else 'smaller-first')
+            break
+        except Exception as error:
+            for name, count in mark.items():
+                del RESULT[name][count:]
+            if attempt == 1:
+                RESULT['faults'].append('font: %s' % error)
     host.wait_enabled('next', 30)
 
 
@@ -92,4 +99,4 @@ if __name__ == '__main__':
     # The wrapped observation is incomplete by design (only two cohorts); its own verdict
     # is printed above and kept, but this run is judged by the interaction samples alone.
     print('WRAPPED-OBSERVATION-EXIT %s' % code)
-    sys.exit(1 if RESULT['faults'] or any(not RESULT[k] for k in RESULT if k != 'faults') else 0)
+    sys.exit(1 if RESULT['faults'] or any(not RESULT[k] for k in RESULT if k not in ('faults', 'font_order')) else 0)
