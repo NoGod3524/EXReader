@@ -246,9 +246,17 @@ def inspect_retained(dependency_profile=False):
                     comparisons=[];detail['comparisons']=comparisons
                     for key in expected:
                         matches=normalized.get(C.canonical_dependency(key,item['original_build']),[])
+                        original_object_path=item['object_files'][key]
+                        retained_path=original_object_path.replace('\\','/')
+                        C.require(retained_path.startswith('trees/'+Path(item['original_build']).name+'/') and
+                            all(part not in ('','.','..') and ':' not in part for part in retained_path.split('/')),
+                            'unsafe retained Windows object spelling')
+                        # Original ZIP members are safe POSIX names; only diagnostic
+                        # materialization changes separators, never the coverage key.
                         comparisons.append(dict(expected=key,exact_present=key in groups,lexical_matches=matches,
                             matched_statuses={k:statuses[k] for k in matches},
-                            retained_object=dict(path=item['object_files'][key],**C.record(folder/item['object_files'][key]))))
+                            retained_object=dict(original_spelling=original_object_path,path=retained_path,
+                                **C.record(folder/retained_path))))
                     detail.update(
                         canonical_collisions={k:v for k,v in normalized.items() if len(v)>1},
                         original_build=item['original_build'],cache=dict(path=cache_path,**C.record(folder/cache_path)),
