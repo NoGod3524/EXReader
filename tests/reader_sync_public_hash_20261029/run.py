@@ -4,10 +4,13 @@ import json
 import os
 from pathlib import Path
 import re
+import selectors
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
+import time
 import package_contract as C
 
 ROOT,HERE,OUT,P=C.ROOT,C.HERE,C.OUT,C.P
@@ -324,6 +327,74 @@ target_link_libraries(adapter PRIVATE EXReaderSync::reader_sync EXReaderOPDSHash
         scope='Android digest adapter source runtime and installed public argument probes; no real Sync/WebDAV hash path')
     return result
 
+def capture_raw_channels(argv,cwd,env,stdout_path,stderr_path,limit=C.HOST_QUERY_LIMIT,timeout=60):
+    """Bounded Linux pipe transport. Partial failures are never complete evidence."""
+    C.actions();C.require(sys.platform=='linux','raw host capture requires the Linux Actions producer')
+    C.require(0<limit<=C.HOST_QUERY_LIMIT and 0<timeout<=60,'raw capture limits outside fixed budget')
+    stdout_path,stderr_path=Path(stdout_path),Path(stderr_path)
+    C.require(stdout_path!=stderr_path and not stdout_path.exists() and not stderr_path.exists(),'raw capture destination occupied/aliased')
+    stdout_path.parent.mkdir(parents=True,exist_ok=True);stderr_path.parent.mkdir(parents=True,exist_ok=True)
+    process=None;failure=None;complete=False;settled=False;deadline=time.monotonic()+timeout
+    try:
+        with stdout_path.open('xb') as stdout_file,stderr_path.open('xb') as stderr_file,selectors.DefaultSelector() as selector:
+            process=subprocess.Popen(argv,cwd=cwd,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
+            for name,pipe,into in (('stdout',process.stdout,stdout_file),('stderr',process.stderr,stderr_file)):
+                os.set_blocking(pipe.fileno(),False);selector.register(pipe,selectors.EVENT_READ,[name,into,0])
+            while selector.get_map():
+                remaining=deadline-time.monotonic()
+                if remaining<=0:failure='timeout';break
+                for key,_ in selector.select(min(remaining,0.1)):
+                    name,into,size=key.data
+                    block=os.read(key.fd,min(65536,limit-size+1))
+                    if not block:selector.unregister(key.fileobj);continue
+                    into.write(block);key.data[2]+=len(block)
+                    if key.data[2]>limit:failure='overflow_'+name;break
+                if failure:break
+            if failure is None:
+                remaining=deadline-time.monotonic()
+                if remaining<=0:failure='timeout'
+                else:
+                    try:process.wait(timeout=remaining)
+                    except subprocess.TimeoutExpired:failure='timeout'
+                if failure is None:
+                    settled=True
+                    if process.returncode!=0:failure='nonzero_exit'
+                    else:complete=True
+    except Exception:
+        complete=False
+        failure='spawn_error' if process is None else 'capture_io_error'
+    finally:
+        if process is not None:
+            if not settled:
+                try:
+                    try:os.killpg(process.pid,signal.SIGTERM)
+                    except ProcessLookupError:pass
+                    try:process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:pass
+                    # Parent may have exited while an owned child holds a pipe.
+                    try:os.killpg(process.pid,signal.SIGKILL)
+                    except ProcessLookupError:pass
+                    process.wait(timeout=5)
+                except Exception:complete=False;failure='cleanup_failed'
+            for pipe in (process.stdout,process.stderr):
+                if pipe is not None:
+                    try:pipe.close()
+                    except Exception:complete=False;failure='capture_io_error'
+    return dict(returncode=None if process is None else process.returncode,
+        capture_complete=complete,capture_failure=failure)
+
+def raw_host_query(h,folder):
+    argv=['ninja','-C',Path(folder).as_posix(),'-t','query','exreader_product']
+    output,stderr=C.HOST_QUERY_STDOUT,C.HOST_QUERY_STDERR
+    status=capture_raw_channels(argv,ROOT,h.ENV,PROOF/output,PROOF/stderr)
+    row=dict(argv=argv,cwd=ROOT.as_posix(),output=output,output_record=C.record(PROOF/output),
+        expected_returncode=0,subjects={},capture_kind='separate-raw-v1',stderr=stderr,stderr_record=C.record(PROOF/stderr),**status)
+    h.COMMANDS.append(row);C.save(PROOF/'commands.json',h.COMMANDS)
+    print('$ '+' '.join(argv)+' [separate raw stdout/stderr]',flush=True)
+    # Evidence is durable before any identity, exit, stderr or parser refusal.
+    text,_,_=C.host_query_streams(h.COMMANDS,lambda p:(PROOF/p).read_bytes(),Path(folder).as_posix(),ROOT.as_posix())
+    return text
+
 def android_host(h):
     home=ROOT/'examples/android/app/src/main/cpp'
     candidates=[]
@@ -335,8 +406,8 @@ def android_host(h):
         C.require(cache.parent.resolve()==cache.parent and home.resolve()==home,'actual Android cache/source path alias')
         candidates.append((cache.parent,selection))
     C.require(len(candidates)==1,'unique actual Android product build required')
-    folder,selection=candidates[0];alias='links/android-host-alias.log'
-    query=h.run(['ninja','-C',folder,'-t','query','exreader_product'],output=alias)
+    folder,selection=candidates[0];alias=C.HOST_QUERY_STDOUT
+    query=raw_host_query(h,folder)
     inputs,_=P.ninja_explicit_inputs(query,'exreader_product','phony')
     C.require(len(inputs)==1,'unique actual Android product output')
     image=(folder/inputs[0]).resolve()
@@ -350,7 +421,7 @@ def android_host(h):
     return dict(original_build=folder.as_posix(),original_image=image.as_posix(),image_node=inputs[0],
         image=image_path,image_record=C.record(image),map=retain(mapfile),map_path=mapfile.as_posix(),
         cache=retain(folder/'CMakeCache.txt'),cache_selection=selection,
-        alias=alias,commands=commands,symbols=symbols,actual_link_command=line,
+        alias=alias,alias_stderr=C.HOST_QUERY_STDERR,commands=commands,symbols=symbols,actual_link_command=line,
         final_image_runtime_claim=False)
 
 def snapshot_probes(h):

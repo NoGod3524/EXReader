@@ -7,12 +7,137 @@ import json
 import os
 from pathlib import Path
 import re
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 import package_contract as C
 
 def encoded(value):return (json.dumps(value,indent=2,sort_keys=True)+'\n').encode()
+
+def stream_fixture(stdout=None,stderr=b''):
+    if stdout is None:stdout=b'exreader_product:\n  input: phony\n    /repo/libexreader_product.so\n  outputs:\n'
+    files={C.HOST_QUERY_STDOUT:stdout,C.HOST_QUERY_STDERR:stderr}
+    record=lambda raw:dict(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+    row=dict(argv=['ninja','-C','/repo/build','-t','query','exreader_product'],cwd='/repo',
+        output=C.HOST_QUERY_STDOUT,output_record=record(stdout),stderr=C.HOST_QUERY_STDERR,stderr_record=record(stderr),
+        returncode=0,expected_returncode=0,subjects={},capture_kind='separate-raw-v1',capture_complete=True,capture_failure=None)
+    return row,files
+
+def stream_transport_controls():
+    """New collector controls, never a recovered historical stream split."""
+    C.actions();R=C.load('tests/reader_sync_public_hash_20261029/run.py','sync_raw_channel_controls')
+    results={}
+    cases={
+        'exact-raw':("import os;os.write(1,b'A\\r\\nB');os.write(2,b'ERR\\x00\\xff')",128,5,True,None),
+        'nonzero':("import os;os.write(1,b'OUT');os.write(2,b'ERR');raise SystemExit(7)",128,5,False,'nonzero_exit'),
+        'stdout-overflow':("import os;os.write(1,b'X'*4096)",128,5,False,'overflow_stdout'),
+        'stderr-overflow':("import os;os.write(2,b'Y'*4096)",128,5,False,'overflow_stderr'),
+        'timeout':("import os,time;os.write(1,b'PARTIAL');time.sleep(20)",128,1,False,'timeout'),
+        'both-pipes':("import os;[(os.write(1,b'A'*1024),os.write(2,b'B'*1024)) for _ in range(64)]",131072,5,True,None),
+        'child-holds-pipe':("import os,time;pid=os.fork();time.sleep(20) if pid==0 else os._exit(0)",128,1,False,'timeout')}
+    with tempfile.TemporaryDirectory() as temp:
+        root=Path(temp)
+        for name,(code,limit,timeout,complete,failure) in cases.items():
+            out=root/(name+'.stdout');err=root/(name+'.stderr')
+            status=R.capture_raw_channels([sys.executable,'-c',code],C.ROOT,dict(os.environ),out,err,limit,timeout)
+            C.require(status['capture_complete'] is complete and status['capture_failure']==failure,'transport control status differs: '+name)
+            a,b=out.read_bytes(),err.read_bytes()
+            C.require(len(a)<=limit+1 and len(b)<=limit+1,'transport control exceeded actual capture bound')
+            if name=='exact-raw':C.require(a==b'A\r\nB' and b==b'ERR\x00\xff','raw channels altered')
+            if name=='nonzero':C.require(a==b'OUT' and b==b'ERR' and status['returncode']==7,'nonzero evidence lost')
+            if name=='both-pipes':C.require(a==b'A'*65536 and b==b'B'*65536,'concurrent complete streams differ')
+            if name=='timeout':C.require(a==b'PARTIAL','timeout partial evidence lost')
+            row,files=stream_fixture();row.update(status)
+            if not complete:
+                try:C.host_query_streams([row],files.__getitem__,'/repo/build','/repo')
+                except ValueError:pass
+                else:raise ValueError('incomplete/nonzero transport admitted: '+name)
+            results[name]=dict(status,stdout=C.record(out),stderr=C.record(err),synthetic=True)
+    return results
+
+class StreamCaptureControls(unittest.TestCase):
+    def test_raw_transport_controls(self):
+        self.assertEqual(len(stream_transport_controls()),7)
+
+    def test_completed_process_lifecycle(self):
+        R=C.load('tests/reader_sync_public_hash_20261029/run.py','sync_completed_channel_control')
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            with patch.object(R.os,'killpg') as kill:
+                status=R.capture_raw_channels([sys.executable,'-c','raise SystemExit(7)'],C.ROOT,dict(os.environ),root/'out',root/'err',128,5)
+                self.assertEqual(status,dict(returncode=7,capture_complete=False,capture_failure='nonzero_exit'))
+                kill.assert_not_called()
+            original=Path.open
+            class ClosingFailure:
+                def __init__(self,file):self.file=file
+                def __enter__(self):return self.file.__enter__()
+                def __exit__(self,*args):self.file.__exit__(*args);raise OSError('fixed close-failure control')
+            def opening(path,*args,**kwargs):
+                file=original(path,*args,**kwargs)
+                return ClosingFailure(file) if path==root/'close-out' and args==('xb',) else file
+            with patch.object(Path,'open',opening),patch.object(R.os,'killpg') as kill:
+                status=R.capture_raw_channels([sys.executable,'-c','pass'],C.ROOT,dict(os.environ),root/'close-out',root/'close-err',128,5)
+                self.assertEqual(status,dict(returncode=0,capture_complete=False,capture_failure='capture_io_error'))
+                kill.assert_not_called()
+
+    def test_exact_channel_policy(self):
+        for stderr in (b'',C.HOST_QUERY_WARNING):
+            row,files=stream_fixture(stderr=stderr)
+            self.assertEqual(C.host_query_streams([row],files.__getitem__,'/repo/build','/repo')[1],['/repo/libexreader_product.so'])
+        for stderr in (C.HOST_QUERY_WARNING*2,C.HOST_QUERY_WARNING+b'\n',b'\r'+C.HOST_QUERY_WARNING,
+                       C.HOST_QUERY_WARNING.replace(b'old',b'bad'),C.HOST_QUERY_WARNING.replace(b'\n',b'\r\n'),b'foreign',b'\xff'):
+            row,files=stream_fixture(stderr=stderr)
+            with self.assertRaisesRegex(ValueError,'unrecognized host query stderr'):
+                C.host_query_streams([row],files.__getitem__,'/repo/build','/repo')
+
+    def test_stdout_never_filtered(self):
+        row,files=stream_fixture();valid=files[C.HOST_QUERY_STDOUT]
+        for raw in (C.HOST_QUERY_WARNING+valid,b'\n'+valid,valid.replace(b'phony',b'foreign'),valid.replace(b'exreader_product:',b'foreign:')):
+            row,files=stream_fixture(stdout=raw)
+            with self.assertRaisesRegex(ValueError,'exact Ninja node/rule binding'):
+                C.host_query_streams([row],files.__getitem__,'/repo/build','/repo')
+        row,files=stream_fixture(stdout=b'\xff')
+        with self.assertRaises(UnicodeDecodeError):C.host_query_streams([row],files.__getitem__,'/repo/build','/repo')
+
+    def test_channel_identity_refusals(self):
+        mutations={'argv':lambda r:r['argv'].__setitem__(-1,'foreign'), 'cwd':lambda r:r.update(cwd='/foreign'),
+            'kind':lambda r:r.update(capture_kind='merged'), 'exit':lambda r:r.update(returncode=1),
+            'incomplete':lambda r:r.update(capture_complete=False), 'failure':lambda r:r.update(capture_failure='timeout'),
+            'path':lambda r:r.update(stderr='../foreign'), 'hash':lambda r:r['stderr_record'].update(sha256='0'*64),
+            'extra':lambda r:r.update(unexpected=True), 'expected-exit':lambda r:r.update(expected_returncode=1)}
+        for name,mutate in mutations.items():
+            row,files=stream_fixture();mutate(row)
+            with self.subTest(name=name),self.assertRaises(ValueError):C.host_query_streams([row],files.__getitem__,'/repo/build','/repo')
+        row,files=stream_fixture()
+        for rows in ([row,row],[row,dict(output=C.HOST_QUERY_STDERR)]):
+            with self.assertRaises(ValueError):C.host_query_streams(rows,files.__getitem__,'/repo/build','/repo')
+        for bad in ({C.HOST_QUERY_STDOUT:files[C.HOST_QUERY_STDOUT]},dict(files,**{C.HOST_QUERY_STDERR:b'changed'})):
+            with self.assertRaises(ValueError):C.host_query_streams([row],bad.__getitem__,'/repo/build','/repo')
+        row,files=stream_fixture(stdout=b'X'*(C.HOST_QUERY_LIMIT+1))
+        with self.assertRaisesRegex(ValueError,'channel byte bound'):C.host_query_streams([row],files.__getitem__,'/repo/build','/repo')
+
+    def test_exact_four_path_scope(self):
+        good={p:'M' for p in C.STREAM_PATHS};C.stream_scope(good)
+        for path in ('apps/reader/sync/src/sync.cpp',C.PUBLIC_OVERRIDE,C.WORKFLOW,
+            'tests/reader_sync_public_hash_20261029/source_lock.json','tests/reader_sync_public_hash_20261029/sync_probe.cpp',
+            'docs/reader-total-progress/reader-sync-public-hash-20261029.md','extras/opds/src/opds_core.c'):
+            with self.subTest(path=path),self.assertRaisesRegex(ValueError,'exact four-path'):
+                C.stream_scope(dict(good,**{path:'M'}))
+        for path in C.STREAM_PATHS:
+            changed=dict(good);changed.pop(path)
+            with self.assertRaises(ValueError):C.stream_scope(changed)
+
+def stream_prerequisite_controls():
+    """Replay current-source controls in retained Actions, without native payloads."""
+    C.actions();stream=io.StringIO()
+    names=('test_completed_process_lifecycle','test_exact_channel_policy','test_stdout_never_filtered',
+        'test_channel_identity_refusals','test_exact_four_path_scope')
+    outcome=unittest.TextTestRunner(stream=stream).run(unittest.TestSuite(StreamCaptureControls(name) for name in names))
+    C.require(outcome.wasSuccessful() and outcome.testsRun==len(names),'new raw-channel contract controls failed: '+stream.getvalue())
+    return dict(contract_tests=outcome.testsRun,transport=stream_transport_controls(),
+        synthetic_only=True,historical_split_reconstructed=False)
 
 def cache_fixture(kind='UNINITIALIZED'):
     return '\n'.join((
@@ -386,6 +511,7 @@ def evidence_mutations(folder,source=None):
             commands=json.loads((folder/'commands.json').read_text())
             for row in commands:
                 if row['output'] in updates:row['output_record']=C.record(folder/row['output'])
+                if row.get('stderr') in updates:row['stderr_record']=C.record(folder/row['stderr'])
                 for p in row['subjects']:
                     if p in updates:row['subjects'][p]=C.record(folder/p)
             (folder/'commands.json').write_bytes(encoded(commands))
@@ -453,6 +579,15 @@ def evidence_mutations(folder,source=None):
         commands=json.loads((folder/'commands.json').read_text());next(r for r in commands if r['output']=='runtime/internal.log')['argv']=['fabricated-marker']
         reject('fabricated-runtime',{'commands.json':encoded(commands)},'control runtime command differs')
     if target=='android':
+        host=report['sync']['host'];stdout=host['alias'];stderr=host['alias_stderr']
+        reject('host-query-warning-on-stdout',{stdout:C.HOST_QUERY_WARNING+(folder/stdout).read_bytes()},'exact Ninja node/rule binding')
+        reject('host-query-unknown-stderr',{stderr:b'unknown warning\n'},'unrecognized host query stderr')
+        reject('host-query-duplicate-warning',{stderr:C.HOST_QUERY_WARNING*2},'unrecognized host query stderr')
+        reject('host-query-swapped-channels',{stdout:(folder/stderr).read_bytes(),stderr:(folder/stdout).read_bytes()},'unrecognized host query stderr')
+        commands=json.loads((folder/'commands.json').read_text());next(r for r in commands if r['output']==stdout)['capture_complete']=False
+        reject('host-query-incomplete',{'commands.json':encoded(commands)},'host query capture incomplete')
+        commands=json.loads((folder/'commands.json').read_text());next(r for r in commands if r['output']==stdout)['stderr']='../foreign'
+        reject('host-query-sidecar-path',{'commands.json':encoded(commands)},'host query stderr path collision/identity differs')
         host=report['sync']['host'];path=host['cache'];text=(folder/path).read_text()
         reject('host-duplicate-abi',{path:(text+'\nANDROID_ABI:STRING=x86_64\n').encode()},
                'duplicate/missing actual Android cache key: ANDROID_ABI')
