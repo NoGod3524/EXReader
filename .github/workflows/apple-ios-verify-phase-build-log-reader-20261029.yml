@@ -1,0 +1,402 @@
+name: Read immutable iOS Verify build failure 20261029
+on:
+  push:
+    branches: [codex/apple-ios-organization-verify-phase-build-log-reader-20261029]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  reader:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Retain reader identity before admission
+        run: |
+          mkdir -p build/ios-verify-build-reader/{evidence,refusal,private}
+          printf 'source=%s\nrun=%s\nattempt=%s\nbranch=%s\nnative_cases_run=0\nformal_credit=0\n' \
+            "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_REF_NAME" \
+            > build/ios-verify-build-reader/evidence/bootstrap.txt
+          cp build/ios-verify-build-reader/evidence/bootstrap.txt build/ios-verify-build-reader/refusal/bootstrap.txt
+      - name: Authenticate original upload and read only fixed bounded text
+        id: reader
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import copy
+          import hashlib
+          import io
+          import json
+          import math
+          import os
+          from pathlib import Path
+          import re
+          import signal
+          import stat
+          import struct
+          import subprocess
+          import sys
+          import time
+          import traceback
+          import unicodedata
+          import warnings
+          import zipfile
+
+          ROOT = Path.cwd()
+          OUT = ROOT / 'build/ios-verify-build-reader/evidence'
+          PRIVATE = ROOT / 'build/ios-verify-build-reader/private'
+          REFUSAL = ROOT / 'build/ios-verify-build-reader/refusal'
+          PARENT = '577a96334ccc2b3015e86b2580674bcbcab5dc1f'
+          BRANCH = 'codex/apple-ios-organization-verify-phase-build-log-reader-20261029'
+          WORKFLOW = '.github/workflows/apple-ios-verify-phase-build-log-reader-20261029.yml'
+          REPO = 'NoGod3524/EXReader'
+          RUN, JOB, ARTIFACT = 40844570326, 123348801079, 12884471900
+          ARTIFACT_NAME = 'ios-verify-phase-probe-40844570326-1'
+          ZIP_SIZE = 94637
+          ZIP_SHA = '4671d86c74e730b9276fed9867e4c9080c9ef64450ccefa7df02aadf2f36bba2'
+          PREPARE_SHA = '6db4739d6f3dd57fe4a8e6e18c949ce88d8d5fd95b7eb5ca4c8dd0c4bc2cca06'
+          SELECTED = ('build.log', 'build.log.stderr', 'xcode-version.stdout', 'runtimes.stdout',
+              'create-preflight.stdout', 'commands.json', 'source-guard.json', 'producer-report.json')
+          DEADLINE = time.monotonic() + 180
+          PRINTED = 0
+          COMMANDS, CONTROLS, INVENTORY, OBSERVATIONS = [], {}, {}, {}
+          SUMMARY = {'source_sha': os.environ.get('GITHUB_SHA'), 'run_id': os.environ.get('GITHUB_RUN_ID'),
+              'attempt': os.environ.get('GITHUB_RUN_ATTEMPT'), 'branch': os.environ.get('GITHUB_REF_NAME'),
+              'original_source': PARENT, 'original_run': RUN, 'original_job': JOB,
+              'original_artifact': {'id': ARTIFACT, 'bytes': ZIP_SIZE, 'sha256': ZIP_SHA},
+              'original_native_conclusion': 'failure', 'native_cases_run': 0,
+              'installed_identity_verified': False, 'product_accepted': False,
+              'root_cause_proved': False, 'formal_credit': 0, 'reader_complete': False, 'problems': []}
+
+          def require(value, message):
+              if not value:
+                  raise ValueError(message)
+
+          def check_time():
+              require(time.monotonic() < DEADLINE, 'reader deadline exhausted')
+
+          def sha(value):
+              return hashlib.sha256(value).hexdigest()
+
+          def encoded(value):
+              return (json.dumps(value, ensure_ascii=False, sort_keys=True, allow_nan=False) + '\n').encode()
+
+          def emit(value):
+              global PRINTED
+              data = encoded(value)
+              require(PRINTED + len(data) <= 512 * 1024, 'encoded stdout ceiling')
+              sys.stdout.buffer.write(data); sys.stdout.buffer.flush(); PRINTED += len(data)
+
+          def save(name, value):
+              data = encoded(value)
+              require(len(data) <= 1024 ** 2, 'receipt file ceiling')
+              (OUT / name).write_bytes(data)
+
+          def evidence_inventory():
+              count = total = 0
+              with os.scandir(OUT) as entries:
+                  for entry in entries:
+                      count += 1; info = entry.stat(follow_symlinks=False)
+                      require(count <= 128 and stat.S_ISREG(info.st_mode) and info.st_nlink == 1, 'evidence entry/type/link ceiling')
+                      total += info.st_size
+                      require(total <= 8 * 1024 ** 2, 'evidence byte ceiling')
+              return {'entries': count, 'bytes': total}
+
+          def command(argv, name, limit=256 * 1024):
+              check_time()
+              path = PRIVATE / 'original.zip' if name == 'original.zip' else OUT / name
+              err = OUT / (name + '.stderr')
+              record = {'argv': argv, 'output': name, 'timeout_seconds': 20, 'exit_code': None}
+              COMMANDS.append(record); process = None; started = time.monotonic()
+              try:
+                  with path.open('wb') as stdout, err.open('wb') as stderr:
+                      process = subprocess.Popen(argv, cwd=ROOT, stdin=subprocess.DEVNULL,
+                          stdout=stdout, stderr=stderr, start_new_session=True)
+                      while process.poll() is None:
+                          check_time(); evidence_inventory()
+                          require(time.monotonic() - started < 20, 'fixed command timeout')
+                          require(path.stat().st_size <= limit and err.stat().st_size <= 256 * 1024, 'command output ceiling')
+                          time.sleep(0.05)
+                      record['exit_code'] = process.returncode
+                      require(path.stat().st_size <= limit and err.stat().st_size <= 256 * 1024, 'completed output ceiling')
+                      require(process.returncode == 0, 'fixed command failed')
+              finally:
+                  if process is not None and process.poll() is None:
+                      os.killpg(process.pid, signal.SIGKILL); process.wait(timeout=3)
+                  for target, cap in ((path, limit), (err, 256 * 1024)):
+                      if target.exists() and target.stat().st_size > cap:
+                          with target.open('r+b') as stream: stream.truncate(cap)
+                          record['truncated'] = True
+                  record['elapsed_seconds'] = time.monotonic() - started
+                  record['output_sha256'] = sha(path.read_bytes()) if path.exists() else None
+                  save('reader-commands.json', COMMANDS)
+              check_time(); evidence_inventory()
+              return path.read_bytes()
+
+          def strict_json(raw):
+              require(len(raw) <= 1024 ** 2, 'JSON byte ceiling')
+              def pairs(items):
+                  result = {}
+                  for key, value in items:
+                      require(key not in result, 'duplicate JSON key'); result[key] = value
+                  return result
+              def nonfinite(value):
+                  raise ValueError('nonfinite JSON number')
+              value = json.loads(raw.decode('utf-8'), object_pairs_hook=pairs, parse_constant=nonfinite)
+              pending = [(value, 0)]; count = 0
+              while pending:
+                  item, depth = pending.pop(); count += 1
+                  require(depth <= 32 and count <= 20000, 'JSON structural ceiling')
+                  if isinstance(item, float): require(math.isfinite(item), 'nonfinite JSON float')
+                  if isinstance(item, dict): pending.extend((v, depth + 1) for v in item.values())
+                  elif isinstance(item, list): pending.extend((v, depth + 1) for v in item)
+              return value
+
+          def api(endpoint, name):
+              return strict_json(command(['gh', 'api', 'repos/' + REPO + '/' + endpoint], name))
+
+          def original_identity(run, jobs, artifacts):
+              require(type(run['id']) is int and run['id'] == RUN and type(run['run_attempt']) is int
+                  and run['run_attempt'] == 1 and run['head_sha'] == PARENT
+                  and run['status'] == 'completed' and run['conclusion'] == 'failure', 'original run identity differs')
+              rows = [j for j in jobs['jobs'] if j['name'] == 'Isolated transport preflight and three Verify prefixes']
+              require(len(rows) == 1 and type(rows[0]['id']) is int and rows[0]['id'] == JOB
+                  and rows[0]['head_sha'] == PARENT and rows[0]['status'] == 'completed'
+                  and rows[0]['conclusion'] == 'failure', 'original producer identity differs')
+              rows = [a for a in artifacts['artifacts'] if a['name'] == ARTIFACT_NAME]
+              require(len(rows) == 1, 'original artifact missing/ambiguous')
+              item = rows[0]
+              require(type(item['id']) is int and item['id'] == ARTIFACT and item['expired'] is False
+                  and type(item['size_in_bytes']) is int and item['size_in_bytes'] == ZIP_SIZE
+                  and item['digest'] == 'sha256:' + ZIP_SHA and item['workflow_run']['id'] == RUN
+                  and item['workflow_run']['head_sha'] == PARENT, 'original artifact identity differs')
+
+          def authenticate(raw):
+              require(len(raw) == ZIP_SIZE and sha(raw) == ZIP_SHA, 'original ZIP size/hash differs')
+
+          def unchanged(before, after):
+              require(before == after, 'original ZIP changed during reading')
+
+          def archive_read(raw, observe=None):
+              selected, inventory = {}, {}
+              with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                  infos = archive.infolist()
+                  require(len(infos) <= 128 and sum(i.file_size for i in infos) <= 4 * 1024 ** 2, 'ZIP aggregate ceiling')
+                  seen, explicit = {}, set()
+                  for item in infos:
+                      check_time(); name = item.filename; directory = item.is_dir()
+                      require(name == item.orig_filename and name and '\\' not in name
+                          and not any(ord(c) < 32 or ord(c) == 127 for c in name), 'unsafe ZIP member name')
+                      parts = (name[:-1] if directory else name).split('/')
+                      require(all(p not in ('', '.', '..') and ':' not in p for p in parts), 'unsafe ZIP member path')
+                      key = unicodedata.normalize('NFC', '/'.join(parts)).casefold()
+                      require(key not in explicit, 'duplicate/case/Unicode ZIP member'); explicit.add(key)
+                      for n in range(1, len(parts) + 1):
+                          spelling = '/'.join(parts[:n]); kind = 'dir' if n < len(parts) or directory else 'file'
+                          key = unicodedata.normalize('NFC', spelling).casefold()
+                          require(key not in seen or seen[key] == (spelling, kind), 'implicit directory/member alias')
+                          seen[key] = (spelling, kind)
+                      require(stat.S_IFMT(item.external_attr >> 16) in (0, stat.S_IFDIR if directory else stat.S_IFREG)
+                          and not item.flag_bits & 1, 'ZIP link/special/encrypted member refused')
+                      require(item.compress_type in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
+                          and 0 <= item.file_size <= 1024 ** 2
+                          and (not directory or (item.file_size == 0 and item.CRC == 0)), 'ZIP member size/method/empty-directory CRC differs')
+                  total = 0
+                  for item in infos:
+                      size = 0; digest = hashlib.sha256(); chunks = []
+                      with archive.open(item) as stream:
+                          for block in iter(lambda: stream.read(65536), b''):
+                              check_time(); size += len(block); total += len(block)
+                              require(size <= item.file_size and total <= 4 * 1024 ** 2, 'ZIP stream ceiling')
+                              digest.update(block)
+                              if item.filename in SELECTED: chunks.append(block)
+                      require(size == item.file_size, 'ZIP declared/stream size differs')
+                      row = {'kind': 'dir' if item.is_dir() else 'file', 'bytes': size,
+                          'sha256': digest.hexdigest()}; inventory[item.filename] = row
+                      content = b''.join(chunks) if item.filename in SELECTED else None
+                      if content is not None: selected[item.filename] = content
+                      if observe is not None: observe(item.filename, row, content)
+                  # Preserve available authenticated observations before a missing-file
+                  # completeness refusal. Unsafe name/type metadata still refuses first.
+                  require(set(selected) == set(SELECTED), 'required selected file missing')
+              return selected, inventory
+
+          def preview(name, raw):
+              raw.decode('utf-8')  # Entire selected file must be valid before clipping.
+              width = 32768
+              while True:
+                  if len(raw) <= width * 2:
+                      prefix, suffix = raw.decode('utf-8'), ''
+                  else:
+                      # Full UTF-8 was validated; ignore only a clipped boundary codepoint.
+                      prefix = raw[:width].decode('utf-8', errors='ignore')
+                      suffix = raw[-width:].decode('utf-8', errors='ignore')
+                  row = {'path': name, 'bytes': len(raw), 'sha256': sha(raw), 'prefix': prefix, 'suffix': suffix,
+                      'prefix_bytes': len(prefix.encode()), 'suffix_bytes': len(suffix.encode()),
+                      'truncated': len(prefix.encode()) + len(suffix.encode()) < len(raw)}
+                  if len(encoded(row)) <= 48 * 1024: return row
+                  width //= 2
+                  require(width >= 1, 'preview cannot fit encoded ceiling')
+
+          def controls():
+              base = {name: b'fixture text' for name in SELECTED}
+              def make(items):
+                  stream = io.BytesIO()
+                  with warnings.catch_warnings():
+                      warnings.simplefilter('ignore', UserWarning)
+                      with zipfile.ZipFile(stream, 'w', compression=zipfile.ZIP_STORED) as archive:
+                          for name, content, mode in items:
+                              info = zipfile.ZipInfo(name); info.external_attr = mode << 16
+                              archive.writestr(info, content)
+                  return stream.getvalue()
+              rows = [(n, v, stat.S_IFREG | 0o600) for n, v in base.items()]
+              valid = make(rows)
+              got, inv = archive_read(valid); unchanged(sha(valid), sha(valid))
+              require(got == base and len(inv) == 8, 'valid ZIP control failed')
+              CONTROLS['valid_archive_read_only'] = True
+              clipped = preview('unicode-control', ('汉字\n' * 20000).encode())
+              require(clipped['truncated'] and len(encoded(clipped)) <= 48 * 1024, 'bounded UTF8 preview control failed')
+              CONTROLS['bounded_utf8_encoded_preview'] = True
+              def negative(name, action):
+                  try: action()
+                  except (ValueError, KeyError, zipfile.BadZipFile, UnicodeDecodeError): CONTROLS[name] = True
+                  else: raise ValueError('negative control admitted: ' + name)
+              observed_missing = []
+              negative('missing_selected', lambda: archive_read(make(rows[1:]),
+                  lambda name, row, raw: observed_missing.append(name)))
+              require(set(observed_missing) == set(SELECTED[1:]), 'missing-file partial observations lost')
+              CONTROLS['missing_selected_retains_partial'] = True
+              negative('duplicate_selected', lambda: archive_read(make(rows + [rows[0]])))
+              with_directory = make(rows + [('directory/', b'', stat.S_IFDIR | 0o700)])
+              _, directory_inventory = archive_read(with_directory)
+              require(directory_inventory['directory/'] == {'kind': 'dir', 'bytes': 0, 'sha256': sha(b'')},
+                  'directory inventory/CRC control failed')
+              CONTROLS['empty_directory_read_and_hashed'] = True
+              bad_directory_header = bytearray(with_directory)
+              bad_directory_header[bad_directory_header.index(b'directory/')] = ord('x')
+              negative('corrupt_directory_local_header', lambda: archive_read(bytes(bad_directory_header)))
+              for name, bad in [('traversal', '../bad'), ('absolute', '/bad'), ('backslash', 'a\\b'),
+                      ('colon', 'a:b'), ('dot', './bad'), ('empty_component', 'a//b'), ('control', 'a\x01b'), ('del', 'a\x7fb')]:
+                  negative(name, lambda bad=bad: archive_read(make(rows + [(bad, b'x', stat.S_IFREG | 0o600)])))
+              for name, additions in [('case_alias', [('A', b'x'), ('a', b'x')]),
+                      ('unicode_alias', [('é', b'x'), ('e\u0301', b'x')]),
+                      ('implicit_directory_alias', [('A/x', b'x'), ('a/y', b'x')]),
+                      ('file_directory_alias', [('a', b'x'), ('a/x', b'x')])]:
+                  negative(name, lambda additions=additions: archive_read(make(rows + [(n, b, stat.S_IFREG | 0o600) for n, b in additions])))
+              for name, mode in [('symlink', stat.S_IFLNK), ('special', stat.S_IFIFO)]:
+                  negative(name, lambda mode=mode: archive_read(make(rows + [('bad', b'x', mode | 0o600)])))
+              negative('entry_limit', lambda: archive_read(make(rows + [('n' + str(i), b'', stat.S_IFREG | 0o600) for i in range(129)])))
+              negative('member_limit', lambda: archive_read(make(rows + [('large', b'x' * (1024 ** 2 + 1), stat.S_IFREG | 0o600)])))
+              negative('aggregate_limit', lambda: archive_read(make(rows + [('large' + str(i), b'x' * 1024 ** 2, stat.S_IFREG | 0o600) for i in range(5)])))
+              corrupt = bytearray(valid); corrupt[corrupt.index(b'fixture text')] ^= 1
+              negative('corrupt_crc', lambda: archive_read(bytes(corrupt)))
+              mismatch = bytearray(valid); offset = mismatch.index(b'PK\x01\x02') + 24
+              struct.pack_into('<I', mismatch, offset, len(b'fixture text') + 1)
+              negative('declared_stream_mismatch', lambda: archive_read(bytes(mismatch)))
+              negative('invalid_selected_utf8', lambda: preview('bad', b'\xff'))
+              negative('duplicate_json_key', lambda: strict_json(b'{"a":1,"a":2}'))
+              for name, raw in [('json_nan', b'NaN'), ('json_infinity', b'Infinity'), ('json_overflow', b'1e999')]:
+                  negative(name, lambda raw=raw: strict_json(raw))
+              run = {'id': RUN, 'run_attempt': 1, 'head_sha': PARENT, 'status': 'completed', 'conclusion': 'failure'}
+              jobs = {'jobs': [{'id': JOB, 'name': 'Isolated transport preflight and three Verify prefixes',
+                  'head_sha': PARENT, 'status': 'completed', 'conclusion': 'failure'}]}
+              artifacts = {'artifacts': [{'id': ARTIFACT, 'name': ARTIFACT_NAME, 'expired': False,
+                  'size_in_bytes': ZIP_SIZE, 'digest': 'sha256:' + ZIP_SHA, 'workflow_run': {'id': RUN, 'head_sha': PARENT}}]}
+              original_identity(run, jobs, artifacts); CONTROLS['valid_identity'] = True
+              for name, where, key, bad in [('wrong_run', 0, 'id', RUN + 1), ('wrong_head', 0, 'head_sha', 'f' * 40),
+                      ('wrong_artifact_size', 2, 'size_in_bytes', ZIP_SIZE + 1), ('wrong_artifact_hash', 2, 'digest', 'sha256:' + 'f' * 64)]:
+                  values = copy.deepcopy([run, jobs, artifacts]); target = values[where] if where == 0 else values[2]['artifacts'][0]
+                  target[key] = bad
+                  negative(name, lambda values=values: original_identity(*values))
+              negative('download_size_hash', lambda: authenticate(b'not the original'))
+              negative('download_content_hash', lambda: authenticate(b'x' * ZIP_SIZE))
+              negative('post_read_mutation', lambda: unchanged('a' * 64, 'b' * 64))
+              require(all(v is True for v in CONTROLS.values()), 'reader controls incomplete')
+
+          def observe(name, row, raw):
+              INVENTORY[name] = row; save('original-inventory.json', INVENTORY)
+              if raw is not None:
+                  value = preview(name, raw); OBSERVATIONS[name] = value
+                  save('selected-observations.json', OBSERVATIONS); emit({'original_observation': value})
+
+          def expired(signum, frame):
+              raise TimeoutError('180-second reader deadline')
+
+          signal.signal(signal.SIGALRM, expired); signal.alarm(180)
+          try:
+              require(os.environ.get('GITHUB_ACTIONS') == 'true' and sys.platform == 'linux', 'Linux Actions only')
+              require(SUMMARY['attempt'] == '1' and SUMMARY['branch'] == BRANCH, 'one named push attempt only')
+              require(command(['git', 'rev-parse', 'HEAD'], 'head.txt').decode().strip() == SUMMARY['source_sha'], 'HEAD differs')
+              require(command(['git', 'rev-parse', 'HEAD^'], 'parent.txt').decode().strip() == PARENT, 'parent differs')
+              require(command(['git', 'diff', '--name-status', PARENT, 'HEAD'], 'delta.txt').decode().splitlines()
+                  == ['A\t' + WORKFLOW], 'exact one workflow addition required')
+              require(not command(['git', 'status', '--porcelain', '--untracked-files=all'], 'status.txt').strip(), 'dirty source')
+              SUMMARY['workflow_sha256'] = sha((ROOT / WORKFLOW).read_bytes())
+              require(sha((ROOT / 'tests/apple_ios_organization_verify_phase_probe_20261029/prepare.py').read_bytes())
+                  == PREPARE_SHA, 'checked-out original prepare hash differs')
+              controls(); save('reader-controls.json', CONTROLS)
+              run = api('actions/runs/' + str(RUN), 'original-run.json')
+              jobs = api('actions/runs/' + str(RUN) + '/attempts/1/jobs?per_page=100', 'original-jobs.json')
+              artifacts = api('actions/runs/' + str(RUN) + '/artifacts?per_page=100', 'original-artifacts.json')
+              original_identity(run, jobs, artifacts)
+              raw = command(['gh', 'api', 'repos/' + REPO + '/actions/artifacts/' + str(ARTIFACT) + '/zip'], 'original.zip', ZIP_SIZE)
+              authenticate(raw); (PRIVATE / 'original.zip').chmod(0o400)
+              selected, inventory = archive_read(raw, observe)
+              unchanged(ZIP_SHA, sha((PRIVATE / 'original.zip').read_bytes()))
+              require(set(OBSERVATIONS) == set(SELECTED), 'selected observations incomplete')
+              guard = strict_json(selected['source-guard.json'])
+              producer = strict_json(selected['producer-report.json'])
+              commands = strict_json(selected['commands.json'])
+              runtimes = strict_json(selected['runtimes.stdout'])
+              for value in (guard, producer):
+                  require(value['source_sha'] == PARENT and value['run_id'] == str(RUN) and value['attempt'] == '1', 'retained source identity differs')
+              require(guard['package_files']['tests/apple_ios_organization_verify_phase_probe_20261029/prepare.py'] == PREPARE_SHA,
+                  'retained prepare hash differs')
+              require(producer['cases'] == [] and producer['capture_complete'] is False, 'original native state differs')
+              require(isinstance(commands, list) and len(commands) <= 32, 'retained command list differs')
+              builds = [c for c in commands if c.get('argv', [])[:2] == ['xcodebuild', 'build-for-testing']]
+              require(len(builds) == 1 and type(builds[0]['exit_code']) is int and builds[0]['exit_code'] == 70, 'original build exit differs')
+              argv = builds[0]['argv']
+              require(all(isinstance(a, str) for a in argv) and argv.count('-destination') == 1, 'build argv shape differs')
+              destination = argv[argv.index('-destination') + 1]
+              created = selected['create-preflight.stdout'].decode('utf-8').strip()
+              require(re.fullmatch(r'[0-9A-Fa-f-]{36}', created), 'created UUID shape differs')
+              SUMMARY['observed_build'] = {'exit_code': 70, 'command_count': len(commands),
+                  'destination': destination, 'created_preflight_uuid': created,
+                  'destination_matches_created': destination == 'platform=iOS Simulator,id=' + created,
+                  'runtime_json_type': type(runtimes).__name__, 'selected_files': sorted(selected)}
+              SUMMARY['controls'] = CONTROLS
+              SUMMARY['original_zip_unchanged'] = True
+              SUMMARY['reader_complete'] = True
+          except BaseException as error:
+              SUMMARY['problems'].append(type(error).__name__ + ': ' + str(error)[:2000])
+              save('failure.json', {'traceback': traceback.format_exc()[-16000:]})
+          finally:
+              signal.alarm(0)
+              save('reader-controls.json', CONTROLS); save('reader-commands.json', COMMANDS)
+              save('summary.json', SUMMARY)
+              chosen = REFUSAL
+              try:
+                  SUMMARY['final_inventory'] = evidence_inventory(); save('summary.json', SUMMARY)
+                  evidence_inventory(); chosen = OUT
+              except BaseException as error:
+                  SUMMARY['reader_complete'] = False
+                  SUMMARY['problems'].append('final evidence refused: ' + str(error)[:2000])
+                  (REFUSAL / 'refusal.json').write_bytes(encoded({'reader_complete': False,
+                      'source_sha': SUMMARY['source_sha'], 'original_artifact': SUMMARY['original_artifact'],
+                      'problems': SUMMARY['problems'], 'partial_tree_uploaded': False, 'native_cases_run': 0, 'formal_credit': 0}))
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+                  stream.write('evidence_path=' + str(chosen.relative_to(ROOT)) + '\n')
+              emit({'reader_summary': SUMMARY})
+          sys.exit(0 if SUMMARY['reader_complete'] else 1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-verify-build-log-reader-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.reader.outputs.evidence_path || 'build/ios-verify-build-reader/refusal/' }}
+          include-hidden-files: true
+          if-no-files-found: error
