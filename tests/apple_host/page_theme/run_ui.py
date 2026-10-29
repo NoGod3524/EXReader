@@ -29,14 +29,17 @@ def main():
     save_commands()
 
     def command(argv, timeout=45, check=True):
+        command_started = time.time()
         try:
             proc = subprocess.run([str(v) for v in argv], capture_output=True, text=True, timeout=timeout)
         except subprocess.TimeoutExpired:
-            commands.append({'argv': [str(v) for v in argv], 'exit_code': None, 'timed_out_seconds': timeout})
+            commands.append({'argv': [str(v) for v in argv], 'exit_code': None, 'timed_out_seconds': timeout,
+                             'started_at_unix': command_started, 'completed_at_unix': time.time()})
             save_commands()
             raise
         commands.append({'argv': [str(v) for v in argv], 'exit_code': proc.returncode,
-                         'stdout': proc.stdout, 'stderr': proc.stderr})
+                         'stdout': proc.stdout, 'stderr': proc.stderr,
+                         'started_at_unix': command_started, 'completed_at_unix': time.time()})
         save_commands()
         if check and proc.returncode:
             raise RuntimeError('Native OS command failed: ' + ' '.join(map(str, argv)))
