@@ -4,7 +4,10 @@
 import json
 import os
 import re
+import shutil
 import subprocess
+import tempfile
+from urllib.parse import parse_qsl, urlsplit
 from contract import ROOT, STAGES, guard, require, sha
 from archive_contract import safe_extract
 from inspect_native import CONTROLS, MESSAGES, ROLES, variant_labels
@@ -27,6 +30,7 @@ STATIC_MESSAGES = MESSAGES + ('Complete evidence and strict verdict must be reco
 SIGNATURES = {'url-request-timeout': 'NSURLErrorDomain Code=-1001',
               'xctest-asynchronous-timeout': 'Asynchronous wait failed',
               'xctest-test-timeout': 'Test exceeded execution time allowance'}
+CASE = 'testDiagnosticContinuationRememberUpdateRestart'
 
 
 def locations(path):
@@ -64,6 +68,71 @@ def safe_progress(result, files):
             'completed_checkpoints': [stage for stage in STAGES if stage in result['checkpoints']],
             'snapshot_archives_present': {stage: stage + '-product.zip' in files for stage in STAGES},
             'commands': commands, 'failure_class': result['failure']}
+
+
+def network_summary(result, requests):
+    """Only finite credential/method categories and shard counts leave Actions."""
+    root = urlsplit(result['root'])
+    require(root.scheme == 'https' and root.hostname == '127.0.0.1' and root.port is not None and
+            not root.query and not root.fragment and not root.username and not root.password and
+            re.fullmatch(r'/privacy-[0-9a-f]{24}/', root.path), 'unexpected fixture root')
+    require(type(requests) is list and len(requests) <= 100000, 'unexpected request inventory')
+    first = result['checkpoints']['remember_closed']['network_requests']
+    require(type(first) is int and 0 <= first <= len(requests), 'unexpected first request boundary')
+    methods = ('GET', 'MKCOL', 'PUT', 'PROPFIND')
+    counts = {role: {method: 0 for method in methods} for role in ('remembered', 'session', 'unrecognized')}
+    shards = {role: set() for role in counts}
+    for index, row in enumerate(requests):
+        require(type(row) is dict and set(row) == {'method', 'path', 'credential'} and
+                row['method'] in methods and row['credential'] in ('remembered', 'session', None) and
+                type(row['path']) is str and row['path'].startswith(root.path), 'unexpected request row')
+        if index < first: continue
+        role = row['credential'] or 'unrecognized'; counts[role][row['method']] += 1
+        match = re.fullmatch(re.escape(root.path) + r'exreader-sync-v1/revisions/([0-9a-f]{2})/', row['path'])
+        if row['method'] == 'PROPFIND' and match: shards[role].add(match.group(1))
+    return {'total_requests': len(requests), 'before_first_checkpoint': first,
+            'after_first_checkpoint': len(requests) - first, 'credential_method_counts_after_first': counts,
+            'distinct_revision_shards_after_first': {role: len(value) for role, value in shards.items()},
+            'raw_paths_headers_values_printed': False}
+
+
+def xcresult_issues(payload):
+    """Only failure-issue nodes; no arbitrary message, URL or test name output."""
+    issues = []
+    def value(row, name):
+        item = row.get(name, {})
+        return item.get('_value', '') if type(item) is dict else ''
+    def walk(node):
+        if type(node) is list:
+            for item in node: walk(item)
+        elif type(node) is dict:
+            if node.get('_type', {}).get('_name') == 'TestFailureIssueSummary':
+                message, name = value(node, 'message'), value(node, 'testCaseName')
+                require(type(message) is str and type(name) is str, 'unexpected issue value')
+                location = node.get('documentLocationInCreatingWorkspace', {})
+                url = value(location, 'url') if type(location) is dict else ''
+                require(type(url) is str, 'unexpected issue location')
+                source_line = None
+                prefix = 'file://' + SOURCE_PATH + '#'
+                if url.startswith(prefix):
+                    fields = parse_qsl(url[len(prefix):], keep_blank_values=True)
+                    keys = {key for key, unused in fields}
+                    allowed = {'StartingLineNumber', 'EndingLineNumber', 'StartingColumnNumber', 'EndingColumnNumber'}
+                    if len(fields) == len(keys) and 'StartingLineNumber' in keys and keys <= allowed and all(
+                            re.fullmatch(r'[0-9]{1,4}', item) and
+                            (int(item) in range(1, 161) if key.endswith('LineNumber') else True)
+                            for key, item in fields):
+                        source_line = int(dict(fields)['StartingLineNumber'])
+                assertion = re.search(r'\b(XCTAssert(?:True|False|Equal|Nil|NotNil)|XCTUnwrap)\b', message)
+                issues.append({'case_matches': re.findall(r'\btest[A-Za-z0-9_]+\b', name) == [CASE],
+                    'source_line': source_line, 'assertion': assertion.group(1) if assertion else None,
+                    'static_messages': [token for token in STATIC_MESSAGES if token in message],
+                    'static_controls': [token for token in CONTROLS if token in message],
+                    'fixed_signatures': [key for key, token in SIGNATURES.items() if token in message]})
+            for item in node.values(): walk(item)
+    walk(payload)
+    return {'failure_issue_count': len(issues), 'issues': issues,
+            'arbitrary_issue_operands_printed': False, 'source_positions_not_authenticated_callsites': True}
 
 
 def main():
@@ -110,6 +179,17 @@ def main():
             failures = json.loads((folder / 'fixture-failures.json').read_text())
             require(type(failures) is list and all(item in FAILURES for item in failures), 'unexpected fixture failure type')
             report['fixture_failure_classes'] = failures
+        require('requests.json' in files and any(name.startswith('privacy.xcresult/') for name in files),
+                'original request or native-result evidence absent')
+        report['network'] = network_summary(result, json.loads((folder / 'requests.json').read_text()))
+        # xcresulttool may update metadata. Parse only a disposable copy after
+        # every retained original member was authenticated above.
+        with tempfile.TemporaryDirectory(prefix='privacy-xcresult-diagnostic-') as temporary:
+            copied = shutil.copytree(folder / 'privacy.xcresult', os.path.join(temporary, 'privacy.xcresult'))
+            done = subprocess.run(['xcrun', 'xcresulttool', 'get', 'object', '--legacy', '--path', copied,
+                                   '--format', 'json'], capture_output=True, timeout=120)
+            require(done.returncode == 0, 'native result parser refused')
+            report['xcresult'] = xcresult_issues(json.loads(done.stdout))
         reports.append(report)
         print(json.dumps(report, sort_keys=True), flush=True)
     (out / 'diagnostic.json').write_text(json.dumps(reports, indent=2) + '\n')
