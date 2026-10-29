@@ -6416,6 +6416,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
 #endif
   settings_load();
   InitializeCriticalSection(&g.library_lock);
+#ifdef EXR_READER_PRODUCT_CATALOG
+  {
+    reader_windows_migration_gate_result admission;
+    if(!reader_windows_migration_startup_allowed(g.library_path,&admission)) {
+      const wchar_t *message=L"此书库有待确认的迁移状态，或无法确认其状态。请先恢复迁移，再重新打开；现有文件已保留。";
+      fprintf(stderr,"[EXReader migration startup gate] blocked suffix=%ls native=%lu\n",
+              admission.marker_suffix,(unsigned long)admission.native_error);
+      if(!script[0]) MessageBoxW(NULL,message,L"EXReader",MB_OK|MB_ICONERROR);
+      set_status(message);
+      host_cleanup();
+      LocalFree(argv);
+      return 2;
+    }
+  }
+#endif
   {
     exr_error error = {0};
     char *path = host_utf8(library_override[0] ? library_override : g.library_path);
