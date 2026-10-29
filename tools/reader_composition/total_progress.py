@@ -429,6 +429,29 @@ def verify_apple_ios_members(spec, jobs):
             'scope_basis': 'original six native simulator UI cases and process restart, not SDK 3.42 or complete product'}
 
 
+def verify_apple_sync_details(spec, jobs):
+    assert spec['adapter'] == 'apple_sync_details_40920468235'
+    assert spec['run'] == 40920468235 and spec['source_prefix'] == '8404d9ab22ca9f0ef1e12fb0192f958bc030cd8d'
+    assert len(jobs) == 1 and jobs[0]['id'] == 123611985195 and jobs[0]['conclusion'] == 'success'
+    pin = {'id':12917129246, 'bytes':817,
+           'sha256':'f4c213432f36dad8367c2a1ea841bb669ef380b774c4a1d6aa2e11c6be3e3904'}
+    with evidence_zip(pin, spec['run'], spec['source_prefix'], 'apple-sync-details-independent-40920468235-1') as archive:
+        value = json.loads(archive.read('result.json'))
+    assert value['catalog_changed'] is False and len(value['results']) == 3
+    matches = [r for r in value['results'] if r['platform'] == spec['platform']]
+    assert len(matches) == 1
+    row = matches[0]
+    assert row['run'] == 40914421686 and row['source'] == '6c7d043d416c1ab1075016695ae510c7b23dd2e5'
+    assert row['job'] == spec['original_job'] and row['artifact'] == spec['original_artifact']
+    assert row['archive_sha256'] == spec['original_archive_sha256']
+    assert row['accepted'] is True and row['physical_device'] is False
+    assert row['main_cases'] == ['test01RootValidationAnonymousRestartAndUpdate()', 'test02SeparateAccountLibrariesAndRestart()', 'test03NativeHTTPSBackgroundCloseAndRetry()']
+    assert row['failure_case'] == 'testAuthorizationFailurePreservesBookAndRetry()'
+    assert row['recovery_shards'] == 256 and row['failed_state_pending_revisions'] == 1
+    return {'artifact':pin['id'], 'zip_sha256':pin['sha256'], 'original_artifact':row['artifact'],
+            'original_source':row['source'], 'platform':row['platform'],
+            'scope_basis':'original XCTest and real HTTPS cancellation, 401 detail, failed-state outbox and explicit recovery; SDK 3.41 host only'}
+
 def verify_evidence(pair):
     key, spec = pair
     try:
@@ -464,6 +487,8 @@ def verify_evidence(pair):
             proof.update(verify())
         elif key == 'f06_sdk342_six_packages':
             proof.update(verify_f06(spec, jobs))
+        elif spec.get('adapter') == 'apple_sync_details_40920468235':
+            proof.update(verify_apple_sync_details(spec, jobs))
         elif key == 'macos_organization_original':
             proof.update(verify_macos_organization(spec, jobs))
         elif spec.get('adapter') == 'apple_four_40904394809':
