@@ -2,8 +2,12 @@
 
 ## Current status
 
-First Actions validation is terminal; a provider-inventory repair is source-only
-pending retest. **No qualification case has run yet.** This package
+Two Actions validations are terminal. Linux/macOS each passed only the four
+typed-serializer controls in the second run; their other 37 cases failed during
+seed creation, before the intended recovery checks. Windows did not enter the
+case driver. **Zero recovery scenarios have qualified.** A second repair is
+source-only and requires a new round checkpoint before publication/execution.
+This package
 does not integrate recovery into the migration tool, retire a product intent,
 restore a database, or establish full P0 acceptance. Existing v3 intents remain
 pending. The earlier 75/75 retention result is not recovery qualification; the
@@ -47,6 +51,62 @@ First-run uploaded artifacts (API metadata, contents not parsed locally):
 | Linux /123229582291 |12868268858|66233|`a973c79df08e07aa4b608f8288115cba2811f8f3b24a17d87e203909311bb43d`|
 | macOS /123229582690 |12868558615|184883|`41965589cf89ac5d46b2c48bda8c94e22f98a53b4191b0a0305c58d87d196ef4`|
 | Windows /123229582595 |12869041682|400950|`81a3b596488612891f331136e3d65d16483fa293e63f1b401d4a3afeac67ef04`|
+
+### Retained repair validation failure and proposed next round
+
+[Run40808511383](https://github.com/NoGod3524/EXReader/actions/runs/40808511383),
+attempt1, source `edeadbcaba13d33b514944d44d1ec6fec6e768d3`, tree
+`4df401f1dd9108a00526b90a23f1aaa6843e4f12`: all source admission and native
+current/old SDK/tool/consumer builds passed. The exact wrapper plus sole STATIC
+closure was measured successfully on every platform. Linux/macOS provider-map
+admission also passed. Their driver results were each **4/41**, with only
+`typed-vector-none`, `typed-vector-rowid`, `typed-vector-type` and
+`typed-vector-cell` passing. All 37 other cases stopped in `seed()`; this is not
+37 observations of failed recovery semantics. Windows failed the map conjunction
+before the driver, so its 43 authored cases were **unrun**, not passed or failed.
+
+The full unchanged `legacy_data.dataset()` deliberately contains an audio
+original that cannot be stored. The seed omitted the original full-fixture
+producer's explicit `--allow-partial` flag (`tests/migration/run_cases.py:127,
+139,329`). Actual reports correctly returned `policy-strict`, one unsupported
+`audio-original-not-storable` for `b-audio`, zero conflicts, and no publication.
+The orphan is instead an expected **unlocated** `orphan-note`, retained in the
+ledger; it is not the unsupported cause. The proposed seed repair preserves
+every original item, requires exit0/result success/code ok, exact full counts,
+that single known unsupported item, all six specific unlocated reasons, all
+5 book and16 annotation records in the ledger (cover remains separately stored
+by the frozen producer), and the unchanged later public projection/parity tests.
+It cannot accept an arbitrary partially imported database as a valid seed.
+
+The Windows failure was the unlabelled conjunction of `sqlite3_open_v2`,
+`sqlite3_backup_init` and `sqlite3.c` substrings. **Which conjunct was missing
+has not been observed**: no artifact bytes were parsed locally. The source-only
+repair prints each historical predicate and actual symbol lines before admission.
+[Microsoft documents /MAP as listing each public symbol's defining .obj file](https://learn.microsoft.com/en-us/cpp/build/reference/map-generate-mapfile?view=msvc-170).
+The proposed Windows-specific check therefore requires exactly one definition
+of each exact API symbol from `exr_vendor_exr_sqlite[.lib]:sqlite3[.c].obj`;
+seven Actions-only positive/foreign/prefix/malformed parser controls accompany
+it. Unknown formats still refuse. Both exact target-closure checks, the archive
+check, POSIX map criteria, runtime/header identity and no-second-implementation
+condition remain mandatory. This is a native-format hypothesis to validate,
+not a claim that the previous map has already proved the hypothesized spelling.
+
+Second-run uploaded artifacts (API metadata only):
+
+| OS / job | Artifact ID | Bytes | ZIP SHA256 |
+| --- | --- | ---: | --- |
+| Linux /123233052816 |12868678752|339752|`f4a5fcdf0d15fe5f39cee656e2ad07bd29beacc6fe3064e8f554ec5b5bae1b72`|
+| macOS /123233052549 |12869366595|459079|`71ec4ddaae998d1ce5c4326849edae7533f9dc9416602dc04e04e2c19f8e1f00`|
+| Windows /123233052712 |12869377413|401319|`d1ab09b99da8e37f620ccc9cdc15df151267685097dd615a2576beafe18085a9`|
+
+The initial **first validation + one repair** cap is exhausted. Proposed next
+scope: one further three-system validation on one reviewed successor SHA,
+41+41+43 authored cases, existing60-minute/job and fail-fast-false settings;
+only this package's `run.py`, workflow and this document change. C/CMake,
+SDK/product/old tests and predecessor bytes remain unchanged. No third run or
+successor publication is authorized by this paragraph. Obtain the round-scope
+checkpoint and independent source clearance first; a further failure remains
+red and requires the same bounded disposition, not unlimited retries.
 
 ## Exact source and runtime scope
 
@@ -147,7 +207,7 @@ two-identically-buggy-hash comparison. This is supported **logical state**, not
 raw SQLite/WAL byte equality, freelist/history or application completeness for
 unimplemented formats.
 
-## Authored controls (not yet run)
+## Authored controls (execution status distinguished above)
 
 41 top-level cases on Linux/macOS; Windows adds two native WAL-read cases = 43.
 Subchecks remain individually present in each case's raw logs and result data.

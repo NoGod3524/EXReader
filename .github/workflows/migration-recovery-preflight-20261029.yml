@@ -83,7 +83,7 @@ jobs:
           cmake -S tests/migration/recovery_preflight_20261029 -B build/preflight -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DSQLITE_HEADER_DIR="$GITHUB_WORKSPACE/build/migration/_deps/migration_sqlite_header-src" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/preflight-configure.txt
           cmake --build build/preflight --config Release --parallel 4 2>&1 | tee build/evidence/preflight-build.txt
           ${{ matrix.py }} - <<'PY'
-          import hashlib, json, re
+          import hashlib, json, os, re
           from pathlib import Path
           closure = Path('build/preflight/link-closure.txt').read_text()
           link_map = Path('build/preflight/provider.map').read_text(errors='replace')
@@ -95,13 +95,51 @@ jobs:
           ], sqlite_targets
           sqlite_providers = [name for name,kind in sqlite_targets if kind == 'STATIC_LIBRARY']
           assert sqlite_providers == ['EXReader::vendor_file_exr_sqlite'], sqlite_providers
-          assert 'sqlite3_open_v2' in link_map and 'sqlite3_backup_init' in link_map and 'sqlite3.c' in link_map
+          # Retain the original three predicate observations before applying
+          # the documented native map format. No guessed missing conjunct.
+          historical_predicates = {s: s in link_map for s in ('sqlite3_open_v2','sqlite3_backup_init','sqlite3.c')}
+          print('historical_map_predicates=' + json.dumps(historical_predicates), flush=True)
+          symbols = ('sqlite3_open_v2','sqlite3_backup_init')
+          symbol_lines = {s: [line for line in link_map.splitlines() if s in line] for s in symbols}
+          print('map_symbol_lines=' + json.dumps(symbol_lines), flush=True)
+          def msvc_symbol_provider(line, symbol):
+              fields = line.split()
+              return (len(fields) >= 4 and re.fullmatch(r'[0-9A-Fa-f]+:[0-9A-Fa-f]+',fields[0]) is not None
+                      and fields[1] == symbol and re.fullmatch(r'[0-9A-Fa-f]+',fields[2]) is not None
+                      and all(flag in ('f','i') for flag in fields[3:-1])
+                      and re.fullmatch(r'exr_vendor_exr_sqlite(?:\.lib)?:sqlite3(?:\.c)?\.obj',fields[-1],re.I) is not None)
+          # Actions-only parser controls do not count as recovery cases.
+          sample = ' 0001:00000000 sqlite3_open_v2 0000000140001000 f exr_vendor_exr_sqlite:sqlite3.obj'
+          assert msvc_symbol_provider(sample,'sqlite3_open_v2')
+          assert msvc_symbol_provider(sample.replace(':sqlite3.obj','.lib:sqlite3.c.obj'),'sqlite3_open_v2')
+          for bad in (
+              sample.replace('exr_vendor_exr_sqlite:','foreign_sqlite:'),
+              sample.replace(':sqlite3.obj',':sqlite3_other.obj'),
+              sample.replace('sqlite3_open_v2 ','sqlite3_open_v2_suffix '),
+              sample + ' extra',
+              sample.replace('0001:00000000','not-an-address'),
+          ):
+              assert not msvc_symbol_provider(bad,'sqlite3_open_v2'), bad
+          print('native_map_parser_controls=7 passed', flush=True)
+          if os.name == 'nt':
+              # MSVC /MAP documents each public symbol's defining .obj file,
+              # not a C source filename. Require BOTH exact symbol definitions
+              # from the sole admitted archive and SQLite object, never merely
+              # any sqlite substring or unrelated archive elsewhere in the map.
+              for symbol in symbols:
+                  definitions = [line for line in symbol_lines[symbol] if len(line.split()) > 1 and line.split()[1] == symbol]
+                  assert len(definitions) == 1 and msvc_symbol_provider(definitions[0],symbol), (symbol,definitions)
+          else:
+              assert all(historical_predicates.values()), historical_predicates
           assert re.search(r'(?:lib)?exr_vendor_exr_sqlite(?:\.a|\.lib|:)',link_map,re.I), 'installed SQLite provider absent from link map'
           # Header/runtime source ID equality is additionally mandatory in every
           # consumer invocation; no private SDK structure or second SQLite build.
           Path('build/evidence/provider-identity.json').write_text(json.dumps({
             'sqlite_target_closure':sqlite_targets,
             'single_static_sqlite_provider':sqlite_providers,
+            'historical_map_predicates':historical_predicates,
+            'map_symbol_lines':symbol_lines,
+            'native_symbol_provider_check':'exact-msvc-archive-object' if os.name == 'nt' else 'original-posix-map-check',
             'provider_map_sha256':hashlib.sha256(Path('build/preflight/provider.map').read_bytes()).hexdigest(),
             'link_closure_sha256':hashlib.sha256(Path('build/preflight/link-closure.txt').read_bytes()).hexdigest(),
             'header_sha256':hashlib.sha256(Path('build/migration/_deps/migration_sqlite_header-src/sqlite3.h').read_bytes()).hexdigest(),

@@ -413,8 +413,59 @@ def main():
         target, pack = folder / 'library.sqlite', folder / 'seed.exrpack'
         entries, notes = L.dataset()
         pack.write_bytes(L.build_pack(entries, notes))
-        child = Child([a.old_tool if schema == 6 else a.tool, 'migrate', '--target', str(target), '--pack', str(pack)], logs / (folder.name + '-seed'))
+        # The unchanged full legacy fixture deliberately includes an unstorable
+        # audio original. Like the original full() producer, opt in explicitly;
+        # do not silently remove the audio/orphan or accept arbitrary partials.
+        child = Child([a.old_tool if schema == 6 else a.tool, 'migrate', '--target', str(target), '--pack', str(pack), '--allow-partial'], logs / (folder.name + '-seed'))
         assert child.finish() == 0, child.out_path.read_text(encoding='utf-8')
+        report = child.report()
+        assert (report['result'], report['code']) == ('success', 'ok'), report
+        assert report['pack']['sha256'] == hashlib.sha256(pack.read_bytes()).hexdigest()
+        expected_counts = {
+            'books_expected': 5, 'books_created': 4, 'books_existing': 0,
+            'books_merged': 0, 'books_skipped': 0,
+            'books_audio_positions_only': 1, 'books_accounted': 5,
+            'notes_expected': 16, 'notes_created': 10, 'notes_existing': 0,
+            'notes_unlocated': 6, 'notes_skipped': 0, 'notes_accounted': 16,
+        }
+        assert {k: report['counts'][k] for k in expected_counts} == expected_counts, report
+        assert report['counts']['entries'] == {
+            'info': 4, 'warning': 1, 'approximate': 2, 'unlocated': 6,
+            'dropped': 1, 'unsupported': 1, 'conflict': 0,
+        }, report
+        unsupported = [(e['code'], e['scope'], e['legacy_id']) for e in report['entries'] if e['severity'] == 'unsupported']
+        assert unsupported == [('audio-original-not-storable', 'book', 'b-audio')], report
+        assert not [e for e in report['entries'] if e['severity'] == 'conflict'], report
+        expected_unlocated = {
+            'n-txt-ambiguous': 'quote-ambiguous',
+            'n-txt-missing': 'quote-not-found',
+            'n-txt-bookmark': 'bookmark-without-cfi',
+            'n-epub-ambiguous': 'quote-ambiguous',
+            'n-pdf-missing': 'quote-not-found', 'n-orphan': 'orphan-note',
+        }
+        assert {n['legacy_id']: n['reason'] for n in report['notes'] if n['status'] == 'unlocated'} == expected_unlocated, report
+        assert {b['legacy_id']: b['status'] for b in report['items']} == {
+            'b-txt': 'created', 'b-epub': 'created', 'b-pdf': 'created',
+            'b-cbz': 'created', 'b-audio': 'audio-positions-only',
+        }, report
+        ledger = json.loads(Path(str(target) + '.legacy-map.json').read_text(encoding='utf-8'))
+        assert ledger['format'] == 'exreader-legacy-map' and ledger['version'] == 1
+        assert ledger['packs'] == [report['pack']['sha256']]
+        assert len(ledger['books']) == 5 and len(ledger['notes']) == 16
+        # Frozen producer deliberately stores the cover separately, not in raw
+        # book JSON. Its public cover bytes remain covered by clone projection.
+        assert {b['legacy_id']: b['retained'] for b in ledger['books']} == {
+            b['legacy_id']: {k: v for k, v in b['record'].items() if k != 'cover'} for b in entries
+        }
+        assert {n['legacy_id']: n['retained'] for n in ledger['notes']} == {n['id']: n for n in notes}
+        assert {n['legacy_id']: n['reason'] for n in ledger['notes'] if not n['located']} == expected_unlocated
+        (folder / 'seed-admission.json').write_text(json.dumps({
+            'explicit_allow_partial': True, 'known_unsupported': unsupported,
+            'expected_unlocated': expected_unlocated, 'counts': report['counts'],
+            'all_original_records_retained_except_separately_stored_cover': True,
+            'pack_sha256': report['pack']['sha256'],
+            'recovery_qualification': False,
+        }, indent=2) + '\n')
         root = folder / 'protocol'
         root.mkdir()
         cat = folder / 'catalog.bin'
