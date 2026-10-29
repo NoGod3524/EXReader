@@ -9,6 +9,7 @@ import re
 import runpy
 import subprocess
 import sys
+import traceback
 
 ROOT = Path(__file__).resolve().parents[2]
 VERSION = "3.42.0"
@@ -20,6 +21,8 @@ def main():
     assert len(sys.argv) == 3 and sys.argv[1] == "--platform"
     platform = sys.argv[2]
     assert platform in ("macos", "iphone", "ipad")
+    evidence = ROOT / "build/team24-apple" / platform / "evidence"
+    evidence.mkdir(parents=True, exist_ok=True)
     cloud = {"source_sha": os.environ["GITHUB_SHA"], "run_id": os.environ["GITHUB_RUN_ID"],
              "attempt": os.environ["GITHUB_RUN_ATTEMPT"]}
     installed = {}
@@ -34,7 +37,8 @@ def main():
         for label, directory in (("sdk", root / "sdk"), ("raw", root / "raw-products")):
             expected = identity[label + "_files"]
             actual = {p.relative_to(directory).as_posix() for p in directory.rglob("*") if p.is_file()}
-            assert actual == set(expected), (target, label, "installed file set differs")
+            assert actual == set(expected), (target, label, "installed file set differs",
+                                             {"missing": sorted(set(expected) - actual), "extra": sorted(actual - set(expected))})
             for path, item in expected.items():
                 data = (directory / path).read_bytes()
                 assert len(data) == item["bytes"] and hashlib.sha256(data).hexdigest() == item["sha256"]
@@ -48,11 +52,12 @@ def main():
                                  (root / "sdk342-installed-identity.json").read_bytes()).hexdigest()}
     failure = None
     try:
+        # The unchanged runner creates this directory with exist_ok=False. Remove
+        # only our still-empty admission directory after all input checks pass.
+        evidence.rmdir()
         runpy.run_path(str(ROOT / "tests/reader_team24_apple/run_ui.py"), run_name="__main__")
     except BaseException as error:
         failure = error
-    evidence = ROOT / "build/team24-apple" / platform / "evidence"
-    evidence.mkdir(parents=True, exist_ok=True)
     identity = {**cloud, "platform": platform, "sdk_version": VERSION,
                 "installed": installed, "accepted": False, "programs": {}}
     try:
@@ -87,4 +92,15 @@ def main():
     assert identity["accepted"]
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except BaseException as error:
+        platform = sys.argv[2] if len(sys.argv) == 3 and sys.argv[2] in ("macos", "iphone", "ipad") else "unknown"
+        out = ROOT / "build/team24-apple" / platform / "evidence"
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "sdk342-admission-failure.json").write_text(json.dumps({
+            "source_sha": os.environ.get("GITHUB_SHA"), "run_id": os.environ.get("GITHUB_RUN_ID"),
+            "attempt": os.environ.get("GITHUB_RUN_ATTEMPT"), "platform": platform,
+            "accepted": False, "failure": repr(error), "traceback": traceback.format_exc()
+        }, indent=2) + "\n")
+        raise
