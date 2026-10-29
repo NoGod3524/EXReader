@@ -41,7 +41,8 @@ jobs:
       - name: Actual NTFS records, full-width collision controls and retained old-format refusals
         run: |
           set -euo pipefail
-          build/record-check/Release/windows-record-check.exe "$GITHUB_WORKSPACE/build/record-evidence/private-state" | tee build/record-evidence/native.json
+          PRIVATE_ROOT=$(cygpath -w "$GITHUB_WORKSPACE/build/record-evidence/private-state")
+          build/record-check/Release/windows-record-check.exe "$PRIVATE_ROOT" | tee build/record-evidence/native.json
           python - <<'PY'
           import hashlib,json,os
           from pathlib import Path
