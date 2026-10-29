@@ -37,6 +37,7 @@ struct HostWave3Sheet: View {
     @State private var choosing = false
     @State private var choice = Choice.annotations
     @State private var pickerError = ""
+    @State private var annotationExportExpanded = false
     @State private var selectedInput = ""
 #if EXR_APPLE_HOST_REVIEW
     @State private var previewExportWhenReady = false
@@ -44,6 +45,7 @@ struct HostWave3Sheet: View {
     @State private var reviewOriginalDirectory: URL?
     @State private var lockedReviewDirectory: URL?
     @State private var reviewPickerFile: URL?
+    @State private var reviewPickerDirectory: URL?
     @State private var reviewExportCheck = ""
 #endif
 
@@ -124,7 +126,11 @@ struct HostWave3Sheet: View {
                 case .annotations: selectedInput = url.lastPathComponent; actions.previewAnnotations(url)
                 case .font: actions.importFont(url)
                 case .original: actions.exportOriginal(url)
-                case .jsonl: actions.exportAnnotations(url, false)
+                case .jsonl:
+#if EXR_APPLE_HOST_REVIEW
+                    reviewPickerDirectory = url
+#endif
+                    actions.exportAnnotations(url, false)
                 case .markdown: actions.exportAnnotations(url, true)
                 }
             case .failure(let error):
@@ -168,7 +174,21 @@ struct HostWave3Sheet: View {
                            perform: actions.confirmAnnotations)
                     action("放弃预览", id: "features.preview.discard", perform: actions.discardPreview)
                 }
-                DisclosureGroup("导出标注") {
+                Button {
+                    annotationExportExpanded.toggle()
+                } label: {
+                    HStack {
+                        Text("导出标注")
+                        Spacer()
+                        Image(systemName: annotationExportExpanded ? "chevron.up" : "chevron.down")
+                            .accessibilityHidden(true)
+                    }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .contentShape(Rectangle())
+                }.buttonStyle(.borderless).disabled(state.busy || ownerBusy)
+                    .accessibilityIdentifier("features.annotations.export-options")
+                    .accessibilityLabel(Text("导出标注"))
+                    .accessibilityValue(annotationExportExpanded ? "已展开" : "已折叠")
+                if annotationExportExpanded {
                     VStack(alignment: .leading, spacing: 8) {
                         action("导出可导入的 JSONL", id: "features.annotations.export-jsonl") { choose(.jsonl) }
                         action("导出 Markdown", id: "features.annotations.export-markdown") { choose(.markdown) }
@@ -193,6 +213,12 @@ struct HostWave3Sheet: View {
                     }
                     .accessibilityValue(font.id == state.selectedFont ? "已选" : "")
                 }
+#if EXR_APPLE_HOST_REVIEW
+                if UserDefaults.standard.bool(forKey: "EXRUITestFixtures") {
+                    Text(state.fontObservation).font(.system(size: 5)).lineLimit(1)
+                        .accessibilityIdentifier("features.font.observation")
+                }
+#endif
                 Text("字体在当前书籍重新排版成功后切换。固定版式保留原书字体。")
                     .font(.caption).foregroundColor(.secondary)
             }.frame(maxWidth: .infinity, alignment: .leading)
@@ -255,6 +281,9 @@ struct HostWave3Sheet: View {
                 action("导入随包字体", id: "features.font.fixture") {
                     if let url = Bundle.main.url(forResource: "Reader", withExtension: "otf") { actions.importFont(url) }
                 }
+                action("导入测试字体", id: "features.font.distinct") {
+                    if let url = Bundle.main.url(forResource: "FontReview", withExtension: "ttf") { actions.importFont(url) }
+                }
                 action("尝试将书籍导入为字体", id: "features.font.invalid") {
                     if let url = Bundle.main.url(forResource: "Sample", withExtension: "epub") { actions.importFont(url) }
                 }
@@ -304,7 +333,11 @@ struct HostWave3Sheet: View {
                 action("准备系统选择器文件", id: "features.annotations.prepare-picker") {
                     guard let source = state.exportURL else { return }
                     do {
-                        let documents = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+                        guard let documents = reviewPickerDirectory else {
+                            throw HostError.invalidInput("请先通过系统选择器导出 JSONL")
+                        }
+                        let accessing = documents.startAccessingSecurityScopedResource()
+                        defer { if accessing { documents.stopAccessingSecurityScopedResource() } }
                         let file = documents.appendingPathComponent("EXReader-annotations.jsonl")
                         let invalid = documents.appendingPathComponent("EXReader-invalid.jsonl")
                         try Data(contentsOf: source).write(to: file, options: .atomic)
@@ -412,5 +445,4 @@ private struct HostWave3SharingPicker: NSViewRepresentable {
 }
 #endif
 #endif
-
 

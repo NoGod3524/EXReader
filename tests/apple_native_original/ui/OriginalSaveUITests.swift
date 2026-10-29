@@ -66,12 +66,29 @@ final class OriginalSaveUITests: XCTestCase {
         }
         XCTAssertTrue(wait { newFolder.exists && newFolder.isHittable }, app.debugDescription)
         newFolder.tap()
-        let name = app.textFields.firstMatch
-        XCTAssertTrue(wait { name.exists && name.isHittable }, app.debugDescription)
-        name.tap(); name.typeText("EXReaderOriginalSave")
-        let done = app.buttons["Done"].firstMatch
-        XCTAssertTrue(wait { done.exists && done.isHittable }, app.debugDescription)
-        done.tap()
+        let inline = app.textViews["DOC.inlineRenameField"].firstMatch
+        if inline.waitForExistence(timeout: 10) {
+            XCTAssertTrue(wait { inline.isHittable }, app.debugDescription)
+            let old = (inline.value as? String) ?? ""
+            inline.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count))
+            inline.typeText("EXReaderOriginalSave\n")
+            // Some iOS Files versions keep inline rename focused after Return.
+            // A tap in the picker navigation area commits the name without
+            // selecting the folder; require the actual rename editor to close.
+            if inline.exists {
+                let picker = app.otherElements["Browse View (Picker)"].firstMatch
+                XCTAssertTrue(wait { picker.exists }, app.debugDescription)
+                picker.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.06)).tap()
+                XCTAssertTrue(wait { !inline.exists }, "Folder rename did not finish: \(app.debugDescription)")
+            }
+        } else {
+            let name = app.textFields.firstMatch
+            XCTAssertTrue(wait { name.exists && name.isHittable }, app.debugDescription)
+            name.tap(); name.typeText("EXReaderOriginalSave")
+            let done = app.buttons["Done"].firstMatch
+            XCTAssertTrue(wait { done.exists && done.isHittable }, app.debugDescription)
+            done.tap()
+        }
         let folder = app.staticTexts["EXReaderOriginalSave"].firstMatch
         if folder.waitForExistence(timeout: 10) && folder.isHittable { folder.tap() }
         let open = app.buttons["Open"].firstMatch
