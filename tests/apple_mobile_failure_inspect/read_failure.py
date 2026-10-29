@@ -6,15 +6,14 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
 from check_parallel_integration import fetch, download_artifact_zip
 PINS = {
-    'iphone': (12928097306, 436248547, 'b7f3125fb508ecc417e59ca083f7ba89aa9e5308971c2aa483a1aab30adad7bb'),
-    'ipad': (12928855897, 485229238, '6f576fe25c63e1ce2571c6672430d809da32eb269332143a9b24bcc483f86d02')}
+    'ipad': (12934491128, 479945377, 'cc696e4d3060c7e2a2c6cf2f55e283bd5e7323ff082cfe949e39d1fb37e6d90a')}
 def main():
     assert os.environ.get('GITHUB_ACTIONS') == 'true' and sys.platform == 'darwin'
     p = argparse.ArgumentParser(); p.add_argument('--platform', choices=PINS, required=True); args = p.parse_args()
     aid, size, sha = PINS[args.platform]
     out = ROOT / 'build/mobile-failure-inspection' / args.platform; out.mkdir(parents=True)
     meta = fetch('actions/artifacts/' + str(aid))
-    assert meta['workflow_run']['id'] == 40935165396 and meta['workflow_run']['head_sha'] == '55ec49020383ef5073f47502b300ab0b5d0a7cae'
+    assert meta['workflow_run']['id'] == 40946665738 and meta['workflow_run']['head_sha'] == 'fc336333cd67bf8871e2602777ec857312de06cb'
     assert meta['size_in_bytes'] == size and meta['digest'] == 'sha256:' + sha and not meta['expired']
     raw = download_artifact_zip(aid)
     assert len(raw) == size and hashlib.sha256(raw).hexdigest() == sha
@@ -24,7 +23,7 @@ def main():
         assert len(names) == len(set(names))
         assert all(not PurePosixPath(n).is_absolute() and '..' not in PurePosixPath(n).parts and '\\\\' not in n for n in names)
         result = json.loads(archive.read('result.json'))
-        assert (result['source_sha'], result['run_id'], result['attempt'], result['platform'], result['accepted']) == ('55ec49020383ef5073f47502b300ab0b5d0a7cae', '40935165396', '1', args.platform, False)
+        assert (result['source_sha'], result['run_id'], result['attempt'], result['platform'], result['accepted']) == ('fc336333cd67bf8871e2602777ec857312de06cb', '40946665738', '1', args.platform, False)
         log = archive.read('wave3-native-ui.log')
         expected = result['files']['wave3-native-ui.log']
         assert len(log) == expected['bytes'] and hashlib.sha256(log).hexdigest() == expected['sha256']
