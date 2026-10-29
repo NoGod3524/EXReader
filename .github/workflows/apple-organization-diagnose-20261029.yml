@@ -1,0 +1,76 @@
+name: Diagnose retained iPhone organization failure
+on:
+  push:
+    branches: [codex/apple-organization-diagnose-20261029]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate fixed original ZIP and read retained xcresult
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, pathlib, stat, subprocess, sys, zipfile
+          assert os.environ['GITHUB_ACTIONS'] == 'true'
+          sys.path.insert(0, 'tools')
+          from check_parallel_integration import fetch, download_artifact_zip
+          source = '329d676880c9c5f653b48f2ed6179bd1d7f97b28'
+          job = fetch('actions/jobs/123704031086')
+          assert job['head_sha'] == source and job['run_id'] == 40946118946
+          assert job['status'] == 'completed' and job['conclusion'] == 'failure'
+          artifact = fetch('actions/artifacts/12930980669')
+          assert artifact['workflow_run']['head_sha'] == source
+          assert artifact['workflow_run']['id'] == 40946118946 and not artifact['expired']
+          raw = download_artifact_zip(12930980669)
+          assert len(raw) == artifact['size_in_bytes'] == 121621011
+          digest = hashlib.sha256(raw).hexdigest()
+          assert digest == '6270282a97f22a832e39813a041b931e3c08b8300ff3b77625b374ece35fd84a'
+          assert artifact['digest'] == 'sha256:' + digest
+          out = pathlib.Path('build/organization-failure-diagnostic')
+          out.mkdir(parents=True, exist_ok=False)
+          (out/'input.json').write_text(json.dumps({'source':source,'producer_run':40946118946,
+            'producer_job':123704031086,'artifact':12930980669,'bytes':len(raw),'sha256':digest,
+            'diagnostic_only':True,'accepted':False}, indent=2))
+          with zipfile.ZipFile(io.BytesIO(raw)) as z:
+            assert len(z.namelist()) == len(set(z.namelist()))
+            assert sum(i.file_size for i in z.infolist()) < 2 * 1024**3
+            for i in z.infolist():
+              p = pathlib.PurePosixPath(i.filename)
+              assert not p.is_absolute() and '..' not in p.parts and '\\' not in i.filename
+              assert not stat.S_ISLNK(i.external_attr >> 16)
+              if 'organization.xcresult' in p.parts or p.suffix == '.log':
+                z.extract(i, out)
+          bundles = list(out.rglob('organization.xcresult'))
+          assert len(bundles) == 1
+          bundle = bundles[0]
+          for kind in ('summary', 'tests'):
+            value = subprocess.check_output(['xcrun','xcresulttool','get','test-results',kind,
+              '--path',str(bundle),'--format','json'], text=True)
+            (out/(kind+'.json')).write_text(value)
+            print(kind + ': ' + value, flush=True)
+          value = subprocess.check_output(['xcrun','xcresulttool','get','object','--legacy',
+            '--path',str(bundle),'--format','json'], text=True)
+          (out/'legacy.json').write_text(value)
+          issues = json.loads(value).get('issues', {})
+          print('issues: ' + json.dumps(issues), flush=True)
+          for path in out.rglob('*.log'):
+            lines = path.read_text(errors='replace').splitlines()
+            for n, line in enumerate(lines):
+              if 'error:' in line or 'XCTAssert' in line or 'failed (' in line:
+                print(str(path) + '\n' + '\n'.join(lines[max(0,n-8):n+5]), flush=True)
+          subprocess.run(['xcrun','xcresulttool','export','attachments','--path',str(bundle),
+            '--output-path',str(out/'attachments')], check=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: organization-failure-diagnostic-${{ github.run_id }}
+          path: build/organization-failure-diagnostic/
+          retention-days: 30
+          if-no-files-found: error
