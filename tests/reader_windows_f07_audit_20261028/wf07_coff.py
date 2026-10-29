@@ -79,7 +79,9 @@ def read_symbols(data, filename):
                 else:
                     require(not spelling.startswith('#1/'), 'unsupported BSD archive member')
                     member = spelling.removesuffix('/')
-                require(member and member.lower().endswith(('.obj', '.o')), 'unsupported non-object archive member: ' + member)
+                require(member and member.lower().endswith(('.obj', '.o')),
+                        'unsupported non-object archive member: ' + str(dict(archive=filename, member=member,
+                            bytes=len(payload), first_64_bytes_hex=payload[:64].hex())))
                 members.append(member); rows.extend(object_symbols(payload, member))
             offset += 60 + size + (size % 2)
         require(offset == len(data), 'archive trailing bytes')
