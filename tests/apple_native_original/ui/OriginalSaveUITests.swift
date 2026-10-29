@@ -72,6 +72,15 @@ final class OriginalSaveUITests: XCTestCase {
             let old = (inline.value as? String) ?? ""
             inline.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count))
             inline.typeText("EXReaderOriginalSave\n")
+            // Some iOS Files versions keep inline rename focused after Return.
+            // A tap in the picker navigation area commits the name without
+            // selecting the folder; require the actual rename editor to close.
+            if inline.exists {
+                let picker = app.otherElements["Browse View (Picker)"].firstMatch
+                XCTAssertTrue(wait { picker.exists }, app.debugDescription)
+                picker.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.06)).tap()
+                XCTAssertTrue(wait { !inline.exists }, "Folder rename did not finish: \(app.debugDescription)")
+            }
         } else {
             let name = app.textFields.firstMatch
             XCTAssertTrue(wait { name.exists && name.isHittable }, app.debugDescription)
