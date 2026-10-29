@@ -1,0 +1,22 @@
+name: Apple iOS saved original independent audit
+on:
+  push:
+    branches: [codex/apple-four-evidence-audit-20261029]
+    paths: ['tools/reader_composition/apple_ios_save_evidence_audit.py', '.github/workflows/apple-ios-save-evidence-audit.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  audit:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original simulator XCTest and saved EPUB bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/apple_ios_save_evidence_audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-ios-save-evidence-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-ios-save-evidence-audit/results.json
+          if-no-files-found: error
