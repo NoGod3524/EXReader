@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 import os
+import copy
 import hashlib
 import http.client
 import inspect
 import json
+import plistlib
 from pathlib import Path
 import socket
 import ssl
+import struct
 import subprocess
 import sys
 import tempfile
@@ -18,6 +21,7 @@ from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler
 from contract import ROOT, sha
 from continuation_contract import CASE, STAGES, case_name, verdict
+from continuation_contract import BUNDLE, ENTITLEMENT_FILE, ENTITLEMENTS, admission_app_identity, admission_tool, entitlement_linker_token, exact_entitlements, macho_entitlement_section, signature_summary, verify_admission_transition, verify_continuation_project
 from continuation_lifecycle import ContinuationLifecycle, LifecycleHTTPServer, atomic_result, seal_files, verify_lifecycle, write_unsealed
 from fixture import fixture
 
@@ -54,7 +58,130 @@ def timeout_child(directory):
         client.close()
 
 
+def control_macho(section, platform=7, copies=1):
+    """Protocol fixture only, not a runnable executable or native proof."""
+    command_size = 24 + 72 + 80 * copies
+    offset = 32 + command_size
+    header = struct.pack('<IiiIIIII', 0xfeedfacf, 0x0100000c, 0, 2, 2, command_size, 0, 0)
+    build = struct.pack('<IIIIII', 0x32, 24, platform, 0, 0, 0)
+    segment = struct.pack('<II16sQQQQiiII', 0x19, 72 + 80 * copies, b'__TEXT', 0,
+                          offset + len(section) * copies, 0, offset + len(section) * copies, 5, 5, copies, 0)
+    sections = b''.join(struct.pack('<16s16sQQIIIIIIII', b'__entitlements', b'__TEXT',
+        offset + index * len(section), len(section), offset + index * len(section), 0, 0, 0, 0, 0, 0, 0)
+        for index in range(copies))
+    return header + build + segment + sections + section * copies
+
+
+def control_project():
+    return {'objects': {
+        'file': {'isa': 'PBXFileReference', 'path': '/strict/PasswordPrivacyUITests.swift', 'sourceTree': '<group>'},
+        'ios': {'isa': 'PBXNativeTarget', 'name': 'EXReaderHost-iOS',
+                'productType': 'com.apple.product-type.application', 'buildConfigurationList': 'list'},
+        'list': {'isa': 'XCConfigurationList', 'buildConfigurations': ['debug', 'release']},
+        'debug': {'isa': 'XCBuildConfiguration', 'name': 'Debug', 'buildSettings': {'OTHER_LDFLAGS': ['$(inherited)', '-lexreader']}},
+        'release': {'isa': 'XCBuildConfiguration', 'name': 'Release', 'buildSettings': {'OTHER_LDFLAGS': ['$(inherited)', '-lexreader']}},
+        'other': {'isa': 'PBXNativeTarget', 'name': 'EXReaderHost-macOS', 'untouched': True}}}
+
+
 class ContinuationControls(unittest.TestCase):
+    def test_entitlements_are_exact_and_reject_duplicate_foreign_or_nonboolean(self):
+        source = ENTITLEMENT_FILE.read_bytes()
+        self.assertEqual(exact_entitlements(source), ENTITLEMENTS)
+        for data in [source.replace(b'<true/>', b'<integer>1</integer>'),
+                source.replace(BUNDLE.encode(), b'foreign.group', 1),
+                source.replace(b'</array>', b'<string>*</string></array>'),
+                source.replace(b'</dict>', b'<key>get-task-allow</key><true/></dict>'),
+                source.replace(b'<true/>', b'<false/>'), b'', b'\x00' + source,
+                plistlib.dumps(ENTITLEMENTS, fmt=plistlib.FMT_BINARY)]:
+            with self.assertRaises(RuntimeError):
+                exact_entitlements(data)
+
+    def test_macho_section_requires_exact_simulator_bounds_and_unique_section(self):
+        source = ENTITLEMENT_FILE.read_bytes(); data = control_macho(source)
+        proof = macho_entitlement_section(data)
+        self.assertEqual(proof['section_sha256'], hashlib.sha256(source).hexdigest())
+        self.assertEqual(proof['platform'], 'ios-simulator')
+        bad_offset = bytearray(data); struct.pack_into('<I', bad_offset, 32 + 24 + 72 + 48, 0)
+        bad_size = bytearray(data); struct.pack_into('<I', bad_size, 32 + 24 + 4, 8)
+        for altered in [data[:31], data[:-1], b'\xca\xfe\xba\xbe' + data[4:],
+                control_macho(source, platform=2), control_macho(source, copies=0),
+                control_macho(source, copies=2), bytes(bad_offset), bytes(bad_size),
+                control_macho(source.replace(BUNDLE.encode(), b'foreign.group', 1))]:
+            with self.assertRaises(RuntimeError): macho_entitlement_section(altered)
+
+    def test_exact_project_delta_cannot_admit_other_targets_flags_or_settings(self):
+        before = control_project(); after = copy.deepcopy(before)
+        probe, entitlement = Path('/owned/Continuation.swift'), Path('/owned/path with spaces/ios.entitlements')
+        after['objects']['file'].update(path=str(probe), sourceTree='<absolute>')
+        mac = copy.deepcopy(after)
+        verify_continuation_project(before, mac, probe, entitlement, 'macos')
+        for key in ('debug', 'release'):
+            after['objects'][key]['buildSettings']['OTHER_LDFLAGS'].append(entitlement_linker_token(entitlement))
+        verify_continuation_project(before, after, probe, entitlement, 'iphone')
+        for target, key, value in [('other', 'untouched', False), ('file', 'path', '/foreign.swift'),
+                ('debug', 'buildSettings', {'OTHER_LDFLAGS': ['-lforeign']}),
+                ('release', 'timeout', 4801), ('ios', 'name', 'Foreign')]:
+            altered = copy.deepcopy(after); altered['objects'][target][key] = value
+            with self.assertRaises(RuntimeError): verify_continuation_project(before, altered, probe, entitlement, 'iphone')
+        with self.assertRaises(RuntimeError): verify_continuation_project(before, after, probe, entitlement, 'macos')
+        for value in ('relative/path', '/foreign,path', '/bad\npath'):
+            with self.assertRaises(RuntimeError): entitlement_linker_token(value)
+        self.assertEqual(before, control_project())
+
+    def test_signature_zero_exit_is_not_identity_or_entitlement_proof(self):
+        display = ('Identifier=' + BUNDLE + '\nSignature=adhoc\nTeamIdentifier=not set\n').encode()
+        self.assertTrue(signature_summary(display, 0)['verified'])
+        self.assertFalse(signature_summary(b'', 1, require_valid=False)['verified'])
+        for text, code in [(b'', 0), (display, 1), (display + b'Signature=adhoc\n', 0),
+                (display.replace(BUNDLE.encode(), b'foreign.group'), 0),
+                (display.replace(b'adhoc', b'adhoc%3Aprivate'), 0),
+                (display.replace(b'not set', b'private...'), 0)]:
+            with self.assertRaises(RuntimeError): signature_summary(text, code)
+
+    def test_admission_app_identity_and_installed_byte_binding_refuse_substitution(self):
+        with tempfile.TemporaryDirectory() as folder:
+            app = Path(folder); (app / 'Frameworks').mkdir()
+            (app / 'EXReaderHost').write_bytes(control_macho(ENTITLEMENT_FILE.read_bytes()))
+            (app / 'Frameworks/libexreader.3.42.0.dylib').write_bytes(b'unchanged protocol fixture SDK')
+            info = {'CFBundleIdentifier': BUNDLE, 'CFBundleExecutable': 'EXReaderHost', 'EXRSourceSHA': 'a' * 40,
+                    'EXRSDKVersion': '3.42.0', 'EXRPageThemeEnabled': True}
+            (app / 'Info.plist').write_bytes(plistlib.dumps(info))
+            before = admission_app_identity(app, 'a' * 40, seal_files(app))
+            before['signature'] = {'verified': False}
+            after = copy.deepcopy(before); after['signature'] = {'verified': True}
+            after['binary'] = {'bytes': 100, 'sha256': 'b' * 64}
+            after['files']['EXReaderHost'] = after['binary']
+            after['files']['_CodeSignature/CodeResources'] = {'bytes': 10, 'sha256': 'c' * 64}
+            installed = copy.deepcopy(after)
+            self.assertTrue(verify_admission_transition(before, after, installed)['built_and_installed_verified'])
+            for key in ('info', 'section', 'libraries', 'binary', 'signature'):
+                altered = copy.deepcopy(installed); altered[key] = {'verified': False} if key == 'signature' else {}
+                with self.assertRaises(RuntimeError): verify_admission_transition(before, after, altered)
+            altered = copy.deepcopy(installed); altered['files']['new-resource'] = {'bytes': 1, 'sha256': 'd' * 64}
+            with self.assertRaises(RuntimeError): verify_admission_transition(before, after, altered)
+            changed_after = copy.deepcopy(altered)
+            with self.assertRaises(RuntimeError): verify_admission_transition(before, changed_after, altered)
+            for key, value in [('CFBundleIdentifier', 'foreign.group'), ('CFBundleExecutable', 'Other'),
+                    ('EXRSourceSHA', 'c' * 40), ('EXRSDKVersion', '0'), ('EXRPageThemeEnabled', False)]:
+                (app / 'Info.plist').write_bytes(plistlib.dumps(dict(info, **{key: value})))
+                with self.assertRaises(RuntimeError): admission_app_identity(app, 'a' * 40, seal_files(app))
+
+    def test_admission_inspection_uses_shared_deadline_and_retains_failed_output(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); commands = []
+            lifecycle = ContinuationLifecycle('iphone', budget_seconds=2, drain_seconds=0.1)
+            done = admission_tool(lifecycle, root, 'installed-display', [sys.executable, '-c',
+                'import sys,time; print("fixed-control",flush=True); time.sleep(60)'], commands)
+            self.assertNotEqual(done.returncode, 0); self.assertTrue(lifecycle.failed)
+            self.assertEqual((root / 'ios-admission/installed-display.stdout').read_bytes(), b'fixed-control\n')
+            self.assertEqual(commands, [{'role': 'admission-installed-display', 'exit': done.returncode}])
+            with self.assertRaises(RuntimeError):
+                admission_tool(lifecycle, root, 'installed-verify', [sys.executable, '-c', 'raise SystemExit(0)'], commands)
+            self.assertFalse((root / 'ios-admission/installed-verify.stdout').exists())
+            write_unsealed(root, 'a' * 40, 'iphone', lifecycle)
+            self.assertFalse((root / 'result.json').exists())
+            self.assertFalse(json.loads((root / 'unsealed.json').read_text())['evidence_sealed'])
+
     def test_delayed_disconnected_callback_must_drain_before_final_snapshot(self):
         with tempfile.TemporaryDirectory() as folder:
             directory = Path(folder); release = threading.Event()

@@ -18,6 +18,7 @@ import sys
 import zipfile
 from urllib.parse import urlsplit
 from continuation_contract import BASE, BUNDLE, CASE, ROOT, STAGES, attachments, case_name, guard, require, sha, verdict
+from continuation_contract import ENTITLEMENT_FILE, admission_app_identity, admission_tool, exact_entitlements, signature_summary, verify_admission_transition, verify_continuation_project
 from fixture import fixture
 from privacy_scan import needles, scan_file, scan_roots, optional_entries, verify_optional_entries
 from log_evidence import attribute_unified_log, retain_product_log
@@ -41,7 +42,10 @@ def main():
               'secure_field_display_is_secret_absence_proof': False,
               'log_scope': 'captured EXReaderHost unified logs including info/debug; not arbitrary OS logs or XCTest input activities',
               'commands': [], 'checkpoints': {}, 'log_attribution': {}, 'failure': None}
+    result['ios_admission_summary'] = {'status': 'not-required' if platform == 'macos' else 'pending',
+        'built_and_installed_verified': False, 'original_osstatus_proven': False, 'full_f10_accepted': False}
     udid = None
+    admission, sdk_libraries = {}, {}
     lifecycle = ContinuationLifecycle(platform)
     fixture_records = None
     def run(role, *argv, env=None, capture=False):
@@ -57,6 +61,36 @@ def main():
         (evidence / (role + '-helper.log')).write_bytes(done.stdout + done.stderr)
         require(done.returncode == 0, 'bounded frozen helper failed')
         return json.loads(done.stdout)
+    def admission_command(role, *argv):
+        return admission_tool(lifecycle, evidence, role, argv, result['commands'])
+    def capture_admission(phase, app):
+        require(phase in ('pre-sign', 'post-sign', 'installed'), 'unknown admission phase')
+        lifecycle.remaining()
+        files = seal_files(app, deadline=lifecycle.deadline)
+        proof = admission_app_identity(app, result['source_sha'], files)
+        for name, record in proof['libraries'].items():
+            if name.startswith('Frameworks/libexreader'):
+                source_library = install / 'sdk/lib' / Path(name).name
+                require(source_library.is_file() and source_library.stat().st_size == record['bytes'] and
+                        sha(source_library) == record['sha256'], 'packaged SDK differs from installed input')
+                if phase == 'pre-sign': sdk_libraries[name] = record
+                else: require(sdk_libraries.get(name) == record, 'input SDK changed during admission')
+        display = admission_command(phase + '-display', 'codesign', '--display', '--verbose=4', app)
+        verification = admission_command(phase + '-verify', 'codesign', '--verify', '--strict', app)
+        require(not lifecycle.failed, 'admission command ownership failed')
+        require(phase == 'pre-sign' or display.returncode == 0, 'host signature inspection failed')
+        proof['signature'] = signature_summary(display.stdout + display.stderr, verification.returncode,
+                                                require_valid=phase != 'pre-sign')
+        proof['signature_display_exit'] = display.returncode
+        proof['signature_verify_exit'] = verification.returncode
+        archive = evidence / 'ios-admission' / (phase + '.zip')
+        archived = admission_command(phase + '-archive', 'ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', app, archive)
+        require(archived.returncode == 0, 'admission app archive failed')
+        require(seal_files(app, deadline=lifecycle.deadline) == files, 'admission app changed during capture')
+        proof.update(files=files, archive_sha256=sha(archive), archive_bytes=archive.stat().st_size)
+        admission[phase] = proof
+        (evidence / 'ios-admission/manifest.json').write_text(json.dumps(admission, indent=2) + '\n')
+        return proof
     try:
         target = 'macos' if platform == 'macos' else 'iphonesimulator'
         install = ROOT / 'build/password-sdk-input' / ('password-sdk-' + target + '-' + result['run_id'] + '-' + result['attempt'])
@@ -71,6 +105,13 @@ def main():
         (evidence / 'source.epub').write_bytes(original)
         shutil.copyfile(resources / 'manifest.json', evidence / 'resource-manifest.json')
         run('project', 'ruby', ROOT / 'tests/apple_password_privacy_20261028/make_continuation_project.rb', project, resources, evidence / 'adapter', platform)
+        projects = []
+        for label in ('strict', 'continuation'):
+            projects.append(json.loads(lifecycle.command(['plutil', '-convert', 'json', '-o', '-',
+                evidence / 'adapter' / (label + '-project.pbxproj')]).stdout))
+        result['generated_project_delta'] = verify_continuation_project(*projects,
+            ROOT / 'tests/apple_password_privacy_20261028/continuation_ui/PasswordPrivacyContinuationUITests.swift',
+            ENTITLEMENT_FILE, platform)
         if platform == 'macos':
             destination, scheme, suffix, signing = 'platform=macOS', 'EXReaderHost-macOS', 'Debug', 'YES'
             require(not (Path.home() / 'Library/Application Support/EXReader').exists(), 'refuse pre-existing product profile')
@@ -98,6 +139,20 @@ def main():
         shutil.copyfile(built / 'EXReaderHost.link.map', evidence / 'EXReaderHost.link.map')
         runtime_library = app / (prefix + 'Frameworks/libexreader.3.42.0.dylib')
         require(runtime_library.is_file(), 'packaged runtime absent')
+        if udid:
+            exact_entitlements(ENTITLEMENT_FILE.read_bytes())
+            capture_admission('pre-sign', app)
+            signed = admission_command('host-sign', 'codesign', '--force', '--sign', '-', app)
+            require(signed.returncode == 0, 'test host ad-hoc signing failed')
+            capture_admission('post-sign', app)
+            require(admission['pre-sign']['info'] == admission['post-sign']['info'] and
+                    admission['pre-sign']['section'] == admission['post-sign']['section'] and
+                    admission['pre-sign']['libraries'] == admission['post-sign']['libraries'],
+                    'signing changed entitlement or packaged SDK bytes')
+            result['pre_sign_provider_check'] = result['provider_check']
+            shutil.copyfile(evidence / 'inspect-helper.log', evidence / 'pre-sign-inspect-helper.log')
+            result['provider_check'] = helper('inspect', binary, built / 'EXReaderHost.link.map')
+            result['ios_admission_summary']['status'] = 'signed-built-only'
         user = 'privacy-user-' + secrets.token_hex(16)
         passwords = {role: 'Privacy-' + secrets.token_hex(32) + '!%:+' for role in ('remembered', 'session')}
         authorizations = {role: 'Basic ' + base64.b64encode((user + ':' + value).encode()).decode() for role, value in passwords.items()}
@@ -244,6 +299,24 @@ def main():
         result['failure'] = type(error).__name__
     finally:
         if udid:
+            # Never substitute built evidence for the actual installed host.
+            # Capture on failure too, after handler drain and BEFORE erase.
+            try:
+                require(lifecycle.drained and not lifecycle.failed and 'post-sign' in admission,
+                        'installed admission lifecycle unavailable')
+                location = admission_command('installed-path', 'xcrun', 'simctl', 'get_app_container', udid, BUNDLE, 'app')
+                require(location.returncode == 0, 'installed application unavailable')
+                installed = Path(location.stdout.decode('utf-8', errors='strict').strip())
+                require(installed.is_absolute() and installed.name == 'EXReaderHost.app' and
+                        not installed.is_symlink() and installed.is_dir(), 'installed application path differs')
+                capture_admission('installed', installed)
+                proof = verify_admission_transition(admission['pre-sign'], admission['post-sign'], admission['installed'])
+                result['ios_admission_summary'] = dict(proof, status='verified-comparison')
+            except Exception:
+                result['ios_admission_summary'] = {'status': 'unavailable-or-refused',
+                    'built_and_installed_verified': False, 'original_osstatus_proven': False, 'full_f10_accepted': False}
+                result['sequence_complete'] = False
+                if result['failure'] is None: result['failure'] = 'RuntimeError'
             stopped = lifecycle.cleanup_command('simulator-shutdown', ['xcrun', 'simctl', 'shutdown', udid])
             cleaned = lifecycle.cleanup_command('simulator-erase', ['xcrun', 'simctl', 'erase', udid])
             # Do not read a mutable callback-owned dictionary on failed drain.
@@ -276,7 +349,7 @@ def main():
             atomic_result(evidence, result, deadline=lifecycle.deadline)
             print(json.dumps({key: result[key] for key in ('accepted', 'diagnostic_only', 'sequence_complete', 'strict_privacy_checks',
                   'source_sha', 'platform', 'failure', 'full_f10_accepted', 'log_attribution', 'ui_state_observations',
-                  'lifecycle', 'evidence_sealed')}), flush=True)
+                  'lifecycle', 'evidence_sealed', 'ios_admission_summary')}), flush=True)
         except Exception:
             # A live daemon callback cannot be safely cancelled in Python.
             # Publish no normal result/files manifest and inspect no mutable

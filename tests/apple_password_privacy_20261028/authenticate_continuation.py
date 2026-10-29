@@ -14,12 +14,13 @@ import sys
 import tempfile
 from urllib.parse import urlsplit
 from continuation_contract import BASE, BUNDLE, CASE, ROOT, STAGES, attachments, case_name, guard, require, sha, verdict
+from continuation_contract import ENTITLEMENT_FILE, admission_app_identity, exact_entitlements, signature_summary, verify_admission_transition, verify_continuation_project
 from inspect_native import variant_labels
 from privacy_scan import needles, scan_roots
 from archive_contract import safe_extract
 from log_evidence import attribute_unified_log, verify_product_log
 from ui_observations import parse_ui_observations
-from continuation_lifecycle import verify_lifecycle
+from continuation_lifecycle import seal_files, verify_lifecycle
 sys.path[:0] = [str(ROOT / 'tests/apple_host'), str(ROOT / 'tools')]
 from collect_evidence import load_results
 from check_apple_product import inspect
@@ -41,6 +42,54 @@ def verify_requests(requests, checkpoints, root):
             require(shards == {format(index, '02x') for index in range(256)}, 'native authenticated sweep incomplete')
         previous = count
     require(previous == len(requests), 'requests after final observation')
+
+
+def verify_ios_admission(directory, source, result):
+    """Re-read original app archives, Mach-O section and actual signatures."""
+    exact_entitlements(ENTITLEMENT_FILE.read_bytes())
+    folder = directory / 'ios-admission'
+    manifest = json.loads((folder / 'manifest.json').read_text())
+    require(set(manifest) == {'pre-sign', 'post-sign', 'installed'}, 'admission phase evidence incomplete')
+    observed = {}
+    for phase in ('pre-sign', 'post-sign', 'installed'):
+        record = manifest[phase]; archive = folder / (phase + '.zip')
+        require(archive.stat().st_size == record['archive_bytes'] and sha(archive) == record['archive_sha256'],
+                'admission original archive differs')
+        with tempfile.TemporaryDirectory(prefix='privacy-admission-') as temporary:
+            extracted = Path(temporary); safe_extract(archive, extracted)
+            require({path.name for path in extracted.iterdir()} == {'EXReaderHost.app'}, 'admission archive namespace differs')
+            app = extracted / 'EXReaderHost.app'
+            files = seal_files(app)
+            require(files == record['files'], 'admission archive members differ')
+            actual = admission_app_identity(app, source, files)
+            for key in ('binary', 'info', 'section', 'libraries', 'files'):
+                require(actual[key] == record[key], 'admission identity replay differs')
+            retained_display = (folder / (phase + '-display.stdout')).read_bytes() + (folder / (phase + '-display.stderr')).read_bytes()
+            retained = signature_summary(retained_display, record['signature_verify_exit'], require_valid=phase != 'pre-sign')
+            require(retained == record['signature'], 'retained signature summary differs')
+            display = subprocess.run(['codesign', '--display', '--verbose=4', app], capture_output=True, timeout=30)
+            verification = subprocess.run(['codesign', '--verify', '--strict', app], capture_output=True, timeout=30)
+            actual['signature'] = signature_summary(display.stdout + display.stderr, verification.returncode,
+                                                     require_valid=phase != 'pre-sign')
+            require(actual['signature'] == record['signature'] and
+                    display.returncode == record['signature_display_exit'] and
+                    verification.returncode == record['signature_verify_exit'], 'actual signature replay differs')
+            require(seal_files(app) == files, 'admission verifier changed original extracted app')
+            observed[phase] = actual
+    expected = dict(verify_admission_transition(observed['pre-sign'], observed['post-sign'], observed['installed']),
+                    status='verified-comparison')
+    require(result['ios_admission_summary'] == expected, 'admission comparison claim differs')
+    require(observed['post-sign']['binary']['sha256'] == result['program']['sha256'] and
+            observed['installed']['libraries']['Frameworks/libexreader.3.42.0.dylib']['sha256'] == result['program']['runtime_sha256'],
+            'admission program binding differs')
+    roles = [step['role'] for step in result['commands']]
+    expected_order = ['build-for-testing', 'admission-pre-sign-archive', 'admission-host-sign',
+        'admission-post-sign-display', 'admission-post-sign-verify', 'admission-post-sign-archive',
+        'native', 'admission-installed-path', 'admission-installed-display', 'admission-installed-verify',
+        'admission-installed-archive']
+    require([role for role in roles if role in expected_order] == expected_order,
+            'admission build sign native installed order differs')
+    return expected
 
 
 def validate(directory, source, run, attempt, platform):
@@ -157,6 +206,8 @@ def validate(directory, source, run, attempt, platform):
     require(continuation['diagnostic_only'] is True and continuation['source_sha'] == source and
             continuation['platform'] == platform and continuation['strict_test_replaced_only_in_generated_probe_target'] is True,
             'continuation adapter identity differs')
+    require(continuation['ios_application_entitlement_linker_only'] is (platform != 'macos') and
+            continuation['entitlement_source_sha256'] == sha(ENTITLEMENT_FILE), 'entitlement adapter differs')
     strict_test = ROOT / 'tests/apple_password_privacy_20261028/ui/PasswordPrivacyUITests.swift'
     probe_test = ROOT / 'tests/apple_password_privacy_20261028/continuation_ui/PasswordPrivacyContinuationUITests.swift'
     require(continuation['strict_test_sha256'] == sha(strict_test) and continuation['continuation_test_sha256'] == sha(probe_test),
@@ -166,13 +217,8 @@ def validate(directory, source, run, attempt, platform):
         path = directory / 'adapter' / (name + '-project.pbxproj')
         require(sha(path) == continuation[name + '_project_sha256'], 'retained generated project differs')
         projects.append(json.loads(subprocess.check_output(['plutil', '-convert', 'json', '-o', '-', str(path)])))
-    before, after = projects
-    matches = [key for key, item in before['objects'].items() if item.get('isa') == 'PBXFileReference' and
-               Path(item.get('path', '')).name == 'PasswordPrivacyUITests.swift']
-    require(len(matches) == 1, 'strict test file reference differs')
-    before['objects'][matches[0]]['path'] = str(probe_test)
-    before['objects'][matches[0]]['sourceTree'] = '<absolute>'
-    require(before == after, 'continuation changed more than generated test reference')
+    project_delta = verify_continuation_project(*projects, probe_test, ENTITLEMENT_FILE, platform)
+    require(project_delta == result['generated_project_delta'], 'producer project equality differs')
     for name, digest in adapter['files'].items(): require(sha(directory / 'adapter' / name) == digest, 'adapter bytes differ')
     generator = (ROOT / 'tests/apple_host/make_xcodeproj.rb').read_text()
     require((directory / 'adapter/original-generator.rb').read_text() == generator, 'old generator differs')
@@ -204,11 +250,16 @@ def validate(directory, source, run, attempt, platform):
         actual['dependencies'] = actual['dependencies'].splitlines()[1:]
         claimed['dependencies'] = claimed['dependencies'].splitlines()[1:]
         require(actual == claimed, 'actual binary provider differs')
+    if platform != 'macos': verify_ios_admission(directory, source, result)
+    else:
+        require(result['ios_admission_summary'] == {'status': 'not-required', 'built_and_installed_verified': False,
+            'original_osstatus_proven': False, 'full_f10_accepted': False}, 'macOS admission scope changed')
     diagnostic = verdict(result['strict_privacy_checks'])
     require(result['diagnostic_verdict'] == diagnostic, 'diagnostic verdict differs')
     return dict(diagnostic, platform=platform, source_sha=source, stages=STAGES, sequence_complete=True,
                 probe_integrity_verified=True, binary_sha256=result['program']['sha256'], dedicated_forget_tested=False,
                 ui_state_observations=observed,
+                ios_admission_summary=result['ios_admission_summary'],
                 log_attribution=result['log_attribution'], attribution_limit='sender image categories, not production owner callsites',
                 privacy_roots={stage: {label: {'strict_passed': proof['accepted'], 'hit_variant_labels': variant_labels(proof)}
                     for label, proof in result['checkpoints'][stage]['scans'].items()} for stage in STAGES})

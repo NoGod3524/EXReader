@@ -363,5 +363,59 @@ cleanup, lingering descendant output, FIFO substitution, large-file/namespace
 mutation, atomic failure and forged receipts. Native/log captures remain complete
 (no16MiB truncation); frozen inspectors execute in bounded owned helper processes,
 without changing the strict helpers or printing arbitrary errors.
-This implementation is unrun until Actions and still needs final source review.
-The separate iOS-entitlement plan remains unimplemented and outside this packet.
+Final source review cleared the six-file implementation. Its single native
+run40822937279/1 at256ec70d1d30d80d1e2069959d5c6409bcc76779 passed all68
+controls and both SDK jobs, but all three native sequences and aggregate failed.
+All producers reported sealed evidence, drained/stopped handlers and completed
+required cleanup. No old artifact was repaired or relabeled valid.
+
+The separately approved diagnostic-only run40825933387/1 at
+cc0cc5021badfb73d29bb03d57da1871b8c79cd8 passed69 controls and skipped all
+SDK/native work. It independently checked all1776 manifested members of the
+current original macOS artifact with zero mismatches and validated its lifecycle
+receipt. Native failure localizes to the checkpoint callback URL request timeout,
+Swift209/210, with three checkpoints complete and both authenticated256-shard
+sweeps present. It is not evidence of a failed final credential predicate.
+The90-second checkpoint and240/360 XCTest limits remain unchanged.
+
+## Comparative simulator entitlement admission — authored, unrun
+
+Owner separately approved the seven-path implementation/review/publication/
+verification scope at2026-10-29T05:51:43Z. This is an isolated Actions test host,
+not a production credential implementation or user-device signing change.
+Current iPhone/iPad evidence remains initial save-incomplete followed by missing
+credentials after a real restart; exact OSStatus and historical cause are unknown.
+
+Only the generated iOS application target gains a linker-created
+__TEXT,__entitlements section containing the exact existing isolated test bundle,
+its single identical keychain group and boolean get-task-allow. Full generated
+project dictionaries are compared before build and independently after upload;
+the only differences permitted are the existing Swift test reference and this
+one iOS application linker token. Other targets, signing settings, SDK/product
+sources, strict UI and all budgets remain unchanged.
+
+After build-for-testing, capture the pre-sign app, then plain ad-hoc sign only
+that host and capture it again before test-without-building. No --deep, profile,
+developer account, foreign group or subsequent rebuild/re-sign. Thin64-bit
+simulator Mach-O section bounds and exact XML dictionary are checked directly;
+unsupported/fat/malformed input refuses. Actual codesign display and strict
+verification are retained without printing arbitrary output. Pre-sign failed
+verification is explicitly observed, never treated as required native success.
+
+On native failure as well as success, inspect and archive the actual installed
+app before bounded shutdown/erase. Missing installed evidence refuses; it is
+never inferred from built bytes. Before/post/installed SDK framework bytes and
+Info identities must match, and installed executable must equal the signed
+one. Packaged libexreader bytes are also compared to the installed SDK input.
+The independent verifier re-extracts all three original app archives, rehashes
+all members, reads the real entitlement section and reruns signature checks.
+
+All added producer commands use the existing owned process-group helper and
+remaining4800-second deadline; no new callback-drain/cleanup/seal exemption.
+Six additional authored controls (proposed total75) cover duplicate/foreign
+entitlements, section/platform/bounds substitution, exact project deltas,
+zero-exit signature spoofing, built/installed byte substitution and actual
+blocked inspection with retained output/unsealed refusal. No local execution.
+This seven-file implementation still requires final independent source review
+and Actions. A changed save/restart outcome would be a bounded comparative
+result, not proof of the old OSStatus or strict/full-F10 acceptance.
