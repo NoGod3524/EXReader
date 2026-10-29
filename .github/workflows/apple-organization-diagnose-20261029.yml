@@ -20,22 +20,22 @@ jobs:
           assert os.environ['GITHUB_ACTIONS'] == 'true'
           sys.path.insert(0, 'tools')
           from check_parallel_integration import fetch, download_artifact_zip
-          source = '329d676880c9c5f653b48f2ed6179bd1d7f97b28'
-          job = fetch('actions/jobs/123704031086')
-          assert job['head_sha'] == source and job['run_id'] == 40946118946
+          source = '9019f94c56245043d68422e6a70948f8fd227e8b'
+          job = fetch('actions/jobs/123734021433')
+          assert job['head_sha'] == source and job['run_id'] == 40951570390
           assert job['status'] == 'completed' and job['conclusion'] == 'failure'
-          artifact = fetch('actions/artifacts/12930980669')
+          artifact = fetch('actions/artifacts/12933684799')
           assert artifact['workflow_run']['head_sha'] == source
-          assert artifact['workflow_run']['id'] == 40946118946 and not artifact['expired']
-          raw = download_artifact_zip(12930980669)
-          assert len(raw) == artifact['size_in_bytes'] == 121621011
+          assert artifact['workflow_run']['id'] == 40951570390 and not artifact['expired']
+          raw = download_artifact_zip(12933684799)
+          assert len(raw) == artifact['size_in_bytes'] == 240212146
           digest = hashlib.sha256(raw).hexdigest()
-          assert digest == '6270282a97f22a832e39813a041b931e3c08b8300ff3b77625b374ece35fd84a'
+          assert digest == '8dbabafab0f5a1693323d1342ecc2c251131d6eab69db55a047f6260dd0fbb85'
           assert artifact['digest'] == 'sha256:' + digest
           out = pathlib.Path('build/organization-failure-diagnostic')
           out.mkdir(parents=True, exist_ok=False)
-          (out/'input.json').write_text(json.dumps({'source':source,'producer_run':40946118946,
-            'producer_job':123704031086,'artifact':12930980669,'bytes':len(raw),'sha256':digest,
+          (out/'input.json').write_text(json.dumps({'source':source,'producer_run':40951570390,
+            'producer_job':123734021433,'artifact':12933684799,'bytes':len(raw),'sha256':digest,
             'diagnostic_only':True,'accepted':False}, indent=2))
           with zipfile.ZipFile(io.BytesIO(raw)) as z:
             assert len(z.namelist()) == len(set(z.namelist()))
