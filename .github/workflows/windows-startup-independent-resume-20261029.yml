@@ -1,0 +1,28 @@
+name: Independent Windows startup original evidence
+on:
+  push:
+    branches: [codex/handoff-evidence-resume-20261029]
+    paths: ['tools/reader_composition/windows_startup_independent.py', '.github/workflows/windows-startup-independent-resume-20261029.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Independently verify original archive, exact cases, preserved fixtures and product bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          python tools/reader_composition/windows_startup_independent.py
+          --run 40939979816 --source 2fff53ff6734ec2b495c841e6669aef562e170d7
+          --job 123680473398 --artifact 12926312358 --bytes 4194330
+          --sha256 dca517038d2a92e0da834fd2870f516e861f061817b0fbbda023f6e35645f850
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-startup-independent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-startup-independent/
+          if-no-files-found: error
