@@ -46,3 +46,13 @@ measurement, not an assumed pass. No D13 experiment or user data is involved.
 This remains a test-only Windows prerequisite. Product admission, full P0,
 physical power-loss qualification, directory-fsync equivalence and F12 stay
 false until the separate integration and complete delivery gates pass.
+
+## Setup failure retained
+
+The first continuation workflow [40936057156](https://github.com/NoGod3524/EXReader/actions/runs/40936057156),
+source ecbe0123e4a3ce943f6569c29b9791b92dd9cbab, stopped in the source guard:
+Windows Python attempted cp1252 decoding of the original UTF-8 driver from git
+show and raised UnicodeDecodeError. No SDK build or qualification group ran
+(0/67 executed, not a 67-group behavioral failure). The guard now specifies
+encoding='utf-8'. The reviewed driver and every native assertion remain unchanged;
+the next source still requires the exact 67 groups and original 30-minute job.
