@@ -46,7 +46,11 @@ def audit(raw, capture, inventory, images, bindings):
     triple = sysroot / 'usr/lib/x86_64-linux-android'
     api_directory = triple / '26'
     metadata_path = ndk / 'meta/system_libs.json'
-    metadata = json.loads(metadata_path.read_text())
+    metadata_bytes = metadata_path.read_bytes()
+    (out / 'system-library-metadata.json').write_bytes(metadata_bytes)
+    C.save(out / 'system-library-metadata-identity.json', dict(path=str(metadata_path),
+           sha256=C.sha(metadata_bytes), bytes=len(metadata_bytes), **C.identity()))
+    metadata = json.loads(metadata_bytes)
     required_stubs = N.system_names(metadata, 26)
     stubs = sorted(api_directory.glob('*.so'))
     input_report = dict(api=26, metadata_sha256=C.digest(metadata_path), metadata=metadata,

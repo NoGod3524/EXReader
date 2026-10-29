@@ -53,6 +53,8 @@ def resolve(path, sysroot, search, chain=()):
 
 def system_names(metadata, api):
     C.require(isinstance(metadata, dict) and metadata, 'missing NDK system library manifest')
-    C.require(all(re.fullmatch(r'lib[A-Za-z0-9_+.-]+\.so', name) and type(level) is int and level > 0
+    C.require(all(re.fullmatch(r'lib[A-Za-z0-9_+.-]+\.so', name) and
+                  ((type(level) is int and level > 0) or
+                   (type(level) is str and re.fullmatch(r'[1-9][0-9]*', level)))
                   for name, level in metadata.items()), 'unsupported NDK system library metadata')
-    return {name for name, level in metadata.items() if level <= api}
+    return {name for name, level in metadata.items() if int(level) <= api}
