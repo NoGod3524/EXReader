@@ -334,7 +334,7 @@ def main():
             except sqlite3.OperationalError as e:assert e.sqlite_errorcode==sqlite3.SQLITE_ERROR
             else:raise AssertionError('syntax calibration unexpectedly succeeded')
         root=d.fresh('01-native-Unicode');r=d.call('identity',root);assert len(r['root_id'])==48 and re.fullmatch('[0-9a-f]{48}',r['root_id']);assert len(r['source_producer'])==64 and 'D:P' in r['actual_root_sddl'];assert r['outside_ancestors']
-        for ancestor in r['outside_ancestors']:assert ancestor['classification']=='outside-pinned-not-private' and ancestor['requested_access']==0x20080 and ancestor['requested_share']==1 and len(ancestor['identity'])==48 and ancestor['observed_sddl']
+        for ancestor in r['outside_ancestors']:assert ancestor['classification']=='outside-pinned-not-private' and ancestor['requested_access']==0x200a0 and ancestor['requested_share']==1 and len(ancestor['identity'])==48 and ancestor['observed_sddl']
         measurement=d.call('directory-flush',root);assert type(measurement['directory_flush_result']) is bool and not measurement['directory_fsync_equivalent']
     def g02():
         root=d.fresh('02-acl');d.call('write',root,'private.txt');before=statfile(root/'private.txt')
@@ -390,8 +390,8 @@ def main():
             d.go(root,'child-spawned');assert c.finish()!=0 and c.report()['reason']=='child-nonzero';child=read_child_report(root);assert not child['target_sdk_open_attempted'] and child['reason'] in ('anchored-use-replaced','child-output-replaced');stable(before,root)
         root,before=fixture('10-target-request');c=d.native('launch',root,'request-pause');c.phase(root,'request-published');replace_file(root,'library.sqlite');foreign=statfile(root/'library.sqlite');d.go(root,'request-published');c.phase(root,'child-spawned');d.go(root,'child-spawned');assert c.finish()!=0;child=read_child_report(root);assert child['reason']=='child-target-request' and not child['target_sdk_open_attempted'];assert statfile(root/'library.sqlite')==foreign;stable(before,root)
     def g11():
-        root=d.fresh('11-rename');c=d.native('rename',root);c.phase(root,'renamed');assert not (root/'source.bin').exists();old=statfile(root/'published.bin');d.go(root,'renamed');assert c.finish()==0
-        r=d.call('rename',root,success=False,reason='rename-no-replace');assert r['native_error'] in (80,183,5) and statfile(root/'published.bin')==old and (root/'source.bin').read_bytes()==b'canonical-native-record\n'
+        root=d.fresh('11-rename');c=d.native('rename',root);c.phase(root,'renamed');assert not (root/'source.bin').exists();old=statfile(root/'published.bin');d.go(root,'renamed');assert c.finish()==0;r=c.report();assert r['rename_attempted'] and r['rename_ntstatus']==0 and r['rename_io_status']==0
+        r=d.call('rename',root,success=False,reason='rename-no-replace');assert r['native_error'] in (80,183,5) and r['rename_attempted'] and r['rename_ntstatus']<0 and statfile(root/'published.bin')==old and (root/'source.bin').read_bytes()==b'canonical-native-record\n'
     def g12():
         root=d.fresh('12-share-refusal');c=d.native('rename-paused',root);c.phase(root,'before-rename');old=statfile(root/'source.bin');h=native_share(root/'source.bin',0x80000000,1|2)
         try:d.go(root,'before-rename');assert c.finish()!=0;assert c.report()['reason']=='regular-open' and c.report()['native_error']==32
