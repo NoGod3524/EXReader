@@ -159,6 +159,19 @@ class Contract(unittest.TestCase):
         with self.assertRaises(ValueError): read_symbols(archive(b'\0' * 32), 'raw-resource.lib')
         with self.assertRaises(ValueError): read_symbols(archive(obj[:-1]), 'truncated-coff.lib')
 
+    def test_observed_cvtres_empty_table_is_narrow_and_cannot_hide_long_names(self):
+        symbol = b'public\0\0' + struct.pack('<IhHBB', 0, 1, 0, 2, 0)
+        obj = struct.pack('<HHIIIHH', 0x8664, 1, 0, 20, 1, 0, 0) + symbol + struct.pack('<I', 0)
+        result = read_symbols(obj, 'ftver.rc.res')
+        self.assertEqual(result['summary']['defined'], ['public'])
+        self.assertEqual(result['format_notes'][0]['variant'], 'cvtres-empty-string-table-zero')
+        with self.assertRaises(ValueError): read_symbols(obj, 'ordinary.obj')
+        with self.assertRaises(ValueError): read_symbols(obj + b'junk', 'trailing.res')
+        for size in (1, 2, 3):
+            with self.assertRaises(ValueError): read_symbols(obj[:-4] + struct.pack('<I', size), 'bad-size.res')
+        long_name = obj[:20] + b'\0' * 4 + struct.pack('<I', 4) + obj[28:]
+        with self.assertRaises(ValueError): read_symbols(long_name, 'long-name.res')
+
     def test_unknown_ordinal_pe_import_refused(self):
         with self.assertRaises(ValueError): C.pe_imports('  unknown.dll\n   80000001 Ordinal 1\n')
 

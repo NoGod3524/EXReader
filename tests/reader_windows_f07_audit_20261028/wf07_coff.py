@@ -4,7 +4,7 @@ from pathlib import PureWindowsPath
 from wf07_contract import require
 
 
-def object_symbols(data, member):
+def object_symbols(data, member, format_notes):
     require(len(data) >= 20, 'short COFF object')
     if data[:4] == b'\0\0\xff\xff':
         require(len(data) >= 56 and data[12:28] == bytes.fromhex('c7a1bad1eebaa94baf20faf66aa4dcb8'),
@@ -18,6 +18,16 @@ def object_symbols(data, member):
     end = pointer + count * width
     require(pointer > 0 and count > 0 and end + 4 <= len(data), 'missing/truncated COFF symbol table')
     strings_size = struct.unpack_from('<I', data, end)[0]
+    if strings_size == 0:
+        # Observed original cvtres resource member, also documented by LLVM's
+        # COFFObjectFile::initSymbolTablePtr: empty table may store 0, not 4.
+        # Narrow support to the observed ordinary-COFF .res layout at EOF;
+        # all long-name references still fail against the empty table below.
+        require(width == 18 and member.lower().endswith('.res') and end + 4 == len(data),
+                'unsupported zero-size COFF string table')
+        format_notes.append(dict(member=member, variant='cvtres-empty-string-table-zero',
+                                 string_table_offset=end, encoded_size=0, bytes=len(data)))
+        strings_size = 4
     require(strings_size >= 4 and end + strings_size <= len(data),
             'COFF string table bounds: ' + str(dict(member=member, bytes=len(data),
                 pointer=pointer, count=count, symbol_width=width, string_table_offset=end,
@@ -59,10 +69,10 @@ def object_symbols(data, member):
 
 
 def read_symbols(data, filename):
-    rows, members = [], []
+    rows, members, format_notes = [], [], []
     if not data.startswith(b'!<arch>\n'):
         member = PureWindowsPath(filename).name
-        rows = object_symbols(data, member); members.append(member)
+        rows = object_symbols(data, member, format_notes); members.append(member)
     else:
         offset, longnames = 8, None
         while offset < len(data):
@@ -88,14 +98,14 @@ def read_symbols(data, filename):
                 require(member and member.lower().endswith(('.obj', '.o', '.res')),
                         'unsupported non-object archive member: ' + str(dict(archive=filename, member=member,
                             bytes=len(payload), first_64_bytes_hex=payload[:64].hex())))
-                members.append(member); rows.extend(object_symbols(payload, member))
+                members.append(member); rows.extend(object_symbols(payload, member, format_notes))
             offset += 60 + size + (size % 2)
         require(offset == len(data), 'archive trailing bytes')
     require(rows and members, 'no recognized external COFF symbols')
     summary = dict(defined=sorted({r['name'] for r in rows if not r['undefined']}),
                    undefined=sorted({r['name'] for r in rows if r['undefined']}),
                    weak=sorted({r['name'] for r in rows if r['weak']}))
-    return dict(summary=summary, rows=rows, members=members)
+    return dict(summary=summary, rows=rows, members=members, format_notes=format_notes)
 
 
 def member_defines(record, member, symbol):
