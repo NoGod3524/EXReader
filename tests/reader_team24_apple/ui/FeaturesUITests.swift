@@ -21,28 +21,35 @@ final class FeaturesUITests: XCTestCase {
         let scroll = e("features.scroll")
         let scrollTarget = id.hasPrefix("features.") && !["features.close", "features.refresh", "features.share"].contains(id)
         var available: XCUIElement?
+        var targetFrame = CGRect.zero
         func canTap(_ target: XCUIElement, viewport: CGRect?) -> Bool {
-            guard target.exists else { return false }
-            let frame = target.frame
+            guard let snapshot = try? target.snapshot() else { return false }
+            let frame = snapshot.frame
+            targetFrame = frame
             let inViewport = viewport.map { $0.contains(CGPoint(x: frame.midX, y: frame.midY)) } ?? true
-            return inViewport && target.isEnabled && target.isHittable
+            return inViewport && snapshot.isEnabled && target.isHittable
         }
         for _ in 0..<24 {
-            let viewport = scrollTarget && scroll.exists ? scroll.frame : nil
+            let viewport = scrollTarget ? (try? scroll.snapshot())?.frame : nil
             let target = e(id)
             if canTap(target, viewport: viewport) { available = target; break }
             if let viewport {
-                let above = target.exists && target.frame.midY < viewport.midY
+                let above = !targetFrame.isEmpty && targetFrame.midY < viewport.midY
 #if os(macOS)
                 scroll.scroll(byDeltaX: 0, deltaY: above ? 140 : -140)
 #else
-                if above { scroll.swipeDown(velocity: .slow) }
-                else { scroll.swipeUp(velocity: .slow) }
+                let center = CGPoint(x: viewport.midX, y: viewport.midY)
+                let frame = targetFrame
+                let distance = min(viewport.height * 0.75,
+                                   max(viewport.height * 0.25, abs(frame.midY - center.y)))
+                let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: above ? 0.2 : 0.8))
+                let end = start.withOffset(CGVector(dx: 0, dy: above ? distance : -distance))
+                start.press(forDuration: 0.05, thenDragTo: end)
 #endif
             }
         }
         let ready = available != nil || wait {
-            let viewport = scrollTarget && scroll.exists ? scroll.frame : nil
+            let viewport = scrollTarget ? (try? scroll.snapshot())?.frame : nil
             let target = self.e(id)
             if canTap(target, viewport: viewport) { available = target; return true }
             return false
@@ -94,7 +101,7 @@ final class FeaturesUITests: XCTestCase {
         let folder = app.cells.matching(NSPredicate(
             format: "identifier == %@ OR label BEGINSWITH %@",
             "EXReaderAnnotations, Folder", "EXReaderAnnotations,")).firstMatch
-        if !file().exists {
+        if !file().waitForExistence(timeout: 3) {
             if !folder.exists {
                 let browse = app.buttons["BackButton"].firstMatch
                 if browse.exists && browse.isHittable { browse.tap() }
@@ -127,12 +134,24 @@ final class FeaturesUITests: XCTestCase {
         XCTAssertTrue(wait { open.exists && open.isHittable })
         open.tap()
 #else
-        let browse = app.buttons["Browse"].firstMatch
-        if browse.waitForExistence(timeout: 5) && browse.isHittable { browse.tap() }
-        let local = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "On My ")).firstMatch
-        if local.exists && local.isHittable { local.tap() }
-        let folder = app.staticTexts["EXReaderAnnotations"].firstMatch
-        if !folder.exists {
+        let local = app.cells.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ OR label IN %@",
+            "DOC.sidebar.item.On My ",
+            ["On My iPhone", "On My iPad", "我的 iPhone", "我的 iPad"])).firstMatch
+        let directory = app.otherElements.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
+            "DOC.browsingRoot Source: com.apple.FileProvider.LocalStorage, Title: ", "EXReaderAnnotations")).firstMatch
+        let folder = app.cells.matching(NSPredicate(
+            format: "identifier == %@ OR label BEGINSWITH %@",
+            "EXReaderAnnotations, Folder", "EXReaderAnnotations,")).firstMatch
+        if !directory.exists {
+            if !local.exists {
+                let browse = app.buttons["Browse"].firstMatch
+                if browse.waitForExistence(timeout: 5) && browse.isHittable { browse.tap() }
+            }
+            if local.exists && local.isHittable { local.tap() }
+        }
+        if !directory.exists && !folder.exists {
             let newFolder = app.buttons["New Folder"].firstMatch
             if !newFolder.exists {
                 let overflow = app.buttons["OverflowBarButtonItem"].firstMatch
@@ -152,7 +171,8 @@ final class FeaturesUITests: XCTestCase {
                 XCTAssertTrue(wait { !inline.exists })
             }
         }
-        if folder.waitForExistence(timeout: 10) && folder.isHittable { folder.tap() }
+        if !directory.exists && folder.waitForExistence(timeout: 10) && folder.isHittable { folder.tap() }
+        XCTAssertTrue(wait { directory.exists }, app.debugDescription)
         let open = app.buttons["Open"].firstMatch
         XCTAssertTrue(wait { open.exists && open.isHittable }, app.debugDescription); open.tap()
 #endif

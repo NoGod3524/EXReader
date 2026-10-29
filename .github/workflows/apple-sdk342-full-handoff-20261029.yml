@@ -1,7 +1,7 @@
 name: Apple SDK 3.42 full same-source host gates
 on:
   push:
-    branches: [codex/apple-sdk342-full-handoff-20261029]
+    branches: [codex/apple-sdk342-full-handoff-20261029, codex/apple-opdshash-resume-20261029, codex/public-product-resume-20261029]
   workflow_dispatch:
 permissions:
   contents: read
@@ -30,7 +30,16 @@ jobs:
             tests/reader_team24_apple/run_ui.py \
             tests/apple_host/EXReaderHostUITests.swift tests/apple_host/reading/ui \
             tests/apple_host/navigation/ui tests/apple_host/search/ui tests/apple_host/page_theme/ui
-          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = 3aaa8003c61fd523b5286a9ea2c06f328e68f6a0
+          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = f7a3ddefc25d7a901dc0ef810dc66d850b9cb20f
+          python3 - <<'PY'
+          import subprocess
+          path = 'tests/reader_team24_apple/ui/FeaturesUITests.swift'
+          marker = b'    func testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot()'
+          old = subprocess.check_output(['git', 'show', '622b9558f79eda07211e15c51bffcd728da6c553:' + path])
+          new = subprocess.check_output(['git', 'show', 'HEAD:' + path])
+          assert old.count(marker) == new.count(marker) == 1
+          assert old[old.index(marker):] == new[new.index(marker):], 'original five feature bodies changed'
+          PY
           git diff --exit-code 4a68d80fbaa524fc28f899d209d795248627080b HEAD -- \
             tests/apple_host/account tests/apple_host/organization tests/reader_apple_font/ui tests/apple_native_original/ui
       - name: Checkout isolated original Apple owner

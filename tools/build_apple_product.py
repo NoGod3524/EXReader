@@ -27,6 +27,7 @@ def main():
     root = Path(__file__).absolute().parents[1]
     sdk = args.sdk.absolute()
     stage = args.product_prefix.absolute() if args.product_prefix else sdk
+    hash_prefix = (stage / 'opds-hash').resolve()
     if os.environ.get('EXR_APPLE_RAW3', 'OFF') not in ('OFF', 'ON'):
         parser.error('EXR_APPLE_RAW3 must be explicitly OFF or ON')
     if args.selector_bytes_candidate and (args.sdk_version not in ('3.41.0', '3.42.0') or stage.resolve() == sdk.resolve()):
@@ -42,6 +43,7 @@ def main():
               '-DCMAKE_PREFIX_PATH=' + (';'.join(map(str, (stage, sdk))) if stage != sdk else str(stage)), '-DEXR_SDK=' + str(sdk),
               '-DEXR_SDK_VERSION=' + args.sdk_version,
               '-DREADER_PRODUCT_PREFIX=' + str(stage),
+              '-DREADER_ORIGINAL_HASH_PREFIX=' + str(hash_prefix),
               '-DLIBXML2_INCLUDE_DIR=' + sysroot + '/usr/include/libxml2',
               '-DLIBXML2_LIBRARY=' + sysroot + '/usr/lib/libxml2.tbd']
     if args.target == 'macos':
@@ -57,7 +59,8 @@ def main():
                 'EXReaderSearch', 'EXReaderNavigation', 'EXReaderReadingCommands', 'EXReaderAnnotationView')
     common += ['-D' + name + '_DIR=' + str((sdk if name == 'EXReader' else stage) / 'lib/cmake' / name) for name in packages]
     common += ['-DEXR_READER_SELECTOR_BYTES_CANDIDATE=' + ('ON' if args.selector_bytes_candidate else 'OFF')]
-    modules = [('catalog', 'apps/reader/store/native'), ('revisions', 'apps/reader/revisions'),
+    modules = [('opds-hash', 'extras/opds'),
+               ('catalog', 'apps/reader/store/native'), ('revisions', 'apps/reader/revisions'),
                ('commands', 'apps/reader/commands'), ('webdav', 'extras/webdav'),
                ('sync', 'apps/reader/sync'), ('session', 'apps/reader/session'),
                ('credentials', 'extras/credentials'), ('reading-state', 'apps/reader/reading-state'),
@@ -70,6 +73,8 @@ def main():
     for name, relative in modules:
         build = args.build.absolute() / name
         options = ['-DEXR_WEBDAV_APPLE_URLSESSION=ON'] if name == 'webdav' else []
+        if name == 'opds-hash':
+            options += ['-DEXREADER_OPDS_HASH_ONLY=ON', '-DCMAKE_INSTALL_PREFIX=' + str(hash_prefix)]
         if args.wave3:
             options += wave3_options.get(name, [])
         for command in (['cmake', '-S', str(root / relative), '-B', str(build), *common, *options],
@@ -101,6 +106,7 @@ def main():
                 'wave3_enabled': args.wave3, 'organization_enabled': True}
     manifest.update(selector_bytes_candidate=args.selector_bytes_candidate,
                     product_prefix=str(stage), sdk_prefix=str(sdk),
+                    original_hash_prefix=str(hash_prefix), original_hash_package='EXReaderOPDSHash 0.1.0',
                     exact_candidate_family=family if args.selector_bytes_candidate else {})
     (stage / 'share/exreader-apple').mkdir(parents=True, exist_ok=True)
     (stage / 'share/exreader-apple/product.json').write_text(json.dumps(manifest, indent=2) + '\n')
