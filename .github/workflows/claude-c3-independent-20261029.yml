@@ -1,0 +1,24 @@
+name: Independent C3 retained Android licence archive
+on:
+  push:
+    branches: [codex/handoff-evidence-resume-20261029]
+    paths: ['tools/reader_composition/claude_c3_independent.py', '.github/workflows/claude-c3-independent-20261029.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Independently read exact original ZIP and packaged bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/reader_composition/claude_c3_independent.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: claude-c3-independent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/claude-c3-independent/
+          if-no-files-found: error
