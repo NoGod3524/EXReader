@@ -128,6 +128,70 @@ def archive_members(raw):
         offset=end+(size%2)
     require(offset==len(raw) and members,'archive extent or no members');return members
 
+def bsd_index_record(raw):
+    """Strict known first BSD index; only its timestamp is eligible for comparison."""
+    archive_members(raw)
+    offset=8;index=None;names=set();ordinary=[]
+    def number(field,base,label):
+        pattern=rb'[0-7]+ *' if base==8 else rb'[0-9]+ *'
+        require(re.fullmatch(pattern,field) is not None,'noncanonical BSD '+label)
+        value=int(field,base)
+        spelling=(format(value,'o') if base==8 else str(value)).encode()
+        require(field==spelling.ljust(len(field),b' '),'noncanonical BSD '+label)
+        return value
+    while offset<len(raw):
+        header=raw[offset:offset+60]
+        require(len(header)==60 and header[58:]==b'`\n','malformed BSD member header')
+        match=re.fullmatch(rb'#1/([1-9][0-9]*) *',header[:16])
+        require(match is not None,'unsupported BSD extended member name')
+        length=int(match[1]);require(header[:16]==('#1/'+str(length)).encode().ljust(16,b' '),'noncanonical BSD name length')
+        timestamp=number(header[16:28],10,'timestamp')
+        number(header[28:34],10,'uid');number(header[34:40],10,'gid');number(header[40:48],8,'mode')
+        size=number(header[48:58],10,'size');start=offset+60;end=start+size
+        require(0<length<size and end<=len(raw),'BSD member name/payload bounds')
+        extended=raw[start:start+length];name=extended.split(b'\0',1)[0]
+        require(name and all(32<=c<127 for c in name),'invalid BSD member name')
+        padding=(- (start+len(name)))%8
+        require(length==len(name)+padding and extended==name+b'\0'*padding,'noncanonical BSD name alignment/padding')
+        name=name.decode('ascii');require(name not in names,'duplicate BSD member name');names.add(name)
+        require(raw[end:end+size%2]==b'\n'*(size%2),'noncanonical BSD member padding')
+        if index is None:
+            require(offset==8 and name in ('__.SYMDEF','__.SYMDEF SORTED'),'unsupported first BSD index name')
+            index=dict(name=name,header_offset=offset,timestamp_offset=offset+16,timestamp=timestamp,
+                payload_offset=start+length,payload_bytes=size-length,
+                payload_sha256=hashlib.sha256(raw[start+length:end]).hexdigest())
+        else:
+            require(not name.startswith('__.SYMDEF'),'second or unknown BSD index member')
+            ordinary.append(name)
+        offset=end+size%2
+    require(offset==len(raw) and index is not None and ordinary,'BSD index/archive extent')
+    require(ordinary==[name for name,_ in archive_members(raw)],'BSD ordinary member identity differs')
+    return index
+
+def archive_equivalence(before,after,target):
+    """Preserve original bytes; allow only a known macOS first-index timestamp."""
+    bm=archive_members(before);am=archive_members(after)
+    result=dict(build=dict(bytes=len(before),sha256=hashlib.sha256(before).hexdigest()),
+        installed=dict(bytes=len(after),sha256=hashlib.sha256(after).hexdigest()),
+        exact_archive_equal=before==after,object_payloads_equal=bm==am,
+        mode='exact',normalization=None)
+    if before==after:return result
+    require(target=='macos','unequal archives require measured macOS index timestamp mode')
+    require(len(before)==len(after),'archive total size differs')
+    bi=bsd_index_record(before);ai=bsd_index_record(after)
+    require(bm==am,'ordered archive object payloads differ')
+    begin=bi['timestamp_offset'];end=begin+12
+    require(begin==24 and ai['timestamp_offset']==begin and before[:begin]==after[:begin] and before[end:]==after[end:],
+        'archive non-timestamp bytes differ')
+    normalized=before[:begin]+b'0           '+before[end:]
+    result.update(mode='macos-first-bsd-index-timestamp',normalization=dict(
+        index_name=bi['name'],timestamp_offset=begin,timestamp_bytes=12,
+        build_timestamp=bi['timestamp'],installed_timestamp=ai['timestamp'],
+        differing_offsets=[i for i in range(begin,end) if before[i]!=after[i]],
+        comparison_sha256=hashlib.sha256(normalized).hexdigest(),
+        index_payload_sha256=bi['payload_sha256']))
+    return result
+
 def symbols(text, target):
     definitions=set();undefined=set()
     for line in text.splitlines():
@@ -459,14 +523,15 @@ def validate(folder, manifest, require_mutations=True):
     require(not ((defs['normal']|defs['revision'])&(PUBLIC|PRIVATE)),'different package defines stream owner entry')
     dependency=json.loads((folder/'dependency.json').read_text())
     require(set(dependency)=={'hash','importer'},'compiled object coverage set')
+    archive_comparisons={}
     for owner,item in dependency.items():
         groups=deps_groups((folder/item['deps']).read_text(),required_valid=item['objects'])
         dependency_command=command_for(item['deps'])
         require(dependency_command['argv']==['ninja','-C',item['original_build'],'-t','deps'] and dependency_command['returncode']==0,
             'dependency evidence is not the exact original build database query')
         expected_objects=item['objects'];require(expected_objects and set(expected_objects)<=set(groups),'missing actual object dependencies')
-        require((folder/item['build_archive']).read_bytes()==(folder/native[owner]['archive']).read_bytes(),
-            'installed archive differs from the exact dependency-tracked build archive')
+        archive_comparisons[owner]=archive_equivalence((folder/item['build_archive']).read_bytes(),
+            (folder/native[owner]['archive']).read_bytes(),target)
         require(set(item['object_files'])==set(expected_objects),'retained object inventory differs')
         archive_objects=archive_members((folder/item['build_archive']).read_bytes())
         require(len(archive_objects)==len(expected_objects),'archive member/object count differs')
@@ -601,9 +666,10 @@ def validate(folder, manifest, require_mutations=True):
             'relocated-archive','relocated-header','relocated-config'}
         if desktop:expected_mutations.add('fabricated-control-runtime')
         if target=='android':expected_mutations.update(('host-target-substitution','android-api-binding'))
+        if target=='macos':expected_mutations.update(('build-index-content','build-object-content'))
         require(set(mutations)==expected_mutations,
             'actual evidence mutation controls incomplete')
         require(all(row['rejected'] is True and row['expected_reason'] in row['actual_reason'] for row in mutations.values()),
             'mutation bypassed intended guard')
     return dict(boundary_link_passed=True,desktop_runtime_passed=desktop,mobile_runtime_passed=False,
-        f07_accepted=False,full_six_accepted=False,target=target,files=len(files))
+        f07_accepted=False,full_six_accepted=False,target=target,files=len(files),archive_comparisons=archive_comparisons)

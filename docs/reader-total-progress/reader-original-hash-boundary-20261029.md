@@ -114,3 +114,48 @@ It reports complete archive member payload identities and raw header/index
 records, total byte difference count and explicitly bounded offset preview.
 Only its JSON report is uploaded. The original equality guard and all admission
 requirements remain unchanged. No native build is repeated by this diagnostic.
+
+## Authenticated archive difference and explicit bounded criterion
+
+The no-build diagnostic [40814640832/1](https://github.com/NoGod3524/EXReader/actions/runs/40814640832)
+at `531f10863f7395d2601317262fca3d78094b952b` passed protocol and original-upload
+inspection; all native producers and normal authentication were skipped.
+Diagnostic artifact12871463973 is1429 bytes, SHA256
+`1e8282c6b5fb797532b251da28580f2e767542b04bc2729e3fec88b17c236568`.
+The original importer pair has31840 bytes in both files and differs at exactly
+offset33: first BSD index-header timestamp1793245046 versus1793245047. Index
+payload and the30736-byte `original_import.cpp.o` payload are byte-identical.
+The4728-byte hash archive is completely identical. This identifies the bytes,
+not the particular ar/ranlib invocation that changed them. The first diagnostic
+did not expose the decoded index name; the next pinned replay must prove it.
+
+The owner explicitly authorized a NEW narrow validation criterion on2026-10-29,
+not a change to old suites or a broad archive metadata exemption. On macOS only,
+a pair may differ solely in the canonical12-byte timestamp field of the first
+BSD extended-name index, whose decoded name must be exactly `__.SYMDEF` or
+`__.SYMDEF SORTED`. Canonical numeric/name/alignment/padding checks reject malformed
+or duplicate index headers. All other bytes—including index content, UID/GID,
+mode, member names/order, object timestamps, object payloads and padding—remain
+exact. Linux, Windows, Android and both iOS targets still require entire-archive
+byte equality. [LLVM's archive reader](https://llvm.org/doxygen/Object_2Archive_8cpp_source.html)
+documents these reserved BSD index names; its
+[writer](https://www.llvm.org/docs/doxygen/ArchiveWriter_8cpp_source.html) distinguishes
+timestamps from payloads. This format reference does not identify the producer's
+actual tool binary.
+
+Both original file hashes, lengths and bytes remain retained. The comparison
+hash is labeled and computed in memory only; it never replaces an original hash
+or rewrites a file. The result exposes exact equality versus timestamp equivalence,
+the decoded index name, original timestamps and every permitted differing offset.
+Exact installed member/object/compile-dependency, native symbol, final link/map,
+relocation and runtime bindings remain required. Synthetic malformed-header,
+unknown/duplicate-index, membership/order, index-content/object-content, nonmacOS,
+numeric/alignment/padding and truncation controls run only in Actions. Two actual
+macOS evidence mutations alter built index content and object content separately;
+they must reach the intended rejection and restore originals byte-for-byte.
+
+The next run retains `[hash-archive-diagnostic]`: protocol/adversarial controls
+and the same authenticated failed-original ZIP only. It must expose the actual
+known index name and bounded equivalence. Old failed source/run remains failed;
+accepted/full-F07/full-six stay false. This is not a fresh native build or full
+same-source target acceptance; that requires a separately authorized later run.

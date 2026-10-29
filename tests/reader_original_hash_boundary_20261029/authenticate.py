@@ -110,6 +110,12 @@ def inspect_prior_archive():
             installed_members=[dict(name=n,bytes=len(p),sha256=hashlib.sha256(p).hexdigest()) for n,p in am],
             differing_byte_count=count,first_64_differing_offsets=preview,
             difference_preview_truncated=count>64)
+        report['archives'][owner]['first_bsd_index']=dict(build=C.bsd_index_record(before),installed=C.bsd_index_record(after))
+        report['archives'][owner]['equivalence']=C.archive_equivalence(before,after,'macos')
+    C.require(report['archives']['hash']['equivalence']['mode']=='exact' and
+        report['archives']['importer']['equivalence']['mode']=='macos-first-bsd-index-timestamp' and
+        report['archives']['importer']['equivalence']['normalization']['differing_offsets']==[33],
+        'original measured archive difference changed')
     C.save(out/'diagnostic.json',report)
     print(json.dumps(report,sort_keys=True),flush=True)
 
