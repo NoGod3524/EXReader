@@ -50,7 +50,7 @@ jobs:
             lines = path.read_text(errors='replace').splitlines()
             for n, line in enumerate(lines):
               if 'error:' in line or 'XCTAssert' in line or 'failed (' in line:
-                print(str(path) + '\n' + '\n'.join(lines[max(0,n-8):n+5]), flush=True)
+                print(str(path) + '\n' + '\n'.join(lines[max(0,n-120):n+160]), flush=True)
           if sys.platform != 'darwin':
             print('Raw logs inspected; retained macOS diagnostic run reads xcresult separately.', flush=True)
             sys.exit(0)
