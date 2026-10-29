@@ -37,6 +37,7 @@ struct HostWave3Sheet: View {
     @State private var choosing = false
     @State private var choice = Choice.annotations
     @State private var pickerError = ""
+    @State private var annotationExportExpanded = false
     @State private var selectedInput = ""
 #if EXR_APPLE_HOST_REVIEW
     @State private var previewExportWhenReady = false
@@ -173,14 +174,28 @@ struct HostWave3Sheet: View {
                            perform: actions.confirmAnnotations)
                     action("放弃预览", id: "features.preview.discard", perform: actions.discardPreview)
                 }
-                DisclosureGroup("导出标注") {
+                Button {
+                    annotationExportExpanded.toggle()
+                } label: {
+                    HStack {
+                        Text("导出标注")
+                        Spacer()
+                        Image(systemName: annotationExportExpanded ? "chevron.up" : "chevron.down")
+                            .accessibilityHidden(true)
+                    }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .contentShape(Rectangle())
+                }.buttonStyle(.borderless).disabled(state.busy || ownerBusy)
+                    .accessibilityIdentifier("features.annotations.export-options")
+                    .accessibilityLabel(Text("导出标注"))
+                    .accessibilityValue(annotationExportExpanded ? "已展开" : "已折叠")
+                if annotationExportExpanded {
                     VStack(alignment: .leading, spacing: 8) {
                         action("导出可导入的 JSONL", id: "features.annotations.export-jsonl") { choose(.jsonl) }
                         action("导出 Markdown", id: "features.annotations.export-markdown") { choose(.markdown) }
                         Text("仅包含保留头；冲突会保留，不自动选择版本。")
                             .font(.caption).foregroundColor(.secondary)
                     }.padding(.top, 8)
-                }.accessibilityIdentifier("features.annotations.export-options")
+                }
             }.frame(maxWidth: .infinity, alignment: .leading)
         } label: { Text("标注导入与导出") }
     }

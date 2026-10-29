@@ -12,6 +12,7 @@ func hostPageThemeColor(_ value: UInt32) -> Color {
 struct HostPageThemeSheet: View {
     @ObservedObject var model: HostReaderModel
     @Environment(\.presentationMode) private var presentation
+    @Environment(\.colorScheme) private var systemScheme
     var body: some View {
         VStack(spacing: 12) {
             Text("阅读主题").font(.headline).accessibilityAddTraits(.isHeader)
@@ -48,6 +49,10 @@ struct HostPageThemeSheet: View {
             Button("关闭") { presentation.wrappedValue.dismiss() }.buttonStyle(.bordered)
                 .accessibilityIdentifier("theme.close")
         }.padding().frame(minWidth: 280, minHeight: 280)
+        .onAppear { model.observePageThemeEnvironment(dark: systemScheme == .dark) }
+        .onChange(of: systemScheme) { value in
+            model.observePageThemeEnvironment(dark: value == .dark)
+        }
     }
 }
 #endif
