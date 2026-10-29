@@ -2,7 +2,8 @@
 
 ## Current status
 
-Source implementation only. **No native result is claimed yet.** This package
+First Actions validation is terminal; a provider-inventory repair is source-only
+pending retest. **No qualification case has run yet.** This package
 does not integrate recovery into the migration tool, retire a product intent,
 restore a database, or establish full P0 acceptance. Existing v3 intents remain
 pending. The earlier 75/75 retention result is not recovery qualification; the
@@ -13,6 +14,39 @@ This implements the independently reviewed five-path plan
 the explicitly narrower physical-fault and durability observations below.
 All builds, tests, fixture generation and artifact interpretation execute only
 in GitHub Actions. Local preparation is source editing/review and Git identity.
+
+### Retained first validation failure
+
+[Run40807421445](https://github.com/NoGod3524/EXReader/actions/runs/40807421445),
+attempt1, source `2743d8a1e586552ff5a0c434d2151572b2a08169`, tree
+`d155716e909e54ade5642e4a9121229c57b15070`: all three exact-source admission steps,
+current SDK/tool builds, actual SDK3.40/tool builds and new C consumer native
+compile/link completed successfully. All three jobs then failed the unchanged
+single-SQLite-provider assertion with `AssertionError: []`. Qualification steps
+were skipped, so this is **zero executed cases**, not125 failures or passes.
+
+The consumer CMake target scanner incorrectly included `LINK_ONLY:` in a
+generator-expression token; that is not an actual target, so recursion missed
+the SQLite provider. Source tracing also found that the installed package exports
+`EXReader::vendor_exr_sqlite` as an INTERFACE wrapper and
+`EXReader::vendor_file_exr_sqlite` as the sole STATIC provider, not the originally
+assumed build-tree name. This follows unchanged `cmake/modules.cmake:75–78` and
+`cmake/install_dependencies.cmake:14–24`. The scoped repair parses exact complete
+namespace/genex entries, requires this exact wrapper and one STATIC provider,
+and adds Actions-configure plain/genex/empty and malformed/ambiguous refusal
+controls. The strict single-implementation condition, native map checks,
+all125 authored cases, SDK,
+product, old tests and budgets remain unchanged. Closure evidence is also printed
+to Actions logs before the assertion. This is the one planned repair validation,
+not a weakened admission rule.
+
+First-run uploaded artifacts (API metadata, contents not parsed locally):
+
+| OS / job | Artifact ID | Bytes | ZIP SHA256 |
+| --- | --- | ---: | --- |
+| Linux /123229582291 |12868268858|66233|`a973c79df08e07aa4b608f8288115cba2811f8f3b24a17d87e203909311bb43d`|
+| macOS /123229582690 |12868558615|184883|`41965589cf89ac5d46b2c48bda8c94e22f98a53b4191b0a0305c58d87d196ef4`|
+| Windows /123229582595 |12869041682|400950|`81a3b596488612891f331136e3d65d16483fa293e63f1b401d4a3afeac67ef04`|
 
 ## Exact source and runtime scope
 
