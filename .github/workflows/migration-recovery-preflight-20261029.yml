@@ -1,0 +1,117 @@
+name: Migration recovery preflight qualification 20261029
+on:
+  push:
+    branches: [codex/migration-recovery-preflight-20261029]
+    paths:
+      - tests/migration/recovery_preflight_20261029/**
+      - .github/workflows/migration-recovery-preflight-20261029.yml
+permissions:
+  contents: read
+concurrency:
+  group: migration-recovery-preflight-${{ github.sha }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+env:
+  TESTED_BASE: fedac0c42c4253f686be4239c4cf45e7e3bf1e1b
+  OLD_SDK_REF: c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
+jobs:
+  qualification:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, label: linux, py: python3, tool: build/migration/exreader-legacy-migrate-tx, old: build/old-migration/exreader-legacy-migrate, probe: build/preflight/migration-recovery-preflight}
+          - {os: macos-15, label: macos, py: python3, tool: build/migration/exreader-legacy-migrate-tx, old: build/old-migration/exreader-legacy-migrate, probe: build/preflight/migration-recovery-preflight}
+          - {os: windows-latest, label: windows, py: python, tool: build/migration/Release/exreader-legacy-migrate-tx.exe, old: build/old-migration/Release/exreader-legacy-migrate.exe, probe: build/preflight/Release/migration-recovery-preflight.exe}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Admit exactly five new files and preserve every predecessor byte
+        run: |
+          set -euo pipefail
+          mkdir -p build/evidence
+          git fetch --no-tags --depth=1 origin "$TESTED_BASE"
+          test "$(git rev-parse FETCH_HEAD)" = "$TESTED_BASE"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          ${{ matrix.py }} - <<'PY'
+          import hashlib, json, os, subprocess
+          from pathlib import Path
+          owned = [
+            'tests/migration/recovery_preflight_20261029/CMakeLists.txt',
+            'tests/migration/recovery_preflight_20261029/probe.c',
+            'tests/migration/recovery_preflight_20261029/run.py',
+            '.github/workflows/migration-recovery-preflight-20261029.yml',
+            'docs/MIGRATION-RECOVERY-PREFLIGHT-20261029.md',
+          ]
+          changed = subprocess.check_output(['git','diff','--no-renames','--name-status',os.environ['TESTED_BASE'],'HEAD'],text=True).splitlines()
+          assert set(changed) == {'A\t' + path for path in owned}, changed
+          Path('build/evidence/source-identity.json').write_text(json.dumps({
+            'sha':os.environ['GITHUB_SHA'], 'tested_base':os.environ['TESTED_BASE'],
+            'run_id':os.environ['GITHUB_RUN_ID'], 'attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+            'old_sdk_ref':os.environ['OLD_SDK_REF'], 'exact_delta':changed,
+            'owned_sha256':{p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in owned},
+            'all_other_predecessor_bytes_unchanged':True, 'product_admission':False,
+          },indent=2)+'\n')
+          PY
+      - name: Build unchanged installed SDK and current candidate
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/sdk-configure.txt
+          cmake --build build/sdk --config Release --parallel 4 2>&1 | tee build/evidence/sdk-build.txt
+          cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage" 2>&1 | tee build/evidence/sdk-install.txt
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/tool-configure.txt
+          cmake --build build/migration --config Release --target exreader-legacy-migrate-tx --parallel 4 2>&1 | tee build/evidence/tool-build.txt
+      - name: Build actual pinned SDK 3.40 original schema6 fixture producer
+        run: |
+          set -euo pipefail
+          mkdir -p build/old-source build/old-migration-source
+          git fetch --no-tags --depth=1 origin "$OLD_SDK_REF"
+          test "$(git rev-parse FETCH_HEAD)" = "$OLD_SDK_REF"
+          git archive FETCH_HEAD | tar -xf - -C build/old-source
+          git archive FETCH_HEAD -- extras/migration | tar -xf - -C build/old-migration-source
+          cmake -S build/old-source -B build/old-sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/old-sdk-configure.txt
+          cmake --build build/old-sdk --config Release --parallel 4 2>&1 | tee build/evidence/old-sdk-build.txt
+          cmake --install build/old-sdk --config Release --prefix "$GITHUB_WORKSPACE/old-stage" 2>&1 | tee build/evidence/old-sdk-install.txt
+          cmake -S build/old-migration-source/extras/migration -B build/old-migration -DEXR_SDK="$GITHUB_WORKSPACE/old-stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/old-tool-configure.txt
+          cmake --build build/old-migration --config Release --target exreader-legacy-migrate --parallel 4 2>&1 | tee build/evidence/old-tool-build.txt
+      - name: Build isolated public API consumer and retain actual link provider evidence
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/recovery_preflight_20261029 -B build/preflight -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DSQLITE_HEADER_DIR="$GITHUB_WORKSPACE/build/migration/_deps/migration_sqlite_header-src" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/preflight-configure.txt
+          cmake --build build/preflight --config Release --parallel 4 2>&1 | tee build/evidence/preflight-build.txt
+          ${{ matrix.py }} - <<'PY'
+          import hashlib, json, re
+          from pathlib import Path
+          closure = Path('build/preflight/link-closure.txt').read_text()
+          link_map = Path('build/preflight/provider.map').read_text(errors='replace')
+          sqlite_targets = sorted(set(re.findall(r'^(\S*sqlite\S*) TYPE=',closure,re.M|re.I)))
+          assert sqlite_targets == ['EXReader::exr_sqlite'], sqlite_targets
+          assert 'sqlite3_open_v2' in link_map and 'sqlite3_backup_init' in link_map and 'sqlite3.c' in link_map
+          assert re.search(r'(?:lib)?exr_sqlite(?:\.a|\.lib|:)',link_map,re.I), 'installed SQLite provider absent from link map'
+          # Header/runtime source ID equality is additionally mandatory in every
+          # consumer invocation; no private SDK structure or second SQLite build.
+          Path('build/evidence/provider-identity.json').write_text(json.dumps({
+            'sqlite_target_closure':sqlite_targets,
+            'provider_map_sha256':hashlib.sha256(Path('build/preflight/provider.map').read_bytes()).hexdigest(),
+            'link_closure_sha256':hashlib.sha256(Path('build/preflight/link-closure.txt').read_bytes()).hexdigest(),
+            'header_sha256':hashlib.sha256(Path('build/migration/_deps/migration_sqlite_header-src/sqlite3.h').read_bytes()).hexdigest(),
+            'qualification_only':True,
+          },indent=2)+'\n')
+          PY
+      - name: Calibrate native fences faults manifests and restart decisions
+        run: |
+          set -euo pipefail
+          ${{ matrix.py }} tests/migration/recovery_preflight_20261029/run.py --probe "${{ matrix.probe }}" --tool "${{ matrix.tool }}" --old-tool "${{ matrix.old }}" --work build/recovery-preflight 2>&1 | tee build/evidence/qualification.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-recovery-preflight-${{ matrix.label }}
+          path: |
+            build/evidence/
+            build/recovery-preflight/
+            build/preflight/provider.map
+            build/preflight/link-closure.txt
+          if-no-files-found: error
