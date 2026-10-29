@@ -20,12 +20,19 @@ final class FeaturesUITests: XCTestCase {
     private func tap(_ id: String) {
         let scroll = e("features.scroll")
         let scrollTarget = id.hasPrefix("features.") && !["features.close", "features.refresh", "features.share"].contains(id)
+        var available: XCUIElement?
+        func canTap(_ target: XCUIElement, viewport: CGRect?) -> Bool {
+            guard target.exists else { return false }
+            let frame = target.frame
+            let inViewport = viewport.map { $0.contains(CGPoint(x: frame.midX, y: frame.midY)) } ?? true
+            return inViewport && target.isEnabled && target.isHittable
+        }
         for _ in 0..<24 {
+            let viewport = scrollTarget && scroll.exists ? scroll.frame : nil
             let target = e(id)
-            let inViewport = !scrollTarget || !scroll.exists || (target.exists && scroll.frame.contains(CGPoint(x: target.frame.midX, y: target.frame.midY)))
-            if target.exists && inViewport && target.isHittable { break }
-            if scrollTarget && scroll.exists {
-                let above = target.exists && target.frame.midY < scroll.frame.midY
+            if canTap(target, viewport: viewport) { available = target; break }
+            if let viewport {
+                let above = target.exists && target.frame.midY < viewport.midY
 #if os(macOS)
                 scroll.scroll(byDeltaX: 0, deltaY: above ? 140 : -140)
 #else
@@ -34,12 +41,14 @@ final class FeaturesUITests: XCTestCase {
 #endif
             }
         }
-        XCTAssertTrue(wait {
+        let ready = available != nil || wait {
+            let viewport = scrollTarget && scroll.exists ? scroll.frame : nil
             let target = self.e(id)
-            let inViewport = !scrollTarget || !scroll.exists || (target.exists && scroll.frame.contains(CGPoint(x: target.frame.midX, y: target.frame.midY)))
-            return target.exists && inViewport && target.isEnabled && target.isHittable
-        }, "Unavailable \(id) \(app.debugDescription)")
-        e(id).tap()
+            if canTap(target, viewport: viewport) { available = target; return true }
+            return false
+        }
+        XCTAssertTrue(ready, "Unavailable \(id) \(app.debugDescription)")
+        available?.tap()
     }
     private func mark(_ name: String) {
         let a = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); a.name = name; a.lifetime = .keepAlways; add(a)
@@ -74,22 +83,81 @@ final class FeaturesUITests: XCTestCase {
             if open.exists && open.isEnabled { open.tap() } else { chinese.tap() }
         }
 #else
-        let files = XCUIApplication(bundleIdentifier: "com.apple.DocumentsApp")
-        func item(_ label: String) -> XCUIElement {
-            let inApp = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
-            return inApp.exists ? inApp : files.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+        // A Files item is a cell; its text child can be hittable without
+        // activating the folder. File labels may also hide the extension.
+        func file() -> XCUIElement {
+            let stem = (name as NSString).deletingPathExtension
+            return app.cells.matching(NSPredicate(
+                format: "identifier == %@ OR identifier BEGINSWITH %@ OR label == %@ OR label BEGINSWITH %@ OR label == %@ OR label BEGINSWITH %@",
+                name, name + ",", name, name + ",", stem, stem + ",")).firstMatch
         }
-        if !item(name).exists {
-            for label in ["Browse", "浏览", "On My iPhone", "On My iPad", "我的 iPhone", "我的 iPad", "EXReader"] {
-                let target = item(label)
-                if target.exists && target.isHittable { target.tap() }
-                if item(name).waitForExistence(timeout: 3) { break }
+        let folder = app.cells.matching(NSPredicate(
+            format: "identifier == %@ OR label BEGINSWITH %@",
+            "EXReaderAnnotations, Folder", "EXReaderAnnotations,")).firstMatch
+        if !file().exists {
+            if !folder.exists {
+                let browse = app.buttons["BackButton"].firstMatch
+                if browse.exists && browse.isHittable { browse.tap() }
+                let local = app.cells.matching(NSPredicate(
+                    format: "identifier BEGINSWITH %@ OR label IN %@",
+                    "DOC.sidebar.item.On My ",
+                    ["On My iPhone", "On My iPad", "我的 iPhone", "我的 iPad"])).firstMatch
+                if local.waitForExistence(timeout: 3) && local.isHittable { local.tap() }
+            }
+            if folder.waitForExistence(timeout: 3) && folder.isHittable {
+                folder.tap()
+                mark("native-picker-annotation-directory")
             }
         }
-        let target = item(name)
-        XCTAssertTrue(wait { target.exists && target.isHittable }, "Picker cannot find \(name): \(app.debugDescription) \(files.debugDescription)")
+        let target = file()
+        XCTAssertTrue(wait { target.exists && target.isEnabled && target.isHittable },
+                      "Picker cannot find \(name): \(app.debugDescription)")
+        mark("native-picker-selected-file-" + name)
         target.tap()
 #endif
+    }
+    private func exportThroughSystemPicker(markdown: Bool) {
+        let button = markdown ? "features.annotations.export-markdown" : "features.annotations.export-jsonl"
+        if !e(button).exists { tap("features.annotations.export-options") }
+        tap(button)
+#if os(macOS)
+        app.typeKey("g", modifierFlags: [.command, .shift])
+        app.typeText("/tmp\n")
+        let open = app.buttons["Open"].firstMatch
+        XCTAssertTrue(wait { open.exists && open.isHittable })
+        open.tap()
+#else
+        let browse = app.buttons["Browse"].firstMatch
+        if browse.waitForExistence(timeout: 5) && browse.isHittable { browse.tap() }
+        let local = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "On My ")).firstMatch
+        if local.exists && local.isHittable { local.tap() }
+        let folder = app.staticTexts["EXReaderAnnotations"].firstMatch
+        if !folder.exists {
+            let newFolder = app.buttons["New Folder"].firstMatch
+            if !newFolder.exists {
+                let overflow = app.buttons["OverflowBarButtonItem"].firstMatch
+                XCTAssertTrue(wait { overflow.exists && overflow.isHittable })
+                overflow.tap()
+            }
+            XCTAssertTrue(wait { newFolder.exists && newFolder.isHittable }); newFolder.tap()
+            let inline = app.textViews["DOC.inlineRenameField"].firstMatch
+            XCTAssertTrue(wait { inline.exists && inline.isHittable })
+            let old = (inline.value as? String) ?? ""
+            inline.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count))
+            inline.typeText("EXReaderAnnotations\n")
+            if inline.exists {
+                let picker = app.otherElements["Browse View (Picker)"].firstMatch
+                XCTAssertTrue(wait { picker.exists })
+                picker.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.06)).tap()
+                XCTAssertTrue(wait { !inline.exists })
+            }
+        }
+        if folder.waitForExistence(timeout: 10) && folder.isHittable { folder.tap() }
+        let open = app.buttons["Open"].firstMatch
+        XCTAssertTrue(wait { open.exists && open.isHittable }, app.debugDescription); open.tap()
+#endif
+        status("标注已导出")
+        mark(markdown ? "native-markdown-folder-save" : "native-jsonl-folder-save")
     }
     func testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot() {
         launch(); let firstPage = text("reader.page")
@@ -179,11 +247,13 @@ final class FeaturesUITests: XCTestCase {
         XCTAssertTrue(wait { self.text("reading.status") == "本书的书签与标注" })
         tap("reading.add-bookmark"); XCTAssertTrue(wait { self.text("reading.status") == "已添加书签" })
         tap("reading.close"); ready(); let originalPosition = text("reader.location"); features()
-        tap("features.annotations.roundtrip"); status("预览完成，请确认后导入"); XCTAssertTrue(e("features.preview.summary").exists); mark("native-preview-no-revisions-write")
+        exportThroughSystemPicker(markdown: false)
         tap("features.annotations.prepare-picker")
         XCTAssertTrue(wait { !self.text("features.annotations.picker-path").isEmpty })
         let validPath = text("features.annotations.picker-path")
         let invalidPath = (validPath as NSString).deletingLastPathComponent + "/EXReader-invalid.jsonl"
+        chooseAnnotationFile("EXReader-annotations.jsonl", path: validPath)
+        status("预览完成，请确认后导入"); XCTAssertTrue(e("features.preview.summary").exists); mark("native-preview-no-revisions-write")
         tap("features.annotations.snapshot"); status("修订快照已读取")
         let before = text("features.annotations.identity")
         XCTAssertEqual(before.count, 64)
@@ -199,7 +269,7 @@ final class FeaturesUITests: XCTestCase {
         XCTAssertEqual(text("features.annotations.identity"), before); mark("invalid-import-revision-identity-unchanged")
         chooseAnnotationFile("EXReader-annotations.jsonl", path: validPath)
         status("预览完成，请确认后导入"); XCTAssertTrue(e("features.preview.confirm").isEnabled); mark("native-picker-valid-preview")
-        tap("features.annotations.markdown-fixture"); status("标注已导出")
+        exportThroughSystemPicker(markdown: true)
         tap("features.annotations.check-exports")
         XCTAssertEqual(text("features.annotations.export-check"), "导出内容一致"); mark("jsonl-markdown-content-verified")
         tap("features.annotations.roundtrip"); status("预览完成，请确认后导入")

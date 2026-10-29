@@ -252,6 +252,7 @@ enum HostReadingWorker {
     static func acceptsParser(_ recorded: String) -> Bool {
         let actual = String(cString: exr_version())
         if recorded == actual { return true }
+        if actual == "3.42.0" { return ["3.40.0", "3.41.0"].contains(recorded) }
         return actual == "3.41.0" &&
             ["3.40.0", "exreader-sdk-3.40.0", "exreader-sdk-3.41.0"].contains(recorded)
     }

@@ -128,6 +128,7 @@ struct HostSyncControls: View {
     @ObservedObject var session: HostAccountSession
     let preparing: Bool
     var compact = false
+    @State private var showingDetails = false
     let synchronize: () -> Void
     var body: some View {
         HStack {
@@ -143,6 +144,9 @@ struct HostSyncControls: View {
                     .accessibilityIdentifier("account.sync.state")
                     .accessibilityValue(Text(session.message))
             }
+            Button { showingDetails = true } label: {
+                Image(systemName: "info.circle").frame(width: 44, height: 44)
+            }.accessibilityIdentifier("account.sync.details").accessibilityLabel(Text("同步详情"))
             if session.running || session.preparing {
                 Button { session.cancel() } label: {
                     if compact { Image(systemName: "stop.circle").font(.system(size: 20)).frame(width: 44, height: 44).contentShape(Rectangle()) }
@@ -151,9 +155,45 @@ struct HostSyncControls: View {
             } else {
                 Button { synchronize() } label: {
                     if compact { Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 20)).frame(width: 44, height: 44).contentShape(Rectangle()) }
-                    else { Text("同步") }
-                }.disabled(preparing || session.preparing).accessibilityIdentifier("account.sync.start").accessibilityLabel(Text("同步"))
+                    else { Text(session.canRetry ? "重试同步" : "同步") }
+                }.disabled(preparing || session.preparing).accessibilityIdentifier("account.sync.start").accessibilityLabel(Text(session.canRetry ? "重试同步" : "同步"))
             }
         }.padding(.horizontal, compact ? 0 : 16)
+        .sheet(isPresented: $showingDetails) {
+            HostSyncDetails(session: session)
+        }
+    }
+}
+
+private struct HostSyncDetails: View {
+    @ObservedObject var session: HostAccountSession
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("同步详情").font(.title2).accessibilityAddTraits(.isHeader)
+                    Spacer()
+                    Button("完成") { dismiss() }.accessibilityIdentifier("account.sync.details.done")
+                }
+                Text(session.state).accessibilityIdentifier("account.sync.details.state")
+                if !session.detailReason.isEmpty {
+                    Text(session.detailReason).accessibilityIdentifier("account.sync.details.reason")
+                }
+                if session.detailHTTPStatus > 0 {
+                    Text("HTTP \(session.detailHTTPStatus)").accessibilityIdentifier("account.sync.details.http")
+                }
+                Text("尝试 \(session.detailAttempt)").accessibilityIdentifier("account.sync.details.attempt")
+                Text("已读分片 \(session.completedShards)/256").accessibilityIdentifier("account.sync.details.shards")
+                Text("操作 \(session.steps)，推送 \(session.detailPushed)，拉取 \(session.detailPulled)")
+                    .accessibilityIdentifier("account.sync.details.operations")
+                Text(session.message).font(.caption)
+                Text("这里是本轮会话的操作计数，可能包含重复记录；一轮完成不代表整个书库已同步。")
+                    .font(.caption).foregroundColor(.secondary)
+            }.padding()
+        }
+#if os(macOS)
+        .frame(minWidth: 360, idealWidth: 480, minHeight: 320)
+#endif
     }
 }
