@@ -72,6 +72,10 @@ STREAM_BASE='626cf3439ef081e7a4993cdd9634334d82933e9f'
 STREAM_TREE='e1d0934cf69d6eed0e31eb851bb841645f225018'
 STREAM_PATHS=tuple('tests/reader_sync_public_hash_20261029/'+name for name in
     ('run.py','package_contract.py','test_contract.py','authenticate.py'))
+JOIN_BASE='bba06fa86cf9e568ef8be15f34665b74646b8f7b'
+JOIN_TREE='4530ecfb871c94162d1569d9ae1c3e7324b502bb'
+JOIN_PATHS=tuple('tests/reader_sync_public_hash_20261029/'+name for name in
+    ('package_contract.py','test_contract.py','authenticate.py'))
 HOST_QUERY_STDOUT='links/android-host-alias.log'
 HOST_QUERY_STDERR='links/android-host-alias.stderr.log'
 HOST_QUERY_WARNING=b'ninja: warning: build log version is too old; starting over\n'
@@ -79,6 +83,9 @@ HOST_QUERY_LIMIT=1024*1024
 
 def stream_scope(delta):
     require(delta=={p:'M' for p in STREAM_PATHS},'exact four-path stream repair delta versus published626 required')
+
+def join_scope(delta):
+    require(delta=={p:'M' for p in JOIN_PATHS},'exact three-path export join delta versus published bba required')
 
 def repair_scope(delta):
     require(delta=={p:'M' for p in REPAIR_PATHS},'exact seven-path repair delta versus published f25 required')
@@ -218,6 +225,9 @@ def guard():
     require(git('rev-parse',STREAM_BASE+'^{tree}')==STREAM_TREE,'published stream base tree differs')
     subprocess.run(['git','merge-base','--is-ancestor',STREAM_BASE,'HEAD'],cwd=ROOT,check=True)
     stream_scope({p:s for s,p in (line.split('\t') for line in git('diff','--name-status',STREAM_BASE,'HEAD').splitlines())})
+    require(git('rev-parse',JOIN_BASE+'^{tree}')==JOIN_TREE,'published join base tree differs')
+    subprocess.run(['git','merge-base','--is-ancestor',JOIN_BASE,'HEAD'],cwd=ROOT,check=True)
+    join_scope({p:s for s,p in (line.split('\t') for line in git('diff','--name-status',JOIN_BASE,'HEAD').splitlines())})
     delta={p:s for s,p in (line.split('\t') for line in git('diff','--name-status',BASE,'HEAD').splitlines())}
     require(delta==lock['expected_delta'] and len(delta)==29 and delta.get(PUBLIC_OVERRIDE)=='M',
         'exact adopted16+Sync3+new9+one validation override delta required')
@@ -233,6 +243,7 @@ def guard():
         public_validation_override=override,legacy_public_default_criterion_unchanged=True,
         repair_base_sha=REPAIR_BASE,repair_paths=list(REPAIR_PATHS),
         stream_repair_base_sha=STREAM_BASE,stream_repair_paths=list(STREAM_PATHS),
+        export_join_base_sha=JOIN_BASE,export_join_paths=list(JOIN_PATHS),
         lane=current_lane(),archive_criterion=BSD_CRITERION,
         original_source_guards_excluded=list(EXCLUSIONS)+P.EXCLUSIONS,
         configured_runner_minutes=budget((ROOT/WORKFLOW).read_text()),f07_accepted=False,physical_device=False)
@@ -500,6 +511,13 @@ def host_query_streams(commands,read_bytes,build,workspace):
     except AssertionError as error:raise ValueError(str(error)) from error
     return text,nodes,outputs
 
+def sync_installed_exports(folder,installed):
+    # Same .cmake filter and assertion; only Path indexing becomes Path joining.
+    exports='\n'.join((folder/v['path']).read_text() for p,v in installed.items() if p.endswith('.cmake'))
+    require('$<LINK_ONLY:EXReaderOPDSHash::opds_sha256_stream>' in exports and
+        'EXReaderRevisions::reader_revision_hash' not in exports,'Sync exported dependency is not public hash only')
+    return exports
+
 def validate(folder,expected_source=None):
     """Replay this named-boundary evidence, not historical admission wrappers."""
     folder=Path(folder);manifest=json.loads((folder/'manifest.json').read_text())
@@ -621,9 +639,7 @@ def validate(folder,expected_source=None):
         if label.startswith('sync-'):
             require(row['raw'] is (label=='sync-raw'),'Sync profile claim differs')
             require(re.findall(r'^EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=(.+)$',cache,re.M)==['ON' if row['raw'] else 'OFF'],'actual Sync raw profile differs')
-            exports='\n'.join((folder[v['path']]).read_text() for p,v in installed.items() if p.endswith('.cmake'))
-            require('$<LINK_ONLY:EXReaderOPDSHash::opds_sha256_stream>' in exports and
-                'EXReaderRevisions::reader_revision_hash' not in exports,'Sync exported dependency is not public hash only')
+            sync_installed_exports(folder,installed)
         dependency_evidence[label]=dict(count=len(paths),spellings=spellings,installed_archive_sha256=H.digest(folder/row['archive']))
         native(label,row['native'])
     require(definitions['hash']==H.PUBLIC|H.PRIVATE,'public hash function owner set differs')

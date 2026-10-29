@@ -16,6 +16,46 @@ import package_contract as C
 
 def encoded(value):return (json.dumps(value,indent=2,sort_keys=True)+'\n').encode()
 
+class ExportJoinControls(unittest.TestCase):
+    def test_installed_nested_export_join(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder=Path(temp)
+            for profile in ('raw','off'):
+                relative=profile+'/lib/cmake/EXReaderSync/EXReaderSyncTargets.cmake'
+                path=folder/relative;path.parent.mkdir(parents=True)
+                value='set_property(TARGET EXReaderSync::reader_sync PROPERTY INTERFACE_LINK_LIBRARIES "$<LINK_ONLY:EXReaderOPDSHash::opds_sha256_stream>")\n'
+                path.write_text(value)
+                installed={'lib/cmake/EXReaderSync/EXReaderSyncTargets.cmake':{'path':relative}}
+                self.assertEqual(C.sync_installed_exports(folder,installed),value)
+                path.write_text(value+'# EXReaderRevisions::reader_revision_hash\n')
+                with self.assertRaisesRegex(ValueError,'Sync exported dependency is not public hash only'):
+                    C.sync_installed_exports(folder,installed)
+                path.write_text('no public dependency\n')
+                with self.assertRaisesRegex(ValueError,'Sync exported dependency is not public hash only'):
+                    C.sync_installed_exports(folder,installed)
+                decoy=folder/(profile+'/public.txt');decoy.write_text(value)
+                installed['public.txt']={'path':profile+'/public.txt'}
+                with self.assertRaisesRegex(ValueError,'Sync exported dependency is not public hash only'):
+                    C.sync_installed_exports(folder,installed)
+                path.unlink()
+                with self.assertRaises(FileNotFoundError):C.sync_installed_exports(folder,installed)
+
+    def test_export_join_exact_scope(self):
+        good={p:'M' for p in C.JOIN_PATHS};C.join_scope(good)
+        for path in ('tests/reader_sync_public_hash_20261029/run.py',C.PUBLIC_OVERRIDE,C.WORKFLOW,
+            'tests/reader_sync_public_hash_20261029/source_lock.json','apps/reader/sync/src/sync.cpp','extras/opds/src/opds_core.c'):
+            with self.subTest(path=path),self.assertRaisesRegex(ValueError,'exact three-path'):
+                C.join_scope(dict(good,**{path:'M'}))
+        for path in C.JOIN_PATHS:
+            changed=dict(good);changed.pop(path)
+            with self.assertRaises(ValueError):C.join_scope(changed)
+
+def export_join_controls():
+    C.actions();stream=io.StringIO()
+    outcome=unittest.TextTestRunner(stream=stream).run(unittest.defaultTestLoader.loadTestsFromTestCase(ExportJoinControls))
+    C.require(outcome.wasSuccessful() and outcome.testsRun==2,'export join controls failed: '+stream.getvalue())
+    return dict(tests=outcome.testsRun,synthetic=True,assertions_unchanged=True)
+
 def stream_fixture(stdout=None,stderr=b''):
     if stdout is None:stdout=b'exreader_product:\n  input: phony\n    /repo/libexreader_product.so\n  outputs:\n'
     files={C.HOST_QUERY_STDOUT:stdout,C.HOST_QUERY_STDERR:stderr}
@@ -579,6 +619,12 @@ def evidence_mutations(folder,source=None):
         commands=json.loads((folder/'commands.json').read_text());next(r for r in commands if r['output']=='runtime/internal.log')['argv']=['fabricated-marker']
         reject('fabricated-runtime',{'commands.json':encoded(commands)},'control runtime command differs')
     if target=='android':
+        for label in ('sync-raw','sync-off'):
+            owner=report['owners'][label];key='lib/cmake/EXReaderSync/EXReaderSyncConfig.cmake'
+            C.require(key in owner['installed'],'actual Sync config mutation subject missing')
+            path=owner['installed'][key]['path'];changed=(folder/path).read_bytes()+b'\n# EXReaderRevisions::reader_revision_hash\n'
+            bad=copy.deepcopy(report);bad['owners'][label]['installed'][key].update(bytes=len(changed),sha256=hashlib.sha256(changed).hexdigest())
+            reject('private-installed-export-'+label,{path:changed,'report.json':encoded(bad)},'Sync exported dependency is not public hash only')
         host=report['sync']['host'];stdout=host['alias'];stderr=host['alias_stderr']
         reject('host-query-warning-on-stdout',{stdout:C.HOST_QUERY_WARNING+(folder/stdout).read_bytes()},'exact Ninja node/rule binding')
         reject('host-query-unknown-stderr',{stderr:b'unknown warning\n'},'unrecognized host query stderr')
