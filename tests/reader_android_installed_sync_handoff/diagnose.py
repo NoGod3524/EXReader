@@ -39,16 +39,22 @@ def main():
             assert target.is_relative_to(OUT.resolve()) and not name.startswith('/'), name
         z.extractall(OUT)
     report['members'] = len(names)
-    result = json.loads((OUT / 'build/c1-installed-sync/installed-sync-result.json').read_text())
+    report['member_sample'] = names[:60]
+
+    def find(suffix):
+        hits = [p for p in OUT.rglob('*') if p.is_file() and p.as_posix().endswith(suffix)]
+        assert len(hits) == 1, (suffix, hits)
+        return hits[0]
+    result = json.loads(find('c1-installed-sync/installed-sync-result.json').read_text())
     report['original_verdict'] = dict(passed=result['passed'], failures=result['failures'], source_sha=result['source_sha'],
         gates={k: v['passed'] for k, v in result['gates'].items()})
-    snaps = json.loads((OUT / 'build/c1-installed-sync/device/process-snapshots.json').read_text())
+    snaps = json.loads(find('device/process-snapshots.json').read_text())
     report['original_snapshots'] = [{k: v for k, v in s.items() if k != 'net_tcp'} for s in snaps['snapshots']]
     report['original_poll_errors'] = snaps['poll_errors']
     report['original_snapshot_keys'] = sorted({k for s in snaps['snapshots'] for k in s})
     report['original_gate_detail'] = {k: result['gates'][k]['detail'] for k in result['gates'] if k.startswith('live_process')}
-    lib = OUT / 'build/c1-installed-sync/device/apk-libs/libexreader_product.so'
-    apk = OUT / 'build/c1-installed-sync/device/installed-host.apk'
+    lib = find('device/apk-libs/libexreader_product.so')
+    apk = find('device/installed-host.apk')
     raw = apk.read_bytes()
     with zipfile.ZipFile(apk) as z:
         info = z.getinfo('lib/x86_64/libexreader_product.so')
