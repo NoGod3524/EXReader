@@ -4,6 +4,7 @@
 import json
 import base64
 import hashlib
+import importlib.util
 import os
 from pathlib import Path
 import re
@@ -45,6 +46,10 @@ PROFILE_ARTIFACTS = {
     'iphone': (12882548477, 215120884, '3375a7fbbd91697532c6447b3f336715a8512039c6f89efad736342a60a3133b'),
     'ipad': (12883131501, 160391222, '001a9b42d19044057fcc5ecf580cffa60050a837b1d9a6a38f46d49277365dda'),
 }
+ATTACHMENT_SOURCE_HASHES = {
+    'continuation_contract.py': '03a72ae6666b59f829ddd3427067dd2963a3664235f1e5d168041b28cee4e7d1',
+    'contract.py': '3bbc7fca067c77b91ad5d4e3fa96a4e98e1d7ade6bfc5c90dd329b56f7eae3af',
+}
 FAILURES = ('RuntimeError', 'AssertionError', 'CalledProcessError', 'TimeoutExpired',
             'FileNotFoundError', 'OperationalError', 'PermissionError', 'KeyError', 'OSError')
 STATIC_MESSAGES = MESSAGES + ('Complete evidence and strict verdict must be recorded before diagnostic continuation',
@@ -61,7 +66,8 @@ DIAGNOSTIC_STAGES = ('entry', 'scope-and-source', 'artifact-metadata', 'artifact
     'archive-bytes', 'archive-extract', 'result-identity', 'member-inventory', 'member-bytes',
     'lifecycle-receipt', 'admission-replay', 'progress-and-native-log', 'scan-summaries', 'fixture-failures', 'network-summary',
     'xcresult-copy', 'xcresult-parser', 'xcresult-issues', 'attachment-export',
-    'attachment-summary', 'safe-report')
+    'attachment-summary', 'attachment-contract-reference', 'attachment-contract-replay',
+    'attachment-contract-predicates', 'attachment-contract-final', 'safe-report')
 CURRENT_DIAGNOSTIC_STAGE = 'entry'
 CURRENT_MEMBER_INTEGRITY = None
 CURRENT_PLATFORM = None
@@ -137,6 +143,22 @@ REFUSAL_CODES = {
     'unexpected attachment identity': 'attachment-identity',
     'unexpected attachment entry': 'attachment-entry',
     'unexpected attachment count': 'attachment-count',
+    'original attachment source differs': 'attachment-source',
+    'original attachment import differs': 'attachment-import',
+    'original attachment export missing': 'attachment-original-missing',
+    'original attachment bytes differ': 'attachment-original-bytes',
+    'original attachment namespace changed': 'attachment-original-namespace',
+    'original attachment predicate shape differs': 'attachment-predicate-shape',
+    'original attachment predicate contradicts helper': 'attachment-predicate-contradiction',
+    'original attachment profile shape differs': 'attachment-profile-shape',
+    'original attachment contract refused': 'attachment-contract-refused',
+    'unsafe attachment': 'attachment-original-unsafe',
+    'duplicate native stages': 'attachment-original-duplicate-stages',
+    'invalid native screenshot': 'attachment-original-screenshot',
+    'native stages/screenshots incomplete': 'attachment-original-incomplete',
+    'invalid actual profile': 'attachment-original-profile',
+    'diagnostic operation mislabeled': 'attachment-original-operation',
+    'unexpected diagnostic case identity': 'attachment-original-case',
 }
 
 
@@ -536,6 +558,130 @@ def attachment_summary(directory):
             'token_presence_is_actual_ui_state_proof': False, 'images_not_ocr_interpreted': True}
 
 
+def attachment_reference(directory):
+    """Execute only immutable repository source, never artifact-provided code."""
+    import contract
+    directory = Path(directory)
+    for name, expected in ATTACHMENT_SOURCE_HASHES.items():
+        done = subprocess.run(['git', 'show', SOURCE + ':tests/apple_password_privacy_20261028/' + name],
+                              cwd=ROOT, capture_output=True, timeout=30)
+        require(done.returncode == 0 and hashlib.sha256(done.stdout).hexdigest() == expected,
+                'original attachment source differs')
+        (directory / name).write_bytes(done.stdout)
+        require(sha(directory / name) == expected, 'original attachment source differs')
+    require(sha(Path(contract.__file__)) == ATTACHMENT_SOURCE_HASHES['contract.py'], 'original attachment import differs')
+    spec = importlib.util.spec_from_file_location('pinned_attachment_contract', directory / 'continuation_contract.py')
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    require(module.require is contract.require and module.sha is contract.sha,
+            'original attachment import differs')
+    return module
+
+
+def attachment_predicates(directory, checkpoints=None):
+    """Finite independent observations; the original helper is authoritative."""
+    groups = json.loads((directory / 'manifest.json').read_text())
+    require(type(groups) is list and len(groups) <= 100000, 'original attachment predicate shape differs')
+    rows = {stage: {'bare_role': 0, 'exact_png': 0, 'underscore_prefix': 0,
+                    'eligible': 0, 'png_magic': 0} for stage in STAGES}
+    total, cases, safe_names, other, documents = 0, True, True, 0, []
+    for group in groups:
+        require(type(group) is dict and type(group.get('attachments')) is list,
+                'original attachment predicate shape differs')
+        case = group.get('testIdentifier') or group.get('testName')
+        cases = cases and type(case) is str and re.findall(r'\btest[A-Za-z0-9_]+\b', case) == [CASE]
+        for item in group['attachments']:
+            total += 1
+            require(total <= 100000 and type(item) is dict and type(item.get('exportedFileName')) is str and
+                    type(item.get('suggestedHumanReadableName')) is str, 'original attachment predicate shape differs')
+            filename, name = item['exportedFileName'], item['suggestedHumanReadableName']
+            safe = Path(filename).name == filename
+            safe_names = safe_names and safe
+            if name.startswith('privacy-stages.json'):
+                documents.append(json.loads((directory / filename).read_text()) if safe else None)
+            recognized = False
+            for stage in STAGES:
+                role = 'privacy-' + stage
+                form = 'bare_role' if name == role else 'exact_png' if name == role + '.png' else \
+                       'underscore_prefix' if name.startswith(role + '_') else None
+                if form is not None: rows[stage][form] += 1; recognized = True
+                if form in ('exact_png', 'underscore_prefix'):
+                    rows[stage]['eligible'] += 1
+                    if safe:
+                        with (directory / filename).open('rb') as file: magic = file.read(8)
+                        rows[stage]['png_magic'] += int(magic == b'\x89PNG\r\n\x1a\n')
+            if not recognized: other += 1
+    document = documents[0] if len(documents) == 1 and type(documents[0]) is dict else None
+    predicates = {'exact_stage_order': None, 'profile_uuid_format': None, 'diagnostic_flag': None, 'operation_value': None}
+    if document is not None:
+        predicates = {'exact_stage_order': document.get('stages') == STAGES,
+            'profile_uuid_format': type(document.get('profile')) is str and
+                re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', document['profile']) is not None,
+            'diagnostic_flag': document.get('diagnostic_continuation') is True,
+            'operation_value': document.get('operation') == 'real Remember off and Update; not a dedicated Forget action'}
+    accepted = cases and safe_names and len(documents) == 1 and all(value is True for value in predicates.values()) and \
+               all(row['eligible'] == row['png_magic'] == 1 for row in rows.values())
+    relation = None
+    if predicates['profile_uuid_format'] is True and type(checkpoints) is dict and list(checkpoints) == STAGES and all(
+            type(value) is dict and type(value.get('profile_id')) is str and
+            re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', value['profile_id']) is not None
+            for value in checkpoints.values()):
+        relation = all(value['profile_id'] == document['profile'] for value in checkpoints.values())
+    return {'entry_count': total, 'case_identity_matches': cases, 'all_single_filenames': safe_names,
+            'stage_document_count': len(documents), 'stage_document_predicates': predicates,
+            'screenshot_name_forms': rows, 'other_name_count': other, 'model_helper_accepts': accepted,
+            'independent_document_profile_relation': relation, 'relation_is_original_next_predicate_execution': False,
+            'arbitrary_names_profiles_or_values_printed': False}
+
+
+def replay_original_attachments(folder, result, report):
+    """Latch real helper outcome before any independent or later refusal."""
+    proof = {'original_export_status': 'absent', 'original_helper_outcome': 'unavailable',
+        'original_helper_refusal': None, 'next_profile_predicate': None, 'predicates': None,
+        'original_export_replayed': False, 'source_and_import_rechecked': False,
+        'fatal_refusal': False, 'native_acceptance': False, 'full_f10_accepted': False,
+        'producer_export_command_succeeded': any(row == {'role': 'attachments', 'exit': 0} for row in result['commands'])}
+    report['original_attachment_contract'] = proof
+    directory = folder / 'attachments'
+    expected = {name[len('attachments/'):]: item for name, item in result['files'].items() if name.startswith('attachments/')}
+    if not expected and not directory.exists():
+        require(not proof['producer_export_command_succeeded'], 'original attachment export missing')
+        return True
+    proof['original_export_status'] = 'invalid'
+    require('manifest.json' in expected and seal_files(directory) == expected, 'original attachment bytes differ')
+    before = inventory(directory); proof['original_export_status'] = 'present'
+    diagnostic_stage('attachment-contract-reference')
+    with tempfile.TemporaryDirectory(prefix='privacy-original-attachment-source-') as temporary:
+        module = attachment_reference(temporary)
+        diagnostic_stage('attachment-contract-replay')
+        try:
+            native_stages, unused_images = module.attachments(directory)
+        except Exception as error:
+            failure = refusal_report(error, 'attachment-contract-replay')
+            proof.update(original_helper_outcome='refused', fatal_refusal=True,
+                original_helper_refusal={key: failure[key] for key in ('exception_class', 'refusal_code')})
+        else:
+            proof['original_helper_outcome'] = 'passed'
+            checkpoints = result['checkpoints']
+            require(type(checkpoints) is dict and list(checkpoints) == STAGES and all(type(value) is dict and
+                type(value.get('profile_id')) is str and re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}',
+                value['profile_id']) is not None for value in checkpoints.values()), 'original attachment profile shape differs')
+            proof['next_profile_predicate'] = all(value['profile_id'] == native_stages['profile'] for value in checkpoints.values())
+            proof['fatal_refusal'] = not proof['next_profile_predicate']
+        # The proof is already the report's live partial object. An observer,
+        # later parser or scan failure cannot erase the reproduced outcome.
+        diagnostic_stage('attachment-contract-predicates')
+        proof['predicates'] = attachment_predicates(directory, result['checkpoints'])
+        require(proof['predicates']['model_helper_accepts'] == (proof['original_helper_outcome'] == 'passed'),
+                'original attachment predicate contradicts helper')
+        require(inventory(directory) == before and seal_files(directory) == expected and inventory(directory) == before,
+                'original attachment namespace changed')
+        import contract
+        require(all(sha(Path(temporary) / name) == digest for name, digest in ATTACHMENT_SOURCE_HASHES.items()) and
+                sha(Path(contract.__file__)) == ATTACHMENT_SOURCE_HASHES['contract.py'], 'original attachment source differs')
+        proof.update(original_export_replayed=True, source_and_import_rechecked=True)
+    return not proof['fatal_refusal']
+
+
 def inspect_native_result(folder, files, report):
     """Independent native extraction AFTER byte/lifecycle admission only.
 
@@ -606,6 +752,7 @@ def diagnose_platform(out, platform, identifier, size, digest):
     report['producer_lifecycle_receipt'] = lifecycle
     report['producer_receipt_is_event_trace_proof'] = False
     report['activity_timing'] = activity_timing(folder / 'native.log')
+    attachment_contract_ok = replay_original_attachments(folder, result, report)
     inspect_native_result(folder, files, report)
     diagnostic_stage('scan-summaries')
     for stage in STAGES:
@@ -631,6 +778,8 @@ def diagnose_platform(out, platform, identifier, size, digest):
         report['admission_namespace_observations'] = admission_namespaces(folder)
         report['retained_metadata_classification'] = admission_metadata(folder)
         report['independent_ios_admission_replay'] = verify_ios_admission(folder, SOURCE, result, require_program=False)
+    diagnostic_stage('attachment-contract-final')
+    require(attachment_contract_ok, 'original attachment contract refused')
     diagnostic_stage('safe-report')
     return report
 

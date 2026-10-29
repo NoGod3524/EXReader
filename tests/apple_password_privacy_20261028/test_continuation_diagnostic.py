@@ -49,8 +49,27 @@ def diagnostic_appledouble(attributes=None, resource=b''):
             struct.pack('>6I', 9, 50, len(finder), 2, 50 + len(finder), len(resource)) + finder + resource)
 
 
+def attachment_bundle(root, form='png'):
+    """Actions-only original-parser fixture; not a real image/native proof."""
+    directory = root / 'attachments'; directory.mkdir()
+    profile = '12345678-1234-1234-1234-123456789abc'
+    document = {'stages': list(inspector.STAGES), 'profile': profile, 'diagnostic_continuation': True,
+                'operation': 'real Remember off and Update; not a dedicated Forget action'}
+    (directory / 'metadata.json').write_text(json.dumps(document))
+    entries = [{'exportedFileName': 'metadata.json', 'suggestedHumanReadableName': 'privacy-stages.json'}]
+    for index, stage in enumerate(inspector.STAGES):
+        name = 'privacy-' + stage + ('.png' if form == 'png' else '_opaque' if form == 'underscore' else '')
+        filename = 'image' + str(index) + '.bin'; (directory / filename).write_bytes(b'\x89PNG\r\n\x1a\nfixture-not-real-image')
+        entries.append({'exportedFileName': filename, 'suggestedHumanReadableName': name})
+    (directory / 'manifest.json').write_text(json.dumps([{'testIdentifier': CASE, 'attachments': entries}]))
+    result = {'commands': [{'role': 'attachments', 'exit': 0}],
+        'checkpoints': {stage: {'profile_id': profile} for stage in inspector.STAGES},
+        'files': {'attachments/' + name: item for name, item in seal_files(directory).items()}}
+    return result
+
+
 def native_order_control(test, root, *, changed_member=False, sealed=True, bad_scan=False,
-                         native_present=True, parser_failure=None):
+                         native_present=True, parser_failure=None, retained_bare_export=False):
     """Actions-only synthetic archive through the REAL admission/native helper."""
     receipt = {'admission_closed': True, 'active_handlers': 0, 'admitted_handlers': 533,
         'rejected_handlers': 0, 'serving_stopped': True, 'drained': True, 'failed': False,
@@ -60,6 +79,9 @@ def native_order_control(test, root, *, changed_member=False, sealed=True, bad_s
                'fixture-failures.json': b'["private-unknown-fixture-operand"]'}
     if native_present: members['privacy.xcresult/Info.plist'] = b'synthetic protocol fixture, not actual xcresult'
     if bad_scan: members['remember_closed-privacy-scan.json'] = b'{"private-unknown-root":{"accepted":false}}'
+    if retained_bare_export:
+        fixture = root / 'fixture-export'; fixture.mkdir(); attachment_bundle(fixture, 'bare')
+        for path in (fixture / 'attachments').iterdir(): members['attachments/' + path.name] = path.read_bytes()
     result = {'source_sha': SOURCE, 'run_id': RUN, 'attempt': '1', 'platform': 'macos',
         'accepted': False, 'diagnostic_only': True, 'full_f10_accepted': False, 'sequence_complete': False,
         'evidence_sealed': sealed, 'lifecycle': receipt, 'failure': 'RuntimeError',
@@ -80,9 +102,11 @@ def native_order_control(test, root, *, changed_member=False, sealed=True, bad_s
         'message': {'_value': 'XCTAssertNil failed private-operand'}, 'testCaseName': {'_value': CASE},
         'documentLocationInCreatingWorkspace': {'url': {'_value': 'file://' + SOURCE_PATH + '#StartingLineNumber=245'}}}
     calls, stages = [], []
+    original_run = subprocess.run
     real_stage = inspector.diagnostic_stage
     def stage(name): stages.append(name); real_stage(name)
     def command(argv, **kwargs):
+        if argv[:2] == ['git', 'show']: return original_run(argv, **kwargs)
         if argv[:2] == ['gh', 'api']:
             test.assertTrue(argv[2].endswith('/actions/artifacts/123/zip'))
             kwargs['stdout'].write(payload)
@@ -113,6 +137,120 @@ def native_order_control(test, root, *, changed_member=False, sealed=True, bad_s
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_actual_original_attachment_helper_accepts_only_original_name_forms(self):
+        for form in ('png', 'underscore', 'bare'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = attachment_bundle(root, form); report = {}
+                outcome = inspector.replay_original_attachments(root, result, report)
+                proof = report['original_attachment_contract']
+                self.assertEqual(outcome, form != 'bare')
+                self.assertEqual(proof['original_helper_outcome'], 'refused' if form == 'bare' else 'passed')
+                self.assertIs(proof['next_profile_predicate'], None if form == 'bare' else True)
+                self.assertTrue(proof['original_export_replayed']); self.assertTrue(proof['source_and_import_rechecked'])
+                self.assertEqual(proof['predicates']['model_helper_accepts'], form != 'bare')
+                self.assertIs(proof['predicates']['independent_document_profile_relation'], True)
+                self.assertFalse(proof['predicates']['relation_is_original_next_predicate_execution'])
+                if form == 'bare':
+                    self.assertEqual(proof['original_helper_refusal']['refusal_code'], 'attachment-original-incomplete')
+                    self.assertTrue(all(row['bare_role'] == 1 and row['eligible'] == 0
+                                        for row in proof['predicates']['screenshot_name_forms'].values()))
+
+    def test_original_attachment_source_import_pins_precede_execution(self):
+        self.assertEqual(inspector.ATTACHMENT_SOURCE_HASHES, {
+            'continuation_contract.py': '03a72ae6666b59f829ddd3427067dd2963a3664235f1e5d168041b28cee4e7d1',
+            'contract.py': '3bbc7fca067c77b91ad5d4e3fa96a4e98e1d7ade6bfc5c90dd329b56f7eae3af'})
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(inspector.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'foreign source', b'private operand')), \
+                patch.object(inspector.importlib.util, 'spec_from_file_location') as loader:
+            with self.assertRaisesRegex(RuntimeError, '^original attachment source differs$'):
+                inspector.attachment_reference(temporary)
+            loader.assert_not_called()
+        import contract
+        actual_sha = inspector.sha
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(inspector, 'sha', side_effect=lambda path: 'f' * 64 if Path(path) == Path(contract.__file__) else actual_sha(path)), \
+                patch.object(inspector.importlib.util, 'spec_from_file_location') as loader:
+            with self.assertRaisesRegex(RuntimeError, '^original attachment import differs$'):
+                inspector.attachment_reference(temporary)
+            loader.assert_not_called()
+
+    def test_original_attachment_profile_mismatch_and_absence_are_not_helper_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); result = attachment_bundle(root); report = {}
+            result['checkpoints'][inspector.STAGES[0]]['profile_id'] = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+            self.assertFalse(inspector.replay_original_attachments(root, result, report))
+            proof = report['original_attachment_contract']
+            self.assertEqual(proof['original_helper_outcome'], 'passed'); self.assertIsNone(proof['original_helper_refusal'])
+            self.assertIs(proof['next_profile_predicate'], False); self.assertTrue(proof['fatal_refusal'])
+            self.assertIs(proof['predicates']['independent_document_profile_relation'], False)
+        with tempfile.TemporaryDirectory() as temporary, patch.object(inspector, 'attachment_reference') as reference:
+            report = {}; root = Path(temporary)
+            # A fresh xcresult export in another directory is NOT the original.
+            regenerated = root / 'regenerated'; regenerated.mkdir(); attachment_bundle(regenerated)
+            self.assertTrue(inspector.replay_original_attachments(root, {'files': {}, 'commands': []}, report))
+            proof = report['original_attachment_contract']
+            self.assertEqual(proof['original_export_status'], 'absent')
+            self.assertEqual(proof['original_helper_outcome'], 'unavailable'); self.assertIsNone(proof['next_profile_predicate'])
+            reference.assert_not_called()
+            with self.assertRaisesRegex(RuntimeError, '^original attachment export missing$'):
+                inspector.replay_original_attachments(root, {'files': {}, 'commands': [{'role': 'attachments', 'exit': 0}]}, {})
+
+    def test_original_attachment_invalid_predicates_and_encoded_values_remain_private(self):
+        for change in ('duplicate-image', 'duplicate-stages', 'unsafe', 'foreign-case', 'order', 'operation', 'uuid', 'flag', 'malformed-json'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = attachment_bundle(root); directory = root / 'attachments'
+                groups = json.loads((directory / 'manifest.json').read_text())
+                document = json.loads((directory / 'metadata.json').read_text())
+                if change == 'duplicate-image': groups[0]['attachments'].append(dict(groups[0]['attachments'][1]))
+                elif change == 'duplicate-stages': groups[0]['attachments'].append(dict(groups[0]['attachments'][0]))
+                elif change == 'unsafe': groups[0]['attachments'][1]['exportedFileName'] = '../private-operand'
+                elif change == 'foreign-case': groups[0]['testIdentifier'] = 'private-operand'
+                elif change == 'order': document['stages'].reverse()
+                elif change == 'operation': document['operation'] = 'UHJpdmFjeS0= private-operand'
+                elif change == 'uuid': document['profile'] = 'Privacy-aaaa... private-operand'
+                elif change == 'flag': document['diagnostic_continuation'] = 1
+                (directory / 'manifest.json').write_text(json.dumps(groups))
+                (directory / 'metadata.json').write_text('private-operand not JSON' if change == 'malformed-json' else json.dumps(document))
+                result['files'] = {'attachments/' + name: item for name, item in seal_files(directory).items()}
+                report = {}
+                if change == 'malformed-json':
+                    with self.assertRaises(json.JSONDecodeError): inspector.replay_original_attachments(root, result, report)
+                else: self.assertFalse(inspector.replay_original_attachments(root, result, report))
+                proof = report['original_attachment_contract']
+                self.assertEqual(proof['original_helper_outcome'], 'refused'); self.assertIsNone(proof['next_profile_predicate'])
+                for operand in ('private-operand', 'UHJpdmFjeS0=', 'Privacy-aaaa...'):
+                    self.assertNotIn(operand, json.dumps(proof))
+
+    def test_original_attachment_replay_rejects_mutation_and_contradictory_model(self):
+        actual = inspector.attachment_predicates
+        for change in ('prefix', 'namespace', 'contradiction'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); result = attachment_bundle(root); report = {}
+                def observe(directory, checkpoints=None):
+                    proof = actual(directory, checkpoints)
+                    if change == 'prefix':
+                        with (directory / 'image0.bin').open('r+b') as file: file.write(b'changed!')
+                    elif change == 'namespace': (directory / 'late-file').write_bytes(b'private-operand')
+                    else: proof['model_helper_accepts'] = False
+                    return proof
+                with patch.object(inspector, 'attachment_predicates', side_effect=observe), self.assertRaises(RuntimeError):
+                    inspector.replay_original_attachments(root, result, report)
+                proof = report['original_attachment_contract']
+                self.assertEqual(proof['original_helper_outcome'], 'passed')
+                self.assertFalse(proof['original_export_replayed'])
+
+    def test_original_attachment_outcome_latches_before_later_fatal_refusal(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            refusal, calls, stages, unused = native_order_control(self, Path(temporary), retained_bare_export=True)
+            self.assertEqual(refusal['refusal_code'], 'fixture-failure-shape')
+            proof = refusal['validated_partial_report']['original_attachment_contract']
+            self.assertEqual(proof['original_helper_outcome'], 'refused')
+            self.assertEqual(proof['original_helper_refusal']['refusal_code'], 'attachment-original-incomplete')
+            self.assertTrue(proof['fatal_refusal']); self.assertTrue(proof['original_export_replayed'])
+            self.assertEqual(calls, ['get', 'export'])
+            self.assertLess(stages.index('attachment-contract-replay'), stages.index('xcresult-copy'))
+            self.assertNotIn('private-', json.dumps(refusal))
+
     def test_current_failure_pins_and_actual_profile_dispatch_are_separate(self):
         self.assertEqual(RUN, '40858915090')
         self.assertEqual(SOURCE, '6803602e5791eafa69a6e61bc5499d36cd31d92e')
