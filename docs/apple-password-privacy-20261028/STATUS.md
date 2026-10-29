@@ -586,3 +586,49 @@ to all parity checks. Replay measures retained-byte transport, not Apple log
 generation or HTTP latency; cache/order effects remain explicit. No speedup is
 claimed before Actions, no next native run is authorized by a green profile,
 and the iPad pre-callback gap remains separate. Strict/F10 acceptance stays false.
+
+## Completed capture profile and authorized literal-search successor
+
+The prior packet was published at `65eacff875176565dc68931d354b25bed9f56acb`.
+[Run40851993660](https://github.com/NoGod3524/EXReader/actions/runs/40851993660)
+passed all111 controls and completed all six full stream pairs and48 paired
+measurements with exact byte/manifest/scan/reference-role parity. SDK/native
+work was skipped. The unchanged20% performance gate failed: AB improved10.297%
+(108.680739830 to97.489731835seconds), BA8.437% (107.107708247 to98.071374331).
+No sample regressed over10%; macOS remember_reopened regressed2.978%. The safe
+1712-byte artifact12887363117 has SHA256
+`3ab8e4f72d377345d0c8069231db91bcc034a45de2110d9c20779d359b8377db`.
+The one-run/zero-repair allowance is consumed; the failed criterion is retained.
+
+Owner approved the next exact three paths on2026-10-29 at10:09:27 UTC:
+continuation_log_capture.py, test_continuation_contract.py and this document.
+Independent actual-source review precedes Git tree/commit/feature publication.
+The unchanged profile-only topology permits ONE new30-minute configured run,
+zero repair/rerun and no native work. All111 existing controls remain; eight
+additional Actions-only controls are authored (119 total, not yet executed).
+
+Only the candidate matcher changes: escaped literal-byte alternatives sorted
+longest-first, complete containment role closure, empty-needle roles preserved,
+and overlap search resumed at the prior start+1. Original JSON decoding,
+exception behavior and sender categories remain the semantic reference.
+Per-invocation preparation and finite path counters are charged inside every
+candidate attribution timer; each call runs in a fresh process. Reference
+fallback is explicit and cannot qualify for candidate performance, even when
+semantically equal. No pattern, message or exception operand is emitted.
+
+The original48 AB/BA measurements and20%/10% gates are unchanged. Afterwards,
+six separate calls report bounded decode/preparation/complete-event-loop/total
+durations, tied to the six original stream hashes; missing phases are null.
+These observations never replace eligibility samples. Their literal path and
+counts must agree with both paired calls, and all calls remain under the same
+18-minute parent deadline and final original-byte replay. No extra raw artifact
+is uploaded. The independent native authenticator still uses the original
+matcher; all strict helpers, workflow, runner and lifecycle are unchanged.
+
+Attribution was about74% of the previous candidate measured work, but the old
+profile did not isolate decoding from matching. The new algorithm is an unrun
+hypothesis, not an established speedup or60-second callback fix. Retained replay
+excludes actual Apple log generation; iPad's pre-callback timeout, opaque iOS
+AppleDouble namespace, strict privacy failures and dedicated Forget UI gap
+remain unresolved. Neither this experiment nor a green performance result
+grants native/F10 acceptance or authority for a new native run.

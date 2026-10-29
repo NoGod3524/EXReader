@@ -110,6 +110,108 @@ def control_project():
 
 
 class ContinuationControls(unittest.TestCase):
+    def test_literal_longest_first_closure_and_cross_boundary_overlap_are_required(self):
+        values={'user:raw':b'ab','remembered:raw':b'abc','session:raw':b'cde'}
+        search=capture_candidate.LiteralRoleSearch(values)
+        self.assertEqual(search.roles(b'abcde'),{'user','remembered','session'})
+        # These explicit wrong alternatives distinguish the control corpus.
+        wrong_order=capture_candidate.LiteralRoleSearch(values); wrong_order.pattern=re.compile(b'ab|abc|cde')
+        self.assertNotEqual(wrong_order.roles(b'abcde'),{'user','remembered','session'})
+        wrong_closure=capture_candidate.LiteralRoleSearch(values); wrong_closure.closures[b'abc']={'remembered'}
+        self.assertNotEqual(wrong_closure.roles(b'abcde'),{'user','remembered','session'})
+        nonoverlap=set().union(*(search.closures[match.group(0)] for match in search.pattern.finditer(b'abcde')))
+        self.assertNotEqual(nonoverlap,{'user','remembered','session'})
+        payload=json.dumps([{'eventMessage':'abcde'}]).encode()
+        self.assertEqual(capture_candidate.attribute_unified_log(payload,values),original_attribution(payload,values))
+
+    def test_literal_search_empty_cross_role_binary_and_regex_punctuation(self):
+        values={'user:raw':b'', 'remembered:raw':b'a.*(b)[c]\\^$|?\x00',
+                'session:raw':b'a.*(b)[c]\\^$|?\x00', 'session:json':b'\x00\nend'}
+        for message in ('', 'a.*(b)[c]\\^$|?\x00\nend', 'aZZbcb', 'no match'):
+            payload=json.dumps([{'eventMessage':message}]).encode()
+            self.assertEqual(capture_candidate.attribute_unified_log(payload,values),original_attribution(payload,values))
+        value,state=capture_candidate.attribution_with_state(b'[{"eventMessage":""}]',{'user:raw':b''})
+        self.assertFalse(state['candidate_path_used']); self.assertFalse(state['fallback_used'])
+        self.assertEqual(state['search_call_count'],0)
+        self.assertEqual(value,original_attribution(b'[{"eventMessage":""}]',{'user:raw':b''}))
+
+    def test_literal_search_prefix_heavy_large_messages_keep_full_reference_result(self):
+        labels=sorted(capture_candidate.VARIANT_LABELS)[:64]
+        values={label:b'a'*(index+1)+b'b' for index,label in enumerate(labels)}
+        for message in ('a'*262144+'b', 'a'*262144+'c'):
+            payload=json.dumps([{'eventMessage':message}]).encode()
+            self.assertEqual(capture_candidate.attribute_unified_log(payload,values),original_attribution(payload,values))
+
+    def test_literal_compiler_fallback_is_explicit_and_cannot_qualify(self):
+        payload=b'[{"eventMessage":"needle"}]'; variants={'user:raw':b'needle'}
+        class PrivatePatternError(re.error):
+            def __str__(self): raise AssertionError('exception text formatted')
+        with patch.object(capture_candidate.re,'compile',side_effect=PrivatePatternError('private operand',b'private pattern')):
+            value,state=capture_candidate.attribution_with_state(payload,variants)
+        self.assertEqual(value,original_attribution(payload,variants))
+        self.assertTrue(state['fallback_used']); self.assertFalse(state['candidate_path_used'])
+        self.assertFalse(capture_candidate.validate_candidate_state(state,False))
+        self.assertNotIn('private',json.dumps(state))
+
+    def test_literal_candidate_preparation_is_inside_each_call_and_eligibility_uninstrumented(self):
+        payload=b'[{"eventMessage":"needle"}]'; variants={'user:raw':b'needle'}
+        compiler=capture_candidate.re.compile
+        with patch.object(capture_candidate.re,'compile',wraps=compiler) as called, \
+                patch.object(capture_candidate.time,'monotonic_ns',side_effect=AssertionError('eligibility phase timer used')):
+            for unused in range(2):
+                value,state=capture_candidate.attribution_with_state(payload,variants)
+                self.assertTrue(capture_candidate.validate_candidate_state(state,False))
+            self.assertEqual(called.call_count,2)
+        self.assertEqual(value,original_attribution(payload,variants))
+        self.assertTrue(all(value is None for value in state['phases'].values()))
+
+    def test_literal_subphase_counts_are_finite_and_absent_phases_are_null(self):
+        payload=b'[{"eventMessage":"needle"}]'; variants={'user:raw':b'needle'}
+        value,state=capture_candidate.attribution_with_state(payload,variants,observe_phases=True)
+        self.assertTrue(capture_candidate.validate_candidate_state(state,True))
+        self.assertEqual(value,original_attribution(payload,variants))
+        self.assertTrue(all(type(value) is int for value in state['phases'].values()))
+        unused,invalid=capture_candidate.attribution_with_state(b'not JSON',variants,observe_phases=True)
+        self.assertIsNotNone(invalid['phases']['decode_ns'])
+        self.assertIsNone(invalid['phases']['prepare_ns']); self.assertIsNone(invalid['phases']['event_loop_ns'])
+        self.assertFalse(capture_candidate.validate_candidate_state(invalid,True))
+        for bad in (True,-1,1.5,float('nan'),'encoded-private-operand'):
+            changed=copy.deepcopy(state); changed['phases']['decode_ns']=bad
+            with self.assertRaises(RuntimeError): capture_candidate.validate_candidate_state(changed,True)
+        changed=copy.deepcopy(state); changed['phases']['event_loop_ns']=None
+        with self.assertRaises(RuntimeError): capture_candidate.validate_candidate_state(changed,True)
+        with self.assertRaises(RuntimeError): capture_candidate.validate_candidate_state(state,1)
+        with self.assertRaises(RuntimeError): capture_candidate.validate_candidate_state(state,False)
+
+    def test_literal_six_diagnostics_and_twelve_candidate_paths_bind_every_original_sample(self):
+        state={'candidate_path_used':True,'fallback_used':False,'literal_event_count':1,'pattern_count':1,'search_call_count':1,
+               'phases':dict.fromkeys(('decode_ns','prepare_ns','event_loop_ns','total_ns'))}
+        samples=[{'platform':platform,'stage':stage,'files':{name:{'bytes':16,'sha256':'a'*64} for name in capture_candidate.FILES}}
+                 for platform in ('macos','iphone') for stage in STAGES[:3]]
+        paths=[{'platform':row['platform'],'stage':row['stage'],'order':order,'state':copy.deepcopy(state)}
+               for row in samples for order in ('AB','BA')]
+        phases=[dict(row,sample_elapsed_ns=20,semantic_parity=True,
+                 state=dict(state,phases={'decode_ns':2,'prepare_ns':3,'event_loop_ns':4,'total_ns':10})) for row in samples]
+        self.assertTrue(capture_candidate.candidate_evidence_gate(paths,phases,samples))
+        fallback=copy.deepcopy(paths); fallback[0]['state'].update(candidate_path_used=False,fallback_used=True,search_call_count=0)
+        self.assertFalse(capture_candidate.candidate_evidence_gate(fallback,phases,samples))
+        for changed in (phases[:-1],phases+[phases[0]], [dict(row,stage='private-stage') for row in phases]):
+            with self.assertRaises(RuntimeError): capture_candidate.candidate_evidence_gate(paths,changed,samples)
+        changed=copy.deepcopy(phases); changed[0]['files'][capture_candidate.FILES[0]]['sha256']='b'*64
+        with self.assertRaises(RuntimeError): capture_candidate.candidate_evidence_gate(paths,changed,samples)
+        changed=copy.deepcopy(phases); changed[0]['state']['search_call_count']=2
+        self.assertFalse(capture_candidate.candidate_evidence_gate(paths,changed,samples))
+        for changed in (samples[:-1]+[samples[0]], [dict(row,extra='private') for row in samples]):
+            with self.assertRaises(RuntimeError): capture_candidate.candidate_evidence_gate(paths,phases,changed)
+        changed=copy.deepcopy(samples); changed[0]['files'][capture_candidate.FILES[0]]['bytes']=True
+        with self.assertRaises(RuntimeError): capture_candidate.candidate_evidence_gate(paths,phases,changed)
+
+    def test_literal_sender_category_body_remains_frozen_reference(self):
+        source=Path(capture_candidate.__file__).read_text()
+        start=source.index('        sender = event.get(')
+        end=source.index("    report['matched_event_groups']",start)
+        self.assertEqual(hashlib.sha256(source[start:end].encode()).hexdigest(),'9f1d0dd1ba6d27a5f809b37ad0eadc0e6f9c54644da7f7f96aa2d0d11b25a952')
+
     def test_capture_file_sink_keeps_large_complete_stdout_and_stderr(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary); lifecycle = ContinuationLifecycle('macos', budget_seconds=20)
@@ -320,13 +422,15 @@ class ContinuationControls(unittest.TestCase):
                 'scans': {name:scan_file(folder/name, variants) for name in capture_candidate.FILES},
                 'attribution': original_attribution(payload, variants)}
             spec_path = root/'spec.json'; capture_candidate.write_private_json(spec_path, spec)
-            for mode in ('capture-reference','capture-candidate','attribution-reference','attribution-candidate'):
+            for mode in ('capture-reference','capture-candidate','attribution-reference','attribution-candidate','phases-candidate'):
                 output=root/mode; output.mkdir(mode=0o700)
                 done=subprocess.run([sys.executable, '-B', str(Path(capture_candidate.__file__)), '--worker', mode,
                     str(spec_path), str(output), str(reference), str(time.monotonic()+20)], capture_output=True, timeout=25)
                 self.assertEqual(done.returncode,0); self.assertEqual(done.stdout,b''); self.assertEqual(done.stderr,b'')
                 measurement=json.loads((output/'measurement.json').read_text())
                 self.assertTrue(measurement['parity']); self.assertGreater(measurement['elapsed_ns'],0)
+                if mode in ('attribution-candidate','phases-candidate'):
+                    self.assertTrue(capture_candidate.validate_candidate_state(measurement['candidate_state'],mode=='phases-candidate'))
             (reference/'continuation_lifecycle.py').write_text('private-operand')
             with self.assertRaises(RuntimeError): capture_candidate.reference_modules(reference,time.monotonic()+2)
 

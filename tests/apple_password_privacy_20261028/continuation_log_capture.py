@@ -233,37 +233,80 @@ def read_payload(path, deadline, expected=None):
     return payload
 
 
-def attribute_unified_log(payload, variants, deadline=None):
-    """Exact reference interpretation, deduplicating only byte-equal needles."""
+class LiteralRoleSearch:
+    """Literal longest-first search with complete contained and overlap roles."""
+    def __init__(self, variants):
+        mapping = {}
+        for label, value in variants.items(): mapping.setdefault(value, set()).add(label.split(':', 1)[0])
+        self.empty_roles = mapping.pop(b'', set())
+        self.keys = sorted(mapping, key=lambda value: (-len(value), value))
+        self.closures = {value: set().union(*(roles for other, roles in mapping.items() if other in value))
+                         for value in self.keys}
+        self.all_roles = self.empty_roles | set().union(*mapping.values())
+        self.pattern = re.compile(b'(?:' + b'|'.join(re.escape(value) for value in self.keys) + b')') if self.keys else None
+        self.search_calls = 0
+
+    def roles(self, message):
+        found = set(self.empty_roles)
+        if self.pattern is None: return found
+        position = 0
+        while found != self.all_roles:
+            self.search_calls += 1
+            match = self.pattern.search(message, position)
+            if match is None: break
+            found.update(self.closures[match.group(0)])
+            # Not match.end(): a later needle may cross this match's boundary.
+            position = match.start() + 1
+        return found
+
+
+def attribution_with_state(payload, variants, deadline=None, observe_phases=False):
+    """Same semantic return plus finite path/optional phase evidence."""
+    require(type(observe_phases) is bool, 'attribution observation mode differs')
+    started = time.monotonic_ns() if observe_phases else None
+    state = {'candidate_path_used': False, 'fallback_used': False,
+             'literal_event_count': 0, 'pattern_count': 0, 'search_call_count': 0,
+             'phases': {name: None for name in ('decode_ns', 'prepare_ns', 'event_loop_ns', 'total_ns')}}
+    def finish(value):
+        if deadline is not None: remaining(deadline)
+        if observe_phases: state['phases']['total_ns'] = time.monotonic_ns() - started
+        return value, state
     require(all(label in VARIANT_LABELS for label in variants), 'unexpected attribution variant')
     if deadline is not None: remaining(deadline)
-    # Preserve the original behavior for unsupported value types, including
-    # when an empty/non-array payload means the reference never tests a value.
     if any(type(value) is not bytes for value in variants.values()):
-        value = reference_attribution(payload, variants)
-        if deadline is not None: remaining(deadline)
-        return value
+        state['fallback_used'] = True
+        return finish(reference_attribution(payload, variants))
     report = {'arbitrary_event_text_printed': False, 'byte_scan_is_authoritative': True,
               'owner_callsite_proven': False, 'parsed_json_array': False, 'matched_event_groups': []}
+    began = time.monotonic_ns() if observe_phases else None
     try: events = json.loads(payload)
     except (ValueError, UnicodeDecodeError):
-        if deadline is not None: remaining(deadline)
-        return report
+        if observe_phases: state['phases']['decode_ns'] = time.monotonic_ns() - began
+        return finish(report)
+    if observe_phases: state['phases']['decode_ns'] = time.monotonic_ns() - began
     if deadline is not None: remaining(deadline)
-    if not isinstance(events, list): return report
+    if not isinstance(events, list): return finish(report)
     report['parsed_json_array'] = True
     report['event_count'] = len(events)
-    mapping = {}
-    for label, value in variants.items(): mapping.setdefault(value, set()).add(label.split(':', 1)[0])
+    began = time.monotonic_ns() if observe_phases else None
+    try: search = LiteralRoleSearch(variants)
+    except re.error:
+        # re.error can carry the complete pattern; never format/print it.
+        # Correct reference output is preserved, but this invocation cannot
+        # qualify as the accelerated candidate in the retained experiment.
+        if observe_phases: state['phases']['prepare_ns'] = time.monotonic_ns() - began
+        state['fallback_used'] = True
+        return finish(reference_attribution(payload, variants))
+    if observe_phases: state['phases']['prepare_ns'] = time.monotonic_ns() - began
+    state['pattern_count'] = len(search.keys)
     counts = {}
+    began = time.monotonic_ns() if observe_phases else None
     for index, event in enumerate(events):
         if deadline is not None and index % 1024 == 0: remaining(deadline)
         if not isinstance(event, dict) or not isinstance(event.get('eventMessage'), str): continue
         message = event['eventMessage'].encode('utf-8')
-        matched = set()
-        for value, roles in mapping.items():
-            if value in message: matched.update(roles)
-        roles = tuple(sorted(matched))
+        state['literal_event_count'] += 1
+        roles = tuple(sorted(search.roles(message)))
         if not roles: continue
         sender = event.get('senderImagePath')
         category = 'unknown-or-other-image'
@@ -281,9 +324,14 @@ def attribute_unified_log(payload, variants, deadline=None):
         key = (category, roles); counts[key] = counts.get(key, 0) + 1
     report['matched_event_groups'] = [{'sender_category': category, 'credential_roles': list(roles), 'event_count': count}
                                       for (category, roles), count in sorted(counts.items())]
-    if deadline is not None: remaining(deadline)
-    return report
+    state['search_call_count'] = search.search_calls
+    state['candidate_path_used'] = search.search_calls > 0
+    if observe_phases: state['phases']['event_loop_ns'] = time.monotonic_ns() - began
+    return finish(report)
 
+
+def attribute_unified_log(payload, variants, deadline=None):
+    return attribution_with_state(payload, variants, deadline=deadline)[0]
 
 def profile_marker_valid(message):
     return type(message) is str and message.count(PROFILE_MARKER) == 1 and not any(marker in message for marker in OTHER_MARKERS)
@@ -416,6 +464,76 @@ def profile_gate(rows):
             'native_authorized': False, 'full_f10_accepted': False}
 
 
+def validate_candidate_state(state, phases_observed):
+    require(type(phases_observed) is bool, 'candidate phase mode differs')
+    require(type(state) is dict and set(state) == {'candidate_path_used', 'fallback_used', 'literal_event_count', 'pattern_count', 'search_call_count', 'phases'} and
+        type(state['candidate_path_used']) is bool and type(state['fallback_used']) is bool and
+        not (state['candidate_path_used'] and state['fallback_used']) and
+        type(state['literal_event_count']) is int and 0 <= state['literal_event_count'] <= 1000000000 and
+        type(state['pattern_count']) is int and 0 <= state['pattern_count'] <= len(VARIANT_LABELS) and
+        type(state['search_call_count']) is int and 0 <= state['search_call_count'] <= 1000000000000 and
+        state['candidate_path_used'] == (state['search_call_count'] > 0), 'candidate path state differs')
+    phases = state['phases']
+    require(type(phases) is dict and set(phases) == {'decode_ns', 'prepare_ns', 'event_loop_ns', 'total_ns'}, 'candidate phase shape differs')
+    require(all(value is None or type(value) is int and 0 <= value <= 1080 * 1000000000 for value in phases.values()),
+            'candidate phase number differs')
+    if phases_observed:
+        require(phases['total_ns'] is not None and sum(value or 0 for key, value in phases.items() if key != 'total_ns') <= phases['total_ns'],
+                'candidate phase durations differ')
+        require(not state['candidate_path_used'] or all(value is not None for value in phases.values()),
+                'candidate entered phase missing')
+    else: require(all(value is None for value in phases.values()), 'eligibility timing instrumented')
+    return state['candidate_path_used'] and not state['fallback_used'] and state['literal_event_count'] > 0 and state['pattern_count'] > 0
+
+
+def candidate_path_gate(records):
+    require(type(records) is list and len(records) == 12, 'candidate path records incomplete')
+    seen, qualified = set(), True
+    for row in records:
+        require(type(row) is dict and set(row) == {'platform', 'stage', 'order', 'state'} and row['platform'] in ('macos', 'iphone') and
+            row['stage'] in STAGES[:3] and row['order'] in ('AB', 'BA'), 'candidate path record differs')
+        key = (row['platform'], row['stage'], row['order'])
+        require(key not in seen, 'duplicate candidate path record'); seen.add(key)
+        valid = validate_candidate_state(row['state'], False)
+        qualified = qualified and valid
+    return qualified
+
+
+def candidate_evidence_gate(paths, observations, samples):
+    qualified = candidate_path_gate(paths)
+    require(type(samples) is list and len(samples) == 6, 'candidate sample bindings incomplete')
+    expected = {}
+    for row in samples:
+        require(type(row) is dict and set(row) == {'platform', 'stage', 'files'} and row['platform'] in ('macos', 'iphone') and
+                row['stage'] in STAGES[:3], 'candidate sample binding shape differs')
+        key = (row['platform'], row['stage'])
+        require(key not in expected and type(row['files']) is dict and set(row['files']) == set(FILES), 'candidate sample stream shape differs')
+        for item in row['files'].values():
+            require(type(item) is dict and set(item) == {'bytes', 'sha256'} and type(item['bytes']) is int and item['bytes'] >= 0 and
+                    type(item['sha256']) is str and re.fullmatch('[0-9a-f]{64}', item['sha256']), 'candidate sample stream metadata differs')
+        expected[key] = row['files']
+    require(set(expected) == {(platform, stage) for platform in ('macos', 'iphone') for stage in STAGES[:3]},
+            'candidate sample bindings differ')
+    require(type(observations) is list and len(observations) == 6, 'candidate subphase inventory differs')
+    seen = set()
+    for row in observations:
+        require(type(row) is dict and set(row) == {'platform', 'stage', 'files', 'sample_elapsed_ns', 'state', 'semantic_parity'} and
+            row['platform'] in ('macos', 'iphone') and row['stage'] in STAGES[:3] and row['semantic_parity'] is True and
+            type(row['sample_elapsed_ns']) is int and 0 < row['sample_elapsed_ns'] <= 1080 * 1000000000, 'candidate subphase record differs')
+        key = (row['platform'], row['stage'])
+        require(key not in seen and row['files'] == expected[key], 'candidate subphase binding differs'); seen.add(key)
+        valid = validate_candidate_state(row['state'], True)
+        require(row['sample_elapsed_ns'] >= row['state']['phases']['total_ns'], 'candidate subphase timer differs')
+        qualified = qualified and valid
+        # The same frozen message/needle bytes must take the same literal path
+        # in both paired calls and its independent observed call.
+        fields = ('candidate_path_used', 'fallback_used', 'literal_event_count', 'pattern_count', 'search_call_count')
+        value = tuple(row['state'][name] for name in fields)
+        qualified = qualified and all(tuple(path['state'][name] for name in fields) == value
+            for path in paths if (path['platform'], path['stage']) == key)
+    return qualified
+
+
 def profile_worker(mode, spec_path, output, reference, deadline):
     """Child-only work. Parent bounds this complete process group as well."""
     from continuation_lifecycle import ContinuationLifecycle
@@ -474,19 +592,27 @@ def profile_worker(mode, spec_path, output, reference, deadline):
             require(stream_record(folder / name, deadline)[0] == spec['manifest']['files'][name], 'transport final bytes differ')
         elapsed = time.monotonic_ns() - start
     else:
-        require(mode in ('attribution-reference', 'attribution-candidate'), 'profile worker mode differs')
+        require(mode in ('attribution-reference', 'attribution-candidate', 'phases-candidate'), 'profile worker mode differs')
         # The old command already materialized stdout; its read was charged
         # in capture-reference. Candidate must pay for its new file read here.
         payload = read_payload(spec['streams'][FILES[0]], deadline, spec['manifest']['files'][FILES[0]]) if mode.endswith('reference') else None
         start = time.monotonic_ns()
         if mode.endswith('candidate'):
             payload = read_payload(spec['streams'][FILES[0]], deadline, spec['manifest']['files'][FILES[0]])
-        outcome = profile_outcome(historical_log.attribute_unified_log if mode.endswith('reference') else attribute_unified_log,
-                                  payload, variants)
+        candidate_state = {}
+        def candidate(value, supplied_variants):
+            report, state = attribution_with_state(value, supplied_variants, deadline=deadline, observe_phases=mode=='phases-candidate')
+            candidate_state.update(state)
+            return report
+        outcome = profile_outcome(historical_log.attribute_unified_log if mode.endswith('reference') else candidate, payload, variants)
         elapsed = time.monotonic_ns() - start
         require(outcome == {'value': spec['attribution'], 'exception': None}, 'retained attribution differs')
     remaining(deadline)
-    write_private_json(output / 'measurement.json', {'elapsed_ns': elapsed, 'parity': True})
+    measurement = {'elapsed_ns': elapsed, 'parity': True}
+    if mode in ('attribution-candidate', 'phases-candidate'):
+        validate_candidate_state(candidate_state, mode=='phases-candidate')
+        measurement['candidate_state'] = candidate_state
+    write_private_json(output / 'measurement.json', measurement)
 
 
 def retained_profile(out, artifacts, source, run):
@@ -506,6 +632,7 @@ def retained_profile(out, artifacts, source, run):
         'all_byte_and_role_parity': False, 'performance_gate': False, 'native_authorized': False,
         'current_source_sha': os.environ['GITHUB_SHA'], 'configured_runner_minutes': 30,
         'samples': [], 'measurements': [], 'ipad_sample_observed': False,
+        'candidate_paths': [], 'phase_observations': [], 'all_candidate_paths_used': False,
         'profile_phase': 'setup', 'current_sample': None, 'summary_write_refused': False,
         'actual_apple_log_generation_profiled': False, 'cache_and_order_effects_excluded': False,
         'arbitrary_values_printed': False}
@@ -576,6 +703,7 @@ def retained_profile(out, artifacts, source, run):
             if platform != 'ipad':
                 require(json.loads(read_payload(folder / 'checkpoints.json', deadline)) == result['checkpoints'], 'profile checkpoints differ')
             folders[platform], result_rows[platform] = folder, result
+        sample_inputs = []
         for platform in ('macos', 'iphone'):
             folder, result = folders[platform], result_rows[platform]
             oracle = folder / 'synthetic-oracle-input.json'
@@ -600,6 +728,7 @@ def retained_profile(out, artifacts, source, run):
                 spec = {'platform': platform, 'stage': stage, 'oracle': str(oracle), 'streams': streams,
                         'manifest': manifest, 'scans': scans, 'attribution': attribution}
                 spec_path = work / (platform + '-' + stage + '.json'); write_private_json(spec_path, spec)
+                sample_inputs.append((platform, stage, spec_path, manifest['files']))
                 summary['samples'].append({'platform': platform, 'stage': stage, 'files': manifest['files']})
                 for comparison in ('capture', 'attribution'):
                     for order, implementations in (('AB', ('reference', 'candidate')), ('BA', ('candidate', 'reference'))):
@@ -610,11 +739,31 @@ def retained_profile(out, artifacts, source, run):
                             private_directory(output, create=True)
                             worker(comparison + '-' + implementation, spec_path, output, reference)
                             measured = json.loads(read_payload(output / 'measurement.json', deadline))
+                            if comparison == 'attribution' and implementation == 'candidate':
+                                require(set(measured) == {'elapsed_ns', 'parity', 'candidate_state'}, 'candidate worker measurement differs')
+                                state = measured.pop('candidate_state')
+                                validate_candidate_state(state, False)
+                                summary['candidate_paths'].append({'platform': platform, 'stage': stage, 'order': order, 'state': state})
                             require(set(measured) == {'elapsed_ns', 'parity'} and measured['parity'] is True and
                                 type(measured['elapsed_ns']) is int and 0 < measured['elapsed_ns'] <= 1080 * 1000000000,
                                 'profile worker measurement differs')
                             summary['measurements'].append(dict(measured, platform=platform, stage=stage,
                                 comparison=comparison, order=order, implementation=implementation))
+        # These six calls are separate diagnostics, NEVER extra eligibility
+        # samples or replacements for a slower original paired measurement.
+        for platform, stage, spec_path, files in sample_inputs:
+            summary['profile_phase'] = 'candidate-subphases'
+            summary['current_sample'] = {'platform': platform, 'stage': stage, 'comparison': 'subphases', 'order': None, 'implementation': 'candidate'}
+            output = work / (platform + '-' + stage + '-subphases'); private_directory(output, create=True)
+            worker('phases-candidate', spec_path, output, reference)
+            measured = json.loads(read_payload(output / 'measurement.json', deadline))
+            require(type(measured) is dict and set(measured) == {'elapsed_ns', 'parity', 'candidate_state'} and
+                measured['parity'] is True and type(measured['elapsed_ns']) is int and 0 < measured['elapsed_ns'] <= 1080 * 1000000000,
+                'candidate subphase measurement differs')
+            validate_candidate_state(measured['candidate_state'], True)
+            summary['phase_observations'].append({'platform': platform, 'stage': stage, 'files': files,
+                'sample_elapsed_ns': measured['elapsed_ns'], 'state': measured['candidate_state'], 'semantic_parity': True})
+        require(len(sample_inputs) == 6 and len(summary['phase_observations']) == 6, 'candidate subphase inventory differs')
         summary['profile_phase'] = 'final-original-replay'
         summary['current_sample'] = None
         for platform, folder in folders.items():
@@ -626,6 +775,8 @@ def retained_profile(out, artifacts, source, run):
         reference_modules(reference, deadline)
         summary['profile_phase'] = 'performance-gate'
         summary.update(profile_gate(summary['measurements']))
+        summary['all_candidate_paths_used'] = candidate_evidence_gate(summary['candidate_paths'], summary['phase_observations'], summary['samples'])
+        summary['performance_gate'] = summary['performance_gate'] and summary['all_candidate_paths_used']
         remaining(deadline)
         summary['profile_complete'] = True
         summary['profile_phase'] = 'complete'
