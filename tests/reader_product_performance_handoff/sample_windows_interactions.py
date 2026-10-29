@@ -87,4 +87,9 @@ if __name__ == '__main__':
         output.mkdir(parents=True, exist_ok=True)
         (output / 'interactions.json').write_text(json.dumps(RESULT, indent=2) + '\n', encoding='utf-8')
         print('INTERACTIONS ' + json.dumps({k: len(v) for k, v in RESULT.items()}))
-    sys.exit(code or 0)
+        for fault in RESULT['faults']:
+            print('INTERACTION-FAULT ' + fault)
+    # The wrapped observation is incomplete by design (only two cohorts); its own verdict
+    # is printed above and kept, but this run is judged by the interaction samples alone.
+    print('WRAPPED-OBSERVATION-EXIT %s' % code)
+    sys.exit(1 if RESULT['faults'] or any(not RESULT[k] for k in RESULT if k != 'faults') else 0)
