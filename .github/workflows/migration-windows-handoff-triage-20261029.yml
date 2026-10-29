@@ -1,0 +1,48 @@
+name: Migration Windows retained failure triage
+on:
+  push:
+    branches: [codex/migration-mainline-handoff-20261029]
+    paths: ['.github/workflows/migration-windows-handoff-triage-20261029.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read exact original Windows failure evidence without replay
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib,io,json,os,subprocess,zipfile
+          from pathlib import Path,PurePosixPath
+          assert os.environ.get('GITHUB_ACTIONS')=='true'
+          repo='repos/NoGod3524/EXReader/'
+          meta=json.loads(subprocess.check_output(['gh','api',repo+'actions/artifacts/12904771798']))
+          assert not meta['expired'] and meta['workflow_run']['id']==40888673546 and meta['workflow_run']['head_sha']=='5db9c2c0b574b0e63675a38b0653f3a9bdd2cb1c'
+          raw=subprocess.check_output(['gh','api',repo+'actions/artifacts/12904771798/zip'])
+          assert len(raw)==3639934 and hashlib.sha256(raw).hexdigest()=='3538655a45319332ef8f197deeaa25815737aed3feeeeab66c3b78bf240f3143'
+          with zipfile.ZipFile(io.BytesIO(raw)) as z:
+              names=z.namelist()
+              assert len(names)==len(set(names)) and all(not PurePosixPath(n).is_absolute() and '..' not in PurePosixPath(n).parts for n in names)
+              reports=[n for n in names if n.endswith('/windows-native/evidence.json') or n.endswith('windows-native/evidence.json')]
+              print('REPORT_NAMES',reports)
+              if not reports:
+                  reports=[n for n in names if n.endswith('evidence.json')]
+                  print('ALL_REPORTS',reports)
+              failures=[]
+              for name in reports:
+                  assert z.getinfo(name).file_size<=64*1024**2
+                  report=json.loads(z.read(name))
+                  failures.extend(c for c in report.get('cases',[]) if not c.get('passed'))
+              out={'producer_run':40888673546,'producer_source':'5db9c2c0b574b0e63675a38b0653f3a9bdd2cb1c','inspection_only':True,'failures':failures}
+              Path('build').mkdir(exist_ok=True)
+              Path('build/windows-native-retained-failures.json').write_text(json.dumps(out,indent=2)+'\n')
+              print(json.dumps(out))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: migration-windows-retained-failures
+          path: build/windows-native-retained-failures.json
+          if-no-files-found: error
