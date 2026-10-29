@@ -138,6 +138,38 @@ jobs:
                   result['diagnostics']['windows_original_replay_error']=brief(error)
                   need(str(error)=='retained raw build owner differs','original Windows failure not reproduced')
               else:raise AssertionError('original Windows replay unexpectedly accepted')
+          def raw_bsd_frames(raw):
+              # Diagnostic observations only, never an archive equivalence predicate.
+              # Retain raw headers/name padding before the frozen strict parser runs.
+              observed=dict(complete=False,members=[],error=None)
+              try:
+                  need(raw.startswith(b'!<arch>\n'),'diagnostic ordinary archive magic')
+                  offset=8
+                  while offset<len(raw):
+                      need(len(observed['members'])<32,'diagnostic member count bound')
+                      header=raw[offset:offset+60]
+                      row=dict(header_offset=offset,header_hex=header.hex())
+                      observed['members'].append(row)
+                      need(len(header)==60 and header[58:]==b'`\n','diagnostic header extent/trailer')
+                      length_match=re.fullmatch(rb'#1/([0-9]+) *',header[:16])
+                      size_match=re.fullmatch(rb'([0-9]+) *',header[48:58])
+                      need(length_match is not None and size_match is not None,'diagnostic extended-name/size syntax')
+                      length=int(length_match[1]);size=int(size_match[1]);start=offset+60;end=start+size
+                      need(0<length<=256 and length<size and end<=len(raw),'diagnostic name/payload bounds')
+                      extended=raw[start:start+length];name=extended.split(b'\0',1)[0]
+                      row.update(extended_name_bytes=length,extended_name_hex=extended.hex(),name_repr=repr(name),
+                          name_bytes=len(name),name_padding_hex=extended[len(name):].hex(),payload_offset=start+length,
+                          payload_bytes=size-length,payload_sha256=sha(raw[start+length:end]),
+                          timestamp_field_hex=header[16:28].hex(),timestamp_field_repr=repr(header[16:28]),
+                          outer_padding_hex=raw[end:end+size%2].hex(),
+                          frozen_expected_name_padding_bytes=(-(start+len(name)))%8,
+                          actual_payload_alignment_mod8=(start+length)%8)
+                      need(end+size%2<=len(raw),'diagnostic outer padding extent')
+                      offset=end+size%2
+                  need(offset==len(raw),'diagnostic final extent')
+                  observed['complete']=True
+              except Exception as error:observed['error']=brief(error)
+              return observed
           def ios_diagnostic(bundle,measured):
               expected={
                   'reading-state':('reader_reading_state_codec','8ef45e13e5cbc3d7579ef2abd45ac1a287e218f21e4ebc4620c94676953fda0e','8ef45e13e5cbc3d7579ef2abd45ac1a287e218f21e4ebc4620c94676953fda0e',33608),
@@ -155,15 +187,21 @@ jobs:
                   need(len(before)==len(after)==size==pair['built_bytes']==pair['installed_bytes'],'iOS pinned archive extent differs')
                   row=dict(owner=owner,built_path=built,installed_path=installed,built_sha256=before_sha,installed_sha256=after_sha,bytes=size,admission_changed=False)
                   rows.append(row)
-                  bi,bm=frozen.bsd_index_archive(before);ai,am=frozen.bsd_index_archive(after)
+                  row.update(raw_built_frames=raw_bsd_frames(before),raw_installed_frames=raw_bsd_frames(after))
+                  try:
+                      bi,bm=frozen.bsd_index_archive(before);ai,am=frozen.bsd_index_archive(after)
+                  except AssertionError as error:
+                      row.update(canonical_bsd_grammar=False,frozen_bsd_parser_error=brief(error))
+                      result['errors'].append(dict(target='iphone',owner=owner,stage='frozen_bsd_parser',error=brief(error)))
+                  else:
+                      row.update(built_index=bi,installed_index=ai,built_ordered_objects=bm,installed_ordered_objects=am,
+                          canonical_bsd_grammar=True,ordered_object_payloads_equal=bm==am,index_payload_equal=bi['payload_sha256']==ai['payload_sha256'])
                   changed=[];count=0
                   for index,(a,b) in enumerate(zip(before,after)):
                       if a!=b:
                           count+=1
                           if len(changed)<32:changed.append(index)
-                  row.update(built_index=bi,installed_index=ai,built_ordered_objects=bm,installed_ordered_objects=am,
-                      canonical_bsd_grammar=True,ordered_object_payloads_equal=bm==am,index_payload_equal=bi['payload_sha256']==ai['payload_sha256'],
-                      different_common_bytes=count,first_different_offsets=changed,
+                  row.update(different_common_bytes=count,first_different_offsets=changed,
                       all_bytes_outside_first_index_timestamp_equal=before[:24]==after[:24] and before[36:]==after[36:])
                   try:observed=frozen.installed_archive_equivalence(before,after,'iphone')
                   except AssertionError as error:
