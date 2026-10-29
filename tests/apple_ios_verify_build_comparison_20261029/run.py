@@ -21,16 +21,16 @@ import subprocess
 import sys
 import time
 import unicodedata
+import urllib.parse
 import xml.etree.ElementTree as ET
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 SELF = Path(__file__).resolve()
 REPO = 'NoGod3524/EXReader'
-PARENT = 'db27e55a807f23c91b9d1968edc56645bb963595'
+PARENT = '197954e7606a32565205881488e71c81a441c6cc'
 BRANCH = 'codex/apple-ios-verify-build-comparison-20261029'
-PATHS = ['.github/workflows/apple-ios-verify-build-comparison-20261029.yml',
-         'tests/apple_ios_verify_build_comparison_20261029/run.py']
+PATHS = ['tests/apple_ios_verify_build_comparison_20261029/run.py']
 PACKAGE = 'tests/apple_ios_organization_verify_phase_probe_20261029'
 BASE = ROOT / 'build/ios-verify-build-comparison'
 E, PRIVATE, REFUSAL = (BASE / n for n in ('evidence', 'private', 'refusal'))
@@ -57,7 +57,9 @@ TREES = {'src': '01dbab7c7c28aff175b5a953fea307e21d84eee2',
     'examples': '2346b8dc7f13113e616d663642a55981c58c3fc1',
     'tools': '7c98293965d81117376dab1aeafae12bc0c444b7',
     'extras': '6aea70df724fcf339d636fdf00707c6685cc50a6'}
-FROZEN = {PACKAGE + '/prepare.py': '6db4739d6f3dd57fe4a8e6e18c949ce88d8d5fd95b7eb5ca4c8dd0c4bc2cca06',
+FROZEN = {'.github/workflows/apple-ios-verify-build-comparison-20261029.yml':
+    '3371a64dfd4cdb7cd0e7cb3b3a0f38525a2371344ea4b68c9a4117369f50f50c',
+    PACKAGE + '/prepare.py': '6db4739d6f3dd57fe4a8e6e18c949ce88d8d5fd95b7eb5ca4c8dd0c4bc2cca06',
     PACKAGE + '/collect.py': '8da9894c26ca3dba7d3ffa9832abcc1bf177bd98eb53c0bc5abf41945d0a8616',
     PACKAGE + '/AppPhaseRecorder.swift': '163107819572b40b40a41e5a661f62e30c7e2362be704a0413a7c60799d494bb',
     PACKAGE + '/VerifyPhaseTests.swift': '006e98de1b87bf50987a9070b16cb8edd71773d6376a0c8c744248bea05b013d',
@@ -80,6 +82,10 @@ COMMANDS, PRINTED = [], 0
 ACTIVE = None
 PINNED_GROUPS = set()
 OWNED_PROCESSES = {}
+GUARD_REFUSAL = (b'the response contains terminal escape sequences; '
+                 b'pass --allow-escape-sequences to output it anyway\n')
+UPLOAD_STEP = 5
+UPLOAD_STEP_NAME = 'Run actions/upload-artifact@v4'
 
 
 class StopGroup(RuntimeError): pass
@@ -265,6 +271,161 @@ def emit(value):
     PRINTED += len(data); sys.stdout.buffer.write(data); sys.stdout.buffer.flush()
 
 
+def redacted(text, tokens=None):
+    """Presentation only. Never used to decide log-route eligibility."""
+    for token in (tokens if tokens is not None else [os.environ.get('GH_TOKEN', ''), os.environ.get('GITHUB_TOKEN', '')]):
+        if token: text = text.replace(token, '[active-token-redacted]')
+    text = re.sub(r'(?im)^.*(?:authorization|proxy-authorization|set-cookie|cookie)\s*[:=].*$',
+                  '[credential header redacted]', text)
+    def url(match):
+        try:
+            value = urllib.parse.urlsplit(match.group(0))
+            # Only host/path survive: no userinfo, signed query or fragment.
+            host = value.hostname
+            if not host or not re.fullmatch(r'[A-Za-z0-9.:-]+', host): return '[URL redacted]'
+            return value.scheme + '://' + host + value.path
+        except ValueError: return '[URL redacted]'
+    text = re.sub(r'https?://[^\s<>"\x00-\x1f\x7f]+', url, text, flags=re.I)
+    # JSON escapes C0 already; visibly escape DEL too, never emit raw ESC.
+    return text.replace('\x7f', '\\u007f')
+
+
+def included_response(raw):
+    """Tagged gh2.100 api.go: Fprintln status (LF), printHeaders (CRLF)."""
+    first_end = raw.find(b'\n', 0, 1024)
+    require(first_end > 0, 'missing bounded first HTTP status')
+    first = raw[:first_end]
+    match = re.fullmatch(rb'HTTP/(?:1\.[01]|2\.0) ([1-5][0-9]{2}) [\x20-\x7e]+', first)
+    require(match is not None, 'unsupported first HTTP status framing')
+    pos = first_end + 1; headers = {}; lines = 1
+    while True:
+        end = raw.find(b'\r\n', pos, 32768)
+        require(end >= pos and end + 2 <= 32768, 'missing/bounded CRLF header termination')
+        line = raw[pos:end]; pos = end + 2; lines += 1
+        require(lines <= 256, 'header line ceiling')
+        if not line: break
+        h = re.fullmatch(rb'([!#$%&\x27*+.^_`|~0-9A-Za-z-]+): ([\x20-\x7e]*)', line)
+        require(h is not None, 'folded/control/malformed response header')
+        key, value = h.group(1).decode('ascii').lower(), h.group(2).decode('ascii')
+        require(key not in headers and key != 'status', 'duplicate/ambiguous response header')
+        headers[key] = value
+    body = raw[pos:]
+    require(not body.startswith(b'HTTP/'), 'second response header block')
+    kind = headers.get('content-type', '')
+    request = headers.get('x-github-request-id')
+    require(request is None or re.fullmatch('[A-Za-z0-9:-]{1,128}', request), 'unsafe request ID')
+    return {'status': int(match.group(1)), 'content_type': kind, 'request_id': request,
+            'header_bytes': pos, 'header_sha256': hashlib.sha256(raw[:pos]).hexdigest()}, body
+
+
+def log_media(value):
+    require(re.fullmatch(r'(?:text/plain|application/octet-stream)(?:;\s*charset=(?:utf-8|"utf-8"))?',
+                         value, flags=re.I), 'unsupported/ambiguous log media type')
+
+
+def safe_response(response, tokens=None):
+    result = dict(response)
+    if result.get('request_id') is not None: result['request_id'] = redacted(result['request_id'], tokens)
+    return result
+
+
+def command_capture(record, out, err, cap, closed, reader=read_bounded, writer=save, sink=emit, tokens=None):
+    """Retain safe finite evidence before error handling, raw data stays private."""
+    receipt = {'command': {k: record.get(k) for k in ('argv', 'output', 'started', 'finished', 'exit_code', 'problem')},
+               'streams_closed': closed is True, 'capture_complete': closed is True, 'streams': {}}
+    raw = {}
+    for label, path in (('stdout', out), ('stderr', err)):
+        row = {'available': False, 'preview_truncated': False}
+        try:
+            require(closed is True, 'owned command/group not closed; stream not read')
+            data = reader(path, cap); row.update(bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+            text = data.decode('utf-8')  # Validate the entire bounded stream first.
+            raw[label] = data; row['available'] = True
+            if label == 'stdout' and '--include' in record.get('argv', []):
+                try:
+                    response, body = included_response(data)
+                    # Never serialize the raw header block, even on error.
+                    row['response'] = {k: v for k, v in safe_response(response, tokens).items() if k != 'content_type'}
+                    try:
+                        log_media(response['content_type'])
+                        row['response']['content_type'] = response['content_type']
+                    except ValueError:
+                        row['response']['content_type'] = '[unsupported media type; bound by raw hash]'
+                    text = body.decode('utf-8')
+                except (ValueError, UnicodeError):
+                    text = ''; row['header_parse_failed'] = True
+            safe = redacted(text, tokens)
+            row['preview'] = safe[:6000]; row['preview_truncated'] = len(safe) > 6000
+        except (ValueError, OSError, UnicodeError) as error:
+            receipt['capture_complete'] = False
+            row['unavailable_reason'] = type(error).__name__ + ': ' + redacted(str(error), tokens)[:300]
+        receipt['streams'][label] = row
+    data, complete = shaped(receipt, 48 * 1024)
+    # An explicitly clipped presentation never replaces the complete raw decision input.
+    shown = strict_json(data, 48 * 1024)
+    writer(E / 'command-observations' / (record['output'] + '.json'), shown)
+    sink({'command_observation': shown})
+    require(receipt['capture_complete'] is True, 'command capture incomplete')
+    return raw, receipt
+
+
+def upload_identity(body):
+    text = body.decode('utf-8')
+    require(body and all(ord(c) >= 32 and ord(c) != 127 or c in '\r\n\t' for c in text), 'nontext/control log body')
+    # Match unique complete lines, including name, not independent substrings.
+    lines = [re.sub(r'^\d{4}-\d\d-\d\dT[0-9:.]+Z ', '', line) for line in text.splitlines()]
+    digests = [s for s in lines if 'SHA256 digest of uploaded artifact zip is ' in s]
+    finalized = [s for s in lines if s.startswith('Artifact ') and '.zip successfully finalized.' in s]
+    uploaded = [s for s in lines if s.startswith('Artifact ') and 'has been successfully uploaded!' in s]
+    require(digests == ['SHA256 digest of uploaded artifact zip is ' + ARTIFACT_SHA]
+            and finalized == ['Artifact ' + ARTIFACT_NAME + '.zip successfully finalized. Artifact ID ' + str(ARTIFACT)]
+            and uploaded == ['Artifact ' + ARTIFACT_NAME + ' has been successfully uploaded! Final size is ' +
+                            str(ARTIFACT_BYTES) + ' bytes. Artifact ID is ' + str(ARTIFACT)], 'unique original upload conjunction')
+
+
+def upload_step(job):
+    require(job.get('id') == OLD_JOB and job.get('run_id') == OLD_RUN and job.get('head_sha') == OLD_SHA
+            and job.get('status') == 'completed' and job.get('conclusion') == 'success'
+            and job.get('name') == 'Privacy SDK iphonesimulator', 'step parent provenance')
+    rows = [s for s in job['steps'] if s.get('number') == UPLOAD_STEP or s.get('name') == UPLOAD_STEP_NAME]
+    require(len(rows) == 1 and type(rows[0].get('number')) is int and rows[0]['number'] == UPLOAD_STEP
+            and rows[0].get('name') == UPLOAD_STEP_NAME and rows[0].get('status') == 'completed'
+            and rows[0].get('conclusion') == 'success', 'exact successful upload step')
+    return rows[0]
+
+
+def log_route(code, raw, version, allow_step):
+    require(type(code) is int and set(raw) == {'stdout', 'stderr'}, 'complete raw response required')
+    # Eligibility is decided exclusively from complete unredacted bytes.
+    response, body = included_response(raw['stdout'])
+    require(response['status'] == 200, 'HTTP status refuses log admission/alternative')
+    log_media(response['content_type'])
+    if code == 0:
+        require(raw['stderr'] == b'', 'unexpected successful log stderr')
+        upload_identity(body)
+        return 'admitted', response, body
+    require(allow_step is True and version == '2.100.0' and code == 1 and body == b''
+            and raw['stderr'] == GUARD_REFUSAL, 'not the exact supported CLI content refusal')
+    return 'exact_cli_guard_step_eligible', response, body
+
+
+def authenticated_upload(job, version, request):
+    code, raw = request(False)
+    route, response, body = log_route(code, raw, version, True)
+    source_route = 'whole_job'; first_response = response
+    if route != 'admitted':
+        upload_step(job)  # No alternative request before exact provenance passes.
+        code, raw = request(True)
+        route, response, body = log_route(code, raw, version, False)
+        source_route = 'same_job_upload_step_5'
+    return {'source': OLD_SHA, 'run_id': OLD_RUN, 'job_id': OLD_JOB, 'artifact_id': ARTIFACT,
+        'artifact_name': ARTIFACT_NAME, 'artifact_bytes': ARTIFACT_BYTES, 'artifact_sha256': ARTIFACT_SHA,
+        'route': source_route, 'step': UPLOAD_STEP if source_route != 'whole_job' else None,
+        'cli_version': version, 'whole_response': safe_response(first_response), 'admitted_response': safe_response(response),
+        'body_bytes': len(body), 'body_sha256': hashlib.sha256(body).hexdigest(),
+        'older_failed_request_cause_proved': False}
+
+
 def build_argv(profile, uid):
     require(profile in ('control', 'phase') and re.fullmatch(r'[0-9A-Fa-f-]{36}', uid), 'build identity')
     root = CONTROL if profile == 'control' else PHASE
@@ -287,6 +448,7 @@ def command_allowed(argv, name, build):
         'clean': ['git', 'status', '--porcelain', '--untracked-files=all'],
         'version': ['xcodebuild', '-version'], 'sdk-version': ['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-version'],
         'os-version': ['sw_vers', '-productVersion'], 'arch': ['uname', '-m'],
+        'gh-version': ['gh', '--version'],
         'xcodeproj-version': ['ruby', '-e', "require 'xcodeproj'; puts Xcodeproj::VERSION"],
         'fixtures': [sys.executable, 'tests/apple_host/prepare_fixtures.py', '--resources', str(RESOURCES)],
         'runtimes': ['xcrun', 'simctl', 'list', 'runtimes', '-j'],
@@ -294,9 +456,11 @@ def command_allowed(argv, name, build):
     for source in (PARENT, OLD_SHA, IDENTITY['source_sha']):
         fixed['trees-' + source[:8]] = ['git', 'rev-parse', *[source + ':' + p for p in TREES]]
     for label, endpoint in [('original-run', 'runs/' + str(OLD_RUN)), ('original-job', 'jobs/' + str(OLD_JOB)),
-        ('original-artifact', 'artifacts/' + str(ARTIFACT)), ('original-upload-log', 'jobs/' + str(OLD_JOB) + '/logs'),
+        ('original-artifact', 'artifacts/' + str(ARTIFACT)),
         ('original-sdk', 'artifacts/' + str(ARTIFACT) + '/zip')]:
         fixed[label] = ['gh', 'api', 'repos/' + REPO + '/actions/' + endpoint]
+    for label, suffix in [('original-upload-log', '/logs'), ('original-upload-step', '/steps/5/logs')]:
+        fixed[label] = ['gh', 'api', '--include', 'repos/' + REPO + '/actions/jobs/' + str(OLD_JOB) + suffix]
     for label, root in (('control', CONTROL), ('phase', PHASE)):
         fixed[label + '-generate'] = ['ruby', str(root / 'generated' / ('make_project_' + label + '.rb')),
             str(root / 'generated/project'), str(RESOURCES), str(root / 'generated/ui'), 'base']
@@ -348,6 +512,10 @@ def command(argv, name, timeout=60, cap=16 * 1024 ** 2, allowed_exit=False, buil
     finally:
         record['finished'] = time.monotonic()
         save(E / 'commands.json', COMMANDS)
+        if record.get('exit_code') != 0 or 'problem' in record:
+            try: closed = record.get('reaped') is True and group_members(os.getpgrp()) == {os.getpid()}
+            except (ValueError, OSError): closed = False
+            command_capture(record, output, error, cap, closed)
         # A live child is not abandoned: the outer supervisor owns/stops this
         # entire group. Worker catches StopGroup only to emit a bounded refusal.
 
@@ -471,7 +639,7 @@ def source_guard():
 def validate_source(head, parent, delta):
     require(head == IDENTITY['source_sha'] and re.fullmatch('[a-f0-9]{40}', head), 'source SHA')
     require(parent == PARENT, 'exact parent')
-    require(sorted(delta) == sorted('A\t' + p for p in PATHS), 'exact two additions')
+    require(sorted(delta) == sorted('M\t' + p for p in PATHS), 'exact one driver modification')
 
 
 def installed_files(root):
@@ -488,11 +656,24 @@ def retained_sdk():
     job = api('actions/jobs/' + str(OLD_JOB), 'original-job')
     artifact = api('actions/artifacts/' + str(ARTIFACT), 'original-artifact')
     validate_metadata(run, job, artifact)
-    _, upload, _ = command(['gh', 'api', 'repos/' + REPO + '/actions/jobs/' + str(OLD_JOB) + '/logs'], 'original-upload-log')
-    text = read_bounded(upload, 16 * 1024 ** 2).decode('utf-8')
-    require('SHA256 digest of uploaded artifact zip is ' + ARTIFACT_SHA in text
-            and 'Final size is ' + str(ARTIFACT_BYTES) + ' bytes. Artifact ID is ' + str(ARTIFACT) in text,
-            'original upload log identity')
+    _, version_out, version_err = command(['gh', '--version'], 'gh-version', timeout=5, cap=8192)
+    raw, _ = command_capture(COMMANDS[-1], version_out, version_err, 8192,
+        group_members(os.getpgrp()) == {os.getpid()})
+    version_text = raw['stdout'].decode('utf-8')
+    version_match = re.fullmatch(r'gh version ([0-9]+\.[0-9]+\.[0-9]+) \([^\r\n]{1,100}\)\n'
+        r'https://github.com/cli/cli/releases/tag/v\1\n', version_text)
+    require(version_match is not None and raw['stderr'] == b'', 'unrecognized actual CLI version output')
+    version = version_match.group(1)
+    def request(step):
+        label = 'original-upload-step' if step else 'original-upload-log'
+        suffix = '/steps/5/logs' if step else '/logs'
+        code, out, err = command(['gh', 'api', '--include', 'repos/' + REPO + '/actions/jobs/' + str(OLD_JOB) + suffix],
+                                  label, allowed_exit=True)
+        raw, _ = command_capture(COMMANDS[-1], out, err, 16 * 1024 ** 2,
+            group_members(os.getpgrp()) == {os.getpid()})
+        return code, raw
+    provenance = authenticated_upload(job, version, request)
+    save(E / 'upload-log-admission.json', provenance); emit({'upload_log_admission': provenance})
     _, archive, _ = command(['gh', 'api', 'repos/' + REPO + '/actions/artifacts/' + str(ARTIFACT) + '/zip'],
                            'original-sdk', cap=ARTIFACT_BYTES)
     archive_hash(archive); archive.chmod(0o400)
@@ -813,6 +994,137 @@ def interpretation(rows):
     return 'inconclusive_other_or_order_sensitive_outcome'
 
 
+def log_controls(result, reject):
+    """Actions-only synthetic cases through the actual capture/route helpers."""
+    global PRINTED
+    body = ('SHA256 digest of uploaded artifact zip is ' + ARTIFACT_SHA + '\nArtifact ' + ARTIFACT_NAME +
+        '.zip successfully finalized. Artifact ID ' + str(ARTIFACT) + '\nArtifact ' + ARTIFACT_NAME +
+        ' has been successfully uploaded! Final size is ' + str(ARTIFACT_BYTES) +
+        ' bytes. Artifact ID is ' + str(ARTIFACT) + '\n').encode()
+    def response(payload=b'', status=200, media='text/plain', extra=b''):
+        return ('HTTP/2.0 ' + str(status) + ' Status\nContent-Type: ' + media + '\r\n').encode() + extra + b'\r\n' + payload
+    step = {'number': 5, 'name': UPLOAD_STEP_NAME, 'status': 'completed', 'conclusion': 'success'}
+    job = {'id': OLD_JOB, 'run_id': OLD_RUN, 'head_sha': OLD_SHA, 'name': 'Privacy SDK iphonesimulator',
+           'status': 'completed', 'conclusion': 'success', 'steps': [step]}
+    good = (0, {'stdout': response(body), 'stderr': b''})
+    guard = (1, {'stdout': response(), 'stderr': GUARD_REFUSAL})
+    def exercise(first, second=good, version='2.100.0', metadata=job):
+        calls = []
+        def request(alternative):
+            calls.append(alternative)
+            require(calls in ([False], [False, True]), 'duplicate alternative request')
+            return second if alternative else first
+        return calls, lambda: authenticated_upload(metadata, version, request)
+    calls, action = exercise(good)
+    require(action()['route'] == 'whole_job' and calls == [False], 'whole log positive')
+    result['whole_log_positive'] = True
+    for media in ('text/plain', 'application/octet-stream', 'text/plain; charset=utf-8'):
+        first = (1, {'stdout': response(media=media), 'stderr': GUARD_REFUSAL})
+        second = (0, {'stdout': response(body, media=media), 'stderr': b''})
+        calls, action = exercise(first, second)
+        value = action()
+        require(value['route'] == 'same_job_upload_step_5' and calls == [False, True]
+                and value['body_sha256'] == hashlib.sha256(body).hexdigest(), 'exact guard step positive')
+    result['exact_cli_guard_both_mime_routes'] = True
+    failures = [(str(status), (1, {'stdout': response(status=status), 'stderr': GUARD_REFUSAL}))
+                for status in (401, 403, 404, 410, 429, 500, 502, 503)]
+    failures += [
+        ('no_status', (1, {'stdout': b'', 'stderr': GUARD_REFUSAL})),
+        ('partial_header', (1, {'stdout': response()[:-1], 'stderr': GUARD_REFUSAL})),
+        ('two_blocks', (1, {'stdout': response(response()), 'stderr': GUARD_REFUSAL})),
+        ('status_crlf', (1, {'stdout': response().replace(b'Status\n', b'Status\r\n'), 'stderr': GUARD_REFUSAL})),
+        ('header_lf', (1, {'stdout': response().replace(b'\r\n', b'\n'), 'stderr': GUARD_REFUSAL})),
+        ('folded_header', (1, {'stdout': response(extra=b' folded\r\n'), 'stderr': GUARD_REFUSAL})),
+        ('duplicate_content_type', (1, {'stdout': response(extra=b'Content-Type: text/plain\r\n'), 'stderr': GUARD_REFUSAL})),
+        ('duplicate_status_field', (1, {'stdout': response(extra=b'Status: 200\r\n'), 'stderr': GUARD_REFUSAL})),
+        ('json_media', (1, {'stdout': response(media='application/json'), 'stderr': GUARD_REFUSAL})),
+        ('comma_media', (1, {'stdout': response(media='text/plain, text/plain'), 'stderr': GUARD_REFUSAL})),
+        ('wrong_charset', (1, {'stdout': response(media='text/plain; charset=latin1'), 'stderr': GUARD_REFUSAL})),
+        ('guard_extra_denial', (1, {'stdout': response(), 'stderr': GUARD_REFUSAL + b'gh: permission denied\n'})),
+        ('guard_hidden_late_line', (1, {'stdout': response(), 'stderr': GUARD_REFUSAL + b' ' * 50000 + b'denied\n'})),
+        ('guard_redaction_cannot_erase', (1, {'stdout': response(), 'stderr': GUARD_REFUSAL + b'Authorization: token\n'})),
+        ('guard_wrong_exit', (4, {'stdout': response(), 'stderr': GUARD_REFUSAL})),
+        ('guard_body_present', (1, {'stdout': response(b'partial'), 'stderr': GUARD_REFUSAL})),
+        ('guard_missing_stderr', (1, {'stdout': response()})),
+        ('guard_invalid_utf8', (1, {'stdout': response(), 'stderr': GUARD_REFUSAL + b'\xff'}))]
+    for label, first in failures:
+        calls, action = exercise(first); reject('log_' + label, action)
+        require(calls == [False], 'refused case attempted alternative: ' + label)
+    calls, action = exercise(guard, version='2.99.0'); reject('log_unknown_cli_version', action)
+    require(calls == [False], 'unknown version alternative attempted')
+    for field, wrong in [('id', OLD_JOB + 1), ('run_id', OLD_RUN + 1), ('head_sha', '0' * 40), ('conclusion', 'failure')]:
+        calls, action = exercise(guard, metadata=dict(job, **{field: wrong})); reject('step_parent_' + field, action)
+        require(calls == [False], 'invalid parent requested step')
+    for field, wrong in [('number', 6), ('number', True), ('name', 'Other'), ('conclusion', 'failure')]:
+        calls, action = exercise(guard, metadata=dict(job, steps=[dict(step, **{field: wrong})]))
+        reject('step_' + field + '_' + str(wrong), action); require(calls == [False], 'invalid step requested')
+    calls, action = exercise(guard, metadata=dict(job, steps=[step, step])); reject('step_duplicate', action)
+    require(calls == [False], 'duplicate step requested')
+    calls, action = exercise(guard, second=guard); reject('step_second_guard_no_third_route', action)
+    require(calls == [False, True], 'unexpected third route')
+    mutated = [('wrong_digest', body.replace(ARTIFACT_SHA.encode(), b'0' * 64)),
+        ('wrong_id', body.replace(str(ARTIFACT).encode(), str(ARTIFACT + 1).encode())),
+        ('wrong_name', body.replace(ARTIFACT_NAME.encode(), b'other-artifact')),
+        ('wrong_size', body.replace(str(ARTIFACT_BYTES).encode(), str(ARTIFACT_BYTES + 1).encode())),
+        ('missing_line', body.split(b'\n', 1)[1]), ('duplicate_upload', body + body),
+        ('ansi', body + b'\x1b[0m'), ('del', body + b'\x7f'), ('nul', body + b'\x00'), ('invalid_utf8', body + b'\xff')]
+    for label, wrong in mutated:
+        for alternative in (False, True):
+            bad = (0, {'stdout': response(wrong), 'stderr': b''})
+            calls, action = exercise(guard if alternative else bad, second=bad)
+            reject('upload_' + label + ('_step' if alternative else '_whole'), action)
+            require(calls == ([False, True] if alternative else [False]), 'wrong identity retry')
+    reject('source_workflow_modified', lambda: validate_source(IDENTITY['source_sha'], PARENT,
+        ['M\t' + PATHS[0], 'M\t.github/workflows/apple-ios-verify-build-comparison-20261029.yml']))
+    reject('source_driver_added_instead', lambda: validate_source(IDENTITY['source_sha'], PARENT, ['A\t' + PATHS[0]]))
+    reject('escape_override_command', lambda: command_allowed(
+        ['gh', 'api', '--allow-escape-sequences', 'repos/' + REPO + '/actions/jobs/' + str(OLD_JOB) + '/logs'],
+        'original-upload-log', None))
+    # Actual failure receipt helper; raw inputs are synthetic private fixtures.
+    record = {'output': 'capture-control', 'argv': ['gh', 'api', '--include', 'fixed'], 'exit_code': 1,
+              'started': 1.0, 'finished': 2.0}
+    out, err = PRIVATE / 'capture.stdout', PRIVATE / 'capture.stderr'
+    out.write_bytes(response(b'hello https://user:secret@host/path?signature=PRIVATE#secret\n'))
+    err.write_bytes(('Authorization: PRIVATE\nCookie: PRIVATE\n' + 'ACTIVE-TOKEN\x00\x1b\x7fé😀' * 20000).encode())
+    receipts, emissions = [], []
+    raw, receipt = command_capture(record, out, err, 2 * 1024 ** 2, True,
+        writer=lambda p, v: receipts.append(v), sink=emissions.append, tokens=['ACTIVE-TOKEN'])
+    rendered = encoded(receipts[-1])
+    require(len(rendered) <= 48 * 1024 and b'ACTIVE-TOKEN' not in rendered and b'PRIVATE' not in rendered
+            and b'user:secret' not in rendered and b'\x1b' not in rendered and b'\x7f' not in rendered
+            and raw['stderr'] == read_bounded(err, 2 * 1024 ** 2), 'safe preview changed raw decision or leaked credential')
+    result['capture_encoded_redaction_raw_separation'] = True
+    def capture(**kw):
+        return command_capture(record, out, err, 2 * 1024 ** 2, kw.pop('closed', True),
+            writer=kw.pop('writer', lambda p, v: None), sink=kw.pop('sink', lambda v: None), **kw)
+    reject('capture_unclosed_not_read', lambda: capture(closed=False,
+        reader=lambda *a: (_ for _ in ()).throw(AssertionError('live stream read'))))
+    reject('capture_missing_stderr', lambda: command_capture(record, out, PRIVATE / 'missing-stderr', 2 * 1024 ** 2,
+        True, writer=lambda p, v: None, sink=lambda v: None))
+    err.write_bytes(b'\xff'); reject('capture_invalid_utf8', capture)
+    err.write_bytes(b'finite')
+    reject('capture_oversized', lambda: command_capture(record, out, err, 1, True, writer=lambda p, v: None, sink=lambda v: None))
+    def changed_reader(path, cap):
+        def grow(event):
+            if event == 'file_opened':
+                with path.open('ab') as f: f.write(b'x')
+        return read_bounded(path, cap, grow)
+    reject('capture_changing_stream', lambda: capture(reader=changed_reader))
+    def fail(*args): raise OSError('synthetic observation receipt/sink failure')
+    reject('capture_receipt_failure', lambda: capture(writer=fail))
+    reject('capture_sink_failure', lambda: capture(sink=fail))
+    require(safe_response({'request_id': 'ACTIVE-TOKEN'}, ['ACTIVE-TOKEN'])['request_id'] == '[active-token-redacted]',
+            'request ID token redaction')
+    result['request_id_token_redaction'] = True
+    printed = PRINTED
+    try:
+        PRINTED = 496 * 1024
+        reject('actual_emit_ordinary_reservation', lambda: emit({'must_not_reach_sink': True}))
+        require(PRINTED == 496 * 1024, 'failed emit changed reservation')
+    finally: PRINTED = printed
+    result['old_controls_retained_no_new_native_budget'] = True
+
+
 def controls():
     result = {}
     def reject(name, action):
@@ -832,11 +1144,11 @@ def controls():
     reject('oversized_json', lambda: strict_json(b' ' * 20, 10))
     reject('unexpected_project_delta', lambda: compare_projects({'control': {'graph': 1}, 'phase': {'graph': 2}}))
     reject('missing_project_arm', lambda: compare_projects({'control': {}}))
-    valid_delta = ['A\t' + p for p in PATHS]
+    valid_delta = ['M\t' + p for p in PATHS]
     validate_source(IDENTITY['source_sha'], PARENT, valid_delta)
     reject('source_wrong_head', lambda: validate_source('0' * 40, PARENT, valid_delta))
     reject('source_wrong_parent', lambda: validate_source(IDENTITY['source_sha'], '0' * 40, valid_delta))
-    reject('source_missing_path', lambda: validate_source(IDENTITY['source_sha'], PARENT, valid_delta[:1]))
+    reject('source_missing_path', lambda: validate_source(IDENTITY['source_sha'], PARENT, []))
     reject('source_modified_old_path', lambda: validate_source(IDENTITY['source_sha'], PARENT, valid_delta + ['M\texamples/apple/HostModel.swift']))
     def infos(names): return [zipfile.ZipInfo(n) for n in names]
     for name, names in [('traversal', ['sdk/../x']), ('case_alias', ['sdk/X', 'sdk/x']),
@@ -930,6 +1242,7 @@ def controls():
     output, complete = shaped({str(n): {str(m): ['x' * 1000] * 24 for m in range(24)} for n in range(24)}, 16384)
     require(len(output) <= 16384 and not complete, 'minimal output fallback'); result['minimal_output_fallback'] = True
     finalization_controls(result)
+    log_controls(result, reject)
     save(E / 'controls.json', result); emit({'controls': result})
 
 
