@@ -56,3 +56,23 @@ show and raised UnicodeDecodeError. No SDK build or qualification group ran
 (0/67 executed, not a 67-group behavioral failure). The guard now specifies
 encoding='utf-8'. The reviewed driver and every native assertion remain unchanged;
 the next source still requires the exact 67 groups and original 30-minute job.
+
+## Real first native result and preserved race
+
+Native continuation 40936421939 at ed734a879c933b78006ce9e78e89921d3c44fe69
+completed **66/67**: 43/43 frozen + 23/24 native. g15/g17 and the added g11
+stimulus controls passed. g10's original downstream assertion remained failed.
+Exact retained-artifact inspection 40937534551 found the 10-request child
+refused with regular-open / native FILE_NOT_FOUND (2), before target SDK open.
+It observed the gap between the old request's rename and the new identity's
+creation, before its initial envelope check. That is a real refusal but does
+not prove the specified post-GO foreign-identity rejection.
+
+The test-only native probe now publishes one complete child-envelope-checked
+marker after its initial request/target check and before GO ReadFile, before
+any output pin or SDK open. Only g10 waits for that actual observation before
+creating the original identity-replacement stimulus. The post-GO checks,
+all original reason assertions, pin/sharing protections and 120/115-second
+bounds remain. The qualification source guard allows precisely this new
+probe addition and the source-only product-next document; every other old
+source byte is still frozen. No product feature is enabled by the marker.

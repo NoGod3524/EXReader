@@ -469,7 +469,7 @@ def main():
     def g10():
         root,before=fixture('10-baseline');d.put(root,'baseline.bin',before['canonical']);c=scan_gate(root,before);c.phase(root,'compared');replace_file(root,'baseline.bin');d.go(root,'compared');assert c.finish()!=0;cdata=c.report();assert cdata['reason']=='bound-evidence-changed' and not cdata['commit_requested'];stable(before,root)
         for which in ('request','output'):
-            root,before=fixture('10-'+which);c=d.native('launch',root,'normal');c.phase(root,'child-spawned')
+            root,before=fixture('10-'+which);c=d.native('launch',root,'normal');c.phase(root,'child-spawned');marker=c.phase(root,'child-envelope-checked');assert not marker['sdk_open_attempted']
             if which=='request':replace_file(root,'use-0.json')
             else:
                 rename_sibling(root/'worker-output',root/'original-output');d.call('mkdir',root,'worker-output')

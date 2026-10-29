@@ -140,6 +140,11 @@ static int sdk_owner(const char *op){exr_library *owner=NULL;exr_error e={0};wr_
  done:if(owner){if(finish_status==-1)finish_status=exr_library_migration_finish(owner,0,&e);exr_library_close(owner);}free(expected);free(observed);return ok&&!failed;}
 static int private_child(unsigned slot,HANDLE lease,HANDLE go,const WCHAR *output,const char *kind){char token[32];DWORD n;exr_library *owner=NULL;exr_error e={0};int ok=0;
  if(!child_envelope(slot,lease,output,kind,0)||!raw_target_id(&child_target_identity))goto done;
+ /* A complete pre-GO observation lets the independent mutation driver wait
+  * until the initial envelope has actually been read. No GO, SDK authority or
+  * output pin is granted by this marker; the unchanged post-GO checks remain. */
+ {lm_sb ready;lm_sb_init(&ready);lm_sb_fmt(&ready,"{\"phase\":\"child-envelope-checked\",\"nonce\":\"%s\",\"pid\":%lu,\"sdk_open_attempted\":%s}\n",wn,GetCurrentProcessId(),target_sdk_open_attempted?"true":"false");
+  if(ready.oom||!wfile("child-envelope-checked.ready",ready.p,ready.n)){lm_sb_free(&ready);goto done;}lm_sb_free(&ready);}
  if(!strcmp(mode,"prepin-child")&&!wrendezvous("child-before-pin"))goto done;
  if(!ReadFile(go,token,32,&n,NULL)||n!=32||memcmp(token,wn,32)){wf("child-owner-go-absent");goto done;}
  if(!child_envelope(slot,lease,output,kind,1)||!wok(wr_recheck(wc,&we)))goto done;{wr_identity now;if(!raw_target_id(&now)||!wr_identity_equal(&now,&child_target_identity)){wf("child-target-changed");goto done;}}
