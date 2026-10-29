@@ -284,3 +284,32 @@ reproduces the historical refusal and mutates each actual common record's size,
 function type and owner. Original source identity is never relabeled current;
 old failures and raw hashes remain retained. No production, SDK, budget, old
 test or workflow change is part of this four-validation-file repair.
+
+## Pinned second-full-run dependency diagnostics (no native rebuild)
+
+The same-tree full run `40821799960/1`, source
+`900366e7d91b973f13fe2e52945d25742e0bee71`, passed five producer jobs:
+Linux/macOS desktop behavior and Android/iOS-device/iOS-simulator installed-only
+link evidence. Windows advanced beyond symbol checks, then failed the exact
+object-key dependency coverage predicate. The ordinary aggregate stopped at its
+unchanged upstream gate. Five green producers alone are not independent admission.
+
+The new `--dependency-diagnostic` profile pins that run, protocol/six job IDs,
+all six original upload IDs, sizes and SHA256 digests. Existing original transport,
+historical sixteen-file source reconstruction, unchanged owner-byte checks and
+exact historical verifier/mutation replay authenticate the five original green
+uploads first. The earlier `--retained-diagnostic` profile remains available.
+
+Failed Windows diagnostics bind retained Ninja output to its exact original
+command and hash, compare the actual archive build rule/object list, and bind
+the original build directory to retained CMake cache. They retain exact expected
+and observed keys, dependency status/count, object hashes, missing keys and
+bounded lexical comparisons/collisions. Lexical matches are observations only:
+no separator/case/alias acceptance, status waiver or coverage predicate changes.
+Unsupported format or identity mismatch still fails with partial JSON retained.
+
+The existing `[hash-retained-diagnostic]` marker now selects this pinned profile.
+It still skips all native producers, ordinary authentication and old archive
+diagnostics, and uploads only `diagnostic.json`. Overall/current-source, six-target
+and F07 acceptance flags remain false. This three-file workflow/auth/document
+change does not alter production owners, parser criteria, tests or budgets.

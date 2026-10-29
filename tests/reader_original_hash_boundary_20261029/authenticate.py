@@ -122,7 +122,7 @@ def inspect_prior_archive():
     C.save(out/'diagnostic.json',report)
     print(json.dumps(report,sort_keys=True),flush=True)
 
-def inspect_retained():
+def inspect_retained(dependency_profile=False):
     """No native build: exact original failures plus explicitly partial green replay."""
     C.actions_only();C.guard();out=C.ROOT/'build/hash-retained-diagnostic';out.mkdir(parents=True)
     prior='1198abce384aabe78bc23450db0c38be487706e1';run_id=40816180401
@@ -134,6 +134,17 @@ def inspect_retained():
         'linux':(123257727441,'success',12872257369,15257989,'0af1380ab4c84ea1ef5acbc3105c566ac4c96d9ba4cf73fd794e8777fb469852'),
         'macos':(123257727355,'success',12872318239,14784426,'69f4d3e3c511ecdf1bf425d42bccb510ba6cd039ed48bea9000e6a2891d1378f'),
         'ios-device':(123257727411,'success',12872328343,14590280,'26869f8a1ffd1e35bf6bc6bea043406cb5a37776251ae29dbdc295073d21cfaf')}
+    protocol_id=123257662840
+    if dependency_profile:
+        prior='900366e7d91b973f13fe2e52945d25742e0bee71';run_id=40821799960
+        ident=dict(source_sha=prior,run_id=str(run_id),attempt='1');protocol_id=123275728402
+        pins={
+            'windows':(123275789262,'failure',12875360361,20484989,'2d754b498ad2be7b7a3730627a79542228c4974b673357b4b486e7ac6150cea7'),
+            'linux':(123275789267,'success',12874529508,15258480,'1ff0c0bb3816b5f543262a6ba9784e054ab3f800fd362d6aad24397c68ac2971'),
+            'macos':(123275789243,'success',12875370278,14782010,'ec6da98495eac389e3a5e2dd774a457140b43ad120170117eecc6185a0659833'),
+            'android':(123275789348,'success',12874567875,34491610,'fbff0d41cb37aa74a16231309bc7d1fbb51b121bdc6e28aae864ac48e32eb236'),
+            'ios-device':(123275789231,'success',12875445075,14591047,'543a4b3e22259c4e66ed547265c012df0c3b09cebeb5d983c83b6ee89dbbf3de'),
+            'ios-simulator':(123275789242,'success',12873984761,14778425,'13a4d8213482393f8cb1af1ed217a04dfca091197844ce62c3a678fb83791a8f')}
     result=dict(C.identity(),original_identity=ident,diagnostic_only=True,accepted=False,f07_accepted=False,
         full_six_accepted=False,diagnostic_complete=False,failures=[],original_artifacts={},failed_producer_details={},
         independently_replayed_original_green={},scope='original-source partial replay; no current-source native acceptance')
@@ -143,7 +154,7 @@ def inspect_retained():
             run['run_attempt']==1 and run['status']=='completed' and run['conclusion']=='failure','original full run identity differs')
         jobs=pages(f'actions/runs/{run_id}/attempts/1/jobs','jobs')
         protocol=[j for j in jobs if j['name']=='protocol']
-        C.require(len(protocol)==1 and protocol[0]['id']==123257662840 and protocol[0]['head_sha']==prior and protocol[0]['conclusion']=='success','original protocol identity differs')
+        C.require(len(protocol)==1 and protocol[0]['id']==protocol_id and protocol[0]['head_sha']==prior and protocol[0]['conclusion']=='success','original protocol identity differs')
         subprocess.run(['git','merge-base','--is-ancestor',prior,'HEAD'],cwd=C.ROOT,check=True)
         paths=C.OWNER_PATHS+C.VALIDATION_PATHS
         changed=subprocess.check_output(['git','diff','--name-only',C.BASE,prior],cwd=C.ROOT,text=True).splitlines()
@@ -166,7 +177,8 @@ def inspect_retained():
         finally:sys.modules['package_contract']=saved
         result['historical_replay_verifier']={name:C.record(code/name) for name in ('package_contract.py','test_contract.py')}
         result['historical_identity_binding']='exact prior git source/16-path guard and original run identity; never relabeled current source'
-        for target in ('linux','macos','ios-device','windows','android','ios-simulator'):
+        target_order=tuple(t for t in C.TARGETS if pins[t][1]=='success')+tuple(t for t in C.TARGETS if pins[t][1]=='failure')
+        for target in target_order:
             job_id,conclusion,artifact_id,size,digest=pins[target]
             rows=[j for j in jobs if j['name']=='produce ('+target+')']
             C.require(len(rows)==1 and rows[0]['id']==job_id and rows[0]['head_sha']==prior and
@@ -201,6 +213,49 @@ def inspect_retained():
                 rows=[r for r in commands if r['output']==path]
                 C.require(len(rows)==1 and rows[0]['output_record']==C.record(folder/path) and rows[0]['returncode']==0,'diagnostic output not bound to original command')
                 return rows[0]
+            if dependency_profile:
+                C.require(target=='windows','unexpected failed dependency producer')
+                dependency=json.loads((folder/'dependency.json').read_text());details={}
+                C.require(set(dependency)=={'hash','importer'},'dependency owner set differs')
+                result['failed_producer_details'][target]=dict(dependencies=details,admitted=False,
+                    coverage_predicate_changed=False,lexical_comparisons_are_diagnostic_only=True)
+                for owner,item in dependency.items():
+                    expected=item['objects'];C.require(0<len(expected)<=64 and len(set(expected))==len(expected),'dependency expected-object bounds/duplicates')
+                    deps=(folder/item['deps']).read_text();groups=C.deps_groups(deps)
+                    C.require(len(groups)<=4096 and all(len(k)<=1024 for k in (*expected,*groups)),'dependency key diagnostic bounds')
+                    detail=dict(expected_objects=expected,actual_group_keys=list(groups),
+                        exact_missing=sorted(set(expected)-set(groups)),admitted=False)
+                    details[owner]=detail
+                    command=command_record(item['deps'])
+                    C.require(command['argv']==['ninja','-C',item['original_build'],'-t','deps'],'original dependency invocation differs')
+                    ninja=(folder/item['ninja']).read_text()
+                    rule=re.search(r'^build '+re.escape(item['archive_output'])+r':[^\n]*',ninja,re.M)
+                    C.require(rule is not None,'retained archive rule missing')
+                    linked=re.findall(r'[^\s:]+\.(?:o|obj)(?=\s|$)',rule.group())
+                    C.require(linked==expected,'retained archive rule/object list differs')
+                    cache_path='trees/'+Path(item['original_build']).name+'/CMakeCache.txt'
+                    homes=re.findall(r'^CMAKE_CACHEFILE_DIR:INTERNAL=(.+)$',(folder/cache_path).read_text(),re.M)
+                    C.require(len(homes)==1 and C.canonical_dependency(homes[0],homes[0])==C.canonical_dependency(item['original_build'],item['original_build']),
+                        'dependency original CWD not cache-bound')
+                    statuses={m[1]:dict(count=int(m[2]),status=m[3]) for line in deps.splitlines()
+                        if (m:=re.fullmatch(r'(.*): #deps (\d+), deps mtime \d+ \((VALID|STALE)\)',line))}
+                    C.require(set(statuses)==set(groups),'dependency status/key inventory differs')
+                    detail['actual_groups']=statuses
+                    normalized={}
+                    for key in groups:normalized.setdefault(C.canonical_dependency(key,item['original_build']),[]).append(key)
+                    comparisons=[];detail['comparisons']=comparisons
+                    for key in expected:
+                        matches=normalized.get(C.canonical_dependency(key,item['original_build']),[])
+                        comparisons.append(dict(expected=key,exact_present=key in groups,lexical_matches=matches,
+                            matched_statuses={k:statuses[k] for k in matches},
+                            retained_object=dict(path=item['object_files'][key],**C.record(folder/item['object_files'][key]))))
+                    detail.update(
+                        canonical_collisions={k:v for k,v in normalized.items() if len(v)>1},
+                        original_build=item['original_build'],cache=dict(path=cache_path,**C.record(folder/cache_path)),
+                        ninja=dict(path=item['ninja'],**C.record(folder/item['ninja'])),
+                        archive_rule=rule.group(),deps_command=command,admitted=False)
+                C.require(any(d['exact_missing'] for d in details.values()),'original exact dependency refusal not reproduced')
+                continue
             if target=='windows':
                 details=[];parser_failures=[];common_details=[]
                 result['failed_producer_details'][target]=dict(weak_externals=details,parser_failures=parser_failures,
@@ -327,8 +382,8 @@ def inspect_retained():
                     details['importer']['current_predicate']['normalization']['differing_offsets']==[33],'measured simulator predicate differs')
                 result['failed_producer_details'][target]=dict(archives=details,admitted=False,
                     criterion='original 1198 requires exact bytes; new bounded simulator predicate is separate, not native acceptance')
-        C.require(set(result['failed_producer_details'])=={'windows','android','ios-simulator'} and
-            set(result['independently_replayed_original_green'])=={'linux','macos','ios-device'},'partial diagnostic coverage incomplete')
+        C.require(set(result['failed_producer_details'])=={t for t in C.TARGETS if pins[t][1]=='failure'} and
+            set(result['independently_replayed_original_green'])=={t for t in C.TARGETS if pins[t][1]=='success'},'partial diagnostic coverage incomplete')
         C.require(not result['failures'],'retained parser rejections remain unresolved')
         result['diagnostic_complete']=True
     except Exception as error:result['failures'].append(str(error))
@@ -339,5 +394,6 @@ def inspect_retained():
 if __name__=='__main__':
     if sys.argv[1:]==['--archive-diagnostic']:inspect_prior_archive()
     elif sys.argv[1:]==['--retained-diagnostic']:inspect_retained()
+    elif sys.argv[1:]==['--dependency-diagnostic']:inspect_retained(dependency_profile=True)
     else:
         C.require(not sys.argv[1:],'unsupported authentication mode');main()
