@@ -5,11 +5,35 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
-from inspect_continuation_failure import CASE, SOURCE_PATH, locations, network_summary, safe_progress, xcresult_issues
+from inspect_continuation_failure import BUNDLE, CASE, SOURCE_PATH, activity_timing, locations, network_summary, safe_progress, xcresult_issues
 from privacy_scan import needles
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_activity_timing_only_known_markers(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'native.log'
+            path.write_text('    t =    12.00s Launch ' + BUNDLE + '\n'
+                            '    t =    25.50s Terminate ' + BUNDLE + '\n'
+                            '    t =    70.00s Launch ' + BUNDLE + '\n'
+                            '    t =    72.00s Tap "同步" Button\n'
+                            '    t =    73.00s Find the "account.sync.state" StaticText\n'
+                            '    t =    74.00s arbitrary private operand\n')
+            report = activity_timing(path)
+            self.assertEqual(report['markers'], [{'seconds': 12.0, 'marker': 'launch'},
+                {'seconds': 25.5, 'marker': 'terminate'}, {'seconds': 70.0, 'marker': 'launch'},
+                {'seconds': 72.0, 'marker': 'tap-sync'}])
+            self.assertEqual(report['state_query_count'], 1)
+            self.assertNotIn('private', str(report))
+
+    def test_activity_operand_and_unbounded_time_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'native.log'
+            for content in ('operand t = 12.00s Launch ' + BUNDLE, 't = 9999.00s Launch ' + BUNDLE,
+                            't = 12.00s Launch ' + BUNDLE + ' private-operand',
+                            't = 12.00s Tap "Privacy-aaaa..." Button'):
+                path.write_text(content + '\n'); self.assertEqual(activity_timing(path)['markers'], [])
+
     def test_network_roles_and_shards_only(self):
         root = 'https://127.0.0.1:12345/privacy-' + 'a' * 24 + '/'
         result = {'root': root, 'checkpoints': {'remember_closed': {'network_requests': 0}}}
@@ -32,11 +56,15 @@ class ContinuationDiagnosticControls(unittest.TestCase):
         for raw in list(needles({'secret': b'Privacy-' + b'c' * 64 + b'!%:+'}).values()) + [b'Privacy-ccc...']:
             report = xcresult_issues({'issues': [issue('XCTAssertTrue failed operand=' + raw.decode('utf-8', errors='replace'), good)]})
             self.assertEqual(report['issues'], [{'case_matches': True, 'source_line': 95, 'assertion': 'XCTAssertTrue',
-                'static_messages': [], 'static_controls': [], 'fixed_signatures': []}])
+                'static_messages': [], 'static_controls': [], 'fixed_signatures': [], 'known_time_allowance': []}])
         for url in ('operand=' + good, 'file://' + SOURCE_PATH + '#StartingLineNumber=99999',
                     good + '&StartingLineNumber=94', good + '&operand=private'):
             self.assertIsNone(xcresult_issues([issue('XCTAssertTrue failed', url)])['issues'][0]['source_line'])
         self.assertEqual(xcresult_issues({'message': {'_value': 'arbitrary private operand'}})['failure_issue_count'], 0)
+        self.assertEqual(xcresult_issues([issue('Test exceeded execution time allowance of 240 seconds private operand', good)])
+                         ['issues'][0]['known_time_allowance'], [240])
+        self.assertEqual(xcresult_issues([issue('Test exceeded execution time allowance of 999999 seconds', good)])
+                         ['issues'][0]['known_time_allowance'], [])
 
     def test_all_encoded_and_truncated_operands_removed(self):
         expected = [{'file': 'PasswordPrivacyContinuationUITests.swift', 'line': 104,

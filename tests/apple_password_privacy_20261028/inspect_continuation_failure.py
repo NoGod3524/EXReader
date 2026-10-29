@@ -31,6 +31,7 @@ SIGNATURES = {'url-request-timeout': 'NSURLErrorDomain Code=-1001',
               'xctest-asynchronous-timeout': 'Asynchronous wait failed',
               'xctest-test-timeout': 'Test exceeded execution time allowance'}
 CASE = 'testDiagnosticContinuationRememberUpdateRestart'
+BUNDLE = 'org.exreader.password-privacy-20261028'
 
 
 def locations(path):
@@ -48,6 +49,28 @@ def locations(path):
                       'fixed_signatures': [key for key, value in SIGNATURES.items() if value in line]}
             if record not in found: found.append(record)
     return found
+
+
+def activity_timing(path):
+    """Bounded XCTest activity markers, not arbitrary titles or product timing."""
+    markers, state_queries = [], []
+    with path.open('r', encoding='utf-8', errors='replace') as file:
+        for line in file:
+            match = re.fullmatch(r'\s*t =\s*([0-9]{1,4}\.[0-9]{2})s\s+([^\r\n]*)\r?\n?', line)
+            if not match or float(match.group(1)) > 4800: continue
+            seconds, title = float(match.group(1)), match.group(2)
+            kind = None
+            if title == 'Launch ' + BUNDLE: kind = 'launch'
+            elif title == 'Terminate ' + BUNDLE: kind = 'terminate'
+            elif title in ('Tap "account.sync.start" Button', 'Tap "同步" Button'): kind = 'tap-sync'
+            elif title.startswith('Find the "account.sync.state" '):
+                state_queries.append(seconds)
+            if kind: markers.append({'seconds': seconds, 'marker': kind})
+    require(len(markers) <= 100, 'unexpected activity marker count')
+    return {'markers': markers, 'state_query_count': len(state_queries),
+            'first_state_query_seconds': state_queries[0] if state_queries else None,
+            'last_state_query_seconds': state_queries[-1] if state_queries else None,
+            'arbitrary_activity_titles_printed': False, 'product_performance_acceptance': False}
 
 
 def safe_progress(result, files):
@@ -128,7 +151,9 @@ def xcresult_issues(payload):
                     'source_line': source_line, 'assertion': assertion.group(1) if assertion else None,
                     'static_messages': [token for token in STATIC_MESSAGES if token in message],
                     'static_controls': [token for token in CONTROLS if token in message],
-                    'fixed_signatures': [key for key, token in SIGNATURES.items() if token in message]})
+                    'fixed_signatures': [key for key, token in SIGNATURES.items() if token in message],
+                    'known_time_allowance': [seconds for seconds in (240, 360)
+                        if re.search(r'Test exceeded execution time allowance of ' + str(seconds) + r'(?:\.0+)? seconds\b', message)]})
             for item in node.values(): walk(item)
     walk(payload)
     return {'failure_issue_count': len(issues), 'issues': issues,
@@ -167,6 +192,7 @@ def main():
                       verified_member_count=len(files), arbitrary_log_text_printed=False,
                       source_positions_not_authenticated_callsites=True,
                       native_failure_locations=locations(folder / 'native.log') if 'native.log' in files else [])
+        report['activity_timing'] = activity_timing(folder / 'native.log')
         for stage in STAGES:
             name = stage + '-privacy-scan.json'
             if name not in files: continue
