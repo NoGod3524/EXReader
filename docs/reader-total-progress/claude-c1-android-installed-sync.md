@@ -28,3 +28,12 @@ The workflow `claude-c1-android-installed-sync.yml` (Actions only):
 
 Nothing here substitutes a standalone adapter probe. Not claimed: F01/F07/F08/F12, physical device,
 full product, accessibility, or any 108-item credit.
+
+## Run history (failures retained)
+- Run 40948116790 / attempt 1, source `a065494878da3bf1130defe34172efbf9ca66461`: protocol passed; host build
+  passed; emulator step FAILED before any test ran (`ModuleNotFoundError: run_roundtrip`: the relocated frozen
+  driver resolved `sys.path` relative to its new location). The verifier then failed for missing `ui/result.json`.
+  No installed-runtime claim is made from this run.
+- Next source: absolute `sys.path` in the generated driver (recorded in provenance), and the verifier now checks the
+  complete exact hash and Sync symbols on one single candidate that is byte-equal to the APK image or equal after
+  the recorded `llvm-strip --strip-unneeded` transform; the selected candidate and mapping are recorded.
