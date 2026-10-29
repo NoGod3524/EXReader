@@ -11,11 +11,61 @@ final class PasswordPrivacyContinuationUITests: XCTestCase {
     private let app = XCUIApplication()
     private var root = "", profile = ""
     private var stages: [String] = []
+    // DIAGNOSTIC_UI_BEGIN
+    // Only finite codes from the already queried snapshot leave this method.
+    // Unknown label/value/error text is never printed or interpolated.
+    private let observationOrigin = ProcessInfo.processInfo.systemUptime
+    private var observationSequence = 0, lastObservationMS = -5000
+    private var lastObservationState = ""
+    private func observationCode(_ value: String) -> String {
+        switch value {
+        case "": return "empty"
+        case "未同步": return "idle"
+        case "正在准备原书": return "preparing-original"
+        case "正在接收书架": return "receiving-shelf"
+        case "准备中": return "preparing"
+        case "正在同步": return "running"
+        case "正在取消": return "cancelling"
+        case "正在关闭": return "closing"
+        case "已关闭": return "closed"
+        case "本轮扫描完成": return "finished"
+        case "已取消": return "cancelled"
+        case "同步失败": return "failed"
+        case "可再次同步以接收后续变更": return "next-sync"
+        case "已提交的历史会保留，可手动重试": return "retry-preserves-history"
+        default: return "other"
+        }
+    }
+    private func observedSnapshot(_ id: String) -> XCUIElementSnapshot? {
+        let item = try? node(id).snapshot()
+        if id == "account.sync.state" {
+            observationSequence += 1
+            let elapsed = Int(max(0, min(4800000, (ProcessInfo.processInfo.systemUptime - observationOrigin) * 1000)))
+            let phase = stages.last == "remember_closed" ? "remembered" :
+                stages.last == "remember_reopened" ? "session" :
+                stages.last == "session_closed" ? "missing-restart" : "unknown"
+            let label = item?.label ?? "", value = (item?.value as? String) ?? ""
+            let labelCode = item == nil ? "unavailable" : observationCode(label)
+            let valueCode = item == nil ? "unavailable" : observationCode(value)
+            let valueKind = item?.value == nil ? "none" : item?.value is String ? "string" :
+                item?.value is NSNumber ? "number" : "other"
+            let labelMissing = label.contains("请重新输入此账号的授权信息") ? 1 : 0
+            let valueMissing = value.contains("请重新输入此账号的授权信息") ? 1 : 0
+            let snapshot = item == nil ? 0 : 1
+            let state = "phase=\(phase) snapshot=\(snapshot) label=\(labelCode) value=\(valueCode) value_kind=\(valueKind) missing_label=\(labelMissing) missing_value=\(valueMissing)"
+            if state != lastObservationState || elapsed - lastObservationMS >= 5000 {
+                print("EXR_PRIVACY_UI_STATE seq=\(observationSequence) elapsed_ms=\(elapsed) " + state)
+                lastObservationState = state; lastObservationMS = elapsed
+            }
+        }
+        return item
+    }
+    // DIAGNOSTIC_UI_END
     private func node(_ id: String) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: id).firstMatch
     }
     private func text(_ id: String) -> String {
-        guard let item = try? node(id).snapshot() else { return "" }
+        guard let item = observedSnapshot(id) else { return "" }
         // Compact sync controls expose the message in value, not the state.
         if id == "account.sync.state" { return item.label }
         return (item.value as? String).flatMap { $0.isEmpty ? nil : $0 } ?? item.label

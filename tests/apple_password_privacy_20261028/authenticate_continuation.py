@@ -18,6 +18,7 @@ from inspect_native import variant_labels
 from privacy_scan import needles, scan_roots
 from archive_contract import safe_extract
 from log_evidence import attribute_unified_log, verify_product_log
+from ui_observations import parse_ui_observations
 sys.path[:0] = [str(ROOT / 'tests/apple_host'), str(ROOT / 'tools')]
 from collect_evidence import load_results
 from check_apple_product import inspect
@@ -55,6 +56,9 @@ def validate(directory, source, run, attempt, platform):
     for name, record in result['files'].items():
         path = directory / name
         require(path.stat().st_size == record['bytes'] and sha(path) == record['sha256'], 'native retained bytes differ')
+    observed = parse_ui_observations(directory / 'native.log')
+    require(observed == result['ui_state_observations'] and observed['observed'],
+            'actual finite UI observation evidence absent or differs')
     commands = result['commands']
     require(commands and all(step['exit'] == 0 for step in commands) and
             {'fixtures', 'project', 'build-for-testing', 'native', 'attachments', 'program-archive'} <=
@@ -200,6 +204,7 @@ def validate(directory, source, run, attempt, platform):
     require(result['diagnostic_verdict'] == diagnostic, 'diagnostic verdict differs')
     return dict(diagnostic, platform=platform, source_sha=source, stages=STAGES, sequence_complete=True,
                 probe_integrity_verified=True, binary_sha256=result['program']['sha256'], dedicated_forget_tested=False,
+                ui_state_observations=observed,
                 log_attribution=result['log_attribution'], attribution_limit='sender image categories, not production owner callsites',
                 privacy_roots={stage: {label: {'strict_passed': proof['accepted'], 'hit_variant_labels': variant_labels(proof)}
                     for label, proof in result['checkpoints'][stage]['scans'].items()} for stage in STAGES})

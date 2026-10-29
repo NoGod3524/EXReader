@@ -221,3 +221,42 @@ limits are untouched. All builds/tests/fixtures/artifact work is Actions-only.
 * Scanner/archive controls and the diagnostic-only pinned setup-artifact check
   passed in Actions. No real credential UI case or full original-native-artifact
   authentication has passed; there is no product acceptance to grant.
+
+## 2026-10-29: retained failure diagnosis and finite UI-state reproduction
+
+The additive continuation at `0533fadf8d5cc41959a7ae81ef1dbd294c7d096e`,
+run `40794326091`, failed all three native sequences after the first checkpoint.
+Its 33 controls, both current-source SDK builds and flags regressions passed.
+Original strict failures and complete synthetic evidence remain preserved.
+
+Four bounded Actions-only diagnostic runs inspected the same pinned original
+uploads without rebuilding SDK/native jobs: `40801553322` (37 controls),
+`40802297629` (39), `40803228570` (41), `40804595108` (43), all successful.
+The first checkpoint completed on all three and callbacks did not fail. macOS
+then performed 272 remembered-role authenticated requests after actual restart,
+including all 256 revision shards. iPhone/iPad recorded no later requests; that
+alone does not prove credential failure. All three native xcresults contain
+execution-time-allowance-exceeded signatures. Subsequent sync-state polling
+lasted macOS 73.41–253.42s, iPhone 155.28–309.62s, iPad 134.49–289.39s.
+
+Each exported result has one first-stage PNG, one text attachment and 15 opaque
+extension attachments. The text contains no literal UTF8 status tokens, but
+UTF16/escaped/opaque data and image interpretation were not covered; missing
+actual displayed-state evidence is not a claim that no error was displayed.
+No production/password defect or scanner bottleneck has been inferred.
+
+The next purposeful continuation reproduction adds finite codes for the actual
+already-queried accessibility snapshot label/value, value type, credential-missing
+indicator, phase and monotonic elapsed time. Unknown text becomes `other`; no raw
+label/value, username, password, framework error or root URL is printed. Changes
+and five-second heartbeats are emitted, without extra snapshot requests. The
+original label-return predicate, controls, case sequence, 180-second sync wait,
+90-second checkpoint wait, native/global job budgets and full all-file privacy
+scans remain unchanged. An Actions-only source contract removes only the
+observation wrapper and checks byte equality with the original continuation UI.
+The independent authenticator recomputes these finite records from the retained
+native log. Four new controls precede any current-source SDK/native work.
+
+This instrumentation is diagnostic only. It cannot convert username log noise
+into strict acceptance, prove secret absence from a masked field, validate a
+production owner callsite, or grant full F10. No dedicated Forget UI exists.

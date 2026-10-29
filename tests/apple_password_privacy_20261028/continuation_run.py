@@ -21,6 +21,7 @@ from continuation_contract import BASE, BUNDLE, CASE, ROOT, STAGES, attachments,
 from fixture import fixture
 from privacy_scan import needles, scan_file, scan_roots, optional_entries, verify_optional_entries
 from log_evidence import attribute_unified_log, retain_product_log
+from ui_observations import parse_ui_observations
 sys.path[:0] = [str(ROOT / 'tests/apple_host'), str(ROOT / 'tools')]
 from collect_evidence import load_results
 from check_apple_product import inspect
@@ -240,11 +241,19 @@ def main():
             cleaned = subprocess.run(['xcrun', 'simctl', 'erase', udid], capture_output=True)
             result['simulator_removed_fixture_state'] = cleaned.returncode == 0
             if cleaned.returncode: result['sequence_complete'] = False
+        try:
+            result['ui_state_observations'] = parse_ui_observations(evidence / 'native.log')
+        except Exception:
+            # Preserve original failure/evidence even if ancillary observation
+            # parsing is absent/invalid; no arbitrary native text is echoed.
+            result['ui_state_observations'] = {'valid': False, 'observed': False,
+                'records': [], 'failure': 'unavailable-or-invalid', 'raw_ui_text_printed': False,
+                'privacy_acceptance': False}
         result['files'] = {str(path.relative_to(evidence)): {'bytes': path.stat().st_size, 'sha256': sha(path)}
                            for path in evidence.rglob('*') if path.is_file() and path != evidence / 'result.json'}
         (evidence / 'result.json').write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
         print(json.dumps({key: result[key] for key in ('accepted', 'diagnostic_only', 'sequence_complete', 'strict_privacy_checks',
-              'source_sha', 'platform', 'failure', 'full_f10_accepted', 'log_attribution')}), flush=True)
+              'source_sha', 'platform', 'failure', 'full_f10_accepted', 'log_attribution', 'ui_state_observations')}), flush=True)
     require(result['sequence_complete'], 'diagnostic sequence incomplete; strict/native/F10 acceptance remains false')
 
 if __name__ == '__main__': main()
