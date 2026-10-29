@@ -44,6 +44,30 @@ def coff_common_fixture(name=C.COFF_STDIO_COMMON,duplicate=False):
     return raw,'000 00000008 UNDEF notype External | '+name+'\n'
 
 class ContractTests(unittest.TestCase):
+    def test_windows_dependency_separator_only(self):
+        expected='CMakeFiles\\owner.dir\\src\\owner.c.obj';observed=expected.replace('\\','/')
+        text=observed+': #deps 1, deps mtime 1 (VALID)\n    public.h\n'
+        groups,binding=C.object_dependency_groups(text,[expected],'windows')
+        self.assertEqual(groups,{expected:['public.h']});self.assertEqual(binding[expected]['observed'],observed)
+        for changed,reason in ((text.replace('(VALID)','(STALE)'),'stale'),
+                (text.replace('#deps 1','#deps 2'),'truncated'),
+                (text+text.replace(observed,expected),'colliding dependency'),
+                (text+text.replace('owner.dir','OWNER.dir'),'case-ambiguous'),
+                (text.replace('owner.dir','OWNER.dir'),'missing actual')):
+            with self.assertRaisesRegex(ValueError,reason):C.object_dependency_groups(changed,[expected],'windows')
+        for bad in ('../'+observed,'/'+observed,'C:/'+observed,observed.replace('/src/','/src/../'),
+                observed.replace('/src/','//src/'),observed.replace('/src/','/./src/')):
+            with self.assertRaises(ValueError):C.object_dependency_groups(text.replace(observed,bad),[expected],'windows')
+            with self.assertRaises(ValueError):C.object_dependency_groups(text,[bad],'windows')
+        with self.assertRaisesRegex(ValueError,'colliding expected'):
+            C.object_dependency_groups(text,[expected,observed],'windows')
+        with self.assertRaises(ValueError):C.object_dependency_groups(text,[expected],'linux')
+        item=dict(original_build='D:/original/build',object_files={expected:'trees/build/'+expected})
+        self.assertEqual(C.retained_object_path(item,expected,'windows'),'trees/build/'+observed)
+        for bad in ('trees/other/'+expected,'trees/build/../'+expected,'trees/build/'+expected.upper()):
+            item['object_files'][expected]=bad
+            with self.assertRaises(ValueError):C.retained_object_path(item,expected,'windows')
+
     def test_coff_common_data_only(self):
         raw,text=coff_common_fixture()
         for owner in ('normal','revision'):
@@ -306,7 +330,10 @@ def evidence_mutations(folder,manifest):
     reject('mixed-source',{'report.json':encoded(report)},'report identity')
     dependency=json.loads((folder/'dependency.json').read_text());item=dependency['importer'];obj=item['objects'][0]
     lines=(folder/item['deps']).read_text().splitlines()
-    start=next(i for i,line in enumerate(lines) if line.startswith(obj+': #deps '));end=start+1
+    target=json.loads((folder/'report.json').read_text())['target']
+    matches=[i for i,line in enumerate(lines) if ': #deps ' in line and
+        C.dependency_object_key(line.split(': #deps ',1)[0],target)==C.dependency_object_key(obj,target)]
+    C.require(len(matches)==1,'mutation dependency object identity ambiguous');start=matches[0];end=start+1
     while end<len(lines) and lines[end].startswith('    '):end+=1
     private=list(lines);count=end-start-1
     private[start]=private[start].replace('#deps '+str(count)+',','#deps '+str(count+1)+',')
@@ -314,6 +341,18 @@ def evidence_mutations(folder,manifest):
     reject('private-include',{item['deps']:('\n'.join(private)+'\n').encode()},'consumer retained a private implementation dependency')
     missing=lines[:start]+lines[end:]
     reject('missing-object',{item['deps']:('\n'.join(missing)+'\n').encode()},'missing actual object dependencies')
+    if target=='windows':
+        observed=lines[start].split(': #deps ',1)[0]
+        block='\n'.join(lines[start:end])+'\n'
+        alternate=observed.replace('\\','/') if '\\' in observed else observed.replace('/','\\')
+        duplicate='\n'.join(lines)+'\n'+block.replace(observed,alternate)
+        reject('dependency-separator-collision',{item['deps']:duplicate.encode()},'colliding dependency object spellings')
+        stale=list(lines);stale[start]=stale[start].replace('(VALID)','(STALE)')
+        reject('dependency-stale',{item['deps']:('\n'.join(stale)+'\n').encode()},'fresh relevant object dependency record is stale')
+        truncated=list(lines);truncated.pop(start+1)
+        reject('dependency-count',{item['deps']:('\n'.join(truncated)+'\n').encode()},'truncated dependency coverage')
+        object_path=C.retained_object_path(item,obj,target);payload=(folder/object_path).read_bytes()
+        reject('dependency-object-bytes',{object_path:payload[:-1]+bytes([payload[-1]^1])},'compiled object does not uniquely bind')
     native=json.loads((folder/'native.json').read_text());native['hash']['members'][0]['name']='foreign-member.o'
     reject('wrong-member',{'native.json':encoded(native)},'member inventory')
     links=json.loads((folder/'links.json').read_text());installed=links['installed'];links['installed']['image_name']='unrelated-final-image'

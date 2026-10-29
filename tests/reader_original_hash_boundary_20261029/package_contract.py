@@ -354,6 +354,46 @@ def canonical_dependency(path,cwd):
         else:parts.append(part)
     return drive+'/'+'/'.join(parts)
 
+def relative_object_spelling(value,target):
+    """Only measured Windows separators; no case, parent or absolute aliases."""
+    require(isinstance(value,str) and value and all(32<=ord(c)<127 for c in value),'invalid relative object spelling')
+    normalized=value.replace('\\','/') if target=='windows' else value
+    require('\\' not in normalized and all(p not in ('','.','..') and ':' not in p for p in normalized.split('/')),
+        'unsafe relative object spelling')
+    return normalized
+
+def dependency_object_key(value,target):
+    normalized=relative_object_spelling(value,target)
+    require(normalized.startswith('CMakeFiles/') and normalized.endswith(('.obj','.o')),'unsupported dependency object key')
+    return normalized
+
+def object_dependency_groups(text,expected,target):
+    if target!='windows':
+        raw=deps_groups(text,required_valid=expected)
+        require(expected and set(expected)<=set(raw),'missing actual object dependencies')
+        return raw,{key:dict(observed=key,comparison_key=key,status='VALID') for key in expected}
+    raw=deps_groups(text);actual={};wanted={};actual_case=set();wanted_case=set()
+    for key in raw:
+        normalized=dependency_object_key(key,target)
+        require(normalized not in actual,'colliding dependency object spellings');actual[normalized]=key
+        require(normalized.casefold() not in actual_case,'case-ambiguous dependency object spellings');actual_case.add(normalized.casefold())
+    for key in expected:
+        normalized=dependency_object_key(key,target)
+        require(normalized not in wanted,'colliding expected object spellings');wanted[normalized]=key
+        require(normalized.casefold() not in wanted_case,'case-ambiguous expected object spellings');wanted_case.add(normalized.casefold())
+    require(wanted and set(wanted)<=set(actual),'missing actual object dependencies')
+    # Apply the original VALID gate after resolving the exact observed spelling.
+    deps_groups(text,required_valid=[actual[k] for k in wanted])
+    bindings={wanted[k]:dict(observed=actual[k],comparison_key=k,status='VALID') for k in wanted}
+    return {wanted[k]:raw[actual[k]] for k in wanted},bindings
+
+def retained_object_path(item,obj,target):
+    if target!='windows':return item['object_files'][obj]
+    actual=relative_object_spelling(item['object_files'][obj],target)
+    expected='trees/'+Path(item['original_build']).name+'/'+dependency_object_key(obj,target)
+    require(actual==expected,'retained object path differs from exact build/object identity')
+    return actual
+
 def vector_output(text):
     rows=re.findall(r'^VECTOR (\d+) (\d+) ([0-9a-f]{64})$',text,re.M)
     expected={(n,k) for n in (0,1,3,55,56,63,64,65,65535,65536,65537) for k in (1,7,64,65536)}
@@ -643,9 +683,9 @@ def validate(folder, manifest, require_mutations=True):
     require(not ((defs['normal']|defs['revision'])&(PUBLIC|PRIVATE)),'different package defines stream owner entry')
     dependency=json.loads((folder/'dependency.json').read_text())
     require(set(dependency)=={'hash','importer'},'compiled object coverage set')
-    archive_comparisons={}
+    archive_comparisons={};dependency_spellings={}
     for owner,item in dependency.items():
-        groups=deps_groups((folder/item['deps']).read_text(),required_valid=item['objects'])
+        groups,dependency_spellings[owner]=object_dependency_groups((folder/item['deps']).read_text(),item['objects'],target)
         dependency_command=command_for(item['deps'])
         require(dependency_command['argv']==['ninja','-C',item['original_build'],'-t','deps'] and dependency_command['returncode']==0,
             'dependency evidence is not the exact original build database query')
@@ -657,7 +697,7 @@ def validate(folder, manifest, require_mutations=True):
         require(len(archive_objects)==len(expected_objects),'archive member/object count differs')
         matched=[]
         for obj in expected_objects:
-            payload=(folder/item['object_files'][obj]).read_bytes()
+            payload=(folder/retained_object_path(item,obj,target)).read_bytes()
             matches=[i for i,(_,data) in enumerate(archive_objects) if data==payload]
             require(len(matches)==1 and matches[0] not in matched,'compiled object does not uniquely bind an actual installed archive member')
             matched.extend(matches)
@@ -785,6 +825,7 @@ def validate(folder, manifest, require_mutations=True):
             'relocated-archive','relocated-header','relocated-config'}
         if desktop:expected_mutations.add('fabricated-control-runtime')
         if target=='android':expected_mutations.update(('host-target-substitution','android-api-binding'))
+        if target=='windows':expected_mutations.update(('dependency-separator-collision','dependency-stale','dependency-count','dependency-object-bytes'))
         if target in ('macos','ios-simulator'):expected_mutations.update(('build-index-content','build-object-content'))
         require(set(mutations)==expected_mutations,
             'actual evidence mutation controls incomplete')
@@ -792,4 +833,4 @@ def validate(folder, manifest, require_mutations=True):
             'mutation bypassed intended guard')
     return dict(boundary_link_passed=True,desktop_runtime_passed=desktop,mobile_runtime_passed=False,
         f07_accepted=False,full_six_accepted=False,target=target,files=len(files),archive_comparisons=archive_comparisons,
-        coff_same_object_fallbacks=coff_fallbacks,coff_common_data=coff_data)
+        coff_same_object_fallbacks=coff_fallbacks,coff_common_data=coff_data,dependency_object_spellings=dependency_spellings)

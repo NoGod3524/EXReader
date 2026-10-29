@@ -313,3 +313,37 @@ It still skips all native producers, ordinary authentication and old archive
 diagnostics, and uploads only `diagnostic.json`. Overall/current-source, six-target
 and F07 acceptance flags remain false. This three-file workflow/auth/document
 change does not alter production owners, parser criteria, tests or budgets.
+
+## Measured Windows separator-only object identity repair
+
+Pinned replay `40823790866/1` at
+`7a4ebd7ac16a8e99a0ffe8a7a7bee84db294200e` independently authenticated all five
+green `900366e7` producers. Both Windows archive rules use backslash relative
+object names; Ninja dependency groups use the same case-sensitive names with
+forward slashes. Their one-to-one groups are VALID with four hash dependencies
+and three importer dependencies. Object hashes and original commands/cache
+were retained; there were no canonical collisions. No coverage was granted then.
+
+The four-validation-file successor changes only this measured identity rule:
+Windows relative object spelling may replace backslash with forward slash.
+Empty/dot/parent/absolute/drive paths, case changes, duplicate normalized spellings
+and case-ambiguous keys are rejected. Expected archive-rule objects and observed
+dependency groups remain one-to-one, with original spellings retained. The VALID,
+advertised row count, exact compiled-source/public-header checks and unique
+object-byte-to-archive-member binding remain required. Retained object files must
+match the exact declared build directory and object path after separator mapping.
+
+Synthetic controls cover separators, collisions, case, traversal/absolute paths,
+stale groups and truncated counts. Actual evidence mutations add separator
+collision, STALE, missing dependency row and altered compiled object bytes to the
+existing private-include/missing-object/member/provider controls. They must fail
+at their intended guards, not merely at a changed inventory hash.
+
+Before another native build, the pinned diagnostic replays the repaired current
+contract and mutation controls over the original failed Windows upload under its
+historical source identity. Its inventory is explicitly reconstructed from that
+authenticated ZIP: it is **not** an original completed producer manifest and does
+not admit Windows, current-source native evidence, six targets or F07. The five
+green uploads still use the unchanged historical verifier. All original failures,
+raw ZIP hashes and object spellings remain retained. Owners, workflow, old tests,
+SDK, build flags and budgets are unchanged by this repair.

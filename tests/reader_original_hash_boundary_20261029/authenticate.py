@@ -263,6 +263,24 @@ def inspect_retained(dependency_profile=False):
                         ninja=dict(path=item['ninja'],**C.record(folder/item['ninja'])),
                         archive_rule=rule.group(),deps_command=command,admitted=False)
                 C.require(any(d['exact_missing'] for d in details.values()),'original exact dependency refusal not reproduced')
+                # The original failed upload has no completed producer manifest.
+                # Build an explicitly diagnostic inventory from its authenticated
+                # ZIP, then exercise repaired predicates under historical identity.
+                spec=importlib.util.spec_from_file_location('repaired_dependency_contract',C.ROOT/'tests/reader_original_hash_boundary_20261029/package_contract.py')
+                repaired=importlib.util.module_from_spec(spec);spec.loader.exec_module(repaired)
+                repaired.ROOT=C.ROOT;repaired.identity=lambda:dict(ident);repaired.guard=lambda:original_source
+                derived=dict(ident,target=target,files={p.relative_to(folder).as_posix():C.record(p) for p in sorted(folder.rglob('*')) if p.is_file()})
+                replay=dict(manifest_origin='diagnostic inventory reconstructed from authenticated original failed ZIP; not an original producer manifest',
+                    verifier_source_sha=C.identity()['source_sha'],evidence_source_sha=prior,
+                    native_acceptance=False,f07_accepted=False)
+                result['failed_producer_details'][target]['repaired_contract_replay']=replay
+                replay['checked']=repaired.validate(folder,derived,require_mutations=False)
+                saved=sys.modules['package_contract'];sys.modules['package_contract']=repaired
+                try:
+                    spec=importlib.util.spec_from_file_location('repaired_dependency_controls',C.ROOT/'tests/reader_original_hash_boundary_20261029/test_contract.py')
+                    repaired_controls=importlib.util.module_from_spec(spec);spec.loader.exec_module(repaired_controls)
+                finally:sys.modules['package_contract']=saved
+                replay['actual_mutation_controls']=repaired_controls.evidence_mutations(folder,derived)
                 continue
             if target=='windows':
                 details=[];parser_failures=[];common_details=[]
