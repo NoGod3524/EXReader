@@ -45,7 +45,9 @@ try:
  gs=js(g,"summary.json");samples=js(g,"samples.json");launches=js(g,"launches.json")["launches"]
  gr=js(g,"report.json");bundle=js(g,"bundle.json");ins=js(gi,"interaction-summary.json")
  report=js(archives["handoff"],"handoff-report.json")
- for j in (wb,gs,gr,ins,report):identity(j)
+ for j in (gs,gr,ins,report):identity(j)
+ # Windows package manifest has source_sha but no embedded run_id; the exact original ZIP pins its run/attempt.
+ assert wb["source_sha"]==SOURCE
  assert (ws.get("source_sha") or ws["environment"]["source_sha"])==SOURCE
  assert wb["sdk_version"]==report["sdk_version"]=="3.42.0" and wb["passed"] is True
  assert not ws["problems"] and wi["faults"]==[] and not ins["problems"]
