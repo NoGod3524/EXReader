@@ -17,9 +17,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           python tools/reader_composition/windows_startup_independent.py
-          --run 40946614986 --source 10672a5325e721b6ae43be43e3f2e6865e1cf4d0
-          --job 123703540074 --artifact 12930555215 --bytes 4195387
-          --sha256 acc7f245f6ce470fd3dda1f296e8cdd6d8d0071dcd1f0014b80ae45e889d8646
+          --run 40946894259 --source 343bb94eb6513beaf5b344e7828342f6602a3b7b
+          --job 123704514919 --artifact 12928599895 --bytes 4195369
+          --sha256 47c3fdbce8c111709e08ec280622a3da1657b3342f39bb172f1c31d0336286d2
       - uses: actions/upload-artifact@v4
         if: always()
         with:
