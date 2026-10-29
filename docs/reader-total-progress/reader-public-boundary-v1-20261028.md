@@ -106,6 +106,43 @@ selector/C06 assertions. Linux reached the same configuration fixture leak after
 its behavior checks; macOS and Android failures above remained. Authentication
 correctly refused the failed Linux job. This is not aggregate or full F07 success.
 
+### Fourth measured run: exact capture refusals retained
+
+Source `ac8b745236c8a376a2fc69e06650de8fb3ca8d1a`, run `40810187900/1`,
+passed 60 synthetic controls and completed the Linux, Windows and iPhone/iPad
+native/capture jobs. Both fresh Apple simulators passed codec 40/40 and retained
+76/76. Linux/Windows/Android passed 40/40 and 88/88; macOS passed 40/40 and 76/76.
+macOS and Android both completed their
+full native, original selector/C06 and configuration-control steps. Android's
+generated CMake CXX compiler record identified the actual NDK clang++ driver while
+the compiler cache assignment was absent; the new exact generated-record binding
+passed. The prior empty-directory transport and selected-prefix fixture failures
+did not recur in those completed steps.
+
+Capture then stopped at two separate exact gates: macOS built-versus-installed
+owner archive SHA equality, and Android existence/workspace containment of a
+map-selected input. Their original error messages omitted the failing owner/input,
+so neither cause is classified yet. In particular, no archive-metadata explanation
+or map-origin exception is assumed. The follow-up only retains both archive byte
+streams, paths, sizes, hashes, bounded difference offsets/window and the exact
+rejected map origin/path/resolved identity before the same strict refusals. It
+does not normalize archives, waive missing inputs or change admission rules.
+
+Authentication failed at the first successful Linux artifact's exact file-set
+equality check. The source capture inventories hidden Ninja dependency/log files,
+while the workflow's evidence uploads used `include-hidden-files: false` (the
+action default). The follow-up enables hidden files only for the four bounded
+`build/public-boundary-v1/evidence/` upload declarations, not the checkout, home,
+or arbitrary work directories. That root is populated only by the explicit
+capture copies of build/install/package/test data and logs; `.git` credentials,
+runner home and environment dumps are not capture roots, and `GH_TOKEN` is scoped
+only to the separate authentication step. No secret-file upload is intended.
+Missing/extra inventory names are now reported before the unchanged equality gate;
+the exact fourth-run missing set was not printed, so complete attribution remains
+pending Actions evidence. Synthetic controls reject omitted dependency files and
+unexpected hidden entries. The terminal aggregate remains failed, all prior runs
+are preserved, and there is no six-entry or full F07 claim.
+
 ### Authorized Android caller extension, 2026-10-29 01:35 UTC
 
 The user confirmed “那我确认” (Sentinel_6c49c0656690819180749be6664bd059,

@@ -804,9 +804,15 @@ def ndk_capture(destination,files,copy):
                     archive=re.fullmatch(r'(.+\.a)\(([^()]+)\)',name)
                     path_name,member=(archive[1],archive[2]) if archive else (name,None)
                     path=Path(path_name) if Path(path_name).is_absolute() else folder/path_name
-                    need('..' not in path.parts,'map input traversal requires explicit diagnosis')
+                    need('..' not in path.parts,('map input traversal requires explicit diagnosis',name,str(path)))
                     if path.is_relative_to(ROOT):
-                        need(path.is_file() and path.resolve().is_relative_to(ROOT),'workspace map input missing/escaping')
+                        exists=path.is_file();resolved=path.resolve();inside=resolved.is_relative_to(ROOT)
+                        if not (exists and inside):
+                            rejected=dict(origin=value,name=name,path=str(path),resolved=str(resolved),is_file=exists,
+                                          resolved_inside_workspace=inside,address=address,size=size)
+                            image_record['rejected_workspace_input']=rejected
+                            print('ACTUAL_REJECTED_WORKSPACE_MAP_INPUT',json.dumps(rejected),flush=True)
+                        need(exists and inside,('workspace map input missing/escaping',name,str(path)))
                         workspace_inputs.setdefault(str(path),set()).add(member);continue
                     if not path.is_relative_to(root):result['gaps'].append('unknown external origin '+name);continue
                     selected.setdefault(str(path),set()).add(member)
@@ -917,8 +923,23 @@ def capture(target):
                 need(owner not in proofs,'ambiguous raw build owner '+owner)
                 name=archive_names[owner];archive_name=name+'.lib' if os.name=='nt' else 'lib'+name+'.a'
                 built=folder/archive_name;installed=stage/'lib'/archive_name
-                need(built.is_file() and installed.is_file() and digest(built)==digest(installed),'actual built archive differs from installed owner')
-                copy(built)
+                pair=dict(owner=owner,built=str(built.relative_to(ROOT)),installed=str(installed.relative_to(ROOT)),built_exists=built.is_file(),installed_exists=installed.is_file())
+                if built.is_file():copy(built);pair.update(built_sha256=digest(built),built_bytes=built.stat().st_size)
+                if installed.is_file():copy(installed);pair.update(installed_sha256=digest(installed),installed_bytes=installed.stat().st_size)
+                if built.is_file() and installed.is_file():
+                    left,right=built.read_bytes(),installed.read_bytes()
+                    changed=[];changed_count=0
+                    for offset,(a,b) in enumerate(zip(left,right)):
+                        if a!=b:
+                            changed_count+=1
+                            if len(changed)<32:changed.append(offset)
+                    pair.update(different_common_bytes=changed_count,first_different_offsets=changed,length_difference=len(right)-len(left))
+                    if changed:
+                        start=max(0,changed[0]-24);end=min(max(len(left),len(right)),changed[0]+48)
+                        pair.update(first_difference_window=dict(start=start,built_hex=left[start:end].hex(),installed_hex=right[start:end].hex()))
+                report.setdefault('built_installed_archive_comparison',[]).append(pair)
+                print('ACTUAL_BUILT_INSTALLED_ARCHIVE',json.dumps(pair),flush=True)
+                need(pair['built_exists'] and pair['installed_exists'] and pair['built_sha256']==pair['installed_sha256'],('actual built archive differs from installed owner',owner))
                 if ninja_deps is not None:
                     groups=ninja_dependency_groups(ninja_deps)
                     query=command(['ninja','-C',folder,'-t','query',archive_name],'archive-input-'+owner).stdout
@@ -1060,6 +1081,11 @@ def verify_delivered_entry(bundle,target,record):
     return dict(target=target,entry_sha256=executable,files=len(manifest['files']),archive_sha256=block['sha256'])
 
 
+def file_inventory_difference(names,files):
+    expected=set(files)|{'inventory.json'};actual=set(names)
+    return dict(missing=sorted(expected-actual),unexpected=sorted(actual-expected))
+
+
 def authenticate():
     actions();report=dict(identity(),named_six_boundary_accepted=False,f07_accepted=False,full_six_f07_accepted=False,artifacts=[])
     def api(path):return json.loads(command(['gh','api','repos/NoGod3524/EXReader/'+path]).stdout)
@@ -1088,6 +1114,10 @@ def authenticate():
                 names=[info.filename for info in bundle.infolist() if not info.is_dir()]
                 inventory=json.loads(bundle.read('inventory.json'))
                 for key,value in identity().items():need(inventory[key]==value,(target,key))
+                difference=file_inventory_difference(names,inventory['files'])
+                if difference['missing'] or difference['unexpected']:
+                    report['inventory_mismatch']=dict(target=target,artifact_id=a['id'],**difference)
+                    print('ACTUAL_ARTIFACT_INVENTORY_MISMATCH',json.dumps(report['inventory_mismatch']),flush=True)
                 need(set(names)==set(inventory['files'])|{'inventory.json'},'complete file inventory')
                 for path,meta in inventory['files'].items():
                     data=bundle.read(path);need(len(data)==meta['bytes'] and hashlib.sha256(data).hexdigest()==meta['sha256'],'file digest '+path)

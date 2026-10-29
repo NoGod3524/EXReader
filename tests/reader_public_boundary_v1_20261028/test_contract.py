@@ -25,6 +25,22 @@ class BoundaryContract(unittest.TestCase):
         for p in (*C.OWNERS,*C.HOSTS,*C.ADDED):
             self.assertFalse(p.startswith(('src/','include/','cmake/','tests/reader_selector_bytes/','tests/reader_f06_packages/')))
 
+    def test_artifact_inventory_requires_hidden_dependencies(self):
+        files={'build/module/.ninja_deps':{},'build/module/.ninja_log':{},'build/module/public.a':{}}
+        self.assertEqual(C.file_inventory_difference([*files,'inventory.json'],files),dict(missing=[],unexpected=[]))
+        diff=C.file_inventory_difference(['inventory.json','build/module/public.a'],files)
+        self.assertEqual(diff['missing'],['build/module/.ninja_deps','build/module/.ninja_log'])
+        self.assertEqual(diff['unexpected'],[])
+
+    def test_artifact_inventory_never_ignores_extra_hidden_files(self):
+        diff=C.file_inventory_difference(['inventory.json','build/.unexpected'],{})
+        self.assertEqual(diff,dict(missing=[],unexpected=['build/.unexpected']))
+
+    def test_hidden_upload_is_bounded_to_captured_evidence(self):
+        text=(C.ROOT/'.github/workflows/reader-public-boundary-v1-20261028.yml').read_text()
+        self.assertEqual(text.count('include-hidden-files: true'),4)
+        self.assertEqual(text.count('path: build/public-boundary-v1/evidence/\n          include-hidden-files: true'),4)
+
     def test_original_selector_versions_uses_actual_legacy_sibling(self):
         data=Path('/owned/native-data')
         for entry in ('linux','windows','macos','iphone','ipad','android'):
