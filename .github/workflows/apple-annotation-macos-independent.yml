@@ -1,0 +1,22 @@
+name: Independent macOS annotation evidence
+on:
+  push:
+    branches: [codex/apple-four-evidence-audit-20261029]
+    paths: ['.github/workflows/apple-annotation-macos-independent.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  audit:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate one completed original host and all 39 unchanged-budget cases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/apple_annotation_independent.py --platform macos
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-annotation-independent-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-annotation-independent/macos/result.json
+          if-no-files-found: warn
