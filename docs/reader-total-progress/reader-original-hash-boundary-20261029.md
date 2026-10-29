@@ -257,3 +257,30 @@ inject foreign output/library spellings and must fail. Actual simulator index
 content mutation must fail outside the timestamp allowance. All originals remain
 unchanged, overall acceptance stays false, and the diagnostic performs no native
 build or executable invocation. A later full native run requires separate approval.
+# Bounded Windows common-data classification (retained replay first)
+
+Retained diagnostic `40820419048/1` at
+`55ea5761ab8dacfd57fb1922bd618ef38271a1b3` preserved five strict common-symbol
+refusals: four normal OPDS objects and one Revisions OPDS helper contain
+`?_OptionsStorage@?1??__local_stdio_printf_options@@9@9`. The original upload
+hashes and failed run remain unchanged. Three importer weak fallback bindings,
+six Android final-command checks, and simulator timestamp/index controls passed
+in that diagnostic; this was not native or all-six acceptance.
+
+The new classification is **data only**, restricted to normal/Revisions roles.
+It requires the exact decorated name, an ordinary x64 COFF record with external
+storage class 2, section 0, value/size 8, type 0 and zero auxiliary records, and
+matching DUMPBIN index/name/value/nonfunction text with complete row inventory.
+No function, public API, undefined import or final-provider credit is granted.
+Other common names, sizes, types or owners are rejected, including every public,
+private and legacy hash name. This follows Microsoft's distinction between an
+undefined reference (zero value) and common-data size (nonzero value) in its
+[PE/COFF specification](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format).
+
+New Actions-only controls cover wrong name/size/type/storage/section/auxiliary,
+duplicate/missing/text-mismatched records, hash-owner and hash-API substitution,
+and attempted function-map credit. The pinned-original diagnostic separately
+reproduces the historical refusal and mutates each actual common record's size,
+function type and owner. Original source identity is never relabeled current;
+old failures and raw hashes remain retained. No production, SDK, budget, old
+test or workflow change is part of this four-validation-file repair.

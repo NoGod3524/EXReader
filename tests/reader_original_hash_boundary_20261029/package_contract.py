@@ -196,13 +196,10 @@ COFF_FALLBACK_PAIRS={
     '??_Eexception@std@@UEAAPEAXI@Z':'??_Gexception@std@@UEAAPEAXI@Z',
     '??_Ebad_alloc@std@@UEAAPEAXI@Z':'??_Gbad_alloc@std@@UEAAPEAXI@Z',
     '??_Ebad_array_new_length@std@@UEAAPEAXI@Z':'??_Gbad_array_new_length@std@@UEAAPEAXI@Z'}
+COFF_STDIO_COMMON='?_OptionsStorage@?1??__local_stdio_printf_options@@9@9'
 
-def coff_weak_fallbacks(raw):
-    """Only measured ordinary-x64 no-library-search same-object function fallbacks.
-
-    This proves a fallback is present, not that a final linker selected it over
-    another already-linked definition. It never grants a public hash entry.
-    """
+def coff_records(raw):
+    """Strict ordinary-x64 record inventory shared by bounded classifications."""
     require(len(raw)>=20 and raw[:2]==b'\x64\x86','unsupported weak COFF object format')
     sections=int.from_bytes(raw[2:4],'little');table=int.from_bytes(raw[8:12],'little');count=int.from_bytes(raw[12:16],'little')
     require(sections>0 and raw[16:18]==b'\0\0' and 20+sections*40<=table and count>0 and table+count*18+4<=len(raw),'COFF symbol/section table bounds')
@@ -225,6 +222,15 @@ def coff_weak_fallbacks(raw):
             section=int.from_bytes(record[12:14],'little',signed=True),type=int.from_bytes(record[14:16],'little'),
             storage=record[16],aux=aux,aux_bytes=raw[start+18:start+18*(1+aux)])
         index+=1+aux
+    return sections,table,rows
+
+def coff_weak_fallbacks(raw):
+    """Only measured ordinary-x64 no-library-search same-object function fallbacks.
+
+    This proves a fallback is present, not that a final linker selected it over
+    another already-linked definition. It never grants a public hash entry.
+    """
+    sections,table,rows=coff_records(raw)
     result={}
     for index,row in rows.items():
         if row['storage']!=105:continue
@@ -247,9 +253,24 @@ def coff_weak_fallbacks(raw):
             code_sha256=hashlib.sha256(raw[data:data+size]).hexdigest(),final_provider_claim=False)
     return result
 
-def symbols(text, target, object_bytes=None):
+def coff_common_data(raw,owner):
+    """One measured eight-byte data allocation, never a function/import/provider."""
+    _,_,rows=coff_records(raw);result={}
+    for index,row in rows.items():
+        if row['name']!=COFF_STDIO_COMMON and not (row['storage']==2 and row['section']==0 and row['value']!=0):continue
+        require(owner in ('normal','revision') and row['name']==COFF_STDIO_COMMON and
+            row['name'] not in PUBLIC|PRIVATE|FORBIDDEN and row['storage']==2 and row['section']==0 and
+            row['value']==8 and row['type']==0 and row['aux']==0,
+            'unsupported COFF common data record or owner')
+        require(row['name'] not in result and sum(r['name']==row['name'] for r in rows.values())==1,'duplicate COFF common data record')
+        result[row['name']]=dict(index=index,bytes=8,storage=2,section=0,type=0,auxiliary_count=0,
+            owner=owner,classification='common-data-only',function_or_api_grant=False,final_provider_claim=False)
+    return result
+
+def symbols(text, target, object_bytes=None, owner=None):
     definitions=set();undefined=set();weak_rows={};strong_rows={}
     fallbacks=coff_weak_fallbacks(object_bytes) if target=='windows' and object_bytes is not None else {}
+    common=coff_common_data(object_bytes,owner) if target=='windows' and object_bytes is not None else {};common_rows=set()
     lines=text.splitlines()
     for position,line in enumerate(lines):
         if target=='windows':
@@ -257,9 +278,13 @@ def symbols(text, target, object_bytes=None):
             m=re.match(r'^\s*([0-9A-Fa-f]+)\s+([0-9A-Fa-f]+)\s+(UNDEF|SECT[0-9A-Fa-f]+)\b(.*?)\b(WeakExternal|External)\s+\|\s+(\S+)(?:\s+(\(.+\)))?\s*$',line)
             require(m is not None,'unknown COFF external row: '+line)
             index,value,section,kind,storage,name,annotation=m.groups();index=int(index,16)
+            if name==COFF_STDIO_COMMON:require(name in common,'measured common-data name lacks binary evidence')
             if annotation:
                 require(name.startswith('?') and annotation.count('(')==annotation.count(')') and '|' not in annotation,
                     'unsupported COFF display annotation')
+            if name in common:
+                require(storage=='External' and section=='UNDEF' and index==common[name]['index'],
+                    'COFF common data cannot become a function or another record')
             if storage=='WeakExternal':
                 require(object_bytes is not None and name in fallbacks,'weak COFF binary fallback evidence required')
                 fallback=fallbacks[name]
@@ -271,7 +296,11 @@ def symbols(text, target, object_bytes=None):
             require(index not in strong_rows,'duplicate COFF external row index')
             strong_rows[index]=(name,section,int(value,16),'()' in kind)
             if section=='UNDEF':
-                require(int(value,16)==0,'COFF common symbol is not a function import: row='+line[:1024]+(' [truncated]' if len(line)>1024 else ''));undefined.add(name)
+                if int(value,16)!=0:
+                    require(name in common and common[name]['index']==index and int(value,16)==8 and kind.strip()=='notype' and name not in common_rows,
+                        'COFF common symbol lacks exact data evidence: row='+line[:1024]+(' [truncated]' if len(line)>1024 else ''))
+                    common_rows.add(name);continue
+                require(name not in common,'COFF common text/binary value differs');undefined.add(name)
             else:
                 # Only function definitions can grant the public ABI.
                 if '()' in kind:definitions.add(name)
@@ -286,15 +315,16 @@ def symbols(text, target, object_bytes=None):
             elif kind=='U':undefined.add(name)
             elif (name in PUBLIC|PRIVATE|FORBIDDEN):raise ValueError('non-function/weak hash entry')
     if target=='windows':
+        require(common_rows==set(common),'COFF common text/binary inventory differs')
         require(set(weak_rows)==set(fallbacks),'weak COFF text/binary inventory differs')
         for row in fallbacks.values():
             require(strong_rows.get(row['fallback_index'])==(row['fallback'],'SECT'+format(row['fallback_section'],'X'),row['fallback_value'],True),
                 'weak COFF strong fallback text/binary definition differs')
     return definitions,undefined
 
-def require_member_definition(folder,member,target,symbol):
+def require_member_definition(folder,member,target,symbol,owner=None):
     payload=(Path(folder)/member['object']).read_bytes()
-    defined,_=symbols((Path(folder)/member['symbols']).read_text(),target,payload if target=='windows' else None)
+    defined,_=symbols((Path(folder)/member['symbols']).read_text(),target,payload if target=='windows' else None,owner)
     require(symbol in defined,'map symbol not defined by exact retained member')
 
 def deps_groups(text,required_valid=()):
@@ -584,7 +614,7 @@ def validate(folder, manifest, require_mutations=True):
         if name=='product':
             require('$<LINK_ONLY:EXReaderOPDSHash::opds_sha256_stream>' in combined,'static public hash dependency not exported')
     require((folder/hash_owner['prefix']/'include/exreader-opds-hash/opds_sha256_stream.h').read_bytes()==(ROOT/OWNER_PATHS[0]).read_bytes(),'installed public header source')
-    native=json.loads((folder/'native.json').read_text());defs={};undef={};coff_fallbacks={}
+    native=json.loads((folder/'native.json').read_text());defs={};undef={};coff_fallbacks={};coff_data={}
     require(set(native)=={'hash','importer','normal','revision'},'native owner inventory')
     for owner,entry in native.items():
         actual=archive_members((folder/entry['archive']).read_bytes())
@@ -592,10 +622,12 @@ def validate(folder, manifest, require_mutations=True):
         defs[owner]=set();undef[owner]=set()
         for (name,payload),member in zip(actual,entry['members']):
             require((folder/member['object']).read_bytes()==payload,'member byte extraction')
-            d,u=symbols((folder/member['symbols']).read_text(errors='strict'),target,payload if target=='windows' else None)
+            d,u=symbols((folder/member['symbols']).read_text(errors='strict'),target,payload if target=='windows' else None,owner)
             if target=='windows':
                 fallback=coff_weak_fallbacks(payload)
                 if fallback:coff_fallbacks[member['object']]=fallback
+                common=coff_common_data(payload,owner)
+                if common:coff_data[member['object']]=common
             require(not(defs[owner]&d&PUBLIC),'duplicate stream definition')
             defs[owner]|=d;undef[owner]|=u
             matching=[row for row in commands if row['output']==member['symbols']]
@@ -691,7 +723,7 @@ def validate(folder, manifest, require_mutations=True):
             candidates=[row for row in native[owner]['members'] if row['name'].replace('\\','/')==member or
                 ('/' not in member and row['name'].replace('\\','/').rsplit('/',1)[-1]==member)]
             require(len(candidates)==1,'map member identity ambiguous/missing')
-            require_member_definition(folder,candidates[0],target,symbol)
+            require_member_definition(folder,candidates[0],target,symbol,owner)
         maptext=maptext.replace('\\','/')
         require(link['image_name'] in command and '.map' in command,'actual final link command absent')
         require(link['hash_prefix'] in command or link['hash_prefix'] in maptext,'final link does not identify exact installed hash prefix')
@@ -760,4 +792,4 @@ def validate(folder, manifest, require_mutations=True):
             'mutation bypassed intended guard')
     return dict(boundary_link_passed=True,desktop_runtime_passed=desktop,mobile_runtime_passed=False,
         f07_accepted=False,full_six_accepted=False,target=target,files=len(files),archive_comparisons=archive_comparisons,
-        coff_same_object_fallbacks=coff_fallbacks)
+        coff_same_object_fallbacks=coff_fallbacks,coff_common_data=coff_data)

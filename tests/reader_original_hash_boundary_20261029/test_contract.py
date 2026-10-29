@@ -33,7 +33,60 @@ def coff_fixture(weak='??_Eexception@std@@UEAAPEAXI@Z',fallback='??_Gexception@s
     text='000 00000000 SECT1 notype () External | '+fallback+'\n001 00000000 UNDEF notype () WeakExternal | '+weak+'\n    Default index 000 No library search\n'
     return raw,text
 
+def coff_common_fixture(name=C.COFF_STDIO_COMMON,duplicate=False):
+    """Synthetic common DATA record; never a public-function fixture."""
+    def u(value,width):return value.to_bytes(width,'little')
+    record=b'\0'*4+u(4,4)+u(8,4)+u(0,2)+u(0,2)+bytes((2,0))
+    records=record*(2 if duplicate else 1);strings=name.encode()+b'\0'
+    header=bytearray(20);header[:2]=u(0x8664,2);header[2:4]=u(1,2);header[8:12]=u(61,4);header[12:16]=u(len(records)//18,4)
+    section=bytearray(40);section[:8]=b'.text\0\0\0';section[16:20]=u(1,4);section[20:24]=u(60,4);section[36:40]=u(0x60000020,4)
+    raw=bytes(header+section)+b'\xc3'+records+u(len(strings)+4,4)+strings
+    return raw,'000 00000008 UNDEF notype External | '+name+'\n'
+
 class ContractTests(unittest.TestCase):
+    def test_coff_common_data_only(self):
+        raw,text=coff_common_fixture()
+        for owner in ('normal','revision'):
+            self.assertEqual(C.symbols(text,'windows',raw,owner),(set(),set()))
+            common=C.coff_common_data(raw,owner)[C.COFF_STDIO_COMMON]
+            self.assertEqual(common['bytes'],8);self.assertFalse(common['function_or_api_grant']);self.assertFalse(common['final_provider_claim'])
+        for owner in (None,'hash','importer','foreign'):
+            with self.assertRaisesRegex(ValueError,'common data record or owner'):C.symbols(text,'windows',raw,owner)
+        with self.assertRaisesRegex(ValueError,'common-data name lacks binary evidence'):C.symbols(text,'windows')
+        for name in (C.COFF_STDIO_COMMON+'foreign',*C.PUBLIC,*C.PRIVATE,*C.FORBIDDEN):
+            altered,output=coff_common_fixture(name)
+            with self.assertRaisesRegex(ValueError,'common data record or owner'):C.symbols(output,'windows',altered,'normal')
+        for offset,value in ((69,(16).to_bytes(4,'little')),(75,(0x20).to_bytes(2,'little'))):
+            altered=raw[:offset]+value+raw[offset+len(value):]
+            with self.assertRaisesRegex(ValueError,'common data record or owner'):C.symbols(text,'windows',altered,'normal')
+        for offset,value in ((73,b'\x01\x00'),(77,b'\x03'),(78,b'\x01')):
+            altered=raw[:offset]+value+raw[offset+len(value):]
+            with self.assertRaises(ValueError):C.symbols(text,'windows',altered,'normal')
+        for altered in (text.replace('000 ','001 ',1),text.replace('00000008','00000000'),
+                text.replace('00000008','00000010'),text.replace('notype','notype ()'),
+                text.replace('UNDEF notype','SECT1 notype ()'),'',text+text):
+            with self.assertRaises(ValueError):C.symbols(altered,'windows',raw,'normal')
+        raw,text=coff_common_fixture(duplicate=True)
+        with self.assertRaisesRegex(ValueError,'duplicate COFF common'):C.symbols(text,'windows',raw,'normal')
+
+    def test_coff_common_never_member_function(self):
+        raw,text=coff_common_fixture()
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td);(folder/'member.obj').write_bytes(raw);(folder/'symbols.txt').write_text(text)
+            member=dict(object='member.obj',symbols='symbols.txt')
+            with self.assertRaisesRegex(ValueError,'map symbol not defined'):
+                C.require_member_definition(folder,member,'windows',C.COFF_STDIO_COMMON,'normal')
+            for section,kind in ((0,0),(1,0x20)):
+                changed=bytearray(raw);changed[69:73]=b'\0'*4
+                changed[73:75]=section.to_bytes(2,'little');changed[75:77]=kind.to_bytes(2,'little')
+                output=text.replace('00000008','00000000')
+                if section:output=output.replace('UNDEF notype','SECT1 notype ()')
+                with self.assertRaisesRegex(ValueError,'common data record or owner'):
+                    C.symbols(output,'windows',bytes(changed),'normal')
+                (folder/'member.obj').write_bytes(changed);(folder/'symbols.txt').write_text(output)
+                with self.assertRaisesRegex(ValueError,'common data record or owner'):
+                    C.require_member_definition(folder,member,'windows',C.COFF_STDIO_COMMON,'normal')
+
     def test_zip_alias(self):
         for names in (('a','A'),('e\u0301','é'),('a','a/b'),('../x','ordinary'),('root//','root/')):
             stream=io.BytesIO()

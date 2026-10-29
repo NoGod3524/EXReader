@@ -202,8 +202,9 @@ def inspect_retained():
                 C.require(len(rows)==1 and rows[0]['output_record']==C.record(folder/path) and rows[0]['returncode']==0,'diagnostic output not bound to original command')
                 return rows[0]
             if target=='windows':
-                details=[];parser_failures=[]
-                result['failed_producer_details'][target]=dict(weak_externals=details,parser_failures=parser_failures,admitted=False)
+                details=[];parser_failures=[];common_details=[]
+                result['failed_producer_details'][target]=dict(weak_externals=details,parser_failures=parser_failures,
+                    common_data=common_details,admitted=False)
                 for owner,entry in native.items():
                     members=C.archive_members((folder/entry['archive']).read_bytes())
                     C.require([n for n,_ in members]==[m['name'] for m in entry['members']],'original COFF member set differs')
@@ -213,7 +214,7 @@ def inspect_retained():
                         C.require(row['subjects']=={member['object']:C.record(folder/member['object'])} and len(row['argv'])==3 and
                             row['argv'][:2]==['dumpbin','/symbols'] and row['argv'][2].replace('\\','/').endswith('/evidence/'+member['object']),'original dumpbin invocation differs')
                         symbol_text=(folder/member['symbols']).read_text()
-                        try:C.symbols(symbol_text,'windows',payload)
+                        try:C.symbols(symbol_text,'windows',payload,owner)
                         except ValueError as error:
                             # Diagnostic continuation only: every rejection remains
                             # an aggregate failure, never an accepted native member.
@@ -223,6 +224,29 @@ def inspect_retained():
                             parser_failures.append(failure)
                             result['failures'].append('Windows retained member rejected: '+owner+'/'+name+': '+failure['error'])
                         binary_fallbacks=C.coff_weak_fallbacks(payload)
+                        common=C.coff_common_data(payload,owner)
+                        if common:
+                            C.require(len(common)==1 and C.COFF_STDIO_COMMON in common,'unexpected retained common data inventory')
+                            try:old.symbols(symbol_text,'windows');original_common_failure=None
+                            except ValueError as error:original_common_failure=str(error)
+                            C.require(original_common_failure=='COFF common symbol is not a function import','historical common-data refusal differs')
+                            bound=common[C.COFF_STDIO_COMMON];table=int.from_bytes(payload[8:12],'little');record=table+bound['index']*18
+                            negatives=[]
+                            for label,offset,value in (('size',record+8,(16).to_bytes(4,'little')),
+                                    ('function-type',record+14,(0x20).to_bytes(2,'little'))):
+                                altered=payload[:offset]+value+payload[offset+len(value):]
+                                try:C.symbols(symbol_text,'windows',altered,owner)
+                                except ValueError as error:C.require('common data record or owner' in str(error),'common mutation hit unrelated guard')
+                                else:raise ValueError('actual common-data mutation accepted')
+                                negatives.append(label)
+                            try:C.symbols(symbol_text,'windows',payload,'hash')
+                            except ValueError as error:C.require('common data record or owner' in str(error),'common owner mutation hit unrelated guard')
+                            else:raise ValueError('actual common-data owner mutation accepted')
+                            negatives.append('hash-owner')
+                            common_details.append(dict(owner=owner,member=name,object=C.record(folder/member['object']),
+                                symbols=C.record(folder/member['symbols']),binary_bound_data=common,
+                                original_failure=original_common_failure,actual_negative_controls=negatives,
+                                function_or_api_grant=False,final_provider_claim=False))
                         lines=symbol_text.splitlines();weak=[i for i,l in enumerate(lines) if 'WeakExternal' in l]
                         if weak:
                             try:old.symbols(symbol_text,'windows');original_failure=None
@@ -252,6 +276,8 @@ def inspect_retained():
                                 symbols=C.record(folder/member['symbols']),weak_groups=groups,original_failure=original_failure,
                                 current_binary_bound_fallbacks=binary_fallbacks,actual_negative_controls=negative_controls,final_provider_claim=False))
                 C.require(details,'original weak COFF failure not reproduced in retained diagnostics')
+                C.require(len(common_details)==5 and [d['owner'] for d in common_details].count('normal')==4 and
+                    [d['owner'] for d in common_details].count('revision')==1,'measured original common-data coverage differs')
             elif target=='android':
                 links=json.loads((folder/'links.json').read_text());details={}
                 C.require(set(links)=={'installed','relocated','normal-first','hash-first','revision-first','hash-revision'},'Android link inventory differs')
