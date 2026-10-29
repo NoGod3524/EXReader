@@ -19,3 +19,15 @@ No default-branch merge, PR, tag or Release is part of this handoff. Builds, syn
 - Windows migration [40936421939](https://github.com/NoGod3524/EXReader/actions/runs/40936421939), source `ed734a879c933b78006ce9e78e89921d3c44fe69`: new same-directory fixture rename stimulus and original 67-group/30-minute gate. Earlier guard failure [40936057156](https://github.com/NoGod3524/EXReader/actions/runs/40936057156) executed no qualification groups and remains retained. Even a passing qualification does not enable Windows production recovery or grant F12.
 
 The independent mobile workflow waits on the already-running exact producer on Ubuntu, then audits each completed host on macOS. It does not dispatch production tests. Its reports receive no catalog credit until explicitly pinned and reread by the fixed progress audit.
+
+## Further mainline checkpoint
+
+Independent mobile audit workflow [40937262016](https://github.com/NoGod3524/EXReader/actions/runs/40937262016) is waiting for the existing producer, not rerunning it. Its source is `82f0bc538024dbd7bedfead76724d307eb683719`.
+
+The 3.42 transport repair is executing in [40937013878](https://github.com/NoGod3524/EXReader/actions/runs/40937013878), source `6be10b3de1e7f9e98bab72db586a66e571199034`; both SDK installations passed and native testing started. The next full Apple candidate is `bd28d4946f17a184dd3cd47a584cf49fce34e973`, branch `codex/apple-sdk342-full-handoff-20261029`, [40937997549](https://github.com/NoGod3524/EXReader/actions/runs/40937997549), queued when checked. It is based on public-module candidate `e6b899284744b95dc832db92ed16324711ff5362`, preserving those module blobs while applying Apple host functionality, the older-record upgrade policy and unchanged-budget original suites. This supersedes neither old host evidence nor any six-platform final gate.
+
+Windows qualification [40936421939](https://github.com/NoGod3524/EXReader/actions/runs/40936421939) completed **66/67**: 43/43 frozen prerequisite and 23/24 native groups. The same-directory helper passed its own no-replace and parent controls and let g15/g17 pass. g10 reached a real downstream refusal. Retained-only inspection [40937534551](https://github.com/NoGod3524/EXReader/actions/runs/40937534551) found the child refused a temporarily missing request before the intended identity-replacement boundary: `regular-open`, Windows error 2, `target_sdk_open_attempted=false`. The original expected reason must not be broadened; the next test-only synchronization candidate will wait for the actual first-envelope-checked boundary before replacing the fixture.
+
+The separate product next step is a Windows startup gate before ordinary `exr_library_open`: an already-present migration pending/recovery/lock marker must prevent an accidental normal open, with a visible diagnostic and untouched user data; an ordinary profile or legacy-sidecar-only profile must still open. This is a cooperative startup prerequisite, not implementation of missing Windows recovery or a claim to eliminate all races.
+
+No new fixed-catalog item has been accepted at this checkpoint; the verified total remains **95/108**.
