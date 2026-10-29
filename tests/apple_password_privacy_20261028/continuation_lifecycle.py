@@ -64,8 +64,10 @@ class ContinuationLifecycle:
             self.admission_closed_event.set()
             self.condition.notify_all()
 
-    def command(self, argv, cap=30, check=True, cwd=None, env=None, max_capture=16 * 1024 * 1024):
+    def command(self, argv, cap=30, check=True, cwd=None, env=None, max_capture=16 * 1024 * 1024, output_sink=None):
         """Own the invocation group; retain output without waiting on inherited pipes."""
+        if output_sink is not None:
+            return output_sink.command(self, argv, cap, check, cwd, env, max_capture)
         limit = self.remaining(cap)
         cutoff = min(self.deadline, time.monotonic() + limit)
         with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:

@@ -22,7 +22,7 @@ from continuation_contract import ENTITLEMENT_FILE, admission_app_identity, admi
 from continuation_contract import CheckpointTiming
 from fixture import fixture
 from privacy_scan import needles, scan_file, scan_roots, optional_entries, verify_optional_entries
-from log_evidence import attribute_unified_log, retain_product_log
+from continuation_log_capture import attribute_unified_log, product_capture, publish_product_capture, read_payload
 from ui_observations import parse_ui_observations
 from continuation_lifecycle import ContinuationLifecycle, atomic_result, seal_files, verify_lifecycle, write_unsealed
 sys.path[:0] = [str(ROOT / 'tests/apple_host'), str(ROOT / 'tools')]
@@ -214,14 +214,14 @@ def main():
             else: absence = []
             timing.phase(stage, 'log-capture-retention')
             command = ['xcrun', 'simctl', 'spawn', udid] if udid else []
+            capture = product_capture(evidence, stage)
             done = lifecycle.command(command + ['log', 'show', '--style', 'json', '--info', '--debug', '--last', '30m',
-                '--predicate', 'process == "EXReaderHost"'], cap=60, check=False, max_capture=None)
+                '--predicate', 'process == "EXReaderHost"'], cap=60, check=False, max_capture=None, output_sink=capture)
             # Retain complete captured bytes before scan/capture refusal. These
             # sensitive synthetic-only artifacts are never printed to console.
-            log_root = retain_product_log(evidence, stage, platform, result['source_sha'], result['run_id'],
-                                          result['attempt'], done.stdout, done.stderr, done.returncode)
+            log_root = publish_product_capture(capture, evidence, stage, platform, result['source_sha'], result['run_id'], result['attempt'])
             require(done.returncode == 0, 'actual product log capture failed')
-            require(bool(done.stdout.strip()), 'actual product log capture was empty')
+            require(capture.nonblank, 'actual product log capture was empty')
             roots['product-log'] = log_root
             timing.phase(stage, 'first-scan-manifest')
             scans = scan_roots(roots, variants)
@@ -229,7 +229,7 @@ def main():
             timing.counts(stage, scans)
             timing.phase(stage, 'attribution-verdict')
             # Primary byte evidence must survive any ancillary attribution issue.
-            attribution = attribute_unified_log(done.stdout, variants)
+            attribution = attribute_unified_log(read_payload(done.stdout, lifecycle.deadline, capture.records['host-unified.json']), variants, deadline=lifecycle.deadline)
             result['log_attribution'][stage] = attribution
             (evidence / (stage + '-safe-log-attribution.json')).write_text(json.dumps(attribution, indent=2) + '\n')
             # This distinct probe acknowledges complete observation, not clean

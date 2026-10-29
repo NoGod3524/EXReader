@@ -508,3 +508,81 @@ additive controls. One authorized automatic native run, zero automatic repair/
 rerun rounds. Configured ceiling10 Ubuntu+480 macOS runner-minutes (not wall
 time/billing), all original60/90/240/360/4800 budgets unchanged. Dedicated
 Forget UI and strict/full-F10 acceptance remain absent.
+
+## Terminal timing evidence and retained failure localization
+
+The timing packet was published at `abd16571fda41b5bc936fcbcfb9a125554992c2e`.
+[Run40839064448](https://github.com/NoGod3524/EXReader/actions/runs/40839064448)
+passed97 controls and both SDK jobs; all three native jobs failed. Independent
+Actions replay verified all1815/1151/1056 original members plus sealed receipts,
+timing schemas, checkpoint identities, scan counts and producer summaries.
+The original all-producer-success gate still refused full validation.
+
+macOS callbacks completed41.454/53.725/89.239seconds; iPhone35.228/37.319/137.912.
+The third macOS callback spent28.124s in capture/retention and36.227s in
+attribution, with652637635 log bytes. iPhone's third spent82.439s and31.956s,
+with352600985 bytes. Capture/retention includes post-command reads/writes/hashes;
+82.439s is not proof the log command exceeded its60-second cap. These timings
+are bound producer monotonic values, not an external clock or HTTP204 receipt.
+iPad had zero callbacks/state queries, not a fast or successful sample.
+
+Retained-only source `25e0e3932482e680e19788504bdc0d7a168a5184`,
+[run40844019214](https://github.com/NoGod3524/EXReader/actions/runs/40844019214),
+passed98 controls and skipped SDK/native work. All three original inventories
+again matched. macOS/iPhone native logs identify Swift245's checkpoint URLSession
+XCTAssertNil with the fixed request-timeout signature. macOS and iPad xcresults
+show execution-timeout issues; iPad has no source position, one launch3.91s,
+zero requests and an absent/null first-checkpoint boundary. Its stuck operation
+and cause are unknown. iPhone diagnosis later refuses fixture-failure-shape;
+iPad retains fatal installed extra-namespace refusal. No timeout, namespace,
+privacy, signing or F10 acceptance was waived.
+
+## Authorized retained-only capture/attribution comparison
+
+Owner approved seven paths on2026-10-29 at09:02:25 UTC: continuation lifecycle,
+new continuation_log_capture.py, continuation runner/contract controls, existing
+retained inspector/workflow and this document. Implementation is not a measured
+speedup or native repair. Independent final-byte review precedes publication.
+The new `[privacy-capture-profile]` mode rejects mixed markers, requires controls,
+and skips every SDK/native/authentication/old diagnostic job. Exactly one run:
+10Ubuntu controls+20macOS profile=30 configured runner-minutes;18-minute internal
+profile deadline enforced by an owned parent timer as well as child/loop limits,
+zero automatic repair/rerun. The exact session writer preserves finite phase/
+sample/refusal breadcrumbs on a stalled parent or owned-child timeout, disarms/
+restores the timer before fixed-summary finalization, and grants no cleanup seal
+after interruption. A later native run needs separate
+permission; this workflow never starts it automatically.
+
+The candidate writes complete stdout/stderr directly into fresh0700/0600 owned
+files, retaining both partial streams on failure. No valid manifest is published
+before writer termination and descriptor/path identity checks; timeout or
+descendant ambiguity is unsealed. No size skip, shortened log window, missing
+root, deferred/background scan, early acknowledgement or budget increase.
+Original strict helpers and authenticator remain byte-unchanged. The existing
+full first/second scans, archive replay, optional-root verification, lifecycle
+drain/seal and all strict privacy failures remain mandatory.
+
+Attribution keeps the original JSON decoder/category semantics and deduplicates
+only equal byte needles with complete role unions. Empty/cross-role/overlapping
+needles and original malformed/Unicode exception behavior have authored parity
+controls. The independent native authenticator still uses the ORIGINAL matcher.
+New controls reconstruct the original lifecycle/checkpoint/workflow bytes and
+pin unchanged imports/authenticator; no assertion or time budget is removed.
+
+The profile authenticates the exact three native originals from40839064448/1,
+all members and sealed receipts before measuring. It uses all six complete
+macOS/iPhone stream pairs; iPad absence is not a zero-time sample. Historical
+capture+retain and imports are byte-pinned toabd16571, not the edited default
+relabeled as reference. Frozen synthetic-oracle identity/shape is validated
+before generating every original encoding variant. Each capture/attribution
+sample is measured in AB thenBA order, with fresh outputs, exact byte/manifest/
+scan/reference-role equality and all samples retained in a finite summary.
+Complete original bytes are rechecked afterwards. Only safe summary JSON is
+uploaded; original raw logs remain pinned and are not re-exported.
+
+Performance eligibility requires both-order aggregate capture+attribution time
+at most80% of reference and no sample paired-mean regression above10%, in addition
+to all parity checks. Replay measures retained-byte transport, not Apple log
+generation or HTTP latency; cache/order effects remain explicit. No speedup is
+claimed before Actions, no next native run is authorized by a green profile,
+and the iPad pre-callback gap remains separate. Strict/F10 acceptance stays false.

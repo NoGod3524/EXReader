@@ -10,6 +10,7 @@ import re
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import zipfile
 from urllib.parse import parse_qsl, urlsplit
@@ -648,6 +649,23 @@ def main():
     require(set(ARTIFACTS) == {'macos', 'iphone', 'ipad'}, 'exact three-platform diagnostic artifact pins required')
     out = ROOT / 'build/apple-password-continuation-diagnostic'; out.mkdir(parents=True, exist_ok=False)
     return run_platforms(out)
+
+
+def capture_profile_main():
+    from continuation_log_capture import retained_profile
+    report = retained_profile(ROOT / 'build/apple-password-capture-profile', ARTIFACTS, SOURCE, RUN)
+    print(json.dumps(report, sort_keys=True), flush=True)
+    return report['profile_complete'] and report['performance_gate'] and not report['profile_refused']
+
+
+if __name__ == '__main__' and sys.argv[1:] == ['--capture-profile']:
+    try:
+        raise SystemExit(0 if capture_profile_main() else 1)
+    except Exception:
+        print(json.dumps({'diagnostic_only': True, 'profile_refused': True,
+            'refusal_code': 'retained-profile-entry-refused', 'native_acceptance': False,
+            'full_f10_accepted': False, 'arbitrary_values_printed': False}), flush=True)
+        raise SystemExit(1) from None
 
 
 if __name__ == '__main__':

@@ -10,6 +10,7 @@ import plistlib
 import re
 from pathlib import Path
 import socket
+import signal
 import ssl
 import struct
 import subprocess
@@ -26,6 +27,9 @@ from continuation_contract import BUNDLE, ENTITLEMENT_FILE, ENTITLEMENTS, admiss
 from continuation_contract import BASE, CheckpointTiming, TIMING_PHASES, TIMING_TIMEBASE, validate_checkpoint_timing
 from continuation_lifecycle import ContinuationLifecycle, LifecycleHTTPServer, atomic_result, seal_files, verify_lifecycle, write_unsealed
 from fixture import fixture
+import continuation_log_capture as capture_candidate
+from log_evidence import attribute_unified_log as original_attribution
+from privacy_scan import needles, scan_file
 
 
 def blocked_server(directory, lifecycle, release):
@@ -106,6 +110,226 @@ def control_project():
 
 
 class ContinuationControls(unittest.TestCase):
+    def test_capture_file_sink_keeps_large_complete_stdout_and_stderr(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); lifecycle = ContinuationLifecycle('macos', budget_seconds=20)
+            sink = capture_candidate.product_capture(root, STAGES[0])
+            script = "import sys; [sys.stdout.buffer.write(b'X'*1048576) for _ in range(65)]; sys.stdout.buffer.write(b'TAIL-CONTROL-ONLY'); sys.stderr.buffer.write(b'COMPLETE-ERROR-CONTROL')"
+            done = lifecycle.command([sys.executable, '-c', script], cap=10, max_capture=None, output_sink=sink)
+            folder = capture_candidate.publish_product_capture(sink, root, STAGES[0], 'macos', 'a'*40, '1', '1')
+            self.assertEqual(done.stdout, folder / 'host-unified.json')
+            self.assertEqual(sink.records['host-unified.json']['bytes'], 65*1048576 + len(b'TAIL-CONTROL-ONLY'))
+            self.assertEqual((folder / 'capture-stderr.txt').read_bytes(), b'COMPLETE-ERROR-CONTROL')
+            self.assertEqual(scan_file(folder / 'host-unified.json', {'user:raw': b'TAIL-CONTROL-ONLY'})['hits'], ['user:raw'])
+            self.assertEqual((folder / 'host-unified.json').stat().st_mode & 0o777, 0o600)
+            self.assertEqual(folder.stat().st_mode & 0o777, 0o700)
+
+    def test_capture_nonzero_and_timeout_retain_exact_partial_streams_before_raise(self):
+        for mode in ('nonzero', 'timeout', 'descendant'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); lifecycle = ContinuationLifecycle('macos', budget_seconds=4)
+                sink = capture_candidate.product_capture(root, STAGES[0])
+                script = "import os,sys,time; os.write(1,b'partial-out'); os.write(2,b'partial-error'); "
+                script += {'nonzero': 'sys.exit(7)', 'timeout': 'time.sleep(10)',
+                    'descendant': 'pid=os.fork(); time.sleep(10) if pid==0 else sys.exit(0)'}[mode]
+                with self.assertRaises(RuntimeError):
+                    lifecycle.command([sys.executable, '-c', script], cap=0.5, max_capture=None, output_sink=sink)
+                self.assertEqual((sink.folder / 'host-unified.json').read_bytes(), b'partial-out')
+                self.assertEqual((sink.folder / 'capture-stderr.txt').read_bytes(), b'partial-error')
+                self.assertFalse((root / (STAGES[0] + '-product-log-manifest.json')).exists())
+                disposition = json.loads((sink.folder.parent / (STAGES[0] + '-capture-disposition.json')).read_text())
+                self.assertEqual(disposition['state'], 'failed-capture' if mode == 'nonzero' else 'failed-unsealed')
+                self.assertFalse(disposition['valid_capture_manifest'])
+                if mode != 'nonzero': self.assertTrue(lifecycle.failed)
+
+    def test_capture_invalid_opt_in_closes_precreated_descriptors_and_retains_refusal(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            sink=capture_candidate.product_capture(Path(temporary), STAGES[0])
+            lifecycle=ContinuationLifecycle('macos', budget_seconds=2)
+            with self.assertRaises(RuntimeError): lifecycle.command([sys.executable, '-c', 'pass'], output_sink=sink)
+            self.assertEqual(sink.descriptors,{})
+            self.assertTrue(lifecycle.failed)
+            self.assertIsNone(sink.process)
+            self.assertTrue(all((sink.folder/name).read_bytes()==b'' for name in capture_candidate.FILES))
+            self.assertEqual(json.loads((sink.folder.parent/(STAGES[0]+'-capture-disposition.json')).read_text())['state'], 'failed-unsealed')
+
+    def test_profile_real_session_deadline_stops_parent_and_preserves_finite_breadcrumbs(self):
+        for mode in ('parent-stall','owned-child-stall'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root=Path(temporary); out=root/'profile'
+                summary={'profile_complete':False,'profile_refused':False,'profile_phase':'setup',
+                         'native_acceptance':False,'full_f10_accepted':False,'measurements':[]}
+                owned=[]; before=signal.getsignal(signal.SIGALRM)
+                def body():
+                    summary['profile_phase']='sample-binding'
+                    if mode=='parent-stall': time.sleep(5)
+                    else:
+                        sink=capture_candidate.FileCapture(out/'owned'); owned.append(sink)
+                        lifecycle=ContinuationLifecycle('macos', budget_seconds=5)
+                        lifecycle.command([sys.executable,'-c',"import os,time; os.write(1,b'partial-owned'); time.sleep(5)"],
+                                          max_capture=None, output_sink=sink)
+                    summary['profile_complete']=True
+                    return summary
+                result=capture_candidate.bounded_profile_session(out,time.monotonic()+0.25,summary,body)
+                self.assertFalse(result['profile_complete']); self.assertFalse(result['performance_gate'])
+                self.assertEqual(result['refusal_code'],'deadline-exhausted')
+                self.assertEqual(result['profile_phase'],'sample-binding')
+                self.assertEqual(json.loads((out/'summary.json').read_text()),result)
+                self.assertEqual(signal.getitimer(signal.ITIMER_REAL),(0.0,0.0))
+                self.assertEqual(signal.getsignal(signal.SIGALRM),before)
+                if owned:
+                    self.assertEqual(owned[0].descriptors,{})
+                    self.assertEqual(owned[0].process.wait(timeout=1),-signal.SIGKILL)
+                    self.assertFalse(owned[0].terminated)
+                    self.assertEqual((owned[0].folder/'host-unified.json').read_bytes(),b'partial-owned')
+                    self.assertEqual(json.loads((out/'owned-capture-disposition.json').read_text())['state'],'failed-unsealed')
+
+    def test_capture_refuses_links_fifo_swap_and_late_earlier_stream_mutation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); target = root / 'owned'; target.write_bytes(b'original')
+            link = root / 'link'; link.symlink_to(target)
+            with self.assertRaises(RuntimeError): capture_candidate.stream_record(link, time.monotonic()+2)
+            hard = root / 'hard'; os.link(target, hard)
+            with self.assertRaises(RuntimeError): capture_candidate.stream_record(target, time.monotonic()+2)
+            hard.unlink()
+            original_open = os.open
+            def replace_with_fifo(path, flags, *args):
+                if Path(path) == target:
+                    target.unlink(); os.mkfifo(target)
+                return original_open(path, flags, *args)
+            with patch.object(capture_candidate.os, 'open', side_effect=replace_with_fifo):
+                with self.assertRaises(RuntimeError): capture_candidate.stream_record(target, time.monotonic()+2)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); sink = capture_candidate.product_capture(root, STAGES[0])
+            lifecycle = ContinuationLifecycle('macos', budget_seconds=4)
+            original_record = capture_candidate.stream_record
+            def mutate_earlier(path, deadline, descriptor=None):
+                result = original_record(path, deadline, descriptor)
+                if Path(path).name == 'capture-stderr.txt': (sink.folder / 'host-unified.json').write_bytes(b'late-change')
+                return result
+            with patch.object(capture_candidate, 'stream_record', side_effect=mutate_earlier):
+                with self.assertRaises(RuntimeError):
+                    lifecycle.command([sys.executable, '-c', "import os; os.write(1,b'original'); os.write(2,b'err')"],
+                                      max_capture=None, output_sink=sink)
+            self.assertTrue(lifecycle.failed); self.assertIsNone(sink.records)
+
+    def test_capture_refuses_manifest_after_swap_and_deadline_never_clean(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); sink = capture_candidate.product_capture(root, STAGES[0])
+            lifecycle = ContinuationLifecycle('macos', budget_seconds=4)
+            lifecycle.command([sys.executable, '-c', "import os; os.write(1,b'original')"], max_capture=None, output_sink=sink)
+            (sink.folder / 'host-unified.json').write_bytes(b'changed')
+            with self.assertRaises(RuntimeError): capture_candidate.publish_product_capture(sink, root, STAGES[0], 'macos', 'a'*40, '1', '1')
+            with self.assertRaises(RuntimeError): capture_candidate.read_payload(sink.folder / 'host-unified.json', time.monotonic()-1)
+            self.assertFalse((root / (STAGES[0] + '-product-log-manifest.json')).exists())
+
+    def test_capture_candidate_attribution_exact_all_roles_encodings_and_overlaps(self):
+        values = {role: ('control-' + role + '-value-0123456789').encode() for role in
+            ('user', 'remembered', 'session', 'remembered-pair', 'session-pair', 'remembered-authorization', 'session-authorization')}
+        variants = needles(values)
+        for value in variants.values():
+            # Include all byte forms representable as eventMessage UTF8; byte
+            # scanning remains authoritative for undecodable raw encodings.
+            try: message = value.decode('utf8')
+            except UnicodeDecodeError: continue
+            payload = json.dumps([{'eventMessage': message, 'senderImagePath': '/System/Library/Frameworks/AppKit.framework/AppKit'}]).encode()
+            self.assertEqual(capture_candidate.attribute_unified_log(payload, variants), original_attribution(payload, variants))
+        variants = {'user:raw': b'', 'remembered:raw': b'ab', 'session:raw': b'ab', 'session:hex': b'abc', 'remembered:json': b'b'}
+        payload = b'[{"eventMessage":"abcab"},{"eventMessage":""}]'
+        self.assertEqual(capture_candidate.attribute_unified_log(payload, variants), original_attribution(payload, variants))
+        self.assertEqual(capture_candidate.attribute_unified_log(payload, variants)['matched_event_groups'][1]['credential_roles'], ['user'])
+
+    def test_capture_matcher_preserves_json_decoding_and_original_exceptions(self):
+        variants = {'user:raw': b'needle'}
+        text = '[{"eventMessage":"old","eventMessage":"needle"},null,42,{"eventMessage":false}]'
+        payloads = [text.encode(encoding) for encoding in ('utf8', 'utf16', 'utf32')]
+        payloads += [b'[] trailing', b'{"not":"array"}', b'\xff', b'[{"eventMessage":"\\ud800"}]', b'[]']
+        for payload in payloads:
+            self.assertEqual(capture_candidate.profile_outcome(capture_candidate.attribute_unified_log, payload, variants),
+                             capture_candidate.profile_outcome(original_attribution, payload, variants))
+        bad = {'user:raw': []}
+        for payload in (b'[]', b'[{"eventMessage":"needle"}]'):
+            self.assertEqual(capture_candidate.profile_outcome(capture_candidate.attribute_unified_log, payload, bad),
+                             capture_candidate.profile_outcome(original_attribution, payload, bad))
+
+    def test_profile_oracle_identity_and_shape_refuse_before_needles(self):
+        oracle = {'synthetic_only': True, 'source_sha': 'a'*40, 'run_id': '1', 'attempt': '1',
+                  'user': 'privacy-user-'+'a'*32, 'passwords': {'remembered': 'Privacy-'+'a'*64+'!%:+', 'session': 'Privacy-'+'b'*64+'!%:+'}}
+        self.assertTrue(capture_candidate.oracle_variants(oracle, 'a'*40, '1', '1'))
+        for change in ({'synthetic_only': False}, {'source_sha': 'b'*40}, {'user': 'private-value'},
+                       {'passwords': dict.fromkeys(('remembered', 'session'), 'Privacy-'+'a'*64+'!%:+')}, {'extra': 'private-value'}):
+            with self.assertRaises(RuntimeError): capture_candidate.oracle_variants(dict(oracle, **change), 'a'*40, '1', '1')
+
+    def test_profile_full_cartesian_measurements_and_performance_gate(self):
+        rows = [dict(platform=platform, stage=stage, comparison=comparison, order=order, implementation=implementation,
+                     elapsed_ns=100 if implementation == 'reference' else 70, parity=True)
+                for platform in ('macos','iphone') for stage in STAGES[:3] for comparison in ('capture','attribution')
+                for order in ('AB','BA') for implementation in ('reference','candidate')]
+        self.assertTrue(capture_candidate.profile_gate(rows)['performance_gate'])
+        for changed in (rows[:-1], rows+[rows[0]], [dict(row, elapsed_ns=True) for row in rows],
+                        [dict(row, stage='private-operand') for row in rows], [dict(row, parity=False) for row in rows]):
+            with self.assertRaises(RuntimeError): capture_candidate.profile_gate(changed)
+        slow = [dict(row, elapsed_ns=105 if row['implementation']=='candidate' else 100) for row in rows]
+        self.assertFalse(capture_candidate.profile_gate(slow)['performance_gate'])
+        one_order = [dict(row, elapsed_ns=95 if row['order']=='BA' and row['implementation']=='candidate' else row['elapsed_ns']) for row in rows]
+        gate=capture_candidate.profile_gate(one_order)
+        self.assertFalse(gate['both_order_aggregate_20_percent_improvement'])
+        self.assertTrue(gate['no_sample_mean_regression_over_10_percent']); self.assertFalse(gate['performance_gate'])
+        one_sample = [dict(row, elapsed_ns=115 if row['platform']=='iphone' and row['stage']==STAGES[0] and row['implementation']=='candidate' else row['elapsed_ns']) for row in rows]
+        gate=capture_candidate.profile_gate(one_sample)
+        self.assertTrue(gate['both_order_aggregate_20_percent_improvement'])
+        self.assertFalse(gate['no_sample_mean_regression_over_10_percent']); self.assertFalse(gate['performance_gate'])
+        self.assertFalse(capture_candidate.profile_gate(rows)['native_authorized'])
+
+    def test_profile_mode_is_exact_and_never_coexists_with_native_or_diagnostics(self):
+        self.assertTrue(capture_candidate.profile_marker_valid('owned '+capture_candidate.PROFILE_MARKER))
+        for value in ('', capture_candidate.PROFILE_MARKER*2, None, True):
+            self.assertFalse(capture_candidate.profile_marker_valid(value))
+        for marker in capture_candidate.OTHER_MARKERS:
+            self.assertFalse(capture_candidate.profile_marker_valid(capture_candidate.PROFILE_MARKER+marker))
+
+    def test_capture_original_default_reconstructs_historical_source_and_imports(self):
+        package = ROOT / 'tests/apple_password_privacy_20261028'
+        source = (package / 'continuation_lifecycle.py').read_text()
+        source = source.replace(', output_sink=None):', '):')
+        source = source.replace('        if output_sink is not None:\n            return output_sink.command(self, argv, cap, check, cwd, env, max_capture)\n', '')
+        self.assertEqual(hashlib.sha256(source.encode()).hexdigest(), capture_candidate.REFERENCE_HASHES['continuation_lifecycle.py'])
+        for name, digest in capture_candidate.REFERENCE_HASHES.items():
+            if name != 'continuation_lifecycle.py': self.assertEqual(sha(package / name), digest)
+        self.assertEqual(sha(package / 'authenticate_continuation.py'), '4e0127c553d22a765cfcbf9274aa6f476b55afaed5f25f6eda22ded5209ac54b')
+
+    def test_profile_actual_worker_protocol_against_pinned_historical_source(self):
+        # Actions-only protocol fixture, not a real retained/native sample.
+        from log_evidence import retain_product_log
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); reference = root / 'reference'; reference.mkdir(mode=0o700)
+            for name, expected in capture_candidate.REFERENCE_HASHES.items():
+                data = subprocess.check_output(['git', 'show', capture_candidate.SOURCE+':tests/apple_password_privacy_20261028/'+name], cwd=ROOT)
+                self.assertEqual(hashlib.sha256(data).hexdigest(), expected)
+                (reference / name).write_bytes(data)
+            oracle = {'synthetic_only': True, 'source_sha': capture_candidate.SOURCE, 'run_id': capture_candidate.RUN, 'attempt': '1',
+                'user': 'privacy-user-'+'a'*32, 'passwords': {'remembered': 'Privacy-'+'a'*64+'!%:+', 'session': 'Privacy-'+'b'*64+'!%:+'}}
+            oracle_path = root / 'oracle.json'; capture_candidate.write_private_json(oracle_path, oracle)
+            variants = capture_candidate.oracle_variants(oracle, capture_candidate.SOURCE, capture_candidate.RUN, '1')
+            payload = json.dumps([{'eventMessage': oracle['user'], 'senderImagePath':'/System/Library/XCTest.framework/XCTest'}]).encode()
+            raw = root / 'raw'; raw.mkdir(mode=0o700)
+            folder = retain_product_log(raw, STAGES[0], 'macos', capture_candidate.SOURCE, capture_candidate.RUN, '1', payload, b'', 0)
+            manifest = json.loads((raw / (STAGES[0]+'-product-log-manifest.json')).read_text())
+            spec = {'platform': 'macos', 'stage': STAGES[0], 'oracle': str(oracle_path), 'manifest': manifest,
+                'streams': {name:str(folder/name) for name in capture_candidate.FILES},
+                'scans': {name:scan_file(folder/name, variants) for name in capture_candidate.FILES},
+                'attribution': original_attribution(payload, variants)}
+            spec_path = root/'spec.json'; capture_candidate.write_private_json(spec_path, spec)
+            for mode in ('capture-reference','capture-candidate','attribution-reference','attribution-candidate'):
+                output=root/mode; output.mkdir(mode=0o700)
+                done=subprocess.run([sys.executable, '-B', str(Path(capture_candidate.__file__)), '--worker', mode,
+                    str(spec_path), str(output), str(reference), str(time.monotonic()+20)], capture_output=True, timeout=25)
+                self.assertEqual(done.returncode,0); self.assertEqual(done.stdout,b''); self.assertEqual(done.stderr,b'')
+                measurement=json.loads((output/'measurement.json').read_text())
+                self.assertTrue(measurement['parity']); self.assertGreater(measurement['elapsed_ns'],0)
+            (reference/'continuation_lifecycle.py').write_text('private-operand')
+            with self.assertRaises(RuntimeError): capture_candidate.reference_modules(reference,time.monotonic()+2)
+
     def test_timing_four_original_checkpoints_have_exact_order_and_identity(self):
         document, summary, checkpoints, identity = timing_control()
         self.assertTrue(summary['valid']); self.assertTrue(summary['observed'])
@@ -272,6 +496,12 @@ class ContinuationControls(unittest.TestCase):
         body = runner[runner.index('        def checkpoint(stage, requests):'):runner.index('        def timed_checkpoint(stage, requests):')]
         body = '\n'.join(line for line in body.splitlines() if not re.fullmatch(
             r"            timing\.(?:phase\(stage, '[a-z-]+'\)|counts\(stage, scans\))", line)).rstrip() + '\n'
+        body = body.replace('            capture = product_capture(evidence, stage)\n', '')
+        body = body.replace(', output_sink=capture)', ')')
+        body = body.replace("            log_root = publish_product_capture(capture, evidence, stage, platform, result['source_sha'], result['run_id'], result['attempt'])\n",
+            "            log_root = retain_product_log(evidence, stage, platform, result['source_sha'], result['run_id'],\n                                          result['attempt'], done.stdout, done.stderr, done.returncode)\n")
+        body = body.replace("require(capture.nonblank, 'actual product log capture was empty')", "require(bool(done.stdout.strip()), 'actual product log capture was empty')")
+        body = body.replace("attribute_unified_log(read_payload(done.stdout, lifecycle.deadline, capture.records['host-unified.json']), variants, deadline=lifecycle.deadline)", 'attribute_unified_log(done.stdout, variants)')
         self.assertEqual(hashlib.sha256(body.encode()).hexdigest(), 'f9acb36b1c9209017c857b8ebb397a767c2ecc8a0f90262df4c379e0e97665a1')
         self.assertEqual(runner.count('timing.phase(stage,'), len(TIMING_PHASES))
         auth = (ROOT / 'tests/apple_password_privacy_20261028/authenticate_continuation.py').read_text()
@@ -280,7 +510,20 @@ class ContinuationControls(unittest.TestCase):
         body = body.replace('                checkpoint_timing=timing,\n', '').rstrip() + '\n'
         self.assertEqual(hashlib.sha256(body.encode()).hexdigest(), 'f658ac04578abfd98d57627058ec1bc8078b37a99605a1a03aaada727a10f868')
         self.assertIn("all(job['head_sha'] == source and job['status'] == 'completed' and job['conclusion'] == 'success' for job in producers)", auth)
-        self.assertEqual(sha(ROOT / '.github/workflows/apple-password-privacy-20261028.yml'), '3eb24789a79b48d2a0af24c7b7c9cf2ed526afc3403e5c7e986840cd35adb673')
+        workflow = (ROOT / '.github/workflows/apple-password-privacy-20261028.yml').read_text()
+        self.assertIn('    timeout-minutes: 20\n', workflow)
+        self.assertEqual(workflow.count('--capture-profile'), 1)
+        self.assertIn('          path: build/apple-password-capture-profile/summary.json\n', workflow)
+        self.assertNotIn('workflow_dispatch', workflow)
+        profile = workflow[workflow.index('  capture-profile:\n'):workflow.index('  prior-diagnostic:\n')]
+        self.assertIn('    needs: contract\n', profile)
+        self.assertNotIn('private-work', profile)
+        workflow = workflow.replace(profile, '')
+        workflow = workflow.replace('      - name: Reject mixed capture profile modes\n        run: python3 -B tests/apple_password_privacy_20261028/continuation_log_capture.py --check-mode\n', '')
+        old_if = "contains(github.event.head_commit.message, '[privacy-diagnostic]') || contains(github.event.head_commit.message, '[privacy-native-diagnostic]') || contains(github.event.head_commit.message, '[privacy-continuation-diagnostic]')"
+        workflow = workflow.replace('"!contains(github.event.head_commit.message, \'[privacy-capture-profile]\') && ('+old_if+')"', old_if)
+        workflow = workflow.replace(" && !contains(github.event.head_commit.message, '[privacy-capture-profile]')", '')
+        self.assertEqual(hashlib.sha256(workflow.encode()).hexdigest(), '3eb24789a79b48d2a0af24c7b7c9cf2ed526afc3403e5c7e986840cd35adb673')
 
     def test_entitlements_are_exact_and_reject_duplicate_foreign_or_nonboolean(self):
         source = ENTITLEMENT_FILE.read_bytes()
