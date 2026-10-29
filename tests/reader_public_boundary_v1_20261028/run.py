@@ -852,6 +852,102 @@ def ndk_capture(destination,files,copy):
     return result
 
 
+def bsd_index_archive(raw):
+    """Strict ordinary BSD archive, preserving every index and object byte."""
+    need(raw.startswith(b'!<arch>\n'),'unsupported BSD archive magic')
+    offset=8;index=None;names=set();ordinary=[]
+    def number(field,base,label):
+        pattern=rb'[0-7]+ *' if base==8 else rb'[0-9]+ *'
+        need(re.fullmatch(pattern,field) is not None,'noncanonical BSD '+label)
+        value=int(field,base);spelling=(format(value,'o') if base==8 else str(value)).encode()
+        need(field==spelling.ljust(len(field),b' '),'noncanonical BSD '+label)
+        return value
+    while offset<len(raw):
+        header=raw[offset:offset+60]
+        need(len(header)==60 and header[58:]==b'`\n','malformed BSD member header')
+        match=re.fullmatch(rb'#1/([1-9][0-9]*) *',header[:16])
+        need(match is not None,'unsupported BSD extended member name')
+        length=int(match[1]);need(header[:16]==('#1/'+str(length)).encode().ljust(16,b' '),'noncanonical BSD name length')
+        timestamp=number(header[16:28],10,'timestamp')
+        number(header[28:34],10,'uid');number(header[34:40],10,'gid');number(header[40:48],8,'mode')
+        size=number(header[48:58],10,'size');start=offset+60;end=start+size
+        need(0<length<size and end<=len(raw),'BSD member name/payload bounds')
+        extended=raw[start:start+length];name=extended.split(b'\0',1)[0]
+        need(name and all(32<=c<127 for c in name),'invalid BSD member name')
+        padding=(-(start+len(name)))%8
+        need(length==len(name)+padding and extended==name+b'\0'*padding,'noncanonical BSD name alignment/padding')
+        name=name.decode('ascii');need(name not in names,'duplicate BSD member name');names.add(name)
+        need(raw[end:end+size%2]==b'\n'*(size%2),'noncanonical BSD member padding')
+        payload=raw[start+length:end]
+        if index is None:
+            need(offset==8 and name in ('__.SYMDEF','__.SYMDEF SORTED'),'unsupported first BSD index name')
+            index=dict(name=name,header_offset=offset,timestamp_offset=offset+16,timestamp=timestamp,
+                       payload_offset=start+length,payload_bytes=len(payload),payload_sha256=hashlib.sha256(payload).hexdigest())
+        else:
+            need(not name.startswith('__.SYMDEF'),'second or unknown BSD index member')
+            need(payload and not payload.startswith((b'BC\xc0\xde',b'\xde\xc0\x17\x0b')),'bitcode/empty BSD object unsupported')
+            ordinary.append(dict(name=name,bytes=len(payload),sha256=hashlib.sha256(payload).hexdigest()))
+        offset=end+size%2
+    need(offset==len(raw) and index is not None and ordinary,'BSD index/archive extent')
+    return index,ordinary
+
+
+def installed_archive_equivalence(before,after,target):
+    # Concept independently reviewed in the separate portable-hash validator;
+    # admission here is based only on this package's own retained byte pair.
+    result=dict(exact_archive_equal=before==after,mode='exact',comparison=None,
+                build_sha256=hashlib.sha256(before).hexdigest(),installed_sha256=hashlib.sha256(after).hexdigest())
+    if before==after:return result
+    need(target=='macos','unequal archives require measured macOS first-index timestamp mode')
+    need(len(before)==len(after),'archive total size differs')
+    bi,bm=bsd_index_archive(before);ai,am=bsd_index_archive(after)
+    need(bm==am,'ordered BSD object payloads differ')
+    begin=bi['timestamp_offset'];end=begin+12
+    need(begin==24 and ai['timestamp_offset']==begin and before[:begin]==after[:begin] and before[end:]==after[end:],
+         'archive non-timestamp bytes differ')
+    result.update(mode='macos-first-bsd-index-timestamp',comparison=dict(
+        index_name=bi['name'],timestamp_offset=begin,timestamp_bytes=12,
+        build_timestamp=bi['timestamp'],installed_timestamp=ai['timestamp'],
+        differing_offsets=[i for i in range(begin,end) if before[i]!=after[i]],
+        comparison_sha256=hashlib.sha256(before[:begin]+b'0           '+before[end:]).hexdigest(),
+        index_payload_sha256=bi['payload_sha256'],ordered_objects=bm,
+        all_non_timestamp_bytes_equal=True))
+    return result
+
+
+def replay_archive_comparisons(read,measured,target):
+    owners={'reading-state':('reader_reading_state_codec','reading_state.cpp'),
+            'reading-commands':('reader_reading_commands','reading_commands.cpp'),
+            'annotation-import':('reader_annotation_import','annotation_import.cpp'),
+            'annotation-export':('reader_annotation_export','annotation_export.cpp')}
+    pairs=measured['built_installed_archive_comparison']
+    need(len(pairs)==len(owners) and {p['owner'] for p in pairs}==set(owners),'exact four unique archive owner pairs required')
+    need(set(measured['actual_compiler_dependencies'])==set(owners),'exact four compiler owner proofs required')
+    stage=layout(target)[1].relative_to(ROOT).as_posix();replayed={}
+    for pair in pairs:
+        owner=pair['owner'];name,source_name=owners[owner];proof=measured['actual_compiler_dependencies'][owner]
+        filename=name+'.lib' if target=='windows' else 'lib'+name+'.a'
+        expected=stage+'/lib/'+filename;built=pair['built'];installed=pair['installed']
+        need(safe_member(built) and safe_member(installed) and PurePosixPath(built).name==filename,'unsafe/wrong built owner archive path')
+        need(installed==expected==measured['installed_archives'][owner]['path'],'wrong installed owner archive path')
+        folder=PurePosixPath(built).parent;cache=read(str(folder/'CMakeCache.txt')).decode()
+        homes=re.findall(r'^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$',cache,re.M)
+        need(len(homes)==1 and homes[0].replace('\\','/').endswith('/apps/reader/'+owner),'retained raw build owner differs')
+        need(re.findall(r'^EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=(.+)$',cache,re.M)==['ON'],'retained owner not raw family')
+        need(proof['source'].replace('\\','/')==homes[0].replace('\\','/')+'/src/'+source_name,'retained compiler source differs')
+        obj=proof['archive_object'].replace('\\','/');need(safe_member(obj) and read(str(folder/obj)),'retained linked object missing')
+        before,after=read(built),read(installed)
+        need(pair['built_exists'] is True and pair['installed_exists'] is True and
+             (pair['built_bytes'],pair['installed_bytes'])==(len(before),len(after)),'archive pair extent claim differs')
+        actual=installed_archive_equivalence(before,after,target)
+        need(actual['build_sha256']==pair['built_sha256']==proof['built_archive_sha256'] and
+             actual['installed_sha256']==pair['installed_sha256']==proof['installed_archive_sha256']==measured['installed_archives'][owner]['sha256'],
+             'archive original digest claims differ')
+        need(actual==pair['equivalence']==proof['archive_equivalence'],'archive equivalence claim differs from retained-byte replay')
+        replayed[owner]=actual
+    return replayed
+
+
 def package_identity(target):
     folder=ROOT/'build/f06'/target
     result=json.loads((folder/'result.json').read_text())
@@ -929,7 +1025,7 @@ def capture(target):
                 need(owner not in proofs,'ambiguous raw build owner '+owner)
                 name=archive_names[owner];archive_name=name+'.lib' if os.name=='nt' else 'lib'+name+'.a'
                 built=folder/archive_name;installed=stage/'lib'/archive_name
-                pair=dict(owner=owner,built=str(built.relative_to(ROOT)),installed=str(installed.relative_to(ROOT)),built_exists=built.is_file(),installed_exists=installed.is_file())
+                pair=dict(owner=owner,built=built.relative_to(ROOT).as_posix(),installed=installed.relative_to(ROOT).as_posix(),built_exists=built.is_file(),installed_exists=installed.is_file())
                 if built.is_file():copy(built);pair.update(built_sha256=digest(built),built_bytes=built.stat().st_size)
                 if installed.is_file():copy(installed);pair.update(installed_sha256=digest(installed),installed_bytes=installed.stat().st_size)
                 if built.is_file() and installed.is_file():
@@ -945,7 +1041,11 @@ def capture(target):
                         pair.update(first_difference_window=dict(start=start,built_hex=left[start:end].hex(),installed_hex=right[start:end].hex()))
                 report.setdefault('built_installed_archive_comparison',[]).append(pair)
                 print('ACTUAL_BUILT_INSTALLED_ARCHIVE',json.dumps(pair),flush=True)
-                need(pair['built_exists'] and pair['installed_exists'] and pair['built_sha256']==pair['installed_sha256'],('actual built archive differs from installed owner',owner))
+                need(pair['built_exists'] and pair['installed_exists'],('actual built/installed archive missing',owner))
+                equivalence=installed_archive_equivalence(left,right,target);pair['equivalence']=equivalence
+                need(equivalence['build_sha256']==pair['built_sha256'] and equivalence['installed_sha256']==pair['installed_sha256'],
+                     'archive changed during retained comparison')
+                print('ACTUAL_ARCHIVE_EQUIVALENCE',json.dumps(dict(owner=owner,**equivalence)),flush=True)
                 if ninja_deps is not None:
                     groups=ninja_dependency_groups(ninja_deps)
                     query=command(['ninja','-C',folder,'-t','query',archive_name],'archive-input-'+owner).stdout
@@ -969,7 +1069,7 @@ def capture(target):
                 required=[stage/'include'/('reader_reading_state_retained_raw_v1.h' if owner=='reading-commands' else 'reader_selector_bytes_v1.h')]
                 proof=owned_dependency_proof(str(home/'src'/source_names[owner]),graph_objects,groups,folder,required,graph_sources)
                 need((folder/proof['archive_object']).is_file(),'linked object bytes absent')
-                proof.update(built_archive_sha256=digest(built),installed_archive_sha256=digest(installed))
+                proof.update(built_archive_sha256=digest(built),installed_archive_sha256=digest(installed),archive_equivalence=equivalence)
                 proofs[owner]=proof
         need(set(proofs)==set(source_names),'all four exact producer TU dependencies required')
         if target=='android':need(android_proof is not None,'actual Android retained caller proof missing')
@@ -996,7 +1096,7 @@ def capture(target):
             else:argv=['nm','-A',archive]
             text=command(argv,'native-owner-'+owner).stdout
             need('reader_rs_encode_retained_raw_v3' not in text,'private C++ entry remains in '+owner)
-            symbol_tables[owner]=text;archive_identity[owner]=dict(path=str(archive.relative_to(ROOT)),sha256=digest(archive),exported_target=target_names[owner],configured_target_file=target_locations[target_names[owner]])
+            symbol_tables[owner]=text;archive_identity[owner]=dict(path=archive.relative_to(ROOT).as_posix(),sha256=digest(archive),exported_target=target_names[owner],configured_target_file=target_locations[target_names[owner]])
         encode='reader_revision_selector_encode_v1';decode='reader_revision_selector_decode_v1';retained='reader_rs_encode_retained_raw_v1'
         for owner,symbol in (('revisions',encode),('revisions',decode),('reading-state',retained)):
             need(symbol_present(symbol_tables[owner],symbol,True,os.name=='nt'),('actual public definition',owner,symbol))
@@ -1128,6 +1228,8 @@ def authenticate():
                 for path,meta in inventory['files'].items():
                     data=bundle.read(path);need(len(data)==meta['bytes'] and hashlib.sha256(data).hexdigest()==meta['sha256'],'file digest '+path)
                 measured=inventory['report'];need(measured['target']==target and measured['capture_complete'] and measured['named_boundary_accepted'],'incomplete owner proof')
+                replayed=replay_archive_comparisons(bundle.read,measured,target)
+                report.setdefault('archive_comparisons_replayed',{})[target]=replayed
                 need(measured['source']['authorized_paths_sha256']=={path:digest(ROOT/path) for path in (*OWNERS,*HOSTS,*ADDED)},'reviewed source manifest drift')
                 expected_entries={'iphone','ipad'} if target=='iphone' else {target}
                 need({entry['target'] for entry in measured['native']['entries']}==expected_entries,'artifact native target inventory')
