@@ -87,14 +87,21 @@ jobs:
           from pathlib import Path
           closure = Path('build/preflight/link-closure.txt').read_text()
           link_map = Path('build/preflight/provider.map').read_text(errors='replace')
-          sqlite_targets = sorted(set(re.findall(r'^(\S*sqlite\S*) TYPE=',closure,re.M|re.I)))
-          assert sqlite_targets == ['EXReader::exr_sqlite'], sqlite_targets
+          print(closure, flush=True)
+          sqlite_targets = sorted(set(re.findall(r'^(\S*sqlite\S*) TYPE=(\S+)$',closure,re.M|re.I)))
+          assert sqlite_targets == [
+            ('EXReader::vendor_exr_sqlite','INTERFACE_LIBRARY'),
+            ('EXReader::vendor_file_exr_sqlite','STATIC_LIBRARY'),
+          ], sqlite_targets
+          sqlite_providers = [name for name,kind in sqlite_targets if kind == 'STATIC_LIBRARY']
+          assert sqlite_providers == ['EXReader::vendor_file_exr_sqlite'], sqlite_providers
           assert 'sqlite3_open_v2' in link_map and 'sqlite3_backup_init' in link_map and 'sqlite3.c' in link_map
-          assert re.search(r'(?:lib)?exr_sqlite(?:\.a|\.lib|:)',link_map,re.I), 'installed SQLite provider absent from link map'
+          assert re.search(r'(?:lib)?exr_vendor_exr_sqlite(?:\.a|\.lib|:)',link_map,re.I), 'installed SQLite provider absent from link map'
           # Header/runtime source ID equality is additionally mandatory in every
           # consumer invocation; no private SDK structure or second SQLite build.
           Path('build/evidence/provider-identity.json').write_text(json.dumps({
             'sqlite_target_closure':sqlite_targets,
+            'single_static_sqlite_provider':sqlite_providers,
             'provider_map_sha256':hashlib.sha256(Path('build/preflight/provider.map').read_bytes()).hexdigest(),
             'link_closure_sha256':hashlib.sha256(Path('build/preflight/link-closure.txt').read_bytes()).hexdigest(),
             'header_sha256':hashlib.sha256(Path('build/migration/_deps/migration_sqlite_header-src/sqlite3.h').read_bytes()).hexdigest(),
