@@ -61,10 +61,21 @@ final class AccountFailureUITests: XCTestCase {
         let book = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library.book.'")).firstMatch
         XCTAssertTrue(book.waitForExistence(timeout: 90))
         XCTAssertTrue(wait { !self.node("library.busy").exists })
+        let importedBookID = book.identifier
+        XCTAssertFalse(importedBookID.isEmpty)
         tap("account.sync.start")
         XCTAssertTrue(wait(180) { self.value("account.sync.state") == "同步失败" })
         XCTAssertTrue(book.exists, "the local original must remain available after failure")
         XCTAssertTrue(node("account.sync.start").isEnabled, "failure must allow a retry")
+
+        XCTAssertEqual(node("account.sync.start").label, "重试同步")
+        tap("account.sync.details")
+        XCTAssertTrue(wait { self.value("account.sync.details.state") == "同步失败" })
+        XCTAssertEqual(value("account.sync.details.http"), "HTTP 401")
+        XCTAssertFalse(value("account.sync.details.reason").isEmpty)
+        let failureScreen = XCTAttachment(screenshot: app.screenshot())
+        failureScreen.name = "actual-401-sync-details"; failureScreen.lifetime = .keepAlways; add(failureScreen)
+        tap("account.sync.details.done")
 
         // The fixture reads the real catalog after the displayed terminal state,
         // and responds only after the outbox observation has been persisted.
@@ -90,6 +101,9 @@ final class AccountFailureUITests: XCTestCase {
         XCTAssertTrue(wait(60) { self.value("account.sync.state") == "已关闭" })
         tap("account.sync.start")
         XCTAssertTrue(wait(180) { self.value("account.sync.state") == "本轮扫描完成" })
-        XCTAssertTrue(book.exists, "successful retry must preserve the original")
+        // FINISHED is observed before the host asynchronously republishes the shelf.
+        // Check the same imported row after that publication, not a transient empty list.
+        XCTAssertTrue(wait { !self.node("library.busy").exists && self.node(importedBookID).exists },
+                      "successful retry must preserve the original")
     }
 }

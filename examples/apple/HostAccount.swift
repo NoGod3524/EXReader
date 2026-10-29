@@ -173,6 +173,13 @@ final class HostAccountSession: ObservableObject {
     @Published private(set) var steps: UInt64 = 0
     @Published private(set) var completedSweeps: UInt64 = 0
     @Published private(set) var completedShards: UInt32 = 0
+    @Published private(set) var detailReason = ""
+    @Published private(set) var detailHTTPStatus = 0
+    @Published private(set) var detailAttempt: UInt64 = 0
+    @Published private(set) var detailPushed: UInt64 = 0
+    @Published private(set) var detailPulled: UInt64 = 0
+    var canRetry: Bool { !running && !preparing && (state == "同步失败" || state == "已取消") }
+
     @Published private(set) var message = ""
     private var handle: OpaquePointer?
 #if EXR_APPLE_WAVE3
@@ -193,7 +200,7 @@ final class HostAccountSession: ObservableObject {
 
     func beginPreparation(cancel: @escaping () -> Void) throws {
         guard !running, !preparing, !closeRequested else { throw HostError.invalidInput("此账号已在准备、同步或关闭") }
-        preparing = true; cancelPreparation = cancel; state = "正在准备原书"; message = ""
+        preparing = true; cancelPreparation = cancel; state = "正在准备原书"; message = ""; detailReason = ""; detailHTTPStatus = 0
     }
 
     func finishPreparation() { preparing = false; cancelPreparation = nil }
@@ -202,10 +209,12 @@ final class HostAccountSession: ObservableObject {
         finishPreparation()
         guard !closeRequested, state != "已关闭" else { return }
         state = cancelled ? "已取消" : "同步失败"
+        detailReason = detail; detailHTTPStatus = 0
         message = cancelled ? "已提交的历史会保留，可手动重试" : detail + "；已提交的历史会保留，可手动重试"
     }
 
     func startFailed(_ detail: String) {
+        detailReason = detail; detailHTTPStatus = 0
         state = "同步失败"; message = detail + "；已提交的历史会保留，可手动重试"
     }
 
@@ -257,7 +266,7 @@ final class HostAccountSession: ObservableObject {
             guard result == READER_SESSION_OK else { throw HostError.invalidInput("无法创建云盘同步会话") }
         }
         guard let handle, reader_session_start(handle) == READER_SESSION_OK else { throw HostError.invalidInput("云盘同步会话尚未就绪") }
-        completion = completed; self.terminal = terminal; running = true; state = "正在同步"; message = ""
+        completion = completed; self.terminal = terminal; running = true; state = "正在同步"; message = ""; detailReason = ""; detailHTTPStatus = 0
         if timer == nil {
             timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in self?.observe() }
         }
@@ -286,6 +295,14 @@ final class HostAccountSession: ObservableObject {
         var snapshot = reader_session_snapshot()
         guard reader_session_observe(handle, &snapshot) == READER_SESSION_OK else { return }
         steps = snapshot.steps; completedSweeps = snapshot.completed_sweeps; completedShards = snapshot.completed_shards
+        detailAttempt = snapshot.attempt; detailPushed = snapshot.pushed; detailPulled = snapshot.pulled
+        detailHTTPStatus = Int(snapshot.error.http_status)
+        // Session errors are fixed module messages, never server bodies or credentials.
+        var nativeError = snapshot.error
+        detailReason = withUnsafeBytes(of: &nativeError.message) { bytes in
+            String(decoding: bytes.prefix(while: { $0 != 0 }), as: UTF8.self)
+        }
+
         switch snapshot.state {
         case READER_SESSION_RUNNING: state = "正在同步"
         case READER_SESSION_CANCELLING: state = "正在取消"
