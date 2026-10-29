@@ -39,7 +39,15 @@ final class FeaturesUITests: XCTestCase {
             let inViewport = !scrollTarget || !scroll.exists || (target.exists && scroll.frame.contains(CGPoint(x: target.frame.midX, y: target.frame.midY)))
             return target.exists && inViewport && target.isEnabled && target.isHittable
         }, "Unavailable \(id) \(app.debugDescription)")
+#if os(macOS)
+        if id == "features.annotations.export-options" {
+            // The native disclosure triangle is at the leading edge; its label
+            // center did not expand it in the retained failed accessibility tree.
+            e(id).coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.5)).tap()
+        } else { e(id).tap() }
+#else
         e(id).tap()
+#endif
     }
     private func mark(_ name: String) {
         let a = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); a.name = name; a.lifetime = .keepAlways; add(a)
@@ -94,6 +102,7 @@ final class FeaturesUITests: XCTestCase {
     private func exportThroughSystemPicker(markdown: Bool) {
         let button = markdown ? "features.annotations.export-markdown" : "features.annotations.export-jsonl"
         if !e(button).exists { tap("features.annotations.export-options") }
+        XCTAssertTrue(wait { self.e(button).exists }, "Export disclosure did not expand: \(app.debugDescription)")
         tap(button)
 #if os(macOS)
         app.typeKey("g", modifierFlags: [.command, .shift])
