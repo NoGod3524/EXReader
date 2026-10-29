@@ -31,3 +31,14 @@ visible rectangle and observed Chinese text. Refused libraries retain exact
 FileID, bytes and existing namespace; only the normal empty product lock file
 created by startup is permitted. Neither qualification nor full P0/F12 is closed
 by these startup checks.
+
+The first Actions run 40938965113 at source
+86d817824c41e72508a0a0d44d7e34fc6e562978 is retained as failure. SDK/current
+product/old producer builds completed; the native driver reached its last
+visible-message check after the first nine cases and observed the required
+Chinese text and visible rectangle. It then failed its hardcoded GetDlgItem(1)
+button lookup. The corrected driver waits for and enumerates the actual single
+visible enabled Button belonging to that same observed dialog; all original
+text, data-preservation and positive-startup assertions remain. Per-case partial
+results are now saved, with passed=false until the full ten-case round completes.
+The product gate source is unchanged in this driver-only repair.

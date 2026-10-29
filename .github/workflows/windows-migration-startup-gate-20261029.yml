@@ -62,7 +62,7 @@ jobs:
           cmake --install build/startup-old-sdk --prefix "$GITHUB_WORKSPACE/build/startup-old-stage"
           cmake -S build/startup-old-source/extras/migration -B build/startup-old-tool -G Ninja -DEXR_SDK="$GITHUB_WORKSPACE/build/startup-old-stage" -DCMAKE_BUILD_TYPE=Release
           cmake --build build/startup-old-tool --target exreader-legacy-migrate --parallel 4
-      - name: Actual product refusal, unchanged old data, normal startup and visible native UI
+      - name: Actual product refusal, normal startup and ready native dialog controls
         run: |
           set -euo pipefail
           python tests/reader_native_owner_repairs/display.py
