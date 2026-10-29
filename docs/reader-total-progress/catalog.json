@@ -1249,11 +1249,11 @@
       "group": "host",
       "platform": "iphone",
       "title": "iPhone：宿主子书架/分类、标签、系列与显式整理",
-      "state": "verified",
+      "state": "partial",
       "evidence": [
         "apple_organization_iphone_original"
       ],
-      "note": "仅授予 SDK 3.41 原六项模拟器 UI、整理和重启范围；标签/系列证据为创建与重开，SDK 3.42 候选失败及完整同源产品另验。"
+      "note": "原六项 SDK 3.41 模拟器 UI 和重启证据已独立核验，但标签及系列仅测试创建与重开，未证明其书籍成员整理；SDK 3.42 iPhone 标签用例失败，完整目标未关闭。"
     },
     {
       "id": "H.iphone.reading",
@@ -1398,11 +1398,11 @@
       "group": "host",
       "platform": "ipad",
       "title": "iPad：宿主子书架/分类、标签、系列与显式整理",
-      "state": "verified",
+      "state": "partial",
       "evidence": [
         "apple_organization_ipad_original"
       ],
-      "note": "仅授予 SDK 3.41 原六项模拟器 UI、整理和重启范围；标签/系列证据为创建与重开，SDK 3.42 候选失败及完整同源产品另验。"
+      "note": "原六项 SDK 3.41 模拟器 UI 和重启证据已独立核验，但标签及系列仅测试创建与重开，未证明其书籍成员整理；SDK 3.42 iPhone 标签用例失败，完整目标未关闭。"
     },
     {
       "id": "H.ipad.reading",
