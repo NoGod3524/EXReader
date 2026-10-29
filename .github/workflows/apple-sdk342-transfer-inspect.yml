@@ -1,0 +1,48 @@
+name: Inspect SDK 3.42 original transfer inventories
+on:
+  push:
+    branches: [codex/apple-sdk342-transfer-inspect-20261029]
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original source and inspect both ZIP inventories
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib,io,json,subprocess,zipfile
+          from pathlib import Path
+          prefix="repos/NoGod3524/EXReader/"
+          def api(path,binary=False):
+              data=subprocess.check_output(["gh","api",prefix+path])
+              return data if binary else json.loads(data)
+          run=api("actions/runs/40935524467")
+          assert run["head_sha"]=="148a5b11f9e65e87520eddff98e5365e83e98c30"
+          reports=[]
+          for a in api("actions/runs/40935524467/artifacts?per_page=100")["artifacts"]:
+              if not a["name"].startswith("team24-apple-sdk-"):continue
+              assert not a["expired"] and a["workflow_run"]["head_sha"]==run["head_sha"]
+              data=api("actions/artifacts/%d/zip"%a["id"],True)
+              assert len(data)==a["size_in_bytes"] and "sha256:"+hashlib.sha256(data).hexdigest()==a["digest"]
+              with zipfile.ZipFile(io.BytesIO(data)) as z:
+                  identity=json.loads(z.read("sdk342-installed-identity.json"))
+                  assert identity["source_sha"]==run["head_sha"] and identity["run_id"]=="40935524467"
+                  for label,folder in (("sdk","sdk/"),("raw","raw-products/")):
+                      expected=identity[label+"_files"]
+                      actual={n[len(folder):] for n in z.namelist() if n.startswith(folder) and not n.endswith("/")}
+                      changed=[n for n in actual&set(expected) if len(z.read(folder+n))!=expected[n]["bytes"] or hashlib.sha256(z.read(folder+n)).hexdigest()!=expected[n]["sha256"]]
+                      reports.append({"artifact":a["id"],"name":a["name"],"label":label,"expected_count":len(expected),"actual_count":len(actual),"missing":sorted(set(expected)-actual),"extra":sorted(actual-set(expected)),"hash_mismatch":changed})
+          out=Path("build/sdk342-transfer-inspection.json");out.parent.mkdir(exist_ok=True)
+          out.write_text(json.dumps({"inspection_only":True,"original_run":40935524467,"original_source":run["head_sha"],"reports":reports},indent=2)+"\n")
+          print(out.read_text(),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sdk342-transfer-inspection-${{ github.run_id }}
+          path: build/sdk342-transfer-inspection.json
+          if-no-files-found: error
