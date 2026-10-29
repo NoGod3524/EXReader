@@ -1,0 +1,146 @@
+name: Migration Windows handoff continuation 67 groups
+on:
+  push:
+    branches: [codex/migration-mainline-handoff-20261029]
+    paths:
+      - .github/workflows/migration-windows-handoff-continuation-20261029.yml
+permissions:
+  contents: read
+concurrency:
+  group: migration-windows-native-${{ github.sha }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+env:
+  TESTED_BASE: 5db9c2c0b574b0e63675a38b0653f3a9bdd2cb1c
+  OLD_SDK_REF: c2d23c29a3b2096c2236fdb414dcd1e66d3243b4
+jobs:
+  windows-native:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Exact fixture repair delta and unchanged original assertions
+        run: |
+          set -euo pipefail
+          mkdir -p build/evidence
+          git fetch --no-tags --depth=1 origin "$TESTED_BASE"
+          test "$(git rev-parse FETCH_HEAD)" = "$TESTED_BASE"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import hashlib,json,os,subprocess,sys,sqlite3
+          from pathlib import Path
+          import ast,collections
+          changed=subprocess.check_output(['git','diff','--no-renames','--name-status',os.environ['TESTED_BASE'],'HEAD'],text=True).splitlines()
+          expected={status+chr(9)+path for status,path in [('M','tests/migration/windows_recovery_native_20261029/run.py'),('A','.github/workflows/migration-windows-handoff-triage-20261029.yml'),('A','.github/workflows/migration-windows-handoff-continuation-20261029.yml'),('A','docs/MIGRATION-WINDOWS-HANDOFF-CONTINUATION-20261029.md')]}
+          assert set(changed)==expected,changed
+          path='tests/migration/windows_recovery_native_20261029/run.py'
+          previous=subprocess.check_output(['git','show',os.environ['TESTED_BASE']+':'+path],text=True)
+          current=Path(path).read_text(encoding='utf-8')
+          def assertions(text):
+              return collections.Counter(ast.dump(n,include_attributes=False) for n in ast.walk(ast.parse(text)) if isinstance(n,ast.Assert))
+          old_asserts=assertions(previous);new_asserts=assertions(current)
+          assert not old_asserts-new_asserts,'original assertion changed or removed'
+          def groups(text):
+              return [n.name for n in ast.walk(ast.parse(text)) if isinstance(n,ast.FunctionDef) and len(n.name)==3 and n.name[0]=='g' and n.name[1:].isdigit()]
+          assert groups(previous)==groups(current) and len(groups(current))==24
+          assert sys.version_info[:2]==(3,12)
+          Path('build/evidence/source.json').write_text(json.dumps(dict(sha=os.environ['GITHUB_SHA'],base=os.environ['TESTED_BASE'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],delta=changed,hashes={x.split(chr(9),1)[1]:hashlib.sha256(Path(x.split(chr(9),1)[1]).read_bytes()).hexdigest() for x in changed},all_other_predecessor_bytes_unchanged=True,original_assertions_unchanged=True,original_groups_unchanged=True,python=sys.version,python_executable=sys.executable,python_sqlite=sqlite3.sqlite_version,product_admission=False,full_p0_acceptance=False),indent=2)+chr(10))
+          PY
+      - name: Build unchanged installed SDK and current candidate
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/sdk-configure.txt
+          cmake --build build/sdk --config Release --parallel 4 2>&1 | tee build/evidence/sdk-build.txt
+          cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage" 2>&1 | tee build/evidence/sdk-install.txt
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/tool-configure.txt
+          cmake --build build/migration --config Release --target exreader-legacy-migrate-tx --parallel 4 2>&1 | tee build/evidence/tool-build.txt
+      - name: Build actual pinned SDK 3.40 original schema6 fixture producer
+        run: |
+          set -euo pipefail
+          mkdir -p build/old-source build/old-migration-source
+          git fetch --no-tags --depth=1 origin "$OLD_SDK_REF"
+          test "$(git rev-parse FETCH_HEAD)" = "$OLD_SDK_REF"
+          git archive FETCH_HEAD | tar -xf - -C build/old-source
+          git archive FETCH_HEAD -- extras/migration | tar -xf - -C build/old-migration-source
+          cmake -S build/old-source -B build/old-sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF 2>&1 | tee build/evidence/old-sdk-configure.txt
+          cmake --build build/old-sdk --config Release --parallel 4 2>&1 | tee build/evidence/old-sdk-build.txt
+          cmake --install build/old-sdk --config Release --prefix "$GITHUB_WORKSPACE/old-stage" 2>&1 | tee build/evidence/old-sdk-install.txt
+          cmake -S build/old-migration-source/extras/migration -B build/old-migration -DEXR_SDK="$GITHUB_WORKSPACE/old-stage" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/old-tool-configure.txt
+          cmake --build build/old-migration --config Release --target exreader-legacy-migrate --parallel 4 2>&1 | tee build/evidence/old-tool-build.txt
+      - name: Build native adapter and unchanged frozen prerequisite
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/windows_recovery_native_20261029 -B build/native -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DSQLITE_HEADER_DIR="$GITHUB_WORKSPACE/build/migration/_deps/migration_sqlite_header-src" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/evidence/native-configure.txt
+          cmake --build build/native --config Release --parallel 4 2>&1 | tee build/evidence/native-build.txt
+          python - <<'PY'
+          import hashlib,json,re
+          from pathlib import Path
+          def admitted(line,symbol):
+              f=line.split()
+              return len(f)>=4 and re.fullmatch(r'[0-9a-fA-F]+:[0-9a-fA-F]+',f[0]) is not None and f[1]==symbol and re.fullmatch(r'[0-9a-fA-F]+',f[2]) is not None and all(x in ('f','i') for x in f[3:-1]) and re.fullmatch(r'exr_vendor_exr_sqlite(?:\.lib)?:sqlite3(?:\.c)?\.obj',f[-1],re.I) is not None
+          sample='0001:00000000 sqlite3_open_v2 0000000140001000 f exr_vendor_exr_sqlite:sqlite3.obj'
+          assert admitted(sample,'sqlite3_open_v2') and admitted(sample.replace(':sqlite3.obj','.lib:sqlite3.c.obj'),'sqlite3_open_v2')
+          for bad in (sample.replace('exr_vendor_exr_sqlite:','foreign:'),sample.replace(':sqlite3.obj',':other.obj'),sample.replace('sqlite3_open_v2 ','sqlite3_open_v2_suffix '),sample+' extra',sample.replace('0001:00000000','unknown')):assert not admitted(bad,'sqlite3_open_v2')
+          records=[]
+          for label,folder,mapname in [('native','build/native','native-provider.map'),('frozen','build/native/frozen-preflight','provider.map')]:
+              closure=Path(folder,'link-closure.txt').read_text();mapping=Path(folder,mapname).read_text(errors='strict')
+              providers=sorted(set(re.findall(r'^(\S*sqlite\S*) TYPE=(\S+)$',closure,re.M|re.I)))
+              assert providers==[('EXReader::vendor_exr_sqlite','INTERFACE_LIBRARY'),('EXReader::vendor_file_exr_sqlite','STATIC_LIBRARY')],providers
+              rows={}
+              # Frozen scanner does not call sqlite3_config; do not demand an
+              # unreferenced symbol survive linker dead stripping. Native logger does.
+              symbols=('sqlite3_open_v2','sqlite3_backup_init')+ (('sqlite3_config',) if label=='native' else ())
+              for symbol in symbols:
+                  definitions=[line for line in mapping.splitlines() if len(line.split())>1 and line.split()[1]==symbol]
+                  assert len(definitions)==1 and admitted(definitions[0],symbol),(label,symbol,definitions)
+                  rows[symbol]=definitions
+              records.append(dict(label=label,providers=providers,symbols=rows,map_sha256=hashlib.sha256(Path(folder,mapname).read_bytes()).hexdigest()))
+          Path('build/evidence/provider.json').write_text(json.dumps(dict(records=records,parser_controls=7),indent=2)+'\n')
+          PY
+      - name: Frozen 43 Windows preflight groups
+        id: frozen
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          python tests/migration/recovery_preflight_20261029/run.py --probe build/native/frozen-preflight/Release/migration-recovery-preflight.exe --tool build/migration/Release/exreader-legacy-migrate-tx.exe --old-tool build/old-migration/Release/exreader-legacy-migrate.exe --work build/windows-frozen-preflight 2>&1 | tee build/evidence/frozen43.txt
+      - name: New 24 native Windows groups
+        id: native
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          python tests/migration/windows_recovery_native_20261029/run.py --probe build/native/Release/migration-windows-native.exe --tool build/migration/Release/exreader-legacy-migrate-tx.exe --old-tool build/old-migration/Release/exreader-legacy-migrate.exe --work build/windows-native 2>&1 | tee build/evidence/native24.txt
+      - name: Exact aggregate without prerequisite waiver
+        if: always()
+        env:
+          FROZEN_OUTCOME: ${{ steps.frozen.outcome }}
+          NATIVE_OUTCOME: ${{ steps.native.outcome }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          result=[]
+          for name,folder,expected in [('frozen43','windows-frozen-preflight',43),('native24','windows-native',24)]:
+              path=Path('build',folder,'result.json' if name=='frozen43' else 'evidence.json');value=json.loads(path.read_text()) if path.exists() else {}
+              rows=value.get('cases',[]);passed=sum(x.get('passed') is True for x in rows)
+              result.append(dict(name=name,expected=expected,observed=len(rows),passed=passed,complete=value.get('passed') is True and len(rows)==expected and passed==expected))
+          complete=all(x['complete'] for x in result) and os.environ['FROZEN_OUTCOME']=='success' and os.environ['NATIVE_OUTCOME']=='success'
+          out=dict(sha=os.environ['GITHUB_SHA'],groups=result,passed=complete,total_expected=67,product_admission=False,full_p0_acceptance=False,directory_fsync_equivalent=False,physical_power_loss_qualified=False)
+          Path('build/evidence/aggregate.json').write_text(json.dumps(out,indent=2)+'\n');print(json.dumps(out),flush=True)
+          assert complete,'67-group qualification incomplete; original failures retained'
+          PY
+      - name: Bounded handle-pinned evidence and no-follow reparse metadata
+        if: always()
+        timeout-minutes: 4
+        run: |
+          python tests/migration/windows_recovery_native_20261029/run.py --archive
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-windows-handoff-${{ github.sha }}
+          path: build/retained-evidence/
+          if-no-files-found: error
