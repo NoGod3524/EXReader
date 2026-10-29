@@ -8,7 +8,8 @@ permissions:
   actions: read
 jobs:
   closure-diagnostic:
-    if: ${{ startsWith(github.event.head_commit.message, 'diagnostic:') }}
+    if: >-
+      ${{ startsWith(github.event.head_commit.message, 'diagnostic:') && !startsWith(github.event.head_commit.message, 'diagnostic: collections') }}
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
@@ -86,6 +87,60 @@ jobs:
             build/driver-diagnostic/case-*/
             build/driver-diagnostic/openbox.log
             !build/**/key.pem
+          if-no-files-found: warn
+  collections-diagnostic:
+    if: >-
+      ${{ startsWith(github.event.head_commit.message, 'diagnostic: collections') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: python3 tests/gtk_native_conflict_resolution_sdk342/identity.py guard
+      - name: Actions-only syntax validation
+        run: |
+          python3 -m py_compile tests/gtk_native_conflict_resolution_sdk342/diagnose_collections.py
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/gtk-native-conflict-resolution-sdk342.yml')"
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-gtk-gtk-first-40794101352-1
+          run-id: 40794101352
+          github-token: ${{ github.token }}
+          path: build/collections-diagnostic/evidence
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdk342-gtk-identity-40794101352-1
+          run-id: 40794101352
+          github-token: ${{ github.token }}
+          path: build/collections-diagnostic/identity
+      - uses: actions/download-artifact@v4
+        with:
+          name: gtk-windows-package-40794101352-1
+          run-id: 40794101352
+          github-token: ${{ github.token }}
+          path: build/collections-diagnostic/package
+      - name: Install runtime and UI inspection dependencies for the pinned executable
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 libcurl4 libxml2 libssl3 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil python3-pyatspi at-spi2-core
+          chmod +x build/collections-diagnostic/package/bin/exreader-linux
+      - name: Compare actual original keys and completed native actions on copied failed profiles
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NO_AT_BRIDGE: '0'
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/collections-diagnostic/openbox.log 2>&1 & trap "kill $! || true" EXIT
+            /usr/bin/python3 tests/gtk_native_conflict_resolution_sdk342/diagnose_collections.py
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-native-collections-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/collections-diagnostic/summary.json
+            build/collections-diagnostic/trial-*/
+            build/collections-diagnostic/openbox.log
           if-no-files-found: warn
   smoke:
     if: ${{ !startsWith(github.event.head_commit.message, 'diagnostic:') }}
