@@ -183,7 +183,10 @@ class AuditContract(unittest.TestCase):
 
     def test_ndk_manifest_not_extension_grants_runtime_name(self):
         import af07_ndk_inputs as N
-        for metadata in ({}, {'libc.so': True}, {'../libc.so': 1}, {'libc.so': '1'}):
+        self.assertEqual(N.system_names({'libc.so': '21', 'libfuture.so': '35'}, 26), {'libc.so'})
+        for metadata in ({}, {'libc.so': True}, {'../libc.so': 1}, {'libc.so': '0'},
+                         {'libc.so': ' 21'}, {'libc.so': '021'}, {'libc.so': '21.0'},
+                         {'libc.so': '-1'}, {'libc.so': 'current'}, {'libc.so': None}):
             with self.assertRaises(ValueError): N.system_names(metadata, 26)
         records = {'host': dict(needed=['libc++.so'], full=dict(defined=[]), dynamic=dict(defined=[]))}
         with self.assertRaises(ValueError): C.system_scope('host', records, {}, {'libc.so': set()}, set())

@@ -135,6 +135,15 @@ artifact-proven import. Exact compiled-input/include-owner coverage and missing
 compiler dependency evidence remain explicit separate blockers to full F07.
 # Exact NDK-input follow-up (diagnostic only)
 
+Run [40783606650](https://github.com/NoGod3524/EXReader/actions/runs/40783606650)
+passed 26 controls and original artifact replay, then refused the NDK metadata
+schema before native module verdicts. The [official generator](https://android.googlesource.com/platform/ndk/+/2b394f4ddaa03f89e7f123c0fdb827d974ce7a12/ndk/checkbuild.py)
+serializes API directory names as decimal strings. The narrow correction
+accepts only canonical positive decimal strings or positive integers, still
+rejecting booleans, signs, whitespace, zero, leading zeroes and nonnumeric
+values. Exact installed metadata bytes/hash are now retained before parsing.
+No metadata value changes a stub's ELF requirement or actual DT_NEEDED scope.
+
 Pinned-input probe [40782970059](https://github.com/NoGod3524/EXReader/actions/runs/40782970059)
 passed all 22 controls and confirmed the exact 19 script bytes with the prior
 failed-input digest. Its selected `libc++_shared.so` candidate was ELF, 1617608
