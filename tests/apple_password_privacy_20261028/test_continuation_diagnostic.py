@@ -9,11 +9,28 @@ import subprocess
 import unittest
 from contract import ROOT, sha
 import inspect_continuation_failure as inspector
-from inspect_continuation_failure import ARTIFACTS, BUNDLE, CASE, DIAGNOSTIC_STAGES, REFUSAL_CODES, RUN, SOURCE, SOURCE_FILE, SOURCE_LAST_LINE, SOURCE_PATH, SOURCE_SHA, activity_timing, attachment_summary, diagnostic_stage, locations, member_integrity, member_role, network_summary, refusal_report, safe_progress, xcresult_issues
+from inspect_continuation_failure import ARTIFACTS, BUNDLE, CASE, DIAGNOSTIC_STAGES, REFUSAL_CODES, RUN, SOURCE, SOURCE_FILE, SOURCE_LAST_LINE, SOURCE_PATH, SOURCE_SHA, activity_timing, attachment_summary, diagnostic_stage, locations, member_integrity, member_role, network_summary, refusal_report, safe_progress, sealed_lifecycle, xcresult_issues
 from privacy_scan import needles
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_sealed_lifecycle_receipt_refuses_missing_false_or_arbitrary_fields(self):
+        receipt = {'admission_closed': True, 'active_handlers': 0, 'admitted_handlers': 532,
+            'rejected_handlers': 0, 'serving_stopped': True, 'drained': True, 'failed': False,
+            'cleanup': {'certificate': 'completed', 'simulator-shutdown': 'not-required', 'simulator-erase': 'not-required'},
+            'outer_limit_seconds': 4800, 'drain_limit_seconds': 90}
+        result = {'evidence_sealed': True, 'lifecycle': receipt}
+        self.assertEqual(sealed_lifecycle(result, 'macos'), receipt)
+        for value in ({}, {'evidence_sealed': False, 'lifecycle': receipt},
+                dict(result, lifecycle=dict(receipt, active_handlers=1)),
+                dict(result, lifecycle=dict(receipt, failed=True)),
+                dict(result, lifecycle=dict(receipt, extra='private operand'))):
+            with self.assertRaises(RuntimeError): sealed_lifecycle(value, 'macos')
+        for raw in list(needles({'secret': b'Privacy-' + b'f' * 64 + b'!%:+'}).values()) + [b'Privacy-fff...']:
+            altered = dict(receipt, cleanup=dict(receipt['cleanup'], certificate=raw.decode('utf-8', errors='replace')))
+            with self.assertRaisesRegex(RuntimeError, '^lifecycle cleanup incomplete$'):
+                sealed_lifecycle(dict(result, lifecycle=altered), 'macos')
+
     def test_member_integrity_checks_all_and_keeps_size_and_hash_distinct(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -100,10 +117,10 @@ class ContinuationDiagnosticControls(unittest.TestCase):
             diagnostic_stage('entry')
 
     def test_current_macos_artifact_and_source_extent_are_exact(self):
-        self.assertEqual(RUN, '40813760224')
-        self.assertEqual(SOURCE, 'a16304c989aa9c1b94ce6e9bb6644a075b3e326b')
-        self.assertEqual(ARTIFACTS, {'macos': (12871319916, 169232203,
-            '19cc7e4b40b3ba01a6c10bf0c143bc911e2772927d6e9742a1d973dbc5e7f3c9')})
+        self.assertEqual(RUN, '40822937279')
+        self.assertEqual(SOURCE, '256ec70d1d30d80d1e2069959d5c6409bcc76779')
+        self.assertEqual(ARTIFACTS, {'macos': (12875323064, 169233545,
+            '2538597b4265578a70f3bc2353d13a289848d49e6036c3e1e4b8338294e60ede')})
         self.assertEqual(sha(ROOT / SOURCE_FILE), SOURCE_SHA)
         self.assertEqual(SOURCE_LAST_LINE, 267)
         self.assertEqual(len((ROOT / SOURCE_FILE).read_text().splitlines()), SOURCE_LAST_LINE)

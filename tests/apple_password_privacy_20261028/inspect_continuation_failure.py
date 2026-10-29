@@ -13,9 +13,10 @@ from urllib.parse import parse_qsl, urlsplit
 from contract import ROOT, STAGES, guard, require, sha
 from archive_contract import safe_extract
 from inspect_native import CONTROLS, MESSAGES, ROLES, variant_labels
+from continuation_lifecycle import verify_lifecycle
 
-RUN = '40813760224'
-SOURCE = 'a16304c989aa9c1b94ce6e9bb6644a075b3e326b'
+RUN = '40822937279'
+SOURCE = '256ec70d1d30d80d1e2069959d5c6409bcc76779'
 SOURCE_FILE = 'tests/apple_password_privacy_20261028/continuation_ui/PasswordPrivacyContinuationUITests.swift'
 SOURCE_SHA = '6555ab86d6a1f517a496a5ce777dfe67ff70a30c89c4cea5a6c7a4a5459fb079'
 SOURCE_LAST_LINE = 267
@@ -23,7 +24,7 @@ SOURCE_PATH = '/Users/runner/work/EXReader/EXReader/' + SOURCE_FILE
 # Exact terminal macOS attempt-1 upload; original three-platform runs stay retained.
 # This diagnostic localizes the remaining fourth-stage failure, not acceptance.
 ARTIFACTS = {
-    'macos': (12871319916, 169232203, '19cc7e4b40b3ba01a6c10bf0c143bc911e2772927d6e9742a1d973dbc5e7f3c9'),
+    'macos': (12875323064, 169233545, '2538597b4265578a70f3bc2353d13a289848d49e6036c3e1e4b8338294e60ede'),
 }
 FAILURES = ('RuntimeError', 'AssertionError', 'CalledProcessError', 'TimeoutExpired',
             'FileNotFoundError', 'OperationalError', 'PermissionError', 'KeyError', 'OSError')
@@ -39,7 +40,7 @@ STATUS_TOKENS = {'finished': '本轮扫描完成', 'failed': '同步失败',
                  'closed': '已关闭', 'preparing-original': '正在准备原书', 'receiving-shelf': '正在接收书架'}
 DIAGNOSTIC_STAGES = ('entry', 'scope-and-source', 'artifact-metadata', 'artifact-download',
     'archive-bytes', 'archive-extract', 'result-identity', 'member-inventory', 'member-bytes',
-    'progress-and-native-log', 'scan-summaries', 'fixture-failures', 'network-summary',
+    'lifecycle-receipt', 'progress-and-native-log', 'scan-summaries', 'fixture-failures', 'network-summary',
     'xcresult-copy', 'xcresult-parser', 'xcresult-issues', 'attachment-export',
     'attachment-summary', 'safe-report')
 CURRENT_DIAGNOSTIC_STAGE = 'entry'
@@ -62,6 +63,10 @@ REFUSAL_CODES = {
     'prior continuation inventory differs': 'member-inventory',
     'prior continuation member differs': 'member-bytes',
     'unexpected member metadata': 'member-metadata',
+    'producer evidence was not sealed': 'unsealed-evidence',
+    'lifecycle receipt shape differs': 'lifecycle-shape',
+    'lifecycle ownership incomplete': 'lifecycle-ownership',
+    'lifecycle cleanup incomplete': 'lifecycle-cleanup',
     'prior continuation verdict differs': 'prior-verdict',
     'unexpected strict checks': 'strict-check-shape',
     'unexpected checkpoint': 'checkpoint-shape',
@@ -151,6 +156,15 @@ def member_integrity(directory, manifest):
         'mismatch_groups': [{'role': role, 'size_matches': size, 'hash_matches': digest, 'count': count}
             for (role, size, digest), count in sorted(groups.items())],
         'arbitrary_member_names_or_bytes_printed': False, 'acceptance': False}
+
+
+def sealed_lifecycle(result, platform):
+    require(result.get('evidence_sealed') is True, 'producer evidence was not sealed')
+    receipt = result['lifecycle']
+    verify_lifecycle(receipt, platform)
+    # verify_lifecycle permits only fixed keys, booleans, bounded counts and
+    # fixed cleanup states. This receipt is not an authenticated event trace.
+    return receipt
 
 
 def locations(path):
@@ -359,6 +373,8 @@ def main():
         diagnostic_stage('member-bytes')
         CURRENT_MEMBER_INTEGRITY = member_integrity(folder, result['files'])
         require(CURRENT_MEMBER_INTEGRITY['mismatch_count'] == 0, 'prior continuation member differs')
+        diagnostic_stage('lifecycle-receipt')
+        lifecycle = sealed_lifecycle(result, platform)
         diagnostic_stage('progress-and-native-log')
         report = safe_progress(result, files)
         report.update(old_source_sha=SOURCE, old_run_id=RUN, old_attempt=1, platform=platform,
@@ -367,6 +383,8 @@ def main():
                       source_positions_not_authenticated_callsites=True,
                       native_failure_locations=locations(folder / 'native.log') if 'native.log' in files else [])
         report['member_integrity'] = CURRENT_MEMBER_INTEGRITY
+        report['producer_lifecycle_receipt'] = lifecycle
+        report['producer_receipt_is_event_trace_proof'] = False
         report['activity_timing'] = activity_timing(folder / 'native.log')
         diagnostic_stage('scan-summaries')
         for stage in STAGES:
