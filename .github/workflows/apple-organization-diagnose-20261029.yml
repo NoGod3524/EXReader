@@ -7,7 +7,7 @@ permissions:
   actions: read
 jobs:
   inspect:
-    runs-on: macos-15
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +46,14 @@ jobs:
               assert not stat.S_ISLNK(i.external_attr >> 16)
               if 'organization.xcresult' in p.parts or p.suffix == '.log':
                 z.extract(i, out)
+          for path in out.rglob('*.log'):
+            lines = path.read_text(errors='replace').splitlines()
+            for n, line in enumerate(lines):
+              if 'error:' in line or 'XCTAssert' in line or 'failed (' in line:
+                print(str(path) + '\n' + '\n'.join(lines[max(0,n-8):n+5]), flush=True)
+          if sys.platform != 'darwin':
+            print('Raw logs inspected; retained macOS diagnostic run reads xcresult separately.', flush=True)
+            sys.exit(0)
           bundles = list(out.rglob('organization.xcresult'))
           assert len(bundles) == 1
           bundle = bundles[0]
@@ -59,11 +67,6 @@ jobs:
           (out/'legacy.json').write_text(value)
           issues = json.loads(value).get('issues', {})
           print('issues: ' + json.dumps(issues), flush=True)
-          for path in out.rglob('*.log'):
-            lines = path.read_text(errors='replace').splitlines()
-            for n, line in enumerate(lines):
-              if 'error:' in line or 'XCTAssert' in line or 'failed (' in line:
-                print(str(path) + '\n' + '\n'.join(lines[max(0,n-8):n+5]), flush=True)
           subprocess.run(['xcrun','xcresulttool','export','attachments','--path',str(bundle),
             '--output-path',str(out/'attachments')], check=True)
           PY
