@@ -44,6 +44,7 @@ struct HostWave3Sheet: View {
     @State private var reviewOriginalDirectory: URL?
     @State private var lockedReviewDirectory: URL?
     @State private var reviewPickerFile: URL?
+    @State private var reviewPickerDirectory: URL?
     @State private var reviewExportCheck = ""
 #endif
 
@@ -124,7 +125,11 @@ struct HostWave3Sheet: View {
                 case .annotations: selectedInput = url.lastPathComponent; actions.previewAnnotations(url)
                 case .font: actions.importFont(url)
                 case .original: actions.exportOriginal(url)
-                case .jsonl: actions.exportAnnotations(url, false)
+                case .jsonl:
+#if EXR_APPLE_HOST_REVIEW
+                    reviewPickerDirectory = url
+#endif
+                    actions.exportAnnotations(url, false)
                 case .markdown: actions.exportAnnotations(url, true)
                 }
             case .failure(let error):
@@ -175,7 +180,7 @@ struct HostWave3Sheet: View {
                         Text("仅包含保留头；冲突会保留，不自动选择版本。")
                             .font(.caption).foregroundColor(.secondary)
                     }.padding(.top, 8)
-                }
+                }.accessibilityIdentifier("features.annotations.export-options")
             }.frame(maxWidth: .infinity, alignment: .leading)
         } label: { Text("标注导入与导出") }
     }
@@ -304,7 +309,11 @@ struct HostWave3Sheet: View {
                 action("准备系统选择器文件", id: "features.annotations.prepare-picker") {
                     guard let source = state.exportURL else { return }
                     do {
-                        let documents = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+                        guard let documents = reviewPickerDirectory else {
+                            throw HostError.invalidInput("请先通过系统选择器导出 JSONL")
+                        }
+                        let accessing = documents.startAccessingSecurityScopedResource()
+                        defer { if accessing { documents.stopAccessingSecurityScopedResource() } }
                         let file = documents.appendingPathComponent("EXReader-annotations.jsonl")
                         let invalid = documents.appendingPathComponent("EXReader-invalid.jsonl")
                         try Data(contentsOf: source).write(to: file, options: .atomic)
