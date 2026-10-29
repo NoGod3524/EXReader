@@ -1,0 +1,22 @@
+name: Read retained mobile annotation timeout
+on:
+  push:
+    branches: [codex/apple-four-evidence-audit-20261029]
+    paths: ['.github/workflows/annotation-mobile-timing-409234.yml']
+permissions: {contents: read, actions: read}
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read exact original case timing without rerunning the application
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/annotation_mobile_timing_409234.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: annotation-mobile-timing-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/annotation-mobile-timing/context.json
+          if-no-files-found: warn
