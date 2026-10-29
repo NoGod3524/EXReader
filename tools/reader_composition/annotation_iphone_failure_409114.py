@@ -10,7 +10,10 @@ raw = subprocess.check_output(["gh","api",repo+"actions/artifacts/%d/zip"%artifa
 assert len(raw) == 557331586 and hashlib.sha256(raw).hexdigest() == "16791cbf850369bf3c0bd71b60e6457650b712ba808971db4186420b855c3076"
 results = []
 with zipfile.ZipFile(io.BytesIO(raw)) as z:
-    for suffix in ("wave3-native-ui.log", "theme-native-ui.log"):
+    for info in z.infolist():
+        if info.filename.endswith("system-commands.json"):
+            print(json.dumps({"system_commands": json.loads(z.read(info))}), flush=True)
+    for suffix in ("wave3-native-ui.log", "theme-os/xcodebuild.log"):
         names = [n for n in z.namelist() if n.endswith(suffix)]
         assert len(names) == 1, names
         lines = z.read(names[0]).decode("utf-8", "replace").splitlines()
