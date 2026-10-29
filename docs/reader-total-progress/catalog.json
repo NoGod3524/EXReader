@@ -468,6 +468,34 @@
       "artifact": 12800691525,
       "bytes": 8880082,
       "sha256": "b4729b41faedc8de484a1dfef8f312840ac0522c66acaffba22b9a30d7933a3e"
+    },
+    "apple_original_iphone": {
+      "run": 40910291131,
+      "doc": "docs/reader-total-progress/apple-ios-original-audited.md",
+      "source_prefix": "0840c701565f69d5d1f0ecf6149a428b4ee87ecd",
+      "adapter": "apple_ios_save_40910291131",
+      "kind": "original",
+      "platform": "iphone",
+      "original_run": 40905868673,
+      "original_source": "127cdb7c62772fd293c10cc032547c28904bd1c2",
+      "original_job": 123560322008,
+      "original_artifact": 12912596737,
+      "original_archive_sha256": "842f2802eef90df0816a930af60b5be987ab2c9500190ef644c9fee19cff9fd1",
+      "test": "testSystemFolderSave()"
+    },
+    "apple_original_ipad": {
+      "run": 40910291131,
+      "doc": "docs/reader-total-progress/apple-ios-original-audited.md",
+      "source_prefix": "0840c701565f69d5d1f0ecf6149a428b4ee87ecd",
+      "adapter": "apple_ios_save_40910291131",
+      "kind": "original",
+      "platform": "ipad",
+      "original_run": 40905868673,
+      "original_source": "127cdb7c62772fd293c10cc032547c28904bd1c2",
+      "original_job": 123560322186,
+      "original_artifact": 12912122792,
+      "original_archive_sha256": "8352574f57110bfa9bbe031e88140f19bf1cbfdacb2deda85cdc999333255849",
+      "test": "testSystemFolderSave()"
     }
   },
   "requirements": [
@@ -1325,9 +1353,11 @@
       "group": "host",
       "platform": "iphone",
       "title": "iPhone：宿主原件导出、系统保存及逐字节回读",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_original_iphone"
+      ],
+      "note": "SDK 3.41 模拟器原生系统选择器保存及 7724 字节回读经独立 Actions 复核；原工件无应用二进制，程序哈希仅引用生产者记录。真机与最终同源交付另验。"
     },
     {
       "id": "H.iphone.jump_history",
@@ -1474,9 +1504,11 @@
       "group": "host",
       "platform": "ipad",
       "title": "iPad：宿主原件导出、系统保存及逐字节回读",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_original_ipad"
+      ],
+      "note": "SDK 3.41 模拟器原生系统选择器保存及 7724 字节回读经独立 Actions 复核；原工件无应用二进制，程序哈希仅引用生产者记录。真机与最终同源交付另验。"
     },
     {
       "id": "H.ipad.jump_history",
