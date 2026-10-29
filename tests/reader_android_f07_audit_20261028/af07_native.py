@@ -254,12 +254,26 @@ def audit(raw, capture, inventory, images, bindings):
     for image, record in image_reports.items():
         image_private[image] = C.image_imports(image, image_reports, reachable[image], system_by_image[image], sdk_providers, public['EXReader'])
     map_reports = {}
+    map_diagnostic_index = 0
     for image in ('libexreader_host.so', 'libexreader_product.so'):
         found = []
         for row in bindings[image]['linked']:
             for name in row['maps']:
                 text = (raw / name).read_text()
                 paths = set(re.findall(r'([^\s()]+\.a)\([^()\n]+\)', text))
+                # Observe the exact retained map/named-input mismatch before the
+                # unchanged refusal. This does not admit implicit NDK inputs.
+                ndk_paths = {path for path in paths if path.startswith(original_ndk + '/')}
+                diagnostic = dict(C.identity(), image=image, map_path=name,
+                    map_sha256=C.digest(raw / name), original_workspace=workspace,
+                    original_ndk=original_ndk, archive_paths=sorted(paths),
+                    matching_linked_output=row['path'], matching_named_inputs=sorted(row['inputs']),
+                    external_named_inputs=external,
+                    missing_ndk_named_inputs=sorted(ndk_paths - set(external)),
+                    admission_changed=False, full_six_platform_f07_accepted=False)
+                C.save(C.OUT / ('map-input-diagnostic-%03d.json' % map_diagnostic_index), diagnostic)
+                print(json.dumps(dict(map_input_diagnostic=diagnostic), sort_keys=True), flush=True)
+                map_diagnostic_index += 1
                 C.require(paths, 'LLD final map archive inputs unrecognized')
                 mapped = []
                 for path in sorted(paths):
