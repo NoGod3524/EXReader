@@ -159,3 +159,46 @@ and the same authenticated failed-original ZIP only. It must expose the actual
 known index name and bounded equivalence. Old failed source/run remains failed;
 accepted/full-F07/full-six stay false. This is not a fresh native build or full
 same-source target acceptance; that requires a separately authorized later run.
+
+## Second full run: partial passes, three original unknowns
+
+Full run [40816180401/1](https://github.com/NoGod3524/EXReader/actions/runs/40816180401)
+used source `1198abce384aabe78bc23450db0c38be487706e1`, exactly the reviewed tree
+`1452cab6ff071efa5a3bdedc790adee5adacde15`. Linux and macOS passed boundary plus
+desktop runtime; iOS-device passed installed-only final-link/member/dependency
+proof (no mobile runtime). macOS's actual index-content/object-content mutation
+controls passed. Its current archive pair was exact; the older unequal pair
+remains separately authenticated. Aggregate failed because three producers failed.
+
+Windows now refuses a weak COFF external; the original log does not identify its
+row/fallback. Android now refuses an unclassified linker-escape operand. iOS
+simulator now refuses entire-archive inequality, correctly retaining the
+macOS-only normalization rule. No weak-symbol, Android escape or simulator
+criterion is relaxed from these messages alone.
+
+`[hash-retained-diagnostic]` skips all native producers, normal authentication and
+the earlier archive diagnostic. A new no-build job pins all six original upload
+IDs, sizes and SHA256 digests, exact source/run/attempt and original job results.
+It authenticates original failure ZIPs before printing every retained weak-row
+context plus advertised fallback-row candidates, the exact final Android linker
+commands/response identities and existing binding failures, and both simulator
+archive/index/object identities and precise differing offsets. These are
+unadmitted diagnostics, never fallback-symbol ownership or simulator acceptance.
+
+The same job independently replays the three original green producers using the
+EXACT historical `package_contract.py` and `test_contract.py` bytes from commit
+1198abce. The historical16-path scope and all retained source records are verified
+against Git; all eight current owner files must still equal that source. A narrow
+historical identity/guard binding uses the original SHA/run/attempt and checked
+source inventory, not current-source identity. Original ZIP/nested hashes,
+complete file inventory, every native proof predicate and actual-evidence
+mutation controls run unchanged. It compares the result with the original
+producer result. Each green target is reported explicitly under
+`independently_replayed_original_green`; overall accepted/full-six/full-F07 stay
+false. Original iOS-device proof remains compile/final-link only.
+
+Only the new diagnostic JSON is uploaded, not original ZIPs or unpacked files.
+API/parse/replay errors are retained as failures with any already established
+partial results; the job remains failed unless all planned diagnostic/replay
+parts finish. This run cannot relabel old artifacts as fresh-source native proof
+and performs no native build or test executable invocation.
