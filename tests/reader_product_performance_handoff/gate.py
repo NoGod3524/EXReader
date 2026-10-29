@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 SDK = '3.42.0'
-NOT_MEASURED = ['Windows scroll/font switch', 'locate/jump', 'frame time / dropped frames',
+NOT_MEASURED = ['reader-body scroll', 'locate/jump', 'frame time / dropped frames',
                 'physical-device fluency', 'Apple', 'Android']
 WIN = (('cold_shelf', 'first_screen_interactive_ms'), ('warm_shelf', 'first_screen_interactive_ms'),
        ('warm_shelf', 'shelf_next_page_ms'), ('warm_shelf', 'search_result_ms'),
@@ -35,6 +35,7 @@ def main():
     p.add_argument('--windows-build', required=True)
     p.add_argument('--gtk-summary', required=True)
     p.add_argument('--gtk-interactions')
+    p.add_argument('--windows-interactions')
     p.add_argument('--output', required=True)
     a = p.parse_args()
     source = os.environ.get('GITHUB_SHA', '')
@@ -57,6 +58,20 @@ def main():
             continue
         rows.append({'platform': 'windows', 'cohort': cohort, 'metric': metric, 'unit': s['unit'],
                      'n': s['n'], 'p50': s['p50'], 'p95': s['p95'], 'max': s['max'], 'ratified_threshold': None})
+    if a.windows_interactions and Path(a.windows_interactions).exists():
+        wi = load(a.windows_interactions)
+        if wi['faults']:
+            problems.append('Windows interaction faults: %r' % wi['faults'][:3])
+        for name in ('shelf_scroll_down', 'shelf_scroll_up', 'font_bigger', 'font_smaller'):
+            v = sorted(wi[name])
+            if not v:
+                problems.append('Windows %s has no samples' % name)
+                continue
+            rows.append({'platform': 'windows', 'cohort': 'interactions', 'metric': name, 'unit': 'ms', 'n': len(v),
+                         'p50': v[len(v) // 2], 'p95': v[max(1, -(-95 * len(v) // 100)) - 1], 'max': v[-1],
+                         'ratified_threshold': None})
+    else:
+        problems.append('Windows interaction summary is missing')
     if gs['launches']['completed'] < gs['launches']['minimum']:
         problems.append('Linux completed %d launches' % gs['launches']['completed'])
     for name, m in sorted(gs['metrics'].items()):
