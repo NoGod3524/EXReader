@@ -306,7 +306,7 @@ jobs:
       - name: Combine measured evidence without budgets or acceptance
         run: |
           python3 -m py_compile tests/reader_product_performance_handoff/gate.py
-          ls -R build/in | head -80
+          find build/in -maxdepth 2 | sort
           python3 tests/reader_product_performance_handoff/gate.py             --windows-summary build/in/reader-product-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}/perf-windows/summary.json             --windows-build build/in/reader-product-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}/desktop-windows-package/build.json             --windows-interactions build/in/reader-product-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}/perf-windows-interactions/interactions.json \n            --gtk-summary build/in/reader-product-perf-gtk-${{ github.run_id }}-${{ github.run_attempt }}/summary.json             --output build/handoff
       - uses: actions/upload-artifact@v4
         if: always()
