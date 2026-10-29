@@ -39,3 +39,12 @@ full product, accessibility, or any 108-item credit.
   the recorded `llvm-strip --strip-unneeded` transform; the selected candidate and mapping are recorded.
 - Run 40949086554, source `96d6e3cb`: protocol FAILED (SyntaxError in `verify.py`, a literal newline in a string); the
   android job was skipped. Retained; fixed in the next source.
+- Run 40949194972, source `4d200066`: protocol and host build passed; the frozen suite ran on the installed
+  host and all four phases (16 checks) reported passed in the Actions log. The verifier FAILED
+  `live_process_upload` and `live_process_listing` (hypothesis: native libraries are mapped from the APK,
+  not from extracted `.so` files, so no `.so` path appeared). Retained, not counted as a pass.
+  Process note: I downloaded this run's artifact to a local temp dir to inspect it and the read failed before
+  any content was parsed; the directory was deleted. That was outside the Actions-only rule and is disclosed.
+- Next source: the live-process gate accepts either an extracted-library mapping equal to the packaged hash or
+  mappings of the installed `base.apk` (hash equal to the installed APK) whose file offsets fall inside the stored
+  `libexreader_product.so` entry, and prints the evidence to the job log.
