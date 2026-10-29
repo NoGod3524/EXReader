@@ -35,12 +35,22 @@ final class IOSOrganizationAcceptanceTests: XCTestCase {
     private func tap(_ element: XCUIElement) {
         XCTAssertTrue(element.waitForExistence(timeout: 60), app.debugDescription)
         if !element.isHittable {
-            let scroll = app.scrollViews.firstMatch
-            if scroll.exists {
-                for _ in 0..<5 where !element.isHittable {
-                    if element.frame.midY < scroll.frame.midY { scroll.swipeDown() }
-                    else { scroll.swipeUp() }
-                }
+            // The library ScrollView remains in the tree behind the sheet.
+            // Scroll only the unique container owning this exact target ID.
+            let targetID = element.identifier
+            guard !targetID.isEmpty else {
+                XCTFail("Non-hittable target has no identifier: \(app.debugDescription)")
+                return
+            }
+            let containers = app.scrollViews.containing(NSPredicate(format: "identifier == %@", targetID))
+            guard containers.count == 1 else {
+                XCTFail("Expected one scroll container for \(targetID): \(app.debugDescription)")
+                return
+            }
+            let scroll = containers.firstMatch
+            for _ in 0..<5 where !element.isHittable {
+                if element.frame.midY < scroll.frame.midY { scroll.swipeDown() }
+                else { scroll.swipeUp() }
             }
         }
         XCTAssertTrue(wait { element.isEnabled && element.isHittable }, app.debugDescription)
