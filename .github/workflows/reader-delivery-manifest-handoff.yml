@@ -1,0 +1,52 @@
+name: Reader delivery manifest and licence handoff
+on:
+  push:
+    branches: [claude/local-c3-delivery-licenses-20261029]
+    paths:
+      - 'tests/reader_delivery_manifest_handoff/**'
+      - 'docs/reader-delivery-handoff/**'
+      - '.github/workflows/reader-delivery-manifest-handoff.yml'
+  workflow_dispatch:
+    inputs:
+      inspect_run:
+        description: 'Run id whose f06-* artifacts are inspected read-only'
+        default: '40678657371'
+      inspect_attempt:
+        description: 'Attempt of that run'
+        default: '1'
+      require_complete:
+        description: 'Fail when any archive lacks registered licence material'
+        default: 'false'
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      INSPECT_RUN: ${{ inputs.inspect_run || '40678657371' }}
+      INSPECT_ATTEMPT: ${{ inputs.inspect_attempt || '1' }}
+      REQUIRE_COMPLETE: ${{ inputs.require_complete || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Syntax and source identity guard
+        run: |
+          python3 -m py_compile tests/reader_delivery_manifest_handoff/check.py
+          python3 tests/reader_delivery_manifest_handoff/check.py guard
+      - name: Source-declared licence expectations, packaging copies and document links
+        run: python3 tests/reader_delivery_manifest_handoff/check.py source
+      - name: Read-only inspection of the six published F06 archives
+        run: python3 tests/reader_delivery_manifest_handoff/check.py artifacts "$INSPECT_RUN" "$INSPECT_ATTEMPT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-delivery-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-delivery-handoff/
+          if-no-files-found: error
