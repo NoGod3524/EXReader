@@ -9,6 +9,21 @@ spec=importlib.util.spec_from_file_location('public_boundary_validator',Path(__f
 C=importlib.util.module_from_spec(spec);spec.loader.exec_module(C)
 
 
+def bsd_fixture(members=None,extra_name_padding=0):
+    """Synthetic grammar only; generated/executed in Actions, never native proof."""
+    members=members or [('__.SYMDEF SORTED',b'index payload',1),('one.o',b'object-one',2),('two.o',b'object-two!',3)]
+    raw=b'!<arch>\n';positions=[]
+    for name,payload,stamp in members:
+        offset=len(raw);name=name.encode();padding=(-(offset+60+len(name)))%8
+        if not positions:padding+=extra_name_padding
+        extended=name+b'\0'*padding;body=extended+payload
+        header=(('#1/'+str(len(extended))).encode().ljust(16)+str(stamp).encode().ljust(12)+
+                b'501'.ljust(6)+b'20'.ljust(6)+b'100644'.ljust(8)+str(len(body)).encode().ljust(10)+b'`\n')
+        raw+=header+body+b'\n'*(len(body)%2)
+        positions.append(dict(header=offset,name=offset+60,payload=offset+60+len(extended),end=offset+60+len(body)))
+    return raw,positions
+
+
 class BoundaryContract(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -40,6 +55,108 @@ class BoundaryContract(unittest.TestCase):
         text=(C.ROOT/'.github/workflows/reader-public-boundary-v1-20261028.yml').read_text()
         self.assertEqual(text.count('include-hidden-files: true'),4)
         self.assertEqual(text.count('path: build/public-boundary-v1/evidence/\n          include-hidden-files: true'),4)
+
+    def test_bsd_first_index_timestamp_only(self):
+        before,_=bsd_fixture();after=before[:24]+b'7'+before[25:]
+        self.assertEqual(C.installed_archive_equivalence(before,before,'linux')['mode'],'exact')
+        result=C.installed_archive_equivalence(before,after,'macos')
+        self.assertFalse(result['exact_archive_equal']);self.assertNotEqual(result['build_sha256'],result['installed_sha256'])
+        self.assertEqual(result['mode'],'macos-first-bsd-index-timestamp')
+        self.assertEqual(result['comparison']['differing_offsets'],[24])
+        self.assertEqual(result['comparison']['comparison_sha256'],C.installed_archive_equivalence(after,before,'macos')['comparison']['comparison_sha256'])
+        for target in ('linux','windows','android','iphone','ipad'):
+            with self.assertRaisesRegex(AssertionError,'measured macOS'):C.installed_archive_equivalence(before,after,target)
+
+    def test_bsd_non_timestamp_changes_rejected(self):
+        before,positions=bsd_fixture();after=bytearray(before);after[24]=ord('7')
+        for offset in (positions[0]['payload'],8+28,8+34,8+40,positions[1]['header']+16,positions[1]['payload']):
+            changed=bytearray(after);changed[offset]=ord('2') if changed[offset]!=ord('2') else ord('3')
+            with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,bytes(changed),'macos')
+
+    def test_bsd_member_set_order_and_duplicate_rejected(self):
+        before,_=bsd_fixture()
+        for members in (
+            [('__.SYMDEF SORTED',b'index payload',7),('two.o',b'object-two!',3),('one.o',b'object-one',2)],
+            [('__.SYMDEF SORTED',b'index payload',7),('one.o',b'object-one',2)],
+            [('__.SYMDEF SORTED',b'index payload',7),('one.o',b'object-one',2),('two.o',b'object-two!',3),('extra.o',b'extra',4)],
+            [('__.SYMDEF SORTED',b'index payload',7),('one.o',b'object-one',2),('one.o',b'object-two!',3)]):
+            with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,bsd_fixture(members)[0],'macos')
+
+    def test_bsd_index_impersonation_and_padding_rejected(self):
+        for first in ('not-an-index','__.SYMDEF FAKE'):
+            before,_=bsd_fixture([(first,b'index payload',1),('one.o',b'object-one',2)])
+            with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,before[:24]+b'7'+before[25:],'macos')
+        before,_=bsd_fixture([('__.SYMDEF SORTED',b'index payload',1),('__.SYMDEF',b'another index',2),('one.o',b'object-one',3)])
+        with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,before[:24]+b'7'+before[25:],'macos')
+        before,_=bsd_fixture(extra_name_padding=8)
+        with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,before[:24]+b'7'+before[25:],'macos')
+
+    def test_bsd_canonical_numeric_fields_required(self):
+        before,_=bsd_fixture();after=before[:24]+b'7'+before[25:]
+        for field in (b'-1          ',b'not-time    ',b'01          ',b'            '):
+            with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,after[:24]+field+after[36:],'macos')
+        for offset,length,value in ((8,16,b'#1/0'),(8,16,b'#1/999999999999'),(8+48,10,b'9999999999'),
+                                    (8+28,6,b'-1'),(8+34,6,b'2x'),(8+40,8,b'999999')):
+            with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,after[:offset]+value.ljust(length)+after[offset+length:],'macos')
+
+    def test_bsd_malformed_extent_magic_and_payload_rejected(self):
+        before,positions=bsd_fixture();after=before[:24]+b'7'+before[25:]
+        for bad in (after[:-1],after[:-10],after[:40],after+b'?',b'!<thin>\n'+after[8:]):
+            with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,bad,'macos')
+        for offset in (positions[0]['name']+15,positions[1]['header']+58,positions[-1]['end']):
+            bad=bytearray(after);bad[offset]=ord('X')
+            with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,bytes(bad),'macos')
+        for members in ([('__.SYMDEF',b'index payload',1)],
+                        [('__.SYMDEF',b'index payload',1),('one.o',b'BC\xc0\xdepayload',2)]):
+            raw,_=bsd_fixture(members)
+            with self.assertRaises(AssertionError):C.bsd_index_archive(raw)
+
+    def archive_replay_fixture(self):
+        before,positions=bsd_fixture();after=before[:24]+b'7'+before[25:]
+        files={};measured=dict(built_installed_archive_comparison=[],actual_compiler_dependencies={},installed_archives={})
+        stage=C.layout('macos')[1].relative_to(C.ROOT).as_posix()
+        for owner,name,source in (('reading-state','reader_reading_state_codec','reading_state.cpp'),
+                                  ('reading-commands','reader_reading_commands','reading_commands.cpp'),
+                                  ('annotation-import','reader_annotation_import','annotation_import.cpp'),
+                                  ('annotation-export','reader_annotation_export','annotation_export.cpp')):
+            folder='build/producer/'+owner;built=folder+'/lib'+name+'.a';installed=stage+'/lib/lib'+name+'.a'
+            home='/producer/apps/reader/'+owner;obj='CMakeFiles/owner.dir/src/'+source+'.o'
+            files[built]=before;files[installed]=after;files[folder+'/'+obj]=b'linked-object'
+            files[folder+'/CMakeCache.txt']=('CMAKE_HOME_DIRECTORY:INTERNAL='+home+'\nEXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=ON\n').encode()
+            equivalence=C.installed_archive_equivalence(before,after,'macos')
+            measured['built_installed_archive_comparison'].append(dict(owner=owner,built=built,installed=installed,
+                built_exists=True,installed_exists=True,built_bytes=len(before),installed_bytes=len(after),
+                built_sha256=equivalence['build_sha256'],installed_sha256=equivalence['installed_sha256'],equivalence=equivalence))
+            measured['actual_compiler_dependencies'][owner]=dict(source=home+'/src/'+source,archive_object=obj,
+                built_archive_sha256=equivalence['build_sha256'],installed_archive_sha256=equivalence['installed_sha256'],archive_equivalence=equivalence)
+            measured['installed_archives'][owner]=dict(path=installed,sha256=equivalence['installed_sha256'])
+        return files,measured,positions
+
+    def test_archive_auth_replays_four_original_pairs(self):
+        files,measured,_=self.archive_replay_fixture()
+        result=C.replay_archive_comparisons(files.__getitem__,measured,'macos')
+        self.assertEqual(set(result),set(measured['actual_compiler_dependencies']))
+        self.assertTrue(all(not p['exact_archive_equal'] for p in result.values()))
+
+    def test_archive_auth_rejects_coherent_hash_claim_with_mutated_index(self):
+        files,measured,positions=self.archive_replay_fixture();pair=measured['built_installed_archive_comparison'][0];owner=pair['owner']
+        changed=bytearray(files[pair['installed']]);changed[positions[0]['payload']]^=1;files[pair['installed']]=bytes(changed)
+        sha=C.hashlib.sha256(changed).hexdigest();pair['installed_sha256']=sha;pair['equivalence']['installed_sha256']=sha
+        measured['actual_compiler_dependencies'][owner]['installed_archive_sha256']=sha
+        measured['installed_archives'][owner]['sha256']=sha
+        with self.assertRaisesRegex(AssertionError,'non-timestamp bytes'):C.replay_archive_comparisons(files.__getitem__,measured,'macos')
+
+    def test_archive_auth_rejects_missing_duplicate_wrong_owner(self):
+        for kind in ('missing','duplicate','wrong-owner','wrong-prefix','wrong-build-owner','wrong-source','false-mode'):
+            files,measured,_=self.archive_replay_fixture();pairs=measured['built_installed_archive_comparison'];pair=pairs[0]
+            if kind=='missing':pairs.pop()
+            elif kind=='duplicate':pairs[-1]=pairs[0]
+            elif kind=='wrong-owner':pair['owner']='revisions'
+            elif kind=='wrong-prefix':pair['installed']='wrong/'+pair['installed']
+            elif kind=='wrong-build-owner':files[str(C.PurePosixPath(pair['built']).parent/'CMakeCache.txt')]=b'CMAKE_HOME_DIRECTORY:INTERNAL=/producer/apps/reader/foreign\nEXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=ON\n'
+            elif kind=='wrong-source':measured['actual_compiler_dependencies'][pair['owner']]['source']='/producer/foreign.cpp'
+            else:pair['equivalence']['exact_archive_equal']=True
+            with self.assertRaises(AssertionError):C.replay_archive_comparisons(files.__getitem__,measured,'macos')
 
     def test_original_selector_versions_uses_actual_legacy_sibling(self):
         data=Path('/owned/native-data')

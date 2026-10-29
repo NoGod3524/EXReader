@@ -174,6 +174,58 @@ unknown intervening input, wrong provider, missing contribution and out-of-range
 address. No NDK filename or private-symbol exemption is added. Actual revised
 parser compatibility and later closure stages still require Actions measurement.
 
+### Sixth run: own macOS archive timestamp evidence and proposed narrow criterion
+
+Source `604b915673abe5aab73ab6477204c95ed7662c7b`, run `40816496086/1`,
+again passed macOS native/configuration checks, then the unchanged strict capture
+gate refused the ReadingState archive. This time both complete originals were
+retained: 33608 bytes each, built SHA256
+`c7bfc1bacfff3e1e11ea91abffb8ef7a6ecbd17e887311a495b01dbc18be73f3`, installed
+`109ac0429e3164c6a710db70514b8a52948b8b35fe22367e9d6b41ae17ccf2c6`.
+Exactly one byte differed, offset33; all other bytes were identical. The retained
+window shows decimal1793247366→1793247367 in the first archive header's timestamp
+field and the partial index-name prefix `__.SYMDEF SOR`. The full old member name
+and canonical archive grammar have not yet been replayed from that pair.
+This is this package's own evidence, separate from similar portable-hash findings.
+The failed run stays failed; the older uninstrumented mismatch remains unclassified.
+
+The source-only proposal changes only the new macOS built-to-installed archive
+criterion: keep exact equality as the normal path; otherwise require complete
+canonical ordinary BSD archives, the first known `__.SYMDEF`/`__.SYMDEF SORTED`
+index, canonical numeric fields/name alignment/NUL and outer padding, unique
+ordered nonempty object members, and identical **every byte outside only the
+first index timestamp field24..35**. Index payloads, all object names/order/payloads,
+all other headers, UID/GID/mode and extents must remain exact. Unknown indexes,
+duplicate members, bitcode, truncation and any non-timestamp alteration refuse.
+Other platforms, including iPhone/iPad, get no exception. The original files and
+their distinct SHA256s remain retained; comparison-only digest and explicit
+`exact_archive_equal=false`/`macos-first-bsd-index-timestamp` mode prevent relabeling
+them byte-identical. This does not attribute the writer or repair historical runs.
+It does not relax installed TARGET_FILE/hash ownership or public-import checks.
+
+The independent authenticator also replays this criterion from the authenticated
+bundle bytes for exactly four unique owner pairs. It binds the platform's canonical
+installed prefix/filename, retained raw CMake owner/source and linked-object record,
+original digests and the producer's exact equivalence/proof fields. Missing,
+duplicate or wrong-owner pairs fail. A coherent reported hash update cannot hide a
+modified index payload: the retained-byte replay still rejects it. Pair/archive
+report paths use the actual ZIP's POSIX spelling on every platform. No producer
+`mode` boolean substitutes for independent comparison.
+
+Terminal sixth-run result: 67 synthetic controls and all six native/configuration
+steps passed. Linux, Windows, Android and both iPhone/iPad capture entries passed;
+Android's LLD hierarchy repair and named JNI/provider capture were measured.
+Authentication verified Linux artifact12873142489, Windows12873395228 and
+Android12873216944, then correctly refused the failed macOS producer. It did not
+reach independent iOS replay or final cross-six wire equality. The aggregate and
+all six-entry/F07 acceptance flags remain failed/false.
+
+The new criterion received independent source review and explicit user approval
+at04:37:27 UTC, including these three validation files and a full feature-branch
+Actions run. New synthetic controls are authored, not locally executed; actual
+criterion compatibility and authenticated original-byte replay still require the
+next Actions run. No previous failure is relabeled passed.
+
 ### Authorized Android caller extension, 2026-10-29 01:35 UTC
 
 The user confirmed “那我确认” (Sentinel_6c49c0656690819180749be6664bd059,
@@ -355,8 +407,9 @@ full final host/package/unpack entries, original F06 reports, compiler objects,
 Ninja commands/dependency groups and response files, Make dependency/link files,
 maps, source/run identity, raw native symbol tables and logs. For each repaired
 consumer TU it binds the exact source dependency group to an object selected by
-the actual archive command, then proves the built archive byte-identical to the
-installed owner. Ninja declared dependency counts and complete Make rule structure
+the actual archive command, then requires built/installed equality (or, only under
+the separately proposed macOS criterion above, exact equality outside the canonical
+first index timestamp). Ninja declared dependency counts and complete Make rule structure
 are checked; missing, truncated, stale, ambiguous and wrong-source groups fail.
 Every inspected archive is bound to the actual configured imported target TARGET_FILE and its unique install manifest, not an unused same-prefix filename. The actual public include path must be installed under the expected prefix, and
 the private detail header must be absent. Native archive symbols must show exactly
