@@ -13,16 +13,16 @@ from contract import ROOT, STAGES, guard, require, sha
 from archive_contract import safe_extract
 from inspect_native import CONTROLS, MESSAGES, ROLES, variant_labels
 
-RUN = '40794326091'
-SOURCE = '0533fadf8d5cc41959a7ae81ef1dbd294c7d096e'
+RUN = '40813760224'
+SOURCE = 'a16304c989aa9c1b94ce6e9bb6644a075b3e326b'
 SOURCE_FILE = 'tests/apple_password_privacy_20261028/continuation_ui/PasswordPrivacyContinuationUITests.swift'
-SOURCE_SHA = '01f9eeeafa9a5f1102d933cea31d51f55179af8053a4949f84b4f13c40a56b8f'
+SOURCE_SHA = '6555ab86d6a1f517a496a5ce777dfe67ff70a30c89c4cea5a6c7a4a5459fb079'
+SOURCE_LAST_LINE = 267
 SOURCE_PATH = '/Users/runner/work/EXReader/EXReader/' + SOURCE_FILE
-# All three producers and their attempt-1 uploads are terminal and immutable.
+# Exact terminal macOS attempt-1 upload; original three-platform runs stay retained.
+# This diagnostic localizes the remaining fourth-stage failure, not acceptance.
 ARTIFACTS = {
-    'macos': (12863262861, 116474070, 'b78ac6348cfff1869d939a0ac81e15b25d262766a79f27c58482761a4d48cef3'),
-    'iphone': (12863842315, 81573493, 'f8964f59140ca2b5be1d014b8185de115cee04db682a268c22eb7df45226e89c'),
-    'ipad': (12863184834, 87090148, 'dec7612196ddced56ceea8e9dfab8b1e0292ec2262d6ff1f588de9a389d46d44'),
+    'macos': (12871319916, 169232203, '19cc7e4b40b3ba01a6c10bf0c143bc911e2772927d6e9742a1d973dbc5e7f3c9'),
 }
 FAILURES = ('RuntimeError', 'AssertionError', 'CalledProcessError', 'TimeoutExpired',
             'FileNotFoundError', 'OperationalError', 'PermissionError', 'KeyError', 'OSError')
@@ -44,7 +44,7 @@ def locations(path):
     with path.open('r', encoding='utf-8', errors='replace') as file:
         for line in file:
             match = re.match(re.escape(SOURCE_PATH) + r':([1-9][0-9]{0,2}): error:', line)
-            if not match or int(match.group(1)) not in range(1, 161): continue
+            if not match or int(match.group(1)) not in range(1, SOURCE_LAST_LINE + 1): continue
             assertion = re.search(r'\b(XCTAssert(?:True|False|Equal|Nil|NotNil)|XCTUnwrap)\b', line)
             record = {'file': 'PasswordPrivacyContinuationUITests.swift', 'line': int(match.group(1)),
                       'assertion': assertion.group(1) if assertion else None,
@@ -147,7 +147,7 @@ def xcresult_issues(payload):
                     allowed = {'StartingLineNumber', 'EndingLineNumber', 'StartingColumnNumber', 'EndingColumnNumber'}
                     if len(fields) == len(keys) and 'StartingLineNumber' in keys and keys <= allowed and all(
                             re.fullmatch(r'[0-9]{1,4}', item) and
-                            (int(item) in range(1, 161) if key.endswith('LineNumber') else True)
+                            (int(item) in range(1, SOURCE_LAST_LINE + 1) if key.endswith('LineNumber') else True)
                             for key, item in fields):
                         source_line = int(dict(fields)['StartingLineNumber'])
                 assertion = re.search(r'\b(XCTAssert(?:True|False|Equal|Nil|NotNil)|XCTUnwrap)\b', message)
@@ -212,7 +212,9 @@ def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
     guard()
     require(sha(ROOT / SOURCE_FILE) == SOURCE_SHA, 'frozen diagnostic source positions changed')
-    require(set(ARTIFACTS) == {'macos', 'iphone', 'ipad'}, 'all original artifact pins required')
+    require(len((ROOT / SOURCE_FILE).read_text().splitlines()) == SOURCE_LAST_LINE,
+            'frozen diagnostic source extent changed')
+    require(set(ARTIFACTS) == {'macos'}, 'exact macOS diagnostic artifact pin required')
     out = ROOT / 'build/apple-password-continuation-diagnostic'; out.mkdir(parents=True, exist_ok=False)
     reports = []
     for platform, (identifier, size, digest) in ARTIFACTS.items():

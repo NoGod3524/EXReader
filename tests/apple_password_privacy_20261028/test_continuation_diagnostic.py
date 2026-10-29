@@ -6,11 +6,37 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from inspect_continuation_failure import BUNDLE, CASE, SOURCE_PATH, activity_timing, attachment_summary, locations, network_summary, safe_progress, xcresult_issues
+from contract import ROOT, sha
+from inspect_continuation_failure import ARTIFACTS, BUNDLE, CASE, RUN, SOURCE, SOURCE_FILE, SOURCE_LAST_LINE, SOURCE_PATH, SOURCE_SHA, activity_timing, attachment_summary, locations, network_summary, safe_progress, xcresult_issues
 from privacy_scan import needles
 
 
 class ContinuationDiagnosticControls(unittest.TestCase):
+    def test_current_macos_artifact_and_source_extent_are_exact(self):
+        self.assertEqual(RUN, '40813760224')
+        self.assertEqual(SOURCE, 'a16304c989aa9c1b94ce6e9bb6644a075b3e326b')
+        self.assertEqual(ARTIFACTS, {'macos': (12871319916, 169232203,
+            '19cc7e4b40b3ba01a6c10bf0c143bc911e2772927d6e9742a1d973dbc5e7f3c9')})
+        self.assertEqual(sha(ROOT / SOURCE_FILE), SOURCE_SHA)
+        self.assertEqual(SOURCE_LAST_LINE, 267)
+        self.assertEqual(len((ROOT / SOURCE_FILE).read_text().splitlines()), SOURCE_LAST_LINE)
+
+    def test_current_source_last_line_is_bounded_in_both_extractors(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'native.log'
+            for number in (SOURCE_LAST_LINE, SOURCE_LAST_LINE + 1):
+                path.write_text(SOURCE_PATH + ':' + str(number) + ': error: XCTAssertTrue failed private-operand\n')
+                rows = locations(path)
+                self.assertEqual([row['line'] for row in rows], [number] if number == SOURCE_LAST_LINE else [])
+                url = 'file://' + SOURCE_PATH + '#StartingLineNumber=' + str(number)
+                issue = {'_type': {'_name': 'TestFailureIssueSummary'},
+                    'message': {'_value': 'XCTAssertTrue failed private-operand'},
+                    'testCaseName': {'_value': CASE},
+                    'documentLocationInCreatingWorkspace': {'url': {'_value': url}}}
+                report = xcresult_issues([issue])
+                self.assertEqual(report['issues'][0]['source_line'], number if number == SOURCE_LAST_LINE else None)
+                self.assertNotIn('private-operand', str(rows) + str(report))
+
     def test_attachment_tokens_cross_chunk_without_raw_names(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -115,7 +141,7 @@ class ContinuationDiagnosticControls(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'native.log'
             for value in ('operand=' + SOURCE_PATH + ':104: error: XCTAssertNil',
-                          SOURCE_PATH + ':161: error: XCTAssertNil', SOURCE_PATH + ':999999999: error: XCTAssertNil',
+                          SOURCE_PATH + ':' + str(SOURCE_LAST_LINE + 1) + ': error: XCTAssertNil', SOURCE_PATH + ':999999999: error: XCTAssertNil',
                           SOURCE_PATH + ':0: error: XCTAssertNil', 'unlocated arbitrary test failure'):
                 path.write_text(value + '\n'); self.assertEqual(locations(path), [])
 
