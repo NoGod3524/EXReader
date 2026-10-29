@@ -55,10 +55,11 @@ out.mkdir(parents=True, exist_ok=True)
 result = {"platform":platform, "run":run_id, "source":source, "job":job_id, "accepted":False, "catalog_changed":False}
 try:
     run = api("actions/runs/%d/attempts/1"%run_id)
-    assert run["head_sha"] == source and run["run_attempt"] == 1 and run["status"] == "completed"
-    assert run["conclusion"] in ("success", "failure"), "retain original run conclusion"
+    assert run["head_sha"] == source and run["run_attempt"] == 1
+    assert run["status"] in ("in_progress", "completed")
+    assert run["conclusion"] in (None, "success", "failure"), "retain original run state; this is one completed host only"
     job = api("actions/jobs/%d"%job_id)
-    assert job["run_id"] == run_id and job["head_sha"] == source and job["conclusion"] == "success"
+    assert job["run_id"] == run_id and job["head_sha"] == source and job["status"] == "completed" and job["conclusion"] == "success"
     name = "team24-apple-native-%s-%d-1"%(platform, run_id)
     matches = [a for a in api("actions/runs/%d/artifacts?per_page=100"%run_id)["artifacts"] if a["name"] == name]
     assert len(matches) == 1
@@ -66,7 +67,9 @@ try:
     assert not meta["expired"] and meta["workflow_run"]["id"] == run_id and meta["workflow_run"]["head_sha"] == source
     raw = api("actions/artifacts/%d/zip"%meta["id"], True)
     assert len(raw) == meta["size_in_bytes"] and "sha256:"+digest(raw) == meta["digest"]
-    result.update(artifact=meta["id"], archive_bytes=len(raw), archive_sha256=digest(raw), original_run_conclusion=run["conclusion"])
+    if platform == "macos":
+        assert meta["id"] == 12920073975 and len(raw) == 316382076 and digest(raw) == "11792b2252650bf055fe035b92a4f7e83b0d7bf248fb404a432d4a651d16e4ac"
+    result.update(artifact=meta["id"], archive_bytes=len(raw), archive_sha256=digest(raw), original_run_status=run["status"], original_run_conclusion=run["conclusion"], whole_run_accepted=False)
     with tempfile.TemporaryDirectory() as work, safe_zip(raw) as z:
         root = Path(work)
         z.extractall(root)
@@ -109,9 +112,14 @@ try:
         system = json.loads((root/"theme-os/system-commands.json").read_text())
         assert system["source_sha"] == source and str(system["run_id"]) == str(run_id) and str(system["attempt"]) == "1"
         assert system["served"] == ["dark", "light"]
-        appearance_commands = [c for c in system["commands"] if "appearance" in c["argv"] and c["exit_code"] == 0]
-        assert any(c["argv"][-1] == "dark" for c in appearance_commands)
-        assert any(c["argv"][-1] == "light" for c in appearance_commands)
+        if platform == "macos":
+            appearance_commands = [c for c in system["commands"] if c["argv"][0] == "osascript" and "set dark mode to " in c["argv"][-1] and c["exit_code"] == 0]
+            assert any(c["argv"][-1].endswith("set dark mode to true") for c in appearance_commands)
+            assert any(c["argv"][-1].endswith("set dark mode to false") for c in appearance_commands)
+        else:
+            appearance_commands = [c for c in system["commands"] if "appearance" in c["argv"] and c["exit_code"] == 0]
+            assert any(c["argv"][-1] == "dark" for c in appearance_commands)
+            assert any(c["argv"][-1] == "light" for c in appearance_commands)
         assert all(c["completed_at_unix"] >= c["started_at_unix"] for c in appearance_commands)
         attachments = root/"independent-attachments"
         subprocess.run(["xcrun", "xcresulttool", "export", "attachments", "--path", str(root/"wave3.xcresult"), "--output-path", str(attachments)], check=True)
