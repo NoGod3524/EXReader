@@ -100,6 +100,7 @@ jobs:
         with:
           name: public-boundary-linux-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/public-boundary-v1/evidence/
+          include-hidden-files: true
           if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
@@ -135,6 +136,7 @@ jobs:
         with:
           name: public-boundary-windows-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/public-boundary-v1/evidence/
+          include-hidden-files: true
           if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
@@ -202,6 +204,7 @@ jobs:
         with:
           name: public-boundary-android-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/public-boundary-v1/evidence/
+          include-hidden-files: true
           if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
@@ -238,6 +241,7 @@ jobs:
         with:
           name: public-boundary-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/public-boundary-v1/evidence/
+          include-hidden-files: true
           if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
