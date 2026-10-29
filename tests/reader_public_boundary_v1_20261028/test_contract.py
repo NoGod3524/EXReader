@@ -64,7 +64,7 @@ class BoundaryContract(unittest.TestCase):
         self.assertEqual(result['mode'],'macos-first-bsd-index-timestamp')
         self.assertEqual(result['comparison']['differing_offsets'],[24])
         self.assertEqual(result['comparison']['comparison_sha256'],C.installed_archive_equivalence(after,before,'macos')['comparison']['comparison_sha256'])
-        for target in ('linux','windows','android','iphone','ipad'):
+        for target in ('linux','windows','android','iphoneos','ios-device','unknown'):
             with self.assertRaisesRegex(AssertionError,'measured macOS'):C.installed_archive_equivalence(before,after,target)
 
     def test_bsd_non_timestamp_changes_rejected(self):
@@ -111,19 +111,22 @@ class BoundaryContract(unittest.TestCase):
             raw,_=bsd_fixture(members)
             with self.assertRaises(AssertionError):C.bsd_index_archive(raw)
 
-    def archive_replay_fixture(self):
+    def archive_replay_fixture(self,target='macos',newline='\n'):
         before,positions=bsd_fixture();after=before[:24]+b'7'+before[25:]
+        if target=='windows':after=before
         files={};measured=dict(built_installed_archive_comparison=[],actual_compiler_dependencies={},installed_archives={})
-        stage=C.layout('macos')[1].relative_to(C.ROOT).as_posix()
+        stage=C.layout(target)[1].relative_to(C.ROOT).as_posix()
         for owner,name,source in (('reading-state','reader_reading_state_codec','reading_state.cpp'),
                                   ('reading-commands','reader_reading_commands','reading_commands.cpp'),
                                   ('annotation-import','reader_annotation_import','annotation_import.cpp'),
                                   ('annotation-export','reader_annotation_export','annotation_export.cpp')):
-            folder='build/producer/'+owner;built=folder+'/lib'+name+'.a';installed=stage+'/lib/lib'+name+'.a'
-            home='/producer/apps/reader/'+owner;obj='CMakeFiles/owner.dir/src/'+source+'.o'
+            folder='build/producer/'+owner;filename=name+'.lib' if target=='windows' else 'lib'+name+'.a'
+            built=folder+'/'+filename;installed=stage+'/lib/'+filename
+            home=('D:/producer/apps/reader/' if target=='windows' else '/producer/apps/reader/')+owner
+            obj='CMakeFiles/owner.dir/src/'+source+('.obj' if target=='windows' else '.o')
             files[built]=before;files[installed]=after;files[folder+'/'+obj]=b'linked-object'
-            files[folder+'/CMakeCache.txt']=('CMAKE_HOME_DIRECTORY:INTERNAL='+home+'\nEXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=ON\n').encode()
-            equivalence=C.installed_archive_equivalence(before,after,'macos')
+            files[folder+'/CMakeCache.txt']=('CMAKE_HOME_DIRECTORY:INTERNAL='+home+newline+'EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=ON'+newline).encode()
+            equivalence=C.installed_archive_equivalence(before,after,target)
             measured['built_installed_archive_comparison'].append(dict(owner=owner,built=built,installed=installed,
                 built_exists=True,installed_exists=True,built_bytes=len(before),installed_bytes=len(after),
                 built_sha256=equivalence['build_sha256'],installed_sha256=equivalence['installed_sha256'],equivalence=equivalence))
@@ -157,6 +160,65 @@ class BoundaryContract(unittest.TestCase):
             elif kind=='wrong-source':measured['actual_compiler_dependencies'][pair['owner']]['source']='/producer/foreign.cpp'
             else:pair['equivalence']['exact_archive_equal']=True
             with self.assertRaises(AssertionError):C.replay_archive_comparisons(files.__getitem__,measured,'macos')
+
+    def test_simulator_timestamp_criterion_replays_all_four_pairs(self):
+        for target in ('iphone','ipad'):
+            files,measured,_=self.archive_replay_fixture(target)
+            result=C.replay_archive_comparisons(files.__getitem__,measured,target)
+            self.assertEqual(len(result),4)
+            self.assertTrue(all(p['mode']=='iphonesimulator-first-bsd-index-timestamp' and not p['exact_archive_equal'] for p in result.values()))
+
+    def test_simulator_coherent_mutated_index_claim_still_refused(self):
+        for target in ('iphone','ipad'):
+            files,measured,positions=self.archive_replay_fixture(target)
+            pair=measured['built_installed_archive_comparison'][0];owner=pair['owner']
+            changed=bytearray(files[pair['installed']]);changed[positions[0]['payload']]^=1
+            files[pair['installed']]=bytes(changed);sha=C.hashlib.sha256(changed).hexdigest()
+            pair['installed_sha256']=sha;pair['equivalence']['installed_sha256']=sha
+            measured['actual_compiler_dependencies'][owner]['installed_archive_sha256']=sha
+            measured['installed_archives'][owner]['sha256']=sha
+            with self.assertRaisesRegex(AssertionError,'non-timestamp bytes'):
+                C.replay_archive_comparisons(files.__getitem__,measured,target)
+
+    def test_simulator_non_timestamp_mutations_still_refused(self):
+        before,positions=bsd_fixture();after=bytearray(before);after[24]=ord('7')
+        for target in ('iphone','ipad'):
+            for offset in (positions[0]['payload'],8+28,8+34,8+40,positions[1]['header']+16,positions[1]['name'],positions[1]['payload']):
+                changed=bytearray(after);changed[offset]^=1
+                with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,bytes(changed),target)
+            for malformed in (bytes(after[:-1]),bytes(after)+b'?',b'!<thin>\n'+bytes(after[8:])):
+                with self.assertRaises(AssertionError):C.installed_archive_equivalence(before,malformed,target)
+
+    def test_extra_padding_exact_branch_preserved_unequal_refused(self):
+        # The original iOS exact-equal State pair exposed nonminimal NUL padding.
+        # This synthetic case preserves exact equality, not a padding relaxation.
+        before,_=bsd_fixture(extra_name_padding=8);after=before[:24]+b'7'+before[25:]
+        for target in ('macos','iphone','ipad'):
+            self.assertEqual(C.installed_archive_equivalence(before,before,target)['mode'],'exact')
+            with self.assertRaisesRegex(AssertionError,'name alignment/padding'):
+                C.installed_archive_equivalence(before,after,target)
+
+    def test_crlf_windows_cache_replay_preserves_four_exact_owners(self):
+        files,measured,_=self.archive_replay_fixture('windows','\r\n')
+        for proof in measured['actual_compiler_dependencies'].values():proof['source']=proof['source'].replace('/','\\')
+        result=C.replay_archive_comparisons(files.__getitem__,measured,'windows')
+        self.assertEqual(len(result),4);self.assertTrue(all(p['exact_archive_equal'] for p in result.values()))
+
+    def test_crlf_cache_does_not_waive_semantic_owner_assertions(self):
+        for kind in ('bare-cr','embedded-cr','duplicate-home','duplicate-raw','wrong-owner','raw-off','source-alias','trailing-space'):
+            files,measured,_=self.archive_replay_fixture('windows','\r\n')
+            pair=measured['built_installed_archive_comparison'][0];owner=pair['owner']
+            cache=str(C.PurePosixPath(pair['built']).parent/'CMakeCache.txt');raw=files[cache]
+            if kind=='bare-cr':raw=raw.replace(b'\r\n',b'\r')
+            elif kind=='embedded-cr':raw=raw.replace(b'/apps/',b'/ap\rps/')
+            elif kind=='duplicate-home':raw+=raw.split(b'\r\n')[0]+b'\r\n'
+            elif kind=='duplicate-raw':raw+=b'EXR_READER_SELECTOR_BYTES_CANDIDATE:BOOL=ON\r\n'
+            elif kind=='wrong-owner':raw=raw.replace(('/'+owner).encode(),b'/foreign')
+            elif kind=='raw-off':raw=raw.replace(b'BOOL=ON',b'BOOL=OFF')
+            elif kind=='source-alias':measured['actual_compiler_dependencies'][owner]['source']+='.alias'
+            else:raw=raw.replace(b'BOOL=ON',b'BOOL=ON ')
+            files[cache]=raw
+            with self.assertRaises(AssertionError):C.replay_archive_comparisons(files.__getitem__,measured,'windows')
 
     def test_original_selector_versions_uses_actual_legacy_sibling(self):
         data=Path('/owned/native-data')
