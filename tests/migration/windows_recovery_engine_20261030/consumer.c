@@ -21,7 +21,7 @@ int main(int argc,char **argv){
  if(target!=INVALID_HANDLE_VALUE){CloseHandle(target);target=INVALID_HANDLE_VALUE;}
  target=wr_open(root,L"target.fixture",GENERIC_READ,FILE_SHARE_READ,0,&error);
  CHECK(target!=INVALID_HANDLE_VALUE);if(target==INVALID_HANDLE_VALUE)goto done;
- CHECK(lm_we_observe(root,target,worker,argv[3],nonce,L"observed.bin",30000,&result,&error));
+ {int observed=lm_we_observe(root,target,worker,argv[3],nonce,L"observed.bin",30000,&result,&error);fprintf(stderr,"observer diagnostic reason=%s native=%lu state=%d exit=%lu worker_terminal=%d descendants_terminal=%d cleanup=%d\n",error.reason?error.reason:"none",error.native,(int)result.state,result.worker_exit,result.worker_terminal,result.descendants_terminal,error.cleanup_unconfirmed);CHECK(observed);}
  CHECK(result.state==LM_WE_OBSERVED&&result.worker_terminal&&result.descendants_terminal&&result.worker_exit==0);
  CHECK(strlen(result.target)==48&&strlen(result.root)==48&&strlen(result.parent)==48);
  CHECK(result.bytes==25&&!strcmp(result.source,argv[4]));
