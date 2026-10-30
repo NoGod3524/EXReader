@@ -50,6 +50,11 @@ def main():
             report['failure'] = str(error)
             C.save(out / 'result.json', report)
             raise
+        if not report['passed']:
+            from collections import Counter
+            print('finding kinds:', dict(Counter(f['kind'] for f in report['findings'])))
+            for f in report['findings'][:60]:
+                print('finding:', json.dumps(f, sort_keys=True)[:300])
         C.require(report['passed'], 'provider/map audit findings: %d' % len(report['findings']))
     elif command == 'aggregate':
         results = {}
