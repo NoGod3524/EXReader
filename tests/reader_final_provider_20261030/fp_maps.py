@@ -164,14 +164,14 @@ def audit(evidence, canon=lambda s: s):
     sdk_defined = {canon(s) for a, t in tables.items() if classify(a, roles) == 'sdk'
                    for row in t.values() for s in row['defined']}
     for archive, member in selected:
-        if classify(archive, roles) == 'sdk':
-            continue
         row = tables.get(archive, {}).get(member, dict(undefined=set()))
         for symbol in sorted(row['undefined']):
             if symbol.startswith(canon('sqlite3')):
                 # SQLite is owned by ProductCatalog; an unselected SDK vendor copy is not a provider.
                 if not any(classify(a, roles) == 'product' for a, _ in definers.get(symbol, [])):
                     findings.append(dict(kind='sqlite_reference_without_product_definer', symbol=symbol, consumer=[archive, member]))
+        if classify(archive, roles) == 'sdk':
+            continue
         for symbol in sorted(row['undefined'] & sdk_defined):
             if symbol.startswith(canon('sqlite3')):
                 continue
