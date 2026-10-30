@@ -1,0 +1,66 @@
+name: C07 independent conflict audit
+on:
+  push:
+    branches: [claude/dot-c07-conflict-audit-20261030]
+  workflow_dispatch:
+    inputs:
+      producer_run_id:
+        description: Successful producer run id supplied by the coordinator (empty runs verifier controls only)
+        required: false
+        default: ''
+      producer_attempt:
+        description: Producer run attempt
+        required: false
+        default: '1'
+      producer_artifact_id:
+        description: Producer artifact id supplied by the coordinator
+        required: false
+        default: ''
+      expected_sha:
+        description: Exact producer source SHA
+        required: false
+        default: 99c329b3839d00b986673c87fcaebf13b04bfee7
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  audit:
+    name: independent verifier controls and producer artifact audit
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start and exclusive path ownership
+        run: |
+          FIXED=343bb94eb6513beaf5b344e7828342f6602a3b7b
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$FIXED" HEAD
+          allowed='^(tests/reader_f05_independent_audit_20261030/|\.github/workflows/claude_c07_conflict_audit_20261030\.yml$|scripts/audit/claude_c07_conflict_audit_20261030\.py$|docs/reader-total-progress/CLAUDE_C07_CONFLICT_AUDIT_20261030\.md$)'
+          bad=$(git diff --name-only "$FIXED" HEAD | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+          test -z "$(git diff --name-only --diff-filter=MD "$FIXED" HEAD)"
+      - name: Syntax check the verifier
+        run: |
+          python3 -I -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" scripts/audit/claude_c07_conflict_audit_20261030.py
+          python3 -I -m py_compile scripts/audit/claude_c07_conflict_audit_20261030.py
+      - name: Run identity and negative controls, then audit the producer artifact when supplied
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.producer_run_id }}
+          ATTEMPT: ${{ inputs.producer_attempt || '1' }}
+          ARTIFACT_ID: ${{ inputs.producer_artifact_id }}
+          EXPECTED_SHA: ${{ inputs.expected_sha || '99c329b3839d00b986673c87fcaebf13b04bfee7' }}
+        run: |
+          python3 -I scripts/audit/claude_c07_conflict_audit_20261030.py --output build/c07-audit --expect-sha "$EXPECTED_SHA" --run-id "$RUN_ID" --attempt "$ATTEMPT" --artifact-id "$ARTIFACT_ID"
+      - name: Preserve the audit record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c07-conflict-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c07-audit/
+          if-no-files-found: error
