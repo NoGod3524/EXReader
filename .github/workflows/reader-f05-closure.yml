@@ -1,0 +1,151 @@
+name: F05 additive peer-wire diagnostics
+on:
+  push:
+    branches: [codex/f05-conflict-recovery-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  boundaries:
+    name: fault boundaries (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, product schema and package path ownership
+        run: |
+          FIXED=343bb94eb6513beaf5b344e7828342f6602a3b7b
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$FIXED" HEAD
+          allowed='^(tests/reader_f05_closure/|tools/reader_composition/f05_closure_independent.py$|.github/workflows/reader-f05-closure.yml$|docs/reader-total-progress/F05_CLOSURE_20261030.md$)'
+          bad=$(git diff --name-only "$FIXED" HEAD | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+          test -z "$(git diff --name-only --diff-filter=MD "$FIXED" HEAD)"
+      - name: Install Linux native TLS XML and SHA dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build
+      - name: Use Apple system native TLS XML and platform SHA with fixture-only OpenSSL CLI
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja pkg-config openssl@3
+          sdkroot=$(xcrun --sdk macosx --show-sdk-path)
+          mkdir -p build/apple-pkgconfig
+          version=$(/usr/bin/curl --version | awk 'NR==1 {print $2}')
+          cat > build/apple-pkgconfig/libcurl.pc <<EOF
+          prefix=$sdkroot/usr
+          Name: libcurl
+          Description: Apple SDK system libcurl
+          Version: $version
+          Libs: -L\${prefix}/lib -lcurl
+          Cflags:
+          EOF
+          echo "PKG_CONFIG_PATH=$PWD/build/apple-pkgconfig" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=$sdkroot/usr" >> "$GITHUB_ENV"
+          echo "PATH=$(brew --prefix openssl@3)/bin:$PATH" >> "$GITHUB_ENV"
+          /usr/bin/curl --version
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the unchanged native product, TLS, revision, sync and session modules
+        run: |
+          mkdir -p build/resilience-logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "RES_PREFIXES=$ws/build/res-dav-stage;$ws/build/res-revision-stage;$ws/build/res-product-stage;$ws/build/res-sync-stage" >> "$GITHUB_ENV"
+          echo "RES_SESSION_STAGE=$ws/build/res-session-stage" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/res-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/res-product-stage" 2>&1 | tee build/resilience-logs/product-configure.log
+          cmake --build build/res-product --verbose 2>&1 | tee build/resilience-logs/product-build.log
+          cmake --install build/res-product 2>&1 | tee build/resilience-logs/product-install.log
+          cmake -S extras/webdav -B build/res-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/res-dav-stage" 2>&1 | tee build/resilience-logs/dav-configure.log
+          cmake --build build/res-dav --verbose 2>&1 | tee build/resilience-logs/dav-build.log
+          cmake --install build/res-dav 2>&1 | tee build/resilience-logs/dav-install.log
+          cmake -S apps/reader/revisions -B build/res-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ws/build/res-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/res-revision-stage" 2>&1 | tee build/resilience-logs/revision-configure.log
+          cmake --build build/res-revisions --verbose 2>&1 | tee build/resilience-logs/revision-build.log
+          cmake --install build/res-revisions 2>&1 | tee build/resilience-logs/revision-install.log
+          cmake -S apps/reader/sync -B build/res-sync -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/res-dav-stage;$ws/build/res-revision-stage;$ws/build/res-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/res-sync-stage" 2>&1 | tee build/resilience-logs/sync-configure.log
+          cmake --build build/res-sync --verbose 2>&1 | tee build/resilience-logs/sync-build.log
+          cmake --install build/res-sync 2>&1 | tee build/resilience-logs/sync-install.log
+          cmake -S apps/reader/session -B build/res-session -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/res-sync-stage;$ws/build/res-dav-stage;$ws/build/res-revision-stage;$ws/build/res-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/res-session-stage" 2>&1 | tee build/resilience-logs/session-configure.log
+          cmake --build build/res-session --verbose 2>&1 | tee build/resilience-logs/session-build.log
+          cmake --install build/res-session 2>&1 | tee build/resilience-logs/session-install.log
+      - name: Build the installed-package consumers
+        run: |
+          cmake -S tests/reader_revisions/consumer -B build/res-revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$RES_PREFIXES" 2>&1 | tee build/resilience-logs/revision-consumer-configure.log
+          cmake --build build/res-revision-consumer --verbose 2>&1 | tee build/resilience-logs/revision-consumer-build.log
+          cmake -S tests/reader_session/consumer -B build/res-session-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$RES_SESSION_STAGE;$RES_PREFIXES" 2>&1 | tee build/resilience-logs/session-consumer-configure.log
+          cmake --build build/res-session-consumer --verbose 2>&1 | tee build/resilience-logs/session-consumer-build.log
+          cmake -S tests/reader_sync_resilience/consumer -B build/res-resilience-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$RES_SESSION_STAGE;$RES_PREFIXES" 2>&1 | tee build/resilience-logs/resilience-consumer-configure.log
+          cmake --build build/res-resilience-consumer --verbose 2>&1 | tee build/resilience-logs/resilience-consumer-build.log
+      - name: Preserve the unchanged 20-item account-session acceptance
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_session/check_session.py --consumer "build/res-session-consumer/session-consumer$exe" --revision-consumer "build/res-revision-consumer/revision-consumer$exe" --output build/session-evidence
+      - name: Real forced termination and abrupt exit at named fault boundaries
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_sync_resilience/check_resilience.py --consumer "build/res-resilience-consumer/resilience-consumer$exe" --revision-consumer "build/res-revision-consumer/revision-consumer$exe" --original-report build/session-evidence/result.json --output build/resilience-evidence
+      - name: Additive two-peer wire, partial receive cancel and hard kill, tombstone diagnostics
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_f05_closure/check_f05.py --consumer "build/res-resilience-consumer/resilience-consumer$exe" --revision-consumer "build/res-revision-consumer/revision-consumer$exe" --original-report build/session-evidence/result.json --output build/f05-evidence
+      - name: Preserve source-bound evidence without private keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-sync-resilience-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/resilience-logs/
+            build/resilience-evidence/
+            build/f05-evidence/
+            build/session-evidence/
+            build/res-session-consumer/session-consumer*
+            build/res-resilience-consumer/resilience-consumer*
+            build/res-revision-consumer/revision-consumer*
+            !build/**/certificates/*.key
+          if-no-files-found: error
+  aggregate:
+    name: strict same-source three-platform aggregate
+    needs: [boundaries]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download every platform artifact from this run and attempt
+        uses: actions/download-artifact@v4
+        with:
+          path: build/download
+          pattern: reader-sync-resilience-*
+      - name: Authenticate all three platform artifacts
+        run: python3 tests/reader_sync_resilience/check_evidence.py build/download --output build/resilience-aggregate
+      - name: Independently authenticate original ZIPs and additive reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/reader_composition/f05_closure_independent.py
+      - name: Preserve the aggregate record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-sync-resilience-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/resilience-aggregate/
+            build/f05-independent/
+          if-no-files-found: error
