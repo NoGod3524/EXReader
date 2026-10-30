@@ -116,6 +116,8 @@ typedef struct {
     int acquire_step, reacquire_step, release_step;
     int publish_step, publish_value, inspect_step, inspect_value;
     int fail_check;
+    int expire_after_publish;
+    int expire_after_discard;
 } mock;
 
 static mock *as_mock(void *ctx) { return (mock *)ctx; }
@@ -187,6 +189,7 @@ static wh_step m_publish(void *ctx, void *cap, const char *stage, wh_pub *pub)
     if (cap != &m->token || !stage || !stage[0]) { *pub = WH_PUB_UNKNOWN; return WH_STEP_UNCERTAIN; }
     m->publish_calls++;
     *pub = (wh_pub)m->publish_value;
+    if (m->expire_after_publish) m->fail_check = 1;
     return (wh_step)m->publish_step;
 }
 
@@ -205,6 +208,7 @@ static wh_step m_discard(void *ctx, void *cap, const char *stage)
     mock *m = as_mock(ctx);
     if (cap != &m->token || !stage || !stage[0]) return WH_STEP_UNCERTAIN;
     m->discard_calls++;
+    if (m->expire_after_discard) m->fail_check = 1;
     return WH_STEP_OK;
 }
 
@@ -536,6 +540,109 @@ static void case_recover_reacquire_failed(void)
     check(m.release_calls == 0 && r.live_lease == 0, "recover-failed", "refused recovery released something");
 }
 
+
+/* Additive regressions: original 15 cases and 61 checks remain unchanged. */
+static int journal_has_event(const builder *b, unsigned wanted)
+{
+    size_t i;
+    for (i = 0; i < b->n; ++i) {
+        unsigned seq, event;
+        if (sscanf(b->lines[i], "EXRWH2 %u %u", &seq, &event) == 2 && event == wanted)
+            return 1;
+    }
+    return 0;
+}
+
+static void case_busy_acquire_zero_writes(void)
+{
+    mock m; wh_provider p; wh_binding b = binding_of(); wh_gates g = gates_of('a');
+    static sink_state s; wh_session *sess; wh_report r; wh_status st;
+    mock_init(&m); provider_of(&p, &m); m.acquire_step = WH_STEP_FAILED;
+    memset(&s, 0, sizeof s);
+    sess = wh_create(&b, &g, &p, sink_append, &s);
+    check(sess != NULL, "busy-zero-writes", "session");
+    if (!sess) return;
+    st = wh_run(sess, &r);
+    check(st == WH_REFUSED, "busy-zero-writes", diag(st, &r));
+    check(s.calls == 0 && s.b.n == 0, "busy-zero-writes", "refused acquire mutated journal");
+    check(m.release_calls == 0 && r.live_lease == 0, "busy-zero-writes", "refusal created or released custody");
+    (void)wh_dispose(sess);
+}
+
+static void case_publish_cap_expires_before_commit(void)
+{
+    mock m; wh_provider p; wh_binding b = binding_of(); wh_gates g = gates_of('a');
+    static sink_state s; wh_session *sess; wh_report r; wh_status st;
+    mock_init(&m); provider_of(&p, &m); m.expire_after_publish = 1;
+    memset(&s, 0, sizeof s);
+    sess = wh_create(&b, &g, &p, sink_append, &s);
+    check(sess != NULL, "publish-cap-expired", "session");
+    if (!sess) return;
+    st = wh_run(sess, &r);
+    check(st == WH_UNCERTAIN, "publish-cap-expired", diag(st, &r));
+    check(!journal_has_event(&s.b, 11u) && !journal_has_event(&s.b, 12u),
+          "publish-cap-expired", "COMMIT or RELEASE_BEGIN after capability expiry");
+    check(m.release_calls == 0 && r.live_lease == 1,
+          "publish-cap-expired", "uncertain ownership was released");
+}
+
+static void case_discard_cap_expires_before_abort_ok(void)
+{
+    mock m; wh_provider p; wh_binding b = binding_of(); wh_gates g = gates_of('a');
+    static sink_state s; wh_session *sess; wh_report r; wh_status st;
+    mock_init(&m); provider_of(&p, &m); m.publish_value = WH_PUB_NO; m.expire_after_discard = 1;
+    memset(&s, 0, sizeof s);
+    sess = wh_create(&b, &g, &p, sink_append, &s);
+    check(sess != NULL, "discard-cap-expired", "session");
+    if (!sess) return;
+    st = wh_run(sess, &r);
+    check(st == WH_UNCERTAIN, "discard-cap-expired", diag(st, &r));
+    check(!journal_has_event(&s.b, 14u) && !journal_has_event(&s.b, 12u),
+          "discard-cap-expired", "ABORT_OK or RELEASE_BEGIN after capability expiry");
+    check(m.release_calls == 0 && r.live_lease == 1,
+          "discard-cap-expired", "uncertain ownership was released");
+}
+
+static void case_recover_absent_actual_prefix(void)
+{
+    mock m; wh_provider p; wh_binding b = binding_of(); wh_gates g = gates_of('a');
+    static builder supplied; static sink_state actual;
+    const char *ptrs[EXR_WH_MAX_JOURNAL]; size_t n; wh_session *sess; wh_report r; wh_status st;
+    mock_init(&m); provider_of(&p, &m);
+    build_to_publish(&b, &g, &supplied, 1); n = view(&supplied, ptrs);
+    memset(&actual, 0, sizeof actual);
+    sess = wh_create(&b, &g, &p, sink_append, &actual);
+    check(sess != NULL, "recover-absent-prefix", "session");
+    if (!sess) return;
+    st = wh_recover(sess, ptrs, n, &r);
+    check(st == WH_UNCERTAIN, "recover-absent-prefix", diag(st, &r));
+    check(actual.calls == 0 && actual.b.n == 0,
+          "recover-absent-prefix", "appended to absent recovery prefix");
+    check(m.release_calls == 0 && m.discard_calls == 0,
+          "recover-absent-prefix", "acted on an unbound journal");
+}
+
+static void case_recover_stale_actual_prefix(void)
+{
+    mock m; wh_provider p; wh_binding b = binding_of(); wh_gates g = gates_of('a');
+    static builder supplied; static sink_state actual;
+    const char *ptrs[EXR_WH_MAX_JOURNAL]; size_t full_n; wh_session *sess; wh_report r; wh_status st;
+    mock_init(&m); provider_of(&p, &m);
+    build_to_publish(&b, &g, &supplied, 1); full_n = view(&supplied, ptrs);
+    memset(&actual, 0, sizeof actual); actual.b = supplied;
+    m.inspect_value = WH_PUB_NO;
+    sess = wh_create(&b, &g, &p, sink_append, &actual);
+    check(sess != NULL, "recover-stale-prefix", "session");
+    if (!sess) return;
+    st = wh_recover(sess, ptrs, full_n - 1, &r);
+    check(st == WH_UNCERTAIN, "recover-stale-prefix", diag(st, &r));
+    check(actual.calls == 0 && actual.b.n == full_n
+          && memcmp(actual.b.lines, supplied.lines, sizeof supplied.lines) == 0,
+          "recover-stale-prefix", "stale recovery mutated actual journal");
+    check(m.release_calls == 0 && m.discard_calls == 0,
+          "recover-stale-prefix", "stale prefix allowed discard/release");
+}
+/* ADDITIVE_REGRESSION_INSERT */
 int main(void)
 {
     case_binding();
@@ -553,6 +660,11 @@ int main(void)
     case_recover_yes_without_intent();
     case_recover_no();
     case_recover_reacquire_failed();
+    case_busy_acquire_zero_writes();
+    case_publish_cap_expires_before_commit();
+    case_discard_cap_expires_before_abort_ok();
+    case_recover_absent_actual_prefix();
+    case_recover_stale_actual_prefix();
     printf("{\"source\":\"%s\",\"checks\":%u,\"failed\":%u,\"passed\":%s}\n",
            CANDIDATE_SOURCE_SHA, checks, failures, failures ? "false" : "true");
     return failures ? 1 : 0;
