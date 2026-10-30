@@ -232,11 +232,11 @@ final class FeaturesUITests: XCTestCase {
             "On My iPhone", "On My iPad", "我的 iPhone", "我的 iPad")).firstMatch
         let currentDirectoryMenu = app.buttons["EXReaderAnnotations, Actions Menu"].firstMatch
         func inDirectory() -> Bool {
-            directory.exists || (localRoot.exists && currentDirectoryMenu.exists)
+            (currentDirectoryMenu.exists && localRoot.exists) || directory.exists
         }
         let browse = app.buttons["Browse"].firstMatch
         XCTAssertTrue(wait {
-            inDirectory() || localRoot.exists || (local.exists && local.isHittable) ||
+            localRoot.exists || inDirectory() || (local.exists && local.isHittable) ||
             (browse.exists && browse.isHittable)
         }, app.debugDescription)
         if !inDirectory() && !localRoot.exists {

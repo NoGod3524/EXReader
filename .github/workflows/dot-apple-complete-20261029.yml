@@ -32,7 +32,7 @@ jobs:
             tests/reader_team24_apple/run_ui.py \
             tests/apple_host/EXReaderHostUITests.swift tests/apple_host/reading/ui \
             tests/apple_host/navigation/ui tests/apple_host/search/ui tests/apple_host/page_theme/ui
-          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = a46f223bf0a96e52b5a5904f66eb270c74c95c91
+          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = 824647af22c2e57a9df01e94064b20a44c2df03b
           python3 - <<'PY'
           import subprocess
           path = 'tests/reader_team24_apple/ui/FeaturesUITests.swift'
