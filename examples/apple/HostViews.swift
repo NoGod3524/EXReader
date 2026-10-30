@@ -532,9 +532,22 @@ private struct HostOrganizationPanel: View {
                 Button("分类") { changeKind(1) }.accessibilityIdentifier("organization.kind.tag")
                 Button("系列") { changeKind(2) }.accessibilityIdentifier("organization.kind.series")
             }.buttonStyle(.bordered)
+#if os(iOS)
+            HStack {
+                Text("显示已移除").accessibilityHidden(true)
+                Spacer()
+                Toggle("显示已移除", isOn: $removed)
+                    .labelsHidden()
+                    .fixedSize(horizontal: true, vertical: false)
+                    .accessibilityLabel("显示已移除")
+                    .accessibilityIdentifier("organization.removed")
+                    .onChange(of: removed) { _ in selectedGroup = nil; edit = ""; refresh() }
+            }
+#else
             Toggle("显示已移除", isOn: $removed)
                 .accessibilityIdentifier("organization.removed")
                 .onChange(of: removed) { _ in selectedGroup = nil; edit = ""; refresh() }
+#endif
             HStack {
                 TextField("名称", text: $name).textFieldStyle(.roundedBorder)
                     .accessibilityIdentifier("organization.name")
