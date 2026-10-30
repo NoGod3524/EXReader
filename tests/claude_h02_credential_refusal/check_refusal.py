@@ -155,8 +155,8 @@ def main():
         # S1: no previous secret, remember on -> refusal, zero authenticated or unauthenticated requests
         dialog = A.open_account()
         A.fill(dialog, root, user_a, pass_a, True)
-        sampled(lambda: A.press(dialog, X.APPLY), A)
-        A.wait(lambda: 'UNAVAILABLE' in A.note(dialog) or '系统安全存储' in A.note(dialog) or '仅本次' in A.note(dialog), timeout=60)
+        sampled(lambda: (A.press(dialog, X.APPLY),
+                         A.wait(lambda: 'UNAVAILABLE' in A.note(dialog) or '系统安全存储' in A.note(dialog) or '仅本次' in A.note(dialog), timeout=60)), A)
         note = A.note(dialog)
         check('s1_remember_on_without_old_secret_is_refused_as_UNAVAILABLE', 'UNAVAILABLE' in note, note=note)
         check('s1_sync_stays_disabled_and_no_request_reaches_server', not A.enabled(dialog, X.SYNC) and not dav_state(),
@@ -165,18 +165,17 @@ def main():
 
         # S2: remember off -> memory only
         A.fill(dialog, root, user_a, pass_a, False)
-        sampled(lambda: A.press(dialog, X.APPLY), A)
-        A.wait(lambda: '仅本次会话' in A.note(dialog), timeout=60)
+        sampled(lambda: (A.press(dialog, X.APPLY), A.wait(lambda: '仅本次会话' in A.note(dialog), timeout=60)), A)
         check('s2_remember_off_accepts_session_only_secret', A.enabled(dialog, X.SYNC), note=A.note(dialog))
-        A.run_sync(dialog)
+        sampled(lambda: A.run_sync(dialog), A)
         after_sync = state()
         check('s2_sync_authenticates_with_session_secret', dav_state() and all(a for _, a in dav_state()), requests=len(dav_state()))
 
         # S3: A is live in memory; saving B (remember on) fails. A must not silently stand in for B.
         count_before_b = len(dav_state())
         A.fill(dialog, root, user_b, pass_b, True)
-        sampled(lambda: A.press(dialog, X.APPLY), A)
-        A.wait(lambda: 'UNAVAILABLE' in A.note(dialog) or '仅本次会话' in A.note(dialog), timeout=60)
+        sampled(lambda: (A.press(dialog, X.APPLY),
+                         A.wait(lambda: 'UNAVAILABLE' in A.note(dialog) or '仅本次会话' in A.note(dialog), timeout=60)), A)
         note_b = A.note(dialog)
         sync_enabled = A.enabled(dialog, X.SYNC)
         check('s3_failed_B_save_is_reported_UNAVAILABLE', 'UNAVAILABLE' in note_b, note=note_b)
