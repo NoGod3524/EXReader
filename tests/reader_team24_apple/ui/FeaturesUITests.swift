@@ -67,6 +67,8 @@ final class FeaturesUITests: XCTestCase {
         let viewport = scrollTarget ? (try? scroll.snapshot())?.frame : nil
         var available: XCUIElement?
         var targetFrame = CGRect.zero
+        var previousAbove: Bool?
+        var controlledCorrection = false
         func candidate() -> XCUIElement {
 #if os(iOS)
             if id.hasPrefix("features.") {
@@ -93,7 +95,11 @@ final class FeaturesUITests: XCTestCase {
                 scroll.scroll(byDeltaX: 0, deltaY: above ? 140 : -140)
 #else
                 let center = CGPoint(x: viewport.midX, y: viewport.midY)
-                let distant = abs(targetFrame.midY - center.y) > viewport.height
+                // A direction reversal proves the native flick crossed the target.
+                // Keep subsequent correction arrested instead of oscillating.
+                if let previousAbove, previousAbove != above { controlledCorrection = true }
+                previousAbove = above
+                let distant = !controlledCorrection && abs(targetFrame.midY - center.y) > viewport.height
                 let distance = min(viewport.height * (distant ? 0.78 : 0.6),
                                    max(viewport.height * 0.1, abs(targetFrame.midY - center.y)))
                 let origin = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
@@ -219,27 +225,31 @@ final class FeaturesUITests: XCTestCase {
             format: "identifier BEGINSWITH %@ AND (identifier ENDSWITH %@ OR identifier ENDSWITH %@ OR identifier ENDSWITH %@ OR identifier ENDSWITH %@)",
             "DOC.browsingRoot Source: com.apple.FileProvider.LocalStorage, Title: ",
             "On My iPhone", "On My iPad", "我的 iPhone", "我的 iPad")).firstMatch
+        let currentDirectoryMenu = app.buttons["EXReaderAnnotations, Actions Menu"].firstMatch
+        func inDirectory() -> Bool {
+            directory.exists || (localRoot.exists && currentDirectoryMenu.exists)
+        }
         let browse = app.buttons["Browse"].firstMatch
         XCTAssertTrue(wait {
-            directory.exists || localRoot.exists || (local.exists && local.isHittable) ||
+            inDirectory() || localRoot.exists || (local.exists && local.isHittable) ||
             (browse.exists && browse.isHittable)
         }, app.debugDescription)
-        if !directory.exists && !localRoot.exists {
+        if !inDirectory() && !localRoot.exists {
             if !(local.exists && local.isHittable) && browse.exists && browse.isHittable { browse.tap() }
             XCTAssertTrue(wait { localRoot.exists || (local.exists && local.isHittable) }, app.debugDescription)
             if !localRoot.exists { local.tap() }
         }
-        XCTAssertTrue(wait { directory.exists || localRoot.exists }, app.debugDescription)
-        if markdown && !directory.exists {
+        XCTAssertTrue(wait { inDirectory() || localRoot.exists }, app.debugDescription)
+        if markdown && !inDirectory() {
             // The first JSONL export in the unchanged case created this folder.
-            XCTAssertTrue(wait { folder.exists && folder.isHittable }, app.debugDescription)
+            XCTAssertTrue(wait { inDirectory() || (folder.exists && folder.isHittable) }, app.debugDescription)
         }
         let newFolder = app.buttons["New Folder"].firstMatch
         let overflow = app.buttons["OverflowBarButtonItem"].firstMatch
         XCTAssertTrue(wait {
-            directory.exists || folder.exists || newFolder.exists || overflow.exists
+            inDirectory() || folder.exists || newFolder.exists || overflow.exists
         }, app.debugDescription)
-        if !directory.exists && !folder.exists {
+        if !inDirectory() && !folder.exists {
             if !newFolder.exists {
                 XCTAssertTrue(wait { overflow.exists && overflow.isHittable })
                 overflow.tap()
@@ -257,8 +267,8 @@ final class FeaturesUITests: XCTestCase {
                 XCTAssertTrue(wait { !inline.exists })
             }
         }
-        if !directory.exists && folder.waitForExistence(timeout: 10) && folder.isHittable { folder.tap() }
-        XCTAssertTrue(wait { directory.exists }, app.debugDescription)
+        if !inDirectory() && folder.waitForExistence(timeout: 10) && folder.isHittable { folder.tap() }
+        XCTAssertTrue(wait { inDirectory() }, app.debugDescription)
         let open = app.buttons["Open"].firstMatch
         XCTAssertTrue(wait { open.exists && open.isHittable }, app.debugDescription); open.tap()
 #endif
