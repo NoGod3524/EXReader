@@ -60,6 +60,8 @@ jobs:
           cmake --install build/f05-credentials
           cmake -S tests/reader_revisions/consumer -B build/f05-revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
           cmake --build build/f05-revision-consumer --parallel 4
+          cmake -S tests/reader_commands/consumer -B build/f05-command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/f05-command-consumer --parallel 4
       - name: Install the repository SDK and public original export module
         run: |
           cmake --preset reading-library 2>&1 | tee build/f05-logs/sdk-configure.log
@@ -84,7 +86,7 @@ jobs:
             openbox >build/f05-logs/openbox-live.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
-            python3 tests/reader_f05_remaining_20261030/check_remaining.py --payload build/f05-package/EXReader-Linux --revision-consumer build/f05-revision-consumer/revision-consumer --build-json build/f05-package/build.json --output build/f05-host-live-evidence
+            python3 tests/reader_f05_remaining_20261030/check_remaining.py --payload build/f05-package/EXReader-Linux --revision-consumer build/f05-revision-consumer/revision-consumer --command-consumer build/f05-command-consumer/command-consumer --build-json build/f05-package/build.json --output build/f05-host-live-evidence
           '
       - name: Report preserved failure diagnostics without changing test outcome
         if: always()
