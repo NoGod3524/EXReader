@@ -35,9 +35,41 @@ persistence (diagnostic). The module maps `ERROR_NO_SUCH_LOGON_SESSION` / `ACCES
 
 ## Evidence
 
-(filled in after the run — see handoff; failures are retained)
+| source SHA | run / attempt | result |
+|---|---|---|
+| `2485c26f18499ffed27ce0a0a82462c57c35603d` | 41086810708 / 1 | failure (retained): build ok; harness failed before any attempt — `net user` prompts for passwords over 14 characters, user never created, no refusal attempted |
+| `40982f689062a9c713045668603cfe8e2fea28ce` | 41087173303 / 1 | success; `refusal_proven: true`, all harness gates true (windows-2022, image 20261026.347.1), artifact `claude-c08-privacy-failure-41087173303-1` |
 
-## Proposed smallest product testing interface (only if refusal stays unproven)
+Run 41087173303 (fix cycle 1 of 2; the fix only shortened the synthetic password and answered the prompt):
+
+| logon type (throw-away user, impersonated) | real module put / get | direct `CredWriteW` | sweep |
+|---|---|---|---|
+| network | `UNAVAILABLE` / `UNAVAILABLE` | error 1312 (`ERROR_NO_SUCH_LOGON_SESSION`) | clean |
+| network-cleartext | `UNAVAILABLE` / `UNAVAILABLE` | error 1312 | clean |
+| batch | LogonUser error 1385 (right not granted) — no attempt | – | clean |
+| service | LogonUser error 1385 — no attempt | – | clean |
+| interactive (no profile loaded) | `UNAVAILABLE` / `NOT_FOUND` | error 1312 | clean |
+
+* Proven (this run, this platform only): the real Windows Credential Manager refuses to store for a logon session
+  that has no credential-capable session, the installed unchanged module reports `UNAVAILABLE` for put and does not
+  return a secret for get, and no copy of the synthetic secret or password appeared in the sandbox (names and
+  contents, all encodings), probe streams, TEMP (stayed empty), the runner user's `cmdkey /list`, or any
+  credential-store file that changed during the run. The synthetic user was removed and verified gone.
+* The refusal is a real OS error from the real store, caused by impersonating a real logon of a throw-away local user;
+  no mock, fault injection, service stop or security-setting change was used.
+* Not proven: the application-level flows (WebDAV/OPDS account save, sync, export) refusing without plaintext fallback —
+  only the credential module's own put/get and the sandbox are observed; the module itself writes no file. A normal
+  interactive desktop logon with a loaded profile (positive control) was not exercised, so the success path of this
+  user is not shown here (C04 shows it for the runner user). Batch/service logons need rights this runner does not
+  grant, so they remain untried.
+* Gate semantics: the workflow is green when the harness is clean; read `refusal_proven` in
+  `summary.json`/`dynamic.json`, not the job colour, for the verdict.
+
+## Proposed smallest product testing interface (not needed for the credential module's refusal; kept for app-level flows)
+
+For application flows, the smallest useful interface is a way to start the host with a credential store known to refuse
+without a mock, for example the host accepting a test-only launch option that runs the credential calls under the same
+impersonated network logon this probe uses. The module-level proposal below is no longer required:
 
 A compile-time-off, test-only seam in `extras/credentials/src/windows.c`: an environment-selected persistence level
 (for example `EXR_CREDENTIALS_TEST_PERSIST=session|enterprise` honoured only when built with
