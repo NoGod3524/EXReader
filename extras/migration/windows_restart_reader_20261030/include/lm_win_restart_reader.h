@@ -27,13 +27,23 @@ typedef struct {
  * identity, the on-disk generation must equal expected_generation, and PENDING
  * must already be set. Every later check re-reads the whole 80-byte region from
  * disk under a reader-owned shared byte-range window over [0,80), which is
- * disjoint from the provider's own 4096/4097 admission locks, and refuses on any
+ * disjoint from the provider's own 4096/4097 admission locks, and requires it to
+ * be byte-identical to the snapshot taken before the acquire, refusing on any
  * drift between disk, the retained value and the provider cache.
+ * The acquire window itself is not closable: the provider must open the file for
+ * write, so in-place truncation cannot be denied, and its OPEN_ALWAYS branch would
+ * re-initialise a zero-length file. The reader therefore settles the snapshot
+ * again immediately after acquiring, under its own window, and refuses with
+ * restart-lease-window-race if the region changed. That refusal returns no reader
+ * object at all, so no custody is ever derived from a lease that moved inside the
+ * window. This detects but cannot undo a provider re-initialisation performed in
+ * that window, which stays a documented residual limit.
  * Distinct refusal reasons: restart-lease-dir, restart-lease-dir-kind,
  * restart-lease-missing, restart-lease-empty, restart-lease-size,
  * restart-lease-kind, restart-lease-header, restart-lease-identity,
  * restart-lease-generation, restart-lease-pending, restart-lease-window,
- * restart-lease-disk-drift, restart-lease-cache-drift, restart-lease-state.
+ * restart-lease-window-race, restart-lease-disk-drift,
+ * restart-lease-cache-drift, restart-lease-state.
  * A failed wr_prepare releases every pin it already held before returning.
  * Byte-range locks cannot stop SetEndOfFile or memory-mapped writes; drift from
  * those is detected on the next check, and detection never clears PENDING.
