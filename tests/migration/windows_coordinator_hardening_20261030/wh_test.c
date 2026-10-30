@@ -54,6 +54,7 @@ typedef struct {
     char bind[65];
     char prev[65];
     unsigned seq;
+    char lease[49], stage[49], snap[65], content[65];
 } builder;
 
 static const char *jval(const char *s) { return (s && s[0]) ? s : "-"; }
@@ -62,6 +63,7 @@ static int builder_start(builder *b, const wh_binding *bind, const wh_gates *g)
 {
     if (!wh_manifest(bind, g, b->lines[0])) return 0;
     b->n = 1;
+    b->lease[0] = 0; b->stage[0] = 0; b->snap[0] = 0; b->content[0] = 0;
     wh_sha256_hex(b->lines[0], strlen(b->lines[0]), b->bind);
     memcpy(b->prev, b->bind, sizeof b->prev);
     b->seq = 1;
@@ -73,9 +75,16 @@ static int builder_event(builder *b, unsigned event, const char *lease,
 {
     char body[EXR_WH_LINE_MAX];
     char seal[65];
-    int k = snprintf(body, sizeof body, "EXRWH2 %u %u %s %s %s %s %s %s",
-                     b->seq, event, jval(lease), jval(stage), jval(snap),
-                     jval(content), b->prev, b->bind);
+    int k;
+    /* The FSM requires every later event to repeat the values already
+       established, so the builder carries them forward like the real writer. */
+    if (lease) snprintf(b->lease, sizeof b->lease, "%.48s", lease);
+    if (stage) snprintf(b->stage, sizeof b->stage, "%.48s", stage);
+    if (snap) snprintf(b->snap, sizeof b->snap, "%.64s", snap);
+    if (content) snprintf(b->content, sizeof b->content, "%.64s", content);
+    k = snprintf(body, sizeof body, "EXRWH2 %u %u %s %s %s %s %s %s",
+                 b->seq, event, jval(b->lease), jval(b->stage), jval(b->snap),
+                 jval(b->content), b->prev, b->bind);
     if (k <= 0 || (size_t)k >= EXR_WH_LINE_MAX - 66) return 0;
     if (b->n >= EXR_WH_MAX_JOURNAL) return 0;
     wh_sha256_hex(body, (size_t)k, seal);
