@@ -32,6 +32,16 @@ def pairs(items):
   need(k not in d,"duplicate-json-key");d[k]=v
  return d
 def js(b): return json.loads(b,object_pairs_hook=pairs)
+def norm_files(items,code="duplicate-manifest-key"):
+ """Producer inventories come from a Windows walk (backslashes) while archive
+  members use forward slashes. Normalising must not silently merge two distinct
+  producer keys into one, which would hide a member from every later check."""
+ out={}
+ for k,v in items.items():
+  key=k.replace("\\","/")
+  need(key not in out,code)
+  out[key]=v
+ return out
 def archive(data):
  need(len(data)==SIZE,"zip-size");need(sha(data)==DIGEST,"zip-digest")
  files={};total=0
@@ -77,7 +87,7 @@ def inspect(v):
    need(stdout.splitlines()[0]=="ready-"+mode and r.get("terminated") is True,"death-cut")
   for k in ("commit_acknowledged","recovery_admission"):false(r,k)
   inventory={k[len(prefix):]:b for k,b in v.items() if k.startswith(prefix)}
-  manifest={k.replace("\\","/"):x for k,x in r["files"].items()}
+  manifest=norm_files(r["files"])
   need(set(inventory)==set(manifest),"inventory")
   for p,b in inventory.items():
    need(manifest[p]["bytes"]==len(b) and manifest[p]["sha256"]==sha(b),"manifest-bytes")
@@ -111,8 +121,8 @@ def inspect(v):
  n=obj(v,"record-evidence/native.json")
  need(n["source"]==SOURCE and n["checks"]==n["expected"]==27 and n["passed"] is True and n["identity_bytes"]==49 and n["sdk_open_attempts"]==0,"record-27")
  false(n,"recovery_admission")
- for leaf,meta in old["files"].items():
-  b=read(v,"record-evidence/private-state/"+leaf.replace("\\","/"));need(meta["bytes"]==len(b) and meta["sha256"]==sha(b),"old-file")
+ for leaf,meta in norm_files(old["files"]).items():
+  b=read(v,"record-evidence/private-state/"+leaf);need(meta["bytes"]==len(b) and meta["sha256"]==sha(b),"old-file")
  d=obj(v,"record-evidence/private-state/record-00.json")
  need(d["target"]==n["target"] and d["source"]==SOURCE,"old-target")
  # Original publisher controls, including retained original bytes.
@@ -160,6 +170,7 @@ def body(out):
  need(job["run_id"]==RUN and job["run_attempt"]==1 and job["head_sha"]==SOURCE and job["conclusion"]=="success","job")
  need(run["head_sha"]==SOURCE and run["run_attempt"]==1 and run["conclusion"]=="success","run")
  raw=api("actions/artifacts/"+str(ART)+"/zip",True);v=archive(raw);positive=inspect(v)
+ (out/"original.zip").write_bytes(raw)
  negatives=[]
  def reject(name,view,expected):
   try:inspect(view)
@@ -180,6 +191,10 @@ def body(out):
  mutation("publisher-count","publish-evidence/receipt.json",lambda d:d["results"][0].update(checks=27),"publisher-28")
  mutation("drop-refusal","recovery-integration/evidence.json",lambda d:d["cases"].pop(),"refusal-8")
  mutation("duplicate-refusal","recovery-integration/evidence.json",lambda d:d["cases"].__setitem__(1,d["cases"][0]),"duplicate-refusal")
+ def _duplicate_manifest_key(d):
+  files=d["results"][0]["files"];key=next(iter(files))
+  files[key.replace("/","\\") if "/" in key else key.replace("\\","/")]=files[key]
+ mutation("duplicate-manifest-key",b,_duplicate_manifest_key,"duplicate-manifest-key")
  for short,stem in (("bridge","windows-record-bridge"),("publish","windows-publish"),("record","windows-record")):
   w=dict(v);k=one(w,"build/"+("migration" if short=="record" else short)+"/Release/exreader-migration-"+stem+".lib");w[k]=w[k]+b"x"
   reject("tamper-built-"+short,w,"built-installed:"+short)
@@ -199,7 +214,7 @@ def body(out):
  deep("sealed-root-tail","normal","private/bridge-slot-01.rec",lambda x:reseal(x,"root","0"*48),"chain-binding")
  deep("sealed-predecessor","normal","private/bridge-slot-01.rec",lambda x:reseal(x,"previous_sha","0"*64),"previous-sha")
  need(inspect(v)==positive,"baseline-changed")
- report={"producer_source":SOURCE,"producer_run":RUN,"attempt":1,"job":JOB,"artifact":ART,"archive_bytes":SIZE,"archive_sha256":DIGEST,"positive":positive,"negative_controls":negatives,"independent_validator":True,"full_p0_acceptance":False,"restart_reader":False,"physical_power_loss":False,"limits":["26 checks are aggregate producer output, not 26 independent re-executions","original NTFS record file ID cannot be remeasured from ZIP; previous_id syntax only","process kill is not physical power loss"],"audit_source":os.environ["GITHUB_SHA"]}
+ report={"producer_source":SOURCE,"producer_run":RUN,"attempt":1,"job":JOB,"artifact":ART,"archive_bytes":SIZE,"archive_sha256":DIGEST,"retained_original_zip":{"path":"audit-evidence/original.zip","bytes":SIZE,"sha256":DIGEST},"positive":positive,"negative_controls":negatives,"independent_validator":True,"full_p0_acceptance":False,"restart_reader":False,"physical_power_loss":False,"limits":["26 checks are aggregate producer output, not 26 independent re-executions","original NTFS record file ID cannot be remeasured from ZIP; previous_id syntax only","process kill is not physical power loss"],"audit_source":os.environ["GITHUB_SHA"]}
  (out/"receipt.json").write_text(json.dumps(report,indent=2)+"\n")
  (out/"producer-metadata.json").write_text(json.dumps({"artifact":meta,"job":job,"run":run},indent=2))
  print(json.dumps(report))

@@ -56,6 +56,16 @@ and audit-result.json. Its API/upload size is3824 bytes, SHA256
 archive itself has not been independently rehashed by a further job; the original
 producer ZIP above has been independently rehashed.
 
+Correction: that first passing script did not write original.zip into
+audit-evidence, so the retention sentence above was wrong for it even though the
+archive was downloaded and rehashed. The script now writes the exact bytes it
+verified to audit-evidence/original.zip before running any control, and the
+receipt records that path with its byte count and SHA256, so a further job can
+re-hash the same bytes. Path normalisation for producer inventories also no longer
+merges keys silently: two manifest keys that collapse to one member path are now
+rejected as duplicate-manifest-key, which is exercised as its own negative
+control. A re-run of this revision is required before any retention claim applies.
+
 Two earlier attempts on this branch are retained, not hidden: 6714d847 failed with
 HTTP 401 because the API token followed the artifact redirect into signed blob
 storage, and ccecb103 failed on `inventory` because the producer manifest records
