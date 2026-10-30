@@ -373,6 +373,7 @@ def summary(reports: Path, out: Path) -> int:
             "Windows/Linux application flows (WebDAV/OPDS accounts, sync, export, crash/kill paths) beyond the credential module and its temp files",
             "the Apple wave3-review temporary directory finding stays open (static gate), nothing suppresses it",
             "full F10, full P0 or any acceptance count; Windows and Linux evidence are reported separately and bind to the single source/run/attempt above"]}
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"platforms": {k: v["passed"] for k, v in platforms.items()}, "gates": verdict,
                       "missing": missing, "identity_mismatch": mismatched, "all": result["all_gates_passed"]}))

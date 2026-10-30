@@ -64,6 +64,8 @@ class Run:
     def record(self, name, ok, diagnostic=False, **detail):
         self.phases.append({"phase": name, "ok": bool(ok), "diagnostic": diagnostic, **detail})
         print(("PASS " if ok else "FAIL ") + ("(diagnostic) " if diagnostic else "") + name, flush=True)
+        if not ok or diagnostic:  # plain-log detail for failures/diagnostics (no secrets are ever in these fields)
+            print("  detail " + json.dumps(detail, default=str, sort_keys=True)[:900], flush=True)
 
     def snapshot_store(self):
         snap = {}
