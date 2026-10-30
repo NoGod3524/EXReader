@@ -19,12 +19,12 @@ import fp_core as C  # noqa: E402
 def linux_config():
     root = C.ROOT.resolve()
     host = root / 'build/gtk-raw-wave3/retained-host'
-    archives = sorted(str(p) for base in ('build/reading-library/stage', 'build/gtk-raw-wave3/raw-stage') for p in (root / base).rglob('*.a'))
+    archives = sorted(str(p) for base in ('build/reading-library/stage', 'build/gtk-raw-wave3/raw-stage', 'build/original-hash') for p in (root / base).rglob('*.a'))
     archives += sorted(str(p) for p in host.rglob('*.a'))
     C.require(any('EXReaderProductCatalog' in a for a in archives), 'no installed ProductCatalog archive')
     return dict(platform='linux', sdk_version='3.42.0', image=str(host / 'gtk-host/exreader-linux'),
         map=str(host / 'gtk-account-host.map'), map_format='gnu', link_cwd=str(host), archives=archives,
-        roles=dict(sdk=[str(root / 'build/reading-library/stage') + '/'], product=[str(root / 'build/gtk-raw-wave3/raw-stage') + '/'],
+        roles=dict(sdk=[str(root / 'build/reading-library/stage') + '/'], product=[str(root / 'build/gtk-raw-wave3/raw-stage') + '/'], hash=[str(root / 'build/original-hash') + '/'],
                    host=[str(host) + '/'], system=['/usr/lib/', '/lib/', '/usr/lib64/', '/lib64/']))
 
 

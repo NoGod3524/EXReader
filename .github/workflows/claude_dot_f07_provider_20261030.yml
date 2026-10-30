@@ -35,6 +35,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build binutils
+      - name: Build and install independent public OPDSHash provider (owner-documented prerequisite)
+        run: |
+          cmake -S extras/opds -B build/original-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/build/original-hash"
+          cmake --build build/original-hash-build --parallel 4
+          cmake --install build/original-hash-build
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$GITHUB_WORKSPACE/build/original-hash" >> "$GITHUB_ENV"
       - name: Build unchanged same-source SDK 3.42 raw/legacy products and retained host
         id: build
         run: |
