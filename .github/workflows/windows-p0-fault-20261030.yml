@@ -1,0 +1,28 @@
+name: Windows P0 fault acceptance readiness (not product pass)
+on:
+  push:
+    branches: [codex/p0-win-fault-acceptance-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  readiness:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compile only new Python source
+        shell: pwsh
+        run: |
+          python -m py_compile tests/migration/windows_p0_fault_acceptance_20261030/admit.py tools/reader_composition/windows_p0_fault_independent_20261030.py
+      - name: Adversarial evidence-validator tests (not native product tests)
+        run: python tests/migration/windows_p0_fault_acceptance_20261030/selftest.py
+      - name: Admit frozen source and report missing native providers
+        run: python tests/migration/windows_p0_fault_acceptance_20261030/admit.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-p0-fault-readiness-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-p0-fault-readiness/readiness.json
+          if-no-files-found: error
