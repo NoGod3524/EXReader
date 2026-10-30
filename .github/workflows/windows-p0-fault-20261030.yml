@@ -26,3 +26,28 @@ jobs:
           name: windows-p0-fault-readiness-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/windows-p0-fault-readiness/readiness.json
           if-no-files-found: error
+  independent-retained-readiness:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate exact prior original readiness ZIP, not product acceptance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          python tools/reader_composition/windows_p0_fault_independent_20261030.py
+          --source ed913187adc7e236602e9c9551598b65f7d0a156
+          --run 41019431452 --attempt 1 --job 123943134731
+          --artifact 12961485161 --bytes 1238
+          --sha256 544342ce45460f649183a877c7b4bc7189d4e10d714cf8c8fc096ded16bb26b1
+          --artifact-name windows-p0-fault-readiness-41019431452-1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-p0-fault-independent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-p0-fault-independent/result.json
+          if-no-files-found: error
