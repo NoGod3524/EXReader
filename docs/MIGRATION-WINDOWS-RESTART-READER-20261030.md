@@ -36,11 +36,48 @@ All API calls serialized; no privilege boundary/thread-safe claim.
 
 Actions creates writer processes using the installed bridge/publisher+C01, proves
 a competing reader cannot acquire while they live, kills them, then launches a
-different reader process. Four cut stages plus reader death/re-reacquire and ten
-negative/classification cases are checked. Later SHARED calls must remain STALE.
-Old record27, publisher28+2cuts, bridge26+4cuts, refusal8 are rerun unchanged.
+different reader process. Four cut stages plus reader death/re-reacquire and the
+negative/classification cases below are checked. Later SHARED calls must remain
+STALE. Old record27, publisher28+2cuts, bridge26+4cuts, refusal8 are rerun unchanged.
 Built/installed archives and map/fixture/source/run receipts are archived.
 
 No physical-power-loss/directory-durability claim, no worker/host/SDK integration,
 no C02 stage-policy validation, no clearing or retry of partial records, no fullP0.
+
+## Containment added in this revision
+
+The pinned C01 provider is frozen outside this package, so its two weaknesses are
+contained in the adapter rather than patched in place. First, it opens the lease
+file with OPEN_ALWAYS, which would silently re-create or re-initialise a lease
+whose file was deleted or truncated. The reader now qualifies the lease namespace
+itself before any lease handle exists: the lease directory and the exactly
+80-byte lease file are pinned with deny-delete sharing, the 48-lowercase-hex
+identity is validated, the 64-byte header must be bound to that identity, the
+on-disk generation must equal the caller's expected generation, and PENDING must
+already be set. A missing, empty, truncated, oversized, header-tampered or
+counter-mismatched lease is refused with a distinct reason, and nothing is
+written, re-created or re-initialised. Second, the provider caches
+generation/pending at acquire time and its own check re-verifies only the
+identity header. The reader re-reads the whole 80-byte region from disk on every
+check under its own shared byte-range window over [0,80), which is disjoint from
+the provider's 4096/4097 admission locks and therefore cannot collide with a live
+C01 holder, and it refuses on any drift between disk, the value retained at open
+and the provider cache. Third, a failed wr_prepare already holds ancestor pins;
+the context is closed immediately on that path instead of being left for close,
+and this is proven by the private root staying renameable while the retained
+reader object is still alive.
+
+Tested cases (24 total: 15 retained plus 9 new). Retained: four cut stages
+(before/record/published/after classification), reader death and re-acquisition,
+and the refusals for partial, missing slot, extra slot, tampered predecessor,
+wrong payload, both targets present, and missing target. Caller-binding refusals:
+stale admitted generation now refuses before any lease handle exists, while a
+wrong root or wrong session binding still yields retained REFUSED evidence. New:
+missing lease, empty lease, truncated lease, grown lease, tampered lease header,
+on-disk generation mismatch, cleared PENDING, a write through a memory-mapped
+view of the aged region while the reader is live, and the failed-wr_prepare pin
+release above. Byte-range locks cannot prevent SetEndOfFile or mapped writes, so
+those are detection cases, not durability claims; detection never clears PENDING
+and never grants admission.
+
 Initial status: source candidate, Actions pending. Maximum3 authorized rounds.

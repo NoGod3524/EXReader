@@ -15,13 +15,33 @@ static int load(const WCHAR *path,lm_wr_record *r){
  f=_wfopen(path,L"rb");if(!f)return 0;n=fread(bytes,1,sizeof(bytes),f);fclose(f);
  return lm_wr_record_decode(bytes,n,r);
 }
+static void leaf_of(WCHAR leaf[64],const char id[49]){
+ size_t i;for(i=0;i<48;i++)leaf[i]=(WCHAR)id[i];memcpy(leaf+48,L".lease",7*sizeof(WCHAR));
+}
+static void printable(const WCHAR *in,char *out,size_t cap){
+ size_t i=0;for(;*in&&i+2<cap;in++){
+  if(*in==L'\\'){out[i++]='\\';out[i++]='\\';}
+  else if(*in>0&&*in<128)out[i++]=(char)*in;
+  else out[i++]='?';
+ }
+ out[i]=0;
+}
+static long long lease_bytes(const WCHAR *dir,const char id[49]){
+ WCHAR path[WR_PATH+64],leaf[64];WIN32_FILE_ATTRIBUTE_DATA data;
+ leaf_of(leaf,id);
+ if(swprintf(path,WR_PATH+64,L"%ls\\%ls",dir,leaf)<0)return -1;
+ if(!GetFileAttributesExW(path,GetFileExInfoStandard,&data))return -1;
+ return ((long long)data.nFileSizeHigh<<32)|(long long)data.nFileSizeLow;
+}
+static const char *why(const wr_error *e){return e->reason?e->reason:"none";}
 int main(int argc,char **argv){
- static wr_context c,lc;WCHAR root[WR_PATH],leases[WR_PATH],manifest[WR_PATH],slotpath[WR_PATH],moved[WR_PATH];
+ static wr_context c,lc;WCHAR root[WR_PATH],reader[WR_PATH],leases[WR_PATH],manifest[WR_PATH],slotpath[WR_PATH],moved[WR_PATH];
  wr_error e={0};lm_wl_error le={0};lm_wl_lease *lease=NULL,*shared=NULL;lm_wl_status ls;
  lm_wr_record record={0},next;wr_identity id;lm_rb *bridge=NULL;lm_wp_custody *custody=NULL;
  lm_rb_result first,last;lm_wp_result publication;HANDLE target=INVALID_HANDLE_VALUE,h;
- const char payload[]="restart payload\n";char sha[65],lease_id[49];lm_rr *reader=NULL;lm_rr_result result;
- int opened,checked,write_denied,rename_denied;uint64_t generation=0;
+ const char payload[]="restart payload\n";char sha[65],lease_id[49],pathbuf[WR_PATH*2];const char *open_reason;
+ lm_rr *reader_obj=NULL;lm_rr_result result;uint64_t generation=0;
+ int opened,checked,write_denied,rename_denied,after_fail;unsigned i;long long bytes;
  if(argc!=4||!wr_utf8(argv[2],root,&e))return 2;
  swprintf(leases,WR_PATH,L"%ls-lease",root);swprintf(manifest,WR_PATH,L"%ls-expected.json",root);
  if(!strcmp(argv[1],"fixture")){
@@ -51,6 +71,13 @@ int main(int argc,char **argv){
   printf("ready-%s\n",argv[3]);fflush(stdout);Sleep(INFINITE);return 11;
  }
  if(!load(manifest,&record))return 12;memcpy(lease_id,record.root,49);
+ if(!strcmp(argv[1],"leasepath")){
+  WCHAR path[WR_PATH+64],leaf[64];
+  leaf_of(leaf,lease_id);
+  if(swprintf(path,WR_PATH+64,L"%ls\\%ls",leases,leaf)<0)return 13;
+  printable(path,pathbuf,sizeof pathbuf);
+  printf("{\"lease\":\"%s\"}\n",pathbuf);return 0;
+ }
  if(!strcmp(argv[1],"shared")){
   ls=lm_wl_acquire(leases,record.root,LM_WL_SHARED,0,&shared,&le);
   if(shared)lm_wl_release(shared);
@@ -59,9 +86,26 @@ int main(int argc,char **argv){
  if(!strcmp(argv[3],"generation"))generation=1;
  if(!strcmp(argv[3],"root"))record.root[47]=record.root[47]=='0'?'1':'0';
  if(!strcmp(argv[3],"session"))record.run[31]='c';
- opened=lm_rr_open(leases,lease_id,
-  generation,root,L"target.bin",L"published.bin",&record,2,&reader,&result,&e);
- checked=opened&&lm_rr_check(reader,&e);write_denied=rename_denied=0;
+ wcscpy(reader,root);
+ if(!strcmp(argv[3],"missing-root"))wcscat(reader,L"\\absent-sub");
+ opened=lm_rr_open(leases,lease_id,generation,reader,L"target.bin",L"published.bin",&record,2,&reader_obj,&result,&e);
+ open_reason=why(&e);
+ checked=opened&&lm_rr_check(reader_obj,&e);write_denied=rename_denied=0;
+ if(!strcmp(argv[3],"drift")){
+  if(!(opened&&checked)){
+   printf("{\"opened\":false,\"checked\":false,\"class\":%d,\"reason\":\"%s\"}\n",(int)result.classification,why(&e));
+   lm_rr_close(reader_obj);return 0;
+  }
+  puts("ready-reader");fflush(stdout);
+  for(i=0;i<200;i++){
+   Sleep(100);
+   if(!lm_rr_check(reader_obj,&e)){
+    printf("{\"check_failed\":true,\"reason\":\"%s\"}\n",why(&e));fflush(stdout);
+    lm_rr_close(reader_obj);return 0;
+   }
+  }
+  puts("{\"check_failed\":false}");fflush(stdout);lm_rr_close(reader_obj);return 0;
+ }
  if(checked){
   swprintf(slotpath,WR_PATH,L"%ls\\bridge-slot-00.rec",root);
   h=CreateFileW(slotpath,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,0,NULL);
@@ -69,8 +113,20 @@ int main(int argc,char **argv){
   swprintf(moved,WR_PATH,L"%ls-moved",root);rename_denied=!MoveFileExW(root,moved,0);
   if(!strcmp(argv[3],"hold")){puts("ready-reader");fflush(stdout);Sleep(INFINITE);}
  }
- printf("{\"source\":\"%s\",\"opened\":%s,\"class\":%d,\"valid\":%u,\"checked\":%s,\"pending\":%d,\"generation\":%llu,\"published\":%d,\"write_denied\":%s,\"rename_denied\":%s,\"sdk_open_attempts\":0,\"commit_acknowledged\":false,\"recovery_admission\":false}\n",
+ /* A refused open must not leave pins behind: the private root must still be
+   renameable. Restored immediately so the caller's file inventory is unchanged. */
+ after_fail=0;
+ if(!checked){
+  swprintf(moved,WR_PATH,L"%ls-moved",root);
+  if(MoveFileExW(root,moved,0)){
+   after_fail=1;
+   if(!MoveFileExW(moved,root,0))after_fail=0;
+  }
+ }
+ bytes=lease_bytes(leases,lease_id);
+ printf("{\"source\":\"%s\",\"opened\":%s,\"class\":%d,\"valid\":%u,\"checked\":%s,\"pending\":%d,\"generation\":%llu,\"published\":%d,\"write_denied\":%s,\"rename_denied\":%s,\"after_fail_rename\":%s,\"lease_bytes\":%lld,\"open_reason\":\"%s\",\"reason\":\"%s\",\"sdk_open_attempts\":0,\"commit_acknowledged\":false,\"recovery_admission\":false}\n",
  SOURCE_SHA,opened?"true":"false",(int)result.classification,result.valid_records,checked?"true":"false",
- result.pending,(unsigned long long)result.generation,result.published,write_denied?"true":"false",rename_denied?"true":"false");
- lm_rr_close(reader);return 0;
+ result.pending,(unsigned long long)result.generation,result.published,write_denied?"true":"false",
+ rename_denied?"true":"false",after_fail?"true":"false",bytes,open_reason,why(&e));
+ lm_rr_close(reader_obj);return 0;
 }
