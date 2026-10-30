@@ -30,5 +30,15 @@ Old C03 c0ec6edf run 41032783657 is background only.
 - Every syntax check, build and test, including the ZIP download and parsing, runs only in GitHub Actions.
 
 ## Status
-Verifier written; first Actions result pending. Producer audit awaits coordinator-supplied successful run id, attempt
+Verifier written; controls and producer audit complete, see Result.
 and artifact id (dispatch inputs `producer_run_id`, `producer_attempt`, `producer_artifact_id`).
+
+## Result (2026-10-30)
+Old producer 99c329b3 run 41084852566 attempt 1 completed with failure (native import dialog closure); retained, not audited.
+Corrected producer ed24fec29f77f17ded6be843f1dfafb4e9e0456e, run 41086747699, attempt 1, completed success, artifact
+f05-remaining-41086747699-1 id 12992621946, 953796 bytes, digest sha256:6bef126ec9b51a034a0397725dfc3261407594b48162069b38dc4ac58213c740
+(official API metadata; head SHA and branch match). The producer diff from 99c329b3 only adds failure diagnostics; schema unchanged.
+Audit: workflow_dispatch run 41088276333 attempt 1 at verifier source c7224e56, success. Verdict ACCEPTED (Linux GTK scope only),
+39 controls all ok. Audit record artifact c07-conflict-audit-41088276333-1 id 12992965833. The ZIP was downloaded, unpacked and parsed
+only inside Actions.
+Not claimed: full F05, the 11-case recovery suite, book delete/restore, six platforms, physical devices.
