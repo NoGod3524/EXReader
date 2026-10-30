@@ -398,7 +398,7 @@ private struct HostWave3ShareButton: View {
     var body: some View {
         Button("分享导出文件") { sharing = true }
             .frame(minHeight: 44).accessibilityIdentifier("features.share")
-            .sheet(isPresented: $sharing) { HostWave3Activity(url: url) }
+            .sheet(isPresented: $sharing) { HostWave3Activity(url: url) { sharing = false } }
     }
 #else
     var body: some View {
@@ -411,8 +411,13 @@ private struct HostWave3ShareButton: View {
 #if os(iOS)
 private struct HostWave3Activity: UIViewControllerRepresentable {
     let url: URL
+    let onFinish: () -> Void
     func makeUIViewController(context: Context) -> UIActivityViewController {
         let controller = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        let finish = onFinish
+        controller.completionWithItemsHandler = { _, _, _, _ in
+            DispatchQueue.main.async { finish() }
+        }
         controller.view.accessibilityIdentifier = "features.share.native"
         if let popover = controller.popoverPresentationController {
             popover.sourceView = controller.view

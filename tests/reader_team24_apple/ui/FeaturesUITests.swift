@@ -18,44 +18,65 @@ final class FeaturesUITests: XCTestCase {
         return check()
     }
     private func tap(_ id: String) {
+#if os(iOS)
+        let scroll = app.scrollViews.matching(identifier: "features.scroll").firstMatch
+#else
         let scroll = e("features.scroll")
+#endif
         let scrollTarget = id.hasPrefix("features.") && !["features.close", "features.refresh", "features.share"].contains(id)
+        let viewport = scrollTarget ? (try? scroll.snapshot())?.frame : nil
         var available: XCUIElement?
         var targetFrame = CGRect.zero
-        func canTap(_ target: XCUIElement, viewport: CGRect?) -> Bool {
+        func candidate() -> XCUIElement {
+#if os(iOS)
+            if id.hasPrefix("features.") {
+                return app.buttons.matching(identifier: id).firstMatch
+            }
+#endif
+            return e(id)
+        }
+        func canTap(_ target: XCUIElement) -> Bool {
             guard let snapshot = try? target.snapshot() else { return false }
-            let frame = snapshot.frame
-            targetFrame = frame
-            let inViewport = viewport.map { $0.contains(CGPoint(x: frame.midX, y: frame.midY)) } ?? true
+            targetFrame = snapshot.frame
+            let inViewport = viewport.map { $0.contains(CGPoint(x: targetFrame.midX, y: targetFrame.midY)) } ?? true
             return inViewport && snapshot.isEnabled && target.isHittable
         }
         for _ in 0..<24 {
-            let viewport = scrollTarget ? (try? scroll.snapshot())?.frame : nil
-            let target = e(id)
-            if canTap(target, viewport: viewport) { available = target; break }
+            let target = candidate()
+            if canTap(target) { available = target; break }
             if let viewport {
                 let above = !targetFrame.isEmpty && targetFrame.midY < viewport.midY
 #if os(macOS)
                 scroll.scroll(byDeltaX: 0, deltaY: above ? 140 : -140)
 #else
                 let center = CGPoint(x: viewport.midX, y: viewport.midY)
-                let frame = targetFrame
-                let distance = min(viewport.height * 0.75,
-                                   max(viewport.height * 0.25, abs(frame.midY - center.y)))
-                let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: above ? 0.2 : 0.8))
+                let distance = min(viewport.height * 0.6,
+                                   max(viewport.height * 0.1, abs(targetFrame.midY - center.y)))
+                let origin = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+                let start = origin.withOffset(CGVector(dx: viewport.midX,
+                    dy: viewport.minY + viewport.height * (above ? 0.2 : 0.8)))
                 let end = start.withOffset(CGVector(dx: 0, dy: above ? distance : -distance))
-                start.press(forDuration: 0.05, thenDragTo: end)
+                start.press(forDuration: 0.01, thenDragTo: end,
+                            withVelocity: .slow, thenHoldForDuration: 0.05)
 #endif
             }
         }
         let ready = available != nil || wait {
-            let viewport = scrollTarget ? (try? scroll.snapshot())?.frame : nil
-            let target = self.e(id)
-            if canTap(target, viewport: viewport) { available = target; return true }
+            let target = candidate()
+            if canTap(target) { available = target; return true }
             return false
         }
         XCTAssertTrue(ready, "Unavailable \(id) \(app.debugDescription)")
+#if os(iOS)
+        if id.hasPrefix("features."), ready, !targetFrame.isEmpty {
+            // The actual target has just passed enabled, viewport and native
+            // hittability checks. Reuse that exact frame for the real input.
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+                .withOffset(CGVector(dx: targetFrame.midX, dy: targetFrame.midY)).tap()
+        } else { available?.tap() }
+#else
         available?.tap()
+#endif
     }
     private func mark(_ name: String) {
         let a = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); a.name = name; a.lifetime = .keepAlways; add(a)
