@@ -41,3 +41,21 @@ No restart reader exists. Empty/partial/missing records after death require a
 separately qualified exclusive recovery reader, never auto-cleanup or SDK admission.
 Observed flush/readback is not physical-power-loss or directory-fsync equivalence.
 No full P0 or common-source acceptance is claimed. Initial status: Actions pending.
+
+## Retained first Actions failure
+
+Source 0db2df43371ace854dd27aa2cc2648d9a84a5a8c, run41085127597 attempt1,
+job124164152366: failure. Frozen/admitted source checks and installed library and
+consumer /W4 /WX builds passed; original record27 and publisher28 plus its two
+death cuts passed. New probe exited3221225725 (STATUS_STACK_OVERFLOW) before output:
+two large wr_context automatic objects exceeded the default executable stack.
+The corrective change uses static storage only in the serialized new probe.
+No old assertions or budgets change. Original refusal8 was skipped after failure.
+
+Retained artifact12990619994:314593 bytes; upload SHA256
+41817de8f437bd000e8b90d982a99686622191527a49eed72a9451715114c33f.
+This is an upload digest, not an independent original-ZIP rehash.
+
+Integration note: codec run[33] is a 32hex transaction token, not C02's complete
+run/attempt/gate identity tuple. A future adapter must preserve and validate that
+external session binding; it cannot substitute the codec field for it.
