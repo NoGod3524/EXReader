@@ -48,6 +48,7 @@ def sha(data):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--payload', type=Path, required=True)
+    parser.add_argument('--command-consumer', type=Path, required=True)
     parser.add_argument('--revision-consumer', type=Path, required=True)
     parser.add_argument('--build-json', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
@@ -66,7 +67,7 @@ def main():
               'build_json_sha256': sha(args.build_json.read_bytes()),
               'revision_consumer_sha256': sha(args.revision_consumer.read_bytes()),
               'host': 'actual GTK exreader-linux, two independent profiles', 'checks': checks, 'count': 0,
-              'scope': 'native Receive and group delete versus update; book deletion pending; Linux only',
+              'scope': 'native Receive and group delete versus update; native book delete and restart restore; Linux only',
               'database_planting': False, 'six_platform_claim': False, 'complete_product': False}
 
     private = Path(tempfile.mkdtemp(prefix='f05-host-', dir=os.environ.get('RUNNER_TEMP')))
@@ -609,6 +610,25 @@ def main():
         assert any(r['peer'] == 'peerB' and r['method'] == 'GET' and '/revisions/' in r['path'] for r in requests)
         record('native_delete_versus_update_converges_without_automatic_winner',
                graph=ga['state'], heads=ga['heads'], wire=wire)
+        # Boundary input uses the installed public typed-command consumer, not SQL writes.
+        # This is explicitly setup by another API client; deletion/restoration below remain real GTK.
+        hard_kill(a)
+        long_title, long_author, long_sort = 'T' * 5000, 'A' * 5000, 'Different stable sort'
+        title_file, author_file, sort_file = folder / 'long-title.txt', folder / 'long-author.txt', folder / 'long-sort.txt'
+        title_file.write_text(long_title)
+        author_file.write_text(long_author)
+        sort_file.write_text(long_sort)
+        book_parents = ids(protocol(a, 'heads', kind_of(a, book), book)['heads'])
+        prepared = subprocess.run([str(args.command_consumer.resolve()), 'book', str(db_path(a)),
+                                   '-', ','.join(book_parents), '0', book, 'txt', sha(body),
+                                   str(len(body)), '1', str(title_file), str(author_file), str(sort_file)],
+                                  capture_output=True, text=True, timeout=45)
+        assert prepared.returncode == 0
+        prepared_value = json.loads(prepared.stdout)
+        assert prepared_value['status'] == 0 and prepared_value['applied'], prepared_value
+        exact_metadata = (long_title, long_author, long_sort, 1)
+        assert sql(a, 'SELECT title,author,sort_title,favorite FROM reader_books WHERE book_key=?', (book,)) == [exact_metadata]
+        launch(a)
         # Real GTK deletion, process restart, retained-book selection and restore.
         focus(a)
         a.host.key('F2', 'ctrl+e')
@@ -651,6 +671,8 @@ def main():
         assert set(deleted_history).issubset(restored)
         record('native_removed_books_restore_after_restart_preserves_delete_parent',
                restore_revision=restore_id, deleted_revision=delete_id)
+        assert sql(a, 'SELECT title,author,sort_title,favorite FROM reader_books WHERE book_key=?', (book,)) == [exact_metadata]
+        record('restore_preserves_5000_character_fields_and_distinct_sort_exactly', title_bytes=5000, author_bytes=5000, setup='installed public typed command; no SQL mutation')
         report['book_delete_restore'] = {'accepted': True, 'delete_revision': delete_id,
                                         'restore_revision': restore_id, 'restart': True}
 
@@ -668,7 +690,7 @@ def main():
             assert not any(form in v for form in forms for v in entries.values())
         assert not leaks, leaks
         record('synthetic_credentials_absent_from_preserved_evidence')
-        assert len(checks) == 6
+        assert len(checks) == 7
         report.update(accepted=True, count=len(checks), observations=observations,
                       request_count=len(requests), credential_leak_hits=0,
                       peers={n: {'account_id': p.account_id, 'pid': pids[n]} for n, p in peers.items()})

@@ -111,11 +111,13 @@ static exr_status metadata_save(linux_reader *reader,const reader_command *comma
     }
   }
   reader_metadata_error error={0};reader_metadata_result submitted={0};reader_metadata_status code;
-  gchar *sort=g_utf8_normalize(command->metadata_title,-1,G_NORMALIZE_DEFAULT_COMPOSE);
-  if(!sort) return EXR_ENCODING;
+  gchar *sort=op==READER_COMMAND_PUT ? g_utf8_normalize(command->metadata_title,-1,G_NORMALIZE_DEFAULT_COMPOSE):NULL;
+  if(op==READER_COMMAND_PUT && !sort) return EXR_ENCODING;
   reader_book_command edit=view->book;edit.operation=(reader_command_operation)op;
-  edit.title=command->metadata_title;edit.author=command->metadata_author;edit.sort_title=sort;
-  edit.favorite=command->metadata_favorite;
+  if(op==READER_COMMAND_PUT) {
+    edit.title=command->metadata_title;edit.author=command->metadata_author;edit.sort_title=sort;
+    edit.favorite=command->metadata_favorite;
+  }
   code=reader_metadata_stage_book(reader->metadata,reader->metadata_snapshot,&edit,&submitted,&error);g_free(sort);
   if(code!=READER_METADATA_OK) return metadata_pending_failure(reader,result,code,&error);
   code=reader_metadata_finish_pending(reader->metadata,&submitted,&error);

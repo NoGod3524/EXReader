@@ -1,3 +1,4 @@
+#include <reader_commands.h>
 static void metadata_submit(reader_action);
 static GtkWidget *metadata_removed_dialog,*metadata_removed_list;
 static char *metadata_removed_cursor;
@@ -13,6 +14,9 @@ static void metadata_removed_request(void) {
 static void metadata_removed_destroy(GtkWidget *widget,gpointer unused) {
   (void)widget;(void)unused;metadata_removed_dialog=metadata_removed_list=NULL;
   g_clear_pointer(&metadata_removed_cursor,g_free);
+}
+static gboolean metadata_removed_delete(GtkWidget *widget,GdkEvent *event,gpointer unused) {
+  (void)widget;(void)event;(void)unused;return metadata_running;
 }
 static void metadata_removed_response(GtkDialog *dialog,int response,gpointer unused) {
   (void)unused;
@@ -43,6 +47,7 @@ static void metadata_removed_present(const reader_result *result) {
     gtk_container_add(GTK_CONTAINER(scroll),metadata_removed_list);
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(metadata_removed_dialog))),scroll,TRUE,TRUE,8);
     g_signal_connect(metadata_removed_dialog,"destroy",G_CALLBACK(metadata_removed_destroy),NULL);
+    g_signal_connect(metadata_removed_dialog,"delete-event",G_CALLBACK(metadata_removed_delete),NULL);
     g_signal_connect(metadata_removed_dialog,"response",G_CALLBACK(metadata_removed_response),NULL);
     g_signal_connect(metadata_removed_list,"row-activated",G_CALLBACK(metadata_removed_activate),NULL);
   }
