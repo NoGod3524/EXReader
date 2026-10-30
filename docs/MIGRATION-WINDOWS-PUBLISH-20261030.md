@@ -43,3 +43,24 @@ native rename's destination-directory write access is the suspected conflict;
 no handle sharing was widened, no pin was dropped, and no copy fallback was
 introduced. A separately reviewed directory-custody policy is required before
 attempting admission. This source is not an accepted publication primitive.
+
+## Separately named initial publication custody
+
+The next source introduces opaque lm_wp_custody_prepare and
+lm_wp_publish_prepared APIs. Original wr_* code and sharing modes remain
+byte-for-byte unchanged. Preparation acquires independent directory handles with
+FILE_SHARE_READ|FILE_SHARE_WRITE but never FILE_SHARE_DELETE while every original
+qualification pin is still live. It validates each full identity, then the caller
+explicitly closes its original context. This is a continuous deny-delete handoff,
+not closing pins or widening handles during publication. Old lm_wp_publish retains
+its original safe refusal under the original directory-sharing contract.
+
+Tradeoff: directory child writes are now admitted. This does NOT mean the namespace
+is globally immutable. The retained source handle still disallows write/delete
+sharing; the destination leaf is published using kernel no-replace semantics and
+checked independently. Ancestor/root/parent renames remain excluded by retained
+deny-delete handles. New tests include parent/root/source rename attempts, source
+and published-file write-open attempts, and an admitted sibling creation, alongside
+existing file/directory/reparse collisions and full FileID/hash controls. The new
+suite requires 28 native controls and both process-death cuts; original record27
+and refusal8 remain unchanged. No real migration admission is supplied.
