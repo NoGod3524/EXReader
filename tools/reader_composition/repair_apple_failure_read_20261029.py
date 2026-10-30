@@ -47,6 +47,15 @@ for i,line in enumerate(lines):
   contexts.append(dict(line=i+1,context=lines[max(0,i-90):min(len(lines),i+140)]))
 (out/"failure-context.json").write_text(json.dumps(contexts,indent=2))
 for item in contexts:print("FAILURE_CONTEXT "+json.dumps(item),flush=True)
+annotation=[]
+active=False
+for line in lines:
+ if "Test Case" in line and "testNativeAnnotationPreviewConfirmCancelAndDuplicate" in line and "started" in line:active=True
+ if active:annotation.append(line)
+ if active and "Test Case" in line and "testNativeAnnotationPreviewConfirmCancelAndDuplicate" not in line:active=False
+print("ANNOTATION_BEGIN "+json.dumps(annotation[:100]),flush=True)
+print("ANNOTATION_END "+json.dumps(annotation[-180:]),flush=True)
+print("ANNOTATION_MILESTONES "+json.dumps([line for line in annotation if "Added attachment" in line or ("t = " in line and any(x in line for x in ("Find the \"features.","Tap ","Press ","Open Application","Terminate ")))][-180:]),flush=True)
 receipt=dict(input=args.input,producer_source=source,producer_run=run,producer_job=jobid,
  artifact=aid,bytes=size,sha256=digest,inspection_source=os.environ["GITHUB_SHA"],
  diagnostic_only=True,product_acceptance=False,issues=issues)
