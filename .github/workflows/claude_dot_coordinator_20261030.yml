@@ -1,0 +1,60 @@
+name: Claude Dot C02 full49 coordinator 20261030
+on:
+  push:
+    branches: [claude/dot-p0-coordinator-20261030]
+    paths:
+      - extras/migration/windows_coordinator_20261030/**
+      - tests/migration/windows_coordinator_20261030/**
+      - scripts/audit/claude_dot_coordinator_20261030.py
+      - .github/workflows/claude_dot_coordinator_20261030.yml
+  workflow_dispatch:
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  coordinator:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Owned-path audit
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          python -I scripts/audit/claude_dot_coordinator_20261030.py | tee evidence/audit-paths.json
+      - name: Build and install coordinator library
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_coordinator_20261030 -B build/lib -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/lib --config Release
+          cmake --install build/lib --config Release --prefix "$GITHUB_WORKSPACE/stage"
+      - name: Build installed-only consumer and run checks
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/windows_coordinator_20261030 -B build/check -DCMAKE_BUILD_TYPE=Release -DCOORD_PREFIX="$GITHUB_WORKSPACE/stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/check --config Release
+          EXE=$(find build/check -name 'coordinator-check*' -type f \( -name coordinator-check -o -name coordinator-check.exe \) | head -1)
+          "$EXE" "$RUNNER_TEMP/coordinator-work" | tee evidence/native.json
+      - name: Evidence and audit
+        if: always()
+        run: |
+          set -uo pipefail
+          LIB=$(find stage/lib -type f | head -1)
+          {
+            echo "{\"source\":\"$GITHUB_SHA\",\"run_id\":\"$GITHUB_RUN_ID\",\"run_attempt\":\"$GITHUB_RUN_ATTEMPT\",\"runner_os\":\"$RUNNER_OS\",\"os_label\":\"${{ matrix.os }}\",\"artifact\":\"coordinator-${{ matrix.os }}\",\"sdk\":\"none-standalone\",\"provider_package\":\"$(basename "$LIB")\",\"provider_package_sha256\":\"$(sha256sum "$LIB" | cut -d' ' -f1)\"}"
+          } > evidence/identity.json
+          python -I scripts/audit/claude_dot_coordinator_20261030.py --evidence evidence/native.json | tee evidence/audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coordinator-${{ matrix.os }}
+          path: evidence
+          if-no-files-found: warn
