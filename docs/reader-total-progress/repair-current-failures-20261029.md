@@ -28,3 +28,12 @@ source550556de68ba1d861cc3fcce8f4a60a66706f7c2 /40982450461：iPad4/5（批注ti
 - Apple独立稿重算19个原ZIP、2SDK文件树、3平台原39、5程序身份、12supp文件/程序/原结果；C2独立稿重算6ZIP与GTK完整计划/实际native scroll traces。尚未执行这些新共同source审计，不得提前授通过。
 
 所有构建、语法、测试、工件下载解析只在Actions。默认分支/PR/tag/Release未动。旧dirty未覆盖。95/108仍是最近真实目录审计口径，本轮尚未做新目录审计。
+
+## 2026-10-29 22:07ET 后续实际结果
+908/run40986067818 已失败终态：手机、平板均4/5，share、history、cancel、null/concurrent均Passed。
+iPad批注159s首断言为exportThroughSystemPicker中的overflow等待；原ZIP12947642991/182600272B/30e69e414ea71e7dee2e350ab518c544f9a6e0e10c22b0fec14c7f937fc6cb14，原ZIP Actions40988497870/40988773248成功核验定位。实际Files仍在Recents，On My iPad已可见；辅助逻辑早先跳过尚未加载的入口，随后等错位置的overflow。
+iPhone批注仍原240s timeout；原ZIP12948425868/175951774B/85313832307b83dff1f7a26fc7fcf319d4adc74312bac8ea83967976b05310ef，Actions40988994976证实全部功能里程碑至confirmed-exact-duplicate已完成，但253s才准备关闭/tearDown；没有61s stale-query停顿，NewFolder有17.48s过渡延迟，余下反复长距离输入耗时。
+新source8eda894a1eacc50ecca1cdd2ca94ab1b4bd7d592/run40989249100正在跑SDK与后续原5x2：真实Files入口/位置/创建控制就绪后才选择分支；远处native1600px/s、0.78viewport bounded flick，近处slowdrag，仍原24drag/240-360预算/90swait/原5正文和全部原断言。不能提前称过。
+共同worktree目前79+10=89路径已staged，仍未commit，暂绑定908/helper95ec6a73093d4a9b0a150f2010b66cad86c19fa6。若8eda过须先恢复其7路径并更新pins/helperblob/整合说明，再commit/push候选跑7条完整同sourceproducer。共同remote仍343。
+审计branch80b1d0ab新增Apple packaged-app ZIP与实际native phase binary双向身份检查，仍仅预备syntax，不是实际最终raw验收；orchestrator SOURCE=PENDING、7runs0须填。完整auditworkflow保存在/tmp/exreader-final-audit-full.yml。
+用户问“多给你几个子代理能修的快点吗”，root回答最多2路可做定位/整合复核、不能缩短CI机器等待；尚未新增/重启代理，原6worker仍停止。
