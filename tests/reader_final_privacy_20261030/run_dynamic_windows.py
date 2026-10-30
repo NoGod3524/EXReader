@@ -33,8 +33,10 @@ def digest(path: Path) -> str:
 
 
 def ps(command: str, timeout=180):
+    # Windows PowerShell 5.1 must not inherit the PSModulePath of the runner's pwsh 7 (modules fail to load)
+    env = {k: v for k, v in os.environ.items() if k.upper() != "PSMODULEPATH"}
     done = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", command],
-                          capture_output=True, text=True, timeout=timeout)
+                          capture_output=True, text=True, timeout=timeout, env=env)
     return done.returncode, (done.stdout + done.stderr).strip()
 
 
