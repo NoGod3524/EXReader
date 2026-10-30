@@ -71,7 +71,7 @@ class Interactions(sample.Sampler):
             event = watch.latest()
             state = event['state'] if event else {}
             host = state.get('host') or {}
-            ready = (sample.settled(state) and not host.get('shelf_loading')
+            ready = (bool(host) and sample.settled(state) and not host.get('shelf_loading')
                      and not host.get('shelf_restoring') and not host.get('shelf_pending'))
             current = (host.get('shelf_first_id'), host.get('shelf_last_id'),
                        host.get('shelf_top_id'), (state.get('shelf') or {}).get('top_offset'))
@@ -103,11 +103,12 @@ class Interactions(sample.Sampler):
             if not state.get('shelf_after'):
                 raise SampleError('fixed 2202-book shelf has no forward interior')
             since = watch.mark()
+            stamp = time.monotonic()
             subprocess.run(['xdotool', 'click', '--repeat', '4', '--delay', '0', '5'],
                            check=True, timeout=30)
             # This is a declared preparation step, not a measured/retried sample.
             self.wait_after(watch, lambda value: sample.settled(value),
-                            max(0, deadline - time.monotonic()), since)
+                            max(0, deadline - time.monotonic()), since, stamp)
             self.save_scroll_trace(watch, since, 'interior-preparation', step=step)
         raise SampleError('bounded interior preparation did not complete')
 
