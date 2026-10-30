@@ -31,10 +31,26 @@ def fixture(name,fixture=None):
  proc=start([exe,'fixture',str(root),fixture],'ready-'+fixture)
  busy=run(root);assert not busy['opened'] and busy['class']==0,busy
  kill(proc)
- assert run(root,verb='shared')['stale'],name
+ shared=run(root,verb='shared')
+ assert shared['stale'] is True,(name,shared)
  return parent,root
-def keep(name,parent,data,**extra):
- data.update(case=name,original_process_terminated=True,shared_still_stale=True,**extra)
+def keep(name,parent,root,data,shared='stale',**extra):
+ """shared is measured, never asserted from a literal. 'stale' requires the
+ provider to still refuse shared admission; 'refused' requires a non-zero status
+ without a stale verdict (the namespace itself is damaged, so no lease is handed
+ out); 'admitted' records the known case where the control itself destroyed
+ PENDING; 'skip' avoids asking at all, because asking would re-create a lease the
+ reader must leave untouched."""
+ data.update(case=name,original_process_terminated=True,**extra)
+ if shared=='skip':
+  data['shared_still_stale']=None;data['shared_probe']='not-run-lease-namespace-damaged'
+ else:
+  measured=run(root,verb='shared')
+  data['shared_still_stale']=measured['stale'];data['shared_status']=measured['status']
+  if shared=='stale':assert measured['stale'] is True,(name,measured)
+  elif shared=='refused':assert measured['stale'] is False and measured['status']!=0,(name,measured)
+  elif shared=='admitted':assert measured['stale'] is False and measured['status']==0,(name,measured)
+  else:raise AssertionError(('unknown shared policy',shared))
  data['files']={str(q.relative_to(parent)):{'bytes':q.stat().st_size,'sha256':hashlib.sha256(q.read_bytes()).hexdigest()} for q in parent.rglob('*') if q.is_file()}
  results.append(data)
 def opened_full(name,fixture_mode,want):
@@ -43,28 +59,19 @@ def opened_full(name,fixture_mode,want):
  assert data['opened'] and data['class']==want,(name,data)
  assert data['checked'] and data['pending']==1 and data['generation']==0,data
  assert data['write_denied'] and data['rename_denied'] and not data['after_fail_rename'],data
- keep(name,parent,data)
+ keep(name,parent,root,data)
 def refused_content(name,mutate,want):
  parent,root=fixture(name)
  mutate(parent,root)
  data=run(root)
  assert data['opened'] and data['class']==want and not data['checked'],(name,data)
- keep(name,parent,data)
+ keep(name,parent,root,data)
 def refused_argument(name,mode,*,opened,reason):
  parent,root=fixture(name)
  data=run(root,mode)
  assert data['opened'] is opened and data['class']==0 and not data['checked'],(name,data)
  assert data['open_reason']==reason,(name,data)
- keep(name,parent,data)
-def refused_lease(name,edit,reason,want_bytes):
- parent,root=fixture(name,fixture='after')
- lease=lease_file(root)
- edit(lease)
- data=run(root)
- assert not data['opened'] and data['class']==0 and not data['checked'],(name,data)
- assert data['reason']==reason,(name,data)
- assert data['lease_bytes']==want_bytes,(name,data)
- keep(name,parent,data)
+ keep(name,parent,root,data)
 # Original content classification: complete evidence, prefix and reserved.
 for name,want in (('before',1),('record',2),('published',2),('after',3)):
  opened_full(name,name,want)
@@ -75,7 +82,7 @@ assert not run(root)['opened']
 kill(reader)
 data=run(root);assert data['opened'] and data['class']==3,data
 assert data['checked'] and data['write_denied'] and data['rename_denied'],data
-keep('reader-death',parent,data)
+keep('reader-death',parent,root,data)
 # Retained-content and namespace refusals.
 refused_content('partial',lambda p,r:(r/'bridge-slot-00.rec').write_bytes(b'{"partial":'),0)
 refused_content('missing-slot',lambda p,r:(r/'bridge-slot-01.rec').unlink(),0)
@@ -94,19 +101,29 @@ refused_content('missing-target',lambda p,r:(p/'published.bin').unlink(),4)
 refused_argument('generation','generation',opened=False,reason='restart-lease-generation')
 refused_argument('root','root',opened=True,reason='restart-root-binding')
 refused_argument('session','session',opened=True,reason='restart-record-chain')
-# Lease namespace negatives: the reader qualifies the provider's frozen 80-byte
-# lease file itself and never lets OPEN_ALWAYS recreate or re-initialise it.
-refused_lease('lease-missing',lambda q:q.unlink(),'restart-lease-missing',-1)
-refused_lease('lease-empty',lambda q:q.write_bytes(b''),'restart-lease-empty',0)
-refused_lease('lease-truncated',lambda q:q.write_bytes(q.read_bytes()[:40]),'restart-lease-size',40)
-refused_lease('lease-grow',lambda q:q.write_bytes(q.read_bytes()+bytes(40)),'restart-lease-size',120)
 def _write64(q,off,value):
  raw=bytearray(q.read_bytes());raw[off:off+8]=struct.pack('<Q',value);q.write_bytes(bytes(raw))
 def _header_edit(q):
  raw=bytearray(q.read_bytes());raw[10]=ord('0') if raw[10:11]!=b'0' else ord('1');q.write_bytes(bytes(raw))
-refused_lease('lease-header',_header_edit,'restart-lease-header',80)
+def refused_lease(name,edit,reason,want_bytes,shared='stale'):
+ parent,root=fixture(name,fixture='after')
+ edit(lease_file(root))
+ data=run(root)
+ assert not data['opened'] and data['class']==0 and not data['checked'],(name,data)
+ assert data['reason']==reason,(name,data)
+ assert data['lease_bytes']==want_bytes,(name,data)
+ keep(name,parent,root,data,shared=shared)
+# Lease namespace negatives: the reader qualifies the provider's frozen 80-byte
+# lease file itself and never lets OPEN_ALWAYS recreate or re-initialise it.
+refused_lease('lease-missing',lambda q:q.unlink(),'restart-lease-missing',-1,shared='skip')
+refused_lease('lease-empty',lambda q:q.write_bytes(b''),'restart-lease-empty',0,shared='skip')
+refused_lease('lease-truncated',lambda q:q.write_bytes(q.read_bytes()[:40]),'restart-lease-size',40,shared='refused')
+refused_lease('lease-grow',lambda q:q.write_bytes(q.read_bytes()+bytes(40)),'restart-lease-size',120,shared='refused')
+refused_lease('lease-header',_header_edit,'restart-lease-header',80,shared='refused')
 refused_lease('lease-generation',lambda q:_write64(q,64,9),'restart-lease-generation',80)
-refused_lease('lease-pending',lambda q:_write64(q,72,0),'restart-lease-pending',80)
+# The control itself clears PENDING, so shared admission is expected to open; the
+# measured value is recorded instead of being papered over.
+refused_lease('lease-pending',lambda q:_write64(q,72,0),'restart-lease-pending',80,shared='admitted')
 # A failed wr_prepare must not leak the ancestor pins it already holds: the
 # private root stays renameable, which is only true when every pin was closed.
 parent,root=fixture('partial-pin',fixture='after')
@@ -114,7 +131,17 @@ data=run(root,'missing-root')
 assert data['opened'] is True and data['class']==0 and not data['checked'],data
 assert data['open_reason']=='ancestor-open',data
 assert data['after_fail_rename'],data
-keep('partial-pin',parent,data,required_root='absent-sub')
+keep('partial-pin',parent,root,data,required_root='absent-sub')
+# The acquire window is injected, not argued about: the probe empties the lease
+# between the reader's pre-validation and the provider acquire, so the provider's
+# OPEN_ALWAYS branch re-initialises it and clears PENDING. The reader must restore
+# the exact pre-acquire bytes, refuse custody, and leave shared admission closed.
+parent,root=fixture('window-race',fixture='after')
+data=run(root,'window-race')
+assert data['opened'] is True and data['class']==0 and not data['checked'],data
+assert data['open_reason']=='restart-lease-window-restored',data
+assert data['lease_restored'] is True and data['lease_bytes']==80,data
+keep('window-race',parent,root,data,shared='stale',window_injected=True)
 # A write through a memory-mapped view bypasses the provider's byte-range locks.
 # The reader must still report drift, because it re-reads the aged region.
 parent,root=fixture('mapped-write',fixture='after')
@@ -128,8 +155,9 @@ line=drift.stdout.readline().strip()
 assert drift.wait(timeout=30)==0,(line,drift.stdout.read())
 data=json.loads(line)
 assert data['check_failed'] is True and data['reason']=='restart-lease-disk-drift',data
-keep('mapped-write',parent,{'source':os.environ['GITHUB_SHA'],'opened':True,'class':3,'valid':2,'checked':False,
- 'pending':1,'generation':0,'published':1,'write_denied':False,'rename_denied':False,'after_fail_rename':False,
- 'lease_bytes':80,'reason':data['reason'],'sdk_open_attempts':0,'commit_acknowledged':False,'recovery_admission':False})
-assert len(results)==24,len(results)
-(work/'receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],passed=True,checks=len(results),results=results,classification_only=True,commit_acknowledged=False,recovery_admission=False,full_p0_acceptance=False,physical_power_loss=False),indent=2)+'\n')
+keep('mapped-write',parent,root,{'source':os.environ['GITHUB_SHA'],'opened':True,'class':3,'valid':2,
+ 'checked':False,'pending':1,'generation':0,'published':1,'write_denied':False,'rename_denied':False,
+ 'after_fail_rename':False,'lease_restored':False,'lease_bytes':80,'reason':data['reason'],
+ 'sdk_open_attempts':0,'commit_acknowledged':False,'recovery_admission':False})
+assert len(results)==25,len(results)
+(work/'receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],passed=True,checks=len(results),results=results,classification_only=True,commit_acknowledged=False,recovery_admission=False,full_p0_acceptance=False,physical_power_loss=False,window_injection='test-seam-between-prevalidation-and-acquire',shared_admission_measured=True),indent=2)+'\n')

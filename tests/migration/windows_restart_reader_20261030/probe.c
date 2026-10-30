@@ -34,6 +34,13 @@ static long long lease_bytes(const WCHAR *dir,const char id[49]){
  return ((long long)data.nFileSizeHigh<<32)|(long long)data.nFileSizeLow;
 }
 static const char *why(const wr_error *e){return e->reason?e->reason:"none";}
+/* Deterministic reproduction of the acquire window: empty the lease between the
+ * reader's pre-validation and the provider acquire, so the provider's OPEN_ALWAYS
+ * branch re-initialises it and clears PENDING. */
+static void truncate_lease(const WCHAR *path){
+ HANDLE h=CreateFileW(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,0,NULL);
+ if(h!=INVALID_HANDLE_VALUE){if(!SetEndOfFile(h)){}CloseHandle(h);}
+}
 int main(int argc,char **argv){
  static wr_context c,lc;WCHAR root[WR_PATH],reader[WR_PATH],leases[WR_PATH],manifest[WR_PATH],slotpath[WR_PATH],moved[WR_PATH];
  wr_error e={0};lm_wl_error le={0};lm_wl_lease *lease=NULL,*shared=NULL;lm_wl_status ls;
@@ -81,13 +88,14 @@ int main(int argc,char **argv){
  if(!strcmp(argv[1],"shared")){
   ls=lm_wl_acquire(leases,record.root,LM_WL_SHARED,0,&shared,&le);
   if(shared)lm_wl_release(shared);
-  printf("{\"stale\":%s}\n",ls==LM_WL_STALE?"true":"false");return ls==LM_WL_STALE?0:13;
+  printf("{\"stale\":%s,\"status\":%d}\n",ls==LM_WL_STALE?"true":"false",(int)ls);return 0;
  }
  if(!strcmp(argv[3],"generation"))generation=1;
  if(!strcmp(argv[3],"root"))record.root[47]=record.root[47]=='0'?'1':'0';
  if(!strcmp(argv[3],"session"))record.run[31]='c';
  wcscpy(reader,root);
  if(!strcmp(argv[3],"missing-root"))wcscat(reader,L"\\absent-sub");
+ if(!strcmp(argv[3],"window-race"))lm_rr_set_window_probe(truncate_lease);
  opened=lm_rr_open(leases,lease_id,generation,reader,L"target.bin",L"published.bin",&record,2,&reader_obj,&result,&e);
  open_reason=why(&e);
  checked=opened&&lm_rr_check(reader_obj,&e);write_denied=rename_denied=0;
@@ -124,9 +132,10 @@ int main(int argc,char **argv){
   }
  }
  bytes=lease_bytes(leases,lease_id);
- printf("{\"source\":\"%s\",\"opened\":%s,\"class\":%d,\"valid\":%u,\"checked\":%s,\"pending\":%d,\"generation\":%llu,\"published\":%d,\"write_denied\":%s,\"rename_denied\":%s,\"after_fail_rename\":%s,\"lease_bytes\":%lld,\"open_reason\":\"%s\",\"reason\":\"%s\",\"sdk_open_attempts\":0,\"commit_acknowledged\":false,\"recovery_admission\":false}\n",
+ printf("{\"source\":\"%s\",\"opened\":%s,\"class\":%d,\"valid\":%u,\"checked\":%s,\"pending\":%d,\"generation\":%llu,\"published\":%d,\"write_denied\":%s,\"rename_denied\":%s,\"after_fail_rename\":%s,\"lease_restored\":%s,\"lease_bytes\":%lld,\"open_reason\":\"%s\",\"reason\":\"%s\",\"sdk_open_attempts\":0,\"commit_acknowledged\":false,\"recovery_admission\":false}\n",
  SOURCE_SHA,opened?"true":"false",(int)result.classification,result.valid_records,checked?"true":"false",
  result.pending,(unsigned long long)result.generation,result.published,write_denied?"true":"false",
- rename_denied?"true":"false",after_fail?"true":"false",bytes,open_reason,why(&e));
+ rename_denied?"true":"false",after_fail?"true":"false",result.lease_restored?"true":"false",
+ bytes,open_reason,why(&e));
  lm_rr_close(reader_obj);return 0;
 }

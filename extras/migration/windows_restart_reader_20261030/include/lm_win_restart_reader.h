@@ -8,7 +8,7 @@ typedef enum { LM_RR_REFUSED=0,LM_RR_RESERVED=1,LM_RR_PREFIX=2,
  LM_RR_COMPLETE_EVIDENCE=3,LM_RR_NAMESPACE_CONFLICT=4 } lm_rr_class;
 typedef struct {
  lm_rr_class classification;unsigned valid_records,slots;
- int pending,published;uint64_t generation;
+ int pending,published,lease_restored;uint64_t generation;
  wr_identity target,records[32];
 } lm_rr_result;
 /* Caller supplies independently trusted binding, NOT data inferred from slots.
@@ -32,17 +32,25 @@ typedef struct {
  * drift between disk, the retained value and the provider cache.
  * The acquire window itself is not closable: the provider must open the file for
  * write, so in-place truncation cannot be denied, and its OPEN_ALWAYS branch would
- * re-initialise a zero-length file. The reader therefore settles the snapshot
- * again immediately after acquiring, under its own window, and refuses with
- * restart-lease-window-race if the region changed. That refusal returns no reader
- * object at all, so no custody is ever derived from a lease that moved inside the
- * window. This detects but cannot undo a provider re-initialisation performed in
- * that window, which stays a documented residual limit.
+ * re-initialise a zero-length file, clearing PENDING. The reader therefore settles
+ * the snapshot again immediately after acquiring, under its own window. When the
+ * settled bytes are a fresh initialisation (generation zero, PENDING cleared) the
+ * exact pre-acquire 80 bytes are written back, because a legitimate commit from
+ * generation zero would have left generation one and cannot produce that shape;
+ * the reader then refuses custody with restart-lease-window-restored but leaves the
+ * domain's PENDING isolation intact. Any other movement refuses with
+ * restart-lease-window-race. Both retentions keep the exclusive lease held, so
+ * shared admission stays closed until the caller closes the object; the object is
+ * only released early when no lease was ever acquired.
+ * Residual: a re-initialisation that cannot be proven from the bytes, or the
+ * window before this adapter ever saw the file, cannot be repaired here, and the
+ * provider still owns that defect.
  * Distinct refusal reasons: restart-lease-dir, restart-lease-dir-kind,
  * restart-lease-missing, restart-lease-empty, restart-lease-size,
  * restart-lease-kind, restart-lease-header, restart-lease-identity,
  * restart-lease-generation, restart-lease-pending, restart-lease-window,
- * restart-lease-window-race, restart-lease-disk-drift,
+ * restart-lease-window-restored, restart-lease-window-race,
+ * restart-lease-restore, restart-lease-disk-drift,
  * restart-lease-cache-drift, restart-lease-state.
  * A failed wr_prepare releases every pin it already held before returning.
  * Byte-range locks cannot stop SetEndOfFile or memory-mapped writes; drift from
@@ -58,4 +66,10 @@ int lm_rr_open(const WCHAR *lease_dir,const char lease_identity[49],
  unsigned slots,lm_rr **out,lm_rr_result *result,wr_error *);
 int lm_rr_check(lm_rr *,wr_error *);
 void lm_rr_close(lm_rr *);
+/* Test seam only, for deterministic reproduction of the acquire window. The hook
+ * runs exactly between the lease pre-validation and the provider acquire and
+ * receives the pinned lease path; production callers leave it NULL, and with no
+ * hook installed the sequence is byte-for-byte the shipped one. It exists so the
+ * interleaving can be injected instead of being argued about. */
+void lm_rr_set_window_probe(void (*fn)(const WCHAR *lease_path));
 #endif
