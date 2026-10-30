@@ -80,11 +80,16 @@ final class FeaturesUITests: XCTestCase {
         func canTap(_ target: XCUIElement) -> Bool {
             guard let snapshot = try? target.snapshot() else { return false }
             targetFrame = snapshot.frame
+#if os(macOS)
+            let inViewport = viewport.map { $0.contains(CGPoint(x: targetFrame.midX, y: targetFrame.midY)) } ?? true
+            return inViewport && snapshot.isEnabled && target.isHittable
+#else
             let visible = viewport.map { $0.intersection(targetFrame) } ?? targetFrame
             guard !visible.isNull, visible.width >= 12, visible.height >= 12,
                   snapshot.isEnabled, target.isHittable else { return false }
             targetFrame = visible
             return true
+#endif
         }
         for _ in 0..<24 {
             let target = candidate()

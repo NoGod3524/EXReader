@@ -61,8 +61,10 @@ final class OriginalSaveUITests: XCTestCase {
         let newFolder = app.buttons["New Folder"].firstMatch
         if !newFolder.exists {
             let overflow = app.buttons["OverflowBarButtonItem"].firstMatch
-            XCTAssertTrue(wait { overflow.exists && overflow.isHittable }, app.debugDescription)
-            overflow.tap()
+            XCTAssertTrue(wait {
+                (newFolder.exists && newFolder.isHittable) || (overflow.exists && overflow.isHittable)
+            }, app.debugDescription)
+            if !(newFolder.exists && newFolder.isHittable) { overflow.tap() }
         }
         XCTAssertTrue(wait { newFolder.exists && newFolder.isHittable }, app.debugDescription)
         newFolder.tap()
