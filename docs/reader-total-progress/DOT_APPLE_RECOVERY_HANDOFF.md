@@ -1,3 +1,63 @@
+# Current recovery checkpoint — 2026-10-30 05:18 UTC / 01:18 EDT
+
+Prepared for the 05:22 UTC hourly report. This section supersedes all older current-state wording below; the prior checkpoint is retained as historical evidence, not as current execution instructions. This is a resumable snapshot, not acceptance or a transfer.
+
+## Publication state and ownership
+
+This update is LOCAL ONLY in /data/workspace/exreader-dot-apple-receipt-20261030, branch codex/dot-apple-receipt-20261030. Its parent is unpublished bb47a331cffb271816a78bb62a90a843a9197f06; preserve history without amend/rebase. Last successfully published snapshot is 97264a714b721b58fbfab659ace37b503fa1ef5a. The bb47 push was denied even after exact user confirmation; no further retry, alternate route, or claim that GitHub is updated is authorized by this checkpoint.
+Sole Apple source/diagnostic/result writer remains /root/repair_verify_apple_mobile; this writer changes only this recovery document. Common/staged worktrees remain outside scope.
+
+## Current full candidate, fresh writer status at 05:16 UTC
+
+Source **c46f7036d81f88d8529871590f780b5430630e47**, branch codex/dot-apple-complete-20261029, worktree /data/workspace/exreader-dot-apple-complete-20261029.
+[Full run 41005300066](https://github.com/NoGod3524/EXReader/actions/runs/41005300066) is in progress, not accepted:
+- SDK: both success.
+- Native iPad and iPhone running; macOS queued.
+- Supplemental four success: font iPad/macOS, original macOS/iPhone.
+- Organization iPad, original iPad and sync iPhone running; five other supplemental jobs queued.
+- Twelve supplemental jobs total = four success + three running + five queued.
+No cross-source pass transfer: a91 successes and c66 focused passes do not prove c46 full completion.
+
+c46 differs by four files from failed a91. The macOS-only canTap correction addresses actual reader.more native geometry 19 x 4 rejected by the prior 12-pixel minimum. It is not evidence of runtime success yet.
+The user explicitly authorized the narrow OriginalSave readiness exception at 04:49:18 UTC: the original iPad line-63 NewFolder versus overflow race is corrected within the existing 90-second readiness budget. This is a disclosed exception to the prior absolute test-body freeze, not blanket authority to alter old tests. Exact exception in existing if !newFolder.exists: the existing wait90 accepts either (newFolder.exists and newFolder.isHittable) OR (overflow.exists and overflow.isHittable); overflow.tap occurs only if New Folder is not already both existing and hittable. Identifiers are app.buttons[New Folder] and app.buttons[OverflowBarButtonItem]. Subsequent original NewFolder wait/tap, inlineRename/Done, folder/Open, exportstatus/filename assertions remain unchanged. Runner budgets 240/360, one original case per platform, and byte-equal source/saved EPUB readback are unchanged. Admission checks whole file against frozen 4a68 plus this exact single snippet replacement. No added wait or budget. All other cases, budgets, assertions and actual saved-byte/hash readbacks remain required. Static reviewers completed the candidate review; that review is not a passing CI verdict.
+
+## Retained failed full source a91
+
+[Run 41000723036](https://github.com/NoGod3524/EXReader/actions/runs/41000723036), source a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72:
+- macOS native 34/39 FAILED.
+- iPad native 38/39 FAILED solely annotation four-minute budget.
+- iPhone native 39/39 SUCCESS on a91 only.
+- Supplemental 11/12 passed; original iPad failed.
+- Same-run authentication and full summary FAILED.
+This source is not a full pass. Preserve all evidence; do not erase failures or splice successes into c46.
+
+Writer is preparing Actions-only diagnosis of a91 iPad original ZIP: artifact 12955922033, 474548744 bytes, SHA256 ee15fc2eaa8b908c8a1b2037e6667be73710745d2f1dcd75c1110b08ccfd2852. Diagnostic source 6cb9a6e68ed1c01406d40fb76cd70a7eac68cb22, run 41007675693, queued at 05:18 UTC. The annotation timeout remains unresolved pending diagnosis; c46 does not change mobile code and is not claimed to fix it.
+
+Completed earlier Actions diagnostics (diagnostic success only, not product acceptance):
+- macOS run 41004057606, source defe56ab, job 123894807795, artifact 12954976626, 63444 bytes, SHA256 b0df49359d119adf5c0e954907f69d2df9d70147be9efe366f8a1466090b8b65. All five failures linked to actual reader.more 19 x 4 geometry.
+- Original iPad run 41004266572, source 2424f562, job 123895461538, artifact 12954926815, 13306177 bytes, SHA256 887746cb7c93baec415647516d29ac9d6fd91d88eaee409fc11aa688198d72fd. Established readiness race; authorized narrow fix follows it.
+
+## Next executable sequence and limits
+
+1. Monitor existing c46 run 41005300066 to terminal; do not duplicate it.
+2. Retain and complete exact a91 iPad ZIP diagnosis in Actions. If c46 fails, diagnose its own raw evidence before a justified authorized fix.
+3. Require all 117 original native cases (39 x 3), all 12 supplemental groups, same-source program/SDK identities, and original same-run ZIP authentication/summary.
+4. Independent 19-ZIP audit at review-only 089c997c7206030477bd9981497cc6a5162bfd38 has NOT executed and has stale a91 pins. Do NOT push its old authentication execution branch. Retarget metadata only to a future full-success producer with exact source/run/attempt/job/artifact/size/digest identities, retaining the unchanged strong checker and static review.
+5. Complete independent 19-ZIP audit, then final result evidence. No final completion claim, common integration, default push, PR, release, or automatic next pack.
+All builds/tests/syntax/ZIP work stay in Actions; no credential/security reads, no new VM, no autosuspend change, no new Codex/Claude agent.
+
+## Count, personnel, estimates and handshake
+
+Formal **95/108 = 87.96% unchanged**; candidate corrections and static review are not formal acceptance. No global P0 migration/conflict recovery or SDK3.42 six-platform same-source completion is established.
+Main writer is active/test monitoring and preparing retained-failure diagnosis. Documentation writer is active for this checkpoint. Other reviewers completed or await new evidence; do not count six slots as six active implementations.
+Remaining full-suite and independent-audit duration cannot be reliably estimated from this running/queued state.
+
+Last verified handshake **2026-10-30 05:14:55 UTC = 01:14:55 America/New_York (EDT)**: running, runtime.ready true, pwd /data/home, exitCode 0, timedOut false; autosuspend 1800 unchanged. Existing automation 6ae40da897ac81918ae3e90d91ee79ea remains the unique 28-minute maintenance task. Healthy output remains quiet.
+
+---
+
+## Historical checkpoint retained below (04:19 UTC; superseded above)
+
 # EXReader Apple recovery checkpoint (not acceptance or a transfer)
 
 Snapshot updated: 2026-10-30 04:19 UTC / 2026-10-30 00:19 America/New_York (EDT), prepared for the 04:22 UTC hourly report.
