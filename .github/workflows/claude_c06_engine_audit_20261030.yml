@@ -15,8 +15,10 @@ jobs:
       - name: Ensure original producer commit is present
         run: |
           set -euo pipefail
-          git cat-file -e b3f346570df7ca972c67232bb5ec3cfb2f6510d8^{commit} || git fetch --no-tags origin b3f346570df7ca972c67232bb5ec3cfb2f6510d8
-          git cat-file -e b3f346570df7ca972c67232bb5ec3cfb2f6510d8^{commit}
+          for s in 83b0bd1c1d2d697973ef43272d42b34cc58baa7f b3f346570df7ca972c67232bb5ec3cfb2f6510d8; do
+            git cat-file -e $s^{commit} || git fetch --no-tags origin $s
+            git cat-file -e $s^{commit}
+          done
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - name: Syntax
@@ -38,5 +40,7 @@ jobs:
           name: claude-c06-engine-audit-${{ github.sha }}
           path: |
             controls.txt
-            build/c06-audit/report.json
+            build/c06-audit/summary.json
+            build/c06-audit/corrected/report.json
+            build/c06-audit/original-b3f34657/report.json
           if-no-files-found: warn

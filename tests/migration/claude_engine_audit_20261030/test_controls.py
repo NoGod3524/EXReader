@@ -22,10 +22,11 @@ SRC_BLOBS = {
 
 
 def blob(sha, path):
-    return SRC_BLOBS.get(path) if sha == E['sha'] else None
+    return SRC_BLOBS.get(path) if sha in (E['sha'], A.LEGACY['sha']) else None
 
 
-def make_files():
+def make_files(exp=None):
+    exp = exp or E
     exe = bytearray(0x200)
     exe[:2] = b'MZ'
     exe[0x3c:0x40] = (0x80).to_bytes(4, 'little')
@@ -35,9 +36,9 @@ def make_files():
     lib = b'!<arch>\nmember'
     priv = {'target.fixture': b'retained-byte-observation', 'observed.bin': b'obs', 'deadline.bin': b''}
     out = {'passed': True, 'checks': 29, 'failed': 0, 'migration_admission': False, 'full_p0_acceptance': False}
-    adm = dict(source=E['sha'], base=E['base'], changed=sorted(SRC_BLOBS), full_p0_acceptance=False,
+    adm = dict(source=exp['sha'], base=exp['base'], changed=sorted(SRC_BLOBS), full_p0_acceptance=False,
                files={p: h(b) for p, b in SRC_BLOBS.items()})
-    rec = dict(source=E['sha'], run=str(E['run_id']), attempt='1', consumer=out, worker_sha256=h(exe),
+    rec = dict(source=exp['sha'], run=str(exp['run_id']), attempt='1', consumer=out, worker_sha256=h(exe),
                library_sha256=h(lib), files={n: h(b) for n, b in priv.items()}, full_p0_acceptance=False)
     ev = A.EV
     f = {ev + 'receipt.json': json.dumps(rec).encode(), ev + 'admission.json': json.dumps(adm).encode(),
@@ -47,6 +48,13 @@ def make_files():
          'build/engine-check/consumer-provider.map': b'map',
          A.INC + 'lm_win_engine.h': b'header-a'}
     f.update({ev + 'private/' + n: b for n, b in priv.items()})
+    if exp['boundary']:
+        bout = {'checks': 21, 'failed': 0, 'passed': True, 'test_only_fault_injection': True}
+        f.update({ev + 'boundary-stdout.txt': json.dumps(bout).encode(), ev + 'boundary-stderr.txt': b'',
+                  ev + 'boundary-receipt.json': json.dumps(dict(
+                      source=exp['sha'], run=str(exp['run_id']), attempt='1', result=bout,
+                      production_test_hooks=False, full_p0_acceptance=False)).encode(),
+                  ev + 'boundary-private/wrong-launch.bin': b'', ev + 'boundary-private/late.bin': b'x'})
     return f
 
 
@@ -55,21 +63,21 @@ def make_meta():
                path=E['workflow'], run_attempt=1)
     steps = [dict(name=n, conclusion='success') for n in A.STEPS] + \
             [dict(name='Run actions/upload-artifact@v4', conclusion='success')]
-    job = dict(name=E['job'], conclusion='success', head_sha=E['sha'], run_id=E['run_id'], run_attempt=1,
+    job = dict(id=E['job_id'], name=E['job'], conclusion='success', head_sha=E['sha'], run_id=E['run_id'], run_attempt=1,
                started_at='2026-10-30T10:00:00Z', completed_at='2026-10-30T10:10:00Z', steps=steps)
     art = dict(id=E['artifact_id'], name='windows-engine-' + E['sha'], expired=False,
                workflow_run=dict(id=E['run_id'], head_sha=E['sha']), created_at='2026-10-30T10:09:00Z',
-               digest='sha256:' + 'ab' * 32)
+               digest='sha256:' + E['zip_sha256'], size_in_bytes=E['zip_size'])
     return run, [job], art
 
 
-def check_files(files, attempt=1, blob_fn=blob):
+def check_files(files, attempt=1, blob_fn=blob, exp=None):
     with tempfile.TemporaryDirectory() as d:
         for p, b in files.items():
             t = Path(d) / p
             t.parent.mkdir(parents=True, exist_ok=True)
             t.write_bytes(b)
-        return A.verify_files(d, attempt, blob_fn)
+        return A.verify_files(d, attempt, blob_fn, exp or E)
 
 
 def edit_json(path, fn):
@@ -83,9 +91,19 @@ def edit_json(path, fn):
 class Controls(unittest.TestCase):
     def test_valid_passes(self):
         run, jobs, art = make_meta()
-        self.assertEqual(A.verify_meta(run, jobs, art, E, 'ab' * 32), 1)
+        self.assertEqual(A.verify_meta(run, jobs, art, E, E['zip_sha256'], E['zip_size']), 1)
         checks, _ = check_files(make_files())
         self.assertIn('receipt-binding', checks)
+        self.assertIn('boundary-binding', checks)
+
+    def test_legacy_target_is_separate(self):
+        L = A.LEGACY
+        checks, _ = check_files(make_files(L), exp=L)
+        self.assertNotIn('boundary-binding', checks)
+        with self.assertRaisesRegex(A.AuditError, 'receipt source mismatch'):
+            check_files(make_files(dict(L, boundary=True)))  # legacy evidence must not satisfy corrected pins
+        with self.assertRaisesRegex(A.AuditError, 'missing original evidence'):
+            check_files(make_files(L), exp=E)  # no boundary evidence: fails
 
     def test_meta_rejections(self):
         def sub(d, k, v):
@@ -110,19 +128,31 @@ class Controls(unittest.TestCase):
             ('artifact head_sha', lambda r, j, a: a['workflow_run'].update(head_sha='3' * 40)),
             ('job window', lambda r, j, a: sub(a, 'created_at', '2026-10-29T10:00:00Z')),
             ('digest', lambda r, j, a: sub(a, 'digest', 'sha256:' + 'cd' * 32)),
+            ('job id mismatch', lambda r, j, a: sub(j[0], 'id', 1)),
+            ('size_in_bytes', lambda r, j, a: sub(a, 'size_in_bytes', 250291)),
         ]
         for rx, mut in cases:
             run, jobs, art = copy.deepcopy(make_meta())
             mut(run, jobs, art)
             with self.subTest(rx), self.assertRaisesRegex(A.AuditError, rx):
-                A.verify_meta(run, jobs, art, E, 'ab' * 32)
+                A.verify_meta(run, jobs, art, E, E['zip_sha256'], E['zip_size'])
+
+    def test_zip_pins(self):
+        run, jobs, art = make_meta()
+        art.pop('digest')
+        with self.assertRaisesRegex(A.AuditError, 'zip sha256 differs'):
+            A.verify_meta(run, jobs, art, dict(E), '0' * 64, E['zip_size'])
+        with self.assertRaisesRegex(A.AuditError, 'zip sha256 differs'):
+            A.verify_meta(run, jobs, art, dict(E), None, E['zip_size'])
+        with self.assertRaisesRegex(A.AuditError, 'zip size differs'):
+            A.verify_meta(run, jobs, art, dict(E), E['zip_sha256'], 1)
 
     def test_attempt_binding(self):
         with self.assertRaisesRegex(A.AuditError, 'receipt attempt'):
             check_files(make_files(), attempt=2)
 
     def test_missing_evidence_fails(self):
-        for p in A.FIXED:
+        for p in A.FIXED + A.BOUNDARY:
             f = make_files()
             if p not in f:
                 continue
@@ -165,6 +195,20 @@ class Controls(unittest.TestCase):
             ('differs from git blob', edit_json(ev + 'admission.json', lambda j: j['files'].update(
                 {'docs/MIGRATION-WINDOWS-ENGINE-20261030.md': h(b'forged')}))),
             ('installed header differs', lambda f: f.update({A.INC + 'lm_win_engine.h': b'forged'})),
+            ('boundary receipt source', edit_json(ev + 'boundary-receipt.json', lambda j: j.update(source='6' * 40))),
+            ('boundary receipt run', edit_json(ev + 'boundary-receipt.json', lambda j: j.update(run='2'))),
+            ('boundary receipt attempt', edit_json(ev + 'boundary-receipt.json', lambda j: j.update(attempt='2'))),
+            ('boundary receipt claims full P0', edit_json(ev + 'boundary-receipt.json',
+                                                          lambda j: j.update(full_p0_acceptance=True))),
+            ('boundary receipt differs', edit_json(ev + 'boundary-receipt.json',
+                                                   lambda j: j['result'].update(checks=20))),
+            ('boundary result not 21', lambda f: (
+                f.update({ev + 'boundary-stdout.txt': json.dumps(
+                    {'checks': 20, 'failed': 0, 'passed': True}).encode()}),
+                edit_json(ev + 'boundary-receipt.json', lambda j: j.update(result=json.loads(
+                    f[ev + 'boundary-stdout.txt'])))(f))),
+            ('wrong-launch bytes', lambda f: f.update({ev + 'boundary-private/wrong-launch.bin': b'x'})),
+            ('boundary json unparsable', lambda f: f.update({ev + 'boundary-stdout.txt': b'nope'})),
         ]
         for rx, mut in cases:
             f = make_files()
