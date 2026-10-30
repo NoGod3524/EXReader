@@ -1,0 +1,26 @@
+/* SPDX-License-Identifier: MIT */
+#ifndef LM_WIN_RESTART_READER_H
+#define LM_WIN_RESTART_READER_H
+#include <lm_recovery_win32_record.h>
+#include <lm_win_lease.h>
+typedef struct lm_rr lm_rr;
+typedef enum { LM_RR_REFUSED=0,LM_RR_RESERVED=1,LM_RR_PREFIX=2,
+ LM_RR_COMPLETE_EVIDENCE=3,LM_RR_NAMESPACE_CONFLICT=4 } lm_rr_class;
+typedef struct {
+ lm_rr_class classification;unsigned valid_records,slots;
+ int pending,published;uint64_t generation;
+ wr_identity target,records[32];
+} lm_rr_result;
+/* Caller supplies independently trusted binding, NOT data inferred from slots.
+ * expected is codec-valid ordinal zero. lease_identity identifies the SAME C01
+ * exclusion domain used by the dead owner; mapping is an integration precondition.
+ * Serialized API. No SDK admission/COMMIT/lease-pending-clear operations exist.
+ * Returns 1 once a retained reader object is available, including REFUSED evidence.
+ * Fresh exclusive acquire failure returns 0 and NULL. Always inspect classification. */
+int lm_rr_open(const WCHAR *lease_dir,const char lease_identity[49],
+ uint64_t expected_generation,const WCHAR *private_root,
+ const WCHAR *source_leaf,const WCHAR *public_leaf,const lm_wr_record *expected,
+ unsigned slots,lm_rr **out,lm_rr_result *result,wr_error *);
+int lm_rr_check(lm_rr *,wr_error *);
+void lm_rr_close(lm_rr *);
+#endif
