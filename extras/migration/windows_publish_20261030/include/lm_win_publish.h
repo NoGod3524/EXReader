@@ -28,4 +28,5 @@ void lm_wp_custody_close(lm_wp_custody *custody);
 int lm_wp_publish_prepared(lm_wp_custody *custody,HANDLE source,
  const WCHAR *source_leaf,const WCHAR *public_leaf,const wr_identity *expected_source,
  const char expected_sha[65],lm_wp_result *result,wr_error *error);
+int lm_wp_custody_identity(lm_wp_custody *,wr_identity *root,wr_identity *parent,wr_error *);
 #endif
