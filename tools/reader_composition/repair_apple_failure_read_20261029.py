@@ -62,6 +62,7 @@ for line in lines:
  if "Test Case" in line and "testNativeAnnotationPreviewConfirmCancelAndDuplicate" in line and "started" in line:active=True
  if active:annotation.append(line)
  if active and "Test Case" in line and "testNativeAnnotationPreviewConfirmCancelAndDuplicate" not in line:active=False
+print("ANNOTATION_FULL_TIMELINE "+json.dumps(annotation),flush=True)
 print("ANNOTATION_BEGIN "+json.dumps(annotation[:100]),flush=True)
 print("ANNOTATION_END "+json.dumps(annotation[-180:]),flush=True)
 print("ANNOTATION_MILESTONES "+json.dumps([line for line in annotation if "Added attachment" in line or ("t = " in line and any(x in line for x in ("Find the \"features.","Tap ","Press ","Open Application","Terminate ")))][-180:]),flush=True)
