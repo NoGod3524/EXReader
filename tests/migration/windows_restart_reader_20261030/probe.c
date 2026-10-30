@@ -41,6 +41,22 @@ static void truncate_lease(const WCHAR *path){
  HANDLE h=CreateFileW(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,0,NULL);
  if(h!=INVALID_HANDLE_VALUE){if(!SetEndOfFile(h)){}CloseHandle(h);}
 }
+/* The same window, but the file ends up in a state the adapter must NOT repair:
+ * a valid header for this identity with an advanced generation and no PENDING.
+ * That is indistinguishable from a real concurrent commit, so the reader has to
+ * refuse and keep custody instead of writing anything back. */
+static char seam_identity[49];
+static void drift_lease(const WCHAR *path){
+ unsigned char buf[80];HANDLE h;DWORD put=0;size_t i;
+ memset(buf,0,sizeof buf);memcpy(buf,"EXRLEASE1\n",10);
+ for(i=0;i<48;i++)buf[10+i]=(unsigned char)seam_identity[i];
+ buf[58]='\n';buf[64]=5; /* generation 5, PENDING 0 */
+ h=CreateFileW(path,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,0,NULL);
+ if(h==INVALID_HANDLE_VALUE)return;
+ if(!SetEndOfFile(h)){}
+ if(!WriteFile(h,buf,sizeof buf,&put,NULL)){}
+ CloseHandle(h);
+}
 int main(int argc,char **argv){
  static wr_context c,lc;WCHAR root[WR_PATH],reader[WR_PATH],leases[WR_PATH],manifest[WR_PATH],slotpath[WR_PATH],moved[WR_PATH];
  wr_error e={0};lm_wl_error le={0};lm_wl_lease *lease=NULL,*shared=NULL;lm_wl_status ls;
@@ -96,9 +112,21 @@ int main(int argc,char **argv){
  wcscpy(reader,root);
  if(!strcmp(argv[3],"missing-root"))wcscat(reader,L"\\absent-sub");
  if(!strcmp(argv[3],"window-race"))lm_rr_set_window_probe(truncate_lease);
+ if(!strcmp(argv[3],"window-drift")){
+  memcpy(seam_identity,lease_id,49);
+  lm_rr_set_window_probe(drift_lease);
+ }
  opened=lm_rr_open(leases,lease_id,generation,reader,L"target.bin",L"published.bin",&record,2,&reader_obj,&result,&e);
  open_reason=why(&e);
  checked=opened&&lm_rr_check(reader_obj,&e);write_denied=rename_denied=0;
+ if(!strcmp(argv[3],"window-drift")){
+  /* The refused object keeps exclusive custody; stay alive so the caller can
+     measure whether shared admission is still blocked, then be killed. */
+  printf("{\"source\":\"%s\",\"opened\":%s,\"class\":%d,\"checked\":%s,\"lease_restored\":%s,\"reason\":\"%s\",\"native\":%lu}\n",
+   SOURCE_SHA,opened?"true":"false",(int)result.classification,checked?"true":"false",
+   result.lease_restored?"true":"false",why(&e),(unsigned long)e.native);
+  fflush(stdout);Sleep(INFINITE);
+ }
  if(!strcmp(argv[3],"drift")){
   if(!(opened&&checked)){
    printf("{\"opened\":false,\"checked\":false,\"class\":%d,\"reason\":\"%s\"}\n",(int)result.classification,why(&e));
