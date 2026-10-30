@@ -29,7 +29,11 @@ try:
   archives[label]=files
   if label in ("main","interactions"):
    bundle=json.loads(files["bundle.json"])
-   assert set(bundle["files"])|{"bundle.json"}==set(files)
+   declared=set(bundle["files"])|{"bundle.json"}
+   # Original interaction runner writes its derived summary after frozen write_evidence().
+   # Bind that one summary separately to raw plans/statistics below; no unknown extra files.
+   if label=="interactions":declared.add("interaction-summary.json")
+   assert declared==set(files),(label,sorted(set(files)-declared),sorted(declared-set(files)))
    for name,record in bundle["files"].items():assert len(files[name])==record["bytes"] and sha(files[name])==record["sha256"]
  main=archives["main"];inter=archives["interactions"]
  report=json.loads(main["report.json"]);summary=json.loads(main["summary.json"]);samples=json.loads(main["samples.json"])
