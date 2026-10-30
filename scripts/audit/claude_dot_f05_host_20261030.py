@@ -28,6 +28,22 @@ EXPECTED = [
     'credentials_and_authorization_are_absent_from_evidence_and_wire_bodies',
 ]
 
+LIVE_EXPECTED = [
+    'live_peerA_pushes_exact_history_while_peerB_process_is_alive_and_untouched',
+    'live_peerB_receives_same_revisions_by_get_while_peerA_process_is_alive',
+    'live_peerB_imports_identical_original_and_keeps_received_history',
+    'live_both_hosts_make_distinct_offline_children_of_one_received_head',
+    'live_two_account_sessions_are_in_flight_on_the_server_simultaneously',
+    'live_peers_converge_on_identical_sibling_heads_titles_unselected_and_wire_history',
+    'live_group_created_in_peerA_ui_reaches_peerB_history_over_wire',
+    'live_group_remove_tombstone_in_peerA_ui_propagates_over_wire_to_peerB',
+    'live_group_restore_in_peerA_ui_propagates_over_wire_and_clears_peerB_tombstone',
+    None,
+    'credentials_and_authorization_are_absent_from_evidence_and_wire_bodies',
+]
+LIVE_TENTH = {'live_delete_versus_update_conflict_blocked_peerB_ui_does_not_project_received_group',
+              'live_delete_versus_update_conflict_converges_without_selection_or_data_loss'}
+
 
 def gh(*arguments, output=None):
     command = ['gh', 'api', *arguments]
@@ -103,6 +119,31 @@ def main():
             if not peerb_gets:
                 problems.append('peerB never received a revision over GET')
             audit['request_count'] = len(requests)
+        lives = list(folder.rglob('f05-host-live-evidence/result.json'))
+        if len(lives) != 1:
+            problems.append('expected exactly one live result.json')
+        else:
+            live = json.loads(lives[0].read_text(encoding='utf-8'))
+            lreq = json.loads((lives[0].parent / 'requests.json').read_text(encoding='utf-8'))
+            audit['live_result_sha256'] = hashlib.sha256(lives[0].read_bytes()).hexdigest()
+            if live.get('source_sha') != args.source or (live.get('run_id'), live.get('attempt')) != (args.run_id, args.attempt):
+                problems.append('live result identity differs')
+            names = live.get('checks') or []
+            shape = [n if i != 9 else None for i, n in enumerate(names)]
+            if live.get('accepted') is not True or live.get('count') != 11 or shape != LIVE_EXPECTED or \
+                    len(names) != 11 or names[9] not in LIVE_TENTH:
+                problems.append('live result does not carry the expected 11 passing checks: %r' % (names,))
+            for flag in ('database_planting', 'six_platform_claim', 'complete_product'):
+                if live.get(flag) is not False:
+                    problems.append('live flag %s must be false' % flag)
+            gates = [r for r in lreq if r.get('fault') == 'gate']
+            if sorted(r['peer'] for r in gates) != ['peerA', 'peerB']:
+                problems.append('live gates were not hit once by each peer')
+            tombs = [r for r in lreq if r['method'] == 'PUT' and r['status'] == 201 and '/revisions/' in r['path']]
+            audit['live'] = {'checks': names, 'request_count': len(lreq), 'revision_puts_201': len(tombs),
+                             'tenth': names[9] if len(names) > 9 else None,
+                             'group_ui_projected_in_peerB': live.get('group_ui_projected_in_peerB'),
+                             'pids': {k: v.get('pid') for k, v in (live.get('peers') or {}).items()}}
     audit['accepted'] = not problems
     (out / 'audit.json').write_text(json.dumps(audit, indent=2), encoding='utf-8')
     print(json.dumps(audit, indent=2))

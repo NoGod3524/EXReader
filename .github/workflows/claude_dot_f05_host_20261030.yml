@@ -27,7 +27,7 @@ jobs:
           bad=$(git diff --name-only "$FIXED" HEAD | grep -Ev "$allowed" || true)
           test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
           test -z "$(git diff --name-only --diff-filter=MD "$FIXED" HEAD)"
-          python3 -m py_compile tests/reader_f05_host_closure_20261030/check_host_f05.py scripts/audit/claude_dot_f05_host_20261030.py
+          python3 -m py_compile tests/reader_f05_host_closure_20261030/check_host_f05.py tests/reader_f05_host_closure_20261030/check_host_f05_live.py scripts/audit/claude_dot_f05_host_20261030.py
       - name: Install native GTK TLS XML and Secret Service dependencies
         run: |
           sudo apt-get update
@@ -73,6 +73,7 @@ jobs:
           cmake --build build/f05-reading-state --parallel 4
           cmake --install build/f05-reading-state
       - name: Build and package the actual GTK host with account integration
+        id: build
         run: |
           cmake -S apps/reader/desktop -B build/f05-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_BUILD_GTK=ON -DEXR_READER_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/f05-logs/host-configure.log
           cmake --build build/f05-desktop --parallel 4 --verbose 2>&1 | tee build/f05-logs/host-build.log
@@ -85,6 +86,15 @@ jobs:
             trap "kill $wm || true" EXIT
             python3 tests/reader_f05_host_closure_20261030/check_host_f05.py --payload build/f05-package/EXReader-Linux --revision-consumer build/f05-revision-consumer/revision-consumer --build-json build/f05-package/build.json --output build/f05-host-evidence
           '
+      - name: Two simultaneously live GTK hosts, convergence and group tombstone and restore over the wire
+        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/f05-logs/openbox-live.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tests/reader_f05_host_closure_20261030/check_host_f05_live.py --payload build/f05-package/EXReader-Linux --revision-consumer build/f05-revision-consumer/revision-consumer --build-json build/f05-package/build.json --output build/f05-host-live-evidence
+          '
       - name: Preserve source-bound evidence without private keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -93,6 +103,7 @@ jobs:
           path: |
             build/f05-logs/
             build/f05-host-evidence/
+            build/f05-host-live-evidence/
             build/f05-package/build.json
             build/f05-package/runtime-dependencies.txt
             build/f05-revision-consumer/revision-consumer
