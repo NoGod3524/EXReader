@@ -132,10 +132,10 @@ int main(int argc,char **argv){
   }
  }
  bytes=lease_bytes(leases,lease_id);
- printf("{\"source\":\"%s\",\"opened\":%s,\"class\":%d,\"valid\":%u,\"checked\":%s,\"pending\":%d,\"generation\":%llu,\"published\":%d,\"write_denied\":%s,\"rename_denied\":%s,\"after_fail_rename\":%s,\"lease_restored\":%s,\"lease_bytes\":%lld,\"open_reason\":\"%s\",\"reason\":\"%s\",\"sdk_open_attempts\":0,\"commit_acknowledged\":false,\"recovery_admission\":false}\n",
+ printf("{\"source\":\"%s\",\"opened\":%s,\"class\":%d,\"valid\":%u,\"checked\":%s,\"pending\":%d,\"generation\":%llu,\"published\":%d,\"write_denied\":%s,\"rename_denied\":%s,\"after_fail_rename\":%s,\"lease_restored\":%s,\"lease_bytes\":%lld,\"open_reason\":\"%s\",\"reason\":\"%s\",\"native\":%lu,\"sdk_open_attempts\":0,\"commit_acknowledged\":false,\"recovery_admission\":false}\n",
  SOURCE_SHA,opened?"true":"false",(int)result.classification,result.valid_records,checked?"true":"false",
  result.pending,(unsigned long long)result.generation,result.published,write_denied?"true":"false",
  rename_denied?"true":"false",after_fail?"true":"false",result.lease_restored?"true":"false",
- bytes,open_reason,why(&e));
+ bytes,open_reason,why(&e),(unsigned long)e.native);
  lm_rr_close(reader_obj);return 0;
 }

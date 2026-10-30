@@ -129,6 +129,10 @@ static int lease_window(lm_rr *r,wr_error *e){
   return native(e,"restart-lease-window");
  return 1;
 }
+static void lease_unwindow(lm_rr *r){
+ OVERLAPPED o;memset(&o,0,sizeof(o));
+ UnlockFileEx(r->lease_file,0,RR_LEASE_SIZE,0,&o);
+}
 static int lease_verify(lm_rr *r,wr_error *e){
  unsigned char hdr[RR_LEASE_SIZE];BY_HANDLE_FILE_INFORMATION fi;LARGE_INTEGER size;
  if(!GetFileInformationByHandle(r->lease_file,&fi))return native(e,"restart-lease-info");
@@ -163,10 +167,19 @@ static int lease_settle(lm_rr *r,wr_error *e){
  if(!memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE))return 1;
  gen=read64(hdr+RR_GEN_OFFSET);pending=read64(hdr+RR_PENDING_OFFSET);
  if(gen==0&&pending==0&&r->gen_disk==0&&r->pending_disk==1&&header_ok(hdr,r->identity)){
-  /* Written through the pin: a shared range lock blocks every other handle. */
+  /* Written through the pin: a shared range lock blocks every other handle. If
+     the platform still refuses the write through the locking handle, drop the
+     window, write, and take it back before reading the bytes again. */
   memset(&o,0,sizeof(o));
-  if(!WriteFile(r->lease_file,r->lease_snapshot,RR_LEASE_SIZE,&put,&o)||put!=RR_LEASE_SIZE||
-     !FlushFileBuffers(r->lease_file)){native(e,"restart-lease-restore");return 0;}
+  if(!(WriteFile(r->lease_file,r->lease_snapshot,RR_LEASE_SIZE,&put,&o)&&put==RR_LEASE_SIZE)){
+   if(GetLastError()!=ERROR_LOCK_VIOLATION){native(e,"restart-lease-restore");return 0;}
+   lease_unwindow(r);memset(&o,0,sizeof(o));put=0;
+   if(!WriteFile(r->lease_file,r->lease_snapshot,RR_LEASE_SIZE,&put,&o)||put!=RR_LEASE_SIZE){
+    native(e,"restart-lease-restore");lease_window(r,e);return 0;
+   }
+   if(!lease_window(r,e))return 0;
+  }
+  if(!FlushFileBuffers(r->lease_file)){native(e,"restart-lease-flush");return 0;}
   if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE)||
      memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE)){refuse(e,"restart-lease-restore");return 0;}
   r->lease_restored=1;return 2;
