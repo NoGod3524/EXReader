@@ -906,7 +906,7 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   if(command->action>=READER_COLLECTIONS_LIST && command->action<=READER_COLLECTIONS_DISCARD) {
     collections_execute(reader,command,result);return;
   }
-  if(command->action>=READER_METADATA_PREPARE && command->action<=READER_METADATA_DISCARD) {
+  if(command->action>=READER_METADATA_PREPARE && command->action<=READER_METADATA_REMOVED_LIST) {
     metadata_execute(reader,command,result);return;
   }
 #endif

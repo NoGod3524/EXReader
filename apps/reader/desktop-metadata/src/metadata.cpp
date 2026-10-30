@@ -231,7 +231,7 @@ struct receive_context {reader_metadata_snapshot *value;std::exception_ptr error
 int receive_book(void *context,const reader_catalog_row *row){
   auto *copy=static_cast<receive_context *>(context);
   try{
-    auto *value=copy->value;value->present=1;
+    auto *value=copy->value;value->present=1;value->deleted=row->deleted;
     value->book_key=text(row->book_key,72);value->format=text(row->format,8);value->sha=value->book_key.substr(value->format.size()+1);
     value->source_bytes=row->source_bytes;value->title=text(row->title,16384,true);value->author=text(row->author,16384,true);
     value->sort=text(row->sort_title,16384,true);value->favorite=row->favorite;return 0;
@@ -340,7 +340,7 @@ extern "C" reader_metadata_status reader_metadata_prepare_book(reader_metadata_o
     auto value=std::make_unique<reader_metadata_snapshot>();value->database=owner->database;value->key=text(book_key,72);value->book_key=value->key;
     observe(*owner,*value);
     reader_catalog_error e{};int found=0;receive_context copy{value.get(),{}};
-    catalog_check(reader_catalog_find(owner->catalog,value->key.c_str(),nullptr,receive_book,&copy,&found,&e),e);
+    catalog_check(reader_catalog_retained_find(owner->catalog,value->key.c_str(),receive_book,&copy,&found,&e),e);
     if(copy.error)std::rethrow_exception(copy.error);
     verify_observation(*owner,*value);
     value->needs_bootstrap=value->present&&!value->graph.revisions;

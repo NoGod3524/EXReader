@@ -129,6 +129,7 @@ static uint64_t metadata_token;
 static int64_t metadata_book;
 static void metadata_apply(host_result *);
 static void metadata_edit(GtkWidget *,gpointer);
+static void metadata_removed_open(GtkWidget *,gpointer);
 static void collections_open(GtkWidget *,gpointer);
 static void collections_apply(host_result *);
 static gboolean collections_opened(void);
@@ -262,6 +263,7 @@ static void compact_toolbar(GtkWidget *toolbar) {
 #ifdef EXR_READER_DESKTOP_METADATA
   GtkWidget *library=compact_submenu(menu,"Library");
   compact_item(library,"Book details…",G_CALLBACK(metadata_edit),NULL);
+  compact_item(library,"Removed books...",G_CALLBACK(metadata_removed_open),NULL);
   compact_item(library,"Collections…",G_CALLBACK(collections_open),NULL);
 #ifdef EXR_READER_ACCOUNT
   compact_item(library,"Account / Sync…",G_CALLBACK(accounts_open),NULL);
@@ -651,7 +653,7 @@ static gboolean apply_result(gpointer data) {
   if(done->action>=READER_COLLECTIONS_LIST && done->action<=READER_COLLECTIONS_DISCARD) {
     collections_apply(done);goto free_result;
   }
-  if(done->action>=READER_METADATA_PREPARE && done->action<=READER_METADATA_DISCARD) {
+  if(done->action>=READER_METADATA_PREPARE && done->action<=READER_METADATA_REMOVED_LIST) {
     metadata_apply(done);goto free_result;
   }
 #endif
@@ -1018,6 +1020,7 @@ static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   }
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
+  if((event->state&GDK_CONTROL_MASK) && (event->state&GDK_SHIFT_MASK) && (event->keyval==GDK_KEY_D || event->keyval==GDK_KEY_d)) { metadata_removed_open(NULL,NULL);return TRUE; }
   if((event->state&GDK_CONTROL_MASK) && (event->state&GDK_SHIFT_MASK) && (event->keyval==GDK_KEY_C || event->keyval==GDK_KEY_c)) {
     collections_open(NULL,NULL);return TRUE;
   }

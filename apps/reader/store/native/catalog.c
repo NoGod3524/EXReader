@@ -364,7 +364,7 @@ int reader_catalog_page(reader_catalog *c,const char *title,const char *key,size
                         reader_catalog_visit visit,void *context,reader_catalog_error *e) {
   return reader_catalog_query_page(c,title,key,NULL,1,limit,visit,context,e);
 }
-static int catalog_find(reader_catalog *c,const char *key,const char *query,int local,
+static int catalog_find(reader_catalog *c,const char *key,const char *query,int local,int retained,
                         reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
   sqlite3_stmt *s=NULL;size_t count=0;int status=enter(c,e);char sql[1024];
   if(found) *found=0;
@@ -374,10 +374,11 @@ static int catalog_find(reader_catalog *c,const char *key,const char *query,int 
   }
   const char *filter=query && query[0] ?
     " AND (instr(lower(b.title),lower(?2))>0 OR instr(lower(b.author),lower(?2))>0)":"";
-  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,b.deleted FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0 AND b.book_key=?1%s%s LIMIT 1",local ? " AND (l.sdk_book_id IS NOT NULL OR EXISTS (SELECT 1 FROM reader_originals o WHERE o.book_key=b.book_key AND o.state='ready'))":"",filter);
+  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,b.deleted FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE (b.deleted=0 OR ?3=1) AND b.book_key=?1%s%s LIMIT 1",local ? " AND (l.sdk_book_id IS NOT NULL OR EXISTS (SELECT 1 FROM reader_originals o WHERE o.book_key=b.book_key AND o.state='ready'))":"",filter);
   status=prepare(c,sql,&s,e);
   if(status==SQLITE_OK) status=bind_text(c,s,1,key,e);
   if(status==SQLITE_OK && query && query[0]) status=bind_text(c,s,2,query,e);
+  if(status==SQLITE_OK) status=sqlite3_bind_int(s,3,retained);
   if(status==SQLITE_OK) status=deliver_rows(c,s,visit,context,&count,e);
   if(status==SQLITE_OK) *found=count!=0;
 leave:
@@ -509,11 +510,11 @@ leave:
 }
 int reader_catalog_find(reader_catalog *c,const char *key,const char *query,
                         reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
-  return catalog_find(c,key,query,0,visit,context,found,e);
+  return catalog_find(c,key,query,0,0,visit,context,found,e);
 }
 int reader_catalog_local_find(reader_catalog *c,const char *key,const char *query,
                         reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
-  return catalog_find(c,key,query,1,visit,context,found,e);
+  return catalog_find(c,key,query,1,0,visit,context,found,e);
 }
 int reader_catalog_group_books_page(reader_catalog *c,reader_catalog_group_kind kind,const char *id,
   const reader_catalog_member_cursor *cursor,const char *query,int local_only,int direction,size_t limit,
@@ -724,4 +725,26 @@ int reader_catalog_original_forget(reader_catalog *c,const char *key,reader_cata
   if(status==SQLITE_OK && !sqlite3_changes(c->database)) status=fail(e,SQLITE_NOTFOUND,"Deleting original missing");
 leave_original_forget:
   sqlite3_finalize(s); c->active=0; return status;
+}
+
+
+int reader_catalog_retained_find(reader_catalog *c,const char *key,
+  reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
+  return catalog_find(c,key,NULL,0,1,visit,context,found,e);
+}
+int reader_catalog_removed_page(reader_catalog *c,const char *after,size_t limit,
+  reader_catalog_visit visit,void *context,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL;int status=enter(c,e);char sql[768];
+  if(status!=SQLITE_OK) return status;
+  if(!visit || !limit || limit>100 || (after && (!valid_text(after) || !after[0]))) {
+    status=fail(e,SQLITE_MISUSE,"Invalid bounded removed-book cursor");goto leave;
+  }
+  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,b.deleted FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=1%s ORDER BY b.book_key LIMIT ?2",
+    after ? " AND b.book_key>?1":"");
+  status=prepare(c,sql,&s,e);
+  if(status==SQLITE_OK && after) status=bind_text(c,s,1,after,e);
+  if(status==SQLITE_OK) status=sqlite3_bind_int(s,2,(int)limit);
+  if(status==SQLITE_OK) status=deliver_rows(c,s,visit,context,NULL,e);
+leave:
+  sqlite3_finalize(s);c->active=0;return status;
 }
