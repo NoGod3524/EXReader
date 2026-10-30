@@ -44,7 +44,7 @@ class Run:
         self.tmp.mkdir()
         self.secret = "c08-canary-" + secrets.token_hex(16)
         self.user = "c08t" + secrets.token_hex(4)
-        self.password = "Zz9!" + secrets.token_urlsafe(18)
+        self.password = "Zz9!" + secrets.token_hex(5)  # 14 chars: no legacy-password prompt
         print("::add-mask::" + self.password, flush=True)
         self.canaries = {"secret": self.secret, "password": self.password}
         self.env = dict(os.environ, TEMP=str(self.tmp), TMP=str(self.tmp), C08_SECRET_HEX=self.secret.encode().hex(),
@@ -97,7 +97,7 @@ class Run:
         return not hits
 
     def run_cmd(self, argv, timeout=120):
-        done = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+        done = subprocess.run(argv, capture_output=True, text=True, timeout=timeout, input="Y\n")
         return done.returncode, (done.stdout + done.stderr).replace(self.password, "<pw>")
 
     def create_user(self):
