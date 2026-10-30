@@ -38,8 +38,11 @@ final class FeaturesUITests: XCTestCase {
         func canTap(_ target: XCUIElement) -> Bool {
             guard let snapshot = try? target.snapshot() else { return false }
             targetFrame = snapshot.frame
-            let inViewport = viewport.map { $0.contains(CGPoint(x: targetFrame.midX, y: targetFrame.midY)) } ?? true
-            return inViewport && snapshot.isEnabled && target.isHittable
+            let visible = viewport.map { $0.intersection(targetFrame) } ?? targetFrame
+            guard !visible.isNull, visible.width >= 12, visible.height >= 12,
+                  snapshot.isEnabled, target.isHittable else { return false }
+            targetFrame = visible
+            return true
         }
         for _ in 0..<24 {
             let target = candidate()
@@ -56,8 +59,13 @@ final class FeaturesUITests: XCTestCase {
                 let start = origin.withOffset(CGVector(dx: viewport.midX,
                     dy: viewport.minY + viewport.height * (above ? 0.2 : 0.8)))
                 let end = start.withOffset(CGVector(dx: 0, dy: above ? distance : -distance))
+                // A distant section needs a real native flick rather than
+                // repeating short, fully arrested drags through every section.
+                // Near the target retain the controlled drag and stop momentum.
+                let distant = abs(targetFrame.midY - center.y) > viewport.height
                 start.press(forDuration: 0.01, thenDragTo: end,
-                            withVelocity: .slow, thenHoldForDuration: 0.05)
+                            withVelocity: distant ? .fast : .slow,
+                            thenHoldForDuration: distant ? 0 : 0.05)
 #endif
             }
         }
