@@ -66,6 +66,22 @@ for index,line in enumerate(annotation):
  if previous is not None and current-previous[0]>=10:
   print("ANNOTATION_IDLE_GAP "+json.dumps(dict(seconds=current-previous[0],context=annotation[max(0,previous[1]-5):index+12])),flush=True)
  previous=(current,index)
+attachments=out/"attachments"
+subprocess.run(["xcrun","xcresulttool","export","attachments","--path",str(bundle),"--output-path",str(attachments)],check=True)
+manifest=json.loads((attachments/"manifest.json").read_text())
+for group in manifest:
+ if "BorrowedFont" not in str(group.get("testIdentifier") or group.get("testName")):continue
+ for item in group["attachments"]:
+  name=item.get("suggestedHumanReadableName","")
+  if name.startswith("final-native-tree"):
+   file=item["exportedFileName"];assert Path(file).name==file
+   print("SHARE_FINAL_NATIVE_TREE "+(attachments/file).read_text(errors="replace")[:26000],flush=True)
+borrowed=[];active=False
+for line in lines:
+ if "Test Case" in line and "testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot" in line and "started" in line:active=True
+ if active:borrowed.append(line)
+ if active and "Test Case" in line and "testBorrowedFont" not in line:active=False
+print("SHARE_NATIVE_MILESTONES "+json.dumps([line for line in borrowed if "Added attachment" in line or any(x in line for x in ('Tap ', 'Swipe ', 'Press ', 'header.closeButton'))]),flush=True)
 receipt=dict(input=args.input,producer_source=source,producer_run=run,producer_job=jobid,
  artifact=aid,bytes=size,sha256=digest,inspection_source=os.environ["GITHUB_SHA"],
  diagnostic_only=True,product_acceptance=False,issues=issues)
