@@ -64,17 +64,19 @@ jobs:
         run: |
           set -uo pipefail
           mkdir -p evidence
-          LIB=$(find stage/lib -type f | head -1)
-          python - "$LIB" <<'PY'
+          LIB=$(find stage/lib -type f | head -1 || true)
+          python - "${LIB:-}" <<'PY'
           import hashlib,json,os,pathlib,sys
-          lib=pathlib.Path(sys.argv[1])
+          arg=sys.argv[1] if len(sys.argv)>1 else ""
+          lib=pathlib.Path(arg) if arg else None
           native=pathlib.Path('evidence-native.json')
           body=json.loads(native.read_text()) if native.exists() else {}
           receipt=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],
                        attempt=os.environ['GITHUB_RUN_ATTEMPT'],os=os.environ['RUNNER_OS'],
                        crate='exreader-migration-coordinator-hardening',
-                       library=lib.name,library_bytes=lib.stat().st_size,
-                       library_sha256=hashlib.sha256(lib.read_bytes()).hexdigest(),
+                       library=(lib.name if lib else None),
+                       library_bytes=(lib.stat().st_size if lib else None),
+                       library_sha256=(hashlib.sha256(lib.read_bytes()).hexdigest() if lib else None),
                        native=body,engine_mock_only=True,
                        real_coordinator_wiring=False,full_p0_acceptance=False)
           pathlib.Path('evidence/receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')

@@ -10,10 +10,12 @@ typedef struct {unsigned event,seq;int publish_intent,published,committed,aborte
  char lease[49],stage[49],snap[65],content[65],prev[65],bind[65];} history;
 struct wh_session {wh_binding b;wh_gates g;wh_provider p;wh_append_verify sink;void *sink_context,*cap;
  history h;char live_lease[49],live_stage[49];int used,poisoned;char manifest[EXR_WH_LINE_MAX];};
-static int hx(const char *s,size_t n){size_t i;for(i=0;i<n;i++)if(!((s[i]>='0'&&s[i]<='9')||(s[i]>='a'&&s[i]<='f')))return 0;return !s[n];}
+static int hx(const char *s,size_t n){size_t i;for(i=0;i<n;i++)if(!((s[i]>='0'&&s[i]<='9')||(s[i]>='a'&&s[i]<='f')))return 0;
+ return !s[n];}
 static int gates(const wh_gates *g){return g&&hx(g->admission,64)&&hx(g->publisher,64)&&hx(g->recovery,64)&&hx(g->observer,64)&&hx(g->fault,64);}
 int wh_manifest(const wh_binding *b,const wh_gates *g,char out[EXR_WH_LINE_MAX]){
- int n;if(!b||!out||!wh_binding_valid(b)||!gates(g))return 0;
+ int n;
+ if(!b||!out||!wh_binding_valid(b)||!gates(g))return 0;
  n=snprintf(out,EXR_WH_LINE_MAX,"EXRWH2|source=%s|run=%s|attempt=%s|artifact=%s|platform=%s|sdk=%s|provider=%s|admission=%s|publisher=%s|recovery=%s|observer=%s|fault=%s",
  b->source,b->run,b->attempt,b->artifact,b->platform,b->sdk,b->provider,g->admission,g->publisher,g->recovery,g->observer,g->fault);
  return n>0&&(size_t)n<EXR_WH_LINE_MAX;
@@ -29,7 +31,8 @@ static wh_status report(wh_session *s,wh_report *r,wh_status status,const char *
  if(s){r->seq=s->h.seq;r->live_lease=s->cap!=NULL;r->poisoned=s->poisoned;
  memcpy(r->lease,s->live_lease[0]?s->live_lease:s->h.lease,49);memcpy(r->staged,s->live_stage[0]?s->live_stage:s->h.stage,49);
  memcpy(r->snapshot,s->h.snap,65);memcpy(r->content,s->h.content,65);}
- snprintf(r->detail,sizeof(r->detail),"%s",why);return status;
+ snprintf(r->detail,sizeof(r->detail),"%s",why);
+ return status;
 }
 static int same(const char *a,const char *b){return !strcmp(a,b);}
 static int transition(history *h,unsigned e,const char *lease,const char *stage,const char *snap,const char *content){
@@ -55,23 +58,29 @@ static int transition(history *h,unsigned e,const char *lease,const char *stage,
  else if(!same(content,h->content))return 0;
  if(e==H_RECOVER_YES&&(!hx(stage,48)||!hx(content,64)))return 0;
  memcpy(h->lease,lease,49);memcpy(h->stage,stage,49);memcpy(h->snap,snap,65);memcpy(h->content,content,65);
- h->event=e;if(e==H_PUBLISH_BEGIN)h->publish_intent=1;
+ h->event=e;
+ if(e==H_PUBLISH_BEGIN)h->publish_intent=1;
  if(e==H_PUBLISH_OK||e==H_RECOVER_YES)h->published=1;
- if(e==H_COMMIT)h->committed=1;if(e==H_ABORT_OK)h->aborted=1;
+ if(e==H_COMMIT)h->committed=1;
+ if(e==H_ABORT_OK)h->aborted=1;
  return 1;
 }
 static const char *value(const char *s){return *s?s:"-";}
 static int make_line(const history *h,unsigned event,const char *lease,const char *stage,const char *snap,const char *content,char out[EXR_WH_LINE_MAX]){
  char seal[65];int n=snprintf(out,EXR_WH_LINE_MAX,"EXRWH2 %u %u %s %s %s %s %s %s",h->seq,event,value(lease),value(stage),value(snap),value(content),h->prev,h->bind);
  if(n<=0||(size_t)n>=EXR_WH_LINE_MAX-66)return 0;
- wh_sha256_hex(out,(size_t)n,seal);strcat(out," ");strcat(out,seal);return 1;
+ wh_sha256_hex(out,(size_t)n,seal);strcat(out," ");strcat(out,seal);
+ return 1;
 }
 static int append_event(wh_session *s,unsigned event,const char *lease,const char *stage,const char *snap,const char *content){
  history next=s->h;char line[EXR_WH_LINE_MAX];
  if(s->poisoned)return 0;
- if(s->h.seq>=EXR_WH_MAX_JOURNAL||!transition(&next,event,lease,stage,snap,content)||!make_line(&s->h,event,lease,stage,snap,content,line)){s->poisoned=1;return 0;}
- if(s->sink(s->sink_context,line)){s->poisoned=1;return 0;}
- memcpy(next.prev,line+strlen(line)-64,65);next.seq++;s->h=next;return 1;
+ if(s->h.seq>=EXR_WH_MAX_JOURNAL||!transition(&next,event,lease,stage,snap,content)||!make_line(&s->h,event,lease,stage,snap,content,line)){s->poisoned=1;
+ return 0;}
+ if(s->sink(s->sink_context,line)){s->poisoned=1;
+ return 0;}
+ memcpy(next.prev,line+strlen(line)-64,65);next.seq++;s->h=next;
+ return 1;
 }
 #define EVENT(s,e) append_event((s),(e),(s)->h.lease,(s)->h.stage,(s)->h.snap,(s)->h.content)
 static int parse(history *h,const char *line){
@@ -80,25 +89,36 @@ static int parse(history *h,const char *line){
  if(!line)return 0;
  n=sscanf(line,"EXRWH2 %u %u %48s %48s %64s %64s %64s %64s %64s %c",&seq,&event,lease,stage,snap,content,prev,bind,seal,&tail);
  if(n!=9||seq!=h->seq||!same(prev,h->prev)||!same(bind,h->bind)||!hx(seal,64))return 0;
- if(same(lease,"-"))lease[0]=0;if(same(stage,"-"))stage[0]=0;
- if(same(snap,"-"))snap[0]=0;if(same(content,"-"))content[0]=0;
+ if(same(lease,"-"))lease[0]=0;
+ if(same(stage,"-"))stage[0]=0;
+ if(same(snap,"-"))snap[0]=0;
+ if(same(content,"-"))content[0]=0;
  if(!transition(&next,event,lease,stage,snap,content)||!make_line(h,event,lease,stage,snap,content,canonical)||strcmp(canonical,line))return 0;
- memcpy(next.prev,seal,65);next.seq++;*h=next;return 1;
+ memcpy(next.prev,seal,65);next.seq++;*h=next;
+ return 1;
 }
 static int load_history(const wh_binding *b,const wh_gates *g,const char *const *lines,size_t n,history *h){
  char manifest[EXR_WH_LINE_MAX];size_t i;
  memset(h,0,sizeof(*h));
  if(!lines||!n||n>EXR_WH_MAX_JOURNAL||!wh_manifest(b,g,manifest)||!lines[0]||strcmp(lines[0],manifest))return 0;
  wh_sha256_hex(manifest,strlen(manifest),h->bind);memcpy(h->prev,h->bind,65);h->seq=1;
- for(i=1;i<n;i++)if(!parse(h,lines[i]))return 0;return 1;
+ for(i=1;i<n;i++){if(!parse(h,lines[i]))return 0;}
+ return 1;
 }
-int wh_journal_check(const wh_binding *b,const wh_gates *g,const char *const *lines,size_t n){history h;return load_history(b,g,lines,n,&h);}
+int wh_journal_check(const wh_binding *b,const wh_gates *g,const char *const *lines,size_t n){history h;
+ return load_history(b,g,lines,n,&h);}
 wh_session *wh_create(const wh_binding *b,const wh_gates *g,const wh_provider *p,wh_append_verify sink,void *ctx){
- wh_session *s;if(!b||!g||!p)return NULL;s=calloc(1,sizeof(*s));if(!s)return NULL;
- if(!wh_manifest(b,g,s->manifest)){free(s);return NULL;}
- s->b=*b;s->g=*g;s->p=*p;s->sink=sink;s->sink_context=ctx;return s;
+ wh_session *s;
+ if(!b||!g||!p)return NULL;s=calloc(1,sizeof(*s));
+ if(!s)return NULL;
+ if(!wh_manifest(b,g,s->manifest)){free(s);
+ return NULL;}
+ s->b=*b;s->g=*g;s->p=*p;s->sink=sink;s->sink_context=ctx;
+ return s;
 }
-int wh_dispose(wh_session *s){if(!s)return 1;if(s->cap||s->poisoned)return 0;free(s);return 1;}
+int wh_dispose(wh_session *s){if(!s)return 1;
+ if(s->cap||s->poisoned)return 0;free(s);
+ return 1;}
 static wh_status uncertain(wh_session *s,wh_report *r,const char *why){return report(s,r,WH_UNCERTAIN,why);}
 static int checked(wh_session *s){return s->cap&&s->p.check(s->p.context,s->cap)==WH_STEP_OK;}
 static wh_status release_terminal(wh_session *s,wh_report *r,int committed){
@@ -135,28 +155,34 @@ wh_status wh_run(wh_session *s,wh_report *r){
  if(s->used||s->poisoned)return uncertain(s,r,"session-already-used");
  if(!ready(s))return report(s,r,WH_PENDING,"provider-contract-incomplete");
  s->used=1;
- if(s->sink(s->sink_context,s->manifest)){s->poisoned=1;return uncertain(s,r,"manifest-write-failed");}
+ if(s->sink(s->sink_context,s->manifest)){s->poisoned=1;
+ return uncertain(s,r,"manifest-write-failed");}
  wh_sha256_hex(s->manifest,strlen(s->manifest),s->h.bind);memcpy(s->h.prev,s->h.bind,65);s->h.seq=1;
  if(!EVENT(s,H_ADMIT_BEGIN))return uncertain(s,r,"journal-admit-intent-failed");
  ac=acquire(s,0,actual);
  if(ac<=0)return report(s,r,ac?WH_UNCERTAIN:WH_REFUSED,"admission-not-proven");
  if(!append_event(s,H_ADMIT_OK,actual,s->h.stage,s->h.snap,s->h.content))return uncertain(s,r,"journal-admission-failed-capability-retained");
- rows=calloc(EXR_WH_MAX_RECORDS,sizeof(*rows));if(!rows)return uncertain(s,r,"allocation-failed-capability-retained");
-#define STOP(why) do{free(rows);return uncertain(s,r,why);}while(0)
+ rows=calloc(EXR_WH_MAX_RECORDS,sizeof(*rows));
+ if(!rows)return uncertain(s,r,"allocation-failed-capability-retained");
+#define STOP(why) do{free(rows);
+ return uncertain(s,r,why);}while(0)
  if(!EVENT(s,H_SNAP_BEGIN)||!checked(s))STOP("snapshot-intent-or-lease-failed");
  step=s->p.snapshot(s->p.context,s->cap,rows,EXR_WH_MAX_RECORDS,&n);
- if(step==WH_STEP_FAILED){free(rows);return abort_known(s,r);}
+ if(step==WH_STEP_FAILED){free(rows);
+ return abort_known(s,r);}
  if(step!=WH_STEP_OK||!wh_snapshot_digest(&s->b,rows,n,snap)||!wh_content_digest(rows,n,content))STOP("snapshot-uncertain-or-invalid");
  if(!append_event(s,H_SNAP_OK,s->h.lease,s->h.stage,snap,s->h.content))STOP("snapshot-journal-failed");
  if(!append_event(s,H_IMPORT_BEGIN,s->h.lease,s->h.stage,s->h.snap,content)||!checked(s))STOP("import-intent-or-lease-failed");
  step=s->p.import_rows(s->p.context,s->cap,rows,n,stage);
  if(hx(stage,48))memcpy(s->live_stage,stage,49);
- if(step==WH_STEP_FAILED&&!stage[0]){free(rows);return abort_known(s,r);}
+ if(step==WH_STEP_FAILED&&!stage[0]){free(rows);
+ return abort_known(s,r);}
  if(step!=WH_STEP_OK||!hx(stage,48))STOP("import-uncertain-or-contradictory");
  if(!append_event(s,H_IMPORT_OK,s->h.lease,stage,s->h.snap,s->h.content))STOP("import-journal-failed");
  if(!EVENT(s,H_VERIFY_BEGIN)||!checked(s))STOP("verify-intent-or-lease-failed");
  step=s->p.verify(s->p.context,s->cap,s->h.stage,rows,n);
- if(step==WH_STEP_FAILED){free(rows);return abort_known(s,r);}
+ if(step==WH_STEP_FAILED){free(rows);
+ return abort_known(s,r);}
  if(step!=WH_STEP_OK)STOP("verify-uncertain");
  if(!EVENT(s,H_VERIFY_OK))STOP("verify-journal-failed");
  free(rows);
