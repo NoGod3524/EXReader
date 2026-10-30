@@ -36,4 +36,30 @@ Markers scan covers only this package's temp files; no user credential store is 
 Failures are kept as red evidence; no assertion is weakened.
 
 ## Status
-Rounds used: see the delivery note in the session; all execution is GitHub Actions only. Consumes no formal acceptance item.
+All execution is GitHub Actions only. Consumes no formal acceptance item. Extra correction rounds were authorized by the user.
+
+| run | source | result |
+|---|---|---|
+| 41142853013 | b1fe263f | probe red: missing 64-bit ctypes signatures (harness bug) |
+| 41142963420 | 6f3641f4 | probe green; host configure red: stale recipe needs OPDSHash prefix |
+| 41143217136 | 2187d102 | probe green; `product-configure` still needs OPDSHash prefix |
+| 41144628910 | 25c126db | cancelled (superseded by known harness bugs) |
+| 41144831499 | 9bf2687d | host ran: 12/14, S3 red, thread sampler n=0 (harness timing) |
+| 41145383847 | 0303bde3 | host ran: **13/14**, only S3 red |
+
+Corrections 3-5 touch only this package: hash-only OPDSHash install before `tests/windows_sdk342/build.py`; pass a `Path`
+to the compact picker; read the host token from the shim launch; keep the thread sampler running until each Apply
+result / session sync finishes (more samples, same assertion).
+
+Latest run 41145383847 attempt 1: probe job 124369135530 green, host job 124369276105 red.
+Artifacts: probe 13020344922 (832 B, zip sha256 4a259f4c10899091fa7b8b8efd56cf2c2fc11446bd65999128f277cc537419cd);
+host 13020472255 (1556 B, zip sha256 c496cf2d4247448c88090db8bb7bd7050efbd54ecdc305ea1e50889fae17d6df).
+
+Green: host primary token is Network logon (session 2); S1 refused as UNAVAILABLE with Sync disabled and zero requests,
+book/revision/outbox unchanged; S2 session-only secret syncs authenticated (272 requests); S3 failure reported
+UNAVAILABLE and book heads unchanged; S4 cancel/retry keeps books and heads; S5 restart has no secret, Sync disabled,
+no requests; no synthetic marker in package temp files; 3 worker threads sampled, all without a thread token (1008).
+
+**Kept RED (product defect):** `s3_failed_B_save_does_not_let_stale_A_secret_sync_as_B` - after saving B fails, Sync
+stays enabled and 257 requests go out with the stale A secret. Matches the read-only finding in `acct_set_job` (old
+in-memory secret not cleared when `exr_credentials_put` fails). Not fixed here: product change is outside this package.
