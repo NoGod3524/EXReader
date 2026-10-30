@@ -81,3 +81,31 @@ those are detection cases, not durability claims; detection never clears PENDING
 and never grants admission.
 
 Initial status: source candidate, Actions pending. Maximum3 authorized rounds.
+
+## Completed run
+
+Source e74452f7f838e7d02a14e3e6ba89df923fce0466, run41099419879, attempt1,
+job124213581187 completed success on windows-2022. All24 cases passed: the four
+cut stages, reader death and re-acquisition, the seven retained content and
+namespace refusals, the three caller-binding refusals, and the nine new cases.
+The new cases include the missing, empty, truncated, grown, header-tampered,
+generation-mismatched and PENDING-cleared leases (each refused with its own
+reason and with the lease bytes left exactly as the negative control wrote them,
+so nothing was re-created or re-initialised), the memory-mapped write that the
+live reader must report as restart-lease-disk-drift even though byte-range locks
+cannot prevent it, and the failed-wr_prepare case where the private root stays
+renameable while the retained reader object is still alive. Artifact12998980254
+retains restart/lease installed libraries, the consumer map, every per-case
+inherited evidence file and the receipt; API size499274 bytes, SHA256
+43c83be9d177a2a008cb282dd22f92009b659ce5b0e96851eec137ffabfbc75c. Old record27,
+publisher28+2cuts, bridge26+4cuts and refusal8 were rerun unchanged in the same
+job and passed.
+
+Two earlier attempts on this branch are retained, not hidden: bcf26e1b failed on
+the tampered-header negative control because that control spliced a single
+replacement byte with the tail of the lease and produced a70-byte file, so the
+size rule refused it first; 42dcb66f passed every other case and then failed on
+the mapped-write case because lm_rr_check collapsed the specific drift reason
+into restart-not-qualified. Both are test/adapter defects; neither changed any
+lease, record or assertion budget, and neither is product evidence.
+
