@@ -37,6 +37,15 @@ static void check(int ok, const char *case_name, const char *what)
     if (!ok) { failures++; printf("FAIL %s: %s\n", case_name, what); }
 }
 
+static char diag_buf[192];
+
+static const char *diag(wh_status st, const wh_report *r)
+{
+    snprintf(diag_buf, sizeof diag_buf, "status=%s detail=%s",
+             wh_status_name(st), (r && r->detail[0]) ? r->detail : "-");
+    return diag_buf;
+}
+
 /* ---------------- journal builder (forged but correctly sealed) ------------- */
 
 typedef struct {
@@ -466,7 +475,7 @@ static void case_recover_yes(void)
     sess = wh_create(&b, &g, &p, sink_append, &recovery_sink);
     check(sess != NULL, "recover-yes", "session");
     if (!sess) return;
-    check(wh_recover(sess, ptrs, n, &r) == WH_COMPLETED, "recover-yes", "status");
+    { wh_status st = wh_recover(sess, ptrs, n, &r); check(st == WH_COMPLETED, "recover-yes", diag(st, &r)); }
     check(m.reacquire_calls == 1 && m.acquire_calls == 0, "recover-yes", "recovery did not take fresh exclusive custody");
     check(m.release_calls == 1, "recover-yes", "release count");
 }
@@ -482,7 +491,7 @@ static void case_recover_yes_without_intent(void)
     sess = wh_create(&b, &g, &p, sink_append, &recovery_sink);
     check(sess != NULL, "recover-no-intent", "session");
     if (!sess) return;
-    check(wh_recover(sess, ptrs, n, &r) == WH_UNCERTAIN, "recover-no-intent", "publication accepted without a recorded intent");
+    { wh_status st = wh_recover(sess, ptrs, n, &r); check(st == WH_UNCERTAIN, "recover-no-intent", diag(st, &r)); }
     check(m.release_calls == 0, "recover-no-intent", "released on contradiction");
 }
 
@@ -498,7 +507,7 @@ static void case_recover_no(void)
     sess = wh_create(&b, &g, &p, sink_append, &recovery_sink);
     check(sess != NULL, "recover-no", "session");
     if (!sess) return;
-    check(wh_recover(sess, ptrs, n, &r) == WH_ROLLED_BACK, "recover-no", "status");
+    { wh_status st = wh_recover(sess, ptrs, n, &r); check(st == WH_ROLLED_BACK, "recover-no", diag(st, &r)); }
     check(m.discard_calls == 1 && m.release_calls == 1, "recover-no", "known abort path");
 }
 
@@ -514,7 +523,7 @@ static void case_recover_reacquire_failed(void)
     sess = wh_create(&b, &g, &p, sink_append, &recovery_sink);
     check(sess != NULL, "recover-failed", "session");
     if (!sess) return;
-    check(wh_recover(sess, ptrs, n, &r) == WH_REFUSED, "recover-failed", "status");
+    { wh_status st = wh_recover(sess, ptrs, n, &r); check(st == WH_REFUSED, "recover-failed", diag(st, &r)); }
     check(m.release_calls == 0 && r.live_lease == 0, "recover-failed", "refused recovery released something");
 }
 
