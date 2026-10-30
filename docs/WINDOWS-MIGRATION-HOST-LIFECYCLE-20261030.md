@@ -41,3 +41,16 @@ seams in examples/reader.c plus windows_feature_integration.cmake. Original
 startup ten cases, record 27 + refusal eight and recovery 270 retain their exact
 source-specific acceptance; none is transferred here. All builds/tests run only
 in Actions. No local test or syntax result is acceptance evidence.
+
+## Source-specific Actions evidence
+Source 2d75d769c88198bd4e0b9e32bada7f90b906abfc independently completed
+run 41019162986 attempt 1, job 123942277359, success on 2026-10-30.
+The seven-new-path admission guard, default-OFF target check and all 16
+contract groups passed with MSVC /W4 /WX. Artifact 12960897330 is named
+migration-host-controller-41019162986-1, size 2433 bytes; GitHub API digest:
+1521821fdd066bc6eb0c0030b31f2539bd7ba96a988a7b8a4d01878920b5162e.
+This digest is API metadata, not an independently downloaded/rehashed ZIP.
+No ZIP was downloaded or parsed outside Actions. This result applies only to
+the stated source; this evidence-document commit requires its own run.
+Actual host seams and existing integration CMake remain unchanged: the engine
+owner confirms shared lifetime admission/reopen lease is not implemented.
