@@ -63,3 +63,14 @@ no requests; no synthetic marker in package temp files; 3 worker threads sampled
 **Kept RED (product defect):** `s3_failed_B_save_does_not_let_stale_A_secret_sync_as_B` - after saving B fails, Sync
 stays enabled and 257 requests go out with the stale A secret. Matches the read-only finding in `acct_set_job` (old
 in-memory secret not cleared when `exr_credentials_put` fails). Not fixed here: product change is outside this package.
+
+## Product fix (user-authorized, branch `codex/claude-h02-acct-fix-20261030`)
+Source `33ac44e2499fa0ed1992b776b819848cce925cfe` on top of H02 `296881e7`: `acct_set_job` now calls `acct_secret_clear(o)`
+when the requested credentials are not adopted (one line in `apps/reader/desktop/windows_accounts.inc`). The H02 workflow
+also runs on this branch and its scope guard admits only that product file. Tests and assertions are unchanged.
+
+Run 41146619827 attempt 1: **success, 14/14**. Probe job 124373109277, host job 124373269896.
+Artifacts: probe 13021071869 (831 B, zip sha256 e5c018f3f6eac371d6ee3a6ca86c63413581758f109e7da118f6517f28b80e2b);
+host 13020688622 (1568 B, zip sha256 4348c3b235c8f42e8374d5de1c3b7619af5e11b8ea88262484e2ea6a7101dc15).
+S3 now: Sync disabled after the failed B save, 0 requests with A. 6 worker threads sampled, none with a thread token.
+The H02 branch itself is unchanged and still shows S3 red (run 41145383847) as the pre-fix evidence.
