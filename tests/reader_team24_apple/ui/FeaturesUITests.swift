@@ -74,18 +74,18 @@ final class FeaturesUITests: XCTestCase {
                 scroll.scroll(byDeltaX: 0, deltaY: above ? 140 : -140)
 #else
                 let center = CGPoint(x: viewport.midX, y: viewport.midY)
-                let distance = min(viewport.height * 0.6,
+                let distant = abs(targetFrame.midY - center.y) > viewport.height
+                let distance = min(viewport.height * (distant ? 0.78 : 0.6),
                                    max(viewport.height * 0.1, abs(targetFrame.midY - center.y)))
                 let origin = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
                 let start = origin.withOffset(CGVector(dx: viewport.midX,
-                    dy: viewport.minY + viewport.height * (above ? 0.2 : 0.8)))
+                    dy: viewport.minY + viewport.height * (above ? (distant ? 0.1 : 0.2) : (distant ? 0.9 : 0.8))))
                 let end = start.withOffset(CGVector(dx: 0, dy: above ? distance : -distance))
                 // A distant section needs a real native flick rather than
                 // repeating short, fully arrested drags through every section.
                 // Near the target retain the controlled drag and stop momentum.
-                let distant = abs(targetFrame.midY - center.y) > viewport.height
                 start.press(forDuration: 0.01, thenDragTo: end,
-                            withVelocity: distant ? .fast : .slow,
+                            withVelocity: distant ? XCUIGestureVelocity(1600) : .slow,
                             thenHoldForDuration: distant ? 0 : 0.05)
 #endif
             }
@@ -196,17 +196,25 @@ final class FeaturesUITests: XCTestCase {
         let folder = app.cells.matching(NSPredicate(
             format: "identifier == %@ OR label BEGINSWITH %@",
             "EXReaderAnnotations, Folder", "EXReaderAnnotations,")).firstMatch
+        let browse = app.buttons["Browse"].firstMatch
+        // A freshly presented Files controller loads its sidebar asynchronously.
+        // Choose a real available navigation control before deciding its location.
+        XCTAssertTrue(wait {
+            directory.exists || (local.exists && local.isHittable) ||
+            (browse.exists && browse.isHittable)
+        }, app.debugDescription)
         if !directory.exists {
-            if !local.exists {
-                let browse = app.buttons["Browse"].firstMatch
-                if browse.waitForExistence(timeout: 5) && browse.isHittable { browse.tap() }
-            }
-            if local.exists && local.isHittable { local.tap() }
+            if !local.exists && browse.exists && browse.isHittable { browse.tap() }
+            XCTAssertTrue(wait { local.exists && local.isHittable }, app.debugDescription)
+            local.tap()
         }
+        let newFolder = app.buttons["New Folder"].firstMatch
+        let overflow = app.buttons["OverflowBarButtonItem"].firstMatch
+        XCTAssertTrue(wait {
+            directory.exists || folder.exists || newFolder.exists || overflow.exists
+        }, app.debugDescription)
         if !directory.exists && !folder.exists {
-            let newFolder = app.buttons["New Folder"].firstMatch
             if !newFolder.exists {
-                let overflow = app.buttons["OverflowBarButtonItem"].firstMatch
                 XCTAssertTrue(wait { overflow.exists && overflow.isHittable })
                 overflow.tap()
             }
