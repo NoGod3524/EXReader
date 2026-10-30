@@ -42,3 +42,5 @@ timeout bounds. Provider maps and raw bytes are retained, but full F07 provider
 closure is not inferred from those files' mere existence. Full P0 stays false.
 
 First Actions run 41019391474 at c57f6bb8c1a753dd21afcb5c9d8d3bbc24098f7e built and installed the actual engine/worker and external consumer. Native checks: 14/21 passed; positive observation failed with six dependent receipt assertions. The retained output file existed and was readable. Reason was not logged; diagnostic-only follow-up preserves every assertion. Failed artifact 12961181839, 238731 bytes, SHA256 6d561b7cf6c1f0054f7de49af86ae3995093e7b4221cc41e6252586c4058c767 remains failed.
+
+Diagnostic run 41022244832 at 9bdb7452 failed the same 14/21 boundary: observer-live-descendants, worker exit0, worker terminal, eventual cleanup confirmed. Native122 was not yet attributable because the query boolean conflated query errors and active counts. Follow-up records actual query error/count and at most1s of observations within the original overall timeout; initial nonzero/query error still fails even if later zero. No acceptance or timeout relaxation.

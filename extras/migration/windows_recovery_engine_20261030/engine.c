@@ -16,6 +16,7 @@ int lm_we_observe(wr_context *root,HANDLE target,const WCHAR *worker_path,
  HANDLE inherited[3];wr_process process={0};wr_identity target_before,target_after,image_id,parent_id;
  lm_we_request request;lm_we_response *response=NULL;size_t length=0;
  char hash[65],target_hash[65];DWORD wrote=0,status=STILL_ACTIVE;WCHAR command[WR_PATH+80],target_path[WR_PATH];int ok=0,started=0;
+ ULONGLONG observation_deadline=GetTickCount64()+timeout_ms;
  SECURITY_ATTRIBUTES sa={sizeof(sa),NULL,TRUE};
  if(!out)return fail(e,"observer-result-null");
  memset(out,0,sizeof(*out));memset(&request,0,sizeof(request));
@@ -53,7 +54,26 @@ int lm_we_observe(wr_context *root,HANDLE target,const WCHAR *worker_path,
  started=1;
  if(!wr_wait(&process,timeout_ms,&status,e))goto done;
  out->worker_terminal=1;out->worker_exit=status;
- if(!empty_job(job)){fail(e,"observer-live-descendants");goto done;}
+ {JOBOBJECT_BASIC_ACCOUNTING_INFORMATION accounting;BOOL queried;
+  SetLastError(ERROR_SUCCESS);
+  queried=QueryInformationJobObject(job,JobObjectBasicAccountingInformation,&accounting,sizeof(accounting),NULL);
+  out->job_query_error=queried?ERROR_SUCCESS:GetLastError();
+  out->active_initial=out->active_last=queried?accounting.ActiveProcesses:MAXDWORD;
+  if(!queried||accounting.ActiveProcesses){
+   /* Diagnostic only: original immediate-zero assertion still fails even if
+      accounting later reaches zero. Observations never extend total timeout. */
+   ULONGLONG until=GetTickCount64()+1000;if(until>observation_deadline)until=observation_deadline;
+   while(queried&&out->active_last&&GetTickCount64()+10<=until){
+    Sleep(10);SetLastError(ERROR_SUCCESS);
+    queried=QueryInformationJobObject(job,JobObjectBasicAccountingInformation,&accounting,sizeof(accounting),NULL);
+    out->diagnostic_samples++;
+    if(!queried){out->job_query_error=GetLastError();break;}
+    out->active_last=accounting.ActiveProcesses;
+   }
+   SetLastError(out->job_query_error?out->job_query_error:ERROR_BUSY);
+   fail(e,"observer-live-descendants");goto done;
+  }
+ }
  out->descendants_terminal=1;
  if(status||!wr_recheck(root,e)||!wr_identity_get(target,0,&target_after,e)||
  !wr_identity_equal(&target_before,&target_after)){fail(e,"observer-terminal-or-identity");goto done;}

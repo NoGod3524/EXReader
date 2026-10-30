@@ -5,7 +5,7 @@
 typedef enum { LM_WE_REFUSED=0,LM_WE_OBSERVED=1,LM_WE_UNCERTAIN=2 } lm_we_state;
 typedef struct {
  lm_we_state state;
- DWORD worker_exit;
+ DWORD worker_exit,job_query_error,active_initial,active_last,diagnostic_samples;
  int worker_terminal,descendants_terminal;
  char source[41],nonce[33],root[49],parent[49],target[49];
  char worker_sha[65],target_sha[65];
