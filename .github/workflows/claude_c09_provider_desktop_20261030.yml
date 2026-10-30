@@ -1,0 +1,97 @@
+name: Claude C09 Windows and macOS final-program provider audit
+on:
+  push:
+    branches: [claude/dot-c09-provider-desktop-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Additions-only source scope and synthetic protocol cases
+        run: |
+          python3 scripts/audit/claude_c09_provider_desktop_20261030.py guard
+          python3 scripts/audit/claude_c09_provider_desktop_20261030.py selftest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c09-protocol-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/provider-desktop/
+          if-no-files-found: warn
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Syntax check of owned files
+        shell: bash
+        run: python -m py_compile tests/reader_provider_desktop_remaining_20261030/*.py scripts/audit/claude_c09_provider_desktop_20261030.py
+      - name: Verify SDK candidate identity (owner recipe precondition)
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt
+      - name: Build unchanged same-source Windows SDK 3.42 products and final host program
+        id: build
+        shell: bash
+        run: python tests/windows_sdk342/build.py
+      - name: Audit actual final Windows program, link map and installed libraries
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        shell: bash
+        run: python scripts/audit/claude_c09_provider_desktop_20261030.py windows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c09-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/provider-desktop/
+            build/windows-sdk342/logs/
+            build/windows-sdk342/host/CMakeCache.txt
+            build/windows-sdk342/host/windows-host.map
+            build/windows-sdk342/host/EXReaderWave3.exe
+            build/windows-sdk342/package/report.json
+            build/windows-sdk342/package/build.json
+            build/windows-sdk342/package/EXReader/EXReader.exe
+          if-no-files-found: warn
+          include-hidden-files: true
+  macos:
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Syntax check of owned files
+        run: python3 -m py_compile tests/reader_provider_desktop_remaining_20261030/*.py scripts/audit/claude_c09_provider_desktop_20261030.py
+      - name: Build unchanged same-source macOS SDK 3.42 products and final host program
+        id: build
+        run: python3 tests/apple_sdk342_package/run.py --target macos
+      - name: Audit actual final macOS program, link map and installed libraries
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: python3 scripts/audit/claude_c09_provider_desktop_20261030.py macos
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c09-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/provider-desktop/
+            build/apple-sdk342/macos/identity.json
+            build/apple-sdk342/macos/host/build.json
+            build/apple-sdk342/macos/host/product-link.json
+            build/apple-sdk342/macos/host/product-link.map
+            build/apple-sdk342/macos/host/product-link.map.symbols.txt
+            build/apple-sdk342/macos/host/product-link.map.dependencies.txt
+            build/apple-sdk342/macos/host/EXReader.app/Contents/MacOS/EXReader
+            build/apple-sdk342/macos/products/share/exreader-apple/product.json
+          if-no-files-found: warn
+          include-hidden-files: true
