@@ -40,6 +40,10 @@ def main():
     elif command == 'selftest':
         subprocess.check_call([sys.executable, '-m', 'py_compile', *map(str, sorted(Path(C.ROOT / C.OWNED).glob('*.py'))), str(C.ROOT / C.AUDITOR)])
         subprocess.check_call([sys.executable, str(C.ROOT / C.OWNED / 'test_fp.py')])
+        subprocess.check_call([sys.executable, str(C.ROOT / C.OWNED / 'test_retro.py')])
+    elif command == 'retro':
+        import fp_retro
+        fp_retro.main()
     elif command in ('linux', 'collect'):
         config = linux_config() if command == 'linux' else json.loads(Path(sys.argv[2]).read_text())
         out = C.OUT / config['platform']

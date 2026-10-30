@@ -5,7 +5,26 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
+  retro:
+    needs: protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate original 47-finding artifact and later artifact; classify (separate sources)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/audit/claude_dot_f07_provider_20261030.py retro
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f07-provider-retro-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/final-provider/retro/retro-result.json
+          if-no-files-found: warn
   protocol:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
