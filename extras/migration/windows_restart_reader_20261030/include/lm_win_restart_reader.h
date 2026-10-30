@@ -35,13 +35,17 @@ typedef struct {
  * re-initialise a zero-length file, clearing PENDING. The reader therefore settles
  * the snapshot again immediately after acquiring, under its own window. When the
  * settled bytes are a fresh initialisation (generation zero, PENDING cleared) the
- * exact pre-acquire 80 bytes are written back, because a legitimate commit from
- * generation zero would have left generation one and cannot produce that shape;
- * the reader then refuses custody with restart-lease-window-restored but leaves the
- * domain's PENDING isolation intact. Any other movement refuses with
- * restart-lease-window-race. Both retentions keep the exclusive lease held, so
- * shared admission stays closed until the caller closes the object; the object is
- * only released early when no lease was ever acquired.
+ * exact pre-acquire 80 bytes are written back through the pinned handle, because a
+ * legitimate commit from generation zero would have left generation one and cannot
+ * produce that shape; the reader then refuses custody with
+ * restart-lease-window-restored but leaves the domain's PENDING isolation intact.
+ * Any other movement refuses with restart-lease-window-race. Both retentions keep
+ * the exclusive lease held, so shared admission stays closed until the caller
+ * closes the object; the object is only released early when no lease was ever
+ * acquired.
+ * The pin therefore carries write access, used only for that proven repair: a
+ * shared byte-range lock over [0,80) blocks every other handle, so a repair from a
+ * second handle cannot work. No other path in this adapter writes the lease.
  * Residual: a re-initialisation that cannot be proven from the bytes, or the
  * window before this adapter ever saw the file, cannot be repaired here, and the
  * provider still owns that defect.

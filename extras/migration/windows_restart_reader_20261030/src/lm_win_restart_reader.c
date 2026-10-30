@@ -97,7 +97,11 @@ static int lease_pin(lm_rr *r,const WCHAR *dir,const char id[49],uint64_t want,w
  memcpy(r->identity,id,49);
  if(swprintf(path,WR_PATH+64,L"%ls\\%ls",dir,leaf)<0)return refuse(e,"restart-lease-path");
  wcscpy(r->lease_path,path);
- r->lease_file=CreateFileW(path,GENERIC_READ|FILE_READ_ATTRIBUTES|READ_CONTROL|SYNCHRONIZE,
+/* The pin takes write access only so that a proven re-initialisation can be
+ * repaired through the same handle that owns the [0,80) window lock: a shared
+ * byte-range lock blocks writes from every other handle, including a second
+ * handle of this process. Nothing else in this adapter writes the lease. */
+ r->lease_file=CreateFileW(path,GENERIC_READ|GENERIC_WRITE|FILE_READ_ATTRIBUTES|READ_CONTROL|SYNCHRONIZE,
   FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,
   FILE_ATTRIBUTE_NORMAL|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
  if(r->lease_file==INVALID_HANDLE_VALUE)return native(e,"restart-lease-missing");
@@ -154,22 +158,15 @@ static int lease_verify(lm_rr *r,wr_error *e){
  * bytes captured under the deny-delete pin is then the only way to keep the
  * domain's PENDING isolation instead of silently opening shared admission. */
 static int lease_settle(lm_rr *r,wr_error *e){
- unsigned char hdr[RR_LEASE_SIZE];uint64_t gen,pending;HANDLE writeback;DWORD put=0;OVERLAPPED o;
+ unsigned char hdr[RR_LEASE_SIZE];uint64_t gen,pending;DWORD put=0;OVERLAPPED o;
  if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE)){native(e,"restart-lease-read");return 0;}
  if(!memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE))return 1;
  gen=read64(hdr+RR_GEN_OFFSET);pending=read64(hdr+RR_PENDING_OFFSET);
  if(gen==0&&pending==0&&r->gen_disk==0&&r->pending_disk==1&&header_ok(hdr,r->identity)){
-  /* The retained pin is deliberately read-only; the restore uses one narrow
-     writable handle opened under the exclusive lease and closed immediately. */
-  writeback=CreateFileW(r->lease_path,GENERIC_READ|GENERIC_WRITE,
-   FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-  if(writeback==INVALID_HANDLE_VALUE){native(e,"restart-lease-restore");return 0;}
+  /* Written through the pin: a shared range lock blocks every other handle. */
   memset(&o,0,sizeof(o));
-  if(!WriteFile(writeback,r->lease_snapshot,RR_LEASE_SIZE,&put,&o)||put!=RR_LEASE_SIZE||
-     !FlushFileBuffers(writeback)){
-   native(e,"restart-lease-restore");CloseHandle(writeback);return 0;
-  }
-  CloseHandle(writeback);
+  if(!WriteFile(r->lease_file,r->lease_snapshot,RR_LEASE_SIZE,&put,&o)||put!=RR_LEASE_SIZE||
+     !FlushFileBuffers(r->lease_file)){native(e,"restart-lease-restore");return 0;}
   if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE)||
      memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE)){refuse(e,"restart-lease-restore");return 0;}
   r->lease_restored=1;return 2;
