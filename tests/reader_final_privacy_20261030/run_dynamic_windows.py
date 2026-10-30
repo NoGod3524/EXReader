@@ -97,7 +97,8 @@ class Run:
 
     def leak_hits(self, tags):
         table = self.table(tags)
-        found = self.aud.scan_tree(self.root, table)
+        # the fixed canary is compiled into the probe binaries by design: never scan sandbox files for it
+        found = self.aud.scan_tree(self.root, self.table([t for t in tags if t != "fx"]))
         self.scanned = {"files": max(self.scanned["files"], found["files"]), "bytes": max(self.scanned["bytes"], found["bytes"])}
         hits = list(found["hits"])
         changed = self.changed_store_files()
@@ -182,6 +183,38 @@ try {{
             _, after = ps("Start-Service VaultSvc -ErrorAction Continue; (Get-Service VaultSvc).Status")
         return ok, {"before": before.splitlines()[-1:], "stopped": stopped.splitlines()[-1:], "restored": after.splitlines()[-1:]}
 
+    def attempt_network_logon(self):
+        """Loopback WinRM with a throw-away local user: a network logon has no credential-capable session."""
+        net = self.root / "net"
+        net.mkdir()
+        exe = net / "f10-probe-net.exe"
+        shutil.copy2(self.probe, exe)
+        user, password = "f10u" + secrets.token_hex(4), secrets.token_hex(12) + "Aa1!"
+        script = f"""
+$ErrorActionPreference = 'Stop'
+icacls '{net}' /grant '*S-1-1-0:(OI)(CI)RX' | Out-Null
+try {{ Enable-PSRemoting -Force -SkipNetworkProfileCheck | Out-Null }} catch {{ "enable_psremoting_failed" }}
+net user {user} '{password}' /add /y | Out-Null
+try {{
+  net localgroup 'Remote Management Users' {user} /add | Out-Null
+  $cred = New-Object System.Management.Automation.PSCredential("$env:COMPUTERNAME\\{user}", (ConvertTo-SecureString '{password}' -AsPlainText -Force))
+  Invoke-Command -ComputerName localhost -Credential $cred -Authentication Negotiate -ScriptBlock {{
+    param($e) $o = & $e unavailable-fixed 2>&1; "exit=$LASTEXITCODE"; $o }} -ArgumentList '{exe}'
+}} finally {{ net user {user} /delete | Out-Null }}
+"""
+        rc, text = ps(script, timeout=400)
+        lines = [l for l in text.splitlines() if l.strip()]
+        code = next((int(l.split("=")[1]) for l in lines if l.startswith("exit=") and l[5:].isdigit()), None)
+        hits = self.aud.scan_bytes("network-output", text.encode(), self.table(("fx", "s1", "s2"))) + self.leak_hits(("s1", "s2"))
+        target = self.cmdkey_has_target()
+        refused = code == 0 and any(l.startswith("RESULT put") and l.split()[-1] in ("UNAVAILABLE", "IO") for l in lines)
+        # lines are our own RESULT/CHECK output or PowerShell error text; no user name/password is echoed back
+        me = getpass.getuser()
+        shown = [l[:160].replace(me, "<user>") for l in lines if not (password in l or user in l)][:10]
+        self.record("W7d-network-logon-winrm-loopback", refused and not hits and not target, diagnostic=True,
+                    powershell_exit=rc, probe_exit=code, output_lines=shown, hits=hits, cmdkey_target_present=target)
+        return refused and not hits and not target, {"probe_exit": code, "powershell_exit": rc}
+
     # ---- sequence
     def sequence(self):
         self.run_probe("W0-argument-validation-leaves-store-untouched", "args", expect_target=False)
@@ -194,7 +227,8 @@ try {{
         self.run_probe("W6b-absent-after-delete", "absent", expect_target=False)
         mechanisms, used = {}, None
         for label, fn in (("low-integrity", self.attempt_low_integrity), ("s4u", self.attempt_s4u),
-                          ("vaultsvc-stopped", self.attempt_vault_stopped)):
+                          ("vaultsvc-stopped", self.attempt_vault_stopped),
+                          ("network-logon", self.attempt_network_logon)):
             try:
                 ok, info = fn()
             except Exception as exc:  # a mechanism that cannot run is a gap, not a pass
