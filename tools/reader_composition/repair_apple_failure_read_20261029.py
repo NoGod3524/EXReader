@@ -8,6 +8,7 @@ PINS={
  "common343":("343bb94eb6513beaf5b344e7828342f6602a3b7b",40946894035,123726898357,12941146187,476424539,"b5037093b8da93b3ff779bead2a0dcc21971f18221f64f7326f236ed80a94b9c"),
  "helper141":("141304d36e451d34c2720f74ce0b3da4f412df3a",40958251556,123750471325,12939157786,470359292,"17237d31e21df747d4baf771f918947886428aec9eef5e37746caabcedde6a18")}
 PINS["features550-ipad"]=("550556de68ba1d861cc3fcce8f4a60a66706f7c2",40982450461,123826706940,12945688879,186995142,"5277167b985c1063abd4ab907cf850ad5ea7ea660bdfcec1184ff94cd432e67c")
+PINS["features550-iphone"]=("550556de68ba1d861cc3fcce8f4a60a66706f7c2",40982450461,123826707004,12945943862,203429036,"a123ebd1a4748e07e6683aad7efc5839a398442e942ca4072e3cbf76dc45e2aa")
 p=argparse.ArgumentParser();p.add_argument("--input",choices=PINS,required=True);args=p.parse_args()
 source,run,jobid,aid,size,digest=PINS[args.input]
 out=Path("build/repair-apple-failure")/args.input;out.mkdir(parents=True,exist_ok=True)
