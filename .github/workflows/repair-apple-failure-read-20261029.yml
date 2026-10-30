@@ -1,32 +1,24 @@
-name: Current repair Apple retained first assertions
+name: Current repair Apple retained original-save assertion
 on:
   push:
     branches: [codex/dot-apple-diagnostic-20261030]
-    paths: ['tools/reader_composition/repair_apple_failure_read_20261029.py', '.github/workflows/repair-apple-failure-read-20261029.yml']
+    paths: ['tools/reader_composition/dot_apple_original_failure_read_20261030.py', '.github/workflows/repair-apple-failure-read-20261029.yml']
 permissions: {contents: read, actions: read}
 jobs:
-  inspect:
+  inspect-original:
     runs-on: macos-15
     timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        input: [featuresa91-macos]
     steps:
       - uses: actions/checkout@v4
       - env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tools/reader_composition/repair_apple_failure_read_20261029.py --input '${{ matrix.input }}'
+        run: python3 tools/reader_composition/dot_apple_original_failure_read_20261030.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: repair-apple-failure-read-${{ matrix.input }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: dot-apple-original-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            build/repair-apple-failure/${{ matrix.input }}/summary.json
-            build/repair-apple-failure/${{ matrix.input }}/tests.json
-            build/repair-apple-failure/${{ matrix.input }}/legacy-issues.json
-            build/repair-apple-failure/${{ matrix.input }}/failure-context.json
-            build/repair-apple-failure/${{ matrix.input }}/receipt.json
-            build/repair-apple-failure/${{ matrix.input }}/history-timeline.json
-            build/repair-apple-failure/${{ matrix.input }}/native-trees.json
+            build/dot-apple-original-failure/*.json
+            build/dot-apple-original-failure/native.log
+            build/dot-apple-original-failure/attachments/
           if-no-files-found: error
