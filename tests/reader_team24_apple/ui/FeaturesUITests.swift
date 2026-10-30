@@ -231,20 +231,31 @@ final class FeaturesUITests: XCTestCase {
             "DOC.browsingRoot Source: com.apple.FileProvider.LocalStorage, Title: ",
             "On My iPhone", "On My iPad", "我的 iPhone", "我的 iPad")).firstMatch
         let currentDirectoryMenu = app.buttons["EXReaderAnnotations, Actions Menu"].firstMatch
-        func inDirectory() -> Bool {
-            (currentDirectoryMenu.exists && localRoot.exists) || directory.exists
+        func observeDirectory(knownRoot: Bool? = nil) -> (directory: Bool, root: Bool?) {
+            var root = knownRoot
+            if currentDirectoryMenu.exists {
+                if root == nil { root = localRoot.exists }
+                if root == true { return (true, root) }
+            }
+            return (directory.exists, root)
         }
+        func inDirectory() -> Bool { observeDirectory().directory }
         let browse = app.buttons["Browse"].firstMatch
         XCTAssertTrue(wait {
-            localRoot.exists || inDirectory() || (local.exists && local.isHittable) ||
+            let root = localRoot.exists
+            return root || observeDirectory(knownRoot: root).directory || (local.exists && local.isHittable) ||
             (browse.exists && browse.isHittable)
         }, app.debugDescription)
-        if !inDirectory() && !localRoot.exists {
+        let entry = observeDirectory()
+        if !entry.directory && !(entry.root ?? localRoot.exists) {
             if !(local.exists && local.isHittable) && browse.exists && browse.isHittable { browse.tap() }
             XCTAssertTrue(wait { localRoot.exists || (local.exists && local.isHittable) }, app.debugDescription)
             if !localRoot.exists { local.tap() }
         }
-        XCTAssertTrue(wait { inDirectory() || localRoot.exists }, app.debugDescription)
+        XCTAssertTrue(wait {
+            let position = observeDirectory()
+            return position.directory || (position.root ?? localRoot.exists)
+        }, app.debugDescription)
         if markdown && !inDirectory() {
             // The first JSONL export in the unchanged case created this folder.
             XCTAssertTrue(wait { inDirectory() || (folder.exists && folder.isHittable) }, app.debugDescription)
