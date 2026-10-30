@@ -625,6 +625,15 @@ def main():
                                   capture_output=True, text=True, timeout=45)
         assert prepared.returncode == 0
         prepared_value = json.loads(prepared.stdout)
+        assert prepared_value['status'] == 3 and prepared_value['revision_status'] == 5 and not prepared_value['created'] and not prepared_value['applied'], prepared_value
+        assert ids(protocol(a, 'heads', kind_of(a, book), book)['heads']) == book_parents
+        record('over_4096_characters_is_rejected_without_new_revision', rejected_characters=5000)
+        long_title, long_author = chr(0x4e66) * 4096, chr(0x4eba) * 4096
+        title_file.write_text(long_title)
+        author_file.write_text(long_author)
+        prepared = subprocess.run([str(args.command_consumer.resolve()), 'book', str(db_path(a)), '-', ','.join(book_parents), '0', book, 'txt', sha(body), str(len(body)), '1', str(title_file), str(author_file), str(sort_file)], capture_output=True, text=True, timeout=45)
+        assert prepared.returncode == 0
+        prepared_value = json.loads(prepared.stdout)
         assert prepared_value['status'] == 0 and prepared_value['applied'], prepared_value
         exact_metadata = (long_title, long_author, long_sort, 1)
         assert sql(a, 'SELECT title,author,sort_title,favorite FROM reader_books WHERE book_key=?', (book,)) == [exact_metadata]
@@ -672,7 +681,7 @@ def main():
         record('native_removed_books_restore_after_restart_preserves_delete_parent',
                restore_revision=restore_id, deleted_revision=delete_id)
         assert sql(a, 'SELECT title,author,sort_title,favorite FROM reader_books WHERE book_key=?', (book,)) == [exact_metadata]
-        record('restore_preserves_5000_character_fields_and_distinct_sort_exactly', title_bytes=5000, author_bytes=5000, setup='installed public typed command; no SQL mutation')
+        record('restore_preserves_4096_multibyte_fields_and_distinct_sort_exactly', title_bytes=12288, author_bytes=12288, setup='installed public typed command; no SQL mutation')
         report['book_delete_restore'] = {'accepted': True, 'delete_revision': delete_id,
                                         'restore_revision': restore_id, 'restart': True}
 
@@ -690,7 +699,7 @@ def main():
             assert not any(form in v for form in forms for v in entries.values())
         assert not leaks, leaks
         record('synthetic_credentials_absent_from_preserved_evidence')
-        assert len(checks) == 7
+        assert len(checks) == 8
         report.update(accepted=True, count=len(checks), observations=observations,
                       request_count=len(requests), credential_leak_hits=0,
                       peers={n: {'account_id': p.account_id, 'pid': pids[n]} for n, p in peers.items()})
