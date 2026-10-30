@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        input: [features908-iphone]
+        input: [features8eda-ipad, features8eda-iphone]
     steps:
       - uses: actions/checkout@v4
       - env:
