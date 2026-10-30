@@ -157,8 +157,12 @@ static int namespace_check(lm_rr *r,wr_error *e){
 int lm_rr_check(lm_rr *r,wr_error *e){
  unsigned i;int source,dest;
  if(!r||r->classification==LM_RR_REFUSED||r->classification==LM_RR_NAMESPACE_CONFLICT||
-    !r->qualified||!lease_check(r,e)||!wr_recheck(&r->context,e)||!namespace_check(r,e))
-  return refuse(e,"restart-not-qualified");
+    !r->qualified)return refuse(e,"restart-not-qualified");
+ /* Keep the specific reason: a lease drift must never be reported as a generic
+    qualification failure, because the two require different operator responses. */
+ if(!lease_check(r,e))return 0;
+ if(!wr_recheck(&r->context,e))return 0;
+ if(!namespace_check(r,e))return 0;
  if(!presence(r->source,&source,e)||!presence(r->dest,&dest,e)||
     source==dest||dest!=r->published)return refuse(e,"restart-namespace-changed");
  for(i=0;i<r->opened;i++)if(!hash(r->files[i],&r->ids[i],LM_WR_RECORD_MAX,r->hashes[i],e)||
