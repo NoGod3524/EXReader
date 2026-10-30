@@ -67,6 +67,12 @@ jobs:
           cmake -S tests/reader_metadata/consumer -B build/f05-metadata-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX"
           cmake --build build/f05-metadata-consumer --parallel 4 --verbose 2>&1 | tee build/f05-logs/metadata-consumer-build.log
           python3 tests/reader_metadata/check_metadata.py --consumer build/f05-metadata-consumer/metadata-consumer --c-consumer build/f05-metadata-consumer/metadata-c-consumer --command-consumer build/f05-command-consumer/command-consumer --product-prefix "$ACCOUNT_PREFIX" --link-map build/f05-metadata-consumer/metadata-link.map --build-log build/f05-logs/metadata-consumer-build.log --output build/f05-metadata-regression-evidence
+      - name: Installed removed-book API bounded paging regressions
+        run: |
+          cmake -S tests/reader_f05_remaining_20261030 -B build/f05-paging -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX"
+          cmake --build build/f05-paging --parallel 4
+          mkdir -p build/f05-paging-evidence
+          build/f05-paging/removed-paging build/f05-paging-evidence/catalog.sqlite | tee build/f05-paging-evidence/result.json
       - name: Install the repository SDK and public original export module
         run: |
           cmake --preset reading-library 2>&1 | tee build/f05-logs/sdk-configure.log
@@ -108,6 +114,7 @@ jobs:
             build/f05-host-evidence/
             build/f05-host-live-evidence/
             build/f05-metadata-regression-evidence/
+            build/f05-paging-evidence/
             build/f05-package/build.json
             build/f05-package/runtime-dependencies.txt
             build/f05-revision-consumer/revision-consumer
