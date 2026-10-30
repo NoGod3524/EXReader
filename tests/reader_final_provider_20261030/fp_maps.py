@@ -207,3 +207,104 @@ def sqlite_reference_rows(evidence, canon=lambda s: s):
                 unselected_candidates=[dict(archive=a, member=m, role=classify(a, roles)) for a, m in both if (a, m) not in selected],
                 status='resolved_by_selected_product' if chosen and all(classify(a, roles) == 'product' for a, _ in chosen) and len(chosen) == 1 else 'PROBLEM'))
     return rows
+
+
+NM_OBJECT = re.compile(r'^(?P<path>.+?\.o):\s*(?P<addr>[0-9a-fA-F]*)\s+(?P<kind>[A-Za-z?-])\s+(?P<sym>\S+)\s*$')
+
+
+def parse_nm_object(text):
+    """`nm -A -g` over one loose object file -> a single member row (same shape as an archive member)."""
+    row = dict(defined=set(), weak=set(), undefined=set())
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        m = NM_OBJECT.match(line)
+        if not m:
+            _fail('unrecognised object nm line: ' + line[:120])
+        kind = m.group('kind')
+        if kind == 'U':
+            row['undefined'].add(m.group('sym'))
+        elif kind in ('w', 'W', 'v', 'V'):
+            row['weak'].add(m.group('sym'))
+        elif kind in STRONG:
+            row['defined'].add(m.group('sym'))
+        elif kind.islower() or kind in ('A', '?', '-'):
+            continue
+        else:
+            _fail('unsupported nm kind ' + kind)
+    return row
+
+
+DYN_SYM = re.compile(r'^\s*\d+:\s+[0-9a-fA-F]+\s+\d+\s+(?P<type>\w+)\s+(?P<bind>\w+)\s+(?P<vis>\w+)\s+(?P<ndx>\S+)\s+(?P<name>\S+?)(?:\s+\(\d+\))?\s*$')
+
+
+def parse_dyn_syms(text):
+    """`readelf -W --dyn-syms` -> [dict(name, version, bind, ndx, type)] preserving ELF symbol versions."""
+    if 'Symbol table' not in text:
+        _fail('not a readelf dynamic symbol table')
+    rows = []
+    for line in text.splitlines():
+        if not re.match(r'^\s*\d+:', line):
+            continue
+        m = DYN_SYM.match(line)
+        if not m:
+            if re.match(r'^\s*\d+:\s+[0-9a-fA-F]+\s+\d+\s+\w+\s+\w+\s+\w+\s+\S+\s*$', line):
+                continue  # unnamed null-symbol rows carry no name
+            _fail('unrecognised dynamic symbol line: ' + line[:120])
+        name, _, version = m.group('name').partition('@')
+        rows.append(dict(name=name, version=version.lstrip('@') or None, bind=m.group('bind'),
+                         ndx=m.group('ndx'), type=m.group('type')))
+    return rows
+
+
+def parse_verneed(text):
+    """`readelf -W -V` -> {needed file: [versions]} from the version-needs section only."""
+    needs, current, inside = {}, None, False
+    for line in text.splitlines():
+        if line.startswith('Version needs section'):
+            inside = True
+            continue
+        if line.startswith('Version ') and inside:
+            inside = False
+        if not inside:
+            continue
+        f = re.search(r'File:\s*(\S+)', line)
+        if f:
+            current = f.group(1)
+            needs.setdefault(current, [])
+            continue
+        n = re.search(r'Name:\s*(\S+)', line)
+        if n:
+            if current is None:
+                _fail('version name before file in verneed')
+            needs[current].append(n.group(1))
+    return needs
+
+
+def audit_dynamic(dynamic):
+    """Final-image dynamic imports/exports and ELF symbol versions.
+
+    Returns (findings, pending). Weak undefined imports and unversioned imports are NOT waived:
+    they are listed as pending because proving them needs the exact system DSO exports.
+    """
+    findings, pending = [], []
+    needed, verneed = set(dynamic['needed']), dynamic['verneed']
+    for file in sorted(set(verneed) - needed):
+        findings.append(dict(kind='verneed_file_not_needed', file=file))
+    seen_versions = {v for file in verneed for v in verneed[file]}
+    weak, unversioned = [], []
+    for sym in dynamic['symbols']:
+        if sym['name'].startswith('sqlite3'):
+            findings.append(dict(kind='dynamic_sqlite_symbol', symbol=sym['name'], version=sym['version'], ndx=sym['ndx']))
+        undefined = sym['ndx'] == 'UND'
+        if undefined and sym['version'] and sym['version'] not in seen_versions:
+            findings.append(dict(kind='dynamic_version_not_in_verneed', symbol=sym['name'], version=sym['version']))
+        if undefined and sym['bind'] == 'WEAK':
+            weak.append(sym['name'] + ('@' + sym['version'] if sym['version'] else ''))
+        elif undefined and not sym['version']:
+            unversioned.append(sym['name'])
+    if weak:
+        pending.append(dict(kind='weak_undefined_imports_unproven', symbols=sorted(weak)))
+    if unversioned:
+        pending.append(dict(kind='unversioned_imports_unproven_without_system_dso', count=len(unversioned), symbols=sorted(unversioned)))
+    return findings, pending

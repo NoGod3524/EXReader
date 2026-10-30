@@ -33,6 +33,10 @@ def run(args, out):
     return done.stdout.decode('utf-8', errors='strict')
 
 
+def sha_name(path):
+    return C.sha(path.encode())[:16]
+
+
 def needed(platform, image, out):
     if platform in ('linux', 'android'):
         text = run([tool(('llvm-readelf', 'readelf')), '-d', image], out / 'needed.txt')
@@ -60,18 +64,42 @@ def collect(config, out):
     for index, archive in enumerate(config['archives']):
         text = run([nm, '-A', '-g', archive], out / 'native' / ('archive-%d.nm.txt' % index))
         archives[norm(archive)] = {m: {k: sorted(v) for k, v in row.items()} for m, row in M.parse_nm_archive(text).items()}
+    selected = [[norm(a), m] for a, m in parsed['members']]
+    pending = []
+    for loose in parsed['objects']:
+        path = norm(loose)
+        if not loose.endswith('.o'):
+            pending.append(dict(kind='non_object_map_input', input=loose))
+            continue
+        if M.classify(path, config['roles']) == 'system':
+            continue
+        selected.append([path, os.path.basename(path)])
+        if Path(path).is_file():
+            row = M.parse_nm_object(run([nm, '-A', '-g', path], out / 'native' / ('object-%s.nm.txt' % sha_name(path))))
+            archives[path] = {os.path.basename(path): {k: sorted(v) for k, v in row.items()}}
     undefined = run([nm, '-u', image], out / 'native' / 'image-undefined.nm.txt').split()
     final_undefined = [s for s in undefined if re.match(r'^[A-Za-z_][\w.@$]*$', s)]
     evidence = dict(identity=C.identity(platform, config.get('sdk_version')), platform=platform,
         image=dict(path=str(image), sha256=C.digest(image)), map=dict(path=config['map'], sha256=C.digest(config['map']),
-        format=parsed['format']), roles=config['roles'], archives=archives, selected=[[norm(a), m] for a, m in parsed['members']],
+        format=parsed['format']), roles=config['roles'], archives=archives, selected=selected,
         product_catalog_archives=config['product_catalog_archives'],
         dynamic_needed=needed(platform, image, out / 'native'), final_undefined=final_undefined,
         system_exports=config.get('system_exports', []))
     canon = (lambda s: s[1:] if s.startswith('_') else s) if config.get('apple') else (lambda s: s)
     findings = M.audit(_as_sets(evidence), canon)
+    if platform in ('linux', 'android'):
+        readelf = tool(('llvm-readelf', 'readelf'))
+        dynamic = dict(symbols=M.parse_dyn_syms(run([readelf, '-W', '--dyn-syms', image], out / 'native' / 'dyn-syms.txt')),
+                       verneed=M.parse_verneed(run([readelf, '-W', '-V', image], out / 'native' / 'versions.txt')),
+                       needed=evidence['dynamic_needed'])
+        more, waiting = M.audit_dynamic(dynamic)
+        findings += more
+        pending += waiting
+        evidence['dynamic'] = dynamic
+    else:
+        pending.append(dict(kind='dynamic_symbol_versions_not_applicable_or_not_implemented', platform=platform))
     references = M.sqlite_reference_rows(_as_sets(evidence), canon)
-    result = dict(evidence['identity'], sqlite_references=references, image=evidence['image'], map=evidence['map'], findings=findings,
+    result = dict(evidence['identity'], pending=pending, sqlite_references=references, image=evidence['image'], map=evidence['map'], findings=findings,
                   passed=not findings, selected_members=len(parsed['members']), archives=len(archives))
     for flag in C.ACCEPT_FLAGS:
         result[flag] = False

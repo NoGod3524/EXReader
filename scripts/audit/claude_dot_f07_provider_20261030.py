@@ -52,6 +52,7 @@ def main():
             raise
         from collections import Counter
         print('sqlite reference classification:', dict(Counter(r['status'] for r in report['sqlite_references'])))
+        print('pending (explicit, not waived):', json.dumps(report['pending'], sort_keys=True)[:1500])
         print('unselected sqlite candidate roles:', dict(Counter(c['role'] for r in report['sqlite_references'] for c in r['unselected_candidates'])))
         if not report['passed']:
             from collections import Counter

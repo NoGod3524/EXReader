@@ -168,6 +168,81 @@ class Audit(unittest.TestCase):
         self.assertEqual([f for f in M.audit(ev, lambda s: s[1:] if s.startswith('_') else s)], [])
 
 
+OBJ_NM = "/b/host/main.c.o:0000000000000000 T main\n/b/host/main.c.o:                 U reader_open\n"
+DYN = """Symbol table '.dynsym' contains 4 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
+     1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND malloc@GLIBC_2.2.5 (2)
+     2: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__
+     3: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND gtk_init
+"""
+VER = """Version symbols section '.gnu.version' contains 4 entries:
+Version needs section '.gnu.version_r' contains 1 entry:
+ Addr: 0x0000000000000500  Offset: 0x000500  Link: 7 (.dynstr)
+  000000: Version: 1  File: libc.so.6  Cnt: 1
+  0x0010:   Name: GLIBC_2.2.5  Flags: none  Version: 2
+"""
+
+
+class LooseObjectsAndVersions(unittest.TestCase):
+    def loose(self, defined=(), path='/opt/host/main.c.o'):
+        ev = evidence()
+        ev['archives'][path] = {'main.c.o': dict(defined=set(defined), weak=set(), undefined={'reader_open'})}
+        ev['selected'].append([path, 'main.c.o'])
+        return ev
+
+    def test_object_nm_parser(self):
+        row = M.parse_nm_object(OBJ_NM)
+        self.assertEqual((row['defined'], row['undefined']), ({'main'}, {'reader_open'}))
+        with self.assertRaises(ValueError):
+            M.parse_nm_object('not nm')
+
+    def test_clean_loose_object_accepted(self):
+        self.assertEqual(kinds(self.loose({'main'})), [])
+
+    def test_loose_object_sqlite_provider_rejected(self):
+        found = kinds(self.loose({'sqlite3_open_v2'}))
+        self.assertIn('duplicate_provider', found)
+        self.assertIn('foreign_sqlite_provider', found)
+
+    def test_loose_object_duplicating_sdk_symbol_rejected(self):
+        self.assertIn('duplicate_provider', kinds(self.loose({'reader_open'})))
+
+    def test_unowned_loose_object_rejected(self):
+        self.assertIn('unowned_link_input', kinds(self.loose({'main'}, '/tmp/stray/main.c.o')))
+
+    def test_loose_object_without_native_table_rejected(self):
+        ev = evidence()
+        ev['selected'].append(['/opt/host/ghost.c.o', 'ghost.c.o'])
+        self.assertIn('selected_member_without_native_table', kinds(ev))
+
+    def dyn(self, text=DYN, ver=VER, needed=('libc.so.6',)):
+        return M.audit_dynamic(dict(symbols=M.parse_dyn_syms(text), verneed=M.parse_verneed(ver), needed=list(needed)))
+
+    def test_versions_accepted_and_weak_left_pending(self):
+        findings, pending = self.dyn()
+        self.assertEqual(findings, [])
+        by_kind = {p['kind']: p for p in pending}
+        self.assertEqual(by_kind['weak_undefined_imports_unproven']['symbols'], ['__gmon_start__'])
+        self.assertEqual(by_kind['unversioned_imports_unproven_without_system_dso']['symbols'], ['gtk_init'])
+
+    def test_dynamic_sqlite_symbol_rejected(self):
+        text = DYN + '     4: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND sqlite3_open_v2\n'
+        self.assertEqual([f['kind'] for f in self.dyn(text)[0]], ['dynamic_sqlite_symbol'])
+
+    def test_version_not_in_verneed_rejected(self):
+        text = DYN + '     4: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND memcpy@GLIBC_2.14 (3)\n'
+        self.assertEqual([f['kind'] for f in self.dyn(text)[0]], ['dynamic_version_not_in_verneed'])
+
+    def test_verneed_file_not_in_needed_rejected(self):
+        self.assertEqual([f['kind'] for f in self.dyn(needed=())[0]], ['verneed_file_not_needed'])
+
+    def test_verneed_parser_ignores_other_sections(self):
+        self.assertEqual(M.parse_verneed(VER), {'libc.so.6': ['GLIBC_2.2.5']})
+        with self.assertRaises(ValueError):
+            M.parse_dyn_syms('nothing')
+
+
 class Scope(unittest.TestCase):
     def test_additions_only(self):
         good = ['A\t' + C.OWNED + 'x.py', 'A\t' + C.WORKFLOW, 'A\t' + C.AUDITOR, 'A\t' + C.DOC]
