@@ -1,0 +1,41 @@
+name: Claude H01 domain gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/claude-h01-domain-gate-20261030]
+    paths: [extras/migration/claude_h01_domain_gate/**, tests/claude_h01_domain_gate/**, .github/workflows/claude-h01-domain-gate-20261030.yml]
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env: {PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Additive scope admission
+        run: |
+          python - <<'PY'
+          import subprocess
+          base='6db7c3dc1005c7fd22f91b02a150bfdd671f723c'
+          paths=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines()
+          prefixes=('extras/migration/claude_h01_domain_gate/','tests/claude_h01_domain_gate/')
+          exact={'.github/workflows/claude-h01-domain-gate-20261030.yml','docs/CLAUDE-H01-DOMAIN-GATE.md'}
+          assert paths and all(p.startswith(prefixes) or p in exact for p in paths),paths
+          PY
+      - name: Gate cases
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          python -I tests/claude_h01_domain_gate/run.py evidence/h01-cases.json | tee evidence/h01-stdout.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: claude-h01-domain-gate-evidence
+          path: evidence
+          if-no-files-found: error
