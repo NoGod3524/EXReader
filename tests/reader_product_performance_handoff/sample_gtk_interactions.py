@@ -62,6 +62,55 @@ class Interactions(sample.Sampler):
         self.record(handle, 'ok', start=stamp, end=max(event['at'], paint_event['at']), event=paint_event)
         return paint_event
 
+
+    def quiet_shelf(self, watch, deadline):
+        # The frozen host saves its scroll viewport after a 300 ms idle timer.
+        # Require an unchanged viewport across that publication before new input.
+        signature, stable_at = None, None
+        while time.monotonic() < deadline:
+            event = watch.latest()
+            state = event['state'] if event else {}
+            host = state.get('host') or {}
+            ready = (sample.settled(state) and not host.get('shelf_loading')
+                     and not host.get('shelf_restoring') and not host.get('shelf_pending'))
+            current = (host.get('shelf_first_id'), host.get('shelf_last_id'),
+                       host.get('shelf_top_id'), (state.get('shelf') or {}).get('top_offset'))
+            now = time.monotonic()
+            if ready and current == signature and stable_at is not None:
+                if now - stable_at >= 0.35:
+                    return event
+            else:
+                signature, stable_at = current if ready else None, now if ready else None
+            time.sleep(0.01)
+        raise SampleError('shelf viewport did not settle within the original operation budget')
+
+    def save_scroll_trace(self, watch, since, phase, **details):
+        if not hasattr(self, 'scroll_traces'):
+            self.scroll_traces = []
+        self.scroll_traces.append(dict(launch=self.launch, phase=phase, details=details,
+                                       events=list(watch.events)[since:]))
+        (self.output / 'scroll-input-traces.json').write_text(
+            json.dumps(self.scroll_traces, indent=2) + '\n')
+
+    def prepare_interior_scroll(self, host, watch):
+        deadline = time.monotonic() + 180
+        for step in range(24):
+            event = self.quiet_shelf(watch, deadline)
+            state = event['state']['host']
+            if state.get('shelf_before') and state.get('shelf_after'):
+                self.save_scroll_trace(watch, watch.mark(), 'interior-ready', state=event['state'])
+                return
+            if not state.get('shelf_after'):
+                raise SampleError('fixed 2202-book shelf has no forward interior')
+            since = watch.mark()
+            subprocess.run(['xdotool', 'click', '--repeat', '4', '--delay', '0', '5'],
+                           check=True, timeout=30)
+            # This is a declared preparation step, not a measured/retried sample.
+            self.wait_after(watch, lambda value: sample.settled(value),
+                            max(0, deadline - time.monotonic()), since)
+            self.save_scroll_trace(watch, since, 'interior-preparation', step=step)
+        raise SampleError('bounded interior preparation did not complete')
+
     def scenario_shelf(self, index, host, watch, kind):
         if kind == 'reader_interact':
             return self.scenario_reader(index, host, watch)
@@ -77,16 +126,28 @@ class Interactions(sample.Sampler):
             if handle['status'] == 'pending':
                 self.record(handle, 'failed', note=str(error))
             return
+        self.prepare_interior_scroll(host, watch)
         for name, button in (('shelf_scroll_down', '5'), ('shelf_scroll_up', '4')):
             for _ in range(SCROLLS):
                 metric = self.expect(name)
-                top = watch.latest()['state']['host'].get('shelf_top_id')
+                deadline = time.monotonic() + 180
+                try:
+                    baseline = self.quiet_shelf(watch, deadline)
+                except SampleError as error:
+                    self.record(metric, 'failed', note=str(error))
+                    return
+                top = baseline['state']['host'].get('shelf_top_id')
                 since = watch.mark()
                 stamp = time.monotonic()
                 subprocess.run(['xdotool', 'click', '--repeat', '4', '--delay', '0', button],
                                check=True, timeout=30)
-                if self.effect_and_paint(watch, since, lambda s: s['host'].get('shelf_top_id') != top,
-                                         stamp, metric, 'shelf top row change', need_paint=False) is None:
+                observed = self.effect_and_paint(
+                    watch, since, lambda s: s['host'].get('shelf_top_id') != top,
+                    stamp, metric, 'shelf top row change',
+                    timeout=max(0, deadline - time.monotonic()), need_paint=False)
+                self.save_scroll_trace(watch, since, 'measured-scroll',
+                                       metric=name, slot=metric['slot'], baseline=baseline['state'])
+                if observed is None:
                     return
 
     def scenario_reader(self, index, host, watch):
@@ -133,9 +194,17 @@ def summarize(output, launches, planned):
         offsets = launch.get('paint_offsets_ms') or []
         intervals += [round(b - a, 3) for a, b in zip(offsets, offsets[1:])]
     problems = [r for r in rows if r['outcome'] != 'ok']
+    expected_counts = {'startup_shelf_rows': 6, 'shelf_scroll_down': 36, 'shelf_scroll_up': 36,
+                       'resume_frame_painted': 6, 'font_bigger': 18, 'font_smaller': 18,
+                       'page_turn_forward': 120}
+    for name, expected in expected_counts.items():
+        actual = len(metrics.get(name, []))
+        if actual != expected:
+            problems.append({'outcome': 'incomplete-coverage', 'metric': name,
+                             'expected': expected, 'observed': actual})
     summary = {'schema': 1, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'launches': len(launches),
-               'planned_launches': planned, 'metrics': {k: stats(v) for k, v in sorted(metrics.items())},
+               'planned_launches': planned, 'expected_counts': expected_counts, 'metrics': {k: stats(v) for k, v in sorted(metrics.items())},
                'rss_high_water_kb': [l.get('vm_hwm_kb') for l in launches],
                'inter_paint_interval_ms': stats(intervals) if intervals else None,
                'problems': problems, 'frame_time_measured': False, 'jump_measured': False,
