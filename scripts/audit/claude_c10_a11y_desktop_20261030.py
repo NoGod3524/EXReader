@@ -210,7 +210,7 @@ def selftest(_):
     broken = gtk_all('pass')
     broken['import_books_visible_on_shelf']['pass'] = False
     result = judge('gtk', broken)
-    assert result['import']['verdict'] == 'fail' and result['reading']['verdict'] == 'pass'
+    assert result['import']['verdict'] == 'fail' and result['settings']['verdict'] == 'pass'
     # a missing exit probe leaves the exit surface incomplete, never passing
     no_exit = {cid: e for cid, e in gtk_all('pass').items() if surfaces.GTK[cid][0] != 'exit'}
     assert judge('gtk', no_exit)['exit']['verdict'] != 'pass'
