@@ -41,6 +41,13 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt
+      - name: Build and install independent public OPDSHash provider (owner-documented prerequisite)
+        shell: bash
+        run: |
+          cmake -S extras/opds -B build/original-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/build/original-hash"
+          cmake --build build/original-hash-build --parallel 4
+          cmake --install build/original-hash-build
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$GITHUB_WORKSPACE/build/original-hash" >> "$GITHUB_ENV"
       - name: Build unchanged same-source Windows SDK 3.42 products and final host program
         id: build
         shell: bash

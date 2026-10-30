@@ -104,9 +104,9 @@ def collect_windows(cfg, out):
     package = Path(cfg['package_image'])
     text = Path(cfg['map']).read_text(encoding='utf-8', errors='replace')
     parsed = W.parse_msvc_map(text)
-    roles = dict(sdk=[fold(cfg['sdk']) + '/'], product=[fold(p) + '/' for p in cfg['product']],
+    roles = dict(sdk=[fold(cfg['sdk']) + '/'], product=[fold(p) + '/' for p in cfg['product']], hash=[fold(cfg['hash']) + '/'],
                  host=[link_cwd + '/'], system=[d + '/' for d in lib_dirs] + ['c:/windows/', 'c:/program files/', 'c:/program files (x86)/'])
-    installed = C.library_identities([('sdk', cfg['sdk']), *[('product', p) for p in cfg['product']], ('host', cfg['link_cwd'])],
+    installed = C.library_identities([('sdk', cfg['sdk']), *[('product', p) for p in cfg['product']], ('hash', cfg['hash']), ('host', cfg['link_cwd'])],
                                      ('.lib', '.dll', '.a'), True)
     archives, kinds = {}, {}
 
@@ -200,6 +200,26 @@ def collect_windows(cfg, out):
     return finish(evidence, lambda s: s, out, dict(pending=pending, imports=imports))
 
 
+def diagnose_unresolved(imports, stubs, sdk_path):
+    """Say why imports stayed unresolved: closure stubs consulted and SDK stubs that mention the symbol."""
+    rows = [r for r in imports if r['status'] != 'resolved']
+    wanted = {r['symbol'] for r in rows}
+    holders = {}
+    for path in Path(sdk_path).rglob('*.tbd'):
+        try:
+            text = path.read_text(encoding='utf-8', errors='replace')
+        except OSError:
+            continue
+        for symbol in wanted:
+            if symbol in text:
+                holders.setdefault(symbol, []).append(str(path.relative_to(sdk_path)))
+    for r in rows:
+        files = sorted({p for i in r.get('candidates', []) for p, _ in stubs.closure(i)})
+        r['diagnostic'] = dict(closure_stubs=[os.path.relpath(f, sdk_path) for f in files], sdk_stubs_mentioning_symbol=holders.get(r['symbol'], [])[:4])
+    for r in rows[:60]:
+        print('unresolved import:', r['symbol'], r['library'], 'weak' if r['weak'] else 'strong', r['diagnostic'], flush=True)
+
+
 # ---- macOS -------------------------------------------------------------------------------------
 
 def collect_macos(cfg, out):
@@ -288,24 +308,57 @@ def collect_macos(cfg, out):
                 'weak import (optional at runtime); provider exports the symbol' if row['weak'] else 'import resolved against the provider export table'))
         else:
             row.update(status='pending', reason='symbol_not_in_provider_stubs', candidates=libs)
+    staged('diagnose unresolved imports', pending, lambda: diagnose_unresolved(imports, stubs, sdk_path))
+
+    def dylib_identity(path):
+        """Content identity modulo ad-hoc re-signing: UUID, __TEXT dump and export table digests."""
+        uuid = re.search(r'cmd LC_UUID\s+cmdsize \d+\s+uuid ([0-9A-Fa-f-]+)', A.run_text(['otool', '-l', path]))
+        names = sorted(exports_of_dylib(str(path)))
+        return dict(path=str(path), sha256=C.digest(path), uuid=uuid.group(1) if uuid else None,
+                    text_sha256=C.sha(A.run_text(['otool', '-t', path]).encode()),
+                    exports_sha256=C.sha('\n'.join(names).encode()), exports=len(names))
+
+    def compare(name, original, copy):
+        a, b = dylib_identity(original), dylib_identity(copy)
+        same = a['uuid'] is not None and all(a[k] == b[k] for k in ('uuid', 'text_sha256', 'exports_sha256'))
+        return dict(name=name, status='ok' if same else 'mismatch', byte_identical=a['sha256'] == b['sha256'],
+                    expected_sha256=a['sha256'], actual_sha256=b['sha256'], expected=a, actual=b,
+                    note='bundled copy is ad-hoc re-signed by the owner recipe; identity is UUID + __TEXT + exports')
     for install in needed:
         if os.path.basename(install).startswith('libexreader'):
             installed_sdk = Path(cfg['sdk']) / 'lib' / os.path.basename(install)
             bundled = frameworks / os.path.basename(install)
             if installed_sdk.is_file() and bundled.is_file():
-                same = C.digest(installed_sdk) == C.digest(bundled)
-                runtime.append(dict(name=install, status='ok' if same else 'mismatch', expected_sha256=C.digest(installed_sdk),
-                                    actual_sha256=C.digest(bundled)))
+                runtime.append(staged('identity ' + install, pending, lambda i=install, a=installed_sdk, b=bundled: compare(i, a, b),
+                                      default=dict(name=install, status='mismatch', reason='identity computation failed')))
             else:
                 runtime.append(dict(name=install, status='mismatch', expected_sha256=None, actual_sha256=None,
                                     reason='installed SDK runtime or bundled copy missing'))
     for dylib in parsed['dylibs']:
         if dylib.endswith('.dylib') and os.path.basename(dylib).startswith('libexreader') and os.path.isfile(dylib):
             bundled = frameworks / os.path.basename(os.path.realpath(dylib))
-            runtime.append(dict(name='map input ' + dylib, status='ok' if bundled.is_file() and C.digest(dylib) == C.digest(bundled) else 'mismatch',
-                                expected_sha256=C.digest(dylib), actual_sha256=C.digest(bundled) if bundled.is_file() else None))
+            if bundled.is_file():
+                runtime.append(staged('identity ' + dylib, pending, lambda d=dylib, b=bundled: compare('map input ' + d, d, b),
+                                      default=dict(name='map input ' + dylib, status='mismatch', reason='identity computation failed')))
+            else:
+                runtime.append(dict(name='map input ' + dylib, status='mismatch', reason='bundled copy missing'))
     extra_findings = []
+    canon = lambda sym: sym[1:] if sym.startswith('_') else sym
+    chosen = {tuple(x) for x in selected}
+    sdk_defined = {canon(x) for a, t in archives.items() if M.classify(a, roles) == 'sdk' for row in t.values() for x in row['defined']}
+    referenced = {canon(x) for a, m in chosen if M.classify(a, roles) not in ('sdk', 'system')
+                  for x in archives.get(a, {}).get(m, {}).get('undefined', ())} & sdk_defined
+    imported = {canon(r['symbol']) for r in imports if r['status'] == 'resolved' and r['library'] == 'libexreader'}
+    for symbol in sorted(referenced - imported):
+        extra_findings.append(dict(kind='sdk_symbol_not_bound_to_sdk_runtime', symbol=symbol))
+    image_defined = {canon(x) for x in re.findall(r'external (\S+)$', A.run_text(['nm', '-m', '-g', '-U', image]), re.M)}
+    provided = {canon(x) for a, m in chosen for x in archives.get(a, {}).get(m, {}).get('defined', ())}
+    for symbol in sorted(x for x in image_defined if x.startswith('sqlite3') and x not in provided):
+        extra_findings.append(dict(kind='image_sqlite_symbol_without_selected_definer', symbol=symbol))
+    pending.append(dict(kind='swift_host_objects_not_retained', count=sum(1 for p in pending if p['kind'] == 'loose_object_not_inspectable'),
+                        note='the owner swiftc deletes its temporary objects; only the final image table covers them (SDK binding, sqlite definitions)'))
     sdk_archives = [s for s in selected if M.classify(s[0], roles) == 'sdk']
+
     if sdk_archives and any(os.path.basename(n).startswith('libexreader') for n in needed):
         extra_findings.append(dict(kind='second_sdk_provider_static_and_dynamic', members=sdk_archives[:10], count=len(sdk_archives)))
     evidence = dict(identity=C.identity('macos', cfg['sdk_version']), platform='macos',
@@ -314,7 +367,8 @@ def collect_macos(cfg, out):
                     roles=roles, archives={a: {m: {k: sorted(v) for k, v in row.items()} for m, row in t.items()} for a, t in archives.items()},
                     selected=selected, product_catalog_archives=names, product_catalog_exports=exports,
                     dynamic_needed=needed, dynamic_imports=imports, runtime_identity=runtime, extra_findings=extra_findings,
-                    installed_libraries=installed, sdk_path=sdk_path)
+                    installed_libraries=installed, sdk_path=sdk_path, sdk_runtime_dynamic=True,
+                    sdk_symbol_bindings=len(referenced & imported), image_defined_symbols=len(image_defined))
     if not names:
         owners = [s for s in selected if M.classify(s[0], roles) == 'product']
         evidence['product_catalog_archives'] = sorted({os.path.basename(s[0]) for s in owners})

@@ -23,7 +23,7 @@ def windows_config():
     host = out / 'host'
     return dict(sdk_version='3.42.0', image=host / 'EXReaderWave3.exe', package_image=out / 'package/EXReader/EXReader.exe',
                 package_dir=out / 'package/EXReader', map=host / 'windows-host.map', link_cwd=host, sdk=out / 'sdk',
-                product=[out / 'product', out / 'raw'], lib_dirs=os.environ.get('LIB', '').split(';'))
+                product=[out / 'product', out / 'raw'], hash=C.ROOT.resolve() / 'build/original-hash', lib_dirs=os.environ.get('LIB', '').split(';'))
 
 
 def macos_config():

@@ -262,6 +262,17 @@ def policy_flags_real_problems():
 
 
 @case
+def dynamic_sdk_ignores_unselected_static_sdk_archives():
+    canon = lambda s: s[1:] if s.startswith('_') else s
+    evidence = good_evidence('macos')
+    evidence['selected'] = [x for x in evidence['selected'] if x[0] != '/r/sdk/lib/libsdk.a']
+    assert C.kinds(C.policy(evidence, canon)) == {'sdk_entry_without_selected_sdk_owner': 1}
+    evidence['sdk_runtime_dynamic'] = True
+    assert C.policy(evidence, canon) == []
+    assert all(c['rejected'] for c in C.negative_controls(evidence, canon))
+
+
+@case
 def additions_only_scope():
     C.owned_paths(['A\t' + C.OWNED + 'x.py', 'A\t' + C.WORKFLOW, 'A\t' + C.AUDITOR, 'A\t' + C.DOC])
     raises(lambda: C.owned_paths(['M\t' + C.OWNED + 'x.py']), 'only new owned files allowed')

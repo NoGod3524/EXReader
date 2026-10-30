@@ -121,7 +121,12 @@ def as_sets(evidence):
 
 def policy(evidence, canon=lambda s: s):
     """Provider findings: the C05 ownership policy plus final-image dynamic rules."""
-    findings = M.audit(as_sets(evidence), canon) + [dict(f) for f in evidence.get('extra_findings', [])]
+    view = evidence
+    if evidence.get('sdk_runtime_dynamic'):
+        # The SDK is a dynamic runtime here: unselected static SDK archives are not providers.
+        chosen = {s[0] for s in evidence['selected']}
+        view = dict(evidence, archives={a: t for a, t in evidence['archives'].items() if a in chosen})
+    findings = M.audit(as_sets(view), canon) + [dict(f) for f in evidence.get('extra_findings', [])]
     for name in evidence.get('dynamic_needed', []):
         low = name.lower()
         if 'sqlite' in low and not any(f.get('name') == name for f in findings):
