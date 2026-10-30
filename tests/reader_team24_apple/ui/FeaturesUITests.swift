@@ -7,7 +7,28 @@ final class FeaturesUITests: XCTestCase {
         let tree = XCTAttachment(string: app.debugDescription); tree.name = "final-native-tree"; tree.lifetime = .keepAlways; add(tree)
         app.terminate()
     }
-    private func e(_ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
+    private func e(_ id: String) -> XCUIElement {
+#if os(iOS)
+        // Query the actual SwiftUI role instead of traversing every remote
+        // Files accessibility element after its controller is dismissed.
+        if id == "features.scroll" { return app.scrollViews.matching(identifier: id).firstMatch }
+        if id == "features.share.native" { return app.otherElements.matching(identifier: id).firstMatch }
+        let labels: Set<String> = [
+            "features.title", "features.status", "features.picker.error",
+            "features.export.filename", "features.font.selected", "features.font.observation",
+            "features.preview.summary", "features.preview.null", "features.preview.conflicts",
+            "features.preview.missing-parents", "features.preview.unresolved",
+            "features.preview.omitted", "features.preview.committed",
+            "features.annotations.identity", "features.annotations.picker-path",
+            "features.annotations.export-check", "features.sync.phase", "features.sync.reason",
+            "features.sync.pending", "features.sync.conflicts", "features.sync.operations",
+            "features.sync.more"
+        ]
+        if labels.contains(id) { return app.staticTexts.matching(identifier: id).firstMatch }
+        if id.hasPrefix("features.") { return app.buttons.matching(identifier: id).firstMatch }
+#endif
+        return app.descendants(matching: .any).matching(identifier: id).firstMatch
+    }
     private func text(_ id: String) -> String {
         guard let value = try? e(id).snapshot() else { return "" }
         return value.label.isEmpty ? (value.value as? String) ?? "" : value.label
@@ -150,6 +171,8 @@ final class FeaturesUITests: XCTestCase {
                       "Picker cannot find \(name): \(app.debugDescription)")
         mark("native-picker-selected-file-" + name)
         target.tap()
+        XCTAssertTrue(wait { self.e("features.close").isHittable },
+                      "The native Files picker did not return to the feature panel")
 #endif
     }
     private func exportThroughSystemPicker(markdown: Bool) {
