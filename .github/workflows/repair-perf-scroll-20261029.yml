@@ -1,0 +1,153 @@
+name: Repair GTK scroll sampler from retained failure
+on:
+  push:
+    branches: [codex/repair-perf-scroll-20261029]
+
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: repair-gtk-scroll-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: '1'
+defaults:
+  run:
+    shell: bash
+jobs:
+  perf:
+    name: GTK product performance sampling (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python3 tools/reader_composition/repair_perf_source_admission_20261029.py
+      - name: Record exact source and component identities
+        run: |
+          mkdir -p build/perf-guards build/perf-logs
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True).strip()
+          components = {path: git('rev-parse', 'HEAD:' + path)
+                        for path in ('src', 'include', 'apps/reader', 'examples/linux')}
+          Path('build/perf-guards/guards.json').write_text(json.dumps({
+              'head': git('rev-parse', 'HEAD'), 'github_sha': os.environ['GITHUB_SHA'],
+              'components': components}, indent=2) + '\n')
+          PY
+      - name: Install the fixed native desktop toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev libglib2.0-dev pkg-config ninja-build xvfb openbox \
+            xdotool xclip x11-utils dbus dbus-x11 at-spi2-core
+      - name: Build and install the independent public OPDSHash owner
+        run: |
+          set -euo pipefail
+          mkdir -p build/perf-logs
+          cmake -S extras/opds -B build/perf-hash-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/perf-hash" 2>&1 | tee build/perf-logs/hash-configure.log
+          cmake --build build/perf-hash-build --parallel 4 2>&1 | tee build/perf-logs/hash-build.log
+          cmake --install build/perf-hash-build 2>&1 | tee build/perf-logs/hash-install.log
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$(realpath "$PWD/build/perf-hash")" >> "$GITHUB_ENV"
+      - name: Build the frozen SDK, the GTK product host, the payload and the corpus probe
+        run: |
+          set -o pipefail
+          cmake --preset reading-library 2>&1 | tee build/perf-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/perf-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/perf-logs/sdk-install.log
+          cmake -S apps/reader/desktop -B build/perf-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DEXR_READER_BUILD_GTK=ON \
+            -DREADER_ORIGINAL_HASH_PREFIX:PATH="$(realpath "$PWD/build/perf-hash")" \
+            -DEXR_READER_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/perf-logs/host-configure.log
+          cmake --build build/perf-desktop --parallel 4 2>&1 | tee build/perf-logs/host-build.log
+          cmake -S tests/reader_product_performance_handoff/gtk_probe -B build/perf-probe -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$PWD/build/reading-library/stage" 2>&1 | tee build/perf-logs/probe-configure.log
+          cmake --build build/perf-probe --parallel 4 2>&1 | tee build/perf-logs/probe-build.log
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.42.0 \
+            --binary build/perf-desktop/gtk-host/exreader-linux --output build/perf-package
+          ls -l build/perf-package | tee build/perf-logs/package-archive.txt
+          stat -c '%s %n' build/perf-package/EXReader-Linux.tar.gz | tee -a build/perf-logs/package-archive.txt
+      - name: Prove the packaged host identity and the absence of any WebView runtime
+        run: |
+          set -o pipefail
+          build/perf-package/EXReader-Linux/bin/exreader-linux --version | tee build/perf-logs/host-version.txt
+          grep -qx '3.42.0 1' build/perf-logs/host-version.txt
+          ! grep -Eic 'webkit|webview|libcef|electron' build/perf-package/runtime-dependencies.txt
+          python3 -m py_compile tests/reader_perf_gtk/observe.py tests/reader_perf_gtk/sample.py \
+            tests/reader_perf_gtk/composition/summarize.py tests/reader_product_performance_handoff/verify_gtk_artifact.py
+      - name: Thirty-two independent launches on a fixed Xvfb, window manager and resolution
+        run: |
+          set -o pipefail
+          xdpyinfo > build/perf-logs/pre-xdpyinfo.txt 2>&1 || true
+          Xvfb :99 -screen 0 1440x900x24 -nolisten tcp > build/perf-logs/xvfb.log 2>&1 &
+          xvfb=$!
+          trap 'kill $xvfb 2>/dev/null || true' EXIT
+          sleep 2
+          export DISPLAY=:99
+          dbus-run-session -- bash -euo pipefail -c '
+            openbox > build/perf-logs/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm 2>/dev/null || true" EXIT
+            sleep 1
+            xdpyinfo > build/perf-logs/xdpyinfo.txt
+            xwininfo -root -tree > build/perf-logs/root-tree.txt
+            python3 tests/reader_perf_gtk/sample.py \
+              --payload build/perf-package/EXReader-Linux \
+              --tarball "$PWD/build/perf-package/EXReader-Linux.tar.gz" \
+              --seed build/perf-probe/seed_library \
+              --output build/perf-evidence \
+              --launches 32 2>&1 | tee build/perf-logs/sampler.log
+            python3 tests/reader_product_performance_handoff/sample_gtk_interactions.py               --payload build/perf-package/EXReader-Linux               --tarball "$PWD/build/perf-package/EXReader-Linux.tar.gz"               --seed build/perf-probe/seed_library               --output build/perf-interactions               --launches 12 2>&1 | tee build/perf-logs/interactions.log
+            pkill -x xclip 2>/dev/null || true
+          '
+      - name: Preserve the raw logs next to the raw samples
+        if: always()
+        run: |
+          mkdir -p build/perf-evidence/logs
+          cp build/perf-logs/*.log build/perf-logs/*.txt build/perf-evidence/logs/ 2>/dev/null || true
+          cp build/perf-desktop/CMakeCache.txt build/perf-package/build.json build/perf-package/runtime-dependencies.txt \
+            build/perf-evidence/logs/ 2>/dev/null || true
+      - name: Aggregate without new budgets and require complete planned coverage
+        if: always()
+        run: |
+          set -o pipefail
+          python3 tests/reader_perf_gtk/composition/summarize.py --output build/perf-evidence \
+            --guards build/perf-guards/guards.json 2>&1 | tee build/perf-logs/summarize.log
+      - name: Preserve the raw CSV, JSON, logs and environment of this attempt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-product-perf-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/perf-evidence/
+          if-no-files-found: error
+      - name: Preserve the interaction samples of this attempt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-product-perf-gtk-interactions-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/perf-interactions/
+          if-no-files-found: warn
+  verify:
+    name: artifact identity verification
+    needs: perf
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify this attempt's jobs, artifact identity and every evidence digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_product_performance_handoff/verify_gtk_artifact.py --output build/perf-verify
+      - name: Preserve the verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-product-perf-gtk-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/perf-verify/
+          if-no-files-found: error
