@@ -1,0 +1,59 @@
+name: Windows migration host controller contract
+on:
+  push:
+    branches: [codex/p0-native-host-lifecycle-20261030]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  controller:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Assert isolated new-only slice and frozen owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-status be3f9f5610125d1ff969add1169028111b398a22 HEAD > changed-paths.txt
+          python - <<'PY'
+          import subprocess
+          expected={
+            'apps/reader/desktop/windows_migration_host.h',
+            'apps/reader/desktop/windows_migration_host.c',
+            'apps/reader/desktop/windows_migration_host.cmake',
+            'tests/windows_migration_host_lifecycle/CMakeLists.txt',
+            'tests/windows_migration_host_lifecycle/check.c',
+            '.github/workflows/windows-migration-host-lifecycle-20261030.yml',
+            'docs/WINDOWS-MIGRATION-HOST-LIFECYCLE-20261030.md'}
+          rows=subprocess.check_output(['git','diff','--name-status','be3f9f5610125d1ff969add1169028111b398a22','HEAD'],text=True).splitlines()
+          assert set(rows)=={'A\t'+p for p in expected},rows
+          PY
+      - name: Default OFF leaves no controller target
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S tests/windows_migration_host_lifecycle -B build/off -G Ninja
+          cmake --build build/off --target help > default-targets.txt
+          if grep -q migration-host-controller default-targets.txt; then exit 1; fi
+      - name: Build and test isolated contract (not host acceptance)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S tests/windows_migration_host_lifecycle -B build/on -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_WINDOWS_MIGRATION_HOST_CONTROLLER=ON 2>&1 | tee configure.txt
+          cmake --build build/on 2>&1 | tee build.txt
+          ctest --test-dir build/on -V --output-on-failure 2>&1 | tee test.txt
+          grep -q 'controller_contract_groups=16 actual_host_acceptance=false full_p0=false' test.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-host-controller-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            changed-paths.txt
+            default-targets.txt
+            configure.txt
+            build.txt
+            test.txt
+            build/on/Testing/Temporary/
+          if-no-files-found: error
