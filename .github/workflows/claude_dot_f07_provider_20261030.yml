@@ -1,0 +1,61 @@
+name: Claude DOT F07 final-image provider audit (C05)
+on:
+  push:
+    branches: [claude/dot-f07-provider-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Additions-only source scope and synthetic protocol cases
+        run: |
+          python3 scripts/audit/claude_dot_f07_provider_20261030.py guard
+          python3 scripts/audit/claude_dot_f07_provider_20261030.py selftest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f07-provider-protocol-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/final-provider/
+          if-no-files-found: warn
+  linux:
+    needs: protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install GTK build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build binutils
+      - name: Build unchanged same-source SDK 3.42 raw/legacy products and retained host
+        id: build
+        run: |
+          python3 -m py_compile tests/gtk_sdk342_package/*.py
+          python3 tests/gtk_sdk342_package/run.py build
+      - name: Audit actual final image, link map and installed SDK/ProductCatalog providers
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: python3 scripts/audit/claude_dot_f07_provider_20261030.py linux
+      - name: Bind per-platform results (never grants acceptance)
+        if: always()
+        run: python3 scripts/audit/claude_dot_f07_provider_20261030.py aggregate build/final-provider
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f07-provider-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/final-provider/
+            build/gtk-sdk342/
+            build/gtk-raw-wave3/retained-host/gtk-account-host.map
+            build/gtk-raw-wave3/retained-host/CMakeCache.txt
+            build/gtk-raw-wave3/*.json
+            build/gtk-raw-wave3/*.log
+          if-no-files-found: warn
+          include-hidden-files: true

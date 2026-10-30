@@ -1,0 +1,61 @@
+"""C05 final-image provider/map auditor entrypoint. Runs only in GitHub Actions.
+
+guard      additions-only source scope against the exact base
+selftest   synthetic protocol cases (no native inspection)
+linux      audit the real final retained GTK host after tests/gtk_sdk342_package/run.py build
+collect    audit any platform from a JSON config (see fp_collect.collect)
+aggregate  bind per-platform result.json files; never grants acceptance
+"""
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tests/reader_final_provider_20261030'))
+import fp_collect as K  # noqa: E402
+import fp_core as C  # noqa: E402
+
+
+def linux_config():
+    root = C.ROOT.resolve()
+    host = root / 'build/gtk-raw-wave3/retained-host'
+    archives = sorted(str(p) for base in ('build/reading-library/stage', 'build/gtk-raw-wave3/raw-stage') for p in (root / base).rglob('*.a'))
+    archives += sorted(str(p) for p in host.rglob('*.a'))
+    C.require(any('EXReaderProductCatalog' in a for a in archives), 'no installed ProductCatalog archive')
+    return dict(platform='linux', sdk_version='3.42.0', image=str(host / 'gtk-host/exreader-linux'),
+        map=str(host / 'gtk-account-host.map'), map_format='gnu', link_cwd=str(host), archives=archives,
+        roles=dict(sdk=[str(root / 'build/reading-library/stage') + '/'], product=[str(root / 'build/gtk-raw-wave3/raw-stage') + '/'],
+                   host=[str(host) + '/'], system=['/usr/lib/', '/lib/', '/usr/lib64/', '/lib64/']))
+
+
+def main():
+    C.actions_only()
+    command = sys.argv[1]
+    if command == 'guard':
+        C.save(C.OUT / 'source.json', C.guard())
+    elif command == 'selftest':
+        subprocess.check_call([sys.executable, '-m', 'py_compile', *map(str, sorted(Path(C.ROOT / C.OWNED).glob('*.py'))), str(C.ROOT / C.AUDITOR)])
+        subprocess.check_call([sys.executable, str(C.ROOT / C.OWNED / 'test_fp.py')])
+    elif command in ('linux', 'collect'):
+        config = linux_config() if command == 'linux' else json.loads(Path(sys.argv[2]).read_text())
+        out = C.OUT / config['platform']
+        report = dict(C.identity(config['platform'], config.get('sdk_version')), passed=False, findings=None)
+        try:
+            report = K.collect(config, out)
+        except Exception as error:
+            report['failure'] = str(error)
+            C.save(out / 'result.json', report)
+            raise
+        C.require(report['passed'], 'provider/map audit findings: %d' % len(report['findings']))
+    elif command == 'aggregate':
+        results = {}
+        for path in sorted(Path(sys.argv[2]).rglob('result.json')):
+            row = json.loads(path.read_text())
+            results[row['platform']] = row
+        C.save(C.OUT / 'aggregate.json', C.bind_results(results))
+    else:
+        raise ValueError(command)
+
+
+if __name__ == '__main__':
+    main()
