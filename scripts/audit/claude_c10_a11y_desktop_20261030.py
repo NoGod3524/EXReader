@@ -198,7 +198,10 @@ def selftest(_):
     def gtk_all(status):
         return {cid: {'name': cid, 'pass': status == 'pass'} for cid in surfaces.GTK}
     good = judge('gtk', gtk_all('pass'))
-    assert all(v['verdict'] == 'pass' for v in good.values()), good
+    for surface, v in good.items():
+        has_action = any(s == surface and k == 'operate' for s, k in surfaces.GTK.values())
+        # GTK reading/annotation have no keyboard-action check: tree-only evidence stays unproven
+        assert v['verdict'] == ('pass' if has_action else 'incomplete') and             v['operable'] == ('pass' if has_action else 'unproven'), (surface, v)
     # existence-only evidence: drop every operate check, tree passes yet nothing is operable
     existence = {cid: e for cid, e in gtk_all('pass').items() if surfaces.GTK[cid][1] != 'operate'}
     for surface, v in judge('gtk', existence).items():
