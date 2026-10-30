@@ -1,20 +1,19 @@
 /* SPDX-License-Identifier: MIT */
 #include "lm_win_lease.h"
-#include <stdio.h>
 #include <stdlib.h>
-#include <wchar.h>
 #include <string.h>
 #define LEASE_LOCK 4096ull
 #define INIT_LOCK 4097ull
 #define HDR_MAGIC "EXRLEASE1\n"
 #define HDR_ID 10
 #define GEN_OFFSET 64
-#define LEASE_SIZE 72
+#define PENDING_OFFSET 72
+#define LEASE_SIZE 80
 #define PATH_MAX_W 3000
 struct lm_wl_lease {
   HANDLE dir, file;
   lm_wl_mode mode;
-  uint64_t generation;
+  uint64_t generation, pending;
   DWORD volume, index_high, index_low;
   unsigned char header[HDR_ID + 48 + 1];
 };
@@ -109,7 +108,10 @@ lm_wl_status lm_wl_acquire(const WCHAR *dirpath, const char identity[49], lm_wl_
   if (memcmp(got, hdr, HDR_ID + 49) != 0) { s = fail(e, LM_WL_REFUSED, 0, "lease header is not bound to this identity"); goto bad; }
   l->volume = finfo.dwVolumeSerialNumber; l->index_high = finfo.nFileIndexHigh; l->index_low = finfo.nFileIndexLow;
   if (!lock_range(l->file, LEASE_LOCK, mode == LM_WL_EXCLUSIVE, timeout_ms, &native)) { s = fail(e, native == ERROR_LOCK_VIOLATION ? LM_WL_BUSY : LM_WL_NATIVE, native, "lease lock"); goto bad; }
-  if (!pread_exact(l->file, GEN_OFFSET, &l->generation, sizeof l->generation)) { native = GetLastError(); unlock_range(l->file, LEASE_LOCK); s = fail(e, LM_WL_NATIVE, native, "read generation"); goto bad; }
+  if (!pread_exact(l->file, GEN_OFFSET, &l->generation, sizeof l->generation) ||
+      !pread_exact(l->file, PENDING_OFFSET, &l->pending, sizeof l->pending)) { native = GetLastError(); unlock_range(l->file, LEASE_LOCK); s = fail(e, LM_WL_NATIVE, native, "read generation"); goto bad; }
+  if (l->pending > 1) { unlock_range(l->file, LEASE_LOCK); s = fail(e, LM_WL_REFUSED, 0, "corrupt pending marker"); goto bad; }
+  if (l->pending && mode == LM_WL_SHARED) { unlock_range(l->file, LEASE_LOCK); s = fail(e, LM_WL_STALE, 0, "unacknowledged publication intent"); goto bad; }
   *out = l;
   return LM_WL_OK;
 bad:
@@ -131,18 +133,33 @@ uint64_t lm_wl_generation(const lm_wl_lease *l) { return l ? l->generation : 0; 
 lm_wl_status lm_wl_require_generation(const lm_wl_lease *l, uint64_t admitted) {
   return l && l->generation == admitted ? LM_WL_OK : LM_WL_STALE;
 }
-lm_wl_status lm_wl_exclusive_bump(lm_wl_lease *l, uint64_t *g, lm_wl_error *e) {
-  uint64_t next; lm_wl_status s;
-  if (!l || l->mode != LM_WL_EXCLUSIVE) return fail(e, LM_WL_INVALID, 0, "exclusive lease required");
-  if ((s = lm_wl_check(l, e)) != LM_WL_OK) return s;
-  if (l->generation == UINT64_MAX) return fail(e, LM_WL_REFUSED, 0, "generation exhausted");
-  next = l->generation + 1;
-  if (!pwrite_exact(l->file, GEN_OFFSET, &next, sizeof next) || !FlushFileBuffers(l->file)) return fail(e, LM_WL_NATIVE, GetLastError(), "persist generation");
-  l->generation = next;
-  if (g) *g = next;
+static lm_wl_status persist(lm_wl_lease *l, DWORD off, uint64_t v, lm_wl_error *e) {
+  if (!pwrite_exact(l->file, off, &v, sizeof v) || !FlushFileBuffers(l->file)) return fail(e, LM_WL_NATIVE, GetLastError(), "persist");
   return LM_WL_OK;
 }
-void lm_wl_release(lm_wl_lease *l) {
+int lm_wl_pending(const lm_wl_lease *l) { return l && l->pending != 0; }
+lm_wl_status lm_wl_exclusive_begin(lm_wl_lease *l, lm_wl_error *e) {
+  lm_wl_status s;
+  if (!l || l->mode != LM_WL_EXCLUSIVE) return fail(e, LM_WL_INVALID, 0, "exclusive lease required");
+  if ((s = lm_wl_check(l, e)) != LM_WL_OK) return s;
+  if (l->pending) return fail(e, LM_WL_REFUSED, 0, "intent already pending; commit after re-qualification");
+  if ((s = persist(l, PENDING_OFFSET, 1, e)) != LM_WL_OK) return s;
+  l->pending = 1;
+  return LM_WL_OK;
+}
+lm_wl_status lm_wl_exclusive_commit(lm_wl_lease *l, uint64_t *g, lm_wl_error *e) {
+  lm_wl_status s;
+  if (!l || l->mode != LM_WL_EXCLUSIVE) return fail(e, LM_WL_INVALID, 0, "exclusive lease required");
+  if ((s = lm_wl_check(l, e)) != LM_WL_OK) return s;
+  if (!l->pending) return fail(e, LM_WL_REFUSED, 0, "no pending intent");
+  if (l->generation == UINT64_MAX) return fail(e, LM_WL_REFUSED, 0, "generation exhausted");
+  if ((s = persist(l, GEN_OFFSET, l->generation + 1, e)) != LM_WL_OK) return s;
+  l->generation++;
+  if ((s = persist(l, PENDING_OFFSET, 0, e)) != LM_WL_OK) return s;
+  l->pending = 0;
+  if (g) *g = l->generation;
+  return LM_WL_OK;
+}void lm_wl_release(lm_wl_lease *l) {
   if (!l) return;
   unlock_range(l->file, LEASE_LOCK);
   CloseHandle(l->file); CloseHandle(l->dir); free(l);

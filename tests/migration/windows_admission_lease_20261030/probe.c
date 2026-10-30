@@ -14,8 +14,9 @@ static int parse_mode(const char *s, lm_wl_mode *m) {
   if (!strcmp(s, "shared")) *m = LM_WL_SHARED; else if (!strcmp(s, "exclusive")) *m = LM_WL_EXCLUSIVE; else return 0;
   return 1;
 }
+static int g_pending;
 static void report(lm_wl_status s, const lm_wl_error *e, unsigned long long gen) {
-  printf("{\"status\":%d,\"native\":%lu,\"generation\":%llu,\"pid\":%lu,\"source\":\"%s\"}\n", (int)s, (unsigned long)e->native, gen, (unsigned long)GetCurrentProcessId(), SOURCE_SHA);
+  printf("{\"status\":%d,\"native\":%lu,\"generation\":%llu,\"pending\":%d,\"pid\":%lu,\"source\":\"%s\"}\n", (int)s, (unsigned long)e->native, gen, g_pending, (unsigned long)GetCurrentProcessId(), SOURCE_SHA);
   fflush(stdout);
 }
 int main(int argc, char **argv) {
@@ -23,6 +24,7 @@ int main(int argc, char **argv) {
   if (argc < 4 || !(dir = wide(argv[2]))) return 64;
   if (!strcmp(argv[1], "hold") && argc == 5 && parse_mode(argv[4], &m)) {
     s = lm_wl_acquire(dir, argv[3], m, 0, &l, &e);
+    g_pending = lm_wl_pending(l);
     report(s, &e, l ? lm_wl_generation(l) : 0);
     if (s != LM_WL_OK) return 2;
     /* Hold until told to release; parent may instead terminate this process. */
@@ -35,18 +37,50 @@ int main(int argc, char **argv) {
   }
   if (!strcmp(argv[1], "try") && argc == 6 && parse_mode(argv[4], &m)) {
     s = lm_wl_acquire(dir, argv[3], m, (DWORD)strtoul(argv[5], NULL, 10), &l, &e);
+    g_pending = lm_wl_pending(l);
     report(s, &e, l ? lm_wl_generation(l) : 0);
     if (l) lm_wl_release(l);
     return s == LM_WL_OK ? 0 : 1;
   }
-  if (!strcmp(argv[1], "bump") && argc == 4) {
-    unsigned long long g = 0;
+  /* publish <dir> <id> <cut>: begin; (cut after-begin) ; commit; (cut after-commit).
+   * The parent hard-kills the process at the announced point. */
+  if (!strcmp(argv[1], "publish") && argc == 5) {
+    uint64_t n = 0;
     s = lm_wl_acquire(dir, argv[3], LM_WL_EXCLUSIVE, 0, &l, &e);
-    if (s == LM_WL_OK) { uint64_t n = 0; s = lm_wl_exclusive_bump(l, &n, &e); g = n; lm_wl_release(l); }
-    report(s, &e, g);
+    if (s != LM_WL_OK) { report(s, &e, 0); return 1; }
+    if (!strcmp(argv[4], "before-begin")) { report(s, &e, lm_wl_generation(l)); Sleep(INFINITE); }
+    s = lm_wl_exclusive_begin(l, &e); g_pending = lm_wl_pending(l);
+    if (s != LM_WL_OK || !strcmp(argv[4], "after-begin")) { report(s, &e, lm_wl_generation(l)); if (s != LM_WL_OK) return 1; Sleep(INFINITE); }
+    s = lm_wl_exclusive_commit(l, &n, &e); g_pending = lm_wl_pending(l);
+    report(s, &e, lm_wl_generation(l));
+    if (s != LM_WL_OK) return 1;
+    if (!strcmp(argv[4], "after-commit")) Sleep(INFINITE);
+    lm_wl_release(l);
+    return 0;
+  }
+  /* resolve <dir> <id>: exclusive re-qualification path; commit a left-over intent. */
+  if (!strcmp(argv[1], "resolve") && argc == 4) {
+    uint64_t n = 0;
+    s = lm_wl_acquire(dir, argv[3], LM_WL_EXCLUSIVE, 0, &l, &e);
+    if (s == LM_WL_OK) { g_pending = lm_wl_pending(l); if (g_pending) s = lm_wl_exclusive_commit(l, &n, &e); report(s, &e, lm_wl_generation(l)); lm_wl_release(l); }
+    else report(s, &e, 0);
     return s == LM_WL_OK ? 0 : 1;
   }
-  if (!strcmp(argv[1], "expect") && argc == 5) {
+  /* misuse: commit without begin, begin twice, begin from shared. */
+  if (!strcmp(argv[1], "misuse") && argc == 4) {
+    lm_wl_lease *sh = NULL; int ok = 1; uint64_t n = 0;
+    ok &= lm_wl_acquire(dir, argv[3], LM_WL_EXCLUSIVE, 0, &l, &e) == LM_WL_OK;
+    ok &= lm_wl_exclusive_commit(l, &n, &e) == LM_WL_REFUSED;
+    ok &= lm_wl_exclusive_begin(l, &e) == LM_WL_OK;
+    ok &= lm_wl_exclusive_begin(l, &e) == LM_WL_REFUSED;
+    ok &= lm_wl_exclusive_commit(l, &n, &e) == LM_WL_OK && n == 1;
+    lm_wl_release(l);
+    ok &= lm_wl_acquire(dir, argv[3], LM_WL_SHARED, 0, &sh, &e) == LM_WL_OK;
+    ok &= lm_wl_exclusive_begin(sh, &e) == LM_WL_INVALID && lm_wl_exclusive_commit(sh, &n, &e) == LM_WL_INVALID;
+    lm_wl_release(sh);
+    printf("{\"misuse\":%d,\"source\":\"%s\"}\n", ok, SOURCE_SHA);
+    return ok ? 0 : 1;
+  }  if (!strcmp(argv[1], "expect") && argc == 5) {
     s = lm_wl_acquire(dir, argv[3], LM_WL_SHARED, 0, &l, &e);
     if (s == LM_WL_OK) { s = lm_wl_require_generation(l, _strtoui64(argv[4], NULL, 10)); report(s, &e, lm_wl_generation(l)); lm_wl_release(l); }
     else report(s, &e, 0);

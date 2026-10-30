@@ -8,7 +8,8 @@ PREFIXES = ('extras/migration/windows_admission_lease_20261030/', 'tests/migrati
 EXACT = {'.github/workflows/claude_dot_lease_20261030.yml', 'scripts/audit/claude_dot_lease_20261030.py',
          'docs/reader-total-progress/CLAUDE_DOT_C01_20261030.md'}
 CASES = ['shared_cross_process_then_hard_kill_release', 'exclusive_blocks_all_then_graceful_release',
-         'prefix32_matching_tail16_distinct_custody', 'generation_gate_stale_after_bump',
+         'prefix32_matching_tail16_distinct_custody', 'generation_gate_stale_after_commit', 'process_death_cuts_fail_closed',
+         'begin_commit_misuse_refused',
          'same_process_second_handle_conflicts', 'non_full49_identity_rejected_without_side_effect',
          'foreign_header_size_hardlink_junction_refused', 'reparse_lease_directory_refused',
          'held_lease_file_delete_and_rename_refused']

@@ -39,9 +39,18 @@ lm_wl_status lm_wl_check(lm_wl_lease *lease, lm_wl_error *error);
 uint64_t lm_wl_generation(const lm_wl_lease *lease);
 /* Admit-reopen gate: STALE when the publisher bumped since the admitted value. */
 lm_wl_status lm_wl_require_generation(const lm_wl_lease *lease, uint64_t admitted);
-/* Exclusive holders only; persisted before return. Publisher calls this after
- * its own publication is verified, so shared admissions made earlier go STALE. */
-lm_wl_status lm_wl_exclusive_bump(lm_wl_lease *lease, uint64_t *generation,
-                                  lm_wl_error *error);
-void lm_wl_release(lm_wl_lease *lease);
+/* Crash-safe publication intent (exclusive holders only), fail closed:
+ *  begin  : persist PENDING before the publisher's first irreversible step.
+ *  commit : call ONLY after the publisher's own full verification of the
+ *           published result; persists generation+1, then clears PENDING.
+ * A holder that dies anywhere between begin and commit leaves PENDING set:
+ * every later SHARED acquire returns LM_WL_STALE (no lease handed out) until an
+ * exclusive holder re-qualifies and calls commit. The lease never observes the
+ * rename itself; it cannot tell whether publication happened, only that it was
+ * not acknowledged. A crash inside commit is also safe (generation first). */
+lm_wl_status lm_wl_exclusive_begin(lm_wl_lease *lease, lm_wl_error *error);
+lm_wl_status lm_wl_exclusive_commit(lm_wl_lease *lease, uint64_t *generation,
+                                    lm_wl_error *error);
+/* 1 when an earlier exclusive holder left an unacknowledged intent. */
+int lm_wl_pending(const lm_wl_lease *lease);void lm_wl_release(lm_wl_lease *lease);
 #endif

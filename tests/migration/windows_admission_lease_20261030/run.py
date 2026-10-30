@@ -63,17 +63,49 @@ status(run('try', d, A, 'shared', 0), BUSY, 'full identity still conflicts')
 kill(proc)
 rec('prefix32_matching_tail16_distinct_custody', files=leases)
 
-# 4 generation / admit-reopen gate
+# 4 generation / admit-reopen gate (begin -> commit)
 g0 = status(run('try', d, C, 'shared', 0), OK, 'fresh')['generation']; assert g0 == 0
 proc, _ = hold(d, C, 'shared')
-status(run('bump', d, C), BUSY, 'bump while shared held')
+status(run('publish', d, C, 'none'), BUSY, 'publish while shared held')
 kill(proc)
-bumped = status(run('bump', d, C), OK, 'bump'); assert bumped['generation'] == 1
-status(run('expect', d, C, 0), STALE, 'stale admission after publisher bump')
+done = status(run('publish', d, C, 'none'), OK, 'full begin/commit'); assert done['generation'] == 1 and done['pending'] == 0
+status(run('expect', d, C, 0), STALE, 'stale admission after commit')
 status(run('expect', d, C, 1), OK, 'current admission')
 status(run('expect', d, A, 0), OK, 'other identity unaffected')
-rec('generation_gate_stale_after_bump', bump=bumped)
+rec('generation_gate_stale_after_commit', commit=done)
 
+# 4b hard process-death cuts around begin/commit: unacknowledged intent fails closed
+def cut(ident, point):
+    proc = subprocess.Popen([probe, 'publish', str(d), ident, point], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        fut = pool.submit(proc.stdout.readline)
+        try: line = fut.result(timeout=30)
+        except BaseException:
+            proc.kill(); proc.wait(timeout=10); raise
+    ann = json.loads(line); assert ann['status'] == OK, ann
+    code = kill(proc)
+    return ann, code
+cuts = {}
+X = '2' * 48
+ann, code = cut(X, 'before-begin'); assert ann['pending'] == 0
+s1 = status(run('try', d, X, 'shared', 3000), OK, 'shared after pre-begin death'); assert s1['generation'] == 0 and s1['pending'] == 0
+cuts['before-begin'] = dict(announced=ann, kill_return_code=code, shared=s1)
+Y = '3' * 48
+ann, code = cut(Y, 'after-begin'); assert ann['pending'] == 1
+s_stale = status(run('try', d, Y, 'shared', 3000), STALE, 'shared after post-begin death')
+status(run('expect', d, Y, 0), STALE, 'expect after post-begin death')
+ex = status(run('try', d, Y, 'exclusive', 3000), OK, 'exclusive sees intent'); assert ex['pending'] == 1 and ex['generation'] == 0
+res = status(run('resolve', d, Y), OK, 'exclusive re-qualification commit'); assert res['generation'] == 1
+s2 = status(run('try', d, Y, 'shared', 0), OK, 'shared after resolve'); assert s2['generation'] == 1 and s2['pending'] == 0
+cuts['after-begin'] = dict(announced=ann, kill_return_code=code, shared_refused=s_stale, exclusive=ex, resolved=res, shared_after=s2)
+Z = '4' * 48
+ann, code = cut(Z, 'after-commit'); assert ann['pending'] == 0 and ann['generation'] == 1
+s3 = status(run('try', d, Z, 'shared', 3000), OK, 'shared after committed death'); assert s3['generation'] == 1 and s3['pending'] == 0
+cuts['after-commit'] = dict(announced=ann, kill_return_code=code, shared=s3)
+rec('process_death_cuts_fail_closed', cuts=cuts)
+
+rc, data = run('misuse', d, '5' * 48); assert rc == 0 and data['misuse'] == 1, data
+rec('begin_commit_misuse_refused')
 # 5 in-process handles also conflict
 rc, data = run('selfconflict', d, 'b' * 48); assert rc == 0 and data['selfconflict'] == 1, data
 rec('same_process_second_handle_conflicts')
@@ -88,7 +120,7 @@ rec('non_full49_identity_rejected_without_side_effect', count=6)
 
 # 7 hostile lease state fails closed
 e = 'c' * 48
-(d / f'{e}.lease').write_bytes(b'x' * 72); status(run('try', d, e, 'shared', 0), REFUSED, 'foreign header')
+(d / f'{e}.lease').write_bytes(b'x' * 80); status(run('try', d, e, 'shared', 0), REFUSED, 'foreign header')
 f = 'd' * 48
 (d / f'{f}.lease').write_bytes(b'short'); status(run('try', d, f, 'shared', 0), REFUSED, 'size mismatch')
 g = 'e' * 48
