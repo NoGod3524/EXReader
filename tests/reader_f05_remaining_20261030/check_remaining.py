@@ -629,6 +629,14 @@ def main():
                       request_count=len(requests), credential_leak_hits=0,
                       peers={n: {'account_id': p.account_id, 'pid': pids[n]} for n, p in peers.items()})
 
+    except Exception as failure:
+        report['failure'] = repr(failure)
+        report['failure_states'] = {n: p.host.read() for n, p in peers.items()}
+        visible = subprocess.run(['wmctrl', '-lpG'], capture_output=True, text=True, timeout=10)
+        (folder / 'failure-windows.txt').write_text(visible.stdout + visible.stderr)
+        subprocess.run(['import', '-window', 'root', str(folder / 'failure-desktop.png')], timeout=15, check=False)
+        raise
+
     finally:
         for fault in faults:
             fault.release.set()

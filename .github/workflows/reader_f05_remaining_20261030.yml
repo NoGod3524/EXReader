@@ -87,6 +87,11 @@ jobs:
             trap "kill $wm || true" EXIT
             python3 tests/reader_f05_remaining_20261030/check_remaining.py --payload build/f05-package/EXReader-Linux --revision-consumer build/f05-revision-consumer/revision-consumer --build-json build/f05-package/build.json --output build/f05-host-live-evidence
           '
+      - name: Report preserved failure diagnostics without changing test outcome
+        if: always()
+        run: |
+          cat build/f05-host-live-evidence/result.json || true
+          cat build/f05-host-live-evidence/failure-windows.txt || true
       - name: Preserve source-bound evidence without private keys
         if: always()
         uses: actions/upload-artifact@v4
