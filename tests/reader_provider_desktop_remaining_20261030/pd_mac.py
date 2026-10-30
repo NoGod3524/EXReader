@@ -157,6 +157,7 @@ def parse_tbd(text):
             symbols.add('_OBJC_EHTYPE_$_' + eh)
         for iv in _list_items(exports, 'objc-ivars'):
             symbols.add('_OBJC_IVAR_$_' + iv)
+        symbols |= set(_list_items(_block(document, 'reexports'), 'symbols'))  # v4: symbols re-exported from sub-libraries
         reexports = _list_items(_block(document, 'reexported-libraries'), 'libraries')
         out.append(dict(install_name=name.group(1).strip(), symbols=symbols, weak_symbols=weak, reexports=reexports))
     if not out:

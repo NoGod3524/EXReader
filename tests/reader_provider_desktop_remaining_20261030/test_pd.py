@@ -185,6 +185,9 @@ reexported-libraries:
 exports:
   - targets:         [ arm64-macos ]
     symbols:         [ _libsystem_own ]
+reexports:
+  - targets:         [ arm64-macos ]
+    symbols:         [ _memchr ]
 --- !tapi-tbd
 tbd-version:     4
 targets:         [ arm64-macos ]
@@ -218,6 +221,7 @@ def tbd_resolution(tmp=None):
         assert hit and hit['install_name'] == '/usr/lib/system/libsystem_c.dylib' and not hit['weak_definition'], hit
         assert index.provider('/usr/lib/libSystem.B.dylib', '_optional_api')['weak_definition'] is True
         assert index.provider('/usr/lib/libSystem.B.dylib', '_not_an_export') is None
+        assert index.provider('/usr/lib/libSystem.B.dylib', '_memchr')['install_name'] == '/usr/lib/libSystem.B.dylib'
         assert A.tbd_path_for('/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation', root) is None
 
 

@@ -143,9 +143,9 @@ def collect_windows(cfg, out):
         if staged('object ' + path, pending, read_object, default='failed') != 'failed':
             selected.append([path, W.member_key(path)])
     names, exports = catalog_archive_names([cfg['sdk'], *cfg['product']], pending, ('lib', 'a'))
-    needed_text = W.run_text(['dumpbin', '/nologo', '/dependents', image])
-    imports_text = W.run_text(['dumpbin', '/nologo', '/imports', image])
     (out / 'native').mkdir(parents=True, exist_ok=True)
+    needed_text = staged('dumpbin dependents', pending, lambda: W.run_text(['dumpbin', '/nologo', '/dependents', image]), default='')
+    imports_text = staged('dumpbin imports', pending, lambda: W.run_text(['dumpbin', '/nologo', '/imports', image]), default='')
     (out / 'native/dependents.txt').write_text(needed_text, encoding='utf-8')
     (out / 'native/imports.txt').write_text(imports_text, encoding='utf-8')
     needed = W.parse_dumpbin_dependents(needed_text)
@@ -315,7 +315,7 @@ def collect_macos(cfg, out):
         uuid = re.search(r'cmd LC_UUID\s+cmdsize \d+\s+uuid ([0-9A-Fa-f-]+)', A.run_text(['otool', '-l', path]))
         names = sorted(exports_of_dylib(str(path)))
         return dict(path=str(path), sha256=C.digest(path), uuid=uuid.group(1) if uuid else None,
-                    text_sha256=C.sha(A.run_text(['otool', '-t', path]).encode()),
+                    text_sha256=C.sha('\n'.join(A.run_text(['otool', '-t', path]).splitlines()[1:]).encode()),  # first line is the file path
                     exports_sha256=C.sha('\n'.join(names).encode()), exports=len(names))
 
     def compare(name, original, copy):
@@ -348,6 +348,7 @@ def collect_macos(cfg, out):
     sdk_defined = {canon(x) for a, t in archives.items() if M.classify(a, roles) == 'sdk' for row in t.values() for x in row['defined']}
     referenced = {canon(x) for a, m in chosen if M.classify(a, roles) not in ('sdk', 'system')
                   for x in archives.get(a, {}).get(m, {}).get('undefined', ())} & sdk_defined
+    referenced = {x for x in referenced if not x.startswith('sqlite3')}  # product-owned, judged by the sqlite rule
     imported = {canon(r['symbol']) for r in imports if r['status'] == 'resolved' and r['library'] == 'libexreader'}
     for symbol in sorted(referenced - imported):
         extra_findings.append(dict(kind='sdk_symbol_not_bound_to_sdk_runtime', symbol=symbol))
