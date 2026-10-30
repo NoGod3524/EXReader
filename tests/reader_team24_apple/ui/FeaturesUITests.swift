@@ -7,12 +7,31 @@ final class FeaturesUITests: XCTestCase {
         let tree = XCTAttachment(string: app.debugDescription); tree.name = "final-native-tree"; tree.lifetime = .keepAlways; add(tree)
         app.terminate()
     }
+    private var nativeShareObserved = false
     private func e(_ id: String) -> XCUIElement {
 #if os(iOS)
         // Query the actual SwiftUI role instead of traversing every remote
         // Files accessibility element after its controller is dismissed.
         if id == "features.scroll" { return app.scrollViews.matching(identifier: id).firstMatch }
-        if id == "features.share.native" { return app.otherElements.matching(identifier: "ActivityListView").firstMatch }
+        if id == "features.share.native" {
+            let native = app.otherElements.matching(identifier: "ActivityListView")
+                .containing(.button, identifier: "header.closeButton").firstMatch
+            if native.exists { nativeShareObserved = true }
+            return native
+        }
+        if id == "features.close" && nativeShareObserved {
+            let close = app.buttons.matching(identifier: id).firstMatch
+            let native = app.otherElements.matching(identifier: "ActivityListView").firstMatch
+            let deadline = Date().addingTimeInterval(3)
+            repeat {
+                if !native.exists && close.exists && close.isHittable {
+                    nativeShareObserved = false
+                    break
+                }
+                RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+            } while Date() < deadline
+            return close
+        }
         let labels: Set<String> = [
             "features.title", "features.status", "features.picker.error",
             "features.export.filename", "features.font.selected", "features.font.observation",
@@ -196,17 +215,24 @@ final class FeaturesUITests: XCTestCase {
         let folder = app.cells.matching(NSPredicate(
             format: "identifier == %@ OR label BEGINSWITH %@",
             "EXReaderAnnotations, Folder", "EXReaderAnnotations,")).firstMatch
+        let localRoot = app.otherElements.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND (identifier ENDSWITH %@ OR identifier ENDSWITH %@ OR identifier ENDSWITH %@ OR identifier ENDSWITH %@)",
+            "DOC.browsingRoot Source: com.apple.FileProvider.LocalStorage, Title: ",
+            "On My iPhone", "On My iPad", "我的 iPhone", "我的 iPad")).firstMatch
         let browse = app.buttons["Browse"].firstMatch
-        // A freshly presented Files controller loads its sidebar asynchronously.
-        // Choose a real available navigation control before deciding its location.
         XCTAssertTrue(wait {
-            directory.exists || (local.exists && local.isHittable) ||
+            directory.exists || localRoot.exists || (local.exists && local.isHittable) ||
             (browse.exists && browse.isHittable)
         }, app.debugDescription)
-        if !directory.exists {
-            if !local.exists && browse.exists && browse.isHittable { browse.tap() }
-            XCTAssertTrue(wait { local.exists && local.isHittable }, app.debugDescription)
-            local.tap()
+        if !directory.exists && !localRoot.exists {
+            if !(local.exists && local.isHittable) && browse.exists && browse.isHittable { browse.tap() }
+            XCTAssertTrue(wait { localRoot.exists || (local.exists && local.isHittable) }, app.debugDescription)
+            if !localRoot.exists { local.tap() }
+        }
+        XCTAssertTrue(wait { directory.exists || localRoot.exists }, app.debugDescription)
+        if markdown && !directory.exists {
+            // The first JSONL export in the unchanged case created this folder.
+            XCTAssertTrue(wait { folder.exists && folder.isHittable }, app.debugDescription)
         }
         let newFolder = app.buttons["New Folder"].firstMatch
         let overflow = app.buttons["OverflowBarButtonItem"].firstMatch
