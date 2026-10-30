@@ -228,42 +228,9 @@
     "tests/migration/windows_record_20261029/probe.c": {
       "source": "2743f32a4eccd5823657da19cb4f77f2411424af",
       "blob": "3c5919a369b279f9d0b1cfe2cb9fa79bfe0a3479"
-    },
-    ".github/workflows/reader-product-performance-handoff.yml": {
-      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
-      "blob": "56634758c92452317c7c1bfa5db555d3a2a0095c"
-    },
-    "docs/reader-total-progress/claude-c2-product-performance.md": {
-      "source": "509edec7e62e050a4c32eac0ba1735f0b19754a8",
-      "blob": "8dd9e5a523cc0bffd9af9fbdb2cacbecd406e164"
-    },
-    "tests/reader_product_performance_handoff/README.md": {
-      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
-      "blob": "1b2d7560e66c5b8c9859011ca7420e3b39816a66"
-    },
-    "tests/reader_product_performance_handoff/gate.py": {
-      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
-      "blob": "241357b941f51bf6265a6d7f2012c369ed960353"
-    },
-    "tests/reader_product_performance_handoff/gtk_probe/CMakeLists.txt": {
-      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
-      "blob": "9b369ac099de49fd138cfe2aacc9267c8da94549"
-    },
-    "tests/reader_product_performance_handoff/sample_gtk_interactions.py": {
-      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
-      "blob": "565d369fe19ddae01af02ecbced853212f8b4938"
-    },
-    "tests/reader_product_performance_handoff/sample_windows_interactions.py": {
-      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
-      "blob": "e8eda41e522156db199a3811ff873aa8ef027f86"
-    },
-    "tests/reader_product_performance_handoff/verify_gtk_artifact.py": {
-      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
-      "blob": "5108c1bd2510da7965ed0c51e31aca735ff46d14"
     }
   },
   "new_files": [
-    ".github/workflows/closure-c2-performance-20261029.yml",
     "tools/reader_composition/closure_source_admission_20261029.py",
     "tools/reader_composition/closure_source_pins_20261029.json",
     "docs/reader-total-progress/closure-integration-source-20261029.md",
