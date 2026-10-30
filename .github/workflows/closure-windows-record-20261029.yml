@@ -1,7 +1,7 @@
 name: Current closure Windows installed record
 on:
   push:
-    branches: [codex/public-product-resume-20261029, codex/closure-candidate-20261029]
+    branches: [codex/closure-candidate-20261029]
     paths: ['.github/workflows/closure-windows-record-20261029.yml', 'tools/reader_composition/closure_source_admission_20261029.py', 'tools/reader_composition/closure_source_pins_20261029.json']
 permissions: {contents: read}
 defaults:
