@@ -41,7 +41,7 @@ static char diag_buf[192];
 
 static const char *diag(wh_status st, const wh_report *r)
 {
-    snprintf(diag_buf, sizeof diag_buf, "status=%s detail=%s",
+    snprintf(diag_buf, sizeof diag_buf, "status=%.24s detail=%.100s",
              wh_status_name(st), (r && r->detail[0]) ? r->detail : "-");
     return diag_buf;
 }
@@ -79,7 +79,7 @@ static int builder_event(builder *b, unsigned event, const char *lease,
     if (k <= 0 || (size_t)k >= EXR_WH_LINE_MAX - 66) return 0;
     if (b->n >= EXR_WH_MAX_JOURNAL) return 0;
     wh_sha256_hex(body, (size_t)k, seal);
-    snprintf(b->lines[b->n], EXR_WH_LINE_MAX, "%s %s", body, seal);
+    snprintf(b->lines[b->n], EXR_WH_LINE_MAX, "%.*s %s", k, body, seal);
     memcpy(b->prev, seal, sizeof b->prev);
     b->seq++;
     b->n++;
@@ -251,7 +251,7 @@ static int sink_append(void *ctx, const char *line)
     s->calls++;
     if (s->fail_at > 0 && s->calls == (size_t)s->fail_at) return 1;
     if (s->b.n >= EXR_WH_MAX_JOURNAL) return 1;
-    snprintf(s->b.lines[s->b.n], EXR_WH_LINE_MAX, "%s", line);
+    snprintf(s->b.lines[s->b.n], EXR_WH_LINE_MAX, "%.*s", EXR_WH_LINE_MAX - 1, line);
     memcpy(s->b.prev, line + strlen(line) - 64, 65);
     s->b.seq++;
     s->b.n++;
