@@ -81,3 +81,41 @@ verified job membership. GUID namespace pins remain held throughout. The frozen
 adapter is unchanged and its wr_cleanup_uncertain latch is respected.
 The new boundary suite additionally rejects an injected launched-image mismatch
 before execution; gate2 now returns UNCERTAIN, not a clean refusal.
+
+## Qualified observer safety repair evidence (2026-10-30 16:13 UTC)
+
+Tested source: `83b0bd1c1d2d697973ef43272d42b34cc58baa7f`.
+GitHub Actions run `41087206035`, attempt1, job `124171372303`: success.
+Original installed-consumer assertions: **29/29 unchanged**. Separate native
+fault-boundary suite: **21/21**. Installed worker/archive byte parity passed.
+The boundary suite uses test-only call wrappers and a real main-exits/child-lives
+fixture, not production fault switches. It covers relative, drive-relative and
+root-relative worker refusals; wrong launched-image refusal before resume with
+empty output; delayed final hash rejected by the original absolute deadline;
+query and termination failure with a live descendant, retained image custody,
+and permanent no-relaunch quarantine. This verifies observer prerequisites only.
+
+Original artifact: `12991588693`, name
+`windows-engine-83b0bd1c1d2d697973ef43272d42b34cc58baa7f`;
+21 files,250290 bytes,SHA256
+`daa5f7b6ab686de1340a73dd80d626e01fd8157487447da651c2cb7ed3c4e913`.
+Independent source review of this exact SHA found no blocking source defect.
+Independent original-ZIP audit remains pending; metadata/log verification is not
+a substitute for that audit.
+
+Earlier failures are retained, not overwritten: initial14/21
+`41019391474`; diagnostics14/21 `41022244832` and `41022763085`;
+bounded-wait27/28 `41023412188`; cleanup diagnostic27/28 `41023948573`;
+the 28-control green `41024463623` and earlier29-control green
+`41024553069` are distinct sources, never combined into this run.
+The GUID-path runtime failure `41085547489` remains documented above.
+
+Important boundaries: the deadline governs acceptance, not an upper bound on
+synchronous I/O; cleanup retains its separate original10-second bound.
+A busy refusal proves only that this call did not launch, not that another call
+is terminal. An uncertain gate or inherited adapter latch remains UNCERTAIN.
+Quarantine is process-lifetime and instance-scoped, not cross-process admission.
+OBSERVED authenticates bytes and identities, not SDK logical validity, migration
+COMMIT, independent reopen, durable recovery, final-provider F07 or full P0.
+The caller must retain external admission on UNCERTAIN. No public SDK/ABI,
+frozen adapter, original consumer assertion or common/staged branch changed.
