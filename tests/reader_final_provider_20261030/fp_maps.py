@@ -178,3 +178,32 @@ def audit(evidence, canon=lambda s: s):
             if not any(classify(a, roles) == 'sdk' for a, _ in definers.get(symbol, [])):
                 findings.append(dict(kind='sdk_entry_without_selected_sdk_owner', symbol=symbol, consumer=[archive, member]))
     return findings
+
+
+def sqlite_reference_rows(evidence, canon=lambda s: s):
+    """Per-reference evidence for every selected member's undefined sqlite3* symbol.
+
+    Records the selected definers and the installed-but-unselected candidates, so the
+    classification is derived from the final map selection, never assumed.
+    """
+    roles = evidence['roles']
+    selected = {tuple(x) for x in evidence['selected']}
+    rows, candidates = [], {}
+    for archive, table in evidence['archives'].items():
+        for member, row in table.items():
+            for symbol in row['defined']:
+                symbol = canon(symbol)
+                if symbol.startswith(canon('sqlite3')):
+                    candidates.setdefault(symbol, []).append((archive, member))
+    for archive, member in sorted(selected):
+        row = evidence['archives'].get(archive, {}).get(member)
+        for symbol in sorted(canon(s) for s in (row['undefined'] if row else ())):
+            if not symbol.startswith(canon('sqlite3')):
+                continue
+            both = candidates.get(symbol, [])
+            chosen = [list(c) for c in both if c in selected]
+            rows.append(dict(symbol=symbol, consumer=[archive, member], selected_definers=chosen,
+                selected_roles=sorted({classify(a, roles) for a, _ in chosen}),
+                unselected_candidates=[dict(archive=a, member=m, role=classify(a, roles)) for a, m in both if (a, m) not in selected],
+                status='resolved_by_selected_product' if chosen and all(classify(a, roles) == 'product' for a, _ in chosen) and len(chosen) == 1 else 'PROBLEM'))
+    return rows

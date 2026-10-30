@@ -134,6 +134,32 @@ class Audit(unittest.TestCase):
         ev['archives']['/opt/sdk/lib/libreader_sdk.a']['vendor.o'] = dict(defined={'sqlite3_open_v2'}, weak=set(), undefined=set())
         self.assertEqual(kinds(ev), [])
 
+    def test_selected_wrong_sdk_sqlite_provider_rejected(self):
+        ev = evidence()
+        ev['archives']['/opt/sdk/lib/libreader_sdk.a']['vendor.o'] = dict(defined={'sqlite3_open_v2'}, weak=set(), undefined=set())
+        ev['selected'].remove(['/opt/prod/lib/libEXReaderProductCatalog.a', 'catalog.o'])
+        ev['selected'].append(['/opt/sdk/lib/libreader_sdk.a', 'vendor.o'])
+        found = kinds(ev)
+        self.assertIn('sqlite_not_uniquely_product_catalog', found)
+        self.assertIn('foreign_sqlite_provider', found)
+        rows = M.sqlite_reference_rows(ev)
+        self.assertTrue(rows and all(r['status'] == 'PROBLEM' for r in rows))
+
+    def test_duplicate_real_provider_rejected(self):
+        ev = evidence()
+        ev['archives']['/opt/host/libhost.a']['dup.o'] = dict(defined={'reader_open'}, weak=set(), undefined=set())
+        ev['selected'].append(['/opt/host/libhost.a', 'dup.o'])
+        self.assertIn('duplicate_provider', kinds(ev))
+
+    def test_unselected_whole_archive_accepted_and_classified(self):
+        ev = evidence()
+        ev['archives']['/opt/sdk/lib/libvendor_sqlite.a'] = {'sqlite3.o': dict(defined={'sqlite3_open_v2', 'sqlite3_step'}, weak=set(), undefined=set())}
+        self.assertEqual(kinds(ev), [])
+        rows = M.sqlite_reference_rows(ev)
+        row = [r for r in rows if r['symbol'] == 'sqlite3_open_v2'][0]
+        self.assertEqual(row['status'], 'resolved_by_selected_product')
+        self.assertEqual(row['unselected_candidates'][0]['role'], 'sdk')
+
     def test_apple_underscore_canon(self):
         ev = evidence()
         row = ev['archives']['/opt/prod/lib/libEXReaderProductCatalog.a']['catalog.o']

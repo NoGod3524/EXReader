@@ -70,7 +70,8 @@ def collect(config, out):
         system_exports=config.get('system_exports', []))
     canon = (lambda s: s[1:] if s.startswith('_') else s) if config.get('apple') else (lambda s: s)
     findings = M.audit(_as_sets(evidence), canon)
-    result = dict(evidence['identity'], image=evidence['image'], map=evidence['map'], findings=findings,
+    references = M.sqlite_reference_rows(_as_sets(evidence), canon)
+    result = dict(evidence['identity'], sqlite_references=references, image=evidence['image'], map=evidence['map'], findings=findings,
                   passed=not findings, selected_members=len(parsed['members']), archives=len(archives))
     for flag in C.ACCEPT_FLAGS:
         result[flag] = False
