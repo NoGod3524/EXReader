@@ -1,0 +1,67 @@
+name: Claude C08 privacy failure 20261030
+on:
+  push:
+    branches: [claude/dot-c08-privacy-failure-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  C08_BASE: 5963488997a7169f2ae40a8d6d33abae15eb3f36
+  AUDITOR: scripts/audit/claude_c08_privacy_failure_20261030.py
+  C08_TESTS: tests/reader_privacy_failure_20261030
+jobs:
+  windows:
+    name: c08-privacy-failure (windows-2022)
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Byte-compile every Python file of this package
+        run: python -I "$AUDITOR" pycompile --out build/c08/reports/pycompile.json --files "$AUDITOR" "$C08_TESTS/run_refusal_windows.py"
+      - name: Scope guard (exact base, owned paths only)
+        if: always()
+        run: python -I "$AUDITOR" scope --repo . --base "$C08_BASE" --expect-sha "$GITHUB_SHA" --out build/c08/reports/scope.json
+      - name: Scanner self-test (planted canaries in every encoding must be found)
+        if: always()
+        run: python -I "$AUDITOR" selftest --out build/c08/reports/selftest.json
+      - name: Enter Windows native compiler environment
+        if: always()
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the unchanged credentials module, then the C08 probe
+        id: build
+        if: always()
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          mkdir -p build/c08/logs
+          cmake -S extras/credentials -B build/module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/stage" 2>&1 | tee build/c08/logs/module-configure.log
+          cmake --build build/module --config Release 2>&1 | tee build/c08/logs/module-build.log
+          cmake --install build/module --config Release 2>&1 | tee build/c08/logs/module-install.log
+          cmake -S "$C08_TESTS" -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/stage" 2>&1 | tee build/c08/logs/probe-configure.log
+          cmake --build build/probe --config Release 2>&1 | tee build/c08/logs/probe-build.log
+      - name: Real Credential Manager refusal attempts under a throw-away user with a synthetic secret
+        id: dynamic
+        if: always() && steps.build.outcome == 'success'
+        run: python -I "$C08_TESTS/run_refusal_windows.py" --probe build/probe/c08-probe.exe --auditor "$AUDITOR" --out build/c08/reports/dynamic.json
+      - name: Bind identity and fold gates
+        if: always()
+        run: python -I "$AUDITOR" summary --report build/c08/reports/dynamic.json --pycompile build/c08/reports/pycompile.json --scope build/c08/reports/scope.json --selftest build/c08/reports/selftest.json --out build/c08/reports/summary.json
+      - name: Preserve reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-c08-privacy-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c08/
+          if-no-files-found: error
