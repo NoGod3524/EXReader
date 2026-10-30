@@ -67,6 +67,13 @@ int reader_catalog_find(reader_catalog *, const char *book_key, const char *quer
 int reader_catalog_local_find(reader_catalog *, const char *book_key, const char *query,
                               reader_catalog_visit, void *, int *found, reader_catalog_error *);
 
+/* Explicit retained lookup includes deleted metadata for restore UI. Existing find stays visible-only.
+ * Removed page uses an exclusive book-key cursor, limit 1..100, no OFFSET/writes. */
+int reader_catalog_retained_find(reader_catalog *,const char *book_key,
+  reader_catalog_visit,void *,int *found,reader_catalog_error *);
+int reader_catalog_removed_page(reader_catalog *,const char *after_key,size_t limit,
+  reader_catalog_visit,void *,reader_catalog_error *);
+
 /* Read-only organization views. Mutations use the native typed command module.
  * These callbacks have the same borrowed-string/owner/no-reentry contract as books. */
 typedef enum { READER_CATALOG_SHELF=0, READER_CATALOG_TAG, READER_CATALOG_SERIES } reader_catalog_group_kind;

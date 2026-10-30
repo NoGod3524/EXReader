@@ -74,23 +74,46 @@ static exr_status metadata_prepare(linux_reader *reader,const reader_command *co
   if(++reader->metadata_token==0) ++reader->metadata_token;
   result->metadata_token=reader->metadata_token;
   result->metadata_favorite=view->book.favorite;result->metadata_needs_bootstrap=view->needs_bootstrap;
-  result->metadata_conflict=code==READER_METADATA_CONFLICT || view->deleted;
+  result->metadata_deleted=view->deleted;
+  result->metadata_conflict=view->graph.heads>1 || view->graph.missing_parents || view->graph.foreign_parents || view->graph.requires_restore;
   result->has_metadata=1;
   snprintf(result->message,sizeof(result->message),"%s",result->metadata_conflict ?
     "Conflicting or removed book versions are retained; editing is disabled":"Book details ready");
   return EXR_OK;
 }
+static exr_status metadata_removed(linux_reader *reader,const reader_command *command,reader_result *result) {
+  result->books=calloc(50,sizeof(*result->books));
+  result->cursors=calloc(50,sizeof(*result->cursors));
+  if(!result->books || !result->cursors) return EXR_MEMORY;
+  shelf_copy copy={result,0};reader_catalog_error error={0};
+  int code=reader_catalog_removed_page(reader->catalog,command->cursor_key,50,shelf_receive,&copy,&error);
+  if(code || copy.failed) return code ? EXR_DATABASE:EXR_MEMORY;
+  result->has_removed_books=1;return EXR_OK;
+}
 static exr_status metadata_save(linux_reader *reader,const reader_command *command,reader_result *result) {
   const reader_metadata_view *view=reader_metadata_snapshot_view(reader->metadata_snapshot);
+  int op=command->metadata_operation;
   if(!view || !command->metadata_token || command->metadata_token!=reader->metadata_token ||
      !command->metadata_key || strcmp(command->metadata_key,view->book.book_key) ||
-     !command->metadata_title || !command->metadata_author || view->deleted ||
-     view->needs_bootstrap || (view->graph.revisions && !view->graph.projection_safe) ||
+     !command->metadata_title || !command->metadata_author ||
+     op<READER_COMMAND_PUT || op>READER_COMMAND_RESTORE ||
+     (view->deleted && op!=READER_COMMAND_RESTORE) || (!view->deleted && op==READER_COMMAND_RESTORE) ||
+     view->needs_bootstrap || view->graph.heads!=1 || view->graph.missing_parents || view->graph.foreign_parents ||
+     view->graph.requires_restore ||
      (command->metadata_favorite!=0 && command->metadata_favorite!=1)) return EXR_ARGUMENT;
+  if(op==READER_COMMAND_RESTORE) {
+    char digest[65];uint64_t bytes=0;exr_error problem={0};
+    exr_status verified=reader_catalog_sdk_original_identity(reader->library,reader->metadata_book,
+      &reader->control,digest,&bytes,&problem);
+    if(verified!=EXR_OK || strcmp(digest,view->book.source_sha256) || bytes!=view->book.source_bytes) {
+      snprintf(result->message,sizeof(result->message),"Restore requires the exact retained original verified by the public SDK");
+      return verified!=EXR_OK ? verified:EXR_DATABASE;
+    }
+  }
   reader_metadata_error error={0};reader_metadata_result submitted={0};reader_metadata_status code;
   gchar *sort=g_utf8_normalize(command->metadata_title,-1,G_NORMALIZE_DEFAULT_COMPOSE);
   if(!sort) return EXR_ENCODING;
-  reader_book_command edit=view->book;edit.operation=READER_COMMAND_PUT;
+  reader_book_command edit=view->book;edit.operation=(reader_command_operation)op;
   edit.title=command->metadata_title;edit.author=command->metadata_author;edit.sort_title=sort;
   edit.favorite=command->metadata_favorite;
   code=reader_metadata_stage_book(reader->metadata,reader->metadata_snapshot,&edit,&submitted,&error);g_free(sort);
@@ -101,11 +124,14 @@ static exr_status metadata_save(linux_reader *reader,const reader_command *comma
   if(!submitted.committed) return EXR_DATABASE;
   reader_metadata_snapshot_free(reader->metadata_snapshot);reader->metadata_snapshot=NULL;
   ++reader->metadata_token;
-  snprintf(result->message,sizeof(result->message),"Book details saved locally");return EXR_OK;
+  snprintf(result->message,sizeof(result->message),"%s",op==READER_COMMAND_DELETE ?
+    "Book removed from shelf; retained original and history kept":op==READER_COMMAND_RESTORE ?
+    "Book restored from retained history":"Book details saved locally");return EXR_OK;
 }
 static void metadata_execute(linux_reader *reader,const reader_command *command,reader_result *result) {
   result->status=metadata_ready(reader,result);if(result->status!=EXR_OK) return;
   if(command->action==READER_METADATA_PREPARE) result->status=metadata_prepare(reader,command,result);
+  else if(command->action==READER_METADATA_REMOVED_LIST) result->status=metadata_removed(reader,command,result);
   else if(command->action==READER_METADATA_SAVE) result->status=metadata_save(reader,command,result);
   else {
     reader_metadata_error error={0};reader_metadata_result submitted={0};
@@ -117,7 +143,7 @@ static void metadata_execute(linux_reader *reader,const reader_command *command,
     if(result->status==EXR_OK) snprintf(result->message,sizeof(result->message),"%s",
       command->action==READER_METADATA_RETRY ? "Earlier edit recovered":"Uncommitted edit discarded");
   }
-  if((result->status==EXR_OK && command->action!=READER_METADATA_PREPARE) || result->metadata_committed) {
+  if((result->status==EXR_OK && command->action!=READER_METADATA_PREPARE && command->action!=READER_METADATA_REMOVED_LIST) || result->metadata_committed) {
     reader_command shelf=*command;shelf.direction=0;shelf.cursor_key=shelf.cursor_title=NULL;
     exr_status status=product_shelf(reader,&shelf,result);
     if(status!=EXR_OK && result->status==EXR_OK) {

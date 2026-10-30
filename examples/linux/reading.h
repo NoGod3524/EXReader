@@ -24,7 +24,7 @@ typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_PREVIOUS, READER_FONT, READER_NOTE_ADD, READER_NOTE_REMOVE,
   READER_NOTE_JUMP, READER_COMMIT, READER_ZOOM, READER_SHELF_QUERY,
   READER_METADATA_PREPARE, READER_METADATA_SAVE, READER_METADATA_RETRY,
-  READER_METADATA_DISCARD, READER_COLLECTIONS_LIST, READER_COLLECTIONS_PREPARE_GROUP,
+  READER_METADATA_DISCARD, READER_METADATA_REMOVED_LIST, READER_COLLECTIONS_LIST, READER_COLLECTIONS_PREPARE_GROUP,
   READER_COLLECTIONS_SAVE_GROUP, READER_COLLECTIONS_PREPARE_MEMBER,
   READER_COLLECTIONS_SAVE_MEMBER, READER_COLLECTIONS_RETRY, READER_COLLECTIONS_DISCARD,
   READER_ACCOUNT_LOAD, READER_ACCOUNT_SET, READER_ACCOUNT_DELETE,
@@ -87,7 +87,7 @@ typedef struct {
 #endif
   const char *metadata_key,*metadata_title,*metadata_author;
   uint64_t metadata_token;
-  int metadata_favorite;
+  int metadata_favorite,metadata_operation;
   int collection_kind,collection_removed,collection_operation;
   int collection_group_direction,collection_member_direction;
   uint64_t collection_token,collection_group_cursor_ordinal,collection_member_cursor_ordinal;
@@ -151,7 +151,7 @@ typedef struct {
   int fixed,zoom;
   size_t page_count;
   int has_metadata,metadata_favorite,metadata_conflict,metadata_needs_bootstrap;
-  int metadata_pending,metadata_committed;
+  int metadata_pending,metadata_committed,metadata_deleted,has_removed_books;
   uint64_t metadata_token;
   char *metadata_title,*metadata_author;
   int has_collections,collection_response,collection_kind,collection_removed,collection_operation;
