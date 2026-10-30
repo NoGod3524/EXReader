@@ -1,5 +1,5 @@
 """Independent retained-artifact audit. Execute only in GitHub Actions."""
-import os,json,hashlib,io,zipfile,urllib.request,re,copy,stat
+import os,json,hashlib,io,zipfile,urllib.request,urllib.error,re,copy,stat
 from pathlib import Path
 SOURCE="af851ee7a7d3c04fd4905785a51e6fc9a1226327"
 RUN=41085869945
@@ -12,9 +12,19 @@ class Rejected(Exception): pass
 def need(ok,code):
  if not ok: raise Rejected(code)
 def sha(b): return hashlib.sha256(b).hexdigest()
+class StripOnRedirect(urllib.request.HTTPRedirectHandler):
+ """Artifact zips redirect to signed blob storage; the API token must not follow.
+  Sending it there yields HTTP 401 and would also disclose it to a second host."""
+ def redirect_request(self,req,fp,code,msg,headers,newurl):
+  r=super().redirect_request(req,fp,code,msg,headers,newurl)
+  if r is not None:
+   for k in [k for k in r.headers if k.lower()=="authorization"]: r.headers.pop(k,None)
+   for k in [k for k in r.unredirected_hdrs if k.lower()=="authorization"]: r.unredirected_hdrs.pop(k,None)
+  return r
+OPENER=urllib.request.build_opener(StripOnRedirect())
 def api(path,raw=False):
  req=urllib.request.Request("https://api.github.com/repos/"+REPO+"/"+path,headers={"Authorization":"Bearer "+os.environ["GH_TOKEN"],"Accept":"application/vnd.github+json"})
- with urllib.request.urlopen(req,timeout=60) as r: data=r.read(4*1024*1024)
+ with OPENER.open(req,timeout=120) as r: data=r.read(8*1024*1024)
  return data if raw else json.loads(data)
 def pairs(items):
  d={}
@@ -135,6 +145,14 @@ def changed(v,suffix,fn):
 def main():
  need(os.environ.get("GITHUB_ACTIONS")=="true","actions-only")
  out=Path("audit-evidence");out.mkdir(exist_ok=True)
+ try:
+  body(out)
+ except BaseException as exc:
+  # A failing audit must still leave evidence instead of an empty upload.
+  detail="http-%d"%exc.code if isinstance(exc,urllib.error.HTTPError) else str(exc)
+  (out/"error.json").write_text(json.dumps({"rejected_or_failed":detail,"audit_source":os.environ.get("GITHUB_SHA"),"independent_validator":True},indent=2)+"\n")
+  raise
+def body(out):
  meta=api("actions/artifacts/"+str(ART));job=api("actions/jobs/"+str(JOB));run=api("actions/runs/"+str(RUN))
  need(meta["id"]==ART and meta["size_in_bytes"]==SIZE and meta["digest"]=="sha256:"+DIGEST and meta["expired"] is False,"artifact")
  need(meta["name"]=="windows-record-bridge-"+SOURCE and meta["workflow_run"]["head_sha"]==SOURCE and meta["workflow_run"]["id"]==RUN,"artifact-owner")
