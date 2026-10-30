@@ -16,6 +16,7 @@ PINS["features8eda-iphone"]=("8eda894a1eacc50ecca1cdd2ca94ab1b4bd7d592",40989249
 PINS["features55e9-ipad"]=("55e9c203fc58c5b94d3d951dad17c32d7f15a08f",40992359608,123858647139,12950219035,180602163,"68e47e9213e87b1d95c65b100603863be279031c0abb2d4875931b2af7610538")
 PINS["features55e9-iphone"]=("55e9c203fc58c5b94d3d951dad17c32d7f15a08f",40992359608,123858647168,12950483426,235576166,"f410536fc8b2732cc75feef43f3d12d583da06f5699b26a0b532f91aad10650d")
 PINS["featuresa91-macos"]=("a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72",41000723036,123885490913,12954019303,431777254,"c209470bef5f68ee8da6121e310dd3c76ff5bb295bbf1d358ec3a8c2621b7b2d")
+PINS["featuresa91-ipad"]=("a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72",41000723036,123885490853,12955922033,474548744,"ee15fc2eaa8b908c8a1b2037e6667be73710745d2f1dcd75c1110b08ccfd2852")
 p=argparse.ArgumentParser();p.add_argument("--input",choices=PINS,required=True);args=p.parse_args()
 source,run,jobid,aid,size,digest=PINS[args.input]
 out=Path("build/repair-apple-failure")/args.input;out.mkdir(parents=True,exist_ok=True)
