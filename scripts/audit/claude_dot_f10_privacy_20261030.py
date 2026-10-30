@@ -74,7 +74,7 @@ TEMP_RE = re.compile(r"\b(g_mkstemp_full|g_mkstemp|g_mkdtemp_full|g_mkdtemp|mkst
                      r"GetTempPath[AW]?|GetTempFileName[AW]?|NSTemporaryDirectory|temporaryDirectory|createTempFile|"
                      r"createTempDirectory|NamedTemporaryFile|TemporaryDirectory|g_get_tmp_dir)\b")
 CLEAN_RE = re.compile(r"\b(unlink|unlinkat|remove|g_remove|g_unlink|rmtree|DeleteFile[AW]?|removeItem|"
-                      r"removeItemAtPath|deleteRecursively|deleteIfExists|rmdir|g_rmdir)\s*\(|\.delete\(|"
+                      r"removeItemAtPath|deleteRecursively|deleteIfExists|rmdir|g_rmdir)\s*\(|\.delete\(|\.cleanup\(|"
                       r"FILE_FLAG_DELETE_ON_CLOSE|O_TMPFILE|\bos\.(remove|unlink)\b")
 LOG_RE = re.compile(r"\b(printf|fprintf|puts|perror|syslog|NSLog|os_log|g_message|g_warning|g_debug|g_critical|"
                     r"g_printerr|g_print|OutputDebugString[AW]?|__android_log_print|Log\.[a-z]\w*|"
@@ -116,7 +116,7 @@ def static_audit(repo: Path) -> dict:
             m_path = USER_PATH.search(line)
             if m_path:
                 paths[rel] = paths.get(rel, 0) + 1
-            if is_comment(line):
+            if is_comment(line) or re.match(r"\s*(from\s+\S+\s+)?import\b", line):
                 continue
             code = LITERAL.sub('""', line)
             m = TEMP_RE.search(code)
@@ -124,6 +124,8 @@ def static_audit(repo: Path) -> dict:
                 window = "\n".join(lines[max(0, i - WINDOW):i + WINDOW + 1])
                 if m.group(1) == "tmpfile":
                     verdict = "auto-unlinked-tmpfile"
+                elif m.group(1) in ("TemporaryDirectory", "NamedTemporaryFile") and re.match(r"\s*(async\s+)?with\b", code):
+                    verdict = "context-managed-cleanup"
                 else:
                     verdict = "cleanup-paired" if CLEAN_RE.search(window) else "unproven"
                 sites.append({"file": rel, "line": i + 1, "api": m.group(1), "verdict": verdict})
@@ -179,6 +181,8 @@ def selftest() -> dict:
                                              'void g(const char*password,int password_length){\n'
                                              '  printf("len %d", password_length);\n}\n'
                                              '/* printf(secret) in a comment */\n')
+        (repo / "src" / "scratch_leak.py").write_text("import tempfile\nd = tempfile.TemporaryDirectory()\nuse(d.name)\n")
+        (repo / "src" / "scratch_ok.py").write_text("import tempfile\nwith tempfile.TemporaryDirectory() as d:\n    use(d)\n")
         for cmd in (["init", "-q"], ["add", "."], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x"]):
             subprocess.run(["git", "-C", str(repo)] + cmd, check=True, capture_output=True)
         result = static_audit(repo)
@@ -187,6 +191,8 @@ def selftest() -> dict:
             by_file[s["file"]] = s["verdict"]
         cases.append({"case": "static-flags-unpaired-mkstemp", "ok": by_file.get("src/bad.c") == "unproven"})
         cases.append({"case": "static-accepts-paired-mkstemp", "ok": by_file.get("src/good.c") == "cleanup-paired"})
+        cases.append({"case": "static-flags-unmanaged-TemporaryDirectory", "ok": by_file.get("src/scratch_leak.py") == "unproven"})
+        cases.append({"case": "static-accepts-with-TemporaryDirectory", "ok": by_file.get("src/scratch_ok.py") == "context-managed-cleanup"})
         flagged = {l["file"] for l in result["credential_log_candidates"]}
         cases.append({"case": "static-flags-secret-printf", "ok": flagged == {"src/bad.c"}})
     finally:
