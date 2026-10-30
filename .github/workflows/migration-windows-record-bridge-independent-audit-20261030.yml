@@ -1,0 +1,26 @@
+name: Independent original bridge ZIP audit
+on:
+  push:
+    branches: [codex/p0-win-record-bridge-audit-20261030]
+    paths: [tests/migration/windows_record_bridge_independent_20261030/**, docs/MIGRATION-WINDOWS-RECORD-BRIDGE-INDEPENDENT-20261030.md, .github/workflows/migration-windows-record-bridge-independent-audit-20261030.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Authenticate retained producer ZIP and independent tamper controls
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/migration/windows_record_bridge_independent_20261030/audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-bridge-audit-${{ github.sha }}
+          path: audit-evidence/
+          if-no-files-found: error
