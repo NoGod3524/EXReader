@@ -1,0 +1,227 @@
+name: Windows restart acquired-window refusal candidate
+on:
+  push:
+    branches: [codex/p0-win-restart-window-lock-20261030]
+    paths: [extras/migration/windows_restart_reader_20261030/**, tests/migration/windows_restart_reader_20261030/**, .github/workflows/migration-windows-restart-window-lock-20261030.yml]
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  record:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env: {PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Frozen source and qualification identity
+        run: |
+          set -euo pipefail
+          mkdir -p build/record-evidence
+          git diff --exit-code 00e12b8b66ac2c66245e462ef4931a724671cd34 HEAD -- src include cmake CMakeLists.txt bindings extras/migration/src/lm_recovery.c extras/migration/src/lm_recovery_win32_platform.c extras/migration/src/lm_recovery_win32_platform.h tests/migration/recovery_preflight_20261029 tests/migration/windows_recovery_native_20261029
+      - name: Additive scope admission without weakening original guard
+        run: |
+          python - <<'PY'
+          import subprocess
+          base='638976413692412fd7cc15d7e508d0382d1faffd'
+          paths=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines()
+          prefixes=('tests/migration/windows_restart_reader_20261030/window_lock/',)
+          exact={'extras/migration/windows_restart_reader_20261030/src/lm_win_restart_reader.c','.github/workflows/migration-windows-restart-window-lock-20261030.yml','docs/MIGRATION-WINDOWS-RESTART-WINDOW-LOCK-20261030.md'}
+          assert len(paths)==6 and all(p.startswith(prefixes) or p in exact for p in paths),paths
+          PY
+      - name: Build installed SDK and separately opted-in production record library
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_AUDIO=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF
+          cmake --build build/sdk --config Release --parallel 4
+          cmake --install build/sdk --config Release --prefix "$GITHUB_WORKSPACE/stage"
+          cmake -S extras/migration -B build/migration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release -DEXR_MIGRATION_WINDOWS_RECORD_CANDIDATE=ON
+          cmake --build build/migration --config Release --parallel 4
+          cmake --install build/migration --config Release --prefix "$GITHUB_WORKSPACE/migration-stage"
+      - name: Build actual installed consumer and original Windows refusal fixture
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/windows_record_20261029 -B build/record-check -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DSOURCE_SHA="$GITHUB_SHA" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/record-check --config Release --parallel 4
+          cmake -S tests/migration/recovery_integration_20261029 -B build/integration -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/integration --config Release --parallel 4
+      - name: Actual NTFS records, full-width collision controls and retained old-format refusals
+        run: |
+          set -euo pipefail
+          PRIVATE_ROOT=$(cygpath -w "$GITHUB_WORKSPACE/build/record-evidence/private-state")
+          build/record-check/Release/windows-record-check.exe "$PRIVATE_ROOT" | tee build/record-evidence/native.json
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path('build/record-evidence');r=json.loads((p/'native.json').read_text())
+          assert r['source']==os.environ['GITHUB_SHA'] and r['passed'] and r['checks']==r['expected']==27
+          assert r['identity_bytes']==49 and len(r['target'])==48 and r['sdk_open_attempts']==0 and r['recovery_admission'] is False
+          files={q.name:{'bytes':q.stat().st_size,'sha256':hashlib.sha256(q.read_bytes()).hexdigest()} for q in (p/'private-state').iterdir()}
+          assert set(files)=={'target.fixture','record-00.json'},files
+          record=json.loads((p/'private-state/record-00.json').read_bytes());assert record['magic']=='EXRWINRECOVERY1' and record['version']==1 and record['target']==r['target']
+          for name in ('root','parent','target'):assert len(record[name])==48 and set(record[name])<=set('0123456789abcdef')
+          built=Path('build/migration/Release/exreader-migration-windows-record.lib');installed=Path('migration-stage/lib/exreader-migration-windows-record.lib')
+          assert built.read_bytes()==installed.read_bytes()
+          (p/'receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],checks=r,files=files,installed_library_sha256=hashlib.sha256(installed.read_bytes()).hexdigest(),full_p0_acceptance=False),indent=2)+'\n')
+          PY
+      - name: Build installed publication primitive and separate installed consumer
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_publish_20261030 -B build/publish -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage"
+          cmake --build build/publish --config Release --parallel 4
+          cmake --install build/publish --config Release --prefix "$GITHUB_WORKSPACE/publish-stage"
+          cmake -S tests/migration/windows_publish_20261030 -B build/publish-check -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DPUBLISH_PREFIX="$GITHUB_WORKSPACE/publish-stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/publish-check --config Release --parallel 4
+          python tests/migration/windows_publish_20261030/run.py --probe build/publish-check/Release/windows-publish-check.exe --work build/publish-evidence
+      - name: Build installed bridge and installed consumer; native negatives and death cuts
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_record_bridge_20261030 -B build/bridge -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DPUBLISH_PREFIX="$GITHUB_WORKSPACE/publish-stage"
+          cmake --build build/bridge --config Release --parallel 4
+          cmake --install build/bridge --config Release --prefix "$GITHUB_WORKSPACE/bridge-stage"
+          cmake -S tests/migration/windows_record_bridge_20261030 -B build/bridge-check -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DPUBLISH_PREFIX="$GITHUB_WORKSPACE/publish-stage" -DBRIDGE_PREFIX="$GITHUB_WORKSPACE/bridge-stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/bridge-check --config Release --parallel 4
+          python tests/migration/windows_record_bridge_20261030/run.py --probe build/bridge-check/Release/windows-record-bridge-check.exe --work build/bridge-evidence
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          pairs={'bridge':('build/bridge/Release/exreader-migration-windows-record-bridge.lib','bridge-stage/lib/exreader-migration-windows-record-bridge.lib'),'publish':('build/publish/Release/exreader-migration-windows-publish.lib','publish-stage/lib/exreader-migration-windows-publish.lib'),'record':('build/migration/Release/exreader-migration-windows-record.lib','migration-stage/lib/exreader-migration-windows-record.lib')}
+          result={}
+          for key,(built,installed) in pairs.items():
+            a=Path(built).read_bytes();b=Path(installed).read_bytes();assert a==b
+            result[key]={'sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b)}
+          Path('build/bridge-evidence/installed.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],libraries=result),indent=2))
+          PY
+      - name: Fetch pinned C01 provider without changing this source
+        uses: actions/checkout@v4
+        with:
+          repository: NoGod3524/EXReader
+          ref: ccd7fec67eb8aa463b09533ce320820f2da472d9
+          path: build/lease-source
+          persist-credentials: false
+      - name: Build installed C01 and restart reader; fresh-process cases
+        run: |
+          set -euo pipefail
+          test "$(git -C build/lease-source rev-parse HEAD)" = ccd7fec67eb8aa463b09533ce320820f2da472d9
+          cmake -S build/lease-source/extras/migration/windows_admission_lease_20261030 -B build/lease
+          cmake --build build/lease --config Release --parallel 4
+          cmake --install build/lease --config Release --prefix "$GITHUB_WORKSPACE/lease-stage"
+          cmake -S extras/migration/windows_restart_reader_20261030 -B build/restart -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DLEASE_PREFIX="$GITHUB_WORKSPACE/lease-stage"
+          cmake --build build/restart --config Release --parallel 4
+          cmake --install build/restart --config Release --prefix "$GITHUB_WORKSPACE/restart-stage"
+          cmake -S tests/migration/windows_restart_reader_20261030 -B build/restart-check -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DPUBLISH_PREFIX="$GITHUB_WORKSPACE/publish-stage" -DBRIDGE_PREFIX="$GITHUB_WORKSPACE/bridge-stage" -DLEASE_PREFIX="$GITHUB_WORKSPACE/lease-stage" -DRESTART_PREFIX="$GITHUB_WORKSPACE/restart-stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/restart-check --config Release --parallel 4
+          python tests/migration/windows_restart_reader_20261030/run.py --probe build/restart-check/Release/windows-restart-reader-check.exe --work build/restart-evidence
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          pairs={'restart':('build/restart/Release/exreader-migration-windows-restart-reader.lib','restart-stage/lib/exreader-migration-windows-restart-reader.lib'),'lease':('build/lease/Release/exreader-migration-windows-lease.lib','lease-stage/lib/exreader-migration-windows-lease.lib')}
+          hashes={}
+          for key,(built,installed) in pairs.items():
+            a=Path(built).read_bytes();b=Path(installed).read_bytes();assert a==b
+            hashes[key]={'sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b)}
+          Path('build/restart-evidence/installed.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],provider_source='ccd7fec67eb8aa463b09533ce320820f2da472d9',libraries=hashes),indent=2))
+          PY
+      - name: Build independent test-only window-lock consumer
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/windows_restart_reader_20261030/window_lock -B build/window-lock-check -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DRECORD_PREFIX="$GITHUB_WORKSPACE/migration-stage" -DLEASE_PREFIX="$GITHUB_WORKSPACE/lease-stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/window-lock-check --config Release --parallel 4 --verbose
+      - name: Prove new hook is absent from installed production and isolated in test objects
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,subprocess
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          out=Path('build/window-lock-isolation');out.mkdir()
+          hook='lm_rr_test_after_acquire';macro='LM_RR_TEST_AFTER_ACQUIRE'
+          prod=Path('build/restart/exreader-migration-windows-restart-reader.vcxproj')
+          test=Path('build/window-lock-check/windows-restart-window-lock.vcxproj')
+          ns={'m':'http://schemas.microsoft.com/developer/msbuild/2003'}
+          evidence={}
+          for label,path,want in (('production',prod,False),('variant',test,True)):
+            tree=ET.parse(path)
+            defs=[n.text or '' for n in tree.findall('.//m:PreprocessorDefinitions',ns)]
+            assert defs and all((macro in d)==want for d in defs),(label,defs)
+            evidence[label+'_definitions']=defs
+            (out/(label+'.vcxproj.txt')).write_bytes(path.read_bytes())
+          assert 'exreader-migration-windows-restart-reader.lib' not in test.read_text()
+          vswhere=Path(os.environ['ProgramFiles(x86)'])/'Microsoft Visual Studio/Installer/vswhere.exe'
+          vs=Path(subprocess.check_output([str(vswhere),'-latest','-products','*','-property','installationPath'],text=True).strip())
+          dumpbin=sorted(vs.glob('VC/Tools/MSVC/*/bin/Hostx64/x64/dumpbin.exe'))[-1]
+          def symbols(path,name):
+            raw=subprocess.check_output([str(dumpbin),'/symbols',str(path)],text=True,errors='replace')
+            (out/name).write_text(raw,encoding='utf-8')
+            return raw
+          production=symbols(Path('restart-stage/lib/exreader-migration-windows-restart-reader.lib'),'production-symbols.txt')
+          assert hook not in production
+          objs=list(Path('build/window-lock-check').rglob('*.obj'))
+          readers=[p for p in objs if 'lm_win_restart_reader' in p.name]
+          probes=[p for p in objs if p.name in ('probe.obj','probe.c.obj')]
+          assert len(readers)==len(probes)==1,(readers,probes)
+          reader_symbols=symbols(readers[0],'variant-reader-symbols.txt')
+          probe_symbols=symbols(probes[0],'variant-probe-symbols.txt')
+          references=[l for l in reader_symbols.splitlines() if '| '+hook in l]
+          definitions=[l for l in probe_symbols.splitlines() if '| '+hook in l]
+          assert len(references)==1 and 'UNDEF' in references[0],references
+          assert len(definitions)==1 and 'UNDEF' not in definitions[0],definitions
+          evidence['hook_reference']=references;evidence['hook_definition']=definitions
+          for label,path,installed in (('installed',Path('build/restart-check/restart-consumer.map'),True),
+                                      ('variant',Path('build/window-lock-check/window-lock.map'),False)):
+            lines=[l for l in path.read_text(errors='replace').splitlines() if ' lm_rr_open ' in l]
+            assert len(lines)==1 and 'lm_win_restart_reader' in lines[0],lines
+            assert ('exreader-migration-windows-restart-reader' in lines[0])==installed,lines
+            evidence[label+'_lm_rr_open']=lines
+          source=Path('extras/migration/windows_restart_reader_20261030/src/lm_win_restart_reader.c')
+          evidence.update(source=os.environ['GITHUB_SHA'],source_file_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
+                          run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],passed=True)
+          (out/'receipt.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print('WINDOW-LOCK-ISOLATION PASS '+json.dumps(evidence,sort_keys=True))
+          PY
+      - name: Two additive window-lock cases without changing the original 26
+        run: |
+          set -euo pipefail
+          python tests/migration/windows_restart_reader_20261030/window_lock/run.py --probe build/window-lock-check/Release/windows-restart-window-lock.exe --fixture-probe build/restart-check/Release/windows-restart-reader-check.exe --work build/window-lock-evidence
+      - name: Original eight Windows recovery capability refusals
+        run: |
+          set -euo pipefail
+          python tests/migration/recovery_integration_20261029/run.py --harness-preflight build/harness-admission
+          python tests/migration/recovery_integration_20261029/run.py --candidate migration-stage/bin/exreader-legacy-migrate-recovery.exe --tool build/migration/Release/exreader-legacy-migrate-tx.exe --old-tool build/migration/Release/exreader-legacy-migrate.exe --fixture build/integration/Release/migration-recovery-fixture.exe --font tests/fixtures/fonts/primary.ttf --fixtures tests/fixtures --harness-admission build/harness-admission/admission.json --work build/recovery-integration
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('build/recovery-integration/evidence.json').read_text());assert len(r['cases'])==8 and r['passed'] and all(c['passed'] for c in r['cases'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-restart-window-lock-${{ github.sha }}
+          path: |
+            build/window-lock-evidence/
+            build/window-lock-isolation/
+            build/window-lock-check/window-lock.map
+            build/restart-evidence/
+            build/restart-check/restart-consumer.map
+            restart-stage/
+            lease-stage/
+            build/restart/Release/exreader-migration-windows-restart-reader.lib
+            build/lease/Release/exreader-migration-windows-lease.lib
+            build/bridge-evidence/
+            build/bridge-check/bridge-consumer.map
+            bridge-stage/
+            build/bridge/Release/exreader-migration-windows-record-bridge.lib
+            build/publish/Release/exreader-migration-windows-publish.lib
+            build/migration/Release/exreader-migration-windows-record.lib
+            build/publish-evidence/
+            build/publish-check/publish-consumer.map
+            publish-stage/
+            build/record-evidence/
+            build/record-check/record-consumer.map
+            build/recovery-integration/
+            build/harness-admission/
+            migration-stage/lib/exreader-migration-windows-record.lib
+            migration-stage/include/exreader-migration-candidate/
+          if-no-files-found: error
