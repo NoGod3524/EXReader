@@ -105,3 +105,8 @@ if(EXR_MIGRATION_WINDOWS_RECORD_CANDIDATE)
   install(FILES src/lm_recovery_win32_record.h src/lm_recovery_win32_platform.h src/lm.h
     DESTINATION include/exreader-migration-candidate)
 endif()
+
+option(EXR_MIGRATION_WINDOWS_ENGINE_CANDIDATE "Build private Windows observer; no migration admission" OFF)
+if(EXR_MIGRATION_WINDOWS_ENGINE_CANDIDATE)
+  add_subdirectory(windows_recovery_engine_20261030)
+endif()
