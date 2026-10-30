@@ -1,0 +1,103 @@
+name: F05 remaining native Receive and delete-versus-update
+on:
+  push:
+    branches: [codex/f05-remaining-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  host-linux:
+    name: actual GTK host two-peer wire, cancel, kill and conflict
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed base and package path ownership
+        run: |
+          FIXED=c5e96644a1ad07e34b0c77d2665ba273fa171333
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$FIXED" HEAD
+          allowed='^(tests/reader_f05_remaining_20261030/|\.github/workflows/reader_f05_remaining_20261030\.yml$|docs/reader-total-progress/F05_REMAINING_20261030\.md$)'
+          bad=$(git diff --name-only "$FIXED" HEAD | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+          test -z "$(git diff --name-only --diff-filter=MD "$FIXED" HEAD)"
+          python3 -m py_compile tests/reader_f05_remaining_20261030/check_remaining.py
+      - name: Install native GTK TLS XML and Secret Service dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build at-spi2-core xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil dbus-x11
+      - name: Build and install the unchanged product, TLS, revision, sync, session and metadata modules
+        run: |
+          mkdir -p build/f05-logs
+          prefix="$PWD/build/f05-stage"
+          echo "ACCOUNT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S extras/opds -B build/f05-hash -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$PWD/build/f05-hash-stage"
+          cmake --build build/f05-hash
+          cmake --install build/f05-hash
+          export EXREADER_ORIGINAL_HASH_PREFIX="$PWD/build/f05-hash-stage"
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$EXREADER_ORIGINAL_HASH_PREFIX" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/f05-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/f05-product --parallel 4
+          cmake --install build/f05-product
+          cmake -S extras/webdav -B build/f05-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/f05-dav --parallel 4
+          cmake --install build/f05-dav
+          cmake -S apps/reader/revisions -B build/f05-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/f05-revisions --parallel 4
+          cmake --install build/f05-revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/f05-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/f05-$module" --parallel 4
+            cmake --install "build/f05-$module"
+          done
+          cmake -S extras/credentials -B build/f05-credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/f05-credentials --parallel 4
+          cmake --install build/f05-credentials
+          cmake -S tests/reader_revisions/consumer -B build/f05-revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/f05-revision-consumer --parallel 4
+      - name: Install the repository SDK and public original export module
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/f05-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/f05-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/f05-logs/sdk-install.log
+          cmake -S extras/sideload -B build/f05-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/f05-sideload --parallel 4
+          cmake --install build/f05-sideload
+          cmake -S apps/reader/reading-state -B build/f05-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/f05-reading-state --parallel 4
+          cmake --install build/f05-reading-state
+      - name: Build and package the actual GTK host with account integration
+        id: build
+        run: |
+          cmake -S apps/reader/desktop -B build/f05-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_BUILD_GTK=ON -DEXR_READER_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/f05-logs/host-configure.log
+          cmake --build build/f05-desktop --parallel 4 --verbose 2>&1 | tee build/f05-logs/host-build.log
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.42.0 --binary build/f05-desktop/gtk-host/exreader-linux --output build/f05-package
+      - name: Native Receive projects group then real delete-versus-update conflict
+        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/f05-logs/openbox-live.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tests/reader_f05_remaining_20261030/check_remaining.py --payload build/f05-package/EXReader-Linux --revision-consumer build/f05-revision-consumer/revision-consumer --build-json build/f05-package/build.json --output build/f05-host-live-evidence
+          '
+      - name: Preserve source-bound evidence without private keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f05-remaining-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f05-logs/
+            build/f05-host-evidence/
+            build/f05-host-live-evidence/
+            build/f05-package/build.json
+            build/f05-package/runtime-dependencies.txt
+            build/f05-revision-consumer/revision-consumer
+            !build/**/*.key
+          if-no-files-found: error
