@@ -609,7 +609,51 @@ def main():
         assert any(r['peer'] == 'peerB' and r['method'] == 'GET' and '/revisions/' in r['path'] for r in requests)
         record('native_delete_versus_update_converges_without_automatic_winner',
                graph=ga['state'], heads=ga['heads'], wire=wire)
-        report['book_delete_restore'] = {'accepted': False, 'reason': 'separate product UI implementation pending; not granted by group operations'}
+        # Real GTK deletion, process restart, retained-book selection and restore.
+        focus(a)
+        a.host.key('F2', 'ctrl+e')
+        window(a, 'Book details')
+        a.host.key('alt+d')
+        window(a, 'Confirm book operation')
+        a.host.key('alt+o')
+        window(a, 'Confirm book operation', False)
+        window(a, 'Book details', False)
+        a.host.wait(lambda s: s['books'] == 0 and not s['error'], timeout=60)
+        assert sql(a, 'SELECT deleted FROM reader_books WHERE book_key=?', (book,)) == [(1,)]
+        deleted_history = ghist(a, book)
+        deleted_heads = protocol(a, 'heads', kind_of(a, book), book)
+        assert deleted_heads['state']['heads'] == 1
+        delete_id = ids(deleted_heads['heads'])[0]
+        assert deleted_history[delete_id]['operation'] == 'delete'
+        record('native_book_delete_retains_tombstone_and_revision_history', revision=delete_id)
+        hard_kill(a)
+        launch(a)
+        focus(a)
+        a.host.key('F2')
+        a.host.wait(lambda s: s['books'] == 0 and not s['error'], timeout=60)
+        a.host.key('ctrl+shift+d')
+        window(a, 'Removed books')
+        a.host.key('Home', 'Return')
+        window(a, 'Book details')
+        a.host.key('alt+r')
+        window(a, 'Confirm book operation')
+        a.host.key('alt+o')
+        window(a, 'Confirm book operation', False)
+        window(a, 'Book details', False)
+        a.host.wait(lambda s: s['books'] == 1 and not s['error'], timeout=60)
+        assert sql(a, 'SELECT deleted FROM reader_books WHERE book_key=?', (book,)) == [(0,)]
+        restored = ghist(a, book)
+        new_ids = set(restored) - set(deleted_history)
+        assert len(new_ids) == 1
+        restore_id = next(iter(new_ids))
+        assert restored[restore_id]['operation'] == 'restore'
+        assert restored[restore_id]['parents'] == [delete_id]
+        assert set(deleted_history).issubset(restored)
+        record('native_removed_books_restore_after_restart_preserves_delete_parent',
+               restore_revision=restore_id, deleted_revision=delete_id)
+        report['book_delete_restore'] = {'accepted': True, 'delete_revision': delete_id,
+                                        'restore_revision': restore_id, 'restart': True}
+
         report['complete_f05'] = False
         (folder / 'requests.json').write_text(json.dumps(requests, indent=2))
         (folder / 'wire.json').write_text(json.dumps({p: sha(v) for p, v in entries.items()}, indent=2))
@@ -624,7 +668,7 @@ def main():
             assert not any(form in v for form in forms for v in entries.values())
         assert not leaks, leaks
         record('synthetic_credentials_absent_from_preserved_evidence')
-        assert len(checks) == 4
+        assert len(checks) == 6
         report.update(accepted=True, count=len(checks), observations=observations,
                       request_count=len(requests), credential_leak_hits=0,
                       peers={n: {'account_id': p.account_id, 'pid': pids[n]} for n, p in peers.items()})

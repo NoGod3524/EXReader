@@ -23,16 +23,15 @@ jobs:
           FIXED=c5e96644a1ad07e34b0c77d2665ba273fa171333
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor "$FIXED" HEAD
-          allowed='^(tests/reader_f05_remaining_20261030/|\.github/workflows/reader_f05_remaining_20261030\.yml$|docs/reader-total-progress/F05_REMAINING_20261030\.md$)'
+          allowed='^(apps/reader/store/native/catalog[.](c|h)$|apps/reader/desktop-metadata/src/metadata[.]cpp$|examples/linux/(metadata[.]inc|metadata_ui[.]inc|reader[.]c|reading[.]c|reading[.]h)$|tests/reader_f05_remaining_20261030/|\.github/workflows/reader_f05_remaining_20261030\.yml$|docs/reader-total-progress/F05_REMAINING_20261030\.md$)'
           bad=$(git diff --name-only "$FIXED" HEAD | grep -Ev "$allowed" || true)
           test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
-          test -z "$(git diff --name-only --diff-filter=MD "$FIXED" HEAD)"
           python3 -m py_compile tests/reader_f05_remaining_20261030/check_remaining.py
       - name: Install native GTK TLS XML and Secret Service dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build at-spi2-core xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil dbus-x11
-      - name: Build and install the unchanged product, TLS, revision, sync, session and metadata modules
+      - name: Build product and metadata changes with unchanged TLS, revision, sync and session modules
         run: |
           mkdir -p build/f05-logs
           prefix="$PWD/build/f05-stage"
