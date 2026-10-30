@@ -24,3 +24,30 @@ jobs:
           name: independent-bridge-audit-${{ github.sha }}
           path: audit-evidence/
           if-no-files-found: error
+  rehash:
+    # The first job states that it retained the exact bytes it verified. This job
+    # downloads that artifact again and re-hashes the retained archive, so the
+    # retention claim rests on a measurement instead of a receipt field.
+    needs: audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: independent-bridge-audit-${{ github.sha }}
+          path: retained
+      - name: Re-hash the retained original ZIP in a second job
+        run: |
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path('retained/original.zip');b=p.read_bytes()
+          digest=hashlib.sha256(b).hexdigest()
+          receipt=json.loads(pathlib.Path('retained/receipt.json').read_text())
+          claim=receipt.get('retained_original_zip') or {}
+          print(json.dumps(dict(retained_bytes=len(b),retained_sha256=digest,claimed=claim),indent=2))
+          assert len(b)==341928,('retained-size',len(b))
+          assert digest=='5880b88ee98dfefe2c3a697054e475df06cfd176fb9089a4964b4acf15fa52fb',('retained-digest',digest)
+          assert claim.get('bytes')==len(b) and claim.get('sha256')==digest,('receipt-claim',claim)
+          assert receipt.get('archive_bytes')==len(b) and receipt.get('archive_sha256')==digest,'outer-binding'
+          print('retained original ZIP re-hashed by a second job: 341928 bytes, SHA256 matches')
+          PY
