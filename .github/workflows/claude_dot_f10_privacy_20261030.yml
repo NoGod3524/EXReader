@@ -30,11 +30,13 @@ jobs:
         if: always()
         run: python3 -I "$AUDITOR" static --repo . --out build/f10/reports/static.json
       - name: Install Secret Service, D-Bus and libsecret
+        if: always()
         run: |
           sudo apt-get update
           sudo apt-get install -y libsecret-1-dev gnome-keyring dbus libglib2.0-bin pkg-config ninja-build
       - name: Build and install the unchanged credentials module, then the F10 probe
         id: build
+        if: always()
         run: |
           set -o pipefail
           ws="$PWD"

@@ -241,6 +241,7 @@ def summary(reports: Path, out: Path) -> int:
             "application-level flows (WebDAV/OPDS accounts, sync, export, crash/kill paths) beyond the credential module",
             "full F10, full P0 or any acceptance count; evidence binds to the single source/run/attempt above"]}
     out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+    print(json.dumps({"gates": verdict, "missing": missing, "all": result["all_gates_passed"]}))
     step = os.environ.get("GITHUB_STEP_SUMMARY")
     if step:
         with open(step, "a") as f:
@@ -272,6 +273,14 @@ def main() -> int:
     if a.cmd == "static":
         print(f"temp sites={len(report['temp_sites'])} unproven={len(report['temp_sites_unproven'])} "
               f"log candidates={len(report['credential_log_candidates'])}")
+        for s in report["temp_sites_unproven"]:
+            print(f"UNPROVEN {s['file']}:{s['line']} {s['api']}")
+        for s in report["temp_sites"]:
+            if s["verdict"] != "unproven":
+                print(f"{s['verdict'].upper()} {s['file']}:{s['line']} {s['api']}")
+        for s in report["credential_log_candidates"]:
+            print(f"LOGLEAK? {s['file']}:{s['line']} {s['identifier']}")
+        print("user-path inventory (informational):", json.dumps(report["user_path_inventory_informational"]))
     return 0 if report["gate_passed"] else 1
 
 
