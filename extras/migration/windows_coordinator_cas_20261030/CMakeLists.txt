@@ -1,0 +1,26 @@
+cmake_minimum_required(VERSION 3.16)
+project(CoordinatorCASFacade LANGUAGES C)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8 /W4 /WX)
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+else()
+  add_compile_options(-Wall -Wextra -Werror)
+endif()
+add_library(installed-hardening STATIC IMPORTED)
+if(MSVC)
+  set(_base "${WH_PREFIX}/lib/exreader-migration-coordinator-hardening.lib")
+else()
+  set(_base "${WH_PREFIX}/lib/libexreader-migration-coordinator-hardening.a")
+endif()
+set_target_properties(installed-hardening PROPERTIES IMPORTED_LOCATION "${_base}"
+  INTERFACE_INCLUDE_DIRECTORIES "${WH_PREFIX}/include/exreader-migration-coordinator-hardening")
+
+add_library(exreader-coordinator-cas STATIC src/wh3_core.c)
+target_include_directories(exreader-coordinator-cas PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/exreader-coordinator-cas>)
+target_link_libraries(exreader-coordinator-cas PUBLIC installed-hardening)
+set_target_properties(exreader-coordinator-cas PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+install(TARGETS exreader-coordinator-cas ARCHIVE DESTINATION lib)
+install(FILES include/exr_wh3.h DESTINATION include/exreader-coordinator-cas)

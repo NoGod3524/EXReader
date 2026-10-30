@@ -1,0 +1,106 @@
+name: C02 ABI3 CAS contract with preserved ABI2 red evidence
+on:
+  push:
+    branches: [codex/dot-c02-cas-contract-20261030]
+    paths:
+      - extras/migration/windows_coordinator_cas_20261030/**
+      - tests/migration/windows_coordinator_cas_20261030/**
+      - .github/workflows/dot-c02-cas-contract-20261030.yml
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Exact six-file additive scope and immutable ABI2
+        run: |
+          set -euo pipefail
+          git diff --name-only 1f0444b32e5b13c1a004383a8350cca8519248c3 HEAD > changed-paths.txt
+          python - <<'PY'
+          import pathlib
+          allowed={'extras/migration/windows_coordinator_cas_20261030/CMakeLists.txt','extras/migration/windows_coordinator_cas_20261030/include/exr_wh3.h','extras/migration/windows_coordinator_cas_20261030/src/wh3_core.c','tests/migration/windows_coordinator_cas_20261030/CMakeLists.txt','tests/migration/windows_coordinator_cas_20261030/wh3_test.c','.github/workflows/dot-c02-cas-contract-20261030.yml'}
+          assert set(pathlib.Path('changed-paths.txt').read_text().splitlines())==allowed
+          PY
+          git diff --exit-code 1f0444b32e5b13c1a004383a8350cca8519248c3 HEAD -- extras/migration/windows_coordinator_hardening_20261030 tests/migration/windows_coordinator_hardening_20261030
+      - name: Build installed ABI2 library and original 81-check consumer
+        id: build2
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_coordinator_hardening_20261030 -B build/lib2 -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/lib2 --config Release
+          cmake --install build/lib2 --config Release --prefix "$GITHUB_WORKSPACE/stage"
+          cmake -S tests/migration/windows_coordinator_hardening_20261030 -B build/check2 -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/check2 --config Release
+      - name: Build installed ABI3 facade and separate contract consumer
+        id: build3
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_coordinator_cas_20261030 -B build/lib3 -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage"
+          cmake --build build/lib3 --config Release
+          cmake --install build/lib3 --config Release --prefix "$GITHUB_WORKSPACE/stage"
+          cmake -S tests/migration/windows_coordinator_cas_20261030 -B build/check3 -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/check3 --config Release
+      - name: Preserve original ABI2 81 checks and raw six contract failures
+        if: ${{ always() && steps.build2.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          EXE=$(find build/check2 -type f \( -name coordinator-hardening-check -o -name coordinator-hardening-check.exe \) | head -1)
+          set +e
+          "$EXE" 2>&1 | tee evidence/abi2.log
+          statuses=("${PIPESTATUS[@]}")
+          set -e
+          printf '%s\n' "${statuses[0]}" > evidence/abi2-exit.txt
+          if [ "${statuses[1]}" -ne 0 ]; then exit "${statuses[1]}"; fi
+          exit "${statuses[0]}"
+      - name: Independently run ABI3 memory transaction contract controls
+        if: ${{ always() && steps.build3.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          EXE=$(find build/check3 -type f \( -name coordinator-cas-check -o -name coordinator-cas-check.exe \) | head -1)
+          set +e
+          "$EXE" 2>&1 | tee evidence/abi3.log
+          statuses=("${PIPESTATUS[@]}")
+          set -e
+          printf '%s\n' "${statuses[0]}" > evidence/abi3-exit.txt
+          if [ "${statuses[1]}" -ne 0 ]; then exit "${statuses[1]}"; fi
+          if [ "${statuses[0]}" -ne 0 ]; then exit "${statuses[0]}"; fi
+          python - <<'PY'
+          import json,os,pathlib
+          records=[json.loads(s) for s in pathlib.Path('evidence/abi3.log').read_text().splitlines() if s.startswith('{"source":')]
+          r=records[-1]
+          assert r['source']==os.environ['GITHUB_SHA'] and r['cases']==16 and r['checks']==64 and r['failed']==0 and r['passed'] is True
+          PY
+      - name: Separate evidence; never relabel original failures as success
+        if: always()
+        run: |
+          mkdir -p evidence
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path('evidence')
+          def summary(name):
+              f=p/name
+              if not f.exists(): return None
+              rs=[json.loads(s) for s in f.read_text(errors='replace').splitlines() if s.startswith('{"source":')]
+              return rs[-1] if rs else None
+          r=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],os=os.environ['RUNNER_OS'],abi2_baseline='1f0444b32e5b13c1a004383a8350cca8519248c3',abi2=summary('abi2.log'),abi3=summary('abi3.log'),native_durability=False,real_owner_wiring=False,full_p0_acceptance=False)
+          (p/'receipt.json').write_text(json.dumps(r,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-cas-contract-${{ matrix.os }}-${{ github.sha }}
+          path: evidence/
+          if-no-files-found: error
