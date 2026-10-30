@@ -29,7 +29,7 @@ assert set(git("diff", "--name-only", BASE, "HEAD").splitlines()) == INHERITED |
 for path in INHERITED - {FEATURES}:
  assert source("HEAD", path) == source(PASSED, path), path
 for path, blob in {
- "tests/reader_team24_apple/ui/FeaturesUITests.swift":"a46f223bf0a96e52b5a5904f66eb270c74c95c91",
+ "tests/reader_team24_apple/ui/FeaturesUITests.swift":"824647af22c2e57a9df01e94064b20a44c2df03b",
  ORIGINAL:"808c63adf60136f8f14d4893a282fb02ba7697f6",
  "examples/apple/HostWave3Views.swift":"5573a621e6748e86054952b62a1a5ba561e43e5c",
  "examples/apple/HostViews.swift":"3132f72e98f4d574b5ade0381226e7b7dfeb1f62",
@@ -42,7 +42,7 @@ assert old[old.index(marker):] == new[new.index(marker):]
 assert old[:old.index(b"    private func e(")] == new[:new.index(b"    private var nativeShareObserved")]
 assert new.count(b"addingTimeInterval(90)") == 1 and new.count(b"for _ in 0..<24") == 1
 
-# Exact platform-only repair: retain all c66 iOS helper text and every test body.
+# Exact Mac geometry repair plus two explicit iOS query-order exceptions; retain every test body.
 qualified = source(PASSED, FEATURES).decode()
 mac_before = """            targetFrame = snapshot.frame
             let visible"""
@@ -62,7 +62,13 @@ close_after = """            targetFrame = visible
 #endif
         }"""
 assert qualified.count(close_before) == 1
-assert source("HEAD", FEATURES).decode() == qualified.replace(close_before, close_after, 1)
+qualified = qualified.replace(close_before, close_after, 1)
+# Equivalent live native query ordering removes repeated negative legacy lookups.
+assert qualified.count('directory.exists || (localRoot.exists && currentDirectoryMenu.exists)') == 1
+qualified = qualified.replace('directory.exists || (localRoot.exists && currentDirectoryMenu.exists)', '(currentDirectoryMenu.exists && localRoot.exists) || directory.exists', 1)
+assert qualified.count('inDirectory() || localRoot.exists || (local.exists && local.isHittable)') == 1
+qualified = qualified.replace('inDirectory() || localRoot.exists || (local.exists && local.isHittable)', 'localRoot.exists || inDirectory() || (local.exists && local.isHittable)', 1)
+assert source("HEAD", FEATURES).decode() == qualified
 # User-authorized 2026-10-30 04:49:18 UTC exception: one existing 90s wait
 # selects a genuinely ready native Files control; every other byte is frozen.
 original_before = "        if !newFolder.exists {\n            let overflow = app.buttons[\"OverflowBarButtonItem\"].firstMatch\n            XCTAssertTrue(wait { overflow.exists && overflow.isHittable }, app.debugDescription)\n            overflow.tap()\n        }\n"
@@ -75,9 +81,9 @@ original = source(PASSED, ".github/workflows/apple-sdk342-full-handoff-20261029.
 expected = original.replace(
  "branches: [codex/apple-sdk342-full-handoff-20261029, codex/apple-opdshash-resume-20261029, codex/public-product-resume-20261029]",
  "branches: [" + BRANCH + "]", 1)
-expected = expected.replace("f7a3ddefc25d7a901dc0ef810dc66d850b9cb20f", "a46f223bf0a96e52b5a5904f66eb270c74c95c91", 1)
+expected = expected.replace("f7a3ddefc25d7a901dc0ef810dc66d850b9cb20f", "824647af22c2e57a9df01e94064b20a44c2df03b", 1)
 expected = expected.replace("      - name: Original checker and retained runner unchanged",
  "      - name: Exact qualified Apple source and independent full wrapper\n        run: python3 " + SELF + "\n      - name: Original checker and retained runner unchanged", 1)
 expected = expected.replace("tests/reader_apple_font/ui tests/apple_native_original/ui", "tests/reader_apple_font/ui tests/apple_native_original/ui \u0027:(exclude)tests/apple_native_original/ui/OriginalSaveUITests.swift\u0027", 1)
 assert Path(WORKFLOW).read_text() == expected
-print("Full source exact 10-path closure: Mac-only geometry correction and explicitly authorized original-export readiness exception; all other original39 and supplemental assertions, runners, checker, owner guard and budgets retained.", flush=True)
+print("Full source exact 10-path closure: Mac geometry correction, equivalent iOS query ordering, and explicitly authorized original-export readiness exception; all other original39 and supplemental assertions, runners, checker, owner guard and budgets retained.", flush=True)
