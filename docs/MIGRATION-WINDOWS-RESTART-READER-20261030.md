@@ -67,7 +67,7 @@ the context is closed immediately on that path instead of being left for close,
 and this is proven by the private root staying renameable while the retained
 reader object is still alive.
 
-Tested cases (24 total: 15 retained plus 9 new). Retained: four cut stages
+Tested cases (25 total: 15 retained plus 10 new). Retained: four cut stages
 (before/record/published/after classification), reader death and re-acquisition,
 and the refusals for partial, missing slot, extra slot, tampered predecessor,
 wrong payload, both targets present, and missing target. Caller-binding refusals:
@@ -75,37 +75,80 @@ stale admitted generation now refuses before any lease handle exists, while a
 wrong root or wrong session binding still yields retained REFUSED evidence. New:
 missing lease, empty lease, truncated lease, grown lease, tampered lease header,
 on-disk generation mismatch, cleared PENDING, a write through a memory-mapped
-view of the aged region while the reader is live, and the failed-wr_prepare pin
-release above. Byte-range locks cannot prevent SetEndOfFile or mapped writes, so
-those are detection cases, not durability claims; detection never clears PENDING
-and never grants admission.
+view of the aged region while the reader is live, the failed-wr_prepare pin
+release above, and the injected acquire-window case below. Byte-range locks cannot
+prevent SetEndOfFile or mapped writes, so those are detection cases, not durability
+claims; detection never clears PENDING and never grants admission.
 
-Initial status: source candidate, Actions pending. Maximum3 authorized rounds.
+## The acquire window, reproduced rather than argued
+
+Pre-validation and the provider acquire are not one atomic step, and the pinned
+provider must open the lease for write, so an in-place truncation inside that
+window cannot be denied. Its OPEN_ALWAYS branch then re-initialises the zero-length
+file, which clears PENDING and would have re-opened shared admission once this
+adapter released the lease. Three mechanisms now cover that:
+
+1. The whole 80-byte region is snapshotted before the acquire and settled again
+   immediately after it, under the reader's own window.
+2. A settled region that is a fresh initialisation (generation zero with PENDING
+   cleared) cannot be a legitimate commit, because a commit from generation zero
+   leaves generation one. In exactly that shape the pre-acquire bytes are written
+   back so the domain's PENDING isolation survives, and the reader still refuses
+   custody with restart-lease-window-restored. Any other movement refuses with
+   restart-lease-window-race.
+3. Both refusals retain the exclusive lease until the caller closes the object, so
+   shared admission stays closed even when the bytes could not be proven repairable.
+   Only a failure that never acquired a lease releases early.
+
+The interleaving is injected, not assumed: `lm_rr_set_window_probe()` runs between
+pre-validation and the acquire and receives the pinned lease path, and the probe
+uses it to empty the file so the provider really does re-initialise it. Production
+leaves the hook NULL and the sequence is unchanged. The repair writes through the
+pinned handle, because a shared byte-range lock over [0,80) blocks every other
+handle including a second one in the same process; if a platform still refuses that
+write, the window is dropped, the write repeated, and the window retaken.
+
+Shared admission is measured, not asserted from a literal: every case asks the
+provider for a shared lease afterwards and records the verdict, with explicit
+policies for namespaces the provider refuses outright and for the two cases where
+asking would either re-create a lease the reader must leave untouched or reproduce
+the known hazard the control itself created.
 
 ## Completed run
 
-Source e74452f7f838e7d02a14e3e6ba89df923fce0466, run41099419879, attempt1,
-job124213581187 completed success on windows-2022. All24 cases passed: the four
-cut stages, reader death and re-acquisition, the seven retained content and
-namespace refusals, the three caller-binding refusals, and the nine new cases.
-The new cases include the missing, empty, truncated, grown, header-tampered,
-generation-mismatched and PENDING-cleared leases (each refused with its own
-reason and with the lease bytes left exactly as the negative control wrote them,
-so nothing was re-created or re-initialised), the memory-mapped write that the
-live reader must report as restart-lease-disk-drift even though byte-range locks
-cannot prevent it, and the failed-wr_prepare case where the private root stays
-renameable while the retained reader object is still alive. Artifact12998980254
-retains restart/lease installed libraries, the consumer map, every per-case
-inherited evidence file and the receipt; API size499274 bytes, SHA256
-43c83be9d177a2a008cb282dd22f92009b659ce5b0e96851eec137ffabfbc75c. Old record27,
+Source 0d57544896877d596cd389e96d31e7b5692913a8, run41105493390, attempt1,
+completed success on windows-2022 with all25 cases. The injected window case
+reported restart-lease-window-restored, lease_restored true, the lease back at
+80 bytes, and shared admission still stale after the reader closed, which is the
+isolation the earlier refusal path lost. Artifact13001202247 retains
+restart/lease installed libraries, the consumer map, every per-case inherited
+evidence file and the receipt; API size505718 bytes, SHA256
+d9ccbd2bea0b1f9388fb66c792f2aad57b65bc62d269eecc5d3d10ff6e153d47. Old record27,
 publisher28+2cuts, bridge26+4cuts and refusal8 were rerun unchanged in the same
-job and passed.
+job and passed. An earlier revision e74452f7 passed the 24 cases without the
+window seam (run41099419879, job124213581187, artifact12998980254, 499274 bytes,
+SHA256 43c83be9d177a2a008cb282dd22f92009b659ce5b0e96851eec137ffabfbc75c).
 
-Two earlier attempts on this branch are retained, not hidden: bcf26e1b failed on
-the tampered-header negative control because that control spliced a single
-replacement byte with the tail of the lease and produced a70-byte file, so the
-size rule refused it first; 42dcb66f passed every other case and then failed on
-the mapped-write case because lm_rr_check collapsed the specific drift reason
-into restart-not-qualified. Both are test/adapter defects; neither changed any
-lease, record or assertion budget, and neither is product evidence.
+Five earlier attempts on this branch are retained, not hidden. bcf26e1b failed on
+the tampered-header control because that control spliced a single replacement byte
+with the tail of the lease and produced a70-byte file, so the size rule refused it
+first. 42dcb66f passed every other case and failed on mapped-write because
+lm_rr_check collapsed the specific drift reason into restart-not-qualified.
+6454b95f and 774ae7dc failed on the injected window case with
+restart-lease-restore because the repair could not write: a read-only pin cannot
+write at all, and a second writable handle is blocked by the reader's own shared
+window lock. Both are adapter defects; the repair now writes through the locking
+handle. None of these attempts changed a lease, record or assertion budget, and
+none is product evidence.
+
+## Residual limits
+
+The window can be detected, repaired when the bytes prove a re-initialisation, and
+kept closed by custody when they do not; it cannot be prevented from outside the
+provider, and a re-initialisation that leaves no distinguishable byte pattern, or
+one that happens before this adapter first sees the file, is outside what this
+adapter can repair. The provider's OPEN_ALWAYS branch remains the defect owner.
+None of this is migration admission, COMMIT, SDK admission, real-host lifecycle or
+physical power-loss evidence, and no full P0 claim is made.
+
 
