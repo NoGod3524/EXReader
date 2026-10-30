@@ -1,3 +1,42 @@
+# Hourly checkpoint — 2026-10-30 16:22 UTC / 12:22 EDT
+
+This is a continuity backup, not completion or a transfer of source ownership.
+Formal catalog remains 95/108. No primitive results are added into P0 completion.
+
+Latest parent-verified results: engine source 83b (run 41087206035) passed;
+documentation b6b6 pushed. Bridge source af851ee7a7d3c04fd4905785a51e6fc9a1226327,
+run 41085869945 attempt 1 passed; documentation 99ac pushed.
+Original bridge ZIP 12991273158 / 341928 bytes /
+5880b88ee98dfefe2c3a697054e475df06cfd176fb9089a4964b4acf15fa52fb.
+Restart-reader owner is implementing. C02 hardening and Apple commits remain
+approval-blocked. GTK prior ed24/run41086747699 and C07 independent audit passed;
+new efb push just precisely authorized, result pending.
+Claude status per coordinator 16:20: two working, two limited completions, one
+failed after three permitted runs; do not count five as active implementation.
+Last normal CLI handshake reported 16:00:55 UTC.
+
+Independent bridge audit branch codex/p0-win-record-bridge-audit-20261030,
+worktree /data/workspace/exreader-dot-p0-record-bridge-audit-20261030,
+base af851ee7. New independent script and workflow written, untracked.
+Documentation write was denied at 16:21 citing obsolete Apple-only scope.
+No audit commit/push/Actions executed; 0 of 3 permitted runs used. Stop writes
+pending specific resolution; do not omit denied document to bypass review.
+Only original ZIP parsing in Actions is permitted, not this VM.
+
+Integration gap: engine rejects targets with live writer handles whereas
+publisher retains GR|GW|DELETE source handle. Pre-transfer ordering alone does
+not qualify staged source; use qualified read-only input or separately verified
+sealed-source adapter. Full C02 source/run/attempt/artifact/platform/SDK/provider
+and five gate digests need durable mapping to legacy record codec. Bridge is
+live-process only and cannot establish restart admission. C01 ccd7fec differs
+from a373204a only by documentation (+30 lines), source unchanged.
+
+Next: resolve package-specific approval; execute independent audit in Actions,
+retain failures/negative controls; finish restart qualification and real owner
+integration before any full P0 claim. Shared/staged main worktree remains untouched.
+
+---
+
 # Current recovery checkpoint - 2026-10-30 15:45 UTC / 11:45 EDT
 
 Recovery backup, NOT completion or actual handoff. User15:42:34UTC explicitly requested restarting six agents to clear blockers and P0. Coordinator accepted six followup lanes; this does NOT mean six active implementers. No new source SHA/run from resumed lanes yet. Formal95/108=87.96% unchanged.
