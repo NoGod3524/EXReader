@@ -23,6 +23,10 @@ samples=one("samples.json")["samples"];failures=[s for s in samples if s["outcom
 launches={r["launch"] for r in failures}
 result=dict(source=SOURCE,producer_run=RUN,artifact=AID,bytes=SIZE,sha256=SHA,acceptance=False,problems=failures,files=list(files),traces={})
 print("FAILED_SAMPLES "+json.dumps(failures),flush=True)
+print("RETAINED_FILES "+json.dumps(list(files)),flush=True)
+for launch in one("launches.json")["launches"]:
+ if launch["launch"] in launches:
+  print("FINAL_LAUNCH "+json.dumps({k:launch.get(k) for k in ("launch","geometry","final_state","state_writes","paint_count")}),flush=True)
 for name,data in files.items():
  if not name.endswith(".jsonl"):continue
  match=re.search(r"launch[-_]?([0-9]+)",name)
