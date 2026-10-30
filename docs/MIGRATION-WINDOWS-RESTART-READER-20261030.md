@@ -67,7 +67,7 @@ the context is closed immediately on that path instead of being left for close,
 and this is proven by the private root staying renameable while the retained
 reader object is still alive.
 
-Tested cases (25 total: 15 retained plus 10 new). Retained: four cut stages
+Tested cases (26 total: 15 retained plus 11 new). Retained: four cut stages
 (before/record/published/after classification), reader death and re-acquisition,
 and the refusals for partial, missing slot, extra slot, tampered predecessor,
 wrong payload, both targets present, and missing target. Caller-binding refusals:
@@ -108,6 +108,15 @@ pinned handle, because a shared byte-range lock over [0,80) blocks every other
 handle including a second one in the same process; if a platform still refuses that
 write, the window is dropped, the write repeated, and the window retaken.
 
+A second injected state covers recovery that must not be repaired. The lease ends
+the window with an advanced generation and no PENDING, which is exactly what a
+real concurrent commit looks like, so the reader refuses with
+restart-lease-window-race and writes nothing back; the refused object keeps the
+exclusive lease, and shared admission stays blocked while it lives. The case then
+kills that process and records the residual: the drift survives, the next reader
+refuses on the advanced generation, and the domain marker is gone. That is stated
+as a recorded limit, not as durability across a crash.
+
 Shared admission is measured, not asserted from a literal: every case asks the
 provider for a shared lease afterwards and records the verdict, with explicit
 policies for namespaces the provider refuses outright and for the two cases where
@@ -116,8 +125,9 @@ the known hazard the control itself created.
 
 ## Completed run
 
-Source 0d57544896877d596cd389e96d31e7b5692913a8, run41105493390, attempt1,
-completed success on windows-2022 with all25 cases. The injected window case
+Source 6db7c3dc, run41130069225, attempt1, completed success on windows-2022 with
+all26 cases; the earlier 0d575448 run41105493390 passed the 25 cases without the
+recovery-failure state. Newest artifact13011924675, API size507992 bytes. The injected window case
 reported restart-lease-window-restored, lease_restored true, the lease back at
 80 bytes, and shared admission still stale after the reader closed, which is the
 isolation the earlier refusal path lost. Artifact13001202247 retains
