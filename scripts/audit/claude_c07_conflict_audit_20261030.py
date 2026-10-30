@@ -329,7 +329,7 @@ def selftest(expect):
             ('run_in_progress', 'api.run_completed_success', with_(('run', 'status'), 'in_progress'), zb),
             ('run_failed', 'api.run_completed_success', with_(('run', 'conclusion'), 'failure'), zb),
             ('head_sha_differs', 'api.run_identity', with_(('run', 'head_sha'), '0' * 40), zb),
-            ('artifact_id_differs', 'api.artifact_identity', with_(('artifact', 'id'), 1), zb),
+            ('artifact_id_differs', 'api.artifact_identity', with_(('artifact', 'id'), 987654321), zb),
             ('artifact_expired', 'api.artifact_identity', with_(('artifact', 'expired'), True), zb),
             ('size_differs', 'api.artifact_size', with_(('artifact', 'size_in_bytes'), 1), zb),
             ('digest_differs', 'api.artifact_digest', meta, zb + b'x'),
