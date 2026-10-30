@@ -90,7 +90,15 @@ done:
  if(started&&!out->descendants_terminal){
   int terminal=0;ULONGLONG deadline=GetTickCount64()+10000;
   if(TerminateJobObject(job,125)){
-   do{if(empty_job(job)){terminal=1;break;}Sleep(10);}while(GetTickCount64()<deadline);
+   do{DWORD actual=STILL_ACTIVE;
+    /* Job accounting and process signaling are separate observations. Never
+       release process ownership merely because the accounting count is zero. */
+    if(WaitForSingleObject(process.process,0)==WAIT_OBJECT_0&&empty_job(job)&&
+       GetExitCodeProcess(process.process,&actual)&&actual!=STILL_ACTIVE){
+     out->worker_exit=actual;terminal=1;break;
+    }
+    Sleep(10);
+   }while(GetTickCount64()<deadline);
   }
   if(terminal){out->worker_terminal=1;out->descendants_terminal=1;}
   else{out->state=LM_WE_UNCERTAIN;if(e)e->cleanup_unconfirmed=1;}
