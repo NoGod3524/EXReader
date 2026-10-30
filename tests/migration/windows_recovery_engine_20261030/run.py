@@ -20,3 +20,12 @@ assert built.read_bytes()==worker.read_bytes()
 lib=root/'engine-stage/lib/exreader-migration-windows-engine.lib'
 assert lib.read_bytes()==(root/'build/migration/windows_recovery_engine_20261030/Release/exreader-migration-windows-engine.lib').read_bytes()
 (evidence/'receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],consumer=r,worker_sha256=digest,library_sha256=hashlib.sha256(lib.read_bytes()).hexdigest(),files={x.name:hashlib.sha256(x.read_bytes()).hexdigest() for x in private.iterdir()},full_p0_acceptance=False),indent=2))
+
+# Additional native injected-boundary suite; original 29 checks above unchanged.
+q=subprocess.run([str(root/'build/engine-check/Release/windows-engine-boundary.exe'),str(evidence/'boundary-private'),str(worker),str(root/'build/engine-check/Release/windows-engine-descendant.exe')],capture_output=True,text=True,timeout=120)
+(evidence/'boundary-stdout.txt').write_text(q.stdout)
+(evidence/'boundary-stderr.txt').write_text(q.stderr)
+assert q.returncode==0,(q.returncode,q.stdout,q.stderr)
+b=json.loads(q.stdout)
+assert b['passed'] is True and b['failed']==0 and b['checks']==19,b
+(evidence/'boundary-receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],result=b,production_test_hooks=False,full_p0_acceptance=False),indent=2))

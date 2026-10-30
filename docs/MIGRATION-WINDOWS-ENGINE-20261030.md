@@ -52,3 +52,17 @@ Bounded-wait run41023412188 source060c7a5d passed27/28 checks: all original21, r
 Run41023948573/source871a0bc5 measured process-deadline1460 with job-zero flags but cleanup-unconfirmed from the subsequent process-handle check. The cleanup branch had treated zero accounting as process signaling. Repair requires both the actual process handle signaled and zero job count, plus a terminal exit code, within the unchanged10s termination-cleanup budget. Failure remains UNCERTAIN; original observation deadline and all28 checks remain unchanged.
 
 The final negative control additionally requires actual forced-exit125 with the original ERROR_TIMEOUT, and independently checks the retained deadline output is empty. All prior28 checks remain; final count29. No sleeping-process timeout is relabeled observation success.
+
+
+## 2026-10-30 safety repair candidate (not yet accepted)
+Retains every original 29-check assertion and prior failed runs. Added final
+same-deadline acceptance gate after parent readback; synchronous I/O remains
+potentially blocking and the independent cleanup budget remains 10 seconds.
+Worker input is drive-absolute; launch uses a revalidated Volume-GUID path with
+non-reparse ancestor pins retained alongside the hashed leaf. A process-wide
+atomic gate serializes calls. Unconfirmed cleanup permanently quarantines the
+job/process/image/target/output and duplicate root/namespace pins; no reset API.
+A separately compiled native boundary harness injects delayed final hashing and
+query/termination refusal, with an actual main-exits/child-lives executable.
+Those injections are not compiled into the installed engine. These are observer
+safety prerequisites, never migration COMMIT, SDK reopen, F07 or full P0 admission.

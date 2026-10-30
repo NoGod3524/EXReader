@@ -13,8 +13,12 @@ typedef struct {
 } lm_we_result;
 /* Caller retains root and target custody for the entire call. No path, SDK,
  * migration admission, COMMIT or reopen authorization is returned.
- * Worker path must name the actual installed image; the image is held with
+ * Worker path must be drive-absolute and name the actual installed image; the image is held with
  * write/delete sharing denied until the job and all descendants are terminal.
+ * Worker launches use a revalidated Volume-GUID path with retained non-reparse
+ * ancestor pins. Concurrent calls refuse. Uncertain cleanup permanently blocks
+ * this engine instance and retains independently owned custody until process exit.
+ * The absolute deadline governs acceptance, not a hard synchronous-I/O duration.
  * Output leaf is exclusive-created and ALWAYS retained, including failures. */
 /* Native job-accounting fence, absolute caller deadline. Does not terminate
  * processes or authorize migration. Wrong handle/query errors fail closed. */
