@@ -1,0 +1,86 @@
+name: C02 ordering fix with retained contract failures 20261030
+on:
+  push:
+    branches: [codex/dot-c02-ordering-fix-20261030]
+    paths:
+      - extras/migration/windows_coordinator_hardening_20261030/src/wh_core.c
+      - .github/workflows/dot-c02-ordering-fix-20261030.yml
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  regression:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Pin production and additive scope
+        run: |
+          set -euo pipefail
+          base=27ca2f173eaed91dac35ab198723b3387bbaedac
+          git diff --exit-code "$base" HEAD -- tests/migration/windows_coordinator_hardening_20261030
+          git diff --name-only "$base" HEAD > changed-paths.txt
+          python - <<'PY'
+          import pathlib,subprocess
+          allowed={'extras/migration/windows_coordinator_hardening_20261030/src/wh_core.c','.github/workflows/dot-c02-ordering-fix-20261030.yml'}
+          changed=set(pathlib.Path('changed-paths.txt').read_text().splitlines())
+          assert changed <= allowed, changed
+          path='tests/migration/windows_coordinator_hardening_20261030/wh_test.c'
+          old=subprocess.check_output(['git','show','b830486c21bfa82cf69a1d816b424fe2fc53d29b:'+path],text=True)
+          new=pathlib.Path(path).read_text()
+          import re
+          cases=re.findall(r'static void (case_[a-z_]+)\(void\)\n\{.*?\n\}',old,re.S)
+          assert len(cases)==15, len(cases)
+          for name in cases:
+              pattern=r'static void '+name+r'\(void\)\n\{.*?\n\}'
+              assert re.search(pattern,old,re.S).group()==re.search(pattern,new,re.S).group(),name
+          PY
+      - name: Build and install ordering-fixed hardening library
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_coordinator_hardening_20261030 -B build/lib -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/lib --config Release
+          cmake --install build/lib --config Release --prefix "$GITHUB_WORKSPACE/stage"
+      - name: Build installed-only consumer
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/windows_coordinator_hardening_20261030 -B build/check -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/check --config Release
+      - name: Run 61 original plus 20 additive checks and preserve raw exit
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          EXE=$(find build/check -type f \( -name coordinator-hardening-check -o -name coordinator-hardening-check.exe \) | head -1)
+          set +e
+          "$EXE" 2>&1 | tee evidence/checks.log
+          statuses=("${PIPESTATUS[@]}")
+          set -e
+          printf '%s\n' "${statuses[0]}" > evidence/test-exit-code.txt
+          if [ "${statuses[1]}" -ne 0 ]; then exit "${statuses[1]}"; fi
+          exit "${statuses[0]}"
+      - name: Record evidence without converting red to green
+        if: always()
+        run: |
+          mkdir -p evidence
+          python - <<'PY'
+          import os,json,pathlib
+          p=pathlib.Path('evidence')
+          text=(p/'checks.log').read_text(errors='replace') if (p/'checks.log').exists() else ''
+          summaries=[json.loads(s) for s in text.splitlines() if s.startswith('{"source":')]
+          receipt=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],os=os.environ['RUNNER_OS'],production_baseline='b830486c21bfa82cf69a1d816b424fe2fc53d29b',prior_regression_source='27ca2f173eaed91dac35ab198723b3387bbaedac',prior_regression_run=41133306330,production_core_modified=True,remaining_contract_gap_expected_failures=6,baseline_checks=61,added_checks=20,expected_total=81,summary=summaries[-1] if summaries else None,scope='module-mock ordering fix; absent/stale prefix contract failures retained; not atomic CAS or production integration',full_p0_acceptance=False)
+          (p/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-ordering-fix-${{ matrix.os }}-${{ github.sha }}
+          path: evidence/
+          if-no-files-found: error

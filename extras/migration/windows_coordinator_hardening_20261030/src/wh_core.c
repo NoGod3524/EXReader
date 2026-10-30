@@ -124,6 +124,7 @@ int wh_dispose(wh_session *s){if(!s)return 1;
 static wh_status uncertain(wh_session *s,wh_report *r,const char *why){return report(s,r,WH_UNCERTAIN,why);}
 static int checked(wh_session *s){return s->cap&&s->p.check(s->p.context,s->cap)==WH_STEP_OK;}
 static wh_status release_terminal(wh_session *s,wh_report *r,int committed){
+ if(!checked(s))return uncertain(s,r,"lease-check-before-release-intent-failed");
  if(!EVENT(s,H_RELEASE_BEGIN))return uncertain(s,r,"journal-release-intent-failed");
  if(!checked(s))return uncertain(s,r,"lease-check-before-release-failed");
  if(s->p.release(s->p.context,s->cap)!=WH_STEP_OK)return report(s,r,WH_LEASE_RETAINED,"release-unconfirmed-capability-retained");
@@ -134,10 +135,12 @@ static wh_status abort_known(wh_session *s,wh_report *r){
  if(!EVENT(s,H_ABORT_BEGIN))return uncertain(s,r,"journal-abort-intent-failed");
  if(!checked(s))return uncertain(s,r,"lease-check-before-discard-failed");
  if(s->h.stage[0]&&s->p.discard(s->p.context,s->cap,s->h.stage)!=WH_STEP_OK)return uncertain(s,r,"discard-unconfirmed");
+ if(!checked(s))return uncertain(s,r,"lease-check-before-abort-terminal-failed");
  if(!EVENT(s,H_ABORT_OK))return uncertain(s,r,"journal-abort-failed");
  return release_terminal(s,r,0);
 }
 static wh_status commit_known(wh_session *s,wh_report *r){
+ if(!checked(s))return uncertain(s,r,"lease-check-before-commit-failed");
  if(!EVENT(s,H_COMMIT))return uncertain(s,r,"journal-commit-failed");
  return release_terminal(s,r,1);
 }
@@ -157,12 +160,12 @@ wh_status wh_run(wh_session *s,wh_report *r){
  if(s->used||s->poisoned)return uncertain(s,r,"session-already-used");
  if(!ready(s))return report(s,r,WH_PENDING,"provider-contract-incomplete");
  s->used=1;
+ ac=acquire(s,0,actual);
+ if(ac<=0)return report(s,r,ac?WH_UNCERTAIN:WH_REFUSED,"admission-not-proven");
  if(s->sink(s->sink_context,s->manifest)){s->poisoned=1;
  return uncertain(s,r,"manifest-write-failed");}
  wh_sha256_hex(s->manifest,strlen(s->manifest),s->h.bind);memcpy(s->h.prev,s->h.bind,65);s->h.seq=1;
  if(!EVENT(s,H_ADMIT_BEGIN))return uncertain(s,r,"journal-admit-intent-failed");
- ac=acquire(s,0,actual);
- if(ac<=0)return report(s,r,ac?WH_UNCERTAIN:WH_REFUSED,"admission-not-proven");
  if(!append_event(s,H_ADMIT_OK,actual,s->h.stage,s->h.snap,s->h.content))return uncertain(s,r,"journal-admission-failed-capability-retained");
  rows=calloc(EXR_WH_MAX_RECORDS,sizeof(*rows));
  if(!rows)return uncertain(s,r,"allocation-failed-capability-retained");
