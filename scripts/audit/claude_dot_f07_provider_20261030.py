@@ -60,6 +60,10 @@ def main():
         if report.get('system_resolution'):
             print('system import resolution:', json.dumps(report['system_resolution']['import_status_counts'], sort_keys=True))
             print('system libraries recorded:', len(report['system_resolution']['libraries']))
+        print('pending kinds:', json.dumps(sorted({p['kind'] for p in report['pending']})))
+        for p in report['pending']:
+            if p['kind'] in ('system_library_resolution_failed', 'needed_library_unrecorded', 'custom_runpath_not_resolved'):
+                print('pending detail:', json.dumps(p, sort_keys=True)[:600])
         print('pending (explicit, not waived):', json.dumps(report['pending'], sort_keys=True)[:3000])
         print('unselected sqlite candidate roles:', dict(Counter(c['role'] for r in report['sqlite_references'] for c in r['unselected_candidates'])))
         if not report['passed']:
