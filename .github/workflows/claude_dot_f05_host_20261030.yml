@@ -128,3 +128,26 @@ jobs:
           name: claude-dot-f05-host-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f05-host-audit/
           if-no-files-found: error
+  verify-original:
+    name: pinned re-verification of run 41027848917 with negative controls
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax checks with py_compile and ast.parse in Actions
+        run: |
+          python3 -m py_compile scripts/audit/claude_dot_f05_host_20261030.py tests/reader_f05_host_closure_20261030/check_host_f05.py tests/reader_f05_host_closure_20261030/check_host_f05_live.py
+          python3 -I -c "import ast,sys; [ast.parse(open(p,encoding='utf-8').read(), p) for p in sys.argv[1:]]; print('ast ok')" scripts/audit/claude_dot_f05_host_20261030.py tests/reader_f05_host_closure_20261030/check_host_f05.py tests/reader_f05_host_closure_20261030/check_host_f05_live.py
+      - name: Download the pinned original ZIP, authenticate identity and digest, verify wire evidence and run negative controls
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/audit/claude_dot_f05_host_20261030.py verify-original --output build/f05-host-original-verify
+      - name: Preserve the verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-dot-f05-host-original-verify-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f05-host-original-verify/verify.json
+            build/f05-host-original-verify/original.zip
+          if-no-files-found: error
