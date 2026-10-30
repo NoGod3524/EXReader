@@ -77,9 +77,10 @@ def inspect(v):
    need(stdout.splitlines()[0]=="ready-"+mode and r.get("terminated") is True,"death-cut")
   for k in ("commit_acknowledged","recovery_admission"):false(r,k)
   inventory={k[len(prefix):]:b for k,b in v.items() if k.startswith(prefix)}
-  need(set(inventory)==set(r["files"]),"inventory")
+  manifest={k.replace("\\","/"):x for k,x in r["files"].items()}
+  need(set(inventory)==set(manifest),"inventory")
   for p,b in inventory.items():
-   need(r["files"][p]["bytes"]==len(b) and r["files"][p]["sha256"]==sha(b),"manifest-bytes")
+   need(manifest[p]["bytes"]==len(b) and manifest[p]["sha256"]==sha(b),"manifest-bytes")
   public=mode in ("normal","published","after")
   need(("published.bin" in inventory)==public and ("private/target.bin" in inventory)!=public,"publication-layout")
   payload=inventory["published.bin" if public else "private/target.bin"]
@@ -111,7 +112,7 @@ def inspect(v):
  need(n["source"]==SOURCE and n["checks"]==n["expected"]==27 and n["passed"] is True and n["identity_bytes"]==49 and n["sdk_open_attempts"]==0,"record-27")
  false(n,"recovery_admission")
  for leaf,meta in old["files"].items():
-  b=read(v,"record-evidence/private-state/"+leaf);need(meta["bytes"]==len(b) and meta["sha256"]==sha(b),"old-file")
+  b=read(v,"record-evidence/private-state/"+leaf.replace("\\","/"));need(meta["bytes"]==len(b) and meta["sha256"]==sha(b),"old-file")
  d=obj(v,"record-evidence/private-state/record-00.json")
  need(d["target"]==n["target"] and d["source"]==SOURCE,"old-target")
  # Original publisher controls, including retained original bytes.
