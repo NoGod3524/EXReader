@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        input: [common343, helper141]
+        input: [features550-ipad]
     steps:
       - uses: actions/checkout@v4
       - env:
