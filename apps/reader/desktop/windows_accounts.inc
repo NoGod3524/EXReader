@@ -259,7 +259,8 @@ static exr_status acct_set_job(host_job *job) {
     acct_secret_adopt(o, data, size, job->account_remember);
     acct_text(job, job->account_remember ? L"凭据已保存到系统安全存储。" : L"仅本次会话使用这些凭据；退出后不会保留。");
   } else {
-    exr_credentials_wipe(data, size); free(data);
+    /* The requested credentials were not adopted; an older in-memory secret must not stand in for them. */
+    exr_credentials_wipe(data, size); free(data); acct_secret_clear(o);
     acct_text(job, code == EXR_CRED_UNAVAILABLE ?
       L"UNAVAILABLE：凭据未保存。请取消勾选“保存到系统安全存储”，仅本次会话使用。" :
       L"凭据未保存：系统安全存储报告错误。");
