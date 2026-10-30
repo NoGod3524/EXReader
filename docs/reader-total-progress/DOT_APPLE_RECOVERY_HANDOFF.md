@@ -1,3 +1,56 @@
+# Current recovery checkpoint — 2026-10-30 06:18 UTC / 02:18 EDT
+
+Prepared for 06:22 UTC report; this section supersedes all older current-state instructions retained below. Local continuity backup only, not acceptance, actual handoff or termination.
+
+## Publication and exact continuation
+
+Receipt worktree /data/workspace/exreader-dot-apple-receipt-20261030; branch codex/dot-apple-receipt-20261030. Parent local checkpoint 9e694585586ccfc36d721762cfba16ed9313aea8 is preserved without amend/rebase. Previous pushes were denied even after confirmations; no retry or alternate route is attempted. Last successful remote snapshot remains 97264a714b721b58fbfab659ace37b503fa1ef5a, not this current state.
+
+Candidate remains **c46f7036d81f88d8529871590f780b5430630e47** on codex/dot-apple-complete-20261029. Its source, test budgets and assertions were NOT changed to address the latest environment failure.
+[Fresh full run 41011360858](https://github.com/NoGod3524/EXReader/actions/runs/41011360858), attempt 1, workflow_dispatch, started approximately 05:58 UTC:
+- Writer API at 06:15:18 UTC: both SDK jobs success.
+- Native macOS, iPhone and iPad all running.
+- Supplemental two success (original macOS, font iPhone); two running (sync iPhone, organization iPhone); eight queued.
+- No failure observed at that checkpoint; not a final verdict.
+This is a fresh COMPLETE same-source run, not a selective theme retry or cross-run pass splice.
+
+## Retained previous c46 failure and justified rerun
+
+[Run 41005300066](https://github.com/NoGod3524/EXReader/actions/runs/41005300066) ended FAILED:
+- Native macOS 39/39 and iPad 39/39 passed.
+- All 12 supplemental groups passed.
+- iPhone accepted 35 cases, but its four theme XCTest cases did NOT run.
+- Cause: xcrun simctl appearance light preflight timed out at its existing 45-second limit before those tests. This was not a product assertion failure and is not four passing or four executed tests.
+- Same-run authentication and full summary failed appropriately.
+Preserve this failed run; do not combine its successes with new run results.
+
+Authenticated original-ZIP diagnostic [41009951756](https://github.com/NoGod3524/EXReader/actions/runs/41009951756), source 833c4729, job 123913352027, proved that exact preflight timeout. It is diagnostic success, not product acceptance. This supported one authorized fresh full workflow_dispatch on unchanged c46. No source change, timeout increase, environment restart or settings change was performed for the rerun.
+
+## Independent audit remains gated
+
+Prepared review-only audit source **55b32042ec68b1182aeaaf2b8f0d822483e3291f** retargets exact c46 producer run 41011360858. Only SOURCE/RUN differ from earlier 089c prepared audit; other checker/metadata logic is unchanged.
+At writer update 06:15, refreshed static review was awaiting response; audit execution branch has NOT been pushed and audit has NOT run. Earlier 089c pins are stale and must not execute.
+Only after ALL fresh producer jobs pass may the exact current pins trigger independent 19-original-ZIP authentication with the unchanged strong checker. Before dispatch, verify review status and producer source/run/attempt/job/artifact/bytes/digests. No success inference from running CI.
+If the new full run fails, preserve and diagnose its own original evidence before further repair or retry.
+
+## Remaining completion gate and constraints
+
+Need all original 39 x 3 native cases + all 12 supplement groups + same-source SDK/program identity + same-run ZIP authentication/summary + separate independent 19-ZIP audit, then a source-pinned final result document. Prior c66 focused successes remain historical precursor evidence only.
+The narrow OriginalSave readiness exception authorized 04:49:18 UTC remains exactly as recorded in the preceding checkpoint: no extra wait/budget/case, saved-byte/hash readback and other assertions unchanged. No new test-body authority is implied.
+Formal **95/108 = 87.96% remains unchanged**. This does not establish global P0 migration/conflict recovery or six-platform same-source completion.
+Main writer remains active/test-monitoring; documentation writer active for this checkpoint; reviewers completed/waiting unless assigned concrete new review. Do not report six slots as six busy agents.
+Remaining completion time cannot be reliably estimated before terminal full-run and independent audit results.
+
+All build/test/syntax/ZIP parsing remains GitHub Actions only. Keep common remote 343bb94 and staged main worktree 9330be4 untouched; no shared integration, default push, PR, tag, release, credential/security operations, new VM or Codex/Claude tasks. Normal saved-login Desktop Commander -> InstaBox route remains in use.
+
+## Maintenance
+
+Latest real handshake **2026-10-30 06:10:26 UTC = 02:10:26 America/New_York (EDT)**: state running, runtime.ready true, pwd /data/home, exitCode 0, timedOut false. Existing unique 28-minute task 6ae40da897ac81918ae3e90d91ee79ea continues; no VM restart/settings or autosuspend change. Healthy results stay quiet.
+
+---
+
+## Historical checkpoint (05:18 UTC; superseded by current section)
+
 # Current recovery checkpoint — 2026-10-30 05:18 UTC / 01:18 EDT
 
 Prepared for the 05:22 UTC hourly report. This section supersedes all older current-state wording below; the prior checkpoint is retained as historical evidence, not as current execution instructions. This is a resumable snapshot, not acceptance or a transfer.
