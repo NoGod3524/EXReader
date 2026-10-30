@@ -1,0 +1,61 @@
+name: Claude Dot F10 privacy 20261030
+on:
+  push:
+    branches: [claude/dot-f10-privacy-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  F10_BASE: c46f7036d81f88d8529871590f780b5430630e47
+  AUDITOR: scripts/audit/claude_dot_f10_privacy_20261030.py
+jobs:
+  linux:
+    name: f10-privacy (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scope guard (exact base, owned paths only)
+        run: python3 -I "$AUDITOR" scope --repo . --expect-sha "$GITHUB_SHA" --out build/f10/reports/scope.json
+      - name: Detector self-test (planted leaks in every encoding must be found)
+        if: always()
+        run: python3 -I "$AUDITOR" selftest --repo . --out build/f10/reports/selftest.json
+      - name: Static production-source audit (temp-file sites, credential logging)
+        if: always()
+        run: python3 -I "$AUDITOR" static --repo . --out build/f10/reports/static.json
+      - name: Install Secret Service, D-Bus and libsecret
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsecret-1-dev gnome-keyring dbus libglib2.0-bin pkg-config ninja-build
+      - name: Build and install the unchanged credentials module, then the F10 probe
+        id: build
+        run: |
+          set -o pipefail
+          ws="$PWD"
+          mkdir -p build/f10/logs
+          cmake -S extras/credentials -B build/module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/stage" 2>&1 | tee build/f10/logs/module-configure.log
+          cmake --build build/module 2>&1 | tee build/f10/logs/module-build.log
+          cmake --install build/module 2>&1 | tee build/f10/logs/module-install.log
+          cmake -S tests/reader_final_privacy_20261030/consumer -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/stage" 2>&1 | tee build/f10/logs/probe-configure.log
+          cmake --build build/probe 2>&1 | tee build/f10/logs/probe-build.log
+      - name: Dynamic run against the real Secret Service with synthetic canaries
+        if: always() && steps.build.outcome == 'success'
+        run: |
+          python3 -I tests/reader_final_privacy_20261030/run_dynamic.py --probe build/probe/f10-probe --auditor "$AUDITOR" \
+            --module-prefix build/stage --out build/f10/reports/dynamic_linux.json
+      - name: Bind identities and fold reports
+        if: always()
+        run: python3 -I "$AUDITOR" summary --reports build/f10/reports --out build/f10/reports/summary.json
+      - name: Preserve reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-dot-f10-privacy-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f10/reports/
+          if-no-files-found: error
