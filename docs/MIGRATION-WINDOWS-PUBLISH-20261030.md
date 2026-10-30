@@ -64,3 +64,21 @@ and published-file write-open attempts, and an admitted sibling creation, alongs
 existing file/directory/reparse collisions and full FileID/hash controls. The new
 suite requires 28 native controls and both process-death cuts; original record27
 and refusal8 remain unchanged. No real migration admission is supplied.
+
+## Completed custody producer (not independent acceptance)
+
+Source c45d01c8fdec63851c5f4539813a8f66885eceb1, Actions 41022476473,
+attempt 1, job 123952756428 completed success. Frozen and additive path guards,
+installed archive plus separately built installed consumer (/W4 /WX), 28 native
+controls, before/after native-publication process-death cuts, original record27
+and original Windows refusal8 all passed their required steps on that source.
+
+Artifact 12962371134 has 198573 bytes; API/upload SHA256 is
+b23f790c642d04a57dbd22970974ed242541cf334a6ad9d0d903041b54b3415e.
+This is producer/API evidence, not an independently downloaded ZIP rehash.
+The original failed run 41019097661 and its artifact remain retained above.
+
+The death-cut fixtures establish process-observed retained file/byte state;
+there is still no implemented migration admission, durable acknowledged-chain
+recovery, real host lifecycle, or physical power-loss proof in this package.
+Independent original-ZIP audit is pending. Do not label this full P0 completion.
