@@ -15,6 +15,7 @@ PINS["features8eda-ipad"]=("8eda894a1eacc50ecca1cdd2ca94ab1b4bd7d592",4098924910
 PINS["features8eda-iphone"]=("8eda894a1eacc50ecca1cdd2ca94ab1b4bd7d592",40989249100,123848764866,12949431864,199934227,"9a932bbbb5853465c158bce62a59d17dde44c85c9a1111c3e9af6ab8066a2f01")
 PINS["features55e9-ipad"]=("55e9c203fc58c5b94d3d951dad17c32d7f15a08f",40992359608,123858647139,12950219035,180602163,"68e47e9213e87b1d95c65b100603863be279031c0abb2d4875931b2af7610538")
 PINS["features55e9-iphone"]=("55e9c203fc58c5b94d3d951dad17c32d7f15a08f",40992359608,123858647168,12950483426,235576166,"f410536fc8b2732cc75feef43f3d12d583da06f5699b26a0b532f91aad10650d")
+PINS["featuresa91-macos"]=("a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72",41000723036,123885490913,12954019303,431777254,"c209470bef5f68ee8da6121e310dd3c76ff5bb295bbf1d358ec3a8c2621b7b2d")
 p=argparse.ArgumentParser();p.add_argument("--input",choices=PINS,required=True);args=p.parse_args()
 source,run,jobid,aid,size,digest=PINS[args.input]
 out=Path("build/repair-apple-failure")/args.input;out.mkdir(parents=True,exist_ok=True)
@@ -30,7 +31,7 @@ with zipfile.ZipFile(io.BytesIO(raw)) as z:
   assert not p.is_absolute() and ".." not in p.parts and "\\" not in n and ":" not in n
   assert stat.S_IFMT(i.external_attr>>16) in (0,stat.S_IFREG,stat.S_IFDIR) and not i.flag_bits&1
  result=json.loads(z.read("result.json"))
- assert (result["source_sha"],str(result["run_id"]),str(result["attempt"]),result["platform"],result["accepted"])==(source,str(run),"1",("ipad" if args.input.endswith("-ipad") else "iphone"),False)
+ assert (result["source_sha"],str(result["run_id"]),str(result["attempt"]),result["platform"],result["accepted"])==(source,str(run),"1",args.input.rsplit("-",1)[1],False)
  log=z.read("wave3-native-ui.log");pin=result["files"]["wave3-native-ui.log"]
  assert len(log)==pin["bytes"] and hashlib.sha256(log).hexdigest()==pin["sha256"]
  (out/"native-ui.log").write_bytes(log)
