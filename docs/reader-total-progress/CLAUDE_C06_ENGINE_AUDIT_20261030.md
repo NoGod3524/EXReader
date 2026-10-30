@@ -39,3 +39,5 @@ Missing original evidence, an unavailable artifact or an unavailable Git blob fa
 ## Result
 
 Pending the first GitHub Actions run on branch `claude/dot-c06-engine-audit-20261030`. Results and any retained failures are appended below.
+
+**First run (no fix cycles used):** auditor commit c4d0acaa00e6046369ee8ba3b8481f8d981fa2b6, run 41086772004, attempt 1, job audit (id 124169858086), artifact 12991438238 (claude-c06-engine-audit-<sha>). 8 rejection controls OK; original run 41024553069 attempt 1, job engine, artifact 12962888396 (zip sha256 819b770ce3822145b1cbdcc15dd59772903c88a2e266f4d81bbef5a02e3ea364) -> provenance_and_integrity_verified true. Producer consumer checks=29 failed=0 remain producer-asserted only. Native fix 7b26bf30 unverified; full P0 not claimed.
