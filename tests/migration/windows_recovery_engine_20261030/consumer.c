@@ -46,6 +46,7 @@ int main(int argc,char **argv){
  CHECK(wr_utf8(argv[5],stalled,&error)&&lm_sha_file(argv[5],worker_sha,&size64));
  memset(&error,0,sizeof(error));
  CHECK(!lm_we_observe(root,target,stalled,worker_sha,nonce,L"deadline.bin",500,&result,&error));
+ fprintf(stderr,"deadline diagnostic reason=%s native=%lu state=%d exit=%lu worker_terminal=%d descendants_terminal=%d cleanup=%d cleanup_native=%lu wait=%lu\n",error.reason?error.reason:"none",error.native,(int)result.state,result.worker_exit,result.worker_terminal,result.descendants_terminal,error.cleanup_unconfirmed,error.cleanup_native,error.wait_result);
  CHECK(result.state!=LM_WE_OBSERVED&&result.worker_terminal&&result.descendants_terminal&&!error.cleanup_unconfirmed);
  }
 done:
