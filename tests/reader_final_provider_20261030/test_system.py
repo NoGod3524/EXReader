@@ -122,6 +122,7 @@ class Parsers(unittest.TestCase):
      2: 0000000000001010    10 FUNC    GLOBAL DEFAULT   12 memcpy@GLIBC_2.2.5
      3: 0000000000001020    10 FUNC    GLOBAL HIDDEN    12 hidden_fn
      4: 0000000000001030    10 FUNC    GLOBAL DEFAULT   12 plain_fn
+     5: 0000000000002000 0x1c19d90 OBJECT  GLOBAL DEFAULT   12 icudt70_dat
 """
 
     def test_dynamic_header(self):
@@ -136,6 +137,7 @@ class Parsers(unittest.TestCase):
         self.assertIn(('memcpy', 'GLIBC_2.2.5', False), exports)
         self.assertIn(('plain_fn', None, True), exports)
         self.assertNotIn('hidden_fn', [e[0] for e in exports])
+        self.assertIn(('icudt70_dat', None, True), exports)  # hexadecimal size column
 
 
 if __name__ == '__main__':

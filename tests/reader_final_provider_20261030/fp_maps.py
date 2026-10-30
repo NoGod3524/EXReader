@@ -235,7 +235,7 @@ def parse_nm_object(text):
     return row
 
 
-DYN_SYM = re.compile(r'^\s*\d+:\s+[0-9a-fA-F]+\s+\d+\s+(?P<type>\w+)\s+(?P<bind>\w+)\s+(?P<vis>\w+)\s+(?P<ndx>\S+)\s+(?P<name>\S+?)(?:\s+\(\d+\))?\s*$')
+DYN_SYM = re.compile(r'^\s*\d+:\s+[0-9a-fA-F]+\s+(?:0x[0-9a-fA-F]+|\d+)\s+(?P<type>\w+)\s+(?P<bind>\w+)\s+(?P<vis>\w+)\s+(?P<ndx>\S+)\s+(?P<name>\S+?)(?:\s+\(\d+\))?\s*$')
 
 
 def parse_dyn_syms(text):
@@ -248,7 +248,7 @@ def parse_dyn_syms(text):
             continue
         m = DYN_SYM.match(line)
         if not m:
-            if re.match(r'^\s*\d+:\s+[0-9a-fA-F]+\s+\d+\s+\w+\s+\w+\s+\w+\s+\S+\s*$', line):
+            if re.match(r'^\s*\d+:\s+[0-9a-fA-F]+\s+(?:0x[0-9a-fA-F]+|\d+)\s+\w+\s+\w+\s+\w+\s+\S+\s*$', line):
                 continue  # unnamed null-symbol rows carry no name
             _fail('unrecognised dynamic symbol line: ' + line[:120])
         raw = m.group('name')
