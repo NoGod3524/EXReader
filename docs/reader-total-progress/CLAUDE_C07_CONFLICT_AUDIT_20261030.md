@@ -42,3 +42,14 @@ Audit: workflow_dispatch run 41088276333 attempt 1 at verifier source c7224e56, 
 39 controls all ok. Audit record artifact c07-conflict-audit-41088276333-1 id 12992965833. The ZIP was downloaded, unpacked and parsed
 only inside Actions.
 Not claimed: full F05, the 11-case recovery suite, book delete/restore, six platforms, physical devices.
+## Result for source 73ac5ca9 (2026-10-30)
+Producer 73ac5ca9f9a4aec0b5477122d05f7a0da1198543, run 41091287293, attempt 1, completed success, job and every step success.
+Artifact f05-remaining-41091287293-1 id 12994257426, 982682 bytes, digest sha256:d27ed7509f64bdcc96b2241c4759f1cfade1b58e27ac22147b6a357049affec0
+(official API metadata; head SHA matches; not expired). Audited separately from ed24fec2 with profile restore8 (eight checks plus the unchanged
+29-check metadata regression record). Verifier source 31b43a5a; audit run 41093198048 attempt 1 success, ACCEPTED, 97 controls all ok
+(controls-only push run 41092994575). Audit record artifact c07-conflict-audit-41093198048-1 id 12995390360. ZIP handled only in Actions.
+Independently re-derived from raw files: Receive/group/delete-versus-update/two-unsafe-heads as before; book delete and restart-restore revision
+linkage (distinct, same ids in result and observations); 5000-character refusal; 4096-multibyte byte counts and no-SQL setup; metadata regression
+accepted for the same source/run/attempt with 29 unique checks and no UI claim. Missing metadata or host evidence is refused (negative controls).
+Limits: the artifact holds no process or SQL record, so actual restart, sort-title equality and tombstone state rest on the producer's own
+assertions and consistent observations (recorded as a non-gating row). Not full F05, not six platforms; ed24fec2 findings and its controls are preserved.
