@@ -34,47 +34,55 @@ and chain binding only. Process-death cuts establish retained bytes, not durable
 recovery. The auditor never executes any binary it retrieves, and no result is
 transferred to a combined, newer or product source.
 
-Initial status before the run: audit not yet run; the producer's own failure
-history remains in its own document.
+History: the first passing revision 074a06bd7099193a2c534db2ad31dfbf87e81413
+(run41098408296, attempt1, job124210073306) already re-derived the same positive
+counts and rejected twenty-one controls, but it never wrote the ZIP it had
+verified, so its retention claim was false and it stands only as history.
 
-## Completed independent audit
+Correction: the script now writes the exact bytes it verified to
+audit-evidence/original.zip before running any control, and the receipt records
+that path with its byte count and SHA256. Path normalisation for producer
+inventories no longer merges keys silently: two manifest keys that collapse to one
+member path are rejected as duplicate-manifest-key, which is exercised as its own
+negative control. Deep byte controls replace the single existing key that
+normalises to the member path and never add an alias, with a structural guard that
+fails if the key set changes, so each control reaches the semantic rule it exists
+to test instead of tripping the duplicate rule first.
 
-Audit source 074a06bd7099193a2c534db2ad31dfbf87e81413, run41098408296, attempt1,
-job124210073306 completed success (17:23:33Z to 17:23:44Z). Actions independently
-downloaded and rehashed original artifact12991273158: 341928 bytes, SHA256
-5880b88ee98dfefe2c3a697054e475df06cfd176fb9089a4964b4acf15fa52fb, and re-derived
+Three failed attempts on this branch are retained, not hidden. 6714d847 failed
+with HTTP 401 because the API token followed the artifact redirect into signed
+blob storage. ccecb103 failed on `inventory` because the producer manifest records
+Windows backslash separators for nested keys while archive members use forward
+slashes. 924bcd63 failed with `accepted-negative:duplicate-manifest-key` because
+the deep controls indexed the manifest with a forward-slash alias and, separately,
+the duplicate control took whichever key came first, which could be a
+separator-free top-level name that cannot be aliased at all. All three are auditor
+defects, not producer defects; none of them accepted or rejected the producer, and
+none is evidence about the producer.
+
+## Completed audit with retained bytes re-hashed
+
+Audit source 0cb31f6786208409e739c980a67838477f5e7dde, run41103549070, attempt1
+(18:03:29Z to 18:05:03Z), two jobs: audit124226543442 and rehash124226669316,
+both completed success. The audit job independently downloaded and rehashed
+original artifact12991273158 (341928 bytes, SHA256
+5880b88ee98dfefe2c3a697054e475df06cfd176fb9089a4964b4acf15fa52fb), re-derived
 bridge26, four death cuts, unchanged original record27, original publisher28 plus
 both death cuts, original refusal8 and the three installed built==installed pairs
-from the retained members rather than from the producer summary. All twenty-one
-negative controls were rejected by their intended semantic rule, including the
-four re-sealed record controls that rewrite the producer manifest so no outer
-archive hash or manifest comparison can be the rejection mechanism.
+from the retained members, rejected all twenty-two negative controls by their
+intended rule, and wrote the verified bytes to audit-evidence/original.zip.
 
-Audit artifact12996663972 retains original.zip plus run/job/artifact API metadata
-and audit-result.json. Its API/upload size is3824 bytes, SHA256
-999f414d517ce89c09325d031f62a4e4f1099bdcc99ae7448d9d6c66d90d7d15. The audit output
-archive itself has not been independently rehashed by a further job; the original
-producer ZIP above has been independently rehashed.
-
-Correction: that first passing script did not write original.zip into
-audit-evidence, so the retention sentence above was wrong for it even though the
-archive was downloaded and rehashed. The script now writes the exact bytes it
-verified to audit-evidence/original.zip before running any control, and the
-receipt records that path with its byte count and SHA256, so a further job can
-re-hash the same bytes. Path normalisation for producer inventories also no longer
-merges keys silently: two manifest keys that collapse to one member path are now
-rejected as duplicate-manifest-key, which is exercised as its own negative
-control. A re-run of this revision is required before any retention claim applies.
-
-Two earlier attempts on this branch are retained, not hidden: 6714d847 failed with
-HTTP 401 because the API token followed the artifact redirect into signed blob
-storage, and ccecb103 failed on `inventory` because the producer manifest records
-Windows backslash separators for nested keys while archive members use forward
-slashes. Both are auditor defects, not producer defects; neither attempt accepted
-or rejected the producer, and neither is evidence about the producer.
+The rehash job then downloaded that artifact and re-measured the retained file,
+printing `retained original ZIP re-hashed by a second job: 341928 bytes, SHA256
+matches` after asserting the size, the producer digest, the receipt claim and the
+outer binding. The retention claim therefore no longer rests on a field written by
+the job that produced the file. Artifact12999342819 carries the result; its API
+upload size is321391 bytes (compressed) and its digest is
+sha256:5df51cbc3afcdeaec3c44d74f667f6e1caafd44452e7939715689ff3baab0c8b.
 
 Acceptance is limited to the tested live-process serialized bridge at producer
 source af851ee7. Full P0, migration admission, real-host lifecycle and physical
 power-loss safety remain unaccepted. No result is transferred to a combined or
 newer product source.
+
 
