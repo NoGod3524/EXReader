@@ -15,7 +15,7 @@ jobs:
         run: |
           git diff --exit-code b2f4e6e1363d0ee20fcb87a6acef548e0624318a HEAD -- . ':!tools/reader_composition/dot_apple_b2f_diagnose_20261030.py' ':!.github/workflows/dot-apple-b2f-diagnose-20261030.yml' ':!docs/reader-total-progress/dot-apple-b2f-diagnose-20261030.md'
           python3 -m py_compile tools/reader_composition/dot_apple_b2f_diagnose_20261030.py
-      - name: Authenticate original ZIPs and inspect original failure evidence
+      - name: Read authenticated diagnostic ZIP and print segmented activity timeline
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tools/reader_composition/dot_apple_b2f_diagnose_20261030.py
