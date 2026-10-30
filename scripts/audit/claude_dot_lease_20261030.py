@@ -181,6 +181,8 @@ def run_qualify(raw_dir, out_dir):
                all_controls_rejected=all(c['rejected'] for c in ctl), publisher_integration=False, full_p0_acceptance=False, physical_power_loss=False,
                workflow_run=dict(run=os.environ.get('GITHUB_RUN_ID'), attempt=os.environ.get('GITHUB_RUN_ATTEMPT'), sha=os.environ.get('GITHUB_SHA')))
     (out / 'qualification.json').write_text(json.dumps(rep, indent=2) + '\n')
+    print('facts', json.dumps(base['facts'], sort_keys=True))
+    print('members', json.dumps(base['members'], sort_keys=True))
     print('qualification ok; controls rejected:', len(ctl))
 
 ap = argparse.ArgumentParser(); ap.add_argument('--paths'); ap.add_argument('--receipt'); ap.add_argument('--qualify'); ap.add_argument('--out'); a = ap.parse_args()
