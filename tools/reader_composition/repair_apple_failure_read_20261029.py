@@ -71,7 +71,7 @@ attachments=out/"attachments"
 subprocess.run(["xcrun","xcresulttool","export","attachments","--path",str(bundle),"--output-path",str(attachments)],check=True)
 manifest=json.loads((attachments/"manifest.json").read_text())
 for group in manifest:
- if "BorrowedFont" not in str(group.get("testIdentifier") or group.get("testName")):continue
+ if not any(case in str(group.get("testIdentifier") or group.get("testName")) for case in ("BorrowedFont","NativeAnnotation")):continue
  for item in group["attachments"]:
   name=item.get("suggestedHumanReadableName","")
   if name.startswith("final-native-tree"):
