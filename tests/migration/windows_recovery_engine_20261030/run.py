@@ -7,12 +7,12 @@ consumer=root/'build/engine-check/Release/windows-engine-check.exe'
 evidence=root/'build/engine-evidence'
 private=evidence/'private'
 digest=hashlib.sha256(worker.read_bytes()).hexdigest()
-p=subprocess.run([str(consumer),str(private),str(worker),digest,os.environ['GITHUB_SHA']],capture_output=True,text=True,timeout=120)
+p=subprocess.run([str(consumer),str(private),str(worker),digest,os.environ['GITHUB_SHA'],str(root/'build/engine-check/Release/windows-engine-stall.exe')],capture_output=True,text=True,timeout=120)
 (evidence/'stdout.txt').write_text(p.stdout);(evidence/'stderr.txt').write_text(p.stderr)
 assert p.returncode==0,(p.returncode,p.stdout,p.stderr)
-r=json.loads(p.stdout);assert r['passed'] and r['checks']==21 and r['failed']==0,r
+r=json.loads(p.stdout);assert r['passed'] and r['checks']==28 and r['failed']==0,r
 assert r['migration_admission'] is False and r['full_p0_acceptance'] is False
-assert {x.name for x in private.iterdir()}=={'target.fixture','observed.bin'}
+assert {x.name for x in private.iterdir()}=={'target.fixture','observed.bin','deadline.bin'}
 assert (private/'target.fixture').read_bytes()==b'retained-byte-observation'
 built=root/'build/migration/windows_recovery_engine_20261030/Release/exreader-migration-windows-observer.exe'
 assert built.read_bytes()==worker.read_bytes()

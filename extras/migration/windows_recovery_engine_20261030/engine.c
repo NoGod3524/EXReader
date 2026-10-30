@@ -9,6 +9,22 @@ static int empty_job(HANDLE job){
  JOBOBJECT_BASIC_ACCOUNTING_INFORMATION a;
  return QueryInformationJobObject(job,JobObjectBasicAccountingInformation,&a,sizeof(a),NULL)&&a.ActiveProcesses==0;
 }
+int lm_we_wait_zero(HANDLE job,ULONGLONG deadline,lm_we_result *out,wr_error *e){
+ JOBOBJECT_BASIC_ACCOUNTING_INFORMATION accounting;int first=1;
+ if(!out)return fail(e,"observer-result-null");
+ out->job_query_error=0;out->diagnostic_samples=0;
+ for(;;){ULONGLONG now;DWORD pause;
+  SetLastError(ERROR_SUCCESS);
+  if(!QueryInformationJobObject(job,JobObjectBasicAccountingInformation,&accounting,sizeof(accounting),NULL)){
+   out->job_query_error=GetLastError();return fail(e,"observer-job-query");
+  }
+  if(first){out->active_initial=accounting.ActiveProcesses;first=0;}
+  out->active_last=accounting.ActiveProcesses;
+  if(!accounting.ActiveProcesses){if(GetTickCount64()>deadline){SetLastError(ERROR_TIMEOUT);return fail(e,"observer-accounting-deadline");}return 1;}
+  now=GetTickCount64();if(now>=deadline){SetLastError(ERROR_TIMEOUT);return fail(e,"observer-descendant-deadline");}
+  pause=(DWORD)((deadline-now)>10?10:(deadline-now));Sleep(pause);out->diagnostic_samples++;
+ }
+}
 int lm_we_observe(wr_context *root,HANDLE target,const WCHAR *worker_path,
  const char expected_worker_sha[65],const char nonce[33],const WCHAR *leaf,
  DWORD timeout_ms,lm_we_result *out,wr_error *e){
@@ -52,28 +68,11 @@ int lm_we_observe(wr_context *root,HANDLE target,const WCHAR *worker_path,
  inherited[0]=input;inherited[1]=output;inherited[2]=child_target;
  if(!wr_spawn(job,worker_path,command,inherited,3,input,output,0,&process,e))goto done;
  started=1;
- if(!wr_wait(&process,timeout_ms,&status,e))goto done;
+ {ULONGLONG now=GetTickCount64();
+ if(now>=observation_deadline){SetLastError(ERROR_TIMEOUT);fail(e,"observer-total-deadline");goto done;}
+ if(!wr_wait(&process,(DWORD)(observation_deadline-now),&status,e))goto done;}
  out->worker_terminal=1;out->worker_exit=status;
- {JOBOBJECT_BASIC_ACCOUNTING_INFORMATION accounting;BOOL queried;
-  SetLastError(ERROR_SUCCESS);
-  queried=QueryInformationJobObject(job,JobObjectBasicAccountingInformation,&accounting,sizeof(accounting),NULL);
-  out->job_query_error=queried?ERROR_SUCCESS:GetLastError();
-  out->active_initial=out->active_last=queried?accounting.ActiveProcesses:MAXDWORD;
-  if(!queried||accounting.ActiveProcesses){
-   /* Diagnostic only: original immediate-zero assertion still fails even if
-      accounting later reaches zero. Observations never extend total timeout. */
-   ULONGLONG until=GetTickCount64()+1000;if(until>observation_deadline)until=observation_deadline;
-   while(queried&&out->active_last&&GetTickCount64()+10<=until){
-    Sleep(10);SetLastError(ERROR_SUCCESS);
-    queried=QueryInformationJobObject(job,JobObjectBasicAccountingInformation,&accounting,sizeof(accounting),NULL);
-    out->diagnostic_samples++;
-    if(!queried){out->job_query_error=GetLastError();break;}
-    out->active_last=accounting.ActiveProcesses;
-   }
-   SetLastError(out->job_query_error?out->job_query_error:ERROR_BUSY);
-   fail(e,"observer-live-descendants");goto done;
-  }
- }
+ if(!lm_we_wait_zero(job,observation_deadline,out,e))goto done;
  out->descendants_terminal=1;
  if(status||!wr_recheck(root,e)||!wr_identity_get(target,0,&target_after,e)||
  !wr_identity_equal(&target_before,&target_after)){fail(e,"observer-terminal-or-identity");goto done;}

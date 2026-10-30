@@ -11,7 +11,7 @@ int main(int argc,char **argv){
  HANDLE target=INVALID_HANDLE_VALUE,h=INVALID_HANDLE_VALUE;WCHAR path[WR_PATH],worker[WR_PATH];
  char worker_sha[65];void *bytes=NULL;size_t size=0;lm_we_result result;
  const char *nonce="0123456789abcdef0123456789abcdef";
- if(argc!=5||!root)return 2;
+ if(argc!=6||!root)return 2;
  CHECK(wr_utf8(argv[1],path,&error));CHECK(wr_utf8(argv[2],worker,&error));
  CHECK(wr_prepare(root,path,1,&error));if(failed)goto done;
  CHECK(wr_write_new(root,L"target.fixture","retained-byte-observation",25,1,&target,&error));
@@ -36,6 +36,18 @@ int main(int argc,char **argv){
  CHECK(!lm_we_observe(root,target,worker,argv[3],nonce,L"bad-timeout.bin",60001,&result,&error));
  h=wr_open(root,L"observed.bin",GENERIC_READ,FILE_SHARE_READ,0,&error);
  CHECK(h!=INVALID_HANDLE_VALUE&&wr_read(h,&bytes,&size,4096,&error)&&size>300);
+ {HANDLE event=CreateEventW(NULL,TRUE,FALSE,NULL),empty=NULL;uint64_t size64=0;WCHAR stalled[WR_PATH];
+ CHECK(event!=NULL);
+ memset(&error,0,sizeof(error));memset(&result,0,sizeof(result));
+ CHECK(!lm_we_wait_zero(event,GetTickCount64()+100,&result,&error)&&result.job_query_error!=0);
+ if(event)CloseHandle(event);
+ empty=wr_job(&error);CHECK(empty!=NULL);
+ CHECK(lm_we_wait_zero(empty,GetTickCount64()+100,&result,&error));if(empty)CloseHandle(empty);
+ CHECK(wr_utf8(argv[5],stalled,&error)&&lm_sha_file(argv[5],worker_sha,&size64));
+ memset(&error,0,sizeof(error));
+ CHECK(!lm_we_observe(root,target,stalled,worker_sha,nonce,L"deadline.bin",500,&result,&error));
+ CHECK(result.state!=LM_WE_OBSERVED&&result.worker_terminal&&result.descendants_terminal&&!error.cleanup_unconfirmed);
+ }
 done:
  if(h!=INVALID_HANDLE_VALUE)CloseHandle(h);free(bytes);
  if(target!=INVALID_HANDLE_VALUE)CloseHandle(target);

@@ -8,3 +8,5 @@ target_compile_definitions(windows-engine-check PRIVATE _CRT_SECURE_NO_WARNINGS 
 target_include_directories(windows-engine-check PRIVATE "${ENGINE_PREFIX}/include/exreader-migration-windows-engine")
 target_link_libraries(windows-engine-check PRIVATE "${ENGINE_PREFIX}/lib/exreader-migration-windows-engine.lib" EXReader::exr_library advapi32 psapi)
 target_link_options(windows-engine-check PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/consumer-provider.map")
+
+add_executable(windows-engine-stall stall.c)

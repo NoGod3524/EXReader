@@ -16,6 +16,9 @@ typedef struct {
  * Worker path must name the actual installed image; the image is held with
  * write/delete sharing denied until the job and all descendants are terminal.
  * Output leaf is exclusive-created and ALWAYS retained, including failures. */
+/* Native job-accounting fence, absolute caller deadline. Does not terminate
+ * processes or authorize migration. Wrong handle/query errors fail closed. */
+int lm_we_wait_zero(HANDLE job,ULONGLONG deadline,lm_we_result *result,wr_error *error);
 int lm_we_observe(wr_context *root,HANDLE target,const WCHAR *worker_path,
  const char expected_worker_sha[65],const char nonce[33],
  const WCHAR *output_leaf,DWORD timeout_ms,lm_we_result *result,wr_error *error);
