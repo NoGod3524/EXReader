@@ -38,4 +38,57 @@ Compile definitions, object/archive symbols and both link maps establish which
 source variant ran. The two-case receipt remains separate from the unchanged
 26-case receipt.
 
-Status: pending the single authorized Actions run. Candidate only; 95/108 unchanged.
+Status: single authorized Actions run passed; scope and residual limits below. Candidate only; 95/108 unchanged.
+
+## Single authorized Actions result
+
+Source: 43f2fd0f94cb820a4ed42ca99ab0906272ba8623.
+Run: https://github.com/NoGod3524/EXReader/actions/runs/41146675121
+Attempt 1; job 124373287391; windows-2022; completed success 2026-10-30T23:51:53Z.
+
+The unchanged original 26-case runner completed successfully against the installed
+production archive. The original record27, publication28+2cuts, bridge26+4cuts
+and refusal8 steps also passed. Their existing assertions were not changed.
+The original 26-case receipt is archived, not printed in the log; this review
+used the unchanged assertions and successful step, and did not unpack the ZIP.
+
+The independent two-case runner printed WINDOW-LOCK-SUMMARY cases=2 failed=0.
+Both cases observed open_reason=restart-lease-window, open_native=33, a non-null
+REFUSED object, checked=false, and exactly one after-acquire hook invocation.
+The helper released its range lock and exited before shared exclusion was tested.
+Both then measured shared status=2 (BUSY) while the refused reader object lived.
+
+Clean case: disk remained generation=0/PENDING=1, SHA256
+864005f505014779a5e860386025ad895486bc69beab14cf443d2cf261ddf040.
+After explicit close, shared status=3 (STALE); a new installed reader succeeded
+with class=3 and checked=true. No permanent handle exclusion remained.
+
+Drift case: disk remained generation=5/PENDING=0 after the helper's deliberate
+write, SHA256 7aeda2715f9b7eb449d3c93f6d1c7db440ea4c1066b429b34b908ad35d1d6a66.
+After reader kill, shared status=0 (admitted), while a fresh installed reader
+refused with restart-lease-generation. This is the measured remaining crash
+isolation gap, NOT a durable-isolation pass or an SDK admission proof.
+The returned result generation/pending zeroes were explicitly recorded as
+unconfirmed fields, separate from actual disk observations.
+
+Isolation verification passed in Actions:
+- production compile definitions omit LM_RR_TEST_AFTER_ACQUIRE;
+- production archive symbol dump contains no lm_rr_test_after_acquire;
+- variant reader object has one UNDEF reference to that hook;
+- variant probe object has one External definition;
+- installed lm_rr_open map source:
+  exreader-migration-windows-restart-reader:lm_win_restart_reader.obj;
+- variant lm_rr_open map source: lm_win_restart_reader.obj (direct object);
+- shared source file SHA256:
+  92d7d41de4a53e312daff4e23de67fada168040b2847f3a0e3f901e70e82f2af.
+
+Artifact: windows-restart-window-lock-43f2fd0f94cb820a4ed42ca99ab0906272ba8623,
+ID 13021382398, 597584 bytes, GitHub ZIP digest SHA256
+14feee6642fe5e4bcff17ccba738cd8d7ebedeb0872efb9904cf6d03a41343a8.
+These are GitHub metadata and upload-log values; no local ZIP extraction or
+re-hashing was performed. Receipts, symbol dumps, project definition evidence,
+both consumer maps, installed archives and older evidence are archived together.
+
+No rerun, second validation round, mainline push, PR, tag, release, C01 change,
+SDK change, production-owner change, public-header change or old-test change.
+Candidate classification evidence only; formal score remains 95/108.
