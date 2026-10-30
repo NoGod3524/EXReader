@@ -20,12 +20,21 @@
 struct lm_rr {
  lm_wl_lease *lease;wr_context context;int initialized,qualified,lease_pinned;
  HANDLE lease_dir,lease_file;DWORD lease_volume,lease_index_high,lease_index_low;
+ WCHAR lease_path[WR_PATH+64];
  char identity[49];uint64_t generation,gen_disk,pending_disk;
+ int lease_restored;
  unsigned char lease_snapshot[RR_LEASE_SIZE];
  HANDLE files[32],target;unsigned opened;
  wr_identity ids[32],target_id;char hashes[32][65],payload[65];
  lm_rr_class classification;WCHAR source[WR_PATH],dest[WR_PATH];int published;
 };
+static void (*window_probe)(const WCHAR *lease_path);
+void lm_rr_set_window_probe(void (*fn)(const WCHAR *lease_path)){window_probe=fn;}
+static int pwrite_exact(HANDLE h,uint64_t off,const void *buf,size_t n){
+ OVERLAPPED o;DWORD put=0;memset(&o,0,sizeof(o));
+ o.Offset=(DWORD)off;o.OffsetHigh=(DWORD)(off>>32);
+ return WriteFile(h,buf,(DWORD)n,&put,&o)&&put==(DWORD)n;
+}
 static int refuse(wr_error *e,const char *why){
  SetLastError(ERROR_INVALID_DATA);if(e){e->native=ERROR_INVALID_DATA;e->reason=why;}return 0;
 }
@@ -92,6 +101,7 @@ static int lease_pin(lm_rr *r,const WCHAR *dir,const char id[49],uint64_t want,w
  lease_leaf(leaf,id);
  memcpy(r->identity,id,49);
  if(swprintf(path,WR_PATH+64,L"%ls\\%ls",dir,leaf)<0)return refuse(e,"restart-lease-path");
+ wcscpy(r->lease_path,path);
  r->lease_file=CreateFileW(path,GENERIC_READ|FILE_READ_ATTRIBUTES|READ_CONTROL|SYNCHRONIZE,
   FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,
   FILE_ATTRIBUTE_NORMAL|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
@@ -140,11 +150,27 @@ static int lease_verify(lm_rr *r,wr_error *e){
  * whole 80-byte region must still be byte-identical to the pre-acquire snapshot.
  * This cannot prevent the provider's own write, but it guarantees that no custody
  * is ever derived from a lease that changed inside that window. */
+/* Called with the reader window held, immediately after the provider acquire.
+ * Returns 1 when unchanged, 2 when a provider re-initialisation was detected and
+ * the pre-acquire snapshot was written back, 0 on real drift or on a restore that
+ * could not be completed. A legitimate commit from generation zero leaves
+ * generation one, so a generation-zero file that lost PENDING can only be the
+ * OPEN_ALWAYS initialisation running inside this window; restoring the exact
+ * bytes captured under the deny-delete pin is then the only way to keep the
+ * domain's PENDING isolation instead of silently opening shared admission. */
 static int lease_settle(lm_rr *r,wr_error *e){
- unsigned char hdr[RR_LEASE_SIZE];
- if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE))return native(e,"restart-lease-read");
- if(memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE))return refuse(e,"restart-lease-window-race");
- return 1;
+ unsigned char hdr[RR_LEASE_SIZE];uint64_t gen,pending;
+ if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE)){native(e,"restart-lease-read");return 0;}
+ if(!memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE))return 1;
+ gen=read64(hdr+RR_GEN_OFFSET);pending=read64(hdr+RR_PENDING_OFFSET);
+ if(gen==0&&pending==0&&r->gen_disk==0&&r->pending_disk==1&&header_ok(hdr,r->identity)){
+  if(!pwrite_exact(r->lease_file,0,r->lease_snapshot,RR_LEASE_SIZE)||
+     !FlushFileBuffers(r->lease_file)){native(e,"restart-lease-restore");return 0;}
+  if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE)||
+     memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE)){refuse(e,"restart-lease-restore");return 0;}
+  r->lease_restored=1;return 2;
+ }
+ refuse(e,"restart-lease-window-race");return 0;
 }
 static int lease_check(lm_rr *r,wr_error *e){
  lm_wl_error le={0};
@@ -198,7 +224,7 @@ int lm_rr_open(const WCHAR *lease_dir,const char lease_identity[49],
  uint64_t generation,const WCHAR *root,const WCHAR *source_leaf,const WCHAR *public_leaf,
  const lm_wr_record *expected,unsigned slots,lm_rr **out,lm_rr_result *result,wr_error *e){
  lm_rr *r=NULL;lm_wl_error le={0};lm_sb encoded;lm_wr_record previous={0},record;
- unsigned i,valid=0;int reserved=0,source,dest;WCHAR leaf[40],unused[WR_PATH];
+ unsigned i,valid=0;int reserved=0,source,dest,settled=0;WCHAR leaf[40],unused[WR_PATH];
  void *bytes=NULL;size_t size=0,j;int zero;HANDLE h;
  if(!out||!result)return refuse(e,"restart-output");*out=NULL;memset(result,0,sizeof(*result));
  lm_sb_init(&encoded);
@@ -212,11 +238,19 @@ int lm_rr_open(const WCHAR *lease_dir,const char lease_identity[49],
  r->lease_file=INVALID_HANDLE_VALUE;r->generation=generation;
  *out=r;result->slots=slots;
  if(!lease_pin(r,lease_dir,lease_identity,generation,e))goto fail;
+ if(window_probe)window_probe(r->lease_path);
  if(lm_wl_acquire(lease_dir,lease_identity,LM_WL_EXCLUSIVE,0,&r->lease,&le)!=LM_WL_OK){
   refuse(e,"restart-exclusive-acquire");goto fail;
  }
  if(!lease_window(r,e))goto fail;
- if(!lease_settle(r,e))goto fail;
+ settled=lease_settle(r,e);
+ if(settled!=1){
+  /* Custody is never derived from a lease that moved inside the acquire window.
+     The object is retained rather than freed so the exclusive lease keeps shared
+     admission closed until the caller closes it after inspecting the refusal. */
+  if(settled==2)refuse(e,"restart-lease-window-restored");
+  goto done;
+ }
  result->generation=lm_wl_generation(r->lease);result->pending=lm_wl_pending(r->lease);
  if(!lease_check(r,e))goto done;
  r->initialized=1;
@@ -269,10 +303,11 @@ int lm_rr_open(const WCHAR *lease_dir,const char lease_identity[49],
 done:
  free(bytes);result->classification=r->classification;result->valid_records=valid;
  result->published=r->published;result->target=r->target_id;
+ result->lease_restored=r->lease_restored;
  for(i=0;i<r->opened;i++)result->records[i]=r->ids[i];
  return 1;
 fail:
  /* No custody was established: release every pin/handle and hand back nothing. */
  free(bytes);result->classification=LM_RR_REFUSED;result->valid_records=0;
- result->published=0;*out=NULL;lm_rr_close(r);return 0;
+ result->published=0;result->lease_restored=r->lease_restored;*out=NULL;lm_rr_close(r);return 0;
 }
