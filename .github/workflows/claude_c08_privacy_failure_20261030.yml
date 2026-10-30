@@ -58,6 +58,10 @@ jobs:
       - name: Bind identity and fold gates
         if: always()
         run: python -I "$AUDITOR" summary --report build/c08/reports/dynamic.json --pycompile build/c08/reports/pycompile.json --scope build/c08/reports/scope.json --selftest build/c08/reports/selftest.json --out build/c08/reports/summary.json
+      - name: Print reports into the Actions log (no download needed to read the verdict)
+        if: always()
+        run: |
+          for f in dynamic summary; do echo "=== $f.json"; cat build/c08/reports/$f.json || true; done
       - name: Preserve reports
         if: always()
         uses: actions/upload-artifact@v4

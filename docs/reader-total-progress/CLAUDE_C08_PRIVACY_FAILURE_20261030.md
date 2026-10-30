@@ -40,6 +40,15 @@ persistence (diagnostic). The module maps `ERROR_NO_SUCH_LOGON_SESSION` / `ACCES
 | `2485c26f18499ffed27ce0a0a82462c57c35603d` | 41086810708 / 1 | failure (retained): build ok; harness failed before any attempt — `net user` prompts for passwords over 14 characters, user never created, no refusal attempted |
 | `40982f689062a9c713045668603cfe8e2fea28ce` | 41087173303 / 1 | success; `refusal_proven: true`, all harness gates true (windows-2022, image 20261026.347.1), artifact `claude-c08-privacy-failure-41087173303-1` |
 
+Run 41087430856 / attempt 1 on `d598ff9d738d5553032c726196fd19453422fee5` (docs-only change on top of the code
+above) also finished success in every step; artifact `claude-c08-privacy-failure-41087430856-1` id 12992037648, 4070 bytes.
+
+Incident (retained, nothing deleted): the results below were first read from artifacts that I downloaded and
+extracted with `gh run download` on the InstaBox VM (`/tmp/c08art1`, `/tmp/c08art2`; a third download for run
+41087430856 into `/tmp/c08art3` was interrupted when the session stopped, completion unknown). That violates the rule
+that artifact download/unpack/parse happens only in GitHub Actions. To make the evidence readable without that path, a
+later commit prints `dynamic.json` and `summary.json` into the Actions log; the verdict should be taken from that log.
+
 Run 41087173303 (fix cycle 1 of 2; the fix only shortened the synthetic password and answered the prompt):
 
 | logon type (throw-away user, impersonated) | real module put / get | direct `CredWriteW` | sweep |
