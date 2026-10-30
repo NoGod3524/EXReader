@@ -17,7 +17,7 @@ struct lm_wl_lease {
   lm_wl_mode mode;
   uint64_t generation, pending;
   DWORD volume, index_high, index_low;
-  unsigned char header[HDR_ID + 48 + 1];
+  unsigned char header[GEN_OFFSET];
 };
 static lm_wl_status fail(lm_wl_error *e, lm_wl_status s, DWORD native, const char *reason) {
   if (e) { e->native = native; e->reason = reason; }
@@ -98,7 +98,7 @@ lm_wl_status lm_wl_acquire(const WCHAR *dirpath, const char identity[49], lm_wl_
   if (_wcsnicmp(filefinal, dirfinal, n) != 0 || filefinal[n] != L'\\' || _wcsicmp(filefinal + n + 1, leaf) != 0) { s = fail(e, LM_WL_REFUSED, 0, "lease file escaped pinned directory"); goto bad; }
   memcpy(hdr, HDR_MAGIC, HDR_ID); memcpy(hdr + HDR_ID, identity, 48); hdr[HDR_ID + 48] = '\n';
   memset(hdr + HDR_ID + 49, 0, LEASE_SIZE - (HDR_ID + 49));
-  memcpy(l->header, hdr, sizeof l->header);
+  memcpy(l->header, hdr, sizeof l->header); /* whole 64-byte region, padding included */
   /* Serialise first-time initialisation of the file against other processes. */
   if (!lock_range(l->file, INIT_LOCK, 1, timeout_ms ? timeout_ms : 1000, &native)) { s = fail(e, native == ERROR_LOCK_VIOLATION ? LM_WL_BUSY : LM_WL_NATIVE, native, "init lock"); goto bad; }
   if (!GetFileSizeEx(l->file, &size)) { native = GetLastError(); unlock_range(l->file, INIT_LOCK); s = fail(e, LM_WL_NATIVE, native, "size"); goto bad; }
@@ -107,7 +107,7 @@ lm_wl_status lm_wl_acquire(const WCHAR *dirpath, const char identity[49], lm_wl_
   unlock_range(l->file, INIT_LOCK);
   if ((s = file_state(l->file, &finfo, e)) != LM_WL_OK) goto bad;
   if (!pread_exact(l->file, 0, got, LEASE_SIZE)) { s = fail(e, LM_WL_NATIVE, GetLastError(), "read header"); goto bad; }
-  if (memcmp(got, hdr, HDR_ID + 49) != 0) { s = fail(e, LM_WL_REFUSED, 0, "lease header is not bound to this identity"); goto bad; }
+  if (memcmp(got, hdr, GEN_OFFSET) != 0) { s = fail(e, LM_WL_REFUSED, 0, "lease header is not bound to this identity"); goto bad; }
   l->volume = finfo.dwVolumeSerialNumber; l->index_high = finfo.nFileIndexHigh; l->index_low = finfo.nFileIndexLow;
   if (!lock_range(l->file, LEASE_LOCK, mode == LM_WL_EXCLUSIVE, timeout_ms, &native)) { s = fail(e, native == ERROR_LOCK_VIOLATION ? LM_WL_BUSY : LM_WL_NATIVE, native, "lease lock"); goto bad; }
   if (!pread_exact(l->file, GEN_OFFSET, &l->generation, sizeof l->generation) ||
