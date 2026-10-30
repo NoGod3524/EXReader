@@ -65,6 +65,8 @@ try:
      assert identity["programs"][mode]["bundle_source_sha"]==SOURCE and identity["programs"][mode]["sdk_version"]=="3.42.0"
      assert identity["programs"][mode]["sha256"]==phase["program"]["sha256"]
      program(z,"program-"+mode+"/EXReaderHost.app/",platform,phase["program"])
+     with zipfile.ZipFile(io.BytesIO(z.read(phase["program"]["packaged_app"]))) as app:
+      check_zip(app);program(app,"EXReaderHost.app/",platform,phase["program"])
     native[platform]=identity;result["native_cases"][platform]=39
    elif name.startswith("apple-sdk342-supplemental-"):
     key=one(z,"sdk342-supplemental.json");report=json.loads(z.read(key));check_cloud(report)
