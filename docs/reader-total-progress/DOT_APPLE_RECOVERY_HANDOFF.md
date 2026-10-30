@@ -1,7 +1,7 @@
 # EXReader Apple recovery checkpoint (not acceptance or a transfer)
 
-Snapshot written: 2026-10-30 03:47 UTC / 2026-10-29 23:47 America/New_York (EDT).
-Source/run state confirmed by the sole implementation writer at 03:43 UTC.
+Snapshot updated: 2026-10-30 04:04 UTC / 2026-10-30 00:04 America/New_York (EDT).
+Focused completion independently verified by coordinator; full-suite running state reported by writer at 04:03 UTC.
 Purpose: hourly resumable evidence snapshot against context/quota interruption. Work continues; this is neither product completion nor an actual handoff.
 
 ## Ownership and resumable entry points
@@ -15,7 +15,7 @@ Purpose: hourly resumable evidence snapshot against context/quota interruption. 
 - This doc-only worktree: /data/workspace/exreader-dot-apple-receipt-20261030; branch codex/dot-apple-receipt-20261030. Pre-snapshot HEAD 966f34930f07cfd251d5f4e85513e4b77128c403, clean.
 - Original working conversation has stopped its development and monitoring. It will NOT automatically integrate or take back the task. Deliver results directly to the user through the current coordinator.
 
-## Current candidate and pending verdict
+## Qualified focused candidate and pending full validation
 
 Exact source: **c66b5590e42adcf708365ba4fa315a811e475aaa**, pushed; writer reports clean source worktree.
 Helper blob: **44b701a3f28d61d91b3588bc0fccc69e5c70e9f1**.
@@ -23,9 +23,9 @@ Helper blob: **44b701a3f28d61d91b3588bc0fccc69e5c70e9f1**.
 [Focused original-five run 40998486779](https://github.com/NoGod3524/EXReader/actions/runs/40998486779), attempt 1:
 - macOS SDK job 123877098804: success.
 - simulator SDK job 123877098994: success.
-- iPad native original-five job 123878247831: in progress at 03:43 UTC.
-- iPhone native original-five job 123878247862: in progress at 03:43 UTC.
-- Neither UI gate is accepted yet. SDK success is not UI success. No full-suite admission until both original-five gates pass on this exact source.
+- iPad native original-five job 123878247831: SUCCESS, original five 5/5 accepted. Annotation 155s / history 28s / share 68s / directory 23s / null 65s. Original ZIP artifact 12952708284, 76318562 bytes, SHA256 207e01d38763f4187b6fe2e7795a90063744295529327fd2147188b59daded99.
+- iPhone native original-five job 123878247862: SUCCESS, original five 5/5 accepted. Annotation 220s / history 36s / share 131s / directory 20s / null 47s. Original ZIP artifact 12953245859, 71554152 bytes, SHA256 2923b1b35f20b9adc07be52c0287d39c8d3e7080675ddda5ace86985ad2436b1.
+- All four jobs succeeded on exact c66 source, attempt 1; both program/SDK3.42 identities accepted. This unlocks full-suite preparation, NOT final acceptance. Full validation is now running on a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72: [run 41000723036](https://github.com/NoGod3524/EXReader/actions/runs/41000723036), attempt 1, in progress. No new full-suite product pass is claimed.
 
 Changes from 55e9 are restricted to the shared UI helper, explicit admission transformation and repair evidence document. The helper latches slower controlled native correction after a real drag direction reversal; Files current-directory recognition accepts actual local-provider root plus EXReaderAnnotations navigation rather than requiring a folder cell while already inside it. Actual Open/content checks remain. Original five test bodies, setup/teardown, 90-second waits, 24-drag cap and 240-360-second budgets remain frozen. See source-pinned docs/reader-total-progress/repair-apple-features-20261029.md for exact implementation evidence.
 
@@ -47,16 +47,16 @@ Earlier failed/superseded evidence remains in the source-pinned repair documents
 
 ## Exact next steps and admission sequence
 
-1. Poll existing 40998486779 / attempt 1 to terminal; do not dispatch a duplicate.
-2. If either original-five gate fails, authenticate and diagnose that exact candidate's original ZIPs in GitHub Actions, preserve the failures, then make only a justified minimal fix. Do not transfer passes across source SHAs.
-3. Only after BOTH original-five gates pass on the same candidate, create codex/dot-apple-complete-20261029 from that qualified source.
-4. Run unchanged original **39 x 3 platforms (macOS, iPhone, iPad) + 12 supplemental groups**, using the same admitted source and SDK/program identities.
+1. DONE: 40998486779 / attempt 1 is terminal success, original-five 5/5 on both platforms. Do not dispatch a duplicate.
+2. Preserve c66 passing producer identities and all historical failures. If a later gate fails, authenticate and diagnose that exact source ZIP in Actions before a minimal fix; never transfer passes across source SHAs.
+3. DONE: qualified c66 was used for codex/dot-apple-complete-20261029, worktree /data/workspace/exreader-dot-apple-complete-20261029. Full source a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72 differs only by two added files: .github/workflows/dot-apple-complete-20261029.yml and tools/reader_composition/dot_apple_complete_admission_20261029.py. All runtime/helper content is identical to qualified c66.
+4. RUNNING: existing run 41000723036 attempt 1 runs unchanged original **39 x 3 platforms (macOS, iPhone, iPad) + 12 supplemental groups**, same-source SDK/program checks and same-run ZIP authentication/full summary. Monitor this existing run; do not duplicate it.
 5. Perform the independent **19 original ZIP** authentication/audit. Bind source, run, attempt, job, artifact, name, bytes and digest. CI job-green alone is not this audit.
 6. Write docs/reader-total-progress/DOT_APPLE_RESULT_20261029.md on the independent branch with exact producer SHA separately from documentation SHA, source/blob identities, all runs/jobs/artifacts, failures, limits and uncompleted items.
 7. Deliver directly to the user. Do not push/integrate the common branch or silently assume global acceptance.
 
-Prepared full-suite workflow template: .github/workflows/apple-sdk342-full-handoff-20261029.yml, blob 09350a203f79749668087c056e303aaf826245a6. Its old helper pin f7a3ddefc25d7a901dc0ef810dc66d850b9cb20f must not be reused for c66. A separate wrapper/admission is needed; the focused seven-path guard cannot admit the full wrapper.
-- Planned full-source delta from qualified c66: only the two independent wrapper/admission additions; preserve other frozen paths.
+Prepared full-suite workflow template: .github/workflows/apple-sdk342-full-handoff-20261029.yml, blob 09350a203f79749668087c056e303aaf826245a6. Its old helper pin f7a3ddefc25d7a901dc0ef810dc66d850b9cb20f must not be reused for c66. The separate full wrapper/admission is now added in a91; the focused seven-path guard itself remains unchanged.
+- Actual full-source delta from qualified c66: only the two independent wrapper/admission additions; other frozen paths preserved.
 - Original 39 = 5 + 13 + 13 + 4 + 4.
 - Supplemental 12 = four groups on three platforms: font 1; original 1 plus real saved-byte/hash readback; organization 6; sync 3 plus separate 401 recovery (256 shards, pending 1, recovered outbox 0).
 - Strong independent checker: tools/reader_composition/closure_apple_independent.py on audit branch, blob dd7f9bf6a5035c2e74791c46346e8efc06305a9d. Keep unchanged; add separate metadata orchestration after full-suite pass.
@@ -89,14 +89,14 @@ Formal catalog remains **95/108 = 87.96%** (foundation 12/12, host 82/84, final 
 F01-F05 / F07-F12 remain pending; F06 is only its previously limited package identity. This work does not establish physical-device, global P0 migration/conflict recovery or six-platform same-source completion.
 
 Actual work status at snapshot:
-- Apple writer: active, waiting for native CI verdict, retaining implementation ownership.
+- Apple writer: active / awaiting full run 41000723036, with independent 19-ZIP follow-through still required; retains implementation ownership.
 - Recovery document writer: active documentation only.
 - Helper freeze audit, supplemental matrix, source identity, runtime boundary and failure-retention audits: completed.
-- Full-workflow reviewer: preparation completed; waiting for qualified candidate.
+- Full-workflow reviewer: reactivated at 04:00 UTC for qualified c66 full-wrapper review.
 - Coordinator handles integration of evidence, not shared-branch integration.
 Six available lanes are not six currently executing agents. Completed auditors must not be counted as live implementation.
 
-Remaining duration cannot be reliably estimated before the focused verdict and full-suite/19-ZIP evidence. Current native jobs have no verified finish time. Do not promise a completion deadline from queued/running status.
+Focused validation is complete. Remaining duration still cannot be reliably estimated before full-suite and independent 19-ZIP evidence; no full-suite completion deadline is established.
 
 ## Existing 28-minute handshake
 
