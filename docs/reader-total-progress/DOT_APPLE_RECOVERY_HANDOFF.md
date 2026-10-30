@@ -1,3 +1,175 @@
+## Final save-point addendum — 16:48 UTC
+GTK exclusive worktree /data/workspace/exreader-dot-f05-remaining-20261030,
+branch codex/f05-remaining-20261030: clean local HEAD
+cbe52cce90680cd043ca38ad0b1771ae6e66bd55; remote last successful source
+73ac5ca9f9a4aec0b5477122d05f7a0da1198543. Local cbe52 adds only typed-command
+pagination candidate tests/workflow/docs; push rejected approximately16:47:17,
+known not executed, no PID, no retry. Its51 tombstone API pagination50/1/0 and
+9 boundary cases have NOT run. This is the fifth current blocked class.
+Run41091287293/A1 succeeds only for73ac: original29 plus newGTK8;
+artifact12994257426 is982682 bytes, SHA256
+d27ed7509f64bdcc96b2241c4759f1cfade1b58e27ac22147b6a357049affec0.
+C07 independent new audit still pending; reviewer's separate CI read was refused.
+No fullF05 claim. Preserve old failures41084852566,41089209666,41089948186.
+Public product8 paths were explicitly authorized; SDK/schema/common staging untouched.
+These updates supersede abbreviated candidate descriptions below.
+
+# COMPLETE RESUMPTION HANDOFF — 2026-10-30 16:45 UTC / 12:45 EDT
+
+This section supersedes historical current-state headings below. The user explicitly
+requested immediate delivery. This is a recovery handoff, NOT completed product acceptance.
+
+## 1. First task: resolve the approval block through a supported approval path
+
+Several explicitly authorized operations are still rejected with obsolete Apple-only
+scope or old pause reasoning. Do not transfer a denied action to another agent, tool,
+device, worktree, encoded command, or omitted file to bypass that denial. Preserve each
+exact target, prior grant and known execution outcome; use the supported approval
+review path. The user declines feedback and elects to manually perform authorized Git operations; feedback is not required. Parent is first guiding read-only Apple git status in PowerShell; no manual commit is yet confirmed. The agent must not execute denied actions on the user behalf or use manual guidance as an automated bypass. Retry only once when materially new exact authorization exists
+and the old action is known not executed. Check uncertain outcomes first.
+The user's iOS screenshot has NO Activity entry: do not claim that entry is available.
+Do not change permissions, custom rules, credentials or security settings as a workaround.
+
+Known blocked classes and save points:
+- Apple: three staged helper/admission/workflow files on
+  codex/dot-apple-complete-20261029 remain uncommitted. HEAD
+  c46f7036d81f88d8529871590f780b5430630e47. Rejection at 15:43:30
+  cited a prior Apple-write pause despite recovery authorization. Subsequent exact
+  approval did not establish a successful commit. Do not clear the staging area.
+- C02 hardening: new exclusive package creation was rejected again at 15:53:10.
+  No new hardening source/branch was created. Existing branch
+  claude/dot-p0-coordinator-20261030 HEAD f7829848d18e0ee27cd9436ff5c1a4c502d05c7b
+  is documentation only beyond source ddfe90a083da5afad168051e30389105dd08cdba.
+- Independent bridge audit: branch codex/p0-win-record-bridge-audit-20261030,
+  worktree /data/workspace/exreader-dot-p0-record-bridge-audit-20261030,
+  HEAD af851ee7a7d3c04fd4905785a51e6fc9a1226327. Two untracked files:
+  .github/workflows/migration-windows-record-bridge-independent-audit-20261030.yml
+  tests/migration/windows_record_bridge_independent_20261030/audit.py
+  Writing docs/MIGRATION-WINDOWS-RECORD-BRIDGE-INDEPENDENT-20261030.md was
+  rejected at 16:21 citing Apple-only scope. No audit commit/push/run; 0/3 rounds.
+  Branch creation itself succeeded only after exact 16:16 authorization.
+- Restart reader: source f9 prefix passed 15 checks, but three review gaps remain;
+  the attempted repair write was rejected. The fixes are NOT delivered. Obtain the
+  owner save-point/refusal record before any mutation; do not infer permission from green CI.
+- Earlier engine/document push denials have been resolved for the already delivered
+  result; retain their refusal history but do not call the successful result blocked.
+  Other blocked operations remain separate, not automatically cleared by this success.
+
+## 2. What actually exists, and what still does not
+
+Formal authoritative catalog remains 95/108 (87.96%): 95 verified, 2 partial,
+11 pending. Catalog blob e0c52bf139da2374cf58dbce40ae6c093a59f39d on
+codex/handoff-evidence-resume-20261029, docs/reader-total-progress/catalog.json.
+Partial: H.iphone.annotation_exchange and H.ipad.annotation_exchange.
+Never add passing primitives together and declare P0 or six-platform product completion.
+
+Latest parent-confirmed candidates (short prefixes are deliberately not fabricated full SHAs):
+- Engine 83b, run 41087206035: 50 checks green; documentation b6b6 pushed.
+- Bridge af851ee7a7d3c04fd4905785a51e6fc9a1226327, run41085869945/A1,
+  job124166761142: 26 aggregate +4 process-kill cuts, original record27,
+  publisher28/refusal8. Documentation99ac pushed. Artifact12991273158,
+  341928B, SHA256 5880b88ee98dfefe2c3a697054e475df06cfd176fb9089a4964b4acf15fa52fb.
+  This is LIVE-PROCESS bridge only, not restart/admission/COMMIT.
+- GTK73ac, run41091287293: green; artifact12994257426, SHA256 d27ed7509f64bdcc96b2241c4759f1cfade1b58e27ac22147b6a357049affec0
+  (independently API-read16:47; original bytes still require audit).
+  Prior ed24/run41086747699 green with independent C07 audit; do not splice runs.
+- Restart f9: green15 but three safety gaps still open, repair write blocked.
+- Apple latest complete same-source run41011360858 failed: Mac/iPhone39 passed,
+  iPad annotation240 timeout and theme bootstatus180 left cases unexecuted;
+  one iPad401 recovery180 failure. Earlier same c46 run41005300066 differs:
+  Mac/iPad39 +12 supplements passed, iPhone theme preflight45 timed out.
+  Neither can be combined into one full pass. Focused c66/run40998486779 both5
+  passed only the focused gate. Full requirement remains39x3+12 plus authenticated
+  same-run outputs and independent original19-ZIP verification.
+
+C01 ccd7fec67eb8aa463b09533ce320820f2da472d9 differs from
+a373204a47666794aea8389b8365b3025aca3442 ONLY by documentation30 lines.
+C05 latest441a5ae2/run41036853551 imports675/resolved672/weak3, not stale336.
+C03 has a real Receive UI; an earlier claim that it was absent was incorrect.
+
+## 3. P0 integration blockers requiring actual implementation
+
+C01 full49 identity and generation/PENDING are real lease state, not a string token.
+Persist PENDING before irreversible publication; durable verified completion precedes
+generation commit and release. C02 currently fails to bind all five gate digests into
+its journal and has six known safety defects: illegal transitions; recovery without
+exclusive reacquisition; release before durable completion; ignored partial journal
+write errors; admission-log failure losing retained lease identity; uncertain publication
+being treated as rollback/release. Its hardening has not been implemented.
+
+C02 binding source41/run21/attempt8/artifact65/platform32/sdk64/provider65 and
+five gate digests need a lossless durable adapter into legacy record source41/run33/
+full49/payloadSHA65. 4096 snapshot rows are NOT 32 bridge phase slots. Bridge slot
+size4096, native record/hash cap1MiB and overall write64MiB are unchanged.
+
+Critical writer-handle mismatch: engine rejects a target with a live writer handle,
+while publisher retains its GR|GW|DELETE source until publication. Merely observing
+before custody transfer does not solve this. Observe qualified read-only input or
+design a separately qualified sealed-source adapter; do not cast opaque custody.
+Restart must reacquire exclusive custody, revalidate identities and lawful transitions,
+retain uncertain evidence and block reopen. Live bridge cannot supply this.
+
+## 4. Actual agents and external sessions
+
+Native roles: engine integration/review, publisher/restart owner, GTK owner,
+C02/Apple blocked owner, approval diagnostic/reviewer, and this evidence/audit lane.
+These are assignments, not six simultaneous implementations; blocked work is blocked.
+
+At16:45 coordinator thread01a18bcc-57f1-7390-9cc5-597be4b28034 reports:
+only C07 new audit session07e5c323 busy/working, no new audit result yet.
+C068d28788d/run41089030820 source-integrity audit completed;
+C07 oldc7224e56/run41088276333 completed;
+C08289e51e9/run41088406560 real Credential refusal module completed, NOT proof
+of application fallback. C09/C10 stopped at three-round limit; no observed quota
+exhaustion. Do not duplicate sessions or auto-resume capped work.
+
+## 5. Access, ownership and no-bypass boundaries
+
+Normal saved-login route ONLY:
+Desktop Commander lap25002 / d55d0477-84bb-4425-8708-5a3ecacce78b ->
+npx --yes instabox@0.8.52 exec m_agqxv2s72g5vwdtsifu5cnmml4 --json --cwd <exclusive-worktree> -- <command>.
+VM agent-browser-mol0. No credentials read/export, login changes or new replacement VM.
+All builds/tests/syntax execution and artifact parsing remain GitHub Actions ONLY.
+No artifacts on the user's computer. Claude's newer permission permits VM download
+only, NOT ZIP extraction/parsing; it does not expand this native audit's permissions.
+Native audit ZIP download/read stays in Actions. No source-validation local runs.
+
+Shared remote343bb94eb6513beaf5b344e7828342f6602a3b7b and main worktree
+HEAD9330be495bffdf3bf421bdc32b963e3fbfc4c9fe with27 staged paths versus HEAD/
+89 cumulative versus343 are protected. Do not clear, commit, take over or push them.
+Original work conversation ended and will not automatically integrate.
+Do not change SDKABI/old assertions, default branch, PRs, tags or releases.
+Per-command Git author only; no global config.
+
+VM auto-suspended14:53:27, restored15:40:07; necessary restoration is now explicitly
+authorized through existing normal route, not permission to replace the VM or change
+autoSuspendAfterSeconds1800. Preserve Desktop Commander background connection.
+Unique28-minute handshake automation6ae40da897ac81918ae3e90d91ee79ea continues;
+old localinstabox-28 deleted. Prompt updated under restoration grant, cycle unchanged.
+Last reported healthy normal handshake16:00:55 UTC. Verify current state before work;
+never claim a package-download failure means VM offline.
+
+## 6. Exact resumption order
+
+1. Resolve the five operation-specific approval/save-point cases via supported review,
+   not agent switching or repeated generic confirmation loops.
+2. Preserve two untracked independent-audit files; finish its separately blocked doc
+   only once allowed, commit only its three exclusive paths and run at most3 Actions.
+   Authenticate fixed original tuple; independent negative controls must exercise
+   semantic rules after recomputing manifests, not merely reject outer ZIP hashes.
+3. Complete restart safety fixes and actual C02 hardening; implement qualified adapter
+   and production lifecycle wiring on separately authorized candidates.
+4. Follow existing C07 audit to terminal, retain failed C09/C10 rounds.
+5. Only coherent same-source product/host evidence and independent original artifacts
+   can close catalog items. Report hourly with a durable checkpoint and honest counts.
+
+The receipt branch is codex/dot-apple-receipt-20261030 in
+/data/workspace/exreader-dot-apple-receipt-20261030. Previous published snapshot
+b8f5eaab7723133da95254b1c5ac999febfb32c1; this new handoff's SHA is supplied only
+after successful commit/push/readback. Historical detailed evidence follows.
+
+---
+
 # Hourly checkpoint — 2026-10-30 16:22 UTC / 12:22 EDT
 
 This is a continuity backup, not completion or a transfer of source ownership.
