@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        input: [features908-ipad]
+        input: [features908-iphone]
     steps:
       - uses: actions/checkout@v4
       - env:
