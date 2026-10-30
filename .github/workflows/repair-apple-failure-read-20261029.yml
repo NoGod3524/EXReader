@@ -1,32 +1,23 @@
-name: Current repair Apple retained first assertions
+name: Current Apple retained sync failure diagnosis
 on:
   push:
     branches: [codex/dot-apple-diagnostic-20261030]
-    paths: ['tools/reader_composition/repair_apple_failure_read_20261029.py', '.github/workflows/repair-apple-failure-read-20261029.yml']
+    paths: ['tools/reader_composition/dot_apple_sync_failure_read_20261030.py', '.github/workflows/repair-apple-failure-read-20261029.yml']
 permissions: {contents: read, actions: read}
 jobs:
   inspect:
     runs-on: macos-15
     timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        input: [featuresc46fresh-ipad]
     steps:
       - uses: actions/checkout@v4
       - env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tools/reader_composition/repair_apple_failure_read_20261029.py --input '${{ matrix.input }}'
+        run: python3 tools/reader_composition/dot_apple_sync_failure_read_20261030.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: repair-apple-failure-read-${{ matrix.input }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: dot-apple-sync-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            build/repair-apple-failure/${{ matrix.input }}/summary.json
-            build/repair-apple-failure/${{ matrix.input }}/tests.json
-            build/repair-apple-failure/${{ matrix.input }}/legacy-issues.json
-            build/repair-apple-failure/${{ matrix.input }}/failure-context.json
-            build/repair-apple-failure/${{ matrix.input }}/receipt.json
-            build/repair-apple-failure/${{ matrix.input }}/history-timeline.json
-            build/repair-apple-failure/${{ matrix.input }}/native-trees.json
+            build/dot-apple-sync-failure/*.json
+            build/dot-apple-sync-failure/native.log
           if-no-files-found: error
