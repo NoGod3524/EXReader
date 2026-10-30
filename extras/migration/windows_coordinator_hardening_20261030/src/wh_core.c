@@ -109,7 +109,8 @@ int wh_journal_check(const wh_binding *b,const wh_gates *g,const char *const *li
  return load_history(b,g,lines,n,&h);}
 wh_session *wh_create(const wh_binding *b,const wh_gates *g,const wh_provider *p,wh_append_verify sink,void *ctx){
  wh_session *s;
- if(!b||!g||!p)return NULL;s=calloc(1,sizeof(*s));
+ if(!b||!g||!p)return NULL;
+ s=calloc(1,sizeof(*s));
  if(!s)return NULL;
  if(!wh_manifest(b,g,s->manifest)){free(s);
  return NULL;}
@@ -117,7 +118,8 @@ wh_session *wh_create(const wh_binding *b,const wh_gates *g,const wh_provider *p
  return s;
 }
 int wh_dispose(wh_session *s){if(!s)return 1;
- if(s->cap||s->poisoned)return 0;free(s);
+ if(s->cap||s->poisoned)return 0;
+ free(s);
  return 1;}
 static wh_status uncertain(wh_session *s,wh_report *r,const char *why){return report(s,r,WH_UNCERTAIN,why);}
 static int checked(wh_session *s){return s->cap&&s->p.check(s->p.context,s->cap)==WH_STEP_OK;}
@@ -164,8 +166,7 @@ wh_status wh_run(wh_session *s,wh_report *r){
  if(!append_event(s,H_ADMIT_OK,actual,s->h.stage,s->h.snap,s->h.content))return uncertain(s,r,"journal-admission-failed-capability-retained");
  rows=calloc(EXR_WH_MAX_RECORDS,sizeof(*rows));
  if(!rows)return uncertain(s,r,"allocation-failed-capability-retained");
-#define STOP(why) do{free(rows);
- return uncertain(s,r,why);}while(0)
+#define STOP(why) do{free(rows);return uncertain(s,r,why);}while(0)
  if(!EVENT(s,H_SNAP_BEGIN)||!checked(s))STOP("snapshot-intent-or-lease-failed");
  step=s->p.snapshot(s->p.context,s->cap,rows,EXR_WH_MAX_RECORDS,&n);
  if(step==WH_STEP_FAILED){free(rows);
