@@ -17,6 +17,7 @@ PINS["features55e9-ipad"]=("55e9c203fc58c5b94d3d951dad17c32d7f15a08f",4099235960
 PINS["features55e9-iphone"]=("55e9c203fc58c5b94d3d951dad17c32d7f15a08f",40992359608,123858647168,12950483426,235576166,"f410536fc8b2732cc75feef43f3d12d583da06f5699b26a0b532f91aad10650d")
 PINS["featuresa91-macos"]=("a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72",41000723036,123885490913,12954019303,431777254,"c209470bef5f68ee8da6121e310dd3c76ff5bb295bbf1d358ec3a8c2621b7b2d")
 PINS["featuresa91-ipad"]=("a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72",41000723036,123885490853,12955922033,474548744,"ee15fc2eaa8b908c8a1b2037e6667be73710745d2f1dcd75c1110b08ccfd2852")
+PINS["featuresc46fresh-ipad"]=("c46f7036d81f88d8529871590f780b5430630e47",41011360858,123918768075,12958994207,396682520,"bfde25294e4948cdcb90a13db3465dd165fd426bd36d6669dbed12ceabcd5184")
 p=argparse.ArgumentParser();p.add_argument("--input",choices=PINS,required=True);args=p.parse_args()
 source,run,jobid,aid,size,digest=PINS[args.input]
 out=Path("build/repair-apple-failure")/args.input;out.mkdir(parents=True,exist_ok=True)
@@ -33,6 +34,10 @@ with zipfile.ZipFile(io.BytesIO(raw)) as z:
   assert stat.S_IFMT(i.external_attr>>16) in (0,stat.S_IFREG,stat.S_IFDIR) and not i.flag_bits&1
  result=json.loads(z.read("result.json"))
  assert (result["source_sha"],str(result["run_id"]),str(result["attempt"]),result["platform"],result["accepted"])==(source,str(run),"1",args.input.rsplit("-",1)[1],False)
+ if "theme-native-ui.log" in names:
+  theme=z.read("theme-native-ui.log");pin=result["files"]["theme-native-ui.log"]
+  assert len(theme)==pin["bytes"] and hashlib.sha256(theme).hexdigest()==pin["sha256"]
+  print("AUTHENTICATED_THEME_LOG "+theme.decode("utf-8","replace"),flush=True)
  log=z.read("wave3-native-ui.log");pin=result["files"]["wave3-native-ui.log"]
  assert len(log)==pin["bytes"] and hashlib.sha256(log).hexdigest()==pin["sha256"]
  (out/"native-ui.log").write_bytes(log)
