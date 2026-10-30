@@ -1,0 +1,276 @@
+{
+  "base": "343bb94eb6513beaf5b344e7828342f6602a3b7b",
+  "files": {
+    ".github/workflows/claude-c1-android-installed-sync.yml": {
+      "source": "7dce4bd6090cb8e1c1fa54b2329583bc55c3e138",
+      "blob": "75c30992c5ee134b7d60a974f95cee8469448d3a"
+    },
+    ".github/workflows/claude-c1-installed-sync-diagnose.yml": {
+      "source": "7dce4bd6090cb8e1c1fa54b2329583bc55c3e138",
+      "blob": "47f4eba25b90656f6d8ec3037bbe0b53ce90ce89"
+    },
+    "docs/reader-total-progress/claude-c1-android-installed-sync.md": {
+      "source": "8590ccc2438eaf723a6324f2b5cdb2cf969e479f",
+      "blob": "26b8b27a0a9f97236244a1f3e13f66aca129067c"
+    },
+    "tests/reader_android_installed_sync_handoff/build.py": {
+      "source": "7dce4bd6090cb8e1c1fa54b2329583bc55c3e138",
+      "blob": "3ac40f6c4f020df095b649e9042ff0c47cdbc699"
+    },
+    "tests/reader_android_installed_sync_handoff/diagnose.py": {
+      "source": "7dce4bd6090cb8e1c1fa54b2329583bc55c3e138",
+      "blob": "95a5d6701a563651f7c557ef4a4c379caba0c505"
+    },
+    "tests/reader_android_installed_sync_handoff/init.gradle": {
+      "source": "7dce4bd6090cb8e1c1fa54b2329583bc55c3e138",
+      "blob": "94f30738c1949866181d513004a9696e1781899d"
+    },
+    "tests/reader_android_installed_sync_handoff/run.py": {
+      "source": "7dce4bd6090cb8e1c1fa54b2329583bc55c3e138",
+      "blob": "e593cb0a1cbb250b020eef46660a6b76fb85f8dd"
+    },
+    "tests/reader_android_installed_sync_handoff/verify.py": {
+      "source": "7dce4bd6090cb8e1c1fa54b2329583bc55c3e138",
+      "blob": "77c298ae6996d313e2526d57fc45d123146b96cb"
+    },
+    ".github/workflows/reader-delivery-android-sdk342-licenses.yml": {
+      "source": "9bced259710edff4bb98c730121ca09295500d73",
+      "blob": "6b67d5dcc1e8de502f2a4800d1d0854ff38a1c48"
+    },
+    ".github/workflows/reader-delivery-manifest-handoff.yml": {
+      "source": "9bced259710edff4bb98c730121ca09295500d73",
+      "blob": "6fca986746a89568e237db6f829adcba7a5ab1a2"
+    },
+    "docs/reader-delivery-handoff/EVIDENCE.md": {
+      "source": "f913898586c930e08f71697bce3175838acfbec3",
+      "blob": "d34f56f70571e7b46f46057788fa2a18252ebd2d"
+    },
+    "docs/reader-delivery-handoff/LICENSE-DEPENDENCY-MATRIX.md": {
+      "source": "f913898586c930e08f71697bce3175838acfbec3",
+      "blob": "13f32cf64129bd9a0bface8b6cc8c8c21cc2d780"
+    },
+    "docs/reader-delivery-handoff/PACKAGING-PATCH.md": {
+      "source": "f913898586c930e08f71697bce3175838acfbec3",
+      "blob": "a1ff11289d59c5d59cf0100f97cfd41d6bee984d"
+    },
+    "docs/reader-delivery-handoff/README.md": {
+      "source": "f913898586c930e08f71697bce3175838acfbec3",
+      "blob": "a109f59b1a6ddd76b72d56195749d66ddf8c0933"
+    },
+    "docs/reader-delivery-handoff/RECEIPT.md": {
+      "source": "f913898586c930e08f71697bce3175838acfbec3",
+      "blob": "8efa2fe03cb218e2b980ac67f1b75e01dbe86c66"
+    },
+    "docs/reader-delivery-handoff/USER-GUIDE.md": {
+      "source": "f913898586c930e08f71697bce3175838acfbec3",
+      "blob": "e6b6836611f74d26258af108da2e5d633a9f91cc"
+    },
+    "tests/android_sdk342_package/run.py": {
+      "source": "9bced259710edff4bb98c730121ca09295500d73",
+      "blob": "f810c5149b6cd68bc5e4123cade299daf367b639"
+    },
+    "tests/reader_delivery_manifest_handoff/android_admission.py": {
+      "source": "9bced259710edff4bb98c730121ca09295500d73",
+      "blob": "2a2ce11a1885cfdce80bab0b3047385717589201"
+    },
+    "tests/reader_delivery_manifest_handoff/android_verify.py": {
+      "source": "9bced259710edff4bb98c730121ca09295500d73",
+      "blob": "9dbeaacb1f9c5f7303147fab8237a5789235db3f"
+    },
+    "tests/reader_delivery_manifest_handoff/check.py": {
+      "source": "9bced259710edff4bb98c730121ca09295500d73",
+      "blob": "5d8796bfcb63fc220d431c7c6c43728f12de34ef"
+    },
+    "tests/reader_delivery_manifest_handoff/safezip.py": {
+      "source": "9bced259710edff4bb98c730121ca09295500d73",
+      "blob": "2f9d80cfe3680a6175d8b8d73353bde7581c1193"
+    },
+    ".github/workflows/migration-public-posix-stage-20261029.yml": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "74dce53c79996f00e6cbfe3f72204b0ffa3ff98b"
+    },
+    ".github/workflows/migration-public-windows-stage-20261029.yml": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "534cd06cc16ff4ea79e30a7d7a50656563c9bd64"
+    },
+    "docs/MIGRATION-PUBLIC-COMPOSITION-STAGE-20261029.md": {
+      "source": "5b6939628e54979125a712ef7a047122037e3885",
+      "blob": "2409175587ea7b8d499e5fb2a4ed9797e9e96701"
+    },
+    "extras/migration/CMakeLists.txt": {
+      "source": "2743f32a4eccd5823657da19cb4f77f2411424af",
+      "blob": "58719d8a24eb0f08d7256740a621c95840f43e2a"
+    },
+    "extras/migration/src/lm.h": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "34ebc39db55dea2639beb850c0138036d4c0b685"
+    },
+    "extras/migration/src/lm_main.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "602b2c786cbe8bf6a326028c497ffd174039f629"
+    },
+    "extras/migration/src/lm_mirror.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "8c3398b670b2cd271390bc79231952dadad47f2f"
+    },
+    "extras/migration/src/lm_mirror.h": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "9dfe5a29d3125c10eeb18d54ae0ecfe87c822ff2"
+    },
+    "extras/migration/src/lm_new_target.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "378e56c7c6eff5029ae6acfd296cdda94110c605"
+    },
+    "extras/migration/src/lm_new_target.h": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "ae4bdcb0d300fbc936d94b5fb0d87ffc3019e299"
+    },
+    "extras/migration/src/lm_recovery.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "a34bcdf3ee4da849e511c17f8886a1ac61cf081b"
+    },
+    "extras/migration/src/lm_recovery.h": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "efb3de3823c3212afb0133a0a9e58b284e4219d6"
+    },
+    "extras/migration/src/lm_recovery_win32_platform.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "f06a744d72f71e485f3eaa12b621bf0e25b8e3ea"
+    },
+    "extras/migration/src/lm_recovery_win32_platform.h": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "ab08d20e7e5b59caf0458a2eaddbb38e609635e4"
+    },
+    "extras/migration/src/lm_recovery_worker.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "7cdd2bcffa35fbbf940bf6aa6da4d7f7b418dd81"
+    },
+    "extras/migration/src/lm_util.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "3c32e35ad79781c246cb20a0ab0727f5733f854a"
+    },
+    "tests/migration/new_target_recovery_20261029/run.py": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "50dce153c86ad5fab443b4cb4b45a94abc2a3cc0"
+    },
+    "tests/migration/public_composition_20261029/admit.py": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "9c22b4a2136d226a850f26d43ee518650f41f31f"
+    },
+    "tests/migration/recovery_handoff_20261029/CMakeLists.txt": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "6f63da30f972f9881d3593b1540668615f808f59"
+    },
+    "tests/migration/recovery_handoff_20261029/handoff.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "009e0c61920d66aa9a3d963616c75e8e36398fc5"
+    },
+    "tests/migration/recovery_handoff_20261029/run.py": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "c6ebfc836fe7b79f7ac6742d45dcf585aceeec28"
+    },
+    "tests/migration/recovery_integration_20261029/CMakeLists.txt": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "62b70f4e63ffebbb4f4dac1c39dc70bf3e04dc23"
+    },
+    "tests/migration/recovery_integration_20261029/fixture_probe.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "e11391b71ddaa1ab2850c5c69aa690d0f88315b0"
+    },
+    "tests/migration/recovery_integration_20261029/run.py": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "e8b6ca210331a9bde0c4ee338140e476c78e8401"
+    },
+    "tests/migration/recovery_preflight_20261029/CMakeLists.txt": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "71b587406c99373863e53f8d2dcc3d3ab52f5acb"
+    },
+    "tests/migration/recovery_preflight_20261029/probe.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "fead4a8f3d4336c6db149892c40b509389bc5a6a"
+    },
+    "tests/migration/recovery_preflight_20261029/run.py": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "6b8d6c0aa8944f8de9c7cb9fadb2e11b1422e798"
+    },
+    "tests/migration/windows_recovery_native_20261029/CMakeLists.txt": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "b75746b93769e7449677b55d06d33f2ce5fac46f"
+    },
+    "tests/migration/windows_recovery_native_20261029/probe.c": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "a039d4221c4503e099bebd9f4cd816bfd40702e0"
+    },
+    "tests/migration/windows_recovery_native_20261029/run.py": {
+      "source": "be3f9f5610125d1ff969add1169028111b398a22",
+      "blob": "098424f23df4485fc29ce9634ddd03f94d8c395a"
+    },
+    ".github/workflows/migration-windows-record-candidate-20261029.yml": {
+      "source": "2743f32a4eccd5823657da19cb4f77f2411424af",
+      "blob": "7f0652f4b858ac1887e0bce18bac8027f98eacee"
+    },
+    "docs/MIGRATION-WINDOWS-RECORD-CANDIDATE-20261029.md": {
+      "source": "2743f32a4eccd5823657da19cb4f77f2411424af",
+      "blob": "5af65cf1629b3b26783105f2dbe99a4c8683f03c"
+    },
+    "extras/migration/src/lm_recovery_win32_record.c": {
+      "source": "2743f32a4eccd5823657da19cb4f77f2411424af",
+      "blob": "c0f07003bccd1d8f392b7cc323bc096bd26cf341"
+    },
+    "extras/migration/src/lm_recovery_win32_record.h": {
+      "source": "2743f32a4eccd5823657da19cb4f77f2411424af",
+      "blob": "d60b16eb38a6bb37b126d4dd5e07978aeabef704"
+    },
+    "tests/migration/windows_record_20261029/CMakeLists.txt": {
+      "source": "2743f32a4eccd5823657da19cb4f77f2411424af",
+      "blob": "9a024465ee84818c0af1286748a4709f792cec20"
+    },
+    "tests/migration/windows_record_20261029/probe.c": {
+      "source": "2743f32a4eccd5823657da19cb4f77f2411424af",
+      "blob": "3c5919a369b279f9d0b1cfe2cb9fa79bfe0a3479"
+    },
+    ".github/workflows/reader-product-performance-handoff.yml": {
+      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
+      "blob": "56634758c92452317c7c1bfa5db555d3a2a0095c"
+    },
+    "docs/reader-total-progress/claude-c2-product-performance.md": {
+      "source": "509edec7e62e050a4c32eac0ba1735f0b19754a8",
+      "blob": "8dd9e5a523cc0bffd9af9fbdb2cacbecd406e164"
+    },
+    "tests/reader_product_performance_handoff/README.md": {
+      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
+      "blob": "1b2d7560e66c5b8c9859011ca7420e3b39816a66"
+    },
+    "tests/reader_product_performance_handoff/gate.py": {
+      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
+      "blob": "241357b941f51bf6265a6d7f2012c369ed960353"
+    },
+    "tests/reader_product_performance_handoff/gtk_probe/CMakeLists.txt": {
+      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
+      "blob": "9b369ac099de49fd138cfe2aacc9267c8da94549"
+    },
+    "tests/reader_product_performance_handoff/sample_gtk_interactions.py": {
+      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
+      "blob": "565d369fe19ddae01af02ecbced853212f8b4938"
+    },
+    "tests/reader_product_performance_handoff/sample_windows_interactions.py": {
+      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
+      "blob": "e8eda41e522156db199a3811ff873aa8ef027f86"
+    },
+    "tests/reader_product_performance_handoff/verify_gtk_artifact.py": {
+      "source": "c3c143c12cb583e33d7b51149d00db5d86806965",
+      "blob": "5108c1bd2510da7965ed0c51e31aca735ff46d14"
+    }
+  },
+  "new_files": [
+    ".github/workflows/closure-c2-performance-20261029.yml",
+    "tools/reader_composition/closure_source_admission_20261029.py",
+    "tools/reader_composition/closure_source_pins_20261029.json",
+    "docs/reader-total-progress/closure-integration-source-20261029.md",
+    ".github/workflows/closure-c1-android-20261029.yml",
+    ".github/workflows/closure-c3-android-20261029.yml",
+    ".github/workflows/closure-recovery-270-20261029.yml",
+    ".github/workflows/closure-windows-67-20261029.yml",
+    ".github/workflows/closure-windows-record-20261029.yml"
+  ]
+}

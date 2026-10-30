@@ -1,0 +1,82 @@
+name: Current closure Android licence archive
+on:
+  push:
+    branches: [codex/public-product-resume-20261029, codex/closure-candidate-20261029]
+    paths: ['.github/workflows/closure-c3-android-20261029.yml', 'tools/reader_composition/closure_source_admission_20261029.py', 'tools/reader_composition/closure_source_pins_20261029.json']
+permissions:
+  contents: read
+concurrency:
+  group: closure-closure-c3-android-20261029.yml-${{ github.sha }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+env:
+  C11_NDK: '27.0.12077973'
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Syntax and C3 identity admission
+        run: |
+          python3 -m py_compile tests/reader_delivery_manifest_handoff/*.py tests/android_sdk342_package/run.py
+          python3 tools/reader_composition/closure_source_admission_20261029.py
+      - name: Prepare Android tools
+        run: |
+          python3 -m pip install 'PyYAML==6.0.3'
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}" "emulator" "system-images;android-34;default;x86_64"
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          mkdir -p build/f06
+      - name: Install the canonical OPDSHash provider prefix
+        run: python3 tests/reader_delivery_manifest_handoff/android_admission.py hash-stage
+      - name: Build exact installed SDK and package (original build())
+        run: python3 tests/android_sdk342_package/run.py build
+      - name: Bind archive licences to the installed SDK and product trees
+        run: python3 tests/reader_delivery_manifest_handoff/android_verify.py verify
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          heap-size: 512M
+          cores: 4
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -camera-back none
+          disable-animations: true
+          script: python3 tests/reader_f06_packages/identity.py android
+      - name: Bind the emulator install to the same archive
+        run: python3 tests/reader_delivery_manifest_handoff/android_verify.py finalize
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c3-android-sdk342-licenses-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c3-android/admission.json
+            build/c3-android/license-verify.json
+            build/f06/android/
+            build/f06/android-payload/build.json
+            build/f06/android-sdk342-build-step-*.sh
+            build/wave3/logs/
+          if-no-files-found: error
