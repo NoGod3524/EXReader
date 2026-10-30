@@ -21,6 +21,7 @@ struct lm_rr {
  lm_wl_lease *lease;wr_context context;int initialized,qualified,lease_pinned;
  HANDLE lease_dir,lease_file;DWORD lease_volume,lease_index_high,lease_index_low;
  char identity[49];uint64_t generation,gen_disk,pending_disk;
+ unsigned char lease_snapshot[RR_LEASE_SIZE];
  HANDLE files[32],target;unsigned opened;
  wr_identity ids[32],target_id;char hashes[32][65],payload[65];
  lm_rr_class classification;WCHAR source[WR_PATH],dest[WR_PATH];int published;
@@ -105,6 +106,7 @@ static int lease_pin(lm_rr *r,const WCHAR *dir,const char id[49],uint64_t want,w
  if(size.QuadPart!=(LONGLONG)RR_LEASE_SIZE)return refuse(e,"restart-lease-size");
  if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE))return native(e,"restart-lease-read");
  if(!header_ok(hdr,id))return refuse(e,"restart-lease-header");
+ memcpy(r->lease_snapshot,hdr,RR_LEASE_SIZE);
  r->gen_disk=read64(hdr+RR_GEN_OFFSET);r->pending_disk=read64(hdr+RR_PENDING_OFFSET);
  if(r->gen_disk!=want)return refuse(e,"restart-lease-generation");
  if(r->pending_disk!=1)return refuse(e,"restart-lease-pending");
@@ -119,17 +121,29 @@ static int lease_window(lm_rr *r,wr_error *e){
  return 1;
 }
 static int lease_verify(lm_rr *r,wr_error *e){
- unsigned char hdr[RR_LEASE_SIZE];BY_HANDLE_FILE_INFORMATION fi;
+ unsigned char hdr[RR_LEASE_SIZE];BY_HANDLE_FILE_INFORMATION fi;LARGE_INTEGER size;
  if(!GetFileInformationByHandle(r->lease_file,&fi))return native(e,"restart-lease-info");
  if(fi.dwVolumeSerialNumber!=r->lease_volume||fi.nFileIndexHigh!=r->lease_index_high||
     fi.nFileIndexLow!=r->lease_index_low)return refuse(e,"restart-lease-identity");
  if(fi.nNumberOfLinks!=1)return refuse(e,"restart-lease-kind");
+ if(!GetFileSizeEx(r->lease_file,&size))return native(e,"restart-lease-size");
+ if(size.QuadPart!=(LONGLONG)RR_LEASE_SIZE)return refuse(e,"restart-lease-size");
  if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE))return native(e,"restart-lease-read");
+ if(memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE))return refuse(e,"restart-lease-disk-drift");
  if(!header_ok(hdr,r->identity))return refuse(e,"restart-lease-header");
- if(read64(hdr+RR_GEN_OFFSET)!=r->gen_disk||read64(hdr+RR_PENDING_OFFSET)!=r->pending_disk)
-  return refuse(e,"restart-lease-disk-drift");
  if(lm_wl_generation(r->lease)!=r->gen_disk)return refuse(e,"restart-lease-cache-drift");
  if(!lm_wl_pending(r->lease)||r->pending_disk!=1)return refuse(e,"restart-lease-state");
+ return 1;
+}
+/* Called with the reader window held, immediately after the provider acquire.
+ * A concurrent truncation would make the provider re-initialise the file, so the
+ * whole 80-byte region must still be byte-identical to the pre-acquire snapshot.
+ * This cannot prevent the provider's own write, but it guarantees that no custody
+ * is ever derived from a lease that changed inside that window. */
+static int lease_settle(lm_rr *r,wr_error *e){
+ unsigned char hdr[RR_LEASE_SIZE];
+ if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE))return native(e,"restart-lease-read");
+ if(memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE))return refuse(e,"restart-lease-window-race");
  return 1;
 }
 static int lease_check(lm_rr *r,wr_error *e){
@@ -202,6 +216,7 @@ int lm_rr_open(const WCHAR *lease_dir,const char lease_identity[49],
   refuse(e,"restart-exclusive-acquire");goto fail;
  }
  if(!lease_window(r,e))goto fail;
+ if(!lease_settle(r,e))goto fail;
  result->generation=lm_wl_generation(r->lease);result->pending=lm_wl_pending(r->lease);
  if(!lease_check(r,e))goto done;
  r->initialized=1;
