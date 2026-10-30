@@ -13,7 +13,21 @@ final class FontReaderUITests: XCTestCase {
         app.terminate()
     }
     private func element(_ id: String) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: id).firstMatch
+#if os(iOS)
+        if id == "features.scroll" { return app.scrollViews.matching(identifier: id).firstMatch }
+        let labels: Set<String> = [
+            "features.status", "features.font.observation", "library.title",
+            "library.busy", "library.font.observation", "reader.location"
+        ]
+        if labels.contains(id) { return app.staticTexts.matching(identifier: id).firstMatch }
+        let buttons: Set<String> = [
+            "features.close", "features.cancel", "library.import.epub", "reader.next", "reader.back"
+        ]
+        if buttons.contains(id) || id.hasPrefix("library.book.") || id.hasPrefix("features.font.") {
+            return app.buttons.matching(identifier: id).firstMatch
+        }
+#endif
+        return app.descendants(matching: .any).matching(identifier: id).firstMatch
     }
     private func text(_ id: String) -> String {
         guard let value = try? element(id).snapshot() else { return "" }

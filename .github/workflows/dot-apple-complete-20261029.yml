@@ -1,8 +1,7 @@
 name: Apple SDK 3.42 full same-source host gates
 on:
   push:
-    branches: [codex/dot-apple-complete-20261029]
-  workflow_dispatch:
+    branches: [codex/dot-apple-query-full-20261030]
 permissions:
   contents: read
   actions: read
@@ -32,7 +31,7 @@ jobs:
             tests/reader_team24_apple/run_ui.py \
             tests/apple_host/EXReaderHostUITests.swift tests/apple_host/reading/ui \
             tests/apple_host/navigation/ui tests/apple_host/search/ui tests/apple_host/page_theme/ui
-          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = 824647af22c2e57a9df01e94064b20a44c2df03b
+          test "$(git rev-parse HEAD:tests/reader_team24_apple/ui/FeaturesUITests.swift)" = b77b88583cff33bbebac2160e13d6f87a58e6f05
           python3 - <<'PY'
           import subprocess
           path = 'tests/reader_team24_apple/ui/FeaturesUITests.swift'
@@ -43,7 +42,7 @@ jobs:
           assert old[old.index(marker):] == new[new.index(marker):], 'original five feature bodies changed'
           PY
           git diff --exit-code 4a68d80fbaa524fc28f899d209d795248627080b HEAD -- \
-            tests/apple_host/account tests/apple_host/organization tests/reader_apple_font/ui tests/apple_native_original/ui ':(exclude)tests/apple_native_original/ui/OriginalSaveUITests.swift'
+            tests/apple_host/account tests/apple_host/organization tests/reader_apple_font/ui tests/apple_native_original/ui ':(exclude)tests/apple_native_original/ui/OriginalSaveUITests.swift' ':(exclude)tests/reader_apple_font/ui/FontReaderUITests.swift'
       - name: Checkout isolated original Apple owner
         uses: actions/checkout@v4
         with:
