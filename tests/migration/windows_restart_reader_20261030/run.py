@@ -159,5 +159,29 @@ keep('mapped-write',parent,root,{'source':os.environ['GITHUB_SHA'],'opened':True
  'checked':False,'pending':1,'generation':0,'published':1,'write_denied':False,'rename_denied':False,
  'after_fail_rename':False,'lease_restored':False,'lease_bytes':80,'reason':data['reason'],
  'sdk_open_attempts':0,'commit_acknowledged':False,'recovery_admission':False})
-assert len(results)==25,len(results)
+# Recovery that cannot be proven safe must fail closed and keep custody. The
+# lease here carries an advanced generation with no PENDING, which is what a real
+# concurrent commit looks like, so the adapter must not write anything back; the
+# refused object keeps the exclusive lease, so shared admission stays blocked for
+# as long as it lives. After that process dies the drift survives: readers still
+# refuse it, but the domain marker is gone, and this case records that instead of
+# claiming durable isolation across a crash.
+parent,root=fixture('window-drift',fixture='after')
+drift2=subprocess.Popen([exe,'read',str(root),'window-drift'],stdout=subprocess.PIPE,text=True)
+line=drift2.stdout.readline().strip()
+data=json.loads(line)
+assert data['opened'] is True and data['class']==0,data
+assert data['reason']=='restart-lease-window-race',data
+assert data['lease_restored'] is False,data
+alive=run(root,verb='shared')
+assert alive['stale'] is False and alive['status']==2,alive
+kill(drift2)
+after=run(root,verb='shared')
+refused=run(root)
+assert refused['opened'] is False and refused['reason']=='restart-lease-pending',refused
+keep('window-drift',parent,root,data,shared='skip',recovery_failed=True,
+     shared_while_alive_status=alive['status'],shared_while_alive_stale=alive['stale'],
+     shared_after_crash_stale=after['stale'],shared_after_crash_status=after['status'],
+     reader_after_crash_refused=True)
+assert len(results)==26,len(results)
 (work/'receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],passed=True,checks=len(results),results=results,classification_only=True,commit_acknowledged=False,recovery_admission=False,full_p0_acceptance=False,physical_power_loss=False,window_injection='test-seam-between-prevalidation-and-acquire',shared_admission_measured=True),indent=2)+'\n')
