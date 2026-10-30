@@ -102,6 +102,45 @@ def is_comment(line: str) -> bool:
     return s.startswith(("//", "/*", "*", "#")) and not s.startswith("#include")
 
 
+MAX_SPAN = 40
+
+
+def call_span(clean: list, i: int, col: int):
+    """Text of the log call that starts at clean[i][col:], joined across lines.
+
+    A parenthesised call ends at its balancing ')'; stream style (cerr << a << b) at ';'.
+    Literals and comment lines are already blanked. Returns (text, last_line_index)."""
+    buf, depth, opened, last = [], 0, False, i
+    for j in range(i, min(len(clean), i + MAX_SPAN)):
+        seg = clean[j][col:] if j == i else clean[j]
+        last = j
+        for k, ch in enumerate(seg):
+            if ch == "(":
+                depth, opened = depth + 1, True
+            elif ch == ")":
+                depth -= 1
+            if (opened and depth <= 0) or (ch == ";" and not opened):
+                buf.append(seg[:k + 1])
+                return "\n".join(buf), j
+        buf.append(seg)
+    return "\n".join(buf), last
+
+
+def multiline_log_leaks(rel: str, lines: list) -> list:
+    """TEXTUAL detection only: credential-named values inside a (possibly multi-line) log call."""
+    clean = ["" if is_comment(l) or re.match(r"\s*(from\s+\S+\s+)?import\b", l) else LITERAL.sub('""', l) for l in lines]
+    found = []
+    for i, code in enumerate(clean):
+        for m in LOG_RE.finditer(code):
+            text, last = call_span(clean, i, m.end())
+            for ident in sorted({x.group(0) for x in SECRET_ID.finditer(text)}):
+                if not SAFE_ID.search(ident):
+                    found.append({"file": rel, "line": i + 1, "end_line": last + 1, "identifier": ident,
+                                  "kind": "multiline" if last > i else "single-line",
+                                  "evidence": "textual-static, not execution proof"})
+    return found
+
+
 def static_audit(repo: Path) -> dict:
     sites, leaks, paths, scanned = [], [], {}, 0
     for rel in tracked(repo):
@@ -132,19 +171,64 @@ def static_audit(repo: Path) -> dict:
             if LOG_RE.search(code):
                 for ident in [x.group(0) for x in SECRET_ID.finditer(code)]:
                     if not SAFE_ID.search(ident):
-                        leaks.append({"file": rel, "line": i + 1, "identifier": ident})
+                        leaks.append({"file": rel, "line": i + 1, "end_line": i + 1, "identifier": ident,
+                                      "kind": "single-line", "evidence": "textual-static, not execution proof"})
+        seen = {(l["file"], l["line"], l["identifier"]) for l in leaks}
+        leaks += [l for l in multiline_log_leaks(rel, lines) if (l["file"], l["line"], l["identifier"]) not in seen]
     unproven = [s for s in sites if s["verdict"] == "unproven"]
     return {"scanned_files": scanned, "temp_sites": sites, "temp_sites_unproven": unproven,
             "credential_log_candidates": leaks,
             "user_path_inventory_informational": {"files": len(paths), "occurrences": sum(paths.values()),
                                                   "top": sorted(paths.items(), key=lambda kv: -kv[1])[:20]},
-            "limitations": ["line-based: multi-line log calls and indirect wrappers are not seen",
+            "detection_class": "textual-static (source text only; never proof of runtime behaviour)",
+            "limitations": ["log calls are matched by name and joined across up to %d lines by bracket/semicolon "
+                            "balance; indirect wrappers, macros, string-built format arguments and values "
+                            "renamed without a credential-like identifier are not seen" % MAX_SPAN,
                             "cleanup evidence is textual proximity (+/-%d lines), not execution" % WINDOW,
                             "no allowlist of users, files or identifiers is applied"],
             "gate_passed": not unproven and not leaks}
 
 
 # ---------------------------------------------------------------- selftest
+# Synthetic multi-line logging fixtures. POSITIVE files must be flagged, NEGATIVE files must not.
+# They are written to a throw-away git repo and judged through the same static_audit() as production.
+MULTILINE_FIXTURES = {
+    "pos_c_fprintf.c": 'void f(const char *password) {\n  fprintf(stderr,\n          "value=%s",\n          password);\n}\n',
+    "pos_c_nested.c": 'void f(const char *password) {\n  printf("%s",\n         copy(\n           password));\n}\n',
+    "pos_cpp_stream.cpp": 'void f() {\n  std::cerr << "a"\n            << api_token\n            << "b";\n}\n',
+    "pos_java_log.java": 'class C { void f(String refreshToken) {\n  Log.d(TAG,\n      "v=" +\n      refreshToken);\n} }\n',
+    "pos_py_logger.py": 'def f(secret_value):\n    logger.info(\n        "x",\n        secret_value,\n    )\n',
+    "pos_swift_print.swift": 'func f(_ credentialBlob: String) {\n  print(\n    "x",\n    credentialBlob\n  )\n}\n',
+    "neg_c_safe_length.c": 'void f(int password_length) {\n  printf("n=%d",\n         password_length);\n}\n',
+    "neg_c_literal_only.c": 'void f(void) {\n  printf("password"\n         " required");\n}\n',
+    "neg_c_comment_in_span.c": 'void f(int n) {\n  printf("n=%d",\n         /* password */\n         n);\n}\n',
+    "neg_c_after_call.c": 'void f(void) {\n  printf("ok");\n  password_set = 1;\n}\n',
+    "neg_c_non_log_call.c": 'void f(const char *password) {\n  store_put(\n      password,\n      3);\n}\n',
+    "neg_py_non_log.py": 'def f(secret_value):\n    vault.put(\n        secret_value,\n    )\n',
+}
+
+
+def multiline_fixture_cases(root: Path) -> list:
+    repo = root / "logrepo"
+    (repo / "src").mkdir(parents=True)
+    for name, text in MULTILINE_FIXTURES.items():
+        (repo / "src" / name).write_text(text)
+    for cmd in (["init", "-q"], ["add", "."], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x"]):
+        subprocess.run(["git", "-C", str(repo)] + cmd, check=True, capture_output=True)
+    found = {}
+    for leak in static_audit(repo)["credential_log_candidates"]:
+        found.setdefault(leak["file"].split("/")[-1], []).append(leak)
+    cases = []
+    for name in MULTILINE_FIXTURES:
+        hits = found.get(name, [])
+        if name.startswith("pos_"):
+            ok = bool(hits) and all(h["kind"] == "multiline" for h in hits)
+        else:
+            ok = not hits
+        cases.append({"case": f"multiline-{name}", "ok": ok, "flagged": [(h["line"], h["end_line"]) for h in hits]})
+    return cases
+
+
 def selftest() -> dict:
     cases, canary = [], secrets.token_bytes(20).hex().encode() + "-päss".encode()
     table = variants(canary)
@@ -195,6 +279,7 @@ def selftest() -> dict:
         cases.append({"case": "static-accepts-with-TemporaryDirectory", "ok": by_file.get("src/scratch_ok.py") == "context-managed-cleanup"})
         flagged = {l["file"] for l in result["credential_log_candidates"]}
         cases.append({"case": "static-flags-secret-printf", "ok": flagged == {"src/bad.c"}})
+        cases += multiline_fixture_cases(root)
     finally:
         shutil.rmtree(root, ignore_errors=True)
     return {"cases": cases, "gate_passed": all(c["ok"] for c in cases)}
@@ -238,10 +323,11 @@ def summary(reports: Path, out: Path) -> int:
         "all_gates_passed": not missing and all(verdict.values()),
         "report_sha256": {n: sha256(reports / f"{n}.json") for n in loaded},
         "established_for_this_source_only": [
-            "Linux Secret Service (gnome-keyring, private D-Bus, temporary HOME/TMPDIR) round-trip with synthetic canaries leaves no canary in any encoding on disk or in probe output",
-            "replaced and deleted secrets do not persist on disk; TMPDIR is empty after each phase",
-            "locked collection and absent service return UNAVAILABLE/IO with no plaintext fallback",
-            "static inventory of temp-file creation sites and credential-named log arguments (no allowlists)"],
+            "[DYNAMIC PROOF] Linux Secret Service (gnome-keyring, private D-Bus, temporary HOME/TMPDIR) round-trip with synthetic canaries leaves no canary in any encoding on disk or in probe output",
+            "[DYNAMIC PROOF] replaced and deleted secrets do not persist on disk; TMPDIR is empty after each phase",
+            "[DYNAMIC PROOF] locked collection and absent service return UNAVAILABLE/IO with no plaintext fallback",
+            "[TEXTUAL ONLY] static inventory of temp-file creation sites and single/multi-line credential-named log arguments (no allowlists); says nothing about runtime behaviour or about code the patterns do not match",
+            "[TEXTUAL ONLY] detector fixtures: synthetic positive and negative multi-line logging sources are classified as expected"],
         "not_established": [
             "Windows, macOS, iOS and Android credential stores and temp cleanup (not exercised by this workflow)",
             "application-level flows (WebDAV/OPDS accounts, sync, export, crash/kill paths) beyond the credential module",
@@ -285,7 +371,7 @@ def main() -> int:
             if s["verdict"] != "unproven":
                 print(f"{s['verdict'].upper()} {s['file']}:{s['line']} {s['api']}")
         for s in report["credential_log_candidates"]:
-            print(f"LOGLEAK? {s['file']}:{s['line']} {s['identifier']}")
+            print(f"LOGLEAK? {s['file']}:{s['line']}-{s['end_line']} {s['identifier']} ({s['kind']}, textual)")
         print("user-path inventory (informational):", json.dumps(report["user_path_inventory_informational"]))
     return 0 if report["gate_passed"] else 1
 
