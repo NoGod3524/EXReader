@@ -44,8 +44,11 @@ static wc_gates gates_all(void) {
 /* ---- journal sink ---- */
 typedef struct { char l[96][EXR_WC_LINE_MAX]; int n, fail_at; } lj;
 static int sink(void *c, const char *line) {
-  lj *j = c; if (j->fail_at >= 0 && j->n == j->fail_at) return 1;
-  if (j->n >= 96) return 1; strcpy(j->l[j->n++], line); return 0;
+  lj *j = c;
+  if (j->fail_at >= 0 && j->n == j->fail_at) return 1;
+  if (j->n >= 96) return 1;
+  strcpy(j->l[j->n++], line);
+  return 0;
 }
 static void lj_init(lj *j) { memset(j, 0, sizeof *j); j->fail_at = -1; }
 static const char *ptrs[96];
@@ -239,7 +242,7 @@ static void fs_checks(const char *tmp) {
   CHECK(p.verify(p.context, staged, rows, n) == WC_STEP_OK);
   put(stage, "foreign.txt", "not ours");
   CHECK(p.discard(p.context, staged) == WC_STEP_UNCERTAIN && exists(stage, "foreign.txt") && exists(stage, "cover.png") == 0);   /* conservative: foreign content retained */
-  { char fp[1300]; snprintf(fp, sizeof fp, "%s/foreign.txt", stage); remove(fp); }
+  { char fp[1400]; snprintf(fp, sizeof fp, "%s/foreign.txt", stage); remove(fp); }
   CHECK(p.discard(p.context, staged) == WC_STEP_OK && !wc_fs_staging_path(fs));
   CHECK(!exists(stage, "library.db"));
   wc_fs_close(fs); fs = NULL;
