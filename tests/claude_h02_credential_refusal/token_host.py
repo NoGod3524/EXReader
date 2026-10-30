@@ -28,14 +28,46 @@ TH32CS_SNAPTHREAD = 0x4
 LOGON_TYPES = {2: 'Interactive', 3: 'Network', 4: 'Batch', 5: 'Service', 7: 'Unlock', 8: 'NetworkCleartext',
                9: 'NewCredentials', 10: 'RemoteInteractive', 11: 'CachedInteractive'}
 
-for fn, restype in ((K.OpenProcess, W.HANDLE), (K.OpenThread, W.HANDLE), (K.CreateToolhelp32Snapshot, W.HANDLE),
-                    (K.GetCurrentProcess, W.HANDLE), (K.GetCurrentThread, W.HANDLE)):
-    fn.restype = restype
+H, PV, DW, BL = W.HANDLE, C.c_void_p, W.DWORD, W.BOOL
+
+
+def _sig(fn, restype, *argtypes):
+    fn.restype, fn.argtypes = restype, list(argtypes)
+
+
+_sig(K.OpenProcess, H, DW, BL, DW)
+_sig(K.OpenThread, H, DW, BL, DW)
+_sig(K.CreateToolhelp32Snapshot, H, DW, DW)
+_sig(K.GetCurrentProcess, H)
+_sig(K.GetCurrentProcessId, DW)
+_sig(K.CloseHandle, BL, H)
+_sig(K.TerminateProcess, BL, H, W.UINT)
+_sig(K.GetExitCodeProcess, BL, H, C.POINTER(DW))
+_sig(K.ProcessIdToSessionId, BL, DW, C.POINTER(DW))
+_sig(A.OpenProcessToken, BL, H, DW, C.POINTER(H))
+_sig(A.OpenThreadToken, BL, H, DW, BL, C.POINTER(H))
+_sig(A.GetTokenInformation, BL, H, DW, PV, DW, C.POINTER(DW))
+_sig(A.SetTokenInformation, BL, H, DW, PV, DW)
+_sig(A.LogonUserW, BL, W.LPCWSTR, W.LPCWSTR, W.LPCWSTR, DW, DW, C.POINTER(H))
+_sig(A.DuplicateTokenEx, BL, H, DW, PV, DW, DW, C.POINTER(H))
+_sig(A.LookupPrivilegeValueW, BL, W.LPCWSTR, W.LPCWSTR, PV)
+_sig(A.AdjustTokenPrivileges, BL, H, BL, PV, DW, PV, PV)
+_sig(A.CreateProcessAsUserW, BL, H, W.LPCWSTR, W.LPWSTR, PV, PV, BL, DW, PV, W.LPCWSTR, PV, PV)
+_sig(A.ConvertStringSecurityDescriptorToSecurityDescriptorW, BL, W.LPCWSTR, DW, C.POINTER(PV), PV)
+_sig(A.SetSecurityInfo, DW, H, DW, DW, PV, PV, PV, PV)
+_sig(U.GetProcessWindowStation, H)
+_sig(U.OpenDesktopW, H, W.LPCWSTR, DW, BL, DW)
+_sig(S.LsaGetLogonSessionData, W.ULONG, PV, C.POINTER(PV))
+_sig(S.LsaFreeReturnBuffer, W.ULONG, PV)
 
 
 class THREADENTRY32(C.Structure):
     _fields_ = [('dwSize', W.DWORD), ('cntUsage', W.DWORD), ('th32ThreadID', W.DWORD), ('th32OwnerProcessID', W.DWORD),
                 ('tpBasePri', W.LONG), ('tpDeltaPri', W.LONG), ('dwFlags', W.DWORD)]
+
+
+_sig(K.Thread32First, BL, H, PV)
+_sig(K.Thread32Next, BL, H, PV)
 
 
 class LUID(C.Structure):
@@ -184,12 +216,9 @@ def open_desktop_to_everyone():
     present, default, dacl = W.BOOL(), W.BOOL(), C.c_void_p()
     A.GetSecurityDescriptorDacl.argtypes = [C.c_void_p, C.POINTER(W.BOOL), C.POINTER(C.c_void_p), C.POINTER(W.BOOL)]
     A.GetSecurityDescriptorDacl(sd, C.byref(present), C.byref(dacl), C.byref(default))
-    U.GetProcessWindowStation.restype = W.HANDLE
-    U.OpenDesktopW.restype = W.HANDLE
     winsta = U.GetProcessWindowStation()
     desktop = U.OpenDesktopW('Default', 0, False, 0x00040000 | 0x00020000 | 0x00080000)  # READ_CONTROL|WRITE_DAC|... 
     results = {}
-    A.SetSecurityInfo.argtypes = [W.HANDLE, W.DWORD, W.DWORD, C.c_void_p, C.c_void_p, C.c_void_p, C.c_void_p]
     results['winsta'] = A.SetSecurityInfo(winsta, 7, 4, None, None, dacl, None)
     results['desktop'] = A.SetSecurityInfo(desktop, 7, 4, None, None, dacl, None) if desktop else 'no desktop handle'
     return results
