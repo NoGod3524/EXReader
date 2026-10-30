@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "lm_win_lease.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <wchar.h>
 #include <string.h>
 #define LEASE_LOCK 4096ull
 #define INIT_LOCK 4097ull
