@@ -171,7 +171,7 @@ drift2=subprocess.Popen([exe,'read',str(root),'window-drift'],stdout=subprocess.
 line=drift2.stdout.readline().strip()
 data=json.loads(line)
 assert data['opened'] is True and data['class']==0,data
-assert data['reason']=='restart-lease-window-race',data
+assert data['open_reason']=='restart-lease-window-race',data
 assert data['lease_restored'] is False,data
 alive=run(root,verb='shared')
 assert alive['stale'] is False and alive['status']==2,alive

@@ -122,9 +122,9 @@ int main(int argc,char **argv){
  if(!strcmp(argv[3],"window-drift")){
   /* The refused object keeps exclusive custody; stay alive so the caller can
      measure whether shared admission is still blocked, then be killed. */
-  printf("{\"source\":\"%s\",\"opened\":%s,\"class\":%d,\"checked\":%s,\"lease_restored\":%s,\"reason\":\"%s\",\"native\":%lu}\n",
+  printf("{\"source\":\"%s\",\"opened\":%s,\"class\":%d,\"checked\":%s,\"lease_restored\":%s,\"open_reason\":\"%s\",\"reason\":\"%s\",\"native\":%lu}\n",
    SOURCE_SHA,opened?"true":"false",(int)result.classification,checked?"true":"false",
-   result.lease_restored?"true":"false",why(&e),(unsigned long)e.native);
+   result.lease_restored?"true":"false",open_reason,why(&e),(unsigned long)e.native);
   fflush(stdout);Sleep(INFINITE);
  }
  if(!strcmp(argv[3],"drift")){
