@@ -1,0 +1,41 @@
+name: Claude Dot C01 Windows admission lease
+on:
+  push:
+    branches: [claude/dot-p0-lease-20261030]
+    paths: [extras/migration/windows_admission_lease_20261030/**, tests/migration/windows_admission_lease_20261030/**, scripts/audit/claude_dot_lease_20261030.py, .github/workflows/claude_dot_lease_20261030.yml]
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  lease:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env: {PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Exclusive owned-path admission
+        run: python scripts/audit/claude_dot_lease_20261030.py --paths x
+      - name: Build and install lease library, then separate consumer
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_admission_lease_20261030 -B build/lease
+          cmake --build build/lease --config Release --parallel 4
+          cmake --install build/lease --config Release --prefix "$GITHUB_WORKSPACE/lease-stage"
+          cmake -S tests/migration/windows_admission_lease_20261030 -B build/lease-check -DLEASE_PREFIX="$GITHUB_WORKSPACE/lease-stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/lease-check --config Release --parallel 4
+      - name: Cross-process native acceptance
+        run: python tests/migration/windows_admission_lease_20261030/run.py --probe build/lease-check/Release/windows-lease-check.exe --lib lease-stage/lib/exreader-migration-windows-lease.lib --work build/lease-evidence
+      - name: Independent receipt audit
+        run: python scripts/audit/claude_dot_lease_20261030.py --receipt build/lease-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: claude-dot-lease-${{ github.sha }}
+          path: |
+            build/lease-evidence/receipt.json
+            lease-stage/
+          if-no-files-found: error
