@@ -37,3 +37,11 @@ iPhone批注仍原240s timeout；原ZIP12948425868/175951774B/85313832307b83dff1
 共同worktree目前79+10=89路径已staged，仍未commit，暂绑定908/helper95ec6a73093d4a9b0a150f2010b66cad86c19fa6。若8eda过须先恢复其7路径并更新pins/helperblob/整合说明，再commit/push候选跑7条完整同sourceproducer。共同remote仍343。
 审计branch80b1d0ab新增Apple packaged-app ZIP与实际native phase binary双向身份检查，仍仅预备syntax，不是实际最终raw验收；orchestrator SOURCE=PENDING、7runs0须填。完整auditworkflow保存在/tmp/exreader-final-audit-full.yml。
 用户问“多给你几个子代理能修的快点吗”，root回答最多2路可做定位/整合复核、不能缩短CI机器等待；尚未新增/重启代理，原6worker仍停止。
+
+## 2026-10-29 22:34ET 当前候选55e9
+8eda/run40989249100已failure：iPad原5为4/5，annotation Passed216s，borrowed/share Failed178s；iPhone原5为3/5，borrowed/share Failed181s、annotation Failed141s，其余三例Passed。
+原ZIP：iPad12949466233/225577077B/71cd429ae05883ac6ad4a64ca2818a06d5b2f2d3d9727b3b85b083e26ee44f7e；iPhone12949431864/199934227B/9a932bbbb5853465c158bce62a59d17dde44c85c9a1111c3e9af6ab8066a2f01。
+Root原ZIP诊断40991581897/source08fbabe9f999b485c3e4a5aed25c47efdbeed84c两job success。首断言/树证明：iPhone本来已经在真实On My iPhone browsingRoot，空File View，无需不存在的侧栏localcell；helper却强制等该cell。share失败均为原最终nativegone+closehittable判定：iPhoneheader未准备好即走swipefallback、ActivityList仍开；iPad实际Close已关闭native，但原body立即outsidefallback在过渡中误关底层featuresheet。
+最新source55e9c203fc58c5b94d3d951dad17c32d7f15a08f/run40992359608已push，SDK/后续原5x2待。新helper认可实际local browsingRoot，未到local才导航；Markdown第二次导出必须等待实际已建folder。初始native-share query要求ActivityList包含真实header.closeButton；通过test-only flag记录实际native展示后，features.close查询最多3秒等待真实ActivityList消失且原closebutton可点，避免过渡中错误outsideclick。不增加tap/model调用，不返回伪Boolean；原case正文/预算/setup/teardown/24drag/90s不改。1600px/s bounded distant input保持。
+两新增复核代理apple_annotation_review/closure_verification_review均已collaboration.list_agents实际completed，报告存closure-repair-readonly-reviews-20261029.md（41a6d761），没有重启；原6worker仍停止。CLI inventory必须分别在c1/c2/c3工作目录执行agents --json --all；本轮重新读取C1 73f87c47、C2 4e0c44a1、C3 c0da3128均state=done且无pid。默认root目录inventory不显示它们，不将缺失当终态。原先cloud3仅stop送达、终态未证实，仍不新建/连接/重启。
+最后InstaBox get+pwd成功2026-10-29T22:13:44-04:00，state=running/ready=true/exit0/pwd=/data/home，已记handshake.log。共同remote仍343，VM主worktree89路径STAGED未commit仍绑定908/helper95ec6a73093d4a9b0a150f2010b66cad86c19fa6，必须保留；等最新实际过再换7paths/pins/helperblob/整合doc并跑7个新同source producer和独立真ZIP审计。最终handoff尚未生成，不得当完成。
