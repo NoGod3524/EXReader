@@ -1,0 +1,42 @@
+name: Claude C06 engine audit 20261030
+on:
+  push:
+    branches: [claude/dot-c06-engine-audit-20261030]
+permissions:
+  actions: read
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Ensure original producer commit is present
+        run: |
+          set -euo pipefail
+          git cat-file -e b3f346570df7ca972c67232bb5ec3cfb2f6510d8^{commit} || git fetch --no-tags origin b3f346570df7ca972c67232bb5ec3cfb2f6510d8
+          git cat-file -e b3f346570df7ca972c67232bb5ec3cfb2f6510d8^{commit}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Syntax
+        run: |
+          set -euo pipefail
+          python -I -c "import ast,sys; [ast.parse(open(p).read(),p) for p in sys.argv[1:]]" scripts/audit/claude_c06_engine_audit_20261030.py tests/migration/claude_engine_audit_20261030/test_controls.py
+          python -I -m py_compile scripts/audit/claude_c06_engine_audit_20261030.py tests/migration/claude_engine_audit_20261030/test_controls.py
+      - name: Rejection controls
+        run: |
+          set -euo pipefail
+          python -I tests/migration/claude_engine_audit_20261030/test_controls.py -v 2>&1 | tee controls.txt
+      - name: Audit original evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -I scripts/audit/claude_c06_engine_audit_20261030.py --out build/c06-audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: claude-c06-engine-audit-${{ github.sha }}
+          path: |
+            controls.txt
+            build/c06-audit/report.json
+          if-no-files-found: warn
