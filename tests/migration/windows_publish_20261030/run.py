@@ -10,7 +10,7 @@ for mode in ('normal','before','after'):
   r=subprocess.run(command,text=True,capture_output=True,timeout=60)
   (parent/'stdout.txt').write_text(r.stdout);(parent/'stderr.txt').write_text(r.stderr)
   assert r.returncode==0,(r.returncode,r.stdout,r.stderr)
-  data=json.loads(r.stdout);assert data['source']==os.environ['GITHUB_SHA'] and data['passed'] and data['checks']==24 and data['failed']==0
+  data=json.loads(r.stdout);assert data['source']==os.environ['GITHUB_SHA'] and data['passed'] and data['checks']==28 and data['failed']==0
   assert len(data['identity'])==48 and data['sdk_open_attempts']==0 and not data['recovery_admission']
   assert (parent/'collision.bin').read_bytes()==b'retain'
   assert (parent/'collision-dir').is_dir() and not (root/'source.bin').exists()
