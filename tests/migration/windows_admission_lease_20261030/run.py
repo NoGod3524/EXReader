@@ -148,6 +148,118 @@ assert (d / f'{A}.lease').exists()
 kill(proc)
 rec('held_lease_file_delete_and_rename_refused')
 
+# 10 malformed / truncated / corrupted metadata fails closed and is never modified
+import struct
+MAXU = 2**64 - 1
+def craft(ident, gen=0, pending=0, mutate=None, size=None):
+    b = bytearray((b'EXRLEASE1\n' + ident.encode() + b'\n').ljust(64, b'\0') + struct.pack('<QQ', gen, pending))
+    if mutate: mutate(b)
+    if size is not None: b = b[:size] if size <= len(b) else b + bytearray(size - len(b))
+    return bytes(b)
+def put(ident, data):
+    f = d / f'{ident}.lease'
+    if f.exists(): f.unlink()
+    f.write_bytes(data); return f
+def refused_both(ident, data, name):
+    f = put(ident, data)
+    for mode in ('shared', 'exclusive'):
+        status(run('try', d, ident, mode, 0), REFUSED, f'{name} {mode}')
+    assert f.read_bytes() == data, f'{name}: refusal modified the lease file'
+    f.unlink()  # a leaked handle/lock would make this fail on Windows
+meta = {}
+n = 0
+def mid():
+    global n; n += 1; return f'{n:02x}' * 24
+for name, data_fn in {
+    'pending_2': lambda i: craft(i, 0, 2),
+    'pending_2e63': lambda i: craft(i, 0, 2**63),
+    'pending_ff': lambda i: craft(i, 5, MAXU),
+    'bad_magic': lambda i: craft(i, mutate=lambda b: b.__setitem__(0, ord('Y'))),
+    'foreign_identity': lambda i: craft('9' * 48),
+    'missing_newline': lambda i: craft(i, mutate=lambda b: b.__setitem__(58, ord(' '))),
+    'identity_case_flip': lambda i: craft(i, mutate=lambda b: b.__setitem__(10, ord(i[0].upper()) if i[0].isalpha() else ord('X'))),
+    'padding_59': lambda i: craft(i, mutate=lambda b: b.__setitem__(59, 1)),
+    'padding_63': lambda i: craft(i, mutate=lambda b: b.__setitem__(63, 0x80)),
+}.items():
+    i = mid(); refused_both(i, data_fn(i), name); meta[name] = 'refused'
+for size in (1, 10, 40, 58, 59, 63, 64, 72, 79, 81, 160, 4096):
+    i = mid(); refused_both(i, craft(i, size=size), f'size_{size}'); meta[f'size_{size}'] = 'refused'
+# zero-length (interrupted before first write) is initialised, not refused
+i = mid(); put(i, b'')
+z = status(run('try', d, i, 'shared', 0), OK, 'zero-length'); assert z['generation'] == 0 and z['pending'] == 0
+assert (d / f'{i}.lease').read_bytes() == craft(i) and len(craft(i)) == 80
+meta['size_0'] = 'initialised'
+# pending=1 : shared STALE, exclusive sees it
+i = mid(); f = put(i, craft(i, 3, 1))
+status(run('try', d, i, 'shared', 0), STALE, 'pending shared')
+x = status(run('try', d, i, 'exclusive', 0), OK, 'pending exclusive'); assert x['pending'] == 1 and x['generation'] == 3
+assert f.read_bytes() == craft(i, 3, 1)
+# interrupted commit (generation written, pending not yet cleared): still fail closed, then monotonic
+i = mid(); put(i, craft(i, 1, 1))
+status(run('try', d, i, 'shared', 0), STALE, 'interrupted commit shared')
+r = status(run('resolve', d, i), OK, 'resolve interrupted commit'); assert r['generation'] == 2
+s = status(run('try', d, i, 'shared', 0), OK, 'after resolve'); assert s['generation'] == 2 and s['pending'] == 0
+meta['interrupted_commit_resolved_monotonic'] = r
+# generation exhaustion: pending stays, file unchanged
+i = mid(); f = put(i, craft(i, MAXU, 1))
+status(run('resolve', d, i), REFUSED, 'exhausted commit')
+assert f.read_bytes() == craft(i, MAXU, 1)
+status(run('try', d, i, 'shared', 0), STALE, 'exhausted still pending')
+i = mid(); put(i, craft(i, MAXU, 0))
+mx = status(run('try', d, i, 'shared', 0), OK, 'max generation readable'); assert mx['generation'] == MAXU
+rec('metadata_malformed_truncated_corrupted_fail_closed', outcomes=meta)
+
+# 11 hard-killed begin/commit loop: invariants after every cut
+import random
+random.seed(20261030)
+L = 'c1' * 24
+loop_results = []
+for k in [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233]:
+    proc = subprocess.Popen([probe, 'loop', str(d), L], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    last = None
+    for _ in range(k):
+        line = proc.stdout.readline(); assert line, proc.stderr.read()
+        last = int(line)
+    code = kill(proc)
+    raw = (d / f'{L}.lease').read_bytes()
+    assert len(raw) == 80 and raw[:64] == craft(L)[:64], 'header damaged by kill'
+    gen, pend = struct.unpack('<QQ', raw[64:])
+    assert pend in (0, 1), pend
+    assert last <= gen <= last + 1 + 100000, (last, gen)  # pipe buffering: child may be ahead of reader
+    st = run('try', d, L, 'shared', 3000)[1]
+    if pend: assert st['status'] == STALE, st
+    else: assert st['status'] == OK and st['generation'] == gen and st['pending'] == 0, st
+    if pend: status(run('resolve', d, L), OK, 'resolve after kill'); post = status(run('try', d, L, 'shared', 0), OK, 'after resolve')
+    else: post = st
+    assert post['generation'] >= gen and post['pending'] == 0
+    loop_results.append(dict(acked=last, file_generation=gen, pending=pend, kill_return_code=code, post_generation=post['generation']))
+assert [r['post_generation'] for r in loop_results] == sorted(r['post_generation'] for r in loop_results)
+rec('interrupted_commit_states_and_kill_loop', cuts=loop_results, pending_cuts=sum(r['pending'] for r in loop_results))
+
+# 12 concurrent processes: exclusive writers, shared readers, first-time initialisation races
+R = 'd2' * 24
+writers = [subprocess.Popen([probe, 'race', str(d), R, '25'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) for _ in range(6)]
+readers = [subprocess.Popen([probe, 'readers', str(d), R, '3000'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) for _ in range(4)]
+wout = []; rout = []
+for pr in writers:
+    out, err = pr.communicate(timeout=120); assert pr.returncode == 0, (out, err); wout.append(json.loads(out.strip().splitlines()[-1]))
+for pr in readers:
+    out, err = pr.communicate(timeout=120); assert pr.returncode == 0, (out, err); rout.append(json.loads(out.strip().splitlines()[-1]))
+committed = sum(w['ok'] for w in wout)
+assert all(w['bad'] == 0 and w['ok'] + w['busy'] == 25 for w in wout), wout
+assert all(r['bad'] == 0 and r['stale'] == 0 for r in rout), rout
+fin = status(run('try', d, R, 'shared', 0), OK, 'final'); assert fin['generation'] == committed and fin['pending'] == 0, (fin, committed)
+raw = (d / f'{R}.lease').read_bytes(); assert raw == craft(R, committed, 0)
+inits = []
+for j in range(3):
+    ident = f'e{j}' * 24
+    ps = [subprocess.Popen([probe, 'try', str(d), ident, 'shared', '5000'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) for _ in range(8)]
+    outs = [json.loads(p_.communicate(timeout=60)[0].strip().splitlines()[-1]) for p_ in ps]
+    assert all(o['status'] == OK and o['generation'] == 0 and o['pending'] == 0 for o in outs), outs
+    assert (d / f'{ident}.lease').read_bytes() == craft(ident)
+    inits.append(len(set(o['pid'] for o in outs)))
+rec('concurrent_processes_pending_intent_invariants', writers=wout, readers=rout, committed=committed, init_race_pids=inits)
+
 receipt = dict(source=os.environ['GITHUB_SHA'], run=os.environ['GITHUB_RUN_ID'], attempt=os.environ['GITHUB_RUN_ATTEMPT'],
                passed=True, case_count=len(cases), cases=cases,
                probe_sha256=hashlib.sha256(pathlib.Path(probe).read_bytes()).hexdigest(),

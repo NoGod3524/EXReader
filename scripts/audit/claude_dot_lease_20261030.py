@@ -12,7 +12,9 @@ CASES = ['shared_cross_process_then_hard_kill_release', 'exclusive_blocks_all_th
          'begin_commit_misuse_refused',
          'same_process_second_handle_conflicts', 'non_full49_identity_rejected_without_side_effect',
          'foreign_header_size_hardlink_junction_refused', 'reparse_lease_directory_refused',
-         'held_lease_file_delete_and_rename_refused']
+         'held_lease_file_delete_and_rename_refused',
+         'metadata_malformed_truncated_corrupted_fail_closed', 'interrupted_commit_states_and_kill_loop',
+         'concurrent_processes_pending_intent_invariants']
 def fail(m): print('AUDIT FAIL:', m); sys.exit(1)
 ap = argparse.ArgumentParser(); ap.add_argument('--paths'); ap.add_argument('--receipt'); a = ap.parse_args()
 if a.paths:

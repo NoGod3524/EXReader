@@ -86,6 +86,46 @@ int main(int argc, char **argv) {
     else report(s, &e, 0);
     return s == LM_WL_OK ? 0 : 1;
   }
+  /* loop <dir> <id>: endless begin/commit; each acknowledged generation is printed after commit returns. */
+  if (!strcmp(argv[1], "loop") && argc == 4) {
+    s = lm_wl_acquire(dir, argv[3], LM_WL_EXCLUSIVE, 0, &l, &e);
+    if (s != LM_WL_OK) { report(s, &e, 0); return 1; }
+    for (;;) {
+      uint64_t n = 0;
+      if (lm_wl_exclusive_begin(l, &e) != LM_WL_OK || lm_wl_exclusive_commit(l, &n, &e) != LM_WL_OK) { report(LM_WL_NATIVE, &e, 0); return 1; }
+      printf("%llu\n", (unsigned long long)n);
+      fflush(stdout);
+    }
+  }
+  /* race <dir> <id> <count>: contend for exclusive custody, begin+commit under it. */
+  if (!strcmp(argv[1], "race") && argc == 5) {
+    unsigned ok = 0, busy = 0, bad = 0, i, count = (unsigned)strtoul(argv[4], NULL, 10);
+    for (i = 0; i < count; i++) {
+      uint64_t n = 0;
+      s = lm_wl_acquire(dir, argv[3], LM_WL_EXCLUSIVE, 2000, &l, &e);
+      if (s == LM_WL_OK) {
+        if (lm_wl_exclusive_begin(l, &e) == LM_WL_OK && lm_wl_exclusive_commit(l, &n, &e) == LM_WL_OK) ok++; else bad++;
+        lm_wl_release(l);
+      } else if (s == LM_WL_BUSY) busy++; else bad++;
+    }
+    printf("{\"ok\":%u,\"busy\":%u,\"bad\":%u,\"pid\":%lu}\n", ok, busy, bad, (unsigned long)GetCurrentProcessId());
+    return bad ? 1 : 0;
+  }
+  /* readers <dir> <id> <ms>: shared admissions must never see pending, generation never regresses. */
+  if (!strcmp(argv[1], "readers") && argc == 5) {
+    unsigned ok = 0, stale = 0, busy = 0, bad = 0; unsigned long long last = 0;
+    ULONGLONG end = GetTickCount64() + strtoul(argv[4], NULL, 10);
+    while (GetTickCount64() < end) {
+      s = lm_wl_acquire(dir, argv[3], LM_WL_SHARED, 200, &l, &e);
+      if (s == LM_WL_OK) {
+        unsigned long long g = lm_wl_generation(l);
+        if (lm_wl_pending(l) || g < last || lm_wl_check(l, &e) != LM_WL_OK) bad++;
+        last = g; ok++; lm_wl_release(l);
+      } else if (s == LM_WL_STALE) stale++; else if (s == LM_WL_BUSY) busy++; else bad++;
+    }
+    printf("{\"ok\":%u,\"stale\":%u,\"busy\":%u,\"bad\":%u,\"last\":%llu}\n", ok, stale, busy, bad, last);
+    return bad ? 1 : 0;
+  }
   /* In-process: a second handle in the same process must still conflict. */
   if (!strcmp(argv[1], "selfconflict") && argc == 4) {
     lm_wl_lease *a = NULL, *b = NULL; int ok = 1;

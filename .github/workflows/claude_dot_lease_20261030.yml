@@ -19,6 +19,8 @@ jobs:
         with: {python-version: '3.12'}
       - name: Exclusive owned-path admission
         run: python scripts/audit/claude_dot_lease_20261030.py --paths x
+      - name: Python syntax (Actions-only)
+        run: python -m py_compile scripts/audit/claude_dot_lease_20261030.py tests/migration/windows_admission_lease_20261030/run.py
       - name: Build and install lease library, then separate consumer
         run: |
           set -euo pipefail
