@@ -10,7 +10,7 @@ static void cut(const char *mode,const char *at){
  if(!strcmp(mode,at)){printf("ready-%s\n",at);fflush(stdout);Sleep(INFINITE);}
 }
 int main(int argc,char **argv){
- wr_context c,other;wr_error e={0};wr_identity id,root_id,parent_id;lm_wr_record record={0},bad,next;
+ static wr_context c,other;wr_error e={0};wr_identity id,root_id,parent_id;lm_wr_record record={0},bad,next;
  lm_rb *bridge=NULL,*refused=NULL;lm_wp_custody *custody=NULL,*other_custody=NULL;
  lm_rb_result first,result;lm_wp_result publication;HANDLE target=INVALID_HANDLE_VALUE,h;
  WCHAR root[WR_PATH],other_path[WR_PATH],slot_path[WR_PATH],move_path[WR_PATH],parent_path[WR_PATH];
