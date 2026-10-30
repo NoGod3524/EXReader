@@ -23,3 +23,23 @@ death cuts before and after publication, then repeats original record27 and refu
 Original tests and admission guards are not relaxed. New workflow has its own narrow
 additive path admission. Evidence must be tied to the exact source and original ZIP;
 until a completed run and independent audit exist, this document claims no acceptance.
+
+## Retained first Actions result
+
+Source 62a71a2e238cb434feacd3e55a7074f6f84ade44, run 41019097661, job
+123942062630 failed. Frozen/admitted paths, installed SDK/provider and both
+publication archive and independent consumer built successfully with /W4 /WX.
+Original record27 passed. Native publication consumer completed 24 controls with
+19 passed and 5 failed: the first positive cross-directory rename returned
+STATUS_SHARING_VIOLATION (0xC0000043), Win32 32. Later failures are publication
+consequences. Process-death cuts and original refusal8 were not reached.
+
+The retained original artifact is 12960368109, 174564 bytes, producer ZIP SHA256
+d0c86b91eec9dd2477711031ea2cebe87907c2a58a57f13cd47429f73ea53850.
+This hash is from Actions upload output, not an independent ZIP rehash.
+
+Existing parent custody pins permit FILE_SHARE_READ only. A cross-directory
+native rename's destination-directory write access is the suspected conflict;
+no handle sharing was widened, no pin was dropped, and no copy fallback was
+introduced. A separately reviewed directory-custody policy is required before
+attempting admission. This source is not an accepted publication primitive.
