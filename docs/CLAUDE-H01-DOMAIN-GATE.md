@@ -42,7 +42,14 @@ H05 should consume that artifact or call the CLI above.
 
 ## Status
 
-Written locally, not yet run. No verification result is claimed until an Actions run
-exists; run id, attempt, job, artifact id/bytes/SHA256 are added after it completes.
-Unproven even when green: the real 80-byte lease header, any `lm_rr_open` integration,
-the true Actions-tuple authenticity (the gate checks shape, not provenance).
+Initial round (1 of 1 + 2 spare): source `559f55aa76bb9f1435a5541460abfc233e090f56`, branch
+`codex/claude-h01-domain-gate-20261030`, run `41144247183` attempt 1, job `gate` (124365472062),
+success. `H01-SUMMARY cases=31 failed=0 gate_sha256=c9b1bce88022d7db35359d0f8dbee4d01643bb2d250a090724279f3b6a395ab2`.
+Artifact `claude-h01-domain-gate-evidence` id 13019559365, 1332 bytes,
+sha256 `b5add2a8c44439f1c301a57edef7d2574af83bd1f1223fbd35401ba696639f66` (GitHub digest of the zip).
+No failures to retain. Candidate evidence only; no score change (baseline stays 95/108).
+
+Unproven: the real 80-byte lease header, any `lm_rr_open` integration, provenance of the
+Actions tuple (shape only), Windows behaviour (ran on ubuntu-latest; pure Python).
+
+Re-verify: `gh run view 41144247183 --log | grep H01-SUMMARY`, or re-dispatch the workflow.
