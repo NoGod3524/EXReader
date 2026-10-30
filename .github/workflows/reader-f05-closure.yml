@@ -72,6 +72,12 @@ jobs:
           if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
           echo "RES_PREFIXES=$ws/build/res-dav-stage;$ws/build/res-revision-stage;$ws/build/res-product-stage;$ws/build/res-sync-stage" >> "$GITHUB_ENV"
           echo "RES_SESSION_STAGE=$ws/build/res-session-stage" >> "$GITHUB_ENV"
+          cmake -S extras/opds -B build/res-hash -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$ws/build/res-hash-stage"
+          cmake --build build/res-hash --verbose
+          cmake --install build/res-hash
+          hash=$(python3 -c "from pathlib import Path; print(Path('build/res-hash-stage').resolve().as_posix())")
+          export EXREADER_ORIGINAL_HASH_PREFIX="$hash"
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$hash" >> "$GITHUB_ENV"
           cmake -S apps/reader/store/native -B build/res-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/res-product-stage" 2>&1 | tee build/resilience-logs/product-configure.log
           cmake --build build/res-product --verbose 2>&1 | tee build/resilience-logs/product-build.log
           cmake --install build/res-product 2>&1 | tee build/resilience-logs/product-install.log
