@@ -16,6 +16,10 @@ on:
         description: Producer artifact id supplied by the coordinator
         required: false
         default: ''
+      profile:
+        description: Evidence profile, receive4 (ed24fec2 era) or restore8 (73ac5ca9 era)
+        required: false
+        default: receive4
       expected_sha:
         description: Exact producer source SHA
         required: false
@@ -54,9 +58,10 @@ jobs:
           RUN_ID: ${{ inputs.producer_run_id }}
           ATTEMPT: ${{ inputs.producer_attempt || '1' }}
           ARTIFACT_ID: ${{ inputs.producer_artifact_id }}
+          PROFILE: ${{ inputs.profile || 'receive4' }}
           EXPECTED_SHA: ${{ inputs.expected_sha || '99c329b3839d00b986673c87fcaebf13b04bfee7' }}
         run: |
-          python3 -I scripts/audit/claude_c07_conflict_audit_20261030.py --output build/c07-audit --expect-sha "$EXPECTED_SHA" --run-id "$RUN_ID" --attempt "$ATTEMPT" --artifact-id "$ARTIFACT_ID"
+          python3 -I scripts/audit/claude_c07_conflict_audit_20261030.py --output build/c07-audit --expect-sha "$EXPECTED_SHA" --run-id "$RUN_ID" --attempt "$ATTEMPT" --artifact-id "$ARTIFACT_ID" --profile "$PROFILE"
       - name: Preserve the audit record
         if: always()
         uses: actions/upload-artifact@v4

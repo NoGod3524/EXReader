@@ -25,6 +25,16 @@ CHECKS = [
     'native_delete_versus_update_converges_without_automatic_winner',
     'synthetic_credentials_absent_from_preserved_evidence',
 ]
+# restore8 = source 73ac5ca9 profile: the four checks above plus real book delete, restart restore and the 4096-character boundary
+CHECKS8 = CHECKS[:3] + [
+    'over_4096_characters_is_rejected_without_new_revision',
+    'native_book_delete_retains_tombstone_and_revision_history',
+    'native_removed_books_restore_after_restart_preserves_delete_parent',
+    'restore_preserves_4096_multibyte_fields_and_distinct_sort_exactly',
+    CHECKS[3],
+]
+PROFILES = {'receive4': CHECKS, 'restore8': CHECKS8}
+METADATA_RESULT = 'f05-metadata-regression-evidence/result.json'
 SHA40 = re.compile(r'^[0-9a-f]{40}$')
 SHA64 = re.compile(r'^[0-9a-f]{64}$')
 PEM = re.compile(rb'-----BEGIN [A-Z ]*PRIVATE KEY-----')
@@ -62,13 +72,17 @@ def pick(files, suffix):
     return files[hits[0]]
 
 
-def build_evidence(files):
-    return {'result': json.loads(pick(files, 'f05-host-live-evidence/result.json')),
-            'requests': json.loads(pick(files, 'f05-host-live-evidence/requests.json')),
-            'wire': json.loads(pick(files, 'f05-host-live-evidence/wire.json')),
-            'build_bytes': pick(files, 'f05-package/build.json'),
-            'consumer_bytes': pick(files, 'f05-revision-consumer/revision-consumer'),
-            'files': files}
+def build_evidence(files, profile='receive4'):
+    """Raises ValueError when any required file is absent: missing evidence is refused, never assumed."""
+    ev = {'result': json.loads(pick(files, 'f05-host-live-evidence/result.json')),
+          'requests': json.loads(pick(files, 'f05-host-live-evidence/requests.json')),
+          'wire': json.loads(pick(files, 'f05-host-live-evidence/wire.json')),
+          'build_bytes': pick(files, 'f05-package/build.json'),
+          'consumer_bytes': pick(files, 'f05-revision-consumer/revision-consumer'),
+          'files': files}
+    if profile == 'restore8':
+        ev['metadata'] = json.loads(pick(files, METADATA_RESULT))
+    return ev
 
 
 def extract(zip_bytes):
@@ -92,7 +106,7 @@ def extract(zip_bytes):
     return out
 
 
-def authenticate(meta, zip_bytes, expect):
+def authenticate(meta, zip_bytes, expect, profile='receive4'):
     """meta = {'run': .., 'jobs': .., 'artifact': ..} straight from the GitHub API."""
     L = Ledger()
     run, art = meta['run'], meta['artifact']
@@ -115,6 +129,10 @@ def authenticate(meta, zip_bytes, expect):
             for j in jobs if j['name'].startswith('actual GTK host')) and
         any(s['name'].startswith('Native Receive projects group') and s['conclusion'] == 'success'
             for j in jobs for s in j['steps']), [j['name'] for j in jobs]))
+    if profile == 'restore8':
+        L.guard('api.metadata_regression_step_success', lambda: any(
+            s['name'].startswith('Preserve unchanged installed metadata regression') and s['conclusion'] == 'success'
+            for j in jobs for s in j['steps']))
     try:
         extract(zip_bytes)
         L.add('zip.safe_members', True)
@@ -123,9 +141,10 @@ def authenticate(meta, zip_bytes, expect):
     return L
 
 
-def audit(ev, expect):
+def audit(ev, expect, profile='receive4'):
     L = Ledger()
     r = ev['result']
+    names = PROFILES[profile]
     obs = lambda i: r['observations'][CHECKS[i]]
     ids = lambda: (obs(1)['delete_revision'], obs(1)['update_revision'], obs(1)['common'])
     g = L.guard
@@ -137,10 +156,10 @@ def audit(ev, expect):
     g('identity.linux_runner', lambda: r['runner_os'] == 'Linux')
     g('scope.no_overclaim', lambda: all(r[k] is False for k in ('database_planting', 'six_platform_claim',
                                                                   'complete_product', 'complete_f05')) and
-      r['book_delete_restore']['accepted'] is False)
+      r['book_delete_restore']['accepted'] is (profile == 'restore8'))
     g('scope.host_is_actual_gtk', lambda: 'GTK' in r['host'] and 'exreader-linux' in r['host'] and 'two' in r['host'])
-    g('checks.exact_four_with_observations', lambda: r['checks'] == CHECKS and r['count'] == 4 and
-      all(c in r['observations'] for c in CHECKS[:3]))
+    g('checks.exact_four_with_observations', lambda: r['checks'] == names and r['count'] == len(names) and
+      all(c in r['observations'] for c in names[:-1]))
     g('hash.build_json_rehash', lambda: r['build_json_sha256'] == sha(ev['build_bytes']))
     g('hash.revision_consumer_rehash', lambda: r['revision_consumer_sha256'] == sha(ev['consumer_bytes']))
     g('hash.program_sha_well_formed', lambda: SHA64.match(r['program_sha256']) is not None)
@@ -192,10 +211,35 @@ def audit(ev, expect):
         bad = [n for n, data in ev['files'].items() if n.endswith('.key') or PEM.search(data) or BASIC.search(data)]
         return not bad and r['credential_leak_hits'] == 0, bad
     g('secrets.no_key_material_or_basic_auth_in_artifact', secrets)
+
+    if profile == 'restore8':
+        o = lambda i: r['observations'][CHECKS8[i]]
+
+        def delete_restore():
+            bd, rest = r['book_delete_restore'], o(5)
+            dele, back = o(4)['revision'], rest['restore_revision']
+            return (bd['restart'] is True and bd['delete_revision'] == dele == rest['deleted_revision'] and
+                    bd['restore_revision'] == back and dele != back and
+                    all(isinstance(v, str) and v for v in (dele, back)) and
+                    'native book delete and restart restore' in r['scope'] and 'Linux' in r['scope']), '%s -> %s' % (dele, back)
+        g('restore.real_delete_then_restart_restore_with_distinct_parent_link', delete_restore)
+        g('multibyte.5000_characters_refused_without_new_revision', lambda: o(3)['rejected_characters'] > 4096)
+        g('multibyte.4096_boundary_bytes_and_no_sql_setup', lambda: (
+            o(6)['title_bytes'] == 4096 * 3 and o(6)['author_bytes'] == 4096 * 3 and 'no SQL mutation' in o(6)['setup']))
+        m = ev['metadata'] if 'metadata' in ev else None
+        g('metadata.regression_same_source_run_attempt', lambda: (
+            m['accepted'] is True and m['source_sha'] == expect['sha'] and str(m['run_id']) == str(expect['run_id']) and
+            str(m['attempt']) == str(expect['attempt']) and str(m['platform']).startswith('linux')))
+        g('metadata.regression_29_unique_checks_unchanged', lambda: (
+            m['count'] == 29 and len(m['checks']) == 29 and len(set(m['checks'])) == 29))
+        g('metadata.regression_not_a_ui_claim', lambda: m['native_adapter_only'] is True and m['desktop_ui_accepted'] is False)
+        L.add('limit.restart_and_sort_exactness_are_producer_assertions', True,
+              'artifact holds no process or SQL record; deletion, restart, restore and sort equality rest on the producer assertions '
+              'plus consistent observations', gating=False)
     return L
 
 
-def make_good(expect):
+def make_good(expect, profile='receive4'):
     d, u, c = 'rev-delete-' + 'd' * 8, 'rev-update-' + 'e' * 8, ['rev-common-' + 'c' * 8]
     pd, pu = '/dav/revisions/%s.json' % d, '/dav/revisions/%s.json' % u
     build = b'{"binary":"exreader-linux","program_sha256":"' + b'7' * 64 + b'","gtk":true}'
@@ -222,23 +266,54 @@ def make_good(expect):
              'f05-host-live-evidence/wire.json': json.dumps({pd: 'a' * 64, pu: 'b' * 64}).encode(),
              'f05-package/build.json': build, 'f05-revision-consumer/revision-consumer': consumer,
              'f05-logs/host-build.log': b'cc -o gtk-host/exreader-linux main.o -lgtk-3'}
+    if profile == 'restore8':
+        delete_rev, restore_rev = 'rev-bookdel-' + '1' * 8, 'rev-restore-' + '2' * 8
+        result.update(checks=list(CHECKS8), count=8,
+                      scope='native Receive and group delete versus update; native book delete and restart restore; Linux only',
+                      book_delete_restore={'accepted': True, 'delete_revision': delete_rev,
+                                           'restore_revision': restore_rev, 'restart': True})
+        result['observations'].update({
+            CHECKS8[3]: {'rejected_characters': 5000},
+            CHECKS8[4]: {'revision': delete_rev},
+            CHECKS8[5]: {'restore_revision': restore_rev, 'deleted_revision': delete_rev},
+            CHECKS8[6]: {'title_bytes': 12288, 'author_bytes': 12288,
+                         'setup': 'installed public typed command; no SQL mutation'}})
+        files['f05-host-live-evidence/result.json'] = json.dumps(result).encode()
+        files[METADATA_RESULT] = json.dumps({
+            'accepted': True, 'source_sha': expect['sha'], 'run_id': str(expect['run_id']), 'attempt': int(expect['attempt']),
+            'platform': 'linux', 'count': 29, 'checks': ['m%d' % i for i in range(29)],
+            'native_adapter_only': True, 'desktop_ui_accepted': False}).encode()
     return files
 
 
-def reencode(files, edit):
-    ev = build_evidence(files)
+def reencode(files, edit, profile='receive4'):
+    ev = build_evidence(files, profile)
     edit(ev)
     files = dict(files)
     for key, name in (('result', 'f05-host-live-evidence/result.json'), ('requests', 'f05-host-live-evidence/requests.json'),
-                      ('wire', 'f05-host-live-evidence/wire.json')):
-        files[name] = json.dumps(ev[key]).encode()
+                      ('wire', 'f05-host-live-evidence/wire.json'), ('metadata', METADATA_RESULT)):
+        if key in ev:
+            files[name] = json.dumps(ev[key]).encode()
     return files
 
 
 def selftest(expect):
+    """Controls for both profiles; the receive4 controls preserve every earlier finding unchanged."""
+    return [dict(row, control='%s:%s' % (p, row['control'])) for p in PROFILES for row in controls(expect, p)]
+
+
+def refuses(files, profile):
+    try:
+        build_evidence(files, profile)
+    except (ValueError, KeyError):
+        return True
+    return False
+
+
+def controls(expect, profile):
     """Identity control must pass; every negative control must fail the specific named check."""
-    rows, good = [], make_good(expect)
-    L = audit(build_evidence(good), expect)
+    rows, good = [], make_good(expect, profile)
+    L = audit(build_evidence(good, profile), expect, profile)
     rows.append({'control': 'identity', 'expect': 'all gating checks pass', 'ok': not L.failed(), 'failed': L.failed()})
 
     def res(ev):
@@ -283,8 +358,8 @@ def selftest(expect):
     ]
     for label, want, edit in cases:
         try:
-            ev = build_evidence(reencode(good, edit))
-            L = audit(ev, expect)
+            ev = build_evidence(reencode(good, edit, profile), profile)
+            L = audit(ev, expect, profile)
             failed = L.failed()
         except Exception as error:  # a crash in the control harness is a failed control
             failed = ['harness crash %s' % error]
@@ -299,8 +374,60 @@ def selftest(expect):
              lambda f: f.update({'f05-logs/host-build.log': b'python3 fixture.py'}))):
         files = dict(good)
         mutate(files)
-        failed = audit(build_evidence(files), expect).failed()
+        failed = audit(build_evidence(files, profile), expect, profile).failed()
         rows.append({'control': label, 'expect': want, 'ok': want in failed, 'failed': failed})
+
+    if profile == 'restore8':
+        bd = lambda e: e['result']['book_delete_restore']
+        o8 = lambda e, i: e['result']['observations'][CHECKS8[i]]
+        extra = [
+            ('book_delete_restore_not_accepted', 'scope.no_overclaim', lambda e: bd(e).update(accepted=False)),
+            ('no_restart_recorded', 'restore.real_delete_then_restart_restore_with_distinct_parent_link',
+             lambda e: bd(e).update(restart=False)),
+            ('restore_revision_equals_delete', 'restore.real_delete_then_restart_restore_with_distinct_parent_link',
+             lambda e: o8(e, 5).update(restore_revision=o8(e, 4)['revision'])),
+            ('result_delete_revision_differs', 'restore.real_delete_then_restart_restore_with_distinct_parent_link',
+             lambda e: bd(e).update(delete_revision='other')),
+            ('restore_observation_missing_parent', 'restore.real_delete_then_restart_restore_with_distinct_parent_link',
+             lambda e: o8(e, 5).pop('deleted_revision')),
+            ('restore_check_missing', 'checks.exact_four_with_observations', lambda e: e['result']['checks'].pop(5)),
+            ('oversize_not_actually_oversize', 'multibyte.5000_characters_refused_without_new_revision',
+             lambda e: o8(e, 3).update(rejected_characters=4096)),
+            ('boundary_title_truncated', 'multibyte.4096_boundary_bytes_and_no_sql_setup',
+             lambda e: o8(e, 6).update(title_bytes=4096)),
+            ('boundary_set_by_sql', 'multibyte.4096_boundary_bytes_and_no_sql_setup',
+             lambda e: o8(e, 6).update(setup='direct SQL update')),
+            ('metadata_regression_failed', 'metadata.regression_same_source_run_attempt',
+             lambda e: e['metadata'].update(accepted=False)),
+            ('metadata_regression_other_source', 'metadata.regression_same_source_run_attempt',
+             lambda e: e['metadata'].update(source_sha='0' * 40)),
+            ('metadata_regression_28_checks', 'metadata.regression_29_unique_checks_unchanged',
+             lambda e: (e['metadata'].update(count=28), e['metadata']['checks'].pop())),
+            ('metadata_regression_duplicate_check', 'metadata.regression_29_unique_checks_unchanged',
+             lambda e: e['metadata']['checks'].__setitem__(1, e['metadata']['checks'][0])),
+            ('metadata_claims_desktop_ui', 'metadata.regression_not_a_ui_claim',
+             lambda e: e['metadata'].update(desktop_ui_accepted=True)),
+        ]
+        for label, want, edit in extra:
+            try:
+                failed = audit(build_evidence(reencode(good, edit, profile), profile), expect, profile).failed()
+            except Exception as error:
+                failed = ['harness crash %s' % error]
+            rows.append({'control': label, 'expect': want, 'ok': want in failed, 'failed': failed})
+        missing = {k: v for k, v in good.items() if not k.endswith(METADATA_RESULT)}
+        rows.append({'control': 'missing_metadata_evidence_refused', 'expect': 'ValueError',
+                     'ok': refuses(missing, 'restore8'), 'failed': []})
+        no_result = {k: v for k, v in good.items() if not k.endswith('f05-host-live-evidence/result.json')}
+        rows.append({'control': 'missing_host_result_refused', 'expect': 'ValueError',
+                     'ok': refuses(no_result, 'restore8'), 'failed': []})
+        # the older four-check artifact must not be accepted under the restore profile, and vice versa
+        old = make_good(expect, 'receive4')
+        rows.append({'control': 'old_four_check_artifact_refused_as_restore8', 'expect': 'ValueError',
+                     'ok': refuses(old, 'restore8'), 'failed': []})
+        rows.append({'control': 'restore8_artifact_rejected_as_receive4',
+                     'expect': 'checks.exact_four_with_observations',
+                     'ok': 'checks.exact_four_with_observations' in audit(build_evidence(good, 'receive4'), expect, 'receive4').failed(),
+                     'failed': []})
 
     # artifact authentication controls
     z = io.BytesIO()
@@ -314,8 +441,10 @@ def selftest(expect):
             'artifact': {'id': expect['artifact_id'], 'name': name, 'expired': False, 'size_in_bytes': len(zb),
                          'digest': 'sha256:' + sha(zb), 'workflow_run': {'id': expect['run_id'], 'head_sha': expect['sha']}},
             'jobs': {'jobs': [{'name': 'actual GTK host two-peer', 'conclusion': 'success',
-                               'steps': [{'name': 'Native Receive projects group', 'conclusion': 'success'}]}]}}
-    L = authenticate(meta, zb, expect)
+                               'steps': [{'name': 'Native Receive projects group', 'conclusion': 'success'},
+                                         {'name': 'Preserve unchanged installed metadata regression assertions',
+                                          'conclusion': 'success'}]}]}}
+    L = authenticate(meta, zb, expect, profile)
     rows.append({'control': 'api_identity', 'expect': 'all pass', 'ok': not L.failed(), 'failed': L.failed()})
 
     def with_(path, value):
@@ -335,13 +464,18 @@ def selftest(expect):
             ('digest_differs', 'api.artifact_digest', meta, zb + b'x'),
             ('host_job_failed', 'api.host_job_all_steps_success',
              with_(('jobs', 'jobs'), [{'name': 'actual GTK host two-peer', 'conclusion': 'failure', 'steps': []}]), zb)):
-        failed = authenticate(m, data, expect).failed()
+        failed = authenticate(m, data, expect, profile).failed()
         rows.append({'control': label, 'expect': want, 'ok': want in failed, 'failed': failed})
+    if profile == 'restore8':
+        failed = authenticate(with_(('jobs', 'jobs'), [{'name': 'actual GTK host two-peer', 'conclusion': 'success', 'steps': [
+            {'name': 'Native Receive projects group', 'conclusion': 'success'}]}]), zb, expect, profile).failed()
+        rows.append({'control': 'metadata_step_absent', 'expect': 'api.metadata_regression_step_success',
+                     'ok': 'api.metadata_regression_step_success' in failed, 'failed': failed})
     for label, member in (('zip_traversal', '../escape.txt'), ('zip_absolute', '/abs.txt'), ('zip_backslash', 'a\\b.txt')):
         z2 = io.BytesIO()
         with zipfile.ZipFile(z2, 'w') as w:
             w.writestr(member, b'x')
-        failed = authenticate(meta, z2.getvalue(), expect).failed()
+        failed = authenticate(meta, z2.getvalue(), expect, profile).failed()
         rows.append({'control': label, 'expect': 'zip.safe_members', 'ok': 'zip.safe_members' in failed, 'failed': failed})
     return rows
 
@@ -358,13 +492,14 @@ def main():
     ap.add_argument('--run-id', default='')
     ap.add_argument('--attempt', default='1')
     ap.add_argument('--artifact-id', default='')
+    ap.add_argument('--profile', choices=sorted(PROFILES), default='receive4')
     args = ap.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only'
     args.output.mkdir(parents=True, exist_ok=True)
     expect = {'sha': args.expect_sha, 'run_id': args.run_id, 'attempt': args.attempt, 'artifact_id': args.artifact_id}
     synth = dict(expect, run_id=args.run_id or '1', attempt=args.attempt or '1', artifact_id=args.artifact_id or '1')
     controls = selftest(synth)
-    report = {'verifier': 'C07 independent', 'controls': controls,
+    report = {'verifier': 'C07 independent', 'profile': args.profile, 'controls': controls,
               'controls_all_ok': all(c['ok'] for c in controls),
               'workflow_run': os.environ.get('GITHUB_RUN_ID'), 'workflow_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
               'verifier_source_sha': os.environ.get('GITHUB_SHA'),
@@ -383,10 +518,12 @@ def main():
             (args.output / 'original-artifact.sha256').write_text(sha(zb) + '\n')
             report['original_zip'] = {'bytes': len(zb), 'sha256': sha(zb), 'run_status': meta['run'].get('status'),
                                       'run_conclusion': meta['run'].get('conclusion')}
-            L = authenticate(meta, zb, expect)
+            L = authenticate(meta, zb, expect, args.profile)
             if not L.failed():
-                L2 = audit(build_evidence(extract(zb)), expect)
-                L.rows += L2.rows
+                try:
+                    L.rows += audit(build_evidence(extract(zb), args.profile), expect, args.profile).rows
+                except (ValueError, KeyError) as error:  # explicit refusal on missing or unparseable evidence
+                    L.add('evidence.complete_and_parseable', False, error)
             report['producer_audited'] = True
             report['producer_rows'] = L.rows
             if L.failed():
