@@ -56,6 +56,15 @@ for line in lines:
 print("ANNOTATION_BEGIN "+json.dumps(annotation[:100]),flush=True)
 print("ANNOTATION_END "+json.dumps(annotation[-180:]),flush=True)
 print("ANNOTATION_MILESTONES "+json.dumps([line for line in annotation if "Added attachment" in line or ("t = " in line and any(x in line for x in ("Find the \"features.","Tap ","Press ","Open Application","Terminate ")))][-180:]),flush=True)
+import re
+previous=None
+for index,line in enumerate(annotation):
+ match=re.search(r"t =\s*([0-9.]+)s",line)
+ if not match:continue
+ current=float(match[1])
+ if previous is not None and current-previous[0]>=10:
+  print("ANNOTATION_IDLE_GAP "+json.dumps(dict(seconds=current-previous[0],context=annotation[max(0,previous[1]-5):index+12])),flush=True)
+ previous=(current,index)
 receipt=dict(input=args.input,producer_source=source,producer_run=run,producer_job=jobid,
  artifact=aid,bytes=size,sha256=digest,inspection_source=os.environ["GITHUB_SHA"],
  diagnostic_only=True,product_acceptance=False,issues=issues)
