@@ -60,6 +60,9 @@ def main():
         if report.get('system_resolution'):
             print('system import resolution:', json.dumps(report['system_resolution']['import_status_counts'], sort_keys=True))
             print('system libraries recorded:', len(report['system_resolution']['libraries']))
+        if report.get('system_resolution'):
+            print('unresolved imports:', json.dumps([[r['import_'], r['bind'], r['reason']] for r in report['system_resolution']['imports'] if r['status'] != 'resolved']))
+            print('providers by library:', json.dumps(sorted({p['library'] for r in report['system_resolution']['imports'] for p in r['providers']})))
         print('pending kinds:', json.dumps(sorted({p['kind'] for p in report['pending']})))
         for p in report['pending']:
             if p['kind'] in ('system_library_resolution_failed', 'needed_library_unrecorded', 'custom_runpath_not_resolved'):
