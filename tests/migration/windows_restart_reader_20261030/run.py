@@ -178,7 +178,8 @@ assert alive['stale'] is False and alive['status']==2,alive
 kill(drift2)
 after=run(root,verb='shared')
 refused=run(root)
-assert refused['opened'] is False and refused['reason']=='restart-lease-pending',refused
+assert refused['opened'] is False,refused
+assert refused['open_reason']=='restart-lease-generation',refused  # generation is checked before PENDING
 keep('window-drift',parent,root,data,shared='skip',recovery_failed=True,
      shared_while_alive_status=alive['status'],shared_while_alive_stale=alive['stale'],
      shared_after_crash_stale=after['stale'],shared_after_crash_status=after['status'],
