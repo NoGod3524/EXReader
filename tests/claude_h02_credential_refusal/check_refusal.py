@@ -140,13 +140,13 @@ def main():
                 report['thread_samples'].setdefault('all', []).extend(sampler.finish())
 
         A = device('dev')
-        report['process_token'] = report['launches'] and shim.launches[-1]['process_token']
+        report['process_token'] = shim.launches[-1]['process_token']
         # import one original through the retained path control
         sys.path.insert(0, str(ROOT / 'tests/reader_windows_compact'))
         import importlib.util
         spec = importlib.util.spec_from_file_location('compact_picker', ROOT / 'tests/reader_windows_compact/check_ui.py')
         compact_ui = importlib.util.module_from_spec(spec);spec.loader.exec_module(compact_ui)
-        compact_ui.picker(A, str(source / 'Refusal Small.txt'))
+        compact_ui.picker(A, source / 'Refusal Small.txt')
         A.wait(lambda: '已导入' in A.status() or '去重' in A.status(), timeout=180);A.wait_idle()
         before = state()
         check('host_runs_under_network_logon_primary_token', report['process_token']['logon_type'] == 'Network'
