@@ -200,7 +200,8 @@ static wc_status end(cx *c, wc_status s, const char *phase, const char *detail) 
 }
 static void pend(char *out, const char *item) {
   size_t n = strlen(out); if (n + strlen(item) + 2 >= 256) return;
-  if (n) out[n++] = ','; strcpy(out + n, item);
+  if (n) out[n++] = ',';
+  strcpy(out + n, item);
 }
 static int preflight(const wc_binding *b, const wc_gates *g, const wc_provider *p, int recover, wc_report *r) {
   if (!b || !g || !p || !r) return 2;

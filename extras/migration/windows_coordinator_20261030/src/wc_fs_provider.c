@@ -52,7 +52,8 @@ static int identity_of(const char *path, int dir, char out[49]) {
 }
 static FILE *fopen_u(const char *path, const char *mode) {
   WCHAR w[2048], m[8]; int i; if (!wide(path, w, 2048)) return NULL;
-  for (i = 0; mode[i] && i < 7; i++) m[i] = (WCHAR)mode[i]; m[i] = 0; return _wfopen(w, m);
+  for (i = 0; mode[i] && i < 7; i++) m[i] = (WCHAR)mode[i];
+  m[i] = 0; return _wfopen(w, m);
 }
 static int make_dir(const char *p) { WCHAR w[2048]; return wide(p, w, 2048) && CreateDirectoryW(w, NULL); }
 static int rm_dir(const char *p) { WCHAR w[2048]; return wide(p, w, 2048) && RemoveDirectoryW(w); }
@@ -177,7 +178,10 @@ static wc_step fs_snapshot(void *ctx, wc_record *rows, size_t cap, size_t *count
 static int note(struct wc_fs *fs, const char *rel, int isdir) {
   if (fs->made_n == fs->made_cap) {
     size_t nc = fs->made_cap ? fs->made_cap * 2 : 64; void *a = realloc(fs->made, nc * sizeof *fs->made); void *d;
-    if (!a) return 0; fs->made = a; d = realloc(fs->made_dir, nc); if (!d) return 0; fs->made_dir = d; fs->made_cap = nc;
+    if (!a) return 0;
+    fs->made = a; d = realloc(fs->made_dir, nc);
+    if (!d) return 0;
+    fs->made_dir = d; fs->made_cap = nc;
   }
   snprintf(fs->made[fs->made_n], EXR_WC_PATH_MAX + 1, "%s", rel); fs->made_dir[fs->made_n++] = (unsigned char)isdir; return 1;
 }
