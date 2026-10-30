@@ -55,7 +55,7 @@ def evidence():
     return dict(roles=dict(sdk=['/opt/sdk/'], product=['/opt/prod/'], host=['/opt/host/']), archives=archives,
                 selected=[['/opt/prod/lib/libEXReaderProductCatalog.a', 'catalog.o'],
                           ['/opt/sdk/lib/libreader_sdk.a', 'entry.o'], ['/opt/host/libhost.a', 'host.o']],
-                product_catalog_marker=C.PRODUCT_CATALOG, dynamic_needed=['libc.so.6'])
+                product_catalog_archives=['libEXReaderProductCatalog.a'], dynamic_needed=['libc.so.6'])
 
 
 def kinds(ev):

@@ -65,7 +65,7 @@ def collect(config, out):
     evidence = dict(identity=C.identity(platform, config.get('sdk_version')), platform=platform,
         image=dict(path=str(image), sha256=C.digest(image)), map=dict(path=config['map'], sha256=C.digest(config['map']),
         format=parsed['format']), roles=config['roles'], archives=archives, selected=[[norm(a), m] for a, m in parsed['members']],
-        product_catalog_marker=config.get('product_catalog_marker', C.PRODUCT_CATALOG),
+        product_catalog_archives=config['product_catalog_archives'],
         dynamic_needed=needed(platform, image, out / 'native'), final_undefined=final_undefined,
         system_exports=config.get('system_exports', []))
     canon = (lambda s: s[1:] if s.startswith('_') else s) if config.get('apple') else (lambda s: s)

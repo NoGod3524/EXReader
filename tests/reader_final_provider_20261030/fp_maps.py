@@ -151,7 +151,7 @@ def audit(evidence, canon=lambda s: s):
     owners = definers.get(entry, [])
     if len(owners) != 1 or classify(owners[0][0], roles) != 'product':
         findings.append(dict(kind='sqlite_not_uniquely_product_catalog', owners=owners))
-    elif evidence['product_catalog_marker'] not in owners[0][0]:
+    elif owners[0][0].rsplit('/', 1)[-1] not in evidence['product_catalog_archives']:
         findings.append(dict(kind='sqlite_owner_not_named_product_catalog', owners=owners))
     for symbol, who in sorted(definers.items()):
         if symbol.startswith(canon('sqlite3')):
