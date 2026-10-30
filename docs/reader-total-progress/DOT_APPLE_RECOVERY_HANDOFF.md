@@ -1,3 +1,229 @@
+# Current recovery checkpoint - 2026-10-30 15:45 UTC / 11:45 EDT
+
+Recovery backup, NOT completion or actual handoff. User15:42:34UTC explicitly requested restarting six agents to clear blockers and P0. Coordinator accepted six followup lanes; this does NOT mean six active implementers. No new source SHA/run from resumed lanes yet. Formal95/108=87.96% unchanged.
+
+## Runtime verified and retained gap
+15:27 read-only get found suspended/readyfalse; automatic pause14:53:27.071313UTC; no exec/wake workaround was used and15:22 backup could not be saved. Runtime subsequently resumed at15:40:07.459273UTC. This worker independently verified15:44 get running/readytrue, revision13, autosuspend1800 unchanged. Normal receipt status read succeeded, only designated document modified; HEAD0249ecb337352f3ec46444cbbcc1a7633f8d43d0.
+
+## Six resumed lane assignments and actual state
+- Apple owner verified three staged paths; authorized retry of commit was still rejected15:43:30, not executed. Reviewer reason: user explicitly paused Apple source writes and no immediate approval. BLOCKED pending exact three-file/branch authorization; no workaround. Remote product source remains last-verified c46, no new pass.
+- Engine owner implementing corrections to three reviewed security/lifecycle hazards (deadline, uncertain descendant custody/latch, hashed file versus launch path). No new SHA/run yet.
+- Publisher owner confirmed new independent bridge branch/worktree implementation. Earlier c45 primitive and audit green are not integrated P0. No new bridge SHA/run yet.
+- Read-only reviewer examining C02 existing contracts; exact previously denied command unavailable, so no recreation/retry of denied action.
+- Managed worker assigned F05 remaining host delete-versus-update evidence. No new verified run yet.
+- This sixth lane performs evidence/documentation only.
+Three lanes have implementation/evidence assignments, one review, one documentation and Apple blocked; do not claim all six implementing or proven progress without outputs.
+
+## Documentation retry boundary
+Only docs/reader-total-progress/DOT_APPLE_RECOVERY_HANDOFF.md in independent receipt worktree/branch is writable here. Parent supplied materially new15:42 clear-blocker authorization for one known-unexecuted denied document commit/push retry. No source-branch pollution or alternate route. If still rejected, stop and return exact action/target/reason, never label working-copy as published. Local pre-operation HEAD0249ecb337352f3ec46444cbbcc1a7633f8d43d0; last known remote97264a714b721b58fbfab659ace37b503fa1ef5a.
+All prior failed evidence, common/default branch protection, SDK/ABI and old assertion limits retained below. All build/test/ZIP work Actions only. New six-lane grant does not override specific later denied operations. No reliable full-completion ETA.
+
+---
+
+## Historical checkpoint(14:25UTC; superseded above)
+
+# Current recovery checkpoint - 2026-10-30 14:25 UTC / 10:25 EDT
+
+14:22 hourly report backup, saved as working copy ONLY. No new user authorization, no implementation resumed. Actual implementation 0; this worker is documentation only. Formal 95/108 = 87.96% unchanged. Pending five-package authorization and previous Apple/document commit-push denials remain held; no retry or bypass.
+
+Normal saved-login DC -> InstaBox -> gh API independently verified at14:25 UTC:
+- Apple remote c46f7036d81f88d8529871590f780b5430630e47 unchanged.
+- Latest full runs41011360858 and41005300066 on c46,41000723036 on a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72: all attempt1 completed/failure. No newer returned run.
+- Receipt remote97264a714b721b58fbfab659ace37b503fa1ef5a unchanged; historical online snapshot, NOT this current working-copy backup.
+All reads succeeded, exitCode0/timedOutfalse. No source edits, development, CI dispatch, commit, push or ZIP processing performed.
+
+Coordinator latest actual handshake14:09:03 UTC /10:09:03 America/New_York EDT succeeded. Existing unique28-minute maintenance remains; no runtime/settings changes. Local last-known HEAD0249ecb337352f3ec46444cbbcc1a7633f8d43d0. No new snapshot commit SHA or online link. No reliable completion ETA pending authorization and complete evidence. Historical source/failure/acceptance and frozen-path boundaries remain below.
+
+---
+
+## Historical checkpoint(13:20UTC; superseded above)
+
+# Current recovery checkpoint - 2026-10-30 13:20 UTC / 09:20 EDT
+
+Prepared for13:22 hourly report. Working-copy backup ONLY, no new commit or publication. No new authorization/development. Actual implementation0; other lanes completed/blocked, five packages still await authorization. Formal95/108=87.96% unchanged.
+
+Normal DC->InstaBox gh API read at13:19 UTC confirmed:
+- Apple remote c46f7036d81f88d8529871590f780b5430630e47 unchanged.
+- Latest full runs41011360858(c46),41005300066(c46),41000723036(a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72): all attempt1 completed/failure, no newer returned run.
+- Receipt remote97264a714b721b58fbfab659ace37b503fa1ef5a unchanged: historical snapshot, NOT this update.
+- Previous denied Apple/document commit/push actions remain held. No retries, workaround, development or CI dispatch.
+
+Coordinator latest full handshake13:14:33UTC /09:14:33 America/New_York EDT succeeded. Existing normal saved-login route and unique28-minute maintenance retained. Local last known HEAD0249ecb337352f3ec46444cbbcc1a7633f8d43d0; no new SHA. Preserve all prior evidence and boundaries below. No reliable completion ETA while concrete authorization and validation remain pending.
+
+---
+
+## Historical checkpoint(12:20UTC; superseded above)
+
+# Current recovery checkpoint - 2026-10-30 12:20 UTC / 08:20 EDT
+
+Prepared for the early-arriving 12:22 hourly report. WORKING-COPY ONLY, not acceptance or actual handoff. No new user authorization since prior report; next five specific packages remain PENDING. Six native workers completed/blocked; actual implementation ZERO. This worker performs documentation/read-only checking only. Formal95/108=87.96% unchanged.
+
+Read-only normal Desktop Commander -> InstaBox -> gh API independently checked at 12:19 UTC:
+- Apple remote codex/dot-apple-complete-20261029 remains c46f7036d81f88d8529871590f780b5430630e47.
+- Latest full-branch runs: 41011360858 (c46), 41005300066 (c46), 41000723036 (a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72); all attempt1 completed/failure. No new run among the latest returned records.
+- Receipt remote codex/dot-apple-receipt-20261030 remains97264a714b721b58fbfab659ace37b503fa1ef5a, NOT this current backup.
+- Previous Apple staged-operation and document commit/push denials remain held. No retries, no new development, no CI dispatch, no alternate execution/publication route.
+
+Latest full handshake reported by coordinator: 2026-10-30 12:16:33 UTC /08:16:33 America/New_York EDT, running/runtime.ready, successful pwd. No inference of a new handshake from these gh reads.
+
+All original failures/candidate evidence and exact boundaries retained below. No reliable completion ETA pending authorization and validation. Local last known HEAD0249ecb337352f3ec46444cbbcc1a7633f8d43d0; this backup creates no new SHA or GitHub link. Existing unique28-minute maintenance remains unchanged.
+
+---
+
+## Historical checkpoint (11:21 UTC; superseded above)
+
+# Current recovery checkpoint — 2026-10-30 11:21 UTC / 07:21 EDT
+
+Prepared for 11:22 UTC hourly report. WORKING-COPY BACKUP ONLY; supersedes older active-work statements below. Not completion or an actual handoff.
+
+## Verified coordination state
+
+Coordinator reports all six native workers completed or blocked; **actual active implementation count is ZERO**, not six. The next five specific work packages await the user's concrete authorization; no answer has been received. Do not dispatch or resume those dependent actions based on elapsed time or older general grants.
+Final reported candidate runs:
+- C01 source a373204a47666794aea8389b8365b3025aca3442, run 41036472271 attempt 1 completed SUCCESS, independently read via GitHub API 11:21 UTC.
+- C03 source c0ec6edf0e4b6fcf34895e79874edca74387c9a3, run 41032783657 attempt 1 completed SUCCESS, independently read via GitHub API 11:21 UTC.
+- C05 source 441a5ae2653dcbeef7a25b3e38c7a7adee12911f, run 41036853551 attempt 1 completed SUCCESS, independently read via GitHub API 11:22 UTC.
+These are candidates, not independently established complete-product acceptance. Exact source metadata is verified, but original-artifact and acceptance evidence still requires its own review. Apple remote branch independently verified at c46f7036d81f88d8529871590f780b5430630e47 at 11:22 UTC. Coordinator read latest Terra 10:10 report: C01 idle/done; C02 idle/working label but no remaining work, so do not duplicate it.
+Formal **95/108 = 87.96% unchanged**. No global P0 migration/conflict recovery or SDK3.42 six-platform same-source completion is claimed. Candidate-green must not erase prior failures or replace independent review.
+
+## Current blockers and next authorized step
+
+- Next five work packages: PENDING user authorization, not executing. Required action is the user's answer to the existing specific request; do not duplicate generic approval prompts.
+- Apple three-file commit: still blocked by prior denial. No new Apple commit, push, CI result or completion is claimed. Preserve its staged state; do not retry or route around denial.
+- Recovery document Git commit/push: previous denial remains; only this working-copy write/readback is performed. No attempt to publish or create a new commit this round.
+- Mainline ETA cannot be reliably estimated while concrete next-work authorization and acceptance evidence remain outstanding.
+The actual safe continuation is preserving this local checkpoint and awaiting the pending authorization, not presenting idle/blocked workers as ongoing implementation.
+
+## Runtime and publication facts
+
+Coordinator verified normal get running/runtime.ready and successful pwd at approximately **11:20 UTC / 07:20 America/New_York (EDT)**. No second-level timestamp supplied. Existing normal saved-login Desktop Commander -> InstaBox route remains in use.
+At 11:20 UTC this document worker independently read receipt git status: only docs/reader-total-progress/DOT_APPLE_RECOVERY_HANDOFF.md modified, exitCode 0, timedOut false.
+
+Receipt worktree /data/workspace/exreader-dot-apple-receipt-20261030, branch codex/dot-apple-receipt-20261030. Last known local HEAD **0249ecb337352f3ec46444cbbcc1a7633f8d43d0**, last known successfully published snapshot **97264a714b721b58fbfab659ace37b503fa1ef5a**. This working-copy snapshot is NOT on GitHub and has no new commit SHA. Old remote link is historical only.
+Keep all prior unpublished commit history and failed evidence. No default/common branch, staged main worktree, SDK/ABI, old assertion, credential/security or runtime-setting change. Build/test/syntax/ZIP parsing remain Actions-only. Existing 28-minute maintenance task 6ae40da897ac81918ae3e90d91ee79ea remains unchanged.
+
+---
+
+## Historical checkpoint (09:26 UTC; superseded above)
+
+# Current recovery checkpoint — 2026-10-30 09:26 UTC / 05:26 EDT
+
+Delayed 09:22 hourly snapshot. WORKING-COPY ONLY, no commit/push retry. Supersedes older status below; preserves historical failures and authorization boundaries. Last known local HEAD 0249ecb337352f3ec46444cbbcc1a7633f8d43d0; last published remote 97264a714b721b58fbfab659ace37b503fa1ef5a. No new GitHub snapshot is claimed.
+
+## Actual Claude states at 09:24 UTC
+
+Coordinator verified official states, not slot counts:
+- C01 busy/working. Candidate source 11dca84e429d84e2ffe7b248ccc8d743c8157e67, run 41031464318 SUCCESS: padding64 fix candidate, not full acceptance.
+- C03 busy/working. Source 676a243bce1a8b03ca440b6f107a881944a1a56e, run 41031867835 SUCCESS: original-artifact validator. It is same-author validation, NOT an independent oracle.
+- C05 busy/working. Source 97c6458bf25160ebe89426f869dd84de502df4a8, run 41032756364 IN PROGRESS, original47 classification.
+- C02 idle/working labels ambiguous and a denied-read hold applies. Do not count it as verified busy, or bypass its denied read.
+- C04 completed with F10 failures; completed is not success or acceptance.
+Thus THREE Claude workers are positively verified busy, one ambiguous/held and one completed-with-failures. Do not report five continuously active. Rolling replacement and verified-reset authorization remains subject to actual quota reset verification and all protected-path/approval constraints.
+
+## Native and Apple unresolved work
+
+Native observer review identified three hazards requiring resolution and evidence:
+1. Final verification may extend beyond the deadline.
+2. Descendant uncertainty can release custody / expose a latch issue.
+3. A gap remains between the file whose bytes were hashed and the pathname actually launched.
+No native fixes since observer source prefix b3f were reported. Its earlier29/29 does not close these hazards or establish production P0 acceptance.
+
+Apple remote source remains c46f7036d81f88d8529871590f780b5430630e47. Three staged helper/admission/workflow paths remain blocked; no commit, push, CI result or new Apple acceptance is claimed. Prior iPad annotation/theme/sync failures and exact diagnostic identities stay preserved below. Do not infer unrelated Claude authorization lifts the denied Apple operations.
+
+## Formal acceptance, continuity and next evidence
+
+Formal **95/108 = 87.96% unchanged**. Component fixes, producer-green runs and same-author validators are candidate evidence only. Need independent original-artifact verification where required, real production integration, preserved original assertions and relevant fault/recovery coverage before advancing formal acceptance.
+C05 run 41032756364 is pending: next owner should read terminal status and actual classification evidence rather than infer success. C04 F10 failures must remain reported. C02 denied operation remains held until an applicable new authorization is verified.
+No reliable total remaining ETA from these running/ambiguous/failing states.
+Actions-only builds/tests/syntax/artifact parsing; existing normal Desktop Commander saved-login InstaBox route. Common/default branches, SDK/ABI and staged main worktree remain frozen, apart from exact previously disclosed narrow independent-candidate exceptions. No blanket scope expansion or denied-action workaround.
+This file is saved only as the authorized working-copy continuity backup; remote approval blockage is not bypassed.
+
+Latest verified normal VM handshake **2026-10-30 08:59:29 UTC = 04:59:29 America/New_York (EDT)** was healthy. Existing unique 28-minute task 6ae40da897ac81918ae3e90d91ee79ea remains. Do not infer a newer full get/pwd result from document access.
+
+---
+
+## Historical checkpoint (08:26 UTC; superseded above)
+
+# Current recovery checkpoint — 2026-10-30 08:26 UTC / 04:26 EDT
+
+Delayed 08:22 hourly snapshot. WORKING-COPY BACKUP ONLY; supersedes older status below. No blocked commit or push retry. Last known local HEAD 0249ecb337352f3ec46444cbbcc1a7633f8d43d0; remote last successfully published snapshot 97264a714b721b58fbfab659ace37b503fa1ef5a. This is not completion or an actual handoff.
+
+## Latest coordinator-verified progress
+
+- Publisher source c45d01c8fdec63851c5f4539813a8f66885eceb1, producer run 41022476473 / attempt 1 / job 123952756428, original ZIP 12962371134 (198573 bytes; SHA256 b23f790c642d04a57dbd22970974ed242541cf334a6ad9d0d903041b54b3415e). Independent audit source prefix 826, run 41024148733 succeeded. This proves the admitted primitive evidence, NOT complete P0.
+- Publisher audit boundaries remain explicit: 28 controls, before/after process-death retention cuts, original record27 and refusal8; full_p0_acceptance=false, physical_power_loss=false, recovery_admission=false, SDK open attempts zero. No coordinator COMMIT/startup recovery or production wiring inference. Original producer retained installed publish archive, not a separate built-publish archive/hash comparison; do not invent independently verified built==installed equality. Exact full audit SHA must be read from run metadata before reusing it.
+- Observer candidate source prefix b3f, run 41024553069 passed 29/29. Independent original-ZIP verification remains pending; this is not final acceptance. Obtain full SHA and artifact identities from that run before admitting further evidence.
+- Apple remote product source remains c46f7036d81f88d8529871590f780b5430630e47; prior complete runs failed as preserved below. Three staged Apple paths remain frozen after another denial at 07:57; do not describe them as committed, pushed or tested. Independent Apple completion remains unmet.
+- All FIVE Claude workers were last verified working at 08:19 UTC by coordinator. This supersedes older zero-started/unconfirmed snapshots below. Exact worker IDs are not included in this message; retrieve manager's actual roster before control actions, and do not duplicate launches.
+- Terra thread 01a18bcc-57f1-7390-9cc5-597be4b28034 is being checked. A thread ID alone does not prove an active run or completed result.
+- User now authorized rolling work and verified reset handling; this supersedes the older automatic-resume prohibition only under the newly verified reset condition. Do not infer quota reset without actual verification, or override protected-source/approval restrictions.
+
+## Remaining acceptance and operational boundaries
+
+Formal acceptance stays **95/108 = 87.96%**. Publisher primitive/audit and observer29 are candidate/component evidence, not blanket P0 migration/conflict recovery, F05, physical-device or SDK3.42 six-platform same-source completion.
+Continue concrete mainline lanes with actual status/IDs; distinguish implementation, CI wait, independent audit, review, blocked and completed. Five Claude working at 08:19 is a time-stamped observation, not a perpetual active-count assertion. Total remaining ETA cannot be reliably estimated from these partial results.
+
+Keep Actions-only build/test/syntax/ZIP parsing. Keep default/common branches, SDK/ABI, old assertions and staged main worktree protected except the exact disclosed user-authorized narrow exceptions. Normal Desktop Commander saved-login InstaBox route only. No repeated denied document commit/push, alternate publication route, or claim that this working-copy update exists on GitHub.
+
+Latest verified full handshake: **2026-10-30 08:04:04 UTC = 04:04:04 America/New_York (EDT)**, healthy as reported by coordinator. Existing 28-minute task 6ae40da897ac81918ae3e90d91ee79ea continues, no settings change inferred.
+
+---
+
+## Historical checkpoint (07:47 UTC; superseded above)
+
+# Current recovery checkpoint — 2026-10-30 07:47 UTC / 03:47 EDT
+
+Delayed 07:22 hourly checkpoint. This section supersedes earlier current-state instructions; historical snapshots remain below. Local continuity backup, not completion or actual transfer.
+
+## Local publication and runtime recovery
+
+Receipt branch/worktree remain codex/dot-apple-receipt-20261030 / /data/workspace/exreader-dot-apple-receipt-20261030. Preserve unpublished history 0249ecb337352f3ec46444cbbcc1a7633f8d43d0, 9e694585, bb47a331 without amend/rebase. Remote last published snapshot remains 97264a714b721b58fbfab659ace37b503fa1ef5a. Earlier blocked attempts are retained. User granted exact independent handoff commit and push at 07:46:06 UTC; one authorized retry may publish this snapshot. No alternate publication route.
+Normal CLI returned 409 cooldown around 07:22; cooldown ended 07:31:25. After waiting, the authorized saved-login route succeeded at 07:31:32–07:32 UTC: receipt git status clean, exitCode 0, timedOut false. No VM restart/replacement or configuration change. Latest actual normal get/pwd handshake succeeded 07:39:40 UTC / 03:39:40 EDT; coordinator separately confirmed this, not inferred from git access.
+
+## Apple retained failures and pending work
+
+Product source remains c46f7036d81f88d8529871590f780b5430630e47. Full rerun 41011360858 ended FAILED:
+- macOS and iPhone 39/39 passed, valid only for this exact producer.
+- iPad 34 accepted; annotation exceeded 240 seconds; four theme cases did not execute after bootstatus 180-second timeout.
+- Supplemental 11/12 passed; iPad 401-recovery failed at its 180-second timeout.
+- No full acceptance or independent 19-ZIP success; audit 55b32042 still unexecuted and pinned to a failed producer.
+Latest native iPad raw-ZIP diagnostic source 2c17452 / run 41017627837 succeeded as DIAGNOSTICS ONLY: duplicate check at 237.40 seconds, final tree 239.61, then termination exceeded 240; separate theme boot failure at 180 seconds.
+Source worktree has three uncommitted paths: two Files-query Boolean order changes only (helper blob 824647af) plus exact admission/workflow pin; pending review, not CI-tested or remote product source.
+Diagnostic worktree at 2c17452 has two staged sync-diagnostic files for ZIP 12960002952. Commit denied 07:13:58; subsequently user explicitly approved this two-file diagnostic, publisher handle protection, engine test diagnosis, independent handoff commit/push and five directory trust operations at 07:46:06 UTC. Four workers resumed after that exact grant. Their new outcomes still require verification; no blanket approval for protected paths.
+Continue exact original-ZIP diagnosis and justified minimal fixes with assertions and budgets retained. Prior OriginalSave readiness exception remains narrow and disclosed. No pass splicing across a91/c46/runs/attempts.
+
+## Newly authorized P0 mainline lanes (independent candidates only)
+
+User explicitly requested six rolling P0 lanes and authorized production integration seams examples/reader.c, apps/reader/desktop/windows_feature_integration.cmake, lm_main.c, and extra migration CMake only in independent candidates. SDK/ABI, old tests, common343 and staged9330 remain frozen. This expands authorized investigation/integration paths, not permission to overwrite common/staged work.
+
+Latest coordinator-supplied lane evidence:
+- Publisher source 62a71a2e238cb434feacd3e55a7074f6f84ade44, run 41019097661 FAILED 19/24 with sharing violation; docs db9778d9. Core implementation is preparing additive initial-custody policy.
+- Migration engine c57f6bb8c1a753dd21afcb5c9d8d3bbc24098f7e, run 41019391474 FAILED 14/21; positive observe blocked, diagnosis pending.
+- Host controller 3b41bbb0bb921aba8df3e2928f8ad137df162119, run 41019458973 passed 16 fake-provider contracts. Unwired; NOT P0 completion.
+- Fault coverage 4ec1b35cf9d40763928aa18fa5fef5b6f57b413b, run 41019572281 passed readiness, six validator units and independent prior-ZIP verification. M01–M10 pending; not actual full fault acceptance.
+- F05 candidate 4fbad77802f2a7bc6001989fae910c603783d0eb, run 41019462832: three desktops and independent ZIP verification passed, 20+21 original and 25 additive. Module-only result, not F05 global acceptance.
+- Apple lane remains incomplete as above; six-lane requested capacity is not proof six active workers at each moment.
+Coordinator must obtain fresh per-lane status before assigning replacement work. Distinguish implementation, queued tests, review, completed preparation and blocked operations; never count available slots as active agents.
+
+## Additional Claude authorization and exact launch uncertainty
+
+At 07:18 the user explicitly authorized FIVE NEW local background Claude Sonnet 5.5 medium workers. Stop all on Pro five-hour limit and do not automatically resume. This supersedes the older no-new-Claude boundary only for this explicit five-worker assignment, not other agents or protected paths.
+Manager /root/manage_claude_background_team initially encountered native-agent capacity error before any external launch/control write; coordinator confirmed no launches had happened then. Latest parent state: ZERO of five Claude workers started; directory trust approved at 07:46:06 UTC, interactive execution route under investigation. NO external Claude worker IDs verified. Record zero started, NOT five running. Verify official task/process list before any duplicate attempt.
+Do not infer this grant authorizes held Apple diagnostic pushes, SDK/common/staged changes, or any unrelated work.
+
+## Continuation, formal acceptance and limits
+
+Formal count remains **95/108 = 87.96%**. Above are candidate and partial results, not accepted global P0 migration, crash/conflict recovery, F05, or SDK3.42 six-platform same-source completion.
+Maintain six useful authorized lanes with replacements as concrete work completes; report actual counts and states. Each hourly report gets a resumable local checkpoint while remote publication is blocked. No repeated generic approval requests or bypass.
+Apple requires same-source full original 39 x 3 +12 supplemental + SDK/program identity + producer authentication/summary + independent 19-ZIP audit + final result. P0 lanes require their genuine production integration and failure/recovery evidence, not fake-provider/module-only green.
+No reliable total completion estimate from current failures/queues. Preserve all failed runs and evidence.
+Build/test/syntax/artifact parsing remains Actions only. Common remote 343bb94eb6513beaf5b344e7828342f6602a3b7b and staged main worktree HEAD9330be495bffdf3bf421bdc32b963e3fbfc4c9fe (27 versus HEAD / 89 versus343) stay untouched. No default/common push, PR, tag, release, security/credential export, or unapproved runtime restart.
+Existing unique 28-minute handshake automation 6ae40da897ac81918ae3e90d91ee79ea remains; autosuspend1800 unchanged.
+
+---
+
+## Historical checkpoint (06:18 UTC; superseded above)
+
 # Current recovery checkpoint — 2026-10-30 06:18 UTC / 02:18 EDT
 
 Prepared for 06:22 UTC report; this section supersedes all older current-state instructions retained below. Local continuity backup only, not acceptance, actual handoff or termination.
