@@ -39,6 +39,8 @@ int lm_b64_decode(const char *s, size_t n, unsigned char **out, size_t *outn, si
 /* UTF-8 path helpers; every function returns 1 on success. */
 FILE *lm_fopen(const char *path, const char *mode);
 int lm_exists(const char *path);
+/* 1: an entry exists (including a symlink); 0: absent; -1: unknown/error. */
+int lm_path_state(const char *path);
 int lm_remove(const char *path);
 int lm_replace(const char *from, const char *to);
 int lm_publish_new(const char *from, const char *to);
