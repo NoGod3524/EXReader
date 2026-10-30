@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
+#if defined(LM_RR_TEST_AFTER_ACQUIRE)
+/* Test target only: absent from the normal archive and public header. */
+extern void lm_rr_test_after_acquire(const WCHAR *lease_path);
+#endif
 /* Pinned C01 provider layout (extras/migration/windows_admission_lease_20261030):
  * 80-byte lease file = 64-byte identity header + generation(u64) + pending(u64).
  * The provider is frozen and outside this worktree, so its two weaknesses are
@@ -256,7 +260,11 @@ int lm_rr_open(const WCHAR *lease_dir,const char lease_identity[49],
  if(lm_wl_acquire(lease_dir,lease_identity,LM_WL_EXCLUSIVE,0,&r->lease,&le)!=LM_WL_OK){
   refuse(e,"restart-exclusive-acquire");goto fail;
  }
- if(!lease_window(r,e))goto fail;
+#if defined(LM_RR_TEST_AFTER_ACQUIRE)
+ lm_rr_test_after_acquire(r->lease_path);
+#endif
+ /* EXCLUSIVE was acquired: retain a refused object even without a window. */
+ if(!lease_window(r,e))goto done;
  settled=lease_settle(r,e);
  if(settled!=1){
   /* Custody is never derived from a lease that moved inside the acquire window.
