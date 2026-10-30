@@ -6,8 +6,8 @@ assert os.environ.get("GITHUB_REPOSITORY") == "NoGod3524/EXReader"
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 from check_parallel_integration import fetch
-SOURCE = "a91ef5f3726b0d2f6bb1136e19bbeeb74fb40d72"
-RUN = 41000723036
+SOURCE = "c46f7036d81f88d8529871590f780b5430630e47"
+RUN = 41011360858
 ATTEMPT = 1
 BRANCH = "codex/dot-apple-complete-20261029"
 WORKFLOW = ".github/workflows/dot-apple-complete-20261029.yml"
