@@ -171,3 +171,12 @@ int lm_wp_publish_prepared(lm_wp_custody *p,HANDLE source,const WCHAR *from,
  v.root_id=p->ids[p->count-1];v.parent_path=p->paths[p->count-2];v.context=p;v.recheck=prepared_check;
  return publish(&v,source,from,to,id,sha,r,e);
 }
+
+/* Identity-only borrowed-custody view: no handles or mutable state escape. */
+int lm_wp_custody_identity(lm_wp_custody *p,wr_identity *root,wr_identity *parent,wr_error *e){
+ if(!root||!parent||root==parent)return refuse(e,"prepared-identity-output");
+ memset(root,0,sizeof(*root));memset(parent,0,sizeof(*parent));
+ if(!prepared_check(p,e))return 0;
+ *root=p->ids[p->count-1];*parent=p->ids[p->count-2];
+ return 1;
+}
