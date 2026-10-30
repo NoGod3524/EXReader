@@ -274,8 +274,7 @@ final class FeaturesUITests: XCTestCase {
             let inline = app.textViews["DOC.inlineRenameField"].firstMatch
             XCTAssertTrue(wait { inline.exists && inline.isHittable })
             let old = (inline.value as? String) ?? ""
-            inline.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count))
-            inline.typeText("EXReaderAnnotations\n")
+            inline.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + "EXReaderAnnotations\n")
             if inline.exists {
                 let picker = app.otherElements["Browse View (Picker)"].firstMatch
                 XCTAssertTrue(wait { picker.exists })
