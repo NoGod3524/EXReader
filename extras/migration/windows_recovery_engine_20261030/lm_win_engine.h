@@ -15,8 +15,9 @@ typedef struct {
  * migration admission, COMMIT or reopen authorization is returned.
  * Worker path must be drive-absolute and name the actual installed image; the image is held with
  * write/delete sharing denied until the job and all descendants are terminal.
- * Worker launches use a revalidated Volume-GUID path with retained non-reparse
- * ancestor pins. Concurrent calls refuse. Uncertain cleanup permanently blocks
+ * Worker custody uses a revalidated Volume-GUID path with retained non-reparse
+ * ancestor pins. DOS launch is suspended until the actual native image path and
+ * full identity match the pinned image, and job membership is confirmed. Concurrent calls refuse. Uncertain cleanup permanently blocks
  * this engine instance and retains independently owned custody until process exit.
  * The absolute deadline governs acceptance, not a hard synchronous-I/O duration.
  * Output leaf is exclusive-created and ALWAYS retained, including failures. */

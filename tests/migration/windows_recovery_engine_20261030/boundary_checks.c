@@ -5,7 +5,7 @@
 #include "lm.h"
 #include <stdio.h>
 #include <string.h>
-static int force_query,force_termination,delay_hash,hash_calls;
+static int force_query,force_termination,delay_hash,hash_calls,wrong_image;
 static BOOL WINAPI checked_query(HANDLE j,JOBOBJECTINFOCLASS c,LPVOID p,DWORD n,LPDWORD r){
  if(force_query){SetLastError(ERROR_INVALID_HANDLE);return FALSE;}
  return QueryInformationJobObject(j,c,p,n,r);
@@ -14,10 +14,17 @@ static BOOL WINAPI checked_terminate(HANDLE j,UINT code){
  if(force_termination){SetLastError(ERROR_ACCESS_DENIED);return FALSE;}
  return TerminateJobObject(j,code);
 }
+static BOOL WINAPI checked_image(HANDLE p,DWORD flags,LPWSTR path,PDWORD n){
+ BOOL ok=QueryFullProcessImageNameW(p,flags,path,n);
+ if(ok&&wrong_image&&*n)path[0]=L'X';
+ return ok;
+}
+#define QueryFullProcessImageNameW checked_image
 #define QueryInformationJobObject checked_query
 #define TerminateJobObject checked_terminate
 #define lm_we_hash delayed_hash
 #include "../../../extras/migration/windows_recovery_engine_20261030/engine.c"
+#undef QueryFullProcessImageNameW
 #undef QueryInformationJobObject
 #undef TerminateJobObject
 #undef lm_we_hash
@@ -42,6 +49,10 @@ int main(int argc,char **argv){
  CHECK(!lm_we_observe(root,target,L"worker.exe",sha,nonce,L"relative.bin",30000,&result,&error)&&!strcmp(error.reason,"observer-worker-absolute"));
  CHECK(!lm_we_observe(root,target,L"C:worker.exe",sha,nonce,L"drive-relative.bin",30000,&result,&error)&&!strcmp(error.reason,"observer-worker-absolute"));
  CHECK(!lm_we_observe(root,target,L"\\worker.exe",sha,nonce,L"root-relative.bin",30000,&result,&error)&&!strcmp(error.reason,"observer-worker-absolute"));
+ wrong_image=1;
+ CHECK(!lm_we_observe(root,target,worker,sha,nonce,L"wrong-launch.bin",30000,&result,&error));
+ CHECK(result.state==LM_WE_REFUSED&&!strcmp(error.reason,"observer-launch-image-binding")&&lm_we_gate==0);
+ wrong_image=0;
  delay_hash=1;hash_calls=0;
  CHECK(!lm_we_observe(root,target,worker,sha,nonce,L"late.bin",1000,&result,&error));
  CHECK(result.state==LM_WE_REFUSED&&!strcmp(error.reason,"observer-final-deadline")&&error.native==ERROR_TIMEOUT);
@@ -55,7 +66,7 @@ int main(int argc,char **argv){
  CHECK(WaitForSingleObject(lm_we_quarantine->retained[0],0)==WAIT_OBJECT_0);
  {JOBOBJECT_BASIC_ACCOUNTING_INFORMATION a;
  CHECK(QueryInformationJobObject(lm_we_quarantine->retained[2],JobObjectBasicAccountingInformation,&a,sizeof(a),NULL)&&a.ActiveProcesses>0);}
- CHECK(!lm_we_observe(root,target,worker,sha,nonce,L"after.bin",30000,&result,&error)&&!strcmp(error.reason,"observer-quarantined-or-busy"));
+ CHECK(!lm_we_observe(root,target,worker,sha,nonce,L"after.bin",30000,&result,&error)&&!strcmp(error.reason,"observer-quarantined-or-busy")&&result.state==LM_WE_UNCERTAIN);
  CloseHandle(target);target=INVALID_HANDLE_VALUE;wr_close(root);
  probe=CreateFileW(worker,GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,0,NULL);
  /* Quarantine image is descendant executable, not the earlier observer. */

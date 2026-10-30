@@ -27,5 +27,7 @@ q=subprocess.run([str(root/'build/engine-check/Release/windows-engine-boundary.e
 (evidence/'boundary-stderr.txt').write_text(q.stderr)
 assert q.returncode==0,(q.returncode,q.stdout,q.stderr)
 b=json.loads(q.stdout)
-assert b['passed'] is True and b['failed']==0 and b['checks']==19,b
+assert b['passed'] is True and b['failed']==0 and b['checks']==21,b
 (evidence/'boundary-receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],result=b,production_test_hooks=False,full_p0_acceptance=False),indent=2))
+
+assert (evidence/'boundary-private/wrong-launch.bin').read_bytes()==b''

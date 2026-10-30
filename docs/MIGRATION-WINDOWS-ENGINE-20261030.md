@@ -66,3 +66,18 @@ A separately compiled native boundary harness injects delayed final hashing and
 query/termination refusal, with an actual main-exits/child-lives executable.
 Those injections are not compiled into the installed engine. These are observer
 safety prerequisites, never migration COMMIT, SDK reopen, F07 or full P0 admission.
+
+
+### Retained first repair failure and launch correction
+Source 7b26bf301b9a658633f11a52b781d9fd5b7ec874, run41085547489 attempt1,
+job124165630772 compiled and installed successfully but the original consumer
+failed10/29: the GUID executable path was refused before resume (native87).
+Artifact12992405490,245108 bytes,SHA256
+a2dd6e12789717b64c8dd3551a9ab1a767bc724c65f66312825153ef24b5d1d0.
+No assertion was relaxed. New private launcher uses canonical DOS only to create
+a suspended process. Before any ResumeThread it requires strict native pathname
+equality and a full-ID reopen through GLOBALROOT against the pinned image, plus
+verified job membership. GUID namespace pins remain held throughout. The frozen
+adapter is unchanged and its wr_cleanup_uncertain latch is respected.
+The new boundary suite additionally rejects an injected launched-image mismatch
+before execution; gate2 now returns UNCERTAIN, not a clean refusal.
