@@ -13,6 +13,8 @@ PINS["features908-ipad"]=("908c07ef41ddca602d7147f807af9511174db5e0",40986067818
 PINS["features908-iphone"]=("908c07ef41ddca602d7147f807af9511174db5e0",40986067818,123839443892,12948425868,175951774,"85313832307b83dff1f7a26fc7fcf319d4adc74312bac8ea83967976b05310ef")
 PINS["features8eda-ipad"]=("8eda894a1eacc50ecca1cdd2ca94ab1b4bd7d592",40989249100,123848764750,12949466233,225577077,"71cd429ae05883ac6ad4a64ca2818a06d5b2f2d3d9727b3b85b083e26ee44f7e")
 PINS["features8eda-iphone"]=("8eda894a1eacc50ecca1cdd2ca94ab1b4bd7d592",40989249100,123848764866,12949431864,199934227,"9a932bbbb5853465c158bce62a59d17dde44c85c9a1111c3e9af6ab8066a2f01")
+PINS["features55e9-ipad"]=("55e9c203fc58c5b94d3d951dad17c32d7f15a08f",40992359608,123858647139,12950219035,180602163,"68e47e9213e87b1d95c65b100603863be279031c0abb2d4875931b2af7610538")
+PINS["features55e9-iphone"]=("55e9c203fc58c5b94d3d951dad17c32d7f15a08f",40992359608,123858647168,12950483426,235576166,"f410536fc8b2732cc75feef43f3d12d583da06f5699b26a0b532f91aad10650d")
 p=argparse.ArgumentParser();p.add_argument("--input",choices=PINS,required=True);args=p.parse_args()
 source,run,jobid,aid,size,digest=PINS[args.input]
 out=Path("build/repair-apple-failure")/args.input;out.mkdir(parents=True,exist_ok=True)
@@ -73,13 +75,34 @@ for index,line in enumerate(annotation):
 attachments=out/"attachments"
 subprocess.run(["xcrun","xcresulttool","export","attachments","--path",str(bundle),"--output-path",str(attachments)],check=True)
 manifest=json.loads((attachments/"manifest.json").read_text())
+native_trees=[]
 for group in manifest:
- if not any(case in str(group.get("testIdentifier") or group.get("testName")) for case in ("BorrowedFont","NativeAnnotation")):continue
+ if not any(case in str(group.get("testIdentifier") or group.get("testName")) for case in ("BorrowedFont","NativeAnnotation","History")):continue
  for item in group["attachments"]:
   name=item.get("suggestedHumanReadableName","")
   if name.startswith("final-native-tree"):
    file=item["exportedFileName"];assert Path(file).name==file
-   print("SHARE_FINAL_NATIVE_TREE "+(attachments/file).read_text(errors="replace")[:26000],flush=True)
+   tree=(attachments/file).read_text(errors="replace")
+   native_trees.append(dict(test=group.get("testIdentifier") or group.get("testName"),name=name,text=tree))
+   print("NATIVE_FINAL_TREE "+json.dumps(native_trees[-1]),flush=True)
+(out/"native-trees.json").write_text(json.dumps(native_trees,indent=2))
+history=[];active=False
+for line in lines:
+ if "Test Case" in line and "History" in line and "started" in line:active=True
+ if active and "Test Case" in line and "History" not in line:active=False
+ if active:history.append(line)
+(out/"history-timeline.json").write_text(json.dumps(history,indent=2))
+print("HISTORY_BEGIN "+json.dumps(history[:100]),flush=True)
+print("HISTORY_END "+json.dumps(history[-240:]),flush=True)
+print("HISTORY_MILESTONES "+json.dumps([line for line in history if "Added attachment" in line or any(x in line for x in ("Tap ","Swipe ","Press ","error:","XCTAssert"))]),flush=True)
+previous=None
+for index,line in enumerate(history):
+ match=re.search(r"t =\s*([0-9.]+)s",line)
+ if not match:continue
+ current=float(match[1])
+ if previous is not None and current-previous[0]>=10:
+  print("HISTORY_IDLE_GAP "+json.dumps(dict(seconds=current-previous[0],context=history[max(0,previous[1]-5):index+12])),flush=True)
+ previous=(current,index)
 borrowed=[];active=False
 for line in lines:
  if "Test Case" in line and "testBorrowedFontRollbackOriginalExportAndReadOnlySnapshot" in line and "started" in line:active=True
