@@ -41,3 +41,39 @@ jobs:
             build/lease-evidence/receipt.json
             lease-stage/
           if-no-files-found: error
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {contents: read, actions: read}
+    env: {GH_TOKEN: '${{ github.token }}', PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Syntax checks (Actions-only)
+        run: |
+          python -m py_compile scripts/audit/claude_dot_lease_20261030.py tests/migration/windows_admission_lease_20261030/run.py
+          python -I -c "import ast,sys;[ast.parse(open(f,encoding='utf-8').read(),f) for f in sys.argv[1:]]" scripts/audit/claude_dot_lease_20261030.py tests/migration/windows_admission_lease_20261030/run.py
+      - name: Fetch pinned original run, attempt, artifact metadata and raw ZIP
+        run: |
+          set -euo pipefail
+          R=repos/${GITHUB_REPOSITORY}/actions
+          mkdir -p qual/raw
+          gh api $R/runs/41031464318 > qual/raw/run.json
+          gh api $R/runs/41031464318/attempts/1 > qual/raw/attempt.json
+          gh api $R/artifacts/12966217138 > qual/raw/artifact.json
+          gh api $R/artifacts/12966217138/zip > qual/raw/artifact.zip
+          ls -l qual/raw
+      - name: Qualify original artifact with negative controls
+        run: python -I scripts/audit/claude_dot_lease_20261030.py --qualify qual/raw --out qual/out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: claude-dot-lease-qualification-${{ github.sha }}
+          path: |
+            qual/out/qualification.json
+            qual/raw/run.json
+            qual/raw/attempt.json
+            qual/raw/artifact.json
+            qual/raw/artifact.zip
+          if-no-files-found: error
