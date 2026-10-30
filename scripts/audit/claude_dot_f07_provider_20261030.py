@@ -41,6 +41,7 @@ def main():
         subprocess.check_call([sys.executable, '-m', 'py_compile', *map(str, sorted(Path(C.ROOT / C.OWNED).glob('*.py'))), str(C.ROOT / C.AUDITOR)])
         subprocess.check_call([sys.executable, str(C.ROOT / C.OWNED / 'test_fp.py')])
         subprocess.check_call([sys.executable, str(C.ROOT / C.OWNED / 'test_retro.py')])
+        subprocess.check_call([sys.executable, str(C.ROOT / C.OWNED / 'test_system.py')])
     elif command == 'retro':
         import fp_retro
         fp_retro.main()
@@ -56,7 +57,10 @@ def main():
             raise
         from collections import Counter
         print('sqlite reference classification:', dict(Counter(r['status'] for r in report['sqlite_references'])))
-        print('pending (explicit, not waived):', json.dumps(report['pending'], sort_keys=True)[:1500])
+        if report.get('system_resolution'):
+            print('system import resolution:', json.dumps(report['system_resolution']['import_status_counts'], sort_keys=True))
+            print('system libraries recorded:', len(report['system_resolution']['libraries']))
+        print('pending (explicit, not waived):', json.dumps(report['pending'], sort_keys=True)[:3000])
         print('unselected sqlite candidate roles:', dict(Counter(c['role'] for r in report['sqlite_references'] for c in r['unselected_candidates'])))
         if not report['passed']:
             from collections import Counter

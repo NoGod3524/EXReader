@@ -251,9 +251,11 @@ def parse_dyn_syms(text):
             if re.match(r'^\s*\d+:\s+[0-9a-fA-F]+\s+\d+\s+\w+\s+\w+\s+\w+\s+\S+\s*$', line):
                 continue  # unnamed null-symbol rows carry no name
             _fail('unrecognised dynamic symbol line: ' + line[:120])
-        name, _, version = m.group('name').partition('@')
+        raw = m.group('name')
+        name, _, version = raw.partition('@')
         rows.append(dict(name=name, version=version.lstrip('@') or None, bind=m.group('bind'),
-                         ndx=m.group('ndx'), type=m.group('type')))
+                         ndx=m.group('ndx'), type=m.group('type'), vis=m.group('vis'),
+                         default='@' not in raw or '@@' in raw))
     return rows
 
 

@@ -12,6 +12,7 @@ import subprocess
 
 import fp_core as C
 import fp_maps as M
+import fp_system as S
 
 NM = ('llvm-nm', 'nm')
 
@@ -65,7 +66,7 @@ def collect(config, out):
         text = run([nm, '-A', '-g', archive], out / 'native' / ('archive-%d.nm.txt' % index))
         archives[norm(archive)] = {m: {k: sorted(v) for k, v in row.items()} for m, row in M.parse_nm_archive(text).items()}
     selected = [[norm(a), m] for a, m in parsed['members']]
-    pending = []
+    pending, system_resolution = [], None
     for loose in parsed['objects']:
         path = norm(loose)
         if not loose.endswith('.o'):
@@ -96,10 +97,21 @@ def collect(config, out):
         findings += more
         pending += waiting
         evidence['dynamic'] = dynamic
+        if platform == 'linux':
+            try:
+                header = S.parse_dynamic_header(run([readelf, '-W', '-d', image], out / 'native' / 'image-dynamic.txt'))
+                system = S.audit(image, header, dynamic, out / 'system')
+            except Exception as error:
+                # Resolution failure keeps every earlier pending item; it never resolves anything.
+                pending.append(dict(kind='system_library_resolution_failed', reason=str(error)))
+            else:
+                findings += system['findings']
+                pending = [p for p in pending if p['kind'] not in S.RESOLVED_PENDING_KINDS] + system['pending']
+                system_resolution = system
     else:
         pending.append(dict(kind='dynamic_symbol_versions_not_applicable_or_not_implemented', platform=platform))
     references = M.sqlite_reference_rows(_as_sets(evidence), canon)
-    result = dict(evidence['identity'], pending=pending, sqlite_references=references, image=evidence['image'], map=evidence['map'], findings=findings,
+    result = dict(evidence['identity'], pending=pending, system_resolution=system_resolution, sqlite_references=references, image=evidence['image'], map=evidence['map'], findings=findings,
                   passed=not findings, selected_members=len(parsed['members']), archives=len(archives))
     for flag in C.ACCEPT_FLAGS:
         result[flag] = False
