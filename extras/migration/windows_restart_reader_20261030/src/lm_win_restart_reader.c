@@ -30,11 +30,6 @@ struct lm_rr {
 };
 static void (*window_probe)(const WCHAR *lease_path);
 void lm_rr_set_window_probe(void (*fn)(const WCHAR *lease_path)){window_probe=fn;}
-static int pwrite_exact(HANDLE h,uint64_t off,const void *buf,size_t n){
- OVERLAPPED o;DWORD put=0;memset(&o,0,sizeof(o));
- o.Offset=(DWORD)off;o.OffsetHigh=(DWORD)(off>>32);
- return WriteFile(h,buf,(DWORD)n,&put,&o)&&put==(DWORD)n;
-}
 static int refuse(wr_error *e,const char *why){
  SetLastError(ERROR_INVALID_DATA);if(e){e->native=ERROR_INVALID_DATA;e->reason=why;}return 0;
 }
@@ -159,13 +154,22 @@ static int lease_verify(lm_rr *r,wr_error *e){
  * bytes captured under the deny-delete pin is then the only way to keep the
  * domain's PENDING isolation instead of silently opening shared admission. */
 static int lease_settle(lm_rr *r,wr_error *e){
- unsigned char hdr[RR_LEASE_SIZE];uint64_t gen,pending;
+ unsigned char hdr[RR_LEASE_SIZE];uint64_t gen,pending;HANDLE writeback;DWORD put=0;OVERLAPPED o;
  if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE)){native(e,"restart-lease-read");return 0;}
  if(!memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE))return 1;
  gen=read64(hdr+RR_GEN_OFFSET);pending=read64(hdr+RR_PENDING_OFFSET);
  if(gen==0&&pending==0&&r->gen_disk==0&&r->pending_disk==1&&header_ok(hdr,r->identity)){
-  if(!pwrite_exact(r->lease_file,0,r->lease_snapshot,RR_LEASE_SIZE)||
-     !FlushFileBuffers(r->lease_file)){native(e,"restart-lease-restore");return 0;}
+  /* The retained pin is deliberately read-only; the restore uses one narrow
+     writable handle opened under the exclusive lease and closed immediately. */
+  writeback=CreateFileW(r->lease_path,GENERIC_READ|GENERIC_WRITE,
+   FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+  if(writeback==INVALID_HANDLE_VALUE){native(e,"restart-lease-restore");return 0;}
+  memset(&o,0,sizeof(o));
+  if(!WriteFile(writeback,r->lease_snapshot,RR_LEASE_SIZE,&put,&o)||put!=RR_LEASE_SIZE||
+     !FlushFileBuffers(writeback)){
+   native(e,"restart-lease-restore");CloseHandle(writeback);return 0;
+  }
+  CloseHandle(writeback);
   if(!pread_exact(r->lease_file,0,hdr,RR_LEASE_SIZE)||
      memcmp(hdr,r->lease_snapshot,RR_LEASE_SIZE)){refuse(e,"restart-lease-restore");return 0;}
   r->lease_restored=1;return 2;
