@@ -1,7 +1,7 @@
 # EXReader Apple recovery checkpoint (not acceptance or a transfer)
 
-Snapshot updated: 2026-10-30 04:04 UTC / 2026-10-30 00:04 America/New_York (EDT).
-Focused completion independently verified by coordinator; full-suite running state reported by writer at 04:03 UTC.
+Snapshot updated: 2026-10-30 04:19 UTC / 2026-10-30 00:19 America/New_York (EDT), prepared for the 04:22 UTC hourly report.
+Focused completion independently verified by coordinator; full-suite state independently read by coordinator at 04:18:51 UTC.
 Purpose: hourly resumable evidence snapshot against context/quota interruption. Work continues; this is neither product completion nor an actual handoff.
 
 ## Ownership and resumable entry points
@@ -64,6 +64,15 @@ Prepared full-suite workflow template: .github/workflows/apple-sdk342-full-hando
 - Do not launch the whole unfinished closure_final_independent workflow with PENDING pins/zero runs/unrelated packages.
 - Mobile success does not prove macOS 39/39; shared helper changes require macOS validation too.
 
+## Full-run checkpoint at 04:18:51 UTC
+
+Run 41000723036 / attempt 1 / a91 source remains in progress, with no failures observed in this checkpoint. Seventeen jobs have materialized; two summary/authentication jobs have not yet materialized. This is not a passing full-suite verdict.
+- Both SDK jobs succeeded: simulator 123884230320, macOS 123884230525.
+- Native macOS 123885490913 and iPad 123885490853 running; native iPhone queued.
+- Supplemental organization iPhone 123885490935, sync iPhone 123885490969 and sync iPad 123885490980 running; other nine supplemental jobs queued (12 total).
+- Independent 19-ZIP audit prepared at 089c997c7206030477bd9981497cc6a5162bfd38. Static identity review found no blockers; this is NOT executed audit evidence. Published only to non-trigger codex/dot-apple-audit-review-20261030.
+- Local execution branch codex/dot-apple-authenticate-20261030 at the same SHA is in /data/workspace/exreader-dot-apple-authenticate-20261030, not pushed. Only after full run completes SUCCESS may its push trigger the pinned independent 19-ZIP audit. If full run fails, diagnose exact failed ZIPs first; do not launch the success audit.
+
 ## Frozen invariants and safety boundaries
 
 All execution uses the existing saved-login normal CLI through Desktop Commander lap25002 (d55d0477-84bb-4425-8708-5a3ecacce78b):
@@ -92,7 +101,7 @@ Actual work status at snapshot:
 - Apple writer: active / awaiting full run 41000723036, with independent 19-ZIP follow-through still required; retains implementation ownership.
 - Recovery document writer: active documentation only.
 - Helper freeze audit, supplemental matrix, source identity, runtime boundary and failure-retention audits: completed.
-- Full-workflow reviewer: reactivated at 04:00 UTC for qualified c66 full-wrapper review.
+- Full-workflow and independent-audit static reviewers: review completed; waiting for a new candidate or resulting evidence, not active implementation.
 - Coordinator handles integration of evidence, not shared-branch integration.
 Six available lanes are not six currently executing agents. Completed auditors must not be counted as live implementation.
 
@@ -101,7 +110,7 @@ Focused validation is complete. Remaining duration still cannot be reliably esti
 ## Existing 28-minute handshake
 
 User independently confirmed enabled task **6ae40da897ac81918ae3e90d91ee79ea**, every 28 minutes, first scheduled 2026-10-29 23:51 America/New_York = 2026-10-30 03:51 UTC. User deleted old local instabox-28 to avoid duplicates.
-Latest real periodic handshake completed 2026-10-30 03:50:35 UTC = Oct 29 23:50:35 EDT: get state running, runtime.ready true; pwd /data/home, exitCode 0, timedOut false. Coordinator verified this result; the scheduled 03:51 invocation arrived slightly early, so actual execution time is recorded separately.
+Latest real periodic handshake completed 2026-10-30 04:18:45 UTC = Oct 30 00:18:45 EDT: get state running, runtime.ready true; pwd /data/home, exitCode 0, timedOut false. Coordinator verified actual execution time and result; autosuspend remains 1800.
 autoSuspendAfterSeconds=1800 unchanged; Desktop Commander connection retained. The first periodic invocation is now confirmed by its actual result.
 Normal success stays quiet; notify only actual offline/pause/failure/timeout/login/CLI failure with last success time. A package download error is not proof the VM is offline. Do not use handshake for builds/tests/artifact processing.
 
