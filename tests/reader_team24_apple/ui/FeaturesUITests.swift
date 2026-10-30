@@ -12,7 +12,7 @@ final class FeaturesUITests: XCTestCase {
         // Query the actual SwiftUI role instead of traversing every remote
         // Files accessibility element after its controller is dismissed.
         if id == "features.scroll" { return app.scrollViews.matching(identifier: id).firstMatch }
-        if id == "features.share.native" { return app.otherElements.matching(identifier: id).firstMatch }
+        if id == "features.share.native" { return app.otherElements.matching(identifier: "ActivityListView").firstMatch }
         let labels: Set<String> = [
             "features.title", "features.status", "features.picker.error",
             "features.export.filename", "features.font.selected", "features.font.observation",
