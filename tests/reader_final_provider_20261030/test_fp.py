@@ -125,6 +125,15 @@ class Audit(unittest.TestCase):
         ev = evidence(); ev['selected'].remove(['/opt/sdk/lib/libreader_sdk.a', 'entry.o'])
         self.assertIn('sdk_entry_without_selected_sdk_owner', kinds(ev))
 
+    def test_sqlite_reference_needs_product_definer(self):
+        ev = evidence(); ev['selected'].remove(['/opt/prod/lib/libEXReaderProductCatalog.a', 'catalog.o'])
+        self.assertIn('sqlite_reference_without_product_definer', kinds(ev))
+
+    def test_unselected_sdk_vendor_sqlite_is_not_a_provider(self):
+        ev = evidence()
+        ev['archives']['/opt/sdk/lib/libreader_sdk.a']['vendor.o'] = dict(defined={'sqlite3_open_v2'}, weak=set(), undefined=set())
+        self.assertEqual(kinds(ev), [])
+
     def test_apple_underscore_canon(self):
         ev = evidence()
         row = ev['archives']['/opt/prod/lib/libEXReaderProductCatalog.a']['catalog.o']
