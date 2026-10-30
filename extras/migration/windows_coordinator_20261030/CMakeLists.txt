@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Standalone full49 migration coordinator. No SDK or host dependency.
+# Standalone full49 migration coordinator. No SDK, lm_main or host dependency.
 cmake_minimum_required(VERSION 3.16)
 project(EXReaderMigrationCoordinator20261030 LANGUAGES C)
 if(MSVC)
