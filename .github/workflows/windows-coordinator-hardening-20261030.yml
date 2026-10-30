@@ -1,0 +1,88 @@
+name: Windows coordinator hardening 20261030
+on:
+  push:
+    branches: [codex/windows-coordinator-hardening-20261030]
+    paths:
+      - extras/migration/windows_coordinator_hardening_20261030/**
+      - tests/migration/windows_coordinator_hardening_20261030/**
+      - .github/workflows/windows-coordinator-hardening-20261030.yml
+  workflow_dispatch:
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  hardening:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Additive scope admission
+        run: |
+          set -euo pipefail
+          base=ddfe90a083da5afad168051e30389105dd08cdba
+          paths=$(git diff --name-only "$base" HEAD || true)
+          if [ -z "$paths" ]; then paths=$(git diff --name-only "$base~1" HEAD); fi
+          echo "$paths"
+          python - "$paths" <<'PY'
+          import sys
+          allowed=('extras/migration/windows_coordinator_hardening_20261030/',
+                   'tests/migration/windows_coordinator_hardening_20261030/',
+                   '.github/workflows/windows-coordinator-hardening-20261030.yml')
+          bad=[p for p in sys.argv[1].splitlines() if p and not p.startswith(allowed)]
+          assert not bad, bad
+          PY
+      - name: Build and install the hardening library
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration/windows_coordinator_hardening_20261030 -B build/lib -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/lib --config Release
+          cmake --install build/lib --config Release --prefix "$GITHUB_WORKSPACE/stage"
+      - name: Build installed-only consumer and run the hardening checks
+        run: |
+          set -euo pipefail
+          cmake -S tests/migration/windows_coordinator_hardening_20261030 -B build/check -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/check --config Release
+          EXE=$(find build/check -type f \( -name coordinator-hardening-check -o -name coordinator-hardening-check.exe \) | head -1)
+          "$EXE" | tee evidence-native.json
+          python - <<'PY'
+          import json,os,pathlib
+          r=json.loads(pathlib.Path('evidence-native.json').read_text())
+          assert r['source']==os.environ['GITHUB_SHA'],('source',r)
+          assert r['passed'] is True and r['failed']==0 and r['checks']>=30,(r,)
+          print('hardening checks:',r['checks'])
+          PY
+      - name: Evidence
+        if: always()
+        run: |
+          set -uo pipefail
+          mkdir -p evidence
+          LIB=$(find stage/lib -type f | head -1)
+          python - "$LIB" <<'PY'
+          import hashlib,json,os,pathlib,sys
+          lib=pathlib.Path(sys.argv[1])
+          native=pathlib.Path('evidence-native.json')
+          body=json.loads(native.read_text()) if native.exists() else {}
+          receipt=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],
+                       attempt=os.environ['GITHUB_RUN_ATTEMPT'],os=os.environ['RUNNER_OS'],
+                       crate='exreader-migration-coordinator-hardening',
+                       library=lib.name,library_bytes=lib.stat().st_size,
+                       library_sha256=hashlib.sha256(lib.read_bytes()).hexdigest(),
+                       native=body,engine_mock_only=True,
+                       real_coordinator_wiring=False,full_p0_acceptance=False)
+          pathlib.Path('evidence/receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          PY
+          cp evidence-native.json evidence/ 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coordinator-hardening-${{ matrix.os }}-${{ github.sha }}
+          path: evidence/
+          if-no-files-found: error
