@@ -192,7 +192,10 @@ def body(out):
  mutation("drop-refusal","recovery-integration/evidence.json",lambda d:d["cases"].pop(),"refusal-8")
  mutation("duplicate-refusal","recovery-integration/evidence.json",lambda d:d["cases"].__setitem__(1,d["cases"][0]),"duplicate-refusal")
  def _duplicate_manifest_key(d):
-  files=d["results"][0]["files"];key=next(iter(files))
+  files=d["results"][0]["files"]
+  nested=[k for k in files if "\\" in k or "/" in k]
+  need(bool(nested),"duplicate-control-needs-nested-key")
+  key=nested[0]
   files[key.replace("/","\\") if "/" in key else key.replace("\\","/")]=files[key]
  mutation("duplicate-manifest-key",b,_duplicate_manifest_key,"duplicate-manifest-key")
  for short,stem in (("bridge","windows-record-bridge"),("publish","windows-publish"),("record","windows-record")):
@@ -200,10 +203,20 @@ def body(out):
   reject("tamper-built-"+short,w,"built-installed:"+short)
  # Deep byte mutations update only the producer manifest, so semantic checks—not
  # the outer archive hash or manifest check—must reject each corruption.
+ def set_member(files,leaf,meta):
+  """Replace the existing key that normalises to this member path, in place.
+  Adding a forward-slash alias next to a producer's backslash key would trip the
+  duplicate-manifest-key rule first and hide the semantic rule under test."""
+  keys=[k for k in files if k.replace("\\","/")==leaf]
+  need(len(keys)==1,"member-key-bind:"+leaf)
+  files[keys[0]]=meta
  def deep(name,mode,leaf,edit,rule):
   w=dict(v);k=one(w,"bridge-evidence/"+mode+"/"+leaf);w[k]=edit(w[k])
   receipt=js(read(w,b));idx=["normal","before","record","published","after"].index(mode)
-  receipt["results"][idx]["files"][leaf]={"bytes":len(w[k]),"sha256":sha(w[k])};w[one(w,b)]=json.dumps(receipt).encode()
+  files=receipt["results"][idx]["files"];before=sorted(files)
+  set_member(files,leaf,{"bytes":len(w[k]),"sha256":sha(w[k])})
+  need(sorted(files)==before,"manifest-key-added")
+  w[one(w,b)]=json.dumps(receipt).encode()
   reject(name,w,rule)
  deep("payload-bytes","normal","published.bin",lambda x:b"wrong\n","payload")
  deep("reserved-byte","before","private/bridge-slot-00.rec",lambda x:b"x"+x[1:],"reservation")
