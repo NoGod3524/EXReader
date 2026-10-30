@@ -13,7 +13,7 @@ root保留共同整合分支、C1/C2/C3/Windows合入、最终总体验证与总
 当前run40992359608：
 - macOS SDK job123857527698、simulator SDK123857527508已success。
 - iPad原5 job123858647139已failure：借用字体/分享、目录取消、history、null/concurrent通过，annotation240s超时。原ZIP12950219035/180602163B/SHA25668e47e9213e87b1d95c65b100603863be279031c0abb2d4875931b2af7610538。
-- iPhone原5 job123858647168请接手时刷新，不能把本包写入时的运行状态当最终结论。
+- iPhone原5 job123858647168已failure：借用字体/分享、目录取消、null/concurrent通过；annotation240s超时、history失败193s。原ZIP12950483426/235576166B/SHA256f410536fc8b2732cc75feef43f3d12d583da06f5699b26a0b532f91aad10650d。两端失败都须在Actions原ZIP里定位最后动作/首断言，保留实际结果。
 运行链接：https://github.com/NoGod3524/EXReader/actions/runs/40992359608
 
 源码/Git/docs必须通过正常保存登录的官方InstaBox CLI：
@@ -22,7 +22,7 @@ npx --yes instabox@0.8.52 exec m_agqxv2s72g5vwdtsifu5cnmml4 --json --cwd /data/w
 不能另建/替换机器，不能改autoSuspend1800；root已有instabox-28维护，不重复建监控。
 须使用用户已连接电脑上的正常CLI通路，不复制/读取/导出登录文件或凭据。若Dot无法访问此通路，先明确报告这一执行阻塞，不换执行器绕限制、不创建Claude云任务。
 
-先向用户确认接手的任务范围、当前实际HEAD/运行状态及InstaBox通路，写一个可供root从GitHub读取的接手回执。root确认接手后停止Apple源码修改。此前root已在此分支工作，不得reset/force-push历史或重启其已停worker。
+先向用户确认接手的任务范围、当前实际HEAD/运行状态及InstaBox通路，写一个可供root从GitHub读取的接手回执。任务实际发送后root暂停Apple源码写入，取得Dot接手/通路回执后登记已接手执行；未发送时不声称委派完成。此前root已在此分支工作，不得reset/force-push历史或重启其已停worker。
 
 ## 可修改范围
 examples/apple/HostWave3Views.swift及必要最小Apple宿主修复；
