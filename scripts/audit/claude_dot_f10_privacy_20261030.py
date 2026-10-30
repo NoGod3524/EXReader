@@ -302,8 +302,42 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def run_identity() -> dict:
+    """Source/run/attempt/job/platform identity; every platform report binds to it."""
+    image = os.environ.get("ImageOS")
+    return {"repository": os.environ.get("GITHUB_REPOSITORY"), "source_sha": os.environ.get("GITHUB_SHA"),
+            "ref": os.environ.get("GITHUB_REF"), "run_id": os.environ.get("GITHUB_RUN_ID"),
+            "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"), "job": os.environ.get("GITHUB_JOB"),
+            "host_os": os.environ.get("RUNNER_OS"), "host_arch": os.environ.get("RUNNER_ARCH"),
+            "image": (image + " " + os.environ.get("ImageVersion", "")) if image else None,
+            "platform": platform.platform(), "python": sys.version.split()[0]}
+
+
+def pycompile(files: list) -> dict:
+    """Byte-compile with doraise; the .pyc goes to a throw-away directory, never into the tree."""
+    import py_compile
+    scratch = Path(tempfile.mkdtemp(prefix="f10-pyc-"))
+    results = []
+    try:
+        for n, f in enumerate(files):
+            try:
+                py_compile.compile(f, cfile=str(scratch / f"{n}.pyc"), doraise=True)
+                results.append({"file": f, "ok": True})
+            except py_compile.PyCompileError as exc:
+                results.append({"file": f, "ok": False, "error": str(exc)[:300]})
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+    return {"identity": run_identity(), "files": results, "gate_passed": bool(results) and all(r["ok"] for r in results)}
+
+
+PLATFORM_GATES = {
+    "linux": ["pycompile_linux", "scope", "selftest", "static", "dynamic_linux"],
+    "windows": ["pycompile_windows", "dynamic_windows"],
+}
+
+
 def summary(reports: Path, out: Path) -> int:
-    names = ["scope", "selftest", "static", "dynamic_linux"]
+    names = [n for gates in PLATFORM_GATES.values() for n in gates]
     loaded, missing = {}, []
     for name in names:
         p = reports / f"{name}.json"
@@ -311,29 +345,37 @@ def summary(reports: Path, out: Path) -> int:
             loaded[name] = json.loads(p.read_text())
         else:
             missing.append(name)
-    verdict = {n: bool(r.get("gate_passed")) for n, r in loaded.items()}
-    identity = {"repository": os.environ.get("GITHUB_REPOSITORY"), "source_sha": os.environ.get("GITHUB_SHA"),
-                "ref": os.environ.get("GITHUB_REF"), "run_id": os.environ.get("GITHUB_RUN_ID"),
-                "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"), "job": os.environ.get("GITHUB_JOB"),
-                "runner_os": os.environ.get("RUNNER_OS"), "runner_arch": os.environ.get("RUNNER_ARCH"),
-                "image": os.environ.get("ImageOS") + " " + os.environ.get("ImageVersion", "") if os.environ.get("ImageOS") else None,
-                "platform": platform.platform(), "python": sys.version.split()[0]}
+    identity = run_identity()
+    verdict, mismatched = {}, []
+    for n, r in loaded.items():
+        ok = bool(r.get("gate_passed"))
+        bound = r.get("identity")
+        if bound is not None and any(bound.get(k) != identity[k] for k in ("source_sha", "run_id", "run_attempt")):
+            ok = False  # never fold reports from a different source/run/attempt
+            mismatched.append(n)
+        verdict[n] = ok
+    platforms = {plat: {"gates": {n: verdict.get(n, False) for n in gates},
+                        "passed": all(verdict.get(n, False) for n in gates),
+                        "bound_identity": {n: loaded[n].get("identity") for n in gates if n in loaded and loaded[n].get("identity")}}
+                 for plat, gates in PLATFORM_GATES.items()}
     result = {
-        "identity": identity, "reports_missing": missing, "gates": verdict,
-        "all_gates_passed": not missing and all(verdict.values()),
+        "identity": identity, "reports_missing": missing, "identity_mismatch": mismatched, "gates": verdict,
+        "platforms": platforms,
+        "all_gates_passed": not missing and not mismatched and all(verdict.values()),
         "report_sha256": {n: sha256(reports / f"{n}.json") for n in loaded},
         "established_for_this_source_only": [
-            "[DYNAMIC PROOF] Linux Secret Service (gnome-keyring, private D-Bus, temporary HOME/TMPDIR) round-trip with synthetic canaries leaves no canary in any encoding on disk or in probe output",
-            "[DYNAMIC PROOF] replaced and deleted secrets do not persist on disk; TMPDIR is empty after each phase",
-            "[DYNAMIC PROOF] locked collection and absent service return UNAVAILABLE/IO with no plaintext fallback",
+            "[DYNAMIC PROOF, LINUX] Secret Service (gnome-keyring, private D-Bus, temporary HOME/TMPDIR) round-trip with synthetic canaries leaves no canary in any encoding on disk or in probe output; replaced/deleted secrets do not persist; TMPDIR empty after each phase; locked collection and absent service refuse with no plaintext fallback",
+            "[DYNAMIC PROOF, WINDOWS] Credential Manager (CredWrite/CredRead/CredDelete through the installed module) round-trip with synthetic canaries: target visible to cmdkey only while stored, no canary in sandbox files/names/streams or in credential-store files changed during the run, TEMP empty after each phase, a real refusal mechanism (low integrity, S4U task or VaultSvc stopped) exercised, final store clean",
             "[TEXTUAL ONLY] static inventory of temp-file creation sites and single/multi-line credential-named log arguments (no allowlists); says nothing about runtime behaviour or about code the patterns do not match",
             "[TEXTUAL ONLY] detector fixtures: synthetic positive and negative multi-line logging sources are classified as expected"],
         "not_established": [
-            "Windows, macOS, iOS and Android credential stores and temp cleanup (not exercised by this workflow)",
-            "application-level flows (WebDAV/OPDS accounts, sync, export, crash/kill paths) beyond the credential module",
-            "full F10, full P0 or any acceptance count; evidence binds to the single source/run/attempt above"]}
+            "macOS, iOS and Android credential stores and temp cleanup (not exercised by this workflow)",
+            "Windows/Linux application flows (WebDAV/OPDS accounts, sync, export, crash/kill paths) beyond the credential module and its temp files",
+            "the Apple wave3-review temporary directory finding stays open (static gate), nothing suppresses it",
+            "full F10, full P0 or any acceptance count; Windows and Linux evidence are reported separately and bind to the single source/run/attempt above"]}
     out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
-    print(json.dumps({"gates": verdict, "missing": missing, "all": result["all_gates_passed"]}))
+    print(json.dumps({"platforms": {k: v["passed"] for k, v in platforms.items()}, "gates": verdict,
+                      "missing": missing, "identity_mismatch": mismatched, "all": result["all_gates_passed"]}))
     step = os.environ.get("GITHUB_STEP_SUMMARY")
     if step:
         with open(step, "a") as f:
@@ -345,23 +387,28 @@ def summary(reports: Path, out: Path) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("scope", "selftest", "static", "summary"):
+    for name in ("scope", "selftest", "static", "summary", "pycompile"):
         p = sub.add_parser(name)
         p.add_argument("--repo", default=".")
         p.add_argument("--out", required=True)
     sub.choices["scope"].add_argument("--expect-sha")
     sub.choices["summary"].add_argument("--reports")
+    sub.choices["pycompile"].add_argument("--files", nargs="+", required=True)
     a = ap.parse_args()
     out = Path(a.out)
     repo = Path(a.repo).resolve()
     if a.cmd == "summary":
         return summary(Path(a.reports), out)
     report = {"scope": lambda: scope(repo, a.expect_sha if hasattr(a, "expect_sha") else None),
-              "selftest": selftest, "static": lambda: static_audit(repo)}[a.cmd]()
+              "selftest": selftest, "static": lambda: static_audit(repo),
+              "pycompile": lambda: pycompile(a.files)}[a.cmd]()
     report["subcommand"] = a.cmd
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     print(json.dumps({k: v for k, v in report.items() if k in ("subcommand", "gate_passed")}))
+    if a.cmd == "pycompile":
+        for r in report["files"]:
+            print(("PYCOMPILE OK " if r["ok"] else "PYCOMPILE FAIL ") + r["file"] + ("" if r["ok"] else " " + r["error"]))
     if a.cmd == "static":
         print(f"temp sites={len(report['temp_sites'])} unproven={len(report['temp_sites_unproven'])} "
               f"log candidates={len(report['credential_log_candidates'])}")

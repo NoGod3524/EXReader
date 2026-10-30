@@ -154,7 +154,8 @@ class Run:
         user, home = getpass.getuser(), str(Path.home())
         report = {
             "gate_passed": bool(self.phases) and all(p["ok"] for p in self.phases),
-            "evidence_class": "dynamic-proof (executed against a real Secret Service with synthetic canaries)",
+            "identity": self.aud.run_identity(),
+            "evidence_class":"dynamic-proof (executed against a real Secret Service with synthetic canaries)",
             "platform": platform.platform(), "host_os": os.environ.get("RUNNER_OS"),
             "provider": "libsecret -> gnome-keyring-daemon (private dbus-daemon, temporary HOME/TMPDIR)",
             "probe_sha256": digest(self.probe), "module_library": lib.name if lib else None,

@@ -10,6 +10,7 @@
 
 static const char *NS = "org.exreader.f10.privacy";
 static const char *ACCOUNT = "3f10c0de-0000-4000-8000-000000000a01";
+static const char FIXED_SECRET[] = "f10-synthetic-fixed-canary-0001";
 
 static int nibble(int c) {
   if (c >= '0' && c <= '9') return c - '0';
@@ -66,10 +67,14 @@ int main(int argc, char **argv) {
   const char *mode = argc == 2 ? argv[1] : "";
   int ok = 0;
   if (!*mode) {
-    fprintf(stderr, "usage: f10-probe <put|verify|absent|delete|unavailable|args>\n");
+    fprintf(stderr, "usage: f10-probe <put|verify|absent|delete|unavailable|unavailable-fixed|args>\n");
     return 2;
   }
-  if (strcmp(mode, "absent") && strcmp(mode, "delete") && strcmp(mode, "args") &&
+  if (!strcmp(mode, "unavailable-fixed")) {  /* no stdin/env in an S4U task: fixed synthetic value */
+    memcpy(secret, FIXED_SECRET, secret_length = sizeof FIXED_SECRET - 1);
+    mode = "unavailable";
+  }
+  if (!secret_length && strcmp(mode, "absent") && strcmp(mode, "delete") && strcmp(mode, "args") &&
       !decode(getenv("F10_SECRET_HEX"), secret, sizeof secret, &secret_length)) {
     fprintf(stderr, "F10_SECRET_HEX missing or invalid\n");
     return 2;

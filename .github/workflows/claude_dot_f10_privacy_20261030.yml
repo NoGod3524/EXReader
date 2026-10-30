@@ -12,6 +12,7 @@ defaults:
 env:
   F10_BASE: c46f7036d81f88d8529871590f780b5430630e47
   AUDITOR: scripts/audit/claude_dot_f10_privacy_20261030.py
+  F10_TESTS: tests/reader_final_privacy_20261030
 jobs:
   linux:
     name: f10-privacy (ubuntu-22.04)
@@ -21,12 +22,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Byte-compile every Python file of this package
+        run: python3 -I "$AUDITOR" pycompile --out build/f10/reports/pycompile_linux.json --files "$AUDITOR" "$F10_TESTS/run_dynamic.py" "$F10_TESTS/run_dynamic_windows.py"
       - name: Scope guard (exact base, owned paths only)
+        if: always()
         run: python3 -I "$AUDITOR" scope --repo . --expect-sha "$GITHUB_SHA" --out build/f10/reports/scope.json
       - name: Detector self-test (planted leaks in every encoding must be found)
         if: always()
         run: python3 -I "$AUDITOR" selftest --repo . --out build/f10/reports/selftest.json
-      - name: Static production-source audit (temp-file sites, credential logging)
+      - name: Static production-source audit (temp-file sites, credential logging) - textual only
         if: always()
         run: python3 -I "$AUDITOR" static --repo . --out build/f10/reports/static.json
       - name: Install Secret Service, D-Bus and libsecret
@@ -44,20 +48,84 @@ jobs:
           cmake -S extras/credentials -B build/module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/stage" 2>&1 | tee build/f10/logs/module-configure.log
           cmake --build build/module 2>&1 | tee build/f10/logs/module-build.log
           cmake --install build/module 2>&1 | tee build/f10/logs/module-install.log
-          cmake -S tests/reader_final_privacy_20261030/consumer -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/stage" 2>&1 | tee build/f10/logs/probe-configure.log
+          cmake -S "$F10_TESTS/consumer" -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/stage" 2>&1 | tee build/f10/logs/probe-configure.log
           cmake --build build/probe 2>&1 | tee build/f10/logs/probe-build.log
       - name: Dynamic run against the real Secret Service with synthetic canaries
         if: always() && steps.build.outcome == 'success'
         run: |
-          python3 -I tests/reader_final_privacy_20261030/run_dynamic.py --probe build/probe/f10-probe --auditor "$AUDITOR" \
+          python3 -I "$F10_TESTS/run_dynamic.py" --probe build/probe/f10-probe --auditor "$AUDITOR" \
             --module-prefix build/stage --out build/f10/reports/dynamic_linux.json
-      - name: Bind identities and fold reports
-        if: always()
-        run: python3 -I "$AUDITOR" summary --reports build/f10/reports --out build/f10/reports/summary.json
-      - name: Preserve reports
+      - name: Preserve Linux reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: claude-dot-f10-privacy-linux-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f10/reports/
+          if-no-files-found: error
+
+  windows:
+    name: f10-privacy (windows-2022)
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Byte-compile every Python file of this package
+        run: python3 -I "$AUDITOR" pycompile --out build/f10/reports/pycompile_windows.json --files "$AUDITOR" "$F10_TESTS/run_dynamic.py" "$F10_TESTS/run_dynamic_windows.py"
+      - name: Enter Windows native compiler environment
+        if: always()
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the unchanged credentials module, then the F10 probe
+        id: build
+        if: always()
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          mkdir -p build/f10/logs
+          cmake -S extras/credentials -B build/module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/stage" 2>&1 | tee build/f10/logs/module-configure.log
+          cmake --build build/module --config Release 2>&1 | tee build/f10/logs/module-build.log
+          cmake --install build/module --config Release 2>&1 | tee build/f10/logs/module-install.log
+          cmake -S "$F10_TESTS/consumer" -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/stage" 2>&1 | tee build/f10/logs/probe-configure.log
+          cmake --build build/probe --config Release 2>&1 | tee build/f10/logs/probe-build.log
+      - name: Dynamic run against the real Windows Credential Manager with synthetic canaries
+        if: always() && steps.build.outcome == 'success'
+        run: |
+          python3 -I "$F10_TESTS/run_dynamic_windows.py" --probe build/probe/f10-probe.exe --auditor "$AUDITOR" \
+            --module-prefix build/stage --out build/f10/reports/dynamic_windows.json
+      - name: Preserve Windows reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-dot-f10-privacy-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f10/reports/
+          if-no-files-found: error
+
+  summary:
+    name: f10-privacy (bind Windows + Linux evidence)
+    runs-on: ubuntu-22.04
+    needs: [linux, windows]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: claude-dot-f10-privacy-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f10/collected
+          merge-multiple: true
+      - name: Bind identities and fold per-platform reports (fails closed on any missing report)
+        run: python3 -I "$AUDITOR" summary --reports build/f10/collected --out build/f10/summary/summary.json
+      - name: Preserve summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-dot-f10-privacy-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f10/summary/
           if-no-files-found: error
