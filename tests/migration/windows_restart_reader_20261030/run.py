@@ -100,9 +100,11 @@ refused_lease('lease-missing',lambda q:q.unlink(),'restart-lease-missing',-1)
 refused_lease('lease-empty',lambda q:q.write_bytes(b''),'restart-lease-empty',0)
 refused_lease('lease-truncated',lambda q:q.write_bytes(q.read_bytes()[:40]),'restart-lease-size',40)
 refused_lease('lease-grow',lambda q:q.write_bytes(q.read_bytes()+bytes(40)),'restart-lease-size',120)
-refused_lease('lease-header',lambda q:q.write_bytes((b'0' if q.read_bytes()[10:11]!=b'0' else b'1')+q.read_bytes()[11:]),'restart-lease-header',80)
 def _write64(q,off,value):
  raw=bytearray(q.read_bytes());raw[off:off+8]=struct.pack('<Q',value);q.write_bytes(bytes(raw))
+def _header_edit(q):
+ raw=bytearray(q.read_bytes());raw[10]=ord('0') if raw[10:11]!=b'0' else ord('1');q.write_bytes(bytes(raw))
+refused_lease('lease-header',_header_edit,'restart-lease-header',80)
 refused_lease('lease-generation',lambda q:_write64(q,64,9),'restart-lease-generation',80)
 refused_lease('lease-pending',lambda q:_write64(q,72,0),'restart-lease-pending',80)
 # A failed wr_prepare must not leak the ancestor pins it already holds: the
