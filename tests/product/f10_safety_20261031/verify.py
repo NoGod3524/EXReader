@@ -26,6 +26,12 @@ def main():
     a=argparse.ArgumentParser();a.add_argument('--input',type=Path,required=True);a.add_argument('--output',type=Path,required=True);args=a.parse_args()
     assert os.environ.get('GITHUB_ACTIONS')=='true'
     root=args.input;out=args.output;out.mkdir(parents=True,exist_ok=True)
+    required=[root/'evidence/index.json',root/'probe/f10-probe']+[root/'evidence'/n/'observation.json' for n in NAMES]
+    missing=[str(p.relative_to(root)) for p in required if not p.is_file()]
+    if missing:
+        result={'source':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'evidence_consistent':False,'safety_passed':False,'full_f10_complete':False,'errors':['producer evidence missing'],'missing':missing,'negative_controls':[]}
+        (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+        print(json.dumps(result));return 1
     index=json.loads((root/'evidence/index.json').read_text())
     rows=[json.loads((root/'evidence'/n/'observation.json').read_text()) for n in NAMES]
     program=(root/'probe/f10-probe').read_bytes()
