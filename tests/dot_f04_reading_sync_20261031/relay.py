@@ -198,3 +198,22 @@ def input_metadata(state):
                       head=progress["id"])
     return dict(original_sha256=original["sha256"], original_bytes=original["bytes"],
                 book_identity=key, location=translated, remote_title=book["payload"]["title"])
+
+
+def finish_cleanup(actions, report, destination):
+    """Attempt every independent cleanup; do not replace an active test failure."""
+    active_failure = sys.exc_info()[0] is not None
+    failures = []
+    for label, action in actions:
+        try:
+            action()
+        except BaseException as error:
+            failures.append({"action": label, "error": type(error).__name__ + ": " + str(error)})
+    report["cleanup_errors"] = failures
+    if failures: report["passed"] = False
+    try:
+        Path(destination).write_text(json.dumps(report, ensure_ascii=False, indent=2))
+    except BaseException as error:
+        failures.append({"action": "write-result", "error": type(error).__name__ + ": " + str(error)})
+    if failures and not active_failure:
+        raise RuntimeError("F04 cleanup failed: " + json.dumps(failures))

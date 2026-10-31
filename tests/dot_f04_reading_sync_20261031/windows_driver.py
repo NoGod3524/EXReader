@@ -6,7 +6,7 @@ import sqlite3, sys
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from relay import start, save, identity, trust_desktop, untrust_desktop, retained_rows
+from relay import start, save, identity, trust_desktop, untrust_desktop, retained_rows, finish_cleanup
 
 def module(name, path):
     spec = importlib.util.spec_from_file_location(name, ROOT / path)
@@ -123,11 +123,14 @@ def main():
         report["passed"] = True
         save(dav, out, args.phase, report); dav = None
     finally:
-        if app: app.close()
+        actions = []
+        if app: actions.append(("close-actual-app", app.close))
         if dav:
-            (out / "requests.json").write_text(json.dumps(dav.requests, indent=2))
-            dav.server.shutdown(); dav.server.server_close()
-        if trust: untrust_desktop(trust)
-        (out / "key.pem").unlink(missing_ok=True)
-        (out / "result.json").write_text(json.dumps(report, ensure_ascii=False, indent=2))
+            actions.extend([
+                ("save-requests", lambda: (out / "requests.json").write_text(json.dumps(dav.requests, indent=2))),
+                ("stop-fixture", dav.server.shutdown),
+                ("close-fixture", dav.server.server_close)])
+        if trust: actions.append(("remove-fixture-trust", lambda: untrust_desktop(trust)))
+        actions.append(("remove-fixture-key", lambda: (out / "key.pem").unlink(missing_ok=True)))
+        finish_cleanup(actions, report, out / "result.json")
 if __name__ == "__main__": main()
