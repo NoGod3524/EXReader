@@ -21,10 +21,15 @@ def analyze(folder, entry, P):
     frames=[r for r in native if r["kind"]=="frame"]
     P.need([r["index"] for r in frames]==list(range(1,len(frames)+1)) and len(frames)==last["frames"],"callback accounting")
     images={};loaded_name=None;pixels=None;changed={119:[],123:[]};invalid={119:0,123:0};previous={};whole=None
-    previous_time=-1;whole_changes=0;phase=[];callback_lags=[];uniform={119:[],123:[]}
+    previous_time=-1;whole_changes=0;phase=[];callback_lags=[];uniform={119:[],123:[]};acquire_ms=[];acquire_lags=[]
     for r in frames:
         P.need(first["qpc"]<=r["callback_qpc"]<=r["copy_qpc"]<=r["map_start_qpc"]<=r["map_end_qpc"]<=
                r["readback_finished_qpc"]<=last["qpc"],"readback chronology")
+        acquisition=[r.get(k) for k in ("callback_entry_qpc","acquire_begin_qpc","acquire_end_qpc")]
+        if any(v is not None for v in acquisition):
+            P.need(all(isinstance(v,int) for v in acquisition) and first["qpc"]<=acquisition[0]<=acquisition[1]<=acquisition[2]==r["callback_qpc"],"frame acquisition chronology")
+            acquire_ms.append((acquisition[2]-acquisition[1])*1000/freq)
+            acquire_lags.append(acquisition[2]*1000/freq-r["system_relative_100ns"]/10000)
         native_time=r["system_relative_100ns"]
         P.need(isinstance(native_time,int) and 0<native_time and previous_time<native_time,"native timestamp sequence")
         previous_time=native_time
@@ -76,6 +81,9 @@ def analyze(folder, entry, P):
             "invalid_regions":invalid,"uniform_regions":uniform,"images":images,"readback_ms":phase,"callback_lag_ms":callback_lags,
             "timestamps_after_callback":sum(value<0 for value in callback_lags),
             "native_timestamp_order_confirmed":all(value>=0 for value in callback_lags),
+            "acquisition_qpc_available_frames":len(acquire_ms),"acquisition_ms":acquire_ms,
+            "timestamps_after_acquire_end":sum(v<0 for v in acquire_lags) if len(acquire_ms)==len(frames) else None,
+            "timestamp_comparison":"raw QPC and SystemRelativeTime; no estimated offset or product-frame inference",
             "frame_census_complete":False,"application_paint_generation_bound":False,
             "frame_budget_measured":False,"physical_scanout_proven":False,"f08_accepted":False}
     P.save(folder/"analysis.json",result);return result

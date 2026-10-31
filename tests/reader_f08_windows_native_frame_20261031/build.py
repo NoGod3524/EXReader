@@ -3,7 +3,7 @@ import importlib.util,json,os,subprocess,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 BASE="8a4f7f90b33142ccc4dfb4722c8c99a8f728eac0"
-FILES={"examples/reader.c","apps/reader/desktop/windows_shelf.inc",
+FILES={"src/library.c","tests/reader_f08_windows_native_frame_20261031/library_journal.c","examples/reader.c","apps/reader/desktop/windows_shelf.inc",
  "tests/reader_f08_window_capture_20261031/observer.cpp",".github/workflows/f08-window-capture-20261031.yml",
  "apps/reader/desktop/catalog_sdk.c","apps/reader/desktop/catalog_sdk.h","apps/reader/desktop/windows_catalog.inc",
  "apps/reader/desktop/windows_feature_integration.cmake","tests/reader_f08_windows_product_20261031/build.py",
@@ -23,9 +23,9 @@ def main():
  B.F08_NATIVE_REVIEW_OPTIONS=["-DEXR_WINDOWS_FRAME_REVIEW=ON","-DEXR_READER_FIXTURES="+(ROOT/"tests/fixtures").as_posix()]
  try:
   B.build()
-  checks=subprocess.run(["cmake","--build",str(B.OUT/"host"),"--target","reader-desktop-catalog-check","reader-native-catalog-check","reader-native-shelf-check","reader-native-organization-check","--parallel","4"],capture_output=True,timeout=120)
+  checks=subprocess.run(["cmake","--build",str(B.OUT/"host"),"--target","reader-desktop-catalog-check","reader-native-catalog-check","reader-native-shelf-check","reader-native-organization-check","f08-library-source-check","f08-library-journal-check","--parallel","4"],capture_output=True,timeout=120)
   (B.EVIDENCE/"catalog-check-build.log").write_bytes(checks.stdout+checks.stderr);B.need(checks.returncode==0,"native catalog checks build")
-  checks=subprocess.run(["ctest","--test-dir",str(B.OUT/"host"),"-R","desktop-(public-sdk-catalog|native-catalog|bidirectional-shelf|organization-views)","--output-on-failure"],capture_output=True,timeout=120)
+  checks=subprocess.run(["ctest","--test-dir",str(B.OUT/"host"),"-R","desktop-(public-sdk-catalog|native-catalog|bidirectional-shelf|organization-views)|f08-library-(source|journal)","--output-on-failure"],capture_output=True,timeout=120)
   (B.EVIDENCE/"catalog-checks.log").write_bytes(checks.stdout+checks.stderr);B.need(checks.returncode==0,"original native catalog, source identity, ownership and rollback checks")
   done=subprocess.run([str(B.EVIDENCE/"program/EXReader.exe"),"--settings-self-test",str(B.EVIDENCE/"settings-selftest.ini")],capture_output=True,timeout=60)
   (B.EVIDENCE/"settings-selftest.log").write_bytes(done.stdout+done.stderr)
