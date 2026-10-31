@@ -75,7 +75,10 @@ def main():
     def configure():
         panel();click("云盘账号")
         root = find(description="云盘地址")
-        if root is not None and not root.get("text"): field("云盘地址",dav.root)
+        if root is None: raise AssertionError("account root control absent")
+        if root.get("text", "") not in ("", dav.root):
+            raise AssertionError("nonfresh profile points to another server; do not overwrite")
+        if not root.get("text"): field("云盘地址",dav.root)
         field("云盘用户名",user);field("云盘密码",password)
         click("仅本次使用")
         wait(lambda:find(description="同步状态"))
@@ -167,13 +170,15 @@ def main():
             "terminated_pid":pid,"reopened_pid":shell("pidof",PACKAGE).decode().strip(),
             "after":restarted})
     except BaseException as error:
-        report["failure"]=repr(error)
-        raise
+        safe = repr(error).replace(password, "<generated-fixture-secret>").replace(auth, "<generated-fixture-auth>")
+        report["failure"]=safe
+        raise RuntimeError(safe) from None
     finally:
         report["requests"]=dav.requests
         report["uncovered"]=["receive cancellation","uncertain PUT acknowledgment kill",
                              "actual original offline reopening","independent artifact authentication"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
         dav.close()
+        adb("reverse","--remove","tcp:"+str(dav.server.server_port))
 
 if __name__=="__main__":main()
