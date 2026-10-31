@@ -262,7 +262,8 @@ def main():
                 raise AssertionError("delete-put conflict lost a head")
             if "conflicting or incomplete versions" not in state.get("notice", ""):
                 raise AssertionError("native organization conflict notice missing")
-        checks.append({"name":"delete_put_tombstone_preserved", "outcome":"passed",
+        checks.append({"name":"delete_put_tombstone_preserved", "outcome":"partial",
+            "preservation_passed":True,"deletion_conflict_ui_detail":False,
             "entity_kind":"tag", "entity_key":tag, "common_parent":parent["heads"],
             "local_put":local_put, "delete":deletion,
             "retained_heads":sorted(combined), "first_native_state":left_group,
