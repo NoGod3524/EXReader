@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.24)
+project(F10SafetyProbe LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+find_package(EXReaderSession 0.2.0 EXACT CONFIG REQUIRED)
+add_executable(f10-probe probe.cpp)
+target_link_libraries(f10-probe PRIVATE EXReaderSession::reader_session)
+target_compile_options(f10-probe PRIVATE -Wall -Wextra -Werror)
