@@ -472,6 +472,12 @@ struct HostReceivedBook {
     let key: String, revision: String, title: String, format: String, sha256: String
     let bytes: UInt64
 }
+struct HostOrganizationReceivePage {
+    var last: String?
+    var count = 0, projected = 0
+    var unsafe: Set<String> = []
+    var pending: Set<String> = []
+}
 struct HostReceivePage {
     var last: String?
     var count = 0, projected = 0, conflicts = 0, retained = 0
@@ -491,13 +497,61 @@ private let hostReceiveEntities = reader_revision_entities_page_raw_v3
 private let hostReceiveSelected = reader_revision_selected_raw_v3
 private let hostReceiveTitle = reader_revision_book_title_raw_v3
 private let hostReceiveProject = reader_revision_project_raw_v3
+private let hostReceiveOrganization = reader_organization_project_page_raw_v3
 #else
 private let hostReceiveEntities = reader_revision_entities_page
 private let hostReceiveSelected = reader_revision_selected
 private let hostReceiveTitle = reader_revision_book_title
 private let hostReceiveProject = reader_revision_project
+private let hostReceiveOrganization = reader_organization_project_page
 #endif
 extension HostCatalog {
+    // This is a native product receive path, not a test-side projector. The public
+    // API fences each safe head and commits only derived metadata; it does not
+    // write history, outbox or SDK state. Handles remain inside this owner item.
+    func receiveOrganizationPage(kind: String, after: String?,
+                                 checkCancellation: () throws -> Void) throws -> HostOrganizationReceivePage {
+        guard ["shelf", "tag", "series", "membership"].contains(kind) else {
+            throw HostCatalogError.invalid("组织接收类型无效")
+        }
+        try checkCancellation()
+        return try withHistory { history in
+            var rows = [reader_organization_projection_row](
+                repeating: reader_organization_projection_row(), count: 50)
+            var count = 0
+            var error = reader_revision_error()
+            let status = hostProductStrings([kind, after ?? ""]) { strings in
+                rows.withUnsafeMutableBufferPointer { buffer in
+                    hostReceiveOrganization(history, strings[0], after == nil ? nil : strings[1],
+                                            50, buffer.baseAddress, &count, &error)
+                }
+            }
+            guard status == READER_REV_OK else {
+                throw HostCatalogError.invalid("组织接收未完成；本页已处理 \(count) 项，已提交结果保留，可重试")
+            }
+            var page = HostOrganizationReceivePage()
+            page.count = count
+            for row in rows.prefix(count) {
+                let key = hostReceiveCString(row.entity_key)
+                page.last = key
+                switch row.result {
+                case READER_ORGANIZATION_PROJECTED:
+                    page.projected += 1
+                case READER_ORGANIZATION_UNSAFE_HISTORY:
+                    page.unsafe.insert(kind + ":" + key)
+                case READER_ORGANIZATION_PENDING_DEPENDENCY, READER_ORGANIZATION_HEAD_CHANGED:
+                    // Include the selected head: a new head must not look like a
+                    // stable unresolved dependency from the preceding scan.
+                    page.pending.insert(kind + ":" + key + ":" + hostReceiveCString(row.info.revision_id))
+                default:
+                    throw HostCatalogError.invalid("组织接收结果无效；保留原历史")
+                }
+            }
+            try checkCancellation()
+            return page
+        }
+    }
+
     func receivePage(after: String?, checkCancellation: () throws -> Void) throws -> HostReceivePage {
         try withHistory { history in
             let copied = HostReceiveEntities()

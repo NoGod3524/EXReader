@@ -61,7 +61,11 @@
       ],
       "finding": "Native receiveAccountPage only projects book entities; remote shelf/tag/series/membership projection is not wired into this completion path.",
       "owner": "existing Apple production owner",
-      "status": "requires sealed owner delivery or explicit production scope; no lower-API bypass"
+      "status": "User explicitly transferred HostCatalog.swift and HostModel.swift to F03. Minimal native integration now prepared, not built/tested/accepted; retained iPad UI issue and full-chain evidence remain open."
     }
+  ],
+  "authorized_production_paths": [
+    "examples/apple/HostCatalog.swift",
+    "examples/apple/HostModel.swift"
   ]
 }
