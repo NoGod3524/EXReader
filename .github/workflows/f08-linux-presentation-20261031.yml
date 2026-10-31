@@ -1,0 +1,57 @@
+name: F08 Linux direct presentation capability
+on:
+  push:
+    branches: [codex/f08-linux-agent-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f08-linux-presentation-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  capability:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    outputs:
+      artifact_id: ${{ steps.raw.outputs.artifact-id }}
+      artifact_digest: ${{ steps.raw.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install the native protocol and compositor toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev libwayland-dev wayland-protocols mutter xvfb mesa-utils x11-utils dbus-x11 gsettings-desktop-schemas
+      - name: Compile and retain every native feedback outcome
+        run: python3 tests/reader_f08_linux_presentation_20261031/run.py
+      - uses: actions/upload-artifact@v4
+        id: raw
+        if: always()
+        with:
+          name: f08-linux-presentation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-linux-presentation/raw/
+          if-no-files-found: error
+  audit:
+    needs: capability
+    if: always() && needs.capability.outputs.artifact_id != ''
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate exact artifact and replay every row
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F08_ARTIFACT_ID: ${{ needs.capability.outputs.artifact_id }}
+          F08_ARTIFACT_DIGEST: ${{ needs.capability.outputs.artifact_digest }}
+        run: python3 tests/reader_f08_linux_presentation_20261031/audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-linux-presentation-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-linux-presentation-audit/audit.json
+            build/f08-linux-presentation-audit/metadata.json
+          if-no-files-found: error
