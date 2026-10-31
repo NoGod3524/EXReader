@@ -256,6 +256,9 @@ def main():
             passed, detail = False, f'{type(error).__name__}: {error}'
         results.append(dict(name=name, passed=passed, detail=detail, seconds=round(time.monotonic() - started, 3), log=log))
         print(('PASS ' if passed else 'FAIL ') + name + (f' -- {detail}' if detail else ''), flush=True)
+        if not passed:
+            for line in log[-20:]:
+                print(f'  | {line}', flush=True)
         restore_private(base)
         shutil.rmtree(base, ignore_errors=True)
     names = [r['name'] for r in results]

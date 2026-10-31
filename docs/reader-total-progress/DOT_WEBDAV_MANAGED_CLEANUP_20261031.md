@@ -2,7 +2,7 @@
 
 ## Scope and authorization
 Common base: 666d0d81730ac3cf7caea52b05ca1f01b1d183b1 (sealed bounded-retry result).
-Core branch codex/dot-webdav-managed-cleanup-core-20261031, core commit 8de75fa97fed32b25fa65eae4d7fa7b5f6b07693,
+Core branch codex/dot-webdav-managed-cleanup-core-20261031, core commit dba079b550f9ec83054e6b7b0b7475f43bc1739f,
 exactly four new files under extras/webdav-cleanup/.
 Tests branch codex/dot-webdav-managed-cleanup-tests-20261031, exactly five new files: tests/webdav_managed_cleanup_20261031/
 CMakeLists.txt, worker.c, run.py, this workflow and this document.
@@ -63,7 +63,12 @@ Initial run 41169665419/A1 (tests d262e079d9b377a077f73f7155dd8279e04ad7dc, core
 failed on both platforms at core compilation: one implicit declaration of renameat, no other diagnostic; no test ran.
 The single targeted correction adds <stdio.h> to the core (8de75fa97fed32b25fa65eae4d7fa7b5f6b07693), repins the tests,
 and adds two precautions to not-yet-compiled test code (an explicit uint32_t cast, every runner exception recorded).
-Correction run pending. Claims: transient_cleanup_passed=true is inherited from the base;
+Correction run 41169795520/A1 (tests 8c60ab9a0b1846c79dbac323d762e155f0acf816, core 8de75fa9): macOS 30/30; Linux 29/30,
+case 10 failed (worker exit 1; detail only in the artifact). Cause, consistent with Linux-only failure: ext4 reused the
+freed inode number for the recreated payload, so dev/ino identity accepted the replacement. The user then approved all
+corrections in this conversation. Fix core dba079b550f9ec83054e6b7b0b7475f43bc1739f: a component-only O_RDONLY payload
+handle stays open from begin until the slot is cleaned or tx_close, keeping the original inode allocated; the runner now
+prints the last worker lines of a failed case. Run pending. Claims: transient_cleanup_passed=true is inherited from the base;
 managed_cleanup_component_passed, product_cleanup_passed and crash_recovery_validated stay false until certified.
 Not done: managed WebDAV entry point, first host root creation and UUID persistence, startup recovery, pending display,
 unpublished staging abandon policy and root rotation. Old unreceipted residue is never adopted. Formal 95/108 unchanged.

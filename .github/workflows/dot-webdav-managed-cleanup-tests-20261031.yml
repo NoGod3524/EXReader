@@ -9,7 +9,7 @@ defaults:
     shell: bash
 env:
   BASE_SHA: 666d0d81730ac3cf7caea52b05ca1f01b1d183b1
-  CORE_SHA: 8de75fa97fed32b25fa65eae4d7fa7b5f6b07693
+  CORE_SHA: dba079b550f9ec83054e6b7b0b7475f43bc1739f
 jobs:
   managed-cleanup:
     name: Managed cleanup (${{ matrix.os }})
