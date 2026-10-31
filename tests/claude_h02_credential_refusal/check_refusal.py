@@ -303,7 +303,7 @@ def main():
         check('no_plaintext_marker_in_package_temp_files', not leaks, files=leaks)
         samples = report['thread_samples'].get('all', [])
         check('worker_threads_observed_without_impersonation_token',
-              bool(samples) and all(s.get('thread_token') == 'none' and s.get('open_thread_token_error') == 1008 for s in samples), n=len(samples))
+              bool(samples) and all(s.get('thread_token') == 'none' and s.get('open_thread_token_error') == 1008 for s in samples), n=len(samples), samples=samples)
     except BaseException as error:
         report['fatal'] = repr(error)
         raise
