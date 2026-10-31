@@ -1,5 +1,5 @@
 # F07 Linux installed managed GTK provider binding
-Prepared, not executed. One Linux 120-minute job and one independent 15-minute audit; no automatic correction round.
+Initial run completed with a retained auxiliary-test configure failure. One Linux 120-minute job and one independent 15-minute audit; no automatic correction round.
 User authorization Sentinel_2f4c8c19b1d481919217a02c7c58cab8.
 Product base 044824f91ddae2ea49994350d308d079a69048ab; SDK 7271829a829bfa6aaa47b73077c493f71af27ad3; unchanged cleanup core dba079b550f9ec83054e6b7b0b7475f43bc1739f.
 Only this document, the new workflow, and five files under tests/reader_f07_provider_binding_20261031 are owned. No product, frozen test, SDK or catalog edits.
@@ -14,3 +14,14 @@ Same run/attempt/source job success and artifact identity, original ZIP hash/siz
 One genuine wrong canonical SDK prefix configure must reject F07_SDK_PREFIX. Audit one positive plus six negative controls: missing map, ambiguous extracted provider, wrong SDK target prefix, wrong version, hook symbol and archive hash tamper. Semantic controls recompute inner hash inventory before rejection, so an outer hash cannot mask their target rule.
 Only whitelisted provider evidence is uploaded; original TLS fixture keys and profiles are outside this upload. Original product recipe and its test assertions stay untouched.
 F07_accepted=false; formal95/108 and six-platform F07 remain unchanged. A failed/missing map or unsupported format is a real evidence gap, never normalized into a pass.
+
+## Initial authorized run: retained failure
+Source f7f632a30c7b396707fe327d7bd784e2924aef33; run [41181794849](https://github.com/NoGod3524/EXReader/actions/runs/41181794849), attempt 1. The one authorized round is used; no automatic correction or rerun.
+Linux job124480540642 failed in the NEW auxiliary consumer CMake configure (build.py line37). The unchanged product recipe had already completed: original77 TLS accepted true; installed no-hook/package checks; actual packaged host --version printed 3.42.0 1. Built and packaged host were both10158144 bytes/SHA256 e6553ff51512d6803db11ca68cdcd8c7adb3d7eb9312d80315001ab9dab10aba.
+The wrapper used check_output without printing/persisting its captured output on failure. Therefore the exact CMake diagnostic is not in the ordinary job log; do not invent it.
+Independent static diagnosis: fixed SDK7271829a cmake/modules.cmake68 defines exr_core as INTERFACE, line70 links exr_render. This new test erroneously asks TARGET_FILE:EXReader::exr_core and expects libexr_core.a. That is a test-design defect and a strong configure-failure explanation, not a quoted original stderr. A future authorized correction should preserve interface TYPE/dependency identity and bind concrete exr_base/exr_render archives instead; never fabricate an interface archive. It should also preserve auxiliary configure stdout/stderr and copy already-built host evidence before auxiliary configure.
+Audit job124480978407 correctly refused producer_job; audit_completed=false/audit_passed=false/F07_accepted=false. It did not download or inspect producer ZIP, adjudicate provider maps, run the six negative controls, or independently inspect final host symbols. Auxiliary runtime consumers and the wrong-prefix control were not reached. No product failure or dual-SQLite runtime conclusion is established.
+Artifacts (API metadata verified, not locally downloaded):
+- producer13035367114,30585 bytes,SHA256 f15bcf53c03bad2126b18943db18898103599e73706fbced418a2876653338c6; upload logs report36 retained recipe configure/build logs.
+- audit13035690977,221 bytes,SHA256 3618276ff0a6cf09017f56c0d12608f7da59f55351dc360a23b15e7286b27ddb.
+The already-built host/map were not copied into the new evidence directory before this auxiliary failure. Their successful construction is supported by original recipe log output, not by a claimed retained binary audit. Formal95/108 and six-platform F07 remain unchanged.
