@@ -65,7 +65,7 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
  DXGI_OUTDUPL_DESC desc{};duplication->GetDesc(&desc);
  if(desc.ModeDesc.Format!=DXGI_FORMAT_B8G8R8A8_UNORM || (desc.Rotation!=DXGI_MODE_ROTATION_IDENTITY && desc.Rotation!=DXGI_MODE_ROTATION_UNSPECIFIED))
   throw std::runtime_error("unsupported native desktop format or rotation");
- std::printf("{\"kind\":\"ready\",\"qpc\":%lld,\"width\":%u,\"height\":%u,\"format\":%u,\"rotation\":%u,\"ring_slots\":8,\"release_policy\":\"immediately_before_next_acquire\"}\n",
+ std::printf("{\"kind\":\"ready\",\"qpc\":%lld,\"width\":%u,\"height\":%u,\"format\":%u,\"rotation\":%u,\"ring_slots\":8,\"release_policy\":\"immediately_before_next_acquire\",\"acquire_policy\":\"nonblocking_while_readback_pending\"}\n",
   tick(),desc.ModeDesc.Width,desc.ModeDesc.Height,desc.ModeDesc.Format,desc.Rotation);std::fflush(stdout);
  D3D11_TEXTURE2D_DESC td{};td.Width=desc.ModeDesc.Width;td.Height=desc.ModeDesc.Height;td.MipLevels=1;td.ArraySize=1;
  td.Format=desc.ModeDesc.Format;td.SampleDesc.Count=1;td.Usage=D3D11_USAGE_STAGING;td.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
@@ -127,10 +127,13 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
   if(pending==slots.size()){backpressure++;drain(true);}
   auto &slot=slots[head];LONGLONG probe_before=tick();std::array<Region,2> before={region(parent,119,pid,description.DesktopCoordinates),region(parent,123,pid,description.DesktopCoordinates)};
   ComPtr<IDXGIResource> resource;DXGI_OUTDUPL_FRAME_INFO info{};release();LONGLONG start=tick();
-  HRESULT hr=duplication->AcquireNextFrame(5,&info,resource.GetAddressOf());LONGLONG acquired=tick();
+  UINT wait_ms=pending?0u:5u;
+  HRESULT hr=duplication->AcquireNextFrame(wait_ms,&info,resource.GetAddressOf());LONGLONG acquired=tick();
   if(hr==DXGI_ERROR_WAIT_TIMEOUT){
    acquire_timeouts++;
-   std::printf("{\"kind\":\"acquire_timeout\",\"start_qpc\":%lld,\"end_qpc\":%lld,\"pending_copies\":%u}\n",start,acquired,pending);
+   std::printf("{\"kind\":\"acquire_timeout\",\"start_qpc\":%lld,\"end_qpc\":%lld,\"pending_copies\":%u,\"requested_timeout_ms\":%u}\n",start,acquired,pending,wait_ms);
+   // No new desktop image: wait for the already copied image, not another image.
+   if(pending)drain(true);
    continue;
   }
   check(hr,"AcquireNextFrame");frames++;held=true;held_index=frames;

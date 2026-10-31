@@ -40,7 +40,8 @@ def analyze(folder,entry):
     ready=[r for r in native if r["kind"]=="ready"]
     need(len(ready)==1 and ready[0]["width"]==1280 and ready[0]["height"]==800 and ready[0]["format"]==87 and
          ready[0]["rotation"] in (0,1) and ready[0]["ring_slots"]==8 and
-         ready[0]["release_policy"]=="immediately_before_next_acquire","fixed native desktop and release policy")
+         ready[0]["release_policy"]=="immediately_before_next_acquire" and
+         ready[0].get("acquire_policy")=="nonblocking_while_readback_pending","fixed native desktop and acquisition policy")
     need(driver[0]["kind"]=="process" and driver[-1]["kind"]=="close" and
          driver[0]["pid"]==driver[-1]["pid"]==pid and driver[0]["frequency"]==freq and
          driver[0]["exe_sha256"]==entry["program_sha256"] and driver[0]["qpc"]<=first["qpc"]<last["qpc"]<=driver[-1]["qpc"] and
@@ -55,7 +56,8 @@ def analyze(folder,entry):
     for row in timeouts:
         need(all(type(row.get(k)) is int for k in ("start_qpc","end_qpc","pending_copies")) and
              previous_timeout<=row["start_qpc"]<=row["end_qpc"]<=last["qpc"] and
-             0<=row["pending_copies"]<=8,"native timeout chronology")
+             0<=row["pending_copies"]<=8 and
+             row.get("requested_timeout_ms")==(0 if row["pending_copies"] else 5),"native timeout chronology")
         previous_timeout=row["end_qpc"]
         phase_ticks["acquire_timeout_call"].append(row["end_qpc"]-row["start_qpc"])
     map_attempts=0;blocking_maps=0
@@ -155,7 +157,7 @@ def analyze(folder,entry):
         "nonuniform_images":sum(x["nonuniform"] for x in images.values()),"raw_images":images,"changed_content":changed,
         "native_input_dispatches":sum(x["dispatched"] for x in inputs),
         "scope":"Actual desktop pixels within the shelf/reading window bounds with native desktop-update QPC",
-        "release_policy":ready[0]["release_policy"],"per_pixel_window_ownership_proven":False,
+        "release_policy":ready[0]["release_policy"],"acquire_policy":ready[0]["acquire_policy"],"per_pixel_window_ownership_proven":False,
         "occlusion_check":"Five WindowFromPoint samples; small overlays between samples are not excluded",
         "application_paint_generation_bound":False,"input_to_verified_content_measured":False,
         "frame_budget_measured":False,"physical_scanout_proven":False,"f08_accepted":False}
