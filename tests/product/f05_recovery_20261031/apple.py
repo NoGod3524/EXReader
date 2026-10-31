@@ -91,7 +91,6 @@ final class F05RecoveryUITests: XCTestCase {
         tap("library.cancel")
         XCTAssertTrue(wait{!self.node("library.busy").exists})
         XCTAssertTrue(book.waitForExistence(timeout:60))
-        openBook()
     }
     func test01BaselineOriginal() throws {
         let root=try XCTUnwrap(ProcessInfo.processInfo.environment["F05_ROOT"])
@@ -109,14 +108,15 @@ final class F05RecoveryUITests: XCTestCase {
         sync()
         XCTAssertTrue(text("account.receive.state").contains("待处理冲突 0 项"))
     }
-    func test02CacheMissReceiveCancelRetry() { cancelRealReceiveThenRetry() }
-    func test03ReceiveRealConcurrentHeads() {
+    func test02CacheMissReceiveCancel() { cancelRealReceiveThenRetry() }
+    func test03RetryOriginal() { openBook() }
+    func test04ReceiveRealConcurrentHeads() {
         sync()
         XCTAssertTrue(text("account.receive.state").contains("待处理冲突 1 项"),
             "actual native conflict must be visible; never select one head")
         openBook()
     }
-    func test04OfflineReopenOriginal() {
+    func test05OfflineReopenOriginal() {
         // Server is offline before this new actual process starts.
         openBook()
     }
@@ -181,7 +181,7 @@ def main():
         if a.platform!="macos":
             if not a.udid:raise ValueError("actual simulator UDID required")
             subprocess.run(["xcrun","simctl","keychain",a.udid,"add-root-cert",str(a.certificate)],check=True)
-        for number,name in enumerate(("test01BaselineOriginal","test02CacheMissReceiveCancelRetry","test03ReceiveRealConcurrentHeads","test04OfflineReopenOriginal")):
+        for number,name in enumerate(("test01BaselineOriginal","test02CacheMissReceiveCancel","test03RetryOriginal","test04ReceiveRealConcurrentHeads","test05OfflineReopenOriginal")):
             if number==1:
                 if a.platform=="macos":
                     if a.container is None:raise ValueError("isolated actual app container required")
@@ -218,8 +218,8 @@ def main():
                     "owner_state":"prior XCTest teardown terminated actual application",
                     "sdk_original_untouched":True,"restored_before_retry":False}
                 server.hold_get=True;server.get_blocked.clear();server.release.clear()
-            if number==2:server.expose_checkpoint(a.peer/contract["remote_conflict"])
-            if number==3:server.offline=True
+            if number==3:server.expose_checkpoint(a.peer/contract["remote_conflict"])
+            if number==4:server.offline=True
             start=len(server.requests)
             argv=command+["-only-testing:EXReaderHostUITests-"+label+"/F05RecoveryUITests/"+name,
                           "-resultBundlePath",str(a.output/(name+".xcresult"))]
@@ -237,14 +237,16 @@ def main():
                 raise AssertionError("real cache-miss receive gate never reached")
             if number>=1:
                 observed=readback(app_folder)
-                expected=contract["common_parent"] if number==1 else contract["competing_heads"]
+                expected=contract["common_parent"] if number<=2 else contract["competing_heads"]
                 if set(observed["heads"])!=set(expected):
                     raise AssertionError("actual retained Apple book heads differ")
-                if len(observed["originals"])!=1 or observed["originals"][0]["sha256"]!=contract["entity_key"].split(":",1)[1]:
+                if number==1 and observed["originals"]:
+                    raise AssertionError("cancel before original response published SDK original")
+                if number>1 and (len(observed["originals"])!=1 or observed["originals"][0]["sha256"]!=contract["entity_key"].split(":",1)[1]):
                     raise AssertionError("actual Apple SDK original is absent, duplicate, or changed")
                 report["cases"][-1]["readback"]=observed
             server.release.set()
-            if number==3 and len(server.requests)!=start:
+            if number==4 and len(server.requests)!=start:
                 raise AssertionError("offline reopening unexpectedly requested network")
     except BaseException as error:
         safe=repr(error).replace(password,"<fixture-secret>").replace(authorization,"<fixture-auth>")
@@ -253,7 +255,7 @@ def main():
     finally:
         report["requests"]=server.requests
         report["uncovered"]=["independent xcresult attachments and artifact authentication",
-            "cancelled-before-retry SDK observation","uncertain acknowledgment process kill",
+            "uncertain acknowledgment process kill",
             "organization projection (owner gap, not lower API injected)",
             "actual rendered text semantic readback"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
