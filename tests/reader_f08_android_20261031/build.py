@@ -1,12 +1,15 @@
 """Actions-only SDK 3.42 shelf adapter; original recipes and tests stay frozen."""
 import importlib.util, json, shlex, shutil, zipfile
-from lane import ROOT, OUT, identity, need, save, sha, guard
+from pathlib import Path
+from lane import ROOT, OUT, identity, need, save, sha, guard, command
 def main():
     guard()
-    diagnostic=ROOT/"tests/reader_f08_android_startup_20261031/StartupCostTest.java"
-    generated=ROOT/"examples/android/app/src/androidTest/java/org/exreader/host/StartupCostTest.java"
-    need(not generated.exists(),"diagnostic source collision")
-    shutil.copyfile(diagnostic,generated)
+    test_sources=OUT/"release-tests/org/exreader/host"
+    test_sources.mkdir(parents=True)
+    # Only the untouched seed runner is executed in Release. Its fault-test
+    # methods and ProductFixture declarations are present but never invoked.
+    for name in ("ShelfCatalogTest.java","ProductFixture.java"):
+        shutil.copyfile(ROOT/"examples/android/app/src/androidTest/java/org/exreader/host"/name,test_sources/name)
     path=ROOT/"tests/reader_android_installed_sync_handoff/build.py"
     spec=importlib.util.spec_from_file_location("installed_sync_build",path)
     builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
@@ -19,15 +22,16 @@ def main():
     wave=ROOT/"build/wave3";stage=wave/"stage"
     flags=["-PexrSdkVersion=3.42.0","-PexrSdk="+str(wave/"sdk-stage"),"-PexrProduct="+str(stage),
         "-PexrSync=true","-PexrSearch=true","-PexrNavigation=true","-PexrReading=true",
-        "-PexrPreferences=true","-PexrSelectorBytes=true","-PexrWave3=true","-PexrWave3Prefix="+str(stage),
+        "-PexrPreferences=true","-PexrPageTheme=true","-PexrF08Review=true","-PexrSelectorBytes=true","-PexrWave3=true","-PexrWave3Prefix="+str(stage),
         "-PexrSearchPrefix="+str(stage),"-PexrNavigationPrefix="+str(stage),
         "-PexrPreferencesPrefix="+str(stage),"-PexrDav="+str(stage),"-PexrSideload="+str(stage),
         "-PexrTestRunner=org.exreader.host.ShelfCatalogTest"]
-    command=["gradle","-p","examples/android","--no-daemon","--stacktrace","-I",
-        str(ROOT/"tests/reader_wave3_c11/candidate.init.gradle"),*flags,
-        ":app:assembleDebug",":app:assembleDebugAndroidTest",":uitest:assembleDebug",":uitest:assembleDebugAndroidTest"]
-    save(OUT/"gradle-command.json",command)
-    builder.sh(["bash","-e","-o","pipefail","-c",shlex.join(command)+" 2>&1 | tee "+shlex.quote(str(OUT/"gradle.log"))])
+    gradle_command=["gradle","-p","examples/android","--no-daemon","--stacktrace","-I",
+        str(ROOT/"tests/reader_wave3_c11/candidate.init.gradle"),"-I",
+        str(ROOT/"tests/reader_f08_android_20261031/release.init.gradle"),*flags,
+        ":app:assembleRelease",":app:assembleReleaseAndroidTest",":uitest:assembleDebug",":uitest:assembleDebugAndroidTest"]
+    save(OUT/"gradle-command.json",gradle_command)
+    builder.sh(["bash","-e","-o","pipefail","-c",shlex.join(gradle_command)+" 2>&1 | tee "+shlex.quote(str(OUT/"gradle.log"))])
     sampler_sources=["tools/run_reader_shelf_ui.py",
         "examples/android/app/src/androidTest/java/org/exreader/host/ShelfCatalogTest.java",
         "examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/ShelfWalkthroughTest.java",
@@ -38,8 +42,8 @@ def main():
     artifacts=OUT/"packages";artifacts.mkdir()
     expected=ROOT/"build/android-host/artifacts";expected.mkdir(parents=True)
     apk_sources={
-        "app-debug.apk":"app/build/outputs/apk/debug/app-debug.apk",
-        "app-debug-androidTest.apk":"app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+        "app-debug.apk":"app/build/outputs/apk/release/app-release.apk",
+        "app-debug-androidTest.apk":"app/build/outputs/apk/androidTest/release/app-release-androidTest.apk",
         "uitest-debug.apk":"uitest/build/outputs/apk/debug/uitest-debug.apk",
         "uitest-debug-androidTest.apk":"uitest/build/outputs/apk/androidTest/debug/uitest-debug-androidTest.apk"}
     packages={}
@@ -48,23 +52,18 @@ def main():
         shutil.copyfile(source,artifacts/name)
         if name!="app-debug-androidTest.apk":shutil.copyfile(source,expected/name)
         packages[name]={"sha256":sha(source),"bytes":source.stat().st_size}
-    owner_command=[x.replace("-PexrTestRunner=org.exreader.host.ShelfCatalogTest",
-        "-PexrTestRunner=org.exreader.host.ProductOwnerTest") for x in command[:-4]]+[":app:assembleDebugAndroidTest"]
-    builder.sh(owner_command)
-    owner_apk=artifacts/"product-owner-androidTest.apk"
-    shutil.copyfile(ROOT/"examples/android"/apk_sources["app-debug-androidTest.apk"],owner_apk)
-    packages[owner_apk.name]={"sha256":sha(owner_apk),"bytes":owner_apk.stat().st_size}
-    need(sha(ROOT/"examples/android"/apk_sources["app-debug.apk"])==packages["app-debug.apk"]["sha256"],
-         "owner runner changed the measured application")
-    shutil.copyfile(artifacts/"app-debug-androidTest.apk",ROOT/"examples/android"/apk_sources["app-debug-androidTest.apk"])
-    diagnostic_command=[x.replace("-PexrTestRunner=org.exreader.host.ShelfCatalogTest",
-        "-PexrTestRunner=org.exreader.host.StartupCostTest") for x in command[:-4]]+[":app:assembleDebugAndroidTest"]
-    builder.sh(diagnostic_command)
-    diagnostic_apk=artifacts/"startup-cost-androidTest.apk"
-    shutil.copyfile(ROOT/"examples/android"/apk_sources["app-debug-androidTest.apk"],diagnostic_apk)
-    packages[diagnostic_apk.name]={"sha256":sha(diagnostic_apk),"bytes":diagnostic_apk.stat().st_size}
-    need(sha(ROOT/"examples/android"/apk_sources["app-debug.apk"])==packages["app-debug.apk"]["sha256"],"diagnostic changed the application")
-    shutil.copyfile(artifacts/"app-debug-androidTest.apk",ROOT/"examples/android"/apk_sources["app-debug-androidTest.apk"])
+    # Keep legacy filenames only at the frozen sampler interface; their exact
+    # bytes come from the signed, non-debuggable Release variant above.
+    legacy_test=ROOT/"examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
+    legacy_test.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copyfile(artifacts/"app-debug-androidTest.apk",legacy_test)
+    aapt=Path(__import__("os").environ["ANDROID_HOME"])/"build-tools/35.0.0/aapt2"
+    badging=command([aapt,"dump","badging",artifacts/"app-debug.apk"],text=True)
+    need("application-debuggable" not in badging,"measured Release APK is debuggable")
+    (OUT/"release-apk-badging.txt").write_text(badging)
+    with zipfile.ZipFile(artifacts/"app-debug.apk") as archive:
+        product_bytes=archive.read("lib/x86_64/libexreader_product.so")
+        need(b"Java_org_exreader_host_ProductFixture_" not in product_bytes,"Release exposes fixture JNI")
     fixtures=ROOT/"build/android-host/fixtures";fixtures.mkdir(parents=True)
     shutil.copyfile(wave/"download/NewReview.txt",fixtures/"NewReview.txt")
     shutil.copyfile(wave/"download/fixtures.json",OUT/"fixtures.json")
@@ -87,10 +86,12 @@ def main():
     inventories={}
     for label,prefix in (("sdk",wave/"sdk-stage"),("product",stage),("hash",builder.OUT/"hash-stage")):
         inventories[label]={p.relative_to(prefix).as_posix():sha(p) for p in sorted(prefix.rglob("*")) if p.is_file()}
-    save(OUT/"build.json",{**identity(),"sdk_version":"3.42.0","debug":True,"packages":packages,
+    save(OUT/"build.json",{**identity(),"sdk_version":"3.42.0","debug":False,"configuration":"Release","ci_test_certificate":True,"packages":packages,
         "native":native,"installed_prefixes":inventories,"sdk_cache_entries":caches,"gradle_flags":flags,
         "recipe_steps":names[:4],"build_recipe_sha256":sha(builder.RECIPE),"adapter_sha256":sha(path),
         "frozen_sampler_files":{p:sha(ROOT/p) for p in sampler_sources},
-        "startup_cost_driver_sha256":sha(diagnostic),"ui_driver_copy_unchanged":True,"page_theme":False,"record_interop":False})
+        "release_init_sha256":sha(ROOT/"tests/reader_f08_android_20261031/release.init.gradle"),
+        "release_badging_sha256":sha(OUT/"release-apk-badging.txt"),"release_fixture_jni_absent":True,
+        "legacy_sampler_filename_aliases":True,"ui_driver_copy_unchanged":True,"page_theme":True,"record_interop":False})
     print("F08_ANDROID_BUILD",json.dumps({"packages":packages,"sdk_version":"3.42.0"}),flush=True)
 if __name__=="__main__":main()

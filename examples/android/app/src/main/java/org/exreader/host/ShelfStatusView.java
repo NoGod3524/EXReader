@@ -13,6 +13,6 @@ public final class ShelfStatusView extends TextView {
     void bind(CatalogShelf shelf) { this.shelf=shelf; }
     @Override public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
-        if (BuildConfig.DEBUG && shelf!=null) info.getExtras().putString("exreader.shelf",shelf.observation());
+        if ((BuildConfig.DEBUG || BuildConfig.F08_REVIEW) && shelf!=null) info.getExtras().putString("exreader.shelf",shelf.observation());
     }
 }
