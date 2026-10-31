@@ -24,7 +24,7 @@ from gtk_host import audit_gtk_host
 from android_host import audit_android_host, android_negative_controls
 from apple_host import audit_apple_host, apple_negative_controls
 from posix_native import audit as audit_posix_native
-from posix_owner import audit_posix_owner
+from posix_owner import audit_posix_owner, posix_owner_negative_controls
 from gtk_snapshots import pending_negative_controls
 
 from protocols import (SDK, C01, ABI2_FAILURES, need, sha, hexadecimal, integer, json_value,
@@ -988,6 +988,9 @@ def main():
             host_controls.extend(android_negative_controls(files,output/role/"negative-controls"))
         if role in ("host-macos", "host-ios"):
             host_controls.extend(apple_negative_controls(files,output/role/"negative-controls"))
+        if role in ("posix-migration-linux", "posix-migration-macos"):
+            host_controls.extend(posix_owner_negative_controls(
+                files,spec,source,git_bytes,output/role/"negative-controls"))
     if windows is None:
         need(args.allow_incomplete and len(host_controls) >= 7,
              "host-components-require-independent-native-negatives")

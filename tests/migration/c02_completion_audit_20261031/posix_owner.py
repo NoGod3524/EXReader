@@ -1049,3 +1049,308 @@ def audit_posix_owner(files,spec,source,git_bytes):
         transactions_audited=audit.transactions,power_loss=False,partial_state_head_repair=False,
         missing=["posix-partial-state-and-head-explicit-repair"],
         cases=audit.case_details)
+
+
+def posix_owner_negative_controls(files,spec,source,git_bytes,output):
+    """Write eight restorable, original-ZIP-bound patches and re-audit each.
+
+    Replacements include every affected actual-observation copy and the runtime
+    inventory. The patch archive supplies its own CRCs; its manifest binds the
+    original artifact API identity and exact ZIP SHA. Each rejection below is
+    obtained after reading that patch ZIP back and reconstructing the file set.
+    """
+    import json
+    import pathlib
+    import zipfile
+
+    baseline = audit_posix_owner(files,spec,source,git_bytes)
+    need(baseline["actual_cases"] == 36 and baseline["historical_cases"] == 65,
+         "po-negative-original-positive-baseline")
+    root = pathlib.Path(output)
+    root.mkdir(parents=True,exist_ok=True)
+    evidence,runtime = spec["evidence_prefix"],spec["runtime_prefix"]
+    material = qualified_material(files,evidence,source,git_bytes)
+    original = OwnerAudit(files,spec,source,material)
+    receipt = original.receipt
+    observed = original.observations
+    results = []
+    source_root = None
+
+    def encoded(value):
+        return (json.dumps(value,ensure_ascii=False,sort_keys=True,
+                           separators=(",",":"))+"\n").encode("utf-8")
+
+    def phase(folder,label):
+        nonlocal source_root
+        snap = original.snapshot(folder,label)
+        source_root = original.home+"/"+runtime.rstrip("/")
+        return snap
+
+    def aliases(replacements,source_path,data):
+        names = [r["artifact_path"] for r in observed if
+                 r["source_path"] == source_path and not r["directory"]]
+        need(names, "po-negative-real-source-aliases")
+        for name in names:
+            replacements[runtime+name] = data
+        if source_root is not None and source_path.startswith(source_root+"/"):
+            direct = runtime+source_path[len(source_root)+1:]
+            if direct in files:
+                replacements[direct] = data
+
+    def envelope(raw,payload):
+        need(raw[:8] == b"PC02M001" and len(raw) == 632+len(payload),
+             "po-negative-exact-envelope-payload")
+        value = bytearray(raw)
+        value[568:-64] = payload
+        value[488:552] = sha(payload).encode()
+        value[-64:] = sha(value[:-64]).encode()
+        return bytes(value)
+
+    def sqlite_mutation(raw,sql,args):
+        db = sqlite3.connect(":memory:")
+        try:
+            db.deserialize(raw)
+            db.execute("PRAGMA trusted_schema=OFF")
+            cursor = db.execute(sql,args)
+            need(cursor.rowcount == 1, "po-negative-one-actual-sqlite-row")
+            db.commit()
+            need(db.execute("PRAGMA integrity_check").fetchall() == [("ok",)],
+                 "po-negative-preserves-valid-sqlite")
+            return db.serialize()
+        finally:
+            db.close()
+
+    def reseal_outer(replacements,identities):
+        # All historical cumulative observation arrays must continue to agree
+        # with the final complete fstat inventory after a semantic mutation.
+        changed = dict(replacements)
+        for path,raw in files.items():
+            if not path.startswith(runtime):
+                continue
+            leaf = posixpath.basename(path)
+            if leaf != "native-source-observations.json" and not (
+                    leaf.startswith("native-observations-") and leaf.endswith(".json")):
+                continue
+            rows = json_value(raw)
+            touched = False
+            for row in rows:
+                if row["source_path"] in identities:
+                    row.update(identities[row["source_path"]])
+                    touched = True
+                archive = runtime+row["artifact_path"]
+                if not row["directory"] and archive in changed:
+                    row["bytes"] = len(changed[archive])
+                    row["sha256"] = sha(changed[archive])
+                    touched = True
+            if touched:
+                changed[path] = encoded(rows)
+        inventory = json_value(files[runtime+"file-hashes.json"])
+        for row in inventory:
+            path = runtime+row["path"]
+            if path in changed:
+                need("sha256" in row, "po-negative-replacement-is-regular-inventory-file")
+                row["bytes"] = len(changed[path])
+                row["sha256"] = sha(changed[path])
+        changed[runtime+"file-hashes.json"] = encoded(inventory)
+        return changed
+
+    def check(name,replacements,expected,identities=None):
+        changed = reseal_outer(replacements,identities or {})
+        need(changed and all(path in files and isinstance(raw,bytes) for path,raw in changed.items()),
+             "po-negative-only-original-member-replacements")
+        patch_path = root/(name+".patch.zip")
+        members = []
+        manifest = dict(schema="pc02-owner-resealed-patch-v1",name=name,source=source,
+                        role=spec["role"],original_artifact=spec["artifact"],
+                        run=spec["run"],attempt=spec["attempt"],job=spec["job"],
+                        expected_rejection=expected,removed=[],replacements=members)
+        for index,path in enumerate(sorted(changed)):
+            raw = changed[path]
+            members.append(dict(path=path,member=f"replacement-{index:04d}.bin",
+                                bytes=len(raw),sha256=sha(raw)))
+        with zipfile.ZipFile(patch_path,"x",compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
+            archive.writestr("patch.json",encoded(manifest))
+            for entry in members:
+                archive.writestr(entry["member"],changed[entry["path"]])
+        # Use only bytes read back through the actual ZIP parser for the attack.
+        reconstructed = dict(files)
+        with zipfile.ZipFile(patch_path,"r") as archive:
+            parsed = json_value(archive.read("patch.json"))
+            need(parsed == manifest and parsed["original_artifact"]["sha256"] ==
+                 spec["artifact"]["sha256"] and
+                 set(archive.namelist()) == {"patch.json"}|{r["member"] for r in members} and
+                 len(archive.namelist()) == len(members)+1,
+                 "po-negative-patch-original-zip-binding-and-complete-inventory")
+            for entry in parsed["replacements"]:
+                relative(entry["path"])
+                raw = archive.read(entry["member"])
+                need(len(raw) == entry["bytes"] and sha(raw) == entry["sha256"],
+                     "po-negative-patch-readback-crc-size-sha")
+                reconstructed[entry["path"]] = raw
+        failure = None
+        try:
+            audit_posix_owner(reconstructed,spec,source,git_bytes)
+        except ValueError as error:
+            failure = str(error)
+        need(failure in expected, "po-negative-owner-semantic-rejection:"+name+":"+str(failure))
+        patch_raw = patch_path.read_bytes()
+        result = dict(name=name,rejected=True,rejection=failure,expected_rejection=expected,
+                      original_zip_sha256=spec["artifact"]["sha256"],
+                      patch=patch_path.name,patch_bytes=len(patch_raw),patch_sha256=sha(patch_raw),
+                      replacements=len(changed),runtime_inventory_resealed=True,
+                      actual_zip_readback=True,decoder="audit_posix_owner")
+        (root/(name+".json")).write_bytes(encoded(result))
+        results.append(result)
+
+    # 1. A PID copied from the killed owner is never a fresh recovery process.
+    folder = "process-kill-900-any"
+    killed = original.json("cases/"+folder+"/process-observation.json")["owner_pid"]
+    recovery_rows = [(path,json_value(raw)) for path,raw in files.items()
+                     if path.startswith(runtime+"cases/"+folder+"/command-") and path.endswith(".json")]
+    selected = [(path,row) for path,row in recovery_rows if row["command"][1:2] == ["recover"]]
+    need(len(selected) == 1, "po-negative-single-real-recovery-command")
+    path,row = selected[0]
+    row["pid"] = killed
+    check("fresh-recovery-reuses-killed-owner-pid",{path:encoded(row)},
+          ["po-fresh-process-recovery-not-original-capability"])
+
+    # 2. Re-seal the JSON while leaving the observed UID field unchanged: the
+    # raw ps row independently contradicts that declaration.
+    path = runtime+"cases/"+folder+"/process-observation.json"
+    row = original.json("cases/"+folder+"/process-observation.json")
+    table = row["ps_stdout"].splitlines()
+    matches = [i for i,line in enumerate(table) if line.split() and int(line.split()[0]) == killed]
+    need(len(matches) == 1, "po-negative-original-owner-ps-row")
+    owner = table[matches[0]].split()
+    owner[2] = str(original.euid+1)
+    table[matches[0]] = " ".join(owner)
+    row["ps_stdout"] = "\n".join(table)+"\n"
+    check("raw-native-owner-uid-contradicts-declaration",{path:encoded(row)},
+          ["po-live-owner-native-uid-and-no-orphan-workers"])
+
+    # 3. An intact SQLite image with one old annotation deleted is not original
+    # content preservation. At 903 there is no PREPARED yet to obscure this.
+    snap = phase("process-kill-903-any","paused")
+    tx = original.transaction(snap,"test_tool")
+    stage = tx["input"]["stages"][0]
+    modified = sqlite_mutation(original.custody_raw(snap,stage),
+                               "DELETE FROM notes WHERE text=?",("original annotation",))
+    replacements = {}
+    aliases(replacements,snap["custody"][stage]["source_path"],modified)
+    check("valid-sqlite-loses-original-annotation",replacements,
+          ["po-original-row-tuples-preserved:notes"])
+
+    # 4. Keep all original SQL rows, but remove the original annotation's ledger
+    # record from both private SDK ledger and mirror, updating PREPARED seals.
+    snap = phase("process-kill-904-any","paused")
+    tx = original.transaction(snap,"test_tool")
+    stages = tx["input"]["stages"]
+    ledger = json_value(original.custody_raw(snap,stages[1]))
+    old_count = len(ledger["notes"])
+    ledger["notes"] = [n for n in ledger["notes"] if n["legacy_id"] != "untouched-note"]
+    need(len(ledger["notes"])+1 == old_count, "po-negative-original-ledger-note-present")
+    mirror = encoded(ledger)
+    database = sqlite_mutation(original.custody_raw(snap,stages[0]),
+                               "UPDATE exr_migration_ledger SET data=? WHERE id=1",(mirror,))
+    replacements = {}
+    for k,data in enumerate((database,mirror)):
+        aliases(replacements,snap["custody"][stages[k]]["source_path"],data)
+    prepared = tx["native"]["prepared_record"]
+    pname = final_name(2,tx["native"]["generation"],tx["input"]["sha256"])
+    ppath = snap["route"]+"/"+pname
+    praw = original.raw(snap["ap"]+"/"+ppath)
+    payload = bytearray(prepared["payload"])
+    for k,data in enumerate((database,mirror)):
+        offset = 73+89*k
+        payload[offset+16:offset+24] = struct.pack("<Q",len(data))
+        payload[offset+24:offset+89] = sha(data).encode()+b"\0"
+    aliases(replacements,snap["authority"][ppath]["source_path"],envelope(praw,bytes(payload)))
+    check("re-sealed-prepared-pair-loses-original-ledger-record",replacements,
+          ["po-original-ledger-records-preserved:notes"])
+
+    # 5. A package copy with a different actual inode cannot satisfy INPUT's
+    # independently registered private-pack identity, even with identical bytes.
+    snap = phase("process-kill-900-any","paused")
+    tx = original.transaction(snap,"test_tool",True)
+    pack_name = tx["input"]["private_pack"]
+    row = snap["custody"][pack_name]
+    check("input-private-pack-actual-native-id-rebound",{},
+          ["po-actual-member-identity-size-digest:"+pack_name],
+          {row["source_path"]:dict(inode=row["inode"]+1)})
+
+    # 6. PREPARED's payload and outer envelope remain internally sealed, but its
+    # new DB identity no longer equals the real reserved stage.
+    snap = phase("process-kill-904-any","paused")
+    tx = original.transaction(snap,"test_tool")
+    prepared = tx["native"]["prepared_record"]
+    pname = final_name(2,tx["native"]["generation"],tx["input"]["sha256"])
+    ppath = snap["route"]+"/"+pname
+    raw = original.raw(snap["ap"]+"/"+ppath)
+    payload = bytearray(prepared["payload"])
+    payload[81:89] = struct.pack("<Q",u64(payload,81)+1)
+    replacements = {}
+    aliases(replacements,snap["authority"][ppath]["source_path"],envelope(raw,bytes(payload)))
+    check("re-sealed-prepared-native-object-contradiction",replacements,
+          ["po-prepared-exact-reserved-native-stage-identities"])
+
+    # 7. Re-seal all immutable floor-chain hashes and all following head records;
+    # the first floor still names the wrong whole raw ACK digest.
+    snap = phase("actual-full-seed-and-next-generation","generation-1")
+    tx = original.transaction(snap,"tool")
+    replacements = {}
+    previous_floor = ZERO
+    new_floors = []
+    for index,floor in enumerate(tx["native"]["floors"]):
+        relative_path = snap["route"]+"/"+floor["name"]
+        raw = original.raw(snap["ap"]+"/"+relative_path)
+        payload = bytearray(raw[568:-64])
+        payload[72:136] = previous_floor.encode()
+        if not index:
+            payload[288] = ord("a") if payload[288] != ord("a") else ord("b")
+        new_raw = envelope(raw,bytes(payload))
+        previous_floor = sha(new_raw)
+        new_floors.append(previous_floor)
+        aliases(replacements,snap["authority"][relative_path]["source_path"],new_raw)
+    hname = head_name(tx["native"]["generation"],tx["input"]["sha256"])
+    hpath = snap["route"]+"/"+hname
+    head = bytearray(original.raw(snap["ap"]+"/"+hpath))
+    previous_head = head[400:464]
+    for index,digest in enumerate(new_floors):
+        offset = 464+272*index
+        head[offset+80:offset+144] = digest.encode()
+        head[offset+144:offset+208] = previous_head
+        head[offset+208:offset+272] = sha(head[offset:offset+208]).encode()
+        previous_head = head[offset+208:offset+272]
+    aliases(replacements,snap["authority"][hpath]["source_path"],bytes(head))
+    check("re-sealed-floor-head-chain-wrong-actual-ack-sha",replacements,
+          ["pm-floor-actual-ack-fstat-raw-and-line"])
+
+    # 8. Even a complete, internally re-sealed temporary has to contain the
+    # claimed event9 fixture. It cannot manufacture a committed publish intent.
+    publish = next(a["count"] for a in tx["native"]["acknowledgements"]
+                   if a["line"].startswith(b"EXRWH2 ") and a["line"].split(b" ")[2] == b"9")
+    snap = phase(f"process-kill-1602-{publish-1}","paused")
+    tx = original.transaction(snap,"test_tool")
+    need(len(tx["temporary"]) == 1, "po-negative-actual-unpromoted-event-nine-temp")
+    temporary = tx["temporary"][0]
+    raw = bytearray(temporary["raw"])
+    parts = temporary["record"]["line"].split(b" ")
+    need(parts[2] == b"9", "po-negative-original-temp-event-nine")
+    parts[2] = b"8"
+    prefix = b" ".join(parts[:-1])
+    line = prefix+b" "+sha(prefix).encode()
+    need(len(line) == len(temporary["record"]["line"]), "po-negative-same-size-resealed-temp-line")
+    raw[296:-64] = line
+    raw[232:296] = sha(line).encode()
+    raw[-64:] = sha(raw[:-64]).encode()
+    replacements = {}
+    source_path = temporary["observed"]["source_path"]
+    aliases(replacements,source_path,bytes(raw))
+    check("re-sealed-temporary-does-not-prove-publish-intent",replacements,
+          ["po-temp-event-nine-never-promoted"])
+
+    need(len(results) == 8, "po-all-eight-owner-specific-resealed-negatives")
+    (root/"owner-negative-controls.json").write_bytes(encoded(dict(
+        schema="pc02-owner-resealed-negatives-v1",source=source,role=spec["role"],
+        original_zip_sha256=spec["artifact"]["sha256"],controls=results)))
+    return results
