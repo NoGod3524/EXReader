@@ -1,5 +1,5 @@
 """Two bounded native diagnostic launches of a CI-authenticated full product."""
-import argparse,ctypes as C,hashlib,importlib.util,json,os,shutil,subprocess,sys,time,types,zipfile
+import argparse,ctypes as C,hashlib,importlib.util,json,os,re,shutil,subprocess,sys,time,types,zipfile
 from ctypes import wintypes as W
 from datetime import datetime,timezone
 from pathlib import Path
@@ -13,7 +13,7 @@ def module(name,path):
 
 def main():
  p=argparse.ArgumentParser();p.add_argument("--zip",required=True);p.add_argument("--metadata",required=True)
- p.add_argument("--expected-source",required=True);p.add_argument("--harness-source");p.add_argument("--cohorts",default="shelf,reader,page");p.add_argument("--helper-root",required=True);p.add_argument("--observer",required=True);a=p.parse_args()
+ p.add_argument("--expected-source",required=True);p.add_argument("--harness-source");p.add_argument("--cohorts",default="shelf,reader,page");p.add_argument("--helper-root",required=True);p.add_argument("--observer",required=True);p.add_argument("--observer-sha256",default="d9091ee8b19cce806942d1c7127802b0cfe222eda10e378d95e0cd2bde9869c7");p.add_argument("--observer-bytes",type=int,default=80896);p.add_argument("--observer-source",default="679895786e4a2c62b961583441f894d373aba4b1");a=p.parse_args()
  need(os.name=="nt" and os.environ.get("COMPUTERNAME","").upper()=="LAP25002","named native Windows device")
  need(os.environ.get("GITHUB_ACTIONS")!="true","local-native provenance")
  data=Path(a.zip).read_bytes();meta=json.loads(Path(a.metadata).read_text(encoding="utf-8-sig"))
@@ -34,7 +34,7 @@ def main():
  need(sha(raw/"program/EXReader.exe")==identity["program_sha256"] and sha(raw/"seed.exe")==identity["seed_sha256"],"executed native product and seed")
  helper=Path(a.helper_root)
  for name,digest in identity["unchanged_helpers"].items():need(sha(helper/name)==digest,"original helper "+name)
- need(sha(a.observer)=="d9091ee8b19cce806942d1c7127802b0cfe222eda10e378d95e0cd2bde9869c7" and Path(a.observer).stat().st_size==80896,"retained lossless WGC observer identity")
+ need(sha(a.observer)==a.observer_sha256 and Path(a.observer).stat().st_size==a.observer_bytes,"retained lossless WGC observer identity")
  sys.path.insert(0,str(helper/"tests/reader_perf_windows"));import perf_windows as H
  D=module("f08_native_display",helper/"tests/reader_wave3_c09/desktop.py")
  replay=module("f08_native_replay",raw/"native-source/replay.py")
@@ -53,6 +53,7 @@ def main():
  foreground=user.GetForegroundWindow();frequency=C.c_longlong();H.K.QueryPerformanceFrequency(C.byref(frequency))
  report=dict(source_sha=a.expected_source,harness_source_sha=a.harness_source or a.expected_source,harness_sha256=sha(__file__),execution="local-native",machine="LAP25002",captures=[],problems=[],
   artifact_id=meta["id"],artifact_digest=meta["digest"],program_sha256=identity["program_sha256"],
+  observer_sha256=sha(a.observer),observer_source_sha=a.observer_source,
   display_before=[before.width,before.height,before.frequency],display_mode_changed_by_harness=False,
   operation_boundary="worker-entry/native-scroll-entry to same-generation GDI execution completion",
   ui_frame_candidate_boundary="ready-frame native UI accept through layout to same-generation GDI completion",f08_accepted=False)
@@ -83,6 +84,13 @@ def main():
     try:return send(hwnd,message,wparam,lparam,timeout)
     finally:event["end_qpc"]=qpc();emit(event)
    def painted():return int(user.GetPropW(host.control("page"),"EXReaderF08PaintedGeneration") or 0)
+   def shelf_property(name):return int(user.GetPropW(host.control("books"),name) or 0)
+   def await_shelf():
+    host.poll(lambda:(True,) if H.U.IsWindowVisible(host.control("books")) and shelf_property("EXReaderShelfSnapshot")>0 and shelf_property("EXReaderShelfSnapshot")==shelf_property("EXReaderF08ShelfPaintedSnapshot") else None,10,interval=.001)
+   def shelf_state():
+    top=host.lb_top();return dict(top=top,top_book_id=shelf_property("EXReaderF08ShelfTopBookId"),snapshot=shelf_property("EXReaderShelfSnapshot"),query=host.text(host.control("search")),rows=host.lb_count(),top_text=host.lb_item(top) if top>=0 else None)
+   def back_to_shelf():
+    back=H.U.GetDlgItem(host.window,46001);need(back,"real compact Shelf control");host.send(back,0xF5);await_shelf()
    def await_paint(previous):
     host.poll(lambda:(True,) if painted()>previous else None,10,interval=.001)
     emit(dict(kind="paint_readiness",pid=host.process.pid,qpc=qpc(),previous_generation=previous,painted_generation=painted()))
@@ -108,6 +116,15 @@ def main():
       for control in ("font_inc","font_dec"):
        host.wait_enabled(control,10);before_paint=painted();host.click(control);await_paint(before_paint);time.sleep(.15)
      host.wait_enabled("font_inc",10)
+     # Validation only: use a nonzero, filtered anchor and return from a real book.
+     back_to_shelf();host.set_text(host.control("search"),"Shelf")
+     host.poll(lambda:(True,) if host.lb_count()==50 and "Shelf 0000" in host.lb_item(0) else None,10)
+     await_shelf();H.op_shelf_next_page(host,20);await_shelf();anchor=shelf_state()
+     need(anchor["top"]>0 and anchor["top_book_id"]>0,"nonzero filtered shelf anchor")
+     title=re.search(r"Shelf \d{4}",anchor["top_text"])[0]
+     before_paint=painted();H.op_open(host,title,30);await_paint(before_paint);back_to_shelf()
+     restored=shelf_state();need(restored["query"]=="Shelf" and restored["top_book_id"]==anchor["top_book_id"],"filtered nonzero anchor restored")
+     entry["return_validation"]=dict(before=anchor,after=restored)
     else:
      # Original reading preparation adds one fixed packaged EPUB in a separate
      # profile; the shelf corpus remains the untouched 2202 seeded originals.
@@ -118,9 +135,30 @@ def main():
      print("F08_PICKER_EXPECTED",host.process.pid,str(fixture),flush=True)
      # The agent selects this fixed packaged fixture through computer-use.
      host.poll(lambda:(True,) if any("EXReader benchmark" in row for row in host.rows()) else None,90,interval=.02)
+     host.set_text(host.control("search"),"EXReader benchmark")
+     host.poll(lambda:(True,) if host.lb_count()==1 and "EXReader benchmark" in host.lb_item(0) else None,10)
+     await_shelf();entry["metadata_anchor_before"]=shelf_state()
      before_paint=painted();entry["open"]=H.op_open(host,"EXReader benchmark",30);await_paint(before_paint);key=entry["open"]["key"];entry["page_turns"]=[]
      for _ in range(8):
       before_paint=painted();turn=H.op_page_turn(host,key);await_paint(before_paint);entry["page_turns"].append(turn);key=turn["to"]
+     host.wait_enabled("metadata",10);host.send(host.window,0x111,128,0)
+     def find_metadata():
+      found=[]
+      @H.ENUM
+      def visit(hwnd,unused):
+       owner=W.DWORD();H.U.GetWindowThreadProcessId(hwnd,C.byref(owner))
+       if owner.value==host.process.pid and H.U.GetDlgItem(hwnd,129) and H.U.GetDlgItem(hwnd,132):found.append(hwnd)
+       return True
+      H.U.EnumWindows(visit,0);need(len(found)<=1,"unique owned metadata dialog");return (found[0],) if found else None
+     dialog=host.poll(find_metadata,10)[0];title=H.U.GetDlgItem(dialog,129);save_button=H.U.GetDlgItem(dialog,132)
+     host.poll(lambda:(True,) if H.U.IsWindowEnabled(save_button) else None,10)
+     new_title="EXReader benchmark F08 metadata";host.set_text(title,new_title);host.send(save_button,0xF5)
+     host.poll(lambda:(True,) if "书籍信息已保存" in host.status() else None,30)
+     before_return=shelf_property("EXReaderShelfSnapshot");back_to_shelf()
+     host.poll(lambda:(True,) if any(new_title in row for row in host.rows()) else None,10);await_shelf();restored=shelf_state()
+     anchor=entry["metadata_anchor_before"]
+     need(restored["query"]==anchor["query"] and restored["top_book_id"]==anchor["top_book_id"] and restored["snapshot"]>before_return,"pending metadata refresh and filtered anchor restored")
+     entry["metadata_return_validation"]=dict(before=anchor,after=restored,title=new_title,pending_snapshot=before_return)
     time.sleep(.2);entry["observed"]=True
    finally:
     if observer:

@@ -6113,7 +6113,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
   }
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
-  if(message==WM_APP+31) { product_shelf_edges();return 0; }
+  if(message==WM_APP+31) { product_shelf_edges();product_shelf_dispatch();return 0; }
 #endif
   switch (message) {
     case WM_CREATE:
@@ -6212,6 +6212,11 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_HOST_COMPLETE: {
       host_job *job = (host_job *)lparam;
       if (!job || job != g.job) return 0;
+      int redraw_page=job->kind!=JOB_SAVE
+#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
+        && job->kind!=JOB_TXT_PROGRESS
+#endif
+        ;
       /* The completion is posted after all SDK work; join only the final ref
          release before the UI accepts/frees the job's owned candidates. */
 #ifdef EXR_WINDOWS_FRAME_REVIEW
@@ -6234,14 +6239,15 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       f08_record("ui_owners_complete",job->review.ui_start_qpc,&job->review,g.frame.generation,g.frame.book_id,IDC_PAGE,job->kind,0,0,0);
 #endif
       job_release(job);
-      InvalidateRect(g.page, NULL, FALSE);
+      if(redraw_page) InvalidateRect(g.page, NULL, FALSE);
       if (!g.job && g.pending) {
         host_job *next = g.pending;
         g.pending = NULL;
         job_start(next);
-      } else {
-        host_update_controls();
       }
+#ifndef EXR_READER_PRODUCT_CATALOG
+      else host_update_controls();
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       prefs_after_complete();
 #endif

@@ -17,6 +17,7 @@
 #include <atomic>
 #include <filesystem>
 #include <mutex>
+#include <memory>
 #include <vector>
 #include <cstdio>
 using namespace winrt;
@@ -86,11 +87,12 @@ int wmain(int argc,wchar_t**argv){
   auto pool=Direct3D11CaptureFramePool::CreateFreeThreaded(native,DirectXPixelFormat::B8G8R8A8UIntNormalized,8,size);
   auto session=pool.CreateCaptureSession(item);session.IsCursorCaptureEnabled(false);
   fs::path folder=argv[4],stop=argv[3];fs::create_directories(folder);
-  std::mutex lock;std::atomic<bool> failed{false},closed{false};unsigned frames=0,changed_images=0,last=0;unsigned long long saved_bytes=0,saved_pixel_bytes=0;
+  struct Gate { std::mutex lock;bool stopping{}; };auto gate=std::make_shared<Gate>();
+  std::atomic<bool> failed{false},closed{false};unsigned frames=0,changed_images=0,last=0;unsigned long long saved_bytes=0,saved_pixel_bytes=0;
   std::vector<unsigned char> previous;com_ptr<ID3D11Texture2D> staging;D3D11_TEXTURE2D_DESC staging_desc{};
-  auto closed_token=item.Closed([&](auto const&,auto const&){closed=true;});
-  auto token=pool.FrameArrived([&](auto const&sender,auto const&){
-   std::lock_guard<std::mutex> guard(lock);if(failed)return;
+  auto closed_token=item.Closed([&,gate](auto const&,auto const&){std::lock_guard<std::mutex> guard(gate->lock);if(!gate->stopping)closed=true;});
+  auto token=pool.FrameArrived([&,gate](auto const&sender,auto const&){
+   std::lock_guard<std::mutex> guard(gate->lock);if(gate->stopping || failed)return;
    try{
     while(auto frame=sender.TryGetNextFrame()){
      auto begin=tick();RECT bounds{},after_bounds{};
@@ -143,8 +145,10 @@ int wmain(int argc,wchar_t**argv){
   std::printf("{\"kind\":\"ready\",\"qpc\":%lld,\"width\":%d,\"height\":%d,\"frame_pool_buffers\":8,\"capture_scope\":\"owned_window\",\"cursor_capture\":false}\n",tick(),size.Width,size.Height);std::fflush(stdout);
   auto deadline=GetTickCount64()+120000;
   while(!fs::exists(stop)&&!failed&&!closed&&IsWindow(root)&&GetTickCount64()<deadline)Sleep(5);
-  session.Close();pool.FrameArrived(token);pool.Close();item.Closed(closed_token);
-  std::lock_guard<std::mutex> guard(lock);bool expired=GetTickCount64()>=deadline;
+  pool.FrameArrived(token);item.Closed(closed_token);
+  { std::lock_guard<std::mutex> stop_guard(gate->lock);gate->stopping=true; }
+  session.Close();pool.Close();
+  std::lock_guard<std::mutex> guard(gate->lock);bool expired=GetTickCount64()>=deadline;
   std::printf("{\"kind\":\"summary\",\"qpc\":%lld,\"frames\":%u,\"changed_images\":%u,\"saved_pixel_bytes\":%llu,\"saved_file_bytes\":%llu,\"deadline_expired\":%s,\"failed\":%s,\"target_closed\":%s,\"frame_census_complete\":false,\"physical_scanout_proven\":false,\"f08_accepted\":false}\n",
    tick(),frames,changed_images,saved_pixel_bytes,saved_bytes,expired?"true":"false",failed?"true":"false",closed?"true":"false");
   return !failed&&!expired&&frames>0?0:1;
