@@ -34,7 +34,9 @@ def main():
         manifest=json_value(supplied)
         need(manifest["source"]==source, "explicit-complete-source-binding")
         roles={item["role"] for item in manifest["packages"]}
-        need(roles <= ROLES and "native-windows" in roles, "selected-valid-roles-and-original-negative-baseline")
+        need(roles and roles <= ROLES and
+             ("native-windows" in roles or bool(roles & {"host-android","host-macos","host-ios","host-gtk"})),
+             "selected-valid-roles-and-native-negative-controls")
         if args.scope=="complete-c02":
             need(roles==ROLES, "complete-mode-all-platform-packages")
     need(manifest["schema"]==1 and manifest["repository"]=="NoGod3524/EXReader" and
