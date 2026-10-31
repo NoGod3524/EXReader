@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.24)
+project(F10StaleOwnerProbe LANGUAGES C)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+find_package(EXReaderWebDAVCleanup 0.1.0 CONFIG REQUIRED)
+add_executable(f10-stale-probe probe.c)
+target_link_libraries(f10-stale-probe PRIVATE EXReaderWebDAVCleanup::exr_webdav_cleanup)
+target_compile_options(f10-stale-probe PRIVATE -Wall -Wextra -Wpedantic -Werror)
+# Existing production hook sites only; a separate binary for deterministic
+# real SIGKILL at receipt/cleanup boundaries, not the installed binary.
+add_library(f10-boundary-core STATIC ../../../extras/webdav-cleanup/src/cleanup_posix.c)
+target_include_directories(f10-boundary-core PUBLIC ../../../extras/webdav-cleanup/include)
+target_compile_definitions(f10-boundary-core PRIVATE EXR_WC_TEST_HOOKS)
+target_compile_options(f10-boundary-core PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_executable(f10-stale-boundary-probe probe.c)
+target_link_libraries(f10-stale-boundary-probe PRIVATE f10-boundary-core)
+target_compile_options(f10-stale-boundary-probe PRIVATE -Wall -Wextra -Wpedantic -Werror)
