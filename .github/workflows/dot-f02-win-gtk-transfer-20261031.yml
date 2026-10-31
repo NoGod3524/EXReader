@@ -34,6 +34,18 @@ jobs:
           if ($LASTEXITCODE) { throw 'hash build' }
           cmake --install build/f02-hash-build
           if ($LASTEXITCODE) { throw 'hash install' }
+      - name: Export canonical installed original-hash prefix
+        shell: pwsh
+        run: |
+          @'
+          file(REAL_PATH "$ENV{GITHUB_WORKSPACE}/build/f02-hash" prefix)
+          if(NOT IS_ABSOLUTE "${prefix}" OR NOT IS_DIRECTORY "${prefix}")
+            message(FATAL_ERROR "Installed original hash prefix missing")
+          endif()
+          file(APPEND "$ENV{GITHUB_ENV}" "EXREADER_ORIGINAL_HASH_PREFIX=${prefix}\n")
+          '@ | Set-Content -Encoding utf8 build/f02-canonical-prefix.cmake
+          cmake -P build/f02-canonical-prefix.cmake
+          if ($LASTEXITCODE) { throw 'canonical prefix export' }
       - name: Verify SDK candidate identity
         shell: bash
         run: |
