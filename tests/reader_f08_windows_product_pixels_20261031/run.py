@@ -47,7 +47,17 @@ def analyze(folder,entry):
          type(driver[-1]["exit"]) is int,"actual native process lifetime")
     images={};previous={};changed={119:[],123:[]};valid={119:0,123:0};invalid={119:0,123:0};indices=set();present=0;extra=0
     phase_ticks={name:[] for name in ("copy_to_first_map","copy_to_successful_map","successful_map_call",
-        "all_map_calls","mapped_to_finished","pixel_copy_and_alpha","pixel_compare","bitmap_write","copy_to_finished")}
+        "all_map_calls","mapped_to_finished","pixel_copy_and_alpha","pixel_compare","bitmap_write","copy_to_finished",
+        "map_wait_acquire_timeout_overlap","acquire_timeout_call")}
+    timeouts=[row for row in native if row["kind"]=="acquire_timeout"]
+    need(type(last.get("acquire_timeouts")) is int and len(timeouts)==last["acquire_timeouts"],"every acquisition timeout retained")
+    previous_timeout=first["qpc"]
+    for row in timeouts:
+        need(all(type(row.get(k)) is int for k in ("start_qpc","end_qpc","pending_copies")) and
+             previous_timeout<=row["start_qpc"]<=row["end_qpc"]<=last["qpc"] and
+             0<=row["pending_copies"]<=8,"native timeout chronology")
+        previous_timeout=row["end_qpc"]
+        phase_ticks["acquire_timeout_call"].append(row["end_qpc"]-row["start_qpc"])
     map_attempts=0;blocking_maps=0
     frames=sorted([r for r in native if r["kind"] in ("frame","pointer_only")],key=lambda r:r["index"])
     need([r["index"] for r in frames]==list(range(1,len(frames)+1)) and len(frames)==last["desktop_records"],"no omitted acquisition records")
@@ -80,6 +90,10 @@ def analyze(folder,entry):
             ("copy_to_finished","copy_submitted_qpc","readback_finished_qpc")):
             phase_ticks[name].append(frame[end]-frame[start])
         phase_ticks["all_map_calls"].append(frame["map_cpu_ticks"])
+        overlap=sum(max(0,min(frame["map_start_qpc"],t["end_qpc"])-max(frame["first_map_qpc"],t["start_qpc"]))
+                    for t in timeouts)
+        need(overlap<=frame["map_start_qpc"]-frame["first_map_qpc"],"nonoverlapping timeout contribution")
+        phase_ticks["map_wait_acquire_timeout_overlap"].append(overlap)
         map_attempts+=frame["map_attempts"];blocking_maps+=frame["map_blocking"]
         present=frame["last_present_qpc"]
         need([r["control_id"] for r in frame["regions"]]==[119,123],"both native content regions")
@@ -132,7 +146,7 @@ def analyze(folder,entry):
         ordered=sorted(x*1000/freq for x in values);n=len(ordered)
         return {"n":n,"p50_ms":ordered[math.ceil(n*.5)-1] if n else None,
                 "p95_ms":ordered[math.ceil(n*.95)-1] if n else None,"max_ms":max(ordered) if n else None}
-    phases={"timing_version":1,"map_attempts":map_attempts,"blocking_maps":blocking_maps,
+    phases={"timing_version":2,"map_attempts":map_attempts,"blocking_maps":blocking_maps,"acquire_timeouts":len(timeouts),
             "durations":{name:phase_summary(values) for name,values in phase_ticks.items()}}
     return {"pid":pid,"observer_pid":entry["observer_pid"],"qpc_frequency":freq,"capture_phases":phases,
         "desktop_records":len(frames),"desktop_updates":len(frames)-last["pointer_only"],

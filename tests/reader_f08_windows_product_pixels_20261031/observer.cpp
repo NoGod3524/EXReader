@@ -70,7 +70,7 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
  D3D11_TEXTURE2D_DESC td{};td.Width=desc.ModeDesc.Width;td.Height=desc.ModeDesc.Height;td.MipLevels=1;td.ArraySize=1;
  td.Format=desc.ModeDesc.Format;td.SampleDesc.Count=1;td.Usage=D3D11_USAGE_STAGING;td.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
  std::array<Slot,8> slots{};for(auto &slot:slots)check(device->CreateTexture2D(&td,nullptr,slot.texture.GetAddressOf()),"staging");
- std::array<Image,2> last{};unsigned head=0,tail=0,pending=0,frames=0,pointer_only=0,extra=0,backpressure=0;
+ std::array<Image,2> last{};unsigned head=0,tail=0,pending=0,frames=0,pointer_only=0,extra=0,backpressure=0,acquire_timeouts=0;
  auto drain=[&](bool block){
   if(!pending)return false;auto &slot=slots[tail];D3D11_MAPPED_SUBRESOURCE map{};
   LONGLONG map_start=tick();if(!slot.map_attempts)slot.first_map=map_start;slot.map_attempts++;
@@ -128,7 +128,12 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
   auto &slot=slots[head];LONGLONG probe_before=tick();std::array<Region,2> before={region(parent,119,pid,description.DesktopCoordinates),region(parent,123,pid,description.DesktopCoordinates)};
   ComPtr<IDXGIResource> resource;DXGI_OUTDUPL_FRAME_INFO info{};release();LONGLONG start=tick();
   HRESULT hr=duplication->AcquireNextFrame(5,&info,resource.GetAddressOf());LONGLONG acquired=tick();
-  if(hr==DXGI_ERROR_WAIT_TIMEOUT)continue;check(hr,"AcquireNextFrame");frames++;held=true;held_index=frames;
+  if(hr==DXGI_ERROR_WAIT_TIMEOUT){
+   acquire_timeouts++;
+   std::printf("{\"kind\":\"acquire_timeout\",\"start_qpc\":%lld,\"end_qpc\":%lld,\"pending_copies\":%u}\n",start,acquired,pending);
+   continue;
+  }
+  check(hr,"AcquireNextFrame");frames++;held=true;held_index=frames;
   if(info.AccumulatedFrames>1)extra+=info.AccumulatedFrames-1;
   if(!info.LastPresentTime.QuadPart){
    pointer_only++;std::printf("{\"kind\":\"pointer_only\",\"index\":%u,\"acquired_qpc\":%lld,\"last_mouse_qpc\":%lld,\"accumulated_frames\":%u}\n",
@@ -146,7 +151,7 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
  release();while(pending)drain(true);
  bool expired=GetTickCount64()>=deadline;
  std::printf("{\"kind\":\"summary\",\"qpc\":%lld,\"desktop_records\":%u,\"pointer_only\":%u,\"accumulated_extra_frames\":%u,"
-  "\"ring_backpressure\":%u,\"deadline_expired\":%s,\"f08_accepted\":false}\n",tick(),frames,pointer_only,extra,backpressure,expired?"true":"false");
+  "\"ring_backpressure\":%u,\"acquire_timeouts\":%u,\"deadline_expired\":%s,\"f08_accepted\":false}\n",tick(),frames,pointer_only,extra,backpressure,acquire_timeouts,expired?"true":"false");
  return !expired && frames>0;
 }
 int wmain(int argc,wchar_t **argv){
