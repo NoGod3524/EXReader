@@ -210,7 +210,7 @@ static void acct_dialog_close(void) {
 static HWND acct_entry(HWND parent, int id, int y, DWORD extra) {
   HWND entry = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | extra,
     120, y, 480, 26, parent, (HMENU)(INT_PTR)id, NULL, NULL);
-  SendMessageW(entry, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  SendMessageW(entry, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
   SendMessageW(entry, EM_SETLIMITTEXT, 2000, 0);
   return entry;
 }
@@ -228,7 +228,7 @@ static INT_PTR CALLBACK acct_dialog_procedure(HWND dialog, UINT message, WPARAM 
       acct.password = acct_entry(dialog, IDC_ACCOUNT_PASSWORD, 92, ES_PASSWORD);
       acct.remember = CreateWindowExW(0, L"BUTTON", L"保存到系统安全存储（取消勾选则仅本次会话）(&R)", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTOCHECKBOX,
         120, 126, 480, 26, dialog, (HMENU)(INT_PTR)IDC_ACCOUNT_REMEMBER, NULL, NULL);
-      SendMessageW(acct.remember, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+      SendMessageW(acct.remember, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
       SendMessageW(acct.remember, BM_SETCHECK, BST_CHECKED, 0);
       MoveWindow(make_button(dialog, IDC_ACCOUNT_APPLY, L"应用(&A)"), 18, 162, 90, 30, TRUE);
       MoveWindow(make_button(dialog, IDC_ACCOUNT_SYNC, L"立即同步(&S)"), 116, 162, 100, 30, TRUE);
@@ -287,7 +287,7 @@ static void acct_open_dialog(void) {
   window = CreateDialogIndirectParamW(GetModuleHandleW(NULL), dialog, g.window, acct_dialog_procedure, 0);
   if (!window) { set_status(L"无法打开账号窗口。"); return; }
   GetWindowRect(g.window, &parent);
-  SetWindowPos(window, HWND_TOP, parent.left + 120, parent.top + 80, 640, 470, SWP_SHOWWINDOW);
+  SetWindowPos(window, HWND_TOP, parent.left + dpi_px(120), parent.top + dpi_px(80), dpi_px(640), dpi_px(470), SWP_SHOWWINDOW);
   host_a11y_owner_enabled(0); SetForegroundWindow(window); SetFocus(acct.root);
   if (!acct.owner.loaded && !g.job && !g.pending) {
     job = acct_job(JOB_ACCOUNT_LOAD, 0);

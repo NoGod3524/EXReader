@@ -361,7 +361,7 @@ static void winnav_show(void) {
   HWND label=make_static(window,0,L"目录项(&R)");MoveWindow(label,12,10,680,22,TRUE);
   directory.rows=CreateWindowExW(WS_EX_CLIENTEDGE,L"LISTBOX",L"目录项",WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT,
     12,36,680,258,window,(HMENU)(INT_PTR)IDC_DIRECTORY_ROWS,NULL,NULL);
-  SendMessageW(directory.rows,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
+  SendMessageW(directory.rows,WM_SETFONT,(WPARAM)host_ui_font(),TRUE);
   directory.message=make_static(window,IDC_DIRECTORY_MESSAGE,L"正在读取目录…");MoveWindow(directory.message,12,300,680,45,TRUE);
   const int ids[]={IDC_DIRECTORY_OPEN,IDC_DIRECTORY_CHILDREN,IDC_DIRECTORY_UP,IDC_DIRECTORY_PREVIOUS,
     IDC_DIRECTORY_NEXT,IDC_DIRECTORY_CANCEL,IDC_DIRECTORY_CLOSE};

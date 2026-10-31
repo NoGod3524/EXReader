@@ -488,7 +488,7 @@ static int w3_create(int kind, const wchar_t *title, const wchar_t *intro, const
   w3.rows = CreateWindowExW(WS_EX_CLIENTEDGE, L"LISTBOX", title,
     WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | (multiple ? LBS_EXTENDEDSEL : 0),
     12, 56, 780, 300, window, (HMENU)(INT_PTR)IDC_W3_ROWS, NULL, NULL);
-  SendMessageW(w3.rows, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  SendMessageW(w3.rows, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
   w3.message = make_static(window, IDC_W3_MESSAGE, L""); MoveWindow(w3.message, 12, 364, 780, 72, TRUE);
   memset(w3.controls, 0, sizeof(w3.controls));
   for (i = 0; i < count && i < 5; i++) {
