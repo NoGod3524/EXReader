@@ -6236,6 +6236,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_HOST_COMPLETE: {
       host_job *job = (host_job *)lparam;
       if (!job || job != g.job) return 0;
+      const int previous_frame_valid=g.frame.valid;
+      const int64_t previous_frame_book=g.frame.book_id;
+      const uint64_t previous_frame_generation=g.frame.generation;
       int redraw_page=job->kind!=JOB_SAVE
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
         && job->kind!=JOB_TXT_PROGRESS
@@ -6245,6 +6248,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
          release before the UI accepts/frees the job's owned candidates. */
 #ifdef EXR_WINDOWS_FRAME_REVIEW
       job->review.ui_start_qpc=f08_tick();job->frame.review=job->review;
+      const f08_origin completion_review=job->review;const int completion_kind=job->kind;
       f08_record("ui_accept_begin",job->review.ui_start_qpc,&job->review,job->frame.generation,job->frame.book_id,IDC_PAGE,job->kind,0,0,0);
 #endif
       WaitForSingleObject(job->thread, INFINITE);
@@ -6284,6 +6288,17 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #endif
 #ifdef EXR_READER_WINDOWS_NAVIGATION
       winnav_controls();
+#endif
+      /* Publish the accepted pixels before a queued background completion can
+         postpone WM_PAINT. Owner, pending and save work above retain their order. */
+      if (!g.closing && g.has_current && g.frame.valid && g.frame.book_id==g.current.id &&
+          (!previous_frame_valid || g.frame.book_id!=previous_frame_book ||
+           g.frame.generation!=previous_frame_generation) &&
+          IsWindowVisible(g.page) && !IsIconic(window) && GetUpdateRect(g.page,NULL,FALSE))
+        UpdateWindow(g.page);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+      f08_record("ui_completion_end",completion_review.ui_start_qpc,&completion_review,
+        g.frame.generation,g.frame.book_id,IDC_PAGE,completion_kind,0,0,0);
 #endif
       if (g.closing) finish_close(window);
       return 0;
