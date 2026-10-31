@@ -685,3 +685,23 @@ gaps. selected-components can never set full_c02_complete=true. GTK still has
 a static-SDK binary-binding gap; preserving real link inputs and independent
 relinking is in progress. Complete acceptance still requires all twelve roles
 at one common source and every capability gap closed. Formal 95/108 is unchanged.
+
+### Six-role original ZIP qualification and negative summary correction
+
+At producer 734f4fa5d1a23515a754a51d0a09dea0e13f1c25, the two original native
+baseline packages, two POSIX native packages (including actual pre-confirm
+snapshots), and both actual migration packages passed independent original ZIP
+audit 41185117231/A1. It retained all six originals, 9 semantic negatives and
+66 role-substitution negatives. Artifact 13036468152, 79707845 bytes, SHA256
+c3ea8d9d0912384810b2672d8c1cd438cc3bf9d7123c9585291ec138e9a03ea1.
+Both actual owners still declare the missing explicit partial-state/head Repair.
+
+The next audit 41185479465/A1 added eight owner-specific resealed attacks per
+platform. All six decoders and all 25 semantic controls reached the saved result,
+but the final compact log formatter raised KeyError('reason'): the new owner
+control records use 'rejection'. The workflow correctly remained failed because
+its audit process exit was nonzero. Preserve artifact 13036783195, 113110575 bytes,
+SHA256 fbd35cbd42f25951d0b34903c810eb3654b37647ebb762f7caf021c15a673cd8.
+The follow-up changes only compact-log field selection; all original checks,
+patch ZIP readback, reconstructed semantic decoders and exact expected rejection
+classes remain unchanged. Its full successful result must be recorded separately.

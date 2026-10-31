@@ -1012,7 +1012,7 @@ def main():
         passed=result["passed"],full_c02_complete=result["full_c02_complete"],producer_source=source,
         original_zips_verified=True, original_zip_count=len(original_checks),
         semantic_negative_controls=len(controls), qualification_negative_controls=len(role_controls),
-        negative_controls=[dict(name=c["name"],reason=c["reason"]) for c in controls],
+        negative_controls=[dict(name=c["name"],reason=c["reason"] if "reason" in c else c["rejection"]) for c in controls],
         missing_capabilities=sorted(missing),
         packages=[dict(role=p["role"],run=p["run"],attempt=p["attempt"],artifact=p["artifact"]["id"],
                        capabilities=p["details"]["capabilities"]) for p in packages])),flush=True)
