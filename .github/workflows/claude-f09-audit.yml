@@ -1,0 +1,84 @@
+name: F09 accessibility audits on shared-source hosts
+# Self-approved F09 budget (user delegation 2026-10-31): see _studio_ui_seal/F09-PLAN.md.
+on:
+  push:
+    branches: [claude/f09-audit-20261101]
+    paths:
+      - tests/f09_audit/**
+      - .github/workflows/claude-f09-audit.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Shared candidate and frozen SDK
+        shell: bash
+        run: |
+          git merge-base --is-ancestor 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD
+          bad=$(git diff --name-only 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD | grep -Ev '^(tests/f09_audit/|\.github/workflows/claude-f09-audit\.yml$)' || true)
+          test -z "$bad" || { echo "outside F09 audit scope: $bad"; exit 1; }
+      - name: Install the UI Automation client used by the audit
+        run: python -m pip install "uiautomation==2.0.29"
+      - name: Build the shared-source Windows host and run the existing audit
+        run: python tests/f09_audit/baseline.py windows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f09-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09/
+            build/f06/windows-build/logs/
+          if-no-files-found: warn
+  linux:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Shared candidate and frozen SDK
+        run: |
+          git merge-base --is-ancestor 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD
+          bad=$(git diff --name-only 343bb94eb6513beaf5b344e7828342f6602a3b7b HEAD | grep -Ev '^(tests/f09_audit/|\.github/workflows/claude-f09-audit\.yml$)' || true)
+          test -z "$bad" || { echo "outside F09 audit scope: $bad"; exit 1; }
+      - name: Install the GTK build and AT-SPI audit dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev \
+            libssl-dev pkg-config ninja-build at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 gsettings-desktop-schemas \
+            dbus dbus-x11 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+      - name: Build the shared-source GTK host and run the existing audit on the accessibility bus
+        run: |
+          set -euo pipefail
+          mkdir -p build/f09/logs
+          # Same session setup as the retained GTK audit workflow (reader-a11y-gtk.yml).
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox > build/f09/logs/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            unset -v NO_AT_BRIDGE || true
+            unset -v GTK_MODULES || true
+            export GTK_A11Y=atspi
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true || true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true || true
+            gdbus call --session --dest org.a11y.Bus --object-path /org/a11y/bus --method org.a11y.Bus.GetAddress || true
+            python3 tests/f09_audit/baseline.py linux
+          ' 2>&1 | tee build/f09/logs/linux-session.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f09-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09/
+            build/f06/linux/
+          if-no-files-found: warn
