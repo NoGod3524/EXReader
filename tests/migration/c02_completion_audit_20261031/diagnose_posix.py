@@ -63,14 +63,14 @@ def main():
         dict(path=name, bytes=len(data), sha256=sha(data)) for name, data in sorted(files.items())
     ], indent=2) + "\n")
     selected_names = [name for name in sorted(files) if
-        name.endswith(("migration-result.json", "legacy-result.json", "pc02-provider-inputs.txt",
+        name.endswith(("migration-result.json", "repair-result.json", "legacy-result.json", "pc02-provider-inputs.txt",
                        "exreader-c02-migrate", "exreader-c02-migrate-controls", "exreader-c02-admission")) or
         "/preserved-binaries/" in name or name.endswith("source-observations.json")]
     print("C02-POSIX-ORIGINAL-MEMBERS " + json.dumps(selected_names), flush=True)
     reports = {}
     for name, data in sorted(files.items()):
         chosen_case = "/process-kill-900-any/" in name or "/process-kill-1603-" in name
-        if not (name.endswith(("migration-result.json", "legacy-result.json", "source-observations.json")) or
+        if not (name.endswith(("migration-result.json", "repair-result.json", "legacy-result.json", "source-observations.json")) or
                 chosen_case and name.endswith(".json") and "/native/" not in name):
             continue
         value = json_value(data)
@@ -84,6 +84,7 @@ def main():
         text = json.dumps(dict(path=name, bytes=len(data), value=shown))
         print("C02-POSIX-ORIGINAL-JSON " + text[:48000], flush=True)
     (out / "selected-json.json").write_text(json.dumps(reports, indent=2) + "\n")
+    repair_diagnostics(files, out)
     need(original.stat().st_size == request["bytes"] and sha(original.read_bytes()) == request["sha256"],
          "original-zip-unchanged-after-diagnostics")
     receipt = dict(scope="diagnostic-only", full_c02_complete=False, producer=request,
@@ -109,6 +110,51 @@ def main():
         (out / "owner-independent.json").write_text(json.dumps(details,indent=2)+"\n")
         print("C02-POSIX-OWNER-INDEPENDENT " + json.dumps({
             key:value for key,value in details.items() if key != "cases"}),flush=True)
+
+
+def repair_diagnostics(files, out):
+    import struct
+    cases = ("partial-begin-actual", "partial-clean-actual", "partial-head-actual",
+             "two-sequential-interruptions", "selected-complete-clean-restored",
+             "protected-applied-floor-rollback-refused")
+    report = {}
+    for case in cases:
+        members = []
+        for name, data in sorted(files.items()):
+            if "/" + case + "/" not in name:
+                continue
+            leaf = name.rsplit("/", 1)[-1]
+            if not (leaf.startswith(("repair-", "proof-")) or leaf == "repair.guard" or
+                    "/repair-archive-" in name or leaf.endswith("-observation.json")):
+                continue
+            row = dict(path=name, bytes=len(data), sha256=sha(data))
+            if data[:8] == b"PC02R001" and len(data) >= 112:
+                row.update(zip(("kind", "sequence", "payload_bytes"), struct.unpack_from("<QQQ", data, 8)))
+            members.append(row)
+        report[case] = members
+        print("C02-REPAIR-MEMBERS " + json.dumps(dict(case=case, count=len(members), members=members)), flush=True)
+    samples = {}
+    for name, data in sorted(files.items()):
+        if name.endswith("native-source-observations.json"):
+            observations = json_value(data)
+            for case in cases:
+                matches = [row for row in observations if case in json.dumps(row)]
+                chosen = []
+                for marker in ("state", "repair-archive-", "proof-"):
+                    chosen.extend([row for row in matches if marker in json.dumps(row)][:3])
+                samples[case] = chosen
+                print("C02-REPAIR-FSTAT " + json.dumps(dict(case=case, rows=chosen)), flush=True)
+        if "/partial-head-actual/" not in name:
+            continue
+        if name.endswith("process-repair-plan-1-observation.json"):
+            value = json_value(data)
+            samples[name] = value
+            print("C02-REPAIR-PROCESS " + json.dumps(dict(path=name, value=value)), flush=True)
+        if name.endswith((".stdout", ".log", ".txt")) and b"repair_" in data and len(data) < 200000:
+            value = data.decode("utf-8", "strict")
+            samples[name] = value
+            print("C02-REPAIR-SDK-LOG " + json.dumps(dict(path=name, text=value)), flush=True)
+    (out / "repair-diagnostic.json").write_text(json.dumps(dict(members=report, samples=samples), indent=2) + "\n")
 
 if __name__ == "__main__":
     main()
