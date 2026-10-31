@@ -28,3 +28,16 @@ The already-built host/map were not copied into the new evidence directory befor
 
 ## Explicitly authorized one correction
 User Sentinel_c755c0f0301881919ceb713442152ace approved one additional Linux120+audit15-minute run. Only the new test CMake/build/checker record core as INTERFACE_LIBRARY with its exact EXReader::exr_render dependency and bind concrete exr_base/exr_render installed archives. Public target_link_libraries remains unchanged. Wrapper commands now persist captured stdout/stderr, print failure output and preserve the nonzero return. No product/old test changes; six audit negative controls remain unchanged. Original failure above is retained. No automatic third run.
+
+
+## Correction result 2026-10-31
+
+Run 41182600094/A1 at 334aa9659426ddd3f3b1adcdcb70db86c32ae511 succeeded: Linux job124482898836, audit124483544959. The separately approved correction round is consumed; no further run is authorized. Initial failure remains above.
+
+Actual managed GTK host/package: 10158144 bytes, SHA256 e6553ff51512d6803db11ca68cdcd8c7adb3d7eb9312d80315001ab9dab10aba. Package prints 3.42.0 ABI1; original77 TLS checks passed. Core is INTERFACE_LIBRARY -> EXReader::exr_render; concrete base/render archives were separately bound.
+
+Independent Actions audit authenticated original ZIP/internal hashes, actual link/map/archive members and recomputed host symbols. Actual host and codec-only control extract product libreader_catalog_sqlite.a(sqlite3.c.o); independent SDK consumer extracts SDK libexr_vendor_exr_sqlite.a(sqlite3.c.o). Dynamic dependency inventory retained. Positive1/negative6 all passed, exact refusal reasons: missing_map, provider_ambiguous, target_prefix, sdk_version_abi, test_hook, file_hash.
+
+Producer artifact13035623286:11793200 bytes/SHA256 922fbf4f782ea31c1b431d1cf612a2f25d7e8806eb4ba1728e6d991269c494a0. Audit artifact13034649803:16488586 bytes/SHA256 e390045e3f926be3314e0c4ce2be278a17e0cd0cff82d6b47da6d2b594ea74a0.
+
+Audit completed/passed true, errors empty. host_runtime_provider_observed=false: executed sourceid/compile options belong only to independent public consumers, not live GTK address attribution. Diagnostic linker flags are recorded; no untested package binary-equivalence claim. F07_accepted=false, formal95/108 unchanged, not six-platform acceptance. No local build/test/ZIP processing.
