@@ -1,0 +1,121 @@
+name: K03 Linux portable A to B update and library retention
+on:
+  push:
+    branches: [claude/k03-linux-portable-upgrade-20261031]
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  PRODUCT_BASE: 8232e91cd7b9296dfcdd3096b96317eb3fa1008a
+  A_ARTIFACT_ID: '12811449234'
+  ATSPI_CLIENT_SHA: 67e2f8c4941205c5581e82fd5a1469d18f696019
+jobs:
+  matrix:
+    name: Real A -> B GTK matrix
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact added paths; production tree equals the product baseline
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$PRODUCT_BASE" HEAD
+          python3 - <<'PY'
+          import os,subprocess
+          base=os.environ['PRODUCT_BASE']
+          changed=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines()
+          ok=lambda p: p.startswith('tests/gtk_portable_upgrade_20261031/') or p in ('.github/workflows/claude-k03-linux-portable-upgrade-20261031.yml','docs/reader-total-progress/K03_LINUX_PORTABLE_UPGRADE_20261031.md')
+          bad=[p for p in changed if not ok(p)]
+          assert not bad, bad
+          print('K03-PATHS-OK', changed)
+          PY
+          mkdir -p build/k03/evidence build/k03-tools
+          git fetch --no-tags origin "$ATSPI_CLIENT_SHA" || true
+          git show "$ATSPI_CLIENT_SHA:tests/reader_a11y_gtk/atspi_client.py" > build/k03-tools/atspi_client.py
+          printf 'source=%s\nproduct_base=%s\natspi_client=%s\n' "$GITHUB_SHA" "$PRODUCT_BASE" "$ATSPI_CLIENT_SHA" > build/k03/evidence/source.txt
+      - name: Install GTK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+          dpkg-query -W libgtk-3-0 libglib2.0-0 at-spi2-core xvfb openbox > build/k03/evidence/packages.txt
+      - name: Download the original A artifact bytes (no rebuild)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/k03-in"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$A_ARTIFACT_ID" > build/k03/evidence/a-artifact-api.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$A_ARTIFACT_ID/zip" > "$RUNNER_TEMP/k03-in/a.zip"
+          sha256sum "$RUNNER_TEMP/k03-in/a.zip" | tee build/k03/evidence/a-artifact.sha256
+      - name: Build B with the same SDK 3.42 GTK recipe that produced A
+        run: |
+          set -euo pipefail
+          python3 tests/gtk_sdk342_package/run.py build 2>&1 | tee build/k03/b-build.log
+          test -f build/f06/linux/manifest.json
+      - name: Move the B build tree away (no build-tree dependency)
+        run: |
+          for d in build/gtk-raw-wave3 build/reading-library; do
+            if [ -d "$d" ]; then mv "$d" "$d.moved-away"; echo "moved $d"; fi
+          done
+      - name: Fixtures, authentication and program directories
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 tests/gtk_portable_upgrade_20261031/fixtures.py "$RUNNER_TEMP/k03/书籍 fixtures"
+          cp "$RUNNER_TEMP/k03/书籍 fixtures.json" build/k03/evidence/fixtures.json
+          /usr/bin/python3 tests/gtk_portable_upgrade_20261031/install.py --a-zip "$RUNNER_TEMP/k03-in/a.zip" --b-dir build/f06/linux --root "$RUNNER_TEMP/k03" --evidence build/k03/evidence
+      - name: Real GTK A -> B matrix through the no-argument launcher
+        timeout-minutes: 60
+        run: |
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/k03-tools"
+            openbox > build/k03/evidence/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            for i in $(seq 1 100); do wmctrl -m 2>/dev/null | grep -q Openbox && break; sleep 0.1; done
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            /usr/bin/python3 tests/gtk_portable_upgrade_20261031/driver.py --install build/k03/evidence/install.json --fixtures "$RUNNER_TEMP/k03/书籍 fixtures" --root "$RUNNER_TEMP/k03" --evidence build/k03/evidence
+          ' 2>&1 | tee build/k03/driver.log
+          exit "${PIPESTATUS[0]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k03-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/k03/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k03-b-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f06/linux/
+            build/gtk-sdk342/
+          if-no-files-found: warn
+
+  independent-check:
+    name: Independent evidence check
+    needs: matrix
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: k03-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/k03-in
+      - name: Recompute conclusions from raw evidence
+        run: |
+          set -o pipefail
+          mkdir -p build/k03-check
+          python3 -I tests/gtk_portable_upgrade_20261031/check.py build/k03-in/evidence --report build/k03-check/check.json 2>&1 | tee build/k03-check/check.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k03-independent-check-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/k03-check/
+          if-no-files-found: error
