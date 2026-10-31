@@ -17,9 +17,9 @@
 #include <vector>
 #include <cstdio>
 using namespace winrt;
-using namespace Windows::Graphics::Capture;
-using namespace Windows::Graphics::DirectX;
-using namespace Windows::Graphics::DirectX::Direct3D11;
+using namespace winrt::Windows::Graphics::Capture;
+using namespace winrt::Windows::Graphics::DirectX;
+using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
 namespace fs=std::filesystem;
 static long long tick(){LARGE_INTEGER n{};QueryPerformanceCounter(&n);return n.QuadPart;}
 static void bitmap(const fs::path&p,const std::vector<unsigned char>&bytes,LONG w,LONG h){
@@ -70,7 +70,7 @@ int wmain(int argc,wchar_t**argv){
      if(current_owner!=pid||(GetWindowDisplayAffinity(root,&current_affinity)&&current_affinity!=WDA_NONE))
       throw hresult_error(E_ACCESSDENIED,L"window identity or protection changed");
      if(content.Width!=size.Width||content.Height!=size.Height)throw hresult_error(E_FAIL,L"capture resized");
-     auto access=frame.Surface().template as<IDirect3DDxgiInterfaceAccess>();
+     auto access=frame.Surface().template as<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>();
      com_ptr<ID3D11Texture2D> texture;check_hresult(access->GetInterface(__uuidof(ID3D11Texture2D),texture.put_void()));
      D3D11_TEXTURE2D_DESC desc{};texture->GetDesc(&desc);
      if(!staging){staging_desc=desc;staging_desc.BindFlags=0;staging_desc.MiscFlags=0;staging_desc.CPUAccessFlags=D3D11_CPU_ACCESS_READ;staging_desc.Usage=D3D11_USAGE_STAGING;
