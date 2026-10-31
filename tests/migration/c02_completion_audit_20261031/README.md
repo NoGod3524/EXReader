@@ -82,3 +82,12 @@ gh workflow run dot-c02-completion-audit-20261031.yml \
 ```
 
 只有该运行的最终 workflow receipt 同时记录 passed:true、full_c02_complete:true、12 份原件、空 missing_capabilities，且原始文件与所有独立负例均通过，才能据此报告完整 C02。分组审计的成功继续作为局部证据保存。
+
+
+## 完成记录
+
+[最终 complete-c02 运行 41194417880/A1](https://github.com/NoGod3524/EXReader/actions/runs/41194417880) 已成功：12 份原始 ZIP 摘要保持不变，105 项语义篡改负例和 132 项角色替换负例全部通过，missing_capabilities 为空，最终回执 passed:true、full_c02_complete:true、audit_exit:0。
+
+生产源码固定为 d32603dc65bccfd65901239d21cb65cd10bca168，实际执行的独立审计源码为 5d9fc903ab015c50c3ce25b57a2680218bb0d419。结果 JSON 的 SHA256 为 d121c13ed27c0a9f0eb735be13f08118c1da41083bcca9caab6c9bc1d2fa8474。审计产物 13039319680 共 1055858172 字节，SHA256 为 a0dbd292b2196fa0086fe87ba08174c9df58a20c7b19a246a370521f90dcd33f；其中保留原 ZIP、API 元数据、负例包、拒绝记录与摘要清单。
+
+POSIX 每个平台均保留原 36 个实际场景和 65/135 历史回归，另通过 20 个实际 Repair 场景、原 8 个 owner 负例和新 8 个 Repair 负例。SDK/C01 与原 ABI2/ABI3 基线保持原样，全部失败历史保存在中央交付记录；正式 95/108、F12 与全 P0 的边界仍按前文执行。

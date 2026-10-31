@@ -2,12 +2,18 @@
 
 ## Current qualification status
 
-The immutable production source is d32603dc65bccfd65901239d21cb65cd10bca168.
-All twelve required roles have original Actions packages at this source. Windows
-product qualification has passed. POSIX Repair's final independent checks and
-the strict twelve-role complete-c02 audit are still pending. The exact original
-package request is tests/migration/c02_completion_audit_20261031/qualification.d326.json.
-Formal acceptance remains 95/108; this work does not grant F12 or full P0 acceptance.
+C02 passed strict complete-c02 qualification on 2026-10-31 in
+[Actions run 41194417880/A1](https://github.com/NoGod3524/EXReader/actions/runs/41194417880).
+The final workflow receipt records passed=true, full_c02_complete=true,
+12 unchanged original ZIPs, 105 semantic negative controls, 132 role-substitution
+controls and an empty missing_capabilities list. The entire workflow completed
+successfully, including retained-artifact upload.
+
+The immutable production source is d32603dc65bccfd65901239d21cb65cd10bca168;
+the independently executed audit source is 5d9fc903ab015c50c3ce25b57a2680218bb0d419.
+The exact original package request and repeat command are retained in
+tests/migration/c02_completion_audit_20261031/qualification.d326.json and README.md.
+Formal acceptance remains 95/108; F12 and full P0 retain their own acceptance gates.
 
 ## Historical implementation record
 
@@ -973,3 +979,73 @@ and recovery refusal, and restoration of the original registered domain.
 Preserve diagnostic failure artifact 13039888620, 47852547 bytes, SHA256
 d489b1fbe6a87df29d41e464024ce07405ed8875af40fd0c593d5c976898f3a8.
 No producer or ACL handling implementation is changed by this audit correction.
+
+
+Linux Repair adversarial qualification 41194013033/A1 at audit source
+844b0709a15395e1275ad473c46dea5003ce7cab passed both original packages and
+25 semantic controls (native 9, original owner 8, Repair 8), plus 22 role
+substitutions. Every Repair attack reached its intended independent rejection:
+original source identity, clone FD identity, actual journal directory identity,
+missing intermediate APPLIED, missing later terminal ACK, historical pre-BEGIN
+DONE switched to a later real grant, historical DONE domain substitution, and
+an orphan proof outside an accounted SDK-proof archive. Saved result SHA256:
+e45f0701f777e1474477b630db688c4abd5c1e54454fb1a5e29bf87e61c8512b.
+Artifact 13039069322 is 175063685 bytes, SHA256
+4650b26165384219b23f9232bd93cd14c7be56ab73cbf3151626320aeae14ce9.
+Its selected scope retains full_c02_complete=false and all ten absent roles.
+
+
+Mac Repair adversarial qualification 41194196765/A1 at audit source
+5d9fc903ab015c50c3ce25b57a2680218bb0d419 passed both original packages,
+all original 36 cases / historical 65 cases and 135 checks, all twenty Repair
+cases, 25 semantic controls and 22 role substitutions. Each of the eight new
+Repair attacks reached the same intended independent refusal as on Linux.
+Saved result SHA256:
+383ba0a7d67dcc615a62f3b84c4559ccbe69b3b5e3323c9edf773cbef8a5de0c.
+Artifact 13039214179 is 172998960 bytes, SHA256
+a22537e2fe609a107f51b83447de7f9431d17bd40b7f113a1994dbbfc69f15af.
+The final twelve-role complete-c02 request is submitted as run 41194417880/A1
+at this audit source against producer d32603dc65bccfd65901239d21cb65cd10bca168.
+Its outcome must be recorded separately; neither selected platform result
+sets full_c02_complete=true.
+
+
+### Final complete-C02 acceptance
+
+Run 41194417880/A1, job 124517589392, completed successfully at audit source
+5d9fc903ab015c50c3ce25b57a2680218bb0d419. This was the strict complete-c02
+request with --require-complete, against the single immutable producer source
+d32603dc65bccfd65901239d21cb65cd10bca168. The saved audit result and separate
+workflow receipt agree: passed=true, full_c02_complete=true, audit_exit=0,
+12 original ZIPs verified unchanged, 105 semantic negative controls,
+132 role substitutions and no missing capabilities. The original producer ZIPs
+total 513165719 bytes. Full original ZIPs, API metadata, reconstructable negative
+capsules, exact rejection records, result JSON and output hashes are retained.
+
+The saved audit-result.json SHA256 is
+`d121c13ed27c0a9f0eb735be13f08118c1da41083bcca9caab6c9bc1d2fa8474`.
+Final artifact 13039319680 is 1055858172 bytes, SHA256
+`a0dbd292b2196fa0086fe87ba08174c9df58a20c7b19a246a370521f90dcd33f`.
+Its name is
+`c02-completion-audit-5d9fc903ab015c50c3ce25b57a2680218bb0d419-41194417880-1`.
+[Completed Actions run and retained artifact](https://github.com/NoGod3524/EXReader/actions/runs/41194417880).
+
+The 105 semantic controls comprise native Windows 9, Windows products 8,
+Android 8, Apple 16 per platform, GTK 16, POSIX original owner 8 per platform,
+and POSIX explicit Repair 8 per platform. The complete request validates both
+native baselines, persistent gate, Windows registry/migration/products, actual
+Android/macOS/iOS/GTK hosts, both POSIX native libraries and both actual POSIX
+migration owners with the new twenty-case explicit Repair evidence.
+
+The frozen SDK 8357eafa28423a7ab93ba08b823af80f01ad1505 and C01
+ccd7fec67eb8aa463b09533ce320820f2da472d9 remain the required inputs.
+Original ABI2 still reports its exact 81 checks and six known failures on both
+platforms; ABI3 retains 16/64/0, Windows native 46/301/0, POSIX native 55/418,
+and actual owner original 36 plus historical 65/135. Those original ABI2 failures
+remain raw in their native jobs and are explicitly verified by this audit.
+Formal 95/108 remains unchanged. This result does not grant F12 or full P0.
+The recorded process-termination experiments do not claim hardware power-loss
+testing; Windows static SDK map and original executable/package binding do not
+claim an independent MSVC static relink. All earlier failed runs above remain
+part of the record. Final documentation changes follow the successful audit;
+production code, test drivers and independent audit code are frozen.
