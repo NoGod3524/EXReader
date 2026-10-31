@@ -45,10 +45,15 @@ final class NativeNavigation implements AutoCloseable {
         Destination(long book,String key,int mode,Result result){this.book=book;this.key=key;this.mode=mode;this.result=result;}
     }
     private final Thread owner=Thread.currentThread();final long book;final String key;final int mode;private long handle;
+    private final NativeLibrary.Borrow borrow;
     NativeNavigation(BookStore store,long book,byte[] font,HostTask task,Control control)throws Exception {
         store.searchOwner();BookStore.VerifiedSource source=store.verifySource(book,null,0,task);this.book=book;
         key=source.key+"@exreader-sdk-"+nativeVersion();mode=source.book.fixed()?FIXED:source.location.equals("epub_chapter")?PUBLICATION:DOCUMENT;
-        handle=nativeOpen(store.nativeLibrary().checked(),book,mode,key,font,control);if(handle==0)throw new IllegalStateException("目录暂时不可用");
+        borrow=store.nativeLibrary().borrow();
+        try {
+            handle=nativeOpen(borrow.checked(),book,mode,key,font,control);
+            if(handle==0)throw new IllegalStateException("目录暂时不可用");
+        } catch(Exception|Error error) { borrow.close(); throw error; }
     }
     private void owned(){if(Thread.currentThread()!=owner||handle==0)throw new IllegalStateException("Navigation requires its live SDK owner");}
     Info info(){owned();return new Info(nativeInfo(handle));}
@@ -58,7 +63,7 @@ final class NativeNavigation implements AutoCloseable {
         if(!key.equals(live))throw new IllegalStateException("书籍已改变，请重新打开目录");
         return new Destination(book,key,mode,new Result(nativeResolve(handle,store.nativeLibrary().checked(),book,mode,live,row,explicitPart,cfi,font,size,control)));
     }
-    @Override public void close(){if(handle==0)return;owned();nativeClose(handle);handle=0;}
+    @Override public void close(){if(handle!=0){owned();nativeClose(handle);handle=0;}borrow.close();}
     private static native String nativeVersion();
     static String nativeParser(){return nativeVersion();}
     private static native long nativeOpen(long library,long book,int mode,String key,byte[] font,Control control);

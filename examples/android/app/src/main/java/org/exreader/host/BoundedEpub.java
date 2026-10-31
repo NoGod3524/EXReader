@@ -24,6 +24,7 @@ final class BoundedEpub implements AutoCloseable {
     final byte[] font;
     final String[][] parts;
     long handle;
+    private final java.util.Map<Long,NativeLibrary.Borrow> pagerBorrows=new java.util.HashMap<>();
     int part, index=-1, chapterPage=-1;
     long start, nextCalls, recoveryCalls;
     float size;
@@ -45,14 +46,32 @@ final class BoundedEpub implements AutoCloseable {
         return -1;
     }
     private long open(int target,float fontSize,HostTask task) throws Exception {
+        if(closed) throw new IllegalStateException("Reader is closed");
         task.check();
-        long began=System.nanoTime();
-        // A selected local font is leased per pager and released with it; otherwise the bundled font bytes are used.
-        long opened=BuildConfig.READER_WAVE3&&FontSelection.active()?nativeOpenLeased(library.checked(),book,target,FontSelection.library(),FontSelection.hash(),fontSize,
-                appearance==null?1.6f:appearance.line,appearance==null?12f:appearance.paragraph,appearance==null?32f:appearance.margin,chapterBudget,theme.enabled,theme.foreground,theme.background,task)
-                :nativeOpen(library.checked(),book,target,font,fontSize,
-                appearance==null?1.6f:appearance.line,appearance==null?12f:appearance.paragraph,appearance==null?32f:appearance.margin,chapterBudget,theme.enabled,theme.foreground,theme.background,task);
-        Log.i("EXRHost","bounded open part="+target+" elapsed_ms="+((System.nanoTime()-began)/1000000L)); return opened;
+        long began=System.nanoTime(),opened=0;
+        NativeLibrary.Borrow borrow=library.borrow();
+        try {
+            // The borrow belongs to this native pager, including an uncommitted PageLoad.
+            opened=BuildConfig.READER_WAVE3&&FontSelection.active()?nativeOpenLeased(borrow.checked(),book,target,FontSelection.library(),FontSelection.hash(),fontSize,
+                    appearance==null?1.6f:appearance.line,appearance==null?12f:appearance.paragraph,appearance==null?32f:appearance.margin,chapterBudget,theme.enabled,theme.foreground,theme.background,task)
+                    :nativeOpen(borrow.checked(),book,target,font,fontSize,
+                    appearance==null?1.6f:appearance.line,appearance==null?12f:appearance.paragraph,appearance==null?32f:appearance.margin,chapterBudget,theme.enabled,theme.foreground,theme.background,task);
+            if(opened==0) throw new IllegalStateException("Chapter pager is unavailable");
+            Log.i("EXRHost","bounded open part="+target+" elapsed_ms="+((System.nanoTime()-began)/1000000L));
+            pagerBorrows.put(opened,borrow);
+            return opened;
+        } catch(Exception|Error error) {
+            if(opened!=0) nativeClose(opened);
+            borrow.close();
+            throw error;
+        }
+    }
+    private void closePager(long pager) {
+        NativeLibrary.Borrow borrow=pagerBorrows.get(pager);
+        if(borrow==null) return;
+        nativeClose(pager);
+        pagerBorrows.remove(pager);
+        borrow.close();
     }
     private Frame next(long pager,HostTask task,boolean recovery,boolean render) throws Exception {
         task.check(); long before=nativeCalls(pager);
@@ -80,7 +99,7 @@ final class BoundedEpub implements AutoCloseable {
         NativeNavigation.Result route=destination.result;int target=(int)route.part;
         if(target<0||target>=parts.length||!parts[target][0].equals(route.path))throw new IllegalArgumentException("Navigation spine identity mismatch");
         long candidate=open(target,size,task);
-        try{nativeCapture(candidate,target,route.offset);}catch(Exception|Error error){nativeClose(candidate);throw error;}
+        try{nativeCapture(candidate,target,route.offset);}catch(Exception|Error error){closePager(candidate);throw error;}
         return prepareOn(candidate,target,0,-1,route.offset,size,task,false);
     }
     PageLoad seekReading(NativeReadingSdk.Match match,HostTask task)throws Exception {
@@ -96,7 +115,7 @@ final class BoundedEpub implements AutoCloseable {
             task.check();
             boolean timedOut=match[0]==-2;
             if(timedOut) {
-                nativeClose(candidate); candidate=0;
+                closePager(candidate); candidate=0;
                 candidate=open(target,value,task);
                 Log.i("EXRHost","bounded progress resolution budget exhausted; original selector retained");
             }
@@ -113,7 +132,7 @@ final class BoundedEpub implements AutoCloseable {
                     "; opened at stored chapter offset "+offset+". Original selector retained.";
             } else if(!fallback) { load.snapshot.highlightStart=match[1]; load.snapshot.highlightEnd=match[2]; }
             return load;
-        } finally { if(candidate!=0) nativeClose(candidate); }
+        } finally { if(candidate!=0) closePager(candidate); }
     }
     PageLoad next(HostTask task) throws Exception {
         if(handle==0) return prepare(part,index+1,chapterPage+1,-1,size,task);
@@ -172,16 +191,17 @@ final class BoundedEpub implements AutoCloseable {
             snapshot.boundedHandle=candidate;
             final long accepted=candidate; final int at=selectedPage;
             PageLoad result=new PageLoad(snapshot,(System.nanoTime()-began)/1000000L,()->{
-                if(handle!=0) nativeClose(handle);
+                if(closed){closePager(accepted);throw new IllegalStateException("Reader is closed");}
+                if(handle!=0) closePager(handle);
                 handle=accepted; part=target; index=snapshot.index; chapterPage=at; start=snapshot.start; size=value; log();
                 unresolvedProgress=snapshot.preserveProgress; unresolvedNotice=snapshot.restoreNotice;
-            },()->nativeClose(accepted));
+            },()->closePager(accepted));
             transferred=true; return result;
-        } finally { if(!transferred) nativeClose(candidate); }
+        } finally { if(!transferred) closePager(candidate); }
     }
     /** A discarded sequential page must return to the last accepted cursor. */
     private void recover() {
-        if(handle!=0) nativeClose(handle); handle=0;
+        if(handle!=0) closePager(handle); handle=0;
         if(closed || chapterPage<0) return;
         HostTask task=new HostTask(()->false);
         long restored=0;
@@ -190,7 +210,7 @@ final class BoundedEpub implements AutoCloseable {
             for(int p=0;p<=chapterPage;p++) if(next(restored,task,true,false)==null) throw new IllegalStateException("Recovery page missing");
             handle=restored; restored=0;
         } catch(Exception error) { Log.w("EXRHost","Bounded cursor recovery: "+error.getMessage()); }
-        finally { if(restored!=0) nativeClose(restored); }
+        finally { if(restored!=0) closePager(restored); }
     }
     void refresh() { recover(); }
     PageLoad retryFrame(PageSnapshot previous,HostTask task) throws Exception {
@@ -238,7 +258,7 @@ final class BoundedEpub implements AutoCloseable {
             return result;
         } catch(RuntimeException|Error error) { bitmap.recycle(); throw error; }
     }
-    @Override public void close() { closed=true; if(handle!=0) nativeClose(handle); handle=0; }
+    @Override public void close() { closed=true; if(handle!=0) closePager(handle); handle=0; }
     private static native String[][] nativeParts(long library,long book);
     private static native long nativeOpen(long library,long book,int part,byte[] font,float size,float line,float paragraph,float margin,long budget,boolean themed,int foreground,int background,HostTask task);
     /** Present only in the wave3 native library; reached only when a local font is selected. */
