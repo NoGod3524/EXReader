@@ -65,6 +65,7 @@ class EscapeProbe {
       Stage("start bitness="+(IntPtr.Size*8)+" apartment="+Thread.CurrentThread.GetApartmentState()+" probe-pid="+Process.GetCurrentProcess().Id);
       report["event_observation_ms"]=5000;report["executable"]=exe;report["expected_selection_event"]=args[2]=="present";
       ProcessStartInfo si=new ProcessStartInfo(exe,"--data "+Quote(Path.Combine(output,"profile"))+" "+Quote(Path.Combine(Path.GetDirectoryName(exe),"Sample.epub")));
+      si.EnvironmentVariables["F09_PROVIDER_LOG"]=Path.Combine(output,"provider.log");
       si.WorkingDirectory=Path.GetDirectoryName(exe);si.UseShellExecute=false;Stage("host-start-before");process=Process.Start(si);
       File.WriteAllText(Path.Combine(output,"host.pid"),process.Id.ToString());
       Stage("host-start-after pid="+process.Id);
@@ -74,7 +75,7 @@ class EscapeProbe {
       SetForegroundWindow(hwnd);page=AutomationElement.FromHandle(pageHwnd);
       Stage("automation-element-created");
       TextPattern pattern=null;
-      Wait(delegate{object p;Stage("ready get-pattern-before");if(!page.TryGetCurrentPattern(TextPattern.Pattern,out p)){Stage("ready pattern-unavailable");return false;}Stage("ready get-pattern-after");pattern=(TextPattern)p;return ReadDocument(pattern,"ready").Length>10 && page.Current.IsEnabled;},120000,"native text ready");
+      Wait(delegate{try{object p;Stage("ready get-pattern-before");if(!page.TryGetCurrentPattern(TextPattern.Pattern,out p)){Stage("ready pattern-unavailable");return false;}Stage("ready get-pattern-after");pattern=(TextPattern)p;return ReadDocument(pattern,"ready").Length>10 && page.Current.IsEnabled;}catch(ElementNotAvailableException){Stage("ready transient-element-unavailable");return false;}},120000,"native text ready");
       page.SetFocus();Wait(delegate{return page.Current.HasKeyboardFocus;},10000,"page keyboard focus");
       string before=ReadDocument(pattern,"before-selection");
       { // Kept alive until process exit: an in-flight UIA callback must not touch a disposed event.
