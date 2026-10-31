@@ -37,7 +37,17 @@ def wait(watch,predicate,since=0,timeout=30):
 def settled(s):
  h=s["host"];keys=("busy","saving") if h.get("reader_visible")==1 else ("busy","saving","shelf_loading","shelf_restoring")
  return all(h.get(k,0)==0 for k in keys)
-def section(watch,name):return {str(k):str(v) for k,v in watch.latest()["state"].get(name,{}).items()}
+def search_snapshot(host):
+ text=host.state_path.read_text();config=configparser.ConfigParser(interpolation=None);config.read_string(text)
+ return dict(config["inbook_search"]) if config.has_section("inbook_search") else {},O.parse_state(text)["host"],hashlib.sha256(text.encode()).hexdigest()
+def search_wait(host,row,predicate,timeout=30):
+ deadline=time.monotonic()+timeout;last=None
+ while time.monotonic()<deadline:
+  host.require_alive("native search state");value,h,digest=search_snapshot(host)
+  if digest!=last:row.setdefault("search_observations",[]).append({"at":stamp(),"state_sha256":digest,"search":value,"host":h});last=digest
+  if predicate(value,h):return value,h
+  time.sleep(.02)
+ raise TimeoutError("native search section: "+repr(value))
 def node(app,name,prefix=False):
  end=time.monotonic()+20
  while time.monotonic()<end:
@@ -71,24 +81,27 @@ def run():
      host.find_window();host.activate();host.resize(1040,620);time.sleep(.3);apps=[a for a in bus.applications() if bus._safe(lambda:a.get_process_id())==host.pid];R.need(len(apps)==1,"native PID application");app=apps[0]
      if kind=="body":
       image=node(app,"Rendered reading page; selectable text and notes are in More")
-      for slot,button in enumerate(("5","5","5","4","4","4")):
+      for slot,button in enumerate(("5","4","5","4","5","4")):
        before=bus.extents(image);h=watch.latest()["state"]["host"];O.command("xdotool","mousemove","--window",host.window,int(h["page_x"])+int(h["page_width"])//2,int(h["page_y"])+int(h["page_height"])//2)
        begin=stamp();O.command("xdotool","click",button);time.sleep(.3);host.require_alive("reader body native scroll");after=bus.extents(image)
        row["actions"].append({"slot":slot,"kind":"body_scroll","button":button,"start":begin,"observed":stamp(),"before":before,"after":after})
      else:
       for slot,paragraph in enumerate((200,1000,1900)):
-       host.activate();host.press("ctrl+shift+f");wait(watch,lambda s:str(s.get("inbook_search",{}).get("visible"))=="1" and settled(s))
+       host.activate();host.press("ctrl+shift+f");search_wait(host,row,lambda v,h:v.get("visible")=="1" and not h.get("busy") and not h.get("saving"))
        dialog=node(app,"Search within book");window=O.command("xdotool","search","--onlyvisible","--name","^Search within book$").splitlines()[-1];O.command("xdotool","windowactivate","--sync",window)
-       query="paragraph %04d"%paragraph;entry=node(app,"In-book query");click(entry);host.press("ctrl+a");host.paste(query);host.press("alt+s")
-       wait(watch,lambda s:str(s.get("inbook_search",{}).get("count"))=="1" and str(s.get("inbook_search",{}).get("running"))=="0" and settled(s))
+       query="paragraph %04d"%paragraph;entry=node(app,"In-book query");click(entry);host.press("ctrl+a");host.paste(query);previous_actions=int(search_snapshot(host)[0]["actions"]);host.press("alt+s")
+       search_wait(host,row,lambda v,h:int(v.get("actions","0"))>previous_actions and v.get("count")=="1" and v.get("running")=="0" and v.get("complete")=="1" and not h.get("busy") and not h.get("saving"))
        selected=node(app,"Search result 1:",True);R.need(selected.get_component_iface().grab_focus(),"native search row focus");time.sleep(.05)
        baseline=watch.latest()["state"]["host"];begin=stamp();box=click(selected)
-       event=wait(watch,lambda s:s["host"].get("frame_generation",0)>baseline.get("frame_generation",0) and s["host"].get("painted_generation")==s["host"].get("frame_generation") and s["host"].get("selected")==len(query) and str(s.get("inbook_search",{}).get("visible"))=="0" and settled(s))
-       after=event["state"]["host"];R.need(after["start"]>baseline["start"] and after["book"]==book,"actual FOUND relocation")
+       search,after=search_wait(host,row,lambda v,h:h.get("frame_generation",0)>baseline.get("frame_generation",0) and h.get("painted_generation")==h.get("frame_generation") and h.get("selected")==len(query) and v.get("visible")=="0" and not h.get("busy") and not h.get("saving"))
+       R.need(after["start"]>baseline["start"] and after["book"]==book,"actual FOUND relocation")
        row["actions"].append({"slot":slot,"kind":"locate_jump","query":query,"start":begin,"observed":stamp(),"before":baseline,"after":after,"native_row_bounds":box});time.sleep(.2)
      row["complete"]=True
     finally:
-     row["rss_peak_kb"]=host.hwm_kb();row["process_exit"]=host.close();host.close_log();watch.close();row["watcher_failure"]=watch.failure
+     row["rss_peak_kb"]=host.hwm_kb()
+     if host.alive() and search_snapshot(host)[0].get("visible")=="1":
+      host.press("Escape");search_wait(host,row,lambda v,h:v.get("visible")=="0",5)
+     row["process_exit"]=host.close();host.close_log();watch.close();row["watcher_failure"]=watch.failure
      O.write_events(folder/"watcher-events.json",watch.events) if hasattr(O,"write_events") else R.save(folder/"watcher-events.json",list(watch.events))
      R.save(OUT/"driver.json",report)
   receipt=replay(OUT,report);R.save(OUT/"summary.json",receipt)
