@@ -6,6 +6,8 @@ on:
       - extras/migration/posix_c02_admission_20261031/**
       - extras/migration/posix_c02_sdk_admission_20261031/**
       - examples/linux/reading.c
+      - examples/linux/reader.c
+      - tools/build_linux_host.py
       - examples/linux/CMakeLists.txt
       - tests/migration/gtk_c02_host_20261031/**
       - .github/workflows/dot-c02-gtk-host-20261031.yml
@@ -66,6 +68,23 @@ jobs:
           python -m py_compile tests/migration/gtk_c02_host_20261031/run.py
           python -c "import sys;sys.path.insert(0,'tools');from host_font import fetch;fetch('build/host-font')"
           python tests/migration/gtk_c02_host_20261031/run.py --host build/gtk/c02-gtk-host-check --admission stage-c02/bin/exreader-c02-admission --font build/host-font/Reader.otf --output "$C02_GTK_EVIDENCE" 2>&1 | tee evidence/host.log
+      - name: Package the actual host with explicit enrollment
+        run: |
+          set -euo pipefail
+          python -m py_compile tools/build_linux_host.py
+          python tools/build_linux_host.py --sdk stage-sdk --sdk-version 3.42.0 --c02-prefix stage-c02 --binary build/gtk/actual-host/gtk-host/exreader-linux --output build/gtk-package
+          python - <<'PY'
+          import hashlib,json,os,pathlib,subprocess
+          root=pathlib.Path('build/gtk-package/EXReader-Linux')
+          manifest=json.loads(pathlib.Path('build/gtk-package/build.json').read_text())
+          assert manifest['source_sha']==os.environ['GITHUB_SHA'] and manifest['c02_admission'] is True
+          for original,installed in [('stage-c02/bin/exreader-c02-admission','exreader-c02-admission'),('build/gtk/actual-host/gtk-host/exreader-linux','exreader-linux')]:
+              assert pathlib.Path(original).read_bytes()==(root/'bin'/installed).read_bytes()
+          profile=pathlib.Path.home()/('c02-packaged-'+os.environ['GITHUB_RUN_ID']+'-'+os.environ['GITHUB_RUN_ATTEMPT'])
+          profile.mkdir(mode=0o700)
+          for command in ('create','check'):
+              subprocess.run([str(root/'bin/exreader-c02-admission'),command,str(profile/'library.sqlite')],check=True)
+          PY
       - name: Preserve binary source and original state identity
         if: always()
         run: |
@@ -86,6 +105,7 @@ jobs:
           name: c02-actual-gtk-${{ github.sha }}
           path: |
             evidence/
+            build/gtk-package/
             ${{ env.C02_GTK_EVIDENCE }}/
           include-hidden-files: true
           if-no-files-found: error

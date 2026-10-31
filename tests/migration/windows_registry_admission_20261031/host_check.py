@@ -8,6 +8,7 @@ p.add_argument("--host",type=Path,required=True)
 p.add_argument("--consumer",type=Path,required=True)
 p.add_argument("--font",type=Path,required=True)
 p.add_argument("--output",type=Path,required=True)
+p.add_argument("--catalog-mode",choices=("product","none"),default="product")
 a=p.parse_args()
 a.host=a.host.resolve();a.consumer=a.consumer.resolve();a.font=a.font.resolve()
 out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
@@ -45,7 +46,7 @@ for name,mode in [("registered","--prepare-host"),("unregistered","--prepare-unr
     (folder/"stdout.txt").write_bytes(r.stdout);(folder/"stderr.txt").write_bytes(r.stderr)
     if name=="registered":
         assert r.returncode==0,(r.returncode,r.stdout,r.stderr)
-        assert Path(str(library)+".product.sqlite").is_file()
+        assert Path(str(library)+".product.sqlite").is_file() is (a.catalog_mode=="product")
         assert b"C02 admission] refused" not in r.stderr
     else:
         assert r.returncode==2 and b"C02 admission] refused before SDK open" in r.stderr,(r.returncode,r.stderr)
