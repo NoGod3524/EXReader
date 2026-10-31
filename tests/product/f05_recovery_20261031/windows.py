@@ -320,8 +320,67 @@ def collect_provider(argv):
                 "F07_accepted": False}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
+
+def build_with_provider_evidence():
+    """Same 3.42 producer recipe; only explicit hash prefix and linker evidence."""
+    if os.name != "nt" or os.environ.get("GITHUB_ACTIONS") != "true":
+        raise RuntimeError("Windows Actions only")
+    import runpy
+    sys.path.insert(0,str(ROOT/"tests/reader_windows_raw3"))
+    import host_build as H
+    original=ROOT/"tests/windows_sdk342/build.py"
+    blob=subprocess.check_output(["git","hash-object",str(original)],cwd=ROOT,text=True).strip()
+    if blob!="d30a5eba1701bfcc3113fe16cea98918a60c7c54":
+        raise AssertionError("original SDK342 producer recipe changed")
+    prefix=(ROOT/"build/f05-original-hash").resolve()
+    bootstrap=ROOT/"build/f05-original-hash-logs"
+    bootstrap.mkdir(parents=True,exist_ok=False)
+    def run(argv,name,timeout=1800):
+        argv=list(map(str,argv))
+        if name=="host-configure":
+            argv.append("-DCMAKE_EXE_LINKER_FLAGS=/VERBOSE:LIB")
+        if name=="host-build":
+            argv.extend(["--","-d","keeprsp"])
+        folder=H.OUT/"logs" if (H.OUT/"logs").is_dir() else bootstrap
+        env=dict(os.environ,VERBOSE="1")
+        print(json.dumps({"step":name,"argv":argv,"cwd":str(ROOT)}),flush=True)
+        process=subprocess.run(argv,cwd=ROOT,env=env,stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,text=True,encoding="utf-8",errors="replace",timeout=timeout)
+        (folder/(name+".log")).write_text(process.stdout)
+        command={"argv":argv,"cwd":str(ROOT),"returncode":process.returncode,
+                 "environment":{"VERBOSE":"1"}}
+        (folder/(name+"-command.json")).write_text(json.dumps(command,indent=2)+"\n")
+        print(process.stdout,flush=True)
+        if process.returncode:raise RuntimeError(name+" failed: "+str(process.returncode))
+    H.run=run
+    run(["cmake","-S",ROOT/"extras/opds","-B",ROOT/"build/f05-original-hash-build",
+         "-G","Ninja","-DCMAKE_BUILD_TYPE=Release","-DEXREADER_OPDS_HASH_ONLY=ON",
+         "-DCMAKE_INSTALL_PREFIX="+str(prefix)],"hash-configure")
+    run(["cmake","--build",ROOT/"build/f05-original-hash-build","--parallel","4"],"hash-build")
+    run(["cmake","--install",ROOT/"build/f05-original-hash-build"],"hash-install")
+    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"]=str(prefix.resolve(strict=True))
+    runpy.run_path(str(original),run_name="__f05_original_build__")
+    out=ROOT/"build/windows-sdk342"
+    archives=list((out/"sdk-build").rglob("exr_sqlite.lib"))
+    if len(archives)!=1:raise AssertionError("unique actual SDK SQLite archive required")
+    product_archive=out/"product/lib/reader_catalog_sqlite.lib"
+    if not product_archive.is_file():raise AssertionError("installed product SQLite archive absent")
+    collect_provider([
+        "--host",str(out/"host/EXReaderWave3.exe"),
+        "--package",str(out/"package/EXReader/EXReader.exe"),
+        "--build-directory",str(out/"host"),
+        "--sdk-prefix",str(out/"sdk"),"--product-prefix",str(out/"product"),
+        "--stage-prefix",str(out/"raw"),
+        "--sdk-archive",str(archives[0]),"--product-archive",str(product_archive),
+        "--link-map",str(out/"host/windows-host.map"),
+        "--build-log",str(out/"logs/host-build.log"),
+        "--build-command-json",str(out/"logs/host-build-command.json"),
+        "--output",str(out/"f07-provider")])
+
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "collect-provider":
+    if len(sys.argv) > 1 and sys.argv[1] == "build":
+        build_with_provider_evidence()
+    elif len(sys.argv) > 1 and sys.argv[1] == "collect-provider":
         collect_provider(sys.argv[2:])
     else:
         main()
