@@ -4,6 +4,9 @@ import SwiftUI
 @main
 struct EXReaderHostApp: App {
     @StateObject private var accounts = HostAccounts()
+#if EXR_APPLE_F08_REVIEW
+    init() { HostF08Review.beginLaunch() }
+#endif
     var body: some Scene {
         WindowGroup {
             HostAccountRoot(accounts: accounts)

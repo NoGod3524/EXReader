@@ -7,6 +7,22 @@ import UIKit
 import AppKit
 #endif
 
+#if EXR_APPLE_F08_REVIEW
+private struct HostF08ScrollPhaseObserver: ViewModifier {
+    let idle: () -> Void
+    @ViewBuilder func body(content: Content) -> some View {
+        if #available(macOS 15, iOS 18, *) {
+            content.onScrollPhaseChange { _, phase in
+                HostF08Review.observeScrollPhase(active: phase == .interacting || phase == .decelerating || phase == .animating)
+                // Publish the read-only counters only after the real native idle/end.
+                // Static counters otherwise leave the last accessibility snapshot stale.
+                if phase == .idle { idle() }
+            }
+        } else { content }
+    }
+}
+#endif
+
 @ViewBuilder private func hostActionLabel(_ title: String) -> some View {
 #if os(iOS)
     Text(title).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
@@ -57,6 +73,9 @@ struct HostRootView: View {
     private let selfTesting = CommandLine.arguments.contains("--self-test")
 
     init(profile: HostAccountProfile? = nil, accounts: HostAccounts? = nil) {
+#if EXR_APPLE_F08_REVIEW
+        HostF08Review.phase("host-root-view-init")
+#endif
         _model = StateObject(wrappedValue: HostReaderModel(profile: profile, accounts: accounts))
     }
 
@@ -167,6 +186,7 @@ private struct ShelfGeometryProbe: View {
 private struct ShelfObservationView: View {
     let value: String
     let searchFocused: Bool
+    var prefix = "library.shelf"
     var body: some View {
         // macOS XCTest truncates one static-text value to 512 UTF-16 units.
         let scalars = Array(value.unicodeScalars)
@@ -174,15 +194,17 @@ private struct ShelfObservationView: View {
             String(String.UnicodeScalarView(scalars[start..<min(start + 200, scalars.count)]))
         }
         ZStack {
-            Text(searchFocused ? "focused" : "unfocused").accessibilityIdentifier("library.search.focus")
-            Text(String(parts.count)).accessibilityIdentifier("library.shelf.count")
+            if prefix == "library.shelf" {
+                Text(searchFocused ? "focused" : "unfocused").accessibilityIdentifier("library.search.focus")
+            }
+            Text(String(parts.count)).accessibilityIdentifier(prefix + ".count")
             ForEach(parts.indices, id: \.self) { index in
-                Text(parts[index]).accessibilityIdentifier("library.shelf.part.\(index)")
+                Text(parts[index]).accessibilityIdentifier(prefix + ".part.\(index)")
             }
         }
         .font(.caption2).lineLimit(1).frame(height: 1).clipped()
         .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("library.shelf.state")
+        .accessibilityIdentifier(prefix + ".state")
     }
 }
 #endif
@@ -208,6 +230,9 @@ struct LibraryScreen: View {
     }
 
     init(model: HostReaderModel) {
+#if EXR_APPLE_F08_REVIEW
+        HostF08Review.phase("library-screen-init")
+#endif
         self.model = model
         _shelf = StateObject(wrappedValue: HostShelf(defaults: model.shelfDefaults))
     }
@@ -353,6 +378,9 @@ struct LibraryScreen: View {
                       }
                     }
                     .accessibilityIdentifier("library.list")
+#if EXR_APPLE_F08_REVIEW
+                    .modifier(HostF08ScrollPhaseObserver(idle: { shelf.objectWillChange.send() }))
+#endif
                     .coordinateSpace(name: "catalog-shelf")
                     .background(ShelfGeometryProbe(shelf: shelf).id(shelf.geometryRevision))
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in
@@ -814,6 +842,12 @@ struct ReaderScreen: View {
                 .onAppear { model.updateViewport(geometry.size) }
                 .onChange(of: geometry.size) { value in model.updateViewport(value) }
             }
+#if EXR_APPLE_F08_REVIEW
+            .overlay(alignment: .bottom) {
+                ShelfObservationView(value: model.f08ReaderObservation, searchFocused: false, prefix: "reader.f08")
+                    .allowsHitTesting(false)
+            }
+#endif
 #if EXR_APPLE_PAGE_THEME
             .background(hostPageThemeColor(model.current?.isFixed == true ? 0xffffffff : model.pageThemePalette.background ?? 0xffffffff))
 #else
