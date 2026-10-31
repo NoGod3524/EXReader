@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, canonical, digest, TABLES, SCOPE
+from identity import ROOT, identity, require, snapshot_receipt, write_json, read_snapshot, canonical, digest, TABLES, SCOPE, same_identity
 
 def receive(a, stamp):
     """A fresh real Windows profile receives authentic GTK/Apple wire and survives restart."""
@@ -17,7 +17,10 @@ def receive(a, stamp):
     spec = importlib.util.spec_from_file_location("f03_windows_interop",
         ROOT / "tests/reader_windows_gtk_interop/windows.py")
     module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
-    expected = json.loads(a.expectations.read_text(encoding="utf-8"))["snapshot"]
+    author_receipt = json.loads(a.expectations.read_text(encoding="utf-8"))
+    same_identity(author_receipt, stamp)
+    require(author_receipt.get("sdk_version") == SCOPE["sdk_version"], "author SDK differs")
+    expected = author_receipt["snapshot"]
     app = None
     dav, user, password = module.relay.start(a.output / "wire", a.previous)
     exe, font = (a.package / "EXReader.exe").resolve(), (a.package / "Reader.otf").resolve()
@@ -29,6 +32,11 @@ def receive(a, stamp):
         app.apply(dialog,"仅本次会话");app.close_account(dialog)
         dialog=app.open_account();app.run_sync(dialog);app.close_account(dialog);app.wait_idle()
         database=Path(str(app.db)+".product.sqlite")
+        def projected():
+            if not database.is_file():return False
+            value=read_snapshot(database)
+            return all(value[table] == expected[table] for table in TABLES)
+        app.wait(projected,timeout=120)
         actual=read_snapshot(database)
         for table in TABLES:
             require(actual[table] == expected[table], "Windows projection differs: "+table)
