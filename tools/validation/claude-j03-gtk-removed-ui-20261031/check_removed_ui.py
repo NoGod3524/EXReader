@@ -269,6 +269,8 @@ def scenario_b(args, out):
     revisions0 = ui.sql('SELECT count(*) FROM reader_revisions')[0][0]
     ui.launch()
     try:
+        command('xdotool', 'windowactivate', '--sync', ui.host.window)
+        ui.host.key('F2')
         ui.host.wait(lambda s: s['books'] == 0)
         # End-page selection: restore the record on page 2.
         ui.open_removed()
