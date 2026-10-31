@@ -88,6 +88,12 @@ def main():
             sync()  # Windows final sync includes real receive/import/mapping.
             app.wait(lambda: app.has_row(args.title), timeout=120)
         app.open(args.title); app.wait_idle()
+        if args.phase == "windows-seed":
+            # Fixed Alice EPUB opens on an image cover. Use real page actions,
+            # as the retained Apple producer does, before capturing a range.
+            for _ in range(3):
+                previous_page = frame(); app.click("next"); app.wait_idle()
+                app.wait(lambda: frame() != previous_page)
         before = frame()
         sync()
         check("remote_sync_does_not_move_active_reader", frame() == before)
