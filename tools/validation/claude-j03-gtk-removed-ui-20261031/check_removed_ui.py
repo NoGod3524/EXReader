@@ -161,23 +161,36 @@ class Ui:
         self.window('Removed books')
 
     def activate_first(self):
-        """Give the list box keyboard focus (a mouse click on a button leaves focus there), then Home+Return."""
+        """Activate the first row by real input; try double-click, then focused Home+Return, then Return. Records which worked."""
         d = self.dialog_node()
-        lists = [n for n in bus.walk(d) if bus.role(n) == 'list box']
-        report.setdefault('activation', []).append({'list_boxes': len(lists), 'focused': False})
-        for n in lists:
-            comp = bus._safe(lambda: n.get_component_iface())
-            if comp is not None and bus._safe(lambda: comp.grab_focus(), False):
-                report['activation'][-1]['focused'] = True
-                break
-        if not report['activation'][-1]['focused']:
-            items = [n for n in bus.walk(d) if bus.role(n) == 'list item']
-            box = bus.extents(items[0]) if items else None
-            assert box and box['x'] >= 0, 'no focusable list row'
-            command('xdotool', 'mousemove', '--sync', str(box['x'] + box['width'] // 2), str(box['y'] + box['height'] // 2))
+        items = [n for n in bus.walk(d) if bus.role(n) == 'list item']
+        box = bus.extents(items[0]) if items else None
+        assert box and box['x'] >= 0 and box['width'] > 0, 'no list row extents'
+        point = (str(box['x'] + box['width'] // 2), str(box['y'] + box['height'] // 2))
+        log = {'row_box': box, 'tried': []}
+        report.setdefault('activation', []).append(log)
+
+        def landed():
+            try:
+                self.window('Book details', timeout=8)
+                return True
+            except TimeoutError:
+                return False
+
+        command('xdotool', 'mousemove', '--sync', *point)
+        command('xdotool', 'click', '--repeat', '2', '--delay', '120', '1')
+        log['tried'].append('double_click')
+        if landed():
+            log['worked'] = 'double_click'; return
+        if self.dialog_node() is not None:
             command('xdotool', 'click', '1')
-        time.sleep(.3)
-        self.host.key('Home', 'Return')
+            time.sleep(.3)
+            self.host.key('Home', 'Return')
+            log['tried'].append('click_home_return')
+            if landed():
+                log['worked'] = 'click_home_return'; return
+        self.diagnose('activation-failed')
+        raise TimeoutError('no activation method opened Book details')
 
     def step(self, name, **data):
         row = dict(name=name, **data)
