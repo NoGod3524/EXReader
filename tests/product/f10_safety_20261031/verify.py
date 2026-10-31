@@ -2,10 +2,10 @@
 """Independent deterministic interpretation of raw observations, Actions only."""
 import argparse,copy,hashlib,json,os,sys
 from pathlib import Path
-NAMES=['normal','close-join','eacces-cleanup','kill-and-restart','target-created-during-download']
+NAMES=['normal','close-join','eacces-cleanup','kill-and-restart','target-created-during-download','existing-same-hash','existing-different-hash','link-refusal-directory']
 def evaluate(index,rows,program):
     errors=[]
-    if list(index['cases'])!=NAMES: errors.append('exact five cases')
+    if list(index['cases'])!=NAMES: errors.append('exact eight cases')
     if index['source']!=os.environ['GITHUB_SHA'] or str(index['run'])!=os.environ['GITHUB_RUN_ID'] or str(index['attempt'])!=os.environ['GITHUB_RUN_ATTEMPT']:errors.append('source/run/attempt')
     if hashlib.sha256(program).hexdigest()!=index['program_sha256']: errors.append('actual consumer digest')
     for name,row in zip(NAMES,rows):
@@ -15,12 +15,14 @@ def evaluate(index,rows,program):
         if row.get('original_before')!=row.get('original_after'):errors.append(name+': original changed')
         if row.get('synthetic_secret_leaks'):errors.append(name+': synthetic secret leaked')
         if not row.get('requests') or not all(x['authenticated'] for x in row['requests']):errors.append(name+': authenticated native requests')
-    normal,closed,eacces,killed,race=rows
+    normal,closed,eacces,killed,race=rows[:5]
     if normal.get('exit_code')!=0 or not normal.get('result') or normal['result'][-1]['status']!=0 or normal['result'][-1]['pushed']!=1:errors.append('normal baseline')
     if not closed.get('close_join_passed') or not any(x.get('state')==7 for x in closed.get('views',[])):errors.append('close before destroy')
     if eacces.get('canary_errno')!=13:errors.append('real EACCES')
     if killed.get('exit_code')!=-9 or not killed.get('killed_residual') or killed.get('restart',{}).get('exit_code')!=0:errors.append('real death/restart')
     if not race.get('concurrent_target') or not race.get('target_after'):errors.append('concurrent target evidence')
+    for row in rows[5:]:
+        if not row.get('concurrent_target') or not row.get('target_after') or not row.get('result'):errors.append(row['name']+': target evidence')
     return errors
 def main():
     a=argparse.ArgumentParser();a.add_argument('--input',type=Path,required=True);a.add_argument('--output',type=Path,required=True);args=a.parse_args()
@@ -52,10 +54,15 @@ def main():
         {'requirement':'process-death leftovers handled by next operation','passed':not temps(rows[3]),'observed':temps(rows[3])},
         {'requirement':'concurrently appeared target not overwritten','passed':rows[4].get('concurrent_target')==rows[4].get('target_after'),'observed':{'before':rows[4].get('concurrent_target'),'after':rows[4].get('target_after')}}
     ]
+    no_replace=[]
+    for row in rows[4:]:
+        status=row.get('result',[{}])[-1].get('status')
+        expected_status=0 if row['name']=='existing-same-hash' else 5
+        no_replace.append({'name':row['name'],'passed':row.get('concurrent_target')==row.get('target_after') and status==expected_status and not temps(row),'status':status,'expected_status':expected_status,'temporary_residue':temps(row)})
     result={'source':index['source'],'run':index['run'],'attempt':index['attempt'],'evidence_consistent':not errors,'errors':errors,
-            'findings':findings,'negative_controls':controls,'safety_passed':not errors and all(x['passed'] for x in findings),
+            'no_replace_passed':not errors and all(x['passed'] for x in no_replace),'no_replace_cases':no_replace,'findings':findings,'negative_controls':controls,'safety_passed':not errors and all(x['passed'] for x in findings) and all(x['passed'] for x in no_replace),
             'full_f10_complete':False,'scope':index['scope'],
-            'limits':['No reading SDK imported or real host UI operated','No OS secure storage failure or lock-screen tests','No managed transport integration in this baseline','SIGKILL is not hardware power loss','No production changes or original assertions changed']}
+            'limits':['No reading SDK imported or real host UI operated','No OS secure storage failure or lock-screen tests','No managed transport integration in this baseline','SIGKILL is not hardware power loss','Only high-level cache no-replace production change; original assertions retained','Stable private directory contract, not adversarial same-UID race protection','Windows native identity branch not runtime tested in this Linux round']}
     (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result))
     # A reproducible defect deliberately remains a failed safety gate.
