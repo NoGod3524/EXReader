@@ -304,6 +304,9 @@ def authenticate_graph():
             names = archive.namelist()
             need(len(names) == len(set(names)) and all(not PurePosixPath(n).is_absolute() and
                  ".." not in PurePosixPath(n).parts and "\\" not in n for n in names), "unsafe archive members")
+            need(all(PurePosixPath(n).name != "key.pem" and
+                     "private" not in PurePosixPath(n).parts and "profile" not in PurePosixPath(n).parts
+                     for n in names), "private fixture/profile files must not be handoff artifacts")
             # No extraction of producer-controlled paths.
             state_raw = archive.read("state.json"); state = json.loads(state_raw)
             result_name = "report.json" if binding["host"] == "android-api34-x86_64" else "result.json"
@@ -324,8 +327,8 @@ def authenticate_graph():
             need(requests and all(r["authenticated"] for r in requests), "actual authenticated request evidence")
             need(any(r["method"] == "PUT" and "/revisions/" in r["path"] for r in requests) or
                  binding["role"] == "return", "actual app publication")
-            if binding["role"] != "seed":
-                need(any(r["method"] == "GET" and "/objects/" in r["path"] for r in requests), "actual app original receive")
+            if binding["role"] != "seed" and binding["fresh_profile"]:
+                need(any(r["method"] == "GET" and "/objects/" in r["path"] for r in requests), "fresh-profile actual app original receive")
             original = contract["original"]
             originals = [base64.b64decode(v["body"], validate=True) for path, v in state["entries"].items() if "/objects/" in path]
             need(len(originals) == 1 and len(originals[0]) == original["bytes"] and

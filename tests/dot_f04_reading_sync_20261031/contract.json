@@ -129,7 +129,8 @@
       "job": "F04 Windows seed",
       "artifact": "f04-windows-seed",
       "host": "windows",
-      "role": "seed"
+      "role": "seed",
+      "fresh_profile": true
     },
     {
       "job": "F04 gtk peer",
@@ -137,7 +138,8 @@
       "host": "linux-gtk",
       "role": "peer",
       "previous": "f04-windows-seed",
-      "incoming_prefix": "F04_WINDOWS"
+      "incoming_prefix": "F04_WINDOWS",
+      "fresh_profile": true
     },
     {
       "job": "F04 Windows return (gtk)",
@@ -145,7 +147,8 @@
       "host": "windows",
       "role": "return",
       "previous": "f04-gtk-peer",
-      "incoming_prefix": "F04_GTK"
+      "incoming_prefix": "F04_GTK",
+      "fresh_profile": true
     },
     {
       "job": "F04 macos peer",
@@ -153,7 +156,8 @@
       "host": "macos",
       "role": "peer",
       "previous": "f04-windows-seed",
-      "incoming_prefix": "F04_WINDOWS"
+      "incoming_prefix": "F04_WINDOWS",
+      "fresh_profile": true
     },
     {
       "job": "F04 Windows return (macos)",
@@ -161,7 +165,8 @@
       "host": "windows",
       "role": "return",
       "previous": "f04-macos-peer",
-      "incoming_prefix": "F04_MACOS"
+      "incoming_prefix": "F04_MACOS",
+      "fresh_profile": true
     },
     {
       "job": "F04 android peer",
@@ -169,7 +174,8 @@
       "host": "android-api34-x86_64",
       "role": "peer",
       "previous": "f04-windows-seed",
-      "incoming_prefix": "F04_WINDOWS"
+      "incoming_prefix": "F04_WINDOWS",
+      "fresh_profile": true
     },
     {
       "job": "F04 Windows return (android)",
@@ -177,7 +183,8 @@
       "host": "windows",
       "role": "return",
       "previous": "f04-android-peer",
-      "incoming_prefix": "F04_ANDROID"
+      "incoming_prefix": "F04_ANDROID",
+      "fresh_profile": true
     },
     {
       "job": "F04 iphone peer",
@@ -185,7 +192,8 @@
       "host": "iphone-simulator",
       "role": "peer",
       "previous": "f04-windows-seed",
-      "incoming_prefix": "F04_WINDOWS"
+      "incoming_prefix": "F04_WINDOWS",
+      "fresh_profile": true
     },
     {
       "job": "F04 Windows return (iphone)",
@@ -193,7 +201,8 @@
       "host": "windows",
       "role": "return",
       "previous": "f04-iphone-peer",
-      "incoming_prefix": "F04_IPHONE"
+      "incoming_prefix": "F04_IPHONE",
+      "fresh_profile": true
     },
     {
       "job": "F04 ipad peer",
@@ -201,7 +210,8 @@
       "host": "ipad-simulator",
       "role": "peer",
       "previous": "f04-windows-seed",
-      "incoming_prefix": "F04_WINDOWS"
+      "incoming_prefix": "F04_WINDOWS",
+      "fresh_profile": true
     },
     {
       "job": "F04 Windows return (ipad)",
@@ -209,7 +219,8 @@
       "host": "windows",
       "role": "return",
       "previous": "f04-ipad-peer",
-      "incoming_prefix": "F04_IPAD"
+      "incoming_prefix": "F04_IPAD",
+      "fresh_profile": true
     }
   ]
 }
