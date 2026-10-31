@@ -117,6 +117,7 @@ PDF、CBZ、音频的跨媒介转换、MOBI/KF8 写回、OCR、DRM、音频转�
 - 源/目标同一文件拒绝，包括：相同路径、大小写别名（Windows）、相对/绝对别名、
   symlink/junction、硬链接、现有文件 identity 相同。目标尚不存在时比较解析后的父目录 +
   basename。
+- 批处理清单本身及其文件别名也受保护：转换输出不能替换清单，报告与清单冲突时在转换开始前拒绝整个调用，`--overwrite` 不解除这一保护。
 - 默认不覆盖现有输出；`--overwrite` 才允许。即使覆盖也先写同目录唯一临时文件
   （`.名称.exreader-<pid>-<n>.tmp`，独占创建），写入并 flush/close 成功后原子发布：
   Windows `MoveFileExW`（不带 REPLACE 时目标存在即失败），POSIX 无覆盖用 `link`+`unlink`、

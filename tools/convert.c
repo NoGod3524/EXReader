@@ -509,7 +509,8 @@ static char *derive_output(const char *input, const cv_format *target, cv_profil
 }
 static int build_jobs(const cv_item_spec *specs, size_t count, const char *root,
                       const char *output_root, int cli_profile_set, cv_profile cli_profile,
-                      int cli_overwrite, cv_job **out_jobs, size_t *out_count, char **error) {
+                      int cli_overwrite, const char *manifest,
+                      cv_job **out_jobs, size_t *out_count, char **error) {
   cv_job *jobs;
   size_t i, j;
   *out_jobs = NULL; *out_count = 0;
@@ -639,6 +640,18 @@ static int build_jobs(const cv_item_spec *specs, size_t count, const char *root,
     }
     job->preflight_ok = 1;
   }
+  /* Protect the batch manifest before any conversion. */
+  for (i = 0; i < count; i++) {
+    if (jobs[i].preflight_ok && manifest) {
+      char *local_error = NULL;
+      int same = 0;
+      if (!cv_same_file(jobs[i].result.output, manifest, &same, &local_error))
+        reject_job(&jobs[i], EXR_IO, local_error ? local_error : "Cannot compare output and batch manifest");
+      else if (same)
+        reject_job(&jobs[i], EXR_ARGUMENT, "Output denotes the batch manifest");
+      free(local_error);
+    }
+  }
   /* Duplicate outputs are rejected before any conversion. */
   for (i = 0; i < count; i++) {
     if (!jobs[i].result.output) continue;
@@ -649,7 +662,6 @@ static int build_jobs(const cv_item_spec *specs, size_t count, const char *root,
       else {
         char *local_error = NULL;
         if (!cv_same_file(jobs[i].result.output, jobs[j].result.output, &same, &local_error)) {
-          free(local_error);
           same = 0;
         }
         free(local_error);
@@ -1091,9 +1103,12 @@ static int publish_report(const char *path, const cv_text *json, char **error) {
   free(temp);
   return 1;
 }
-static int report_collides(const char *report, const cv_job *jobs, size_t count, char **error) {
+static int report_collides(const char *report, const cv_job *jobs, size_t count,
+                           const char *manifest, char **error) {
   size_t i;
+  int same = 0;
   if (!report) return 0;
+  if (manifest && (!cv_same_file(report, manifest, &same, error) || same)) return 1;
   for (i = 0; i < count; i++) {
     int same = 0;
     if (jobs[i].result.input && cv_path_equal(report, jobs[i].result.input)) return 1;
@@ -1324,15 +1339,15 @@ static int convert_main(int argc, char **argv) {
   if (job_count) {
     size_t built = 0;
     if (!build_jobs(specs, job_count, root, output_root, profile_set, profile,
-                    overwrite, &jobs, &built, &parse_error)) {
+                    overwrite, manifest_arg, &jobs, &built, &parse_error)) {
       status = invocation_error(parse_error ? parse_error : "Cannot prepare jobs");
       free(parse_error); parse_error = NULL;
       goto done;
     }
     job_count = built;
   }
-  if (report && report_collides(report, jobs, job_count, &report_error)) {
-    status = invocation_error(report_error ? report_error : "Report path collides with an input or output");
+  if (report && report_collides(report, jobs, job_count, manifest_arg, &report_error)) {
+    status = invocation_error(report_error ? report_error : "Report path collides with an input, output or batch manifest");
     free(report_error); report_error = NULL;
     goto done;
   }
