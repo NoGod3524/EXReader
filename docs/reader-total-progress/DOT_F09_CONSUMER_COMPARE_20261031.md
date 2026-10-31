@@ -29,3 +29,18 @@ No source/build/test execution occurs outside GitHub Actions.
 References:
 - https://learn.microsoft.com/en-us/windows/win32/api/uiautomationclient/nn-uiautomationclient-iuiautomationtextpattern
 - https://learn.microsoft.com/en-us/windows/win32/api/uiautomationclient/nf-uiautomationclient-iuiautomation-addautomationeventhandler
+
+## Initial result and targeted correction (round 2/2)
+Run 41159097889 A1 at c75fcd84e696f0967d34c477ac5f3da6a49f3fef failed.
+Both host packages and their existing checks built; the new native consumer
+failed compilation before any of the four observations ran. This is a new
+fixture header-dependency defect, not evidence of a new host product failure.
+Windows SDK 10.0.26100.0 UIAutomationCore.h line 49 reported C4430/C2146 at
+the first interface forward declaration, followed by cascading errors.
+With WIN32_LEAN_AND_MEAN retained, explicitly include objbase.h and oleauto.h
+before UIAutomation.h, plus initguid.h as required for UIA GUID definitions.
+No assertions, runtime steps, SDK, provider, or original managed probe changed.
+Retain artifact 13026641067, 5049 bytes, SHA256
+f0bb2e395f5573fe233386d9ebbc57916e5c97a630e49cda5d37e7267da03aa7.
+This uses the only targeted correction; no further automatic round is authorized.
+Reference: https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-uiautomationoverview
