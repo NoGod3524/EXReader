@@ -29,6 +29,7 @@ jobs:
         with:
           name: f09-escape-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
+            build/f09-escape/diagnostic-overlay.json
             build/f09-escape/source.json
             build/f09-escape/verdict.json
             build/f09-escape/baseline/*.log
