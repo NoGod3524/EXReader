@@ -1,6 +1,7 @@
 """Build and observe the full Windows host through unchanged native helpers and samplers."""
 import argparse, hashlib, importlib.util, json, math, os, shutil, subprocess, sys, traceback
 from pathlib import Path
+if hasattr(sys.stdout,"reconfigure"):sys.stdout.reconfigure(encoding="utf-8",errors="backslashreplace")
 ROOT=Path(__file__).resolve().parents[2];HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(ROOT/"tests/reader_f08_android_20261031"))
 from lane import identity, need, save, sha, command
@@ -94,7 +95,7 @@ def sample():
         report["steps"].append({"name":label,"exit":result.returncode})
         if result.returncode:
             report["problems"].append(label)
-            print("\n".join((EVIDENCE/(label+".log")).read_text(errors="replace").splitlines()[-50:]),flush=True)
+            print("\n".join((EVIDENCE/(label+".log")).read_text(encoding="utf-8",errors="replace").splitlines()[-50:]),flush=True)
         print("F08_WINDOWS_PHASE",label,result.returncode,flush=True)
         return result.returncode
     try:
