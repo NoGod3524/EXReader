@@ -1,14 +1,16 @@
 name: F08 Windows GDI frame measurement capability
 on:
   push:
-    branches: [codex/dot-f08-windows-frame-capability-20261031]
+    branches: [codex/dot-f08-windows-frame-capability-20261031, codex/dot-f08-windows-frame-audit-20261031]
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: f08-windows-frame-capability-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   capability:
+    if: github.ref_name == 'codex/dot-f08-windows-frame-capability-20261031'
     runs-on: windows-2022
     timeout-minutes: 20
     steps:
@@ -33,4 +35,23 @@ jobs:
           path: |
             build/f08-windows-frame-capability/
             build/f08-win-control/Release/f08_frame_control.exe
+          if-no-files-found: error
+  audit:
+    if: github.ref_name == 'codex/dot-f08-windows-frame-audit-20261031'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate existing ZIP and inspect capture diagnostics
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_windows_frame_capability_20261031/audit.py
+      - name: Preserve authenticated audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f08-windows-frame-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-windows-frame-audit/
           if-no-files-found: error
