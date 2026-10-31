@@ -921,6 +921,11 @@ def main():
                   passed=not missing or args.allow_incomplete)
     (output/"audit-result.json").write_text(json.dumps(result,indent=2)+"\n")
     print(json.dumps(result),flush=True)
+    print("C02-AUDIT-SUMMARY " + json.dumps(dict(
+        passed=result["passed"],full_c02_complete=result["full_c02_complete"],producer_source=source,
+        semantic_negative_controls=len(controls),missing_capabilities=sorted(missing),
+        packages=[dict(role=p["role"],run=p["run"],attempt=p["attempt"],artifact=p["artifact"]["id"],
+                       capabilities=p["details"]["capabilities"]) for p in packages])),flush=True)
     return 0 if result["passed"] else 1
 
 if __name__ == "__main__":

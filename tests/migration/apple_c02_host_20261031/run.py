@@ -179,6 +179,17 @@ def main():
     try:
         authenticate_install(sdk,"c02-sdk-identity.json",args.target,source)
         authenticate_install(product,"c02-product-identity.json",args.target,source)
+        sdk_identity = json.loads((sdk/"c02-sdk-identity.json").read_text())
+        original_sdk = evidence/"installed-sdk"
+        (original_sdk/"lib").mkdir(parents=True)
+        libraries = sorted((sdk/"lib").glob("libexreader*.dylib"))
+        assert libraries,"original authenticated SDK shared provider missing"
+        for library in libraries:
+            destination = original_sdk/"lib"/library.name
+            shutil.copyfile(library,destination)
+            assert sha(destination) == sdk_identity["files"]["lib/"+library.name],library.name
+        shutil.copyfile(sdk/"c02-sdk-identity.json",original_sdk/"c02-sdk-identity.json")
+        receipt["original_sdk_archive_prefix"] = "installed-sdk/"
         qualified_sources = list(SOURCES)
         for folder in ("extras/migration/posix_c02_admission_20261031","extras/migration/posix_c02_sdk_admission_20261031"):
             qualified_sources += [path.relative_to(ROOT).as_posix() for path in (ROOT/folder).rglob("*") if path.is_file()]

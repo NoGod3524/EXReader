@@ -134,6 +134,7 @@ def macho_sdk(raw):
         kind, length = struct.unpack_from("<II", raw, offset)
         need(length >= 8 and offset + length <= 32 + size, "apple-macho-command-bounds")
         if kind in (0xc, 0x80000018, 0x8000001f):
+            need(length >= 24, "apple-complete-dylib-load-command")
             name_offset = struct.unpack_from("<I", raw, offset+8)[0]
             need(24 <= name_offset < length, "apple-macho-dylib-name-offset")
             text = raw[offset+name_offset:offset+length].split(b"\0",1)[0].decode()
@@ -148,17 +149,27 @@ def bundles(files, receipt, platform, source, spec):
     mobile = platform == "iphonesimulator"
     paths = {"production":"bundles/production.app/" + ("EXReader" if mobile else "Contents/MacOS/EXReader"),
              "runtime":"bundles/runtime.app/" + ("C02Runtime" if mobile else "Contents/MacOS/C02Runtime")}
+    sdk_identity = json_value(files["installed/c02-sdk-identity.json"])
+    sdk_copies = []
     for kind,path in paths.items():
         need(sha(files[path]) == receipt["binaries"][kind], "apple-qualified-bundle-binary-sha")
         provider = macho_sdk(files[path])
         app = "bundles/" + kind + ".app/"
         frameworks = app + ("Frameworks/" if mobile else "Contents/Frameworks/")
-        need(files[frameworks + provider][:4] == b"\xcf\xfa\xed\xfe", "apple-real-bundled-sdk-dylib")
+        sdk_raw = files[frameworks + provider]
+        expected = sdk_identity["files"]["lib/" + provider]
+        actual = sha(sdk_raw)
+        if actual != expected:
+            print(json.dumps(dict(diagnostic="apple-sdk-original-bundle-bytes",bundle=kind,provider=provider,
+                                  original_sha256=expected,bundled_sha256=actual,bytes=len(sdk_raw))),flush=True)
+        need(actual == expected, "apple-bundled-exact-installed-sdk")
+        sdk_copies.append(sdk_raw)
         plist = plistlib.loads(files[app + ("Info.plist" if mobile else "Contents/Info.plist")])
         need(plist["EXRSourceSHA"] == source, "apple-bundle-qualified-source")
         if kind == "runtime":
             need(str(plist["EXRRun"]) == str(spec["run"]) and
                  str(plist["EXRAttempt"]) == str(spec["attempt"]), "apple-runtime-bundle-producer")
+    need(sdk_copies[0] == sdk_copies[1], "apple-both-bundles-same-sdk")
     build = json_value(files["build.json"])
     need(build["source_sha"] == source and build["sdk_version"] == "3.42.0" and
          build["c02_admission"] is True and build["c02_installed_files"], "apple-production-installed-admission")

@@ -327,6 +327,7 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeClose(JNIEnv *
 
 JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeClosePrimaryForSourceTest(
     JNIEnv *env, jclass type, jlong handle, jint expected) {
+#ifdef READER_C02_TEST
   android_library_owner *owner = (android_library_owner *)(intptr_t)handle;
   if (!owner || owner->closed || !owner->library || expected <= 0 ||
       owner->sources != (size_t)expected || !pc02_check(owner->lease)) {
@@ -334,6 +335,10 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeClosePrimaryFo
     return;
   }
   Java_org_exreader_host_NativeLibrary_nativeClose(env, type, handle);
+#else
+  (void)type; (void)handle; (void)expected;
+  admission_error(env, "Primary-close probe is disabled in this product");
+#endif
 }
 
 JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_nativeBooks(JNIEnv *env, jclass type, jlong handle) {
