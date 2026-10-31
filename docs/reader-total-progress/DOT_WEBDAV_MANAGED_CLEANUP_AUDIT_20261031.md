@@ -1,3 +1,20 @@
+# Managed cleanup：原始证据独立重算审计
+
+状态：补证审计已准备，等待本次 Actions 实测。当前用户明确接管上游补证和审计，并授权继续到产品 CI 完成。
+本提交延续既有独立验证程序，不导入或执行 producer 代码，只读取固定 ZIP 和源码文本。原 prepared 程序及文档（本地 deec56424e494848a17c799a357525f0852fed62）已按原字节保存在父提交 a788f82b9c84ea6fab1f5e8e3f3e928b1b3be98e；没有追认它曾运行或接受。
+新增原始字段检查由本次接手者编写，独立性指与 producer 分离的实现、执行和重新计算。
+
+固定 producer：run 41174402876 / attempt 1；tests 711e1fc8a8c5b86f210bcddc934c479599387582；core dba079b550f9ec83054e6b7b0b7475f43bc1739f。
+Linux 30/30，job 124458850309，artifact 13031778309，114285 bytes，SHA-256 4520aae748dff728019ce865116685930cd887a3783c827c2ac3bf4422554946。
+macOS 30/30，job 124458849971，artifact 13031863107，101735 bytes，SHA-256 3c8533a40556485d8818821068fe6cceef67e83e94cd15d26d59ba431abfe2ec。
+完整 source/header/archive/consumer/hookworker SHA-256 均固定在 verify.py 中，并与 API 源码和 ZIP 内字节重新比对。
+
+每个平台保留原 8 项篡改负控，并新增 10 项原始数据负控：SIGKILL 返回码、canary errno、cleanup errno、目标 inode、nlink、内容、receipt CRC、UUID、状态以及第二次恢复变化。修改 JSON 后重新计算内部 seal，拒绝必须来自语义检查。
+重新计算覆盖真实子进程生命周期、十组死亡观测、权限与 canary、receipt 4160 字节独立 CRC/布局解码、发布目标 inode/内容/大小/链接数、保留 pending 残留、两次恢复幂等性和 valid-next 修订边界。
+原始 ZIP 仅在 Actions 下载、哈希、解析和保留；不在本机或 VM 解包。原始失败及旧缺口历史保留如下。
+
+## 历史 prepared 记录（适用于旧 run，不作为当前结果）
+
 # Independent managed cleanup artifact audit
 
 Status: prepared; no audit result claimed. One authorized Ubuntu Actions job,

@@ -1,35 +1,52 @@
 #!/usr/bin/env python3
 """Actions-only authentication of two fixed historical artifacts; never runs their code."""
-import base64, copy, hashlib, io, json, os, re, stat, subprocess, sys, zipfile
+import base64, copy, hashlib, io, json, os, re, stat, subprocess, sys, zipfile, zlib
 from pathlib import Path, PurePosixPath
 
 REPO="NoGod3524/EXReader"
 BASE="d69bae312fd0791dac119509437fb29abc92a25c"
-TESTS="12da717cef38c90ae2097e52d33f7b3682aef043"
+TESTS="711e1fc8a8c5b86f210bcddc934c479599387582"
 CORE="dba079b550f9ec83054e6b7b0b7475f43bc1739f"
 PRODUCER_BASE="666d0d81730ac3cf7caea52b05ca1f01b1d183b1"
-RUN=41170057297
+RUN=41174402876
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/"build/managed-cleanup-audit"
 OWNED={"tests/webdav_managed_cleanup_audit_20261031/verify.py",
 ".github/workflows/dot-webdav-managed-cleanup-audit-20261031.yml",
 "docs/reader-total-progress/DOT_WEBDAV_MANAGED_CLEANUP_AUDIT_20261031.md"}
 PINS=[
- dict(platform="Linux",system="Linux",machine="x86_64",euid=1001,job=124445872128,
- id=13030965993,size=86807,digest="25b95345c6607c6fc0fadd54c95bdd62c515bcc460498664bddabdf88c88b442",
- archive="276bb6c488e6ed916e87d77a3e062e1e1f650d89cb1a12229ac75cf0a20bfdd3",
- consumer="2a527a976611c260d999a67c685ef13dcac5db62104ea259108cb02d01cf1af7",
- hookworker="038d520caf990618f371f8c3396d824720863d526c2ced207b8f88c51e63e217"),
- dict(platform="macOS",system="Darwin",machine="arm64",euid=501,job=124445872050,
- id=13030352879,size=74101,digest="72ac0c1e56854a06669e01b7e9714605562c03275e482853d0088901f8d566fe",
- archive="89a9e40095ee94197c979c5291f8a846257cef0c36a9f120c89095d7e4d4698a",
- consumer="55436fa7faccf0c1ab26d77a2e4f7c0e08f76636d4e8ee3b250e2d4081bcf89b",
- hookworker="de8aa56936f14230e818979df8c83ffee33e4ae6747218b4a8dc533b2aeee0ba")]
+  {
+    "platform": "Linux",
+    "system": "Linux",
+    "machine": "x86_64",
+    "euid": 1001,
+    "job": 124458850309,
+    "id": 13031778309,
+    "size": 114285,
+    "digest": "4520aae748dff728019ce865116685930cd887a3783c827c2ac3bf4422554946",
+    "archive": "276bb6c488e6ed916e87d77a3e062e1e1f650d89cb1a12229ac75cf0a20bfdd3",
+    "consumer": "a069cd2970f4a370a9f99beaac78df20d1a650cd80247866de046d9c01c9b222",
+    "hookworker": "c045fcd16d88e64f5c1d31a3222b15a8cd4f6dab4a83a193ffd2f87919956b84"
+  },
+  {
+    "platform": "macOS",
+    "system": "Darwin",
+    "machine": "arm64",
+    "euid": 501,
+    "job": 124458849971,
+    "id": 13031863107,
+    "size": 101735,
+    "digest": "3c8533a40556485d8818821068fe6cceef67e83e94cd15d26d59ba431abfe2ec",
+    "archive": "807cd16f551bd9da7fd3be0e101b68f0e698b11003516e8bfea37e93ef9c7bdf",
+    "consumer": "2a0607ef46b66b610fb857359befae461fab843d553b3d05fd36f7025ddd3098",
+    "hookworker": "b88fc3eafab0a0eb7bdc8a1f1b8a4a395aa11a7ea9e0557d3c9d816bceaff20d"
+  }
+]
 SOURCE={
  "build/core/extras/webdav-cleanup/src/cleanup_posix.c":(CORE,"extras/webdav-cleanup/src/cleanup_posix.c","2ebb5a27b62998b6fc185277a04d81b506871880f7edb3860923f775dfb70590"),
  "build/core/extras/webdav-cleanup/include/exr_webdav_cleanup.h":(CORE,"extras/webdav-cleanup/include/exr_webdav_cleanup.h","5c683d07eb87c21d521bab95b0fc56738da12975ebbc022257ef338498edd979"),
- "tests/webdav_managed_cleanup_20261031/worker.c":(TESTS,"tests/webdav_managed_cleanup_20261031/worker.c","a0dfb8cdb620051e8beb5592afb3b27624ccb2b17c14a09a4557e6b00b1e4d30"),
- "tests/webdav_managed_cleanup_20261031/run.py":(TESTS,"tests/webdav_managed_cleanup_20261031/run.py","ec16b703e61b7de0b6ece18e43731b99a1228b7b2b6151cc018f6fb0506661ba")}
+ "tests/webdav_managed_cleanup_20261031/worker.c":(TESTS,"tests/webdav_managed_cleanup_20261031/worker.c","83fd9d19d99119203bcc23df9bcb9ca53b57c82f69cb0958ecdd7d9f2fe38b05"),
+ "tests/webdav_managed_cleanup_20261031/run.py":(TESTS,"tests/webdav_managed_cleanup_20261031/run.py","afaf4cf7c140172e4045c1b97a91dbb52bf50a7327e06f55a5b8a83cfd5d00ea")}
 NAMES=[
 "01-normal-publish-cleanup","02-abandon-owned","03-abandon-sealed","04-unauthorized-abandon-refused",
 "05-same-process-lock","06-cross-process-lock","07-active-tx-blocks-close","08-existing-target-not-replaced",
@@ -101,6 +118,155 @@ def recovery(log,states,cleaned,pending,reason):
   expected=dict(status=0,refused=0,receipt_uncertain=0,native_error=0,states=states,
    pending=pending,cleaned=cleaned if i==0 else 0,inspected=len(states),total_slots=len(states),next_slot=len(states))
   need(all(type(r.get(k)) is type(v) and r[k]==v for k,v in expected.items()),reason)
+
+def raw_entries(snapshot):
+ rows=snapshot["entries"]
+ if type(rows) is list:
+  need(len({r["path"] for r in rows})==len(rows),"raw_duplicate_path")
+  rows={r["path"]:{k:v for k,v in r.items() if k!="path"} for r in rows}
+ need(type(rows) is dict and 0<len(rows)<=1024,"raw_entries")
+ for path,r in rows.items():
+  p=PurePosixPath(path)
+  need((path=="." or (not p.is_absolute() and ".." not in p.parts)) and "error" not in r,"raw_path_or_error")
+  need(r.get("kind") in ("file","dir","symlink","other"),"raw_kind")
+  for k in ("dev","ino","nlink","size","mode","uid","gid"):
+   need(type(r.get(k)) is int and r[k]>=0,"raw_stat")
+  if r["kind"]=="file":
+   try:b=bytes.fromhex(r["bytes_hex"])
+   except (ValueError,KeyError):raise Invalid("raw_bytes")
+   need(len(b)==r["size"] and len(b)<=65536,"raw_bytes")
+   if "sha256" in r:need(sha(b)==r["sha256"],"raw_hash")
+ return rows
+def one(rows,key,value):
+ found=[r for r in rows if r.get(key)==value]
+ need(len(found)==1,"raw_unique:"+value)
+ return found[0]
+def snap(c,label,worker=False):
+ rows=c["raw"]["worker_events"] if worker else c["raw"]["snapshots"]
+ return raw_entries(one(rows,"label",label))
+def receipt(entries,path="root/.receipt"):
+ need(path in entries and entries[path]["kind"]=="file","raw_receipt")
+ b=bytes.fromhex(entries[path]["bytes_hex"])
+ need(len(b)==4160 and b[:8]==b"EXRWCRCT","raw_receipt")
+ u32=lambda p:int.from_bytes(b[p:p+4],"little")
+ u64=lambda p:int.from_bytes(b[p:p+8],"little")
+ need(u32(8)==1 and u32(12)<=64 and u64(16)>0 and u64(24)>0 and not any(b[48:60]),"raw_receipt")
+ need(zlib.crc32(b[:60]+b"\0"*4+b[64:])==u32(60),"raw_crc")
+ need(u64(24)==entries["root"]["ino"],"raw_root_identity")
+ slots=[]
+ for i in range(64):
+  pos=64+i*64;s=b[pos:pos+64]
+  if i>=u32(12):need(not any(s),"raw_receipt");continue
+  state=u32(pos)
+  need(state in range(1,7) and not any(s[4:8]+s[48:64]),"raw_receipt")
+  size,di,pi=u64(pos+8),u64(pos+16),u64(pos+24)
+  need((size==di==pi==0) if state==1 else di>0 and pi>0,"raw_receipt")
+  slots.append(dict(state=state,bytes=size,dir_ino=di,payload_ino=pi,id=s[32:48].hex()))
+ return dict(generation=u64(16),root_ino=u64(24),uuid=b[32:48].hex(),slots=slots)
+def target(entries):
+ t=entries.get("dest/book.epub")
+ if t:
+  need(t["kind"]=="file","raw_target")
+  need(bytes.fromhex(t["bytes_hex"])==b"managed cleanup payload 20261031\n","raw_target_bytes")
+ return t
+def same_target(a,b,links):
+ ta,tb=target(a),target(b)
+ need((ta is None)==(tb is None),"raw_target_presence")
+ if ta:
+  need(all(ta[k]==tb[k] for k in ("dev","ino","size","bytes_hex")),"raw_target_identity")
+  need(tb["nlink"]==links,"raw_target_links")
+def transaction_disk(entries,phase):
+ tx=[p for p,r in entries.items() if p.startswith("root/tx-") and p.count("/")==1]
+ need(len(tx)==(0 if phase=="receipt_next_synced" else 1),"raw_disk_phase")
+ payload=[p for p in entries if p.startswith("root/tx-") and p.endswith("/payload")]
+ need(len(payload)==(0 if phase in ("directory_created","alias_unlinked","receipt_next_synced") else 1),"raw_disk_phase")
+ t=target(entries);has_book=phase in ("linked","published","alias_unlinked")
+ need((t is not None)==has_book,"raw_disk_phase")
+ if t:need(t["nlink"]==(1 if phase=="alias_unlinked" else 2),"raw_target_links")
+ if payload and t:
+  q=entries[payload[0]]
+  need(all(q[k]==t[k] for k in ("dev","ino","size","nlink","bytes_hex")),"raw_alias_identity")
+ need(("root/.receipt.next" in entries)==(phase=="receipt_next_synced"),"raw_disk_phase")
+ return tx,payload
+def raw_case(c,index,pin):
+ raw=c.get("raw",{})
+ need(raw.get("schema")==1 and raw.get("euid")==pin["euid"] and raw.get("observer_pid",0)>0,"raw_schema")
+ processes=raw.get("processes",[])
+ need(len(processes)>=1 and len({p["pid"] for p in processes})==len(processes),"raw_process")
+ killed=[]
+ for p in processes:
+  need(type(p["pid"]) is int and p["pid"]>0 and p["pid"]!=raw["observer_pid"]
+   and p.get("timed_out") is False and len(p["argv"])>=3,"raw_process")
+  if p["argv"][1] in ("hold","kill-flow"):
+   need(p.get("kill_sent") is True and p.get("signal_sent")==9 and p.get("returncode")==-9,"raw_sigkill")
+   killed.append(p)
+  else:
+   need(p.get("kill_sent") is False and p.get("signal_sent") is None and p.get("returncode")==0,"raw_process")
+ need(len(killed)==(1 if index==5 or index>=21 else 0),"raw_sigkill")
+ events=[loads(x[4:]) for x in c["log"] if x.startswith("RAW ")]
+ need(events==raw.get("worker_events"),"raw_event_binding")
+ for s in raw.get("snapshots",[]):raw_entries(s)
+ for e in events:
+  need(e.get("pid") in [p["pid"] for p in processes] and e.get("euid")==pin["euid"],"raw_event_process")
+  if e.get("type")=="snapshot":raw_entries(e)
+ snap(c,"before-case");snap(c,"final")
+ if killed:
+  before=snap(c,"held");dead=snap(c,"after-death")
+  need(before==dead,"raw_death_disk")
+ if index==5:
+  need([p["argv"][1] for p in processes]==["prep","hold","try-open","try-open"],"raw_lock_processes")
+  return
+ if index!=12 and index<21:return
+ recoverer=[p for p in processes if p["argv"][1]=="recover"]
+ need(len(recoverer)==1 and all(recoverer[0]["pid"]!=p["pid"] for p in killed),"raw_recovery_process")
+ before=snap(c,"before-recovery");after=snap(c,"after-recovery")
+ first=snap(c,"recovery-1",True);second=snap(c,"recovery-2",True)
+ # Hash fields are a Python convenience; compare all actual stat/byte observations.
+ strip=lambda rows:{p:{k:v for k,v in r.items() if k!="sha256"} for p,r in rows.items()}
+ need(strip(first)==strip(second)==strip(after),"raw_idempotence")
+ old=receipt(before);new=receipt(first);again=receipt(second)
+ uuid=one([dict(uuid=x[5:]) for x in c["log"] if x.startswith("UUID ")],"uuid",old["uuid"])["uuid"]
+ need(new["uuid"]==again["uuid"]==uuid,"raw_uuid")
+ if index==12:
+  need([p["argv"][1] for p in processes]==["case","recover"],"raw_eacces_process")
+  ca=one(events,"type","canary");cl=one(events,"type","cleanup")
+  need(ca.get("euid",0)>0 and ca.get("mode")==0o500 and ca.get("returncode")==-1 and ca.get("errno")==13 and ca.get("exists")==1,"raw_eacces")
+  need(cl.get("euid",0)>0 and cl.get("mode")==0o500 and cl.get("status")==2 and cl.get("removed")==0
+   and cl.get("pending")==1 and cl.get("native_error")==13 and cl.get("receipt_uncertain")==0,"raw_eacces")
+  cb=snap(c,"canary-before",True);ce=snap(c,"canary-after",True)
+  need(cb==ce and cb["canary"]["mode"]==0o500 and cb["canary/c"]["bytes_hex"]=="630a","raw_canary")
+  eb=snap(c,"eacces-before",True);ee=snap(c,"eacces-after",True)
+  need(eb==ee,"raw_eacces_preservation")
+  dirs=[p for p in eb if p.startswith("root/tx-") and p.count("/")==1]
+  need(len(dirs)==1 and eb[dirs[0]]["mode"]==0o500 and before[dirs[0]]["mode"]==0o700,"raw_eacces_permissions")
+  same_target(eb,before,2);same_target(before,after,1)
+  need([s["state"] for s in receipt(eb)["slots"]]==[5],"raw_eacces_receipt")
+  states,cleaned=[6],1
+ else:
+  phase,state,states,cleaned,pending=KILLS[index-21]
+  need(snap(c,"after-death")==before,"raw_recovery_start")
+  dirs,payloads=transaction_disk(before,phase)
+  if phase=="receipt_next_synced":
+   nxt=receipt(before,"root/.receipt.next")
+   need(old["slots"]==[] and len(nxt["slots"])==1 and nxt["slots"][0]["state"]==1
+    and nxt["generation"]==old["generation"]+1 and nxt["uuid"]==old["uuid"]
+    and nxt["root_ino"]==old["root_ino"],"raw_next_amendment")
+  else:
+   need(len(old["slots"])==1 and old["slots"][0]["state"]==state,"raw_phase_receipt")
+   slot=old["slots"][0]
+   need(dirs==["root/tx-"+slot["id"]],"raw_transaction_id")
+   if state>=2:
+    need(before[dirs[0]]["ino"]==slot["dir_ino"],"raw_alias_identity")
+    if payloads:need(before[payloads[0]]["ino"]==slot["payload_ino"],"raw_alias_identity")
+  same_target(before,after,1 if cleaned else (target(before) or {}).get("nlink"))
+  if not cleaned:
+   for path,row in before.items():
+    if path.startswith("root/tx-"):need(after.get(path)==row,"raw_pending_preserved")
+ need([s["state"] for s in new["slots"]]==states,"raw_recovery_receipt")
+ need(new["generation"]==old["generation"]+cleaned,"raw_recovery_generation")
+ need("root/.receipt.next" not in after,"raw_next_survived")
+ if cleaned:need(not any(p.startswith("root/tx-") for p in after),"raw_cleanup_disk")
+
 def semantic(package,pin):
  files=validate_seal(package)
  binding=obj(files,"wc-logs/binding.json")
@@ -145,24 +311,15 @@ def semantic(package,pin):
    phase,state,states,cleaned,pending=KILLS[i-21]
    need([x for x in log if x.startswith("HELD ")]==[f"HELD {phase} 0 {state}"],"kill_marker")
    recovery(log,states,cleaned,pending,"kill_recovery")
+ for i,c in enumerate(cases):raw_case(c,i,pin)
  matrix=get(files,"wc-logs/matrix.log").decode().splitlines()
  need([x for x in matrix if x.startswith("PASS ")]==["PASS "+n for n in NAMES],"matrix_cases")
  return {"producer_case_execution_authenticated":True,"cases":30,
  "source_bound_assertions_authenticated":True,"raw_recovery_reports_recomputed":10,
- "critical_evidence_complete":False,
- "gaps":[
- {"requirement":"independent target preservation verification","cases":[13,27,28,29],
-  "missing":"before/after dev,ino,sha256,nlink were checked in producer memory but not serialized",
-  "classification":"independent_recomputation_unavailable_not_product_failure"},
- {"requirement":"independent actual EACCES verification","cases":[13],
-  "missing":"actual canary unlink errno and cleanup errno/mode observations are not logged; pinned C CHECK and PASS only",
-  "classification":"source_bound_assertion_only_not_product_failure"},
- {"requirement":"independent process death verification","cases":list(range(22,31)),
-  "missing":"HELD markers retained, but actual kill returncode/PID and before/after disk snapshot not serialized",
-  "classification":"source_bound_runner_assertion_only_not_product_failure"}],
+ "critical_evidence_complete":True,"raw_cases_checked":30,"raw_process_deaths_checked":10,"receipt_recovery_pairs_checked":10,"gaps":[],
  "disclosed_contract_amendment":{"case":30,"difference":"valid successor .receipt.next is discarded and old receipt reopened; frozen handoff said refuse every .next",
  "observed_constraints":"CRC/structural decode, matching UUID/root inode, next generation=current+1; no predecessor hash or full old/new slot transition comparison in open",
- "producer_document_discloses_amendment":True,"approval_origin_independently_verified":False},
+ "producer_document_discloses_amendment":True,"approval_origin_independently_verified":False,"current_user_authorized_upstream_takeover":True},
  "product_failure_proven":False,"product_cleanup_passed":False,"power_loss_validated":False}
 def controls(files,pin):
  # Mutations are re-encoded and the inner inventory seal is recomputed, so
@@ -197,6 +354,52 @@ def controls(files,pin):
   need(actual==expected,"negative_control:"+name)
   cases.append(dict(name=name,expected=expected,actual=actual,resealed=True))
  return dict(positive=1,negative=8,passed=True,cases=cases)
+
+def raw_controls(files,pin):
+ cases=[]
+ names=["signal_return","canary_errno","cleanup_errno","target_inode","target_link_count",
+        "target_bytes","receipt_crc","receipt_uuid","receipt_state","recovery_repeat"]
+ for name in names:
+  changed=dict(files);n=locate(changed,"wc-evidence/results.json");r=loads(changed[n])
+  if name=="signal_return":
+   p=next(p for p in r["cases"][21]["raw"]["processes"] if p["argv"][1]=="kill-flow");p["returncode"]=0
+  elif name in ("canary_errno","cleanup_errno"):
+   c=r["cases"][12];kind,key=("canary","errno") if name=="canary_errno" else ("cleanup","native_error")
+   next(e for e in c["raw"]["worker_events"] if e.get("type")==kind)[key]=0
+  elif name.startswith("target_") or name=="recovery_repeat":
+   c=r["cases"][27]
+   snapshots=[s for s in c["raw"]["snapshots"] if s["label"]=="after-recovery"]
+   snapshots += [s for s in c["raw"]["worker_events"] if s.get("label") in ("recovery-1","recovery-2")]
+   if name=="recovery_repeat":snapshots=snapshots[-1:]
+   for s in snapshots:
+    rows=s["entries"];t=rows["dest/book.epub"] if type(rows) is dict else next(x for x in rows if x["path"]=="dest/book.epub")
+    if name=="target_inode":t["ino"]+=1
+    elif name=="target_link_count":t["nlink"]+=1
+    elif name=="target_bytes":
+     b=b"X"+bytes.fromhex(t["bytes_hex"])[1:];t["bytes_hex"]=b.hex()
+     if "sha256" in t:t["sha256"]=sha(b)
+    else:t["nlink"]+=1
+  else:
+   c=r["cases"][27]
+   for s in c["raw"]["snapshots"]:
+    if s["label"] not in ("held","after-death","before-recovery"):continue
+    t=s["entries"]["root/.receipt"];b=bytearray.fromhex(t["bytes_hex"])
+    if name=="receipt_crc":b[60]^=1
+    else:
+     if name=="receipt_uuid":b[32]^=1
+     else:b[64:68]=(3).to_bytes(4,"little")
+     b[60:64]=b"\0"*4;b[60:64]=zlib.crc32(b).to_bytes(4,"little")
+    t["bytes_hex"]=b.hex();t["sha256"]=sha(b)
+  # Keep the redundant raw event transcript consistent, then reseal the package.
+  for c in r["cases"]:
+   it=iter(c["raw"]["worker_events"])
+   c["log"]=["RAW "+json.dumps(next(it)) if x.startswith("RAW ") else x for x in c["log"]]
+  changed[n]=encoded(r);actual=None
+  try:semantic(seal(changed),pin)
+  except Invalid as e:actual=str(e)
+  need(actual is not None and actual.startswith("raw_"),"negative_control:"+name)
+  cases.append(dict(name=name,actual=actual,resealed=True))
+ return dict(positive=1,negative=len(cases),passed=True,cases=cases)
 def authenticate(pin):
  meta=api("actions/artifacts/"+str(pin["id"]))
  name=f"webdav-managed-cleanup-{pin['platform']}-{RUN}-1"
@@ -210,7 +413,7 @@ def authenticate(pin):
  need(sha(path.read_bytes())==pin["digest"],"preserved_zip")
  files=unpack(data);package=seal(files)
  (OUT/(pin["platform"]+"-inventory.json")).write_bytes(encoded(package["inventory"]))
- result=semantic(package,pin);result["controls"]=controls(files,pin)
+ result=semantic(package,pin);result["controls"]=controls(files,pin);result["raw_controls"]=raw_controls(files,pin)
  result.update(platform=pin["platform"],artifact=meta,original_zip_sha256=pin["digest"],
   evidence_integrity_passed=True)
  return result
@@ -238,7 +441,8 @@ def main():
       "reason":str(e) if isinstance(e,Invalid) else "artifact_processing_failed"})
   result["audit_completed"]=True
   result["evidence_integrity_passed"]=len(result["platforms"])==2 and not result["errors"]
-  result["audit_passed"]=result["evidence_integrity_passed"] and all(p["critical_evidence_complete"] for p in result["platforms"])
+  result["critical_evidence_complete"]=result["evidence_integrity_passed"] and all(p["critical_evidence_complete"] for p in result["platforms"])
+  result["audit_passed"]=result["critical_evidence_complete"]
  except Exception as e:
   result["errors"].append({"error_type":type(e).__name__,"reason":str(e) if isinstance(e,Invalid) else "setup_or_identity_failed"})
  finally:

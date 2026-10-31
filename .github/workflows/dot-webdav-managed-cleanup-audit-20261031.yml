@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Authenticate only the two fixed historical artifacts
+      - name: Authenticate and independently recompute the two pinned evidence artifacts
         env:
           GH_TOKEN: ${{ github.token }}
         run: python tests/webdav_managed_cleanup_audit_20261031/verify.py
