@@ -1,0 +1,33 @@
+name: F08 native Apple Instruments capability
+on:
+  push:
+    branches: [codex/dot-f08-apple-trace-20261031]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  probe:
+    name: Instruments ${{ matrix.platform }}
+    runs-on: macos-15
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse the additive capability observer
+        run: python3 -m py_compile tests/reader_f08_apple_trace_20261031/probe.py
+      - name: Trace the authenticated Release program without rebuilding it
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_apple_trace_20261031/probe.py ${{ matrix.platform }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-apple-trace-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-apple-trace-${{ matrix.platform }}/
+          include-hidden-files: true
+          if-no-files-found: error
