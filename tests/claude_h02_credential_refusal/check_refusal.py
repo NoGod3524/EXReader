@@ -132,6 +132,54 @@ def main():
             with dav.lock:
                 return [(r['method'], r['authenticated']) for r in dav.requests]
 
+        def revision_rows():
+            return sql('SELECT revision_id,entity_kind,entity_key,body_sha256,body_json FROM reader_revisions ORDER BY revision_id')
+
+        def snapshot():
+            # Heads are computed independently from the retained wire parents, not from a host summary.
+            rows = revision_rows()
+            parents = {(kind, key, parent) for _, kind, key, _, body in rows for parent in json.loads(body)['parents']}
+            return {'books': state()['books'],
+                    'heads': sorted((kind, key, rid) for rid, kind, key, _, _ in rows if (kind, key, rid) not in parents),
+                    'revisions': [(rid, kind, key, sha) for rid, kind, key, sha, _ in rows],
+                    'outbox': state()['outbox']}
+
+        def attempt(action):
+            try:
+                return action(), None
+            except Exception as error:
+                return False, repr(error)
+
+        def interrupt(dialog, mode):
+            """Interrupt a real A network session: 'cancel' while a PROPFIND is held open, 'fail' with a server error."""
+            detail = {'mode': mode}
+            if mode == 'cancel':
+                dav.blocked.clear();dav.release.clear();dav.pause = True
+                A.press(dialog, X.SYNC)
+                detail['network_request_held'] = dav.blocked.wait(180)
+                detail['cancel_enabled'], detail['cancel_error'] = attempt(
+                    lambda: detail['network_request_held'] and A.wait(lambda: A.enabled(dialog, X.CANCEL), timeout=30))
+                if detail['cancel_enabled']:
+                    A.press(dialog, X.CANCEL)
+                dav.pause = False;dav.release.set()
+                expected = '同步已取消'
+            else:
+                dav.fail = 500
+                A.press(dialog, X.SYNC)
+                expected = '同步失败'
+            _, detail['settle_error'] = attempt(lambda: A.wait(
+                lambda: any(n in A.note(dialog) for n in ('同步已取消', '同步失败', '同步完成')), timeout=240))
+            dav.fail = 0
+            detail['note'] = A.note(dialog);detail['retry_enabled'] = A.enabled(dialog, X.RETRY)
+            really = expected in detail['note'] and detail['retry_enabled'] and (
+                mode != 'cancel' or (detail['network_request_held'] and detail['cancel_enabled']))
+            return bool(really), detail
+
+        def apply_a_session_only(dialog):
+            A.wait(lambda: A.enabled(dialog, X.APPLY), timeout=240)
+            A.fill(dialog, root, user_a, pass_a, False);A.press(dialog, X.APPLY)
+            A.wait(lambda: '仅本次会话' in A.note(dialog), timeout=60)
+
         def sampled(action, host):
             sampler = T.ThreadSampler(host.process.pid);sampler.start()
             try:
@@ -188,19 +236,49 @@ def main():
               sync_enabled_after_failed_B=sync_enabled, requests_with_A_after_B_failed=len(dav_state()) - count_before_b)
         check('s3_book_revision_head_unchanged_by_failed_B', state()['books'] == after_sync['books'], before=after_sync['books'], after=state()['books'])
 
-        # S4: cancel then retry leaves books/heads as they were
-        if A.enabled(dialog, X.SYNC) or True:
-            A.fill(dialog, root, user_a, pass_a, False);A.press(dialog, X.APPLY)
-            A.wait(lambda: '仅本次会话' in A.note(dialog), timeout=60)
-            heads = state()
-            A.press(dialog, X.SYNC)
+        # S4: a real cancel of A's network session, then Retry, keeps books, revision heads and revision bytes
+        try:
+            apply_a_session_only(dialog)
+            before = snapshot()
+            really, detail = interrupt(dialog, 'cancel')
+            check('s4_cancel_really_happened_during_network', really, **detail)
+            if detail['retry_enabled']:
+                A.press(dialog, X.RETRY)
+            _, error = attempt(lambda: A.wait_note(dialog, '同步完成', 240))
+            after = snapshot()
+            check('s4_retry_after_cancel_completes', error is None, note=A.note(dialog), error=error)
+            check('s4_cancel_retry_keeps_books', after['books'] == before['books'], before=before['books'], after=after['books'])
+            check('s4_cancel_retry_keeps_revision_heads', bool(before['heads']) and after['heads'] == before['heads'], before=before['heads'], after=after['heads'])
+            check('s4_cancel_retry_keeps_revision_bytes', after['revisions'] == before['revisions'],
+                  before=len(before['revisions']), after=len(after['revisions']))
+        except Exception as error:
+            check('s4_completed_without_harness_error', False, error=repr(error))
+
+        # S6: A's session is cancelled / failed, saving B fails, then Retry must send nothing at all
+        for tag, mode in (('a', 'cancel'), ('b', 'fail')):
             try:
-                A.wait(lambda: A.enabled(dialog, X.CANCEL), timeout=15);A.press(dialog, X.CANCEL)
-                A.wait(lambda: A.enabled(dialog, X.RETRY), timeout=120);A.press(dialog, X.RETRY)
+                apply_a_session_only(dialog)
+                really, detail = interrupt(dialog, mode)
+                check('s6%s_A_session_really_%s' % (tag, 'cancelled' if mode == 'cancel' else 'failed'), really, **detail)
+                before, count_before = snapshot(), len(dav_state())
+                A.fill(dialog, root, user_b, pass_b, True)
+                A.press(dialog, X.APPLY)
+                A.wait(lambda: 'UNAVAILABLE' in A.note(dialog) or '仅本次会话' in A.note(dialog), timeout=60)
+                check('s6%s_B_save_refused_as_UNAVAILABLE' % tag, 'UNAVAILABLE' in A.note(dialog), note=A.note(dialog))
+                retry_enabled = A.enabled(dialog, X.RETRY)
+                A.press(dialog, X.RETRY)
+                time.sleep(10)
+                _, idle_error = attempt(lambda: A.wait(lambda: A.enabled(dialog, X.APPLY), timeout=240))
+                new_requests = dav_state()[count_before:]
+                check('s6%s_retry_after_failed_B_sends_zero_requests' % tag, not new_requests,
+                      retry_enabled_after_failed_B=retry_enabled, new_requests=len(new_requests),
+                      methods=sorted({m for m, _ in new_requests}), note=A.note(dialog), idle_error=idle_error)
+                after = snapshot()
+                check('s6%s_retry_after_failed_B_keeps_books_heads_revisions' % tag, after == before,
+                      heads=(before['heads'], after['heads']), revisions=(len(before['revisions']), len(after['revisions'])),
+                      outbox=(before['outbox'], after['outbox']))
             except Exception as error:
-                report['s4_cancel_window_missed'] = repr(error)
-            A.wait_note(dialog, '同步完成', 240)
-            check('s4_cancel_retry_keeps_books_and_heads', state()['books'] == heads['books'], revisions=(heads['revisions'], state()['revisions']))
+                check('s6%s_completed_without_harness_error' % tag, False, error=repr(error))
         A.close_account(dialog)
         A.close()
 

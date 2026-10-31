@@ -31,7 +31,11 @@ diagnostic hook in `acct_set_job`/`acct_load_job` that logs `GetLastError()` of 
 ## Scenarios
 S1 no old secret + remember on -> refused, Sync disabled, zero server requests, book/revision/outbox unchanged.
 S2 remember off -> session-only secret, Sync works. S3 A live, B (remember on) fails -> A must not silently sync as B;
-book rows unchanged. S4 cancel/retry keeps books/heads. S5 restart -> secret gone, Sync disabled, no requests.
+book rows unchanged. S4 a real cancel (a PROPFIND is held open, Cancel pressed, note `同步已取消`, Retry enabled), then
+Retry completes and keeps books, revision heads (computed from the retained wire `parents`, non-empty) and every revision
+row. S5 restart -> secret gone, Sync disabled, no requests. S6a/S6b: A's network session is really cancelled / failed
+(HTTP 500, note `同步失败`), saving B with remember on is refused, Retry is pressed -> zero new server requests and
+books, heads, revisions and outbox unchanged.
 Markers scan covers only this package's temp files; no user credential store is enumerated.
 Failures are kept as red evidence; no assertion is weakened.
 
