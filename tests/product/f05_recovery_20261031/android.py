@@ -223,6 +223,24 @@ def main():
         local=snapshot("offline")
         if local["outbox"]<1 or local["heads"]==before["heads"]:
             raise AssertionError("native offline edit absent")
+        dav.offline=False
+        dav.hold_put=True;dav.put_committed.clear();dav.release.clear()
+        panel();click("立即同步")
+        if not dav.put_committed.wait(45):
+            raise AssertionError("native local revision did not reach uncertain PUT ack boundary")
+        killed=shell("pidof",PACKAGE).decode().strip()
+        committed=dict(dav.entries)
+        shell("am","force-stop",PACKAGE)
+        dav.release.set()
+        launch();configure();sync();close_panel()
+        recovered=snapshot("uncertain-ack-retry")
+        if recovered["outbox"] or any(dav.entries.get(k)!=v for k,v in committed.items()):
+            raise AssertionError("kill/retry lost queued identity or rewrote committed bytes")
+        reopened=shell("pidof",PACKAGE).decode().strip()
+        if killed==reopened:raise AssertionError("actual process was not replaced")
+        report["cases"].append({"name":"kill_commit_ack_replay","outcome":"passed",
+            "terminated_pid":killed,"reopened_pid":reopened,"before":local,"after":recovered,
+            "committed_wire_unchanged":True})
         # Publish only the real GTK deletion. A's new local branch is causally
         # concurrent because it was authored before this immutable branch exposure.
         remote=dav.expose_checkpoint(a.peer/contract["remote_delete"])
@@ -256,8 +274,7 @@ def main():
         raise RuntimeError(safe) from None
     finally:
         report["requests"]=dav.requests
-        report["uncovered"]=["uncertain PUT acknowledgment kill",
-                             "actual original offline reopening","independent artifact authentication"]
+        report["uncovered"]=["actual original offline reopening","independent artifact authentication"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
         dav.close()
         adb("reverse","--remove","tcp:"+str(dav.server.server_port))
