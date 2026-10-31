@@ -16,6 +16,9 @@ def verify(value,ident,slot):
     cases=value["comparisons"]
     L.need([r["query"] for r in cases]==["selection","heads","heads","selection"] and
            all(r["verified_books"]==2202 and r["heads"]>=2202 and 0<r["cpu_ns"]<=r["wall_ns"]*2 for r in cases),"ABBA query coverage")
+    keys=value["key_comparisons"]
+    L.need([r["query"] for r in keys]==["lookup","local_key","local_key","lookup"] and
+           all(r["verified_books"]==2202 and 0<r["cpu_ns"]<=r["wall_ns"]*2 for r in keys),"key ABBA coverage")
     L.need(value["bookstore_open_wall_ns"]>0 and value["bookstore_open_cpu_ns"]>0,"constructor timing")
     return {k:v for k,v in value.items() if k!="query_rows"}
 def run():
@@ -46,4 +49,8 @@ def run():
         summary.append(verify(json.loads(raw),ident,slot))
     L.save(out/"startup-summary.json",summary)
     print("F08_ANDROID_STARTUP_COST",json.dumps(summary),flush=True)
-if __name__=="__main__":run()
+if __name__=="__main__":
+    run()
+    if len(sys.argv)>1 and sys.argv[1]=="full":
+        L.need(L.command(["adb","shell","pm","clear","org.exreader.host"],text=True).strip()=="Success","fresh original UI cohort")
+        L.sample()

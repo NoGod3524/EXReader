@@ -4,8 +4,8 @@ from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[2]
 HERE=Path(__file__).resolve().parent
 OUT=ROOT/"build/f08-android"
-BASE="5d4152744ef0fd9a1f2775cdcdae0e542b08476d"
-ALLOWED={"tests/reader_f08_android_20261031/build.py","tests/reader_f08_android_20261031/lane.py",
+BASE="1efae40cf006b59f22673edccf763e446183a695"
+ALLOWED={"tests/reader_f08_android_20261031/lane.py",
          ".github/workflows/dot-f08-android-20261031.yml",
          "tests/reader_f08_android_startup_20261031/StartupCostTest.java",
          "tests/reader_f08_android_startup_20261031/diagnose.py"}
@@ -97,6 +97,18 @@ def owner_controls():
     (OUT/"owner-report.json").write_bytes(report)
     return verify_owner(json.loads(report),ident)
 
+def catalog_controls():
+    command(["adb","shell","am","force-stop","org.exreader.host"])
+    command(["adb","install","-r","-t",OUT/"packages/app-debug-androidTest.apk"])
+    ident=identity()
+    output=command(["adb","shell","am","instrument","-w","-r","-e","source_sha",ident["source_sha"],
+        "-e","run_id",ident["run_id"],"-e","attempt",ident["attempt"],
+        "org.exreader.host.test/org.exreader.host.ShelfCatalogTest"],timeout=300)
+    (OUT/"catalog-instrumentation.txt").write_bytes(output)
+    need(b"OK (12 tests)" in output and b"INSTRUMENTATION_CODE: -1" in output and b"FAILURES!!!" not in output,
+         "original twelve shelf catalog tests")
+    return {"cases":12,"passed":True}
+
 def sample():
     guard()
     profile=json.loads((HERE/"profile.json").read_text());save(OUT/"profile.json",profile)
@@ -133,6 +145,7 @@ def sample():
         save(OUT/"evaluation.json",{**identity(),"shelf_budget_accepted":False,"f08_accepted":False,"problem":str(error)})
         raise
     print("F08_ANDROID_OWNER",json.dumps(owner_controls()),flush=True)
+    print("F08_ANDROID_CATALOG",json.dumps(catalog_controls()),flush=True)
     need(run.returncode==0,"original sampler failed")
     need(result["shelf_budget_accepted"],"predeclared shelf budget exceeded")
 def seal():
@@ -198,7 +211,9 @@ def audit():
             recorded=json.loads((raw/"evaluation.json").read_text())
             need(all(recorded.get(k)==v for k,v in evaluation.items()),"budget evaluation differs")
             owner=verify_owner(json.loads((raw/"owner-report.json").read_text()),ident)
-            report.update(evaluation,observation_complete=True,owner_regression=owner)
+            catalog=(raw/"catalog-instrumentation.txt").read_bytes()
+            need(b"OK (12 tests)" in catalog and b"INSTRUMENTATION_CODE: -1" in catalog and b"FAILURES!!!" not in catalog,"catalog regression")
+            report.update(evaluation,observation_complete=True,owner_regression=owner,catalog_regression={"cases":12,"passed":True})
     if (raw/"startup-summary.json").exists():
         sys.path.insert(0,str(ROOT/"tests/reader_f08_android_startup_20261031"))
         import diagnose
