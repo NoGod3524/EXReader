@@ -51,7 +51,10 @@ final class ProbeHost implements ImportOwner {
             try {
                 System.loadLibrary("exreader");
                 System.loadLibrary("importprobe");
-                handle = NativeBridge.open(new File(app.getFilesDir(), "probe.exrlib").getAbsolutePath());
+                // Explicit fixture creation is separate from ordinary open.
+                if (!new File(app.getFilesDir(), "library.db").exists()) NativeBridge.create(app);
+                handle = NativeBridge.open(app);
+                if (handle == 0) throw new IllegalStateException("Library admission refused");
                 entry = ImportEntry.create(app, app.getFilesDir(), sdkOwner, this);
                 List<ReadyRequest> left = entry.pendingReady();
                 StringBuilder ids = new StringBuilder();

@@ -87,6 +87,7 @@ def main():
     parser.add_argument('--prefix', type=Path, required=True)
     parser.add_argument('--work', type=Path, required=True)
     args = parser.parse_args()
+    if os.environ.get('GITHUB_ACTIONS') != 'true': raise SystemExit('Actions execution required')
     prefix, work = args.prefix.absolute(), args.work.absolute()
     work.mkdir(parents=True, exist_ok=True)
     log = work / 'stage.log'
@@ -97,6 +98,13 @@ def main():
         search = [prefix] if config == 'Release' else [target, prefix]
         build(ROOT / 'extras/sideload', work / ('sideload-' + config),
               common(config, target, [prefix]) + ['-DEXR_SDK=' + str(prefix)], log)
+        # Cross-install the same native authority consumed by the actual host.
+        for name, source, extra in (
+                ('abi2', 'extras/migration/windows_coordinator_hardening_20261030', []),
+                ('c02-native', 'extras/migration/posix_c02_admission_20261031', ['-DWH_PREFIX=' + str(target)]),
+                ('c02-sdk', 'extras/migration/posix_c02_sdk_admission_20261031',
+                 ['-DWH_PREFIX=' + str(target), '-DPC02_PREFIX=' + str(target), '-DEXR_SDK=' + str(prefix)])):
+            build(ROOT / source, work / (name + '-' + config), common(config, target, search) + extra, log)
         build(ROOT / 'extras/android-import-entry', work / ('entry-' + config),
               common(config, target, search) + ['-DEXR_SDK=' + str(prefix)], log)
         archive = target / 'lib/libexr_android_import_entry.a'
@@ -105,7 +113,11 @@ def main():
     for required in ('include/exr_android_import_entry.h', 'include/exr_sideload.h',
                      'share/exreader-android-import-entry/sample/host_bridge.c',
                      'share/exreader-android-import-entry/sample/java/org/exreader/importentry/sample/NativeBridge.java',
-                     'lib/cmake/EXReaderAndroidImportEntry/EXReaderAndroidImportEntryConfig.cmake'):
+                     'lib/cmake/EXReaderAndroidImportEntry/EXReaderAndroidImportEntryConfig.cmake',
+                     'include/exreader-c02-admission/exr_pc02_sdk.h',
+                     'lib/libexreader-posix-c02-sdk-admission.a',
+                     'lib/libexreader-posix-c02-admission.a',
+                     'lib/libexreader-migration-coordinator-hardening.a'):
         if not (prefix / required).is_file():
             raise SystemExit('installed prefix lacks ' + required)
     (work / 'stage.json').write_text(json.dumps({'prefix': str(prefix), 'modules': modules}, indent=2))

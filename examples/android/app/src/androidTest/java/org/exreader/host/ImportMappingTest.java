@@ -62,8 +62,9 @@ public final class ImportMappingTest extends Instrumentation {
             sendStatus(1, status);
             Throwable failed = null;
             try {
-                directory = new File(context.getCacheDir(), "import-mapping-" + index);
+                directory = new File(context.getCacheDir(), "import-mapping-" + index + "-" + NativeCatalog.newId());
                 remove(directory); require(directory.mkdirs(), "test directory");
+                NativeAdmission.initialize(context,new File(directory,"library.db"),NativeAdmission.CREATE);
                 checks[index].run();
             } catch (Throwable error) { failed = error; }
             finally { try { ProductFixture.closeAll(); remove(directory); } catch (Throwable error) { if (failed == null) failed = error; } }
@@ -315,6 +316,7 @@ public final class ImportMappingTest extends Instrumentation {
         for (boolean legacyOldest : new boolean[]{false, true}) {
             File folder = new File(directory, legacyOldest ? "legacy-oldest" : "bounded-oldest");
             require(folder.mkdirs(), "historical database directory");
+            NativeAdmission.initialize(context,new File(folder,"library.db"),NativeAdmission.CREATE);
             long firstId;
             String key;
             try (BookStore store = new BookStore(context, new File(folder, "library.db"))) {
@@ -373,6 +375,7 @@ public final class ImportMappingTest extends Instrumentation {
             directory = new File(context.getFilesDir(), "mapping-process-" + (during ? "during" : "before"));
             if (phase.startsWith("seed-")) {
                 remove(directory); require(directory.mkdirs(), "phase directory");
+                NativeAdmission.initialize(context,new File(directory,"library.db"),NativeAdmission.CREATE);
                 BookStore store = phaseStore = open();
                 File file = text("published.txt", 2000);
                 BookStore.VerifiedSource source = imported(store, file);

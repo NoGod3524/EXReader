@@ -1161,14 +1161,15 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             HostTask task=beginTask(4); long gen=generation;
             worker.execute(()->{
                 try {
-                    closeSessionsLocked(); store.close(); store=null;
-                    File file=new File(getFilesDir(),"library.db");
+                    closeSessionsLocked();
+                    File file=NativeAdmission.schema6Backup(getApplicationContext(),store.nativeLibrary());
                     try(android.database.sqlite.SQLiteDatabase old=android.database.sqlite.SQLiteDatabase.openDatabase(file.getPath(),null,0)) {
                         old.execSQL("DROP TABLE epub_notes"); old.execSQL("DROP TABLE epub_progress"); old.execSQL("DROP TABLE epub_bounded_books");
                         old.execSQL("PRAGMA user_version=6");
                     }
-                    store=new BookStore(getApplicationContext(),file);
-                    try(android.database.sqlite.SQLiteDatabase current=android.database.sqlite.SQLiteDatabase.openDatabase(file.getPath(),null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY);
+                    NativeAdmission.initialize(getApplicationContext(),file,NativeAdmission.ENROLL);
+                    try(BookStore fixture=new BookStore(getApplicationContext(),file);
+                        android.database.sqlite.SQLiteDatabase current=android.database.sqlite.SQLiteDatabase.openDatabase(file.getPath(),null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY);
                         android.database.Cursor cursor=current.rawQuery("PRAGMA user_version",null)) {
                         if(!cursor.moveToFirst() || cursor.getInt(0)!=7) throw new IllegalStateException("Schema migration did not reach 7");
                     }

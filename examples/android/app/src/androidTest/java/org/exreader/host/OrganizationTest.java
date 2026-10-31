@@ -37,7 +37,8 @@ public final class OrganizationTest extends Instrumentation {
         int failed=0;
         for(int i=0;i<checks.length;i++){
             sendStatus(1,status(i));Throwable failure=null;
-            try { clearJournal();directory=new File(context.getCacheDir(),"organization-"+i);remove(directory);require(directory.mkdirs(),"directory");
+            try { clearJournal();directory=new File(context.getCacheDir(),"organization-"+i+"-"+NativeCatalog.newId());remove(directory);require(directory.mkdirs(),"directory");
+                NativeAdmission.initialize(context,new File(directory,"library.db"),NativeAdmission.CREATE);
                 books=new BookStore(context,new File(directory,"library.db"));checks[i].run(); }
             catch(Throwable error){failure=error;}
             finally { try { ProductFixture.closeAll();if(books!=null)books.close();books=null;remove(directory);clearJournal(); }
@@ -162,6 +163,7 @@ public final class OrganizationTest extends Instrumentation {
     private void phase(String phase){Bundle result=new Bundle();try{
         directory=context.getFilesDir();File evidence=new File(context.getExternalFilesDir(null),"organization-tests");require(evidence.exists()||evidence.mkdirs(),"phase evidence");
         if(phase.equals("seed-ui")) {
+            NativeAdmission.initialize(context,new File(directory,"library.db"),NativeAdmission.CREATE);
             clearJournal();books=new BookStore(context,new File(directory,"library.db"));
             CatalogStore.ShelfBook first=book("Org One"),second=book("Org Two");
             db().execSQL("UPDATE reader_books SET title=?,author=?,sort_title=?,favorite=1 WHERE book_key=?",new Object[]{"Org One edited 😀","User Author","Org One edited 😀",first.key.bookKey});
