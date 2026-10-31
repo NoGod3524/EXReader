@@ -1,86 +1,69 @@
-name: Dot F10 safety characterization (one approved run)
+name: Dot F10 fixed original artifact diagnosis (one run)
 on:
   push:
-    branches: [dot/f10-safety-20261031]
+    branches: [dot/f10-safety-diagnose-20261031]
     paths: [.github/workflows/dot-f10-safety-20261031.yml]
 permissions:
   contents: read
-defaults:
-  run:
-    shell: bash
+  actions: read
 jobs:
-  linux:
+  diagnose:
     runs-on: ubuntu-22.04
-    timeout-minutes: 45
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Guard exact ownership and unchanged SDK
+      - name: Authenticate fixed original ZIP then print original configure log
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          python - <<'PY'
-          import json,subprocess
-          m=json.load(open('tests/product/f10_safety_20261031/manifest.json'))
-          actual=subprocess.check_output(['git','diff','--name-only',m['base'],'HEAD'],text=True).splitlines()
-          assert sorted(actual)==sorted(m['allowed_paths']),actual
-          subprocess.run(['git','diff','--exit-code',m['sdk_frozen'],'HEAD','--','src','include','cmake','CMakeLists.txt','bindings'],check=True)
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,urllib.request,urllib.error,zipfile,uuid
+          out=pathlib.Path('diagnosis');out.mkdir()
+          token=os.environ['GH_TOKEN']
+          headers={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
+          base='https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13062040395'
+          with urllib.request.urlopen(urllib.request.Request(base,headers=headers),timeout=30) as response:
+              meta=json.load(response)
+          assert meta['id']==13062040395 and meta['size_in_bytes']==489 and not meta['expired']
+          assert meta['workflow_run']['id']==41252143789
+          assert meta['workflow_run']['head_sha']=='a650340012ef112731b03388a0c4367621e9b82a'
+          expected='7b29ec96c36a737c2161dadce877072fb0f18f3c840e7f8a38986ce13d9a7ff0'
+          assert meta['digest']=='sha256:'+expected
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,req,fp,code,msg,headers,newurl): return None
+          opener=urllib.request.build_opener(NoRedirect())
+          try:
+              response=opener.open(urllib.request.Request(base+'/zip',headers=headers),timeout=30)
+          except urllib.error.HTTPError as e:
+              assert e.code in (301,302,303,307,308)
+              location=e.headers['Location']
+              assert location.startswith('https://')
+              # Signed storage download: never forward GitHub Authorization.
+              response=urllib.request.urlopen(location,timeout=30)
+          with response:
+              data=response.read(490)
+          assert len(data)==489 and hashlib.sha256(data).hexdigest()==expected
+          archive=out/'original-13062040395.zip';archive.write_bytes(data)
+          with zipfile.ZipFile(archive) as z:
+              assert z.namelist()==['logs/store-config.log'],z.namelist()
+              info=z.getinfo('logs/store-config.log')
+              assert info.file_size<1048576
+              text=z.read(info).decode('utf-8')
+          (out/'store-config.log').write_text(text)
+          receipt={'artifact_id':meta['id'],'original_run':41252143789,'original_attempt':1,'original_source':meta['workflow_run']['head_sha'],'bytes':len(data),'sha256':expected,'members':['logs/store-config.log'],'log_sha256':hashlib.sha256(text.encode()).hexdigest(),'build_or_test_executed':False,'diagnostic_source':os.environ['GITHUB_SHA'],'diagnostic_run':os.environ['GITHUB_RUN_ID']}
+          (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print(json.dumps(receipt))
+          marker=uuid.uuid4().hex
+          print('::stop-commands::'+marker)
+          print('BEGIN AUTHENTICATED ORIGINAL logs/store-config.log')
+          print(text)
+          print('END AUTHENTICATED ORIGINAL logs/store-config.log')
+          print('::'+marker+'::')
           PY
-          python -m py_compile tests/product/f10_safety_20261031/{fixture,drive,verify}.py
-      - name: Build installed raw sync and session, not a reading SDK or host UI
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build
-          mkdir -p build/f10/logs
-          p="$PWD/build/f10/prefix"
-          cmake -S apps/reader/store/native -B build/f10/store -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" >build/f10/logs/store-config.log 2>&1
-          cmake --build build/f10/store >build/f10/logs/store-build.log 2>&1
-          cmake --install build/f10/store >>build/f10/logs/store-build.log 2>&1
-          cmake -S extras/webdav -B build/f10/dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" >build/f10/logs/dav-config.log 2>&1
-          cmake --build build/f10/dav >build/f10/logs/dav-build.log 2>&1
-          cmake --install build/f10/dav >>build/f10/logs/dav-build.log 2>&1
-          for module in revisions sync session; do
-            cmake -S apps/reader/$module -B build/f10/$module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" -DCMAKE_PREFIX_PATH="$p" -DREADER_PRODUCT_PREFIX="$p" -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON >build/f10/logs/$module-config.log 2>&1
-            cmake --build build/f10/$module >build/f10/logs/$module-build.log 2>&1
-            cmake --install build/f10/$module >>build/f10/logs/$module-build.log 2>&1
-          done
-          cmake -S tests/product/f10_safety_20261031 -B build/f10/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$p" >build/f10/logs/probe-config.log 2>&1
-          cmake --build build/f10/probe >build/f10/logs/probe-build.log 2>&1
-      - name: Capture real permission failure, process death and file identity
-        run: python tests/product/f10_safety_20261031/drive.py --probe build/f10/probe/f10-probe --output build/f10/evidence
-      - name: Preserve complete raw observations and binary without fixture keys
+      - name: Preserve unchanged original ZIP and diagnostic receipt
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: f10-linux-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            build/f10/evidence/
-            build/f10/logs/
-            build/f10/probe/f10-probe
+          name: f10-original-log-diagnosis-${{ github.run_id }}-${{ github.run_attempt }}
+          path: diagnosis/
           if-no-files-found: error
-  audit:
-    needs: linux
-    if: always()
-    runs-on: ubuntu-22.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: f10-linux-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f10-download
-      - name: Interpret original observations and refuse semantic tampering
-        run: |
-          # Upload common ancestor is build/f10; preserve its exact paths.
-          python tests/product/f10_safety_20261031/verify.py --input build/f10-download --output build/f10-audit
-      - name: Preserve failures and independent verdict
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: f10-audit-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f10-audit/
-          if-no-files-found: error
-# Activate the sole approved characterization run after native dot review.
