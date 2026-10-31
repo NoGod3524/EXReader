@@ -52,7 +52,7 @@ public final class ShelfCatalogTest extends Instrumentation {
                 this::canceledOldSearchCannotReplaceNewResults,this::missingEndAnchorFallsBackWithinSameFilter,
                 this::pendingRestoreRetainsOnlySameQueryAnchor,this::canonicalSearchPreservesDisplayBytes};
         try {
-            directory=new File(context.getCacheDir(),"shelf-catalog"); remove(directory); require(directory.mkdirs(),"test folder");
+            directory=new File(context.getCacheDir(),"shelf-catalog-"+NativeCatalog.newId()); remove(directory); require(directory.mkdirs(),"test folder");
             seed(directory,false);
             store=new BookStore(context,new File(directory,"library.db"));
             for (int index=0;index<checks.length;index++) {
@@ -85,7 +85,9 @@ public final class ShelfCatalogTest extends Instrumentation {
     private void seed(File root,boolean prefs) throws Exception {
         File sources=new File(root,"books"); require(sources.isDirectory() || sources.mkdirs(),"source folder");
         android.content.SharedPreferences.Editor editor=context.getSharedPreferences("host",Context.MODE_PRIVATE).edit();
-        try(NativeLibrary sdk=new NativeLibrary(new File(root,"library.db").getPath())) {
+        File database=new File(root,"library.db");
+        NativeAdmission.initialize(context,database,NativeAdmission.CREATE);
+        try(NativeLibrary sdk=new NativeLibrary(context,database)) {
             for(int index=0;index<TXT_BOOKS+1;index++) {
                 String title=index==TXT_BOOKS ? "100%_literal" : index<130 ? "Tie title" : index==1999 ? NFD_TITLE : String.format(Locale.ROOT,"Book %04d",index);
                 byte[] bytes=("Real short TXT source "+index+". Read, paginate, search and reopen this book.\n").getBytes(StandardCharsets.UTF_8);

@@ -181,6 +181,7 @@ static unsigned char *read_entire_file(const char *path, size_t *size) {
 
 #include "c02_admission_jni.inc"
 #include "c02_test_jni.inc"
+#include "c02_schema_fixture_jni.inc"
 
 static exr_library *library(JNIEnv *env, jlong handle) {
   android_library_owner *owner = (android_library_owner *)(intptr_t)handle;

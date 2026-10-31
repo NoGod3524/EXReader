@@ -45,7 +45,8 @@ public final class ProductOwnerTest extends Instrumentation {
         int failed=0;
         for(int i=0;i<checks.length;i++){
             sendStatus(1,status(NAMES[i],i+1));Bundle result=status(NAMES[i],i+1);Throwable failure=null;
-            try{directory=new File(context.getCacheDir(),"product-owner-"+i);remove(directory);require(directory.mkdirs(),"owner directory");
+            try{directory=new File(context.getCacheDir(),"product-owner-"+i+"-"+NativeCatalog.newId());remove(directory);require(directory.mkdirs(),"owner directory");
+                NativeAdmission.initialize(context,new File(directory,"library.db"),NativeAdmission.CREATE);
                 catalog=new CatalogStore(context,new File(directory,"reader-catalog.db"));checks[i].run();}
             catch(Throwable error){failure=error;}
             finally{try{ProductFixture.closeAll();if(catalog!=null)catalog.close();catalog=null;remove(directory);}catch(Throwable error){if(failure==null)failure=error;}}

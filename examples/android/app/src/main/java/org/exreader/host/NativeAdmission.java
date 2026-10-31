@@ -84,6 +84,16 @@ final class NativeAdmission {
         } catch (IOException error) { throw new IllegalStateException(error); }
     }
 
+    static File schema6Backup(Context context, NativeLibrary source) throws IOException {
+        if (!BuildConfig.DEBUG) throw new IllegalStateException("Schema fixture requires a Debug host");
+        File normal = new File(context.getFilesDir(), "library.db");
+        try (Container container = new Container(context, normal)) {
+            String relative = nativeSchemaBackup(container.descriptor.getFd(), container.device, container.inode, source.checked());
+            return new File(context.getApplicationContext().getDataDir().getCanonicalFile(), relative);
+        }
+    }
+
+    private static native String nativeSchemaBackup(int contextFd, long device, long inode, long source);
     private static native long nativeOpen(int contextFd, long device, long inode, String libraryRelative);
     private static native void nativeEnroll(int contextFd, long device, long inode, String libraryRelative, int operation);
     private static native void nativeEvent(int contextFd, String event);
