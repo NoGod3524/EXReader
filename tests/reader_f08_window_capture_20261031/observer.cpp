@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 #include <cstdio>
+#include <string>
 using namespace winrt;
 using namespace winrt::Windows::Graphics::Capture;
 using namespace winrt::Windows::Graphics::DirectX;
@@ -54,14 +55,28 @@ static void bitmap(const fs::path&p,const std::vector<unsigned char>&bytes,LONG 
   if(roundtrip!=bytes)throw hresult_error(E_FAIL,L"PNG roundtrip mismatch");
  }
 }
+static unsigned long long capture_limit(const wchar_t*arg){
+ std::wstring value(arg);size_t consumed=0;auto ms=std::stoull(value,&consumed);
+ if(consumed!=value.size()||ms<1||ms>5400000)throw hresult_error(E_INVALIDARG,L"capture limit 1..5400000 ms");
+ return ms;
+}
 int wmain(int argc,wchar_t**argv){
  setvbuf(stdout,nullptr,_IOLBF,65536);SetProcessDPIAware();
  try{
+  if(argc==2&&std::wstring(argv[1])==L"--check-limits"){
+   if(capture_limit(L"1")!=1||capture_limit(L"120000")!=120000||capture_limit(L"5400000")!=5400000)throw hresult_error(E_FAIL,L"capture limit positive control");
+   for(const auto*value:{L"0",L"5400001",L"-1",L"120000x",L""}){
+    bool rejected=false;try{capture_limit(value);}catch(...){rejected=true;}
+    if(!rejected)throw hresult_error(E_FAIL,L"capture limit negative control");
+   }
+   std::printf("{\"capture_limit_checks\":8,\"passed\":true}\n");return 0;
+  }
   if(argc==3&&std::wstring(argv[1])==L"--check-png"){
    init_apartment(apartment_type::multi_threaded);
    bitmap(argv[2],{0,17,255,255,255,1,83,255,19,27,29,255,255,255,255,255},2,2,true);return 0;
   }
-  if(argc!=5)throw hresult_error(E_INVALIDARG,L"root_hwnd pid stop_file image_folder");
+  if(argc!=5&&argc!=6)throw hresult_error(E_INVALIDARG,L"root_hwnd pid stop_file image_folder [capture_limit_ms]");
+  auto limit_ms=argc==6?capture_limit(argv[5]):120000ull;auto frame_limit=argc==6?(limit_ms*60+999)/1000+8:7200ull;if(frame_limit<7200)frame_limit=7200;
   HWND root=(HWND)(uintptr_t)std::stoull(argv[1]);DWORD pid=(DWORD)std::stoul(argv[2]),owner=0,affinity=0;
   GetWindowThreadProcessId(root,&owner);
   if(!IsWindow(root)||owner!=pid)throw hresult_error(E_ACCESSDENIED,L"window ownership");
@@ -125,7 +140,7 @@ int wmain(int argc,wchar_t**argv){
      std::array<Region,2> after={region(root,119),region(root,123)};
      frames++;bool changed=previous!=bytes;
      if(changed){
-      if(saved_bytes>(1ull<<30)||frames>7200)throw hresult_error(E_FAIL,L"image byte or frame cap");
+      if(saved_bytes>(1ull<<30)||frames>frame_limit)throw hresult_error(E_FAIL,L"image byte or frame cap");
       last=frames;previous=std::move(bytes);saved_pixel_bytes+=previous.size();changed_images++;
       auto path=folder/(std::to_string(last)+".png");bitmap(path,previous,size.Width,size.Height);saved_bytes+=fs::file_size(path);
      }
@@ -145,8 +160,8 @@ int wmain(int argc,wchar_t**argv){
    catch(...){std::printf("{\"kind\":\"callback_error\",\"qpc\":%lld}\n",tick());std::fflush(stdout);failed=true;}
   });
   session.StartCapture();
-  std::printf("{\"kind\":\"ready\",\"qpc\":%lld,\"width\":%d,\"height\":%d,\"frame_pool_buffers\":8,\"capture_scope\":\"owned_window\",\"cursor_capture\":false}\n",tick(),size.Width,size.Height);std::fflush(stdout);
-  auto deadline=GetTickCount64()+120000;
+  std::printf("{\"kind\":\"ready\",\"qpc\":%lld,\"width\":%d,\"height\":%d,\"frame_pool_buffers\":8,\"capture_scope\":\"owned_window\",\"cursor_capture\":false,\"capture_limit_ms\":%llu,\"frame_limit\":%llu}\n",tick(),size.Width,size.Height,limit_ms,frame_limit);std::fflush(stdout);
+  auto deadline=GetTickCount64()+limit_ms;
   while(!fs::exists(stop)&&!failed&&!closed&&IsWindow(root)&&GetTickCount64()<deadline)Sleep(5);
   pool.FrameArrived(token);item.Closed(closed_token);
   { std::lock_guard<std::mutex> stop_guard(gate->lock);gate->stopping=true; }
