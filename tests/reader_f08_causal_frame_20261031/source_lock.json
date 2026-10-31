@@ -1,0 +1,28 @@
+{
+  "base": "cfdaf6a4531548be63b4dd0c2bccd6b050a93124",
+  "owned": [
+    "tests/reader_f08_causal_frame_20261031/CMakeLists.txt",
+    "tests/reader_f08_causal_frame_20261031/probe.c",
+    "tests/reader_f08_causal_frame_20261031/driver.py",
+    "tests/reader_f08_causal_frame_20261031/verify.py",
+    "tests/reader_f08_causal_frame_20261031/source_lock.json",
+    ".github/workflows/dot-f08-causal-frame-20261031.yml",
+    "docs/reader-total-progress/DOT_F08_CAUSAL_FRAME_20261031.md"
+  ],
+  "frozen": {
+    "src": "01dbab7c7c28aff175b5a953fea307e21d84eee2",
+    "include": "ef1bbaafc4a250053e5b0f88d329d1a25b22794b",
+    "cmake": "505c604a2b30b72b3a251cd3f0bb7628e6d58fc1",
+    "CMakeLists.txt": "a5ed27fcca1d709c2217c585da47dc55dc23c1d0",
+    "apps/reader": "004a0b08be8568407475b8bafe8472bd216516b8",
+    "examples": "b4bd6ad62bc8438ab093ca2c0553158ef4e8c0f0",
+    "tools": "dfb0100ac0b0cbba7b0774e54713291e7e1a5126",
+    "tests/reader_perf_gtk": "1307379b0441eb3b60967e3e81065bb3a3e7625a",
+    "tests/reader_product_performance_handoff": "a12ac45569033330ce6881dbcc4f3f3171f360b2",
+    "tests/reader_f08_gtk_frameclock_20261031": "15a81389376e8d82380047ffcc47e3f2718fca6b",
+    ".github/workflows/dot-f08-gtk-frameclock-20261031.yml": "62f7e011e17e561d3aa188a4ef3b7c9940090f48"
+  },
+  "rounds": 1,
+  "sampling_minutes": 90,
+  "verification_minutes": 20
+}
