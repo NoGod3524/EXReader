@@ -113,8 +113,12 @@ def qualified_material(files, evidence, source, git_bytes):
     # This adapter describes the synchronous INPUT13844/PREPARED251 producer.
     main = _source_text(source,OWNER+"src/pc02_main.c",git_bytes)
     driver = _source_text(source,DRIVER,git_bytes)
+    repair_profile = "from repair_cases import RepairCases" in driver
     need("sizeof(p2_input)==13844" in main and "sizeof(p2_prepared)==251" in main and
-         "PC02-synchronous" in cmake and "cases=36 failed=0" in driver,
+         "PC02-synchronous" in cmake and
+         ("cases=36 failed=0" in driver or repair_profile and
+          re.search(r"cases=36 repair_cases=(17|20) failed=0",driver)),
+
          "po-qualified-production-wire-and-full-driver")
     dataset = [n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name == "dataset"]
     need(len(dataset) == 1, "po-qualified-full-dataset")
@@ -127,7 +131,8 @@ def qualified_material(files, evidence, source, git_bytes):
                 note_ids.add(ast.literal_eval(node.args[0]))
     need(len(book_ids) == 5 and len(note_ids) == 16, "po-complete-five-kinds-sixteen-notes")
     return dict(provider=sha(material),txt=txt.encode("utf-8"),historical=cases,
-                book_ids=book_ids,note_ids=note_ids,qualified_material_sha256=sha(material))
+                book_ids=book_ids,note_ids=note_ids,qualified_material_sha256=sha(material),
+                repair_profile=repair_profile)
 
 
 def audit_inventory(files, runtime):
@@ -212,8 +217,15 @@ class OwnerAudit:
                   stat.S_ISREG(row["raw_mode"])), "po-unique-actual-fstat-object-and-mode")
             absolute_path(row["source_path"])
             normalized = dict(row,path=path,mode=row["raw_mode"])
-            metadata(normalized,self.euid,directory=row["directory"],
-                     private="/native-authority-" in path or row["directory"])
+            unsafe_acl = (path == "repair-cases/authority-allow-acl-refused/native-authority-allow-acl" and
+                          row["directory"])
+            if unsafe_acl:
+                need(row["uid"] == self.euid and integer(row["links"]) and integer(row["bytes"]) and
+                     row["sha256"] is None and observed_id(row)[1] > 0,
+                     "po-actual-deliberate-unsafe-authority-acl-snapshot")
+            else:
+                metadata(normalized,self.euid,directory=row["directory"],
+                         private="/native-authority-" in path or row["directory"])
             if not row["directory"]:
                 raw = files[self.runtime+path]
                 need(row["bytes"] == len(raw) and row["sha256"] == sha(raw),
@@ -256,6 +268,15 @@ class OwnerAudit:
                 continue
             row = json_value(raw)
             command = row["command"]
+            need(isinstance(command,list) and command and isinstance(command[0],str),
+                 "po-actual-command-shape-before-platform-role")
+            if (self.material["repair_profile"] and self.spec["role"] == "posix-migration-macos" and
+                match[1].rstrip("/") == "repair-cases/authority-allow-acl-refused" and
+                command[0] in ("/bin/ls","/bin/chmod")):
+                self.binary_map[command[0]] = ("acl-system",None)
+            need(command[0] not in ("/bin/ls","/bin/chmod") or
+                 match[1].rstrip("/") == "repair-cases/authority-allow-acl-refused",
+                 "po-platform-acl-command-only-in-explicit-acl-fixture")
             need(isinstance(command,list) and command and command[0] in self.binary_map and
                  all(isinstance(v,str) for v in command) and integer(row["pid"]) and row["pid"] > 0 and
                  integer(row["observer_pid"]) and row["observer_pid"] > 0 and
@@ -667,7 +688,17 @@ class OwnerAudit:
             envelope = metadata_envelope(self.raw(snap["ap"]+"/"+rn+"/"+name),name,ar[rn+"/"+name],self.euid)
             inp = self.decode_input(snap,envelope,role)
             acks,temporary,prefix = self.acknowledgements(snap,inp)
-            tx = audit_transaction(self.files,ar,current_binding=snap["binding_raw"],
+            tx_files,tx_objects = self.files,ar
+            if any(r["directory"] and name.startswith(rn+"/") for name,r in ar.items()):
+                need((snap["folder"],snap["label"]) in getattr(self,"repair_verified_phases",set()),
+                     "po-complete-repair-tree-validated-before-native-projection")
+                root_prefix = self.runtime+snap["ap"]+"/"
+                tx_objects = {name:r for name,r in ar.items() if name in (".","authority","registry.lock",rn) or
+                              posixpath.dirname(name) == rn and not r["directory"]}
+                tx_files = {name:raw for name,raw in self.files.items() if
+                            not name.startswith(root_prefix+rn+"/") or
+                            posixpath.dirname(name) == root_prefix+rn}
+            tx = audit_transaction(tx_files,tx_objects,current_binding=snap["binding_raw"],
                   raw_state=snap["state_raw"],exact=exact,euid=self.euid,library_path=snap["library"],
                   parent=snap["parent"],authority_prefix=self.runtime+snap["ap"]+"/",
                   profile="production-native-ack",acknowledgements=acks,expected_source=self.source,
@@ -1027,6 +1058,10 @@ def audit_posix_owner(files,spec,source,git_bytes):
               f"process-kill-1603-{publish_ordinal-1}",1603,publish_ordinal-1,special="ack-intent")
     for kind in ("same-bytes-new-ID","wrong-input-tuple","hole","old-valid-tip"):
         audit.bad_ack(kind,publish_ordinal)
+    repair_details = None
+    if material["repair_profile"]:
+        from posix_repair import audit_repair_cases
+        repair_details = audit_repair_cases(audit,source,git_bytes)
     rows = audit.receipt["results"]
     expected = [r["name"] for r in audit.case_details]
     need(len(expected) == len(set(expected)) == 36 and audit.receipt["cases"] == 36 and
@@ -1046,8 +1081,10 @@ def audit_posix_owner(files,spec,source,git_bytes):
         controls_sha256=audit.binary_hash["test_tool"],runtime_files=inventory_count,
         native_fstat_objects=len(audit.observations),phase_snapshots=len(audit.snapshots),
         actual_cases=36,historical_cases=historical["cases"],historical_checks=historical["checks"],
-        transactions_audited=audit.transactions,power_loss=False,partial_state_head_repair=False,
-        missing=["posix-partial-state-and-head-explicit-repair"],
+        transactions_audited=audit.transactions,power_loss=False,
+        partial_state_head_repair=repair_details is not None and repair_details["verified"],
+        repair_cases=repair_details["cases"] if repair_details else 0,repair=repair_details,
+        missing=repair_details["missing"] if repair_details else ["posix-partial-state-and-head-explicit-repair"],
         cases=audit.case_details)
 
 
