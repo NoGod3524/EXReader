@@ -2,7 +2,12 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "catalog_sdk.h"
 #include <sqlite3.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,10 +33,21 @@ int main(int argc,char **argv) {
     CHECK(sqlite3_prepare_v2(db,"PRAGMA journal_mode",-1,&stmt,NULL)==SQLITE_OK);
     CHECK(sqlite3_step(stmt)==SQLITE_ROW && !strcmp((const char *)sqlite3_column_text(stmt,0),"wal"));
     CHECK(sqlite3_finalize(stmt)==SQLITE_OK && sqlite3_close(db)==SQLITE_OK);
+#ifdef _WIN32
     WIN32_FILE_ATTRIBUTE_DATA info;
     CHECK(GetFileAttributesExA(wal_path,GetFileExInfoStandard,&info) && (info.nFileSizeHigh || info.nFileSizeLow));
+#else
+    struct stat info;
+    CHECK(stat(wal_path,&info)==0 && info.st_size>0);
+#endif
     puts("READY_TO_KILL_COMMITTED_WAL");fflush(stdout);
-    for(;;) Sleep(1000);
+    for(;;) {
+#ifdef _WIN32
+      Sleep(1000);
+#else
+      sleep(1);
+#endif
+    }
   }
   CHECK(!strcmp(argv[2],"recover"));
   CHECK(reader_catalog_has_local(catalog,1,&present,NULL)==SQLITE_OK && present);
