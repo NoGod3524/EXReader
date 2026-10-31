@@ -1,5 +1,5 @@
 """Actions-only three-target measurements; all original shelf assertions stay intact."""
-import argparse, importlib.util, json, os, plistlib, re, shutil, subprocess, sys, traceback
+import argparse, importlib.util, json, os, plistlib, re, shutil, signal, subprocess, sys, traceback
 from pathlib import Path
 import xml.etree.ElementTree as ET
 ROOT=Path(__file__).resolve().parents[2]
@@ -72,14 +72,29 @@ def native(platform):
     report={**identity(),"platform":platform,"collection_complete":False,"f08_accepted":False,"diagnostic":diagnostic,"commands":[],"problems":[]}
     def run(args,role,required=True,timeout=3600):
         args=list(map(str,args));print("F08_APPLE_PHASE",platform,role,flush=True)
+        timed_out=False
         with (evidence/(role+".log")).open("wb") as f:
-            value=subprocess.run(args,cwd=ROOT,stdout=f,stderr=subprocess.STDOUT,timeout=timeout)
-        report["commands"].append({"role":role,"argv":args,"returncode":value.returncode})
-        if value.returncode:
-            report["problems"].append(role+" exit "+str(value.returncode))
+            process=subprocess.Popen(args,cwd=ROOT,stdout=f,stderr=subprocess.STDOUT,start_new_session=True)
+            try:
+                process.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                timed_out=True
+                # Ask xcodebuild to cancel and finalize its xcresult before sealing.
+                # Preserve the failed cohort instead of leaving a live writer behind.
+                for native_signal,grace in ((signal.SIGINT,30),(signal.SIGTERM,10),(signal.SIGKILL,5)):
+                    try: os.killpg(process.pid,native_signal)
+                    except ProcessLookupError: break
+                    try: process.wait(timeout=grace);break
+                    except subprocess.TimeoutExpired: continue
+                if process.returncode is None: process.wait(timeout=5)
+                f.write(("\nF08 collection timeout after "+str(timeout)+" seconds; cancellation requested.\n").encode())
+        report["commands"].append({"role":role,"argv":args,"returncode":process.returncode,
+            "timed_out":timed_out,"collection_timeout_s":timeout})
+        if process.returncode or timed_out:
+            report["problems"].append(role+(" collection timeout "+str(timeout)+"s" if timed_out else " exit "+str(process.returncode)))
             print("\n".join((evidence/(role+".log")).read_text(errors="replace").splitlines()[-60:]),flush=True)
             if required:raise RuntimeError(role+" failed")
-        return value.returncode==0
+        return process.returncode==0 and not timed_out
     failure=None
     try:
         installed=authenticate_inputs();mac=installed["macos"]/"sdk"
@@ -199,11 +214,14 @@ def native(platform):
             save(evidence/"xcresult-objects.json",raw_objects);save(evidence/"performance-metrics.json",metrics)
             source_report=evidence/"original/shelf-ui.json"
             report["original_ui_accepted"]=source_report.is_file() and json.loads(source_report.read_text()).get("accepted") is True
-        for label,group in (("shelf-animation","ShelfUITests/test14F08NativeShelfAnimationSignposts"),
-                            ("launch","F08LaunchUITests"),("reader","F08ReaderUITests")):
+        # Collect launch/reader before the extra scroll experiment. Its full
+        # frozen gesture cohort remains intact even when a diagnostic cap expires.
+        for label,group in (("launch","F08LaunchUITests"),("reader","F08ReaderUITests"),
+                            ("shelf-animation","ShelfUITests/test14F08NativeShelfAnimationSignposts")):
             result=evidence/(label+".xcresult")
             run(["xcodebuild","test-without-building",*common,"-resultBundlePath",result,
-                "-only-testing:"+test_target+"/"+group],label+"-metrics",required=False,timeout=480)
+                "-only-testing:"+test_target+"/"+group],label+"-metrics",required=False,
+                timeout=1200 if label=="shelf-animation" and not diagnostic else 480)
             if result.exists():
                 raw_objects,cases=extract_metrics(result,with_cases=True)
                 save(evidence/(label+"-xcresult-objects.json"),raw_objects)

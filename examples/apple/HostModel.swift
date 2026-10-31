@@ -79,7 +79,7 @@ enum HostF08Review {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
     }
     private static let animationLog = OSLog(subsystem: "org.exreader.f08", category: "NativeUI")
-    private static var scrollActive = false
+    private(set) static var scrollActive = false
     private(set) static var scrollStarts = 0
     private(set) static var scrollEnds = 0
     static func observeScrollPhase(active: Bool) {
@@ -516,9 +516,12 @@ final class HostShelf: ObservableObject {
 #if EXR_APPLE_F08_REVIEW
         value["f08_launch_task_status"] = HostF08Review.launchStatus
         value["f08_launch_task_error"] = HostF08Review.launchError
-        value["f08_launch_phases"] = HostF08Review.phases
+        // Keep the detailed phase buffer out of the live accessibility view tree
+        // until the native endpoint has fired; the buffer retains every timestamp.
+        value["f08_launch_phases"] = ["finished", "native-layout-finished", "start-failed", "finish-failed"].contains(HostF08Review.launchStatus) ? HostF08Review.phases : []
         value["f08_native_scroll_signpost_starts"] = HostF08Review.scrollStarts
         value["f08_native_scroll_signpost_ends"] = HostF08Review.scrollEnds
+        value["f08_native_scroll_active"] = HostF08Review.scrollActive
 #endif
         return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
     }
@@ -1610,10 +1613,16 @@ final class HostReaderModel: ObservableObject {
     private var slowDelay: Double = 0
 
     init(profile: HostAccountProfile? = nil, accounts: HostAccounts? = nil) {
+#if EXR_APPLE_F08_REVIEW
+        HostF08Review.phase("reader-model-init")
+#endif
         self.accountProfile = profile
         self.accounts = accounts
         self.accountSession = profile.flatMap { accounts?.controller(for: $0) }
         self.defaults = profile.flatMap { UserDefaults(suiteName: "org.exreader.account." + $0.id) } ?? .standard
+#if EXR_APPLE_F08_REVIEW
+        HostF08Review.phase("reader-model-init-complete")
+#endif
     }
 
     deinit {

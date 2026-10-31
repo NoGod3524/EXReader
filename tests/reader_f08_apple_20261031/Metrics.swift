@@ -16,6 +16,11 @@
     }
 
     func test14F08NativeShelfAnimationSignposts() {
+        // The preceding additive reader diagnostic imports Sample.epub. Reopen
+        // an exact fresh copy of the same frozen 2202 originals outside measurement.
+        app.terminate()
+        app.launchArguments = ["-EXRShelfSeed", "-EXRFreshState", "1"]
+        app.launch()
         search("")
         _ = ready("")
         let options = XCTMeasureOptions()
@@ -28,6 +33,11 @@
             for _ in 0..<10 { scroll(previous: true) }
             _ = ready("")
         }
+        XCTAssertTrue(wait(10) {
+            guard let value = self.state() else { return false }
+            return value["f08_native_scroll_active"] as? Bool == false &&
+                value["f08_native_scroll_signpost_starts"] as? Int == value["f08_native_scroll_signpost_ends"] as? Int
+        }, "Native scroll did not reach idle with matching actual begin/end counters")
         let value = ready("")
         record("f08-native-animation-scroll-metrics", value)
         XCTAssertGreaterThan(value["f08_native_scroll_signpost_starts"] as? Int ?? 0, 0)
@@ -157,10 +167,28 @@ final class F08ReaderUITests: XCTestCase {
         XCTAssertTrue(wait { self.node(id).exists && self.node(id).isEnabled && self.node(id).isHittable }, "Unavailable \(id): \(app.debugDescription)")
         node(id).tap()
     }
+    private func readerObservation() -> [String: Any]? {
+        guard let root = try? node("reader.f08.state").snapshot() else { return nil }
+        var nodes = [root], parts: [Int: String] = [:], count: Int?
+        while let value = nodes.popLast() {
+            let text = value.label.isEmpty ? (value.value as? String) ?? "" : value.label
+            if value.identifier == "reader.f08.count" { count = Int(text) }
+            let prefix = "reader.f08.part."
+            if value.identifier.hasPrefix(prefix), let index = Int(value.identifier.dropFirst(prefix.count)) { parts[index] = text }
+            nodes.append(contentsOf: value.children)
+        }
+        guard let count, (1...256).contains(count), parts.count == count,
+              (0..<count).allSatisfy({ parts[$0] != nil }),
+              let data = (0..<count).map({ parts[$0]! }).joined().data(using: .utf8) else { return nil }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+    }
     private func reader() -> [String: Any] {
         XCTAssertTrue(wait { self.node("reader.page").exists && !self.node("reader.busy").exists && !self.node("reader.error").exists })
-        guard let value = try? node("reader.page").snapshot(), let raw = value.value as? String,
-              let data = raw.data(using: .utf8), let result = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { XCTFail("Reader bitmap observation missing"); return [:] }
+        guard let result = readerObservation() else {
+            let snapshot = try? node("reader.page").snapshot()
+            XCTFail("Reader bitmap observation missing; native page value=\(String(describing: snapshot?.value)) label=\(String(describing: snapshot?.label)) metadata=\(String(describing: try? node("reader.f08.state").snapshot()))")
+            return [:]
+        }
         XCTAssertEqual((result["bitmap_sha256"] as? String)?.count, 64)
         XCTAssertGreaterThan(result["sdk_frame_count"] as? Int ?? 0, 0)
         return result
