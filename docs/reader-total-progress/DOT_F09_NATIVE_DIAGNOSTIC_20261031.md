@@ -26,3 +26,25 @@ Missing events are reported as missing, not evidence of no fault.
 Both observations run independently; either failure keeps the workflow red.
 Source/Git editing only through the designated Desktop Commander/InstaBox route.
 All execution and validation remain Actions-only.
+
+## New-batch round 1 result and final bounded diagnostic
+Run 41156727928 A1 at 475a6e7875b250f8b96c531a4a70898a1e429fd1 remains FAILURE.
+Both diagnostic hosts returned document text length 432 twice and received Ctrl+A.
+After GetSelection returned one range, both managed probes crashed in selection
+GetText. Provider logs contain two complete successful document GetText sequences
+but no selection GetText entry; prior logging success narrows the boundary but
+missing output alone cannot prove non-entry because logging IO can fail.
+The candidate ready transient exception is now retried within the same 120s.
+Windows fault events were unavailable; no fault address has been established.
+Artifact 13026045081 retains 10572 bytes with SHA256
+cf589512893bea0749c99e1e0351f31013ee211796a282b99f8381ed8e53a258.
+
+Round 2 of the new two-round batch adds only test-overlay observation of real
+range creation, QI request category, actual AddRef/Release return counts, and the
+SAFEARRAY publication VT/dimension/bounds. Process-local pointer values identify
+objects, not their memory contents. No extra self-QI or reference operations are
+introduced; real final ownership and all return/error paths remain unchanged.
+No product fix is inferred from this diagnostic. The existing exact original
+and compiled hashes, identical dual overlay, text/selection/event assertions,
+budgets, and failed overall verdict for either probe remain.
+After this final authorized round there is no automatic additional execution.
