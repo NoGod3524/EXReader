@@ -30,3 +30,9 @@ Original UI log yields redacted action timeline with original line numbers, per-
 Collector failures/caps/missing or mismatched identity are evidence-incomplete, never product success. Original test failure remains failure; collection failure after test success blocks promotion. Observation can perturb runtime; no improvement claim.
 Separate apple-observe-platform-run-attempt artifact uploaded always(), including test failure. All execution only Actions. Full19 body unchanged; cannot trigger on focused branch.
 Preserve a9a/run41151397700 failure and dc66/run41155577811 diagnostic. New focused source/run/attempt independent; no old-pass splicing. Full sameSHA uses its own complete19 run/attempt. No automatic rerun.
+
+## Collector bounded timeout correction (2026-10-31 02:38Z)
+
+Preserved source b1954ed14c0e473ff4a8359db14b707903629d82 / run 41159160846 attempt 1: both original-five product runners accepted 5/5, runner_exit=0; both jobs failed solely collector completeness. iPad preselection simctl list timed out at 20 seconds; process snapshots timed out at 5 seconds on both hosts. All original artifacts and failures remain.
+
+User explicitly approved one further focused run with only observer simctl list timeout 20->60 seconds, ps timeout 5->15 seconds, and watcher join 10->20 seconds. Exact admission mirrors those three substitutions. All errors, strict identity matching, completeness gates, sampling count and interval remain unchanged. No retry, product/runner/checker/body/teardown/90/24/240-360 changes. This does not guarantee success or reduce observation gaps. Six jobs must succeed with complete evidence before same-HEAD full19 promotion; no mixing runs or attempts.
