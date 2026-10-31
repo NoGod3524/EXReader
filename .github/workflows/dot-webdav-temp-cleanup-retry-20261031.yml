@@ -1,0 +1,134 @@
+name: WebDAV bounded temporary cleanup retry
+on:
+  push:
+    branches: [codex/dot-webdav-temp-cleanup-retry-20261031]
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  webdav-import:
+    name: WebDAV import (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Exact six-path and one-line product guard
+        run: |
+          python - <<'PY'
+          import subprocess
+          base='5dffc953109d13b7537f27de6fbaa6125eb19993'
+          allowed={'extras/webdav/src/webdav.cpp','tests/webdav_temp_cleanup_retry_20261031/CMakeLists.txt','tests/webdav_temp_cleanup_retry_20261031/probe.cpp','tests/webdav_temp_cleanup_retry_20261031/run.py','.github/workflows/dot-webdav-temp-cleanup-retry-20261031.yml','docs/reader-total-progress/DOT_WEBDAV_TEMP_CLEANUP_RETRY_20261031.md'}
+          assert set(subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines())==allowed
+          old=subprocess.check_output(['git','show',base+':extras/webdav/src/webdav.cpp'],text=True)
+          new=open('extras/webdav/src/webdav.cpp').read()
+          assert old.count('    unlinkat(directory,name.c_str(),0);\n')==1
+          assert new==old.replace('    unlinkat(directory,name.c_str(),0);\n','    if(unlinkat(directory,name.c_str(),0)!=0) return;\n')
+          PY
+      - name: Install build and fixture tooling
+        run: |
+          mkdir -p build/wi-logs
+          python -m pip install ninja==1.11.1.1
+          if [ "$RUNNER_OS" = Linux ]; then
+            sudo apt-get update
+            sudo apt-get install -y libcurl4-openssl-dev libxml2-dev pkg-config
+          elif [ "$RUNNER_OS" = macOS ]; then
+            brew install openssl@3
+            echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"
+          fi
+      - name: Configure and build the frozen reading library
+        run: |
+          set -o pipefail
+          git rev-parse HEAD > build/wi-logs/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "WI_PREFIX=$ws/build/wi-prefix" >> "$GITHUB_ENV"
+          echo "WI_SDK=$ws/build/wi-frozen/build/reading-library/stage" >> "$GITHUB_ENV"
+          git worktree add --detach build/wi-frozen 9854061be331fe603a1822d9b2b36ee357154927
+          cd build/wi-frozen
+          cmake --preset reading-library 2>&1 | tee "$ws/build/wi-logs/sdk-configure.log"
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee "$ws/build/wi-logs/sdk-build.log"
+          cmake --install build/reading-library 2>&1 | tee "$ws/build/wi-logs/sdk-install.log"
+      - name: Build unchanged sideload and one-line WebDAV candidate
+        run: |
+          set -o pipefail
+          apple=OFF
+          if [ "$RUNNER_OS" = macOS ]; then apple=ON; fi
+          cmake -S extras/sideload -B build/wi-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WI_SDK" -DCMAKE_INSTALL_PREFIX="$WI_PREFIX" 2>&1 | tee build/wi-logs/sideload-configure.log
+          cmake --build build/wi-sideload --parallel 4 2>&1 | tee build/wi-logs/sideload-build.log
+          cmake --install build/wi-sideload 2>&1 | tee build/wi-logs/sideload-install.log
+          cmake -S extras/webdav -B build/wi-webdav -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_WEBDAV_APPLE_URLSESSION=$apple -DCMAKE_INSTALL_PREFIX="$WI_PREFIX" 2>&1 | tee build/wi-logs/webdav-configure.log
+          cmake --build build/wi-webdav --parallel 4 2>&1 | tee build/wi-logs/webdav-build.log
+          cmake --install build/wi-webdav 2>&1 | tee build/wi-logs/webdav-install.log
+      - name: Build and install EXReaderCloudImport against installed packages only
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/cloud-import -B build/wi-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WI_SDK" -DCMAKE_PREFIX_PATH="$WI_PREFIX;$WI_SDK" -DCMAKE_INSTALL_PREFIX="$WI_PREFIX" 2>&1 | tee build/wi-logs/adapter-configure.log
+          cmake --build build/wi-adapter --parallel 4 --verbose 2>&1 | tee build/wi-logs/adapter-build.log
+          cmake --install build/wi-adapter 2>&1 | tee build/wi-logs/adapter-install.log
+      - name: Compile the independent C and C++ consumers from installed packages
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_webdav_import/consumer -B build/wi-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WI_PREFIX;$WI_SDK" 2>&1 | tee build/wi-logs/consumer-configure.log
+          cmake --build build/wi-consumer --parallel 4 2>&1 | tee build/wi-logs/consumer-build.log
+      - name: Real native TLS WebDAV download, SDK import and independent SDK readback
+        run: |
+          set -o pipefail
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python3 tests/reader_webdav_import/check_cloud_import.py --probe "build/wi-consumer/cloud-probe$exe" --cxx "build/wi-consumer/cloud-cpp-consumer$exe" --review-probe "build/wi-consumer/cloud-review-probe$exe" --fixtures tests/fixtures --module-prefix build/wi-prefix --output build/wi-evidence 2>&1 | tee build/wi-logs/checks.log
+      - name: Original 77-case TLS regression without wrappers
+        run: |
+          set -euo pipefail
+          cmake -S tests/webdav/consumer -B build/cleanup-old -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WI_PREFIX"
+          cmake --build build/cleanup-old --parallel 4
+          python tests/webdav/check_tls.py --consumer build/cleanup-old/webdav-consumer --module-prefix build/wi-prefix --output build/cleanup-old-evidence | tee build/wi-logs/old77.log
+      - name: Seven real HTTPS bounded-cleanup cases on installed module
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          cmake -S tests/webdav_temp_cleanup_retry_20261031 -B build/cleanup-new -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WI_PREFIX" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/cleanup-new --parallel 4 --verbose | tee build/wi-logs/retry-build.log
+          python tests/webdav_temp_cleanup_retry_20261031/run.py --probe build/cleanup-new/webdav-cleanup-retry --output build/cleanup-retry-evidence | tee build/wi-logs/retry.log
+      - name: Source and installed module identity
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          out=pathlib.Path('build/wi-logs');out.mkdir(parents=True,exist_ok=True)
+          paths=['extras/webdav/src/webdav.cpp','extras/webdav/include/exr_webdav.h','build/wi-webdav/libexr_webdav.a','build/wi-prefix/lib/libexr_webdav.a']
+          r=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],sdk_source='9854061be331fe603a1822d9b2b36ee357154927',files={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths if pathlib.Path(p).is_file()})
+          (out/'binding.json').write_text(json.dumps(r,indent=2)+'\n')
+          print('CLEANUP-RETRY-BINDING '+json.dumps(r))
+          PY
+      - name: Preserve source-bound logs, installed files and every case record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webdav-cleanup-retry-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/wi-logs/
+            build/wi-evidence/
+            !build/wi-evidence/certificates/*.key
+            build/cleanup-old-evidence/
+            !build/cleanup-old-evidence/certificates/*.key
+            build/cleanup-retry-evidence/
+            !build/cleanup-retry-evidence/*.key
+            build/cleanup-new/retry.map
+            build/wi-prefix/
+            build/wi-consumer/cloud-probe*
+            build/wi-consumer/cloud-cpp-consumer*
+            build/wi-consumer/cloud-review-probe*
+            build/wi-consumer/CMakeCache.txt
+            build/wi-adapter/CMakeCache.txt
+          if-no-files-found: error
