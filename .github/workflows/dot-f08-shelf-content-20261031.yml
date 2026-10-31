@@ -3,6 +3,12 @@ on:
   push:
     branches: [codex/dot-f08-shelf-content-20261031]
   workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        default: capture
+        options: [capture, replay]
+        description: Capture new native data or analyze the pinned completed cohort
 permissions:
   contents: read
   actions: read
@@ -39,7 +45,7 @@ jobs:
           path: build/f08-causal-control/
           if-no-files-found: warn
   capture:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.mode != 'replay'
     needs: controls
     runs-on: ubuntu-22.04
     timeout-minutes: 90
@@ -100,4 +106,24 @@ jobs:
         with:
           name: f08-shelf-content-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f08-shelf-content-audit/
+          if-no-files-found: error
+  replay:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'replay'
+    needs: controls
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate and analyze the pinned completed native cohort
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_shelf_content_20261031/run.py replay
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-shelf-replay-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-shelf-replay/
+          include-hidden-files: true
           if-no-files-found: error
