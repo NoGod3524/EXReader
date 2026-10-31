@@ -1,0 +1,26 @@
+name: F07 fixed Windows header dependency evidence
+on:
+  push:
+    branches: [codex/dot-f07-desktop-header-evidence-20261031]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate and diagnose fixed Windows artifact only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f07_desktop_header_evidence_20261031/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f07-header-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f07-header-evidence/
+          if-no-files-found: error
+          retention-days: 14
