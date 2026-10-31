@@ -121,6 +121,12 @@ jobs:
           cmake --build build/standalone --config Release --parallel 4 2>&1 | tee evidence/build-logs/standalone.log
           STANDALONE=$(find build/standalone -type f -name EXReader.exe | head -1)
           python tests/migration/windows_registry_admission_20261031/host_check.py --host "$STANDALONE" --consumer "$EXE" --font tests/fixtures/fonts/primary.ttf --catalog-mode none --output evidence/standalone 2>&1 | tee evidence/standalone-host.log
+      - name: Build actual Wave3 account profile and enforce its native admission
+        run: |
+          set -euo pipefail
+          python tests/migration/windows_registry_admission_20261031/build_full_host.py --sdk build/sdk --c02 stage --hash-prefix build/hash-prefix --output build/c02-full-host 2>&1 | tee evidence/full-host-build.log
+          EXE=$(find build/registry -type f -name coordinator-registry-check.exe | head -1)
+          python tests/migration/windows_registry_admission_20261031/host_check.py --host build/c02-full-host/host/EXReaderWave3.exe --consumer "$EXE" --font tests/fixtures/fonts/primary.ttf --output evidence/wave3 2>&1 | tee evidence/wave3-host.log
       - name: Actual migration command and deterministic fresh-process recovery
         run: |
           set -euo pipefail
@@ -132,6 +138,9 @@ jobs:
         if: always()
         run: |
           mkdir -p evidence
+          if [ -d build/c02-full-host/logs ]; then cp -r build/c02-full-host/logs evidence/full-host-build-logs; fi
+          if [ -f build/c02-full-host/build.json ]; then cp build/c02-full-host/build.json evidence/full-host-build.json; fi
+          if [ -f build/c02-full-host/host/EXReaderWave3.exe ]; then cp build/c02-full-host/host/EXReaderWave3.exe evidence/; fi
           python - <<'PY'
           import hashlib,json,os,pathlib,subprocess
           p=pathlib.Path('evidence')

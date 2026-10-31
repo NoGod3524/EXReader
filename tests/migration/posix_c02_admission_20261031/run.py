@@ -61,12 +61,12 @@ def main():
     print(scope_stdout,end="");print(scope_stderr,end="",file=sys.stderr)
     assert len(scope_summaries)==1
     scoped=scope_summaries[0]
-    assert scoped["source"]==os.environ["GITHUB_SHA"] and scoped["cases"]==7 and len(scope_cases)==7
+    assert scoped["source"]==os.environ["GITHUB_SHA"] and scoped["cases"]==10 and len(scope_cases)==10
     assert scoped["checks"]==sum(c["checks"] for c in scope_cases) and scoped["failed"]==sum(c["failed"] for c in scope_cases)==0
     assert scoped["passed"] is True and scoped["scoped"] is True and scoped["process_kill"] is True
     assert scoped["actual_sdk"] is False and scoped["host_wiring"] is False and scoped["power_loss"] is False
     assert scope_result.returncode==0
-    print(f"POSIX-C02-SCOPED cases=7 checks={scoped['checks']} failed=0")
+    print(f"POSIX-C02-SCOPED cases=10 checks={scoped['checks']} failed=0")
     print(f"POSIX-C02-ADMISSION cases={r['cases']} checks={r['checks']} failed=0")
     return 0
 if __name__=="__main__":sys.exit(main())

@@ -33,7 +33,9 @@ typedef int (*pc02_prove)(void *,const char *library,int fd,
    [A-Za-z0-9._-], folded to lowercase in the route to bind case aliases. */
 /* Explicit platform scope. The fixed host factory, not a migration package,
    supplies the already-open application container and independently captured
-   native identity. The anchor must be euid-owned mode0700. Each lease keeps its
+   native identity. The anchor must be euid-owned, with owner rwx and no special
+   or group/other write bits; 0755/0711 are accepted. Its captured permissions
+   must remain exact throughout the scope lifetime. Each lease keeps its
    own CLOEXEC duplicate; closing the factory scope cannot release a live lease.
    OS ancestors above this trusted fd are outside the strict Linux path walk.
    Relative paths below it are still traversed with openat/O_NOFOLLOW and their

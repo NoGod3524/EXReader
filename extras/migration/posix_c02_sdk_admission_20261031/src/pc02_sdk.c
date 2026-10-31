@@ -70,8 +70,9 @@ int pc02_sdk_open_user(const char *path,pc02_lease **out) {
 int pc02_sdk_enroll_user(const char *path,int create,pc02_sdk_proof *proof) {
  char authority[PATH_MAX];
  if(proof)memset(proof,0,sizeof(*proof));
- return proof&&pc02_user_authority(authority,sizeof(authority))&&pc02_authority_create(authority)&&
-   pc02_enroll(authority,path,create,initial_proof,proof,NULL);
+ return proof&&pc02_user_authority(authority,sizeof(authority))&&
+   (pc02_enroll(authority,path,create,initial_proof,proof,NULL)||
+    (pc02_authority_create(authority)&&pc02_enroll(authority,path,create,initial_proof,proof,NULL)));
 }
 int pc02_sdk_recover_enrollment_user(const char *path,pc02_sdk_proof *proof) {
  char authority[PATH_MAX];
@@ -81,8 +82,9 @@ int pc02_sdk_recover_enrollment_user(const char *path,pc02_sdk_proof *proof) {
 }
 int pc02_sdk_enroll_in(pc02_scope *scope,const char *authority,const char *path,int create,pc02_sdk_proof *proof) {
  if(proof)memset(proof,0,sizeof(*proof));
- return proof&&pc02_authority_create_in(scope,authority)&&
-   pc02_enroll_in(scope,authority,path,create,initial_proof,proof,NULL);
+ return proof&&(pc02_enroll_in(scope,authority,path,create,initial_proof,proof,NULL)||
+   (pc02_authority_create_in(scope,authority)&&
+    pc02_enroll_in(scope,authority,path,create,initial_proof,proof,NULL)));
 }
 int pc02_sdk_recover_enrollment_in(pc02_scope *scope,const char *authority,const char *path,pc02_sdk_proof *proof) {
  if(proof)memset(proof,0,sizeof(*proof));
