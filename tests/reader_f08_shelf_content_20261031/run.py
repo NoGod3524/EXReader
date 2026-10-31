@@ -235,6 +235,21 @@ def replay():
     finally:
         dest.mkdir(parents=True,exist_ok=True);save(dest/"replay.json",report)
         print("F08_SHELF_CONTENT_REPLAY",json.dumps(report),flush=True)
+def inspect_control():
+    guard()
+    source="2ad96de8e334ce72db54bdde3e45c4c6d6f430c1";run="41223862779";artifact=13050154596
+    digest="688d71b14599bd64161d1ffd0ccb41effe8ad0e0ad1b25644206e41772a1b272"
+    producer=api("actions/runs/"+run);meta=api("actions/artifacts/"+str(artifact))
+    need(producer["head_sha"]==source and producer["run_attempt"]==1,"control producer")
+    need(meta["workflow_run"]["id"]==int(run) and meta["workflow_run"]["head_sha"]==source and
+         meta["size_in_bytes"]==435 and meta["digest"]=="sha256:"+digest and not meta["expired"],"control artifact")
+    data=command(["gh","api","repos/NoGod3524/EXReader/actions/artifacts/"+str(artifact)+"/zip"])
+    need(len(data)==435 and hashlib.sha256(data).hexdigest()==digest,"control original ZIP")
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        infos=z.infolist()
+        need(len(infos)==1 and infos[0].filename=="draw.json" and infos[0].file_size<65536 and
+             not infos[0].flag_bits&1 and stat.S_IFMT(infos[0].external_attr>>16) in (0,stat.S_IFREG),"single regular control output")
+        print("F08_RETAINED_CONTROL_FAILURE",z.read(infos[0]).decode(),flush=True)
 if __name__=="__main__":
-    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("guard","capture","audit","seal","replay"))
+    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("guard","capture","audit","seal","replay","inspect_control"))
     globals()[parser.parse_args().mode]()
