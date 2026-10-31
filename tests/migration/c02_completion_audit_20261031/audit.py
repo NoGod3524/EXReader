@@ -627,6 +627,12 @@ def android_evidence(files, spec, source, missing):
     result = audit_android_host(files, spec, source, set(names), original, fixture)
     if not result["binaries"]["installed_sdk_byte_binding"]:
         missing.add("android-installed-sdk-byte-binding")
+    if not result["binaries"]["standard_package_byte_binding"]:
+        missing.add("android-standard-package-byte-binding")
+    else:
+        formal = json_value(files["formal-package/build.json"])
+        for path,digest in formal["c02_admission"]["source_files_sha256"].items():
+            need(sha(git_bytes(source,path)) == digest, "android-standard-qualified-source-bytes")
     return result
 
 def host_evidence(files, spec, source, missing):

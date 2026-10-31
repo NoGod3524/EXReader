@@ -125,7 +125,39 @@ def loadable_elf(raw):
     need(loads, "android-elf-loads-present")
     return bytes(normalized[:64]), headers, loads
 
-def apk_provider(files):
+def elf_exports(raw):
+    loadable_elf(raw)
+    offset = struct.unpack_from("<Q", raw, 40)[0]
+    size,count = struct.unpack_from("<HH", raw, 58)
+    need(size == 64 and 0 < count < 4096 and offset + count*size <= len(raw), "android-elf-section-table")
+    sections = [struct.unpack_from("<IIQQQQIIQQ",raw,offset+index*size) for index in range(count)]
+    defined, undefined, needed = set(), set(), []
+    for section in sections:
+        kind,start,length,link,step = section[1],section[4],section[5],section[6],section[9]
+        if kind not in (6,11):
+            continue
+        need(start + length <= len(raw) and link < count, "android-elf-dynamic-section")
+        strings = sections[link]
+        need(strings[1] == 3 and strings[4]+strings[5] <= len(raw), "android-elf-dynamic-strings")
+        table = raw[strings[4]:strings[4]+strings[5]]
+        def text(index):
+            need(0 <= index < len(table), "android-elf-string-index")
+            end = table.find(b"\0",index)
+            need(end >= 0, "android-elf-string-terminator")
+            return table[index:end].decode("ascii")
+        need(step == (16 if kind == 6 else 24) and length % step == 0, "android-elf-entry-size")
+        for position in range(start,start+length,step):
+            if kind == 6:
+                tag,value = struct.unpack_from("<QQ",raw,position)
+                if tag == 1:
+                    needed.append(text(value))
+            else:
+                name,info,other,index,value,size = struct.unpack_from("<IBBHQQ",raw,position)
+                if info >> 4 in (1,2) and name:
+                    (defined if index else undefined).add(text(name))
+    return defined, undefined, needed
+
+def apk_provider(files, source):
     with zipfile.ZipFile(io.BytesIO(files["app-debug.apk"])) as archive:
         names = archive.namelist()
         need(len(names) == len(set(names)), "android-apk-unique-paths")
@@ -133,6 +165,12 @@ def apk_provider(files):
         host = archive.read("lib/x86_64/libexreader_host.so")
     need(provider.startswith(b"\x7fELF") and host.startswith(b"\x7fELF") and
          files["libexreader_host.so"].startswith(b"\x7fELF"), "android-actual-apk-native-libraries")
+    defined, undefined, needed = elf_exports(host)
+    sdk_defined, _, _ = elf_exports(provider)
+    public = {"exr_library_open", "exr_library_close"}
+    gate = {"pc02_open_in", "pc02_check", "pc02_close"}
+    need(public <= sdk_defined and public <= undefined and not public & defined and
+         gate <= defined and needed.count("libexreader.so") == 1, "android-actual-apk-one-sdk-native-gate")
     installed = json_value(files["sdk-installed.json"])
     candidates = [row for row in installed if row["path"] == "lib/libexreader.so"]
     need(len(candidates) == 1, "android-installed-shared-sdk-inventory")
@@ -144,12 +182,32 @@ def apk_provider(files):
              "android-retained-installed-sdk-bytes")
         need(loadable_elf(installed_raw) == loadable_elf(provider), "android-packaged-sdk-loadable-byte-equality")
         provider_bound = True
+    formal_bound = False
+    if "formal-package/build.json" in files:
+        formal = json_value(files["formal-package/build.json"])
+        need(formal["source_sha"] == source and formal["sdk_version"] == "3.42.0" and
+             formal["c02_admission"]["profile"] == "c02" and formal["c02_admission"]["source"] == source and
+             formal["c02_admission"]["sdk_base"] == SDK and formal["sdk_built"] is True and
+             formal["apk_built"] is True, "android-standard-builder-qualified-source")
+        for name in ("app-debug.apk", "app-release-unsigned.apk"):
+            raw = files["formal-package/" + name]
+            with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                actual_sdk = archive.read("lib/x86_64/libexreader.so")
+                actual_host = archive.read("lib/x86_64/libexreader_host.so")
+            exports, imports, dependencies = elf_exports(actual_host)
+            need(actual_sdk == provider and gate <= exports and public <= imports and
+                 not public & exports and dependencies.count("libexreader.so") == 1,
+                 "android-standard-debug-release-native-gate-and-same-sdk")
+            if name == "app-debug.apk":
+                item = formal["artifacts"][name]
+                need(item["sha256"] == sha(raw), "android-standard-package-build-manifest")
+        formal_bound = True
     symbols = files["host-defined-symbols.txt"].decode().splitlines()
     names = {line.split()[-1] for line in symbols if line.split()}
     need("exr_library_open" not in names and
          {"pc02_open_in", "pc02_check", "pc02_close", "pc02_sdk_enroll_in"} <= names and
          b"libexreader.so" in files["host-dynamic.txt"], "android-one-shared-sdk-and-native-admission")
-    return dict(installed_sdk_byte_binding=provider_bound,
+    return dict(installed_sdk_byte_binding=provider_bound, standard_package_byte_binding=formal_bound,
                 apk_sha256=sha(files["app-debug.apk"]), shared_sdk_sha256=sha(provider),
                 jni_sha256=sha(host))
 
@@ -248,7 +306,7 @@ def audit_android_host(files, spec, source, expected_cases, original, fixture):
                               "android-native-authority-byte-decoder", "android-original-sqlite",
                               "android-native-source-final-owner", "android-process-death-pending"],
                 runtime_cases=14, checks=report["checks"], app_uid=uid, native_snapshots=decoded,
-                binaries=apk_provider(files), actual_migration=False)
+                binaries=apk_provider(files, source), actual_migration=False)
 
 def android_negative_controls(files, output):
     report = json_value(files[BASE + "device-report.json"])
