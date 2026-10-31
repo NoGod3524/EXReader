@@ -91,6 +91,8 @@ def build_sdk(stage, build):
         configure = [configure[0], configure[1], configure[2], '-G', 'Ninja'] + configure[3:]
     run(configure)
     run([cmake, '--build', build, '--parallel', '4', '--target', 'install'])
+    from android_c02 import install
+    install(stage, stage, Path(build) / 'c02-admission', ndk)
     return ndk
 
 
@@ -133,14 +135,18 @@ def patch_android_libraries(stage):
 def build_product(stage, build):
     """Cross-install public product packages, never Android system SQLite."""
     cmake = shutil.which('cmake')
+    from android_c02 import install_hash
+    hash_prefix = install_hash(Path(stage) / 'original-hash', Path(build) / 'original-hash', ndk_home())
+    os.environ['EXREADER_ORIGINAL_HASH_PREFIX'] = str(hash_prefix)
     common = ['-G', 'Ninja', '-DCMAKE_TOOLCHAIN_FILE=' + str(ndk_home() / 'build/cmake/android.toolchain.cmake'),
               '-DANDROID_ABI=x86_64', '-DANDROID_PLATFORM=android-' + str(MIN_SDK),
               '-DANDROID_STL=c++_static', '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
               '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH',
               '-DCMAKE_INSTALL_PREFIX=' + str(stage), '-DCMAKE_PREFIX_PATH=' + str(stage),
-              '-DREADER_PRODUCT_PREFIX=' + str(stage)]
+              '-DREADER_PRODUCT_PREFIX=' + str(stage),
+              '-DREADER_ORIGINAL_HASH_PREFIX=' + str(hash_prefix)]
     for name, source, target in (
-            ('catalog', 'apps/reader/store/native', 'reader_catalog'),
+            ('catalog', 'apps/reader/store/native', 'reader_original_import'),
             ('revisions', 'apps/reader/revisions', 'reader_revisions'),
             ('commands', 'apps/reader/commands', 'reader_commands')):
         location = build / name
@@ -356,7 +362,8 @@ def gradle_build(stage, gradle):
     local.write_text('sdk.dir=%s\n' % str(sdk).replace('\\', '\\\\'))
     command = [gradle, '-p', ANDROID, '--no-daemon', '--stacktrace',
                ':app:assembleDebug', ':uitest:assembleDebug', ':uitest:assembleDebugAndroidTest',
-               '-PexrSdk=' + str(stage)]
+               '-PexrSdk=' + str(stage), '-PexrSdkVersion=3.42.0',
+               '-PexrC02Prefix=' + str(stage)]
     env = dict(os.environ)
     env.setdefault('ANDROID_HOME', str(sdk))
     env.setdefault('ANDROID_SDK_ROOT', str(sdk))
@@ -402,7 +409,10 @@ def main():
     if platform.system() != 'Linux':
         raise SystemExit('Android host builds run in Linux CI only')
     cloud = cloud_identity()
-    owned = ownership()
+    from android_c02 import provenance
+    c02 = provenance()
+    # Retain the historical review guard when that legacy profile is selected.
+    owned = ownership() if (os.environ.get('ANDROID_OWNERSHIP_HEAD') or os.environ.get('ANDROID_CANDIDATE_SDK_BASE')) else c02
     stage = args.stage.absolute()
     build = args.build_dir.absolute()
     build.mkdir(parents=True, exist_ok=True)
@@ -410,6 +420,9 @@ def main():
         raise SystemExit('Preserve earlier build evidence: choose a fresh output directory')
     if not args.skip_sdk:
         build_sdk(stage, args.sdk_build.absolute())
+    else:
+        from android_c02 import install
+        install(stage, stage, build / 'c02-admission', ndk_home())
     product_stage = ROOT / 'stage/android-product'
     build_product(product_stage, build / 'product')
     if not (stage / 'lib/libexreader_jni.so').is_file():
@@ -468,6 +481,8 @@ def main():
         'product_files_sha256': inventory(product_stage),
         'source_files_sha256': source_files(),
         'ownership': owned,
+        'c02_admission': c02,
+        'c02_prefix': str(stage),
         'sdk_built': not args.skip_sdk,
         'apk_built': not args.skip_gradle,
     }

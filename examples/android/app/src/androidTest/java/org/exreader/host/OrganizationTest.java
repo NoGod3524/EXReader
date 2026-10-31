@@ -37,7 +37,7 @@ public final class OrganizationTest extends Instrumentation {
         int failed=0;
         for(int i=0;i<checks.length;i++){
             sendStatus(1,status(i));Throwable failure=null;
-            try { clearJournal();directory=new File(context.getCacheDir(),"organization-"+i+"-"+NativeCatalog.newId());remove(directory);require(directory.mkdirs(),"directory");
+            try { clearJournal();directory=new File(context.getFilesDir(),"organization-"+i+"-"+NativeCatalog.newId());remove(directory);require(directory.mkdirs(),"directory");
                 NativeAdmission.initialize(context,new File(directory,"library.db"),NativeAdmission.CREATE);
                 books=new BookStore(context,new File(directory,"library.db"));checks[i].run(); }
             catch(Throwable error){failure=error;}
