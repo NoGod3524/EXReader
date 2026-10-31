@@ -48,6 +48,10 @@ def click(host,name,timeout=2000):
         try:W.fill_system_dialog(adapter,path)
         finally:W.time,W.post_click=old_clock,old_post
         if W.system_dialog(adapter):raise P.MeasurementFault("native picker remained open")
+        # The dialog can close before compact_import submits its worker. Preserve
+        # the original synchronous-click contract by observing the real busy control.
+        host.poll(lambda: (True,) if not host.import_enabled() else None,30,interval=0.001)
+        entry["worker_busy_observed_ms"]=P.now_ms()
         entry["completed"]=True
     except BaseException as error:
         entry["error"]=repr(error);raise
