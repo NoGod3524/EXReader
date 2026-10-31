@@ -34,21 +34,27 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build
-          mkdir -p build/f10/logs
-          p="$PWD/build/f10/prefix"
-          cmake -S apps/reader/store/native -B build/f10/store -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" >build/f10/logs/store-config.log 2>&1
-          cmake --build build/f10/store >build/f10/logs/store-build.log 2>&1
-          cmake --install build/f10/store >>build/f10/logs/store-build.log 2>&1
-          cmake -S extras/webdav -B build/f10/dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" >build/f10/logs/dav-config.log 2>&1
-          cmake --build build/f10/dav >build/f10/logs/dav-build.log 2>&1
-          cmake --install build/f10/dav >>build/f10/logs/dav-build.log 2>&1
+          mkdir -p build/f10/logs build/f10/prefix
+          p="$(realpath build/f10/prefix)"
+          export EXREADER_ORIGINAL_HASH_PREFIX="$p"
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$p" >> "$GITHUB_ENV"
+          trap 'rc=$?; echo "F10 build failed: exit $rc"; for f in build/f10/logs/*.log; do echo "--- $f"; tail -n 80 "$f"; done; exit "$rc"' ERR
+          cmake -S extras/opds -B build/f10/hash -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$p" 2>&1 | tee build/f10/logs/hash-config.log
+          cmake --build build/f10/hash 2>&1 | tee build/f10/logs/hash-build.log
+          cmake --install build/f10/hash 2>&1 | tee -a build/f10/logs/hash-build.log
+          cmake -S apps/reader/store/native -B build/f10/store -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" 2>&1 | tee build/f10/logs/store-config.log
+          cmake --build build/f10/store 2>&1 | tee build/f10/logs/store-build.log
+          cmake --install build/f10/store 2>&1 | tee -a build/f10/logs/store-build.log
+          cmake -S extras/webdav -B build/f10/dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" 2>&1 | tee build/f10/logs/dav-config.log
+          cmake --build build/f10/dav 2>&1 | tee build/f10/logs/dav-build.log
+          cmake --install build/f10/dav 2>&1 | tee -a build/f10/logs/dav-build.log
           for module in revisions sync session; do
-            cmake -S apps/reader/$module -B build/f10/$module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" -DCMAKE_PREFIX_PATH="$p" -DREADER_PRODUCT_PREFIX="$p" -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON >build/f10/logs/$module-config.log 2>&1
-            cmake --build build/f10/$module >build/f10/logs/$module-build.log 2>&1
-            cmake --install build/f10/$module >>build/f10/logs/$module-build.log 2>&1
+            cmake -S apps/reader/$module -B build/f10/$module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" -DCMAKE_PREFIX_PATH="$p" -DREADER_PRODUCT_PREFIX="$p" -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON 2>&1 | tee build/f10/logs/$module-config.log
+            cmake --build build/f10/$module 2>&1 | tee build/f10/logs/$module-build.log
+            cmake --install build/f10/$module 2>&1 | tee -a build/f10/logs/$module-build.log
           done
-          cmake -S tests/product/f10_safety_20261031 -B build/f10/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$p" >build/f10/logs/probe-config.log 2>&1
-          cmake --build build/f10/probe >build/f10/logs/probe-build.log 2>&1
+          cmake -S tests/product/f10_safety_20261031 -B build/f10/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$p" 2>&1 | tee build/f10/logs/probe-config.log
+          cmake --build build/f10/probe 2>&1 | tee build/f10/logs/probe-build.log
       - name: Capture real permission failure, process death and file identity
         run: python tests/product/f10_safety_20261031/drive.py --probe build/f10/probe/f10-probe --output build/f10/evidence
       - name: Preserve complete raw observations and binary without fixture keys
@@ -83,4 +89,4 @@ jobs:
           name: f10-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f10-audit/
           if-no-files-found: error
-# Activate the sole approved characterization run after native dot review.
+# Prepare separately approved dependency-repair round; activation after review.
