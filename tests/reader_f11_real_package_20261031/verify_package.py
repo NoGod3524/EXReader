@@ -79,7 +79,18 @@ def main():
             need(identity['sdk_content_paths'] == ['src','include','cmake','CMakeLists.txt','bindings'], 'sdk-content-paths')
             need(identity['product']['source_sha'] == lock['producer_source'] and identity['product']['sdk_version'] == lock['sdk_version'], 'product-identity')
             need(build['source_sha'] == lock['producer_source'] and build['sdk_version'] == lock['sdk_version'], 'build-identity')
-            need(build['page_theme_enabled'] is True and identity['page_theme_enabled'] is True, 'original-feature-assertion')
+            profile = lock['historical_profile']
+            need(profile == {'build_page_theme_enabled':False, 'identity_page_theme_field':'absent',
+                             'wave3_enabled':True, 'selector_bytes_candidate':True}, 'historical-profile-lock')
+            need(build['page_theme_enabled'] is False and 'page_theme_enabled' not in identity,
+                 'historical-page-theme-profile')
+            need(build['wave3_enabled'] is True and build['selector_bytes_candidate'] is True
+                 and identity['product']['wave3_enabled'] is True, 'original-feature-profile')
+            report['historical_profile_observed'] = {
+                'build_page_theme_enabled':build['page_theme_enabled'],
+                'identity_page_theme_field':'absent',
+                'build_wave3_enabled':build['wave3_enabled'],
+                'build_selector_bytes_candidate':build['selector_bytes_candidate']}
             package = archive.read('EXReader.zip')
         need(sha(package) == identity['archive_sha256'], 'inner-archive-hash')
         with tempfile.TemporaryDirectory() as folder:

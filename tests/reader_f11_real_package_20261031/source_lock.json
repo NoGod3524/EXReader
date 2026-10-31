@@ -11,5 +11,16 @@
   "sdk_version": "3.42.0",
   "sdk_content_candidate": "8357eafa28423a7ab93ba08b823af80f01ad1505",
   "gate_source": "9b5d0d6914671c99fc20b8cc7361f700b83ca778",
-  "gate_run": 41152533489
+  "gate_run": 41152533489,
+  "historical_profile": {
+    "build_page_theme_enabled": false,
+    "identity_page_theme_field": "absent",
+    "wave3_enabled": true,
+    "selector_bytes_candidate": true
+  },
+  "prior_failed_audit": {
+    "source": "bf6af40c2f228de9a8f8d78d9e1aff665aecfc90",
+    "run": 41156000885,
+    "reason": "original-feature-assertion; audit used later schema, not producer schema"
+  }
 }
