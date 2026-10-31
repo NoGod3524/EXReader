@@ -1,0 +1,33 @@
+name: Fixed iPad full failure text evidence
+on:
+  push:
+    branches: [codex/dot-apple-ipad-full-evidence-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: ipad-full-evidence-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate two fixed original ZIPs and inspect text only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/apple_ipad_full_evidence_20261031/verify.py
+      - name: Preserve redacted evidence and unresolved gaps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-ipad-full-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-ipad-full-evidence/
+          if-no-files-found: error
+          retention-days: 30
