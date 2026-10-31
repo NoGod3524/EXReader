@@ -162,14 +162,80 @@ def prepare():
         "android_init": "build/f04-driver/init.gradle",
         "instrumentation": "org.exreader.host.F04AndroidTest"}), flush=True)
 
+def build_producer(platform):
+    """Actions-only recipe, still unreachable from the disabled workflow."""
+    import hashlib
+    # The historical package guards pin unrelated old branch path sets.
+    # This package's exact twelve-file + frozen-SDK admission is mandatory;
+    # build functions themselves and all their original assertions stay intact.
+    subprocess.run([sys.executable, str(HERE / "admission.py")], cwd=ROOT, check=True)
+    recipes = {
+        "windows": ("tests/windows_sdk342/build.py", []),
+        "gtk": ("tests/gtk_sdk342_package/run.py", ["build"]),
+        "android": ("tests/android_sdk342_package/run.py", ["build"]),
+        "macos": ("tests/apple_sdk342_host/build.py", ["--target", "macos"]),
+        "iphonesimulator": ("tests/apple_sdk342_host/build.py", ["--target", "iphonesimulator"]),
+    }
+    path, arguments = recipes[platform]
+    original_recipe = retained(path)
+    if platform == "android":
+        (ROOT / "build/f06").mkdir(parents=True, exist_ok=True)
+    subprocess.run([sys.executable, str(ROOT / path), *arguments], cwd=ROOT, check=True)
+    evidence = {"source_sha": os.environ["GITHUB_SHA"],
+        "run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+        "platform": platform, "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+        "sdk_version": "3.42.0", "recipe": path,
+        "recipe_sha256": hashlib.sha256(original_recipe.encode()).hexdigest(),
+        "host_runtime_accepted": False, "F04_accepted": False}
+    if platform == "android":
+        import yaml
+        workflow = retained(".github/workflows/reader-apple-android-relay.yml")
+        steps = yaml.safe_load(workflow)["jobs"]["android"]["steps"]
+        selected = [s for s in steps if s.get("name") == "Build real cross-platform relay instrumentation"]
+        assert len(selected) == 1
+        body = selected[0]["run"]
+        body = replace_once(body, "$PWD/tests/apple_android_relay/android/init.gradle",
+                            "$PWD/build/f04-driver/init.gradle")
+        body = replace_once(body, "org.exreader.host.RelayAndroidTest", "org.exreader.host.F04AndroidTest")
+        body = replace_once(body, "-PexrSdk=", "-PexrSdkVersion=3.42.0 -PexrSdk=")
+        script = OUT / "android-instrumentation.sh"
+        script.write_text(body)
+        subprocess.run(["bash", "-e", "-o", "pipefail", str(script)], cwd=ROOT, check=True)
+        # An instrumentation-only rebuild must not silently substitute the host APK.
+        original_apk = ROOT / "build/wave3/artifacts/app-debug.apk"
+        built_apk = ROOT / "examples/android/app/build/outputs/apk/debug/app-debug.apk"
+        assert original_apk.read_bytes() == built_apk.read_bytes()
+        evidence["instrumentation_recipe_sha256"] = hashlib.sha256(body.encode()).hexdigest()
+    candidates = {
+        "windows": ROOT / "build/windows-sdk342/package/EXReader/EXReader.exe",
+        "gtk": ROOT / "build/gtk-raw-wave3/retained-package/EXReader-Linux/bin/exreader-linux",
+        "android": ROOT / "build/wave3/artifacts/app-debug.apk",
+    }
+    if platform in candidates:
+        binary = candidates[platform]
+        evidence["program"] = {"path": binary.relative_to(ROOT).as_posix(),
+            "bytes": binary.stat().st_size, "sha256": hashlib.sha256(binary.read_bytes()).hexdigest()}
+    else:
+        identity = ROOT / ("build/raw3-ios-sdk/" + platform + "/sdk342-installed-identity.json")
+        installed = json.loads(identity.read_text())
+        assert installed["source_sha"] == evidence["source_sha"]
+        assert installed["sdk_version"] == "3.42.0"
+        evidence["installed_identity_sha256"] = hashlib.sha256(identity.read_bytes()).hexdigest()
+        evidence["program"] = None  # Real host is built by the later UI producer, not this SDK step.
+    (OUT / ("build-" + platform + ".json")).write_text(json.dumps(evidence, indent=2) + "\n")
+
 def main():
     assert os.environ.get("GITHUB_ACTIONS") == "true", "Actions only"
     assert Path.cwd().resolve() == ROOT
     assert os.environ.get("EXR_APPLE_SDK_VERSION") == "3.42.0"
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk"))
+    parser.add_argument("action", choices=("prepare", "apple", "android", "android-peer", "iphone-peer", "ipad-peer", "macos-peer", "windows", "gtk", "build-windows", "build-gtk", "build-android", "build-macos", "build-iphonesimulator"))
     args, rest = parser.parse_known_args()
     prepare()
+    if args.action.startswith("build-"):
+        assert not rest, rest
+        build_producer(args.action.removeprefix("build-"))
+        return
     if args.action != "prepare":
         driver = HERE / (args.action + "_driver.py") if args.action in ("windows", "gtk") else OUT / (args.action + ".py")
         completed = subprocess.run([sys.executable, str(driver), *rest], cwd=ROOT)
