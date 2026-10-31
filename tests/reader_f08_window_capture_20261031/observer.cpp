@@ -4,6 +4,8 @@
  */
 #include <windows.h>
 #include <d3d11.h>
+#include <dwmapi.h>
+#include <array>
 #include <dxgi1_2.h>
 #include <windows.graphics.capture.interop.h>
 #include <windows.graphics.directx.direct3d11.interop.h>
@@ -22,6 +24,15 @@ using namespace winrt::Windows::Graphics::DirectX;
 using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
 namespace fs=std::filesystem;
 static long long tick(){LARGE_INTEGER n{};QueryPerformanceCounter(&n);return n.QuadPart;}
+struct Region { HWND hwnd{}; DWORD pid{}; int id{}; RECT rect{}; bool visible{}; };
+static Region region(HWND root,int id){
+ Region r{};r.id=id;r.hwnd=GetDlgItem(root,id);GetWindowThreadProcessId(r.hwnd,&r.pid);
+ RECT c{};POINT p{};if(!r.hwnd||!GetClientRect(r.hwnd,&c)||!ClientToScreen(r.hwnd,&p))return r;
+ r.rect={p.x,p.y,p.x+c.right,p.y+c.bottom};r.visible=IsWindowVisible(r.hwnd)!=FALSE;return r;
+}
+static bool same(const Region&a,const Region&b){
+ return a.hwnd==b.hwnd&&a.pid==b.pid&&a.visible==b.visible&&EqualRect(&a.rect,&b.rect);
+}
 static void bitmap(const fs::path&p,const std::vector<unsigned char>&bytes,LONG w,LONG h){
  BITMAPFILEHEADER f{};BITMAPINFOHEADER b{};f.bfType=0x4d42;f.bfOffBits=sizeof(f)+sizeof(b);f.bfSize=f.bfOffBits+(DWORD)bytes.size();
  b.biSize=sizeof(b);b.biWidth=w;b.biHeight=-h;b.biPlanes=1;b.biBitCount=32;b.biSizeImage=(DWORD)bytes.size();
@@ -65,7 +76,10 @@ int wmain(int argc,wchar_t**argv){
    std::lock_guard<std::mutex> guard(lock);if(failed)return;
    try{
     while(auto frame=sender.TryGetNextFrame()){
-     auto begin=tick();auto content=frame.ContentSize();auto relative=frame.SystemRelativeTime().count();
+     auto begin=tick();RECT bounds{},after_bounds{};
+     check_hresult(DwmGetWindowAttribute(root,DWMWA_EXTENDED_FRAME_BOUNDS,&bounds,sizeof(bounds)));
+     std::array<Region,2> before={region(root,119),region(root,123)};
+     auto content=frame.ContentSize();auto relative=frame.SystemRelativeTime().count();
      DWORD current_owner=0,current_affinity=0;GetWindowThreadProcessId(root,&current_owner);
      if(current_owner!=pid||(GetWindowDisplayAffinity(root,&current_affinity)&&current_affinity!=WDA_NONE))
       throw hresult_error(E_ACCESSDENIED,L"window identity or protection changed");
@@ -84,14 +98,26 @@ int wmain(int argc,wchar_t**argv){
       auto src=(unsigned char*)mapped.pData+(size_t)y*mapped.RowPitch;auto dst=bytes.data()+(size_t)y*size.Width*4;
       memcpy(dst,src,(size_t)size.Width*4);for(LONG x=0;x<size.Width;x++)dst[x*4+3]=255;
      }
-     context->Unmap(staging.get(),0);frames++;bool changed=previous!=bytes;
+     context->Unmap(staging.get(),0);
+     check_hresult(DwmGetWindowAttribute(root,DWMWA_EXTENDED_FRAME_BOUNDS,&after_bounds,sizeof(after_bounds)));
+     std::array<Region,2> after={region(root,119),region(root,123)};
+     frames++;bool changed=previous!=bytes;
      if(changed){
       if(saved_bytes+bytes.size()>(1ull<<30))throw hresult_error(E_FAIL,L"image byte cap");
       last=frames;previous=std::move(bytes);saved_bytes+=previous.size();changed_images++;
       bitmap(folder/(std::to_string(last)+".bmp"),previous,size.Width,size.Height);
      }
-     std::printf("{\"kind\":\"frame\",\"index\":%u,\"system_relative_100ns\":%lld,\"callback_qpc\":%lld,\"copy_qpc\":%lld,\"map_start_qpc\":%lld,\"map_end_qpc\":%lld,\"readback_finished_qpc\":%lld,\"width\":%d,\"height\":%d,\"changed\":%s,\"image\":\"%u.bmp\"}\n",
-      frames,(long long)relative,begin,copy,map_begin,map_end,tick(),size.Width,size.Height,changed?"true":"false",last);std::fflush(stdout);
+     std::printf("{\"kind\":\"frame\",\"index\":%u,\"system_relative_100ns\":%lld,\"callback_qpc\":%lld,\"copy_qpc\":%lld,\"map_start_qpc\":%lld,\"map_end_qpc\":%lld,\"readback_finished_qpc\":%lld,\"width\":%d,\"height\":%d,\"changed\":%s,\"image\":\"%u.bmp\",\"regions\":[",
+      frames,(long long)relative,begin,copy,map_begin,map_end,tick(),size.Width,size.Height,changed?"true":"false",last);
+     for(unsigned j=0;j<2;j++){
+      const auto&r=before[j];bool stable=same(r,after[j])&&EqualRect(&bounds,&after_bounds);
+      RECT crop={r.rect.left-bounds.left,r.rect.top-bounds.top,r.rect.right-bounds.left,r.rect.bottom-bounds.top};
+      bool valid=r.pid==pid&&r.visible&&stable&&!IsIconic(root)&&bounds.right-bounds.left==size.Width&&bounds.bottom-bounds.top==size.Height&&
+       crop.left>=0&&crop.top>=0&&crop.right<=size.Width&&crop.bottom<=size.Height&&crop.right>crop.left&&crop.bottom>crop.top;
+      std::printf("%s{\"control_id\":%d,\"hwnd\":%llu,\"pid\":%lu,\"crop\":[%ld,%ld,%ld,%ld],\"visible\":%s,\"geometry_stable\":%s,\"valid\":%s}",
+       j?",":"",r.id,(unsigned long long)(uintptr_t)r.hwnd,r.pid,crop.left,crop.top,crop.right,crop.bottom,r.visible?"true":"false",stable?"true":"false",valid?"true":"false");
+     }
+     std::printf("]}\n");std::fflush(stdout);
     }
    }catch(hresult_error const&e){std::printf("{\"kind\":\"callback_error\",\"hresult\":\"0x%08lX\",\"qpc\":%lld}\n",(unsigned long)e.code(),tick());std::fflush(stdout);failed=true;}
    catch(...){std::printf("{\"kind\":\"callback_error\",\"qpc\":%lld}\n",tick());std::fflush(stdout);failed=true;}
