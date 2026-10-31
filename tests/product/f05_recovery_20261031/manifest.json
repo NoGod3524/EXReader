@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "requirement": "F05",
-  "state": "blocked-production-capability",
+  "state": "implementation-in-progress",
   "preparation_base": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
   "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
   "hosts": [
@@ -14,8 +14,8 @@
   ],
   "cases": [
     "offline_reconnect",
-    "concurrent_heads_explicit_resolution",
-    "delete_put_tombstone_explicit_restore",
+    "concurrent_heads_preserved",
+    "delete_put_tombstone_preserved",
     "cancel_receive_retry",
     "kill_commit_ack_replay",
     "restart_offline_read"
@@ -43,8 +43,6 @@
       "audit": 15
     }
   },
-  "blocked_by": [
-    "Shared metadata snapshot validation rejects all heads>1 before the current host edit/restore routes can resolve them.",
-    "Owner-approved explicit conflict resolution UI and safe captured-head transaction are required; tests must not bypass the actual host via lower commands API."
-  ]
+  "blocked_by": [],
+  "contract": "Preserve concurrent heads and display conflict; do not auto-select a winner. Preserve concurrent tombstone and put; old put is not restore. If a user explicitly resolves/restores, parents must include all competing heads. No requirement to resolve every scenario to one head."
 }
