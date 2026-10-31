@@ -80,12 +80,14 @@ static HANDLE reg_spawn(unsigned mode,unsigned stop) {
  CloseHandle(pi.hThread);return pi.hProcess;
 }
 static int coordinator_child(reg_shared *shared);
+static int member_child(reg_shared *shared);
 static int reg_child(const char *handle) {
  HANDLE mapping=(HANDLE)(uintptr_t)_strtoui64(handle,NULL,10);
  reg_shared *shared=MapViewOfFile(mapping,FILE_MAP_ALL_ACCESS,0,0,sizeof(*shared));
  wh3wr_registration *r=NULL;wh3w_controls controls={0};void *cap=NULL;wh3_tip tip;
  if(!shared)return 90;
  if(shared->stop==600)return coordinator_child(shared);
+ if(shared->stop>=WH3WR_MEMBER_PROVED)return member_child(shared);
  if(shared->stop>=WH3WR_EPOCH_INTENT){
   controls.context=shared;controls.phase=reg_barrier;
   return wh3wr_next_epoch(shared->library,sdk_prove,(void *)original,&controls)?0:96;
@@ -124,19 +126,25 @@ static HKEY fixture_key(void) {
  if(RegOpenKeyExW(HKEY_CURRENT_USER,path,REG_OPTION_OPEN_LINK,KEY_ALL_ACCESS|KEY_WOW64_64KEY,&key)!=ERROR_SUCCESS)return NULL;
  return key;
 }
-static int reg_terminal(void *cap,wh3_tip *after) {
- wh3_tip before;size_t i;int ok;
- if(!wh3wr_journal(registration,&f.b,&f.g,NULL,&f.store)||!builder_start(&built,&f.b,&f.g))return 0;
+static int reg_build_terminal(void) {
+ int ok;if(!builder_start(&built,&f.b,&f.g))return 0;
  ok=builder_event(&built,1,NULL,NULL,NULL,NULL)&&builder_event(&built,2,HX40 "01234567",NULL,NULL,NULL)
   &&builder_event(&built,3,NULL,NULL,NULL,NULL)&&builder_event(&built,4,NULL,NULL,HX64,NULL)
   &&builder_event(&built,5,NULL,NULL,NULL,HX64)&&builder_event(&built,6,NULL,HX40 "01234567",NULL,NULL)
   &&builder_event(&built,7,NULL,NULL,NULL,NULL)&&builder_event(&built,8,NULL,NULL,NULL,NULL)
   &&builder_event(&built,9,NULL,NULL,NULL,NULL)&&builder_event(&built,10,NULL,NULL,NULL,NULL)
   &&builder_event(&built,11,NULL,NULL,NULL,NULL)&&builder_event(&built,12,NULL,NULL,NULL,NULL);
- if(!ok)return 0;empty_tip(&before);
- for(i=0;i<built.n;i++){if(wh3w_append(f.store,cap,&before,built.lines[i],after)!=WH3_TX_OK)return 0;before=*after;}
+ return ok;
+}
+static int reg_prefix(void *cap,size_t count,wh3_tip *after) {
+ wh3_tip before;size_t i;
+ if(!wh3wr_journal(registration,&f.b,&f.g,NULL,&f.store)||!reg_build_terminal()||count>built.n)return 0;
+ empty_tip(&before);
+ for(i=0;i<count;i++){if(wh3w_append(f.store,cap,&before,built.lines[i],after)!=WH3_TX_OK)return 0;before=*after;}
  return 1;
 }
+static int reg_terminal(void *cap,wh3_tip *after) {return reg_prefix(cap,13,after);}
+
 static void unknown_case(void) {
  if(!reg_fixture("missing-registry-never-initializes",0))return;
  expect(!reg_open(WH3WG_SHARED,NULL),"no caller-invented grant");
@@ -728,6 +736,138 @@ static void checkpoint_bad_case(int replaced) {
     "bad checkpoint refuses before any SDK proof");
  expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"bad checkpoint remains quarantined");
 }
+typedef struct {
+ wh3w_identity old_id,new_id;DWORD old_size,new_size;char old_sha[65],new_sha[65];
+ int old_present,reject;unsigned calls;
+} member_proof;
+typedef struct {member_proof database,mirror;int has_mirror;} member_terminal;
+static int member_hash(HANDLE h,char hash[65],DWORD *size) {
+ LARGE_INTEGER n,zero;unsigned char *bytes;DWORD got=0;int ok;
+ zero.QuadPart=0;if(h==INVALID_HANDLE_VALUE||!GetFileSizeEx(h,&n)||n.QuadPart<0||n.QuadPart>1048576)return 0;
+ bytes=malloc((size_t)n.QuadPart+1);if(!bytes)return 0;
+ ok=SetFilePointerEx(h,zero,NULL,FILE_BEGIN)&&ReadFile(h,bytes,(DWORD)n.QuadPart,&got,NULL)&&got==(DWORD)n.QuadPart;
+ if(ok){wh_sha256_hex(bytes,got,hash);*size=got;}free(bytes);return ok;
+}
+static int member_capture(const wchar_t *path,wh3w_identity *id,char hash[65],DWORD *size) {
+ HANDLE h;int ok;
+ h=CreateFileW(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+ if(h==INVALID_HANDLE_VALUE)return 0;
+ ok=capture_id(path,0,id)&&member_hash(h,hash,size);CloseHandle(h);return ok;
+}
+static int member_prove(void *context,HANDLE old,HANDLE staged) {
+ member_proof *proof=context;char hash[65];DWORD size;proof->calls++;
+ if(proof->reject||!!proof->old_present!=(old!=INVALID_HANDLE_VALUE))return 0;
+ if(proof->old_present&&(!member_hash(old,hash,&size)||size!=proof->old_size||memcmp(hash,proof->old_sha,65)))return 0;
+ return member_hash(staged,hash,&size)&&size==proof->new_size&&!memcmp(hash,proof->new_sha,65);
+}
+static int member_seed_file(const wchar_t *path,const char *bytes) {
+ HANDLE h=CreateFileW(path,GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_NEW,FILE_FLAG_WRITE_THROUGH,NULL);DWORD n;int ok;
+ if(h==INVALID_HANDLE_VALUE)return 0;
+ ok=WriteFile(h,bytes,(DWORD)strlen(bytes),&n,NULL)&&n==strlen(bytes)&&FlushFileBuffers(h);CloseHandle(h);return ok;
+}
+static int member_prepare(member_proof *proof,void **cap,wh3_tip *tip) {
+ wchar_t path[MAX_PATH];wh3_tip empty;memset(proof,0,sizeof(*proof));
+ if(!reg_open(WH3WG_OWNER,NULL)||!member_capture(reglib,&proof->old_id,proof->old_sha,&proof->old_size))return 0;
+ proof->old_present=1;
+ if(!wh3wr_transaction_write(registration,WH3WR_INPUT,proof,sizeof(*proof)))return 0;
+ empty_tip(&empty);
+ if(!wh3wr_begin(registration,&f.b,&f.g,&empty,cap))return 0;
+ swprintf_s(path,MAX_PATH,L"%ls\\member-stage.sqlite",f.parent);
+ return sdk_seed(path,published)&&member_capture(path,&proof->new_id,proof->new_sha,&proof->new_size)&&
+    wh3wr_transaction_write(registration,WH3WR_PREPARED,proof,sizeof(*proof))&&reg_prefix(*cap,10,tip);
+}
+static int member_terminal_prove(void *context,const wh3_tip *tip) {
+ member_terminal *terminal=context;wchar_t path[MAX_PATH];wh3w_identity id;char hash[65];DWORD size;
+ if(tip->line_count!=13||!sdk_prove((void *)published,reglib))return 0;
+ swprintf_s(path,MAX_PATH,L"%ls\\member-retained.sqlite",f.parent);
+ if(!member_capture(path,&id,hash,&size)||memcmp(&id,&terminal->database.old_id,sizeof(id))||
+    size!=terminal->database.old_size||memcmp(hash,terminal->database.old_sha,65))return 0;
+ if(terminal->has_mirror){
+  swprintf_s(path,MAX_PATH,L"%ls\\mirror.json",f.parent);
+  if(!member_capture(path,&id,hash,&size)||memcmp(&id,&terminal->mirror.new_id,sizeof(id))||
+     size!=terminal->mirror.new_size||memcmp(hash,terminal->mirror.new_sha,65))return 0;
+  if(terminal->mirror.old_present){
+   swprintf_s(path,MAX_PATH,L"%ls\\retained-mirror.json",f.parent);
+   if(!member_capture(path,&id,hash,&size)||memcmp(&id,&terminal->mirror.old_id,sizeof(id))||
+      size!=terminal->mirror.old_size||memcmp(hash,terminal->mirror.old_sha,65))return 0;
+  }
+ }
+ return 1;
+}
+static int member_finish(void *cap,wh3_tip *tip,member_terminal *proof) {
+ size_t i;wh3_tip before=*tip;
+ if(!reg_build_terminal()||before.line_count!=10)return 0;
+ for(i=10;i<built.n;i++){if(wh3w_append(f.store,cap,&before,built.lines[i],tip)!=WH3_TX_OK)return 0;before=*tip;}
+ return wh3wr_finish(registration,f.store,tip,member_terminal_prove,proof);
+}
+static void member_roundtrip_case(int old_mirror) {
+ member_terminal proof={0};void *cap=NULL;wh3_tip tip;wchar_t path[MAX_PATH];wh3w_identity after;
+ if(!reg_fixture(old_mirror?"compound-existing-mirror-handle-proof":"compound-new-mirror-handle-proof",1))return;
+ expect(member_prepare(&proof.database,&cap,&tip),"native pending, immutable images and publish-intent prefix");if(!cap)return;
+ swprintf_s(path,MAX_PATH,L"%ls\\occupied.sqlite",f.parent);
+ expect(member_seed_file(path,"foreign retained object"),"real unexpected retention object");
+ expect(wh3wr_publish_member(registration,L"library.sqlite",&proof.database.old_id,L"member-stage.sqlite",
+    &proof.database.new_id,L"occupied.sqlite",member_prove,&proof.database,NULL)==WH3_TX_MISMATCH,"never overwrite unexpected retained object");
+ proof.database.reject=1;
+ expect(wh3wr_publish_member(registration,L"library.sqlite",&proof.database.old_id,L"member-stage.sqlite",
+    &proof.database.new_id,L"member-retained.sqlite",member_prove,&proof.database,NULL)==WH3_TX_MISMATCH,"actual-handle proof refusal performs no rename");
+ expect(sdk_prove((void *)original,reglib),"original SDK target remains unchanged after refusal");
+ proof.database.reject=0;
+ expect(wh3wr_publish_member(registration,L"library.sqlite",&proof.database.old_id,L"member-stage.sqlite",
+    &proof.database.new_id,L"member-retained.sqlite",member_prove,&proof.database,NULL)==WH3_TX_OK,"handle-verified actual database publication");
+ expect(wh3wr_check(registration),"live target identity after checked publication");
+ expect(wh3wr_publish_member(registration,L"library.sqlite",&proof.database.old_id,L"member-stage.sqlite",
+    &proof.database.new_id,L"member-retained.sqlite",member_prove,&proof.database,NULL)==WH3_TX_OK,"exact already-published state is verified again");
+ proof.has_mirror=1;proof.mirror.old_present=old_mirror;
+ if(old_mirror){
+  swprintf_s(path,MAX_PATH,L"%ls\\mirror.json",f.parent);
+  expect(member_seed_file(path,"old ledger")&&member_capture(path,&proof.mirror.old_id,proof.mirror.old_sha,&proof.mirror.old_size),"capture actual previous mirror");
+ }
+ swprintf_s(path,MAX_PATH,L"%ls\\stage-mirror.json",f.parent);
+ expect(member_seed_file(path,"verified new ledger")&&member_capture(path,&proof.mirror.new_id,proof.mirror.new_sha,&proof.mirror.new_size),"capture actual staged mirror");
+ expect(wh3wr_publish_member(registration,L"mirror.json",old_mirror?&proof.mirror.old_id:NULL,L"stage-mirror.json",
+    &proof.mirror.new_id,old_mirror?L"retained-mirror.json":NULL,member_prove,&proof.mirror,NULL)==WH3_TX_OK,"second publication member uses the same exclusive domain");
+ expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"compound publication remains closed before terminal proof");
+ expect(member_finish(cap,&tip,&proof),"all members independently prove before CLEAN");
+ reg_close_all();
+ expect(capture_id(reglib,0,&after)&&!memcmp(&after,&proof.database.new_id,sizeof(after)),"actual new database identity retained");
+ expect(reg_probe(WH3WG_SHARED)==1,"fresh reader after compound proof"); 
+}
+static int member_child(reg_shared *shared) {
+ member_proof proof;void *cap=NULL;wh3_tip tip;wh3w_controls controls={0};
+ f.b=shared->b;f.g=shared->g;wcscpy_s(reglib,MAX_PATH,shared->library);
+ wcscpy_s(f.root,MAX_PATH,shared->root);wcscpy_s(f.parent,MAX_PATH,shared->library);*wcsrchr(f.parent,L'\\')=0;
+ controls.context=shared;controls.phase=reg_barrier;
+ if(!member_prepare(&proof,&cap,&tip))return 97;
+ return wh3wr_publish_member(registration,L"library.sqlite",&proof.old_id,L"member-stage.sqlite",&proof.new_id,
+    L"member-retained.sqlite",member_prove,&proof,&controls)==WH3_TX_OK?0:98;
+}
+static void member_kill_case(unsigned phase) {
+ char name[100];HANDLE child;member_terminal proof={0};member_proof input={0};size_t size=0,count=0;
+ wh3_tip tip;void *cap=NULL;char (*lines)[EXR_WH_LINE_MAX];wh3w_identity before;char before_sha[65];DWORD before_size;
+ snprintf(name,sizeof(name),"native-member-process-death-%u",phase);
+ if(!reg_fixture(name,1))return;
+ expect(member_capture(reglib,&before,before_sha,&before_size),"independent original content and native identity");
+ child=reg_spawn(WH3WG_OWNER,phase);expect(child!=NULL,"spawn checked native publisher");if(!child)return;
+ expect(WaitForSingleObject(rrdy,15000)==WAIT_OBJECT_0&&rs->reached==(int)phase,"observe exact native publication barrier");
+ expect(finish(child,1),"kill actual checked publisher");
+ expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"pending native namespace never admits fresh reader");
+ expect(reg_open(WH3WG_RECOVER,NULL),"fresh exclusive reconciliation holder");
+ expect(wh3wr_transaction_read(registration,WH3WR_INPUT,&input,sizeof(input),&size)&&size==sizeof(input)&&
+    !memcmp(&input.old_id,&before,sizeof(before))&&input.old_size==before_size&&!memcmp(input.old_sha,before_sha,65),"independent original registration proof");
+ expect(wh3wr_transaction_read(registration,WH3WR_PREPARED,&proof.database,sizeof(proof.database),&size)&&
+    size==sizeof(proof.database)&&!memcmp(&proof.database.old_id,&before,sizeof(before))&&
+    proof.database.old_size==before_size&&!memcmp(proof.database.old_sha,before_sha,65),"acknowledged staged native proof survives death");
+ expect(wh3wr_journal(registration,&f.b,&f.g,NULL,&f.store),"reopen exact original journal");
+ lines=calloc(EXR_WH_MAX_JOURNAL,sizeof(*lines));expect(lines!=NULL,"bounded original prefix storage");if(!lines)return;
+ expect(wh3w_read(f.store,lines,EXR_WH_MAX_JOURNAL,&count,&tip)&&count==10,"complete original publish-intent prefix");
+ free(lines);
+ expect(wh3wr_resume(registration,&f.b,&f.g,f.store,&tip,&cap),"fresh capability for exact acknowledged prefix");
+ expect(wh3wr_publish_member(registration,L"library.sqlite",&proof.database.old_id,L"member-stage.sqlite",
+    &proof.database.new_id,L"member-retained.sqlite",member_prove,&proof.database,NULL)==WH3_TX_OK,"complete or confirm only the exact retained/staged native state");
+ expect(member_finish(cap,&tip,&proof),"verified original and actual target precede recovered CLEAN");
+ reg_close_all();expect(reg_probe(WH3WG_SHARED)==1,"fresh reader after independently proven namespace repair");
+}
 int main(int argc,char **argv) {
  if(argc==3&&!strcmp(argv[1],"--registry-child"))return reg_child(argv[2]);
  if(argc==3&&!strcmp(argv[1],"--probe-owner")){
@@ -756,6 +896,8 @@ int main(int argc,char **argv) {
  {unsigned i;for(i=0;i<3;i++)transaction_case(i);epoch_repeat_case();
   for(i=WH3WR_EPOCH_INTENT;i<=WH3WR_EPOCH_RETIRED;i++)epoch_kill_case(i);}
  checkpoint_bad_case(0);checkpoint_bad_case(1);
+ member_roundtrip_case(0);member_roundtrip_case(1);
+ {unsigned i;for(i=WH3WR_MEMBER_PROVED;i<=WH3WR_MEMBER_FLUSHED;i++)member_kill_case(i);}
  fixture_close();if(rs)UnmapViewOfFile(rs);if(rm)CloseHandle(rm);if(rrdy)CloseHandle(rrdy);if(rgo)CloseHandle(rgo);
  printf("{\"source\":\"%s\",\"cases\":%u,\"checks\":%u,\"failed\":%u,\"passed\":%s,\"actual_sdk\":true,\"trusted_registry\":true,\"production_coordinator\":false,\"full_c02_acceptance\":false}\n",
    CANDIDATE_SOURCE_SHA,cases,checks,failures,failures?"false":"true");

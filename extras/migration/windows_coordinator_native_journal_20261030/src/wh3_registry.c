@@ -736,3 +736,82 @@ done:
  if(directory!=INVALID_HANDLE_VALUE)CloseHandle(directory);
  if(!wh3wr_close(next))ok=0;if(!wh3wr_close(old))ok=0;return ok;
 }
+/* One member of a compound publication. Recovery uses the same native
+   identities and proof while fresh exclusive custody is held. */
+static HANDLE rmember_open(const wchar_t *path,wh3w_identity *id,int *present) {
+ HANDLE h;DWORD error;*present=0;
+ h=CreateFileW(path,GENERIC_READ|GENERIC_WRITE|DELETE,FILE_SHARE_READ,NULL,OPEN_EXISTING,
+   FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_WRITE_THROUGH,NULL);
+ if(h==INVALID_HANDLE_VALUE){error=GetLastError();if(error==ERROR_FILE_NOT_FOUND)*present=-1;return h;}
+ if(!rid(h,id,0)){CloseHandle(h);SetLastError(ERROR_INVALID_DATA);return INVALID_HANDLE_VALUE;}
+ *present=1;return h;
+}
+wh3_tx_status wh3wr_publish_member(wh3wr_registration *r,const wchar_t *target_leaf,
+ const wh3w_identity *original,const wchar_t *stage_leaf,const wh3w_identity *staged,
+ const wchar_t *retained_leaf,int (*prove)(void *,HANDLE,HANDLE),void *context,
+ const wh3w_controls *controls) {
+ wchar_t paths[3][MAX_PATH];const wchar_t *leaves[3],*library_leaf;size_t parent;unsigned k;
+ HANDLE handles[3]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE};
+ wh3w_identity identities[3],observed;int present[3]={0},main_target=0,already=0,retained=0,ok=0;
+ HANDLE old=INVALID_HANDLE_VALUE,new_image=INVALID_HANDLE_VALUE;DWORD error=ERROR_INVALID_PARAMETER;
+ wh3_tx_status status=WH3_TX_MISMATCH;
+ if(!r||!r->cap||!prove||!staged||!rleaf(target_leaf)||!rleaf(stage_leaf)||
+    !ridentity(r,0)||!rcurrent(r)||!wh3wg_check(r->gate))goto done;
+ library_leaf=wcsrchr(r->library,L'\\')+1;parent=(size_t)(library_leaf-r->library);
+ main_target=!_wcsicmp(library_leaf,target_leaf);
+ if(!_wcsicmp(target_leaf,stage_leaf)||(original?(!rleaf(retained_leaf)||
+      !_wcsicmp(target_leaf,retained_leaf)||!_wcsicmp(stage_leaf,retained_leaf)||reqid(original,staged)):
+      retained_leaf!=NULL)||(main_target&&(!original||!reqid(original,&r->ids[4]))))goto done;
+ leaves[0]=target_leaf;leaves[1]=stage_leaf;leaves[2]=retained_leaf;
+ for(k=0;k<(original?3u:2u);k++){
+  if(parent+wcslen(leaves[k])>=MAX_PATH)goto done;
+  memcpy(paths[k],r->library,parent*sizeof(wchar_t));wcscpy_s(paths[k]+parent,MAX_PATH-parent,leaves[k]);
+ }
+ if(main_target&&!wh3wr_prepare_publish(r))goto done;
+ for(k=0;k<(original?3u:2u);k++){
+  handles[k]=rmember_open(paths[k],&identities[k],&present[k]);
+  if(!present[k]){error=GetLastError();goto done;}
+ }
+ if(present[0]==1&&reqid(&identities[0],staged)&&present[1]==-1){
+  if(original&&(present[2]!=1||!reqid(&identities[2],original)))goto done;
+  new_image=handles[0];old=original?handles[2]:INVALID_HANDLE_VALUE;already=1;
+ }else if(present[1]==1&&reqid(&identities[1],staged)){
+  new_image=handles[1];
+  if(original){
+   if(present[0]==1&&reqid(&identities[0],original)&&present[2]==-1)old=handles[0];
+   else if(present[0]==-1&&present[2]==1&&reqid(&identities[2],original)){old=handles[2];retained=1;}
+   else goto done;
+  }else if(present[0]!=-1)goto done;
+ }else goto done;
+ if((old!=INVALID_HANDLE_VALUE&&!FlushFileBuffers(old))||!FlushFileBuffers(new_image)){error=GetLastError();goto done;}
+ if(!prove(context,old,new_image)||!rid(new_image,&observed,0)||!reqid(&observed,staged)||
+    (old!=INVALID_HANDLE_VALUE&&(!rid(old,&observed,0)||!reqid(&observed,original)))||
+    !ridentity(r,0)||!rcurrent(r)||!wh3wg_check(r->gate)){error=ERROR_INVALID_DATA;goto done;}
+ rphase(controls,WH3WR_MEMBER_PROVED);
+ if(!already){
+  status=WH3_TX_UNCERTAIN;
+  if(original&&!retained){
+   if(!rrename(old,retained_leaf)){error=GetLastError();goto done;}
+   rphase(controls,WH3WR_MEMBER_RETAINED);
+  }
+  if(!rid(new_image,&observed,0)||!reqid(&observed,staged)||
+     !ridentity(r,0)||!rcurrent(r)||!wh3wg_check(r->gate))goto done;
+  if(!rrename(new_image,target_leaf)){error=GetLastError();goto done;}
+  rphase(controls,WH3WR_MEMBER_BOUND);
+ }
+ if((old!=INVALID_HANDLE_VALUE&&!FlushFileBuffers(old))||!FlushFileBuffers(new_image)){error=GetLastError();goto done;}
+ if(!rid(new_image,&observed,0)||!reqid(&observed,staged)||
+    (old!=INVALID_HANDLE_VALUE&&(!rid(old,&observed,0)||!reqid(&observed,original)))||
+    !ridentity(r,0)||!rcurrent(r)||!wh3wg_check(r->gate))goto done;
+ rphase(controls,WH3WR_MEMBER_FLUSHED);ok=1;
+done:
+ for(k=0;k<3;k++)if(handles[k]!=INVALID_HANDLE_VALUE)CloseHandle(handles[k]);
+ if(ok&&main_target){
+  ok=rtarget(r,0,0)&&rid(r->target,&observed,0)&&reqid(&observed,staged)&&
+     ridentity(r,1)&&rcurrent(r)&&wh3wg_check(r->gate);
+  if(!ok)error=ERROR_INVALID_DATA;
+ }
+ if(ok)return WH3_TX_OK;
+ if(status==WH3_TX_UNCERTAIN){wh3w_domain domain;wh3wg_domain(r->gate,&domain);domain.poison(domain.context,r->cap,"compound-publication-uncertain");}
+ SetLastError(error);return status;
+}
