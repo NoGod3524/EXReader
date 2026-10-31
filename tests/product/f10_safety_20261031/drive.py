@@ -42,7 +42,7 @@ def main():
         cache=work/'cache';originals=work/'originals';cache.mkdir(mode=0o700);originals.mkdir(mode=0o700)
         original=originals/(source_sha+'.txt');original.write_bytes(source)
         revfile=work/'revision.json';revfile.write_bytes(wire)
-        account=uuid.uuid4().hex
+        account=str(uuid.uuid4())
         fixture=Fixture(cert,key,authorization)
         process=None
         record={'name':name,'source':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],
