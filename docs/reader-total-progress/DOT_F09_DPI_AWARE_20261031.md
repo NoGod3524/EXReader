@@ -18,3 +18,11 @@ Local Narrator check on a 125% display (AppliedDPI 120): its focus box for EXRea
 System-aware, not per-monitor: a window moved to a monitor with a different DPI is bitmap-scaled by Windows and its accessibility rectangles are then virtualized for that monitor. No WM_DPICHANGED handling. Scaling and the highlight can only be checked on a display above 100%, so CI proves build and self-test only; the real check is manual. Formal F09 and Narrator speech verification remain false.
 
 Initial status: source prepared, no run yet.
+
+## Result (1/2), 2026-10-31 07:25 UTC
+
+Source cc65d1e2855a054851d132f863bc5f79c8c44c18; run41175736889 attempt1, job124462798287: success, 26 Windows native host checks passed, no new compiler warning from reader.c. Artifact13033480326, `f09-dpi-aware-41175736889-1`, 17141996 bytes, SHA256 872996eedf469fff6be3e70edc82ebe387b03fec8774ac9dcbd305cc104fde5e; EXReader.exe SHA256 6f1e561e5f12ed85c047063e46d019358cba5a3d4c563c7f74d609ffe29332cf. Downloaded with user confirmation into a new empty folder; all 31 files matched the manifest.
+
+Local check on the same 125% display (AppliedDPI 120), same method as the Narrator package observation: EXReader opened at DPI-scaled size with scaled controls and font. With Narrator running, its focus box matched the real control rectangles for the whole window, the reading page, the annotation list, the annotation content box and the shelf search box (checked by moving focus with the mouse and keyboard and comparing screenshots). The 0.8x position/size offset and the box leaving the window no longer occurred. Narrator's Home window appeared at start and was minimized; Narrator was then stopped and EXReader closed.
+
+Not established: Narrator speech (still unheard; Live captions showed nothing earlier), every dialog and the compact layout at 125% (only the main window was exercised), 150% or higher scales, and moving the window between monitors of different DPI (system-aware only). The earlier defect candidate is considered fixed for the main window at 125%. Formal F09 and Narrator verification remain false.
