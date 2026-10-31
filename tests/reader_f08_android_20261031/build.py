@@ -44,6 +44,15 @@ def main():
         shutil.copyfile(source,artifacts/name)
         if name!="app-debug-androidTest.apk":shutil.copyfile(source,expected/name)
         packages[name]={"sha256":sha(source),"bytes":source.stat().st_size}
+    owner_command=[x.replace("-PexrTestRunner=org.exreader.host.ShelfCatalogTest",
+        "-PexrTestRunner=org.exreader.host.ProductOwnerTest") for x in command[:-4]]+[":app:assembleDebugAndroidTest"]
+    builder.sh(owner_command)
+    owner_apk=artifacts/"product-owner-androidTest.apk"
+    shutil.copyfile(ROOT/"examples/android"/apk_sources["app-debug-androidTest.apk"],owner_apk)
+    packages[owner_apk.name]={"sha256":sha(owner_apk),"bytes":owner_apk.stat().st_size}
+    need(sha(ROOT/"examples/android"/apk_sources["app-debug.apk"])==packages["app-debug.apk"]["sha256"],
+         "owner runner changed the measured application")
+    shutil.copyfile(artifacts/"app-debug-androidTest.apk",ROOT/"examples/android"/apk_sources["app-debug-androidTest.apk"])
     fixtures=ROOT/"build/android-host/fixtures";fixtures.mkdir(parents=True)
     shutil.copyfile(wave/"download/NewReview.txt",fixtures/"NewReview.txt")
     shutil.copyfile(wave/"download/fixtures.json",OUT/"fixtures.json")

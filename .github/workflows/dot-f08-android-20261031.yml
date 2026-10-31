@@ -1,7 +1,7 @@
-name: F08 Android same-source shelf measurements
+name: F08 Android catalog head startup repair
 on:
   push:
-    branches: [codex/dot-f08-android-20261031]
+    branches: [codex/f08-android-startup-heads-20261031]
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Guard test-only source and measurement controls
+      - name: Check pinned source and unchanged budgets
         run: |
           python3 -m py_compile tests/reader_f08_android_20261031/*.py
           python3 tests/reader_f08_android_20261031/lane.py guard
