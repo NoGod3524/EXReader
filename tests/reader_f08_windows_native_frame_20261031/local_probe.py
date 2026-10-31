@@ -13,7 +13,7 @@ def module(name,path):
 
 def main():
  p=argparse.ArgumentParser();p.add_argument("--zip",required=True);p.add_argument("--metadata",required=True)
- p.add_argument("--expected-source",required=True);p.add_argument("--harness-source");p.add_argument("--helper-root",required=True);p.add_argument("--observer",required=True);a=p.parse_args()
+ p.add_argument("--expected-source",required=True);p.add_argument("--harness-source");p.add_argument("--cohorts",default="shelf,reader,page");p.add_argument("--helper-root",required=True);p.add_argument("--observer",required=True);a=p.parse_args()
  need(os.name=="nt" and os.environ.get("COMPUTERNAME","").upper()=="LAP25002","named native Windows device")
  need(os.environ.get("GITHUB_ACTIONS")!="true","local-native provenance")
  data=Path(a.zip).read_bytes();meta=json.loads(Path(a.metadata).read_text(encoding="utf-8-sig"))
@@ -44,6 +44,7 @@ def main():
  user.ShowWindow.argtypes=[W.HWND,C.c_int];user.SetWindowPos.argtypes=[W.HWND,W.HWND,C.c_int,C.c_int,C.c_int,C.c_int,W.UINT];user.SetWindowPos.restype=W.BOOL
  user.GetDlgCtrlID.argtypes=[W.HWND];user.GetDlgCtrlID.restype=C.c_int
  user.PostMessageW.argtypes=[W.HWND,W.UINT,W.WPARAM,W.LPARAM];user.PostMessageW.restype=W.BOOL
+ user.GetPropW.argtypes=[W.HWND,W.LPCWSTR];user.GetPropW.restype=W.HANDLE
  H.K.QueryPerformanceCounter.argtypes=[C.POINTER(C.c_longlong)];H.K.QueryPerformanceFrequency.argtypes=[C.POINTER(C.c_longlong)]
  H.K.SetThreadExecutionState.argtypes=[W.DWORD];H.K.SetThreadExecutionState.restype=W.DWORD
  def qpc():
@@ -59,7 +60,8 @@ def main():
  awake=H.K.SetThreadExecutionState(0x80000003);need(awake,"temporary awake request")
  deadline=time.monotonic()+1200
  try:
-  for index,kind in enumerate(("shelf","reader","page")):
+  cohorts=a.cohorts.split(",");need(cohorts and len(cohorts)==len(set(cohorts)) and set(cohorts)<={"shelf","reader","page"},"named diagnostic cohorts")
+  for index,kind in enumerate(cohorts):
    need(time.monotonic()<deadline,"20 minute native diagnostic bound")
    folder=out/("capture-%02d"%index);folder.mkdir();trace=folder/"product-native-trace.json"
    entry=dict(index=index,kind=kind,folder=folder.name,complete=False);report["captures"].append(entry)
@@ -80,6 +82,10 @@ def main():
     event=dict(kind="input",pid=host.process.pid,hwnd=int(hwnd),control=user.GetDlgCtrlID(hwnd),message=message,wparam=wparam,start_qpc=qpc())
     try:return send(hwnd,message,wparam,lparam,timeout)
     finally:event["end_qpc"]=qpc();emit(event)
+   def painted():return int(user.GetPropW(host.control("page"),"EXReaderF08PaintedGeneration") or 0)
+   def await_paint(previous):
+    host.poll(lambda:(True,) if painted()>previous else None,10,interval=.001)
+    emit(dict(kind="paint_readiness",pid=host.process.pid,qpc=qpc(),previous_generation=previous,painted_generation=painted()))
    host.send=traced;emit(dict(kind="process",pid=host.process.pid,qpc=qpc(),frequency=frequency.value,exe_sha256=sha(host.exe)))
    try:
     entry["first_screen"]=H.op_first_screen(host,60);entry["hwnd"]=int(host.window)
@@ -97,10 +103,10 @@ def main():
      entry["first_scroll"]=H.op_shelf_next_page(host,20)
      for _ in range(3):host.wheel(4);time.sleep(.12);host.wheel_up(4);time.sleep(.12)
     elif kind=="reader":
-     H.op_reset_top(host);entry["open"]=H.op_open(host,"Shelf 0000",30)
+     H.op_reset_top(host);before_paint=painted();entry["open"]=H.op_open(host,"Shelf 0000",30);await_paint(before_paint)
      for _ in range(3):
       for control in ("font_inc","font_dec"):
-       host.wait_enabled(control,10);host.click(control);time.sleep(.15)
+       host.wait_enabled(control,10);before_paint=painted();host.click(control);await_paint(before_paint);time.sleep(.15)
      host.wait_enabled("font_inc",10)
     else:
      # Original reading preparation adds one fixed packaged EPUB in a separate
@@ -112,9 +118,9 @@ def main():
      print("F08_PICKER_EXPECTED",host.process.pid,str(fixture),flush=True)
      # The agent selects this fixed packaged fixture through computer-use.
      host.poll(lambda:(True,) if any("EXReader benchmark" in row for row in host.rows()) else None,90,interval=.02)
-     entry["open"]=H.op_open(host,"EXReader benchmark",30);key=entry["open"]["key"];entry["page_turns"]=[]
+     before_paint=painted();entry["open"]=H.op_open(host,"EXReader benchmark",30);await_paint(before_paint);key=entry["open"]["key"];entry["page_turns"]=[]
      for _ in range(8):
-      turn=H.op_page_turn(host,key);entry["page_turns"].append(turn);key=turn["to"]
+      before_paint=painted();turn=H.op_page_turn(host,key);await_paint(before_paint);entry["page_turns"].append(turn);key=turn["to"]
     time.sleep(.2);entry["observed"]=True
    finally:
     if observer:
