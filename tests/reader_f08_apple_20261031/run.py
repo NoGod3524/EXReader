@@ -95,13 +95,19 @@ def native(platform):
         original=ROOT/"tests/apple_host/shelf/ui/ShelfUITests.swift";text=original.read_text()
         insertion=(HERE/"Metrics.swift").read_text();at=text.rfind("}")
         need(at>0 and "test08F08ScrollMetrics" not in text,"insertion boundary")
-        tests=out/"tests";tests.mkdir()
+        tests=out/"shelf/ui";tests.mkdir(parents=True)
         candidate=tests/original.name;candidate.write_text(text[:at]+insertion+text[at:])
         save(evidence/"driver.json",{"original_sha256":sha(original),"candidate_sha256":sha(candidate),
             "insertion_sha256":sha(HERE/"Metrics.swift"),"original_cases_unchanged":True})
         shutil.copyfile(candidate,evidence/"ShelfUITests.swift")
         project=out/"project";derived=out/"derived"
         run(["ruby","tests/reader_team24_apple/make_project.rb",project,resources,tests,"wave3"],"project")
+        configuration=json.loads(command(["ruby","-rxcodeproj","-rjson","-e",
+            'p=Xcodeproj::Project.open(ARGV[0]);v={};p.targets.each{|t|next unless t.product_type=="com.apple.product-type.application";t.build_configurations.each{|c|v[t.name+"/"+c.name]=c.build_settings["SWIFT_ACTIVE_COMPILATION_CONDITIONS"]}};puts JSON.generate(v)',
+            project/"EXReaderHost.xcodeproj"],text=True))
+        required={"EXR_APPLE_SHELF_REVIEW","EXR_APPLE_HOST_REVIEW","EXR_APPLE_RAW3","EXR_APPLE_WAVE3","EXR_APPLE_PAGE_THEME"}
+        need(len(configuration)==4 and all(required<=set(value.split()) for value in configuration.values()),"shelf observation and full-feature flags")
+        save(evidence/"project-configuration.json",configuration)
         if platform=="macos":
             destination="platform=macOS";device="macos";device_name="macOS host";runtime="macOS"
             scheme="EXReaderHost-macOS";suffix="Debug";signing="YES";test_target="EXReaderHostUITests-macOS"
