@@ -554,6 +554,21 @@
       "source_prefix": "a24e24fa1577c6dd685b304c2506e3db90346eb8",
       "doc": "docs/reader-total-progress/apple-annotation-macos-audited.md",
       "adapter": "apple_annotation_macos_40928332937"
+    },
+    "apple_annotation_iphone_independent_review_20261031": {
+      "run": 41170540560,
+      "doc": "docs/reader-total-progress/EXREADER_C02_WEBDAV_HANDOFF_20261031.md",
+      "source_prefix": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
+      "expected_conclusion": "failure",
+      "artifact": 13031773957,
+      "sha256": "7f32490e8692af06650494bbcb1be6c267214f90db1001bbb5a7b016ca66f4e7",
+      "bytes": 324049983,
+      "platform": "iphone",
+      "case_phase": "wave3",
+      "phase_case_count": 5,
+      "required_cases": [
+        "testNativeAnnotationPreviewConfirmCancelAndDuplicate()"
+      ]
     }
   },
   "requirements": [
@@ -1406,9 +1421,11 @@
       "group": "host",
       "platform": "iphone",
       "title": "iPhone：宿主标注文件导入/导出、预览确认及错误拒绝",
-      "state": "partial",
-      "evidence": [],
-      "note": "有部分模块或实现，未找到覆盖完整目标的已接受宿主证据；计零分。"
+      "state": "verified",
+      "evidence": [
+        "apple_annotation_iphone_independent_review_20261031"
+      ],
+      "note": "父任务dot独立复审按原固定条款接受iPhone宿主标注导入/导出、预览确认及错误拒绝；原整轮与两次审计红灯保持，额外截图角色规则不作为固定条款。范围为iPhone SE3/iOS26.2模拟器，不授予真机、全Apple或完整F02。"
     },
     {
       "id": "H.iphone.original_export",
