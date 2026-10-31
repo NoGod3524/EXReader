@@ -3,7 +3,7 @@ import argparse, hashlib, importlib.util, io, json, os, shutil, stat, subprocess
 from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/"build/f08-shelf-content"
 BASE="2bd45f2f764b4cba33037d3366baea3adee1086b"
-PRODUCER={"source_sha":BASE,"run_id":"41191842821","attempt":"1"}
+PRODUCER={"source_sha":"1c39ec9f0b5015d3aa1f12c0a39bcfa4719568b2","run_id":"41196829037","attempt":"1"}
 FILES={"tests/reader_f08_causal_frame_20261031/probe.c","tests/reader_f08_causal_frame_20261031/verify.py",
        "tests/reader_f08_causal_frame_20261031/draw_control.c","tests/reader_f08_causal_frame_20261031/shelf_content.h",
        "tests/reader_f08_shelf_content_20261031/run.py",".github/workflows/dot-f08-shelf-content-20261031.yml"}
@@ -65,7 +65,7 @@ def product(raw):
     for path,digest in built["helpers"].items():
         need(hashlib.sha256(command(["git","show",BASE+":"+path])).hexdigest()==digest,"original helper bytes")
     package=load(raw/"perf-package/build.json");payload=raw/"perf-package/EXReader-Linux"
-    need(package["source_sha"]==BASE and package["sdk_version"]=="3.42.0" and package["abi"]==1,"fixed package")
+    need(package["source_sha"]==PRODUCER["source_sha"] and package["sdk_version"]=="3.42.0" and package["abi"]==1,"fixed package")
     files={p.relative_to(payload).as_posix():sha(p) for p in payload.rglob("*") if p.is_file()}
     need(files==package["files"] and sha(payload/"bin/exreader-linux")==built["program_sha256"],"exact complete payload")
     seed=raw/"perf-probe/seed_library";need(sha(seed)==built["probes"]["perf-probe/seed_library"],"original corpus seed")
