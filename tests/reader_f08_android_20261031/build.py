@@ -1,5 +1,6 @@
 """Actions-only SDK 3.42 shelf adapter; original recipes and tests stay frozen."""
 import importlib.util, json, shlex, shutil, zipfile
+from pathlib import Path
 from lane import ROOT, OUT, identity, need, save, sha, guard, command
 def main():
     guard()
