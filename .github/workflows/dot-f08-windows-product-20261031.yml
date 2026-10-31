@@ -1,0 +1,69 @@
+name: F08 Windows full product baseline
+on:
+  push:
+    branches: [codex/dot-f08-windows-product-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  sample:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Guard frozen production and compile test adapters
+        run: |
+          python -m py_compile tests/reader_f08_windows_product_20261031/build.py tests/reader_f08_windows_product_20261031/audit.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build SDK 3.42 and the complete installed Windows host
+        run: python tests/reader_f08_windows_product_20261031/build.py build
+      - name: Original observation and interaction suites
+        run: python tests/reader_f08_windows_product_20261031/build.py sample
+      - name: Seal package and observations including failures
+        if: always()
+        run: python tests/reader_f08_windows_product_20261031/build.py seal
+      - uses: actions/upload-artifact@v4
+        id: upload
+        if: always()
+        with:
+          name: f08-windows-product-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-windows-product/evidence
+          if-no-files-found: error
+          retention-days: 30
+  audit:
+    needs: sample
+    if: always() && needs.sample.outputs.artifact_id != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate complete ZIP and independently verify native observations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F08_ARTIFACT_ID: ${{ needs.sample.outputs.artifact_id }}
+          F08_ARTIFACT_DIGEST: ${{ needs.sample.outputs.artifact_digest }}
+        run: python3 tests/reader_f08_windows_product_20261031/audit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-windows-product-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-windows-product-audit/audit.json
+            build/f08-windows-product-audit/metadata.json
+            build/f08-windows-product-audit/original-verifier.log
+          if-no-files-found: error
