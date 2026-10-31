@@ -68,7 +68,7 @@ static void acct_detail_refresh(void) {
 static void acct_controls(void) {
   if (!acct.dialog) return;
   int busy = acct_busy();
-  int retry_session = acct.session && (acct.view.state == READER_SESSION_FAILED || acct.view.state == READER_SESSION_CANCELLED);
+  int retry_session = acct.session && !acct.session_stale && (acct.view.state == READER_SESSION_FAILED || acct.view.state == READER_SESSION_CANCELLED);
   EnableWindow(acct.dialog, TRUE);
   EnableWindow(GetDlgItem(acct.dialog, IDC_ACCOUNT_APPLY), !busy && !g.closing);
   EnableWindow(GetDlgItem(acct.dialog, IDC_ACCOUNT_SYNC), !busy && !g.closing && acct.have_secret && g.product_ready && !g.product_pending);
@@ -122,7 +122,7 @@ static void acct_start_network(void) {
       config.account_id = o->id; config.dav.root_url = o->root; config.dav.authorization = authorization;
       config.dav.timeout_ms = 15000;
       code = reader_session_create(&config, &acct.session);
-      if (code == READER_SESSION_OK) { acct.generation++; code = reader_session_start(acct.session); }
+      if (code == READER_SESSION_OK) { acct.generation++; acct.session_stale = 0; code = reader_session_start(acct.session); }
       if (acct.session) reader_session_observe(acct.session, &acct.view);
     }
   }
@@ -185,7 +185,7 @@ static void acct_cancel(void) {
 static void acct_retry(void) {
   if (acct_busy() || g.closing) return;
   InterlockedExchange(&acct.cancelled, 0);
-  if (acct.session && (acct.view.state == READER_SESSION_FAILED || acct.view.state == READER_SESSION_CANCELLED)) {
+  if (acct.session && !acct.session_stale && (acct.view.state == READER_SESSION_FAILED || acct.view.state == READER_SESSION_CANCELLED)) {
     reader_session_status code = reader_session_start(acct.session);
     reader_session_observe(acct.session, &acct.view);
     acct.stage_failed = 0;
@@ -308,6 +308,8 @@ static void acct_job_accept(host_job *job) {
       if (acct.have_secret) SendMessageW(acct.remember, BM_SETCHECK, o->secret_remember ? BST_CHECKED : BST_UNCHECKED, 0);
     }
     if (job->kind == JOB_ACCOUNT_FORGET && acct.dialog) SetWindowTextW(acct.password, L"");
+    /* An existing session keeps the authorization it was created with; only Sync may start one with the new state. */
+    if (job->kind == JOB_ACCOUNT_SET || job->kind == JOB_ACCOUNT_FORGET) acct.session_stale = 1;
     acct_notice(job->message[0] ? job->message : ok ? L"账号设置已更新。" : L"账号操作未完成。");
   } else if (job->kind == JOB_ACCOUNT_STAGE) {
     /* A cancellation can arrive after the worker finishes but before this callback. */
