@@ -726,6 +726,7 @@ static int scoped_cases_main(void){
  printf("{\"source\":\"%s\",\"cases\":%u,\"checks\":%u,\"failed\":%u,\"passed\":%s,\"native_posix\":true,\"scoped\":true,\"process_kill\":true,\"power_loss\":false,\"actual_sdk\":false,\"host_wiring\":false}\n",SOURCE_SHA,cases,checks,failures,failures?"false":"true");
  return failures?1:0;
 }
+#include "../posix_c02_migration_20261031/native_api_cases.inc"
 int main(int argc,char **argv){
  memset(manifest,'a',64);
  manifest[64]=0;
@@ -735,6 +736,11 @@ int main(int argc,char **argv){
  terminal[64]=0;
  if(argc==8&&!strcmp(argv[1],"--child"))return child_main(argc,argv);
  if(argc==8&&!strcmp(argv[1],"--scope-child"))return scoped_child_main(argc,argv);
+ if(argc==8&&!strcmp(argv[1],"--migration-child"))return native_publish_child(argc,argv);
+ if(argc==3&&!strcmp(argv[1],"--migration-cases")){
+  if(!realpath(argv[0],self)||!realpath(argv[2],work))return 64;
+  return native_migration_cases_main();
+ }
  if(argc==3&&!strcmp(argv[1],"--scope-cases")){
   if(!realpath(argv[0],self)||!realpath(argv[2],work))return 64;
   return scoped_cases_main();

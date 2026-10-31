@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <service android:name=".C02SourceService" android:exported="false" android:process=":c02source" />
+    <service android:name=".C02OwnerService" android:exported="false" android:process=":c02owner" />
+  </application>
+</manifest>

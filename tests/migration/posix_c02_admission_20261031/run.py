@@ -37,9 +37,19 @@ def main():
     rows=[json.loads(line) for line in stdout.splitlines() if line.startswith('{"')]
     summaries=[row for row in rows if "source" in row]
     cases=[row for row in rows if "case" in row]
+    api_work=output/"native-migration-api"
+    api_work.mkdir(mode=0o700)
+    api_result=subprocess.run([str(tool),"--migration-cases",str(api_work)],capture_output=True,timeout=180)
+    api_stdout=api_result.stdout.decode("utf-8","replace");api_stderr=api_result.stderr.decode("utf-8","replace")
+    (output/"migration-api.stdout").write_text(api_stdout,encoding="utf-8")
+    (output/"migration-api.stderr").write_text(api_stderr,encoding="utf-8")
+    api_rows=[json.loads(line) for line in api_stdout.splitlines() if line.startswith('{"')]
+    api_summaries=[row for row in api_rows if "source" in row]
+    api_cases=[row for row in api_rows if "case" in row]
     receipt=dict(source=os.environ["GITHUB_SHA"],run=os.environ["GITHUB_RUN_ID"],attempt=os.environ["GITHUB_RUN_ATTEMPT"],
                  platform=platform.platform(),tool=dict(name=tool.name,bytes=tool.stat().st_size,sha256=sha(tool)),exit=result.returncode,
-                 summaries=summaries,case_rows=cases,scoped=dict(exit=scope_result.returncode,summaries=scope_summaries,case_rows=scope_cases),actual_sdk=False,host_wiring=False,power_loss=False)
+                 summaries=summaries,case_rows=cases,scoped=dict(exit=scope_result.returncode,summaries=scope_summaries,case_rows=scope_cases),
+                 migration_api=dict(exit=api_result.returncode,summaries=api_summaries,case_rows=api_cases),actual_sdk=False,host_wiring=False,power_loss=False)
     (output/"receipt.json").write_text(json.dumps(receipt,indent=2)+"\n",encoding="utf-8")
     inventory=[]
     for path in sorted(output.rglob("*")):
@@ -66,6 +76,15 @@ def main():
     assert scoped["passed"] is True and scoped["scoped"] is True and scoped["process_kill"] is True
     assert scoped["actual_sdk"] is False and scoped["host_wiring"] is False and scoped["power_loss"] is False
     assert scope_result.returncode==0
+    print(api_stdout,end="");print(api_stderr,end="",file=sys.stderr)
+    assert len(api_summaries)==1
+    api=api_summaries[0]
+    assert api["source"]==os.environ["GITHUB_SHA"] and api["cases"]==16 and len(api_cases)==16
+    assert api["checks"]==sum(c["checks"] for c in api_cases) and api["failed"]==sum(c["failed"] for c in api_cases)==0
+    assert api["passed"] is True and api["migration_api"] is True and api["process_kill"] is True
+    assert api["actual_sdk"] is False and api["host_wiring"] is False and api["power_loss"] is False
+    assert api_result.returncode==0
+    print(f"POSIX-C02-MIGRATION-API cases=16 checks={api['checks']} failed=0")
     print(f"POSIX-C02-SCOPED cases=10 checks={scoped['checks']} failed=0")
     print(f"POSIX-C02-ADMISSION cases={r['cases']} checks={r['checks']} failed=0")
     return 0

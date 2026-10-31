@@ -179,16 +179,16 @@ static unsigned char *read_entire_file(const char *path, size_t *size) {
   return data;
 }
 
+#include "c02_admission_jni.inc"
+#include "c02_test_jni.inc"
+
 static exr_library *library(JNIEnv *env, jlong handle) {
-  if (!handle) {
-    jclass type = (*env)->FindClass(env, "java/lang/IllegalStateException");
-    if (type) {
-      (*env)->ThrowNew(env, type, "Library handle is closed");
-      (*env)->DeleteLocalRef(env, type);
-    }
+  android_library_owner *owner = (android_library_owner *)(intptr_t)handle;
+  if (!owner || !owner->library || owner->closed || !pc02_check(owner->lease)) {
+    admission_error(env, "Library admission is closed or changed");
     return NULL;
   }
-  return (exr_library *)(intptr_t)handle;
+  return owner->library;
 }
 
 #ifdef READER_HOST_SYNC
@@ -313,30 +313,15 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_syncIdentity
 }
 #endif
 
-JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeLibrary_nativeOpen(JNIEnv *env, jclass type, jstring path) {
-  char *name = input_string(env, path);
-  exr_library *handle = NULL;
-  exr_error error;
-  exr_status status;
-  (void)type;
-  memset(&error, 0, sizeof(error));
-  if (!name) {
-    if (!(*env)->ExceptionCheck(env)) throw_argument(env, "Library path is required");
-    return 0;
-  }
-  status = exr_library_open(name, &handle, &error);
-  free(name);
-  if (status != EXR_OK) {
-    throw_status(env, status, &error, "Cannot open the library");
-    return 0;
-  }
-  return (jlong)(intptr_t)handle;
-}
-
 JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeClose(JNIEnv *env, jclass type, jlong handle) {
-  (void)env;
-  (void)type;
-  if (handle) exr_library_close((exr_library *)(intptr_t)handle);
+  android_library_owner *owner = (android_library_owner *)(intptr_t)handle;
+  (void)env; (void)type;
+  if (!owner || owner->closed) return;
+  exr_library_close(owner->library);
+  owner->library = NULL;
+  owner->closed = 1;
+  admission_event(owner->events, "sdk_close", owner->target);
+  admission_owner_release(owner);
 }
 
 JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_nativeBooks(JNIEnv *env, jclass type, jlong handle) {
@@ -384,6 +369,8 @@ JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_nativeBooks(
 JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeOpenSource(
     JNIEnv *env, jclass type, jlong handle, jlong book) {
   exr_library *store = library(env, handle);
+  android_library_owner *owner = (android_library_owner *)(intptr_t)handle;
+  android_source_owner *retained;
   exr_source *source;
   exr_error error = {0}; exr_status status;
   jlong values[2]; jlongArray result;
@@ -391,27 +378,38 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeOpenSour
   if (!store) return NULL;
   result = (*env)->NewLongArray(env, 2);
   if (!result) return NULL;
-  source = calloc(1, sizeof(*source));
-  if (!source) { throw_status(env, EXR_MEMORY, NULL, "Cannot allocate source"); return NULL; }
+  retained = calloc(1, sizeof(*retained));
+  if (!retained) { throw_status(env, EXR_MEMORY, NULL, "Cannot allocate source"); return NULL; }
+  source = &retained->source;
+  if (owner->sources == SIZE_MAX || !pc02_borrow(owner->lease)) {
+    free(retained); admission_error(env, "Cannot retain source admission"); return NULL;
+  }
+  retained->owner = owner;
   status = exr_library_source(store, (int64_t)book, source, &error);
   if (status != EXR_OK || source->size == 0 || source->size > INT64_MAX) {
     if (status == EXR_OK) source->release(source->context);
-    free(source);
+    pc02_unborrow(owner->lease);
+    free(retained);
     throw_status(env, status == EXR_OK ? EXR_IO : status, &error, "Cannot open stored source");
     return NULL;
   }
-  values[0] = (jlong)(intptr_t)source; values[1] = (jlong)source->size;
+  values[0] = (jlong)(intptr_t)retained; values[1] = (jlong)source->size;
   (*env)->SetLongArrayRegion(env, result, 0, 2, values);
-  if ((*env)->ExceptionCheck(env)) { source->release(source->context); free(source); return NULL; }
+  if ((*env)->ExceptionCheck(env)) {
+    source->release(source->context); pc02_unborrow(owner->lease); free(retained); return NULL;
+  }
+  ++owner->sources;
+  admission_event(owner->events, "source_open", owner->target);
   return result;
 }
 
 JNIEXPORT jint JNICALL Java_org_exreader_host_NativeLibrary_nativeReadSource(
     JNIEnv *env, jclass type, jlong handle, jlong offset, jbyteArray bytes, jint count) {
-  exr_source *source = (exr_source *)(intptr_t)handle;
+  android_source_owner *retained = (android_source_owner *)(intptr_t)handle;
+  exr_source *source = retained ? &retained->source : NULL;
   unsigned char buffer[65536]; size_t total = 0;
   (void)type;
-  if (!source || !bytes || offset < 0 || count <= 0 || count > (jint)sizeof(buffer)
+  if (!source || !pc02_check(retained->owner->lease) || !bytes || offset < 0 || count <= 0 || count > (jint)sizeof(buffer)
       || count > (*env)->GetArrayLength(env, bytes) || (uint64_t)offset > source->size
       || (uint64_t)count > source->size - (uint64_t)offset) {
     throw_argument(env, "Invalid source read range"); return 0;
@@ -430,9 +428,18 @@ JNIEXPORT jint JNICALL Java_org_exreader_host_NativeLibrary_nativeReadSource(
 
 JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeCloseSource(
     JNIEnv *env, jclass type, jlong handle) {
-  exr_source *source = (exr_source *)(intptr_t)handle;
+  android_source_owner *retained = (android_source_owner *)(intptr_t)handle;
+  android_library_owner *owner;
   (void)env; (void)type;
-  if (source) { source->release(source->context); free(source); }
+  if (!retained) return;
+  owner = retained->owner;
+  admission_event(owner->events, "source_release_begin", owner->target);
+  retained->source.release(retained->source.context);
+  admission_event(owner->events, "source_release_end", owner->target);
+  pc02_unborrow(owner->lease);
+  --owner->sources;
+  free(retained);
+  admission_owner_release(owner);
 }
 
 JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeLibrary_nativeImportFile(
