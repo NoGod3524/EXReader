@@ -325,6 +325,17 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeClose(JNIEnv *
   admission_owner_release(owner);
 }
 
+JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeClosePrimaryForSourceTest(
+    JNIEnv *env, jclass type, jlong handle, jint expected) {
+  android_library_owner *owner = (android_library_owner *)(intptr_t)handle;
+  if (!owner || owner->closed || !owner->library || expected <= 0 ||
+      owner->sources != (size_t)expected || !pc02_check(owner->lease)) {
+    admission_error(env, "Primary-close probe requires only live raw source borrows");
+    return;
+  }
+  Java_org_exreader_host_NativeLibrary_nativeClose(env, type, handle);
+}
+
 JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_nativeBooks(JNIEnv *env, jclass type, jlong handle) {
   exr_library *store = library(env, handle);
   exr_book *books = NULL;

@@ -98,6 +98,7 @@ public final class C02HostTest extends Instrumentation {
             Bundle ready = source.call(C02ActorService.SOURCE, book);
             require(ready.getInt("uid") == Process.myUid() && ready.getInt("pid") != Process.myPid(), "source actor is not app UID/separate process");
             require(ready.getBoolean("source_read_after_sdk_close"), "source not usable after actual SDK primary close");
+            require(ready.getBoolean("mixed_borrow_refused"), "primary-close probe accepted mixed native borrows");
             passed("actual_source_survives_native_sdk_primary_close");
             require(!C02Probe.canOwn(context), "other process OWNER admitted while native source live");
             snapshot("source-held");
