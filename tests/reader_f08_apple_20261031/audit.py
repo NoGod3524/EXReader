@@ -53,7 +53,7 @@ def main():
                 target="EXReaderHost-macOS" if kind=="macos" else "EXReaderHost-iOS"
                 app_settings=[r["buildSettings"] for r in settings if r.get("target")==target]
                 need(len(app_settings)==1 and app_settings[0]["CONFIGURATION"]=="Release" and
-                     app_settings[0]["SWIFT_OPTIMIZATION_LEVEL"]=="-O","actual optimized host")
+                     app_settings[0]["SWIFT_OPTIMIZATION_LEVEL"]=="-O" and app_settings[0]["ONLY_ACTIVE_ARCH"]=="YES","actual optimized host")
                 schemes=list((raw/"schemes").glob("*.xcscheme"));need(len(schemes)==2,"scheme evidence")
                 for scheme in schemes:
                     tree=ET.parse(scheme)
@@ -71,7 +71,8 @@ def main():
             if "program_sha256" in result:
                 binary=raw/"program/EXReaderHost.app"/("Contents/MacOS/EXReaderHost" if kind=="macos" else "EXReaderHost")
                 need(sha(binary)==result["program_sha256"],"native program differs")
-                entry["program_sha256"]=result["program_sha256"]
+                need(command(["lipo","-archs",binary],text=True).split()==result["program_architecture"],"program architecture")
+                entry["program_sha256"]=result["program_sha256"];entry["program_architecture"]=result["program_architecture"]
             if (raw/"performance-metrics.json").exists():
                 _,metrics=extract_metrics(raw/"metrics.xcresult")
                 need(metrics==json.loads((raw/"performance-metrics.json").read_text()),"xcresult metrics differ")

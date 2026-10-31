@@ -21,7 +21,8 @@
     "debugger_enabled": false,
     "code_coverage_enabled": false,
     "sanitizers_enabled": false,
-    "main_thread_checker_enabled": false
+    "main_thread_checker_enabled": false,
+    "only_active_architecture": true
   },
   "budgets": {
     "animation_hitch_time_ratio_ms_per_s": 10,

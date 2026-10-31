@@ -144,7 +144,7 @@ def native(platform):
         build_options=["-project",project/"EXReaderHost.xcodeproj","-scheme",scheme,"-destination",destination,
                 "-derivedDataPath",derived,"-configuration","Release",
                 "EXR_SDK_DIR="+str(sdk),"EXR_PRODUCTS_DIR="+str(products),"CODE_SIGNING_ALLOWED="+signing,
-                "SWIFT_OPTIMIZATION_LEVEL=-O","GCC_OPTIMIZATION_LEVEL=s"]
+                "SWIFT_OPTIMIZATION_LEVEL=-O","GCC_OPTIMIZATION_LEVEL=s","ONLY_ACTIVE_ARCH=YES"]
         common=[*build_options,"-enableCodeCoverage","NO","-enableAddressSanitizer","NO",
                 "-enableThreadSanitizer","NO","-enableUndefinedBehaviorSanitizer","NO",
                 "-parallel-testing-enabled","NO","-test-timeouts-enabled","YES",
@@ -153,7 +153,7 @@ def native(platform):
         save(evidence/"build-settings.json",settings)
         targets=[row["buildSettings"] for row in settings if row.get("target")==scheme]
         need(len(targets)==1 and targets[0]["CONFIGURATION"]=="Release" and
-             targets[0]["SWIFT_OPTIMIZATION_LEVEL"]=="-O","optimized product configuration")
+             targets[0]["SWIFT_OPTIMIZATION_LEVEL"]=="-O" and targets[0]["ONLY_ACTIVE_ARCH"]=="YES","optimized product configuration")
         report["configuration"]="Release";report["build_settings_sha256"]=sha(evidence/"build-settings.json")
         run(["xcodebuild","test",*common,"-resultBundlePath",original_result,
              "-skip-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics"],"original-seven",required=False)
@@ -161,6 +161,9 @@ def native(platform):
         info=plistlib.loads((app/("Contents/Info.plist" if platform=="macos" else "Info.plist")).read_bytes())
         need(info["EXRSourceSHA"]==identity()["source_sha"] and info["EXRSDKVersion"]=="3.42.0","program identity")
         binary=app/("Contents/MacOS/EXReaderHost" if platform=="macos" else "EXReaderHost")
+        architecture=command(["lipo","-archs",binary],text=True).split()
+        need(architecture==[command(["uname","-m"],text=True).strip()],"native runner architecture")
+        report["program_architecture"]=architecture
         before=sha(binary);shutil.copytree(app,evidence/"program/EXReaderHost.app")
         report["program_sha256"]=before
         (evidence/"program-dependencies.txt").write_text(command(["otool","-L",binary],text=True))
