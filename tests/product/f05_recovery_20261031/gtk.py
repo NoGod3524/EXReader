@@ -105,14 +105,21 @@ def main():
         open_account(host)
         host.key("alt+s")
         wait(host, lambda: account(host).get("session_state") == "4", 240)
-        if heads is not None:
-            wait(host, lambda: set(snapshot(host)["heads"]) == set(heads))
-        # Transport completion does not project or import. Press the real
-        # separate Receive action before observing product/visible conflicts.
+        # Retained history is not shelf projection. Observe the actual Receive
+        # action crossing its owner boundary; three pre-existing idle zeros
+        # cannot be accepted as completion of a click not yet processed.
+        before_receive = account(host)
         host.key("alt+r")
+        wait(host, lambda: account(host).get("preparing") == "1"
+             or account(host).get("phase") != "0"
+             or int(account(host).get("receive_seen", "0")) >
+                int(before_receive.get("receive_seen", "0")), 120)
         wait(host, lambda: account(host).get("phase") == "0"
              and account(host).get("preparing") == "0"
-             and account(host).get("owner_busy") == "0", 120)
+             and account(host).get("owner_busy") == "0"
+             and account(host).get("projection_status") not in (None, "0"), 120)
+        if heads is not None:
+            wait(host, lambda: set(snapshot(host)["heads"]) == set(heads))
         state = account(host)
         command("import", "-window", window(host, "Account and Sync"),
                 out / ("sync-" + host.folder.name + "-" + str(len(store.requests)) + ".png"))
@@ -183,9 +190,13 @@ def main():
         sync(first)
         right = sync(second, heads)
         left = sync(first, heads)
-        # A visual screenshot alone is insufficient: inspect native observer
-        # fields only after the exact actual conflict display contract is bound.
-        checks.append({"name": "concurrent_heads_preserved", "outcome": "needs-ui-audit",
+        key = snapshot(first)["entity_key"]
+        for state in (left, right):
+            if (int(state.get("conflict_rows", "0")) < 1
+                    or key not in state.get("conflict_keys", "")
+                    or not all(head in state.get("conflict_heads", "") for head in heads)):
+                raise AssertionError("native conflict rows do not expose both retained heads")
+        checks.append({"name": "concurrent_heads_preserved", "outcome": "passed",
                        "heads": sorted(heads), "first_native_state": left,
                        "second_native_state": right})
     except Exception as error:
@@ -200,7 +211,7 @@ def main():
                     host.process.wait(timeout=20)
         store.close()
         report["requests"] = store.requests
-        report["uncovered"] = ["conflict UI independent readback", "delete-put tombstone",
+        report["uncovered"] = ["delete-put tombstone",
                                "receive cancellation", "offline reopened actual read",
                                "independent original-artifact authentication"]
         (out / "coverage.json").write_text(json.dumps(report, indent=2) + "\n")
