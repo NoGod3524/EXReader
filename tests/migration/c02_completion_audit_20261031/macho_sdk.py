@@ -83,8 +83,27 @@ def inspect_macho(raw):
             command["segment"] = dict(name=name,vmaddr=_u(raw,position+24,"<Q"),vmsize=_u(raw,position+32,"<Q"),
                 fileoff=_u(raw,position+40,"<Q"),filesize=_u(raw,position+48,"<Q"),maxprot=_u(raw,position+56),
                 initprot=_u(raw,position+60),sections=_u(raw,position+64),flags=_u(raw,position+68))
+            sections = []
+            for index in range(command["segment"]["sections"]):
+                entry = position+72+80*index
+                sections.append(dict(name=raw[entry:entry+16].split(b"\0",1)[0].decode("ascii"),
+                    segment=raw[entry+16:entry+32].split(b"\0",1)[0].decode("ascii"),
+                    address=_u(raw,entry+32,"<Q"),size=_u(raw,entry+40,"<Q"),
+                    offset=_u(raw,entry+48),flags=_u(raw,entry+64)))
+            command["section_table"] = sections
             if name == "__LINKEDIT":
                 linkedit.append(command)
+        elif kind == 0x1b:
+            need(size == 24,"macho-sdk-uuid-command-size")
+            command["uuid"] = raw[position+8:position+24].hex()
+        elif kind == 0xd:
+            need(size >= 24,"macho-sdk-id-dylib-command-size")
+            name_offset = _u(raw,position+8)
+            need(24 <= name_offset < size,"macho-sdk-id-dylib-name-offset")
+            end = raw.find(b"\0",position+name_offset,position+size)
+            need(end >= position+name_offset,"macho-sdk-id-dylib-name-terminated")
+            command.update(install_name=raw[position+name_offset:end].decode("utf-8"),
+                           current_version=_u(raw,position+16),compatibility_version=_u(raw,position+20))
         elif kind == 0x1d:
             need(size == 16,"macho-sdk-code-signature-command-size")
             command.update(dataoff=_u(raw,position+8),datasize=_u(raw,position+12))

@@ -112,7 +112,7 @@ def main():
                 if key in compact:
                     value = compact[key]
                     compact[key] = dict(value,commands=[cmd for cmd in value["commands"] if
-                        cmd["kind"] == 0x1d or cmd.get("segment",{}).get("name") == "__LINKEDIT"])
+                        cmd["kind"] in (0x1b,0xd,0x1d) or cmd.get("segment",{}).get("name") in ("__TEXT","__LINKEDIT")])
             print(json.dumps(dict(diagnostic="original-sdk-macho-layout",**compact)),flush=True)
     (out/"diagnostic.json").write_text(json.dumps(dict(
         scope="diagnostic-only",full_c02_complete=False,producer=request,reports=reports),indent=2)+"\n")
