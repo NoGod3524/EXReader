@@ -54,8 +54,19 @@ Official API references:
 
 The old artifact verifier runs unchanged. New same-run/attempt original ZIP digest, strict member inventory, raw trace recomputation and host/module hashes are additionally checked.
 Only synthetic trace/evidence directories are uploaded; private profiles, clipboard state and runtime HOME stay outside.
-Status: prepared candidate; execution evidence pending independent review and the sole authorized run.
+Status: initial authorized run failed; original cohort passed, new causal cohort incomplete. See retained result below.
 
-Retained host.bin and module.so are copied from the actual executed paths; both raw binary hashes are recomputed in the separate artifact audit, without executing downloaded binaries.
+Retained host.bin and module.so are copied from the actual executed paths; the verifier is designed to recompute both raw binary hashes in the separate artifact audit (skipped in the failed initial run), without executing downloaded binaries.
 
 Raw numeric state -1 means unavailable (including early painted generation); these rows remain in evidence. Matching effects require known nonnegative relevant fields and the same book as the injected action.
+
+## Initial authorized run: failure retained (2026-10-31)
+
+- Source: `878a3f67a2bcfad51d49c67292548e5892185f3d`.
+- [Run 41169786301, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41169786301), started 04:44:26Z; sampling job 124445045025 ended 05:04:31Z with failure. The single authorized run is consumed; no automatic correction or rerun.
+- All builds, exact seven-path/frozen-source guard and packaged-host identity passed. Original frame verification reported `evidence_complete=true`, 44 launches, 760 old samples and 2 positive plus 24 negative controls. Original 32-launch aggregation accepted all 520 samples; the separate original 12-launch cohort reported 240/240 and zero problems.
+- New cohort launched all six processes. Page launches 0/3 and font launches 1/4 each recorded one attempted action then failed after approximately 180 seconds; shelf launches 2/5 each completed three actions. This is ten attempted actions, not eighteen successful observations.
+- New verification rejected `top.accepted=false` at the driver admission check. The new 2+8 controls and causal joins were NOT reached. The dependent 20-minute artifact-authentication job was skipped. No latency/classification or physical-presentation conclusion is established.
+- [Raw new-cohort artifact 13030394230](https://github.com/NoGod3524/EXReader/actions/runs/41169786301/artifacts/13030394230): 4,422,645 bytes; SHA-256 `d20d1b690625b914f16dadc958c7cbb1409c17681db96896190678d350d0c189`. Metadata and textual Actions logs were read; no archive was downloaded or parsed outside Actions.
+- Static diagnostic candidate, NOT proven root cause: the new driver requires both shelf-loading and shelf-restoring flags to be clear even for page/font actions. The frozen successful reader scenario does not impose these shelf-only conditions. In production `shelf_restore`, leaving the shelf cancels its timer without clearing `shelf_restoring`; this can make the additional predicate inappropriate for a hidden shelf. Raw failed-launch state/input records must establish which predicate failed before a correction is justified.
+- Next work requires a separately authorized bounded Actions package to inspect the fixed failed artifact and print exact failed predicates. Preserve this failure and every original assertion; do not infer a product performance defect from a driver timeout or relax generation/same-book checks. Formal score remains 95/108; F08 remains unaccepted.
