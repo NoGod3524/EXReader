@@ -24,14 +24,23 @@ def inspect(doc):
  R.need(doc.get("schema")==1 and doc.get("overflow")==0 and doc.get("capacity")==65536 and doc.get("queue_observed") is True,"protocol/queue")
  jobs=doc["jobs"];frames=doc["frames"];inputs=doc["inputs"]
  R.need(0<len(jobs)<=65536 and 0<len(frames)<=65536 and len(inputs)<=65536,"census bounds")
- missing=[];page=[];shelf=[];initial=[];categories={};overhead=[];native_errors=[];reader_repaint=[];shelf_bounds=[]
+ missing=[];page=[];shelf=[];initial=[];categories={};overhead=[];native_errors=[];reader_repaint=[];shelf_bounds=[];ui={};first_clocks=set()
  for i,e in enumerate(inputs):R.need(e["id"]==i+1 and type(e["at"]) is int and e["at"]>0,"native input")
  for i,f in enumerate(frames):
-  R.need(f["id"]==i+1 and all(type(f[k]) is int and f[k]>=0 for k in ("before","sync_start","sync_end","counter","kind","page_job","shelf_job","input")),"native frame")
-  R.need(0<f["before"]<=f["sync_start"]<=f["sync_end"] and f["input"]<=len(inputs),"native ordering")
+  R.need(f["id"]==i+1 and all(type(f[k]) is int and f[k]>=0 for k in ("gdk_frame_start","animation_frame_time","before","sync_start","sync_end","counter","kind","page_job","shelf_job","input")),"native frame")
+  R.need(0<f["gdk_frame_start"]<=f["before"]<=f["sync_start"]<=f["sync_end"] and f["input"]<=len(inputs),"native ordering")
   R.need(f["page_job"]<=len(jobs) and f["shelf_job"]<=len(jobs),"native job binding")
   overhead.append(f["sync_end"]-f["sync_start"])
   if f["native_error"]:native_errors.append(i+1)
+  cost=f["sync_end"]-f["gdk_frame_start"];ui.setdefault("ui_all_frames",[]).append(cost)
+  group="ui_initial_clock_frame" if f["clock"] not in first_clocks else "ui_ordinary_after_first_clock_frame";first_clocks.add(f["clock"]);ui.setdefault(group,[]).append(cost)
+  if f["kind"]&2:ui.setdefault("ui_shelf_frames",[]).append(cost)
+  if f["kind"]&5:
+   ui.setdefault("ui_reader_frames",[]).append(cost)
+   if f["kind"]&4:ui.setdefault("ui_body_frames",[]).append(cost)
+   job=jobs[f["page_job"]-1] if f["page_job"] else {};action=job.get("action")
+   kind="ui_font_frames" if action in (5,33,58) else "ui_page_turn_frames" if action in (3,4) else "ui_locate_jump_frames" if action in (8,36,40,47,61) else "ui_reader_other_frames"
+   ui.setdefault(kind,[]).append(cost)
   if f["kind"]&1:reader_repaint.append(f["sync_end"]-f["before"])
   if f["kind"]&2 and f["input"]:
    start=inputs[f["input"]-1]["at"];R.need(start<=f["sync_end"],"shelf input clock");shelf_bounds.append(f["sync_end"]-start)
@@ -53,10 +62,10 @@ def inspect(doc):
    R.need(j["frame_generation"]>0,"accepted page generation")
    page.append(duration)
    if first:initial.append(duration);first=False
-   name="page_turn" if j["action"] in (3,4) else "font" if j["action"] in (5,58) else "locate_jump" if j["action"] in (8,36,40,47,61) else "reader_other"
+   name="page_turn" if j["action"] in (3,4) else "font" if j["action"] in (5,33,58) else "locate_jump" if j["action"] in (8,36,40,47,61) else "reader_other"
    categories.setdefault(name,[]).append(duration)
   elif j["shelf_visible"]:shelf.append(duration)
- return {"jobs":len(jobs),"page_generations":sum(bool(j["page"]) for j in jobs),"shelf_generations":sum(bool(j["shelf"]) for j in jobs),"non_frame_jobs":sum(not(j["page"] or j["shelf"]) for j in jobs),"background_shelf_generations":sum(bool(j["shelf"] and not j["shelf_visible"]) for j in jobs),"native_frames":len(frames),"native_errors":native_errors,"missing_required_generations":missing,"inputs":len(inputs),"probe_static_bytes":doc["probe_static_bytes"],"values":{"all_page_generations":page,"initial_page_generation":initial,"visible_shelf_worker_generations":shelf,"shelf_input_to_native_completion_upper_bound":shelf_bounds,"reader_body_native_full_GDK_phase_only":reader_repaint,"native_fence_wait":overhead,**categories}}
+ return {"jobs":len(jobs),"page_generations":sum(bool(j["page"]) for j in jobs),"shelf_generations":sum(bool(j["shelf"]) for j in jobs),"non_frame_jobs":sum(not(j["page"] or j["shelf"]) for j in jobs),"background_shelf_generations":sum(bool(j["shelf"] and not j["shelf_visible"]) for j in jobs),"native_frames":len(frames),"native_errors":native_errors,"missing_required_generations":missing,"inputs":len(inputs),"probe_static_bytes":doc["probe_static_bytes"],"values":{"all_page_generations":page,"initial_page_generation":initial,"visible_shelf_worker_generations":shelf,"shelf_input_to_native_completion_upper_bound":shelf_bounds,"reader_body_native_full_GDK_phase_only":reader_repaint,"native_fence_wait":overhead,**categories,**ui}}
 def verify(raw,output=None):
  reports=[];combined={};ident=R.identity();raw=Path(raw)
  for cohort,expected in [("perf-evidence",32),("perf-interactions",12)]:
@@ -65,6 +74,8 @@ def verify(raw,output=None):
    directory=raw/cohort/"raw"/("launch-%02d"%launch["launch"])/"native-cost";paths=list(directory.glob("*.json"));pid=launch["pid"]
    R.need(len(paths)==1 and paths[0].name==str(pid)+".json" and launch["process_exit"]==0,"normal native PID output")
    doc=R.load(paths[0]);R.need(doc["pid"]==pid and all(doc[k]==ident[v] for k,v in [("source","source_sha"),("run","run_id"),("attempt","attempt")]) and doc["executable"].endswith("/bin/exreader-linux"),"native identity")
+   timing=R.load(paths[0].parent.parent/"frameclock"/paths[0].name);lookup={(f["clock"],f["counter"]):f["frame_time_us"] for f in timing["frames"]}
+   R.need(len(timing["frames"])==len(doc["frames"]) and all(lookup.get((f["clock"],f["counter"]))==f["gdk_frame_start"] for f in doc["frames"]),"independent actual frame-start census")
    result=inspect(doc);values=result.pop("values");result.update(cohort=cohort,launch=launch["launch"],pid=pid,raw_sha256=R.sha(paths[0]))
    for name,rows in values.items():combined.setdefault(name,[]).extend(rows)
    result["metrics"]={k:stats(v) for k,v in values.items()};reports.append(result)
@@ -72,13 +83,15 @@ def verify(raw,output=None):
  causal=[]
  for path in sorted((raw/"f08-causal").rglob("native-cost/*.json")):
   doc=R.load(path);R.need(all(doc[k]==ident[v] for k,v in [("source","source_sha"),("run","run_id"),("attempt","attempt")]),"causal native identity")
+  timing=R.load(path.parent.parent/path.name);lookup={(f["clock"],f["counter"]):f["frame_time"] for f in timing["frames"]}
+  R.need(len(timing["frames"])==len(doc["frames"]) and all(lookup.get((f["clock"],f["counter"]))==f["gdk_frame_start"] for f in doc["frames"]),"independent causal actual frame-start census")
   item=inspect(doc);values=item.pop("values");item["metrics"]={k:stats(v) for k,v in values.items()};item["raw_sha256"]=R.sha(path);causal.append(item)
  R.need(len(causal)==6,"six causal native traces")
  complete=not any(r["native_errors"] or r["missing_required_generations"] for r in reports+causal)
  metrics={k:stats(v) for k,v in combined.items()};checks=[]
- for name in ("all_page_generations","visible_shelf_worker_generations","shelf_input_to_native_completion_upper_bound"):
+ for name in ("ui_all_frames","ui_reader_frames","ui_shelf_frames","ui_page_turn_frames","ui_font_frames"):
   m=metrics[name];checks.append({"metric":name,"count":m["count"],"p95_max_ms":16.67,"p99_max_ms":33.34,"passed":bool(m["count"]) and m["p95_ms"]<=16.67 and m["p99_ms"]<=33.34})
- receipt={**ident,"launches":reports,"causal_launches":causal,"metrics":metrics,"complete_generation_census":complete,"checks":checks,"candidate_native_cost_budget_passed":complete and all(c["passed"] for c in checks),"physical_presentation_proven":False,"shelf_bound_includes_input_queue_and_animation":True,"native_fence_changes_timing_and_is_included":True,"reader_body_GDK_phase_is_not_substituted_for_full_generation_cost":True,"f08_accepted":False}
+ receipt={**ident,"launches":reports,"causal_launches":causal,"metrics":metrics,"complete_generation_census":complete,"checks":checks,"candidate_ui_frame_budget_passed":complete and all(c["passed"] for c in checks),"ui_frame_semantics":"actual GdkFrameTimings.frame_time to after-paint and XSync; update/layout/draw/native server processing included","worker_to_native_is_operation_latency":True,"gpu_compositor_scanout_proven":False,"physical_presentation_proven":False,"shelf_bound_includes_input_queue_and_animation":True,"native_fence_changes_timing_and_is_included":True,"reader_body_GDK_phase_is_not_substituted_for_full_generation_cost":True,"f08_accepted":False}
  if output:R.save(Path(output)/"summary.json",receipt)
  print("F08_NATIVE_COST",json.dumps({k:v for k,v in receipt.items() if k not in ("launches","causal_launches")}),flush=True)
  return receipt
