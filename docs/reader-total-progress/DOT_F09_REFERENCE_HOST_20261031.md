@@ -15,3 +15,24 @@ run.py runs the byte-frozen handle-control driver unchanged: frozen eight observ
 Selection-event and Escape assertions are EXReader-specific; RichEdit failing them is expected and not a finding. The comparison metric is exit code (0xC0000005 versus not), the last stage reached and raw method values. Whether RichEdit's text pattern comes from its own provider or from a UIAutomationCore built-in proxy is not determined; either way it is Microsoft code. A RichEdit pass narrows responsibility toward EXReader's provider but still names no defect; a RichEdit crash on the same route points at the client path but still is not proof of a specific Windows defect. No product, provider or consumer change. Formal F09 acceptance and screen-reader verification remain false; all prior failures retained.
 
 Initial status: source prepared, no run yet.
+
+## Initial validation result (1/2), 2026-10-31 05:36 UTC
+
+Source 6893064b407bb55411667a6629fef9c81ba2e35c; run41172958918 attempt1, job124454609343: overall failure (frozen aggregate assertion re-raised, as designed). Artifact13032042304, `f09-reference-host-41172958918-1`, 114767 bytes, SHA256 40e8b35045fa8c6018dfebaaf33d890a88ffdfda02fd6c9c3e8f9635c19dd354. Guard passed, both 26-check suites passed; all frozen EXReader observations reproduced exactly (frozen eight; array-handle compare/expand non-standard values, clone 0x80040201; direct-handle control all S_OK).
+
+Same consumer binaries, same run, Microsoft RichEdit reference host:
+
+| Consumer / route | EXReader baseline and candidate | Microsoft RichEdit reference |
+|---|---|---|
+| managed .NET selection GetText | 0xC0000005 | 0xC0000005, last stage `ctrl-a get-selection-after count=1` |
+| legacy C API selection GetText | 0xC0000005 | 0xC0000005, last stage `legacy-get-text-before` |
+| legacy C API visible-array GetText | 0xC0000005 | 0xC0000005, last stage `legacy-get-text-before` |
+| array-handle CompareEndpoints | 0x7938BD91 | 0x7938BD91 |
+| array-handle Clone | 0x80040201 | 0x80040201 |
+| array-handle ExpandToEnclosingUnit | 0x7938BD8F | 0x7938BD8F |
+| direct-handle compare/clone/expand/gettext | all S_OK | all S_OK |
+| typed native COM selection-array GetText | passes (candidate all assertions) | GetText on selection range length 290 succeeds; later fails only the EXReader-specific Escape-clears-selection expectation (exit 1), as anticipated |
+
+The array-handle values again changed between runs (now 0x7938BD91/0x7938BD8F) and are identical between EXReader and RichEdit within this run.
+
+Result: every crash and anomaly on the array-to-legacy-handle route reproduces identically against a Microsoft RichEdit text provider, while direct legacy handles and typed COM array ranges work on both. The fault therefore does not follow the EXReader provider; it follows the legacy client route (UIAutomationCore legacy HUIATEXTRANGE from an array element via UiaHTextRangeFromVariant, also used by .NET UIAutomationClient) on this runner's Windows Server 2022 build (UIAutomationCore 7.2.20348.1). This is strong evidence that no EXReader provider change is warranted for these failures. It is not proof of a specific Windows defect or instruction, and whether RichEdit's text pattern is native or a UIAutomationCore proxy is not determined. No correction run needed or used. No product, provider or consumer change. Formal F09 acceptance and screen-reader verification remain false; how F09 acceptance treats legacy/managed consumers is a user decision. All prior failures retained.
