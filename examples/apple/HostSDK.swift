@@ -284,8 +284,10 @@ final class HostDocument {
     let handle: OpaquePointer
     let text: Data
     let title: String
+    private let library: HostLibrary?
 
     init(adopting document: OpaquePointer) {
+        library = nil
         handle = document
         var size = 0
         if let pointer = exr_document_text(document, &size), size > 0 { text = Data(bytes: pointer, count: size) }
@@ -298,6 +300,7 @@ final class HostDocument {
         var document: OpaquePointer?
         var error = exr_error()
         try hostCheck(exr_library_document(library.handle, bookID, &document, &error), error)
+        self.library = library
         guard let document else { throw HostError.invalidResult("书籍无法打开") }
         if cancel?.isCancelled == true {
             exr_document_free(document)
@@ -883,16 +886,29 @@ struct HostNoteRow: Identifiable {
 final class HostLibrary {
     let handle: OpaquePointer
     let path: URL
+    private let admission: HostC02Lease
 
     init(path: URL) throws {
-        self.path = path
+        let admitted = try HostC02Lease(path: path)
         var library: OpaquePointer?
         var error = exr_error()
-        try path.path.withCString { pointer in
-            try hostCheck(exr_library_open(pointer, &library, &error), error)
+        do {
+            try admitted.check()
+            try admitted.libraryPath.withCString { pointer in
+#if EXR_APPLE_C02_REVIEW
+                HostC02Review.sdkOpenCalls += 1
+#endif
+                try hostCheck(exr_library_open(pointer, &library, &error), error)
+            }
+            guard library != nil else { throw HostError.invalidResult("书库无法打开") }
+            try admitted.check()
+        } catch {
+            exr_library_close(library)
+            throw error
         }
-        guard let library else { throw HostError.invalidResult("书库无法打开") }
-        handle = library
+        self.path = URL(fileURLWithPath: admitted.libraryPath)
+        admission = admitted
+        handle = library!
     }
 
     deinit { exr_library_close(handle) }

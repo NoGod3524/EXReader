@@ -76,6 +76,19 @@ def main():
                         ['cmake', '--build', str(build), '--parallel', '4'],
                         ['cmake', '--install', str(build)]):
             subprocess.run(command, check=True)
+    c02_enabled = args.sdk_version == '3.42.0'
+    if c02_enabled:
+        for name, relative in (
+            ('c02-hardening', 'extras/migration/windows_coordinator_hardening_20261030'),
+            ('c02-admission', 'extras/migration/posix_c02_admission_20261031'),
+            ('c02-sdk-admission', 'extras/migration/posix_c02_sdk_admission_20261031')):
+            build = args.build.absolute() / name
+            for command in (
+                ['cmake', '-S', str(root / relative), '-B', str(build), *common,
+                 '-DWH_PREFIX=' + str(stage), '-DPC02_PREFIX=' + str(stage)],
+                ['cmake', '--build', str(build), '--parallel', '4'],
+                ['cmake', '--install', str(build)]):
+                subprocess.run(command, check=True)
     if args.wave3:
         for _, target, _ in WAVE3_MODULES:
             for path in (stage / 'lib' / ('lib' + target + '.a'), stage / 'include' / (target + '.h')):
@@ -98,7 +111,8 @@ def main():
                 'installed_modules': [x[0] for x in modules],
                 'sqlite_provider': 'libreader_catalog_sqlite.a', 'system_sqlite_fallback': False,
                 'reading_resolver_linked': False, 'webdav_transport': 'Foundation URLSession',
-                'wave3_enabled': args.wave3, 'organization_enabled': True}
+                'wave3_enabled': args.wave3, 'organization_enabled': True,
+                'c02_admission': c02_enabled, 'c02_authority': 'fixed-os-user-or-app-container'}
     manifest.update(selector_bytes_candidate=args.selector_bytes_candidate,
                     product_prefix=str(stage), sdk_prefix=str(sdk),
                     exact_candidate_family=family if args.selector_bytes_candidate else {})

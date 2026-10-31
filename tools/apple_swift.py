@@ -23,7 +23,7 @@ WAVE3_MODULES = (
 )
 
 
-def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False):
+def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False, c02_prefix=None):
     sdk = Path(sdk).absolute()
     product = Path(product_prefix).absolute() if product_prefix else sdk
     if wave3 and not selector_bytes_candidate:
@@ -63,6 +63,15 @@ def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False)
                 raise RuntimeError('Missing installed raw wave3 header: ' + header)
         if not (bridge / 'reader_apple_features.h').is_file():
             raise RuntimeError('Missing Apple wave3 product bridge')
+    if c02_prefix:
+        admission = Path(c02_prefix).absolute()
+        version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk / 'include/exr/base.h').read_text())
+        if version is None or version[1] != '3.42.0':
+            raise RuntimeError('C02 host admission requires the frozen SDK 3.42.0')
+        includes = (*includes, admission / 'include/exreader-c02-admission')
+        archives = [admission / 'lib' / ('lib' + name + '.a') for name in
+                    ('exreader-posix-c02-sdk-admission', 'exreader-posix-c02-admission',
+                     'exreader-migration-coordinator-hardening')] + archives
     for path in [*includes, *archives]:
         if not path.exists():
             raise RuntimeError('Missing installed Apple product dependency: ' + str(path))
@@ -81,6 +90,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--product-prefix', type=Path)
+    parser.add_argument('--c02-prefix', type=Path)
     parser.add_argument('--selector-bytes-candidate', action='store_true',
                         default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
     parser.add_argument('arguments', nargs=argparse.REMAINDER)
@@ -93,10 +103,14 @@ def main():
             source = Path(__file__).absolute().parents[1] / 'examples/apple' / filename
             if not any(Path(value).name == source.name for value in arguments):
                 arguments.append(str(source))
+    host_sdk = any(Path(value).name == 'HostSDK.swift' for value in arguments)
+    if host_sdk and not any(Path(value).name == 'HostC02Admission.swift' for value in arguments):
+        arguments.append(str(Path(__file__).absolute().parents[1] / 'examples/apple/HostC02Admission.swift'))
+    c02 = args.c02_prefix or (args.product_prefix or args.sdk if host_sdk else None)
     output = Path(arguments[arguments.index('-o') + 1])
     mapping = Path(str(output) + '.link.map')
     raw_include = ['-I', str(args.product_prefix.absolute() / 'include')] if args.selector_bytes_candidate and args.product_prefix else []
-    subprocess.run(['xcrun', 'swiftc', *raw_include, *arguments, *flags(args.sdk, args.product_prefix, args.selector_bytes_candidate), '-Xlinker', '-map',
+    subprocess.run(['xcrun', 'swiftc', *raw_include, *arguments, *flags(args.sdk, args.product_prefix, args.selector_bytes_candidate, c02_prefix=c02), '-Xlinker', '-map',
                     '-Xlinker', str(mapping)], check=True)
     Path(str(output) + '.product.json').write_text(json.dumps(inspect(output, mapping, args.selector_bytes_candidate), indent=2) + '\n')
 

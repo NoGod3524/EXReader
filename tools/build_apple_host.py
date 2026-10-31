@@ -29,6 +29,7 @@ def main():
     parser.add_argument('--platform', choices=['macos', 'simulator', 'iphoneos'], required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--product-prefix', type=Path)
+    parser.add_argument('--c02-prefix', type=Path)
     parser.add_argument('--wave3', action='store_true', help='Enable the installed five-feature product without review entry points')
     parser.add_argument('--selector-bytes-candidate', action='store_true',
                         default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
@@ -75,7 +76,8 @@ def main():
     sources = sorted((ROOT/'examples/apple').glob('*.swift'))
     command = ['xcrun', '--sdk', native_sdk, 'swiftc', '-swift-version', '5', '-O', '-parse-as-library',
                '-sdk', sdk_path, '-target', target, '-I', sdk/'include', '-L', sdk/'lib',
-               '-lexreader', *product_flags(sdk, args.product_prefix, args.selector_bytes_candidate, args.wave3), '-Xlinker', '-rpath', '-Xlinker', rpath,
+               '-lexreader', *product_flags(sdk, args.product_prefix, args.selector_bytes_candidate, args.wave3,
+                                           args.c02_prefix or args.product_prefix or sdk), '-Xlinker', '-rpath', '-Xlinker', rpath,
                ROOT/'bindings/swift/EXReader.swift', *sources, '-o', executable,
                '-Xlinker', '-map', '-Xlinker', output/'product-link.map']
     if args.selector_bytes_candidate and args.product_prefix:
@@ -89,7 +91,8 @@ def main():
             'CFBundleName': 'EXReader', 'CFBundleDisplayName': 'EXReader',
             'CFBundlePackageType': 'APPL', 'CFBundleVersion': '1',
             'CFBundleShortVersionString': version, 'EXRSourceSHA': source_sha,
-            'EXRRawSelectorEnabled': args.selector_bytes_candidate, 'EXRWave3Enabled': args.wave3}
+            'EXRRawSelectorEnabled': args.selector_bytes_candidate, 'EXRWave3Enabled': args.wave3,
+            'EXRC02AdmissionEnabled': True}
     if mobile:
         info.update({'MinimumOSVersion': '15.0', 'LSRequiresIPhoneOS': True,
                      'UIApplicationSceneManifest': {'UIApplicationSupportsMultipleScenes': True},
@@ -123,7 +126,16 @@ def main():
         shutil.copyfile(library, frameworks/library.name)
         run('codesign', '--force', '--sign', '-', frameworks/library.name)
     run('codesign', '--force', '--deep', '--sign', '-', app)
+    admission = (args.c02_prefix or args.product_prefix or sdk).absolute()
+    admission_files = [admission / 'include/exreader-c02-admission' / name
+                       for name in ('exr_pc02.h', 'exr_pc02_sdk.h', 'module.modulemap')]
+    admission_files += [admission / 'lib' / ('lib' + name + '.a') for name in
+                        ('exreader-posix-c02-sdk-admission', 'exreader-posix-c02-admission',
+                         'exreader-migration-coordinator-hardening')]
     manifest = {'schema': 1, 'source_sha': source_sha, 'sdk_version': version,
+                'c02_admission': True,
+                'c02_installed_files': {str(path.relative_to(admission)): hashlib.sha256(path.read_bytes()).hexdigest()
+                                        for path in admission_files},
                 'page_theme_enabled': args.page_theme,
                 'selector_bytes_candidate': args.selector_bytes_candidate,
                 'wave3_enabled': args.wave3,
