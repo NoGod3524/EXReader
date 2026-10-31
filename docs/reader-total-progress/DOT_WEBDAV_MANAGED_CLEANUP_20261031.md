@@ -58,7 +58,7 @@ lock; 08 existing target not replaced; 09 root/registered txdir as destination r
 alias_unlinked and receipt_next_synced(RESERVED). Every kill case checks the disk residue, reopens in a new process,
 recovers twice for idempotence and checks destination bytes, hash, dev and inode (nlink may drop by one only).
 
-## Status
+## 历史状态（原 producer run）
 Initial run 41169665419/A1 (tests d262e079d9b377a077f73f7155dd8279e04ad7dc, core 6ba50a89a82f82212fcadaf8d825176cc9fbe856)
 failed on both platforms at core compilation: one implicit declaration of renameat, no other diagnostic; no test ran.
 The single targeted correction adds <stdio.h> to the core (8de75fa97fed32b25fa65eae4d7fa7b5f6b07693), repins the tests,
@@ -89,5 +89,22 @@ unpublished staging abandon policy and root rotation. Old unreceipted residue is
 本次在原 tests 分支补齐原始观测，core 固定为 dba079b550f9ec83054e6b7b0b7475f43bc1739f；原 30 个用例、断言和每进程 30 秒界限保留。
 results.json 新增 raw schema 1：真实子进程 PID/argv/returncode/kill_sent/signal_sent/timed_out；before-case、held、after-death、before/after-recovery、final 的 no-follow 文件元数据及原始字节；C 进程逐次恢复快照，以及 EACCES canary 和 cleanup 的实际返回值、errno、euid、mode。
 快照在 fixture teardown 前保存；失败同样保留记录。后续独立验证器须自己解码 receipt/CRC 并重算目标身份、进程死亡与恢复幂等性，不能仅采信 PASS。
-历史 run 41169665419、41169795520、41170057297 及各次失败原因继续保留；新 run 的完整 SHA、artifact digest 和审计接受结论将在实际完成后补录。
+历史 run 41169665419、41169795520、41170057297 及各次失败原因继续保留；新 run 与审计终态见下节。
 所有编译、语法检查、运行和 ZIP 处理仅发生于 GitHub Actions。
+
+## 补证与独立审计终态
+
+受测 tests SHA：711e1fc8a8c5b86f210bcddc934c479599387582；core SHA：dba079b550f9ec83054e6b7b0b7475f43bc1739f。
+[Producer run 41174402876](https://github.com/NoGod3524/EXReader/actions/runs/41174402876) / attempt 1：Linux job 124458850309、macOS job 124458849971 均 completed/success，原 30 项各 30/30。
+
+| 平台 | Artifact | Bytes | SHA-256 |
+|---|---|---:|---|
+| Linux | 13031778309 / webdav-managed-cleanup-Linux-41174402876-1 | 114285 | 4520aae748dff728019ce865116685930cd887a3783c827c2ac3bf4422554946 |
+| macOS | 13031863107 / webdav-managed-cleanup-macOS-41174402876-1 | 101735 | 3c8533a40556485d8818821068fe6cceef67e83e94cd15d26d59ba431abfe2ec |
+
+独立 verifier 受测 SHA：ea54eb95eafc62a2db8fec4547eab142856f9351；[Audit run 41174612650](https://github.com/NoGod3524/EXReader/actions/runs/41174612650) / attempt 1；job 124459479516 completed/success。
+审计 artifact：13031974546，232564 bytes，SHA-256 88b3580ea082c941c6286dc6bb542683cc2bf75675944981b415b27462579efa。
+实测 audit_completed=true、evidence_integrity_passed=true、critical_evidence_complete=true、audit_passed=true、errors=[]。
+每平台重算 30 个 case、10 组实际进程死亡及 receipt/recovery 对；各 8 个原负控和 10 个 raw 负控全部按预期拒绝，共 36 个。原始 ZIP、源码字节和输出均保存在 Actions artifact。
+独立性为独立检查实现与独立 Actions 执行；本次补证和 verifier 扩展均由接手 GPT 编写。历史批准记录未被补造，core 的已披露 valid-next 修订维持原字节。
+此封存提交只更新文档，上述受测 SHA 不变。产品验证另见 [GTK 接入记录](https://github.com/NoGod3524/EXReader/blob/codex/gpt-webdav-product-integration-20261031/docs/reader-total-progress/GPT_WEBDAV_PRODUCT_INTEGRATION_20261031.md)，组件审计本身不授予产品验收。正式 95/108 保持。
