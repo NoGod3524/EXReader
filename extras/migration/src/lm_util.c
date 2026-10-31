@@ -247,6 +247,21 @@ int lm_exists(const char *path) {
   return stat(path, &st) == 0;
 #endif
 }
+int lm_path_state(const char *path) {
+#ifdef _WIN32
+  wchar_t *w = widen(path);DWORD attr, error;
+  if (!w) return -1;
+  attr = GetFileAttributesW(w);
+  error = attr == INVALID_FILE_ATTRIBUTES ? GetLastError() : ERROR_SUCCESS;
+  free(w);
+  if (attr != INVALID_FILE_ATTRIBUTES) return 1;
+  return error == ERROR_FILE_NOT_FOUND ? 0 : -1;
+#else
+  struct stat st;
+  if (lstat(path, &st) == 0) return 1;
+  return errno == ENOENT ? 0 : -1;
+#endif
+}
 int lm_remove(const char *path) {
 #ifdef _WIN32
   wchar_t *w = widen(path);
