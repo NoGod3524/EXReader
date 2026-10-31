@@ -26,12 +26,12 @@ def main():
         "-PexrSearchPrefix="+str(stage),"-PexrNavigationPrefix="+str(stage),
         "-PexrPreferencesPrefix="+str(stage),"-PexrDav="+str(stage),"-PexrSideload="+str(stage),
         "-PexrTestRunner=org.exreader.host.ShelfCatalogTest"]
-    command=["gradle","-p","examples/android","--no-daemon","--stacktrace","-I",
+    gradle_command=["gradle","-p","examples/android","--no-daemon","--stacktrace","-I",
         str(ROOT/"tests/reader_wave3_c11/candidate.init.gradle"),"-I",
         str(ROOT/"tests/reader_f08_android_20261031/release.init.gradle"),*flags,
         ":app:assembleRelease",":app:assembleReleaseAndroidTest",":uitest:assembleDebug",":uitest:assembleDebugAndroidTest"]
-    save(OUT/"gradle-command.json",command)
-    builder.sh(["bash","-e","-o","pipefail","-c",shlex.join(command)+" 2>&1 | tee "+shlex.quote(str(OUT/"gradle.log"))])
+    save(OUT/"gradle-command.json",gradle_command)
+    builder.sh(["bash","-e","-o","pipefail","-c",shlex.join(gradle_command)+" 2>&1 | tee "+shlex.quote(str(OUT/"gradle.log"))])
     sampler_sources=["tools/run_reader_shelf_ui.py",
         "examples/android/app/src/androidTest/java/org/exreader/host/ShelfCatalogTest.java",
         "examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/ShelfWalkthroughTest.java",
