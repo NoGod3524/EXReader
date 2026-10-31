@@ -38,3 +38,44 @@ A green proof means proof_completed=true and cleanup_failure_reproduced=true;
 product_cleanup_passed remains false. It does not mean product cleanup was fixed,
 nor does it authorize publication semantics changes. No SDK/C01/Claude/C02 files
 are changed. Status: pending first Actions observation.
+
+## Initial Actions result: defect reproduced, product not fixed
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41159220235,
+attempt 1, source 73229da841bdb1fec7be830ab4af8deba6109e75, job 124412788541,
+completed SUCCESS. The unchanged TLS suite reports 77 accepted checks.
+Four new raw case receipts establish:
+- Normal: OK/published=1, one real link and one unlink, no residue, target nlink=1.
+- EIO once: OK/published=1, errno=5, one injected failure and only one target
+  unlink attempt even after destructor; a temporary hardlink remains.
+- Persistent permission failure: uid=1001, actual directory mode=0500,
+  no synthetic EACCES injection, real unlink errno=13; OK/published=1 and
+  one temporary hardlink remains after destructor.
+- Existing target: EXISTS (11), published=0, bytes=0, no committed link or
+  residual temporary, original target content unchanged.
+
+Both fault cases have identical target/temporary device+inode and nlink=2.
+All three newly published targets are 1048609 bytes, SHA256
+8fe1c8c0f8b33638905f8cf884bbc5718f091345cbcf413c5406092cdb41c4f5.
+The fixture restores directory mode 0700, verifies unrelated unlink succeeds,
+records the defect, and only then removes the residual temporary name. This
+explicit fixture cleanup is not product cleanup and never deletes the target.
+The evidence reports proof_completed=true, cleanup_failure_reproduced=true,
+publication_contract_preserved=true, product_cleanup_passed=false.
+
+Source/installed binding:
+- extras/webdav/src/webdav.cpp SHA256
+  b38acf80184cea14e98acab908685aa3282b602a15e792193141f3d7c68bda5e.
+- Public header SHA256
+  efef0f4a1d04f6c3e790da339065f45c33e4aecbaf5e4d3c3ac4025f00e72971.
+- Built and installed archive SHA256
+  90045e216a0a11147f778b4ac138eb41ce618308e9da41903fc61da236ee2469.
+Artifact 13025898592, 143785 bytes, SHA256
+beffd770e8ba6a60c07447e6f6dba8e92bd2c53ce58e959184c02a4beb8449ee.
+Only logs and artifact metadata were read outside Actions; no local ZIP parsing.
+
+The initial round establishes the requested reproduction; no corrective rerun
+is needed or consumed. This documentation-only receipt uses [skip ci].
+Any product cleanup fix or recovery policy remains a separate owner decision
+and must preserve successful publication semantics rather than returning a
+misleading unpublished failure.
