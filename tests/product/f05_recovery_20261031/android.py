@@ -259,12 +259,27 @@ def main():
         report["cases"].append({"name":"offline_reconnect_delete_put",
             "outcome":"passed","before":before,"offline":local,"after":after,
             "native_conflict_text":status,"peer_author":remote["author"]})
+        dav.offline=True
+        offline_requests=len(dav.requests)
         pid=shell("pidof",PACKAGE).decode().strip()
         shell("am","force-stop",PACKAGE)
         launch()
         restarted=snapshot("restart")
         if restarted["heads"]!=after["heads"]:
             raise AssertionError("retained conflict changed after process restart")
+        click(title,contains=True)
+        page=wait(lambda:next((n for n in nodes() if n.get("class")=="org.exreader.host.ReaderView"
+            and n.get("content-desc","").startswith("Reading page 1.")),None),120)
+        rendered=nodes()
+        if not any("F05 GTK original" in n.get("content-desc","") or
+                   "F05 GTK original" in n.get("text","") for n in rendered):
+            raise AssertionError("offline original text not present in native reading nodes")
+        if len(dav.requests)!=offline_requests:
+            raise AssertionError("offline original reopening attempted network")
+        (a.output/"offline-reader.png").write_bytes(adb("exec-out","screencap","-p"))
+        report["cases"].append({"name":"restart_offline_read","outcome":"passed",
+            "reader":page,"rendered_nodes":rendered,
+            "sdk_originals":sdk_snapshot("offline-original"),"network_requests":0})
         report["cases"].append({"name":"restart_preserves_conflict","outcome":"passed",
             "terminated_pid":pid,"reopened_pid":shell("pidof",PACKAGE).decode().strip(),
             "after":restarted})
