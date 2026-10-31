@@ -13,6 +13,7 @@ def module(name,path):
 
 def main():
  p=argparse.ArgumentParser();p.add_argument("--zip",required=True);p.add_argument("--metadata",required=True)
+ p.add_argument("--frozen-library");p.add_argument("--frozen-library-sha256")
  p.add_argument("--expected-source",required=True);p.add_argument("--harness-source");p.add_argument("--cohorts",default="shelf,reader,page");p.add_argument("--helper-root",required=True);p.add_argument("--observer",required=True);p.add_argument("--observer-sha256",default="d9091ee8b19cce806942d1c7127802b0cfe222eda10e378d95e0cd2bde9869c7");p.add_argument("--observer-bytes",type=int,default=80896);p.add_argument("--observer-source",default="679895786e4a2c62b961583441f894d373aba4b1");a=p.parse_args()
  need(os.name=="nt" and os.environ.get("COMPUTERNAME","").upper()=="LAP25002","named native Windows device")
  need(os.environ.get("GITHUB_ACTIONS")!="true","local-native provenance")
@@ -58,6 +59,14 @@ def main():
   operation_boundary="worker-entry/native-scroll-entry to same-generation GDI execution completion",
   ui_frame_candidate_boundary="ready-frame native UI accept through layout to same-generation GDI completion",f08_accepted=False)
  profile=out/"profile";report["seed"]=H.seed_corpus(profile,raw/"seed.exe")
+ if a.frozen_library or a.frozen_library_sha256:
+  need(a.frozen_library and a.frozen_library_sha256,"complete frozen input identity")
+  frozen=Path(a.frozen_library);need(sha(frozen)==a.frozen_library_sha256,"retained frozen SDK original library")
+  target=profile/"library.sqlite"
+  need(not any(Path(str(target)+suffix).exists() for suffix in ("-wal","-shm","-journal")),"closed seed has no outstanding journal")
+  shutil.copyfile(frozen,target)
+  report["frozen_library_input"]={"path":str(frozen),"sha256":sha(target),"bytes":target.stat().st_size,"journal_header_hex":target.read_bytes()[18:20].hex(),"seed_then_replace_from_authenticated_original":True}
+
  awake=H.K.SetThreadExecutionState(0x80000003);need(awake,"temporary awake request")
  deadline=time.monotonic()+1200
  try:
