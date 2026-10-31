@@ -31,18 +31,18 @@ def main():
     program=(root/'probe/f10-probe').read_bytes()
     errors=evaluate(index,rows,program)
     controls=[]
-    variants=[('source',lambda i,r:i.update(source='0'*40)),('consumer',lambda i,r:i.update(program_sha256='0'*64)),
-              ('permission',lambda i,r:r[2].update(canary_errno=0)),('kill',lambda i,r:r[3].update(exit_code=0)),
-              ('join',lambda i,r:r[1].update(close_join_passed=False)),('original',lambda i,r:r[0].update(original_after='0'*64))]
-    for name,mutate in variants:
+    variants=[('source','source/run/attempt',lambda i,r:i.update(source='0'*40)),('consumer','actual consumer digest',lambda i,r:i.update(program_sha256='0'*64)),
+              ('permission','real EACCES',lambda i,r:r[2].update(canary_errno=0)),('kill','real death/restart',lambda i,r:r[3].update(exit_code=0)),
+              ('join','close before destroy',lambda i,r:r[1].update(close_join_passed=False)),('original','normal: original changed',lambda i,r:r[0].update(original_after='0'*64))]
+    for name,expected_reason,mutate in variants:
         i=copy.deepcopy(index);r=copy.deepcopy(rows);mutate(i,r)
-        reasons=evaluate(i,r,program);controls.append({'name':name,'rejected':bool(reasons),'reasons':reasons})
+        reasons=evaluate(i,r,program);controls.append({'name':name,'rejected':expected_reason in reasons and expected_reason not in errors,'expected_reason':expected_reason,'reasons':reasons})
     if not all(x['rejected'] for x in controls):errors.append('negative control accepted')
     temps=lambda r:[x for x in r.get('after',[]) if x['name'].endswith('.tmp')]
     findings=[
         {'requirement':'normal successful operation removes its temporaries','passed':not temps(rows[0]),'observed':temps(rows[0])},
         {'requirement':'close waits for worker release before destroy','passed':rows[1].get('close_join_passed',False)},
-        {'requirement':'failed deletion leaves explicit recoverable cleanup ownership','passed':not temps(rows[2]),'observed':temps(rows[2]),'note':'public result has no cleanup-owner/status field; retain failed result, do not infer recoverability'},
+        {'requirement':'EACCES cleanup observation: no temporary residue at operation return','passed':not temps(rows[2]),'observed':temps(rows[2]),'note':'Residue is an observed gap, not proof all retained files are unsafe. Public result has no cleanup-owner/status field; owner policy/recovery still requires implementation and verification.'},
         {'requirement':'process-death leftovers handled by next operation','passed':not temps(rows[3]),'observed':temps(rows[3])},
         {'requirement':'concurrently appeared target not overwritten','passed':rows[4].get('concurrent_target')==rows[4].get('target_after'),'observed':{'before':rows[4].get('concurrent_target'),'after':rows[4].get('target_after')}}
     ]
