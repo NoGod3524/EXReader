@@ -103,8 +103,11 @@ jobs:
           if ($LASTEXITCODE) { throw 'metadata configure failed' }
           cmake --build build/organization-consumer --parallel 4
           if ($LASTEXITCODE) { throw 'metadata build failed' }
-          cmake -S tests/windows_organization_projection/cloud -B build/cloud-readback -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 "-DCMAKE_PREFIX_PATH=$prefix"
+          cmake -S tests/windows_organization_projection/cloud -B build/cloud-readback -G Ninja -DCMAKE_BUILD_TYPE=Release "-DEXR_SDK_VERSION:STRING=3.42.0" "-DCMAKE_PREFIX_PATH=$prefix"
           if ($LASTEXITCODE) { throw 'readback configure failed' }
+          $versionLines = @(Select-String -LiteralPath build/cloud-readback/CMakeCache.txt -Pattern '^EXR_SDK_VERSION:STRING=3\.42\.0$')
+          if ($versionLines.Count -ne 1) { throw 'F02 actual CMake SDK version differs' }
+          Write-Output 'F02_CMAKE_VERSION build/cloud-readback=3.42.0 STRING'
           cmake --build build/cloud-readback --parallel 4
           if ($LASTEXITCODE) { throw 'readback build failed' }
           New-Item -ItemType Directory -Force build/c09/package | Out-Null
@@ -137,8 +140,11 @@ jobs:
       - name: Build existing installed public SDK original inspector
         shell: pwsh
         run: |
-          cmake -S tests/reader_gtk_receive -B build/f02-inspector -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 "-DCMAKE_PREFIX_PATH=$pwd/build/windows-sdk342/sdk"
+          cmake -S tests/reader_gtk_receive -B build/f02-inspector -G Ninja -DCMAKE_BUILD_TYPE=Release "-DEXR_SDK_VERSION:STRING=3.42.0" "-DCMAKE_PREFIX_PATH=$pwd/build/windows-sdk342/sdk"
           if ($LASTEXITCODE) { throw 'inspector configure' }
+          $versionLines = @(Select-String -LiteralPath build/f02-inspector/CMakeCache.txt -Pattern '^EXR_SDK_VERSION:STRING=3\.42\.0$')
+          if ($versionLines.Count -ne 1) { throw 'F02 actual CMake SDK version differs' }
+          Write-Output 'F02_CMAKE_VERSION build/f02-inspector=3.42.0 STRING'
           cmake --build build/f02-inspector --parallel 4
           if ($LASTEXITCODE) { throw 'inspector build' }
       - name: Native Windows import and actual HTTPS PUT
