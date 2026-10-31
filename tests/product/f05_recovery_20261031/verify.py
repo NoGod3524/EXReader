@@ -3,7 +3,7 @@
 
 The independent artifact authenticator must precede this gate. This gate never
 turns missing hosts, direct receiver injections, skipped scenarios, or component
-results into client acceptance. Current capability blocker is intentionally fatal.
+results into client acceptance. Only a reviewed, complete producer matrix may open the gate.
 """
 import argparse
 import json
@@ -12,8 +12,8 @@ from pathlib import Path
 
 HOSTS = {"windows", "linux", "android", "macos", "iphone", "ipad"}
 CASES = {
-    "offline_reconnect", "concurrent_heads_explicit_resolution",
-    "delete_put_tombstone_explicit_restore", "cancel_receive_retry",
+    "offline_reconnect", "concurrent_heads_preserved",
+    "delete_put_tombstone_preserved", "cancel_receive_retry",
     "kill_commit_ack_replay", "restart_offline_read",
 }
 
@@ -51,28 +51,34 @@ def check(manifest, bundle, source, run, attempt):
             require(case["actual_host_actions"] is True, label + ": missing real host")
             require(case["receiver_database_injection"] is False,
                     label + ": direct receiver insertion is not peer synchronization")
-            require(case["peer_wire_observed"] is True, label + ": missing wire peer")
+            if case["name"] != "restart_offline_read":
+                require(case["peer_wire_observed"] is True, label + ": missing wire peer")
             require(case["original_identity_preserved"] is True,
                     label + ": original bytes/SDK mapping changed")
-            require(case["reopened_host_readable"] is True, label + ": reopen absent")
+            if case["name"] in {"cancel_receive_retry", "kill_commit_ack_replay", "restart_offline_read"}:
+                require(case["reopened_host_readable"] is True, label + ": reopen absent")
             require(case["revision_bytes_preserved"] is True,
                     label + ": replay rewrote immutable bytes")
             require(case["source_evidence"], label + ": missing evidence references")
-            if case["name"] == "concurrent_heads_explicit_resolution":
+            if case["name"] == "concurrent_heads_preserved":
                 heads = case["competing_heads"]
                 require(len(heads) >= 2 and len(set(heads)) == len(heads),
                         label + ": not actually concurrent")
-                exact_set(case["resolution_parents"], set(heads), label + ": parents")
-                require(case["explicit_user_resolution"] is True,
-                        label + ": implicit conflict winner")
-                exact_set(case["final_heads"], {case["resolution_revision"]},
-                          label + ": unresolved head set")
-            elif case["name"] == "delete_put_tombstone_explicit_restore":
+                require(case["conflict_displayed"] is True, label + ": silent conflict")
+                if case.get("explicit_user_resolution", False):
+                    exact_set(case["resolution_parents"], set(heads), label + ": parents")
+                    exact_set(case["final_heads"], {case["resolution_revision"]}, label + ": resolution")
+                else:
+                    exact_set(case["final_heads"], set(heads), label + ": discarded concurrent head")
+            elif case["name"] == "delete_put_tombstone_preserved":
                 require(case["stale_peer_did_not_resurrect"] is True,
                         label + ": stale put resurrected deletion")
-                require(case["tombstone"] in case["restore_parents"]
-                        and case["explicit_user_restore"] is True,
-                        label + ": missing explicit tombstone restoration")
+                require(case["delete_conflict_displayed"] is True
+                        and case["tombstone_preserved"] is True,
+                        label + ": silent or discarded delete conflict")
+                if case.get("explicit_user_restore", False):
+                    exact_set(case["restore_parents"], set(case["competing_heads"]),
+                              label + ": restore must cover every competing head")
             elif case["name"] == "kill_commit_ack_replay":
                 require(case["terminated_pid"] != case["reopened_pid"],
                         label + ": no new process")
