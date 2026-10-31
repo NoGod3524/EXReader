@@ -50,3 +50,6 @@ Added a GTK native-UI author for nested shelf/tag/series, group delete/restore, 
 
 ### Static review follow-through
 GTK author now waits for removed-mode transitions and verifies the actual parent/ordinal/group tombstone/membership projection before recording success. Added a fresh native Windows account/session receiver against the real relay, read-only exact organization/revision comparison, and actual process relaunch persistence checks. These are source preparations, not executed results. Android/Apple transport bootstrap and common manifest assembly still require completion before CI can be proposed.
+
+### Android receiver preparation
+The native receiver can host the unchanged authentic wire under its own build-time fixture CA and reverse the local TLS port into the emulator. It refuses an APK whose bundled test CA differs, performs actual native sync/UI/restart assertions, then reads the stopped app catalog plus WAL for exact group/membership/revision comparison. Windows now prechecks source/run/attempt/SDK of the author receipt and waits for the actual receive projection. None of these steps have run; Apple fixture bootstrap and final chain/manifest remain open, and CI remains zero.

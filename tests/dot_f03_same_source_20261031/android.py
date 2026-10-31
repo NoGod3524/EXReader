@@ -1,14 +1,42 @@
 """Execute installed Android native organization suites and preserve their failure evidence."""
 import argparse
+import base64
+import hashlib
+import importlib.util
+import os
 import json
 import shutil
+import zipfile
 from pathlib import Path
 import subprocess
 import sys
-from identity import ROOT, identity, require, digest, same_identity, write_json
+from identity import ROOT, identity, require, digest, same_identity, write_json, read_snapshot, TABLES, SCOPE, canonical
 
 def adb(*args, timeout=120):
     return subprocess.check_output(["adb", *map(str, args)], stderr=subprocess.STDOUT, timeout=timeout)
+
+def wire_server(previous, fixture):
+    """Serve only prior authentic producer bytes using the CA already compiled into this test APK."""
+    spec=importlib.util.spec_from_file_location("f03_android_relay",
+        ROOT / "tests/reader_windows_gtk_interop/relay.py")
+    relay=importlib.util.module_from_spec(spec);spec.loader.exec_module(relay)
+    raw=previous.read_bytes(); saved=json.loads(raw)
+    same_identity(saved,identity())
+    require(saved.get("schema")==1,"unexpected actual wire schema")
+    cert,key=fixture/"public/server.crt",fixture/"private/server.key"
+    require(cert.is_file() and key.is_file(),"matching build-time fixture TLS material missing")
+    user="f03-fixture";password="f03-"+os.urandom(24).hex()
+    authorization="Basic "+base64.b64encode((user+":"+password).encode()).decode()
+    server=relay.Dav(cert,key,authorization)
+    server.certificate_sha256=digest(cert)
+    server.previous_sha256=hashlib.sha256(raw).hexdigest()
+    server.directories=set(saved["directories"])
+    for path,entry in saved["entries"].items():
+        body=base64.b64decode(entry["body"],validate=True)
+        require(hashlib.sha256(body).hexdigest()==entry["sha256"],"prior wire differs")
+        server.entries[path]=body
+    server.prior_entries=dict(server.entries);server.prior_directories=set(server.directories)
+    return relay,server,{"root":server.base+"/dav/","user":user,"password":password}
 
 def main():
     p = argparse.ArgumentParser()
@@ -21,12 +49,17 @@ def main():
     p.add_argument("--reports", type=Path)
     p.add_argument("--mode", choices=["retained","receive"], default="retained")
     p.add_argument("--expectations", type=Path)
+    p.add_argument("--projection-expectations", type=Path)
     p.add_argument("--connection", type=Path)
+    p.add_argument("--wire", type=Path)
+    p.add_argument("--tls-fixture", type=Path)
 
     a = p.parse_args()
     stamp = identity()
     a.output.mkdir(parents=True, exist_ok=False)
     passed = False
+    server = None
+    reversed_port = None
     names = ("host_apk", "owner_test_apk", "ui_apk", "ui_test_apk")
     apks = {name: digest(getattr(a, name)) for name in names}
     try:
@@ -42,10 +75,27 @@ def main():
         adb("pull", installed[len("package:"):], a.output / "installed.apk")
         require(digest(a.output / "installed.apk") == apks["host_apk"], "installed host differs")
         if a.mode == "receive":
-            require(a.expectations is not None and a.connection is not None,
+            require(a.projection_expectations is not None, "identity-bound author projection required")
+            expected_receipt=json.loads(a.projection_expectations.read_text(encoding="utf-8"))
+            same_identity(expected_receipt,stamp)
+            require(expected_receipt.get("sdk_version")==SCOPE["sdk_version"], "author SDK differs")
+            require(a.expectations is not None and (a.connection is not None or
+                    (a.wire is not None and a.tls_fixture is not None)),
                     "actual producer expectations and fixture connection required")
             groups = json.loads(a.expectations.read_text(encoding="utf-8"))
-            config = json.loads(a.connection.read_text(encoding="utf-8"))
+            if a.wire is not None:
+                require(a.tls_fixture is not None, "matching build-time TLS fixture required")
+                ca=(a.tls_fixture/"public/ca.crt").read_bytes()
+                with zipfile.ZipFile(a.host_apk) as archive:
+                    matches=[name for name in archive.namelist()
+                             if name.endswith("/host_sync_fixture_ca.crt")]
+                    require(len(matches)==1,"built APK fixture trust anchor not identifiable")
+                    require(archive.read(matches[0])==ca,"server CA differs from actual built APK")
+                relay, server, config = wire_server(a.wire, a.tls_fixture)
+                reversed_port = "tcp:" + str(server.server.server_port)
+                adb("reverse", reversed_port, reversed_port)
+            else:
+                config = json.loads(a.connection.read_text(encoding="utf-8"))
             require(config["root"].startswith("https://127.0.0.1:"), "local fixture only")
             require(isinstance(groups, list) and groups, "actual expected group IDs required")
             command = ["shell","am","instrument","-w","-r","-e","disableAnalytics","true",
@@ -68,6 +118,35 @@ def main():
             require(receipt.get("accepted") is True and receipt.get("native_sync_completed") is True and
                     receipt.get("restart_verified") is True, "actual receiver UI/restart failed")
             require(b"FAILURES" not in raw and b"OK (1 test)" in raw, "receiver test failed")
+            # Pull a stopped real application's DB plus its WAL; never write its data.
+            adb("shell","am","force-stop","org.exreader.host")
+            database=a.output/"native-catalog"/"reader-catalog.db"
+            database.parent.mkdir()
+            database.write_bytes(adb("exec-out","run-as","org.exreader.host",
+                                     "cat","files/reader-catalog.db"))
+            for suffix in ("-wal","-shm"):
+                remote="files/reader-catalog.db"+suffix
+                exists=subprocess.run(["adb","shell","run-as","org.exreader.host","test","-f",remote],
+                                      capture_output=True,check=False)
+                if exists.returncode==0:
+                    Path(str(database)+suffix).write_bytes(
+                        adb("exec-out","run-as","org.exreader.host","cat",remote))
+            actual=read_snapshot(database);expected=expected_receipt["snapshot"]
+            for table in TABLES:
+                require(actual[table]==expected[table],"Android projection differs: "+table)
+            original={r["id"]:r["body"] for r in expected["revisions"]}
+            received={r["id"]:r["body"] for r in actual["revisions"]}
+            require(all(received.get(k)==v for k,v in original.items()),"Android exact revisions differ")
+            write_json(a.output/"projection.json",{**stamp,"host":"android",
+                "sdk_version":SCOPE["sdk_version"],"program_sha256":apks["host_apk"],
+                "native_sync_completed":True,"restart_verified":True,"snapshot":actual,
+                "snapshot_sha256":hashlib.sha256(canonical(actual)).hexdigest(),
+                "complete_product_accepted":False})
+            if server is not None:
+                require(any(r["method"]=="GET" and "/revisions/" in r["path"] and
+                            r["authenticated"] for r in server.requests), "no native revision download")
+                relay.save(server,a.output/"wire","f03-android-receive",{"native_ui_receipt":"../received/result.json"})
+                server=None
             passed = True
             return
         common = []
@@ -102,6 +181,11 @@ def main():
                         "--evidence", str(a.output), "--all-exits"], cwd=ROOT, check=True)
         passed = True
     finally:
+        if server is not None:
+            write_json(a.output/"failed-requests.json",server.requests)
+            server.server.shutdown();server.server.server_close()
+        if reversed_port is not None:
+            subprocess.run(["adb","reverse","--remove",reversed_port], check=False)
         write_json(a.output / "driver-result.json",
                    {**stamp, "host": "android", "apk_sha256": apks,
                     "native_lifecycle_passed": passed, "mode": a.mode, "complete_product_accepted": False,
