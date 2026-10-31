@@ -815,3 +815,15 @@ done:
  if(status==WH3_TX_UNCERTAIN){wh3w_domain domain;wh3wg_domain(r->gate,&domain);domain.poison(domain.context,r->cap,"compound-publication-uncertain");}
  SetLastError(error);return status;
 }
+
+int wh3wr_clean(wh3wr_registration *r) {return r&&!r->cap&&rclean(r);}
+
+int wh3wr_library_path(wh3wr_registration *r,wchar_t *out,size_t capacity) {
+ DWORD n;wh3w_identity id;
+ if(out&&capacity)out[0]=0;
+ if(!r||!out||!capacity||capacity>MAXDWORD||r->target==INVALID_HANDLE_VALUE||
+    !wh3wr_check(r)||!rid(r->target,&id,0)||!reqid(&id,&r->live_target))return 0;
+ n=GetFinalPathNameByHandleW(r->target,out,(DWORD)capacity,FILE_NAME_NORMALIZED|VOLUME_NAME_GUID);
+ if(!n||n>=capacity||!wh3wr_check(r)){out[0]=0;return 0;}
+ return 1;
+}

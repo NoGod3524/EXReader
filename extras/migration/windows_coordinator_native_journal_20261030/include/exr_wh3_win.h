@@ -111,6 +111,10 @@ int wh3wr_recover_enrollment(const wchar_t *library,
 int wh3wr_open(const wchar_t *library,unsigned mode,const wh3w_controls *,
  wh3wr_registration **);
 int wh3wr_check(wh3wr_registration *);
+/* Observe only the exact independently registered CLEAN grant and target. */
+int wh3wr_clean(wh3wr_registration *);
+/* Stable volume-GUID SDK path derived from the held target, never a DOS alias. */
+int wh3wr_library_path(wh3wr_registration *,wchar_t *,size_t);
 /* Per-native-domain immutable input and verified-stage records, held in the
    protected registry. Unknown writes cannot issue success or authorize publish.
    Only explicit owner/recovery callers may read them; bytes are still subject

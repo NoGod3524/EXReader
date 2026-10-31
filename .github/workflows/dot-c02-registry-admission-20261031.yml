@@ -5,6 +5,7 @@ on:
     paths:
       - extras/migration/windows_coordinator_native_journal_20261030/**
       - tests/migration/windows_registry_admission_20261031/**
+      - extras/migration/src/lm_main.c
       - examples/reader.c
       - apps/reader/desktop/CMakeLists.txt
       - .github/workflows/dot-c02-registry-admission-20261031.yml
@@ -44,7 +45,7 @@ jobs:
           cmake --build build/sdk-build --parallel 4 2>&1 | tee evidence/build-logs/sdk-build.log
           cmake --install build/sdk-build
           cmake -S extras/migration/windows_coordinator_native_journal_20261030 -B build/native -DWH_PREFIX="$GITHUB_WORKSPACE/stage" -DWH3_BUILD_SDK_TOOL=ON -DEXR_SDK="$GITHUB_WORKSPACE/build/sdk"
-          cmake --build build/native --target exreader-c02-admission --config Release 2>&1 | tee evidence/build-logs/admission-command-build.log
+          cmake --build build/native --config Release 2>&1 | tee evidence/build-logs/admission-command-build.log
           cmake --install build/native --config Release --prefix "$GITHUB_WORKSPACE/stage"
       - name: Build separate installed registry consumer and actual product
         run: |
@@ -83,6 +84,20 @@ jobs:
           EXE=$(find build/registry -type f -name coordinator-registry-check.exe | head -1)
           python tests/reader_native_owner_repairs/display.py
           python tests/migration/windows_registry_admission_20261031/host_check.py --host build/product/EXReaderProduct.exe --consumer "$EXE" --font tests/fixtures/fonts/primary.ttf --output evidence/product 2>&1 | tee evidence/host.log
+      - name: Build existing migration consumers and preserve legacy behavior
+        run: |
+          set -euo pipefail
+          cmake -S extras/migration -B build/legacy -DEXR_SDK="$GITHUB_WORKSPACE/build/sdk" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/legacy --target exreader-legacy-migrate exreader-legacy-migrate-tx --config Release --parallel 4 2>&1 | tee evidence/build-logs/legacy-build.log
+          LEGACY=$(find build/legacy -type f -name exreader-legacy-migrate.exe | head -1)
+          python tests/migration/run_cases.py --tool "$LEGACY" --out evidence/legacy-scenarios.json --workdir evidence/legacy-cases --label c02-shared-loop 2>&1 | tee evidence/legacy-scenarios.log
+      - name: Actual migration command and deterministic fresh-process recovery
+        run: |
+          set -euo pipefail
+          cp build/native/wh3_build.h build/native/wh3-provider-sources.txt evidence/
+          TEST_TOOL=$(find build/native -type f -name exreader-c02-migrate-test.exe | head -1)
+          LEGACY_TX=$(find build/legacy -type f -name exreader-legacy-migrate-tx.exe | head -1)
+          python tests/migration/windows_registry_admission_20261031/migration_check.py --tool stage/bin/exreader-c02-migrate.exe --test-tool "$TEST_TOOL" --admission stage/bin/exreader-c02-admission.exe --legacy "$LEGACY_TX" --output evidence/actual-migration 2>&1 | tee evidence/actual-migration.log
       - name: Preserve raw state and provenance
         if: always()
         run: |
