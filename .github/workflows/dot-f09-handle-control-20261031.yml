@@ -1,0 +1,53 @@
+name: F09 frozen observations, array-handle differential and direct-handle control
+on:
+  push:
+    branches: [codex/dot-f09-handle-control-20261031]
+permissions:
+  contents: read
+concurrency:
+  group: f09-handle-control-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  compare:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Eight frozen observations, six array-handle and eight direct-handle processes
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: utf-8
+        run: python tests/reader_f09_handle_control_20261031/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f09-handle-control-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09-handle-control/*.json
+            build/f09-handle-control/*-managed/*.log
+            build/f09-handle-control/*-managed/*.json
+            build/f09-handle-control/*-native/*.log
+            build/f09-handle-control/*-native/*.json
+            build/f09-handle-control/*-legacy/*.log
+            build/f09-handle-control/*-legacy/*.json
+            build/f09-handle-control/*-legacy/*.txt
+            build/f09-handle-control/*-visible/*.log
+            build/f09-handle-control/*-visible/*.json
+            build/f09-handle-control/*-visible/*.txt
+            build/f09-handle-control/*-handle-*/*.log
+            build/f09-handle-control/*-handle-*/*.json
+            build/f09-handle-control/*-handle-*/*.txt
+            build/f09-handle-control/*-control-*/*.log
+            build/f09-handle-control/*-control-*/*.json
+            build/f09-handle-control/*-control-*/*.txt
+            build/f09-handle-control/baseline-package/build.json
+            build/f09-handle-control/candidate-package/build.json
+            build/f09-handle-control/baseline-package/report.json
+            build/f09-handle-control/candidate-package/report.json
+          if-no-files-found: error
