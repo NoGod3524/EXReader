@@ -1,8 +1,12 @@
-# F02 Windows to Android: sole first-run evidence
+# F02 Windows to Android fixed-input validation
+
+Current fixed-slice result: **passed**, source98d2542f3d9849bbcb81f134c6327b59240043b3 / run41240919804/A1. All20 original Activity checks,12 semantic controls and additional cold-cache raw-evidence checks passed. Formal **95/108** and F02_accepted=false remain. The complete current result and artifact identities are in the final section; earlier failed records remain below.
+
+## Original first-run record (retained)
 
 Result: **failed; candidate not accepted**. Formal progress remains **95/108**. This document seals the result of the one authorized round; it does not authorize a correction or another run.
 
-## Fixed identities
+### Fixed identities
 
 - Exclusive branch: `codex/gpt-f02-win-android-transfer-20261031`.
 - Tested source: [`fe947bec25a56f40538677ffa9fb2a5e1e351b08`](https://github.com/NoGod3524/EXReader/commit/fe947bec25a56f40538677ffa9fb2a5e1e351b08).
@@ -14,7 +18,7 @@ Result: **failed; candidate not accepted**. Formal progress remains **95/108**. 
 
 The source commit changes exactly the two Android production files, the eight approved harness/workflow paths, and this document. JNI, SDK, existing tests and old assertion bytes remain frozen. A subsequent document-only [skip ci] seal has the tested source as its parent; it must not be used as a replacement test identity.
 
-## Actual Actions result
+### Actual Actions result
 
 [Run41233481729 / attempt1](https://github.com/NoGod3524/EXReader/actions/runs/41233481729) was triggered once by push at2026-10-31T19:17:09Z. It completed **failure** at19:25:24Z. There was no rerun or workflow dispatch.
 
@@ -37,7 +41,7 @@ At19:25:01Z the producer emitted `accepted=false, safe_upload=true, phases=1, F0
 
 The run did **not** reach the offline or second offline process phases. Expected20 checks are not reported as20 passes; their complete execution was not established. The independent ordinary log records `passed=false`, `errors=["AssertionError: upstream android"]` and `F02_accepted=false`. Its12 semantic mutation controls did **not** run, because the prerequisite failed before ZIP re-verification.
 
-## Preserved original artifacts
+### Preserved original artifacts
 
 All six artifacts below belong to exact source fe947bec25a56f40538677ffa9fb2a5e1e351b08, run41233481729/A1. API metadata and ordinary upload logs agree. They were unexpired at this seal, with API expiry2027-01-29T19:17:09Z. No artifact was deleted or overwritten.
 
@@ -52,7 +56,7 @@ All six artifacts below belong to exact source fe947bec25a56f40538677ffa9fb2a5e1
 
 The independent319-byte ZIP is a failed prerequisite summary, not a successful verification archive. Receiver evidence was uploaded only after its generated-credential scan passed. Artifact ZIPs have not been downloaded, unpacked or parsed locally or in the VM.
 
-## Implementation and reused input
+### Implementation and reused input
 
 The two production edits prepare a verified private TXT reading copy from the existing SDK original on its owner thread. A unique staging file stays unpublished until the existing HostTask page publication transaction; cancellation or abandonment removes only its own staging file. The canonical verified reading copy and host path preference publish inside that transaction. Copy recovery does not import another SDK book, generate a product revision or send PUT. The build passed; this first run does not establish the complete runtime behavior.
 
@@ -67,7 +71,7 @@ Admission reauthenticated that original ZIP using the frozen original verifier. 
 
 The new adapter derives required commands from the frozen D22 recipe and explicitly supplies3.42.0 for SDK/module/Gradle inputs. The original D22 suite allows3.40/3.41 and EPUB; it was not weakened or falsely claimed passed in full. Its original page-themeOFF and3.41 gate are unchanged.
 
-## Budget, route and continuation boundary
+### Budget, route and continuation boundary
 
 Authorization: one round, admission10 + Android60 + independent15 = **85 runner-minute ceiling**. That single slot is consumed. Actual job intervals total487seconds, approximately8.12 elapsed runner-minutes; API run_duration_ms=495000 is8.25 wall minutes. The timing endpoint reports zero billed UBUNTU milliseconds, which is billing metadata rather than a statement that the jobs took no time. Unused time under the ceiling does not authorize another round.
 
@@ -145,7 +149,7 @@ Observation evidence document prepared at 2026-10-31T20:19:54.361948+00:00 / 202
 
 ## Approved cold-cache full validation round (2026-10-31)
 
-Status: implementation draft, not run. New exclusive branch codex/gpt-f02-cold-cache-validation-20261031, parent3ba9dbefe975b60cd6d3b6d2dac6d186f43c637b. Product source remainsfe947bec25a56f40538677ffa9fb2a5e1e351b08; SDK8357eafa28423a7ab93ba08b823af80f01ad1505 and archived real Windows sender remain fixed.
+Status: sole full round completed/success; tested identity and actual evidence follow. New exclusive branch codex/gpt-f02-cold-cache-validation-20261031, parent3ba9dbefe975b60cd6d3b6d2dac6d186f43c637b. Product source remainsfe947bec25a56f40538677ffa9fb2a5e1e351b08; SDK8357eafa28423a7ab93ba08b823af80f01ad1505 and archived real Windows sender remain fixed.
 
 Exact six paths: F02ReceiveTest.java, run.py, source_lock.json (branch identity), fetch_sender.py (budget metadata), existing workflow and this document. Independent authenticate.py, build.py, init.gradle, product and SDK files are frozen. The additional independent cold-cache checks live in the approved workflow, avoiding a seventh path.
 
@@ -154,3 +158,67 @@ The original sync remains first. Before corrupt mode the test requires native/co
 Original corruption, truncation, cancellation, empty-SDK/cache assertions and timeouts remain. Normal receive must add a real original GET and obtain correct bytes. Duplicate receive must add no original GET; unrelated metadata traffic is allowed. Original20 Activity checks, offline reopening and12 independent controls remain intact. Isolated raw bytes and numeric native stat evidence are retained. New counter publications count original-request arrivals and atomically replace only a test counter file, so a late response does not create a new request.
 
 Workflow is restored to admission10 + Android60 + independent15 =85 runner-minute ceiling, exactly one initial attempt, no automatic correction/rerun. Original independent assertions run first; workflow-contained verification then recomputes the new isolation, exact XOR1 and GET-boundary evidence from its authenticated original ZIPs. All syntax/build/test/fixture/ZIP handling remains Actions-only. Any result is followed only by document [skip ci] sealing. Formal95/108 remains.
+
+## Complete cold-cache result
+
+**Passed for this fixed archived-Windows-input / Android-emulator slice.** [Run41240919804/A1](https://github.com/NoGod3524/EXReader/actions/runs/41240919804) is completed/success at tested source [98d2542f3d9849bbcb81f134c6327b59240043b3](https://github.com/NoGod3524/EXReader/commit/98d2542f3d9849bbcb81f134c6327b59240043b3), branchcodex/gpt-f02-cold-cache-validation-20261031, parent3ba9dbefe975b60cd6d3b6d2dac6d186f43c637b. The later seal changes only this document; use98d2542f3 as the CI source identity.
+
+The round modifies exactly the six approved harness/workflow/document paths. Product source remainsfe947bec25a56f40538677ffa9fb2a5e1e351b08; MainActivity blobc98cb87a86ab95ae9498cf9ab5dce68e9c4dd369 and BookStore blobbe6dc75e0f77d0a975c21dc7dddeea31b46d5d81 are unchanged. SDK8357eafa28423a7ab93ba08b823af80f01ad1505 remains3.42.0/ABI1. Original authenticate.py blob9fcdc67c466e32b940bc4081a4517014eb028f3b is unchanged. No seventh source path was needed.
+
+### Actual jobs, original checks and audit
+
+| Job | UTC interval | Actual result |
+|---|---|---|
+| admission124654451614 | 20:52:35–20:52:52 | success: pinned original sender, fixed SDK/product guards, exact six current paths and retained Java assertions/timeouts/XOR1 input |
+| android124654552379 | 20:52:54–20:58:33 | success: build plus all original Activity checks |
+| authenticate124655822564 | 20:58:35–20:58:49 | success: unchanged original audit/12 controls, followed by new raw-evidence recomputation |
+
+Actual phases were online13/13 (PID2444), offline4/4 (PID2739) and reopen3/3 (PID2830), all UID10141. Each adb subprocess returned0; raw native evidence was present; instrumentation finish codes were-1 and Java phases passed. The original audit independently checked those three raw PID/UID records, stable SDK book1, exact SDK original bytes, actual reader/source frames, screenshots, closed owners, removed download cache, server stop and fresh-process offline reopening.
+
+The original ordinary audit log records **passed=true, errors=[], receiver.checks=20**. All **12 semantic controls** were rejected for their original specified reasons: sender-source, sender-PUT, wire-hash, receiver-attempt, receiver-key, receiver-GET, receiver-SDK-bytes, receiver-open, runtime-sdk, runtime-apk, cache-eviction and process-restart. No original assertion, timeout or count was lowered.
+
+The workflow-contained additional implementation records **F02_COLD_CACHE_AUDIT passed=true, errors=[]**. It reads the original authenticated input/receiver ZIPs retained by the unchanged independent job; it does not trust only producer success flags.
+
+### Cold/warm cache proof
+
+Before isolation, the controller and native session were FINISHED(state4), completed_shards256, epoch3. Preparing/receiving/projecting/closing/pollQueued/sdkTask flags were false before the transfer queue barrier, after it and after the move. SDK books0 and remote local_id0 were retained. No owner was cancelled or forced closed to create that precondition.
+
+The verified initial12000-byte cache had dev65062, inode319641, nlink1, UID10141, mode0600 and original SHA-256 `5f00b41f874d60348d6dc237873759906e5f0ed28b05bb399a6699bbc3c7b38f`. Its single atomic move into the new0700 app-private isolation directory preserved every identity field. The active path was absent afterward. Nine subsequent boundary observations recorded active_exists=false. The isolated original remained intact and was uploaded as `cold-cache-isolated-original.txt`; independent verification compared its raw bytes to the original Windows body and recomputed numeric raw stat evidence. There was no loop deletion or restoration from isolation.
+
+The actual authenticated corrupt GET is raw event259: HTTP200,12000 bytes, response SHA-256 `25f030d1715ea011f46442dc8ebd073c1ecdaa2836713e700b678e14ec208d03`. Independent code rebuilt the expected first-byte-XOR1 body from the Windows original and matched that digest. Corrupt/truncate/block modes were all actually consumed. The original error-status and empty-SDK/active-cache assertions passed.
+
+Five original-object requests were recorded: initial sync(id1), corrupt(id2), truncate(id3), block(id4) and normal receive(id5). The normal receive boundary advanced the original GET count **4 -> 5**, with a new non-fault request returning the exact original bytes. The new active cache used inode319644, distinct from isolated inode319641. No isolated cache was copied back.
+
+Duplicate receive kept the original GET count **5 -> 5**; its active cache dev/inode/size/hash stayed unchanged and the original SDK-one-book assertion passed. This comparison is for the target original only; unrelated metadata traffic is permitted. Counter publications count request arrivals and are atomic, so a delayed prior response does not masquerade as a new duplicate GET.
+
+### Build and preserved artifacts
+
+The build report and independent runtime APK checks bind:
+
+| APK | Bytes | SHA-256 |
+|---|---:|---|
+| host.apk | 27439236 | `08f0878602d19ddd4e06b36136c7459f795d5599c28e12f7369bbf7eb768c9c6` |
+| test.apk | 269312 | `9190256e03b3f82ba72da6949912ff83991164af3a102cbb91cff5116788aab1` |
+
+All six artifact identities below match ordinary upload logs and API metadata, exact source98d2542f3 /41240919804/A1. They were unexpired at seal; expiry2027-01-29T20:52:25Z.
+
+| Artifact | ID | ZIP bytes | SHA-256 |
+|---|---:|---:|---|
+| f02-android-input-41240919804-1 | [13056919452](https://github.com/NoGod3524/EXReader/actions/runs/41240919804/artifacts/13056919452) | 12687487 | `e751848fa3dd88f54faba33e4ead5fa91a43e4acd4f9975be274ee9771f8168e` |
+| f02-android-independent-41240919804-1 | [13057039510](https://github.com/NoGod3524/EXReader/actions/runs/41240919804/artifacts/13057039510) | 34060965 | `5b7f555953568fc9d66f25ca800fb2425155ca06c6c87317486e834551fc380a` |
+| f02-android-build-41240919804-1 | [13057228958](https://github.com/NoGod3524/EXReader/actions/runs/41240919804/artifacts/13057228958) | 20127607 | `5426f89912f2a84451763f7f64a42e6db6d3a23b1e107f2214bc3e20fb8e2d58` |
+| f02-android-receiver-41240919804-1 | [13057791050](https://github.com/NoGod3524/EXReader/actions/runs/41240919804/artifacts/13057791050) | 21324132 | `8b62ed3843455ee4f60e3b439690614e444b090b14c0af90c618d10f1d4573b1` |
+| f02-android-status-41240919804-1 | [13057791056](https://github.com/NoGod3524/EXReader/actions/runs/41240919804/artifacts/13057791056) | 289 | `a222b47a3da898b79503de9b6cf41cee0c0cea3efc1386be17c4223c0d4c9d9c` |
+| f02-android-admission-41240919804-1 | [13057870068](https://github.com/NoGod3524/EXReader/actions/runs/41240919804/artifacts/13057870068) | 625 | `08927430f6de381c84bde9ae32baec64549f6b17c4ea44add15d2a58945f801b` |
+
+Read `summary.json` in independent artifact13057039510 for the original20/12 audit and `cold-cache-verification.json` for the additional isolation/XOR1/GET recomputation. Its `input.zip` and `receiver.zip` are the authenticated original producer ZIPs. Receiver13057791050 contains the raw isolated original/stat, original request/event records, phase reports/native records, SDK originals and screenshots. ZIP download/parsing remains Actions-only.
+
+### Budget and claim boundary
+
+This new approval allowed one85-minute round (admission10 + Android60 + audit15). One of one is consumed. Actual job intervals total370seconds, **6.17 elapsed runner-minutes**; run wall duration384seconds. Unused ceiling time does not authorize another run. No correction or rerun occurred.
+
+All earlier failed runs and artifacts remain, including41233481729 and41237500791; diagnostic41235413651 and all prior seals remain identifiable above. New public observation records are limited to fixed enums, filtered test frames, hashes and numeric identities. Private credentials/runtime endpoint and arbitrary exception/logcat strings are excluded; safe_upload=true. Source/Git/docs used the approved original VM/native CLI route; all syntax/build/runtime/fixture/ZIP operations were Actions-only.
+
+The original sender remains archived real Windows source3b416378337a73c62423857e4340d469d357038d /41169386789/A1 /13030748486, not a new-source Windows run or continuously live Windows service. Android is an emulator. The fixed slice proves original transfer, rejection under the real injected faults, cache reuse and SDK-backed offline reopening. Physical Android, six-target coverage and complete formal F02 acceptance are not conferred. **F02_accepted=false; formal95/108 remains unchanged.** External owners, main/shared branches, PRs, tags and releases remain untouched.
+
+Cold-cache evidence document prepared at 2026-10-31T21:02:54.799417+00:00 / 2026-10-31 17:02:54 EDT.
