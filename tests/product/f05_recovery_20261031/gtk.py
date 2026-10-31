@@ -90,16 +90,17 @@ def main():
         host.key("alt+h", "alt+a")
         wait(host, lambda: account(host).get("bound") == "1")
         close_account(host)
-    def snapshot(host):
+    def snapshot(host, kind="book", entity=None):
         db = host.folder / "profile/library.sqlite.product.sqlite"
         with sqlite3.connect(db.as_uri() + "?mode=ro", uri=True, timeout=20) as connection:
             records = [json.loads(r[0]) for r in connection.execute("SELECT body_json FROM reader_revisions")]
             pending = connection.execute("SELECT count(*) FROM reader_outbox").fetchone()[0]
-        entity_keys = {r["entity_key"] for r in records if r["entity_kind"] == "book"}
+        selected = [r for r in records if r["entity_kind"] == kind and (entity is None or r["entity_key"] == entity)]
+        entity_keys = {r["entity_key"] for r in selected}
         if len(entity_keys) != 1:
             raise AssertionError("single-book producer cannot combine unrelated entity heads")
-        ids = {r["id"] for r in records if r["entity_kind"] == "book"}
-        parents = {p for r in records if r["entity_kind"] == "book" for p in r["parents"]}
+        ids = {r["id"] for r in selected}
+        parents = {p for r in selected for p in r["parents"]}
         return {"entity_key": next(iter(entity_keys)), "heads": sorted(ids - parents), "records": records, "outbox": pending}
     def sync(host, heads=None):
         open_account(host)
@@ -125,6 +126,35 @@ def main():
                 out / ("sync-" + host.folder.name + "-" + str(len(store.requests)) + ".png"))
         close_account(host)
         return state
+    def collections(host):
+        state = configparser.ConfigParser(interpolation=None)
+        state.read(host.observe)
+        return dict(state["collections"]) if state.has_section("collections") else {}
+    def group_action(host, action, identifier=None, name=None):
+        command("xdotool", "windowactivate", "--sync", host.window)
+        host.key("F2", "ctrl+shift+c")
+        window(host, "Library collections")
+        wait(host, lambda: collections(host).get("visible") == "1")
+        host.key("alt+t", "Home", "Down", "Tab")
+        wait(host, lambda: collections(host).get("kind") == "1")
+        if identifier:
+            ids = collections(host).get("group_ids", "").split(",")
+            if identifier not in ids: raise AssertionError("actual tag missing")
+            host.key("alt+g", "Home")
+            for _ in range(ids.index(identifier)): host.key("Down")
+            wait(host, lambda: collections(host).get("selected_id") == identifier)
+        host.key("alt+" + {"create":"n", "edit":"s", "delete":"d"}[action])
+        window(host, "Collection details")
+        if name is not None:
+            host.key("alt+n", "ctrl+a")
+            host.paste(name)
+        host.key("Return")
+        window(host, "Collection details", False)
+        wait(host, lambda: collections(host).get("editor") == "0")
+        selected = collections(host).get("selected_id")
+        host.key("alt+F4")
+        window(host, "Library collections", False)
+        return identifier or selected
     def edit(host, title):
         command("xdotool", "windowactivate", "--sync", host.window)
         host.key("F2", "ctrl+e")
@@ -183,6 +213,39 @@ def main():
         checks.append({"name": "kill_commit_ack_replay", "outcome": "passed",
                        "terminated_pid": pid, "reopened_pid": first.process.pid,
                        "pending": pending, "after": snapshot(first)})
+        # Both native peers share one actual group parent. The server checkpoints
+        # are raw authenticated PUTs, not synthetic revisions or DB injection.
+        tag = group_action(first, "create", name="F05 shared tag")
+        sync(first)
+        sync(second)
+        parent = snapshot(first, "tag", tag)
+        if parent["heads"] != snapshot(second, "tag", tag)["heads"]:
+            raise AssertionError("group common ancestor not received")
+        base_checkpoint = store.checkpoint(out / "peer-baseline", "gtk-native-group-create")
+        group_action(first, "edit", tag, "F05 offline tag edit")
+        local_put = snapshot(first, "tag", tag)
+        group_action(second, "delete", tag)
+        deletion = snapshot(second, "tag", tag)
+        sync(second)
+        store.checkpoint(out / "peer-delete", "gtk-native-group-delete")
+        sync(first)
+        right_group = sync(second)
+        left_group = sync(first)
+        combined = set(local_put["heads"]) | set(deletion["heads"])
+        for host, state in ((first, left_group), (second, right_group)):
+            if set(snapshot(host, "tag", tag)["heads"]) != combined:
+                raise AssertionError("delete-put conflict lost a head")
+            if state.get("organization_paused") != "1":
+                raise AssertionError("unsafe organization projection was not paused")
+        checks.append({"name":"delete_put_tombstone_preserved", "outcome":"passed",
+            "entity_kind":"tag", "entity_key":tag, "common_parent":parent["heads"],
+            "local_put":local_put, "delete":deletion,
+            "retained_heads":sorted(combined), "first_native_state":left_group,
+            "second_native_state":right_group, "stale_put_is_not_restore":True})
+        (out / "peer-contract.json").write_text(json.dumps({
+            "entity_kind":"tag", "entity_key":tag, "common_parent":parent["heads"],
+            "baseline":"peer-baseline", "remote_delete":"peer-delete",
+            "simultaneous_online_peers":False}, indent=2) + "\n")
         edit(first, "Concurrent GTK first")
         edit(second, "Concurrent GTK second")
         heads = set(snapshot(first)["heads"]) | set(snapshot(second)["heads"])
