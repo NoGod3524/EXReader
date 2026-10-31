@@ -4,9 +4,11 @@ from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[2]
 HERE=Path(__file__).resolve().parent
 OUT=ROOT/"build/f08-android"
-BASE="8e5f4c850839c493e1307ea8f17ab3552209d08a"
+BASE="5d4152744ef0fd9a1f2775cdcdae0e542b08476d"
 ALLOWED={"tests/reader_f08_android_20261031/build.py","tests/reader_f08_android_20261031/lane.py",
-         ".github/workflows/dot-f08-android-20261031.yml"}
+         ".github/workflows/dot-f08-android-20261031.yml",
+         "tests/reader_f08_android_startup_20261031/StartupCostTest.java",
+         "tests/reader_f08_android_startup_20261031/diagnose.py"}
 def need(value,message):
     if not value:raise ValueError(message)
 def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -197,6 +199,14 @@ def audit():
             need(all(recorded.get(k)==v for k,v in evaluation.items()),"budget evaluation differs")
             owner=verify_owner(json.loads((raw/"owner-report.json").read_text()),ident)
             report.update(evaluation,observation_complete=True,owner_regression=owner)
+    if (raw/"startup-summary.json").exists():
+        sys.path.insert(0,str(ROOT/"tests/reader_f08_android_startup_20261031"))
+        import diagnose
+        need(build["startup_cost_driver_sha256"]==sha(ROOT/"tests/reader_f08_android_startup_20261031/StartupCostTest.java"),"startup driver source")
+        need(sha(raw/"installed/app-debug.apk")==sha(raw/"packages/app-debug.apk"),"installed diagnostic product")
+        summary=[diagnose.verify(json.loads((raw/f"startup-{i}.json").read_text()),ident,i) for i in range(3)]
+        need(summary==json.loads((raw/"startup-summary.json").read_text()),"diagnostic replay")
+        report.update(startup_diagnostic_complete=True,startup_costs=summary)
     save(target/"audit.json",report)
     print("F08_ANDROID_AUDIT",json.dumps(report),flush=True)
 if __name__=="__main__":

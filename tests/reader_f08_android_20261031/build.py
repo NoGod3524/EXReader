@@ -3,6 +3,10 @@ import importlib.util, json, shlex, shutil, zipfile
 from lane import ROOT, OUT, identity, need, save, sha, guard
 def main():
     guard()
+    diagnostic=ROOT/"tests/reader_f08_android_startup_20261031/StartupCostTest.java"
+    generated=ROOT/"examples/android/app/src/androidTest/java/org/exreader/host/StartupCostTest.java"
+    need(not generated.exists(),"diagnostic source collision")
+    shutil.copyfile(diagnostic,generated)
     path=ROOT/"tests/reader_android_installed_sync_handoff/build.py"
     spec=importlib.util.spec_from_file_location("installed_sync_build",path)
     builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
@@ -53,6 +57,14 @@ def main():
     need(sha(ROOT/"examples/android"/apk_sources["app-debug.apk"])==packages["app-debug.apk"]["sha256"],
          "owner runner changed the measured application")
     shutil.copyfile(artifacts/"app-debug-androidTest.apk",ROOT/"examples/android"/apk_sources["app-debug-androidTest.apk"])
+    diagnostic_command=[x.replace("-PexrTestRunner=org.exreader.host.ShelfCatalogTest",
+        "-PexrTestRunner=org.exreader.host.StartupCostTest") for x in command[:-4]]+[":app:assembleDebugAndroidTest"]
+    builder.sh(diagnostic_command)
+    diagnostic_apk=artifacts/"startup-cost-androidTest.apk"
+    shutil.copyfile(ROOT/"examples/android"/apk_sources["app-debug-androidTest.apk"],diagnostic_apk)
+    packages[diagnostic_apk.name]={"sha256":sha(diagnostic_apk),"bytes":diagnostic_apk.stat().st_size}
+    need(sha(ROOT/"examples/android"/apk_sources["app-debug.apk"])==packages["app-debug.apk"]["sha256"],"diagnostic changed the application")
+    shutil.copyfile(artifacts/"app-debug-androidTest.apk",ROOT/"examples/android"/apk_sources["app-debug-androidTest.apk"])
     fixtures=ROOT/"build/android-host/fixtures";fixtures.mkdir(parents=True)
     shutil.copyfile(wave/"download/NewReview.txt",fixtures/"NewReview.txt")
     shutil.copyfile(wave/"download/fixtures.json",OUT/"fixtures.json")
@@ -79,6 +91,6 @@ def main():
         "native":native,"installed_prefixes":inventories,"sdk_cache_entries":caches,"gradle_flags":flags,
         "recipe_steps":names[:4],"build_recipe_sha256":sha(builder.RECIPE),"adapter_sha256":sha(path),
         "frozen_sampler_files":{p:sha(ROOT/p) for p in sampler_sources},
-        "ui_driver_copy_unchanged":True,"page_theme":False,"record_interop":False})
+        "startup_cost_driver_sha256":sha(diagnostic),"ui_driver_copy_unchanged":True,"page_theme":False,"record_interop":False})
     print("F08_ANDROID_BUILD",json.dumps({"packages":packages,"sdk_version":"3.42.0"}),flush=True)
 if __name__=="__main__":main()
