@@ -23,7 +23,6 @@
     "device": "pixel_6",
     "cores": 4,
     "ram_mib": 4096,
-    "heap_mib": 512,
     "size": [
       1080,
       2400
@@ -35,7 +34,10 @@
     "gpu": "host",
     "system_image_archive_revision": 4,
     "system_image_embedded_revision": 2,
-    "system_image_archive_sha256": "b57f6386af25b0fe5488e77196b43c03778c6760e6f4311611d090391b9cb2b3"
+    "system_image_archive_sha256": "b57f6386af25b0fe5488e77196b43c03778c6760e6f4311611d090391b9cb2b3",
+    "requested_heap_mib": 512,
+    "effective_heap_mib": 576,
+    "guest_growthlimit_mib": 192
   },
   "real_sdk_sources": 2202,
   "budgets": {
