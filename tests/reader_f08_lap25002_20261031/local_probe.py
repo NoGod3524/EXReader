@@ -36,7 +36,7 @@ def main():
     head = P.command(["git", "rev-parse", "HEAD"], text=True).strip()
     P.need(head == args.expected_source, "reviewed source")
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    out = ROOT / "build" / ("f08-local-native-" + stamp)
+    out = Path(os.environ["USERPROFILE"]) / ".codex/f08-device-runs" / stamp
     out.mkdir(parents=True, exist_ok=False)
     cached = ROOT / "build/f08-local-inputs/product/original.zip"
     raw, product = P.F.product(out / "product", cached.read_bytes() if cached.exists() else None)
