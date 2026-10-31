@@ -97,3 +97,19 @@ Probe job 124407375404, host job 124407478660, both green. Artifacts: probe 1302
 44bdaa4f632fdbf431771f52ae5efc3f404f2107e1505d0028c7a23144ec7a31); host 13025796711 (2053 B, zip sha256
 9b799cc9541746c5316b3ce581c1911a3627bd43e0022d0b547aee05e04aea6d).
 S6a/S6b: Retry disabled after the failed B save, 0 new requests, books/heads/revisions/outbox unchanged. S4 green as above.
+
+### Diagnostics rounds (thread sample detail, idle Apply wait)
+- Run 41158142840 (H02 b8aff586): host aborted in S3 with `TimeoutError` (Apply result not seen within 60 s); nothing after
+  S2 ran. Host 13025749467 (1278 B, zip sha256 4d06d5589e5d83390efd3783758632e27f5c05ec32e1aa8b74886e0a5e9f2634).
+  Same source on the fix branch, run 41158200475: 26/26, 5 thread samples all `none`/1008.
+- Harness then waits for an enabled Apply before each press and prints note/detail/button state on a missed transition.
+  In both following runs Apply was already enabled at every press, so the "dropped click" explanation is **not
+  confirmed**; the S3 timeout of 41158142840 and the n=6 thread red of 41157434078 remain unexplained and did not recur.
+- Run 41158820531 (H02 24599c6f, pre-fix product): 23/26, red only S3, S6a (256 requests), S6b (257 requests); thread
+  check green, 4 samples all `none`/1008. Probe job 124411522098, host job 124411633770. Artifacts: probe 13025874543
+  (832 B, f1271ee9e4d4c8d86ec652ade525d3115e01149b805ecc830cb7e3a90677636d); host 13026174673 (2135 B,
+  965e3b06f22d4fbd17f06d94344c4f1477557a4fc49509a2cfbe848200577484).
+- Run 41158823796 (fix branch 837f3840): **success, 26/26**; thread check 4 samples all `none`/1008. Probe job
+  124411532937, host job 124411647297. Artifacts: probe 13025827937 (832 B,
+  01efa4ac434657f69e0bbf0c31454d210852fd16b6221abf3ef4f8ac6f0c5b74); host 13026865136 (2102 B,
+  0fb69d4c0d95a333e38e466bfd9c0652b0e87f3f1a0800ff2d7fd68a261af8b9).
