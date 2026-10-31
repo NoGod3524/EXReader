@@ -609,7 +609,7 @@ def registry_evidence(files, spec, source, missing):
     return dict(capabilities=["trusted-registry","windows-product-admission","legacy-regression",*migration["capabilities"]],
                 registry=result,cli_cases=len(admission),host_cases=len(product),legacy=legacy,scanner=scanner,migration=migration)
 
-def gtk_evidence(files, spec, source):
+def gtk_evidence(files, spec, source, verification_output=None):
     for key in ("evidence_prefix", "runtime_prefix", "package_prefix"):
         prefix = spec[key]
         need(prefix.endswith("/") and canonical_path(prefix[:-1]) == prefix[:-1], "gtk-artifact-prefix")
@@ -624,7 +624,7 @@ def gtk_evidence(files, spec, source):
                 isinstance(node.func,ast.Name) and node.func.id == "done" and node.args and
                 isinstance(node.args[0],ast.Constant) and isinstance(node.args[0].value,str)]
     need(len(declared) == len(set(declared)) and len(declared) >= 13, "gtk-source-case-declaration")
-    return audit_gtk_host(files,spec,source,set(declared))
+    return audit_gtk_host(files,spec,source,set(declared),verification_output=verification_output)
 
 def posix_native_evidence(files, spec, source):
     prefix = spec["independent_prefix"]
@@ -823,7 +823,7 @@ def semantic_diagnostic(files,spec,error):
                 error=type(error).__name__,detail=str(error),contexts=contexts,logs=logs,
                 files=[dict(path=name,bytes=len(data)) for name,data in sorted(files.items())])
 
-def validate(files,spec,source,missing):
+def validate(files,spec,source,missing,verification_output=None):
     package_identity(spec,source)
     role = spec["role"]
     if role.startswith("native-"):
@@ -833,7 +833,7 @@ def validate(files,spec,source,missing):
     if role == "registry-product":
         return registry_evidence(files,spec,source,missing)
     if role == "host-gtk":
-        details = gtk_evidence(files,spec,source)
+        details = gtk_evidence(files,spec,source,verification_output)
         if details.get("installed_sdk_byte_binding") is not True:
             missing.add("host-gtk:installed-sdk-byte-binding")
         return details
@@ -971,7 +971,7 @@ def main():
         raw,metadata = acquire(repo,spec,source,output/role)
         files = zip_files(raw)
         try:
-            details = validate(files,spec,source,missing)
+            details = validate(files,spec,source,missing,output/role/"independent-binary")
         except Exception as error:
             diagnostic = semantic_diagnostic(files,spec,error)
             (output/role/"semantic-failure.json").write_text(json.dumps(diagnostic,indent=2)+"\n")
