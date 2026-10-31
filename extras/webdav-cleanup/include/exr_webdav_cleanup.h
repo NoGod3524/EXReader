@@ -119,7 +119,10 @@ exr_wc_status exr_wc_recover(exr_wc_root *root, uint32_t start,
                              uint32_t maximum,
                              exr_wc_recovery_report *report);
 /* Additive explicit stale-unpublished abandonment. Requires the exclusive
- * root lock, no active transaction, and an exact prior inspect() identity.
+ * root lock, no active transaction, and a prior inspect() identity matching
+ * slot, transaction ID, state, recorded inodes and bytes. Historical device
+ * numbers in expected are ignored: filesystem devices are checked against
+ * the currently opened root, as in the original cross-open contract.
  * Only OWNED/SEALED are eligible; CLEANED is idempotent for the same identity.
  * RESERVED/PUBLISH_INTENT/PUBLISHED are refused (recover() is unchanged).
  * Unknown entries, replaced identities, non-private objects and extra links
