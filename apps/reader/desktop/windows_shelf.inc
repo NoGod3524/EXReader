@@ -134,6 +134,9 @@ static void product_shelf_accept(host_job *job) {
   product_shelf_reveal=0;product_shelf_remember();SetTimer(g.window,4,300,NULL);PostMessageW(g.window,WM_APP+31,0,0);
 }
 static LRESULT CALLBACK product_shelf_procedure(HWND window,UINT message,WPARAM wparam,LPARAM lparam) {
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  if(f08_count_query(message)) return CallWindowProcW(g.shelf_procedure,window,message,wparam,lparam);
+#endif
   if(message==WM_NCDESTROY) RemovePropW(window,L"EXReaderShelfSnapshot");
 #ifdef EXR_WINDOWS_FRAME_REVIEW
   /* Every native listbox message is retained, including direct GDI paths.

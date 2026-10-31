@@ -62,7 +62,7 @@ def replay(document):
                 "input_id":row["input_id"],"message":row["message"],"completion_qpc":row["qpc"]})
  # Native LISTBOX internals can update selection/scrollbars without changing top/count.
  # Keep every dispatch and completion; do not promote this partial census to all frames.
- return {"raw_rows":len(rows),"reader_produced":len(produced),"reader_published":len(publications),
+ return {"raw_rows":len(rows),"read_only_message_counts":document.get("read_only_message_counts",[]),"reader_produced":len(produced),"reader_published":len(publications),
   "reader_paints":len(paints),"reader_samples":reader,"reader_missing":missing,
   "reader_full_frame_production":stats([r["full_frame_production_ms"] for r in reader]),
   "reader_font_full_frame_production":stats(font),"reader_page_full_frame_production":stats(page),
