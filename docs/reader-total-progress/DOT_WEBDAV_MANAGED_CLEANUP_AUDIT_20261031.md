@@ -1,6 +1,6 @@
 # Managed cleanup：原始证据独立重算审计
 
-状态：补证审计已准备，等待本次 Actions 实测。当前用户明确接管上游补证和审计，并授权继续到产品 CI 完成。
+状态：补证独立审计已通过；实际 run、artifact 及重算结论如下。当前用户明确接管上游补证和审计，并授权继续到产品 CI 完成。
 本提交延续既有独立验证程序，不导入或执行 producer 代码，只读取固定 ZIP 和源码文本。原 prepared 程序及文档（本地 deec56424e494848a17c799a357525f0852fed62）已按原字节保存在父提交 a788f82b9c84ea6fab1f5e8e3f3e928b1b3be98e；没有追认它曾运行或接受。
 新增原始字段检查由本次接手者编写，独立性指与 producer 分离的实现、执行和重新计算。
 
@@ -12,6 +12,24 @@ macOS 30/30，job 124458849971，artifact 13031863107，101735 bytes，SHA-256 3
 每个平台保留原 8 项篡改负控，并新增 10 项原始数据负控：SIGKILL 返回码、canary errno、cleanup errno、目标 inode、nlink、内容、receipt CRC、UUID、状态以及第二次恢复变化。修改 JSON 后重新计算内部 seal，拒绝必须来自语义检查。
 重新计算覆盖真实子进程生命周期、十组死亡观测、权限与 canary、receipt 4160 字节独立 CRC/布局解码、发布目标 inode/内容/大小/链接数、保留 pending 残留、两次恢复幂等性和 valid-next 修订边界。
 原始 ZIP 仅在 Actions 下载、哈希、解析和保留；不在本机或 VM 解包。原始失败及旧缺口历史保留如下。
+
+
+## 补证与独立审计终态
+
+受测 tests SHA：711e1fc8a8c5b86f210bcddc934c479599387582；core SHA：dba079b550f9ec83054e6b7b0b7475f43bc1739f。
+[Producer run 41174402876](https://github.com/NoGod3524/EXReader/actions/runs/41174402876) / attempt 1：Linux job 124458850309、macOS job 124458849971 均 completed/success，原 30 项各 30/30。
+
+| 平台 | Artifact | Bytes | SHA-256 |
+|---|---|---:|---|
+| Linux | 13031778309 / webdav-managed-cleanup-Linux-41174402876-1 | 114285 | 4520aae748dff728019ce865116685930cd887a3783c827c2ac3bf4422554946 |
+| macOS | 13031863107 / webdav-managed-cleanup-macOS-41174402876-1 | 101735 | 3c8533a40556485d8818821068fe6cceef67e83e94cd15d26d59ba431abfe2ec |
+
+独立 verifier 受测 SHA：ea54eb95eafc62a2db8fec4547eab142856f9351；[Audit run 41174612650](https://github.com/NoGod3524/EXReader/actions/runs/41174612650) / attempt 1；job 124459479516 completed/success。
+审计 artifact：13031974546，232564 bytes，SHA-256 88b3580ea082c941c6286dc6bb542683cc2bf75675944981b415b27462579efa。
+实测 audit_completed=true、evidence_integrity_passed=true、critical_evidence_complete=true、audit_passed=true、errors=[]。
+每平台重算 30 个 case、10 组实际进程死亡及 receipt/recovery 对；各 8 个原负控和 10 个 raw 负控全部按预期拒绝，共 36 个。原始 ZIP、源码字节和输出均保存在 Actions artifact。
+独立性为独立检查实现与独立 Actions 执行；本次补证和 verifier 扩展均由接手 GPT 编写。历史批准记录未被补造，core 的已披露 valid-next 修订维持原字节。
+此封存提交只更新文档，上述受测 SHA 不变。产品验证另见 [GTK 接入记录](https://github.com/NoGod3524/EXReader/blob/codex/gpt-webdav-product-integration-20261031/docs/reader-total-progress/GPT_WEBDAV_PRODUCT_INTEGRATION_20261031.md)，组件审计本身不授予产品验收。正式 95/108 保持。
 
 ## 历史 prepared 记录（适用于旧 run，不作为当前结果）
 
