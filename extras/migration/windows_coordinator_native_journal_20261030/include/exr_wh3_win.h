@@ -37,6 +37,11 @@ typedef struct wh3w_store wh3w_store;
 int wh3w_open(const wchar_t *,const wh3w_identity[3],const wh_binding *,
  const wh_gates *,const wh3w_domain *,const wh3w_controls *,wh3w_store **);
 wh3_tx_status wh3w_append(void *,void *,const wh3_tip *,const char *,wh3_tip *);
+/* Read the current fully acknowledged pair without mutation or authority
+   upgrade. Recovery must bind the returned tip to independently trusted
+   transaction metadata, then request an exact fresh resume capability. */
+int wh3w_read(wh3w_store *,char (*lines)[EXR_WH_LINE_MAX],size_t capacity,
+ size_t *count,wh3_tip *tip);
 /* No domain release or CLEAN transition. Poison survives only if the real
    domain integration persists it and all readers consult that gate/intent. */
 void wh3w_close(wh3w_store *);
