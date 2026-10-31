@@ -34,7 +34,9 @@ def producer():
  return binary,seed
 def wait(watch,predicate,since=0,timeout=30):
  index,event=watch.wait(predicate,timeout,since);R.need(index is not None,"native state predicate: "+str(event));return event
-def settled(s):return all(s["host"].get(k,0)==0 for k in ("busy","saving","shelf_loading","shelf_restoring"))
+def settled(s):
+ h=s["host"];keys=("busy","saving") if h.get("reader_visible")==1 else ("busy","saving","shelf_loading","shelf_restoring")
+ return all(h.get(k,0)==0 for k in keys)
 def section(watch,name):return {str(k):str(v) for k,v in watch.latest()["state"].get(name,{}).items()}
 def node(app,name,prefix=False):
  end=time.monotonic()+20
@@ -59,7 +61,8 @@ def run():
    for number,kind in enumerate(("body","jump","body","jump")):
     folder=OUT/("launch-%02d"%number);folder.mkdir();profile=temp/("profile-%02d"%number);shutil.copytree(seed_profile,profile)
     (profile/"reader.ini").write_text("[reader]\nbook=%d\nfont=24\nzoom=100\n[shelf]\nquery=\ntop_key=\nselected_key=\ntop_offset=0\n"%book)
-    runtime=folder/"runtime";runtime.mkdir();env=dict(os.environ,HOME=str(runtime),XDG_CONFIG_HOME=str(runtime/"config"),XDG_CACHE_HOME=str(runtime/"cache"),XDG_RUNTIME_DIR=str(runtime/"xdg"),GDK_BACKEND="x11",LANG="C.UTF-8",LC_ALL="C.UTF-8",GTK_MODULES=str(ROOT/"build"/F.PROBE),LD_PRELOAD=str(ROOT/"build"/F.PROBE),EXR_F08_NATIVE_OUTPUT=str(folder/"native-cost"),NO_AT_BRIDGE="0")
+    runtime=temp/("runtime-%02d"%number);runtime.mkdir();env=dict(os.environ,HOME=str(runtime),XDG_CONFIG_HOME=str(runtime/"config"),XDG_CACHE_HOME=str(runtime/"cache"),XDG_RUNTIME_DIR=str(runtime/"xdg"),GDK_BACKEND="x11",LANG="C.UTF-8",LC_ALL="C.UTF-8",GTK_MODULES=str(ROOT/"build"/F.PROBE),LD_PRELOAD=str(ROOT/"build"/F.PROBE),EXR_F08_NATIVE_OUTPUT=str(folder/"native-cost"),EXR_F08_CAUSAL_OUTPUT=str(folder),NO_AT_BRIDGE="0")
+    R.need(len(str(Path(env["XDG_RUNTIME_DIR"])/"at-spi/bus_999999999999"))<100,"short native accessibility socket path")
     Path(env["EXR_F08_NATIVE_OUTPUT"]).mkdir()
     for name in ("XDG_CONFIG_HOME","XDG_CACHE_HOME","XDG_RUNTIME_DIR"):Path(env[name]).mkdir(mode=0o700)
     watch=O.Watch(runtime);host=O.Host(binary,binary.parent.parent/"Reader.otf",profile,runtime,env);row={"launch":number,"kind":kind,"actions":[],"complete":False};report["launches"].append(row)
