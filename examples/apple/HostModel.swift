@@ -8,7 +8,10 @@ import Combine
 import Darwin
 
 #if EXR_APPLE_F08_REVIEW
+import os
+#if os(iOS)
 import MetricKit
+#endif
 
 // Native extended launch measurement includes the first stable, usable shelf.
 // The normal host does not compile this review observer.
@@ -33,8 +36,11 @@ enum HostF08Review {
     }
     static func beginLaunch() {
         phase("app-init")
-        guard ProcessInfo.processInfo.arguments.contains("-EXRF08Launch") else { return }
-        if #available(macOS 13, iOS 16, *) {
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-EXRF08PhaseOnly") { launchStatus = "observing-native-layout"; return }
+        guard args.contains("-EXRF08Launch") else { return }
+#if os(iOS)
+        if #available(iOS 16, *) {
             do {
                 phase("native-extend-begin")
                 try MXMetricManager.extendLaunchMeasurement(forTaskID: MXLaunchTaskID(rawValue: "org.exreader.f08.shelf-ready"))
@@ -42,26 +48,52 @@ enum HostF08Review {
                 launchStatus = "started"
             } catch { launchStatus = "start-failed"; launchError = String(describing: error) }
         } else { launchStatus = "unsupported" }
+#else
+        // The actual Xcode16.4 MetricKit headers mark launch tasks unavailable on macOS.
+        // Keep native layout readiness, and report a launch-request upper bound separately.
+        launchStatus = "observing-native-layout"
+#endif
     }
     static func observeShelf(_ value: String, ready: @escaping () -> Bool, changed: @escaping () -> Void) {
-        guard launchStatus == "started", value != signature || pending == nil else { return }
+        guard (launchStatus == "started" || launchStatus == "observing-native-layout"), value != signature || pending == nil else { return }
         signature = value; pending?.cancel()
         let work = DispatchWorkItem {
             pending = nil
             guard ready() else { return }
-            if #available(macOS 13, iOS 16, *) {
+            phase("native-layout-ready")
+#if os(iOS)
+            if launchStatus == "started", #available(iOS 16, *) {
                 do {
                     phase("native-finish-begin")
                     try MXMetricManager.finishExtendedLaunchMeasurement(forTaskID: MXLaunchTaskID(rawValue: "org.exreader.f08.shelf-ready"))
                     phase("native-finish-returned")
                     launchStatus = "finished"
                 } catch { launchStatus = "finish-failed"; launchError = String(describing: error) }
-                changed()
-            }
+            } else { launchStatus = "native-layout-finished" }
+#else
+            launchStatus = "native-layout-finished"
+#endif
+            changed()
         }
         pending = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
     }
+    private static let animationLog = OSLog(subsystem: "org.exreader.f08", category: "NativeUI")
+    private static var scrollActive = false
+    private(set) static var scrollStarts = 0
+    private(set) static var scrollEnds = 0
+    static func observeScrollPhase(active: Bool) {
+        guard active != scrollActive else { return }
+        scrollActive = active
+        if active {
+            scrollStarts += 1
+            os_signpost(.animationBegin, log: animationLog, name: "ShelfScroll", signpostID: .exclusive)
+        } else {
+            scrollEnds += 1
+            os_signpost(.end, log: animationLog, name: "ShelfScroll", signpostID: .exclusive)
+        }
+    }
+
 }
 #endif
 
@@ -485,6 +517,8 @@ final class HostShelf: ObservableObject {
         value["f08_launch_task_status"] = HostF08Review.launchStatus
         value["f08_launch_task_error"] = HostF08Review.launchError
         value["f08_launch_phases"] = HostF08Review.phases
+        value["f08_native_scroll_signpost_starts"] = HostF08Review.scrollStarts
+        value["f08_native_scroll_signpost_ends"] = HostF08Review.scrollEnds
 #endif
         return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
     }

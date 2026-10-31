@@ -7,6 +7,18 @@ import UIKit
 import AppKit
 #endif
 
+#if EXR_APPLE_F08_REVIEW
+private struct HostF08ScrollPhaseObserver: ViewModifier {
+    @ViewBuilder func body(content: Content) -> some View {
+        if #available(macOS 15, iOS 18, *) {
+            content.onScrollPhaseChange { _, phase in
+                HostF08Review.observeScrollPhase(active: phase == .interacting || phase == .decelerating || phase == .animating)
+            }
+        } else { content }
+    }
+}
+#endif
+
 @ViewBuilder private func hostActionLabel(_ title: String) -> some View {
 #if os(iOS)
     Text(title).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
@@ -353,6 +365,9 @@ struct LibraryScreen: View {
                       }
                     }
                     .accessibilityIdentifier("library.list")
+#if EXR_APPLE_F08_REVIEW
+                    .modifier(HostF08ScrollPhaseObserver())
+#endif
                     .coordinateSpace(name: "catalog-shelf")
                     .background(ShelfGeometryProbe(shelf: shelf).id(shelf.geometryRevision))
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in

@@ -171,7 +171,8 @@ def native(platform):
         else:
             run(["xcodebuild","test",*common,"-resultBundlePath",original_result,
                 "-only-testing:"+test_target+"/ShelfUITests",
-                "-skip-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics"],"original-seven",required=False)
+                "-skip-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics",
+                "-skip-testing:"+test_target+"/ShelfUITests/test14F08NativeShelfAnimationSignposts"],"original-seven",required=False)
         app=derived/"Build/Products"/suffix/"EXReaderHost.app"
         info=plistlib.loads((app/("Contents/Info.plist" if platform=="macos" else "Info.plist")).read_bytes())
         need(info["EXRSourceSHA"]==identity()["source_sha"] and info["EXRSDKVersion"]=="3.42.0","program identity")
@@ -198,7 +199,8 @@ def native(platform):
             save(evidence/"xcresult-objects.json",raw_objects);save(evidence/"performance-metrics.json",metrics)
             source_report=evidence/"original/shelf-ui.json"
             report["original_ui_accepted"]=source_report.is_file() and json.loads(source_report.read_text()).get("accepted") is True
-        for label,group in (("launch","F08LaunchUITests"),("reader","F08ReaderUITests")):
+        for label,group in (("shelf-animation","ShelfUITests/test14F08NativeShelfAnimationSignposts"),
+                            ("launch","F08LaunchUITests"),("reader","F08ReaderUITests")):
             result=evidence/(label+".xcresult")
             run(["xcodebuild","test-without-building",*common,"-resultBundlePath",result,
                 "-only-testing:"+test_target+"/"+group],label+"-metrics",required=False,timeout=480)
