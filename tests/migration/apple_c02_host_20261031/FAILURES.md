@@ -56,3 +56,28 @@ and its original ReaderApp entry point.
 | c02-apple-products-iphonesimulator-41177046640-1 | 13033253643 | 1493227 | 444c370f464d83d78d1ad4252f29fcc0f68e13804c1d3f7a02fb38d9de44c2b2 |
 | c02-apple-runtime-macos-41177046640-1 | 13033343936 | 104469 | f49f0a99f68539df29b2e20248f721048c142c54a381f8ff5f2701aa8fcfd868 |
 | c02-apple-runtime-iphonesimulator-41177046640-1 | 13032744433 | 103895 | 68e63c8a3134a9015766b7a72142c34d59a5e632288d12fa82e217c933930ef9 |
+
+## Third candidate 0bf4bf4b99795e0f2301b372cd7eb60dd631361e
+
+[Run 41177757574, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41177757574).
+Both SDK and both products jobs succeeded. macOS runtime job124469334136
+succeeded. Simulator runtime job124469334107 built both bundles and completed
+the actual1002/1102 external termination barriers, then failed baseline startup.
+
+The original ZIP was independently API/digest-bound and read only in
+[diagnostic run41178931382/A1](https://github.com/NoGod3524/EXReader/actions/runs/41178931382).
+Its baseline.log and runtime/baseline/failure.json show actual HostModel startup
+deadline. The harness executed its blocking baseline inside a main GCD block;
+nested iOS RunLoop waiting could not run the queued main completion block.
+The test now runs its iOS exercise on a worker and uses main.sync for model
+creation/actions/state reads. UIKit's ordinary main loop remains available.
+The30second deadline and all actual admission/last-owner assertions remain.
+
+| Artifact | ID | Bytes | API SHA256 |
+| --- | --- | ---: | --- |
+| c02-apple-sdk-macos-41177757574-1 | 13033249682 | 19354597 | 6ef6ff48fdae2710e950e6943e7421bad0632cb5c299a28ccac5e1fd5ffcad54 |
+| c02-apple-sdk-iphonesimulator-41177757574-1 | 13034035284 | 19349519 | c2cdba63f44e28ef12c49708b5945fb337459465b4ed5a3282793444c326df0c |
+| c02-apple-products-macos-41177757574-1 | 13033841686 | 5078591 | 1a68ae7ec87786466c824682be342937f43273c632538cb2c091c486a1a21d16 |
+| c02-apple-products-iphonesimulator-41177757574-1 | 13034095194 | 1493235 | 47db02395319cf38ed26bdb5b76c5da2d3dcecd9e2104c211e55b0b2c5593053 |
+| c02-apple-runtime-macos-41177757574-1 | 13033808562 | 55007217 | 79d9dd786a363cf09aee20462590694924045cabe725925252ee4b9e83ed7390 |
+| c02-apple-runtime-iphonesimulator-41177757574-1 | 13033871756 | 54869708 | bb8cea6ace75d618e997ea36b76e46790678fe7225e920a038170b870a749d48 |
