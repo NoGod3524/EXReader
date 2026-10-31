@@ -27,6 +27,7 @@ typedef struct {
   const double *initial_clip_transform; /* NULL means output coordinates. */
   size_t *active_mask_bytes; /* Shared across recursive mask G painters. */
   unsigned group_present,group_flags; /* Optional root transparency group. */
+  const double *background_cmyk; /* Borrowed CMYK backdrop for this call. */
 } exr_pdf_raster_config;
 /* Output is owned and empty on failure. Initial maps PDF user space to pixels.
    Unsupported image filters and non-device/transparency features fail. */

@@ -200,6 +200,14 @@ def flat_mask(image):
     return out
 
 
+def interior_mask(covered):
+    # Cropping touches the content boundary. MinFilter extends edge pixels,
+    # so provide the actual empty exterior before the fixed 3px erosion.
+    padded = Image.new('L', (covered.width + 6, covered.height + 6), 0)
+    padded.paste(covered, (3, 3))
+    return padded.filter(ImageFilter.MinFilter(7)).crop((3, 3, covered.width + 3, covered.height + 3))
+
+
 def compare(ours, ref):
     a = crop_content(ours)
     b = crop_content(ref)
@@ -217,9 +225,9 @@ def compare(ours, ref):
             mask_shifted = Image.new('L', a.size, 0)
             mask_shifted.paste(fb, (dx, dy))
             flat = ImageChops.multiply(fa, mask_shifted)
-            # Interior mask: content in both images, eroded by two pixels.
+            # Interior mask: content in both images, eroded by three pixels.
             covered = ImageChops.multiply(mask(a), mask(shifted))
-            interior = covered.filter(ImageFilter.MinFilter(7))
+            interior = interior_mask(covered)
             total = sum(1 for v in interior.getdata() if v)
             if not total:
                 continue

@@ -1,0 +1,1 @@
+{"source_unchanged":true,"missing":{"threw":true,"code":"database-missing","exists":false},"summary":{"database":"exreader","version":1,"books":5,"notes":15,"originals":5,"orphan_files":0,"max_original_bytes":1642,"total_original_bytes":3570,"manifest_sha256":"4d5c416488bb36b0bd25c7b005221e9e76facf164a93079ae7f2d0278d0bb290","bytes":9501}}

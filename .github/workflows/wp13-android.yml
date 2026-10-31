@@ -1,0 +1,185 @@
+name: WP13 Android host
+
+on:
+  push:
+    branches: [codex/wp13-android, codex/wp13-android-review]
+    paths:
+      - 'examples/android/**'
+      - 'tools/build_android_host.py'
+      - 'tools/check_android_host.py'
+      - 'tools/android_host_evidence.py'
+      - 'tools/run_android_host_evidence.py'
+      - 'tests/android_host/**'
+      - '.github/workflows/wp13-android.yml'
+      - 'docs/WP13-ANDROID.md'
+      - 'docs/WP13-ANDROID-REVIEW.md'
+      - 'docs/validation/wp13-android*.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-host:
+    timeout-minutes: 120
+    runs-on: ubuntu-latest
+    env:
+      # Freeze Android ownership before other package scopes join the tested source.
+      ANDROID_OWNERSHIP_HEAD: d0b205a56e4fcfbd5cca55a808327f00b25971ed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install pinned Android packages
+        run: |
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          if [ ! -x "$SDK/cmdline-tools/latest/bin/sdkmanager" ]; then
+            echo "preinstalled Android SDK is missing" >&2
+            exit 1
+          fi
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "$SDK/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
+          echo "$SDK/emulator" >> "$GITHUB_PATH"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --install \
+            "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" \
+            "ndk;27.0.12077973" "cmake;3.22.1" "emulator" \
+            "system-images;android-34;default;x86_64"
+
+      - name: Install patchelf
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y patchelf
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build x86_64 SDK, host APK and fixtures
+        id: build
+        run: |
+          set -o pipefail
+          mkdir -p build/android-host
+          python3 tools/build_android_host.py \
+            --stage stage/android-x86_64 \
+            --build-dir build/android-host \
+            --gradle gradle 2>&1 | tee build/android-host/build.log
+
+      - name: Static source and ownership checks
+        id: static
+        run: python3 tools/check_android_host.py --repo .
+
+      - name: Enable KVM for the emulator
+        run: |
+          ls -l /dev/kvm
+          sudo chmod 666 /dev/kvm
+          /usr/local/lib/android/sdk/emulator/emulator -accel-check || true
+
+      - name: Boot emulator and run original 45, review 10 and bounded 11
+        id: emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash examples/android/ci/emulator.sh
+
+      - name: Print per-suite summaries and failing case identities
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for path in Path('build/android-host/evidence').glob('*/validation.json'):
+              report=json.loads(path.read_text())
+              print(json.dumps({'suite':report.get('suite'),'summary':report.get('summary'),'sequence':report.get('sequence')}))
+              for case in report.get('cases',[]):
+                  if case.get('status')!='pass':
+                      print(json.dumps({'id':case.get('id'),'status':case.get('status'),'error':case.get('error'),'detail':case.get('detail')}))
+          PY
+
+      - name: Preflight complete same-run evidence
+        id: preflight
+        if: always()
+        continue-on-error: true
+        env:
+          ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.static.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
+        run: |
+          mkdir -p build/android-host/evidence/artifacts
+          if compgen -G 'build/android-host/artifacts/*.apk' > /dev/null; then
+            cp build/android-host/artifacts/*.apk build/android-host/evidence/artifacts/
+          fi
+          python3 tools/check_android_host.py \
+            --repo . \
+            --evidence build/android-host/evidence \
+            --build build/android-host/build.json \
+            --stage stage/android-x86_64 \
+            --output build/android-host/evidence/preflight.json
+
+      - name: Prove evidence gate accepts the complete run and rejects altered inputs
+        id: gate_review
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: |
+          python3 tests/android_host/check_evidence_gate.py \
+            --evidence build/android-host/evidence \
+            --build build/android-host/build.json \
+            --stage stage/android-x86_64 \
+            --output build/android-host/gate-review.json
+
+      - name: Prove bounded evidence gate rejects altered inputs
+        id: bounded_gate
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: |
+          python3 tests/android_host/check_bounded_evidence_gate.py \
+            --evidence build/android-host/evidence --build build/android-host/build.json \
+            --stage stage/android-x86_64 --output build/android-host/bounded-gate-review.json
+
+      - name: Final fail-closed acceptance
+        if: always()
+        env:
+          ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.static.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
+          ANDROID_GATE_OUTCOME: '${{ steps.gate_review.outcome }}'
+          ANDROID_BOUNDED_GATE_OUTCOME: '${{ steps.bounded_gate.outcome }}'
+        run: |
+          python3 tools/check_android_host.py \
+            --repo . \
+            --evidence build/android-host/evidence \
+            --build build/android-host/build.json \
+            --stage stage/android-x86_64 \
+            --gate-review build/android-host/gate-review.json \
+            --bounded-gate-review build/android-host/bounded-gate-review.json \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --output docs/validation/wp13-android.json
+
+      - name: Upload host APKs, native logs and per-case evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXReader-WP13-Android
+          if-no-files-found: error
+          path: |
+            build/android-host/build.json
+            build/android-host/build.log
+            build/android-host/gate-review.json
+            build/android-host/bounded-gate-review.json
+            build/android-host/fixtures/
+            build/android-host/artifacts/
+            build/android-host/evidence/
+            stage/android-x86_64/
+            docs/validation/wp13-android.json

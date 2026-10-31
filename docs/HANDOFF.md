@@ -1,6 +1,23 @@
 # EXReader 开发状态与路线
 
-更新日期：2026-10-20。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.39.0**、ABI epoch **1**、书库 schema **6**。
+更新日期：2026-10-22。当前为 C11 SDK，附 Windows 和 Apple 原生参考阅读应用，MIT，版本 **3.40.0**、ABI epoch **1**、书库 schema **6**。
+
+3.40.0新增独立有界EPUB章分页、跨窗口CFI/书签/正文输出；旧快照入口和限界保持原契约。
+本批实现与验证入口：`docs/WP6-BOUNDED-READER.md`、`docs/validation/2026-10-20-wp6-window-reader.json`。
+WP6固定出口已通过：50/100MiB单章打开，10→100MiB索引与解析/续排峰值增量19.3MiB，
+真实窗口逐出后随机恢复、2/4MiB窗口全章逐页哈希一致；普通表格优化沿用既有独立验收。
+PNG修复源码的七作业CI和Linux ASan/UBSan 159/159通过；六配置SDK、许可、基准、
+四宿主报告及三平台章解析/转换结果已下载独立核验，清单含1385文件（含19份下载身份记录）。
+WP16首次最终源码长测因PNG依赖的空读取问题拒绝，72份已通过报告与失败现场均已归档。
+共享修复和固定回归已落地；同一修正源码的四目标各24CPU小时长测与严格云端汇总已通过，旧源码时长不拼接。
+修复版Windows默认/关闭可选图像解码器各169/169、18次计量和全章遍历、默认/裁剪安装消费均通过。
+WP16对冻结SDK源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9` 的五项登记出口全部通过；后续宿主/可选包及项目整体仍独立跟踪。
+长测与最终严格汇总、归档均由GitHub Actions云端执行，本地常驻轮询已按用户要求停止。
+本次修正证据见 `docs/validation/2026-10-21-png-reliability.json`，最终98作业/99工件云端记录见 `docs/validation/2026-10-22-reliability-cloud.json`。
+后续独立开发分为五个外派包（迁移、OPDS、Windows、Apple、Android）及四个内部包（Linux、OCR、发行文档审计、兼容语料），
+分支、文件归属与完整交付要求见 `docs/handoffs/parallel-2026-10-21/README.md`。
+这些新包在独立分支进行；其构建与测试仅在GitHub云端执行，不自动继承本次冻结源码的长测结论。
+下列旧批次数字与未完成记录按当时源码保留。
 
 WP7六个交付提交已集成：八个声明脚本的功能和Windows验收按固定800例口径接收。
 主线Linux ASan/UBSan结果与最终关闭状态见 `docs/validation/2026-10-20-wp7-integration.json`。
@@ -24,7 +41,7 @@ WP12a最终提交链也已集成：更多CBZ图像格式与CBZ/PDF流式原书�
 
 本轮参考应用的CI七作业全部成功，macOS/iPhone模拟器/iPad模拟器各21项自动自检通过；
 Windows本地与CI各26项。默认/裁剪桌面安装消费、移动交叉编译及带许可的SDK产物已归档。
-用户现阶段暂缓iPhone/iPad真机安装。96分片可靠性续批仍在运行；语料、单章增量解析、
+用户现阶段暂缓iPhone/iPad真机安装。冻结SDK的96分片可靠性续批及严格汇总已通过；语料、其余格式增量解析、
 应用完整验收及下表未完成能力继续保留。记录见 `docs/RELIABILITY-HANDOFF.md`、
 `docs/validation/2026-10-20-native-hosts.json`、`docs/validation/2026-10-20-corpus-performance.json`。
 
@@ -45,8 +62,8 @@ WP7、WP8、WP12a的分支、独立目录和完整出口分别见 `docs/WP7-HAND
 
 | 领域 | 已有实现 | 主要缺口 |
 | --- | --- | --- |
-| 文档与模型 | TXT、XHTML/HTML、FB2、EPUB、DOCX、RTF、MOBI/KF8；通用构造、分段 loader、随机读取源、树与资源 | HTML5 错误恢复、完整 Word 版面、章内增量解析 |
-| 排版与位置 | CSS 子集、float/clear 和逐行绕排、表格列宽/合并/垂直对齐/逐边边框/重复表头；页级续排、缓存字节预算、检查点、CFI、TextQuote、命中选择 | 完整 CSS、border-spacing、复杂百分比与溢出、大章解析成本 |
+| 文档与模型 | TXT、XHTML/HTML、FB2、EPUB、DOCX、RTF、MOBI/KF8；通用构造、分段 loader、随机读取源、树与资源；EPUB独立有界章阅读 | HTML5 错误恢复、完整 Word 版面、其余格式章内增量解析 |
+| 排版与位置 | CSS 子集、float/clear 和逐行绕排、表格列宽/合并/垂直对齐/逐边边框/重复表头；页级续排、缓存字节预算、检查点、CFI、TextQuote、命中选择；EPUB跨窗续排与恢复 | 完整 CSS、border-spacing、复杂百分比与溢出、全量快照及其余格式的大章解析成本 |
 | 文字与字体 | Unicode17、双向、OpenType、阿拉伯、Devanagari及WP7八个声明脚本、竖排、ruby、可变轴、词典/provider 断词；COLRv0、COLRv1、SVG字体子集、sbix、CBDT、cmap14 | 其他脚本及更多语言实测；彩色字体声明范围见WP8矩阵 |
 | PDF | 固定页与文字几何、搜索选择、字体/Type3、图像与 CMYK/YCCK JPEG、渐变1–7及分量函数数组、ICC v2/v4、16种混合、隔离/非隔离/挖空组、软遮罩 | 审计列出的组合错误和限界；旧宿主有限外推、自适应采样、Pattern、JPX/JBIG2、OutputIntent、完整印刷色彩 |
 | PDF 认证与编辑 | Standard R2–R6、RC4/AES、可重试认证、权限快照；基础标注与元数据增量保存 | PubSec、EFOpen、加密写回、AcroForm、安全 redaction；增量删除保留历史原文 |

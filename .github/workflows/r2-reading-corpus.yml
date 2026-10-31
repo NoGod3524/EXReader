@@ -1,0 +1,86 @@
+name: R2 real reading corpus
+on:
+  push:
+    branches: ['codex/r2-real-corpus']
+    paths:
+      - 'tools/reading_corpus/**'
+      - 'tests/reading_corpus/**'
+      - '.github/workflows/r2-reading-corpus.yml'
+      - 'src/flow.c'
+      - 'src/pager.c'
+      - 'src/layout_internal.h'
+  workflow_dispatch:
+    inputs:
+      manifest:
+        type: string
+        default: tools/reading_corpus/real-v1.json
+      registration:
+        type: string
+        default: ea5c13e081cfba86d9f6dd759439894463e51126
+  workflow_call:
+    inputs:
+      manifest:
+        type: string
+        default: tools/reading_corpus/real-v1.json
+      registration:
+        type: string
+        default: ea5c13e081cfba86d9f6dd759439894463e51126
+    outputs:
+      accepted:
+        value: ${{ jobs.accept.outputs.accepted }}
+      manifest_sha256:
+        value: ${{ jobs.accept.outputs.manifest_sha256 }}
+permissions:
+  contents: read
+concurrency:
+  group: r2-reading-corpus-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  accept:
+    name: R2 real document acceptance
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    outputs:
+      accepted: ${{ steps.accept.outputs.accepted }}
+      manifest_sha256: ${{ steps.accept.outputs.manifest_sha256 }}
+    env:
+      R2_MANIFEST: ${{ inputs.manifest || 'tools/reading_corpus/real-v1.json' }}
+      R2_REGISTRATION: ${{ inputs.registration || 'ea5c13e081cfba86d9f6dd759439894463e51126' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install independent source inspector
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Verify declaration before any engine process
+        run: |
+          python3 -c 'import sys; from pathlib import Path; sys.path.insert(0,"tools/reading_corpus"); from run import registered; import os; registered(Path(os.environ["R2_MANIFEST"]),os.environ["R2_REGISTRATION"])'
+      - name: Verify bounded collector retry and download refusals
+        run: python3 tests/reading_corpus/check_collect.py
+      - name: Collect all eight exact published sources
+        run: python3 tools/reading_corpus/collect.py collect "$R2_MANIFEST" build/r2/inputs
+      - name: Build and install current native reading SDK
+        run: |
+          cmake --preset reading-core
+          cmake --build --preset reading-core
+          cmake --install build/reading-core
+      - name: Build public installed reading consumers
+        run: |
+          cmake -S tests/reading_corpus -B build/r2/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-core/stage"
+          cmake --build build/r2/consumer --parallel 4
+      - name: Exercise real consumers and rejected evidence paths
+        run: python3 tests/reading_corpus/check_protocol.py build/r2/consumer/r2-location tests/fixtures/fonts/primary.ttf
+      - name: Complete all-page and reopen-selector acceptance
+        id: accept
+        run: |
+          python3 tools/reading_corpus/run.py --manifest "$R2_MANIFEST" --registered-at "$R2_REGISTRATION" \
+            --assets build/r2/inputs/assets --binary build/r2/consumer/r2-document \
+            --location build/r2/consumer/r2-location --font tests/fixtures/fonts/primary.ttf --output build/r2/evidence
+      - name: Preserve all inputs, failures and source-bound results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-real-corpus-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/r2
+          if-no-files-found: error
+          retention-days: 30

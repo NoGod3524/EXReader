@@ -1,0 +1,12 @@
+{
+ "base": "69-read-shared-child.pdf",
+ "id": "69",
+ "category": "read/shared-child",
+ "expect": "read-fail",
+ "size": 737,
+ "sha256": "c654d998ded7be1ee31f8eac23370a185beff9fc41cfbec2e3809c7fc60e474a",
+ "edited_sha256": null,
+ "assertions": 6,
+ "result": "pass",
+ "failures": []
+}

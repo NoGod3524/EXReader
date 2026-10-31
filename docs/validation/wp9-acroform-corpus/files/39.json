@@ -1,0 +1,12 @@
+{
+ "base": "39-reject-multiline.pdf",
+ "id": "39",
+ "category": "reject/multiline",
+ "expect": "reject",
+ "size": 672,
+ "sha256": "871a9d2225836f8b77bfb4b5c3abde39096b516068149491640eb6db2d750e67",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

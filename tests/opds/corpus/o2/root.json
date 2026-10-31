@@ -1,0 +1,14 @@
+{
+  "metadata": {"title": "Fixture Catalog", "identifier": "urn:opds-test:root2", "modified": "2026-01-01T00:00:00Z"},
+  "links": [
+    {"rel": "self", "href": "/c/o2/root.json", "type": "application/opds+json"},
+    {"rel": "start", "href": "root.json", "type": "application/opds+json"},
+    {"rel": "search", "href": "/o2/search{?query,page}", "type": "application/opds+json", "templated": true}
+  ],
+  "navigation": [
+    {"href": "/o2/all?page=1", "title": "All Books", "type": "application/opds+json", "rel": "subsection"},
+    {"href": "new.json", "title": "New Releases", "type": "application/opds+json", "rel": ["current", "http://opds-spec.org/sort/new"]},
+    {"href": "shelf.json", "title": "Vendor Shelf", "type": "application/vnd.vendor+json", "rel": "x-vendor/shelf"},
+    {"href": "plain.json", "title": "No Rel"}
+  ]
+}

@@ -3,6 +3,121 @@
 #include "formats_internal.h"
 #include <ctype.h>
 
+typedef struct style_allocation {
+  void *pointer;
+  size_t size;
+  struct style_allocation *next;
+} style_allocation;
+typedef struct {
+  size_t budget, bytes, peak;
+  style_allocation *allocations;
+  exr_status failed;
+} style_budget;
+#ifdef _MSC_VER
+static __declspec(thread) style_budget *active_budget;
+#else
+static _Thread_local style_budget *active_budget;
+#endif
+static int style_reserve(size_t bytes) {
+  style_budget *b = active_budget;
+  if (!b) return 1;
+  if (bytes > b->budget - b->bytes) { b->failed = EXR_LIMIT; return 0; }
+  if (b->bytes + bytes > b->peak) b->peak = b->bytes + bytes;
+  return 1;
+}
+static void *style_malloc(size_t size) {
+  style_budget *b = active_budget;
+  style_allocation *record;
+  void *data;
+  if (!b) return malloc(size);
+  if (!size) size = 1;
+  if (size > SIZE_MAX - sizeof(*record)) { b->failed = EXR_LIMIT; return NULL; }
+  if (!style_reserve(size + sizeof(*record))) return NULL;
+  data = malloc(size);
+  if (!data) { b->failed = EXR_MEMORY; return NULL; }
+  record = malloc(sizeof(*record));
+  if (!record) { free(data); b->failed = EXR_MEMORY; return NULL; }
+  *record = (style_allocation){data,size,b->allocations}; b->allocations = record;
+  b->bytes += size + sizeof(*record); return data;
+}
+static void style_free(void *data) {
+  style_budget *b = active_budget;
+  style_allocation **at;
+  if (!data) return;
+  if (b) {
+    for (at = &b->allocations; *at; at = &(*at)->next) if ((*at)->pointer == data) {
+      style_allocation *record = *at;
+      *at = record->next; b->bytes -= record->size + sizeof(*record); free(record); break;
+    }
+  }
+  free(data);
+}
+static void *style_calloc(size_t count,size_t size) {
+  void *data;
+  if (size && count > SIZE_MAX / size) { if (active_budget) active_budget->failed = EXR_LIMIT; return NULL; }
+  data = style_malloc(count * size);
+  if (data) memset(data,0,count * size);
+  return data;
+}
+static void *style_realloc(void *data,size_t size) {
+  style_budget *b = active_budget;
+  style_allocation *record;
+  void *replacement;
+  if (!b) return realloc(data,size);
+  if (!data) return style_malloc(size);
+  if (!size) { style_free(data); return NULL; }
+  for (record = b->allocations; record && record->pointer != data; record = record->next) {}
+  if (!record) { b->failed = EXR_FORMAT; return NULL; }
+  /* Explicit old/new overlap keeps the charged peak exact and bounded. */
+  if (!style_reserve(size)) return NULL;
+  replacement = malloc(size);
+  if (!replacement) { b->failed = EXR_MEMORY; return NULL; }
+  memcpy(replacement,data,size < record->size ? size : record->size); free(data);
+  b->bytes = b->bytes - record->size + size; record->pointer = replacement; record->size = size;
+  return replacement;
+}
+static int style_grow(void **data,size_t *capacity,size_t count,size_t unit) {
+  size_t next = *capacity ? *capacity : 64;
+  void *replacement;
+  if (count <= *capacity) return 1;
+  while (next < count && next <= SIZE_MAX / 2) next *= 2;
+  if (!unit || next < count || next > SIZE_MAX / unit) {
+    if (active_budget) active_budget->failed = EXR_LIMIT;
+    return 0;
+  }
+  replacement = style_realloc(*data,next * unit);
+  if (!replacement) return 0;
+  *data = replacement; *capacity = next; return 1;
+}
+static char *style_copy(const char *text,size_t size) {
+  char *data;
+  if (size == SIZE_MAX) { if (active_budget) active_budget->failed = EXR_LIMIT; return NULL; }
+  data = style_malloc(size + 1);
+  if (data) { memcpy(data,text,size); data[size] = 0; }
+  return data;
+}
+static void *resource_alloc(void *context,size_t size) { (void)context;return style_malloc(size); }
+static void *resource_resize(void *context,void *data,size_t size) { (void)context;return style_realloc(data,size); }
+static void resource_free(void *context,void *data) { (void)context;style_free(data); }
+static exr_status style_resource(const exr_document *d,size_t resource,const exr_control *control,
+                                 void **out,size_t *size,exr_error *e) {
+  const exr_resource_allocator allocator={NULL,resource_alloc,resource_resize,resource_free};
+  return exr_document_resource_bounded(d,resource,&allocator,control,out,size,e);
+}
+static exr_status style_decode(const void *data,size_t size,exr_buffer *out,exr_error *e) {
+  const unsigned char *bytes = data;
+  size_t maximum = size;
+  if (size >= 2 && ((bytes[0] == 0xff && bytes[1] == 0xfe) || (bytes[0] == 0xfe && bytes[1] == 0xff))) {
+    if (size > (SIZE_MAX - 2) / 3) return exr_fail(e,EXR_LIMIT,"Stylesheet decoding size overflow");
+    maximum = size * 3 / 2;
+  }
+  if (maximum == SIZE_MAX) return exr_fail(e,EXR_LIMIT,"Stylesheet decoding size overflow");
+  out->data = style_malloc(maximum + 1);
+  if (!out->data) return exr_fail(e,active_budget->failed ? active_budget->failed : EXR_MEMORY,"Decoded stylesheet exceeds allocation budget");
+  out->capacity = maximum + 1;
+  return exr_decode(data,size,out,e);
+}
+
 enum {
   FONT_SIZE,
   WEIGHT,
@@ -58,6 +173,7 @@ enum {
   BORDER_RIGHT_STYLE,
   BORDER_BOTTOM_STYLE,
   BORDER_LEFT_STYLE,
+  BORDER_SPACING,
   PROPERTIES
 };
 typedef struct {
@@ -248,7 +364,7 @@ static int property(const char *s, size_t n) {
       "font-family", "text-decoration-line", "writing-mode", "text-orientation", "max-height", "ruby-position", "ruby-align", "table-layout", "vertical-align", "border-collapse", "float", "clear", "hyphens",
       "border-top-width", "border-right-width", "border-bottom-width", "border-left-width",
       "border-top-color", "border-right-color", "border-bottom-color", "border-left-color",
-      "border-top-style", "border-right-style", "border-bottom-style", "border-left-style"};
+      "border-top-style", "border-right-style", "border-bottom-style", "border-left-style", "border-spacing"};
   int i;
   for (i = 0; i < PROPERTIES; i++)
     if (equal(s, n, names[i]))
@@ -278,7 +394,7 @@ static int property(const char *s, size_t n) {
   return -1;
 }
 static char *clean_css(const char *s, size_t n) {
-  char *out = malloc(n + 1);
+  char *out = style_malloc(n + 1);
   size_t i = 0, used = 0;
   int quote = 0;
   if (!out)
@@ -479,7 +595,7 @@ static int declarations(css *c, const char *s, size_t n, declaration **out, size
       for (t = 0; t < target_count; t++) {
         declaration *v;
         if (++c->declarations > 131072 || *count >= 256 ||
-            !exr_grow((void **)out, &cap, *count + 1, sizeof(**out))) {
+            !style_grow((void **)out, &cap, *count + 1, sizeof(**out))) {
           c->failed = EXR_LIMIT;
           return 0;
         }
@@ -550,7 +666,7 @@ static int stylesheet(css *c, const char *source, size_t n, size_t chapter, int 
       exr_font_rule font;
       if (exr_parse_font_rule(s + open + 1, close - open - 1, base, chapter, &font)) {
         if (c->font_count >= 64 ||
-            !exr_grow((void **)&c->fonts, &c->font_capacity, c->font_count + 1, sizeof(font))) {
+            !style_grow((void **)&c->fonts, &c->font_capacity, c->font_count + 1, sizeof(font))) {
           c->failed = EXR_LIMIT;
           break;
         }
@@ -561,7 +677,7 @@ static int stylesheet(css *c, const char *source, size_t n, size_t chapter, int 
     if (s[start] == '@' || open - start > 512)
       continue;
     if (c->count >= 4096 ||
-        !exr_grow((void **)&c->rules, &c->capacity, c->count + 1, sizeof(rule))) {
+        !style_grow((void **)&c->rules, &c->capacity, c->count + 1, sizeof(rule))) {
       c->failed = EXR_LIMIT;
       break;
     }
@@ -569,7 +685,7 @@ static int stylesheet(css *c, const char *source, size_t n, size_t chapter, int 
     memset(r, 0, sizeof(*r));
     r->chapter = chapter;
     r->user = user;
-    r->selector = exr_copy(s + start, open - start);
+    r->selector = style_copy(s + start, open - start);
     if (!r->selector) {
       c->failed = EXR_MEMORY;
       break;
@@ -577,7 +693,7 @@ static int stylesheet(css *c, const char *source, size_t n, size_t chapter, int 
     if (!declarations(c, s + open + 1, close - open - 1, &r->declarations, &r->count))
       break;
   }
-  free(s);
+  style_free(s);
   return !c->failed;
 }
 static int length(const char *s, float em, float rem, int unitless, exr_length *out) {
@@ -642,6 +758,25 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
   float number;
   char *end;
   uint32_t rgba;
+  if (prop == BORDER_SPACING) {
+    float values[2]; size_t at=0; int count=0;
+    if(!strcmp(v,"inherit") || !strcmp(v,"unset")) {
+      memcpy(s->border_spacing,parent->border_spacing,sizeof(s->border_spacing)); return 1;
+    }
+    if(!strcmp(v,"initial")) { s->border_spacing[0]=s->border_spacing[1]=0; return 1; }
+    while(v[at]) {
+      char token[128]; size_t start,n;
+      while(ws(v[at])) at++;
+      if(!v[at]) break;
+      start=at; while(v[at] && !ws(v[at])) at++;
+      n=at-start; if(count==2 || n>=sizeof(token)) return 0;
+      memcpy(token,v+start,n); token[n]=0;
+      if(!length(token,s->font_size,root,0,&l) || l.percent || l.value<0) return 0;
+      values[count++]=l.value;
+    }
+    if(!count) return 0;
+    s->border_spacing[0]=values[0]; s->border_spacing[1]=values[count-1]; return 1;
+  }
   if (!strcmp(v, "inherit")) {
     if (prop == FAMILY)
       s->family = parent->family;
@@ -931,7 +1066,7 @@ static void compete(winner *w, const declaration *a, size_t count, uint64_t base
     }
   }
 }
-exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *config,
+static exr_status compute_styles(const exr_document *d, const exr_layout_config *config,
                               exr_style **out, exr_font_rule **fonts, size_t *font_count,
                               exr_error *e) {
   css c = {0};
@@ -978,15 +1113,16 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
             exr_document_resolve(d, n->chapter, href, &resource, &target, &ignored) != EXR_OK ||
             resource == SIZE_MAX)
           continue;
-        c.failed = exr_document_resource(d, resource, &bytes, &size, e);
+        c.failed = active_budget ? style_resource(d, resource, &config->control, &bytes, &size, e) :
+            exr_document_resource(d, resource, &bytes, &size, e);
         if (c.failed)
           goto done;
-        c.failed = exr_decode(bytes, size, &decoded, e);
-        exr_free(bytes);
+        c.failed = active_budget ? style_decode(bytes, size, &decoded, e) : exr_decode(bytes, size, &decoded, e);
+        style_free(bytes);
         if (!c.failed)
           stylesheet(&c, decoded.data ? decoded.data : "", decoded.size, n->chapter, 0,
                        d->resources[resource].path, config->embedded_fonts);
-        free(decoded.data);
+        style_free(decoded.data);
         if (c.failed)
           goto done;
       }
@@ -994,7 +1130,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
   if (config->user_css && !stylesheet(&c, config->user_css, strlen(config->user_css), SIZE_MAX, 1,
                                       "", config->embedded_fonts))
     goto done;
-  styles = calloc(d->node_count, sizeof(*styles));
+  styles = style_calloc(d->node_count, sizeof(*styles));
   if (!styles) {
     c.failed = EXR_MEMORY;
     goto done;
@@ -1027,6 +1163,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
     s->ruby_align = parent->ruby_align;
     s->indent = parent->indent;
     s->border_collapse = parent->border_collapse;
+    memcpy(s->border_spacing,parent->border_spacing,sizeof(s->border_spacing));
     s->hyphens = parent->hyphens;
     s->display = EXR_CSS_INLINE;
     /* HTML table defaults; other host-defined elements retain the CSS initial
@@ -1113,9 +1250,9 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
         goto done;
       }
       declarations(&c, clean, strlen(clean), &inline_declarations, &inline_count);
-      free(clean);
+      style_free(clean);
       if (c.failed) {
-        free(inline_declarations);
+        style_free(inline_declarations);
         goto done;
       }
       compete(w, inline_declarations, inline_count, UINT64_C(1) << 56, s, parent, o->font_size);
@@ -1142,10 +1279,10 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
       else {
         size_t length = strlen(s->family) + 1;
         const char *copy = NULL;
-        if (length <= 1024 * 1024 - family_bytes) copy = exr_copy(s->family, length - 1);
+        if (length <= 1024 * 1024 - family_bytes) copy = style_copy(s->family, length - 1);
         if (!copy) {
           s->family = NULL;
-          free(inline_declarations);
+          style_free(inline_declarations);
           c.failed = length > 1024 * 1024 - family_bytes ? EXR_LIMIT : EXR_MEMORY;
           goto done;
         }
@@ -1154,7 +1291,7 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
         s->family_owned = 1;
       }
     }
-    free(inline_declarations);
+    style_free(inline_declarations);
     if ((n->parent != SIZE_MAX && parent->display == EXR_CSS_NONE) || !strcmp(name, "head") ||
         !strcmp(name, "script") || !strcmp(name, "style") || !strcmp(name, "template") ||
         exr_node_attribute(n, "hidden"))
@@ -1162,13 +1299,13 @@ exr_status exr_compute_styles(const exr_document *d, const exr_layout_config *co
   }
 done:
   for (i = 0; i < c.count; i++) {
-    free(c.rules[i].selector);
-    free(c.rules[i].declarations);
+    style_free(c.rules[i].selector);
+    style_free(c.rules[i].declarations);
   }
-  free(c.rules);
+  style_free(c.rules);
   if (c.failed) {
     exr_styles_free(styles, d->node_count);
-    free(c.fonts);
+    style_free(c.fonts);
     return exr_fail(e, c.failed, c.failed == EXR_CANCELLED ? "Operation cancelled" :
                      "Stylesheet decoding or complexity limit failed");
   }
@@ -1177,12 +1314,51 @@ done:
   *font_count = c.font_count;
   return EXR_OK;
 }
+exr_status exr_compute_styles(const exr_document *d,const exr_layout_config *config,
+  exr_style **styles,exr_font_rule **fonts,size_t *font_count,exr_error *e) {
+  style_budget *previous = active_budget;
+  exr_status status;
+  active_budget = NULL;
+  status = compute_styles(d,config,styles,fonts,font_count,e);
+  active_budget = previous; return status;
+}
+exr_status exr_compute_styles_bounded(const exr_document *d,const exr_layout_config *config,
+  size_t budget,exr_style **styles,exr_font_rule **fonts,size_t *font_count,
+  exr_style_memory *memory,exr_error *e) {
+  style_budget state = {0}, *previous = active_budget;
+  style_allocation *record;
+  exr_status status;
+  if (memory) memset(memory,0,sizeof(*memory));
+  if (!styles || !fonts || !font_count) return exr_fail(e,EXR_ARGUMENT,"Missing bounded style output");
+  *styles = NULL; *fonts = NULL; *font_count = 0;
+  if (!d || !config) return exr_fail(e,EXR_ARGUMENT,"Invalid bounded style input");
+  if (budget < sizeof(state)) return exr_fail(e,EXR_LIMIT,"Style allocation budget is too small");
+  state.budget = budget; state.bytes = state.peak = sizeof(state); active_budget = &state;
+  status = compute_styles(d,config,styles,fonts,font_count,e);
+  if (state.failed) status = state.failed;
+  if (status != EXR_OK) {
+    exr_styles_free(*styles,d->node_count); style_free(*fonts);
+    *styles = NULL; *fonts = NULL; *font_count = 0;
+    exr_fail(e,status,"Stylesheet decoding or allocation budget failed");
+  }
+  if (memory) memory->peak_bytes = state.peak;
+  while ((record = state.allocations) != NULL) {
+    state.allocations = record->next;
+    if (status != EXR_OK) free(record->pointer);
+    else if (memory) {
+      memory->retained_bytes += record->size;
+      if (record->pointer == *fonts) memory->retained_fonts_bytes = record->size;
+    }
+    free(record);
+  }
+  active_budget = previous; return status;
+}
 void exr_styles_free(exr_style *styles, size_t count) {
   size_t i;
   if (!styles) return;
   for (i = 0; i < count; i++)
-    if (styles[i].family_owned) free((void *)styles[i].family);
-  free(styles);
+    if (styles[i].family_owned) style_free((void *)styles[i].family);
+  style_free(styles);
 }
 
 static int font_rule_ws(unsigned char c) { return c == ' ' || (c >= 9 && c <= 13); }

@@ -1,0 +1,59 @@
+name: R2 bounded image cache regression
+on:
+  push:
+    branches: ['codex/r2-real-corpus']
+    paths: ['src/flow.c', 'src/pager.c', 'src/layout_internal.h', 'tests/test_page_cache.c', '.github/workflows/r2-image-cache.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    name: image cache / ${{ matrix.mode }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [Release, sanitizer]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure full native tests
+        run: |
+          if [ '${{ matrix.mode }}' = sanitizer ]; then
+            cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_ENABLE_AAC=OFF
+          else
+            cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF
+          fi
+      - run: cmake --build build/native --parallel 4
+      - name: Full native regression including retained images and cache pressure
+        run: ctest --test-dir build/native --output-on-failure
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+      - name: Prove regression detects the unchanged SDK
+        if: matrix.mode == 'Release'
+        run: |
+          git worktree add --detach build/baseline 9bd2b2c3caf1f63dc4437e0af978247494e87145
+          cp tests/test_page_cache.c build/baseline/tests/test_page_cache.c
+          cmake -S build/baseline -B build/baseline-build -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF
+          cmake --build build/baseline-build --target exreader-page-cache-test --parallel 4
+          set +e
+          build/baseline-build/exreader-page-cache-test tests/fixtures/fonts >build/baseline.stdout 2>build/baseline.stderr
+          status=$?
+          set -e
+          test "$status" -eq 1
+          grep -q 'Decoded image cache exceeds 64 MiB' build/baseline.stderr
+          echo 'Unmodified SDK rejects the cumulative-image regression as expected.'
+      - name: Preserve full regression and unchanged-SDK control
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-image-cache-${{ matrix.mode }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/native/Testing/
+            build/baseline.stdout
+            build/baseline.stderr
+          if-no-files-found: error
+          retention-days: 30

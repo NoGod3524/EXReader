@@ -1,0 +1,12 @@
+{
+ "base": "75-read-depth-limit.pdf",
+ "id": "75",
+ "category": "read/depth-limit",
+ "expect": "read-fail",
+ "size": 6235,
+ "sha256": "bfe311e3a3613a332059a97b16260365d657c0b039c5f1ea1acf1ffadeec5556",
+ "edited_sha256": null,
+ "assertions": 6,
+ "result": "pass",
+ "failures": []
+}

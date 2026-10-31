@@ -1,0 +1,12 @@
+{
+ "base": "15-checkbox-existing-dict.pdf",
+ "id": "15",
+ "category": "checkbox/appearance",
+ "expect": "accept",
+ "size": 980,
+ "sha256": "553658371ac3fb6c54fc1cdadea3c4dac9889f41e236ccc7154aab73bb69c581",
+ "edited_sha256": "b4366bb3979ffa7b6624f11160299a6f2df09ca2125f9cd79f674551301ce9ae",
+ "assertions": 33,
+ "result": "pass",
+ "failures": []
+}

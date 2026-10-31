@@ -1,0 +1,12 @@
+{
+ "base": "21-choice-multi.pdf",
+ "id": "21",
+ "category": "choice/multiselect",
+ "expect": "accept",
+ "size": 646,
+ "sha256": "75ea07c26550d022a62f41d94a108aa8e1ed3c512d6c53944dbbcdb2b345d8a1",
+ "edited_sha256": "18fa5983ad38e21aa19c2032cfc4923a1a870321e662d48dbec84d72251730a1",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

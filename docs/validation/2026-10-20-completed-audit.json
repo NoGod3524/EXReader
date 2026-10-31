@@ -1,0 +1,457 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "kind": "completed-feature-code-audit",
+  "audit_code_baseline": "07c6910c12dab572771440c7ce34157f079f80d9",
+  "observed_head_at_report": "f294f42b271a57483fdd5f51636c678419b89866",
+  "observed_branch_at_report": "codex/reliability-convert-memory",
+  "original_test_report_source": "ea9b5294be9205a842ac4d8cf78bc4f5e31ba0b1",
+  "original_probe_report_source": "ea9b5294be9205a842ac4d8cf78bc4f5e31ba0b1",
+  "parallel_other_package_changes": [
+    ".github/workflows/conversion-memory-rootcause.yml",
+    "tools/convert.c",
+    "tools/convert_io.c",
+    "tools/convert_io.h"
+  ],
+  "audited_file_identity_verified_against_baseline": true,
+  "source_identity_note": "Shared checkout was switched by another executor. Raw report commit fields are preserved. Audited files match the original baseline text and runtime hash is unchanged. Excluded converter diagnostics differ. This mapping is not cross-commit CPU acceptance.",
+  "sdk_version": "3.39.0",
+  "excluded_implementation": [
+    "converter memory/platform integration",
+    "WP6 bounded chapter windows",
+    "WP16 release evidence/final campaign"
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "priority": "P1",
+      "title": "CBZ failure cleanup accesses an unallocated array",
+      "source": {
+        "path": "C:\\Users\\Oscar\\exr\\src\\cbz.c",
+        "sha256": "8ea9d0b197415e63700c4b39599f926bf26f84079cce595de6d84659398b8d4f",
+        "line": 196
+      },
+      "confirmed": true,
+      "fixed": false,
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\cbz-limit-result.json",
+        "sha256": "f52508524ff804adb2a2bbf60b11d32b5da0211407063cd18253f16c06773b89"
+      }
+    },
+    {
+      "id": "F2",
+      "priority": "P2",
+      "title": "TIFF associated alpha is consumed as straight RGBA",
+      "source": {
+        "path": "C:\\Users\\Oscar\\exr\\src\\image_formats.c",
+        "sha256": "4477edabd1c526c383980807609e6ee3b2a6eb56b20401b0ce4fc054b8b6eefe",
+        "line": 279
+      },
+      "confirmed": true,
+      "fixed": false,
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\tiff-alpha.json",
+        "sha256": "8cef3c1b450a7273df9ebd47b172d4a1db9576689665b12beca4817c6f2870e7"
+      }
+    },
+    {
+      "id": "F3",
+      "priority": "P2",
+      "title": "CBZ frames interleave across members",
+      "source": {
+        "path": "C:\\Users\\Oscar\\exr\\src\\cbz.c",
+        "sha256": "8ea9d0b197415e63700c4b39599f926bf26f84079cce595de6d84659398b8d4f",
+        "line": 48
+      },
+      "confirmed": true,
+      "fixed": false,
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\cbz-page-order.json",
+        "sha256": "edb80d23ac4b7ac431e5f6fb350ea2820eca80706686229ad639ba7ad3a8c3a7"
+      }
+    },
+    {
+      "id": "F4",
+      "priority": "P2",
+      "title": "CBZ rejects contract-compliant short reads",
+      "source": {
+        "path": "C:\\Users\\Oscar\\exr\\src\\cbz.c",
+        "sha256": "8ea9d0b197415e63700c4b39599f926bf26f84079cce595de6d84659398b8d4f",
+        "line": 62
+      },
+      "confirmed": true,
+      "fixed": false,
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\cbz-short-read.json",
+        "sha256": "1b9b649badb92fab8943db6fe556cfdd0c43c2cc9109bbd181932e52bfe608a2"
+      }
+    },
+    {
+      "id": "F5",
+      "priority": "P2",
+      "title": "SVG default stroke is black instead of none",
+      "source": {
+        "path": "C:\\Users\\Oscar\\exr\\src\\font_svg.c",
+        "sha256": "6aa2b9ba82d09a592974a6f543f3422d74d444949cc97f523647c629f195680f",
+        "line": 1101
+      },
+      "confirmed": true,
+      "fixed": false,
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\svg-default-stroke.json",
+        "sha256": "264a4753b5baa68044dbe2a25f775b51bc6faaf909fa10f41c2ba3aab48eafa7"
+      }
+    },
+    {
+      "id": "F6",
+      "priority": "P2",
+      "title": "SVG percentage opacity is rejected",
+      "source": {
+        "path": "C:\\Users\\Oscar\\exr\\src\\font_svg.c",
+        "sha256": "6aa2b9ba82d09a592974a6f543f3422d74d444949cc97f523647c629f195680f",
+        "line": 1124
+      },
+      "confirmed": true,
+      "fixed": false,
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\svg-percent-opacity.json",
+        "sha256": "46655484c23e7ae5b1d072a205d119578a4669ef1f08901411f11f93958498cd"
+      }
+    },
+    {
+      "id": "F7",
+      "priority": "P2",
+      "title": "SVG root opacity is bypassed",
+      "source": {
+        "path": "C:\\Users\\Oscar\\exr\\src\\font_svg.c",
+        "sha256": "6aa2b9ba82d09a592974a6f543f3422d74d444949cc97f523647c629f195680f",
+        "line": 1392
+      },
+      "confirmed": true,
+      "fixed": false,
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\svg-root-opacity.json",
+        "sha256": "14312470f84d07e218019b17b2c95095adf97a302b692d748cac5d1a5db330ff"
+      }
+    }
+  ],
+  "counts": {
+    "P1": 1,
+    "P2": 6,
+    "confirmed": 7,
+    "fixed": 0
+  },
+  "existing_tests": {
+    "report": {
+      "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\existing\\summary.json",
+      "sha256": "59e263cdad1c846973b849759afaa05e8a43811146f1b76323d27e2feb19af92"
+    },
+    "total": 148,
+    "passed": 148,
+    "excluded": [
+      "native-convert-corpus",
+      "native-convert",
+      "native-convert-cli",
+      "native-convert-benchmark",
+      "native-benchmark",
+      "native-document-probe",
+      "native-corpus-triage",
+      "native-fuzz-driver",
+      "native-fuzz-font",
+      "native-fuzz-layout",
+      "native-fuzz-render",
+      "native-fuzz-pipeline-contract",
+      "native-fuzz-accounting",
+      "native-fuzz-smoke",
+      "native-xml-input"
+    ],
+    "output_paths_isolated": true,
+    "new_build": false,
+    "sanitizer_run": false
+  },
+  "probes": {
+    "summary": {
+      "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\probe-summary.json",
+      "sha256": "8632c66a493000d6e7fe83ea131112a72e94238467314ffb9cc5f045664b93a3"
+    },
+    "driver": {
+      "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\run_probes.py",
+      "sha256": "918b9037ad9eb9c8e12bfd37af0af60299b2dbde39484af2efca1c8552107931"
+    },
+    "native_cbz_consumer": {
+      "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\check_cbz_cleanup.c",
+      "sha256": "be98d9daf2c71f6b8d1c7f7c4295c36083b56cf9c54c6fa509c9d01cf7df5b31"
+    },
+    "native_result": {
+      "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\cbz-native-result.json",
+      "sha256": "b7413ca0e396606e82653d3cd587cf12c44aad18ebb864ae4712cf6f92f9f673"
+    }
+  },
+  "executables": [
+    {
+      "path": "C:\\Users\\Oscar\\exr\\build\\wp7-integration-20261020\\gcc\\libexreader.dll",
+      "sha256": "4a8f276e7dde4feba8c838a2a100d2c388f97f82bdd2d04d247a70926069528c"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\build\\wp7-integration-20261020\\gcc\\exreader-render-color-font.exe",
+      "sha256": "c503a21c85b25d81972bf6b8898197e879f63697fb5cf736d8d39cca8dae3ed3"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\build\\audit-completed-20261020\\check_cbz_cleanup.exe",
+      "sha256": "a2254b3993aac05da6f1af528694a6c70b926b9362841cc2eba754353d3d7521"
+    }
+  ],
+  "inspected_file_snapshots": [
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\cbz.c",
+      "sha256": "8ea9d0b197415e63700c4b39599f926bf26f84079cce595de6d84659398b8d4f",
+      "baseline_git_blob_sha256": "8ea9d0b197415e63700c4b39599f926bf26f84079cce595de6d84659398b8d4f",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\image_formats.c",
+      "sha256": "4477edabd1c526c383980807609e6ee3b2a6eb56b20401b0ce4fc054b8b6eefe",
+      "baseline_git_blob_sha256": "4477edabd1c526c383980807609e6ee3b2a6eb56b20401b0ce4fc054b8b6eefe",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\images.c",
+      "sha256": "5ddc4fa595f01246bae5616ed5cf15b7a22fc4b4566f2cc444cbb0a57843b156",
+      "baseline_git_blob_sha256": "5ddc4fa595f01246bae5616ed5cf15b7a22fc4b4566f2cc444cbb0a57843b156",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\affine_image.c",
+      "sha256": "e4b8828659f4092ca9b214fbddc7e40ccd0e46a3da894277b2bc839d619c3f98",
+      "baseline_git_blob_sha256": "6924ed8bdbdcbc6d975a906030fdbffdf381ac360cc476a16edd216e25d648b9",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\font_svg.c",
+      "sha256": "6aa2b9ba82d09a592974a6f543f3422d74d444949cc97f523647c629f195680f",
+      "baseline_git_blob_sha256": "6aa2b9ba82d09a592974a6f543f3422d74d444949cc97f523647c629f195680f",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\font_colr_v1.c",
+      "sha256": "a79454fba566f64c79f2d3dc4425f5792be3f37d42285b9f5b1d59521d166453",
+      "baseline_git_blob_sha256": "a79454fba566f64c79f2d3dc4425f5792be3f37d42285b9f5b1d59521d166453",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\font_color.c",
+      "sha256": "40a162ef6311ddb1ecc7f369551ee062efe51e0e3b135694109610b4c842f4bc",
+      "baseline_git_blob_sha256": "7776f5037fd8f8fa390b4c67cfed2be74973bc077c7da7028b58b336b3ea2fcb",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\opentype.c",
+      "sha256": "27e1b5757f85d0cfbb4399b8212b10c6ac6055058f26d71ab19e54dbe79a6fc1",
+      "baseline_git_blob_sha256": "27e1b5757f85d0cfbb4399b8212b10c6ac6055058f26d71ab19e54dbe79a6fc1",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\font_bitmap.c",
+      "sha256": "8e769fe4df0916657a90718f046e9cced6751bf5357d5a4c669769b169fcddfa",
+      "baseline_git_blob_sha256": "4c054bdf7d9f1bda8e45ea3d9048e2c6515d7752cbbf2641b28794762fdbbc3e",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\library.c",
+      "sha256": "b907cabf4da8e042a1ea4435d9fd76fc96860fd81892a763d6de08e56cad21a8",
+      "baseline_git_blob_sha256": "b907cabf4da8e042a1ea4435d9fd76fc96860fd81892a763d6de08e56cad21a8",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\audio.c",
+      "sha256": "0c63a77c05b0e33095f4653e601f324d37874955238bcbbd77703ad61d411a64",
+      "baseline_git_blob_sha256": "2cd2a4aeb9f7ebec773f184dc7695365623956202477bdecd7166dadc31bc713",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\audio_player.c",
+      "sha256": "cab998882a6301fe36264e6684a02f0e39b37ee8b88443ac82d289071620cf29",
+      "baseline_git_blob_sha256": "6ec3154ceb97e67df6e92adf0c6a3952a89504b34874fb5f007f3d9a45143b6d",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\audio_output.c",
+      "sha256": "38bf02d4e1dccbd3a6b006fdc508a6235454fd9682f45b2897e79f0a510e1132",
+      "baseline_git_blob_sha256": "c308b71dcca8c7acd10ae370ccb6c28cbb4532b2e14212c01c74d8fecd706284",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\pcm.c",
+      "sha256": "c6d570430232a20a09a30fcef81fbfe09ac9a2eedd29a3260ea523f2bb6e76c4",
+      "baseline_git_blob_sha256": "9e3cd204d5ebbdc9abd8f293cc476cc95ce8972ba84668228a688a64c9adc55d",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\wave.c",
+      "sha256": "8b3f74cc0b772bbf53bd3e7ad5b3352013c88d99f34de2002916d6b24c8b1d7b",
+      "baseline_git_blob_sha256": "7b8ba64efcaaa3b1d82d7ee2153a538c39b6b54154f6c61485734f96ada3264d",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\source.c",
+      "sha256": "aafa374888870eecf8421e7a322ac89b920d6f4b3259d3c1945f0bc174f31ec4",
+      "baseline_git_blob_sha256": "3531d051b47596d454f0d39970eff2274096684c47d79da34f84f4153001cfed",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\map.c",
+      "sha256": "6129d40beaf648b69d2d3864d78259b089c63d1c2ecd690c0f2f87e4f9e0e73b",
+      "baseline_git_blob_sha256": "6129d40beaf648b69d2d3864d78259b089c63d1c2ecd690c0f2f87e4f9e0e73b",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\text_index.c",
+      "sha256": "f9f5c300680ed02bdc33de9edf473f5e8c8b52b7b4bf12af743e44d8e9d4117e",
+      "baseline_git_blob_sha256": "71441d21ad377f9639e10e17f5e444f53f1c9aae53d48a60b749d1bd07c6b0eb",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\fixed.c",
+      "sha256": "557f43ba612eb2303d098f02666b6b1ff1bf24662e7d8a3d70b05d0d3992fae4",
+      "baseline_git_blob_sha256": "41cf0c37e7f422769e438073f37a2f56a014a5f63251519a3cbd346a61a0bf3f",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\icc.c",
+      "sha256": "3ba239efae62209141f61451e59413a0eea3085ca01bc6c7314119bd0ce117f4",
+      "baseline_git_blob_sha256": "f49b60127a6252748d6fdcbf1d727dd8d8e7d050f612009165ee934c91121cc7",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\pdf_paint.c",
+      "sha256": "1d674f70d9d686297fab0e7c5ac4a760d0b9f9cfd5846e38da7abb3bb711303f",
+      "baseline_git_blob_sha256": "a1804f6cc8e3a1de147d3ce725ea3d9baa6fc6c4241d4c5e94f73ded16c3eb61",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\pdf_softmask.c",
+      "sha256": "082c336567e3bbe19f411db774ef333d5a5e158ffb373d28f9db8969455c6a8d",
+      "baseline_git_blob_sha256": "fb405e735691a1210dd6417619bc25958c2f5aec6d8b5222f2429dd6a871bf50",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\pdf_color.c",
+      "sha256": "f10757e39cc14fc33030bf6f6a45162e2a92b6dd2b46bc04ca8d66f02ee81b6e",
+      "baseline_git_blob_sha256": "5499b0d055369e40cf8628ddbd2eee5f67625dda599537398c53219507dc8434",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\pdf_write.c",
+      "sha256": "74c9763688031507b97fa90b98f16ab38ffd7511c47d1ae6dded7311fb2a50bc",
+      "baseline_git_blob_sha256": "8799116490bd3df0dd9516a46e10fcbe597c59a639793d4f2884f7acdbd624d4",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\style.c",
+      "sha256": "90270ab3fd732034f6c18375a8e385c8dd48e1a32bf6878abef5c3e901735f29",
+      "baseline_git_blob_sha256": "3ec4eed040583af3c2d817d441e85b2e5cdfeafcd5afaa867bbc5a959a534d0b",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\rtf.c",
+      "sha256": "d18b3a4460a9f191d06bfaf056f6abc933f6fcc330cdcaa0608455e088ee8c8a",
+      "baseline_git_blob_sha256": "14a1537048e7e8bd412976c513d35b693672ed9a05afc09436773076f90c32d6",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\src\\normalize.c",
+      "sha256": "5b62e1ddc686f79b38a0a94275b8cb72153d87a3d953410f27fe58fdda277ba7",
+      "baseline_git_blob_sha256": "321715dc21a1347d22aeb09dcf2af69f8d509648ddbe7980c921fd2412da69e9",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\bindings\\jni\\exreader_jni.c",
+      "sha256": "5f6f3968dceeb61c60ccdbff92afef05f6cf29b41ecaa757125257ca663873d2",
+      "baseline_git_blob_sha256": "5f6f3968dceeb61c60ccdbff92afef05f6cf29b41ecaa757125257ca663873d2",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\bindings\\jni\\EXReader.java",
+      "sha256": "34beef37318751fc01dcdfccfccfb223c3de02a3497ab59f65e2f3d0b13473c4",
+      "baseline_git_blob_sha256": "34beef37318751fc01dcdfccfccfb223c3de02a3497ab59f65e2f3d0b13473c4",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\bindings\\swift\\EXReader.swift",
+      "sha256": "46ff13eef371dd08a7e8893f7be563df99b03ddd3753fef97452656cd1109f0e",
+      "baseline_git_blob_sha256": "46ff13eef371dd08a7e8893f7be563df99b03ddd3753fef97452656cd1109f0e",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\include\\exr\\base.h",
+      "sha256": "b6550dd4d558dd90b587ffa9ac8a9c36707b0ab2265aac232a9ddd480987be19",
+      "baseline_git_blob_sha256": "656e1712e8aae65cec605871772e3d08e2d729171a9b463583cd7db3d8d458b3",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\docs\\SUPPORT_MATRIX.md",
+      "sha256": "1f265fc250ad5b27efe4b17f8d0468e1c112c47c6c12fdabccb3f8553d83bb41",
+      "baseline_git_blob_sha256": "471477f28e72d0e7e8cde0bf6d5bf0a76c0cb3298792e1e1c40e127d90ae5f5e",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\docs\\WP8_SVG_FONTS.md",
+      "sha256": "417664e120fd9f082c263c343f10be60d8ba92f715aae7c171540ba9672417cf",
+      "baseline_git_blob_sha256": "417664e120fd9f082c263c343f10be60d8ba92f715aae7c171540ba9672417cf",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\exr\\docs\\WP12A-FORMATS.md",
+      "sha256": "fca4bf9c17fdc57ee35b5c04007ade4548ed599b3b8187c27d4be85ba947cd48",
+      "baseline_git_blob_sha256": "9ff9b0012dfa5aae042a633df1a1c1f0314c552f7e92e022cf1b0acc18c2af1c",
+      "text_content_matches_baseline": true,
+      "comparison": "CRLF/LF normalized; actual file SHA256 retained separately"
+    }
+  ],
+  "report": {
+    "path": "C:\\Users\\Oscar\\exr\\docs\\AUDIT-COMPLETED-2026-10-20.md",
+    "sha256": "888a1dc90f552ab4131b1e8b1c1fadb2e045b8ef331a81feaa1c503baeb24f1e"
+  },
+  "protected_files_unchanged": true,
+  "engine_modified_by_audit": false,
+  "original_fixtures_modified_by_audit": false,
+  "budgets_or_tolerances_changed": false,
+  "remote_tasks_started_by_audit": false,
+  "audit_complete": true,
+  "all_features_accepted": false,
+  "physical_device_execution": false,
+  "python_version": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]"
+}

@@ -495,10 +495,15 @@ exr_status exr_document_resolve(const exr_document *d, size_t chapter, const cha
     *node = d->chapters[ch].root;
     return EXR_OK;
   }
-  for (i = d->chapters[ch].root; i < d->node_count && d->nodes[i].chapter == ch; i++) {
-    const char *id = exr_node_attribute(&d->nodes[i], "id");
+  for (i = d->chapters[ch].root; i < d->node_count && exr_doc_node(d,i).chapter == ch; i++) {
+    exr_node value;const char *id;
+    if(d->view) {
+      exr_status status=d->view->prepare(d->view->context,i,NULL,e);
+      if(status!=EXR_OK) { *resource=*node=SIZE_MAX;return status; }
+    }
+    value=exr_doc_node(d,i);id=exr_node_attribute(&value, "id");
     if (!id)
-      id = exr_node_attribute(&d->nodes[i], "http://www.w3.org/XML/1998/namespace|id");
+      id = exr_node_attribute(&value, "http://www.w3.org/XML/1998/namespace|id");
     if (id && !strcmp(id, fragment)) {
       *node = i;
       break;
@@ -917,6 +922,84 @@ done:
   *out = d;
   return exr_fail(e, EXR_OK, "");
 }
+typedef struct {
+  exr_chapter_feed_fn feed;
+  void *context;
+  const exr_control *control;
+  exr_error *error;
+  size_t fed,size;
+  exr_status status;
+} bounded_chapter_input;
+static void *resource_allocate(void *context,size_t count,size_t size);
+static void *resource_reallocate(void *context,void *data,size_t count,size_t size);
+static void resource_release(void *context,void *data);
+static size_t bounded_chapter_feed(void *context,mz_uint64 offset,const void *data,size_t size) {
+  bounded_chapter_input *input=context;
+  size_t at=0;
+  if(offset!=input->fed || size>input->size-input->fed) {
+    input->status=exr_fail(input->error,EXR_FORMAT,"Inconsistent streaming chapter extent");return 0;
+  }
+  while(at<size) {
+    size_t chunk=size-at>32768 ? 32768 : size-at;
+    input->status=exr_control_poll(input->control,EXR_STAGE_READ,input->fed,input->size,input->error);
+    if(input->status==EXR_OK)
+      input->status=input->feed(input->context,(const char *)data+at,chunk,0,input->error);
+    if(input->status!=EXR_OK) return 0;
+    input->fed+=chunk;at+=chunk;
+  }
+  return size;
+}
+/* Dedicated streaming entry: the old complete-snapshot member cap is unchanged.
+   Streamed chapter input is bounded by the existing total expansion limit and
+   the consumer independently budgets all retained parser/index/window memory. */
+static exr_status chapter_feed_with_allocator(const exr_document *index,size_t part,
+  exr_chapter_feed_fn feed,void *context,const exr_resource_allocator *allocator,
+  const exr_control *control,exr_error *e) {
+  archive z={0};
+  mz_zip_archive_file_stat stat;
+  bounded_chapter_input input={0};
+  exr_status status;
+  int member_index;
+  const char *path;
+  if(!index || index->format!=EXR_EPUB || !index->shared_archive ||
+     part>=index->chapter_count || index->chapters[part].resource>=index->resource_count || !feed)
+    return exr_fail(e,EXR_ARGUMENT,"Invalid streaming chapter input");
+  if(allocator) {
+    if(!allocator->allocate || !allocator->reallocate || !allocator->release)
+      return exr_fail(e,EXR_ARGUMENT,"Incomplete chapter source allocator");
+    z.archive.m_pAlloc=resource_allocate;z.archive.m_pRealloc=resource_reallocate;
+    z.archive.m_pFree=resource_release;z.archive.m_pAlloc_opaque=(void *)allocator;
+  }
+  status=exr_control_cancel(control,e);if(status!=EXR_OK) return status;
+  status=archive_backing(&z,index,e);
+  if(status!=EXR_OK) { mz_zip_reader_end(&z.archive);return status; }
+  path=index->resources[index->chapters[part].resource].path;
+  member_index=mz_zip_reader_locate_file(&z.archive,path,NULL,MZ_ZIP_FLAG_CASE_SENSITIVE);
+  if(member_index<0 || !mz_zip_reader_file_stat(&z.archive,(mz_uint)member_index,&stat))
+    status=exr_fail(e,EXR_FORMAT,"Streaming chapter member is missing");
+  else if(stat.m_is_encrypted || stat.m_uncomp_size>EXR_MAX_INPUT)
+    status=exr_fail(e,EXR_LIMIT,"Streaming chapter exceeds total expansion limit");
+  else {
+    input.feed=feed;input.context=context;input.control=control;input.error=e;
+    input.size=(size_t)stat.m_uncomp_size;
+    if(!mz_zip_reader_extract_to_callback(&z.archive,(mz_uint)member_index,bounded_chapter_feed,&input,0) ||
+       input.fed!=input.size)
+      status=z.status!=EXR_OK ? z.status : input.status!=EXR_OK ? input.status :
+        exr_fail(e,EXR_FORMAT,"Streaming chapter extraction failed");
+    else status=feed(context,NULL,0,1,e);
+  }
+  mz_zip_reader_end(&z.archive);return status;
+}
+exr_status exr_epub_chapter_feed(const exr_document *index,size_t part,
+  exr_chapter_feed_fn feed,void *context,const exr_control *control,exr_error *e) {
+  return chapter_feed_with_allocator(index,part,feed,context,NULL,control,e);
+}
+exr_status exr_epub_chapter_feed_bounded(const exr_document *index,size_t part,
+  exr_chapter_feed_fn feed,void *context,const exr_resource_allocator *allocator,
+  const exr_control *control,exr_error *e) {
+  if(!allocator) return exr_fail(e,EXR_ARGUMENT,"Missing chapter source allocator");
+  return chapter_feed_with_allocator(index,part,feed,context,allocator,control,e);
+}
 static exr_status docx_member(void *context, const char *path, int optional, void **data,
                                 size_t *size, exr_error *e) {
   archive *z = context; *data=NULL; *size=0;
@@ -1246,4 +1329,59 @@ exr_status exr_document_open(const char *path, exr_document **out, exr_error *e)
   s = exr_document_open_memory(f, data, n, out, e);
   free(data);
   return s;
+}
+
+static void *resource_allocate(void *context,size_t count,size_t size) {
+  const exr_resource_allocator *a=context;
+  if(size && count>SIZE_MAX/size) return NULL;
+  return a->allocate(a->context,count*size);
+}
+static void *resource_reallocate(void *context,void *data,size_t count,size_t size) {
+  const exr_resource_allocator *a=context;
+  if(size && count>SIZE_MAX/size) return NULL;
+  return a->reallocate(a->context,data,count*size);
+}
+static void resource_release(void *context,void *data) {
+  const exr_resource_allocator *a=context;
+  a->release(a->context,data);
+}
+exr_status exr_document_resource_bounded(const exr_document *d,size_t resource,
+  const exr_resource_allocator *allocator,const exr_control *control,void **out,size_t *size,exr_error *e) {
+  archive z={0};
+  mz_zip_archive_file_stat stat;
+  exr_status status;
+  int file;
+  if(!out || !size) return exr_fail(e,EXR_ARGUMENT,"Missing bounded resource output");
+  *out=NULL;*size=0;
+  if(!d || resource>=d->resource_count || !allocator || !allocator->allocate ||
+     !allocator->reallocate || !allocator->release) return exr_fail(e,EXR_ARGUMENT,"Invalid bounded resource input");
+  status=exr_control_cancel(control,e);if(status!=EXR_OK) return status;
+  if(d->resource_data) {
+    const exr_resource_data *entry=&d->resource_data[resource];
+    if(!entry->bytes) return exr_fail(e,EXR_FORMAT,"Resource has no encoded bytes");
+    *out=allocator->allocate(allocator->context,entry->size ? entry->size : 1);
+    if(!*out) return exr_fail(e,EXR_MEMORY,"Bounded resource allocation rejected");
+    memcpy(*out,entry->bytes,entry->size);*size=entry->size;
+    return EXR_OK;
+  }
+  z.archive.m_pAlloc=resource_allocate;z.archive.m_pRealloc=resource_reallocate;
+  z.archive.m_pFree=resource_release;z.archive.m_pAlloc_opaque=(void *)allocator;
+  status=archive_backing(&z,d,e);
+  if(status!=EXR_OK) { mz_zip_reader_end(&z.archive);return status; }
+  file=member_info(&z,d->resources[resource].path,&stat,e);
+  if(file<0) { status=z.status;goto done; }
+  *size=(size_t)stat.m_uncomp_size;
+  *out=allocator->allocate(allocator->context,*size ? *size : 1);
+  if(!*out) { status=EXR_MEMORY;goto done; }
+  if(!mz_zip_reader_extract_to_mem(&z.archive,(mz_uint)file,*out,*size,0)) {
+    status=z.status!=EXR_OK ? z.status : EXR_FORMAT;goto done;
+  }
+  status=exr_control_cancel(control,e);
+done:
+  mz_zip_reader_end(&z.archive);
+  if(status!=EXR_OK) {
+    allocator->release(allocator->context,*out);*out=NULL;*size=0;
+    return exr_fail(e,status,"Bounded resource decoding failed");
+  }
+  return EXR_OK;
 }

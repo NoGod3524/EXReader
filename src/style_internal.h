@@ -25,6 +25,7 @@ typedef struct {
   int ruby_position, ruby_align;
   int table_fixed;
   int border_collapse;
+  float border_spacing[2]; /* CSS physical horizontal, vertical lengths. */
   int vertical_align;
   int float_side,clear_side; /* CSS line-left=1, line-right=2, both=3. */
   int hyphens;
@@ -65,6 +66,13 @@ static inline int exr_border_uniform(const exr_style *s) {
 exr_status exr_compute_styles(const exr_document *doc, const exr_layout_config *config,
                               exr_style **styles, exr_font_rule **fonts, size_t *font_count,
                               exr_error *error);
+typedef struct { size_t retained_bytes, retained_fonts_bytes, peak_bytes; } exr_style_memory;
+exr_status exr_compute_styles_bounded(const exr_document *doc,const exr_layout_config *config,
+  size_t budget,exr_style **styles,exr_font_rule **fonts,size_t *font_count,
+  exr_style_memory *memory,exr_error *error);
+static inline const exr_style *exr_doc_style(const exr_document *doc,const exr_style *styles,size_t node) {
+  return doc->view ? doc->view->style(doc->view->context,node) : &styles[node];
+}
 void exr_styles_free(exr_style *styles, size_t count);
 int exr_family_next(const char *value, size_t *offset, char out[128]);
 int exr_family_equal(const char *a, const char *b);

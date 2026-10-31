@@ -1,0 +1,12 @@
+{
+ "base": "12-text-utf16-name.pdf",
+ "id": "12",
+ "category": "text/name-encoding",
+ "expect": "accept",
+ "size": 683,
+ "sha256": "92f8561d6b1257c4192358c80670035b289be2ad929f6228711eecf8d5b05f61",
+ "edited_sha256": "45c6c12ab95707a7c5c13b7d7c920c077ddd88f34d6bbe66dd53e87925c28e15",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

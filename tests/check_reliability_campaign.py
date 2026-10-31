@@ -38,6 +38,8 @@ def main():
             logs[target] = ('fuzz: 100 iterations over %d seeds, 1 %s, no crash\n'
                             'process_cpu_seconds=3600.000000000 requested_cpu_seconds=3600\n'
                             % (len(CORPUS[target]), label)).encode()
+            if target in ('layout', 'render'):
+                logs[target] += b'bounded_chapter_attempts=5 bounded_chapter_completed=1\n'
             row = dict(schema=SCHEMA, target=target, source_sha=SOURCE, seed=1, effective_seed=1,
                        working_tree_clean=True, source_unchanged=True, sanitizers_requested=True,
                        sanitizer_environment=SANITIZER_ENV,
@@ -49,6 +51,8 @@ def main():
                        host_font_sha256=HASH if target in ('layout', 'render') else None,
                        binary_sha256=HASH, runtimes={'libexreader.so.1': HASH}, platform='synthetic-only',
                        build_manifest_sha256=digest(proof))
+            if target in ('layout', 'render'):
+                row.update(bounded_chapter_attempts=5, bounded_chapter_completed=1)
             rows.append(row)
 
         def check(data, valid=False, edit=None, **options):
@@ -90,6 +94,26 @@ def main():
             checks += 1
 
         check(rows, valid=True)
+        # A successful snapshot path must not hide an absent or failing bounded
+        # reader. Test report fields and independently rehashed raw logs.
+        for target in ('layout', 'render'):
+            position = list(CORPUS).index(target)
+            for field in ('bounded_chapter_attempts', 'bounded_chapter_completed'):
+                for value in (None, 0, -1, True, '1', 101):
+                    changed = copy.deepcopy(rows); changed[position][field] = value
+                    check(changed)
+                changed = copy.deepcopy(rows); del changed[position][field]; check(changed)
+            for replacement in (b'', b'bounded_chapter_attempts=5 bounded_chapter_completed=0\n',
+                                b'bounded_chapter_attempts=5 bounded_chapter_completed=1\n'*2,
+                                b'bounded_chapter_attempts=6 bounded_chapter_completed=1\n'):
+                def route_log(folder, position=position, replacement=replacement, target=target):
+                    shard=folder/str(position)
+                    content=logs[target].split(b'bounded_chapter_attempts=')[0]+replacement
+                    (shard/'run.log').write_bytes(content)
+                    row=json.loads((shard/'report.json').read_text())
+                    row['log_sha256']=digest(shard/'run.log'); write_json(shard/'report.json',row)
+                check(rows,edit=route_log)
+        changed = copy.deepcopy(rows); changed[0]['bounded_chapter_completed'] = 1; check(changed)
         check([])
         check(rows[:-1])
         check(rows+[copy.deepcopy(rows[0])])

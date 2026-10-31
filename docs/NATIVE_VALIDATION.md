@@ -1,5 +1,75 @@
 # Native C validation
 
+## PNG dependency reliability correction (3.40.0 pre-release)
+
+The first final-source campaign was rejected by a font shard. Its PNG decoder
+performed an undefined zero-length library read. All produced evidence and 72
+valid historical shard reports are retained; their CPU time is not credited
+to a replacement source. The pinned decoder now receives two local corrections
+in a generated build-directory header, preserving the original cache, license,
+valid PNG semantics and budgets. Image tests cover valid empty data chunks and
+failure cleanup; a fixed font replay must complete its normal API return.
+
+Windows image/font/pipeline and optional-codec/PDF checks pass. The replacement
+source passes all seven native CI jobs, including Linux ASan/UBSan 159/159.
+Its platform packages, r4 quantitative runs, full chapter traversal and installed
+consumers have independent evidence. The four-target 24-CPU-hour replacement
+campaign is running and WP16 remains incomplete. Current and retained prior
+source identities are in `docs/validation/2026-10-21-png-reliability.json` and
+`docs/validation/2026-10-20-wp6-window-reader.json`.
+
+## Bounded EPUB chapters (3.40.0)
+
+The current measurement, ordinary CI and reliability campaign source is
+`635225fe6ceb7759a948a1d8cede0ab18ea1cee9`. Earlier measurement and acceptance
+rounds remain in the evidence JSON. All seven native jobs pass,
+including Linux ASan/UBSan 159/159 and iPhone/iPad simulator host checks.
+Windows default and codec-disabled suites pass 169/169 each; the pipeline
+contract suite passes 83 checks. Installed GCC/MSVC core, default C and exact-version
+C++ consumers pass. Named PE exports retain all 316 prior names and add eight;
+the older package-B count included import aliases and remains historical.
+
+Eighteen fixed-corpus measurements pass. The indexed/parser/continuation peak
+increment from a 10 MiB to 100 MiB single chapter is 20,269,292 bytes.
+Full 10/50/100 MiB chapters contain 12,018/60,088/120,177 pages; every page hash
+matches between 2 MiB and 4 MiB windows. Original snapshot work/member limits
+remain covered, and restored checkpoints survive actual window eviction.
+The corrected callback and pending-allocation failure paths have dedicated
+budget regressions and pass the Linux sanitizer suite.
+
+The independently checked platform inventory contains 1,385 files (including
+19 download identity records), six SDK
+configurations, four host reports, licenses, benchmarks, conversion results and
+three-platform chapter evidence. Schema-3 smoke evidence reaggregates strictly;
+layout/render must each complete an actual bounded-reader page. The first
+24-CPU-hour campaign was rejected; its replacement is running. Evidence:
+`docs/validation/2026-10-20-wp6-window-reader.json`.
+
+## Seven audited corrections (3.39.1)
+
+CBZ failure cleanup, source short reads and member/frame order, TIFF alpha,
+and SVG default stroke, percentage opacity and root/ancestor opacity have
+dedicated before/after regressions. The SVG suite also covers selected glyphs
+inside definitions. Fixed fixtures, reference thresholds and resource budgets
+are unchanged. Windows GCC passes 156/156; image/CBZ/stream/SVG suites report
+1553/4506/84/908 checks. Linux ASan/UBSan passes 153/153 on engine/package
+commit `29092645f1e4e0ffb0125d08055505dca028e9e3`.
+
+The fixed 56-scene Chrome comparison passes after correcting the existing
+3px interior mask to treat pixels outside a tight crop as empty. The initial
+55/56 comparison and both independent boundary diagnoses remain available.
+TIFF visible white-background difference drops from 54 to 0; low-alpha raw
+RGB retains libtiff's 8-bit association quantization. Installed C/C++ consumers
+and optional-codec results, exact source hashes and individual CI results are
+indexed in `docs/validation/2026-10-20-audit-fixes.json`.
+
+The macOS job's sole failure is the separately handed-off conversion batch
+memory benchmark; all four media/SVG suites pass there. This repair record
+also verifies the later conversion delivery `599667e` at 7/7 CI, with all
+three platforms passing CLI37, matrix520, render20 and the original memory
+budget. That delivery is not integrated into this repair branch. Joint-source
+acceptance, WP6 and WP16 final-source campaigns remain separate.
+
 ## WP7, WP8, WP12-lite and WP12a joint integration (3.39.0)
 
 Mainline preserves all delivery records and fixed acceptance scopes. Joint

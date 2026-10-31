@@ -1,0 +1,337 @@
+{
+  "schema": 1,
+  "package": "Parallel integration, phase 1 pre-integration",
+  "phase": "pre-integration candidate; final freeze waits for package A and package B deliveries",
+  "branch": "codex/parallel-integration",
+  "worktree": "C:/Users/Oscar/.codex/worktrees/parallel-integration/EXReader",
+  "base_head_before_this_round": "397ab0c610ad7f43b4aee09b033d80bd40c420dc",
+  "corpus_registration_ancestor": "00a8838cf6089e67a730ca6fd4956cb45d09c27d",
+  "pre_integration_source": "4729f7fc7d908d249704d96ee61cc74ee778a27f",
+  "merge_commits": {
+    "acroform": "c3b0475ac9aab24d381713393172f0836af25038",
+    "border_spacing": "252b26d602f24d5267fa6669f6219fa6a675edf0",
+    "apple": "4729f7fc7d908d249704d96ee61cc74ee778a27f"
+  },
+  "inputs": {
+    "acroform": {
+      "branch": "codex/wp9-acroform",
+      "delivery_head": "4605dbf7524f8764b923e5c447e1a6988fe4f62f",
+      "tested_implementation": "7e44ae59d47a578dac3116154b0de5a67efb0163",
+      "independent_run": 39817023587,
+      "independent_result": "3/3 success; declared AcroForm implementation scope only"
+    },
+    "border_spacing": {
+      "branch": "codex/wp5-border-spacing",
+      "delivery_head": "a0bb9d2d6988b74e62aa1592faed681cee1950d4",
+      "tested_implementation": "ee76f5b582ec92112bb294226d5b42758b1ad2ae",
+      "independent_run": 39816051738,
+      "independent_result": "2/2 success; 163/163 per platform"
+    },
+    "apple": {
+      "branch": "codex/wp13-apple-review",
+      "delivery_head": "535f6baff40234427d9d0584fee1432dfecf099b",
+      "tested_implementation": "b3f28ca19904f9a6f173113f6ed86e62928be875",
+      "independent_run": 39813162880,
+      "independent_result": "8/8 success with strict summary accepted"
+    },
+    "android": {
+      "branch": "codex/wp13-android-review",
+      "delivery_head": "05048cccd84532509e0d6039feb3b7769824ec1a",
+      "tested_implementation": "ac7aecc4d3c2e6e65a6797ab556cd31546ca3a5c",
+      "independent_run": 39816104855,
+      "independent_result": "final failure; not accepted and not merged"
+    },
+    "opds_facets": {
+      "branch": "codex/wp15-catalog-features",
+      "delivery_head": "47d8fda0bea9aca6eb1f3f595344b31c0ec51d08",
+      "tested_implementation": "757e2f33271b358715ea8f83f44a3c779ad660e8",
+      "independent_run": 39815167314,
+      "independent_result": "2/2 success; held back until the ownership ancestor H is frozen"
+    }
+  },
+  "cloud_runs": {
+    "native": {
+      "id": 39821205425,
+      "attempt": 1,
+      "workflow": ".github/workflows/native.yml",
+      "head_sha": "4729f7fc7d908d249704d96ee61cc74ee778a27f",
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-10-22T17:29:45Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39821205425",
+      "jobs": [
+        {
+          "id": 119972659335,
+          "name": "fuzz",
+          "conclusion": "success"
+        },
+        {
+          "id": 119972659642,
+          "name": "desktop (ubuntu-22.04)",
+          "conclusion": "success"
+        },
+        {
+          "id": 119972659718,
+          "name": "android",
+          "conclusion": "success"
+        },
+        {
+          "id": 119972659723,
+          "name": "desktop (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "id": 119972659809,
+          "name": "sanitizers",
+          "conclusion": "success"
+        },
+        {
+          "id": 119972659891,
+          "name": "apple-mobile",
+          "conclusion": "success"
+        },
+        {
+          "id": 119972659911,
+          "name": "desktop (macos-15)",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12445895622,
+          "name": "EXReader-performance-macOS",
+          "bytes": 14352,
+          "digest": "sha256:a9e5edc035ba92fc3107437269df1fa21343d4fcc95b892bac5e6b96dcf296a4",
+          "expired": false
+        },
+        {
+          "id": 12445685542,
+          "name": "EXReader-C-Linux",
+          "bytes": 20759316,
+          "digest": "sha256:2a1b01777c176fad7dd5e18688c182314a253d614f866dc6690c3b0941ecf5f9",
+          "expired": false
+        },
+        {
+          "id": 12445661152,
+          "name": "EXReader-conversion-macOS",
+          "bytes": 14168,
+          "digest": "sha256:4a34915c5e94a6472dd70e3e4eb8ba84f386393b5d18542b2d7f4047b0eb5a1e",
+          "expired": false
+        },
+        {
+          "id": 12445660063,
+          "name": "reliability-native-smoke",
+          "bytes": 28807,
+          "digest": "sha256:64b1a4a3c31ec7ada35342bfc3576665fdcb8233dd7a2a9d509c1e0d66930816",
+          "expired": false
+        },
+        {
+          "id": 12445486755,
+          "name": "EXReader-conversion-Windows",
+          "bytes": 14289,
+          "digest": "sha256:c063ded4b03ccf0de5decb9b461b3dfe239ed5fd9596b12c881b7d23ee86a629",
+          "expired": false
+        },
+        {
+          "id": 12445470751,
+          "name": "sanitizer-native-tests",
+          "bytes": 27505,
+          "digest": "sha256:d6e7fbe6c36101be3c8ab79fee16ec986cdbc1925675b7216323722d0293a629",
+          "expired": false
+        },
+        {
+          "id": 12445306100,
+          "name": "EXReader-WP6-Linux",
+          "bytes": 28769,
+          "digest": "sha256:a8c07fc1cd04a82b463642dd557a3a6cd491a9ed38b4de1aee5e9bcf49f2551e",
+          "expired": false
+        },
+        {
+          "id": 12445077613,
+          "name": "EXReader-reference-iPhone-iPad",
+          "bytes": 24820105,
+          "digest": "sha256:33c8ef6a589586d8b779330f5450f7219a9608585b1bfb1b818762304a9434c4",
+          "expired": false
+        },
+        {
+          "id": 12444797394,
+          "name": "EXReader-WP6-Windows",
+          "bytes": 28603,
+          "digest": "sha256:72d2d978b69015dcad86fedd5072cd6e604750f89553ecd8ecf89e44440412e1",
+          "expired": false
+        },
+        {
+          "id": 12444796941,
+          "name": "EXReader-WP6-macOS",
+          "bytes": 27777,
+          "digest": "sha256:d8eca4dd694f017a5fdd3c9518a25ead882445e98a92171eca63d795cf1196df",
+          "expired": false
+        },
+        {
+          "id": 12444677714,
+          "name": "EXReader-C-macOS",
+          "bytes": 18082227,
+          "digest": "sha256:b4d076c4cd11c47b9030bee83dab5422b7bbe62f73d18e8b913ac99d377540c4",
+          "expired": false
+        },
+        {
+          "id": 12444654779,
+          "name": "EXReader-C-iOS-iPadOS-arm64",
+          "bytes": 35750151,
+          "digest": "sha256:8037ec334f8f6e6e3881fb22fe79437cf32bcd2a278840be3080ecfe5634a127",
+          "expired": false
+        },
+        {
+          "id": 12444602441,
+          "name": "EXReader-performance-Linux",
+          "bytes": 14427,
+          "digest": "sha256:654867b73a61a06568f336ce321fa7d0230678ffbb7fc7c6912cfc65f4dc4f7d",
+          "expired": false
+        },
+        {
+          "id": 12444364389,
+          "name": "EXReader-C-Windows",
+          "bytes": 14249734,
+          "digest": "sha256:4ad502d862b82c80221c3126a56f8403dbedafdbd0b41965b634b9c041e21aa7",
+          "expired": false
+        },
+        {
+          "id": 12444124801,
+          "name": "EXReader-reference-Windows",
+          "bytes": 17381407,
+          "digest": "sha256:aea31b270c55e07f2f713c75d1b10bafc2dd9940ba115bc256119105f3cab8c5",
+          "expired": false
+        },
+        {
+          "id": 12444099777,
+          "name": "EXReader-conversion-Linux",
+          "bytes": 14007,
+          "digest": "sha256:76e0b66b1bf7b6ead984993189d562a6d12a5dc9930ade50e93ecb86e1a6d137",
+          "expired": false
+        },
+        {
+          "id": 12443984562,
+          "name": "EXReader-reference-macOS",
+          "bytes": 24936951,
+          "digest": "sha256:dce51f9f1c15d5d31eb640ab437bf26639556db668f90c9b0d5e578b59f8d3f2",
+          "expired": false
+        },
+        {
+          "id": 12443939844,
+          "name": "EXReader-performance-Windows",
+          "bytes": 14418,
+          "digest": "sha256:2a46acbb10203e59e090ca7d374ea6c7ef5cc9ac51e86813a661526265446ce7",
+          "expired": false
+        },
+        {
+          "id": 12443624942,
+          "name": "EXReader-C-Android-arm64",
+          "bytes": 33414352,
+          "digest": "sha256:375710552684304b4c54a8c185b5b1cd40383dfce7f220f2e0691dcf8c606ff6",
+          "expired": false
+        }
+      ]
+    },
+    "acroform": {
+      "id": 39821209875,
+      "attempt": 1,
+      "workflow": ".github/workflows/acroform.yml",
+      "head_sha": "4729f7fc7d908d249704d96ee61cc74ee778a27f",
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-10-22T17:18:25Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39821209875",
+      "jobs": [
+        {
+          "id": 119972666595,
+          "name": "native (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "id": 119972667019,
+          "name": "native (ubuntu-22.04)",
+          "conclusion": "success"
+        },
+        {
+          "id": 119972667131,
+          "name": "sanitizer",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": []
+    },
+    "spacing": {
+      "id": 39821213939,
+      "attempt": 1,
+      "workflow": ".github/workflows/wp5-border-spacing.yml",
+      "head_sha": "4729f7fc7d908d249704d96ee61cc74ee778a27f",
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-10-22T17:24:11Z",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/39821213939",
+      "jobs": [
+        {
+          "id": 119972681289,
+          "name": "spacing (ubuntu-22.04)",
+          "conclusion": "success"
+        },
+        {
+          "id": 119972681551,
+          "name": "spacing (windows-latest)",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": []
+    }
+  },
+  "capability_coverage": {
+    "native_full_regression": "ctest on Windows, Ubuntu and macOS builds the whole suite, so native-pdf-form and native-table-spacing run in the same job as the existing regressions",
+    "sanitizers": "the native sanitizer job runs the same suite with ASan/UBSan, including the AcroForm and border-spacing tests",
+    "install_and_consumers": "portable install, trimmed component install, installed host examples, C++ consumer, JNI and Swift bindings in the same run",
+    "layer_dependencies": "tools/check_layers.py on Linux and on the AcroForm build",
+    "dedicated_capability_runs": "AcroForm and border-spacing keep their own workflows and are registered as supplemental same-source runs of the strict summary"
+  },
+  "gate_changes": {
+    "sdk_baseline_chain": "tools/check_parallel_integration.py now requires a separately accepted baseline candidate, identical protected trees, an ancestry check, the registered baseline evidence runs and matching version/ABI",
+    "baseline_contracts": ".github/workflows/wp15-opds.yml and tools/android_host_evidence.py must name the registered candidate",
+    "supplemental_sources": "the strict summary additionally requires the acroform and spacing runs at the same source instead of replacing any of the ten package groups"
+  },
+  "unmet": [
+    "package A final Android delivery and its 45+10 cases, 49 pages, 48-gate acceptance",
+    "package B final corpus with at least 30 independent documents",
+    "final SDK candidate refreeze if a protected tree changes, and promotion of the Android SDK guard from pending to active",
+    "OPDS ownership ancestor H and the final OPDS merge",
+    "the ten-group same-source acceptance and its strict summary at the final source",
+    "real corpus 0/1710, device, VoiceOver and TalkBack review, complete WP15 and the rest of the queue"
+  ],
+  "acceptance_effect": "This record accepts only the pre-integration candidate source and its declared package scopes; complete_product=false, wp16_accepted=false, wp16_cpu_credit_seconds=0",
+  "ancestry": {
+    "corpus_registration_ancestor": "00a8838cf6089e67a730ca6fd4956cb45d09c27d",
+    "corpus_registration_is_ancestor_of_pre_integration_source": true,
+    "previous_sdk_baseline_ancestor": "a2552d7feb786cd2345d2b0b3eb894777b3254db",
+    "eight_group_acceptance_source_ancestor": "9e4b595ed7e10dcb2d78f5547e4e6a11a04ba3a1"
+  },
+  "gate_verification": {
+    "protocol_run": {
+      "id": 39823812435,
+      "event": "push",
+      "head_sha": "824d71601f7940ed1cb57fb06f562983bb0940e8",
+      "result": "protocol job success; the summarize job was skipped because no run map was supplied"
+    },
+    "baseline_run": {
+      "id": 39823842117,
+      "event": "workflow_dispatch",
+      "head_sha": "824d71601f7940ed1cb57fb06f562983bb0940e8",
+      "checked_source": "82f88966c0ca2bbca93837861270b8cb57ebb184",
+      "result": "protocol and baseline jobs success; the baseline job verified ancestry, protected trees, the OPDS contract, the pending Android guard, the three candidate evidence runs and the published version/ABI",
+      "summarize_job": "skipped by design"
+    },
+    "scope": "gate and baseline wiring only; no package or capability run was accepted here"
+  },
+  "current_branch_head": {
+    "head": "5c4af0067b8b5ee1b262451c34370f1b711fbbf5",
+    "relation_to_candidate": "tooling and documentation commits only after K",
+    "protected_trees_identical_to_candidate": true,
+    "verified_by": "git rev-parse K:<path> against HEAD:<path> for all eight protected paths"
+  }
+}

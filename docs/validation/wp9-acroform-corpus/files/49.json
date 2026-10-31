@@ -1,0 +1,12 @@
+{
+ "base": "49-reject-permissions.pdf",
+ "id": "49",
+ "category": "reject/permissions",
+ "expect": "reject",
+ "size": 700,
+ "sha256": "9d17d8ba45a09ac419e7eeb1313b557c4e87ff90641389163603d89f27233461",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

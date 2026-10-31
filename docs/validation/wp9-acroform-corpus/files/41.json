@@ -1,0 +1,12 @@
+{
+ "base": "41-reject-comb.pdf",
+ "id": "41",
+ "category": "reject/comb",
+ "expect": "reject",
+ "size": 686,
+ "sha256": "79b5e0aed06972a8ea031bfc003897ffedc2934bb39d40097bacad9ade5cddc4",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

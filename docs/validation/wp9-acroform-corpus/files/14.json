@@ -1,0 +1,12 @@
+{
+ "base": "14-checkbox-off.pdf",
+ "id": "14",
+ "category": "checkbox/off",
+ "expect": "accept",
+ "size": 980,
+ "sha256": "a110dcab49da67d3e518399899deb182f4065503e1bbc82e9439c19ae04c80e0",
+ "edited_sha256": "81af2e83cf00a03594f6bc5ce0b927b4f9c0d942fb0e4e91799e6f2921c4497b",
+ "assertions": 33,
+ "result": "pass",
+ "failures": []
+}

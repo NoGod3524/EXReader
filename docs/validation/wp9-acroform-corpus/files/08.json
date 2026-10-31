@@ -1,0 +1,12 @@
+{
+ "base": "08-text-clear.pdf",
+ "id": "08",
+ "category": "text/empty",
+ "expect": "accept",
+ "size": 675,
+ "sha256": "7e29831f31391b3a439bb5295205dd0fc26171d87ed9f0b2951027720dd20ab1",
+ "edited_sha256": "226f847c3e6c0211bc2e85fdc0af9ffc270fcfc0401c63ebc4e71b6d33ceb805",
+ "assertions": 30,
+ "result": "pass",
+ "failures": []
+}

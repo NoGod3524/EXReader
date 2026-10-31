@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "pdf_raster_internal.h"
+#include "pdf_jpx_internal.h"
 typedef struct { exr_pdf_file *file; exr_error error; } image_reader;
 typedef struct { uint32_t active[16]; size_t depth,live; } image_chain;
 static uint32_t get(image_reader *r,uint32_t dict,const char *key) {
@@ -68,7 +69,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
                                  image_chain *chain,unsigned *kind,exr_bitmap *inks) {
   image_reader r={0}; uint32_t width,height,bits=1,id,key[2*EXR_PDF_MAX_COLORANTS]={0}; unsigned channels=1,k,indexed=0,color_key=0;
   int stencil=0,interpolate=0; double decode[2*EXR_PDF_MAX_COLORANTS]={0,1}; exr_pdf_colorspace *space=NULL;
-  const unsigned char *bytes; size_t size,row,y,x,local_work=0,owned=0; exr_bitmap bitmap={0}; exr_vector_texture *mask_texture=NULL; const exr_pdf_value *v;
+  const unsigned char *bytes; unsigned char *jpx_samples=NULL; size_t size,row,y,x,local_work=0,owned=0,jpx_live=0; exr_bitmap bitmap={0}; exr_vector_texture *mask_texture=NULL; const exr_pdf_value *v;
   uint32_t mask=EXR_PDF_NONE; unsigned soft=0,entered=0,charged=0,matte=0; double matte_rgb[4]={0};
   exr_pdf_stream_codec codec=EXR_PDF_STREAM_RAW; uint32_t parameters=EXR_PDF_NONE;
   if(out) *out=NULL;
@@ -137,7 +138,9 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
       color_key=1;
     }
   }
-  id=get(&r,image,"Decode");
+  if(r.error.code!=EXR_OK || exr_pdf_image_payload(file,image,&bytes,&size,&codec,&parameters,&r.error)!=EXR_OK) goto done;
+  /* PDF 1.7 sections 3.3.8/4.8.4: non-mask JPX ignores Decode, including Indexed. */
+  id=codec==EXR_PDF_STREAM_JPX && !stencil ? EXR_PDF_NONE : get(&r,image,"Decode");
   if(id!=EXR_PDF_NONE) {
     uint32_t at; v=exr_pdf_value_at(file,id); if(v->kind!=EXR_PDF_ARRAY) goto invalid; at=v->first;
     for(k=0;k<2*channels;k++) {
@@ -150,12 +153,31 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     if(at!=EXR_PDF_NONE) goto invalid;
   }
   if(stencil && !((decode[0]==0 && decode[1]==1) || (decode[0]==1 && decode[1]==0))) goto invalid;
-  if(r.error.code!=EXR_OK || exr_pdf_image_payload(file,image,&bytes,&size,&codec,&parameters,&r.error)!=EXR_OK) goto done;
+  if(r.error.code!=EXR_OK) goto done;
   row=((size_t)width*channels*bits+7)/8;
   owned=(size_t)width*height*4;
   if(inks && exr_pdf_colorspace_device(space)==EXR_PDF_DEVICE_CMYK) owned*=2;
   if(owned>(size_t)128*1024*1024-chain->live) { exr_fail(&r.error,EXR_LIMIT,"PDF image/mask pixels exceed 128 MiB"); goto done; }
   chain->live+=owned; charged=1;
+  if(codec==EXR_PDF_STREAM_JPX) {
+    size_t decoded_size=0,planes;exr_status status;
+    if(stencil) goto invalid;
+    if((size_t)width*height>((size_t)64*1024*1024)/sizeof(int32_t)/channels) {
+      exr_fail(&r.error,EXR_LIMIT,"PDF JPX component planes exceed workspace budget");goto done;
+    }
+    planes=(size_t)width*height*channels*sizeof(int32_t);
+    if(row>(size_t)64*1024*1024/height || row*height>(size_t)64*1024*1024-planes ||
+       planes+row*height>(size_t)128*1024*1024-chain->live) {
+      exr_fail(&r.error,EXR_LIMIT,"PDF JPX samples exceed payload or image-chain budget");goto done;
+    }
+    jpx_live=planes+row*height;chain->live+=jpx_live;
+    status=exr_pdf_jpx_decode(bytes,size,width,height,channels,bits,(int)indexed,control,&jpx_samples,&decoded_size,&r.error);
+    if(status!=EXR_OK) { if(r.error.code==EXR_OK) r.error.code=status;goto done; }
+    if(decoded_size!=row*height) goto invalid;
+    /* The adapter has destroyed its component planes before handing off bytes. */
+    chain->live-=planes;jpx_live-=planes;
+    bytes=jpx_samples;size=decoded_size;
+  }
   if(inks && exr_pdf_colorspace_device(space)==EXR_PDF_DEVICE_CMYK) {
     inks->width=width;inks->height=height;inks->stride=width*4;inks->channels=4;
     inks->pixels=malloc((size_t)inks->stride*height);
@@ -229,6 +251,7 @@ invalid:
   if(r.error.code==EXR_OK) exr_fail(&r.error,EXR_FORMAT,"Invalid PDF image dictionary, samples or Decode array");
 done:
   if(entered) chain->depth--;
+  chain->live-=jpx_live;free(jpx_samples);
   if(charged) chain->live-=owned;
   release_texture(mask_texture,chain); free(bitmap.pixels); exr_pdf_colorspace_free(space);
   if(r.error.code!=EXR_OK && inks) { free(inks->pixels);memset(inks,0,sizeof(*inks)); }

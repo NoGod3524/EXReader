@@ -1,0 +1,146 @@
+name: R5 Android bounded candidate (no acceptance)
+on:
+  workflow_dispatch:
+    inputs:
+      inspect_run_id:
+        description: Read an earlier candidate's per-case failures in Actions only; no acceptance
+        type: string
+        default: ''
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect-failure:
+    if: ${{ inputs.inspect_run_id != '' && github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      INSPECT_RUN: ${{ inputs.inspect_run_id }}
+    steps:
+      - name: Read previous cloud case reports, diagnostic only
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$INSPECT_RUN" --jq '{id,head_sha,run_attempt,status,conclusion}'
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$INSPECT_RUN/artifacts?per_page=100" --jq '.artifacts[]|{id,name,size_in_bytes,digest,expired}'
+          gh run download "$INSPECT_RUN" --repo "$GITHUB_REPOSITORY" --pattern "R5-Android-bounded-candidate-$INSPECT_RUN-*" --dir cloud-diagnostic
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          print('diagnostic_only=true; accepted=false')
+          for path in Path('cloud-diagnostic').rglob('validation.json'):
+              report=json.loads(path.read_text())
+              print(json.dumps({'path':str(path),'source':report.get('source_sha'),'suite':report.get('suite'),'summary':report.get('summary'),'sequence':report.get('sequence')}))
+              for case in report.get('cases',[]):
+                  if case.get('status')!='pass':
+                      print(json.dumps({'id':case.get('id'),'status':case.get('status'),'error':case.get('error'),'detail':case.get('detail')}))
+          for path in Path('cloud-diagnostic').rglob('review-logcat.txt'):
+              lines=path.read_text(errors='replace').splitlines()
+              begins=[i for i,line in enumerate(lines) if 'case start destroyed_activity_releases_worker' in line]
+              selected=lines[begins[-1]:] if begins else lines
+              selected=[line for line in selected if 'EXRHost' in line and any(word in line for word in
+                  ('status ','storage mode','paging {','progress attempt','bounded open','bounded scan','handle ','worker shutdown'))]
+              for line in selected[-40:]: print(line)
+          PY
+  candidate-build:
+    if: ${{ !inputs.inspect_run_id }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      ANDROID_CANDIDATE_SDK_BASE: 9854061be331fe603a1822d9b2b36ee357154927
+      ANDROID_OWNERSHIP_HEAD: d0b205a56e4fcfbd5cca55a808327f00b25971ed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install Android build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y patchelf
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
+      - name: Build candidate SDK and APKs in cloud
+        id: build
+        run: |
+          mkdir -p build/android-host
+          set -o pipefail
+          python3 tools/build_android_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/android-host/build.log
+      - name: Static candidate source checks
+        id: static
+        run: python3 tools/check_android_host.py --repo .
+      - name: Enable KVM
+        run: sudo chmod 666 /dev/kvm
+      - name: Run original 45, review 10 and bounded 11 on API34 x86_64
+        id: emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          script: bash examples/android/ci/emulator.sh
+      - name: Print per-suite summaries and failing case identities
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for path in Path('build/android-host/evidence').glob('*/validation.json'):
+              report=json.loads(path.read_text())
+              print(json.dumps({'suite':report.get('suite'),'summary':report.get('summary'),'sequence':report.get('sequence')}))
+              for case in report.get('cases',[]):
+                  if case.get('status')!='pass':
+                      print(json.dumps({'id':case.get('id'),'status':case.get('status'),'error':case.get('error'),'detail':case.get('detail')}))
+          PY
+      - name: Verify complete candidate evidence
+        id: preflight
+        if: always()
+        continue-on-error: true
+        env:
+          ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.static.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
+        run: |
+          mkdir -p build/android-host/evidence/artifacts
+          cp build/android-host/artifacts/*.apk build/android-host/evidence/artifacts/
+          python3 tools/check_android_host.py --repo . --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --output build/android-host/evidence/preflight.json
+      - name: Original 48 evidence gate checks
+        id: gate_review
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: python3 tests/android_host/check_evidence_gate.py --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --output build/android-host/gate-review.json
+      - name: Additional bounded evidence gate checks
+        id: bounded_gate
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: python3 tests/android_host/check_bounded_evidence_gate.py --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --output build/android-host/bounded-gate-review.json
+      - name: Candidate runtime result, no formal acceptance
+        if: always()
+        env:
+          ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.static.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
+          ANDROID_GATE_OUTCOME: '${{ steps.gate_review.outcome }}'
+          ANDROID_BOUNDED_GATE_OUTCOME: '${{ steps.bounded_gate.outcome }}'
+        run: |
+          python3 tools/check_android_host.py --repo . --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --gate-review build/android-host/gate-review.json --bounded-gate-review build/android-host/bounded-gate-review.json --output build/android-host/candidate.json
+      - name: Candidate scope only
+        if: always()
+        run: |
+          echo 'candidate_only=true; accepted=false; formal acceptance runs separately in wp13-android.yml'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: R5-Android-bounded-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/android-host/build.log
+            build/android-host/build.json
+            build/android-host/artifacts/
+            build/android-host/fixtures/
+            build/android-host/evidence/
+            build/android-host/*gate-review.json
+            build/android-host/candidate.json
+          if-no-files-found: error

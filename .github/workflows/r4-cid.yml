@@ -1,0 +1,55 @@
+name: R4 bundled FreeType CID diagnosis
+on:
+  push:
+    branches: ['codex/r4-core-hotspots']
+    paths: ['.github/workflows/r4-cid.yml', 'tests/r4_core/cid_diagnose.py', 'tests/test_pdf_outline.c']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  streams:
+    name: page 35 original filter and parameter dictionaries
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12474886324
+          run-id: 39891075765
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: build/frozen
+      - run: python3 -m pip install PyMuPDF==1.26.7
+      - run: python3 tests/r4_core/cid_diagnose.py --streams build/frozen/real-inputs/assets/pdf/nasa-solar-system.pdf build/stream-diagnostic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-stream-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/stream-diagnostic/
+          if-no-files-found: error
+  diagnose:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12474886324
+          run-id: 39891075765
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: build/frozen
+      - name: Build existing outline consumer against bundled FreeType
+        run: |
+          cmake -S . -B build/native -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF
+          cmake --build build/native --parallel 4 --target exreader-pdf-outline-test
+          python3 -m pip install PyMuPDF==1.26.7
+      - run: python3 tests/r4_core/cid_diagnose.py build/native/exreader-pdf-outline-test build/frozen/real-inputs/assets/pdf/nasa-solar-system.pdf build/cid-diagnostic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-cid-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/cid-diagnostic/
+          if-no-files-found: error

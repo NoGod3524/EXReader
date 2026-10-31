@@ -1,0 +1,12 @@
+{
+ "base": "40-reject-password.pdf",
+ "id": "40",
+ "category": "reject/password",
+ "expect": "reject",
+ "size": 672,
+ "sha256": "17f750020edf097695ffd664568485011d0166ba47ef450306602cdc0fdae2bd",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

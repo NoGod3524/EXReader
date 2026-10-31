@@ -1,0 +1,12 @@
+{
+ "base": "38-reject-maxlen.pdf",
+ "id": "38",
+ "category": "reject/maxlen",
+ "expect": "reject",
+ "size": 673,
+ "sha256": "3b050955e8b75550345ebea3449f5285d599cc98ba6d48de3f33dcba4675a7f1",
+ "edited_sha256": null,
+ "assertions": 23,
+ "result": "pass",
+ "failures": []
+}

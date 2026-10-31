@@ -3,6 +3,24 @@
 #define EXR_FORMATS_INTERNAL_H
 #include "document_internal.h"
 #include "exr/formats.h"
+typedef struct {
+  void *context;
+  void *(*allocate)(void *context,size_t size);
+  void *(*reallocate)(void *context,void *data,size_t size);
+  void (*release)(void *context,void *data);
+} exr_resource_allocator;
+/* The supplied allocator rejects every archive/output allocation before it
+   exceeds its caller's budget; member metadata is checked before extraction. */
+exr_status exr_document_resource_bounded(const exr_document *doc,size_t resource,
+  const exr_resource_allocator *allocator,const exr_control *control,void **out,size_t *size,exr_error *error);
+typedef exr_status (*exr_chapter_feed_fn)(void *context,const void *data,size_t size,int final,exr_error *error);
+exr_status exr_epub_chapter_feed(const exr_document *index,size_t part,
+  exr_chapter_feed_fn feed,void *context,const exr_control *control,exr_error *error);
+/* Every central-directory, source-read and inflate allocation uses allocator.
+   The caller can charge a shared live budget in these callbacks. */
+exr_status exr_epub_chapter_feed_bounded(const exr_document *index,size_t part,
+  exr_chapter_feed_fn feed,void *context,const exr_resource_allocator *allocator,
+  const exr_control *control,exr_error *error);
 exr_status exr_parse(exr_document *doc, const void *data, size_t size, exr_error *error);
 exr_status exr_epub_index(const void *data, size_t size, exr_document **out, exr_error *error);
 exr_status exr_epub_index_source(const exr_source *source, exr_document **out, exr_error *error);

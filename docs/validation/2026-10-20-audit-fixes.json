@@ -1,0 +1,2570 @@
+{
+  "schema": 1,
+  "recorded_at_utc": "2026-10-21T01:29:09.181887+00:00",
+  "scope": "Seven completed-feature audit findings, independent of handoff packages A/B/C",
+  "baseline_commit": "07c6910c12dab572771440c7ce34157f079f80d9",
+  "engine_package_source_commit": "29092645f1e4e0ffb0125d08055505dca028e9e3",
+  "reference_checker_source_commit": "ea6f96df999caae041fdd3a37e79713dbcd19093",
+  "branch": "codex/audit-media-fixes",
+  "worktree": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader",
+  "versions": {
+    "sdk": "3.39.1",
+    "core": "3.38.1",
+    "pdf": "3.38.3",
+    "library": "3.34.0",
+    "abi": 1,
+    "schema": 6
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "title": "CBZ failed-probe cleanup",
+      "status": "fixed",
+      "before_regression_failed": true,
+      "after_regression_passed": true,
+      "before": {
+        "id": "F1",
+        "exit_code": 3221225477,
+        "regression_failed_before_fix": true
+      },
+      "before_logs": [
+        {
+          "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/baseline-regressions/F1.stdout.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/baseline-regressions/F1.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "after": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/media-fixed.xml",
+        "bytes": 999,
+        "sha256": "1e96060a484b494296d4de0a35dbd70baef5babd5f672be14efc09860a6b9177"
+      }
+    },
+    {
+      "id": "F2",
+      "title": "TIFF straight-alpha normalization",
+      "status": "fixed",
+      "before_regression_failed": true,
+      "after_regression_passed": true,
+      "before": {
+        "id": "F2",
+        "exit_code": 1,
+        "regression_failed_before_fix": true
+      },
+      "before_logs": [
+        {
+          "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/baseline-regressions/F2.stdout.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/baseline-regressions/F2.stderr.log",
+          "bytes": 78,
+          "sha256": "901bc413ff972bb9ba66141f3029f43aeb616acb28ecac1c16cf6b8fad5dd6ea"
+        }
+      ],
+      "after": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/media-fixed.xml",
+        "bytes": 999,
+        "sha256": "1e96060a484b494296d4de0a35dbd70baef5babd5f672be14efc09860a6b9177"
+      }
+    },
+    {
+      "id": "F3",
+      "title": "CBZ member-before-frame ordering",
+      "status": "fixed",
+      "before_regression_failed": true,
+      "after_regression_passed": true,
+      "before": {
+        "id": "F3",
+        "exit_code": 1,
+        "regression_failed_before_fix": true
+      },
+      "before_logs": [
+        {
+          "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/baseline-regressions/F3.stdout.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/baseline-regressions/F3.stderr.log",
+          "bytes": 46,
+          "sha256": "5e29dfb4b97694294773a978de3d957accd024b688bccb417823e19d63a1484f"
+        }
+      ],
+      "after": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/media-fixed.xml",
+        "bytes": 999,
+        "sha256": "1e96060a484b494296d4de0a35dbd70baef5babd5f672be14efc09860a6b9177"
+      }
+    },
+    {
+      "id": "F4",
+      "title": "CBZ legal source short reads",
+      "status": "fixed",
+      "before_regression_failed": true,
+      "after_regression_passed": true,
+      "before": {
+        "id": "F4",
+        "exit_code": 1,
+        "regression_failed_before_fix": true
+      },
+      "before_logs": [
+        {
+          "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/baseline-regressions/F4.stdout.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/baseline-regressions/F4.stderr.log",
+          "bytes": 132,
+          "sha256": "581233fd254b964152e0c43f0d8384c154900ee7279c56e4a1e86a4f6b6cdde2"
+        }
+      ],
+      "after": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/media-fixed.xml",
+        "bytes": 999,
+        "sha256": "1e96060a484b494296d4de0a35dbd70baef5babd5f672be14efc09860a6b9177"
+      }
+    },
+    {
+      "id": "F5",
+      "title": "SVG default stroke",
+      "status": "fixed",
+      "before_regression_failed": true,
+      "after_regression_passed": true,
+      "before": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-svg-fixes/EXReader/build/svg-fixes/regression-f5-before.log",
+        "bytes": 114,
+        "sha256": "d02993a5161350220cd311c4ebe887751f0eef624da1cebde7301af5bb8c2921"
+      },
+      "after": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-svg-fixes/EXReader/build/svg-fixes/acceptance-defs.json",
+        "bytes": 1165,
+        "sha256": "ee4e8885b55a39f8fa1bbfc141fddde0527fca97100d5725917ff87b51c7cdba"
+      }
+    },
+    {
+      "id": "F6",
+      "title": "SVG percentage opacity",
+      "status": "fixed",
+      "before_regression_failed": true,
+      "after_regression_passed": true,
+      "before": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-svg-fixes/EXReader/build/svg-fixes/regression-f6-before.log",
+        "bytes": 67,
+        "sha256": "0f632cdbe5137206c6594eb08c808381c0de53bb680875063a6a803e4354947d"
+      },
+      "after": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-svg-fixes/EXReader/build/svg-fixes/acceptance-defs.json",
+        "bytes": 1165,
+        "sha256": "ee4e8885b55a39f8fa1bbfc141fddde0527fca97100d5725917ff87b51c7cdba"
+      }
+    },
+    {
+      "id": "F7",
+      "title": "SVG root and ancestor opacity",
+      "status": "fixed",
+      "before_regression_failed": true,
+      "after_regression_passed": true,
+      "before": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-svg-fixes/EXReader/build/svg-fixes/regression-f7-before.log",
+        "bytes": 114,
+        "sha256": "d02993a5161350220cd311c4ebe887751f0eef624da1cebde7301af5bb8c2921"
+      },
+      "after": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-svg-fixes/EXReader/build/svg-fixes/acceptance-defs.json",
+        "bytes": 1165,
+        "sha256": "ee4e8885b55a39f8fa1bbfc141fddde0527fca97100d5725917ff87b51c7cdba"
+      }
+    }
+  ],
+  "windows_gcc_release": {
+    "passed": 156,
+    "total": 156,
+    "evidence": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/joint-tests.xml",
+      "bytes": 36507,
+      "sha256": "3b280229e569c61171b4f2cde134e34927755ce10fc2aa9e25cacc0e0f99d343"
+    }
+  },
+  "windows_media": {
+    "passed": 3,
+    "total": 3,
+    "evidence": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/media-fixed.xml",
+      "bytes": 999,
+      "sha256": "1e96060a484b494296d4de0a35dbd70baef5babd5f672be14efc09860a6b9177"
+    }
+  },
+  "windows_optional_codecs_off": {
+    "passed": 4,
+    "total": 4,
+    "evidence": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/codecs-off.xml",
+      "bytes": 1243,
+      "sha256": "faacb0db5d223b8848bfe8e5961d016dba8e0d93b8b2fded58db7c00a80ea0f6"
+    }
+  },
+  "suite_check_counts": {
+    "image": 1553,
+    "cbz": 4506,
+    "stream": 84,
+    "svg": 908
+  },
+  "svg": {
+    "byte_exact_document_pairs": 10,
+    "final": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-svg-fixes/EXReader/build/svg-fixes/acceptance-defs.json",
+      "bytes": 1165,
+      "sha256": "ee4e8885b55a39f8fa1bbfc141fddde0527fca97100d5725917ff87b51c7cdba"
+    },
+    "initial_preserved": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-svg-fixes/EXReader/build/svg-fixes/acceptance.json",
+      "bytes": 1782,
+      "sha256": "04a373512b9ce1a3ba921c244e5d345019e85b7175984bfafa5f10a07703417e"
+    },
+    "defs_regression_before": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-svg-fixes/EXReader/build/svg-fixes/regression-defs-before.log",
+      "bytes": 39,
+      "sha256": "c2102928880602e107844d9851bbbff3a90e352d1a37d9bebc21bc30348671f4"
+    }
+  },
+  "independent_probe_rerun": {
+    "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/probes/after/probe-summary.json",
+    "bytes": 2016,
+    "sha256": "0f5c0eaef1a08ddccb66319d02fec4230aba33ca2c8bd0ab8f1684f456b119d4"
+  },
+  "tiff": {
+    "visible_white_background_max_channel_difference_before": 54,
+    "visible_white_background_max_channel_difference_after": 0,
+    "raw_rgba_equality_required": false,
+    "reason": "libtiff associated 8-bit raster quantization; transparent RGB normalized to zero",
+    "regression_contract": "premultiplied contribution and actual canvas composites on two opaque backgrounds differ by at most one channel level",
+    "raw_probe_confirmed_field": "legacy byte-inequality observation retained; not the visible-defect acceptance verdict",
+    "evidence": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/probes/after/tiff-alpha.json",
+      "bytes": 8853,
+      "sha256": "c12f46c0dade2fc652cc99d9f0c3ce5f28d1af6ec1163c529c4ad9bb00f373f7"
+    }
+  },
+  "reference": {
+    "initial": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/chrome-reference/reference.json",
+      "bytes": 29600,
+      "sha256": "56e72d2c96c99edd762e79fb6507a0fddd83946b68f18225a6938491ffb9c562"
+    },
+    "initial_passed": 55,
+    "final": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/chrome-reference-r2/reference.json",
+      "bytes": 29727,
+      "sha256": "4862a949bc44f85a6d653419960439a45be064340e50323a71bd8b3056332081"
+    },
+    "report": {
+      "bbox_tolerance": 3,
+      "flat_tolerance": 16,
+      "fonts": {
+        "colrv1": {
+          "file": "colrv1.ttf",
+          "reference_sha256": "871346345597ff0b60c6fd28378683df7ef874dbcf513adc0c2e2e5e1a0adec5",
+          "scene_count": 32,
+          "sha256": "6f2d20017ee066e049ff54d8285e67720360cc72182f569f20d111bfe41651b0"
+        },
+        "svg": {
+          "file": "svgfont.ttf",
+          "reference_sha256": "ba47ed90ba4a4549b7097006cc8f0220dae253926796e5c0e9fcf95a2e88be29",
+          "scene_count": 24,
+          "sha256": "d4bdaeac0b2b43ddc3c3e250ff562890f26fbd344d6e0683fdc03d79f919f961"
+        }
+      },
+      "mean_tolerance": 4.0,
+      "passed": 56,
+      "reference": "Google Chrome 152.0.7977.42 (Skia)",
+      "scenes": {
+        "arc": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5350,
+          "glyph": 17,
+          "interior_fraction": 0.5125,
+          "interior_pixels": 3280,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "bf0503252d3c91398d4e48502ecda62121531ff489c641e2ebaa100904123500",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "dbb72fa4d79cd6a83ac5bbe42a1eb5bd77062faf0e5b120c2c48326961797b6c"
+        },
+        "circle": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5342,
+          "glyph": 5,
+          "interior_fraction": 0.65359375,
+          "interior_pixels": 4183,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "10105235682ff6ba3d026c644766920d24a78ee063af4edb0603a7a791bb3530",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "bd376ff794e45d76b17c7fcd6890775071f5d7da435f8e2b1f65bdffbd18ad63"
+        },
+        "clipbox": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 3364,
+          "glyph": 38,
+          "interior_fraction": 0.81,
+          "interior_pixels": 2916,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "0f52efc0d7f156cb950be0ad6a5ccba792ec2b9aa5cf728e66e80dd93252d4b0",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "15b84c4de428b7ddbfa2b1a78de9aa6152d06705d88dd16733e16e35cb403096"
+        },
+        "clipbox_gradient": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": null,
+          "flat_pixels": 0,
+          "glyph": 39,
+          "interior_fraction": 0.81,
+          "interior_pixels": 2916,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "59ea01009c05051aeb5e3dd7fa9f4de374eced567f705178d32874f4cac43c50",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "aa8d1281c3433d49363ad385af408bdec04d48d0c331c9ccdb8331cbaff3f55f"
+        },
+        "colr_glyph": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 30,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "922cd39f1a8748ae6234241b200ae47a4fb35b65d491132b2584171df975501f",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "aec6f4d27440190b267857e0d1899b5ced4622514083cf767cdef5fc6838ffea"
+        },
+        "composite_difference": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5764,
+          "glyph": 34,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "119f568d9e728e83fc6cb9959601903c3e94864d121be82cb2a9fa3bd1177458",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "9ae9da72fcb836a31f9cf9d7c131f3193309eddcf0c56c9a6808ddc42e309b0e"
+        },
+        "composite_luminosity": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5764,
+          "glyph": 35,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "31769642ab551e631d407fbde1a375ac2f7b0ab252667039e492d76309f03ba7",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "4cdba9995b6928e992ef76620e212cd12d27cec1c8f6dbe728f7742a577b37dc"
+        },
+        "composite_multiply": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5764,
+          "glyph": 32,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "e0bb14b99e03f5817b89194a284080016f46a51a1f15504f7528cf7d6bbb79d1",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "82d21b07c0997896e888ecf75deda6f579e776a6a1ed5188d8a1e445a1374cf3"
+        },
+        "composite_normal": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5764,
+          "glyph": 31,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "0aecc20520d6ec0f25c491fd129ff3adf6b4ea90cfa5d814829a0eade67727db",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "ee994f2705840b66faa6c37787993a8d0403dc1f8f4187b3ce9c371db899c092"
+        },
+        "composite_screen": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5764,
+          "glyph": 33,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "9f4905b06ad10ef40d20030795f629c4bb792c6b1f8effc1f31b6f6dab876488",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "49fa249e659e6e6d45316afb32a11b4850e870acb9dd84260730894d705d8982"
+        },
+        "current_color": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 13,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "b0143ef56f53597eedb7c211653ecc63601e0be4772827c1f9537d7b3bb81f36",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "101f80f47ae83127fa4240f06744ebad9cdeb6e1fd977fdb8d1c734164a88dc8"
+        },
+        "defs_ignored": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 3364,
+          "glyph": 21,
+          "interior_fraction": 0.81,
+          "interior_pixels": 2916,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "6d3e860fc69051c31952393b0ac8cada166ff8604da20fe77a292bf564a420d0",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "54ed906fc639b7a69407778675e7ea06764c79bbc3d6ceed297bc30d35f6d9d8"
+        },
+        "ellipse": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 3604,
+          "glyph": 6,
+          "interior_fraction": 0.62,
+          "interior_pixels": 2790,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "3ded4b0075041d1a7d567f58a23328f155ee3a9604bc669c76951b981f530d4e",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "fcf0f422ef06202013337ff19870abc95782ceb71c5ce0e77118f6654f4ea394"
+        },
+        "evenodd": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5764,
+          "glyph": 10,
+          "interior_fraction": 0.525,
+          "interior_pixels": 3360,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "1af91e13c06f01f3544347d7a768727aa89a6f9f1b7419a6fd60a3f4b1d3bb89",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "b9fafc8bd75b59d11a957a886004cb7bd2ccc89fee4a7c159addebbc5fd8814a"
+        },
+        "fill_opacity": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 12,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "32e96bf8afec416636dcdb9cde917610cf811c0eb3082a23b0a6b48bd5ea13e7",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "3606f0dd25ecb89517a8794cf4a69b6a6fd81909f3f8d70e165ed764c638b830"
+        },
+        "group_opacity": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 11,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "32e96bf8afec416636dcdb9cde917610cf811c0eb3082a23b0a6b48bd5ea13e7",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "3606f0dd25ecb89517a8794cf4a69b6a6fd81909f3f8d70e165ed764c638b830"
+        },
+        "gzip_rect": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 23,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "4bbbf5d61e5d24a83ac64603d25858fc7c932c3936a26ca253a3a0a5da530335",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "324a1834554a6534e95374ba6a9a75ce372b676d4aa9cf6538004a56b28b98e0"
+        },
+        "layer_gradient": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 2992,
+          "glyph": 40,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 3,
+          "mean_difference": 0.023,
+          "ok": true,
+          "ours_sha256": "cf8613cc9394c14a6db8aed75d586da96cd22c00bfdbc6fc8e890dde36010feb",
+          "outlier_fraction": 0.0,
+          "p99_difference": 1,
+          "reference_sha256": "4e5e98966a6e3be0c441a59f6be0dedccd7436b54860cff416db7ed6fd6da010"
+        },
+        "layers": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5928,
+          "glyph": 10,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "aa8f45c988fa0c4ab842a36d5001b991cf3e4049b69a5af292f32844696ba1f4",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "f83b38bd72d3e3de270669044fd3a9c2d79ef8fc0d20669485628d94d7b97b08"
+        },
+        "layers_overlap": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5764,
+          "glyph": 11,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "82bdb992712349e46cd0ee46897862530727e38a86ee0e1f7d4483ece6d638fe",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "5879625aef29bc86903928e079c6a5e4829485c6a1a9599971bc451f5102dc96"
+        },
+        "linear": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": null,
+          "flat_pixels": 0,
+          "glyph": 12,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "06a02779acbe896c979bca52ca1a82acc6d2aefa3c87352785d27be8838e035a",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "9558c5662a087041214ac2ec0d2b7e3725fd5c1ce52f0a122836f17239633214"
+        },
+        "linear_alpha": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 1326,
+          "glyph": 15,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "c945b3aac50eaadff13af9ad942e57a5d32dde2fd0e73af0eab04d80a48594d6",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "7633be51debbb9b961dde0540f28c0dde3717903a5288a1c53726e602b97c207"
+        },
+        "linear_p2": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": null,
+          "flat_pixels": 0,
+          "glyph": 13,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "06a02779acbe896c979bca52ca1a82acc6d2aefa3c87352785d27be8838e035a",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "9558c5662a087041214ac2ec0d2b7e3725fd5c1ce52f0a122836f17239633214"
+        },
+        "linear_repeat": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": null,
+          "flat_pixels": 0,
+          "glyph": 16,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "22e2824cff3df9430a29b2bf43eaf8e159f25083ee5441e32dcb79d80aef33c4",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "6958b8b404e4b1904527febef46e11b2259958be1d4b6555772a15aee1a4ff7f"
+        },
+        "linear_shear": {
+          "dx": 2,
+          "dy": -2,
+          "flat_max_difference": 0,
+          "flat_pixels": 2775,
+          "glyph": 14,
+          "interior_fraction": 0.81,
+          "interior_pixels": 5184,
+          "judged_on": "interior",
+          "max_difference": 2,
+          "mean_difference": 0.054,
+          "ok": true,
+          "ours_sha256": "85ff82fbacc8a3b7e80bac21f235d11692ff6c1ed033cd0c2073108e2788ec3d",
+          "outlier_fraction": 0.0,
+          "p99_difference": 1,
+          "reference_sha256": "e9f02e267838d32bf98e27317fe14098458de66b38903c2443c40e2275c57b8f"
+        },
+        "named_color": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 18,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "c74963e273c33d629101616cf1b1b792f5257010e241234e0791c0b9cb93cc0f",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "2a78c238834f0054e7e62aff7eedd0bd45b3bd7a85abdbf76f1d782cc9bd3913"
+        },
+        "nested_groups": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 1444,
+          "glyph": 20,
+          "interior_fraction": 0.7225,
+          "interior_pixels": 1156,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "79310f40279d8353764cfd48c8df8d5ebc124d232eb492a3fb63d69958943f4c",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "235d3b06ff5319e96fea015eb71697048879caf59af19c28ccc6695d17cadbae"
+        },
+        "no_viewbox": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 22,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "d1d0162fa203d7cba3212e78d311f69b349d16b64fbb017bd89357582a9cb3c3",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "a62d53cf9146e1c9ac84827e0d5eeb1b4371d581da29975bd5f2806c223b14e9"
+        },
+        "path_curve": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5365,
+          "glyph": 4,
+          "interior_fraction": 0.655,
+          "interior_pixels": 4192,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "0e9a9acd707fa7e74f5b97533d8e767e44f3a36283b11adadb0437b57193caaa",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "ba6319ab5456945936cb51dd8abc0b417e6a4b1961cc17747e3b79a6db8e2560"
+        },
+        "polygon": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5476,
+          "glyph": 7,
+          "interior_fraction": 0.371875,
+          "interior_pixels": 2380,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "564cc8357c63faf537a1863feba56e6d24b8b2dc7c7dd231f5dd3f214c4d413c",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "187f351253b9bedb6f2b78120b09e96e0fa718ae0711435d08331210f6d3cecf"
+        },
+        "polyline": {
+          "dx": 0,
+          "dy": -1,
+          "flat_max_difference": 0,
+          "flat_mean_difference": 0.0,
+          "flat_p99_difference": 0,
+          "flat_pixels": 4223,
+          "glyph": 8,
+          "interior_fraction": 0.1365079365079365,
+          "interior_pixels": 860,
+          "judged_on": "flat",
+          "max_difference": 1,
+          "mean_difference": 0.002,
+          "ok": true,
+          "ours_sha256": "150b5415dc27f3f6774fb3aff006c3654436beb1ab937cd70f4f8aa469ec75ec",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "e7a988ba782b516aafd1a3f76d3313a6774dfa0b578138347e83e548e434639b"
+        },
+        "radial": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 904,
+          "glyph": 17,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 3,
+          "mean_difference": 0.037,
+          "ok": true,
+          "ours_sha256": "d62006973bbeec6351d83ba0d8c32adba9255b9553970d7ecf4388cedb921d35",
+          "outlier_fraction": 0.0,
+          "p99_difference": 1,
+          "reference_sha256": "f2d27cea8fa8a29cb0e00980b6315d5c100b5013d143d4130453adf6fc13e73a"
+        },
+        "radial_offset": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 1742,
+          "glyph": 18,
+          "interior_fraction": 0.8325,
+          "interior_pixels": 3996,
+          "judged_on": "interior",
+          "max_difference": 16,
+          "mean_difference": 0.143,
+          "ok": true,
+          "ours_sha256": "353cb1a6be54315df861606edc11877cd0f2fca3a227802ce3796e9dec929e98",
+          "outlier_fraction": 0.0,
+          "p99_difference": 3,
+          "reference_sha256": "341ca92f479a94bba2e814ef2c889343168239e688e451945eb6cec0e4b86037"
+        },
+        "rect": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 2,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "1c45e81ea0bfbf0402a62d751e2115c0a1d9f22104dcfd52d50ba783e36644de",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "2c4dfa6858fe8446b6f4129e80774180ae7525bb3b268ac54284b04b5d4e7f79"
+        },
+        "rgb_color": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 19,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "851ce6e486fd5d3a94af084b14b665e5ea6bdd32dc1cefff3cd6b3861d44e08e",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "f8030425b31668df0dab6f269d0141ce4bdc7da00ff5f09b9c2ad2a8164bd1e4"
+        },
+        "rotate": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 2964,
+          "glyph": 24,
+          "interior_fraction": 0.78625,
+          "interior_pixels": 2516,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "793f58a05d4a99871d28400ed80b5217ea46369acb7ed4d5cdf1e42c47c23bff",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "3002dc131cfed4fcb2394f2862901c0b73e0dd04e99585d0e23995037ded8785"
+        },
+        "rotate_center": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 2964,
+          "glyph": 25,
+          "interior_fraction": 0.78625,
+          "interior_pixels": 2516,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "8b6c5e4b3d6328748892b2edbc8af0684168f35d869b37c890f356526daf46a9",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "345f19ef0e62d7b8baa099706ba837d81c924ca19686252c9710d863592106c9"
+        },
+        "rotate_half": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 2964,
+          "glyph": 26,
+          "interior_fraction": 0.78625,
+          "interior_pixels": 2516,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "61b2bd7eacda0602dc125762163ff8e0b77ee02488f01d273cc00cb7d7e36821",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "e97ec943056134f35b816115ebb3332dcd3f4af29aa7ef3fad8a4c6a13606970"
+        },
+        "scale": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 1444,
+          "glyph": 21,
+          "interior_fraction": 0.7225,
+          "interior_pixels": 1156,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "2e459e57e22cd73064509fe6c43867a0503e32488b2b379ca31c5455aa0c32de",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "47a606d6d543ed265ec10a888de9250b4dade45eb729aa2a9d7f5a52a00e33d3"
+        },
+        "scale_center": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 1444,
+          "glyph": 22,
+          "interior_fraction": 0.7225,
+          "interior_pixels": 1156,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "d07619d6a981788e8c52fb27aa8c4b1378273de343739fc22593b647c71ea99e",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "ab0d4ce6f8563753ffaa76284bba01c464e518d98b3441f74b7c933daa4522b1"
+        },
+        "scale_uniform": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 1444,
+          "glyph": 23,
+          "interior_fraction": 0.7225,
+          "interior_pixels": 1156,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "2e459e57e22cd73064509fe6c43867a0503e32488b2b379ca31c5455aa0c32de",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "47a606d6d543ed265ec10a888de9250b4dade45eb729aa2a9d7f5a52a00e33d3"
+        },
+        "shared_a": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 39,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "55259e87c22bc02bf3e0438bf77c9529158130db409c09317bd6cd24d27f4184",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "e98f68ab190a20216815a3de16610ce854a3b7b499fece392a5a002d1add7448"
+        },
+        "shared_b": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 2845,
+          "glyph": 40,
+          "interior_fraction": 0.6144444444444445,
+          "interior_pixels": 2212,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "99cd63e6ca0db2d194c13e953186ce786ecdd814cfe4a6f0dc5e6502d17f30a3",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "8cdd97f40dd8c5b7c38a840b1907e3ea0aa9e643e4d7047785f67f83ae65cbb5"
+        },
+        "skew": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 11550,
+          "glyph": 27,
+          "interior_fraction": 0.39890625,
+          "interior_pixels": 5106,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "15648714a8c3f42bb986f3ce36f292e527a1307715e01dac4fd7fe8905551f1a",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "baadcdf44a2fe0e1beda3564cc6aec456980899b778c0583a54536796d11444a"
+        },
+        "skew_y": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 11550,
+          "glyph": 28,
+          "interior_fraction": 0.39890625,
+          "interior_pixels": 5106,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "c56372df13b620dc82b622db084af9a084aac03c40c7a0f0b29cc8a6ded3f493",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "51671b5d66a7ab9fb6eb0d8ca319b1953dd077c53233fd35e4466c1341fa68c1"
+        },
+        "solid": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 7,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "922cd39f1a8748ae6234241b200ae47a4fb35b65d491132b2584171df975501f",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "aec6f4d27440190b267857e0d1899b5ced4622514083cf767cdef5fc6838ffea"
+        },
+        "solid_fg": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 8,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "53dc075bdd62ec27b73e839a7a97c438a63120560a49ba13b024ea971c3fa32e",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "64b9d1b45782c49d7d377e780c5cf216f657b724b3ea8a204fe4fe77c8d2990c"
+        },
+        "solid_half": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 9,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "f1bc997b1f74193c5f790b48d56f244c32a39329e7a6283ddb381aeae109c44a",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "2850023db5160ee5348e8b05eee672e9b79868021cc273c6ee02d714356b6c04"
+        },
+        "stroke_caps": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 848,
+          "glyph": 9,
+          "interior_fraction": 0.4492753623188406,
+          "interior_pixels": 496,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "7e9021c7e6066e5b4c214ab943039127e75b552683676597792c3ff00d313844",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "24d8eb5b53d7aacbbfa05de4e543318bc9e8adb0a7bbe7c67c590b577cee1cb6"
+        },
+        "sweep": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 190,
+          "glyph": 19,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 1,
+          "mean_difference": 0.007,
+          "ok": true,
+          "ours_sha256": "7f7ae3183abe382ca4f7dfa0bd7cf8fb4c00b0a98396053e19b2e70d511db310",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "5e70b2bf553c8fa1d25f33b6af5ccc664807d567cd957e0a6241607b2227dc70"
+        },
+        "transform": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 1444,
+          "glyph": 29,
+          "interior_fraction": 0.7225,
+          "interior_pixels": 1156,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "c9a0e9b5a3fb66c396dffd49debeeacee9d264845b7f521a628431ed682e09e7",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "33080edd2d31c679989d7d3ef1f792a2fa4415b77ab4f7d9e7ee63427203012b"
+        },
+        "transform_matrix": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 1444,
+          "glyph": 14,
+          "interior_fraction": 0.7225,
+          "interior_pixels": 1156,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "c200207077af02e67cddf26c0ad80d655f1bd01b28d3b252990c77808492c1a1",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "89296bcb7bda830c6f723e5c5f48024b405560d5a1f6fa87cfdc4ee5d3820548"
+        },
+        "transform_rotate": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 15,
+          "interior_fraction": 0.3802055164954029,
+          "interior_pixels": 2812,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "eb6317d3ba0526d784ced2d538a6fd9ddabe795c674b41126365f9c4bce7b86a",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "ee0ee406360afd5eafda43637788526cac092da9ad2aac8f1f3e968afb7bd3e3"
+        },
+        "translate": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 6084,
+          "glyph": 20,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "fe8932a98cf80ab3c4d82b1d0fcdd2761a7d6637f9b4e2422a426da1bb59b276",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "f717001846270959381917747f869a6b06b49d737b3e8922792f6740c104e831"
+        },
+        "two_rects": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 5928,
+          "glyph": 3,
+          "interior_fraction": 0.855625,
+          "interior_pixels": 5476,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "98b9f09140c0cfe7a6b2d473bc3b238f6bdfb3a1e0f1f64602273ddcc8c22e90",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "3fbc31dd3f15a3207c37d068d470de1864a7b9d08b940eaec99e7a9ed5ae7bc9"
+        },
+        "viewbox_scaled": {
+          "dx": 0,
+          "dy": 0,
+          "flat_max_difference": 0,
+          "flat_pixels": 3364,
+          "glyph": 16,
+          "interior_fraction": 0.81,
+          "interior_pixels": 2916,
+          "judged_on": "interior",
+          "max_difference": 0,
+          "mean_difference": 0.0,
+          "ok": true,
+          "ours_sha256": "b5010104829cd44dc444fd3e4d767e6a96569ac5473bda8fab31c36f6d4b7c1d",
+          "outlier_fraction": 0.0,
+          "p99_difference": 0,
+          "reference_sha256": "5291dd12fbc4c04b0d94470b2cd1fc7663486c408b6a5be63978585d3c771af2"
+        }
+      },
+      "size_px": 100,
+      "total": 56
+    },
+    "checker_fix": "Supply zero exterior before existing 7x7 MinFilter, retaining fixed 3px erosion",
+    "tolerances_changed": false,
+    "scenes_removed": 0,
+    "fixture_or_golden_changes": false,
+    "mask_unit_cases_passed": 4,
+    "self_check": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/reference-mask-tests.log",
+      "bytes": 56,
+      "sha256": "8d3812ffbfd5c05b321d69f8d2030fe532e70c3abacfd34ebae5a312d33fde2c"
+    },
+    "independent_boundary_diagnosis": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-svg-fixes/EXReader/build/svg-fixes/circle-crop-diagnosis.json",
+      "bytes": 3079,
+      "sha256": "148568472da262dfcfa1259e9592bb0fb335a121d3af7b7d0a863e847befb78e"
+    }
+  },
+  "installed_consumption": {
+    "default_c": {
+      "passed": 4,
+      "total": 4
+    },
+    "exact_cpp": {
+      "passed": 1,
+      "total": 1
+    },
+    "codecs_off": {
+      "passed": 1,
+      "total": 1
+    },
+    "attempts": [
+      {
+        "name": "consumer-compat",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\consumer-compat.log"
+      },
+      {
+        "name": "consumer-construct",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\consumer-construct.log"
+      },
+      {
+        "name": "consumer-fixed",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\consumer-fixed.log"
+      },
+      {
+        "name": "consumer-wave",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\consumer-wave.log"
+      },
+      {
+        "name": "cpp-consumer",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\cpp-consumer.log"
+      },
+      {
+        "name": "codecs-off-configure",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\codecs-off-configure.log"
+      },
+      {
+        "name": "codecs-off-build",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\codecs-off-build.log"
+      },
+      {
+        "name": "codecs-off-tests",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\codecs-off-tests.log"
+      },
+      {
+        "name": "codecs-off-install",
+        "exit_code": 1,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\codecs-off-install.log"
+      },
+      {
+        "name": "codecs-off-tools-build",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\codecs-off-tools-build.log"
+      },
+      {
+        "name": "codecs-off-install-r2",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\codecs-off-install-r2.log"
+      },
+      {
+        "name": "codecs-off-consumer-configure",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\codecs-off-consumer-configure.log"
+      },
+      {
+        "name": "codecs-off-consumer-build",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\codecs-off-consumer-build.log"
+      },
+      {
+        "name": "codecs-off-consumer",
+        "exit_code": 0,
+        "log": "C:\\Users\\Oscar\\.codex\\worktrees\\audit-media-fixes\\EXReader\\build\\audit-fixes\\codecs-off-consumer.log"
+      }
+    ],
+    "initial_install_failure": "Only test targets had been built; required tools absent. Preserved first attempt; built tools and installed successfully on retry."
+  },
+  "ci": {
+    "run_id": 39525878554,
+    "source_commit": "29092645f1e4e0ffb0125d08055505dca028e9e3",
+    "jobs": [
+      {
+        "completedAt": "2026-10-21T01:25:17Z",
+        "conclusion": "success",
+        "databaseId": 118980278886,
+        "name": "apple-mobile",
+        "startedAt": "2026-10-21T01:11:50Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-21T01:11:52Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-21T01:11:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:11:54Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-21T01:11:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:14:58Z",
+            "conclusion": "success",
+            "name": "Build iOS and iPadOS device and simulator libraries",
+            "number": 3,
+            "startedAt": "2026-10-21T01:11:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:25:05Z",
+            "conclusion": "success",
+            "name": "Build and run the iPhone and iPad reference host",
+            "number": 4,
+            "startedAt": "2026-10-21T01:14:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:25:08Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 5,
+            "startedAt": "2026-10-21T01:25:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:25:12Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 6,
+            "startedAt": "2026-10-21T01:25:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:25:13Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 12,
+            "startedAt": "2026-10-21T01:25:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:25:15Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-10-21T01:25:13Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/39525878554/job/118980278886"
+      },
+      {
+        "completedAt": "2026-10-21T01:15:11Z",
+        "conclusion": "success",
+        "databaseId": 118980279135,
+        "name": "fuzz",
+        "startedAt": "2026-10-21T01:11:47Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-21T01:11:48Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-21T01:11:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:11:50Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-21T01:11:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:12:09Z",
+            "conclusion": "success",
+            "name": "Configure the instrumented fuzz driver",
+            "number": 3,
+            "startedAt": "2026-10-21T01:11:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:13:02Z",
+            "conclusion": "success",
+            "name": "Run cmake --build build/fuzz --parallel 4",
+            "number": 4,
+            "startedAt": "2026-10-21T01:12:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:13:02Z",
+            "conclusion": "success",
+            "name": "Verify exact crash records and parser routing",
+            "number": 5,
+            "startedAt": "2026-10-21T01:13:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:13:35Z",
+            "conclusion": "success",
+            "name": "Bounded parser campaign (seeded, reproducible)",
+            "number": 6,
+            "startedAt": "2026-10-21T01:13:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:13:39Z",
+            "conclusion": "success",
+            "name": "Verify font, pagination and rendering pipeline contracts",
+            "number": 7,
+            "startedAt": "2026-10-21T01:13:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:13:54Z",
+            "conclusion": "success",
+            "name": "Bounded font, layout and rendering campaigns",
+            "number": 8,
+            "startedAt": "2026-10-21T01:13:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:08Z",
+            "conclusion": "success",
+            "name": "Verify measured CPU evidence and strict aggregation on all four targets",
+            "number": 9,
+            "startedAt": "2026-10-21T01:13:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:09Z",
+            "conclusion": "success",
+            "name": "Preserve measured evidence on success and failure",
+            "number": 10,
+            "startedAt": "2026-10-21T01:15:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:09Z",
+            "conclusion": "skipped",
+            "name": "Keep the triggering input when the campaign fails",
+            "number": 11,
+            "startedAt": "2026-10-21T01:15:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:09Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 22,
+            "startedAt": "2026-10-21T01:15:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:09Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 23,
+            "startedAt": "2026-10-21T01:15:09Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/39525878554/job/118980279135"
+      },
+      {
+        "completedAt": "2026-10-21T01:20:24Z",
+        "conclusion": "success",
+        "databaseId": 118980279172,
+        "name": "sanitizers",
+        "startedAt": "2026-10-21T01:11:47Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-21T01:11:48Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-21T01:11:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:11:49Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-21T01:11:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:12:10Z",
+            "conclusion": "success",
+            "name": "Run cmake -S . -B build/asan -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_ENABLE_AAC=OFF",
+            "number": 3,
+            "startedAt": "2026-10-21T01:11:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:13:16Z",
+            "conclusion": "success",
+            "name": "Run cmake --build build/asan --parallel 4",
+            "number": 4,
+            "startedAt": "2026-10-21T01:12:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:20:22Z",
+            "conclusion": "success",
+            "name": "Run ctest --test-dir build/asan --output-on-failure",
+            "number": 5,
+            "startedAt": "2026-10-21T01:13:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:20:23Z",
+            "conclusion": "success",
+            "name": "Preserve sanitizer test evidence",
+            "number": 6,
+            "startedAt": "2026-10-21T01:20:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:20:23Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 12,
+            "startedAt": "2026-10-21T01:20:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:20:23Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-10-21T01:20:23Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/39525878554/job/118980279172"
+      },
+      {
+        "completedAt": "2026-10-21T01:23:16Z",
+        "conclusion": "success",
+        "databaseId": 118980279182,
+        "name": "desktop (windows-latest)",
+        "startedAt": "2026-10-21T01:11:47Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-21T01:11:49Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-21T01:11:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:11:57Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-21T01:11:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:13:55Z",
+            "conclusion": "success",
+            "name": "Configure native C",
+            "number": 3,
+            "startedAt": "2026-10-21T01:11:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:16:18Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 4,
+            "startedAt": "2026-10-21T01:13:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:16:18Z",
+            "conclusion": "skipped",
+            "name": "Verify compiled layer dependencies",
+            "number": 5,
+            "startedAt": "2026-10-21T01:16:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:18:41Z",
+            "conclusion": "success",
+            "name": "Native parsing, pagination, rendering and bookshelf tests",
+            "number": 6,
+            "startedAt": "2026-10-21T01:16:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:18:51Z",
+            "conclusion": "success",
+            "name": "Table continuation with a platform OpenType font",
+            "number": 7,
+            "startedAt": "2026-10-21T01:18:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:18:52Z",
+            "conclusion": "success",
+            "name": "Install portable SDK with license notices",
+            "number": 8,
+            "startedAt": "2026-10-21T01:18:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:18:59Z",
+            "conclusion": "success",
+            "name": "Build and run installed static components",
+            "number": 9,
+            "startedAt": "2026-10-21T01:18:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:21:44Z",
+            "conclusion": "success",
+            "name": "Build and test core without optional components",
+            "number": 10,
+            "startedAt": "2026-10-21T01:18:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:22:37Z",
+            "conclusion": "success",
+            "name": "Verify storage without playback or PDF",
+            "number": 11,
+            "startedAt": "2026-10-21T01:21:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:22:48Z",
+            "conclusion": "success",
+            "name": "Build host examples against the installed SDK",
+            "number": 12,
+            "startedAt": "2026-10-21T01:22:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:22:51Z",
+            "conclusion": "success",
+            "name": "Run the installed Windows SDK",
+            "number": 13,
+            "startedAt": "2026-10-21T01:22:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:22:51Z",
+            "conclusion": "skipped",
+            "name": "Run the installed Linux SDK",
+            "number": 14,
+            "startedAt": "2026-10-21T01:22:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:22:54Z",
+            "conclusion": "success",
+            "name": "Package and check the Windows reference reader",
+            "number": 15,
+            "startedAt": "2026-10-21T01:22:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:22:54Z",
+            "conclusion": "skipped",
+            "name": "Run the installed macOS SDK",
+            "number": 16,
+            "startedAt": "2026-10-21T01:22:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:22:55Z",
+            "conclusion": "success",
+            "name": "Measure installed PDF group rendering",
+            "number": 17,
+            "startedAt": "2026-10-21T01:22:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:22:58Z",
+            "conclusion": "success",
+            "name": "Bound table alignment memory against the installed SDK",
+            "number": 18,
+            "startedAt": "2026-10-21T01:22:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:23:02Z",
+            "conclusion": "success",
+            "name": "Build and run JNI host against installed SDK",
+            "number": 19,
+            "startedAt": "2026-10-21T01:22:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:23:02Z",
+            "conclusion": "skipped",
+            "name": "Build and run Swift host against installed SDK",
+            "number": 20,
+            "startedAt": "2026-10-21T01:23:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:23:05Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 21,
+            "startedAt": "2026-10-21T01:23:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:23:05Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 22,
+            "startedAt": "2026-10-21T01:23:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:23:07Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 23,
+            "startedAt": "2026-10-21T01:23:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:23:08Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 24,
+            "startedAt": "2026-10-21T01:23:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:23:11Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 25,
+            "startedAt": "2026-10-21T01:23:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:23:11Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 26,
+            "startedAt": "2026-10-21T01:23:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:23:14Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 52,
+            "startedAt": "2026-10-21T01:23:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:23:14Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 53,
+            "startedAt": "2026-10-21T01:23:14Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/39525878554/job/118980279182"
+      },
+      {
+        "completedAt": "2026-10-21T01:15:58Z",
+        "conclusion": "failure",
+        "databaseId": 118980279186,
+        "name": "desktop (macos-15)",
+        "startedAt": "2026-10-21T01:11:48Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-21T01:11:50Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-21T01:11:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:11:53Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-21T01:11:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:12:44Z",
+            "conclusion": "success",
+            "name": "Configure native C",
+            "number": 3,
+            "startedAt": "2026-10-21T01:11:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:14:13Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 4,
+            "startedAt": "2026-10-21T01:12:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:14:13Z",
+            "conclusion": "skipped",
+            "name": "Verify compiled layer dependencies",
+            "number": 5,
+            "startedAt": "2026-10-21T01:14:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "failure",
+            "name": "Native parsing, pagination, rendering and bookshelf tests",
+            "number": 6,
+            "startedAt": "2026-10-21T01:14:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Table continuation with a platform OpenType font",
+            "number": 7,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Install portable SDK with license notices",
+            "number": 8,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Build and run installed static components",
+            "number": 9,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Build and test core without optional components",
+            "number": 10,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Verify storage without playback or PDF",
+            "number": 11,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Build host examples against the installed SDK",
+            "number": 12,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Run the installed Windows SDK",
+            "number": 13,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Run the installed Linux SDK",
+            "number": 14,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Package and check the Windows reference reader",
+            "number": 15,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Run the installed macOS SDK",
+            "number": 16,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Measure installed PDF group rendering",
+            "number": 17,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Bound table alignment memory against the installed SDK",
+            "number": 18,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Build and run JNI host against installed SDK",
+            "number": 19,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Build and run Swift host against installed SDK",
+            "number": 20,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:49Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 21,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:50Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 22,
+            "startedAt": "2026-10-21T01:15:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:50Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 23,
+            "startedAt": "2026-10-21T01:15:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:51Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 24,
+            "startedAt": "2026-10-21T01:15:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:51Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 25,
+            "startedAt": "2026-10-21T01:15:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:52Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 26,
+            "startedAt": "2026-10-21T01:15:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:53Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 52,
+            "startedAt": "2026-10-21T01:15:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:56Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 53,
+            "startedAt": "2026-10-21T01:15:53Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/39525878554/job/118980279186"
+      },
+      {
+        "completedAt": "2026-10-21T01:12:45Z",
+        "conclusion": "success",
+        "databaseId": 118980279191,
+        "name": "android",
+        "startedAt": "2026-10-21T01:11:47Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-21T01:11:48Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-21T01:11:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:11:49Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-21T01:11:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:12:41Z",
+            "conclusion": "success",
+            "name": "Build Android ARM64 shared engine",
+            "number": 3,
+            "startedAt": "2026-10-21T01:11:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:12:44Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 4,
+            "startedAt": "2026-10-21T01:12:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:12:44Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 8,
+            "startedAt": "2026-10-21T01:12:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:12:44Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 9,
+            "startedAt": "2026-10-21T01:12:44Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/39525878554/job/118980279191"
+      },
+      {
+        "completedAt": "2026-10-21T01:17:36Z",
+        "conclusion": "success",
+        "databaseId": 118980279334,
+        "name": "desktop (ubuntu-22.04)",
+        "startedAt": "2026-10-21T01:11:47Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-21T01:11:48Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-21T01:11:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:11:50Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-10-21T01:11:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:12:09Z",
+            "conclusion": "success",
+            "name": "Configure native C",
+            "number": 3,
+            "startedAt": "2026-10-21T01:11:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:13:57Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 4,
+            "startedAt": "2026-10-21T01:12:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:13:57Z",
+            "conclusion": "success",
+            "name": "Verify compiled layer dependencies",
+            "number": 5,
+            "startedAt": "2026-10-21T01:13:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:35Z",
+            "conclusion": "success",
+            "name": "Native parsing, pagination, rendering and bookshelf tests",
+            "number": 6,
+            "startedAt": "2026-10-21T01:13:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:38Z",
+            "conclusion": "success",
+            "name": "Table continuation with a platform OpenType font",
+            "number": 7,
+            "startedAt": "2026-10-21T01:15:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:39Z",
+            "conclusion": "success",
+            "name": "Install portable SDK with license notices",
+            "number": 8,
+            "startedAt": "2026-10-21T01:15:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:15:39Z",
+            "conclusion": "success",
+            "name": "Build and run installed static components",
+            "number": 9,
+            "startedAt": "2026-10-21T01:15:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:16:48Z",
+            "conclusion": "success",
+            "name": "Build and test core without optional components",
+            "number": 10,
+            "startedAt": "2026-10-21T01:15:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:23Z",
+            "conclusion": "success",
+            "name": "Verify storage without playback or PDF",
+            "number": 11,
+            "startedAt": "2026-10-21T01:16:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:24Z",
+            "conclusion": "success",
+            "name": "Build host examples against the installed SDK",
+            "number": 12,
+            "startedAt": "2026-10-21T01:17:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:24Z",
+            "conclusion": "skipped",
+            "name": "Run the installed Windows SDK",
+            "number": 13,
+            "startedAt": "2026-10-21T01:17:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:25Z",
+            "conclusion": "success",
+            "name": "Run the installed Linux SDK",
+            "number": 14,
+            "startedAt": "2026-10-21T01:17:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:25Z",
+            "conclusion": "skipped",
+            "name": "Package and check the Windows reference reader",
+            "number": 15,
+            "startedAt": "2026-10-21T01:17:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:25Z",
+            "conclusion": "skipped",
+            "name": "Run the installed macOS SDK",
+            "number": 16,
+            "startedAt": "2026-10-21T01:17:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:25Z",
+            "conclusion": "success",
+            "name": "Measure installed PDF group rendering",
+            "number": 17,
+            "startedAt": "2026-10-21T01:17:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:28Z",
+            "conclusion": "success",
+            "name": "Bound table alignment memory against the installed SDK",
+            "number": 18,
+            "startedAt": "2026-10-21T01:17:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:31Z",
+            "conclusion": "success",
+            "name": "Build and run JNI host against installed SDK",
+            "number": 19,
+            "startedAt": "2026-10-21T01:17:28Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:31Z",
+            "conclusion": "skipped",
+            "name": "Build and run Swift host against installed SDK",
+            "number": 20,
+            "startedAt": "2026-10-21T01:17:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:31Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 21,
+            "startedAt": "2026-10-21T01:17:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:31Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 22,
+            "startedAt": "2026-10-21T01:17:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:32Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 23,
+            "startedAt": "2026-10-21T01:17:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:33Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 24,
+            "startedAt": "2026-10-21T01:17:32Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:35Z",
+            "conclusion": "success",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 25,
+            "startedAt": "2026-10-21T01:17:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:35Z",
+            "conclusion": "skipped",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 26,
+            "startedAt": "2026-10-21T01:17:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:35Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 52,
+            "startedAt": "2026-10-21T01:17:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-21T01:17:35Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 53,
+            "startedAt": "2026-10-21T01:17:35Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/39525878554/job/118980279334"
+      }
+    ],
+    "sanitizers": {
+      "passed": 153,
+      "total": 153,
+      "log": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/ci-sanitizers-raw.log",
+        "bytes": 230081,
+        "sha256": "f1c0f070baca53206d6bfe66bb2e197268306a7673dde27decf6ade57b65c17b"
+      },
+      "artifact_test_log": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/ci-sanitizer-artifact/Testing/Temporary/LastTest.log",
+        "bytes": 110793,
+        "sha256": "74d832169dcba5a2f337bcbdda1a5eb87843c1af7161d5f6483630d2836541c0"
+      },
+      "test_count_note": "Existing sanitizer configuration omits the three ctypes hyphen oracles because Python cannot load an ASan library without its runtime; native C equivalents still run."
+    },
+    "macos": {
+      "passed": 155,
+      "total": 156,
+      "sole_failure": "native-convert-benchmark",
+      "failed_budget": {
+        "batch_peak_bytes": 146538496,
+        "single_peak_bytes": 27115520,
+        "allowed_growth_bytes": 33554432
+      },
+      "media_and_svg_suites_passed": true,
+      "ownership": "Separate conversion memory handoff package A",
+      "log": {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/ci-macos-raw.log",
+        "bytes": 218248,
+        "sha256": "4c91c19c6fa94a8fd5c5b6253c1ed8cd9b0498889418cf9c84d6efe6b11e2639"
+      }
+    }
+  },
+  "source_files": [
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/src/cbz.c",
+      "bytes": 22486,
+      "sha256": "85f90ad69432a2a8d5979844694fa96715bdb2ef7186d276e374a684eb0d4d52"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/src/image_formats.c",
+      "bytes": 24625,
+      "sha256": "5393f7dff98b8fc4a013e4439512c43694d169c3dfacd286d74c1f641aaeaf55"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/src/font_svg.c",
+      "bytes": 62790,
+      "sha256": "fd32c01e77aead95b9b99d3b2654701ab24c07c875c0364f775046d8929a9b6f"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/tests/test_cbz_formats.c",
+      "bytes": 6200,
+      "sha256": "5dd11c76b8465024a531ff412e499132cf26aed3c10a4a3a60a5de204e863e3e"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/tests/test_image_formats.c",
+      "bytes": 9416,
+      "sha256": "c5156e59ffc05c3023995428799a41f3138d9cdf93cff9d0119388544e6dcbe2"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/tests/test_library_stream.c",
+      "bytes": 10448,
+      "sha256": "c8c1e3ab3b8c12c2392c3b7887cdd3ebddf3c2fdd357f1248e60454afa0f812d"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/tests/test_font_svg.c",
+      "bytes": 22171,
+      "sha256": "e27fc9c6c8e04318af5cbc58f7e92e3724e439aa72654d036458dd7b84ba00ed"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/tools/check_color_font_reference.py",
+      "bytes": 15862,
+      "sha256": "80e48d1cc292c12172824dc2c86d50403f1c5e08e261190f05d46b49a88dcaae"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/tests/check_color_font_reference_mask.py",
+      "bytes": 1149,
+      "sha256": "74a4bcb909b8c60320b2e03c23a02ee9ff305ca8fc263777e2aec3f8cc8177be"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/CMakeLists.txt",
+      "bytes": 64419,
+      "sha256": "ac6b7c3818d4a9cd927acae5be64c8ac58725dfa9dc53165ae9a812a6bbc0112"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/cmake/deps.cmake",
+      "bytes": 11794,
+      "sha256": "1170764d1c6ef338944ecba2ffa59116d618d0b592c6b6154e93eae4c2be3faa"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/cmake/versions.cmake",
+      "bytes": 217,
+      "sha256": "8ac994b16c2ac7cc6600ec2485337b3458ccb30acbe8b29bbe411f2338e027b9"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/include/exr/base.h",
+      "bytes": 4380,
+      "sha256": "410bc7fca5eb6bc5e33697d65d0590f5ac24d272a10e6f40dbc66b16c7b0bd00"
+    },
+    {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/include/exr/pdf.h",
+      "bytes": 2111,
+      "sha256": "b62c6b5e7bb483fd7d87af48d1d3ccd792a9b4e43ce1f0cbea11e46385eef448"
+    }
+  ],
+  "fixtures": {
+    "unchanged_from_baseline": true,
+    "count": 1858,
+    "manifest": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/fixture-manifest.json",
+      "bytes": 433676,
+      "sha256": "b221d397a318860a896d8094f2ff8008a598579af4746c5235d468cc75060b62"
+    }
+  },
+  "programs_and_dependencies": {
+    "manifest": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/installed-program-manifest.json",
+      "bytes": 8663,
+      "sha256": "25e99b7e05974b696ad21d3c852229eae39a6c42502c7d4c9c281b983204f4ea"
+    },
+    "build_configuration": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/CMakeCache.txt",
+      "bytes": 69523,
+      "sha256": "1113afa89c1ae7a84f9a3629632448e6891b861660629dc648491fbdea22ebf5"
+    },
+    "runtime": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/libexreader.dll",
+      "bytes": 9752139,
+      "sha256": "1da221a00d7d14c8d9c3d6e8f86d1b5a37b3985b1ee118b799e672ce1922f954"
+    },
+    "renderer": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/exreader-render-color-font.exe",
+      "bytes": 66727,
+      "sha256": "a7aaa2102ceb65cfe3180a2d771a132773067bab3a38215c6d23bbefb9a9ef44"
+    }
+  },
+  "original_audit": {
+    "report": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/docs/AUDIT-COMPLETED-2026-10-20.md",
+      "bytes": 8523,
+      "sha256": "888a1dc90f552ab4131b1e8b1c1fadb2e045b8ef331a81feaa1c503baeb24f1e"
+    },
+    "json": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/docs/validation/2026-10-20-completed-audit.json",
+      "bytes": 21520,
+      "sha256": "0b8f2a0ed73726c16909db3ebcf3f1648ab377847c33ed0f9f5e1bf427a3eba4"
+    },
+    "copied_byte_identically": true,
+    "original_outputs": "C:/Users/Oscar/exr/build/audit-completed-20261020"
+  },
+  "evidence_manifest": {
+    "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/evidence-manifest.json",
+    "bytes": 66778,
+    "sha256": "cb0e4035a4a486fd18dd5d8db47fc9cbcb04c9dcd3281ccfef80aaf2a006c628"
+  },
+  "protected_original_files_unchanged": {
+    "docs/validation/2026-10-19-shading-extent-ci.json": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
+    "src/internal.h": "c951b04a1611008b2e97437d6877bebabf29ec2c374a1c8166c9aca14f34e904"
+  },
+  "separate_conversion_delivery": {
+    "verification": {
+      "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/package-a-verification.json",
+      "bytes": 3481,
+      "sha256": "e9ea00830c28d5f88c80322861ad07aa05469584c0cea1f8770ae6aa18389e9a"
+    },
+    "status": "Delivery source 599667e independently verified at 7/7 CI; three platforms CLI37/matrix520/render20 and original memory budget pass",
+    "integrated_into_this_branch": false,
+    "prior_run_final_states": [
+      {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/package-a-prior-run-39521329265.json",
+        "bytes": 22555,
+        "sha256": "779ff92dcc3a0334c35ab9da7b5bcbfb9afe12ed7eccfa39d224500718d0f270"
+      },
+      {
+        "path": "C:/Users/Oscar/.codex/worktrees/audit-media-fixes/EXReader/build/audit-fixes/package-a-prior-run-39521983620.json",
+        "bytes": 2020,
+        "sha256": "17b4b6993b312e2e257cd53755d56e00900e358e970364f0090e0b7ed83d620d"
+      }
+    ]
+  },
+  "unclosed_separate_work": [
+    "Joint integration of delivered conversion package A",
+    "WP6 bounded chapter parser package B",
+    "WP16 final-source release evidence and 24 CPU-hour campaigns package C"
+  ],
+  "release_acceptance": false
+}

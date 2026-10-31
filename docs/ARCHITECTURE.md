@@ -1,6 +1,14 @@
 # 模块与稳定核心
 
-2026-10-19，C11 SDK3.38.0，MIT，ABI1，schema6。
+2026-10-19结构快照：C11 SDK3.38.0，MIT，ABI1，schema6。
+当前SDK3.40.0及schema7有界存储/宿主接入见[SDK冻结记录](R5-SDK-FREEZE.md)。
+
+## 原生阅读路径约束
+
+2026-10-22 确定：多格式解析、排版与自有 PDF 渲染核心保持原生实现，不依赖 WebView 或浏览器运行时。
+HTML/EPUB 输入由 C 核解析并生成布局/绘制结果，参考宿主用原生控件、像素或系统绘图接口呈现。
+WebView2、WKWebView、Android WebView、Chromium 和 Electron 不作为 SDK 或参考宿主的运行依赖。
+浏览器对照仅用于开发期质量验证。当前定位与性能优先级见 [项目概述](PROJECT_OVERVIEW.md#项目定位与优先级)。
 
 ## 核心与可选组件
 
@@ -27,6 +35,8 @@
 | `exr_textindex` | 独立SQLite全文索引，`EXR_BUILD_TEXT_INDEX` | base；不依赖书库或文档 |
 
 SQLite仅在书库或索引存在时获取/构建。FAAD2默认关闭；`EXR_ENABLE_AAC=ON`只链接音频目标。核心自有代码保持MIT，包含FAAD2的最终组合二进制仍须遵守GPL，静态归档的分名不会改变该要求。
+
+`CMakePresets.json` 的 `reading-core` 选择 core 与 `exr_pdf`（含密码认证、ICC 和现有图像解码开关），关闭 `exr_audio`、`exr_library`、`exr_textindex`、`exr_pdf_edit`、旧共享总库、工具和 JNI；`reading-library` 仅再加入 `exr_library`。这是组件选择，不改变各组件能力边界，也不改变原默认构建。命令见 [README](../README.md#阅读-sdk-preset)。
 
 ## 公开接口与版本
 
