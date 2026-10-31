@@ -241,7 +241,7 @@ class sink {
     handle_=CreateFileW(wide(temp).c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
     if(handle_==INVALID_HANDLE_VALUE)fail(READER_ANNOTATION_EXPORT_IO,"Cannot create the temporary output file",0,0,last_os_error());
 #else
-    fd_=::open(temp.c_str(),O_WRONLY|O_CREAT|O_EXCL,0666);
+    fd_=::open(temp.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC,0600);
     if(fd_<0)fail(READER_ANNOTATION_EXPORT_IO,"Cannot create the temporary output file",0,0,last_os_error());
 #endif
     temp_=temp;

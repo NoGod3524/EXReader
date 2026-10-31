@@ -1,0 +1,104 @@
+name: F10 annotation POSIX private output
+on:
+  push:
+    branches: [codex/dot-f10-annotation-private-20261031]
+    paths:
+      - apps/reader/annotation-export/src/annotation_export.cpp
+      - tests/reader_annotation_export_posix_private_20261031/**
+      - .github/workflows/dot-f10-annotation-private-20261031.yml
+      - docs/reader-total-progress/DOT_F10_ANNOTATION_PRIVATE_20261031.md
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  privacy:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Exact scope and one-line product guard
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          base='5963488997a7169f2ae40a8d6d33abae15eb3f36'
+          source='apps/reader/annotation-export/src/annotation_export.cpp'
+          allowed={source,'tests/reader_annotation_export_posix_private_20261031/CMakeLists.txt','tests/reader_annotation_export_posix_private_20261031/probe.cpp','tests/reader_annotation_export_posix_private_20261031/run.py','.github/workflows/dot-f10-annotation-private-20261031.yml','docs/reader-total-progress/DOT_F10_ANNOTATION_PRIVATE_20261031.md'}
+          changed=set(subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          assert changed==allowed,changed
+          before=subprocess.check_output(['git','show',base+':'+source])
+          after=open(source,'rb').read()
+          old=b'O_WRONLY|O_CREAT|O_EXCL,0666'
+          new=b'O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC,0600'
+          assert before.count(old)==1 and before.replace(old,new)==after
+          PY
+      - name: Build installed dependencies and untouched old consumers
+        run: |
+          set -euo pipefail
+          python -m pip install ninja==1.11.1.1
+          mkdir -p build/private-logs
+          S="$PWD/build/private-stage"
+          SDK="$PWD/build/reading-library/stage"
+          mkdir -p build/private-hash-stage
+          export EXREADER_ORIGINAL_HASH_PREFIX="$(cd build/private-hash-stage && pwd -P)"
+          cmake -S extras/opds -B build/private-hash -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$EXREADER_ORIGINAL_HASH_PREFIX"
+          cmake --build build/private-hash --parallel 4
+          cmake --install build/private-hash
+          cmake -S apps/reader/store/native -B build/private-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$S"
+          cmake --build build/private-product --parallel 4
+          cmake --install build/private-product
+          cmake -S apps/reader/revisions -B build/private-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$S" -DCMAKE_INSTALL_PREFIX="$S"
+          cmake --build build/private-revisions --parallel 4
+          cmake --install build/private-revisions
+          cmake --preset reading-library
+          cmake --build --preset reading-library --parallel 4
+          cmake --install build/reading-library
+          cmake -S apps/reader/reading-state -B build/private-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$SDK" -DEXR_SDK_VERSION=3.42.0 -DCMAKE_PREFIX_PATH="$S" -DCMAKE_INSTALL_PREFIX="$S"
+          cmake --build build/private-state --parallel 4
+          cmake --install build/private-state
+          cmake -S apps/reader/annotation-export -B build/private-export -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S;$SDK" -DCMAKE_INSTALL_PREFIX="$S"
+          cmake --build build/private-export --parallel 4
+          cmake --install build/private-export
+          cmake -S tests/reader_annotation_export/consumer -B build/private-old -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S;$SDK"
+          cmake --build build/private-old --parallel 4
+          cmake -S tests/reader_annotation_export_posix_private_20261031 -B build/private-new -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S;$SDK" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/private-new --parallel 4
+      - name: Unchanged original regression
+        run: |
+          set -euo pipefail
+          python tests/reader_annotation_export/make_fixtures.py build/private-fixtures
+          python tests/reader_annotation_export/check_export.py --probe build/private-old/annotation-export-probe --c-consumer build/private-old/annotation-export-c-consumer --fixtures build/private-fixtures --output build/private-old-evidence | tee build/private-logs/original.log
+      - name: New installed-consumer permission and exec cases
+        run: |
+          set -euo pipefail
+          python tests/reader_annotation_export_posix_private_20261031/run.py --probe build/private-new/annotation-private --old-probe build/private-old/annotation-export-probe --fixtures build/private-fixtures --work build/private-evidence | tee build/private-logs/new.log
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          built=pathlib.Path('build/private-export/libreader_annotation_export.a').read_bytes()
+          installed=pathlib.Path('build/private-stage/lib/libreader_annotation_export.a').read_bytes()
+          assert built==installed
+          source=pathlib.Path('apps/reader/annotation-export/src/annotation_export.cpp').read_bytes()
+          r=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],archive_sha256=hashlib.sha256(installed).hexdigest(),source_sha256=hashlib.sha256(source).hexdigest())
+          pathlib.Path('build/private-evidence/installed.json').write_text(json.dumps(r,indent=2)+'\n')
+          print('PRIVATE-INSTALLED '+json.dumps(r))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f10-annotation-private-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/private-logs/
+            build/private-old-evidence/
+            build/private-evidence/
+            build/private-new/private.map
+            build/private-old/annotation-export-link.map
+            build/private-stage/lib/libreader_annotation_export.a
+          if-no-files-found: warn
