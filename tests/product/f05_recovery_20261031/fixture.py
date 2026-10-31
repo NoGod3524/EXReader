@@ -80,7 +80,7 @@ class Store:
                 self.reply(412 if exists else 201)
             def do_GET(self):
                 if not self.authorized(): return
-                if self.path == "/__f05_gate" and authorization is None:
+                if self.path == "/__f05_gate":
                     self.reply(200, json.dumps({"original_get_blocked": outer.get_blocked.is_set()}).encode())
                     return
                 with outer.lock:
