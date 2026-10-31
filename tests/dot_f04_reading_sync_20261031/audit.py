@@ -5,7 +5,7 @@ Runs the unchanged prior relay assertions first, then verifies additional
 application-authored bookmark/range bytes and explicit receiver landings.
 A passing stage can NEVER set the complete six-target F04 flag.
 """
-import base64, hashlib, json, os, subprocess, sys
+import argparse, base64, hashlib, json, os, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -158,7 +158,7 @@ def main():
         output.update(stage_accepted=True, original_relay_accepted=True, record_checks=checked,
                       artifacts=scope["summary"]["artifacts"],
                       remaining_targets=["Windows", "Linux GTK", "macOS", "iPad"],
-                      remaining_scope=["four-format cross-host coverage", "six-host no-mislocation negatives"])
+                      remaining_scope=["six-host connected bidirectional product graph", "retained protocol and host no-mislocation evidence"])
     except Exception as error:
         output["failures"].append(type(error).__name__ + ": " + str(error))
         raise
@@ -167,5 +167,110 @@ def main():
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n")
         print(json.dumps(output, ensure_ascii=False), flush=True)
+
+def graph_audit(manifest_path):
+    """Audit a real connected graph; no all-pairs or six-author requirement.
+
+    This preparation checker establishes the wire/UI graph only. Final retained
+    producer authentication and its CI budget are still explicit pending work;
+    it cannot promote the F04 catalog.
+    """
+    need(os.environ.get("GITHUB_ACTIONS") == "true", "Actions only")
+    from relay import load, input_metadata
+    manifest = json.loads(manifest_path.read_text())
+    required = set(json.loads((HERE / "contract.json").read_text())["platforms"])
+    nodes, edges, checked = {}, set(), []
+    identity = {k: os.environ[v] for k, v in
+                (("source_sha", "GITHUB_SHA"), ("run_id", "GITHUB_RUN_ID"), ("attempt", "GITHUB_RUN_ATTEMPT"))}
+    for item in manifest["states"]:
+        state, digest = load(manifest_path.parent / item["path"])
+        need(digest == item["sha256"], "state identity")
+        need(all(state[k] == v for k, v in identity.items()), "same-source/run/attempt")
+        data = state["data"]; host = data["platform"]
+        need(host in required and data["sdk_version"] == "3.42.0", "host/SDK identity")
+        need(data["program"]["bytes"] > 0 and len(data["program"]["sha256"]) == 64, "real program identity")
+        nodes[digest] = (host, state, revisions(state))
+    for edge in manifest["edges"]:
+        sender, source, source_rows = nodes[edge["from"]]
+        receiver, destination, destination_rows = nodes[edge["to"]]
+        need(sender != receiver, "edge must cross real host roles")
+        need(destination["previous_sha256"] == edge["from"], "actual staged transport predecessor")
+        data = destination["data"]
+        for revision, pair in source_rows.items():
+            need(revision in destination_rows and destination_rows[revision][1] == pair[1], "immutable wire changed in transport")
+        expected_progress = input_metadata(source)["location"]
+        progress_id = expected_progress["head"]
+        need(destination_rows[progress_id][1] == source_rows[progress_id][1], "exact progress wire")
+        if receiver in ("iphone-simulator", "ipad-simulator", "macos"):
+            checkpoint = data["f04_checkpoints"].get("position")
+            need(checkpoint is not None, "Apple position checkpoint")
+            apple_landing(checkpoint, source_rows[progress_id][0]["payload"]["location"], data["original_sha256"])
+        elif receiver == "android-api34-x86_64":
+            android_landing(data["restored_frame"], source_rows[progress_id][0]["payload"]["location"])
+        elif receiver == "windows":
+            need("独立原书与当前绘图文档" in data["progress_navigation"]["native_message"], "Windows progress public FOUND")
+        else:
+            nav = data["progress_navigation"]; frame = nav["frame"]; target = expected_progress["start"]
+            need(nav["record_state"]["match"] == "1" and frame["part"] == expected_progress["part"] and
+                 frame["start"] <= target < frame["end"], "GTK progress exact target page")
+        for role, marker in edge["markers"].items():
+            need(role in ("bookmark", "note"), "supported record role")
+            wire, raw = selected(source_rows, marker)
+            location = wire["payload"]["location"]
+            need((location["selector"]["start"] == location["selector"]["end"]) == (role == "bookmark"), "point/range preserved")
+            if receiver in ("iphone-simulator", "ipad-simulator", "macos"):
+                checkpoint = data["f04_checkpoints"]["incoming-" + role]
+                apple_landing(checkpoint, location, data["original_sha256"])
+                observed = checkpoint["retained_records"]
+                need(any(row["revision_id"] == wire["id"] and
+                         base64.b64decode(row["raw_base64"], validate=True) == raw for row in observed),
+                     "Apple actual retained wire")
+            elif receiver == "android-api34-x86_64":
+                matched = [row for row in data["incoming_records"] if row["head"] == wire["id"]]
+                need(len(matched) == 1 and base64.b64decode(matched[0]["wire_b64"], validate=True) == raw,
+                     "Android public retained wire")
+                android_landing(data["incoming_" + role + "_frame"], location)
+            else:
+                need(any(row["revision_id"] == wire["id"] and
+                         base64.b64decode(row["raw_base64"], validate=True) == raw for row in data["incoming"]),
+                     "desktop actual retained wire")
+                navigation = [n for n in data["navigations"] if n["marker"] == marker]
+                need(len(navigation) == 1, "real explicit record action")
+                if receiver == "windows":
+                    need("独立原书与当前绘图文档" in navigation[0]["native_message"], "native independent/current FOUND")
+                else:
+                    need(navigation[0]["record_state"]["match"] == "1", "GTK native FOUND")
+                    frame = navigation[0]["frame"]; anchor = location["selector"]["start"]
+                    need(frame["part"] == location["part"] and frame["start"] <= anchor < frame["end"],
+                         "GTK frame contains original anchor")
+            checked.append({"from": sender, "to": receiver, "kind": role,
+                            "revision_id": wire["id"], "wire_sha256": hashlib.sha256(raw).hexdigest()})
+        need(set(edge["markers"]) == {"bookmark", "note"}, "edge record coverage")
+        need("remote_sync_does_not_move_active_reader" in data["checks"] or
+             receiver in ("iphone-simulator", "ipad-simulator", "macos", "android-api34-x86_64"),
+             "desktop receive non-navigation observation")
+        edges.add((sender, receiver))
+    observed_hosts = {host for host, _, _ in nodes.values()}
+    need(observed_hosts == required, "six actual host roles required")
+    for start in required:
+        seen, pending = {start}, [start]
+        while pending:
+            current = pending.pop()
+            for a, b in edges:
+                if a == current and b not in seen: seen.add(b); pending.append(b)
+        need(seen == required, "graph is not bidirectionally connected from " + start)
+    report = dict(identity, graph_checked=True, graph_checks=checked, hosts=sorted(required),
+                  F04_accepted=False, six_target_accepted=False,
+                  remaining=["authenticate retained original protocol/host producers",
+                             "same-source executable runtime verification; this preparation is not final acceptance"])
+    target = manifest_path.parent / "f04-graph-summary.json"
+    target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+    print(json.dumps(report, ensure_ascii=False), flush=True)
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--graph", type=Path)
+    args = parser.parse_args()
+    if args.graph: graph_audit(args.graph)
+    else: main()
+

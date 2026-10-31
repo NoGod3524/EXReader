@@ -14,7 +14,7 @@ def main():
     assert source == os.environ["GITHUB_SHA"]
     assert git("merge-base", contract["base_source"], source) == contract["base_source"]
     changed = git("diff", "--name-only", contract["base_source"], source).splitlines()
-    assert set(changed) == set(contract["authorized_paths"]), (changed, "exact ten-file ownership")
+    assert set(changed) == set(contract["authorized_paths"]), (changed, "exact authorized twelve-file ownership")
     sdk_paths = ("src", "include", "cmake", "CMakeLists.txt", "bindings")
     assert not git("diff", "--name-only", contract["sdk_source"], source, "--", *sdk_paths)
     assert not git("status", "--porcelain", "--", *sdk_paths)

@@ -10,6 +10,7 @@ import importlib.util
 import os
 from pathlib import Path
 import secrets
+import sqlite3
 import shutil
 import subprocess
 import sys
@@ -80,9 +81,10 @@ def start(folder, previous=None, certificate=None, key=None):
 
 def save(dav, folder, phase, data):
     folder = Path(folder)
-    assert phase in ('apple-first', 'android', 'apple-return')
+    contract = json.loads((Path(__file__).resolve().parent / 'contract.json').read_text())
+    assert phase in contract['phases']
     assert data['passed'] is True and data['checks']
-    assert data.get('f04_stage') == 'iphone-android-reading-v1'
+    assert data.get('f04_stage') in ('iphone-android-reading-v1', 'six-host-reading-preparation-v2')
     assert data.get('sdk_version') == '3.42.0'
     assert dav.prior_directories.issubset(dav.directories)
     assert all(dav.entries.get(path) == body for path, body in dav.prior_entries.items())
@@ -103,3 +105,79 @@ def save(dav, folder, phase, data):
     dav.server.shutdown()
     dav.server.server_close()
     (folder / 'key.pem').unlink(missing_ok=True)
+
+
+def retained_rows(database):
+    """Read exact stored wires only; never open an SDK owner or write a database."""
+    database = Path(database).resolve()
+    assert database.is_file()
+    with sqlite3.connect(database.as_uri() + "?mode=ro", uri=True) as db:
+        db.execute("PRAGMA query_only=ON")
+        rows = db.execute("SELECT revision_id,body_json FROM reader_revisions "
+                          "WHERE entity_kind IN ('progress','annotation') ORDER BY revision_id").fetchall()
+    result = []
+    for revision, wire in rows:
+        body = wire.encode("utf-8") if isinstance(wire, str) else bytes(wire)
+        value = json.loads(body)
+        assert value["id"] == revision
+        result.append({"revision_id": revision, "raw_base64": base64.b64encode(body).decode(),
+                       "sha256": hashlib.sha256(body).hexdigest()})
+    return result
+
+
+def trust_desktop(certificate, prefix):
+    """Ephemeral Actions runner trust; identity returned for exact cleanup."""
+    identity()
+    certificate = Path(certificate).resolve()
+    if os.name == "nt":
+        fingerprint = subprocess.check_output(["openssl", "x509", "-in", str(certificate),
+                        "-noout", "-fingerprint", "-sha1"], text=True).strip().split("=", 1)[1].replace(":", "")
+        assert len(fingerprint) == 40 and all(c in "0123456789ABCDEFabcdef" for c in fingerprint)
+        subprocess.run(["certutil", "-addstore", "-f", "Root", str(certificate)],
+                       check=True, capture_output=True)
+        return {"kind": "windows", "fingerprint": fingerprint}
+    if sys.platform.startswith("linux"):
+        target = "/usr/local/share/ca-certificates/" + prefix + ".crt"
+        subprocess.run(["sudo", "cp", str(certificate), target], check=True, capture_output=True)
+        subprocess.run(["sudo", "update-ca-certificates"], check=True, capture_output=True)
+        return {"kind": "linux", "path": target}
+    raise AssertionError("Only desktop Windows/GTK trust is supported by this helper")
+
+
+def untrust_desktop(trust):
+    identity()
+    if trust["kind"] == "windows":
+        subprocess.run(["certutil", "-delstore", "Root", trust["fingerprint"]],
+                       check=True, capture_output=True)
+    elif trust["kind"] == "linux":
+        assert trust["path"] in ("/usr/local/share/ca-certificates/f04-gtk.crt",)
+        subprocess.run(["sudo", "rm", "--", trust["path"]], check=True, capture_output=True)
+        subprocess.run(["sudo", "update-ca-certificates"], check=True, capture_output=True)
+    else:
+        raise AssertionError("Unknown fixture trust identity")
+
+
+def input_metadata(state):
+    """Protocol data for a real receiver, selected from immutable service bytes."""
+    wires = []
+    for path, item in state["entries"].items():
+        if "/revisions/" in path:
+            raw = base64.b64decode(item["body"], validate=True)
+            assert hashlib.sha256(raw).hexdigest() == item["sha256"]
+            wires.append(json.loads(raw))
+    original = json.loads((Path(__file__).resolve().parent / "contract.json").read_text())["original"]
+    key = original["format"] + ":" + original["sha256"]
+    def head(kind):
+        history = [v for v in wires if v["entity_kind"] == kind and v["entity_key"] == key]
+        parents = {p for v in history for p in v["parents"]}
+        heads = [v for v in history if v["id"] not in parents]
+        assert len(heads) == 1 and heads[0].get("payload"), "receiver requires SAFE unique " + kind
+        assert all(p in {v["id"] for v in history} for v in history for p in v["parents"])
+        return heads[0]
+    progress, book = head("progress"), head("book")
+    location = progress["payload"]["location"]
+    assert location["mode"] == "epub_chapter"
+    translated = dict(location["selector"], part=location["part"], path=location["part_path"],
+                      head=progress["id"])
+    return dict(original_sha256=original["sha256"], original_bytes=original["bytes"],
+                book_identity=key, location=translated, remote_title=book["payload"]["title"])

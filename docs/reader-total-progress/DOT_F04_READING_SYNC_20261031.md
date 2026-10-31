@@ -109,3 +109,35 @@ Static source follow-up: point records remain BOOKMARK after note-text edits (an
 Static review caught BookStore construction invoking repairMissingMappings(): the prepared Android driver now borrows the actual MainActivity worker/store for list, retained-wire and public original reads; it does not open a second application BookStore/SDK connection. Its independent chapter-boundary fixture remains a separate isolated test library. No runtime proof is claimed for this correction.
 
 The singleTask MainActivity must first launch after instrumentation installs ActivityMonitor. The generated Android adapter prepares only its files/ test-input directory before instrumentation instead of prelaunching the Activity; the actual account/receive UI flow still launches it. This avoids an unobserved preexisting activity in the owner-borrow path.
+
+## 2026-10-31 六 host 扩展准备（仍为 0 CI）
+
+批准：用户 23:28:57 UTC 明确批准新增 Windows/GTK 两个 driver，原 10 文件适配；仅同一独占分支，产品/SDK/旧测试不动，所有构建和测试仍需另批 Actions 预算。
+当前包范围为 12 个新增于 94fb 的文件；本节不将编写、静态检查或提交当作运行通过。
+
+### 原文约束与最小覆盖图
+- catalog F04：六目标进度/书签/标注与原始锚点双向互通，不误定位。
+- PRODUCT-PLAN P5：六目标闭环，至少两设备同步原书、进度、标注和分类。
+- READING-V2 必须出口 2：TXT 文首/多字节/文末点、EPUB 章/重复 spine、完整文档 chapter、PDF/CBZ 无文字页，在第二独立 SDK 库解析。
+- 因而不把“四格式 × 三类型 × 六作者 × 所有端对”加成新门槛。原 18 锚点/17 FOUND/1 AMBIGUOUS 协议证据按原范围保留；无文字页不制造范围标注。
+- 规划 Windows 与 GTK/macOS/Android/iPhone/iPad 五条双向边。每个接收端实际产品拉取和明确导航，返回端通过真实 UI 编辑/保存产生 outbox，再由另一真实客户端接收。不可将本地已下载但未发布的字节当作出站证明。
+- 全局 ID 和原 wire 保真、SAFE+FOUND、活动阅读不被远端强跳仍是实质要求；没有六作者数或截图数量的额外拒绝门槛。
+
+### 新增两个真实产品驱动
+- windows_driver.py 使用正式旧 Windows host 的 RecordsApp/Account Device 控件；不是 Windows Studio。原生导入、账号、保存、记录打开、出站同步；SQLite 仅 URI mode=ro 观测原 wire。
+- gtk_driver.py 使用实际 GTK 应用、AT-SPI 与 xdotool；系统导入、实际账号与阅读记录控件。编辑接收的书签/标注保留全局身份和原锚点，不调用测试修订提交器。
+- Windows 活动页使用既有原账号验收的原生 page-label 控件 124，而不是会被任意状态消息改变的 status 文本作误导航判据。
+- 所有桌面证书信任只设计在 Actions 临时 runner，记录指纹/路径并清理；不在用户电脑上安装证书。私钥不进入证据包。
+
+### Apple / Android 适配
+- apple_driver.swift 增加 macOS 菜单平台分支，iPhone/iPad 共用 iOS 真实控件；peer 通过现有产品记录编辑/保存返回，不改生产 hook。
+- run.py 保持旧双端 adapter；另生成 iphone-peer/ipad-peer/macos-peer/android-peer 包装，设备选择、macOS app 路径、实际只读产品记录路径分开。旧 runner 仍逐字节锁定 94fb，旧断言保留。
+- Android incoming-prefix 来自 runner 输入；原五检查与新增两检查分别记录，实际 app owner 队列只读规则不变。
+- 原独立边界夹具、原真 EPUB 字节身份和原公开 API 检查不被此次图适配删去。
+
+### 真实状态与下一步
+- 尚未编译、语法检查、运行或下载解析任何工件；CI 0，workflow 的 job 仍 if:false。
+- 图审计新增检查同源码/run/attempt、相邻真实传输、双向可达、六 host 程序身份、三类 wire 与实际导航；仍只给 graph_checked，F04_accepted / six_target_accepted 恒 false。
+- **未完成**：六 host 的完整 producer 工作流与 artifact routing、保留协议及宿主 producer 的严格认证接线；编译/runtime正确性；完整六端无误定位验收。现阶段不是“已完成六端驱动验收”。
+- 外部 Apple 标注产品 writer 仍归原 owner，任何实际生产能力缺口必须回报；不以 SDK consumer、数据库注入或测试内部函数冒充 UI 成功。
+- 待独立静态复核后，汇总上述尚缺实施及实际 CI job/预算再申请。不自动重复旧昂贵整轮。

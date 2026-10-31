@@ -27,9 +27,13 @@ final class F04ReadingSyncUITests: XCTestCase {
         e(id).tap()
     }
     private func records() {
+        #if os(iOS)
         let trigger = e("reader.more").buttons.firstMatch
         XCTAssertTrue(wait { trigger.exists && trigger.frame.width > 0 })
         trigger.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        #else
+        tap("reader.more")
+        #endif
         XCTAssertTrue(wait { e("reader.records").exists || app.buttons["阅读记录"].exists })
         if e("reader.records").exists { tap("reader.records") } else { app.buttons["阅读记录"].tap() }
         XCTAssertTrue(wait { text("reading.status") == "本书的书签与标注" })
@@ -67,14 +71,14 @@ final class F04ReadingSyncUITests: XCTestCase {
         let unchanged = text("reader.location")
         records(); tap("reading.add-bookmark")
         XCTAssertTrue(wait { text("reading.status").contains("已添加书签") })
-        note(row("书签"), "F04_APPLE_BOOKMARK")
+        note(row("书签"), "__OUTGOING_PREFIX___BOOKMARK")
         tap("reading.close")
         tap("reader.select"); tap("selection.all")
         XCTAssertTrue(wait { !text("selection.quote").isEmpty })
         tap("selection.reading-highlight")
         XCTAssertTrue(wait { text("reader.status") == "已保存高亮到阅读记录" })
         tap("selection.close")
-        records(); note(row("高亮"), "F04_APPLE_NOTE"); tap("reading.close")
+        records(); note(row("高亮"), "__OUTGOING_PREFIX___NOTE"); tap("reading.close")
         XCTAssertEqual(text("reader.location"), unchanged, "Creating annotations must not navigate")
         checkpoint("created-records")
     }
@@ -129,10 +133,20 @@ final class F04ReadingSyncUITests: XCTestCase {
         if "__PHASE__" == "apple-first" {
             createExchangeRecords()
         } else {
-            jumpIncoming("书签", "F04_ANDROID_BOOKMARK", "incoming-bookmark")
-            jumpIncoming("批注", "F04_ANDROID_NOTE", "incoming-note")
+            jumpIncoming("书签", "__INCOMING_PREFIX___BOOKMARK", "incoming-bookmark")
+            jumpIncoming("批注", "__INCOMING_PREFIX___NOTE", "incoming-note")
         }
-        if "__PHASE__" == "apple-first" {
+        if "__PHASE__" != "apple-return" {
+            if "__PHASE__" != "apple-first" {
+                let unchanged = text("reader.location")
+                records(); tap("reading.save-progress")
+                XCTAssertTrue(wait { text("reading.status") == "已保存阅读进度" })
+                note(row("书签", containing: "__INCOMING_PREFIX___BOOKMARK"), "__OUTGOING_PREFIX___BOOKMARK")
+                note(row("批注", containing: "__INCOMING_PREFIX___NOTE"), "__OUTGOING_PREFIX___NOTE")
+                tap("reading.close")
+                XCTAssertEqual(text("reader.location"), unchanged)
+                checkpoint("edited-records")
+            }
             tap("reader.back"); tap("account.sync.start")
             XCTAssertTrue(wait { text("account.receive.state").hasPrefix("已接收") && !e("account.sync.cancel").exists })
             checkpoint("uploaded")
