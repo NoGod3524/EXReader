@@ -45,7 +45,7 @@ static int repair_schema(void *context,const void *input,size_t input_bytes,cons
  return 1;
 }
 static int repair_clone(const pc02_repair_view *v,unsigned ordinal,const char *source,const pc02_repair_file *expected,
- char out[P2_PATH]){
+ char out[P2_PATH],int *source_held,int *clone_held,pc02_file *clone_snapshot){
  int input=-1,output=-1,ok=0;
  pc02_file wanted,observed;
  char leaf[96];
@@ -64,33 +64,45 @@ static int repair_clone(const pc02_repair_view *v,unsigned ordinal,const char *s
     !pc02io_copy(input,output,&wanted)||fsync(v->archive_directory_fd)||
     !pc02io_match(v->parent_directory,source,&wanted))goto done;
  int n=snprintf(out,P2_PATH,"%s/%s",v->archive_directory,leaf);
- if(n<=0||n>=P2_PATH)goto done;
- ok=1;
+ if(n<=0||n>=P2_PATH||!pc02io_hash(output,clone_snapshot)||
+    !pc02io_match(v->archive_directory_fd,leaf,clone_snapshot))goto done;
+ printf("{\"repair_clone\":%u,\"proof_leaf\":\"%s\",\"source_device\":%llu,\"source_inode\":%llu,\"clone_device\":%llu,\"clone_inode\":%llu,\"bytes\":%llu,\"sha256\":\"%s\"}\n",ordinal,leaf,
+  (unsigned long long)pc02io_get64(wanted.identity),(unsigned long long)pc02io_get64(wanted.identity+8),
+  (unsigned long long)pc02io_get64(clone_snapshot->identity),(unsigned long long)pc02io_get64(clone_snapshot->identity+8),
+  (unsigned long long)pc02io_get64(clone_snapshot->size),clone_snapshot->sha);
+ *source_held=input;input=-1;*clone_held=output;output=-1;ok=1;
 done:if(input>=0&&close(input))ok=0;
 if(output>=0&&close(output))ok=0;
 return ok;
+}
+static int repair_clone_exact(const pc02_repair_view *v,int fd,const char *path,const pc02_file *snapshot){
+ pc02_file actual;const char *leaf=strrchr(path,'/');
+ return leaf&&fd>=0&&pc02io_hash(fd,&actual)&&pc02io_equal(&actual,snapshot)&&
+  pc02io_match(v->archive_directory_fd,leaf+1,snapshot)&&pc02io_quiet(v->archive_directory_fd,leaf+1);
 }
 static int repair_prove(void *context,const pc02_repair_view *v){
  p2_owner *o=context;
  const pc02_repair_description *d=v->description;
  char original[2][P2_PATH],prepared[2][P2_PATH],pack[P2_PATH];
- int pack_fd=-1,ok=0;
- pc02_file expected;
+ int pack_fd=-1,ok=0,sources[4]={-1,-1,-1,-1},clones[4]={-1,-1,-1,-1};
+ pc02_file snapshots[4],expected;
  memcpy(&expected,&d->pack,sizeof(expected));
  if(strcmp(v->library,o->input.library)||memcmp(d->binding,&o->input.binding,sizeof(o->input.binding))||
     !supported_filesystem(v->parent_directory)||!supported_filesystem(v->archive_directory_fd)||
     !pc02io_match(v->parent_directory,d->pack_leaf,&expected))return 0;
+ pack_fd=openat(v->parent_directory,d->pack_leaf,O_RDONLY|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC);
+ if(pack_fd<0||!pc02io_hash(pack_fd,&expected)||memcmp(&expected,&d->pack,sizeof(expected)))goto done;
  for(unsigned k=0;k<2;k++){
   const pc02_repair_member *m=&d->members[k];
-  if(m->original_present&&!repair_clone(v,k,v->member_states[k]?m->retained:m->target,&d->original[k],original[k]))goto done;
+  if(m->original_present&&!repair_clone(v,k,v->member_states[k]?m->retained:m->target,&d->original[k],original[k],&sources[k],&clones[k],&snapshots[k]))goto done;
   if(v->publish_intent&&(!d->has_prepared||
-    !repair_clone(v,k+2,v->member_states[k]==2?m->target:m->stage,&d->prepared[k],prepared[k])))goto done;
+    !repair_clone(v,k+2,v->member_states[k]==2?m->target:m->stage,&d->prepared[k],prepared[k],&sources[k+2],&clones[k+2],&snapshots[k+2])))goto done;
  }
+ for(unsigned k=0;k<4;k++)if(clones[k]>=0&&!repair_clone_exact(v,clones[k],k<2?original[k]:prepared[k-2],&snapshots[k]))goto done;
  if(!pc02t_original_verify(original[0],d->mirror_present?original[1]:NULL))goto done;
  if(v->publish_intent){
   int n=snprintf(pack,sizeof(pack),"%s/%s",o->parent_path,d->pack_leaf);
   if(n<=0||n>=P2_PATH)goto done;
-  pack_fd=openat(v->parent_directory,d->pack_leaf,O_RDONLY|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC);
   if(pack_fd<0||!pc02io_hash(pack_fd,&expected)||memcmp(&expected,&d->pack,sizeof(expected))||
      !pc02t_original_verify(prepared[0],prepared[1])||
      !pc02t_verify(pack_fd,prepared[0],pack,prepared[1]))goto done;
@@ -100,13 +112,21 @@ static int repair_prove(void *context,const pc02_repair_view *v){
  for(unsigned k=0;k<2;k++){
   const pc02_repair_member *m=&d->members[k];
   if(m->original_present){memcpy(&expected,&d->original[k],sizeof(expected));
+   pc02_file held;if(!pc02io_hash(sources[k],&held)||!pc02io_equal(&held,&expected)||
+    !repair_clone_exact(v,clones[k],original[k],&snapshots[k]))goto done;
    if(!pc02io_match(v->parent_directory,v->member_states[k]?m->retained:m->target,&expected))goto done;
   }
   if(v->publish_intent){memcpy(&expected,&d->prepared[k],sizeof(expected));
+   pc02_file held;if(!pc02io_hash(sources[k+2],&held)||!pc02io_equal(&held,&expected)||
+    !repair_clone_exact(v,clones[k+2],prepared[k],&snapshots[k+2]))goto done;
    if(!pc02io_match(v->parent_directory,v->member_states[k]==2?m->target:m->stage,&expected))goto done;
   }
  }
  ok=1;
 done:if(pack_fd>=0&&close(pack_fd))ok=0;
+for(unsigned k=0;k<4;k++){
+ if(sources[k]>=0&&close(sources[k]))ok=0;
+ if(clones[k]>=0&&close(clones[k]))ok=0;
+}
 return ok;
 }
