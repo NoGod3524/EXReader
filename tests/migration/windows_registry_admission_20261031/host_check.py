@@ -63,8 +63,8 @@ out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
 results=[]
 evidence=ProductEvidence(out,dict(host=a.host,consumer=a.consumer))
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
-def record(name,**evidence):
-    results.append(dict(name=name,passed=True,**evidence))
+def record(name,**observations):
+    results.append(dict(name=name,passed=True,**observations))
     (out/"report.json").write_text(json.dumps(dict(source=os.environ["GITHUB_SHA"],
         run=os.environ["GITHUB_RUN_ID"],attempt=os.environ["GITHUB_RUN_ATTEMPT"],
         cases=results,complete=False,passed=False,full_c02_acceptance=False,
