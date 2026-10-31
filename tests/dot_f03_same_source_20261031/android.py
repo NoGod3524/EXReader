@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import os
 import json
+import shlex
 import shutil
 import zipfile
 from pathlib import Path
@@ -13,7 +14,10 @@ import sys
 from identity import ROOT, identity, require, digest, same_identity, write_json, read_snapshot, TABLES, SCOPE, canonical
 
 def adb(*args, timeout=120):
-    return subprocess.check_output(["adb", *map(str, args)], stderr=subprocess.STDOUT, timeout=timeout)
+    values=list(map(str,args))
+    if values and values[0] == "shell":
+        values=["shell",shlex.join(values[1:])]
+    return subprocess.check_output(["adb", *values], stderr=subprocess.STDOUT, timeout=timeout)
 
 def wire_server(previous, fixture):
     """Serve only prior authentic producer bytes using the CA already compiled into this test APK."""
@@ -27,14 +31,16 @@ def wire_server(previous, fixture):
     require(cert.is_file() and key.is_file(),"matching build-time fixture TLS material missing")
     user="f03-fixture";password="f03-"+os.urandom(24).hex()
     authorization="Basic "+base64.b64encode((user+":"+password).encode()).decode()
-    server=relay.Dav(cert,key,authorization)
-    server.certificate_sha256=digest(cert)
-    server.previous_sha256=hashlib.sha256(raw).hexdigest()
-    server.directories=set(saved["directories"])
+    entries={}
     for path,entry in saved["entries"].items():
         body=base64.b64decode(entry["body"],validate=True)
         require(hashlib.sha256(body).hexdigest()==entry["sha256"],"prior wire differs")
-        server.entries[path]=body
+        entries[path]=body
+    directories=set(saved["directories"])
+    server=relay.Dav(cert,key,authorization)
+    server.certificate_sha256=digest(cert)
+    server.previous_sha256=hashlib.sha256(raw).hexdigest()
+    server.directories=directories;server.entries=entries
     server.prior_entries=dict(server.entries);server.prior_directories=set(server.directories)
     return relay,server,{"root":server.base+"/dav/","user":user,"password":password}
 
