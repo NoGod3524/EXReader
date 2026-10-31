@@ -241,7 +241,7 @@ public:
       reject(errno==EEXIST ? EXR_DAV_EXISTS:EXR_DAV_IO,"Destination publication refused");
 #else
     if(linkat(directory,name.c_str(),directory,dest.c_str(),0)!=0) reject(errno==EEXIST ? EXR_DAV_EXISTS:EXR_DAV_IO,"Destination publication refused");
-    unlinkat(directory,name.c_str(),0);
+    if(unlinkat(directory,name.c_str(),0)!=0) return;
 #endif
 #endif
     name.clear();
