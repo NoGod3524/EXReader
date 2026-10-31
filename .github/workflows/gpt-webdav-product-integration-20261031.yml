@@ -8,6 +8,9 @@ permissions:
 concurrency:
   group: gpt-webdav-product-integration
   cancel-in-progress: false
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
 defaults:
   run:
     shell: bash
@@ -66,6 +69,7 @@ jobs:
             build/gtk-managed/ui/
             build/gtk-managed/old-webdav-evidence/
             !build/gtk-managed/**/*.key
+          include-hidden-files: true
           if-no-files-found: error
   compatibility:
     name: Legacy ${{ matrix.platform }}
@@ -108,6 +112,7 @@ jobs:
             build/gtk-managed/legacy-tls-evidence/
             build/gtk-managed/legacy-session-evidence/
             !build/gtk-managed/**/*.key
+          include-hidden-files: true
           if-no-files-found: error
   evidence:
     name: Independent product evidence verification
@@ -127,4 +132,5 @@ jobs:
         with:
           name: gtk-managed-verification-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/gtk-managed-verification/
+          include-hidden-files: true
           if-no-files-found: error
