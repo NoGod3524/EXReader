@@ -140,6 +140,30 @@ def main():
         selected=[row for row in book_rows if row["id"] not in book_parents]
         if len(selected)!=1:raise AssertionError("receive cancellation needs one safe actual book")
         title=selected[0]["payload"]["title"]
+        original=selected[0]["payload"]
+        leaf=original["source_sha256"]+"."+original["format"]
+        if not re.fullmatch(r"[0-9a-f]{64}\\.[a-z0-9]+",leaf):
+            raise AssertionError("invalid fixed original cache identity")
+        cache="files/sync-cache/"+leaf
+        body=adb("exec-out","run-as",PACKAGE,"cat",cache)
+        if len(body)!=original["source_bytes"] or hashlib.sha256(body).hexdigest()!=original["source_sha256"]:
+            raise AssertionError("cache fault requires verified exact original identity")
+        idle=find(description="同步状态")
+        if idle is None or "本轮同步结束" not in idle.get("text",""):
+            raise AssertionError("cache quarantine requires idle completed native owner")
+        quarantine="files/f05-cache-quarantine-"+secrets.token_hex(12)
+        shell("run-as",PACKAGE,"mkdir",quarantine)
+        before_stat=adb("exec-out","run-as",PACKAGE,"stat","-c","%i:%s:%a",cache).decode().strip()
+        shell("run-as",PACKAGE,"mv",cache,quarantine+"/"+leaf)
+        after_stat=adb("exec-out","run-as",PACKAGE,"stat","-c","%i:%s:%a",quarantine+"/"+leaf).decode().strip()
+        retained=adb("exec-out","run-as",PACKAGE,"cat",quarantine+"/"+leaf)
+        if before_stat!=after_stat or retained!=body:
+            raise AssertionError("cache quarantine was not same identity atomic rename")
+        (a.output/"quarantined-cache.bin").write_bytes(retained)
+        report["cache_fault"]={"path":cache,"quarantine":quarantine+"/"+leaf,
+            "before_stat":before_stat,"after_stat":after_stat,"bytes":len(body),
+            "sha256":hashlib.sha256(body).hexdigest(),"owner_idle_native_state":idle["text"],
+            "sdk_original_untouched":True,"restored_before_retry":False}
         dav.hold_get=True;dav.get_blocked.clear();dav.release.clear()
         click(title,contains=True);click("接收")
         if not dav.get_blocked.wait(30):
