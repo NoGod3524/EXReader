@@ -380,7 +380,7 @@ def main():
     (a.output/"file-hashes.json").write_text(json.dumps(inventory,indent=2)+"\n")
     runner.save();assert len(runner.rows)==36,len(runner.rows)
     assert all(r["passed"] for r in runner.rows),[r["name"] for r in runner.rows if not r["passed"]]
-    assert len(runner.repair_rows)==17 and all(r["passed"] for r in runner.repair_rows),[r["name"] for r in runner.repair_rows if not r["passed"]]
-    print("POSIX-C02-ACTUAL cases=36 repair_cases=17 failed=0")
+    assert len(runner.repair_rows)==20 and all(r["passed"] for r in runner.repair_rows),[r["name"] for r in runner.repair_rows if not r["passed"]]
+    print("POSIX-C02-ACTUAL cases=36 repair_cases=20 failed=0")
     return 0
 if __name__=="__main__":sys.exit(main())

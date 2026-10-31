@@ -89,8 +89,24 @@ static void pr_info_ref(pr_ref *out,const char *leaf,const pc02rp_info *info){
  memcpy(out->sha256,info->sha256,65);
  strcpy(out->leaf,leaf);
 }
+
+static int pr_hash(const char value[65],int allow_zero){
+ return value[64]==0&&hex64(value)&&(allow_zero||nonzero(value));
+}
+static int pr_binding_bounds(const pc02_repair_description *d){
+ wh_binding b;
+ wh_gates g;
+ memcpy(&b,d->binding,sizeof(b));
+ memcpy(&g,d->gates,sizeof(g));
+ const char *v[]={b.source,b.run,b.attempt,b.artifact,b.platform,b.sdk,b.provider,g.admission,g.publisher,g.recovery,g.observer,g.fault};
+ const size_t n[]={sizeof(b.source),sizeof(b.run),sizeof(b.attempt),sizeof(b.artifact),sizeof(b.platform),sizeof(b.sdk),sizeof(b.provider),
+  sizeof(g.admission),sizeof(g.publisher),sizeof(g.recovery),sizeof(g.observer),sizeof(g.fault)};
+ for(size_t k=0;k<sizeof(n)/sizeof(n[0]);k++)if(!memchr(v[k],0,n[k]))return 0;
+ return 1;
+}
+
 static int pr_ref_valid(const pr_ref *r){
- return memchr(r->leaf,0,sizeof(r->leaf))&&leaf_ok(r->leaf)&&nonzero(r->sha256)&&get64(r->identity+8);
+ return memchr(r->leaf,0,sizeof(r->leaf))&&leaf_ok(r->leaf)&&pr_hash(r->sha256,0)&&get64(r->identity+8);
 }
 static pc02rp_info pr_ref_info(const pr_ref *ref){
  pc02rp_info info;
@@ -117,8 +133,96 @@ static int pr_read_named(pc02_lease *h,const char *prefix,unsigned kind,uint64_t
  pr_info_ref(ref,leaf,&blob->info);
  return 1;
 }
+
+static int pr_decimal(const char **cursor,uint64_t *value){
+ const char *start=*cursor;
+ char *end=NULL;
+ if(*start<'0'||*start>'9'||(start[0]=='0'&&start[1]>='0'&&start[1]<='9'))return 0;
+ errno=0;
+ unsigned long long n=strtoull(start,&end,10);
+ if(errno||!end||end==start)return 0;
+ *value=(uint64_t)n;
+ *cursor=end;
+ return 1;
+}
+static int pr_factory_leaf(const char *leaf,int proof){
+ const char *p=leaf+(proof?6:12);
+ uint64_t pid,ordinal=0,serial;
+ if(strncmp(leaf,proof?"proof-":"repair-next-",proof?6:12)||!pr_decimal(&p,&pid)||!pid||pid>LONG_MAX||*p++!='-')return 0;
+ if(proof&&(!pr_decimal(&p,&ordinal)||ordinal>3||*p++!='-'))return 0;
+ if(!pr_decimal(&p,&serial)||serial>1023)return 0;
+ if(!proof)return !*p;
+ if(strncmp(p,".image",6))return 0;
+ p+=6;
+ return !*p||!strcmp(p,"-wal")||!strcmp(p,"-shm")||!strcmp(p,"-journal");
+}
+static int pr_index_suffix(const char *leaf,const char *prefix,const char *suffix,unsigned *index){
+ size_t n=strlen(prefix),tail=strlen(suffix);
+ if(strncmp(leaf,prefix,n)||strlen(leaf)!=n+6+tail||strcmp(leaf+n+6,suffix))return 0;
+ for(unsigned k=0;k<6;k++)if(leaf[n+k]<'0'||leaf[n+k]>'9')return 0;
+ char digits[7];
+ memcpy(digits,leaf+n,6);
+ digits[6]=0;
+ unsigned value=(unsigned)strtoul(digits,NULL,10);
+ if(!value||value>PR_PLANS)return 0;
+ *index=value;
+ return 1;
+}
+static int pr_archive_leaf(const char *leaf,unsigned *sequence){
+ const char *prefix="repair-archive-";
+ size_t n=strlen(prefix);
+ if(strncmp(leaf,prefix,n)||strlen(leaf)<n+10)return 0;
+ for(unsigned k=0;k<6;k++)if(leaf[n+k]<'0'||leaf[n+k]>'9')return 0;
+ char digits[7];
+ memcpy(digits,leaf+n,6);
+ digits[6]=0;
+ unsigned seq=(unsigned)strtoul(digits,NULL,10);
+ const char *p=leaf+n+6;
+ uint64_t pid,serial;
+ if(!seq||seq>PR_PLANS||*p++!='-'||!pr_decimal(&p,&pid)||!pid||pid>LONG_MAX||
+    *p++!='-'||!pr_decimal(&p,&serial)||serial>1023||*p)return 0;
+ *sequence=seq;
+ return 1;
+}
+static int pr_named_private(int directory,const char *leaf,int is_directory){
+ int fd=openat(directory,leaf,O_RDONLY|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC|(is_directory?O_DIRECTORY:0));
+ pc02_identity id;
+ struct stat named;
+ int ok=fd>=0&&metadata(fd,is_directory,1,&id)&&!fstatat(directory,leaf,&named,AT_SYMLINK_NOFOLLOW)&&
+  (uint64_t)named.st_dev==id.device&&(uint64_t)named.st_ino==id.inode;
+ if(fd>=0&&close(fd))ok=0;
+ return ok;
+}
+static int pr_archive_objects(int directory,const pr_part *parts,size_t count){
+ int fd=openat(directory,".",O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+ if(fd<0)return 0;
+ DIR *dir=fdopendir(fd);
+ if(!dir){close(fd);
+ return 0;
+ }
+ int ok=0;
+ unsigned seen=0;
+ for(;;){
+  errno=0;
+  struct dirent *entry=readdir(dir);
+  if(!entry){if(errno)goto done;
+  break;
+  }
+  const char *leaf=entry->d_name;
+  if(!strcmp(leaf,".")||!strcmp(leaf,".."))continue;
+  if(++seen>8192||!pr_named_private(directory,leaf,0))goto done;
+  unsigned exact=0;
+  for(size_t k=0;k<count;k++)if(!strcmp(leaf,parts[k].saved_leaf))exact++;
+  if(exact>1||(!exact&&!pr_factory_leaf(leaf,0)&&!pr_factory_leaf(leaf,1)))goto done;
+ }
+ ok=1;
+done:if(closedir(dir))ok=0;
+return ok;
+}
+
 static int pr_scan_names(pc02_lease *h,unsigned *last,unsigned *last_done){
- unsigned char plans[PR_PLANS+1]={0},done[PR_PLANS+1]={0},applied[PR_PLANS+1]={0};
+ unsigned char plans[PR_PLANS+1]={0},done[PR_PLANS+1]={0},applied[PR_PLANS+1]={0},retired[PR_PLANS+1]={0};
+ unsigned largest_archive=0;
  int fd=-1,ok=0;
  DIR *dir=NULL;
  *last=*last_done=0;
@@ -142,8 +246,32 @@ static int pr_scan_names(pc02_lease *h,unsigned *last,unsigned *last_done){
   else if(!strncmp(e->d_name,"repair-done-",12)){prefix="repair-done";
   set=done;
   }
-  else if(!strncmp(e->d_name,"repair-applied-",15)){prefix="repair-applied";set=applied;}
-  else continue;
+  else if(!strncmp(e->d_name,"repair-applied-",15)){prefix="repair-applied";
+  set=applied;
+  }
+  else if(!strncmp(e->d_name,"repair-guard-",13)){
+   unsigned n;
+   if(!pr_index_suffix(e->d_name,"repair-guard-",".retired",&n)||retired[n]||!pr_named_private(h->route_dir,e->d_name,0))goto finish;
+   retired[n]=1;
+   continue;
+  }
+  else if(!strncmp(e->d_name,"repair-archive-",15)){
+   unsigned n;
+   if(!pr_archive_leaf(e->d_name,&n)||!pr_named_private(h->route_dir,e->d_name,1))goto finish;
+   if(n>largest_archive)largest_archive=n;
+   continue;
+  }
+  else if(!strncmp(e->d_name,"repair-next-",12)){
+   if(!pr_factory_leaf(e->d_name,0)||!pr_named_private(h->route_dir,e->d_name,0))goto finish;
+   continue;
+  }
+  else if(!strcmp(e->d_name,"repair.guard")){
+   if(!pr_named_private(h->route_dir,e->d_name,0))goto finish;
+   continue;
+  }
+  else{if(!strncmp(e->d_name,"repair-",7))goto finish;
+  continue;
+  }
   const char *digits=e->d_name+strlen(prefix)+1;
   if(strlen(digits)!=6||strspn(digits,"0123456789")!=6)goto finish;
   unsigned n=(unsigned)strtoul(digits,NULL,10);
@@ -157,7 +285,8 @@ static int pr_scan_names(pc02_lease *h,unsigned *last,unsigned *last_done){
   if(set==done&&n>*last_done)*last_done=n;
  }
  for(unsigned k=1;k<=*last;k++)if(!plans[k])goto finish;
- for(unsigned k=1;k<=PR_PLANS;k++)if(applied[k]&&!plans[k])goto finish;
+ for(unsigned k=1;k<=PR_PLANS;k++)if((applied[k]||retired[k])&&!plans[k])goto finish;
+ if(largest_archive>*last+1)goto finish;
  if(*last_done>*last)goto finish;
  ok=1;
 finish:
@@ -175,7 +304,8 @@ static int pr_blob_prefix(int fd,uint64_t size,const char sha256[65],const pc02_
  return ok;
 }
 static int pr_archive_open(pc02_lease *h,const pr_plan *plan){
- if(!memchr(plan->archive_leaf,0,sizeof(plan->archive_leaf))||!leaf_ok(plan->archive_leaf))return -1;
+ unsigned archive_sequence=0;
+ if(!memchr(plan->archive_leaf,0,sizeof(plan->archive_leaf))||!pr_archive_leaf(plan->archive_leaf,&archive_sequence)||archive_sequence!=get64(plan->sequence))return -1;
  int fd=openat(h->route_dir,plan->archive_leaf,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
  pc02_identity id,expected=getid(plan->archive_identity);
  struct stat named;
@@ -231,11 +361,16 @@ static int pr_parts_validate(pc02_lease *h,const pr_plan *plan,const pr_part *pa
  int ok=1;
  for(size_t k=0;k<count;k++){
   const pr_part *part=&parts[k];
+  char expected_leaf[16]={0};
+  int length=snprintf(expected_leaf,sizeof(expected_leaf),"raw-%04u",(unsigned)k);
+  if(length<=0||length>=(int)sizeof(expected_leaf)||memcmp(part->saved_leaf,expected_leaf,sizeof(expected_leaf))){ok=0;
+  break;
+  }
   pc02_identity expected=getid(part->saved_identity);
   pc02rp_blob raw={0};
   if(!memchr(part->saved_leaf,0,sizeof(part->saved_leaf))||!leaf_ok(part->saved_leaf)||
-     !memchr(part->leaf,0,sizeof(part->leaf))||!leaf_ok(part->leaf)||!nonzero(part->sha256)||
-     !nonzero(part->saved_sha256)||get64(part->bytes)!=get64(part->saved_bytes)||
+     !memchr(part->leaf,0,sizeof(part->leaf))||!leaf_ok(part->leaf)||!pr_hash(part->sha256,0)||
+     !pr_hash(part->saved_sha256,0)||get64(part->bytes)!=get64(part->saved_bytes)||
      memcmp(part->sha256,part->saved_sha256,65)){ok=0;
      break;
      }
@@ -246,6 +381,7 @@ static int pr_parts_validate(pc02_lease *h,const pr_plan *plan,const pr_part *pa
   if(fd>=0&&close(fd))ok=0;
   if(!ok)break;
  }
+ if(ok&&!pr_archive_objects(directory,parts,count))ok=0;
  if(close(directory))ok=0;
  return ok&&pr_sources_validate(h,plan,parts,count);
 }
@@ -261,7 +397,8 @@ static int pr_plan_read(pc02_lease *h,unsigned sequence,pc02rp_blob *raw,pr_ref 
 static int pr_plan_shape(const pr_plan *p){
  uint64_t sk=get64(p->state_keep),hk=get64(p->head_keep),se=get64(p->state_extra),he=get64(p->head_extra);
  return sk&&sk<=PR_LIMIT&&se<=PR_LIMIT-sk&&hk>=464&&hk<=PR_LIMIT&&he<=PR_LIMIT-hk&&sk%S_BYTES==0&&(hk-464)%272==0&&(se==0||se==S_BYTES)&&he==0&&
-  nonzero(p->state_target_sha256)&&nonzero(p->head_target_sha256)&&
+  pr_hash(p->state_target_sha256,0)&&pr_hash(p->head_target_sha256,0)&&
+  pr_hash(p->pending_seal,0)&&pr_hash(p->manifest,0)&&pr_hash(p->input,0)&&pr_hash(p->terminal_sha256,1)&&pr_binding_bounds(&p->description)&&
   p->before_begin<=1&&p->publish_intent<=1&&p->committed<=1&&p->aborted<=1&&p->terminal<=1;
 }
 static const pr_part *pr_part_role(const pr_part *p,size_t count,unsigned role){
@@ -426,7 +563,8 @@ static int pr_select_input(pr_context *c,const char *leaf,uint64_t generation,co
  if(c->before_begin){
   unsigned char expected[S_BYTES];
   pc02rs_blob state={c->state_raw.info.identity,c->state_raw.data,c->state_raw.bytes};
-  char empty_terminal[65];zero_sha(empty_terminal);
+  char empty_terminal[65];
+  zero_sha(empty_terminal);
   if(!pc02rs_state_next(&c->state,'B',c->pending.manifest,c->pending.input,empty_terminal,&c->state.target,expected)||
      !pc02rs_state_tail(&state,&c->state,expected))return 0;
   memcpy(c->pending.seal,expected+S_SEAL,64);
@@ -785,6 +923,7 @@ typedef struct {
  unsigned last,last_done,first,active;
  pr_ref latest_ref,applied_ref,done_ref,guard_ref;
  pc02rp_blob latest;
+ char archives[PR_PLANS][96];
  pr_plan *plan;
  pr_part *parts;
 }
@@ -843,6 +982,71 @@ static int pr_minimum(pc02_lease *h,const pr_plan *plan,const pr_part *parts,siz
  return pr_blob_prefix(h->state_file,get64(applied->state_bytes),applied->state_sha256,&expected)&&
   pr_head_prefix(h,plan,applied->head_identity,get64(applied->head_bytes),applied->head_sha256);
 }
+
+static int pr_done_transaction(pc02_lease *h,const pr_plan *p,const pr_done *done,const unsigned char *terminal){
+ pr_context *c=calloc(1,sizeof(*c));
+ int ok=0;
+ if(!c)return 0;
+ c->head=c->journal=c->archive=-1;
+ c->h=h;
+ c->description=p->description;
+ c->before_begin=p->before_begin;
+ c->state.kind=p->before_begin?'I':'B';
+ c->pending.generation=get64(p->generation);
+ memcpy(c->pending.seal,p->pending_seal,65);
+ memcpy(c->pending.input,p->input,65);
+ memcpy(c->pending.manifest,p->manifest,65);
+ memcpy(c->origin_binding,p->origin_binding,B_BYTES);
+ c->input_raw.data=calloc(1,PM_HEAD);
+ if(!c->input_raw.data)goto finish;
+ memcpy(c->input_raw.data+552,done->head_identity,16);
+ if(p->before_begin){
+  char leaf[128];
+  pc02_identity head_id=getid(done->head_identity),actual,journal_id=getid(p->description.journal_identity);
+  if(!pm_head_name(get64(p->generation),p->input,leaf))goto finish;
+  c->head=regular_open(h->route_dir,leaf,O_RDONLY,1,&actual);
+  if(c->head<0||!sameid(&actual,&head_id)||!pc02rp_read_raw(c->head,PR_LIMIT,&c->head_raw)||
+     c->head_raw.bytes!=464||memcmp(c->head_raw.info.sha256,done->head_prefix_sha256,65))goto finish;
+  c->journal=openat(h->parent,p->description.journal,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+  if(c->journal<0||!metadata(c->journal,1,1,&actual)||!sameid(&actual,&journal_id))goto finish;
+  int fd=openat(c->journal,".",O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+  if(fd<0)goto finish;
+  DIR *dir=fdopendir(fd);
+  if(!dir){close(fd);
+  goto finish;
+  }
+  int empty=1;
+  for(;;){errno=0;
+  struct dirent *e=readdir(dir);
+  if(!e){if(errno)empty=0;
+  break;
+  }
+   if(strcmp(e->d_name,".")&&strcmp(e->d_name,"..")){empty=0;
+   break;
+   }
+  }
+  if(closedir(dir))empty=0;
+  if(!empty)goto finish;
+  ok=1;
+  goto finish;
+ }
+ if(!pr_collect(c)||c->head_raw.bytes!=get64(done->head_bytes)||
+    memcmp(c->head_raw.info.sha256,done->head_prefix_sha256,65)||
+    c->tx.head_tail_bytes||c->tx.head_count!=c->floor_count||c->floor_count!=c->ack_count)goto finish;
+ if(p->before_begin){if(c->ack_count)goto finish;
+ }
+ else{
+  if(!terminal||!c->tx.terminal||c->tx.committed==c->tx.aborted||
+     memcmp(terminal,c->tx.last_line_sha256,64))goto finish;
+  const unsigned char *target=c->tx.committed?p->description.prepared[0].identity:p->description.original[0].identity;
+  if(memcmp(target,done->binding+40,16))goto finish;
+ }
+ ok=1;
+finish:c->h=NULL;
+pr_context_free(c);
+return ok;
+}
+
 static int pr_done_read(pc02_lease *h,unsigned last,pr_ledger *l,const pr_ref *previous,pc02rp_blob *out,pr_ref *ref){
  if(!pr_read_named(h,"repair-done",PR_DONE,last,out,ref)||out->bytes!=sizeof(pr_done))return 0;
  const pr_done *d=(const pr_done *)out->data;
@@ -860,20 +1064,22 @@ static int pr_done_read(pc02_lease *h,unsigned last,pr_ledger *l,const pr_ref *p
  const pr_part *head_part=pr_part_role(l->parts,(size_t)get64(p->part_count),PR_HEAD);
  if(!head_part||memcmp(d->head_identity,head_part->identity,16))goto done;
  if(!sameid(&state_id,&h->state_id)||get64(d->state_bytes)<get64(p->state_keep)||
-    !nonzero(d->state_prefix_sha256)||!nonzero(d->head_prefix_sha256)||
+    !pr_hash(d->state_prefix_sha256,0)||!pr_hash(d->head_prefix_sha256,0)||
     !pr_blob_prefix(h->state_file,get64(d->state_bytes),d->state_prefix_sha256,&state_id)||
     !pr_head_prefix(h,p,d->head_identity,get64(d->head_bytes),d->head_prefix_sha256))goto done;
  uint64_t current=get64(h->binding+88),finished=get64(d->binding+88);
  if(current<finished||(current==finished&&memcmp(h->binding,d->binding,B_BYTES)))goto done;
  if(p->before_begin){
-  if(memcmp(d->binding,p->origin_binding,B_BYTES)||get64(d->state_bytes)!=get64(p->state_keep))goto done;
+  if(memcmp(d->binding,p->origin_binding,B_BYTES)||get64(d->state_bytes)!=get64(p->state_keep)||
+     !pr_done_transaction(h,p,d,NULL))goto done;
  }
  else{
   if(finished!=get64(p->generation)||!binding_target.inode||get64(d->state_bytes)<S_BYTES)goto done;
   unsigned char last_state[S_BYTES];
   if(!io_read(h->state_file,last_state,S_BYTES,(off_t)(get64(d->state_bytes)-S_BYTES))||
      last_state[8]!='C'||get64(last_state+24)!=finished||memcmp(last_state+S_SEAL,d->binding+96,64)||
-     memcmp(last_state+224,d->binding+40,16))goto done;
+     memcmp(last_state+224,d->binding+40,16)||memcmp(last_state+32,p->manifest,64)||
+     memcmp(last_state+96,p->input,64)||memcmp(last_state+240,p->pending_seal,64)||!pr_done_transaction(h,p,d,last_state+160))goto done;
  }
  ok=1;
 done:pc02rp_free(&applied);
@@ -882,6 +1088,60 @@ return ok;
 static void pr_ledger_free(pr_ledger *l){pc02rp_free(&l->latest);
 memset(l,0,sizeof(*l));
 }
+
+static int pr_orphan_archives(pc02_lease *h,char names[PR_PLANS][96],size_t count){
+ int root=openat(h->route_dir,".",O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+ if(root<0)return 0;
+ DIR *outer=fdopendir(root);
+ if(!outer){close(root);
+ return 0;
+ }
+ int ok=0;
+ for(;;){
+  errno=0;
+  struct dirent *entry=readdir(outer);
+  if(!entry){if(errno)goto done;
+  break;
+  }
+  if(strncmp(entry->d_name,"repair-archive-",15))continue;
+  unsigned referenced=0;
+  for(size_t k=0;k<count;k++)if(!strcmp(entry->d_name,names[k]))referenced++;
+  if(referenced>1)goto done;
+  if(referenced)continue;
+  int fd=openat(h->route_dir,entry->d_name,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+  if(fd<0)goto done;
+  DIR *inner=fdopendir(fd);
+  if(!inner){close(fd);
+  goto done;
+  }
+  unsigned char raw[PR_PARTS]={0};
+  unsigned largest=0,total=0;
+  int inner_ok=0;
+  for(;;){
+   errno=0;
+   struct dirent *part=readdir(inner);
+   if(!part){if(!errno)inner_ok=1;
+   break;
+   }
+   const char *leaf=part->d_name;
+   if(!strcmp(leaf,".")||!strcmp(leaf,".."))continue;
+   if(++total>8192||!pr_named_private(fd,leaf,0))break;
+   if(pr_factory_leaf(leaf,0))continue;
+   if(strlen(leaf)!=8||strncmp(leaf,"raw-",4)||strspn(leaf+4,"0123456789")!=4)break;
+   unsigned n=(unsigned)strtoul(leaf+4,NULL,10);
+   if(n>=PR_PARTS||raw[n])break;
+   raw[n]=1;
+   if(n+1>largest)largest=n+1;
+  }
+  for(unsigned k=0;k<largest;k++)if(!raw[k])inner_ok=0;
+  if(closedir(inner))inner_ok=0;
+  if(!inner_ok)goto done;
+ }
+ ok=1;
+done:if(closedir(outer))ok=0;
+return ok;
+}
+
 static int pr_ledger_read(pc02_lease *h,pr_ledger *l){
  memset(l,0,sizeof(*l));
  unsigned named_done=0;
@@ -895,12 +1155,18 @@ static int pr_ledger_read(pc02_lease *h,pr_ledger *l){
   pr_plan *p;
   pr_part *parts;
   if(!pr_plan_read(h,k,&raw,&ref,&p,&parts)||!pr_plan_shape(p))goto fail_record;
+  strcpy(l->archives[k-1],p->archive_leaf);
+  char retired_leaf[96];
+  if(!pr_guard_name(k,retired_leaf)||
+   (!missing(h->route_dir,retired_leaf)&&get64(p->first)!=k))goto fail_record;
   if(!pr_equal_ref(&p->previous_plan,&previous_plan)||!pr_equal_ref(&p->previous_done,&previous_done))goto fail_record;
   if(k<l->last){
-   pc02rp_blob prior_applied={0};pr_ref prior_ref;
+   pc02rp_blob prior_applied={0};
+   pr_ref prior_ref;
    int retained=pr_applied_read(h,k,&ref,&prior_applied,&prior_ref)&&
     pr_minimum(h,p,parts,(size_t)get64(p->part_count),(const pr_applied *)prior_applied.data);
-   pc02rp_free(&prior_applied);if(!retained)goto fail_record;
+   pc02rp_free(&prior_applied);
+   if(!retained)goto fail_record;
   }
   if(!first||closed){
    first=k;
@@ -936,12 +1202,12 @@ static int pr_ledger_read(pc02_lease *h,pr_ledger *l){
 fail_record:pc02rp_free(&raw);
 goto fail;
  }
- if(l->last_done!=named_done)goto fail;
+ if(l->last_done!=named_done||!pr_orphan_archives(h,l->archives,l->last))goto fail;
  l->active=l->last&&!closed;
  if(l->active){
   if(missing(h->route_dir,"repair.guard"))goto fail;
   pc02rp_blob guard={0};
-  if(!pr_guard_read(h,&l->guard_ref,l->first,&guard)){pc02rp_free(&guard);
+  if(!pr_read_object(h,&l->guard_ref,PR_GUARD,l->first,&guard)){pc02rp_free(&guard);
   goto fail;
   }
   pc02rp_free(&guard);
