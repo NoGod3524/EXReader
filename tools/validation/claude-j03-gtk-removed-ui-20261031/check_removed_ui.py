@@ -67,12 +67,33 @@ class Ui:
             assert self.host.process.poll() is None, 'host exited'
             r = subprocess.run(['xdotool', 'search', '--onlyvisible', '--all', '--pid', str(self.host.process.pid),
                                 '--name', '^' + title + '$'], text=True, capture_output=True, timeout=5)
-            if bool(r.stdout.strip()) == present:
-                if present:
+            seen = bool(r.stdout.strip()) or (present and self.atspi_has(title))
+            if seen == present:
+                if present and r.stdout.strip():
                     command('xdotool', 'windowactivate', '--sync', r.stdout.splitlines()[-1])
                 return
             time.sleep(.1)
+        self.diagnose('window-' + title)
         raise TimeoutError('window state differs: ' + title)
+
+    def atspi_has(self, title):
+        for n in bus.walk(self.app):
+            if bus.name(n) == title and bus.role(n) in ('dialog', 'frame', 'window') and bus.states(n).get('showing'):
+                return True
+        return False
+
+    def diagnose(self, label):
+        listing = subprocess.run(['wmctrl', '-lpG'], text=True, capture_output=True, timeout=10).stdout
+        ids = subprocess.run(['xdotool', 'search', '--all', '--pid', str(self.host.process.pid), '--name', '.'],
+                             text=True, capture_output=True, timeout=10).stdout.split()
+        names = []
+        for i in ids[:60]:
+            r = subprocess.run(['xdotool', 'getwindowname', i], text=True, capture_output=True, timeout=5)
+            names.append(i + ':' + r.stdout.strip())
+        tops = [bus.role(n) + ':' + bus.name(n) + ':' + str(bool(bus.states(n).get('showing'))) for n in bus.children(self.app)]
+        report.setdefault('diagnostics', []).append({'label': label, 'wmctrl': listing, 'x_windows': names,
+                                                      'atspi_top_level': tops, 'host_state': self.host.read()})
+        subprocess.run(['import', '-window', 'root', str(self.folder / ('diag-' + label.replace(' ', '_') + '.png'))], timeout=20, check=False)
 
     def dialog_node(self):
         for n in bus.walk(self.app):
