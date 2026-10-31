@@ -143,7 +143,7 @@ def main():
             host.key("alt+g", "Home")
             for _ in range(ids.index(identifier)): host.key("Down")
             wait(host, lambda: collections(host).get("selected_id") == identifier)
-        host.key("alt+" + {"create":"n", "edit":"s", "delete":"d"}[action])
+        host.key("alt+" + {"create":"n", "edit":"r", "delete":"d"}[action])
         window(host, "Collection details")
         if name is not None:
             host.key("alt+n", "ctrl+a")
