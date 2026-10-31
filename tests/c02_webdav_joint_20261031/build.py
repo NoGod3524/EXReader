@@ -15,7 +15,7 @@ def main():
  a='  "--binary",OUT/"host/gtk-host/exreader-linux","--output",OUT/"package"])'
  b='  "--c02-prefix",JOINT_C02_PREFIX,"--binary",OUT/"host/gtk-host/exreader-linux","--output",OUT/"package"])'
  assert text.count(a)==1;text=text.replace(a,b)
- a='"-G","Ninja"';b='"-G",("Unix Makefiles" if name=="host" else "Ninja")'
+ a='build,"-G","Ninja","-DCMAKE_BUILD_TYPE=Release"';b='build,"-G",("Unix Makefiles" if name=="host" else "Ninja"),"-DCMAKE_BUILD_TYPE=Release"'
  assert text.count(a)==1;text=text.replace(a,b)
  def deps(original,sdk,products):
   c02_deps(sdk,prefix,owner=True)
