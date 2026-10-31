@@ -17,6 +17,8 @@ class Store:
         self.lock = threading.Lock()
         self.offline = False
         self.hold_put = False
+        self.hold_get = False
+        self.get_blocked = threading.Event()
         self.put_committed, self.release = threading.Event(), threading.Event()
         outer = self
 
@@ -78,7 +80,13 @@ class Store:
                 self.reply(412 if exists else 201)
             def do_GET(self):
                 if not self.authorized(): return
-                with outer.lock: body = outer.entries.get(self.path)
+                with outer.lock:
+                    body = outer.entries.get(self.path)
+                    held = outer.hold_get and "/objects/" in self.path
+                    if held: outer.hold_get = False
+                if held:
+                    outer.get_blocked.set()
+                    outer.release.wait(60)
                 self.reply(404 if body is None else 200, body or b"")
             def do_PROPFIND(self):
                 if not self.authorized(): return
