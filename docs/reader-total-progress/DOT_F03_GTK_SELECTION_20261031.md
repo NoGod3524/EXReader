@@ -18,3 +18,12 @@ Shelf position changes from last to first; tag/series IDs retain their ordering.
 This does not duplicate Removed pagination, original-file retry, or synchronization interoperability.
 No numeric performance claims, no whole F03 promotion, formal 95/108 unchanged.
 Failures retain state/tree/logs/screenshots; no assertion or timeout relaxation and no skipped negative outcomes.
+
+## Observed first-run result
+Exact tested source: 3de7d45dc21f034916d5e9aa6a89a3d3126ef806.
+Run https://github.com/NoGod3524/EXReader/actions/runs/41160082299 attempt1, job124415495100 SUCCESS completed2026-10-31T02:32:08Z.
+Actual Actions logs: unchanged metadata29 passed, unchanged collections UI27 passed; F03_SELECTION accepted=true/checks15/setup153/error=null. Every kind's dirty-before-cancel snapshot label is retained.
+This confirms the existing live/off-page selection contract for the tested native GTK build; it did not discover a product defect.
+Artifact13026418563,897668 bytes,SHA2563b2dc81542655d344ab83ffbe8deb31a10bd150591ecc0de5581bcc8bac89a78,source-bound and unexpired at read.
+Independent static+terminal reviewer verified API/log/counts/metadata. Neither reviewer nor writer downloaded or parsed the original artifact ZIP outside Actions, and screenshots were not independently visually inspected in this review.
+F03_accepted remains false, formal95/108 unchanged. 1of2 authorized runs consumed; targeted correction round unused. This doc-only receipt is not a new tested source or a new CI run.
