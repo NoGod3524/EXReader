@@ -43,7 +43,8 @@ static bool same(const Region &a,const Region &b){
 }
 struct Slot{
  ComPtr<ID3D11Texture2D> texture;DXGI_OUTDUPL_FRAME_INFO info{};std::array<Region,2> regions{};
- LONGLONG probe_before{},start{},acquired{},geometry{},copy_submitted{};unsigned index{};bool used{};
+ LONGLONG probe_before{},start{},acquired{},geometry{},copy_submitted{},first_map{},map_cpu_ticks{};
+ unsigned index{},map_attempts{};bool used{};
 };
 struct Image{std::vector<unsigned char> pixels;LONG width{},height{};unsigned index{};};
 static void bitmap(const fs::path &path,const std::vector<unsigned char> &pixels,LONG width,LONG height){
@@ -72,19 +73,23 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
  std::array<Image,2> last{};unsigned head=0,tail=0,pending=0,frames=0,pointer_only=0,extra=0,backpressure=0;
  auto drain=[&](bool block){
   if(!pending)return false;auto &slot=slots[tail];D3D11_MAPPED_SUBRESOURCE map{};
+  LONGLONG map_start=tick();if(!slot.map_attempts)slot.first_map=map_start;slot.map_attempts++;
   HRESULT hr=context->Map(slot.texture.Get(),0,D3D11_MAP_READ,block?0:D3D11_MAP_FLAG_DO_NOT_WAIT,&map);
+  LONGLONG map_end=tick();slot.map_cpu_ticks+=map_end-map_start;
   if(hr==DXGI_ERROR_WAS_STILL_DRAWING)return false;check(hr,"Map");
   std::printf("{\"kind\":\"frame\",\"index\":%u,\"start_qpc\":%lld,\"acquired_qpc\":%lld,\"last_present_qpc\":%lld,"
    "\"last_mouse_qpc\":%lld,\"accumulated_frames\":%u,\"rects_coalesced\":%s,\"protected_content\":%s,\"geometry_qpc\":%lld,"
-   "\"probe_before_qpc\":%lld,\"copy_submitted_qpc\":%lld,\"regions\":[",
+   "\"probe_before_qpc\":%lld,\"copy_submitted_qpc\":%lld,\"first_map_qpc\":%lld,"
+   "\"map_start_qpc\":%lld,\"map_end_qpc\":%lld,\"map_cpu_ticks\":%lld,\"map_attempts\":%u,\"map_blocking\":%s,\"regions\":[",
    slot.index,slot.start,slot.acquired,slot.info.LastPresentTime.QuadPart,slot.info.LastMouseUpdateTime.QuadPart,
-   slot.info.AccumulatedFrames,slot.info.RectsCoalesced?"true":"false",slot.info.ProtectedContentMaskedOut?"true":"false",slot.geometry,slot.probe_before,slot.copy_submitted);
+   slot.info.AccumulatedFrames,slot.info.RectsCoalesced?"true":"false",slot.info.ProtectedContentMaskedOut?"true":"false",slot.geometry,slot.probe_before,slot.copy_submitted,
+   slot.first_map,map_start,map_end,slot.map_cpu_ticks,slot.map_attempts,block?"true":"false");
   for(size_t j=0;j<2;j++){
    const auto &r=slot.regions[j];auto &previous=last[j];bool valid=r.pid==pid && r.visible && r.bounds && r.unoccluded && r.stable &&
     !slot.info.ProtectedContentMaskedOut && slot.info.LastPresentTime.QuadPart>0;
-   bool changed=false;std::string name;
+   bool changed=false;std::string name;LONGLONG copy_start=0,copy_end=0,compare_end=0,write_start=0,write_end=0;
    if(valid){
-    LONG width=r.rect.right-r.rect.left,height=r.rect.bottom-r.rect.top;std::vector<unsigned char> pixels((size_t)width*height*4);
+    copy_start=tick();LONG width=r.rect.right-r.rect.left,height=r.rect.bottom-r.rect.top;std::vector<unsigned char> pixels((size_t)width*height*4);
     for(LONG y=0;y<height;y++){
      auto src=(unsigned char*)map.pData+(size_t)(r.rect.top-description.DesktopCoordinates.top+y)*map.RowPitch+
       (size_t)(r.rect.left-description.DesktopCoordinates.left)*4;
@@ -92,16 +97,18 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
      // Desktop alpha is not content. Retain exact BGR and make the BMP opaque.
      for(LONG x=0;x<width;x++)dst[x*4+3]=255;
     }
-    changed=previous.width!=width || previous.height!=height || previous.pixels!=pixels;
+    copy_end=tick();changed=previous.width!=width || previous.height!=height || previous.pixels!=pixels;compare_end=tick();
     if(changed){previous.pixels=std::move(pixels);previous.width=width;previous.height=height;previous.index=slot.index;
-     name=std::to_string(r.id)+"-"+std::to_string(previous.index)+".bmp";bitmap(folder/name,previous.pixels,width,height);}
+     name=std::to_string(r.id)+"-"+std::to_string(previous.index)+".bmp";
+     write_start=tick();bitmap(folder/name,previous.pixels,width,height);write_end=tick();}
     else name=std::to_string(r.id)+"-"+std::to_string(previous.index)+".bmp";
    }
    std::printf("%s{\"control_id\":%d,\"hwnd\":%llu,\"pid\":%lu,\"rect\":[%ld,%ld,%ld,%ld],"
-    "\"visible\":%s,\"unoccluded\":%s,\"in_bounds\":%s,\"geometry_stable\":%s,\"valid\":%s,\"changed\":%s,\"image\":\"%s\"}",
+    "\"visible\":%s,\"unoccluded\":%s,\"in_bounds\":%s,\"geometry_stable\":%s,\"valid\":%s,\"changed\":%s,\"image\":\"%s\","
+    "\"copy_start_qpc\":%lld,\"copy_end_qpc\":%lld,\"compare_end_qpc\":%lld,\"write_start_qpc\":%lld,\"write_end_qpc\":%lld}",
     j?",":"",r.id,(unsigned long long)(uintptr_t)r.hwnd,r.pid,r.rect.left,r.rect.top,r.rect.right,r.rect.bottom,
     r.visible?"true":"false",r.unoccluded?"true":"false",r.bounds?"true":"false",r.stable?"true":"false",
-    valid?"true":"false",changed?"true":"false",name.c_str());
+    valid?"true":"false",changed?"true":"false",name.c_str(),copy_start,copy_end,compare_end,write_start,write_end);
   }
   context->Unmap(slot.texture.Get(),0);
   std::printf("],\"readback_finished_qpc\":%lld}\n",tick());std::fflush(stdout);
@@ -131,6 +138,7 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
   slot.regions={region(parent,119,pid,description.DesktopCoordinates),region(parent,123,pid,description.DesktopCoordinates)};
   for(size_t j=0;j<2;j++)slot.regions[j].stable=same(before[j],slot.regions[j]);
   slot.geometry=tick();slot.info=info;slot.probe_before=probe_before;slot.start=start;slot.acquired=acquired;slot.index=frames;slot.used=true;
+  slot.first_map=slot.map_cpu_ticks=0;slot.map_attempts=0;
   ComPtr<ID3D11Texture2D> source;check(resource.As(&source),"DesktopTexture");
   context->CopyResource(slot.texture.Get(),source.Get());context->Flush();slot.copy_submitted=tick();
   pending++;head=(head+1)%slots.size();
