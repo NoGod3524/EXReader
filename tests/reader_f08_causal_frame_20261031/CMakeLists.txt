@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+cmake_minimum_required(VERSION 3.16)
+project(f08_causal_frame C)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
+find_package(Threads REQUIRED)
+add_library(exreader_f08_causal MODULE probe.c)
+set_target_properties(exreader_f08_causal PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+target_compile_options(exreader_f08_causal PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(exreader_f08_causal PRIVATE PkgConfig::GTK Threads::Threads ${CMAKE_DL_LIBS})
+# Test module only: deliberately no install(), public hook or product linkage.
