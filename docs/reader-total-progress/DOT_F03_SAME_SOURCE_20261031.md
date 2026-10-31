@@ -47,3 +47,6 @@ not executed, no receipt or passing build claimed. Original CI setup dependencie
 
 ### Continued source preparation (not executed)
 Added a GTK native-UI author for nested shelf/tag/series, group delete/restore, membership remove/restore and restart, then actual account-session HTTPS publication. Product SQL remains read-only. Lifecycle operation coverage is checked across phases, not falsely required in every phase or from every host. Added target-matched canonical OPDSHash preinstallation to the new build wrapper; unchanged Apple builder already owns its per-target hash setup. Full receiver transport/orchestration, evidence manifest and original retained suites remain unfinished/unexecuted. No CI authorized or started; preparation is not F03 acceptance.
+
+### Static review follow-through
+GTK author now waits for removed-mode transitions and verifies the actual parent/ordinal/group tombstone/membership projection before recording success. Added a fresh native Windows account/session receiver against the real relay, read-only exact organization/revision comparison, and actual process relaunch persistence checks. These are source preparations, not executed results. Android/Apple transport bootstrap and common manifest assembly still require completion before CI can be proposed.
