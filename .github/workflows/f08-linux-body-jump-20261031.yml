@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
       - run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libgtk-3-dev libx11-dev libsecret-1-0 gnome-keyring xvfb openbox xdotool xclip x11-utils dbus-x11 python3-gi gir1.2-atspi-2.0
+          sudo apt-get install -y libgtk-3-dev libx11-dev libsecret-1-0 gnome-keyring xvfb openbox xdotool xclip x11-utils dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0
       - name: Control complete boundary then run actual cached body and FOUND jumps
         env:
           GH_TOKEN: ${{ github.token }}

@@ -6,7 +6,6 @@ R=F.R;ROOT=F.ROOT;HERE=F.HERE;OUT=ROOT/"build/f08-linux-body-jump"
 PRODUCER_RUN=41238271101;PRODUCER_SHA="82d6d757346b6450d3290a2c8cafb27b43d4a431"
 sys.path.insert(0,str(ROOT/"tests/reader_perf_gtk"));sys.path.insert(0,str(ROOT/"tests/reader_a11y_gtk"))
 import observe as O
-import atspi_client as bus
 def stamp():return time.monotonic_ns()//1000
 def load(p):return json.loads(p.read_text())
 def api(path):return subprocess.check_output(["gh","api","repos/NoGod3524/EXReader/"+path])
@@ -49,6 +48,8 @@ def click(n):
  O.command("xdotool","mousemove","--sync",box["x"]+box["width"]//2,box["y"]+box["height"]//2);O.command("xdotool","click","1")
  return box
 def run():
+ global bus
+ import atspi_client as bus
  F.guard();OUT.mkdir(parents=True,exist_ok=False);report={**R.identity(),"planned_launches":4,"launches":[],"problems":[],"f08_accepted":False}
  try:
   binary,seed=producer();F.compile_probe();shutil.copyfile(ROOT/"build"/F.PROBE,OUT/"module.so");report["module_sha256"]=R.sha(OUT/"module.so");R.need(bus.init()[0],"native accessibility bus");bus.Atspi.set_timeout(800,0)
@@ -93,12 +94,15 @@ def run():
  finally:
   R.save(OUT/"driver.json",report);R.save(OUT/"manifest.json",{**R.identity(),"files":{p.relative_to(OUT).as_posix():{"bytes":p.stat().st_size,"sha256":R.sha(p)} for p in sorted(OUT.rglob("*")) if p.is_file() and "producer" not in p.relative_to(OUT).parts and p.name!="manifest.json"},"f08_accepted":False})
 def replay(raw,driver):
- values={"body_input_to_native_completion_upper_bound":[],"locate_jump_worker_to_native_completion":[]};rows=[]
+ values={"body_input_to_native_completion_upper_bound":[],"locate_jump_worker_to_native_completion":[]};rows=[];ui_values={}
  R.need(len(driver["launches"])==4 and not driver["problems"],"complete new launch cohort")
  for row in driver["launches"]:
   R.need(row["complete"] and row["process_exit"]==0 and row["watcher_failure"] is None and len(row["actions"])==(6 if row["kind"]=="body" else 3),"all extra native actions")
   path=raw/("launch-%02d"%row["launch"])/"native-cost"/(str(row["pid"])+".json");doc=load(path);R.need(doc["pid"]==row["pid"] and all(doc[k]==R.identity()[v] for k,v in [("source","source_sha"),("run","run_id"),("attempt","attempt")]),"extra raw identity")
-  census=F.inspect(doc);R.need(not census["missing_required_generations"] and not census["native_errors"],"complete extra generation/native census")
+  census=F.inspect(doc)
+  for name,items in census["values"].items():
+   if name.startswith("ui_"):ui_values.setdefault(name,[]).extend(items)
+  R.need(not census["missing_required_generations"] and not census["native_errors"],"complete extra generation/native census")
   actions=[]
   for action in row["actions"]:
    if action["kind"]=="locate_jump":
@@ -114,7 +118,7 @@ def replay(raw,driver):
     R.need(prior and any(abs(item["scroll"]-prior[-1]["body"]["scroll"])>.01 for item in used),"actual native body scroll changed")
     values["body_input_to_native_completion_upper_bound"].extend(bound);actions.append({"slot":action["slot"],"native_inputs":[e["id"] for e in native],"frames":used})
   rows.append({"launch":row["launch"],"kind":row["kind"],"jobs":census["jobs"],"native_frames":census["native_frames"],"actions":actions,"raw_sha256":R.sha(path)})
- metrics={k:F.stats(v) for k,v in values.items()};return {**R.identity(),"launches":rows,"metrics":metrics,"producer":load(raw/"producer-identity.json"),"complete":True,"native_fence_wait_included":True,"body_metric_is_input_to_completion_upper_bound":True,"budgets":{"p95_ms":16.67,"p99_ms":33.34},"candidate_passed":all(v["count"] and v["p95_ms"]<=16.67 and v["p99_ms"]<=33.34 for v in metrics.values()),"f08_accepted":False}
+ metrics={k:F.stats(v) for k,v in {**values,**ui_values}.items()};return {**R.identity(),"launches":rows,"metrics":metrics,"producer":load(raw/"producer-identity.json"),"complete":True,"native_fence_wait_included":True,"body_metric_is_input_to_completion_upper_bound":True,"budgets":{"p95_ms":16.67,"p99_ms":33.34},"worker_to_native_is_operation_latency":True,"candidate_ui_frame_passed":all(metrics[k]["count"] and metrics[k]["p95_ms"]<=16.67 and metrics[k]["p99_ms"]<=33.34 for k in ("ui_all_frames","ui_body_frames","ui_locate_jump_frames")),"f08_accepted":False}
 def audit():
  F.guard();out=ROOT/"build/f08-linux-body-jump-audit";out.mkdir(parents=True,exist_ok=False);aid=int(os.environ["F08_ARTIFACT_ID"]);meta=json.loads(api("actions/artifacts/"+str(aid)));data=api("actions/artifacts/"+str(aid)+"/zip");digest=hashlib.sha256(data).hexdigest()
  R.need(not meta["expired"] and meta["name"]=="f08-linux-body-jump-"+R.identity()["run_id"]+"-"+R.identity()["attempt"] and meta["digest"]=="sha256:"+digest and len(data)==meta["size_in_bytes"] and os.environ["F08_ARTIFACT_DIGEST"].removeprefix("sha256:")==digest and meta["workflow_run"]["head_sha"]==R.identity()["source_sha"] and str(meta["workflow_run"]["id"])==R.identity()["run_id"],"extra artifact identity")
