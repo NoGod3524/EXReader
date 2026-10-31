@@ -101,11 +101,22 @@ def click_continue(host,deadline,row):
     command("xdotool","click","1")
     row["input_end"]=now()
 
+def stop_watch(watch,close):
+    # The frozen watcher can still be inside select/read after running=False.
+    # Close its inotify descriptor only after that thread has actually stopped.
+    watch.running=False
+    watch.thread.join(timeout=1)
+    if watch.thread.is_alive():
+        if watch.failure is None:watch.failure="inotify watcher did not stop within 1 second"
+        return
+    close(watch)
+
 def install():
     need(os.environ.get("GITHUB_ACTIONS")=="true","Actions only")
     need(os.environ.get("DBUS_SESSION_BUS_ADDRESS"),"explicit desktop bus session required")
     need(not getattr(O.Host,"_f08_compact_adapter",False),"adapter already installed")
     launch,wait,close_log=O.Host.launch,O.Watch.wait,O.Host.close_log
+    close_watch=O.Watch.close
     pending={}
     def launch_native(host):
         settings=(host.profile/"reader.ini").read_text()
@@ -163,6 +174,7 @@ def install():
                 if src.is_file() and src.resolve()!=(dest/name).resolve():shutil.copyfile(src,dest/name)
             pending.pop(str(host.folder.resolve()),None)
     O.Host.launch,O.Watch.wait,O.Host.close_log=launch_native,wait_native,close_native
+    O.Watch.close=lambda watch:stop_watch(watch,close_watch)
     O.Host._f08_compact_adapter=True
 
 if __name__=="__main__":
