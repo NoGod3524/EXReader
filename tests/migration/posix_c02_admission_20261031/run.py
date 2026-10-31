@@ -25,12 +25,21 @@ def main():
     stdout=result.stdout.decode("utf-8","replace");stderr=result.stderr.decode("utf-8","replace")
     (output/"native.stdout").write_text(stdout,encoding="utf-8")
     (output/"native.stderr").write_text(stderr,encoding="utf-8")
+    scope_work=output/"native-scope"
+    scope_work.mkdir(mode=0o700)
+    scope_result=subprocess.run([str(tool),"--scope-cases",str(scope_work)],capture_output=True,timeout=180)
+    scope_stdout=scope_result.stdout.decode("utf-8","replace");scope_stderr=scope_result.stderr.decode("utf-8","replace")
+    (output/"scope.stdout").write_text(scope_stdout,encoding="utf-8")
+    (output/"scope.stderr").write_text(scope_stderr,encoding="utf-8")
+    scope_rows=[json.loads(line) for line in scope_stdout.splitlines() if line.startswith('{"')]
+    scope_summaries=[row for row in scope_rows if "source" in row]
+    scope_cases=[row for row in scope_rows if "case" in row]
     rows=[json.loads(line) for line in stdout.splitlines() if line.startswith('{"')]
     summaries=[row for row in rows if "source" in row]
     cases=[row for row in rows if "case" in row]
     receipt=dict(source=os.environ["GITHUB_SHA"],run=os.environ["GITHUB_RUN_ID"],attempt=os.environ["GITHUB_RUN_ATTEMPT"],
                  platform=platform.platform(),tool=dict(name=tool.name,bytes=tool.stat().st_size,sha256=sha(tool)),exit=result.returncode,
-                 summaries=summaries,case_rows=cases,actual_sdk=False,host_wiring=False,power_loss=False)
+                 summaries=summaries,case_rows=cases,scoped=dict(exit=scope_result.returncode,summaries=scope_summaries,case_rows=scope_cases),actual_sdk=False,host_wiring=False,power_loss=False)
     (output/"receipt.json").write_text(json.dumps(receipt,indent=2)+"\n",encoding="utf-8")
     inventory=[]
     for path in sorted(output.rglob("*")):
@@ -49,6 +58,15 @@ def main():
     assert r["passed"] is True and r["native_posix"] is True and r["process_kill"] is True
     assert r["power_loss"] is False and r["actual_sdk"] is False and r["host_wiring"] is False
     assert result.returncode==0
+    print(scope_stdout,end="");print(scope_stderr,end="",file=sys.stderr)
+    assert len(scope_summaries)==1
+    scoped=scope_summaries[0]
+    assert scoped["source"]==os.environ["GITHUB_SHA"] and scoped["cases"]==7 and len(scope_cases)==7
+    assert scoped["checks"]==sum(c["checks"] for c in scope_cases) and scoped["failed"]==sum(c["failed"] for c in scope_cases)==0
+    assert scoped["passed"] is True and scoped["scoped"] is True and scoped["process_kill"] is True
+    assert scoped["actual_sdk"] is False and scoped["host_wiring"] is False and scoped["power_loss"] is False
+    assert scope_result.returncode==0
+    print(f"POSIX-C02-SCOPED cases=7 checks={scoped['checks']} failed=0")
     print(f"POSIX-C02-ADMISSION cases={r['cases']} checks={r['checks']} failed=0")
     return 0
 if __name__=="__main__":sys.exit(main())

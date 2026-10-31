@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 add_compile_options(/utf-8)
-set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed SDK: frozen 3.40.0 or explicit 3.41.0 candidate")
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed SDK: 3.40.0, 3.41.0 or frozen 3.42.0")
 option(EXR_READER_WINDOWS_RAW3 "Explicit raw-capability Windows host; never default" OFF)
 option(EXR_READER_WINDOWS_TXT_RECOVERY "Enable the incomplete product TXT recovery integration" OFF)
 option(EXR_READER_WINDOWS_TXT_PROGRESS "Persist product TXT reading positions on the content identity" OFF)
@@ -26,12 +26,12 @@ if(EXR_READER_WINDOWS_TXT_PROGRESS)
 endif()
 set(EXR_WINDOWS_PRODUCT_VERSION 0.1.0)
 if(EXR_READER_WINDOWS_RAW3)
-  if(NOT EXR_SDK_VERSION STREQUAL "3.41.0")
-    message(FATAL_ERROR "Raw Windows host requires the approved SDK3.41 profile")
+  if(NOT EXR_SDK_VERSION MATCHES "^3\\.(41|42)\\.0$")
+    message(FATAL_ERROR "Raw Windows host requires the approved SDK3.41 or explicit frozen SDK3.42 profile")
   endif()
   set(EXR_WINDOWS_PRODUCT_VERSION 0.2.0)
 endif()
-if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
+if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41|42)\\.0$")
   message(FATAL_ERROR "Unsupported exact reader SDK version: ${EXR_SDK_VERSION}")
 endif()
 find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core library
@@ -108,11 +108,26 @@ target_link_libraries(reader_catalog_sdk PUBLIC reader_catalog EXReader::exr_lib
 target_link_libraries(reader_catalog_sdk PRIVATE bcrypt normaliz)
 target_compile_options(reader_catalog_sdk PRIVATE /W4 /WX)
 
+set(READER_C02_PREFIX "" CACHE PATH "Installed C02 native admission, CAS and hardening provider")
+if(NOT IS_ABSOLUTE "${READER_C02_PREFIX}")
+  message(FATAL_ERROR "Every Windows library host requires an absolute READER_C02_PREFIX")
+endif()
+file(TO_CMAKE_PATH "${READER_C02_PREFIX}" READER_C02_PREFIX)
+add_library(reader_c02 INTERFACE)
+target_include_directories(reader_c02 INTERFACE
+  "${READER_C02_PREFIX}/include/exreader-coordinator-native"
+  "${READER_C02_PREFIX}/include/exreader-coordinator-cas"
+  "${READER_C02_PREFIX}/include/exreader-migration-coordinator-hardening")
+target_link_libraries(reader_c02 INTERFACE
+  "${READER_C02_PREFIX}/lib/exreader-coordinator-native.lib"
+  "${READER_C02_PREFIX}/lib/exreader-coordinator-cas.lib"
+  "${READER_C02_PREFIX}/lib/exreader-migration-coordinator-hardening.lib" advapi32)
+
 function(reader_windows_account_host target)
   add_executable(${target} WIN32 "${ROOT}/examples/reader.c")
   target_compile_definitions(${target} PRIVATE EXR_READER_PRODUCT_CATALOG=1 EXR_READER_DESKTOP_METADATA=1
     EXR_READER_WINDOWS_ACCOUNT=1 "EXR_READER_WINDOWS_PRODUCT_HEADER=\"${DESKTOP}/windows_catalog.inc\"")
-  target_link_libraries(${target} PRIVATE reader_catalog_sdk EXReader::exr_core
+  target_link_libraries(${target} PRIVATE reader_c02 reader_catalog_sdk EXReader::exr_core
     EXReaderDesktopMetadata::reader_desktop_metadata EXReaderSession::reader_session
     EXReaderCredentials::exr_credentials EXReaderSideload::exr_sideload
     comdlg32 gdi32 shell32 user32 advapi32 bcrypt normaliz)

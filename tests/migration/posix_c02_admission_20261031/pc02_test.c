@@ -164,7 +164,7 @@ static int child_main(int argc,char **argv){
 typedef struct {pid_t pid;
  int ready,go;
  } child;
-static int spawn_child(const fixture *f,unsigned mode,unsigned phase,child *out){
+static int spawn_command(const char *command,const fixture *f,unsigned mode,unsigned phase,child *out){
  int ready[2]={-1,-1},go[2]={-1,-1};
  char modes[16],phases[16],ready_fd[16],go_fd[16];
  pid_t pid;
@@ -180,7 +180,7 @@ static int spawn_child(const fixture *f,unsigned mode,unsigned phase,child *out)
  if(pid<0)return 0;
  if(!pid){
   if(fcntl(ready[1],F_SETFD,0)||fcntl(go[0],F_SETFD,0))_exit(90);
-  execl(self,self,"--child",f->authority,f->library,modes,phases,ready_fd,go_fd,(char *)NULL);
+  execl(self,self,command,f->authority,f->library,modes,phases,ready_fd,go_fd,(char *)NULL);
  _exit(91);
  }
  close(ready[1]);
@@ -190,6 +190,7 @@ static int spawn_child(const fixture *f,unsigned mode,unsigned phase,child *out)
  out->go=go[1];
  return 1;
 }
+static int spawn_child(const fixture *f,unsigned mode,unsigned phase,child *out){return spawn_command("--child",f,mode,phase,out);}
 static int reached(child *c){
  struct pollfd pollfd={c->ready,POLLIN|POLLHUP,0};
  char value=0;
@@ -476,6 +477,223 @@ static void negative_case(unsigned kind){
  }
  end_case(name);
 }
+typedef struct {fixture f;
+ char context[PATH_BYTES],outside[PATH_BYTES];
+ int fd;
+ pc02_identity id;
+ pc02_scope *scope;
+ } scoped_fixture;
+static int identity_fd(int fd,pc02_identity *id){
+ struct stat s;
+ if(fstat(fd,&s))return 0;
+ id->device=(uint64_t)s.st_dev;
+ id->inode=(uint64_t)s.st_ino;
+ return 1;
+}
+static int scoped_fixture_open(scoped_fixture *s,const char *name,int registered){
+ char label[96];
+ memset(s,0,sizeof(*s));
+ s->fd=-1;
+ snprintf(label,sizeof(label),"%02u-%s",++fixture_count,name);
+ if(!join(s->f.directory,work,label)||mkdir(s->f.directory,0700)||
+    !join(s->outside,s->f.directory,"outside")||mkdir(s->outside,0700))return 0;
+ char system[PATH_BYTES];
+ if(!join(system,s->f.directory,"trusted-system")||mkdir(system,0770)||chmod(system,0770)||
+    !join(s->context,system,"app-container")||mkdir(s->context,0700)||
+    !join(s->f.authority,s->context,"authority")||!join(s->f.library,s->context,"library.sqlite"))return 0;
+ s->fd=open(s->context,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+ if(s->fd<0||!identity_fd(s->fd,&s->id)||!pc02_scope_create(s->fd,&s->id,&s->scope))return 0;
+ if(!registered)return 1;
+ proof p={"original\n",0};
+ return pc02_authority_create_in(s->scope,"authority")&&file_write(s->f.library,"original\n",9)&&
+ pc02_enroll_in(s->scope,"authority","library.sqlite",0,exact_proof,&p,NULL);
+}
+static void scoped_fixture_close(scoped_fixture *s){
+ pc02_scope_close(s->scope);
+ s->scope=NULL;
+ if(s->fd>=0)close(s->fd);
+ s->fd=-1;
+}
+static int scoped_open(scoped_fixture *s,unsigned mode,pc02_lease **h){
+ return pc02_open_in(s->scope,"authority","library.sqlite",mode,NULL,NULL,h);
+}
+static void scoped_lifetime_case(void){
+ const char *name="scope-fd-lifetime-and-sdk-path";
+ scoped_fixture s;
+ pc02_lease *h=NULL;
+ begin_case(name);
+ expect(scoped_fixture_open(&s,name,0),"trusted private Context fd under system-style group-writable ancestor");
+ expect(!pc02_authority_create(s.f.authority),"default strict Linux behavior still rejects these ancestors");
+ expect(pc02_authority_create_in(s.scope,"authority")&&file_write(s.f.library,"original\n",9),"explicit authority inside the trusted fd");
+ proof p={"original\n",0};
+ expect(pc02_enroll_in(s.scope,"authority","library.sqlite",0,exact_proof,&p,NULL)&&p.calls==1,"scoped actual enrollment proof");
+ expect(scoped_open(&s,PC02_SHARED,&h),"scoped registered reader");
+ const char *actual=pc02_library_path(h);
+ char bytes[9];
+ expect(actual&&file_read(actual,bytes,sizeof(bytes))&&!memcmp(bytes,"original\n",9),"checked fd-derived SDK path addresses actual expected object");
+ scoped_fixture_close(&s);
+ expect(pc02_check(h)&&pc02_borrow(h)&&!pc02_close(h),"lease owns its CLOEXEC scope duplicate after factory closes");
+ expect(pc02_unborrow(h)&&pc02_close(h),"last borrowed owner releases scoped lease");
+ end_case(name);
+}
+static void scoped_identity_case(void){
+ const char *name="scope-native-identity-and-private-mode";
+ scoped_fixture s;
+ pc02_scope *bad=NULL;
+ begin_case(name);
+ expect(scoped_fixture_open(&s,name,0),"private scoped fixture");
+ pc02_identity wrong=s.id;
+ wrong.inode++;
+ expect(!pc02_scope_create(s.fd,&wrong,&bad)&&!bad,"digest or wrong native identity cannot create scope");
+ expect(!chmod(s.context,0755)&&!pc02_scope_create(s.fd,&s.id,&bad)&&!bad,"nonprivate anchor rejects before path operations");
+ expect(!chmod(s.context,0700),"restore fixture permissions");
+ char file[PATH_BYTES];
+ expect(join(file,s.context,"not-directory")&&file_write(file,"x",1),"actual regular file fd");
+ int fd=open(file,O_RDONLY|O_CLOEXEC);
+ pc02_identity id={0};
+ expect(fd>=0&&identity_fd(fd,&id)&&!pc02_scope_create(fd,&id,&bad)&&!bad,"regular fd never grants Context authority");
+ if(fd>=0)close(fd);
+ scoped_fixture_close(&s);
+ end_case(name);
+}
+static void scoped_escape_case(void){
+ const char *name="scope-relative-path-escape";
+ scoped_fixture s;
+ pc02_lease *h=NULL;
+ begin_case(name);
+ expect(scoped_fixture_open(&s,name,1),"registered scoped fixture");
+ const char *bad[]={"../escape","/absolute","authority/../escape","authority//escape","authority/.","."};
+ proof p={"original\n",0};
+ for(unsigned k=0;
+ k<sizeof(bad)/sizeof(bad[0]);
+ k++){
+  expect(!pc02_authority_create_in(s.scope,bad[k]),"authority path cannot escape or normalize ambiguously");
+  expect(!pc02_open_in(s.scope,"authority",bad[k],PC02_SHARED,NULL,NULL,&h)&&!h,"library path cannot escape scope");
+ }
+ expect(!pc02_enroll_in(s.scope,"authority","authority/library.sqlite",1,exact_proof,&p,NULL)&&!p.calls,"authority cannot be reused as library namespace");
+ expect(scoped_open(&s,PC02_SHARED,&h)&&pc02_close(h),"original scoped library unchanged after refusals");
+ scoped_fixture_close(&s);
+ end_case(name);
+}
+static void scoped_symlink_case(void){
+ const char *name="scope-symlink-escape";
+ scoped_fixture s;
+ pc02_lease *h=NULL;
+ begin_case(name);
+ expect(scoped_fixture_open(&s,name,1),"registered scoped fixture");
+ char linkpath[PATH_BYTES],outside[PATH_BYTES];
+ expect(join(linkpath,s.context,"foreign")&&
+  join(outside,s.outside,"library.sqlite")&&file_write(outside,"outside\n",8)&&!symlink(s.outside,linkpath),"native link to a distinct private namespace");
+ expect(!pc02_authority_create_in(s.scope,"foreign/authority"),"relative authority traversal refuses symlink");
+ expect(!pc02_open_in(s.scope,"authority","foreign/library.sqlite",PC02_SHARED,NULL,NULL,&h)&&!h,"relative library traversal refuses symlink");
+ char retained[PATH_BYTES];
+ expect(join(retained,s.context,"retained.sqlite")&&!rename(s.f.library,retained)&&!symlink(outside,s.f.library),"actual registered target becomes symlink");
+ expect(!scoped_open(&s,PC02_SHARED,&h)&&!h,"registered target symlink never opens SDK");
+ char bytes[8];
+ expect(file_read(outside,bytes,sizeof(bytes))&&!memcmp(bytes,"outside\n",8),"outside object untouched");
+ scoped_fixture_close(&s);
+ end_case(name);
+}
+static void scoped_rebind_case(void){
+ const char *name="scope-anchor-path-rebinding";
+ scoped_fixture s;
+ pc02_lease *h=NULL;
+ begin_case(name);
+ expect(scoped_fixture_open(&s,name,1)&&scoped_open(&s,PC02_SHARED,&h),"live scoped owner");
+ char moved[PATH_BYTES];
+ size_t n=strlen(s.context);
+ expect(n+10<sizeof(moved),"bounded renamed fixture");
+ strcpy(moved,s.context);
+ strcat(moved,".retained");
+ expect(!rename(s.context,moved)&&!mkdir(s.context,0700),"actual context path now names a distinct directory");
+ expect(!pc02_check(h)&&!pc02_library_path(h),"old scope ID and SDK path cannot rebind");
+ pc02_lease *fresh=NULL;
+ expect(!scoped_open(&s,PC02_SHARED,&fresh)&&!fresh,"factory does not adopt replacement context");
+ expect(pc02_close(h),"identity refusal does not synthesize CLEAN or delete evidence");
+ scoped_fixture_close(&s);
+ end_case(name);
+}
+static void scoped_permission_case(void){
+ const char *name="scope-anchor-permission-drift";
+ scoped_fixture s;
+ pc02_lease *h=NULL;
+ begin_case(name);
+ expect(scoped_fixture_open(&s,name,1)&&scoped_open(&s,PC02_SHARED,&h),"live private Context scope");
+ expect(!chmod(s.context,0755),"actual anchor permission drift");
+ expect(!pc02_check(h)&&!pc02_library_path(h),"scope private-mode drift refuses checked SDK path");
+ pc02_lease *fresh=NULL;
+ expect(!scoped_open(&s,PC02_SHARED,&fresh)&&!fresh,"no implicit broader-scope adoption");
+ expect(pc02_close(h)&&!chmod(s.context,0700),"close only releases lifetime; restore test fixture");
+ expect(scoped_open(&s,PC02_SHARED,&fresh)&&pc02_close(fresh),"exact unchanged authority works after explicit mode restoration");
+ scoped_fixture_close(&s);
+ end_case(name);
+}
+static int scoped_child_main(int argc,char **argv){
+ unsigned long long device=0,inode=0;
+ char tail;
+ if(argc!=8||strlen(argv[3])!=32||sscanf(argv[3],"%16llx%16llx%c",&device,&inode,&tail)!=2)return 71;
+ int fd=open(argv[2],O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+ pc02_scope *scope=NULL;
+ pc02_identity expected={(uint64_t)device,(uint64_t)inode};
+ pc02_lease *h=NULL;
+ pc02_cap *cap=NULL;
+ barrier b={atoi(argv[6]),atoi(argv[7]),(unsigned)strtoul(argv[5],NULL,10)};
+ pc02_controls controls={&b,at_phase,0,0};
+ proof p={"original\n",0};
+ pc02_grant grant={0};
+ if(fd<0||!pc02_scope_create(fd,&expected,&scope))return 72;
+ close(fd);
+ if(!pc02_open_in(scope,"authority","library.sqlite",PC02_OWNER,NULL,&controls,&h))return 73;
+ pc02_scope_close(scope);
+ if(!pc02_begin(h,manifest,input,&cap))return 74;
+ if(!pc02_finish(h,cap,terminal,exact_proof,&p,&grant))return 75;
+ return pc02_close(h)?0:76;
+}
+static void scoped_pending_case(void){
+ const char *name="scope-process-death-and-exact-recovery";
+ scoped_fixture s;
+ pc02_lease *h=NULL,*reader=NULL;
+ pc02_cap *cap=NULL;
+ pc02_pending_record exact={0},bad={0};
+ pc02_grant grant={0};
+ proof p={"original\n",0};
+ child c={0};
+ begin_case(name);
+ expect(scoped_fixture_open(&s,name,1),"registered private context");
+ fixture args={0};
+ strcpy(args.authority,s.context);
+ snprintf(args.library,sizeof(args.library),"%016llx%016llx",(unsigned long long)s.id.device,(unsigned long long)s.id.inode);
+ expect(spawn_command("--scope-child",&args,PC02_OWNER,PC02_PENDING_DURABLE,&c),"fresh exec in fixed trusted Context");
+ int at=reached(&c);
+ expect(at,"scoped native durable PENDING barrier");
+ if(!at){finish_child(&c,1);
+ scoped_fixture_close(&s);
+ end_case(name);
+ return;
+ }
+ expect(!scoped_open(&s,PC02_SHARED,&reader),"scoped reader refuses live migration");
+ expect(finish_child(&c,1),"kill actual scoped holder");
+ expect(!scoped_open(&s,PC02_SHARED,&reader),"persistent scoped PENDING after process death");
+ expect(scoped_open(&s,PC02_RECOVER,&h)&&pc02_pending(h,&exact),"fresh scoped exact descriptor");
+ bad=exact;
+ bad.generation++;
+ expect(!pc02_resume(h,&bad,&cap)&&!cap,"stale scoped recovery descriptor refuses");
+ expect(pc02_resume(h,&exact,&cap)&&pc02_finish(h,cap,terminal,exact_proof,&p,&grant)&&p.calls==1,"actual original proof before scoped CLEAN");
+ expect(pc02_close(h)&&scoped_open(&s,PC02_SHARED,&reader)&&pc02_close(reader),"new scoped reader after independent finish");
+ scoped_fixture_close(&s);
+ end_case(name);
+}
+static int scoped_cases_main(void){
+ scoped_lifetime_case();
+ scoped_identity_case();
+ scoped_escape_case();
+ scoped_symlink_case();
+ scoped_rebind_case();
+ scoped_permission_case();
+ scoped_pending_case();
+ printf("{\"source\":\"%s\",\"cases\":%u,\"checks\":%u,\"failed\":%u,\"passed\":%s,\"native_posix\":true,\"scoped\":true,\"process_kill\":true,\"power_loss\":false,\"actual_sdk\":false,\"host_wiring\":false}\n",SOURCE_SHA,cases,checks,failures,failures?"false":"true");
+ return failures?1:0;
+}
 int main(int argc,char **argv){
  memset(manifest,'a',64);
  manifest[64]=0;
@@ -484,6 +702,11 @@ int main(int argc,char **argv){
  memset(terminal,'c',64);
  terminal[64]=0;
  if(argc==8&&!strcmp(argv[1],"--child"))return child_main(argc,argv);
+ if(argc==8&&!strcmp(argv[1],"--scope-child"))return scoped_child_main(argc,argv);
+ if(argc==3&&!strcmp(argv[1],"--scope-cases")){
+  if(!realpath(argv[0],self)||!realpath(argv[2],work))return 64;
+  return scoped_cases_main();
+ }
  if(argc!=2||!realpath(argv[0],self)||!realpath(argv[1],work)){fputs("usage: posix-c02-admission-check EXISTING_PRIVATE_WORKDIR\n",stderr);
  return 64;
  }

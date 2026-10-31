@@ -301,3 +301,46 @@ older complete history is refused by byte comparison against the protected archi
 It checks SQLite ledger/source/annotation content independently of the C verifier.
 These additions have not yet passed Actions. POSIX host/owner integration and the
 final same-source original-ZIP audit remain outstanding; formal acceptance is 95/108.
+
+## Qualified Windows raw repair and POSIX component result (2026-10-31 05:40 UTC)
+
+Source faae61879441085d800879332699d0b6fd5e2307, run
+[41170465266/A1](https://github.com/NoGod3524/EXReader/actions/runs/41170465266),
+job 124447124317 passed all 83 actual migration/recovery scenarios, the 29-case
+scanner (91794 checks, 6603 observations), registry 50/530, installed enrollment
+11 cases, actual Windows product 6 cases and the unchanged legacy scenario runner.
+Original artifact 13031266152: 2859406 bytes, API SHA256
+dbad1ea92cdaa8f256eeb67b61d9a95f42bbf99540c7447253bf4c1c6bedd6ed.
+The raw repair and original-prefix floor additions above now have actual Actions
+evidence. The earlier ef2478 run 41168469106 ended cancelled at its 35-minute
+job timeout; it is retained as a failed bring-up attempt, not a runtime pass.
+
+Source 10926201953185cd1ec2fcd0c2b3f4985bc9feef, run
+[41171196433/A1](https://github.com/NoGod3524/EXReader/actions/runs/41171196433)
+passed the strict native POSIX consumer on Ubuntu and macOS: each 28 cases /
+207 checks / zero failures. These component receipts explicitly declare
+actual_sdk=false, host_wiring=false and power_loss=false.
+Ubuntu artifact 13030579171: 99149 bytes, API SHA256
+d9efdab3688cce47c6c3696cb168391eab7fb7afb9b27a86254b25db0f1e4d8c.
+macOS artifact 13030429676: 99452 bytes, API SHA256
+7da3f86bea1aafc5935c4865683ced331153d58cbde6ead5f28eabaee0241316.
+The first POSIX source b366191a run 41170770328 preserved its macOS Clang
+uninitialized-observation compile failure; 109262 initialized that descriptor.
+Its companion native run 41170770312 retains the original six ABI2 failures
+on both platforms, including the absent/stale prefix mutation signatures.
+
+The next integration candidate adds a fixed OS-container scope without weakening
+the default POSIX path walk, plus seven scoped native cases; an explicit SDK
+creation/enrollment adapter; actual GTK admission before product-lock/SDK access
+and until its live page/search owners retire; and default C02 admission for all
+Windows standalone readers and installed legacy read commands. Old Windows
+mutation commands refuse before target/report/lock access. The unchanged legacy
+runner uses an explicitly selected Actions-only, noninstallable historical build.
+
+A new independent audit consumes the four pinned original faae ZIP artifacts.
+It checks native protocols and SQLite content, and reruns nine resealed negative
+controls. Its Windows component mode explicitly remains incomplete; original
+ZIP hashes and failure output are retained. The new scope/host/audit candidates
+have not yet been executed at this entry. Actual POSIX synchronous migration,
+Android/Apple admission and final same-source complete qualification remain open.
+Formal acceptance remains 95/108.

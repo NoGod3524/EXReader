@@ -5,17 +5,47 @@ if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   add_compile_options(/utf-8)
 endif()
-find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
+set(EXR_SDK_VERSION "3.42.0" CACHE STRING "Exact installed Windows reading SDK: 3.41.0 or frozen 3.42.0")
+if(NOT EXR_SDK_VERSION MATCHES "^3\\.(41|42)\\.0$")
+  message(FATAL_ERROR "Unsupported exact Windows reader SDK: ${EXR_SDK_VERSION}")
+endif()
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core library
+  PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
+set(READER_C02_PREFIX "" CACHE PATH "Installed C02 native admission, CAS and hardening provider")
+if(NOT IS_ABSOLUTE "${READER_C02_PREFIX}")
+  message(FATAL_ERROR "Every Windows library host requires an absolute READER_C02_PREFIX")
+endif()
+file(TO_CMAKE_PATH "${READER_C02_PREFIX}" READER_C02_PREFIX)
+add_library(reader_c02 INTERFACE)
+target_include_directories(reader_c02 INTERFACE
+  "${READER_C02_PREFIX}/include/exreader-coordinator-native"
+  "${READER_C02_PREFIX}/include/exreader-coordinator-cas"
+  "${READER_C02_PREFIX}/include/exreader-migration-coordinator-hardening")
+target_link_libraries(reader_c02 INTERFACE
+  "${READER_C02_PREFIX}/lib/exreader-coordinator-native.lib"
+  "${READER_C02_PREFIX}/lib/exreader-coordinator-cas.lib"
+  "${READER_C02_PREFIX}/lib/exreader-migration-coordinator-hardening.lib" advapi32)
+if(TARGET EXReader::exreader)
+  set(reader_sdk EXReader::exreader)
+else()
+  set(reader_sdk EXReader::exr_library EXReader::exr_core)
+endif()
 if(NOT EXR_REVIEW_SOURCE)
   set(EXR_REVIEW_SOURCE "${CMAKE_CURRENT_LIST_DIR}/../../../examples/reader.c")
 endif()
 add_executable(EXReader WIN32 "${EXR_REVIEW_SOURCE}")
-target_link_libraries(EXReader PRIVATE EXReader::exreader comdlg32 gdi32 shell32 user32)
+target_link_libraries(EXReader PRIVATE reader_c02 ${reader_sdk} comdlg32 gdi32 shell32 user32)
 if(NOT MSVC)
   target_link_libraries(EXReader PRIVATE m)
 endif()
 target_compile_definitions(EXReader PRIVATE EXR_HOST_WORKER_REVIEW=1
   EXR_HOST_WORKER_REVIEW_HEADER="${CMAKE_CURRENT_LIST_DIR}/hooks.h")
-find_file(EXR_RUNTIME NAMES exreader.dll libexreader.dll PATHS "${EXR_SDK}/bin" NO_DEFAULT_PATH REQUIRED)
-add_custom_command(TARGET EXReader POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:EXReader>" VERBATIM)
+set(exr_type "")
+if(TARGET EXReader::exreader)
+  get_target_property(exr_type EXReader::exreader TYPE)
+endif()
+if(exr_type STREQUAL "SHARED_LIBRARY")
+  find_file(EXR_RUNTIME NAMES exreader.dll libexreader.dll PATHS "${EXR_SDK}/bin" NO_DEFAULT_PATH REQUIRED)
+  add_custom_command(TARGET EXReader POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:EXReader>" VERBATIM)
+endif()

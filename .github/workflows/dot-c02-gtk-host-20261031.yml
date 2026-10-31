@@ -1,0 +1,91 @@
+name: C02 actual GTK admission and retained search ownership
+on:
+  push:
+    branches: [codex/dot-c02-native-journal-20261030]
+    paths:
+      - extras/migration/posix_c02_admission_20261031/**
+      - extras/migration/posix_c02_sdk_admission_20261031/**
+      - examples/linux/reading.c
+      - examples/linux/CMakeLists.txt
+      - tests/migration/gtk_c02_host_20261031/**
+      - .github/workflows/dot-c02-gtk-host-20261031.yml
+permissions: {contents: read}
+defaults:
+  run: {shell: bash}
+jobs:
+  gtk:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Freeze SDK and original coordinator controls
+        run: |
+          set -euo pipefail
+          git diff --exit-code 8357eafa28423a7ab93ba08b823af80f01ad1505 HEAD -- src include cmake CMakeLists.txt bindings
+          git diff --exit-code a8d0b162d8c21617e4c2c837e3eb2b2174bbf69b HEAD -- extras/migration/windows_coordinator_hardening_20261030 tests/migration/windows_coordinator_hardening_20261030 extras/migration/windows_coordinator_cas_20261030 tests/migration/windows_coordinator_cas_20261030 extras/migration/windows_admission_lease_20261030
+          mkdir -p evidence/build-logs
+          echo "C02_GTK_EVIDENCE=$HOME/c02-gtk-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
+      - name: Install GTK and XML headers
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev libxml2-dev libssl-dev
+      - name: Install unchanged SDK and native authority
+        run: |
+          set -euo pipefail
+          cmake --preset reading-library -B build/sdk -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-sdk"
+          cmake --build build/sdk --parallel 4 2>&1 | tee evidence/build-logs/sdk.log
+          cmake --install build/sdk
+          cmake -S extras/migration/windows_coordinator_hardening_20261030 -B build/abi2 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-abi2"
+          cmake --build build/abi2 --parallel 4
+          cmake --install build/abi2
+          cmake -S extras/migration/posix_c02_admission_20261031 -B build/native -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage-abi2" -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-native"
+          cmake --build build/native --parallel 4 2>&1 | tee evidence/build-logs/native.log
+          cmake --install build/native
+          cmake -S extras/migration/posix_c02_sdk_admission_20261031 -B build/sdk-admission -DCMAKE_BUILD_TYPE=Release -DWH_PREFIX="$GITHUB_WORKSPACE/stage-abi2" -DPC02_PREFIX="$GITHUB_WORKSPACE/stage-native" -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-c02"
+          cmake --build build/sdk-admission --parallel 4 2>&1 | tee evidence/build-logs/sdk-admission.log
+          cmake --install build/sdk-admission
+      - name: Build actual installed GTK product with search and navigation
+        run: |
+          set -euo pipefail
+          for component in search navigation; do
+            cmake -S "apps/reader/$component" -B "build/$component" -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DEXR_SDK_VERSION=3.42.0 -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-products"
+            cmake --build "build/$component" --parallel 4
+            cmake --install "build/$component"
+          done
+          cmake -S extras/opds -B build/hash -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-hash"
+          cmake --build build/hash --parallel 4
+          cmake --install build/hash
+          cmake -S tests/migration/gtk_c02_host_20261031 -B build/gtk -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/stage-sdk" -DEXR_C02_PREFIX="$GITHUB_WORKSPACE/stage-c02" -DREADER_SEARCH_PREFIX="$GITHUB_WORKSPACE/stage-products" -DREADER_NAVIGATION_PREFIX="$GITHUB_WORKSPACE/stage-products" -DREADER_ORIGINAL_HASH_PREFIX="$GITHUB_WORKSPACE/stage-hash"
+          cmake --build build/gtk --parallel 4 --target exreader-linux c02-gtk-host-check 2>&1 | tee evidence/build-logs/gtk.log
+      - name: Actual page and unfinished search across independent owner processes
+        run: |
+          set -euo pipefail
+          python -m py_compile tests/migration/gtk_c02_host_20261031/run.py
+          python -c "import sys;sys.path.insert(0,'tools');from host_font import fetch;fetch('build/host-font')"
+          python tests/migration/gtk_c02_host_20261031/run.py --host build/gtk/c02-gtk-host-check --admission stage-c02/bin/exreader-c02-admission --font build/host-font/Reader.otf --output "$C02_GTK_EVIDENCE" 2>&1 | tee evidence/host.log
+      - name: Preserve binary source and original state identity
+        if: always()
+        run: |
+          mkdir -p evidence
+          python - <<'PY'
+          import hashlib,json,os,pathlib,shutil
+          root=pathlib.Path('evidence')
+          for path in ('build/gtk/c02-gtk-host-check','build/gtk/actual-host/gtk-host/exreader-linux','stage-c02/bin/exreader-c02-admission'):
+              p=pathlib.Path(path)
+              if p.is_file(): shutil.copy2(p,root/p.name)
+          data=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],full_c02_acceptance=False)
+          (root/'receipt.json').write_text(json.dumps(data,indent=2)+'\n')
+          (root/'file-hashes.json').write_text(json.dumps([dict(path=str(p.relative_to(root)),bytes=p.stat().st_size,sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sorted(root.rglob('*')) if p.is_file()],indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-actual-gtk-${{ github.sha }}
+          path: |
+            evidence/
+            ${{ env.C02_GTK_EVIDENCE }}/
+          include-hidden-files: true
+          if-no-files-found: error

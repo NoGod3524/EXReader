@@ -5,6 +5,14 @@
 cmake_minimum_required(VERSION 3.24)
 project(EXReaderLegacyMigration LANGUAGES C)
 option(EXR_MIGRATION_WINDOWS_RECORD_CANDIDATE "Build the separate full-FileID Windows record format; no recovery admission" OFF)
+option(LM_HISTORICAL_TEST_BASELINE "Actions-only original CLI behavior controls; installation is forbidden" OFF)
+if(LM_HISTORICAL_TEST_BASELINE)
+  if(NOT WIN32 OR NOT "$ENV{GITHUB_ACTIONS}" STREQUAL "true")
+    message(FATAL_ERROR "LM_HISTORICAL_TEST_BASELINE is restricted to explicit Windows Actions regression controls")
+  endif()
+  message(STATUS "Historical behavior baseline: no C02 product acceptance and no installation")
+  install(CODE "message(FATAL_ERROR \"Historical legacy test controls cannot be installed\")")
+endif()
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   add_compile_options(/utf-8)
@@ -13,10 +21,46 @@ endif()
 if(EXR_SDK)
   list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
 endif()
-find_package(EXReader CONFIG REQUIRED COMPONENTS core library)
+if(WIN32 AND NOT LM_HISTORICAL_TEST_BASELINE)
+  find_package(EXReader 3.42.0 EXACT CONFIG REQUIRED COMPONENTS core library)
+else()
+  find_package(EXReader CONFIG REQUIRED COMPONENTS core library)
+endif()
 if(NOT TARGET EXReader::exr_library)
   message(FATAL_ERROR "The installed SDK lacks the library component (build it with EXR_ENABLE_LIBRARY=ON); the migration tool cannot run without the SQLite library API.")
 endif()
+
+# Every normal Windows CLI is a C02 consumer. Historical controls are explicit
+# Actions-only executables and can never enter an installation prefix.
+if(WIN32 AND NOT LM_HISTORICAL_TEST_BASELINE)
+  set(LM_C02_PREFIX "" CACHE PATH "Installed C02 native admission, CAS and hardening libraries")
+  if(NOT IS_ABSOLUTE "${LM_C02_PREFIX}")
+    message(FATAL_ERROR "Windows migration commands require an absolute LM_C02_PREFIX")
+  endif()
+  file(TO_CMAKE_PATH "${LM_C02_PREFIX}" LM_C02_PREFIX)
+  add_library(lm_c02_guard STATIC src/lm_c02_guard.c)
+  target_include_directories(lm_c02_guard PRIVATE
+    "${LM_C02_PREFIX}/include/exreader-coordinator-native"
+    "${LM_C02_PREFIX}/include/exreader-coordinator-cas"
+    "${LM_C02_PREFIX}/include/exreader-migration-coordinator-hardening")
+  target_compile_definitions(lm_c02_guard PRIVATE _CRT_SECURE_NO_WARNINGS _WIN32_WINNT=0x0602)
+  if(MSVC)
+    target_compile_options(lm_c02_guard PRIVATE /utf-8 /W4 /WX)
+  endif()
+  target_link_libraries(lm_c02_guard PUBLIC
+    "${LM_C02_PREFIX}/lib/exreader-coordinator-native.lib"
+    "${LM_C02_PREFIX}/lib/exreader-coordinator-cas.lib"
+    "${LM_C02_PREFIX}/lib/exreader-migration-coordinator-hardening.lib" advapi32
+    PRIVATE EXReader::exr_library)
+  set_target_properties(lm_c02_guard PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+endif()
+function(lm_configure_cli target)
+  if(WIN32 AND NOT LM_HISTORICAL_TEST_BASELINE)
+    target_compile_definitions(${target} PRIVATE LM_C02_PRODUCTION=1)
+    target_link_libraries(${target} PRIVATE lm_c02_guard)
+  endif()
+endfunction()
+
 # SQLite's public backup API snapshots an old library without opening it through
 # the newer SDK (which would upgrade the original in place). The installed SDK
 # supplies the linked SQLite implementation; use the matching pinned header.
@@ -27,11 +71,13 @@ add_executable(exreader-legacy-migrate src/lm_main.c src/lm_pack.c src/lm_util.c
 target_include_directories(exreader-legacy-migrate PRIVATE "${migration_sqlite_header_SOURCE_DIR}")
 target_link_libraries(exreader-legacy-migrate PRIVATE EXReader::exr_library)
 set_target_properties(exreader-legacy-migrate PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+lm_configure_cli(exreader-legacy-migrate)
 add_executable(exreader-legacy-migrate-tx src/lm_main.c src/lm_pack.c src/lm_util.c src/lm_mirror.c)
 target_compile_definitions(exreader-legacy-migrate-tx PRIVATE EXR_MIGRATION_TX_CANDIDATE=1)
 target_include_directories(exreader-legacy-migrate-tx PRIVATE "${migration_sqlite_header_SOURCE_DIR}")
 target_link_libraries(exreader-legacy-migrate-tx PRIVATE EXReader::exr_library)
 set_target_properties(exreader-legacy-migrate-tx PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+lm_configure_cli(exreader-legacy-migrate-tx)
 if(WIN32)
   target_link_libraries(exreader-legacy-migrate PRIVATE psapi)
   target_link_libraries(exreader-legacy-migrate-tx PRIVATE psapi)
@@ -67,8 +113,11 @@ endif()
 # executables above do not define this macro and retain their prior code paths.
 add_executable(exreader-legacy-migrate-recovery
   src/lm_main.c src/lm_pack.c src/lm_util.c src/lm_mirror.c src/lm_recovery.c src/lm_new_target.c)
-target_compile_definitions(exreader-legacy-migrate-recovery PRIVATE
-  EXR_MIGRATION_TX_CANDIDATE=1 EXR_MIGRATION_RECOVERY_CANDIDATE=1)
+target_compile_definitions(exreader-legacy-migrate-recovery PRIVATE EXR_MIGRATION_TX_CANDIDATE=1)
+if(NOT WIN32 OR LM_HISTORICAL_TEST_BASELINE)
+  target_compile_definitions(exreader-legacy-migrate-recovery PRIVATE EXR_MIGRATION_RECOVERY_CANDIDATE=1)
+endif()
+lm_configure_cli(exreader-legacy-migrate-recovery)
 target_include_directories(exreader-legacy-migrate-recovery PRIVATE "${migration_sqlite_header_SOURCE_DIR}")
 target_link_libraries(exreader-legacy-migrate-recovery PRIVATE EXReader::exr_library)
 set_target_properties(exreader-legacy-migrate-recovery PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
