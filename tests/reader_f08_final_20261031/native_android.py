@@ -31,6 +31,7 @@ def load(path):
 
 def bundle():
     need(sys.platform == "win32" and os.environ.get("GITHUB_ACTIONS") != "true", "native Windows only")
+    need(os.environ.get("COMPUTERNAME", "").upper() == "LAP25002", "named native host")
     value = load(ROOT / "bundle.json")
     need(value["kind"] == "native-local-source-bundle" and re.fullmatch(r"[0-9a-f]{40}", value["execution_source_sha"]), "source bundle")
     need(set(value["files"]) == {"tests/reader_f08_final_20261031/native_android.py",
@@ -167,11 +168,104 @@ def worker(plan_path):
     sys.argv = ["run_reader_shelf_ui.py", "--output", str(Path(plan["output"]) / "execution")]
     sampler(plan, Path(plan["output"]))["main"]()
 
+def collect_terminal_state(plan, out):
+    errors = []
+    for name, query in {
+        "terminal-power.txt": ["dumpsys", "power"],
+        "terminal-display.txt": ["dumpsys", "display"],
+        "terminal-input.txt": ["dumpsys", "input"],
+        "terminal-window.txt": ["dumpsys", "window", "windows"],
+        "terminal-surfaceflinger.txt": ["dumpsys", "SurfaceFlinger"],
+    }.items():
+        try:
+            (out / name).write_text(adb(plan, "shell", *query, timeout=8), encoding="utf-8")
+        except Exception as error:
+            errors.append({"file": name, "error": repr(error)})
+    installed = out / "installed.apk"
+    try:
+        paths = [p.removeprefix("package:") for p in adb(plan, "shell", "pm", "path", APP).splitlines()
+                 if p.startswith("package:")]
+        need(len(paths) == 1, "installed package path")
+        adb(plan, "pull", paths[0], installed)
+        actual = sha(installed)
+        expected = load(out / "producer.json")["build"]["packages"]["app-debug.apk"]["sha256"]
+        save(out / "installed-identity.json", {"package_path": paths[0], "sha256": actual,
+             "producer_sha256": expected, "matches_producer": actual == expected})
+        if actual != expected:
+            errors.append({"file": "installed.apk", "error": "installed bytes differ from producer"})
+    except Exception as error:
+        errors.append({"file": "installed.apk", "error": repr(error)})
+    save(out / "terminal-collection.json", {"errors": errors})
+    return errors
+
+def descriptive(out):
+    # This report never promotes partial UI execution to acceptance.
+    frozen = sampler(load(out / "plan.json"))
+    ui_path = out / "execution/ui/validation.json"
+    ui = load(ui_path) if ui_path.exists() else {}
+    rows, windows, capture_records = [], [], []
+    for path in sorted((out / "execution/windows").glob("*.jsonl")):
+        data = path.read_bytes()
+        need(data.endswith(b"\n"), "truncated native Window trace")
+        events = [json.loads(line) for line in data.splitlines()]
+        header = events[0]
+        need(header["kind"] == "start", "native Window header")
+        frames = [r for r in events[1:] if r["kind"] == "frame"]
+        need(all(r["pid"] == header["pid"] and r["window_id"] == header["window_id"]
+                 and r["sequence"] == i + 1 and type(r["total_ns"]) is int and r["total_ns"] >= 0
+                 for i, r in enumerate(frames)), "native frame identity/sequence")
+        capture_records.extend(r for r in events[1:] if r.get("kind") not in ("frame", "stop"))
+        rows.extend(frames)
+        windows.append({"file": path.name, "callbacks": len(frames),
+                        "closed_cleanly": events[-1]["kind"] == "stop", "sha256": sha(path)})
+    ordinary = [r for r in rows if r["first_draw"] == 0]
+    segments = [{**interval, "completed_frame_ms": frozen["summarize"]([
+        r["total_ns"] / 1e6 for r in ordinary
+        if interval["started_elapsed_ns"] <= r["callback_elapsed_ns"] <= interval["finished_elapsed_ns"]])}
+        for interval in ui.get("intervals", [])]
+    pss_path = out / "execution/pss-sampling.json"
+    pss = load(pss_path) if pss_path.exists() else {"samples": [], "errors": ["missing PSS summary"]}
+    valid = []
+    pss_errors = list(pss["errors"])
+    for record in pss["samples"]:
+        if record.get("total_pss_kib") is None:
+            continue
+        try:
+            raw = (out / "execution/pss" / (str(record["slot"]) + ".txt")).read_text()
+            need(frozen["pss_total"](raw, record["pid"]) == record["total_pss_kib"], "raw PSS differs")
+            need(not record.get("process_changed_during_sample"), "PSS process changed")
+            valid.append(record["total_pss_kib"])
+        except Exception as error:
+            pss_errors.append({"slot": record["slot"], "error": repr(error)})
+    screenshots = []
+    from PIL import Image
+    for path in sorted((out / "execution/ui/shots").glob("*.png")):
+        with Image.open(path) as image:
+            size = list(image.size); extrema = image.convert("RGB").getextrema()
+        screenshots.append({"file": path.name, "sha256": sha(path), "size": size,
+                            "nonuniform": any(low != high for low, high in extrema)})
+    cases = ui.get("cases", [])
+    first = next((c.get("detail", {}).get("observation", {}).get("first_interactive_ms")
+                  for c in cases if c.get("id") == "first_interactive_real_catalog"), None)
+    return {"sampling_identity": load(out / "plan.json")["identity"],
+            "ui_passed": ui.get("passed"), "ui_failed": ui.get("failed"), "ui_skipped": ui.get("skipped"),
+            "first_interactive_ms": first, "all_callbacks": frozen["summarize"]([r["total_ns"] / 1e6 for r in rows]),
+            "ordinary_callbacks": frozen["summarize"]([r["total_ns"] / 1e6 for r in ordinary]),
+            "callback_drops": sum(r["drop_count"] for r in rows), "windows": windows, "segments": segments,
+            "sampled_peak_pss_kib": max(valid, default=None), "valid_pss_samples": len(valid),
+            "pss_collection_errors": pss_errors, "other_capture_records": capture_records,
+            "unknown_first_draw": sum(r["first_draw"] not in (0, 1) for r in rows), "screenshots": screenshots,
+            "all_case_screenshots_nonuniform": len(screenshots) == 10 and all(r["nonuniform"] for r in screenshots),
+            "native_frame_census_proven": False, "partial_diagnostics_only": True, "f08_accepted": False}
+
 def replay(out):
     plan = load(out / "plan.json"); current = bundle()
     need(current["execution_source_sha"] == plan["execution_source_sha"], "execution source differs")
     need(load(out / "native-profile.json")["profile_sha256"] == sha(HERE / "android-native-profile.json"), "measured profile differs")
     namespace = sampler(plan)
+    installed = load(out / "installed-identity.json")
+    need(installed["matches_producer"] and sha(out / "installed.apk") == installed["producer_sha256"], "installed product identity")
+    need(descriptive(out)["all_case_screenshots_nonuniform"], "visible case content missing")
     analyzed = namespace["analyze"](out / "execution", plan["identity"])
     recorded = load(out / "execution/result.json")
     need(recorded["accepted"] and not recorded["problems"] and all(recorded.get(k) == v for k, v in analyzed.items()), "independent original replay")
@@ -191,7 +285,15 @@ def run(args):
     save(out / "plan.json", plan)
     before = display(); errors = []; process = None; measured = None
     try:
+        from PIL import Image
         prepare(args.archive.resolve(), out); profile_check(plan, out)
+        # Each cloud run used a fresh AVD. Clear only the owned test helper's
+        # retained output before reusing the native AVD; original APP clearing
+        # and the seed path remain inside the unchanged frozen sampler.
+        if adb(plan, "shell", "pm", "path", HELPER, check=False).strip():
+            clear = adb(plan, "shell", "pm", "clear", HELPER)
+            (out / "clear-helper-before-sample.txt").write_text(clear, encoding="utf-8")
+            need(clear.strip() == "Success", "fresh helper output")
         with (out / "worker.log").open("wb") as log:
             process = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "worker", "--plan", str(out / "plan.json")], stdout=log, stderr=subprocess.STDOUT)
             try: code = process.wait(timeout=1100)
@@ -201,12 +303,12 @@ def run(args):
                 try: code = process.wait(timeout=30)
                 except subprocess.TimeoutExpired:
                     process.kill(); code = process.wait(timeout=10)
+        collection_errors = collect_terminal_state(plan, out)
+        diagnostics = descriptive(out)
+        save(out / "descriptive-diagnostics.json", diagnostics)
         need(code == 0 and not errors, "original native sampler failed")
-        installed = out / "installed.apk"
-        paths = [p.removeprefix("package:") for p in adb(plan, "shell", "pm", "path", APP).splitlines() if p.startswith("package:")]
-        need(len(paths) == 1, "installed package path")
-        adb(plan, "pull", paths[0], installed)
-        need(sha(installed) == load(out / "producer.json")["build"]["packages"]["app-debug.apk"]["sha256"], "actual installed APK")
+        need(not collection_errors, "terminal evidence incomplete")
+        need(diagnostics["all_case_screenshots_nonuniform"], "missing visible case content")
         measured = replay(out); save(out / "qualification.json", measured)
     except BaseException:
         errors.append(traceback.format_exc()); raise
