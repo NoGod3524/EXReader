@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import platform
+import signal
 import queue
 import shutil
 import stat
@@ -69,6 +70,56 @@ def expect(condition, message):
         raise Failure(message)
 
 
+
+class EvidenceLog(list):
+    def __init__(self, base):
+        super().__init__()
+        self.base = base
+        self.raw = dict(schema=1, observer_pid=os.getpid(), euid=os.geteuid(),
+                        processes=[], snapshots=[])
+
+    def snapshot(self, label):
+        entries = {}
+        def visit(path):
+            rel = str(path.relative_to(self.base)) or '.'
+            try:
+                st = path.lstat()
+                row = dict(dev=st.st_dev, ino=st.st_ino, nlink=st.st_nlink,
+                           size=st.st_size, mode=stat.S_IMODE(st.st_mode),
+                           uid=st.st_uid, gid=st.st_gid)
+                entries[rel] = row
+                expect(len(entries) <= 1024, 'evidence entry bound')
+                if stat.S_ISREG(st.st_mode):
+                    row['kind'] = 'file'
+                    expect(st.st_size <= 65536, 'evidence byte bound')
+                    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+                    with os.fdopen(fd, 'rb') as f:
+                        actual = os.fstat(f.fileno())
+                        expect((actual.st_dev, actual.st_ino) == (st.st_dev, st.st_ino),
+                               'evidence file changed')
+                        data = f.read(65537)
+                    expect(len(data) == st.st_size, 'evidence short read')
+                    row.update(bytes_hex=data.hex(), sha256=hashlib.sha256(data).hexdigest())
+                elif stat.S_ISDIR(st.st_mode):
+                    row['kind'] = 'dir'
+                    for child in sorted(path.iterdir()):
+                        visit(child)
+                elif stat.S_ISLNK(st.st_mode):
+                    row.update(kind='symlink', target=os.readlink(path))
+                else:
+                    row['kind'] = 'other'
+            except OSError as error:
+                entries.setdefault(rel, {}).update(error=error.errno)
+        visit(self.base)
+        self.raw['snapshots'].append(dict(label=label, entries=entries))
+
+    def process(self, proc, argv):
+        row = dict(pid=proc.pid, argv=list(argv), returncode=None,
+                   kill_sent=False, signal_sent=None, timed_out=False)
+        self.raw['processes'].append(row)
+        return row
+
+
 class Worker:
     """A spawned worker whose stdout lines arrive through a queue."""
 
@@ -78,8 +129,10 @@ class Worker:
         self.lines = queue.Queue()
         self.proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT, text=True)
+        self.record = log.process(self.proc, argv)
         self.deadline = time.monotonic() + LIMIT
-        threading.Thread(target=self._read, daemon=True).start()
+        self.reader = threading.Thread(target=self._read, daemon=True)
+        self.reader.start()
 
     def _read(self):
         for line in self.proc.stdout:
@@ -102,13 +155,27 @@ class Worker:
     def kill(self):
         if self.proc.poll() is None:
             self.proc.kill()
-        return self.proc.wait(timeout=LIMIT)
+            self.record.update(kill_sent=True, signal_sent=int(signal.SIGKILL))
+        self.record['returncode'] = self.proc.wait(timeout=LIMIT)
+        self.reader.join(timeout=LIMIT)
+        expect(not self.reader.is_alive(), 'stdout reader did not finish')
+        return self.record['returncode']
 
 
 def run(argv, log):
-    proc = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=LIMIT)
-    log.extend(proc.stdout.splitlines())
-    return proc.returncode, proc.stdout.splitlines()
+    proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    record = log.process(proc, argv)
+    try:
+        output, _ = proc.communicate(timeout=LIMIT)
+    except subprocess.TimeoutExpired:
+        record['timed_out'] = True
+        proc.kill()
+        record.update(kill_sent=True, signal_sent=int(signal.SIGKILL))
+        output, _ = proc.communicate(timeout=LIMIT)
+    record['returncode'] = proc.returncode
+    log.extend(output.splitlines())
+    expect(not record['timed_out'], 'worker timeout')
+    return proc.returncode, output.splitlines()
 
 
 def line_value(lines, prefix):
@@ -118,7 +185,9 @@ def line_value(lines, prefix):
 
 
 def recover(consumer, base, uuid, log):
+    log.snapshot('before-recovery')
     code, lines = run([consumer, 'recover', str(base), uuid], log)
+    log.snapshot('after-recovery')
     expect(code == 0, f'recover exited {code}')
     status = int(line_value(lines, 'OPEN '))
     reports = [json.loads(line[len('RECOVER '):]) for line in lines if line.startswith('RECOVER ')]
@@ -152,8 +221,10 @@ def case_cross_process(consumer, base, log):
         expect(holder.wait_for('HELD ') == 'HELD 0', 'holder did not open the root')
         code, lines = run([consumer, 'try-open', str(base), uuid], log)
         expect(code == 0 and line_value(lines, 'STATUS ') == '3', 'second process was not BUSY')
+        log.snapshot('held')
     finally:
         returncode = holder.kill()
+        log.snapshot('after-death')
     expect(returncode == -9, f'holder ended with {returncode}, not SIGKILL')
     code, lines = run([consumer, 'try-open', str(base), uuid], log)
     expect(code == 0 and line_value(lines, 'STATUS ') == '0', 'lock not released by process death')
@@ -187,8 +258,10 @@ def case_kill(name, hookworker, consumer, base, log):
         uuid = worker.wait_for('UUID ').split()[1]
         held = worker.wait_for('HELD ')
         expect(held.split()[1:] == [phase, '0', str(state)], f'held at {held!r}')
+        log.snapshot('held')
     finally:
         returncode = worker.kill()
+        log.snapshot('after-death')
     expect(returncode == -9, f'worker ended with {returncode}, not SIGKILL')
     root, book = base / 'root', base / 'dest' / 'book.epub'
     has_tx, has_payload, has_book, nlink, has_next = DISK[phase]
@@ -241,7 +314,8 @@ def main():
     results = []
     for name in ALL:
         base = Path(tempfile.mkdtemp(prefix=f'wc-{name[:2]}-'))
-        log, started = [], time.monotonic()
+        log, started = EvidenceLog(base), time.monotonic()
+        log.snapshot('before-case')
         try:
             if name == '06-cross-process-lock':
                 case_cross_process(consumer, base, log)
@@ -254,7 +328,12 @@ def main():
             passed, detail = True, ''
         except Exception as error:  # every case must leave a record
             passed, detail = False, f'{type(error).__name__}: {error}'
-        results.append(dict(name=name, passed=passed, detail=detail, seconds=round(time.monotonic() - started, 3), log=log))
+        try:
+            log.snapshot('final')
+            log.raw['worker_events'] = [json.loads(line[4:]) for line in log if line.startswith('RAW ')]
+        except Exception as error:
+            passed, detail = False, f'evidence: {type(error).__name__}: {error}'
+        results.append(dict(name=name, passed=passed, detail=detail, seconds=round(time.monotonic() - started, 3), log=log, raw=log.raw))
         print(('PASS ' if passed else 'FAIL ') + name + (f' -- {detail}' if detail else ''), flush=True)
         if not passed:
             for line in log[-20:]:

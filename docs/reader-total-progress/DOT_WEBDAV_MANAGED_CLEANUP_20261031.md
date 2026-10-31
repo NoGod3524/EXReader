@@ -82,3 +82,12 @@ certification of the artifacts above (not yet done); product_cleanup_passed=fals
 (SIGKILL process-death recovery only, no power-loss proof, no product wiring).
 Not done: managed WebDAV entry point, first host root creation and UUID persistence, startup recovery, pending display,
 unpublished staging abandon policy and root rotation. Old unreceipted residue is never adopted. Formal 95/108 unchanged.
+
+## 2026-10-31 GPT 上游补证接管
+
+用户在产品接入聊天明确要求“把这两个上游阻塞也接管解决，补齐原始证据并完成独立审计，然后继续产品接入和 CI 验证，直到完成”。
+本次在原 tests 分支补齐原始观测，core 固定为 dba079b550f9ec83054e6b7b0b7475f43bc1739f；原 30 个用例、断言和每进程 30 秒界限保留。
+results.json 新增 raw schema 1：真实子进程 PID/argv/returncode/kill_sent/signal_sent/timed_out；before-case、held、after-death、before/after-recovery、final 的 no-follow 文件元数据及原始字节；C 进程逐次恢复快照，以及 EACCES canary 和 cleanup 的实际返回值、errno、euid、mode。
+快照在 fixture teardown 前保存；失败同样保留记录。后续独立验证器须自己解码 receipt/CRC 并重算目标身份、进程死亡与恢复幂等性，不能仅采信 PASS。
+历史 run 41169665419、41169795520、41170057297 及各次失败原因继续保留；新 run 的完整 SHA、artifact digest 和审计接受结论将在实际完成后补录。
+所有编译、语法检查、运行和 ZIP 处理仅发生于 GitHub Actions。

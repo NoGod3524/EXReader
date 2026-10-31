@@ -8,6 +8,8 @@
 
 #include "exr_webdav_cleanup.h"
 
+#include <dirent.h>
+#include <inttypes.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -43,6 +45,88 @@ void exr_wc_test_hook(const char *phase, uint32_t slot, uint32_t state) {
   for (;;) pause();
 }
 #endif
+
+
+/* Raw observations for a separate verifier. No producer verdict is encoded here. */
+static void raw_string(const char *s) {
+  putchar('"');
+  for (; *s; s++) {
+    unsigned char c = (unsigned char)*s;
+    if (c == '"' || c == '\\') putchar('\\');
+    if (c < 32) printf("\\u%04x", (unsigned)c);
+    else putchar(c);
+  }
+  putchar('"');
+}
+static int raw_count, raw_first;
+static void raw_entry(int parent, const char *name, const char *path, int depth) {
+  struct stat st;
+  int error = 0;
+  if (!raw_first) putchar(',');
+  raw_first = 0;
+  printf("{\"path\":"); raw_string(path);
+  if (++raw_count > 1024 || depth > 8) { printf(",\"error\":%d}", EOVERFLOW); return; }
+  if (fstatat(parent, name, &st, AT_SYMLINK_NOFOLLOW) != 0) {
+    printf(",\"error\":%d}", errno); return;
+  }
+  printf(",\"dev\":%" PRIuMAX ",\"ino\":%" PRIuMAX ",\"nlink\":%" PRIuMAX
+         ",\"size\":%" PRIuMAX ",\"mode\":%u,\"uid\":%u,\"gid\":%u,\"kind\":\"%s\"",
+         (uintmax_t)st.st_dev, (uintmax_t)st.st_ino, (uintmax_t)st.st_nlink,
+         (uintmax_t)st.st_size, (unsigned)(st.st_mode & 07777),
+         (unsigned)st.st_uid, (unsigned)st.st_gid,
+         S_ISREG(st.st_mode) ? "file" : S_ISDIR(st.st_mode) ? "dir" : S_ISLNK(st.st_mode) ? "symlink" : "other");
+  if (S_ISREG(st.st_mode)) {
+    int fd = openat(parent, name, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+    unsigned char buf[65536];
+    size_t total = 0;
+    if (fd < 0) error = errno;
+    else {
+      while (total < sizeof buf) {
+        ssize_t n = read(fd, buf + total, sizeof buf - total);
+        if (n < 0 && errno == EINTR) continue;
+        if (n < 0) { error = errno; break; }
+        if (!n) break;
+        total += (size_t)n;
+      }
+      close(fd);
+      if ((uintmax_t)st.st_size != total) error = EOVERFLOW;
+    }
+    printf(",\"bytes_hex\":\"");
+    for (size_t i = 0; i < total; i++) printf("%02x", (unsigned)buf[i]);
+    putchar('"');
+  }
+  if (error) printf(",\"error\":%d", error);
+  putchar('}');
+  if (S_ISDIR(st.st_mode)) {
+    int fd = openat(parent, name, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    DIR *dir = fd < 0 ? NULL : fdopendir(fd);
+    if (!dir) {
+      if (fd >= 0) close(fd);
+      printf(",{\"path\":"); raw_string(path); printf(",\"error\":%d}", errno);
+      return;
+    }
+    struct dirent *e;
+    while ((e = readdir(dir))) {
+      char child[1024];
+      if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")) continue;
+      int n = snprintf(child, sizeof child, "%s%s%s", !strcmp(path, ".") ? "" : path,
+                       !strcmp(path, ".") ? "" : "/", e->d_name);
+      if (n < 0 || (size_t)n >= sizeof child) {
+        printf(",{\"path\":\"overflow\",\"error\":%d}", EOVERFLOW); break;
+      }
+      raw_entry(fd, e->d_name, child, depth + 1);
+    }
+    closedir(dir);
+  }
+}
+static void raw_snapshot(int base, const char *label) {
+  raw_count = 0; raw_first = 1;
+  printf("RAW {\"type\":\"snapshot\",\"label\":"); raw_string(label);
+  printf(",\"pid\":%ld,\"euid\":%u,\"entries\":[", (long)getpid(), (unsigned)geteuid());
+  raw_entry(base, ".", ".", 0);
+  printf("]}\n");
+  fflush(stdout);
+}
 
 static int open_dir(int base, const char *name) {
   return openat(base, name, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
@@ -354,8 +438,16 @@ static int c13(int base) {
   CHECK(geteuid() != 0);
   CHECK((cd = make_dir(base, "canary")) >= 0 && write_file(cd, "c", "c\n") == 0);
   CHECK(fchmod(cd, 0500) == 0);
+  raw_snapshot(base, "canary-before");
   errno = 0;
-  CHECK(unlinkat(cd, "c", 0) != 0 && errno == EACCES);
+  int canary_rc = unlinkat(cd, "c", 0);
+  int canary_errno = errno;
+  CHECK(fstat(cd, &st) == 0);
+  printf("RAW {\"type\":\"canary\",\"pid\":%ld,\"euid\":%u,\"mode\":%u,\"returncode\":%d,\"errno\":%d,\"exists\":%d}\n",
+         (long)getpid(), (unsigned)geteuid(), (unsigned)(st.st_mode & 07777),
+         canary_rc, canary_errno, !absent(cd, "c"));
+  raw_snapshot(base, "canary-after");
+  CHECK(canary_rc != 0 && canary_errno == EACCES);
   CHECK(fchmod(cd, 0700) == 0 && unlinkat(cd, "c", 0) == 0 && close(cd) == 0);
   CHECK(unlinkat(base, "canary", AT_REMOVEDIR) == 0);
   CHECK(exr_wc_create_at(base, "root", &r, uuid) == EXR_WC_OK);
@@ -363,7 +455,14 @@ static int c13(int base) {
   if (published_tx(r, dest, "book.epub", &tx)) return 1;
   CHECK(txname(r, 0, name) == 0 && (rd = open_dir(base, "root")) >= 0 && (td = open_dir(rd, name)) >= 0);
   CHECK(fchmod(td, 0500) == 0);
-  CHECK(exr_wc_cleanup(tx, 0, &c) == EXR_WC_IO && c.pending == 1 && c.removed == 0 && c.native_error == EACCES);
+  raw_snapshot(base, "eacces-before");
+  int cleanup_status = exr_wc_cleanup(tx, 0, &c);
+  CHECK(fstat(td, &st) == 0);
+  printf("RAW {\"type\":\"cleanup\",\"pid\":%ld,\"euid\":%u,\"mode\":%u,\"status\":%d,\"removed\":%d,\"pending\":%d,\"native_error\":%d,\"receipt_uncertain\":%d}\n",
+         (long)getpid(), (unsigned)geteuid(), (unsigned)(st.st_mode & 07777),
+         cleanup_status, c.removed, c.pending, c.native_error, c.receipt_uncertain);
+  raw_snapshot(base, "eacces-after");
+  CHECK(cleanup_status == EXR_WC_IO && c.pending == 1 && c.removed == 0 && c.native_error == EACCES);
   CHECK(state_of(r, 0) == EXR_WC_PUBLISHED && !absent(td, "payload"));
   CHECK(fstatat(dest, "book.epub", &st, AT_SYMLINK_NOFOLLOW) == 0 && st.st_nlink == 2);
   CHECK(exr_wc_tx_close(&tx) == EXR_WC_OK && exr_wc_close(&r) == EXR_WC_OK);
@@ -578,6 +677,7 @@ static int cmd_recover(int base, const char *uuid) {
            (unsigned)rep.next_slot, (unsigned)rep.total_slots, rep.receipt_uncertain, rep.native_error);
     for (uint32_t i = 0; i < rep.total_slots; i++) printf("%s%u", i ? "," : "", (unsigned)state_of(r, i));
     printf("]}\n");
+    raw_snapshot(base, k == 0 ? "recovery-1" : "recovery-2");
   }
   return exr_wc_close(&r) == EXR_WC_OK ? 0 : 1;
 }
