@@ -1,5 +1,6 @@
 name: C02 trusted Windows registry and actual product admission
 on:
+  workflow_dispatch:
   push:
     branches: [codex/dot-c02-native-journal-20261030]
     paths:
@@ -141,6 +142,7 @@ jobs:
           if [ -d build/c02-full-host/logs ]; then cp -r build/c02-full-host/logs evidence/full-host-build-logs; fi
           if [ -f build/c02-full-host/build.json ]; then cp build/c02-full-host/build.json evidence/full-host-build.json; fi
           if [ -f build/c02-full-host/host/EXReaderWave3.exe ]; then cp build/c02-full-host/host/EXReaderWave3.exe evidence/; fi
+          if [ -d build/c02-full-host/package ]; then cp -r build/c02-full-host/package evidence/full-host-package; fi
           python - <<'PY'
           import hashlib,json,os,pathlib,subprocess
           p=pathlib.Path('evidence')

@@ -30,3 +30,29 @@ are GitHub artifact API metadata; no ZIP was downloaded or parsed outside Action
 
 Successful SDK compilation and partial product artifacts do not qualify Apple
 runtime admission or complete C02.
+
+## Second candidate 36918c9c1ee18aa5345cd6ea4cf3072922e3c43b
+
+[Run 41177046640, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41177046640).
+Both SDK and both complete products jobs succeeded. Native runtime cases have
+not yet run.
+
+Simulator runtime job124467687280 failed compiling the production bundle:
+HostC02Admission.swift:30 resolved open to the enclosing enum method.
+The correction explicitly selects Darwin.open.
+
+macOS runtime job124467687252 built and checked the full production bundle,
+then failed compiling the review harness: excluding ReaderApp.swift while
+including HostViews.swift removed its SelfTestScreen declaration. The harness
+now explicitly compiles the nine production SDK/model/catalog owner files and
+their actual dependencies. The full production app continues compiling all UI
+and its original ReaderApp entry point.
+
+| Artifact | ID | Bytes | API SHA256 |
+| --- | --- | ---: | --- |
+| c02-apple-sdk-macos-41177046640-1 | 13033017427 | 19352659 | c89f5d00917fed5462ea3b13491792de0905a492d763b55d4168dd6db8e86477 |
+| c02-apple-sdk-iphonesimulator-41177046640-1 | 13032777523 | 19347238 | ca6bcff45e522772b1ea3bd4c34d9a8b9620c4a11cc2b7f5a6b8ebb996ec42f2 |
+| c02-apple-products-macos-41177046640-1 | 13033797396 | 5078581 | 98f1cf29a6fe8f58aca8c1d73412cea6995ddd017b7d95add8742e72067c4e50 |
+| c02-apple-products-iphonesimulator-41177046640-1 | 13033253643 | 1493227 | 444c370f464d83d78d1ad4252f29fcc0f68e13804c1d3f7a02fb38d9de44c2b2 |
+| c02-apple-runtime-macos-41177046640-1 | 13033343936 | 104469 | f49f0a99f68539df29b2e20248f721048c142c54a381f8ff5f2701aa8fcfd868 |
+| c02-apple-runtime-iphonesimulator-41177046640-1 | 13032744433 | 103895 | 68e63c8a3134a9015766b7a72142c34d59a5e632288d12fa82e217c933930ef9 |

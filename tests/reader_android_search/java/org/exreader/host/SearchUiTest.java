@@ -104,7 +104,9 @@ public final class SearchUiTest extends Instrumentation {
     }
     private int format(String value){switch(value){case "txt":return NativeLibrary.FORMAT_TXT;case "epub":return NativeLibrary.FORMAT_EPUB;case "pdf":return NativeLibrary.FORMAT_PDF;case "cbz":return NativeLibrary.FORMAT_CBZ;default:throw new AssertionError("fixture format");}}
     private void seed()throws Exception {
-        books=new JSONObject();try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        File admittedDatabase=new File(context.getFilesDir(),"library.db");
+        if(!admittedDatabase.exists())NativeAdmission.initialize(context,admittedDatabase,NativeAdmission.CREATE);
+        books=new JSONObject();try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             JSONArray originals=input.getJSONArray("books");for(int i=0;i<originals.length();i++){
                 JSONObject row=originals.getJSONObject(i);File file=new File(context.getFilesDir(),"search-fixtures/"+row.getString("file"));need(file.length()==row.getLong("bytes"),"seed original length");
                 NativeLibrary.ImportResult result=library.importFile(file.getAbsolutePath(),format(row.getString("format")),row.getString("title"));need(hash(library,result.id).equals(row.getString("sha256")),"SDK original fixture identity");
@@ -118,7 +120,7 @@ public final class SearchUiTest extends Instrumentation {
     }
     private String snapshot()throws Exception {
         JSONObject result=new JSONObject();JSONArray rows=new JSONArray();
-        try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             NativeLibrary.Book[] items=library.books();Arrays.sort(items,(a,b)->Long.compare(a.id,b.id));need(items.length==6,"six exact originals retained");
             for(NativeLibrary.Book value:items){JSONObject row=new JSONObject().put("id",value.id).put("format",value.format).put("title",value.title).put("position",value.position).put("favorite",value.favorite).put("status",value.status).put("source_sha256",hash(library,value.id));JSONArray notes=new JSONArray();
                 if(value.fixed()){for(NativeLibrary.FixedNote note:library.fixedNotes(value.id))notes.put(new JSONArray().put(note.id).put(note.page).put(note.start).put(note.end).put(note.comment).put(note.selected));}
@@ -151,7 +153,7 @@ public final class SearchUiTest extends Instrumentation {
         Method version=NativeSearch.class.getDeclaredMethod("nativeVersion"),open=NativeSearch.class.getDeclaredMethod("nativeOpen",long.class,long.class,int.class,String.class,String.class,byte[].class,float.class,NativeSearch.Control.class),next=NativeSearch.class.getDeclaredMethod("nativeNext",long.class,int.class,NativeSearch.Control.class),close=NativeSearch.class.getDeclaredMethod("nativeClose",long.class),resolve=NativeSearch.class.getDeclaredMethod("nativeResolve",long.class,long.class,int.class,long.class,long.class,long.class,String[].class,byte[][].class,byte[].class,float.class,HostTask.class);
         for(Method method:new Method[]{version,open,next,close,resolve})method.setAccessible(true);
         byte[] font;try(java.io.InputStream stream=context.getAssets().open("Reader.otf");java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream()){byte[] chunk=new byte[65536];for(int count;(count=stream.read(chunk))>0;)out.write(chunk,0,count);font=out.toByteArray();}
-        try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             HostTask task=new HostTask(()->false);NativeSearch.Control control=new NativeSearch.Control(task,context.getFilesDir(),false);String parser=(String)invoke(version),key="txt:"+books.getJSONObject("txt").getString("sha256")+"|exreader-sdk-"+parser;
             for(String invalid:new String[]{"","\0","\ud800","中".repeat(1366)}){boolean refused=false;try{long handle=(Long)invoke(open,library.checked(),book("txt"),NativeSearch.REFLOW,key,invalid,font,24f,control);if(handle!=0)invoke(close,handle);}catch(IllegalArgumentException|NativeSearch.Failure expected){refused=true;}need(refused,"JNI rejects empty/NUL/unpaired/oversized UTF-8 query");need(NativeSearchProbe.live()==0,"failed open retains no source handle");}
             long handle=(Long)invoke(open,library.checked(),book("txt"),NativeSearch.REFLOW,key,"Z-hit 249",font,24f,control);need(handle!=0,"installed module opens through JNI");

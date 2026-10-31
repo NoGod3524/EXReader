@@ -45,6 +45,8 @@ public final class OrganizationSyncTest extends Instrumentation {
     private void configure()throws Exception{click("More");click("同步");click("云盘账号");field("云盘地址",input.getString("root"));field("云盘用户名",input.getString("user"));field("云盘密码",input.getString("password"));click("仅本次使用");status("仅本次使用凭据");}
     @Override public void onStart(){context=getTargetContext();Throwable failure=null;
         try{
+            File admittedDatabase=new File(context.getFilesDir(),"library.db");
+            if(!admittedDatabase.exists())NativeAdmission.initialize(context,admittedDatabase,NativeAdmission.CREATE);
             input=new JSONObject(new String(Files.readAllBytes(new File(context.getFilesDir(),"organization-sync-input.json").toPath()),StandardCharsets.UTF_8));
             Files.delete(new File(context.getFilesDir(),"organization-sync-input.json").toPath());
             check("actual_activity_sync_and_saved_intent_barrier",()->{
@@ -79,7 +81,7 @@ public final class OrganizationSyncTest extends Instrumentation {
                     need(NativeCatalog.memberFind(owner,0,input.getString("shelf_id"),input.getString("book_key")).length==1,"membership projected");
                     need(NativeCatalog.groupFind(owner,0,input.getString("orphan_id")).length==0,"missing parent retained pending");
                 }finally{NativeCatalog.close(owner);}
-                try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){need(library.books().length==0,"metadata needs no imported SDK original");}
+                try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){need(library.books().length==0,"metadata needs no imported SDK original");}
             });
             check("queued_close_retires_session_before_next_batch",()->{
                 SyncController controller=SyncController.get(context);

@@ -27,7 +27,7 @@ enum HostC02Admission {
               expected.st_uid == geteuid(), UInt32(expected.st_mode) & UInt32(S_IFMT) == UInt32(S_IFDIR) else {
             throw HostC02Failure(detail: "应用书库目录身份无效")
         }
-        let descriptor = home.withCString { open($0, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC) }
+        let descriptor = home.withCString { Darwin.open($0, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC) }
         guard descriptor >= 0 else { throw HostC02Failure(detail: "应用书库目录无法打开") }
         defer { close(descriptor) }
         var actual = stat()

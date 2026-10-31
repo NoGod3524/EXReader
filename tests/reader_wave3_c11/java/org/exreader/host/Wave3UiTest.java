@@ -129,7 +129,9 @@ public final class Wave3UiTest extends Instrumentation {
     }
     private int format(String value){switch(value){case "txt":return NativeLibrary.FORMAT_TXT;case "epub":return NativeLibrary.FORMAT_EPUB;case "pdf":return NativeLibrary.FORMAT_PDF;default:throw new AssertionError("fixture format");}}
     private void seed()throws Exception {
-        books=new JSONObject();try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        File admittedDatabase=new File(context.getFilesDir(),"library.db");
+        if(!admittedDatabase.exists())NativeAdmission.initialize(context,admittedDatabase,NativeAdmission.CREATE);
+        books=new JSONObject();try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             JSONArray originals=input.getJSONArray("books");for(int i=0;i<originals.length();i++){
                 JSONObject row=originals.getJSONObject(i);File file=new File(context.getFilesDir(),"wave3-fixtures/"+row.getString("file"));need(file.length()==row.getLong("bytes"),"seed original length");
                 NativeLibrary.ImportResult result=library.importFile(file.getAbsolutePath(),format(row.getString("format")),row.getString("title"));
@@ -153,7 +155,7 @@ public final class Wave3UiTest extends Instrumentation {
             Cursor cursor=product.rawQuery("SELECT COUNT(*) FROM reader_revisions WHERE entity_kind='annotation'",null)){cursor.moveToFirst();return cursor.getInt(0);}
     }
     private String sdkState()throws Exception {
-        JSONArray rows=new JSONArray();try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        JSONArray rows=new JSONArray();try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             NativeLibrary.Book[] items=library.books();java.util.Arrays.sort(items,(a,b)->Long.compare(a.id,b.id));
             for(NativeLibrary.Book value:items){JSONObject row=new JSONObject().put("id",value.id).put("title",value.title).put("position",value.position);
                 if(!value.fixed()&&!(value.format==NativeLibrary.FORMAT_EPUB&&library.bounded(value.id)))row.put("progress",new JSONArray(library.progress(value.id)));
@@ -236,7 +238,9 @@ public final class Wave3UiTest extends Instrumentation {
         check("original_export_cancel_receipt_and_ordinary_exception_under_checkjni",()->{
             JSONObject original=input.getJSONArray("books").getJSONObject(0);
             File source=new File(context.getFilesDir(),"wave3-fixtures/"+original.getString("file"));
-            try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"cancel-export.db").getAbsolutePath())) {
+            File admittedCancellation=new File(context.getFilesDir(),"cancel-export.db");
+            if(!admittedCancellation.exists())NativeAdmission.initialize(context,admittedCancellation,NativeAdmission.CREATE);
+            try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"cancel-export.db"))) {
                 long selected=library.importFile(source.getAbsolutePath(),format(original.getString("format")),"Cancellation original").id;
                 File directory=new File(context.getFilesDir().getCanonicalFile(),"cancel-export");need(directory.mkdirs(),"fresh export directory");
                 NativeOriginalExport.Result cancelled=NativeOriginalExport.export(library.checked(),new long[]{selected},directory.getAbsolutePath(),new HostTask(()->true));

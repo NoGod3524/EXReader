@@ -64,6 +64,8 @@ public final class RelayAndroidTest extends Instrumentation {
         JSONObject bounds=new JSONObject().put("app_files_path",rawRoot.getPath()).put("canonical_app_files_path",appRoot.getPath()).put("passed",false).put("app_database_seeded",false);
         evidence.put("independent_boundary_tests",bounds);
         File folder=new File(appRoot,"relay-boundary");need(folder.mkdirs()||folder.isDirectory(),"isolated boundary folder");
+        File admittedBoundary=new File(folder,"library.db");
+        if(!admittedBoundary.exists())NativeAdmission.initialize(context,admittedBoundary,NativeAdmission.CREATE);
         File fontFile=new File(folder,"Reader.otf");byte[] font;
         try(java.io.InputStream stream=context.getAssets().open("Reader.otf")){font=stream.readAllBytes();}Files.write(fontFile.toPath(),font);
         File empty=new File(folder,"all-empty.epub");
@@ -81,7 +83,7 @@ public final class RelayAndroidTest extends Instrumentation {
         File fontDirectory=new File(folder,"fonts");need(fontDirectory.mkdirs()||fontDirectory.isDirectory(),"isolated font library directory");
         active="independent_boundary_font_open";
         NativeFonts fonts=NativeFonts.open(fontDirectory.getPath());
-        try(NativeLibrary library=new NativeLibrary(new File(folder,"library.db").getPath())){
+        try(NativeLibrary library=new NativeLibrary(context,new File(folder,"library.db"))){
             active="independent_boundary_font_import";
             HostTask task=new HostTask(()->false);NativeFonts.Imported imported=fonts.importFile(fontFile.getPath(),"Boundary font",task);need(imported.ok(),"boundary local font imported by production module");FontSelection.attach(fonts.handle,imported.hash);
             active="independent_boundary_all_empty";
@@ -123,6 +125,8 @@ public final class RelayAndroidTest extends Instrumentation {
     }
     @Override public void onStart(){context=getTargetContext();Throwable failure=null;Bundle result=new Bundle();
         try{
+            File admittedDatabase=new File(context.getFilesDir(),"library.db");
+            if(!admittedDatabase.exists())NativeAdmission.initialize(context,admittedDatabase,NativeAdmission.CREATE);
             AccessibilityServiceInfo service=getUiAutomation().getServiceInfo();service.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;getUiAutomation().setServiceInfo(service);
             File inputFile=new File(context.getFilesDir(),"relay-input.json");input=new JSONObject(new String(Files.readAllBytes(inputFile.toPath()),StandardCharsets.UTF_8));Files.delete(inputFile.toPath());
             need(BuildConfig.READER_SYNC&&BuildConfig.READER_READING&&BuildConfig.READER_SELECTOR_BYTES_CANDIDATE,"real candidate product features");
@@ -132,7 +136,7 @@ public final class RelayAndroidTest extends Instrumentation {
             });
             check("explicit_application_receive_original",()->{until(n->n.isEnabled()&&text(n).contains(input.optString("remote_title")),this::tap,"remote book",30000);click("接收");status("书籍已接收");
                 File original=new File(new File(context.getFilesDir(),"sync-cache"),input.getString("original_sha256")+".epub");need(original.length()==input.getLong("original_bytes"),"received exact byte length");need(BookStore.syncFileHash(original,new HostTask(()->false)).equals(input.getString("original_sha256")),"received SHA256 from Apple original");
-                try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getPath())){
+                try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
                     NativeLibrary.Book[] books=library.books();need(books.length==1,"exactly one app-received original");
                     java.security.MessageDigest digest=java.security.MessageDigest.getInstance("SHA-256");
                     try(NativeLibrary.Source source=library.source(books[0].id)){

@@ -98,7 +98,9 @@ def build_apps(target,out,sdk,product,evidence,source):
     sysroot = subprocess.check_output(["xcrun","--sdk",native_sdk,"--show-sdk-path"],text=True).strip()
     architecture = "arm64" if mobile else subprocess.check_output(["uname","-m"],text=True).strip()
     triple = architecture+("-apple-ios15.0-simulator" if mobile else "-apple-macosx12.0")
-    swift_sources = sorted(path for path in (ROOT/"examples/apple").glob("*.swift") if path.name != "ReaderApp.swift")
+    core = ("HostSDK.swift","HostC02Admission.swift","HostModel.swift","HostCatalog.swift","HostAccount.swift",
+            "HostSearch.swift","HostNavigation.swift","HostReadingRecords.swift","HostOrganization.swift")
+    swift_sources = [ROOT/"examples/apple"/name for name in core]
     command = ["xcrun","--sdk",native_sdk,"swiftc","-swift-version","5","-O","-parse-as-library",
                "-D","EXR_APPLE_C02_REVIEW","-sdk",sysroot,"-target",triple,"-I",sdk/"include",
                "-L",sdk/"lib","-lexreader",*flags(sdk,product,c02_prefix=product),
