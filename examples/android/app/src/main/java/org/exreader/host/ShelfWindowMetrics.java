@@ -141,9 +141,14 @@ final class ShelfWindowMetrics implements AutoCloseable {
         readyEvent("stop",catalogLatch.generation,catalogLatch.revision,catalogLatch.readyStatus,SystemClock.elapsedRealtimeNanos());
         window.removeOnFrameMetricsAvailableListener(listener);
         handler.post(()->{
+            try {if(readyOutput!=null)readyOutput.close();}
+            catch(Exception error){fail(error);}
             try {
-                if(output!=null){if(!failed)write(new JSONObject().put("kind","stop").put("frames",frames).put("dropped",dropped));output.close();}
-            } catch(Exception error){fail(error);} finally{try{if(readyOutput!=null)readyOutput.close();}catch(Exception error){fail(error);}thread.quitSafely();}
+                if(output!=null&&!failed)write(new JSONObject().put("kind","stop").put("frames",frames).put("dropped",dropped));
+            } catch(Exception error){fail(error);} finally{
+                try {if(output!=null)output.close();}catch(Exception error){fail(error);}
+                thread.quitSafely();
+            }
         });
     }
 }
