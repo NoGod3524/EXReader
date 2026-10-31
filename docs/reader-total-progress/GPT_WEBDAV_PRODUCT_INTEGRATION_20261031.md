@@ -1,5 +1,101 @@
 # Linux GTK WebDAV managed staging 产品接入
 
+## 回交总验收 owner
+
+交付方：本聊天 GPT。接收方：EXReader 主任务总验收 owner。核验时间：2026-10-31 06:36 UTC。
+
+**接回结论：上游原始证据缺口及独立审计阻塞已解决；固定产品组合上的 Linux GTK managed WebDAV transport staging/alias 闭环已通过。** 本包无运行中 CI 或待修失败。主任务可接回候选证据审核，正式计分仍为 **95/108**。
+
+### 分支与固定 SHA
+
+| 用途 | 功能分支 | 固定 SHA 与角色 |
+|---|---|---|
+| 清理 core | `codex/dot-webdav-managed-cleanup-core-20261031` | `dba079b550f9ec83054e6b7b0b7475f43bc1739f`；受审 core，分支 HEAD，生产四文件未改 |
+| 原 30-case 补证 | `codex/dot-webdav-managed-cleanup-tests-20261031` | 受测源码 `711e1fc8a8c5b86f210bcddc934c479599387582`；文档封存 HEAD `2a6bada9b391e741425556e5ac67c6191a1f145a` |
+| 上游独立审计 | `codex/dot-webdav-managed-cleanup-audit-20261031` | 受测 verifier `ea54eb95eafc62a2db8fec4547eab142856f9351`；文档封存 HEAD `5f05c86f4f9b36579539279a000d695ad7af5454` |
+| GTK 产品接入 | `codex/gpt-webdav-product-integration-20261031` | 受测组合 `044824f91ddae2ea49994350d308d079a69048ab`；产品证据封存 `63bc79d03120a08c4597f075fbfb7719ae4a1770`；本回交在其后仅更新本文件 |
+
+产品基线固定 `8232e91cd7b9296dfcdd3096b96317eb3fa1008a`；SDK 单独固定 `7271829a829bfa6aaa47b73077c493f71af27ad3`，实测版本 **3.42.0 / ABI 1**。
+本回交文档的完整 HEAD 随交付消息给出，固定文档链接也包含该 40 位提交。该文档提交与受测组合之间仅有本文件差异，不将文档 HEAD 标为受测源码。
+
+[产品固定源码](https://github.com/NoGod3524/EXReader/tree/044824f91ddae2ea49994350d308d079a69048ab) · [完整产品 diff](https://github.com/NoGod3524/EXReader/compare/8232e91cd7b9296dfcdd3096b96317eb3fa1008a...044824f91ddae2ea49994350d308d079a69048ab) · [准确 30 路径清单](https://github.com/NoGod3524/EXReader/blob/044824f91ddae2ea49994350d308d079a69048ab/tests/gtk_managed_webdav_20261031/manifest.json)
+
+### CI 与独立结论
+
+以下均为 attempt 1、completed/success。
+
+| 阶段 | Run / Jobs | 实际结论 |
+|---|---|---|
+| 上游补证 | [41174402876](https://github.com/NoGod3524/EXReader/actions/runs/41174402876)；Linux 124458850309，macOS 124458849971 | 原 30 case、原断言及 30 秒界限保留；两平台各 30/30 |
+| 上游独立重算 | [41174612650](https://github.com/NoGod3524/EXReader/actions/runs/41174612650)；124459479516 | `audit_passed=true`、`critical_evidence_complete=true`、`errors=[]`；每平台 30 case / 10 组死亡与恢复原始观察，36 项负控均按预期拒绝 |
+| Linux GTK | [41176687170](https://github.com/NoGod3524/EXReader/actions/runs/41176687170)；124465594563 | 原 TLS 77/77、传输故障矩阵 25/25、真实 GTK 21 条记录、3 项混用安装前缀拒绝 |
+| Windows 旧 API | 同上；124465594509 | TLS 76/76，原 session 20/20，managed 默认关闭 |
+| macOS 旧 API | 同上；124465594472 | TLS 77/77，原 session 20/20，managed 默认关闭 |
+| 产品独立重算 | 同上；124466368909 | `accepted=true`、`errors=[]`；认证原 ZIP，重算 receipt/CRC/身份/死亡/幂等/容量；4 项篡改负控按指定语义拒绝 |
+
+独立性指与 producer 分离的验证实现、原始值重算和独立 Actions 执行；本轮补证与 verifier 扩展均由本聊天 GPT 编写。
+[上游补证封存记录](https://github.com/NoGod3524/EXReader/blob/2a6bada9b391e741425556e5ac67c6191a1f145a/docs/reader-total-progress/DOT_WEBDAV_MANAGED_CLEANUP_20261031.md) · [上游独立审计封存记录](https://github.com/NoGod3524/EXReader/blob/5f05c86f4f9b36579539279a000d695ad7af5454/docs/reader-total-progress/DOT_WEBDAV_MANAGED_CLEANUP_AUDIT_20261031.md)
+
+### 证据入口与读取顺序
+
+1. 先读 [产品独立验证包](https://github.com/NoGod3524/EXReader/actions/runs/41176687170/artifacts/13033108235) 的 `summary.json`；其中 `Linux.zip`、`Windows.zip`、`macOS.zip` 为原生产者 ZIP。
+2. 再读 [Linux 产品包与原始证据](https://github.com/NoGod3524/EXReader/actions/runs/41176687170/artifacts/13032843468)：`admission.json`、`build.json`、`matrix/results.json`、`ui/results.json`、`capability-refusals.json`。
+3. 逐案检查 `matrix/` 下原始 receipt/lock、恢复前后元数据和实际进程日志；`ui/` 下 AT-SPI/状态、截图与 HTTPS 请求记录；实际 PID、SIGKILL=-9、非 root errno=13、dev/ino/nlink/size/hash 均已留存。
+4. 运行产物在 `package/EXReader-Linux/` 和 `package/EXReader-Linux.tar.gz`，包 manifest 在 `package/build.json`。实际 GTK 与包内二进制一致：10158144 bytes，SHA-256 `e6553ff51512d6803db11ca68cdcd8c7adb3d7eb9312d80315001ab9dab10aba`。
+5. 已安装 archive/headers/configs 在 `prefix/`；链接 map、nm 及构建日志证明产品与普通 consumer 无 hook，故障 worker 单独编译。所有编译、测试与 ZIP 获取/解析均在 Actions。
+
+| 证据包 | Artifact ID / 下载入口 | ZIP bytes | SHA-256 |
+|---|---|---:|---|
+| 上游 Linux | [13031778309](https://github.com/NoGod3524/EXReader/actions/runs/41174402876/artifacts/13031778309) | 114285 | `4520aae748dff728019ce865116685930cd887a3783c827c2ac3bf4422554946` |
+| 上游 macOS | [13031863107](https://github.com/NoGod3524/EXReader/actions/runs/41174402876/artifacts/13031863107) | 101735 | `3c8533a40556485d8818821068fe6cceef67e83e94cd15d26d59ba431abfe2ec` |
+| 上游独立审计 | [13031974546](https://github.com/NoGod3524/EXReader/actions/runs/41174612650/artifacts/13031974546) | 232564 | `88b3580ea082c941c6286dc6bb542683cc2bf75675944981b415b27462579efa` |
+| GTK Linux | [13032843468](https://github.com/NoGod3524/EXReader/actions/runs/41176687170/artifacts/13032843468) | 44542391 | `70e270bc70d424052ebe0b8eb60f4cecc4a21598ff22bb877719c924dbce4990` |
+| Windows 兼容 | [13032843544](https://github.com/NoGod3524/EXReader/actions/runs/41176687170/artifacts/13032843544) | 2358868 | `957c707820335a19e36f50ae6601b460dd24bb8347b44aa14e8891d1d611da72` |
+| macOS 兼容 | [13032777124](https://github.com/NoGod3524/EXReader/actions/runs/41176687170/artifacts/13032777124) | 1339913 | `9223cf8ee905828179550a0f49336d5c9de47d55f6d65635c0fa806117e3b9f8` |
+| 产品独立验证 | [13033108235](https://github.com/NoGod3524/EXReader/actions/runs/41176687170/artifacts/13033108235) | 47565339 | `b4ac0501c60878f14c57b10ca3f1f32ac702f89e399086f141e66ae25cb5695b` |
+
+截至回交核验，七份 artifact 均未过期；API 记录到期日为 **2027-01-29**。完整名称和逐 case 状态见下方封存明细。
+
+### 已完成范围
+
+- 在真实 GTK `accounts_start_network → reader_session_create_managed_raw_v3 → worker → reader_sync_step_raw_v3 → exr_webdav_download_file` 链路接入，完成真实 HTTPS 同步、原件校验、打开及重开书籍。
+- root leaf / UUID 持久绑定私有 canonical profile；原子注册表、启动恢复、未知或不确定残留保留、错 UUID / 损坏 / symlink 拒绝。
+- 16 根 × 每根 64 lifetime slots；第 64/65 个 slot、跨根继续、pending/full/available 混合重启及 1024 slot 容量耗尽均已实测。无 slot 复用或临时路径回退。
+- 区分发布与清理结果；发布后的 EACCES/uncertain 不抹去 published 事实。GTK 显示 pending、busy、refused、uncertain 与容量拒绝，已有书保持可读。
+- 单独 Retry cleanup 不产生新下载、导入或 PUT；实测请求计数与目标身份不变。Close/Cancel/Disconnect、传输中关闭窗口和 GTK SIGKILL 重开通过。
+- 保持固定 core 四文件、旧 ABI/结构布局/默认行为及原相关断言；Windows/macOS 默认旧 API 回归通过。改动精确为 30 个已登记路径。
+
+### 剩余缺口与计分边界
+
+| 未覆盖项 | 主任务接回时的处理 |
+|---|---|
+| sync private_file、上传 snapshot、GTK import snapshot 的高层生命周期 | 继续作为独立缺口管理；本包仅清理 transport staging/alias |
+| 永久根退休、slot 复用、无限长期容量 | 仍未实现；当前到 16 根/1024 lifetime slots 即拒绝，需另立受控合同 |
+| Windows/macOS/iOS/Android 的 managed 宿主接入 | 未验收；本轮 Windows/macOS 只证明旧路径兼容 |
+| 断电、存储缓存及跨重启任意替换的安全性 | 未证明；SIGKILL 结论限进程死亡，当前模型为合作进程、受控同 UID 命名空间与本地文件系统 |
+| 新主任务组合、完整 F10 或 F01–F12 产品验收 | 本次固定组合结论不能直接转授；若主任务改变源码/SDK/安装组合，需固定新 SHA 后验收对应组合 |
+| 历史 amendment 批准溯源 | 原 audit 保留 `approval_origin_independently_verified=false`；本轮用户明确授权接管，core 已披露的 valid-next 合同与字节保持，未补造历史批准记录 |
+
+正式 `catalog.json` 未改，台账 **95/108** 保持。未改 SDK、其它宿主、received.inc、J02 delivery.py；未合主线、开合 PR、打 tag 或发布版本。
+
+### 主任务接回动作
+
+1. 将本回交登记为“Linux GTK managed transport staging/alias 固定组合验证通过，待总验收 owner 审核入账”；使用上表受测 SHA，不使用浮动分支或文档 HEAD 代替。
+2. 核对独立验证包与原 ZIP 的 ID/bytes/SHA-256、两份 summary 终态及准确 30 路径清单，再核对真实 GTK 的关键场景与剩余缺口。
+3. 产品候选已包含已审 core 四文件；tests/audit 分支作为证据来源保留，不把三条不同基线的分支直接叠合成已验证产品。
+4. 若转入主任务的新集成基线，先核共享路径所有权与生产 diff，再固定新组合并运行对应产品验收。原 H03/J03 等任务仍由原 owner 管理。
+5. 保留失败历史和 artifact，并在 2027-01-29 到期前按主任务流程归档需要长期保留的证据。后续编译/测试/ZIP 处理仍沿用 Actions 环境约束。
+
+### 保留的失败历史
+
+产品首轮 [41176047061 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41176047061)，源码 `fef8bf9fd9b7c68228705cd6e20d6f56031897ab`：
+Linux/macOS 已过；Windows 因脚本反斜杠与 CMake canonical prefix 不一致失败，改脚本 `as_posix()`；
+独立 verifier 因两个 `build.json` 的后缀查找歧义拒绝，改为精确成员路径。
+定点修复即最终受测 `044824f91ddae2ea49994350d308d079a69048ab`，未降低旧断言，首轮四份 artifacts 全部保留，身份见下文。
+上游历史 [41169665419](https://github.com/NoGod3524/EXReader/actions/runs/41169665419)、[41169795520](https://github.com/NoGod3524/EXReader/actions/runs/41169795520) 及旧绿 [41170057297](https://github.com/NoGod3524/EXReader/actions/runs/41170057297) 继续保留在上游封存记录。
+
+## 原产品交付封存明细
+
 本聊天用户已授权实施，并进一步明确接管上游补证、独立审计、产品接入和 CI，持续到完成。
 当前状态：上游补证、独立审计、Linux GTK 产品接入及三平台 CI 均已完成；最终独立产品重算 accepted=true、errors=[]。正式台账保持 95/108，不改 catalog.json。
 
