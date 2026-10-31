@@ -116,7 +116,7 @@ jobs:
           def utc():return dt.datetime.now(dt.timezone.utc).isoformat()
           code,version=command(['xcodebuild','-version'])
           report['xcode_version']=version.strip() if code==0 else None
-          code,raw=command(['xcrun','simctl','list','devices','available','--json'])
+          code,raw=command(['xcrun','simctl','list','devices','available','--json'],60)
           udid=None
           if code==0:
               try:
@@ -133,7 +133,7 @@ jobs:
                   if not (evidence/'wave3-native-ui.log').exists():continue
                   if not active:active=True;window['start_utc']=utc()
                   if len(samples)>=300:report['sampling_capped']=True;return
-                  code,text=command(['ps','-axo','pid=,ppid=,stat=,etime=,comm='],5)
+                  code,text=command(['ps','-axo','pid=,ppid=,stat=,etime=,comm='],15)
                   rows=[]
                   if code:report['errors'].append({'operation':'process-snapshot','exit':code})
                   else:
@@ -153,7 +153,7 @@ jobs:
               rc=subprocess.call([sys.executable,'tests/apple_features_repair_20261029/focused_runner.py','--platform',platform])
           finally:
               report['runner_exit']=rc;report['runner_ended_utc']=utc()
-              stop.set();watcher.join(10);window['end_utc']=utc();report['window']=window
+              stop.set();watcher.join(20);window['end_utc']=utc();report['window']=window
               if watcher.is_alive():report['errors'].append({'operation':'observer-thread-not-stopped'})
               save('process-timeline.json',samples)
               try:
