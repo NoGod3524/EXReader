@@ -20,4 +20,18 @@ Seven new files: five files under `tests/product/f10_stale_owner_20261031/`, thi
 Coverage includes OWNED/SEALED actual process death, exclusive-lock conflict, real nonroot EACCES and retry, identity/permission/link/symlink/extra-entry refusal, unknown residue preservation, exact readonly borrowing and close lifetime, original PUBLISHED recovery, 64-slot capacity, interrupted cleanup convergence, and RESERVED/PUBLISH_INTENT refusal. Test secrets/data are synthetic; private fixture trees are not uploaded. A synthetic foreign-UID fixture uses Actions sudo chown on its own generated payload only.
 
 ## Status
-Prepared only. No run/artifact identity exists yet. Full F10 remains false. Linux API evidence cannot grant other platforms, SDK/host UI integration, malicious same-UID resistance or hardware power-loss claims.
+Prepared source is now verified by the single approved run below. Full F10 remains false. Linux API evidence cannot grant other platforms, SDK/host UI integration, malicious same-UID resistance or hardware power-loss claims.
+
+## Fixed measured result and handoff
+
+- Run [41254709863 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41254709863), measured source **1dd213236ccd77899cb58c7d7ec58d5d3bca4448**.
+- Linux job **124695313603** and audit job **124695358391** both succeeded.
+- Independent verdict: **api_accepted=true**, **errors=[]**, **33 cases / 258 assertions**, all **8 semantic negative controls rejected**. 29 installed-library cases and 4 labelled existing-hook real-kill boundary cases.
+- Producer artifact **13061754329**, `f10-stale-linux-41254709863-1`, **101625 bytes**, SHA256 **bd79ea75b8475caea784b0f519f70d9d5073ddb67326b32df17e7c3d179da5e8**.
+- Audit artifact **13062403971**, `f10-stale-audit-41254709863-1`, **711 bytes**, SHA256 **9ce612a724d9559498c28c7659c0c340481fc4bad239ce9c93697f4c34603862**.
+- Both artifacts expire **2027-01-29T23:58:38Z**. Ordinary audit stdout supplies the verdict; no local artifact extraction was used.
+- Approved budget: **1/1 run consumed**, zero reruns. This document seal is skip-ci and does not change the measured API.
+
+The two additive interfaces are accepted within the stated Linux cooperative-owner contract. Existing recover semantics and 64-slot lifetime behavior are retained and exercised. This is **not** sync snapshot integration: the earlier high-level EACCES and SIGKILL residue observations remain unresolved until the product uses owned snapshots and exposes recovery status. The newly supported readonly descriptor does not silently extend pathname-only WebDAV upload.
+
+Next phase must first specify a reviewed test design linking original F10 requirements to positive/negative scenarios, expected refusal causes and evidence boundaries. Keep at most one implementation line and one verification line for this module. Old no-replace and diagnosis branches remain sealed; no continuing CI or automatic extra team is authorized. Full F10 and the official total remain unchanged.
