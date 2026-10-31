@@ -57,8 +57,16 @@ final class FeaturesUITests: XCTestCase {
         while Date() < deadline { if check() { return true }; RunLoop.current.run(until: Date().addingTimeInterval(0.15)) }
         return check()
     }
+#if os(iOS)
+    private var tapCallSeq = 0
+    private func decision(_ message: String) { print("EXR-DECISION \(message)") }
+#endif
     private func tap(_ id: String) {
 #if os(iOS)
+        tapCallSeq += 1
+        let callID = tapCallSeq
+        var querySeq = 0
+        let callStart = ProcessInfo.processInfo.systemUptime
         let scroll = app.scrollViews.matching(identifier: "features.scroll").firstMatch
 #else
         let scroll = e("features.scroll")
@@ -78,15 +86,35 @@ final class FeaturesUITests: XCTestCase {
             return e(id)
         }
         func canTap(_ target: XCUIElement) -> Bool {
-            guard let snapshot = try? target.snapshot() else { return false }
+#if os(iOS)
+            querySeq += 1
+            let snapshotStart = ProcessInfo.processInfo.systemUptime
+#endif
+            guard let snapshot = try? target.snapshot() else {
+#if os(iOS)
+                decision("tap call=\(callID) id=\(id) query=\(querySeq) t=\(ProcessInfo.processInfo.systemUptime - callStart) snapshot=nil")
+#endif
+                return false
+            }
+#if os(iOS)
+            let snapshotSeconds = ProcessInfo.processInfo.systemUptime - snapshotStart
+#endif
             targetFrame = snapshot.frame
 #if os(macOS)
             let inViewport = viewport.map { $0.contains(CGPoint(x: targetFrame.midX, y: targetFrame.midY)) } ?? true
             return inViewport && snapshot.isEnabled && target.isHittable
 #else
             let visible = viewport.map { $0.intersection(targetFrame) } ?? targetFrame
-            guard !visible.isNull, visible.width >= 12, visible.height >= 12,
-                  snapshot.isEnabled, target.isHittable else { return false }
+            let sizeOK = !visible.isNull && visible.width >= 12 && visible.height >= 12
+            var hittable: Bool?
+            var hittableSeconds: Double?
+            if sizeOK && snapshot.isEnabled {
+                let hittableStart = ProcessInfo.processInfo.systemUptime
+                hittable = target.isHittable
+                hittableSeconds = ProcessInfo.processInfo.systemUptime - hittableStart
+            }
+            decision("tap call=\(callID) id=\(id) query=\(querySeq) t=\(ProcessInfo.processInfo.systemUptime - callStart) viewport=\(String(describing: viewport)) frame=\(snapshot.frame) snapshotSeconds=\(snapshotSeconds) enabled=\(snapshot.isEnabled) visible=\(visible) hittable=\(String(describing: hittable)) hittableSeconds=\(String(describing: hittableSeconds))")
+            guard hittable == true else { return false }
             if id == "features.annotations.snapshot" {
                 guard let fresh = try? target.snapshot() else { return false }
                 targetFrame = fresh.frame
@@ -112,6 +140,7 @@ final class FeaturesUITests: XCTestCase {
                 let center = CGPoint(x: viewport.midX, y: viewport.midY)
                 // A direction reversal proves the native flick crossed the target.
                 // Keep subsequent correction arrested instead of oscillating.
+                let priorAbove = previousAbove
                 if let previousAbove, previousAbove != above { controlledCorrection = true }
                 previousAbove = above
                 let distant = !controlledCorrection && abs(targetFrame.midY - center.y) > viewport.height
@@ -121,6 +150,9 @@ final class FeaturesUITests: XCTestCase {
                 let start = origin.withOffset(CGVector(dx: viewport.midX,
                     dy: viewport.minY + viewport.height * (above ? (distant ? 0.1 : 0.2) : (distant ? 0.9 : 0.8))))
                 let end = start.withOffset(CGVector(dx: 0, dy: above ? distance : -distance))
+                let startFraction = above ? (distant ? 0.1 : 0.2) : (distant ? 0.9 : 0.8)
+                let startY = viewport.minY + viewport.height * startFraction
+                decision("scroll call=\(callID) id=\(id) query=\(querySeq) t=\(ProcessInfo.processInfo.systemUptime - callStart) above=\(above) previousAbove=\(String(describing: priorAbove)) controlledCorrection=\(controlledCorrection) distant=\(distant) distance=\(distance) startX=\(viewport.midX) startY=\(startY) endY=\(startY + (above ? distance : -distance)) velocity=\(distant ? "1600" : "slow") hold=\(distant ? 0 : 0.05)")
                 // A distant section needs a real native flick rather than
                 // repeating short, fully arrested drags through every section.
                 // Near the target retain the controlled drag and stop momentum.
@@ -135,6 +167,9 @@ final class FeaturesUITests: XCTestCase {
             if canTap(target) { available = target; return true }
             return false
         }
+#if os(iOS)
+        decision("tap-final call=\(callID) id=\(id) ready=\(ready) queries=\(querySeq) totalSeconds=\(ProcessInfo.processInfo.systemUptime - callStart) targetFrame=\(targetFrame)")
+#endif
         XCTAssertTrue(ready, "Unavailable \(id) \(app.debugDescription)")
 #if os(iOS)
         if id.hasPrefix("features."), ready, !targetFrame.isEmpty {
