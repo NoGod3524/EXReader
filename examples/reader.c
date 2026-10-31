@@ -4560,6 +4560,9 @@ static int import_title_fallback(const wchar_t *path, int64_t id) {
 }
 
 static void host_update_controls(void) {
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  int64_t controls_begin=f08_tick();
+#endif
   HWND focused = GetFocus();
   int busy = (g.job != NULL) || (g.pending != NULL);
   int has = g.has_current && g.frame.valid && !g.session.txt;
@@ -4609,6 +4612,9 @@ static void host_update_controls(void) {
   host_a11y_owner_reapply();
 #ifdef EXR_READER_WINDOWS_COMPACT
   compact_controls();
+#endif
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_record("ui_controls",controls_begin,NULL,g.frame.generation,g.frame.book_id,IDC_PAGE,g.job ? g.job->kind : 0,0,busy,0);
 #endif
 }
 
