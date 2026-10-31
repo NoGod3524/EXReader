@@ -257,7 +257,7 @@ def main():
         if any(r["operation"]=="restore" for r in after["records"]):
             raise AssertionError("ordinary concurrent put became implicit restore")
         report["cases"].append({"name":"offline_reconnect_delete_put",
-            "outcome":"passed","before":before,"offline":local,"after":after,
+            "outcome":"partial","preservation_passed":True,"deletion_conflict_ui_detail":False,"before":before,"offline":local,"after":after,
             "native_conflict_text":status,"peer_author":remote["author"]})
         dav.offline=True
         offline_requests=len(dav.requests)
