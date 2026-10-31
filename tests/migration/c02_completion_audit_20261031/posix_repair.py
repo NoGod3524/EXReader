@@ -1426,7 +1426,7 @@ def audit_repair_cases(owner,source,git_bytes):
         acl_valid = ([r["command"] for r in rows] == [
              ["/bin/ls","-lde",authority],["/bin/chmod","+a#","0","everyone allow write",authority],
              ["/bin/ls","-lde",authority],["/bin/chmod","-a#","0",authority]] and all(r["exit"] == 0 for r in rows) and
-             re.search(r"^\s*0:\s+group:everyone\s+allow\s+.*write",rows[2]["stdout"],re.M))
+             re.search(r"^\s*0:\s+group:everyone\s+allow\s+add_file\s*$",rows[2]["stdout"],re.M))
         if not acl_valid:
             import json
             print("C02-REPAIR-ACL-DIAGNOSTIC "+json.dumps([
