@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """Actions-only actual Android host build with installed native C02 admission."""
-import hashlib, json, os, pathlib, shutil, subprocess, sys
+import hashlib, json, os, pathlib, re, shutil, subprocess, sys, zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 OUT = ROOT / "evidence/android-c02"
@@ -14,52 +14,27 @@ def main():
     sys.path.insert(0, str(ROOT / "tools"))
     import build_android_host as host
     sdk = ROOT / "stage/android-c02-sdk"
-    host.build_sdk(sdk, ROOT / "build/android-c02-sdk")
-    toolchain = host.ndk_home() / "build/cmake/android.toolchain.cmake"
-    common = ["-G", "Ninja", "-DCMAKE_TOOLCHAIN_FILE=" + str(toolchain), "-DANDROID_ABI=x86_64",
-              "-DANDROID_PLATFORM=android-26", "-DANDROID_STL=c++_static", "-DCMAKE_BUILD_TYPE=Release",
-              "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH"]
+    formal = ROOT / "build/android-c02-formal-package"
+    # Exercise the ordinary product entry point before enabling process actors.
+    run([sys.executable, "tools/build_android_host.py", "--stage", sdk,
+         "--sdk-build", ROOT / "build/android-c02-sdk", "--build-dir", formal, "--gradle", "gradle"])
     product = ROOT / "stage/android-product"
-    # Current product catalog consumes the independent installed OPDS hash owner.
-    hash_prefix = ROOT / "stage/android-c02-hash"
-    hash_build = ROOT / "build/android-c02-hash"
-    run(["cmake", "-S", "extras/opds", "-B", hash_build, *common,
-         "-DEXREADER_OPDS_HASH_ONLY=ON", "-DCMAKE_INSTALL_PREFIX=" + str(hash_prefix)])
-    run(["cmake", "--build", hash_build, "--parallel", "4"])
-    run(["cmake", "--install", hash_build])
-    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = str(hash_prefix)
-    for name, source, target in [
-        ("catalog", "apps/reader/store/native", "reader_original_import"),
-        ("revisions", "apps/reader/revisions", "reader_revisions"),
-        ("commands", "apps/reader/commands", "reader_commands")]:
-        build = ROOT / "build/android-c02-product" / name
-        run(["cmake", "-S", source, "-B", build, *common,
-             "-DCMAKE_INSTALL_PREFIX=" + str(product), "-DCMAKE_PREFIX_PATH=" + str(product),
-             "-DREADER_PRODUCT_PREFIX=" + str(product), "-DREADER_ORIGINAL_HASH_PREFIX=" + str(hash_prefix)])
-        run(["cmake", "--build", build, "--parallel", "4", "--target", target])
-        run(["cmake", "--install", build])
-    host.patch_android_libraries(sdk)
-    abi = ROOT / "stage/android-c02-abi2"
-    native = ROOT / "stage/android-c02-native"
-    admission = ROOT / "stage/android-c02"
-    for name, source, prefix, extra in [
-        ("abi2", "extras/migration/windows_coordinator_hardening_20261030", abi, []),
-        ("native", "extras/migration/posix_c02_admission_20261031", native, ["-DWH_PREFIX=" + str(abi)]),
-        ("sdk-admission", "extras/migration/posix_c02_sdk_admission_20261031", admission,
-         ["-DWH_PREFIX=" + str(abi), "-DPC02_PREFIX=" + str(native), "-DEXR_SDK=" + str(sdk)])]:
-        build = ROOT / ("build/android-c02-" + name)
-        run(["cmake", "-S", source, "-B", build, *common, "-DCMAKE_INSTALL_PREFIX=" + str(prefix), *extra])
-        run(["cmake", "--build", build, "--parallel", "4"])
-        run(["cmake", "--install", build])
-    assets = ROOT / "examples/android/app/src/main/assets"
-    assets.mkdir(parents=True, exist_ok=True)
-    run([sys.executable, "tools/reader_catalog_assets.py", "--output", assets / "reader-catalog-v1.json"])
-    from host_font import fetch
-    font = fetch(ROOT / "build/c02-host-font")
-    shutil.copyfile(font / "Reader.otf", assets / "Reader.otf")
-    shutil.copyfile(font / "OFL.txt", assets / "OFL.txt")
+    admission = sdk
+    native = sdk
+    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = str(product / "original-hash")
+    formal_evidence = OUT / "formal-package"
+    formal_evidence.mkdir()
+    shutil.copyfile(formal / "build.json", formal_evidence / "build.json")
+    shutil.copyfile(formal / "artifacts/app-debug.apk", formal_evidence / "app-debug.apk")
+    metadata = json.loads((formal / "build.json").read_text())
+    assert metadata["sdk_version"] == "3.42.0" and metadata["c02_admission"]["profile"] == "c02"
+    assert metadata["c02_admission"]["source"] == os.environ["GITHUB_SHA"]
     android = ROOT / "examples/android"
-    (android / "local.properties").write_text("sdk.dir=" + str(host.android_home()) + "\n")
+    run(["gradle", "-p", android, "--no-daemon", "--stacktrace", ":app:assembleRelease",
+         "-PexrSdk=" + str(sdk), "-PexrSdkVersion=3.42.0", "-PexrProduct=" + str(product),
+         "-PexrC02Prefix=" + str(admission)])
+    shutil.copyfile(android / "app/build/outputs/apk/release/app-release-unsigned.apk",
+                    formal_evidence / "app-release-unsigned.apk")
     run(["gradle", "-p", android, "--no-daemon", "--stacktrace", ":app:assembleDebug", ":app:assembleDebugAndroidTest",
          "-PexrSdk=" + str(sdk), "-PexrSdkVersion=3.42.0", "-PexrC02Prefix=" + str(admission),
          "-PexrProduct=" + str(product), "-PexrC02Test=true", "-PexrTestRunner=org.exreader.host.C02HostTest"])
@@ -69,11 +44,41 @@ def main():
     # ELF/provider inspection remains on Actions. Native host must call the same
     # shared SDK; the installed admission archives must not define SDK symbols.
     ndkbin = host.ndk_home() / "toolchains/llvm/prebuilt/linux-x86_64/bin"
-    native_hosts = list((android / "app/build/intermediates/cxx/Debug").rglob("libexreader_host.so"))
+    packaged = OUT / "libexreader_host.packaged.so"
+    sdk_installed = OUT / "sdk-libexreader.installed.so"
+    sdk_packaged = OUT / "sdk-libexreader.packaged.so"
+    shutil.copyfile(sdk / "lib/libexreader.so", sdk_installed)
+    with zipfile.ZipFile(app) as archive:
+        packaged.write_bytes(archive.read("lib/x86_64/libexreader_host.so"))
+        sdk_packaged.write_bytes(archive.read("lib/x86_64/libexreader.so"))
+    strip_matches = []
+    if sdk_installed.read_bytes() == sdk_packaged.read_bytes():
+        strip_matches.append("identical")
+    for flag, label in [("--strip-unneeded", "unneeded"), ("--strip-debug", "debug")]:
+        predicted = OUT / ("sdk-libexreader.strip-" + label + ".so")
+        run([ndkbin / "llvm-strip", flag, "-o", predicted, sdk_installed])
+        if predicted.read_bytes() == sdk_packaged.read_bytes(): strip_matches.append(flag)
+    (OUT / "sdk-byte-binding.json").write_text(json.dumps(dict(installed="sdk-libexreader.installed.so",
+        packaged="sdk-libexreader.packaged.so", apk="app-debug.apk", apk_entry="lib/x86_64/libexreader.so",
+        installed_sha256=hashlib.sha256(sdk_installed.read_bytes()).hexdigest(),
+        packaged_sha256=hashlib.sha256(sdk_packaged.read_bytes()).hexdigest(),
+        ndk="27.0.12077973", matching_official_strip=strip_matches), indent=2) + "\n")
+    assert strip_matches, "Packaged SDK differs from installed SDK and the official NDK strip transforms"
+    def build_id(path):
+        notes = subprocess.check_output([str(ndkbin / "llvm-readelf"), "-n", str(path)], text=True)
+        match = re.search(r"Build ID:\s*([0-9a-f]+)", notes)
+        assert match, path
+        return match.group(1)
+    actual_build_id = build_id(packaged)
+    native_hosts = [path for path in (android / "app/build/intermediates/cxx/Debug").rglob("libexreader_host.so")
+                    if build_id(path) == actual_build_id]
     assert len(native_hosts) == 1, native_hosts
     shutil.copyfile(native_hosts[0], OUT / "libexreader_host.so")
     symbols = subprocess.check_output([str(ndkbin / "llvm-nm"), "--defined-only", str(native_hosts[0])])
-    dynamic = subprocess.check_output([str(ndkbin / "llvm-readelf"), "-d", str(native_hosts[0])])
+    dynamic = subprocess.check_output([str(ndkbin / "llvm-readelf"), "-d", str(packaged)])
+    (OUT / "native-provider.json").write_text(json.dumps(dict(build_id=actual_build_id,
+        packaged_sha256=hashlib.sha256(packaged.read_bytes()).hexdigest(),
+        unstripped_sha256=hashlib.sha256(native_hosts[0].read_bytes()).hexdigest()), indent=2) + "\n")
     (OUT / "host-defined-symbols.txt").write_bytes(symbols)
     (OUT / "host-dynamic.txt").write_bytes(dynamic)
     assert not any(line.split()[-1:] == [b"exr_library_open"] for line in symbols.splitlines()), "duplicate static SDK provider"

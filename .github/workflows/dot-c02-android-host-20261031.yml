@@ -14,6 +14,8 @@ on:
       - examples/android/app/src/main/cpp/**
       - examples/android/app/build.gradle
       - tests/migration/android_c02_host_20261031/**
+      - tools/android_c02.py
+      - tools/build_android_host.py
       - .github/workflows/dot-c02-android-host-20261031.yml
   workflow_dispatch:
 permissions: {contents: read}

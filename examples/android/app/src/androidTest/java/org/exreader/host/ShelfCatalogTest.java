@@ -52,7 +52,7 @@ public final class ShelfCatalogTest extends Instrumentation {
                 this::canceledOldSearchCannotReplaceNewResults,this::missingEndAnchorFallsBackWithinSameFilter,
                 this::pendingRestoreRetainsOnlySameQueryAnchor,this::canonicalSearchPreservesDisplayBytes};
         try {
-            directory=new File(context.getCacheDir(),"shelf-catalog-"+NativeCatalog.newId()); remove(directory); require(directory.mkdirs(),"test folder");
+            directory=new File(context.getFilesDir(),"shelf-catalog-"+NativeCatalog.newId()); remove(directory); require(directory.mkdirs(),"test folder");
             seed(directory,false);
             store=new BookStore(context,new File(directory,"library.db"));
             for (int index=0;index<checks.length;index++) {

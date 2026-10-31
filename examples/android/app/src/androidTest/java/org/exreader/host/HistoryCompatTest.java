@@ -34,7 +34,7 @@ public final class HistoryCompatTest extends Instrumentation {
     @Override public void onStart(){
         Context context=getTargetContext();Throwable failure=null;
         try{
-            File directory=new File(context.getCacheDir(),"history-compat-"+NativeCatalog.newId());need(directory.mkdirs(),"private directory");
+            File directory=new File(context.getFilesDir(),"history-compat-"+NativeCatalog.newId());need(directory.mkdirs(),"private directory");
             File original=new File(directory,"original.txt"),database=new File(directory,"library.db");
             Files.write(original.toPath(),("Original bootstrap identity "+directory.getName()+"\n").getBytes(StandardCharsets.UTF_8));
             NativeAdmission.initialize(context,database,NativeAdmission.CREATE);

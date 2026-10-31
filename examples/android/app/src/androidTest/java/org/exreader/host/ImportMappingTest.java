@@ -62,7 +62,7 @@ public final class ImportMappingTest extends Instrumentation {
             sendStatus(1, status);
             Throwable failed = null;
             try {
-                directory = new File(context.getCacheDir(), "import-mapping-" + index + "-" + NativeCatalog.newId());
+                directory = new File(context.getFilesDir(), "import-mapping-" + index + "-" + NativeCatalog.newId());
                 remove(directory); require(directory.mkdirs(), "test directory");
                 NativeAdmission.initialize(context,new File(directory,"library.db"),NativeAdmission.CREATE);
                 checks[index].run();
