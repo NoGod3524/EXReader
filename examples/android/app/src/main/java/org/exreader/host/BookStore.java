@@ -27,6 +27,61 @@ final class BookStore implements AutoCloseable {
     NativeLibrary nativeLibrary() { return library; }
     boolean bounded(long bookId) { return library.bounded(bookId); }
 
+    /** A verified SDK original staged for the existing page-publication transaction. */
+    static final class ReaderCopy implements AutoCloseable {
+        private File staged;
+        private final File published;
+        ReaderCopy(File staged,File published) { this.staged=staged;this.published=published; }
+        File readFile() { return staged==null?published:staged; }
+        File publishedFile() { return published; }
+        void publish() throws IOException {
+            if(staged!=null) {
+                java.nio.file.Files.move(staged.toPath(),published.toPath(),
+                        java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                staged=null;
+            }
+        }
+        @Override public void close() { if(staged!=null){staged.delete();staged=null;} }
+    }
+
+    ReaderCopy prepareReaderCopy(long book,String expectedSha,long expectedBytes,
+                                 File directory,HostTask task) throws IOException {
+        if(Thread.currentThread()!=sdkOwner)
+            throw new IllegalStateException("Reading originals require the existing SDK owner");
+        task.check();
+        VerifiedSource source=verifySource(book,expectedSha,expectedBytes,task);
+        if(source.book.format!=NativeLibrary.FORMAT_TXT)
+            throw new IOException("Only TXT reader-copy recovery is supported");
+        File root=new File(directory.getParentFile().getCanonicalFile(),directory.getName());
+        if(!root.getCanonicalFile().equals(root))
+            throw new IOException("Reading originals directory must be canonical");
+        if(!root.isDirectory()&&!root.mkdirs())
+            throw new IOException("Cannot create reading originals directory");
+        File published=new File(root,source.sha256+".txt");
+        if(!published.getCanonicalFile().equals(published.getAbsoluteFile()))
+            throw new IOException("Reading original path must be canonical");
+        if(published.exists()) {
+            if(!published.isFile())throw new IOException("Reading original is not a file");
+            if(published.length()==source.bytes&&source.sha256.equals(syncFileHash(published,task))) {
+                task.check();return new ReaderCopy(null,published);
+            }
+        }
+        File staged=new File(root,".reader-"+java.util.UUID.randomUUID()+".txt");
+        boolean retained=false;
+        try {
+            if(library.exportOriginal(book,staged.getAbsolutePath(),task)!=source.bytes
+                    ||staged.length()!=source.bytes
+                    ||!source.sha256.equals(syncFileHash(staged,task)))
+                throw new IOException("Recovered reading original differs from the SDK");
+            task.check();
+            ReaderCopy result=new ReaderCopy(staged,published);retained=true;return result;
+        } finally {
+            if(!retained)staged.delete();
+        }
+    }
+
+
     BookStore(Context context, File database) throws IOException {
         CatalogStore openedCatalog = new CatalogStore(context,
                 new File(database.getParentFile(), "reader-catalog.db"));

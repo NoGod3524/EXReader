@@ -1,0 +1,86 @@
+{
+  "base": "f59425f00af9069a22dc9cef2399ae84e3a62648",
+  "sdk": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "branch": "codex/gpt-f02-win-android-transfer-20261031",
+  "owned": [
+    "examples/android/app/src/main/java/org/exreader/host/MainActivity.java",
+    "examples/android/app/src/main/java/org/exreader/host/BookStore.java",
+    "tests/reader_f02_win_android_20261031/source_lock.json",
+    "tests/reader_f02_win_android_20261031/fetch_sender.py",
+    "tests/reader_f02_win_android_20261031/build.py",
+    "tests/reader_f02_win_android_20261031/run.py",
+    "tests/reader_f02_win_android_20261031/authenticate.py",
+    "tests/reader_f02_win_android_20261031/init.gradle",
+    "tests/reader_f02_win_android_20261031/java/org/exreader/host/F02ReceiveTest.java",
+    ".github/workflows/dot-f02-win-android-transfer-20261031.yml",
+    "docs/reader-total-progress/DOT_F02_WIN_ANDROID_TRANSFER_20261031.md"
+  ],
+  "production_baseline_blobs": {
+    "examples/android/app/src/main/java/org/exreader/host/MainActivity.java": "24e18536e40ea450f95bfbc310f81d7163b05fa7",
+    "examples/android/app/src/main/java/org/exreader/host/BookStore.java": "8757f8977a5b1ce9fdf29545c332de7c72a1257d"
+  },
+  "frozen_sdk": {
+    "src": "01dbab7c7c28aff175b5a953fea307e21d84eee2",
+    "include": "ef1bbaafc4a250053e5b0f88d329d1a25b22794b",
+    "cmake": "505c604a2b30b72b3a251cd3f0bb7628e6d58fc1",
+    "CMakeLists.txt": "a5ed27fcca1d709c2217c585da47dc55dc23c1d0",
+    "bindings": "54c12f70a1a63cae6574984a388b66bf6248c38e",
+    "tests/windows_sdk342": "0044ebda61fe5750c8defa5d81b63414df14fdbc",
+    "tests/gtk_sdk342_package": "0b63f1c5e5afcac9dfc5f687ea58c79a686b1c40",
+    "tests/reader_gtk_raw_wave3": "f0f12308626e10dbfbc2756a0afeff18e6987a0e",
+    "tests/reader_windows_account": "db06dfd321b0befe60430fe509ab98a06e78dcc6",
+    "tests/linux_host": "cc848eca53445fbc290ee5a7d714315932f76031",
+    "tests/reader_gtk_receive": "ad3e0c31c056ee421f1549ab8b847860f08107bc",
+    "tests/reader_windows_compact": "fa4a06abad46f5542190b38f2891a005890da3b7",
+    "tests/reader_navigation": "defb7e62adc638c04e448cdc5138c4386a9c0de8",
+    "tests/reader_gtk_navigation": "7c74f08ecd942bb6f251a4f8248d262f6162843a",
+    "tests/reader_gtk_batch_import": "56481df2c5bfc3177aea0e4c1b02996170db1abf",
+    "apps/reader": "004a0b08be8568407475b8bafe8472bd216516b8",
+    "extras": "61fccfdaa6786ecd87dc9a7939c7d63314af4f11",
+    "tools": "dfb0100ac0b0cbba7b0774e54713291e7e1a5126",
+    "tests/reader_android_receive_d22": "60892d12db3dc0c90134a5f63593bb0097593cdc",
+    "tests/reader_f02_win_gtk_20261031": "84228b8493c92a6ff82c27c0943b1e5111f28ea8",
+    ".github/workflows/reader-d22-android-receive.yml": "449767394c9f63671e9936660f6c5433d0abcc34"
+  },
+  "sender": {
+    "source": "3b416378337a73c62423857e4340d469d357038d",
+    "run": 41169386789,
+    "attempt": 1,
+    "job": 124443838088,
+    "sender_artifact": 13030748486,
+    "bytes": 6354365,
+    "sha256": "4771f705c20c7230e13a193cbf44eb8b0c3a03ea4da208fbef26ad82fa033a8a",
+    "audit_artifact": 13031635572,
+    "audit_bytes": 15488583,
+    "audit_sha256": "c21ebc168c25481d2755c148218f8865a0c77cbe3909330a007e7f6470069e79",
+    "original_bytes": 12000,
+    "original_sha256": "5f00b41f874d60348d6dc237873759906e5f0ed28b05bb399a6699bbc3c7b38f",
+    "sender_name": "f02-windows-41169386789-1"
+  },
+  "budgets": {
+    "admission": 10,
+    "android": 60,
+    "audit": 15,
+    "total": 85,
+    "rounds": 1
+  },
+  "scope": "archived real Windows PUT -> SDK342 Android Activity receive and SDK-backed offline reopen; not complete F02",
+  "formal_catalog_blob": "e0c52bf139da2374cf58dbce40ae6c093a59f39d",
+  "formal_score": "95/108",
+  "production_result_blobs": {
+    "examples/android/app/src/main/java/org/exreader/host/MainActivity.java": "c98cb87a86ab95ae9498cf9ab5dce68e9c4dd369",
+    "examples/android/app/src/main/java/org/exreader/host/BookStore.java": "be6dc75e0f77d0a975c21dc7dddeea31b46d5d81"
+  },
+  "build_contract": {
+    "ndk": "27.0.12077973",
+    "java": "17",
+    "gradle": "8.9",
+    "api": 34,
+    "abi": "x86_64",
+    "sdk_version": "3.42.0",
+    "page_theme": false,
+    "legacy_D22_assertions_unchanged": true
+  },
+  "expected_activity_checks": 20,
+  "semantic_controls": 12
+}
