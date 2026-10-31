@@ -100,3 +100,45 @@ requires the shelf in the UI to list exactly three books after reopen; items 8 a
 
 Further results are appended below. Scope of any result: F12 Linux portable
 update slice only — not F11, not six-platform F12, not formal release or signing, not licensing/documentation.
+
+## Result
+Run 41176158414 / attempt 1 (1d30c8111e6a0ac75f3ea35ff305fbcf034477a0), after four driver/workflow-only corrections
+(attempts 41174389797, 41174578730, 41175145440, 41175497127 are kept as the failure history above): success.
+
+| Job | ID | Result |
+|---|---|---|
+| Real A -> B GTK matrix | 124464039211 | success |
+| Independent evidence check | 124465363916 | success (`accepted: true`, no findings) |
+
+| Artifact | ID | Bytes | Digest |
+|---|---|---|---|
+| k03-evidence-41176158414-1 | 13032718240 | 449856 | sha256:b11adb294ec8371a3b1a3d145f2d615ef2146686a0b9ba2cd8b26228e12745c5 |
+| k03-b-package-41176158414-1 | 13032907739 | 18573921 | sha256:8501bb5fa5152af3ace135e354586aac484ceecc82a8d25850b82276f5b54d08 |
+| k03-independent-check-41176158414-1 | 13033012644 | 1102 | sha256:2de51c22912b08f44191b6c82cf2fcf7cb3378a7769eb2b725cea4e1030d39d0 |
+
+Identity: A source 8f8acf32…, SDK 3.42.0, entry sha256 e87554e64e2eea23f6b81b004c8fe17f6657ec64d4a64906292969f165e29673;
+B source = the run SHA on product baseline 8232e91c, SDK 3.42.0, entry sha256
+69c2ceac39b5d2b03997a49bae309637c8eb56d07894b043f6e3cd64d14150e5 (different binaries). The profile written by A
+reports library `user_version` 7; A and B are the same SDK/schema generation, so this is a program-path update, not a
+schema migration.
+
+Per item: 1-12 passed (summary passed 12, failed 0, blocked 0); not-run: B-modified profile back into A (no downgrade
+contract; promised nowhere) and cross-schema migration (no older-schema source authorized).
+
+Proven: both packages run through the unmodified no-argument launcher from a space/non-ASCII path and an unrelated CWD
+with the default profile under the isolated XDG_DATA_HOME; a profile built by real UI input in A (PDF, TXT, EPUB, page
+position, note, font setting, shelf with a member) is reopened by B at the same book and page with the same three
+original-byte hashes, the A note, shelf and setting; B's own edit survives close/reopen with no duplicate import (UI
+shelf lists exactly three books); the profile flock (`/proc/locks`) lets only one writer in and the second process shows
+the refusal; a damaged B copy exits 127 without touching A, B or the profile; B SIGKILLed by PID keeps the
+confirmed pre-kill note and reopens; the pre-update backup opened by the original A matches; a repeated A -> B -> B on
+an independent profile adds nothing; moving/removing synthetic program directories leaves the profile intact.
+
+Not proven / not claimed: cross-schema migration; downgrade; power-loss durability (SIGKILL only); signature or
+auto-update machinery (none exists); other distributions (Ubuntu 22.04 runner only); release/signing; F11; other
+platforms. Observations for the product owner, not defects fixed here: the host reports every library-open failure as
+code 3 "Could not open library or font" (the specific "already in use" text is not surfaced), and both A and B resume
+with "Position not unique; saved chapter offset shown, original point retained".
+
+Next owner: fixed inputs are A artifact 12811449234, source 1d30c811…, the three artifacts above. Re-check offline:
+`python3 -I tests/gtk_portable_upgrade_20261031/check.py <k03-evidence>/evidence --report check.json`.
