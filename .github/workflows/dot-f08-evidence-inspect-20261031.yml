@@ -1,0 +1,65 @@
+name: F08 pinned evidence inspection
+run-name: F08 evidence ${{ inputs.artifact }}
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        required: true
+        type: string
+      run:
+        required: true
+        type: string
+      attempt:
+        required: true
+        default: '1'
+        type: string
+      artifact:
+        required: true
+        type: string
+      digest:
+        required: true
+        type: string
+      bytes:
+        required: true
+        type: string
+      manifest:
+        required: true
+        default: manifest.json
+        type: string
+      paths:
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate every file and inspect selected original records
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F08_SOURCE: ${{ inputs.source }}
+          F08_RUN: ${{ inputs.run }}
+          F08_ATTEMPT: ${{ inputs.attempt }}
+          F08_ARTIFACT: ${{ inputs.artifact }}
+          F08_DIGEST: ${{ inputs.digest }}
+          F08_BYTES: ${{ inputs.bytes }}
+          F08_MANIFEST: ${{ inputs.manifest }}
+          F08_PATHS: ${{ inputs.paths }}
+        run: |
+          python3 -m py_compile tests/reader_f08_evidence_inspect_20261031/inspect.py
+          python3 tests/reader_f08_evidence_inspect_20261031/inspect.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-evidence-inspection-${{ inputs.artifact }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-evidence-inspect/*.json
+          if-no-files-found: error
