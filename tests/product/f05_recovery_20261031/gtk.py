@@ -118,7 +118,8 @@ def main():
         wait(host, lambda: account(host).get("phase") == "0"
              and account(host).get("preparing") == "0"
              and account(host).get("owner_busy") == "0"
-             and account(host).get("projection_status") not in (None, "0"), 120)
+             and (account(host).get("notice", "").startswith("Sync finished.")
+                  or account(host).get("notice", "").startswith("Shelf organization:")), 120)
         if heads is not None:
             wait(host, lambda: set(snapshot(host)["heads"]) == set(heads))
         state = account(host)
@@ -275,7 +276,7 @@ def main():
                     host.process.wait(timeout=20)
         store.close()
         report["requests"] = store.requests
-        report["uncovered"] = ["delete-put tombstone",
+        report["uncovered"] = ["stale-put replay after tombstone", "conditional explicit restore parents",
                                "receive cancellation", "offline reopened actual read",
                                "independent original-artifact authentication"]
         (out / "coverage.json").write_text(json.dumps(report, indent=2) + "\n")
