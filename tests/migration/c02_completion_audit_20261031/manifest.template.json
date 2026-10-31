@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "source": null,
+  "repository": "NoGod3524/EXReader",
+  "packages": [
+    {
+      "role": "native-windows",
+      "platform": "Windows",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "native_evidence (windows-2022)",
+      "workflow": ".github/workflows/dot-c02-native-journal-20261030.yml",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      }
+    },
+    {
+      "role": "native-linux",
+      "platform": "Linux",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "native_evidence (ubuntu-22.04)",
+      "workflow": ".github/workflows/dot-c02-native-journal-20261030.yml",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      }
+    },
+    {
+      "role": "persistent-gate",
+      "platform": "Windows",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "persistent_gate",
+      "workflow": ".github/workflows/dot-c02-domain-gate-20261031.yml",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      }
+    },
+    {
+      "role": "registry-product",
+      "platform": "Windows",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "registry_and_product",
+      "workflow": ".github/workflows/dot-c02-registry-admission-20261031.yml",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      },
+      "expected_registry": {
+        "cases": 50,
+        "checks": 530
+      },
+      "expected_scanner": {"cases":29,"checks":91794,"observations":6603},
+      "required_repair_phases": [
+        950,
+        951,
+        952,
+        953,
+        954,
+        955
+      ]
+    },
+    {
+      "role": "host-android",
+      "platform": "Linux",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "android",
+      "workflow": ".github/workflows/dot-c02-host-owners-20261031.yml",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      },
+      "receipt": "c02-evidence/receipt.json",
+      "admission_report": null,
+      "observation_log": null
+    },
+    {
+      "role": "host-macos",
+      "platform": "macOS",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": "macos",
+      "workflow": ".github/workflows/dot-c02-host-owners-20261031.yml",
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      },
+      "receipt": "c02-evidence/receipt.json",
+      "admission_report": null,
+      "observation_log": null
+    },
+    {
+      "role": "host-gtk",
+      "platform": "Linux",
+      "run": null,
+      "attempt": 1,
+      "job": null,
+      "job_name": null,
+      "workflow": null,
+      "artifact": {
+        "id": null,
+        "name": null,
+        "bytes": null,
+        "sha256": null
+      },
+      "receipt": null,
+      "admission_report": null,
+      "observation_log": null
+    }
+  ]
+}

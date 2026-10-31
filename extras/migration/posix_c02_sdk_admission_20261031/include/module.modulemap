@@ -1,0 +1,5 @@
+module CEXReaderC02 [system] {
+  header "exr_pc02.h"
+  header "exr_pc02_sdk.h"
+  export *
+}

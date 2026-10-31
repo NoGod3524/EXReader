@@ -6,6 +6,9 @@
 #define _DARWIN_C_SOURCE
 #endif
 #include "lm_ledger.h"
+#ifdef LM_C02_PRODUCTION
+#include "lm_c02_guard.h"
+#endif
 #ifdef EXR_MIGRATION_TX_CANDIDATE
 #include "lm_mirror.h"
 #endif
@@ -2753,6 +2756,16 @@ static void run_verify(ctx *c) {
 
 /* ---------- command line ---------- */
 static void usage(void) {
+#ifdef LM_C02_PRODUCTION
+  fputs("usage: exreader-legacy-migrate inspect --pack PACK\n"
+        "       exreader-legacy-migrate dump --target LIBRARY\n"
+        "       exreader-legacy-migrate verify --pack PACK --target LIBRARY\n"
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+        "       exreader-legacy-migrate export-ledger --target LIBRARY --output NEW_FILE\n"
+#endif
+        "Library commands require explicit exreader-c02-admission registration; reports use stdout.\n"
+        "Migration and recovery: exreader-c02-migrate migrate LIBRARY PACK | recover LIBRARY\n",stderr);
+#else
   fputs("usage: exreader-legacy-migrate <command> [options]\n"
         "  inspect --pack PACK\n"
         "  migrate --pack PACK --target LIBRARY [--report FILE] [--allow-partial] [--dry-run] [--break-lock]\n"
@@ -2767,6 +2780,7 @@ static void usage(void) {
 #endif
         "  --version\n"
         "Exit: 0 success/dry-run, 1 usage, 2 rejected, 3 failed, 4 cancelled, 5 busy, 6 inconsistent\n", stderr);
+#endif
 }
 static int real_main(int argc, char **argv) {
   ctx *c = lm_xalloc(sizeof(*c));
@@ -2785,6 +2799,14 @@ static int real_main(int argc, char **argv) {
     exr_version()); return 0; }
   if (argc < 2) { usage(); return 1; }
   c->cmd = argv[1];
+#ifdef LM_C02_PRODUCTION
+  {
+    lm_err admission_error={{0},{0}};
+    if(!lm_c02_guard_command(c->cmd,&admission_error)){
+      fail(c,O_REJECTED,admission_error.code,"%s",admission_error.message);emit(c);return EXIT_CODE[c->out];
+    }
+  }
+#endif
   for (i = 2; i < argc; i++) {
     const char *a = argv[i];
     if (!strcmp(a, "--pack") && i + 1 < argc) c->pack_path = argv[++i];
@@ -2812,6 +2834,18 @@ static int real_main(int argc, char **argv) {
       if (!strcmp(c->inject, "cancel") && at) c->cancel_at = c->inject_at;
     } else { usage(); return 1; }
   }
+#ifdef LM_C02_PRODUCTION
+  {
+    const char *physical=NULL,*requested_report=c->report_path;
+    lm_err admission_error={{0},{0}};
+    /* Error reporting itself must never overwrite a protected target. */
+    c->report_path=NULL;
+    if(!lm_c02_guard_read(c->cmd,c->target,requested_report,&physical,&admission_error)){
+      fail(c,O_REJECTED,admission_error.code,"%s",admission_error.message);emit(c);return EXIT_CODE[c->out];
+    }
+    if(physical)c->target=physical;
+  }
+#endif
   lm_binary_stdout();
   signal(SIGINT, on_signal);
   signal(SIGTERM, on_signal);

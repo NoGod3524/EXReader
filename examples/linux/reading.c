@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #define _POSIX_C_SOURCE 200809L
 #include "reading.h"
+#include <exr_pc02_sdk.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,6 +93,7 @@ typedef struct {
   size_t part,page,start,end,position;
 } reader_session;
 struct linux_reader {
+  pc02_lease *admission;
   exr_library *library;
   exr_font *font;
   exr_control control;
@@ -257,6 +259,16 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
   *out=NULL;if(!reader) return EXR_MEMORY;
 #ifdef EXR_READER_PRODUCT_CATALOG
   reader->catalog_lock=-1;
+#endif
+  if(!pc02_sdk_open_user(database,&reader->admission) || !pc02_check(reader->admission)) {
+    if(error) {
+      error->code=EXR_IO;
+      snprintf(error->message,sizeof(error->message),
+        "Library admission refused. Use exreader-c02-admission for explicit creation or enrollment; retain recovery evidence.");
+    }
+    linux_reader_close(reader);return EXR_IO;
+  }
+#ifdef EXR_READER_PRODUCT_CATALOG
   size_t path_size=strlen(database)+32;
   reader->catalog_path=malloc(path_size);
   char *lock_path=malloc(path_size);
@@ -312,6 +324,8 @@ void linux_reader_close(linux_reader *reader) {
     free(reader->catalog_path);
     if(reader->catalog_lock>=0) close(reader->catalog_lock);
 #endif
+    /* All SDK sources, asynchronous owners and catalog work have retired. */
+    pc02_close(reader->admission);
     free(reader);
   }
 }
@@ -846,6 +860,11 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+  if(!pc02_check(reader->admission)) {
+    result->status=EXR_IO;
+    snprintf(result->message,sizeof(result->message),"Library admission changed; close the reader and retain recovery evidence.");
+    return;
+  }
 #ifdef EXR_READER_BATCH_IMPORT
   if(command->action>=READER_BATCH_BEGIN && command->action<=READER_BATCH_CLOSE) {
     batch_execute(reader,command,result);return;

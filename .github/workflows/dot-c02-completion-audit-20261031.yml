@@ -1,0 +1,101 @@
+name: C02 independent original ZIP evidence audit
+on:
+  push:
+    branches: [codex/dot-c02-native-journal-20261030]
+    paths:
+      - tests/migration/c02_completion_audit_20261031/**
+      - .github/workflows/dot-c02-completion-audit-20261031.yml
+  workflow_dispatch:
+    inputs:
+      producer_source:
+        description: Full immutable producer commit SHA
+        type: string
+        required: true
+        default: faae61879441085d800879332699d0b6fd5e2307
+      scope:
+        description: Fixed Windows component experiment or explicit complete qualification
+        type: choice
+        required: true
+        default: windows-components
+        options: [windows-components, complete-c02]
+      qualification_manifest:
+        description: Complete JSON manifest, required only for complete-c02
+        type: string
+        required: false
+        default: ''
+permissions: {contents: read, actions: read}
+defaults:
+  run: {shell: bash}
+jobs:
+  original_zip_semantics:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      QUALIFICATION_SOURCE: ${{ inputs.producer_source || 'faae61879441085d800879332699d0b6fd5e2307' }}
+      AUDIT_SCOPE: ${{ inputs.scope || 'windows-components' }}
+      QUALIFICATION_JSON: ${{ inputs.qualification_manifest || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify candidate audit code syntax on Actions
+        run: |
+          set -euo pipefail
+          mkdir -p audit-evidence
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python -m py_compile tests/migration/c02_completion_audit_20261031/*.py 2>&1 | tee audit-evidence/syntax.log
+      - name: Select exact producer and explicit qualification scope
+        run: |
+          set -euo pipefail
+          python tests/migration/c02_completion_audit_20261031/prepare.py --source "$QUALIFICATION_SOURCE" --scope "$AUDIT_SCOPE" --output audit-evidence/qualification.json 2>&1 | tee audit-evidence/preparation.log
+      - name: Retain original ZIPs and independently audit all supplied semantics
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          flags=(--require-complete)
+          if [ "$AUDIT_SCOPE" = windows-components ]; then
+            flags=(--allow-incomplete)
+          fi
+          set +e
+          python tests/migration/c02_completion_audit_20261031/audit.py --manifest audit-evidence/qualification.json --output audit-evidence/packages "${flags[@]}" 2>&1 | tee audit-evidence/audit.log
+          statuses=("${PIPESTATUS[@]}")
+          set -e
+          printf '%s\n' "${statuses[0]}" > audit-evidence/audit-exit.txt
+          if [ "${statuses[1]}" -ne 0 ]; then exit "${statuses[1]}"; fi
+          exit "${statuses[0]}"
+      - name: Preserve final scope and original ZIP digests even after failure
+        if: always()
+        env:
+          PRIOR_JOB_STATUS: ${{ job.status }}
+        run: |
+          mkdir -p audit-evidence
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          root=pathlib.Path('audit-evidence')
+          result_path=root/'packages/audit-result.json'
+          result=json.loads(result_path.read_text()) if result_path.exists() else None
+          exit_path=root/'audit-exit.txt'
+          audit_exit=int(exit_path.read_text().strip()) if exit_path.exists() else None
+          passed=bool(result and result.get('passed') and audit_exit==0 and os.environ['PRIOR_JOB_STATUS']=='success')
+          receipt=dict(audit_source=os.environ['GITHUB_SHA'],audit_run=os.environ['GITHUB_RUN_ID'],
+                       audit_attempt=os.environ['GITHUB_RUN_ATTEMPT'],producer_source=os.environ['QUALIFICATION_SOURCE'],
+                       requested_scope=os.environ['AUDIT_SCOPE'],completed=result is not None,audit_exit=audit_exit,
+                       full_c02_complete=bool(passed and result.get('full_c02_complete')),passed=passed)
+          (root/'workflow-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          rows=[dict(path=p.relative_to(root).as_posix(),bytes=p.stat().st_size,sha256=hashlib.sha256(p.read_bytes()).hexdigest())
+                for p in sorted(root.rglob('*')) if p.is_file()]
+          (root/'audit-file-hashes.json').write_text(json.dumps(rows,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-completion-audit-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/
+          if-no-files-found: error

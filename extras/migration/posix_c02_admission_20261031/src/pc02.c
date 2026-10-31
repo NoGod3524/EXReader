@@ -43,6 +43,7 @@ typedef struct {unsigned char kind;
  pc02_identity target;
  pc02_pending_record pending;
  } state;
+struct pc02_scope {int fd;pc02_identity id;char path[PATH_CAP];};
 struct pc02_cap {struct pc02_cap *next;struct pc02_lease *owner;
  uint64_t generation;
  char seal[65];
@@ -50,10 +51,11 @@ struct pc02_cap {struct pc02_cap *next;struct pc02_lease *owner;
 struct pc02_lease {
  pin pins[PINS];
  unsigned pin_count,mode,borrows;
- int root,parent,route_dir,registry,authority_file,lease_file,state_file,binding_file,target_file;
+ int root,parent,route_dir,registry,authority_file,lease_file,state_file,binding_file,target_file,scope_file;
  int active,poisoned,transition;
  pc02_identity root_id,parent_id,route_id,lease_id,state_id,binding_id,authority_id,registry_id;
- char root_path[PATH_CAP],library[PATH_CAP],leaf[256],route[65];
+ char root_path[PATH_CAP],library[PATH_CAP],leaf[256],route[65],scope_path[PATH_CAP];
+ pc02_identity scope_id;
  unsigned char binding[B_BYTES],anchor[A_BYTES];
  state seen;
  pc02_controls controls;
@@ -174,6 +176,167 @@ static int leaf_ok(const char *leaf){
  }
  return 1;
 }
+static int authority_current(pc02_lease *h);
+static int duplicate_fd(int fd){
+#ifdef F_DUPFD_CLOEXEC
+ return fcntl(fd,F_DUPFD_CLOEXEC,3);
+#else
+ int copy=fcntl(fd,F_DUPFD,3);
+ if(copy>=0&&fcntl(copy,F_SETFD,FD_CLOEXEC)){close(copy);
+ return -1;
+ }
+ return copy;
+#endif
+}
+static int relative_valid(const char *path){
+ size_t k,n,start=0;
+ if(!path||!(n=strlen(path))||n>=PATH_CAP||path[0]=='/'||path[n-1]=='/')return 0;
+ for(k=0;
+ k<=n;
+ k++)if(!path[k]||path[k]=='/'){
+  size_t length=k-start;
+  if(!length||length>255||(length==1&&path[start]=='.')||
+     (length==2&&path[start]=='.'&&path[start+1]=='.'))return 0;
+  start=k+1;
+ }
+ return 1;
+}
+static int directory_path(int fd,char path[PATH_CAP]){
+ pc02_identity original,observed;
+ if(!metadata(fd,1,0,&original))return 0;
+#ifdef __APPLE__
+ if(fcntl(fd,F_GETPATH,path))return 0;
+#else
+ char descriptor[64];
+ ssize_t n;
+ if(snprintf(descriptor,sizeof(descriptor),"/proc/self/fd/%d",fd)>=(int)sizeof(descriptor))return 0;
+ n=readlink(descriptor,path,PATH_CAP-1);
+ if(n<=0||(size_t)n>=PATH_CAP-1)return 0;
+ path[n]=0;
+#endif
+ if(!safe_path(path))return 0;
+ int probe=open(path,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+ if(probe<0)return 0;
+ int ok=metadata(probe,1,0,&observed)&&sameid(&original,&observed);
+ close(probe);
+ return ok;
+}
+static int scope_current(int fd,const pc02_identity *expected,const char *path){
+ pc02_identity actual;
+ char physical[PATH_CAP];
+ return metadata(fd,1,1,&actual)&&sameid(&actual,expected)&&directory_path(fd,physical)&&!strcmp(path,physical);
+}
+int pc02_scope_create(int trusted,const pc02_identity *expected,pc02_scope **out){
+ pc02_scope *scope=NULL;
+ pc02_identity actual;
+ int copy=-1;
+ if(out)*out=NULL;
+ if(!out||!expected)return 0;
+ copy=duplicate_fd(trusted);
+ if(copy<0||!metadata(copy,1,1,&actual)||!sameid(&actual,expected))goto fail;
+ scope=calloc(1,sizeof(*scope));
+ if(!scope)goto fail;
+ scope->fd=copy;
+ scope->id=actual;
+ if(!directory_path(copy,scope->path)||!scope_current(copy,&scope->id,scope->path))goto fail;
+ *out=scope;
+ return 1;
+fail:
+ if(copy>=0)close(copy);
+ free(scope);
+ return 0;
+}
+int pc02_scope_close(pc02_scope *scope){
+ if(!scope)return 1;
+ close(scope->fd);
+ free(scope);
+ return 1;
+}
+static const char *scope_relative(pc02_lease *h,const char *path){
+ size_t n=strlen(h->scope_path);
+ if(strncmp(path,h->scope_path,n)|| (path[n]&&path[n]!='/'))return NULL;
+ const char *relative=path+n+(path[n]=='/');
+ if(relative[0]&&!relative_valid(relative))return NULL;
+ return relative;
+}
+static int scope_directory(pc02_lease *h,const char *path){
+ const char *relative=scope_relative(h,path);
+ char component[256];
+ size_t at=0;
+ if(!relative)return -1;
+ int current=duplicate_fd(h->scope_file);
+ if(current<0)return -1;
+ while(relative[at]){
+  size_t end=at;
+ while(relative[end]&&relative[end]!='/')end++;
+  memcpy(component,relative+at,end-at);
+ component[end-at]=0;
+  int next=openat(current,component,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+  close(current);
+ current=next;
+  if(current<0)return -1;
+  if(!metadata(current,1,0,NULL)){close(current);
+ return -1;
+ }
+  at=end+(relative[end]=='/');
+ }
+ return current;
+}
+static int add_scope_pin(pc02_lease *h,int fd,const char *path,int private_mode){
+ pc02_identity id;
+ if(h->pin_count>=PINS||!metadata(fd,1,private_mode,&id)){close(fd);
+ return -1;
+ }
+ h->pins[h->pin_count].fd=fd;
+ h->pins[h->pin_count].id=id;
+ strcpy(h->pins[h->pin_count].path,path);
+ h->pin_count++;
+ return fd;
+}
+static int pin_scope_chain(pc02_lease *h,const char *path,int final_private){
+ const char *relative=scope_relative(h,path);
+ char component[256],prefix[PATH_CAP];
+ size_t at=0,n;
+ if(!relative||!scope_current(h->scope_file,&h->scope_id,h->scope_path))return -1;
+ int current=duplicate_fd(h->scope_file);
+ if(current<0)return -1;
+ if(add_scope_pin(h,current,h->scope_path,1)<0)return -1;
+ strcpy(prefix,h->scope_path);
+ n=strlen(prefix);
+ while(relative[at]){
+  size_t end=at;
+ while(relative[end]&&relative[end]!='/')end++;
+  memcpy(component,relative+at,end-at);
+ component[end-at]=0;
+  int next=openat(current,component,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+  if(next<0)return -1;
+  if(n+1+end-at>=sizeof(prefix)){close(next);
+ return -1;
+ }
+  prefix[n++]='/';
+ memcpy(prefix+n,component,end-at+1);
+ n+=end-at;
+  if(add_scope_pin(h,next,prefix,relative[end]?0:final_private)<0)return -1;
+  current=next;
+ at=end+(relative[end]=='/');
+ }
+ return current;
+}
+static int scoped_pins_current(pc02_lease *h){
+ if(!scope_current(h->scope_file,&h->scope_id,h->scope_path))return 0;
+ for(unsigned k=0;
+ k<h->pin_count;
+ k++){
+  pc02_identity actual;
+  if(!metadata(h->pins[k].fd,1,0,&actual)||!sameid(&actual,&h->pins[k].id))return 0;
+  int fd=scope_directory(h,h->pins[k].path);
+ if(fd<0)return 0;
+  int ok=metadata(fd,1,0,&actual)&&sameid(&actual,&h->pins[k].id);
+  close(fd);
+ if(!ok)return 0;
+ }
+ return metadata(h->root,1,1,NULL)&&authority_current(h);
+}
 static int pin_dir(pc02_lease *h,const char *path,int private_mode){
  int fd;
  pc02_identity id;
@@ -189,6 +352,7 @@ static int pin_dir(pc02_lease *h,const char *path,int private_mode){
  return fd;
 }
 static int pin_chain(pc02_lease *h,const char *path,int final_private){
+ if(h->scope_file>=0)return pin_scope_chain(h,path,final_private);
  size_t k,n=strlen(path);
  char prefix[PATH_CAP];
  int fd=-1;
@@ -206,8 +370,8 @@ static int pin_chain(pc02_lease *h,const char *path,int final_private){
  if(fd<0)return -1;
  }return fd;
 }
-static int authority_current(pc02_lease *h);
 static int pins_current(pc02_lease *h){
+ if(h->scope_file>=0)return scoped_pins_current(h);
  unsigned k;
  for(k=0;
  k<h->pin_count;
@@ -282,13 +446,42 @@ static int legacy_clear(pc02_lease *h){
 static pc02_lease *allocate(void){
  pc02_lease *h=calloc(1,sizeof(*h));
  if(!h)return NULL;
- h->root=h->parent=h->route_dir=h->registry=h->authority_file=h->lease_file=h->state_file=h->binding_file=h->target_file=-1;
+ h->root=h->parent=h->route_dir=h->registry=h->authority_file=h->lease_file=h->state_file=h->binding_file=h->target_file=h->scope_file=-1;
  return h;
+}
+static pc02_lease *allocate_in(pc02_scope *scope){
+ if(!scope||!scope_current(scope->fd,&scope->id,scope->path))return NULL;
+ pc02_lease *h=allocate();
+ if(!h)return NULL;
+ h->scope_file=duplicate_fd(scope->fd);
+ if(h->scope_file<0){free(h);
+ return NULL;
+ }
+ h->scope_id=scope->id;
+ strcpy(h->scope_path,scope->path);
+ return h;
+}
+static int scope_join(pc02_scope *scope,const char *relative,char path[PATH_CAP]){
+ if(!scope||!scope_current(scope->fd,&scope->id,scope->path)||!relative_valid(relative))return 0;
+ size_t a=strlen(scope->path),b=strlen(relative);
+ if(a+b+2>PATH_CAP)return 0;
+ memcpy(path,scope->path,a);
+ path[a]='/';
+ memcpy(path+a+1,relative,b+1);
+ return 1;
+}
+static int scope_paths(pc02_scope *scope,const char *authority,const char *library,
+ char root[PATH_CAP],char target[PATH_CAP]){
+ if(!scope_join(scope,authority,root)||!scope_join(scope,library,target))return 0;
+ size_t a=strlen(authority),b=strlen(library);
+ if(!strcmp(authority,library)||(a<b&&!strncmp(authority,library,a)&&library[a]=='/')||
+    (b<a&&!strncmp(authority,library,b)&&authority[b]=='/'))return 0;
+ return 1;
 }
 static void destroy(pc02_lease *h){
  unsigned k;
  if(!h)return;
- int *fds[]={&h->route_dir,&h->registry,&h->authority_file,&h->lease_file,&h->state_file,&h->binding_file,&h->target_file};
+ int *fds[]={&h->route_dir,&h->registry,&h->authority_file,&h->lease_file,&h->state_file,&h->binding_file,&h->target_file,&h->scope_file};
  for(k=0;
  k<sizeof(fds)/sizeof(fds[0]);
  k++)if(*fds[k]>=0)close(*fds[k]);
@@ -335,8 +528,10 @@ static int library_parent(pc02_lease *h,const char *library){
  else{memcpy(parent,library,n);
  parent[n]=0;
  }
+ unsigned prior=h->pin_count;
  h->parent=pin_chain(h,parent,0);
  if(h->parent<0||!metadata(h->parent,1,0,&h->parent_id))return 0;
+ if(h->scope_file>=0)for(unsigned j=prior;j<h->pin_count;j++)if(sameid(&h->pins[j].id,&h->root_id))return 0;
  char folded[256];
  strcpy(folded,h->leaf);
  for(k=0;
@@ -574,8 +769,7 @@ static int publish_binding(pc02_lease *h,const unsigned char candidate[B_BYTES],
  phase(h,PC02_BINDING_DURABLE);
  return binding_current(h)&&route_current(h);
 }
-int pc02_authority_create(const char *root){
- pc02_lease *h=allocate();
+static int authority_create_h(pc02_lease *h,const char *root){
  char parent[PATH_CAP],leaf[256];
  const char *slash;
  size_t n;
@@ -617,8 +811,7 @@ static int enrollment_proof(pc02_lease *h,pc02_prove prove,void *context,const p
     fsync(h->target_file)||fsync(h->parent)||!route_current(h))return 0;
  return 1;
 }
-int pc02_enroll(const char *root,const char *library,int create_library,pc02_prove prove,void *context,const pc02_controls *controls){
- pc02_lease *h=allocate();
+static int enroll_h(pc02_lease *h,const char *root,const char *library,int create_library,pc02_prove prove,void *context,const pc02_controls *controls){
  unsigned char intent[B_BYTES],initial[S_BYTES];
  char zero[65];
  pc02_identity target;
@@ -655,8 +848,7 @@ done:
  destroy(h);
  return ok;
 }
-int pc02_recover_enrollment(const char *root,const char *library,pc02_prove prove,void *context,const pc02_controls *controls){
- pc02_lease *h=allocate();
+static int recover_enrollment_h(pc02_lease *h,const char *root,const char *library,pc02_prove prove,void *context,const pc02_controls *controls){
  unsigned char intent[B_BYTES],initial[S_BYTES],check[B_BYTES];
  pc02_identity target;
  char zero[65];
@@ -702,8 +894,7 @@ done:
  destroy(h);
  return ok;
 }
-int pc02_open(const char *root,const char *library,unsigned mode,const pc02_grant *expected,const pc02_controls *controls,pc02_lease **out){
- pc02_lease *h=allocate();
+static int open_h(pc02_lease *h,const char *root,const char *library,unsigned mode,const pc02_grant *expected,const pc02_controls *controls,pc02_lease **out){
  int ok=0;
  pc02_identity target;
  if(out)*out=NULL;
@@ -831,3 +1022,46 @@ int pc02_close(pc02_lease *h){if(!h)return 1;
  destroy(h);
  return 1;
  }
+
+int pc02_authority_create(const char *root){
+ return authority_create_h(allocate(),root);
+}
+int pc02_enroll(const char *root,const char *library,int create_library,
+ pc02_prove prove,void *context,const pc02_controls *controls){
+ return enroll_h(allocate(),root,library,create_library,prove,context,controls);
+}
+int pc02_recover_enrollment(const char *root,const char *library,
+ pc02_prove prove,void *context,const pc02_controls *controls){
+ return recover_enrollment_h(allocate(),root,library,prove,context,controls);
+}
+int pc02_open(const char *root,const char *library,unsigned mode,
+ const pc02_grant *expected,const pc02_controls *controls,pc02_lease **out){
+ return open_h(allocate(),root,library,mode,expected,controls,out);
+}
+int pc02_authority_create_in(pc02_scope *scope,const char *authority){
+ char root[PATH_CAP];pc02_lease *h=allocate_in(scope);
+ if(!h||!scope_join(scope,authority,root)){destroy(h);return 0;}
+ return authority_create_h(h,root);
+}
+int pc02_enroll_in(pc02_scope *scope,const char *authority,const char *library,int create_library,
+ pc02_prove prove,void *context,const pc02_controls *controls){
+ char root[PATH_CAP],target[PATH_CAP];pc02_lease *h=allocate_in(scope);
+ if(!h||!scope_paths(scope,authority,library,root,target)){destroy(h);return 0;}
+ return enroll_h(h,root,target,create_library,prove,context,controls);
+}
+int pc02_recover_enrollment_in(pc02_scope *scope,const char *authority,const char *library,
+ pc02_prove prove,void *context,const pc02_controls *controls){
+ char root[PATH_CAP],target[PATH_CAP];pc02_lease *h=allocate_in(scope);
+ if(!h||!scope_paths(scope,authority,library,root,target)){destroy(h);return 0;}
+ return recover_enrollment_h(h,root,target,prove,context,controls);
+}
+int pc02_open_in(pc02_scope *scope,const char *authority,const char *library,unsigned mode,
+ const pc02_grant *expected,const pc02_controls *controls,pc02_lease **out){
+ char root[PATH_CAP],target[PATH_CAP];pc02_lease *h=allocate_in(scope);
+ if(out)*out=NULL;
+ if(!h||!scope_paths(scope,authority,library,root,target)){destroy(h);return 0;}
+ return open_h(h,root,target,mode,expected,controls,out);
+}
+const char *pc02_library_path(pc02_lease *h){
+ return pc02_check(h)?h->library:NULL;
+}

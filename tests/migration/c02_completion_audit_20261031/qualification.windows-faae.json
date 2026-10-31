@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "source": "faae61879441085d800879332699d0b6fd5e2307",
+  "repository": "NoGod3524/EXReader",
+  "component_scope": "windows-components-faae",
+  "packages": [
+    {
+      "role": "native-windows",
+      "platform": "Windows",
+      "run": 41170465210,
+      "attempt": 1,
+      "job": 124447124397,
+      "job_name": "native_evidence (windows-2022)",
+      "workflow": ".github/workflows/dot-c02-native-journal-20261030.yml",
+      "artifact": {
+        "id": 13030717630,
+        "name": "c02-native-journal-windows-2022-faae61879441085d800879332699d0b6fd5e2307",
+        "bytes": 33185,
+        "sha256": "b313254fce3ccd0f6923a5dfc9bf316239aea854b14a548bce638afd4fe096f3"
+      }
+    },
+    {
+      "role": "native-linux",
+      "platform": "Linux",
+      "run": 41170465210,
+      "attempt": 1,
+      "job": 124447124213,
+      "job_name": "native_evidence (ubuntu-22.04)",
+      "workflow": ".github/workflows/dot-c02-native-journal-20261030.yml",
+      "artifact": {
+        "id": 13030961707,
+        "name": "c02-native-journal-ubuntu-22.04-faae61879441085d800879332699d0b6fd5e2307",
+        "bytes": 1680,
+        "sha256": "d8ae58be76a8434a9c8789cd640c60e51121386b53cdbacba119d6d6db58a576"
+      }
+    },
+    {
+      "role": "persistent-gate",
+      "platform": "Windows",
+      "run": 41170465156,
+      "attempt": 1,
+      "job": 124447123797,
+      "job_name": "persistent_gate",
+      "workflow": ".github/workflows/dot-c02-domain-gate-20261031.yml",
+      "artifact": {
+        "id": 13030757425,
+        "name": "c02-persistent-gate-faae61879441085d800879332699d0b6fd5e2307",
+        "bytes": 39968,
+        "sha256": "1cbd6467fdfdd78f3437b8abb751a26dc143fc5290c28afcfbd2051c85e82ffa"
+      }
+    },
+    {
+      "role": "registry-product",
+      "platform": "Windows",
+      "run": 41170465266,
+      "attempt": 1,
+      "job": 124447124317,
+      "job_name": "registry_and_product",
+      "workflow": ".github/workflows/dot-c02-registry-admission-20261031.yml",
+      "artifact": {
+        "id": 13031266152,
+        "name": "c02-registry-product-faae61879441085d800879332699d0b6fd5e2307",
+        "bytes": 2859406,
+        "sha256": "dbad1ea92cdaa8f256eeb67b61d9a95f42bbf99540c7447253bf4c1c6bedd6ed"
+      },
+      "expected_registry": {
+        "cases": 50,
+        "checks": 530
+      },
+      "expected_scanner": {
+        "cases": 29,
+        "checks": 91794,
+        "observations": 6603
+      },
+      "required_repair_phases": [
+        950,
+        951,
+        952,
+        953,
+        954,
+        955
+      ]
+    }
+  ]
+}

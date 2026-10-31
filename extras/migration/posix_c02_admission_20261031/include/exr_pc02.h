@@ -5,6 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+typedef struct pc02_scope pc02_scope;
 typedef struct pc02_lease pc02_lease;
 typedef struct pc02_cap pc02_cap;
 typedef struct {uint64_t device,inode;} pc02_identity;
@@ -30,6 +31,26 @@ typedef int (*pc02_prove)(void *,const char *library,int fd,
    nothing. These application locks do not isolate hostile same-user code.
    Library ancestors support UTF-8; the final basename is portable ASCII
    [A-Za-z0-9._-], folded to lowercase in the route to bind case aliases. */
+/* Explicit platform scope. The fixed host factory, not a migration package,
+   supplies the already-open application container and independently captured
+   native identity. The anchor must be euid-owned mode0700. Each lease keeps its
+   own CLOEXEC duplicate; closing the factory scope cannot release a live lease.
+   OS ancestors above this trusted fd are outside the strict Linux path walk.
+   Relative paths below it are still traversed with openat/O_NOFOLLOW and their
+   permissions/identities checked. Scope and authority must be fixed for every
+   reader and migrator sharing this library. */
+int pc02_scope_create(int trusted_context_directory,const pc02_identity *expected,pc02_scope **);
+int pc02_scope_close(pc02_scope *);
+int pc02_authority_create_in(pc02_scope *,const char *authority_relative);
+int pc02_enroll_in(pc02_scope *,const char *authority_relative,const char *library_relative,
+ int create_library,pc02_prove,void *,const pc02_controls *);
+int pc02_recover_enrollment_in(pc02_scope *,const char *authority_relative,
+ const char *library_relative,pc02_prove,void *,const pc02_controls *);
+int pc02_open_in(pc02_scope *,const char *authority_relative,const char *library_relative,
+ unsigned mode,const pc02_grant *expected,const pc02_controls *,pc02_lease **);
+/* Borrowed path, valid only while the checked lease lives. Scoped leases expose
+   the actual directory-fd-derived path, never an unvalidated package spelling. */
+const char *pc02_library_path(pc02_lease *);
 int pc02_authority_create(const char *authority_root);
 /* Explicit only. A new route is reserved before prove; an existing incomplete
    route is never filled in or adopted by this call. create_library uses O_EXCL. */

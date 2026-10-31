@@ -104,10 +104,21 @@ jobs:
       - name: Build existing migration consumers and preserve legacy behavior
         run: |
           set -euo pipefail
-          cmake -S extras/migration -B build/legacy -DEXR_SDK="$GITHUB_WORKSPACE/build/sdk" -DCMAKE_BUILD_TYPE=Release
+          cmake -S extras/migration -B build/legacy -DEXR_SDK="$GITHUB_WORKSPACE/build/sdk" -DLM_HISTORICAL_TEST_BASELINE=ON -DCMAKE_BUILD_TYPE=Release
           cmake --build build/legacy --target exreader-legacy-migrate exreader-legacy-migrate-tx --config Release --parallel 4 2>&1 | tee evidence/build-logs/legacy-build.log
           LEGACY=$(find build/legacy -type f -name exreader-legacy-migrate.exe | head -1)
           python tests/migration/run_cases.py --tool "$LEGACY" --out evidence/legacy-scenarios.json --workdir evidence/legacy-cases --label c02-shared-loop 2>&1 | tee evidence/legacy-scenarios.log
+      - name: Installed legacy commands and standalone readers require C02
+        run: |
+          set -euo pipefail
+          C02_PREFIX=$(cygpath -m "$GITHUB_WORKSPACE/stage")
+          cmake -S extras/migration -B build/guarded-legacy -DEXR_SDK="$GITHUB_WORKSPACE/build/sdk" -DLM_C02_PREFIX="$C02_PREFIX" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/guarded-legacy"
+          cmake --build build/guarded-legacy --config Release --parallel 4 2>&1 | tee evidence/build-logs/guarded-legacy.log
+          cmake --install build/guarded-legacy --config Release
+          EXE=$(find build/registry -type f -name coordinator-registry-check.exe | head -1)
+          python tests/migration/windows_registry_admission_20261031/legacy_guard_check.py --prefix guarded-legacy --admission stage/bin/exreader-c02-admission.exe --consumer "$EXE" --output evidence/legacy-guard 2>&1 | tee evidence/legacy-guard.log
+          cmake -S examples/windows -B build/standalone -DEXR_SDK="$GITHUB_WORKSPACE/build/sdk" -DEXR_SDK_VERSION=3.42.0 -DREADER_C02_PREFIX="$C02_PREFIX" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/standalone --config Release --parallel 4 2>&1 | tee evidence/build-logs/standalone.log
       - name: Actual migration command and deterministic fresh-process recovery
         run: |
           set -euo pipefail
