@@ -5,7 +5,8 @@ ROOT=Path(__file__).resolve().parents[2]
 HERE=Path(__file__).resolve().parent
 OUT=ROOT/"build/f08-android"
 BASE="f3d73c6f895fc4c11146fc19612c8a12e15b3b43"
-ALLOWED={'.github/workflows/dot-f08-android-20261031.yml',
+ALLOWED={'examples/android/app/src/main/cpp/CMakeLists.txt',
+         '.github/workflows/dot-f08-android-20261031.yml',
          'examples/android/app/build.gradle',
          'examples/android/app/src/main/java/org/exreader/host/ShelfStatusView.java',
          'examples/android/app/src/main/java/org/exreader/host/ShelfWindowMetrics.java',
