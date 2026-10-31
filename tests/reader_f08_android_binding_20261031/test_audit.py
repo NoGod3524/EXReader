@@ -59,6 +59,8 @@ class ExactBindingControls(unittest.TestCase):
     def test_callback_drop_and_sequence_gap(self):
         b,f=fixture();f[1]['drop_count']=1;self.check_missing(b,f)
         b,f=fixture();f[1]['sequence']=2;self.check_missing(b,f)
+    def test_native_error_row_rejects_otherwise_complete_binding(self):
+        b,f=fixture();f.append({'kind':'error','detail':'readyOutput.close failed'});self.check_missing(b,f)
     def test_callback_before_native_completion(self):
         b,f=fixture();f[1]['callback_mono_ns']=120_000_000;self.check_missing(b,f)
     def test_native_completion_before_draw(self):
