@@ -23,6 +23,8 @@ final class NativeCatalog {
     static native CatalogStore.ShelfBook[] page(long owner, String nfc, String nfd, String sort, String key,
                                                boolean before, boolean inclusive, CancellationSignal cancellation);
     static native CatalogStore.ShelfBook lookup(long owner, long sdkId, String exactTitle);
+    /** Same visible local mapping as lookup, without constructing shelf display fields. */
+    static native String localKey(long owner, long sdkId);
     static native boolean hasLocal(long owner, long sdkId);
     static native void removeLocal(long owner, long sdkId);
     static native void attach(long owner, String format, String sha, long bytes, long sdkId, String mode,

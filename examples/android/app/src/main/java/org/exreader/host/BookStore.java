@@ -176,8 +176,8 @@ final class BookStore implements AutoCloseable {
         for (NativeLibrary.Book book : books) {
             try {
                 boolean missing=!catalog.hasLocalBook(book.id);
-                CatalogStore.ShelfBook local=missing?null:catalog.localShelfBook(book.id);
-                if(missing||(local!=null&&NativeCatalog.heads(catalog.nativeOwner(),"book",local.key.bookKey).length==0)) {
+                String local=missing?null:NativeCatalog.localKey(catalog.nativeOwner(),book.id);
+                if(missing||(local!=null&&NativeCatalog.heads(catalog.nativeOwner(),"book",local).length==0)) {
                     VerifiedSource source=verifySource(book, null, 0, new HostTask(() -> false));
                     if(missing)catalog.attach(source);
                     ensureOriginalRevision(source);
