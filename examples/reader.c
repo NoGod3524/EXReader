@@ -622,36 +622,91 @@ static void settings_load(void) {
 #endif
 }
 
-static void settings_save(void) {
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+static unsigned f08_settings_write_attempts;
+#endif
+static BOOL settings_put(const wchar_t *section,const wchar_t *key,const wchar_t *value,const wchar_t *path) {
+  wchar_t current[512];
+  DWORD n=GetPrivateProfileStringW(section,key,L"\1",current,512,path);
+  /* The native profile cache observes other writes. A sentinel-valued request
+     and a truncated read take the original write path, including failure retry. */
+  if(n<511 && wcscmp(value,L"\1") && !wcscmp(current,value)) return TRUE;
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_settings_write_attempts++;
+#endif
+  return WritePrivateProfileStringW(section,key,value,path);
+}
+static void settings_save_body(void) {
   wchar_t number[64];
   if (!g.settings_path[0]) return;
 #ifdef EXR_READER_PRODUCT_CATALOG
   product_shelf_remember();
   wchar_t *query=host_wide(g.shelf_query ? g.shelf_query:"",g.shelf_query ? strlen(g.shelf_query):0);
-  WritePrivateProfileStringW(L"Shelf",L"Query",query ? query:L"",g.settings_path);free(query);
+  settings_put(L"Shelf",L"Query",query ? query:L"",g.settings_path);free(query);
   wchar_t *key=host_wide(g.shelf_top_key,strlen(g.shelf_top_key));
-  WritePrivateProfileStringW(L"Shelf",L"TopKey",key ? key:L"",g.settings_path);free(key);
+  settings_put(L"Shelf",L"TopKey",key ? key:L"",g.settings_path);free(key);
   key=host_wide(g.shelf_selected_key,strlen(g.shelf_selected_key));
-  WritePrivateProfileStringW(L"Shelf",L"SelectedKey",key ? key:L"",g.settings_path);free(key);
+  settings_put(L"Shelf",L"SelectedKey",key ? key:L"",g.settings_path);free(key);
 #endif
   swprintf(number, 64, L"%d", g.font_percent);
-  WritePrivateProfileStringW(L"Host", L"FontPercent", number, g.settings_path);
+  settings_put(L"Host", L"FontPercent", number, g.settings_path);
   swprintf(number, 64, L"%d", g.zoom_percent);
-  WritePrivateProfileStringW(L"Host", L"ZoomPercent", number, g.settings_path);
+  settings_put(L"Host", L"ZoomPercent", number, g.settings_path);
   swprintf(number, 64, L"%d", g.window_width);
-  WritePrivateProfileStringW(L"Host", L"WindowWidth", number, g.settings_path);
+  settings_put(L"Host", L"WindowWidth", number, g.settings_path);
   swprintf(number, 64, L"%d", g.window_height);
-  WritePrivateProfileStringW(L"Host", L"WindowHeight", number, g.settings_path);
+  settings_put(L"Host", L"WindowHeight", number, g.settings_path);
   swprintf(number, 64, L"%lld", (long long)g.active_book_id);
-  WritePrivateProfileStringW(L"Host", L"ActiveBook", number, g.settings_path);
+  settings_put(L"Host", L"ActiveBook", number, g.settings_path);
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
   {
     wchar_t *key=host_wide(g.active_txt_key,strlen(g.active_txt_key));
-    WritePrivateProfileStringW(L"Host",L"ActiveTxtKey",key ? key:L"",g.settings_path);
+    settings_put(L"Host",L"ActiveTxtKey",key ? key:L"",g.settings_path);
     free(key);
   }
 #endif
 }
+
+static void settings_save(void) {
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  LONGLONG start=f08_tick();unsigned before=f08_settings_write_attempts;
+#endif
+  settings_save_body();
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_record("settings_save",start,&g.frame.review,g.frame.generation,g.frame.book_id,0,0,0,
+    f08_settings_write_attempts-before,0);
+#endif
+}
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+static int f08_settings_selftest(const wchar_t *path) {
+  unsigned before,checks=0;wchar_t value[128],missing[HOST_PATH],retry[HOST_PATH];
+#define PROFILE_CHECK(c) do { if(!(c)) { fprintf(stderr,"F08_SETTINGS_CHECK line=%u\n",__LINE__);return 4; }checks++; } while(0)
+  PROFILE_CHECK(WritePrivateProfileStringW(L"Other",L"Preserved",L"yes",path));
+  before=f08_settings_write_attempts;
+  PROFILE_CHECK(settings_put(L"Host",L"MissingEmpty",L"",path));
+  PROFILE_CHECK(f08_settings_write_attempts==before+1);
+  PROFILE_CHECK(settings_put(L"Host",L"MissingEmpty",L"",path));
+  PROFILE_CHECK(f08_settings_write_attempts==before+1);
+  PROFILE_CHECK(settings_put(L"Host",L"Value",L"first",path));
+  before=f08_settings_write_attempts;
+  PROFILE_CHECK(settings_put(L"Host",L"Value",L"first",path));
+  PROFILE_CHECK(f08_settings_write_attempts==before);
+  PROFILE_CHECK(WritePrivateProfileStringW(L"Host",L"Value",L"external",path));
+  PROFILE_CHECK(settings_put(L"Host",L"Value",L"first",path));
+  PROFILE_CHECK(f08_settings_write_attempts==before+1);
+  GetPrivateProfileStringW(L"Other",L"Preserved",L"",value,128,path);
+  PROFILE_CHECK(!wcscmp(value,L"yes"));
+  PROFILE_CHECK(settings_put(L"Host",L"Sentinel",L"\1",path));
+  swprintf(missing,HOST_PATH,L"%ls.absent",path);swprintf(retry,HOST_PATH,L"%ls\\retry.ini",missing);
+  PROFILE_CHECK(!settings_put(L"Host",L"Value",L"retry",retry));
+  PROFILE_CHECK(CreateDirectoryW(missing,NULL));
+  PROFILE_CHECK(settings_put(L"Host",L"Value",L"retry",retry));
+  GetPrivateProfileStringW(L"Host",L"Value",L"",value,128,retry);
+  PROFILE_CHECK(!wcscmp(value,L"retry"));
+  printf("{\"settings_profile_checks\":%u,\"passed\":true}\n",checks);return 0;
+#undef PROFILE_CHECK
+}
+#endif
 
 /* ------------------------------------------------------------------ */
 /* Bookshelf and annotation snapshots                                  */
@@ -6154,14 +6209,24 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (!job || job != g.job) return 0;
       /* The completion is posted after all SDK work; join only the final ref
          release before the UI accepts/frees the job's owned candidates. */
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+      job->review.ui_start_qpc=f08_tick();job->frame.review=job->review;
+      f08_record("ui_accept_begin",job->review.ui_start_qpc,&job->review,job->frame.generation,job->frame.book_id,IDC_PAGE,job->kind,0,0,0);
+#endif
       WaitForSingleObject(job->thread, INFINITE);
       g.job = NULL;
       handle_job_complete(job);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+      f08_record("ui_accept_body_end",job->review.ui_start_qpc,&job->review,g.frame.generation,g.frame.book_id,IDC_PAGE,job->kind,0,0,0);
+#endif
 #ifdef EXR_READER_WINDOWS_WAVE3
       w3_after_complete(job);
 #endif
 #ifdef EXR_READER_WINDOWS_COMPACT
       compact_complete(job);
+#endif
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+      f08_record("ui_owners_complete",job->review.ui_start_qpc,&job->review,g.frame.generation,g.frame.book_id,IDC_PAGE,job->kind,0,0,0);
 #endif
       job_release(job);
       InvalidateRect(g.page, NULL, FALSE);
@@ -6393,6 +6458,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   (void)previous;
   (void)command;
   if (!argv) return 2;
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  if(argc==3 && !wcscmp(argv[1],L"--settings-self-test")) {
+    result=f08_settings_selftest(argv[2]);LocalFree(argv);return (int)result;
+  }
+#endif
   if (argc > 1 && !wcscmp(argv[1], L"--self-test")) {
     result = selftest(argv, argc);
     LocalFree(argv);

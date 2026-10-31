@@ -1,5 +1,5 @@
 """Two bounded native diagnostic launches of a CI-authenticated full product."""
-import argparse,ctypes as C,hashlib,importlib.util,json,os,subprocess,sys,time,zipfile
+import argparse,ctypes as C,hashlib,importlib.util,json,os,shutil,subprocess,sys,time,types,zipfile
 from ctypes import wintypes as W
 from datetime import datetime,timezone
 from pathlib import Path
@@ -37,6 +37,7 @@ def main():
  need(sha(a.observer)=="d9091ee8b19cce806942d1c7127802b0cfe222eda10e378d95e0cd2bde9869c7" and Path(a.observer).stat().st_size==80896,"retained lossless WGC observer identity")
  sys.path.insert(0,str(helper/"tests/reader_perf_windows"));import perf_windows as H
  D=module("f08_native_display",helper/"tests/reader_wave3_c09/desktop.py")
+ WUI=module("f08_original_native_ui",helper/"tests/reader_wave3_c09/check_ui.py")
  replay=module("f08_native_replay",raw/"native-source/replay.py")
  user=C.WinDLL("user32",use_last_error=True)
  user.EnumDisplaySettingsW.argtypes=[W.LPCWSTR,W.DWORD,C.POINTER(D.Settings)];user.EnumDisplaySettingsW.restype=W.BOOL
@@ -52,17 +53,21 @@ def main():
  report=dict(source_sha=a.expected_source,execution="local-native",machine="LAP25002",captures=[],problems=[],
   artifact_id=meta["id"],artifact_digest=meta["digest"],program_sha256=identity["program_sha256"],
   display_before=[before.width,before.height,before.frequency],display_mode_changed_by_harness=False,
-  frame_boundary="worker-entry/native-scroll-entry to same-generation GDI execution completion",f08_accepted=False)
+  operation_boundary="worker-entry/native-scroll-entry to same-generation GDI execution completion",
+  ui_frame_candidate_boundary="ready-frame native UI accept through layout to same-generation GDI completion",f08_accepted=False)
  profile=out/"profile";report["seed"]=H.seed_corpus(profile,raw/"seed.exe")
  awake=H.K.SetThreadExecutionState(0x80000003);need(awake,"temporary awake request")
  deadline=time.monotonic()+1200
  try:
-  for index,kind in enumerate(("shelf","reader")):
+  for index,kind in enumerate(("shelf","reader","page")):
    need(time.monotonic()<deadline,"20 minute native diagnostic bound")
    folder=out/("capture-%02d"%index);folder.mkdir();trace=folder/"product-native-trace.json"
    entry=dict(index=index,kind=kind,folder=folder.name,complete=False);report["captures"].append(entry)
+   launch_profile=profile
+   if kind=="page":
+    launch_profile=out/"reading-profile";shutil.copytree(profile,launch_profile)
    previous=os.environ.get("EXREADER_F08_TRACE");os.environ["EXREADER_F08_TRACE"]=str(trace)
-   try:host=H.Host(raw/"program/EXReader.exe",raw/"program/Reader.otf",profile,folder/"application.log")
+   try:host=H.Host(raw/"program/EXReader.exe",raw/"program/Reader.otf",launch_profile,folder/"application.log")
    finally:
     if previous is None:os.environ.pop("EXREADER_F08_TRACE",None)
     else:os.environ["EXREADER_F08_TRACE"]=previous
@@ -91,12 +96,24 @@ def main():
     if kind=="shelf":
      entry["first_scroll"]=H.op_shelf_next_page(host,20)
      for _ in range(3):host.wheel(4);time.sleep(.12);host.wheel_up(4);time.sleep(.12)
-    else:
+    elif kind=="reader":
      H.op_reset_top(host);entry["open"]=H.op_open(host,"Shelf 0000",30)
      for _ in range(3):
       for control in ("font_inc","font_dec"):
        host.wait_enabled(control,10);host.click(control);time.sleep(.15)
      host.wait_enabled("font_inc",10)
+    else:
+     # Original reading preparation adds one fixed packaged EPUB in a separate
+     # profile; the shelf corpus remains the untouched 2202 seeded originals.
+     fixture=raw/"program/Sample-positive.epub";entry["reading_fixture_sha256"]=sha(fixture)
+     adapter=types.SimpleNamespace(window=host.window,process=host.process,
+       wait=lambda predicate,timeout=30:host.poll(predicate,timeout,interval=.02))
+     host.wait_enabled("import",30);WUI.post_click(host.window,H.IDS["import"])
+     WUI.fill_system_dialog(adapter,fixture)
+     host.poll(lambda:(True,) if any("EXReader benchmark" in row for row in host.rows()) else None,60,interval=.02)
+     entry["open"]=H.op_open(host,"EXReader benchmark",30);key=entry["open"]["key"];entry["page_turns"]=[]
+     for _ in range(8):
+      turn=H.op_page_turn(host,key);entry["page_turns"].append(turn);key=turn["to"]
     time.sleep(.2);entry["observed"]=True
    finally:
     if observer:

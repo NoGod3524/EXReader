@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 BASE="8a4f7f90b33142ccc4dfb4722c8c99a8f728eac0"
 FILES={"examples/reader.c","apps/reader/desktop/windows_shelf.inc",
+ "apps/reader/desktop/catalog_sdk.c","apps/reader/desktop/catalog_sdk.h","apps/reader/desktop/windows_catalog.inc",
  "apps/reader/desktop/windows_feature_integration.cmake","tests/reader_f08_windows_product_20261031/build.py",
  "tests/reader_f08_windows_native_frame_20261031/trace.h","tests/reader_f08_windows_native_frame_20261031/build.py",
  "tests/reader_f08_windows_native_frame_20261031/replay.py","tests/reader_f08_windows_native_frame_20261031/local_probe.py",
@@ -21,13 +22,17 @@ def main():
  B.F08_NATIVE_REVIEW_OPTIONS=["-DEXR_WINDOWS_FRAME_REVIEW=ON"]
  try:
   B.build()
+  done=subprocess.run([str(B.EVIDENCE/"program/EXReader.exe"),"--settings-self-test",str(B.EVIDENCE/"settings-selftest.ini")],capture_output=True,timeout=60)
+  (B.EVIDENCE/"settings-selftest.log").write_bytes(done.stdout+done.stderr)
+  B.need(done.returncode==0,"native settings comparison, external update, failed write and retry controls")
   cache=(B.EVIDENCE/"host-CMakeCache.txt").read_text()
   B.need("EXR_WINDOWS_FRAME_REVIEW:BOOL=ON" in cache,"native diagnostic option compiled")
   (B.EVIDENCE/"native-source").mkdir()
   for name in ("local_probe.py","replay.py","trace.h","pixels.py"):
    (B.EVIDENCE/"native-source"/name).write_bytes((Path(__file__).parent/name).read_bytes())
   B.save(B.EVIDENCE/"native-frame-build.json",{**B.identity(),"instrumented":True,
-   "boundary":"worker-entry to first same-generation GDI execution completion",
+   "operation_boundary":"worker-entry to same-generation GDI execution completion",
+   "ui_frame_candidate_boundary":"ready-frame native UI accept to same-generation GDI execution completion",
    "physical_scanout_proven":False,"f08_accepted":False})
  finally:B.seal()
 if __name__=="__main__":main()
