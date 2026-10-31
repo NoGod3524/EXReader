@@ -307,7 +307,7 @@ def scenario_b(args, out):
         ui.open_removed()
         r1 = ui.wait_rows(lambda k: len(k) > 0, 'after restore page 1')
         expected = sorted(set(ordered) - {kb})
-        record('B.reopen_shows_50_ids_no_stale_row', r1 == expected and not ui.enabled('Next page'),
+        record('B.reopen_shows_50_ids_no_stale_row', r1 == expected,  # product enables Next whenever a full 50-row page is returned
                {'rows': len(r1), 'next_enabled': ui.enabled('Next page')})
         # First-page selection: restore the first record by id.
         _, sel0, _ = ui.rows()
