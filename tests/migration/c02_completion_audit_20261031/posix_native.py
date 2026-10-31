@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Actions-only independent component-byte audit, with original assertions intact."""
 import argparse
+import functools
 import json
 import os
 from pathlib import Path
@@ -14,7 +15,7 @@ import subprocess
 
 from protocols import need, sha, hexadecimal, integer, json_value
 from posix_protocols import binding, states, native_id, observed_id, metadata
-from posix_migration import audit_transaction, committed_head
+from posix_migration import audit_transaction, committed_head, head_name
 
 BASE = ["missing-explicit-enrollment","explicit-create","last-borrow-retains-shared",
         "child-shared-before-owner","child-owner-before-shared","process-kill-pending-1101",
@@ -213,8 +214,48 @@ def _member_images(files, objects, case, decoded, euid):
     need(entries[0]["original"] == decoded["begin"]["target"],"pn-original-member-bound-to-original-b")
     return dict(state="published" if clean else "original",members=entries)
 
-def audit_api(files, objects, euid):
+@functools.lru_cache(maxsize=None)
+def head_snapshot_required(source):
+    need(hexadecimal(source,40),"pn-head-snapshot-qualified-source")
+    path = "tests/migration/posix_c02_migration_20261031/native_api_cases.inc"
+    result = subprocess.run(["git","show",source+":"+path],capture_output=True)
+    need(result.returncode == 0,"pn-head-snapshot-source-protocol-unavailable")
+    text = result.stdout.decode()
+    marker = "PC02_NATIVE_API_HEAD_CONFIRM_SNAPSHOTS"
+    found = re.findall(r"^#define "+marker+r" ([01])$",text,re.M)
+    need(found == ["1"] or not found and marker not in text,"pn-head-snapshot-static-contract")
+    return found == ["1"]
+
+def confirm_snapshot(files, objects, case, decoded, euid, required):
+    if not required:
+        return False
+    leaf = head_name(decoded["generation"],decoded["input"])
+    parsed,raws,observations = {},{},{}
+    for phase,size in (("before-confirm",464),("after-confirm",736)):
+        stem = case+"/head-"+phase
+        need(stem+".raw" in files and stem+".json" in files,"pn-required-head-confirm-snapshot-missing")
+        raw = files[stem+".raw"]
+        observation = json_value(files[stem+".json"])
+        need(observation["schema"] == "pc02-head-confirm-snapshot-v1" and
+             observation["method"] == "fstat" and observation["source_head_name"] == leaf and
+             observation["bytes"] == size == len(raw) and observation["sha256"] == sha(raw),
+             "pn-actual-source-fd-head-snapshot")
+        value = committed_head(raw,leaf,dict(observation,path=leaf),euid)
+        need(value["identity"] == decoded["input_record"]["head_identity"] and
+             value["origin_raw"] == decoded["input_record"]["origin_raw"] and
+             value["count"] == (0 if phase == "before-confirm" else 1),
+             "pn-original-registered-head-before-after-native-state")
+        parsed[phase],raws[phase],observations[phase] = value,raw,observation
+    need(raws["after-confirm"][:464] == raws["before-confirm"] and
+         parsed["before-confirm"]["identity"] == parsed["after-confirm"]["identity"] == decoded["head"]["identity"] and
+         parsed["after-confirm"]["file_sha256"] == decoded["head"]["file_sha256"] and
+         parsed["after-confirm"]["records"] == decoded["head"]["records"],
+         "pn-same-original-head-only-exact-confirm-append")
+    return True
+
+def audit_api(files, objects, euid, snapshot_required):
     classified = []
+    snapshot_verified = False
     for ordinal,name in enumerate(API,1):
         case = f"native-migration-api/{ordinal:02d}-{name}"
         need(case in objects and stat.S_ISDIR(objects[case]["mode"]),"pn-original-api-fixture-directory")
@@ -261,10 +302,13 @@ def audit_api(files, objects, euid):
             need(decoded["floors"][1]["last_line_sha256"] == sha(b"second actual line") and
                  any(row["name"] == ".metadata-uncommitted-fixture" for row in decoded["retained_temporary"]),
                  "pn-source-preserved-temp-and-stale-cas-control")
+        if name == API[10]:
+            snapshot_verified = confirm_snapshot(files,objects,case,decoded,euid,snapshot_required)
         classified.append(dict(name=name,valid=True,floor_count=expected_count,head_count=expected_count,
                                input_native=decoded["input_record"]["identity"],head_native=decoded["head"]["identity"],**content))
     need(len(classified) == 17 and sum(row["valid"] for row in classified) == 7,"pn-all17-independent-classifications")
-    return classified
+    need(snapshot_verified == snapshot_required,"pn-static-required-head-snapshot-verified")
+    return classified,snapshot_verified
 
 def audit(files, objects, *, source, run, attempt, euid):
     producer_inventory(files,objects)
@@ -277,13 +321,16 @@ def audit(files, objects, *, source, run, attempt, euid):
     summaries = [_group(files,receipt,"native",original,BASE,207),
                  _group(files,receipt,"scope",receipt["scoped"],SCOPED,81),
                  _group(files,receipt,"migration-api",receipt["migration_api"],API,130)]
-    classified = audit_api(files,objects,euid)
+    snapshot_required = head_snapshot_required(source)
+    classified,snapshot_verified = audit_api(files,objects,euid,snapshot_required)
     return dict(source=source,run=str(run),attempt=str(attempt),passed=True,actual_sdk=False,host_wiring=False,
                 full_c02_complete=False,power_loss=False,original_counts=summaries,migration_api=classified,
                 migration_api_positive=7,migration_api_negative=10,
-                independent_pre_confirm_snapshot=False,
-                evidence_limits=["Producer retained post-confirm head, not an independent464-byte pre-confirm fstat snapshot.",
-                                 "Original28/scope10 assertions and raw inventory are preserved; this adapter newly classifies API17."])
+                independent_pre_confirm_snapshot=snapshot_verified,
+                head_snapshot_required_by_source=snapshot_required,
+                evidence_limits=([] if snapshot_verified else [
+                    "This historical source retained no independent464-byte pre-confirm fstat snapshot."])+[
+                    "Original28/scope10 assertions and raw inventory are preserved; this adapter newly classifies API17."])
 
 def main():
     need(os.environ.get("GITHUB_ACTIONS") == "true" and os.name == "posix","pn-all-execution-only-Actions-POSIX")

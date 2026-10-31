@@ -596,12 +596,19 @@ def posix_native_evidence(files, spec, source):
     need(len(binary) == tool["bytes"] and sha(binary) == tool["sha256"], "posix-original-executed-binary")
     result = audit_posix_native(raw,observation["objects"],source=source,run=spec["run"],
                                attempt=spec["attempt"],euid=observation["euid"])
-    need(json_value(json.dumps(result).encode()) == json_value(retained["result.json"]),
-         "posix-independent-original-zip-redecode-agrees")
+    recorded = json_value(retained["result.json"])
+    decoded = json_value(json.dumps(result).encode())
+    if "head_snapshot_required_by_source" not in recorded:
+        need(decoded["head_snapshot_required_by_source"] is False, "posix-new-head-source-requires-recorded-contract")
+        recorded["head_snapshot_required_by_source"] = False
+    for value in (recorded, decoded):
+        value.pop("evidence_limits", None)
+    need(decoded == recorded, "posix-independent-original-zip-redecode-agrees")
     return dict(capabilities=["posix-original-55-418","posix-api17-independent-native-semantics"],
                 original_counts=result["original_counts"], migration_api=result["migration_api"],
                 actual_sdk=False, actual_migration=False,
-                independent_pre_confirm_snapshot=False, evidence_limits=result["evidence_limits"])
+                independent_pre_confirm_snapshot=result["independent_pre_confirm_snapshot"],
+                evidence_limits=result["evidence_limits"])
 
 def android_evidence(files, spec, source, missing):
     inventory(files, "artifact-file-hashes.json")

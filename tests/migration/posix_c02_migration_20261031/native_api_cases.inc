@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Included by pc02_test.c. Native bytes only: no SDK qualification claim. */
+#define PC02_NATIVE_API_HEAD_CONFIRM_SNAPSHOTS 1
 typedef struct {
  fixture f;
  pc02_lease *h;
@@ -316,6 +317,44 @@ static int native_floor_child(int argc,char **argv){
  if(!nt_start(&t,&f,&controls,0)||!nt_floor(&t,1,&floor))return 68;
  return pc02_abandon(t.h,t.cap)&&pc02_close(t.h)?0:69;
 }
+/* Separate original-source fd observations; retained copies have their own IDs. */
+static int nt_capture_head(const fixture *f,const char *leaf,const char *label,struct stat *out){
+ char path[PATH_BYTES],raw_path[PATH_BYTES],json_path[PATH_BYTES],raw_leaf[80],json_leaf[80];
+ unsigned char bytes[1024];
+ char hash[65],record[1024];
+ struct stat first={0},after={0};
+ int fd=-1,ok=0,n;
+ size_t got=0,size=0;
+ if(!route_path(f,leaf,path)||snprintf(raw_leaf,sizeof(raw_leaf),"head-%s.raw",label)>=(int)sizeof(raw_leaf)||
+    snprintf(json_leaf,sizeof(json_leaf),"head-%s.json",label)>=(int)sizeof(json_leaf)||
+    !join(raw_path,f->directory,raw_leaf)||!join(json_path,f->directory,json_leaf))return 0;
+ fd=open(path,O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
+ if(fd<0)return 0;
+ ok=!fstat(fd,&first)&&S_ISREG(first.st_mode)&&first.st_uid==geteuid()&&first.st_nlink==1&&
+    (first.st_mode&07777)==0600&&first.st_size>=464&&first.st_size<=(off_t)sizeof(bytes);
+ if(ok)size=(size_t)first.st_size;
+ while(ok&&got<size){
+  ssize_t amount=pread(fd,bytes+got,size-got,(off_t)got);
+  if(amount<0&&errno==EINTR)continue;
+  if(amount<=0){ok=0;break;}
+  got+=(size_t)amount;
+ }
+ if(ok)ok=!fstat(fd,&after)&&first.st_dev==after.st_dev&&first.st_ino==after.st_ino&&
+          first.st_size==after.st_size&&first.st_mode==after.st_mode&&first.st_uid==after.st_uid&&
+          first.st_nlink==after.st_nlink;
+ if(close(fd))ok=0;
+ if(!ok)return 0;
+ wh_sha256_hex(bytes,size,hash);
+ n=snprintf(record,sizeof(record),
+  "{\"schema\":\"pc02-head-confirm-snapshot-v1\",\"source_head_name\":\"%s\",\"method\":\"fstat\","
+  "\"device\":%llu,\"inode\":%llu,\"mode\":%u,\"uid\":%llu,\"gid\":%llu,\"links\":%llu,\"bytes\":%llu,\"sha256\":\"%s\"}\n",
+  leaf,(unsigned long long)(uint64_t)first.st_dev,(unsigned long long)(uint64_t)first.st_ino,
+  (unsigned)first.st_mode,(unsigned long long)first.st_uid,(unsigned long long)first.st_gid,
+  (unsigned long long)first.st_nlink,(unsigned long long)size,hash);
+ if(n<0||(size_t)n>=sizeof(record)||!file_write(raw_path,bytes,size)||!file_write(json_path,record,(size_t)n))return 0;
+ *out=first;
+ return 1;
+}
 static void native_floor_confirm_case(void){
  const char *name="native-floor-confirm-process-kill";
  fixture f={0};
@@ -336,14 +375,14 @@ static void native_floor_confirm_case(void){
  expect(opened(&f,PC02_RECOVER,&t.h)&&pc02_descriptor(t.h,&t.pending,&clean)&&!clean&&
   pc02_floor_read(t.h,&t.pending,&floor)&&floor.count==1,"fresh owner includes complete floor without downgrading its tip");
  snprintf(leaf,sizeof(leaf),"commit-head-%016llx-%s",(unsigned long long)t.pending.generation,t.pending.input);
- expect(route_path(&f,leaf,path)&&!stat(path,&before)&&before.st_size==464,"original registered head has exactly its durable initial header");
+ expect(route_path(&f,leaf,path)&&nt_capture_head(&f,leaf,"before-confirm",&before)&&before.st_size==464,"original registered head has exactly its durable initial header");
  expect(pc02_resume(t.h,&t.pending,&t.cap),"only exact fresh pending capability can confirm");
  wrong=floor;
  wrong.count=0;
  expect(!pc02_floor_confirm(t.h,t.cap,&wrong),"old expected count never auto-upgrades or appends");
  expect(pc02_floor_confirm(t.h,t.cap,&floor)&&pc02_floor_read(t.h,&t.pending,&after)&&
   after.count==floor.count&&!strcmp(after.chain_sha256,floor.chain_sha256),"exact confirmation fills head without adding or replacing any floor");
- expect(!stat(path,&confirmed)&&confirmed.st_size==736&&confirmed.st_dev==before.st_dev&&confirmed.st_ino==before.st_ino,"same registered head now includes exactly one canonical actual record");
+ expect(nt_capture_head(&f,leaf,"after-confirm",&confirmed)&&confirmed.st_size==736&&confirmed.st_dev==before.st_dev&&confirmed.st_ino==before.st_ino,"same registered head now includes exactly one canonical actual record");
  nt_abandon(&t);
  end_case(name);
 }
