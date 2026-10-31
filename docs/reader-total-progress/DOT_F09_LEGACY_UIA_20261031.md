@@ -38,3 +38,10 @@ https://learn.microsoft.com/en-us/windows/win32/api/uiautomationcoreapi/nf-uiaut
 https://learn.microsoft.com/en-us/windows/win32/api/uiautomationcoreapi/nf-uiautomationcoreapi-textrange_gettext
 Public dotnet/wpf UiaCoreApi.cs is a conversion reference, not proven source for
 the exact installed .NET Framework binary; runtime metadata must remain explicit.
+
+
+## Initial legacy run and targeted collector correction
+
+Initial run 41161587756 attempt 1 at 9bca0cf54d06cab69dc227dca0eaced898fdf46f failed before all six consumer observations. Both existing 26-check host suites and all three consumer compilations passed. The new PowerShell reference-module collector returned 1; its captured stderr was not persisted, so the specific failure is unknown, not a product or legacy API finding. Artifact 13027875669: 5046 bytes, SHA256 4eaa87408d300128bc196745fa7f791862e2740c1e4556ce5911abad28f997ae.
+
+The sole targeted correction (batch 2/2) preserves the original six precise reference-module paths, retains raw collector stdout/stderr in lossless base64 plus decoded text and return code, and records individual file errors. EncodedCommand UTF-16LE avoids argument interpretation ambiguity; this does not assert that quoting caused the initial failure. Metadata must contain six unique complete file records, versions and hashes on a 64-bit process. Missing/invalid metadata remains an aggregate failure but no longer prevents the six independent consumer observations. No provider, product, consumer, original assertion or timeout changes. Initial failure retained; formal F09 remains unaccepted.

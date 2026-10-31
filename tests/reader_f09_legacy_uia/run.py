@@ -201,6 +201,7 @@ def main():
                     "legacy":"tests/reader_f09_legacy_uia/legacy_probe.cpp"}
     runtime_script = r"""
 $ErrorActionPreference='Stop'
+[Console]::OutputEncoding=New-Object System.Text.UTF8Encoding($false)
 $framework=Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319'
 $paths=@((Join-Path $env:WINDIR 'System32/UIAutomationCore.dll'),
          (Join-Path $framework 'WPF/UIAutomationClient.dll'),
@@ -208,12 +209,44 @@ $paths=@((Join-Path $env:WINDIR 'System32/UIAutomationCore.dll'),
          (Join-Path $framework 'WPF/WindowsBase.dll'),
          (Join-Path $framework 'clr.dll'),(Join-Path $framework 'mscorlib.dll'))
 $rows=@()
-foreach($p in $paths){$f=Get-Item -LiteralPath $p;$h=Get-FileHash -Algorithm SHA256 -LiteralPath $p
-$rows+=@{path=$f.FullName;file_version=$f.VersionInfo.FileVersion;product_version=$f.VersionInfo.ProductVersion;bytes=$f.Length;sha256=$h.Hash}}
+foreach($p in $paths){
+ try{
+  $f=Get-Item -LiteralPath $p
+  $h=Get-FileHash -Algorithm SHA256 -LiteralPath $p
+  $rows+=@{path=$f.FullName;exists=$true;file_version=$f.VersionInfo.FileVersion;product_version=$f.VersionInfo.ProductVersion;bytes=$f.Length;sha256=$h.Hash}
+ }catch{$rows+=@{path=$p;exists=(Test-Path -LiteralPath $p);error_type=$_.Exception.GetType().FullName;error=$_.Exception.Message}}
+}
 @{reference_modules=$rows;process_bits=([IntPtr]::Size*8);os_version=[Environment]::OSVersion.VersionString}|ConvertTo-Json -Depth 5
 """
-    runtime = subprocess.run(["powershell","-NoProfile","-NonInteractive","-Command",runtime_script],capture_output=True,check=True)
-    (OUT/"runtime-reference-modules.json").write_bytes(runtime.stdout)
+    import base64
+    runtime = subprocess.run(["powershell","-NoProfile","-NonInteractive","-EncodedCommand",
+        base64.b64encode(runtime_script.encode("utf-16-le")).decode("ascii")],capture_output=True)
+    runtime_evidence = dict(returncode=runtime.returncode,
+        stdout_base64=base64.b64encode(runtime.stdout).decode("ascii"),
+        stderr_base64=base64.b64encode(runtime.stderr).decode("ascii"),
+        stdout=runtime.stdout.decode("utf-8",errors="replace"),
+        stderr=runtime.stderr.decode("utf-8",errors="replace"))
+    (OUT/"runtime-collector.json").write_text(json.dumps(runtime_evidence,indent=2),encoding="utf-8")
+    try:
+        metadata = json.loads(runtime.stdout.decode("utf-8-sig"))
+        rows = metadata.get("reference_modules",[])
+        windir = Path(os.environ["WINDIR"])
+        framework = windir/"Microsoft.NET/Framework64/v4.0.30319"
+        expected_paths = {os.path.normcase(os.path.normpath(str(p))) for p in
+            [windir/"System32/UIAutomationCore.dll",framework/"WPF/UIAutomationClient.dll",
+             framework/"WPF/UIAutomationTypes.dll",framework/"WPF/WindowsBase.dll",
+             framework/"clr.dll",framework/"mscorlib.dll"]}
+        metadata_ok = (runtime.returncode == 0 and metadata.get("process_bits") == 64 and len(rows) == 6 and
+            {os.path.normcase(os.path.normpath(r.get("path",""))) for r in rows} == expected_paths and
+            all(r.get("exists") is True and not r.get("error") and r.get("file_version") and r.get("product_version") and
+                r.get("bytes",0)>0 and len(r.get("sha256",""))==64 and
+                all(c in "0123456789abcdefABCDEF" for c in r["sha256"]) for r in rows))
+    except (ValueError,TypeError,AttributeError):
+        metadata = dict(error="runtime metadata missing or invalid")
+        metadata_ok = False
+    metadata["passed"] = metadata_ok
+    (OUT/"runtime-reference-modules.json").write_text(json.dumps(metadata,indent=2),encoding="utf-8")
+    print("F09-RUNTIME-METADATA",json.dumps(runtime_evidence),flush=True)
 
     (OUT/"consumers.json").write_text(json.dumps({
         k:dict(binary_sha256=hashlib.sha256(v.read_bytes()).hexdigest(),
@@ -261,11 +294,11 @@ $rows+=@{path=$f.FullName;file_version=$f.VersionInfo.FileVersion;product_versio
         reports[observation] = report
         (directory / "observation.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     assert len(reports) == 6
-    passed = all(r["passed"] for r in reports.values())
-    (OUT / "verdict.json").write_text(json.dumps(dict(passed=passed, reports=reports,
-        retained_failure_runs=[41152293447,41155749004,41156727928,41157569248,41159097889,41159620416,41160570582], diagnostic_only=True, overlays=overlays,
+    passed = metadata_ok and all(r["passed"] for r in reports.values())
+    (OUT / "verdict.json").write_text(json.dumps(dict(passed=passed, reports=reports, runtime_metadata_passed=metadata_ok,
+        retained_failure_runs=[41152293447,41155749004,41156727928,41157569248,41159097889,41159620416,41160570582,41161587756], diagnostic_only=True, overlays=overlays,
         hashes={k: hashlib.sha256(v.read_bytes()).hexdigest() for k,v in packages.items()},
         formal_f09_accepted=False, screen_reader_verified=False), indent=2))
-    assert passed, "one or more of six independent consumer observations failed; legacy/native cannot override managed"
+    assert passed, "runtime metadata or one or more of six independent consumer observations failed; legacy/native cannot override managed"
 if __name__ == "__main__":
     main()
