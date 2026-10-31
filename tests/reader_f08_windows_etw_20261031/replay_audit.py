@@ -25,6 +25,53 @@ def events(path):
             "execution":dict(execution.attrib) if execution is not None else {},
             "clock":dict(clock.attrib) if clock is not None else {},"data":data,"labels":rendered}
         node.clear()
+def inspect_window(rows, updates, links, native_path, folder, pid):
+    native=[json.loads(line) for line in native_path.read_text().splitlines()]
+    need(native[0]["kind"]=="start" and native[-1]["kind"]=="stop","native endpoints")
+    frequency=native[0]["qpc_frequency"]
+    headers=[r for r in rows if r["provider"].startswith("{9e814aad") and "PerfFreq" in r["data"]]
+    need(len(headers)==1 and int(headers[0]["data"]["PerfFreq"].strip())==frequency,"same QPC frequency")
+    need(int(headers[0]["data"]["EventsLost"].strip())==0 and int(headers[0]["data"]["BuffersLost"].strip())==0,"ETW losses")
+    draws=[r for r in native if r["kind"] in ("gdi_paint","dxgi_present")]
+    associations=[];unmatched=[];ambiguous=[]
+    for event in updates:
+        point=int(event["clock"]["RawTime"])
+        matches=[i for i,draw in enumerate(draws) if draw["start_qpc"]<=point<=draw["end_qpc"]]
+        record={"event":event,"paint_indexes":matches}
+        associations.append(record)
+        if not matches:unmatched.append(record)
+        elif len(matches)>1:ambiguous.append(record)
+    joined=[]
+    for i,draw in enumerate(draws):
+        matches=[x["event"] for x in associations if x["paint_indexes"]==[i]]
+        joined.append({"native":draw,"render_events":matches,"duration_ms":1000*(draw["end_qpc"]-draw["start_qpc"])/frequency})
+    native_summary={"draws":len(draws),"events":len(updates),"unmatched_events":len(unmatched),
+        "ambiguous_events":len(ambiguous),"draws_with_event":sum(bool(x["render_events"]) for x in joined),
+        "draws_without_event":sum(not x["render_events"] for x in joined),
+        "by_event":{key:sum(x["event"]["event"]==key and len(x["paint_indexes"])==1 for x in associations) for key in ("41","42")},
+        "native_duration_ms":{"min":min(x["duration_ms"] for x in joined),"max":max(x["duration_ms"] for x in joined)},
+        "qpc_frequency":frequency,"physical_presentation_proven":False}
+    save(folder/"native-paint-join.json",{"summary":native_summary,"draws":joined,"unmatched":unmatched,"ambiguous":ambiguous})
+    dwm=[r for r in rows if r["provider"]=="Microsoft-Windows-Dwm-Core"]
+    direct=[r for r in links if r["provider"]=="Microsoft-Windows-Dwm-Core"]
+    binding=[r for r in direct if r["event"]=="84"]
+    sprite_tokens={str(value).strip().casefold() for row in binding for key,value in row["data"].items()
+                   if "sprite" in key.casefold() and value and str(value).strip().casefold() not in ("0","0x0")}
+    sprite_links=[r for r in dwm if any(str(value).strip().casefold() in sprite_tokens for value in r["data"].values())]
+    types={}
+    for row in dwm:
+        key=str(row["event"])+"/"+str(row["labels"].get("Task"))+"/"+str(row["labels"].get("Opcode"))
+        entry=types.setdefault(key,{"count":0,"first":row});entry["count"]+=1
+    direct_examples={}
+    for row in direct:direct_examples.setdefault(row["event"],[]).append(row)
+    save(folder/"dwm-types.json",types);save(folder/"dwm-window-links.json",direct);save(folder/"dwm-sprite-links.json",sprite_links)
+    print("F08_NATIVE_PAINT_JOIN",folder.name,json.dumps(native_summary),flush=True)
+    print("F08_DWM_WINDOW",folder.name,json.dumps({key:value[:4] for key,value in direct_examples.items()}),flush=True)
+    print("F08_DWM_TYPES",folder.name,json.dumps(types),flush=True)
+    return {"native_paint_join":native_summary,"sprite_tokens":sorted(sprite_tokens),"sprite_link_count":len(sprite_links),
+            "dwm_window_event_count":len(direct),"dwm_types":{key:value["count"] for key,value in types.items()},
+            "physical_presentation_proven":False}
+
 def main():
     need(os.environ.get("GITHUB_ACTIONS")=="true","Actions only")
     need(command(["git","rev-parse","HEAD"],text=True).strip()==identity()["source_sha"],"audit source")
@@ -58,10 +105,6 @@ def main():
     actual={p.relative_to(raw).as_posix() for p in raw.rglob("*") if p.is_file()}
     need(actual==set(receipt["files"])|{"receipt.json"},"inventory")
     for name,item in receipt["files"].items():need(sha(raw/name)==item["sha256"] and (raw/name).stat().st_size==item["bytes"],"file bytes")
-    pm=OUT/"PresentMon-2.6.0-x64.exe"
-    with urllib.request.urlopen("https://github.com/GameTechDev/PresentMon/releases/download/v2.6.0/PresentMon-2.6.0-x64.exe",timeout=60) as response:
-        pm.write_bytes(response.read())
-    need(pm.stat().st_size==980320 and sha(pm)==PM_SHA,"pinned PresentMon")
     report={**identity(),"producer_source":BASE,"producer_run":RUN,"artifact_id":ARTIFACT,"original_sha256":DIGEST,
             "resampled":False,"captures":[],"f08_accepted":False}
     for capture in receipt["captures"]:
@@ -85,18 +128,8 @@ def main():
                "external_window_links":[r for r in links if r["execution"].get("ProcessID")!=str(pid)][:12],
                "trace_headers":[r for r in rows if r["provider"].startswith("{9e814aad")][:2],
                "replays":[]}
-        print("F08_RAW_TIMESTAMPS",json.dumps(entry),flush=True)
-        for profile,flags in (("display",[]),("display_no_gpu",["--no_track_gpu"]),("cpu",["--no_track_display","--no_track_gpu","--no_track_input"])):
-            output=folder/(profile+".csv")
-            args=[str(pm),"--etl_file",str(etl),"--process_id",str(pid),"--output_file",str(output),
-                  "--no_console_stats","--qpc_time",*flags]
-            with (folder/(profile+".log")).open("wb") as log:result=subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,timeout=180)
-            save(folder/(profile+"-command.json"),args)
-            parsed=list(csv.DictReader(output.open(encoding="utf-8-sig",newline=""))) if output.exists() else []
-            need(all(row.get("ProcessID")==str(pid) for row in parsed),"replay PID")
-            replay={"profile":profile,"exit":result.returncode,"rows":len(parsed),"columns":list(parsed[0]) if parsed else [],
-                    "first_rows":parsed[:2]}
-            entry["replays"].append(replay);print("F08_ETL_REPLAY",mode,json.dumps(replay),flush=True)
+        entry["window_analysis"]=inspect_window(rows,updates,links,raw/mode/"control.jsonl",folder,pid)
+        entry["replays_not_repeated"]=True
         report["captures"].append(entry)
     report["files"]={p.relative_to(OUT).as_posix():{"sha256":sha(p),"bytes":p.stat().st_size}
                      for p in OUT.rglob("*") if p.is_file() and "raw" not in p.relative_to(OUT).parts}
