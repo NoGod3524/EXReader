@@ -1,0 +1,45 @@
+name: F09 focused Escape message routing
+on:
+  push:
+    branches: [codex/dot-f09-escape-routing-20261031]
+permissions:
+  contents: read
+concurrency:
+  group: f09-routing-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  compare:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Four independent actual UIA observations
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: utf-8
+        run: python tests/reader_f09_escape_routing/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f09-routing-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09-escape-routing/*.json
+            build/f09-escape-routing/baseline-managed/*.log
+            build/f09-escape-routing/baseline-managed/*.json
+            build/f09-escape-routing/candidate-managed/*.log
+            build/f09-escape-routing/candidate-managed/*.json
+            build/f09-escape-routing/baseline-native/*.log
+            build/f09-escape-routing/baseline-native/*.json
+            build/f09-escape-routing/candidate-native/*.log
+            build/f09-escape-routing/candidate-native/*.json
+            build/f09-escape-routing/baseline-package/build.json
+            build/f09-escape-routing/candidate-package/build.json
+            build/f09-escape-routing/baseline-package/report.json
+            build/f09-escape-routing/candidate-package/report.json
+          if-no-files-found: error

@@ -3584,8 +3584,14 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       if (task && task->fn) task->fn(task->context);
       return 0;
     }
-    case WM_GETDLGCODE:
-      return DLGC_WANTARROWS | DLGC_WANTCHARS;
+    case WM_GETDLGCODE: {
+      const MSG *key = (const MSG *)lparam;
+      LRESULT flags = DLGC_WANTARROWS | DLGC_WANTCHARS;
+      if (wparam == VK_ESCAPE && key && key->hwnd == window &&
+          key->message == WM_KEYDOWN && key->wParam == VK_ESCAPE)
+        return flags | DLGC_WANTMESSAGE;
+      return flags;
+    }
     case WM_LBUTTONDOWN:
       if (g.job || g.pending || !g.frame.valid) return 0;
       SetFocus(window);
