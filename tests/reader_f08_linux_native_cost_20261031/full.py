@@ -6,7 +6,7 @@ LEGACY=ROOT/"tests/reader_f08_linux_product_20261031"
 sys.path.insert(0,str(LEGACY))
 import run as R
 BASE="c86f18a088cff42db9ee0c33a5bd9fbd6cbe01bd"
-FILES={"tests/reader_f08_linux_native_cost_20261031/"+n for n in ("probe.c","inject.py","control.c","full.py")}|{".github/workflows/f08-linux-native-cost-20261031.yml",".github/workflows/f08-linux-presentation-20261031.yml","docs/reader-total-progress/F08_LINUX_NATIVE_COST_20261031.md"}
+FILES={"tests/reader_f08_linux_native_cost_20261031/"+n for n in ("probe.c","inject.py","control.c","full.py")}|{".github/workflows/f08-linux-native-cost-20261031.yml",".github/workflows/f08-linux-presentation-20261031.yml","docs/reader-total-progress/F08_LINUX_NATIVE_COST_20261031.md","tests/reader_f08_linux_native_cost_20261031/extras.py",".github/workflows/f08-linux-body-jump-20261031.yml","docs/reader-total-progress/F08_LINUX_BODY_JUMP_20261031.md"}
 PROBE="f08-native-cost/libexreader_f08_native_cost.so"
 def guard():
  R.need(os.environ.get("GITHUB_ACTIONS")=="true" and sys.platform.startswith("linux"),"Linux Actions only")

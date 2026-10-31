@@ -1,0 +1,80 @@
+name: F08 Linux native reader body and locate jump
+on:
+  push:
+    branches: [codex/f08-linux-body-jump-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: f08-linux-body-jump-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+jobs:
+  sample:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    outputs:
+      artifact_id: ${{ steps.raw.outputs.artifact-id }}
+      artifact_digest: ${{ steps.raw.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev libx11-dev libsecret-1-0 gnome-keyring xvfb openbox xdotool xclip x11-utils dbus-x11 python3-gi gir1.2-atspi-2.0
+      - name: Control complete boundary then run actual cached body and FOUND jumps
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          Xvfb :99 -screen 0 1440x900x24 -nolisten tcp > /tmp/f08-extra-xvfb.log 2>&1 &
+          f08_xvfb=$!
+          trap 'kill $f08_xvfb 2>/dev/null || true' EXIT
+          sleep 2
+          DISPLAY=:99 dbus-run-session -- bash -euo pipefail -c '
+            openbox > /tmp/f08-extra-openbox.log 2>&1 &
+            f08_wm=$!
+            trap "kill $f08_wm 2>/dev/null || true" EXIT
+            sleep 1
+            python3 tests/reader_f08_linux_native_cost_20261031/full.py control
+            python3 tests/reader_f08_linux_native_cost_20261031/extras.py
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-linux-body-jump-control-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-native-control/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        id: raw
+        if: always()
+        with:
+          name: f08-linux-body-jump-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-linux-body-jump/
+            !build/f08-linux-body-jump/producer/
+          include-hidden-files: true
+          if-no-files-found: warn
+  audit:
+    needs: sample
+    if: always() && needs.sample.outputs.artifact_id != ''
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate producer and new artifact then independently replay all added actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F08_ARTIFACT_ID: ${{ needs.sample.outputs.artifact_id }}
+          F08_ARTIFACT_DIGEST: ${{ needs.sample.outputs.artifact_digest }}
+        run: python3 tests/reader_f08_linux_native_cost_20261031/extras.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-linux-body-jump-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-linux-body-jump-audit/audit.json
+          if-no-files-found: warn
