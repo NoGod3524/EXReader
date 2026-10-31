@@ -67,7 +67,7 @@ def main():
    entry=dict(index=index,kind=kind,folder=folder.name,complete=False);report["captures"].append(entry)
    launch_profile=profile
    if kind=="page":
-    launch_profile=out/"reading-profile";shutil.copytree(profile,launch_profile)
+    launch_profile=out/"reading-profile";shutil.copytree(out/"reading-base" if (out/"reading-base").exists() else profile,launch_profile)
    previous=os.environ.get("EXREADER_F08_TRACE");os.environ["EXREADER_F08_TRACE"]=str(trace)
    try:host=H.Host(raw/"program/EXReader.exe",raw/"program/Reader.otf",launch_profile,folder/"application.log")
    finally:
@@ -130,6 +130,7 @@ def main():
      stream.close()
     entry["peak"]=host.close();entry["process_exit"]=host.process.poll();emit(dict(kind="close",pid=host.process.pid,qpc=qpc(),exit=entry["process_exit"]))
    need(entry["process_exit"]==0 and entry.get("observer_exit")==0 and entry.get("observed"),"normal complete native capture")
+   if kind=="shelf":shutil.copytree(profile,out/"reading-base")
    native=json.loads(trace.read_text());need(native["pid"]==entry["pid"] and native["frequency"]==frequency.value,"native trace process clock")
    try:
     entry["analysis"]=replay.replay(native);save(folder/"analysis.json",entry["analysis"]);entry["complete"]=True
