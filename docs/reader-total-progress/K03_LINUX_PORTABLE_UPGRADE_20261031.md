@@ -73,5 +73,14 @@ Single targeted correction: the workflow stages OPDSHash from this same tree (`e
 canonical prefix, as `dot-integration-candidate-20261031.yml` does) and exports the prefix before running the unchanged
 recipe. No recipe, product or guard change.
 
-Correction run results, artifact IDs and digests are appended below. Scope of any result: F12 Linux portable
+The user then lifted the correction limit for this conversation.
+
+Run 41174578730 / attempt 1 (b6c2d31151677fdff3a0a81e7231415d1360c32b): B built (SDK 3.42.0, entry
+69c2ceac…50e5; A entry e87554e6…9673, SDK 3.42.0); item 1 passed; items 2 and 11 failed with "never idle" after the
+first import (book=1 imported, last STATUS busy=1), the rest blocked. Cause (driver): after a frame the host queues the
+position commit and clears busy in `state()` without printing a STATUS line (reader.c READER_COMMIT branch), so the
+STATUS busy field is not an idle signal. Correction 2: idle is a quiet-stdout window, and a reading key rejected with
+"Reading operation in progress" is repeated. No product change.
+
+Further results are appended below. Scope of any result: F12 Linux portable
 update slice only — not F11, not six-platform F12, not formal release or signing, not licensing/documentation.

@@ -29,6 +29,7 @@ TOOLS = Path(__file__).resolve().parents[2] / 'tools'
 sys.path.insert(0, str(TOOLS))
 import atspi_client as bus  # noqa: E402  (copied from the retained 67e2f8c4 client by the workflow)
 
+BUSY_MESSAGE = 'Reading operation in progress'
 LOCK_MESSAGE = 'This local library is already in use or cannot be locked'
 NOTE_A = 'K03 旧包批注 café'
 NOTE_B = 'K03 新包批注 नमस्ते'
@@ -164,32 +165,45 @@ class Host:
             if self.process.poll() is not None:
                 raise RuntimeError(f'{self.label}: host exited {self.process.returncode}')
             values = self.statuses()[since:]
-            if values and predicate(values[-1]) and not values[-1].get('busy') and not values[-1].get('saving'):
-                return values[-1]
+            if values and predicate(values[-1]):
+                return self.idle()
             time.sleep(.1)
         raise TimeoutError(f'{self.label}: status not reached; last={self.last()!r}')
 
-    def idle(self, quiet=.8, timeout=40):
-        """Waits until the latest STATUS is not busy/saving and nothing new arrived for `quiet` seconds."""
+    def lines(self):
+        self.log.flush()
+        return self.log_path.read_bytes().count(b'
+')
+
+    def idle(self, quiet=1.5, timeout=40):
+        """Quiet stdout for `quiet` seconds. The STATUS busy/saving fields are not an idle signal: after a
+        frame the host commits the position and clears busy without printing another STATUS line."""
         end = time.monotonic() + timeout
         count, stable = -1, time.monotonic()
         while time.monotonic() < end:
             if self.process.poll() is not None:
                 raise RuntimeError(f'{self.label}: host exited {self.process.returncode}')
-            values = self.statuses()
-            if len(values) != count:
-                count, stable = len(values), time.monotonic()
-            elif time.monotonic() - stable >= quiet and (not values or (not values[-1].get('busy') and not values[-1].get('saving'))):
-                return values[-1] if values else {}
+            now = self.lines()
+            if now != count:
+                count, stable = now, time.monotonic()
+            elif time.monotonic() - stable >= quiet:
+                return self.last()
             time.sleep(.1)
-        raise TimeoutError(f'{self.label}: never idle; last={self.last()!r}')
+        raise TimeoutError(f'{self.label}: output never settled; last={self.last()!r}')
 
     def key(self, *keys):
         for value in keys:
-            command('xdotool', 'key', '--clearmodifiers', value)
-            time.sleep(.15)
-            if value in ('F3', 'F4', 'F8', 'F10', 'Return'):
+            for attempt in range(6):
+                before = len(self.statuses())
+                command('xdotool', 'key', '--clearmodifiers', value)
+                time.sleep(.15)
+                if value not in ('F3', 'F4', 'F8', 'F10', 'Return'):
+                    break
                 self.idle()
+                # The host rejects reading work while a commit runs; repeat the same user key.
+                if not any(s.get('message', '').startswith(BUSY_MESSAGE) for s in self.statuses()[before:]):
+                    break
+                time.sleep(1)
 
     def paste(self, text):
         subprocess.run(['xclip', '-selection', 'clipboard'], input=text.encode(), check=True, timeout=10)
