@@ -165,3 +165,24 @@ Extra-workload raw artifact 13057342447: 137,687 bytes, SHA-256 1a4111ea72840923
 Both use executable SHA-256 c5be0d15fd4de21ad04daa75474d45440e121be0bb20e3b91b4a668c3e637215 and observer SHA-256 c844d11a40a525138221f7721319fd528d3a318b6712a6f2e72f24bb6c7af810. Every original ZIP entry was rehashed. Earlier cancelled, incomplete and driver-error executions remain preserved.
 
 These results validate this Linux component and its recorded X11/Xvfb profile. They do not prove physical/GPU/compositor scanout, and they do not transfer acceptance to other targets or to a later common-source build. The formal F08 catalog remains pending.
+
+## Android optimized Release component
+
+Source 03ecfa21f6cd8d8e354145d56ffdf24244ecbe61 builds the existing complete host with SDK 3.42, PageTheme, Raw3, Wave3, Reading, Preferences, Search, Navigation and Sync. It enables bounded F08 shelf observations with an explicit build property; ordinary builds leave that observation flag false. The APK is a non-debuggable Release variant, signed only with the ephemeral CI test certificate. The unchanged sampler receives explicit legacy filename aliases for these exact Release APK bytes. The independent audit rechecks APK flags, installed/package hashes and absence of private ProductFixture JNI.
+
+This build exposed and fixed a production compatibility guard that accepted PageTheme only with SDK 3.41 despite the host already admitting SDK 3.42. The guard now accepts the two existing palette-capable SDK versions and retains the reading/preferences prerequisites and exact installed-SDK check.
+
+[Run 41240610450](https://github.com/NoGod3524/EXReader/actions/runs/41240610450), sample 124653538458, completed all ten unchanged shelf UI cases and failed the unchanged frame limits. Audit 124655592271 succeeded in authenticating all 326 archived files and recomputing this failure.
+
+| Release observation | Observed | Original maximum |
+| --- | ---: | ---: |
+| First interaction | 1,562.43903 ms | 2,000 ms |
+| Sampled process PSS | 80,632 KiB | 524,288 KiB |
+| Ordinary Window P95 | 117.742834 ms | 16.67 ms |
+| Ordinary Window P99 | 138.485091 ms | 33.34 ms |
+
+Raw artifact 13056959967: 42,119,480 bytes; SHA-256 791a2a412820cbc308292f0edec869bc3079504eccd3e5383582d007313982e7. Audit artifact 13057403457: 1,233 bytes; SHA-256 cafca364a5a0964846b17bbe1bbed1a7044b07d7d128215d16c18b3d9b5c9b68.
+
+The original forty-case Debug regression remains independently retained; its private fault suites are not claimed to run against this Release binary. Failed intermediate builds, including the original SDK guard rejection and two test-adapter errors, remain in Actions. Software-renderer and native HWUI OpenGL/Vulkan system-Settings controls also remain separate environment diagnostics and do not grant product acceptance.
+
+Android frame acceptance and its additional reader/font/jump coverage are still outstanding. A bounded same-process native FrameMetrics/FrameTimeline diagnostic is being prepared to distinguish UI scheduling, submission, buffer/fence waits and actual raster work. It does not alter the declared budgets or any desktop resolution.
