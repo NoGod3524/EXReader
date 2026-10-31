@@ -5,9 +5,58 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 assert os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform == "win32"
+
+WINDOWS_C02_PRODUCT_EVIDENCE = 1
+class ProductEvidence:
+    def __init__(self, output, programs):
+        self.output=output;self.binaries={};self.by_path={};self.rows=[]
+        (output/"binaries").mkdir();(output/"commands").mkdir()
+        for role,path in programs.items():
+            path=Path(path).resolve()
+            with path.open("rb") as stream:
+                first=os.fstat(stream.fileno());raw=stream.read();last=os.fstat(stream.fileno())
+            assert (first.st_dev,first.st_ino,first.st_size,first.st_mtime_ns)==(
+                last.st_dev,last.st_ino,last.st_size,last.st_mtime_ns)
+            retained="binaries/"+role+".exe";(output/retained).write_bytes(raw)
+            item=dict(source_path=str(path),retained=retained,bytes=len(raw),
+                sha256=hashlib.sha256(raw).hexdigest(),identity=[first.st_dev,first.st_ino])
+            self.binaries[role]=item;self.by_path[str(path).casefold()]=role
+        (output/"binaries.json").write_text(json.dumps(self.binaries,indent=2)+"\n")
+    def command(self,args):
+        command=list(map(str,args));path=Path(command[0]).resolve()
+        role=self.by_path[str(path).casefold()];item=self.binaries[role]
+        assert hashlib.sha256(path.read_bytes()).hexdigest()==item["sha256"]
+        return command,role
+    def finished(self,label,proc,args,stdout,stderr,cwd=None,timed_out=False):
+        command,role=self.command(args);index=len(self.rows)+1
+        stdout_name="commands/%03d.stdout"%index;stderr_name="commands/%03d.stderr"%index
+        (self.output/stdout_name).write_bytes(stdout);(self.output/stderr_name).write_bytes(stderr)
+        row=dict(index=index,label=label,role=role,argv=command,pid=proc.pid,exit=proc.returncode,
+            cwd=str(Path(cwd).resolve() if cwd is not None else Path.cwd().resolve()),timed_out=timed_out,
+            binary_sha256=self.binaries[role]["sha256"],stdout=stdout_name,stderr=stderr_name,
+            stdout_bytes=len(stdout),stderr_bytes=len(stderr),
+            stdout_sha256=hashlib.sha256(stdout).hexdigest(),stderr_sha256=hashlib.sha256(stderr).hexdigest())
+        self.rows.append(row)
+        with (self.output/"commands.jsonl").open("ab") as stream:
+            stream.write((json.dumps(row)+"\n").encode());stream.flush();os.fsync(stream.fileno())
+    def start(self,args,**kwargs):
+        command,_=self.command(args)
+        return subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE,**kwargs)
+    def run(self,label,args,timeout=30,capture_output=True,**kwargs):
+        assert capture_output is True
+        command,_=self.command(args);proc=self.start(command,**kwargs)
+        try:
+            stdout,stderr=proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill();stdout,stderr=proc.communicate()
+            self.finished(label,proc,command,stdout,stderr,kwargs.get("cwd"),True)
+            raise
+        self.finished(label,proc,command,stdout,stderr,kwargs.get("cwd"))
+        return subprocess.CompletedProcess(command,proc.returncode,stdout,stderr)
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tests/reader_windows_raw3"))
 import host_build as H
@@ -69,4 +118,33 @@ binary = host / "EXReaderWave3.exe"
 H.run([sys.executable, ROOT / "tools/build_windows_host.py", "--sdk", sdk,
     "--binary", binary, "--c02-prefix", c02, "--output", out / "package",
     "--static-reading"], "package-with-admission")
+execution = out / "package/execution"
+execution.mkdir()
+package = out / "package/EXReader"
+captured = ProductEvidence(execution,dict(host=package/"EXReader.exe",
+    admission=package/"exreader-c02-admission.exe",migration=package/"exreader-c02-migrate.exe"))
+report,image = execution/"selftest-report.json",execution/"selftest-page.png"
+selftest_args = [package/"EXReader.exe","--self-test",package/"Reader.otf",
+    package/"Sample.epub",package/"Sample.pdf",report,image]
+result = captured.run("packaged-selftest",selftest_args,timeout=120)
+assert result.returncode == 0, (result.returncode,result.stdout,result.stderr)
+checked = json.loads(report.read_text())
+assert checked["schema"] == 1 and checked["platform"] == "Windows" and checked["passed"] is True
+assert checked["engine_version"] == "3.42.0" and checked["checks"] >= 26
+version = captured.run("packaged-migration-version",[package/"exreader-c02-migrate.exe","--version"],timeout=30)
+assert version.returncode == 0
+profile = execution/"admission"
+profile.mkdir()
+library,authority = profile/"library.sqlite",profile/"native-domain"
+for label,args in (("packaged-create",["create",library,authority]),("packaged-check",["check",library])):
+    result = captured.run(label,[package/"exreader-c02-admission.exe",*args],timeout=45)
+    assert result.returncode == 0 and json.loads(result.stdout)["admitted"] is True
+(execution/"receipt.json").write_text(json.dumps(dict(
+    schema="c02-windows-package-execution-v1",source=os.environ["GITHUB_SHA"],
+    run=os.environ["GITHUB_RUN_ID"],attempt=os.environ["GITHUB_RUN_ATTEMPT"],platform="Windows",
+    binaries=captured.binaries,commands="commands.jsonl",selftest_checks=checked["checks"],
+    report="selftest-report.json",report_sha256=hashlib.sha256(report.read_bytes()).hexdigest(),
+    image="selftest-page.png",image_sha256=hashlib.sha256(image.read_bytes()).hexdigest(),
+    passed=True,full_c02_acceptance=False),indent=2)+"\n")
+print("C02-WINDOWS-PACKAGE-WITNESS cases=4 failed=0",flush=True)
 print(str(binary), flush=True)

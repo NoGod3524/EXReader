@@ -794,3 +794,32 @@ Actual owner Ubuntu job 124499572095 in run 41188280556 passed the existing
 SHA256 f2a47c5e53f3854fe00b98d5e14e8b3eea9cbb49fe6710d251f21c97b944071e.
 These runs verify compilation and previous behavior after production Repair
 integration; the new explicit Repair cut/retry scenarios remain a separate gate.
+
+### Windows executable/probe retention and actual Repair trials
+
+Final summary review found that the Windows registry decoder did not yet read
+the existing guarded legacy, standalone reader and Wave3/full-package branches.
+Their workflow success alone is insufficient for the new independent product
+proof. The producers now retain the actual executables, per-command argv/PID/exit,
+stdout/stderr hashes, both owner probes, actual window observations and before/after
+target data in the original evidence tree. The formal package's executed bytes
+must be bound separately; old packages remain usable only with explicit gaps.
+
+The first new Windows capture run 41188769734/A1, producer
+33e5f6a5b9f266c9ef68eade05ff97fc77c1f8cb, failed in host_check.py's report writer:
+record's local keyword dictionary named evidence shadowed the recorder object,
+raising AttributeError at evidence.binaries. The native product action had run,
+but the report and remaining groups did not complete. Preserve job 124501027300
+and artifact 13037802437, 7089143 bytes, SHA256
+87db1ddf76448fb05719f5c1bde8e5c00144557487e074478c2c0c003e50e544.
+The repair changes this capture naming collision, not product acceptance.
+
+Producer 313a22493e23f597e2a04f5bb6e93e43577bddce adds 17 separate real Repair
+scenarios while retaining migration-result.json's original 36 and all 65/135
+historical cases. repair-result.json records partial B/C/head, actual SIGKILL
+at six Repair phases, consecutive interruptions, ambiguous candidates, double
+partials, complete contradictions, orphan APPLIED, protected-floor rollback,
+selected complete C restoration and an actual authority ALLOW ACL. Original
+and cloned SDK proof FDs are now held across verification, with exact identities,
+whole-byte hashes and named-object checks before and after. Run 41189018097/A1
+is the first execution of these new cases; it is pending, not qualification.
