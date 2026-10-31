@@ -50,3 +50,35 @@ Windows, SDK, original tests and workflow are unchanged.
 A second explicit authorization permits one new push-triggered validation run
 with the existing Ubuntu/macOS matrix and 30-minute limit per job. Its result is
 pending; no local test or build is used. Full F10 promotion remains false.
+
+## Second-run evidence and separately authorized archive diagnosis
+
+Run 41155648866 attempt 1 at 036717d9796e40b69cb48352c797695b76e17ae7
+is FAILURE overall: Linux job 124401750360 succeeds, macOS 124401750603 fails.
+Both platforms' original suites pass and both raw PRIVATE-SUMMARY receipts show
+all six operational cases plus parser controls passing. macOS fails afterwards
+at the retained built==installed archive byte equality assertion. This does not
+establish why archive bytes differ, nor permit calling the overall run green.
+Linux artifact 13024203900; macOS artifact 13024099122.
+
+A new authorization allows at most two additional diagnostic/correction runs.
+The first only adds evidence to this workflow: original built and installed
+archive SHA/size, raw archive headers and object payload hashes, exact tools and
+version output, generated install script and verbose archive build command.
+Both original archives are retained. No bytes are normalized and the existing
+built==installed assertion remains the acceptance gate. No product, SDK,
+old assertion, new operational case or runtime limit is changed.
+
+CMake v4.4.4's cmInstallTargetGenerator.cxx generates post-install ranlib for
+Apple static libraries. Apple cctools libtool.c documents deterministic -D and
+ZERO_AR_DATE. These explain a candidate mechanism, not this run's actual
+difference; diagnostics must establish the changed bytes and actual tools first.
+Sources:
+https://raw.githubusercontent.com/Kitware/CMake/v4.4.4/Source/cmInstallTargetGenerator.cxx
+https://raw.githubusercontent.com/apple-oss-distributions/cctools/main/misc/libtool.c
+
+Member records preserve order and offsets, including repeated names and symbol
+index members. BSD inline names are decoded; GNU /NNN long-name references remain
+raw name tokens, not resolved identities. No object equality is inferred from
+names alone. Diagnostic tool failures/timeouts are recorded without bypassing
+the final full-byte comparison.

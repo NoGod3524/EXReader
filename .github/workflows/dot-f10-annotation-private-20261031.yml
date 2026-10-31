@@ -65,7 +65,8 @@ jobs:
           cmake --build build/private-state --parallel 4
           cmake --install build/private-state
           cmake -S apps/reader/annotation-export -B build/private-export -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S;$SDK" -DCMAKE_INSTALL_PREFIX="$S"
-          cmake --build build/private-export --parallel 4
+          cmake --build build/private-export --parallel 4 --verbose
+          cat build/private-export/cmake_install.cmake
           cmake --install build/private-export
           cmake -S tests/reader_annotation_export/consumer -B build/private-old -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S;$SDK"
           cmake --build build/private-old --parallel 4
@@ -81,9 +82,56 @@ jobs:
           set -euo pipefail
           python tests/reader_annotation_export_posix_private_20261031/run.py --probe build/private-new/annotation-private --old-probe build/private-old/annotation-export-probe --fixtures build/private-fixtures --work build/private-evidence | tee build/private-logs/new.log
           python - <<'PY'
-          import hashlib,json,os,pathlib
+          import hashlib,json,os,pathlib,subprocess
           built=pathlib.Path('build/private-export/libreader_annotation_export.a').read_bytes()
           installed=pathlib.Path('build/private-stage/lib/libreader_annotation_export.a').read_bytes()
+          def sha(data):return hashlib.sha256(data).hexdigest()
+          def members(data):
+              assert data[:8]==b'!<arch>\n'
+              result=[];offset=8
+              while offset<len(data):
+                  header=data[offset:offset+60]
+                  assert len(header)==60 and header[58:60]==b'\x60\n'
+                  size=int(header[48:58]);start=offset+60;end=start+size
+                  assert size>=0 and end<=len(data)
+                  name=header[:16].decode('ascii').strip();payload=data[start:end]
+                  if name.startswith('#1/'):
+                      n=int(name[3:]);assert 0<=n<=len(payload)
+                      name=payload[:n].rstrip(b'\0').decode('utf-8');payload=payload[n:]
+                  result.append(dict(offset=offset,name=name,header_hex=header.hex(),raw_size=size,payload_size=len(payload),payload_sha256=sha(payload)))
+                  offset=end+(size%2)
+              assert offset==len(data)
+              return result
+          cache={}
+          for line in pathlib.Path('build/private-export/CMakeCache.txt').read_text().splitlines():
+              if '=' in line and not line.startswith(('#','//')):
+                  key,value=line.split('=',1);cache[key.split(':')[0]]=value
+          def probe(argv):
+              try:
+                  v=subprocess.run(argv,capture_output=True,text=True,timeout=15)
+                  return dict(argv=argv,returncode=v.returncode,stdout=v.stdout,stderr=v.stderr)
+              except (OSError,subprocess.TimeoutExpired) as e:
+                  return dict(argv=argv,error=type(e).__name__+': '+str(e))
+          tools={}
+          for key in ('CMAKE_AR','CMAKE_RANLIB','CMAKE_CXX_COMPILER'):
+              path=cache.get(key)
+              if path:
+                  versions=[]
+                  for flag in ('--version','-V'):
+                      versions.append(probe([path,flag]))
+                  tools[key]=dict(path=path,realpath=str(pathlib.Path(path).resolve()),versions=versions)
+          ar_lists={}
+          for label,path in (('built','build/private-export/libreader_annotation_export.a'),('installed','build/private-stage/lib/libreader_annotation_export.a')):
+              ar_lists[label]=probe([cache['CMAKE_AR'],'-tv',path])
+          diff=[i for i,(a,b) in enumerate(zip(built,installed)) if a!=b]
+          evidence=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
+                        equal=built==installed,built_size=len(built),installed_size=len(installed),
+                        built_sha256=sha(built),installed_sha256=sha(installed),
+                        differing_common_bytes=len(diff),first_difference_offsets=diff[:256],
+                        built_members=members(built),installed_members=members(installed),tools=tools,ar_lists=ar_lists,
+                        ZERO_AR_DATE=os.environ.get('ZERO_AR_DATE'),cmake_version=probe(['cmake','--version']))
+          pathlib.Path('build/private-evidence/archive-diagnostic.json').write_text(json.dumps(evidence,indent=2)+'\n')
+          print('PRIVATE-ARCHIVE-DIAGNOSTIC '+json.dumps(evidence),flush=True)
           assert built==installed
           source=pathlib.Path('apps/reader/annotation-export/src/annotation_export.cpp').read_bytes()
           r=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],archive_sha256=hashlib.sha256(installed).hexdigest(),source_sha256=hashlib.sha256(source).hexdigest())
@@ -101,4 +149,7 @@ jobs:
             build/private-new/private.map
             build/private-old/annotation-export-link.map
             build/private-stage/lib/libreader_annotation_export.a
+            build/private-export/libreader_annotation_export.a
+            build/private-export/cmake_install.cmake
+            build/private-export/CMakeCache.txt
           if-no-files-found: warn
