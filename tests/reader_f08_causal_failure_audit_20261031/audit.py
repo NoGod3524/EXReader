@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path, PurePosixPath
 
 REPO = "NoGod3524/EXReader"
-BASE = "aa070c9032ae114650d1dcc1e4a1f8c002ec961d"
+BASE = "25a5d87f0b17a796dbd57dd2c2342893e36f4013"
 SOURCE = "878a3f67a2bcfad51d49c67292548e5892185f3d"
 RUN, ATTEMPT, ARTIFACT = 41169786301, 1, 13030394230
 ZIP_BYTES = 4422645
@@ -99,13 +99,18 @@ def guard():
     need(git("rev-parse", "HEAD") == os.environ["GITHUB_SHA"], "audit_source")
     need(git("rev-parse", "HEAD^") == BASE, "audit_parent")
     changed = git("diff", "--name-status", BASE, "HEAD").splitlines()
-    need(set(changed) == {"A\t" + p for p in OWNED}, "exact_three_added_paths")
+    need(set(changed) == {"M\t" + p for p in (OWNED[0], OWNED[2])}, "exact_repair_paths")
     need(not git("status", "--porcelain", "--untracked-files=no"), "clean_source")
     listing = api("actions/workflows/" + WORKFLOW + "/runs?branch=" + BRANCH + "&per_page=100")
     save("audit-runs.json", listing)
     runs = listing.get("workflow_runs", [])
-    need(listing.get("total_count") == 1 and len(runs) == 1, "one_audit_run")
-    current = runs[0]
+    need(listing.get("total_count") == 2 and len(runs) == 2, "two_bounded_audit_runs")
+    by_id = {str(run["id"]): run for run in runs}
+    need(set(by_id) == {"41174980081", os.environ["GITHUB_RUN_ID"]}, "known_prior_and_current")
+    prior = by_id["41174980081"]
+    need(prior["head_sha"] == "6725cbd3e496dd8daba81136240e79f70f28f5f3" and
+         prior["run_attempt"] == 1 and prior["conclusion"] == "failure", "retained_failed_audit")
+    current = by_id[os.environ["GITHUB_RUN_ID"]]
     need(str(current["id"]) == os.environ["GITHUB_RUN_ID"] and
          current["head_sha"] == os.environ["GITHUB_SHA"] and
          current["run_attempt"] == 1, "audit_run_identity")
@@ -371,7 +376,7 @@ def action_report(raw, action, healthy=True):
     full_true = [r["index"] for r in timeline if start <= r["state"]["at"] <= end and
                  r["state"]["ok"] and r["predicates"]["original_changed"] is True]
     baseline = [r["index"] for r in timeline if r["state"]["sequence"] == action["previous_sequence"]
-                and r["state"][field] == action["before"] and r["state"]["book"] == action["book"]
+                and r["state"][field] == action["before"] and r["state"]["book"] == action["book"]]
     baseline_paint = [i for i in baseline if field == "shelf_top_id" or
                       raw["states"][i]["painted_generation"] == action["previous_generation"]]
     reasons = []

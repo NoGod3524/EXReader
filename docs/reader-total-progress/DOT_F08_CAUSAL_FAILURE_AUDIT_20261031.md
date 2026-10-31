@@ -1,6 +1,6 @@
 # F08 retained causal failure audit
 
-Status: the single audit attempt failed during Python parsing, before any diagnostic logic ran. Formal progress stays 95/108; F08 is not accepted.
+Status: the parsing error is repaired; one additional 20-minute audit execution is prepared. The initial failure is retained below. Formal progress stays 95/108; F08 is not accepted.
 
 ## Scope and immutable producer
 
@@ -13,7 +13,7 @@ source `878a3f67a2bcfad51d49c67292548e5892185f3d`.
 [Artifact 13030394230](https://github.com/NoGod3524/EXReader/actions/runs/41169786301/artifacts/13030394230)
 has name `f08-causal-41169786301-1`, size 4,422,645 bytes and SHA-256
 `d20d1b690625b914f16dadc958c7cbb1409c17681db96896190678d350d0c189`.
-Actions metadata was read back and matches these pins. The diagnostic did not download or parse the ZIP; its inner records remain unexamined.
+Actions metadata was read back and matches these pins. The initial diagnostic did not download or parse the ZIP; its inner records remain unexamined before the corrected execution.
 
 The original cohort remains 44 launches / 760 samples / 2 positive + 24 negative controls.
 The new producer planned 6 launches / 18 actions / 2 positive + 8 negative controls.
@@ -21,12 +21,16 @@ It attempted ten actions: page/font launches 0, 1, 3 and 4 failed after one acti
 shelf launches 2 and 5 each completed three driver actions. Producer accepted=false remains intact.
 Its new controls, causal verifier and dependent artifact authentication were not completed.
 
-## One execution
+## Bounded executions
 
-One Ubuntu 22.04 job, at most 20 minutes, one attempt, no automatic repair or rerun.
+The initial single execution failed during parsing and is retained below.
+This repair has one additional Ubuntu 22.04 job, at most 20 minutes, attempt 1, with no automatic rerun.
 The workflow only triggers on its exact branch and audit source/workflow paths.
-Concurrency serializes this audit; the script checks attempt 1, a single run for this workflow/branch,
-the exact parent commit and exactly three added paths. A later documentation-only result commit uses [skip ci].
+Concurrency serializes this audit. The repaired script requires the exact parent
+`25a5d87f0b17a796dbd57dd2c2342893e36f4013` and changes to only the audit script and this document.
+It admits exactly two workflow runs: retained failure 41174980081 at source
+`6725cbd3e496dd8daba81136240e79f70f28f5f3`, and the current source's new attempt 1.
+A later documentation-only result commit uses [skip ci].
 No product run, compilation, installation, new sampling or execution of retained binaries is included.
 All diagnostic execution and ZIP parsing occur inside Actions; no local syntax checks or tests are run.
 
@@ -104,4 +108,14 @@ A completed diagnostic cannot promote F08 or revise the failed producer's result
 - The source branch was read back at the exact audit SHA. The commit-scoped Actions query found one run, attempt 1, with failure.
 - The hidden-shelf condition remains an unverified static candidate. No new causal result, physical-presentation result or F08 acceptance evidence was obtained.
 
-This result is published as a separate documentation-only commit with [skip ci]. The audit source file remains the exact failed version for traceability.
+This result is published as a separate documentation-only commit with [skip ci]. The exact failed version remains at source commit 6725cbd3e496dd8daba81136240e79f70f28f5f3 for traceability.
+
+## Corrected execution
+
+The baseline list comprehension now has its missing closing square bracket.
+The only other script changes bind admission to the retained result-document parent,
+the two modified paths, and the known failed run plus this one additional execution.
+The producer identity/hash pins, raw predicates and joins, all 1+12 audit controls,
+20-minute workflow limit and original failed results are unchanged.
+
+The corrected execution has not run at this commit's preparation time.
