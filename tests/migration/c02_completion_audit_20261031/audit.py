@@ -573,7 +573,7 @@ def gtk_evidence(files, spec, source):
     need(len(declared) == len(set(declared)) and len(declared) >= 13, "gtk-source-case-declaration")
     return audit_gtk_host(files,spec,source,set(declared))
 
-def android_evidence(files, spec, source):
+def android_evidence(files, spec, source, missing):
     inventory(files)
     test = git_bytes(source, "tests/migration/android_c02_host_20261031/androidTest/java/org/exreader/host/C02HostTest.java").decode()
     names = re.findall(r'passed\("([a-z_]+)"\)', test)
@@ -587,7 +587,10 @@ def android_evidence(files, spec, source):
     original = re.findall(r'c02_fixture_original\[\] = ("(?:[^"\\]|\\.)*");', fixture_source)
     need(len(original) == 1, "android-qualified-original-source")
     original = json.loads(original[0]).encode()
-    return audit_android_host(files, spec, source, set(names), original, fixture)
+    result = audit_android_host(files, spec, source, set(names), original, fixture)
+    if not result["binaries"]["installed_sdk_byte_binding"]:
+        missing.add("android-installed-sdk-byte-binding")
+    return result
 
 def host_evidence(files, spec, source, missing):
     receipt = json_value(files[spec["receipt"]])
@@ -724,7 +727,7 @@ def validate(files,spec,source,missing):
     if role == "host-gtk":
         return gtk_evidence(files,spec,source)
     if role == "host-android":
-        return android_evidence(files,spec,source)
+        return android_evidence(files,spec,source,missing)
     return host_evidence(files,spec,source,missing)
 
 def reseal_intents(data,wrong_ack=False):

@@ -104,6 +104,27 @@ def pending_descriptor(raw, row):
          raw[73:137].decode("ascii") == row["manifest"] and
          raw[138:202].decode("ascii") == row["input"], "android-exact-pending-from-raw-state")
 
+def loadable_elf(raw):
+    need(len(raw) >= 64 and raw[:7] == b"\x7fELF\x02\x01\x01", "android-elf64-little-endian")
+    need(struct.unpack_from("<H", raw, 18)[0] == 62 and
+         struct.unpack_from("<H", raw, 52)[0] == 64, "android-qualified-x86-64-elf")
+    offset = struct.unpack_from("<Q", raw, 32)[0]
+    size, count = struct.unpack_from("<HH", raw, 54)
+    need(size == 56 and 0 < count <= 128 and offset + size*count <= len(raw), "android-elf-program-table")
+    normalized = bytearray(raw)
+    normalized[40:48] = bytes(8)
+    normalized[58:64] = bytes(6)
+    headers, loads = [], []
+    for index in range(count):
+        header = struct.unpack_from("<IIQQQQQQ", raw, offset + size*index)
+        kind, flags, start, address, physical, length, memory, alignment = header
+        headers.append(header)
+        if kind == 1:
+            need(length <= memory and start + length <= len(raw), "android-bounded-elf-load")
+            loads.append((flags,address,physical,length,memory,alignment,sha(normalized[start:start+length])))
+    need(loads, "android-elf-loads-present")
+    return bytes(normalized[:64]), headers, loads
+
 def apk_provider(files):
     with zipfile.ZipFile(io.BytesIO(files["app-debug.apk"])) as archive:
         names = archive.namelist()
@@ -114,14 +135,22 @@ def apk_provider(files):
          files["libexreader_host.so"].startswith(b"\x7fELF"), "android-actual-apk-native-libraries")
     installed = json_value(files["sdk-installed.json"])
     candidates = [row for row in installed if row["path"] == "lib/libexreader.so"]
-    need(len(candidates) == 1 and candidates[0]["bytes"] == len(provider) and
-         candidates[0]["sha256"] == sha(provider), "android-packaged-exact-shared-sdk")
+    need(len(candidates) == 1, "android-installed-shared-sdk-inventory")
+    item = candidates[0]
+    provider_bound = item["bytes"] == len(provider) and item["sha256"] == sha(provider)
+    if "sdk-libexreader.installed.so" in files:
+        installed_raw = files["sdk-libexreader.installed.so"]
+        need(len(installed_raw) == item["bytes"] and sha(installed_raw) == item["sha256"],
+             "android-retained-installed-sdk-bytes")
+        need(loadable_elf(installed_raw) == loadable_elf(provider), "android-packaged-sdk-loadable-byte-equality")
+        provider_bound = True
     symbols = files["host-defined-symbols.txt"].decode().splitlines()
     names = {line.split()[-1] for line in symbols if line.split()}
     need("exr_library_open" not in names and
          {"pc02_open_in", "pc02_check", "pc02_close", "pc02_sdk_enroll_in"} <= names and
          b"libexreader.so" in files["host-dynamic.txt"], "android-one-shared-sdk-and-native-admission")
-    return dict(apk_sha256=sha(files["app-debug.apk"]), shared_sdk_sha256=sha(provider),
+    return dict(installed_sdk_byte_binding=provider_bound,
+                apk_sha256=sha(files["app-debug.apk"]), shared_sdk_sha256=sha(provider),
                 jni_sha256=sha(host))
 
 def audit_android_host(files, spec, source, expected_cases, original, fixture):
