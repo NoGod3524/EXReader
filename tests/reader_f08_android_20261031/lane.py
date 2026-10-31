@@ -4,11 +4,15 @@ from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[2]
 HERE=Path(__file__).resolve().parent
 OUT=ROOT/"build/f08-android"
-BASE="1efae40cf006b59f22673edccf763e446183a695"
-ALLOWED={"tests/reader_f08_android_20261031/lane.py",
-         ".github/workflows/dot-f08-android-20261031.yml",
-         "tests/reader_f08_android_startup_20261031/StartupCostTest.java",
-         "tests/reader_f08_android_startup_20261031/diagnose.py"}
+BASE="f3d73c6f895fc4c11146fc19612c8a12e15b3b43"
+ALLOWED={'.github/workflows/dot-f08-android-20261031.yml',
+         'examples/android/app/build.gradle',
+         'examples/android/app/src/main/java/org/exreader/host/ShelfStatusView.java',
+         'examples/android/app/src/main/java/org/exreader/host/ShelfWindowMetrics.java',
+         'tests/reader_f08_android_20261031/build.py',
+         'tests/reader_f08_android_20261031/lane.py',
+         'tests/reader_f08_android_20261031/profile.json',
+         'tests/reader_f08_android_20261031/release.init.gradle'}
 def need(value,message):
     if not value:raise ValueError(message)
 def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -144,8 +148,7 @@ def sample():
     except Exception as error:
         save(OUT/"evaluation.json",{**identity(),"shelf_budget_accepted":False,"f08_accepted":False,"problem":str(error)})
         raise
-    print("F08_ANDROID_OWNER",json.dumps(owner_controls()),flush=True)
-    print("F08_ANDROID_CATALOG",json.dumps(catalog_controls()),flush=True)
+    print("F08_RELEASE_REGRESSION_SCOPE original ten UI cases; private Debug fault suites are separate",flush=True)
     need(run.returncode==0,"original sampler failed")
     need(result["shelf_budget_accepted"],"predeclared shelf budget exceeded")
 def seal():
@@ -210,10 +213,18 @@ def audit():
             evaluation=evaluate(result,json.loads((HERE/"profile.json").read_text()))
             recorded=json.loads((raw/"evaluation.json").read_text())
             need(all(recorded.get(k)==v for k,v in evaluation.items()),"budget evaluation differs")
-            owner=verify_owner(json.loads((raw/"owner-report.json").read_text()),ident)
-            catalog=(raw/"catalog-instrumentation.txt").read_bytes()
-            need(b"OK (12 tests)" in catalog and b"INSTRUMENTATION_CODE: -1" in catalog and b"FAILURES!!!" not in catalog,"catalog regression")
-            report.update(evaluation,observation_complete=True,owner_regression=owner,catalog_regression={"cases":12,"passed":True})
+            need(build["debug"] is False and build["configuration"]=="Release" and build["page_theme"] is True,
+                 "optimized full-feature Release identity")
+            aapt=Path(os.environ["ANDROID_HOME"])/"build-tools/35.0.0/aapt2"
+            badging=command([aapt,"dump","badging",raw/"packages/app-debug.apk"],text=True)
+            need("application-debuggable" not in badging and
+                 badging==(raw/"release-apk-badging.txt").read_text() and
+                 sha(raw/"release-apk-badging.txt")==build["release_badging_sha256"],"Release APK flags")
+            with zipfile.ZipFile(raw/"packages/app-debug.apk") as package:
+                need(b"Java_org_exreader_host_ProductFixture_" not in package.read("lib/x86_64/libexreader_product.so"),
+                     "Release fixture JNI exported")
+            report.update(evaluation,observation_complete=True,configuration="Release",
+                release_ui_cases=10,debug_fault_suites_executed=False,release_fixture_jni_absent=True)
     if (raw/"startup-summary.json").exists():
         sys.path.insert(0,str(ROOT/"tests/reader_f08_android_startup_20261031"))
         import diagnose

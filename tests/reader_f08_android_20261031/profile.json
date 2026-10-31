@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "scope": "Android shelf only; not the complete F08 gate",
+  "scope": "Optimized non-debuggable Android Release shelf; not the complete F08 gate",
   "sdk_version": "3.42.0",
   "runner": "ubuntu-24.04",
   "api": 34,
@@ -23,8 +23,17 @@
     "Window callback duration is not physical display presentation.",
     "PSS is sampled about once a second, not a continuous peak.",
     "This lane does not cover reader-body scroll, page/font changes or locate/jump.",
-    "Other five target platforms require their own evidence."
+    "Other five target platforms require their own evidence.",
+    "The original ten UI cases run unchanged. Private fixture/owner fault tests are retained in the separate Debug regression; their passing status does not transfer to this Release binary."
   ],
   "f08_accepted": false,
-  "frame_budget_scope": "All ordinary Window callbacks and each original forward/reverse scroll interval."
+  "frame_budget_scope": "All ordinary Window callbacks and each original forward/reverse scroll interval.",
+  "configuration": {
+    "variant": "Release",
+    "debuggable": false,
+    "page_theme": true,
+    "f08_review_observations": true,
+    "ci_test_certificate": true,
+    "record_interop_debug_probe": false
+  }
 }
