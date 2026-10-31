@@ -44,3 +44,35 @@ Retain artifact 13026641067, 5049 bytes, SHA256
 f0bb2e395f5573fe233386d9ebbc57916e5c97a630e49cda5d37e7267da03aa7.
 This uses the only targeted correction; no further automatic round is authorized.
 Reference: https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-uiautomationoverview
+
+## Final observed result (2/2 exhausted)
+Source fe66f3a613c8e304043885633916672a05e1dd5b, run 41159620416 A1,
+job 124414039121: FAILURE. Native consumer compiled; all four observations ran.
+- baseline-managed and candidate-managed: two document reads of length 432,
+  Ctrl+A selection event and GetSelection count 1, then native AccessViolation
+  in managed RawTextRange_GetText. Neither reached Escape.
+- baseline-native and candidate-native: document and selected-range GetText
+  returned length 432; Ctrl+A positive control passed; real Escape was sent.
+  Both then timed out at the unchanged 5-second selection-clear predicate.
+  Provider ranges during those observations remained start 0/end 432.
+  This is not a native pass and cannot override the managed failure.
+- Same SDK/host source and diagnostic overlay were used for the consumer pair.
+  The observation demonstrates a consumer-path difference, not proof that the
+  provider or managed library is solely responsible for the AccessViolation.
+Artifact 13026382940, 39686 bytes, SHA256
+069678579d121fdba67b20c54b5b07ad7e0e19d8d683d3886fe89ed368aeaeba.
+No full F09 or screen-reader acceptance; all prior failures remain retained.
+
+Read-only source follow-up found page WM_GETDLGCODE returns WANTARROWS|WANTCHARS
+(reader.c 3587), while the main loop calls IsDialogMessage before DispatchMessage
+(line 6274). The existing page VK_ESCAPE handler is at line 3713.
+Microsoft documents ESC dialog handling and conditional DLGC_WANTMESSAGE.
+A narrowly scoped ESC routing candidate therefore warrants separate approval
+and execution; it has NOT been applied in this package and is not proven fixed.
+No unconditional WANTALLKEYS, no blind reference-count changes, no assertion loss.
+Managed AV remains a separate unresolved blocker.
+References:
+https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-isdialogmessagew
+https://learn.microsoft.com/en-us/windows/win32/dlgbox/wm-getdlgcode
+https://learn.microsoft.com/en-us/windows/win32/dlgbox/dlgbox-programming-considerations
+Result-only documentation commit uses [skip ci]; no third run is authorized.
