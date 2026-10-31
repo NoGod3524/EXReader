@@ -252,7 +252,7 @@ def main():
             else:
                 case_in_process(name, consumer, base, log)
             passed, detail = True, ''
-        except (Failure, subprocess.TimeoutExpired, OSError, ValueError) as error:
+        except Exception as error:  # every case must leave a record
             passed, detail = False, f'{type(error).__name__}: {error}'
         results.append(dict(name=name, passed=passed, detail=detail, seconds=round(time.monotonic() - started, 3), log=log))
         print(('PASS ' if passed else 'FAIL ') + name + (f' -- {detail}' if detail else ''), flush=True)

@@ -177,7 +177,7 @@ static int abandon(int base, int seal) {
   CHECK(exr_wc_create_at(base, "root", &r, uuid) == EXR_WC_OK);
   CHECK(exr_wc_begin(r, &tx, &fd) == EXR_WC_OK && write_all(fd, data, strlen(data)) == 0);
   if (seal) CHECK(exr_wc_seal(tx) == EXR_WC_OK);
-  CHECK(state_of(r, 0) == (seal ? EXR_WC_SEALED : EXR_WC_OWNED) && txname(r, 0, name) == 0);
+  CHECK(state_of(r, 0) == (uint32_t)(seal ? EXR_WC_SEALED : EXR_WC_OWNED) && txname(r, 0, name) == 0);
   CHECK((rd = open_dir(base, "root")) >= 0 && !absent(rd, name));
   CHECK(exr_wc_cleanup(tx, 1, &c) == EXR_WC_OK && c.removed == 1 && c.pending == 0);
   CHECK(state_of(r, 0) == EXR_WC_CLEANED && absent(rd, name));

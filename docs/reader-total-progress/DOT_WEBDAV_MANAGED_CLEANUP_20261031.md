@@ -2,7 +2,7 @@
 
 ## Scope and authorization
 Common base: 666d0d81730ac3cf7caea52b05ca1f01b1d183b1 (sealed bounded-retry result).
-Core branch codex/dot-webdav-managed-cleanup-core-20261031, core commit 6ba50a89a82f82212fcadaf8d825176cc9fbe856,
+Core branch codex/dot-webdav-managed-cleanup-core-20261031, core commit 8de75fa97fed32b25fa65eae4d7fa7b5f6b07693,
 exactly four new files under extras/webdav-cleanup/.
 Tests branch codex/dot-webdav-managed-cleanup-tests-20261031, exactly five new files: tests/webdav_managed_cleanup_20261031/
 CMakeLists.txt, worker.c, run.py, this workflow and this document.
@@ -59,7 +59,11 @@ alias_unlinked and receipt_next_synced(RESERVED). Every kill case checks the dis
 recovers twice for idempotence and checks destination bytes, hash, dev and inode (nlink may drop by one only).
 
 ## Status
-Pending the first Actions run. Claims: transient_cleanup_passed=true is inherited from the base;
+Initial run 41169665419/A1 (tests d262e079d9b377a077f73f7155dd8279e04ad7dc, core 6ba50a89a82f82212fcadaf8d825176cc9fbe856)
+failed on both platforms at core compilation: one implicit declaration of renameat, no other diagnostic; no test ran.
+The single targeted correction adds <stdio.h> to the core (8de75fa97fed32b25fa65eae4d7fa7b5f6b07693), repins the tests,
+and adds two precautions to not-yet-compiled test code (an explicit uint32_t cast, every runner exception recorded).
+Correction run pending. Claims: transient_cleanup_passed=true is inherited from the base;
 managed_cleanup_component_passed, product_cleanup_passed and crash_recovery_validated stay false until certified.
 Not done: managed WebDAV entry point, first host root creation and UUID persistence, startup recovery, pending display,
 unpublished staging abandon policy and root rotation. Old unreceipted residue is never adopted. Formal 95/108 unchanged.
