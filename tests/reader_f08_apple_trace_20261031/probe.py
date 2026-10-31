@@ -40,6 +40,19 @@ def main(platform):
         if required:need(result.returncode==0,label+" failed: "+result.stdout.decode("utf-8",errors="replace")[-2000:])
         return result
     try:
+        developer=Path("/Applications/Xcode_26.2.app/Contents/Developer")
+        report["available_xcodes"]=sorted(str(path) for path in Path("/Applications").glob("Xcode*.app"))
+        report["requested_developer_dir"]=str(developer)
+        need(developer.is_dir(),"fixed Xcode 26.2 tracing toolchain unavailable")
+        os.environ["DEVELOPER_DIR"]=str(developer)
+        version=run("selected-xcode",["xcodebuild","-version"]).stdout.decode("utf-8",errors="replace")
+        need(version.splitlines()[0]=="Xcode 26.2","fixed tracing tool version")
+        sdk=run("selected-simulator-sdk",["xcrun","--sdk","iphonesimulator","--show-sdk-version"]).stdout.decode().strip()
+        need(sdk=="26.2","tracing SDK matches the fixed iOS 26.2 runtime")
+        report["tracing_toolchain"]={"xcode":"26.2","simulator_sdk":sdk,"developer_dir":str(developer)}
+        run("trace-tool",["xcrun","--find","xctrace"])
+        run("developer-security",["/usr/sbin/DevToolsSecurity","-status"],required=False)
+        run("user-groups",["id"])
         producer=B.api("actions/runs/"+B.PRODUCER["run_id"])
         need(producer["status"]=="completed" and producer["conclusion"]=="success" and
              producer["head_sha"]==B.PRODUCER["source_sha"] and str(producer["run_attempt"])=="1","completed Release producer")
@@ -61,9 +74,10 @@ def main(platform):
         need("Animation Hitches" in templates,"native Animation Hitches template unavailable")
         if platform!="macos":
             choices=json.loads(run("simulators",["xcrun","simctl","list","devices","available","--json"]).stdout)
-            prefix="iPhone" if platform=="iphone" else "iPad"
-            runtime,name,device=max((rt,d["name"],d["udid"]) for rt,items in choices["devices"].items()
-                for d in items if d.get("isAvailable") and d["name"].startswith(prefix))
+            runtime="com.apple.CoreSimulator.SimRuntime.iOS-26-2"
+            name="iPhone SE (3rd generation)" if platform=="iphone" else "iPad mini (A17 Pro)"
+            matches=[d for d in choices["devices"].get(runtime,[]) if d.get("isAvailable") and d["name"]==name]
+            need(len(matches)==1,"same fixed simulator profile");device=matches[0]["udid"]
             report["destination"]={"runtime":runtime,"name":name,"udid":device}
             run("shutdown-before",["xcrun","simctl","shutdown",device],required=False)
             run("erase",["xcrun","simctl","erase",device])

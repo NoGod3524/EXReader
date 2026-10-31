@@ -1,4 +1,4 @@
-name: F08 process-scoped Apple Instruments capability
+name: F08 fixed Xcode Apple Instruments capability
 on:
   push:
     branches: [codex/dot-f08-apple-trace-20261031]
