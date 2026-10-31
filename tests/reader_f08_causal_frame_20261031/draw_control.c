@@ -32,6 +32,22 @@ static cairo_surface_t *render_widget(GtkWidget *widget){
  cairo_surface_flush(s);g_assert_cmpint(cairo_surface_status(s),==,CAIRO_STATUS_SUCCESS);
  return s;
 }
+static cairo_surface_t *render_composition(GtkWidget *widget){
+ int width=gtk_widget_get_allocated_width(widget),height=gtk_widget_get_allocated_height(widget);
+ /* GTK bypasses its window-backed cache for image-surface targets. Use a
+  * same-backend surface, then copy pixels only for this isolated comparison. */
+ cairo_surface_t *native=gdk_window_create_similar_surface(gtk_widget_get_window(widget),
+  CAIRO_CONTENT_COLOR_ALPHA,width,height);
+ cairo_t *cr=cairo_create(native);
+ cairo_set_operator(cr,CAIRO_OPERATOR_CLEAR);cairo_paint(cr);cairo_set_operator(cr,CAIRO_OPERATOR_OVER);
+ gtk_widget_draw(widget,cr);cairo_destroy(cr);
+ g_assert_cmpint(cairo_surface_status(native),==,CAIRO_STATUS_SUCCESS);
+ cairo_surface_t *pixels=cairo_image_surface_create(CAIRO_FORMAT_ARGB32,width,height);
+ cr=cairo_create(pixels);cairo_set_source_surface(cr,native,0,0);cairo_paint(cr);cairo_destroy(cr);
+ cairo_surface_flush(pixels);cairo_surface_destroy(native);
+ g_assert_cmpint(cairo_surface_status(pixels),==,CAIRO_STATUS_SUCCESS);
+ return pixels;
+}
 static cairo_surface_t *render(void){return render_widget(target);}
 int main(int argc,char **argv){
  gtk_init(&argc,&argv);
@@ -84,10 +100,10 @@ int main(int argc,char **argv){
  g_assert_cmpfloat(observed_content.scroll,<,observed_content.y+observed_content.height);
  cairo_surface_destroy(shifted);
  GtkWidget *viewport=gtk_widget_get_ancestor(target,GTK_TYPE_VIEWPORT);g_assert_nonnull(viewport);
- cairo_surface_t *viewport_before=render_widget(viewport);
+ cairo_surface_t *viewport_before=render_composition(viewport);
  gulong viewport_handler=g_signal_connect(viewport,"draw",G_CALLBACK(passive_viewport),NULL);
  unsigned list_before=callbacks;
- cairo_surface_t *viewport_after=render_widget(viewport);
+ cairo_surface_t *viewport_after=render_composition(viewport);
  unsigned cached_list_draws=callbacks-list_before;
  g_assert_cmpuint(viewport_callbacks,==,1);
  g_assert_true(viewport_content.available);g_assert_true(viewport_content.clip_intersects);
