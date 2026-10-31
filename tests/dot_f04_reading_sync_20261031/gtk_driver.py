@@ -8,7 +8,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "tools")); sys.path.insert(0, str(HERE))
 from check_linux_host import Session, command
 import atspi_client as bus
-from relay import start, save, identity, trust_desktop, untrust_desktop, retained_rows, finish_cleanup
+from relay import start, save, identity, trust_desktop, untrust_desktop, retained_rows, finish_cleanup, input_metadata, load
 
 def main():
     assert os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform.startswith("linux")
@@ -113,9 +113,7 @@ def main():
         trust = trust_desktop(out / "cert.pem", "f04-gtk")
         assert bus.init()[0]; host.launch(); app = bus.wait_application("exreader-linux")
         host.wait(lambda s: not s["saving"])
-        # Real chooser, including its existing asynchronous selection handling.
-        host.dialog(args.original.resolve())
-        host.wait(lambda s: not s["saving"] and s["error"] == 0)
+        # Receiver stays empty until real network receive and cloud-row open.
         account_window()
         for mnemonic, value in (("w", dav.base + "/dav/"), ("u", user), ("p", password)):
             host.key("alt+" + mnemonic, "ctrl+a"); host.paste(value)
@@ -123,6 +121,18 @@ def main():
         wait("account", lambda s: s["bound"] == "1" and s["credential_status"] == "0" and
              s["root"] == dav.base + "/dav/" and s["owner_busy"] == "0")
         account_close()
+        sync()
+        previous, _ = load(args.previous)
+        title = input_metadata(previous)["remote_title"]
+        command("xdotool", "windowactivate", "--sync", host.window)
+        queries = host.read()["shelf_queries"]
+        host.key("ctrl+f", "ctrl+a"); host.paste(title)
+        host.wait(lambda s: s["shelf_queries"] > queries and not s["shelf_loading"] and
+                  not s["shelf_restoring"] and s["books"] == 1, timeout=60)
+        host.key("F2", "Home", "Return")
+        wait("account", lambda s: s["visible"] == "0" and int(s["imported_book"]) > 0, 240)
+        imported = int(observed("account")["imported_book"])
+        host.wait(lambda s: s["book"] == imported and s["reader_visible"] == 1 and not s["saving"], timeout=90)
         before = frame(); sync()
         check("remote_sync_does_not_move_active_reader", frame() == before)
         received = rows(); report["incoming"] = received

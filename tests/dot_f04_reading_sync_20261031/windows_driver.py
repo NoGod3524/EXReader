@@ -77,12 +77,16 @@ def main():
         trust = trust_desktop(out / "cert.pem", "f04-windows")
         app = Device(args.candidate.resolve(), args.font.resolve(), out / "profile")
         app.wait_initial_shelf(); app.wait_idle()
-        # Import is always through the real native import controls. The same original is not
-        # fabricated or installed by SQLite; receiver still pulls remote wires.
-        app.import_file(args.original.resolve()); app.wait_idle()
+        # Only the seed imports locally. A receiver starts empty, otherwise
+        # staging a local bootstrap could create a competing book root.
+        if args.phase == "windows-seed":
+            app.import_file(args.original.resolve()); app.wait_idle()
         d = app.open_account()
         app.fill(d, dav.base + "/dav/", user, password, False)
         app.apply(d, "仅本次会话"); app.close_account(d)
+        if args.previous:
+            sync()  # Windows final sync includes real receive/import/mapping.
+            app.wait(lambda: app.has_row(args.title), timeout=120)
         app.open(args.title); app.wait_idle()
         before = frame()
         sync()
