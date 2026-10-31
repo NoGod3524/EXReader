@@ -241,3 +241,34 @@ Source `496fd00eaf9b12afefb4c8da5db838661080f357`, run [41165129647/A1](https://
 ### Candidate compound-member native publication
 
 A new explicit member operation holds actual original/staged handles with write/delete sharing denied while an independent callback checks their bytes. It accepts only the exact original+stage+absent-retained state, the exact retained-original+stage+missing-target recovery state, or the exact retained-original+published-target state with staging absent. Originally absent auxiliary targets use a separately defined two-object state. It never overwrites an unexpected target or retained object, and any unknown result after attempting a rename poisons the holder. All directory pins remain unchanged; successful main-library publication reopens and checks the new live identity. Four deterministic native barriers cover successful proof, retained original with missing target, published target and final flush. New component tests exercise existing and new mirror members, false content proof, occupied retained paths, idempotent observation and process death at all four barriers. The low-level fixtures construct their journal prefix explicitly; the already-qualified real wh3_run/wh3_recover tests remain intact. This does not yet represent the production legacy transformer or partial native-log repair.
+
+## Actual compound-member result and production importer candidate
+
+Source 37ce9128672817bd699dbc8cea92c78a20eb505f, run 41165902815 attempt 1,
+job 124433297895 succeeded: registry consumer 50 cases / 530 checks / zero failures,
+installed admission CLI 11 cases, actual Windows host 6 cases.
+Original artifact 13028424590 is 306611 bytes, SHA256
+ff87fc79045210e46adcbced58f2dd2cdd30fdbac2bad0620b648c9876e128cf.
+This result qualifies component member publication; it does not qualify the production importer.
+
+The next candidate adds the synchronous actual migration command. Under the native PENDING
+capability it streams the fixed, write-denied original into a previously reserved private
+database object; SQLite WAL/SHM/journal companions are refused before and after the copy.
+The unchanged SDK opens only the private image. The original book/annotation/policy loop
+is extracted into process_pack_rows and reused; originals are independently hashed before
+and after import, migration ledger bytes are committed in the private image, and an independent
+SDK reopen verifies the pack, library and external mirror before immutable PREPARED is written.
+Both actual publication handles are checked against INPUT/PREPARED before either member
+is renamed. Every SDK owner/source closes synchronously before publication.
+
+The installed production binary has no barrier-control code. A separately named test binary
+contains deterministic named-event controls, while both producer binaries record their actual
+SHA256 and original Actions source/run/attempt. Recovery retains original producer binding and
+reacquires only for the exact acknowledged native prefix; it either confirms both prepared
+members or proves unchanged originals and preserves identified private objects.
+
+This candidate is not yet executed. Planned Actions preserve all old ABI2/ABI3/native assertions,
+run the original legacy scenario runner for the shared-loop extraction, then exercise actual
+migration, a second epoch, strict rollback, process kills and foreign prepared bytes/identities.
+Torn-journal/gate explicit repair, other platform admission and final same-source original-ZIP
+semantic audit remain outstanding. Formal acceptance remains 95/108.

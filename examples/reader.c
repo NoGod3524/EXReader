@@ -6449,7 +6449,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
 #endif
   {
     exr_error error = {0};
+#ifdef EXR_READER_PRODUCT_CATALOG
+    wchar_t pinned_library[HOST_PATH];
+    char *path=wh3wr_library_path(reader_admission,pinned_library,HOST_PATH)?host_utf8(pinned_library):NULL;
+#else
     char *path = host_utf8(library_override[0] ? library_override : g.library_path);
+#endif
     exr_status status = path ? exr_library_open(path, &g.library, &error) : EXR_MEMORY;
     free(path);
 #ifdef EXR_READER_PRODUCT_CATALOG

@@ -2136,9 +2136,84 @@ static int publish(ctx *c) {
   return 1;
 }
 
+static int process_pack_rows(ctx *c) {
+  size_t i, *order = NULL, *first_of, *count_of, *note_book;
+  /* Group annotations by book without copying them. */
+  note_book = lm_xalloc((c->pack.notes->n + 1) * sizeof(size_t));
+  first_of = lm_xalloc((c->pack.books->n + 2) * sizeof(size_t));
+  count_of = lm_xalloc((c->pack.books->n + 2) * sizeof(size_t));
+  order = lm_xalloc((c->pack.notes->n + 1) * sizeof(size_t));
+  for (i = 0; i < c->pack.books->n; i++) lm_hm_put(&c->pack_books, lm_get_str(c->pack.books->items[i], "legacy_id"), i);
+  for (i = 0; i < c->pack.notes->n; i++) {
+    const char *owner = lm_get_str(lm_get(c->pack.notes->items[i], "record"), "bookId");
+    size_t at;
+    note_book[i] = owner && lm_hm_get(&c->pack_books, owner, &at) ? at : SIZE_MAX;
+    if (note_book[i] != SIZE_MAX) count_of[note_book[i]]++;
+  }
+  {
+    size_t sum = 0;
+    for (i = 0; i < c->pack.books->n; i++) { first_of[i] = sum; sum += count_of[i]; count_of[i] = 0; }
+    for (i = 0; i < c->pack.notes->n; i++)
+      if (note_book[i] != SIZE_MAX) order[first_of[note_book[i]] + count_of[note_book[i]]++] = i;
+  }
+  for (i = 0; i < c->pack.books->n && c->out == O_NONE; i++) {
+    if (!tick(c)) break;
+    process_book(c, c->pack.books->items[i], c->pack.notes, order, first_of[i], first_of[i] + count_of[i]);
+  }
+  for (i = 0; i < c->pack.notes->n && c->out == O_NONE; i++) {
+    const jv *jn = c->pack.notes->items[i];
+    const char *id = lm_get_str(jn, "legacy_id");
+    lm_note *ln;
+    lm_sb canonical;
+    char fingerprint[65];
+    if (note_book[i] != SIZE_MAX) continue;
+    if (!tick(c)) break;
+    lm_sb_init(&canonical);
+    lm_json_write(&canonical, lm_get(jn, "record"));
+    lm_sha_bytes(canonical.p ? canonical.p : "", canonical.n, fingerprint);
+    lm_sb_free(&canonical);
+    ln = lm_ledger_note(&c->ledger, id, 0);
+    if (ln) {
+      ln->touched = 1;
+      if (strcmp(ln->fp, fingerprint)) {
+        entry(c, S_CONFLICT, "note-changed", "note", id, "existing legacy annotation differs; earlier result retained");
+        c->notes_skipped++;
+        note_item(c, id, ln->book_legacy ? ln->book_legacy : "", kind_name(ln->kind), "skipped", ln->new_id, NULL, "note-changed");
+      } else if (ln->located) {
+        c->notes_existing++;
+        note_item(c, id, ln->book_legacy ? ln->book_legacy : "", kind_name(ln->kind), "existing", ln->new_id, "ledger", NULL);
+      } else {
+        c->notes_unlocated++;
+        note_item(c, id, "", kind_name(ln->kind), "unlocated", 0, ln->method, ln->reason);
+      }
+      continue;
+    }
+    ln = lm_ledger_note(&c->ledger, id, 1);
+    ln->touched = 1;
+    set_str(&ln->reason, "orphan-note");
+    free(ln->retained);
+    ln->retained = record_json(lm_get(jn, "record"), 0);
+    strcpy(ln->fp, fingerprint);
+    entry(c, S_UNLOCATED, "orphan-note", "note", id, "the annotation refers to a book that is not in the export; preserved in the ledger only");
+    c->notes_unlocated++;
+    note_item(c, id, "", "reflow", "unlocated", 0, NULL, "orphan-note");
+  }
+  free(note_book); free(first_of); free(count_of); free(order);
+  if (c->out != O_NONE) return 0;
+  /* Books processed through the ledger count as expected-accounted. */
+  if (!c->allow_partial && (c->sev[S_UNSUPPORTED] || c->sev[S_CONFLICT])) {
+#ifdef EXR_MIGRATION_TX_CANDIDATE
+    fail(c, O_REJECTED, "policy-strict", "%u unsupported and %u conflicting items; requested migration changes were not committed (rerun with --allow-partial to commit the convertible part)", c->sev[S_UNSUPPORTED], c->sev[S_CONFLICT]);
+#else
+    fail(c, O_REJECTED, "policy-strict", "%u unsupported and %u conflicting items; nothing was published (rerun with --allow-partial to publish the convertible part)", c->sev[S_UNSUPPORTED], c->sev[S_CONFLICT]);
+#endif
+    return 0;
+  }
+  return 1;
+}
+
 static int run_migrate(ctx *c) {
   lm_err e;
-  size_t i, *order = NULL, *first_of, *count_of, *note_book;
   unsigned long long stamp = (unsigned long long)time(NULL);
 #ifndef EXR_MIGRATION_TX_CANDIDATE
   FILE *lock;
@@ -2300,77 +2375,7 @@ static int run_migrate(ctx *c) {
 #ifdef EXR_MIGRATION_TX_CANDIDATE
 process_pack:
 #endif
-  /* Group annotations by book without copying them. */
-  note_book = lm_xalloc((c->pack.notes->n + 1) * sizeof(size_t));
-  first_of = lm_xalloc((c->pack.books->n + 2) * sizeof(size_t));
-  count_of = lm_xalloc((c->pack.books->n + 2) * sizeof(size_t));
-  order = lm_xalloc((c->pack.notes->n + 1) * sizeof(size_t));
-  for (i = 0; i < c->pack.books->n; i++) lm_hm_put(&c->pack_books, lm_get_str(c->pack.books->items[i], "legacy_id"), i);
-  for (i = 0; i < c->pack.notes->n; i++) {
-    const char *owner = lm_get_str(lm_get(c->pack.notes->items[i], "record"), "bookId");
-    size_t at;
-    note_book[i] = owner && lm_hm_get(&c->pack_books, owner, &at) ? at : SIZE_MAX;
-    if (note_book[i] != SIZE_MAX) count_of[note_book[i]]++;
-  }
-  {
-    size_t sum = 0;
-    for (i = 0; i < c->pack.books->n; i++) { first_of[i] = sum; sum += count_of[i]; count_of[i] = 0; }
-    for (i = 0; i < c->pack.notes->n; i++)
-      if (note_book[i] != SIZE_MAX) order[first_of[note_book[i]] + count_of[note_book[i]]++] = i;
-  }
-  for (i = 0; i < c->pack.books->n && c->out == O_NONE; i++) {
-    if (!tick(c)) break;
-    process_book(c, c->pack.books->items[i], c->pack.notes, order, first_of[i], first_of[i] + count_of[i]);
-  }
-  for (i = 0; i < c->pack.notes->n && c->out == O_NONE; i++) {
-    const jv *jn = c->pack.notes->items[i];
-    const char *id = lm_get_str(jn, "legacy_id");
-    lm_note *ln;
-    lm_sb canonical;
-    char fingerprint[65];
-    if (note_book[i] != SIZE_MAX) continue;
-    if (!tick(c)) break;
-    lm_sb_init(&canonical);
-    lm_json_write(&canonical, lm_get(jn, "record"));
-    lm_sha_bytes(canonical.p ? canonical.p : "", canonical.n, fingerprint);
-    lm_sb_free(&canonical);
-    ln = lm_ledger_note(&c->ledger, id, 0);
-    if (ln) {
-      ln->touched = 1;
-      if (strcmp(ln->fp, fingerprint)) {
-        entry(c, S_CONFLICT, "note-changed", "note", id, "existing legacy annotation differs; earlier result retained");
-        c->notes_skipped++;
-        note_item(c, id, ln->book_legacy ? ln->book_legacy : "", kind_name(ln->kind), "skipped", ln->new_id, NULL, "note-changed");
-      } else if (ln->located) {
-        c->notes_existing++;
-        note_item(c, id, ln->book_legacy ? ln->book_legacy : "", kind_name(ln->kind), "existing", ln->new_id, "ledger", NULL);
-      } else {
-        c->notes_unlocated++;
-        note_item(c, id, "", kind_name(ln->kind), "unlocated", 0, ln->method, ln->reason);
-      }
-      continue;
-    }
-    ln = lm_ledger_note(&c->ledger, id, 1);
-    ln->touched = 1;
-    set_str(&ln->reason, "orphan-note");
-    free(ln->retained);
-    ln->retained = record_json(lm_get(jn, "record"), 0);
-    strcpy(ln->fp, fingerprint);
-    entry(c, S_UNLOCATED, "orphan-note", "note", id, "the annotation refers to a book that is not in the export; preserved in the ledger only");
-    c->notes_unlocated++;
-    note_item(c, id, "", "reflow", "unlocated", 0, NULL, "orphan-note");
-  }
-  free(note_book); free(first_of); free(count_of); free(order);
-  if (c->out != O_NONE) return 0;
-  /* Books processed through the ledger count as expected-accounted. */
-  if (!c->allow_partial && (c->sev[S_UNSUPPORTED] || c->sev[S_CONFLICT])) {
-#ifdef EXR_MIGRATION_TX_CANDIDATE
-    fail(c, O_REJECTED, "policy-strict", "%u unsupported and %u conflicting items; requested migration changes were not committed (rerun with --allow-partial to commit the convertible part)", c->sev[S_UNSUPPORTED], c->sev[S_CONFLICT]);
-#else
-    fail(c, O_REJECTED, "policy-strict", "%u unsupported and %u conflicting items; nothing was published (rerun with --allow-partial to publish the convertible part)", c->sev[S_UNSUPPORTED], c->sev[S_CONFLICT]);
-#endif
-    return 0;
-  }
+  if (!process_pack_rows(c)) return 0;
   if (c->out == O_NONE) {
 #ifdef EXR_MIGRATION_RECOVERY_CANDIDATE
     lm_sb text;exr_status status;

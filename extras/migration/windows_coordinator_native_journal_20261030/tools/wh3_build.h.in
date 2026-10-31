@@ -1,0 +1,5 @@
+/* Configured from the exact source and Actions producer, never read from environment at runtime. */
+#define WH3_BUILD_SOURCE "@WH3_BUILD_SOURCE@"
+#define WH3_BUILD_RUN "@WH3_BUILD_RUN@"
+#define WH3_BUILD_ATTEMPT "@WH3_BUILD_ATTEMPT@"
+#define WH3_PROVIDER_SHA "@WH3_PROVIDER_SHA@"
