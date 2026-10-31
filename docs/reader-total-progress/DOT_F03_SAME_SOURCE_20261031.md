@@ -1,0 +1,34 @@
+# F03 native dot preparation — not acceptance
+
+Prepared2026-10-31UTC. Native dot F03 coordinator; no Codex task launched.
+Formal ledger remains **96/108 (88.89%)**, F03 **pending**.
+
+## Authority
+GitHub route approved23:08:06UTC; independent preparation scope approved23:13:25UTC.
+F03 has **zero CI**, no production/SDK edits. Branch:dot/f03-same-source-20261031.
+Baseline94fb236a4a2da87dfbaf4f1dd2a47885d615a230; SDK8357eafa28423a7ab93ba08b823af80f01ad1505.
+src/include/cmake/CMakeLists.txt/bindings objects match frozenSDK.
+No in-flight Apple/UI/F08 work was merged.
+
+## Delivered preparation and limits
+13 new paths contain retained native UI execution, identity/read-only snapshot helpers,
+fixture generation, fail-closed receipt verification and isolated lifecycle source copies.
+**Full six-host network driver is not implemented yet.** Existing local suites/tag relay cannot
+satisfy the final manifest. README lists remaining wiring/build/native suite gaps.
+No source has been executed or tested. Workflow disabled even for manual dispatch.
+No local/VM build, syntax, test, fixture, benchmark, artifact download or ZIP parsing.
+
+## Blocker
+[Original run41170540560](https://github.com/NoGod3524/EXReader/actions/runs/41170540560)/A1:
+iPad organization job124448286050 failed testTagAndSeriesPersist:
+Missing organization.kind.tag; six tests/one failure.
+iPhone/macOS green only grants local lifecycle scope. No failure is weakened or hidden.
+
+## Next
+Complete real six-author/six-receiver wire orchestration; connect GTK/Android builds and new
+native test classes; obtain existing Apple owner's iPad fixed source; independent review;
+then separately authorized full CI preserving all original counts/failures.
+No F03 ledger increment before complete clause proof.
+
+F04 reading,F05 recovery,F07 provider,F10 privacy,F08 performance and external Apple/UI owners
+retain their paths. These preparation files do not complete or stop the overall task.

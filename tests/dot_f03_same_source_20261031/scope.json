@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "requirement": "F03",
+  "baseline": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
+  "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "sdk_version": "3.42.0",
+  "hosts": [
+    "windows",
+    "gtk",
+    "android",
+    "macos",
+    "iphone",
+    "ipad"
+  ],
+  "sdk_paths": [
+    "src",
+    "include",
+    "cmake",
+    "CMakeLists.txt",
+    "bindings"
+  ],
+  "operations": [
+    "nested-shelf",
+    "tag",
+    "series",
+    "group-delete",
+    "group-restore",
+    "membership-remove",
+    "membership-restore",
+    "restart"
+  ],
+  "identity_fields": [
+    "source_sha",
+    "run_id",
+    "attempt"
+  ],
+  "ci_authorized": false,
+  "complete": false,
+  "known_blockers": [
+    {
+      "host": "ipad",
+      "run": "41170540560",
+      "job": "124448286050",
+      "case": "testTagAndSeriesPersist",
+      "error": "Missing organization.kind.tag",
+      "owner": "existing Apple product owner"
+    },
+    {
+      "host": "all",
+      "error": "Six-host wire lifecycle extension requires actual producer/receiver receipts; retained single-host suites and Windows/GTK tag relay are not full F03."
+    }
+  ]
+}
