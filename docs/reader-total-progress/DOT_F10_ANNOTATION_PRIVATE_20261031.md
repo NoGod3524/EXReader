@@ -107,3 +107,39 @@ the ambient ZERO_AR_DATE value separately from the declared scoped subprocess
 environment; an ambient null does not describe those three subprocesses.
 The remaining second run in the new two-run authorization must still prove
 the original entire built==installed equality; no normalization is performed.
+
+## Final result (supersedes pending status above)
+
+Run https://github.com/NoGod3524/EXReader/actions/runs/41157287749, attempt 1,
+source 914e08622e84473206638409be9586b20766f817, completed SUCCESS.
+Ubuntu job 124406764013 and macOS job 124406764273 both passed the unchanged
+original regression and the new installed-consumer step. Raw logs contain each
+platform's six operational cases and 1 positive / 4 negative parser controls.
+Normal/cancel cases observed two staged files and two exec checks each; budget
+cases observed zero staged files and are only cleanup/target-preservation checks.
+Normal cases exported 23 annotations. F10_promoted remains false.
+
+The original complete archive byte equality assertion passes on both platforms,
+without normalization:
+- Linux: 143562 bytes; built and installed SHA256
+  ea0702fd7e8caac0bd6058dd88b11314e174b1f005e964ac52d8ce841d65d92f.
+- macOS: 84904 bytes; built and installed SHA256
+  d0024df02767b1a0945592386cfcb80e70dc04cb2675dc2d5dc1bc430004d9bf.
+Both diagnostics report equal=true and zero differing bytes. macOS member dates
+are zero; the TOC and object payload hashes match the diagnostic failure run.
+The production source SHA256 on both platforms is
+77638d408d301949c76b424090b23dd04f803f95f526b150301a2a4e6106b72b.
+
+Artifact metadata (not locally extracted):
+- Linux 13025547510, 775955 bytes, SHA256
+  00d13ad637f39397f1727e9c39cc9a848dc5ff3f35a8774f08fecaacae40bb31.
+- macOS 13025407717, 855604 bytes, SHA256
+  882735d99200a2e05d46c861fd5579b09fce71a4836fbf595d6b51ab6a20beaf.
+
+Historical runs 41152773143, 41155648866, and 41156691844 remain failures.
+No old assertion was removed; no product or SDK changes followed the original
+single POSIX creation-line fix. The extra authorized two-run batch is exhausted.
+This result covers the bounded POSIX permissions/exec package, not full F10,
+Windows/mobile behavior, crash durability, or arbitrary same-user path attacks.
+This documentation-only receipt is committed with [skip ci]; it does not create
+another validation run or replace the tested source SHA above.
