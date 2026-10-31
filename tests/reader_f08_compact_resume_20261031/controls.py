@@ -2,7 +2,40 @@
 import copy
 import json
 import os
+import tempfile
+from pathlib import Path
 import adapter as A
+
+def watcher_controls():
+    with tempfile.TemporaryDirectory() as temporary:
+        watch=A.O.Watch(Path(temporary)/"native")
+        (watch.folder/"state.ini").write_text("[host]\nsequence=1\n")
+        index,event=watch.wait(lambda state:state["host"].get("sequence")==1,2)
+        assert index is not None,event
+        def close_after_join(value):
+            assert not value.thread.is_alive() and value.fd>=0
+            A.O.Watch.close(value)
+        A.stop_watch(watch,close_after_join)
+        assert watch.failure is None and watch.fd==-1 and not watch.thread.is_alive()
+        failed=A.O.Watch(Path(temporary)/"retained")
+        failed.failure="preexisting observation failure"
+        A.stop_watch(failed,close_after_join)
+        assert failed.failure=="preexisting observation failure" and failed.fd==-1
+    class Stuck:
+        def join(self,timeout):assert timeout==1
+        def is_alive(self):return True
+    class Watch:
+        running=True
+        failure=None
+        thread=Stuck()
+    stuck=Watch()
+    def forbidden_close(value):raise AssertionError("closed descriptor while reader alive")
+    A.stop_watch(stuck,forbidden_close)
+    assert stuck.failure=="inotify watcher did not stop within 1 second"
+    stuck.failure="original failure";A.stop_watch(stuck,forbidden_close)
+    assert stuck.failure=="original failure"
+    return dict(native_thread_stopped_before_close=True,prior_failure_retained=True,
+                live_reader_descriptor_not_closed=True,shutdown_timeout_rejected=True)
 
 def main():
     A.need(os.environ.get("GITHUB_ACTIONS")=="true","Actions only")
@@ -45,5 +78,5 @@ def main():
         except A.O.SampleError:negative.append("expired_"+str(stamp))
         else:raise AssertionError("deadline renewed")
     assert A.remaining(1000000,500000)==.5
-    print("F08_COMPACT_CONTROLS",json.dumps(dict(positive=3,negative=negative,performance_samples=False)))
+    print("F08_COMPACT_CONTROLS",json.dumps(dict(positive=3,negative=negative,watcher=watcher_controls(),performance_samples=False)))
 if __name__=="__main__":main()
