@@ -1,0 +1,307 @@
+{
+  "task": "J04",
+  "c09_run": 41091277686,
+  "c09_source": "82c4a08c51ba2bfa67cb8899bb9e26609dc47eaf",
+  "artifact_id": 12993253798,
+  "c09_budget_restored": false,
+  "claims_windows_product_accepted": false,
+  "artifact": {
+    "name": "c09-windows-41091277686-1",
+    "bytes": 8956408,
+    "sha256": "b4cb373476c179d93994608399c48e7d59c9e6c5778717c4f885145009a1fe76"
+  },
+  "map_entries": [
+    {
+      "name": "windows-sdk342/host/windows-host.map",
+      "bytes": 6514500
+    }
+  ],
+  "maps": [
+    {
+      "entry": "windows-sdk342/host/windows-host.map",
+      "bytes": 6514500,
+      "sha256": "9132c51ca3a9cd31b298505b35da67452d378c83543b9aa7bb5674287cdbe7ad",
+      "encoding": "utf-8",
+      "line_count": 53496,
+      "line_endings_crlf": true,
+      "format_markers": {
+        "msvc_publics_by_value": true,
+        "msvc_static_symbols": true,
+        "msvc_header_address_rva": true,
+        "lld_header": false,
+        "gnu_archive_section": false
+      },
+      "publics_anchor_line": 69,
+      "around_anchor": [
+        " 0004:00000000 00031a88H .pdata                  DATA",
+        " 0005:00000000 00000100H .fptable                DATA",
+        " 0006:00000000 00000060H .rsrc$01                DATA",
+        " 0006:00000060 00000180H .rsrc$02                DATA",
+        "",
+        "  Address         Publics by Value              Rva+Base               Lib:Object",
+        "",
+        " 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>",
+        " 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>",
+        " 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>",
+        " 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>",
+        " 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>",
+        " 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>",
+        " 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>",
+        " 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>",
+        " 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>",
+        " 0000:00000000       __enclave_config           0000000000000000     <absolute>",
+        " 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>",
+        " 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>",
+        " 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>",
+        " 0000:00000000       __guard_fids_count         0000000000000000     <absolute>",
+        " 0000:00000000       __guard_fids_table         0000000000000000     <absolute>",
+        " 0000:00000000       __guard_iat_count          0000000000000000     <absolute>",
+        " 0000:00000000       __guard_iat_table          0000000000000000     <absolute>",
+        " 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>",
+        " 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>",
+        " 0000:00000000       __hybrid_auxiliary_delayload_iat 0000000000000000     <absolute>",
+        " 0000:00000000       __hybrid_auxiliary_delayload_iat_copy 0000000000000000     <absolute>",
+        " 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>",
+        " 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>"
+      ],
+      "old_parser": {
+        "error": "MSVC map selects no library members",
+        "members": null,
+        "line_hits_after_anchor": 53421
+      },
+      "independent": {
+        "archive_members": 0,
+        "loose_objects": 771,
+        "recognised_by_section": {
+          "msvc": 53421,
+          "lld": 0,
+          "gnu": 0
+        },
+        "unrecognised_lines": 65,
+        "unrecognised_sample": [
+          [
+            1,
+            " EXReaderWave3"
+          ],
+          [
+            3,
+            " Timestamp is 6ae4c82b (Fri Oct 30 16:39:07 2026)"
+          ],
+          [
+            5,
+            " Preferred load address is 0000000140000000"
+          ],
+          [
+            7,
+            " Start         Length     Name                   Class"
+          ],
+          [
+            8,
+            " 0001:00000000 00000140H .text$di                CODE"
+          ],
+          [
+            9,
+            " 0001:00000140 004c2830H .text$mn                CODE"
+          ],
+          [
+            10,
+            " 0001:004c2970 00000210H .text$mn$00             CODE"
+          ],
+          [
+            11,
+            " 0001:004c2b80 000010a0H .text$mn$21             CODE"
+          ],
+          [
+            12,
+            " 0001:004c3c20 00008400H .text$x                 CODE"
+          ],
+          [
+            13,
+            " 0001:004cc020 0000015cH .text$yd                CODE"
+          ],
+          [
+            14,
+            " 0002:00000000 000009f8H .idata$5                DATA"
+          ],
+          [
+            15,
+            " 0002:000009f8 00000038H .00cfg                  DATA"
+          ],
+          [
+            16,
+            " 0002:00000a30 00000008H .CRT$XCA                DATA"
+          ],
+          [
+            17,
+            " 0002:00000a38 00000008H .CRT$XCAA               DATA"
+          ],
+          [
+            18,
+            " 0002:00000a40 00000018H .CRT$XCC                DATA"
+          ],
+          [
+            19,
+            " 0002:00000a58 00000010H .CRT$XCL                DATA"
+          ],
+          [
+            20,
+            " 0002:00000a68 00000018H .CRT$XCU                DATA"
+          ],
+          [
+            21,
+            " 0002:00000a80 00000008H .CRT$XCZ                DATA"
+          ],
+          [
+            22,
+            " 0002:00000a88 00000008H .CRT$XIA                DATA"
+          ],
+          [
+            23,
+            " 0002:00000a90 00000008H .CRT$XIAA               DATA"
+          ],
+          [
+            24,
+            " 0002:00000a98 00000008H .CRT$XIAC               DATA"
+          ],
+          [
+            25,
+            " 0002:00000aa0 00000030H .CRT$XIC                DATA"
+          ],
+          [
+            26,
+            " 0002:00000ad0 00000008H .CRT$XIZ                DATA"
+          ],
+          [
+            27,
+            " 0002:00000ad8 00000008H .CRT$XLA                DATA"
+          ],
+          [
+            28,
+            " 0002:00000ae0 00000008H .CRT$XLZ                DATA"
+          ],
+          [
+            29,
+            " 0002:00000ae8 00000008H .CRT$XPA                DATA"
+          ],
+          [
+            30,
+            " 0002:00000af0 00000010H .CRT$XPX                DATA"
+          ],
+          [
+            31,
+            " 0002:00000b00 00000008H .CRT$XPXA               DATA"
+          ],
+          [
+            32,
+            " 0002:00000b08 00000008H .CRT$XPZ                DATA"
+          ],
+          [
+            33,
+            " 0002:00000b10 00000008H .CRT$XTA                DATA"
+          ],
+          [
+            34,
+            " 0002:00000b18 000000e8H .CRT$XTZ                DATA"
+          ],
+          [
+            35,
+            " 0002:00000b20 00000000H .gehcont$y              DATA"
+          ],
+          [
+            36,
+            " 0002:00000b20 00000000H .gfids$y                DATA"
+          ],
+          [
+            37,
+            " 0002:00000b20 00000000H .giats$y                DATA"
+          ],
+          [
+            38,
+            " 0002:00000c00 00283610H .rdata                  DATA"
+          ],
+          [
+            39,
+            " 0002:00284210 00000170H .rdata$00               DATA"
+          ],
+          [
+            40,
+            " 0002:00284380 00000000H .rdata$CastGuardVftablesA DATA"
+          ],
+          [
+            41,
+            " 0002:00284380 00000000H .rdata$CastGuardVftablesC DATA"
+          ],
+          [
+            42,
+            " 0002:00284380 00000028H .rdata$T                DATA"
+          ],
+          [
+            43,
+            " 0002:002843a8 00001514H .rdata$r                DATA"
+          ]
+        ]
+      },
+      "verdict": "no_archive_members_in_map",
+      "reason": "recognised map with 771 link inputs, none from an archive"
+    }
+  ],
+  "controls": [
+    {
+      "name": "synthetic_msvc_lib",
+      "members": 1,
+      "objects": 1,
+      "unknown": 0,
+      "pass": true
+    },
+    {
+      "name": "synthetic_msvc_dot_a",
+      "members": 1,
+      "objects": 0,
+      "unknown": 0,
+      "pass": true
+    },
+    {
+      "name": "synthetic_lld_paren",
+      "members": 1,
+      "objects": 0,
+      "unknown": 0,
+      "pass": true
+    },
+    {
+      "name": "synthetic_gnu_archive_list",
+      "members": 1,
+      "objects": 0,
+      "unknown": 1,
+      "pass": true
+    },
+    {
+      "name": "negative_truncated_header_only",
+      "members": 0,
+      "objects": 0,
+      "unknown": 0,
+      "pass": true
+    },
+    {
+      "name": "negative_garbage",
+      "members": 0,
+      "objects": 0,
+      "unknown": 100,
+      "pass": true
+    },
+    {
+      "name": "negative_loose_objects_only",
+      "members": 0,
+      "objects": 1,
+      "unknown": 0,
+      "pass": true
+    },
+    {
+      "name": "negative_unrecognised_map_is_insufficient_not_pass",
+      "pass": true
+    }
+  ],
+  "controls_all_pass": true,
+  "verdicts": [
+    "no_archive_members_in_map"
+  ]
+}
