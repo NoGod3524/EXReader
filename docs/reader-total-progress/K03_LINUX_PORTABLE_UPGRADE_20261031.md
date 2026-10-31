@@ -82,5 +82,9 @@ position commit and clears busy in `state()` without printing a STATUS line (rea
 STATUS busy field is not an idle signal. Correction 2: idle is a quiet-stdout window, and a reading key rejected with
 "Reading operation in progress" is repeated. No product change.
 
+Run 41175145440 / attempt 1 (48a3643978a2bc0c850598777986864d3f87ed9a): B built and installed again with the same
+entry hashes; the driver did not start — a SyntaxError introduced by correction 2 (a bytes literal split by a raw
+newline). No UI item ran. Correction 3 restores `b'\n'`.
+
 Further results are appended below. Scope of any result: F12 Linux portable
 update slice only — not F11, not six-platform F12, not formal release or signing, not licensing/documentation.

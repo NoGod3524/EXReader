@@ -172,8 +172,7 @@ class Host:
 
     def lines(self):
         self.log.flush()
-        return self.log_path.read_bytes().count(b'
-')
+        return self.log_path.read_bytes().count(b'\n')
 
     def idle(self, quiet=1.5, timeout=40):
         """Quiet stdout for `quiet` seconds. The STATUS busy/saving fields are not an idle signal: after a
