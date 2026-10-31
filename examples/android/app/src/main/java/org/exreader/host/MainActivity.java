@@ -505,6 +505,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             FixedSession candidateFixed = null;
             PageLoad load = null;
             boolean accepted = false;
+            BookStore.ReaderCopy recoveredOriginal = null;
             String notice = null;
             String resolvedTitle = displayTitle;
             try {
@@ -519,6 +520,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 final NativeLibrary.Book target=store.find(id);
                 if (target==null) throw new IOException("Book is missing from the SDK library");
                 String path = prefs.getString("path_" + target.id, null);
+                if(target.format==NativeLibrary.FORMAT_TXT&&(path==null||!new File(path).isFile())) {
+                    String expected=local.key.bookKey.substring(local.key.bookKey.indexOf(':')+1);
+                    recoveredOriginal=store.prepareReaderCopy(target.id,expected,local.sourceBytes,
+                            new File(getFilesDir(),"reader-originals"),task);
+                    path=recoveredOriginal.readFile().getAbsolutePath();
+                }
                 boolean bounded = target.format==NativeLibrary.FORMAT_EPUB && store.bounded(target.id);
                 Log.i(TAG,"storage mode book="+target.id+" bounded="+bounded);
                 if (!bounded && (path == null || !new File(path).isFile())) {
@@ -565,9 +572,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 Log.i(TAG, "handle open book=" + target.id + " mode=" + (target.fixed() ? "fixed" : "reflow"));
                 final ReflowSession nextReflow = candidateReflow;
                 final FixedSession nextFixed = candidateFixed;
+                final BookStore.ReaderCopy pendingOriginal = recoveredOriginal;
                 final PageLoad[] delivery={load};
                 try {
                     task.commit(() -> {
+                        if(pendingOriginal!=null) {
+                            pendingOriginal.publish();
+                            if(!prefs.edit().putString("path_"+target.id,pendingOriginal.publishedFile().getAbsolutePath())
+                                    .putLong("size_"+target.id,local.sourceBytes).commit())
+                                throw new IOException("Recovered reading path could not be saved");
+                        }
                         delivery[0]=persistPage(delivery[0],task);delivery[0].snapshot.sourceKey=local.key.bookKey;delivery[0].accept();
                         closeSessionsLocked(); reflow=nextReflow; fixed=nextFixed; sessionBookId=target.id;
                     });
@@ -595,6 +609,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     if (candidateReflow != null) candidateReflow.close();
                     if (candidateFixed != null) candidateFixed.close();
                 }
+                if(recoveredOriginal!=null)recoveredOriginal.close();
             }
         });
     }
