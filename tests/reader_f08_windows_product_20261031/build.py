@@ -6,7 +6,8 @@ sys.path.insert(0,str(ROOT/"tests/reader_f08_android_20261031"))
 from lane import identity, need, save, sha, command
 BASE="fb1197d607a2d3401488427f8bfdfcaea32568bd"
 OUT=ROOT/"build/f08-windows-product";EVIDENCE=OUT/"evidence"
-FILES={"tests/reader_f08_windows_product_20261031/build.py","tests/reader_f08_windows_product_20261031/audit.py",
+FILES={"tests/reader_f08_windows_product_20261031/native_picker.py",
+       "tests/reader_f08_windows_product_20261031/build.py","tests/reader_f08_windows_product_20261031/audit.py",
        "tests/reader_f08_windows_product_20261031/profile.json",".github/workflows/dot-f08-windows-product-20261031.yml"}
 def guard():
     need(os.environ.get("GITHUB_ACTIONS")=="true","Actions only")
@@ -73,7 +74,8 @@ def build():
     shutil.copyfile(host/"reader-windows-shelf-seed.exe",EVIDENCE/"seed.exe")
     shutil.copyfile(host/"CMakeCache.txt",EVIDENCE/"host-CMakeCache.txt")
     shutil.copyfile(host/"windows-host.map",EVIDENCE/"windows-host.map")
-    sources=["tests/reader_wave3_c09/build.py","tests/reader_windows_raw3/host_build.py",
+    sources=["tests/reader_wave3_c09/check_ui.py","tests/reader_windows_preferences/check_ui.py",
+        "tests/reader_wave3_c09/build.py","tests/reader_windows_raw3/host_build.py",
         "tests/reader_perf_windows/perf_windows.py","tests/reader_perf_windows/diagnose_txt_import.py",
         "tests/reader_perf_windows/verify_composition.py","tests/reader_product_performance_handoff/sample_windows_interactions.py"]
     save(EVIDENCE/"build-identity.json",{**identity(),"sdk_version":"3.42.0","program_sha256":sha(EVIDENCE/"program/EXReader.exe"),
@@ -90,16 +92,19 @@ def sample():
         with (EVIDENCE/(label+".log")).open("wb") as log:
             result=subprocess.run(list(map(str,args)),cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,timeout=timeout)
         report["steps"].append({"name":label,"exit":result.returncode})
-        if result.returncode:report["problems"].append(label)
+        if result.returncode:
+            report["problems"].append(label)
+            print("\n".join((EVIDENCE/(label+".log")).read_text(errors="replace").splitlines()[-50:]),flush=True)
         print("F08_WINDOWS_PHASE",label,result.returncode,flush=True)
         return result.returncode
     try:
         need(run("desktop",[sys.executable,"tests/reader_wave3_c09/desktop.py","--output",EVIDENCE/"desktop.json"],120)==0,"desktop")
         need(json.loads((EVIDENCE/"desktop.json").read_text())["after"]==[profile["screen_width"],profile["screen_height"]],"fixed display")
         common=["--package",EVIDENCE/"program","--seed",EVIDENCE/"seed.exe"]
-        run("txt-diagnosis",[sys.executable,"tests/reader_perf_windows/diagnose_txt_import.py",*common,
+        adapter=HERE/"native_picker.py"
+        run("txt-diagnosis",[sys.executable,adapter,"diagnosis",*common,
             "--output",EVIDENCE/"txt","--runs","3"],1800)
-        run("original-main",[sys.executable,"tests/reader_perf_windows/perf_windows.py",*common,
+        run("original-main",[sys.executable,adapter,"main",*common,
             "--output",EVIDENCE/"observations","--work",OUT/"observation-work",
             "--cohorts","cold_shelf,warm_shelf,reading,import,import_epub","--launches-per-cohort","12",
             "--txt-diagnostic",EVIDENCE/"txt/diagnosis.json"],3600)
@@ -107,7 +112,7 @@ def sample():
             "--summary",EVIDENCE/"observations/summary.json","--package",EVIDENCE/"program",
             "--start",identity()["source_sha"],"--launches","30","--per-cohort","10"],180)
         report["original_verify_passed"]=original_verify==0
-        run("original-interactions",[sys.executable,"tests/reader_product_performance_handoff/sample_windows_interactions.py",
+        run("original-interactions",[sys.executable,adapter,"interactions",
             *common,"--output",EVIDENCE/"interactions","--work",OUT/"interaction-work",
             "--cohorts","warm_shelf,reading","--launches-per-cohort","5"],1800)
         report["collection_complete"]=not report["problems"]
