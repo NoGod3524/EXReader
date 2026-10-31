@@ -59,10 +59,13 @@ struct exr_wc_root {
   exr_wc_tx *active;
 };
 
+/* hold is a component-only read handle on the payload, open from begin until
+ * the slot is cleaned or tx_close.  It keeps the payload inode allocated, so a
+ * replaced payload can never reuse the recorded inode number meanwhile. */
 struct exr_wc_tx {
   exr_wc_root *root;
   uint32_t slot;
-  int dirfd, fd;
+  int dirfd, fd, hold;
 };
 
 enum { WC_DONE, WC_PENDING, WC_DENIED, WC_UNSURE };
@@ -497,7 +500,7 @@ fail:
 exr_wc_status exr_wc_begin(exr_wc_root *r, exr_wc_tx **out, int *borrowed_fd) {
   wc_slot v;
   char name[36];
-  struct stat ds, ps;
+  struct stat ds, ps, hs;
   exr_wc_tx *tx;
   exr_wc_status s;
   uint32_t slot;
@@ -520,7 +523,7 @@ exr_wc_status exr_wc_begin(exr_wc_root *r, exr_wc_tx **out, int *borrowed_fd) {
   if (!(tx = calloc(1, sizeof *tx))) return EXR_WC_IO;
   tx->root = r;
   tx->slot = slot;
-  tx->fd = -1;
+  tx->fd = tx->hold = -1;
   s = EXR_WC_IO;
   tx->dirfd = wc_open_dir(r->dirfd, name);
   if (tx->dirfd < 0 || fstat(tx->dirfd, &ds) != 0 || !wc_private(&ds, S_IFDIR) || ds.st_dev != r->dev)
@@ -530,6 +533,9 @@ exr_wc_status exr_wc_begin(exr_wc_root *r, exr_wc_tx **out, int *borrowed_fd) {
   WC_HOOK("payload_created", slot, EXR_WC_RESERVED);
   if (fstat(tx->fd, &ps) != 0 || !wc_private(&ps, S_IFREG) || wc_sync(tx->dirfd) != 0 ||
       wc_sync(r->dirfd) != 0)
+    goto fail;
+  tx->hold = openat(tx->dirfd, wc_payload, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+  if (tx->hold < 0 || fstat(tx->hold, &hs) != 0 || hs.st_dev != ps.st_dev || hs.st_ino != ps.st_ino)
     goto fail;
   v.state = EXR_WC_OWNED;
   v.dir_ino = (uint64_t)ds.st_ino;
@@ -541,6 +547,7 @@ exr_wc_status exr_wc_begin(exr_wc_root *r, exr_wc_tx **out, int *borrowed_fd) {
   *borrowed_fd = tx->fd;
   return EXR_WC_OK;
 fail:
+  if (tx->hold >= 0) close(tx->hold);
   if (tx->fd >= 0) close(tx->fd);
   if (tx->dirfd >= 0) close(tx->dirfd);
   free(tx);
@@ -673,6 +680,8 @@ exr_wc_status exr_wc_cleanup(exr_wc_tx *tx, int abandon_unpublished,
   tx->fd = tx->dirfd = -1;
   switch (wc_clean_slot(tx->root, tx->slot, &e)) {
   case WC_DONE:
+    if (tx->hold >= 0) close(tx->hold);
+    tx->hold = -1;
     res->removed = 1;
     return EXR_WC_OK;
   case WC_PENDING:
@@ -754,6 +763,7 @@ exr_wc_status exr_wc_tx_close(exr_wc_tx **p) {
   exr_wc_tx *tx;
   if (!p || !*p) return EXR_WC_OK;
   tx = *p;
+  if (tx->hold >= 0) close(tx->hold);
   if (tx->fd >= 0) close(tx->fd);
   if (tx->dirfd >= 0) close(tx->dirfd);
   if (tx->root->active == tx) tx->root->active = NULL;
