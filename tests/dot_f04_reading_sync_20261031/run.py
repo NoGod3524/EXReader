@@ -49,6 +49,12 @@ def stage_android():
     source = replace_once(source, "sys.path.insert(0, str(Path(__file__).resolve().parents[1]))",
                           "sys.path.insert(0, " + repr(str(HERE)) + ")")
     source = replace_once(source, "package + '.RelayAndroidTest'", "package + '.F04AndroidTest'")
+    # MainActivity is singleTask: install ActivityMonitor before its first
+    # launch, otherwise onNewIntent need not deliver an Activity to the monitor.
+    # Only the test-input directory is prepared here; no app database is seeded.
+    source = replace_once(source,
+        "adb('shell', 'am', 'start', '-W', '-n', package + '/.MainActivity')",
+        "adb('shell', 'run-as', package, 'mkdir', '-p', 'files')")
     source = replace_once(source, "'apple_progress_public_parse_real_jump', 'real_forward_pages_and_application_save',",
         "'apple_progress_public_parse_real_jump', 'peer_bookmark_and_annotation_originals_resolve',\n"
         "            'real_forward_pages_and_application_save', 'create_return_bookmark_and_annotation',")
