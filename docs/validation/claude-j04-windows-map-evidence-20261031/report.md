@@ -19,3 +19,10 @@ J04's own parser carried the same `.lib`/`.a` assumption, so its recorded machin
 
 ## Still not established (so C09 remains not passed)
 Mapping archive base names to installed `.lib` files and identities (needs the build's LIB path/`resolve_input`), dynamic imports via `dumpbin`, weak/delay-load explanations, Windows negative controls, and any Windows provider-ownership conclusion. No Windows product or C09 acceptance is claimed.
+
+## Addendum: corrected parser, run 41156867582 attempt 1 (commit 270b9ca2) — machine verdict now matches
+Run 41156510546 (commit d0d3298c) failed on a SyntaxError in my test strings (no analysis happened). Run 41156867582 succeeded; evidence artifact 13025406603 (sha256:87513ae6...58d4c). It re-authenticated the same C09 artifact/map (map sha256 9132c51c...bdb7ad) and, with the parser now recognising MSVC archive base-name members and separating DLL import stubs:
+- verdict **old_parser_misread**, reproduced old failure `MSVC map selects no library members` (old regex still hits 53421 lines);
+- **750 archive members from 57 archives** with source line numbers (`members-windows-host.map.json`), 15 import stubs, 6 loose/linker-generated inputs, 65 unrecognised lines retained (headers/section tables);
+- 10 controls pass (4 synthetic positives incl. base-name form, 6 negatives incl. truncated, garbage, loose-objects-only, import stub, unrecognised map ≠ pass).
+This supersedes the mislabelled machine verdict in the first run (kept above). Runs used by J04: 3 (first run, failed syntax, corrected). Still not established: mapping archive base names to installed `.lib` identities, dumpbin imports, weak/delay-load explanation, Windows negative controls; C09 and the Windows product remain not accepted.

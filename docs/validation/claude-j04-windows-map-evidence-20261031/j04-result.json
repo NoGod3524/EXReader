@@ -70,12 +70,13 @@
         "line_hits_after_anchor": 53421
       },
       "independent": {
-        "archive_members": 0,
-        "loose_objects": 771,
+        "archive_members": 750,
+        "loose_objects": 6,
         "recognised_by_section": {
           "msvc": 53421,
           "lld": 0,
-          "gnu": 0
+          "gnu": 0,
+          "import_stubs": 15
         },
         "unrecognised_lines": 65,
         "unrecognised_sample": [
@@ -241,8 +242,8 @@
           ]
         ]
       },
-      "verdict": "no_archive_members_in_map",
-      "reason": "recognised map with 771 link inputs, none from an archive"
+      "verdict": "old_parser_misread",
+      "reason": "old parser failed closed but an independent parse of the same bytes finds 750 archive members"
     }
   ],
   "controls": [
@@ -256,6 +257,20 @@
     {
       "name": "synthetic_msvc_dot_a",
       "members": 1,
+      "objects": 0,
+      "unknown": 0,
+      "pass": true
+    },
+    {
+      "name": "synthetic_msvc_basename_no_extension",
+      "members": 1,
+      "objects": 0,
+      "unknown": 0,
+      "pass": true
+    },
+    {
+      "name": "negative_import_stub_is_not_a_member",
+      "members": 0,
       "objects": 0,
       "unknown": 0,
       "pass": true
@@ -302,6 +317,6 @@
   ],
   "controls_all_pass": true,
   "verdicts": [
-    "no_archive_members_in_map"
+    "old_parser_misread"
   ]
 }
