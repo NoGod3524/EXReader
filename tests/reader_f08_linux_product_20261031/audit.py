@@ -42,6 +42,7 @@ def main():
         built=load(raw/"build-identity.json")
         need(all(built.get(k)==v for k,v in ident.items()) and built["sdk_version"]=="3.42.0","build identity")
         need(set(built["helpers"])==set(R.FROZEN),"frozen helper coverage")
+        need(built.get("test_adapters")=={p:sha(ROOT/p) for p in R.ADAPTERS},"unchanged startup and shutdown adapter")
         for p,d in built["helpers"].items():need(sha(ROOT/p)==d,"unchanged helper: "+p)
         for p,d in built["components"].items():need(command(["git","rev-parse","HEAD:"+p],text=True).strip()==d,"production tree")
         options=R.compiled_features((raw/"host-CMakeCache.txt").read_text(),load(raw/"host-compile_commands.json"))

@@ -1,13 +1,14 @@
 """Build the full GTK product and run frozen samplers in Actions."""
-import argparse, importlib.util, json, math, os, re, shutil, subprocess, sys, traceback
+import argparse, importlib.util, json, math, os, re, shutil, signal, subprocess, sys, traceback
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2];HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(ROOT/"tests/reader_f08_android_20261031"))
 from lane import identity, need, save, sha, command
-BASE="1860c614bb0aa3d68e9718b8452ea36ba9f504bf"
+BASE="714482fa388ab24195f13f48c09cf68a30628f57"
 OUT=ROOT/"build/f08-linux-product";EVIDENCE=OUT/"evidence"
 FILES={"tests/reader_f08_linux_product_20261031/run.py","tests/reader_f08_linux_product_20261031/audit.py",
-       "tests/reader_f08_linux_product_20261031/profile.json",".github/workflows/dot-f08-linux-product-20261031.yml"}
+       ".github/workflows/dot-f08-linux-product-20261031.yml"}
+ADAPTERS=("tests/reader_f08_compact_resume_20261031/adapter.py","tests/reader_f08_compact_resume_20261031/controls.py")
 COHORTS=("perf-evidence","perf-interactions")
 TREES=(*COHORTS,"perf-package","perf-guards","f08-result","f08-causal","f08-causal-control")
 PROBES=("perf-probe/seed_library","f08-probe/libexreader_f08.so","f08-causal-probe/libexreader_f08_causal.so")
@@ -92,6 +93,7 @@ def build():
     save(EVIDENCE/"build-identity.json",{**identity(),"sdk_version":"3.42.0","compiled_options":compiled,
         "program_sha256":sha(ROOT/"build/perf-package/EXReader-Linux/bin/exreader-linux"),
         "helpers":{p:sha(ROOT/p) for p in FROZEN},"components":trees,
+        "test_adapters":{p:sha(ROOT/p) for p in ADAPTERS},
         "installed_family":{p.relative_to(prefix).as_posix():sha(p) for p in prefix.rglob("*") if p.is_file()},
         "probes":{p:sha(ROOT/"build"/p) for p in PROBES},"f08_accepted":False})
 def verify_commands():
@@ -100,9 +102,45 @@ def verify_commands():
              "--output","build/perf-evidence","--guards","build/perf-guards/guards.json"]),
         ("frameclock-verify",[sys.executable,"tests/reader_f08_gtk_frameclock_20261031/verify.py"]),
         ("causal-verify",[sys.executable,"tests/reader_f08_causal_frame_20261031/verify.py","verify"])]
+def startup_coverage(raw,records):
+    import configparser
+    sys.path.insert(0,str(ROOT/"tests/reader_f08_compact_resume_20261031"))
+    import adapter as A
+    wanted={k:os.environ[k] for k in ("GITHUB_SHA","GITHUB_RUN_ID","GITHUB_RUN_ATTEMPT")}
+    cohorts=[(name,rows) for name,rows in records.items()]
+    cohorts.append(("f08-causal",load(raw/"f08-causal/driver.json")["cohorts"]))
+    counts={};legacy=[]
+    for name,rows in cohorts:
+        continued=0
+        for row in rows:
+            folder=raw/name/("launch-%02d"%row["launch"]) if name=="f08-causal" else raw/name/"raw"/("launch-%02d"%row["launch"])
+            receipt=load(folder/"compact-resume.json")
+            need(receipt["identity"]==wanted and receipt["pid"]==row["pid"],"native startup identity")
+            settings=(folder/"startup-settings.ini").read_text()
+            need(sha(folder/"startup-settings.ini")==receipt["settings_sha256"],"native startup settings bytes")
+            config=configparser.ConfigParser(interpolation=None);config.read_string(settings)
+            need(config.getint("reader","book")==receipt["requested_book"],"native startup requested book")
+            A.verify(receipt,row if name=="f08-causal" else None)
+            reading=row["kind"] in ("resume_turn","reader_interact","page","font")
+            need(receipt["stage"]==("continued" if reading else "shelf_unchanged"),"declared startup route")
+            if name=="perf-evidence":need(row["entry_book"]==receipt["requested_book"],"original main entry book")
+            if name=="perf-interactions" and row["entry_book"]!=receipt["requested_book"]:
+                legacy.append({"cohort":name,"launch":row["launch"],"kind":row["kind"],
+                               "original_entry_book":row["entry_book"],"actual_settings_book":receipt["requested_book"]})
+            continued+=reading
+        counts[name]={"continued":continued,"shelf_unchanged":len(rows)-continued}
+    need(counts=={"perf-evidence":{"continued":8,"shelf_unchanged":24},
+                  "perf-interactions":{"continued":6,"shelf_unchanged":6},
+                  "f08-causal":{"continued":4,"shelf_unchanged":2}},"all 50 native startup routes")
+    need(len(legacy)==6 and all(x["kind"]=="reader_interact" and x["original_entry_book"]==0 for x in legacy),
+         "unchanged interaction sampler's inherited entry labels")
+    return {"cohorts":counts,"shared_startup_limit_seconds":600,"automatic_restore_measured":False,
+            "legacy_entry_metadata_mismatches":legacy,
+            "resume_latency_includes_native_continue_preparation":True}
 def evaluate(raw,profile):
     records={name:load(raw/name/"launches.json")["launches"] for name in COHORTS}
     need([len(records[k]) for k in COHORTS]==[32,12],"all original launches")
+    startup=startup_coverage(raw,records)
     original=load(raw/"perf-evidence/report.json")
     need(original["accepted"] is True and not original["problems"],"original coverage")
     interaction=load(raw/"perf-interactions/interaction-summary.json")
@@ -128,10 +166,20 @@ def evaluate(raw,profile):
     need(frames["evidence_complete"] is True and len(frames["launches"])==44,"native frame coverage")
     causal=load(raw/"f08-causal/summary.json")
     need(causal["passed"] is True and causal["new_launches"]==6 and causal["new_actions"]==18,"causal coverage")
-    return {"checks":checks,"non_frame_budget_passed":all(c["passed"] for c in checks),
+    shelf=[action for row in causal["results"] if row["kind"]=="shelf" for action in row["actions"]]
+    need(len(shelf)==6 and all(action["causal_attribution"] in ("input_and_observed_shelf_content_at_draw_entry","input_and_observed_shelf_viewport_composition") and
+         type(action["event_to_content_draw_entry_us"]) is int and action["event_to_content_draw_entry_us"]>=0
+         for action in shelf),"six native shelf content bindings")
+    need(causal["draw_control"].get("viewport_composition_control") is True and
+         causal["draw_control"].get("viewport_pixels_equal") is True and
+         causal["draw_control"].get("cached_list_draws")==0,"native cached composition control")
+    return {"startup":startup,"checks":checks,"non_frame_budget_passed":all(c["passed"] for c in checks),
         "native_frame_records":sum(r["frames"] for r in frames["launches"]),
         "native_frame_incomplete":sum(r["incomplete"] for r in frames["launches"]),
-        "causal_launches":6,"causal_actions":18,"frame_budget_measured":False,
+        "causal_launches":6,"causal_actions":18,"shelf_content_actions":6,
+        "shelf_attributions":[action["causal_attribution"] for action in shelf],
+        "shelf_content_draw_entry_us":[action["event_to_content_draw_entry_us"] for action in shelf],
+        "frame_budget_measured":False,
         "physical_presentation_proven":False,"f08_accepted":False}
 def sample():
     guard();profile=load(HERE/"profile.json")
@@ -140,8 +188,22 @@ def sample():
     def execute(label,args,timeout=3600):
         try:
             with (EVIDENCE/(label+".log")).open("wb") as log:
-                p=subprocess.run(list(map(str,args)),cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,timeout=timeout)
-            code=p.returncode
+                p=subprocess.Popen(list(map(str,args)),cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+                try:code=p.wait(timeout=timeout)
+                except subprocess.TimeoutExpired:
+                    code=124
+                    try:os.killpg(p.pid,signal.SIGTERM)
+                    except ProcessLookupError:pass
+                    try:p.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        try:os.killpg(p.pid,signal.SIGKILL)
+                        except ProcessLookupError:pass
+                        p.wait(timeout=5)
+                finally:
+                    if p.poll() is None:
+                        try:os.killpg(p.pid,signal.SIGKILL)
+                        except ProcessLookupError:pass
+                        p.wait(timeout=5)
         except subprocess.TimeoutExpired:code=124
         report["steps"].append({"name":label,"exit":code})
         if code:report["problems"].append(label)
@@ -154,12 +216,12 @@ def sample():
         if code==0:save(ROOT/"build/f08-causal-control/draw.json",load(EVIDENCE/"draw-control.log"))
         common=["--payload","build/perf-package/EXReader-Linux","--tarball",ROOT/"build/perf-package/EXReader-Linux.tar.gz",
                 "--seed","build/perf-probe/seed_library"]
-        execute("original-main",[sys.executable,"tests/reader_f08_gtk_frameclock_20261031/verify.py","run",
+        execute("original-main",[sys.executable,ROOT/ADAPTERS[0],"tests/reader_f08_gtk_frameclock_20261031/verify.py","run",
             "tests/reader_perf_gtk/sample.py",*common,"--output","build/perf-evidence","--launches","32"],3600)
-        execute("original-interactions",[sys.executable,"tests/reader_f08_gtk_frameclock_20261031/verify.py","run",
+        execute("original-interactions",[sys.executable,ROOT/ADAPTERS[0],"tests/reader_f08_gtk_frameclock_20261031/verify.py","run",
             "tests/reader_product_performance_handoff/sample_gtk_interactions.py",*common,
             "--output","build/perf-interactions","--launches","12"],1800)
-        execute("causal",[sys.executable,"tests/reader_f08_causal_frame_20261031/driver.py"],900)
+        execute("causal",[sys.executable,ROOT/ADAPTERS[0],"tests/reader_f08_causal_frame_20261031/driver.py"],900)
         for label,args in verify_commands():execute(label,args,180)
         report["collection_complete"]=not report["problems"]
         need(report["collection_complete"],"original observations incomplete")
