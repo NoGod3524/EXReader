@@ -1,0 +1,170 @@
+{
+  "base": "c44a9cf211fffa4ed6f2720ffa49a186c3b4d196",
+  "products": [
+    {
+      "path": "apps/reader/annotation-export/src/annotation_export.cpp",
+      "old_source": "5963488997a7169f2ae40a8d6d33abae15eb3f36",
+      "source": "914e08622e84473206638409be9586b20766f817",
+      "base_blob": "3034f5530102ce24cee499ad2f0984cbf650691a",
+      "sha256": "77638d408d301949c76b424090b23dd04f803f95f526b150301a2a4e6106b72b"
+    },
+    {
+      "path": "extras/webdav/src/webdav.cpp",
+      "old_source": "5dffc953109d13b7537f27de6fbaa6125eb19993",
+      "source": "ef83932406f8160547ebc3b73751f807a8486561",
+      "base_blob": "8ad4a9c5f5e104128904cfa5c35d129a78b577d1",
+      "sha256": "36fd471a0bfbd9a1535fc7aacd5efeadec523a65cf4cb16978c03f826b7588e1"
+    },
+    {
+      "path": "examples/reader.c",
+      "old_source": "8f8acf3234cba747165f001c0c96efe1b911e6ad",
+      "source": "a8352f3623078e4d64b222c5af4dc7a2f2bfa379",
+      "base_blob": "f9c22436a7bc140fdabe5f4a399f58bc2e8922bb",
+      "sha256": "ae6acfc2c65a3ae1e4181fb7d0ddac94709adbcc6ae77ce24bbc3db9b88abc46"
+    },
+    {
+      "path": "apps/reader/desktop/windows_accounts.inc",
+      "old_source": "24599c6fd51f8b5720878c0e8ed4d7d262db90f8",
+      "source": "837f3840258aecd8e2fbf4044b140073bf217883",
+      "base_blob": "14c0bad0054ac36ff6793ce2132c049230f09aed",
+      "sha256": "24ac34dd4b7d0b9b1d1d9af8c6cdcadb5d8c3473debbd345987ef598faff684c"
+    },
+    {
+      "path": "apps/reader/desktop/windows_accounts_ui.inc",
+      "old_source": "24599c6fd51f8b5720878c0e8ed4d7d262db90f8",
+      "source": "837f3840258aecd8e2fbf4044b140073bf217883",
+      "base_blob": "a1e819a32589046c74650f8edfed219952f4750e",
+      "sha256": "41394eba85531f2b91c06012dd49f9089f9b041d4758f47510dfc61ac3799d80"
+    }
+  ],
+  "frozen_tests": [
+    {
+      "path": "tests/reader_annotation_export_posix_private_20261031/CMakeLists.txt",
+      "source": "914e08622e84473206638409be9586b20766f817",
+      "blob": "31419169f68b7fae901a07e47333d66336af24ed",
+      "sha256": "8e1e46ab8934b66dc9160901e31c150f2b2b1e3895655e3f84aab3629945cf78"
+    },
+    {
+      "path": "tests/reader_annotation_export_posix_private_20261031/probe.cpp",
+      "source": "914e08622e84473206638409be9586b20766f817",
+      "blob": "992090fa9087d580df58fe3ab5c3ca25e333a52c",
+      "sha256": "5a668cc784ca172da7e6371795b9541867d1225b0823974902f8b53af61f97cb"
+    },
+    {
+      "path": "tests/reader_annotation_export_posix_private_20261031/run.py",
+      "source": "914e08622e84473206638409be9586b20766f817",
+      "blob": "ddc156621d43e1bfe525f46dc0d7e67b22454d36",
+      "sha256": "d5da539359b912ee5de224a2c5c784cab6386df348c1fbb00fe681d503c62164"
+    },
+    {
+      "path": "tests/webdav_temp_cleanup_retry_20261031/CMakeLists.txt",
+      "source": "ef83932406f8160547ebc3b73751f807a8486561",
+      "blob": "500a8bcd5ed80c4e7d5e0bb3b11450e3dd6f4da0",
+      "sha256": "d8a35a9a6c04f869b0c6879fb86cd58d934405dcebf0f6bcf969d545b71b8443"
+    },
+    {
+      "path": "tests/webdav_temp_cleanup_retry_20261031/probe.cpp",
+      "source": "ef83932406f8160547ebc3b73751f807a8486561",
+      "blob": "3c847ed98f7a620a6efac575f10887cd6d96ae33",
+      "sha256": "b04e12ae959ff2d18f6dc848afe7ea6bd12b6bc163d656f5b56ff06102243a37"
+    },
+    {
+      "path": "tests/webdav_temp_cleanup_retry_20261031/run.py",
+      "source": "ef83932406f8160547ebc3b73751f807a8486561",
+      "blob": "25d1eeff470955030156013683b629a3930975c6",
+      "sha256": "52b5baef4521501e1ad9aff4e05dad08d9a5df32e1cb7c3f835ceff0ffdf382d"
+    },
+    {
+      "path": "tests/reader_f09_consumer_compare/native_probe.cpp",
+      "source": "a8352f3623078e4d64b222c5af4dc7a2f2bfa379",
+      "blob": "35b20785fd66d09d92eaa25cbc8558e1bf3aee3b",
+      "sha256": "ff81947d7e861139e00eae6cd3a0d7c8423c97bd5801c0fb9404093b8fcae892"
+    },
+    {
+      "path": "tests/reader_f09_consumer_compare/run.py",
+      "source": "a8352f3623078e4d64b222c5af4dc7a2f2bfa379",
+      "blob": "a95de47e1fedc693c8b611ad5052edba502b263d",
+      "sha256": "537b63aa4b18110bd960138159eb151eb22fe8c752f4ac53fbb5d38d7377120d"
+    },
+    {
+      "path": "tests/reader_f09_escape_routing/run.py",
+      "source": "a8352f3623078e4d64b222c5af4dc7a2f2bfa379",
+      "blob": "78b9faf743fcfb33da6d4390ae4f29f3b3dbd4dc",
+      "sha256": "681e465823e4309ebf389860d1408ad9272b2ec5f9ef64f9513e32a2fa0feb77"
+    },
+    {
+      "path": "tests/reader_f09_escape_selection/probe.cs",
+      "source": "a8352f3623078e4d64b222c5af4dc7a2f2bfa379",
+      "blob": "6b557f092dd998cc461a9a8edb08dc64eb12599b",
+      "sha256": "c5f2b76918b5a574cb641f3672309a6d0b3ba93328325b0f71f32a60920bcee2"
+    },
+    {
+      "path": "tests/reader_f09_escape_selection/provider_diagnostics.inc",
+      "source": "a8352f3623078e4d64b222c5af4dc7a2f2bfa379",
+      "blob": "c628228a78ce373b5622e150ef924e43e921c5a3",
+      "sha256": "08f269eb1c6bc5ac45859ef29bfab6fe5ed41c41b81fe99863672d6069fb1c59"
+    },
+    {
+      "path": "tests/reader_f09_escape_selection/run.py",
+      "source": "a8352f3623078e4d64b222c5af4dc7a2f2bfa379",
+      "blob": "a602c05f24fc8edcde0e70dd4dcda6b46b73512a",
+      "sha256": "d204cdbf58b1e110b4286efa9e2a70666301c25c42f8d00aa6febdffb9f7049e"
+    },
+    {
+      "path": "tests/claude_h02_credential_refusal/LOCAL_HANDOFF_H01-H05.md",
+      "source": "837f3840258aecd8e2fbf4044b140073bf217883",
+      "blob": "9e43f532675fa28631c4f5e83cd01858d7186f38",
+      "sha256": "21d1ab52f0e84c09f7be76cf9ce58a28a7a459b4eec97199b299d572c6b5c3d8"
+    },
+    {
+      "path": "tests/claude_h02_credential_refusal/check_refusal.py",
+      "source": "837f3840258aecd8e2fbf4044b140073bf217883",
+      "blob": "15fdc025184692c7bc807ebd7de0662cf2a3b6ef",
+      "sha256": "c388e1643bc16bc936348427438015df15ff6faf083772306656abcd470f0954"
+    },
+    {
+      "path": "tests/claude_h02_credential_refusal/probe_cred.py",
+      "source": "837f3840258aecd8e2fbf4044b140073bf217883",
+      "blob": "861a2c75d88db3dff960948de3e662451133aa5f",
+      "sha256": "2303641bba8f86f5f194aa3133403c5e08c58587ccfcf2b75595a6af79e6fb94"
+    },
+    {
+      "path": "tests/claude_h02_credential_refusal/token_host.py",
+      "source": "837f3840258aecd8e2fbf4044b140073bf217883",
+      "blob": "e0f01554d33e8925913366d81f262125351080be",
+      "sha256": "0597ed29ae45a2ffd869bcc0406e5b6eab03ab071fefbdce012d92e60e95022b"
+    }
+  ],
+  "runner_minutes": 525,
+  "initial_rounds": 1,
+  "max_evidenced_corrections": 1,
+  "formal_acceptance": false,
+  "allowed_paths": [
+    "apps/reader/annotation-export/src/annotation_export.cpp",
+    "extras/webdav/src/webdav.cpp",
+    "examples/reader.c",
+    "apps/reader/desktop/windows_accounts.inc",
+    "apps/reader/desktop/windows_accounts_ui.inc",
+    "tests/reader_annotation_export_posix_private_20261031/CMakeLists.txt",
+    "tests/reader_annotation_export_posix_private_20261031/probe.cpp",
+    "tests/reader_annotation_export_posix_private_20261031/run.py",
+    "tests/webdav_temp_cleanup_retry_20261031/CMakeLists.txt",
+    "tests/webdav_temp_cleanup_retry_20261031/probe.cpp",
+    "tests/webdav_temp_cleanup_retry_20261031/run.py",
+    "tests/reader_f09_consumer_compare/native_probe.cpp",
+    "tests/reader_f09_consumer_compare/run.py",
+    "tests/reader_f09_escape_routing/run.py",
+    "tests/reader_f09_escape_selection/probe.cs",
+    "tests/reader_f09_escape_selection/provider_diagnostics.inc",
+    "tests/reader_f09_escape_selection/run.py",
+    "tests/claude_h02_credential_refusal/LOCAL_HANDOFF_H01-H05.md",
+    "tests/claude_h02_credential_refusal/check_refusal.py",
+    "tests/claude_h02_credential_refusal/probe_cred.py",
+    "tests/claude_h02_credential_refusal/token_host.py",
+    "tests/dot_integration_candidate_20261031/manifest.json",
+    "tests/dot_integration_candidate_20261031/guard.py",
+    "tests/dot_integration_candidate_20261031/f09_driver.py",
+    ".github/workflows/dot-integration-candidate-20261031.yml",
+    "docs/reader-total-progress/DOT_INTEGRATION_CANDIDATE_20261031.md"
+  ]
+}

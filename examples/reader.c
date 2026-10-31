@@ -3584,8 +3584,14 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       if (task && task->fn) task->fn(task->context);
       return 0;
     }
-    case WM_GETDLGCODE:
-      return DLGC_WANTARROWS | DLGC_WANTCHARS;
+    case WM_GETDLGCODE: {
+      const MSG *key = (const MSG *)lparam;
+      LRESULT flags = DLGC_WANTARROWS | DLGC_WANTCHARS;
+      if (wparam == VK_ESCAPE && key && key->hwnd == window &&
+          key->message == WM_KEYDOWN && key->wParam == VK_ESCAPE)
+        return flags | DLGC_WANTMESSAGE;
+      return flags;
+    }
     case WM_LBUTTONDOWN:
       if (g.job || g.pending || !g.frame.valid) return 0;
       SetFocus(window);
@@ -3710,10 +3716,13 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
         case 'I':
           if (GetKeyState(VK_CONTROL) & 0x8000) { host_command(IDC_IMPORT_BUTTON); return 0; }
           break;
-        case VK_ESCAPE:
+        case VK_ESCAPE: {
+          int selection_changed = g.selection.active;
           selection_clear();
+          if (selection_changed) host_a11y_page_changed(1);
           set_status(L"已清除选择。");
           return 0;
+        }
       }
       break;
   }
