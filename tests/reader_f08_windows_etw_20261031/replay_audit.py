@@ -115,6 +115,45 @@ def inspect_composition(rows, handles, pid, folder):
             "present_succeeded_count":sum(r["event"]=="141" for r in cycle),
             "process_frame_info":[r for r in cycle if r["event"]=="11"],
             "all_events":cycle,"paint_generation_link":"unknown","physical_presentation_proven":False})
+    retirement=[r for r in dwm if r["event"]=="202"]
+    target_handles=set(handles);previous_update={}
+    frame_joins=[]
+    for cycle in selected:
+        timeline=cycle["all_events"]
+        infos=[r for r in timeline if r["event"]=="1" and unsigned(r["data"].get("cFrame")) not in (None,0)
+               and unsigned(r["data"].get("fRendered"))==1 and unsigned(r["data"].get("fPresented"))==1]
+        info=infos[0] if len(infos)==1 else None
+        retired=[r for r in retirement if info and r["execution"].get("ProcessID")==info["execution"].get("ProcessID")
+                 and unsigned(r["data"].get("cFrame"))==unsigned(info["data"].get("cFrame"))]
+        endpoint=retired[0] if len(retired)==1 else None
+        qpc=unsigned(endpoint["data"].get("qpcConfirmed")) if endpoint else None
+        valid=bool(info and endpoint and unsigned(endpoint["data"].get("fTimedOut"))==0 and qpc and
+                   qpc>=cycle["start_qpc"] and qpc<=unsigned(endpoint["clock"].get("RawTime")))
+        candidates=[]
+        for update in cycle["updates"]:
+            hwnd=(update["data"].get("hWnd") or "").strip().casefold();point=unsigned(update["clock"].get("RawTime"))
+            prior=previous_update.get(hwnd)
+            matches=[r for r in rows if prior is not None and r["provider"]=="Microsoft-Windows-Win32k" and
+                     r["execution"].get("ProcessID")==str(pid) and r["event"]=="41" and
+                     (r["data"].get("hwnd") or "").strip().casefold()==hwnd and
+                     prior<unsigned(r["clock"].get("RawTime"))<=point]
+            candidates.append({"hwnd":hwnd,"previous_window_update_qpc":prior,"window_update":update,
+                "render_events_since_previous_update":matches,"paint_generation_link":"unknown_temporal_only"})
+            previous_update[hwnd]=point
+        frame_joins.append({"cycle_start_qpc":cycle["start_qpc"],"cycle_end_qpc":cycle["end_qpc"],
+            "candidate_frame_infos":infos,"retire_events":retired,"frame_id_retirement_join_valid":valid,
+            "qpc_confirmed":qpc,"window_update_candidates":candidates,"physical_presentation_proven":False})
+    save(folder/"frame-retirement-joins.json",frame_joins)
+    summary={"target_window_cycles":len(selected),"valid_frame_id_retirement_joins":sum(x["frame_id_retirement_join_valid"] for x in frame_joins),
+        "missing_or_ambiguous_frame_infos":sum(len(x["candidate_frame_infos"])!=1 for x in frame_joins),
+        "missing_or_ambiguous_retire_events":sum(len(x["retire_events"])!=1 for x in frame_joins),
+        "window_updates_with_single_prior_render_candidate":sum(len(y["render_events_since_previous_update"])==1
+            for x in frame_joins for y in x["window_update_candidates"]),
+        "window_updates_without_prior_boundary":sum(y["previous_window_update_qpc"] is None for x in frame_joins for y in x["window_update_candidates"]),
+        "window_updates_with_multiple_prior_render_candidates":sum(len(y["render_events_since_previous_update"])>1
+            for x in frame_joins for y in x["window_update_candidates"]),
+        "application_paint_generation_bound":False,"physical_presentation_proven":False}
+    print("F08_FRAME_RETIREMENT",folder.name,json.dumps(summary),flush=True)
     frame_info=[r for r in dwm if r["event"] in ("1","202")]
     save(folder/"composition-cycles.json",{"target_cycles":selected,"unfinished_cycles":unfinished,"frame_info":frame_info})
     duplicate_names=sum(len([x["attributes"].get("Name") for x in row["event_data"]])!=
@@ -128,7 +167,7 @@ def inspect_composition(rows, handles, pid, folder):
         "first_target_cycle":{"events":[{"event":r["event"],"qpc":r["clock"].get("RawTime"),
              "task":r["labels"].get("Task"),"data":r["data"],"event_data":r["event_data"]}
              for r in selected[0]["all_events"] if r["event"] in ("10","11","12","46","87","100","15","16","141","387","114")]} if selected else None,
-        "frame_info_examples":frame_info[:4],"paint_generation_link":"unknown","physical_presentation_proven":False}
+        "frame_info_examples":frame_info[:4],"retirement_join":summary,"paint_generation_link":"unknown","physical_presentation_proven":False}
     print("F08_COMPOSITION_CONTEXT",folder.name,json.dumps(result),flush=True)
     return {k:v for k,v in result.items() if k not in ("first_target_cycle","frame_info_examples")}
 
