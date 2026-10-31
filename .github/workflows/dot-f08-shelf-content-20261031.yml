@@ -1,0 +1,98 @@
+name: F08 native shelf draw content
+on:
+  push:
+    branches: [codex/dot-f08-shelf-content-20261031]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  controls:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify test-only changes and Python syntax
+        run: |
+          python3 tests/reader_f08_shelf_content_20261031/run.py guard
+          python3 -m py_compile tests/reader_f08_causal_frame_20261031/verify.py tests/reader_f08_shelf_content_20261031/run.py
+          python3 tests/reader_f08_causal_frame_20261031/verify.py preflight
+      - name: Build only the passive observer and isolated native control
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build pkg-config libgtk-3-dev xvfb
+          cmake -S tests/reader_f08_causal_frame_20261031 -B build/f08-causal-probe -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/f08-causal-probe
+      - name: Verify native row identity and unchanged pixels
+        run: |
+          mkdir -p build/f08-causal-control
+          xvfb-run -a -s "-screen 0 1440x900x24" build/f08-causal-probe/f08_draw_control > build/f08-causal-control/draw.json
+          cat build/f08-causal-control/draw.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-shelf-content-controls-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-causal-control/
+          if-no-files-found: warn
+  capture:
+    if: github.event_name == 'workflow_dispatch'
+    needs: controls
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    outputs:
+      artifact: ${{ steps.upload.outputs.artifact-id }}
+      digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install the fixed GTK runtime and test compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build pkg-config libgtk-3-dev xvfb openbox xdotool x11-utils libsecret-1-0
+          cmake -S tests/reader_f08_causal_frame_20261031 -B build/f08-causal-probe -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/f08-causal-probe
+      - name: Run unchanged six-launch driver with the original full product
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          xvfb-run -a -s "-screen 0 1440x900x24" sh -c '
+            set -eu
+            openbox > build/f08-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm" EXIT
+            mkdir -p build/f08-causal-control
+            build/f08-causal-probe/f08_draw_control > build/f08-causal-control/draw.json
+            python3 tests/reader_f08_shelf_content_20261031/run.py capture
+          '
+      - uses: actions/upload-artifact@v4
+        id: upload
+        if: always()
+        with:
+          name: f08-shelf-content-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-shelf-content/
+          include-hidden-files: true
+          if-no-files-found: error
+  audit:
+    if: always() && github.event_name == 'workflow_dispatch' && needs.capture.outputs.artifact != ''
+    needs: capture
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Independently authenticate and recompute every content binding
+        env:
+          GH_TOKEN: ${{ github.token }}
+          F08_ARTIFACT_ID: ${{ needs.capture.outputs.artifact }}
+          F08_ARTIFACT_DIGEST: ${{ needs.capture.outputs.digest }}
+        run: python3 tests/reader_f08_shelf_content_20261031/run.py audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-shelf-content-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-shelf-content-audit/
+          if-no-files-found: error
