@@ -89,4 +89,4 @@ jobs:
           name: f10-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f10-audit/
           if-no-files-found: error
-# Prepare separately approved dependency-repair round; activation after review.
+# Activate the separately approved dependency-repair round after native review.
