@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "reader_session.h"
+#ifdef EXR_READER_SESSION_MANAGED
+#include "reader_session_managed.h"
+#endif
 #include <atomic>
 #include <condition_variable>
 #include <cstdio>
@@ -68,6 +71,9 @@ struct reader_session {
   const bool raw_api;explicit reader_session(bool raw=false):raw_api(raw){}
   std::string product,directory,originals,account,root,authorization;
   exr_webdav_config limits{};
+#ifdef EXR_READER_SESSION_MANAGED
+  std::string managed_profile;exr_webdav_managed_snapshot managed_view{};bool cleanup_requested=false;
+#endif
   std::mutex mutex;std::condition_variable changed;std::thread worker;
   std::atomic<bool> cancelled{false};std::atomic<uint64_t> transferred{0};
   bool pending=false,running=false,closing=false;
@@ -95,6 +101,13 @@ std::unique_ptr<connection> connect(reader_session &s){
   std::unique_ptr<connection> c(new connection);exr_webdav_config config=s.limits;
   config.root_url=s.root.c_str();config.authorization=s.authorization.c_str();exr_webdav_error de{};
   if(exr_webdav_create(&config,&c->dav,&de)!=EXR_DAV_OK){failure f{READER_SESSION_SYNC};f.error.dav_code=(int)de.code;throw f;}
+#ifdef EXR_READER_SESSION_MANAGED
+  if(!s.managed_profile.empty()){
+    auto code=exr_webdav_managed_enable(c->dav,s.managed_profile.c_str(),&de);
+    {std::lock_guard<std::mutex> lock(s.mutex);exr_webdav_managed_observe(c->dav,&s.managed_view);}
+    if(code!=EXR_DAV_OK){failure f{READER_SESSION_SYNC};f.error.dav_code=(int)de.code;throw f;}
+  }
+#endif
   reader_revision_error re{};
   auto open_history=reader_revisions_open;
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
@@ -114,8 +127,20 @@ void work(reader_session *s){
   std::unique_ptr<connection> c;unsigned shard=0;std::string after;bool finished=false;
   for(;;){
     {
-      std::unique_lock<std::mutex> lock(s->mutex);s->changed.wait(lock,[&]{return s->pending||s->closing;});
+      std::unique_lock<std::mutex> lock(s->mutex);s->changed.wait(lock,[&]{return s->pending||s->closing
+#ifdef EXR_READER_SESSION_MANAGED
+        ||s->cleanup_requested
+#endif
+        ;});
       if(s->closing)break;
+#ifdef EXR_READER_SESSION_MANAGED
+      if(s->cleanup_requested){
+        s->running=true;lock.unlock();c.reset();
+        exr_webdav_managed_snapshot observed{};
+        exr_webdav_managed_recover_profile(s->managed_profile.c_str(),&observed);
+        lock.lock();s->managed_view=observed;s->cleanup_requested=false;s->running=false;continue;
+      }
+#endif
       s->pending=false;s->running=true;s->view.attempt++;
       if(finished){shard=0;after.clear();s->view.steps=s->view.pushed=s->view.pulled=s->view.originals_verified=0;
         s->view.pending_metadata_observations=s->view.pending_original_observations=0;s->view.completed_shards=0;s->view.shard=0;s->view.after[0]=0;finished=false;}
@@ -134,7 +159,11 @@ void work(reader_session *s){
 #endif
           reader_sync_report report{};reader_sync_status step=advance(c->sync,shard,after.c_str(),100,&control,&report,&error);
           {
-            std::lock_guard<std::mutex> lock(s->mutex);s->view.pushed+=report.pushed;s->view.pulled+=report.pulled;s->view.originals_verified+=report.originals_verified;
+            std::lock_guard<std::mutex> lock(s->mutex);
+#ifdef EXR_READER_SESSION_MANAGED
+            if(!s->managed_profile.empty())exr_webdav_managed_observe(c->dav,&s->managed_view);
+#endif
+            s->view.pushed+=report.pushed;s->view.pulled+=report.pulled;s->view.originals_verified+=report.originals_verified;
             s->view.pending_metadata_observations+=report.pending_metadata;s->view.pending_original_observations+=report.pending_local_original;
             if(step==READER_SYNC_OK){s->view.steps++;after=report.after;
               if(report.shard_complete){s->view.completed_shards++;if(shard==255){s->view.completed_sweeps++;finished=true;}else shard=report.next_shard;}
@@ -145,27 +174,48 @@ void work(reader_session *s){
         }
       }
     }catch(const failure &f){status=f.code;error=f.error;}catch(...){status=READER_SESSION_IO;}
-    {std::lock_guard<std::mutex> lock(s->mutex);s->running=false;s->view.status=status;s->view.error=error;s->view.state=s->closing?READER_SESSION_CLOSING:result;}
+    {std::lock_guard<std::mutex> lock(s->mutex);
+#ifdef EXR_READER_SESSION_MANAGED
+      if(c&&!s->managed_profile.empty())exr_webdav_managed_observe(c->dav,&s->managed_view);
+#endif
+      s->running=false;s->view.status=status;s->view.error=error;s->view.state=s->closing?READER_SESSION_CLOSING:result;}
   }
   c.reset();
-  {std::lock_guard<std::mutex> lock(s->mutex);s->view.state=READER_SESSION_CLOSED;}
+  {std::lock_guard<std::mutex> lock(s->mutex);
+#ifdef EXR_READER_SESSION_MANAGED
+    s->cleanup_requested=false;
+#endif
+    s->view.state=READER_SESSION_CLOSED;}
 }
 }
-static reader_session_status create_session(bool raw_api,const reader_session_config *config,reader_session **out){
+static reader_session_status create_session(bool raw_api,const reader_session_config *config,reader_session **out,const char *managed_profile=nullptr){
   if(out)*out=nullptr;
   if(!out||!config||!bounded(config->product_path,8192)||!bounded(config->private_directory,8192)||
     !bounded(config->original_directory,8192)||!uuid(config->account_id)||!bounded(config->dav.root_url,8192)||
     (config->dav.authorization&&*config->dav.authorization&&!bounded(config->dav.authorization,8192)))return READER_SESSION_ARGUMENT;
+#ifdef EXR_READER_SESSION_MANAGED
+  if(managed_profile&&(!raw_api||!bounded(managed_profile,8192)))return READER_SESSION_ARGUMENT;
+#else
+  (void)managed_profile;
+#endif
   try{
     for(const char *p:{config->private_directory,config->original_directory}){fs::path folder=fs::u8path(p);if(fs::is_symlink(fs::symlink_status(folder))||!fs::is_directory(folder))return READER_SESSION_ARGUMENT;}
     std::unique_ptr<reader_session> s(new reader_session(raw_api));s->product=config->product_path;s->directory=config->private_directory;s->originals=config->original_directory;
     s->account=config->account_id;s->root=config->dav.root_url;s->authorization=config->dav.authorization?config->dav.authorization:"";
-    s->limits=config->dav;s->limits.root_url=s->limits.authorization=nullptr;s->worker=std::thread(work,s.get());*out=s.release();return READER_SESSION_OK;
+    s->limits=config->dav;s->limits.root_url=s->limits.authorization=nullptr;
+#ifdef EXR_READER_SESSION_MANAGED
+    if(managed_profile){s->managed_profile=managed_profile;s->managed_view.enabled=1;}
+#endif
+    s->worker=std::thread(work,s.get());*out=s.release();return READER_SESSION_OK;
   }catch(...){return READER_SESSION_IO;}
 }
 extern "C" reader_session_status reader_session_start(reader_session *s){if(!s)return READER_SESSION_ARGUMENT;std::lock_guard<std::mutex> lock(s->mutex);
   if(s->closing)return READER_SESSION_ARGUMENT;
-  if(s->pending||s->running)return READER_SESSION_BUSY;
+  if(s->pending||s->running
+#ifdef EXR_READER_SESSION_MANAGED
+    ||s->cleanup_requested
+#endif
+    )return READER_SESSION_BUSY;
   s->cancelled.store(false);s->transferred.store(0);s->pending=true;s->view.state=READER_SESSION_RUNNING;s->changed.notify_one();return READER_SESSION_OK;
 }
 extern "C" reader_session_status reader_session_cancel(reader_session *s){if(!s)return READER_SESSION_ARGUMENT;std::lock_guard<std::mutex> lock(s->mutex);
@@ -187,4 +237,25 @@ extern "C" reader_session_status reader_session_destroy(reader_session **pointer
 extern "C" reader_session_status reader_session_create(const reader_session_config *c,reader_session **s){return create_session(false,c,s);}
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
 extern "C" reader_session_status reader_session_create_raw_v3(const reader_session_config *c,reader_session **s){return create_session(true,c,s);}
+#endif
+
+#ifdef EXR_READER_SESSION_MANAGED
+extern "C" reader_session_status reader_session_create_managed_raw_v3(const reader_session_config *c,const char *profile,reader_session **out) {
+  if(!profile){if(out)*out=nullptr;return READER_SESSION_ARGUMENT;}
+  return create_session(true,c,out,profile);
+}
+extern "C" reader_session_status reader_session_managed_observe(reader_session *s,exr_webdav_managed_snapshot *out) {
+  if(out)*out={};
+  if(!s||!out)return READER_SESSION_ARGUMENT;
+  std::lock_guard<std::mutex> lock(s->mutex);
+  if(s->managed_profile.empty())return READER_SESSION_ARGUMENT;
+  *out=s->managed_view;out->recovery_running=s->cleanup_requested?1:0;return READER_SESSION_OK;
+}
+extern "C" reader_session_status reader_session_managed_retry_cleanup(reader_session *s) {
+  if(!s)return READER_SESSION_ARGUMENT;
+  std::lock_guard<std::mutex> lock(s->mutex);
+  if(s->managed_profile.empty()||s->closing)return READER_SESSION_ARGUMENT;
+  if(s->running||s->pending||s->cleanup_requested)return READER_SESSION_BUSY;
+  s->cleanup_requested=true;s->changed.notify_one();return READER_SESSION_OK;
+}
 #endif

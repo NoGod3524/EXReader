@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "reader_sync.h"
+#ifdef EXR_WEBDAV_MANAGED
+#include "exr_webdav_managed.h"
+#endif
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -150,7 +153,12 @@ struct step {
       std::set<std::string> resources;for(size_t i=0;i<listed.value.count;i++)resources.insert(listed.value.entries[i].resource);initialized.emplace(part,std::move(resources));
     }end=folder.find('/',end+1);}
   }
-  void download(const std::string &resource,private_file &file){exr_webdav_error error{};exr_webdav_download result{};dav_check(exr_webdav_download_file(s.dav,resource.c_str(),s.directory.u8string().c_str(),file.name.filename().u8string().c_str(),control,&result,&error),error);}
+  void download(const std::string &resource,private_file &file){
+#ifdef EXR_WEBDAV_MANAGED
+    if(exr_webdav_managed_enabled(s.dav)&&file.name.filename().u8string().rfind(".reader-sync-",0)==0)
+      file.name=file.name.parent_path()/fs::u8path(file.name.filename().u8string().substr(1));
+#endif
+    exr_webdav_error error{};exr_webdav_download result{};dav_check(exr_webdav_download_file(s.dav,resource.c_str(),s.directory.u8string().c_str(),file.name.filename().u8string().c_str(),control,&result,&error),error);}
   void publish(const std::string &resource,const fs::path &file,uint64_t bytes,const std::string &expected){
     std::string folder=resource.substr(0,resource.find_last_of('/')+1);ensure(folder);auto &entries=initialized[folder];
     if(entries.size()>=2000&&!entries.count(resource))reject(READER_SYNC_LIMIT,"Immutable shard has reached its 2000-entry discovery ceiling");

@@ -7,6 +7,12 @@
 #include <math.h>
 #ifdef EXR_READER_ACCOUNT
 #include <reader_session.h>
+#ifdef EXR_READER_GTK_MANAGED
+#include <reader_session_managed.h>
+static void managed_startup(void);
+static gboolean managed_defer_exit(void);
+static char *managed_observation(void);
+#endif
 #include <exr_credentials.h>
 #include <reader_projection.h>
 #endif
@@ -339,6 +345,10 @@ static void state(void) {
 #ifdef EXR_READER_ACCOUNT
   char *account=accounts_observation();
   complete=g_strconcat(data,account,NULL);g_free(data);g_free(account);data=complete;
+#ifdef EXR_READER_GTK_MANAGED
+  char *managed=managed_observation();
+  complete=g_strconcat(data,managed,NULL);g_free(data);g_free(managed);data=complete;
+#endif
 #endif
 #ifdef EXR_READER_PREFERENCES_UI
   char *preferences=preferences_observation();
@@ -667,6 +677,9 @@ static gboolean apply_result(gpointer data) {
 #endif
   if(done->generation!=g_atomic_int_get(&generation)) goto free_result;
   profile_writable=done->profile_writable;
+#ifdef EXR_READER_GTK_MANAGED
+  if(profile_writable)managed_startup();
+#endif
   if(result->has_shelf) {
 #ifdef EXR_READER_PRODUCT_CATALOG
     if(done->shelf_generation==g_atomic_int_get(&shelf_generation)) {
@@ -849,6 +862,9 @@ static void submit(reader_action action,int64_t id,const char *path,int size) {
 #include "collections_ui.inc"
 #endif
 #ifdef EXR_READER_ACCOUNT
+#ifdef EXR_READER_GTK_MANAGED
+#include "webdav_managed_owner.inc"
+#endif
 #include "accounts_ui.inc"
 #endif
 #ifdef EXR_READER_PREFERENCES_UI
@@ -1065,6 +1081,9 @@ static gboolean page_painted(GtkWidget *widget,cairo_t *context,gpointer unused)
   (void)context;(void)unused;painted_generation=frame_generation;page_draw_serial++;page_draw_sensitive=gtk_widget_is_sensitive(widget);state();return FALSE;
 }
 static void stop_worker(void) {
+#ifdef EXR_READER_GTK_MANAGED
+  if(managed_defer_exit())return;
+#endif
 #ifdef EXR_READER_ACCOUNT
   if(accounts_defer_exit()) return;
 #endif
@@ -1084,6 +1103,9 @@ static void stop_worker(void) {
 }
 static gboolean close_window(GtkWidget *w,GdkEvent *event,gpointer unused) {
   (void)w;(void)event;(void)unused;
+#ifdef EXR_READER_GTK_MANAGED
+  if(managed_defer_exit())return TRUE;
+#endif
 #ifdef EXR_READER_READING_RECORDS_UI
   if(reading_records_opened()) reading_records_close();
 #endif
@@ -1193,6 +1215,11 @@ int main(int argc,char **argv) {
   }
 #endif
   label=gtk_label_new("Import a book to start reading");gtk_box_pack_start(GTK_BOX(root),label,FALSE,FALSE,0);
+#ifdef EXR_READER_GTK_MANAGED
+  managed_owner.badge=gtk_label_new("Checking temporary downloads…");
+  gtk_label_set_line_wrap(GTK_LABEL(managed_owner.badge),TRUE);
+  gtk_box_pack_start(GTK_BOX(root),managed_owner.badge,FALSE,FALSE,0);
+#endif
   stack=gtk_stack_new();gtk_box_pack_start(GTK_BOX(root),stack,TRUE,TRUE,0);
   shelf=gtk_list_box_new();gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(shelf),TRUE);
   atk_object_set_name(gtk_widget_get_accessible(shelf),"Bookshelf");
@@ -1361,6 +1388,9 @@ int main(int argc,char **argv) {
 #endif
 #ifdef EXR_READER_ACCOUNT
   accounts_cleanup();
+#ifdef EXR_READER_GTK_MANAGED
+  managed_shutdown();
+#endif
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   g_free(shelf_query);g_free(shelf_top_key);g_free(shelf_selected_key);g_free(restore_key);
