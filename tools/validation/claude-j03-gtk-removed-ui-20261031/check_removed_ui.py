@@ -30,6 +30,11 @@ def record(name, ok, observed=None):
     assert ok, row
 
 
+def text_of(node):
+    value = bus.accessible_text(node)
+    return value['text'] if isinstance(value, dict) else (value or '')
+
+
 class Ui:
     def __init__(self, payload, folder):
         self.folder = folder
@@ -83,7 +88,7 @@ class Ui:
         for n in bus.walk(d):
             if bus.role(n) != 'label':
                 continue
-            text = bus.name(n) + '\n' + (bus.accessible_text(n) or '')
+            text = bus.name(n) + '\n' + text_of(n)
             m = KEY.search(text)
             if m and bus.states(n).get('visible', True):
                 box = bus.extents(n) or {'y': 0}
@@ -92,7 +97,7 @@ class Ui:
         for n in bus.walk(d):
             if bus.role(n) == 'list item' and bus.states(n).get('selected'):
                 for c in bus.walk(n):
-                    m = KEY.search(bus.name(c) + '\n' + (bus.accessible_text(c) or ''))
+                    m = KEY.search(bus.name(c) + '\n' + text_of(c))
                     if m:
                         selected.append(m.group(0)); break
         return list(found), selected, titles
