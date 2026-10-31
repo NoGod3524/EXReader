@@ -7,13 +7,14 @@ on:
       mode:
         type: choice
         default: capture
-        options: [capture, replay]
+        options: [capture, replay, inspect_control]
         description: Capture new native data or analyze the pinned completed cohort
 permissions:
   contents: read
   actions: read
 jobs:
   controls:
+    if: inputs.mode != 'inspect_control'
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
@@ -36,8 +37,11 @@ jobs:
       - name: Verify native row identity and unchanged pixels
         run: |
           mkdir -p build/f08-causal-control
+          set +e
           xvfb-run -a -s "-screen 0 1440x900x24" build/f08-causal-probe/f08_draw_control > build/f08-causal-control/draw.json
+          f08_control_status=$?
           cat build/f08-causal-control/draw.json
+          exit "$f08_control_status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -127,3 +131,15 @@ jobs:
           path: build/f08-shelf-replay/
           include-hidden-files: true
           if-no-files-found: error
+  inspect_control:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'inspect_control'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate and read retained native control failure
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f08_shelf_content_20261031/run.py inspect_control
