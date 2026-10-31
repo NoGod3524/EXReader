@@ -113,6 +113,10 @@ static void product_shelf_accept(host_job *job) {
   int before=direction>0 ? g.shelf_before:job->product_shelf_before;
   int after=direction<0 ? g.shelf_after:job->product_shelf_after;
   if(drop) { if(direction<0) after=1;else before=1; }
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_shelf_pending=job->review;
+  f08_record("shelf_apply",0,&job->review,(unsigned long)product_shelf_snapshot_serial,0,IDC_BOOKS,0,0,count,direction);
+#endif
   g.shelf_applying=1;shelf_clear();g.shelf=books;g.shelf_cursors=cursors;g.shelf_count=count;
   g.shelf_before=before;g.shelf_after=after;g.shelf_filter_pending=0;
   g.shelf_evicted+=(unsigned)drop;if(count>g.shelf_max_cached) g.shelf_max_cached=(unsigned)count;
@@ -131,7 +135,39 @@ static void product_shelf_accept(host_job *job) {
 }
 static LRESULT CALLBACK product_shelf_procedure(HWND window,UINT message,WPARAM wparam,LPARAM lparam) {
   if(message==WM_NCDESTROY) RemovePropW(window,L"EXReaderShelfSnapshot");
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  /* Every native listbox message is retained, including direct GDI paths.
+     Getters bypass this subclass so observations cannot recursively trace themselves. */
+  LONGLONG f08_start=f08_tick();LONG f08_previous=f08_active_input;
+  LRESULT f08_top=CallWindowProcW(g.shelf_procedure,window,LB_GETTOPINDEX,0,0);
+  LRESULT f08_count_before=CallWindowProcW(g.shelf_procedure,window,LB_GETCOUNT,0,0);
+  if(message==WM_MOUSEWHEEL || message==WM_VSCROLL || message==WM_KEYDOWN || message==WM_LBUTTONDOWN || message==LB_SETTOPINDEX)
+    f08_previous=f08_input_begin(IDC_BOOKS,message);
+  f08_origin f08_old_pending=f08_shelf_pending;
+  int f08_direct=message==WM_MOUSEWHEEL || message==WM_VSCROLL || message==WM_HSCROLL || message==WM_KEYDOWN || message==LB_SETTOPINDEX;
+  if(f08_direct) { memset(&f08_shelf_pending,0,sizeof(f08_shelf_pending));
+    f08_shelf_pending.id=-InterlockedIncrement(&f08_direct_frames);f08_shelf_pending.input_id=f08_active_input;
+    f08_shelf_pending.worker_start_qpc=f08_start; }
+  f08_origin f08_source=f08_shelf_pending;
+  f08_record("shelf_message_begin",f08_start,&f08_source,(unsigned long)product_shelf_snapshot_serial,0,IDC_BOOKS,message,0,f08_top,f08_count_before);
+#endif
   LRESULT result=CallWindowProcW(g.shelf_procedure,window,message,wparam,lparam);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  { BOOL flushed=GdiFlush();
+    LRESULT top=CallWindowProcW(g.shelf_procedure,window,LB_GETTOPINDEX,0,0);
+    LRESULT count=CallWindowProcW(g.shelf_procedure,window,LB_GETCOUNT,0,0);
+    BOOL pending=GetUpdateRect(window,NULL,FALSE);int changed=top!=f08_top || count!=f08_count_before;
+    if(message==WM_SETREDRAW) f08_shelf_redraw=wparam!=0;
+    f08_record("shelf_gdi_complete",f08_start,&f08_source,(unsigned long)product_shelf_snapshot_serial,0,IDC_BOOKS,message,
+      flushed ? 1+(pending ? 2:0)+(f08_shelf_redraw ? 4:0):-1,top,count);
+    if(flushed && f08_shelf_redraw && !pending && !(product_shelf_snapshot_serial&1) &&
+        (message==WM_PAINT || (f08_direct && changed))) {
+      f08_record("shelf_frame_complete",f08_start,&f08_source,(unsigned long)product_shelf_snapshot_serial,0,IDC_BOOKS,message,1,top,count);
+      memset(&f08_shelf_pending,0,sizeof(f08_shelf_pending));
+    } else if(f08_direct && !changed) f08_shelf_pending=f08_old_pending;
+  }
+  f08_active_input=f08_previous;
+#endif
   if(message==WM_VSCROLL || message==WM_MOUSEWHEEL || message==WM_KEYDOWN || message==WM_SIZE) {
     product_shelf_remember();SetTimer(g.window,4,300,NULL);PostMessageW(g.window,WM_APP+31,0,0);
   }

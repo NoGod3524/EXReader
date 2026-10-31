@@ -61,7 +61,8 @@ def build():
         "-DCMAKE_PREFIX_PATH="+prefix,"-DEXR_SDK="+str(sdk),"-DEXR_SDK_VERSION=3.42.0",
         "-DREADER_METADATA_PREFIX="+str(stage),"-DREADER_ACCOUNT_PREFIX="+str(stage),
         "-DEXR_READER_WINDOWS_WAVE3=ON","-DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=ON",
-        "-DEXR_READER_WINDOWS_TXT_PROGRESS=ON","-DEXR_READER_WINDOWS_SHELF_TESTS=ON"],"host-configure")
+        "-DEXR_READER_WINDOWS_TXT_PROGRESS=ON","-DEXR_READER_WINDOWS_SHELF_TESTS=ON",
+        *globals().get("F08_NATIVE_REVIEW_OPTIONS",[])],"host-configure")
     H.run(["cmake","--build",host,"--target","EXReaderWave3","reader-windows-shelf-seed","--parallel","4","--verbose"],"host-build")
     H.run([sys.executable,"tools/build_windows_host.py","--sdk",sdk,"--binary",host/"EXReaderWave3.exe",
            "--output",OUT/"package","--static-reading"],"package")

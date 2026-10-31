@@ -107,7 +107,14 @@ enum {
 #define WM_HOST_COMPLETE (WM_APP + 1)
 #define WM_HOST_PROGRESS (WM_APP + 2)
 
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+#include EXR_WINDOWS_FRAME_REVIEW_HEADER
+#endif
+
 typedef struct {
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_origin review;
+#endif
   exr_bitmap bitmap;
   uint32_t *dib;
   wchar_t *text;
@@ -527,6 +534,9 @@ static void frame_clear(host_frame *frame) {
 }
 
 static void frame_move(host_frame *dst, host_frame *src) {
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  if(dst==&g.frame) f08_record("reader_publish",0,&src->review,src->generation,src->book_id,IDC_PAGE,0,src->valid,src->page,src->bitmap.width);
+#endif
   frame_clear(dst);
   *dst = *src;
   memset(src, 0, sizeof(*src));
@@ -959,6 +969,9 @@ struct host_job {
   exr_status status;
   exr_error error;
   host_frame frame;
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_origin review;
+#endif
   int have_frame;
   int at_end;
   int imported;
@@ -1116,6 +1129,10 @@ static host_job *job_new(int kind) {
   if (!job) return NULL;
   job->refs = 1;
   job->kind = kind;
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  if(f08_enabled) { job->review.id=InterlockedIncrement(&f08_jobs);job->review.input_id=f08_active_input;
+    job->review.queued_qpc=f08_tick();f08_record("job_created",0,&job->review,0,0,0,kind,0,0,0); }
+#endif
   job->zoom_percent = g.zoom_percent;
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   /* Immutable value snapshot: the worker never reads the owner's record. */
@@ -3026,6 +3043,10 @@ static exr_status job_import(host_job *job) {
 #endif
 static unsigned __stdcall job_thread(void *context) {
   host_job *job = context;
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  job->review.worker_start_qpc=f08_tick();
+  f08_record("worker_begin",0,&job->review,0,0,0,job->kind,0,0,0);
+#endif
   job_pause(job);
   if (job_cancel_flag(job) && job->kind != JOB_ROLLBACK && job->kind != JOB_IMPORT_ORGANIZE && !job_commit_barrier(job->kind))
     job->status = EXR_CANCELLED;
@@ -3060,6 +3081,11 @@ static unsigned __stdcall job_thread(void *context) {
   )
     job->status = job->kind == JOB_IMPORT ? rollback_import(job) : EXR_CANCELLED;
   if (job->status == EXR_CANCELLED) frame_clear(&job->frame);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  job->review.worker_end_qpc=f08_tick();job->frame.review=job->review;
+  f08_record("worker_end",job->review.worker_start_qpc,&job->review,job->frame.generation,
+    job->frame.book_id,0,job->kind,job->status,job->have_frame,job->frame.valid);
+#endif
   if (!PostMessageW(g.window, WM_HOST_COMPLETE, 0, (LPARAM)job)) {
     /* Window gone; the UI-side reference is released during shutdown. */
   }
@@ -3453,6 +3479,10 @@ static void paint_selection(HDC dc) {
 }
 
 static void paint_page_view(HWND window) {
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  LONGLONG f08_paint_start=f08_tick();int f08_draw_ok=0;
+  f08_record("reader_paint_begin",f08_paint_start,&g.frame.review,g.frame.generation,g.frame.book_id,IDC_PAGE,WM_PAINT,g.frame.valid+(IsWindowVisible(window) ? 2:0),g.frame.page,g.frame.bitmap.width);
+#endif
   PAINTSTRUCT paint;
   HDC dc = BeginPaint(window, &paint);
   RECT area;
@@ -3469,6 +3499,9 @@ static void paint_page_view(HWND window) {
     info.bmiHeader.biCompression = BI_RGB;
     SetStretchBltMode(dc, HALFTONE);
     SetBrushOrgEx(dc, 0, 0, NULL);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+    f08_draw_ok=
+#endif
     StretchDIBits(dc, g.view.dx, g.view.dy,
                   (int)(g.frame.bitmap.width * g.view.scale),
                   (int)(g.frame.bitmap.height * g.view.scale),
@@ -3488,6 +3521,10 @@ static void paint_page_view(HWND window) {
     DrawFocusRect(dc, &focus);
   }
   EndPaint(window, &paint);
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  { BOOL flushed=GdiFlush();
+    f08_record("reader_gdi_complete",f08_paint_start,&g.frame.review,g.frame.generation,g.frame.book_id,IDC_PAGE,WM_PAINT,flushed ? g.frame.valid+(IsWindowVisible(window) ? 2:0): -1,f08_draw_ok,g.frame.page); }
+#endif
 }
 
 static size_t point_offset(int x, int y, int at_end) {
@@ -4871,7 +4908,15 @@ static void handle_job_complete(host_job *job) {
   }
 }
 
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+static void host_command_body(int id);
 static void host_command(int id) {
+  LONG previous=f08_input_begin(id,WM_COMMAND);host_command_body(id);f08_active_input=previous;
+}
+static void host_command_body(int id) {
+#else
+static void host_command(int id) {
+#endif
   if (g.session.txt && id != IDC_OPEN_BUTTON && id != IDC_IMPORT_BUTTON && id != IDC_CANCEL && id != IDC_DELETE_BUTTON && id != IDC_PREV && id != IDC_NEXT && id != IDC_SELECT_ALL && id != IDC_COPY_QUOTE
 #ifdef EXR_READER_WINDOWS_ACCOUNT
       && id != IDC_ACCOUNT_BUTTON
@@ -6293,6 +6338,9 @@ static void host_cleanup(void) {
     job_release(g.discard);
     g.discard = NULL;
   }
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  if(!f08_finish()) { fprintf(stderr,"F08 trace write failed\n");ExitProcess(3); }
+#endif
   session_clear(&g.session);
   frame_clear(&g.frame);
   notes_clear();
@@ -6350,6 +6398,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     LocalFree(argv);
     return (int)result;
   }
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+  f08_initialize();
+#endif
   for (i = 1; i < argc; i++) {
     const wchar_t *value = (i + 1 < argc) ? argv[i + 1] : L"";
     if (!wcscmp(argv[i], L"--drive")) { copy_wstring(script, HOST_PATH, value); i++; }
