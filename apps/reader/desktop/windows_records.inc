@@ -373,11 +373,11 @@ static void winrecords_show(void) {
   HWND label=make_static(window,0,L"阅读记录：书签、划线、笔记和位置(&R)");MoveWindow(label,12,12,780,22,TRUE);
   records.rows=CreateWindowExW(WS_EX_CLIENTEDGE,L"LISTBOX",L"阅读记录",WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT,
     12,38,780,270,window,(HMENU)(INT_PTR)IDC_RECORDS_ROWS,NULL,NULL);
-  SendMessageW(records.rows,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
+  SendMessageW(records.rows,WM_SETFONT,(WPARAM)host_ui_font(),TRUE);
   label=make_static(window,0,L"书签名称或笔记内容(&T)");MoveWindow(label,12,315,780,20,TRUE);
   records.body=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|ES_MULTILINE|ES_AUTOVSCROLL,
     12,337,780,82,window,(HMENU)(INT_PTR)IDC_RECORDS_BODY,NULL,NULL);
-  SendMessageW(records.body,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);SendMessageW(records.body,EM_SETLIMITTEXT,65536,0);
+  SendMessageW(records.body,WM_SETFONT,(WPARAM)host_ui_font(),TRUE);SendMessageW(records.body,EM_SETLIMITTEXT,65536,0);
   records.message=make_static(window,IDC_RECORDS_MESSAGE,L"正在读取…");MoveWindow(records.message,12,425,780,46,TRUE);
   const wchar_t *labels[]={L"保存位置(&P)",L"加书签(&B)",L"划线笔记(&H)",L"改笔记(&E)",L"删除(&D)",L"恢复(&V)",L"定位(&O)",
     L"上一批",L"下一批",L"刷新(&F)",L"重试原请求",L"放弃原请求",L"取消(&X)",L"关闭(&C)"};

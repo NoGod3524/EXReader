@@ -351,13 +351,13 @@ static void winsearch_show(void) {
   HWND label=make_static(window,0,L"查找文字(&Q)");MoveWindow(label,12,12,110,22,TRUE);
   inbook.query=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,
     124,10,404,26,window,(HMENU)(INT_PTR)IDC_INBOOK_QUERY,NULL,NULL);
-  SendMessageW(inbook.query,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
+  SendMessageW(inbook.query,WM_SETFONT,(WPARAM)host_ui_font(),TRUE);
   SendMessageW(inbook.query,EM_SETLIMITTEXT,4096,0);
   inbook.find=make_button(window,IDC_INBOOK_FIND,L"查找(&F)");MoveWindow(inbook.find,540,10,108,26,TRUE);
   HWND results_label=make_static(window,0,L"书内查找结果(&R)");MoveWindow(results_label,12,44,636,22,TRUE);
   inbook.rows=CreateWindowExW(WS_EX_CLIENTEDGE,L"LISTBOX",L"书内查找结果",WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT,
     12,70,636,236,window,(HMENU)(INT_PTR)IDC_INBOOK_HITS,NULL,NULL);
-  SendMessageW(inbook.rows,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
+  SendMessageW(inbook.rows,WM_SETFONT,(WPARAM)host_ui_font(),TRUE);
   inbook.message=make_static(window,IDC_INBOOK_MESSAGE,L"输入文字后查找。边界：逐字、区分大小写；不包含扫描页OCR。");MoveWindow(inbook.message,12,316,636,36,TRUE);
   inbook.next=make_button(window,IDC_INBOOK_NEXT,L"下一批(&N)");MoveWindow(inbook.next,12,360,120,28,TRUE);
   inbook.open=make_button(window,IDC_INBOOK_OPEN,L"定位(&O)");MoveWindow(inbook.open,144,360,120,28,TRUE);

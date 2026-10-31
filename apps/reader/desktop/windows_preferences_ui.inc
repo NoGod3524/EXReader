@@ -16,7 +16,7 @@ static HWND prefs_entry(HWND parent, int id, int x, int y, int width) {
   HWND entry = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"",
                                WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
                                x, y, width, 24, parent, (HMENU)(INT_PTR)id, NULL, NULL);
-  SendMessageW(entry, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  SendMessageW(entry, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
   SendMessageW(entry, EM_SETLIMITTEXT, 12, 0);
   return entry;
 }
@@ -27,7 +27,7 @@ static HWND prefs_combo(HWND parent, int id, int x, int y, int width,
                                WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST,
                                x, y, width, 200, parent, (HMENU)(INT_PTR)id, NULL, NULL);
   int index;
-  SendMessageW(combo, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  SendMessageW(combo, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
   for (index = 0; index < count; index++) SendMessageW(combo, CB_ADDSTRING, 0, (LPARAM)items[index]);
   return combo;
 }
@@ -179,8 +179,8 @@ static void prefs_dialog_layout(void) {
   MoveWindow(prefs_ui.close, 520, expanded ? 508 : 372, 84, 30, TRUE);
   MoveWindow(prefs_ui.message, 18, expanded ? 544 : 408, 584, 44, TRUE);
   GetWindowRect(g.window, &parent);
-  SetWindowPos(prefs_ui.dialog, HWND_TOP, parent.left + 100, parent.top + 50, 630,
-               expanded ? 632 : 496, SWP_SHOWWINDOW);
+  SetWindowPos(prefs_ui.dialog, HWND_TOP, parent.left + dpi_px(100), parent.top + dpi_px(50), dpi_px(630),
+               dpi_px(expanded ? 632 : 496), SWP_SHOWWINDOW);
 }
 
 static void prefs_dialog_controls(void) {

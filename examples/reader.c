@@ -3159,18 +3159,56 @@ static void handle_job_complete(host_job *job);
 /* Used by the accessibility provider, which is compiled before this function. */
 static size_t point_offset(int x, int y, int at_end);
 
+/* DPI: the process is system-DPI aware, so UI Automation, Narrator and the magnifier see the
+   same physical pixels the window uses. Layout constants below are written for 96 DPI and are
+   scaled here; the window and child sizes go through these macros. */
+static UINT host_dpi = 96;
+static int dpi_px(int value) { return value == CW_USEDEFAULT ? value : MulDiv(value, (int)host_dpi, 96); }
+static int dpi_logical(int value) { return MulDiv(value, 96, (int)host_dpi); }
+static void host_init_dpi(void) {
+  typedef BOOL (WINAPI *set_context_fn)(HANDLE);
+  typedef UINT (WINAPI *system_dpi_fn)(void);
+  HMODULE user = GetModuleHandleW(L"user32.dll");
+  FARPROC set_context = user ? GetProcAddress(user, "SetProcessDpiAwarenessContext") : NULL;
+  FARPROC system_dpi = user ? GetProcAddress(user, "GetDpiForSystem") : NULL;
+  if (set_context) ((set_context_fn)set_context)((HANDLE)-2); /* DPI_AWARENESS_CONTEXT_SYSTEM_AWARE */
+  if (system_dpi) {
+    UINT dpi = ((system_dpi_fn)system_dpi)();
+    if (dpi >= 96 && dpi <= 960) host_dpi = dpi;
+  }
+}
+static HFONT host_ui_font(void) {
+  static HFONT font;
+  if (!font) {
+    typedef BOOL (WINAPI *spi_dpi_fn)(UINT, UINT, PVOID, UINT, UINT);
+    HMODULE user = GetModuleHandleW(L"user32.dll");
+    FARPROC spi = user ? GetProcAddress(user, "SystemParametersInfoForDpi") : NULL;
+    NONCLIENTMETRICSW metrics;
+    memset(&metrics, 0, sizeof(metrics));
+    metrics.cbSize = sizeof(metrics);
+    if (spi && ((spi_dpi_fn)spi)(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0, host_dpi))
+      font = CreateFontIndirectW(&metrics.lfMessageFont);
+    if (!font) font = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+  }
+  return font;
+}
+#define MoveWindow(window, x, y, w, h, repaint) \
+  MoveWindow(window, dpi_px(x), dpi_px(y), dpi_px(w), dpi_px(h), repaint)
+#define CreateWindowExW(ex, cls, text, style, x, y, w, h, parent, menu, instance, param) \
+  CreateWindowExW(ex, cls, text, style, dpi_px(x), dpi_px(y), dpi_px(w), dpi_px(h), parent, menu, instance, param)
+
 static HWND make_button(HWND parent, int id, const wchar_t *text) {
   HWND window = CreateWindowExW(0, L"BUTTON", text,
                                 WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                                 0, 0, 10, 10, parent, (HMENU)(INT_PTR)id, NULL, NULL);
-  if (window) SendMessageW(window, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  if (window) SendMessageW(window, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
   return window;
 }
 
 static HWND make_static(HWND parent, int id, const wchar_t *text) {
   HWND window = CreateWindowExW(0, L"STATIC", text, WS_CHILD | WS_VISIBLE | SS_LEFT,
                                 0, 0, 10, 10, parent, (HMENU)(INT_PTR)id, NULL, NULL);
-  if (window) SendMessageW(window, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  if (window) SendMessageW(window, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
   return window;
 }
 #ifdef EXR_READER_DESKTOP_METADATA
@@ -3208,7 +3246,7 @@ static void create_controls(HWND parent) {
   g.import_label = make_static(parent, IDC_IMPORT_LABEL, L"导入路径");
   g.import_edit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP |
                                   ES_AUTOHSCROLL, 0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_IMPORT_EDIT, NULL, NULL);
-  SendMessageW(g.import_edit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  SendMessageW(g.import_edit, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
   g.import_button = make_button(parent, IDC_IMPORT_BUTTON, L"导入(&I)");
   g.open_button = make_button(parent, IDC_OPEN_BUTTON, L"打开(&O)");
   g.delete_button = make_button(parent, IDC_DELETE_BUTTON, L"删除(&D)");
@@ -3238,14 +3276,14 @@ static void create_controls(HWND parent) {
   g.books = CreateWindowExW(WS_EX_CLIENTEDGE, L"LISTBOX", L"书架",
                             WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                             0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_BOOKS, NULL, NULL);
-  SendMessageW(g.books, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  SendMessageW(g.books, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
 #ifdef EXR_READER_PRODUCT_CATALOG
   /* A real static with a mnemonic names the search box (the same native path the
      import field already uses) and gives it an Alt access key. */
   g.shelf_search_label=make_static(parent,IDC_SHELF_SEARCH_LABEL,L"\u641c\u7d22(&S)");
   g.shelf_search=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,
     0,0,10,10,parent,(HMENU)(INT_PTR)IDC_SHELF_SEARCH,NULL,NULL);
-  SendMessageW(g.shelf_search,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
+  SendMessageW(g.shelf_search,WM_SETFONT,(WPARAM)host_ui_font(),TRUE);
   SendMessageW(g.shelf_search,EM_SETLIMITTEXT,256,0);
   g.shelf_refresh=make_button(parent,IDC_SHELF_REFRESH,L"刷新(&F)");
 #ifdef EXR_READER_DESKTOP_METADATA
@@ -3263,12 +3301,12 @@ static void create_controls(HWND parent) {
   g.notes = CreateWindowExW(WS_EX_CLIENTEDGE, L"LISTBOX", L"标注列表",
                             WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                             0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_NOTES, NULL, NULL);
-  SendMessageW(g.notes, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  SendMessageW(g.notes, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
   g.note_edit_label = make_static(parent, IDC_NOTE_EDIT_LABEL, L"\u6807\u6ce8\u5185\u5bb9(&M)");
   g.note_edit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP |
                                  ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL,
                                  0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_NOTE_EDIT, NULL, NULL);
-  SendMessageW(g.note_edit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  SendMessageW(g.note_edit, WM_SETFONT, (WPARAM)host_ui_font(), TRUE);
   /* Multiline editing without swallowing Tab: see host_a11y_prepare_note. */
   host_a11y_prepare_note();
   g.page = CreateWindowExW(WS_EX_CLIENTEDGE, L"EXReaderPage", L"阅读区域",
@@ -3296,8 +3334,8 @@ static void layout_controls(void) {
   int books_height, notes_top, notes_height;
   const int button_y = 40, button_h = 28;
   GetClientRect(g.window, &area);
-  width = area.right;
-  height = area.bottom;
+  width = dpi_logical(area.right);
+  height = dpi_logical(area.bottom);
   content_bottom = height - 36;
   left_width = width / 4;
   if (left_width < 250) left_width = 250;
@@ -6028,20 +6066,20 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_SIZE: {
       RECT bounds;
       GetWindowRect(window, &bounds);
-      g.window_width = bounds.right - bounds.left;
-      g.window_height = bounds.bottom - bounds.top;
+      g.window_width = dpi_logical(bounds.right - bounds.left);
+      g.window_height = dpi_logical(bounds.bottom - bounds.top);
       layout_controls();
       InvalidateRect(g.page, NULL, TRUE);
       return 0;
     }
     case WM_GETMINMAXINFO: {
       MINMAXINFO *limits = (MINMAXINFO *)lparam;
-      limits->ptMinTrackSize.x = 1060;
-      limits->ptMinTrackSize.y = 660;
+      limits->ptMinTrackSize.x = dpi_px(1060);
+      limits->ptMinTrackSize.y = dpi_px(660);
 #ifdef EXR_READER_WINDOWS_COMPACT
       if (!compact_expanded) {
-        limits->ptMinTrackSize.x = 640;
-        limits->ptMinTrackSize.y = 420;
+        limits->ptMinTrackSize.x = dpi_px(640);
+        limits->ptMinTrackSize.y = dpi_px(420);
       }
 #endif
       RECT work;
@@ -6460,8 +6498,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     LocalFree(argv);
     return 2;
   }
+  host_init_dpi();
   g.window = CreateWindowW(L"EXReaderHost", L"EXReader", WS_OVERLAPPEDWINDOW,
-                           CW_USEDEFAULT, CW_USEDEFAULT, g.window_width, g.window_height,
+                           CW_USEDEFAULT, CW_USEDEFAULT, dpi_px(g.window_width), dpi_px(g.window_height),
                            NULL, NULL, instance, NULL);
   if (!g.window) {
     host_cleanup();

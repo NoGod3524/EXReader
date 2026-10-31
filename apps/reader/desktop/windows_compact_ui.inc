@@ -59,7 +59,7 @@ static int compact_layout(void) {
   compact_visible(compact_resume,!compact_expanded && !compact_reading);
   if (compact_expanded) return 0;
   GetClientRect(g.window,&area);
-  int width=area.right,height=area.bottom;
+  int width=dpi_logical(area.right),height=dpi_logical(area.bottom);
   compact_visible(g.status,1);MoveWindow(g.status,12,height-28,width-24,22,TRUE);
   if (compact_reading) {
     compact_visible(compact_back,1);MoveWindow(compact_back,12,10,80,28,TRUE);
@@ -112,8 +112,8 @@ static void compact_expand(int expanded) {
   if(expanded) {
     RECT bounds;GetWindowRect(g.window,&bounds);
     int width=bounds.right-bounds.left,height=bounds.bottom-bounds.top;
-    if(width<1060 || height<660)
-      SetWindowPos(g.window,NULL,0,0,width<1060?1060:width,height<660?660:height,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+    if(width<dpi_px(1060) || height<dpi_px(660))
+      SetWindowPos(g.window,NULL,0,0,width<dpi_px(1060)?dpi_px(1060):width,height<dpi_px(660)?dpi_px(660):height,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
   }
   layout_controls();
 }

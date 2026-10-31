@@ -1,0 +1,35 @@
+name: F09 DPI-aware Windows host package
+on:
+  push:
+    branches: [codex/dot-f09-dpi-aware-20261031]
+permissions:
+  contents: read
+concurrency:
+  group: f09-dpi-aware-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build, package and self-test the DPI-aware host
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: utf-8
+        run: python tests/reader_f09_dpi_20261031/run.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f09-dpi-aware-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09-narrator-package/package-manifest.json
+            build/f09-narrator-package/candidate-package/build.json
+            build/f09-narrator-package/candidate-package/report.json
+            build/f09-narrator-package/candidate-package/EXReader/
+          if-no-files-found: error

@@ -200,7 +200,7 @@ static INT_PTR CALLBACK winio_dialog_proc(HWND dialog,UINT message,WPARAM wparam
     MoveWindow(make_static(dialog,0,winio.mode==WINIO_CLOUD ? L"云盘目录与书籍(&L)":L"书架多选（Ctrl/Shift，最多100本）(&L)"),16,12,720,24,TRUE);
     winio.rows=CreateWindowExW(WS_EX_CLIENTEDGE,L"LISTBOX",winio.mode==WINIO_CLOUD ? L"云盘目录与书籍":L"书架多选",
       WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|LBS_NOTIFY|(winio.mode==WINIO_BULK ? LBS_EXTENDEDSEL:0),16,38,720,210,dialog,(HMENU)(INT_PTR)IDC_IO_ROWS,NULL,NULL);
-    SendMessageW(winio.rows,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
+    SendMessageW(winio.rows,WM_SETFONT,(WPARAM)host_ui_font(),TRUE);
     if(winio.mode==WINIO_BULK) {
       for(size_t i=0;i<winio.count;i++) SendMessageW(winio.rows,LB_ADDSTRING,0,(LPARAM)winio.titles[i]);
       MoveWindow(make_static(dialog,0,L"明确动作(&A)"),16,258,130,24,TRUE);
@@ -290,7 +290,7 @@ static void winio_show(int mode) {
   DLGTEMPLATE *dialog=(DLGTEMPLATE *)data.bytes;dialog->style=WS_POPUP|WS_CAPTION|WS_SYSMENU|DS_MODALFRAME;dialog->cx=420;dialog->cy=360;
   HWND window=CreateDialogIndirectParamW(GetModuleHandleW(NULL),dialog,g.window,winio_dialog_proc,0);
   if(!window) return;
-  RECT r;GetWindowRect(g.window,&r);SetWindowPos(window,HWND_TOP,r.left+70,r.top+30,770,mode==WINIO_CLOUD ? 470:680,SWP_SHOWWINDOW);
+  RECT r;GetWindowRect(g.window,&r);SetWindowPos(window,HWND_TOP,r.left+dpi_px(70),r.top+dpi_px(30),dpi_px(770),dpi_px(mode==WINIO_CLOUD ? 470:680),SWP_SHOWWINDOW);
   host_a11y_owner_enabled(0);SetForegroundWindow(window);SetFocus(winio.rows);
   if(mode==WINIO_CLOUD) winio_list("");else winio_submit(winio_new(WINIO_INSPECT));
 }

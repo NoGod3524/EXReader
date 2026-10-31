@@ -56,7 +56,7 @@ static void metadata_failed_to_start(host_job *job) {
 static HWND metadata_entry(HWND parent,int id,int y,const wchar_t *value) {
   HWND entry=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",value ? value:L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,
     108,y,486,26,parent,(HMENU)(INT_PTR)id,NULL,NULL);
-  SendMessageW(entry,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
+  SendMessageW(entry,WM_SETFONT,(WPARAM)host_ui_font(),TRUE);
   SendMessageW(entry,EM_SETLIMITTEXT,8192,0);return entry;
 }
 static INT_PTR CALLBACK metadata_dialog_procedure(HWND dialog,UINT message,WPARAM wparam,LPARAM lparam) {
@@ -80,7 +80,7 @@ static INT_PTR CALLBACK metadata_dialog_procedure(HWND dialog,UINT message,WPARA
       g.metadata_author=metadata_entry(dialog,IDC_METADATA_AUTHOR,54,g.metadata_author_value);
       g.metadata_favorite=CreateWindowExW(0,L"BUTTON",L"收藏(&F)",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX,
         108,94,230,26,dialog,(HMENU)(INT_PTR)IDC_METADATA_FAVORITE,NULL,NULL);
-      SendMessageW(g.metadata_favorite,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
+      SendMessageW(g.metadata_favorite,WM_SETFONT,(WPARAM)host_ui_font(),TRUE);
       SendMessageW(g.metadata_favorite,BM_SETCHECK,g.metadata_favorite_value ? BST_CHECKED:BST_UNCHECKED,0);
       g.metadata_message=make_static(dialog,IDC_METADATA_MESSAGE,g.metadata_notice);
       MoveWindow(g.metadata_message,18,132,576,48,TRUE);
@@ -123,7 +123,7 @@ static void metadata_show_dialog(void) {
   HWND window=CreateDialogIndirectParamW(GetModuleHandleW(NULL),dialog,g.window,metadata_dialog_procedure,0);
   if(!window) { metadata_clear_ui();host_a11y_owner_enabled(1);set_status(L"无法打开书籍详情窗口。");return; }
   RECT parent;GetWindowRect(g.window,&parent);
-  SetWindowPos(window,HWND_TOP,parent.left+140,parent.top+100,628,g.metadata_recovery ? 244:278,SWP_SHOWWINDOW);
+  SetWindowPos(window,HWND_TOP,parent.left+dpi_px(140),parent.top+dpi_px(100),dpi_px(628),dpi_px(g.metadata_recovery ? 244:278),SWP_SHOWWINDOW);
   host_a11y_owner_enabled(0);SetForegroundWindow(window);
   SetFocus(g.metadata_recovery ? GetDlgItem(window,IDC_METADATA_RETRY):g.metadata_title);
 }
