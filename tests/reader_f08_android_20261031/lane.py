@@ -91,7 +91,9 @@ def sample():
     save(env/"runner.json",{k:os.environ.get(k) for k in
         ("RUNNER_OS","RUNNER_ARCH","RUNNER_NAME","ImageOS","ImageVersion","C11_NDK")})
     (env/"cpu.txt").write_bytes(command(["lscpu"]))
-    (env/"emulator.txt").write_bytes(command(["emulator","-version"],stderr=subprocess.STDOUT))
+    emulator=Path(os.environ["ANDROID_HOME"])/"emulator"
+    shutil.copyfile(emulator/"source.properties",env/"emulator-source.properties")
+    save(env/"emulator-binary.json",{"path":str(emulator/"emulator"),"sha256":sha(emulator/"emulator")})
     run=subprocess.run([sys.executable,"tools/run_reader_shelf_ui.py","--output",str(OUT/"execution")],cwd=ROOT)
     installed=OUT/"installed";installed.mkdir()
     try:
