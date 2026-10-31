@@ -37,3 +37,10 @@ hardware qualification does not count as final same-source F08 acceptance.
 The requested 512 MiB guest heap is clamped by the official emulator to 576 MiB
 (growth limit 192 MiB), matching the archived Ubuntu runtime. The 512 MiB
 sampled process PSS budget is unchanged.
+
+Native failures also retain terminal display/power/window/input/SurfaceFlinger
+state and the actual installed APK identity. Descriptive statistics preserve all
+callback rows and first draws without promoting an incomplete UI run. Visible
+case screenshots must be nonuniform; black captures are an explicit missing
+content failure. Reusing the owned AVD clears only the test helper's retained
+output before the original driver runs, matching its fresh-AVD assumption.
