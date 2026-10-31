@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "package": "F04-reading-sync-stage1",
+  "package": "F04-reading-sync-six-host-preparation",
   "base_source": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
   "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
   "sdk_version": "3.42.0",
@@ -15,19 +15,32 @@
     "tests/dot_f04_reading_sync_20261031/run.py",
     "tests/dot_f04_reading_sync_20261031/audit.py",
     ".github/workflows/dot-f04-reading-sync-20261031.yml",
-    "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md"
+    "docs/reader-total-progress/DOT_F04_READING_SYNC_20261031.md",
+    "tests/dot_f04_reading_sync_20261031/windows_driver.py",
+    "tests/dot_f04_reading_sync_20261031/gtk_driver.py"
   ],
   "phase": "implementation-only-no-CI",
   "ci_runs_authorized": 0,
   "complete_f04": false,
   "platforms": [
+    "windows",
+    "linux-gtk",
+    "macos",
+    "android-api34-x86_64",
     "iphone-simulator",
-    "android-api34-x86_64"
+    "ipad-simulator"
   ],
   "phases": [
     "apple-first",
     "android",
-    "apple-return"
+    "apple-return",
+    "windows-seed",
+    "windows-peer",
+    "windows-return",
+    "gtk-peer",
+    "macos-peer",
+    "iphone-peer",
+    "ipad-peer"
   ],
   "required_types": [
     "progress",
@@ -41,10 +54,7 @@
     "android_note": "F04_ANDROID_NOTE"
   },
   "unimplemented_final_targets": [
-    "windows",
-    "linux-gtk",
-    "macos",
-    "ipad"
+    "six-host producer artifact routing and retained-proof authentication"
   ],
   "transport": "staged authenticated HTTPS snapshots, not simultaneous hosts",
   "original": {
@@ -63,5 +73,55 @@
     "android_sync_phases": 4,
     "android_receive_checks": 24,
     "old_drivers": "unchanged; generated Actions-only adapter copies exact base scripts"
-  }
+  },
+  "acceptance_basis": {
+    "catalog": "docs/reader-total-progress/catalog.json:F04",
+    "product": "docs/READER-PRODUCT-PLAN.md:P5",
+    "wire": "docs/READER-READING-V2.md:必须跑通的出口"
+  },
+  "coverage": {
+    "topology": "connected bidirectional graph; no all-pairs requirement",
+    "planned_edges": [
+      [
+        "windows",
+        "linux-gtk"
+      ],
+      [
+        "windows",
+        "macos"
+      ],
+      [
+        "windows",
+        "android-api34-x86_64"
+      ],
+      [
+        "windows",
+        "iphone-simulator"
+      ],
+      [
+        "windows",
+        "ipad-simulator"
+      ]
+    ],
+    "authors": "at least two real applications; no fixed six-author threshold",
+    "host_fixture": "one common original EPUB for three record types",
+    "protocol_modes": "retain original 18 v2 probes across two independent SDK libraries; not repeated for every host",
+    "unsupported": "no fabricated range on textless fixed pages",
+    "safe_navigation": "SAFE + public FOUND only; missing/ambiguous retained without auto-navigation",
+    "evidence": "program/source identity, exact wires, real UI actions and requests; no screenshot-count threshold"
+  },
+  "unverified_final_targets": [
+    "windows",
+    "linux-gtk",
+    "macos",
+    "android-api34-x86_64",
+    "iphone-simulator",
+    "ipad-simulator"
+  ],
+  "execution_blockers": [
+    "zero CI authorization",
+    "six-host producer workflow is intentionally disabled",
+    "compiled/runtime correctness and all final host behavior unverified",
+    "graph checker intentionally cannot set F04_accepted until retained producer evidence is integrated"
+  ]
 }

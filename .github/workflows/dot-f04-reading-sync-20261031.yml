@@ -16,3 +16,5 @@ jobs:
           fetch-depth: 0
       - name: Admit fixed source and exclusive paths
         run: python3 tests/dot_f04_reading_sync_20261031/admission.py
+# Expanded Windows/GTK/macOS/iPad adapters are preparation only.
+# No six-host producer jobs, dispatch budget, or automatic retry is authorized.

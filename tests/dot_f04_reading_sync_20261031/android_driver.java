@@ -240,8 +240,8 @@ public final class F04AndroidTest extends Instrumentation {
 
             check("peer_bookmark_and_annotation_originals_resolve",()->{
                 JSONArray rows=observedRecords();evidence.put("incoming_records",rows);
-                jumpRecord(recordWith(rows,"F04_APPLE_BOOKMARK"),"F04_APPLE_BOOKMARK","incoming_bookmark_frame");
-                jumpRecord(recordWith(rows,"F04_APPLE_NOTE"),"F04_APPLE_NOTE","incoming_note_frame");
+                jumpRecord(recordWith(rows,input.optString("incoming_prefix","F04_APPLE")+"_BOOKMARK"),input.optString("incoming_prefix","F04_APPLE")+"_BOOKMARK","incoming_bookmark_frame");
+                jumpRecord(recordWith(rows,input.optString("incoming_prefix","F04_APPLE")+"_NOTE"),input.optString("incoming_prefix","F04_APPLE")+"_NOTE","incoming_note_frame");
             });
             check("real_forward_pages_and_application_save",()->{
                 JSONObject before=settled();for(int i=0;i<3;i++){JSONObject old=settled();until(n->id(n,"reader_view"),n->need(n.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD),"native forward action"),"page forward",30000);

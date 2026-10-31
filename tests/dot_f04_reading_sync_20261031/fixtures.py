@@ -1,4 +1,8 @@
-"""Actions-only fixed F5 real EPUB acquisition; never select after SDK results."""
+"""Actions-only common host EPUB. Retained v2 18-anchor fixtures remain separate.
+
+Do not multiply every format/point/range by every host. Original fixed-page empty
+points and repeated-spine protocol cases stay in their unchanged SDK tests.
+"""
 import hashlib
 import json
 import os
