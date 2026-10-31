@@ -80,6 +80,8 @@ MSVC_SYM = re.compile(r"^\s*(?P<seg>[0-9A-Fa-f]{4}):(?P<off>[0-9A-Fa-f]{8})\s+(?
 SRC_ARCHIVE_COLON = re.compile(r"^(?P<ar>.+?\.(?:lib|a)):(?P<mem>.+)$", re.I)
 LLD_IN = re.compile(r"^\s*[0-9A-Fa-f]{8,16}\s+[0-9A-Fa-f]{8,16}\s+\d+\s+(?:\S+\s+)?(?P<src>\S.*?)\s*$")
 PAREN_ARCHIVE = re.compile(r"(?P<ar>" + ARCHIVE + r")\((?P<mem>[^)]+)\)", re.I)
+BASENAME_MEMBER = re.compile(r"^(?P<ar>[^\/:<>*\s]+):(?P<mem>[^\/:]+\.(?:obj|o))$", re.I)
+IMPORT_STUB = re.compile(r"^(?P<ar>[^\/:<>*\s]+):(?P<mem>[^\/:]+\.dll)$", re.I)
 GNU_ARCHIVE = re.compile(r"^(?P<ar>\S.*?\.(?:lib|a))\((?P<mem>[^)]+)\)\s*$", re.I)
 
 
@@ -96,7 +98,7 @@ def classify_format(text):
 
 def parse(text):
     """Return members/objects with source line numbers and every unrecognised line."""
-    members, objects, unknown = {}, {}, []
+    members, objects, unknown, stubs = {}, {}, [], {}
     sections = {"msvc": 0, "lld": 0, "gnu": 0}
     mode, lines = None, text.splitlines()
     for no, line in enumerate(lines, 1):
@@ -117,8 +119,15 @@ def parse(text):
                 if src.startswith("<"):
                     objects.setdefault(src, no); continue
                 a = SRC_ARCHIVE_COLON.match(src)
+                b = BASENAME_MEMBER.match(src)
+                d = IMPORT_STUB.match(src)
                 if a:
                     members.setdefault((a.group("ar"), a.group("mem").lower()), no)
+                elif d:
+                    stubs.setdefault(src, no)
+                elif b:
+                    # MSVC prints the archive base name without its extension.
+                    members.setdefault((b.group("ar"), b.group("mem").lower()), no)
                 else:
                     objects.setdefault(src, no)
                 continue
@@ -140,6 +149,7 @@ def parse(text):
                 members.setdefault((g.group("ar"), g.group("mem").lower()), no)
                 continue
         unknown.append((no, line[:200]))
+    sections['import_stubs'] = len(stubs)
     return members, objects, unknown, sections
 
 
@@ -171,6 +181,12 @@ def controls():
                     "pass": len(m) == want_members})
     case("synthetic_msvc_lib", msvc_lib, 1)
     case("synthetic_msvc_dot_a", msvc_a, 1)
+    case("synthetic_msvc_basename_no_extension", "Publics by Value
+ 0001:00000010  foo  0000000140001010 f   exr_vendor_webp:dec_clip_tables.c.obj
+", 1)
+    case("negative_import_stub_is_not_a_member", "Publics by Value
+ 0001:00000010  foo  0000000140001010 f   kernel32:KERNEL32.dll
+", 0)
     case("synthetic_lld_paren", lld, 1)
     case("synthetic_gnu_archive_list", gnu, 1)
     case("negative_truncated_header_only", "Publics by Value\n", 0)
