@@ -11,16 +11,19 @@
     "tests/product/f10_safety_20261031/verify.py",
     "tests/product/f10_safety_20261031/manifest.json",
     ".github/workflows/dot-f10-safety-20261031.yml",
-    "docs/reader-total-progress/DOT_F10_SAFETY_20261031.md"
+    "docs/reader-total-progress/DOT_F10_SAFETY_20261031.md",
+    "apps/reader/sync/src/sync.cpp"
   ],
   "ci_budget": {
-    "current_round": 2,
+    "current_round": 3,
     "additional_runs": 1,
     "linux_minutes": 45,
     "audit_minutes": 15,
     "automatic_reruns": 0
   },
-  "production_writes": false,
+  "production_writes": [
+    "apps/reader/sync/src/sync.cpp"
+  ],
   "full_f10_complete": false,
   "preserved_runs": [
     {
@@ -34,6 +37,12 @@
       "attempt": 1,
       "source": "65cf2e26afbc2337b6f136664dbfa883c031ac9e",
       "result": "read-only diagnosis success"
+    },
+    {
+      "id": 41252870989,
+      "attempt": 1,
+      "source": "d727e98c1c3c2d1a47a3be551995df310ae2c469",
+      "result": "producer success; consistent safety failure"
     }
   ]
 }
