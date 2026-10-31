@@ -58,6 +58,9 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
     private android.view.ViewTreeObserver.OnPreDrawListener firstDraw;
     private boolean loading, before, after, applying, started;
     private volatile boolean closed;
+    private ShelfWindowMetrics completionMetrics;
+    private boolean completionApplied;
+    private android.view.ViewTreeObserver.OnDrawListener completionDraw;
 
     CatalogShelf(Context context, ListView list, EditText search, TextView status, SharedPreferences prefs,
                  Executor executor, Loader loader, Consumer<Throwable> failure) {
@@ -98,6 +101,11 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
 
     void load() { if (!started) start(); else refresh(); }
 
+    void observeFirstInteractive(long startedNs,ShelfWindowMetrics metrics) {
+        completionMetrics=metrics;
+        observeFirstInteractive(startedNs);
+    }
+
     void observeFirstInteractive(long startedNs) {
         activityStartedNs=startedNs;
         firstDraw=()->{
@@ -107,7 +115,10 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
                 for(int at=0;laidOut && at<children;at++)laidOut=rows.get(first+at).key.bookKey.equals(list.getChildAt(at).getTag());
                 if(laidOut){
                     drawnRevision=appliedRevision;
-                    if(firstInteractiveNs==0)firstInteractiveNs=android.os.SystemClock.elapsedRealtimeNanos();
+                    if(firstInteractiveNs==0){
+                        firstInteractiveNs=android.os.SystemClock.elapsedRealtimeNanos();
+                        if(completionMetrics!=null)completionMetrics.catalogReady(generation,appliedRevision,firstInteractiveNs);
+                    }
                 }
             }
             return true;
@@ -160,6 +171,7 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
                     }
                     apply(page,previous,reset,anchor,restoreTop);
                     appliedGeneration=token;
+                    observeCompletionApply(token);
                 });
             } catch (Throwable error) {
                 ui.post(()->{
@@ -172,6 +184,25 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
                 });
             }
         });
+    }
+
+    private void observeCompletionApply(long token) {
+        if(completionMetrics==null||completionApplied||firstInteractiveNs!=0)return;
+        completionApplied=true;
+        // apply() already notified the real adapter; the observer never requests another draw.
+        boolean pending=list.isShown()&&list.isAttachedToWindow()&&(list.isLayoutRequested()||list.isDirty());
+        if(completionMetrics.catalogApplied(token,appliedRevision,pending)){
+            completionDraw=()->{
+                completionMetrics.catalogTreeDraw(generation,appliedRevision);
+                // OnDraw listeners cannot remove themselves during dispatch.
+                ui.postAtFrontOfQueue(()->{
+                    if(completionDraw!=null&&list.getViewTreeObserver().isAlive())
+                        list.getViewTreeObserver().removeOnDrawListener(completionDraw);
+                    completionDraw=null;
+                });
+            };
+            list.getViewTreeObserver().addOnDrawListener(completionDraw);
+        }
     }
 
     private void apply(List<CatalogStore.ShelfBook> page, boolean previous, boolean reset,
@@ -285,6 +316,8 @@ final class CatalogShelf extends BaseAdapter implements AutoCloseable, AbsListVi
 
     @Override public void close() {
         save(); closed=true; invalidateRequest();
+        if(completionDraw!=null&&list.getViewTreeObserver().isAlive())list.getViewTreeObserver().removeOnDrawListener(completionDraw);
+        completionDraw=null;
         if (pendingSearch!=null) ui.removeCallbacks(pendingSearch);
         if (firstDraw!=null && list.getViewTreeObserver().isAlive())list.getViewTreeObserver().removeOnPreDrawListener(firstDraw);
     }

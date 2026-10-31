@@ -200,7 +200,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         bindViews();
         if(savedInstanceState!=null&&BuildConfig.READER_WAVE3){originalPanel.restoreState(savedInstanceState);annotationPanel.restoreState(savedInstanceState);}
         shelfMetrics=ShelfWindowMetrics.start(this,activityStartedNs);
-        if(shelfMetrics!=null)catalogShelf.observeFirstInteractive(activityStartedNs);
+        if(shelfMetrics!=null)catalogShelf.observeFirstInteractive(activityStartedNs,shelfMetrics);
         wireActions();
         readerView.setListener(this);
 
