@@ -21,11 +21,15 @@ class Runner:
         self.provider=m[2]
     def call(self,folder,tool,*args,expected=(0,),env=None):
         self.serial+=1
-        p=subprocess.run([str(tool),*map(str,args)],capture_output=True,timeout=120,env=env)
-        row=dict(command=[str(tool),*map(str,args)],exit=p.returncode,
-                 stdout=p.stdout.decode("utf-8","replace"),stderr=p.stderr.decode("utf-8","replace"))
+        p=subprocess.Popen([str(tool),*map(str,args)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+        timed_out=False
+        try:stdout,stderr=p.communicate(timeout=120)
+        except subprocess.TimeoutExpired:
+            timed_out=True;p.kill();stdout,stderr=p.communicate(timeout=10)
+        row=dict(command=[str(tool),*map(str,args)],pid=p.pid,observer_pid=os.getpid(),observer_uid=os.getuid(),observer_euid=os.geteuid(),
+                 exit=p.returncode,timed_out=timed_out,stdout=stdout.decode("utf-8","replace"),stderr=stderr.decode("utf-8","replace"))
         (folder/f"command-{self.serial:04}.json").write_text(json.dumps(row,indent=2)+"\n")
-        if expected is not None:assert p.returncode in expected,row
+        if expected is not None:assert not timed_out and p.returncode in expected,row
         return row
     def fixture(self,name,seed=True,enroll=True):
         folder=self.a.output/"cases"/name;folder.mkdir(parents=True,mode=0o700)
@@ -76,7 +80,7 @@ class Runner:
         finally:os.close(fd)
         row=dict(source_path=str(path),artifact_path=artifact.relative_to(self.a.output).as_posix(),
              device=before.st_dev,inode=before.st_ino,uid=before.st_uid,gid=before.st_gid,links=before.st_nlink,
-             mode=stat.S_IMODE(before.st_mode),directory=is_dir)
+             mode=stat.S_IMODE(before.st_mode),raw_mode=before.st_mode,directory=is_dir,bytes=before.st_size,sha256=None)
         if not is_dir:
             row.update(bytes=len(data),sha256=hashlib.sha256(data).hexdigest())
             if artifact!=path:
@@ -253,27 +257,43 @@ class Runner:
         out=open(folder/"process.stdout","wb");err=open(folder/"process.stderr","wb")
         p=subprocess.Popen([str(self.a.test_tool),"migrate",str(target),str(pack)],stdout=out,stderr=err,env=env,pass_fds=(ready_w,go_r))
         os.close(ready_w);os.close(go_r)
+        observation=dict(owner_pid=p.pid,observer_pid=os.getpid(),observer_uid=os.getuid(),observer_euid=os.geteuid(),phase=phase,sequence=sequence,member=member,require_cap=require_cap,ready_hex="",kill_signal=None)
         try:
             events=select.select([ready_r],[],[],60)[0]
-            assert events and os.read(ready_r,1)==b"r",("barrier not reached",phase,p.poll())
-            children=subprocess.run(["ps","-axo","pid=,ppid="],capture_output=True,text=True,check=True)
-            assert not [line for line in children.stdout.splitlines() if len(line.split())==2 and int(line.split()[1])==p.pid],"synchronous owner spawned a child"
+            raw_ready=os.read(ready_r,1) if events else b""
+            observation["ready_hex"]=raw_ready.hex()
+            assert events and raw_ready==b"r",("barrier not reached",phase,p.poll())
+            ps_command=["ps","-axo","pid=,ppid=,uid="]
+            children=subprocess.run(ps_command,capture_output=True,text=True,check=True)
+            observation.update(ps_command=ps_command,ps_stdout=children.stdout,ps_stderr=children.stderr,ps_exit=children.returncode)
+            process_rows=[list(map(int,line.split())) for line in children.stdout.splitlines() if len(line.split())==3]
+            owner=[row for row in process_rows if row[0]==p.pid]
+            assert len(owner)==1 and owner[0][1]==os.getpid() and owner[0][2]==os.geteuid(),owner
+            observation["owner_uid"]=owner[0][2]
+            assert not [row for row in process_rows if row[1]==p.pid],"synchronous owner spawned a child"
             self.call(folder,self.a.admission,"check",target,expected=(2,))
             self.capture(folder,target,"paused")
-            os.kill(p.pid,signal.SIGKILL);assert p.wait(timeout=10)==-signal.SIGKILL
+            observation["kill_signal"]=int(signal.SIGKILL)
+            os.kill(p.pid,signal.SIGKILL);observation["wait_returncode"]=p.wait(timeout=10)
+            assert observation["wait_returncode"]==-signal.SIGKILL
         finally:
             if p.poll() is None:p.kill();p.wait(timeout=10)
             os.close(ready_r);os.close(go_w);out.close();err.close()
+            observation["final_returncode"]=p.returncode
+            observation["barrier_stdout"]=(folder/"process.stdout").read_text(errors="replace")
+            (folder/"process-observation.json").write_text(json.dumps(observation,indent=2)+"\n")
+        return observation
     def cut(self,phase,sequence=None,member=None,require_cap=False):
         name=f"process-kill-{phase}-"+("any" if sequence is None else str(sequence))+("-m"+str(member) if member is not None else "")
         folder,target,pack,seedpack=self.fixture(name)
         before=sha(target);baseline=self.logical(target)
-        self.paused(folder,target,pack,phase,sequence,member,require_cap)
+        process=self.paused(folder,target,pack,phase,sequence,member,require_cap)
         route=self.route(target);expected=self.native_reader_expected(route,target)
         self.call(folder,self.a.admission,"check",target,expected=(0,) if expected else (2,))
         desc=self.input(target);acks=self.ack(desc) if desc else []
         committed=any(r["event"]==9 for r in acks)
-        self.call(folder,self.a.tool,"recover",target)
+        fresh=self.call(folder,self.a.tool,"recover",target)
+        assert fresh["pid"]!=process["owner_pid"]
         self.call(folder,self.a.admission,"check",target)
         self.call(folder,self.a.guarded,"verify","--pack",seedpack,"--target",target)
         logical=self.logical(target)
@@ -314,9 +334,9 @@ class Runner:
         self.rows.append(row);print(json.dumps(row),flush=True);self.save()
     def save(self):
         value=dict(source=os.environ["GITHUB_SHA"],run=os.environ["GITHUB_RUN_ID"],attempt=os.environ["GITHUB_RUN_ATTEMPT"],
-             provider=self.provider,platform=platform.platform(),actual_sdk=True,synchronous_owner=True,workers=False,power_loss=False,
+             provider=self.provider,platform=platform.platform(),process_uid=os.getuid(),process_euid=os.geteuid(),actual_sdk=True,synchronous_owner=True,workers=False,power_loss=False,
              partial_state_head_repair=False,cases=len(self.rows),failed=sum(not r["passed"] for r in self.rows),results=self.rows,
-             binaries={p.name:dict(bytes=p.stat().st_size,sha256=sha(p)) for p in (self.a.tool,self.a.test_tool,self.a.admission,self.a.legacy,self.a.guarded)})
+             binaries={role:dict(path=str(getattr(self.a,role)),bytes=getattr(self.a,role).stat().st_size,sha256=sha(getattr(self.a,role)),mode=stat.S_IMODE(getattr(self.a,role).stat().st_mode)) for role in ("tool","test_tool","admission","legacy","guarded")})
         (self.a.output/"migration-result.json").write_text(json.dumps(value,indent=2)+"\n")
         (self.a.output/"native-source-observations.json").write_text(json.dumps(self.sources,indent=2)+"\n")
 def main():

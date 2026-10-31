@@ -62,7 +62,7 @@ jobs:
       - name: Build true synchronous owner, guarded old CLI and explicit historical controls
         run: |
           set -euo pipefail
-          cmake -S extras/migration/posix_c02_migration_20261031 -B build/owner -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DPC02_SDK_PREFIX="$GITHUB_WORKSPACE/stage-c02" -DWH3_PREFIX="$GITHUB_WORKSPACE/stage-abi3" -DPC02_BUILD_SOURCE="$GITHUB_SHA" -DPC02_BUILD_RUN="$GITHUB_RUN_ID" -DPC02_BUILD_ATTEMPT="$GITHUB_RUN_ATTEMPT" -DPC02_MIGRATION_ACTIONS_CONTROLS=ON -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-owner"
+          cmake -S extras/migration/posix_c02_migration_20261031 -B build/owner -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DPC02_SDK_PREFIX="$GITHUB_WORKSPACE/stage-c02" -DWH3_PREFIX="$GITHUB_WORKSPACE/stage-abi3" -DWH_PREFIX="$GITHUB_WORKSPACE/stage-abi2" -DPC02_BUILD_SOURCE="$GITHUB_SHA" -DPC02_BUILD_RUN="$GITHUB_RUN_ID" -DPC02_BUILD_ATTEMPT="$GITHUB_RUN_ATTEMPT" -DPC02_MIGRATION_ACTIONS_CONTROLS=ON -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/stage-owner"
           cmake --build build/owner --parallel 4 2>&1 | tee evidence/build-logs/owner.log
           cmake --install build/owner
           cmake -S extras/migration -B build/guarded -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DLM_C02_PREFIX="$GITHUB_WORKSPACE/stage-c02"
@@ -70,6 +70,9 @@ jobs:
           cmake -S extras/migration -B build/legacy-baseline -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$GITHUB_WORKSPACE/stage-sdk" -DLM_HISTORICAL_TEST_BASELINE=ON
           cmake --build build/legacy-baseline --parallel 4 2>&1 | tee evidence/build-logs/legacy-baseline.log
           cp build/owner/pc02-provider-inputs.txt evidence/
+          mkdir -p evidence/preserved-binaries/legacy evidence/preserved-binaries/guarded
+          cp build/legacy-baseline/exreader-legacy-migrate* evidence/preserved-binaries/legacy/
+          cp build/guarded/exreader-legacy-migrate* evidence/preserved-binaries/guarded/
       - name: Original historical runner unchanged
         run: |
           set -euo pipefail
