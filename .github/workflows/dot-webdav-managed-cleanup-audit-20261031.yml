@@ -1,0 +1,32 @@
+name: Independent managed cleanup artifact audit
+on:
+  push:
+    branches: [codex/dot-webdav-managed-cleanup-audit-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: managed-cleanup-audit-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate only the two fixed historical artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/webdav_managed_cleanup_audit_20261031/verify.py
+      - name: Preserve original ZIP bytes and layered audit result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: managed-cleanup-independent-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/managed-cleanup-audit/
+          if-no-files-found: error
