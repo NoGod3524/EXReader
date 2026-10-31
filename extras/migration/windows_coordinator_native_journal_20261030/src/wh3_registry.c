@@ -293,6 +293,43 @@ int wh3wr_enroll(const wchar_t *library,const wchar_t *root,
  int (*prove)(void *,const wchar_t *),void *context) {
  return wh3wr_enroll_controlled(library,root,prove,context,NULL);
 }
+int wh3wr_enroll_created(const wchar_t *library,const wchar_t *root,int create_library,
+ int (*prove)(void *,const wchar_t *),void *context) {
+ wh3wr_registration *target=NULL,*domain=NULL;wchar_t route[65],path[MAX_PATH];
+ const wchar_t *names[]={L"admission.bin",L"journal.bin",L"intent.bin"};
+ HANDLE root_pin=INVALID_HANDLE_VALUE,files[3]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE};
+ wh3w_identity id;unsigned k;int fresh=0,ok=0;
+ if(!prove||(create_library!=0&&create_library!=1))return 0;
+ target=calloc(1,sizeof(*target));domain=calloc(1,sizeof(*domain));
+ if(target)target->target=INVALID_HANDLE_VALUE;if(domain)domain->target=INVALID_HANDLE_VALUE;
+ if(!target||!domain)goto done;
+ if(!rpath(library,target->library,target->route)||!rpath(root,domain->library,route)||
+    wcslen(domain->library)>MAX_PATH-32||!rpins(target)||!rpins(domain)||!rlegacy(target->library))goto done;
+ if(create_library){
+  target->target=CreateFileW(target->library,GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
+    CREATE_NEW,FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_WRITE_THROUGH,NULL);
+  if(target->target==INVALID_HANDLE_VALUE||!rid(target->target,&id,0)||!FlushFileBuffers(target->target))goto done;
+ }
+ fresh=CreateDirectoryW(domain->library,NULL)!=0;
+ if(!fresh&&GetLastError()!=ERROR_ALREADY_EXISTS)goto done;
+ root_pin=CreateFileW(domain->library,FILE_LIST_DIRECTORY|FILE_READ_ATTRIBUTES,FILE_SHARE_READ,NULL,
+    OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+ if(root_pin==INVALID_HANDLE_VALUE||!rid(root_pin,&id,1))goto done;
+ if(fresh)for(k=0;k<3;k++){
+  HANDLE writer;
+  swprintf_s(path,MAX_PATH,L"%ls\\%ls",domain->library,names[k]);
+  writer=CreateFileW(path,GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
+    CREATE_NEW,FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_WRITE_THROUGH,NULL);
+  if(writer==INVALID_HANDLE_VALUE)goto done;
+  if(FlushFileBuffers(writer))files[k]=ReOpenFile(writer,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,0);
+  CloseHandle(writer);if(files[k]==INVALID_HANDLE_VALUE||!rid(files[k],&id,0))goto done;
+ }
+ ok=wh3wr_enroll(target->library,domain->library,prove,context);
+done:
+ for(k=0;k<3;k++)if(files[k]!=INVALID_HANDLE_VALUE)CloseHandle(files[k]);
+ if(root_pin!=INVALID_HANDLE_VALUE)CloseHandle(root_pin);
+ (void)wh3wr_close(target);(void)wh3wr_close(domain);return ok;
+}
 int wh3wr_recover_enrollment(const wchar_t *library,
  int (*prove)(void *,const wchar_t *),void *context) {
  wh3wr_registration *r;HANDLE files[3]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE};

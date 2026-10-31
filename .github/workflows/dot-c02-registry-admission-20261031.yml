@@ -43,6 +43,9 @@ jobs:
           cmake --preset reading-library -B build/sdk-build -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/build/sdk"
           cmake --build build/sdk-build --parallel 4 2>&1 | tee evidence/build-logs/sdk-build.log
           cmake --install build/sdk-build
+          cmake -S extras/migration/windows_coordinator_native_journal_20261030 -B build/native -DWH_PREFIX="$GITHUB_WORKSPACE/stage" -DWH3_BUILD_SDK_TOOL=ON -DEXR_SDK="$GITHUB_WORKSPACE/build/sdk"
+          cmake --build build/native --target exreader-c02-admission --config Release 2>&1 | tee evidence/build-logs/admission-command-build.log
+          cmake --install build/native --config Release --prefix "$GITHUB_WORKSPACE/stage"
       - name: Build separate installed registry consumer and actual product
         run: |
           set -euo pipefail
@@ -69,6 +72,11 @@ jobs:
           assert r['actual_sdk'] is True and r['trusted_registry'] is True
           assert r['production_coordinator'] is False and r['full_c02_acceptance'] is False
           PY
+      - name: Installed production enrollment command
+        run: |
+          set -euo pipefail
+          EXE=$(find build/registry -type f -name coordinator-registry-check.exe | head -1)
+          python tests/migration/windows_registry_admission_20261031/admission_cli_check.py --tool stage/bin/exreader-c02-admission.exe --consumer "$EXE" --output evidence/admission-command 2>&1 | tee evidence/admission-command.log
       - name: Actual product before-SDK refusal and last-owner release
         run: |
           set -euo pipefail
@@ -80,8 +88,10 @@ jobs:
         run: |
           mkdir -p evidence
           python - <<'PY'
-          import hashlib,json,os,pathlib
+          import hashlib,json,os,pathlib,subprocess
           p=pathlib.Path('evidence')
+          registry=subprocess.run(['reg.exe','export',r'HKCU\Software\EXReaderC02Admission',str(p/'registration.reg'),'/y'],capture_output=True)
+          (p/'registry-export.json').write_text(json.dumps(dict(exit=registry.returncode,stdout=registry.stdout.decode(errors='replace'),stderr=registry.stderr.decode(errors='replace')),indent=2)+'\n')
           (p/'receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],frozen_sdk='8357eafa28423a7ab93ba08b823af80f01ad1505',full_c02_acceptance=False),indent=2)+'\n')
           rows=[dict(path=f.relative_to(p).as_posix(),bytes=f.stat().st_size,sha256=hashlib.sha256(f.read_bytes()).hexdigest()) for f in sorted(p.rglob('*')) if f.is_file()]
           (p/'file-hashes.json').write_text(json.dumps(rows,indent=2)+'\n')
