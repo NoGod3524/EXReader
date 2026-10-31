@@ -452,3 +452,149 @@ observation compile failure; Ubuntu passed original28+scope10+API17.
 The correction zero-initializes only local observation structs and retains
 all55 scenarios and Werror. The next Windows candidate packages the explicit
 admission/migration commands and tests that packaged enrollment works.
+
+## 2026-10-31 platform runtime and independent original-byte audit update
+
+The formal 95/108 ledger remains unchanged. These are separate, source-bound
+component qualifications; they do not combine different commits into a final
+C02 result. The remaining complete-C02 gates are the real POSIX SDK migration
+owner, explicit protected Repair of incomplete native records, and all required
+roles qualified again at one final source.
+
+### Ordinary Windows and GTK packages
+
+- Source 0bf4bf4b99795e0f2301b372cd7eb60dd631361e, Windows run 41177757587/A1,
+  succeeded with the ordinary full host package. The package includes the actual
+  admission and migration executables and exercises packaged create/check.
+  Original artifact 13033423402: 53135499 bytes,
+  SHA256 1bc5839a19e91ea0e2037428c49881d3d366f18c89e0f3f603120552161c248b.
+- GTK original-ZIP audit 41178152226/A1 used audit code 6613749f5011b25f2c7e58eea62cfe112347d842
+  and the three original 36918c9c1ee18aa5345cd6ea4cf3072922e3c43b packages.
+  It independently checked the actual GTK package, 13 cases, four native snapshots,
+  SQLite original content, before-SDK refusals, final search/page custody,
+  and all 17 controls (9 original Windows plus 8 resealed POSIX controls).
+  Audit artifact 13033921020: 57397043 bytes,
+  SHA256 d7cdf7c16f2446b7a706b5dcf73b131e14552548f23f200696785ad46ae52924.
+
+### Actual Android application, sample, and ordinary package
+
+Source 6613749f5011b25f2c7e58eea62cfe112347d842, run 41178126581/A1,
+completed the actual application job 124469811855 (14 cases, 361 checks,
+app UID 10141) and the original import-entry sample job 124469811718
+(19 scenarios, 95 passed, 0 failed). App artifact 13033543534:
+20057961 bytes, SHA256 15c2d07346c26ca21e6f3ea22d1e6e86701926e1dacd1a46709e7af74ea5a4a2.
+
+The first Android original audit 41179393722 failed because the adapter applied
+the runtime inventory to the later artifact envelope. The producer has two
+inventories: run.py records the runtime, then the workflow adds source.txt,
+logcat-final.txt and artifact-receipt.json and records artifact-file-hashes.json.
+Commit a16aa72353ff73caaeae383f68daa56514c3aa5b verifies both inventories completely.
+Audit 41179499606 then passed 14/361, all seven app-UID native snapshots,
+independent SQLite original content, actual SDK-close/source-release/lease-close
+order, exact B/C/Binding native identities, process-death PENDING, and 17 negative
+controls. It explicitly retained android-installed-sdk-byte-binding as missing:
+the old artifact did not preserve the pre-strip SDK bytes. Audit artifact
+13034287464: 20207481 bytes,
+SHA256 0ad6e89ec544cce3065461e6c7c3be83fac43467be2cb51ddaf72f774993dda8.
+
+Source 07386b64e10fe45199fcd52af9b7c01ccece750c, run 41179597460/A1,
+subsequently succeeded through the ordinary tools/build_android_host.py entry,
+ordinary Debug and Release APKs, the 14/361 actual app-UID cases and original
+19/95 sample scenarios. The shared SDK is built once and C02 admission archives
+are installed into its prefix. Both normal and skip-SDK paths require the same
+frozen source boundary. The independent installed OPDS hash and original-import
+product dependency are now built by the ordinary product recipe.
+
+App artifact 13034417579: 75549634 bytes,
+SHA256 f7e1256557fab02f39cbbdd0a14ba7695f341fa7e99891df45205c9504597664.
+It preserves the actual pre-strip SDK, APK-extracted SDK, official NDK strip
+outputs, ordinary packages, and matching native host provider evidence.
+Independent audit 41180555114/A1 at e2695dac6369fc162be2bac4e3d79031e5a5c164
+passed original raw semantics plus 8 fully resealed native negatives. It parses
+the actual APK ELF dynamic imports/exports and compares every SDK PT_LOAD byte
+and program header, normalizing only ELF section-table metadata changed by
+strip. installed_sdk_byte_binding and standard_package_byte_binding are both
+true. Audit artifact 13034906411: 75465075 bytes,
+SHA256 f1db75e769008cd8a626d62d88625b350f440048f956046caf5e14ba2eeaed1d.
+
+A subsequent static review found a debug-only primary-close probe could ignore
+non-Source Java borrows. Commit 2a8a073af rejects mixed borrows before changing
+Java or native ownership. Its existing scenario now also proves rejected close
+preserves the SDK and lease; the total remains 14 cases, expected 362 checks.
+Commit 99999d629 additionally compiles that native probe closed in ordinary
+products. Their Actions results must be recorded separately when available.
+
+### Apple actual runtimes and original snapshots
+
+Run 41177757574/A1 at 0bf4bf4b99795e0f2301b372cd7eb60dd631361e passed macOS
+runtime but failed iOS baseline. Read-only original ZIP diagnostic 41178931382
+retained and checked original iOS artifact 13033871756 before showing the actual
+failure: the test occupied the main GCD queue while waiting for HostModel's
+main-queue completion. This was a test scheduling failure, not an admission
+failure. Commit 267bdbaddeb15f9420bd5c2e20f1cb031fd95613 runs the iOS test driver
+on a worker while keeping HostModel actions and observations on the main queue.
+It retains the same 30-second deadline and all 14 cases.
+
+At that source, run 41179330166/A1 succeeded for both frozen SDK jobs, both
+installed-product jobs and both actual runtime jobs:
+- macOS job 124474161157, artifact 13034720573, 55008521 bytes,
+  SHA256 8700b0786c51a1a988e3e422e85fe071d719603774566eb3b546e959ac6b132c.
+- iOS simulator job 124474161201, artifact 13034398089, 55041336 bytes,
+  SHA256 c6210ff3cb2d0838132b0a2b8cd33ba4ee525f2f84a1f00a0c8c79492285705c.
+
+Original-ZIP audit 41180380294/A1 at af19d8e586c9c6c5120ff251be6e76a1370c4f8c
+succeeded for both runtime artifacts: 14 cases per platform, five actual process
+phases, enrollment and PENDING external kills, all nine positive/negative
+authority routes, original SQLite contents, before-SDK rejection, real document/
+publication/fixed final owners, actual stdout observations and 16 resealed native
+controls. Audit artifact 13034344083: 109826075 bytes,
+SHA256 8490db3d255033cfd37d0dcc799b804c0e9406cf9b40e065ab2370d124c91a22.
+This first adapter bound native consumer binaries and installed C02 archives;
+its bundled shared-SDK check still only established Mach-O structure. Review
+therefore added the stricter SDK identity comparison in 99999d629. The producer
+now also preserves authenticated pre-codesign SDK dylibs in installed-sdk/,
+before any bundle copying/signing. Exact SDK/bundle code binding still requires
+that strengthened audit result; the earlier component pass is not substituted.
+
+### POSIX API raw bytes, fstat, and original ZIPs
+
+Source 18490e949dbbd40be48d26b312bacd024cf38f5f, run 41179811151/A1,
+passed on both Ubuntu and macOS: original 28/207, scope 10/81 and API 17/130,
+55 cases and 418 checks per platform. The additional independent adapter
+opens the real producer objects with NOFOLLOW and captures fstat, retaining the
+original producer inventory and every raw regular file. It independently
+classifies all 17 API cases as 7 positive and 10 exact expected refusals.
+Its component floor profile is explicitly 272 bytes and journal_bound=false;
+it cannot qualify the real production ACK/floor contract.
+
+- macOS job 124474722889, artifact 13034038752, 718524 bytes,
+  SHA256 a17d27931a7fd30fb5b2a93831de7525fdc03b0fef04377908d2d2ce53ce673f.
+- Ubuntu job 124474723053, artifact 13033719660, 732993 bytes,
+  SHA256 56c2536b7cb010de541f9d1464edf3acabc0e940b5cfde4b551f033530abf503.
+
+Original-ZIP audit 41180443980/A1 at af19d8e586c9c6c5120ff251be6e76a1370c4f8c
+independently re-decoded those two snapshots together with the same-source
+original native Windows and Ubuntu ZIPs. The original ABI2 81/6 exact signatures,
+ABI3 16/64/0, Windows native 46/301/0 and all 9 original negatives remain intact.
+Audit artifact 13034094644: 826335 bytes,
+SHA256 b92b3f45e76a50d3fc209100fa6c77992021797d8b1f5713f1c64ee85a64b3c5.
+The old evidence truthfully retains independent_pre_confirm_snapshot=false:
+it has the post-confirm head and C assertions, not an independently retained
+464-byte pre-confirm original. A new producer patch is being prepared to retain
+both actual source-fd identities and before/after raw heads; historical artifacts
+will not be rewritten.
+
+Selected host-only original audits require at least seven independent native
+semantic negatives and always retain missing roles. Complete mode still
+requires all twelve same-source roles, including both real POSIX migration
+owners and the original Windows negative baseline. All build, runtime, fixture,
+syntax, archive download and archive decoding operations remain Actions-only.
+
+The strengthened Apple audit 41181231939/A1 at 99999d629 failed at the expected
+original-versus-bundled SDK byte comparison for the old 267bdbad macOS artifact:
+libexreader.1.dylib, original identity SHA256
+e3c1c09e57569ce001d7663115a5a224ee61b6445b528b287dc978cc5f8be528 versus bundled
+SHA256 bdab1d5ce896c58c6791bdfa7e3bb19b704e457955b2cbc3da4b7a3742b932d0
+(8062896 bytes). The producer copies then ad-hoc signs bundle dylibs after its
+SDK identity was recorded. Actual signature-region differences must be decoded
+from the newly retained original SDK bytes; the audit does not waive this mismatch.
