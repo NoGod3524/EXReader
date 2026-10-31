@@ -219,8 +219,19 @@ def collect_provider(argv):
         records[label] = {"actual_path": str(source), "bytes": len(data),
                           "sha256": hashlib.sha256(data).hexdigest()}
     def capture(label, command):
-        done = subprocess.run(command, cwd=args.build_directory, capture_output=True,
-                              text=True, errors="replace")
+        try:
+            done = subprocess.run(command, cwd=args.build_directory, capture_output=True,
+                                  text=True, errors="replace", timeout=120)
+        except subprocess.TimeoutExpired as error:
+            def decoded(value):
+                return value.decode(errors="replace") if isinstance(value, bytes) else value or ""
+            partial = decoded(error.stdout) + decoded(error.stderr)
+            (out / label).write_text(partial)
+            print(partial, flush=True)
+            commands.append({"argv": command, "cwd": str(args.build_directory.resolve()),
+                             "returncode": None, "timed_out": True, "output": label})
+            (out / "command.json").write_text(json.dumps(commands, indent=2) + "\n")
+            raise RuntimeError("provider command timed out: " + label) from error
         data = done.stdout + done.stderr
         (out / label).write_text(data)
         # Preserve diagnostics in ordinary job stdout as well as artifacts.
@@ -257,6 +268,12 @@ def collect_provider(argv):
         current, baseline = git_object(os.environ["GITHUB_SHA"]), git_object(frozen)
         guard[item] = {"actual": current, "frozen": baseline}
         if current != baseline: raise RuntimeError("frozen SDK object mismatch: " + item)
+    for diagnostic in sorted(out.rglob("*")):
+        if diagnostic.is_file():
+            label = diagnostic.relative_to(out).as_posix()
+            data = diagnostic.read_bytes()
+            records.setdefault(label, {"actual_path": str(diagnostic), "bytes": len(data),
+                                       "sha256": hashlib.sha256(data).hexdigest()})
     manifest = {"schema": 1, "source": os.environ["GITHUB_SHA"],
                 "run": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
                 "sdk_freeze": frozen, "sdk_object_guard": guard,
