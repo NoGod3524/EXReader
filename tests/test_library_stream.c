@@ -37,6 +37,11 @@ static void *archive(const char *fixtures,size_t *size,int pad) {
   CHECK(mz_zip_writer_finalize_heap_archive(&zip,&out,size));CHECK(mz_zip_writer_end(&zip));return out;
 }
 static int64_t count_books(exr_library *library) { exr_book *books=NULL;size_t n=0;int64_t id=0;OK(exr_library_books(library,NULL,&books,&n,&error));if(n) id=books[0].id;exr_books_free(books,n);return id; }
+static void same_page(exr_fixed_document *doc,const exr_bitmap *expected) {
+  exr_bitmap actual={0};OK(exr_fixed_render(doc,0,1,NULL,&actual,&error));
+  CHECK(actual.width==expected->width && actual.height==expected->height && actual.stride==expected->stride);
+  CHECK(!memcmp(actual.pixels,expected->pixels,(size_t)expected->stride*expected->height));exr_bitmap_free(&actual);
+}
 static void short_reads(const void *bytes,size_t size) {
   memory_source memory={0};exr_source source={0};exr_library *library=NULL;int64_t id=99;
   memory.data=bytes;memory.size=size;memory.fail_at=(size_t)-1;memory.chunk=7;
@@ -93,7 +98,19 @@ int main(int argc,char **argv) {
   }
   OK(exr_library_fixed_source(library,id,NULL,&doc,&error));
   { const exr_fixed_page *pages;size_t count2;pages=exr_fixed_pages(doc,&count2);CHECK(count2==1);
-    OK(exr_fixed_render(doc,0,1,NULL,&bitmap,&error));CHECK(bitmap.width>0 && bitmap.height>0);exr_bitmap_free(&bitmap); }
+    OK(exr_fixed_render(doc,0,1,NULL,&bitmap,&error));CHECK(bitmap.width>0 && bitmap.height>0); }
+  /* Metadata updates must not invalidate either active reader's source. */
+  { exr_fixed_document *second=NULL;exr_book book={0};void *cover;size_t cover_size;unsigned pass;
+    OK(exr_library_fixed_source(library,id,NULL,&second,&error));
+    book.id=id;book.title="Streamed";
+    for(pass=0;pass<3;pass++) {
+      book.position=pass%2;book.favorite=pass%2;
+      OK(exr_library_update(library,&book,&error));same_page(doc,&bitmap);same_page(second,&bitmap);
+    }
+    cover=read_file(argv[1],&cover_size);OK(exr_library_cover(library,id,cover,cover_size,&error));free(cover);
+    same_page(doc,&bitmap);same_page(second,&bitmap);exr_fixed_free(second);
+  }
+  exr_bitmap_free(&bitmap);
   exr_fixed_free(doc);doc=NULL;
   /* Cancellation in the middle of the chunked blob write rolls back the row. */
   memory.reads=0;memory.cancel_after=12;source.control.cancelled=mem_cancel;source.control.context=&memory;
@@ -119,12 +136,21 @@ int main(int argc,char **argv) {
     snprintf(dbpath,sizeof(dbpath),"%s/storage.sqlite",argv[2]);remove(dbpath);OK(exr_library_open(dbpath,&separate,&error));
     memory.reads=0;
     OK(exr_library_import_source(separate,EXR_CBZ,&source,"Storage",&dup,&error));CHECK(dup>0);
+    OK(exr_library_fixed_source(separate,dup,NULL,&doc,&error));
+    OK(exr_library_delete(separate,dup,&error));
+    { int64_t replacement=0;
+      OK(exr_library_import_source(separate,EXR_CBZ,&source,"Replacement",&replacement,&error));CHECK(replacement==dup);
+      CHECK(exr_fixed_render(doc,0,1,NULL,&bitmap,&error)==EXR_IO && !bitmap.pixels);
+    }
+    exr_fixed_free(doc);doc=NULL;
     exr_library_close(separate);
   }
   exr_library_close(library);
   OK(exr_library_open(path,&library,&error));CHECK(count_books(library)==1);
-  OK(exr_library_fixed_source(library,id,NULL,&doc,&error));CHECK(doc && exr_fixed_pages(doc,&n) && n==1);exr_fixed_free(doc);doc=NULL;
+  OK(exr_library_fixed_source(library,id,NULL,&doc,&error));CHECK(doc && exr_fixed_pages(doc,&n) && n==1);
+  { exr_book book={0};book.id=id;book.title="After reopen";book.favorite=1;OK(exr_library_update(library,&book,&error)); }
   exr_library_close(library);
+  OK(exr_fixed_render(doc,0,1,NULL,&bitmap,&error));exr_bitmap_free(&bitmap);exr_fixed_free(doc);doc=NULL;
   /* A read-only database is a storage failure: the transaction rolls back. */
   { char dbpath[4096];snprintf(dbpath,sizeof(dbpath),"%s/stream.sqlite",argv[2]);
 #ifdef _WIN32

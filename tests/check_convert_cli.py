@@ -305,6 +305,86 @@ def scenario_protection(r):
     ok = code == 3 and target_dir.is_dir() and not list(target_dir.iterdir())
     r.record("publish-failure", "target directory unchanged and temp cleaned", code, ok, stdout, err)
 
+def scenario_batch_path_errors(r):
+    directory = r.work / "batch-path-errors"
+    source, good = directory / "source.txt", directory / "good.txt"
+    write_text(source, "Independent conversion.")
+    bad = directory / ("bad?.txt" if os.name == "nt" else "a" * 300 + ".txt")
+    m, report = directory / "manifest.json", directory / "report.json"
+    manifest(m, [{"id": "bad", "input": str(source), "to": "txt", "output": str(bad)},
+                 {"id": "good", "input": str(source), "to": "txt", "output": str(good)}])
+    code, stdout, err, _ = r.run(["--batch", m, "--report", report])
+    data = r.report(report) if report.is_file() else {}
+    statuses = {item["id"]: item["status"] for item in data.get("items", [])}
+    ok = code == 3 and statuses == {"bad": "rejected", "good": "ok"}
+    ok = ok and good.read_bytes() == source.read_bytes() and not list(directory.glob("*.tmp"))
+    r.record("batch-invalid-output-path", "reject invalid path and publish independent item", code, ok, stdout, err)
+
+
+def scenario_unicode_output_aliases(r):
+    if os.name != "nt":
+        return
+    # The second pair has different UTF-8 byte lengths but the same Windows name.
+    for name, first, second, alias in (("accent", "É.txt", "é.txt", True),
+                                      ("unequal-utf8", "Ⱥ.txt", "ⱥ.txt", True),
+                                      ("distinct-long-s", "ſ.txt", "S.txt", False)):
+        directory = r.work / ("unicode-alias-" + name)
+        a, b, good = directory / "a.txt", directory / "b.txt", directory / "good.txt"
+        write_text(a, "First source.")
+        write_text(b, "Second source.")
+        m = directory / "manifest.json"
+        manifest(m, [{"id": "one", "input": str(a), "to": "txt", "output": first},
+                     {"id": "two", "input": str(b), "to": "txt", "output": second},
+                     {"id": "good", "input": str(a), "to": "txt", "output": good.name}], overwrite=True)
+        code, stdout, err, _ = r.run(["--batch", m])
+        data = json.loads(stdout) if stdout.strip().startswith("{") else {}
+        statuses = {item["id"]: item["status"] for item in data.get("items", [])}
+        if alias:
+            ok = code == 3 and statuses == {"one": "rejected", "two": "rejected", "good": "ok"}
+            ok = ok and not (directory / first).exists() and not (directory / second).exists()
+        else:
+            ok = code == 0 and statuses == {"one": "ok", "two": "ok", "good": "ok"}
+            ok = ok and (directory / first).read_bytes() == a.read_bytes() and (directory / second).read_bytes() == b.read_bytes()
+        ok = ok and good.read_bytes() == a.read_bytes()
+        r.record("unicode-output-alias-" + name, "reject filesystem aliases; retain distinct names", code, ok, stdout, err)
+
+
+def scenario_manifest_protection(r):
+    for name in ("direct", "overwrite", "hardlink"):
+        directory = r.work / ("manifest-report-" + name)
+        source, output = directory / "source.txt", directory / "output.txt"
+        write_text(source, "Preserve the batch configuration.")
+        m = directory / "manifest.json"
+        manifest(m, [{"input": str(source), "to": "txt", "output": str(output)}])
+        before = sha256(m)
+        report = m
+        if name == "hardlink":
+            report = directory / "alias.json"
+            os.link(m, report)
+        code, stdout, err, _ = r.run(["--batch", m, "--report", report] +
+                                      (["--overwrite"] if name == "overwrite" else []))
+        ok = code == 2 and sha256(m) == before and sha256(report) == before and not output.exists()
+        ok = ok and not list(directory.glob("*.tmp"))
+        r.record("manifest-report-" + name, "reject report/manifest collision before conversion", code, ok, stdout, err)
+    for name in ("direct", "hardlink"):
+        directory = r.work / ("manifest-output-" + name)
+        source, good = directory / "source.txt", directory / "good.txt"
+        write_text(source, "Independent conversion.")
+        m = directory / "manifest.json"
+        target = m if name == "direct" else directory / "alias.json"
+        manifest(m, [{"id": "bad", "input": str(source), "to": "txt", "output": str(target)},
+                     {"id": "good", "input": str(source), "to": "txt", "output": str(good)}], overwrite=True)
+        if name == "hardlink":
+            os.link(m, target)
+        before = sha256(m)
+        code, stdout, err, _ = r.run(["--batch", m])
+        data = json.loads(stdout) if stdout.strip().startswith("{") else {}
+        statuses = {item["id"]: item["status"] for item in data.get("items", [])}
+        ok = code == 3 and statuses == {"bad": "rejected", "good": "ok"}
+        ok = ok and sha256(m) == before and sha256(target) == before and good.read_bytes() == source.read_bytes()
+        r.record("manifest-output-" + name, "preserve manifest and publish independent item", code, ok, stdout, err)
+
+
 def scenario_paths_and_limit(r):
     directory = r.work / "中文 空格"
     source = directory / "输入 文件.txt"
@@ -384,6 +464,9 @@ def main():
     scenario_preserve(r)
     scenario_batch(r)
     scenario_protection(r)
+    scenario_batch_path_errors(r)
+    scenario_unicode_output_aliases(r)
+    scenario_manifest_protection(r)
     scenario_paths_and_limit(r)
     scenario_cancel(r)
     expected = len(r.scenarios)

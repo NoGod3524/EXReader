@@ -15,6 +15,8 @@ import urllib.request
 import zipfile
 import xml.etree.ElementTree as ET
 
+FROZEN_DIRECTORY = Path(__file__).resolve().parent / 'frozen'
+
 
 def sha(data):
     return hashlib.sha256(data).hexdigest()
@@ -73,6 +75,25 @@ def fetch(url, limit):
             time.sleep(delay)
 
 
+def source_bytes(entry, mode):
+    relative = Path(entry['path'])
+    if relative.is_absolute() or '..' in relative.parts:
+        raise ValueError('Unsafe manifest path')
+    retained = FROZEN_DIRECTORY / relative
+    limit = entry['limits']['download_bytes']
+    if mode == 'collect' and retained.is_file():
+        with retained.open('rb') as stream:
+            data = stream.read(limit + 1)
+        if len(data) > limit:
+            raise ValueError('Declared download bound exceeded')
+        final_url = retained.as_uri()
+    else:
+        data, final_url = fetch(entry['source_url'], limit)
+    if mode == 'collect' and (sha(data) != entry['sha256'] or len(data) != entry['size']):
+        raise ValueError('Frozen source identity changed')
+    return data, final_url
+
+
 def structure(path, entry):
     # Independent source inspection only: no SDK outcomes influence selection.
     if entry['format'] == 'EPUB':
@@ -113,9 +134,7 @@ def main():
         target.parent.mkdir(parents=True, exist_ok=True)
         try:
             time.sleep(0.5)
-            data, final_url = fetch(entry['source_url'], entry['limits']['download_bytes'])
-            if a.mode == 'collect' and (sha(data) != entry['sha256'] or len(data) != entry['size']):
-                raise ValueError('Frozen source identity changed')
+            data, final_url = source_bytes(entry, a.mode)
             if sha(data) in hashes:
                 raise ValueError('Duplicate document content')
             hashes.add(sha(data))
