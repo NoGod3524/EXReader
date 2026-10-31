@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "base": "7131426ba6a4a0ff7782e4cafd0ff908b9a88a9b",
+  "source": "01ab528888f5c5be97e5824d69e2908e31e68e24",
+  "product": "044824f91ddae2ea49994350d308d079a69048ab",
+  "sdk": "7271829a829bfa6aaa47b73077c493f71af27ad3",
+  "run": 41186261435,
+  "attempt": 1,
+  "job": 124493687007,
+  "artifact": 13036129037,
+  "bytes": 31654088,
+  "sha256": "c71801182be4188ad1fea84d2b5b2691e50735fbfa8763acbb7c1fe8d5efd9e4",
+  "name": "f07-desktop-windows-41186261435-1"
+}
