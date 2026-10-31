@@ -41,4 +41,73 @@ jobs:
           echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
           yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" 
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}"
+      - name: Install independent Android OPDSHash owner
+        run: |
+          cmake -S extras/opds -B build/c02-hash -G Ninja -DCMAKE_TOOLCHAIN_FILE="$ANDROID_HOME/ndk/${C11_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DEXREADER_OPDS_HASH_ONLY=ON
+          cmake --build build/c02-hash --parallel 4
+          cmake --install build/c02-hash --prefix "$GITHUB_WORKSPACE/build/c02-hash-prefix"
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$GITHUB_WORKSPACE/build/c02-hash-prefix" >> "$GITHUB_ENV"
+      - name: Build real host and JNI using the unchanged SDK 3.42 recipe
+        run: |
+          mkdir -p build/f06
+          mkdir -p build/c02-evidence
+          set -o pipefail
+          python3 tests/android_sdk342_package/run.py build 2>&1 | tee build/c02-evidence/android-build.log
+      - name: Retain C02 build identity
+        if: always()
+        run: |
+          mkdir -p build/c02-evidence
+          python3 - <<'PY'
+          import json,os,pathlib
+          pathlib.Path('build/c02-evidence/receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],platform=os.environ['RUNNER_OS'],full_c02_acceptance=False),indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-android-owners-${{ github.sha }}
+          path: |
+            build/c02-evidence/
+            build/f06/android-payload/build.json
+            build/f06/android-sdk342-build-step-*.sh
+            build/wave3/logs/
+            build/wave3/artifacts/sha256.txt
+          if-no-files-found: error
+  macos:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install independent macOS OPDSHash owner
+        run: |
+          cmake -S extras/opds -B build/c02-hash -DCMAKE_BUILD_TYPE=Release -DEXREADER_OPDS_HASH_ONLY=ON -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
+          cmake --build build/c02-hash --parallel 4
+          cmake --install build/c02-hash --prefix "$GITHUB_WORKSPACE/build/c02-hash-prefix"
+          echo "EXREADER_ORIGINAL_HASH_PREFIX=$GITHUB_WORKSPACE/build/c02-hash-prefix" >> "$GITHUB_ENV"
+      - name: Build actual macOS host against frozen SDK 3.42
+        run: |
+          mkdir -p build/c02-evidence
+          set -o pipefail
+          python3 tests/apple_sdk342_package/run.py --target macos 2>&1 | tee build/c02-evidence/macos-build.log
+      - name: Retain C02 build identity
+        if: always()
+        run: |
+          mkdir -p build/c02-evidence
+          python3 - <<'PY'
+          import json,os,pathlib
+          pathlib.Path('build/c02-evidence/receipt.json').write_text(json.dumps(dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],platform=os.environ['RUNNER_OS'],full_c02_acceptance=False),indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-macos-owners-${{ github.sha }}
+          path: |
+            build/c02-evidence/
+            build/apple-sdk342/macos/identity.json
+            build/apple-sdk342/macos/host/build.json
+            build/apple-sdk342/macos/host/product-link.json
+            build/apple-sdk342/macos/products/share/exreader-apple/product.json
+          if-no-files-found: error
