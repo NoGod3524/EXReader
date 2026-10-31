@@ -86,7 +86,29 @@ def linux():
     record('gtk', payload, code, report)
 
 
+def android_prepare():
+    """The shared-source APK where the retained audit expects the owner build,
+    with the identity record its checker compares the installed APK against."""
+    import hashlib
+    F = module('tests/reader_f06_packages/build.py', 'f09_f06')
+    F.OUT = ROOT / 'build/f06'
+    F.OUT.mkdir(parents=True, exist_ok=True)
+    apk = F.android() / 'artifacts/app-debug.apk'
+    host = ROOT / 'build/android-host'
+    (host / 'artifacts').mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(apk, host / 'artifacts/app-debug.apk')
+    raw = (host / 'artifacts/app-debug.apk').read_bytes()
+    sys.path.insert(0, str(ROOT / 'tools'))
+    B = module('tools/build_android_host.py', 'f09_android_host')
+    B.write_fixtures(host / 'fixtures')
+    record = {'source_sha': os.environ.get('GITHUB_SHA'), 'recipe': 'tests/reader_f06_packages/build.py android',
+              'artifacts': {'app-debug.apk': {'path': str(host / 'artifacts/app-debug.apk'), 'size': len(raw),
+                                              'sha256': hashlib.sha256(raw).hexdigest()}}}
+    (host / 'build.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+    print(json.dumps(record), flush=True)
+
+
 if __name__ == '__main__':
     assert os.environ.get('GITHUB_ACTIONS') == 'true', 'GitHub Actions only'
     OUT.mkdir(parents=True, exist_ok=True)
-    {'windows': windows, 'linux': linux}[sys.argv[1]]()
+    {'windows': windows, 'linux': linux, 'android-prepare': android_prepare}[sys.argv[1]]()
