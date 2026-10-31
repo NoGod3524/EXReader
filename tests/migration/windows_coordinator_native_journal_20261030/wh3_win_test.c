@@ -332,16 +332,20 @@ static void ancestry(void) {
  }
 }
 static void rebind_during_open(void) {
- size_t k;unsigned pins=1;HANDLE child;wchar_t moved[MAX_PATH];int ready;
+ HANDLE child;wchar_t moved[MAX_PATH];int ready;BOOL changed;DWORD error;
  case_start("unpinned-descendant-rebind-during-open");expect(fixture_new(),"fixture");
- for(k=3;f.parent[k];k++)if(f.parent[k]==L'\\')pins++;
- pins++; /* drive root, each separator, then final parent */
- child=spawn(CHILD_PROBE,WH3W_PINNED_BASE+pins);expect(child!=NULL,"spawn opener");if(!child)return;
- ready=WaitForSingleObject(f.ready,15000)==WAIT_OBJECT_0;
- expect(ready&&f.shared->reached==WH3W_PINNED_BASE+pins,"parent pinned, root not opened");
- if(!ready){(void)finish(child,1);return;}
  swprintf_s(moved,MAX_PATH,L"%ls-old",f.root);
- expect(MoveFileW(f.root,moved)!=0,"unopened descendant actually moved");
+ expect(MoveFileW(f.root,moved)!=0,"baseline target rename works");
+ expect(MoveFileW(moved,f.root)!=0,"baseline target restored");
+ /* Only the volume root is pinned. Pinning the target parent would already
+    prevent the namespace write, so that is not a successful-rebind fixture. */
+ child=spawn(CHILD_PROBE,WH3W_PINNED_BASE+1);expect(child!=NULL,"spawn opener");if(!child)return;
+ ready=WaitForSingleObject(f.ready,15000)==WAIT_OBJECT_0;
+ expect(ready&&f.shared->reached==WH3W_PINNED_BASE+1,"volume root pinned, target parent not opened");
+ if(!ready){(void)finish(child,1);return;}
+ changed=MoveFileW(f.root,moved);error=GetLastError();
+ printf("OBS midopen root_move=%d error=%lu reached=%u\n",(int)changed,(unsigned long)error,f.shared->reached);
+ expect(changed!=0,"unopened descendant actually moved");
  expect(CreateDirectoryW(f.root,NULL)&&create_files(f.root),"replacement objects installed");
  SetEvent(f.go);expect(finish(child,0),"opener finishes");expect(!f.shared->opened,"trusted root ID rejects new input binding");
 }
