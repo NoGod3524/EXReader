@@ -1,0 +1,15 @@
+{
+  "repository": "NoGod3524/EXReader",
+  "producer_run": 40655659565,
+  "producer_attempt": 1,
+  "producer_source": "4971c75f9037bb9e95498435efe5d179b87dcea6",
+  "producer_branch": "codex/apple-sdk342-optin-20261028",
+  "artifact_id": 12805245231,
+  "artifact_name": "apple-sdk342-iphonesimulator-40655659565-1",
+  "artifact_bytes": 27011224,
+  "artifact_sha256": "a14b0825e0b1db8204e394a99af4d46417cb4052e8678bc493e82d60b2c49af5",
+  "sdk_version": "3.42.0",
+  "sdk_content_candidate": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "gate_source": "9b5d0d6914671c99fc20b8cc7361f700b83ca778",
+  "gate_run": 41152533489
+}
