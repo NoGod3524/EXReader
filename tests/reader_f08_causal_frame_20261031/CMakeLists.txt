@@ -9,3 +9,7 @@ set_target_properties(exreader_f08_causal PROPERTIES C_STANDARD 11 C_STANDARD_RE
 target_compile_options(exreader_f08_causal PRIVATE -Wall -Wextra -Werror)
 target_link_libraries(exreader_f08_causal PRIVATE PkgConfig::GTK Threads::Threads ${CMAKE_DL_LIBS})
 # Test module only: deliberately no install(), public hook or product linkage.
+add_executable(f08_draw_control draw_control.c)
+set_target_properties(f08_draw_control PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+target_compile_options(f08_draw_control PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(f08_draw_control PRIVATE PkgConfig::GTK)

@@ -14,9 +14,9 @@
 #include <unistd.h>
 #define CAP 65536u
 #define CLOCKS 64u
-#define FIELDS 11u
+#define FIELDS 12u
 static const char *keys[FIELDS]={"sequence","painted_generation","book","page","font",
- "busy","saving","shelf_top_id","shelf_pending","shelf_loading","shelf_restoring"};
+ "busy","saving","shelf_top_id","shelf_pending","shelf_loading","shelf_restoring","reader_visible"};
 typedef struct {gint64 at;gint64 values[FIELDS];gint64 end;int ok;} State;
 typedef struct {gint64 at;guint32 server_ms;unsigned type,code,hardware,clock;} Input;
 typedef struct {gint64 at,counter;unsigned clock,kind;} Draw;
@@ -26,7 +26,7 @@ static Input inputs[CAP];
 static Draw draws[CAP];
 static Frame frames[CAP];
 static GdkFrameClock *clocks[CLOCKS];
-static unsigned ns,ni,nd,nf,nc,overflow,event_hook,draw_hook;
+static unsigned ns,ni,nd,nf,nc,overflow,event_hook,draw_hook,list_draw_handlers;
 static gint64 begins[CLOCKS];
 static gboolean enabled;
 static pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
@@ -81,10 +81,30 @@ static void after(GdkFrameClock *clock,gpointer data){
  else overflow++;
  pthread_mutex_unlock(&mutex);
 }
+static void record_draw(GtkWidget *w,unsigned kind){
+ GdkFrameClock *c=gtk_widget_get_frame_clock(w);if(!c)return;
+ Draw row={g_get_monotonic_time(),gdk_frame_clock_get_frame_counter(c),clock_id(c),kind};
+ pthread_mutex_lock(&mutex);if(nd<CAP)draws[nd++]=row;else overflow++;pthread_mutex_unlock(&mutex);
+}
+static gboolean list_draw(GtkWidget *w,cairo_t *cr,gpointer data){
+ (void)cr;(void)data;
+ if(enabled && ours(w) && g_strcmp0(atk_object_get_name(gtk_widget_get_accessible(w)),"Bookshelf")==0)
+  record_draw(w,2u);
+ /* GtkWidget skips signal emission when no instance handler exists. Observe
+  * before the class draw and return FALSE so normal painting is preserved.
+  * GTK 3.24.33 gtk/gtkwidget.c: gtk_widget_draw_internal(). */
+ return FALSE;
+}
 static gboolean realized(GSignalInvocationHint *h,guint n,const GValue *v,gpointer data){
  (void)h;(void)data;
- if(!n || !GTK_IS_WINDOW(g_value_get_object(v)))return TRUE;
+ if(!n || !GTK_IS_WIDGET(g_value_get_object(v)))return TRUE;
  GtkWidget *w=GTK_WIDGET(g_value_get_object(v));
+ if(GTK_IS_LIST_BOX(w) && !g_object_get_data(G_OBJECT(w),"exr-f08-list-draw")){
+  g_signal_connect(w,"draw",G_CALLBACK(list_draw),NULL);
+  g_object_set_data(G_OBJECT(w),"exr-f08-list-draw",GUINT_TO_POINTER(1));
+  list_draw_handlers++;
+ }
+ if(!GTK_IS_WINDOW(w))return TRUE;
  /* Title may be assigned after realize; clocks are harmlessly observed for all windows. */
  GdkFrameClock *c=gtk_widget_get_frame_clock(w);
  if(!c || clock_id(c)!=CLOCKS)return TRUE;
@@ -115,12 +135,9 @@ static gboolean draw_observed(GSignalInvocationHint *h,guint n,const GValue *v,g
  const char *name=atk_object_get_name(gtk_widget_get_accessible(w));
  unsigned kind=(GTK_IS_IMAGE(w) &&
   (g_strcmp0(name,"Rendered page; selectable text is in the adjacent panel")==0 ||
-   g_strcmp0(name,"Rendered reading page; selectable text and notes are in More")==0))?1u:
-  (GTK_IS_LIST_BOX(w) && g_strcmp0(name,"Bookshelf")==0)?2u:0u;
- if(!kind)return TRUE;
- GdkFrameClock *c=gtk_widget_get_frame_clock(w);if(!c)return TRUE;
- Draw row={g_get_monotonic_time(),gdk_frame_clock_get_frame_counter(c),clock_id(c),kind};
- pthread_mutex_lock(&mutex);if(nd<CAP)draws[nd++]=row;else overflow++;pthread_mutex_unlock(&mutex);
+   g_strcmp0(name,"Rendered reading page; selectable text and notes are in More")==0))?1u:0u;
+ /* Lists are recorded by the instance callback, never twice by this hook. */
+ if(kind)record_draw(w,kind);
  return TRUE;
 }
 G_MODULE_EXPORT void gtk_module_init(gint *argc,gchar ***argv){
@@ -155,6 +172,7 @@ __attribute__((destructor)) static void finish(void){
  fputs(",\"executable\":",f);quoted(f,exe);
  fprintf(f,",\"capacity\":%u,\"overflow\":%u,\"event_hook\":%u,\"draw_hook\":%u,\"clock_count\":%u,\"probe_static_bytes\":%zu",
   CAP,overflow,event_hook,draw_hook,nc,sizeof(states)+sizeof(inputs)+sizeof(draws)+sizeof(frames));
+ fprintf(f,",\"list_draw_handlers\":%u",list_draw_handlers);
  fputs(",\"states\":[",f);
  for(unsigned i=0;i<ns;i++){
   State *s=states+i;fprintf(f,"%s{\"at\":%"G_GINT64_FORMAT",\"end\":%"G_GINT64_FORMAT",\"ok\":%s",i?",":"",s->at,s->end,s->ok?"true":"false");

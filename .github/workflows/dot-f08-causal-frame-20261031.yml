@@ -1,7 +1,7 @@
 name: F08 additional causal frame attribution
 on:
   push:
-    branches: [codex/dot-f08-causal-frame-20261031]
+    branches: [codex/dot-f08-causal-frame-fix-20261031]
 
 permissions:
   contents: read
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Admit exact seven-file additive scope
+      - name: Admit exact test-only repair scope
         run: python3 tests/reader_f08_causal_frame_20261031/verify.py guard
       - name: Record exact source and component identities
         run: |
@@ -46,6 +46,22 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y libgtk-3-dev libglib2.0-dev pkg-config ninja-build xvfb openbox \
             xdotool xclip x11-utils dbus dbus-x11 at-spi2-core
+      - name: Check causal predicates and GTK draw dispatch before sampling
+        run: |
+          set -euo pipefail
+          mkdir -p build/f08-causal-control
+          python3 -m py_compile tests/reader_f08_causal_frame_20261031/driver.py tests/reader_f08_causal_frame_20261031/verify.py
+          python3 tests/reader_f08_causal_frame_20261031/verify.py preflight | tee build/f08-causal-control/predicates.log
+          cmake -S tests/reader_f08_causal_frame_20261031 -B build/f08-causal-probe -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/f08-causal-probe --parallel 4
+          timeout 30s xvfb-run -a build/f08-causal-probe/f08_draw_control | tee build/f08-causal-control/draw.json
+      - name: Preserve independent regression controls
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f08-causal-controls-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-causal-control/
+          if-no-files-found: error
       - name: Build and install the independent public OPDSHash owner
         run: |
           set -euo pipefail
@@ -84,10 +100,6 @@ jobs:
         run: |
           cmake -S tests/reader_f08_gtk_frameclock_20261031 -B build/f08-probe -G Ninja -DCMAKE_BUILD_TYPE=Release
           cmake --build build/f08-probe --parallel 4
-      - name: Build additional passive causal module
-        run: |
-          cmake -S tests/reader_f08_causal_frame_20261031 -B build/f08-causal-probe -G Ninja -DCMAKE_BUILD_TYPE=Release
-          cmake --build build/f08-causal-probe --parallel 4
       - name: Thirty-two independent launches on a fixed Xvfb, window manager and resolution
         run: |
           set -o pipefail
