@@ -21,7 +21,7 @@ enum HostF08Review {
         guard ProcessInfo.processInfo.arguments.contains("-EXRF08Launch") else { return }
         if #available(macOS 13, iOS 16, *) {
             do {
-                try MXMetricManager.extendLaunchMeasurement(forTaskID: "org.exreader.f08.shelf-ready")
+                try MXMetricManager.extendLaunchMeasurement(forTaskID: MXLaunchTaskID(rawValue: "org.exreader.f08.shelf-ready"))
                 launchStatus = "started"
             } catch { launchStatus = "start-failed"; launchError = String(describing: error) }
         } else { launchStatus = "unsupported" }
@@ -34,7 +34,7 @@ enum HostF08Review {
             guard ready() else { return }
             if #available(macOS 13, iOS 16, *) {
                 do {
-                    try MXMetricManager.finishExtendedLaunchMeasurement(forTaskID: "org.exreader.f08.shelf-ready")
+                    try MXMetricManager.finishExtendedLaunchMeasurement(forTaskID: MXLaunchTaskID(rawValue: "org.exreader.f08.shelf-ready"))
                     launchStatus = "finished"
                 } catch { launchStatus = "finish-failed"; launchError = String(describing: error) }
                 changed()
