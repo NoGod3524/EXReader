@@ -100,6 +100,14 @@ int wh3wr_resume(wh3wr_registration *,const wh_binding *,const wh_gates *,
    gate and registry remain held. Reacquire the actual published target before
    committing a new trusted binding. Readers cannot invoke this transition. */
 int wh3wr_prepare_publish(wh3wr_registration *);
+/* Same-parent, handle-bound publication preserves the old target at a fresh
+   retained leaf. The caller supplies the independently verified stage FileID.
+   Every directory pin stays live and keeps denying write/delete opens.
+   MISMATCH performs no namespace mutation; UNCERTAIN poisons this holder and
+   requires fresh recovery. This operation does not write the terminal journal
+   or advance admission. Call finish only after independent publication proof. */
+wh3_tx_status wh3wr_publish(wh3wr_registration *,const wchar_t *stage_leaf,
+ const wh3w_identity *stage_identity,const wchar_t *retained_leaf);
 int wh3wr_finish(wh3wr_registration *,wh3w_store *,const wh3_tip *,
  int (*prove)(void *,const wh3_tip *),void *context);
 /* Refuses while a journal retains the gate. Caller closes all SDK borrowers

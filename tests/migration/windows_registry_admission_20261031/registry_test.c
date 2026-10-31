@@ -210,16 +210,33 @@ static void publication_case(int fail_clean) {
  expect(sdk_seed(stage,published),"actual staged SDK database");
  expect(wh3wr_prepare_publish(registration),"release target pin only under live pending");
  {
-  HANDLE deletion;DWORD deletion_error,parent_error,save_error,publish_error;int saved,moved;
+  HANDLE deletion;DWORD deletion_error,parent_error,save_error,publish_error;int saved;
   deletion=CreateFileW(reglib,DELETE,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,NULL);
   deletion_error=deletion==INVALID_HANDLE_VALUE?GetLastError():0;if(deletion!=INVALID_HANDLE_VALUE)CloseHandle(deletion);
   deletion=CreateFileW(f.parent,FILE_ADD_FILE|FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
   parent_error=deletion==INVALID_HANDLE_VALUE?GetLastError():0;if(deletion!=INVALID_HANDLE_VALUE)CloseHandle(deletion);
   saved=MoveFileW(reglib,backup)!=0;save_error=saved?0:GetLastError();
-  moved=saved&&MoveFileW(stage,reglib)!=0;publish_error=moved?0:(saved?GetLastError():ERROR_OPERATION_ABORTED);
-  printf("OBS publication delete_open_error=%lu parent_write_error=%lu saved=%d save_error=%lu moved=%d publish_error=%lu\n",
-    (unsigned long)deletion_error,(unsigned long)parent_error,saved,(unsigned long)save_error,moved,(unsigned long)publish_error);
-  expect(saved&&moved,"actual target namespace publication");
+  printf("OBS publication delete_open_error=%lu parent_write_error=%lu absolute_rename=%d error=%lu\n",
+    (unsigned long)deletion_error,(unsigned long)parent_error,saved,(unsigned long)save_error);
+  expect(deletion_error==0&&parent_error==ERROR_SHARING_VIOLATION&&!saved&&save_error==ERROR_SHARING_VIOLATION,
+    "strong directory custody remains unchanged");
+  {
+   wh3w_identity stage_id,bad_id;wh3_tx_status status;
+   expect(capture_id(stage,0,&stage_id),"independently captured staged FileID");bad_id=stage_id;bad_id.file.Identifier[0]^=1;
+   expect(wh3wr_publish(registration,L"stage.sqlite",&bad_id,L"retained.sqlite")==WH3_TX_MISMATCH,
+     "wrong stage identity makes no publication");
+   expect(wh3wr_publish(registration,L"..\\stage.sqlite",&stage_id,L"retained.sqlite")==WH3_TX_MISMATCH,
+     "publication refuses path traversal");
+   status=wh3wr_publish(registration,L"stage.sqlite",&stage_id,L"retained.sqlite");
+   publish_error=status==WH3_TX_OK?0:GetLastError();
+   printf("OBS handle_publication status=%d error=%lu\n",(int)status,(unsigned long)publish_error);
+   expect(status==WH3_TX_OK,"actual target namespace publication");
+   expect(sdk_prove((void *)original,backup),"old actual SDK library retained");
+   deletion=CreateFileW(f.parent,GENERIC_WRITE|DELETE,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,
+     OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+   expect(deletion==INVALID_HANDLE_VALUE&&GetLastError()==ERROR_SHARING_VIOLATION,"publication never relaxes parent pins");
+   if(deletion!=INVALID_HANDLE_VALUE)CloseHandle(deletion);
+  }
  }
  expect(reg_terminal(cap,&tip),"complete acknowledged native journal");
  if(fail_clean){
