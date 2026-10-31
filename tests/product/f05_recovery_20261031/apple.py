@@ -60,6 +60,31 @@ final class F05RecoveryUITests: XCTestCase {
         XCTAssertTrue(node("reader.back").waitForExistence(timeout:90))
         XCTAssertTrue(wait{!self.node("reader.busy").exists})
     }
+    private func gateReached() -> Bool {
+        guard let root=ProcessInfo.processInfo.environment["F05_ROOT"],
+              let url=URL(string:root.replacingOccurrences(of:"/dav/",with:"/__f05_gate")) else {return false}
+        let done=expectation(description:"read-only fixture boundary")
+        var reached=false
+        let task=URLSession.shared.dataTask(with:url){data,_,_ in
+            if let data,let object=try? JSONSerialization.jsonObject(with:data) as? [String:Bool] {
+                reached=object["original_get_blocked"] == true
+            }
+            done.fulfill()
+        }
+        task.resume()
+        wait(for:[done],timeout:5)
+        return reached
+    }
+    private func cancelRealReceiveThenRetry() {
+        let book=app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH 'library.book.'")).firstMatch
+        XCTAssertTrue(book.waitForExistence(timeout:60))
+        book.tap()
+        XCTAssertTrue(wait{self.gateReached()},"native original GET must reach held boundary")
+        tap("library.cancel")
+        XCTAssertTrue(wait{!self.node("library.busy").exists})
+        XCTAssertTrue(book.waitForExistence(timeout:60))
+        openBook()
+    }
     func test01BaselineOriginal() throws {
         let root=try XCTUnwrap(ProcessInfo.processInfo.environment["F05_ROOT"])
         tap("account.choose")
@@ -71,7 +96,7 @@ final class F05RecoveryUITests: XCTestCase {
         XCTAssertTrue(wait{self.node("account.choose").label=="云盘书库，"+root})
         sync()
         XCTAssertTrue(text("account.receive.state").contains("待处理冲突 0 项"))
-        openBook()
+        cancelRealReceiveThenRetry()
     }
     func test02ReceiveRealConcurrentHeads() {
         sync()
@@ -125,6 +150,8 @@ def main():
             if not a.udid:raise ValueError("actual simulator UDID required")
             subprocess.run(["xcrun","simctl","keychain",a.udid,"add-root-cert",str(a.certificate)],check=True)
         for number,name in enumerate(("test01BaselineOriginal","test02ReceiveRealConcurrentHeads","test03OfflineReopenOriginal")):
+            if number==0:
+                server.hold_get=True;server.get_blocked.clear();server.release.clear()
             if number==1:server.expose_checkpoint(a.peer/contract["remote_conflict"])
             if number==2:server.offline=True
             start=len(server.requests)
@@ -137,6 +164,9 @@ def main():
             report["cases"].append({"test":name,"exit":done.returncode,"requests_start":start,
                                     "requests_end":len(server.requests),"argv":argv})
             if done.returncode:raise AssertionError("actual Apple UI failed: "+name)
+            if number==0 and not server.get_blocked.is_set():
+                raise AssertionError("native original receive gate was never reached")
+            server.release.set()
             if number==2 and len(server.requests)!=start:
                 raise AssertionError("offline reopening unexpectedly requested network")
     except BaseException as error:
@@ -145,7 +175,7 @@ def main():
     finally:
         report["requests"]=server.requests
         report["uncovered"]=["independent xcresult attachments and catalog head audit",
-            "receive cancellation","uncertain acknowledgment process kill",
+            "receive cancellation exact SDK count/readback","uncertain acknowledgment process kill",
             "organization projection (owner gap, not lower API injected)",
             "actual displayed original byte/readback authentication"]
         (a.output/"coverage.json").write_text(json.dumps(report,indent=2)+"\n")
