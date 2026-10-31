@@ -1377,6 +1377,7 @@ final class HostReaderModel: ObservableObject {
     @Published var stateHash = "—"
     @Published var busy = false
     @Published private(set) var libraryReady = false
+    @Published private(set) var admissionRequired = false
     @Published private(set) var organizationURL: URL?
     @Published private(set) var organizationVerificationBusy = false
     @Published private(set) var syncPreparing = false
@@ -1461,6 +1462,7 @@ final class HostReaderModel: ObservableObject {
     private var syncCancel: HostCancelBox?
     private var receiveCancel: HostCancelBox?
     private var started = false
+    private var explicitAdmissionCompleted = false
     private var lastViewport = CGSize.zero
     private var viewportWork: DispatchWorkItem?
     private struct ViewportRequest {
@@ -1937,6 +1939,34 @@ final class HostReaderModel: ObservableObject {
         statusText = "导入失败"
     }
 
+    func prepareLibrary(_ action: HostC02Action) {
+        guard !busy, !libraryReady else { return }
+        busy = true
+        admissionRequired = false
+        queue.async {
+            do {
+                let folder = try self.storageFolder()
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true,
+                                                        attributes: [.posixPermissions: 0o700])
+                try HostC02Admission.perform(action, path: folder.appendingPathComponent("library.sqlite"))
+                DispatchQueue.main.async {
+                    self.explicitAdmissionCompleted = true
+                    self.started = false
+                    self.busy = false
+                    self.start()
+                }
+            } catch {
+                self.appendLog("library admission failed: \(self.describe(error))")
+                DispatchQueue.main.async {
+                    self.errorText = self.describe(error)
+                    self.statusText = "书库登记未完成"
+                    self.admissionRequired = true
+                    self.busy = false
+                }
+            }
+        }
+    }
+
     func start() {
         traceUITest("startup-request")
         guard !started else { return }
@@ -1954,45 +1984,27 @@ final class HostReaderModel: ObservableObject {
            let value = Double(ProcessInfo.processInfo.arguments[index + 1]) {
             slowDelay = max(0, min(10, value / 1000))
         }
-        let fresh = freshState
+        let fresh = freshState && !explicitAdmissionCompleted
         queue.async {
             do {
                 let folder = try self.storageFolder()
-                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true,
+                                                        attributes: [.posixPermissions: 0o700])
                 if fresh {
-#if EXR_APPLE_HOST_REVIEW
-                    // Fresh review fixtures must not silently discard a prior
-                    // interrupted organization request and its failure evidence.
-                    let pending = folder.appendingPathComponent("organization.pending")
-                    if FileManager.default.fileExists(atPath: pending.path) {
-                        try FileManager.default.moveItem(at: pending, to: folder.appendingPathComponent(
-                            "organization-preserved-\(UUID().uuidString).pending"))
+                    let preserved = ["library.sqlite", "library.sqlite-wal", "library.sqlite-shm", "library.sqlite-journal",
+                                     "reader-catalog.db", "reader-catalog.db-wal", "reader-catalog.db-shm",
+                                     "reader-catalog.db-journal", "organization.pending"]
+                    guard !preserved.contains(where: { FileManager.default.fileExists(atPath: folder.appendingPathComponent($0).path) }) else {
+                        throw HostError.invalidInput("此目录已有书库或恢复记录，请选择新的测试档案")
                     }
-#endif
-                    for name in ["library.sqlite", "library.sqlite-wal", "library.sqlite-shm",
-                                 "reader-catalog.db", "reader-catalog.db-wal", "reader-catalog.db-shm",
-                                 "reader-catalog.db-journal"] {
-                        try? FileManager.default.removeItem(at: folder.appendingPathComponent(name))
-                    }
-                    self.defaults.removeObject(forKey: "EXRLastBook")
-#if EXR_APPLE_WAVE3
-                    self.defaults.removeObject(forKey: "EXRImportedFont")
-#endif
                 }
+                let library = try HostLibrary(path: folder.appendingPathComponent("library.sqlite"))
                 guard let migration = Bundle.main.url(forResource: HostCatalog.resourceName, withExtension: "sql") else {
                     throw HostError.invalidInput("缺少原始产品书库迁移资源")
                 }
 #if EXR_APPLE_SHELF_REVIEW
-                if ProcessInfo.processInfo.arguments.contains("-EXRShelfSeed"),
-                   !FileManager.default.fileExists(atPath: folder.appendingPathComponent("library.sqlite").path) {
-                    for (resource, destination) in [("ShelfSeed-library", "library.sqlite"), ("ShelfSeed-reader-catalog", "reader-catalog.db")] {
-                        let ext = resource == "ShelfSeed-library" ? "sqlite" : "db"
-                        guard let source = Bundle.main.url(forResource: resource, withExtension: ext) else {
-                            throw HostError.invalidInput("缺少实际 SDK 原件书库")
-                        }
-                        try FileManager.default.copyItem(at: source, to: folder.appendingPathComponent(destination))
-                    }
-                    for key in ["EXRLastBook", "EXRShelfQuery", "EXRShelfTop", "EXRShelfSelected"] { self.defaults.removeObject(forKey: key) }
+                if ProcessInfo.processInfo.arguments.contains("-EXRShelfSeed") {
+                    throw HostError.invalidInput("请在新的测试档案中显式导入夹具，保留现有书库")
                 }
 #endif
                 let catalog = try HostCatalog(path: folder.appendingPathComponent("reader-catalog.db"),
@@ -2000,7 +2012,6 @@ final class HostReaderModel: ObservableObject {
 #if EXR_APPLE_IMPORT_REVIEW
                 self.configureImportMappingReview()
 #endif
-                let library = try HostLibrary(path: folder.appendingPathComponent("library.sqlite"))
                 try HostImportCopy.discardInterrupted(in: folder.appendingPathComponent("import-staging", isDirectory: true))
                 let fontURL = Bundle.main.url(forResource: "Reader", withExtension: "otf")
                 guard let fontURL else { throw HostError.invalidInput("缺少 Reader.otf") }
@@ -2038,6 +2049,7 @@ final class HostReaderModel: ObservableObject {
                     // Both owner dependencies and the initial SDK read exist
                     // before any import control or backend entry is admitted.
                     self.libraryReady = true
+                    self.admissionRequired = false
                     self.busy = false
                     if !repairProblems.isEmpty {
                         self.errorText = "产品索引待修复：" + repairProblems.joined(separator: "；")
@@ -2056,6 +2068,7 @@ final class HostReaderModel: ObservableObject {
                 DispatchQueue.main.async {
                     self.errorText = self.describe(error)
                     self.statusText = "初始化失败"
+                    self.admissionRequired = error is HostC02Failure
                     self.busy = false
                 }
             }

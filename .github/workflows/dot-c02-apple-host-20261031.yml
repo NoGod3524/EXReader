@@ -1,0 +1,120 @@
+name: DOT C02 Apple fixed authority and actual host runtime
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/dot-c02-native-journal-20261030]
+    paths:
+      - '.github/workflows/dot-c02-apple-host-20261031.yml'
+      - 'examples/apple/HostSDK.swift'
+      - 'examples/apple/HostModel.swift'
+      - 'examples/apple/HostViews.swift'
+      - 'examples/apple/HostC02Admission.swift'
+      - 'tools/apple_swift.py'
+      - 'tools/build_apple_host.py'
+      - 'tools/build_apple_product.py'
+      - 'extras/migration/posix_c02_admission_20261031/**'
+      - 'extras/migration/posix_c02_sdk_admission_20261031/**'
+      - 'tests/migration/apple_c02_host_20261031/**'
+permissions:
+  contents: read
+  actions: read
+env:
+  PYTHONUNBUFFERED: '1'
+  EXR_APPLE_SDK_VERSION: '3.42.0'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  sdk:
+    name: Frozen SDK3.42 Apple ${{ matrix.target }}
+    runs-on: macos-15
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Actions-only syntax and exact frozen SDK install
+        timeout-minutes: 12
+        run: |
+          python3 -m py_compile tests/migration/apple_c02_host_20261031/*.py tools/apple_swift.py tools/build_apple_host.py tools/build_apple_product.py
+          python3 tests/migration/apple_c02_host_20261031/build.py --phase sdk --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-apple-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-c02/${{ matrix.target }}/sdk/
+          include-hidden-files: true
+          if-no-files-found: error
+  products:
+    name: Installed C02 and product Apple ${{ matrix.target }}
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: c02-apple-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-c02/${{ matrix.target }}/sdk
+      - name: Install actual SDK admission and all host product libraries
+        timeout-minutes: 12
+        run: python3 tests/migration/apple_c02_host_20261031/build.py --phase products --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-apple-products-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-c02/${{ matrix.target }}/products/
+          include-hidden-files: true
+          if-no-files-found: error
+  runtime:
+    name: Actual C02 Apple app UID ${{ matrix.target }}
+    needs: [sdk, products]
+    runs-on: macos-15
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: c02-apple-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-c02/${{ matrix.target }}/sdk
+      - uses: actions/download-artifact@v4
+        with:
+          name: c02-apple-products-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-c02/${{ matrix.target }}/products
+      - name: Production bundle and actual native app UID barriers and last owners
+        timeout-minutes: 12
+        run: python3 tests/migration/apple_c02_host_20261031/run.py --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-apple-runtime-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-c02/${{ matrix.target }}/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30

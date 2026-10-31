@@ -72,6 +72,8 @@ struct HostRootView: View {
         Group {
             if selfTesting {
                 SelfTestScreen()
+            } else if model.admissionRequired {
+                HostAdmissionScreen(model: model)
             } else if model.showLibrary || model.current == nil {
                 LibraryScreen(model: model)
             } else {
@@ -119,6 +121,27 @@ struct HostRootView: View {
         .onDisappear {
             if !selfTesting { model.persistNow(); model.closeAccountSession() }
         }
+    }
+}
+
+private struct HostAdmissionScreen: View {
+    @ObservedObject var model: HostReaderModel
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Text("打开书库").font(.title)
+            Text("请创建新书库，或登记与恢复已有书库。")
+            Text(model.errorText).font(.callout).foregroundColor(.secondary)
+            Button("创建新书库") { model.prepareLibrary(.create) }
+                .accessibilityIdentifier("c02.create")
+            Button("登记现有书库") { model.prepareLibrary(.enroll) }
+                .accessibilityIdentifier("c02.enroll")
+            Button("恢复未完成的登记") { model.prepareLibrary(.recoverEnrollment) }
+                .accessibilityIdentifier("c02.recover-enrollment")
+        }
+        .padding(24)
+        .disabled(model.busy)
+        .accessibilityIdentifier("c02.setup")
     }
 }
 
