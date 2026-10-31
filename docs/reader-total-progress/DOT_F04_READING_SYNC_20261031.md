@@ -107,3 +107,5 @@ this zero-CI preparation grant.
 Static source follow-up: point records remain BOOKMARK after note-text edits (annotation_view.cpp classifies point before note_size). The new strict selector also refuses missing/foreign parents, duplicate parents and cyclic history before accepting one head. These are static findings, not executed tests.
 
 Static review caught BookStore construction invoking repairMissingMappings(): the prepared Android driver now borrows the actual MainActivity worker/store for list, retained-wire and public original reads; it does not open a second application BookStore/SDK connection. Its independent chapter-boundary fixture remains a separate isolated test library. No runtime proof is claimed for this correction.
+
+The singleTask MainActivity must first launch after instrumentation installs ActivityMonitor. The generated Android adapter prepares only its files/ test-input directory before instrumentation instead of prelaunching the Activity; the actual account/receive UI flow still launches it. This avoids an unobserved preexisting activity in the owner-borrow path.
