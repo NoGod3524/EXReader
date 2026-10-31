@@ -1,7 +1,7 @@
 {
   "base": "f59425f00af9069a22dc9cef2399ae84e3a62648",
   "sdk": "8357eafa28423a7ab93ba08b823af80f01ad1505",
-  "branch": "codex/gpt-f02-online-observation-20261031",
+  "branch": "codex/gpt-f02-cold-cache-validation-20261031",
   "owned": [
     "examples/android/app/src/main/java/org/exreader/host/MainActivity.java",
     "examples/android/app/src/main/java/org/exreader/host/BookStore.java",

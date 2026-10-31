@@ -1,12 +1,12 @@
-name: F02 Android original online observation
+name: F02 cold-cache complete validation
 on:
   push:
-    branches: [codex/gpt-f02-online-observation-20261031]
+    branches: [codex/gpt-f02-cold-cache-validation-20261031]
 permissions:
   contents: read
   actions: read
 concurrency:
-  group: f02-online-observation-${{ github.ref }}
+  group: gpt-f02-cold-cache-validation
   cancel-in-progress: false
 env:
   PYTHONUTF8: '1'
@@ -15,9 +15,63 @@ defaults:
   run:
     shell: bash
 jobs:
-  observation:
+  admission:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Exact11 source and immutable real Windows sender input
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          python -m py_compile tests/reader_f02_win_android_20261031/*.py
+          python tests/reader_f02_win_android_20261031/fetch_sender.py
+          python - <<'PY'
+          import re, subprocess
+          from pathlib import Path
+          base='3ba9dbefe975b60cd6d3b6d2dac6d186f43c637b'
+          java='tests/reader_f02_win_android_20261031/java/org/exreader/host/F02ReceiveTest.java'
+          old=subprocess.check_output(['git','show',base+':'+java],text=True)
+          now=Path(java).read_text()
+          match=re.search(r'(?ms)^    // F02_COLD_CACHE_PRECONDITION_BEGIN\n(.*?)^    // F02_COLD_CACHE_PRECONDITION_END\n',now)
+          assert match and now.count('F02_COLD_CACHE_PRECONDITION_BEGIN')==now.count('F02_COLD_CACHE_PRECONDITION_END')==1
+          normalized=now[:match.start()]+now[match.end():]
+          for call in ('prepareColdCache();','coldCacheMustRemainAbsent();','normalDownloadStart();','normalDownloadEnd();','duplicateGetStart();','duplicateGetEnd();'):
+              normalized=normalized.replace(call,'')
+          assert re.findall(r'need\((.*?)\);',old,re.S)==re.findall(r'need\((.*?)\);',normalized,re.S), 'all original Java assertions'
+          for fragment in ['get(45,TimeUnit.SECONDS)','null,120000','this::tap,30000','SystemClock.sleep(80)']:
+              assert old.count(fragment)==normalized.count(fragment), 'original timeouts/polling'
+          group='check("corrupt_original_rejected",()->{mode("corrupt");receive();status("完整性校验失败");empty();});'
+          assert group in normalized, 'original corrupt calls retained after explicit new preparation'
+          assert 'Files.delete' not in match[1] and 'Files.move(active.toPath(),isolated.toPath(),java.nio.file.StandardCopyOption.ATOMIC_MOVE)' in match[1], 'single atomic isolation without deletion'
+          run=Path('tests/reader_f02_win_android_20261031/run.py').read_text()
+          assert 'self.send(200,bytes([original[0]^1])+original[1:])' in run, 'original xor1 payload'
+          expected={
+           '.github/workflows/dot-f02-win-android-transfer-20261031.yml',
+           'docs/reader-total-progress/DOT_F02_WIN_ANDROID_TRANSFER_20261031.md',
+           'tests/reader_f02_win_android_20261031/fetch_sender.py',
+           java,'tests/reader_f02_win_android_20261031/run.py','tests/reader_f02_win_android_20261031/source_lock.json'}
+          changed=set(subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          assert changed==expected, 'exact six changed paths'
+          print('F02_COLD_SOURCE_GUARD original20 assertions/timeouts/input retained; explicit cold precondition only')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f02-android-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f02-android-input/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f02-android-admission-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f02-android/admission.json
+          if-no-files-found: warn
+  android:
+    needs: admission
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
@@ -27,38 +81,16 @@ jobs:
         with: {distribution: temurin, java-version: '17'}
       - uses: gradle/actions/setup-gradle@v4
         with: {gradle-version: '8.9'}
-      - name: Fixed source and original Windows sender admission
-        env: {GH_TOKEN: '${{ github.token }}'}
-        run: |
-          python -m py_compile tests/reader_f02_win_android_20261031/*.py
-          python tests/reader_f02_win_android_20261031/fetch_sender.py
-          python - <<'PY'
-          import re, subprocess
-          from pathlib import Path
-          base='f47f7c374524d2774e9a61cba44f63a5b7580916'
-          java='tests/reader_f02_win_android_20261031/java/org/exreader/host/F02ReceiveTest.java'
-          old=subprocess.check_output(['git','show',base+':'+java],text=True)
-          now=Path(java).read_text()
-          assert re.findall(r'need\((.*?)\);',old,re.S)==re.findall(r'need\((.*?)\);',now,re.S), 'original Java assertions'
-          for fragment in ['get(45,TimeUnit.SECONDS)','null,120000','this::tap,30000','SystemClock.sleep(80)']:
-              assert old.count(fragment)==now.count(fragment), 'original timeout/polling'
-          group='check("corrupt_original_rejected",()->{mode("corrupt");receive();status("完整性校验失败");empty();});'
-          assert group in old and group in now, 'original corrupt call order'
-          run=Path('tests/reader_f02_win_android_20261031/run.py').read_text()
-          assert "self.send(200,bytes([original[0]^1])+original[1:])" in run, 'original byte mutation'
-          print('F02_OBSERVATION_GUARD original assertions/timeouts/corrupt call order retained')
-          PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: f02-android-input-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f02-android-input/
-          if-no-files-found: error
-          overwrite: false
-      - name: Build unchanged product and observation instrumentation
+          path: build/f02-android-input
+      - name: Build fixed SDK342 and matched real Activity/instrumentation APKs
+        id: build
         run: python tests/reader_f02_win_android_20261031/build.py
       - name: Enable the original emulator accelerator
         run: sudo chmod 666 /dev/kvm
-      - name: Original assertions with bounded observations
+      - name: Actual receive, public original readback and offline process reopen
         id: receive
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -70,15 +102,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: python tests/reader_f02_win_android_20261031/run.py
-      - name: Preserve original input admission
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: f02-android-admission-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f02-android/admission.json
-          if-no-files-found: warn
-          overwrite: false
-      - name: Preserve safe build evidence
+      - name: Preserve safe build evidence on success or failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -89,8 +113,7 @@ jobs:
             build/f02-android/recipe-*.sh
             build/f02-android/artifacts/
           if-no-files-found: warn
-          overwrite: false
-      - name: Preserve credential-scanned receiver observations
+      - name: Preserve credential-scanned receiver evidence
         if: always() && steps.receive.outputs.safe_upload == 'true'
         uses: actions/upload-artifact@v4
         with:
@@ -98,7 +121,6 @@ jobs:
           path: build/f02-android/
           include-hidden-files: true
           if-no-files-found: error
-          overwrite: false
       - name: Preserve bounded public terminal status
         if: always()
         uses: actions/upload-artifact@v4
@@ -106,4 +128,122 @@ jobs:
           name: f02-android-status-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f02-android-status/
           if-no-files-found: warn
-          overwrite: false
+  authenticate:
+    needs: [admission, android]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Authenticate original ZIPs and independently recompute12 controls
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: python tests/reader_f02_win_android_20261031/authenticate.py
+      - name: Recompute cold isolation and target original GET boundaries
+        run: |
+          python - <<'PY'
+          import json, sys
+          sys.path.insert(0,'tests/reader_f02_win_android_20261031')
+          from fetch_sender import OUT, identity, sha, unpack_current, old_verifier
+          target=OUT/'independent'
+          result=dict(identity=identity(),passed=False,errors=[],F02_accepted=False,formal='95/108')
+          def require(value,code):
+              if not value:raise AssertionError(code)
+          try:
+              previous=json.loads((target/'summary.json').read_text())
+              require(previous['passed'] and len(previous['controls'])==12,'original_independent_audit_and12_controls')
+              inputs=unpack_current((target/'input.zip').read_bytes())
+              files=unpack_current((target/'receiver.zip').read_bytes())
+              frozen=old_verifier();windows=frozen.unpack(inputs['sender.zip']);sender=frozen.verify_sender(windows)
+              original=windows['objects/'+sender['original_sha256']]
+              require(len(original)==sender['original_bytes']==12000 and sha(original)==sender['original_sha256'],'fixed_original_bytes')
+              report=json.loads(files['report.json'])
+              cold=report['phases'][0]['observed']['cold_cache_preparation']
+              epochs=[]
+              for name in ('owner_before','owner_fenced','owner_after'):
+                  owner=cold[name];epochs.append(owner['epoch'])
+                  require(owner['session_present'] is True and owner['controller_state']==owner['native_state']==4
+                          and owner['native_code']==0 and owner['completed_shards']==256 and owner['target_present'] is True
+                          and owner['target_local_id']==0 and owner['target_receivable'] is True,'cold_owner_finished')
+                  require(all(owner[k] is False for k in ('preparing','receiving','projecting','closingOwned','pollQueued','sdk_task_present')),'cold_owner_idle')
+              require(len(set(epochs))==1 and cold['sdk_books_before']==0 and cold['directory_mode']==0o700,'cold_setup_identity_and_owner')
+              before=cold['before'];isolated=cold['isolated']
+              require(cold['status']=='ready' and cold['active_after']['exists'] is False
+                      and cold['quarantine_relative']=='f02-cold-cache-isolation/'+sender['original_sha256']+'.txt','cold_atomic_move_record')
+              for value in (before,isolated):
+                  require(value['exists'] is True and value['regular'] is True and value['symbolic'] is False
+                          and value['nlink']==1 and value['uid']==report['phases'][0]['uid']>0
+                          and value['size']==12000 and value['sha256']==sha(original),'cold_file_identity')
+              require(all(before[k]==isolated[k] for k in ('dev','ino','nlink','uid','size','mode','sha256')),'atomic_rename_preserves_identity')
+              guards=cold['guards']
+              require(len(guards)>=9 and all(g['active_exists'] is False for g in guards),'cold_cache_never_rebuilt_at_boundaries')
+              raw=files['cold-cache-isolated-original.txt'];native=report['cold_cache_isolation']['native']
+              require(raw==original and report['cold_cache_isolation']['identity']==identity()
+                      and native['exists'] is True and native['sha256']==sha(raw),'retained_isolation_raw_bytes')
+              values=files['cold-cache-isolated-native-stat.txt'].decode().strip().split()
+              require(len(values)==6 and all(v.isdigit() for v in values),'raw_isolation_stat_shape')
+              parsed=dict(zip(('dev','ino','nlink','uid','size'),map(int,values[:5])));parsed['mode']=int(values[5],8)
+              require(all(parsed[k]==isolated[k] for k in parsed) and all(native[k]==isolated[k] for k in ('dev','ino','nlink','uid','size')),'raw_stat_recomputes_isolation_identity')
+              events=json.loads(files['events.json']);requests=json.loads(files['original-get-requests.json'])
+              require(requests==report['original_get_requests'] and [q['id'] for q in requests]==list(range(1,len(requests)+1)),'original_get_request_inventory')
+              target_events=[e for e in events if e['method']=='GET' and e['path']==sender['object_path']]
+              require(len(target_events)==len(requests),'original_get_requests_have_raw_responses')
+              for request in requests:
+                  event=events[request['response_event_seq']-1]
+                  require(event['seq']==request['response_event_seq'] and event['method']=='GET'
+                          and event['path']==sender['object_path'] and event['original_get_request_id']==request['id']
+                          and request['authenticated'] is True and event['authenticated'] is True,'original_get_request_response_binding')
+              history=report['original_get_counter_history'];count=0
+              for publication,value in enumerate(history,1):
+                  require(value['identity']==identity() and value['original_sha256']==sender['original_sha256']
+                          and value['publication']==publication,'counter_publication_identity')
+                  if value['kind']=='request':
+                      count+=1;require(requests[count-1]['start_publication']==publication,'counter_request_publication')
+                  else:
+                      require(value['kind']=='response','counter_publication_kind')
+                      event=events[value['last_event_seq']-1]
+                      require(event['original_get_request_id']==value['response_request_id']
+                              and all(value[k]==event[v] for k,v in (('authenticated','authenticated'),('response_status','status'),('response_bytes','response_bytes'),('response_sha256','response_sha256'))),'counter_response_recomputed')
+                  require(value['count']==value['last_request_id']==count,'counter_request_count_recomputed')
+              require(count==len(requests),'counter_complete')
+              def snapshot(value):
+                  require(value in history and value['count']>0 and value['last_event_seq']>0,'snapshot_is_atomic_counter_publication')
+                  return value['count']
+              faults=report['fault_observations']
+              require([f['mode'] for f in faults]==['corrupt','truncate','block'] and all(f['mode_consumed'] is True and f['authenticated'] is True for f in faults),'all_original_fault_modes_consumed')
+              corrupt=faults[0];event=events[corrupt['event_seq']-1]
+              corrupted=bytes([original[0]^1])+original[1:]
+              require(corrupt['corrupt_sent'] is True and event['method']=='GET' and event['path']==sender['object_path']
+                      and event['status']==200 and event['response_bytes']==12000 and event['response_sha256']==sha(corrupted)
+                      and corrupt['response_sha256']==sha(corrupted),'exact_xor1_original_response')
+              normal=report['phases'][0]['observed']['normal_download']
+              n0=snapshot(normal['before']);n1=snapshot(normal['after'])
+              require(n1>n0,'normal_download_added_original_request')
+              candidates=[q for q in requests if n0<q['id']<=n1 and q['fault_mode']=='none']
+              require(any(events[q['response_event_seq']-1]['status']==200 and events[q['response_event_seq']-1]['response_bytes']==12000
+                          and events[q['response_event_seq']-1]['response_sha256']==sha(original) for q in candidates),'normal_download_received_original_bytes')
+              duplicate=report['phases'][0]['observed']['duplicate_original_gets']
+              d0=snapshot(duplicate['before']);d1=snapshot(duplicate['after'])
+              require(d0==d1,'duplicate_added_no_original_get')
+              for value in (duplicate['cache_before'],duplicate['cache_after']):
+                  require(value['exists'] is True and value['size']==12000 and value['sha256']==sha(original),'duplicate_valid_cache_identity')
+              result.update(passed=True,original_controls=12,isolated_original_bytes=len(raw),isolated_dev=parsed['dev'],isolated_ino=parsed['ino'],
+                            original_get_requests=len(requests),normal_get_before=n0,normal_get_after=n1,duplicate_get_before=d0,duplicate_get_after=d1,
+                            exact_corrupt_xor1_verified=True,cold_owner_finished=True)
+          except AssertionError as error:
+              result['errors'].append(str(error))
+          except Exception as error:
+              result['errors'].append(type(error).__name__)
+          finally:
+              (target/'cold-cache-verification.json').write_text(json.dumps(result,indent=2)+'\n')
+              print('F02_COLD_CACHE_AUDIT '+json.dumps(result),flush=True)
+          if not result['passed']:raise SystemExit(1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f02-android-independent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f02-android/independent/
+          if-no-files-found: error

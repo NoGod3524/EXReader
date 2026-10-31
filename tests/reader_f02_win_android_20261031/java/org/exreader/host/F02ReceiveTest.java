@@ -157,6 +157,129 @@ public final class F02ReceiveTest extends Instrumentation {
 
         }catch(Throwable ignored){failureObservation=new JSONObject();}
     }
+    // F02_COLD_CACHE_PRECONDITION_BEGIN
+    private final JSONObject coldPreparation=new JSONObject();
+    private final JSONObject normalDownload=new JSONObject();
+    private final JSONObject duplicateGets=new JSONObject();
+    private final JSONArray coldGuards=new JSONArray();
+    private boolean coldSequence;
+    private void coldNeed(boolean value,String reason)throws Exception{
+        coldPreparation.put("last_condition",reason);
+        if(!value)coldPreparation.put("status","failed").put("failure_code",reason);
+        need(value,reason);
+    }
+    private Object syncControllerForTest()throws Exception{
+        Field instance=SyncController.class.getDeclaredField("instance");instance.setAccessible(true);
+        Object controller=instance.get(null);coldNeed(controller!=null,"sync_controller_present");return controller;
+    }
+    private JSONObject syncOwnerSnapshot(Object controller)throws Exception{
+        ExecutorService owner=(ExecutorService)field(controller,"worker");
+        return owner.submit(()->{
+            JSONObject value=new JSONObject().put("controller_state",field(controller,"state")).put("epoch",field(controller,"epoch"))
+                .put("sdk_task_present",field(controller,"sdkTask")!=null);
+            for(String name:new String[]{"preparing","receiving","projecting","closingOwned","pollQueued"})value.put(name,field(controller,name));
+            long token=(Long)field(controller,"session");value.put("session_present",token!=0);
+            if(token!=0){
+                NativeSync.Snapshot snapshot=new NativeSync.Snapshot(NativeSync.command(token,0));
+                value.put("native_code",snapshot.code).put("native_state",snapshot.state).put("completed_shards",snapshot.completedShards);
+            }
+            value.put("target_present",false);
+            File product=(File)field(controller,"product");
+            for(String[] row:NativeSync.books(product.getAbsolutePath(),"")){
+                NativeSync.RemoteBook book=new NativeSync.RemoteBook(row);
+                if(book.key.equals(input.getString("book_key"))){
+                    value.put("target_present",true).put("target_local_id",book.localId).put("target_receivable",book.receivable());break;
+                }
+            }
+            return value;
+        }).get(5,TimeUnit.SECONDS);
+    }
+    private boolean syncQuiescent(JSONObject value)throws Exception{
+        if(!value.getBoolean("session_present")||value.getInt("controller_state")!=NativeSync.FINISHED
+            ||value.getInt("native_state")!=NativeSync.FINISHED||value.getInt("native_code")!=0
+            ||value.getInt("completed_shards")!=256||value.getBoolean("sdk_task_present")
+            ||!value.getBoolean("target_present")||value.getLong("target_local_id")!=0||!value.getBoolean("target_receivable"))return false;
+        for(String name:new String[]{"preparing","receiving","projecting","closingOwned","pollQueued"})if(value.getBoolean(name))return false;
+        return true;
+    }
+    private JSONObject coldFileMeta(File target)throws Exception{
+        if(!Files.exists(target.toPath(),java.nio.file.LinkOption.NOFOLLOW_LINKS))return new JSONObject().put("exists",false);
+        android.system.StructStat value=android.system.Os.lstat(target.getAbsolutePath());
+        boolean regular=(value.st_mode&0170000)==0100000;
+        return new JSONObject().put("exists",true).put("regular",regular).put("symbolic",Files.isSymbolicLink(target.toPath()))
+            .put("dev",value.st_dev).put("ino",value.st_ino).put("nlink",value.st_nlink).put("uid",value.st_uid)
+            .put("size",value.st_size).put("mode",value.st_mode&0777).put("sha256",regular?hash(target):"not_regular");
+    }
+    private void prepareColdCache()throws Exception{
+        observed.put("cold_cache_preparation",coldPreparation).put("normal_download",normalDownload).put("duplicate_original_gets",duplicateGets);
+        coldPreparation.put("status","preparing").put("expected_bytes",input.getLong("bytes")).put("expected_sha256",input.getString("sha256")).put("guards",coldGuards);
+        corruptStep("prepare_sync_owner");
+        Object controller=syncControllerForTest();
+        JSONObject first=syncOwnerSnapshot(controller);coldPreparation.put("owner_before",first);
+        coldNeed(syncQuiescent(first),"sync_owner_finished_before_isolation");
+        ExecutorService transfers=(ExecutorService)field(controller,"transfers");
+        transfers.submit(()->{}).get(5,TimeUnit.SECONDS);
+        JSONObject fenced=syncOwnerSnapshot(controller);coldPreparation.put("owner_fenced",fenced);
+        coldNeed(syncQuiescent(fenced)&&first.getLong("epoch")==fenced.getLong("epoch"),"sync_and_transfer_owners_quiescent");
+        int count=owner(()->store().nativeLibrary().books().length);coldPreparation.put("sdk_books_before",count);
+        coldNeed(count==0,"cold_setup_sdk_empty");
+        coldNeed(input.getLong("bytes")==12000&&input.getString("sha256").matches("[0-9a-f]{64}"),"fixed_cold_original_identity");
+        File active=cache(),parent=new File(context.getFilesDir(),"sync-cache").getCanonicalFile();
+        coldNeed(active.getCanonicalFile().getParentFile().equals(parent),"canonical_active_cache_parent");
+        JSONObject before=coldFileMeta(active);coldPreparation.put("before",before);
+        coldNeed(before.getBoolean("exists")&&before.getBoolean("regular")&&!before.getBoolean("symbolic")
+            &&before.getLong("nlink")==1&&before.getLong("uid")==android.os.Process.myUid()&&before.getLong("uid")>0
+            &&before.getLong("size")==12000&&before.getString("sha256").equals(input.getString("sha256")),"verified_initial_sync_cache");
+        File directory=file("f02-cold-cache-isolation");
+        coldNeed(!Files.exists(directory.toPath(),java.nio.file.LinkOption.NOFOLLOW_LINKS),"new_private_isolation_directory");
+        Files.createDirectory(directory.toPath());android.system.Os.chmod(directory.getAbsolutePath(),0700);
+        coldPreparation.put("directory_mode",android.system.Os.lstat(directory.getAbsolutePath()).st_mode&0777);
+        String relative="f02-cold-cache-isolation/"+input.getString("sha256")+".txt";
+        File isolated=file(relative);coldPreparation.put("quarantine_relative",relative).put("substep","atomic_isolation_move");
+        Files.move(active.toPath(),isolated.toPath(),java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        JSONObject after=coldFileMeta(isolated);coldPreparation.put("isolated",after).put("active_after",coldFileMeta(active));
+        coldNeed(!Files.exists(active.toPath(),java.nio.file.LinkOption.NOFOLLOW_LINKS),"active_cache_absent_after_atomic_move");
+        coldNeed(after.getBoolean("regular")&&!after.getBoolean("symbolic")&&after.getLong("dev")==before.getLong("dev")
+            &&after.getLong("ino")==before.getLong("ino")&&after.getLong("nlink")==1&&after.getLong("uid")==before.getLong("uid")
+            &&after.getLong("size")==before.getLong("size")&&after.getString("sha256").equals(before.getString("sha256")),"isolated_original_identity_preserved");
+        JSONObject finalOwner=syncOwnerSnapshot(controller);coldPreparation.put("owner_after",finalOwner);
+        coldNeed(syncQuiescent(finalOwner)&&finalOwner.getLong("epoch")==fenced.getLong("epoch"),"sync_owner_still_quiescent");
+        coldSequence=true;coldPreparation.put("status","ready").put("substep","cold_ready");
+        coldCacheMustRemainAbsent();
+    }
+    private void coldCacheMustRemainAbsent()throws Exception{
+        if(!coldSequence)return;
+        boolean exists=Files.exists(cache().toPath(),java.nio.file.LinkOption.NOFOLLOW_LINKS);
+        coldGuards.put(new JSONObject().put("elapsed_ms",SystemClock.elapsedRealtime()).put("active_exists",exists));
+        coldNeed(!exists,"cold_cache_not_rebuilt");
+    }
+    private JSONObject originalGetCounter()throws Exception{
+        File counter=file("f02-original-get-counter.json");
+        coldNeed(counter.isFile(),"original_get_counter_present");
+        JSONObject value=new JSONObject(new String(Files.readAllBytes(counter.toPath()),StandardCharsets.UTF_8));
+        coldNeed(value.getString("original_sha256").equals(input.getString("sha256"))&&value.getLong("count")>0
+            &&value.getLong("last_event_seq")>0,"original_get_counter_identity");
+        return value;
+    }
+    private void normalDownloadStart()throws Exception{
+        coldCacheMustRemainAbsent();normalDownload.put("before",originalGetCounter());
+    }
+    private void normalDownloadEnd()throws Exception{
+        JSONObject after=originalGetCounter();normalDownload.put("after",after);
+        coldNeed(after.getLong("count")>normalDownload.getJSONObject("before").getLong("count")
+            &&after.getInt("response_status")==200&&after.getBoolean("authenticated")
+            &&after.getLong("response_bytes")==input.getLong("bytes")&&after.getString("response_sha256").equals(input.getString("sha256")),"normal_receive_performed_original_get");
+        coldSequence=false;normalDownload.put("verified",true);
+    }
+    private void duplicateGetStart()throws Exception{
+        duplicateGets.put("before",originalGetCounter()).put("cache_before",coldFileMeta(cache()));
+    }
+    private void duplicateGetEnd()throws Exception{
+        JSONObject after=originalGetCounter();duplicateGets.put("after",after).put("cache_after",coldFileMeta(cache()));
+        coldNeed(after.getLong("count")==duplicateGets.getJSONObject("before").getLong("count"),"duplicate_original_get_count_unchanged");
+        duplicateGets.put("verified",true);
+    }
+    // F02_COLD_CACHE_PRECONDITION_END
     interface Check {void run() throws Exception;}
     @Override public void onCreate(Bundle args){super.onCreate(args);arguments=args;start();}
     static void need(boolean value,String reason){if(!value)throw new AssertionError(reason);}
@@ -211,9 +334,9 @@ public final class F02ReceiveTest extends Instrumentation {
     private void marker(String name)throws Exception{Files.write(file(name).toPath(),new byte[]{1});}
     private void waitFile(String name)throws Exception{long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){if(file(name).isFile())return;SystemClock.sleep(80);}throw new AssertionError("Native request boundary not observed");}
     private File cache()throws Exception{return file("sync-cache/"+input.getString("sha256")+".txt");}
-    private void receive()throws Exception{corruptStep("select_title");clickTitle();corruptStep("click_receive");click("接收");corruptSnapshot("receive_clicked");}
+    private void receive()throws Exception{coldCacheMustRemainAbsent();corruptStep("select_title");clickTitle();corruptStep("click_receive");click("接收");corruptSnapshot("receive_clicked");}
     private void mode(String value)throws Exception{
-        corruptStep("set_fault_mode");
+        coldCacheMustRemainAbsent();corruptStep("set_fault_mode");
         Files.deleteIfExists(file("f02-get-blocked").toPath());Files.deleteIfExists(file("f02-get-release").toPath());
         Files.write(file("f02-get-mode").toPath(),value.getBytes(StandardCharsets.UTF_8));
         corruptSnapshot("mode_written");
@@ -297,16 +420,18 @@ public final class F02ReceiveTest extends Instrumentation {
             click("云盘账号");set("云盘地址",input.getString("root"));set("云盘用户名",input.getString("user"));set("云盘密码",input.getString("password"));click("仅本次使用");status("仅本次使用凭据");
             click("立即同步");status("本轮同步结束");need(owner(()->store().nativeLibrary().books().length)==0,"scan does not import SDK original");
         });
-        check("corrupt_original_rejected",()->{mode("corrupt");receive();status("完整性校验失败");empty();});
+        check("corrupt_original_rejected",()->{prepareColdCache();mode("corrupt");receive();status("完整性校验失败");empty();});
         check("truncated_original_rejected",()->{mode("truncate");receive();status("原件下载未完成");empty();});
         check("cancel_blocked_receive_preserves_empty_library",()->{
             mode("block");receive();waitFile("f02-get-blocked");long before=SystemClock.elapsedRealtime();click("取消同步");need(SystemClock.elapsedRealtime()-before<2000,"cancel remains responsive");marker("f02-get-release");status("已取消");empty();
         });
         check("explicit_receive_imports_exact_original",()->{
+            normalDownloadStart();
             receive();status("书籍已接收");need(cache().isFile()&&cache().length()==input.getLong("bytes")&&hash(cache()).equals(input.getString("sha256")),"exact HTTPS cache");
             need(owner(()->store().nativeLibrary().books().length)==1,"real receive imports once");
+            normalDownloadEnd();
         });
-        check("duplicate_receive_keeps_one_sdk_mapping",()->{receive();status("书籍已接收");need(owner(()->store().nativeLibrary().books().length)==1,"no duplicate SDK book");});
+        check("duplicate_receive_keeps_one_sdk_mapping",()->{duplicateGetStart();receive();status("书籍已接收");need(owner(()->store().nativeLibrary().books().length)==1,"no duplicate SDK book");duplicateGetEnd();});
         check("actual_online_reader",()->{click("关闭");clickTitle();observed.put("open",open());});
         long book=observed.getJSONObject("open").getLong("book");copyCases(book);
         check("closed_host_sdk_original",()->{stopHost();observed.put("sdk_readback",inspectClosed());});
