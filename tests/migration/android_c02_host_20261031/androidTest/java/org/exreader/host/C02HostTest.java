@@ -91,7 +91,7 @@ public final class C02HostTest extends Instrumentation {
         Os.symlink(database.getPath(), alias.getPath());
         try { new NativeLibrary(context, alias); throw new AssertionError("symlink alias opened"); }
         catch (NativeAdmission.Required expected) {}
-        finally { Os.unlink(alias.getPath()); }
+        finally { java.nio.file.Files.delete(alias.toPath()); }
         passed("context_relative_dot_and_symlink_escape_refused");
 
         try (Actor source = new Actor(C02SourceService.class)) {

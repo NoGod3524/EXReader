@@ -20,6 +20,8 @@ import zipfile
 
 from production import bound_history, acknowledged_prefix, audit_repairs
 from scanner import audit_scanner
+from gtk_host import audit_gtk_host
+from gtk_snapshots import pending_negative_controls
 
 from protocols import (SDK, C01, ABI2_FAILURES, need, sha, hexadecimal, integer, json_value,
                        summary, frames, history, native_pair, gate_records, registry_binding,
@@ -553,6 +555,23 @@ def registry_evidence(files, spec, source, missing):
     return dict(capabilities=["trusted-registry","windows-product-admission","legacy-regression",*migration["capabilities"]],
                 registry=result,cli_cases=len(admission),host_cases=len(product),legacy=legacy,scanner=scanner,migration=migration)
 
+def gtk_evidence(files, spec, source):
+    for key in ("evidence_prefix", "runtime_prefix", "package_prefix"):
+        prefix = spec[key]
+        need(prefix.endswith("/") and canonical_path(prefix[:-1]) == prefix[:-1], "gtk-artifact-prefix")
+    prefix = spec["evidence_prefix"]
+    evidence = {name[len(prefix):]:data for name,data in files.items() if name.startswith(prefix)}
+    inventory(evidence)
+    receipt = json_value(evidence["receipt.json"])
+    provenance(receipt,spec,source)
+    need(receipt["full_c02_acceptance"] is False, "gtk-build-receipt-scope")
+    tree = ast.parse(git_bytes(source,"tests/migration/gtk_c02_host_20261031/run.py"))
+    declared = [node.args[0].value for node in ast.walk(tree) if isinstance(node,ast.Call) and
+                isinstance(node.func,ast.Name) and node.func.id == "done" and node.args and
+                isinstance(node.args[0],ast.Constant) and isinstance(node.args[0].value,str)]
+    need(len(declared) == len(set(declared)) and len(declared) >= 13, "gtk-source-case-declaration")
+    return audit_gtk_host(files,spec,source,set(declared))
+
 def host_evidence(files, spec, source, missing):
     receipt = json_value(files[spec["receipt"]])
     provenance(receipt,spec,source)
@@ -685,6 +704,8 @@ def validate(files,spec,source,missing):
         return persistent_evidence(files,spec,source)
     if role == "registry-product":
         return registry_evidence(files,spec,source,missing)
+    if role == "host-gtk":
+        return gtk_evidence(files,spec,source)
     return host_evidence(files,spec,source,missing)
 
 def reseal_intents(data,wrong_ack=False):
@@ -787,6 +808,7 @@ def main():
     missing = set(ROLES - {spec["role"] for spec in specs})
     packages = []
     original_checks = []
+    host_controls = []
     windows = None
     for spec in specs:
         role = spec["role"]
@@ -804,8 +826,10 @@ def main():
         original_checks.append((output/role/"original.zip",spec["artifact"]))
         if role == "native-windows":
             windows = (files,spec)
+        if role == "host-gtk":
+            host_controls.extend(pending_negative_controls(files,spec["runtime_prefix"],output/role/"negative-controls"))
     need(windows is not None, "negative-controls-require-original-windows-native")
-    controls = negative_controls(windows[0],windows[1],source,output)
+    controls = negative_controls(windows[0],windows[1],source,output) + host_controls
     for path,artifact in original_checks:
         need(path.stat().st_size == artifact["bytes"] and sha(path.read_bytes()) == artifact["sha256"],
              "retained-original-unchanged")

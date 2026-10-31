@@ -17,9 +17,9 @@ on:
         type: choice
         required: true
         default: windows-components
-        options: [windows-components, complete-c02]
+        options: [windows-components, selected-components, complete-c02]
       qualification_manifest:
-        description: Complete JSON manifest, required only for complete-c02
+        description: Exact JSON manifest for selected-components or complete-c02
         type: string
         required: false
         default: ''
@@ -60,7 +60,7 @@ jobs:
         run: |
           set -euo pipefail
           flags=(--require-complete)
-          if [ "$AUDIT_SCOPE" = windows-components ]; then
+          if [ "$AUDIT_SCOPE" != complete-c02 ]; then
             flags=(--allow-incomplete)
           fi
           set +e

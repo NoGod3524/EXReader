@@ -9,12 +9,13 @@ import subprocess
 import sys
 
 from protocols import need, hexadecimal, json_value, sha
+from audit import ROLES
 
 def main():
     need(os.environ.get("GITHUB_ACTIONS")=="true", "actions-only-manifest-selection")
     parser=argparse.ArgumentParser()
     parser.add_argument("--source",required=True)
-    parser.add_argument("--scope",choices=("windows-components","complete-c02"),required=True)
+    parser.add_argument("--scope",choices=("windows-components","selected-components","complete-c02"),required=True)
     parser.add_argument("--output",type=pathlib.Path,required=True)
     args=parser.parse_args()
     need(hexadecimal(args.source,40), "explicit-full-producer-sha")
@@ -29,12 +30,13 @@ def main():
         manifest=json_value(raw)
         need(not supplied and manifest["source"]==source, "fixed-original-windows-components-only")
     else:
-        need(supplied, "complete-mode-requires-explicit-qualification-manifest")
+        need(supplied, "selected-scope-requires-explicit-qualification-manifest")
         manifest=json_value(supplied)
         need(manifest["source"]==source, "explicit-complete-source-binding")
         roles={item["role"] for item in manifest["packages"]}
-        need(roles=={"native-windows","native-linux","persistent-gate","registry-product",
-                     "host-android","host-macos","host-gtk"}, "complete-mode-all-platform-packages")
+        need(roles <= ROLES and "native-windows" in roles, "selected-valid-roles-and-original-negative-baseline")
+        if args.scope=="complete-c02":
+            need(roles==ROLES, "complete-mode-all-platform-packages")
     need(manifest["schema"]==1 and manifest["repository"]=="NoGod3524/EXReader" and
          manifest["repository"]==os.environ["GITHUB_REPOSITORY"], "qualification-repository")
     args.output.parent.mkdir(parents=True,exist_ok=True)
