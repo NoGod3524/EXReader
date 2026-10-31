@@ -24,7 +24,7 @@ sdk, c02, hash_prefix, out = (x.resolve() for x in (a.sdk, a.c02, a.hash_prefix,
 out.mkdir(parents=True, exist_ok=False)
 (out / "logs").mkdir()
 H.OUT = out
-os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = str(hash_prefix)
+os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = hash_prefix.as_posix()
 product, stage = out / "product", out / "raw"
 prefix = ";".join(map(str, (stage, product, sdk)))
 H.configure(ROOT / "apps/reader/store/native", out / "catalog-build",
@@ -35,7 +35,7 @@ for module in tuple(H.MODULES) + NEW_MODULES:
     options = ["-DCMAKE_INSTALL_PREFIX=" + str(stage), "-DCMAKE_PREFIX_PATH=" + prefix,
         "-DEXR_SDK=" + str(sdk), "-DEXR_SDK_VERSION=3.42.0",
         "-DREADER_PRODUCT_PREFIX=" + str(product),
-        "-DREADER_ORIGINAL_HASH_PREFIX=" + str(hash_prefix)] + EXTRA_FLAGS.get(name, [])
+        "-DREADER_ORIGINAL_HASH_PREFIX=" + hash_prefix.as_posix()] + EXTRA_FLAGS.get(name, [])
     if name == "cloud-import":
         options += ["-DREADER_CLOUD_BUILD_CONTENT_BOUND=ON"]
     if name in set(H.RAW_MODULES) | RAW_NEW:
@@ -48,7 +48,7 @@ H.run(["cmake", "-S", ROOT / "apps/reader/desktop", "-B", host, "-G", "Ninja",
     "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_PREFIX_PATH=" + prefix,
     "-DEXR_SDK=" + str(sdk), "-DEXR_SDK_VERSION=3.42.0",
     "-DREADER_METADATA_PREFIX=" + str(stage), "-DREADER_ACCOUNT_PREFIX=" + str(stage),
-    "-DREADER_C02_PREFIX=" + str(c02), "-DREADER_ORIGINAL_HASH_PREFIX=" + str(hash_prefix),
+    "-DREADER_C02_PREFIX=" + str(c02), "-DREADER_ORIGINAL_HASH_PREFIX=" + hash_prefix.as_posix(),
     "-DEXR_READER_WINDOWS_WAVE3=ON", "-DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=ON",
     "-DEXR_READER_WINDOWS_TXT_PROGRESS=ON"], "host-configure")
 H.run(["cmake", "--build", host, "--target", "EXReaderWave3", "--parallel", "4"], "host-build")
