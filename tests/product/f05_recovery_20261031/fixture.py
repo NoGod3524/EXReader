@@ -12,6 +12,7 @@ from xml.sax.saxutils import escape
 class Store:
     def __init__(self, certificate, key, authorization):
         self.entries, self.requests, self.commits = {}, [], []
+        self.inherited_commits = []
         self.directories = {"/dav/"}
         self.lock = threading.Lock()
         self.offline = False
@@ -112,7 +113,7 @@ class Store:
         directory = Path(directory)
         directory.mkdir(parents=True, exist_ok=False)
         with self.lock:
-            entries, commits, requests = dict(self.entries), list(self.commits), list(self.requests)
+            entries, commits, requests = dict(self.entries), list(self.commits) + list(self.inherited_commits), list(self.requests)
             directories = sorted(self.directories)
         files = {}
         for index, (path, body) in enumerate(sorted(entries.items())):
@@ -127,7 +128,7 @@ class Store:
             "sdk": "8357eafa28423a7ab93ba08b823af80f01ad1505",
             "files": files, "directories": directories, "commits": commits,
             "requests": requests, "simultaneous_online_peers": False}
-        (directory / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\\n")
+        (directory / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
         return manifest
 
     def expose_checkpoint(self, directory):
@@ -155,6 +156,10 @@ class Store:
             for path, body in verified.items():
                 if path in self.entries and self.entries[path] != body:
                     raise AssertionError("immutable peer path collision")
+            for commit in data["commits"]:
+                self.inherited_commits.append({**commit, "inherited_from": {
+                    "author": data["author"], "source": data["source"],
+                    "run": data["run"], "attempt": data["attempt"]}})
             self.entries.update(verified)
             self.directories.update(data["directories"])
         return data
