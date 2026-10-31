@@ -28,13 +28,14 @@ final class BookStore implements AutoCloseable {
     boolean bounded(long bookId) { return library.bounded(bookId); }
 
     BookStore(Context context, File database) throws IOException {
-        CatalogStore openedCatalog = new CatalogStore(context,
-                new File(database.getParentFile(), "reader-catalog.db"));
-        NativeLibrary openedLibrary;
+        NativeLibrary openedLibrary = new NativeLibrary(context, database);
+        CatalogStore openedCatalog;
         try {
-            openedLibrary = new NativeLibrary(database.getAbsolutePath());
-        } catch (RuntimeException | Error error) {
-            openedCatalog.close();
+            NativeAdmission.event(context, database, "catalog_open");
+            openedCatalog = new CatalogStore(context,
+                    new File(database.getParentFile(), "reader-catalog.db"));
+        } catch (IOException | RuntimeException | Error error) {
+            openedLibrary.close();
             throw error;
         }
         catalog = openedCatalog;
@@ -43,8 +44,8 @@ final class BookStore implements AutoCloseable {
         organization = new OrganizationStore(this,context.getSharedPreferences("organization",Context.MODE_PRIVATE));
         try { repairMissingMappings(); }
         catch (RuntimeException | Error error) {
-            try { library.close(); } catch (RuntimeException cleanup) { error.addSuppressed(cleanup); }
             try { catalog.close(); } catch (RuntimeException cleanup) { error.addSuppressed(cleanup); }
+            try { library.close(); } catch (RuntimeException cleanup) { error.addSuppressed(cleanup); }
             throw error;
         }
     }
@@ -258,7 +259,7 @@ final class BookStore implements AutoCloseable {
 
     @Override
     public void close() {
-        try { library.close(); }
-        finally { catalog.close(); }
+        try { catalog.close(); }
+        finally { library.close(); }
     }
 }

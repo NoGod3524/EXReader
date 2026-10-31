@@ -11,6 +11,7 @@ import sqlite3
 import subprocess
 import selectors
 import time
+from capture import capture
 
 assert os.environ.get("GITHUB_ACTIONS") == "true" and os.name == "posix"
 p = argparse.ArgumentParser()
@@ -35,6 +36,7 @@ def call(name, command, expected=0, **kwargs):
     r = subprocess.run(list(map(str, command)), capture_output=True, timeout=45, **kwargs)
     (out / (name + ".stdout")).write_bytes(r.stdout)
     (out / (name + ".stderr")).write_bytes(r.stderr)
+    (out / (name + ".exit")).write_text(str(r.returncode) + "\n")
     assert r.returncode == expected, (name, r.returncode, r.stdout, r.stderr)
     return r
 def snapshot(root):
@@ -54,6 +56,8 @@ second = out / "second.sqlite"
 call("second-create", [admission, "create", second])
 assert json.loads(probe("second-created", second).stdout)["books"] == 0
 done("existing-valid-authority-supports-another-library")
+authority = Path(pwd.getpwuid(os.geteuid()).pw_dir).resolve() / ".exreader-c02-admission"
+capture(authority, [library, second], out / "snapshots/clean")
 before = snapshot(out)
 call("duplicate-create", [admission, "create", library], 2)
 assert library.stat().st_ino == before["library.sqlite"][0]
@@ -74,6 +78,7 @@ try:
     assert event["search_complete"] is False, event
     call("exclusive-while-borrowed", [host, "owner", library], 2)
     done("actual-page-and-incomplete-search-keep-shared-custody", **event)
+    capture(authority, [library, second], out / "snapshots/borrowed")
     probe("catalog-second-reader", library, 2)
     done("product-catalog-owner-still-exclusive")
     child.stdin.write(b"\n")
@@ -86,6 +91,7 @@ finally:
     log.close()
 call("exclusive-after-close", [host, "owner", library])
 done("last-search-page-sdk-and-catalog-close-release-custody")
+capture(authority, [library, second], out / "snapshots/released")
 assert json.loads(probe("reopen-after-close", library).stdout)["books"] == 1
 with sqlite3.connect("file:" + str(library) + "?mode=ro", uri=True) as db:
     records = db.execute("SELECT id,title,source FROM books ORDER BY id").fetchall()
@@ -129,6 +135,7 @@ call("pending-command", [admission, "check", library], 2)
 call("pending-duplicate-enroll", [admission, "enroll", library], 2)
 assert all(Path(path).read_bytes() == data for path, data in tracked.items())
 done("durable-pending-blocks-actual-host-before-any-catalog-write", descriptor=descriptor)
+capture(authority, [library, second], out / "snapshots/pending")
 authority = Path(pwd.getpwuid(os.geteuid()).pw_dir).resolve() / ".exreader-c02-admission"
 objects = []
 for path in [authority, *sorted(authority.rglob("*"))]:

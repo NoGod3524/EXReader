@@ -135,9 +135,21 @@ public final class NativeLibrary implements AutoCloseable {
         }
     }
 
-    public NativeLibrary(String path) {
-        handle = nativeOpen(path);
-        if (handle == 0) throw new IllegalStateException("Cannot open the native library");
+    public NativeLibrary(android.content.Context context, java.io.File database) {
+        handle = NativeAdmission.open(context, database);
+        if (handle == 0) throw new NativeAdmission.Required("Library admission is unavailable");
+    }
+
+    /** Context is required to select the app's fixed native authority. */
+    @Deprecated public NativeLibrary(String path) {
+        throw new NativeAdmission.Required("Use the OS Context when opening a library");
+    }
+
+    /** Debug actor: exercise native SDK-close while an actual Source remains. */
+    void closePrimaryForAdmissionTest() {
+        if (!BuildConfig.C02_ADMISSION_TEST) throw new IllegalStateException("Test actor is disabled");
+        closeRequested = true;
+        closeHandle();
     }
 
     public static String identity() {
@@ -293,7 +305,6 @@ public final class NativeLibrary implements AutoCloseable {
     private static native int nativeReadSource(long source, long offset, byte[] bytes, int count);
     private static native void nativeCloseSource(long source);
     private static native boolean nativeBounded(long handle,long bookId);
-    private static native long nativeOpen(String path);
     private static native void nativeClose(long handle);
     private static native String[][] nativeBooks(long handle);
     private static native long[] nativeImportFile(long handle, String path, int format, String title,

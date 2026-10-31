@@ -247,7 +247,7 @@ def case_commands(files, folder):
     need(result, "case-command-records")
     return result
 
-def check_commands(rows, source, allowed_source_provider):
+def check_commands(rows, source, allowed_source_provider, pre_admission=False):
     for row in rows:
         command = row["command"]
         if len(command) < 2:
@@ -262,6 +262,11 @@ def check_commands(rows, source, allowed_source_provider):
             for line in row["stdout"].splitlines():
                 if line.startswith('{"status":'):
                     result = json_value(line)
+                    if result.get("status") == "abandoned_before_admission":
+                        need(pre_admission and mode == "recover" and row["exit"] == 0 and
+                             result == dict(status="abandoned_before_admission",live_capability=False),
+                             "migration-exact-pre-admission-abandonment")
+                        continue
                     need(result["source"] == source and result["provider"] == allowed_source_provider, "migration-command-producer")
                     need(result["status"] in ("completed","rolled_back","uncertain","lease_retained","refused","pending"),
                          "migration-command-status")
@@ -324,7 +329,7 @@ def migration_evidence(files, spec, source, missing):
         need(canonical_path(case_name)==case_name and "/" not in case_name, "actual-case-evidence-directory")
         folder="actual-migration/cases/"+case_name
         commands=case_commands(files,folder)
-        check_commands(commands,source,provider)
+        check_commands(commands,source,provider,detail.get("phase")==900)
         if "gate_fault" in detail:
             fault_observed.add(detail["gate_fault"])
             need(detail["exit"]==2 and detail["gate_fault"] in (201,203), "real-gate-short-write")

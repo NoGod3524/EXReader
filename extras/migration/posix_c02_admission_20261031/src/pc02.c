@@ -1075,3 +1075,4 @@ int pc02_open_in(pc02_scope *scope,const char *authority,const char *library,uns
 const char *pc02_library_path(pc02_lease *h){
  return pc02_check(h)?h->library:NULL;
 }
+#include "pc02_migration.inc"

@@ -240,6 +240,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     for (File kind : stale) { File[] leftovers = kind.isDirectory() ? kind.listFiles() : new File[]{kind}; if (leftovers != null) for (File leftover : leftovers) if (leftover.isFile() && !leftover.delete()) Log.w(TAG, "stale staging file remains"); }
                     try { fontLibrary(); } catch (Throwable error) { postStatus("本地字体不可用，使用默认字体：" + message(error)); }
                 }
+            } catch (NativeAdmission.Required error) {
+                postStatus("Library error: " + message(error));
+                postUi(this::showLibraryAdmission);
+                return;
             } catch (Throwable error) {
                 postStatus("Library error: " + message(error));
                 return;
@@ -247,6 +251,26 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             postUi(() -> { updateSdkLabel(); imports.pump(); });
             loadShelf(true);
         });
+    }
+
+
+    private void showLibraryAdmission() {
+        if (destroyed || isFinishing()) return;
+        new AlertDialog.Builder(this).setTitle("打开书库")
+                .setMessage("书库当前不可用。创建新书库，或验证已有书库后继续。")
+                .setItems(new String[]{"创建新书库", "验证现有书库", "恢复首次登记"}, (dialog, which) -> {
+                    if (worker == null || destroyed) return;
+                    postStatus("正在验证书库…");
+                    worker.execute(() -> {
+                        try {
+                            synchronized (IMPORT_LOCK) {
+                                NativeAdmission.initialize(getApplicationContext(),
+                                        new File(getFilesDir(), "library.db"), which + 1);
+                            }
+                            postUi(() -> { if (!destroyed) recreate(); });
+                        } catch (Throwable error) { postStatus("Library error: " + message(error)); }
+                    });
+                }).setNegativeButton("稍后", null).show();
     }
 
     private void bindViews() {
