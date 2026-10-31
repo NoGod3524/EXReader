@@ -1,5 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 #include "exr_webdav.h"
+#ifdef EXR_WEBDAV_MANAGED
+#include "exr_webdav_managed.h"
+#include "exr_webdav_cleanup.h"
+#include <dirent.h>
+#include <sys/file.h>
+#include <sstream>
+#include <thread>
+#endif
 #include <algorithm>
 #include <chrono>
 #include <cctype>
@@ -154,6 +162,10 @@ std::string narrow(const wchar_t *s) {
 struct internet { HINTERNET h=nullptr; ~internet(){if(h) WinHttpCloseHandle(h);} };
 #endif
 
+#ifdef EXR_WEBDAV_MANAGED
+#include "webdav_managed_posix.inc"
+#endif
+
 class temporary {
 #ifdef _WIN32
   HANDLE file=INVALID_HANDLE_VALUE;std::wstring directory,name,dest;
@@ -251,8 +263,15 @@ struct sink {
   uint64_t maximum,received=0;const exr_webdav_control *control;
   std::vector<unsigned char> *buffer=nullptr;temporary *file=nullptr;
   exr_webdav_write_observer observer=nullptr;void *observer_context=nullptr;
+#ifdef EXR_WEBDAV_MANAGED
+  managed_temporary *managed=nullptr;
+#endif
   void append(const void *data,size_t bytes) {
     cancelled(control);if(bytes>maximum-received) reject(EXR_DAV_LIMIT,"Transfer byte limit exceeded");
+#ifdef EXR_WEBDAV_MANAGED
+    if(managed) { managed->write(data,bytes);if(observer)observer(observer_context,data,bytes); }
+    else
+#endif
     if(file) { file->write(data,bytes);if(observer) observer(observer_context,data,bytes); }
     else { const unsigned char *p=(const unsigned char *)data;buffer->insert(buffer->end(),p,p+bytes); }
     received+=(uint64_t)bytes;if(control && control->progress) control->progress(control->context,received);
@@ -298,6 +317,9 @@ long remaining(clock_type::time_point deadline) {
 }
 
 struct exr_webdav_client {
+#ifdef EXR_WEBDAV_MANAGED
+  std::unique_ptr<managed_pool> managed;
+#endif
   url root;std::string authorization;uint64_t max_download;size_t max_listing,max_entries;unsigned timeout;
 #ifdef __ANDROID__
   std::thread::id android_owner=std::this_thread::get_id();
@@ -650,6 +672,9 @@ extern "C" exr_webdav_status exr_webdav_create(const exr_webdav_config *config,e
   } catch(const failure &f) { return report(error,f); } catch(...) { return report(error,{EXR_DAV_MEMORY,"Cannot create WebDAV client",0}); }
 }
 extern "C" void exr_webdav_free(exr_webdav_client *client) {
+#ifdef EXR_WEBDAV_MANAGED
+  if(client&&client->managed&&client->managed->owner!=std::this_thread::get_id())return;
+#endif
 #ifdef __ANDROID__
   if(!android_release(client))return;
 #endif
@@ -715,7 +740,19 @@ static exr_webdav_status download_file(exr_webdav_client *client,const char *res
 #elif defined(EXR_WEBDAV_APPLE_URLSESSION)
     apple_operation operation(client);
 #endif
+#ifdef EXR_WEBDAV_MANAGED
+    if(client->managed){client->managed->check_owner();client->managed->view.published=0;}
+#endif
     std::string relative=path(resource,false);if(relative.empty() || relative.back()=='/') reject(EXR_DAV_ARGUMENT,"Download requires a file resource");
+#ifdef EXR_WEBDAV_MANAGED
+    if(client->managed) {
+      client->managed->check_owner();client->managed->view.published=0;cancelled(control);
+      managed_temporary file(*client->managed,directory,filename);
+      sink s{client->max_download,0,control,nullptr,nullptr,observer,observer_context};s.managed=&file;
+      url target=client->root;target.path+=relative;
+      fetch(*client,target,"GET",200,s);file.publish(control);out->bytes=s.received;out->published=1;return EXR_DAV_OK;
+    }
+#endif
     cancelled(control);temporary file(directory,filename);sink s{client->max_download,0,control,nullptr,&file,observer,observer_context};url target=client->root;target.path+=relative;
     fetch(*client,target,"GET",200,s);file.publish(control);out->bytes=s.received;out->published=1;return EXR_DAV_OK;
   } catch(const failure &f) { return report(error,f); } catch(...) { return report(error,{EXR_DAV_MEMORY,"Cannot allocate WebDAV transfer",0}); }
@@ -757,3 +794,25 @@ extern "C" exr_webdav_status exr_webdav_publish_file(exr_webdav_client *client,c
     cancelled(control);return EXR_DAV_OK;
   }catch(const failure &f){return report(error,f);}catch(...){return report(error,{EXR_DAV_IO,"Cannot publish immutable private file",0});}
 }
+
+#ifdef EXR_WEBDAV_MANAGED
+extern "C" exr_webdav_status exr_webdav_managed_enable(exr_webdav_client *c,const char *profile,exr_webdav_error *error) {
+  clean(error);
+  if(!c||c->managed)return report(error,{EXR_DAV_ARGUMENT,"Managed capability can be enabled once",0});
+  try{c->managed=std::make_unique<managed_pool>();c->managed->open(profile);return EXR_DAV_OK;}
+  catch(const failure &f){return report(error,f);}
+  catch(...){if(c->managed)c->managed->view.status=EXR_WC_IO;return report(error,{EXR_DAV_IO,"Cannot initialize managed download cleanup",0});}
+}
+extern "C" int exr_webdav_managed_enabled(const exr_webdav_client *c){return c&&c->managed?1:0;}
+extern "C" exr_webdav_status exr_webdav_managed_observe(const exr_webdav_client *c,exr_webdav_managed_snapshot *out) {
+  if(out)*out={};
+  if(!c||!out||!c->managed||c->managed->owner!=std::this_thread::get_id())return EXR_DAV_ARGUMENT;
+  *out=c->managed->view;return EXR_DAV_OK;
+}
+extern "C" int exr_webdav_managed_recover_profile(const char *profile,exr_webdav_managed_snapshot *out) {
+  if(!out)return EXR_WC_ARGUMENT;
+  managed_pool p;
+  try{p.open(profile);}catch(const failure &){}catch(...){p.view.status=EXR_WC_IO;}
+  p.summarize();*out=p.view;return p.view.status;
+}
+#endif
