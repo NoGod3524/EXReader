@@ -1,3 +1,52 @@
+# EXReader continuation snapshot — 2026-10-31 23:20 UTC / 19:20 America/New_York
+
+This is a continuity backup, not a stop/completion declaration. Formal count remains **96/108 (88.89%), 96 verified / 1 partial / 11 pending**. Catalog remains pinned at 5db41cb19673fb75bb0b498c677d770931ac33e8; no catalog, product, SDK, old test or workflow is modified by this document update.
+
+## Current authorized native-dot work
+
+At 23:08:06 UTC the user approved connected GitHub direct source/Git access for the six native dot agents, superseding the earlier source-route-only restriction for these scoped packages. No Codex/Claude task or extra team was started. Desktop Commander remains unused after its quota denial. InstaBox handshake was not rechecked in this work; no new last-success time is claimed.
+
+At 23:13:25 UTC the user approved the first scoped batch: F03 13 new files, F04 10 new files (both implementation only, zero CI); F05 10 new files/one 265 runner-minute cap; F07 4 new files/one 15-minute diagnostic; F10 8 new files/one 60-minute cap. Total allowance:45 new files and340 runner-minutes, not permission for automatic repeats. Preparation commits use skip-ci. Current branches and actual stable identities:
+
+| Package | Actual source/seal at snapshot | Current state and budget |
+|---|---|---|
+| F03 | dot/f03-same-source-20261031 / 514526d3c0373d6e86087e78074be50f03eec053 |13 new files remotely present; preparation only, six-host wire/receipt connection incomplete, static review underway;0 CI. Reviewer requested preparation-only verdict and no newly invented screenshot/author-round rule. |
+| F04 | dot/f04-reading-sync-20261031 / a7c0adba3f940d916a19545ebf9901a606744686 |10 new files remotely present; initial Apple/Android real-driver preparation, not complete six-target evidence;0 CI and no syntax/build/test execution. |
+| F05 | dot/f05-client-recovery-20261031 / dc142dd9558a8ce7b9a3b072d5483e86d81d20cd |6 of10 permitted new files present; Windows two-host/HTTPS fault driver preparation, remaining host/receive-cancel/tombstone coverage incomplete; no workflow,0/1 run used. |
+| F06 | original accepted source8f8acf3234cba747165f001c0c96efe1b911e6ad; catalog5db41cb |Already verified; native dot rechecked original12/12 jobs and six identities. No repeat build. Agent now performs cross-package static review and this single-document continuity update. |
+| F07 | dot/f07-link-evidence-20261031 / seal697448abd8188580304806163ba9b543e76ba9ba; tested triggerf33eb38571fd551f78555b89ab7ae553889f5cc4 |One approved diagnostic completed, not F07 acceptance;1/1 run used. |
+| F10 | dot/f10-safety-20261031 / cf3feb1eb7b37590326bfe3cbbd22b88b7f92f0e (agent-reported latest preparation; reviewed prior e789814fab5b6aa57312799d3f941de456b19a49) |8 new files; bounded installed raw-module experiment, no host/SDK acceptance. No run ID available at snapshot. Final activation intended but not represented here as running. |
+
+Implementation, diagnostic and review are distinct: F03/F04/F05 preparing implementations; F10 preparing its single bounded experiment; F07 completed its diagnostic; F06 reviewing. Completed or waiting slots are not active implementation. No external team's current activity is inferred.
+
+## Common source, owner and acceptance boundaries
+
+Five-package preparation product source is94fb236a4a2da87dfbaf4f1dd2a47885d615a230; frozen SDK8357eafa28423a7ab93ba08b823af80f01ad1505. This is a shared preparation baseline, not a finally integrated six-host acceptance. GitHub compare confirms94fb descends from original F06 source8f8acf by42 commits. Original F06 success is not transferred to the new source or behavioral cases.
+
+Linux C02/WebDAV joint b5e7fea87174f5e0baabfad97cf5cf7082f2d85e and94fb diverge3/1 commits fromc44a9cf211fffa4ed6f2720ffa49a186c3b4d196. Its manifest locks SDK7271829a829bfa6aaa47b73077c493f71af27ad3 and covers Linux admission/managed transport plus Windows/macOS legacy compatibility. SDK727 and8357 differ in library implementation/header/version metadata; same version labels are not equivalence. No joint delta or Android98d254 production delta was automatically merged.
+
+C02/WebDAV sealed deliverables remain fixed; C02 is not reassigned. Existing Apple/UI/F08/F09 and other production owners retain their scopes. F05 does not write sync.cpp; any F10 production fix or shared composition requires explicit single-writer scope. Apple iPad organization issue remains with its existing owner. No in-flight UI/Apple delta is imported.
+
+F05 contract interpretation is fixed to the original clauses: real competing-head preservation, visible deletion conflict, stale put must not resurrect a tombstone, illegal projection pauses, native explicit conflict UI, offline reconnect/cancel/crash recovery. Where an existing user resolve/restore is exercised, its parents must cover competing heads/tombstones. No invented requirement forces every host and every case to become a single head. Offline cases are not required to perform online wire requests. The initial blanket production blocker was corrected; this does not grant F05 acceptance.
+
+F03 review similarly must not reject original semantic evidence merely because a new exact screenshot role or exhaustive author-round shape is absent. New stronger test plans are separate from the unchanged fixed criterion.
+
+F10 reviews distinguish a real installed raw sync/session module from a real host. Negative-control rejection now requires the mutation's expected reason, not an unrelated baseline error. Residual files are recorded as observations; their existence alone is not proof that every retained file is unsafe. Full F10 remains false.
+
+## Actual run and preserved evidence
+
+F07 [41251856370/attempt1](https://github.com/NoGod3524/EXReader/actions/runs/41251856370), diagnostic job124686859052, completed success (GitHub jobs rechecked). It read the exact original Windows artifact without rebuilding. Agent reports retained full host-build.log5469 bytes/11 lines/SHA256351fbd1917835bae4dcee349303f609533aff49db7b583ba270133e9675248a6, with no Searching/Loaded rows; original parser/evaluator still refuse provider_loaded_ambiguous. Diagnostic completion is not provider acceptance; F07 remains false. Output artifact13061358143,32453178 bytes,SHA25686a22d48bbb319bd0be40b9a08ae84b4ebcb82fbdd9ddd3728c9a31c69d4d3c2 (agent-reported; ZIP not downloaded here). New provider capture would require separate scope/budget; no repeat is authorized.
+
+F06 [40678657371/attempt1](https://github.com/NoGod3524/EXReader/actions/runs/40678657371):12/12 jobs success; original F06 job122788662924 and aggregate122788746787 accepted=true/failures=[]; all six original artifact IDs/digests/source identities match pinned handoff and remain unexpired. Only development-package extraction/install/program identity is accepted; no full behavioral, provider, physical-device or release credit.
+
+## Next continuation
+
+Finish the approved independent new drivers, statically review exact write sets and original contracts, then use only the already-approved single runs where their producers are ready. Retain every failure, actual source/run/attempt/artifact identity and original assertion. Do not spend a full six-host budget on an incomplete producer merely to obtain red status. No reliable end-to-end ETA is established; remaining work includes real six-host interaction and external-owner capabilities.
+
+The historical independently accepted iPhone entry and its original failed audit history are preserved below.
+
+---
+
 # EXReader continuation: independently accepted iPhone annotation exchange
 
 Formal ledger: **96/108 = 88.89%**. Static catalog counts are **96 verified,1 partial,11 pending,total108**. This records the parent's independent scoped acceptance and the user's approved single-item ledger update; no new Actions audit is represented as passed.
