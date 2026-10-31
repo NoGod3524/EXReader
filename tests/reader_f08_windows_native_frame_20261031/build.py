@@ -19,9 +19,13 @@ def guard():
  B.need(not B.command(["git","status","--porcelain"],text=True).strip(),"clean checkout")
 def main():
  B.guard=guard;B.OUT=ROOT/"build/f08-windows-native-frame";B.EVIDENCE=B.OUT/"evidence"
- B.F08_NATIVE_REVIEW_OPTIONS=["-DEXR_WINDOWS_FRAME_REVIEW=ON"]
+ B.F08_NATIVE_REVIEW_OPTIONS=["-DEXR_WINDOWS_FRAME_REVIEW=ON","-DEXR_READER_FIXTURES="+(ROOT/"tests/fixtures").as_posix()]
  try:
   B.build()
+  checks=subprocess.run(["cmake","--build",str(B.OUT/"host"),"--target","reader-desktop-catalog-check","reader-native-catalog-check","reader-native-shelf-check","reader-native-organization-check","--parallel","4"],capture_output=True,timeout=120)
+  (B.EVIDENCE/"catalog-check-build.log").write_bytes(checks.stdout+checks.stderr);B.need(checks.returncode==0,"native catalog checks build")
+  checks=subprocess.run(["ctest","--test-dir",str(B.OUT/"host"),"-R","desktop-(public-sdk-catalog|native-catalog|bidirectional-shelf|organization-views)","--output-on-failure"],capture_output=True,timeout=120)
+  (B.EVIDENCE/"catalog-checks.log").write_bytes(checks.stdout+checks.stderr);B.need(checks.returncode==0,"original native catalog, source identity, ownership and rollback checks")
   done=subprocess.run([str(B.EVIDENCE/"program/EXReader.exe"),"--settings-self-test",str(B.EVIDENCE/"settings-selftest.ini")],capture_output=True,timeout=60)
   (B.EVIDENCE/"settings-selftest.log").write_bytes(done.stdout+done.stderr)
   B.need(done.returncode==0,"native settings comparison, external update, failed write and retry controls")

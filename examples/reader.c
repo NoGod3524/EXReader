@@ -3578,6 +3578,8 @@ static void paint_page_view(HWND window) {
   EndPaint(window, &paint);
 #ifdef EXR_WINDOWS_FRAME_REVIEW
   { BOOL flushed=GdiFlush();
+    if(flushed && g.frame.valid && f08_draw_ok>0 && IsWindowVisible(window))
+      SetPropW(window,L"EXReaderF08PaintedGeneration",(HANDLE)(ULONG_PTR)g.frame.generation);
     f08_record("reader_gdi_complete",f08_paint_start,&g.frame.review,g.frame.generation,g.frame.book_id,IDC_PAGE,WM_PAINT,flushed ? g.frame.valid+(IsWindowVisible(window) ? 2:0): -1,f08_draw_ok,g.frame.page); }
 #endif
 }
@@ -3668,6 +3670,9 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
     case WM_GETOBJECT:
       return host_a11y_page_object(window, wparam, lparam);
     case WM_NCDESTROY:
+#ifdef EXR_WINDOWS_FRAME_REVIEW
+      RemovePropW(window,L"EXReaderF08PaintedGeneration");
+#endif
       host_a11y_page_destroyed();
       return DefWindowProcW(window, message, wparam, lparam);
     case HOST_A11Y_CALL: {

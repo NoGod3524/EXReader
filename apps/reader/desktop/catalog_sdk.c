@@ -19,10 +19,17 @@ static int64_t sdk_tick(void) { LARGE_INTEGER v;QueryPerformanceCounter(&v);retu
 const reader_catalog_sdk_trace *reader_catalog_sdk_trace_get(void) { return &sdk_trace; }
 #endif
 
-typedef struct { BCRYPT_ALG_HANDLE algorithm; BCRYPT_HASH_HANDLE value; } source_hash;
+/* One repair worker may hash many originals. Hash objects remain per original;
+ * the algorithm provider is borrowed only until that repair call returns. */
+static __declspec(thread) BCRYPT_ALG_HANDLE repair_hash_algorithm;
+typedef struct { BCRYPT_ALG_HANDLE algorithm; BCRYPT_HASH_HANDLE value;int owns_algorithm; } source_hash;
 static int hash_begin(source_hash *h) {
-  return BCryptOpenAlgorithmProvider(&h->algorithm,BCRYPT_SHA256_ALGORITHM,NULL,0)>=0 &&
-    BCryptCreateHash(h->algorithm,&h->value,NULL,0,NULL,0,0)>=0;
+  h->algorithm=repair_hash_algorithm;
+  if(!h->algorithm) {
+    if(BCryptOpenAlgorithmProvider(&h->algorithm,BCRYPT_SHA256_ALGORITHM,NULL,0)<0) return 0;
+    h->owns_algorithm=1;
+  }
+  return BCryptCreateHash(h->algorithm,&h->value,NULL,0,NULL,0,0)>=0;
 }
 static int hash_update(source_hash *h,const unsigned char *bytes,size_t size) {
   return BCryptHashData(h->value,(PUCHAR)bytes,(ULONG)size,0)>=0;
@@ -32,7 +39,7 @@ static int hash_finish(source_hash *h,unsigned char digest[32]) {
 }
 static void hash_close(source_hash *h) {
   if(h->value) BCryptDestroyHash(h->value);
-  if(h->algorithm) BCryptCloseAlgorithmProvider(h->algorithm,0);
+  if(h->algorithm && h->owns_algorithm) BCryptCloseAlgorithmProvider(h->algorithm,0);
 }
 static char *title_nfc(const char *text) {
   if(!title_within_limit(text)) return NULL;
@@ -178,7 +185,7 @@ exr_status reader_catalog_sdk_attach(reader_catalog *catalog,exr_library *librar
   if(key) snprintf(key,READER_BOOK_KEY_CAPACITY,"%s:%s",format,hex);
   return EXR_OK;
 }
-exr_status reader_catalog_sdk_repair(reader_catalog *catalog,exr_library *library,const exr_book *books,
+static exr_status catalog_sdk_repair_books(reader_catalog *catalog,exr_library *library,const exr_book *books,
                                     size_t count,const exr_control *control,size_t *failed,exr_error *error) {
   exr_status first=EXR_OK;if(error) memset(error,0,sizeof(*error));if(failed) *failed=0;
 #ifdef _WIN32
@@ -215,4 +222,21 @@ exr_status reader_catalog_sdk_repair(reader_catalog *catalog,exr_library *librar
   }
   if(cancelled(control)) return fail(error,EXR_CANCELLED,"Catalog repair cancelled after final book");
   return first;
+}
+
+exr_status reader_catalog_sdk_repair(reader_catalog *catalog,exr_library *library,const exr_book *books,
+                                    size_t count,const exr_control *control,size_t *failed,exr_error *error) {
+#ifdef _WIN32
+  BCRYPT_ALG_HANDLE previous=repair_hash_algorithm,opened=NULL;
+  if(!previous) {
+    if(BCryptOpenAlgorithmProvider(&opened,BCRYPT_SHA256_ALGORITHM,NULL,0)>=0) repair_hash_algorithm=opened;
+    else opened=NULL; /* Keep the original per-book error/retry path. */
+  }
+#endif
+  exr_status status=catalog_sdk_repair_books(catalog,library,books,count,control,failed,error);
+#ifdef _WIN32
+  repair_hash_algorithm=previous;
+  if(opened) BCryptCloseAlgorithmProvider(opened,0);
+#endif
+  return status;
 }
