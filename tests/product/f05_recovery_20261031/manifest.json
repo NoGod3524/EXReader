@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "requirement": "F05",
+  "state": "blocked-production-capability",
+  "preparation_base": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
+  "sdk_freeze": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "hosts": [
+    "windows",
+    "linux",
+    "android",
+    "macos",
+    "iphone",
+    "ipad"
+  ],
+  "cases": [
+    "offline_reconnect",
+    "concurrent_heads_explicit_resolution",
+    "delete_put_tombstone_explicit_restore",
+    "cancel_receive_retry",
+    "kill_commit_ack_replay",
+    "restart_offline_read"
+  ],
+  "evidence_policy": {
+    "host_actions_required": true,
+    "wire_production_required": true,
+    "receiver_injection_allowed": false,
+    "skip_is_pass": false,
+    "module_probe_is_host": false,
+    "physical_power_loss_claim": false
+  },
+  "ci": {
+    "approved_runs": 1,
+    "used_runs": 0,
+    "runner_minute_cap": 265,
+    "job_caps": {
+      "windows": 45,
+      "linux": 20,
+      "android": 60,
+      "macos": 30,
+      "iphone": 45,
+      "ipad": 45,
+      "admission": 5,
+      "audit": 15
+    }
+  },
+  "blocked_by": [
+    "Shared metadata snapshot validation rejects all heads>1 before the current host edit/restore routes can resolve them.",
+    "Owner-approved explicit conflict resolution UI and safe captured-head transaction are required; tests must not bypass the actual host via lower commands API."
+  ]
+}
