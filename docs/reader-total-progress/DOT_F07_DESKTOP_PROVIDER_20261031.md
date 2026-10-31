@@ -63,3 +63,15 @@ Header evidence resolves Ninja dependency entries against the recorded command c
 Windows host policy is aligned with the frozen product contract (tests/reader_catalog/check_desktop_sdk.py at044824 allows a sole product or SDK SQLite provider). This is not an unconstrained replacement of the expected archive: MAP sqlite API owners must all agree; full-path MSVC Searching/Loaded evidence must select one allowed archive/member; the exact installed target path, archive bytes/hash and SDK727 input remain bound. Direct SQLite objects, unknown/ambiguous owners and system fallback remain refused. Codec-only remains product-only; auxiliary SDK remains SDK-only; Mac host remains static product SQLite plus its existing shared SDK architecture.
 
 All original seven negative controls remain. Wrong-owner now changes the actually selected owner to an unknown archive rather than assuming product was selected. Two additional resealed negatives cover foreign header and foreign consumer directory: one positive plus nine negatives per platform. Source-id equality is reported separately from complete compile-option sets and FTS5; equality of source-id never proves option equivalence or live-host behavior. Independent LLVM reads original binaries/archives without executing them. At authoring this new20min replay has not run; original audit failures remain failures and F07_accepted=false/formal95/108 remain unchanged.
+
+## Fixed-artifact certification replay: preserved failure (2026-10-31)
+
+- Verifier source: `26d94263a47f05788ba1444f2c250db8cf94d2c1`.
+- Pure audit [run 41188947889 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/41188947889), job `124501556150`, completed **failure**. The single authorized Ubuntu 20-minute replay is consumed; no automatic correction or rerun.
+- Producer remains `01ab528888f5c5be97e5824d69e2908e31e68e24`, run `41186261435`, attempt 1. No product was rebuilt or artifact executable run.
+- Actual summary: `audit_completed=false`, `audit_passed=false`, `errors=["provider_loaded_ambiguous"]`, `platforms=[]`, `F07_accepted=false`, formal `95/108`.
+- Windows identity, sealed inventory and the corrected installed-header resolution were reached before the MSVC loaded-member parser refused. This error does **not** establish that the actual host has multiple SQLite providers: the parser's zero/multiple-match refusal has not yet been distinguished using retained raw evidence. Do not promote a parser refusal to a demonstrated product defect.
+- No completed platform certification is claimed. The Windows semantic controls and macOS certification were not reached. Earlier failed audits and the successful narrow header diagnostic remain unchanged.
+- Retained audit artifact: ID `13038275682`, `31563241` bytes, SHA-256 `db39164de434bb87f105a09bc75b50a31eeb371baacbc78ae37a263864d664e5`; includes the original Windows ZIP and failure summary. No local ZIP download or analysis was performed.
+- Host live-runtime provider observation and full six-platform F07 acceptance remain unproved.
+
