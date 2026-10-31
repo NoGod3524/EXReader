@@ -1,7 +1,7 @@
-name: F08 full GTK product with native viewport evidence
+name: F08 full GTK product after durable catalog WAL repair
 on:
   push:
-    branches: [codex/dot-f08-linux-viewport-20261031]
+    branches: [codex/f08-linux-wal-product-20261031]
 permissions:
   contents: read
   actions: read

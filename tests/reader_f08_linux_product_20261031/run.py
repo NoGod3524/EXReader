@@ -4,9 +4,9 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2];HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(ROOT/"tests/reader_f08_android_20261031"))
 from lane import identity, need, save, sha, command
-BASE="714482fa388ab24195f13f48c09cf68a30628f57"
+BASE="a2d3bdd6f7258b6c27188093b253dcad3038c6ca"
 OUT=ROOT/"build/f08-linux-product";EVIDENCE=OUT/"evidence"
-FILES={"tests/reader_f08_linux_product_20261031/run.py","tests/reader_f08_linux_product_20261031/audit.py",
+FILES={"tests/reader_f08_linux_product_20261031/run.py",
        ".github/workflows/dot-f08-linux-product-20261031.yml"}
 ADAPTERS=("tests/reader_f08_compact_resume_20261031/adapter.py","tests/reader_f08_compact_resume_20261031/controls.py")
 COHORTS=("perf-evidence","perf-interactions")
