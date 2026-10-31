@@ -1,0 +1,76 @@
+name: WebDAV published temporary cleanup proof
+on:
+  push:
+    branches: [codex/dot-webdav-temp-cleanup-proof-20261031]
+    paths:
+      - tests/webdav_temp_cleanup_proof_20261031/**
+      - .github/workflows/dot-webdav-temp-cleanup-proof-20261031.yml
+      - docs/reader-total-progress/DOT_WEBDAV_TEMP_CLEANUP_PROOF_20261031.md
+permissions: {contents: read}
+defaults:
+  run:
+    shell: bash
+jobs:
+  proof:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Exact additive scope and original source guard
+        run: |
+          python - <<'PY'
+          import subprocess
+          base='a9a22319825d97b9d94b4d2f11e7ca0a5635a673'
+          allowed={'tests/webdav_temp_cleanup_proof_20261031/CMakeLists.txt','tests/webdav_temp_cleanup_proof_20261031/probe.cpp','tests/webdav_temp_cleanup_proof_20261031/run.py','.github/workflows/dot-webdav-temp-cleanup-proof-20261031.yml','docs/reader-total-progress/DOT_WEBDAV_TEMP_CLEANUP_PROOF_20261031.md'}
+          changed=set(subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          assert changed==allowed,changed
+          subprocess.run(['git','diff','--exit-code',base,'HEAD','--','extras/webdav','tests/webdav','tests/reader_webdav_import','tests/reader_webdav_interop','src','include','cmake','CMakeLists.txt'],check=True)
+          PY
+      - name: Build and install unchanged native module and separate consumers
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev pkg-config ninja-build
+          mkdir -p build/cleanup-logs
+          cmake -S extras/webdav -B build/cleanup-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/cleanup-stage"
+          cmake --build build/cleanup-module --verbose | tee build/cleanup-logs/module-build.log
+          cmake --install build/cleanup-module
+          cmake -S tests/webdav/consumer -B build/cleanup-old -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/cleanup-stage"
+          cmake --build build/cleanup-old --verbose | tee build/cleanup-logs/old-build.log
+          cmake -S tests/webdav_temp_cleanup_proof_20261031 -B build/cleanup-new -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/cleanup-stage" -DSOURCE_SHA="$GITHUB_SHA"
+          cmake --build build/cleanup-new --verbose | tee build/cleanup-logs/proof-build.log
+      - name: Unchanged 77-case TLS cancellation short-read and no-replace regression
+        run: |
+          set -euo pipefail
+          python tests/webdav/check_tls.py --consumer build/cleanup-old/webdav-consumer --module-prefix build/cleanup-stage --output build/cleanup-old-evidence | tee build/cleanup-logs/old.log
+      - name: Real HTTPS published-link cleanup fault proof
+        run: |
+          set -euo pipefail
+          python tests/webdav_temp_cleanup_proof_20261031/run.py --probe build/cleanup-new/webdav-cleanup-proof --output build/cleanup-proof-evidence | tee build/cleanup-logs/proof.log
+      - name: Preserve source and installed archive binding
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          out=pathlib.Path('build/cleanup-logs');out.mkdir(parents=True,exist_ok=True)
+          paths=['extras/webdav/src/webdav.cpp','extras/webdav/include/exr_webdav.h','build/cleanup-module/libexr_webdav.a','build/cleanup-stage/lib/libexr_webdav.a']
+          r=dict(source=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],files={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths if pathlib.Path(p).is_file()})
+          (out/'binding.json').write_text(json.dumps(r,indent=2)+'\n')
+          print('CLEANUP-PROOF-BINDING '+json.dumps(r))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: webdav-cleanup-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/cleanup-logs/
+            build/cleanup-old-evidence/
+            !build/cleanup-old-evidence/certificates/*.key
+            build/cleanup-proof-evidence/
+            !build/cleanup-proof-evidence/*.key
+            build/cleanup-new/proof.map
+            build/cleanup-stage/lib/libexr_webdav.a
+          if-no-files-found: warn
