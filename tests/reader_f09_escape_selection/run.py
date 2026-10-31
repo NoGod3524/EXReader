@@ -68,6 +68,27 @@ def diagnostic_overlay(source):
 }"""
     assert content.count(old) == 1
     content = content.replace(old, new, 1)
+    # Observe real ownership calls only: no extra QI/AddRef/Release for diagnosis.
+    patches = [
+        ('static HRESULT STDMETHODCALLTYPE host_a11y_range_query(ITextRangeProvider *self, REFIID id, void **out) {\n',
+         'static HRESULT STDMETHODCALLTYPE host_a11y_range_query(ITextRangeProvider *self, REFIID id, void **out) {\n'
+         '  F09_TRACE((host_a11y_range*)self,IsEqualIID(id,&IID_IUnknown)?"qi-iunknown":IsEqualIID(id,&IID_ITextRangeProvider)?"qi-text-range":IsEqualIID(id,&host_a11y_range_iid)?"qi-private":"qi-other",0,S_OK);\n'),
+        ('  return (ULONG)InterlockedIncrement(&range->refs);\n',
+         '  LONG incremented=InterlockedIncrement(&range->refs);\n'
+         '  F09_TRACE(range,"addref",incremented,S_OK);\n'
+         '  return (ULONG)incremented;\n'),
+        ('  left = InterlockedDecrement(&range->refs);\n',
+         '  F09_TRACE(range,"release-before",0,S_OK);\n'
+         '  left = InterlockedDecrement(&range->refs);\n'
+         '  F09_COUNT(range,left);\n'),
+        ('  range->end = end;\n  return range;\n',
+         '  range->end = end;\n  F09_TRACE(range,"created",0,S_OK);\n  return range;\n'),
+        ('  slot[0] = &range->iface;\n  SafeArrayUnaccessData(array);\n  *out = array;\n',
+         '  slot[0] = &range->iface;\n  SafeArrayUnaccessData(array);\n  F09_ARRAY(array,range);\n  *out = array;\n')
+    ]
+    for before, after in patches:
+        assert content.count(before) == 1, before
+        content = content.replace(before, after, 1)
     target.write_text(content, encoding="utf-8")
     return dict(original_sha256=hashlib.sha256(original_bytes).hexdigest(),
                 compiled_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
