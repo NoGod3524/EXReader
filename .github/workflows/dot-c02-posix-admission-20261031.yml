@@ -7,6 +7,7 @@ on:
       - extras/migration/posix_c02_admission_20261031/**
       - tests/migration/posix_c02_admission_20261031/**
       - .github/workflows/dot-c02-posix-admission-20261031.yml
+      - tests/migration/c02_completion_audit_20261031/posix*.py
 permissions: {contents: read}
 defaults:
   run: {shell: bash}
@@ -46,6 +47,10 @@ jobs:
           cmake -S tests/migration/posix_c02_admission_20261031 -B build/pc02-check -DCMAKE_BUILD_TYPE=Release -DPC02_PREFIX="$GITHUB_WORKSPACE/stage-pc02" -DWH_PREFIX="$GITHUB_WORKSPACE/stage-abi2" -DSOURCE_SHA="$GITHUB_SHA"
           cmake --build build/pc02-check --parallel 4 2>&1 | tee evidence/build-logs/consumer.log
           python tests/migration/posix_c02_admission_20261031/run.py --tool build/pc02-check/posix-c02-admission-check --output "$C02_POSIX_EVIDENCE" 2>&1 | tee evidence/native.log
+      - name: Independently decode retained API bytes and actual fstat identities
+        run: |
+          set -euo pipefail
+          python tests/migration/c02_completion_audit_20261031/posix_native.py --evidence "$C02_POSIX_EVIDENCE" --tool build/pc02-check/posix-c02-admission-check --output evidence/native-independent 2>&1 | tee evidence/native-independent.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
