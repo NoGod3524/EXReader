@@ -7,6 +7,11 @@ on:
       - .github/workflows/dot-c02-completion-audit-20261031.yml
   workflow_dispatch:
     inputs:
+      posix_diagnostic:
+        description: Exact POSIX original ZIP metadata for Actions-only diagnostics
+        type: string
+        required: false
+        default: ''
       producer_source:
         description: Full immutable producer commit SHA
         type: string
@@ -28,6 +33,7 @@ defaults:
   run: {shell: bash}
 jobs:
   original_zip_semantics:
+    if: github.event_name != 'workflow_dispatch' || inputs.posix_diagnostic == ''
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     env:
@@ -98,4 +104,24 @@ jobs:
         with:
           name: c02-completion-audit-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: audit-evidence/
+          if-no-files-found: error
+  posix_original_diagnostic:
+    if: github.event_name == 'workflow_dispatch' && inputs.posix_diagnostic != ''
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Retain exact original POSIX ZIP and inspect native evidence paths
+        env:
+          GH_TOKEN: ${{ github.token }}
+          C02_POSIX_DIAGNOSTIC: ${{ inputs.posix_diagnostic }}
+        run: python3 tests/migration/c02_completion_audit_20261031/diagnose_posix.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c02-posix-original-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-diagnostic/
           if-no-files-found: error
