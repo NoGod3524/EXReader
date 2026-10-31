@@ -12,7 +12,7 @@ permissions:
   contents: read
   actions: read
 env:
-  F08_APPLE_DIAGNOSTIC: ${{ github.event_name == 'push' || inputs.diagnostic }}
+  F08_APPLE_DIAGNOSTIC: ${{ inputs.diagnostic || false }}
   EXR_APPLE_SDK_VERSION: '3.42.0'
   EXR_APPLE_PAGE_THEME: 'ON'
   EXR_APPLE_RAW3: 'OFF'
@@ -52,7 +52,7 @@ jobs:
     name: Native ${{ matrix.platform }}
     needs: sdk
     runs-on: macos-15
-    timeout-minutes: ${{ (github.event_name == 'push' || inputs.diagnostic) && 25 || 90 }}
+    timeout-minutes: ${{ inputs.diagnostic && 20 || 90 }}
     strategy:
       fail-fast: false
       matrix:
