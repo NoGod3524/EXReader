@@ -15,9 +15,9 @@ At 23:13:25 UTC the user approved the first scoped batch: F03 13 new files, F04 
 | F05 | dot/f05-client-recovery-20261031 / dc142dd9558a8ce7b9a3b072d5483e86d81d20cd |6 of10 permitted new files present; Windows two-host/HTTPS fault driver preparation, remaining host/receive-cancel/tombstone coverage incomplete; no workflow,0/1 run used. |
 | F06 | original accepted source8f8acf3234cba747165f001c0c96efe1b911e6ad; catalog5db41cb |Already verified; native dot rechecked original12/12 jobs and six identities. No repeat build. Agent now performs cross-package static review and this single-document continuity update. |
 | F07 | dot/f07-link-evidence-20261031 / seal697448abd8188580304806163ba9b543e76ba9ba; tested triggerf33eb38571fd551f78555b89ab7ae553889f5cc4 |One approved diagnostic completed, not F07 acceptance;1/1 run used. |
-| F10 | dot/f10-safety-20261031 / cf3feb1eb7b37590326bfe3cbbd22b88b7f92f0e (agent-reported latest preparation; reviewed prior e789814fab5b6aa57312799d3f941de456b19a49) |8 new files; bounded installed raw-module experiment, no host/SDK acceptance. No run ID available at snapshot. Final activation intended but not represented here as running. |
+| F10 | dot/f10-safety-20261031 / tested a650340012ef112731b03388a0c4367621e9b82a |8 new files; bounded installed raw-module experiment, no host/SDK acceptance. Run41252143789/attempt1 queued at23:21 UTC (agent-reported);1/1 approved run started, no repeat. |
 
-Implementation, diagnostic and review are distinct: F03/F04/F05 preparing implementations; F10 preparing its single bounded experiment; F07 completed its diagnostic; F06 reviewing. Completed or waiting slots are not active implementation. No external team's current activity is inferred.
+Implementation, diagnostic and review are distinct: F03/F04/F05 preparing implementations; F10 waiting on its single bounded Actions experiment; F07 completed its diagnostic; F06 reviewing. Completed or waiting slots are not active implementation. No external team's current activity is inferred.
 
 ## Common source, owner and acceptance boundaries
 
@@ -34,6 +34,9 @@ F03 review similarly must not reject original semantic evidence merely because a
 F10 reviews distinguish a real installed raw sync/session module from a real host. Negative-control rejection now requires the mutation's expected reason, not an unrelated baseline error. Residual files are recorded as observations; their existence alone is not proof that every retained file is unsafe. Full F10 remains false.
 
 ## Actual run and preserved evidence
+
+F10 [41252143789/attempt1](https://github.com/NoGod3524/EXReader/actions/runs/41252143789), source a650340012ef112731b03388a0c4367621e9b82a, has been queued; no result or artifact is asserted. One60-minute capped run authorized and started. This update records actual activation, not a second run.
+
 
 F07 [41251856370/attempt1](https://github.com/NoGod3524/EXReader/actions/runs/41251856370), diagnostic job124686859052, completed success (GitHub jobs rechecked). It read the exact original Windows artifact without rebuilding. Agent reports retained full host-build.log5469 bytes/11 lines/SHA256351fbd1917835bae4dcee349303f609533aff49db7b583ba270133e9675248a6, with no Searching/Loaded rows; original parser/evaluator still refuse provider_loaded_ambiguous. Diagnostic completion is not provider acceptance; F07 remains false. Output artifact13061358143,32453178 bytes,SHA25686a22d48bbb319bd0be40b9a08ae84b4ebcb82fbdd9ddd3728c9a31c69d4d3c2 (agent-reported; ZIP not downloaded here). New provider capture would require separate scope/budget; no repeat is authorized.
 
