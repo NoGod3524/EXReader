@@ -387,6 +387,144 @@ static void drive_alias_case(void) {
     DDD_NO_BROADCAST_SYSTEM,drive,target)!=0,"remove only this fixture drive mapping");
  expect(reg_open(WH3WG_SHARED,NULL),"original registered path remains admitted");reg_close_all();
 }
+/* This provider exercises the real frozen coordinator, native journal, actual
+   registry and SDK. The one-book transformer is fixture orchestration only. */
+typedef struct {
+ void *cap;wh3_tip tip;wh3w_identity before,staged;char lease[49],stage_id[49];
+ wh_record row;char original_bytes[128];size_t original_size;
+ wchar_t stage[MAX_PATH];unsigned published,checks_after_publish,proofs,released;
+} run_fixture;
+static void run_identity(const wh3w_identity *id,char out[49]) {
+ static const char hex[]="0123456789abcdef";unsigned char bytes[24];unsigned i;
+ for(i=0;i<8;i++)bytes[i]=(unsigned char)(id->volume>>(8*i));
+ memcpy(bytes+8,&id->file,16);
+ for(i=0;i<24;i++){out[2*i]=hex[bytes[i]>>4];out[2*i+1]=hex[bytes[i]&15];}out[48]=0;
+}
+static int run_read(const wchar_t *path,wh_record *row,char bytes[128],size_t *length) {
+ char narrow[4*MAX_PATH];exr_library *lib=NULL;exr_error error={0};exr_book *books=NULL;
+ exr_source source={0};size_t n=0;wh3w_identity id;int ok=0;
+ memset(row,0,sizeof(*row));*length=0;
+ if(!capture_id(path,0,&id)||!utf8_path(path,narrow)||exr_library_open(narrow,&lib,&error)!=EXR_OK)return 0;
+ if(exr_library_books(lib,NULL,&books,&n,&error)!=EXR_OK||n!=1||
+    exr_library_source(lib,books[0].id,&source,&error)!=EXR_OK||source.size>=128||
+    source.read_at(source.context,0,bytes,(size_t)source.size)!=source.size)goto done;
+ *length=(size_t)source.size;bytes[*length]=0;
+ run_identity(&id,row->id);strcpy_s(row->path,sizeof(row->path),"books/one/original.txt");
+ row->size=source.size;wh_sha256_hex(bytes,*length,row->sha);ok=1;
+done:
+ if(source.release)source.release(source.context);exr_books_free(books,n);exr_library_close(lib);return ok;
+}
+static wh_step run_check(void *context,void *cap) {
+ run_fixture *r=context;
+ if(cap!=r->cap||!wh3wr_check(registration))return WH_STEP_UNCERTAIN;
+ if(r->published)r->checks_after_publish++;return WH_STEP_OK;
+}
+static wh_step run_acquire(void *context,const wh_binding *b,const wh_gates *g,void **cap,char id[49]) {
+ run_fixture *r=context;wh3w_identity root;
+ *cap=NULL;
+ if(!reg_open(WH3WG_OWNER,NULL))return WH_STEP_FAILED;
+ empty_tip(&r->tip);
+ if(!wh3wr_begin(registration,b,g,&r->tip,&r->cap))return WH_STEP_UNCERTAIN;
+ *cap=r->cap;
+ if(!wh3wr_journal(registration,b,g,NULL,&f.store)||!capture_id(f.root,1,&root)||
+    !capture_id(reglib,0,&r->before))return WH_STEP_UNCERTAIN;
+ run_identity(&root,r->lease);memcpy(id,r->lease,49);return WH_STEP_OK;
+}
+static wh_step run_reacquire(void *context,const wh_binding *b,const wh_gates *g,
+ const char *prior,void **cap,char id[49]) {
+ (void)context;(void)b;(void)g;(void)prior;(void)id;*cap=NULL;return WH_STEP_FAILED;
+}
+static wh_step run_snapshot(void *context,void *cap,wh_record *rows,size_t max,size_t *n) {
+ run_fixture *r=context;*n=0;
+ if(run_check(context,cap)!=WH_STEP_OK||!max||
+    !run_read(reglib,&r->row,r->original_bytes,&r->original_size))return WH_STEP_UNCERTAIN;
+ rows[0]=r->row;*n=1;return WH_STEP_OK;
+}
+static wh_step run_import(void *context,void *cap,const wh_record *rows,size_t n,char id[49]) {
+ run_fixture *r=context;
+ if(run_check(context,cap)!=WH_STEP_OK||n!=1||memcmp(rows,&r->row,sizeof(*rows)))return WH_STEP_UNCERTAIN;
+ swprintf_s(r->stage,MAX_PATH,L"%ls\\coordinator-stage.sqlite",f.parent);
+ if(!sdk_seed(r->stage,r->original_bytes)||!capture_id(r->stage,0,&r->staged))return WH_STEP_UNCERTAIN;
+ run_identity(&r->staged,r->stage_id);memcpy(id,r->stage_id,49);return WH_STEP_OK;
+}
+static int run_content(run_fixture *r,const wchar_t *path,const char *expected) {
+ wh_record row;char bytes[128],content[65];size_t size=0;
+ return run_read(path,&row,bytes,&size)&&wh_content_digest(&row,1,content)&&
+   !strcmp(content,expected)&&size==r->original_size&&!memcmp(bytes,r->original_bytes,size);
+}
+static wh_step run_verify(void *context,void *cap,const char *id,const wh_record *rows,size_t n) {
+ run_fixture *r=context;char content[65];wh3w_identity actual;
+ if(run_check(context,cap)!=WH_STEP_OK||strcmp(id,r->stage_id)||n!=1||
+    !wh_content_digest(rows,n,content)||!capture_id(r->stage,0,&actual)||
+    memcmp(&actual,&r->staged,sizeof(actual))||!run_content(r,r->stage,content))return WH_STEP_UNCERTAIN;
+ return WH_STEP_OK;
+}
+static wh_step run_publish(void *context,void *cap,const char *id,wh_pub *pub) {
+ run_fixture *r=context;*pub=WH_PUB_UNKNOWN;
+ if(run_check(context,cap)!=WH_STEP_OK||strcmp(id,r->stage_id)||
+    wh3wr_publish(registration,L"coordinator-stage.sqlite",&r->staged,L"coordinator-retained.sqlite")!=WH3_TX_OK)return WH_STEP_UNCERTAIN;
+ r->published=1;*pub=WH_PUB_YES;return WH_STEP_OK;
+}
+static wh_step run_inspect(void *context,void *cap,const char *id,const char *content,wh_pub *pub) {
+ run_fixture *r=context;wh3w_identity actual;*pub=WH_PUB_UNKNOWN;
+ if(run_check(context,cap)!=WH_STEP_OK||strcmp(id,r->stage_id)||
+    !capture_id(reglib,0,&actual)||memcmp(&actual,&r->staged,sizeof(actual))||
+    !run_content(r,reglib,content))return WH_STEP_UNCERTAIN;
+ *pub=WH_PUB_YES;return WH_STEP_OK;
+}
+static wh_step run_discard(void *context,void *cap,const char *id) {
+ (void)context;(void)cap;(void)id;return WH_STEP_UNCERTAIN;
+}
+static wh3_tx_status run_append(void *context,void *cap,const wh3_tip *expected,
+ const char *line,wh3_tip *actual) {
+ run_fixture *r=context;wh3_tx_status status=wh3w_append(f.store,cap,expected,line,actual);
+ if(status==WH3_TX_OK)r->tip=*actual;return status;
+}
+static int run_terminal_proof(void *context,const wh3_tip *tip) {
+ run_fixture *r=context;char content[65];wh_pub publication=WH_PUB_UNKNOWN;r->proofs++;
+ return tip->line_count==13&&tip->line_count==r->tip.line_count&&
+   !memcmp(tip->last_line_sha,r->tip.last_line_sha,65)&&wh_content_digest(&r->row,1,content)&&
+   run_inspect(r,r->cap,r->stage_id,content,&publication)==WH_STEP_OK&&publication==WH_PUB_YES;
+}
+static wh_step run_release(void *context,void *cap) {
+ run_fixture *r=context;
+ if(run_check(context,cap)!=WH_STEP_OK||
+    !wh3wr_finish(registration,f.store,&r->tip,run_terminal_proof,r))return WH_STEP_UNCERTAIN;
+ wh3w_close(f.store);f.store=NULL;
+ if(!wh3wr_close(registration))return WH_STEP_UNCERTAIN;
+ registration=NULL;r->cap=NULL;r->released=1;return WH_STEP_OK;
+}
+static void coordinator_case(void) {
+ run_fixture r={0};wh_provider p={0};wh3_backend backend;wh3_session *session;
+ wh_report report;wh_status status;wh3w_identity actual;
+ if(!reg_fixture("real-coordinator-publishes-before-commit-and-release",1))return;
+ p.abi=EXR_WH_ABI;p.identity_sha=f.b.provider;p.context=&r;p.acquire=run_acquire;p.reacquire=run_reacquire;
+ p.check=run_check;p.snapshot=run_snapshot;p.import_rows=run_import;p.verify=run_verify;
+ p.publish=run_publish;p.inspect=run_inspect;p.discard=run_discard;p.release=run_release;
+ backend.abi=EXR_WH3_ABI;backend.context=&r;backend.append=run_append;
+ session=wh3_create(&f.b,&f.g,&p,&backend);expect(session!=NULL,"real ABI3 coordinator");if(!session)return;
+ status=wh3_run(session,&report);
+ printf("OBS real_coordinator status=%d detail=%s seq=%u after_publish_checks=%u proof=%u released=%u\n",
+   (int)status,report.detail,report.seq,r.checks_after_publish,r.proofs,r.released);
+ expect(status==WH_COMPLETED&&!report.live_lease&&!report.poisoned,"actual coordinator reaches durable commit and release");
+ expect(r.tip.line_count==13&&r.checks_after_publish>=4&&r.proofs==1&&r.released,"post-publication checks and independent terminal proof execute");
+ expect(capture_id(reglib,0,&actual)&&!memcmp(&actual,&r.staged,sizeof(actual))&&
+    memcmp(&actual,&r.before,sizeof(actual)),"new actual target replaces original identity");
+ expect(wh3_dispose(session),"completed real coordinator disposes");
+ expect(reg_probe(WH3WG_SHARED)==1&&rs->sdk_opened,"fresh process reads verified original from published target");
+ expect(reg_open(WH3WG_SHARED,NULL)&&wh3wr_check(registration),"new trusted target matches ordinary admission");reg_close_all();
+}
+static void recover_missing_case(void) {
+ wh3_tip empty;void *cap=NULL;wchar_t retained[MAX_PATH];
+ if(!reg_fixture("recovery-checks-observed-missing-target",1))return;
+ empty_tip(&empty);expect(reg_open(WH3WG_OWNER,NULL)&&wh3wr_begin(registration,&f.b,&f.g,&empty,&cap),"durable pending before missing-target control");
+ reg_close_all();swprintf_s(retained,MAX_PATH,L"%ls\\missing-retained.sqlite",f.parent);
+ expect(MoveFileW(reglib,retained)!=0,"retain actual original outside target leaf");
+ expect(reg_open(WH3WG_RECOVER,NULL)&&wh3wr_check(registration),"explicit recovery observes and rechecks missing target");
+ expect(sdk_seed(reglib,published),"actual unexpected target appears");
+ expect(!wh3wr_check(registration),"recovery refuses silently adopting new target");reg_close_all();
+ expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"pending target change never admits ordinary reader");
+}
 int main(int argc,char **argv) {
  if(argc==3&&!strcmp(argv[1],"--registry-child"))return reg_child(argv[2]);
  if(argc==3&&!strcmp(argv[1],"--probe-owner")){
@@ -411,7 +549,7 @@ int main(int argc,char **argv) {
  {unsigned i;for(i=WH3WR_ENROLL_RESERVED;i<=WH3WR_ENROLL_BOUND;i++)enrollment_kill(i);
   for(i=0;i<3;i++){enrollment_policy(i,0);enrollment_policy(i,1);}
   for(i=0;i<4;i++)enrollment_bad(i);}
- drive_alias_case();
+ drive_alias_case();coordinator_case();recover_missing_case();
  fixture_close();if(rs)UnmapViewOfFile(rs);if(rm)CloseHandle(rm);if(rrdy)CloseHandle(rrdy);if(rgo)CloseHandle(rgo);
  printf("{\"source\":\"%s\",\"cases\":%u,\"checks\":%u,\"failed\":%u,\"passed\":%s,\"actual_sdk\":true,\"trusted_registry\":true,\"production_coordinator\":false,\"full_c02_acceptance\":false}\n",
    CANDIDATE_SOURCE_SHA,cases,checks,failures,failures?"false":"true");
