@@ -107,7 +107,10 @@ def main():
     entry["peak"]=host.close();entry["process_exit"]=host.process.poll();emit(dict(kind="close",pid=host.process.pid,qpc=qpc(),exit=entry["process_exit"]))
    need(entry["process_exit"]==0 and entry.get("observer_exit")==0 and entry.get("observed"),"normal complete native capture")
    native=json.loads(trace.read_text());need(native["pid"]==entry["pid"] and native["frequency"]==frequency.value,"native trace process clock")
-   entry["analysis"]=replay.replay(native);save(folder/"analysis.json",entry["analysis"]);entry["complete"]=True
+   try:
+    entry["analysis"]=replay.replay(native);save(folder/"analysis.json",entry["analysis"]);entry["complete"]=True
+   except BaseException as error:
+    entry["analysis_error"]=repr(error);report["problems"].append(kind+" replay: "+repr(error))
  except BaseException as error:report["problems"].append(repr(error));raise
  finally:
   report["execution_state_restored"]=bool(H.K.SetThreadExecutionState(awake))
