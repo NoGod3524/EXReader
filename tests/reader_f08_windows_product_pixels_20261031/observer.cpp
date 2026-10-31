@@ -43,7 +43,7 @@ static bool same(const Region &a,const Region &b){
 }
 struct Slot{
  ComPtr<ID3D11Texture2D> texture;DXGI_OUTDUPL_FRAME_INFO info{};std::array<Region,2> regions{};
- LONGLONG start{},acquired{},geometry{};unsigned index{};bool used{};
+ LONGLONG probe_before{},start{},acquired{},geometry{},copy_submitted{};unsigned index{};bool used{};
 };
 struct Image{std::vector<unsigned char> pixels;LONG width{},height{};unsigned index{};};
 static void bitmap(const fs::path &path,const std::vector<unsigned char> &pixels,LONG width,LONG height){
@@ -64,7 +64,7 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
  DXGI_OUTDUPL_DESC desc{};duplication->GetDesc(&desc);
  if(desc.ModeDesc.Format!=DXGI_FORMAT_B8G8R8A8_UNORM || (desc.Rotation!=DXGI_MODE_ROTATION_IDENTITY && desc.Rotation!=DXGI_MODE_ROTATION_UNSPECIFIED))
   throw std::runtime_error("unsupported native desktop format or rotation");
- std::printf("{\"kind\":\"ready\",\"qpc\":%lld,\"width\":%u,\"height\":%u,\"format\":%u,\"rotation\":%u,\"ring_slots\":8}\n",
+ std::printf("{\"kind\":\"ready\",\"qpc\":%lld,\"width\":%u,\"height\":%u,\"format\":%u,\"rotation\":%u,\"ring_slots\":8,\"release_policy\":\"immediately_before_next_acquire\"}\n",
   tick(),desc.ModeDesc.Width,desc.ModeDesc.Height,desc.ModeDesc.Format,desc.Rotation);std::fflush(stdout);
  D3D11_TEXTURE2D_DESC td{};td.Width=desc.ModeDesc.Width;td.Height=desc.ModeDesc.Height;td.MipLevels=1;td.ArraySize=1;
  td.Format=desc.ModeDesc.Format;td.SampleDesc.Count=1;td.Usage=D3D11_USAGE_STAGING;td.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
@@ -75,9 +75,10 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
   HRESULT hr=context->Map(slot.texture.Get(),0,D3D11_MAP_READ,block?0:D3D11_MAP_FLAG_DO_NOT_WAIT,&map);
   if(hr==DXGI_ERROR_WAS_STILL_DRAWING)return false;check(hr,"Map");
   std::printf("{\"kind\":\"frame\",\"index\":%u,\"start_qpc\":%lld,\"acquired_qpc\":%lld,\"last_present_qpc\":%lld,"
-   "\"last_mouse_qpc\":%lld,\"accumulated_frames\":%u,\"rects_coalesced\":%s,\"protected_content\":%s,\"geometry_qpc\":%lld,\"regions\":[",
+   "\"last_mouse_qpc\":%lld,\"accumulated_frames\":%u,\"rects_coalesced\":%s,\"protected_content\":%s,\"geometry_qpc\":%lld,"
+   "\"probe_before_qpc\":%lld,\"copy_submitted_qpc\":%lld,\"regions\":[",
    slot.index,slot.start,slot.acquired,slot.info.LastPresentTime.QuadPart,slot.info.LastMouseUpdateTime.QuadPart,
-   slot.info.AccumulatedFrames,slot.info.RectsCoalesced?"true":"false",slot.info.ProtectedContentMaskedOut?"true":"false",slot.geometry);
+   slot.info.AccumulatedFrames,slot.info.RectsCoalesced?"true":"false",slot.info.ProtectedContentMaskedOut?"true":"false",slot.geometry,slot.probe_before,slot.copy_submitted);
   for(size_t j=0;j<2;j++){
    const auto &r=slot.regions[j];auto &previous=last[j];bool valid=r.pid==pid && r.visible && r.bounds && r.unoccluded && r.stable &&
     !slot.info.ProtectedContentMaskedOut && slot.info.LastPresentTime.QuadPart>0;
@@ -106,28 +107,35 @@ static bool observe(HWND parent,DWORD pid,IDXGIAdapter1 *adapter,IDXGIOutput *ou
   std::printf("],\"readback_finished_qpc\":%lld}\n",tick());std::fflush(stdout);
   slot.used=false;tail=(tail+1)%slots.size();pending--;return true;
  };
+ bool held=false;unsigned held_index=0;
+ // DXGI recommends minimizing the interval between ReleaseFrame and AcquireNextFrame.
+ // Keep ownership during visibility probes and CPU readback of earlier staging slots.
+ auto release=[&](){
+  if(held){check(duplication->ReleaseFrame(),"ReleaseFrame");held=false;
+   std::printf("{\"kind\":\"frame_release\",\"index\":%u,\"qpc\":%lld}\n",held_index,tick());}
+ };
  ULONGLONG deadline=GetTickCount64()+600000;
  while(!fs::exists(stop) && IsWindow(parent) && GetTickCount64()<deadline){
   while(drain(false)){}
   if(pending==slots.size()){backpressure++;drain(true);}
-  auto &slot=slots[head];std::array<Region,2> before={region(parent,119,pid,description.DesktopCoordinates),region(parent,123,pid,description.DesktopCoordinates)};
-  ComPtr<IDXGIResource> resource;DXGI_OUTDUPL_FRAME_INFO info{};LONGLONG start=tick();
+  auto &slot=slots[head];LONGLONG probe_before=tick();std::array<Region,2> before={region(parent,119,pid,description.DesktopCoordinates),region(parent,123,pid,description.DesktopCoordinates)};
+  ComPtr<IDXGIResource> resource;DXGI_OUTDUPL_FRAME_INFO info{};release();LONGLONG start=tick();
   HRESULT hr=duplication->AcquireNextFrame(5,&info,resource.GetAddressOf());LONGLONG acquired=tick();
-  if(hr==DXGI_ERROR_WAIT_TIMEOUT)continue;check(hr,"AcquireNextFrame");frames++;
+  if(hr==DXGI_ERROR_WAIT_TIMEOUT)continue;check(hr,"AcquireNextFrame");frames++;held=true;held_index=frames;
   if(info.AccumulatedFrames>1)extra+=info.AccumulatedFrames-1;
   if(!info.LastPresentTime.QuadPart){
    pointer_only++;std::printf("{\"kind\":\"pointer_only\",\"index\":%u,\"acquired_qpc\":%lld,\"last_mouse_qpc\":%lld,\"accumulated_frames\":%u}\n",
     frames,acquired,info.LastMouseUpdateTime.QuadPart,info.AccumulatedFrames);
-   check(duplication->ReleaseFrame(),"ReleaseFrame");continue;
+   continue;
   }
   slot.regions={region(parent,119,pid,description.DesktopCoordinates),region(parent,123,pid,description.DesktopCoordinates)};
   for(size_t j=0;j<2;j++)slot.regions[j].stable=same(before[j],slot.regions[j]);
-  slot.geometry=tick();slot.info=info;slot.start=start;slot.acquired=acquired;slot.index=frames;slot.used=true;
+  slot.geometry=tick();slot.info=info;slot.probe_before=probe_before;slot.start=start;slot.acquired=acquired;slot.index=frames;slot.used=true;
   ComPtr<ID3D11Texture2D> source;check(resource.As(&source),"DesktopTexture");
-  context->CopyResource(slot.texture.Get(),source.Get());context->Flush();
-  check(duplication->ReleaseFrame(),"ReleaseFrame");pending++;head=(head+1)%slots.size();
+  context->CopyResource(slot.texture.Get(),source.Get());context->Flush();slot.copy_submitted=tick();
+  pending++;head=(head+1)%slots.size();
  }
- while(pending)drain(true);
+ release();while(pending)drain(true);
  bool expired=GetTickCount64()>=deadline;
  std::printf("{\"kind\":\"summary\",\"qpc\":%lld,\"desktop_records\":%u,\"pointer_only\":%u,\"accumulated_extra_frames\":%u,"
   "\"ring_backpressure\":%u,\"deadline_expired\":%s,\"f08_accepted\":false}\n",tick(),frames,pointer_only,extra,backpressure,expired?"true":"false");

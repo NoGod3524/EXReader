@@ -39,7 +39,8 @@ def analyze(folder,entry):
     need(not [r for r in native if r["kind"] in ("error","fatal")],"native capture error")
     ready=[r for r in native if r["kind"]=="ready"]
     need(len(ready)==1 and ready[0]["width"]==1280 and ready[0]["height"]==800 and ready[0]["format"]==87 and
-         ready[0]["rotation"] in (0,1) and ready[0]["ring_slots"]==8,"fixed native desktop")
+         ready[0]["rotation"] in (0,1) and ready[0]["ring_slots"]==8 and
+         ready[0]["release_policy"]=="immediately_before_next_acquire","fixed native desktop and release policy")
     need(driver[0]["kind"]=="process" and driver[-1]["kind"]=="close" and
          driver[0]["pid"]==driver[-1]["pid"]==pid and driver[0]["frequency"]==freq and
          driver[0]["exe_sha256"]==entry["program_sha256"] and driver[0]["qpc"]<=first["qpc"]<last["qpc"]<=driver[-1]["qpc"] and
@@ -47,10 +48,18 @@ def analyze(folder,entry):
     images={};previous={};changed={119:[],123:[]};valid={119:0,123:0};invalid={119:0,123:0};indices=set();present=0;extra=0
     frames=sorted([r for r in native if r["kind"] in ("frame","pointer_only")],key=lambda r:r["index"])
     need([r["index"] for r in frames]==list(range(1,len(frames)+1)) and len(frames)==last["desktop_records"],"no omitted acquisition records")
+    releases=[r for r in native if r["kind"]=="frame_release"]
+    need([r["index"] for r in releases]==list(range(1,len(frames)+1)),"every acquired frame released once")
+    for frame,release in zip(frames,releases):
+        need(frame["acquired_qpc"]<=release["qpc"]<=last["qpc"],"release after native acquisition")
+        if frame["index"]<len(frames):
+            following=frames[frame["index"]]
+            need(release["qpc"]<=following.get("start_qpc",following["acquired_qpc"]),"release before next acquisition")
     for frame in frames:
         index=frame["index"];extra+=max(0,frame["accumulated_frames"]-1)
         if frame["kind"]=="pointer_only":continue
-        need(first["qpc"]<=frame["start_qpc"]<=frame["acquired_qpc"]<=frame["geometry_qpc"]<=frame["readback_finished_qpc"]<=last["qpc"] and
+        need(first["qpc"]<=frame["probe_before_qpc"]<=frame["start_qpc"]<=frame["acquired_qpc"]<=frame["geometry_qpc"]<=
+             frame["copy_submitted_qpc"]<=frame["readback_finished_qpc"]<=last["qpc"] and
              0<frame["last_present_qpc"]<=frame["acquired_qpc"] and frame["last_present_qpc"]>present and
              frame["accumulated_frames"]>0,"native frame QPC chronology")
         present=frame["last_present_qpc"]
@@ -94,7 +103,9 @@ def analyze(folder,entry):
         "valid_region_records":valid,"unavailable_region_records":invalid,"distinct_content_frames":{k:len(v) for k,v in changed.items()},
         "nonuniform_images":sum(x["nonuniform"] for x in images.values()),"raw_images":images,"changed_content":changed,
         "native_input_dispatches":sum(x["dispatched"] for x in inputs),
-        "scope":"Actual desktop pixels from PID-owned visible shelf/reading regions with native desktop-update QPC",
+        "scope":"Actual desktop pixels within the shelf/reading window bounds with native desktop-update QPC",
+        "release_policy":ready[0]["release_policy"],"per_pixel_window_ownership_proven":False,
+        "occlusion_check":"Five WindowFromPoint samples; small overlays between samples are not excluded",
         "application_paint_generation_bound":False,"input_to_verified_content_measured":False,
         "frame_budget_measured":False,"physical_scanout_proven":False,"f08_accepted":False}
 def capture():
