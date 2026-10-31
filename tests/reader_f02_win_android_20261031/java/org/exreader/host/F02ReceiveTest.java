@@ -34,11 +34,134 @@ public final class F02ReceiveTest extends Instrumentation {
     private String phase,activeCheck;
     private final JSONArray checks=new JSONArray();
     private final JSONObject observed=new JSONObject();
+    private String activeSubstep="none";
+    private long activeCheckStarted;
+    private final JSONArray corruptTrace=new JSONArray();
+    private JSONObject failureObservation=new JSONObject();
+    private boolean observingCorrupt(){return "corrupt_original_rejected".equals(activeCheck);}
+    private static String statusCategory(String value){
+        if(value.contains("原件完整性校验失败"))return "original_integrity";
+        if(value.contains("接收的原件校验失败"))return "receive_integrity";
+        if(value.contains("原件下载未完成"))return "download_incomplete";
+        if(value.contains("书籍已接收"))return "received";
+        if(value.contains("当前不能接收"))return "receive_refused";
+        if(value.contains("远端原件身份或大小不可接收"))return "identity_refused";
+        if(value.contains("原件不在本机"))return "credentials_missing";
+        if(value.contains("原件目录不可用"))return "directory_unavailable";
+        if(value.contains("正在核对并接收原件"))return "receiving";
+        if(value.contains("本轮同步结束"))return "scan_complete";
+        if(value.contains("正在更新书架"))return "projecting";
+        if(value.contains("请等待当前操作"))return "busy";
+        if(value.contains("已取消"))return "cancelled";
+        if(value.contains("就绪"))return "ready";
+        return value.isEmpty()?"absent":"other_redacted";
+    }
+    private JSONObject statusObservation(){
+        JSONObject out=new JSONObject();
+        try{
+            final String[] raw={""};
+            act(n->"同步状态".contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),n->raw[0]=text(n));
+            String first=raw[0].split("\n",2)[0];
+            out.put("category",statusCategory(first));
+            if("download_incomplete".equals(statusCategory(first))){
+                java.util.regex.Matcher code=java.util.regex.Pattern.compile("（(-?[0-9]{1,10})）").matcher(first);
+                if(code.find())out.put("download_code",Long.parseLong(code.group(1)));
+            }
+        }catch(Throwable ignored){try{out.put("category","capture_unavailable");}catch(Exception absent){}}
+        return out;
+    }
+    private JSONObject panelObservation(){
+        try{
+            Field instance=SyncController.class.getDeclaredField("instance");instance.setAccessible(true);
+            Object controller=instance.get(null),panel=controller==null?null:field(controller,"listener");
+            if(!(panel instanceof SyncPanel))return new JSONObject().put("available",false);
+            final JSONObject[] captured={null};
+            java.util.concurrent.CountDownLatch ready=new java.util.concurrent.CountDownLatch(1);
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{
+                JSONObject row=new JSONObject();
+                try{
+                    row.put("available",true).put("busy",field(panel,"busy"));
+                    java.util.List<?> rows=(java.util.List<?>)field(panel,"books");
+                    for(Object value:rows){
+                        NativeSync.RemoteBook book=(NativeSync.RemoteBook)value;
+                        if(book.key.equals(input.getString("book_key"))){
+                            row.put("target_present",true).put("receivable",book.receivable())
+                                .put("selection",book.selection).put("deleted",book.deleted)
+                                .put("revision_present",!book.revision.isEmpty()).put("bytes",book.bytes)
+                                .put("local_id",book.localId).put("txt_format","txt".equals(book.format))
+                                .put("expected_sha",book.sha.equals(input.getString("sha256")));
+                            return;
+                        }
+                    }
+                    row.put("target_present",false);
+                }catch(Throwable ignored){try{row.put("available",false);}catch(Exception absent){}}
+                finally{captured[0]=row;ready.countDown();}
+            });
+            if(ready.await(200,TimeUnit.MILLISECONDS)&&captured[0]!=null)return captured[0];
+            return new JSONObject().put("available",false).put("capture_timeout",true);
+        }catch(Throwable ignored){return new JSONObject();}
+    }
+    private void corruptSnapshot(String label){
+        if(!observingCorrupt())return;
+        try{
+            JSONObject row=new JSONObject().put("label",label).put("substep",activeSubstep)
+                .put("elapsed_ms",SystemClock.elapsedRealtime()-activeCheckStarted).put("status",statusObservation());
+            File cached=cache();
+            row.put("cache_exists",cached.exists()).put("cache_is_file",cached.isFile()).put("cache_bytes",cached.length());
+            if(cached.isFile()&&cached.length()<=131072)row.put("cache_sha256",hash(cached));
+            File mode=file("f02-get-mode");
+            row.put("mode_marker_exists",mode.isFile()).put("panel",panelObservation());
+            corruptTrace.put(row);
+        }catch(Throwable ignored){
+            try{corruptTrace.put(new JSONObject().put("label",label).put("substep",activeSubstep).put("capture_unavailable",true));}catch(Exception absent){}
+        }
+    }
+    private void corruptStep(String value){
+        if(observingCorrupt()){activeSubstep=value;corruptSnapshot("before");}
+    }
+    private void corruptValue(String name,long value){
+        if(observingCorrupt())try{corruptTrace.put(new JSONObject().put("substep",activeSubstep).put("elapsed_ms",SystemClock.elapsedRealtime()-activeCheckStarted).put(name,value));}catch(Exception ignored){}
+    }
+    private static String assertionReason(Throwable failure){
+        String message=failure.getMessage();
+        if("Actual UI target did not become ready".equals(message))return "ui_target_timeout";
+        if("visible UI action".equals(message))return "ui_action_not_visible";
+        if("actual SDK owner available".equals(message))return "sdk_owner_unavailable";
+        if("failed receive cannot import an original".equals(message))return "failed_receive_imported_original";
+        if("failed receive cannot publish cache".equals(message))return "failed_receive_published_cache";
+        return "other_redacted";
+    }
+    private void failureSnapshot(Throwable failure){
+        if(!observingCorrupt())return;
+        corruptSnapshot("failure");
+        try{
+            JSONArray frames=new JSONArray();
+            for(StackTraceElement frame:failure.getStackTrace()){
+                if(frame.getClassName().equals(F02ReceiveTest.class.getName())||frame.getClassName().startsWith(F02ReceiveTest.class.getName()+"$")){
+                    String method=frame.getMethodName();
+                    if(method.matches("[A-Za-z0-9_$<>]{1,96}"))
+                        frames.put(new JSONObject().put("method",method).put("line",frame.getLineNumber()));
+                    if(frames.length()==12)break;
+                }
+            }
+            failureObservation=new JSONObject().put("substep",activeSubstep).put("assertion_reason",assertionReason(failure))
+                .put("test_frames",frames).put("status",statusObservation()).put("trace",corruptTrace);
+            try{
+                ExecutorService sdk=(ExecutorService)field(activity,"worker");
+                if(sdk!=null&&!sdk.isShutdown()){
+                    java.util.concurrent.Future<Integer> sampled=sdk.submit(()->store().nativeLibrary().books().length);
+                    try{failureObservation.put("post_failure_sdk_books",sampled.get(2,TimeUnit.SECONDS)).put("sdk_sample","owner_read");}
+                    finally{if(!sampled.isDone())sampled.cancel(false);}
+                }else failureObservation.put("sdk_sample","owner_unavailable");
+            }catch(Throwable ignored){try{failureObservation.put("sdk_sample","capture_unavailable");}catch(Exception absent){}}
+
+        }catch(Throwable ignored){failureObservation=new JSONObject();}
+    }
     interface Check {void run() throws Exception;}
     @Override public void onCreate(Bundle args){super.onCreate(args);arguments=args;start();}
     static void need(boolean value,String reason){if(!value)throw new AssertionError(reason);}
     private void check(String name,Check action)throws Exception{
-        activeCheck=name;Bundle status=new Bundle();status.putString("class",getClass().getName());status.putString("test",name);sendStatus(1,status);
+        activeCheck=name;activeCheckStarted=SystemClock.elapsedRealtime();Bundle status=new Bundle();status.putString("class",getClass().getName());status.putString("test",name);sendStatus(1,status);
         action.run();checks.put(new JSONObject().put("name",name).put("passed",true));sendStatus(0,status);
     }
     private Object field(Object target,String name)throws Exception{
@@ -46,8 +169,11 @@ public final class F02ReceiveTest extends Instrumentation {
     }
     private <T>T owner(Callable<T> action)throws Exception{
         ExecutorService worker=(ExecutorService)field(activity,"worker");
+        corruptValue("sdk_owner_available",worker!=null&&!worker.isShutdown()?1:0);
         need(worker!=null&&!worker.isShutdown(),"actual SDK owner available");
-        return worker.submit(action).get(45,TimeUnit.SECONDS);
+        T value=worker.submit(action).get(45,TimeUnit.SECONDS);
+        if(value instanceof Integer)corruptValue("sdk_book_count",((Integer)value).longValue());
+        return value;
     }
     private BookStore store()throws Exception{return (BookStore)field(activity,"store");}
     private AccessibilityNodeInfo find(AccessibilityNodeInfo node,Predicate<AccessibilityNodeInfo> predicate){
@@ -66,30 +192,33 @@ public final class F02ReceiveTest extends Instrumentation {
     private void until(Predicate<AccessibilityNodeInfo> predicate,java.util.function.Consumer<AccessibilityNodeInfo> action,long timeout){
         long end=SystemClock.elapsedRealtime()+timeout;
         while(SystemClock.elapsedRealtime()<end){try{if(act(predicate,action))return;}catch(IllegalStateException stale){}SystemClock.sleep(80);}
+        corruptValue("wait_timeout_ms",timeout);corruptSnapshot("ui_timeout");
         throw new AssertionError("Actual UI target did not become ready");
     }
     private static String text(AccessibilityNodeInfo node){return node.getText()==null?"":node.getText().toString();}
     private static boolean id(AccessibilityNodeInfo node,String name){String value=node.getViewIdResourceName();return value!=null&&value.endsWith("/"+name);}
     private void tap(AccessibilityNodeInfo node){
-        Rect r=new Rect();node.getBoundsInScreen(r);need(r.width()>0&&r.height()>0,"visible UI action");
+        Rect r=new Rect();node.getBoundsInScreen(r);corruptValue("tap_width",r.width());corruptValue("tap_height",r.height());need(r.width()>0&&r.height()>0,"visible UI action");
         if(node.performAction(AccessibilityNodeInfo.ACTION_CLICK))return;
         long t=SystemClock.uptimeMillis();sendPointerSync(MotionEvent.obtain(t,t,MotionEvent.ACTION_DOWN,r.centerX(),r.centerY(),0));sendPointerSync(MotionEvent.obtain(t,t+30,MotionEvent.ACTION_UP,r.centerX(),r.centerY(),0));
     }
     private void click(String value){until(n->n.isEnabled()&&text(n).equalsIgnoreCase(value),this::tap,30000);}
     private void clickTitle()throws Exception{String title=input.getString("title");until(n->n.isEnabled()&&text(n).contains(title),this::tap,30000);}
     private void set(String description,String value){until(n->description.contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),n->{Bundle b=new Bundle();b.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);need(n.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,b),"actual field edit");},30000);}
-    private void status(String value){until(n->"同步状态".contentEquals(n.getContentDescription()==null?"":n.getContentDescription())&&text(n).contains(value),null,120000);}
+    private void status(String value){corruptStep("wait_integrity_status");until(n->"同步状态".contentEquals(n.getContentDescription()==null?"":n.getContentDescription())&&text(n).contains(value),null,120000);corruptSnapshot("status_matched");}
     private void panel(){click("More");click("同步");until(n->"同步状态".contentEquals(n.getContentDescription()==null?"":n.getContentDescription()),null,30000);}
     private File file(String name){return new File(context.getFilesDir(),name);}
     private void marker(String name)throws Exception{Files.write(file(name).toPath(),new byte[]{1});}
     private void waitFile(String name)throws Exception{long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){if(file(name).isFile())return;SystemClock.sleep(80);}throw new AssertionError("Native request boundary not observed");}
     private File cache()throws Exception{return file("sync-cache/"+input.getString("sha256")+".txt");}
-    private void receive()throws Exception{clickTitle();click("接收");}
+    private void receive()throws Exception{corruptStep("select_title");clickTitle();corruptStep("click_receive");click("接收");corruptSnapshot("receive_clicked");}
     private void mode(String value)throws Exception{
+        corruptStep("set_fault_mode");
         Files.deleteIfExists(file("f02-get-blocked").toPath());Files.deleteIfExists(file("f02-get-release").toPath());
         Files.write(file("f02-get-mode").toPath(),value.getBytes(StandardCharsets.UTF_8));
+        corruptSnapshot("mode_written");
     }
-    private void empty()throws Exception{need(owner(()->store().nativeLibrary().books().length)==0,"failed receive cannot import an original");need(!cache().exists(),"failed receive cannot publish cache");}
+    private void empty()throws Exception{corruptStep("check_sdk_books");need(owner(()->store().nativeLibrary().books().length)==0,"failed receive cannot import an original");corruptStep("check_cache_absence");need(!cache().exists(),"failed receive cannot publish cache");corruptSnapshot("empty_verified");}
     private void launch(){
         activity=startActivitySync(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP));
         need(activity!=null,"actual target Activity");
@@ -208,12 +337,15 @@ public final class F02ReceiveTest extends Instrumentation {
                 .put("test",new JSONObject().put("sha256",hash(new File(getContext().getApplicationInfo().sourceDir)))));
             File incoming=file("f02-input.json");input=new JSONObject(new String(Files.readAllBytes(incoming.toPath()),StandardCharsets.UTF_8));Files.delete(incoming.toPath());
             if("online".equals(phase))online();else if("offline".equals(phase)||"reopen".equals(phase))offline();else throw new AssertionError("Unknown phase");
-        }catch(Throwable error){failure=error;}
+        }catch(Throwable error){failure=error;failureSnapshot(error);}
         finally{
             try{
                 JSONObject report=new JSONObject().put("identity",new JSONObject().put("source",arguments.getString("source")).put("run",Long.parseLong(arguments.getString("run"))).put("attempt",Integer.parseInt(arguments.getString("attempt"))))
                     .put("phase",phase).put("pid",android.os.Process.myPid()).put("uid",android.os.Process.myUid()).put("sdk_version","3.42.0").put("passed",failure==null).put("checks",checks).put("count",checks.length()).put("observed",observed);
+                observed.put("corrupt_trace",corruptTrace);
+                report.put("active_substep",observingCorrupt()?activeSubstep:"outside_corrupt");
                 if(failure!=null)report.put("failure_type",failure.getClass().getSimpleName()).put("active_check",activeCheck);
+                if(failure!=null&&observingCorrupt())report.put("failure_observation",failureObservation);
                 Files.write(file("f02-report-"+phase+".json").toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));
                 result.putString("stream","F02_ANDROID "+phase+" checks="+checks.length()+" passed="+(failure==null)+"\n");
             }catch(Exception e){result.putString("stream","F02 report could not be written\n");failure=e;}

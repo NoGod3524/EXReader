@@ -1,12 +1,12 @@
-name: F02 Windows original to Android receive slice
+name: F02 Android original online observation
 on:
   push:
-    branches: [codex/gpt-f02-win-android-transfer-20261031]
+    branches: [codex/gpt-f02-online-observation-20261031]
 permissions:
   contents: read
   actions: read
 concurrency:
-  group: gpt-f02-win-android-transfer
+  group: f02-online-observation-${{ github.ref }}
   cancel-in-progress: false
 env:
   PYTHONUTF8: '1'
@@ -15,34 +15,9 @@ defaults:
   run:
     shell: bash
 jobs:
-  admission:
+  observation:
     runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
-      - name: Exact11 source and immutable real Windows sender input
-        env: {GH_TOKEN: '${{ github.token }}'}
-        run: |
-          python -m py_compile tests/reader_f02_win_android_20261031/*.py
-          python tests/reader_f02_win_android_20261031/fetch_sender.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: f02-android-input-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f02-android-input/
-          if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: f02-android-admission-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f02-android/admission.json
-          if-no-files-found: warn
-  android:
-    needs: admission
-    runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
@@ -52,16 +27,38 @@ jobs:
         with: {distribution: temurin, java-version: '17'}
       - uses: gradle/actions/setup-gradle@v4
         with: {gradle-version: '8.9'}
-      - uses: actions/download-artifact@v4
+      - name: Fixed source and original Windows sender admission
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          python -m py_compile tests/reader_f02_win_android_20261031/*.py
+          python tests/reader_f02_win_android_20261031/fetch_sender.py
+          python - <<'PY'
+          import re, subprocess
+          from pathlib import Path
+          base='f47f7c374524d2774e9a61cba44f63a5b7580916'
+          java='tests/reader_f02_win_android_20261031/java/org/exreader/host/F02ReceiveTest.java'
+          old=subprocess.check_output(['git','show',base+':'+java],text=True)
+          now=Path(java).read_text()
+          assert re.findall(r'need\((.*?)\);',old,re.S)==re.findall(r'need\((.*?)\);',now,re.S), 'original Java assertions'
+          for fragment in ['get(45,TimeUnit.SECONDS)','null,120000','this::tap,30000','SystemClock.sleep(80)']:
+              assert old.count(fragment)==now.count(fragment), 'original timeout/polling'
+          group='check("corrupt_original_rejected",()->{mode("corrupt");receive();status("完整性校验失败");empty();});'
+          assert group in old and group in now, 'original corrupt call order'
+          run=Path('tests/reader_f02_win_android_20261031/run.py').read_text()
+          assert "self.send(200,bytes([original[0]^1])+original[1:])" in run, 'original byte mutation'
+          print('F02_OBSERVATION_GUARD original assertions/timeouts/corrupt call order retained')
+          PY
+      - uses: actions/upload-artifact@v4
         with:
           name: f02-android-input-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f02-android-input
-      - name: Build fixed SDK342 and matched real Activity/instrumentation APKs
-        id: build
+          path: build/f02-android-input/
+          if-no-files-found: error
+          overwrite: false
+      - name: Build unchanged product and observation instrumentation
         run: python tests/reader_f02_win_android_20261031/build.py
       - name: Enable the original emulator accelerator
         run: sudo chmod 666 /dev/kvm
-      - name: Actual receive, public original readback and offline process reopen
+      - name: Original assertions with bounded observations
         id: receive
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -73,7 +70,15 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: python tests/reader_f02_win_android_20261031/run.py
-      - name: Preserve safe build evidence on success or failure
+      - name: Preserve original input admission
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f02-android-admission-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f02-android/admission.json
+          if-no-files-found: warn
+          overwrite: false
+      - name: Preserve safe build evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -84,7 +89,8 @@ jobs:
             build/f02-android/recipe-*.sh
             build/f02-android/artifacts/
           if-no-files-found: warn
-      - name: Preserve credential-scanned receiver evidence
+          overwrite: false
+      - name: Preserve credential-scanned receiver observations
         if: always() && steps.receive.outputs.safe_upload == 'true'
         uses: actions/upload-artifact@v4
         with:
@@ -92,6 +98,7 @@ jobs:
           path: build/f02-android/
           include-hidden-files: true
           if-no-files-found: error
+          overwrite: false
       - name: Preserve bounded public terminal status
         if: always()
         uses: actions/upload-artifact@v4
@@ -99,22 +106,4 @@ jobs:
           name: f02-android-status-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f02-android-status/
           if-no-files-found: warn
-  authenticate:
-    needs: [admission, android]
-    if: always()
-    runs-on: ubuntu-22.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
-      - name: Authenticate original ZIPs and independently recompute12 controls
-        env: {GH_TOKEN: '${{ github.token }}'}
-        run: python tests/reader_f02_win_android_20261031/authenticate.py
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: f02-android-independent-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f02-android/independent/
-          if-no-files-found: error
+          overwrite: false

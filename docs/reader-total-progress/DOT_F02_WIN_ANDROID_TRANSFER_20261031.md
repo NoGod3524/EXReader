@@ -78,3 +78,15 @@ Next action requires a separately approved bounded Actions diagnostic to inspect
 Formal F02 still requires its original six-target coverage and the required common upload/download/open loops across real host applications. This failed archived-Windows-to-Android-emulator slice does not establish physical Android, six-target acceptance, a common new-source Windows producer, complete20-check runtime success or12-control independent acceptance. The authoritative catalog was not edited; formal95/108 remains. External UI/F08/F09/Apple/C02 owner scopes remain untouched. No main/shared branch, PR, tag or release was created.
 
 Evidence document prepared at 2026-10-31T19:28:39.267433+00:00 / 2026-10-31 15:28:39 EDT.
+
+## Approved passive observation round (2026-10-31)
+
+Status: six-file observation draft, not yet run. The earlier failed run above and its original artifacts remain unchanged. New exclusive branch: codex/gpt-f02-online-observation-20261031, fixed parent f47f7c374524d2774e9a61cba44f63a5b7580916. Product source/blobs remain fe947bec25a56f40538677ffa9fb2a5e1e351b08; SDK8357eafa28423a7ab93ba08b823af80f01ad1505 remains fixed.
+
+Only six paths may differ from that parent: F02ReceiveTest.java, run.py, source_lock.json (branch identity only), fetch_sender.py (budget metadata only), the existing dot-f02-win-android-transfer workflow and this document. No product, SDK, build adapter, init.gradle or independent verifier change is authorized.
+
+Observations add named substeps, fixed assertion-reason enums, filtered test method/line frames, status categories, published panel eligibility, SDK counts from the original owner query and transport-cache metadata. UI observation waits at most200ms; an optional post-failure SDK count uses its owner and a2-second wait, marks unavailable on timeout, and never interrupts host work. They preserve the original corrupt check body, all original need conditions, polling/timeout values and the12000-byte first-byte XOR1 response. Observer capture failures remain optional evidence, not replacements for product assertions.
+
+Server evidence distinguishes marker consumption, authentication and successful corrupted-response send. Per-phase process evidence records adb return code, instrumentation code, native evidence presence and Java phase result before the original combined guard. Runtime endpoint bytes join the existing private-output scan; raw logcat text is replaced by bounded hash/size and filtered test frames. No arbitrary exception message, credentials or raw runtime URL is published by new observation records.
+
+The one approved observation uses one Ubuntu job with30-minute ceiling, initial attempt only, no automatic correction/rerun. Source admission, original sender authentication, unchanged SDK/app build and original driver run in that job. Original20 assertions remain in the driver; completion is measured, not assumed. The12-control independent audit is not scheduled by this observation workflow. Actions alone perform syntax/build/test/fixture/ZIP operations. After terminal results, only this document may be sealed [skip ci]. Formal95/108 remains.

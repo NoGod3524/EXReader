@@ -12,9 +12,11 @@ def main():
  authorization='Basic '+base64.b64encode((user+':'+password).encode()).decode()
  secret_bytes=[v.encode() for v in (user,password,authorization)]
  events=[];errors=[];server=None;reports=[];observations={};success=False
+ fault_observations=[];process_observations=[];phase_observations=[]
  report=dict(identity=identity(),accepted=False,sender_artifact=receipt,book_key=sender['book_key'],
   original_bytes=sender['original_bytes'],original_sha256=sender['original_sha256'],sdk_version='3.42.0',
   F02_accepted=False,formal='95/108',phases=reports,processes=observations)
+ report.update(fault_observations=fault_observations,process_observations=process_observations,phase_observations=phase_observations,independent12_controls_executed=False)
  def command(args,timeout=90,input=None,check=True):
   p=subprocess.run(list(map(str,args)),input=input,capture_output=True,timeout=timeout)
   if check:need(p.returncode==0,'Android command '+str(args[0]))
@@ -33,6 +35,11 @@ def main():
   need(len(native)==6,'native file metadata')
   data=private(name)
   return dict(exists=True,dev=int(native[0]),ino=int(native[1]),nlink=int(native[2]),uid=int(native[3]),size=int(native[4]),mode=native[5],sha256=sha(data))
+ def record_observation(name,value,public=None):
+  raw=json.dumps(value,ensure_ascii=True,sort_keys=True).encode()
+  need(not re.search(rb'https?://|Basic\s',raw),'redacted observation fields')
+  safe_save(name,raw)
+  print('F02_ANDROID_OBSERVATION '+json.dumps(value if public is None else public,ensure_ascii=True),flush=True)
  def instrument(phase):
   payload=dict(root=root,user=user,password=password,title=sender['title'],book_key=sender['book_key'],sha256=sender['original_sha256'],bytes=sender['original_bytes'])
   write('f02-input.json',json.dumps(payload,ensure_ascii=False).encode())
@@ -52,9 +59,24 @@ def main():
    time.sleep(.15)
   if p.poll() is None:p.kill();p.wait(timeout=10);raise AssertionError('instrumentation timeout')
   output=p.communicate(timeout=15)[0];safe_save(phase+'-instrumentation.txt',output)
+  process=dict(identity=identity(),phase=phase,adb_returncode=p.returncode,native_present=native is not None,
+   native_sha256=sha(native) if native is not None else None,instrumentation_bytes=len(output),instrumentation_sha256=sha(output),
+   instrumentation_codes=[int(v) for v in re.findall(rb'^INSTRUMENTATION_CODE:\s*(-?[0-9]+)\s*$',output,re.M)])
+  process_observations.append(process);record_observation(phase+'-process-observation.json',process)
   need(p.returncode==0 and b'Process crashed' not in output,'actual instrumentation process')
   data=private('f02-report-'+phase+'.json');safe_save(phase+'-report.json',data);value=json.loads(data)
   reports.append(value)
+  trace=value.get('observed',{}).get('corrupt_trace',[])
+  detail=value.get('failure_observation',{})
+  phase_observation=dict(identity=identity(),phase=phase,java_passed=value.get('passed'),
+   active_check=value.get('active_check'),active_substep=value.get('active_substep'),failure_type=value.get('failure_type'),
+   failure_observation=detail,corrupt_trace=trace)
+  phase_observations.append(phase_observation)
+  public=dict(identity=identity(),phase=phase,java_passed=value.get('passed'),active_check=value.get('active_check'),
+   active_substep=value.get('active_substep'),failure_type=value.get('failure_type'),
+   failure_observation={k:v for k,v in detail.items() if k!='trace'},first_snapshot=trace[:1],last_snapshots=trace[-2:],
+   sdk_observations=[r for r in trace if 'sdk_owner_available' in r or 'sdk_book_count' in r])
+  record_observation(phase+'-phase-observation.json',phase_observation,public)
   need(native is not None and value['passed'],'actual '+phase+' checks')
   pid=int(re.search(rb'^Pid:\s+([0-9]+)',native,re.M)[1]);uid=int(re.search(rb'^Uid:\s+([0-9]+)',native,re.M)[1])
   need(value['pid']==pid and value['uid']==uid,'observed process identity');observations[phase]=dict(pid=pid,uid=uid)
@@ -76,6 +98,7 @@ def main():
    server.entries={r['path']:files['objects/'+r['sha256']] for r in manifest['entries']}
    server.dirs=set(manifest['directories'])
   root='https://127.0.0.1:'+str(server.server.server_port)+'/dav/'
+  secret_bytes.append(root.encode())
   object_path=sender['object_path'];original=server.entries[object_path];base=server.server.RequestHandlerClass
   def event(handler,code,data,declared=None):
    trace=getattr(handler,'trace',{})
@@ -84,15 +107,27 @@ def main():
      authenticated=handler.headers.get('Authorization')==authorization,request_bytes=trace.get('body_bytes',0),
      request_sha256=trace.get('body_sha256',sha(b'')),response_bytes=len(data),response_sha256=sha(data),
      declared_bytes=len(data) if declared is None else declared))
+    fault=getattr(handler,'f02_fault_observation',None)
+    if fault is not None:
+     fault.update(response_status=code,response_bytes=len(data),response_sha256=sha(data),declared_bytes=len(data) if declared is None else declared)
   class EvidenceHandler(base):
    def send(self,code,data=b''):
     event(self,code,data);return super().send(code,data)
    def do_GET(self):
+    self.f02_fault_observation=None
     try:
      if self.path==object_path and exists('f02-get-mode'):
       mode=private('f02-get-mode').decode().strip();adb('shell','run-as',PACKAGE,'rm','files/f02-get-mode')
+      fault=dict(mode=mode if mode in ('corrupt','truncate','block') else 'other_redacted',mode_consumed=True,
+       corrupt_sent=False,authenticated=self.headers.get('Authorization')==authorization,request_role='original')
+      self.f02_fault_observation=fault
+      with server.lock:fault_observations.append(fault)
       if not self.authorized():return
-      if mode=='corrupt':self.send(200,bytes([original[0]^1])+original[1:]);return
+      if mode=='corrupt':
+       self.send(200,bytes([original[0]^1])+original[1:])
+       with server.lock:fault['corrupt_sent']=True
+       print('F02_ANDROID_FAULT_OBSERVATION '+json.dumps(dict(identity=identity(),fault=fault)),flush=True)
+       return
       if mode=='truncate':
        partial=original[:len(original)//2];event(self,200,partial,len(original))
        self.trace['response']=200;self.send_response(200);self.send_header('Content-Length',str(len(original)));self.send_header('Connection','close');self.end_headers();self.close_connection=True
@@ -149,7 +184,11 @@ def main():
   report['accepted']=True;success=True
  except Exception as exc:
   report['error_type']=type(exc).__name__
-  try:safe_save('failure-logcat.txt',adb('logcat','-d','-v','threadtime','-t','1500',check=False).stdout)
+  try:
+   raw_logcat=adb('logcat','-d','-v','threadtime','-t','1500',check=False).stdout
+   frames=[dict(method=m.decode('ascii'),line=int(n)) for m,n in re.findall(
+    rb'\bat org\.exreader\.host\.F02ReceiveTest(?:\$[A-Za-z0-9_$]+)?\.([A-Za-z0-9_$<>]{1,96})\(F02ReceiveTest\.java:([0-9]+)\)',raw_logcat)][:12]
+   safe_save('failure-logcat-observation.json',json.dumps(dict(bytes=len(raw_logcat),sha256=sha(raw_logcat),test_frames=frames,raw_text_published=False)).encode())
   except Exception:pass
   raise
  finally:
@@ -167,6 +206,9 @@ def main():
    save(ROOT/'build/f02-android-status/status.json',dict(identity=identity(),accepted=success,safe_upload=safe,error_type=report.get('error_type'),F02_accepted=False))
    if safe:
     with open(os.environ['GITHUB_OUTPUT'],'a') as out:out.write('safe_upload=true\n')
+   print('F02_ANDROID_OBSERVATION_TERMINAL '+json.dumps(dict(identity=identity(),fault_observations=fault_observations,
+    process_observations=process_observations,phase_results=[dict(phase=v.get('phase'),passed=v.get('passed'),active_check=v.get('active_check'),active_substep=v.get('active_substep')) for v in reports],
+    independent12_controls_executed=False,F02_accepted=False,formal='95/108')),flush=True)
    print('F02_ANDROID_RESULT '+json.dumps(dict(identity=identity(),accepted=success,safe_upload=safe,phases=len(reports),F02_accepted=False)),flush=True)
    need(safe,'no generated credentials in uploaded evidence')
 if __name__=='__main__':main()
