@@ -144,6 +144,19 @@ int wh3wr_prepare_publish(wh3wr_registration *);
    or advance admission. Call finish only after independent publication proof. */
 wh3_tx_status wh3wr_publish(wh3wr_registration *,const wchar_t *stage_leaf,
  const wh3w_identity *stage_identity,const wchar_t *retained_leaf);
+/* Qualified compound-member publication/reconciliation. The proof callback
+   reads the actual old/staged handles while both deny write/delete sharing;
+   it must neither close them nor modify their bytes. NULL original means a
+   previously absent target and requires NULL retained_leaf. Every other
+   accepted state matches exact original/staged identities and fresh leaves.
+   Recovery never overwrites an unexpected object or infers completion from a
+   pathname. All members require independent proof before overall finish. */
+enum { WH3WR_MEMBER_PROVED=800, WH3WR_MEMBER_RETAINED,
+       WH3WR_MEMBER_BOUND, WH3WR_MEMBER_FLUSHED };
+wh3_tx_status wh3wr_publish_member(wh3wr_registration *,const wchar_t *target_leaf,
+ const wh3w_identity *original,const wchar_t *stage_leaf,const wh3w_identity *staged,
+ const wchar_t *retained_leaf,int (*prove)(void *,HANDLE,HANDLE),void *context,
+ const wh3w_controls *);
 int wh3wr_finish(wh3wr_registration *,wh3w_store *,const wh3_tip *,
  int (*prove)(void *,const wh3_tip *),void *context);
 /* Refuses while a journal retains the gate. Caller closes all SDK borrowers
