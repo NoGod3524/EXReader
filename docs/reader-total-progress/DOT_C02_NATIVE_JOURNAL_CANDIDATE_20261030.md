@@ -882,3 +882,29 @@ bytes, trace identities, map and formal package bindings are unchanged. Preserve
 failed job 124508062624 and artifact 13039295056, 96762953 bytes, SHA256
 b9f314199bf1b71deccfde5d3714ad5571ccf5f77625b64f132ef28530563bee.
 Its retry audits the same four original d326 ZIPs, without rebuilding producers.
+
+
+### Same-source Windows independent product qualification
+
+Audit 41191719836/A1 at a5a335036359867a9c2b87d09f03b79989c9ad4d
+passed all four original d326 packages, 17 semantic negative controls and
+44 role substitutions. The saved result SHA256 is
+14b78fb26050edeb1a3e81f9148247887ee2770c60287bce21e225662d2dc2c8;
+artifact 13039615103 is 104072342 bytes, SHA256
+8a639a2f2abec7cddc752b2b10e4033ce0534b22be796666e174c944c03a6015.
+The precise native Windows separator correction closes the prior audit failure.
+The independent product decoder covers 18 guarded legacy cases, three profiles
+with six actual host cases each, original executed/formal-package PE binding,
+actual owner probes, SDK data, window observations, PNG and full-profile modules.
+Static SDK map and no-runtime-DLL checks are reported at their actual strength;
+no independent MSVC static relink is claimed. The eight product negatives invoke
+the same decoder with freshly repacked evidence. The selected request remains
+component evidence because the other eight roles are absent; complete-c02 still
+requires the independently checked POSIX Repair evidence and all twelve roles.
+
+The immutable twelve-role producer manifest is qualification.d326.json. The
+original production source remains d32603dc65bccfd65901239d21cb65cd10bca168.
+Subsequent changes to independent decoders and documentation do not rebuild or
+replace those retained original packages. Explicit Repair has passed both actual
+20-case native consumers; full semantic decoding and new adversarial replays
+are being submitted against those exact originals.
