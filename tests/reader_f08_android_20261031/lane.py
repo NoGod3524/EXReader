@@ -218,7 +218,7 @@ def audit():
         sys.path.insert(0,str(ROOT/"tests/reader_f08_android_startup_20261031"))
         import diagnose
         need(build["startup_cost_driver_sha256"]==sha(ROOT/"tests/reader_f08_android_startup_20261031/StartupCostTest.java"),"startup driver source")
-        need(sha(raw/"installed/app-debug.apk")==sha(raw/"packages/app-debug.apk"),"installed diagnostic product")
+        need(sha(raw/"startup-installed/app-debug.apk")==sha(raw/"packages/app-debug.apk"),"installed diagnostic product")
         summary=[diagnose.verify(json.loads((raw/f"startup-{i}.json").read_text()),ident,i) for i in range(3)]
         need(summary==json.loads((raw/"startup-summary.json").read_text()),"diagnostic replay")
         report.update(startup_diagnostic_complete=True,startup_costs=summary)

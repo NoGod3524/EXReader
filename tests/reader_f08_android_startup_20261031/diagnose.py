@@ -30,7 +30,7 @@ def run():
         "org.exreader.host.test/org.exreader.host.ShelfCatalogTest"],timeout=300)
     (out/"startup-seed.txt").write_bytes(seed)
     L.need(b"EXR_SHELF_SEEDED 2202" in seed and b"INSTRUMENTATION_CODE: -1" in seed,"original corpus seed")
-    installed=out/"installed";installed.mkdir()
+    installed=out/"startup-installed";installed.mkdir()
     paths=L.command(["adb","shell","pm","path","org.exreader.host"],text=True).splitlines()
     L.need(len(paths)==1 and paths[0].startswith("package:"),"installed package")
     L.command(["adb","pull",paths[0][8:],installed/"app-debug.apk"])
