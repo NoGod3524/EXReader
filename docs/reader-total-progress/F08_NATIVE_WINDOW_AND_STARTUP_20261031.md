@@ -80,11 +80,38 @@ Source 89ad06714250667a82851253d24398eab47acf63, [run 41235602427](https://githu
 
 The alternating full-selection queries took 611.527–630.577 ms per 2,202 books. Existing heads queries took 225.705–230.622 ms. This same-run diagnosis supports removal of redundant selection decoding. It does not establish UI performance acceptance.
 
-### Key-only candidate awaiting validation
+### Key-only candidate: complete functional regression, frame budget still failed
 
-Product change 1efae40cf006b59f22673edccf763e446183a695 adds a JNI projection returning only the existing local lookup's book key. Mapping repair keeps the same catalog query, missing-mapping check, revision check, and bootstrap behavior; it avoids constructing five Java display strings and a shelf object for each book.
+Product change 1efae40cf006b59f22673edccf763e446183a695 adds a JNI projection returning only the existing local lookup's book key. Mapping repair keeps its catalog lookup, missing-mapping check, revision check and bootstrap behavior; it avoids constructing five Java display strings and a shelf object for each book.
 
-Validation source 3f74fa7205cb48cdbd0c7804ebff7ace5288aef9 is executing in [run 41236301654](https://github.com/NoGod3524/EXReader/actions/runs/41236301654). It adds same-run lookup/key ABBA checks and retains the original ten UI, twelve catalog, and eighteen owner cases. The existing UI frame, startup, and memory limits are unchanged. This receipt does not claim a result for that live run.
+The first validation, source 3f74fa7205cb48cdbd0c7804ebff7ace5288aef9 and run 41236301654, completed its ten UI cases but then failed because the startup diagnostic and full sampler both created the same installed-package receipt directory. The dependent audit failed at the consequently absent evaluation.json. Both failures remain preserved. Its raw artifact is 13055663243, 44,354,178 bytes, SHA-256 73f6a06449f460114c22c854eca6235481ede195af5f05d62d028bb56e1e582e. A separate replay authenticated all 339 manifest payloads; it did not rewrite the producer result. The UI data in that failed producer still exceeded the frame and first-interaction limits.
+
+Source 1c5eb2f7f12ec59cab182ceaeb574672cee4968b separates startup-installed from the ordinary installed receipt. [Run 41237326028](https://github.com/NoGod3524/EXReader/actions/runs/41237326028) completed the original ten shelf UI, eighteen ProductOwnerTest and twelve ShelfCatalogTest cases. All forty passed. Sampling job 124643723129 then failed the unchanged frame limits; independent audit 124645833257 authenticated and recomputed the complete observation.
+
+| Metric | Observed | Original maximum | Result |
+| --- | ---: | ---: | --- |
+| First interaction | 1,987.733059 ms | 2,000 ms | Pass in this execution |
+| Sampled PSS | 114,817 KiB | 524,288 KiB | Pass |
+| Ordinary Window frame P95 | 84.834417 ms | 16.67 ms | Fail |
+| Ordinary Window frame P99 | 103.456589 ms | 33.34 ms | Fail |
+| Forward scroll P95 / P99 | 84.450628 / 88.98622 ms | 16.67 / 33.34 ms | Fail |
+| Reverse scroll P95 / P99 | 83.659927 / 88.572523 ms | 16.67 / 33.34 ms | Fail |
+
+Raw artifact 13056143910 has 64,166,493 ZIP bytes and SHA-256 ada9948c943a316f79577218fc7b889600ae6c6a07372d7258a0f1021ab474f2. Audit artifact 13055569953 has 1,987 bytes and SHA-256 d40c762ebe69748a889badbb4d0484c96847897ea78ada3c1a2d4c540af63459. All 319 archived files were authenticated. Both jobs retained their 20-minute caps.
+
+Same-process lookup/key ABBA checks verified the same 2,202 keys. The three constructor times were 388.898, 379.622 and 382.509 ms. The key-only query passes took 100.969-109.015 ms per 2,202 books, while full lookup passes took 293.326-323.249 ms on the same runner. Different-run startup timings are not an A/B comparison.
+
+### Native system-UI renderer controls
+
+Source 7fae9b37f1c2210a538b3924b31093df7db24dc2 predeclared three software-renderer candidates before [run 41238038744](https://github.com/NoGod3524/EXReader/actions/runs/41238038744). Each used the same API34 x86_64 Pixel 6, four virtual CPUs, 4 GiB RAM, animation scale 1 and native 1080x2400 geometry, without a size override. The program under observation was Android's system Settings, not EXReader. Its APK SHA-256 was ea2c3efc9f4ad1d5e84ecb1f4aa0d05703bab8f6a7c57c35091ddc9f8916a666 in every candidate.
+
+| Requested renderer | Retained ordinary completed frames | Native Settings elapsed P95 / P99 ms | Artifact |
+| --- | ---: | ---: | --- |
+| swiftshader_indirect | 103 | 267.147451 / 355.762521 | 13056705073 |
+| swangle | 65 | 677.580276 / 907.532378 | 13055934595 |
+| lavapipe | 103 | 294.057899 / 407.501985 | 13055959631 |
+
+These are bounded gfxinfo ring observations and environment controls, with separate timestamp semantics from the product Window callback metric. All snapshots and two unavailable swangle completion records remain. The controls do not establish an EXReader frame census, a product pass, or a matched-host A/B comparison between renderers. They show that substantial native system-UI latency also occurs in these hosted software-renderer environments.
 
 ## Linux and remaining acceptance
 
@@ -100,3 +127,11 @@ Mutter capability source 0c89ee0bee126c2316b2a6445bde7a5a47bb42f3, [run 41233452
 GTK 3.24.33's Wayland implementation itself estimates its presentation field from a frame callback plus one refresh interval. Merely obtaining nonzero values from that backend would not resolve this gap. See [upstream implementation](https://github.com/GNOME/gtk/blob/3.24.33/gdk/wayland/gdkwindow-wayland.c#L492).
 
 Remaining work includes valid product-frame attribution on Windows and Linux, Android UI performance and full interaction coverage, Apple first-interaction and missing frame/workload coverage, and rebuilding/verifying the six targets from one final production source. Local screenshots, successful artifact audits, and passing query diagnostics do not close those gates.
+
+## Parallel integration
+
+At the user's request, Windows, Linux and Apple are being handled by three independent GPT-6.1 Sol agents at max reasoning; the root agent owns Android, integration and final acceptance. Each uses an isolated branch/worktree. Desktop resolution changes remain prohibited.
+
+The integration branch is codex/f08-final-integration-20261031. Its initial production assembly is source 01dcd120b186ed3e8f72a373aff52db798d89613. Relative to the shared base 6c3c75bc793acb2bd369db7ea9d701fb87946a81, only six production paths differ: the three Android mapping-projection paths and three Linux durable-WAL paths. Core SDK source/include/CMake trees remain unchanged. Existing Windows/Apple/Linux measurement adapters and failed evidence are retained in the history. New agent instrumentation is not accepted into the final source until its checks and measurement coverage are reviewed.
+
+Formal catalog F08 remains pending. The next common-source execution must prove all required target/workload budgets; independent component runs cannot transfer acceptance to that assembly.
