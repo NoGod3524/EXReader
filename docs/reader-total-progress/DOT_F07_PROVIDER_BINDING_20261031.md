@@ -25,3 +25,6 @@ Artifacts (API metadata verified, not locally downloaded):
 - producer13035367114,30585 bytes,SHA256 f15bcf53c03bad2126b18943db18898103599e73706fbced418a2876653338c6; upload logs report36 retained recipe configure/build logs.
 - audit13035690977,221 bytes,SHA256 3618276ff0a6cf09017f56c0d12608f7da59f55351dc360a23b15e7286b27ddb.
 The already-built host/map were not copied into the new evidence directory before this auxiliary failure. Their successful construction is supported by original recipe log output, not by a claimed retained binary audit. Formal95/108 and six-platform F07 remain unchanged.
+
+## Explicitly authorized one correction
+User Sentinel_c755c0f0301881919ceb713442152ace approved one additional Linux120+audit15-minute run. Only the new test CMake/build/checker record core as INTERFACE_LIBRARY with its exact EXReader::exr_render dependency and bind concrete exr_base/exr_render installed archives. Public target_link_libraries remains unchanged. Wrapper commands now persist captured stdout/stderr, print failure output and preserve the nonzero return. No product/old test changes; six audit negative controls remain unchanged. Original failure above is retained. No automatic third run.

@@ -29,7 +29,8 @@ def check(files,identity):
  need(prefix+"/include/exreader-product/sqlite3.h" in text(files,"sdk-header-deps.txt"),"sqlite_header_origin")
  need("#define SQLITE_VERSION " in text(files,"sqlite3-installed.h"),"sqlite_header")
  targets=b["targets"]
- need(targets["product"]==prefix+"/lib/libreader_catalog_sqlite.a" and targets["sdk"]==sdk+"/lib/exreader/libexr_vendor_exr_sqlite.a" and targets["core"]==sdk+"/lib/libexr_core.a","target_prefix")
+ need(targets["product"]==prefix+"/lib/libreader_catalog_sqlite.a" and targets["sdk"]==sdk+"/lib/exreader/libexr_vendor_exr_sqlite.a" and targets["base"]==sdk+"/lib/libexr_base.a" and targets["render"]==sdk+"/lib/libexr_render.a","target_prefix")
+ need(b["core_interface"]==dict(type="INTERFACE_LIBRARY",links=["EXReader::exr_render"]),"core_interface")
  need('EXR_VERSION "3.42.0"' in text(files,"sdk-header.h") and re.search(r"#define EXR_ABI_VERSION\s+1u",text(files,"sdk-header.h")),"sdk_version_abi")
  cache=text(files,"host-cache.txt")
  for key in ("EXR_READER_GTK_MANAGED","EXR_READER_GTK_RAW3","EXR_READER_GTK_ACCOUNT","EXR_READER_GTK_READING_RECORDS"):
