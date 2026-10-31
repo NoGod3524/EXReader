@@ -129,4 +129,60 @@ public final class OrganizationInteropTest {
     private void create(String name,String order){clickText("New");field("Name",name);if(order!=null)field("Order — smaller first",order);clickText("Save");committed();waitItem(name);}
     private void addBook(String title,String order){clickText("Add book");ready();item(title);if(order!=null&&device.wait(Until.hasObject(By.desc("Order — smaller first")),3000))field("Order — smaller first",order);clickText("Add");committed();waitItem(title);}
     private void createRefused(String name){clickText("New");field("Name",name);clickText("Save");assertNotNull(device.wait(Until.findObject(By.textContains("Change refused")),20000));}
+    /** Read native UI after the preceding real host network receive; never seed product data. */
+    @Test public void receivedOrganization() throws Exception {
+        device=UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        context=InstrumentationRegistry.getInstrumentation().getTargetContext();
+        args=InstrumentationRegistry.getArguments();
+        String raw=args.getString("f03_expected_groups");
+        assertNotNull("Actual remote producer expectations required",raw);
+        JSONArray expected=new JSONArray(raw); assertTrue(expected.length()>0);
+        output=new File(context.getExternalFilesDir(null),"f03-received-evidence");
+        assertFalse(output.exists()); assertTrue(output.mkdirs());
+        JSONObject report=identity().put("accepted",false).put("scope","native received organization UI");
+        try {
+            String root=args.getString("f03_dav_root");
+            assertNotNull(root); assertTrue(root.startsWith("https://"));
+            launch();clickText("More");clickText("同步");clickText("云盘账号");
+            field("云盘地址",root);
+            field("云盘用户名",args.getString("f03_dav_username",""));
+            field("云盘密码",args.getString("f03_dav_password",""));
+            clickText("仅本次使用");
+            assertNotNull(device.wait(Until.findObject(By.textContains("仅本次使用凭据")),30000));
+            clickText("立即同步");
+            assertNotNull(device.wait(Until.findObject(By.textContains("本轮同步结束")),180000));
+            clickText("关闭");
+            report.put("native_sync_completed",true);
+            for(int cycle=0;cycle<2;cycle++){
+                if(cycle==1) device.executeShellCommand("am force-stop "+APP);
+                launch();open();
+                for(int i=0;i<expected.length();i++){
+                    JSONObject row=expected.getJSONObject(i);
+                    String groupKind=row.getString("kind");
+                    assertTrue(groupKind.equals("shelf")||groupKind.equals("tag")||groupKind.equals("series"));
+                    kind(groupKind.equals("shelf")?"Shelves":groupKind.equals("tag")?"Tags":"Series");
+                    JSONArray parents=row.optJSONArray("parents");
+                    if(parents!=null)for(int n=0;n<parents.length();n++){item(parents.getString(n));clickText("Children");ready();}
+                    String name=row.getString("name");
+                    if(row.getBoolean("deleted")){
+                        assertFalse("Deleted remote group still active",hasItem(name));
+                        clickText("Removed");ready();waitItem(name);clickText("Active");ready();
+                    }else{
+                        waitItem(name);
+                        if(row.has("member_title")){
+                            item(name);clickText("Books");ready();
+                            assertEquals(row.getBoolean("member_present"),hasItem(row.getString("member_title")));
+                        }
+                    }
+                }
+                assertTrue(device.takeScreenshot(new File(output,"received-"+cycle+".png")));
+                device.dumpWindowHierarchy(new File(output,"received-"+cycle+".xml"));
+                clickText("Close");
+            }
+            report.put("accepted",true).put("restart_verified",true).put("expected",expected);
+        } finally {
+            Files.write(new File(output,"result.json").toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
 }

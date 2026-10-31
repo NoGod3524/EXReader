@@ -6,6 +6,7 @@ import importlib.util
 import os
 from pathlib import Path
 import runpy
+import subprocess
 import sys
 from identity import ROOT, SCOPE, identity, require, write_json
 
@@ -33,14 +34,55 @@ class SDK342Loader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--host", choices=["windows", "macos", "iphone", "ipad"], required=True)
+    p.add_argument("--host", choices=["windows", "macos", "iphone", "ipad", "android"], required=True)
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--native-tests", action="store_true")
+    p.add_argument("--sdk", type=Path)
+    p.add_argument("--products", type=Path)
+    p.add_argument("--resources", type=Path)
+    p.add_argument("--destination")
     a = p.parse_args()
     stamp = identity()
     changes = []
     accepted = False
     try:
-        if a.host == "windows":
+        if a.native_tests:
+            require(a.sdk is not None and a.products is not None, "installed SDK/products required")
+            work = ROOT / "build/dot-f03-native" / a.host
+            work.mkdir(parents=True, exist_ok=False)
+            if a.host == "android":
+                init = work / "f03.init.gradle"
+                path = (Path(__file__).resolve().parent / "android").as_posix()
+                init.write_text("gradle.beforeProject { p -> if (p.path == ':uitest') { "
+                                "p.pluginManager.withPlugin('com.android.application') { "
+                                "p.android.sourceSets.androidTest.java.srcDir new File('"
+                                + path + "') } } }\n", encoding="utf-8")
+                subprocess.run(["gradle", "-p", str(ROOT / "examples/android"), "--no-daemon",
+                                "--stacktrace", "-I", str(init),
+                                "-PexrSdk=" + str(a.sdk.resolve()),
+                                "-PexrProduct=" + str(a.products.resolve()),
+                                ":uitest:assembleDebug", ":uitest:assembleDebugAndroidTest"],
+                               cwd=ROOT, check=True)
+            else:
+                require(a.host in ("macos", "iphone", "ipad"), "unsupported native target")
+                require(a.resources is not None and a.resources.is_dir(), "original fixtures required")
+                require(a.destination is not None, "exact actual device destination required")
+                os.environ["EXR_APPLE_SDK_VERSION"] = SCOPE["sdk_version"]
+                project = work / "project"
+                subprocess.run(["ruby", "tests/reader_team24_apple/make_project.rb", str(project),
+                                str(a.resources.resolve()), str(Path(__file__).resolve().parent), "base"],
+                               cwd=ROOT, check=True)
+                scheme = "EXReaderHost-macOS" if a.host == "macos" else "EXReaderHost-iOS"
+                subprocess.run(["xcodebuild", "build-for-testing", "-project",
+                                str(project / "EXReaderHost.xcodeproj"), "-scheme", scheme,
+                                "-destination", a.destination, "-derivedDataPath", str(work / "derived"),
+                                "EXR_SDK_DIR=" + str(a.sdk.resolve()),
+                                "EXR_PRODUCTS_DIR=" + str(a.products.resolve()),
+                                "CODE_SIGNING_ALLOWED=" + ("YES" if a.host == "macos" else "NO")],
+                               cwd=ROOT, check=True)
+        elif a.host == "android":
+            raise ValueError("Android SDK/product producer not yet wired; native-tests requires installed stages")
+        elif a.host == "windows":
             require(os.name == "nt", "Windows build requires Windows runner")
             loader = SDK342Loader(changes)
             sys.meta_path.insert(0, loader)

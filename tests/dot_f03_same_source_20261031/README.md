@@ -13,17 +13,20 @@ Only new F03 paths are owned. Production, SDK, old tests and external owners are
 - Windows retained native organization tests and actual Windows/GTK tag relay phases.
 - GTK original collections UI and actual host relay phases.
 - Android installed APK identity, original native eight checks, eight real UI lifecycle cases and
-  original strict all-exits checker; requires real connected XML and owner evidence.
-- Separate Apple/Android lifecycle source copies retain original methods and assertions.
+  original strict all-exits checker; requires real connected XML and owner evidence. A separate receive mode drives actual Android
+  HTTPS account UI, verifies organization controls and restarts the process.
+- Separate Apple/Android lifecycle source copies retain original methods and assertions and add
+  native HTTPS receiver/visibility/restart cases. Those new cases do not replace original six/eight gates.
 - Windows version-only in-memory build adaptation and original Apple SDK3.42 installer invocation.
-- Fail-closed final contract requiring all six actual author/receiver wire lifecycle receipts.
+- Fail-closed final contract requiring actual cross-device author and all-six receiver wire lifecycle receipts.
 
 ## Explicit remaining implementation gaps
 1. Six-host lifecycle execution is not yet connected to emit the final manifest. Existing Windows/GTK
    relay covers tag membership only; Android original network test synthesizes records and is not
    used as a six-host author proof.
 2. GTK/Android build orchestration still needs connection to final workflow.
-3. New Apple/Android classes are not yet compiled/wired into independent suites.
+3. Native-test compilation wiring is authored but unexecuted. Apple/Android real HTTPS receiver UI
+   and process-restart checks are authored; complete six-host artifact orchestration remains absent.
 4. Retained drivers do not emit the complete new interop receipt schema. Projection-only receipts
    deliberately lack native sync/restart proof and are rejected by final verification.
 5. Original iPad organization fails at organization.kind.tag. Existing Apple owner must fix it;
