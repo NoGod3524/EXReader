@@ -545,7 +545,7 @@ static void scoped_identity_case(void){
  pc02_identity wrong=s.id;
  wrong.inode++;
  expect(!pc02_scope_create(s.fd,&wrong,&bad)&&!bad,"digest or wrong native identity cannot create scope");
- expect(!chmod(s.context,0755)&&!pc02_scope_create(s.fd,&s.id,&bad)&&!bad,"nonprivate anchor rejects before path operations");
+ expect(!chmod(s.context,0775)&&!pc02_scope_create(s.fd,&s.id,&bad)&&!bad,"group-writable anchor rejects before path operations");
  expect(!chmod(s.context,0700),"restore fixture permissions");
  char file[PATH_BYTES];
  expect(join(file,s.context,"not-directory")&&file_write(file,"x",1),"actual regular file fd");
@@ -620,7 +620,7 @@ static void scoped_permission_case(void){
  begin_case(name);
  expect(scoped_fixture_open(&s,name,1)&&scoped_open(&s,PC02_SHARED,&h),"live private Context scope");
  expect(!chmod(s.context,0755),"actual anchor permission drift");
- expect(!pc02_check(h)&&!pc02_library_path(h),"scope private-mode drift refuses checked SDK path");
+ expect(!pc02_check(h)&&!pc02_library_path(h),"scope captured-mode drift refuses checked SDK path");
  pc02_lease *fresh=NULL;
  expect(!scoped_open(&s,PC02_SHARED,&fresh)&&!fresh,"no implicit broader-scope adoption");
  expect(pc02_close(h)&&!chmod(s.context,0700),"close only releases lifetime; restore test fixture");
@@ -683,6 +683,35 @@ static void scoped_pending_case(void){
  scoped_fixture_close(&s);
  end_case(name);
 }
+static void scoped_readonly_mode_case(unsigned mode){
+ char name[80];scoped_fixture s;pc02_lease *h=NULL;struct stat st;
+ snprintf(name,sizeof(name),"scope-readonly-anchor-%04o",mode);begin_case(name);
+ expect(scoped_fixture_open(&s,name,0),"fresh private fixture before trusted factory");
+ pc02_scope_close(s.scope);s.scope=NULL;
+ expect(!chmod(s.context,(mode_t)mode)&&pc02_scope_create(s.fd,&s.id,&s.scope),"factory accepts euid-owned anchor without group/other write");
+ proof p={"original\n",0};
+ expect(pc02_authority_create_in(s.scope,"authority")&&file_write(s.f.library,"original\n",9)&&
+  pc02_enroll_in(s.scope,"authority","library.sqlite",0,exact_proof,&p,NULL),"actual scoped authority and library enrollment");
+ expect(!stat(s.f.authority,&st)&&(st.st_mode&07777)==0700,"authority remains strictly private");
+ expect(scoped_open(&s,PC02_SHARED,&h)&&pc02_check(h)&&pc02_library_path(h),"actual reader under captured readonly/traverse anchor");
+ expect(!chmod(s.context,mode==0755?0711:0755)&&!pc02_check(h)&&!pc02_library_path(h),"safe-to-safe mode drift still refuses existing scope");
+ expect(pc02_close(h),"mode drift only releases the owner");
+ pc02_lease *fresh=NULL;
+ expect(!scoped_open(&s,PC02_SHARED,&fresh)&&!fresh,"factory scope cannot silently adopt mode change");
+ expect(!chmod(s.context,(mode_t)mode)&&scoped_open(&s,PC02_SHARED,&fresh)&&pc02_close(fresh),"exact captured mode restoration retains original authority");
+ scoped_fixture_close(&s);end_case(name);
+}
+static void scoped_write_mode_case(void){
+ const char *name="scope-group-other-write-rejected";scoped_fixture s;
+ begin_case(name);expect(scoped_fixture_open(&s,name,0),"private anchor fixture");
+ unsigned modes[]={0775,0702,0777};
+ for(unsigned k=0;k<sizeof(modes)/sizeof(modes[0]);k++){
+  pc02_scope *bad=NULL;
+  expect(!chmod(s.context,(mode_t)modes[k])&&!pc02_scope_create(s.fd,&s.id,&bad)&&!bad,"trusted native ID cannot authorize group/other writable anchor");
+ }
+ expect(!chmod(s.context,0700),"restore only this test fixture");
+ scoped_fixture_close(&s);end_case(name);
+}
 static int scoped_cases_main(void){
  scoped_lifetime_case();
  scoped_identity_case();
@@ -691,6 +720,9 @@ static int scoped_cases_main(void){
  scoped_rebind_case();
  scoped_permission_case();
  scoped_pending_case();
+ scoped_readonly_mode_case(0755);
+ scoped_readonly_mode_case(0711);
+ scoped_write_mode_case();
  printf("{\"source\":\"%s\",\"cases\":%u,\"checks\":%u,\"failed\":%u,\"passed\":%s,\"native_posix\":true,\"scoped\":true,\"process_kill\":true,\"power_loss\":false,\"actual_sdk\":false,\"host_wiring\":false}\n",SOURCE_SHA,cases,checks,failures,failures?"false":"true");
  return failures?1:0;
 }

@@ -15,9 +15,7 @@
 #include <limits.h>
 #ifdef __APPLE__
 #include <TargetConditionals.h>
-#if TARGET_OS_OSX
 #include <sys/acl.h>
-#endif
 #endif
 #ifndef O_CLOEXEC
 #define O_CLOEXEC 0
@@ -43,7 +41,7 @@ typedef struct {unsigned char kind;
  pc02_identity target;
  pc02_pending_record pending;
  } state;
-struct pc02_scope {int fd;pc02_identity id;char path[PATH_CAP];};
+struct pc02_scope {int fd;pc02_identity id;mode_t mode;char path[PATH_CAP];};
 struct pc02_cap {struct pc02_cap *next;struct pc02_lease *owner;
  uint64_t generation;
  char seal[65];
@@ -56,6 +54,7 @@ struct pc02_lease {
  pc02_identity root_id,parent_id,route_id,lease_id,state_id,binding_id,authority_id,registry_id;
  char root_path[PATH_CAP],library[PATH_CAP],leaf[256],route[65],scope_path[PATH_CAP];
  pc02_identity scope_id;
+ mode_t scope_mode;
  unsigned char binding[B_BYTES],anchor[A_BYTES];
  state seen;
  pc02_controls controls;
@@ -103,7 +102,7 @@ static void id_from_stat(const struct stat *s,pc02_identity *id){id->device=(uin
  id->inode=(uint64_t)s->st_ino;
  }
 static int access_acl(int fd){
-#if defined(__APPLE__) && TARGET_OS_OSX
+#if defined(__APPLE__)
  acl_t acl=acl_get_fd_np(fd,ACL_TYPE_EXTENDED);
  if(!acl)return errno==ENOENT;
  acl_entry_t entry;int which=ACL_FIRST_ENTRY,result=0,ok=1;
@@ -221,10 +220,18 @@ static int directory_path(int fd,char path[PATH_CAP]){
  close(probe);
  return ok;
 }
-static int scope_current(int fd,const pc02_identity *expected,const char *path){
- pc02_identity actual;
+static int scope_metadata(int fd,pc02_identity *id,mode_t *mode){
+ struct stat s;
+ if(!metadata(fd,1,0,id)||fstat(fd,&s)||s.st_uid!=geteuid()||
+    (s.st_mode&07022)||(s.st_mode&0700)!=0700)return 0;
+ if(mode)*mode=s.st_mode&07777;
+ return 1;
+}
+static int scope_current(int fd,const pc02_identity *expected,mode_t mode,const char *path){
+ pc02_identity actual;mode_t observed;
  char physical[PATH_CAP];
- return metadata(fd,1,1,&actual)&&sameid(&actual,expected)&&directory_path(fd,physical)&&!strcmp(path,physical);
+ return scope_metadata(fd,&actual,&observed)&&observed==mode&&sameid(&actual,expected)&&
+ directory_path(fd,physical)&&!strcmp(path,physical);
 }
 int pc02_scope_create(int trusted,const pc02_identity *expected,pc02_scope **out){
  pc02_scope *scope=NULL;
@@ -233,12 +240,14 @@ int pc02_scope_create(int trusted,const pc02_identity *expected,pc02_scope **out
  if(out)*out=NULL;
  if(!out||!expected)return 0;
  copy=duplicate_fd(trusted);
- if(copy<0||!metadata(copy,1,1,&actual)||!sameid(&actual,expected))goto fail;
+ mode_t mode;
+ if(copy<0||!scope_metadata(copy,&actual,&mode)||!sameid(&actual,expected))goto fail;
  scope=calloc(1,sizeof(*scope));
  if(!scope)goto fail;
  scope->fd=copy;
  scope->id=actual;
- if(!directory_path(copy,scope->path)||!scope_current(copy,&scope->id,scope->path))goto fail;
+ scope->mode=mode;
+ if(!directory_path(copy,scope->path)||!scope_current(copy,&scope->id,scope->mode,scope->path))goto fail;
  *out=scope;
  return 1;
 fail:
@@ -297,10 +306,10 @@ static int pin_scope_chain(pc02_lease *h,const char *path,int final_private){
  const char *relative=scope_relative(h,path);
  char component[256],prefix[PATH_CAP];
  size_t at=0,n;
- if(!relative||!scope_current(h->scope_file,&h->scope_id,h->scope_path))return -1;
+ if(!relative||!scope_current(h->scope_file,&h->scope_id,h->scope_mode,h->scope_path))return -1;
  int current=duplicate_fd(h->scope_file);
  if(current<0)return -1;
- if(add_scope_pin(h,current,h->scope_path,1)<0)return -1;
+ if(add_scope_pin(h,current,h->scope_path,0)<0)return -1;
  strcpy(prefix,h->scope_path);
  n=strlen(prefix);
  while(relative[at]){
@@ -323,7 +332,7 @@ static int pin_scope_chain(pc02_lease *h,const char *path,int final_private){
  return current;
 }
 static int scoped_pins_current(pc02_lease *h){
- if(!scope_current(h->scope_file,&h->scope_id,h->scope_path))return 0;
+ if(!scope_current(h->scope_file,&h->scope_id,h->scope_mode,h->scope_path))return 0;
  for(unsigned k=0;
  k<h->pin_count;
  k++){
@@ -450,7 +459,7 @@ static pc02_lease *allocate(void){
  return h;
 }
 static pc02_lease *allocate_in(pc02_scope *scope){
- if(!scope||!scope_current(scope->fd,&scope->id,scope->path))return NULL;
+ if(!scope||!scope_current(scope->fd,&scope->id,scope->mode,scope->path))return NULL;
  pc02_lease *h=allocate();
  if(!h)return NULL;
  h->scope_file=duplicate_fd(scope->fd);
@@ -458,11 +467,12 @@ static pc02_lease *allocate_in(pc02_scope *scope){
  return NULL;
  }
  h->scope_id=scope->id;
+ h->scope_mode=scope->mode;
  strcpy(h->scope_path,scope->path);
  return h;
 }
 static int scope_join(pc02_scope *scope,const char *relative,char path[PATH_CAP]){
- if(!scope||!scope_current(scope->fd,&scope->id,scope->path)||!relative_valid(relative))return 0;
+ if(!scope||!scope_current(scope->fd,&scope->id,scope->mode,scope->path)||!relative_valid(relative))return 0;
  size_t a=strlen(scope->path),b=strlen(relative);
  if(a+b+2>PATH_CAP)return 0;
  memcpy(path,scope->path,a);

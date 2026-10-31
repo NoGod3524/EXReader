@@ -176,10 +176,13 @@ def persistent_evidence(files, spec, source):
     need(result["persistent_gate"] is True and result["frozen_c01_drift"] is True and
          result["publication_proof_control"] is True and result["real_owner_wiring"] is False, "gate-scope")
     need(files["gate-exit.txt"].strip() == b"0", "gate-exit")
-    log = files["gate.log"].decode()
+    log = files["gate.log"].decode().replace("\r\n","\n")
     named_cases(log,28)
     reached = re.findall(r"^OBS gate_reached=(\d+) expected=(\d+)$",log,re.M)
-    need([int(a) for a,b in reached] == [201,202,203,204] and all(a == b for a,b in reached), "gate-real-kills")
+    if [int(a) for a,b in reached] != [201,202,203,204] or not all(a == b for a,b in reached):
+        print(json.dumps(dict(diagnostic="gate-real-kills",parsed=reached,
+                              raw_observations=[line for line in log.splitlines() if line.startswith("OBS gate_")])),flush=True)
+        raise ValueError("gate-real-kills")
     # Retain and independently classify every raw gate, including planted invalid objects.
     classified = []
     for name in sorted(files):
@@ -640,6 +643,27 @@ def acquire(repo,spec,source,directory):
     need(sha(raw) == artifact["sha256"], "original-zip-sha256")
     return raw,metadata
 
+def semantic_diagnostic(files,spec,error):
+    contexts = []
+    trace = error.__traceback__
+    keys = {"folder","number","index","offset","phase","sequence","name","path","kind",
+            "prefix","count","event","repair_phase","origin_phase","origin_sequence"}
+    while trace is not None:
+        local = trace.tb_frame.f_locals
+        values = {key:value for key,value in local.items() if key in keys and
+                  (value is None or type(value) in (str,int,bool))}
+        contexts.append(dict(function=trace.tb_frame.f_code.co_name,line=trace.tb_lineno,values=values))
+        trace = trace.tb_next
+    logs = {}
+    for name,data in sorted(files.items()):
+        if "/" not in name and name.endswith(".log"):
+            lines = data.decode(errors="backslashreplace").splitlines()
+            logs[name] = dict(lines=len(lines),tail=lines[-8:])
+    return dict(diagnostic="component-semantic-failure",role=spec["role"],run=spec["run"],
+                attempt=spec["attempt"],artifact=spec["artifact"]["id"],
+                error=type(error).__name__,detail=str(error),contexts=contexts,logs=logs,
+                files=[dict(path=name,bytes=len(data)) for name,data in sorted(files.items())])
+
 def validate(files,spec,source,missing):
     role = spec["role"]
     if role.startswith("native-"):
@@ -755,7 +779,13 @@ def main():
         role = spec["role"]
         raw,metadata = acquire(repo,spec,source,output/role)
         files = zip_files(raw)
-        details = validate(files,spec,source,missing)
+        try:
+            details = validate(files,spec,source,missing)
+        except Exception as error:
+            diagnostic = semantic_diagnostic(files,spec,error)
+            (output/role/"semantic-failure.json").write_text(json.dumps(diagnostic,indent=2)+"\n")
+            print(json.dumps({key:value for key,value in diagnostic.items() if key != "files"}),flush=True)
+            raise
         packages.append(dict(role=role,run=spec["run"],attempt=spec["attempt"],job=spec["job"],
                              artifact=spec["artifact"],details=details))
         original_checks.append((output/role/"original.zip",spec["artifact"]))

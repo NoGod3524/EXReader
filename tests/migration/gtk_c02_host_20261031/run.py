@@ -50,6 +50,10 @@ r = call("create", [admission, "create", library])
 assert json.loads(r.stdout)["admitted"] is True
 assert json.loads(probe("created", library).stdout)["books"] == 0
 done("explicit-creation-and-real-gtk-shelf")
+second = out / "second.sqlite"
+call("second-create", [admission, "create", second])
+assert json.loads(probe("second-created", second).stdout)["books"] == 0
+done("existing-valid-authority-supports-another-library")
 before = snapshot(out)
 call("duplicate-create", [admission, "create", library], 2)
 assert library.stat().st_ino == before["library.sqlite"][0]
@@ -126,10 +130,20 @@ call("pending-duplicate-enroll", [admission, "enroll", library], 2)
 assert all(Path(path).read_bytes() == data for path, data in tracked.items())
 done("durable-pending-blocks-actual-host-before-any-catalog-write", descriptor=descriptor)
 authority = Path(pwd.getpwuid(os.geteuid()).pw_dir).resolve() / ".exreader-c02-admission"
+objects = []
+for path in [authority, *sorted(authority.rglob("*"))]:
+    native = path.stat()
+    objects.append(dict(path=path.relative_to(authority).as_posix(), device=native.st_dev,
+        inode=native.st_ino, mode=native.st_mode, links=native.st_nlink,
+        bytes=native.st_size, sha256=hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None))
+(out / "authority-native-identities.json").write_text(json.dumps(dict(
+    root=str(authority), objects=objects, library=dict(path=str(library),
+    device=library.stat().st_dev, inode=library.stat().st_ino,
+    bytes=library.stat().st_size, sha256=hashlib.sha256(library.read_bytes()).hexdigest())), indent=2) + "\n")
 shutil.copytree(authority, out / "retained-authority")
-assert len(rows) == 12
+assert len(rows) == 13
 save()
 report = json.loads((out / "report.json").read_text())
 report.update(passed=True, complete=True)
 (out / "report.json").write_text(json.dumps(report, indent=2) + "\n")
-print("C02-ACTUAL-GTK cases=12 failed=0")
+print("C02-ACTUAL-GTK cases=13 failed=0")
