@@ -164,3 +164,6 @@ The singleTask MainActivity must first launch after instrumentation installs Act
 - Graph producer上传清单只取state/result（Android report）/requests/cert.pem/program.bin与明确证据；不得整目录带入profile、private或key.pem。原ZIP认证发现这些本包私有路径会拒绝，不下载用户凭据。
 
 Producer contract explicitly marks current jobs `fresh_profile=true`: original GET is required for those non-seed jobs only, not a universal requirement for a future approved cached-profile return. Current drivers still create fresh profiles. No CI was run.
+
+### Producer build recipe preparation (not executed)
+`run.py build-{windows,gtk,android,macos,iphonesimulator}` first requires this package's exact admission, then invokes byte-locked 94fb SDK3.42 build recipes. Historical unrelated branch guards are not substituted for current admission; build assertions are unchanged. Android compiles the new instrumentation using the original named relay Gradle recipe, exact SDK3.42 selection, and verifies the app APK did not change during instrumentation build. Apple SDK steps explicitly do not claim to have built the UI executable. Workflow remains disabled; dependency setup, same-run routing, retained proof authentication and actual execution remain incomplete.
