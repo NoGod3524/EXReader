@@ -45,29 +45,35 @@ final class F08LaunchUITests: XCTestCase {
               let data = (0..<count).map({ parts[$0]! }).joined().data(using: .utf8) else { return nil }
         return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
     }
-    private func ready() -> [String: Any] {
+    private func ready(requireExtendedTask: Bool) -> [String: Any] {
         let end = Date().addingTimeInterval(30)
+        var previous = "", stableAt = Date()
         while Date() < end {
             if let value = shelf(), value["query"] as? String == "", value["loading"] as? Bool == false,
                value["restoring_layout"] as? Bool == false, value["generation"] as? Int == value["applied_generation"] as? Int,
-               value["f08_launch_task_status"] as? String == "finished",
+               (!requireExtendedTask || value["f08_launch_task_status"] as? String == "finished"),
                let visible = value["visible_keys"] as? [String], !visible.isEmpty,
                !(value["top_key"] as? String ?? "").isEmpty {
                 let field = app.descendants(matching: .any).matching(identifier: "library.search").firstMatch
-                if field.exists && field.isEnabled && field.isHittable { return value }
+                let signature = "\(value["generation"] as? Int ?? -1)|\(value["top_key"] as? String ?? "")|" + visible.joined(separator: "|")
+                if signature != previous { previous = signature; stableAt = Date() }
+                if field.exists && field.isEnabled && field.isHittable && (requireExtendedTask || Date().timeIntervalSince(stableAt) >= 0.35) { return value }
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.05))
         }
-        XCTFail("Native shelf launch task did not finish: \(String(describing: shelf()))")
+        XCTFail("Native shelf launch task did not finish: \(String(describing: shelf())) tree=\(app.debugDescription)")
         return [:]
     }
-    private func launchMetric(responsive: Bool) {
+    private func launchMetric(responsive: Bool, extendedTask: Bool = true) {
+        if !extendedTask {
+            app.launchArguments = ["-EXRShelfSeed", "-EXRFreshState", "1", "-EXRF08PhaseOnly"]
+        }
         let options = XCTMeasureOptions(); options.iterationCount = 5; options.invocationOptions = [.manuallyStop]
         measure(metrics: [XCTApplicationLaunchMetric(waitUntilResponsive: responsive), XCTClockMetric()], options: options) {
             app.launch()
-            let value = ready()
+            let value = ready(requireExtendedTask: extendedTask)
             stopMeasuring()
-            samples.append(["native_wait_until_responsive": responsive, "shelf": value,
+            samples.append(["native_wait_until_responsive": responsive, "native_extended_task_enabled": extendedTask, "shelf": value,
                 "scope": "fresh process and fresh copy of the frozen 2202-original library; XCTest clock includes launch/quiescence/AX polling"])
             let screen = XCTAttachment(screenshot: app.screenshot()); screen.name = "f08-launch-ready"; screen.lifetime = .keepAlways; add(screen)
             app.terminate()
@@ -76,6 +82,7 @@ final class F08LaunchUITests: XCTestCase {
     }
     func test09NativeExtendedLaunchThroughShelfReady() { launchMetric(responsive: false) }
     func test10NativeResponsiveLaunchAndShelfUpperBound() { launchMetric(responsive: true) }
+    func test13NativeResponsiveLaunchWithoutExtendedTaskControl() { launchMetric(responsive: true, extendedTask: false) }
 }
 
 final class F08ReaderUITests: XCTestCase {
@@ -137,7 +144,14 @@ final class F08ReaderUITests: XCTestCase {
     }
     private func nativeMetrics() -> [XCTMetric] {
         var metrics: [XCTMetric] = [XCTClockMetric(), XCTMemoryMetric(application: app)]
+#if compiler(>=6.2)
         if #available(macOS 26, iOS 26, *) { metrics.append(XCTHitchMetric(application: app)) }
+#endif
+        let details: [String: Any] = ["runtime": ProcessInfo.processInfo.operatingSystemVersionString,
+            "configured_native_metric_types": metrics.map { String(describing: type(of: $0)) }]
+        let data = try! JSONSerialization.data(withJSONObject: details, options: [.sortedKeys])
+        let attachment = XCTAttachment(string: String(decoding: data, as: UTF8.self))
+        attachment.name = "f08-native-metric-configuration"; attachment.lifetime = .keepAlways; add(attachment)
         return metrics
     }
     private func locate(_ query: String) {
