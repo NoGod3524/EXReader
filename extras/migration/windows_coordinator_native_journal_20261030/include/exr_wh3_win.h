@@ -77,4 +77,33 @@ int wh3wg_close(wh3wg_gate *);
 int wh3wg_reconcile(wh3wg_gate *,wh3w_store *,const wh3_tip *,
  int (*prove)(void *,const wh3_tip *),void *context,wh3wg_grant *);
 
+/* Windows application registry adapter. Ordinary open reads the current-user
+   protected registry and never enrolls. Enrollment is an explicit operation on
+   an existing target and three empty native files, with independent clean-state
+   proof while exclusively held. Registry aliases, permissive ACLs and
+   noncanonical bindings refuse. Each record binds the actual target FileID.
+   The trust boundary is the current user and SYSTEM; hostile same-user code
+   with registry write rights is not isolated by this application protocol. */
+typedef struct wh3wr_registration wh3wr_registration;
+int wh3wr_enroll(const wchar_t *library,const wchar_t *root,
+ int (*prove_initial)(void *,const wchar_t *),void *context);
+int wh3wr_open(const wchar_t *library,unsigned mode,const wh3w_controls *,
+ wh3wr_registration **);
+int wh3wr_check(wh3wr_registration *);
+int wh3wr_journal(wh3wr_registration *,const wh_binding *,const wh_gates *,
+ const wh3w_controls *,wh3w_store **);
+int wh3wr_begin(wh3wr_registration *,const wh_binding *,const wh_gates *,
+ const wh3_tip *,void **capability);
+int wh3wr_resume(wh3wr_registration *,const wh_binding *,const wh_gates *,
+ wh3w_store *,const wh3_tip *,void **capability);
+/* Drops only the owner's target pin, after durable PENDING. Parent namespace,
+   gate and registry remain held. Reacquire the actual published target before
+   committing a new trusted binding. Readers cannot invoke this transition. */
+int wh3wr_prepare_publish(wh3wr_registration *);
+int wh3wr_finish(wh3wr_registration *,wh3w_store *,const wh3_tip *,
+ int (*prove)(void *,const wh3_tip *),void *context);
+/* Refuses while a journal retains the gate. Caller closes all SDK borrowers
+   before releasing a shared registration. Pending never becomes clean here. */
+int wh3wr_close(wh3wr_registration *);
+
 #endif

@@ -29,6 +29,8 @@
 #include <wchar.h>
 #ifdef EXR_READER_PRODUCT_CATALOG
 #include "catalog_sdk.h"
+#include <exr_wh3_win.h>
+static wh3wr_registration *reader_admission;
 #endif
 #ifdef EXR_READER_WINDOWS_TXT_RECOVERY
 #include <original_import.h>
@@ -6315,6 +6317,12 @@ static void host_cleanup(void) {
 #endif
   if (g.library) exr_library_close(g.library);
   g.library = NULL;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  /* Worker, source, publication, pager, search, navigation and export owners
+     above have completed native teardown before shared custody is released. */
+  if(!wh3wr_close(reader_admission)) ExitProcess(1);
+  reader_admission=NULL;
+#endif
   exr_font_free(g.font);
   g.font = NULL;
   if (g.drive_log) fclose(g.drive_log);
@@ -6431,11 +6439,25 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     }
   }
 #endif
+#ifdef EXR_READER_PRODUCT_CATALOG
+  if(!wh3wr_open(g.library_path,WH3WG_SHARED,NULL,&reader_admission)) {
+    const wchar_t *message=L"书库尚未完成迁移登记，或迁移状态尚未确认。请先完成登记或恢复，再打开书库。";
+    fprintf(stderr,"[EXReader C02 admission] refused before SDK open\n");
+    if(!script[0]) MessageBoxW(NULL,message,L"EXReader",MB_OK|MB_ICONERROR);
+    set_status(message);host_cleanup();LocalFree(argv);return 2;
+  }
+#endif
   {
     exr_error error = {0};
     char *path = host_utf8(library_override[0] ? library_override : g.library_path);
     exr_status status = path ? exr_library_open(path, &g.library, &error) : EXR_MEMORY;
     free(path);
+#ifdef EXR_READER_PRODUCT_CATALOG
+    if(status==EXR_OK&&!wh3wr_check(reader_admission)) {
+      fprintf(stderr,"[EXReader C02 admission] identity changed during SDK open\n");
+      host_cleanup();LocalFree(argv);return 2;
+    }
+#endif
     if (status != EXR_OK) {
       wchar_t message[512];
       describe_error(message, 512, L"无法打开书架数据库", status, &error);

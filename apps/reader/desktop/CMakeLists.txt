@@ -99,7 +99,21 @@ set(READER_SEARCH_PREFIX "" CACHE PATH "Installed optional in-book search packag
 set(READER_PREFERENCES_PREFIX "" CACHE PATH "Installed optional reader preferences package")
 set(READER_ACCOUNT_PREFIX "" CACHE PATH "Installed optional session, credentials and sideload modules")
 if(WIN32)
+  set(READER_C02_PREFIX "" CACHE PATH "Installed C02 native admission and journal provider")
+  if(NOT IS_ABSOLUTE "${READER_C02_PREFIX}")
+    message(FATAL_ERROR "Windows product requires the installed C02 admission prefix")
+  endif()
+  add_library(reader_c02 INTERFACE)
+  target_include_directories(reader_c02 INTERFACE
+    "${READER_C02_PREFIX}/include/exreader-coordinator-native"
+    "${READER_C02_PREFIX}/include/exreader-coordinator-cas"
+    "${READER_C02_PREFIX}/include/exreader-migration-coordinator-hardening")
+  target_link_libraries(reader_c02 INTERFACE
+    "${READER_C02_PREFIX}/lib/exreader-coordinator-native.lib"
+    "${READER_C02_PREFIX}/lib/exreader-coordinator-cas.lib"
+    "${READER_C02_PREFIX}/lib/exreader-migration-coordinator-hardening.lib" advapi32)
   add_executable(EXReaderProduct WIN32 ../../../examples/reader.c)
+  target_link_libraries(EXReaderProduct PRIVATE reader_c02)
   target_compile_definitions(EXReaderProduct PRIVATE EXR_READER_PRODUCT_CATALOG=1
     "EXR_READER_WINDOWS_PRODUCT_HEADER=\"${CMAKE_CURRENT_SOURCE_DIR}/windows_catalog.inc\"")
   target_link_libraries(EXReaderProduct PRIVATE reader_catalog_sdk EXReader::exr_core
@@ -120,7 +134,7 @@ if(WIN32)
       EXR_HOST_WORKER_REVIEW=1 EXR_HOST_SHELF_REVIEW=1
       "EXR_READER_WINDOWS_PRODUCT_HEADER=\"${CMAKE_CURRENT_SOURCE_DIR}/windows_catalog.inc\""
       "EXR_HOST_WORKER_REVIEW_HEADER=\"${CMAKE_CURRENT_SOURCE_DIR}/../../../tests/windows_host/worker_review/hooks.h\"")
-    target_link_libraries(EXReaderShelfReview PRIVATE reader_catalog_sdk EXReader::exr_core comdlg32 gdi32 shell32 user32)
+    target_link_libraries(EXReaderShelfReview PRIVATE reader_catalog_sdk EXReader::exr_core comdlg32 gdi32 shell32 user32 reader_c02)
     if(READER_METADATA_PREFIX)
       target_compile_definitions(EXReaderShelfReview PRIVATE EXR_READER_DESKTOP_METADATA=1)
       target_link_libraries(EXReaderShelfReview PRIVATE EXReaderDesktopMetadata::reader_desktop_metadata)
