@@ -500,9 +500,11 @@ def provider_sources(files,spec,source):
         need(name not in definitions, "provider-duplicate-definition")
         definitions[name]=value
     digest=sha(material)
-    need(definitions["WH3_BUILD_SOURCE"]==source and definitions["WH3_BUILD_RUN"]==str(spec["run"]) and
-         definitions["WH3_BUILD_ATTEMPT"]==str(spec["attempt"]) and definitions["WH3_PROVIDER_SHA"]==digest,
-         "provider-configured-build-binding")
+    expected_build = dict(WH3_BUILD_SOURCE=source,WH3_BUILD_RUN=str(spec["run"]),
+                          WH3_BUILD_ATTEMPT=str(spec["attempt"]),WH3_PROVIDER_SHA=digest)
+    for key,value in expected_build.items():
+        need(definitions.get(key)==value,
+             "provider-configured-build-binding:"+key+":actual="+str(definitions.get(key))+":expected="+value)
     return digest,endings
 
 
