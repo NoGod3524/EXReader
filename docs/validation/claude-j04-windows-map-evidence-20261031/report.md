@@ -1,6 +1,6 @@
 # J04 Windows MAP evidence parser — result: old parser misread (derived); package's own machine verdict is wrong
 
-C09 stays sealed (its three runs, report and failure are untouched). This is a separate package: **one** Actions run, 41155430302 attempt 1 (commit 9c… on `codex/claude-j04-windows-map-evidence-20261031`), evidence artifact 13025037310 (sha256:57671b0a...59204). No rerun is permitted by the budget.
+C09 stays sealed (its three runs, report and failure are untouched). This is a separate package: **one** Actions run, 41155430302 attempt 1 (commit b07b3528 on `codex/claude-j04-windows-map-evidence-20261031`), evidence artifact 13025037310 (sha256:57671b0a...59204). No rerun is permitted by the budget.
 
 ## Identity (verified in the run)
 C09 run 41091277686/1, source 82c4a08c51ba2bfa67cb8899bb9e26609dc47eaf, Windows artifact 12993253798 (`c09-windows-41091277686-1`, 8956408 bytes, sha256 b4cb3734...1fe76) → entry `windows-sdk342/host/windows-host.map`, 6514500 bytes, sha256 9132c51ca3a9cd31b298505b35da67452d378c83543b9aa7bb5674287cdbe7ad, utf-8, 53496 lines, MSVC `Publics by Value` header at line 69.
