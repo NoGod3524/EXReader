@@ -617,12 +617,12 @@ static int rcheckpoint_read(HKEY key,unsigned char bytes[RCKBYTES]) {
  if(memcmp(bytes+RCKNEW,zero,RBYTES)&&!rrecord_valid(bytes+RCKNEW))return 0;
  memcpy(path,bytes+RCKPATH,sizeof(path));
  if(!wmemchr(path,0,MAX_PATH))return 0;
- {wchar_t original[MAX_PATH],*slash;size_t parent,k,n=wcslen(path);
+ {wchar_t original[MAX_PATH],*slash;size_t parent,k,path_length=wcslen(path);
   memcpy(original,bytes+8+768,sizeof(original));if(!wmemchr(original,0,MAX_PATH))return 0;
   slash=wcsrchr(original,L'\\');if(!slash)return 0;parent=(size_t)(slash-original)+1;
-  if(n!=parent+36||wmemcmp(path,original,parent)||wmemcmp(path+parent,L"wh3-",4))return 0;
-  for(k=parent+4;k<n;k++)if(!((path[k]>=L'0'&&path[k]<=L'9')||(path[k]>=L'a'&&path[k]<=L'f')))return 0;
-  for(k=n+1;k<MAX_PATH;k++)if(path[k])return 0;
+  if(path_length!=parent+36||wmemcmp(path,original,parent)||wmemcmp(path+parent,L"wh3-",4))return 0;
+  for(k=parent+4;k<path_length;k++)if(!((path[k]>=L'0'&&path[k]<=L'9')||(path[k]>=L'a'&&path[k]<=L'f')))return 0;
+  for(k=path_length+1;k<MAX_PATH;k++)if(path[k])return 0;
  }
  if(memcmp(bytes+RCKNEW,zero,RBYTES)&&
     (memcmp(bytes+RCKPATH,bytes+RCKNEW+768,2*MAX_PATH)||
