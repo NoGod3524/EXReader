@@ -1,13 +1,13 @@
 {
-  "base": "cfdaf6a4531548be63b4dd0c2bccd6b050a93124",
+  "base": "ea74ceccb867c2567fdf7824bb1c11839651e796",
   "owned": [
-    "tests/reader_f08_causal_frame_20261031/CMakeLists.txt",
-    "tests/reader_f08_causal_frame_20261031/probe.c",
-    "tests/reader_f08_causal_frame_20261031/driver.py",
-    "tests/reader_f08_causal_frame_20261031/verify.py",
-    "tests/reader_f08_causal_frame_20261031/source_lock.json",
     ".github/workflows/dot-f08-causal-frame-20261031.yml",
-    "docs/reader-total-progress/DOT_F08_CAUSAL_FRAME_20261031.md"
+    "tests/reader_f08_causal_frame_20261031/CMakeLists.txt",
+    "tests/reader_f08_causal_frame_20261031/draw_control.c",
+    "tests/reader_f08_causal_frame_20261031/driver.py",
+    "tests/reader_f08_causal_frame_20261031/probe.c",
+    "tests/reader_f08_causal_frame_20261031/source_lock.json",
+    "tests/reader_f08_causal_frame_20261031/verify.py"
   ],
   "frozen": {
     "src": "01dbab7c7c28aff175b5a953fea307e21d84eee2",

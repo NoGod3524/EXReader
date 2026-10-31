@@ -13,6 +13,16 @@ def wait(watch,predicate,since=0,timeout=180):
     index,event=watch.wait(predicate,timeout,since)
     if index is None:raise SampleError(str(event))
     return event
+STATE_KEYS=("sequence","painted_generation","book","page","font","busy","saving",
+            "reader_visible","shelf_top_id","shelf_loading","shelf_restoring")
+def action_complete(state,action):
+    h=state["host"];field=action["field"];shelf=field=="shelf_top_id"
+    required=(field,"book","sequence","busy","saving","shelf_loading")
+    required+=("shelf_restoring",) if shelf else ("painted_generation","reader_visible")
+    if not all(type(h.get(k)) is int and h[k]>=0 for k in required):return False
+    effect=h[field]!=action["before"] if shelf else h[field]==action["expected"]
+    ready=not h["shelf_restoring"] if shelf else h["reader_visible"]==1 and h["painted_generation"]>action["previous_generation"]
+    return effect and ready and h["book"]==action["book"] and h["sequence"]>action["previous_sequence"] and settled(state) and not h["shelf_loading"]
 def main():
     if os.environ.get("GITHUB_ACTIONS")!="true":raise RuntimeError("Actions only")
     OUT.mkdir(parents=True,exist_ok=False)
@@ -100,15 +110,18 @@ def main():
                         subprocess.run(["xdotool","click","4" if slot==1 else "5"],check=True,timeout=30)
                     else:host.press(key)
                     action["inject_end"]=now()
+                    action["wait_start"]=now();action["evaluations"]=[]
                     def changed(s):
-                        h=s["host"]
-                        effect=h.get(field)!=old if kind=="shelf" else h.get(field)==expected
-                        painted=True if kind=="shelf" else h.get("painted_generation",0)>action["previous_generation"]
-                        return effect and painted and h.get("book")==action["book"] and settled(s) and not h.get("shelf_loading") and not h.get("shelf_restoring")
-                    effect=wait(watch,changed,since)
+                        passed=action_complete(s,action)
+                        if len(action["evaluations"])>=65536:raise SampleError("predicate evidence capacity")
+                        action["evaluations"].append(dict(at=now(),passed=passed,
+                            host={k:s["host"].get(k) for k in STATE_KEYS}))
+                        return passed
+                    try:effect=wait(watch,changed,since)
+                    finally:action["wait_end"]=now()
                     action.update(effect_at=int(effect["at"]*1000000),done=now(),
                         observed={k:effect["state"]["host"].get(k) for k in
-                                  ("sequence","painted_generation","book","page","font","shelf_top_id")})
+                                  STATE_KEYS})
                     quiet()
                 row["passed"]=True
             except Exception as exc:
@@ -118,6 +131,8 @@ def main():
                 except Exception as exc:
                     row["exit"]=None;row["close_error"]=type(exc).__name__;host.kill()
                 host.close_log();watch.close()
+                row["watcher_events"]=[dict(at=int(e["at"]*1000000),
+                    host={k:e["state"]["host"].get(k) for k in STATE_KEYS}) for e in watch.events]
                 row["observation_failure"]=watch.failure
                 row["passed"]=row["passed"] and row["exit"]==0 and not watch.failure
                 row["host_sha256_after"]=digest(binary)
