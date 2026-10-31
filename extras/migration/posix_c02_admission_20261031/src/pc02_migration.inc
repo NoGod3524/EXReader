@@ -369,6 +369,17 @@ int pc02_floor_advance(pc02_lease *h,pc02_cap *cap,const pc02_floor *expected,
  *out=check;
  return 1;
 }
+int pc02_floor_confirm(pc02_lease *h,pc02_cap *cap,const pc02_floor *expected){
+ pc02_floor actual,after;
+ if(!expected||!live_cap(h,cap)||h->borrows||
+    !pc02_floor_read(h,&h->seen.pending,&actual)||!pm_floor_same(expected,&actual))return 0;
+ if(!pm_head_catchup(h,cap,(unsigned)actual.count)||
+    !pc02_floor_read(h,&h->seen.pending,&after)||!pm_floor_same(expected,&after)||!live_cap(h,cap)){
+  h->poisoned=1;
+  return 0;
+ }
+ return 1;
+}
 static int pm_member_names(pc02_lease *h,const pc02_member *m){
  char mirror[320];
  if(!m||!memchr(m->target,0,sizeof(m->target))||!memchr(m->stage,0,sizeof(m->stage))||

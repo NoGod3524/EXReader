@@ -110,6 +110,9 @@ typedef struct {
  uint64_t count;char manifest[65],last_line_sha256[65],chain_sha256[65];
 } pc02_floor;
 int pc02_floor_read(pc02_lease *,const pc02_pending_record *,pc02_floor *);
+/* Explicit fresh-owner confirmation of this exact full floor. It catches up
+   an interrupted independent head, adds no floor/count, never adopts newer. */
+int pc02_floor_confirm(pc02_lease *,pc02_cap *,const pc02_floor *exact);
 int pc02_floor_advance(pc02_lease *,pc02_cap *,const pc02_floor *exact,
  const char line_sha256[65],pc02_floor *);
 typedef struct {

@@ -40,6 +40,8 @@ Reads enumerate actual final floor names, reject holes/noncanonical names, check
 
 The actual journal ACK must be completely and durably published before advancing FLOOR. FLOOR is durable before head append. A successful advance requires head pwrite/fsync/independent readback and a fresh full floor/head scan. Native controls1401/1402/1403 cover metadata write/publish/durable and1501/1502 cover head write/durable.
 
+pc02_floor_confirm requires a live fresh capability and exact full-floor CAS. It only completes the independently registered head through that exact floor count; it creates no floor, never upgrades expected state, and cannot discard a complete record. The seventeenth native API case actually kills a fresh process at the first FLOOR's1402 publication: recovery observes complete floor1 and the same464-byte head, refuses old count0, then confirms that exact floor and independently observes the same head nativeID grow to736 bytes.
+
 ## Native members and lifetime
 
 The only targets are the registered library basename and its .legacy-map.json mirror. Stage and retained names are distinct canonical sibling basenames. The exact native states are original+stage/no-retained, retained+stage/no-target, or retained+published/no-stage. An originally absent mirror never gains a retained original. Unknown objects, identities or errors refuse.
@@ -48,6 +50,6 @@ Publication requires live cap, prepare_publish, zero borrows, independent actual
 
 pc02_abandon only invalidates the exact current in-memory cap when borrows=0 and poisons the lease. No disk bytes change; close can then release handles. Original close with an active cap still refuses.
 
-The original28 admission and10 scope cases remain. The additional16 native API cases exercise actual metadata/head/floor bytes and IDs, contradictory records, last-floor rollback, exact publication, and real process kills at1301/1302. They are component tests: actual_sdk=false and host_wiring=false. They preserve every raw source/failure object via the original Actions inventory.
+The original28 admission and10 scope cases remain. The additional17 native API cases exercise actual metadata/head/floor bytes and IDs, contradictory records, last-floor rollback, exact publication, and real process kills at1301/1302. They are component tests: actual_sdk=false and host_wiring=false. They preserve every raw source/failure object via the original Actions inventory.
 
 Required next qualification: actual synchronous SDK owner and canonical per-line journal; explicit archived/protected repair for partial B/C/head tails. Ordinary open still refuses those tails. No power-loss claim is made.

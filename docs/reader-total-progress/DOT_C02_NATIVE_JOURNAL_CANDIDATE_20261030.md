@@ -372,3 +372,57 @@ artifact 13032097070, 21422 bytes, SHA256
 be81c4a1c504e37a3fac55c5642436e97a781b498a40b8f0c2506c318b6760ef.
 The corrected audit, packaged GTK enrollment tool and standalone-reader runtime
 checks are new candidates pending Actions. Full C02 remains open.
+
+## Original ZIP semantic audit and platform integration (2026-10-31 06:26 UTC)
+
+Audit source 422b40c238ac595272c706fd48e38ccf5564e475, run
+[41175856635/A1](https://github.com/NoGod3524/EXReader/actions/runs/41175856635)
+passed independent decoding of all four original faae6187 producer ZIPs,
+including the 83 actual migration scenarios, native original 46/301, gate
+28/309, registry 50/530, scanner 29/91794/6603 and unchanged legacy cases.
+All nine resealed/repacked semantic negative controls were rejected.
+Audit artifact 13032652174: 1733685 bytes, API SHA256
+c9e8e30d6e3dc036a9130802005d15c733dff505c8a77344be5e044857406e99.
+The audit explicitly reports full_c02_complete=false and missing platform
+host roles. This is a completed Windows component audit, not final C02.
+
+Retained audit failures: 41174018878 (CRLF gate observation parsing),
+41174560431 and 41175352126 (CMake in-memory LF provider fingerprint versus
+Windows text serialization), and 41175466342 (the exact pre-admission
+abandonment record intentionally has no source/provider fields). Each fix
+preserves original ZIP/API binding, complete native counts and invalid-case
+classification. The early-abandonment exception is restricted to successful
+recover at phase900 and independently checked empty journal/initial gate.
+Source b396d639f audit run41176352115 also passed the same fixed experiment.
+
+GTK source8c00e9b3 run41174560448 passed13 actual runtime cases and packaged
+explicit enrollment create/check. It adds a second library under the same
+valid authority. The preceding539ae run41174018899 failed packaged creation
+because the helper tried to recreate an existing root; ordinary opens still
+never create or enroll authority. New captures retain original native IDs,
+UID/mode/link/size/SHA and bytes at clean/borrowed/released/pending stages.
+
+POSIX source b396d639ff56016e1b7f806cce64385890486936,
+run41176352105/A1 passed on both Ubuntu and macOS: original28/207,
+OS-scope10/81 and new metadata/member/floor16/119, all zero failures.
+Ubuntu artifact13033122111:267925 bytes, SHA256
+a94661a7d57f14d351adcf3a71adfa04b6a9739a2ca9081c231bb171be9b97fc.
+macOS artifact13032752777:268526 bytes, SHA256
+a22b85587a70f84957873f62d5f7a4bce3e1bfcd0b2c597e02d901a0069f7768.
+First run41175856697 retained Ubuntu GCC misleading-indentation errors;
+macOS passed. The repair only separates statements and keeps Werror.
+These are native components with actual_sdk=false and host_wiring=false.
+
+Windows full Wave3 bring-up retained run41174560399 (noncanonical Windows
+hash-prefix spelling) and41175352156 (feature-created Wave3 target missing
+reader_c02 linkage). b396d639f links the installed native provider to that
+actual target after the unchanged feature include. Its runtime is pending.
+Android actual app-UID and Apple macOS/simulator admission first candidates
+are committed, but their runtime scenarios have not yet been qualified.
+The Android first failure exposed an unbounded no-device logcat collection;
+its evidence step is being bounded so failure artifacts can upload.
+
+Still required: actual synchronous POSIX SDK migration, archived explicit
+repair of partial state/head tails, actual Android/macOS/iOS and full Windows
+runtime results, independent POSIX/host byte audit, and one-source complete
+qualification. Frozen SDK/C01 and formal acceptance95/108 remain unchanged.

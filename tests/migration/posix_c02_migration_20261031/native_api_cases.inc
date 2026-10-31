@@ -295,11 +295,64 @@ static void native_head_negative(unsigned kind){
  nt_abandon(&t);
  end_case(name);
 }
+typedef struct {barrier wait;unsigned published;} native_floor_barrier;
+static void native_floor_pause(void *context,unsigned phase){
+ native_floor_barrier *b=context;
+ if(phase==1402&&++b->published==3)at_phase(&b->wait,phase);
+}
+static int native_floor_child(int argc,char **argv){
+ if(argc!=8)return 66;
+ fixture f={0};
+ native_tx t;
+ pc02_floor floor;
+ strcpy(f.authority,argv[2]);
+ strcpy(f.library,argv[3]);
+ strcpy(f.directory,argv[3]);
+ char *slash=strrchr(f.directory,'/');
+ if(!slash)return 67;
+ *slash=0;
+ native_floor_barrier b={{atoi(argv[6]),atoi(argv[7]),1402},0};
+ pc02_controls controls={&b,native_floor_pause,0,0};
+ if(!nt_start(&t,&f,&controls,0)||!nt_floor(&t,1,&floor))return 68;
+ return pc02_abandon(t.h,t.cap)&&pc02_close(t.h)?0:69;
+}
+static void native_floor_confirm_case(void){
+ const char *name="native-floor-confirm-process-kill";
+ fixture f={0};
+ child c={0};
+ native_tx t;
+ pc02_floor floor,wrong,after;
+ char leaf[128],path[PATH_BYTES];
+ struct stat before,confirmed;
+ int clean=0;
+ begin_case(name);
+ expect(fresh(&f,name,1)&&spawn_command("--floor-child",&f,PC02_OWNER,1402,&c),"fresh floor publisher process");
+ int at=reached(&c);
+ expect(at,"complete immutable floor published before any head record");
+ if(!at){finish_child(&c,1);end_case(name);return;}
+ expect(finish_child(&c,1),"real kill preserves complete floor and shorter valid head");
+ memset(&t,0,sizeof(t));
+ t.f=f;
+ expect(opened(&f,PC02_RECOVER,&t.h)&&pc02_descriptor(t.h,&t.pending,&clean)&&!clean&&
+  pc02_floor_read(t.h,&t.pending,&floor)&&floor.count==1,"fresh owner includes complete floor without downgrading its tip");
+ snprintf(leaf,sizeof(leaf),"commit-head-%016llx-%s",(unsigned long long)t.pending.generation,t.pending.input);
+ expect(route_path(&f,leaf,path)&&!stat(path,&before)&&before.st_size==464,"original registered head has exactly its durable initial header");
+ expect(pc02_resume(t.h,&t.pending,&t.cap),"only exact fresh pending capability can confirm");
+ wrong=floor;
+ wrong.count=0;
+ expect(!pc02_floor_confirm(t.h,t.cap,&wrong),"old expected count never auto-upgrades or appends");
+ expect(pc02_floor_confirm(t.h,t.cap,&floor)&&pc02_floor_read(t.h,&t.pending,&after)&&
+  after.count==floor.count&&!strcmp(after.chain_sha256,floor.chain_sha256),"exact confirmation fills head without adding or replacing any floor");
+ expect(!stat(path,&confirmed)&&confirmed.st_size==736&&confirmed.st_dev==before.st_dev&&confirmed.st_ino==before.st_ino,"same registered head now includes exactly one canonical actual record");
+ nt_abandon(&t);
+ end_case(name);
+}
 static int native_migration_cases_main(void){
  native_metadata_case();
  for(unsigned k=0;k<3;k++)native_metadata_negative(k);
  native_floor_case();
  for(unsigned k=0;k<5;k++)native_floor_negative(k);
+ native_floor_confirm_case();
  native_head_negative(0);
  native_head_negative(1);
  native_members_case(0);

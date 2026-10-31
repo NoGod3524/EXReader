@@ -737,6 +737,7 @@ int main(int argc,char **argv){
  if(argc==8&&!strcmp(argv[1],"--child"))return child_main(argc,argv);
  if(argc==8&&!strcmp(argv[1],"--scope-child"))return scoped_child_main(argc,argv);
  if(argc==8&&!strcmp(argv[1],"--migration-child"))return native_publish_child(argc,argv);
+ if(argc==8&&!strcmp(argv[1],"--floor-child"))return native_floor_child(argc,argv);
  if(argc==3&&!strcmp(argv[1],"--migration-cases")){
   if(!realpath(argv[0],self)||!realpath(argv[2],work))return 64;
   return native_migration_cases_main();
