@@ -49,5 +49,28 @@ SIGKILL proves process-death recovery, not power-loss durability. The authorizat
 user approval recorded in the sealed document; the overall acceptance owner should confirm it when consuming this.
 
 ## Status
-Pending the first run on this branch; results, artifact IDs and digests are appended below as three separate
-conclusions: original test result, evidence completeness, independent audit status. None of them is "product F10 done".
+Initial run 41173668011 / attempt 1 on tests b821ea48bea88d54fddd69ff1c58ad3effc10d19 (core dba079b5): success on
+the first attempt; the targeted-correction allowance was not used. File-set, archive-export/hook-absence, header
+identity and link-line audits passed on both platforms.
+
+| Job | ID | Result | Artifact ID | Name | Bytes | Digest |
+|---|---|---|---|---|---|---|
+| Linux x86_64 (ubuntu-22.04), euid 1001 | 124456677607 | success | 13032546141 | k01-webdav-evidence-Linux-41173668011-1 | 121881 | sha256:57ee5985f9cecb5517f15c4b7a0223ad68062a1fb7859ea19ca3ae8dd1c28ac3 |
+| macOS arm64 (macos-15), euid 501 | 124456677730 | success | 13032062590 | k01-webdav-evidence-macOS-41173668011-1 | 110595 | sha256:e63e37366b7fcf0d69c0527861331f5bc57a56fa889b0889b8421d285da1ac68 |
+| Offline verifier + negatives | 124456783132 | success | 13032067656 | k01-webdav-evidence-verifier-41173668011-1 | 7841 | sha256:54dc4395693afa23c502c46ee08f513fef0c4780cdff62882408167a7679769c |
+
+Three separate conclusions:
+1. Original test result: passed — 30/30 on Linux and macOS with the fixed name set (producer summary).
+2. Evidence completeness: passed — the offline verifier, reading only raw evidence, accepted both platforms
+   (30/30 cases verified, 0 errors); the unmodified control was accepted and all 12 negative mutations were rejected
+   for their named reason on both platforms.
+3. Independent audit status: not done. This is the producer owner's verifier; acceptance by the overall acceptance
+   owner's independent audit is still required before K02 may start.
+
+Not claimed: product F10 cleanup, product wiring (K02), power-loss durability, root rotation. Formal 95/108 unchanged.
+
+## For the next owner
+Fixed inputs: tests b821ea48bea88d54fddd69ff1c58ad3effc10d19, core dba079b550f9ec83054e6b7b0b7475f43bc1739f, the three
+artifacts above. Re-verify offline from a downloaded artifact (inside Actions or any isolated runner):
+`python -I tests/webdav_managed_cleanup_evidence_20261031/verify.py <artifact>/wc-evidence/evidence --report v.json`
+and `python -I tests/webdav_managed_cleanup_evidence_20261031/negatives.py <same dir> --report n.json`.
