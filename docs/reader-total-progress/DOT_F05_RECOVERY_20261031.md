@@ -1,3 +1,59 @@
+# UI owner handoff: distinguish deletion conflicts — 2026-10-31 23:57 UTC
+
+**For the existing F09/UI owner; no production files reassigned to F05.**
+Preparation base: `94fb236a4a2da87dfbaf4f1dd2a47885d615a230`, frozen SDK
+`8357eafa28423a7ab93ba08b823af80f01ad1505`. Tests at
+`525d8b736c985a0a1adcf14977ec429c8bf5b69b` explicitly mark affected deletion
+presentation as partial, not accepted. No CI run spent.
+
+## Reproduction and missing user-visible fact
+Two real native GTK peers receive one actual tag parent. A uses Rename; B uses
+Delete before receiving A. Their authenticated immutable PUT histories are joined.
+Both competing heads remain, and unsafe ordinary projection is not silently selected.
+Android receives that real parent, performs its own offline native edit, and then
+receives the unchanged GTK deletion. No receiver DB insertion occurs.
+
+GTK shows only organization-conflict counts. Its book-conflict rows say “Version
+conflict” and the activated dialog is generic; there is no native group detail
+identifying the deletion head versus the competing modification. Android
+OrganizationPanel refuses editing with “Unresolved group revisions”; SyncPanel
+detail contains transport/queue summaries, not per-head operations. Users cannot
+identify the retained delete/put conflict from these screens. DB/head evidence is
+not a replacement for visible presentation.
+
+## Smallest owner-owned candidate surface (not a blanket write authorization)
+- GTK: `examples/linux/collections_ui.inc` and/or `accounts_ui.inc`, with the
+  existing serial owner/result plumbing if needed. Expose a read-only reachable
+  detail for the affected group; preserve bounded paging, cancellation and owner lifetime.
+- Android: `OrganizationPanel.java` and its existing owner-posted read-only bridge.
+  `NativeCatalog.selection` supplies selection/deleted/restore flags and head IDs,
+  but does not currently expose each head's operation to the panel; extend the
+  existing binding only if needed, not by creating another BookStore/SDK owner.
+- Public product API already has `reader_revision_heads` /
+  `reader_revision_heads_raw_v3`; `reader_revision_head` carries
+  revision_id, **operation**, sha256, complete, requires_restore. Read these via
+  the matching existing product owner/ABI. No SDK or protocol schema change is proposed.
+  `reader_metadata_snapshot_view` supplies the complete observed head set for
+  host presentation, including conflict snapshots.
+
+Acceptance: an ordinary user can open actual native details and distinguish delete
+from the competing modification, tied to the same entity and retained revisions.
+No required special Chinese label, no forced single-head resolution, no automatic
+restore. Existing conditional resolve/restore must still include every competing
+parent. F05 will exercise the real entry, capture native detail, and cross-check
+its revision identities/operations against raw authenticated wire.
+
+## Forwardable summary
+Please add read-only deletion-conflict details for GTK/Android on the existing
+UI-owner branch: generic conflict notice plus a reachable native view showing the
+retained delete and competing modification, using existing typed head-operation
+data on the current owner. Preserve all heads and original assertions; do not
+auto-resolve or restore, touch SDK originals, or spend CI beyond your explicit
+budget. Return exact source SHA, owned files and evidence so F05 can integrate
+only after coordinator approval.
+
+---
+
 # Current preparation — 2026-10-31 23:46 UTC / 19:46 America/New_York
 
 **F05 pending. Formal 96/108 unchanged. CI used 0/1; cap 265 runner-minutes.**
