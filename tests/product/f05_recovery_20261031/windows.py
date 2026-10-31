@@ -196,5 +196,80 @@ def main():
         subprocess.run(["certutil", "-delstore", "Root", fingerprint], capture_output=True)
         key.unlink(missing_ok=True)
 
+
+def collect_provider(argv):
+    """Capture original build inputs/outputs only; never infer runtime binding."""
+    if os.name != "nt" or os.environ.get("GITHUB_ACTIONS") != "true":
+        raise RuntimeError("Windows Actions only")
+    parser = argparse.ArgumentParser()
+    for name in ("host", "package", "build-directory", "sdk-prefix", "product-prefix",
+                 "stage-prefix", "sdk-archive", "product-archive", "link-map",
+                 "build-log", "build-command-json", "output"):
+        parser.add_argument("--" + name, type=Path, required=True)
+    args = parser.parse_args(argv)
+    out = args.output.resolve()
+    out.mkdir(parents=True, exist_ok=False)
+    records, commands = {}, []
+    def copy(label, source):
+        source = source.resolve(strict=True)
+        data = source.read_bytes()
+        target = out / label
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        records[label] = {"actual_path": str(source), "bytes": len(data),
+                          "sha256": hashlib.sha256(data).hexdigest()}
+    def capture(label, command):
+        done = subprocess.run(command, cwd=args.build_directory, capture_output=True,
+                              text=True, errors="replace")
+        data = done.stdout + done.stderr
+        (out / label).write_text(data)
+        # Preserve diagnostics in ordinary job stdout as well as artifacts.
+        print(data, flush=True)
+        commands.append({"argv": command, "cwd": str(args.build_directory.resolve()),
+                         "returncode": done.returncode, "output": label})
+        (out / "command.json").write_text(json.dumps(commands, indent=2) + "\n")
+        if done.returncode: raise RuntimeError("provider command failed: " + label)
+    copy("host.exe", args.host)
+    copy("packaged.exe", args.package)
+    copy("sdk-sqlite.lib", args.sdk_archive)
+    copy("product-sqlite.lib", args.product_archive)
+    copy("host.map", args.link_map)
+    copy("host-build.log", args.build_log)
+    copy("host-build-command.json", args.build_command_json)
+    for name in ("CMakeCache.txt", "build.ninja", "CMakeFiles/rules.ninja"):
+        copy(name, args.build_directory / name)
+    responses = sorted(args.build_directory.rglob("*.rsp"))
+    if not responses:
+        raise RuntimeError("No original Ninja response file retained; do not reconstruct")
+    for response in responses:
+        copy("response/" + response.relative_to(args.build_directory).as_posix(), response)
+    capture("cmake-version.log", ["cmake", "--version"])
+    capture("host-imports.log", ["dumpbin", "/IMPORTS", str(args.package.resolve())])
+    for role, archive in (("sdk", args.sdk_archive), ("product", args.product_archive)):
+        capture(role + "-symbols.log", ["dumpbin", "/SYMBOLS", str(archive.resolve())])
+        capture(role + "-members.log", ["dumpbin", "/LINKERMEMBER:1", str(archive.resolve())])
+    frozen = "8357eafa28423a7ab93ba08b823af80f01ad1505"
+    guard = {}
+    for item in ("src", "include", "cmake", "CMakeLists.txt", "tests/fixtures"):
+        def git_object(ref):
+            return subprocess.run(["git", "rev-parse", ref + ":" + item], cwd=ROOT,
+                                  check=True, capture_output=True, text=True).stdout.strip()
+        current, baseline = git_object(os.environ["GITHUB_SHA"]), git_object(frozen)
+        guard[item] = {"actual": current, "frozen": baseline}
+        if current != baseline: raise RuntimeError("frozen SDK object mismatch: " + item)
+    manifest = {"schema": 1, "source": os.environ["GITHUB_SHA"],
+                "run": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+                "sdk_freeze": frozen, "sdk_object_guard": guard,
+                "sdk_prefix": str(args.sdk_prefix.resolve(strict=True)),
+                "product_prefix": str(args.product_prefix.resolve(strict=True)),
+                "stage_prefix": str(args.stage_prefix.resolve(strict=True)),
+                "files": records, "commands": commands,
+                "observations": "static-only", "host_runtime_provider_observed": False,
+                "F07_accepted": False}
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "collect-provider":
+        collect_provider(sys.argv[2:])
+    else:
+        main()
