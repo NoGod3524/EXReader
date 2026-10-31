@@ -39,6 +39,16 @@ jobs:
           name: f08-windows-lifetime-regression-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/f08-windows-lifetime-regression/regression.json
           if-no-files-found: warn
+      - name: Preserve real disabled-font failure and verify the shared dispatch deadline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_f08_windows_product_frames_20261031/frames.py control_regression
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f08-windows-control-regression-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f08-windows-control-regression/regression.json
+          if-no-files-found: error
       - name: Authenticate fixed full product and trace unchanged interaction cohort
         env:
           GH_TOKEN: ${{ github.token }}
