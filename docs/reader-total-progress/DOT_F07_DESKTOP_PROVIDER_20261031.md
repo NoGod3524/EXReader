@@ -19,3 +19,16 @@ All commands issued through the new wrapper have stdout/stderr captured and pers
 
 ## Acceptance boundary
 This package establishes static link/package evidence for these two fixed host profiles. Shared SDK internals and two-level dynamic binding are not claimed to be the same as a live process-wide SQLite uniqueness proof. host_runtime_provider_observed=false; auxiliary source-id observations are separate. F07_accepted=false and formal95/108 remain unchanged; no six-platform completion, managed-cleanup integration or production-binary equality to unrelated builds is asserted. Original Linux F07 success and first failure remain independently sealed.
+
+
+## Failed runs retained (2026-10-31)
+
+Initial run41185541703/A1/source72ffabc68a864c83b47a9d10329f8799f4bdc6e4: macOS124491614240 success; Windows124491614131 failed at new dumpbin /? version probe returning1100, after successful host/package/IMPORTS/HEADERS commands. Help text and Dumper14.44.35229.0 were retained. Windows auxiliary consumers were not reached. Audit124492547104 failed closed at producer_job and authenticated neither platform. Artifacts: Windows13035913701/26538435B/SHA25622b7f5c4c56c9991441765a4800687b0e5d3c4666b3d344bf27b02e87eebe7c6; mac13036113313/59059033B/SHA2563fcdab3afd21778b23e6438f82d977282f00b9cfcb28cfe8d57c5d39c09a7768; audit13037060133/308B/SHA256958772843ca9176edabb836a89d2fc167fbd5036a813f5f74ee5bd464d783a42.
+
+User Sentinel_c9dc79ba6e1c8191932b5a383c29ddfe separately approved only the HEADERS-based version correction and one additional Windows240/mac120/audit20 round. Source01ab528888f5c5be97e5824d69e2908e31e68e24 preserves nonzero failures, requires one exact Dumper version from successful HEADERS, and retains argv/returncode/output hash; it does not tolerate arbitrary1100.
+
+Correction run41186261435/A1: Windows124493687007 and macOS124493687201 both succeeded. Audit124494459783 failed at installed_header, platforms empty. Original Windows artifact identity, internal hashes, package host, SDK/ABI/core and target-prefix checks preceded that failure; host provider judgment and semantic negative controls were not reached. macOS was not downloaded or independently authenticated. Ordinary logs lack the actual dependency path text: case/path-format mismatch is only a candidate, not a proven cause or proof that the system header was used.
+
+Fixed correction artifacts: Windows13036129037/31654088B/SHA256c71801182be4188ad1fea84d2b5b2691e50735fbfa8763acbb7c1fe8d5efd9e4; mac13037275549/59058964B/SHA256eb77ff395cbbc907172ef709b5a7b3ed79fd4f21fa28a8b444099f4487e3b169; audit13037126061/31563172B/SHA2566dcd572421e60fca7784e6b8dbf984e9b89396e4aa699712c34e29a5976a9984.
+
+Both run failures remain failures. host_runtime_provider_observed=false, F07_accepted=false and formal95/108 unchanged. No local ZIP/build/test or third full-build run. The first doc append was explicitly denied without execution; user Sentinel_068ef275ed308191ab5ca0de911c470b subsequently explicitly approved failure/diagnostic doc append and skip-ci sealing, plus one independent Ubuntu20min existing-artifact diagnostic. This paragraph records that new authority, not a bypass of the denial.
