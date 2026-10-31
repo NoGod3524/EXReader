@@ -40,6 +40,7 @@ def _code_directory(raw, code, offset):
         fields.update(runtime=_be(code,88),preencrypt_offset=_be(code,92))
     if version >= 0x20600:
         minimum = 108
+        need(len(code) >= minimum,"macho-sdk-cd-linkage-header")
         fields.update(linkage_hash=code[96],linkage_type=code[97],
                       linkage_subtype=_u(code,98,">H"),linkage_offset=_be(code,100),linkage_size=_be(code,104))
     need(len(code) >= minimum and minimum <= fields["identifier_offset"] < len(code),"macho-sdk-cd-header-identifier")
@@ -159,8 +160,192 @@ def sdk_pair_diagnostic(original,bundled):
     return dict(scope="diagnostic-only",byte_identical=original == bundled,changed_bytes=changed,
                 difference_regions=regions,original=before,bundled=after)
 
+
+def _only(values,label):
+    need(len(values) == 1,label)
+    return values[0]
+
+def _sdk_layout(raw,layout):
+    need(layout["cpu"] == 0x100000c and layout["subcpu"] == 0 and layout["filetype"] == 6,
+         "macho-sdk-profile-arm64-dylib")
+    commands = layout["commands"]
+    text = _only([item for item in commands if item.get("segment",{}).get("name") == "__TEXT"],
+                 "macho-sdk-unique-text")
+    code = _only([item for item in text["section_table"] if item["name"] == "__text"],
+                 "macho-sdk-unique-text-section")
+    identity = _only([item for item in commands if item["kind"] == 0xd],"macho-sdk-unique-install-name")
+    uuid = _only([item for item in commands if item["kind"] == 0x1b],"macho-sdk-unique-uuid")
+    need(identity["install_name"] == "@rpath/libexreader.1.dylib" and
+         identity["current_version"] == 0x32a00 and identity["compatibility_version"] == 0x10000,
+         "macho-sdk-frozen-sdk342-install-name")
+    segment = text["segment"]
+    need(segment["fileoff"] == segment["vmaddr"] == 0 and segment["maxprot"] == segment["initprot"] == 5 and
+         0 < segment["filesize"] <= layout["signature"]["command"]["dataoff"] and
+         code["segment"] == "__TEXT" and code["flags"] == 0x80000400 and
+         32+layout["command_bytes"] <= code["offset"] < code["offset"]+code["size"] <= segment["filesize"],
+         "macho-sdk-text-code-range")
+    signature,linkedit = layout["signature"],layout["linkedit"]["segment"]
+    offset = signature["command"]["dataoff"]
+    need(offset % 16 == 0 and signature["file_tail_bytes"] == 0 and
+         signature["command"]["datasize"] == len(raw)-offset and
+         0 <= linkedit["fileoff"] < offset and linkedit["filesize"] == len(raw)-linkedit["fileoff"] and
+         linkedit["vmsize"] == (linkedit["filesize"]+0x3fff)//0x4000*0x4000 and
+         linkedit["maxprot"] == linkedit["initprot"] == 1 and
+         linkedit["sections"] == linkedit["flags"] == 0,
+         "macho-sdk-signature-tail-linkedit-size")
+    for item in commands:
+        value = item.get("segment")
+        if value and value["name"] != "__LINKEDIT":
+            need(value["fileoff"]+value["filesize"] <= linkedit["fileoff"],"macho-sdk-nonlinkedit-file-range")
+    return text,code,identity,uuid
+
+def _signature_profile(raw,layout,resigned):
+    text,section,identity,uuid = _sdk_layout(raw,layout)
+    signature = layout["signature"]
+    expected_slots = [0,2,0x10000] if resigned else [0]
+    need([item["slot"] for item in signature["blobs"]] == expected_slots,"macho-sdk-signature-slots")
+    cursor = 12+8*len(expected_slots)
+    for item in signature["blobs"]:
+        need(item["offset"] == cursor,"macho-sdk-signature-packed-blobs")
+        cursor += item["bytes"]
+    need(cursor == signature["superblob_bytes"] and signature["padding_zero"],
+         "macho-sdk-signature-padding")
+    entry = signature["blobs"][0]
+    need(entry["magic"] == 0xfade0c02 and "code_directory" in entry,"macho-sdk-primary-code-directory")
+    value = entry["code_directory"]
+    need(value["version"] == 0x20400 and value["flags"] == (2 if resigned else 0x20002) and
+         value["hash_type"] == 2 and value["hash_size"] == 32 and value["page_exponent"] == 12 and
+         value["platform"] == value["spare2"] == value["scatter_offset"] == value["team_offset"] == 0 and
+         value["spare3"] == value["code_limit64"] == value["exec_base"] == value["exec_flags"] == 0,
+         "macho-sdk-supported-code-directory")
+    need(value["page_hashes_supported"] and value["all_page_hashes_valid"] and
+         value["page_hashes_verified"] == value["code_slots"],"macho-sdk-cd-page-hashes")
+    special = 2 if resigned else 0
+    identifier = value["identifier"]
+    uuid_identifier = "libexreader-55554944"+uuid["uuid"]
+    need(identifier in ("libexreader.1","libexreader.3",uuid_identifier) if resigned else
+         identifier == "libexreader.1.dylib","macho-sdk-signature-identifier")
+    expected_limit = text["segment"]["filesize"] if resigned else section["size"]
+    need(value["exec_limit"] == expected_limit,"macho-sdk-code-directory-executable-size")
+    need(value["identifier_offset"] == 88 and value["special_slots"] == special and
+         value["hash_offset"] == 88+len(identifier.encode("ascii"))+1+special*32 and
+         value["bytes"] == value["hash_offset"]+value["code_slots"]*32,
+         "macho-sdk-code-directory-packed-layout")
+    location = signature["command"]["dataoff"]+entry["offset"]
+    directory = raw[location:location+entry["bytes"]]
+    if resigned:
+        requirements = bytes.fromhex("fade0c010000000c00000000")
+        cms = bytes.fromhex("fade0b0100000008")
+        for item,expected in zip(signature["blobs"][1:],(requirements,cms)):
+            start = signature["command"]["dataoff"]+item["offset"]
+            need(raw[start:start+item["bytes"]] == expected,"macho-sdk-empty-ad-hoc-signature-metadata")
+        hashes = value["hash_offset"]
+        need(directory[hashes-32:hashes] == bytes(32) and
+             directory[hashes-64:hashes-32] == hashlib.sha256(requirements).digest(),
+             "macho-sdk-requirements-special-slot")
+        # Only the allocation profiles observed in both original 99999 SDK ZIPs.
+        expected_padding = 18011 if identifier == uuid_identifier else 18002
+        need(signature["padding_bytes"] == expected_padding and signature["command"]["datasize"] % 16 == 0,
+             "macho-sdk-observed-ad-hoc-allocation")
+    else:
+        need(signature["padding_bytes"] == 0,"macho-sdk-linker-signature-exact-length")
+    return dict(code_pages=value["code_slots"],code_directory_sha256=entry["sha256"],
+                identifier=identifier,signature_offset=signature["command"]["dataoff"],
+                signature_bytes=signature["command"]["datasize"],exec_limit=expected_limit,
+                linkedit_fileoff=layout["linkedit"]["segment"]["fileoff"])
+
+def _normalized_prefix(raw,layout):
+    end = layout["signature"]["command"]["dataoff"]
+    ranges = [(layout["linkedit"]["offset"]+32,8),
+              (layout["linkedit"]["offset"]+48,8),
+              (layout["signature"]["command"]["offset"]+12,4)]
+    result = bytearray(raw[:end])
+    for offset,size in ranges:
+        need(32 <= offset and offset+size <= 32+layout["command_bytes"],"macho-sdk-normalized-field-bounds")
+        result[offset:offset+size] = bytes(size)
+    return bytes(result),[dict(offset=offset,bytes=size) for offset,size in ranges]
+
 def bind_sdk(original: bytes,bundled: bytes):
+    """Bind an authenticated SDK3.42 original to its exact bytes or observed ad-hoc re-signing."""
+    before = inspect_macho(original)
+    before_signature = _signature_profile(original,before,False)
     if original == bundled:
-        inspect_macho(original)
-        return dict(binding="exact-bytes",sha256=sha(original),bytes=len(original))
-    raise ValueError("macho-sdk-resigning-profile-awaits-original-byte-diagnostics")
+        return dict(binding="exact-bytes",original_sha256=sha(original),bundled_sha256=sha(bundled),
+                    bytes=len(original),all_code_pages_verified=True,original=before_signature,bundled=before_signature)
+    after = inspect_macho(bundled)
+    after_signature = _signature_profile(bundled,after,True)
+    need(before_signature["signature_offset"] == after_signature["signature_offset"],
+         "macho-sdk-resigning-moved-signature")
+    first,ranges = _normalized_prefix(original,before)
+    second,other_ranges = _normalized_prefix(bundled,after)
+    need(ranges == other_ranges and first == second,"macho-sdk-resigning-changed-payload")
+    return dict(binding="verified-ad-hoc-resign",original_sha256=sha(original),bundled_sha256=sha(bundled),
+                original_bytes=len(original),bundled_bytes=len(bundled),all_code_pages_verified=True,
+                normalized_prefix_sha256=sha(first),prefix_bytes=len(first),
+                retained_linkedit_bytes=len(first)-before_signature["linkedit_fileoff"],
+                mutable_prefix_fields=ranges,original=before_signature,bundled=after_signature)
+
+def _rehash_code_pages(raw):
+    """Negative-control helper: make altered payload pages internally self-consistent."""
+    layout = inspect_macho(raw)
+    entry = layout["signature"]["blobs"][0]
+    value = entry["code_directory"]
+    need(value["hash_type"] == 2 and value["hash_size"] == 32 and value["page_exponent"] == 12,
+         "macho-sdk-negative-control-page-format")
+    result = bytearray(raw)
+    location = layout["signature"]["command"]["dataoff"]+entry["offset"]+value["hash_offset"]
+    for number in range(value["code_slots"]):
+        start = number*4096
+        result[location+number*32:location+(number+1)*32] = hashlib.sha256(
+            raw[start:min(start+4096,value["code_limit"])]).digest()
+    return bytes(result)
+
+def sdk_negative_variants(original: bytes,bundled: bytes):
+    """Yield byte pairs for Actions original-ZIP re-packaging; no filesystem or native execution."""
+    bind_sdk(original,bundled)
+    before,after = inspect_macho(original),inspect_macho(bundled)
+    text = _only([item for item in after["commands"] if item.get("segment",{}).get("name") == "__TEXT"],
+                 "macho-sdk-negative-text")
+    section = _only([item for item in text["section_table"] if item["name"] == "__text"],
+                    "macho-sdk-negative-text-section")
+    code_offset = section["offset"]+min(64,section["size"]-1)
+    def flip(raw,offset):
+        need(0 <= offset < len(raw),"macho-sdk-negative-byte-bounds")
+        changed = bytearray(raw)
+        changed[offset] ^= 1
+        return bytes(changed)
+    def variant(name,first,second):
+        return dict(name=name,original=first,bundled=second)
+    changed = flip(bundled,code_offset)
+    yield variant("sdk-code-byte",original,changed)
+    yield variant("sdk-code-byte-rehashed",original,_rehash_code_pages(changed))
+    changed = flip(bundled,after["linkedit"]["segment"]["fileoff"]+8)
+    yield variant("sdk-linkedit-payload-rehashed",original,_rehash_code_pages(changed))
+    changed = flip(original,code_offset)
+    yield variant("sdk-original-payload-rehashed",_rehash_code_pages(changed),bundled)
+    entry = after["signature"]["blobs"][0]
+    hash_offset = after["signature"]["command"]["dataoff"]+entry["offset"]+entry["code_directory"]["hash_offset"]
+    yield variant("sdk-forged-page-hash",original,flip(bundled,hash_offset))
+    changed = bytearray(bundled)
+    struct.pack_into("<I",changed,after["signature"]["command"]["offset"]+8,len(bundled)+16)
+    yield variant("sdk-signature-out-of-bounds",original,bytes(changed))
+    changed = bytearray(bundled)
+    struct.pack_into("<Q",changed,after["linkedit"]["offset"]+48,len(bundled)+1)
+    yield variant("sdk-linkedit-out-of-bounds",original,bytes(changed))
+    changed = bytearray(bundled)
+    struct.pack_into("<Q",changed,after["linkedit"]["offset"]+32,after["linkedit"]["segment"]["vmsize"]+0x4000)
+    yield variant("sdk-linkedit-vmsize-rehashed",original,_rehash_code_pages(bytes(changed)))
+
+def sdk_negative_controls(original: bytes,bundled: bytes):
+    """Actions check companion; whole-ZIP callers retain and independently audit each yielded variant."""
+    records = []
+    for candidate in sdk_negative_variants(original,bundled):
+        try:
+            bind_sdk(candidate["original"],candidate["bundled"])
+        except (ValueError,UnicodeError,struct.error) as error:
+            records.append(dict(name=candidate["name"],rejected=True,reason=str(error),
+                original_sha256=sha(candidate["original"]),bundled_sha256=sha(candidate["bundled"])))
+        else:
+            raise ValueError("macho-sdk-negative-control-accepted:"+candidate["name"])
+    need(len(records) == 8,"macho-sdk-negative-control-count")
+    return dict(cases=len(records),failed=0,controls=records)
