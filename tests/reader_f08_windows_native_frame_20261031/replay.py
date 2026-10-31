@@ -22,7 +22,7 @@ def replay(document):
  produced=[r for r in workers.values() if r["flags"]==0 and r["v0"] and r["v1"]]
  paints=[r for r in rows if r["kind"]=="reader_gdi_complete"]
  publications=[r for r in rows if r["kind"]=="reader_publish" and r["flags"]]
- reader=[];missing=[];all_ids=set();font=[];page=[];ui_frames=[];ui_missing=[]
+ reader=[];missing=[];all_ids=set();font=[];page=[];ui_frames=[];ui_missing=[];ui_font=[];ui_page=[]
  for pub in publications:
   identity=(pub["job_id"],pub["generation"],pub["book"])
   need(identity not in all_ids,"duplicate accepted generation");all_ids.add(identity)
@@ -52,6 +52,8 @@ def replay(document):
   if ui_start:
    need(end<=ui_start<=pub["qpc"]<=paint["start_qpc"],"native UI pipeline chronology")
    sample["native_ui_frame_ms"]=(paint["qpc"]-ui_start)*1000/frequency;ui_frames.append(sample["native_ui_frame_ms"])
+   if input_row and input_row["control"] in (113,114):ui_font.append(sample["native_ui_frame_ms"])
+   if input_row and input_row["control"] in (105,106):ui_page.append(sample["native_ui_frame_ms"])
   else:ui_missing.append(identity)
   reader.append(sample)
  for worker in produced:
@@ -74,6 +76,7 @@ def replay(document):
   "reader_full_frame_production":stats([r["full_frame_production_ms"] for r in reader]),
   "reader_operation_latency_interpretation":"async worker start to GDI completion; ordinary frame budget is not applied",
   "reader_native_ui_frame_candidates":stats(ui_frames,True),"reader_native_ui_start_missing":ui_missing,
+  "reader_native_ui_font_candidates":stats(ui_font,True),"reader_native_ui_page_candidates":stats(ui_page,True),
   "native_ui_boundary":"WM_HOST_COMPLETE accepts ready frame, through owner/layout handling, to first same-generation GDI completion",
   "phase_rows":[r for r in rows if r["kind"] in ("settings_save","ui_accept_begin","ui_accept_body_end","ui_owners_complete","catalog_hash","catalog_attach","catalog_lookup")],
   "reader_font_full_frame_production":stats(font),"reader_page_full_frame_production":stats(page),
