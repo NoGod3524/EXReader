@@ -52,6 +52,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--binary', type=Path, required=True)
+    parser.add_argument('--c02-prefix', type=Path, required=True, help='Installed admission and exact migration commands')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--static-reading', action='store_true', help='Package the installed lightweight static reading consumer')
     args = parser.parse_args()
@@ -61,6 +62,19 @@ def main():
     payload = output/'EXReader'
     payload.mkdir(parents=True)
     shutil.copyfile(binary, payload/'EXReader.exe')
+    c02 = args.c02_prefix.resolve()
+    for name in ('exreader-c02-admission.exe', 'exreader-c02-migrate.exe'):
+        shutil.copyfile(c02/'bin'/name, payload/name)
+    (payload/'LIBRARY-ADMISSION.txt').write_text(
+        'Create a new private library explicitly:\n'
+        '  exreader-c02-admission.exe create LIBRARY NEW_PRIVATE_DOMAIN_DIRECTORY\n'
+        'Verify an existing library explicitly:\n'
+        '  exreader-c02-admission.exe enroll LIBRARY NEW_PRIVATE_DOMAIN_DIRECTORY\n'
+        'Check registration: exreader-c02-admission.exe check LIBRARY\n'
+        'Open: EXReader.exe --library LIBRARY --data PRIVATE_PROFILE_DIRECTORY\n'
+        'Import a legacy pack: exreader-c02-migrate.exe migrate LIBRARY PACK\n'
+        'Recover an interrupted import: exreader-c02-migrate.exe recover LIBRARY\n'
+        'Keep the original package and recovery evidence for that transaction.\n', encoding='utf-8')
     runtimes = [sdk/'bin'/name for name in ('exreader.dll', 'libexreader.dll') if (sdk/'bin'/name).is_file()]
     if args.static_reading:
         if runtimes:
@@ -92,7 +106,22 @@ def main():
     if checked.get('passed') is not True or checked.get('checks', 0) < 26 or checked.get('engine_version') != expected:
         raise RuntimeError('Invalid Windows host report')
     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
+    version = subprocess.check_output([str(payload/'exreader-c02-migrate.exe'), '--version'], text=True).strip()
+    if not re.fullmatch('exreader-c02-migrate '+source_sha+r' provider=[0-9a-f]{64} SDK=3\.42\.0', version):
+        raise RuntimeError('Packaged migration command is not the exact source/SDK provider')
+    profile = output/'admission-check'
+    profile.mkdir()
+    library, authority = profile/'library.sqlite', profile/'native-domain'
+    observations = []
+    for command in (['create', str(library), str(authority)], ['check', str(library)]):
+        result = subprocess.run([str(payload/'exreader-c02-admission.exe'), *command],
+            capture_output=True, text=True, timeout=45)
+        observations.append(dict(command=command, exit=result.returncode, stdout=result.stdout, stderr=result.stderr))
+        (output/'admission-check.json').write_text(json.dumps(observations, indent=2)+'\n')
+        if result.returncode or json.loads(result.stdout).get('admitted') is not True:
+            raise RuntimeError('Packaged explicit admission failed')
     manifest = {'schema': 1, 'passed': True, 'source_sha': source_sha, 'sdk_version': expected,
+                'c02_admission': True, 'migration_version': version,
                 'selftest_checks': checked['checks'],
                 'files': {str(p.relative_to(payload)).replace('\\', '/'): digest(p)
                           for p in sorted(payload.rglob('*')) if p.is_file()},

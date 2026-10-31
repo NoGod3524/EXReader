@@ -162,7 +162,8 @@ static int safe_path(const char *path){
   size_t len=k-start;
  if(!len||(len==1&&path[start]=='.')||(len==2&&path[start]=='.'&&path[start+1]=='.'))return 0;
   start=k+1;
- }return 1;
+ }
+ return 1;
 }
 static int leaf_ok(const char *leaf){
  size_t k,n=strlen(leaf);
@@ -377,7 +378,8 @@ static int pin_chain(pc02_lease *h,const char *path,int final_private){
  prefix[k]=0;
   fd=pin_dir(h,prefix,k==n?final_private:0);
  if(fd<0)return -1;
- }return fd;
+ }
+ return fd;
 }
 static int pins_current(pc02_lease *h){
  if(h->scope_file>=0)return scoped_pins_current(h);

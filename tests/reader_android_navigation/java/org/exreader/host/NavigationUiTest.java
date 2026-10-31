@@ -100,7 +100,9 @@ public final class NavigationUiTest extends Instrumentation {
     }
     private int format(String value){switch(value){case "txt":return NativeLibrary.FORMAT_TXT;case "epub":return NativeLibrary.FORMAT_EPUB;case "pdf":return NativeLibrary.FORMAT_PDF;case "cbz":return NativeLibrary.FORMAT_CBZ;default:throw new AssertionError("fixture format");}}
     private void seed()throws Exception {
-        books=new JSONObject();try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        File admittedDatabase=new File(context.getFilesDir(),"library.db");
+        if(!admittedDatabase.exists())NativeAdmission.initialize(context,admittedDatabase,NativeAdmission.CREATE);
+        books=new JSONObject();try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             JSONArray originals=input.getJSONArray("books");for(int i=0;i<originals.length();i++){
                 JSONObject row=originals.getJSONObject(i);File file=new File(context.getFilesDir(),"navigation-fixtures/"+row.getString("file"));need(file.length()==row.getLong("bytes"),"seed original length");
                 NativeLibrary.ImportResult result=library.importFile(file.getAbsolutePath(),format(row.getString("format")),row.getString("title"));need(hash(library,result.id).equals(row.getString("sha256")),"SDK original fixture identity");
@@ -114,7 +116,7 @@ public final class NavigationUiTest extends Instrumentation {
     }
     private String snapshot()throws Exception {
         JSONObject result=new JSONObject();JSONArray rows=new JSONArray();
-        try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             NativeLibrary.Book[] items=library.books();Arrays.sort(items,(a,b)->Long.compare(a.id,b.id));need(items.length==6,"six exact originals retained");
             for(NativeLibrary.Book value:items){JSONObject row=new JSONObject().put("id",value.id).put("format",value.format).put("title",value.title).put("position",value.position).put("favorite",value.favorite).put("status",value.status).put("source_sha256",hash(library,value.id));JSONArray notes=new JSONArray();
                 if(value.fixed()){for(NativeLibrary.FixedNote note:library.fixedNotes(value.id))notes.put(new JSONArray().put(note.id).put(note.page).put(note.start).put(note.end).put(note.comment).put(note.selected));}
@@ -147,12 +149,12 @@ public final class NavigationUiTest extends Instrumentation {
     private void firstTarget(){contains("First & chapter");click("打开此目标");}
     private void row(int index){long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){int[] found={0};if(act(node->id(node,"text1")&&node.isVisibleToUser()&&found[0]++==index,this::tap))return;SystemClock.sleep(80);}throw new AssertionError("visible page row "+index+" unavailable");}
     private void jumped(long token,String role)throws Exception {until(node->id(node,"reader_view")&&node.isVisibleToUser(),null,"actual reader after directory selection",120000);long end=SystemClock.elapsedRealtime()+120000;while(SystemClock.elapsedRealtime()<end){JSONObject value=frame();if(value.optLong("book",-1)==book(role)&&value.optLong("accepted_token",0)>token){zero();return;}SystemClock.sleep(80);}throw new AssertionError("directory selection did not publish a real frame");}
-    private String cfi(int mode)throws Exception {try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){return NativeNavigationProbe.cfi(library.checked(),book("nav"),mode);}}
+    private String cfi(int mode)throws Exception {try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){return NativeNavigationProbe.cfi(library.checked(),book("nav"),mode);}}
     private void inputCfi(String value){click("CFI 位置");until(node->description(node,"EPUB CFI"),node->{Bundle args=new Bundle();args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);need(node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,args),"set actual CFI input");},"CFI input",30000);click("定位");}
     private void boundaryChecks()throws Exception {
         Method open=NativeNavigation.class.getDeclaredMethod("nativeOpen",long.class,long.class,int.class,String.class,byte[].class,NativeNavigation.Control.class),info=NativeNavigation.class.getDeclaredMethod("nativeInfo",long.class),page=NativeNavigation.class.getDeclaredMethod("nativePage",long.class,long.class,long.class,int.class),resolve=NativeNavigation.class.getDeclaredMethod("nativeResolve",long.class,long.class,long.class,int.class,String.class,long.class,long.class,String.class,byte[].class,float.class,NativeNavigation.Control.class),close=NativeNavigation.class.getDeclaredMethod("nativeClose",long.class);for(Method method:new Method[]{open,info,page,resolve,close})method.setAccessible(true);
         byte[] font;try(java.io.InputStream stream=context.getAssets().open("Reader.otf")){font=stream.readAllBytes();}
-        try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             String key="epub:"+books.getJSONObject("nav").getString("sha256")+"@exreader-sdk-"+NativeNavigation.nativeParser();HostTask task=new HostTask(()->false);NativeNavigation.Control control=new NativeNavigation.Control(task,context.getFilesDir(),false);long handle=(Long)invoke(open,library.checked(),book("nav"),NativeNavigation.PUBLICATION,key,font,control);need(handle!=0,"installed navigation opens through JNI");
             try{long[] before=(long[])invoke(info,handle);need(before[3]==expected.getInt("nav_total_rows"),"actual SDK snapshot has all 48 rows");for(Object[] invalid:new Object[][]{{handle,-2L,0L,32},{handle,-1L,-1L,32},{handle,-1L,0L,0},{handle,-1L,0L,33}}){boolean refused=false;try{invoke(page,invalid);}catch(IllegalArgumentException error){refused=true;}need(refused,"invalid native page boundary refused");}
                 AtomicReference<Throwable> wrong=new AtomicReference<>();Thread other=new Thread(()->{try{invoke(info,handle);}catch(Throwable error){wrong.set(error);}});other.start();other.join(5000);need(!other.isAlive()&&wrong.get() instanceof IllegalArgumentException,"snapshot refuses another thread");need(Arrays.equals(before,(long[])invoke(info,handle)),"owner snapshot unchanged after refusal");

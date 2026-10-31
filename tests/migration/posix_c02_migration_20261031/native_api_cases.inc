@@ -321,9 +321,9 @@ static void native_floor_confirm_case(void){
  fixture f={0};
  child c={0};
  native_tx t;
- pc02_floor floor,wrong,after;
+ pc02_floor floor={0},wrong={0},after={0};
  char leaf[128],path[PATH_BYTES];
- struct stat before,confirmed;
+ struct stat before={0},confirmed={0};
  int clean=0;
  begin_case(name);
  expect(fresh(&f,name,1)&&spawn_command("--floor-child",&f,PC02_OWNER,1402,&c),"fresh floor publisher process");

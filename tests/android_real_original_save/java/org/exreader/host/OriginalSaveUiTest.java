@@ -113,7 +113,9 @@ public final class OriginalSaveUiTest extends Instrumentation {
     }
     private int format(String value){switch(value){case "txt":return NativeLibrary.FORMAT_TXT;case "epub":return NativeLibrary.FORMAT_EPUB;case "pdf":return NativeLibrary.FORMAT_PDF;default:throw new AssertionError("fixture format");}}
     private void seed()throws Exception {
-        books=new JSONObject();try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        File admittedDatabase=new File(context.getFilesDir(),"library.db");
+        if(!admittedDatabase.exists())NativeAdmission.initialize(context,admittedDatabase,NativeAdmission.CREATE);
+        books=new JSONObject();try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             JSONArray originals=input.getJSONArray("books");for(int i=0;i<originals.length();i++){
                 JSONObject row=originals.getJSONObject(i);File file=new File(context.getFilesDir(),"wave3-fixtures/"+row.getString("file"));need(file.length()==row.getLong("bytes"),"seed original length");
                 NativeLibrary.ImportResult result=library.importFile(file.getAbsolutePath(),format(row.getString("format")),row.getString("title"));

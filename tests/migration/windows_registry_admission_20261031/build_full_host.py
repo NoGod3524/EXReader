@@ -62,4 +62,7 @@ binary = host / "EXReaderWave3.exe"
     binary=str(binary.relative_to(out)), binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
     sdk_version="3.42.0", installed_modules=list(H.MODULES) + list(NEW_MODULES),
     full_c02_acceptance=False), indent=2) + "\n")
+H.run([sys.executable, ROOT / "tools/build_windows_host.py", "--sdk", sdk,
+    "--binary", binary, "--c02-prefix", c02, "--output", out / "package",
+    "--static-reading"], "package-with-admission")
 print(str(binary), flush=True)

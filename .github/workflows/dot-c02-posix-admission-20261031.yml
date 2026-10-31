@@ -1,5 +1,6 @@
 name: C02 native POSIX admission and owner custody
 on:
+  workflow_dispatch:
   push:
     branches: [codex/dot-c02-native-journal-20261030]
     paths:

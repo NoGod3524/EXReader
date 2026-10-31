@@ -15,13 +15,30 @@ def main():
     import build_android_host as host
     sdk = ROOT / "stage/android-c02-sdk"
     host.build_sdk(sdk, ROOT / "build/android-c02-sdk")
-    product = ROOT / "stage/android-product"
-    host.build_product(product, ROOT / "build/android-c02-product")
-    host.patch_android_libraries(sdk)
     toolchain = host.ndk_home() / "build/cmake/android.toolchain.cmake"
     common = ["-G", "Ninja", "-DCMAKE_TOOLCHAIN_FILE=" + str(toolchain), "-DANDROID_ABI=x86_64",
               "-DANDROID_PLATFORM=android-26", "-DANDROID_STL=c++_static", "-DCMAKE_BUILD_TYPE=Release",
               "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH"]
+    product = ROOT / "stage/android-product"
+    # Current product catalog consumes the independent installed OPDS hash owner.
+    hash_prefix = ROOT / "stage/android-c02-hash"
+    hash_build = ROOT / "build/android-c02-hash"
+    run(["cmake", "-S", "extras/opds", "-B", hash_build, *common,
+         "-DEXREADER_OPDS_HASH_ONLY=ON", "-DCMAKE_INSTALL_PREFIX=" + str(hash_prefix)])
+    run(["cmake", "--build", hash_build, "--parallel", "4"])
+    run(["cmake", "--install", hash_build])
+    os.environ["EXREADER_ORIGINAL_HASH_PREFIX"] = str(hash_prefix)
+    for name, source, target in [
+        ("catalog", "apps/reader/store/native", "reader_original_import"),
+        ("revisions", "apps/reader/revisions", "reader_revisions"),
+        ("commands", "apps/reader/commands", "reader_commands")]:
+        build = ROOT / "build/android-c02-product" / name
+        run(["cmake", "-S", source, "-B", build, *common,
+             "-DCMAKE_INSTALL_PREFIX=" + str(product), "-DCMAKE_PREFIX_PATH=" + str(product),
+             "-DREADER_PRODUCT_PREFIX=" + str(product), "-DREADER_ORIGINAL_HASH_PREFIX=" + str(hash_prefix)])
+        run(["cmake", "--build", build, "--parallel", "4", "--target", target])
+        run(["cmake", "--install", build])
+    host.patch_android_libraries(sdk)
     abi = ROOT / "stage/android-c02-abi2"
     native = ROOT / "stage/android-c02-native"
     admission = ROOT / "stage/android-c02"

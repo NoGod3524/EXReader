@@ -426,3 +426,29 @@ Still required: actual synchronous POSIX SDK migration, archived explicit
 repair of partial state/head tails, actual Android/macOS/iOS and full Windows
 runtime results, independent POSIX/host byte audit, and one-source complete
 qualification. Frozen SDK/C01 and formal acceptance95/108 remain unchanged.
+
+
+## Full Windows host and GTK independent native snapshots
+
+Source b396d639ff56016e1b7f806cce64385890486936, Windows run41176352067/A1
+passed the actual full Wave3 build and6 runtime admission cases, standalone6,
+product6, installed legacy guard18, enrollment11, registry50/530, scanner
+29/91794/6603 and all83 real migration scenarios. Artifact13033081676:
+7024746 bytes, API SHA256
+587753f56af7abe734735b4cf564b05b1cfc892e7c72da5feb1048d73f6a4317.
+
+Source36918c9c1ee18aa5345cd6ea4cf3072922e3c43b, GTK run41177046720/A1
+passed13 actual host cases, packaged create/check and independent decoding
+of four native snapshots. Eight fully resealed/rehashed POSIX corruptions
+were rejected, including pending-prefix rollback, wrong native ID, wrong
+grant, reserved/sequence changes, permissions and a torn state tail.
+Artifact13033177186:57284131 bytes, API SHA256
+5ee9fbc3aaae64507698a3b795d5b8b9015743d9a08485b3f7346cc3afd95846.
+The raw original ZIP still requires inclusion in the final cross-platform
+audit; the same Actions job's independent decoder is a component result.
+
+POSIX run41177046644 retained the new17-case macOS Clang uninitialized
+observation compile failure; Ubuntu passed original28+scope10+API17.
+The correction zero-initializes only local observation structs and retains
+all55 scenarios and Werror. The next Windows candidate packages the explicit
+admission/migration commands and tests that packaged enrollment works.

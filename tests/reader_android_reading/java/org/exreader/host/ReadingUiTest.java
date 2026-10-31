@@ -101,7 +101,9 @@ public final class ReadingUiTest extends Instrumentation {
     }
     private int format(String value){switch(value){case "txt":return NativeLibrary.FORMAT_TXT;case "epub":return NativeLibrary.FORMAT_EPUB;case "pdf":return NativeLibrary.FORMAT_PDF;case "cbz":return NativeLibrary.FORMAT_CBZ;default:throw new AssertionError("fixture format");}}
     private void seed()throws Exception {
-        books=new JSONObject();try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        File admittedDatabase=new File(context.getFilesDir(),"library.db");
+        if(!admittedDatabase.exists())NativeAdmission.initialize(context,admittedDatabase,NativeAdmission.CREATE);
+        books=new JSONObject();try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             JSONArray originals=input.getJSONArray("books");for(int i=0;i<originals.length();i++){
                 JSONObject row=originals.getJSONObject(i);File file=new File(context.getFilesDir(),"reading-fixtures/"+row.getString("file"));need(file.length()==row.getLong("bytes"),"seed original length");
                 NativeLibrary.ImportResult result=row.getString("role").equals("legacy")?library.importLegacyFile(file.getAbsolutePath(),format(row.getString("format")),row.getString("title")):library.importFile(file.getAbsolutePath(),format(row.getString("format")),row.getString("title"));need(hash(library,result.id).equals(row.getString("sha256")),"SDK original fixture identity");
@@ -115,7 +117,7 @@ public final class ReadingUiTest extends Instrumentation {
     }
     private String snapshot()throws Exception {
         JSONObject result=new JSONObject();JSONArray rows=new JSONArray();
-        try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){
+        try(NativeLibrary library=new NativeLibrary(context,new File(context.getFilesDir(),"library.db"))){
             NativeLibrary.Book[] items=library.books();Arrays.sort(items,(a,b)->Long.compare(a.id,b.id));need(items.length==7,"seven exact originals retained");
             for(NativeLibrary.Book value:items){JSONObject row=new JSONObject().put("id",value.id).put("format",value.format).put("title",value.title).put("position",value.position).put("favorite",value.favorite).put("status",value.status).put("source_sha256",hash(library,value.id));JSONArray notes=new JSONArray();
                 if(value.fixed()){for(NativeLibrary.FixedNote note:library.fixedNotes(value.id))notes.put(new JSONArray().put(note.id).put(note.page).put(note.start).put(note.end).put(note.comment).put(note.selected));}

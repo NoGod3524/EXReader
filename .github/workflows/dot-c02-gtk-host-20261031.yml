@@ -1,5 +1,6 @@
 name: C02 actual GTK admission and retained search ownership
 on:
+  workflow_dispatch:
   push:
     branches: [codex/dot-c02-native-journal-20261030]
     paths:
