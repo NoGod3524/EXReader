@@ -1,0 +1,30 @@
+name: F07 fixed full link evidence
+on:
+  push:
+    branches: [dot/f07-link-evidence-20261031]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: dot-f07-link-evidence-20261031
+  cancel-in-progress: false
+jobs:
+  diagnostic:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Read fixed original link evidence without rebuilding
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_f07_link_evidence_20261031/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f07-full-link-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f07-link-evidence/
+          if-no-files-found: error
+          retention-days: 30
