@@ -16,9 +16,11 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sdk', type=Path, required=True)
-    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0', '3.42.0'), default='3.40.0',
-                        help='Exact SDK version; the frozen default remains 3.40.0')
+    parser.add_argument('--sdk-version', choices=('3.42.0',), default='3.42.0',
+                        help='Exact frozen SDK required by the C02 admission package')
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--c02-prefix', type=Path, required=True,
+                        help='Installed C02 SDK admission package for this SDK and platform')
     parser.add_argument('--binary', type=Path, help='Package this already-built native consumer instead of rebuilding the reference host')
     args = parser.parse_args()
     if platform.system() != 'Linux':
@@ -34,14 +36,29 @@ def main():
     else:
         subprocess.run(['cmake', '-S', str(ROOT/'examples/linux'), '-B', str(build),
                         '-DEXR_SDK='+str(args.sdk.resolve()), '-DEXR_SDK_VERSION='+args.sdk_version,
-                        '-DCMAKE_BUILD_TYPE=Release'], check=True)
+                        '-DEXR_C02_PREFIX='+str(args.c02_prefix.resolve()),
+                        '-DCMAKE_PREFIX_PATH='+str(args.sdk.resolve()), '-DCMAKE_BUILD_TYPE=Release'], check=True)
         subprocess.run(['cmake', '--build', str(build), '--parallel', '4'], check=True)
         subprocess.run(['cmake', '--install', str(build), '--prefix', str(payload)], check=True)
+    admission = args.c02_prefix.resolve(strict=True)/'bin/exreader-c02-admission'
+    shutil.copy2(admission, payload/'bin/exreader-c02-admission')
+    (payload/'LIBRARY-ADMISSION.txt').write_text(
+        'Create a new library explicitly before opening the reader:\n'
+        '  bin/exreader-c02-admission create /absolute/profile/library.sqlite\n'
+        'The profile directory must already exist and be owned by your account.\n'
+        'To register an existing library, close its readers and run:\n'
+        '  bin/exreader-c02-admission enroll /absolute/profile/library.sqlite\n'
+        'An interrupted enrollment can be retried with recover-enrollment.\n'
+        'Migration recovery uses the migration tool; retain all recovery files.\n'
+        'Run bin/exreader-linux Reader.otf /absolute/profile after registration.\n')
     identity = subprocess.check_output([str(payload/'bin/exreader-linux'), '--version'], text=True).strip()
     if identity != args.sdk_version + ' 1':
         raise RuntimeError('Installed host reports an unexpected SDK or ABI')
     dependencies = subprocess.check_output(['ldd', str(payload/'bin/exreader-linux')], text=True)
     (output/'runtime-dependencies.txt').write_text(dependencies)
+    admission_dependencies = subprocess.check_output(['ldd', str(payload/'bin/exreader-c02-admission')], text=True)
+    (output/'admission-runtime-dependencies.txt').write_text(admission_dependencies)
+    dependencies += '\n' + admission_dependencies
     modules = [line.split()[0].rsplit('/', 1)[-1].lower() for line in dependencies.splitlines() if line.strip()]
     if 'not found' in dependencies or any(marker in name for name in modules for marker in ('webkit', 'webview', 'libcef', 'electron')):
         raise RuntimeError('Native host has an unavailable or browser runtime dependency')
@@ -53,6 +70,7 @@ def main():
     shutil.copytree(args.sdk/'share/exreader/licenses', payload/'licenses')
     source = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
     manifest = {'schema': 1, 'source_sha': source, 'sdk_version': identity.split()[0], 'abi': int(identity.split()[1]),
+                'c02_admission': True, 'c02_authority': 'OS account home/.exreader-c02-admission',
                 'gtk_version': subprocess.check_output(['pkg-config', '--modversion', 'gtk+-3.0'], text=True).strip(),
                 'files': {str(p.relative_to(payload)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(payload.rglob('*')) if p.is_file()}}

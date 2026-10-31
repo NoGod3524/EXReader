@@ -83,6 +83,29 @@ def named_cases(log, count):
          len({name for _,name in rows}) == count, "named-case-completeness")
     need(not re.search(r"^FAIL ",log,re.M), "unexpected-test-failure")
 
+@functools.lru_cache(maxsize=None)
+def native_fixture_binding(source):
+    legacy = git_bytes(source,"tests/migration/windows_coordinator_hardening_20261030/wh_test.c").decode()
+    native = git_bytes(source,"tests/migration/windows_coordinator_native_journal_20261030/wh3_win_test.c").decode()
+    values = {}
+    for macro, size in (("HX40",40),("HX64",64)):
+        found = re.findall(r'^#define '+macro+r' "([0-9a-f]+)"$',legacy,re.M)
+        need(len(found) == 1 and hexadecimal(found[0],size), "native-fixture-macro:"+macro)
+        values[macro] = found[0]
+    fields = {"source":"HX40","run":'"4100000000"',"attempt":'"1"',
+              "artifact":"HX64","platform":'"ubuntu-22.04"',"sdk":'"3.42.0"',"provider":"HX64"}
+    for name, literal in fields.items():
+        statement = 'snprintf(b.'+name+', sizeof b.'+name+', "%s", '+literal+');'
+        need(statement in legacy, "native-fixture-static-binding:"+name)
+    need('#include "../windows_coordinator_hardening_20261030/wh_test.c"' in native and
+         'f.b=binding_of();snprintf(f.b.platform,sizeof(f.b.platform),"windows-2022");f.g=gates_of(\'a\');' in native,
+         "native-fixture-static-override")
+    expected = {name:values[literal] if literal in values else literal[1:-1]
+                for name,literal in fields.items()}
+    expected["platform"] = "windows-2022"
+    expected.update({name:"a"*64 for name in ("admission","publisher","recovery","observer","fault")})
+    return expected
+
 def native_evidence(files, spec, source):
     inventory(files)
     receipt = json_value(files["receipt.json"])
@@ -116,14 +139,30 @@ def native_evidence(files, spec, source):
          "native-ten-real-barriers")
     need("OBS midopen root_move=1 error=0 reached=101" in log, "native-real-path-rebinding")
     invalid = set(range(10,17)) | set(range(19,27)) | set(range(36,43)) | {46}
+    fixture = native_fixture_binding(source)
     for number in range(1,47):
         prefix = f"native-files/case-{number:03}/a/b/"
+        journal, intents = files[prefix+"journal.bin"], files[prefix+"intent.bin"]
+        decoder_error = None
         try:
-            native_pair(files[prefix+"journal.bin"],files[prefix+"intent.bin"],source)
+            state = native_pair(journal,intents,fixture["source"])
+            if state["count"]:
+                need(state["binding"] == fixture, "native-fixture-manifest")
             valid = True
-        except ValueError:
+        except ValueError as error:
             valid = False
-        need(valid is (number not in invalid), f"native-raw-case-{number:03}")
+            decoder_error = type(error).__name__+":"+str(error)
+        if valid is not (number not in invalid):
+            try:
+                raw_lines = [line.decode("ascii",errors="backslashreplace") for line in frames(journal)[:3]]
+            except ValueError as error:
+                raw_lines = ["frame-error:"+str(error), journal[:256].hex()]
+            print(json.dumps(dict(diagnostic="native-classification-mismatch",case=number,
+                                  expected_valid=number not in invalid,actual_valid=valid,
+                                  decoder_error=decoder_error,journal_bytes=len(journal),
+                                  intent_bytes=len(intents),first_lines=raw_lines,
+                                  first_intent_hex=intents[:424].hex())),flush=True)
+            raise ValueError(f"native-raw-case-{number:03}:"+str(decoder_error or "unexpectedly-valid"))
     return dict(capabilities=["abi2-windows-known-six","abi3-windows","native-46-301"])
 
 def persistent_evidence(files, spec, source):

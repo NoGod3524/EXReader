@@ -770,7 +770,7 @@ static gpointer work(gpointer font_path) {
     result->shelf_generation=job->shelf_generation;
     result->profile_writable=opened==EXR_OK;
     if(opened==EXR_OK) linux_reader_execute(reader,&job->command,&result->value);
-    else { result->value.status=opened;strcpy(result->value.message,"Could not open library or font"); }
+    else { result->value.status=opened;g_strlcpy(result->value.message,error.message[0] ? error.message:"Could not open library or font",sizeof(result->value.message)); }
     g_idle_add(apply_result,result);job_free(job);
   }
   linux_reader_close(reader);g_idle_add(worker_stopped,NULL);return NULL;

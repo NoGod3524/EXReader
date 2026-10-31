@@ -344,3 +344,31 @@ ZIP hashes and failure output are retained. The new scope/host/audit candidates
 have not yet been executed at this entry. Actual POSIX synchronous migration,
 Android/Apple admission and final same-source complete qualification remain open.
 Formal acceptance remains 95/108.
+
+## First actual reader integration result
+
+Source 2d0423c5ec7c1079dbc7de95f0e9db30f4c4f3d5 has passed:
+- Windows run 41173415484/A1: all 83 actual migration scenarios, scanner
+  29/91794/6603, registry 50/530, enrollment 11, actual product 6, and the new
+  18 installed legacy-command refusal/admission cases. Standalone reader built.
+  Artifact 13032157171, 2890705 bytes, SHA256
+  6ecfac68e28444ca78591a29f3c8fd0ac95f2b64162a9d61ef644b8acbffdd3b.
+- GTK run 41173415522/A1: 12 actual host cases, including a live page plus
+  incomplete SDK search holding shared custody, final-owner release, explicit
+  creation, actual shelf reopen and independent original SQLite bytes, cloned
+  path/inode refusal, and durable PENDING before catalog access.
+  Artifact 13032511149, 12965813 bytes, SHA256
+  d99b933a70fa07df5f634943af576f5c9f126e7538ca2aca521e69d4c4054fe2.
+- POSIX run 41173415556/A1 on both Ubuntu and macOS: original 28/207 and
+  scoped 7/58, all zero failures.
+
+The first independent audit run 41173415518/A1 failed on native fixture case001.
+The audit incorrectly used the actual producer SHA as the fixed fixture binding;
+the native fixture intentionally uses HX40 in its journal while its result and
+Actions receipt bind the actual source. The fix independently reads the fixed
+fixture manifest from the specified producer Git source and retains strict API,
+receipt, original 46/301, invalid-case and negative-control checks. Failure
+artifact 13032097070, 21422 bytes, SHA256
+be81c4a1c504e37a3fac55c5642436e97a781b498a40b8f0c2506c318b6760ef.
+The corrected audit, packaged GTK enrollment tool and standalone-reader runtime
+checks are new candidates pending Actions. Full C02 remains open.
