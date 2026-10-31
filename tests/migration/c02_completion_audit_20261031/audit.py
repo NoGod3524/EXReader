@@ -21,6 +21,7 @@ import zipfile
 from production import bound_history, acknowledged_prefix, audit_repairs
 from scanner import audit_scanner
 from gtk_host import audit_gtk_host
+from android_host import audit_android_host, android_negative_controls
 from gtk_snapshots import pending_negative_controls
 
 from protocols import (SDK, C01, ABI2_FAILURES, need, sha, hexadecimal, integer, json_value,
@@ -572,6 +573,22 @@ def gtk_evidence(files, spec, source):
     need(len(declared) == len(set(declared)) and len(declared) >= 13, "gtk-source-case-declaration")
     return audit_gtk_host(files,spec,source,set(declared))
 
+def android_evidence(files, spec, source):
+    inventory(files)
+    test = git_bytes(source, "tests/migration/android_c02_host_20261031/androidTest/java/org/exreader/host/C02HostTest.java").decode()
+    names = re.findall(r'passed\("([a-z_]+)"\)', test)
+    need(len(names) == len(set(names)) == 14, "android-qualified-source-original-cases")
+    fixture_source = git_bytes(source, "examples/android/app/src/main/cpp/c02_test_jni.inc").decode()
+    fixture = {}
+    for name in ("manifest", "input", "terminal"):
+        values = re.findall(r'c02_fixture_' + name + r'\[\] = "([0-9a-f]{64})";', fixture_source)
+        need(len(values) == 1, "android-qualified-source-fixture:" + name)
+        fixture[name] = values[0]
+    original = re.findall(r'c02_fixture_original\[\] = ("(?:[^"\\]|\\.)*");', fixture_source)
+    need(len(original) == 1, "android-qualified-original-source")
+    original = json.loads(original[0]).encode()
+    return audit_android_host(files, spec, source, set(names), original, fixture)
+
 def host_evidence(files, spec, source, missing):
     receipt = json_value(files[spec["receipt"]])
     provenance(receipt,spec,source)
@@ -706,6 +723,8 @@ def validate(files,spec,source,missing):
         return registry_evidence(files,spec,source,missing)
     if role == "host-gtk":
         return gtk_evidence(files,spec,source)
+    if role == "host-android":
+        return android_evidence(files,spec,source)
     return host_evidence(files,spec,source,missing)
 
 def reseal_intents(data,wrong_ack=False):
@@ -828,6 +847,8 @@ def main():
             windows = (files,spec)
         if role == "host-gtk":
             host_controls.extend(pending_negative_controls(files,spec["runtime_prefix"],output/role/"negative-controls"))
+        if role == "host-android":
+            host_controls.extend(android_negative_controls(files,output/role/"negative-controls"))
     need(windows is not None, "negative-controls-require-original-windows-native")
     controls = negative_controls(windows[0],windows[1],source,output) + host_controls
     for path,artifact in original_checks:

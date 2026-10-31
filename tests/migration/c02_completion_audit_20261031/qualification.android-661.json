@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "source": "6613749f5011b25f2c7e58eea62cfe112347d842",
+  "repository": "NoGod3524/EXReader",
+  "packages": [
+    {
+      "role": "native-windows",
+      "platform": "Windows",
+      "run": 41178126701,
+      "attempt": 1,
+      "job": 124469812367,
+      "job_name": "native_evidence (windows-2022)",
+      "workflow": ".github/workflows/dot-c02-native-journal-20261030.yml",
+      "artifact": {
+        "id": 13033955982,
+        "name": "c02-native-journal-windows-2022-6613749f5011b25f2c7e58eea62cfe112347d842",
+        "bytes": 33175,
+        "sha256": "db8a0115419fa82e81dbd1db27dbf3d2977829216c1c0123414fa62efae6e068"
+      }
+    },
+    {
+      "role": "native-linux",
+      "platform": "Linux",
+      "run": 41178126701,
+      "attempt": 1,
+      "job": 124469812479,
+      "job_name": "native_evidence (ubuntu-22.04)",
+      "workflow": ".github/workflows/dot-c02-native-journal-20261030.yml",
+      "artifact": {
+        "id": 13034165402,
+        "name": "c02-native-journal-ubuntu-22.04-6613749f5011b25f2c7e58eea62cfe112347d842",
+        "bytes": 1678,
+        "sha256": "42b796f51e6e07d08e1bf03451a5f1b4b0c5b36f91255cd7d806a20524665f54"
+      }
+    },
+    {
+      "role": "host-android",
+      "platform": "Android",
+      "run": 41178126581,
+      "attempt": 1,
+      "job": 124469811855,
+      "job_name": "android",
+      "workflow": ".github/workflows/dot-c02-android-host-20261031.yml",
+      "artifact": {
+        "id": 13033543534,
+        "name": "c02-actual-android-6613749f5011b25f2c7e58eea62cfe112347d842",
+        "bytes": 20057961,
+        "sha256": "15c2d07346c26ca21e6f3ea22d1e6e86701926e1dacd1a46709e7af74ea5a4a2"
+      }
+    }
+  ]
+}
