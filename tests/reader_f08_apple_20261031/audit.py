@@ -46,6 +46,13 @@ def main():
             need(all(result.get(k)==v for k,v in ident.items()) and result["platform"]==kind and result["f08_accepted"] is False,"native identity")
             need((raw/"profile.json").read_bytes()==(HERE/"profile.json").read_bytes(),"profile bytes")
             entry["collection_complete"]=result["collection_complete"];entry["problems"]=result["problems"]
+            if (raw/"original.xcresult").exists():
+                sys.path.insert(0,str(ROOT/"tests/apple_host"));from collect_evidence import load_results
+                entry["original_cases"]=load_results(raw/"original.xcresult")
+            if "program_sha256" in result:
+                binary=raw/"program/EXReaderHost.app"/("Contents/MacOS/EXReaderHost" if kind=="macos" else "EXReaderHost")
+                need(sha(binary)==result["program_sha256"],"native program differs")
+                entry["program_sha256"]=result["program_sha256"]
             if (raw/"performance-metrics.json").exists():
                 _,metrics=extract_metrics(raw/"metrics.xcresult")
                 need(metrics==json.loads((raw/"performance-metrics.json").read_text()),"xcresult metrics differ")
