@@ -1,4 +1,4 @@
-name: F07 fixed Windows header dependency evidence
+name: F07 fixed desktop artifact certification
 on:
   push:
     branches: [codex/dot-f07-desktop-header-evidence-20261031]
@@ -6,21 +6,23 @@ permissions:
   contents: read
   actions: read
 jobs:
-  diagnose:
+  audit:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Authenticate and diagnose fixed Windows artifact only
+      - name: Independent binary readers only
+        run: sudo apt-get update && sudo apt-get install -y llvm
+      - name: Certify the two fixed original desktop artifacts without rebuilding
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tests/reader_f07_desktop_header_evidence_20261031/verify.py
+        run: python3 tests/reader_f07_desktop_provider_20261031/verify.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: f07-header-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/f07-header-evidence/
+          name: f07-fixed-desktop-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f07-desktop-audit/
           if-no-files-found: error
           retention-days: 14
