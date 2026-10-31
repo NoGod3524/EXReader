@@ -630,3 +630,58 @@ The complete request template now lists all twelve current roles and exact
 workflows. Actual POSIX Repair and its independent production adapter, Apple
 signed SDK byte binding, and a final common-source all-role audit remain open.
 Formal 95/108 and frozen SDK/C01 values remain unchanged.
+
+### Qualified actual POSIX owner and SDK byte audits (08:25 UTC)
+
+The ABI2 include correction at 692e52506c2508434d5792ba0e1ac775e1e1e2ba
+passed Ubuntu job 124483253755 in 41182716610/A1: actual owner 36 cases and
+unchanged historical 65 cases / 135 checks. macOS job 124483253727 failed at
+getentropy's missing declaration. Commit 0ddfc8d09e2def04ed3df095c06e5a0207f8d758
+adds Apple's sys/random.h declaration without weakening Werror. Run
+41183156836/A1 then passed both complete platform jobs:
+- Ubuntu job 124484542053, artifact 13035955228, 44748311 bytes,
+  SHA256 a80fc58b910afa2f571374e8f8b9d740fbc6c332577cb652d7192b0ae95ff750.
+- macOS job 124484542364, artifact 13036390157, 39326349 bytes,
+  SHA256 4044518f0187533a9b5e7280daf99a7bf7dc3119948d681833fc5f96af546832.
+
+Independent Actions diagnostic 41184422915/A1 at
+734f4fa5d1a23515a754a51d0a09dea0e13f1c25 retained and audited the original
+692e Ubuntu ZIP (artifact 13035563580, 44751227 bytes,
+SHA256 4d549d71db64240e438c41fee79940e33f0b79f4c136f3c390bd1fdfe76f05cc).
+Its independent production decoder passed all 36 actual and 65 historical
+cases, 65 transactions, 70 phase snapshots, 2728 native fstat objects and
+3784 runtime files. It verified actual SDK payloads, INPUT13844/PREPARED251,
+ACK296/FLOOR352, native IDs and fresh process recovery. The result explicitly
+retains partial_state_head_repair=false. This is diagnostic evidence from a
+successful job in a partially failed workflow, not a complete qualification.
+The diagnostic artifact is 13036950208, 42607586 bytes,
+SHA256 0b087b5b1d080bd8a9d403969de3a1d9f2bbeade0f5f96ce84cd811ecc13663b.
+
+Apple's original SDK and re-signed bundle binding now independently validates
+all CodeDirectory SHA256 pages and the entire prefix before the signature.
+Only the verified __LINKEDIT VM/file lengths and LC_CODE_SIGNATURE datasize
+(20 bytes total) are normalized; original code, symbols and other LINKEDIT
+bytes remain exact. The original and ad-hoc signature layouts, identities,
+special slots, executable ranges and allocation bounds are checked separately.
+Eight SDK byte-pair attacks per platform are repacked, rehashed, read back and
+rejected, including changed code or LINKEDIT with recomputed page hashes.
+
+Run 41184435643/A1 at 734f4fa5d independently audited both original 99999 Apple
+runtime ZIPs. Its compact Actions result and separate saved-result receipt
+confirm two originals, 32 semantic negatives and 22 role-substitution negatives.
+Artifact 13036272253 is 254890304 bytes, SHA256
+de24b7840f670dcfc442365bb8137ff03195f425df198f68171ec7576bea44f1;
+audit-result.json SHA256 is
+d074b61154435d7b76d6b4f1bb91eac89b549ddd7f8ba6e4300ba097054055ac.
+The earlier d8cd9f549 run 41183677876 also succeeded; its giant stdout result
+was not visible through gh logs. Full JSON remains retained in both artifacts;
+734f4fa5d emits compact logs instead of printing the giant record first.
+
+Review also closed two qualification gaps: each role is now fixed to its real
+platform/workflow/job/artifact naming rule, and POSIX production roles call
+their own decoder instead of falling through the Apple host adapter. Missing
+pre-confirm snapshots and missing explicit Repair are unconditional capability
+gaps. selected-components can never set full_c02_complete=true. GTK still has
+a static-SDK binary-binding gap; preserving real link inputs and independent
+relinking is in progress. Complete acceptance still requires all twelve roles
+at one common source and every capability gap closed. Formal 95/108 is unchanged.
