@@ -858,3 +858,27 @@ continued migration after pre-BEGIN repair; the pre-BEGIN epoch retains its
 own empty journal/head and must not mistake a later INPUT's same-generation
 FLOOR files for its own. Old seventeen-case evidence retains this explicit gap
 until the new native controls and independent audit pass.
+
+At producer d32603dc65bccfd65901239d21cb65cd10bca168, run 41190546125/A1
+passed both real owners with original 36 + Repair 20 and 0 failures, alongside
+unchanged 65/135 historical cases. Ubuntu job 124506277350 retains artifact
+13038363533, 58297512 bytes, SHA256
+a68dcad815d39d7d52ec914383e3760b8234d4e1f7df1d7dadff5605609cc596;
+macOS job 124506277155 retains artifact 13038493608, 52964857 bytes, SHA256
+02a5c5b8265a4ff244cd9236043e065bd30f20e3dbc49797b4cb4ca631d3eb3c.
+All twelve producer roles now have original packages at this same source,
+513165719 original ZIP bytes in total. The native baseline jobs still retain
+only their six exact original ABI2 failures; new native and ABI3 steps passed.
+The independent complete-c02 audit is not yet finished.
+
+Windows original audit 41191160651/A1 at audit source c14ab2ef2 reached the
+formal package after passing legacy and the three actual host profiles, then
+failed wp-qualified-all-full-profile-modules. Actual original JSON confirms
+all 23 modules exactly match the qualified source; the composite assertion also
+required build.binary == host/EXReaderWave3.exe, whereas the native Windows
+Path.relative_to value is host\\EXReaderWave3.exe. The follow-up accepts only
+these two exact equivalent separator spellings. Module membership, original PE
+bytes, trace identities, map and formal package bindings are unchanged. Preserve
+failed job 124508062624 and artifact 13039295056, 96762953 bytes, SHA256
+b9f314199bf1b71deccfde5d3714ad5571ccf5f77625b64f132ef28530563bee.
+Its retry audits the same four original d326 ZIPs, without rebuilding producers.
