@@ -1,3 +1,59 @@
+# Current preparation — 2026-10-31 23:46 UTC / 19:46 America/New_York
+
+**F05 pending. Formal 96/108 unchanged. CI used 0/1; cap 265 runner-minutes.**
+Stable source before this note: a21a7d044032c524dc2c9a6831d4bdcc2d32ae7e.
+Branch dot/f05-client-recovery-20261031; base 94fb236a4a2da87dfbaf4f1dd2a47885d615a230;
+SDK freeze 8357eafa28423a7ab93ba08b823af80f01ad1505.
+Nine of ten approved new files exist; workflow is deliberately absent until
+actual drivers and independent audit are ready. None has been executed or syntax-tested.
+
+## Implemented preparation, not validated results
+- Windows: real two-profile UI edits, offline reconnect, committed PUT/unknown ack
+  process kill and retry, preserved concurrent book heads, offline reopening.
+  Exports actual authenticated PUT bytes for same-run Apple receiver checkpoints.
+- GTK: real two-profile book recovery plus group create/common-parent,
+  native Rename versus Delete, retained two heads and visible organization conflict.
+  Exports baseline and native deletion bytes for actual Android offline author.
+- Android: actual UI via adb/uiautomator; native group offline edit, incoming GTK
+  tombstone and conflict presentation, restart retention. Receive-cancel gate
+  needs controlled cache-miss setup before execution.
+- Apple: generated real XCTest drives actual account baseline reception/open,
+  real Windows concurrent-head reception and explicit conflict count, offline reopen.
+  Receive-cancel is explicitly still uncovered after review caught sync prefetch
+  consuming an incorrectly early GET gate. No result transferred from that source.
+- F07 static provider collector retained inside windows.py, reviewed for hashes,
+  provenance and bounded diagnostics; actual verbose build recipe still pending.
+
+## Original contract and remaining gaps
+No forced single-head resolution. Preserve all heads and tombstones, display conflict,
+and check all parents if explicit restore/resolution occurs. Ordinary stale put cannot
+implicitly restore. Receipt validation is not independent artifact authentication.
+Pending: complete host-specific cancel/crash boundaries, immutable original/SDK exact
+readback, stale-put/conditional-restore assertions, producer/artifact authentication,
+all old suites retained, one same-source recipe and final reviewer sign-off.
+Apple 94fb receiveAccountBooks/HostCatalog.receivePage projects books only, not remote
+organization. F03 independently confirmed this owner gap. F05 uses genuine book peers
+for Apple coverage rather than lower-API organization injection.
+
+## Authorized cache-miss test setup
+Parent confirmed only isolated Actions profiles: verify exact cache hash/size and
+owner idle/no pending download, atomically rename that one file into a test quarantine,
+preserve identity/evidence, then actual UI receive and cancel/retry. Do not delete
+broadly, touch SDK originals or restore cache before normal download. Temporary
+fixture credentials enter through actual UI, never real account credentials.
+
+## Boundaries / continuation
+No source/SDK/old tests changed; no workflow dispatched, no repeated green old run,
+no Codex/Claude task. F10 retains sync.cpp writer coordination; external Apple/UI
+owners retained. Source/Git uses the expressly approved GitHub direct route.
+Desktop Commander quota remains unavailable; no new handshake performed here.
+Do not infer running/ready or a last-success time from this handoff.
+
+The older notes below are preserved history; current status above supersedes their
+obsolete production-blocker/single-head interpretation and file-count statements.
+
+---
+
 # Contract correction — 2026-10-31 23:19 UTC
 
 The coordinator settled the original F05 interpretation: preserve every concurrent
