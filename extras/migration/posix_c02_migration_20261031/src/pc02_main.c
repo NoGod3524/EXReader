@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #ifdef __APPLE__
 #include <sys/mount.h>
+#include <sys/random.h>
 #else
 #include <sys/vfs.h>
 #endif
