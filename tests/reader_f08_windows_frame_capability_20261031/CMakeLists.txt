@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.24)
+project(f08_windows_frame_capability LANGUAGES CXX)
+add_executable(f08_frame_control control.cpp)
+target_compile_features(f08_frame_control PRIVATE cxx_std_17)
+target_compile_definitions(f08_frame_control PRIVATE UNICODE _UNICODE)
+target_compile_options(f08_frame_control PRIVATE /W4 /WX)
+target_link_libraries(f08_frame_control PRIVATE user32 gdi32 d3d11 dxgi)
