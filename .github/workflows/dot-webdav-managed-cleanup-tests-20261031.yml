@@ -1,0 +1,114 @@
+name: WebDAV managed cleanup component tests
+on:
+  push:
+    branches: [codex/dot-webdav-managed-cleanup-tests-20261031]
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  BASE_SHA: 666d0d81730ac3cf7caea52b05ca1f01b1d183b1
+  CORE_SHA: 6ba50a89a82f82212fcadaf8d825176cc9fbe856
+jobs:
+  managed-cleanup:
+    name: Managed cleanup (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Exact file sets and separate pinned core checkout
+        run: |
+          set -euo pipefail
+          mkdir -p build/wc-logs
+          git fetch --no-tags origin "$CORE_SHA"
+          python - <<'PY'
+          import os,subprocess
+          base,core=os.environ['BASE_SHA'],os.environ['CORE_SHA']
+          def names(a,b): return set(subprocess.check_output(['git','diff','--name-only',a,b],text=True).splitlines())
+          tests={'tests/webdav_managed_cleanup_20261031/CMakeLists.txt','tests/webdav_managed_cleanup_20261031/worker.c','tests/webdav_managed_cleanup_20261031/run.py','.github/workflows/dot-webdav-managed-cleanup-tests-20261031.yml','docs/reader-total-progress/DOT_WEBDAV_MANAGED_CLEANUP_20261031.md'}
+          corefiles={'extras/webdav-cleanup/CMakeLists.txt','extras/webdav-cleanup/EXReaderWebDAVCleanupConfig.cmake.in','extras/webdav-cleanup/include/exr_webdav_cleanup.h','extras/webdav-cleanup/src/cleanup_posix.c'}
+          for a,b in ((base,'HEAD'),(base,core)): subprocess.check_call(['git','merge-base','--is-ancestor',a,b])
+          assert names(base,'HEAD')==tests, names(base,'HEAD')
+          assert names(base,core)==corefiles, names(base,core)
+          print('FILE-SETS-OK')
+          PY
+          git worktree add --detach build/core "$CORE_SHA"
+          test "$(git -C build/core rev-parse HEAD)" = "$CORE_SHA"
+          printf 'tests=%s\ncore=%s\nbase=%s\n' "$GITHUB_SHA" "$CORE_SHA" "$BASE_SHA" > build/wc-logs/source.txt
+          python -m pip install ninja==1.11.1.1
+      - name: Build and install the core package from the core checkout
+        run: |
+          set -euo pipefail
+          cmake -S build/core/extras/webdav-cleanup -B build/wc-core -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/wc-prefix" 2>&1 | tee build/wc-logs/core-configure.log
+          cmake --build build/wc-core --verbose 2>&1 | tee build/wc-logs/core-build.log
+          cmake --install build/wc-core 2>&1 | tee build/wc-logs/core-install.log
+      - name: Installed archive exports and hook absence
+        run: |
+          set -euo pipefail
+          nm -g build/wc-prefix/lib/libexr_webdav_cleanup.a > build/wc-logs/archive-nm.txt
+          python - <<'PY'
+          import filecmp,re
+          nm=open('build/wc-logs/archive-nm.txt').read()
+          assert 'exr_wc_test_hook' not in nm
+          for f in ['create_at','open_at','begin','seal','publish_at','cleanup','inspect','recover','tx_close','close']:
+              assert re.search(r'\sT _?exr_wc_'+f+r'$',nm,re.M), f
+          assert filecmp.cmp('build/wc-prefix/include/exr_webdav_cleanup.h','build/core/extras/webdav-cleanup/include/exr_webdav_cleanup.h',shallow=False)
+          print('ARCHIVE-AUDIT-OK')
+          PY
+      - name: Build the installed-package consumer and the direct-source hook worker
+        run: |
+          set -euo pipefail
+          cmake -S tests/webdav_managed_cleanup_20261031 -B build/wc-tests -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/wc-prefix" -DEXR_WC_CORE_SOURCE="$PWD/build/core" 2>&1 | tee build/wc-logs/tests-configure.log
+          cmake --build build/wc-tests --verbose 2>&1 | tee build/wc-logs/tests-build.log
+          nm build/wc-tests/wc-consumer > build/wc-logs/consumer-nm.txt
+          nm build/wc-tests/wc-hookworker > build/wc-logs/hookworker-nm.txt
+          python - <<'PY'
+          log=open('build/wc-logs/tests-build.log').read().splitlines()
+          links=[l for l in log if ' -o wc-hookworker' in l or ' -o wc-consumer' in l]
+          hook=[l for l in links if ' -o wc-hookworker' in l]; cons=[l for l in links if ' -o wc-consumer' in l]
+          assert len(hook)==1 and len(cons)==1, links
+          assert 'libexr_webdav_cleanup.a' not in hook[0] and 'libexr_webdav_cleanup.a' in cons[0]
+          assert 'exr_wc_test_hook' not in open('build/wc-logs/consumer-nm.txt').read()
+          assert 'exr_wc_test_hook' in open('build/wc-logs/hookworker-nm.txt').read()
+          print('LINK-AUDIT-OK')
+          PY
+      - name: Fixed 30-case matrix
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          python tests/webdav_managed_cleanup_20261031/run.py --consumer build/wc-tests/wc-consumer --hookworker build/wc-tests/wc-hookworker --output build/wc-evidence --core-sha "$CORE_SHA" --tests-sha "$GITHUB_SHA" 2>&1 | tee build/wc-logs/matrix.log
+      - name: Source and binary identity
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          out=pathlib.Path('build/wc-logs');out.mkdir(parents=True,exist_ok=True)
+          paths=['build/core/extras/webdav-cleanup/src/cleanup_posix.c','build/core/extras/webdav-cleanup/include/exr_webdav_cleanup.h','build/wc-prefix/include/exr_webdav_cleanup.h','build/wc-prefix/lib/libexr_webdav_cleanup.a','build/wc-tests/wc-consumer','build/wc-tests/wc-hookworker','tests/webdav_managed_cleanup_20261031/worker.c','tests/webdav_managed_cleanup_20261031/run.py']
+          r=dict(tests_source=os.environ['GITHUB_SHA'],core_source=os.environ['CORE_SHA'],base=os.environ['BASE_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],files={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths if pathlib.Path(p).is_file()})
+          (out/'binding.json').write_text(json.dumps(r,indent=2)+'\n')
+          print('MANAGED-CLEANUP-BINDING '+json.dumps(r))
+          PY
+      - name: Preserve logs, installed package and case records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webdav-managed-cleanup-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/wc-logs/
+            build/wc-evidence/
+            build/wc-prefix/
+            build/wc-tests/wc-consumer
+            build/wc-tests/wc-hookworker
+            build/wc-tests/CMakeCache.txt
+            build/wc-core/CMakeCache.txt
+          if-no-files-found: error
