@@ -62,9 +62,12 @@ def main():
             return connection.execute(query).fetchall()
     def snapshot(name):
         records = [json.loads(body) for body, in rows(name, "SELECT body_json FROM reader_revisions")]
+        entity_keys = {r["entity_key"] for r in records if r["entity_kind"] == "book"}
+        if len(entity_keys) != 1:
+            raise AssertionError("single-book producer cannot combine unrelated entity heads")
         ids = {r["id"] for r in records if r["entity_kind"] == "book"}
         parents = {p for r in records if r["entity_kind"] == "book" for p in r["parents"]}
-        return {"heads": sorted(ids - parents), "records": records,
+        return {"entity_key": next(iter(entity_keys)), "heads": sorted(ids - parents), "records": records,
                 "outbox": rows(name, "SELECT count(*) FROM reader_outbox")[0][0]}
     def configure(device):
         dialog = device.open_account()
