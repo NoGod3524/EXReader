@@ -238,8 +238,45 @@ static exr_status library_open(const char *path, exr_library **out, exr_error *e
   *out = l;
   return EXR_OK;
 }
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+/* Reuse the product catalog's local-volume policy. A failed conversion keeps
+   rollback journaling; source leases and SQLite's FULL durability are unchanged. */
+static void library_local_reads(sqlite3 *db) {
+  const char *path=sqlite3_db_filename(db,"main");
+  wchar_t *wide=NULL,*resolved=NULL,volume[MAX_PATH];HANDLE file=INVALID_HANDLE_VALUE;
+  sqlite3_stmt *statement=NULL;
+  if(!path || !*path) return;
+  int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,path,-1,NULL,0);
+  if(n<=0) return;
+  wide=malloc((size_t)n*sizeof(*wide));resolved=malloc(32768*sizeof(*resolved));
+  if(!wide || !resolved || !MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,path,-1,wide,n)) goto done;
+  file=CreateFileW(wide,0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+  if(file==INVALID_HANDLE_VALUE) goto done;
+  DWORD length=GetFinalPathNameByHandleW(file,resolved,32768,FILE_NAME_NORMALIZED|VOLUME_NAME_DOS);
+  if(length==0 || length>=32768 || !GetVolumePathNameW(resolved,volume,MAX_PATH) || GetDriveTypeW(volume)!=DRIVE_FIXED) goto done;
+  sqlite3_busy_timeout(db,0);
+  if(sqlite3_prepare_v2(db,"PRAGMA journal_mode",-1,&statement,NULL)==SQLITE_OK &&
+     sqlite3_step(statement)==SQLITE_ROW) {
+    const char *mode=(const char *)sqlite3_column_text(statement,0);
+    int is_delete=mode && !strcmp(mode,"delete");
+    sqlite3_finalize(statement);statement=NULL;
+    if(is_delete) sqlite3_exec(db,"PRAGMA journal_mode=WAL",NULL,NULL,NULL);
+  }
+  sqlite3_finalize(statement);
+  sqlite3_busy_timeout(db,3000);
+done:
+  if(file!=INVALID_HANDLE_VALUE) CloseHandle(file);
+  free(wide);free(resolved);
+}
+#endif
 exr_status exr_library_open(const char *path,exr_library **out,exr_error *e) {
-  return library_open(path,out,e,0);
+  exr_status status=library_open(path,out,e,0);
+#ifdef _WIN32
+  if(status==EXR_OK) library_local_reads((*out)->db);
+#endif
+  return status;
 }
 exr_status exr_library_migration_open(const char *path,exr_library **out,exr_error *e) {
   return library_open(path,out,e,1);

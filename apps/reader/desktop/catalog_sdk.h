@@ -8,6 +8,11 @@ extern "C" {
 #endif
 
 #define READER_BOOK_KEY_CAPACITY 72
+#if defined(EXR_WINDOWS_FRAME_REVIEW) && defined(_WIN32)
+typedef struct { int64_t hash_qpc,attach_qpc,lookup_qpc;unsigned hashed,attached,lookups; } reader_catalog_sdk_trace;
+const reader_catalog_sdk_trace *reader_catalog_sdk_trace_get(void);
+#endif
+
 /* Hash a borrowed immutable source in 64 KiB blocks. Short reads are accepted;
  * cancellation and read failure clear both outputs. Does not release source. */
 exr_status reader_catalog_source_identity(const exr_source *, const exr_control *,
