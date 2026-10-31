@@ -155,3 +155,19 @@ Source 6750ca5ce97abe8c02b625accab65285cb2a1e1e, run https://github.com/NoGod352
 macOS job 124410152702 built and installed the frozen SDK, then stopped before compiling the host because the independent OPDSHash prefix was absent. The C02 workflow now installs that existing dependency for each target and passes its canonical prefix. No SDK or existing build recipe changes. Both jobs now retain a C02 receipt even if an early configuration fails.
 
 The first configuration-fix commit 17c66b38921792b7a13c958f81f75d0b9fb900f5 contains an interrupted workflow write. Its run is ineligible for build evidence regardless of conclusion: the truncated recipe has no complete host build. The completed workflow is verified byte-for-byte against the authored source before the corrective commit. Commit/push is now stopped whenever a source-transfer result is incomplete.
+
+### Actual Android and macOS products built
+
+Source 8f4f311fb16e7201e02340fd658c13617c0f2936, run https://github.com/NoGod3524/EXReader/actions/runs/41159005963 / attempt 1: Android job 124412117716 and macOS job 124412117932 both completed the actual product build. This validates compilation/linking of the owner changes against frozen SDK 3.42, not admission behavior on those platforms.
+
+Artifacts: Android 13026571265, 65242 bytes, SHA256 ac3efcb2e35b87cfc7889f4f500dc63dd520313ace65ead32b5b9f87b3052664; macOS 13026154827, 21796 bytes, SHA256 4fa735a2e664fb3bc28ed1e43f4c9e043eefa3f9d906bc46728ae8809faf1632. Digests are GitHub original-ZIP metadata pending independent ZIP audit.
+
+### Windows trusted registry and actual product entry
+
+The new Windows registry adapter anchors registration in HKCU Software/EXReaderC02Admission, with explicit protected current-user/SYSTEM ACLs. It rejects registry links, weak ACLs and noncanonical bindings. The binding records the native root/admission/journal/intent/target identities and exact acknowledged gate generation plus seal. Ordinary open never creates a key, file or grant. Enrollment is separate, requires empty native objects and independent initial-state proof while held.
+
+Shared open pins the target namespace and actual library FileID and holds the persistent gate. Owner begin persists PENDING before issuing a capability. Publication can release the owner's target pin only while that capability is live; successful terminal journal and independent published-target proof precede registry advancement. A fresh explicit recovery can reconcile an unacknowledged native CLEAN with the old trusted grant. Registry publication is the final authority publication after the native CLEAN receipt and actual proof; an ambiguous registry API result is not reported as success.
+
+The actual Windows product now requires this installed admission provider and acquires shared registration before ordinary SDK open. Its cleanup releases registration only after workers, sources and session owners are torn down and the SDK library closes. The separate native consumer plans 14 registry/SDK cases and 6 actual-product checks. Its publication operation uses a real replacement SDK database and independent SDK source-byte verification; orchestration remains test code, not the production migration coordinator.
+
+Still required: production enrollment and enrollment recovery; the actual migration coordinator/publisher and worker recovery; explicit recovery of partial native journal records; transaction journal rollover; Android/Apple/GTK persistent admission adapters and runtime borrower tests; final same-source acceptance and original-ZIP audit. Existing standalone self-test/private-backup namespaces must also be classified before full entry-point coverage is claimed. Formal acceptance remains 95/108.
