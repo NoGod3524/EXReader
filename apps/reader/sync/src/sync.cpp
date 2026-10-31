@@ -11,6 +11,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+#ifndef _WIN32
+#include <sys/stat.h>
+#endif
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -125,6 +128,54 @@ std::string hash_file(const fs::path &name,uint64_t expected,const exr_webdav_co
   if(snapshot){output.flush();if(!output)reject(READER_SYNC_IO,"Cannot flush verified private snapshot");}
   cancelled(control);return hash.finish();
 }
+
+// Identity checks bound this operation to the verified private regular source.
+// The host still owns a stable private directory: this is not an adversarial
+// same-UID pathname-race defense. No replace/delete fallback is permitted.
+struct file_identity {
+#ifdef _WIN32
+  DWORD volume, high, low;
+#else
+  dev_t device; ino_t inode;
+#endif
+};
+file_identity regular_identity(const fs::path &path) {
+#ifdef _WIN32
+  HANDLE h=CreateFileW(path.c_str(),FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,nullptr);
+  if(h==INVALID_HANDLE_VALUE)reject(READER_SYNC_IO,"Cannot inspect private file identity");
+  BY_HANDLE_FILE_INFORMATION i{};BOOL ok=GetFileInformationByHandle(h,&i);CloseHandle(h);
+  if(!ok||(i.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT)))reject(READER_SYNC_HASH,"Private file is not a regular non-link file");
+  return {i.dwVolumeSerialNumber,i.nFileIndexHigh,i.nFileIndexLow};
+#else
+  struct stat i{};
+  if(lstat(path.c_str(),&i)!=0)reject(READER_SYNC_IO,"Cannot inspect private file identity");
+  if(!S_ISREG(i.st_mode))reject(READER_SYNC_HASH,"Private file is not a regular non-link file");
+  return {i.st_dev,i.st_ino};
+#endif
+}
+bool same_identity(const file_identity &a,const file_identity &b) {
+#ifdef _WIN32
+  return a.volume==b.volume&&a.high==b.high&&a.low==b.low;
+#else
+  return a.device==b.device&&a.inode==b.inode;
+#endif
+}
+void cache_publish_no_replace(private_file &raw,const fs::path &cached,uint64_t bytes,const std::string &expected,const exr_webdav_control *control) {
+  const auto before=regular_identity(raw.name);
+  if(hash_file(raw.name,bytes,control)!=expected)reject(READER_SYNC_HASH,"Downloaded original identity differs");
+  if(!same_identity(before,regular_identity(raw.name)))reject(READER_SYNC_HASH,"Private source identity changed");
+  std::error_code error;fs::create_hard_link(raw.name,cached,error);
+  if(error) {
+    if(error!=std::errc::file_exists)reject(READER_SYNC_IO,"No-replace cache publication refused");
+    const auto existing=regular_identity(cached);
+    if(hash_file(cached,bytes,control)!=expected||!same_identity(existing,regular_identity(cached)))reject(READER_SYNC_HASH,"Existing private cache identity differs");
+  } else if(!same_identity(before,regular_identity(raw.name))||!same_identity(before,regular_identity(cached))) {
+    reject(READER_SYNC_HASH,"Published cache identity changed");
+  }
+  // private_file removes only our staging name. Never keep it after linking,
+  // remove the existing destination, or fall back to replacement rename.
+}
+
 struct queue_row {reader_revision_info info{};std::string wire;};
 int queued(void *context,const reader_revision_outbox_row *row){auto &v=*(std::vector<queue_row> *)context;queue_row q;q.info=row->info;q.wire.assign(row->wire,row->info.bytes);v.push_back(std::move(q));return 0;}
 std::string shard_name(unsigned shard){char value[3];std::snprintf(value,sizeof(value),"%02x",shard);return value;}
@@ -193,7 +244,7 @@ struct step {
     if(status==READER_REV_NOT_FOUND){++report.pending_metadata;return;}revision_check(status);
     std::string key=i.book_key,expected=key.substr(key.find(':')+1);fs::path cached=s.directory/fs::u8path(object_name(key));
     if(fs::exists(cached)){if(hash_file(cached,bytes,control)!=expected)reject(READER_SYNC_HASH,"Private original cache identity differs");}
-    else {private_file raw(s.directory);download(object_path(key),raw);if(hash_file(raw.name,bytes,control)!=expected)reject(READER_SYNC_HASH,"Downloaded original identity differs");fs::rename(raw.name,cached);raw.keep=true;}
+    else {private_file raw(s.directory);download(object_path(key),raw);cache_publish_no_replace(raw,cached,bytes,expected,control);}
     ++report.originals_verified;
   }
   void pull(unsigned shard,const std::string &after,size_t limit){
