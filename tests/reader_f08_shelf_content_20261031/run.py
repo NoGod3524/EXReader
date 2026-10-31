@@ -10,7 +10,8 @@ FILES={"tests/reader_f08_causal_frame_20261031/probe.c","tests/reader_f08_causal
        "tests/reader_f08_compact_resume_20261031/adapter.py","tests/reader_f08_compact_resume_20261031/controls.py"}
 sys.path.insert(0,str(ROOT/"tests/reader_f08_causal_frame_20261031"))
 import driver as D
-import verify as V
+_verify_spec=importlib.util.spec_from_file_location("f08_causal_verifier",ROOT/"tests/reader_f08_causal_frame_20261031/verify.py")
+V=importlib.util.module_from_spec(_verify_spec);_verify_spec.loader.exec_module(V)
 sys.path.insert(0,str(ROOT/"tests/reader_f08_compact_resume_20261031"))
 import adapter as A
 spec=importlib.util.spec_from_file_location("linux_full_product",ROOT/"tests/reader_f08_linux_product_20261031/run.py")
@@ -19,6 +20,7 @@ need,save,sha,command,identity,load=R.need,R.save,R.sha,R.command,R.identity,R.l
 def api(path):return json.loads(command(["gh","api","repos/NoGod3524/EXReader/"+path]))
 def guard():
     need(os.environ.get("GITHUB_ACTIONS")=="true" and sys.platform.startswith("linux"),"Linux Actions only")
+    need(Path(V.__file__).resolve()==ROOT/"tests/reader_f08_causal_frame_20261031/verify.py" and callable(getattr(V,"verify",None)),"explicit causal verifier import")
     need(command(["git","rev-parse","HEAD"],text=True).strip()==identity()["source_sha"],"source identity")
     command(["git","merge-base","--is-ancestor",BASE,"HEAD"])
     need(set(command(["git","diff","--name-only",BASE,"HEAD"],text=True).splitlines())==FILES,"test-only scope")
@@ -86,13 +88,13 @@ def coverage(summary):
     return {"shelf_actions":len(actions),"content_draw_entry_us":[a["event_to_content_draw_entry_us"] for a in actions],
             "content_frame_end_us":[a["event_to_content_frame_end_us"] for a in actions],
             "physical_presentation_proven":False,"frame_budget_measured":False,"f08_accepted":False}
-def startup_coverage(root,top):
+def startup_coverage(root,top,ident=None):
     import configparser
     continued=0
     for row in top["cohorts"]:
         folder=root/("launch-%02d"%row["launch"])
         receipt=load(folder/"compact-resume.json")
-        need(receipt["identity"]==V.identity(),"startup receipt identity")
+        need(receipt["identity"]==(V.identity() if ident is None else ident),"startup receipt identity")
         settings=(folder/"startup-settings.ini").read_text()
         need(hashlib.sha256(settings.encode()).hexdigest()==receipt["settings_sha256"],"original startup settings")
         config=configparser.ConfigParser(interpolation=None);config.read_string(settings)
@@ -165,6 +167,48 @@ def audit():
         report.update(checked,collection_complete=True,program_sha256=built["program_sha256"])
     dest=ROOT/"build/f08-shelf-content-audit";dest.mkdir()
     save(dest/"audit.json",report);print("F08_SHELF_CONTENT_AUDIT",json.dumps(report),flush=True)
+def replay():
+    # The producer completed all six native launches. Its wrong verifier import
+    # failed before analysis; replay that immutable raw record without resampling.
+    guard();dest=ROOT/"build/f08-shelf-replay"
+    producer={"source_sha":"622a29b3bb4b0f4e8a579f870718f2935d9dbf9d","run_id":"41221687229","attempt":"1"}
+    report={**identity(),"replay_complete":False,"problems":[],"f08_accepted":False}
+    try:
+        raw,pin=archive(producer,"f08-shelf-content-41221687229-1",dest,13049843291)
+        need(pin["bytes"]==5073776 and pin["sha256"]=="30a403187a9aeb73af483f9867c3775f4d1909492ba0595d7b5653ea9c9f22b3","fixed native archive")
+        report["producer_artifact"]=pin
+        previous=load(raw/"result.json")
+        need(previous["collection_complete"] is False,"preserve original analysis failure")
+        report["original_problems"]=previous["problems"]
+        original,original_pin=archive(PRODUCER,"f08-linux-product-"+PRODUCER["run_id"]+"-1",ROOT/"build/f08-replay-product-input")
+        built=product(original);report["product"]=original_pin
+        verifier="tests/reader_f08_causal_frame_20261031/verify.py"
+        need(sha(ROOT/verifier)==hashlib.sha256(command(["git","show",producer["source_sha"]+":"+verifier])).hexdigest(),"same causal analysis code")
+        ident=dict(GITHUB_SHA=producer["source_sha"],GITHUB_RUN_ID=producer["run_id"],GITHUB_RUN_ATTEMPT=producer["attempt"])
+        top=load(raw/"f08-causal/driver.json");V.verify_top(top,ident)
+        need(sha(raw/"f08-causal/host.bin")==built["program_sha256"]==previous["program_sha256"]==top["host_sha256"],"same full product binary")
+        need(sha(raw/"f08-causal/module.so")==top["module_sha256"],"native observer bytes")
+        control=load(raw/"f08-causal-control/draw.json")
+        need(control.get("passed") is True and control.get("hook_only")==0 and control.get("with_handler")==1 and
+             control.get("callbacks")==1 and control.get("pixels_equal") is True and control.get("nonempty") is True,"native draw control")
+        results=[]
+        for row in top["cohorts"]:
+            observations=load(raw/("f08-causal/launch-%02d/%d.json"%(row["launch"],row["pid"])))
+            need(observations.get("shelf_content_version")==1,"native shelf content schema")
+            need(observations["executable"]==str((ROOT/"build/perf-package/EXReader-Linux/bin/exreader-linux").resolve()),"native executable path")
+            analyzed=V.analyze(observations,row,ident)
+            results.append({**{key:row[key] for key in ("launch","pid","kind")},**analyzed})
+        summary={"passed":True,"new_launches":6,"new_actions":18,"results":results,"draw_control":control,
+                 "physical_display_presented":False,"F08_accepted":False}
+        report.update(coverage(summary),replay_complete=True,program_sha256=built["program_sha256"],
+            startup=startup_coverage(raw/"f08-causal",top,ident),
+            controls={"original":V.controls(),"predicate":V.regressions(),"content":V.content_regressions()})
+        save(dest/"analysis.json",summary)
+    except BaseException as error:
+        report["problems"].append(repr(error));report["traceback"]=traceback.format_exc();raise
+    finally:
+        dest.mkdir(parents=True,exist_ok=True);save(dest/"replay.json",report)
+        print("F08_SHELF_CONTENT_REPLAY",json.dumps(report),flush=True)
 if __name__=="__main__":
-    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("guard","capture","audit","seal"))
+    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("guard","capture","audit","seal","replay"))
     globals()[parser.parse_args().mode]()
