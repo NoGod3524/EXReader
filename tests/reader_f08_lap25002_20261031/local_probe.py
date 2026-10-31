@@ -73,8 +73,6 @@ def main():
     user = C.WinDLL("user32", use_last_error=True)
     user.EnumDisplaySettingsW.argtypes = [W.LPCWSTR, W.DWORD, C.POINTER(D.Settings)]
     user.EnumDisplaySettingsW.restype = W.BOOL
-    user.ChangeDisplaySettingsExW.argtypes = [W.LPCWSTR, C.POINTER(D.Settings), W.HWND, W.DWORD, W.LPVOID]
-    user.ChangeDisplaySettingsExW.restype = W.LONG
     user.GetForegroundWindow.restype = W.HWND
     user.SetForegroundWindow.argtypes = [W.HWND]
     user.GetDlgCtrlID.argtypes = [W.HWND]
@@ -88,6 +86,9 @@ def main():
     P.need(user.EnumDisplaySettingsW(None, 0xffffffff, C.byref(before)), "current display")
     foreground = user.GetForegroundWindow()
     report["display_before"] = [before.width, before.height, before.frequency]
+    report["display_mode_changed_by_harness"] = False
+    report["window_outer_size"] = [1168, 752]
+    P.need(before.width >= 1168 and before.height >= 752, "native display accommodates the fixed test window")
     frequency = C.c_longlong()
     H.K.QueryPerformanceFrequency(C.byref(frequency))
     def qpc():
@@ -98,11 +99,6 @@ def main():
     P.need(execution_state, "temporary display and system awake request")
     report["execution_state_before"] = execution_state
     try:
-        requested = D.Settings.from_buffer_copy(before)
-        requested.width, requested.height, requested.frequency = 1280, 800, 60
-        requested.fields = 0x00080000 | 0x00100000 | 0x00400000
-        P.need(user.ChangeDisplaySettingsExW(None, C.byref(requested), None, 2, None) == 0, "supported device mode")
-        P.need(user.ChangeDisplaySettingsExW(None, C.byref(requested), None, 0, None) == 0, "device mode")
         for index, kind in enumerate(("shelf", "font")):
             folder = out / ("capture-%02d" % index)
             folder.mkdir()
@@ -135,7 +131,7 @@ def main():
                 entry["first_screen"] = H.op_first_screen(host, 60)
                 entry["hwnd"] = int(host.window)
                 user.ShowWindow(host.window, 9)
-                P.need(user.SetWindowPos(host.window, W.HWND(-1), 0, 0, 0, 0, 0x43), "visible owned product window")
+                P.need(user.SetWindowPos(host.window, W.HWND(-1), 0, 0, 1168, 752, 0x42), "visible owned product window")
                 user.SetForegroundWindow(host.window)
                 print("F08_ACTIVATE_OWNED_WINDOW", json.dumps({"pid": host.process.pid, "hwnd": int(host.window), "kind": kind}), flush=True)
                 activation_deadline = time.monotonic() + 90
@@ -191,9 +187,8 @@ def main():
         raise
     finally:
         report["execution_state_restored"] = bool(H.K.SetThreadExecutionState(execution_state))
-        restored = user.ChangeDisplaySettingsExW(None, C.byref(before), None, 0, None)
         after = D.Settings(size=C.sizeof(D.Settings))
-        report["display_restored"] = restored == 0 and bool(user.EnumDisplaySettingsW(None, 0xffffffff, C.byref(after))) and (
+        report["display_unchanged"] = bool(user.EnumDisplaySettingsW(None, 0xffffffff, C.byref(after))) and (
             after.width, after.height, after.frequency) == (before.width, before.height, before.frequency)
         if foreground:
             user.SetForegroundWindow(foreground)
@@ -202,7 +197,7 @@ def main():
             "files": {p.relative_to(out).as_posix(): {"sha256": P.sha(p), "bytes": p.stat().st_size}
                       for p in sorted(out.rglob("*")) if p.is_file() and p != out / "manifest.json"}})
         print("F08_LOCAL_NATIVE_OUTPUT", str(out), flush=True)
-        P.need(report["display_restored"], "original display restoration")
+        P.need(report["display_unchanged"], "desktop display mode must remain unchanged")
     try:
         for entry in report["captures"]:
             entry["analysis"] = WGC.analyze(out / entry["folder"], entry, P)

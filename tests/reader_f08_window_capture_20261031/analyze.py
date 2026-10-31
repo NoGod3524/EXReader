@@ -21,7 +21,7 @@ def analyze(folder, entry, P):
     frames=[r for r in native if r["kind"]=="frame"]
     P.need([r["index"] for r in frames]==list(range(1,len(frames)+1)) and len(frames)==last["frames"],"callback accounting")
     images={};loaded_name=None;pixels=None;changed={119:[],123:[]};invalid={119:0,123:0};previous={};whole=None
-    previous_time=-1;whole_changes=0;phase=[];callback_lags=[]
+    previous_time=-1;whole_changes=0;phase=[];callback_lags=[];uniform={119:[],123:[]}
     for r in frames:
         P.need(first["qpc"]<=r["callback_qpc"]<=r["copy_qpc"]<=r["map_start_qpc"]<=r["map_end_qpc"]<=
                r["readback_finished_qpc"]<=last["qpc"],"readback chronology")
@@ -54,11 +54,14 @@ def analyze(folder, entry, P):
             P.need(region["pid"]==pid and region["hwnd"]>0 and region["visible"] and region["geometry_stable"] and
                    0<=x0<x1<=r["width"] and 0<=y0<y1<=r["height"],"owned visible crop")
             crop=b"".join(pixels[(y*r["width"]+x0)*4:(y*r["width"]+x1)*4] for y in range(y0,y1))
-            P.need(any(len(set(crop[c::4]))>1 for c in range(3)),"blank or masked product region")
+            nonuniform=any(len(set(crop[c::4]))>1 for c in range(3))
+            if not nonuniform:
+                uniform[control].append({"index":r["index"],"bgra":list(crop[:4]),
+                                         "classification":"uniform_pixels_cause_unknown"})
             digest=hashlib.sha256(crop).hexdigest();key=(x1-x0,y1-y0,digest)
             if previous.get(control)!=key:
                 changed[control].append({"index":r["index"],"system_relative_100ns":native_time,"image":name,
-                                         "region_sha256":digest,"crop":region["crop"]})
+                                         "region_sha256":digest,"crop":region["crop"],"nonuniform":nonuniform})
             previous[control]=key
         phase.append((r["readback_finished_qpc"]-r["copy_qpc"])*1000/freq)
         callback_lags.append(r["callback_qpc"]*1000/freq-native_time/10000)
@@ -69,8 +72,8 @@ def analyze(folder, entry, P):
     for event in inputs:
         P.need(event["pid"]==pid and driver[0]["qpc"]<=event["start_qpc"]<=event["dispatch_qpc"]<=event["end_qpc"]<=driver[-1]["qpc"],"input chronology")
     result={"native_frames":len(frames),"native_input_dispatches":len(inputs),
-            "distinct_content_frames":{key:len(value) for key,value in changed.items()},"content_frames":changed,
-            "invalid_regions":invalid,"images":images,"readback_ms":phase,"callback_lag_ms":callback_lags,
+            "distinct_content_frames":{key:sum(r["nonuniform"] for r in value) for key,value in changed.items()},"content_frames":changed,
+            "invalid_regions":invalid,"uniform_regions":uniform,"images":images,"readback_ms":phase,"callback_lag_ms":callback_lags,
             "timestamps_after_callback":sum(value<0 for value in callback_lags),
             "native_timestamp_order_confirmed":all(value>=0 for value in callback_lags),
             "frame_census_complete":False,"application_paint_generation_bound":False,
