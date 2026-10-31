@@ -8,8 +8,8 @@ SDK=OUT/"sdk-source/build/reading-library/stage"
 def run(name,args,cwd=ROOT,timeout=1800):
  OUT.mkdir(parents=True,exist_ok=True)
  print("RUN",name,flush=True)
- p=subprocess.run(list(map(str,args)),cwd=cwd,capture_output=True,text=True,errors="replace",timeout=timeout)
- (OUT/(name+".log")).write_text(p.stdout+"\n"+p.stderr)
+ p=subprocess.run(list(map(str,args)),cwd=cwd,capture_output=True,text=True,encoding="utf-8",errors="replace",timeout=timeout)
+ (OUT/(name+".log")).write_text(p.stdout+"\n"+p.stderr,encoding="utf-8")
  print(p.stdout[-2500:]+p.stderr[-2500:],flush=True)
  if p.returncode:raise RuntimeError(name+": "+str(p.returncode))
  return p.stdout
@@ -24,7 +24,7 @@ def cmake(name,source,extra=(),prefix=PREFIX,install=True,targets=()):
 def hash_file(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def build():
  cmake("hash","extras/opds",["-DEXREADER_OPDS_HASH_ONLY=ON"])
- os.environ["EXREADER_ORIGINAL_HASH_PREFIX"]=str(PREFIX)
+ os.environ["EXREADER_ORIGINAL_HASH_PREFIX"]=PREFIX.as_posix()
  cmake("cleanup","extras/webdav-cleanup")
  cmake("webdav","extras/webdav",["-DEXR_WEBDAV_MANAGED=ON"])
  cmake("probes","tests/gtk_managed_webdav_20261031",["-DHOST_SOURCE="+str(ROOT)],install=False)
@@ -49,6 +49,24 @@ def build():
  cmake("host","apps/reader/desktop",extra,install=False,targets=("exreader-linux",))
  run("package",[sys.executable,"tools/build_linux_host.py","--sdk",SDK,"--sdk-version","3.42.0",
   "--binary",OUT/"host/gtk-host/exreader-linux","--output",OUT/"package"])
+
+ # Capability configs reject a cached dependency from a different installation.
+ import shutil
+ foreign=OUT/"foreign-prefix";shutil.copytree(PREFIX,foreign)
+ checks=[]
+ for name,package,target in (("dav","EXReaderWebDAVManaged","EXReaderWebDAV"),
+                             ("cleanup","EXReaderWebDAVManaged","EXReaderWebDAVCleanup"),
+                             ("session","EXReaderSessionManaged","EXReaderSession")):
+  source=OUT/("mixed-"+name);source.mkdir()
+  (source/"CMakeLists.txt").write_text("cmake_minimum_required(VERSION 3.24)\nproject(MixedCapability LANGUAGES C CXX)\nfind_package("+package+" 0.1.0 EXACT CONFIG REQUIRED)\n")
+  p=subprocess.run(["cmake","-S",str(source),"-B",str(source/"build"),"-G","Ninja",
+   "-DCMAKE_PREFIX_PATH="+str(PREFIX),"-D"+target+"_DIR="+str(foreign/"lib/cmake"/target)],
+   capture_output=True,text=True,encoding="utf-8",errors="replace",timeout=90)
+  (OUT/("mixed-"+name+".log")).write_text(p.stdout+"\n"+p.stderr,encoding="utf-8")
+  assert p.returncode!=0 and any(x in p.stdout+p.stderr for x in ("same installation","share one installation","origin mismatch","matching installed")),p.stdout+p.stderr
+  checks.append(dict(name=name,returncode=p.returncode))
+ (OUT/"capability-refusals.json").write_text(json.dumps(checks,indent=2)+"\n")
+
  # Original WebDAV consumer is unchanged and still selects the old default API.
  cmake("old-webdav","tests/webdav/consumer",install=False)
  run("old-webdav-tests",[sys.executable,"tests/webdav/check_tls.py","--consumer",OUT/"old-webdav/webdav-consumer",
@@ -63,7 +81,7 @@ def build():
  assert "exr_wc_test_hook" not in normal and "exr_webdav_managed_test_hook" not in normal
  binary=OUT/"host/gtk-host/exreader-linux";pack=OUT/"package/EXReader-Linux/bin/exreader-linux"
  assert binary.read_bytes()==pack.read_bytes()
- run("version",[pack,"--version"])
+ assert run("version",[pack,"--version"]).split()[0]=="3.42.0"
  files={str(p.relative_to(ROOT)):dict(bytes=p.stat().st_size,sha256=hash_file(p)) for p in
   [*libs,binary,pack,OUT/"probes/managed-consumer",OUT/"probes/managed-fault-worker",SDK/"lib/libexr_core.a"] if p.is_file()}
  result=dict(source=os.environ["GITHUB_SHA"],sdk_source=SDK_SOURCE,run=os.environ["GITHUB_RUN_ID"],
@@ -73,7 +91,7 @@ def build():
 def compat():
  stage=OUT/"legacy"
  cmake("legacy-hash","extras/opds",["-DEXREADER_OPDS_HASH_ONLY=ON"],prefix=stage)
- os.environ["EXREADER_ORIGINAL_HASH_PREFIX"]=str(stage)
+ os.environ["EXREADER_ORIGINAL_HASH_PREFIX"]=stage.as_posix()
  for name,source in [("webdav","extras/webdav"),("product","apps/reader/store/native"),("revisions","apps/reader/revisions"),("sync","apps/reader/sync"),("session","apps/reader/session")]:
   cmake("legacy-"+name,source,prefix=stage)
  cmake("legacy-consumer","tests/webdav/consumer",prefix=stage,install=False)

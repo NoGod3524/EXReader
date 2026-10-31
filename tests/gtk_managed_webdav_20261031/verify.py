@@ -7,8 +7,7 @@ def need(value,why):
 def sha(b):return hashlib.sha256(b).hexdigest()
 def api(path):return subprocess.check_output(["gh","api","repos/NoGod3524/EXReader/"+path],timeout=60)
 def locate(files,suffix):
- rows=[n for n in files if n==suffix or n.endswith("/"+suffix)]
- need(len(rows)==1,"member "+suffix);return rows[0]
+ need(suffix in files,"member "+suffix);return suffix
 def obj(files,suffix):return json.loads(files[locate(files,suffix)])
 def unpack(data):
  files={};seen=set()
@@ -48,6 +47,7 @@ def check_linux(files):
   if p.endswith((".a","exreader-linux","managed-consumer")):
    need(b"exr_wc_test_hook" not in b and b"exr_webdav_managed_test_hook" not in b,"installed hook")
  need(build["installed_only"] and build["no_installed_hooks"],"installed source distinction")
+ negatives=obj(files,"capability-refusals.json");need(len(negatives)==3 and all(n["returncode"]!=0 for n in negatives),"mixed package refusals")
  cases=matrix["cases"];need(len(cases)==25 and len({c["name"] for c in cases})==25,"product case set")
  kills=0
  for i,c in enumerate(cases,1):
@@ -109,14 +109,18 @@ def controls(files):
    n=locate(files,"matrix/results.json");r=json.loads(files[n])
    if name=="signal":next(p for p in r["cases"][6]["processes"] if p["kill_sent"])["returncode"]=0
    elif name=="target":
-    next(s for s in r["cases"][5]["snapshots"] if s["label"]=="recovery-2")["entries"]["dest/book.txt"]["ino"]+=1
+    for s in r["cases"][5]["snapshots"]:
+     if s["label"] in ("recovery-1","recovery-2"):s["entries"]["dest/book.txt"]["ino"]+=1
    else:
     p=r["cases"][24]["processes"][0];p["observations"][-1]["published"]=1
     log=locate(changed,"matrix/"+p["log"]);lines=changed[log].decode().splitlines();index=max(i for i,x in enumerate(lines) if x.startswith("OBS "))
     lines[index]="OBS "+json.dumps(p["observations"][-1]);changed[log]=("\n".join(lines)+"\n").encode()
   changed[n]=(json.dumps(r)+"\n").encode()
   try:check_linux(changed)
-  except AssertionError as e:results.append(dict(name=name,rejected=True,reason=str(e)))
+  except AssertionError as e:
+   expected={"signal":"actual SIGKILL","target":"published target preserved","capacity":"capacity refusal","gtk":"cleanup retry only"}[name]
+   need(str(e)==expected,"negative control failed for unrelated reason "+name+": "+str(e))
+   results.append(dict(name=name,rejected=True,reason=str(e)))
   else:raise AssertionError("negative control accepted "+name)
  return results
 def main():

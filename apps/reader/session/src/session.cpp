@@ -220,6 +220,9 @@ extern "C" reader_session_status reader_session_start(reader_session *s){if(!s)r
 }
 extern "C" reader_session_status reader_session_cancel(reader_session *s){if(!s)return READER_SESSION_ARGUMENT;std::lock_guard<std::mutex> lock(s->mutex);
   if(s->closing)return READER_SESSION_ARGUMENT;
+#ifdef EXR_READER_SESSION_MANAGED
+  if(s->cleanup_requested)return READER_SESSION_OK; /* Bounded offline recovery drains before CLOSED. */
+#endif
   if(s->pending||s->running){s->cancelled.store(true);s->view.state=READER_SESSION_CANCELLING;}return READER_SESSION_OK;
 }
 extern "C" reader_session_status reader_session_observe(reader_session *s,reader_session_snapshot *out){if(out)*out={};if(!s||!out)return READER_SESSION_ARGUMENT;

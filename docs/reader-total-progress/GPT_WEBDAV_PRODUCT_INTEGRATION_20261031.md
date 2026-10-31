@@ -54,3 +54,15 @@ Linux 构建完整安装依赖和实际 GTK、原 77 项 TLS 回归，25 项本�
 Windows/macOS 默认关闭 managed，原 installed TLS 用例分别 76/77 项及原异步 session 20 项保持原断言。
 独立 evidence job 认证本次原始 ZIP，重算原始 receipt CRC/身份、目标保留、死亡退出码、恢复幂等和容量界限，核对实际 GTK 二进制、截图与网络记录，并运行篡改负控。
 每次失败 artifacts 保留，最终完整 SHA、run/attempt、各 artifact digest 和尚存边界在实际结果后补录。
+
+## 首轮产品运行及修复
+
+源码 fef8bf9fd9b7c68228705cd6e20d6f56031897ab；[41176047061](https://github.com/NoGod3524/EXReader/actions/runs/41176047061) / attempt 1。
+Linux job 124463711948 success：完整 GTK 构建、旧 77 项 TLS、25 项故障矩阵和真实 GTK 21 条记录通过。macOS job 124463712158 success：旧 77 项 TLS 和 20 项 session 通过。
+Windows job 124463712157 失败于旧 product 的 canonical hash prefix guard：脚本传入 Windows 反斜杠，而 CMake REALPATH 为正斜杠。仅将脚本前缀转为 as_posix()，不改原断言。
+独立 evidence job 124464715649 拒绝：member build.json。打包器也产出 package/EXReader-Linux/build.json；后缀模糊查找冲突。改为要求 artifact 根目录下的精确成员路径，保留两份不同用途的 build.json。
+修复同批补上：UTF-8 日志、隐藏 receipt/lock 文件上传、三个跨安装前缀拒绝控制、实际包版本 3.42.0 核对，以及 idle cleanup 期间 Cancel 不改变为悬空 CANCELLING 状态。四项产品篡改控制须按指定语义原因拒绝。
+- gtk-managed-Windows-41176047061-1：artifact 13033750401，187149 bytes，sha256:fd10a2ebb9e1bfe9ecca6cfe30bb9d1a5a6af6d33fa29e26d411d3d44569d77b。
+- gtk-managed-macOS-41176047061-1：artifact 13033127154，1340193 bytes，sha256:c4b0cc6f2ad78a0207c0d372acd597fa083ab0a74c18ceaf5e6e83b7419639a4。
+- gtk-managed-Linux-41176047061-1：artifact 13033037169，44484192 bytes，sha256:598781a635214e94ac373a9352134044555835af8988f0aa32eb8e90c7dab773。
+- gtk-managed-verification-41176047061-1：artifact 13032831514，44010334 bytes，sha256:bf9e0d1450036eaeaaa8095f242b551d3f6151da3a56147d4cb7ba7820044062。
