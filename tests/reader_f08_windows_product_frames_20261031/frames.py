@@ -94,9 +94,12 @@ def analyze(folder,pid,frequency,native):
     inputs=[r for r in events if r["kind"]=="input"]
     need(all(type(r.get("target_enabled_before")) is bool and type(r.get("target_enabled_after")) is bool for r in inputs),"native control state coverage")
     buttons=[r for r in inputs if r["message"]==0xF5]
+    fonts=[r for r in buttons if r["control_id"] in (113,114)]
+    need(all(r.get("target_enabled_at_dispatch") is True and 0<r.get("remaining_dispatch_budget_ms",0)<=2000
+             for r in fonts if r.get("input_dispatched")),"native ready font dispatch")
     summary={"pid":pid,"qpc_frequency":frequency,"etw_events":len(rows),"bound_windows":len(handles),
         "button_dispatch_states":buttons,"disabled_button_dispatches":sum(not r["target_enabled_before"] for r in buttons),
-        "input_dispatches":sum(r["kind"]=="input" for r in events),"composition":context,
+        "input_attempts":len(inputs),"input_dispatches":sum(r.get("input_dispatched") is True for r in inputs),"composition":context,
         "dwm_cycle_to_retirement_ms":durations,"scope":"DWM composition cycle; not application input-to-frame time",
         "application_paint_generation_bound":False,"frame_budget_measured":False,"physical_presentation_proven":False}
     save(folder/"analysis.json",summary)
@@ -161,6 +164,66 @@ def binding_regression():
     report={**identity(),"producer":pin,"artifact_id":artifact,"sha256":digest,"authenticated":True,
         "bindings":bindings,"negative_controls":negatives,"original_failure_preserved":True,"resampled":False,"f08_accepted":False}
     save(target/"regression.json",report);print("F08_PROCESS_LIFETIME_REGRESSION",json.dumps(report),flush=True)
+
+def remaining_dispatch_budget(enabled,deadline,now=time.perf_counter,pause=time.sleep):
+    """Readiness and the native send share the caller's original dispatch deadline."""
+    polls=0
+    while True:
+        remaining=deadline-now()
+        if remaining<=0:raise TimeoutError("font control stayed disabled within original dispatch budget")
+        if enabled():
+            remaining=deadline-now()
+            if remaining<=0:raise TimeoutError("font readiness arrived after original dispatch budget")
+            milliseconds=int(remaining*1000)
+            if milliseconds<1:raise TimeoutError("no whole millisecond remains for native dispatch")
+            return milliseconds,polls
+        pause(min(0.001,remaining));polls+=1
+
+def readiness_controls():
+    checks=[]
+    for label,ready_at in (("already-enabled",0.0),("brief-native-busy",0.003)):
+        clock=[0.0]
+        remaining,polls=remaining_dispatch_budget(lambda:clock[0]>=ready_at,0.020,
+            lambda:clock[0],lambda seconds:clock.__setitem__(0,clock[0]+seconds))
+        need(0<remaining<=20 and clock[0]>=ready_at and clock[0]+remaining/1000<=0.020+1e-12,"shared dispatch deadline")
+        checks.append({"name":label,"remaining_ms":remaining,"polls":polls,"passed":True})
+    for label,deadline,enabled in (("never-enabled",0.002,False),("expired-before-enabled",0.0,True),("no-whole-millisecond",0.0005,True)):
+        clock=[0.0]
+        try:remaining_dispatch_budget(lambda:enabled,deadline,lambda:clock[0],
+            lambda seconds:clock.__setitem__(0,clock[0]+seconds))
+        except TimeoutError:
+            need(clock[0]<=deadline+1e-12,"readiness extended the budget")
+            checks.append({"name":label,"passed":True})
+        else:raise ValueError("disabled or expired control accepted")
+    return checks
+
+def control_regression():
+    guard();target=ROOT/"build/f08-windows-control-regression"
+    pin={"source_sha":"be53e4303b9775858b222b6c66f0752438eb9b97","run_id":"41191707315","attempt":"1"}
+    artifact=13038973819;digest="c962be6207a0e8e6cf9dae9562db4abef89ce375ef4fa066cd7576e436790b1f";size=145680800
+    meta=api("actions/artifacts/"+str(artifact));producer=api("actions/runs/"+pin["run_id"])
+    need(meta["id"]==artifact and not meta["expired"] and meta["workflow_run"]["head_sha"]==pin["source_sha"]
+         and str(meta["workflow_run"]["id"])==pin["run_id"] and meta["size_in_bytes"]==size
+         and meta["digest"]=="sha256:"+digest and producer["head_sha"]==pin["source_sha"]
+         and str(producer["run_attempt"])==pin["attempt"],"retained control-failure identity")
+    data=command(["gh","api","repos/NoGod3524/EXReader/actions/artifacts/"+str(artifact)+"/zip"])
+    need(len(data)==size and hashlib.sha256(data).hexdigest()==digest,"retained control-failure ZIP")
+    target.mkdir(parents=True,exist_ok=False);raw=target/"raw";extract(data,raw,"manifest.json",pin)
+    result=json.loads((raw/"result.json").read_text())
+    interactions=json.loads((raw/"observations/interactions.json").read_text())
+    need(result["capture_complete"] is False and interactions["faults"],"original failure preserved")
+    disabled=[]
+    for entry in result["captures"]:
+        events=[json.loads(line) for line in (raw/entry["folder"]/"native.jsonl").read_text().splitlines()]
+        for row in events:
+            if row["kind"]=="input" and row["message"]==0xF5 and row["control_id"] in (113,114) and row["target_enabled_before"] is False:
+                disabled.append({"pid":entry["pid"],"control_id":row["control_id"],"start_qpc":row["start_qpc"],
+                    "end_qpc":row["end_qpc"],"label_before":row["page_label_before"],"label_after":row["page_label_after"]})
+    need(disabled,"no retained disabled font observations")
+    report={**identity(),"producer":pin,"artifact_id":artifact,"sha256":digest,"authenticated":True,
+        "disabled_font_observations":disabled,"original_faults":interactions["faults"],"original_failure_preserved":True,
+        "controls":readiness_controls(),"resampled":False,"f08_accepted":False}
+    save(target/"regression.json",report);print("F08_CONTROL_READINESS_REGRESSION",json.dumps(report),flush=True)
 
 def capture():
     guard();OUT.mkdir(parents=True,exist_ok=False)
@@ -236,10 +299,11 @@ def capture():
             return result
         def send(host,hwnd,message,wparam=0,lparam=0,timeout=2000):
             if message not in (0xF5,0x20A,0x186,0x111,0xC):return original_send(host,hwnd,message,wparam,lparam,timeout)
+            deadline=time.perf_counter()+timeout/1000
             bind(host,hwnd);start=qpc()
             event={"kind":"input","pid":host.process.pid,"hwnd":int(hwnd),"message":message,"wparam":wparam,
                    "control_id":user.GetDlgCtrlID(hwnd),"start_qpc":start,"completed":False,
-                   "target_enabled_before":bool(user.IsWindowEnabled(hwnd)),
+                   "input_dispatched":False,"target_enabled_before":bool(user.IsWindowEnabled(hwnd)),
                    "target_visible_before":bool(user.IsWindowVisible(hwnd))}
             if message==0xF5:
                 try:
@@ -247,7 +311,16 @@ def capture():
                     event["page_label_before"]=host.label(500)
                 except Exception as error:event["observation_error"]=repr(error)
             try:
-                result=original_send(host,hwnd,message,wparam,lparam,timeout);event["completed"]=True;return result
+                remaining=timeout
+                if message==0xF5 and event["control_id"] in (113,114):
+                    event["ready_wait_start_qpc"]=qpc()
+                    remaining,polls=remaining_dispatch_budget(lambda:bool(user.IsWindowEnabled(hwnd)),deadline)
+                    event["ready_wait_end_qpc"]=qpc();event["ready_polls"]=polls
+                    event["target_enabled_at_dispatch"]=bool(user.IsWindowEnabled(hwnd))
+                    need(event["target_enabled_at_dispatch"],"font control lost native readiness before dispatch")
+                    event["remaining_dispatch_budget_ms"]=remaining
+                event["dispatch_qpc"]=qpc();event["input_dispatched"]=True
+                result=original_send(host,hwnd,message,wparam,lparam,remaining);event["completed"]=True;return result
             except BaseException as error:event["error"]=repr(error);raise
             finally:
                 event["end_qpc"]=qpc();event["target_enabled_after"]=bool(user.IsWindowEnabled(hwnd))
@@ -351,4 +424,4 @@ def audit():
         "application_paint_generation_bound":False,"f08_accepted":False}
     save(target/"audit.json",report);print("F08_PRODUCT_ETW_AUDIT",json.dumps(report),flush=True)
 if __name__=="__main__":
-    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("capture","audit","binding_regression"));globals()[parser.parse_args().mode]()
+    parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("capture","audit","binding_regression","control_regression"));globals()[parser.parse_args().mode]()
