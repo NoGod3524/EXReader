@@ -118,6 +118,27 @@ exr_wc_status exr_wc_inspect(exr_wc_root *root, uint32_t slot,
 exr_wc_status exr_wc_recover(exr_wc_root *root, uint32_t start,
                              uint32_t maximum,
                              exr_wc_recovery_report *report);
+/* Additive explicit stale-unpublished abandonment. Requires the exclusive
+ * root lock, no active transaction, and an exact prior inspect() identity.
+ * Only OWNED/SEALED are eligible; CLEANED is idempotent for the same identity.
+ * RESERVED/PUBLISH_INTENT/PUBLISHED are refused (recover() is unchanged).
+ * Unknown entries, replaced identities, non-private objects and extra links
+ * are refused, never adopted. Missing already-removed owned names are allowed
+ * to complete an interrupted cleanup. Permission/I/O failures remain pending.
+ * Cooperative trusted owner-worker contract; not an adversarial same-UID
+ * filesystem defense. No receipt format change, slot reuse, or broad scanning.
+ */
+exr_wc_status exr_wc_abandon_stale(exr_wc_root *root,
+                                  const exr_wc_info *expected,
+                                  exr_wc_cleanup_result *result);
+/* Borrow the component's O_RDONLY payload descriptor from a SEALED active
+ * transaction after identity/size/permission verification. Use pread only.
+ * Do not close, dup, fork, write, or retain it past cleanup/tx_close. These are
+ * caller obligations, not kernel restrictions on a trusted caller. Failed
+ * calls set *borrowed_fd=-1. No pathname or writable descriptor is exported.
+ * This does not change pathname-only WebDAV publication or enable host wiring.
+ */
+exr_wc_status exr_wc_borrow_sealed_fd(exr_wc_tx *tx, int *borrowed_fd);
 /* Releases resources only: no cleanup, the root lock stays held. */
 exr_wc_status exr_wc_tx_close(exr_wc_tx **tx);
 /* BUSY while a transaction is open; NULL is an idempotent OK. */
