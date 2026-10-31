@@ -1,0 +1,57 @@
+name: F09 frozen visible observations with corrected crash-event collector
+on:
+  push:
+    branches: [codex/dot-f09-av-stack-20261031]
+permissions:
+  contents: read
+concurrency:
+  group: f09-av-stack-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  compare:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Eight frozen observations with Application Error and WER event fields
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: utf-8
+        run: python tests/reader_f09_av_stack_20261031/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f09-av-stack-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f09-av-stack/*.json
+            build/f09-av-stack/baseline-managed/*.log
+            build/f09-av-stack/baseline-managed/*.json
+            build/f09-av-stack/candidate-managed/*.log
+            build/f09-av-stack/candidate-managed/*.json
+            build/f09-av-stack/baseline-native/*.log
+            build/f09-av-stack/baseline-native/*.json
+            build/f09-av-stack/candidate-native/*.log
+            build/f09-av-stack/candidate-native/*.json
+            build/f09-av-stack/baseline-legacy/*.log
+            build/f09-av-stack/baseline-legacy/*.json
+            build/f09-av-stack/baseline-legacy/*.txt
+            build/f09-av-stack/candidate-legacy/*.log
+            build/f09-av-stack/candidate-legacy/*.json
+            build/f09-av-stack/candidate-legacy/*.txt
+            build/f09-av-stack/baseline-visible/*.log
+            build/f09-av-stack/baseline-visible/*.json
+            build/f09-av-stack/baseline-visible/*.txt
+            build/f09-av-stack/candidate-visible/*.log
+            build/f09-av-stack/candidate-visible/*.json
+            build/f09-av-stack/candidate-visible/*.txt
+            build/f09-av-stack/baseline-package/build.json
+            build/f09-av-stack/candidate-package/build.json
+            build/f09-av-stack/baseline-package/report.json
+            build/f09-av-stack/candidate-package/report.json
+          if-no-files-found: error
