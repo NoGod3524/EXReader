@@ -77,3 +77,19 @@ single non-empty head and every revision row unchanged. S6a/S6b: A's session rea
 UNAVAILABLE, but **Retry stayed enabled and sent 256 / 257 requests (GET, PROPFIND) with A** - kept RED, as is S3.
 Also red in this run only: `worker_threads_observed_without_impersonation_token` (n=6); the job log prints no per-sample
 detail, so the cause is not established (it was green with n=3/6 in runs 41145383847, 41146619827, 41157486595).
+
+### Diagnostics rounds (thread sample detail, idle Apply wait)
+- Run 41158142840 (H02 b8aff586): host aborted in S3 with `TimeoutError` (Apply result not seen within 60 s); nothing after
+  S2 ran. Host 13025749467 (1278 B, zip sha256 4d06d5589e5d83390efd3783758632e27f5c05ec32e1aa8b74886e0a5e9f2634).
+  Same source on the fix branch, run 41158200475: 26/26, 5 thread samples all `none`/1008.
+- Harness then waits for an enabled Apply before each press and prints note/detail/button state on a missed transition.
+  In both following runs Apply was already enabled at every press, so the "dropped click" explanation is **not
+  confirmed**; the S3 timeout of 41158142840 and the n=6 thread red of 41157434078 remain unexplained and did not recur.
+- Run 41158820531 (H02 24599c6f, pre-fix product): 23/26, red only S3, S6a (256 requests), S6b (257 requests); thread
+  check green, 4 samples all `none`/1008. Probe job 124411522098, host job 124411633770. Artifacts: probe 13025874543
+  (832 B, f1271ee9e4d4c8d86ec652ade525d3115e01149b805ecc830cb7e3a90677636d); host 13026174673 (2135 B,
+  965e3b06f22d4fbd17f06d94344c4f1477557a4fc49509a2cfbe848200577484).
+- Run 41158823796 (fix branch 837f3840): **success, 26/26**; thread check 4 samples all `none`/1008. Probe job
+  124411532937, host job 124411647297. Artifacts: probe 13025827937 (832 B,
+  01efa4ac434657f69e0bbf0c31454d210852fd16b6221abf3ef4f8ac6f0c5b74); host 13026865136 (2102 B,
+  0fb69d4c0d95a333e38e466bfd9c0652b0e87f3f1a0800ff2d7fd68a261af8b9).
