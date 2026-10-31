@@ -278,7 +278,7 @@ static void pending_kill_case(unsigned phase){
  child c={0};
  pc02_lease *h=NULL,*reader=NULL;
  pc02_cap *cap=NULL;
- pc02_pending_record exact,bad;
+ pc02_pending_record exact={0},bad;
  pc02_grant grant;
  proof p={"original\n",0};
  snprintf(name,sizeof(name),"process-kill-pending-%u",phase);
