@@ -16,7 +16,8 @@ struct wh3wr_registration {
  wh3wg_gate *gate;
  HANDLE target,pins[RPINS],enrollment_mutex;
  wchar_t library[MAX_PATH],root[MAX_PATH],paths[RPINS][MAX_PATH],route[65];
- wh3w_identity ids[5],pinids[RPINS];
+ wh3w_identity ids[5],pinids[RPINS],live_target;
+ int target_absent;
  unsigned np,mode; void *cap;
  unsigned char record[RBYTES];
  wh3wg_grant grant;char domain[49];
@@ -193,9 +194,10 @@ static int rpins(wh3wr_registration *r) {
 static int rtarget(wh3wr_registration *r,int missing,int exact) {
  wh3w_identity id;
  r->target=CreateFileW(r->library,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,NULL);
- if(r->target==INVALID_HANDLE_VALUE)return missing&&GetLastError()==ERROR_FILE_NOT_FOUND;
+ r->target_absent=0;
+ if(r->target==INVALID_HANDLE_VALUE){r->target_absent=missing&&GetLastError()==ERROR_FILE_NOT_FOUND;return r->target_absent;}
  if(!rid(r->target,&id,0)||(exact&&!reqid(&id,&r->ids[4])))return 0;
- return 1;
+ r->live_target=id;return 1;
 }
 static int ridentity(wh3wr_registration *r,int target) {
  unsigned k;wh3w_identity id;
@@ -207,7 +209,16 @@ static int ridentity(wh3wr_registration *r,int target) {
   if(h==INVALID_HANDLE_VALUE)return 0;
   ok=rid(h,&id,1)&&reqid(&id,&r->pinids[k]);CloseHandle(h);if(!ok)return 0;
  }
- return !target||(r->target!=INVALID_HANDLE_VALUE&&rid(r->target,&id,0)&&reqid(&id,&r->ids[4]));
+ if(!target)return 1;
+ if(r->target!=INVALID_HANDLE_VALUE)return rid(r->target,&id,0)&&reqid(&id,&r->live_target);
+ /* Only explicit recovery can retain an observed missing target. Its absence
+    must still hold; opening a new object here would silently adopt it. */
+ if(r->mode==WH3WG_RECOVER&&r->target_absent){
+  HANDLE h=CreateFileW(r->library,FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+  if(h!=INVALID_HANDLE_VALUE){CloseHandle(h);return 0;}
+  return GetLastError()==ERROR_FILE_NOT_FOUND;
+ }
+ return 0;
 }
 static int rread_value(HKEY key,const wchar_t *value,unsigned char bytes[RBYTES]) {
  DWORD type=0,n=RBYTES;char hash[65];
@@ -447,7 +458,7 @@ int wh3wr_resume(wh3wr_registration *r,const wh_binding *b,const wh_gates *g,
 }
 int wh3wr_prepare_publish(wh3wr_registration *r) {
  if(!r||!r->cap||!ridentity(r,0)||!rcurrent(r)||!wh3wg_check(r->gate))return 0;
- if(r->target!=INVALID_HANDLE_VALUE){CloseHandle(r->target);r->target=INVALID_HANDLE_VALUE;}return 1;
+ if(r->target!=INVALID_HANDLE_VALUE){CloseHandle(r->target);r->target=INVALID_HANDLE_VALUE;}r->target_absent=0;return 1;
 }
 /* A leaf-only native rename uses the source handle's actual parent. Absolute
    MoveFile paths reopen that parent for FILE_ADD_FILE and conflict with our
