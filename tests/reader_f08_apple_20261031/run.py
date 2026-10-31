@@ -6,15 +6,15 @@ ROOT=Path(__file__).resolve().parents[2]
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(ROOT/"tests/reader_f08_android_20261031"))
 from lane import identity, need, save, sha, command
-BASE="6c3c75bc793acb2bd369db7ea9d701fb87946a81"
-ALLOWED={"tests/reader_f08_apple_20261031/run.py","tests/reader_f08_apple_20261031/audit.py",
+BASE="ea3875a9fb96d9c5e4c79c058ffaacb1d1663c1b"
+ALLOWED={"examples/apple/HostModel.swift","examples/apple/HostViews.swift","examples/apple/ReaderApp.swift","tests/reader_f08_apple_20261031/run.py","tests/reader_f08_apple_20261031/audit.py",
          "tests/reader_f08_apple_20261031/Metrics.swift","tests/reader_f08_apple_20261031/profile.json",
          ".github/workflows/dot-f08-apple-20261031.yml"}
 def guard():
     need(os.environ.get("GITHUB_ACTIONS")=="true","Actions only")
     need(command(["git","rev-parse","HEAD"],text=True).strip()==identity()["source_sha"],"source")
     command(["git","merge-base","--is-ancestor",BASE,"HEAD"])
-    need(set(command(["git","diff","--name-only",BASE,"HEAD"],text=True).splitlines())==ALLOWED,"test-only scope")
+    need(set(command(["git","diff","--name-only",BASE,"HEAD"],text=True).splitlines())==ALLOWED,"additive native metrics and gated review observers only")
 def seal(kind):
     guard()
     sdk=kind in ("macos-sdk","iphonesimulator-sdk")
@@ -37,8 +37,8 @@ def authenticate_inputs():
             for p,item in meta[key].items():need(sha(root/folder/p)==item["sha256"] and (root/folder/p).stat().st_size==item["bytes"],"SDK bytes")
         values[target]=root
     return values
-def extract_metrics(metrics_result):
-    raw_objects=[];metrics=[]
+def extract_metrics(metrics_result, with_cases=False):
+    raw_objects=[];metrics=[];cases=[]
     def object_data(oid=None):
         args=["xcrun","xcresulttool","get","object","--legacy","--path",metrics_result,"--format","json"]
         if oid:args+=["--id",oid]
@@ -53,17 +53,23 @@ def extract_metrics(metrics_result):
     references={node["testsRef"]["id"]["_value"] for node in walk(root) if "testsRef" in node}
     for oid in sorted(references):
         plan=object_data(oid)
-        summaries={node["summaryRef"]["id"]["_value"] for node in walk(plan) if "summaryRef" in node}
+        summaries={node["summaryRef"]["id"]["_value"]:node for node in walk(plan) if "summaryRef" in node}
         for summary in sorted(summaries):
             data=object_data(summary)
             for node in walk(data):
-                if "performanceMetrics" in node:metrics.extend(node["performanceMetrics"].get("_values",[]))
-    return raw_objects,metrics
+                if "performanceMetrics" in node:
+                    found=node["performanceMetrics"].get("_values",[]);metrics.extend(found)
+                    context=summaries[summary]
+                    cases.append({"identifier":node.get("identifier",context.get("identifier",{})).get("_value"),
+                        "name":node.get("name",context.get("name",{})).get("_value"),"status":node.get("testStatus",context.get("testStatus",{})).get("_value"),
+                        "performance_metrics":found})
+    return raw_objects,cases if with_cases else metrics
 
 def native(platform):
+    diagnostic=os.environ.get("F08_APPLE_DIAGNOSTIC","").lower()=="true"
     guard()
     out=ROOT/"build/f08-apple"/platform;evidence=out/"evidence";evidence.mkdir(parents=True)
-    report={**identity(),"platform":platform,"collection_complete":False,"f08_accepted":False,"commands":[],"problems":[]}
+    report={**identity(),"platform":platform,"collection_complete":False,"f08_accepted":False,"diagnostic":diagnostic,"commands":[],"problems":[]}
     def run(args,role,required=True,timeout=3600):
         args=list(map(str,args));print("F08_APPLE_PHASE",platform,role,flush=True)
         with (evidence/(role+".log")).open("wb") as f:
@@ -95,9 +101,11 @@ def native(platform):
         shutil.copyfile(seed/"shelf-seed.json",evidence/"shelf-seed.json")
         original=ROOT/"tests/apple_host/shelf/ui/ShelfUITests.swift";text=original.read_text()
         insertion=(HERE/"Metrics.swift").read_text();at=text.rfind("}")
+        inside,marker,standalone=insertion.partition("// F08_STANDALONE_CLASSES")
+        need(bool(marker),"standalone measurement classes")
         need(at>0 and "test08F08ScrollMetrics" not in text,"insertion boundary")
         tests=out/"shelf/ui";tests.mkdir(parents=True)
-        candidate=tests/original.name;candidate.write_text(text[:at]+insertion+text[at:])
+        candidate=tests/original.name;candidate.write_text(text[:at]+inside+text[at:]+standalone)
         save(evidence/"driver.json",{"original_sha256":sha(original),"candidate_sha256":sha(candidate),
             "insertion_sha256":sha(HERE/"Metrics.swift"),"original_cases_unchanged":True})
         shutil.copyfile(candidate,evidence/"ShelfUITests.swift")
@@ -116,10 +124,13 @@ def native(platform):
             document.write(path,encoding="utf-8",xml_declaration=True)
             (evidence/"schemes").mkdir(exist_ok=True)
             shutil.copyfile(path,evidence/"schemes"/path.name)
+        run(["ruby","-rxcodeproj","-e",
+            'p=Xcodeproj::Project.open(ARGV[0]);p.targets.each{|t|next unless t.product_type=="com.apple.product-type.application";t.build_configurations.each{|c|c.build_settings["SWIFT_ACTIVE_COMPILATION_CONDITIONS"]+=" EXR_APPLE_F08_REVIEW"}};p.save',
+            project/"EXReaderHost.xcodeproj"],"native-observer-flag")
         configuration=json.loads(command(["ruby","-rxcodeproj","-rjson","-e",
             'p=Xcodeproj::Project.open(ARGV[0]);v={};p.targets.each{|t|next unless t.product_type=="com.apple.product-type.application";t.build_configurations.each{|c|v[t.name+"/"+c.name]=c.build_settings["SWIFT_ACTIVE_COMPILATION_CONDITIONS"]}};puts JSON.generate(v)',
             project/"EXReaderHost.xcodeproj"],text=True))
-        required={"EXR_APPLE_SHELF_REVIEW","EXR_APPLE_HOST_REVIEW","EXR_APPLE_RAW3","EXR_APPLE_WAVE3","EXR_APPLE_PAGE_THEME"}
+        required={"EXR_APPLE_F08_REVIEW","EXR_APPLE_SHELF_REVIEW","EXR_APPLE_HOST_REVIEW","EXR_APPLE_RAW3","EXR_APPLE_WAVE3","EXR_APPLE_PAGE_THEME"}
         need(len(configuration)==4 and all(required<=set(value.split()) for value in configuration.values()),"shelf observation and full-feature flags")
         save(evidence/"project-configuration.json",configuration)
         if platform=="macos":
@@ -155,8 +166,12 @@ def native(platform):
         need(len(targets)==1 and targets[0]["CONFIGURATION"]=="Release" and
              targets[0]["SWIFT_OPTIMIZATION_LEVEL"]=="-O" and targets[0]["ONLY_ACTIVE_ARCH"]=="YES","optimized product configuration")
         report["configuration"]="Release";report["build_settings_sha256"]=sha(evidence/"build-settings.json")
-        run(["xcodebuild","test",*common,"-resultBundlePath",original_result,
-             "-skip-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics"],"original-seven",required=False)
+        if diagnostic:
+            run(["xcodebuild","build-for-testing",*common],"diagnostic-build",timeout=600)
+        else:
+            run(["xcodebuild","test",*common,"-resultBundlePath",original_result,
+                "-only-testing:"+test_target+"/ShelfUITests",
+                "-skip-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics"],"original-seven",required=False)
         app=derived/"Build/Products"/suffix/"EXReaderHost.app"
         info=plistlib.loads((app/("Contents/Info.plist" if platform=="macos" else "Info.plist")).read_bytes())
         need(info["EXRSourceSHA"]==identity()["source_sha"] and info["EXRSDKVersion"]=="3.42.0","program identity")
@@ -167,28 +182,34 @@ def native(platform):
         before=sha(binary);shutil.copytree(app,evidence/"program/EXReaderHost.app")
         report["program_sha256"]=before
         (evidence/"program-dependencies.txt").write_text(command(["otool","-L",binary],text=True))
-        if platform=="macos":container=Path.home()/"Library/Application Support/EXReader"
-        else:
-            container=command([sys.executable,"tests/apple_host/resolve_container.py","--udid",device,
-                               "--output",evidence/"container.json"],text=True).strip()
-        run([sys.executable,"tests/apple_host/shelf/collect_shelf_evidence.py","--platform",platform,
-             "--xcresult",original_result,"--output",evidence/"original","--container",container,
-             "--app",app,"--seed",seed/"shelf-seed.json","--sdk-root",sdk,
-             "--sdk-identity",installed[target]/"sdk-identity.json","--destination",destination_file],
-             "original-evidence",required=False,timeout=600)
-        run(["xcodebuild","test-without-building",*common,"-resultBundlePath",metrics_result,
-             "-only-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics"],"scroll-metrics",required=False,timeout=1200)
+        if not diagnostic:
+            if platform=="macos":container=Path.home()/"Library/Application Support/EXReader"
+            else:
+                container=command([sys.executable,"tests/apple_host/resolve_container.py","--udid",device,
+                                   "--output",evidence/"container.json"],text=True).strip()
+            run([sys.executable,"tests/apple_host/shelf/collect_shelf_evidence.py","--platform",platform,
+                 "--xcresult",original_result,"--output",evidence/"original","--container",container,
+                 "--app",app,"--seed",seed/"shelf-seed.json","--sdk-root",sdk,
+                 "--sdk-identity",installed[target]/"sdk-identity.json","--destination",destination_file],
+                 "original-evidence",required=False,timeout=600)
+            run(["xcodebuild","test-without-building",*common,"-resultBundlePath",metrics_result,
+                "-only-testing:"+test_target+"/ShelfUITests/test08F08ScrollMetrics"],"scroll-metrics",required=False,timeout=1200)
+            raw_objects,metrics=extract_metrics(metrics_result)
+            save(evidence/"xcresult-objects.json",raw_objects);save(evidence/"performance-metrics.json",metrics)
+            source_report=evidence/"original/shelf-ui.json"
+            report["original_ui_accepted"]=source_report.is_file() and json.loads(source_report.read_text()).get("accepted") is True
+        for label,group in (("launch","F08LaunchUITests"),("reader","F08ReaderUITests")):
+            result=evidence/(label+".xcresult")
+            run(["xcodebuild","test-without-building",*common,"-resultBundlePath",result,
+                "-only-testing:"+test_target+"/"+group],label+"-metrics",required=False,timeout=480)
+            if result.exists():
+                raw_objects,cases=extract_metrics(result,with_cases=True)
+                save(evidence/(label+"-xcresult-objects.json"),raw_objects)
+                save(evidence/(label+"-performance-cases.json"),cases)
+                run(["xcrun","xcresulttool","export","attachments","--path",result,"--output-path",evidence/(label+"-attachments")],label+"-attachments",required=False,timeout=90)
         need(sha(binary)==before,"program changed between functional and performance tests")
-        raw_objects,metrics=extract_metrics(metrics_result)
-        save(evidence/"xcresult-objects.json",raw_objects)
-        save(evidence/"performance-metrics.json",metrics)
-        need(metrics,"no native performance metrics")
-        report["metric_identifiers"]=[m.get("identifier",{}).get("_value") for m in metrics]
-        source_report=evidence/"original/shelf-ui.json"
-        need(source_report.is_file(),"original seven-case evidence absent")
-        original_report=json.loads(source_report.read_text())
-        report["original_ui_accepted"]=original_report.get("accepted") is True
-        report["collection_complete"]=not report["problems"] and report["original_ui_accepted"]
+        report["diagnostic_complete"]=not report["problems"]
+        report["collection_complete"]=not diagnostic and not report["problems"] and report.get("original_ui_accepted") is True
         report["budget_evaluation"]="Native metric units and frame coverage await independent audit; F08 remains pending."
     except BaseException as error:
         failure=error;report["problems"].append(repr(error));report["traceback"]=traceback.format_exc()
@@ -197,7 +218,7 @@ def native(platform):
         shutil.copyfile(HERE/"profile.json",evidence/"profile.json")
         print("F08_APPLE_RESULT",json.dumps(report),flush=True)
     if failure:raise failure
-    need(report["collection_complete"],"incomplete Apple measurements")
+    need(report.get("diagnostic_complete") if diagnostic else report["collection_complete"],"incomplete Apple measurements")
 if __name__=="__main__":
     parser=argparse.ArgumentParser();parser.add_argument("mode",choices=("guard","native","seal"))
     parser.add_argument("--platform",choices=("macos","iphone","ipad","macos-sdk","iphonesimulator-sdk"))

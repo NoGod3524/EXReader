@@ -77,6 +77,25 @@ def main():
                 _,metrics=extract_metrics(raw/"metrics.xcresult")
                 need(metrics==json.loads((raw/"performance-metrics.json").read_text()),"xcresult metrics differ")
                 entry["performance_metrics"]=metrics
+            for label in ("launch","reader"):
+                result_path=raw/(label+".xcresult");saved_path=raw/(label+"-performance-cases.json")
+                if result_path.exists() and saved_path.exists():
+                    _,cases=extract_metrics(result_path,with_cases=True)
+                    need(cases==json.loads(saved_path.read_text()),label+" native case metrics differ")
+                    sys.path.insert(0,str(ROOT/"tests/apple_host"));from collect_evidence import load_results
+                    entry[label+"_cases"]=load_results(result_path)
+                    entry[label+"_performance_cases"]=cases
+            if (raw/"driver.json").exists():
+                driver=json.loads((raw/"driver.json").read_text())
+                original=ROOT/"tests/apple_host/shelf/ui/ShelfUITests.swift";text=original.read_text();at=text.rfind("}")
+                inside,marker,standalone=(HERE/"Metrics.swift").read_text().partition("// F08_STANDALONE_CLASSES")
+                need(marker and (raw/"ShelfUITests.swift").read_text()==text[:at]+inside+text[at:]+standalone,
+                     "original seven case bodies or additive driver differ")
+                need(driver["original_sha256"]==sha(original) and driver["insertion_sha256"]==sha(HERE/"Metrics.swift")
+                     and driver["candidate_sha256"]==sha(raw/"ShelfUITests.swift"),"driver identity")
+                entry["original_cases_unchanged"]=True
+            entry["diagnostic"]=result.get("diagnostic",False)
+            entry["diagnostic_complete"]=result.get("diagnostic_complete",False)
             if (raw/"original/shelf-ui.json").exists():
                 original=json.loads((raw/"original/shelf-ui.json").read_text())
                 sys.path.insert(0,str(ROOT/"tests/apple_host"));from collect_evidence import load_results
