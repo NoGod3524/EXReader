@@ -1,0 +1,86 @@
+name: Dot F10 safety characterization (one approved run)
+on:
+  push:
+    branches: [dot/f10-safety-20261031]
+    paths: [.github/workflows/dot-f10-safety-20261031.yml]
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard exact ownership and unchanged SDK
+        run: |
+          python - <<'PY'
+          import json,subprocess
+          m=json.load(open('tests/product/f10_safety_20261031/manifest.json'))
+          actual=subprocess.check_output(['git','diff','--name-only',m['base'],'HEAD'],text=True).splitlines()
+          assert sorted(actual)==sorted(m['allowed_paths']),actual
+          subprocess.run(['git','diff','--exit-code',m['sdk_frozen'],'HEAD','--','src','include','cmake','CMakeLists.txt','bindings'],check=True)
+          PY
+          python -m py_compile tests/product/f10_safety_20261031/{fixture,drive,verify}.py
+      - name: Build installed raw sync and session, not a reading SDK or host UI
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build
+          mkdir -p build/f10/logs
+          p="$PWD/build/f10/prefix"
+          cmake -S apps/reader/store/native -B build/f10/store -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" >build/f10/logs/store-config.log 2>&1
+          cmake --build build/f10/store >build/f10/logs/store-build.log 2>&1
+          cmake --install build/f10/store >>build/f10/logs/store-build.log 2>&1
+          cmake -S extras/webdav -B build/f10/dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" >build/f10/logs/dav-config.log 2>&1
+          cmake --build build/f10/dav >build/f10/logs/dav-build.log 2>&1
+          cmake --install build/f10/dav >>build/f10/logs/dav-build.log 2>&1
+          for module in revisions sync session; do
+            cmake -S apps/reader/$module -B build/f10/$module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$p" -DCMAKE_PREFIX_PATH="$p" -DREADER_PRODUCT_PREFIX="$p" -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON >build/f10/logs/$module-config.log 2>&1
+            cmake --build build/f10/$module >build/f10/logs/$module-build.log 2>&1
+            cmake --install build/f10/$module >>build/f10/logs/$module-build.log 2>&1
+          done
+          cmake -S tests/product/f10_safety_20261031 -B build/f10/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$p" >build/f10/logs/probe-config.log 2>&1
+          cmake --build build/f10/probe >build/f10/logs/probe-build.log 2>&1
+      - name: Capture real permission failure, process death and file identity
+        run: python tests/product/f10_safety_20261031/drive.py --probe build/f10/probe/f10-probe --output build/f10/evidence
+      - name: Preserve complete raw observations and binary without fixture keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f10-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f10/evidence/
+            build/f10/logs/
+            build/f10/probe/f10-probe
+          if-no-files-found: error
+  audit:
+    needs: linux
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: f10-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f10-download
+      - name: Interpret original observations and refuse semantic tampering
+        run: |
+          # Upload common ancestor is build/f10; preserve its exact paths.
+          python tests/product/f10_safety_20261031/verify.py --input build/f10-download --output build/f10-audit
+      - name: Preserve failures and independent verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f10-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/f10-audit/
+          if-no-files-found: error
+# Prepared only: final activation commit is separately reviewed.
