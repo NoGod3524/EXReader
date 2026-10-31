@@ -780,3 +780,17 @@ Existing real ACL negative checks remain unchanged. Production Repair guard
 and SDK proof callbacks are submitted with this correction for native compile
 and original regressions; actual new Repair cut/retry scenarios are not yet
 qualified. All prior failures remain available.
+
+At producer 730fe1ec94ad369145daa7c9f143e3000287c8b6, helper run
+41188280561/A1 passed on both platforms: 30 cases / 3872 checks / 0 failures,
+8 independently decoded wrappers, and all real ALLOW ACL refusals.
+- macOS job 124499572401, UID 501, artifact 13037756864, 238598 bytes,
+  SHA256 dd9732a83263deed3fe55173daf38af99bc55e75c83d3e9a06dc176c6885d586.
+- Ubuntu job 124499572553, UID 1001, artifact 13037238786, 238595 bytes,
+  SHA256 c181f33d7b21123547b78ad00e950d5aad50a9a093832bf0d085a758264dc566.
+Native admission run 41188280516 also passed both unchanged 55/418 consumers.
+Actual owner Ubuntu job 124499572095 in run 41188280556 passed the existing
+36 cases plus the historical 65/135, with artifact 13037807922, 45015277 bytes,
+SHA256 f2a47c5e53f3854fe00b98d5e14e8b3eea9cbb49fe6710d251f21c97b944071e.
+These runs verify compilation and previous behavior after production Repair
+integration; the new explicit Repair cut/retry scenarios remain a separate gate.

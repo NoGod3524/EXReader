@@ -52,7 +52,9 @@ H.run(["cmake", "-S", ROOT / "apps/reader/desktop", "-B", host, "-G", "Ninja",
     "-DEXR_READER_WINDOWS_WAVE3=ON", "-DEXR_READER_WINDOWS_CLOUD_CONTENT_BOUND=ON",
     "-DEXR_READER_WINDOWS_TXT_PROGRESS=ON"], "host-configure")
 H.run(["cmake", "--build", host, "--target", "EXReaderWave3", "--parallel", "4"], "host-build")
-mapping = (host / "windows-host.map").read_text(errors="replace")
+mapping_path = host / "windows-host.map"
+mapping = mapping_path.read_text(errors="replace")
+(out / "logs/windows-host.map").write_bytes(mapping_path.read_bytes())
 for symbol in ("wh3wr_open", "wh3wr_close", "exr_webdav_download_observed"):
     assert re.search(r"\b" + symbol + r"\b", mapping), symbol
 binary = host / "EXReaderWave3.exe"
@@ -61,6 +63,8 @@ binary = host / "EXReaderWave3.exe"
     attempt=os.environ["GITHUB_RUN_ATTEMPT"], platform="Windows Wave3 raw SDK3.42",
     binary=str(binary.relative_to(out)), binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
     sdk_version="3.42.0", installed_modules=list(H.MODULES) + list(NEW_MODULES),
+    evidence_schema="c02-windows-products-v1",binary_bytes=binary.stat().st_size,
+    link_map="full-host-build-logs/windows-host.map",link_map_sha256=hashlib.sha256(mapping_path.read_bytes()).hexdigest(),
     full_c02_acceptance=False), indent=2) + "\n")
 H.run([sys.executable, ROOT / "tools/build_windows_host.py", "--sdk", sdk,
     "--binary", binary, "--c02-prefix", c02, "--output", out / "package",
