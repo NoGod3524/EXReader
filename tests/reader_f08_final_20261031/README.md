@@ -1,0 +1,28 @@
+# Same-source Linux acceptance adapter
+
+This runs the original 44 launches, six causal launches and four body/jump
+launches on one newly built executable and seed. It retains all 54 native
+frame censuses, including first frames and outliers. Worker operation latency
+remains separate from native UI frame cost.
+
+The component builders, original assertions, native probes and frozen budgets
+are reused. The final adapter replaces only their historical branch guards
+and the extra cohort's older producer download. Its source guard admits the
+reviewed integration commit plus this directory and its workflow.
+
+Before the final six-platform validation, update contract.json reviewed_source
+to the integrated production commit. No other production, fixture, original
+test or build-recipe changes are admitted after that point. The dedicated
+adapter-check branch runs only the 20-minute controls. The final-validation
+branch runs controls, the original 90-minute full lane, and a 20-minute audit.
+
+The audit authenticates every ZIP entry, checks the shared executable, seed
+and observer bytes, replays original assertions and all added actions, rejects
+duplicate clock/counter joins, and computes all seven UI categories over all
+54 launches. Linux platform_accepted is separate from the six-platform F08 gate.
+
+Validation of the new census used the authenticated original artifacts from
+runs 41240011603 and 41241360545: all 7,837 frames and every metric match the
+original delivery, including the 295.194 ms maximum and 84 initial frames.
+Native and independent duplicate keys, and a foreign source SHA, were rejected.
+No new product performance run is claimed by that replay.
