@@ -36,6 +36,7 @@ def main():
     object_resource='/dav/exreader-sync-v1/objects/'+source_sha[:2]+'/'+source_sha+'.txt'
     revision_resource='/dav/exreader-sync-v1/revisions/10/'+rev['id']+'-'+sha(wire)+'.json'
     all_cases=[]
+    race_cases=['target-created-during-download','existing-same-hash','existing-different-hash','link-refusal-directory']
     def run_case(name):
         case=out/name;case.mkdir()
         work=private/name;work.mkdir(mode=0o700)
@@ -55,7 +56,7 @@ def main():
             record['exit_code']=p.returncode
             record['result']=[json.loads(x) for x in stdout.splitlines() if x.startswith('{')]
         try:
-            if name=='target-created-during-download':
+            if name in race_cases:
                 fixture.add(object_resource,source);fixture.add(revision_resource,wire)
                 fixture.gate_method='GET';fixture.gate_fragment='/objects/'
             else:
@@ -113,12 +114,13 @@ def main():
                     restart=subprocess.run(cmd('step'),env=env,capture_output=True,text=True,timeout=25)
                     record['restart']={'exit_code':restart.returncode,'result':[json.loads(x) for x in restart.stdout.splitlines() if x.startswith('{')]}
                     assert secret not in restart.stdout+restart.stderr
-                elif name=='target-created-during-download':
+                elif name in race_cases:
                     target=cache/(source_sha+'.txt')
-                    target.write_bytes(b'F10 concurrent target must not be overwritten')
-                    record['concurrent_target']={'sha256':sha(target.read_bytes()),'ino':target.stat().st_ino}
+                    if name=='link-refusal-directory':target.mkdir()
+                    else:target.write_bytes(source if name=='existing-same-hash' else b'F10 concurrent target must not be overwritten')
+                    record['concurrent_target']={'sha256':sha(target.read_bytes()) if target.is_file() else None,'ino':target.stat().st_ino,'directory':target.is_dir()}
                     fixture.release.set();collect(process)
-                    record['target_after']={'sha256':sha(target.read_bytes()),'ino':target.stat().st_ino}
+                    record['target_after']={'sha256':sha(target.read_bytes()) if target.is_file() else None,'ino':target.stat().st_ino,'directory':target.is_dir()}
             record['after']=observe(cache)
             record['original_after']=sha(original.read_bytes())
             record['requests']=fixture.requests
@@ -142,7 +144,7 @@ def main():
         record['synthetic_secret_leaks']=leaks
         record['credential_scan_scope']='test product catalog, cache and fixture original only; not OS secure storage'
         save(case/'observation.json',record);all_cases.append(record)
-    for name in ['normal','close-join','eacces-cleanup','kill-and-restart','target-created-during-download']:run_case(name)
+    for name in ['normal','close-join','eacces-cleanup','kill-and-restart']+race_cases:run_case(name)
     save(out/'index.json',{'source':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],
                           'cases':[x['name'] for x in all_cases],'program_sha256':sha(probe.read_bytes()),
                           'scope':'installed raw sync/session modules; no reading SDK or host UI acceptance','full_f10_complete':False})
