@@ -175,10 +175,23 @@ def main():
                 mode != 'cancel' or (detail['network_request_held'] and detail['cancel_enabled']))
             return bool(really), detail
 
+        def press_apply(dialog):
+            """Apply only once the host is idle; a click on a disabled button is silently dropped by Win32."""
+            _, error = attempt(lambda: A.wait(lambda: A.enabled(dialog, X.APPLY), timeout=240))
+            print(json.dumps({'apply': {'enabled': A.enabled(dialog, X.APPLY), 'note': A.note(dialog), 'wait_error': error}},
+                             ensure_ascii=False), flush=True)
+            A.press(dialog, X.APPLY)
+
+        def await_note(dialog, needles, timeout=60):
+            try:
+                return A.wait(lambda: any(n in A.note(dialog) for n in needles), timeout=timeout)
+            except TimeoutError:
+                raise TimeoutError(json.dumps({'expected': needles, 'note': A.note(dialog), 'detail': A.detail(dialog),
+                                               'apply_enabled': A.enabled(dialog, X.APPLY)}, ensure_ascii=False))
+
         def apply_a_session_only(dialog):
-            A.wait(lambda: A.enabled(dialog, X.APPLY), timeout=240)
-            A.fill(dialog, root, user_a, pass_a, False);A.press(dialog, X.APPLY)
-            A.wait(lambda: '仅本次会话' in A.note(dialog), timeout=60)
+            A.fill(dialog, root, user_a, pass_a, False);press_apply(dialog)
+            await_note(dialog, ('仅本次会话',))
 
         def sampled(action, host):
             sampler = T.ThreadSampler(host.process.pid);sampler.start()
@@ -203,8 +216,7 @@ def main():
         # S1: no previous secret, remember on -> refusal, zero authenticated or unauthenticated requests
         dialog = A.open_account()
         A.fill(dialog, root, user_a, pass_a, True)
-        sampled(lambda: (A.press(dialog, X.APPLY),
-                         A.wait(lambda: 'UNAVAILABLE' in A.note(dialog) or '系统安全存储' in A.note(dialog) or '仅本次' in A.note(dialog), timeout=60)), A)
+        sampled(lambda: (press_apply(dialog), await_note(dialog, ('UNAVAILABLE', '系统安全存储', '仅本次'))), A)
         note = A.note(dialog)
         check('s1_remember_on_without_old_secret_is_refused_as_UNAVAILABLE', 'UNAVAILABLE' in note, note=note)
         check('s1_sync_stays_disabled_and_no_request_reaches_server', not A.enabled(dialog, X.SYNC) and not dav_state(),
@@ -213,7 +225,7 @@ def main():
 
         # S2: remember off -> memory only
         A.fill(dialog, root, user_a, pass_a, False)
-        sampled(lambda: (A.press(dialog, X.APPLY), A.wait(lambda: '仅本次会话' in A.note(dialog), timeout=60)), A)
+        sampled(lambda: (press_apply(dialog), await_note(dialog, ('仅本次会话',))), A)
         check('s2_remember_off_accepts_session_only_secret', A.enabled(dialog, X.SYNC), note=A.note(dialog))
         sampled(lambda: A.run_sync(dialog), A)
         after_sync = state()
@@ -222,8 +234,7 @@ def main():
         # S3: A is live in memory; saving B (remember on) fails. A must not silently stand in for B.
         count_before_b = len(dav_state())
         A.fill(dialog, root, user_b, pass_b, True)
-        sampled(lambda: (A.press(dialog, X.APPLY),
-                         A.wait(lambda: 'UNAVAILABLE' in A.note(dialog) or '仅本次会话' in A.note(dialog), timeout=60)), A)
+        sampled(lambda: (press_apply(dialog), await_note(dialog, ('UNAVAILABLE', '仅本次会话'))), A)
         note_b = A.note(dialog)
         sync_enabled = A.enabled(dialog, X.SYNC)
         check('s3_failed_B_save_is_reported_UNAVAILABLE', 'UNAVAILABLE' in note_b, note=note_b)
@@ -262,8 +273,8 @@ def main():
                 check('s6%s_A_session_really_%s' % (tag, 'cancelled' if mode == 'cancel' else 'failed'), really, **detail)
                 before, count_before = snapshot(), len(dav_state())
                 A.fill(dialog, root, user_b, pass_b, True)
-                A.press(dialog, X.APPLY)
-                A.wait(lambda: 'UNAVAILABLE' in A.note(dialog) or '仅本次会话' in A.note(dialog), timeout=60)
+                press_apply(dialog)
+                await_note(dialog, ('UNAVAILABLE', '仅本次会话'))
                 check('s6%s_B_save_refused_as_UNAVAILABLE' % tag, 'UNAVAILABLE' in A.note(dialog), note=A.note(dialog))
                 retry_enabled = A.enabled(dialog, X.RETRY)
                 A.press(dialog, X.RETRY)
