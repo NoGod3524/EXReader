@@ -86,5 +86,17 @@ Run 41175145440 / attempt 1 (48a3643978a2bc0c850598777986864d3f87ed9a): B built 
 entry hashes; the driver did not start — a SyntaxError introduced by correction 2 (a bytes literal split by a raw
 newline). No UI item ran. Correction 3 restores `b'\n'`.
 
+Run 41175497127 / attempt 1 (d59c1276b69cb7a9e4cfc94854fd0307c40a2971): driver ran. Items 1-6, 10 and 11 passed;
+items 7, 8, 12 failed and item 9 passed vacuously. Observations: the second writer *was* refused, but the host reports
+every library-open failure as code 3 "Could not open library or font" (the "already in use" text is only inside the
+error struct), so the test's expected message was wrong; the failed assertion then skipped closing the running B, whose
+flock on `library.sqlite.product.lock` made later launches (items 8, 9, 12) fail with `book=0`. Item 9's "passed" is
+therefore not accepted: it reopened a locked profile. Also noted: A and B both resume with the status "Position not
+unique; saved chapter offset shown, original point retained" (a product message, identical in A and B).
+Correction 4 (driver only): item 7 asserts code 3 + the same text visible in the label + the raw kernel flock holder
+(`/proc/locks`: only the writer PID holds the lock, none after it closes) and always closes the second process; item 9
+now requires the library to reopen with the original book, the pre-kill note to be confirmed and to survive; item 5
+requires the shelf in the UI to list exactly three books after reopen; items 8 and 12 carry explicit messages.
+
 Further results are appended below. Scope of any result: F12 Linux portable
 update slice only — not F11, not six-platform F12, not formal release or signing, not licensing/documentation.

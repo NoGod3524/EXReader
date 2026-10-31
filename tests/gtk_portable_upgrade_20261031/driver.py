@@ -555,8 +555,11 @@ def main():
         resumed = reopen.idle()
         assert reopen.rec['pid'] != hosts['B1'].rec['pid'] and reopen.rec['exe_sha256'] == install['b']['entry_sha256']
         assert resumed.get('book') == state['epub_id'], resumed
+        reopen.activate()
+        reopen.key('F2')
+        reopen.idle()
         rows = reopen.shelf_rows()
-        assert rows is None or len(rows) == 3, f'duplicate import after reopen: {rows}'
+        assert rows is not None and len(rows) == 3, f'shelf in the UI does not show exactly the three books: {rows}'
         state['after_b'] = snap
         return dict(moved=moved, note_status=statuses[-3:], notes=notes, reopen_pid=reopen.rec['pid'],
                     resumed=resumed, rows=rows, screenshot=reopen.screenshot('reopened'))
@@ -578,28 +581,52 @@ def main():
         return dict(programs={'A': str(a_dir), 'B': str(b_dir)}, cwd=str(unrelated), profile=str(main_xdg / 'data/exreader'),
                     font_from_package=True)
 
+    def flock_holders(path):
+        """Raw kernel view: PIDs holding an flock on this file's inode (/proc/locks)."""
+        inode = os.stat(path).st_ino
+        holders = []
+        for line in Path('/proc/locks').read_text().splitlines():
+            fields = line.split()
+            if len(fields) >= 6 and 'FLOCK' in fields and fields[5].split(':')[-1] == str(inode):
+                holders.append(dict(pid=int(fields[4]), mode=fields[3], line=line))
+        return holders
+
     def concurrent_lock():
         writer = hosts['B2']
         before = writer.idle()
+        lock_file = main_xdg / 'data/exreader/library.sqlite.product.lock'
+        held = flock_holders(lock_file)
+        assert [h['pid'] for h in held] == [writer.process.pid], f'writer does not hold the profile lock: {held}'
+        profile_before = tree(main_xdg / 'data/exreader')
         second = hosts['A2'] = Host(ev, 'A2-concurrent', a_dir, main_xdg, unrelated)
-        second.launch()
-        deadline = time.monotonic() + 30
-        while time.monotonic() < deadline and not any(LOCK_MESSAGE in s.get('message', '') for s in second.statuses()):
-            time.sleep(.1)
-        refused = [s for s in second.statuses() if LOCK_MESSAGE in s.get('message', '')]
-        labels = second.label_text()
-        shot = second.screenshot('lock-refused')
-        assert refused, f'second writer was not refused: {second.statuses()[-3:]}'
-        assert any(LOCK_MESSAGE in l for l in labels), f'refusal not visible: {labels}'
-        second.close()
+        try:
+            second.launch()
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline and not any(s.get('code') == 3 for s in second.statuses()):
+                time.sleep(.1)
+            refused = [s for s in second.statuses() if s.get('code') == 3]
+            labels = second.label_text()
+            shot = second.screenshot('lock-refused')
+            holders_during = flock_holders(lock_file)
+            assert refused and refused[-1]['book'] == 0, f'second writer was not refused: {second.statuses()[-3:]}'
+            assert any(l == refused[-1]['message'] for l in labels), f'refusal not visible: {labels}'
+            assert [h['pid'] for h in holders_during] == [writer.process.pid], f'lock moved: {holders_during}'
+        finally:
+            if second.process.poll() is None:
+                second.close()
         writer.activate()
         after = writer.idle()
         code = writer.close()
         assert code == 0
+        assert not flock_holders(lock_file), 'lock still held after the writer closed'
         snap = inspect(ev, 'after-lock', writer.profile)
         assert snap['books'] == state['after_b']['books'] and set(all_notes(snap)) == set(all_notes(state['after_b']))
         return dict(refused=refused[-1], labels=labels, screenshot=shot, writer_before=before, writer_after=after,
-                    second_exit=second.rec['exit'])
+                    second_exit=second.rec['exit'], lock_holders_before=held, lock_holders_during=holders_during,
+                    profile_files_before=len(profile_before),
+                    note='the host reports every library open failure as code 3 "Could not open library or font"; '
+                         'the held flock on library.sqlite.product.lock (/proc/locks) is the raw cause evidence')
+
 
     def damaged_b():
         broken = root / 'K03 程序 目录' / 'B 损坏 副本'
@@ -615,11 +642,11 @@ def main():
             host.finish()
         assert host.rec['exit'] != 0, 'damaged copy started'
         assert tree(main_xdg / 'data/exreader') == profile_before, 'profile changed by failed start'
-        assert tree(a_dir) == program_before['A'] and tree(b_dir) == program_before['B']
+        assert tree(a_dir) == program_before['A'] and tree(b_dir) == program_before['B'], 'A or B program directory changed'
         good = Host(ev, 'B3-after-damaged', b_dir, main_xdg, unrelated)
         good.launch()
         resumed = good.idle()
-        assert resumed.get('book') == state['epub_id']
+        assert resumed.get('book') == state['epub_id'], f'good B did not reopen the profile: {resumed}'
         assert good.close() == 0
         return dict(damaged_exit=host.rec['exit'], recovered=resumed, signature_verifier_claimed=False)
 
@@ -630,11 +657,14 @@ def main():
         confirmed = host.note(NOTE_K)
         host.key('F4')
         unconfirmed = host.last()
+        assert confirmed and confirmed[-1].get('message') == 'Ready' and confirmed[-1].get('code') == 0,             f'the note was not confirmed before the kill: {confirmed}'
         code = host.kill()
         assert code == -signal.SIGKILL
         reopen = Host(ev, 'B5-after-kill', b_dir, main_xdg, unrelated)
         reopen.launch()
         resumed = reopen.idle()
+        assert reopen.rec['exe_sha256'] == install['b']['entry_sha256']
+        assert resumed.get('code') == 0 and resumed.get('book') == state['epub_id'],             f'library did not reopen after SIGKILL: {resumed}'
         assert reopen.close() == 0
         snap = inspect(ev, 'after-kill', reopen.profile)
         assert snap['integrity'] == 'ok' and [b['source_sha256'] for b in snap['books']] == \
@@ -643,6 +673,7 @@ def main():
         ev.notes.append(dict(kill_note_persisted=any(n[-1] == NOTE_K for n in notes),
                              unconfirmed_page_turn=unconfirmed, resumed=resumed))
         assert set(all_notes(state['after_b'])) <= set(notes), 'confirmed notes lost after SIGKILL'
+        assert any(n[-1] == NOTE_K for n in notes), 'the note confirmed before the kill was lost'
         state['after_kill'] = snap
         return dict(exit=code, confirmed_note_status=confirmed[-2:], kill_note_persisted=any(n[-1] == NOTE_K for n in notes),
                     unconfirmed_after_kill=unconfirmed, resumed=resumed, power_loss_claimed=False)
@@ -691,7 +722,8 @@ def main():
         host = Host(ev, 'B6-moved', moved, main_xdg, unrelated)
         host.launch()
         resumed = host.idle()
-        assert host.rec['exe'].startswith(str(moved)) and resumed.get('book') == state['epub_id']
+        assert host.rec['exe'].startswith(str(moved)), host.rec['exe']
+        assert resumed.get('book') == state['epub_id'], f'moved B did not reopen the profile: {resumed}'
         rows = host.shelf_rows()
         assert host.close() == 0
         shutil.move(str(moved), str(b_dir))
