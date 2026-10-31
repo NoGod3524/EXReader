@@ -101,9 +101,17 @@ static int reg_probe(unsigned mode) {
  return rs->opened;
 }
 static HKEY fixture_key(void) {
- wchar_t upper[MAX_PATH],path[128];char hash[65];HKEY key=NULL;unsigned k;
- if(!LCMapStringEx(LOCALE_NAME_INVARIANT,LCMAP_UPPERCASE,reglib,-1,upper,MAX_PATH,NULL,NULL,0))return NULL;
- wh_sha256_hex(upper,wcslen(upper)*sizeof(wchar_t),hash);
+ wchar_t upper[MAX_PATH],canonical[MAX_PATH],parent[MAX_PATH],path[128];char hash[65];
+ unsigned char bytes[32+2*MAX_PATH];wh3w_identity id;HKEY key=NULL;size_t n;unsigned k;
+ if(!GetLongPathNameW(reglib,canonical,MAX_PATH))return NULL;
+ n=(size_t)(wcsrchr(reglib,L'\\')-reglib);if(n==2)n=3;
+ memcpy(parent,reglib,n*sizeof(wchar_t));parent[n]=0;
+ if(!capture_id(parent,1,&id)||!LCMapStringEx(LOCALE_NAME_INVARIANT,LCMAP_UPPERCASE,
+    wcsrchr(canonical,L'\\')+1,-1,upper,MAX_PATH,NULL,NULL,0))return NULL;
+ memcpy(bytes,"WH3LOC01",8);
+ for(k=0;k<8;k++)bytes[8+k]=(unsigned char)(id.volume>>(8*k));
+ memcpy(bytes+16,&id.file,16);n=wcslen(upper)*sizeof(wchar_t);memcpy(bytes+32,upper,n);
+ wh_sha256_hex(bytes,32+n,hash);
  wcscpy_s(path,128,L"Software\\EXReaderC02Admission\\");
  {size_t offset=wcslen(path);for(k=0;k<65;k++)path[offset+k]=(wchar_t)hash[k];}
  if(RegOpenKeyExW(HKEY_CURRENT_USER,path,REG_OPTION_OPEN_LINK,KEY_ALL_ACCESS|KEY_WOW64_64KEY,&key)!=ERROR_SUCCESS)return NULL;
@@ -344,6 +352,41 @@ static void enrollment_bad(unsigned kind) {
  expect(reg_probe(WH3WG_SHARED)==0&&!rs->sdk_opened,"no admission from rejected recovery");
  if(kind==3)expect(GetFileAttributesW(path)==INVALID_FILE_ATTRIBUTES&&GetLastError()==ERROR_FILE_NOT_FOUND,"missing object never recreated");
 }
+static void drive_alias_case(void) {
+ wchar_t drive[3]={0,L':',0},alias[MAX_PATH],alternate[MAX_PATH],target[MAX_PATH+8],short_path[MAX_PATH];
+ wh3w_identity a={0},b={0};DWORD used=GetLogicalDrives();int letter;wh3wr_registration *other=NULL;
+ if(!reg_fixture("drive-alias-cannot-enroll-a-second-domain",1))return;
+ expect(used!=0,"native drive inventory");if(!used)return;
+ for(letter=25;letter>=15;letter--)if(!(used&(1u<<letter)))break;
+ expect(letter>=15,"unused private drive letter");if(letter<15)return;drive[0]=(wchar_t)(L'A'+letter);
+ swprintf_s(target,MAX_PATH+8,L"\\??\\%ls",f.parent);
+ expect(DefineDosDeviceW(DDD_RAW_TARGET_PATH|DDD_NO_BROADCAST_SYSTEM,drive,target)!=0,"actual DOS drive alias");
+ {wchar_t root[4]={drive[0],L':',L'\\',0},fs[32];
+  expect(GetDriveTypeW(root)==DRIVE_FIXED&&GetVolumeInformationW(root,NULL,0,NULL,NULL,NULL,fs,32)&&!_wcsicmp(fs,L"NTFS"),
+    "drive alias meets the actual local-NTFS routing prerequisites");}
+ swprintf_s(alias,MAX_PATH,L"%ls\\library.sqlite",drive);
+ expect(capture_id(reglib,0,&a)&&capture_id(alias,0,&b)&&a.volume==b.volume&&!memcmp(&a.file,&b.file,16),
+    "alias resolves to exactly the same native target");
+ swprintf_s(alternate,MAX_PATH,L"%ls\\other-domain",f.parent);initial_proofs=0;
+ expect(!wh3wr_enroll_created(alias,alternate,0,counted_initial,(void *)original),
+    "another path spelling cannot create independent admission");
+ expect(initial_proofs==0,"alias duplicate refuses before SDK proof");
+ expect(reg_open(WH3WG_OWNER,NULL),"original domain still owns target");
+ expect(!wh3wr_open(alias,WH3WG_SHARED,NULL,&other),"alias cannot bypass exclusive original owner");
+ (void)wh3wr_close(other);reg_close_all();
+ short_path[0]=0;
+ {DWORD short_length=GetShortPathNameW(reglib,short_path,MAX_PATH);
+ printf("OBS short_alias_available=%d native_error=%lu\n",short_length&&short_length<MAX_PATH&&_wcsicmp(short_path,reglib)!=0,(unsigned long)(short_length?0:GetLastError()));}
+ if(short_path[0]&&_wcsicmp(short_path,reglib)){
+  swprintf_s(alternate,MAX_PATH,L"%ls\\short-domain",f.parent);initial_proofs=0;
+  expect(capture_id(short_path,0,&b)&&a.volume==b.volume&&!memcmp(&a.file,&b.file,16),"actual short-name alias");
+  expect(!wh3wr_enroll_created(short_path,alternate,0,counted_initial,(void *)original)&&initial_proofs==0,
+    "short-name alias cannot enroll a second gate");
+ }
+ expect(DefineDosDeviceW(DDD_RAW_TARGET_PATH|DDD_REMOVE_DEFINITION|DDD_EXACT_MATCH_ON_REMOVE|
+    DDD_NO_BROADCAST_SYSTEM,drive,target)!=0,"remove only this fixture drive mapping");
+ expect(reg_open(WH3WG_SHARED,NULL),"original registered path remains admitted");reg_close_all();
+}
 int main(int argc,char **argv) {
  if(argc==3&&!strcmp(argv[1],"--registry-child"))return reg_child(argv[2]);
  if(argc==3&&!strcmp(argv[1],"--probe-owner")){
@@ -368,6 +411,7 @@ int main(int argc,char **argv) {
  {unsigned i;for(i=WH3WR_ENROLL_RESERVED;i<=WH3WR_ENROLL_BOUND;i++)enrollment_kill(i);
   for(i=0;i<3;i++){enrollment_policy(i,0);enrollment_policy(i,1);}
   for(i=0;i<4;i++)enrollment_bad(i);}
+ drive_alias_case();
  fixture_close();if(rs)UnmapViewOfFile(rs);if(rm)CloseHandle(rm);if(rrdy)CloseHandle(rrdy);if(rgo)CloseHandle(rgo);
  printf("{\"source\":\"%s\",\"cases\":%u,\"checks\":%u,\"failed\":%u,\"passed\":%s,\"actual_sdk\":true,\"trusted_registry\":true,\"production_coordinator\":false,\"full_c02_acceptance\":false}\n",
    CANDIDATE_SOURCE_SHA,cases,checks,failures,failures?"false":"true");

@@ -152,15 +152,30 @@ done:
  if(sd)LocalFree(sd);if(sid)LocalFree(sid);free(user);return ok;
 }
 static int rpath(const wchar_t *input,wchar_t out[MAX_PATH],wchar_t route[65]) {
- wchar_t upper[MAX_PATH],drive[4],fs[32];DWORD n;size_t k,len;char hash[65];
+ wchar_t upper[MAX_PATH],drive[4],fs[32],parent[MAX_PATH],canonical[MAX_PATH];
+ DWORD n,error;size_t k,len,parent_length;char hash[65];HANDLE h;wh3w_identity id;
+ const wchar_t *leaf;unsigned char identity[32+2*MAX_PATH];
  if(!input)return 0;n=GetFullPathNameW(input,MAX_PATH,out,NULL);
  if(n<4||n>=MAX_PATH||out[1]!=L':'||out[2]!=L'\\'||wcschr(out+2,L':')||out[n-1]==L'\\')return 0;
  for(k=3;k<n;k++)if(out[k]==L'\\'&&(out[k-1]==L'.'||out[k-1]==L' '||out[k-1]==L'\\'))return 0;
  if(out[n-1]==L'.'||out[n-1]==L' ')return 0;
  drive[0]=out[0];drive[1]=L':';drive[2]=L'\\';drive[3]=0;
  if(GetDriveTypeW(drive)!=DRIVE_FIXED||!GetVolumeInformationW(drive,NULL,0,NULL,NULL,NULL,fs,32)||_wcsicmp(fs,L"NTFS"))return 0;
- if(!LCMapStringEx(LOCALE_NAME_INVARIANT,LCMAP_UPPERCASE,out,-1,upper,MAX_PATH,NULL,NULL,0))return 0;
- len=wcslen(upper);wh_sha256_hex(upper,len*sizeof(wchar_t),hash);
+ /* Route aliases to one logical location: actual parent FileID plus the
+    long leaf name. A textual drive spelling is not an exclusion domain. */
+ leaf=wcsrchr(out,L'\\')+1;parent_length=(size_t)(leaf-out)-1;if(parent_length==2)parent_length=3;
+ memcpy(parent,out,parent_length*sizeof(wchar_t));parent[parent_length]=0;
+ h=CreateFileW(parent,FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,
+    OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT,NULL);
+ if(h==INVALID_HANDLE_VALUE)return 0;
+ n=(DWORD)rid(h,&id,1);CloseHandle(h);if(!n)return 0;
+ n=GetLongPathNameW(out,canonical,MAX_PATH);
+ if(n>=MAX_PATH)return 0;
+ if(n)leaf=wcsrchr(canonical,L'\\')+1;
+ else {error=GetLastError();if(error!=ERROR_FILE_NOT_FOUND&&error!=ERROR_PATH_NOT_FOUND)return 0;}
+ if(!LCMapStringEx(LOCALE_NAME_INVARIANT,LCMAP_UPPERCASE,leaf,-1,upper,MAX_PATH,NULL,NULL,0))return 0;
+ memcpy(identity,"WH3LOC01",8);rput(identity+8,id.volume);memcpy(identity+16,&id.file,16);
+ len=wcslen(upper);memcpy(identity+32,upper,len*sizeof(wchar_t));wh_sha256_hex(identity,32+len*sizeof(wchar_t),hash);
  for(k=0;k<65;k++)route[k]=(wchar_t)hash[k];return 1;
 }
 static int rpins(wh3wr_registration *r) {
@@ -173,7 +188,7 @@ static int rpins(wh3wr_registration *r) {
   r->pins[r->np]=h;wcscpy_s(r->paths[r->np],MAX_PATH,part);
   if(!rid(h,&r->pinids[r->np],1)){r->np++;return 0;}r->np++;
  }
- return r->np!=0;
+ {wchar_t again[MAX_PATH],route[65];return r->np&&rpath(r->library,again,route)&&!wcscmp(route,r->route);}
 }
 static int rtarget(wh3wr_registration *r,int missing,int exact) {
  wh3w_identity id;
@@ -337,7 +352,7 @@ int wh3wr_enroll(const wchar_t *library,const wchar_t *root,
 }
 int wh3wr_enroll_created(const wchar_t *library,const wchar_t *root,int create_library,
  int (*prove)(void *,const wchar_t *),void *context) {
- wh3wr_registration *target=NULL,*domain=NULL;wchar_t route[65],path[MAX_PATH];
+ wh3wr_registration *target=NULL,*domain=NULL;wchar_t path[MAX_PATH];
  const wchar_t *names[]={L"admission.bin",L"journal.bin",L"intent.bin"};
  HANDLE root_pin=INVALID_HANDLE_VALUE,files[3]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE};
  wh3w_identity id;unsigned k;int fresh=0,ok=0;
@@ -345,7 +360,7 @@ int wh3wr_enroll_created(const wchar_t *library,const wchar_t *root,int create_l
  target=calloc(1,sizeof(*target));domain=calloc(1,sizeof(*domain));
  if(target)target->target=INVALID_HANDLE_VALUE;if(domain)domain->target=INVALID_HANDLE_VALUE;
  if(!target||!domain)goto done;
- if(!rpath(library,target->library,target->route)||!rpath(root,domain->library,route)||
+ if(!rpath(library,target->library,target->route)||!rpath(root,domain->library,domain->route)||
     wcslen(domain->library)>MAX_PATH-32||!rpins(target)||!rpins(domain)||!rlegacy(target->library))goto done;
  if(create_library){
   target->target=CreateFileW(target->library,GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
